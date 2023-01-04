@@ -6,19 +6,41 @@ use crate::schema::{invites, users};
 use crate::users::User;
 use chrono::{DateTime, Utc};
 use database::{DbConnection, Paginate, Result};
+use derive_more::{AsRef, Display, From, FromStr, Into};
 use diesel::{
     BoolExpressionMethods, ExpressionMethods, Identifiable, JoinOnDsl, QueryDsl, Queryable,
 };
 use diesel_async::RunQueryDsl;
+use diesel_newtype::DieselNewtype;
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use types::{
     api::v1::{invites::InviteResource, users::PublicUserProfile},
     core::{InviteCodeId, RoomId, UserId},
 };
 
-types::diesel_newtype! {
-    #[derive(Copy)] InviteCodeSerialId(i64) => diesel::sql_types::BigInt
-}
+#[derive(
+    AsRef,
+    Display,
+    From,
+    FromStr,
+    Into,
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    AsExpression,
+    FromSqlRow,
+    DieselNewtype,
+)]
+#[diesel(sql_type = diesel::sql_types::BigInt)]
+pub struct InviteCodeSerialId(i64);
 
 /// Diesel invites struct
 ///

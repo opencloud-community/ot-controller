@@ -3,20 +3,43 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Contains the room specific database structs and queries
+
 use crate::schema::{rooms, users};
 use crate::tariffs::Tariff;
 use crate::users::User;
 use chrono::{DateTime, Utc};
 use database::DbConnection;
 use database::{Paginate, Result};
+use derive_more::{AsRef, Display, From, FromStr, Into};
 use diesel::prelude::*;
 use diesel::{ExpressionMethods, Identifiable, QueryDsl, Queryable};
 use diesel_async::RunQueryDsl;
+use diesel_newtype::DieselNewtype;
+use serde::{Deserialize, Serialize};
 use types::core::{RoomId, TenantId, UserId};
 
-types::diesel_newtype! {
-    #[derive(Copy)] SerialRoomId(i64) => diesel::sql_types::BigInt
-}
+#[derive(
+    AsRef,
+    Display,
+    From,
+    FromStr,
+    Into,
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    AsExpression,
+    FromSqlRow,
+    DieselNewtype,
+)]
+#[diesel(sql_type = diesel::sql_types::BigInt)]
+pub struct SerialRoomId(i64);
 
 /// Diesel room struct
 ///

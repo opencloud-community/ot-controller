@@ -2,6 +2,5 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-mod diesel_newtype;
 mod maybe_put_behind_feature;
 mod sql_enum;

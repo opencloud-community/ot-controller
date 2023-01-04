@@ -50,6 +50,8 @@ chrono-tz = { workspace = true, features = ["serde"] }
 
 strum.workspace = true
 redis-args = { path = "../redis-args" }
+diesel-newtype = { path = "../diesel-newtype", package = "opentalk-diesel-newtype" }
+derive_more.workspace = true
 
 rustc-hash.workspace = true
 md5.workspace = true

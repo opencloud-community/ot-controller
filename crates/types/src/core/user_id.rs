@@ -2,51 +2,54 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use derive_more::{AsRef, Display, From, FromStr, Into};
+use uuid::Uuid;
+
+#[allow(unused_imports)]
+use crate::imports::*;
+
 #[cfg(feature = "kustos")]
 use kustos_shared::subject::PolicyUser;
 
-use uuid::Uuid;
-
-crate::diesel_newtype! {
-    feature_gated:
-
-    #[derive(Copy)]
-    // If feature `kustos` is enabled, `FromStr` is implemented by the
-    // `diesel_newtype!(…)` macro.
-    #[cfg_attr(
-        not(feature = "kustos"),
-        derive(derive_more::FromStr),
-    )]
-    #[cfg_attr(
-        feature = "redis",
-        derive(redis_args::ToRedisArgs, redis_args::FromRedisValue),
-        to_redis_args(fmt),
-        from_redis_value(FromStr)
-    )]
-    UserId(uuid::Uuid) => diesel::sql_types::Uuid, "/users/"
-}
+/// The id of a user
+#[derive(
+    AsRef, Display, From, FromStr, Into, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash,
+)]
+#[cfg_attr(feature="diesel",
+    derive(DieselNewtype, AsExpression, FromSqlRow),
+    diesel(sql_type = diesel::sql_types::Uuid),
+)]
+#[cfg_attr(feature = "kustos", derive(KustosPrefix), kustos_prefix("/users/"))]
+#[cfg_attr(
+    feature = "redis",
+    derive(ToRedisArgs, FromRedisValue),
+    to_redis_args(fmt),
+    from_redis_value(FromStr)
+)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct UserId(Uuid);
 
 impl UserId {
     /// Create a ZERO user id, e.g. for testing purposes
     pub const fn nil() -> Self {
-        Self::from(Uuid::nil())
+        Self(Uuid::nil())
     }
 
     /// Create a user id from a number, e.g. for testing purposes
     pub const fn from_u128(id: u128) -> Self {
-        Self::from(Uuid::from_u128(id))
+        Self(Uuid::from_u128(id))
     }
 
     /// Generate a new random user id
     #[cfg(feature = "rand")]
     pub fn generate() -> Self {
-        Self::from(Uuid::new_v4())
+        Self(Uuid::new_v4())
     }
 }
 
 #[cfg(feature = "kustos")]
 impl From<UserId> for PolicyUser {
     fn from(id: UserId) -> Self {
-        Self::from(id.into_inner())
+        Self::from(Uuid::from(id))
     }
 }

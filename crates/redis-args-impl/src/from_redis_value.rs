@@ -137,7 +137,7 @@ fn impl_from_redis_value_from_str(input: &syn::DeriveInput) -> Result<TokenStrea
     let ident = &input.ident;
 
     let expanded = quote! {
-        impl #generics redis::FromRedisValue for #ident #generics {
+        impl #generics ::redis_args::__exports::redis::FromRedisValue for #ident #generics {
             fn from_redis_value(v: &::redis_args::__exports::redis::Value) -> ::redis_args::__exports::redis::RedisResult<Self> {
                 match *v {
                     ::redis_args::__exports::redis::Value::Data(ref bytes) => {

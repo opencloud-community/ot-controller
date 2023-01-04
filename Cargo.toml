@@ -61,9 +61,9 @@ serde_repr = "0.1"
 serial_test = "2"
 strum = { version = "0.25", features = ["derive"] }
 syn = "1"
+thiserror = "1"
 tokio = "1"
 tokio-stream = { version = "0.1", features = ["sync"] }
-thiserror = "1"
 tracing = "0.1"
 tracing-opentelemetry = "0.19"
 url = "2"

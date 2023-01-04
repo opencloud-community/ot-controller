@@ -1,18 +1,44 @@
 // SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
 //
 // SPDX-License-Identifier: EUPL-1.2
+
 use super::schema::{groups, user_groups};
 use super::users::User;
 use database::{DbConnection, Result};
+use derive_more::{AsRef, Display, From, FromStr, Into};
 use diesel::prelude::*;
+use diesel::{
+    BoolExpressionMethods, ExpressionMethods, Identifiable, Insertable, OptionalExtension,
+    QueryDsl, Queryable,
+};
 use diesel_async::scoped_futures::ScopedFutureExt;
 use diesel_async::{AsyncConnection, RunQueryDsl};
+use diesel_newtype::DieselNewtype;
+use serde::{Deserialize, Serialize};
 use types::core::{GroupId, GroupName, TenantId, UserId};
 
-types::diesel_newtype! {
-    #[derive(Copy)]
-    SerialGroupId(i64) => diesel::sql_types::BigInt
-}
+#[derive(
+    AsRef,
+    Display,
+    From,
+    FromStr,
+    Into,
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    DieselNewtype,
+    AsExpression,
+    FromSqlRow,
+)]
+#[diesel(sql_type = diesel::sql_types::BigInt)]
+pub struct SerialGroupId(i64);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Queryable, Insertable, Identifiable)]
 #[diesel(table_name = groups)]

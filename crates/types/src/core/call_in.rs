@@ -2,16 +2,28 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use derive_more::{AsRef, Display, From, FromStr, Into};
+
 #[allow(unused_imports)]
 use crate::imports::*;
 
-crate::diesel_newtype! {
-    feature_gated:
-
-    NumericId(String) => diesel::sql_types::Text,
-    CallInId(NumericId) => diesel::sql_types::Text,
-    CallInPassword(NumericId) => diesel::sql_types::Text
-}
+/// Base type for numeric identifieirs
+#[derive(
+    AsRef, Display, From, FromStr, Into, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash,
+)]
+#[cfg_attr(
+    feature = "diesel",
+    derive(DieselNewtype, AsExpression, FromSqlRow),
+    diesel(sql_type = diesel::sql_types::Text)
+)]
+#[cfg_attr(
+    feature = "redis",
+    derive(ToRedisArgs, FromRedisValue,),
+    to_redis_args(fmt),
+    from_redis_value(FromStr)
+)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct NumericId(String);
 
 impl NumericId {
     /// Generate a new random `NumericId`
@@ -23,7 +35,7 @@ impl NumericId {
         const NUMERIC: [char; 10] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
         let numeric_dist = Slice::new(&NUMERIC).unwrap();
 
-        Self::from(thread_rng().sample_iter(numeric_dist).take(10).collect())
+        Self(thread_rng().sample_iter(numeric_dist).take(10).collect())
     }
 }
 
@@ -32,12 +44,12 @@ impl Validate for NumericId {
     fn validate(&self) -> Result<(), ValidationErrors> {
         let mut errors = ValidationErrors::new();
 
-        if self.inner().len() != 10 {
+        if self.as_ref().len() != 10 {
             errors.add("0", ValidationError::new("Invalid id length"));
             return Err(errors);
         }
 
-        for c in self.inner().chars() {
+        for c in self.as_ref().chars() {
             if !c.is_ascii_digit() {
                 errors.add("0", ValidationError::new("Non numeric character"));
                 return Err(errors);
@@ -47,6 +59,24 @@ impl Validate for NumericId {
         Ok(())
     }
 }
+
+/// The id of a call-in participation
+#[derive(
+    AsRef, Display, From, FromStr, Into, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash,
+)]
+#[cfg_attr(
+    feature = "diesel",
+    derive(DieselNewtype, AsExpression, FromSqlRow),
+    diesel(sql_type = diesel::sql_types::Text)
+)]
+#[cfg_attr(
+    feature = "redis",
+    derive(ToRedisArgs, FromRedisValue,),
+    to_redis_args(fmt),
+    from_redis_value(FromStr)
+)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct CallInId(NumericId);
 
 impl CallInId {
     /// Generate a random sip id
@@ -59,9 +89,27 @@ impl CallInId {
 #[cfg(feature = "serde")]
 impl Validate for CallInId {
     fn validate(&self) -> Result<(), ValidationErrors> {
-        self.inner().validate()
+        self.as_ref().validate()
     }
 }
+
+/// The password for authenticating call-in participation
+#[derive(
+    AsRef, Display, From, FromStr, Into, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash,
+)]
+#[cfg_attr(
+    feature = "diesel",
+    derive(DieselNewtype, AsExpression, FromSqlRow),
+    diesel(sql_type = diesel::sql_types::Text)
+)]
+#[cfg_attr(
+    feature = "redis",
+    derive(ToRedisArgs, FromRedisValue,),
+    to_redis_args(fmt),
+    from_redis_value(FromStr)
+)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct CallInPassword(NumericId);
 
 impl CallInPassword {
     /// Generate a random sip password
@@ -74,6 +122,6 @@ impl CallInPassword {
 #[cfg(feature = "serde")]
 impl Validate for CallInPassword {
     fn validate(&self) -> Result<(), ValidationErrors> {
-        self.inner().validate()
+        self.as_ref().validate()
     }
 }

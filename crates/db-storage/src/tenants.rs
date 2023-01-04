@@ -5,14 +5,39 @@
 use crate::schema::{tenants, users};
 use chrono::{DateTime, Utc};
 use database::{DbConnection, Result};
+use derive_more::{AsRef, Display, From, FromStr, Into};
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
+use diesel_newtype::DieselNewtype;
+use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use types::core::{TenantId, UserId};
 
-types::diesel_newtype! {
-    OidcTenantId(String) => diesel::sql_types::Text
-}
+#[derive(
+    AsRef,
+    Display,
+    From,
+    FromStr,
+    Into,
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    DieselNewtype,
+    AsExpression,
+    FromSqlRow,
+    ToRedisArgs,
+    FromRedisValue,
+)]
+#[diesel(sql_type = diesel::sql_types::Text)]
+#[to_redis_args(fmt = "{0}")]
+#[from_redis_value(FromStr)]
+pub struct OidcTenantId(String);
 
 #[derive(Debug, Clone, Queryable, Identifiable, Serialize, Deserialize)]
 pub struct Tenant {

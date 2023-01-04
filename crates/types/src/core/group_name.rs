@@ -2,24 +2,25 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::{convert::Infallible, str::FromStr};
+use derive_more::{AsRef, Display, From, FromStr, Into};
 
-crate::diesel_newtype! {
-    feature_gated:
+#[allow(unused_imports)]
+use crate::imports::*;
 
-    #[cfg_attr(
-        feature="redis",
-        derive(redis_args::ToRedisArgs, redis_args::FromRedisValue),
-        to_redis_args(fmt = "{0}"),
-        from_redis_value(FromStr)
-    )]
-    GroupName(String) => diesel::sql_types::Text
-}
-
-impl FromStr for GroupName {
-    type Err = Infallible;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self::from(s.into()))
-    }
-}
+/// The name of a group
+#[derive(
+    AsRef, Display, From, FromStr, Into, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash,
+)]
+#[cfg_attr(
+    feature = "diesel",
+    derive(DieselNewtype, AsExpression, FromSqlRow),
+    diesel(sql_type = diesel::sql_types::Text)
+)]
+#[cfg_attr(
+    feature = "redis",
+    derive(ToRedisArgs, FromRedisValue,),
+    to_redis_args(fmt),
+    from_redis_value(FromStr)
+)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct GroupName(String);

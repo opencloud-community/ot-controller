@@ -18,6 +18,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use types::common::{features, shared_folder::SharedFolder};
 use types::core::UserId;
+use uuid::Uuid;
 
 pub struct RegisteredMailRecipient {
     pub id: UserId,
@@ -94,14 +95,14 @@ fn to_event(
     };
 
     mail_worker_proto::v1::Event {
-        id: *event.id.inner(),
+        id: Uuid::from(event.id),
         name: event.title,
         description: event.description,
         start_time,
         end_time,
         rrule: event.recurrence_pattern,
         room: v1::Room {
-            id: *room.id.inner(),
+            id: Uuid::from(room.id),
             password: room.password,
         },
         call_in,

@@ -679,7 +679,7 @@ impl Authz {
 
         for resource in resources {
             let removed = inner
-                .remove_filtered_policy(0, vec![invite.clone(), resource.into().into_inner()])
+                .remove_filtered_policy(0, vec![invite.clone(), resource.into().to_string()])
                 .await?;
 
             if removed {

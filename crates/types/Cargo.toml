@@ -20,10 +20,10 @@ chrono-tz.workspace = true
 clap = { workspace = true, optional = true }
 client-shared = { path = "../client-shared", package = "opentalk-client-shared", optional = true }
 derive_more = "0.99"
-diesel = { workspace = true, features = ["uuid", "postgres"], optional = true }
+diesel = { workspace = true, features = ["uuid"], optional = true }
+diesel-newtype = { path = "../diesel-newtype", package = "opentalk-diesel-newtype", optional = true }
 email_address.workspace = true
 http = { workspace = true, optional = true }
-kustos = { path = "../kustos", optional = true }
 kustos-prefix = { path = "../kustos-prefix", package = "opentalk-kustos-prefix", optional = true }
 kustos-shared = { path = "../kustos-shared", optional = true }
 rand = { workspace = true, optional = true }
@@ -42,9 +42,9 @@ default = []
 actix = ["dep:actix-http", "dep:actix-web-httpauth", "dep:bytes"]
 backend = ["actix", "diesel", "kustos", "rand", "redis", "serde"]
 clap = ["dep:clap"]
-diesel = ["serde", "dep:diesel"]
+diesel = ["serde", "dep:diesel", "dep:diesel-newtype"]
 frontend = ["serde", "dep:client-shared", "dep:http"]
-kustos = ["dep:kustos", "dep:kustos-shared", "dep:kustos-prefix"]
+kustos = ["dep:kustos-prefix", "dep:kustos-shared"]
 rand = ["dep:rand", "uuid/v4"]
 redis = ["serde", "dep:redis", "dep:redis-args"]
 serde = [

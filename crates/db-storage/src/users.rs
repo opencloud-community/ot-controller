@@ -8,12 +8,13 @@ use super::schema::{groups, users};
 use crate::{levenshtein, lower, soundex};
 use controller_settings::Settings;
 use database::{DbConnection, Paginate, Result};
-use diesel::prelude::*;
+use derive_more::{AsRef, Display, From, FromStr, Into};
 use diesel::{
     BelongingToDsl, BoolExpressionMethods, ExpressionMethods, GroupedBy, Identifiable, Insertable,
     OptionalExtension, QueryDsl, Queryable, TextExpressionMethods,
 };
 use diesel_async::RunQueryDsl;
+use diesel_newtype::DieselNewtype;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use types::{
@@ -21,10 +22,28 @@ use types::{
     core::{TariffId, TariffStatus, TenantId, UserId},
 };
 
-types::diesel_newtype! {
-    #[derive(Copy)]
-    SerialUserId(i64) => diesel::sql_types::BigInt
-}
+#[derive(
+    AsRef,
+    Display,
+    From,
+    FromStr,
+    Into,
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    AsExpression,
+    FromSqlRow,
+    DieselNewtype,
+)]
+#[diesel(sql_type = diesel::sql_types::BigInt)]
+pub struct SerialUserId(i64);
 
 const MAX_USER_SEARCH_RESULTS: usize = 50;
 

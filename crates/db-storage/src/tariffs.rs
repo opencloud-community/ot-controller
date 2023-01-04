@@ -8,8 +8,10 @@ use chrono::{DateTime, Utc};
 use controller_settings::{DEFAULT_NAMESPACE, NAMESPACE_SEPARATOR};
 use core::fmt::Debug;
 use database::{DbConnection, Result};
+use derive_more::{AsRef, Display, From, FromStr, Into};
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
+use diesel_newtype::DieselNewtype;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use rustc_hash::FxHashSet;
 use serde::{Deserialize, Serialize};
@@ -20,9 +22,27 @@ use types::{
     core::{TariffId, UserId},
 };
 
-types::diesel_newtype! {
-    ExternalTariffId(String) => diesel::sql_types::Text
-}
+#[derive(
+    AsRef,
+    Display,
+    From,
+    FromStr,
+    Into,
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    Ord,
+    PartialOrd,
+    Eq,
+    PartialEq,
+    Hash,
+    AsExpression,
+    FromSqlRow,
+    DieselNewtype,
+)]
+#[diesel(sql_type = diesel::sql_types::Text)]
+pub struct ExternalTariffId(String);
 
 #[derive(
     Debug, Clone, Queryable, Identifiable, Serialize, Deserialize, ToRedisArgs, FromRedisValue,
