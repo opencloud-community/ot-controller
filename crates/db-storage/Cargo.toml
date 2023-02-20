@@ -57,9 +57,11 @@ redis = { workspace = true, features = ["tokio-comp", "connection-manager"] }
 url.workspace = true
 
 rand.workspace = true
+strum.workspace = true
 redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
 
 [dev-dependencies]
+actix-rt.workspace = true
 serial_test.workspace = true
 test-util = { path = "../test-util", package = "opentalk-test-util", features = ["database"] }
 pretty_assertions.workspace = true

@@ -165,14 +165,16 @@ table! {
 table! {
     use crate::sql_types::*;
 
-    legal_votes (id) {
+    module_resources (id) {
         id -> Uuid,
-        id_serial -> Int8,
+        tenant_id -> Uuid,
+        room_id -> Uuid,
         created_by -> Uuid,
         created_at -> Timestamptz,
-        room -> Nullable<Uuid>,
-        protocol -> Jsonb,
-        tenant_id -> Uuid,
+        updated_at -> Timestamptz,
+        namespace -> Varchar,
+        tag -> Nullable<Varchar>,
+        data -> Jsonb,
     }
 }
 
@@ -291,9 +293,9 @@ joinable!(events -> tenants (tenant_id));
 joinable!(external_tariffs -> tariffs (tariff_id));
 joinable!(groups -> tenants (tenant_id));
 joinable!(invites -> rooms (room));
-joinable!(legal_votes -> rooms (room));
-joinable!(legal_votes -> tenants (tenant_id));
-joinable!(legal_votes -> users (created_by));
+joinable!(module_resources -> rooms (room_id));
+joinable!(module_resources -> tenants (tenant_id));
+joinable!(module_resources -> users (created_by));
 joinable!(room_assets -> assets (asset_id));
 joinable!(room_assets -> rooms (room_id));
 joinable!(rooms -> tenants (tenant_id));
@@ -316,7 +318,7 @@ allow_tables_to_appear_in_same_query!(
     external_tariffs,
     groups,
     invites,
-    legal_votes,
+    module_resources,
     refinery_schema_history,
     room_assets,
     rooms,

@@ -11,12 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - controller: add event information to `JoinSuccess` signaling message ([#266](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/266))
 - controller: extend `JoinSuccess` signaling message's `Event` with `EventId` field ([#399](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/399))
+- db-storage: add the `module-resources` table, allowing modules to save arbitrary JSON data ([#345](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/345))
 
 ### Changed
 
 - db-storage/mail-worker-protocol: added `revision` field to `events` to track the number of changes
 - cli: Update `fix-cli` subcommand, now also fixes access to events and legal-votes ([#387](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/387))
 - logging: `RUST_LOG` environment variable entries override settings from configuration file ([#69](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/69))
+- db-storage: replace the `legal-votes` database table with the `module-resources` table. ⚠️ permissions need to be updated with the `fix-acl` command ⚠️ ([#345](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/345))
 
 ### Fixed
 

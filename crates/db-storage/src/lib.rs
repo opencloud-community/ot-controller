@@ -22,6 +22,7 @@ pub mod events;
 pub mod groups;
 pub mod invites;
 pub mod migrations;
+pub mod module_resources;
 pub mod rooms;
 pub mod sip_configs;
 pub mod tariffs;
