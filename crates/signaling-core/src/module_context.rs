@@ -49,16 +49,20 @@ where
 
     /// Queue a outgoing message to be sent via the websocket
     /// after exiting the `on_event` function
-    pub fn ws_send(&mut self, message: M::Outgoing) {
+    pub fn ws_send(&mut self, message: impl Into<M::Outgoing>) {
         self.ws_send_overwrite_timestamp(message, self.timestamp)
     }
 
     /// Similar to `ws_send` but sets an explicit timestamp
-    pub fn ws_send_overwrite_timestamp(&mut self, message: M::Outgoing, timestamp: Timestamp) {
+    pub fn ws_send_overwrite_timestamp(
+        &mut self,
+        message: impl Into<M::Outgoing>,
+        timestamp: Timestamp,
+    ) {
         self.ws_messages.push(NamespacedEvent {
             namespace: M::NAMESPACE,
             timestamp,
-            payload: message,
+            payload: message.into(),
         });
     }
 
