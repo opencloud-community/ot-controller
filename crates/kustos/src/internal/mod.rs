@@ -9,27 +9,8 @@ use crate::error::Error;
 
 pub(crate) mod custom_matcher;
 pub(crate) mod diesel_adapter;
-pub(crate) mod impls;
 pub(crate) mod rbac_api_ex;
 pub(crate) mod synced_enforcer;
-
-pub trait ToCasbin {
-    fn to_casbin_policy(self) -> Vec<String>;
-}
-
-//TODO(r.floren) finr better name for this. We do not want that to be part of ToCasbin as then we need to impl to_casbin_policy ofr UserPolicies<'_>
-pub trait ToCasbinMultiple {
-    fn to_casbin_policies(self) -> Vec<Vec<String>>;
-}
-
-/// This trait is used to allow different struct to be used with casbin.
-///
-/// This allows strict rules for keys in the permissions system.
-/// Similar to redis we use prefixes here to differentiate resources.
-/// E.g. user::<UUID> and group::<ID>
-pub trait ToCasbinString {
-    fn to_casbin_string(self) -> String;
-}
 
 /// Default Model
 ///
@@ -77,12 +58,13 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::access::AccessMethod;
     use crate::internal::rbac_api_ex::RbacApiEx;
     use crate::subject::{PolicyInvite, PolicyUser};
+    use crate::AccessMethod;
     use crate::{InvitePolicy, UserPolicies, UserPolicy};
     use casbin::{CoreApi, MgmtApi};
     use pretty_assertions::assert_eq;
+    use shared::{error::ParsingError, internal::ToCasbin};
     use std::convert::TryInto;
     use std::iter::FromIterator;
     use std::str::FromStr;
@@ -206,7 +188,7 @@ mod test {
         let is = input
             .into_iter()
             .map(TryInto::<UserPolicy>::try_into)
-            .collect::<std::result::Result<Vec<_>, crate::ParsingError>>()
+            .collect::<std::result::Result<Vec<_>, ParsingError>>()
             .unwrap();
         assert_eq!(is, should);
 
@@ -220,7 +202,7 @@ mod test {
         assert!(input
             .into_iter()
             .map(TryInto::<UserPolicy>::try_into)
-            .collect::<std::result::Result<Vec<_>, crate::ParsingError>>()
+            .collect::<std::result::Result<Vec<_>, ParsingError>>()
             .is_err());
     }
 

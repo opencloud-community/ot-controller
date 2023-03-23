@@ -13,7 +13,7 @@ use db_storage::{
     sip_configs::SipConfig,
 };
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
-use kustos::{access::AccessMethod, Authz, Resource as _, ResourceId};
+use kustos::{AccessMethod, Authz, Resource as _, ResourceId};
 use log::Log;
 use opentalk_log::{debug, warn};
 use settings::Settings;

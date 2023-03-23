@@ -4,7 +4,6 @@
 
 //! Includes an enforcer that supports a background task which reloads the adapter every n seconds
 use super::rbac_api_ex::RbacApiEx;
-use super::{ToCasbin, ToCasbinString};
 use crate::metrics::KustosMetrics;
 use crate::{PolicyUser, UserPolicy};
 use async_trait::async_trait;
@@ -16,6 +15,7 @@ use casbin::{
 use casbin::{EventEmitter, Result};
 use opentelemetry::Context;
 use parking_lot as pl;
+use shared::internal::{ToCasbin, ToCasbinString};
 use std::collections::HashMap;
 use std::convert::TryInto;
 use std::sync::Arc;

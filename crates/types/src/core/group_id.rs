@@ -36,7 +36,7 @@ impl GroupId {
 }
 
 #[cfg(feature = "kustos")]
-impl From<GroupId> for kustos::subject::PolicyGroup {
+impl From<GroupId> for kustos_shared::subject::PolicyGroup {
     fn from(group_id: GroupId) -> Self {
         Self::from(group_id.to_string())
     }

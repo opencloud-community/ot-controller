@@ -27,6 +27,9 @@ COPY ./crates/janus-media/Cargo.toml ./crates/janus-media/Cargo.toml
 COPY ./crates/jobs/Cargo.toml ./crates/jobs/Cargo.toml
 COPY ./crates/keycloak-admin/Cargo.toml ./crates/keycloak-admin/Cargo.toml
 COPY ./crates/kustos/Cargo.toml ./crates/kustos/Cargo.toml
+COPY ./crates/kustos-prefix/Cargo.toml ./crates/kustos-prefix/Cargo.toml
+COPY ./crates/kustos-prefix-impl/Cargo.toml ./crates/kustos-prefix-impl/Cargo.toml
+COPY ./crates/kustos-shared/Cargo.toml ./crates/kustos-shared/Cargo.toml
 COPY ./crates/lapin-pool/Cargo.toml ./crates/lapin-pool/Cargo.toml
 COPY ./crates/log/Cargo.toml ./crates/log/Cargo.toml
 COPY ./crates/mail-worker-protocol/Cargo.toml ./crates/mail-worker-protocol/Cargo.toml
@@ -44,6 +47,8 @@ COPY ./crates/signaling-core/Cargo.toml ./crates/signaling-core/Cargo.toml
 COPY ./crates/test-util/Cargo.toml ./crates/test-util/Cargo.toml
 COPY ./crates/types/Cargo.toml ./crates/types/Cargo.toml
 COPY ./crates/main/Cargo.toml ./crates/main/Cargo.toml
+COPY ./crates/diesel-newtype/Cargo.toml ./crates/diesel-newtype/Cargo.toml
+COPY ./crates/diesel-newtype-impl/Cargo.toml ./crates/diesel-newtype-impl/Cargo.toml
 COPY ./xtask/Cargo.toml ./xtask/Cargo.toml
 COPY ./Cargo.toml ./Cargo.toml
 COPY ./Cargo.lock ./Cargo.lock

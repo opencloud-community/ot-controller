@@ -2594,8 +2594,8 @@ dependencies = [
  "diesel",
  "diesel-async",
  "futures",
- "http",
  "itertools 0.11.0",
+ "kustos-shared",
  "log",
  "opentalk-database",
  "opentalk-db-storage",
@@ -2608,6 +2608,19 @@ dependencies = [
  "tracing",
  "tracing-futures",
  "url",
+ "uuid",
+]
+
+[[package]]
+name = "kustos-shared"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "casbin",
+ "http",
+ "itertools 0.11.0",
+ "pretty_assertions",
+ "thiserror",
  "uuid",
 ]
 
@@ -3476,6 +3489,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "opentalk-kustos-prefix"
+version = "0.0.0-dev"
+dependencies = [
+ "kustos-shared",
+ "opentalk-kustos-prefix-impl",
+]
+
+[[package]]
+name = "opentalk-kustos-prefix-impl"
+version = "0.0.0-dev"
+dependencies = [
+ "proc-macro-crate",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "opentalk-log"
 version = "0.0.0-dev"
 dependencies = [
@@ -3675,7 +3706,9 @@ dependencies = [
  "email_address",
  "http",
  "kustos",
+ "kustos-shared",
  "opentalk-client-shared",
+ "opentalk-kustos-prefix",
  "pretty_assertions",
  "rand",
  "redis",
@@ -4176,6 +4209,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3c2fcef82c0ec6eefcc179b978446c399b3cdf73c392c35604e399eee6df1ee3"
 dependencies = [
  "elliptic-curve",
+]
+
+[[package]]
+name = "proc-macro-crate"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "97dc5fea232fc28d2f597b37c4876b348a40e33f3b02cc975c8d006d78d94b1a"
+dependencies = [
+ "toml_datetime",
+ "toml_edit 0.20.2",
 ]
 
 [[package]]
@@ -5742,14 +5785,14 @@ dependencies = [
  "serde",
  "serde_spanned",
  "toml_datetime",
- "toml_edit",
+ "toml_edit 0.19.15",
 ]
 
 [[package]]
 name = "toml_datetime"
-version = "0.6.5"
+version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3550f4e9685620ac18a50ed434eb3aec30db8ba93b0287467bca5826ea25baf1"
+checksum = "7cda73e2f1397b1262d6dfdcef8aafae14d1de7748d66822d3bfeeb6d03e5e4b"
 dependencies = [
  "serde",
 ]
@@ -5763,6 +5806,17 @@ dependencies = [
  "indexmap 2.1.0",
  "serde",
  "serde_spanned",
+ "toml_datetime",
+ "winnow",
+]
+
+[[package]]
+name = "toml_edit"
+version = "0.20.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "396e4d48bbb2b7554c944bde63101b5ae446cff6ec4a24227428f15eb72ef338"
+dependencies = [
+ "indexmap 2.1.0",
  "toml_datetime",
  "winnow",
 ]

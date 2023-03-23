@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 #[cfg(feature = "kustos")]
-use kustos::subject::PolicyInvite;
+use kustos_shared::subject::PolicyInvite;
 
 use uuid::Uuid;
 

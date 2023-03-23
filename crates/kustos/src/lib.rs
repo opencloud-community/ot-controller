@@ -73,39 +73,43 @@
 //! # });
 //! ```
 use crate::actix_web::KustosService;
-use access::AccessMethod;
 use casbin::{CoreApi, MgmtApi, RbacApi};
 use database::Db;
-use internal::{synced_enforcer::SyncedEnforcer, ToCasbin, ToCasbinMultiple, ToCasbinString};
+use internal::synced_enforcer::SyncedEnforcer;
 use metrics::KustosMetrics;
-use policy::{
-    GroupPolicies, InvitePolicies, InvitePolicy, Policy, RolePolicies, UserPolicies, UserPolicy,
+use shared::{
+    internal::{ToCasbin, ToCasbinMultiple, ToCasbinString},
+    policy::{
+        GroupPolicies, InvitePolicies, InvitePolicy, Policy, RolePolicies, UserPolicies, UserPolicy,
+    },
+    resource::KustosFromStr,
+    subject::{
+        GroupToRole, IsSubject, PolicyGroup, PolicyInvite, PolicyRole, PolicyUser, UserToGroup,
+        UserToRole,
+    },
 };
-use std::{str::FromStr, sync::Arc, time::Duration};
-use subject::{
-    GroupToRole, IsSubject, PolicyGroup, PolicyInvite, PolicyRole, PolicyUser, UserToGroup,
-    UserToRole,
-};
+use std::{sync::Arc, time::Duration};
 use tokio::{
     sync::{broadcast::Receiver, RwLock},
     task::JoinHandle,
 };
 
-pub mod access;
 pub mod actix_web;
 pub mod db;
 mod error;
 mod internal;
 pub mod metrics;
-pub mod policies_builder;
-pub mod policy;
 pub mod prelude;
-pub mod resource;
-pub mod subject;
 
-pub(crate) use error::ParsingError;
-pub use error::{Error, ResourceParseError, Result};
+pub use error::{Error, Result};
 pub use resource::*;
+pub use shared::{
+    access::AccessMethod,
+    error::ResourceParseError,
+    policies_builder, policy, resource,
+    resource::{AccessibleResources, Resource, ResourceId},
+    subject,
+};
 
 #[macro_use]
 extern crate diesel;
@@ -463,7 +467,7 @@ impl Authz {
     ) -> Result<AccessibleResources<T>>
     where
         U: Into<PolicyUser>,
-        T: Resource + FromStr,
+        T: Resource + KustosFromStr,
     {
         let policies = self
             .inner
@@ -475,9 +479,10 @@ impl Authz {
         let type_wildcard = format!("{prefix}*");
 
         // Check if a wildcard policy is present and fulfills the access request
-        let has_wildcard_access = policies
-            .iter()
-            .find(|x| (*x.obj == type_wildcard || &*x.obj == "/*") && x.act.contains(&access));
+        let has_wildcard_access = policies.iter().find(|x| {
+            (x.obj().as_str() == type_wildcard || x.obj().as_str() == "/*")
+                && x.act().contains(&access)
+        });
 
         if has_wildcard_access.is_some() {
             return Ok(AccessibleResources::All);
@@ -486,15 +491,15 @@ impl Authz {
         // Transform the list of accessible resources from strings to T
         let resources = policies
             .into_iter()
-            .filter(|x| x.act.contains(&access))
+            .filter(|x| x.act().contains(&access))
             .map(|x| -> ResourceId { x.into() })
             .filter_map(|x| {
                 x.strip_prefix(prefix)
                     // Filter everything that still contains a slash, these are subresources
                     .filter(|x| !x.contains('/'))
-                    .map(T::from_str)
+                    .map(KustosFromStr::kustos_from_str)
             })
-            .collect::<Result<Vec<T>, <T as FromStr>::Err>>()?;
+            .collect::<Result<Vec<T>, ResourceParseError>>()?;
 
         Ok(AccessibleResources::List(resources))
     }
@@ -570,7 +575,7 @@ impl Authz {
         self.inner
             .write()
             .await
-            .remove_filtered_policy(1, vec![resource.into().0])
+            .remove_filtered_policy(1, vec![resource.into().to_string()])
             .await
             .map_err(Into::into)
     }
@@ -588,7 +593,7 @@ impl Authz {
 
         for resource in resources {
             let removed = inner
-                .remove_filtered_policy(1, vec![resource.into().0])
+                .remove_filtered_policy(1, vec![resource.into().to_string()])
                 .await?;
 
             if removed {
@@ -643,7 +648,7 @@ impl Authz {
 
         for resource in resources {
             let removed = inner
-                .remove_filtered_policy(0, vec![user.clone(), resource.into().0])
+                .remove_filtered_policy(0, vec![user.clone(), resource.into().to_string()])
                 .await?;
 
             if removed {
@@ -674,7 +679,7 @@ impl Authz {
 
         for resource in resources {
             let removed = inner
-                .remove_filtered_policy(0, vec![invite.clone(), resource.into().0])
+                .remove_filtered_policy(0, vec![invite.clone(), resource.into().into_inner()])
                 .await?;
 
             if removed {

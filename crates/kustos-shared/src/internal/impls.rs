@@ -3,23 +3,29 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Provides various internal implementations
-use super::{ToCasbin, ToCasbinMultiple, ToCasbinString};
-use crate::{
-    policies_builder::{PoliciesBuilder, Ready},
-    policy::{InvitePolicy, Policies, Policy},
-    subject::{PolicyInvite, UserToGroup, UserToRole},
-    AccessMethod, GroupToRole, IsSubject, PolicyGroup, PolicyRole, PolicyUser, ResourceId,
-    UserPolicy,
-};
+
 use casbin::{rhai::Dynamic, EnforceArgs};
 use itertools::Itertools;
+
 use std::{
     collections::hash_map::DefaultHasher,
     convert::TryFrom,
     hash::{Hash, Hasher},
     str::FromStr,
 };
-use uuid::Uuid;
+
+use super::{ToCasbin, ToCasbinMultiple, ToCasbinString};
+use crate::{
+    access::AccessMethod,
+    error::ParsingError,
+    policies_builder::{PoliciesBuilder, Ready},
+    policy::{InvitePolicy, Policies, Policy, UserPolicy},
+    resource::ResourceId,
+    subject::{
+        GroupToRole, IsSubject, PolicyGroup, PolicyInvite, PolicyRole, PolicyUser, UserToGroup,
+        UserToRole,
+    },
+};
 
 impl ToCasbinString for AccessMethod {
     fn to_casbin_string(self) -> String {
@@ -42,35 +48,9 @@ impl ToCasbinString for PolicyUser {
     }
 }
 
-impl FromStr for PolicyUser {
-    type Err = crate::ParsingError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.starts_with("user::") {
-            Ok(PolicyUser(Uuid::from_str(s.trim_start_matches("user::"))?))
-        } else {
-            Err(crate::ParsingError::PolicyUser(s.to_owned()))
-        }
-    }
-}
-
 impl ToCasbinString for PolicyInvite {
     fn to_casbin_string(self) -> String {
         format!("invite::{}", self.0)
-    }
-}
-
-impl FromStr for PolicyInvite {
-    type Err = crate::ParsingError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.starts_with("invite::") {
-            Ok(PolicyInvite(Uuid::from_str(
-                s.trim_start_matches("invite::"),
-            )?))
-        } else {
-            Err(crate::ParsingError::PolicyUser(s.to_owned()))
-        }
     }
 }
 
@@ -80,42 +60,18 @@ impl ToCasbinString for PolicyRole {
     }
 }
 
-impl FromStr for PolicyRole {
-    type Err = crate::ParsingError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.starts_with("role::") {
-            Ok(PolicyRole(s.trim_start_matches("role::").to_string()))
-        } else {
-            Err(crate::ParsingError::PolicyInternalGroup(s.to_owned()))
-        }
-    }
-}
-
 impl ToCasbinString for PolicyGroup {
     fn to_casbin_string(self) -> String {
         format!("group::{}", self.0)
     }
 }
 
-impl FromStr for PolicyGroup {
-    type Err = crate::ParsingError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.starts_with("group::") {
-            Ok(PolicyGroup(s.trim_start_matches("group::").to_string()))
-        } else {
-            Err(crate::ParsingError::PolicyOPGroup(s.to_owned()))
-        }
-    }
-}
-
-impl<T: FromStr<Err = crate::ParsingError> + IsSubject> TryFrom<Vec<String>> for Policy<T> {
-    type Error = crate::ParsingError;
+impl<T: FromStr<Err = ParsingError> + IsSubject> TryFrom<Vec<String>> for Policy<T> {
+    type Error = ParsingError;
 
     fn try_from(value: Vec<String>) -> Result<Self, Self::Error> {
         if value.len() != 3 {
-            return Err(crate::ParsingError::Custom(format!(
+            return Err(ParsingError::Custom(format!(
                 "Wrong amount of casbin args: {value:?}",
             )));
         }

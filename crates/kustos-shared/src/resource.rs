@@ -17,7 +17,7 @@ use std::{fmt::Display, ops::Deref, str::FromStr};
 
 /// This trait is used to allow the retrieval of resource reduced URL prefixes as well as retrieving
 /// the reduced URL
-pub trait Resource: Sized + Display + FromStr<Err = ResourceParseError> {
+pub trait Resource: Sized + Display + KustosFromStr {
     /// URI prefix of the ID of this resource
     ///
     /// # Example
@@ -32,6 +32,16 @@ pub trait Resource: Sized + Display + FromStr<Err = ResourceParseError> {
         debug_assert!(Self::PREFIX.starts_with('/') && Self::PREFIX.ends_with('/'));
 
         ResourceId(format!("{}{}", Self::PREFIX, self))
+    }
+}
+
+pub trait KustosFromStr: Sized {
+    fn kustos_from_str(s: &str) -> Result<Self, ResourceParseError>;
+}
+
+impl<T: Resource + FromStr<Err = E>, E: Into<ResourceParseError>> KustosFromStr for T {
+    fn kustos_from_str(s: &str) -> Result<Self, ResourceParseError> {
+        Self::from_str(s).map_err(Into::into)
     }
 }
 
@@ -64,11 +74,21 @@ impl ResourceId {
         inner.push_str(suffix.as_ref());
         ResourceId(inner)
     }
+
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
+}
+
+impl ToString for ResourceId {
+    fn to_string(&self) -> String {
+        self.as_str().to_string()
+    }
 }
 
 impl AsRef<str> for ResourceId {
     fn as_ref(&self) -> &str {
-        self.0.as_str()
+        self.as_str()
     }
 }
 
@@ -95,7 +115,7 @@ impl From<String> for ResourceId {
 ///
 /// If a subject has access to a wildcard `/*` or `/resourceName/*` [`AccessibleResources::All`]
 /// should be returned, else a List of all accessible resources via [`AccessibleResources::List`]
-pub enum AccessibleResources<T: Resource + FromStr> {
+pub enum AccessibleResources<T: Resource> {
     List(Vec<T>),
     All,
 }

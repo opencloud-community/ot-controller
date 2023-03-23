@@ -24,6 +24,8 @@ diesel = { workspace = true, features = ["uuid", "postgres"], optional = true }
 email_address.workspace = true
 http = { workspace = true, optional = true }
 kustos = { path = "../kustos", optional = true }
+kustos-prefix = { path = "../kustos-prefix", package = "opentalk-kustos-prefix", optional = true }
+kustos-shared = { path = "../kustos-shared", optional = true }
 rand = { workspace = true, optional = true }
 redis = { workspace = true, optional = true }
 redis-args = { path = "../redis-args", optional = true }
@@ -42,7 +44,7 @@ backend = ["actix", "diesel", "kustos", "rand", "redis", "serde"]
 clap = ["dep:clap"]
 diesel = ["serde", "dep:diesel"]
 frontend = ["serde", "dep:client-shared", "dep:http"]
-kustos = ["dep:kustos"]
+kustos = ["dep:kustos", "dep:kustos-shared", "dep:kustos-prefix"]
 rand = ["dep:rand", "uuid/v4"]
 redis = ["serde", "dep:redis", "dep:redis-args"]
 serde = [

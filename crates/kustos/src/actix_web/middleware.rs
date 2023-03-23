@@ -4,10 +4,9 @@
 
 //! Actix-web middleware based on <https://github.com/casbin-rs/actix-casbin-auth>
 use crate::actix_web::{Invite, User};
-use crate::internal::block;
+use crate::internal::{block, synced_enforcer::SyncedEnforcer};
 use crate::policy::InvitePolicy;
 use crate::subject::PolicyInvite;
-use crate::{AccessMethod, PolicyUser, SyncedEnforcer, UserPolicy};
 use actix_web::dev::{Service, Transform};
 use actix_web::{
     dev::ServiceRequest, dev::ServiceResponse, Error, HttpMessage, HttpResponse, Result,
@@ -16,6 +15,7 @@ use casbin::{CoreApi, Result as CasbinResult};
 use futures::future::{ok, Ready};
 use futures::Future;
 use itertools::Itertools;
+use shared::{access::AccessMethod, policy::UserPolicy, subject::PolicyUser};
 use std::cell::RefCell;
 use std::ops::{Deref, DerefMut};
 use std::pin::Pin;

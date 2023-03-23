@@ -1,0 +1,30 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+name = "kustos-shared"
+version = "0.1.0"
+edition = "2021"
+license = "EUPL-1.2"
+authors.workspace = true
+publish = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow.workspace = true
+http.workspace = true
+itertools = { workspace = true, optional = true }
+thiserror.workspace = true
+uuid = { workspace = true, features = [ "v4" ] }
+
+[dependencies.casbin]
+workspace = true
+optional = true
+
+[features]
+internal = ["dep:casbin", "dep:itertools"]
+
+[dev-dependencies]
+pretty_assertions.workspace = true

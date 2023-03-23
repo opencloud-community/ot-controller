@@ -2,12 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::policy::{GroupPolicy, InvitePolicy, Policy, RolePolicy, UserPolicy};
-use crate::prelude::{PolicyGroup, PolicyRole, PolicyUser};
-use crate::subject::PolicyInvite;
-use crate::{AccessMethod, IsSubject, ResourceId};
-use std::fmt::Debug;
-use std::mem::take;
+use crate::{
+    access::AccessMethod,
+    policy::{GroupPolicy, InvitePolicy, Policy, RolePolicy, UserPolicy},
+    resource::ResourceId,
+    subject::{IsSubject, PolicyGroup, PolicyInvite, PolicyRole, PolicyUser},
+};
+use std::{fmt::Debug, mem::take};
 
 #[doc(hidden)]
 pub trait BuilderState: Debug {
@@ -21,7 +22,7 @@ pub trait BuilderState: Debug {
 /// # Example:
 /// ```
 /// # use uuid::Uuid;
-/// # use kustos::prelude::*;
+/// # use kustos_shared::{access::AccessMethod, policies_builder::PoliciesBuilder};
 /// let user_id = Uuid::nil();
 /// let policies = PoliciesBuilder::default()
 ///     .grant_user_access(user_id)
@@ -146,9 +147,6 @@ impl<B: BuilderState> PoliciesBuilder<B> {
     }
 
     /// Wraps up the previous state and switched to the `Finished` state
-    ///
-    /// Only in the `Finished` state can the builder be passed to the [`add_policies`](super::Authz::add_policies)
-    /// function of [Authz](super::Authz).
     pub fn finish(self) -> PoliciesBuilder<Ready> {
         let mut this = PoliciesBuilder {
             user_policies: self.user_policies,
