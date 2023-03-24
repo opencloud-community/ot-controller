@@ -70,6 +70,28 @@ be banned from the room for the remainder of the session.
 
 ---
 
+### Debrief
+
+Starts a debriefing.
+
+#### Fields
+
+| Field        | Type   | Required | Description                                        |
+| ------------ | -------| -------- | -------------------------------------------------- |
+| `action`     | `enum` | yes      | Must be `"debrief"`                                |
+| `kick_scope` | `enum` | yes      | Either `"guests"`, `"users_and_guests"` or `"all"` |
+
+##### Example
+
+```json
+{
+    "action": "debrief",
+    "kick_scope": "guest"
+}
+```
+
+---
+
 ### EnableWaitingRoom
 
 Requires moderator role.
@@ -254,6 +276,32 @@ Received when you were banned from the room. Will be the last message before ser
     "message": "banned"
 }
 ```
+
+---
+
+### SessionEnded
+
+Received when you were removed from the room (e.g. due to debriefing).
+
+#### Fields
+
+| Field       | Type     | Always | Description                 |
+| ------------| -------- | ------ | --------------------------- |
+| `message`   | `enum`   | yes    | Is `"session_ended"`        |
+| `issued_by` | `string` | yes    | Id of the issuing moderator |
+
+---
+
+### DebriefingStarted
+
+Received when a debriefing has started that you participate in.
+
+#### Fields
+
+| Field       | Type     | Always | Description                 |
+| ------------| -------- | ------ | --------------------------- |
+| `message`   | `enum`   | yes    | Is `"debriefing_started"`   |
+| `issued_by` | `string` | yes    | Id of the issuing moderator |
 
 ---
 

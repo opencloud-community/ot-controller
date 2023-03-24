@@ -12,6 +12,9 @@ pub enum Message {
     Kicked,
     Banned,
 
+    SessionEnded { issued_by: ParticipantId },
+    DebriefingStarted { issued_by: ParticipantId },
+
     InWaitingRoom,
 
     JoinedWaitingRoom(control::outgoing::Participant),
@@ -56,6 +59,36 @@ mod test {
         let expected = json!({"message": "banned"});
 
         let produced = serde_json::to_value(&Message::Banned).unwrap();
+
+        assert_eq!(expected, produced);
+    }
+
+    #[test]
+    fn session_ended() {
+        let expected = json!({
+            "message": "session_ended",
+            "issued_by": "00000000-0000-0000-0000-000000000000"
+        });
+
+        let produced = serde_json::to_value(&Message::SessionEnded {
+            issued_by: ParticipantId::nil(),
+        })
+        .unwrap();
+
+        assert_eq!(expected, produced);
+    }
+
+    #[test]
+    fn debriefing_started() {
+        let expected = json!({
+            "message": "debriefing_started",
+            "issued_by": "00000000-0000-0000-0000-000000000000"
+        });
+
+        let produced = serde_json::to_value(&Message::DebriefingStarted {
+            issued_by: ParticipantId::nil(),
+        })
+        .unwrap();
 
         assert_eq!(expected, produced);
     }
