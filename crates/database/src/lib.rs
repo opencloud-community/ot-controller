@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! K3K Database connector, interface and connection handling
+//! OpenTalk Database connector, interface and connection handling
 
 use diesel::pg::Pg;
 use diesel::query_builder::{AstPass, Query, QueryFragment};

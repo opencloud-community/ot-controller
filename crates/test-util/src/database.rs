@@ -27,15 +27,15 @@ impl DatabaseContext {
     /// Create a new [`DatabaseContext`]
     ///
     /// Uses the environment variable `POSTGRES_BASE_URL` to connect to postgres. Defaults to `postgres://postgres:password123@localhost:5432`
-    /// when the environment variable is not set. The same goes for `DATABASE_NAME` where the default is `k3k_test`.
+    /// when the environment variable is not set. The same goes for `DATABASE_NAME` where the default is `opentalk_test`.
     ///
     /// Once connected, the database with `DATABASE_NAME` gets dropped and re-created to guarantee a clean state, then the
-    /// k3k controller migration is applied.
+    /// opentalk controller migration is applied.
     pub async fn new(drop_db_on_drop: bool) -> Self {
         let base_url = std::env::var("POSTGRES_BASE_URL")
             .unwrap_or_else(|_| "postgres://postgres:password123@localhost:5432".to_owned());
 
-        let db_name = std::env::var("DATABASE_NAME").unwrap_or_else(|_| "k3k_test".to_owned());
+        let db_name = std::env::var("DATABASE_NAME").unwrap_or_else(|_| "opentalk_test".to_owned());
 
         let postgres_url = format!("{base_url}/postgres");
         let mut conn =
@@ -77,7 +77,7 @@ impl DatabaseContext {
 
         let user = NewUser {
             oidc_sub: format!("oidc_sub{n}"),
-            email: format!("k3k_test_user{n}@example.org"),
+            email: format!("opentalk_test_user{n}@example.org"),
             title: "".into(),
             firstname: "test".into(),
             lastname: "tester".into(),

@@ -53,7 +53,7 @@ pub struct SignalingProtocols(&'static [&'static str]);
 
 impl SignalingProtocols {
     pub fn data() -> Data<Self> {
-        Data::new(Self(&["k3k-signaling-json-v1.0"]))
+        Data::new(Self(&["opentalk-signaling-json-v1.0"]))
     }
 }
 

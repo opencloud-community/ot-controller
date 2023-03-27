@@ -13,7 +13,7 @@ use types::core::{ParticipantId, Timestamp};
 
 /// The timer key holds a serialized [`Timer`].
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room_id}:timer")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room_id}:timer")]
 struct TimerKey {
     room_id: SignalingRoomId,
 }

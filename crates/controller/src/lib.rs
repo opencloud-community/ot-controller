@@ -2,21 +2,21 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Extensible core library of the *K3K Controller*
+//! Extensible core library of the *OpentTalk Controller*
 //!
 //! # Example
 //!
 //! ```no_run
-//! use k3k_controller_core::Controller;
+//! use opentalk_controller_core::Controller;
 //! use anyhow::Result;
 //!
 //! #[actix_web::main]
 //! async fn main()  {
-//!     k3k_controller_core::try_or_exit(run()).await;
+//!     opentalk_controller_core::try_or_exit(run()).await;
 //! }
 //!
 //! async fn run() -> Result<()> {
-//!    if let Some(controller) = Controller::create("K3K Controller Community Edition").await? {
+//!    if let Some(controller) = Controller::create("OpenTalk Controller Community Edition").await? {
 //!         controller.run().await?;
 //!     }
 //!

@@ -13,7 +13,7 @@ use super::RecordingId;
 
 /// Stores the [`RecordingState`] of this room.
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room_id}:recording:init")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room_id}:recording:init")]
 struct RecordingStateKey {
     room_id: SignalingRoomId,
 }

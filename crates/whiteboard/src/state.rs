@@ -12,7 +12,7 @@ use url::Url;
 
 /// Stores the [`InitState`] of this room.
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room_id}:spacedeck:init")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room_id}:spacedeck:init")]
 pub(super) struct InitStateKey {
     pub(super) room_id: SignalingRoomId,
 }

@@ -9,7 +9,7 @@ use redis_args::ToRedisArgs;
 
 /// Stores the etherpad group_id that is associated with this room.
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room_id}:protocol:group")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room_id}:protocol:group")]
 pub(super) struct GroupKey {
     pub(super) room_id: SignalingRoomId,
 }

@@ -6,12 +6,12 @@ use crate::common::make_user;
 use chrono::{TimeZone as _, Utc};
 use chrono_tz::Tz;
 use database::DbConnection;
-use k3k_db_storage::events::{
+use opentalk_db_storage::events::{
     Event, EventInvite, EventInviteStatus, GetEventsCursor, NewEvent, NewEventInvite,
     UpdateEventInvite,
 };
-use k3k_db_storage::rooms::NewRoom;
-use k3k_db_storage::tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId};
+use opentalk_db_storage::rooms::NewRoom;
+use opentalk_db_storage::tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId};
 use pretty_assertions::assert_eq;
 use serial_test::serial;
 use types::core::{EventId, RoomId, TimeZone, UserId};

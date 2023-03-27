@@ -20,7 +20,7 @@ use types::core::{BreakoutRoomId, ParticipantId, ResumptionToken, RoomId, UserId
 
 /// Redis key for a resumption token containing [`ResumptionData`].
 #[derive(Debug, ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:resumption={}")]
+#[to_redis_args(fmt = "opentalk-signaling:resumption={}")]
 pub struct ResumptionRedisKey(pub ResumptionToken);
 
 /// Data saved in redis behind the [`ResumptionRedisKey`]

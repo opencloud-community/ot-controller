@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "k3k-types"
+name = "opentalk-types"
 edition = "2021"
 authors.workspace = true
 version.workspace = true
@@ -17,7 +17,7 @@ diesel = { version = "2", features = ["postgres", "uuid"], optional = true }
 kustos = { path = "../kustos", optional = true }
 rand = { version = "0.8.5", optional = true }
 redis = { version = "0.22", optional = true }
-redis-args = { path = "../redis-args", package = "k3k-redis-args", optional = true }
+redis-args = { path = "../redis-args", package = "opentalk-redis-args", optional = true }
 serde = { version = "1", features = ["derive"], optional = true }
 strum = { version = "0.24", features = ["derive"] }
 uuid = { version = "1" }

@@ -12,7 +12,7 @@ use std::collections::HashMap;
 
 /// Key to the current poll config
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room}:polls:config")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:polls:config")]
 struct PollConfig {
     room: SignalingRoomId,
 }
@@ -65,7 +65,7 @@ pub(super) async fn del_config(
 
 /// Key to the current vote results
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room}:poll={poll}:results")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:poll={poll}:results")]
 struct PollResults {
     room: SignalingRoomId,
     poll: PollId,
@@ -135,7 +135,7 @@ pub(super) async fn poll_results(
 
 /// Key to the list of all polls inside the given room
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room}:polls:list")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:polls:list")]
 struct PollList {
     room: SignalingRoomId,
 }

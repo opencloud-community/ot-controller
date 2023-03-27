@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-default-run = "k3k-controller"
-name = "k3k-controller"
+default-run = "opentalk-controller"
+name = "opentalk-controller"
 edition = "2021"
 license = "EUPL-1.2"
 authors.workspace = true
@@ -12,8 +12,10 @@ version.workspace = true
 publish = false
 
 [dependencies]
-controller = { path = "../../crates/controller", package = "k3k-controller-core" }
-community-modules = { path = "../../crates/community-modules", package = "k3k-community-modules" }
+controller = { path = "../../crates/controller", package = "opentalk-controller-core" }
+community-modules = { path = "../../crates/community-modules", package = "opentalk-community-modules" }
 kustos = { path = "../../crates/kustos" }
 anyhow = "1.0"
 actix-web = { version = "4", default-features = false }
+anstream = "0.2"
+owo-colors = "3"

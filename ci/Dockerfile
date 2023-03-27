@@ -8,8 +8,8 @@ RUN apt-get update && apt-get install -y libpq5 ca-certificates protobuf-compile
 
 WORKDIR /controller
 
-COPY target/release/k3k-controller .
+COPY target/release/opentalk-controller .
 COPY extra/example.toml config.toml
 
 EXPOSE 11311
-ENTRYPOINT [ "./k3k-controller" ]
+ENTRYPOINT [ "./opentalk-controller" ]

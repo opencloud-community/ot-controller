@@ -5,7 +5,7 @@
 #![allow(clippy::extra_unused_lifetimes)]
 
 //! Contains the database ORM and database migrations for the controller/storage
-//! Builds upon k3k-database
+//! Builds upon opentalk-database
 //!
 //! To extend you need to implement a fitting trait extension.
 //! Example:

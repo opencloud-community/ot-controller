@@ -29,7 +29,7 @@ async fn create_rmq_config() -> RabbitMqConfig {
         "to-janus".to_owned(),
         "janus-exchange".to_owned(),
         "from-janus".to_owned(),
-        "k3k-signaling-echo-external-channel".to_owned(),
+        "opentalk-signaling-echo-external-channel".to_owned(),
     )
 }
 

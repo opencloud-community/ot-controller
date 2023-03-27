@@ -1,8 +1,8 @@
 ---
 openapi: 3.1.0
 info:
-  title: K3K Controller Frontend API
-  description: Specifies the endpoints and structure of the K3K Controller Frontend API
+  title: OpenTalk Controller Frontend API
+  description: Specifies the endpoints and structure of the OpenTalk Controller Frontend API
   version: '1'
   license:
     name: EUPL-1.2
@@ -914,7 +914,7 @@ paths:
           required: true
           schema:
             $ref: '#/components/schemas/SignalingProtocolHeader'
-          example: k3k-signaling-json-v1.0, ticket#eyJpc3MiOiJodHRwczovL2V4YW1wbGUuYXV0aDAuY29tLy
+          example: opentalk-signaling-json-v1.0, ticket#eyJpc3MiOiJodHRwczovL2V4YW1wbGUuYXV0aDAuY29tLy
         - in: header
           name: Connection
           required: true
@@ -1521,7 +1521,7 @@ components:
     SignalingProtocolHeader:
       anyOf:
         - type: string
-          enum: [k3k-signaling-json-v$MAJOR.$MINOR]
+          enum: [opentalk-signaling-json-v$MAJOR.$MINOR]
           description: >
             This informs the API that you want to talk using Protocol specified in this document.
             The version part MUST be a valid MAJOR.MINOR release of this specification.

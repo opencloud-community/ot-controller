@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use database::DbConnection;
-use k3k_db_storage::tariffs::Tariff;
-use k3k_db_storage::tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId};
-use k3k_db_storage::users::{NewUser, User};
+use opentalk_db_storage::tariffs::Tariff;
+use opentalk_db_storage::tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId};
+use opentalk_db_storage::users::{NewUser, User};
 
 pub fn make_user(
     conn: &mut DbConnection,

@@ -11,7 +11,21 @@ async fn main() {
 }
 
 async fn run() -> Result<()> {
-    if let Some(mut controller) = Controller::create("K3K Controller Community Edition").await? {
+    match std::env::args().next() {
+        Some(s) if s.contains("k3k-controller") => {
+            use owo_colors::OwoColorize as _;
+            anstream::eprintln!(
+                "{}: It appears you're using the deprecated `k3k-controller` executable, \
+                you should be using the `opentalk-controller` executable instead. \
+                The `k3k-controller` executable will be removed in a future release.",
+                "DEPRECATION WARNING".yellow().bold(),
+            );
+        }
+        _ => {}
+    }
+    if let Some(mut controller) =
+        Controller::create("OpenTalk Controller Community Edition").await?
+    {
         community_modules::register(&mut controller).await?;
         controller.run().await?;
     }

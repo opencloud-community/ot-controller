@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "k3k-whiteboard"
+name = "opentalk-whiteboard"
 edition = "2021"
 license = "EUPL-1.2"
 authors.workspace = true
@@ -13,13 +13,13 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-controller-shared = { path = "../controller-shared-types", package = "k3k-controller-shared" }
-controller = { path = "../controller", package = "k3k-controller-core" }
-db-storage = { path = "../db-storage", package = "k3k-db-storage" }
-database = { path = "../database", package = "k3k-database" }
+controller-shared = { path = "../controller-shared-types", package = "opentalk-controller-shared" }
+controller = { path = "../controller", package = "opentalk-controller-core" }
+db-storage = { path = "../db-storage", package = "opentalk-db-storage" }
+database = { path = "../database", package = "opentalk-database" }
 redis = "0.22"
-redis-args = { path = "../redis-args", package = "k3k-redis-args" }
-types = { path = "../types", package = "k3k-types", features = ["backend"] }
+redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
+types = { path = "../types", package = "opentalk-types", features = ["backend"] }
 reqwest = { version = "0.11", default-features = false, features = [
     "json",
     "cookies",

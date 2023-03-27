@@ -24,7 +24,7 @@ mod to_redis_args;
 /// ### Struct with named fields
 ///
 /// ```
-/// # #[macro_use] extern crate k3k_redis_args;
+/// # #[macro_use] extern crate opentalk_redis_args;
 /// #[derive(ToRedisArgs)]
 /// #[to_redis_args(fmt = "path:to:id={id}:with:value:{value}")]
 /// struct IdValue {
@@ -37,7 +37,7 @@ mod to_redis_args;
 /// ### Struct with unnamed fields
 ///
 /// ````
-/// # #[macro_use] extern crate k3k_redis_args;
+/// # #[macro_use] extern crate opentalk_redis_args;
 /// # #[macro_use] extern crate serde;
 /// #[derive(ToRedisArgs)]
 /// #[to_redis_args(fmt = "path:to:{}:with:{}")]
@@ -52,7 +52,7 @@ mod to_redis_args;
 /// ## Examples
 ///
 /// ```
-/// # #[macro_use] extern crate k3k_redis_args;
+/// # #[macro_use] extern crate opentalk_redis_args;
 /// # use serde::Serialize;
 /// #[derive(ToRedisArgs, Serialize)]
 /// #[to_redis_args(serde)]
@@ -78,7 +78,7 @@ pub fn derive_to_redis_args(input: TokenStream) -> TokenStream {
 /// ## Example
 ///
 /// ```
-/// # #[macro_use] extern crate k3k_redis_args;
+/// # #[macro_use] extern crate opentalk_redis_args;
 /// #[derive(FromRedisValue)]
 /// #[from_redis_value(FromStr)]
 /// struct IdValue {
@@ -103,7 +103,7 @@ pub fn derive_to_redis_args(input: TokenStream) -> TokenStream {
 /// ## Example
 ///
 /// ```
-/// # #[macro_use] extern crate k3k_redis_args;
+/// # #[macro_use] extern crate opentalk_redis_args;
 /// # #[macro_use] extern crate serde;
 /// # use serde::Deserialize;
 /// #[derive(FromRedisValue, Deserialize)]

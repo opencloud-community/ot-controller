@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use controller::prelude::*;
-use k3k_polls::*;
+use opentalk_polls::*;
 use pretty_assertions::assert_eq;
 use serial_test::serial;
 use std::time::Duration;

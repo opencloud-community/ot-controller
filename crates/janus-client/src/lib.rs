@@ -18,7 +18,7 @@
 //! let (sink, _) = mpsc::channel(1);
 //! let connection = lapin::Connection::connect("amqp://janus-backend:5672", lapin::ConnectionProperties::default()).await.unwrap();
 //! let channel = connection.create_channel().await.unwrap();
-//! let config = RabbitMqConfig::new_from_channel(channel, "janus-gateway".into(), "to-janus".into(), "from-janus".into(), "k3k-signaling".into());
+//! let config = RabbitMqConfig::new_from_channel(channel, "janus-gateway".into(), "to-janus".into(), "from-janus".into(), "opentalk-signaling".into());
 //! let client = Client::new(config, ClientId(Arc::from("")), sink).await.unwrap();
 //! let session = client.create_session().await.unwrap();
 //! let echo_handle = session
@@ -70,7 +70,7 @@
 //! let (sink, _) = mpsc::channel(1);
 //! let connection = lapin::Connection::connect("amqp://janus-backend:5672", lapin::ConnectionProperties::default()).await.unwrap();
 //! let channel = connection.create_channel().await.unwrap();
-//! let config = RabbitMqConfig::new_from_channel(channel, "janus-gateway".into(), "to-janus".into(), "from-janus".into(), "k3k-signaling".into());
+//! let config = RabbitMqConfig::new_from_channel(channel, "janus-gateway".into(), "to-janus".into(), "from-janus".into(), "opentalk-signaling".into());
 //! let client = janus_client::Client::new(config, ClientId(Arc::from("")), sink).await.unwrap();
 //! let session = client.create_session().await.unwrap();
 //!

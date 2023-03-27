@@ -13,7 +13,7 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-database = { path = "../database", package = "k3k-database" }
+database = { path = "../database", package = "opentalk-database" }
 
 ## Database migration
 barrel = { version = "0.7", features = ["pg"] }
@@ -64,7 +64,7 @@ features = ["runtime-tokio", "incremental"]
 serial_test = "1"
 anyhow = "1.0"
 # TODO(r.floren) remove this in the future. Currently used to migrate in tests. Find something lighter.
-db-storage = { path = "../db-storage", package = "k3k-db-storage" }
+db-storage = { path = "../db-storage", package = "opentalk-db-storage" }
 url = "2"
 tokio = { version = "1", features = ["rt", "macros"] }
 pretty_assertions = "1.3"

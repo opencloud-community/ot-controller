@@ -12,8 +12,9 @@ mod reload;
 mod tariffs;
 mod tenants;
 
+// TODO: renamed-to-opentalk
 #[derive(Parser, Debug, Clone)]
-#[clap(name = "k3k-controller")]
+#[clap(name = "opentalk-controller")]
 pub struct Args {
     #[clap(
         short,

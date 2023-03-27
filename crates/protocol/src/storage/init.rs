@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 /// Stores the [`InitState`] of this room.
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room_id}:protocol:init")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room_id}:protocol:init")]
 pub(super) struct InitKey {
     pub(super) room_id: SignalingRoomId,
 }

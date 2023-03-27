@@ -11,7 +11,9 @@ use types::core::ParticipantId;
 
 /// Contains the [`SessionInfo`] of the a participant.
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room_id}:participant={participant_id}:protocol-session")]
+#[to_redis_args(
+    fmt = "opentalk-signaling:room={room_id}:participant={participant_id}:protocol-session"
+)]
 pub(super) struct SessionInfoKey {
     pub(super) room_id: SignalingRoomId,
     pub(super) participant_id: ParticipantId,
