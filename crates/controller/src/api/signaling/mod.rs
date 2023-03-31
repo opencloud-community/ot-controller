@@ -39,6 +39,12 @@ pub enum Role {
     Moderator,
 }
 
+impl Role {
+    pub const fn is_moderator(&self) -> bool {
+        matches!(self, Role::Moderator)
+    }
+}
+
 /// The complete room id
 ///
 /// It consist of the room-id inside the database and an optional
