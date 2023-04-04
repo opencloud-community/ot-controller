@@ -21,7 +21,6 @@ pub mod assets;
 pub mod events;
 pub mod groups;
 pub mod invites;
-pub mod legal_votes;
 pub mod migrations;
 pub mod rooms;
 pub mod sip_configs;

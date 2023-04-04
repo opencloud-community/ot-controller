@@ -12,7 +12,7 @@ use anyhow::{bail, Context, Error, Result};
 use clap::Parser;
 use controller_settings::Settings;
 use database::{Db, DbConnection};
-use db_storage::{events::Event, legal_votes::LegalVote, rooms::Room, users::User};
+use db_storage::{events::Event, rooms::Room, users::User};
 use kustos::prelude::*;
 use std::sync::Arc;
 
@@ -36,10 +36,6 @@ pub(super) struct Args {
     #[clap(long, default_value = "false")]
     skip_rooms: bool,
 
-    /// Skip fix of legal-vote permissions
-    #[clap(long, default_value = "false")]
-    skip_legal_votes: bool,
-
     /// Skip fix of event permission fixes
     #[clap(long, default_value = "false")]
     skip_events: bool,
@@ -60,7 +56,6 @@ pub(super) async fn fix_acl(settings: Settings, args: Args) -> Result<()> {
             skip_users: false,
             skip_groups: false,
             skip_rooms: false,
-            skip_legal_votes: false,
             skip_events: false,
         } => {
             // Only remove all policies if none of the skips are specified
@@ -86,10 +81,6 @@ pub(super) async fn fix_acl(settings: Settings, args: Args) -> Result<()> {
 
     if !args.skip_rooms {
         fix_rooms(&mut conn, &authz).await?;
-    }
-
-    if !args.skip_legal_votes {
-        fix_legal_votes(&mut conn, &authz).await?;
     }
 
     if !args.skip_events {
@@ -180,28 +171,6 @@ async fn fix_rooms(conn: &mut DbConnection, authz: &kustos::Authz) -> Result<()>
             .grant_user_access(user.id)
             .room_read_access(room.id)
             .room_write_access(room.id)
-            .finish();
-    }
-
-    authz.add_policies(policies).await?;
-
-    Ok(())
-}
-
-async fn fix_legal_votes(conn: &mut DbConnection, authz: &kustos::Authz) -> Result<()> {
-    let legal_votes_with_creator = LegalVote::get_all_with_creator(conn)
-        .await
-        .context("failed to load legal votes")?;
-
-    let mut policies = PoliciesBuilder::new();
-
-    for (legal_vote_id, creator_id) in legal_votes_with_creator {
-        policies = policies
-            .grant_user_access(creator_id)
-            .add_resource(
-                legal_vote_id.resource_id(),
-                [AccessMethod::Get, AccessMethod::Put, AccessMethod::Delete],
-            )
             .finish();
     }
 
