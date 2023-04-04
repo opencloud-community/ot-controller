@@ -110,14 +110,15 @@ impl Chat {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ChatState {
-    enabled: bool,
-    room_history: Vec<StoredMessage>,
-    groups_history: Vec<GroupHistory>,
-    last_seen_timestamp_global: Option<Timestamp>,
-    last_seen_timestamps_private: HashMap<ParticipantId, Timestamp>,
-    last_seen_timestamps_group: HashMap<GroupName, Timestamp>,
+    pub enabled: bool,
+    pub room_history: Vec<StoredMessage>,
+    pub groups_history: Vec<GroupHistory>,
+    pub private_history: Vec<PrivateHistory>,
+    pub last_seen_timestamp_global: Option<Timestamp>,
+    pub last_seen_timestamps_private: HashMap<ParticipantId, Timestamp>,
+    pub last_seen_timestamps_group: HashMap<GroupName, Timestamp>,
 }
 
 impl ChatState {
@@ -128,6 +129,7 @@ impl ChatState {
         groups: &[Group],
     ) -> Result<Self> {
         let enabled = storage::is_chat_enabled(redis_conn, room.room_id()).await?;
+
         let room_history = storage::get_room_chat_history(redis_conn, room).await?;
         let mut groups_history = Vec::new();
         for group in groups {
@@ -137,6 +139,20 @@ impl ChatState {
 
             groups_history.push(GroupHistory {
                 name: group.name.clone(),
+                history,
+            });
+        }
+
+        let mut private_history = Vec::new();
+        let correspondents =
+            storage::get_private_chat_correspondents_for_participant(redis_conn, room, participant)
+                .await?;
+        for correspondent in correspondents {
+            let history =
+                storage::get_private_chat_history(redis_conn, room, participant, correspondent)
+                    .await?;
+            private_history.push(PrivateHistory {
+                correspondent,
                 history,
             });
         }
@@ -152,6 +168,7 @@ impl ChatState {
             room_history,
             enabled,
             groups_history,
+            private_history,
             last_seen_timestamp_global,
             last_seen_timestamps_private,
             last_seen_timestamps_group,
@@ -159,10 +176,16 @@ impl ChatState {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct GroupHistory {
     name: GroupName,
     history: Vec<StoredMessage>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct PrivateHistory {
+    pub correspondent: ParticipantId,
+    pub history: Vec<StoredMessage>,
 }
 
 #[derive(Serialize)]
@@ -432,6 +455,31 @@ impl SignalingModule for Chat {
                             scope: Scope::Private(target),
                         };
 
+                        let stored_msg = StoredMessage {
+                            id: out_message_contents.id,
+                            source: out_message_contents.source,
+                            content: out_message_contents.content.clone(),
+                            scope: out_message_contents.scope.clone(),
+                            timestamp: ctx.timestamp(),
+                        };
+
+                        storage::add_private_chat_correspondents(
+                            ctx.redis_conn(),
+                            self.room,
+                            self.id,
+                            target,
+                        )
+                        .await?;
+
+                        storage::add_message_to_private_chat_history(
+                            ctx.redis_conn(),
+                            self.room,
+                            self.id,
+                            target,
+                            &stored_msg,
+                        )
+                        .await?;
+
                         let out_message = outgoing::Message::MessageSent(out_message_contents);
 
                         ctx.exchange_publish(
@@ -559,6 +607,21 @@ impl SignalingModule for Chat {
                 storage::delete_chat_enabled(ctx.redis_conn(), self.room.room_id()).await
             {
                 log::error!("Failed to clean up chat enabled flag {}", e);
+            }
+
+            let correspondents =
+                storage::get_private_chat_correspondents(ctx.redis_conn(), self.room)
+                    .await
+                    .unwrap_or_else(|e| {
+                        log::error!("Failed to load room private chat correspondents, {}", e);
+                        Default::default()
+                    });
+            for (a, b) in correspondents {
+                if let Err(e) =
+                    storage::delete_private_chat_history(ctx.redis_conn(), self.room, a, b).await
+                {
+                    log::error!("Failed to remove room private chat history, {}", e);
+                }
             }
 
             let participants = control::storage::get_all_participants(ctx.redis_conn(), self.room)

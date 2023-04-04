@@ -4,7 +4,7 @@
 
 use chrono::{DateTime, Utc};
 use controller::prelude::*;
-use opentalk_chat::{incoming, Chat, Scope};
+use opentalk_chat::{incoming, outgoing, Chat, ChatState, Scope};
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use serial_test::serial;
@@ -88,6 +88,7 @@ async fn last_seen_timestamps() {
                         "last_seen_timestamps_private": {},
                         "last_seen_timestamps_group": {},
                         "room_history": [],
+                        "private_history": [],
                     })
                 );
             }
@@ -193,6 +194,7 @@ async fn last_seen_timestamps() {
                             "name": "group2",
                         },
                     ],
+                    "private_history": [],
                     "last_seen_timestamp_global": timestamp_global_raw,
                     "last_seen_timestamps_private": {
                         "00000000-0000-0000-0000-000000000002": timestamp_private_raw,
@@ -280,6 +282,7 @@ async fn common_groups_on_join() {
                             "name":"group2"
                         }
                     ],
+                    "private_history": [],
                     "room_history": [],
                     "last_seen_timestamp_global": null,
                     "last_seen_timestamps_group": {},
@@ -333,11 +336,220 @@ async fn common_groups_on_join() {
                             "name": "group3"
                         }
                     ],
+                    "private_history": [],
                     "last_seen_timestamp_global": null,
                     "last_seen_timestamps_group": {},
                     "last_seen_timestamps_private": {},
                 })
             );
+        }
+        _ => panic!(),
+    }
+
+    module_tester.shutdown().await.unwrap();
+}
+
+#[actix_rt::test]
+#[serial]
+async fn private_chat_history_on_join() {
+    let test_ctx = TestContext::new().await;
+
+    let user1 = test_ctx.db_ctx.create_test_user(USER_1.n, vec![]).unwrap();
+
+    let user2 = test_ctx.db_ctx.create_test_user(USER_2.n, vec![]).unwrap();
+
+    let waiting_room = false;
+    let room = test_ctx
+        .db_ctx
+        .create_test_room(ROOM_ID, user1.id, waiting_room)
+        .unwrap();
+
+    let mut module_tester = ModuleTester::<Chat>::new(
+        test_ctx.db_ctx.db.clone(),
+        test_ctx.authz,
+        test_ctx.redis_conn,
+        room,
+    );
+
+    module_tester
+        .join_user(
+            USER_1.participant_id,
+            user1.clone(),
+            Role::User,
+            USER_1.name,
+            (),
+        )
+        .await
+        .unwrap();
+
+    let join_success1 = module_tester
+        .receive_ws_message(&USER_1.participant_id)
+        .await
+        .unwrap();
+
+    match join_success1 {
+        controller::prelude::WsMessageOutgoing::Control(
+            control::outgoing::Message::JoinSuccess(control::outgoing::JoinSuccess {
+                module_data,
+                participants,
+                ..
+            }),
+        ) => {
+            assert!(participants.is_empty());
+
+            // check own groups
+            let chat_data = module_data.get("chat").unwrap();
+            let json = serde_json::to_value(chat_data).unwrap();
+            assert_eq!(
+                json,
+                json!({
+                    "enabled": true,
+                    "groups_history": [],
+                    "private_history": [],
+                    "room_history": [],
+                    "last_seen_timestamp_global": null,
+                    "last_seen_timestamps_group": {},
+                    "last_seen_timestamps_private": {},
+                })
+            );
+        }
+        _ => panic!(),
+    }
+
+    module_tester
+        .join_user(USER_2.participant_id, user2, Role::User, USER_2.name, ())
+        .await
+        .unwrap();
+
+    let join_success2 = module_tester
+        .receive_ws_message(&USER_2.participant_id)
+        .await
+        .unwrap();
+
+    match join_success2 {
+        controller::prelude::WsMessageOutgoing::Control(
+            control::outgoing::Message::JoinSuccess(control::outgoing::JoinSuccess {
+                module_data,
+                participants,
+                ..
+            }),
+        ) => {
+            assert_eq!(participants.len(), 1);
+
+            // check common groups here
+            let peer_frontend_data = participants[0].module_data.get("chat").unwrap();
+            let json = serde_json::to_value(peer_frontend_data).unwrap();
+            assert_eq!(json, json!({"groups":[]}));
+
+            // check own groups
+            let chat_data = module_data.get("chat").unwrap();
+            let json = serde_json::to_value(chat_data).unwrap();
+            assert_eq!(
+                json,
+                json!({
+                    "enabled": true,
+                    "room_history": [],
+                    "groups_history": [],
+                    "private_history": [],
+                    "last_seen_timestamp_global": null,
+                    "last_seen_timestamps_group": {},
+                    "last_seen_timestamps_private": {},
+                })
+            );
+        }
+        _ => panic!(),
+    }
+
+    let joined = module_tester
+        .receive_ws_message(&USER_1.participant_id)
+        .await
+        .unwrap();
+
+    assert!(matches!(
+        joined,
+        WsMessageOutgoing::Control(control::outgoing::Message::Joined(
+            control::outgoing::Participant {id, module_data: _}
+        )) if id == USER_2.participant_id
+    ));
+
+    module_tester
+        .send_ws_message(
+            &USER_1.participant_id,
+            incoming::Message::SendMessage(incoming::SendMessage {
+                content: "Low".into(),
+                scope: Scope::Private(USER_2.participant_id),
+            }),
+        )
+        .unwrap();
+
+    for user in [USER_1, USER_2] {
+        let private_message = module_tester
+            .receive_ws_message(&user.participant_id)
+            .await
+            .unwrap();
+
+        assert!(matches!(
+            private_message,
+            WsMessageOutgoing::Module(outgoing::Message::MessageSent(outgoing::MessageSent {
+                id: _,
+                source,
+                content,
+                scope
+            })) if source == USER_1.participant_id
+               && scope == Scope::Private(USER_2.participant_id)
+               && content == *"Low"
+        ));
+    }
+
+    module_tester.leave(&USER_1.participant_id).await.unwrap();
+
+    let user1_leave_message = module_tester
+        .receive_ws_message(&USER_2.participant_id)
+        .await
+        .unwrap();
+
+    assert!(matches!(
+        user1_leave_message,
+        WsMessageOutgoing::Control(control::outgoing::Message::Left(
+            control::outgoing::AssociatedParticipant {id}
+        )) if id == USER_1.participant_id
+    ));
+
+    module_tester
+        .join_user(USER_1.participant_id, user1, Role::User, USER_1.name, ())
+        .await
+        .unwrap();
+
+    let join_again_success = module_tester
+        .receive_ws_message(&USER_1.participant_id)
+        .await
+        .unwrap();
+
+    match join_again_success {
+        controller::prelude::WsMessageOutgoing::Control(
+            control::outgoing::Message::JoinSuccess(control::outgoing::JoinSuccess {
+                module_data,
+                ..
+            }),
+        ) => {
+            // check that last seen timestamps are not set
+            let chat_data = module_data.get("chat").unwrap();
+            let chat_state: ChatState = serde_json::from_value(chat_data.clone()).unwrap();
+            let ChatState {
+                enabled: _,
+                room_history: _,
+                groups_history: _,
+                mut private_history,
+                last_seen_timestamp_global: _,
+                last_seen_timestamps_private: _,
+                last_seen_timestamps_group: _,
+            } = chat_state;
+            assert!(private_history.len() == 1);
+            let mut correspondence = private_history.pop().unwrap();
+            assert_eq!(correspondence.correspondent, USER_2.participant_id);
+            assert_eq!(correspondence.history.len(), 1);
+            let message = correspondence.history.pop().unwrap();
+            assert_eq!(message.content, "Low".to_string());
         }
         _ => panic!(),
     }
