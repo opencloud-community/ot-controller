@@ -47,10 +47,19 @@ const PUBLISHER_INFO: &str = "k3k-signaling:mcu:publishers";
 /// busy mcu for a new publisher.
 const MCU_LOAD: &str = "k3k-signaling:mcu:load";
 
+fn mcu_load_key(mcu_id: &McuId, loop_index: Option<usize>) -> String {
+    if let Some(loop_index) = loop_index {
+        format!("{}@{}", mcu_id.0, loop_index)
+    } else {
+        format!("{}", mcu_id.0)
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 struct PublisherInfo<'i> {
     room_id: JanusRoomId,
     mcu_id: Cow<'i, str>,
+    loop_index: Option<usize>,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -247,14 +256,27 @@ impl McuPool {
         &self,
         redis: &mut RedisConnection,
         clients: &'guard RwLockReadGuard<'guard, HashSet<McuClient>>,
-    ) -> Result<&'guard McuClient> {
+    ) -> Result<(&'guard McuClient, Option<usize>)> {
         // Get all mcu's in order lowest to highest
         let ids: Vec<String> = redis.zrangebyscore(MCU_LOAD, "-inf", "+inf").await?;
 
         // choose the first available mcu
         for id in ids {
-            if let Some(client) = clients.get(id.as_str()) {
-                return Ok(client);
+            let (id, loop_index) = if let Some((id, loop_index)) = id.rsplit_once('@') {
+                (
+                    id,
+                    Some(
+                        loop_index
+                            .parse::<usize>()
+                            .context("Failed to parse loop_index")?,
+                    ),
+                )
+            } else {
+                (id.as_str(), None)
+            };
+
+            if let Some(client) = clients.get(id) {
+                return Ok((client, loop_index));
             }
         }
 
@@ -269,13 +291,13 @@ impl McuPool {
         let mut redis = self.redis.clone();
 
         let clients = self.clients.read().await;
-        let client = self
+        let (client, loop_index) = self
             .choose_client(&mut redis, &clients)
             .await
             .context("Failed to choose McuClient")?;
 
         let (handle, room_id) = self
-            .create_publisher_handle(client, media_session_key)
+            .create_publisher_handle(client, media_session_key, loop_index)
             .await
             .context("Failed to get or create publisher handle")?;
 
@@ -284,6 +306,7 @@ impl McuPool {
         let info = serde_json::to_string(&PublisherInfo {
             room_id,
             mcu_id: Cow::Borrowed(client.id.0.as_ref()),
+            loop_index,
         })
         .context("Failed to serialize publisher info")?;
 
@@ -291,6 +314,11 @@ impl McuPool {
             .hset(PUBLISHER_INFO, media_session_key.to_string(), info)
             .await
             .context("Failed to set publisher info")?;
+
+        redis
+            .zincr(MCU_LOAD, mcu_load_key(&client.id, loop_index), 1)
+            .await
+            .context("Failed to increment handle count")?;
 
         tokio::spawn(JanusPublisher::run(
             media_session_key,
@@ -303,6 +331,8 @@ impl McuPool {
         let publisher = JanusPublisher {
             handle,
             room_id,
+            mcu_id: client.id.clone(),
+            loop_index,
             media_session_key,
             redis,
             destroy,
@@ -315,10 +345,11 @@ impl McuPool {
         &self,
         client: &McuClient,
         media_session_key: MediaSessionKey,
+        loop_index: Option<usize>,
     ) -> Result<(janus_client::Handle, JanusRoomId)> {
         let handle = client
             .session
-            .attach_to_plugin(janus_client::JanusPlugin::VideoRoom)
+            .attach_to_plugin(janus_client::JanusPlugin::VideoRoom, loop_index)
             .await
             .context("Failed to attach session to videoroom plugin")?;
 
@@ -410,14 +441,14 @@ impl McuPool {
 
         let handle = client
             .session
-            .attach_to_plugin(janus_client::JanusPlugin::VideoRoom)
+            .attach_to_plugin(janus_client::JanusPlugin::VideoRoom, info.loop_index)
             .await
             .context("Failed to attach to videoroom plugin")?;
 
         redis
-            .zincr(MCU_LOAD, info.mcu_id.as_ref(), 1)
+            .zincr(MCU_LOAD, mcu_load_key(&client.id, info.loop_index), 1)
             .await
-            .context("Failed to increment subscriber count")?;
+            .context("Failed to increment handle count")?;
 
         let (destroy, destroy_sig) = oneshot::channel();
 
@@ -433,6 +464,7 @@ impl McuPool {
             handle: handle.clone(),
             room_id: info.room_id,
             mcu_id: client.id.clone(),
+            loop_index: info.loop_index,
             media_session_key,
             redis,
             destroy,
@@ -709,10 +741,19 @@ impl McuClient {
             format!("k3k-sig-janus-{}", id.0),
         );
 
-        redis
-            .zincr(MCU_LOAD, id.0.as_ref(), 0)
-            .await
-            .context("Failed to initialize subscriber count")?;
+        if let Some(event_loops) = config.event_loops {
+            for loop_index in 0..event_loops {
+                redis
+                    .zincr(MCU_LOAD, mcu_load_key(&id, Some(loop_index)), 0)
+                    .await
+                    .context("Failed to initialize handle count")?;
+            }
+        } else {
+            redis
+                .zincr(MCU_LOAD, mcu_load_key(&id, None), 0)
+                .await
+                .context("Failed to initialize handle count")?;
+        }
 
         let mut client = janus_client::Client::new(
             rabbit_mq_config,
@@ -793,6 +834,8 @@ impl McuClient {
 pub struct JanusPublisher {
     handle: janus_client::Handle,
     room_id: JanusRoomId,
+    mcu_id: McuId,
+    loop_index: Option<usize>,
     media_session_key: MediaSessionKey,
     redis: RedisConnection,
     destroy: oneshot::Sender<()>,
@@ -861,6 +904,11 @@ impl JanusPublisher {
         {
             log::error!("Failed to remove publisher info, {}", e);
         }
+
+        self.redis
+            .zincr(MCU_LOAD, mcu_load_key(&self.mcu_id, self.loop_index), -1)
+            .await
+            .context("Failed to decrease handle count")?;
 
         if let Err(e) = self
             .handle
@@ -963,6 +1011,7 @@ pub struct JanusSubscriber {
     handle: janus_client::Handle,
     room_id: JanusRoomId,
     mcu_id: McuId,
+    loop_index: Option<usize>,
     media_session_key: MediaSessionKey,
     redis: RedisConnection,
     destroy: oneshot::Sender<()>,
@@ -1017,9 +1066,9 @@ impl JanusSubscriber {
         let _ = self.destroy.send(());
 
         self.redis
-            .zincr(MCU_LOAD, self.mcu_id.0.as_ref(), -1)
+            .zincr(MCU_LOAD, mcu_load_key(&self.mcu_id, self.loop_index), -1)
             .await
-            .context("Failed to decrease subscriber count")?;
+            .context("Failed to decrease handle count")?;
 
         detach_result.map_err(From::from)
     }

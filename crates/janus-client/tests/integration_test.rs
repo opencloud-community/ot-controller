@@ -49,7 +49,7 @@ async fn echo_external_channel() {
     let client = Client::new(config, id, sink).await.unwrap();
     let mut session = client.create_session().await.unwrap();
     let echo_handle = session
-        .attach_to_plugin(JanusPlugin::Echotest)
+        .attach_to_plugin(JanusPlugin::Echotest, None)
         .await
         .unwrap();
 
@@ -80,7 +80,7 @@ async fn create_and_list_rooms() {
     let client = Client::new(config, id, sink).await.unwrap();
     let mut session = client.create_session().await.unwrap();
     let handle = session
-        .attach_to_plugin(JanusPlugin::VideoRoom)
+        .attach_to_plugin(JanusPlugin::VideoRoom, None)
         .await
         .unwrap();
 
@@ -166,7 +166,7 @@ async fn send_offer() {
     let client = Client::new(config, id, sink).await.unwrap();
     let mut session = client.create_session().await.unwrap();
     let publisher_handle = session
-        .attach_to_plugin(JanusPlugin::VideoRoom)
+        .attach_to_plugin(JanusPlugin::VideoRoom, None)
         .await
         .unwrap();
 
@@ -232,7 +232,7 @@ async fn send_offer_websocket() {
     let client = Client::new(config, id, sink).await.unwrap();
     let mut session = client.create_session().await.unwrap();
     let publisher_handle = session
-        .attach_to_plugin(JanusPlugin::VideoRoom)
+        .attach_to_plugin(JanusPlugin::VideoRoom, None)
         .await
         .unwrap();
 
