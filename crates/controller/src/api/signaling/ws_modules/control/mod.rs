@@ -10,9 +10,9 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use types::core::{ParticipantId, ParticipationKind, Timestamp};
 
+pub mod exchange;
 pub mod incoming;
 pub mod outgoing;
-pub mod rabbitmq;
 pub mod storage;
 
 pub const NAMESPACE: &str = "control";

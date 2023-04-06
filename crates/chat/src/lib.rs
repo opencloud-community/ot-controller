@@ -7,9 +7,9 @@
 //! ## Functionality
 //!
 //! Issues timestamp and messageIds to incoming chat messages and forwards them to other participants in the room or group.
-//! For this the rabbitmq room exchange or target group exchange is used.
+
 use anyhow::{Context, Result};
-use control::rabbitmq;
+use control::exchange;
 use controller::prelude::*;
 use database::Db;
 use db_storage::groups::Group;
@@ -30,8 +30,8 @@ mod storage;
 
 pub use storage::is_chat_enabled;
 
-fn group_routing_key(group_id: GroupId) -> String {
-    format!("group.{group_id}")
+fn current_room_by_group_id(room_id: SignalingRoomId, group_id: GroupId) -> String {
+    format!("room={room_id}:group={group_id}")
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
@@ -178,7 +178,7 @@ impl SignalingModule for Chat {
 
     type Incoming = incoming::Message;
     type Outgoing = outgoing::Message;
-    type RabbitMqMessage = outgoing::Message;
+    type ExchangeMessage = outgoing::Message;
 
     type ExtEvent = ();
 
@@ -208,11 +208,7 @@ impl SignalingModule for Chat {
             for group in &groups {
                 log::debug!("Group: {}", group.id);
 
-                ctx.add_rabbitmq_binding(
-                    group_routing_key(group.id),
-                    rabbitmq::current_room_exchange_name(ctx.room_id()),
-                    Default::default(),
-                );
+                ctx.add_exchange_binding(current_room_by_group_id(room, group.id));
             }
             groups
         } else {
@@ -373,9 +369,8 @@ impl SignalingModule for Chat {
 
                 storage::set_chat_enabled(ctx.redis_conn(), self.room.room_id(), true).await?;
 
-                ctx.rabbitmq_publish(
-                    rabbitmq::current_room_exchange_name(self.room),
-                    rabbitmq::room_all_routing_key().into(),
+                ctx.exchange_publish(
+                    exchange::current_room_all_participants(self.room),
                     outgoing::Message::ChatEnabled(ChatEnabled { issued_by: self.id }),
                 );
             }
@@ -389,9 +384,8 @@ impl SignalingModule for Chat {
 
                 storage::set_chat_enabled(ctx.redis_conn(), self.room.room_id(), false).await?;
 
-                ctx.rabbitmq_publish(
-                    rabbitmq::current_room_exchange_name(self.room),
-                    rabbitmq::room_all_routing_key().into(),
+                ctx.exchange_publish(
+                    exchange::current_room_all_participants(self.room),
                     outgoing::Message::ChatDisabled(ChatDisabled { issued_by: self.id }),
                 );
             }
@@ -440,9 +434,8 @@ impl SignalingModule for Chat {
 
                         let out_message = outgoing::Message::MessageSent(out_message_contents);
 
-                        ctx.rabbitmq_publish(
-                            rabbitmq::current_room_exchange_name(self.room),
-                            rabbitmq::room_participant_routing_key(target),
+                        ctx.exchange_publish(
+                            exchange::current_room_by_participant_id(self.room, target),
                             out_message.clone(),
                         );
 
@@ -475,9 +468,8 @@ impl SignalingModule for Chat {
 
                             let out_message = outgoing::Message::MessageSent(out_message_contents);
 
-                            ctx.rabbitmq_publish(
-                                rabbitmq::current_room_exchange_name(self.room),
-                                group_routing_key(group.id),
+                            ctx.exchange_publish(
+                                current_room_by_group_id(self.room, group.id),
                                 out_message,
                             )
                         }
@@ -507,9 +499,8 @@ impl SignalingModule for Chat {
 
                         let out_message = outgoing::Message::MessageSent(out_message_contents);
 
-                        ctx.rabbitmq_publish(
-                            rabbitmq::current_room_exchange_name(self.room),
-                            rabbitmq::room_all_routing_key().into(),
+                        ctx.exchange_publish(
+                            exchange::current_room_all_participants(self.room),
                             out_message,
                         );
                     }
@@ -528,9 +519,8 @@ impl SignalingModule for Chat {
                     log::error!("Failed to clear room chat history, {}", e);
                 }
 
-                ctx.rabbitmq_publish(
-                    rabbitmq::current_room_exchange_name(self.room),
-                    rabbitmq::room_all_routing_key().into(),
+                ctx.exchange_publish(
+                    exchange::current_room_all_participants(self.room),
                     outgoing::Message::HistoryCleared(HistoryCleared { issued_by: self.id }),
                 );
             }
@@ -550,7 +540,7 @@ impl SignalingModule for Chat {
                     }
                 };
             }
-            Event::RabbitMq(msg) => {
+            Event::Exchange(msg) => {
                 ctx.ws_send(msg);
             }
             Event::Ext(_) => {}

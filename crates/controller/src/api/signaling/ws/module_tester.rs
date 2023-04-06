@@ -11,7 +11,7 @@
 //! The idea is to simulate a frontend websocket connection. See the LegalVote integration tests for examples.
 use super::modules::AnyStream;
 use super::{
-    DestroyContext, Event, NamespacedCommand, NamespacedEvent, RabbitMqPublish, SignalingModule,
+    DestroyContext, Event, ExchangePublish, NamespacedCommand, NamespacedEvent, SignalingModule,
 };
 use crate::api::signaling::prelude::control::incoming::Join;
 use crate::api::signaling::prelude::control::{self, outgoing, storage, ControlData, NAMESPACE};
@@ -67,8 +67,8 @@ where
 
     /// A map of RunnerInterfaces with their JoinHandle, each for a participant
     runner_interfaces: HashMap<ParticipantId, (RunnerInterface<M>, JoinHandle<()>)>,
-    /// A rabbitmq broadcast channel that mocks a rabbitmq connection
-    rabbitmq_sender: broadcast::Sender<RabbitMqPublish>,
+    /// A broadcast channel that mocks a the message exchange
+    exchange_sender: broadcast::Sender<ExchangePublish>,
 }
 
 impl<M> ModuleTester<M>
@@ -77,7 +77,7 @@ where
 {
     /// Create a new ModuleTester instance
     pub fn new(db: Arc<Db>, authz: Arc<Authz>, redis_conn: RedisConnection, room: Room) -> Self {
-        let (rabbitmq_sender, _) = broadcast::channel(10);
+        let (exchange_sender, _) = broadcast::channel(10);
 
         Self {
             redis_conn,
@@ -87,7 +87,7 @@ where
             // todo: add breakout room support
             breakout_room: None,
             runner_interfaces: HashMap::new(),
-            rabbitmq_sender,
+            exchange_sender,
         }
     }
 
@@ -113,7 +113,7 @@ where
             self.redis_conn.clone(),
             params,
             client_interface,
-            self.rabbitmq_sender.clone(),
+            self.exchange_sender.clone(),
         )
         .await?;
 
@@ -326,14 +326,13 @@ where
 {
     redis_conn: RedisConnection,
     room_id: SignalingRoomId,
-    room: Room,
     participant_id: ParticipantId,
     participant: Participant<UserId>,
     role: Role,
     control_data: Option<ControlData>,
     module: M,
     interface: ClientInterface<M>,
-    rabbitmq_sender: broadcast::Sender<RabbitMqPublish>,
+    exchange_sender: broadcast::Sender<ExchangePublish>,
     events: SelectAll<AnyStream>,
     exit: bool,
 }
@@ -356,7 +355,7 @@ where
         mut redis_conn: RedisConnection,
         params: M::Params,
         interface: ClientInterface<M>,
-        rabbitmq_sender: broadcast::Sender<RabbitMqPublish>,
+        exchange_sender: broadcast::Sender<ExchangePublish>,
     ) -> Result<Self> {
         let mut events = SelectAll::new();
 
@@ -369,8 +368,7 @@ where
             db: &db,
             storage: &storage,
             authz: &authz,
-            rabbitmq_exchanges: &mut vec![],
-            rabbitmq_bindings: &mut vec![],
+            exchange_bindings: &mut vec![],
             events: &mut events,
             redis_conn: &mut redis_conn,
             m: PhantomData::<fn() -> M>,
@@ -390,14 +388,13 @@ where
         Ok(Self {
             redis_conn,
             room_id: SignalingRoomId(room.id, breakout_room),
-            room,
             participant_id,
             participant,
             role,
             control_data: Option::<ControlData>::None,
             module,
             interface,
-            rabbitmq_sender,
+            exchange_sender,
             events,
             exit: false,
         })
@@ -405,11 +402,11 @@ where
 
     /// The MockRunners event loop
     async fn run(mut self) {
-        let mut rabbitmq_receiver = self.rabbitmq_sender.subscribe();
+        let mut exchange_receiver = self.exchange_sender.subscribe();
 
         while !self.exit {
             let mut ws_messages = vec![];
-            let mut rabbitmq_publish = vec![];
+            let mut exchange_publish = vec![];
             let mut invalidate_data = false;
             let mut events = SelectAll::new();
             let mut exit = None;
@@ -418,7 +415,7 @@ where
                 role: self.role,
                 timestamp: Timestamp::now(),
                 ws_messages: &mut ws_messages,
-                rabbitmq_publish: &mut rabbitmq_publish,
+                exchange_publish: &mut exchange_publish,
                 redis_conn: &mut self.redis_conn.clone(),
                 invalidate_data: &mut invalidate_data,
                 events: &mut events,
@@ -442,21 +439,21 @@ where
                             self.exit = true;
                         },
                     }
-                    self.handle_module_requested_actions(ws_messages, rabbitmq_publish, invalidate_data, events, exit).await;
+                    self.handle_module_requested_actions(ws_messages, exchange_publish, invalidate_data, events, exit).await;
                 }
-                res = rabbitmq_receiver.recv() => {
-                    let message = res.expect("Error when receiving on rabbitmq broadcast channel");
+                res = exchange_receiver.recv() => {
+                    let message = res.expect("Error when receiving on exchange broadcast channel");
 
-                    self.handle_rabbitmq_message(ctx, message).await.expect("Error when handling rabbitmq message");
+                    self.handle_exchange_message(ctx, message).await.expect("Error when handling exchange message");
 
-                    self.handle_module_requested_actions(ws_messages, rabbitmq_publish, invalidate_data, events, exit).await;
+                    self.handle_module_requested_actions(ws_messages, exchange_publish, invalidate_data, events, exit).await;
                 }
                 Some((namespace, message)) = self.events.next() => {
                     assert_eq!(namespace, M::NAMESPACE, "Invalid namespace on external event");
 
                     self.module.on_event(ctx, Event::Ext(*message.downcast().expect("invalid ext type"))).await.expect("Error when handling external event");
 
-                    self.handle_module_requested_actions(ws_messages, rabbitmq_publish, invalidate_data, events, exit).await;
+                    self.handle_module_requested_actions(ws_messages, exchange_publish, invalidate_data, events, exit).await;
                 }
             }
         }
@@ -611,7 +608,7 @@ where
                     outgoing::Message::JoinSuccess(join_success),
                 ))?;
 
-                self.publish_rabbitmq_control(control::rabbitmq::Message::Joined(
+                self.publish_exchange_control(control::exchange::Message::Joined(
                     self.participant_id,
                 ))?;
 
@@ -649,13 +646,13 @@ where
         }
     }
 
-    async fn handle_rabbitmq_control_message(
+    async fn handle_exchange_control_message(
         &mut self,
         ctx: ModuleContext<'_, M>,
-        control_message: control::rabbitmq::Message,
+        control_message: control::exchange::Message,
     ) -> Result<()> {
         match control_message {
-            control::rabbitmq::Message::Joined(participant_id) => {
+            control::exchange::Message::Joined(participant_id) => {
                 if self.participant_id == participant_id {
                     return Ok(());
                 }
@@ -683,7 +680,7 @@ where
 
                 Ok(())
             }
-            control::rabbitmq::Message::Left(participant_id) => {
+            control::exchange::Message::Left(participant_id) => {
                 if self.participant_id == participant_id {
                     return Ok(());
                 }
@@ -701,7 +698,7 @@ where
 
                 Ok(())
             }
-            control::rabbitmq::Message::Update(participant_id) => {
+            control::exchange::Message::Update(participant_id) => {
                 if self.participant_id == participant_id {
                     return Ok(());
                 }
@@ -729,58 +726,58 @@ where
 
                 Ok(())
             }
-            control::rabbitmq::Message::Accepted(_participant_id) => {
+            control::exchange::Message::Accepted(_participant_id) => {
                 todo!()
             }
-            control::rabbitmq::Message::SetModeratorStatus(_) => unimplemented!(),
-            control::rabbitmq::Message::ResetRaisedHands { issued_by: _ } => unimplemented!(),
-            control::rabbitmq::Message::EnableRaiseHands { issued_by: _ } => unimplemented!(),
-            control::rabbitmq::Message::DisableRaiseHands { issued_by: _ } => unimplemented!(),
+            control::exchange::Message::SetModeratorStatus(_) => unimplemented!(),
+            control::exchange::Message::ResetRaisedHands { issued_by: _ } => unimplemented!(),
+            control::exchange::Message::EnableRaiseHands { issued_by: _ } => unimplemented!(),
+            control::exchange::Message::DisableRaiseHands { issued_by: _ } => unimplemented!(),
         }
     }
 
-    fn publish_rabbitmq_control(&mut self, message: control::rabbitmq::Message) -> Result<()> {
+    fn publish_exchange_control(&mut self, message: control::exchange::Message) -> Result<()> {
         let message = serde_json::to_string(&NamespacedCommand {
             namespace: NAMESPACE,
             payload: message,
         })?;
 
-        let rabbitmq_publish = RabbitMqPublish {
-            exchange: Some(control::rabbitmq::current_room_exchange_name(
-                SignalingRoomId::new_test(self.room.id),
-            )),
-            routing_key: control::rabbitmq::room_all_routing_key().into(),
+        let exchange_publish = ExchangePublish {
+            routing_key: control::exchange::current_room_all_participants(self.room_id),
             message,
         };
 
-        self.rabbitmq_sender
-            .send(rabbitmq_publish)
-            .map_err(|e| anyhow::Error::msg(format!("Unable to send rabbbitmq_publish, {e}")))?;
+        self.exchange_sender
+            .send(exchange_publish)
+            .map_err(|e| anyhow::Error::msg(format!("Unable to send exchange_publish, {e}")))?;
         Ok(())
     }
 
-    /// Check if the routing key matches this participant and serialize the rabbitmq message
-    async fn handle_rabbitmq_message(
+    /// Check if the routing key matches this participant and serialize the exchange message
+    async fn handle_exchange_message(
         &mut self,
         ctx: ModuleContext<'_, M>,
-        rabbitmq_publish: RabbitMqPublish,
+        exchange_publish: ExchangePublish,
     ) -> Result<()> {
         let participant_routing_key =
-            control::rabbitmq::room_participant_routing_key(self.participant_id);
+            control::exchange::current_room_by_participant_id(self.room_id, self.participant_id);
         match self.participant {
             Participant::User(user) => {
-                let user_routing_key = control::rabbitmq::room_user_routing_key(user);
+                let user_routing_key =
+                    control::exchange::current_room_by_user_id(self.room_id, user);
 
-                if !(rabbitmq_publish.routing_key == "participant.all"
-                    || rabbitmq_publish.routing_key == participant_routing_key
-                    || rabbitmq_publish.routing_key == user_routing_key)
+                if !(exchange_publish.routing_key
+                    == control::exchange::current_room_all_participants(self.room_id)
+                    || exchange_publish.routing_key == participant_routing_key
+                    || exchange_publish.routing_key == user_routing_key)
                 {
                     return Ok(());
                 }
             }
             Participant::Guest | Participant::Sip | Participant::Recorder => {
-                if !(rabbitmq_publish.routing_key == "participant.all"
-                    || rabbitmq_publish.routing_key == participant_routing_key)
+                if !(exchange_publish.routing_key
+                    == control::exchange::current_room_all_participants(self.room_id)
+                    || exchange_publish.routing_key == participant_routing_key)
                 {
                     return Ok(());
                 }
@@ -788,13 +785,13 @@ where
         }
 
         let namespaced =
-            serde_json::from_str::<NamespacedCommand<Value>>(&rabbitmq_publish.message)
-                .context("Failed to read incoming rabbitmq message")?;
+            serde_json::from_str::<NamespacedCommand<Value>>(&exchange_publish.message)
+                .context("Failed to read incoming exchange message")?;
 
         if namespaced.namespace == NAMESPACE {
             let control_message = serde_json::from_value(namespaced.payload)?;
 
-            self.handle_rabbitmq_control_message(ctx, control_message)
+            self.handle_exchange_control_message(ctx, control_message)
                 .await
                 .context("Error when handling ws control message")?;
 
@@ -803,14 +800,14 @@ where
             let module_message = serde_json::from_value(namespaced.payload)?;
 
             self.module
-                .on_event(ctx, Event::RabbitMq(module_message))
+                .on_event(ctx, Event::Exchange(module_message))
                 .await
-                .context("Module error on rabbitmq event")?;
+                .context("Module error on exchange event")?;
 
             Ok(())
         } else {
             bail!(
-                "Got rabbitmq message with unknown namespace '{}'",
+                "Got exchange message with unknown namespace '{}'",
                 namespaced.namespace
             )
         }
@@ -819,7 +816,7 @@ where
     async fn handle_module_requested_actions(
         &mut self,
         ws_messages: Vec<NamespacedEvent<'_, M::Outgoing>>,
-        rabbitmq_publish: Vec<RabbitMqPublish>,
+        exchange_publish: Vec<ExchangePublish>,
         invalidate_data: bool,
         events: SelectAll<AnyStream>,
         exit: Option<CloseCode>,
@@ -831,15 +828,15 @@ where
                 .expect("Error sending outgoing module message");
         }
 
-        for rabbitmq_message in rabbitmq_publish {
-            self.rabbitmq_sender
-                .send(rabbitmq_message)
+        for exchange_message in exchange_publish {
+            self.exchange_sender
+                .send(exchange_message)
                 .expect("Error sending outgoing module message");
         }
 
         if invalidate_data {
-            self.publish_rabbitmq_control(control::rabbitmq::Message::Update(self.participant_id))
-                .expect("Error sending rabbitmq update message");
+            self.publish_exchange_control(control::exchange::Message::Update(self.participant_id))
+                .expect("Error sending exchange participant-update message");
         }
 
         for event in events {
@@ -855,7 +852,7 @@ where
 
     async fn leave_room(&mut self) -> Result<()> {
         let mut ws_messages = vec![];
-        let mut rabbitmq_publish = vec![];
+        let mut exchange_publish = vec![];
         let mut invalidate_data = false;
         let mut events = SelectAll::new();
         let mut exit = None;
@@ -864,7 +861,7 @@ where
             role: self.role,
             timestamp: Timestamp::now(),
             ws_messages: &mut ws_messages,
-            rabbitmq_publish: &mut rabbitmq_publish,
+            exchange_publish: &mut exchange_publish,
             redis_conn: &mut self.redis_conn,
             invalidate_data: &mut invalidate_data,
             events: &mut events,
@@ -880,7 +877,7 @@ where
 
         self.handle_module_requested_actions(
             ws_messages,
-            rabbitmq_publish,
+            exchange_publish,
             invalidate_data,
             events,
             exit,
@@ -924,8 +921,8 @@ where
         let destroy_room =
             storage::participants_all_left(&mut self.redis_conn, self.room_id).await?;
 
-        self.publish_rabbitmq_control(control::rabbitmq::Message::Left(self.participant_id))
-            .context("Failed to send rabbitmq left message on destroy")?;
+        self.publish_exchange_control(control::exchange::Message::Left(self.participant_id))
+            .context("Failed to send exchange participant-left message on destroy")?;
 
         let ctx = DestroyContext {
             redis_conn: &mut self.redis_conn.clone(),

@@ -9,9 +9,9 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::core::{ParticipantId, RoomId, UserId};
 
+pub mod exchange;
 pub mod incoming;
 pub mod outgoing;
-pub mod rabbitmq;
 pub mod storage;
 
 pub const NAMESPACE: &str = "moderation";
@@ -83,10 +83,9 @@ async fn set_waiting_room_enabled(
 ) -> Result<()> {
     storage::set_waiting_room_enabled(ctx.redis_conn(), room_id, enabled).await?;
 
-    ctx.rabbitmq_publish(
-        breakout::rabbitmq::global_exchange_name(room_id),
-        control::rabbitmq::room_all_routing_key().into(),
-        rabbitmq::Message::WaitingRoomEnableUpdated,
+    ctx.exchange_publish(
+        control::exchange::global_room_all_participants(room_id),
+        exchange::Message::WaitingRoomEnableUpdated,
     );
 
     Ok(())
@@ -99,7 +98,7 @@ impl SignalingModule for ModerationModule {
     type Params = ();
     type Incoming = incoming::Message;
     type Outgoing = outgoing::Message;
-    type RabbitMqMessage = rabbitmq::Message;
+    type ExchangeMessage = exchange::Message;
     type ExtEvent = ();
     type FrontendData = ModerationModuleFrontendData;
     type PeerFrontendData = ();
@@ -187,10 +186,9 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
-                ctx.rabbitmq_publish(
-                    control::rabbitmq::current_room_exchange_name(self.room),
-                    control::rabbitmq::room_participant_routing_key(target),
-                    rabbitmq::Message::Banned(target),
+                ctx.exchange_publish(
+                    control::exchange::current_room_by_participant_id(self.room, target),
+                    exchange::Message::Banned(target),
                 );
             }
             Event::WsMessage(incoming::Message::Kick(incoming::Target { target })) => {
@@ -198,10 +196,9 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
-                ctx.rabbitmq_publish(
-                    control::rabbitmq::current_room_exchange_name(self.room),
-                    control::rabbitmq::room_participant_routing_key(target),
-                    rabbitmq::Message::Kicked(target),
+                ctx.exchange_publish(
+                    control::exchange::current_room_by_participant_id(self.room, target),
+                    exchange::Message::Kicked(target),
                 );
             }
             Event::WsMessage(incoming::Message::Debrief(kick_scope)) => {
@@ -211,10 +208,9 @@ impl SignalingModule for ModerationModule {
 
                 set_waiting_room_enabled(&mut ctx, self.room.room_id(), true).await?;
 
-                ctx.rabbitmq_publish(
-                    control::rabbitmq::current_room_exchange_name(self.room),
-                    control::rabbitmq::room_all_routing_key().to_string(),
-                    rabbitmq::Message::Debriefed {
+                ctx.exchange_publish(
+                    control::exchange::current_room_all_participants(self.room),
+                    exchange::Message::Debriefed {
                         kick_scope,
                         issued_by: self.id,
                     },
@@ -226,6 +222,11 @@ impl SignalingModule for ModerationModule {
                 }
 
                 set_waiting_room_enabled(&mut ctx, self.room.room_id(), true).await?;
+
+                ctx.exchange_publish(
+                    control::exchange::global_room_all_participants(self.room.room_id()),
+                    exchange::Message::WaitingRoomEnableUpdated,
+                );
             }
             Event::WsMessage(incoming::Message::DisableWaitingRoom) => {
                 if ctx.role() != Role::Moderator {
@@ -233,6 +234,11 @@ impl SignalingModule for ModerationModule {
                 }
 
                 set_waiting_room_enabled(&mut ctx, self.room.room_id(), false).await?;
+
+                ctx.exchange_publish(
+                    control::exchange::global_room_all_participants(self.room.room_id()),
+                    exchange::Message::WaitingRoomEnableUpdated,
+                );
             }
             Event::WsMessage(incoming::Message::Accept(incoming::Target { target })) => {
                 if ctx.role() != Role::Moderator {
@@ -250,10 +256,9 @@ impl SignalingModule for ModerationModule {
                     .await?;
                 storage::waiting_room_remove(ctx.redis_conn(), self.room.room_id(), target).await?;
 
-                ctx.rabbitmq_publish_control(
-                    control::rabbitmq::current_room_exchange_name(self.room),
-                    control::rabbitmq::room_participant_routing_key(target),
-                    control::rabbitmq::Message::Accepted(target),
+                ctx.exchange_publish_control(
+                    control::exchange::global_room_by_participant_id(self.room.room_id(), target),
+                    control::exchange::Message::Accepted(target),
                 );
             }
             Event::WsMessage(incoming::Message::ResetRaisedHands) => {
@@ -261,10 +266,9 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
-                ctx.rabbitmq_publish_control(
-                    control::rabbitmq::current_room_exchange_name(self.room),
-                    control::rabbitmq::room_all_routing_key().to_string(),
-                    control::rabbitmq::Message::ResetRaisedHands { issued_by: self.id },
+                ctx.exchange_publish_control(
+                    control::exchange::current_room_all_participants(self.room),
+                    control::exchange::Message::ResetRaisedHands { issued_by: self.id },
                 );
             }
 
@@ -276,10 +280,9 @@ impl SignalingModule for ModerationModule {
                 storage::set_raise_hands_enabled(ctx.redis_conn(), self.room.room_id(), true)
                     .await?;
 
-                ctx.rabbitmq_publish_control(
-                    control::rabbitmq::current_room_exchange_name(self.room),
-                    control::rabbitmq::room_all_routing_key().to_string(),
-                    control::rabbitmq::Message::EnableRaiseHands { issued_by: self.id },
+                ctx.exchange_publish_control(
+                    control::exchange::current_room_all_participants(self.room),
+                    control::exchange::Message::EnableRaiseHands { issued_by: self.id },
                 );
             }
 
@@ -291,26 +294,25 @@ impl SignalingModule for ModerationModule {
                 storage::set_raise_hands_enabled(ctx.redis_conn(), self.room.room_id(), false)
                     .await?;
 
-                ctx.rabbitmq_publish_control(
-                    control::rabbitmq::current_room_exchange_name(self.room),
-                    control::rabbitmq::room_all_routing_key().to_string(),
-                    control::rabbitmq::Message::DisableRaiseHands { issued_by: self.id },
+                ctx.exchange_publish_control(
+                    control::exchange::current_room_all_participants(self.room),
+                    control::exchange::Message::DisableRaiseHands { issued_by: self.id },
                 );
             }
 
-            Event::RabbitMq(rabbitmq::Message::Banned(participant)) => {
+            Event::Exchange(exchange::Message::Banned(participant)) => {
                 if self.id == participant {
                     ctx.ws_send(outgoing::Message::Banned);
                     ctx.exit(Some(CloseCode::Normal));
                 }
             }
-            Event::RabbitMq(rabbitmq::Message::Kicked(participant)) => {
+            Event::Exchange(exchange::Message::Kicked(participant)) => {
                 if self.id == participant {
                     ctx.ws_send(outgoing::Message::Kicked);
                     ctx.exit(Some(CloseCode::Normal));
                 }
             }
-            Event::RabbitMq(rabbitmq::Message::Debriefed {
+            Event::Exchange(exchange::Message::Debriefed {
                 kick_scope,
                 issued_by,
             }) => {
@@ -321,7 +323,7 @@ impl SignalingModule for ModerationModule {
                     ctx.ws_send(outgoing::Message::DebriefingStarted { issued_by });
                 }
             }
-            Event::RabbitMq(rabbitmq::Message::JoinedWaitingRoom(id)) => {
+            Event::Exchange(exchange::Message::JoinedWaitingRoom(id)) => {
                 if self.id == id {
                     return Ok(());
                 }
@@ -336,7 +338,7 @@ impl SignalingModule for ModerationModule {
                     control::outgoing::Participant { id, module_data },
                 ));
             }
-            Event::RabbitMq(rabbitmq::Message::LeftWaitingRoom(id)) => {
+            Event::Exchange(exchange::Message::LeftWaitingRoom(id)) => {
                 if self.id == id {
                     return Ok(());
                 }
@@ -345,7 +347,7 @@ impl SignalingModule for ModerationModule {
                     control::outgoing::AssociatedParticipant { id },
                 ));
             }
-            Event::RabbitMq(rabbitmq::Message::WaitingRoomEnableUpdated) => {
+            Event::Exchange(exchange::Message::WaitingRoomEnableUpdated) => {
                 let enabled =
                     storage::is_waiting_room_enabled(ctx.redis_conn(), self.room.room_id()).await?;
 

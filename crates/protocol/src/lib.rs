@@ -12,18 +12,18 @@ use controller::storage::assets::save_asset;
 use controller::storage::ObjectStorage;
 use database::Db;
 use etherpad_client::EtherpadClient;
+use exchange::GenerateUrl;
 use futures::TryStreamExt;
 use incoming::ParticipantSelection;
 use outgoing::{AccessUrl, PdfAsset};
-use rabbitmq::GenerateUrl;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use types::core::ParticipantId;
 
+pub mod exchange;
 pub mod incoming;
 pub mod outgoing;
-pub mod rabbitmq;
 pub mod storage;
 
 const PAD_NAME: &str = "protocol";
@@ -58,7 +58,7 @@ impl SignalingModule for Protocol {
     type Params = controller_shared::settings::Etherpad;
     type Incoming = incoming::Message;
     type Outgoing = outgoing::Message;
-    type RabbitMqMessage = rabbitmq::Event;
+    type ExchangeMessage = exchange::Event;
     type ExtEvent = ();
     type FrontendData = ();
     type PeerFrontendData = Access;
@@ -124,8 +124,8 @@ impl SignalingModule for Protocol {
             Event::WsMessage(msg) => {
                 self.on_ws_message(&mut ctx, msg).await?;
             }
-            Event::RabbitMq(event) => {
-                self.on_rabbitmq_event(&mut ctx, event).await?;
+            Event::Exchange(event) => {
+                self.on_exchange_event(&mut ctx, event).await?;
             }
             Event::ParticipantUpdated(participant_id, peer_frontend_data)
             | Event::ParticipantJoined(participant_id, peer_frontend_data) => {
@@ -226,18 +226,19 @@ impl Protocol {
 
                 if first_init {
                     // all participants get access on first initialization
-                    ctx.rabbitmq_publish(
-                        control::rabbitmq::current_room_exchange_name(self.room_id),
-                        control::rabbitmq::room_all_routing_key().into(),
-                        rabbitmq::Event::GenerateUrl(GenerateUrl { writers: targets }),
+                    ctx.exchange_publish(
+                        control::exchange::current_room_all_participants(self.room_id),
+                        exchange::Event::GenerateUrl(GenerateUrl { writers: targets }),
                     );
                 } else {
                     // calls after the first init only reach the targeted participants
                     for participant_id in targets {
-                        ctx.rabbitmq_publish(
-                            control::rabbitmq::current_room_exchange_name(self.room_id),
-                            control::rabbitmq::room_participant_routing_key(participant_id),
-                            rabbitmq::Event::GenerateUrl(GenerateUrl {
+                        ctx.exchange_publish(
+                            control::exchange::current_room_by_participant_id(
+                                self.room_id,
+                                participant_id,
+                            ),
+                            exchange::Event::GenerateUrl(GenerateUrl {
                                 writers: vec![participant_id],
                             }),
                         );
@@ -297,10 +298,12 @@ impl Protocol {
                     }
 
                     // notify participant to recreate readonly sessions
-                    ctx.rabbitmq_publish(
-                        control::rabbitmq::current_room_exchange_name(self.room_id),
-                        control::rabbitmq::room_participant_routing_key(participant_id),
-                        rabbitmq::Event::GenerateUrl(GenerateUrl { writers: vec![] }),
+                    ctx.exchange_publish(
+                        control::exchange::current_room_by_participant_id(
+                            self.room_id,
+                            participant_id,
+                        ),
+                        exchange::Event::GenerateUrl(GenerateUrl { writers: vec![] }),
                     );
                 }
             }
@@ -348,10 +351,9 @@ impl Protocol {
                     )
                     .await?;
 
-                    ctx.rabbitmq_publish(
-                        control::rabbitmq::current_room_exchange_name(self.room_id),
-                        control::rabbitmq::room_all_routing_key().into(),
-                        rabbitmq::Event::PdfAsset(PdfAsset { filename, asset_id }),
+                    ctx.exchange_publish(
+                        control::exchange::current_room_all_participants(self.room_id),
+                        exchange::Event::PdfAsset(PdfAsset { filename, asset_id }),
                     );
                 } else {
                     ctx.ws_send(outgoing::Message::Error(outgoing::Error::NotInitialized));
@@ -363,13 +365,13 @@ impl Protocol {
         Ok(())
     }
 
-    async fn on_rabbitmq_event(
+    async fn on_exchange_event(
         &mut self,
         ctx: &mut ModuleContext<'_, Self>,
-        event: rabbitmq::Event,
+        event: exchange::Event,
     ) -> Result<()> {
         match event {
-            rabbitmq::Event::GenerateUrl(GenerateUrl { writers }) => {
+            exchange::Event::GenerateUrl(GenerateUrl { writers }) => {
                 if writers.contains(&self.participant_id) {
                     let write_url = self.generate_url(ctx, false).await?;
 
@@ -382,7 +384,7 @@ impl Protocol {
 
                 ctx.invalidate_data();
             }
-            rabbitmq::Event::PdfAsset(pdf_asset) => {
+            exchange::Event::PdfAsset(pdf_asset) => {
                 ctx.ws_send(outgoing::Message::PdfAsset(pdf_asset))
             }
         }

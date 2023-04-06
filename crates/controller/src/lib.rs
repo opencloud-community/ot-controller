@@ -37,6 +37,7 @@ use anyhow::{anyhow, Context, Result};
 use arc_swap::ArcSwap;
 use breakout::BreakoutRooms;
 use database::Db;
+use exchange_task::ExchangeHandle;
 use keycloak_admin::KeycloakAdminClient;
 use lapin_pool::RabbitMqPool;
 use moderation::ModerationModule;
@@ -61,6 +62,7 @@ pub mod api;
 
 mod acl;
 mod cli;
+mod exchange_task;
 mod metrics;
 mod oidc;
 mod redis_wrapper;
@@ -160,6 +162,9 @@ pub struct Controller {
     /// RabbitMQ connection pool, can be used to create connections and channels
     pub rabbitmq_pool: Arc<RabbitMqPool>,
 
+    /// Handle to the internal message exchange
+    pub exchange_handle: ExchangeHandle,
+
     /// Cloneable redis connection manager, can be used to write/read to the controller's redis.
     pub redis: RedisConnection,
 
@@ -229,6 +234,8 @@ impl Controller {
             settings.rabbit_mq.max_channels_per_connection,
         );
 
+        let exchange_handle = exchange_task::ExchangeTask::spawn(rabbitmq_pool.clone()).await?;
+
         // Connect to postgres
         let mut db = Db::connect(&settings.database).context("Failed to connect to database")?;
         db.set_metrics(metrics.database.clone());
@@ -267,7 +274,10 @@ impl Controller {
         signaling.add_module::<BreakoutRooms>(());
         signaling.add_module::<ModerationModule>(());
         if let Some(queue) = settings.rabbit_mq.recording_task_queue.clone() {
-            signaling.add_module::<recording::Recording>(recording::RecordingParams { queue });
+            signaling.add_module::<recording::Recording>((
+                rabbitmq_pool.clone(),
+                recording::RecordingParams { queue },
+            ));
         }
 
         Ok(Self {
@@ -279,6 +289,7 @@ impl Controller {
             oidc,
             kc_admin_client,
             rabbitmq_pool,
+            exchange_handle,
             redis: redis_conn,
             shutdown,
             reload,
@@ -295,6 +306,7 @@ impl Controller {
         let http_server = {
             let settings = self.shared_settings.clone();
             let rabbitmq_pool = Data::from(self.rabbitmq_pool.clone());
+            let exchange_handle = Data::new(self.exchange_handle);
             let signaling_modules = Arc::downgrade(&signaling_modules);
             let signaling_metrics = Data::from(self.metrics.signaling.clone());
             let db = Arc::downgrade(&self.db);
@@ -362,6 +374,7 @@ impl Controller {
                     .app_data(redis)
                     .app_data(Data::new(shutdown.clone()))
                     .app_data(rabbitmq_pool.clone())
+                    .app_data(exchange_handle.clone())
                     .app_data(signaling_modules)
                     .app_data(SignalingProtocols::data())
                     .app_data(signaling_metrics.clone())

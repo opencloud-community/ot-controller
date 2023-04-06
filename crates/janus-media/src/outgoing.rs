@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use crate::exchange;
 use crate::incoming::Target;
 use crate::mcu::{self, MediaSessionKey, MediaSessionType};
-use crate::rabbitmq;
 use janus_client::TrickleCandidate;
 use serde::Serialize;
 use types::core::ParticipantId;
@@ -48,7 +48,7 @@ pub enum Message {
     FocusUpdate(FocusUpdate),
 
     #[serde(rename = "request_mute")]
-    RequestMute(rabbitmq::RequestMute),
+    RequestMute(exchange::RequestMute),
 
     #[serde(rename = "presenter_granted")]
     PresenterGranted,
@@ -159,7 +159,7 @@ pub enum Error {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::rabbitmq::RequestMute;
+    use crate::exchange::RequestMute;
     use controller::prelude::*;
     use pretty_assertions::assert_eq;
     use serde_json::json;

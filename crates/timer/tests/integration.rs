@@ -90,7 +90,7 @@ async fn start_timer(
     // time frame to check if timestamps received by the timer module are within bounds
     //
     // The module tester does not do any networking when it comes to websocket and
-    // rabbitmq messages. The timestamp offset from expected messages comes only
+    // exchange messages. The timestamp offset from expected messages comes only
     // from cpu limitation.
     let time_frame = TimeFrame::now(50);
 
