@@ -8,7 +8,9 @@ use super::schema::casbin_rule::{self, dsl::*};
 use crate::eq_empty;
 use database::{DatabaseError, DbConnection, Result};
 use diesel::result::Error as DieselError;
-use diesel::{BoolExpressionMethods, Connection, ExpressionMethods, QueryDsl, RunQueryDsl};
+use diesel::{BoolExpressionMethods, ExpressionMethods, QueryDsl};
+use diesel_async::scoped_futures::ScopedFutureExt;
+use diesel_async::{AsyncConnection, RunQueryDsl};
 
 #[derive(Queryable, Identifiable, Debug)]
 #[diesel(table_name = casbin_rule)]
@@ -36,7 +38,7 @@ pub struct NewCasbinRule {
 }
 
 #[tracing::instrument(err, skip_all)]
-pub fn remove_policy(conn: &mut DbConnection, pt: &str, rule: Vec<String>) -> Result<bool> {
+pub async fn remove_policy(conn: &mut DbConnection, pt: &str, rule: Vec<String>) -> Result<bool> {
     let rule = normalize_casbin_rule(rule, 0);
 
     let filter = ptype
@@ -50,37 +52,49 @@ pub fn remove_policy(conn: &mut DbConnection, pt: &str, rule: Vec<String>) -> Re
 
     diesel::delete(casbin_rule.filter(filter))
         .execute(conn)
+        .await
         .map(|n| n == 1)
         .map_err(DatabaseError::from)
 }
 
 #[tracing::instrument(err, skip_all)]
-pub fn remove_policies(conn: &mut DbConnection, pt: &str, rules: Vec<Vec<String>>) -> Result<bool> {
+pub async fn remove_policies(
+    conn: &mut DbConnection,
+    pt: &str,
+    rules: Vec<Vec<String>>,
+) -> Result<bool> {
     conn.transaction(|conn| {
-        for rule in rules {
-            let rule = normalize_casbin_rule(rule, 0);
+        async move {
+            for rule in rules {
+                let rule = normalize_casbin_rule(rule, 0);
 
-            let filter = ptype
-                .eq(pt)
-                .and(v0.eq(&rule[0]))
-                .and(v1.eq(&rule[1]))
-                .and(v2.eq(&rule[2]))
-                .and(v3.eq(&rule[3]))
-                .and(v4.eq(&rule[4]))
-                .and(v5.eq(&rule[5]));
+                let filter = ptype
+                    .eq(pt)
+                    .and(v0.eq(&rule[0]))
+                    .and(v1.eq(&rule[1]))
+                    .and(v2.eq(&rule[2]))
+                    .and(v3.eq(&rule[3]))
+                    .and(v4.eq(&rule[4]))
+                    .and(v5.eq(&rule[5]));
 
-            match diesel::delete(casbin_rule.filter(filter)).execute(conn) {
-                Ok(n) if n == 1 => continue,
-                _ => return Err(DieselError::RollbackTransaction.into()),
+                match diesel::delete(casbin_rule.filter(filter))
+                    .execute(conn)
+                    .await
+                {
+                    Ok(n) if n == 1 => continue,
+                    _ => return Err(DieselError::RollbackTransaction.into()),
+                }
             }
-        }
 
-        Ok(true)
+            Ok(true)
+        }
+        .scope_boxed()
     })
+    .await
 }
 
 #[tracing::instrument(err, skip_all)]
-pub fn remove_filtered_policy(
+pub async fn remove_filtered_policy(
     conn: &mut DbConnection,
     pt: &str,
     field_index: usize,
@@ -155,50 +169,63 @@ pub fn remove_filtered_policy(
 
     boxed_query
         .execute(conn)
+        .await
         .map(|n| n >= 1)
         .map_err(DatabaseError::from)
 }
 
 #[tracing::instrument(err, skip_all)]
-pub fn clear_policy(conn: &mut DbConnection) -> Result<()> {
+pub async fn clear_policy(conn: &mut DbConnection) -> Result<()> {
     diesel::delete(casbin_rule)
         .execute(conn)
+        .await
         .map(|_| ())
         .map_err(DatabaseError::from)
 }
 
 #[tracing::instrument(err, skip_all)]
-pub fn save_policy(conn: &mut DbConnection, rules: Vec<NewCasbinRule>) -> Result<()> {
+pub async fn save_policy(conn: &mut DbConnection, rules: Vec<NewCasbinRule>) -> Result<()> {
     conn.transaction::<_, DatabaseError, _>(|conn| {
-        diesel::delete(casbin_rule).execute(conn)?;
+        async move {
+            diesel::delete(casbin_rule).execute(conn).await?;
 
-        diesel::insert_into(casbin_rule)
-            .values(&rules)
-            .execute(conn)?;
-        Ok(())
+            diesel::insert_into(casbin_rule)
+                .values(&rules)
+                .execute(conn)
+                .await?;
+
+            Ok(())
+        }
+        .scope_boxed()
     })
+    .await
 }
 
 #[tracing::instrument(err, skip_all)]
-pub fn load_policy(conn: &mut DbConnection) -> Result<Vec<CasbinRule>> {
+pub async fn load_policy(conn: &mut DbConnection) -> Result<Vec<CasbinRule>> {
     casbin_rule
         .load::<CasbinRule>(conn)
+        .await
         .map_err(DatabaseError::from)
 }
 
 #[tracing::instrument(err, skip_all)]
-pub fn add_policy(conn: &mut DbConnection, new_rule: NewCasbinRule) -> Result<()> {
+pub async fn add_policy(conn: &mut DbConnection, new_rule: NewCasbinRule) -> Result<()> {
     diesel::insert_into(casbin_rule)
         .values(&new_rule)
-        .execute(conn)?;
+        .execute(conn)
+        .await?;
+
     Ok(())
 }
 
 #[tracing::instrument(err, skip_all)]
-pub fn add_policies(conn: &mut DbConnection, new_rules: Vec<NewCasbinRule>) -> Result<()> {
+pub async fn add_policies(conn: &mut DbConnection, new_rules: Vec<NewCasbinRule>) -> Result<()> {
     diesel::insert_into(casbin_rule)
         .values(&new_rules)
-        .execute(conn)?;
+        .execute(conn)
+        .await?;
+
     Ok(())
 }
 

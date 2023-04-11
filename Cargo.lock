@@ -2369,6 +2369,7 @@ dependencies = [
  "barrel",
  "casbin",
  "diesel",
+ "diesel-async",
  "futures",
  "http",
  "itertools",

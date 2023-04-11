@@ -47,7 +47,7 @@
 //! # let local = task::LocalSet::new();
 //! # local.block_on(&rt, async {
 //! let db = Arc::new(
-//! Db::connect_url("postgres://postgres:postgres@localhost/kustos", 10, None).unwrap(),
+//! Db::connect_url("postgres://postgres:postgres@localhost/kustos", 10).unwrap(),
 //! );
 //! let (mut shutdown, _) = tokio::sync::broadcast::channel(1);
 //! let authz = Authz::new_with_autoload(db, shutdown.subscribe(), Duration::from_secs(10))
