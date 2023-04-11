@@ -56,7 +56,7 @@ impl DatabaseContext {
             .await
             .expect("Unable to migrate database");
 
-        let db_conn = Arc::new(Db::connect_url(&db_url, 5, None).unwrap());
+        let db_conn = Arc::new(Db::connect_url(&db_url, 5).unwrap());
 
         Self {
             base_url: base_url.to_string(),
@@ -66,14 +66,17 @@ impl DatabaseContext {
         }
     }
 
-    pub fn create_test_user(&self, n: u32, groups: Vec<String>) -> Result<User> {
-        let mut conn = self.db.get_conn()?;
+    pub async fn create_test_user(&self, n: u32, groups: Vec<String>) -> Result<User> {
+        let mut conn = self.db.get_conn().await?;
 
         let tenant = get_or_create_tenant_by_oidc_id(
             &mut conn,
             &OidcTenantId::from("OpenTalkDefaultTenant".to_owned()),
-        )?;
-        let tariff = Tariff::get_by_name(&mut conn, "OpenTalkDefaultTariff").unwrap();
+        )
+        .await?;
+        let tariff = Tariff::get_by_name(&mut conn, "OpenTalkDefaultTariff")
+            .await
+            .unwrap();
 
         let user = NewUser {
             oidc_sub: format!("oidc_sub{n}"),
@@ -88,28 +91,30 @@ impl DatabaseContext {
             tenant_id: tenant.id,
             tariff_id: tariff.id,
         }
-        .insert(&mut conn)?;
+        .insert(&mut conn)
+        .await?;
 
         let groups: Vec<(TenantId, GroupName)> = groups
             .into_iter()
             .map(|name| (tenant.id, GroupName::from(name)))
             .collect();
-        let groups = get_or_create_groups_by_name(&mut conn, &groups)?;
-        insert_user_into_groups(&mut conn, &user, &groups)?;
+        let groups = get_or_create_groups_by_name(&mut conn, &groups).await?;
+        insert_user_into_groups(&mut conn, &user, &groups).await?;
 
         Ok(user)
     }
 
-    pub fn create_test_room(
+    pub async fn create_test_room(
         &self,
         _room_id: RoomId,
         created_by: UserId,
         waiting_room: bool,
     ) -> Result<Room> {
-        let mut conn = self.db.get_conn()?;
+        let mut conn = self.db.get_conn().await?;
 
         let tenant =
-            get_or_create_tenant_by_oidc_id(&mut conn, &OidcTenantId::from("default".to_owned()))?;
+            get_or_create_tenant_by_oidc_id(&mut conn, &OidcTenantId::from("default".to_owned()))
+                .await?;
 
         let new_room = NewRoom {
             created_by,
@@ -118,7 +123,7 @@ impl DatabaseContext {
             tenant_id: tenant.id,
         };
 
-        let room = new_room.insert(&mut conn)?;
+        let room = new_room.insert(&mut conn).await?;
 
         Ok(room)
     }

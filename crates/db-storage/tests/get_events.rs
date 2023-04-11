@@ -18,15 +18,16 @@ use types::core::{EventId, RoomId, TimeZone, UserId};
 
 mod common;
 
-fn make_event(
+async fn make_event(
     conn: &mut DbConnection,
     user_id: UserId,
     room_id: RoomId,
     hour: Option<u32>,
     is_adhoc: bool,
 ) -> Event {
-    let tenant =
-        get_or_create_tenant_by_oidc_id(conn, &OidcTenantId::from("default".into())).unwrap();
+    let tenant = get_or_create_tenant_by_oidc_id(conn, &OidcTenantId::from("default".into()))
+        .await
+        .unwrap();
     NewEvent {
         title: "Test Event".into(),
         description: "Test Event".into(),
@@ -46,10 +47,11 @@ fn make_event(
         tenant_id: tenant.id,
     }
     .insert(conn)
+    .await
     .unwrap()
 }
 
-fn update_invite_status(
+async fn update_invite_status(
     conn: &mut DbConnection,
     user_id: UserId,
     event_id: EventId,
@@ -57,7 +59,7 @@ fn update_invite_status(
 ) {
     let changeset = UpdateEventInvite { status: new_status };
 
-    changeset.apply(conn, user_id, event_id).unwrap();
+    changeset.apply(conn, user_id, event_id).await.unwrap();
 }
 
 #[tokio::test]
@@ -65,9 +67,9 @@ fn update_invite_status(
 async fn test() {
     let db_ctx = test_util::database::DatabaseContext::new(true).await;
 
-    let mut conn = db_ctx.db.get_conn().unwrap();
+    let mut conn = db_ctx.db.get_conn().await.unwrap();
 
-    let user = make_user(&mut conn, "Test", "Tester", "Test Tester");
+    let user = make_user(&mut conn, "Test", "Tester", "Test Tester").await;
 
     let room = NewRoom {
         created_by: user.id,
@@ -76,24 +78,25 @@ async fn test() {
         tenant_id: user.tenant_id,
     }
     .insert(&mut conn)
+    .await
     .unwrap();
 
     // create events. The variable number indicates its expected ordering
 
     // first two events, first on on hour 2 then 1.
     // This tests the ordering of comparison of times (e.g. starts_at, then created_at)
-    let event2 = make_event(&mut conn, user.id, room.id, Some(2), true);
-    let event1 = make_event(&mut conn, user.id, room.id, Some(1), true);
+    let event2 = make_event(&mut conn, user.id, room.id, Some(2), true).await;
+    let event1 = make_event(&mut conn, user.id, room.id, Some(1), true).await;
 
     // this event should come last because starts_at is largest
-    let event8 = make_event(&mut conn, user.id, room.id, Some(10), true);
+    let event8 = make_event(&mut conn, user.id, room.id, Some(10), true).await;
 
     // Test that created_at is being honored if starts_at is equal
-    let event3 = make_event(&mut conn, user.id, room.id, Some(3), true);
-    let event4 = make_event(&mut conn, user.id, room.id, Some(3), true);
-    let event5 = make_event(&mut conn, user.id, room.id, Some(3), true);
-    let event6 = make_event(&mut conn, user.id, room.id, Some(3), true);
-    let event7 = make_event(&mut conn, user.id, room.id, Some(3), true);
+    let event3 = make_event(&mut conn, user.id, room.id, Some(3), true).await;
+    let event4 = make_event(&mut conn, user.id, room.id, Some(3), true).await;
+    let event5 = make_event(&mut conn, user.id, room.id, Some(3), true).await;
+    let event6 = make_event(&mut conn, user.id, room.id, Some(3), true).await;
+    let event7 = make_event(&mut conn, user.id, room.id, Some(3), true).await;
 
     {
         // Test cursor
@@ -111,6 +114,7 @@ async fn test() {
             None,
             2,
         )
+        .await
         .unwrap();
         assert_eq!(first_two.len(), 2);
         let query_event1 = &first_two[0].0;
@@ -134,6 +138,7 @@ async fn test() {
             Some(cursor),
             2,
         )
+        .await
         .unwrap();
         assert_eq!(first_two.len(), 2);
         let query_event3 = &next_two[0].0;
@@ -156,6 +161,7 @@ async fn test() {
             Some(cursor),
             2,
         )
+        .await
         .unwrap();
         assert_eq!(first_two.len(), 2);
         let query_event5 = &next_two[0].0;
@@ -178,6 +184,7 @@ async fn test() {
             Some(cursor),
             2,
         )
+        .await
         .unwrap();
         assert_eq!(first_two.len(), 2);
         let query_event7 = &next_two[0].0;
@@ -200,6 +207,7 @@ async fn test() {
             None,
             100,
         )
+        .await
         .unwrap();
         assert_eq!(only_event8.len(), 1);
         assert_eq!(only_event8[0].0, event8);
@@ -219,6 +227,7 @@ async fn test() {
             None,
             100,
         )
+        .await
         .unwrap();
         assert_eq!(every_event_except_event8.len(), 7);
         assert_eq!(every_event_except_event8[0].0, event1);
@@ -244,6 +253,7 @@ async fn test() {
             None,
             100,
         )
+        .await
         .unwrap();
         assert_eq!(only_event_at_3h.len(), 5);
         assert_eq!(only_event_at_3h[0].0, event3);
@@ -259,10 +269,10 @@ async fn test() {
 async fn get_events_invite_filter() {
     let db_ctx = test_util::database::DatabaseContext::new(true).await;
 
-    let mut conn = db_ctx.db.get_conn().unwrap();
+    let mut conn = db_ctx.db.get_conn().await.unwrap();
 
-    let inviter = make_user(&mut conn, "Ingo", "Inviter", "inviter");
-    let invitee = make_user(&mut conn, "Ingrid", "Invitee", "invitee");
+    let inviter = make_user(&mut conn, "Ingo", "Inviter", "inviter").await;
+    let invitee = make_user(&mut conn, "Ingrid", "Invitee", "invitee").await;
 
     let room = NewRoom {
         created_by: inviter.id,
@@ -271,12 +281,13 @@ async fn get_events_invite_filter() {
         tenant_id: inviter.tenant_id,
     }
     .insert(&mut conn)
+    .await
     .unwrap();
 
-    let accept_event = make_event(&mut conn, inviter.id, room.id, Some(1), true);
-    let decline_event = make_event(&mut conn, inviter.id, room.id, Some(1), true);
-    let tentative_event = make_event(&mut conn, inviter.id, room.id, Some(1), true);
-    let pending_event = make_event(&mut conn, inviter.id, room.id, Some(1), true);
+    let accept_event = make_event(&mut conn, inviter.id, room.id, Some(1), true).await;
+    let decline_event = make_event(&mut conn, inviter.id, room.id, Some(1), true).await;
+    let tentative_event = make_event(&mut conn, inviter.id, room.id, Some(1), true).await;
+    let pending_event = make_event(&mut conn, inviter.id, room.id, Some(1), true).await;
 
     // Check that the creator of the events gets created events when filtering by `Accepted` invite status
     let all_events = Event::get_all_for_user_paginated(
@@ -291,6 +302,7 @@ async fn get_events_invite_filter() {
         None,
         100,
     )
+    .await
     .unwrap();
 
     assert_eq!(all_events.len(), 4);
@@ -320,6 +332,7 @@ async fn get_events_invite_filter() {
         None,
         100,
     )
+    .await
     .unwrap();
 
     assert!(no_events.is_empty());
@@ -340,6 +353,7 @@ async fn get_events_invite_filter() {
             created_at: None,
         }
         .try_insert(&mut conn)
+        .await
         .unwrap();
     }
 
@@ -348,21 +362,24 @@ async fn get_events_invite_filter() {
         invitee.id,
         accept_event.id,
         EventInviteStatus::Accepted,
-    );
+    )
+    .await;
 
     update_invite_status(
         &mut conn,
         invitee.id,
         decline_event.id,
         EventInviteStatus::Declined,
-    );
+    )
+    .await;
 
     update_invite_status(
         &mut conn,
         invitee.id,
         tentative_event.id,
         EventInviteStatus::Tentative,
-    );
+    )
+    .await;
 
     // check `accepted` invites
     let accepted_events = Event::get_all_for_user_paginated(
@@ -377,6 +394,7 @@ async fn get_events_invite_filter() {
         None,
         100,
     )
+    .await
     .unwrap();
 
     assert_eq!(accepted_events.len(), 1);
@@ -397,6 +415,7 @@ async fn get_events_invite_filter() {
         None,
         100,
     )
+    .await
     .unwrap();
 
     assert_eq!(declined_events.len(), 1);
@@ -417,6 +436,7 @@ async fn get_events_invite_filter() {
         None,
         100,
     )
+    .await
     .unwrap();
 
     assert_eq!(tentative_events.len(), 1);
@@ -437,6 +457,7 @@ async fn get_events_invite_filter() {
         None,
         100,
     )
+    .await
     .unwrap();
 
     assert_eq!(pending_events.len(), 1);
@@ -457,6 +478,7 @@ async fn get_events_invite_filter() {
         None,
         100,
     )
+    .await
     .unwrap();
 
     assert_eq!(all_events.len(), 4);
@@ -479,11 +501,11 @@ async fn get_events_invite_filter() {
 async fn get_event_invites() {
     let db_ctx = test_util::database::DatabaseContext::new(true).await;
 
-    let mut conn = db_ctx.db.get_conn().unwrap();
+    let mut conn = db_ctx.db.get_conn().await.unwrap();
 
-    let ferdinand = make_user(&mut conn, "Ferdinand", "Jaegermeister", "ferdemeister");
-    let louise = make_user(&mut conn, "Jeez", "Louise", "Jesus");
-    let gerhard = make_user(&mut conn, "Gerhard", "Bauer", "Hardi");
+    let ferdinand = make_user(&mut conn, "Ferdinand", "Jaegermeister", "ferdemeister").await;
+    let louise = make_user(&mut conn, "Jeez", "Louise", "Jesus").await;
+    let gerhard = make_user(&mut conn, "Gerhard", "Bauer", "Hardi").await;
 
     let room = NewRoom {
         created_by: ferdinand.id,
@@ -492,10 +514,11 @@ async fn get_event_invites() {
         tenant_id: ferdinand.tenant_id,
     }
     .insert(&mut conn)
+    .await
     .unwrap();
 
     // EVENT 1 MIT JEEZ LOUISE AND GERHARD
-    let event1 = make_event(&mut conn, ferdinand.id, room.id, Some(1), true);
+    let event1 = make_event(&mut conn, ferdinand.id, room.id, Some(1), true).await;
 
     NewEventInvite {
         event_id: event1.id,
@@ -504,6 +527,7 @@ async fn get_event_invites() {
         created_at: None,
     }
     .try_insert(&mut conn)
+    .await
     .unwrap();
 
     NewEventInvite {
@@ -513,10 +537,11 @@ async fn get_event_invites() {
         created_at: None,
     }
     .try_insert(&mut conn)
+    .await
     .unwrap();
 
     // EVENT 2 MIT JEEZ LOUSE UND FERDINAND
-    let event2 = make_event(&mut conn, gerhard.id, room.id, Some(1), true);
+    let event2 = make_event(&mut conn, gerhard.id, room.id, Some(1), true).await;
 
     NewEventInvite {
         event_id: event2.id,
@@ -525,6 +550,7 @@ async fn get_event_invites() {
         created_at: None,
     }
     .try_insert(&mut conn)
+    .await
     .unwrap();
 
     NewEventInvite {
@@ -534,10 +560,13 @@ async fn get_event_invites() {
         created_at: None,
     }
     .try_insert(&mut conn)
+    .await
     .unwrap();
 
     let events = &[&event1, &event2][..];
-    let invites_with_invitees = EventInvite::get_for_events(&mut conn, events).unwrap();
+    let invites_with_invitees = EventInvite::get_for_events(&mut conn, events)
+        .await
+        .unwrap();
 
     for (event, invites_with_users) in events.iter().zip(invites_with_invitees) {
         println!("Event: {event:#?}");
@@ -557,9 +586,9 @@ async fn get_event_invites() {
 async fn get_event_adhoc() {
     let db_ctx = test_util::database::DatabaseContext::new(true).await;
 
-    let mut conn = db_ctx.db.get_conn().unwrap();
+    let mut conn = db_ctx.db.get_conn().await.unwrap();
 
-    let user = make_user(&mut conn, "Test", "Tester", "Test Tester");
+    let user = make_user(&mut conn, "Test", "Tester", "Test Tester").await;
 
     let room = NewRoom {
         created_by: user.id,
@@ -568,13 +597,14 @@ async fn get_event_adhoc() {
         tenant_id: user.tenant_id,
     }
     .insert(&mut conn)
+    .await
     .unwrap();
 
-    let event1 = make_event(&mut conn, user.id, room.id, Some(1), true);
-    let event2 = make_event(&mut conn, user.id, room.id, Some(1), false);
-    let event3 = make_event(&mut conn, user.id, room.id, Some(1), false);
-    let event4 = make_event(&mut conn, user.id, room.id, Some(1), true);
-    let event5 = make_event(&mut conn, user.id, room.id, Some(1), true);
+    let event1 = make_event(&mut conn, user.id, room.id, Some(1), true).await;
+    let event2 = make_event(&mut conn, user.id, room.id, Some(1), false).await;
+    let event3 = make_event(&mut conn, user.id, room.id, Some(1), false).await;
+    let event4 = make_event(&mut conn, user.id, room.id, Some(1), true).await;
+    let event5 = make_event(&mut conn, user.id, room.id, Some(1), true).await;
 
     let all = Event::get_all_for_user_paginated(
         &mut conn,
@@ -588,6 +618,7 @@ async fn get_event_adhoc() {
         None,
         10,
     )
+    .await
     .unwrap();
 
     assert_eq!(all.len(), 5);
@@ -609,6 +640,7 @@ async fn get_event_adhoc() {
         None,
         10,
     )
+    .await
     .unwrap();
     assert_eq!(adhoc.len(), 3);
     assert_eq!(adhoc[0].0, event1);
@@ -627,6 +659,7 @@ async fn get_event_adhoc() {
         None,
         10,
     )
+    .await
     .unwrap();
     assert_eq!(non_adhoc.len(), 2);
     assert_eq!(non_adhoc[0].0, event2);
@@ -638,9 +671,9 @@ async fn get_event_adhoc() {
 async fn get_event_time_independent() {
     let db_ctx = test_util::database::DatabaseContext::new(true).await;
 
-    let mut conn = db_ctx.db.get_conn().unwrap();
+    let mut conn = db_ctx.db.get_conn().await.unwrap();
 
-    let user = make_user(&mut conn, "Test", "Tester", "Test Tester");
+    let user = make_user(&mut conn, "Test", "Tester", "Test Tester").await;
 
     let room = NewRoom {
         created_by: user.id,
@@ -649,13 +682,14 @@ async fn get_event_time_independent() {
         tenant_id: user.tenant_id,
     }
     .insert(&mut conn)
+    .await
     .unwrap();
 
-    let event1 = make_event(&mut conn, user.id, room.id, None, false);
-    let event2 = make_event(&mut conn, user.id, room.id, None, false);
-    let event3 = make_event(&mut conn, user.id, room.id, Some(1), false);
-    let event4 = make_event(&mut conn, user.id, room.id, None, false);
-    let event5 = make_event(&mut conn, user.id, room.id, Some(2), false);
+    let event1 = make_event(&mut conn, user.id, room.id, None, false).await;
+    let event2 = make_event(&mut conn, user.id, room.id, None, false).await;
+    let event3 = make_event(&mut conn, user.id, room.id, Some(1), false).await;
+    let event4 = make_event(&mut conn, user.id, room.id, None, false).await;
+    let event5 = make_event(&mut conn, user.id, room.id, Some(2), false).await;
 
     let all = Event::get_all_for_user_paginated(
         &mut conn,
@@ -669,6 +703,7 @@ async fn get_event_time_independent() {
         None,
         10,
     )
+    .await
     .unwrap();
 
     // different order than creation order, because events without
@@ -692,6 +727,7 @@ async fn get_event_time_independent() {
         None,
         10,
     )
+    .await
     .unwrap();
     assert_eq!(time_independent.len(), 3);
     assert_eq!(time_independent[0].0, event1);
@@ -710,6 +746,7 @@ async fn get_event_time_independent() {
         None,
         10,
     )
+    .await
     .unwrap();
     assert_eq!(time_dependent.len(), 2);
     assert_eq!(time_dependent[0].0, event3);
@@ -721,9 +758,9 @@ async fn get_event_time_independent() {
 async fn get_event_min_max_time() {
     let db_ctx = test_util::database::DatabaseContext::new(true).await;
 
-    let mut conn = db_ctx.db.get_conn().unwrap();
+    let mut conn = db_ctx.db.get_conn().await.unwrap();
 
-    let user = make_user(&mut conn, "Test", "Tester", "Test Tester");
+    let user = make_user(&mut conn, "Test", "Tester", "Test Tester").await;
 
     let room = NewRoom {
         created_by: user.id,
@@ -732,6 +769,7 @@ async fn get_event_min_max_time() {
         tenant_id: user.tenant_id,
     }
     .insert(&mut conn)
+    .await
     .unwrap();
 
     let event1 = NewEvent {
@@ -753,6 +791,7 @@ async fn get_event_min_max_time() {
         tenant_id: user.tenant_id,
     }
     .insert(&mut conn)
+    .await
     .unwrap();
 
     let event2 = NewEvent {
@@ -774,6 +813,7 @@ async fn get_event_min_max_time() {
         tenant_id: user.tenant_id,
     }
     .insert(&mut conn)
+    .await
     .unwrap();
 
     {
@@ -790,6 +830,7 @@ async fn get_event_min_max_time() {
             None,
             10,
         )
+        .await
         .unwrap();
 
         assert_eq!(events.len(), 2);
@@ -811,6 +852,7 @@ async fn get_event_min_max_time() {
             None,
             10,
         )
+        .await
         .unwrap();
         assert!(events.is_empty());
     }
@@ -829,6 +871,7 @@ async fn get_event_min_max_time() {
             None,
             10,
         )
+        .await
         .unwrap();
         assert!(events.is_empty());
     }
@@ -847,6 +890,7 @@ async fn get_event_min_max_time() {
             None,
             10,
         )
+        .await
         .unwrap();
         assert!(events.is_empty());
     }
@@ -865,6 +909,7 @@ async fn get_event_min_max_time() {
             None,
             10,
         )
+        .await
         .unwrap();
         assert!(events.is_empty());
     }
@@ -883,6 +928,7 @@ async fn get_event_min_max_time() {
             None,
             10,
         )
+        .await
         .unwrap();
         assert_eq!(events.len(), 1);
         assert_eq!(events[0].0, event2);
@@ -902,6 +948,7 @@ async fn get_event_min_max_time() {
             None,
             10,
         )
+        .await
         .unwrap();
         assert_eq!(events.len(), 1);
         assert_eq!(events[0].0, event2);
@@ -921,6 +968,7 @@ async fn get_event_min_max_time() {
             None,
             10,
         )
+        .await
         .unwrap();
         assert_eq!(events.len(), 1);
         assert_eq!(events[0].0, event2);
@@ -940,6 +988,7 @@ async fn get_event_min_max_time() {
             None,
             10,
         )
+        .await
         .unwrap();
         assert_eq!(events.len(), 1);
         assert_eq!(events[0].0, event2);
@@ -959,6 +1008,7 @@ async fn get_event_min_max_time() {
             None,
             10,
         )
+        .await
         .unwrap();
         assert_eq!(events.len(), 1);
         assert_eq!(events[0].0, event2);
@@ -978,6 +1028,7 @@ async fn get_event_min_max_time() {
             None,
             10,
         )
+        .await
         .unwrap();
         assert_eq!(events.len(), 1);
         assert_eq!(events[0].0, event2);
@@ -997,6 +1048,7 @@ async fn get_event_min_max_time() {
             None,
             10,
         )
+        .await
         .unwrap();
         assert_eq!(events.len(), 1);
         assert_eq!(events[0].0, event2);
@@ -1016,6 +1068,7 @@ async fn get_event_min_max_time() {
             None,
             10,
         )
+        .await
         .unwrap();
         assert_eq!(events.len(), 1);
         assert_eq!(events[0].0, event2);

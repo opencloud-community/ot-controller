@@ -13,49 +13,61 @@ mod common;
 #[serial]
 async fn test() {
     let db_ctx = test_util::database::DatabaseContext::new(true).await;
-    let mut conn = db_ctx.db.get_conn().unwrap();
+    let mut conn = db_ctx.db.get_conn().await.unwrap();
 
     // generate some random users with some made up names
-    let tenant_id = make_user(&mut conn, "Aileen", "Strange", "Spectre").tenant_id;
-    make_user(&mut conn, "Laura", "Rutherford", "Jakiro");
-    make_user(&mut conn, "Cheryl", "Lazarus", "Kaolin");
+    let tenant_id = make_user(&mut conn, "Aileen", "Strange", "Spectre")
+        .await
+        .tenant_id;
+    make_user(&mut conn, "Laura", "Rutherford", "Jakiro").await;
+    make_user(&mut conn, "Cheryl", "Lazarus", "Kaolin").await;
 
-    let users = User::find(&mut conn, tenant_id, "La").unwrap();
+    let users = User::find(&mut conn, tenant_id, "La").await.unwrap();
     assert_eq!(users.len(), 2);
     assert_eq!(users[0].firstname, "Cheryl");
     assert_eq!(users[1].firstname, "Laura");
 
-    let users = User::find(&mut conn, tenant_id, "Ru").unwrap();
+    let users = User::find(&mut conn, tenant_id, "Ru").await.unwrap();
     assert_eq!(users.len(), 2);
     assert_eq!(users[0].firstname, "Laura");
     assert_eq!(users[1].firstname, "Cheryl");
 
     // Try the levenshtein/soundex matching with worse input each time
-    let users = User::find(&mut conn, tenant_id, "Cheril Lazarus").unwrap();
+    let users = User::find(&mut conn, tenant_id, "Cheril Lazarus")
+        .await
+        .unwrap();
     assert_eq!(users.len(), 1);
     assert_eq!(users[0].firstname, "Cheryl");
 
-    let users = User::find(&mut conn, tenant_id, "Cheril Lasarus").unwrap();
+    let users = User::find(&mut conn, tenant_id, "Cheril Lasarus")
+        .await
+        .unwrap();
     assert_eq!(users.len(), 1);
     assert_eq!(users[0].firstname, "Cheryl");
 
-    let users = User::find(&mut conn, tenant_id, "Cherill Lasarus").unwrap();
+    let users = User::find(&mut conn, tenant_id, "Cherill Lasarus")
+        .await
+        .unwrap();
     assert_eq!(users.len(), 1);
     assert_eq!(users[0].firstname, "Cheryl");
 
-    let users = User::find(&mut conn, tenant_id, "Cherill Lasaruz").unwrap();
+    let users = User::find(&mut conn, tenant_id, "Cherill Lasaruz")
+        .await
+        .unwrap();
     assert_eq!(users.len(), 1);
     assert_eq!(users[0].firstname, "Cheryl");
 
-    let users = User::find(&mut conn, tenant_id, "Spectre").unwrap();
+    let users = User::find(&mut conn, tenant_id, "Spectre").await.unwrap();
     assert_eq!(users.len(), 1);
     assert_eq!(users[0].firstname, "Aileen");
 
-    let users = User::find(&mut conn, tenant_id, "Spektre").unwrap();
+    let users = User::find(&mut conn, tenant_id, "Spektre").await.unwrap();
     assert_eq!(users.len(), 1);
     assert_eq!(users[0].firstname, "Aileen");
 
-    let users = User::find(&mut conn, tenant_id, "Schpecktre").unwrap();
+    let users = User::find(&mut conn, tenant_id, "Schpecktre")
+        .await
+        .unwrap();
     assert_eq!(users.len(), 1);
     assert_eq!(users[0].firstname, "Aileen");
 }

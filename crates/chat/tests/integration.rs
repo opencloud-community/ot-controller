@@ -22,6 +22,7 @@ async fn last_seen_timestamps() {
             USER_1.n,
             vec![String::from("group1"), String::from("group2")],
         )
+        .await
         .unwrap();
     let user2 = test_ctx
         .db_ctx
@@ -29,12 +30,14 @@ async fn last_seen_timestamps() {
             USER_2.n,
             vec![String::from("group1"), String::from("group3")],
         )
+        .await
         .unwrap();
 
     let waiting_room = false;
     let room = test_ctx
         .db_ctx
         .create_test_room(ROOM_ID, user1.id, waiting_room)
+        .await
         .unwrap();
 
     let mut module_tester = ModuleTester::<Chat>::new(
@@ -222,6 +225,7 @@ async fn common_groups_on_join() {
             USER_1.n,
             vec![String::from("group1"), String::from("group2")],
         )
+        .await
         .unwrap();
 
     let user2 = test_ctx
@@ -230,12 +234,14 @@ async fn common_groups_on_join() {
             USER_2.n,
             vec![String::from("group1"), String::from("group3")],
         )
+        .await
         .unwrap();
 
     let waiting_room = false;
     let room = test_ctx
         .db_ctx
         .create_test_room(ROOM_ID, user1.id, waiting_room)
+        .await
         .unwrap();
 
     let mut module_tester = ModuleTester::<Chat>::new(
@@ -354,14 +360,23 @@ async fn common_groups_on_join() {
 async fn private_chat_history_on_join() {
     let test_ctx = TestContext::new().await;
 
-    let user1 = test_ctx.db_ctx.create_test_user(USER_1.n, vec![]).unwrap();
+    let user1 = test_ctx
+        .db_ctx
+        .create_test_user(USER_1.n, vec![])
+        .await
+        .unwrap();
 
-    let user2 = test_ctx.db_ctx.create_test_user(USER_2.n, vec![]).unwrap();
+    let user2 = test_ctx
+        .db_ctx
+        .create_test_user(USER_2.n, vec![])
+        .await
+        .unwrap();
 
     let waiting_room = false;
     let room = test_ctx
         .db_ctx
         .create_test_room(ROOM_ID, user1.id, waiting_room)
+        .await
         .unwrap();
 
     let mut module_tester = ModuleTester::<Chat>::new(
