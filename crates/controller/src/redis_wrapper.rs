@@ -33,6 +33,10 @@ impl RedisConnection {
         self.metrics = Some(metrics);
         self
     }
+
+    pub fn into_manager(self) -> redis::aio::ConnectionManager {
+        self.connection_manager
+    }
 }
 
 impl ConnectionLike for RedisConnection {

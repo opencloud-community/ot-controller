@@ -166,6 +166,8 @@ skip = [
     { name = "time", version = "=0.1.45" },
     { name = "wasi", version = "=0.10.0" },
     { name = "windows-sys", version = "=0.42" },
+    { name = "cargo_metadata", version = "=0.14.2" },
+    { name = "memoffset", version = "=0.7.1" },
 ]
 # Similarly to `skip` allows you to skip certain crates during duplicate
 # detection. Unlike skip, it also includes the entire tree of transitive

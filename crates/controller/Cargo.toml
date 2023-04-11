@@ -59,6 +59,7 @@ diesel = { version = "2", features = [
 ] }
 diesel-async = "0.2.0"
 uuid = { package = "uuid", version = "1.3.0", features = ["serde", "v4"] }
+cache = { path = "../cache" , package = "opentalk-cache" }
 
 ### S3 Storage
 aws-config = "0.51"
