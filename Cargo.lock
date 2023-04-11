@@ -2947,6 +2947,7 @@ dependencies = [
  "chrono",
  "chrono-tz",
  "diesel",
+ "diesel-async",
  "kustos",
  "log",
  "opentalk-controller-shared",

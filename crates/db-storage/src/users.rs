@@ -10,8 +10,9 @@ use database::{DbConnection, Paginate, Result};
 use diesel::prelude::*;
 use diesel::{
     BelongingToDsl, BoolExpressionMethods, ExpressionMethods, GroupedBy, Identifiable, Insertable,
-    OptionalExtension, QueryDsl, Queryable, RunQueryDsl, TextExpressionMethods,
+    OptionalExtension, QueryDsl, Queryable, TextExpressionMethods,
 };
+use diesel_async::RunQueryDsl;
 use std::fmt;
 use types::core::{TariffId, TenantId, UserId};
 
@@ -57,10 +58,11 @@ impl User {
     ///
     /// If no user exists with `user_id` this returns an Error
     #[tracing::instrument(err, skip_all)]
-    pub fn get(conn: &mut DbConnection, user_id: UserId) -> Result<User> {
+    pub async fn get(conn: &mut DbConnection, user_id: UserId) -> Result<User> {
         let user = users::table
             .filter(users::id.eq(user_id))
-            .get_result(conn)?;
+            .get_result(conn)
+            .await?;
 
         Ok(user)
     }
@@ -69,14 +71,15 @@ impl User {
     ///
     /// If no user exists with `user_id` this returns an Error
     #[tracing::instrument(err, skip_all)]
-    pub fn get_filtered_by_tenant(
+    pub async fn get_filtered_by_tenant(
         conn: &mut DbConnection,
         tenant_id: TenantId,
         user_id: UserId,
     ) -> Result<User> {
         let user = users::table
             .filter(users::id.eq(user_id).and(users::tenant_id.eq(tenant_id)))
-            .get_result(conn)?;
+            .get_result(conn)
+            .await?;
 
         Ok(user)
     }
@@ -85,7 +88,7 @@ impl User {
     ///
     /// Returns None if no user matches `email`
     #[tracing::instrument(err, skip_all)]
-    pub fn get_by_email(
+    pub async fn get_by_email(
         conn: &mut DbConnection,
         tenant_id: TenantId,
         email: &str,
@@ -93,6 +96,7 @@ impl User {
         let user = users::table
             .filter(users::tenant_id.eq(tenant_id).and(users::email.eq(email)))
             .get_result(conn)
+            .await
             .optional()?;
 
         Ok(user)
@@ -100,27 +104,29 @@ impl User {
 
     /// Get one or more users with the given phone number
     #[tracing::instrument(err, skip_all)]
-    pub fn get_by_phone(
+    pub async fn get_by_phone(
         conn: &mut DbConnection,
         tenant_id: TenantId,
         phone: &str,
     ) -> Result<Vec<User>> {
         let users = users::table
             .filter(users::tenant_id.eq(tenant_id).and(users::phone.eq(phone)))
-            .get_results(conn)?;
+            .get_results(conn)
+            .await?;
 
         Ok(users)
     }
 
     /// Get all users alongside their current groups
     #[tracing::instrument(err, skip_all)]
-    pub fn get_all_with_groups(conn: &mut DbConnection) -> Result<Vec<(User, Vec<Group>)>> {
+    pub async fn get_all_with_groups(conn: &mut DbConnection) -> Result<Vec<(User, Vec<Group>)>> {
         let users_query = users::table.order_by(users::id.desc());
-        let users = users_query.load(conn)?;
+        let users = users_query.load(conn).await?;
 
         let groups_query = UserGroupRelation::belonging_to(&users).inner_join(groups::table);
         let groups: Vec<Vec<(UserGroupRelation, Group)>> = groups_query
-            .load::<(UserGroupRelation, Group)>(conn)?
+            .load::<(UserGroupRelation, Group)>(conn)
+            .await?
             .grouped_by(&users);
 
         let users_with_groups = users
@@ -134,7 +140,7 @@ impl User {
 
     /// Get all users paginated
     #[tracing::instrument(err, skip_all, fields(%limit, %page))]
-    pub fn get_all_paginated(
+    pub async fn get_all_paginated(
         conn: &mut DbConnection,
         limit: i64,
         page: i64,
@@ -143,14 +149,14 @@ impl User {
             .order_by(users::id.desc())
             .paginate_by(limit, page);
 
-        let users_with_total = query.load_and_count(conn)?;
+        let users_with_total = query.load_and_count(conn).await?;
 
         Ok(users_with_total)
     }
 
     /// Get Users paginated and filtered by ids
     #[tracing::instrument(err, skip_all, fields(%limit, %page))]
-    pub fn get_by_ids_paginated(
+    pub async fn get_by_ids_paginated(
         conn: &mut DbConnection,
         ids: &[UserId],
         limit: i64,
@@ -161,16 +167,16 @@ impl User {
             .order_by(users::id.desc())
             .paginate_by(limit, page);
 
-        let users_with_total = query.load_and_count::<User, _>(conn)?;
+        let users_with_total = query.load_and_count::<User, _>(conn).await?;
 
         Ok(users_with_total)
     }
 
     /// Returns all `User`s filtered by id
     #[tracing::instrument(err, skip_all)]
-    pub fn get_all_by_ids(conn: &mut DbConnection, ids: &[UserId]) -> Result<Vec<User>> {
+    pub async fn get_all_by_ids(conn: &mut DbConnection, ids: &[UserId]) -> Result<Vec<User>> {
         let query = users::table.filter(users::id.eq_any(ids));
-        let users = query.load(conn)?;
+        let users = query.load(conn).await?;
 
         Ok(users)
     }
@@ -179,7 +185,7 @@ impl User {
     ///
     /// Returns None no user matched `sub`
     #[tracing::instrument(err, skip_all)]
-    pub fn get_by_oidc_sub(
+    pub async fn get_by_oidc_sub(
         conn: &mut DbConnection,
         tenant_id: TenantId,
         sub: &str,
@@ -187,6 +193,7 @@ impl User {
         let user = users::table
             .filter(users::oidc_sub.eq(sub).and(users::tenant_id.eq(tenant_id)))
             .get_result(conn)
+            .await
             .optional()?;
 
         Ok(user)
@@ -194,7 +201,7 @@ impl User {
 
     /// Get all users filtered by the given subs
     #[tracing::instrument(err, skip_all)]
-    pub fn get_all_by_oidc_subs(
+    pub async fn get_all_by_oidc_subs(
         conn: &mut DbConnection,
         tenant_id: TenantId,
         subs: &[&str],
@@ -205,7 +212,8 @@ impl User {
                     .eq(tenant_id)
                     .and(users::oidc_sub.eq_any(subs)),
             )
-            .load(conn)?;
+            .load(conn)
+            .await?;
 
         Ok(users)
     }
@@ -214,7 +222,7 @@ impl User {
     ///
     /// This looks for similarities of the search_str in the display_name, first+lastname and email
     #[tracing::instrument(err, skip_all)]
-    pub fn find(
+    pub async fn find(
         conn: &mut DbConnection,
         tenant_id: TenantId,
         search_str: &str,
@@ -261,7 +269,8 @@ impl User {
             .then_order_by(levenshtein(lower_first_lastname, &search_str))
             .then_order_by(users::id)
             .limit(5)
-            .load(conn)?;
+            .load(conn)
+            .await?;
 
         Ok(matches)
     }
@@ -286,9 +295,9 @@ pub struct NewUser {
 }
 
 impl NewUser {
-    pub fn insert(self, conn: &mut DbConnection) -> Result<User> {
+    pub async fn insert(self, conn: &mut DbConnection) -> Result<User> {
         let query = self.insert_into(users::table);
-        let user = query.get_result(conn)?;
+        let user = query.get_result(conn).await?;
         Ok(user)
     }
 }
@@ -315,9 +324,9 @@ pub struct UpdateUser<'a> {
 }
 
 impl UpdateUser<'_> {
-    pub fn apply(self, conn: &mut DbConnection, user_id: UserId) -> Result<User> {
+    pub async fn apply(self, conn: &mut DbConnection, user_id: UserId) -> Result<User> {
         let query = diesel::update(users::table.filter(users::id.eq(user_id))).set(self);
-        let user: User = query.get_result(conn)?;
+        let user: User = query.get_result(conn).await?;
         Ok(user)
     }
 }

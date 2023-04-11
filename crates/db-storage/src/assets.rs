@@ -5,16 +5,14 @@
 use crate::schema::assets;
 use crate::schema::room_assets;
 use chrono::{DateTime, Utc};
-use database::DbConnection;
-use database::Paginate;
-use database::Result;
-use diesel::BoolExpressionMethods;
-use diesel::Connection;
-use diesel::Insertable;
-use diesel::JoinOnDsl;
-use diesel::RunQueryDsl;
-use diesel::{ExpressionMethods, QueryDsl};
-use diesel::{Identifiable, Queryable};
+use database::{DbConnection, Paginate, Result};
+use diesel::{
+    BoolExpressionMethods, ExpressionMethods, Identifiable, Insertable, JoinOnDsl, QueryDsl,
+    Queryable,
+};
+use diesel_async::scoped_futures::ScopedFutureExt;
+use diesel_async::AsyncConnection;
+use diesel_async::RunQueryDsl;
 use types::core::{AssetId, RoomId, TenantId};
 
 /// Diesel resource struct
@@ -31,7 +29,7 @@ pub struct Asset {
 
 impl Asset {
     #[tracing::instrument(err, skip_all)]
-    pub fn get(conn: &mut DbConnection, id: AssetId, room_id: RoomId) -> Result<Self> {
+    pub async fn get(conn: &mut DbConnection, id: AssetId, room_id: RoomId) -> Result<Self> {
         //FIXME: The inner_join below (as well as the room_id parameter) can be removed when assets have their own
         // permission check and don't rely on room permissions
 
@@ -44,23 +42,27 @@ impl Asset {
             .filter(assets::id.eq(id))
             .select(assets::all_columns);
 
-        let resource: Asset = query.get_result(conn)?;
+        let resource: Asset = query.get_result(conn).await?;
 
         Ok(resource)
     }
 
     #[tracing::instrument(err, skip_all)]
-    pub fn get_all_ids_for_room(conn: &mut DbConnection, room_id: RoomId) -> Result<Vec<AssetId>> {
+    pub async fn get_all_ids_for_room(
+        conn: &mut DbConnection,
+        room_id: RoomId,
+    ) -> Result<Vec<AssetId>> {
         let query = room_assets::table
             .select(room_assets::asset_id)
             .filter(room_assets::room_id.eq(room_id));
 
-        let assets = query.load(conn)?;
+        let assets = query.load(conn).await?;
 
         Ok(assets)
     }
+
     #[tracing::instrument(err, skip_all)]
-    pub fn get_all_for_room_paginated(
+    pub async fn get_all_for_room_paginated(
         conn: &mut DbConnection,
         room_id: RoomId,
         limit: i64,
@@ -72,13 +74,13 @@ impl Asset {
             .select(assets::all_columns)
             .paginate_by(limit, page);
 
-        let resources_with_total = query.load_and_count(conn)?;
+        let resources_with_total = query.load_and_count(conn).await?;
 
         Ok(resources_with_total)
     }
 
     #[tracing::instrument(err, skip_all)]
-    pub fn get_all_for_rooms_paginated(
+    pub async fn get_all_for_rooms_paginated(
         conn: &mut DbConnection,
         room_ids: &[RoomId],
         limit: i64,
@@ -90,13 +92,13 @@ impl Asset {
             .select(assets::all_columns)
             .paginate_by(limit, page);
 
-        let resources_with_total = query.load_and_count(conn)?;
+        let resources_with_total = query.load_and_count(conn).await?;
 
         Ok(resources_with_total)
     }
 
     #[tracing::instrument(err, skip_all)]
-    pub fn get_all_paginated(
+    pub async fn get_all_paginated(
         conn: &mut DbConnection,
         limit: i64,
         page: i64,
@@ -105,37 +107,48 @@ impl Asset {
             .select(assets::all_columns)
             .paginate_by(limit, page);
 
-        let resources_with_total = query.load_and_count(conn)?;
+        let resources_with_total = query.load_and_count(conn).await?;
 
         Ok(resources_with_total)
     }
 
     #[tracing::instrument(err, skip_all)]
-    pub fn delete_by_id(conn: &mut DbConnection, asset_id: AssetId, room_id: RoomId) -> Result<()> {
+    pub async fn delete_by_id(
+        conn: &mut DbConnection,
+        asset_id: AssetId,
+        room_id: RoomId,
+    ) -> Result<()> {
         conn.transaction(|conn| {
-            //FIXME: This check (as well as the room_id parameter) can be removed when assets have their own permission
-            // check and don't rely on room permissions
-            //
-            // check if the asset exists for the specified room
-            room_assets::table
-                .filter(
-                    room_assets::asset_id
-                        .eq(asset_id)
-                        .and(room_assets::room_id.eq(room_id)),
-                )
-                .execute(conn)?;
+            async move {
+                //FIXME: This check (as well as the room_id parameter) can be removed when assets have their own permission
+                // check and don't rely on room permissions
+                //
+                // check if the asset exists for the specified room
+                room_assets::table
+                    .filter(
+                        room_assets::asset_id
+                            .eq(asset_id)
+                            .and(room_assets::room_id.eq(room_id)),
+                    )
+                    .execute(conn)
+                    .await?;
 
-            diesel::delete(assets::table.filter(assets::id.eq(asset_id))).execute(conn)?;
+                diesel::delete(assets::table.filter(assets::id.eq(asset_id)))
+                    .execute(conn)
+                    .await?;
 
-            Ok(())
+                Ok(())
+            }
+            .scope_boxed()
         })
+        .await
     }
 
     #[tracing::instrument(err, skip_all)]
-    pub fn delete_by_ids(conn: &mut DbConnection, asset_ids: &[AssetId]) -> Result<()> {
+    pub async fn delete_by_ids(conn: &mut DbConnection, asset_ids: &[AssetId]) -> Result<()> {
         let query = diesel::delete(assets::table.filter(assets::id.eq_any(asset_ids)));
 
-        query.execute(conn)?;
+        query.execute(conn).await?;
 
         Ok(())
     }
@@ -159,18 +172,23 @@ pub struct NewAsset {
 
 impl NewAsset {
     #[tracing::instrument(err, skip_all)]
-    pub fn insert_for_room(self, conn: &mut DbConnection, room_id: RoomId) -> Result<Asset> {
+    pub async fn insert_for_room(self, conn: &mut DbConnection, room_id: RoomId) -> Result<Asset> {
         conn.transaction(|conn| {
-            let asset: Asset = self.insert_into(assets::table).get_result(conn)?;
+            async move {
+                let asset: Asset = self.insert_into(assets::table).get_result(conn).await?;
 
-            RoomAsset {
-                room_id,
-                asset_id: asset.id,
+                RoomAsset {
+                    room_id,
+                    asset_id: asset.id,
+                }
+                .insert_into(room_assets::table)
+                .execute(conn)
+                .await?;
+
+                Ok(asset)
             }
-            .insert_into(room_assets::table)
-            .execute(conn)?;
-
-            Ok(asset)
+            .scope_boxed()
         })
+        .await
     }
 }

@@ -9,7 +9,8 @@ use chrono::{DateTime, Utc};
 use database::{DatabaseError, DbConnection, Paginate, Result};
 use diesel::prelude::*;
 use diesel::result::DatabaseErrorKind;
-use diesel::{ExpressionMethods, Identifiable, QueryDsl, Queryable, RunQueryDsl};
+use diesel::{ExpressionMethods, Identifiable, QueryDsl, Queryable};
+use diesel_async::RunQueryDsl;
 
 pub mod types;
 
@@ -40,17 +41,17 @@ pub struct LegalVote {
 impl LegalVote {
     /// Get the `LegalVote` with the provided `legal_vote_id`
     #[tracing::instrument(err, skip_all)]
-    pub fn get(conn: &mut DbConnection, legal_vote_id: LegalVoteId) -> Result<LegalVote> {
+    pub async fn get(conn: &mut DbConnection, legal_vote_id: LegalVoteId) -> Result<LegalVote> {
         let query = legal_votes::table.filter(legal_votes::id.eq(legal_vote_id));
 
-        let legal_vote = query.get_result(conn)?;
+        let legal_vote = query.get_result(conn).await?;
 
         Ok(legal_vote)
     }
 
     /// Get all `LegalVote` filtered by ids and room, paginated
     #[tracing::instrument(err, skip_all)]
-    pub fn get_for_room_by_ids_paginated(
+    pub async fn get_for_room_by_ids_paginated(
         conn: &mut DbConnection,
         room_id: RoomId,
         accessible_ids: &[LegalVoteId],
@@ -62,14 +63,14 @@ impl LegalVote {
             .filter(legal_votes::id.eq_any(accessible_ids))
             .paginate_by(limit, page);
 
-        let legal_votes_with_total = query.load_and_count::<LegalVote, _>(conn)?;
+        let legal_votes_with_total = query.load_and_count::<LegalVote, _>(conn).await?;
 
         Ok(legal_votes_with_total)
     }
 
     /// Get all `LegalVote`s by ids, paginated
     #[tracing::instrument(err, skip_all)]
-    pub fn get_by_ids_paginated(
+    pub async fn get_by_ids_paginated(
         conn: &mut DbConnection,
         ids: &[LegalVoteId],
         limit: i64,
@@ -79,14 +80,14 @@ impl LegalVote {
             .filter(legal_votes::id.eq_any(ids))
             .paginate_by(limit, page);
 
-        let legal_votes_with_total = query.load_and_count::<LegalVote, _>(conn)?;
+        let legal_votes_with_total = query.load_and_count::<LegalVote, _>(conn).await?;
 
         Ok(legal_votes_with_total)
     }
 
     /// Get all `LegalVote`s, paginated
     #[tracing::instrument(err, skip_all)]
-    pub fn get_all_paginated(
+    pub async fn get_all_paginated(
         conn: &mut DbConnection,
         limit: i64,
         page: i64,
@@ -95,14 +96,14 @@ impl LegalVote {
             .order_by(legal_votes::id.desc())
             .paginate_by(limit, page);
 
-        let legal_votes_with_total = query.load_and_count::<LegalVote, _>(conn)?;
+        let legal_votes_with_total = query.load_and_count::<LegalVote, _>(conn).await?;
 
         Ok(legal_votes_with_total)
     }
 
     /// Get all `LegalVotes` for room, paginated
     #[tracing::instrument(err, skip_all)]
-    pub fn get_for_room_paginated(
+    pub async fn get_for_room_paginated(
         conn: &mut DbConnection,
         room_id: RoomId,
         limit: i64,
@@ -112,14 +113,14 @@ impl LegalVote {
             .filter(legal_votes::room.eq(room_id))
             .paginate_by(limit, page);
 
-        let legal_votes_with_total = query.load_and_count::<LegalVote, _>(conn)?;
+        let legal_votes_with_total = query.load_and_count::<LegalVote, _>(conn).await?;
 
         Ok(legal_votes_with_total)
     }
 
     /// Get all `LegalVotes` for room
     #[tracing::instrument(err, skip_all)]
-    pub fn get_all_ids_for_room(
+    pub async fn get_all_ids_for_room(
         conn: &mut DbConnection,
         room_id: RoomId,
     ) -> Result<Vec<LegalVoteId>> {
@@ -127,17 +128,18 @@ impl LegalVote {
             .select(legal_votes::id)
             .filter(legal_votes::room.eq(room_id));
 
-        let legal_votes_with_total = query.load(conn)?;
+        let legal_votes_with_total = query.load(conn).await?;
 
         Ok(legal_votes_with_total)
     }
 
     /// Delete all `LegalVotes` for room
     #[tracing::instrument(err, skip_all)]
-    pub fn delete_by_room(conn: &mut DbConnection, room_id: RoomId) -> Result<()> {
+    pub async fn delete_by_room(conn: &mut DbConnection, room_id: RoomId) -> Result<()> {
         diesel::delete(legal_votes::table)
             .filter(legal_votes::room.eq(room_id))
-            .execute(conn)?;
+            .execute(conn)
+            .await?;
 
         Ok(())
     }
@@ -168,7 +170,7 @@ impl NewLegalVote {
     /// Generates a [`LegalVoteId`] (uuid) for the entry in the database. In case the insert statement fails with an `UniqueViolation`,
     /// the statement will be resend with a different [`LegalVoteId`] to counteract uuid collisions.
     #[tracing::instrument(err, skip_all)]
-    pub fn insert(self, conn: &mut DbConnection) -> Result<LegalVote> {
+    pub async fn insert(self, conn: &mut DbConnection) -> Result<LegalVote> {
         // Try 3 times to generate a UUID without collision.
         // While a single collision is highly unlikely, this enforces
         // a unique ID in this sensitive topic. If this fails more than
@@ -176,7 +178,7 @@ impl NewLegalVote {
         for _ in 0..3 {
             let query = self.clone().insert_into(legal_votes::table);
 
-            match query.get_result(conn) {
+            match query.get_result(conn).await {
                 Ok(legal_vote) => return Ok(legal_vote),
                 Err(diesel::result::Error::DatabaseError(
                     DatabaseErrorKind::UniqueViolation,
@@ -199,7 +201,7 @@ impl NewLegalVote {
 /// Set the vote protocol for the provided `legal_vote_id`
 // FIXME(r.floren): Is there a mentally better place for this? LegalVote does not make much sense, and NewProtocol neither.
 #[tracing::instrument(err, skip_all)]
-pub fn set_protocol(
+pub async fn set_protocol(
     conn: &mut DbConnection,
     legal_vote_id: LegalVoteId,
     protocol: NewProtocol,
@@ -210,7 +212,7 @@ pub fn set_protocol(
     let query = diesel::update(legal_votes::table.filter(legal_votes::id.eq(&legal_vote_id)))
         .set(legal_votes::protocol.eq(protocol));
 
-    query.execute(conn)?;
+    query.execute(conn).await?;
 
     Ok(())
 }

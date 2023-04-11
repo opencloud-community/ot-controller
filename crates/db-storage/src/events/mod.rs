@@ -19,8 +19,10 @@ use diesel::prelude::*;
 use diesel::sql_types::{Nullable, Record, Timestamptz, Uuid};
 use diesel::{
     BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods,
-    OptionalExtension, PgSortExpressionMethods, QueryDsl, Queryable, RunQueryDsl,
+    OptionalExtension, PgSortExpressionMethods, QueryDsl, Queryable,
 };
+use diesel_async::scoped_futures::ScopedFutureExt;
+use diesel_async::{AsyncConnection, RunQueryDsl};
 use serde::Serialize;
 use std::io::Write;
 use std::str::FromStr;
@@ -126,17 +128,17 @@ impl GetEventsCursor {
 
 impl Event {
     #[tracing::instrument(err, skip_all)]
-    pub fn get(conn: &mut DbConnection, event_id: EventId) -> Result<Event> {
+    pub async fn get(conn: &mut DbConnection, event_id: EventId) -> Result<Event> {
         let query = events::table.filter(events::id.eq(event_id));
 
-        let event = query.first(conn)?;
+        let event = query.first(conn).await?;
 
         Ok(event)
     }
 
     #[tracing::instrument(err, skip_all)]
     #[allow(clippy::type_complexity)]
-    pub fn get_with_invite_and_room(
+    pub async fn get_with_invite_and_room(
         conn: &mut DbConnection,
         user_id: UserId,
         event_id: EventId,
@@ -163,14 +165,14 @@ impl Event {
             ))
             .filter(events::id.eq(event_id));
 
-        let (event, invite, room, sip_config, is_favorite) = query.first(conn)?;
+        let (event, invite, room, sip_config, is_favorite) = query.first(conn).await?;
 
         Ok((event, invite, room, sip_config, is_favorite))
     }
 
     #[tracing::instrument(err, skip_all)]
     #[allow(clippy::type_complexity)]
-    pub fn get_with_room(
+    pub async fn get_with_room(
         conn: &mut DbConnection,
         event_id: EventId,
     ) -> Result<(Event, Room, Option<SipConfig>)> {
@@ -184,14 +186,14 @@ impl Event {
             ))
             .filter(events::id.eq(event_id));
 
-        let (event, room, sip_config) = query.first(conn)?;
+        let (event, room, sip_config) = query.first(conn).await?;
 
         Ok((event, room, sip_config))
     }
 
     #[tracing::instrument(err, skip_all)]
     #[allow(clippy::too_many_arguments, clippy::type_complexity)]
-    pub fn get_all_for_user_paginated(
+    pub async fn get_all_for_user_paginated(
         conn: &mut DbConnection,
         user: &User,
         only_favorites: bool,
@@ -331,7 +333,7 @@ impl Event {
             Room,
             Option<SipConfig>,
             bool,
-        )> = query.load(conn)?;
+        )> = query.load(conn).await?;
 
         let mut events_with_invite_room_and_exceptions =
             Vec::with_capacity(events_with_invite_and_room.len());
@@ -340,7 +342,8 @@ impl Event {
             let exceptions = if event.is_recurring.unwrap_or_default() {
                 event_exceptions::table
                     .filter(event_exceptions::event_id.eq(event.id))
-                    .load(conn)?
+                    .load(conn)
+                    .await?
             } else {
                 vec![]
             };
@@ -359,10 +362,11 @@ impl Event {
     }
 
     #[tracing::instrument(err, skip_all)]
-    pub fn delete_by_id(conn: &mut DbConnection, event_id: EventId) -> Result<()> {
+    pub async fn delete_by_id(conn: &mut DbConnection, event_id: EventId) -> Result<()> {
         diesel::delete(events::table)
             .filter(events::id.eq(event_id))
-            .execute(conn)?;
+            .execute(conn)
+            .await?;
 
         Ok(())
     }
@@ -371,12 +375,15 @@ impl Event {
     ///
     /// This is needed because when rescheduling an Event from time x onwards, we create a new Event and both reference the room.
     #[tracing::instrument(err, skip_all)]
-    pub fn get_all_ids_for_room(conn: &mut DbConnection, room_id: RoomId) -> Result<Vec<EventId>> {
+    pub async fn get_all_ids_for_room(
+        conn: &mut DbConnection,
+        room_id: RoomId,
+    ) -> Result<Vec<EventId>> {
         let query = events::table
             .select(events::id)
             .filter(events::room.eq(room_id));
 
-        let events = query.load(conn)?;
+        let events = query.load(conn).await?;
 
         Ok(events)
     }
@@ -385,10 +392,11 @@ impl Event {
     ///
     /// Fastpath for deleting multiple events in room
     #[tracing::instrument(err, skip_all)]
-    pub fn delete_all_for_room(conn: &mut DbConnection, room_id: RoomId) -> Result<()> {
+    pub async fn delete_all_for_room(conn: &mut DbConnection, room_id: RoomId) -> Result<()> {
         diesel::delete(events::table)
             .filter(events::room.eq(room_id))
-            .execute(conn)?;
+            .execute(conn)
+            .await?;
 
         Ok(())
     }
@@ -417,10 +425,10 @@ pub struct NewEvent {
 
 impl NewEvent {
     #[tracing::instrument(err, skip_all)]
-    pub fn insert(self, conn: &mut DbConnection) -> Result<Event> {
+    pub async fn insert(self, conn: &mut DbConnection) -> Result<Event> {
         let query = self.insert_into(events::table);
 
-        let event = query.get_result(conn)?;
+        let event = query.get_result(conn).await?;
 
         Ok(event)
     }
@@ -447,13 +455,13 @@ pub struct UpdateEvent {
 
 impl UpdateEvent {
     #[tracing::instrument(err, skip_all)]
-    pub fn apply(self, conn: &mut DbConnection, event_id: EventId) -> Result<Event> {
+    pub async fn apply(self, conn: &mut DbConnection, event_id: EventId) -> Result<Event> {
         let query = diesel::update(events::table)
             .filter(events::id.eq(event_id))
             .set(self)
             .returning(events::all_columns);
 
-        let event = query.get_result(conn)?;
+        let event = query.get_result(conn).await?;
 
         Ok(event)
     }
@@ -498,7 +506,7 @@ impl HasUsers for &EventException {
 
 impl EventException {
     #[tracing::instrument(err, skip_all)]
-    pub fn get_for_event(
+    pub async fn get_for_event(
         conn: &mut DbConnection,
         event_id: EventId,
         datetime: DateTime<Utc>,
@@ -509,13 +517,13 @@ impl EventException {
                 .and(event_exceptions::exception_date.eq(datetime)),
         );
 
-        let exceptions = query.first(conn).optional()?;
+        let exceptions = query.first(conn).await.optional()?;
 
         Ok(exceptions)
     }
 
     #[tracing::instrument(err, skip_all)]
-    pub fn get_all_for_event(
+    pub async fn get_all_for_event(
         conn: &mut DbConnection,
         event_id: EventId,
         datetimes: &[DateTime<Utc>],
@@ -526,17 +534,17 @@ impl EventException {
                 .and(event_exceptions::exception_date.eq_any(datetimes)),
         );
 
-        let exceptions = query.load(conn).optional()?.unwrap_or_default();
+        let exceptions = query.load(conn).await.optional()?.unwrap_or_default();
 
         Ok(exceptions)
     }
 
     #[tracing::instrument(err, skip_all)]
-    pub fn delete_all_for_event(conn: &mut DbConnection, event_id: EventId) -> Result<()> {
+    pub async fn delete_all_for_event(conn: &mut DbConnection, event_id: EventId) -> Result<()> {
         let query =
             diesel::delete(event_exceptions::table).filter(event_exceptions::event_id.eq(event_id));
 
-        query.execute(conn)?;
+        query.execute(conn).await?;
 
         Ok(())
     }
@@ -561,10 +569,10 @@ pub struct NewEventException {
 
 impl NewEventException {
     #[tracing::instrument(err, skip_all)]
-    pub fn insert(self, conn: &mut DbConnection) -> Result<EventException> {
+    pub async fn insert(self, conn: &mut DbConnection) -> Result<EventException> {
         let query = self.insert_into(event_exceptions::table);
 
-        let event_exception = query.get_result(conn)?;
+        let event_exception = query.get_result(conn).await?;
 
         Ok(event_exception)
     }
@@ -585,7 +593,7 @@ pub struct UpdateEventException {
 
 impl UpdateEventException {
     #[tracing::instrument(err, skip_all)]
-    pub fn apply(
+    pub async fn apply(
         self,
         conn: &mut DbConnection,
         event_exception_id: EventExceptionId,
@@ -595,7 +603,7 @@ impl UpdateEventException {
             .set(self)
             .returning(event_exceptions::all_columns);
 
-        let exception = query.get_result(conn)?;
+        let exception = query.get_result(conn).await?;
 
         Ok(exception)
     }
@@ -644,45 +652,50 @@ pub struct EventInvite {
 
 impl EventInvite {
     #[tracing::instrument(err, skip_all)]
-    pub fn get_for_events(
+    pub async fn get_for_events(
         conn: &mut DbConnection,
         events: &[&Event],
     ) -> Result<Vec<Vec<(EventInvite, User)>>> {
         conn.transaction(|conn| {
-            let invites: Vec<EventInvite> = EventInvite::belonging_to(events).load(conn)?;
-            let mut user_ids: Vec<UserId> = invites.iter().map(|x| x.invitee).collect();
-            // Small optimization to filter out duplicates
-            user_ids.sort_unstable();
-            user_ids.dedup();
+            async move {
+                let invites: Vec<EventInvite> =
+                    EventInvite::belonging_to(events).load(conn).await?;
+                let mut user_ids: Vec<UserId> = invites.iter().map(|x| x.invitee).collect();
+                // Small optimization to filter out duplicates
+                user_ids.sort_unstable();
+                user_ids.dedup();
 
-            let users = User::get_all_by_ids(conn, &user_ids)?;
+                let users = User::get_all_by_ids(conn, &user_ids).await?;
 
-            let invites_by_event: Vec<Vec<EventInvite>> = invites.grouped_by(events);
-            let mut invites_with_users_by_event = Vec::with_capacity(events.len());
+                let invites_by_event: Vec<Vec<EventInvite>> = invites.grouped_by(events);
+                let mut invites_with_users_by_event = Vec::with_capacity(events.len());
 
-            for invites in invites_by_event {
-                let mut invites_with_users = Vec::with_capacity(invites.len());
+                for invites in invites_by_event {
+                    let mut invites_with_users = Vec::with_capacity(invites.len());
 
-                for invite in invites {
-                    let user = users
-                        .iter()
-                        .find(|user| user.id == invite.invitee)
-                        .ok_or_else(|| {
-                            DatabaseError::Custom("bug: user invite invitee missing".into())
-                        })?;
+                    for invite in invites {
+                        let user = users
+                            .iter()
+                            .find(|user| user.id == invite.invitee)
+                            .ok_or_else(|| {
+                                DatabaseError::Custom("bug: user invite invitee missing".into())
+                            })?;
 
-                    invites_with_users.push((invite, user.clone()))
+                        invites_with_users.push((invite, user.clone()))
+                    }
+
+                    invites_with_users_by_event.push(invites_with_users);
                 }
 
-                invites_with_users_by_event.push(invites_with_users);
+                Ok(invites_with_users_by_event)
             }
-
-            Ok(invites_with_users_by_event)
+            .scope_boxed()
         })
+        .await
     }
 
     #[tracing::instrument(err, skip_all)]
-    pub fn get_for_event_paginated(
+    pub async fn get_for_event_paginated(
         conn: &mut DbConnection,
         event_id: EventId,
         per_page: i64,
@@ -695,13 +708,14 @@ impl EventInvite {
             .then_order_by(event_invites::created_by.desc())
             .then_order_by(event_invites::invitee.desc())
             .paginate_by(per_page, page);
-        let invites = query.load_and_count(conn)?;
+
+        let invites = query.load_and_count(conn).await?;
 
         Ok(invites)
     }
 
     #[tracing::instrument(err, skip_all)]
-    pub fn get_pending_for_user(
+    pub async fn get_pending_for_user(
         conn: &mut DbConnection,
         user_id: UserId,
     ) -> Result<Vec<EventInvite>> {
@@ -711,13 +725,13 @@ impl EventInvite {
                 .and(event_invites::status.eq(EventInviteStatus::Pending)),
         );
 
-        let event_invites = query.load(conn)?;
+        let event_invites = query.load(conn).await?;
 
         Ok(event_invites)
     }
 
     #[tracing::instrument(err, skip_all)]
-    pub fn delete_by_invitee(
+    pub async fn delete_by_invitee(
         conn: &mut DbConnection,
         event_id: EventId,
         invitee: UserId,
@@ -730,7 +744,7 @@ impl EventInvite {
             )
             .returning(event_invites::all_columns);
 
-        let event_invite = query.get_result(conn)?;
+        let event_invite = query.get_result(conn).await?;
 
         Ok(event_invite)
     }
@@ -750,10 +764,10 @@ impl NewEventInvite {
     ///
     /// When yielding a unique key violation, None is returned.
     #[tracing::instrument(err, skip_all)]
-    pub fn try_insert(self, conn: &mut DbConnection) -> Result<Option<EventInvite>> {
+    pub async fn try_insert(self, conn: &mut DbConnection) -> Result<Option<EventInvite>> {
         let query = self.insert_into(event_invites::table);
 
-        let result = query.get_result(conn);
+        let result = query.get_result(conn).await;
 
         match result {
             Ok(event_invite) => Ok(Some(event_invite)),
@@ -775,7 +789,7 @@ pub struct UpdateEventInvite {
 impl UpdateEventInvite {
     /// Apply the update to the invite where `user_id` is the invitee
     #[tracing::instrument(err, skip_all)]
-    pub fn apply(
+    pub async fn apply(
         self,
         conn: &mut DbConnection,
         user_id: UserId,
@@ -797,7 +811,7 @@ impl UpdateEventInvite {
             // change it here
             .returning(event_invites::all_columns);
 
-        let event_invite = query.get_result(conn)?;
+        let event_invite = query.get_result(conn).await?;
 
         Ok(event_invite)
     }
@@ -818,7 +832,7 @@ impl EventFavorite {
     ///
     /// Returns true if something was deleted
     #[tracing::instrument(err, skip_all)]
-    pub fn delete_by_id(
+    pub async fn delete_by_id(
         conn: &mut DbConnection,
         user_id: UserId,
         event_id: EventId,
@@ -829,7 +843,8 @@ impl EventFavorite {
                     .eq(user_id)
                     .and(event_favorites::event_id.eq(event_id)),
             )
-            .execute(conn)?;
+            .execute(conn)
+            .await?;
 
         Ok(lines_changes > 0)
     }
@@ -847,10 +862,10 @@ impl NewEventFavorite {
     ///
     /// When yielding a unique key violation, None is returned.
     #[tracing::instrument(err, skip_all)]
-    pub fn try_insert(self, conn: &mut DbConnection) -> Result<Option<EventFavorite>> {
+    pub async fn try_insert(self, conn: &mut DbConnection) -> Result<Option<EventFavorite>> {
         let query = self.insert_into(event_favorites::table);
 
-        let result = query.get_result(conn);
+        let result = query.get_result(conn).await;
 
         match result {
             Ok(event_favorite) => Ok(Some(event_favorite)),

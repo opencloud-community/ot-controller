@@ -5,6 +5,8 @@ use super::schema::{groups, user_groups};
 use super::users::User;
 use database::{DbConnection, Result};
 use diesel::prelude::*;
+use diesel_async::scoped_futures::ScopedFutureExt;
+use diesel_async::{AsyncConnection, RunQueryDsl};
 use types::core::{GroupId, GroupName, TenantId, UserId};
 
 types::diesel_newtype! {
@@ -23,14 +25,14 @@ pub struct Group {
 
 impl Group {
     #[tracing::instrument(err, skip_all)]
-    pub fn get_all_for_user(conn: &mut DbConnection, user_id: UserId) -> Result<Vec<Group>> {
+    pub async fn get_all_for_user(conn: &mut DbConnection, user_id: UserId) -> Result<Vec<Group>> {
         let query = user_groups::table
             .inner_join(groups::table)
             .filter(user_groups::user_id.eq(user_id))
             .select(groups::all_columns)
             .order_by(groups::id_serial);
 
-        let groups: Vec<Group> = query.load(conn)?;
+        let groups: Vec<Group> = query.load(conn).await?;
 
         Ok(groups)
     }
@@ -45,24 +47,29 @@ pub struct NewGroup<'a> {
 impl NewGroup<'_> {
     /// Insert the new group. If the group already exists for the OIDC issuer the group will be returned instead
     #[tracing::instrument(err, skip_all)]
-    pub fn insert_or_get(self, conn: &mut DbConnection) -> Result<Group> {
+    pub async fn insert_or_get(self, conn: &mut DbConnection) -> Result<Group> {
         conn.transaction(|conn| {
-            let query = groups::table
-                .select(groups::all_columns)
-                .filter(groups::name.eq(&self.name));
+            async move {
+                let query = groups::table
+                    .select(groups::all_columns)
+                    .filter(groups::name.eq(&self.name));
 
-            let group: Option<Group> = query.first(conn).optional()?;
+                let group: Option<Group> = query.first(conn).await.optional()?;
 
-            let group = if let Some(group) = group {
-                group
-            } else {
-                diesel::insert_into(groups::table)
-                    .values(self)
-                    .get_result(conn)?
-            };
+                let group = if let Some(group) = group {
+                    group
+                } else {
+                    diesel::insert_into(groups::table)
+                        .values(self)
+                        .get_result(conn)
+                        .await?
+                };
 
-            Ok(group)
+                Ok(group)
+            }
+            .scope_boxed()
         })
+        .await
     }
 }
 
@@ -86,7 +93,7 @@ pub struct UserGroupRelation {
 /// Get or create groups in the database by their name and tenant_id
 /// If the group is currently not stored, create a new group and returns the ID along the already present ones.
 /// Does not preserve the order of groups passed to the function
-pub fn get_or_create_groups_by_name(
+pub async fn get_or_create_groups_by_name(
     conn: &mut DbConnection,
     groups: &[(TenantId, GroupName)],
 ) -> Result<Vec<Group>> {
@@ -100,7 +107,7 @@ pub fn get_or_create_groups_by_name(
         );
     }
 
-    let mut present_groups: Vec<Group> = query.load(conn)?;
+    let mut present_groups: Vec<Group> = query.load(conn).await?;
 
     // Create a `NewGroup` for every group that the previous query didn't return
     let new_groups: Vec<NewGroup> = groups
@@ -119,7 +126,8 @@ pub fn get_or_create_groups_by_name(
         let new_groups: Vec<Group> = diesel::insert_into(groups::table)
             .values(&new_groups)
             .returning(groups::all_columns)
-            .load(conn)?;
+            .load(conn)
+            .await?;
 
         present_groups.extend(new_groups);
     }
@@ -128,7 +136,7 @@ pub fn get_or_create_groups_by_name(
 }
 
 #[tracing::instrument(err, skip_all)]
-pub fn insert_user_into_groups(
+pub async fn insert_user_into_groups(
     conn: &mut DbConnection,
     user: &User,
     groups: &[Group],
@@ -144,13 +152,14 @@ pub fn insert_user_into_groups(
     diesel::insert_into(user_groups::table)
         .values(new_user_groups)
         .on_conflict_do_nothing()
-        .execute(conn)?;
+        .execute(conn)
+        .await?;
 
     Ok(())
 }
 
 #[tracing::instrument(err, skip_all)]
-pub fn remove_user_from_groups(
+pub async fn remove_user_from_groups(
     conn: &mut DbConnection,
     user: &User,
     groups: &[Group],
@@ -163,7 +172,8 @@ pub fn remove_user_from_groups(
                 .eq(user.id)
                 .and(user_groups::group_id.eq_any(group_ids)),
         )
-        .execute(conn)?;
+        .execute(conn)
+        .await?;
 
     Ok(())
 }
