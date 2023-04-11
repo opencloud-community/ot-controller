@@ -155,16 +155,10 @@ pub struct Database {
     pub url: String,
     #[serde(default = "default_max_connections")]
     pub max_connections: u32,
-    #[serde(default = "default_min_idle_connections")]
-    pub min_idle_connections: u32,
 }
 
 fn default_max_connections() -> u32 {
     100
-}
-
-fn default_min_idle_connections() -> u32 {
-    10
 }
 
 /// Settings for Keycloak

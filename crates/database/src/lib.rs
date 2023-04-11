@@ -6,10 +6,12 @@
 
 use diesel::pg::Pg;
 use diesel::query_builder::{AstPass, Query, QueryFragment};
-use diesel::query_dsl::LoadQuery;
 use diesel::result::Error;
 use diesel::sql_types::BigInt;
-use diesel::{r2d2, PgConnection, QueryResult, RunQueryDsl};
+use diesel::QueryResult;
+use diesel_async::methods::LoadQuery;
+use diesel_async::pooled_connection::deadpool::{BuildError, Object, PoolError};
+use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
 use std::borrow::Cow;
 
 #[macro_use]
@@ -23,8 +25,7 @@ pub use db::Db;
 pub use metrics::DatabaseMetrics;
 
 /// Pooled connection alias
-pub type DbConnection =
-    metrics::MetricsConnection<r2d2::PooledConnection<r2d2::ConnectionManager<PgConnection>>>;
+pub type DbConnection = metrics::MetricsConnection<Object<AsyncPgConnection>>;
 
 /// Result type using [`DatabaseError`] as a default Error
 pub type Result<T, E = DatabaseError> = std::result::Result<T, E>;
@@ -38,10 +39,10 @@ pub enum DatabaseError {
     DieselError(diesel::result::Error),
     #[error("A requested resource could not be found")]
     NotFound,
-    // The R2D2 error mapping is only possible when using r2d2 directly as a dependency, hence the
-    // generic R2D2 error handling. See https://github.com/diesel-rs/diesel/issues/2336
-    #[error("The connection pool returned an Error: `{0}`")]
-    R2D2Error(String),
+    #[error("Deadpool build error: `{0}`")]
+    DeadpoolBuildError(#[from] BuildError),
+    #[error("Deadpool error: `{0}`")]
+    DeadpoolError(#[from] PoolError),
 }
 
 impl DatabaseError {
@@ -115,11 +116,17 @@ impl<T> Paginated<T> {
         Paginated { per_page, ..self }
     }
 
-    pub fn load_and_count<'query, U, Conn>(self, conn: &mut Conn) -> QueryResult<(Vec<U>, i64)>
+    pub async fn load_and_count<'query, U, Conn>(
+        self,
+        conn: &mut Conn,
+    ) -> QueryResult<(Vec<U>, i64)>
     where
         Self: LoadQuery<'query, Conn, (U, i64)>,
+        Conn: AsyncConnection,
+        U: Send + 'static,
+        T: 'query,
     {
-        let results = self.load::<(U, i64)>(conn)?;
+        let results = self.load::<(U, i64)>(conn).await?;
         let total = results.get(0).map(|x| x.1).unwrap_or(0);
         let records = results.into_iter().map(|x| x.0).collect();
         Ok((records, total))
@@ -129,8 +136,6 @@ impl<T> Paginated<T> {
 impl<T: Query> Query for Paginated<T> {
     type SqlType = (T::SqlType, BigInt);
 }
-
-impl<T, Conn> RunQueryDsl<Conn> for Paginated<T> {}
 
 impl<T> QueryFragment<Pg> for Paginated<T>
 where
