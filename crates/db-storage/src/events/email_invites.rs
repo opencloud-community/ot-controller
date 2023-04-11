@@ -89,6 +89,19 @@ impl EventEmailInvite {
                 .on_conflict_do_nothing()
                 .execute(conn)?;
 
+            diesel::delete(
+                event_email_invites::table.filter(
+                    event_email_invites::email.eq(&user.email).and(
+                        event_email_invites::event_id.eq_any(
+                            events::table
+                                .filter(events::tenant_id.eq(user.tenant_id))
+                                .select(events::id),
+                        ),
+                    ),
+                ),
+            )
+            .execute(conn)?;
+
             Ok(event_ids)
         })
     }
