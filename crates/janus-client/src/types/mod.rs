@@ -367,6 +367,7 @@ mod tests {
         let attach = JanusRequest::AttachToPlugin(AttachToPlugin {
             plugin: JanusPlugin::VideoRoom,
             session_id: SessionId::new(123),
+            loop_index: None,
         });
 
         assert_eq_json!(

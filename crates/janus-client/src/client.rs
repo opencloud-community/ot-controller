@@ -294,12 +294,14 @@ impl InnerClient {
         &self,
         session: SessionId,
         plugin: JanusPlugin,
+        loop_index: Option<usize>,
     ) -> Result<HandleId, error::Error> {
         let transaction = self
             .create_transaction(
                 JanusRequest::AttachToPlugin(AttachToPlugin {
                     plugin,
                     session_id: session,
+                    loop_index,
                 }),
                 false,
             )
@@ -410,13 +412,14 @@ impl InnerSession {
     pub(crate) async fn attach_to_plugin(
         &self,
         plugin: JanusPlugin,
+        loop_index: Option<usize>,
     ) -> Result<Arc<InnerHandle>, error::Error> {
         let client = self
             .client
             .upgrade()
             .expect("Failed Weak::upgrade. Expected the client reference to be still valid");
 
-        let handle_id = client.attach_to_plugin(self.id, plugin).await?;
+        let handle_id = client.attach_to_plugin(self.id, plugin, loop_index).await?;
 
         let handle = Arc::new(InnerHandle::new(
             self.client.clone(),

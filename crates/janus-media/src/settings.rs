@@ -57,6 +57,8 @@ pub struct Connection {
     pub exchange: String,
     #[serde(default = "default_from_janus_routing_key")]
     pub from_routing_key: String,
+    #[serde(default)]
+    pub event_loops: Option<usize>,
 }
 
 const fn default_max_video_bitrate() -> u64 {

@@ -86,6 +86,8 @@ pub struct KeepAlive {
 pub struct AttachToPlugin {
     pub plugin: JanusPlugin,
     pub session_id: SessionId,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub loop_index: Option<usize>,
 }
 
 /// Sends a message to a plugin

@@ -22,7 +22,7 @@
 //! let client = Client::new(config, ClientId(Arc::from("")), sink).await.unwrap();
 //! let session = client.create_session().await.unwrap();
 //! let echo_handle = session
-//!     .attach_to_plugin(JanusPlugin::Echotest)
+//!     .attach_to_plugin(JanusPlugin::Echotest, None)
 //!     .await
 //!     .unwrap();
 //!
@@ -75,13 +75,13 @@
 //! let session = client.create_session().await.unwrap();
 //!
 //! let echo_handle = session
-//!     .attach_to_plugin(JanusPlugin::VideoRoom)
+//!     .attach_to_plugin(JanusPlugin::VideoRoom, None)
 //!     .await
 //!     .unwrap();
 //! let publisher = PublisherClient(echo_handle);
 //!
 //! let echo_handle = session
-//!     .attach_to_plugin(JanusPlugin::VideoRoom)
+//!     .attach_to_plugin(JanusPlugin::VideoRoom, None)
 //!     .await
 //!     .unwrap();
 //! let subscriber = SubscriberClient(echo_handle);
@@ -193,9 +193,13 @@ impl Session {
     /// Attaches to the given plugin
     ///
     /// Returns a [`Handle`](Handle) or [`Error`](error::Error) if something went wrong
-    pub async fn attach_to_plugin(&self, plugin: JanusPlugin) -> Result<Handle, error::Error> {
+    pub async fn attach_to_plugin(
+        &self,
+        plugin: JanusPlugin,
+        loop_index: Option<usize>,
+    ) -> Result<Handle, error::Error> {
         Ok(Handle {
-            inner: self.inner.attach_to_plugin(plugin).await?,
+            inner: self.inner.attach_to_plugin(plugin, loop_index).await?,
         })
     }
 

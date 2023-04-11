@@ -84,6 +84,10 @@ to_routing_key = "to-janus"
 exchange = "janus-exchange"
 from_routing_key = "from-janus"
 
+# Optional setting to specify how many event loops are configured for this janus server
+# This value is used to balance new webrtc sessions on specific event-loops.
+#event_loops = 92
+
 [rabbit_mq]
 # The URL to use to connect to the rabbit mq broker
 #url = "amqp://username:password@host/%2F"
