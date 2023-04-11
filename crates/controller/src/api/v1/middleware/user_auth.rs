@@ -149,24 +149,26 @@ pub async fn check_access_token(
         }
     };
 
-    let (current_tenant, current_user) = crate::block(move || {
-        let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-        let tenant = Tenant::get_by_oidc_id(&mut conn, OidcTenantId::from(oidc_tenant_id))?
-            .ok_or_else(|| {
-                ApiError::unauthorized()
-                    .with_code("unknown_tenant_id")
-                    .with_message("Unknown tenant_id in access token. Please login first!")
-            })?;
+    let current_tenant = Tenant::get_by_oidc_id(&mut conn, OidcTenantId::from(oidc_tenant_id))
+        .await?
+        .ok_or_else(|| {
+            ApiError::unauthorized()
+                .with_code("unknown_tenant_id")
+                .with_message("Unknown tenant_id in access token. Please login first!")
+        })?;
 
-        match User::get_by_oidc_sub(&mut conn, tenant.id, &sub)? {
-            Some(user) => Ok((tenant, user)),
-            None => Err(ApiError::unauthorized()
+    let current_user = match User::get_by_oidc_sub(&mut conn, current_tenant.id, &sub).await? {
+        Some(user) => user,
+        None => {
+            return Err(ApiError::unauthorized()
                 .with_code("unknown_sub")
-                .with_message("Unknown subject in access token. Please login first!")),
+                .with_message("Unknown subject in access token. Please login first!"))
         }
-    })
-    .await??;
+    };
+
+    drop(conn);
 
     // check if the id token is expired
     if chrono::Utc::now().timestamp() > current_user.id_token_exp {

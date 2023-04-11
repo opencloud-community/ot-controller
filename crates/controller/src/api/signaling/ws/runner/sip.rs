@@ -54,25 +54,16 @@ async fn try_map_to_user_display_name(
         .mode(phonenumber::Mode::E164)
         .to_string();
 
-    let db = db.clone();
-    let result = crate::block(move || {
-        let mut conn = db.get_conn()?;
-
-        User::get_by_phone(&mut conn, tenant_id, &phone_e164)
-    })
-    .await;
+    let mut conn = db.get_conn().await.ok()?;
+    let result = User::get_by_phone(&mut conn, tenant_id, &phone_e164).await;
 
     let users = match result {
-        Ok(Ok(users)) => users,
-        Ok(Err(err)) => {
+        Ok(users) => users,
+        Err(err) => {
             log::warn!(
                 "Failed to get users by phone number from database {:?}",
                 err
             );
-            return None;
-        }
-        Err(err) => {
-            log::error!("Blocking error in phone mapper: {:?}", err);
             return None;
         }
     };

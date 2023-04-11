@@ -1046,8 +1046,7 @@ impl Runner {
         let db = self.db.clone();
         let creator_id = self.room.created_by;
 
-        let tariff = crate::block(move || Tariff::get_by_user_id(&mut db.get_conn()?, &creator_id))
-            .await??;
+        let tariff = Tariff::get_by_user_id(&mut db.get_conn().await?, &creator_id).await?;
 
         let mut lock = storage::room_mutex(self.room_id);
         let guard = lock.lock(&mut self.redis_conn).await?;
@@ -1128,9 +1127,7 @@ impl Runner {
             let db = self.db.clone();
             let creator_id = self.room.created_by;
 
-            let mut tariff =
-                crate::block(move || Tariff::get_by_user_id(&mut db.get_conn()?, &creator_id))
-                    .await??;
+            let mut tariff = Tariff::get_by_user_id(&mut db.get_conn().await?, &creator_id).await?;
 
             let guard = lock.lock(&mut self.redis_conn).await?;
 

@@ -558,74 +558,75 @@ pub async fn new_event(
 
     new_event.validate()?;
 
-    let event_resource = crate::block(move || {
-        let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-        // simplify logic by splitting the event creation
-        // into two paths: time independent and time dependent
-        match new_event {
-            PostEventsBody {
+    // simplify logic by splitting the event creation
+    // into two paths: time independent and time dependent
+    let event_resource = match new_event {
+        PostEventsBody {
+            title,
+            description,
+            password,
+            waiting_room,
+            is_time_independent: true,
+            is_all_day: None,
+            starts_at: None,
+            ends_at: None,
+            recurrence_pattern,
+            is_adhoc,
+        } if recurrence_pattern.is_empty() => {
+            create_time_independent_event(
+                &settings,
+                &mut conn,
+                current_user,
                 title,
                 description,
                 password,
                 waiting_room,
-                is_time_independent: true,
-                is_all_day: None,
-                starts_at: None,
-                ends_at: None,
-                recurrence_pattern,
                 is_adhoc,
-            } if recurrence_pattern.is_empty() => {
-                create_time_independent_event(
-                    &settings,
-                    &mut conn,
-                    current_user,
-                    title,
-                    description,
-                    password,
-                    waiting_room,
-                    is_adhoc
-                )
-            }
-            PostEventsBody {
-                title,
-                description,
-                password,
-                waiting_room,
-                is_time_independent: false,
-                is_all_day: Some(is_all_day),
-                starts_at: Some(starts_at),
-                ends_at: Some(ends_at),
-                recurrence_pattern,
-                is_adhoc,
-            } => {
-                create_time_dependent_event(
-                    &settings,
-                    &mut conn,
-                    current_user,
-                    title,
-                    description,
-                    password,
-                    waiting_room,
-                    is_all_day,
-                    starts_at,
-                    ends_at,
-                    recurrence_pattern,
-                    is_adhoc,
-                )
-            }
-            new_event => {
-                let msg = if new_event.is_time_independent {
-                    "time independent events must not have is_all_day, starts_at, ends_at or recurrence_pattern set"
-                } else {
-                    "time dependent events must have title, description, is_all_day, starts_at and ends_at set"
-                };
-
-                Err(ApiError::bad_request().with_message(msg))
-            }
+            )
+            .await?
         }
-    })
-    .await??;
+        PostEventsBody {
+            title,
+            description,
+            password,
+            waiting_room,
+            is_time_independent: false,
+            is_all_day: Some(is_all_day),
+            starts_at: Some(starts_at),
+            ends_at: Some(ends_at),
+            recurrence_pattern,
+            is_adhoc,
+        } => {
+            create_time_dependent_event(
+                &settings,
+                &mut conn,
+                current_user,
+                title,
+                description,
+                password,
+                waiting_room,
+                is_all_day,
+                starts_at,
+                ends_at,
+                recurrence_pattern,
+                is_adhoc,
+            )
+            .await?
+        }
+        new_event => {
+            let msg = if new_event.is_time_independent {
+                "time independent events must not have is_all_day, starts_at, ends_at or recurrence_pattern set"
+            } else {
+                "time dependent events must have title, description, is_all_day, starts_at and ends_at set"
+            };
+
+            return Err(ApiError::bad_request().with_message(msg));
+        }
+    };
+
+    drop(conn);
 
     let policies = PoliciesBuilder::new()
         .grant_user_access(event_resource.created_by.id)
@@ -642,7 +643,7 @@ pub async fn new_event(
 
 /// Part of `POST /events` endpoint
 #[allow(clippy::too_many_arguments)]
-fn create_time_independent_event(
+async fn create_time_independent_event(
     settings: &Settings,
     conn: &mut DbConnection,
     current_user: User,
@@ -658,9 +659,10 @@ fn create_time_independent_event(
         waiting_room,
         tenant_id: current_user.tenant_id,
     }
-    .insert(conn)?;
+    .insert(conn)
+    .await?;
 
-    let sip_config = NewSipConfig::new(room.id, false).insert(conn)?;
+    let sip_config = NewSipConfig::new(room.id, false).insert(conn).await?;
 
     let event = NewEvent {
         title,
@@ -680,7 +682,8 @@ fn create_time_independent_event(
         is_adhoc,
         tenant_id: current_user.tenant_id,
     }
-    .insert(conn)?;
+    .insert(conn)
+    .await?;
 
     Ok(EventResource {
         id: event.id,
@@ -708,7 +711,7 @@ fn create_time_independent_event(
 
 /// Part of `POST /events` endpoint
 #[allow(clippy::too_many_arguments)]
-fn create_time_dependent_event(
+async fn create_time_dependent_event(
     settings: &Settings,
     conn: &mut DbConnection,
     current_user: User,
@@ -733,9 +736,10 @@ fn create_time_dependent_event(
         waiting_room,
         tenant_id: current_user.tenant_id,
     }
-    .insert(conn)?;
+    .insert(conn)
+    .await?;
 
-    let sip_config = NewSipConfig::new(room.id, false).insert(conn)?;
+    let sip_config = NewSipConfig::new(room.id, false).insert(conn).await?;
 
     let event = NewEvent {
         title,
@@ -755,7 +759,8 @@ fn create_time_dependent_event(
         is_adhoc,
         tenant_id: current_user.tenant_id,
     }
-    .insert(conn)?;
+    .insert(conn)
+    .await?;
 
     Ok(EventResource {
         id: event.id,
@@ -881,157 +886,157 @@ pub async fn get_events(
 
     let kc_admin_client_ref = &kc_admin_client;
 
-    let events_data = crate::block(move || -> Result<GetPaginatedEventsData, ApiError> {
-        let per_page = query
-            .per_page
-            .unwrap_or_else(default_pagination_per_page)
-            .clamp(1, 100);
+    let per_page = query
+        .per_page
+        .unwrap_or_else(default_pagination_per_page)
+        .clamp(1, 100);
 
-        let mut users = GetUserProfilesBatched::new();
+    let mut users = GetUserProfilesBatched::new();
 
-        let get_events_cursor = query
-            .after
-            .map(|cursor| db_storage::events::GetEventsCursor {
-                from_id: cursor.event_id,
-                from_created_at: cursor.event_created_at,
-                from_starts_at: cursor.event_starts_at,
-            });
+    let get_events_cursor = query
+        .after
+        .map(|cursor| db_storage::events::GetEventsCursor {
+            from_id: cursor.event_id,
+            from_created_at: cursor.event_created_at,
+            from_starts_at: cursor.event_starts_at,
+        });
 
-        let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-        let events = Event::get_all_for_user_paginated(
-            &mut conn,
-            &current_user,
-            query.favorites,
-            query.invite_status,
-            query.time_min,
-            query.time_max,
-            query.adhoc,
-            query.time_independent,
-            get_events_cursor,
-            per_page,
-        )?;
+    let events = Event::get_all_for_user_paginated(
+        &mut conn,
+        &current_user,
+        query.favorites,
+        query.invite_status,
+        query.time_min,
+        query.time_max,
+        query.adhoc,
+        query.time_independent,
+        get_events_cursor,
+        per_page,
+    )
+    .await?;
 
-        for (event, _, _, _, exceptions, _) in &events {
-            users.add(event);
-            users.add(exceptions);
-        }
+    for (event, _, _, _, exceptions, _) in &events {
+        users.add(event);
+        users.add(exceptions);
+    }
 
-        let users = users.fetch(&settings, &mut conn)?;
+    let users = users.fetch(&settings, &mut conn).await?;
 
-        let event_refs: Vec<&Event> = events.iter().map(|(event, ..)| event).collect();
+    let event_refs: Vec<&Event> = events.iter().map(|(event, ..)| event).collect();
 
-        // Build list of event invites with user, grouped by events
-        let invites_with_users_grouped_by_event = if query.invitees_max == 0 {
-            // Do not query event invites if invitees_max is zero, instead create dummy value
-            (0..events.len()).map(|_| Vec::new()).collect()
-        } else {
-            EventInvite::get_for_events(&mut conn, &event_refs)?
-        };
+    // Build list of event invites with user, grouped by events
+    let invites_with_users_grouped_by_event = if query.invitees_max == 0 {
+        // Do not query event invites if invitees_max is zero, instead create dummy value
+        (0..events.len()).map(|_| Vec::new()).collect()
+    } else {
+        EventInvite::get_for_events(&mut conn, &event_refs).await?
+    };
 
-        // Build list of additional email event invites, grouped by events
-        let email_invites_grouped_by_event = if query.invitees_max == 0 {
-            // Do not query email event invites if invitees_max is zero, instead create dummy value
-            (0..events.len()).map(|_| Vec::new()).collect()
-        } else {
-            EventEmailInvite::get_for_events(&mut conn, &event_refs)?
-        };
+    // Build list of additional email event invites, grouped by events
+    let email_invites_grouped_by_event = if query.invitees_max == 0 {
+        // Do not query email event invites if invitees_max is zero, instead create dummy value
+        (0..events.len()).map(|_| Vec::new()).collect()
+    } else {
+        EventEmailInvite::get_for_events(&mut conn, &event_refs).await?
+    };
 
-        type InvitesByEvent = Vec<(Vec<(EventInvite, User)>, Vec<EventEmailInvite>)>;
-        let invites_grouped_by_event: InvitesByEvent = invites_with_users_grouped_by_event
+    drop(conn);
+
+    type InvitesByEvent = Vec<(Vec<(EventInvite, User)>, Vec<EventEmailInvite>)>;
+    let invites_grouped_by_event: InvitesByEvent = invites_with_users_grouped_by_event
+        .into_iter()
+        .zip(email_invites_grouped_by_event)
+        .collect();
+
+    let mut event_resources = vec![];
+
+    let mut ret_cursor_data = None;
+
+    for (
+        (event, invite, room, sip_config, exceptions, is_favorite),
+        (mut invites_with_user, mut email_invites),
+    ) in events.into_iter().zip(invites_grouped_by_event)
+    {
+        ret_cursor_data = Some(GetEventsCursorData {
+            event_id: event.id,
+            event_created_at: event.created_at,
+            event_starts_at: event.starts_at,
+        });
+
+        let created_by = users.get(event.created_by);
+        let updated_by = users.get(event.updated_by);
+
+        let invite_status = invite
+            .map(|invite| invite.status)
+            .unwrap_or(EventInviteStatus::Accepted);
+
+        let invitees_truncated = query.invitees_max == 0
+            || (invites_with_user.len() + email_invites.len()) > query.invitees_max as usize;
+
+        invites_with_user.truncate(query.invitees_max as usize);
+        let email_invitees_max = query.invitees_max - invites_with_user.len().max(0) as u32;
+        email_invites.truncate(email_invitees_max as usize);
+
+        let registered_invitees_iter = invites_with_user
             .into_iter()
-            .zip(email_invites_grouped_by_event)
+            .map(|(invite, user)| EventInvitee::from_invite_with_user(invite, user, &settings));
+
+        let unregistered_invitees_iter = email_invites
+            .into_iter()
+            .map(|invite| EventInvitee::from_email_invite(invite, &settings));
+
+        let invitees = registered_invitees_iter
+            .chain(unregistered_invitees_iter)
             .collect();
 
-        let mut event_resources = vec![];
+        let starts_at = DateTimeTz::starts_at_of(&event);
+        let ends_at = DateTimeTz::ends_at_of(&event);
 
-        let mut ret_cursor_data = None;
+        let can_edit = can_edit(&event, &current_user);
 
-        for (
-            (event, invite, room, sip_config, exceptions, is_favorite),
-            (mut invites_with_user, mut email_invites),
-        ) in events.into_iter().zip(invites_grouped_by_event)
-        {
-            ret_cursor_data = Some(GetEventsCursorData {
-                event_id: event.id,
-                event_created_at: event.created_at,
-                event_starts_at: event.starts_at,
-            });
+        event_resources.push(EventOrException::Event(EventResource {
+            id: event.id,
+            created_by,
+            created_at: event.created_at,
+            updated_by,
+            updated_at: event.updated_at,
+            title: event.title,
+            description: event.description,
+            room: EventRoomInfo::from_room(&settings, room, sip_config),
+            invitees_truncated,
+            invitees,
+            is_time_independent: event.is_time_independent,
+            is_all_day: event.is_all_day,
+            starts_at,
+            ends_at,
+            recurrence_pattern: recurrence_string_to_array(event.recurrence_pattern),
+            type_: if event.is_recurring.unwrap_or_default() {
+                EventType::Recurring
+            } else {
+                EventType::Single
+            },
+            invite_status,
+            is_favorite,
+            can_edit,
+            is_adhoc: event.is_adhoc,
+        }));
 
-            let created_by = users.get(event.created_by);
-            let updated_by = users.get(event.updated_by);
+        for exception in exceptions {
+            let created_by = users.get(exception.created_by);
 
-            let invite_status = invite
-                .map(|invite| invite.status)
-                .unwrap_or(EventInviteStatus::Accepted);
-
-            let invitees_truncated = query.invitees_max == 0
-                || (invites_with_user.len() + email_invites.len()) > query.invitees_max as usize;
-
-            invites_with_user.truncate(query.invitees_max as usize);
-            let email_invitees_max = query.invitees_max - invites_with_user.len().max(0) as u32;
-            email_invites.truncate(email_invitees_max as usize);
-
-            let registered_invitees_iter = invites_with_user
-                .into_iter()
-                .map(|(invite, user)| EventInvitee::from_invite_with_user(invite, user, &settings));
-
-            let unregistered_invitees_iter = email_invites
-                .into_iter()
-                .map(|invite| EventInvitee::from_email_invite(invite, &settings));
-
-            let invitees = registered_invitees_iter
-                .chain(unregistered_invitees_iter)
-                .collect();
-
-            let starts_at = DateTimeTz::starts_at_of(&event);
-            let ends_at = DateTimeTz::ends_at_of(&event);
-
-            let can_edit = can_edit(&event, &current_user);
-
-            event_resources.push(EventOrException::Event(EventResource {
-                id: event.id,
-                created_by,
-                created_at: event.created_at,
-                updated_by,
-                updated_at: event.updated_at,
-                title: event.title,
-                description: event.description,
-                room: EventRoomInfo::from_room(&settings, room, sip_config),
-                invitees_truncated,
-                invitees,
-                is_time_independent: event.is_time_independent,
-                is_all_day: event.is_all_day,
-                starts_at,
-                ends_at,
-                recurrence_pattern: recurrence_string_to_array(event.recurrence_pattern),
-                type_: if event.is_recurring.unwrap_or_default() {
-                    EventType::Recurring
-                } else {
-                    EventType::Single
-                },
-                invite_status,
-                is_favorite,
-                can_edit,
-                is_adhoc: event.is_adhoc,
-            }));
-
-            for exception in exceptions {
-                let created_by = users.get(exception.created_by);
-
-                event_resources.push(EventOrException::Exception(
-                    EventExceptionResource::from_db(exception, created_by, can_edit),
-                ));
-            }
+            event_resources.push(EventOrException::Exception(
+                EventExceptionResource::from_db(exception, created_by, can_edit),
+            ));
         }
+    }
 
-        Ok(GetPaginatedEventsData {
-            event_resources,
-            before: None,
-            after: ret_cursor_data.map(|c| Cursor(c).to_base64()),
-        })
-    })
-    .await??;
+    let events_data = GetPaginatedEventsData {
+        event_resources,
+        before: None,
+        after: ret_cursor_data.map(|c| Cursor(c).to_base64()),
+    };
 
     let resource_mapping_futures = events_data
         .event_resources
@@ -1050,6 +1055,7 @@ pub async fn get_events(
                 EventOrException::Exception(inner) => EventOrException::Exception(inner),
             }
         });
+
     let event_resources = futures::future::join_all(resource_mapping_futures).await;
 
     Ok(ApiResponse::new(event_resources)
@@ -1083,55 +1089,53 @@ pub async fn get_event(
     let event_id = event_id.into_inner();
     let query = query.into_inner();
 
-    let event_resource = crate::block(move || -> Result<EventResource, ApiError> {
-        let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-        let (event, invite, room, sip_config, is_favorite) =
-            Event::get_with_invite_and_room(&mut conn, current_user.id, event_id)?;
-        let (invitees, invitees_truncated) =
-            get_invitees_for_event(&settings, &mut conn, event_id, query.invitees_max)?;
+    let (event, invite, room, sip_config, is_favorite) =
+        Event::get_with_invite_and_room(&mut conn, current_user.id, event_id).await?;
+    let (invitees, invitees_truncated) =
+        get_invitees_for_event(&settings, &mut conn, event_id, query.invitees_max).await?;
 
-        let users = GetUserProfilesBatched::new()
-            .add(&event)
-            .fetch(&settings, &mut conn)?;
+    let users = GetUserProfilesBatched::new()
+        .add(&event)
+        .fetch(&settings, &mut conn)
+        .await?;
 
-        let starts_at = DateTimeTz::starts_at_of(&event);
-        let ends_at = DateTimeTz::ends_at_of(&event);
+    drop(conn);
 
-        let can_edit = can_edit(&event, &current_user);
+    let starts_at = DateTimeTz::starts_at_of(&event);
+    let ends_at = DateTimeTz::ends_at_of(&event);
 
-        let event_resource = EventResource {
-            id: event.id,
-            title: event.title,
-            description: event.description,
-            room: EventRoomInfo::from_room(&settings, room, sip_config),
-            invitees_truncated,
-            invitees,
-            created_by: users.get(event.created_by),
-            created_at: event.created_at,
-            updated_by: users.get(event.updated_by),
-            updated_at: event.updated_at,
-            is_time_independent: event.is_time_independent,
-            is_all_day: event.is_all_day,
-            starts_at,
-            ends_at,
-            recurrence_pattern: recurrence_string_to_array(event.recurrence_pattern),
-            type_: if event.is_recurring.unwrap_or_default() {
-                EventType::Recurring
-            } else {
-                EventType::Single
-            },
-            invite_status: invite
-                .map(|inv| inv.status)
-                .unwrap_or(EventInviteStatus::Accepted),
-            is_favorite,
-            can_edit,
-            is_adhoc: event.is_adhoc,
-        };
+    let can_edit = can_edit(&event, &current_user);
 
-        Ok(event_resource)
-    })
-    .await??;
+    let event_resource = EventResource {
+        id: event.id,
+        title: event.title,
+        description: event.description,
+        room: EventRoomInfo::from_room(&settings, room, sip_config),
+        invitees_truncated,
+        invitees,
+        created_by: users.get(event.created_by),
+        created_at: event.created_at,
+        updated_by: users.get(event.updated_by),
+        updated_at: event.updated_at,
+        is_time_independent: event.is_time_independent,
+        is_all_day: event.is_all_day,
+        starts_at,
+        ends_at,
+        recurrence_pattern: recurrence_string_to_array(event.recurrence_pattern),
+        type_: if event.is_recurring.unwrap_or_default() {
+            EventType::Recurring
+        } else {
+            EventType::Single
+        },
+        invite_status: invite
+            .map(|inv| inv.status)
+            .unwrap_or(EventInviteStatus::Accepted),
+        is_favorite,
+        can_edit,
+        is_adhoc: event.is_adhoc,
+    };
 
     let event_resource = EventResource {
         invitees: enrich_invitees_from_keycloak(
@@ -1308,109 +1312,103 @@ pub async fn patch_event(
 
     let send_email_notification = !query.suppress_email_notification;
 
-    let (event_resource, notification_values) = crate::block({
-        let current_tenant = current_tenant.clone();
+    let mut conn = db.get_conn().await?;
 
-        move || -> Result<(EventResource, UpdateNotificationValues), ApiError> {
-            let mut conn = db.get_conn()?;
+    let (event, invite, room, sip_config, is_favorite) =
+        Event::get_with_invite_and_room(&mut conn, current_user.id, event_id).await?;
 
-            let (event, invite, room, sip_config, is_favorite) =
-                Event::get_with_invite_and_room(&mut conn, current_user.id, event_id)?;
-
-            let room = if patch.password.is_some() || patch.waiting_room.is_some() {
-                // Update the event's room if at least one of the fields is set
-                UpdateRoom {
-                    password: patch.password.clone(),
-                    waiting_room: patch.waiting_room,
-                }
-                .apply(&mut conn, event.room)?
-            } else {
-                room
-            };
-
-            let created_by = if event.created_by == current_user.id {
-                current_user.clone()
-            } else {
-                User::get(&mut conn, event.created_by)?
-            };
-
-            // Special case: if the patch only modifies the password do not update the event
-            let event = if patch.only_modifies_room() {
-                event
-            } else {
-                let update_event = match (event.is_time_independent, patch.is_time_independent) {
-                    (true, Some(false)) => {
-                        // The patch changes the event from an time-independent event
-                        // to a time dependent event
-                        patch_event_change_to_time_dependent(&current_user, patch)?
-                    }
-                    (true, _) | (false, Some(true)) => {
-                        // The patch will modify an time-independent event or
-                        // change an event to a time-independent event
-                        patch_time_independent_event(&mut conn, &current_user, &event, patch)?
-                    }
-                    _ => {
-                        // The patch modifies an time dependent event
-                        patch_time_dependent_event(&mut conn, &current_user, &event, patch)?
-                    }
-                };
-
-                update_event.apply(&mut conn, event_id)?
-            };
-
-            let invited_users = get_invited_mail_recipients_for_event(&mut conn, event_id)?;
-            let invite_for_room = Invite::get_first_for_room(&mut conn, room.id, current_user.id)?;
-            let notification_values = UpdateNotificationValues {
-                tenant: current_tenant,
-                created_by: created_by.clone(),
-                event: event.clone(),
-                room: room.clone(),
-                sip_config: sip_config.clone(),
-                invited_users,
-                invite_for_room,
-            };
-
-            let (invitees, invitees_truncated) =
-                get_invitees_for_event(&settings, &mut conn, event_id, query.invitees_max)?;
-
-            let starts_at = DateTimeTz::starts_at_of(&event);
-            let ends_at = DateTimeTz::ends_at_of(&event);
-
-            let can_edit = can_edit(&event, &current_user);
-
-            let event_resource = EventResource {
-                id: event.id,
-                created_by: PublicUserProfile::from_db(&settings, created_by),
-                created_at: event.created_at,
-                updated_by: PublicUserProfile::from_db(&settings, current_user),
-                updated_at: event.updated_at,
-                title: event.title,
-                description: event.description,
-                room: EventRoomInfo::from_room(&settings, room, sip_config),
-                invitees_truncated,
-                invitees,
-                is_time_independent: event.is_time_independent,
-                is_all_day: event.is_all_day,
-                starts_at,
-                ends_at,
-                recurrence_pattern: recurrence_string_to_array(event.recurrence_pattern),
-                type_: if event.is_recurring.unwrap_or_default() {
-                    EventType::Recurring
-                } else {
-                    EventType::Single
-                },
-                invite_status: invite
-                    .map(|inv| inv.status)
-                    .unwrap_or(EventInviteStatus::Accepted),
-                is_favorite,
-                can_edit,
-                is_adhoc: event.is_adhoc,
-            };
-
-            Ok((event_resource, notification_values))
+    let room = if patch.password.is_some() || patch.waiting_room.is_some() {
+        // Update the event's room if at least one of the fields is set
+        UpdateRoom {
+            password: patch.password.clone(),
+            waiting_room: patch.waiting_room,
         }
-    })
-    .await??;
+        .apply(&mut conn, event.room)
+        .await?
+    } else {
+        room
+    };
+
+    let created_by = if event.created_by == current_user.id {
+        current_user.clone()
+    } else {
+        User::get(&mut conn, event.created_by).await?
+    };
+
+    // Special case: if the patch only modifies the password do not update the event
+    let event = if patch.only_modifies_room() {
+        event
+    } else {
+        let update_event = match (event.is_time_independent, patch.is_time_independent) {
+            (true, Some(false)) => {
+                // The patch changes the event from an time-independent event
+                // to a time dependent event
+                patch_event_change_to_time_dependent(&current_user, patch)?
+            }
+            (true, _) | (false, Some(true)) => {
+                // The patch will modify an time-independent event or
+                // change an event to a time-independent event
+                patch_time_independent_event(&mut conn, &current_user, &event, patch).await?
+            }
+            _ => {
+                // The patch modifies an time dependent event
+                patch_time_dependent_event(&mut conn, &current_user, &event, patch).await?
+            }
+        };
+
+        update_event.apply(&mut conn, event_id).await?
+    };
+
+    let invited_users = get_invited_mail_recipients_for_event(&mut conn, event_id).await?;
+    let invite_for_room = Invite::get_first_for_room(&mut conn, room.id, current_user.id).await?;
+    let notification_values = UpdateNotificationValues {
+        tenant: current_tenant.clone(),
+        created_by: created_by.clone(),
+        event: event.clone(),
+        room: room.clone(),
+        sip_config: sip_config.clone(),
+        invited_users,
+        invite_for_room,
+    };
+
+    let (invitees, invitees_truncated) =
+        get_invitees_for_event(&settings, &mut conn, event_id, query.invitees_max).await?;
+
+    drop(conn);
+
+    let starts_at = DateTimeTz::starts_at_of(&event);
+    let ends_at = DateTimeTz::ends_at_of(&event);
+
+    let can_edit = can_edit(&event, &current_user);
+
+    let event_resource = EventResource {
+        id: event.id,
+        created_by: PublicUserProfile::from_db(&settings, created_by),
+        created_at: event.created_at,
+        updated_by: PublicUserProfile::from_db(&settings, current_user),
+        updated_at: event.updated_at,
+        title: event.title,
+        description: event.description,
+        room: EventRoomInfo::from_room(&settings, room, sip_config),
+        invitees_truncated,
+        invitees,
+        is_time_independent: event.is_time_independent,
+        is_all_day: event.is_all_day,
+        starts_at,
+        ends_at,
+        recurrence_pattern: recurrence_string_to_array(event.recurrence_pattern),
+        type_: if event.is_recurring.unwrap_or_default() {
+            EventType::Recurring
+        } else {
+            EventType::Single
+        },
+        invite_status: invite
+            .map(|inv| inv.status)
+            .unwrap_or(EventInviteStatus::Accepted),
+        is_favorite,
+        can_edit,
+        is_adhoc: event.is_adhoc,
+    };
 
     if send_email_notification {
         notify_invitees_about_update(notification_values, mail_service, &kc_admin_client).await;
@@ -1524,7 +1522,7 @@ fn patch_event_change_to_time_dependent(
 /// Part of `PATCH /events/{event_id}` (see [`patch_event`])
 ///
 /// Patch event which is time dependent into a time independent event
-fn patch_time_independent_event(
+async fn patch_time_independent_event(
     conn: &mut DbConnection,
     current_user: &User,
     event: &Event,
@@ -1564,7 +1562,7 @@ fn patch_time_independent_event(
 
     if event.is_recurring.unwrap_or_default() {
         // delete all exceptions as the time dependence has been removed
-        EventException::delete_all_for_event(conn, event.id)?;
+        EventException::delete_all_for_event(conn, event.id).await?;
     }
 
     Ok(UpdateEvent {
@@ -1588,7 +1586,7 @@ fn patch_time_independent_event(
 /// Part of `PATCH /events/{event_id}` (see [`patch_event`])
 ///
 /// Patch fields on an time dependent event (without changing the time dependence field)
-fn patch_time_dependent_event(
+async fn patch_time_dependent_event(
     conn: &mut DbConnection,
     current_user: &User,
     event: &Event,
@@ -1613,7 +1611,7 @@ fn patch_time_dependent_event(
         // Delete all exceptions for recurring events as the patch may modify fields that influence the
         // timestamps at which instances (occurrences) are generated, making it impossible to match the
         // exceptions to instances
-        EventException::delete_all_for_event(conn, event.id)?;
+        EventException::delete_all_for_event(conn, event.id).await?;
     }
 
     Ok(UpdateEvent {
@@ -1670,36 +1668,32 @@ pub async fn delete_event(
 
     let send_email_notification = !query.suppress_email_notification;
 
-    let notification_values = crate::block(
-        move || -> Result<CancellationNotificationValues, ApiError> {
-            let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-            // TODO(w.rabl) Further DB access optimization (replacing call to get_with_invite_and_room)?
-            let (event, _invite, room, sip_config, _is_favorite) =
-                Event::get_with_invite_and_room(&mut conn, current_user.id, event_id)?;
+    // TODO(w.rabl) Further DB access optimization (replacing call to get_with_invite_and_room)?
+    let (event, _invite, room, sip_config, _is_favorite) =
+        Event::get_with_invite_and_room(&mut conn, current_user.id, event_id).await?;
 
-            let created_by = if event.created_by == current_user.id {
-                current_user
-            } else {
-                User::get(&mut conn, event.created_by)?
-            };
+    let created_by = if event.created_by == current_user.id {
+        current_user
+    } else {
+        User::get(&mut conn, event.created_by).await?
+    };
 
-            let invited_users = get_invited_mail_recipients_for_event(&mut conn, event_id)?;
+    let invited_users = get_invited_mail_recipients_for_event(&mut conn, event_id).await?;
 
-            Event::delete_by_id(&mut conn, event_id)?;
+    Event::delete_by_id(&mut conn, event_id).await?;
 
-            let notification_values = CancellationNotificationValues {
-                tenant: current_tenant.into_inner(),
-                created_by,
-                event,
-                room,
-                sip_config,
-                invited_users,
-            };
-            Ok(notification_values)
-        },
-    )
-    .await??;
+    drop(conn);
+
+    let notification_values = CancellationNotificationValues {
+        tenant: current_tenant.into_inner(),
+        created_by,
+        event,
+        room,
+        sip_config,
+        invited_users,
+    };
 
     if send_email_notification {
         notify_invitees_about_delete(notification_values, mail_service, &kc_admin_client).await;
@@ -1776,7 +1770,7 @@ pub async fn event_reschedule(
     actix_web::HttpResponse::NotImplemented().finish()
 }
 
-fn get_invitees_for_event(
+async fn get_invitees_for_event(
     settings: &Settings,
     conn: &mut DbConnection,
     event_id: EventId,
@@ -1786,7 +1780,7 @@ fn get_invitees_for_event(
         // Get regular invitees up to the maximum invitee count specified.
 
         let (invites_with_user, total_invites_count) =
-            EventInvite::get_for_event_paginated(conn, event_id, invitees_max, 1)?;
+            EventInvite::get_for_event_paginated(conn, event_id, invitees_max, 1).await?;
 
         let mut invitees: Vec<EventInvitee> = invites_with_user
             .into_iter()
@@ -1801,7 +1795,7 @@ fn get_invitees_for_event(
         let invitees_max = invitees_max - loaded_invites_count;
         if invitees_max > 0 {
             let (email_invites, total_email_invites_count) =
-                EventEmailInvite::get_for_event_paginated(conn, event_id, invitees_max, 1)?;
+                EventEmailInvite::get_for_event_paginated(conn, event_id, invitees_max, 1).await?;
 
             let email_invitees: Vec<EventInvitee> = email_invites
                 .into_iter()
@@ -1821,12 +1815,13 @@ fn get_invitees_for_event(
     }
 }
 
-fn get_invited_mail_recipients_for_event(
+async fn get_invited_mail_recipients_for_event(
     conn: &mut DbConnection,
     event_id: EventId,
 ) -> database::Result<Vec<MailRecipient>> {
     // TODO(w.rabl) Further DB access optimization (replacing call to get_for_event_paginated)?
-    let (invites_with_user, _) = EventInvite::get_for_event_paginated(conn, event_id, i64::MAX, 1)?;
+    let (invites_with_user, _) =
+        EventInvite::get_for_event_paginated(conn, event_id, i64::MAX, 1).await?;
     let user_invitees = invites_with_user.into_iter().map(|(_, user)| {
         MailRecipient::Registered(RegisteredMailRecipient {
             email: user.email,
@@ -1838,7 +1833,7 @@ fn get_invited_mail_recipients_for_event(
     });
 
     let (email_invites, _) =
-        EventEmailInvite::get_for_event_paginated(conn, event_id, i64::MAX, 1)?;
+        EventEmailInvite::get_for_event_paginated(conn, event_id, i64::MAX, 1).await?;
     let email_invitees = email_invites.into_iter().map(|invitee| {
         MailRecipient::External(ExternalMailRecipient {
             email: invitee.email,

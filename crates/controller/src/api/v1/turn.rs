@@ -212,20 +212,19 @@ async fn check_access_token_or_invite(
                     .with_www_authenticate(AuthenticationError::InvalidAccessToken)
             })?;
 
-            crate::block(move || {
-                let mut conn = db.get_conn()?;
+            let mut conn = db.get_conn().await?;
 
-                match Invite::get(&mut conn, InviteCodeId::from(invite_uuid)).optional()? {
-                    Some(invite) => Ok(invite),
-                    None => {
-                        log::warn!("The requesting user could not be found in the database");
-                        Err(ApiError::unauthorized()
-                            .with_www_authenticate(AuthenticationError::InvalidAccessToken))
-                    }
+            match Invite::get(&mut conn, InviteCodeId::from(invite_uuid))
+                .await
+                .optional()?
+            {
+                Some(invite) => Ok(Either::Right(invite)),
+                None => {
+                    log::warn!("The requesting user could not be found in the database");
+                    Err(ApiError::unauthorized()
+                        .with_www_authenticate(AuthenticationError::InvalidAccessToken))
                 }
-            })
-            .await?
-            .map(Either::Right)
+            }
         }
     }
 }

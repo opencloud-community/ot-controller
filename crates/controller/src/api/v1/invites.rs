@@ -11,7 +11,7 @@ use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json, Path, Query, ReqData};
 use actix_web::{delete, get, post, put};
 use chrono::{DateTime, Utc};
-use database::{DatabaseError, Db};
+use database::Db;
 use db_storage::invites::{Invite, NewInvite, UpdateInvite};
 use db_storage::rooms::Room;
 use db_storage::users::User;
@@ -73,28 +73,24 @@ pub async fn add_invite(
     let settings = settings.load_full();
     let room_id = room_id.into_inner();
     let current_user = current_user.into_inner();
-
     let new_invite = data.into_inner();
-    let current_user_clone = current_user.clone();
-    let db_invite = crate::block(move || {
-        let mut conn = db.get_conn()?;
 
-        let new_invite = NewInvite {
-            active: true,
-            created_by: current_user_clone.id,
-            updated_by: current_user_clone.id,
-            room: room_id,
-            expiration: new_invite.expiration,
-        };
+    let mut conn = db.get_conn().await?;
 
-        new_invite.insert(&mut conn)
-    })
-    .await??;
+    let invite = NewInvite {
+        active: true,
+        created_by: current_user.id,
+        updated_by: current_user.id,
+        room: room_id,
+        expiration: new_invite.expiration,
+    }
+    .insert(&mut conn)
+    .await?;
 
     let created_by = PublicUserProfile::from_db(&settings, current_user.clone());
     let updated_by = PublicUserProfile::from_db(&settings, current_user);
 
-    let invite = InviteResource::from_with_user(db_invite, created_by, updated_by);
+    let invite = InviteResource::from_with_user(invite, created_by, updated_by);
 
     Ok(ApiResponse::new(invite))
 }
@@ -113,14 +109,12 @@ pub async fn get_invites(
     let room_id = room_id.into_inner();
     let PagePaginationQuery { per_page, page } = pagination.into_inner();
 
-    let (invites_with_users, total_invites) = crate::block(move || {
-        let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-        let room = Room::get(&mut conn, room_id)?;
+    let room = Room::get(&mut conn, room_id).await?;
 
-        Invite::get_all_for_room_with_users_paginated(&mut conn, room.id, per_page, page)
-    })
-    .await??;
+    let (invites_with_users, total_invites) =
+        Invite::get_all_for_room_with_users_paginated(&mut conn, room.id, per_page, page).await?;
 
     let invites = invites_with_users
         .into_iter()
@@ -158,24 +152,19 @@ pub async fn get_invite(
         invite_code,
     } = path_params.into_inner();
 
-    let (db_invite, created_by, updated_by) = crate::block(move || {
-        let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-        let invite_with_users = Invite::get_with_users(&mut conn, invite_code)?;
+    let (invite, created_by, updated_by) = Invite::get_with_users(&mut conn, invite_code).await?;
 
-        if invite_with_users.0.room != room_id {
-            return Err(DatabaseError::NotFound);
-        }
-
-        Ok(invite_with_users)
-    })
-    .await??;
+    if invite.room != room_id {
+        return Err(ApiError::not_found());
+    }
 
     let created_by = PublicUserProfile::from_db(&settings, created_by);
     let updated_by = PublicUserProfile::from_db(&settings, updated_by);
 
     Ok(ApiResponse::new(InviteResource::from_with_user(
-        db_invite, created_by, updated_by,
+        invite, created_by, updated_by,
     )))
 }
 
@@ -205,32 +194,26 @@ pub async fn update_invite(
     } = path_params.into_inner();
     let update_invite = update_invite.into_inner();
 
-    let current_user_id = current_user.id;
-    let (invite, created_by) = crate::block(move || {
-        let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-        let invite = Invite::get(&mut conn, invite_code)?;
+    let invite = Invite::get(&mut conn, invite_code).await?;
 
-        if invite.room != room_id {
-            return Err(DatabaseError::NotFound);
-        }
+    if invite.room != room_id {
+        return Err(ApiError::not_found());
+    }
 
-        let created_by = User::get(&mut conn, invite.created_by)?;
+    let created_by = User::get(&mut conn, invite.created_by).await?;
 
-        let now = chrono::Utc::now();
-        let changeset = UpdateInvite {
-            updated_by: Some(current_user_id),
-            updated_at: Some(now),
-            expiration: Some(update_invite.expiration),
-            active: None,
-            room: None,
-        };
+    let now = chrono::Utc::now();
+    let changeset = UpdateInvite {
+        updated_by: Some(current_user.id),
+        updated_at: Some(now),
+        expiration: Some(update_invite.expiration),
+        active: None,
+        room: None,
+    };
 
-        let invite = changeset.apply(&mut conn, room_id, invite_code)?;
-
-        Ok((invite, created_by))
-    })
-    .await??;
+    let invite = changeset.apply(&mut conn, room_id, invite_code).await?;
 
     let created_by = PublicUserProfile::from_db(&settings, created_by);
     let updated_by = PublicUserProfile::from_db(&settings, current_user);
@@ -255,20 +238,17 @@ pub async fn delete_invite(
         invite_code,
     } = path_params.into_inner();
 
-    crate::block(move || {
-        let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-        let changeset = UpdateInvite {
-            updated_by: Some(current_user.id),
-            updated_at: Some(Utc::now()),
-            expiration: None,
-            active: Some(false),
-            room: None,
-        };
+    let changeset = UpdateInvite {
+        updated_by: Some(current_user.id),
+        updated_at: Some(Utc::now()),
+        expiration: None,
+        active: Some(false),
+        room: None,
+    };
 
-        changeset.apply(&mut conn, room_id, invite_code)
-    })
-    .await??;
+    changeset.apply(&mut conn, room_id, invite_code).await?;
 
     Ok(NoContent)
 }
@@ -297,15 +277,10 @@ pub async fn verify_invite_code(
 
     data.validate()?;
 
-    let (invite, room) = crate::block(move || -> database::Result<_> {
-        let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-        let invite = Invite::get(&mut conn, data.invite_code)?;
-        let room = Room::get(&mut conn, invite.room)?;
-
-        Ok((invite, room))
-    })
-    .await??;
+    let invite = Invite::get(&mut conn, data.invite_code).await?;
+    let room = Room::get(&mut conn, invite.room).await?;
 
     if invite.active {
         if let Some(expiration) = invite.expiration {

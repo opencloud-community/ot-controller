@@ -127,92 +127,89 @@ pub async fn get_event_instances(
 
     let kc_admin_client_ref = &kc_admin_client;
 
-    let instances_data = crate::block(
-        move || -> Result<GetPaginatedEventInstancesData, ApiError> {
-            let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-            let (event, invite, room, sip_config, is_favorite) =
-                Event::get_with_invite_and_room(&mut conn, current_user.id, event_id)?;
+    let (event, invite, room, sip_config, is_favorite) =
+        Event::get_with_invite_and_room(&mut conn, current_user.id, event_id).await?;
 
-            let (invitees, invitees_truncated) =
-                super::get_invitees_for_event(&settings, &mut conn, event.id, invitees_max)?;
+    let (invitees, invitees_truncated) =
+        super::get_invitees_for_event(&settings, &mut conn, event.id, invitees_max).await?;
 
-            let invite_status = invite
-                .map(|inv| inv.status)
-                .unwrap_or(EventInviteStatus::Accepted);
+    let invite_status = invite
+        .map(|inv| inv.status)
+        .unwrap_or(EventInviteStatus::Accepted);
 
-            let rruleset = build_rruleset(&event)?;
+    let rruleset = build_rruleset(&event)?;
 
-            // limit of how far into the future we calculate instances (40 years)
-            let max_dt = Utc::now().with_timezone(&rruleset.dt_start.timezone())
-                + chrono::Duration::weeks(12 * 40);
+    // limit of how far into the future we calculate instances (40 years)
+    let max_dt =
+        Utc::now().with_timezone(&rruleset.dt_start.timezone()) + chrono::Duration::weeks(12 * 40);
 
-            let mut iter: Box<dyn Iterator<Item = DateTime<Tz>>> =
-                Box::new(rruleset.into_iter().skip_while(move |&dt| dt > max_dt));
+    let mut iter: Box<dyn Iterator<Item = DateTime<Tz>>> =
+        Box::new(rruleset.into_iter().skip_while(move |&dt| dt > max_dt));
 
-            if let Some(time_min) = time_min {
-                iter = Box::new(iter.skip_while(move |&dt| dt <= time_min));
-            }
+    if let Some(time_min) = time_min {
+        iter = Box::new(iter.skip_while(move |&dt| dt <= time_min));
+    }
 
-            if let Some(time_max) = time_max {
-                iter = Box::new(iter.skip_while(move |&dt| dt >= time_max));
-            }
+    if let Some(time_max) = time_max {
+        iter = Box::new(iter.skip_while(move |&dt| dt >= time_max));
+    }
 
-            let datetimes: Vec<DateTime<Utc>> = iter
-                .skip(skip * offset)
-                .take(skip)
-                .map(|dt| dt.with_timezone(&Utc))
-                .collect();
+    let datetimes: Vec<DateTime<Utc>> = iter
+        .skip(skip * offset)
+        .take(skip)
+        .map(|dt| dt.with_timezone(&Utc))
+        .collect();
 
-            let exceptions = EventException::get_all_for_event(&mut conn, event_id, &datetimes)?;
+    let exceptions = EventException::get_all_for_event(&mut conn, event_id, &datetimes).await?;
 
-            let users = GetUserProfilesBatched::new()
-                .add(&event)
-                .add(&exceptions)
-                .fetch(&settings, &mut conn)?;
+    let users = GetUserProfilesBatched::new()
+        .add(&event)
+        .add(&exceptions)
+        .fetch(&settings, &mut conn)
+        .await?;
 
-            let room = EventRoomInfo::from_room(&settings, room, sip_config);
+    drop(conn);
 
-            let can_edit = can_edit(&event, &current_user);
+    let room = EventRoomInfo::from_room(&settings, room, sip_config);
 
-            let mut exceptions = exceptions.into_iter().peekable();
+    let can_edit = can_edit(&event, &current_user);
 
-            let mut instances = vec![];
+    let mut exceptions = exceptions.into_iter().peekable();
 
-            for datetime in datetimes {
-                let exception =
-                    exceptions.next_if(|exception| exception.exception_date == datetime);
+    let mut instances = vec![];
 
-                let instance = create_event_instance(
-                    &users,
-                    event.clone(),
-                    invite_status,
-                    is_favorite,
-                    exception,
-                    room.clone(),
-                    InstanceId(datetime),
-                    invitees.clone(),
-                    invitees_truncated,
-                    can_edit,
-                )?;
+    for datetime in datetimes {
+        let exception = exceptions.next_if(|exception| exception.exception_date == datetime);
 
-                instances.push(instance);
-            }
+        let instance = create_event_instance(
+            &users,
+            event.clone(),
+            invite_status,
+            is_favorite,
+            exception,
+            room.clone(),
+            InstanceId(datetime),
+            invitees.clone(),
+            invitees_truncated,
+            can_edit,
+        )?;
 
-            let next_cursor = if !instances.is_empty() {
-                Some(Cursor(GetEventInstancesCursorData { page: page + 1 }).to_base64())
-            } else {
-                None
-            };
+        instances.push(instance);
+    }
 
-            Ok(GetPaginatedEventInstancesData {
-                instances,
-                before: None,
-                after: next_cursor,
-            })
-        },
-    )
-    .await??;
+    let next_cursor = if !instances.is_empty() {
+        Some(Cursor(GetEventInstancesCursorData { page: page + 1 }).to_base64())
+    } else {
+        None
+    };
+
+    let instances_data = GetPaginatedEventInstancesData {
+        instances,
+        before: None,
+        after: next_cursor,
+    };
 
     // Enrich the invitees for the first instance only and reuse them as all instances have the same invitees.
     let event_instances = if let Some(instance) = instances_data.instances.first() {
@@ -271,45 +268,41 @@ pub async fn get_event_instance(
     } = path.into_inner();
     let query = query.into_inner();
 
-    let event_instance = crate::block(move || -> Result<EventInstance, ApiError> {
-        let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-        let (event, invite, room, sip_config, is_favorite) =
-            Event::get_with_invite_and_room(&mut conn, current_user.id, event_id)?;
-        verify_recurrence_date(&event, instance_id.0)?;
+    let (event, invite, room, sip_config, is_favorite) =
+        Event::get_with_invite_and_room(&mut conn, current_user.id, event_id).await?;
+    verify_recurrence_date(&event, instance_id.0)?;
 
-        let (invitees, invitees_truncated) =
-            super::get_invitees_for_event(&settings, &mut conn, event_id, query.invitees_max)?;
+    let (invitees, invitees_truncated) =
+        super::get_invitees_for_event(&settings, &mut conn, event_id, query.invitees_max).await?;
 
-        let exception = EventException::get_for_event(&mut conn, event_id, instance_id.0)?;
+    let exception = EventException::get_for_event(&mut conn, event_id, instance_id.0).await?;
 
-        let users = GetUserProfilesBatched::new()
-            .add(&event)
-            .add(&exception)
-            .fetch(&settings, &mut conn)?;
+    let users = GetUserProfilesBatched::new()
+        .add(&event)
+        .add(&exception)
+        .fetch(&settings, &mut conn)
+        .await?;
 
-        let room = EventRoomInfo::from_room(&settings, room, sip_config);
+    let room = EventRoomInfo::from_room(&settings, room, sip_config);
 
-        let can_edit = can_edit(&event, &current_user);
+    let can_edit = can_edit(&event, &current_user);
 
-        let event_instance = create_event_instance(
-            &users,
-            event,
-            invite
-                .map(|inv| inv.status)
-                .unwrap_or(EventInviteStatus::Accepted),
-            is_favorite,
-            exception,
-            room,
-            instance_id,
-            invitees,
-            invitees_truncated,
-            can_edit,
-        )?;
-
-        Ok(event_instance)
-    })
-    .await??;
+    let event_instance = create_event_instance(
+        &users,
+        event,
+        invite
+            .map(|inv| inv.status)
+            .unwrap_or(EventInviteStatus::Accepted),
+        is_favorite,
+        exception,
+        room,
+        instance_id,
+        invitees,
+        invitees_truncated,
+        can_edit,
+    )?;
 
     let event_instance = EventInstance {
         invitees: enrich_invitees_from_keycloak(
@@ -406,120 +399,118 @@ pub async fn patch_event_instance(
         instance_id,
     } = path.into_inner();
 
-    let event_instance = crate::block(move || -> Result<EventInstance, ApiError> {
-        let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-        let (event, invite, room, sip_config, is_favorite) =
-            Event::get_with_invite_and_room(&mut conn, current_user.id, event_id)?;
+    let (event, invite, room, sip_config, is_favorite) =
+        Event::get_with_invite_and_room(&mut conn, current_user.id, event_id).await?;
 
-        if !event.is_recurring.unwrap_or_default() {
-            return Err(ApiError::not_found());
-        }
+    if !event.is_recurring.unwrap_or_default() {
+        return Err(ApiError::not_found());
+    }
 
-        verify_recurrence_date(&event, instance_id.0)?;
+    verify_recurrence_date(&event, instance_id.0)?;
 
-        let exception = if let Some(exception) =
-            EventException::get_for_event(&mut conn, event_id, instance_id.0)?
-        {
-            let is_all_day = patch
-                .is_all_day
-                .or(exception.is_all_day)
-                .or(event.is_all_day)
-                .unwrap();
-            let starts_at = patch
-                .starts_at
-                .or_else(|| DateTimeTz::starts_at_of(&event))
-                .or_else(|| DateTimeTz::maybe_from_db(exception.starts_at, exception.starts_at_tz))
-                .unwrap();
-            let ends_at = patch
-                .ends_at
-                .or_else(|| DateTimeTz::ends_at_of(&event))
-                .or_else(|| DateTimeTz::maybe_from_db(exception.ends_at, exception.ends_at_tz))
-                .unwrap();
+    let exception = if let Some(exception) =
+        EventException::get_for_event(&mut conn, event_id, instance_id.0).await?
+    {
+        let is_all_day = patch
+            .is_all_day
+            .or(exception.is_all_day)
+            .or(event.is_all_day)
+            .unwrap();
+        let starts_at = patch
+            .starts_at
+            .or_else(|| DateTimeTz::starts_at_of(&event))
+            .or_else(|| DateTimeTz::maybe_from_db(exception.starts_at, exception.starts_at_tz))
+            .unwrap();
+        let ends_at = patch
+            .ends_at
+            .or_else(|| DateTimeTz::ends_at_of(&event))
+            .or_else(|| DateTimeTz::maybe_from_db(exception.ends_at, exception.ends_at_tz))
+            .unwrap();
 
-            super::verify_exception_dt_params(is_all_day, starts_at, ends_at)?;
+        super::verify_exception_dt_params(is_all_day, starts_at, ends_at)?;
 
-            let update_exception = UpdateEventException {
-                kind: match patch.status {
-                    Some(EventStatus::Ok) => Some(EventExceptionKind::Modified),
-                    Some(EventStatus::Cancelled) => Some(EventExceptionKind::Cancelled),
-                    None => None,
-                },
-                title: patch.title.map(Some),
-                description: patch.description.map(Some),
-                is_all_day: patch.is_all_day.map(Some),
-                starts_at: patch.starts_at.map(|dt| Some(dt.to_datetime_tz())),
-                starts_at_tz: patch.starts_at.map(|dt| Some(dt.timezone)),
-                ends_at: patch.ends_at.map(|dt| Some(dt.to_datetime_tz())),
-                ends_at_tz: patch.ends_at.map(|dt| Some(dt.timezone)),
-            };
-
-            update_exception.apply(&mut conn, exception.id)?
-        } else {
-            let is_all_day = patch.is_all_day.or(event.is_all_day).unwrap();
-            let starts_at = patch
-                .starts_at
-                .or_else(|| DateTimeTz::starts_at_of(&event))
-                .unwrap();
-            let ends_at = patch
-                .ends_at
-                .or_else(|| DateTimeTz::ends_at_of(&event))
-                .unwrap();
-
-            super::verify_exception_dt_params(is_all_day, starts_at, ends_at)?;
-
-            let new_exception = NewEventException {
-                event_id: event.id,
-                exception_date: instance_id.0,
-                exception_date_tz: event.starts_at_tz.unwrap(),
-                created_by: current_user.id,
-                kind: if let Some(EventStatus::Cancelled) = patch.status {
-                    EventExceptionKind::Cancelled
-                } else {
-                    EventExceptionKind::Modified
-                },
-                title: patch.title,
-                description: patch.description,
-                is_all_day: patch.is_all_day,
-                starts_at: patch.starts_at.map(|dt| dt.to_datetime_tz()),
-                starts_at_tz: patch.starts_at.map(|dt| dt.timezone),
-                ends_at: patch.ends_at.map(|dt| dt.to_datetime_tz()),
-                ends_at_tz: patch.ends_at.map(|dt| dt.timezone),
-            };
-
-            new_exception.insert(&mut conn)?
+        let update_exception = UpdateEventException {
+            kind: match patch.status {
+                Some(EventStatus::Ok) => Some(EventExceptionKind::Modified),
+                Some(EventStatus::Cancelled) => Some(EventExceptionKind::Cancelled),
+                None => None,
+            },
+            title: patch.title.map(Some),
+            description: patch.description.map(Some),
+            is_all_day: patch.is_all_day.map(Some),
+            starts_at: patch.starts_at.map(|dt| Some(dt.to_datetime_tz())),
+            starts_at_tz: patch.starts_at.map(|dt| Some(dt.timezone)),
+            ends_at: patch.ends_at.map(|dt| Some(dt.to_datetime_tz())),
+            ends_at_tz: patch.ends_at.map(|dt| Some(dt.timezone)),
         };
 
-        let (invitees, invitees_truncated) =
-            super::get_invitees_for_event(&settings, &mut conn, event_id, query.invitees_max)?;
+        update_exception.apply(&mut conn, exception.id).await?
+    } else {
+        let is_all_day = patch.is_all_day.or(event.is_all_day).unwrap();
+        let starts_at = patch
+            .starts_at
+            .or_else(|| DateTimeTz::starts_at_of(&event))
+            .unwrap();
+        let ends_at = patch
+            .ends_at
+            .or_else(|| DateTimeTz::ends_at_of(&event))
+            .unwrap();
 
-        let users = GetUserProfilesBatched::new()
-            .add(&event)
-            .add(&exception)
-            .fetch(&settings, &mut conn)?;
+        super::verify_exception_dt_params(is_all_day, starts_at, ends_at)?;
 
-        let room = EventRoomInfo::from_room(&settings, room, sip_config);
+        let new_exception = NewEventException {
+            event_id: event.id,
+            exception_date: instance_id.0,
+            exception_date_tz: event.starts_at_tz.unwrap(),
+            created_by: current_user.id,
+            kind: if let Some(EventStatus::Cancelled) = patch.status {
+                EventExceptionKind::Cancelled
+            } else {
+                EventExceptionKind::Modified
+            },
+            title: patch.title,
+            description: patch.description,
+            is_all_day: patch.is_all_day,
+            starts_at: patch.starts_at.map(|dt| dt.to_datetime_tz()),
+            starts_at_tz: patch.starts_at.map(|dt| dt.timezone),
+            ends_at: patch.ends_at.map(|dt| dt.to_datetime_tz()),
+            ends_at_tz: patch.ends_at.map(|dt| dt.timezone),
+        };
 
-        let can_edit = can_edit(&event, &current_user);
+        new_exception.insert(&mut conn).await?
+    };
 
-        let event_instance = create_event_instance(
-            &users,
-            event,
-            invite
-                .map(|inv| inv.status)
-                .unwrap_or(EventInviteStatus::Accepted),
-            is_favorite,
-            Some(exception),
-            room,
-            instance_id,
-            invitees,
-            invitees_truncated,
-            can_edit,
-        )?;
+    let (invitees, invitees_truncated) =
+        super::get_invitees_for_event(&settings, &mut conn, event_id, query.invitees_max).await?;
 
-        Ok(event_instance)
-    })
-    .await??;
+    let users = GetUserProfilesBatched::new()
+        .add(&event)
+        .add(&exception)
+        .fetch(&settings, &mut conn)
+        .await?;
+
+    let room = EventRoomInfo::from_room(&settings, room, sip_config);
+
+    let can_edit = can_edit(&event, &current_user);
+
+    drop(conn);
+
+    let event_instance = create_event_instance(
+        &users,
+        event,
+        invite
+            .map(|inv| inv.status)
+            .unwrap_or(EventInviteStatus::Accepted),
+        is_favorite,
+        Some(exception),
+        room,
+        instance_id,
+        invitees,
+        invitees_truncated,
+        can_edit,
+    )?;
 
     let event_instance = EventInstance {
         invitees: enrich_invitees_from_keycloak(

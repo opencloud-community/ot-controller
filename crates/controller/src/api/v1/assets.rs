@@ -43,12 +43,10 @@ pub async fn room_assets(
     let room_id = room_id.into_inner();
     let PagePaginationQuery { per_page, page } = pagination.into_inner();
 
-    let (assets, asset_count) = crate::block(move || {
-        let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-        Asset::get_all_for_room_paginated(&mut conn, room_id, per_page, page)
-    })
-    .await??;
+    let (assets, asset_count) =
+        Asset::get_all_for_room_paginated(&mut conn, room_id, per_page, page).await?;
 
     let asset_data = assets.into_iter().map(Into::into).collect();
 
@@ -63,12 +61,7 @@ pub async fn room_asset(
 ) -> Result<HttpResponse, ApiError> {
     let (room_id, asset_id) = path.into_inner();
 
-    let asset = crate::block(move || {
-        let mut conn = db.get_conn()?;
-
-        Asset::get(&mut conn, asset_id, room_id)
-    })
-    .await??;
+    let asset = Asset::get(&mut db.get_conn().await?, asset_id, room_id).await?;
 
     let data = storage::assets::get_asset(&storage, &asset.id).await?;
 

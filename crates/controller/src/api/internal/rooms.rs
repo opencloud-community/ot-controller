@@ -16,7 +16,8 @@ use db_storage::legal_votes::LegalVote;
 use db_storage::rooms::Room;
 use db_storage::sip_configs::SipConfig;
 use db_storage::users::User;
-use diesel::Connection;
+use diesel_async::scoped_futures::ScopedFutureExt;
+use diesel_async::AsyncConnection;
 use kustos::prelude::*;
 use types::core::RoomId;
 
@@ -42,19 +43,10 @@ pub async fn delete(
     let room_id = room_id.into_inner();
     let room_path = format!("/rooms/{room_id}");
 
-    let db_clone = db.clone();
-    let (mut linked_events, mut linked_legal_votes) =
-        crate::block(move || -> database::Result<_> {
-            let mut conn = db_clone.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-            Room::get(&mut conn, room_id)?;
-
-            Ok((
-                Event::get_all_ids_for_room(&mut conn, room_id)?,
-                LegalVote::get_all_ids_for_room(&mut conn, room_id)?,
-            ))
-        })
-        .await??;
+    let mut linked_events = Event::get_all_ids_for_room(&mut conn, room_id).await?;
+    let mut linked_legal_votes = LegalVote::get_all_ids_for_room(&mut conn, room_id).await?;
 
     // Sort for improved equality comparison later on, inside the transaction.
     linked_events.sort();
@@ -84,37 +76,41 @@ pub async fn delete(
         .chain(associated_room_resource_ids(room_id))
         .collect();
 
-    let assets = crate::block(move || {
-        let mut conn = db.get_conn()?;
-        conn.transaction(|conn| {
-            // We check if in the meantime (during the permission check) another event got linked to
-            let mut current_events = Event::get_all_ids_for_room(conn, room_id)?;
-            current_events.sort();
+    let assets = conn
+        .transaction(|conn| {
+            async move {
+                // We check if in the meantime (during the permission check) another event got linked to
+                let mut current_events = Event::get_all_ids_for_room(conn, room_id).await?;
+                current_events.sort();
 
-            if current_events != linked_events {
-                return Err(DatabaseError::custom("Race-condition during access checks"));
+                if current_events != linked_events {
+                    return Err(DatabaseError::custom("Race-condition during access checks"));
+                }
+
+                let mut current_legal_votes =
+                    LegalVote::get_all_ids_for_room(conn, room_id).await?;
+                current_legal_votes.sort();
+
+                if current_legal_votes != linked_legal_votes {
+                    return Err(DatabaseError::custom("Race-condition during access checks"));
+                }
+
+                let mut current_assets = Asset::get_all_ids_for_room(conn, room_id).await?;
+                current_assets.sort();
+
+                LegalVote::delete_by_room(conn, room_id).await?;
+                Event::delete_all_for_room(conn, room_id).await?;
+                SipConfig::delete_by_room(conn, room_id).await?;
+                Asset::delete_by_ids(conn, &current_assets).await?;
+                Room::delete_by_id(conn, room_id).await?;
+
+                Ok(current_assets)
             }
-
-            let mut current_legal_votes = LegalVote::get_all_ids_for_room(conn, room_id)?;
-            current_legal_votes.sort();
-
-            if current_legal_votes != linked_legal_votes {
-                return Err(DatabaseError::custom("Race-condition during access checks"));
-            }
-
-            let mut current_assets = Asset::get_all_ids_for_room(conn, room_id)?;
-            current_assets.sort();
-
-            LegalVote::delete_by_room(conn, room_id)?;
-            Event::delete_all_for_room(conn, room_id)?;
-            SipConfig::delete_by_room(conn, room_id)?;
-            Asset::delete_by_ids(conn, &current_assets)?;
-            Room::delete_by_id(conn, room_id)?;
-
-            Ok(current_assets)
+            .scope_boxed()
         })
-    })
-    .await??;
+        .await?;
+
+    drop(conn);
 
     for asset_id in assets {
         storage.delete(asset_key(&asset_id)).await?;

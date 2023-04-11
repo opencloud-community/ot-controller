@@ -151,30 +151,25 @@ pub async fn patch_me(
 
     let settings = settings.load_full();
 
-    let db_user = crate::block(move || -> Result<User, ApiError> {
-        let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-        let changeset = UpdateUser {
-            title: patch.title.as_deref(),
-            firstname: None,
-            lastname: None,
-            phone: None,
-            email: None,
-            display_name: patch.display_name.as_deref(),
-            language: patch.language.as_deref(),
-            dashboard_theme: patch.dashboard_theme.as_deref(),
-            conference_theme: patch.conference_theme.as_deref(),
-            id_token_exp: None,
-            tariff_id: None,
-        };
+    let changeset = UpdateUser {
+        title: patch.title.as_deref(),
+        firstname: None,
+        lastname: None,
+        phone: None,
+        email: None,
+        display_name: patch.display_name.as_deref(),
+        language: patch.language.as_deref(),
+        dashboard_theme: patch.dashboard_theme.as_deref(),
+        conference_theme: patch.conference_theme.as_deref(),
+        id_token_exp: None,
+        tariff_id: None,
+    };
 
-        let user = changeset.apply(&mut conn, current_user.id)?;
+    let user = changeset.apply(&mut conn, current_user.id).await?;
 
-        Ok(user)
-    })
-    .await??;
-
-    let user_profile = PrivateUserProfile::from_db(&settings, db_user);
+    let user_profile = PrivateUserProfile::from_db(&settings, user);
 
     Ok(Either::Left(Json(user_profile)))
 }
@@ -205,12 +200,10 @@ pub async fn get_me_tariff(
     current_user: ReqData<User>,
 ) -> Result<Json<TariffResource>, ApiError> {
     let current_user = current_user.into_inner();
-    let tariff = crate::block(move || {
-        let mut conn = db.get_conn()?;
 
-        Tariff::get(&mut conn, current_user.tariff_id)
-    })
-    .await??;
+    let mut conn = db.get_conn().await?;
+
+    let tariff = Tariff::get(&mut conn, current_user.tariff_id).await?;
 
     let response = TariffResource::from_tariff(tariff, &modules.get_module_names());
 
@@ -229,12 +222,11 @@ pub async fn get_user(
 ) -> Result<Json<PublicUserProfile>, ApiError> {
     let settings = settings.load_full();
 
-    let user = crate::block(move || {
-        let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
+    let user =
         User::get_filtered_by_tenant(&mut conn, current_user.tenant_id, user_id.into_inner())
-    })
-    .await??;
+            .await?;
 
     let user_profile = PublicUserProfile::from_db(&settings, user);
 
@@ -304,28 +296,23 @@ pub async fn find(
             }
         };
 
-        let (db_users, kc_users) = crate::block(move || -> Result<_, ApiError> {
-            let mut conn = db.get_conn()?;
+        let mut conn = db.get_conn().await?;
 
-            let kc_subs: Vec<&str> = found_kc_users
-                .iter()
-                .map(|kc_user| kc_user.id.as_str())
-                .collect();
+        let kc_subs: Vec<&str> = found_kc_users
+            .iter()
+            .map(|kc_user| kc_user.id.as_str())
+            .collect();
 
-            let users = User::get_all_by_oidc_subs(&mut conn, current_tenant.id, &kc_subs)?;
+        let users = User::get_all_by_oidc_subs(&mut conn, current_tenant.id, &kc_subs).await?;
 
-            found_kc_users.retain(|kc_user| !users.iter().any(|user| user.oidc_sub == kc_user.id));
+        found_kc_users.retain(|kc_user| !users.iter().any(|user| user.oidc_sub == kc_user.id));
 
-            Ok((users, found_kc_users))
-        })
-        .await??;
-
-        db_users
+        users
             .into_iter()
             .map(|user| {
                 UserFindResponseItem::Registered(PublicUserProfile::from_db(&settings, user))
             })
-            .chain(kc_users.into_iter().map(|kc_user| {
+            .chain(found_kc_users.into_iter().map(|kc_user| {
                 let avatar_url =
                     email_to_libravatar_url(&settings.avatar.libravatar_url, &kc_user.email);
 
@@ -338,12 +325,9 @@ pub async fn find(
             }))
             .collect()
     } else {
-        let found_users = crate::block(move || {
-            let mut conn = db.get_conn()?;
+        let mut conn = db.get_conn().await?;
 
-            User::find(&mut conn, current_tenant.id, &query.q)
-        })
-        .await??;
+        let found_users = User::find(&mut conn, current_tenant.id, &query.q).await?;
 
         found_users
             .into_iter()

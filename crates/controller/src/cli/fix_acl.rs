@@ -25,6 +25,7 @@ pub(crate) async fn fix_acl(settings: Settings, config: FixAclConfig) -> Result<
     let db = Arc::new(Db::connect(&settings.database).context("Failed to connect to database")?);
     let mut conn = db
         .get_conn()
+        .await
         .context("Failed to get connection from connection pool")?;
 
     let authz = kustos::Authz::new(db.clone()).await?;
@@ -58,7 +59,9 @@ async fn fix_user(
     authz: &kustos::Authz,
     errors: &mut Vec<Error>,
 ) -> Result<()> {
-    let users = User::get_all_with_groups(conn).context("Failed to load users")?;
+    let users = User::get_all_with_groups(conn)
+        .await
+        .context("Failed to load users")?;
     for (user, groups) in users {
         if config.user_roles {
             let needs_addition = !match authz.is_user_in_role(user.id, "user").await {
@@ -112,7 +115,9 @@ async fn fix_rooms(
     authz: &kustos::Authz,
     errors: &mut Vec<Error>,
 ) -> Result<()> {
-    let rooms = Room::get_all_with_creator(conn).context("failed to load rooms")?;
+    let rooms = Room::get_all_with_creator(conn)
+        .await
+        .context("failed to load rooms")?;
 
     for (room, user) in rooms {
         match maybe_grant_access_to_user(

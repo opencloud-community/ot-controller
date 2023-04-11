@@ -46,21 +46,16 @@ fn disallow_empty(modify_room: &PutSipConfig) -> Result<(), ValidationError> {
 pub async fn get(db: Data<Db>, room_id: Path<RoomId>) -> Result<Json<SipConfigResource>, ApiError> {
     let room_id = room_id.into_inner();
 
-    let sip_config = crate::block(move || -> database::Result<_> {
-        let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-        let config = SipConfig::get_by_room(&mut conn, room_id)?;
+    let config = SipConfig::get_by_room(&mut conn, room_id).await?;
 
-        Ok(SipConfigResource {
-            room: room_id,
-            sip_id: config.sip_id,
-            password: config.password,
-            lobby: config.lobby,
-        })
-    })
-    .await??;
-
-    Ok(Json(sip_config))
+    Ok(Json(SipConfigResource {
+        room: room_id,
+        sip_id: config.sip_id,
+        password: config.password,
+        lobby: config.lobby,
+    }))
 }
 
 /// API Endpoint *PUT /rooms/{room_id}/sip*
@@ -80,17 +75,17 @@ pub async fn put(
 
     modify_sip_config.validate()?;
 
-    let (sip_config, newly_created) = crate::block(move || -> database::Result<_> {
-        let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-        let changeset = UpdateSipConfig {
-            password: modify_sip_config.password.clone(),
-            enable_lobby: modify_sip_config.lobby,
-        };
+    let changeset = UpdateSipConfig {
+        password: modify_sip_config.password.clone(),
+        enable_lobby: modify_sip_config.lobby,
+    };
 
-        // FIXME: use on_conflict().do_update() (UPSERT) for this PUT
-        // Try to modify the sip config before creating a new one
-        if let Some(db_sip_config) = changeset.apply(&mut conn, room_id)? {
+    // FIXME: use on_conflict().do_update() (UPSERT) for this PUT
+    // Try to modify the sip config before creating a new one
+    let (sip_config, newly_created) =
+        if let Some(db_sip_config) = changeset.apply(&mut conn, room_id).await? {
             let sip_config = SipConfigResource {
                 room: room_id,
                 sip_id: db_sip_config.sip_id,
@@ -98,7 +93,7 @@ pub async fn put(
                 lobby: db_sip_config.lobby,
             };
 
-            Ok((sip_config, false))
+            (sip_config, false)
         } else {
             // Create a new sip config
             let mut new_config =
@@ -108,7 +103,7 @@ pub async fn put(
                 new_config.password = password;
             }
 
-            let config = new_config.insert(&mut conn)?;
+            let config = new_config.insert(&mut conn).await?;
 
             let config_resource = SipConfigResource {
                 room: room_id,
@@ -117,10 +112,8 @@ pub async fn put(
                 lobby: config.lobby,
             };
 
-            Ok((config_resource, true))
-        }
-    })
-    .await??;
+            (config_resource, true)
+        };
 
     let mut response = if newly_created {
         HttpResponse::Created()
@@ -138,12 +131,9 @@ pub async fn put(
 pub async fn delete(db: Data<Db>, room_id: Path<RoomId>) -> Result<HttpResponse, ApiError> {
     let room_id = room_id.into_inner();
 
-    crate::block(move || {
-        let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-        SipConfig::delete_by_room(&mut conn, room_id)
-    })
-    .await??;
+    SipConfig::delete_by_room(&mut conn, room_id).await?;
 
     Ok(HttpResponse::NoContent().finish())
 }

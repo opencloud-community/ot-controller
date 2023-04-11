@@ -181,40 +181,36 @@ pub async fn get_all_for_room(
         .get_accessible_resources_for_user(current_user.id, AccessMethod::Get)
         .await?;
 
-    let (legal_votes, count) = crate::block(move || -> database::Result<_> {
-        let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-        let (legal_votes, count) = match accessible_legal_votes {
-            AccessibleResources::List(vote_ids) => LegalVote::get_for_room_by_ids_paginated(
-                &mut conn, room_id, &vote_ids, per_page, page,
-            )?,
-            AccessibleResources::All => {
-                LegalVote::get_for_room_paginated(&mut conn, room_id, per_page, page)?
-            }
-        };
+    let (legal_votes, count) = match accessible_legal_votes {
+        AccessibleResources::List(vote_ids) => {
+            LegalVote::get_for_room_by_ids_paginated(&mut conn, room_id, &vote_ids, per_page, page)
+                .await?
+        }
+        AccessibleResources::All => {
+            LegalVote::get_for_room_paginated(&mut conn, room_id, per_page, page).await?
+        }
+    };
 
-        let mut detailed_votes = Vec::new();
+    let mut detailed_votes = Vec::new();
 
-        for legal_vote in legal_votes {
-            match parse_protocol(&mut conn, legal_vote.protocol) {
-                Ok(legal_vote_detailed) => detailed_votes.push(LegalVoteEntry {
+    for legal_vote in legal_votes {
+        match parse_protocol(&mut conn, legal_vote.protocol).await {
+            Ok(legal_vote_detailed) => detailed_votes.push(LegalVoteEntry {
+                legal_vote_id: legal_vote.id,
+                protocol_result: ProtocolResult::Ok(legal_vote_detailed),
+            }),
+            Err(protocol_error) => {
+                detailed_votes.push(LegalVoteEntry {
                     legal_vote_id: legal_vote.id,
-                    protocol_result: ProtocolResult::Ok(legal_vote_detailed),
-                }),
-                Err(protocol_error) => {
-                    detailed_votes.push(LegalVoteEntry {
-                        legal_vote_id: legal_vote.id,
-                        protocol_result: ProtocolResult::Error(protocol_error),
-                    });
-                }
+                    protocol_result: ProtocolResult::Error(protocol_error),
+                });
             }
         }
+    }
 
-        Ok((detailed_votes, count))
-    })
-    .await??;
-
-    Ok(ApiResponse::new(legal_votes).with_page_pagination(per_page, page, count))
+    Ok(ApiResponse::new(detailed_votes).with_page_pagination(per_page, page, count))
 }
 
 /// API Endpoint *GET /legal_votes*
@@ -233,38 +229,33 @@ pub async fn get_all(
         .get_accessible_resources_for_user(current_user.id, AccessMethod::Get)
         .await?;
 
-    let (legal_votes, count) = crate::block(move || -> database::Result<_> {
-        let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-        let (legal_votes, count) = match accessible_legal_votes {
-            AccessibleResources::List(vote_ids) => {
-                LegalVote::get_by_ids_paginated(&mut conn, &vote_ids, per_page, page)?
-            }
-            AccessibleResources::All => LegalVote::get_all_paginated(&mut conn, per_page, page)?,
-        };
+    let (legal_votes, count) = match accessible_legal_votes {
+        AccessibleResources::List(vote_ids) => {
+            LegalVote::get_by_ids_paginated(&mut conn, &vote_ids, per_page, page).await?
+        }
+        AccessibleResources::All => LegalVote::get_all_paginated(&mut conn, per_page, page).await?,
+    };
 
-        let mut detailed_votes = Vec::new();
+    let mut detailed_votes = Vec::new();
 
-        for legal_vote in legal_votes {
-            match parse_protocol(&mut conn, legal_vote.protocol) {
-                Ok(legal_vote_detailed) => detailed_votes.push(LegalVoteEntry {
+    for legal_vote in legal_votes {
+        match parse_protocol(&mut conn, legal_vote.protocol).await {
+            Ok(legal_vote_detailed) => detailed_votes.push(LegalVoteEntry {
+                legal_vote_id: legal_vote.id,
+                protocol_result: ProtocolResult::Ok(legal_vote_detailed),
+            }),
+            Err(protocol_error) => {
+                detailed_votes.push(LegalVoteEntry {
                     legal_vote_id: legal_vote.id,
-                    protocol_result: ProtocolResult::Ok(legal_vote_detailed),
-                }),
-                Err(protocol_error) => {
-                    detailed_votes.push(LegalVoteEntry {
-                        legal_vote_id: legal_vote.id,
-                        protocol_result: ProtocolResult::Error(protocol_error),
-                    });
-                }
+                    protocol_result: ProtocolResult::Error(protocol_error),
+                });
             }
         }
+    }
 
-        Ok((detailed_votes, count))
-    })
-    .await??;
-
-    Ok(ApiResponse::new(legal_votes).with_page_pagination(per_page, page, count))
+    Ok(ApiResponse::new(detailed_votes).with_page_pagination(per_page, page, count))
 }
 
 /// API Endpoint *GET /legal_votes/{legal_vote_id}*
@@ -292,30 +283,25 @@ pub async fn get_specific(
         kustos::AccessibleResources::All => (),
     }
 
-    let legal_vote_detailed = crate::block(move || -> database::Result<_> {
-        let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-        let legal_vote = LegalVote::get(&mut conn, legal_vote_id)?;
+    let legal_vote = LegalVote::get(&mut conn, legal_vote_id).await?;
 
-        let legal_vote_entry = match parse_protocol(&mut conn, legal_vote.protocol) {
-            Ok(legal_vote_detailed) => LegalVoteEntry {
-                legal_vote_id: legal_vote.id,
-                protocol_result: ProtocolResult::Ok(legal_vote_detailed),
-            },
-            Err(protocol_error) => LegalVoteEntry {
-                legal_vote_id: legal_vote.id,
-                protocol_result: ProtocolResult::Error(protocol_error),
-            },
-        };
+    let legal_vote_entry = match parse_protocol(&mut conn, legal_vote.protocol).await {
+        Ok(legal_vote_detailed) => LegalVoteEntry {
+            legal_vote_id: legal_vote.id,
+            protocol_result: ProtocolResult::Ok(legal_vote_detailed),
+        },
+        Err(protocol_error) => LegalVoteEntry {
+            legal_vote_id: legal_vote.id,
+            protocol_result: ProtocolResult::Error(protocol_error),
+        },
+    };
 
-        Ok(legal_vote_entry)
-    })
-    .await??;
-
-    Ok(Json(legal_vote_detailed))
+    Ok(Json(legal_vote_entry))
 }
 
-fn parse_protocol(
+async fn parse_protocol(
     conn: &mut DbConnection,
     protocol: Protocol,
 ) -> Result<LegalVoteDetails, ProtocolError> {
@@ -327,7 +313,7 @@ fn parse_protocol(
                     ProtocolError::InvalidProtocol
                 })?;
 
-            parse_v1_entries(conn, entries)
+            parse_v1_entries(conn, entries).await
         }
         unknown => {
             log::error!("Unknown legal vote protocol version '{}'", unknown);
@@ -337,7 +323,7 @@ fn parse_protocol(
 }
 
 /// Converts a list of v1 protocol entries to [`LegalVoteDetails`]
-fn parse_v1_entries(
+async fn parse_v1_entries(
     conn: &mut DbConnection,
     entries: Vec<v1::ProtocolEntry>,
 ) -> Result<LegalVoteDetails, ProtocolError> {
@@ -379,6 +365,7 @@ fn parse_v1_entries(
                 } = start.parameters;
 
                 let initiator = User::get(conn, start.issuer)
+                    .await
                     .map_err(|e| {
                         log::error!(
                             "Failed to resolve vote initiator in legal vote protocol, {}",
@@ -413,6 +400,7 @@ fn parse_v1_entries(
                     protocol::v1::StopKind::Expired => StopKind::Expired,
                     protocol::v1::StopKind::ByUser(user_id) => {
                         let participant_info = User::get(conn, user_id)
+                            .await
                             .map_err(|e| {
                                 log::error!(
                                     "Failed to resolve stop issuer in legal vote protocol, {}",
@@ -435,6 +423,7 @@ fn parse_v1_entries(
 
     let vote_result = if let Some(cancel) = cancel {
         let participant_info = User::get(conn, cancel.issuer)
+            .await
             .map_err(|e| {
                 log::error!(
                     "Failed to resolve stop issuer in legal vote protocol, {}",
@@ -465,7 +454,7 @@ fn parse_v1_entries(
         return Err(ProtocolError::InvalidProtocol);
     };
 
-    let users = User::get_all_by_ids(conn, &user_ids).map_err(|e| {
+    let users = User::get_all_by_ids(conn, &user_ids).await.map_err(|e| {
         log::error!(
             "Failed to get users by id while parsing legal vote protocol {}",
             e

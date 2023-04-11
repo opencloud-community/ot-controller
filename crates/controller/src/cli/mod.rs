@@ -131,10 +131,10 @@ pub async fn parse_args() -> Result<Args> {
                 println!("{result:?}");
             }
             SubCommand::Tenants(command) => {
-                tenants::handle_command(settings, command)?;
+                tenants::handle_command(settings, command).await?;
             }
             SubCommand::Tariffs(command) => {
-                tariffs::handle_command(settings, command)?;
+                tariffs::handle_command(settings, command).await?;
             }
         }
     }

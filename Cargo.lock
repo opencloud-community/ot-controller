@@ -2842,6 +2842,7 @@ dependencies = [
  "clap",
  "config",
  "diesel",
+ "diesel-async",
  "either",
  "email_address",
  "futures",
