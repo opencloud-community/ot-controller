@@ -5,7 +5,7 @@
 use crate::{api::signaling::prelude::*, redis_wrapper::RedisConnection};
 use actix_http::ws::CloseCode;
 use anyhow::Result;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::core::{ParticipantId, RoomId, UserId};
 
@@ -15,6 +15,14 @@ pub mod rabbitmq;
 pub mod storage;
 
 pub const NAMESPACE: &str = "moderation";
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(tag = "kick_scope", rename_all = "snake_case")]
+pub enum KickScope {
+    Guests,
+    UsersAndGuests,
+    All,
+}
 
 pub struct ModerationModule {
     room: SignalingRoomId,
@@ -26,6 +34,16 @@ pub struct ModerationModuleFrontendData {
     waiting_room_enabled: bool,
     waiting_room_participants: Vec<control::outgoing::Participant>,
     raise_hands_enabled: bool,
+}
+
+impl KickScope {
+    const fn kicks_role(self, role: Role) -> bool {
+        match self {
+            KickScope::Guests => matches!(role, Role::Guest),
+            KickScope::UsersAndGuests => !matches!(role, Role::Moderator),
+            KickScope::All => true,
+        }
+    }
 }
 
 async fn build_waiting_room_participants(
@@ -56,6 +74,22 @@ async fn build_waiting_room_participants(
     }
 
     Ok(waiting_room)
+}
+
+async fn set_waiting_room_enabled(
+    ctx: &mut ModuleContext<'_, ModerationModule>,
+    room_id: RoomId,
+    enabled: bool,
+) -> Result<()> {
+    storage::set_waiting_room_enabled(ctx.redis_conn(), room_id, enabled).await?;
+
+    ctx.rabbitmq_publish(
+        breakout::rabbitmq::global_exchange_name(room_id),
+        control::rabbitmq::room_all_routing_key().into(),
+        rabbitmq::Message::WaitingRoomEnableUpdated,
+    );
+
+    Ok(())
 }
 
 #[async_trait::async_trait(?Send)]
@@ -170,33 +204,35 @@ impl SignalingModule for ModerationModule {
                     rabbitmq::Message::Kicked(target),
                 );
             }
+            Event::WsMessage(incoming::Message::Debrief(kick_scope)) => {
+                if ctx.role() != Role::Moderator {
+                    return Ok(());
+                }
+
+                set_waiting_room_enabled(&mut ctx, self.room.room_id(), true).await?;
+
+                ctx.rabbitmq_publish(
+                    control::rabbitmq::current_room_exchange_name(self.room),
+                    control::rabbitmq::room_all_routing_key().to_string(),
+                    rabbitmq::Message::Debriefed {
+                        kick_scope,
+                        issued_by: self.id,
+                    },
+                );
+            }
             Event::WsMessage(incoming::Message::EnableWaitingRoom) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
                 }
 
-                storage::set_waiting_room_enabled(ctx.redis_conn(), self.room.room_id(), true)
-                    .await?;
-
-                ctx.rabbitmq_publish(
-                    breakout::rabbitmq::global_exchange_name(self.room.room_id()),
-                    control::rabbitmq::room_all_routing_key().into(),
-                    rabbitmq::Message::WaitingRoomEnableUpdated,
-                );
+                set_waiting_room_enabled(&mut ctx, self.room.room_id(), true).await?;
             }
             Event::WsMessage(incoming::Message::DisableWaitingRoom) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
                 }
 
-                storage::set_waiting_room_enabled(ctx.redis_conn(), self.room.room_id(), false)
-                    .await?;
-
-                ctx.rabbitmq_publish(
-                    breakout::rabbitmq::global_exchange_name(self.room.room_id()),
-                    control::rabbitmq::room_all_routing_key().into(),
-                    rabbitmq::Message::WaitingRoomEnableUpdated,
-                );
+                set_waiting_room_enabled(&mut ctx, self.room.room_id(), false).await?;
             }
             Event::WsMessage(incoming::Message::Accept(incoming::Target { target })) => {
                 if ctx.role() != Role::Moderator {
@@ -272,6 +308,17 @@ impl SignalingModule for ModerationModule {
                 if self.id == participant {
                     ctx.ws_send(outgoing::Message::Kicked);
                     ctx.exit(Some(CloseCode::Normal));
+                }
+            }
+            Event::RabbitMq(rabbitmq::Message::Debriefed {
+                kick_scope,
+                issued_by,
+            }) => {
+                if kick_scope.kicks_role(ctx.role()) {
+                    ctx.ws_send(outgoing::Message::SessionEnded { issued_by });
+                    ctx.exit(Some(CloseCode::Normal));
+                } else {
+                    ctx.ws_send(outgoing::Message::DebriefingStarted { issued_by });
                 }
             }
             Event::RabbitMq(rabbitmq::Message::JoinedWaitingRoom(id)) => {

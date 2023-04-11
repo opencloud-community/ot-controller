@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - controller/settings: remove `http.cors` section as CORS is now statically configured to allow any origin
 - controller/settings: add `tenants` and `tariffs` sections, which allow configuring how users are assigned to each tenant/tariff.
 - legal-vote: add option to set protocol timezone ([#338](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/338))
+- controller: add debriefing and kicking multiple users at once ([#350](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/350))
 
 ### Changed
 
