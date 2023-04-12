@@ -1206,6 +1206,22 @@ impl Runner {
         Ok(())
     }
 
+    async fn room_has_moderator_besides_me(&mut self) -> Result<bool> {
+        let roles_and_left_at_timestamps =
+            control::storage::get_role_and_left_at_for_room_participants(
+                &mut self.redis_conn,
+                SignalingRoomId(self.room.id, None),
+            )
+            .await?;
+
+        Ok(roles_and_left_at_timestamps
+            .iter()
+            .filter(|(k, _)| **k != self.id)
+            .any(|(_, (role, left_at))| {
+                role.as_ref().map(Role::is_moderator).unwrap_or_default() && left_at.is_none()
+            }))
+    }
+
     /// Enforces the given tariff.
     ///
     /// Requires the room lock to be taken before calling
@@ -1215,6 +1231,12 @@ impl Runner {
     ) -> Result<ControlFlow<JoinBlockedReason, Tariff>> {
         let tariff =
             control::storage::try_init_tariff(&mut self.redis_conn, self.room.id, tariff).await?;
+
+        if self.role == Role::Moderator && !self.room_has_moderator_besides_me().await? {
+            control::storage::increment_participant_count(&mut self.redis_conn, self.room.id)
+                .await?;
+            return Ok(ControlFlow::Continue(tariff));
+        }
 
         if let Some(participant_limit) = tariff.quotas.0.get("room_participant_limit") {
             if let Some(count) =

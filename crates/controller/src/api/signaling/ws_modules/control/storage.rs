@@ -2,16 +2,17 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::api::signaling::SignalingRoomId;
+use crate::api::signaling::{Role, SignalingRoomId};
 use crate::redis_wrapper::RedisConnection;
 use anyhow::{Context, Result};
 use db_storage::tariffs::Tariff;
 use r3dlock::Mutex;
 use redis::{AsyncCommands, FromRedisValue, ToRedisArgs};
 use redis_args::ToRedisArgs;
-use std::convert::identity;
+use std::collections::HashSet;
 use std::fmt::Debug;
 use std::time::Duration;
+use std::{collections::HashMap, convert::identity};
 use types::core::{ParticipantId, RoomId, Timestamp};
 
 /// Describes a set of participants inside a room.
@@ -339,6 +340,40 @@ where
             .await
             .with_context(|| format!("Failed to get attribute '{name}' for all participants "))
     }
+}
+
+pub async fn get_role_and_left_at_for_room_participants(
+    redis_conn: &mut RedisConnection,
+    room: SignalingRoomId,
+) -> Result<HashMap<ParticipantId, (Option<Role>, Option<Timestamp>)>> {
+    let mut pipe = redis::pipe();
+    pipe.atomic();
+    pipe.hgetall(RoomParticipantAttributes {
+        room,
+        attribute_name: "role",
+    });
+    pipe.hgetall(RoomParticipantAttributes {
+        room,
+        attribute_name: "left_at",
+    });
+
+    let (mut roles, mut left_at_timestamps): (
+        HashMap<ParticipantId, Role>,
+        HashMap<ParticipantId, Timestamp>,
+    ) = pipe
+        .query_async(redis_conn)
+        .await
+        .with_context(|| "Failed to get attributes")?;
+    let participants: HashSet<ParticipantId> = roles
+        .keys()
+        .chain(left_at_timestamps.keys())
+        .copied()
+        .collect();
+
+    Ok(participants
+        .into_iter()
+        .map(|p| (p, (roles.remove(&p), left_at_timestamps.remove(&p))))
+        .collect())
 }
 
 #[derive(Debug, ToRedisArgs)]
