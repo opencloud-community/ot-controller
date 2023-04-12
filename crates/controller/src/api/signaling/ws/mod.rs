@@ -16,8 +16,6 @@ use db_storage::rooms::Room;
 use db_storage::users::User;
 use futures::stream::SelectAll;
 use kustos::Authz;
-use lapin::options::{ExchangeDeclareOptions, QueueBindOptions};
-use lapin::ExchangeKind;
 use modules::{any_stream, AnyStream};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -65,7 +63,7 @@ where
     },
 
     /// The participant is in the process of leaving the room, this event will be called before
-    /// `on_destroy` is called and before the rabbitmq control message `Left` has been sent.
+    /// `on_destroy` is called and before the exchange control message `Left` has been sent.
     ///
     /// Note: Calls to `ModuleContext::ws_send` when receiving this event will almost certainly fail
     Leaving,
@@ -89,8 +87,8 @@ where
     /// Received websocket message
     WsMessage(M::Incoming),
 
-    /// RabbitMQ queue received a message for this module
-    RabbitMq(M::RabbitMqMessage),
+    /// Exchange subscriber received a message for this module
+    Exchange(M::ExchangeMessage),
 
     /// External event provided by eventstream which was added using [`InitContext::add_event_stream`].
     ///
@@ -112,23 +110,14 @@ where
     db: &'ctx Arc<Db>,
     storage: &'ctx Arc<ObjectStorage>,
     authz: &'ctx Arc<Authz>,
-    rabbitmq_exchanges: &'ctx mut Vec<RabbitMqExchange>,
-    rabbitmq_bindings: &'ctx mut Vec<RabbitMqBinding>,
+    exchange_bindings: &'ctx mut Vec<ExchangeBinding>,
     events: &'ctx mut SelectAll<AnyStream>,
     redis_conn: &'ctx mut RedisConnection,
     m: PhantomData<fn() -> M>,
 }
 
-struct RabbitMqExchange {
-    name: String,
-    kind: ExchangeKind,
-    options: ExchangeDeclareOptions,
-}
-
-struct RabbitMqBinding {
+struct ExchangeBinding {
     routing_key: String,
-    exchange: String,
-    options: QueueBindOptions,
 }
 
 impl<M> InitContext<'_, M>
@@ -188,32 +177,9 @@ where
         self.redis_conn
     }
 
-    /// Add a rabbitmq exchange to be created
-    pub fn add_rabbitmq_exchange(
-        &mut self,
-        name: String,
-        kind: ExchangeKind,
-        options: ExchangeDeclareOptions,
-    ) {
-        self.rabbitmq_exchanges.push(RabbitMqExchange {
-            name,
-            kind,
-            options,
-        });
-    }
-
-    /// Add a rabbitmq binding to bind the queue to
-    pub fn add_rabbitmq_binding(
-        &mut self,
-        routing_key: String,
-        exchange: String,
-        options: QueueBindOptions,
-    ) {
-        self.rabbitmq_bindings.push(RabbitMqBinding {
-            routing_key,
-            exchange,
-            options,
-        });
+    /// Add a routing-key for the exchange-subscriber to bind to
+    pub fn add_exchange_binding(&mut self, routing_key: String) {
+        self.exchange_bindings.push(ExchangeBinding { routing_key });
     }
 
     /// Add a custom event stream which return `M::ExtEvent`
@@ -235,7 +201,7 @@ where
     role: Role,
     ws_messages: &'ctx mut Vec<NamespacedEvent<'static, M::Outgoing>>,
     timestamp: Timestamp,
-    rabbitmq_publish: &'ctx mut Vec<RabbitMqPublish>,
+    exchange_publish: &'ctx mut Vec<ExchangePublish>,
     redis_conn: &'ctx mut RedisConnection,
     events: &'ctx mut SelectAll<AnyStream>,
     invalidate_data: &'ctx mut bool,
@@ -245,8 +211,7 @@ where
 }
 
 #[derive(Debug, Clone)]
-struct RabbitMqPublish {
-    exchange: Option<String>,
+struct ExchangePublish {
     routing_key: String,
     message: String,
 }
@@ -274,32 +239,21 @@ where
         });
     }
 
-    /// Queue a outgoing message to be sent via rabbitmq
-    pub fn rabbitmq_publish(
-        &mut self,
-        exchange: String,
-        routing_key: String,
-        message: M::RabbitMqMessage,
-    ) {
-        self.rabbitmq_publish_any(
-            Some(exchange),
+    /// Queue a outgoing message to be sent via the message exchange
+    pub fn exchange_publish(&mut self, routing_key: String, message: M::ExchangeMessage) {
+        self.exchange_publish_any(
             routing_key,
-            NamespacedCommand {
+            NamespacedEvent {
                 namespace: M::NAMESPACE,
+                timestamp: self.timestamp,
                 payload: message,
             },
         );
     }
 
-    /// Queue any serializable outgoing message to be sent via rabbitmq
-    pub fn rabbitmq_publish_any(
-        &mut self,
-        exchange: Option<String>,
-        routing_key: String,
-        message: impl Serialize,
-    ) {
-        self.rabbitmq_publish.push(RabbitMqPublish {
-            exchange,
+    /// Queue any serializable outgoing message to be sent via the message exchange
+    pub fn exchange_publish_any(&mut self, routing_key: String, message: impl Serialize) {
+        self.exchange_publish.push(ExchangePublish {
             routing_key,
             message: serde_json::to_string(&message).expect("value must be serializable to json"),
         });
@@ -308,17 +262,16 @@ where
     /// Queue a outgoing control message
     ///
     /// Used in modules which control some behavior in the control module/runner
-    pub(crate) fn rabbitmq_publish_control(
+    pub(crate) fn exchange_publish_control(
         &mut self,
-        exchange: String,
         routing_key: String,
-        message: control::rabbitmq::Message,
+        message: control::exchange::Message,
     ) {
-        self.rabbitmq_publish_any(
-            Some(exchange),
+        self.exchange_publish_any(
             routing_key,
-            NamespacedCommand {
+            NamespacedEvent {
                 namespace: control::NAMESPACE,
+                timestamp: self.timestamp,
                 payload: message,
             },
         );
@@ -393,8 +346,8 @@ pub trait SignalingModule: Sized + 'static {
     /// The websocket outgoing message type
     type Outgoing: Serialize + PartialEq + Debug;
 
-    /// Message type sent over rabbitmq to other participant's modules
-    type RabbitMqMessage: for<'de> Deserialize<'de> + Serialize;
+    /// Message type sent over the message exchange to other participant's modules
+    type ExchangeMessage: for<'de> Deserialize<'de> + Serialize;
 
     /// Optional event type, yielded by `ExtEventStream`
     ///

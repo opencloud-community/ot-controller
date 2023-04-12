@@ -11,6 +11,7 @@ use crate::api::signaling::ticket::{TicketData, TicketRedisKey};
 use crate::api::signaling::ws::actor::WebSocketActor;
 use crate::api::v1::response::ApiError;
 use crate::api::Participant;
+use crate::exchange_task::ExchangeHandle;
 use crate::redis_wrapper::RedisConnection;
 use crate::settings::SharedSettingsActix;
 use crate::storage::ObjectStorage;
@@ -23,7 +24,6 @@ use database::Db;
 use db_storage::rooms::Room;
 use db_storage::users::User;
 use kustos::Authz;
-use lapin_pool::RabbitMqPool;
 use std::marker::PhantomData;
 use std::time::Instant;
 use tokio::sync::{broadcast, mpsc};
@@ -65,7 +65,7 @@ pub(crate) async fn ws_service(
     storage: Data<ObjectStorage>,
     authz: Data<Authz>,
     redis_conn: Data<RedisConnection>,
-    rabbitmq_pool: Data<RabbitMqPool>,
+    exchange_handle: Data<ExchangeHandle>,
     metrics: Data<SignalingMetrics>,
     protocols: Data<SignalingProtocols>,
     modules: Data<SignalingModules>,
@@ -115,14 +115,6 @@ pub(crate) async fn ws_service(
             .protocols(protocols.0)
             .start_with_addr()?;
 
-    let rabbitmq_channel = match rabbitmq_pool.create_channel().await {
-        Ok(rabbitmq_channel) => rabbitmq_channel,
-        Err(e) => {
-            log::error!("Failed to create rmq channel, {}", e);
-            return Ok(HttpResponse::InternalServerError().finish());
-        }
-    };
-
     let mut builder = Runner::builder(
         request_id,
         ticket_data.participant_id,
@@ -136,7 +128,7 @@ pub(crate) async fn ws_service(
         storage.into_inner(),
         authz.into_inner(),
         redis_conn,
-        rabbitmq_channel,
+        (**exchange_handle).clone(),
         resumption_keep_alive,
     );
 

@@ -18,9 +18,9 @@ use types::core::Timestamp;
 use url::Url;
 
 mod client;
+mod exchange;
 mod incoming;
 mod outgoing;
-mod rabbitmq;
 mod state;
 
 struct Whiteboard {
@@ -62,7 +62,7 @@ impl SignalingModule for Whiteboard {
 
     type Outgoing = outgoing::Message;
 
-    type RabbitMqMessage = rabbitmq::Event;
+    type ExchangeMessage = exchange::Event;
 
     type ExtEvent = GetPdfEvent;
 
@@ -105,9 +105,9 @@ impl SignalingModule for Whiteboard {
 
                 Ok(())
             }
-            Event::RabbitMq(event) => {
+            Event::Exchange(event) => {
                 match event {
-                    rabbitmq::Event::Initialized => {
+                    exchange::Event::Initialized => {
                         if let Some(InitState::Initialized(space_info)) =
                             state::get(ctx.redis_conn(), self.room_id).await?
                         {
@@ -118,7 +118,7 @@ impl SignalingModule for Whiteboard {
                             log::error!("Whiteboard module received `Initialized` but spacedeck was not initialized");
                         }
                     }
-                    rabbitmq::Event::PdfAsset(pdf_asset) => {
+                    exchange::Event::PdfAsset(pdf_asset) => {
                         ctx.ws_send(outgoing::Message::PdfAsset(pdf_asset));
                     }
                 }
@@ -197,10 +197,9 @@ impl SignalingModule for Whiteboard {
                 )
                 .await?;
 
-                ctx.rabbitmq_publish(
-                    control::rabbitmq::current_room_exchange_name(self.room_id),
-                    control::rabbitmq::room_all_routing_key().into(),
-                    rabbitmq::Event::PdfAsset(PdfAsset { filename, asset_id }),
+                ctx.exchange_publish(
+                    control::exchange::current_room_all_participants(self.room_id),
+                    exchange::Event::PdfAsset(PdfAsset { filename, asset_id }),
                 );
 
                 Ok(())
@@ -234,7 +233,7 @@ impl SignalingModule for Whiteboard {
 impl Whiteboard {
     /// Creates a new spacedeck space
     ///
-    /// When spacedeck gets initialized here, this function will send the [`rabbitmq::Event::Initialized`] to all
+    /// When spacedeck gets initialized here, this function will send the [`exchange::Event::Initialized`] to all
     /// participants in the room
     async fn create_space(&self, ctx: &mut ModuleContext<'_, Self>) -> Result<()> {
         match state::try_start_init(ctx.redis_conn(), self.room_id).await? {
@@ -265,10 +264,9 @@ impl Whiteboard {
 
                 state::set_initialized(ctx.redis_conn(), self.room_id, space_info).await?;
 
-                ctx.rabbitmq_publish(
-                    control::rabbitmq::current_room_exchange_name(self.room_id),
-                    control::rabbitmq::room_all_routing_key().into(),
-                    rabbitmq::Event::Initialized,
+                ctx.exchange_publish(
+                    control::exchange::current_room_all_participants(self.room_id),
+                    exchange::Event::Initialized,
                 );
             }
         }

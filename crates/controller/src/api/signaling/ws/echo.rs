@@ -17,7 +17,7 @@ impl SignalingModule for Echo {
     type Params = ();
     type Incoming = Value;
     type Outgoing = Value;
-    type RabbitMqMessage = ();
+    type ExchangeMessage = ();
     type ExtEvent = ();
     type FrontendData = ();
     type PeerFrontendData = ();
@@ -39,7 +39,7 @@ impl SignalingModule for Echo {
             Event::WsMessage(incoming) => {
                 ctx.ws_send(incoming);
             }
-            Event::RabbitMq(_) => {}
+            Event::Exchange(_) => {}
             Event::Ext(_) => unreachable!("no registered external events"),
             // Ignore
             Event::RaiseHand => {}

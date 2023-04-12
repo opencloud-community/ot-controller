@@ -26,9 +26,9 @@ use std::str::FromStr;
 use storage::ready_status::ReadyStatus;
 use types::core::{ParticipantId, Timestamp};
 
+pub mod exchange;
 pub mod incoming;
 pub mod outgoing;
-pub mod rabbitmq;
 mod storage;
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq, Hash, ToRedisArgs)]
@@ -80,7 +80,7 @@ impl SignalingModule for Timer {
 
     type Outgoing = outgoing::Message;
 
-    type RabbitMqMessage = rabbitmq::Event;
+    type ExchangeMessage = exchange::Event;
 
     type ExtEvent = ExpiredEvent;
 
@@ -151,7 +151,7 @@ impl SignalingModule for Timer {
                     .await?;
             }
             Event::WsMessage(msg) => self.handle_ws_message(&mut ctx, msg).await?,
-            Event::RabbitMq(event) => {
+            Event::Exchange(event) => {
                 self.handle_rmq_message(&mut ctx, event).await?;
             }
             Event::Ext(expired) => {
@@ -255,10 +255,9 @@ impl Timer {
                     ready_check_enabled: start.enable_ready_check,
                 };
 
-                ctx.rabbitmq_publish(
-                    control::rabbitmq::current_room_exchange_name(self.room_id),
-                    control::rabbitmq::room_all_routing_key().into(),
-                    rabbitmq::Event::Start(started),
+                ctx.exchange_publish(
+                    control::exchange::current_room_all_participants(self.room_id),
+                    exchange::Event::Start(started),
                 );
             }
             incoming::Message::Stop(stop) => {
@@ -300,10 +299,9 @@ impl Timer {
                         )
                         .await?;
 
-                        ctx.rabbitmq_publish(
-                            control::rabbitmq::current_room_exchange_name(self.room_id),
-                            control::rabbitmq::room_all_routing_key().into(),
-                            rabbitmq::Event::UpdateReadyStatus(rabbitmq::UpdateReadyStatus {
+                        ctx.exchange_publish(
+                            control::exchange::current_room_all_participants(self.room_id),
+                            exchange::Event::UpdateReadyStatus(exchange::UpdateReadyStatus {
                                 timer_id: timer.id,
                                 participant_id: self.participant_id,
                             }),
@@ -319,10 +317,10 @@ impl Timer {
     async fn handle_rmq_message(
         &self,
         ctx: &mut ModuleContext<'_, Self>,
-        event: rabbitmq::Event,
+        event: exchange::Event,
     ) -> Result<()> {
         match event {
-            rabbitmq::Event::Start(started) => {
+            exchange::Event::Start(started) => {
                 if let outgoing::Kind::Countdown { ends_at } = started.kind {
                     ctx.add_event_stream(once(
                         sleep(
@@ -339,14 +337,14 @@ impl Timer {
 
                 ctx.ws_send(outgoing::Message::Started(started));
             }
-            rabbitmq::Event::Stop(stopped) => {
+            exchange::Event::Stop(stopped) => {
                 // remove the participants ready status when receiving 'stopped'
                 storage::ready_status::delete(ctx.redis_conn(), self.room_id, self.participant_id)
                     .await?;
 
                 ctx.ws_send(outgoing::Message::Stopped(stopped));
             }
-            rabbitmq::Event::UpdateReadyStatus(update_ready_status) => {
+            exchange::Event::UpdateReadyStatus(update_ready_status) => {
                 if let Some(ready_status) = storage::ready_status::get(
                     ctx.redis_conn(),
                     self.room_id,
@@ -383,10 +381,9 @@ impl Timer {
             None => return Ok(()),
         };
 
-        ctx.rabbitmq_publish(
-            control::rabbitmq::current_room_exchange_name(self.room_id),
-            control::rabbitmq::room_all_routing_key().into(),
-            rabbitmq::Event::Stop(outgoing::Stopped {
+        ctx.exchange_publish(
+            control::exchange::current_room_all_participants(self.room_id),
+            exchange::Event::Stop(outgoing::Stopped {
                 timer_id: timer.id,
                 kind: reason,
                 reason: message,

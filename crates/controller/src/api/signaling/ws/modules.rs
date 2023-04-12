@@ -6,7 +6,7 @@ use super::{Event, ModuleContext};
 use super::{SignalingModule, Timestamp};
 use crate::api::signaling::metrics::SignalingMetrics;
 use crate::api::signaling::ws::runner::Builder;
-use crate::api::signaling::ws::{DestroyContext, InitContext, RabbitMqPublish};
+use crate::api::signaling::ws::{DestroyContext, ExchangePublish, InitContext};
 use crate::api::signaling::ws_modules::control::outgoing::Participant;
 use crate::api::signaling::ws_modules::control::ControlData;
 use crate::api::signaling::Role;
@@ -81,7 +81,7 @@ impl Modules {
                 id: ctx.id,
                 role: ctx.role,
                 ws_messages: ctx.ws_messages,
-                rabbitmq_publish: ctx.rabbitmq_publish,
+                exchange_publish: ctx.exchange_publish,
                 redis_conn: ctx.redis_conn,
                 events: ctx.events,
                 invalidate_data: ctx.invalidate_data,
@@ -114,7 +114,7 @@ impl Modules {
 #[derive(Debug)]
 pub enum DynTargetedEvent {
     WsMessage(Value),
-    RabbitMqMessage(Value),
+    ExchangeMessage(Value),
     Ext(Box<dyn Any + 'static>),
 }
 
@@ -140,7 +140,7 @@ pub(super) struct DynEventCtx<'ctx> {
     pub role: Role,
     pub timestamp: Timestamp,
     pub ws_messages: &'ctx mut Vec<Message>,
-    pub rabbitmq_publish: &'ctx mut Vec<RabbitMqPublish>,
+    pub exchange_publish: &'ctx mut Vec<ExchangePublish>,
     pub redis_conn: &'ctx mut RedisConnection,
     pub events: &'ctx mut SelectAll<AnyStream>,
     pub invalidate_data: &'ctx mut bool,
@@ -179,7 +179,7 @@ where
         let ctx = ModuleContext {
             role: ctx.role,
             ws_messages: ctx.ws_messages,
-            rabbitmq_publish: ctx.rabbitmq_publish,
+            exchange_publish: ctx.exchange_publish,
             redis_conn: ctx.redis_conn,
             events: ctx.events,
             invalidate_data: ctx.invalidate_data,
@@ -194,10 +194,10 @@ where
                 let msg = serde_json::from_value(msg).context("Failed to parse WS message")?;
                 self.module.on_event(ctx, Event::WsMessage(msg)).await?;
             }
-            DynTargetedEvent::RabbitMqMessage(msg) => {
+            DynTargetedEvent::ExchangeMessage(msg) => {
                 let msg =
-                    serde_json::from_value(msg).context("Failed to parse RabbitMq message")?;
-                self.module.on_event(ctx, Event::RabbitMq(msg)).await?;
+                    serde_json::from_value(msg).context("Failed to parse exchange message")?;
+                self.module.on_event(ctx, Event::Exchange(msg)).await?;
             }
             DynTargetedEvent::Ext(ext) => {
                 self.module
@@ -217,7 +217,7 @@ where
         let ctx = ModuleContext {
             role: ctx.role,
             ws_messages: ctx.ws_messages,
-            rabbitmq_publish: ctx.rabbitmq_publish,
+            exchange_publish: ctx.exchange_publish,
             redis_conn: ctx.redis_conn,
             events: ctx.events,
             invalidate_data: ctx.invalidate_data,
@@ -324,7 +324,7 @@ where
             role: dyn_ctx.role,
             timestamp: dyn_ctx.timestamp,
             ws_messages: &mut ws_messages,
-            rabbitmq_publish: dyn_ctx.rabbitmq_publish,
+            exchange_publish: dyn_ctx.exchange_publish,
             redis_conn: dyn_ctx.redis_conn,
             events: dyn_ctx.events,
             invalidate_data: dyn_ctx.invalidate_data,
@@ -363,7 +363,7 @@ where
             role: dyn_ctx.role,
             timestamp: dyn_ctx.timestamp,
             ws_messages: &mut ws_messages,
-            rabbitmq_publish: dyn_ctx.rabbitmq_publish,
+            exchange_publish: dyn_ctx.exchange_publish,
             redis_conn: dyn_ctx.redis_conn,
             events: dyn_ctx.events,
             invalidate_data: dyn_ctx.invalidate_data,
@@ -428,8 +428,7 @@ where
             db: &builder.db,
             storage: &builder.storage,
             authz: &builder.authz,
-            rabbitmq_exchanges: &mut builder.rabbitmq_exchanges,
-            rabbitmq_bindings: &mut builder.rabbitmq_bindings,
+            exchange_bindings: &mut builder.exchange_bindings,
             events: &mut builder.events,
             redis_conn: &mut builder.redis_conn,
             m: PhantomData::<fn() -> M>,

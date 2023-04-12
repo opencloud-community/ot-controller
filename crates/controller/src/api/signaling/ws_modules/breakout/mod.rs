@@ -17,9 +17,9 @@ use std::time::{Duration, SystemTime};
 use tokio::time::sleep;
 use types::core::{BreakoutRoomId, ParticipantId, ParticipationKind, RoomId, Timestamp};
 
+pub mod exchange;
 pub mod incoming;
 pub mod outgoing;
-pub mod rabbitmq;
 pub mod storage;
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -73,7 +73,7 @@ impl SignalingModule for BreakoutRooms {
     type Params = ();
     type Incoming = incoming::Message;
     type Outgoing = outgoing::Message;
-    type RabbitMqMessage = rabbitmq::Message;
+    type ExchangeMessage = exchange::Message;
     type ExtEvent = TimerEvent;
     type FrontendData = FrontendData;
     type PeerFrontendData = ();
@@ -127,10 +127,9 @@ impl SignalingModule for BreakoutRooms {
                         }
                     }
 
-                    ctx.rabbitmq_publish(
-                        rabbitmq::global_exchange_name(self.parent),
-                        control::rabbitmq::room_all_routing_key().into(),
-                        rabbitmq::Message::Joined(ParticipantInOtherRoom {
+                    ctx.exchange_publish(
+                        control::exchange::global_room_all_participants(self.room.room_id()),
+                        exchange::Message::Joined(ParticipantInOtherRoom {
                             breakout_room: self.breakout_room,
                             id: self.id,
                             display_name: control_data.display_name.clone(),
@@ -196,10 +195,9 @@ impl SignalingModule for BreakoutRooms {
                 let config = storage::get_config(ctx.redis_conn(), self.parent).await?;
 
                 if config.is_some() || self.breakout_room.is_some() {
-                    ctx.rabbitmq_publish(
-                        rabbitmq::global_exchange_name(self.parent),
-                        control::rabbitmq::room_all_routing_key().into(),
-                        rabbitmq::Message::Left(AssocParticipantInOtherRoom {
+                    ctx.exchange_publish(
+                        control::exchange::global_room_all_participants(self.room.room_id()),
+                        exchange::Message::Left(AssocParticipantInOtherRoom {
                             breakout_room: self.breakout_room,
                             id: self.id,
                         }),
@@ -214,7 +212,7 @@ impl SignalingModule for BreakoutRooms {
             Event::ParticipantLeft(_) => Ok(()),
             Event::ParticipantUpdated(_, _) => Ok(()),
             Event::WsMessage(msg) => self.on_ws_msg(ctx, msg).await,
-            Event::RabbitMq(msg) => self.on_rabbitmq_msg(ctx, msg).await,
+            Event::Exchange(msg) => self.on_exchange_msg(ctx, msg).await,
             Event::Ext(TimerEvent::RoomExpired) => {
                 ctx.ws_send(outgoing::Message::Expired);
 
@@ -332,10 +330,9 @@ impl BreakoutRooms {
 
                 storage::set_config(ctx.redis_conn(), self.parent, &config).await?;
 
-                ctx.rabbitmq_publish(
-                    rabbitmq::global_exchange_name(self.parent),
-                    control::rabbitmq::room_all_routing_key().into(),
-                    rabbitmq::Message::Start(rabbitmq::Start {
+                ctx.exchange_publish(
+                    control::exchange::global_room_all_participants(self.parent),
+                    exchange::Message::Start(exchange::Start {
                         config,
                         started,
                         assignments,
@@ -344,10 +341,9 @@ impl BreakoutRooms {
             }
             incoming::Message::Stop => {
                 if storage::del_config(ctx.redis_conn(), self.parent).await? {
-                    ctx.rabbitmq_publish(
-                        rabbitmq::global_exchange_name(self.parent),
-                        control::rabbitmq::room_all_routing_key().into(),
-                        rabbitmq::Message::Stop,
+                    ctx.exchange_publish(
+                        control::exchange::global_room_all_participants(self.parent),
+                        exchange::Message::Stop,
                     );
                 } else {
                     ctx.ws_send(outgoing::Message::Error(outgoing::Error::Inactive));
@@ -358,13 +354,13 @@ impl BreakoutRooms {
         Ok(())
     }
 
-    async fn on_rabbitmq_msg(
+    async fn on_exchange_msg(
         &mut self,
         mut ctx: ModuleContext<'_, Self>,
-        msg: rabbitmq::Message,
+        msg: exchange::Message,
     ) -> Result<()> {
         match msg {
-            rabbitmq::Message::Start(start) => {
+            exchange::Message::Start(start) => {
                 let assignment = start.assignments.get(&self.id).copied();
 
                 let expires = if let Some(duration) = start.config.duration {
@@ -379,7 +375,7 @@ impl BreakoutRooms {
                     assignment,
                 }));
             }
-            rabbitmq::Message::Stop => {
+            exchange::Message::Stop => {
                 ctx.ws_send(outgoing::Message::Stopped);
 
                 if self.breakout_room.is_some() {
@@ -389,14 +385,14 @@ impl BreakoutRooms {
                     ));
                 }
             }
-            rabbitmq::Message::Joined(participant) => {
+            exchange::Message::Joined(participant) => {
                 if self.breakout_room == participant.breakout_room {
                     return Ok(());
                 }
 
                 ctx.ws_send(outgoing::Message::Joined(participant))
             }
-            rabbitmq::Message::Left(assoc_participant) => {
+            exchange::Message::Left(assoc_participant) => {
                 if self.breakout_room == assoc_participant.breakout_room {
                     return Ok(());
                 }

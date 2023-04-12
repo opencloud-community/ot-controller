@@ -17,9 +17,9 @@ use tokio::time::sleep;
 use types::core::Timestamp;
 use uuid::Uuid;
 
+pub mod exchange;
 pub mod incoming;
 pub mod outgoing;
-pub mod rabbitmq;
 mod storage;
 
 pub struct ExpiredEvent(PollId);
@@ -37,7 +37,7 @@ impl SignalingModule for Polls {
 
     type Incoming = incoming::Message;
     type Outgoing = outgoing::Message;
-    type RabbitMqMessage = rabbitmq::Message;
+    type ExchangeMessage = exchange::Message;
 
     type ExtEvent = ExpiredEvent;
 
@@ -86,7 +86,7 @@ impl SignalingModule for Polls {
             Event::ParticipantLeft(_) => Ok(()),
             Event::ParticipantUpdated(_, _) => Ok(()),
             Event::WsMessage(msg) => self.on_ws_message(ctx, msg).await,
-            Event::RabbitMq(msg) => self.on_rabbitmq_message(ctx, msg).await,
+            Event::Exchange(msg) => self.on_exchange_message(ctx, msg).await,
             Event::Ext(ExpiredEvent(id)) => {
                 if let Some(config) = self.config.as_ref().filter(|config| config.id == id) {
                     let results =
@@ -223,10 +223,9 @@ impl Polls {
 
                 storage::list_add(ctx.redis_conn(), self.room, config.id).await?;
 
-                ctx.rabbitmq_publish(
-                    control::rabbitmq::current_room_exchange_name(self.room),
-                    control::rabbitmq::room_all_routing_key().into(),
-                    rabbitmq::Message::Started(config),
+                ctx.exchange_publish(
+                    control::exchange::current_room_all_participants(self.room),
+                    exchange::Message::Started(config),
                 );
 
                 Ok(())
@@ -249,10 +248,9 @@ impl Polls {
                         config.voted = true;
 
                         if config.live {
-                            ctx.rabbitmq_publish(
-                                control::rabbitmq::current_room_exchange_name(self.room),
-                                control::rabbitmq::room_all_routing_key().into(),
-                                rabbitmq::Message::Update(poll_id),
+                            ctx.exchange_publish(
+                                control::exchange::current_room_all_participants(self.room),
+                                exchange::Message::Update(poll_id),
                             );
                         }
                     } else {
@@ -282,10 +280,9 @@ impl Polls {
                     // Delete config from redis to stop vote
                     storage::del_config(ctx.redis_conn(), self.room).await?;
 
-                    ctx.rabbitmq_publish(
-                        control::rabbitmq::current_room_exchange_name(self.room),
-                        control::rabbitmq::room_all_routing_key().into(),
-                        rabbitmq::Message::Finish(finish.id),
+                    ctx.exchange_publish(
+                        control::exchange::current_room_all_participants(self.room),
+                        exchange::Message::Finish(finish.id),
                     );
                 } else {
                     ctx.ws_send(outgoing::Message::Error(outgoing::Error::InvalidPollId));
@@ -296,13 +293,13 @@ impl Polls {
         }
     }
 
-    async fn on_rabbitmq_message(
+    async fn on_exchange_message(
         &mut self,
         mut ctx: ModuleContext<'_, Self>,
-        msg: rabbitmq::Message,
+        msg: exchange::Message,
     ) -> Result<()> {
         match msg {
-            rabbitmq::Message::Started(config) => {
+            exchange::Message::Started(config) => {
                 let id = config.id;
 
                 ctx.ws_send_overwrite_timestamp(
@@ -322,7 +319,7 @@ impl Polls {
 
                 Ok(())
             }
-            rabbitmq::Message::Update(id) => {
+            exchange::Message::Update(id) => {
                 if let Some(config) = &self.config {
                     let results =
                         storage::poll_results(ctx.redis_conn(), self.room, config).await?;
@@ -335,7 +332,7 @@ impl Polls {
 
                 Ok(())
             }
-            rabbitmq::Message::Finish(id) => {
+            exchange::Message::Finish(id) => {
                 if let Some(config) = self.config.take() {
                     let results =
                         storage::poll_results(ctx.redis_conn(), self.room, &config).await?;

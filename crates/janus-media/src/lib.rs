@@ -29,11 +29,11 @@ use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 use types::core::ParticipantId;
 
+mod exchange;
 mod focus;
 mod incoming;
 mod mcu;
 mod outgoing;
-mod rabbitmq;
 mod sessions;
 mod settings;
 mod storage;
@@ -104,7 +104,7 @@ impl SignalingModule for Media {
 
     type Incoming = incoming::Message;
     type Outgoing = outgoing::Message;
-    type RabbitMqMessage = rabbitmq::Message;
+    type ExchangeMessage = exchange::Message;
 
     type ExtEvent = (MediaSessionKey, WebRtcEvent);
 
@@ -352,10 +352,9 @@ impl SignalingModule for Media {
                     return Ok(());
                 }
 
-                ctx.rabbitmq_publish(
-                    control::rabbitmq::current_room_exchange_name(self.room),
-                    control::rabbitmq::room_all_routing_key().into(),
-                    rabbitmq::Message::PresenterGranted(selection),
+                ctx.exchange_publish(
+                    control::exchange::current_room_all_participants(self.room),
+                    exchange::Message::PresenterGranted(selection),
                 )
             }
             Event::WsMessage(incoming::Message::RevokePresenterRole(selection)) => {
@@ -365,10 +364,9 @@ impl SignalingModule for Media {
                     return Ok(());
                 }
 
-                ctx.rabbitmq_publish(
-                    control::rabbitmq::current_room_exchange_name(self.room),
-                    control::rabbitmq::room_all_routing_key().into(),
-                    rabbitmq::Message::PresenterRevoked(selection),
+                ctx.exchange_publish(
+                    control::exchange::current_room_all_participants(self.room),
+                    exchange::Message::PresenterRevoked(selection),
                 )
             }
 
@@ -415,35 +413,33 @@ impl SignalingModule for Media {
                         }));
                     }
                 },
-                WebRtcEvent::StartedTalking => ctx.rabbitmq_publish(
-                    control::rabbitmq::current_room_exchange_name(self.room),
-                    control::rabbitmq::room_all_routing_key().into(),
-                    rabbitmq::Message::StartedTalking(media_session_key.0),
+                WebRtcEvent::StartedTalking => ctx.exchange_publish(
+                    control::exchange::current_room_all_participants(self.room),
+                    exchange::Message::StartedTalking(media_session_key.0),
                 ),
-                WebRtcEvent::StoppedTalking => ctx.rabbitmq_publish(
-                    control::rabbitmq::current_room_exchange_name(self.room),
-                    control::rabbitmq::room_all_routing_key().into(),
-                    rabbitmq::Message::StoppedTalking(media_session_key.0),
+                WebRtcEvent::StoppedTalking => ctx.exchange_publish(
+                    control::exchange::current_room_all_participants(self.room),
+                    exchange::Message::StoppedTalking(media_session_key.0),
                 ),
             },
-            Event::RabbitMq(rabbitmq::Message::StartedTalking(id)) => {
+            Event::Exchange(exchange::Message::StartedTalking(id)) => {
                 if let Some(focus) = self.focus_detection.on_started_talking(id) {
                     ctx.ws_send(outgoing::Message::FocusUpdate(outgoing::FocusUpdate {
                         focus,
                     }));
                 }
             }
-            Event::RabbitMq(rabbitmq::Message::StoppedTalking(id)) => {
+            Event::Exchange(exchange::Message::StoppedTalking(id)) => {
                 if let Some(focus) = self.focus_detection.on_stopped_talking(id) {
                     ctx.ws_send(outgoing::Message::FocusUpdate(outgoing::FocusUpdate {
                         focus,
                     }));
                 }
             }
-            Event::RabbitMq(rabbitmq::Message::RequestMute(request_mute)) => {
+            Event::Exchange(exchange::Message::RequestMute(request_mute)) => {
                 ctx.ws_send(outgoing::Message::RequestMute(request_mute));
             }
-            Event::RabbitMq(rabbitmq::Message::PresenterGranted(selection)) => {
+            Event::Exchange(exchange::Message::PresenterGranted(selection)) => {
                 if !selection.participant_ids.contains(&self.id) {
                     return Ok(());
                 }
@@ -459,7 +455,7 @@ impl SignalingModule for Media {
 
                 ctx.invalidate_data();
             }
-            Event::RabbitMq(rabbitmq::Message::PresenterRevoked(selection)) => {
+            Event::Exchange(exchange::Message::PresenterRevoked(selection)) => {
                 if !selection.participant_ids.contains(&self.id) {
                     return Ok(());
                 }
@@ -612,7 +608,7 @@ impl Media {
         let room_participants =
             control::storage::get_all_participants(ctx.redis_conn(), self.room).await?;
 
-        let request_mute = rabbitmq::RequestMute {
+        let request_mute = exchange::RequestMute {
             issuer: self.id,
             force: moderator_mute.force,
         };
@@ -622,10 +618,9 @@ impl Media {
                 continue;
             }
 
-            ctx.rabbitmq_publish(
-                control::rabbitmq::current_room_exchange_name(self.room),
-                control::rabbitmq::room_participant_routing_key(target),
-                rabbitmq::Message::RequestMute(request_mute),
+            ctx.exchange_publish(
+                control::exchange::current_room_by_participant_id(self.room, target),
+                exchange::Message::RequestMute(request_mute),
             )
         }
 
