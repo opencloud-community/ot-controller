@@ -4,6 +4,7 @@
 
 //! Actix-web middleware based on <https://github.com/casbin-rs/actix-casbin-auth>
 use crate::actix_web::User;
+use crate::internal::block;
 use crate::{AccessMethod, PolicyUser, SyncedEnforcer, UserPolicy};
 use actix_web::dev::{Service, Transform};
 use actix_web::{
@@ -136,25 +137,32 @@ where
                 };
 
                 let subject: PolicyUser = user.0.into();
-                let lock = cloned_enforcer.read().await;
 
                 let span = tracing::Span::current();
 
-                match lock.enforce(UserPolicy::new(subject, path, action)) {
-                    Ok(true) => {
-                        drop(lock);
+                let enforce_result = block(move || {
+                    let lock = cloned_enforcer.blocking_read();
+
+                    lock.enforce(UserPolicy::new(subject, path, action))
+                })
+                .await;
+
+                match enforce_result {
+                    Ok(Ok(true)) => {
                         span.record("enforcement", true);
                         srv.call(req).await
                     }
-                    Ok(false) => {
-                        drop(lock);
+                    Ok(Ok(false)) => {
                         span.record("enforcement", false);
                         Ok(req.into_response(HttpResponse::Forbidden().finish()))
                     }
-                    Err(e) => {
-                        drop(lock);
+                    Ok(Err(e)) => {
                         log::error!("Enforce error {}", e);
                         Ok(req.into_response(HttpResponse::BadGateway().finish()))
+                    }
+                    Err(_) => {
+                        log::error!("Enforcer panicked");
+                        Ok(req.into_response(HttpResponse::InternalServerError().finish()))
                     }
                 }
             }
