@@ -34,8 +34,8 @@ pub trait ToCasbinString {
 ///
 /// Matches sub, obj, act with:
 /// sub group membership g(r.sub, p.sub)
-/// obj keyMatch3 (URL template spec matching with {placeholder} and * ), placeholder with the same id matches the same string.
-/// act regexMatch (policy regex matches request)
+/// obj keyMatch (URL match with a * in the end for wildcard), placeholder with the same id matches the same string.
+/// act custom actMatch (policy list of allowed actions matches request's action)
 ///
 /// OPTIONS calls are generally allowed
 /// subjects in the role::administrator g role are allowed.
@@ -53,8 +53,15 @@ g = _, _
 e = some(where (p.eft == allow))
 
 [matchers]
-m = r.act == "OPTIONS" || g(r.sub, p.sub) && keyMatch3(r.obj, p.obj) && regexMatch(r.act, p.act)
+m = r.act == "OPTIONS" || g(r.sub, p.sub) && keyMatch(r.obj, p.obj) && actMatch(r.act, p.act)
 "#;
+
+/// Try to match a request action (e.g. `GET`) to a policy's allowed actions (e.g. `GET|POST|PUT`)
+/// Used instead of regexMatch to improve enforce performance
+pub(crate) fn act_match(request: &str, policy: &str) -> bool {
+    policy.split('|').any(|p| p.eq(request))
+}
+
 pub(crate) async fn default_acl_model() -> DefaultModel {
     DefaultModel::from_str(MODEL).await.unwrap()
 }
@@ -228,6 +235,7 @@ mod test {
         let m = default_acl_model().await;
         let a = casbin::MemoryAdapter::default();
         let mut enforcer = casbin::Enforcer::new(m, a).await.unwrap();
+        enforcer.add_function("actMatch", |req, pol| super::act_match(&req, &pol));
         enforcer
             .add_policies(to_owned2(vec![
                 vec!["role::administrator", "/*", "GET|POST|PUT|DELETE"],
