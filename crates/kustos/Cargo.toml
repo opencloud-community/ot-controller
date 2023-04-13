@@ -56,7 +56,7 @@ opentelemetry = { version = "0.18", default-features = false, features = [
 
 [dependencies.casbin]
 git = "https://github.com/kbalt/casbin-rs.git"
-rev = "76b07db60264138b3f10b52469b74e41629e3e15"
+rev = "a5cd79704726b423030942769779ea7d4e8129ee"
 default-features = false
 features = ["runtime-tokio", "incremental"]
 
