@@ -14,7 +14,7 @@ use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json, Path, Query, ReqData};
 use actix_web::{get, patch, Either};
 use anyhow::Context;
-use controller_shared::settings::Settings;
+use controller_shared::settings::{Settings, TenantAssignment};
 use database::Db;
 use db_storage::tariffs::Tariff;
 use db_storage::tenants::Tenant;
@@ -285,10 +285,24 @@ pub async fn find(
     }
 
     let found_users = if settings.endpoints.users_find_use_kc {
-        let mut found_kc_users = kc_admin_client
-            .search_user(current_tenant.oidc_tenant_id.inner(), &query.q)
-            .await
-            .context("Failed to search for user in keycloak")?;
+        let mut found_kc_users = match settings.tenants.assignment {
+            TenantAssignment::Static { .. } => {
+                // Do not filter by tenant_id if the assignment is static, since thats used
+                // when the keycloak does not provide any tenant information we can filter over anyway
+                kc_admin_client
+                    .search_user(&query.q)
+                    .await
+                    .context("Failed to search for user in keycloak")?
+            }
+            TenantAssignment::ByExternalTenantId => {
+                // Keycloak must contain information about the tenancy of a user,
+                // so we pass in the tenant_id to filter the found users
+                kc_admin_client
+                    .search_user_filtered(current_tenant.oidc_tenant_id.inner(), &query.q)
+                    .await
+                    .context("Failed to search for user in keycloak")?
+            }
+        };
 
         let (db_users, kc_users) = crate::block(move || -> Result<_, ApiError> {
             let mut conn = db.get_conn()?;

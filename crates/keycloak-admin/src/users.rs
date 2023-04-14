@@ -46,7 +46,27 @@ struct VerifyEmailQuery<'s> {
 
 impl KeycloakAdminClient {
     /// Query keycloak for users using the given search string
-    pub async fn search_user(&self, tenant_id: &str, search_str: &str) -> Result<Vec<User>> {
+    pub async fn search_user(&self, search_str: &str) -> Result<Vec<User>> {
+        let url = self.url(["admin", "realms", &self.realm, "users"])?;
+
+        let query = SearchQuery {
+            search: search_str,
+            max: 5,
+        };
+
+        let response = self
+            .send_authorized(move |c| c.get(url.clone()).query(&query))
+            .await?;
+
+        Ok(response.json().await?)
+    }
+
+    /// Query keycloak for users using the given search string, filtered by the tenant_id
+    pub async fn search_user_filtered(
+        &self,
+        tenant_id: &str,
+        search_str: &str,
+    ) -> Result<Vec<User>> {
         let url = self.url(["admin", "realms", &self.realm, "users"])?;
 
         // TODO: Fix this code once https://github.com/keycloak/keycloak/issues/16687 is resolved.
