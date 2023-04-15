@@ -30,9 +30,15 @@ pub struct ModerationModule {
 }
 
 #[derive(Debug, Serialize)]
+pub struct ModeratorFrontendData {
+    pub waiting_room_enabled: bool,
+    pub waiting_room_participants: Vec<control::outgoing::Participant>,
+}
+
+#[derive(Debug, Serialize)]
 pub struct ModerationModuleFrontendData {
-    waiting_room_enabled: bool,
-    waiting_room_participants: Vec<control::outgoing::Participant>,
+    #[serde(flatten)]
+    moderator_data: Option<ModeratorFrontendData>,
     raise_hands_enabled: bool,
 }
 
@@ -125,13 +131,9 @@ impl SignalingModule for ModerationModule {
                 frontend_data,
                 participants: _,
             } => {
-                if ctx.role() == Role::Moderator {
+                let moderator_data = if ctx.role() == Role::Moderator {
                     let waiting_room_enabled =
                         storage::is_waiting_room_enabled(ctx.redis_conn(), self.room.room_id())
-                            .await?;
-
-                    let raise_hands_enabled =
-                        storage::is_raise_hands_enabled(ctx.redis_conn(), self.room.room_id())
                             .await?;
 
                     let list =
@@ -157,12 +159,21 @@ impl SignalingModule for ModerationModule {
 
                     waiting_room_participants.append(&mut accepted_waiting_room_participants);
 
-                    *frontend_data = Some(ModerationModuleFrontendData {
+                    Some(ModeratorFrontendData {
                         waiting_room_enabled,
                         waiting_room_participants,
-                        raise_hands_enabled,
-                    });
-                }
+                    })
+                } else {
+                    None
+                };
+
+                let raise_hands_enabled =
+                    storage::is_raise_hands_enabled(ctx.redis_conn(), self.room.room_id()).await?;
+
+                *frontend_data = Some(ModerationModuleFrontendData {
+                    moderator_data,
+                    raise_hands_enabled,
+                });
             }
             Event::Leaving => {}
             Event::RaiseHand => {}
@@ -393,5 +404,52 @@ impl SignalingModule for ModerationModule {
                 log::error!("Failed to clean up accepted waiting room list {}", e);
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+
+    #[test]
+    fn frontend_data_for_moderator() {
+        assert_eq!(
+            serde_json::to_value(&ModerationModuleFrontendData {
+                moderator_data: Some(ModeratorFrontendData {
+                    waiting_room_enabled: true,
+                    waiting_room_participants: vec![control::outgoing::Participant {
+                        id: ParticipantId::from_u128(1),
+                        module_data: HashMap::new()
+                    }]
+                }),
+                raise_hands_enabled: false
+            })
+            .unwrap(),
+            json!({
+                "raise_hands_enabled": false,
+                "waiting_room_enabled": true,
+                "waiting_room_participants": [
+                    {
+                        "id": "00000000-0000-0000-0000-000000000001",
+                    }
+                ]
+            })
+        );
+    }
+
+    #[test]
+    fn frontend_data_for_user() {
+        assert_eq!(
+            serde_json::to_value(&ModerationModuleFrontendData {
+                moderator_data: None,
+                raise_hands_enabled: false
+            })
+            .unwrap(),
+            json!({
+                "raise_hands_enabled": false,
+            })
+        );
     }
 }
