@@ -21,7 +21,6 @@ use crate::api::signaling::ws_modules::control::{
     exchange, incoming, outgoing, storage, ControlData, NAMESPACE,
 };
 use crate::api::signaling::SignalingRoomId;
-use crate::api::v1::tariffs::TariffResource;
 use crate::exchange_task::{ExchangeHandle, SubscriberHandle};
 use crate::redis_wrapper::RedisConnection;
 use crate::storage::ObjectStorage;
@@ -1208,7 +1207,7 @@ impl Runner {
                 avatar_url: control_data.avatar_url.clone(),
                 role: self.role,
                 closes_at,
-                tariff: TariffResource::from_tariff(tariff, &available_modules).into(),
+                tariff: tariff.to_tariff_resource(&available_modules).into(),
                 module_data,
                 participants,
             }),

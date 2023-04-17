@@ -17,7 +17,6 @@ use crate::api::signaling::prelude::control::incoming::Join;
 use crate::api::signaling::prelude::control::{self, outgoing, storage, ControlData, NAMESPACE};
 use crate::api::signaling::prelude::{InitContext, ModuleContext};
 use crate::api::signaling::SignalingRoomId;
-use crate::api::v1::tariffs::TariffResource;
 use crate::api::Participant;
 use crate::redis_wrapper::RedisConnection;
 use crate::storage::ObjectStorage;
@@ -42,6 +41,7 @@ use tokio::task;
 use tokio::time::timeout;
 use tokio_stream::StreamExt;
 use types::{
+    common::tariff::TariffResource,
     core::{BreakoutRoomId, ParticipantId, ParticipationKind, TariffId, Timestamp, UserId},
     signaling::Role,
 };

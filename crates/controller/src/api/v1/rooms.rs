@@ -12,7 +12,6 @@ use super::response::{NoContent, CODE_INVALID_VALUE};
 use super::users::PublicUserProfile;
 use crate::api::signaling::prelude::*;
 use crate::api::signaling::ticket::start_or_continue_signaling_session;
-use crate::api::v1::tariffs::TariffResource;
 use crate::api::v1::{ApiResponse, PagePaginationQuery};
 use crate::api::Participant;
 use crate::redis_wrapper::RedisConnection;
@@ -29,7 +28,10 @@ use kustos::policies_builder::{GrantingAccess, PoliciesBuilder};
 use kustos::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-use types::core::{BreakoutRoomId, InviteCodeId, ResumptionToken, RoomId, TicketToken};
+use types::{
+    common::tariff::TariffResource,
+    core::{BreakoutRoomId, InviteCodeId, ResumptionToken, RoomId, TicketToken},
+};
 use validator::Validate;
 
 /// A Room
@@ -264,7 +266,7 @@ pub async fn get_room_tariff(
     let room = Room::get(&mut conn, room_id).await?;
     let tariff = room.get_tariff(&mut conn).await?;
 
-    let response = TariffResource::from_tariff(tariff, &modules.get_module_names());
+    let response = tariff.to_tariff_resource(&modules.get_module_names());
 
     Ok(Json(response))
 }

@@ -2,10 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::api::v1::tariffs::TariffResource;
 use serde::Serialize;
 use std::collections::HashMap;
 use types::{
+    common::tariff::TariffResource,
     core::{ParticipantId, Timestamp},
     signaling::Role,
 };
@@ -141,8 +141,7 @@ mod test {
             "enabled_modules": ["chat"],
         });
 
-        let actual =
-            serde_json::to_value(TariffResource::from_tariff(tariff, &available_modules)).unwrap();
+        let actual = serde_json::to_value(tariff.to_tariff_resource(&available_modules)).unwrap();
 
         assert_eq!(actual, expected);
     }
