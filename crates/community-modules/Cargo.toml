@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "k3k-community-modules"
+name = "opentalk-community-modules"
 edition = "2021"
 license = "EUPL-1.2"
 authors.workspace = true
@@ -14,12 +14,12 @@ publish = false
 
 [dependencies]
 anyhow = "1.0"
-controller = { path = "../controller", package = "k3k-controller-core" }
+controller = { path = "../controller", package = "opentalk-controller-core" }
 
-janus-media = { path = "../janus-media", package = "k3k-janus-media" }
-chat = { path = "../chat", package = "k3k-chat" }
-polls = { path = "../polls", package = "k3k-polls" }
+janus-media = { path = "../janus-media", package = "opentalk-janus-media" }
+chat = { path = "../chat", package = "opentalk-chat" }
+polls = { path = "../polls", package = "opentalk-polls" }
 kustos = { path = "../kustos" }
-protocol = { path = "../protocol", package = "k3k-protocol" }
-timer = { path = "../timer", package = "k3k-timer" }
-whiteboard = { path = "../whiteboard", package = "k3k-whiteboard" }
+protocol = { path = "../protocol", package = "opentalk-protocol" }
+timer = { path = "../timer", package = "opentalk-timer" }
+whiteboard = { path = "../whiteboard", package = "opentalk-whiteboard" }

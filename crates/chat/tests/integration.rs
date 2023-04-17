@@ -4,7 +4,7 @@
 
 use chrono::{DateTime, Utc};
 use controller::prelude::*;
-use k3k_chat::{incoming, Chat, Scope};
+use opentalk_chat::{incoming, Chat, Scope};
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use serial_test::serial;

@@ -10,7 +10,7 @@ use types::core::{ParticipantId, RoomId, UserId};
 
 /// Set of user-ids banned in a room
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room}:bans")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:bans")]
 struct Bans {
     room: RoomId,
 }
@@ -61,7 +61,7 @@ pub async fn delete_bans(redis_conn: &mut RedisConnection, room: RoomId) -> Resu
 
 /// If set to true the waiting room is enabled
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room}:waiting_room_enabled")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:waiting_room_enabled")]
 struct WaitingRoomEnabled {
     room: RoomId,
 }
@@ -121,7 +121,7 @@ pub async fn delete_waiting_room_enabled(
 
 /// If set to true the raise hands is enabled
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room}:raise_hands_enabled")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:raise_hands_enabled")]
 struct RaiseHandsEnabled {
     room: RoomId,
 }
@@ -163,7 +163,7 @@ pub async fn delete_raise_hands_enabled(
 
 /// Set of participant ids inside the waiting room
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room}:waiting_room_list")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:waiting_room_list")]
 struct WaitingRoomList {
     room: RoomId,
 }
@@ -233,7 +233,7 @@ pub async fn delete_waiting_room(redis_conn: &mut RedisConnection, room: RoomId)
 
 /// Set of participant ids inside the waiting room but accepted
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room}:waiting_room_accepted_list")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:waiting_room_accepted_list")]
 struct AcceptedWaitingRoomList {
     room: RoomId,
 }

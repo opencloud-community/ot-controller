@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use crate::common::make_user;
-use k3k_db_storage::users::User;
+use opentalk_db_storage::users::User;
 use pretty_assertions::assert_eq;
 use serial_test::serial;
 

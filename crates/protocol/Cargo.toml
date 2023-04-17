@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "k3k-protocol"
+name = "opentalk-protocol"
 edition = "2021"
 license = "EUPL-1.2"
 authors.workspace = true
@@ -11,16 +11,16 @@ version.workspace = true
 publish = false
 
 [dependencies]
-controller-shared = { path = "../controller-shared-types", package = "k3k-controller-shared" }
+controller-shared = { path = "../controller-shared-types", package = "opentalk-controller-shared" }
 etherpad-client = { path = "../etherpad-client", package = "etherpad-client" }
-controller = { path = "../controller", package = "k3k-controller-core" }
-database = { path = "../database", package = "k3k-database" }
-db-storage = { path = "../db-storage", package = "k3k-db-storage" }
+controller = { path = "../controller", package = "opentalk-controller-core" }
+database = { path = "../database", package = "opentalk-database" }
+db-storage = { path = "../db-storage", package = "opentalk-db-storage" }
 serde = { version = "1", features = ["derive"] }
 redis = "0.22"
-redis-args = { path = "../redis-args", package = "k3k-redis-args" }
-types = { path = "../types", package = "k3k-types", features = ["backend"] }
+redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
+types = { path = "../types", package = "opentalk-types", features = ["backend"] }
 
 [dev-dependencies]
-test-util = { path = "../test-util", package = "k3k-test-util", features = ["database"] }
+test-util = { path = "../test-util", package = "opentalk-test-util", features = ["database"] }
 pretty_assertions = "1.3"

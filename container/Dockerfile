@@ -54,8 +54,9 @@ RUN apt-get update && apt-get install -y libpq5 ca-certificates
 
 WORKDIR /controller
 
-COPY --from=Builder /controller/target/release/k3k-controller .
+COPY --from=Builder /controller/target/release/opentalk-controller .
+RUN ln -s opentalk-controller k3k-controller
 COPY extra/example.toml config.toml
 
 EXPOSE 11311
-ENTRYPOINT [ "./k3k-controller" ]
+ENTRYPOINT [ "./opentalk-controller" ]

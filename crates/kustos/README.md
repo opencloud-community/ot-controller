@@ -8,7 +8,7 @@ SPDX-License-Identifier: EUPL-1.2
 
 Kustos (from latin `custos`, means guard)
 
-An authorization provider for use in k3k/opentalk.
+An authorization provider for use in opentalk.
 Currently casbin is used as the main library to provide access checks.
 One benefit over using casbin directly is more typesafety with the added cost of removing some flexibility.
 This also aims to add an abstraction to be able to switch out the underlying authz framework when needed.

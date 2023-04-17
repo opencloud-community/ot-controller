@@ -6,21 +6,21 @@
 ///
 /// The application settings are set with a TOML config file. Settings specified in the config file
 /// can be overwritten by environment variables. To do so, set an environment variable
-/// with the prefix `K3K_CTRL_` followed by the field names you want to set. Nested fields are separated by two underscores `__`.
+/// with the prefix `OPENTALK_CTRL_` followed by the field names you want to set. Nested fields are separated by two underscores `__`.
 /// ```sh
-/// K3K_CTRL_<field>__<field-of-field>...
+/// OPENTALK_CTRL_<field>__<field-of-field>...
 /// ```
 ///
 /// # Example
 ///
 /// set the `database.url` field:
 /// ```sh
-/// K3K_CTRL_DATABASE__URL=postgres://postgres:password123@localhost:5432/k3k
+/// OPENTALK_CTRL_DATABASE__URL=postgres://postgres:password123@localhost:5432/opentalk
 /// ```
 ///
 /// So the field 'database.max_connections' would resolve to:
 /// ```sh
-/// K3K_CTRL_DATABASE__MAX_CONNECTIONS=5
+/// OPENTALK_CTRL_DATABASE__MAX_CONNECTIONS=5
 /// ```
 ///
 /// # Note
@@ -92,14 +92,56 @@ pub struct Settings {
     pub extensions: HashMap<String, config::Value>,
 }
 
+#[derive(Debug, Clone)]
+struct WarningSource<T: Clone>(T);
+
+impl<T> config::Source for WarningSource<T>
+where
+    T: config::Source + Send + Sync + Clone + 'static,
+{
+    fn clone_into_box(&self) -> Box<dyn config::Source + Send + Sync> {
+        Box::new((*self).clone())
+    }
+
+    fn collect(&self) -> Result<config::Map<String, config::Value>, config::ConfigError> {
+        let values = self.0.collect()?;
+        if !values.is_empty() {
+            use owo_colors::OwoColorize as _;
+
+            anstream::eprintln!(
+                "{}: The following environment variables have been deprecated and \
+                will not work in a future release. Please change them as suggested below:",
+                "DEPRECATION WARNING".yellow().bold(),
+            );
+
+            for key in values.keys() {
+                let env_var = key.replace('.', "__").to_uppercase();
+                anstream::eprintln!(
+                    "{}: rename environment variable {} to {}",
+                    "DEPRECATION WARNING".yellow().bold(),
+                    format!("K3K_CTRL_{}", env_var).yellow(),
+                    format!("OPENTALK_CTRL_{}", env_var).green().bold(),
+                );
+            }
+        }
+
+        Ok(values)
+    }
+}
+
 impl Settings {
     /// Creates a new Settings instance from the provided TOML file.
     /// Specific fields can be set or overwritten with environment variables (See struct level docs for more details).
     pub fn load(file_name: &str) -> Result<Self, ConfigError> {
         Config::builder()
             .add_source(File::new(file_name, FileFormat::Toml))
-            .add_source(
+            .add_source(WarningSource(
                 Environment::with_prefix("K3K_CTRL")
+                    .prefix_separator("_")
+                    .separator("__"),
+            ))
+            .add_source(
+                Environment::with_prefix("OPENTALK_CTRL")
                     .prefix_separator("_")
                     .separator("__"),
             )
@@ -192,7 +234,7 @@ impl Default for Logging {
 }
 
 fn default_service_name() -> String {
-    "k3k-controller".into()
+    "controller".into()
 }
 
 fn default_service_namespace() -> String {
@@ -202,7 +244,7 @@ fn default_service_namespace() -> String {
 fn default_directives() -> Vec<String> {
     // Disable spamming noninformative traces
     vec![
-        "k3k=INFO".into(),
+        "opentalk=INFO".into(),
         "pinky_swear=OFF".into(),
         "rustls=WARN".into(),
         "mio=ERROR".into(),
@@ -465,7 +507,7 @@ mod test {
 
         assert_eq!(
             settings.database.url,
-            "postgres://postgres:password123@localhost:5432/k3k"
+            "postgres://postgres:password123@localhost:5432/opentalk"
         );
         assert_eq!(settings.http.port, 11311u16);
 
@@ -473,10 +515,10 @@ mod test {
         let env_db_url = "postgres://envtest:password@localhost:5432/opentalk".to_string();
         let env_http_port: u16 = 8000;
         let screen_share_requires_permission = true;
-        env::set_var("K3K_CTRL_DATABASE__URL", &env_db_url);
-        env::set_var("K3K_CTRL_HTTP__PORT", env_http_port.to_string());
+        env::set_var("OPENTALK_CTRL_DATABASE__URL", &env_db_url);
+        env::set_var("OPENTALK_CTRL_HTTP__PORT", env_http_port.to_string());
         env::set_var(
-            "K3K_CTRL_DEFAULTS__SCREEN_SHARE_REQUIRES_PERMISSION",
+            "OPENTALK_CTRL_DEFAULTS__SCREEN_SHARE_REQUIRES_PERMISSION",
             screen_share_requires_permission.to_string(),
         );
 

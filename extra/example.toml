@@ -18,7 +18,7 @@
 #otlp_tracing_endpoint = "http://localhost:4317"
 
 # Service name when using opentelemetry
-#service_name = "k3k-controller"
+#service_name = "controller"
 # Service namespace when using opentelemetry
 #service_namespace = "opentalk"
 # Service instance id when using opentelemetry. A random UUID will be generated at runtime if not set here.
@@ -26,7 +26,7 @@
 
 [database]
 # URL used to connect to a postgres.
-url = "postgres://postgres:password123@localhost:5432/k3k"
+url = "postgres://postgres:password123@localhost:5432/opentalk"
 
 # Maximum number of connections allowed to the server.
 # Defaults to 100 which is the default of postgres.
@@ -122,7 +122,7 @@ from_routing_key = "from-janus"
 #    "turns:127.0.0.1:5349?transport=tcp"
 #]
 # The Pre Shared Key set with --static-auth-secret=...
-#pre_shared_key = "k3k2"
+#pre_shared_key = "opentalk2"
 
 #[stun]
 #uris = ["stun:127.0.0.1:3478"]

@@ -142,7 +142,7 @@ test:cargo_test:
   stage: test
   variables:
     # Set ENV vars for services
-    POSTGRES_DB: k3k
+    POSTGRES_DB: opentalk
     POSTGRES_USER: postgres
     POSTGRES_PASSWORD: password123
     POSTGRES_HOST_AUTH_METHOD: trust
@@ -154,7 +154,7 @@ test:cargo_test:
     # Used for integration tests
     JANUS_HOST: ws://janus-gateway:8188
     POSTGRES_BASE_URL: postgres://postgres:password123@postgres:5432
-    DATABASE_NAME: k3k
+    DATABASE_NAME: opentalk
     KUSTOS_TESTS_DATABASE_URL: postgres://postgres:password123@postgres:5432/kustos
     AMQP_ADDR: amqp://guest:guest@rabbitmq:5672
     REDIS_ADDR: redis://redis:6379/
@@ -207,7 +207,7 @@ build:
   stage: build
   artifacts:
     paths:
-      - target/release/k3k-controller
+      - target/release/opentalk-controller
     expire_in: 1 week
   before_script:
     - apt-get update && apt-get install -y libpq-dev musl-tools protobuf-compiler

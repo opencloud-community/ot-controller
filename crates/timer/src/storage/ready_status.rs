@@ -12,7 +12,7 @@ use types::core::ParticipantId;
 /// A key to track the participants ready status
 #[derive(ToRedisArgs)]
 #[to_redis_args(
-    fmt = "k3k-signaling:room={room_id}:participant::{participant_id}::timer-ready-status"
+    fmt = "opentalk-signaling:room={room_id}:participant::{participant_id}::timer-ready-status"
 )]
 struct ReadyStatusKey {
     room_id: SignalingRoomId,

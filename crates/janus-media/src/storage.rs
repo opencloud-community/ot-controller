@@ -12,7 +12,9 @@ use types::core::ParticipantId;
 /// Data related to a module inside a participant
 // TODO can this be removed?
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room}:participant={participant}:namespace=media:state")]
+#[to_redis_args(
+    fmt = "opentalk-signaling:room={room}:participant={participant}:namespace=media:state"
+)]
 struct MediaState {
     room: SignalingRoomId,
     participant: ParticipantId,
@@ -66,7 +68,7 @@ pub async fn del_state(
 }
 
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room}:namespace=media:presenters")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:namespace=media:presenters")]
 struct Presenters {
     room: SignalingRoomId,
 }

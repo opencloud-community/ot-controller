@@ -15,14 +15,14 @@ use types::core::{BreakoutRoomId, RoomId};
 
 /// Typed key to a set which contains all breakout-room ids
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room}:breakout:rooms")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:breakout:rooms")]
 struct BreakoutRooms {
     room: RoomId,
 }
 
 /// Typed key to the breakout-room config for the specified room
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room}:breakout:config")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:breakout:config")]
 struct BreakoutRoomConfig {
     room: RoomId,
 }

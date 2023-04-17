@@ -47,7 +47,7 @@ impl TenantTableRow {
     }
 }
 
-/// Implementation of the `k3k-controller tenants list` command
+/// Implementation of the `opentalk-controller tenants list` command
 fn list_all_tenants(settings: Settings) -> Result<()> {
     let db = Db::connect(&settings.database).context("Failed to connect to database")?;
     let mut conn = db.get_conn()?;
@@ -63,7 +63,7 @@ fn list_all_tenants(settings: Settings) -> Result<()> {
     Ok(())
 }
 
-/// Implementation of the `k3k-controller tenants set-oidc-id <tenant-id> <new-oidc-id>` command
+/// Implementation of the `opentalk-controller tenants set-oidc-id <tenant-id> <new-oidc-id>` command
 fn set_oidc_id(settings: Settings, id: TenantId, new_oidc_id: OidcTenantId) -> Result<()> {
     let db = Db::connect(&settings.database).context("Failed to connect to database")?;
     let mut conn = db.get_conn()?;

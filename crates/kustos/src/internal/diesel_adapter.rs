@@ -431,8 +431,9 @@ mod tests {
 
     async fn setup() -> anyhow::Result<Arc<Db>> {
         use anyhow::Context;
-        let url = std::env::var("KUSTOS_TESTS_DATABASE_URL")
-            .unwrap_or_else(|_| "postgres://postgres:password123@localhost:5432/k3k".to_string());
+        let url = std::env::var("KUSTOS_TESTS_DATABASE_URL").unwrap_or_else(|_| {
+            "postgres://postgres:password123@localhost:5432/opentalk".to_string()
+        });
 
         if PgConnection::establish(&url).is_err() {
             let (database, postgres_url) = change_database_of_url(&url, "postgres");

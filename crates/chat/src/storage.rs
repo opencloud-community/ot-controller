@@ -30,7 +30,7 @@ pub struct StoredMessage {
 
 /// Key to the chat history inside a room
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room}:chat:history")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:chat:history")]
 struct RoomChatHistory {
     room: SignalingRoomId,
 }
@@ -77,7 +77,7 @@ pub async fn delete_room_chat_history(
 
 /// If set to true the chat is enabled
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room}:chat_enabled")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:chat_enabled")]
 struct ChatEnabled {
     room: RoomId,
 }
@@ -113,7 +113,9 @@ pub async fn delete_chat_enabled(redis_conn: &mut RedisConnection, room: RoomId)
 
 /// A hash of last-seen timestamps
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room}:participant={participant}:chat:last_seen:global")]
+#[to_redis_args(
+    fmt = "opentalk-signaling:room={room}:participant={participant}:chat:last_seen:global"
+)]
 struct RoomParticipantLastSeenTimestampPrivate {
     room: SignalingRoomId,
     participant: ParticipantId,
@@ -161,7 +163,9 @@ pub async fn delete_last_seen_timestamps_private(
 
 /// A hash of last-seen timestamps
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room}:participant={participant}:chat:last_seen:group")]
+#[to_redis_args(
+    fmt = "opentalk-signaling:room={room}:participant={participant}:chat:last_seen:group"
+)]
 struct RoomParticipantLastSeenTimestampsGroup {
     room: SignalingRoomId,
     participant: ParticipantId,
@@ -209,7 +213,9 @@ pub async fn delete_last_seen_timestamps_group(
 
 /// A hash of last-seen timestamps
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room}:participant={participant}:chat:last_seen:private")]
+#[to_redis_args(
+    fmt = "opentalk-signaling:room={room}:participant={participant}:chat:last_seen:private"
+)]
 struct RoomParticipantLastSeenTimestampGlobal {
     room: SignalingRoomId,
     participant: ParticipantId,
@@ -458,7 +464,7 @@ mod test {
             };
             assert_eq!(
                 id.to_redis_args(),
-                "k3k-signaling:room=ecead1b3-eed0-4cb9-912e-4bb31a3914bd:chat:history"
+                "opentalk-signaling:room=ecead1b3-eed0-4cb9-912e-4bb31a3914bd:chat:history"
                     .to_redis_args()
             );
         }
@@ -466,7 +472,7 @@ mod test {
             let id = ChatEnabled { room: room_id };
             assert_eq!(
                 id.to_redis_args(),
-                "k3k-signaling:room=ecead1b3-eed0-4cb9-912e-4bb31a3914bd:chat_enabled"
+                "opentalk-signaling:room=ecead1b3-eed0-4cb9-912e-4bb31a3914bd:chat_enabled"
                     .to_redis_args()
             )
         }
@@ -475,7 +481,7 @@ mod test {
 
 /// A set of group members inside a room
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room}:group={group}:participants")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:group={group}:participants")]
 struct RoomGroupParticipants {
     room: SignalingRoomId,
     group: GroupId,
@@ -483,7 +489,7 @@ struct RoomGroupParticipants {
 
 /// A lock for the set of group members inside a room
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room}:group={group}:participants.lock")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:group={group}:participants.lock")]
 pub struct RoomGroupParticipantsLock {
     pub room: SignalingRoomId,
     pub group: GroupId,
@@ -491,7 +497,7 @@ pub struct RoomGroupParticipantsLock {
 
 /// A lock for a group chat history inside a room
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room}:group={group}:chat:history")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:group={group}:chat:history")]
 struct RoomGroupChatHistory {
     room: SignalingRoomId,
     group: GroupId,

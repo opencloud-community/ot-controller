@@ -4,9 +4,9 @@ SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
 SPDX-License-Identifier: EUPL-1.2
 -->
 
-# K3K Controller
+# OpenTalk Controller
 
-Authentication and scheduling backend for the K3K conference system.
+Authentication and scheduling backend for the OpenTalk conference system.
 
 The controller is split into multiple crates to allow for extensibility.
 
@@ -15,10 +15,10 @@ This root crate uses all crates to run the controller with its full feature set.
 ## Manual
 
 ```text
-k3k-controller 0.1.0-rc.1
+opentalk-controller 0.1.0-rc.1
 
 USAGE:
-    k3k-controller [FLAGS] [OPTIONS] [SUBCOMMAND]
+    opentalk-controller [FLAGS] [OPTIONS] [SUBCOMMAND]
 
 FLAGS:
     -h, --help       Prints help information
@@ -48,7 +48,7 @@ docker build -f container/Dockerfile . --tag <your tag>
 
 ## Configuration
 
-k3k-controller looks for a config file `./config.toml` in the project root.
+opentalk-controller looks for a config file `./config.toml` in the project root.
 
 There is an example config file in `extra/example.toml` that can be copied:
 
@@ -59,15 +59,15 @@ cp ./extra/example.toml ./config.toml
 You can specify a different config file using the `-c` argument:
 
 ```sh
-k3k-controller -c other_config.toml
+opentalk-controller -c other_config.toml
 ```
 
 Settings specified in the config file can be overwritten by environment variables.
-To do so, set an environment variable with the prefix `K3K_CTRL_` followed by the field names you want to set.
+To do so, set an environment variable with the prefix `OPENTALK_CTRL_` followed by the field names you want to set.
 Nested fields are separated by two underscores `__`.
 
 ```sh
-K3K_CTRL_<field>__<field-of-field>...
+OPENTALK_CTRL_<field>__<field-of-field>...
 ```
 
 ### Example
@@ -75,13 +75,13 @@ K3K_CTRL_<field>__<field-of-field>...
 set the `database.url` field:
 
 ```sh
-K3K_CTRL_DATABASE__URL=postgres://k3k:s3cur3_p4ssw0rd@localhost:5432/k3k
+OPENTALK_CTRL_DATABASE__URL=postgres://opentalk:s3cur3_p4ssw0rd@localhost:5432/opentalk
 ```
 
 So the field 'database.max_connections' would resolve to:
 
 ```sh
-K3K_CTRL_DATABASE__MAX_CONNECTIONS=5
+OPENTALK_CTRL_DATABASE__MAX_CONNECTIONS=5
 ```
 
 ### Note

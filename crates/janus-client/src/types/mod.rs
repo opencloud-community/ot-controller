@@ -240,7 +240,7 @@ impl std::fmt::Display for TransactionId {
 }
 
 /// The streamtypes we utilize
-// todo move to k3k-signaling
+// todo move to opentalk-signaling
 pub enum StreamTypes {
     Video,
     Screen,

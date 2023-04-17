@@ -102,7 +102,7 @@ async fn connect_and_migrate(
     let random: u8 = rand::thread_rng().gen();
     let (db_name, drop_db) = database_name
         .map(|var| (var, false))
-        .unwrap_or_else(|| (format!("k3k_migration_{random}"), true));
+        .unwrap_or_else(|| (format!("opentalk_migration_{random}"), true));
     let postgres_url = format!("{base_url}/{db_name}");
 
     if PgConnection::establish(&postgres_url).is_err() {

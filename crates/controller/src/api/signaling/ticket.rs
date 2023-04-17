@@ -12,7 +12,7 @@ use types::core::{BreakoutRoomId, ParticipantId, ResumptionToken, RoomId, Ticket
 
 /// Typed redis key for a signaling ticket containing [`TicketData`]
 #[derive(Debug, Copy, Clone, ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:ticket={ticket}")]
+#[to_redis_args(fmt = "opentalk-signaling:ticket={ticket}")]
 pub struct TicketRedisKey<'s> {
     pub ticket: &'s str,
 }

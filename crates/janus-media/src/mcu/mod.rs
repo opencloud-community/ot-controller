@@ -39,13 +39,13 @@ pub use self::types::*;
 /// Redis key of the publisher => McuId/JanusRoomId mapping
 ///
 /// This information is used when creating a subscriber
-const PUBLISHER_INFO: &str = "k3k-signaling:mcu:publishers";
+const PUBLISHER_INFO: &str = "opentalk-signaling:mcu:publishers";
 
 /// Redis key for a sorted set of mcu-clients.
 ///
 /// The score represents the amounts of subscribers on that mcu and is used to choose the least
 /// busy mcu for a new publisher.
-const MCU_LOAD: &str = "k3k-signaling:mcu:load";
+const MCU_LOAD: &str = "opentalk-signaling:mcu:load";
 
 fn mcu_load_key(mcu_id: &McuId, loop_index: Option<usize>) -> String {
     if let Some(loop_index) = loop_index {
@@ -738,7 +738,7 @@ impl McuClient {
             config.to_routing_key.clone(),
             config.exchange.clone(),
             config.from_routing_key.clone(),
-            format!("k3k-sig-janus-{}", id.0),
+            format!("opentalk-sig-janus-{}", id.0),
         );
 
         if let Some(event_loops) = config.event_loops {

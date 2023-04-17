@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "k3k-db-storage"
+name = "opentalk-db-storage"
 edition = "2021"
 license = "EUPL-1.2"
 authors.workspace = true
@@ -13,10 +13,10 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-controller-shared = { path = "../controller-shared-types", package = "k3k-controller-shared" }
-database = { path = "../database", package = "k3k-database" }
+controller-shared = { path = "../controller-shared-types", package = "opentalk-controller-shared" }
+database = { path = "../database", package = "opentalk-database" }
 kustos = { path = "../kustos" }
-types = { path = "../types", package = "k3k-types", features = ["backend"] }
+types = { path = "../types", package = "opentalk-types", features = ["backend"] }
 
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["raw_value"] }
@@ -58,9 +58,9 @@ redis = { version = "0.22", features = ["tokio-comp", "connection-manager"] }
 url = "2"
 
 rand = "0.8.5"
-redis-args = { path = "../redis-args", package = "k3k-redis-args" }
+redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
 
 [dev-dependencies]
 serial_test = "1"
-test-util = { path = "../test-util", package = "k3k-test-util", features = ["database"] }
+test-util = { path = "../test-util", package = "opentalk-test-util", features = ["database"] }
 pretty_assertions = "1.3"

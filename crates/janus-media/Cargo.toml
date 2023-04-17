@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "k3k-janus-media"
+name = "opentalk-janus-media"
 edition = "2021"
 license = "EUPL-1.2"
 authors.workspace = true
@@ -11,16 +11,16 @@ version.workspace = true
 publish = false
 
 [dependencies]
-controller = { path = "../controller", package = "k3k-controller-core" }
-controller-shared = { path = "../controller-shared-types", package = "k3k-controller-shared" }
+controller = { path = "../controller", package = "opentalk-controller-core" }
+controller-shared = { path = "../controller-shared-types", package = "opentalk-controller-shared" }
 serde = { version = "1", features = ["derive"] }
 janus-client = { path = "../janus-client" }
 pin-project-lite = "0.2"
 redis = "0.22"
-redis-args = { path = "../redis-args", package = "k3k-redis-args" }
+redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
 lapin-pool = { path = "../lapin-pool" }
-types = { path = "../types", package = "k3k-types", features = ["backend"] }
+types = { path = "../types", package = "opentalk-types", features = ["backend"] }
 
 [dev-dependencies]
-test-util = { path = "../test-util", package = "k3k-test-util", features = ["database"] }
+test-util = { path = "../test-util", package = "opentalk-test-util", features = ["database"] }
 pretty_assertions = "1.3"

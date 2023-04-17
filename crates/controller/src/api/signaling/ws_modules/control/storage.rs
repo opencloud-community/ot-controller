@@ -18,21 +18,21 @@ use types::core::{ParticipantId, RoomId, Timestamp};
 /// Describes a set of participants inside a room.
 /// This MUST always be locked before accessing it
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room}:participants")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:participants")]
 struct RoomParticipants {
     room: SignalingRoomId,
 }
 
 /// Key used for the lock over the room participants set
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room}:participants.lock")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:participants.lock")]
 pub struct RoomLock {
     pub room: SignalingRoomId,
 }
 
 /// Key used for the lock over the room participants set
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room}:participants:attributes:{attribute_name}")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:participants:attributes:{attribute_name}")]
 struct RoomParticipantAttributes<'s> {
     room: SignalingRoomId,
     attribute_name: &'s str,
@@ -42,7 +42,7 @@ struct RoomParticipantAttributes<'s> {
 ///
 /// Notice that this key only contains the [`RoomId`] as it applies to all breakout rooms as well
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room_id}:participant-count")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room_id}:participant-count")]
 pub struct RoomParticipantCount {
     room_id: RoomId,
 }
@@ -51,14 +51,14 @@ pub struct RoomParticipantCount {
 ///
 /// Notice that this key only contains the [`RoomId`] as it applies to all breakout rooms as well
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room_id}:tariff")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room_id}:tariff")]
 pub struct RoomTariff {
     room_id: RoomId,
 }
 
 /// The point in time the room closes.
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room}:closes_at")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:closes_at")]
 struct RoomClosesAt {
     room: SignalingRoomId,
 }
@@ -377,7 +377,7 @@ pub async fn get_role_and_left_at_for_room_participants(
 }
 
 #[derive(Debug, ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:runner:{id}")]
+#[to_redis_args(fmt = "opentalk-signaling:runner:{id}")]
 pub struct ParticipantIdRunnerLock {
     pub id: ParticipantId,
 }
@@ -394,7 +394,7 @@ pub async fn participant_id_in_use(
 
 /// Key used for setting the `skip_waiting_room` attribute for a participant
 #[derive(Debug, ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:participant={participant}:skip_waiting_room")]
+#[to_redis_args(fmt = "opentalk-signaling:participant={participant}:skip_waiting_room")]
 pub struct SkipWaitingRoom {
     participant: ParticipantId,
 }
