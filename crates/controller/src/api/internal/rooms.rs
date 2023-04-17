@@ -3,8 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use crate::api::internal::NoContent;
+use crate::api::signaling::prelude::*;
 use crate::api::v1::events::associated_resource_ids;
 use crate::api::v1::response::ApiError;
+use crate::exchange_task::ExchangeHandle;
 use crate::storage::assets::asset_key;
 use crate::storage::ObjectStorage;
 use actix_web::delete;
@@ -36,11 +38,13 @@ use types::core::RoomId;
 pub async fn delete(
     db: Data<Db>,
     storage: Data<ObjectStorage>,
+    exchange_handle: Data<ExchangeHandle>,
     room_id: Path<RoomId>,
     current_user: ReqData<User>,
     authz: Data<Authz>,
 ) -> Result<NoContent, ApiError> {
     let room_id = room_id.into_inner();
+    let current_user = current_user.into_inner();
     let room_path = format!("/rooms/{room_id}");
 
     let mut conn = db.get_conn().await?;
@@ -67,6 +71,19 @@ pub async fn delete(
 
     if checked.iter().any(|&res| !res) {
         return Err(ApiError::forbidden());
+    }
+
+    let message = types::signaling::NamespacedEvent {
+        namespace: control::NAMESPACE,
+        timestamp: types::core::Timestamp::now(),
+        payload: control::exchange::Message::RoomDeleted,
+    };
+
+    if let Err(e) = exchange_handle.publish(
+        control::exchange::global_room_all_participants(room_id),
+        serde_json::to_string(&message).expect("Failed to convert namespaced to json"),
+    ) {
+        log::warn!("Failed to publish message to exchange, {}", e);
     }
 
     let resources: Vec<_> = linked_events

@@ -343,6 +343,16 @@ Received when a moderator assigned a new role to a participant.
 }
 ```
 
+### RoomDeleted
+
+Received by a participant if removed from the room because the room has been deleted. Will be the last message before server-side websocket disconnection.
+
+#### Fields
+
+| Field     | Type   | Always | Description         |
+| ----------| ------ | ------ | ------------------- |
+| `message` | `enum` | yes    | Is `"room_deleted"` |
+
 ### Error
 
 Received when something went wrong.

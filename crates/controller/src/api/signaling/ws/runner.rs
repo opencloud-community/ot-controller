@@ -1632,6 +1632,11 @@ impl Runner {
                     ))
                     .await;
             }
+            exchange::Message::RoomDeleted => {
+                self.ws_send_control(timestamp, outgoing::Message::RoomDeleted)
+                    .await;
+                self.ws.close(CloseCode::Normal).await;
+            }
         }
 
         Ok(())

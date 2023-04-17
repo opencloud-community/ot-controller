@@ -733,6 +733,7 @@ where
             control::exchange::Message::ResetRaisedHands { issued_by: _ } => unimplemented!(),
             control::exchange::Message::EnableRaiseHands { issued_by: _ } => unimplemented!(),
             control::exchange::Message::DisableRaiseHands { issued_by: _ } => unimplemented!(),
+            control::exchange::Message::RoomDeleted => unimplemented!(),
         }
     }
 
