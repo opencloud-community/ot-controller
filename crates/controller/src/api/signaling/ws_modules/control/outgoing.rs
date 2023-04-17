@@ -82,13 +82,6 @@ pub enum Error {
     NothingToDo,
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-pub enum WaitingRoomState {
-    Waiting,
-    Accepted,
-}
-
 #[cfg(test)]
 mod test {
     use std::str::FromStr;

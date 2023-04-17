@@ -7,5 +7,7 @@
 pub mod event;
 
 mod participant;
+mod waiting_room_state;
 
 pub use participant::Participant;
+pub use waiting_room_state::WaitingRoomState;

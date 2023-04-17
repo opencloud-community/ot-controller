@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
     core::{ParticipantId, RoomId, UserId},
-    signaling::control::Participant,
+    signaling::control::{Participant, WaitingRoomState},
 };
 
 pub mod exchange;
@@ -59,7 +59,7 @@ async fn build_waiting_room_participants(
     redis_conn: &mut RedisConnection,
     room_id: RoomId,
     list: &Vec<ParticipantId>,
-    waiting_room_state: control::outgoing::WaitingRoomState,
+    waiting_room_state: WaitingRoomState,
 ) -> Result<Vec<Participant>> {
     let mut waiting_room = Vec::with_capacity(list.len());
 
@@ -148,7 +148,7 @@ impl SignalingModule for ModerationModule {
                         ctx.redis_conn(),
                         self.room.room_id(),
                         &list,
-                        control::outgoing::WaitingRoomState::Waiting,
+                        WaitingRoomState::Waiting,
                     )
                     .await?;
 
@@ -159,7 +159,7 @@ impl SignalingModule for ModerationModule {
                         ctx.redis_conn(),
                         self.room.room_id(),
                         &list,
-                        control::outgoing::WaitingRoomState::Accepted,
+                        WaitingRoomState::Accepted,
                     )
                     .await?;
 
