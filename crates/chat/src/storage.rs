@@ -594,7 +594,7 @@ pub async fn delete_group_chat_history(
 
 /// A set of private chat correspondents for a participant in a room
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "k3k-signaling:room={room}:private_chat_correspondents")]
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:private_chat_correspondents")]
 struct RoomPrivateChatCorrespondentsKey {
     room: SignalingRoomId,
 }
@@ -719,7 +719,7 @@ pub async fn get_private_chat_correspondents_for_participant(
 /// Private chat history for two participants inside a room
 #[derive(ToRedisArgs)]
 #[to_redis_args(
-    fmt = "k3k-signaling:room={room}:participant={participant_one}:participant={participant_two}:chat:history"
+    fmt = "opentalk-signaling:room={room}:participant={participant_one}:participant={participant_two}:chat:history"
 )]
 struct RoomPrivateChatHistory {
     room: SignalingRoomId,
