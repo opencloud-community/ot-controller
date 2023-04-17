@@ -7,7 +7,10 @@ use std::collections::HashMap;
 use types::{
     common::tariff::TariffResource,
     core::{ParticipantId, Timestamp},
-    signaling::{control::Participant, Role},
+    signaling::{
+        control::{event::Error, Participant},
+        Role,
+    },
 };
 
 #[derive(Clone, Debug, Serialize, PartialEq, Eq)]
@@ -65,21 +68,6 @@ pub enum JoinBlockedReason {
 #[derive(Clone, Debug, Serialize, PartialEq, Eq)]
 pub struct AssociatedParticipant {
     pub id: ParticipantId,
-}
-
-#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
-#[serde(tag = "error", rename_all = "snake_case")]
-pub enum Error {
-    InvalidJson,
-    InvalidNamespace,
-    InvalidUsername,
-    AlreadyJoined,
-    NotYetJoined,
-    NotAcceptedOrNotInWaitingRoom,
-    RaiseHandsDisabled,
-    InsufficientPermissions,
-    TargetIsRoomOwner,
-    NothingToDo,
 }
 
 #[cfg(test)]

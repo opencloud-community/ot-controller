@@ -50,7 +50,10 @@ use tokio::time::{interval, sleep};
 use tokio_stream::StreamExt;
 use types::{
     core::{BreakoutRoomId, ParticipantId, ParticipationKind, UserId},
-    signaling::{control::Participant, Role},
+    signaling::{
+        control::{event as control_event, Participant},
+        Role,
+    },
 };
 use uuid::Uuid;
 
@@ -703,7 +706,7 @@ impl Runner {
             Err(e) => {
                 log::error!("Failed to parse namespaced message, {}", e);
 
-                self.ws_send_control_error(timestamp, outgoing::Error::InvalidJson)
+                self.ws_send_control_error(timestamp, control_event::Error::InvalidJson)
                     .await;
 
                 return;
@@ -721,7 +724,7 @@ impl Runner {
                 Err(e) => {
                     log::error!("Failed to parse control payload, {}", e);
 
-                    self.ws_send_control_error(timestamp, outgoing::Error::InvalidJson)
+                    self.ws_send_control_error(timestamp, control_event::Error::InvalidJson)
                         .await;
                 }
             }
@@ -740,7 +743,7 @@ impl Runner {
                         .await
                 }
                 Err(NoSuchModuleError(())) => {
-                    self.ws_send_control_error(timestamp, outgoing::Error::InvalidNamespace)
+                    self.ws_send_control_error(timestamp, control_event::Error::InvalidNamespace)
                         .await;
                 }
             }
@@ -755,7 +758,7 @@ impl Runner {
         match msg {
             incoming::Message::Join(join) => {
                 if !matches!(self.state, RunnerState::None) {
-                    self.ws_send_control_error(timestamp, outgoing::Error::AlreadyJoined)
+                    self.ws_send_control_error(timestamp, control_event::Error::AlreadyJoined)
                         .await;
 
                     return Ok(());
@@ -791,7 +794,7 @@ impl Runner {
                 };
 
                 if display_name.is_empty() || display_name.len() > 100 {
-                    self.ws_send_control_error(timestamp, outgoing::Error::InvalidUsername)
+                    self.ws_send_control_error(timestamp, control_event::Error::InvalidUsername)
                         .await;
                 }
 
@@ -870,7 +873,7 @@ impl Runner {
 
                         self.ws_send_control_error(
                             timestamp,
-                            outgoing::Error::NotAcceptedOrNotInWaitingRoom,
+                            control_event::Error::NotAcceptedOrNotInWaitingRoom,
                         )
                         .await;
                     }
@@ -880,7 +883,7 @@ impl Runner {
                 if !moderation::storage::is_raise_hands_enabled(&mut self.redis_conn, self.room.id)
                     .await?
                 {
-                    self.ws_send_control_error(timestamp, outgoing::Error::RaiseHandsDisabled)
+                    self.ws_send_control_error(timestamp, control_event::Error::RaiseHandsDisabled)
                         .await;
 
                     return Ok(());
@@ -893,7 +896,7 @@ impl Runner {
             }
             incoming::Message::GrantModeratorRole(incoming::Target { target }) => {
                 if !matches!(self.state, RunnerState::Joined) {
-                    self.ws_send_control_error(timestamp, outgoing::Error::NotYetJoined)
+                    self.ws_send_control_error(timestamp, control_event::Error::NotYetJoined)
                         .await;
 
                     return Ok(());
@@ -904,7 +907,7 @@ impl Runner {
             }
             incoming::Message::RevokeModeratorRole(incoming::Target { target }) => {
                 if !matches!(self.state, RunnerState::Joined) {
-                    self.ws_send_control_error(timestamp, outgoing::Error::NotYetJoined)
+                    self.ws_send_control_error(timestamp, control_event::Error::NotYetJoined)
                         .await;
 
                     return Ok(());
@@ -925,7 +928,7 @@ impl Runner {
         grant: bool,
     ) -> Result<()> {
         if self.role != Role::Moderator {
-            self.ws_send_control_error(timestamp, outgoing::Error::InsufficientPermissions)
+            self.ws_send_control_error(timestamp, control_event::Error::InsufficientPermissions)
                 .await;
 
             return Ok(());
@@ -937,7 +940,7 @@ impl Runner {
         let is_moderator = matches!(role, Some(Role::Moderator));
 
         if is_moderator == grant {
-            self.ws_send_control_error(timestamp, outgoing::Error::NothingToDo)
+            self.ws_send_control_error(timestamp, control_event::Error::NothingToDo)
                 .await;
 
             return Ok(());
@@ -948,7 +951,7 @@ impl Runner {
 
         if let Some(user_id) = user_id {
             if user_id == self.room.created_by {
-                self.ws_send_control_error(timestamp, outgoing::Error::TargetIsRoomOwner)
+                self.ws_send_control_error(timestamp, control_event::Error::TargetIsRoomOwner)
                     .await;
 
                 return Ok(());
@@ -1779,7 +1782,7 @@ impl Runner {
         }
     }
 
-    async fn ws_send_control_error(&mut self, timestamp: Timestamp, error: outgoing::Error) {
+    async fn ws_send_control_error(&mut self, timestamp: Timestamp, error: control_event::Error) {
         self.ws_send_control(timestamp, ControlEvent::Error(error))
             .await;
     }
