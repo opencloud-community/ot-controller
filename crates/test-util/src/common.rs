@@ -5,7 +5,7 @@
 use crate::database::DatabaseContext;
 use crate::redis;
 use anyhow::{Context, Result};
-use control::outgoing::Message;
+use control::outgoing::ControlEvent;
 use controller::prelude::*;
 use db_storage::users::User;
 use kustos::Authz;
@@ -133,7 +133,7 @@ pub async fn setup_users<M: SignalingModule>(
         .unwrap();
 
     // Expect a JoinSuccess response
-    if let WsMessageOutgoing::Control(Message::JoinSuccess(join_success)) = module_tester
+    if let WsMessageOutgoing::Control(ControlEvent::JoinSuccess(join_success)) = module_tester
         .receive_ws_message(&USER_1.participant_id)
         .await
         .unwrap()
@@ -158,7 +158,7 @@ pub async fn setup_users<M: SignalingModule>(
         .unwrap();
 
     // Expect a JoinSuccess on user2 websocket
-    if let WsMessageOutgoing::Control(Message::JoinSuccess(join_success)) = module_tester
+    if let WsMessageOutgoing::Control(ControlEvent::JoinSuccess(join_success)) = module_tester
         .receive_ws_message(&USER_2.participant_id)
         .await
         .unwrap()
@@ -171,7 +171,7 @@ pub async fn setup_users<M: SignalingModule>(
     }
 
     // Expect a ParticipantJoined event on user1 websocket
-    if let WsMessageOutgoing::Control(Message::Joined(participant)) = module_tester
+    if let WsMessageOutgoing::Control(ControlEvent::Joined(participant)) = module_tester
         .receive_ws_message(&USER_1.participant_id)
         .await
         .unwrap()

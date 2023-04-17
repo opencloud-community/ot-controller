@@ -11,7 +11,7 @@ use super::{
 };
 use crate::api;
 use crate::api::signaling::metrics::SignalingMetrics;
-use crate::api::signaling::prelude::control::outgoing::JoinBlockedReason;
+use crate::api::signaling::prelude::control::outgoing::{ControlEvent, JoinBlockedReason};
 use crate::api::signaling::prelude::*;
 use crate::api::signaling::resumption::{ResumptionTokenKeepAlive, ResumptionTokenUsed};
 use crate::api::signaling::ws::actor::WsCommand;
@@ -653,7 +653,7 @@ impl Runner {
                     .await;
                 }
                 _ = &mut self.time_limit_future => {
-                    self.ws_send_control(Timestamp::now(), outgoing::Message::TimeLimitQuotaElapsed).await;
+                    self.ws_send_control(Timestamp::now(), ControlEvent::TimeLimitQuotaElapsed).await;
                     self.ws.close(CloseCode::Normal).await;
                     break;
                 }
@@ -1058,7 +1058,7 @@ impl Runner {
             Ok(ControlFlow::Break(reason)) => {
                 guard.unlock(&mut self.redis_conn).await?;
 
-                self.ws_send_control(Timestamp::now(), outgoing::Message::JoinBlocked(reason))
+                self.ws_send_control(Timestamp::now(), ControlEvent::JoinBlocked(reason))
                     .await;
 
                 return Ok(());
@@ -1140,7 +1140,7 @@ impl Runner {
                 Ok(ControlFlow::Break(reason)) => {
                     guard.unlock(&mut self.redis_conn).await?;
 
-                    self.ws_send_control(Timestamp::now(), outgoing::Message::JoinBlocked(reason))
+                    self.ws_send_control(Timestamp::now(), ControlEvent::JoinBlocked(reason))
                         .await;
 
                     return Ok(());
@@ -1201,7 +1201,7 @@ impl Runner {
 
         self.ws_send_control(
             timestamp,
-            outgoing::Message::JoinSuccess(outgoing::JoinSuccess {
+            ControlEvent::JoinSuccess(outgoing::JoinSuccess {
                 id: self.id,
                 display_name: control_data.display_name.clone(),
                 avatar_url: control_data.avatar_url.clone(),
@@ -1437,7 +1437,7 @@ impl Runner {
                     )
                     .await;
 
-                self.ws_send_control(timestamp, outgoing::Message::Joined(participant))
+                self.ws_send_control(timestamp, ControlEvent::Joined(participant))
                     .await;
 
                 self.handle_module_requested_actions(timestamp, actions)
@@ -1459,7 +1459,7 @@ impl Runner {
 
                 self.ws_send_control(
                     timestamp,
-                    outgoing::Message::Left(outgoing::AssociatedParticipant { id }),
+                    ControlEvent::Left(outgoing::AssociatedParticipant { id }),
                 )
                 .await;
 
@@ -1487,7 +1487,7 @@ impl Runner {
                     )
                     .await;
 
-                self.ws_send_control(timestamp, outgoing::Message::Update(participant))
+                self.ws_send_control(timestamp, ControlEvent::Update(participant))
                     .await;
 
                 self.handle_module_requested_actions(timestamp, actions)
@@ -1567,7 +1567,7 @@ impl Runner {
                 )
                 .await?;
 
-                self.ws_send_control(timestamp, outgoing::Message::RoleUpdated { new_role })
+                self.ws_send_control(timestamp, ControlEvent::RoleUpdated { new_role })
                     .await;
 
                 self.exchange_publish_control(timestamp, None, exchange::Message::Update(self.id));
@@ -1635,7 +1635,7 @@ impl Runner {
                     .await;
             }
             exchange::Message::RoomDeleted => {
-                self.ws_send_control(timestamp, outgoing::Message::RoomDeleted)
+                self.ws_send_control(timestamp, ControlEvent::RoomDeleted)
                     .await;
                 self.ws.close(CloseCode::Normal).await;
             }
@@ -1781,11 +1781,11 @@ impl Runner {
     }
 
     async fn ws_send_control_error(&mut self, timestamp: Timestamp, error: outgoing::Error) {
-        self.ws_send_control(timestamp, outgoing::Message::Error(error))
+        self.ws_send_control(timestamp, ControlEvent::Error(error))
             .await;
     }
 
-    async fn ws_send_control(&mut self, timestamp: Timestamp, payload: outgoing::Message) {
+    async fn ws_send_control(&mut self, timestamp: Timestamp, payload: ControlEvent) {
         self.ws
             .send(Message::Text(
                 serde_json::to_string(&NamespacedEvent {

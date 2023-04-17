@@ -608,7 +608,7 @@ where
                 };
 
                 self.interface.ws.send(WsMessageOutgoing::Control(
-                    outgoing::Message::JoinSuccess(join_success),
+                    outgoing::ControlEvent::JoinSuccess(join_success),
                 ))?;
 
                 self.publish_exchange_control(control::exchange::Message::Joined(
@@ -678,7 +678,7 @@ where
                 }
 
                 self.interface.ws.send(WsMessageOutgoing::Control(
-                    control::outgoing::Message::Joined(participant),
+                    control::outgoing::ControlEvent::Joined(participant),
                 ))?;
 
                 Ok(())
@@ -694,9 +694,9 @@ where
                     .context("Module error on ParticipantLeft event")?;
 
                 self.interface.ws.send(WsMessageOutgoing::Control(
-                    control::outgoing::Message::Left(control::outgoing::AssociatedParticipant {
-                        id: participant_id,
-                    }),
+                    control::outgoing::ControlEvent::Left(
+                        control::outgoing::AssociatedParticipant { id: participant_id },
+                    ),
                 ))?;
 
                 Ok(())
@@ -724,7 +724,7 @@ where
                 }
 
                 self.interface.ws.send(WsMessageOutgoing::Control(
-                    control::outgoing::Message::Update(participant),
+                    control::outgoing::ControlEvent::Update(participant),
                 ))?;
 
                 Ok(())
@@ -973,7 +973,7 @@ where
     M: SignalingModule,
 {
     Module(M::Outgoing),
-    Control(control::outgoing::Message),
+    Control(control::outgoing::ControlEvent),
 }
 
 impl<M> Clone for WsMessageOutgoing<M>
