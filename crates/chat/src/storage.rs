@@ -10,13 +10,17 @@ use r3dlock::{Mutex, MutexGuard};
 use redis::AsyncCommands;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{
+    collections::{HashMap, HashSet},
+    str::FromStr,
+};
 use types::core::{GroupId, GroupName, ParticipantId, RoomId, Timestamp};
+use uuid::Uuid;
 
 /// Message type stores in redis
 ///
 /// This needs to have a inner timestamp.
-#[derive(Debug, Deserialize, Serialize, ToRedisArgs, FromRedisValue)]
+#[derive(Clone, Debug, Deserialize, Serialize, ToRedisArgs, FromRedisValue)]
 #[to_redis_args(serde)]
 #[from_redis_value(serde)]
 pub struct StoredMessage {
@@ -495,7 +499,7 @@ pub struct RoomGroupParticipantsLock {
     pub group: GroupId,
 }
 
-/// A lock for a group chat history inside a room
+/// Chat history for a group inside a room
 #[derive(ToRedisArgs)]
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:group={group}:chat:history")]
 struct RoomGroupChatHistory {
@@ -586,4 +590,220 @@ pub async fn delete_group_chat_history(
         .with_context(
             || format!("Failed to delete room group chat history, {room}, group={group}",),
         )
+}
+
+/// A set of private chat correspondents for a participant in a room
+#[derive(ToRedisArgs)]
+#[to_redis_args(fmt = "k3k-signaling:room={room}:private_chat_correspondents")]
+struct RoomPrivateChatCorrespondentsKey {
+    room: SignalingRoomId,
+}
+
+#[derive(ToRedisArgs, FromRedisValue, Eq, PartialEq, Debug, Hash)]
+#[to_redis_args(fmt = "{participant_one}:{participant_two}")]
+#[from_redis_value(FromStr)]
+struct RoomPrivateChatCorrespondents {
+    participant_one: ParticipantId,
+    participant_two: ParticipantId,
+}
+
+impl FromStr for RoomPrivateChatCorrespondents {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        let participants = s
+            .split_once(':')
+            .context("Failed to split RoomPrivateChatCorrespondents")?;
+
+        Ok(Self {
+            participant_one: ParticipantId::from(Uuid::from_str(participants.0)?),
+            participant_two: ParticipantId::from(Uuid::from_str(participants.1)?),
+        })
+    }
+}
+
+impl From<RoomPrivateChatCorrespondents> for (ParticipantId, ParticipantId) {
+    fn from(
+        RoomPrivateChatCorrespondents {
+            participant_one,
+            participant_two,
+        }: RoomPrivateChatCorrespondents,
+    ) -> Self {
+        (participant_one, participant_two).ordered()
+    }
+}
+
+trait OrderTuple {
+    fn ordered(self) -> Self;
+}
+
+impl<T: PartialOrd> OrderTuple for (T, T) {
+    fn ordered(self) -> Self {
+        if self.0 > self.1 {
+            (self.1, self.0)
+        } else {
+            self
+        }
+    }
+}
+
+#[tracing::instrument(level = "debug", skip(redis_conn))]
+pub async fn add_private_chat_correspondents(
+    redis_conn: &mut RedisConnection,
+    room: SignalingRoomId,
+    participant_one: ParticipantId,
+    participant_two: ParticipantId,
+) -> Result<()> {
+    let participants = (participant_one, participant_two).ordered();
+    redis_conn
+        .sadd(
+            RoomPrivateChatCorrespondentsKey { room },
+            RoomPrivateChatCorrespondents {
+                participant_one: participants.0,
+                participant_two: participants.1,
+            },
+        )
+        .await
+        .context("Failed to add private chat correspondents to set")?;
+
+    Ok(())
+}
+
+#[tracing::instrument(level = "debug", skip(redis_conn))]
+pub async fn delete_private_chat_correspondents(
+    redis_conn: &mut RedisConnection,
+    room: SignalingRoomId,
+) -> Result<()> {
+    redis_conn
+        .del(RoomPrivateChatCorrespondentsKey { room })
+        .await
+        .context("Failed to delete private chat correspondents")?;
+
+    Ok(())
+}
+
+#[tracing::instrument(level = "debug", skip(redis_conn))]
+pub async fn get_private_chat_correspondents(
+    redis_conn: &mut RedisConnection,
+    room: SignalingRoomId,
+) -> Result<HashSet<(ParticipantId, ParticipantId)>> {
+    let correspondents: HashSet<RoomPrivateChatCorrespondents> = redis_conn
+        .smembers(RoomPrivateChatCorrespondentsKey { room })
+        .await
+        .context("Failed to get private chat correspondents")?;
+
+    Ok(correspondents.into_iter().map(From::from).collect())
+}
+
+#[tracing::instrument(level = "debug", skip(redis_conn))]
+pub async fn get_private_chat_correspondents_for_participant(
+    redis_conn: &mut RedisConnection,
+    room: SignalingRoomId,
+    participant: ParticipantId,
+) -> Result<HashSet<ParticipantId>> {
+    Ok(get_private_chat_correspondents(redis_conn, room)
+        .await?
+        .into_iter()
+        .filter_map(|(a, b)| {
+            if a == participant {
+                Some(b)
+            } else if b == participant {
+                Some(a)
+            } else {
+                None
+            }
+        })
+        .collect())
+}
+
+/// Private chat history for two participants inside a room
+#[derive(ToRedisArgs)]
+#[to_redis_args(
+    fmt = "k3k-signaling:room={room}:participant={participant_one}:participant={participant_two}:chat:history"
+)]
+struct RoomPrivateChatHistory {
+    room: SignalingRoomId,
+    participant_one: ParticipantId,
+    participant_two: ParticipantId,
+}
+
+impl RoomPrivateChatHistory {
+    pub fn new(
+        room: SignalingRoomId,
+        participant_a: ParticipantId,
+        participant_b: ParticipantId,
+    ) -> Self {
+        let (participant_one, participant_two) = (participant_a, participant_b).ordered();
+        Self {
+            room,
+            participant_one,
+            participant_two,
+        }
+    }
+}
+
+#[tracing::instrument(level = "debug", skip(redis_conn))]
+pub async fn get_private_chat_history(
+    redis_conn: &mut RedisConnection,
+    room: SignalingRoomId,
+    participant_one: ParticipantId,
+    participant_two: ParticipantId,
+) -> Result<Vec<StoredMessage>> {
+    redis_conn
+        .lrange(
+            RoomPrivateChatHistory::new(room, participant_one, participant_two),
+            0,
+            -1,
+        )
+        .await
+        .with_context(|| {
+            format!(
+                "Failed to get room private chat history, {room}, \
+                participants {participant_one} and {participant_two}"
+            )
+        })
+}
+
+#[tracing::instrument(level = "debug", skip(redis_conn, message))]
+pub async fn add_message_to_private_chat_history(
+    redis_conn: &mut RedisConnection,
+    room: SignalingRoomId,
+    participant_one: ParticipantId,
+    participant_two: ParticipantId,
+    message: &StoredMessage,
+) -> Result<()> {
+    redis_conn
+        .lpush(
+            RoomPrivateChatHistory::new(room, participant_one, participant_two),
+            message,
+        )
+        .await
+        .with_context(|| {
+            format!(
+                "Failed to add message to room private chat history, {room}, \
+                participants {participant_one} and {participant_two}",
+            )
+        })
+}
+
+#[tracing::instrument(level = "debug", skip(redis_conn))]
+pub async fn delete_private_chat_history(
+    redis_conn: &mut RedisConnection,
+    room: SignalingRoomId,
+    participant_one: ParticipantId,
+    participant_two: ParticipantId,
+) -> Result<()> {
+    redis_conn
+        .del(RoomPrivateChatHistory::new(
+            room,
+            participant_one,
+            participant_two,
+        ))
+        .await
+        .with_context(|| {
+            format!(
+                "Failed to delete room private chat history, {room}, \
+                participants {participant_one} and {participant_two}"
+            )
+        })
 }
