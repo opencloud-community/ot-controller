@@ -2,8 +2,6 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use redis_args::{FromRedisValue, ToRedisArgs};
-use serde::{Deserialize, Serialize};
 use std::fmt;
 use types::core::{BreakoutRoomId, RoomId};
 
@@ -23,26 +21,8 @@ pub mod prelude {
         SignalingProtocols,
     };
     pub use super::ws_modules::{breakout, control, moderation, recording};
-    pub use super::{Role, SignalingRoomId};
-}
-
-/// Role of the participant inside a room
-#[derive(
-    Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, ToRedisArgs, FromRedisValue,
-)]
-#[serde(rename_all = "lowercase")]
-#[to_redis_args(serde)]
-#[from_redis_value(serde)]
-pub enum Role {
-    Guest,
-    User,
-    Moderator,
-}
-
-impl Role {
-    pub const fn is_moderator(&self) -> bool {
-        matches!(self, Role::Moderator)
-    }
+    pub use super::SignalingRoomId;
+    pub use types::signaling::Role;
 }
 
 /// The complete room id

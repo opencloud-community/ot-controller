@@ -6,5 +6,7 @@
 //! (typically through websockets)
 
 mod namespaced;
+mod role;
 
 pub use namespaced::{NamespacedCommand, NamespacedEvent};
+pub use role::Role;

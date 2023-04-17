@@ -5,7 +5,7 @@
 use super::metrics::SignalingMetrics;
 use super::prelude::*;
 use crate::api::signaling::ws_modules::control::ControlData;
-use crate::api::signaling::{Role, SignalingRoomId};
+use crate::api::signaling::SignalingRoomId;
 use crate::api::Participant;
 use crate::redis_wrapper::RedisConnection;
 use crate::storage::ObjectStorage;

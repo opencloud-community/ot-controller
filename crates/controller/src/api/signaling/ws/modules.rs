@@ -9,7 +9,6 @@ use crate::api::signaling::ws::runner::Builder;
 use crate::api::signaling::ws::{DestroyContext, ExchangePublish, InitContext};
 use crate::api::signaling::ws_modules::control::outgoing::Participant;
 use crate::api::signaling::ws_modules::control::ControlData;
-use crate::api::signaling::Role;
 use crate::redis_wrapper::RedisConnection;
 use actix_http::ws::{CloseCode, Message};
 use anyhow::{Context, Result};
@@ -21,7 +20,7 @@ use std::marker::PhantomData;
 use std::pin::Pin;
 use std::sync::Arc;
 use tokio_stream::{Stream, StreamExt};
-use types::core::ParticipantId;
+use types::{core::ParticipantId, signaling::Role};
 
 pub type AnyStream = Pin<Box<dyn Stream<Item = (&'static str, Box<dyn Any + 'static>)>>>;
 

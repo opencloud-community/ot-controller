@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::api::signaling::{Role, SignalingRoomId};
+use crate::api::signaling::SignalingRoomId;
 use crate::redis_wrapper::RedisConnection;
 use anyhow::{Context, Result};
 use db_storage::tariffs::Tariff;
@@ -13,7 +13,10 @@ use std::collections::HashSet;
 use std::fmt::Debug;
 use std::time::Duration;
 use std::{collections::HashMap, convert::identity};
-use types::core::{ParticipantId, RoomId, Timestamp};
+use types::{
+    core::{ParticipantId, RoomId, Timestamp},
+    signaling::Role,
+};
 
 /// Describes a set of participants inside a room.
 /// This MUST always be locked before accessing it

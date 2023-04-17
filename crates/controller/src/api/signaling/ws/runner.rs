@@ -20,7 +20,7 @@ use crate::api::signaling::ws_modules::control::storage::ParticipantIdRunnerLock
 use crate::api::signaling::ws_modules::control::{
     exchange, incoming, outgoing, storage, ControlData, NAMESPACE,
 };
-use crate::api::signaling::{Role, SignalingRoomId};
+use crate::api::signaling::SignalingRoomId;
 use crate::api::v1::tariffs::TariffResource;
 use crate::exchange_task::{ExchangeHandle, SubscriberHandle};
 use crate::redis_wrapper::RedisConnection;
@@ -50,7 +50,10 @@ use std::time::{Duration, Instant};
 use tokio::sync::{broadcast, mpsc};
 use tokio::time::{interval, sleep};
 use tokio_stream::StreamExt;
-use types::core::{BreakoutRoomId, ParticipantId, ParticipationKind, UserId};
+use types::{
+    core::{BreakoutRoomId, ParticipantId, ParticipationKind, UserId},
+    signaling::Role,
+};
 use uuid::Uuid;
 
 mod sip;
