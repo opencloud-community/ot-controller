@@ -586,7 +586,9 @@ where
                         let value = serde_json::to_value(data)
                             .context("Failed to convert module peer frontend data to value")?;
 
-                        participant.module_data.insert(M::NAMESPACE, value);
+                        participant
+                            .module_data
+                            .insert(M::NAMESPACE.to_string(), value);
                     }
                 }
 
@@ -674,7 +676,9 @@ where
                         "Failed to serialize PeerFrontendData for ParticipantJoined event",
                     )?;
 
-                    participant.module_data.insert(M::NAMESPACE, module_data);
+                    participant
+                        .module_data
+                        .insert(M::NAMESPACE.to_string(), module_data);
                 }
 
                 self.interface.ws.send(WsMessageOutgoing::Control(
@@ -720,7 +724,9 @@ where
                         "Failed to serialize PeerFrontendData for ParticipantUpdated event",
                     )?;
 
-                    participant.module_data.insert(M::NAMESPACE, module_data);
+                    participant
+                        .module_data
+                        .insert(M::NAMESPACE.to_string(), module_data);
                 }
 
                 self.interface.ws.send(WsMessageOutgoing::Control(
@@ -891,8 +897,11 @@ where
         Ok(())
     }
 
-    async fn build_participant(&mut self, id: ParticipantId) -> Result<outgoing::Participant> {
-        let mut participant = outgoing::Participant {
+    async fn build_participant(
+        &mut self,
+        id: ParticipantId,
+    ) -> Result<types::signaling::control::Participant> {
+        let mut participant = types::signaling::control::Participant {
             id,
             module_data: Default::default(),
         };
@@ -900,7 +909,7 @@ where
         let control_data = ControlData::from_redis(&mut self.redis_conn, self.room_id, id).await?;
 
         participant.module_data.insert(
-            NAMESPACE,
+            NAMESPACE.to_string(),
             serde_json::to_value(control_data)
                 .expect("Failed to convert ControlData to serde_json::Value"),
         );

@@ -9,7 +9,10 @@ use pretty_assertions::assert_eq;
 use serde_json::json;
 use serial_test::serial;
 use test_util::{TestContext, ROOM_ID, USER_1, USER_2};
-use types::core::{GroupName, Timestamp};
+use types::{
+    core::{GroupName, Timestamp},
+    signaling::control::Participant,
+};
 
 #[actix_rt::test]
 #[serial]
@@ -483,7 +486,7 @@ async fn private_chat_history_on_join() {
     assert!(matches!(
         joined,
         WsMessageOutgoing::Control(control::outgoing::ControlEvent::Joined(
-            control::outgoing::Participant {id, module_data: _}
+            Participant {id, module_data: _}
         )) if id == USER_2.participant_id
     ));
 

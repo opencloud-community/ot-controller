@@ -3193,6 +3193,7 @@ dependencies = [
  "rand",
  "redis",
  "serde",
+ "serde_json",
  "strum",
  "uuid",
  "validator",

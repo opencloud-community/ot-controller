@@ -15,7 +15,6 @@ use crate::api::signaling::prelude::control::outgoing::{ControlEvent, JoinBlocke
 use crate::api::signaling::prelude::*;
 use crate::api::signaling::resumption::{ResumptionTokenKeepAlive, ResumptionTokenUsed};
 use crate::api::signaling::ws::actor::WsCommand;
-use crate::api::signaling::ws_modules::control::outgoing::Participant;
 use crate::api::signaling::ws_modules::control::storage::ParticipantIdRunnerLock;
 use crate::api::signaling::ws_modules::control::{
     exchange, incoming, outgoing, storage, ControlData, NAMESPACE,
@@ -51,7 +50,7 @@ use tokio::time::{interval, sleep};
 use tokio_stream::StreamExt;
 use types::{
     core::{BreakoutRoomId, ParticipantId, ParticipationKind, UserId},
-    signaling::Role,
+    signaling::{control::Participant, Role},
 };
 use uuid::Uuid;
 
@@ -1339,7 +1338,7 @@ impl Runner {
     /// If the participant is an invisible service (like the recorder) and shouldn't be shown to other participants
     /// this function will return Ok(None)
     async fn build_participant(&mut self, id: ParticipantId) -> Result<Option<Participant>> {
-        let mut participant = outgoing::Participant {
+        let mut participant = Participant {
             id,
             module_data: Default::default(),
         };
@@ -1352,7 +1351,7 @@ impl Runner {
         };
 
         participant.module_data.insert(
-            NAMESPACE,
+            NAMESPACE.to_string(),
             serde_json::to_value(control_data)
                 .expect("Failed to convert ControlData to serde_json::Value"),
         );

@@ -4,7 +4,7 @@
 
 use crate::api::signaling::prelude::*;
 use serde::Serialize;
-use types::core::ParticipantId;
+use types::{core::ParticipantId, signaling::control::Participant};
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
 #[serde(tag = "message", rename_all = "snake_case")]
@@ -17,7 +17,7 @@ pub enum Message {
 
     InWaitingRoom,
 
-    JoinedWaitingRoom(control::outgoing::Participant),
+    JoinedWaitingRoom(Participant),
     LeftWaitingRoom(control::outgoing::AssociatedParticipant),
 
     WaitingRoomEnabled,

@@ -7,7 +7,6 @@ use super::{SignalingModule, Timestamp};
 use crate::api::signaling::metrics::SignalingMetrics;
 use crate::api::signaling::ws::runner::Builder;
 use crate::api::signaling::ws::{DestroyContext, ExchangePublish, InitContext};
-use crate::api::signaling::ws_modules::control::outgoing::Participant;
 use crate::api::signaling::ws_modules::control::ControlData;
 use crate::redis_wrapper::RedisConnection;
 use actix_http::ws::{CloseCode, Message};
@@ -20,7 +19,10 @@ use std::marker::PhantomData;
 use std::pin::Pin;
 use std::sync::Arc;
 use tokio_stream::{Stream, StreamExt};
-use types::{core::ParticipantId, signaling::Role};
+use types::{
+    core::ParticipantId,
+    signaling::{control::Participant, Role},
+};
 
 pub type AnyStream = Pin<Box<dyn Stream<Item = (&'static str, Box<dyn Any + 'static>)>>>;
 
@@ -255,7 +257,9 @@ where
                         let value = serde_json::to_value(data)
                             .context("Failed to convert module peer frontend data to value")?;
 
-                        participant.module_data.insert(M::NAMESPACE, value);
+                        participant
+                            .module_data
+                            .insert(M::NAMESPACE.to_string(), value);
                     }
                 }
             }
@@ -279,7 +283,9 @@ where
                     let value = serde_json::to_value(data)
                         .context("Failed to convert module peer frontend data to value")?;
 
-                    participant.module_data.insert(M::NAMESPACE, value);
+                    participant
+                        .module_data
+                        .insert(M::NAMESPACE.to_string(), value);
                 }
             }
             DynBroadcastEvent::ParticipantLeft(participant) => {
@@ -298,7 +304,9 @@ where
                     let value = serde_json::to_value(data)
                         .context("Failed to convert module peer frontend data to value")?;
 
-                    participant.module_data.insert(M::NAMESPACE, value);
+                    participant
+                        .module_data
+                        .insert(M::NAMESPACE.to_string(), value);
                 }
             }
         }

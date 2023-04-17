@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use types::{
     common::tariff::TariffResource,
     core::{ParticipantId, Timestamp},
-    signaling::Role,
+    signaling::{control::Participant, Role},
 };
 
 #[derive(Clone, Debug, Serialize, PartialEq, Eq)]
@@ -87,14 +87,6 @@ pub enum Error {
 pub enum WaitingRoomState {
     Waiting,
     Accepted,
-}
-
-#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
-pub struct Participant {
-    pub id: ParticipantId,
-
-    #[serde(flatten)]
-    pub module_data: HashMap<&'static str, serde_json::Value>,
 }
 
 #[cfg(test)]
