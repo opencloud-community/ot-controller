@@ -12,7 +12,7 @@ async fn main() {
 
 async fn run() -> Result<()> {
     match std::env::args().next() {
-        Some(s) if s.contains("k3k-controller") => {
+        Some(s) if s.ends_with("k3k-controller") => {
             use owo_colors::OwoColorize as _;
             anstream::eprintln!(
                 "{}: It appears you're using the deprecated `k3k-controller` executable, \
