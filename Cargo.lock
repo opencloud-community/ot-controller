@@ -1128,7 +1128,7 @@ dependencies = [
 [[package]]
 name = "casbin"
 version = "2.0.9"
-source = "git+https://github.com/kbalt/casbin-rs.git?rev=76b07db60264138b3f10b52469b74e41629e3e15#76b07db60264138b3f10b52469b74e41629e3e15"
+source = "git+https://github.com/kbalt/casbin-rs.git?rev=a5cd79704726b423030942769779ea7d4e8129ee#a5cd79704726b423030942769779ea7d4e8129ee"
 dependencies = [
  "async-trait",
  "fixedbitset",

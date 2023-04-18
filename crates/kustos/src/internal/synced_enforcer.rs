@@ -132,7 +132,9 @@ impl CoreApi for SyncedEnforcer {
         M: TryIntoModel,
         A: TryIntoAdapter,
     {
-        let enforcer = Enforcer::new_raw(m, a).await?;
+        let mut enforcer = Enforcer::new_raw(m, a).await?;
+
+        enforcer.add_function("actMatch", |req, pol| super::act_match(&req, &pol));
 
         let enforcer = SyncedEnforcer {
             enforcer,
