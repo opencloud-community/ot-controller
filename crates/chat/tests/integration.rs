@@ -11,7 +11,7 @@ use serial_test::serial;
 use test_util::{TestContext, ROOM_ID, USER_1, USER_2};
 use types::{
     core::{GroupName, Timestamp},
-    signaling::control::{AssociatedParticipant, Participant},
+    signaling::control::{event::JoinSuccess, AssociatedParticipant, Participant},
 };
 
 #[actix_rt::test]
@@ -68,10 +68,7 @@ async fn last_seen_timestamps() {
             .unwrap();
         match join_success {
             controller::prelude::WsMessageOutgoing::Control(
-                control::outgoing::ControlEvent::JoinSuccess(control::outgoing::JoinSuccess {
-                    module_data,
-                    ..
-                }),
+                control::outgoing::ControlEvent::JoinSuccess(JoinSuccess { module_data, .. }),
             ) => {
                 // check that last seen timestamps are not set
                 let chat_data = module_data.get("chat").unwrap();
@@ -177,10 +174,7 @@ async fn last_seen_timestamps() {
     // verify that we receive the correct timestamp for group1
     match rejoin_success {
         controller::prelude::WsMessageOutgoing::Control(
-            control::outgoing::ControlEvent::JoinSuccess(control::outgoing::JoinSuccess {
-                module_data,
-                ..
-            }),
+            control::outgoing::ControlEvent::JoinSuccess(JoinSuccess { module_data, .. }),
         ) => {
             // check own groups
             let chat_data = module_data.get("chat").unwrap();
@@ -266,7 +260,7 @@ async fn common_groups_on_join() {
 
     match join_success1 {
         controller::prelude::WsMessageOutgoing::Control(
-            control::outgoing::ControlEvent::JoinSuccess(control::outgoing::JoinSuccess {
+            control::outgoing::ControlEvent::JoinSuccess(JoinSuccess {
                 module_data,
                 participants,
                 ..
@@ -314,7 +308,7 @@ async fn common_groups_on_join() {
 
     match join_success2 {
         controller::prelude::WsMessageOutgoing::Control(
-            control::outgoing::ControlEvent::JoinSuccess(control::outgoing::JoinSuccess {
+            control::outgoing::ControlEvent::JoinSuccess(JoinSuccess {
                 module_data,
                 participants,
                 ..
@@ -407,7 +401,7 @@ async fn private_chat_history_on_join() {
 
     match join_success1 {
         controller::prelude::WsMessageOutgoing::Control(
-            control::outgoing::ControlEvent::JoinSuccess(control::outgoing::JoinSuccess {
+            control::outgoing::ControlEvent::JoinSuccess(JoinSuccess {
                 module_data,
                 participants,
                 ..
@@ -446,7 +440,7 @@ async fn private_chat_history_on_join() {
 
     match join_success2 {
         controller::prelude::WsMessageOutgoing::Control(
-            control::outgoing::ControlEvent::JoinSuccess(control::outgoing::JoinSuccess {
+            control::outgoing::ControlEvent::JoinSuccess(JoinSuccess {
                 module_data,
                 participants,
                 ..
@@ -545,10 +539,7 @@ async fn private_chat_history_on_join() {
 
     match join_again_success {
         controller::prelude::WsMessageOutgoing::Control(
-            control::outgoing::ControlEvent::JoinSuccess(control::outgoing::JoinSuccess {
-                module_data,
-                ..
-            }),
+            control::outgoing::ControlEvent::JoinSuccess(JoinSuccess { module_data, .. }),
         ) => {
             // check that last seen timestamps are not set
             let chat_data = module_data.get("chat").unwrap();

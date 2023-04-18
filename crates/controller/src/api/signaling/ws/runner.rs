@@ -17,7 +17,7 @@ use crate::api::signaling::resumption::{ResumptionTokenKeepAlive, ResumptionToke
 use crate::api::signaling::ws::actor::WsCommand;
 use crate::api::signaling::ws_modules::control::storage::ParticipantIdRunnerLock;
 use crate::api::signaling::ws_modules::control::{
-    exchange, incoming, outgoing, storage, ControlData, NAMESPACE,
+    exchange, incoming, storage, ControlData, NAMESPACE,
 };
 use crate::api::signaling::SignalingRoomId;
 use crate::exchange_task::{ExchangeHandle, SubscriberHandle};
@@ -52,7 +52,7 @@ use types::{
     core::{BreakoutRoomId, ParticipantId, ParticipationKind, UserId},
     signaling::{
         control::{
-            event::{self as control_event, JoinBlockedReason},
+            event::{self as control_event, JoinBlockedReason, JoinSuccess},
             AssociatedParticipant, Participant,
         },
         Role,
@@ -1206,7 +1206,7 @@ impl Runner {
 
         self.ws_send_control(
             timestamp,
-            ControlEvent::JoinSuccess(outgoing::JoinSuccess {
+            ControlEvent::JoinSuccess(JoinSuccess {
                 id: self.id,
                 display_name: control_data.display_name.clone(),
                 avatar_url: control_data.avatar_url.clone(),

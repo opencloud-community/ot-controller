@@ -43,7 +43,10 @@ use tokio_stream::StreamExt;
 use types::{
     common::tariff::TariffResource,
     core::{BreakoutRoomId, ParticipantId, ParticipationKind, TariffId, Timestamp, UserId},
-    signaling::{control::AssociatedParticipant, Role},
+    signaling::{
+        control::{event::JoinSuccess, AssociatedParticipant},
+        Role,
+    },
 };
 
 /// A module tester that simulates a runner environment for provided module.
@@ -575,7 +578,7 @@ where
 
                 if let Some(frontend_data) = frontend_data {
                     module_data.insert(
-                        M::NAMESPACE,
+                        M::NAMESPACE.to_string(),
                         serde_json::to_value(frontend_data)
                             .context("Failed to convert frontend-data to value")?,
                     );
@@ -592,7 +595,7 @@ where
                     }
                 }
 
-                let join_success = control::outgoing::JoinSuccess {
+                let join_success = JoinSuccess {
                     id: self.participant_id,
                     display_name: join.display_name,
                     avatar_url,

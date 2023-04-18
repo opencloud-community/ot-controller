@@ -3,17 +3,12 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use serde::Serialize;
-use std::collections::HashMap;
-use types::{
-    common::tariff::TariffResource,
-    core::{ParticipantId, Timestamp},
-    signaling::{
-        control::{
-            event::{Error, JoinBlockedReason},
-            AssociatedParticipant, Participant,
-        },
-        Role,
+use types::signaling::{
+    control::{
+        event::{Error, JoinBlockedReason, JoinSuccess},
+        AssociatedParticipant, Participant,
     },
+    Role,
 };
 
 #[derive(Clone, Debug, Serialize, PartialEq, Eq)]
@@ -40,28 +35,6 @@ pub enum ControlEvent {
     Error(Error),
 }
 
-#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
-pub struct JoinSuccess {
-    pub id: ParticipantId,
-
-    pub display_name: String,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub avatar_url: Option<String>,
-
-    pub role: Role,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub closes_at: Option<Timestamp>,
-
-    pub tariff: Box<TariffResource>,
-
-    #[serde(flatten)]
-    pub module_data: HashMap<&'static str, serde_json::Value>,
-
-    pub participants: Vec<Participant>,
-}
-
 #[cfg(test)]
 mod test {
     use std::str::FromStr;
@@ -71,7 +44,10 @@ mod test {
     use db_storage::tariffs::Tariff;
     use pretty_assertions::assert_eq;
     use serde_json::json;
-    use types::core::TariffId;
+    use types::{
+        common::tariff::TariffResource,
+        core::{ParticipantId, TariffId},
+    };
 
     fn participant_tariff() -> TariffResource {
         TariffResource {

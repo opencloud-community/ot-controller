@@ -124,7 +124,7 @@ pub enum DynTargetedEvent {
 pub enum DynBroadcastEvent<'evt> {
     Joined(
         &'evt ControlData,
-        &'evt mut HashMap<&'static str, Value>,
+        &'evt mut HashMap<String, Value>,
         &'evt mut Vec<Participant>,
     ),
     Leaving,
@@ -246,7 +246,7 @@ where
 
                 if let Some(frontend_data) = frontend_data {
                     module_data.insert(
-                        M::NAMESPACE,
+                        M::NAMESPACE.to_string(),
                         serde_json::to_value(frontend_data)
                             .context("Failed to convert frontend-data to value")?,
                     );
