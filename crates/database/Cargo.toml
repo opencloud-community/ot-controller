@@ -17,11 +17,16 @@ controller-shared = { path = "../controller-shared-types", package = "opentalk-c
 diesel = { version = "^2.0.3", features = [
     "postgres",
     "uuid",
-    "r2d2",
     "serde_json",
     "chrono",
     "i-implement-a-third-party-backend-and-opt-into-breaking-changes",
 ] }
+diesel-async = { version = "0.2.1", features = ["postgres", "deadpool"] }
+deadpool-runtime = { version = "0.1", features = ["tokio_1"] }
+
+async-trait = "0.1"
+futures-core = "0.3"
+
 
 ### Error handling
 thiserror = "1.0"
@@ -29,6 +34,7 @@ thiserror = "1.0"
 ### Logging utilities
 log = { version = "0.4", features = ["serde"] }
 tracing = { version = "0.1" }
+pin-project-lite = "0.2"
 
 ### Opentelementry metrics
 opentelemetry = { version = "0.18", default-features = false, features = [

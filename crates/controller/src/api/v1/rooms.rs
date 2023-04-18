@@ -64,19 +64,16 @@ pub async fn accessible(
         .get_accessible_resources_for_user(current_user.id, AccessMethod::Get)
         .await?;
 
-    let (rooms, room_count) = crate::block(move || {
-        let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-        match accessible_rooms {
-            kustos::AccessibleResources::All => {
-                Room::get_all_with_creator_paginated(&mut conn, per_page, page)
-            }
-            kustos::AccessibleResources::List(list) => {
-                Room::get_by_ids_with_creator_paginated(&mut conn, &list, per_page, page)
-            }
+    let (rooms, room_count) = match accessible_rooms {
+        kustos::AccessibleResources::All => {
+            Room::get_all_with_creator_paginated(&mut conn, per_page, page).await?
         }
-    })
-    .await??;
+        kustos::AccessibleResources::List(list) => {
+            Room::get_by_ids_with_creator_paginated(&mut conn, &list, per_page, page).await?
+        }
+    };
 
     let rooms = rooms
         .into_iter()
@@ -122,38 +119,33 @@ pub async fn new(
 
     room_parameters.validate()?;
 
-    let current_user_id = current_user.id;
+    let mut conn = db.get_conn().await?;
 
-    let room = crate::block(move || -> database::Result<_> {
-        let mut conn = db.get_conn()?;
+    let new_room = db_rooms::NewRoom {
+        created_by: current_user.id,
+        password: room_parameters.password,
+        waiting_room: room_parameters.waiting_room,
+        tenant_id: current_user.tenant_id,
+    };
 
-        let new_room = db_rooms::NewRoom {
-            created_by: current_user_id,
-            password: room_parameters.password,
-            waiting_room: room_parameters.waiting_room,
-            tenant_id: current_user.tenant_id,
-        };
+    let room = new_room.insert(&mut conn).await?;
 
-        let room = new_room.insert(&mut conn)?;
+    if room_parameters.enable_sip {
+        NewSipConfig::new(room.id, false).insert(&mut conn).await?;
+    }
 
-        if room_parameters.enable_sip {
-            NewSipConfig::new(room.id, false).insert(&mut conn)?;
-        }
-
-        Ok(room)
-    })
-    .await??;
+    drop(conn);
 
     let room_resource = RoomResource {
         id: room.id,
-        created_by: PublicUserProfile::from_db(&settings, current_user),
+        created_by: PublicUserProfile::from_db(&settings, current_user.clone()),
         created_at: room.created_at,
         password: room.password,
         waiting_room: room.waiting_room,
     };
 
     let policies = PoliciesBuilder::new()
-        .grant_user_access(current_user_id)
+        .grant_user_access(current_user.id)
         .room_read_access(room_resource.id)
         .room_write_access(room_resource.id)
         .finish();
@@ -192,17 +184,14 @@ pub async fn patch(
 
     modify_room.validate()?;
 
-    let room = crate::block(move || {
-        let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-        let changeset = db_rooms::UpdateRoom {
-            password: modify_room.password,
-            waiting_room: modify_room.waiting_room,
-        };
+    let changeset = db_rooms::UpdateRoom {
+        password: modify_room.password,
+        waiting_room: modify_room.waiting_room,
+    };
 
-        changeset.apply(&mut conn, room_id)
-    })
-    .await??;
+    let room = changeset.apply(&mut conn, room_id).await?;
 
     let room_resource = RoomResource {
         id: room.id,
@@ -226,12 +215,7 @@ pub async fn delete(
 ) -> Result<NoContent, ApiError> {
     let room_id = room_id.into_inner();
 
-    crate::block(move || {
-        let mut conn = db.get_conn()?;
-
-        Room::delete_by_id(&mut conn, room_id)
-    })
-    .await??;
+    Room::delete_by_id(&mut db.get_conn().await?, room_id).await?;
 
     let resources = associated_resource_ids(room_id);
 
@@ -252,12 +236,9 @@ pub async fn get(
     let settings = settings.load();
     let room_id = room_id.into_inner();
 
-    let (room, created_by) = crate::block(move || {
-        let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-        Room::get_with_user(&mut conn, room_id)
-    })
-    .await??;
+    let (room, created_by) = Room::get_with_user(&mut conn, room_id).await?;
 
     let room_resource = RoomResource {
         id: room.id,
@@ -278,13 +259,10 @@ pub async fn get_room_tariff(
 ) -> Result<Json<TariffResource>, ApiError> {
     let room_id = room_id.into_inner();
 
-    let tariff = crate::block(move || {
-        let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-        let room = Room::get(&mut conn, room_id)?;
-        room.get_tariff(&mut conn)
-    })
-    .await??;
+    let room = Room::get(&mut conn, room_id).await?;
+    let tariff = room.get_tariff(&mut conn).await?;
 
     let response = TariffResource::from_tariff(tariff, &modules.get_module_names());
 
@@ -363,12 +341,7 @@ pub async fn start(
     let request = request.into_inner();
     let room_id = room_id.into_inner();
 
-    let room = crate::block(move || {
-        let mut conn = db.get_conn()?;
-
-        Room::get(&mut conn, room_id)
-    })
-    .await??;
+    let room = Room::get(&mut db.get_conn().await?, room_id).await?;
 
     let mut redis_conn = (**redis_conn).clone();
 
@@ -431,24 +404,21 @@ pub async fn start_invited(
         )])
     })?;
 
-    let room = crate::block(move || -> Result<db_rooms::Room, ApiError> {
-        let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-        let invite = Invite::get(&mut conn, InviteCodeId::from(invite_code_as_uuid))?;
+    let invite = Invite::get(&mut conn, InviteCodeId::from(invite_code_as_uuid)).await?;
 
-        if !invite.active {
-            return Err(ApiError::not_found());
-        }
+    if !invite.active {
+        return Err(ApiError::not_found());
+    }
 
-        if invite.room != room_id {
-            return Err(ApiError::bad_request().with_message("Room id mismatch"));
-        }
+    if invite.room != room_id {
+        return Err(ApiError::bad_request().with_message("Room id mismatch"));
+    }
 
-        let room = Room::get(&mut conn, invite.room)?;
+    let room = Room::get(&mut conn, invite.room).await?;
 
-        Ok(room)
-    })
-    .await??;
+    drop(conn);
 
     if let Some(password) = &room.password {
         if let Some(pw) = &request.password {

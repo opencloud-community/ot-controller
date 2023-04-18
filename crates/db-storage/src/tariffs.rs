@@ -8,6 +8,7 @@ use chrono::{DateTime, Utc};
 use core::fmt::Debug;
 use database::{DbConnection, Result};
 use diesel::prelude::*;
+use diesel_async::RunQueryDsl;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -32,50 +33,56 @@ pub struct Tariff {
 }
 
 impl Tariff {
-    pub fn get(conn: &mut DbConnection, id: TariffId) -> Result<Self> {
-        let tariff = tariffs::table.filter(tariffs::id.eq(id)).get_result(conn)?;
+    pub async fn get(conn: &mut DbConnection, id: TariffId) -> Result<Self> {
+        let tariff = tariffs::table
+            .filter(tariffs::id.eq(id))
+            .get_result(conn)
+            .await?;
 
         Ok(tariff)
     }
 
-    pub fn get_all(conn: &mut DbConnection) -> Result<Vec<Self>> {
-        let tariffs = tariffs::table.load(conn)?;
+    pub async fn get_all(conn: &mut DbConnection) -> Result<Vec<Self>> {
+        let tariffs = tariffs::table.load(conn).await?;
 
         Ok(tariffs)
     }
 
-    pub fn get_by_name(conn: &mut DbConnection, name: &str) -> Result<Self> {
+    pub async fn get_by_name(conn: &mut DbConnection, name: &str) -> Result<Self> {
         let query = tariffs::table.filter(tariffs::name.eq(name));
 
-        let tariff = query.get_result(conn)?;
+        let tariff = query.get_result(conn).await?;
 
         Ok(tariff)
     }
 
-    pub fn delete_by_id(conn: &mut DbConnection, id: TariffId) -> Result<()> {
+    pub async fn delete_by_id(conn: &mut DbConnection, id: TariffId) -> Result<()> {
         let query = diesel::delete(tariffs::table).filter(tariffs::id.eq(id));
-        query.execute(conn)?;
+        query.execute(conn).await?;
         Ok(())
     }
 
-    pub fn get_by_external_id(conn: &mut DbConnection, id: &ExternalTariffId) -> Result<Self> {
+    pub async fn get_by_external_id(
+        conn: &mut DbConnection,
+        id: &ExternalTariffId,
+    ) -> Result<Self> {
         let query = external_tariffs::table
             .filter(external_tariffs::external_id.eq(id))
             .inner_join(tariffs::table)
             .select(tariffs::all_columns);
 
-        let tariff = query.get_result(conn)?;
+        let tariff = query.get_result(conn).await?;
 
         Ok(tariff)
     }
 
-    pub fn get_by_user_id(conn: &mut DbConnection, id: &UserId) -> Result<Self> {
+    pub async fn get_by_user_id(conn: &mut DbConnection, id: &UserId) -> Result<Self> {
         let query = users::table
             .filter(users::id.eq(id))
             .inner_join(tariffs::table)
             .select(tariffs::all_columns);
 
-        let tariff = query.get_result(conn)?;
+        let tariff = query.get_result(conn).await?;
 
         Ok(tariff)
     }
@@ -90,9 +97,9 @@ pub struct NewTariff {
 }
 
 impl NewTariff {
-    pub fn insert(self, conn: &mut DbConnection) -> Result<Tariff> {
+    pub async fn insert(self, conn: &mut DbConnection) -> Result<Tariff> {
         let query = self.insert_into(tariffs::table);
-        let tariff = query.get_result(conn)?;
+        let tariff = query.get_result(conn).await?;
 
         Ok(tariff)
     }
@@ -108,9 +115,9 @@ pub struct UpdateTariff {
 }
 
 impl UpdateTariff {
-    pub fn apply(self, conn: &mut DbConnection, tariff_id: TariffId) -> Result<Tariff> {
+    pub async fn apply(self, conn: &mut DbConnection, tariff_id: TariffId) -> Result<Tariff> {
         let query = diesel::update(tariffs::table.filter(tariffs::id.eq(tariff_id))).set(self);
-        let tariff = query.get_result(conn)?;
+        let tariff = query.get_result(conn).await?;
         Ok(tariff)
     }
 }
@@ -123,26 +130,26 @@ pub struct ExternalTariff {
 }
 
 impl ExternalTariff {
-    pub fn get_all_for_tariff(
+    pub async fn get_all_for_tariff(
         conn: &mut DbConnection,
         tariff_id: TariffId,
     ) -> Result<Vec<ExternalTariffId>> {
         let query = external_tariffs::table
             .filter(external_tariffs::tariff_id.eq(tariff_id))
             .select(external_tariffs::external_id);
-        let external_ids = query.load(conn)?;
+        let external_ids = query.load(conn).await?;
 
         Ok(external_ids)
     }
 
-    pub fn delete_all_for_tariff(conn: &mut DbConnection, tariff_id: TariffId) -> Result<()> {
+    pub async fn delete_all_for_tariff(conn: &mut DbConnection, tariff_id: TariffId) -> Result<()> {
         let query = diesel::delete(external_tariffs::table)
             .filter(external_tariffs::tariff_id.eq(tariff_id));
-        query.execute(conn)?;
+        query.execute(conn).await?;
         Ok(())
     }
 
-    pub fn delete_all_for_tariff_by_external_id(
+    pub async fn delete_all_for_tariff_by_external_id(
         conn: &mut DbConnection,
         tariff_id: TariffId,
         external_ids: &[ExternalTariffId],
@@ -152,13 +159,13 @@ impl ExternalTariff {
                 .eq(tariff_id)
                 .and(external_tariffs::external_id.eq_any(external_ids)),
         );
-        query.execute(conn)?;
+        query.execute(conn).await?;
         Ok(())
     }
 
-    pub fn insert(self, conn: &mut DbConnection) -> Result<()> {
+    pub async fn insert(self, conn: &mut DbConnection) -> Result<()> {
         let query = self.insert_into(external_tariffs::table);
-        query.execute(conn)?;
+        query.execute(conn).await?;
 
         Ok(())
     }

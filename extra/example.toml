@@ -32,11 +32,6 @@ url = "postgres://postgres:password123@localhost:5432/opentalk"
 # Defaults to 100 which is the default of postgres.
 #max_connections = 100
 
-# Minimum number of connections that are at least open.
-# If load increases the controller will open new connection, at most max_connections many.
-# Defaults to 10
-#min_idle_connections = 10
-
 [http]
 # The port to bind the HTTP Server to (defaults to 11311).
 port = 11311

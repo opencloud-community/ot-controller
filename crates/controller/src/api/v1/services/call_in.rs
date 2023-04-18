@@ -13,7 +13,7 @@ use actix_web::web::{Data, Json};
 use database::Db;
 use db_storage::sip_configs::SipConfig;
 use serde::{Deserialize, Serialize};
-use types::core::{CallInId, CallInPassword, ResumptionToken, RoomId, TicketToken};
+use types::core::{CallInId, CallInPassword, ResumptionToken, TicketToken};
 use validator::Validate;
 
 pub const REQUIRED_CALL_IN_ROLE: &str = "opentalk-call-in";
@@ -43,20 +43,18 @@ pub async fn start(
     request.id.validate()?;
     request.pin.validate()?;
 
-    let room_id = crate::block(move || -> Result<RoomId, ApiError> {
-        let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-        if let Some(sip_config) = SipConfig::get(&mut conn, request.id)? {
-            if sip_config.password == request.pin {
-                return Ok(sip_config.room);
-            }
+    let room_id = match SipConfig::get(&mut conn, request.id).await? {
+        Some(sip_config) if sip_config.password == request.pin => sip_config.room,
+        _ => {
+            return Err(ApiError::bad_request()
+                .with_code("invalid_credentials")
+                .with_message("given call-in id & pin combination is not valid"));
         }
+    };
 
-        Err(ApiError::bad_request()
-            .with_code("invalid_credentials")
-            .with_message("given call-in id & pin combination is not valid"))
-    })
-    .await??;
+    drop(conn);
 
     let (ticket, resumption) =
         start_or_continue_signaling_session(&mut redis_conn, Participant::Sip, room_id, None, None)

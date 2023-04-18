@@ -3,17 +3,15 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Contains the room specific database structs and queries
-use crate::diesel::RunQueryDsl;
-use crate::schema::rooms;
-use crate::schema::users;
+use crate::schema::{rooms, users};
 use crate::tariffs::Tariff;
 use crate::users::User;
 use chrono::{DateTime, Utc};
 use database::DbConnection;
 use database::{Paginate, Result};
 use diesel::prelude::*;
-use diesel::{ExpressionMethods, QueryDsl};
-use diesel::{Identifiable, Queryable};
+use diesel::{ExpressionMethods, Identifiable, QueryDsl, Queryable};
+use diesel_async::RunQueryDsl;
 use types::core::{RoomId, TenantId, UserId};
 
 types::diesel_newtype! {
@@ -37,41 +35,41 @@ pub struct Room {
 impl Room {
     /// Select a room using the given id
     #[tracing::instrument(err, skip_all)]
-    pub fn get(conn: &mut DbConnection, id: RoomId) -> Result<Self> {
+    pub async fn get(conn: &mut DbConnection, id: RoomId) -> Result<Self> {
         let query = rooms::table.filter(rooms::id.eq(id));
 
-        let room: Room = query.get_result(conn)?;
+        let room: Room = query.get_result(conn).await?;
 
         Ok(room)
     }
 
     /// Select a room and the creator using the given room id
     #[tracing::instrument(err, skip_all)]
-    pub fn get_with_user(conn: &mut DbConnection, id: RoomId) -> Result<(Self, User)> {
+    pub async fn get_with_user(conn: &mut DbConnection, id: RoomId) -> Result<(Self, User)> {
         let query = rooms::table
             .filter(rooms::id.eq(id))
             .inner_join(users::table);
 
-        let result: (Room, User) = query.get_result(conn)?;
+        let result: (Room, User) = query.get_result(conn).await?;
 
         Ok(result)
     }
 
     /// Select all rooms joined with their creator
     #[tracing::instrument(err, skip_all)]
-    pub fn get_all_with_creator(conn: &mut DbConnection) -> Result<Vec<(Room, User)>> {
+    pub async fn get_all_with_creator(conn: &mut DbConnection) -> Result<Vec<(Room, User)>> {
         let query = rooms::table
             .order_by(rooms::id.desc())
             .inner_join(users::table);
 
-        let room_with_creator = query.load::<(Room, User)>(conn)?;
+        let room_with_creator = query.load::<(Room, User)>(conn).await?;
 
         Ok(room_with_creator)
     }
 
     /// Select all rooms paginated
     #[tracing::instrument(err, skip_all)]
-    pub fn get_all_with_creator_paginated(
+    pub async fn get_all_with_creator_paginated(
         conn: &mut DbConnection,
         limit: i64,
         page: i64,
@@ -82,14 +80,14 @@ impl Room {
             .order_by(rooms::id.desc())
             .paginate_by(limit, page);
 
-        let rooms_with_total = query.load_and_count(conn)?;
+        let rooms_with_total = query.load_and_count(conn).await?;
 
         Ok(rooms_with_total)
     }
 
     /// Select all rooms filtered by ids
     #[tracing::instrument(err, skip_all)]
-    pub fn get_by_ids_with_creator_paginated(
+    pub async fn get_by_ids_with_creator_paginated(
         conn: &mut DbConnection,
         ids: &[RoomId],
         limit: i64,
@@ -102,31 +100,31 @@ impl Room {
             .order_by(rooms::id.desc())
             .paginate_by(limit, page);
 
-        let rooms_with_total = query.load_and_count(conn)?;
+        let rooms_with_total = query.load_and_count(conn).await?;
 
         Ok(rooms_with_total)
     }
 
     /// Get the room's tariff
     #[tracing::instrument(err, skip_all)]
-    pub fn get_tariff(&self, conn: &mut DbConnection) -> Result<Tariff> {
-        let user = User::get(conn, self.created_by)?;
-        Tariff::get(conn, user.tariff_id)
+    pub async fn get_tariff(&self, conn: &mut DbConnection) -> Result<Tariff> {
+        let user = User::get(conn, self.created_by).await?;
+        Tariff::get(conn, user.tariff_id).await
     }
 
     /// Delete a room using the given id
     #[tracing::instrument(err, skip_all)]
-    pub fn delete_by_id(conn: &mut DbConnection, room_id: RoomId) -> Result<()> {
+    pub async fn delete_by_id(conn: &mut DbConnection, room_id: RoomId) -> Result<()> {
         let query = diesel::delete(rooms::table.filter(rooms::id.eq(room_id)));
 
-        query.execute(conn)?;
+        query.execute(conn).await?;
 
         Ok(())
     }
 
     /// Delete the room from the database
-    pub fn delete(self, conn: &mut DbConnection) -> Result<()> {
-        Self::delete_by_id(conn, self.id)
+    pub async fn delete(self, conn: &mut DbConnection) -> Result<()> {
+        Self::delete_by_id(conn, self.id).await
     }
 }
 
@@ -144,8 +142,8 @@ pub struct NewRoom {
 
 impl NewRoom {
     #[tracing::instrument(err, skip_all)]
-    pub fn insert(self, conn: &mut DbConnection) -> Result<Room> {
-        let room = self.insert_into(rooms::table).get_result(conn)?;
+    pub async fn insert(self, conn: &mut DbConnection) -> Result<Room> {
+        let room = self.insert_into(rooms::table).get_result(conn).await?;
 
         Ok(room)
     }
@@ -163,9 +161,9 @@ pub struct UpdateRoom {
 
 impl UpdateRoom {
     #[tracing::instrument(err, skip_all)]
-    pub fn apply(self, conn: &mut DbConnection, room_id: RoomId) -> Result<Room> {
+    pub async fn apply(self, conn: &mut DbConnection, room_id: RoomId) -> Result<Room> {
         let target = rooms::table.filter(rooms::id.eq(&room_id));
-        let room = diesel::update(target).set(self).get_result(conn)?;
+        let room = diesel::update(target).set(self).get_result(conn).await?;
 
         Ok(room)
     }

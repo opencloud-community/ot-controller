@@ -21,14 +21,17 @@ pub enum Command {
     SetOidcId { id: Uuid, new_oidc_id: String },
 }
 
-pub fn handle_command(settings: Settings, command: Command) -> Result<()> {
+pub async fn handle_command(settings: Settings, command: Command) -> Result<()> {
     match command {
-        Command::List => list_all_tenants(settings),
-        Command::SetOidcId { id, new_oidc_id } => set_oidc_id(
-            settings,
-            TenantId::from(id),
-            OidcTenantId::from(new_oidc_id),
-        ),
+        Command::List => list_all_tenants(settings).await,
+        Command::SetOidcId { id, new_oidc_id } => {
+            set_oidc_id(
+                settings,
+                TenantId::from(id),
+                OidcTenantId::from(new_oidc_id),
+            )
+            .await
+        }
     }
 }
 
@@ -48,11 +51,11 @@ impl TenantTableRow {
 }
 
 /// Implementation of the `opentalk-controller tenants list` command
-fn list_all_tenants(settings: Settings) -> Result<()> {
+async fn list_all_tenants(settings: Settings) -> Result<()> {
     let db = Db::connect(&settings.database).context("Failed to connect to database")?;
-    let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-    let tenants = Tenant::get_all(&mut conn)?;
+    let tenants = Tenant::get_all(&mut conn).await?;
     let rows: Vec<TenantTableRow> = tenants
         .into_iter()
         .map(TenantTableRow::from_tenant)
@@ -64,18 +67,19 @@ fn list_all_tenants(settings: Settings) -> Result<()> {
 }
 
 /// Implementation of the `opentalk-controller tenants set-oidc-id <tenant-id> <new-oidc-id>` command
-fn set_oidc_id(settings: Settings, id: TenantId, new_oidc_id: OidcTenantId) -> Result<()> {
+async fn set_oidc_id(settings: Settings, id: TenantId, new_oidc_id: OidcTenantId) -> Result<()> {
     let db = Db::connect(&settings.database).context("Failed to connect to database")?;
-    let mut conn = db.get_conn()?;
+    let mut conn = db.get_conn().await?;
 
-    let tenant = Tenant::get(&mut conn, id)?;
+    let tenant = Tenant::get(&mut conn, id).await?;
     let old_oidc_id = tenant.oidc_tenant_id;
 
     UpdateTenant {
         updated_at: Utc::now(),
         oidc_tenant_id: &new_oidc_id,
     }
-    .apply(&mut conn, id)?;
+    .apply(&mut conn, id)
+    .await?;
 
     println!(
         "Updated tenant's oidc-id\n\tid  = {id}\n\told = {old_oidc_id}\n\tnew = {new_oidc_id}"

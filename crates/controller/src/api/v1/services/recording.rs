@@ -49,12 +49,7 @@ pub async fn start(
     let mut redis_conn = (**redis_ctx).clone();
     let body = body.into_inner();
 
-    let room = crate::block(move || -> database::Result<_> {
-        let mut conn = db.get_conn()?;
-
-        Room::get(&mut conn, body.room_id)
-    })
-    .await??;
+    let room = Room::get(&mut db.get_conn().await?, body.room_id).await?;
 
     let (ticket, resumption) = start_or_continue_signaling_session(
         &mut redis_conn,
@@ -82,16 +77,7 @@ pub async fn upload_render(
     data: Payload,
 ) -> Result<NoContent, ApiError> {
     // Assert that the room exists
-    crate::block({
-        let db = db.clone();
-        let room_id = query.room_id;
-        move || {
-            let mut conn = db.get_conn()?;
-
-            Room::get(&mut conn, room_id)
-        }
-    })
-    .await??;
+    Room::get(&mut db.get_conn().await?, query.room_id).await?;
 
     save_asset(
         &storage,

@@ -3,11 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use super::schema::sip_configs;
-use crate::diesel::RunQueryDsl;
 use database::{DatabaseError, DbConnection, Result};
 use diesel::prelude::*;
-use diesel::{ExpressionMethods, QueryDsl};
-use diesel::{Identifiable, Queryable};
+use diesel::{ExpressionMethods, Identifiable, QueryDsl, Queryable};
+use diesel_async::RunQueryDsl;
 use types::core::{CallInId, CallInPassword, RoomId};
 
 /// Diesel SipConfig struct
@@ -23,34 +22,34 @@ pub struct SipConfig {
 impl SipConfig {
     /// Get the sip config for the specified sip_id
     #[tracing::instrument(err, skip_all)]
-    pub fn get(conn: &mut DbConnection, sip_id: CallInId) -> Result<Option<SipConfig>> {
+    pub async fn get(conn: &mut DbConnection, sip_id: CallInId) -> Result<Option<SipConfig>> {
         let query = sip_configs::table.filter(sip_configs::sip_id.eq(&sip_id));
-        let sip_config = query.get_result(conn).optional()?;
+        let sip_config = query.get_result(conn).await.optional()?;
 
         Ok(sip_config)
     }
 
     /// Get the sip config for the specified room
     #[tracing::instrument(err, skip_all)]
-    pub fn get_by_room(conn: &mut DbConnection, room_id: RoomId) -> Result<SipConfig> {
+    pub async fn get_by_room(conn: &mut DbConnection, room_id: RoomId) -> Result<SipConfig> {
         let query = sip_configs::table.filter(sip_configs::room.eq(&room_id));
-        let sip_config = query.get_result(conn)?;
+        let sip_config = query.get_result(conn).await?;
 
         Ok(sip_config)
     }
 
     /// Delete the sip config for the specified room
     #[tracing::instrument(err, skip_all)]
-    pub fn delete_by_room(conn: &mut DbConnection, room_id: RoomId) -> Result<()> {
+    pub async fn delete_by_room(conn: &mut DbConnection, room_id: RoomId) -> Result<()> {
         let query = diesel::delete(sip_configs::table.filter(sip_configs::room.eq(&room_id)));
 
-        query.execute(conn)?;
+        query.execute(conn).await?;
 
         Ok(())
     }
 
-    pub fn delete(&self, conn: &mut DbConnection) -> Result<()> {
-        Self::delete_by_room(conn, self.room)
+    pub async fn delete(&self, conn: &mut DbConnection) -> Result<()> {
+        Self::delete_by_room(conn, self.room).await
     }
 }
 
@@ -81,11 +80,11 @@ impl NewSipConfig {
     }
 
     #[tracing::instrument(err, skip_all)]
-    pub fn insert(mut self, conn: &mut DbConnection) -> Result<SipConfig> {
+    pub async fn insert(mut self, conn: &mut DbConnection) -> Result<SipConfig> {
         for _ in 0..3 {
             let query = self.clone().insert_into(sip_configs::table);
 
-            let config = match query.get_result(conn) {
+            let config = match query.get_result(conn).await {
                 Ok(config) => config,
                 Err(diesel::result::Error::DatabaseError(
                     diesel::result::DatabaseErrorKind::UniqueViolation,
@@ -116,11 +115,15 @@ pub struct UpdateSipConfig {
 }
 
 impl UpdateSipConfig {
-    pub fn apply(self, conn: &mut DbConnection, room_id: RoomId) -> Result<Option<SipConfig>> {
+    pub async fn apply(
+        self,
+        conn: &mut DbConnection,
+        room_id: RoomId,
+    ) -> Result<Option<SipConfig>> {
         let query =
             diesel::update(sip_configs::table.filter(sip_configs::room.eq(&room_id))).set(self);
 
-        let config = query.get_result(conn).optional()?;
+        let config = query.get_result(conn).await.optional()?;
 
         Ok(config)
     }

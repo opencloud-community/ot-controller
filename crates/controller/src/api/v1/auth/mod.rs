@@ -73,70 +73,68 @@ pub async fn login(
         }
     };
 
-    let db_result = crate::block(move || -> Result<_, ApiError> {
-        let settings = settings.load_full();
-        let mut conn = db.get_conn()?;
+    let settings = settings.load_full();
+    let mut conn = db.get_conn().await?;
 
-        // Get tariff depending on the configured assignment
-        let tariff = match &settings.tariffs.assignment {
-            TariffAssignment::Static { static_tariff_name } => {
-                Tariff::get_by_name(&mut conn, static_tariff_name)?
-            }
-            TariffAssignment::ByExternalTariffId => {
-                let external_tariff_id = info.tariff_id.clone().ok_or_else(|| {
-                    ApiError::bad_request()
-                        .with_code("invalid_claims")
-                        .with_message("tariff_id missing in id_token claims")
-                })?;
-
-                Tariff::get_by_external_id(&mut conn, &ExternalTariffId::from(external_tariff_id))
-                    .optional()?
-                    .ok_or_else(|| {
-                        ApiError::internal()
-                            .with_code("invalid_tariff_id")
-                            .with_message("JWT contained unknown tariff_id")
-                    })?
-            }
-        };
-
-        // Get the tenant_id depending on the configured assignment
-        let tenant_id = match &settings.tenants.assignment {
-            TenantAssignment::Static { static_tenant_id } => static_tenant_id.clone(),
-            TenantAssignment::ByExternalTenantId => info.tenant_id.clone().ok_or_else(|| {
+    // Get tariff depending on the configured assignment
+    let tariff = match &settings.tariffs.assignment {
+        TariffAssignment::Static { static_tariff_name } => {
+            Tariff::get_by_name(&mut conn, static_tariff_name).await?
+        }
+        TariffAssignment::ByExternalTariffId => {
+            let external_tariff_id = info.tariff_id.clone().ok_or_else(|| {
                 ApiError::bad_request()
                     .with_code("invalid_claims")
-                    .with_message("tenant_id missing in id_token claims")
-            })?,
-        };
+                    .with_message("tariff_id missing in id_token claims")
+            })?;
 
-        let tenant = get_or_create_tenant_by_oidc_id(&mut conn, &OidcTenantId::from(tenant_id))?;
+            Tariff::get_by_external_id(&mut conn, &ExternalTariffId::from(external_tariff_id))
+                .await
+                .optional()?
+                .ok_or_else(|| {
+                    ApiError::internal()
+                        .with_code("invalid_tariff_id")
+                        .with_message("JWT contained unknown tariff_id")
+                })?
+        }
+    };
 
-        let groups: Vec<(TenantId, GroupName)> = take(&mut info.x_grp)
-            .into_iter()
-            .map(|group| (tenant.id, GroupName::from(group)))
-            .collect();
+    // Get the tenant_id depending on the configured assignment
+    let tenant_id = match &settings.tenants.assignment {
+        TenantAssignment::Static { static_tenant_id } => static_tenant_id.clone(),
+        TenantAssignment::ByExternalTenantId => info.tenant_id.clone().ok_or_else(|| {
+            ApiError::bad_request()
+                .with_code("invalid_claims")
+                .with_message("tenant_id missing in id_token claims")
+        })?,
+    };
 
-        let groups = get_or_create_groups_by_name(&mut conn, &groups)?;
+    let tenant = get_or_create_tenant_by_oidc_id(&mut conn, &OidcTenantId::from(tenant_id)).await?;
 
-        // Try to get the user by the `sub` field in the IdToken
-        let user = User::get_by_oidc_sub(&mut conn, tenant.id, &info.sub)?;
+    let groups: Vec<(TenantId, GroupName)> = take(&mut info.x_grp)
+        .into_iter()
+        .map(|group| (tenant.id, GroupName::from(group)))
+        .collect();
 
-        let login_result = match user {
-            Some(user) => {
-                // Found a matching user, update its attributes, tenancy and groups
-                update_user::update_user(&settings, &mut conn, user, info, groups, tariff)?
-            }
-            None => {
-                // No matching user, create a new one with inside the given tenants and groups
-                create_user::create_user(&settings, &mut conn, info, tenant, groups, tariff)?
-            }
-        };
+    let groups = get_or_create_groups_by_name(&mut conn, &groups).await?;
 
-        Ok(login_result)
-    })
-    .await??;
+    // Try to get the user by the `sub` field in the IdToken
+    let user = User::get_by_oidc_sub(&mut conn, tenant.id, &info.sub).await?;
 
-    update_core_user_permissions(authz.as_ref(), db_result).await?;
+    let login_result = match user {
+        Some(user) => {
+            // Found a matching user, update its attributes, tenancy and groups
+            update_user::update_user(&settings, &mut conn, user, info, groups, tariff).await?
+        }
+        None => {
+            // No matching user, create a new one with inside the given tenants and groups
+            create_user::create_user(&settings, &mut conn, info, tenant, groups, tariff).await?
+        }
+    };
+
+    drop(conn);
+
+    update_core_user_permissions(authz.as_ref(), login_result).await?;
 
     Ok(Json(LoginResponse {
         // TODO calculate permissions

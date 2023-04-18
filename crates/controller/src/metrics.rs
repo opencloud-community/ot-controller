@@ -188,7 +188,7 @@ impl CombinedMetrics {
                 .with_description("Number of currently non-idling db connections")
                 .init(),
             dbpool_connections_idle: meter
-                .u64_histogram("sql.dbpool_connections_idle")
+                .i64_histogram("sql.dbpool_connections_idle")
                 .with_description("Number of currently idling db connections")
                 .init(),
         });

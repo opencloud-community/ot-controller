@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Casbin-rs adapter taken from <https://github.com/casbin-rs/diesel-adapter> but inlined to allow for our migration
-use super::block;
 use crate::db::{
     self,
     casbin::{CasbinRule, NewCasbinRule},
@@ -33,20 +32,19 @@ impl CasbinAdapter {
     }
 }
 
+fn adapter(e: impl std::error::Error + Send + Sync + 'static) -> AdapterError {
+    AdapterError(Box::new(e))
+}
+
 #[async_trait]
 impl Adapter for CasbinAdapter {
     #[tracing::instrument(level = "trace", skip(self, m))]
     async fn load_policy(&self, m: &mut dyn Model) -> Result<()> {
         let db = self.db.clone();
 
-        let rules = block(move || {
-            let mut conn = db.get_conn()?;
-
-            db::load_policy(&mut conn)
-        })
-        .await
-        .map_err(|e| AdapterError(Box::new(e)))?
-        .map_err(|e| AdapterError(Box::new(e)))?;
+        let mut conn = db.get_conn().await.map_err(adapter)?;
+        let rules = db::load_policy(&mut conn).await.map_err(adapter)?;
+        drop(conn);
 
         for casbin_rule in &rules {
             let rule = load_policy_line(casbin_rule);
@@ -68,29 +66,20 @@ impl Adapter for CasbinAdapter {
     async fn clear_policy(&mut self) -> Result<()> {
         let db = self.db.clone();
 
-        block(move || {
-            let mut conn = db.get_conn()?;
+        let mut conn = db.get_conn().await.map_err(adapter)?;
 
-            db::clear_policy(&mut conn)
-        })
-        .await
-        .map_err(|e| AdapterError(Box::new(e)))?
-        .map_err(|e| AdapterError(Box::new(e)))
-        .map_err(Into::into)
+        db::clear_policy(&mut conn).await.map_err(adapter)?;
+
+        Ok(())
     }
 
     #[tracing::instrument(level = "trace", skip(self, m, f), fields(filter_p = ?f.p, filter_g = ?f.g))]
     async fn load_filtered_policy<'a>(&mut self, m: &mut dyn Model, f: Filter<'a>) -> Result<()> {
         let db = self.db.clone();
 
-        let rules = block(move || {
-            let mut conn = db.get_conn()?;
-
-            db::load_policy(&mut conn)
-        })
-        .await
-        .map_err(|e| AdapterError(Box::new(e)))?
-        .map_err(|e| AdapterError(Box::new(e)))?;
+        let mut conn = db.get_conn().await.map_err(adapter)?;
+        let rules = db::load_policy(&mut conn).await.map_err(adapter)?;
+        drop(conn);
 
         for casbin_rule in &rules {
             let rule = load_filtered_policy_row(casbin_rule, &f);
@@ -141,15 +130,11 @@ impl Adapter for CasbinAdapter {
             }
         }
 
-        block(move || {
-            let mut conn = db.get_conn()?;
+        let mut conn = db.get_conn().await.map_err(adapter)?;
 
-            db::save_policy(&mut conn, rules)
-        })
-        .await
-        .map_err(|e| AdapterError(Box::new(e)))?
-        .map_err(|e| AdapterError(Box::new(e)))
-        .map_err(Into::into)
+        db::save_policy(&mut conn, rules).await.map_err(adapter)?;
+
+        Ok(())
     }
 
     /// Adds a policy
@@ -162,20 +147,15 @@ impl Adapter for CasbinAdapter {
         let db = self.db.clone();
         let ptype_c = ptype.to_string();
 
-        block(move || -> Result<bool> {
-            let mut conn = db.get_conn().map_err(|e| AdapterError(Box::new(e)))?;
+        match save_policy_line(&ptype_c, &rule) {
+            Some(new_rule) => {
+                let mut conn = db.get_conn().await.map_err(adapter)?;
 
-            match save_policy_line(&ptype_c, &rule) {
-                Some(new_rule) => {
-                    db::add_policy(&mut conn, new_rule).map_err(|e| AdapterError(Box::new(e)))?;
-                    Ok(true)
-                }
-                None => Err(crate::Error::Custom("Invalid policy".to_string()).into()),
+                db::add_policy(&mut conn, new_rule).await.map_err(adapter)?;
+                Ok(true)
             }
-        })
-        .await?
-        .map_err(|e| AdapterError(Box::new(e)))
-        .map_err(Into::into)
+            None => Err(crate::Error::Custom("Invalid policy".to_string()).into()),
+        }
     }
 
     /// Adds multiple policies
@@ -193,21 +173,18 @@ impl Adapter for CasbinAdapter {
         let db = self.db.clone();
         let ptype_c = ptype.to_string();
 
-        block(move || -> Result<bool> {
-            let mut conn = db.get_conn().map_err(|e| AdapterError(Box::new(e)))?;
+        let new_rules = rules
+            .iter()
+            .filter_map(|x: &Vec<String>| save_policy_line(&ptype_c, x))
+            .collect::<Vec<NewCasbinRule>>();
 
-            let new_rules = rules
-                .iter()
-                .filter_map(|x: &Vec<String>| save_policy_line(&ptype_c, x))
-                .collect::<Vec<NewCasbinRule>>();
+        let mut conn = db.get_conn().await.map_err(adapter)?;
 
-            db::add_policies(&mut conn, new_rules).map_err(|e| AdapterError(Box::new(e)))?;
+        db::add_policies(&mut conn, new_rules)
+            .await
+            .map_err(adapter)?;
 
-            Ok(true)
-        })
-        .await?
-        .map_err(|e| AdapterError(Box::new(e)))
-        .map_err(Into::into)
+        Ok(true)
     }
 
     #[tracing::instrument(level = "trace", skip(self, rule))]
@@ -215,15 +192,13 @@ impl Adapter for CasbinAdapter {
         let db = self.db.clone();
         let ptype_c = pt.to_string();
 
-        block(move || {
-            let mut conn = db.get_conn()?;
+        let mut conn = db.get_conn().await.map_err(adapter)?;
 
-            db::remove_policy(&mut conn, &ptype_c, rule)
-        })
-        .await
-        .map_err(|e| AdapterError(Box::new(e)))?
-        .map_err(|e| AdapterError(Box::new(e)))
-        .map_err(Into::into)
+        let b = db::remove_policy(&mut conn, &ptype_c, rule)
+            .await
+            .map_err(adapter)?;
+
+        Ok(b)
     }
 
     #[tracing::instrument(level = "trace", skip(self, rules))]
@@ -236,15 +211,13 @@ impl Adapter for CasbinAdapter {
         let db = self.db.clone();
         let ptype_c = pt.to_string();
 
-        block(move || {
-            let mut conn = db.get_conn()?;
+        let mut conn = db.get_conn().await.map_err(adapter)?;
 
-            db::remove_policies(&mut conn, &ptype_c, rules)
-        })
-        .await
-        .map_err(|e| AdapterError(Box::new(e)))?
-        .map_err(|e| AdapterError(Box::new(e)))
-        .map_err(Into::into)
+        let b = db::remove_policies(&mut conn, &ptype_c, rules)
+            .await
+            .map_err(adapter)?;
+
+        Ok(b)
     }
 
     #[tracing::instrument(level = "trace", skip(self, field_index, field_values))]
@@ -259,15 +232,13 @@ impl Adapter for CasbinAdapter {
             let db = self.db.clone();
             let ptype_c = pt.to_string();
 
-            block(move || {
-                let mut conn = db.get_conn()?;
+            let mut conn = db.get_conn().await.map_err(adapter)?;
 
-                db::remove_filtered_policy(&mut conn, &ptype_c, field_index, field_values)
-            })
-            .await
-            .map_err(|e| AdapterError(Box::new(e)))?
-            .map_err(|e| AdapterError(Box::new(e)))
-            .map_err(Into::into)
+            let b = db::remove_filtered_policy(&mut conn, &ptype_c, field_index, field_values)
+                .await
+                .map_err(adapter)?;
+
+            Ok(b)
         } else {
             Ok(false)
         }
@@ -445,17 +416,12 @@ mod tests {
         db_storage::migrations::migrate_from_url(&url)
             .await
             .context("Migration failed")?;
-        let db =
-            Arc::new(Db::connect_url(&url, 10, Some(2)).context("Failed to connect to database")?);
-        let db_clone = db.clone();
-        block(move || {
-            let mut conn = db_clone.get_conn()?;
 
-            db::clear_policy(&mut conn)
-        })
-        .await
-        .unwrap()
-        .unwrap();
+        let db = Arc::new(Db::connect_url(&url, 10).context("Failed to connect to database")?);
+
+        let mut conn = db.get_conn().await?;
+
+        db::clear_policy(&mut conn).await?;
 
         Ok(db)
     }

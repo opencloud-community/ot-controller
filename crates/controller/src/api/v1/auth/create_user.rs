@@ -12,7 +12,8 @@ use db_storage::groups::{insert_user_into_groups, Group};
 use db_storage::tariffs::Tariff;
 use db_storage::tenants::Tenant;
 use db_storage::users::NewUser;
-use diesel::Connection;
+use diesel_async::scoped_futures::ScopedFutureExt;
+use diesel_async::AsyncConnection;
 
 /// Called when `POST /auth/login` receives an id-token with a new `sub` + `tenant_id` field combination. Creates a new
 /// user in the given tenant using the information extracted from the id-token claims.
@@ -21,7 +22,7 @@ use diesel::Connection;
 /// If any email-invites in the given tenant exist for the new user's email, they will be migrated to user-invites.
 ///
 /// Returns the created user, their groups and all events they are invited to.
-pub(super) fn create_user(
+pub(super) async fn create_user(
     settings: &Settings,
     conn: &mut DbConnection,
     info: IdTokenInfo,
@@ -42,30 +43,35 @@ pub(super) fn create_user(
         .unwrap_or_else(|| format!("{} {}", info.firstname, info.lastname));
 
     conn.transaction(|conn| {
-        let user = NewUser {
-            oidc_sub: info.sub,
-            email: info.email,
-            title: String::new(),
-            display_name,
-            firstname: info.firstname,
-            lastname: info.lastname,
-            id_token_exp: info.expiration.timestamp(),
-            // TODO: try to get user language from accept-language header
-            language: settings.defaults.user_language.clone(),
-            phone: phone_number,
-            tenant_id: tenant.id,
-            tariff_id: tariff.id,
+        async move {
+            let user = NewUser {
+                oidc_sub: info.sub,
+                email: info.email,
+                title: String::new(),
+                display_name,
+                firstname: info.firstname,
+                lastname: info.lastname,
+                id_token_exp: info.expiration.timestamp(),
+                // TODO: try to get user language from accept-language header
+                language: settings.defaults.user_language.clone(),
+                phone: phone_number,
+                tenant_id: tenant.id,
+                tariff_id: tariff.id,
+            }
+            .insert(conn)
+            .await?;
+
+            insert_user_into_groups(conn, &user, &groups).await?;
+
+            let event_and_room_ids = EventEmailInvite::migrate_to_user_invites(conn, &user).await?;
+
+            Ok(LoginResult::UserCreated {
+                user,
+                groups,
+                event_and_room_ids,
+            })
         }
-        .insert(conn)?;
-
-        insert_user_into_groups(conn, &user, &groups)?;
-
-        let event_and_room_ids = EventEmailInvite::migrate_to_user_invites(conn, &user)?;
-
-        Ok(LoginResult::UserCreated {
-            user,
-            groups,
-            event_and_room_ids,
-        })
+        .scope_boxed()
     })
+    .await
 }

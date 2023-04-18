@@ -8,7 +8,7 @@
 //!
 //! Issues timestamp and messageIds to incoming chat messages and forwards them to other participants in the room or group.
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use control::exchange;
 use controller::prelude::*;
 use database::Db;
@@ -217,16 +217,9 @@ impl SignalingModule for Chat {
         let room = ctx.room_id();
 
         let groups = if let Participant::User(user) = ctx.participant() {
-            let user_id = user.id;
-            let db = ctx.db().clone();
+            let mut conn = ctx.db().get_conn().await?;
 
-            let groups = controller::block(move || {
-                let mut conn = db.get_conn()?;
-
-                Group::get_all_for_user(&mut conn, user_id)
-            })
-            .await?
-            .context("Failed to retrieve groups for user")?;
+            let groups = Group::get_all_for_user(&mut conn, user.id).await?;
 
             for group in &groups {
                 log::debug!("Group: {}", group.id);
@@ -302,31 +295,24 @@ impl SignalingModule for Chat {
                 let self_groups = self.groups.clone();
 
                 // Inquire the database about each user's groups
-                let participant_to_common_groups_mappings =
-                    controller::block(move || -> Result<Vec<(ParticipantId, Vec<GroupName>)>> {
-                        let mut conn = db.get_conn()?;
+                let mut conn = db.get_conn().await?;
 
-                        let mut participant_to_common_groups_mappings = vec![];
+                let mut participant_to_common_groups_mappings = vec![];
 
-                        for (user_id, participant_id) in participant_user_mappings {
-                            // Get the users groups
-                            let groups = Group::get_all_for_user(&mut conn, user_id)?;
+                for (user_id, participant_id) in participant_user_mappings {
+                    // Get the users groups
+                    let groups = Group::get_all_for_user(&mut conn, user_id).await?;
 
-                            // Intersect our groups and the groups of the user and collect their id/name
-                            // as strings into a set
-                            let common_groups = self_groups
-                                .iter()
-                                .filter(|self_group| groups.contains(self_group))
-                                .map(|group| group.name.clone())
-                                .collect();
+                    // Intersect our groups and the groups of the user and collect their id/name
+                    // as strings into a set
+                    let common_groups = self_groups
+                        .iter()
+                        .filter(|self_group| groups.contains(self_group))
+                        .map(|group| group.name.clone())
+                        .collect();
 
-                            participant_to_common_groups_mappings
-                                .push((participant_id, common_groups));
-                        }
-
-                        Ok(participant_to_common_groups_mappings)
-                    })
-                    .await??;
+                    participant_to_common_groups_mappings.push((participant_id, common_groups));
+                }
 
                 // Iterate over the result of the controller::block call and insert the common groups
                 // into the PeerFrontendData
@@ -357,23 +343,18 @@ impl SignalingModule for Chat {
                     let db = self.db.clone();
                     let self_groups = self.groups.clone();
 
-                    let common_groups = controller::block(move || -> Result<Vec<GroupName>> {
-                        // Get the user's groups
-                        let mut conn = db.get_conn()?;
+                    // Get the user's groups
+                    let mut conn = db.get_conn().await?;
 
-                        let groups = Group::get_all_for_user(&mut conn, user_id)?;
+                    let groups = Group::get_all_for_user(&mut conn, user_id).await?;
 
-                        // Intersect our groups and the groups of the user and collect their id/name
-                        // as strings into a set
-                        let common_groups = self_groups
-                            .iter()
-                            .filter(|self_group| groups.contains(self_group))
-                            .map(|group| group.name.clone())
-                            .collect();
-
-                        Ok(common_groups)
-                    })
-                    .await??;
+                    // Intersect our groups and the groups of the user and collect their id/name
+                    // as strings into a set
+                    let common_groups = self_groups
+                        .iter()
+                        .filter(|self_group| groups.contains(self_group))
+                        .map(|group| group.name.clone())
+                        .collect();
 
                     *peer_frontend_data = Some(PeerFrontendData {
                         groups: common_groups,

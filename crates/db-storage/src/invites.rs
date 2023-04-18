@@ -8,8 +8,8 @@ use chrono::{DateTime, Utc};
 use database::{DbConnection, Paginate, Result};
 use diesel::{
     BoolExpressionMethods, ExpressionMethods, Identifiable, JoinOnDsl, QueryDsl, Queryable,
-    RunQueryDsl,
 };
+use diesel_async::RunQueryDsl;
 use std::collections::{HashMap, HashSet};
 use types::core::{InviteCodeId, RoomId, UserId};
 
@@ -37,21 +37,21 @@ pub struct Invite {
 pub type InviteWithUsers = (Invite, User, User);
 
 impl Invite {
-    /// Returns a invites for id
+    /// Query for an invite with the given id
     #[tracing::instrument(err, skip_all)]
-    pub fn get(conn: &mut DbConnection, invite_code_id: InviteCodeId) -> Result<Invite> {
+    pub async fn get(conn: &mut DbConnection, invite_code_id: InviteCodeId) -> Result<Invite> {
         let query = invites::table
             .filter(invites::id.eq(invite_code_id))
             .order(invites::updated_at.desc());
 
-        let invite = query.first(conn)?;
+        let invite = query.first(conn).await?;
 
         Ok(invite)
     }
 
-    /// Returns a invites with user metadata for id    
+    /// Returns a invites with user metadata for id
     #[tracing::instrument(err, skip_all)]
-    pub fn get_with_users(
+    pub async fn get_with_users(
         conn: &mut DbConnection,
         invite_code_id: InviteCodeId,
     ) -> Result<InviteWithUsers> {
@@ -61,10 +61,10 @@ impl Invite {
             .filter(invites::id.eq(invite_code_id))
             .inner_join(users::table.on(invites::created_by.eq(users::id)))
             .order(invites::updated_at.desc());
-        let (invite, created_by) = query.first::<(Invite, User)>(conn)?;
+        let (invite, created_by) = query.first::<(Invite, User)>(conn).await?;
 
         let query = users::table.filter(users::id.eq(invite.updated_by));
-        Ok((invite, created_by, query.first(conn)?))
+        Ok((invite, created_by, query.first(conn).await?))
     }
 
     /// Returns a paginated view on invites for the given room
@@ -73,7 +73,7 @@ impl Invite {
     /// Returns:
     /// Vec<(Invite, CreatedByUser, UpdatedByUser)> - A Vec of invites along with the users that created and updated the invite
     #[tracing::instrument(err, skip_all, fields(%limit, %page))]
-    pub fn get_all_for_room_paginated(
+    pub async fn get_all_for_room_paginated(
         conn: &mut DbConnection,
         room_id: RoomId,
         limit: i64,
@@ -84,7 +84,7 @@ impl Invite {
             .order(invites::updated_at.desc())
             .paginate_by(limit, page);
 
-        let invites_with_total = query.load_and_count::<Invite, _>(conn)?;
+        let invites_with_total = query.load_and_count::<Invite, _>(conn).await?;
 
         Ok(invites_with_total)
     }
@@ -94,7 +94,7 @@ impl Invite {
     /// Returns:
     /// Vec<(Invite, CreatedByUser, UpdatedByUser)> - A Vec of invites along with the users that created and updated the invite
     #[tracing::instrument(err, skip_all, fields(%limit, %page))]
-    pub fn get_all_for_room_with_users_paginated(
+    pub async fn get_all_for_room_with_users_paginated(
         conn: &mut DbConnection,
         room_id: RoomId,
         limit: i64,
@@ -105,7 +105,8 @@ impl Invite {
             .inner_join(users::table.on(invites::created_by.eq(users::id)))
             .order(invites::updated_at.desc())
             .paginate_by(limit, page);
-        let (invites_with_user, total) = query.load_and_count::<(Invite, User), _>(conn)?;
+
+        let (invites_with_user, total) = query.load_and_count::<(Invite, User), _>(conn).await?;
 
         // This needs urgent improvement, this will come up more times when we follow the created_by, updated_by pattern.
         let users_set = invites_with_user
@@ -118,7 +119,7 @@ impl Invite {
         let users = users_set.iter().collect::<Vec<_>>();
 
         let query = users::table.filter(users::id.eq_any(users));
-        let updated_by = query.get_results::<User>(conn)?;
+        let updated_by = query.get_results::<User>(conn).await?;
         let updated_by = updated_by
             .into_iter()
             .map(|u| (u.id, u))
@@ -143,12 +144,12 @@ impl Invite {
         ))
     }
 
-    pub fn get_first_for_room(
+    pub async fn get_first_for_room(
         conn: &mut DbConnection,
         room_id: RoomId,
         user_id: UserId,
     ) -> Result<Invite> {
-        let (invites_for_room, _) = Invite::get_all_for_room_paginated(conn, room_id, 1, 1)?;
+        let (invites_for_room, _) = Invite::get_all_for_room_paginated(conn, room_id, 1, 1).await?;
         let invite_for_room = invites_for_room.into_iter().next();
 
         let invite_for_room = if let Some(invite) = invite_for_room {
@@ -161,7 +162,8 @@ impl Invite {
                 room: room_id,
                 expiration: None,
             }
-            .insert(conn)?
+            .insert(conn)
+            .await?
         };
 
         Ok(invite_for_room)
@@ -175,7 +177,7 @@ impl Invite {
     /// Vec<(Invite, CreatedByUser, UpdatedByUser)> - A Vec of invites along with the users that created and updated the invite
     // FIXME(r.floren): When diesel 2.0 gets release this can be reworked to use proper aliases
     #[tracing::instrument(err, skip_all, fields(%limit, %page))]
-    pub fn get_all_for_room_with_users_by_ids_paginated(
+    pub async fn get_all_for_room_with_users_by_ids_paginated(
         conn: &mut DbConnection,
         room_id: RoomId,
         ids: &[InviteCodeId],
@@ -188,7 +190,8 @@ impl Invite {
             .inner_join(users::table.on(invites::created_by.eq(users::id)))
             .order(invites::updated_at.desc())
             .paginate_by(limit, page);
-        let (invites_with_user, total) = query.load_and_count::<(Invite, User), _>(conn)?;
+
+        let (invites_with_user, total) = query.load_and_count::<(Invite, User), _>(conn).await?;
 
         // This needs urgent improvement, this will come up more times when we follow the created_by, updated_by pattern.
         let users_set = invites_with_user
@@ -200,7 +203,7 @@ impl Invite {
         let users = users_set.iter().collect::<Vec<_>>();
 
         let query = users::table.filter(users::id.eq_any(users));
-        let updated_by = query.get_results::<User>(conn)?;
+        let updated_by = query.get_results::<User>(conn).await?;
         let updated_by = updated_by
             .into_iter()
             .map(|u| (u.id, u))
@@ -241,10 +244,10 @@ pub struct NewInvite {
 
 impl NewInvite {
     #[tracing::instrument(err, skip_all)]
-    pub fn insert(self, conn: &mut DbConnection) -> Result<Invite> {
+    pub async fn insert(self, conn: &mut DbConnection) -> Result<Invite> {
         let query = diesel::insert_into(invites::table).values(self);
 
-        let invite = query.get_result(conn)?;
+        let invite = query.get_result(conn).await?;
 
         Ok(invite)
     }
@@ -265,7 +268,7 @@ pub struct UpdateInvite {
 
 impl UpdateInvite {
     #[tracing::instrument(err, skip_all)]
-    pub fn apply(
+    pub async fn apply(
         self,
         conn: &mut DbConnection,
         room_id: RoomId,
@@ -280,7 +283,7 @@ impl UpdateInvite {
             .set(self)
             .returning(invites::all_columns);
 
-        let invite = query.get_result(conn)?;
+        let invite = query.get_result(conn).await?;
 
         Ok(invite)
     }

@@ -39,40 +39,24 @@ pub async fn save_asset(
         .context("failed to upload asset file to storage")?;
 
     // create db entry
-    let block_result = crate::block(move || {
-        let mut db_conn = db.get_conn()?;
+    let mut db_conn = db.get_conn().await?;
 
-        let room = Room::get(&mut db_conn, room_id)?;
+    let room = Room::get(&mut db_conn, room_id).await?;
 
-        NewAsset {
-            id: asset_id,
-            namespace,
-            filename,
-            kind,
-            tenant_id: room.tenant_id,
-        }
-        .insert_for_room(&mut db_conn, room_id)
-    })
+    let db_insert_res = NewAsset {
+        id: asset_id,
+        namespace,
+        filename,
+        kind,
+        tenant_id: room.tenant_id,
+    }
+    .insert_for_room(&mut db_conn, room_id)
     .await;
 
-    let mut is_error = false;
-
-    // check possible errors
-    match block_result {
-        Ok(db_result) => {
-            if let Err(e) = db_result {
-                log::error!("Failed to create new asset in db: {}", e);
-                is_error = true;
-            }
-        }
-        Err(e) => {
-            log::error!("Blocking error while creating asset: {}", e);
-            is_error = true;
-        }
-    }
+    drop(db_conn);
 
     // rollback s3 storage if errors occurred
-    if is_error {
+    if let Err(e) = db_insert_res {
         if let Err(err) = storage.delete(asset_key(&asset_id)).await {
             log::error!(
                 "Failed to rollback s3 asset after database error, leaking asset: {}",
@@ -80,6 +64,8 @@ pub async fn save_asset(
             );
             return Err(err);
         }
+
+        return Err(e.into());
     }
 
     Ok(asset_id)
@@ -97,12 +83,7 @@ pub async fn delete_asset(
     room_id: RoomId,
     asset_id: AssetId,
 ) -> Result<()> {
-    crate::block(move || {
-        let mut conn = db.get_conn()?;
-
-        Asset::delete_by_id(&mut conn, asset_id, room_id)
-    })
-    .await??;
+    Asset::delete_by_id(&mut db.get_conn().await?, asset_id, room_id).await?;
 
     storage.delete(asset_key(&asset_id)).await
 }

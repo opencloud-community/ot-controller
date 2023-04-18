@@ -7,15 +7,18 @@ use opentalk_db_storage::tariffs::Tariff;
 use opentalk_db_storage::tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId};
 use opentalk_db_storage::users::{NewUser, User};
 
-pub fn make_user(
+pub async fn make_user(
     conn: &mut DbConnection,
     firstname: &str,
     lastname: &str,
     display_name: &str,
 ) -> User {
-    let tenant =
-        get_or_create_tenant_by_oidc_id(conn, &OidcTenantId::from("default".to_owned())).unwrap();
-    let tariff = Tariff::get_by_name(conn, "OpenTalkDefaultTariff").unwrap();
+    let tenant = get_or_create_tenant_by_oidc_id(conn, &OidcTenantId::from("default".to_owned()))
+        .await
+        .unwrap();
+    let tariff = Tariff::get_by_name(conn, "OpenTalkDefaultTariff")
+        .await
+        .unwrap();
 
     NewUser {
         email: format!(
@@ -35,5 +38,6 @@ pub fn make_user(
         tariff_id: tariff.id,
     }
     .insert(conn)
+    .await
     .unwrap()
 }

@@ -5,17 +5,19 @@
 use crate::metrics::{DatabaseMetrics, MetricsConnection};
 use crate::{DatabaseError, DbConnection};
 use controller_shared::settings;
-use diesel::r2d2::ConnectionManager;
-use diesel::{r2d2, PgConnection};
+use deadpool_runtime::Runtime;
+use diesel_async::pooled_connection::deadpool::Pool;
+use diesel_async::pooled_connection::AsyncDieselConnectionManager;
+use diesel_async::AsyncPgConnection;
 use opentelemetry::Context;
 use std::sync::Arc;
 use std::time::Duration;
 
-type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
+type DbPool = Pool<AsyncPgConnection>;
 
 /// Db container that uses a connection pool to hand out connections
 ///
-/// Uses an r2d2 connection pool to manage multiple established connections.
+/// Uses an deadpool connection pool to manage multiple established connections.
 pub struct Db {
     metrics: Option<Arc<DatabaseMetrics>>,
     pool: DbPool,
@@ -25,26 +27,18 @@ impl Db {
     /// Creates a new Db instance from the specified database settings.
     #[tracing::instrument(skip(db_settings))]
     pub fn connect(db_settings: &settings::Database) -> crate::Result<Self> {
-        Self::connect_url(
-            &db_settings.url,
-            db_settings.max_connections,
-            Some(db_settings.min_idle_connections),
-        )
+        Self::connect_url(&db_settings.url, db_settings.max_connections)
     }
 
     /// Creates a new Db instance from the specified database url.
-    pub fn connect_url(db_url: &str, max_conns: u32, min_idle: Option<u32>) -> crate::Result<Self> {
-        let manager = ConnectionManager::<PgConnection>::new(db_url);
+    pub fn connect_url(db_url: &str, max_conns: u32) -> crate::Result<Self> {
+        let manager = AsyncDieselConnectionManager::<AsyncPgConnection>::new(db_url);
 
-        let pool = diesel::r2d2::Pool::builder()
-            .max_size(max_conns)
-            .min_idle(min_idle)
-            .connection_timeout(Duration::from_secs(10))
-            .build(manager)
-            .map_err(|e| {
-                log::error!("Unable to create database connection pool, {}", e);
-                DatabaseError::R2D2Error(e.to_string())
-            })?;
+        let pool = Pool::builder(manager)
+            .max_size(max_conns as usize)
+            .create_timeout(Some(Duration::from_secs(10)))
+            .runtime(Runtime::Tokio1)
+            .build()?;
 
         Ok(Self {
             metrics: None,
@@ -58,18 +52,20 @@ impl Db {
     }
 
     /// Returns an established connection from the connection pool
-    pub fn get_conn(&self) -> crate::Result<DbConnection> {
-        let res = self.pool.get();
-        let state = self.pool.state();
+    #[tracing::instrument(skip_all)]
+    pub async fn get_conn(&self) -> crate::Result<DbConnection> {
+        let res = self.pool.get().await;
+        let state = self.pool.status();
 
         if let Some(metrics) = &self.metrics {
             let context = Context::current();
             metrics
                 .dbpool_connections
-                .record(&context, state.connections as u64, &[]);
+                .record(&context, state.size as u64, &[]);
+
             metrics
-                .dbpool_connections
-                .record(&context, state.idle_connections as u64, &[]);
+                .dbpool_connections_idle
+                .record(&context, state.available as i64, &[]);
         }
 
         match res {
@@ -82,7 +78,7 @@ impl Db {
                 Ok(conn)
             }
             Err(e) => {
-                let state = self.pool.state();
+                let state = self.pool.status();
                 let msg = format!(
                     "Unable to get connection from connection pool.
                                 Error: {e}
@@ -90,7 +86,7 @@ impl Db {
                                     {state:?}",
                 );
                 log::error!("{}", &msg);
-                Err(DatabaseError::R2D2Error(msg))
+                Err(DatabaseError::DeadpoolError(e))
             }
         }
     }

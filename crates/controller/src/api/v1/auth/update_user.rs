@@ -10,7 +10,8 @@ use database::DbConnection;
 use db_storage::groups::{insert_user_into_groups, remove_user_from_groups, Group};
 use db_storage::tariffs::Tariff;
 use db_storage::users::{UpdateUser, User};
-use diesel::Connection;
+use diesel_async::scoped_futures::ScopedFutureExt;
+use diesel_async::AsyncConnection;
 
 /// Called when the `POST /auth/login` endpoint received an id-token with a `sub`+`tenant_id` combination that maps to
 /// an existing user. Resets the expiry time of the id-token for the user. Also updates all fields in the database that
@@ -20,7 +21,7 @@ use diesel::Connection;
 /// removes the user from all groups that are not in the list and adds them to the groups in the list.
 ///
 /// Returns the user and all groups the user was removed from and added to.
-pub(super) fn update_user(
+pub(super) async fn update_user(
     settings: &Settings,
     conn: &mut DbConnection,
     user: User,
@@ -30,29 +31,33 @@ pub(super) fn update_user(
 ) -> database::Result<LoginResult> {
     let changeset = create_changeset(settings, &user, &info, tariff);
 
-    let user = changeset.apply(conn, user.id)?;
+    let user = changeset.apply(conn, user.id).await?;
 
     conn.transaction(|conn| {
-        let curr_groups = Group::get_all_for_user(conn, user.id)?;
+        async move {
+            let curr_groups = Group::get_all_for_user(conn, user.id).await?;
 
-        // Add user to added groups
-        let groups_added_to = difference_by(&groups, &curr_groups, |group| &group.id);
-        if !groups_added_to.is_empty() {
-            insert_user_into_groups(conn, &user, &groups_added_to)?;
+            // Add user to added groups
+            let groups_added_to = difference_by(&groups, &curr_groups, |group| &group.id);
+            if !groups_added_to.is_empty() {
+                insert_user_into_groups(conn, &user, &groups_added_to).await?;
+            }
+
+            // Remove user from removed groups
+            let groups_removed_from = difference_by(&curr_groups, &groups, |group| &group.id);
+            if !groups_removed_from.is_empty() {
+                remove_user_from_groups(conn, &user, &groups_removed_from).await?;
+            }
+
+            Ok(LoginResult::UserUpdated {
+                user,
+                groups_added_to,
+                groups_removed_from,
+            })
         }
-
-        // Remove user from removed groups
-        let groups_removed_from = difference_by(&curr_groups, &groups, |group| &group.id);
-        if !groups_removed_from.is_empty() {
-            remove_user_from_groups(conn, &user, &groups_removed_from)?;
-        }
-
-        Ok(LoginResult::UserUpdated {
-            user,
-            groups_added_to,
-            groups_removed_from,
-        })
+        .scope_boxed()
     })
+    .await
 }
 
 /// Create an [`UpdateUser`] changeset based on a comparison between `user` and `token_info`

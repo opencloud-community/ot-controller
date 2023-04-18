@@ -36,7 +36,7 @@ impl GetUserProfilesBatched {
         self
     }
 
-    pub fn fetch(
+    pub async fn fetch(
         &mut self,
         settings: &Settings,
         conn: &mut DbConnection,
@@ -51,6 +51,7 @@ impl GetUserProfilesBatched {
         self.users.dedup();
 
         User::get_all_by_ids(conn, &self.users)
+            .await
             .map(|users| {
                 users
                     .into_iter()
