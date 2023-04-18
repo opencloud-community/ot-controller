@@ -9,7 +9,7 @@ use arc_swap::ArcSwap;
 use config::ConfigError;
 use std::sync::Arc;
 
-pub use controller_shared::settings::*;
+pub use controller_settings::*;
 
 pub type SharedSettingsActix = Data<ArcSwap<Settings>>;
 
@@ -55,7 +55,7 @@ pub fn load_settings(args: &Args) -> Result<Settings, ConfigError> {
 #[cfg(test)]
 mod test {
     use config::ConfigError;
-    use controller_shared::settings::Settings;
+    use controller_settings::Settings;
 
     #[test]
     fn example_toml() -> Result<(), ConfigError> {

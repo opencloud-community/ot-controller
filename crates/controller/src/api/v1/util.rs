@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use super::users::PublicUserProfile;
-use controller_shared::settings::Settings;
+use controller_settings::Settings;
 use database::DbConnection;
 use database::Result;
 use db_storage::users::User;

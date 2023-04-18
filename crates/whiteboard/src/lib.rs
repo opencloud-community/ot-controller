@@ -56,7 +56,7 @@ struct GetPdfEvent {
 impl SignalingModule for Whiteboard {
     const NAMESPACE: &'static str = "whiteboard";
 
-    type Params = controller_shared::settings::Spacedeck;
+    type Params = controller_settings::Spacedeck;
 
     type Incoming = incoming::Message;
 

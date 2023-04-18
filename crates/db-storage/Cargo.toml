@@ -13,7 +13,7 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-controller-shared = { path = "../controller-shared-types", package = "opentalk-controller-shared" }
+controller-settings = { path = "../controller-settings", package = "opentalk-controller-settings" }
 database = { path = "../database", package = "opentalk-database" }
 kustos = { path = "../kustos" }
 types = { path = "../types", package = "opentalk-types", features = ["backend"] }

@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "opentalk-controller-shared"
-description = "Shared types and trait definitions for opentalk-controller"
+name = "opentalk-controller-settings"
+description = "Settings for opentalk-controller"
 edition = "2021"
 license = "EUPL-1.2"
 authors.workspace = true

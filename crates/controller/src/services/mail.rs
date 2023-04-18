@@ -10,7 +10,7 @@
 // TODO We probably can avoid the conversion to MailTasks if no rabbit_mq_queue is set in all mail fns
 use crate::metrics::EndpointMetrics;
 use anyhow::{Context, Result};
-use controller_shared::settings::{Settings, SharedSettings};
+use controller_settings::{Settings, SharedSettings};
 use db_storage::{events::Event, rooms::Room, sip_configs::SipConfig, users::User};
 use lapin_pool::{RabbitMqChannel, RabbitMqPool};
 use mail_worker_proto::*;

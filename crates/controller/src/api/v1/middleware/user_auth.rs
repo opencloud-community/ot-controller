@@ -12,7 +12,7 @@ use actix_web::http::header::Header;
 use actix_web::web::Data;
 use actix_web::{HttpMessage, ResponseError};
 use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
-use controller_shared::settings::{Settings, SharedSettings, TenantAssignment};
+use controller_settings::{Settings, SharedSettings, TenantAssignment};
 use core::future::ready;
 use database::Db;
 use db_storage::tenants::{OidcTenantId, Tenant};

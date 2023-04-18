@@ -2,35 +2,35 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-/// Contains the application settings.
-///
-/// The application settings are set with a TOML config file. Settings specified in the config file
-/// can be overwritten by environment variables. To do so, set an environment variable
-/// with the prefix `OPENTALK_CTRL_` followed by the field names you want to set. Nested fields are separated by two underscores `__`.
-/// ```sh
-/// OPENTALK_CTRL_<field>__<field-of-field>...
-/// ```
-///
-/// # Example
-///
-/// set the `database.url` field:
-/// ```sh
-/// OPENTALK_CTRL_DATABASE__URL=postgres://postgres:password123@localhost:5432/opentalk
-/// ```
-///
-/// So the field 'database.max_connections' would resolve to:
-/// ```sh
-/// OPENTALK_CTRL_DATABASE__MAX_CONNECTIONS=5
-/// ```
-///
-/// # Note
-///
-/// Fields set via environment variables do not affect the underlying config file.
-///
-/// # Implementation Details:
-///
-/// Setting categories, in which all properties implement a default value, should also implement the [`Default`] trait.
-///
+//! Contains the application settings.
+//!
+//! The application settings are set with a TOML config file. Settings specified in the config file
+//! can be overwritten by environment variables. To do so, set an environment variable
+//! with the prefix `OPENTALK_CTRL_` followed by the field names you want to set. Nested fields are separated by two underscores `__`.
+//! ```sh
+//! OPENTALK_CTRL_<field>__<field-of-field>...
+//! ```
+//!
+//! # Example
+//!
+//! set the `database.url` field:
+//! ```sh
+//! OPENTALK_CTRL_DATABASE__URL=postgres://postgres:password123@localhost:5432/opentalk
+//! ```
+//!
+//! So the field 'database.max_connections' would resolve to:
+//! ```sh
+//! OPENTALK_CTRL_DATABASE__MAX_CONNECTIONS=5
+//! ```
+//!
+//! # Note
+//!
+//! Fields set via environment variables do not affect the underlying config file.
+//!
+//! # Implementation Details:
+//!
+//! Setting categories, in which all properties implement a default value, should also implement the [`Default`] trait.
+
 use arc_swap::ArcSwap;
 use config::{Config, ConfigError, Environment, File, FileFormat};
 use openidconnect::{ClientId, ClientSecret};

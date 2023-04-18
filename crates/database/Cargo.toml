@@ -11,7 +11,7 @@ version.workspace = true
 publish = false
 
 [dependencies]
-controller-shared = { path = "../controller-shared-types", package = "opentalk-controller-shared" }
+controller-settings = { path = "../controller-settings", package = "opentalk-controller-settings" }
 
 ### ORM and Database connector
 diesel = { version = "^2.0.3", features = [

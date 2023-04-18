@@ -5,7 +5,7 @@
 use super::LoginResult;
 use crate::api::util::parse_phone_number;
 use crate::oidc::IdTokenInfo;
-use controller_shared::settings::Settings;
+use controller_settings::Settings;
 use database::DbConnection;
 use db_storage::groups::{insert_user_into_groups, remove_user_from_groups, Group};
 use db_storage::tariffs::Tariff;

@@ -4,7 +4,7 @@
 
 use super::http::async_http_client;
 use anyhow::{anyhow, Context, Result};
-use controller_shared::settings;
+use controller_settings as settings;
 use openidconnect::core::CoreClient;
 use openidconnect::url::Url;
 use openidconnect::{ClientId, IntrospectionUrl, IssuerUrl};

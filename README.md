@@ -108,8 +108,8 @@ Inside the crates folder following crates can be found:
     - Database connection and interfacing
     - `actix_web` based HTTP servers for external and internal APIs
     - Extensible signaling websocket endpoint for video room signaling
-- [controller-shared-types](crates/controller-shared-types)
-    - Shared types among the controller and modules
+- [controller-settings](crates/controller-settings)
+    - Settings for the controller
 - [db-storage](crates/db-storage)
     - Database types used for the controller and modules
 - [janus-media](crates/janus-media)

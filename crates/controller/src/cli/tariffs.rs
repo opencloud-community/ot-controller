@@ -5,7 +5,7 @@
 use anyhow::{Context, Result};
 use chrono::Utc;
 use clap::Subcommand;
-use controller_shared::settings::Settings;
+use controller_settings::Settings;
 use database::{Db, DbConnection};
 use db_storage::tariffs::{ExternalTariff, ExternalTariffId, NewTariff, Tariff, UpdateTariff};
 use db_storage::utils::Jsonb;

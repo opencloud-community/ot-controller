@@ -6,7 +6,7 @@ use actix_web::dev::{ServiceRequest, ServiceResponse};
 use actix_web::http::header::USER_AGENT;
 use actix_web::{Error, HttpMessage};
 use anyhow::Result;
-use controller_shared::settings::Logging;
+use controller_settings::Logging;
 use opentelemetry::global;
 use opentelemetry::sdk::{trace, Resource};
 use opentelemetry::KeyValue;

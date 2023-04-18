@@ -4,7 +4,7 @@
 
 use crate::metrics::{DatabaseMetrics, MetricsConnection};
 use crate::{DatabaseError, DbConnection};
-use controller_shared::settings;
+use controller_settings as settings;
 use deadpool_runtime::Runtime;
 use diesel_async::pooled_connection::deadpool::Pool;
 use diesel_async::pooled_connection::AsyncDieselConnectionManager;

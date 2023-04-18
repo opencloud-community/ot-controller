@@ -6,7 +6,7 @@
 
 use crate::api::util::parse_phone_number;
 use crate::prelude::*;
-use controller_shared::settings;
+use controller_settings as settings;
 use database::Db;
 use db_storage::users::User;
 use phonenumber::PhoneNumber;

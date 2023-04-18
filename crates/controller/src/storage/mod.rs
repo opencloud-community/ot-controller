@@ -10,7 +10,7 @@ use aws_sdk_s3::Client;
 use aws_sdk_s3::Credentials as AwsCred;
 use aws_sdk_s3::Endpoint;
 use bytes::Bytes;
-use controller_shared::settings::MinIO;
+use controller_settings::MinIO;
 use futures::Stream;
 use futures::StreamExt;
 

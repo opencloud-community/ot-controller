@@ -23,7 +23,7 @@ use actix_web::web::{Data, Json, Path, Query, ReqData};
 use actix_web::{delete, get, patch, post, Either};
 use chrono::{DateTime, Datelike, NaiveTime, TimeZone as _, Utc};
 use chrono_tz::Tz;
-use controller_shared::settings::Settings;
+use controller_settings::Settings;
 use database::{Db, DbConnection};
 use db_storage::events::{
     email_invites::EventEmailInvite, Event, EventException, EventExceptionKind, EventInvite,

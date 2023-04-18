@@ -11,7 +11,7 @@ version.workspace = true
 publish = false
 
 [dependencies]
-controller-shared = { path = "../controller-shared-types", package = "opentalk-controller-shared" }
+controller-settings = { path = "../controller-settings", package = "opentalk-controller-settings" }
 etherpad-client = { path = "../etherpad-client", package = "etherpad-client" }
 controller = { path = "../controller", package = "opentalk-controller-core" }
 database = { path = "../database", package = "opentalk-database" }
