@@ -4,6 +4,7 @@
 
 //! Signaling messages for the `control` namespace
 
+pub mod command;
 pub mod event;
 
 mod associated_participant;

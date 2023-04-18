@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use serde::Deserialize;
-use types::core::ParticipantId;
+use types::signaling::common::TargetParticipant;
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "action", rename_all = "snake_case")]
@@ -14,19 +14,14 @@ pub enum Message {
     EnterRoom,
     RaiseHand,
     LowerHand,
-    GrantModeratorRole(Target),
-    RevokeModeratorRole(Target),
+    GrantModeratorRole(TargetParticipant),
+    RevokeModeratorRole(TargetParticipant),
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Join {
     /// The users display name
     pub display_name: String,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct Target {
-    pub target: ParticipantId,
 }
 
 #[cfg(test)]

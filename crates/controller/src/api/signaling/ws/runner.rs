@@ -50,6 +50,7 @@ use tokio_stream::StreamExt;
 use types::{
     core::{BreakoutRoomId, ParticipantId, ParticipationKind, UserId},
     signaling::{
+        common::TargetParticipant,
         control::{
             event::{self as control_event, ControlEvent, JoinBlockedReason, JoinSuccess},
             AssociatedParticipant, Participant,
@@ -896,7 +897,7 @@ impl Runner {
             incoming::Message::LowerHand => {
                 self.handle_raise_hand_change(timestamp, false).await?;
             }
-            incoming::Message::GrantModeratorRole(incoming::Target { target }) => {
+            incoming::Message::GrantModeratorRole(TargetParticipant { target }) => {
                 if !matches!(self.state, RunnerState::Joined) {
                     self.ws_send_control_error(timestamp, control_event::Error::NotYetJoined)
                         .await;
@@ -907,7 +908,7 @@ impl Runner {
                 self.handle_grant_moderator_msg(timestamp, target, true)
                     .await?;
             }
-            incoming::Message::RevokeModeratorRole(incoming::Target { target }) => {
+            incoming::Message::RevokeModeratorRole(TargetParticipant { target }) => {
                 if !matches!(self.state, RunnerState::Joined) {
                     self.ws_send_control_error(timestamp, control_event::Error::NotYetJoined)
                         .await;
