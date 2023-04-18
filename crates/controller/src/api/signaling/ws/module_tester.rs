@@ -13,7 +13,6 @@ use super::modules::AnyStream;
 use super::{
     DestroyContext, Event, ExchangePublish, NamespacedCommand, NamespacedEvent, SignalingModule,
 };
-use crate::api::signaling::prelude::control::incoming::ControlCommand;
 use crate::api::signaling::prelude::control::{self, storage, ControlData, NAMESPACE};
 use crate::api::signaling::prelude::{InitContext, ModuleContext};
 use crate::api::signaling::SignalingRoomId;
@@ -45,7 +44,7 @@ use types::{
     core::{BreakoutRoomId, ParticipantId, ParticipationKind, TariffId, Timestamp, UserId},
     signaling::{
         control::{
-            command::Join,
+            command::{ControlCommand, Join},
             event::{ControlEvent, JoinSuccess},
             AssociatedParticipant,
         },

@@ -4,7 +4,30 @@
 
 //! Signaling messages for the `control` namespace
 
-use crate::imports::*;
+use crate::{imports::*, signaling::common::TargetParticipant};
+
+/// Commands received by the `control` module
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(tag = "action", rename_all = "snake_case")
+)]
+pub enum ControlCommand {
+    /// Join a meeting
+    Join(Join),
+    /// Enter into the room while being in the waiting room
+    /// after being accepted by a moderator
+    EnterRoom,
+    /// Raise a hand
+    RaiseHand,
+    /// Lower a raised hand
+    LowerHand,
+    /// Grant moderator role to another participant
+    GrantModeratorRole(TargetParticipant),
+    /// Revoke moderator role from another participant
+    RevokeModeratorRole(TargetParticipant),
+}
 
 /// Body of the join command
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -12,4 +35,49 @@ use crate::imports::*;
 pub struct Join {
     /// The users display name
     pub display_name: String,
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use pretty_assertions::assert_eq;
+    use serde_json::json;
+
+    #[test]
+    fn hello() {
+        let json = json!({
+            "action": "join",
+            "display_name": "Test!",
+        });
+
+        let msg: ControlCommand = serde_json::from_value(json).unwrap();
+
+        if let ControlCommand::Join(Join { display_name }) = msg {
+            assert_eq!(display_name, "Test!");
+        } else {
+            panic!()
+        }
+    }
+
+    #[test]
+    fn raise_hand() {
+        let json = json!({
+            "action": "raise_hand",
+        });
+
+        let msg: ControlCommand = serde_json::from_value(json).unwrap();
+
+        assert!(matches!(msg, ControlCommand::RaiseHand));
+    }
+
+    #[test]
+    fn lower_hand() {
+        let json = json!({
+            "action": "lower_hand",
+        });
+
+        let msg: ControlCommand = serde_json::from_value(json).unwrap();
+
+        assert!(matches!(msg, ControlCommand::LowerHand));
+    }
 }

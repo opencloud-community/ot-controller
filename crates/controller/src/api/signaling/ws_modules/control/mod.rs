@@ -11,7 +11,6 @@ use serde::{Deserialize, Serialize};
 use types::core::{ParticipantId, ParticipationKind, Timestamp};
 
 pub mod exchange;
-pub mod incoming;
 pub mod storage;
 
 pub const NAMESPACE: &str = "control";

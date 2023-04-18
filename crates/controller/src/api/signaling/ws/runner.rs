@@ -15,9 +15,7 @@ use crate::api::signaling::prelude::*;
 use crate::api::signaling::resumption::{ResumptionTokenKeepAlive, ResumptionTokenUsed};
 use crate::api::signaling::ws::actor::WsCommand;
 use crate::api::signaling::ws_modules::control::storage::ParticipantIdRunnerLock;
-use crate::api::signaling::ws_modules::control::{
-    exchange, incoming::ControlCommand, storage, ControlData, NAMESPACE,
-};
+use crate::api::signaling::ws_modules::control::{exchange, storage, ControlData, NAMESPACE};
 use crate::api::signaling::SignalingRoomId;
 use crate::exchange_task::{ExchangeHandle, SubscriberHandle};
 use crate::redis_wrapper::RedisConnection;
@@ -52,6 +50,7 @@ use types::{
     signaling::{
         common::TargetParticipant,
         control::{
+            command::ControlCommand,
             event::{self as control_event, ControlEvent, JoinBlockedReason, JoinSuccess},
             AssociatedParticipant, Participant,
         },
