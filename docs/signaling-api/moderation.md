@@ -241,7 +241,7 @@ Reset all raised hands in the room.
 
 ### Kicked
 
-Received when you were kicked from the room. Will be the last message before server-side websocket disconnection.
+Received by a participant if kicked from the room. Will be the last message before server-side websocket disconnection.
 
 #### Fields
 
@@ -261,7 +261,7 @@ Received when you were kicked from the room. Will be the last message before ser
 
 ### Banned
 
-Received when you were banned from the room. Will be the last message before server-side websocket disconnection.
+Received by a participant if banned from the room. Will be the last message before server-side websocket disconnection.
 
 #### Fields
 
@@ -281,7 +281,7 @@ Received when you were banned from the room. Will be the last message before ser
 
 ### SessionEnded
 
-Received when you were removed from the room (e.g. due to debriefing).
+Received by a participant if removed from the room (e.g. due to debriefing). Will be the last message before server-side websocket disconnection.
 
 #### Fields
 
@@ -294,7 +294,7 @@ Received when you were removed from the room (e.g. due to debriefing).
 
 ### DebriefingStarted
 
-Received when a debriefing has started that you participate in.
+Received when a debriefing has started that a participant is part of.
 
 #### Fields
 
