@@ -16,7 +16,7 @@ use crate::api::signaling::resumption::{ResumptionTokenKeepAlive, ResumptionToke
 use crate::api::signaling::ws::actor::WsCommand;
 use crate::api::signaling::ws_modules::control::storage::ParticipantIdRunnerLock;
 use crate::api::signaling::ws_modules::control::{
-    exchange, incoming, storage, ControlData, NAMESPACE,
+    exchange, incoming::ControlCommand, storage, ControlData, NAMESPACE,
 };
 use crate::api::signaling::SignalingRoomId;
 use crate::exchange_task::{ExchangeHandle, SubscriberHandle};
@@ -756,10 +756,10 @@ impl Runner {
     async fn handle_control_msg(
         &mut self,
         timestamp: Timestamp,
-        msg: incoming::Message,
+        msg: ControlCommand,
     ) -> Result<()> {
         match msg {
-            incoming::Message::Join(join) => {
+            ControlCommand::Join(join) => {
                 if !matches!(self.state, RunnerState::None) {
                     self.ws_send_control_error(timestamp, control_event::Error::AlreadyJoined)
                         .await;
@@ -845,7 +845,7 @@ impl Runner {
                     self.join_room(timestamp, control_data, false).await?;
                 }
             }
-            incoming::Message::EnterRoom => {
+            ControlCommand::EnterRoom => {
                 match replace(&mut self.state, RunnerState::None) {
                     RunnerState::Waiting {
                         accepted: true,
@@ -882,7 +882,7 @@ impl Runner {
                     }
                 }
             }
-            incoming::Message::RaiseHand => {
+            ControlCommand::RaiseHand => {
                 if !moderation::storage::is_raise_hands_enabled(&mut self.redis_conn, self.room.id)
                     .await?
                 {
@@ -894,10 +894,10 @@ impl Runner {
 
                 self.handle_raise_hand_change(timestamp, true).await?;
             }
-            incoming::Message::LowerHand => {
+            ControlCommand::LowerHand => {
                 self.handle_raise_hand_change(timestamp, false).await?;
             }
-            incoming::Message::GrantModeratorRole(TargetParticipant { target }) => {
+            ControlCommand::GrantModeratorRole(TargetParticipant { target }) => {
                 if !matches!(self.state, RunnerState::Joined) {
                     self.ws_send_control_error(timestamp, control_event::Error::NotYetJoined)
                         .await;
@@ -908,7 +908,7 @@ impl Runner {
                 self.handle_grant_moderator_msg(timestamp, target, true)
                     .await?;
             }
-            incoming::Message::RevokeModeratorRole(TargetParticipant { target }) => {
+            ControlCommand::RevokeModeratorRole(TargetParticipant { target }) => {
                 if !matches!(self.state, RunnerState::Joined) {
                     self.ws_send_control_error(timestamp, control_event::Error::NotYetJoined)
                         .await;

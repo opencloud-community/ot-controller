@@ -13,6 +13,7 @@ use super::modules::AnyStream;
 use super::{
     DestroyContext, Event, ExchangePublish, NamespacedCommand, NamespacedEvent, SignalingModule,
 };
+use crate::api::signaling::prelude::control::incoming::ControlCommand;
 use crate::api::signaling::prelude::control::{self, storage, ControlData, NAMESPACE};
 use crate::api::signaling::prelude::{InitContext, ModuleContext};
 use crate::api::signaling::SignalingRoomId;
@@ -128,11 +129,11 @@ where
 
         let runner_handle = task::spawn_local(runner.run());
 
-        runner_interface.ws.send(WsMessageIncoming::Control(
-            control::incoming::Message::Join(Join {
+        runner_interface
+            .ws
+            .send(WsMessageIncoming::Control(ControlCommand::Join(Join {
                 display_name: display_name.into(),
-            }),
-        ))?;
+            })))?;
 
         self.runner_interfaces
             .insert(participant_id, (runner_interface, runner_handle));
@@ -188,8 +189,8 @@ where
     /// Send a module specific WebSocket message to the underlying module that is mapped to `participant_id`.
     ///
     /// # Note
-    /// WebSocket control messages (e.g. [`RaiseHand`](control::incoming::Message::RaiseHand),
-    /// [`LowerHand`](control::incoming::Message::LowerHand)) have to be sent via their respective helper function.
+    /// WebSocket control messages (e.g. [`RaiseHand`](ControlCommand::RaiseHand),
+    /// [`LowerHand`](ControlCommand::LowerHand)) have to be sent via their respective helper function.
     pub fn send_ws_message(
         &self,
         participant_id: &ParticipantId,
@@ -238,21 +239,21 @@ where
         }
     }
 
-    /// Send a [`RaiseHand`](control::incoming::Message::RaiseHand) control message to the module/runner.
+    /// Send a [`RaiseHand`](ControlCommand::RaiseHand) control message to the module/runner.
     pub fn raise_hand(&mut self, participant_id: &ParticipantId) -> Result<()> {
         let interface = self.get_runner_interface(participant_id)?;
-        interface.ws.send(WsMessageIncoming::Control(
-            control::incoming::Message::RaiseHand,
-        ))
+        interface
+            .ws
+            .send(WsMessageIncoming::Control(ControlCommand::RaiseHand))
     }
 
-    /// Send a [`LowerHand`](control::incoming::Message::LowerHand) control message to the module/runner.
+    /// Send a [`LowerHand`](ControlCommand::LowerHand) control message to the module/runner.
     pub fn lower_hand(&mut self, participant_id: &ParticipantId) -> Result<()> {
         let interface = self.get_runner_interface(participant_id)?;
 
-        interface.ws.send(WsMessageIncoming::Control(
-            control::incoming::Message::LowerHand,
-        ))
+        interface
+            .ws
+            .send(WsMessageIncoming::Control(ControlCommand::LowerHand))
     }
 
     /// Close the WebSocket channel and leave the room with the participant
@@ -480,13 +481,13 @@ where
     async fn handle_ws_control_message(
         &mut self,
         mut ctx: ModuleContext<'_, M>,
-        control_message: control::incoming::Message,
+        control_message: ControlCommand,
     ) -> Result<()> {
         let mut lock = storage::room_mutex(self.room_id);
         let guard = lock.lock(&mut self.redis_conn).await?;
 
         match control_message {
-            control::incoming::Message::Join(join) => {
+            ControlCommand::Join(join) => {
                 let mut attr_pipe = storage::AttrPipeline::new(self.room_id, self.participant_id);
 
                 match &self.participant {
@@ -627,8 +628,8 @@ where
 
                 Ok(())
             }
-            control::incoming::Message::EnterRoom => unreachable!(),
-            control::incoming::Message::RaiseHand => {
+            ControlCommand::EnterRoom => unreachable!(),
+            ControlCommand::RaiseHand => {
                 storage::AttrPipeline::new(self.room_id, self.participant_id)
                     .set("hand_is_up", true)
                     .set("hand_updated_at", ctx.timestamp)
@@ -641,7 +642,7 @@ where
 
                 Ok(())
             }
-            control::incoming::Message::LowerHand => {
+            ControlCommand::LowerHand => {
                 storage::AttrPipeline::new(self.room_id, self.participant_id)
                     .set("hand_is_up", false)
                     .set("hand_updated_at", ctx.timestamp)
@@ -654,8 +655,8 @@ where
 
                 Ok(())
             }
-            control::incoming::Message::GrantModeratorRole(_) => unimplemented!(),
-            control::incoming::Message::RevokeModeratorRole(_) => unimplemented!(),
+            ControlCommand::GrantModeratorRole(_) => unimplemented!(),
+            ControlCommand::RevokeModeratorRole(_) => unimplemented!(),
         }
     }
 
@@ -983,7 +984,7 @@ where
     M: SignalingModule,
 {
     Module(M::Incoming),
-    Control(control::incoming::Message),
+    Control(ControlCommand),
     /// The 'WebSocket' was closed
     CloseWs,
 }

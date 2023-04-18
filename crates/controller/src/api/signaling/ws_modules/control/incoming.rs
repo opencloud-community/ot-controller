@@ -7,7 +7,7 @@ use types::signaling::{common::TargetParticipant, control::command::Join};
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "action", rename_all = "snake_case")]
-pub enum Message {
+pub enum ControlCommand {
     Join(Join),
     /// Enter into the room while being in the waiting room
     /// after being accepted by a moderator
@@ -32,9 +32,9 @@ mod test {
         }
         "#;
 
-        let msg: Message = serde_json::from_str(json).unwrap();
+        let msg: ControlCommand = serde_json::from_str(json).unwrap();
 
-        if let Message::Join(Join { display_name }) = msg {
+        if let ControlCommand::Join(Join { display_name }) = msg {
             assert_eq!(display_name, "Test!");
         } else {
             panic!()
@@ -49,9 +49,9 @@ mod test {
         }
         "#;
 
-        let msg: Message = serde_json::from_str(json).unwrap();
+        let msg: ControlCommand = serde_json::from_str(json).unwrap();
 
-        assert!(matches!(msg, Message::RaiseHand));
+        assert!(matches!(msg, ControlCommand::RaiseHand));
     }
 
     #[test]
@@ -62,8 +62,8 @@ mod test {
         }
         "#;
 
-        let msg: Message = serde_json::from_str(json).unwrap();
+        let msg: ControlCommand = serde_json::from_str(json).unwrap();
 
-        assert!(matches!(msg, Message::LowerHand));
+        assert!(matches!(msg, ControlCommand::LowerHand));
     }
 }
