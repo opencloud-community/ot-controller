@@ -51,7 +51,7 @@ use tokio_stream::StreamExt;
 use types::{
     core::{BreakoutRoomId, ParticipantId, ParticipationKind, UserId},
     signaling::{
-        control::{event as control_event, Participant},
+        control::{event as control_event, AssociatedParticipant, Participant},
         Role,
     },
 };
@@ -1459,11 +1459,8 @@ impl Runner {
                     )
                     .await;
 
-                self.ws_send_control(
-                    timestamp,
-                    ControlEvent::Left(outgoing::AssociatedParticipant { id }),
-                )
-                .await;
+                self.ws_send_control(timestamp, ControlEvent::Left(AssociatedParticipant { id }))
+                    .await;
 
                 self.handle_module_requested_actions(timestamp, actions)
                     .await;

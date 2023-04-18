@@ -8,7 +8,7 @@ use types::{
     common::tariff::TariffResource,
     core::{ParticipantId, Timestamp},
     signaling::{
-        control::{event::Error, Participant},
+        control::{event::Error, AssociatedParticipant, Participant},
         Role,
     },
 };
@@ -63,11 +63,6 @@ pub struct JoinSuccess {
 #[serde(tag = "reason", rename_all = "snake_case")]
 pub enum JoinBlockedReason {
     ParticipantLimitReached,
-}
-
-#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
-pub struct AssociatedParticipant {
-    pub id: ParticipantId,
 }
 
 #[cfg(test)]

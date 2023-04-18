@@ -43,7 +43,7 @@ use tokio_stream::StreamExt;
 use types::{
     common::tariff::TariffResource,
     core::{BreakoutRoomId, ParticipantId, ParticipationKind, TariffId, Timestamp, UserId},
-    signaling::Role,
+    signaling::{control::AssociatedParticipant, Role},
 };
 
 /// A module tester that simulates a runner environment for provided module.
@@ -698,9 +698,9 @@ where
                     .context("Module error on ParticipantLeft event")?;
 
                 self.interface.ws.send(WsMessageOutgoing::Control(
-                    control::outgoing::ControlEvent::Left(
-                        control::outgoing::AssociatedParticipant { id: participant_id },
-                    ),
+                    control::outgoing::ControlEvent::Left(AssociatedParticipant {
+                        id: participant_id,
+                    }),
                 ))?;
 
                 Ok(())

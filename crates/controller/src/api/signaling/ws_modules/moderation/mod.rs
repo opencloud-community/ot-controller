@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
     core::{ParticipantId, RoomId, UserId},
-    signaling::control::{Participant, WaitingRoomState},
+    signaling::control::{AssociatedParticipant, Participant, WaitingRoomState},
 };
 
 pub mod exchange;
@@ -363,9 +363,9 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
-                ctx.ws_send(outgoing::Message::LeftWaitingRoom(
-                    control::outgoing::AssociatedParticipant { id },
-                ));
+                ctx.ws_send(outgoing::Message::LeftWaitingRoom(AssociatedParticipant {
+                    id,
+                }));
             }
             Event::Exchange(exchange::Message::WaitingRoomEnableUpdated) => {
                 let enabled =

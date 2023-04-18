@@ -11,7 +11,7 @@ use serial_test::serial;
 use test_util::{TestContext, ROOM_ID, USER_1, USER_2};
 use types::{
     core::{GroupName, Timestamp},
-    signaling::control::Participant,
+    signaling::control::{AssociatedParticipant, Participant},
 };
 
 #[actix_rt::test]
@@ -529,7 +529,7 @@ async fn private_chat_history_on_join() {
     assert!(matches!(
         user1_leave_message,
         WsMessageOutgoing::Control(control::outgoing::ControlEvent::Left(
-            control::outgoing::AssociatedParticipant {id}
+            AssociatedParticipant {id}
         )) if id == USER_1.participant_id
     ));
 
