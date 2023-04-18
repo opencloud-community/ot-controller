@@ -13,7 +13,41 @@ use crate::{
     signaling::Role,
 };
 
-use super::Participant;
+use super::{AssociatedParticipant, Participant};
+
+/// Events sent out by the `control` module
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(tag = "message", rename_all = "snake_case")
+)]
+pub enum ControlEvent {
+    /// The participant joined successfully
+    JoinSuccess(JoinSuccess),
+    /// Joining the room failed
+    JoinBlocked(JoinBlockedReason),
+    /// State change of this participant
+    Update(Participant),
+    /// A participant that joined the room
+    Joined(Participant),
+    /// This participant left the room
+    Left(AssociatedParticipant),
+    /// The quota's time limit has elapsed
+    TimeLimitQuotaElapsed,
+
+    /// This participant's role in the meeting has been updated
+    RoleUpdated {
+        /// The new role of the participant
+        new_role: Role,
+    },
+
+    /// The room has been deleted
+    RoomDeleted,
+
+    /// An error happened when executing a `control` command
+    Error(Error),
+}
 
 /// The data received by a participant upon successfully joining a meeting
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -96,4 +130,129 @@ pub enum Error {
 
     /// An issued command requires no further actions
     NothingToDo,
+}
+#[cfg(test)]
+mod test {
+    use std::str::FromStr;
+
+    use super::*;
+    use crate::core::TariffId;
+    use chrono::DateTime;
+    use pretty_assertions::assert_eq;
+    use serde_json::json;
+
+    fn participant_tariff() -> TariffResource {
+        TariffResource {
+            id: TariffId::nil(),
+            name: "test".into(),
+            quotas: Default::default(),
+            enabled_modules: Default::default(),
+        }
+    }
+
+    #[test]
+    fn join_success() {
+        let expected = json!({
+            "message": "join_success",
+            "id": "00000000-0000-0000-0000-000000000000",
+            "display_name": "name",
+            "avatar_url": "http://url",
+            "role": "user",
+            "closes_at":"2021-06-24T14:00:11.873753715Z",
+            "tariff": serde_json::to_value(participant_tariff()).unwrap(),
+            "participants": [],
+        });
+
+        let produced = serde_json::to_value(&ControlEvent::JoinSuccess(JoinSuccess {
+            id: ParticipantId::nil(),
+            display_name: "name".into(),
+            avatar_url: Some("http://url".into()),
+            role: Role::User,
+            closes_at: Some(
+                DateTime::from_str("2021-06-24T14:00:11.873753715Z")
+                    .unwrap()
+                    .into(),
+            ),
+            tariff: participant_tariff().into(),
+            module_data: Default::default(),
+            participants: vec![],
+        }))
+        .unwrap();
+
+        assert_eq!(expected, produced);
+    }
+
+    #[test]
+    fn join_success_guest() {
+        let expected = json!({
+            "message": "join_success",
+            "id": "00000000-0000-0000-0000-000000000000",
+            "display_name": "name",
+            "role": "guest",
+            "tariff": serde_json::to_value(participant_tariff()).unwrap(),
+            "participants": [],
+        });
+
+        let produced = serde_json::to_value(&ControlEvent::JoinSuccess(JoinSuccess {
+            id: ParticipantId::nil(),
+            display_name: "name".into(),
+            avatar_url: None,
+            role: Role::Guest,
+            closes_at: None,
+            tariff: participant_tariff().into(),
+            module_data: Default::default(),
+            participants: vec![],
+        }))
+        .unwrap();
+
+        assert_eq!(expected, produced);
+    }
+
+    #[test]
+    fn update() {
+        let expected = json!({"message": "update", "id": "00000000-0000-0000-0000-000000000000"});
+
+        let produced = serde_json::to_value(&ControlEvent::Update(Participant {
+            id: ParticipantId::nil(),
+            module_data: Default::default(),
+        }))
+        .unwrap();
+
+        assert_eq!(expected, produced);
+    }
+
+    #[test]
+    fn joined() {
+        let expected = json!({"message": "joined", "id": "00000000-0000-0000-0000-000000000000"});
+
+        let produced = serde_json::to_value(&ControlEvent::Joined(Participant {
+            id: ParticipantId::nil(),
+            module_data: Default::default(),
+        }))
+        .unwrap();
+
+        assert_eq!(expected, produced);
+    }
+
+    #[test]
+    fn left() {
+        let expected = json!({"message": "left","id": "00000000-0000-0000-0000-000000000000"});
+
+        let produced = serde_json::to_value(&ControlEvent::Left(AssociatedParticipant {
+            id: ParticipantId::nil(),
+        }))
+        .unwrap();
+
+        assert_eq!(expected, produced);
+    }
+
+    #[test]
+    fn error() {
+        let expected = json!({"message": "error", "error": "raise_hands_disabled"});
+
+        let produced =
+            serde_json::to_value(&ControlEvent::Error(Error::RaiseHandsDisabled)).unwrap();
+
+        assert_eq!(expected, produced);
+    }
 }

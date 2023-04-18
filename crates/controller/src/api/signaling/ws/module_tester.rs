@@ -14,7 +14,7 @@ use super::{
     DestroyContext, Event, ExchangePublish, NamespacedCommand, NamespacedEvent, SignalingModule,
 };
 use crate::api::signaling::prelude::control::incoming::Join;
-use crate::api::signaling::prelude::control::{self, outgoing, storage, ControlData, NAMESPACE};
+use crate::api::signaling::prelude::control::{self, storage, ControlData, NAMESPACE};
 use crate::api::signaling::prelude::{InitContext, ModuleContext};
 use crate::api::signaling::SignalingRoomId;
 use crate::api::Participant;
@@ -44,7 +44,10 @@ use types::{
     common::tariff::TariffResource,
     core::{BreakoutRoomId, ParticipantId, ParticipationKind, TariffId, Timestamp, UserId},
     signaling::{
-        control::{event::JoinSuccess, AssociatedParticipant},
+        control::{
+            event::{ControlEvent, JoinSuccess},
+            AssociatedParticipant,
+        },
         Role,
     },
 };
@@ -612,9 +615,11 @@ where
                     participants,
                 };
 
-                self.interface.ws.send(WsMessageOutgoing::Control(
-                    outgoing::ControlEvent::JoinSuccess(join_success),
-                ))?;
+                self.interface
+                    .ws
+                    .send(WsMessageOutgoing::Control(ControlEvent::JoinSuccess(
+                        join_success,
+                    )))?;
 
                 self.publish_exchange_control(control::exchange::Message::Joined(
                     self.participant_id,
@@ -684,9 +689,11 @@ where
                         .insert(M::NAMESPACE.to_string(), module_data);
                 }
 
-                self.interface.ws.send(WsMessageOutgoing::Control(
-                    control::outgoing::ControlEvent::Joined(participant),
-                ))?;
+                self.interface
+                    .ws
+                    .send(WsMessageOutgoing::Control(ControlEvent::Joined(
+                        participant,
+                    )))?;
 
                 Ok(())
             }
@@ -700,11 +707,11 @@ where
                     .await
                     .context("Module error on ParticipantLeft event")?;
 
-                self.interface.ws.send(WsMessageOutgoing::Control(
-                    control::outgoing::ControlEvent::Left(AssociatedParticipant {
-                        id: participant_id,
-                    }),
-                ))?;
+                self.interface
+                    .ws
+                    .send(WsMessageOutgoing::Control(ControlEvent::Left(
+                        AssociatedParticipant { id: participant_id },
+                    )))?;
 
                 Ok(())
             }
@@ -732,9 +739,11 @@ where
                         .insert(M::NAMESPACE.to_string(), module_data);
                 }
 
-                self.interface.ws.send(WsMessageOutgoing::Control(
-                    control::outgoing::ControlEvent::Update(participant),
-                ))?;
+                self.interface
+                    .ws
+                    .send(WsMessageOutgoing::Control(ControlEvent::Update(
+                        participant,
+                    )))?;
 
                 Ok(())
             }
@@ -985,7 +994,7 @@ where
     M: SignalingModule,
 {
     Module(M::Outgoing),
-    Control(control::outgoing::ControlEvent),
+    Control(ControlEvent),
 }
 
 impl<M> Clone for WsMessageOutgoing<M>

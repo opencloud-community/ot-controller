@@ -11,7 +11,6 @@ use super::{
 };
 use crate::api;
 use crate::api::signaling::metrics::SignalingMetrics;
-use crate::api::signaling::prelude::control::outgoing::ControlEvent;
 use crate::api::signaling::prelude::*;
 use crate::api::signaling::resumption::{ResumptionTokenKeepAlive, ResumptionTokenUsed};
 use crate::api::signaling::ws::actor::WsCommand;
@@ -52,7 +51,7 @@ use types::{
     core::{BreakoutRoomId, ParticipantId, ParticipationKind, UserId},
     signaling::{
         control::{
-            event::{self as control_event, JoinBlockedReason, JoinSuccess},
+            event::{self as control_event, ControlEvent, JoinBlockedReason, JoinSuccess},
             AssociatedParticipant, Participant,
         },
         Role,
