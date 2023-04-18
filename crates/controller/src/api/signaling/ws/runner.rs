@@ -11,7 +11,7 @@ use super::{
 };
 use crate::api;
 use crate::api::signaling::metrics::SignalingMetrics;
-use crate::api::signaling::prelude::control::outgoing::{ControlEvent, JoinBlockedReason};
+use crate::api::signaling::prelude::control::outgoing::ControlEvent;
 use crate::api::signaling::prelude::*;
 use crate::api::signaling::resumption::{ResumptionTokenKeepAlive, ResumptionTokenUsed};
 use crate::api::signaling::ws::actor::WsCommand;
@@ -51,7 +51,10 @@ use tokio_stream::StreamExt;
 use types::{
     core::{BreakoutRoomId, ParticipantId, ParticipationKind, UserId},
     signaling::{
-        control::{event as control_event, AssociatedParticipant, Participant},
+        control::{
+            event::{self as control_event, JoinBlockedReason},
+            AssociatedParticipant, Participant,
+        },
         Role,
     },
 };

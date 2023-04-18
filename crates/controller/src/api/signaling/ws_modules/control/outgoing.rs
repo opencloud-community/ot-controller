@@ -8,7 +8,10 @@ use types::{
     common::tariff::TariffResource,
     core::{ParticipantId, Timestamp},
     signaling::{
-        control::{event::Error, AssociatedParticipant, Participant},
+        control::{
+            event::{Error, JoinBlockedReason},
+            AssociatedParticipant, Participant,
+        },
         Role,
     },
 };
@@ -57,12 +60,6 @@ pub struct JoinSuccess {
     pub module_data: HashMap<&'static str, serde_json::Value>,
 
     pub participants: Vec<Participant>,
-}
-
-#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
-#[serde(tag = "reason", rename_all = "snake_case")]
-pub enum JoinBlockedReason {
-    ParticipantLimitReached,
 }
 
 #[cfg(test)]
