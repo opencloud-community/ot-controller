@@ -65,7 +65,7 @@ async fn build_waiting_room_participants(
 
     for id in list {
         let control_data =
-            control::ControlData::from_redis(redis_conn, SignalingRoomId(room_id, None), *id)
+            control::ControlState::from_redis(redis_conn, SignalingRoomId(room_id, None), *id)
                 .await?;
 
         let module_data = HashMap::from([
@@ -346,7 +346,7 @@ impl SignalingModule for ModerationModule {
                 }
 
                 let control_data =
-                    control::ControlData::from_redis(ctx.redis_conn(), self.room, id).await?;
+                    control::ControlState::from_redis(ctx.redis_conn(), self.room, id).await?;
 
                 let module_data = HashMap::from([(
                     control::NAMESPACE.to_string(),

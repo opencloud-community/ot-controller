@@ -13,7 +13,7 @@ use super::modules::AnyStream;
 use super::{
     DestroyContext, Event, ExchangePublish, NamespacedCommand, NamespacedEvent, SignalingModule,
 };
-use crate::api::signaling::prelude::control::{self, storage, ControlData, NAMESPACE};
+use crate::api::signaling::prelude::control::{self, storage, ControlState, NAMESPACE};
 use crate::api::signaling::prelude::{InitContext, ModuleContext};
 use crate::api::signaling::SignalingRoomId;
 use crate::api::Participant;
@@ -338,7 +338,7 @@ where
     participant_id: ParticipantId,
     participant: Participant<UserId>,
     role: Role,
-    control_data: Option<ControlData>,
+    control_data: Option<ControlState>,
     module: M,
     interface: ClientInterface<M>,
     exchange_sender: broadcast::Sender<ExchangePublish>,
@@ -400,7 +400,7 @@ where
             participant_id,
             participant,
             role,
-            control_data: Option::<ControlData>::None,
+            control_data: Option::<ControlState>::None,
             module,
             interface,
             exchange_sender,
@@ -548,7 +548,7 @@ where
                     _ => None,
                 };
 
-                let mut control_data = ControlData {
+                let mut control_data = ControlState {
                     display_name: join.display_name.clone(),
                     role: self.role,
                     avatar_url: avatar_url.clone(),
@@ -918,7 +918,7 @@ where
             module_data: Default::default(),
         };
 
-        let control_data = ControlData::from_redis(&mut self.redis_conn, self.room_id, id).await?;
+        let control_data = ControlState::from_redis(&mut self.redis_conn, self.room_id, id).await?;
 
         participant.module_data.insert(
             NAMESPACE.to_string(),

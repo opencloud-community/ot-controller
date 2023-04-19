@@ -7,7 +7,7 @@ use super::{SignalingModule, Timestamp};
 use crate::api::signaling::metrics::SignalingMetrics;
 use crate::api::signaling::ws::runner::Builder;
 use crate::api::signaling::ws::{DestroyContext, ExchangePublish, InitContext};
-use crate::api::signaling::ws_modules::control::ControlData;
+use crate::api::signaling::ws_modules::control::ControlState;
 use crate::redis_wrapper::RedisConnection;
 use actix_http::ws::{CloseCode, Message};
 use anyhow::{Context, Result};
@@ -123,7 +123,7 @@ pub enum DynTargetedEvent {
 #[derive(Debug)]
 pub enum DynBroadcastEvent<'evt> {
     Joined(
-        &'evt ControlData,
+        &'evt ControlState,
         &'evt mut HashMap<String, Value>,
         &'evt mut Vec<Participant>,
     ),

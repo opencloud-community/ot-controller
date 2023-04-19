@@ -4,7 +4,7 @@
 
 use super::metrics::SignalingMetrics;
 use super::prelude::*;
-use crate::api::signaling::ws_modules::control::ControlData;
+use crate::api::signaling::ws_modules::control::ControlState;
 use crate::api::signaling::SignalingRoomId;
 use crate::api::Participant;
 use crate::redis_wrapper::RedisConnection;
@@ -49,7 +49,7 @@ where
     Joined {
         /// Data set by the control module. Some modules require attributes specified by the
         /// control module which are provided here on join
-        control_data: &'evt ControlData,
+        control_data: &'evt ControlState,
 
         /// The module can set this option to Some(M::FrontendData) to populate
         /// the `join_success` message with additional information to the frontend module counterpart

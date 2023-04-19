@@ -15,7 +15,7 @@ use crate::api::signaling::prelude::*;
 use crate::api::signaling::resumption::{ResumptionTokenKeepAlive, ResumptionTokenUsed};
 use crate::api::signaling::ws::actor::WsCommand;
 use crate::api::signaling::ws_modules::control::storage::ParticipantIdRunnerLock;
-use crate::api::signaling::ws_modules::control::{exchange, storage, ControlData, NAMESPACE};
+use crate::api::signaling::ws_modules::control::{exchange, storage, ControlState, NAMESPACE};
 use crate::api::signaling::SignalingRoomId;
 use crate::exchange_task::{ExchangeHandle, SubscriberHandle};
 use crate::redis_wrapper::RedisConnection;
@@ -271,7 +271,7 @@ enum RunnerState {
     /// Inside the waiting room
     Waiting {
         accepted: bool,
-        control_data: ControlData,
+        control_data: ControlState,
     },
 
     /// Inside the actual room
@@ -803,7 +803,7 @@ impl Runner {
                 self.set_control_attributes(timestamp, &display_name, avatar_url.as_deref())
                     .await?;
 
-                let control_data = ControlData {
+                let control_data = ControlState {
                     display_name,
                     role: self.role,
                     avatar_url,
@@ -1047,7 +1047,7 @@ impl Runner {
     async fn join_waiting_room(
         &mut self,
         timestamp: Timestamp,
-        control_data: ControlData,
+        control_data: ControlState,
     ) -> Result<()> {
         let db = self.db.clone();
         let creator_id = self.room.created_by;
@@ -1122,7 +1122,7 @@ impl Runner {
     async fn join_room(
         &mut self,
         timestamp: Timestamp,
-        control_data: ControlData,
+        control_data: ControlState,
         joining_from_waiting_room: bool,
     ) -> Result<()> {
         let mut lock = storage::room_mutex(self.room_id);
@@ -1348,7 +1348,7 @@ impl Runner {
             module_data: Default::default(),
         };
 
-        let control_data = ControlData::from_redis(&mut self.redis_conn, self.room_id, id).await?;
+        let control_data = ControlState::from_redis(&mut self.redis_conn, self.room_id, id).await?;
 
         // Do not build participants for invisible services
         if !control_data.participation_kind.is_visible() {

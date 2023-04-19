@@ -17,7 +17,7 @@ pub const NAMESPACE: &str = "control";
 
 /// Control module's FrontendData
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ControlData {
+pub struct ControlState {
     pub display_name: String,
     pub role: Role,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -29,7 +29,7 @@ pub struct ControlData {
     pub hand_updated_at: Timestamp,
 }
 
-impl ControlData {
+impl ControlState {
     pub async fn from_redis(
         redis_conn: &mut RedisConnection,
         room_id: SignalingRoomId,
