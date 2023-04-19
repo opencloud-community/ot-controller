@@ -4,7 +4,6 @@
 
 //! Breakout room module
 
-use self::incoming::BreakoutCommand;
 use self::outgoing::BreakoutEvent;
 use self::storage::BreakoutConfig;
 use crate::api::signaling::SignalingRoomId;
@@ -19,11 +18,10 @@ use std::time::{Duration, SystemTime};
 use tokio::time::sleep;
 use types::{
     core::{BreakoutRoomId, ParticipantId, ParticipationKind, RoomId, Timestamp},
-    signaling::Role,
+    signaling::{breakout::command::BreakoutCommand, Role},
 };
 
 pub mod exchange;
-pub mod incoming;
 pub mod outgoing;
 pub mod storage;
 
