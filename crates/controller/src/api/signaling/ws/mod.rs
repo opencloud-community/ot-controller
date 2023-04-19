@@ -4,7 +4,6 @@
 
 use super::metrics::SignalingMetrics;
 use super::prelude::*;
-use crate::api::signaling::ws_modules::control::ControlState;
 use crate::api::signaling::SignalingRoomId;
 use crate::api::Participant;
 use crate::redis_wrapper::RedisConnection;
@@ -25,7 +24,7 @@ use std::sync::Arc;
 use tokio_stream::Stream;
 use types::{
     core::{BreakoutRoomId, ParticipantId, Timestamp},
-    signaling::{NamespacedCommand, NamespacedEvent},
+    signaling::{control::state::ControlState, NamespacedCommand, NamespacedEvent},
 };
 
 mod actor;

@@ -9,8 +9,12 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
     core::{ParticipantId, RoomId, UserId},
-    signaling::control::{AssociatedParticipant, Participant, WaitingRoomState},
+    signaling::control::{
+        state::ControlState, AssociatedParticipant, Participant, WaitingRoomState,
+    },
 };
+
+use super::control::ControlStateExt as _;
 
 pub mod exchange;
 pub mod incoming;
@@ -65,8 +69,7 @@ async fn build_waiting_room_participants(
 
     for id in list {
         let control_data =
-            control::ControlState::from_redis(redis_conn, SignalingRoomId(room_id, None), *id)
-                .await?;
+            ControlState::from_redis(redis_conn, SignalingRoomId(room_id, None), *id).await?;
 
         let module_data = HashMap::from([
             (
@@ -346,7 +349,7 @@ impl SignalingModule for ModerationModule {
                 }
 
                 let control_data =
-                    control::ControlState::from_redis(ctx.redis_conn(), self.room, id).await?;
+                    ControlState::from_redis(ctx.redis_conn(), self.room, id).await?;
 
                 let module_data = HashMap::from([(
                     control::NAMESPACE.to_string(),

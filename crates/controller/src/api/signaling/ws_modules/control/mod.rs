@@ -7,30 +7,28 @@
 //! Actual control 'module' code can be found inside `crate::api::signaling::ws::runner`
 use crate::prelude::*;
 use anyhow::Result;
-use serde::{Deserialize, Serialize};
-use types::core::{ParticipantId, ParticipationKind, Timestamp};
+use types::{
+    core::{ParticipantId, ParticipationKind, Timestamp},
+    signaling::control::state::ControlState,
+};
 
 pub mod exchange;
 pub mod storage;
 
 pub const NAMESPACE: &str = "control";
 
-/// Control module's FrontendData
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ControlState {
-    pub display_name: String,
-    pub role: Role,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub avatar_url: Option<String>,
-    pub participation_kind: ParticipationKind,
-    pub hand_is_up: bool,
-    pub joined_at: Timestamp,
-    pub left_at: Option<Timestamp>,
-    pub hand_updated_at: Timestamp,
+#[async_trait::async_trait]
+pub trait ControlStateExt: Sized {
+    async fn from_redis(
+        redis_conn: &mut RedisConnection,
+        room_id: SignalingRoomId,
+        participant_id: ParticipantId,
+    ) -> Result<Self>;
 }
 
-impl ControlState {
-    pub async fn from_redis(
+#[async_trait::async_trait]
+impl ControlStateExt for ControlState {
+    async fn from_redis(
         redis_conn: &mut RedisConnection,
         room_id: SignalingRoomId,
         participant_id: ParticipantId,
