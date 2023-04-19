@@ -17,6 +17,7 @@ use actix_web_httpauth::headers::www_authenticate::bearer::{Bearer, Error};
 use database::DatabaseError;
 use diesel::result::DatabaseErrorKind;
 use itertools::Itertools;
+use serde::Deserialize;
 use serde::Serialize;
 use std::borrow::Cow;
 use std::fmt;
@@ -41,7 +42,7 @@ pub fn json_error_handler(err: JsonPayloadError, _: &HttpRequest) -> actix_web::
         .into()
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct StandardErrorBody {
     // Machine readable error code
     code: Cow<'static, str>,
@@ -49,7 +50,7 @@ struct StandardErrorBody {
     message: Cow<'static, str>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ValidationErrorEntry {
     /// The field related to the error
     /// It's a struct level error when no field is set
@@ -90,7 +91,7 @@ impl ValidationErrorEntry {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct ValidationErrorBody {
     /// Machine readable error message
     code: Cow<'static, str>,
@@ -114,7 +115,7 @@ impl ValidationErrorBody {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 enum ErrorBody {
     /// The standard error body
@@ -314,6 +315,28 @@ impl ApiError {
             "An internal server error occurred",
         )
     }
+
+    pub fn from_cacheable(cachable: CacheableApiError) -> anyhow::Result<Self> {
+        Ok(Self {
+            status: StatusCode::from_u16(cachable.status)?,
+            www_authenticate: cachable
+                .www_authenticate
+                .map(|b| HeaderValue::from_bytes(&b))
+                .transpose()?,
+            body: cachable.body,
+        })
+    }
+
+    pub fn to_cacheable(&self) -> CacheableApiError {
+        CacheableApiError {
+            status: self.status.as_u16(),
+            www_authenticate: self
+                .www_authenticate
+                .as_ref()
+                .map(|h| h.as_bytes().to_owned()),
+            body: self.body.clone(),
+        }
+    }
 }
 
 impl std::fmt::Display for ApiError {
@@ -372,6 +395,13 @@ impl ResponseError for ApiError {
 impl From<crate::BlockingError> for ApiError {
     fn from(e: crate::BlockingError) -> Self {
         log::error!("REST API threw internal error from blocking error: {}", e);
+        Self::internal()
+    }
+}
+
+impl From<cache::CacheError> for ApiError {
+    fn from(e: cache::CacheError) -> Self {
+        log::error!("REST API threw internal error while writing/reading cache: {e}");
         Self::internal()
     }
 }
@@ -521,6 +551,14 @@ fn convert_validation_code(code: &str) -> &'static str {
         "empty" => CODE_MISSING_VALUE,
         _ => CODE_INVALID_VALUE,
     }
+}
+
+/// (De)Serializable version of [`ApiError`] so it can be externally cached
+#[derive(Clone, Serialize, Deserialize)]
+pub struct CacheableApiError {
+    status: u16,
+    www_authenticate: Option<Vec<u8>>,
+    body: ErrorBody,
 }
 
 #[cfg(test)]

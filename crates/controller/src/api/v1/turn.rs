@@ -7,6 +7,7 @@ use super::response::ApiError;
 use crate::api::v1::middleware::user_auth::check_access_token;
 use crate::api::v1::response::error::AuthenticationError;
 use crate::api::v1::response::NoContent;
+use crate::caches::Caches;
 use crate::oidc::OidcContext;
 use crate::settings::{self, SharedSettingsActix};
 use crate::settings::{Settings, TurnServer};
@@ -69,6 +70,7 @@ pub enum IceServer {
 pub async fn get(
     settings: SharedSettingsActix,
     db: Data<Db>,
+    caches: Data<Caches>,
     oidc_ctx: Data<OidcContext>,
     req: HttpRequest,
 ) -> Result<AWEither<Json<Vec<IceServer>>, NoContent>, ApiError> {
@@ -79,7 +81,7 @@ pub async fn get(
     let stun_servers = &settings.stun;
 
     // This is a omniauth endpoint. AccessTokens and InviteCodes are allowed as Bearer tokens
-    match check_access_token_or_invite(&settings, &req, db, oidc_ctx).await? {
+    match check_access_token_or_invite(&settings, &req, db, &caches, oidc_ctx).await? {
         Either::Right(invite) => {
             log::trace!(
                 "Generating new turn credentials for invite {} and servers {:?}",
@@ -181,6 +183,7 @@ async fn check_access_token_or_invite(
     settings: &Settings,
     req: &HttpRequest,
     db: Data<Db>,
+    caches: &Caches,
     oidc_ctx: Data<OidcContext>,
 ) -> Result<Either<User, Invite>, ApiError> {
     let auth = Authorization::<Bearer>::parse(req).map_err(|e| {
@@ -195,6 +198,7 @@ async fn check_access_token_or_invite(
         settings,
         db.clone(),
         oidc_ctx,
+        &caches.user_access_tokens,
         AccessToken::new(access_token.clone()),
     )
     .await;

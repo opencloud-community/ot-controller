@@ -3,8 +3,9 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Handles user Authentication in API requests
-use crate::api::v1::response::error::AuthenticationError;
+use crate::api::v1::response::error::{AuthenticationError, CacheableApiError};
 use crate::api::v1::response::ApiError;
+use crate::caches::Caches;
 use crate::oidc::{OidcContext, UserClaims};
 use actix_web::dev::{Service, ServiceRequest, ServiceResponse, Transform};
 use actix_web::error::Error;
@@ -12,6 +13,8 @@ use actix_web::http::header::Header;
 use actix_web::web::Data;
 use actix_web::{HttpMessage, ResponseError};
 use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
+use cache::Cache;
+use chrono::Utc;
 use controller_settings::{Settings, SharedSettings, TenantAssignment};
 use core::future::ready;
 use database::Db;
@@ -23,6 +26,8 @@ use std::pin::Pin;
 use std::rc::Rc;
 use std::task::{Context, Poll};
 use tracing_futures::Instrument;
+
+pub type UserAccessTokenCache = Cache<String, Result<(Tenant, User), CacheableApiError>>;
 
 /// Middleware factory
 ///
@@ -85,6 +90,10 @@ where
         let settings = self.settings.clone();
         let db = self.db.clone();
         let oidc_ctx = self.oidc_ctx.clone();
+        let caches = req
+            .app_data::<Data<Caches>>()
+            .expect("Caches must be provided as AppData")
+            .clone();
 
         let parse_match_span =
             tracing::span!(tracing::Level::TRACE, "Authorization::<Bearer>::parse");
@@ -108,8 +117,14 @@ where
         Box::pin(
             async move {
                 let settings = settings.load_full();
-                let (current_tenant, current_user) =
-                    check_access_token(&settings, db, oidc_ctx, access_token).await?;
+                let (current_tenant, current_user) = check_access_token(
+                    &settings,
+                    db,
+                    oidc_ctx,
+                    &caches.user_access_tokens,
+                    access_token,
+                )
+                .await?;
                 req.extensions_mut()
                     .insert(kustos::actix_web::User::from(current_user.id.into_inner()));
                 req.extensions_mut().insert(current_tenant);
@@ -126,27 +141,94 @@ pub async fn check_access_token(
     settings: &Settings,
     db: Data<Db>,
     oidc_ctx: Data<OidcContext>,
+    cache: &UserAccessTokenCache,
     access_token: AccessToken,
 ) -> Result<(Tenant, User), ApiError> {
-    let (oidc_tenant_id, sub) = match oidc_ctx.verify_access_token::<UserClaims>(&access_token) {
-        Ok(claims) => {
-            // Get the tenant_id depending on the configured assignment
-            let tenant_id = match &settings.tenants.assignment {
-                TenantAssignment::Static { static_tenant_id } => static_tenant_id.clone(),
-                TenantAssignment::ByExternalTenantId => claims.tenant_id.ok_or_else(|| {
-                    log::error!("Invalid access token, missing tenant_id");
-                    ApiError::unauthorized()
-                        .with_www_authenticate(AuthenticationError::InvalidAccessToken)
-                })?,
-            };
-
-            (tenant_id, claims.sub)
-        }
+    // First verify the access-token's signature, expiry and claims
+    let user_claims = match oidc_ctx.verify_access_token::<UserClaims>(&access_token) {
+        Ok(user_claims) => user_claims,
         Err(e) => {
-            log::error!("Invalid access token, {}", e);
+            log::debug!("Invalid access token, {}", e);
             return Err(ApiError::unauthorized()
                 .with_www_authenticate(AuthenticationError::InvalidAccessToken));
         }
+    };
+
+    // Access token is still valid, search for cached results
+    if let Ok(Some(result)) = cache.get(access_token.secret()).await {
+        // Hit! Return the cached result
+        match result {
+            Ok(tenant_and_user) => Ok(tenant_and_user),
+            Err(err) => Err(ApiError::from_cacheable(err)?),
+        }
+    } else {
+        // Miss, do the check and cache the result
+
+        // Calculate the remaining ttl of the token
+        let token_ttl = user_claims.exp - Utc::now();
+
+        let check_result =
+            check_access_token_inner(settings, db, oidc_ctx, &access_token, user_claims).await;
+
+        match check_result {
+            Ok((tenant, user)) => {
+                // Check if the id-token info is expired
+                //
+                // This result must not be cached!
+                // The error can be resolved by calling /auth/login with a valid id_token.
+                // The same access-token will then pass this check here.
+                if chrono::Utc::now().timestamp() > user.id_token_exp {
+                    return Err(ApiError::unauthorized()
+                        .with_message("The session for this user has expired")
+                        .with_www_authenticate(AuthenticationError::SessionExpired));
+                }
+
+                // Avoid caching results for tokens that are about to expire
+                if token_ttl > chrono::Duration::seconds(10) {
+                    cache
+                        .insert_with_ttl(
+                            access_token.secret().clone(),
+                            Ok((tenant.clone(), user.clone())),
+                            token_ttl.to_std().expect("duration was previously checked"),
+                        )
+                        .await?;
+                }
+
+                Ok((tenant, user))
+            }
+            Err(e) => {
+                // Do not cache internal errors or tokens that are about to expire
+                if !e.status_code().is_server_error() && token_ttl > chrono::Duration::seconds(10) {
+                    cache
+                        .insert_with_ttl(
+                            access_token.secret().clone(),
+                            Err(e.to_cacheable()),
+                            token_ttl.to_std().expect("duration was previously checked"),
+                        )
+                        .await?;
+                }
+
+                Err(e)
+            }
+        }
+    }
+}
+
+/// Fetches all associated user data of the access token
+async fn check_access_token_inner(
+    settings: &Settings,
+    db: Data<Db>,
+    oidc_ctx: Data<OidcContext>,
+    access_token: &AccessToken,
+    claims: UserClaims,
+) -> Result<(Tenant, User), ApiError> {
+    // Get the tenant_id depending on the configured assignment
+    let oidc_tenant_id = match &settings.tenants.assignment {
+        TenantAssignment::Static { static_tenant_id } => static_tenant_id.clone(),
+        TenantAssignment::ByExternalTenantId => claims.tenant_id.ok_or_else(|| {
+            log::error!("Invalid access token, missing tenant_id");
+            ApiError::unauthorized().with_www_authenticate(AuthenticationError::InvalidAccessToken)
+        })?,
     };
 
     let mut conn = db.get_conn().await?;
@@ -159,25 +241,17 @@ pub async fn check_access_token(
                 .with_message("Unknown tenant_id in access token. Please login first!")
         })?;
 
-    let current_user = match User::get_by_oidc_sub(&mut conn, current_tenant.id, &sub).await? {
-        Some(user) => user,
-        None => {
-            return Err(ApiError::unauthorized()
+    let current_user = User::get_by_oidc_sub(&mut conn, current_tenant.id, &claims.sub)
+        .await?
+        .ok_or_else(|| {
+            ApiError::unauthorized()
                 .with_code("unknown_sub")
-                .with_message("Unknown subject in access token. Please login first!"))
-        }
-    };
+                .with_message("Unknown subject in access token. Please login first!")
+        })?;
 
     drop(conn);
 
-    // check if the id token is expired
-    if chrono::Utc::now().timestamp() > current_user.id_token_exp {
-        return Err(ApiError::unauthorized()
-            .with_message("The session for this user has expired")
-            .with_www_authenticate(AuthenticationError::SessionExpired));
-    }
-
-    let info = match oidc_ctx.introspect_access_token(&access_token).await {
+    let info = match oidc_ctx.introspect_access_token(access_token).await {
         Ok(info) => info,
         Err(e) => {
             log::error!("Failed to check if AccessToken is active, {}", e);

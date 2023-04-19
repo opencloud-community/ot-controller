@@ -61,6 +61,7 @@ mod api;
 pub mod api;
 
 mod acl;
+mod caches;
 mod cli;
 mod exchange_task;
 mod metrics;
@@ -342,6 +343,8 @@ impl Controller {
 
             let metrics = Data::new(self.metrics);
 
+            let caches = Data::new(caches::Caches::create(redis.clone()));
+
             HttpServer::new(move || {
                 let cors = setup_cors();
 
@@ -380,6 +383,7 @@ impl Controller {
                     .app_data(signaling_metrics.clone())
                     .app_data(metrics.clone())
                     .app_data(mail_service)
+                    .app_data(caches.clone())
                     .service(api::signaling::ws_service)
                     .service(metrics::metrics)
                     .service(v1_scope(

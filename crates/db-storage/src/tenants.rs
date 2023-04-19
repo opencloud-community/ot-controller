@@ -7,13 +7,14 @@ use chrono::{DateTime, Utc};
 use database::{DbConnection, Result};
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
+use serde::{Deserialize, Serialize};
 use types::core::{TenantId, UserId};
 
 types::diesel_newtype! {
     OidcTenantId(String) => diesel::sql_types::Text
 }
 
-#[derive(Debug, Clone, Queryable, Identifiable)]
+#[derive(Debug, Clone, Queryable, Identifiable, Serialize, Deserialize)]
 pub struct Tenant {
     pub id: TenantId,
     pub created_at: DateTime<Utc>,

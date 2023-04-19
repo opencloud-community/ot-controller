@@ -13,6 +13,7 @@ use diesel::{
     OptionalExtension, QueryDsl, Queryable, TextExpressionMethods,
 };
 use diesel_async::RunQueryDsl;
+use serde::{Deserialize, Serialize};
 use std::fmt;
 use types::core::{TariffId, TenantId, UserId};
 
@@ -24,7 +25,7 @@ types::diesel_newtype! {
 /// Diesel user struct
 ///
 /// Is used as a result in various queries. Represents a user column
-#[derive(Clone, Queryable, Identifiable)]
+#[derive(Clone, Queryable, Identifiable, Serialize, Deserialize)]
 pub struct User {
     pub id: UserId,
     pub id_serial: SerialUserId,
