@@ -4,7 +4,7 @@
 
 use anyhow::{Context, Result};
 use clap::{ArgAction, Parser, Subcommand};
-use controller_shared::settings::Settings;
+use controller_settings::Settings;
 
 mod acl;
 mod fix_acl;

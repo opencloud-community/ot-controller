@@ -30,7 +30,7 @@ use actix_http::ws::{CloseCode, CloseReason, Message};
 use actix_web_actors::ws;
 use anyhow::{bail, Context, Result};
 use bytestring::ByteString;
-use controller_shared::settings::SharedSettings;
+use controller_settings::SharedSettings;
 use database::Db;
 use db_storage::rooms::Room;
 use db_storage::tariffs::Tariff;

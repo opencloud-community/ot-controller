@@ -5,7 +5,7 @@
 use anyhow::{Context, Result};
 use chrono::Utc;
 use clap::Subcommand;
-use controller_shared::settings::Settings;
+use controller_settings::Settings;
 use database::Db;
 use db_storage::tenants::{OidcTenantId, Tenant, UpdateTenant};
 use tabled::{Style, Table, Tabled};

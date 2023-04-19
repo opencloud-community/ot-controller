@@ -14,7 +14,7 @@ publish = false
 
 [dependencies]
 controller = { path = "../controller", package = "opentalk-controller-core" }
-controller-shared = { path = "../controller-shared-types", package = "opentalk-controller-shared" }
+controller-settings = { path = "../controller-settings", package = "opentalk-controller-settings" }
 serde = { version = "1", features = ["derive"] }
 redis = "0.22"
 redis-args = { path = "../redis-args", package = "opentalk-redis-args" }

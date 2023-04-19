@@ -55,7 +55,7 @@ struct Protocol {
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for Protocol {
     const NAMESPACE: &'static str = "protocol";
-    type Params = controller_shared::settings::Etherpad;
+    type Params = controller_settings::Etherpad;
     type Incoming = incoming::Message;
     type Outgoing = outgoing::Message;
     type ExchangeMessage = exchange::Event;

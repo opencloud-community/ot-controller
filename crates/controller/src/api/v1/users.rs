@@ -14,7 +14,7 @@ use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json, Path, Query, ReqData};
 use actix_web::{get, patch, Either};
 use anyhow::Context;
-use controller_shared::settings::{Settings, TenantAssignment};
+use controller_settings::{Settings, TenantAssignment};
 use database::Db;
 use db_storage::tariffs::Tariff;
 use db_storage::tenants::Tenant;

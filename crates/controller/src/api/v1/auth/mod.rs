@@ -11,7 +11,7 @@ use crate::oidc::{OidcContext, VerifyError};
 use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json};
 use actix_web::{get, post};
-use controller_shared::settings::{TariffAssignment, TenantAssignment};
+use controller_settings::{TariffAssignment, TenantAssignment};
 use core::mem::take;
 use database::{Db, OptionalExt};
 use db_storage::groups::{get_or_create_groups_by_name, Group};

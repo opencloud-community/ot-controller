@@ -2776,7 +2776,7 @@ version = "0.0.0-dev"
 dependencies = [
  "actix-rt",
  "opentalk-controller-core",
- "opentalk-controller-shared",
+ "opentalk-controller-settings",
  "opentalk-database",
  "opentalk-db-storage",
  "opentalk-redis-args",
@@ -2857,7 +2857,7 @@ dependencies = [
  "mime",
  "nix",
  "openidconnect",
- "opentalk-controller-shared",
+ "opentalk-controller-settings",
  "opentalk-database",
  "opentalk-db-storage",
  "opentalk-mail-worker-protocol",
@@ -2901,7 +2901,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "opentalk-controller-shared"
+name = "opentalk-controller-settings"
 version = "0.0.0-dev"
 dependencies = [
  "anstream",
@@ -2930,7 +2930,7 @@ dependencies = [
  "diesel-async",
  "futures-core",
  "log",
- "opentalk-controller-shared",
+ "opentalk-controller-settings",
  "opentelemetry",
  "pin-project-lite",
  "thiserror",
@@ -2950,7 +2950,7 @@ dependencies = [
  "diesel-async",
  "kustos",
  "log",
- "opentalk-controller-shared",
+ "opentalk-controller-settings",
  "opentalk-database",
  "opentalk-redis-args",
  "opentalk-test-util",
@@ -2978,7 +2978,7 @@ dependencies = [
  "janus-client",
  "lapin-pool",
  "opentalk-controller-core",
- "opentalk-controller-shared",
+ "opentalk-controller-settings",
  "opentalk-redis-args",
  "opentalk-test-util",
  "opentalk-types",
@@ -3023,7 +3023,7 @@ version = "0.0.0-dev"
 dependencies = [
  "etherpad-client",
  "opentalk-controller-core",
- "opentalk-controller-shared",
+ "opentalk-controller-settings",
  "opentalk-database",
  "opentalk-db-storage",
  "opentalk-redis-args",
@@ -3055,7 +3055,7 @@ dependencies = [
  "fern",
  "kustos",
  "opentalk-controller-core",
- "opentalk-controller-shared",
+ "opentalk-controller-settings",
  "opentalk-database",
  "opentalk-db-storage",
  "opentalk-types",
@@ -3071,7 +3071,7 @@ version = "0.0.0-dev"
 dependencies = [
  "actix-rt",
  "opentalk-controller-core",
- "opentalk-controller-shared",
+ "opentalk-controller-settings",
  "opentalk-redis-args",
  "opentalk-test-util",
  "opentalk-types",
@@ -3110,7 +3110,7 @@ dependencies = [
  "chrono",
  "futures",
  "opentalk-controller-core",
- "opentalk-controller-shared",
+ "opentalk-controller-settings",
  "opentalk-database",
  "opentalk-db-storage",
  "opentalk-redis-args",

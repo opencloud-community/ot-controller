@@ -7,7 +7,7 @@
 use super::AclSubCommand;
 use crate::acl::{check_or_create_kustos_role_policy, maybe_remove_kustos_role_policy};
 use anyhow::{Context, Result};
-use controller_shared::settings::Settings;
+use controller_settings::Settings;
 use database::Db;
 use kustos::prelude::AccessMethod;
 use std::sync::Arc;

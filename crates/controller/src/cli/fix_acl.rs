@@ -8,7 +8,7 @@
 // TODO(r.floren) We might want to change these to batched fixed in the future,
 // depending on the memory footprint
 use anyhow::{Context, Error, Result};
-use controller_shared::settings::Settings;
+use controller_settings::Settings;
 use database::{Db, DbConnection};
 use db_storage::{rooms::Room, users::User};
 use kustos::prelude::*;

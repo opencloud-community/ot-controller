@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y libpq-dev protobuf-compiler
 COPY ./crates/chat/Cargo.toml ./crates/chat/Cargo.toml
 COPY ./crates/community-modules/Cargo.toml ./crates/community-modules/Cargo.toml
 COPY ./crates/controller/Cargo.toml ./crates/controller/Cargo.toml
-COPY ./crates/controller-shared-types/Cargo.toml ./crates/controller-shared-types/Cargo.toml
+COPY ./crates/controller-settings/Cargo.toml ./crates/controller-settings/Cargo.toml
 COPY ./crates/database/Cargo.toml ./crates/database/Cargo.toml
 COPY ./crates/db-storage/Cargo.toml ./crates/db-storage/Cargo.toml
 COPY ./crates/etherpad-client/Cargo.toml ./crates/etherpad-client/Cargo.toml
