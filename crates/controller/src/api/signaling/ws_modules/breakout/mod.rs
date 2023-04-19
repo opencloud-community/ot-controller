@@ -19,7 +19,7 @@ use tokio::time::sleep;
 use types::{
     core::{BreakoutRoomId, ParticipantId, ParticipationKind, RoomId, Timestamp},
     signaling::{
-        breakout::{command::BreakoutCommand, event},
+        breakout::{command::BreakoutCommand, event, BreakoutRoom},
         Role,
     },
 };
@@ -51,12 +51,6 @@ pub struct BreakoutRooms {
     parent: RoomId,
     room: SignalingRoomId,
     breakout_room: Option<BreakoutRoomId>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct BreakoutRoom {
-    id: BreakoutRoomId,
-    name: String,
 }
 
 #[derive(Debug, Serialize)]
