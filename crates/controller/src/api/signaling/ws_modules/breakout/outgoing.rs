@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::{AssocParticipantInOtherRoom, ParticipantInOtherRoom};
+use super::{AssociatedParticipantInOtherRoom, ParticipantInOtherRoom};
 use serde::Serialize;
 use types::signaling::breakout::event::{Error, Started};
 
@@ -14,7 +14,7 @@ pub enum BreakoutEvent {
     Expired,
 
     Joined(ParticipantInOtherRoom),
-    Left(AssocParticipantInOtherRoom),
+    Left(AssociatedParticipantInOtherRoom),
 
     Error(Error),
 }
@@ -110,11 +110,12 @@ mod test {
             "id": "00000000-0000-0000-0000-000000000000",
         });
 
-        let produced = serde_json::to_value(BreakoutEvent::Left(AssocParticipantInOtherRoom {
-            breakout_room: Some(BreakoutRoomId::nil()),
-            id: ParticipantId::nil(),
-        }))
-        .unwrap();
+        let produced =
+            serde_json::to_value(BreakoutEvent::Left(AssociatedParticipantInOtherRoom {
+                breakout_room: Some(BreakoutRoomId::nil()),
+                id: ParticipantId::nil(),
+            }))
+            .unwrap();
 
         assert_eq!(expected, produced);
     }

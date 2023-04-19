@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use super::storage::BreakoutConfig;
-use super::AssocParticipantInOtherRoom;
+use super::AssociatedParticipantInOtherRoom;
 use crate::api::signaling::BreakoutRoomId;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -17,7 +17,7 @@ pub enum Message {
     Stop,
 
     Joined(ParticipantInOtherRoom),
-    Left(AssocParticipantInOtherRoom),
+    Left(AssociatedParticipantInOtherRoom),
 }
 
 #[derive(Debug, Serialize, Deserialize)]

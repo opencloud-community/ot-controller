@@ -29,7 +29,7 @@ pub mod outgoing;
 pub mod storage;
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct AssocParticipantInOtherRoom {
+pub struct AssociatedParticipantInOtherRoom {
     pub breakout_room: Option<BreakoutRoomId>,
     pub id: ParticipantId,
 }
@@ -185,7 +185,7 @@ impl SignalingModule for BreakoutRooms {
                 if config.is_some() || self.breakout_room.is_some() {
                     ctx.exchange_publish(
                         control::exchange::global_room_all_participants(self.room.room_id()),
-                        exchange::Message::Left(AssocParticipantInOtherRoom {
+                        exchange::Message::Left(AssociatedParticipantInOtherRoom {
                             breakout_room: self.breakout_room,
                             id: self.id,
                         }),
