@@ -4,7 +4,7 @@
 
 use serde::Deserialize;
 use std::time::Duration;
-use types::core::ParticipantId;
+use types::signaling::breakout::command::RoomParameter;
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "action", rename_all = "snake_case")]
@@ -18,12 +18,6 @@ pub struct Start {
     pub rooms: Vec<RoomParameter>,
     #[serde(default, with = "time")]
     pub duration: Option<Duration>,
-}
-
-#[derive(Debug, Deserialize, PartialEq, Eq)]
-pub struct RoomParameter {
-    pub name: String,
-    pub assignments: Vec<ParticipantId>,
 }
 
 mod time {
@@ -43,6 +37,7 @@ mod time {
 mod test {
     use super::*;
     use pretty_assertions::assert_eq;
+    use types::core::ParticipantId;
 
     #[test]
     fn breakout_start() {
