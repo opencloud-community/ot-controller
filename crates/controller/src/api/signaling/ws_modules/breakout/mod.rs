@@ -17,9 +17,9 @@ use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
 use tokio::time::sleep;
 use types::{
-    core::{BreakoutRoomId, ParticipantId, ParticipationKind, RoomId, Timestamp},
+    core::{BreakoutRoomId, ParticipantId, RoomId},
     signaling::{
-        breakout::{command::BreakoutCommand, event, BreakoutRoom},
+        breakout::{command::BreakoutCommand, event, BreakoutRoom, ParticipantInOtherRoom},
         Role,
     },
 };
@@ -27,18 +27,6 @@ use types::{
 pub mod exchange;
 pub mod outgoing;
 pub mod storage;
-
-#[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct ParticipantInOtherRoom {
-    pub breakout_room: Option<BreakoutRoomId>,
-    pub id: ParticipantId,
-    pub display_name: String,
-    pub role: Role,
-    pub avatar_url: Option<String>,
-    pub participation_kind: ParticipationKind,
-    pub joined_at: Timestamp,
-    pub left_at: Option<Timestamp>,
-}
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct AssocParticipantInOtherRoom {

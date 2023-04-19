@@ -99,7 +99,6 @@ mod test {
             "avatar_url": "example.org/avatar.png",
             "participation_kind": "user",
             "joined_at": "1970-01-01T00:00:00Z",
-            "left_at": ()
         });
     }
 
