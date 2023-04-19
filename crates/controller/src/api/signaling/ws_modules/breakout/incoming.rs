@@ -3,8 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use serde::Deserialize;
-use std::time::Duration;
-use types::signaling::breakout::command::RoomParameter;
+use types::signaling::breakout::command::Start;
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "action", rename_all = "snake_case")]
@@ -13,31 +12,13 @@ pub enum BreakoutCommand {
     Stop,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct Start {
-    pub rooms: Vec<RoomParameter>,
-    #[serde(default, with = "time")]
-    pub duration: Option<Duration>,
-}
-
-mod time {
-    use serde::{Deserialize, Deserializer};
-    use std::time::Duration;
-
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<Duration>, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let seconds: Option<u64> = Deserialize::deserialize(deserializer)?;
-        Ok(seconds.map(Duration::from_secs))
-    }
-}
-
 #[cfg(test)]
 mod test {
+    use std::time::Duration;
+
     use super::*;
     use pretty_assertions::assert_eq;
-    use types::core::ParticipantId;
+    use types::{core::ParticipantId, signaling::breakout::command::RoomParameter};
 
     #[test]
     fn breakout_start() {
