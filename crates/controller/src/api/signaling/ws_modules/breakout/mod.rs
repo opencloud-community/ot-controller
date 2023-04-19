@@ -367,7 +367,7 @@ impl BreakoutRooms {
                     None
                 };
 
-                ctx.ws_send(BreakoutEvent::Started(outgoing::Started {
+                ctx.ws_send(BreakoutEvent::Started(event::Started {
                     rooms: start.config.rooms,
                     expires,
                     assignment,

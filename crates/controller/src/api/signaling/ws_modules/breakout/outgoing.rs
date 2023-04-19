@@ -2,10 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::{AssocParticipantInOtherRoom, BreakoutRoom, BreakoutRoomId, ParticipantInOtherRoom};
-use chrono::{DateTime, Utc};
+use super::{AssocParticipantInOtherRoom, ParticipantInOtherRoom};
 use serde::Serialize;
-use types::signaling::breakout::event::Error;
+use types::signaling::breakout::event::{Error, Started};
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
 #[serde(tag = "message", rename_all = "snake_case")]
@@ -20,13 +19,6 @@ pub enum BreakoutEvent {
     Error(Error),
 }
 
-#[derive(Debug, Serialize, PartialEq, Eq)]
-pub struct Started {
-    pub rooms: Vec<BreakoutRoom>,
-    pub expires: Option<DateTime<Utc>>,
-    pub assignment: Option<BreakoutRoomId>,
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -34,8 +26,8 @@ mod test {
     use serde_json::json;
     use test_util::assert_eq_json;
     use types::{
-        core::{ParticipantId, ParticipationKind, Timestamp},
-        signaling::Role,
+        core::{BreakoutRoomId, ParticipantId, ParticipationKind, Timestamp},
+        signaling::{breakout::BreakoutRoom, Role},
     };
 
     #[test]
