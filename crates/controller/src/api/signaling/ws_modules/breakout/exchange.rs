@@ -3,12 +3,14 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use super::storage::BreakoutConfig;
-use super::AssociatedParticipantInOtherRoom;
 use crate::api::signaling::BreakoutRoomId;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::SystemTime;
-use types::{core::ParticipantId, signaling::breakout::ParticipantInOtherRoom};
+use types::{
+    core::ParticipantId,
+    signaling::breakout::{AssociatedParticipantInOtherRoom, ParticipantInOtherRoom},
+};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

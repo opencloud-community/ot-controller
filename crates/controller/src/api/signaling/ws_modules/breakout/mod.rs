@@ -12,14 +12,17 @@ use actix_http::ws::CloseCode;
 use anyhow::{bail, Result};
 use chrono::{DateTime, Utc};
 use futures::FutureExt;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
 use tokio::time::sleep;
 use types::{
     core::{BreakoutRoomId, ParticipantId, RoomId},
     signaling::{
-        breakout::{command::BreakoutCommand, event, BreakoutRoom, ParticipantInOtherRoom},
+        breakout::{
+            command::BreakoutCommand, event, AssociatedParticipantInOtherRoom, BreakoutRoom,
+            ParticipantInOtherRoom,
+        },
         Role,
     },
 };
@@ -27,12 +30,6 @@ use types::{
 pub mod exchange;
 pub mod outgoing;
 pub mod storage;
-
-#[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct AssociatedParticipantInOtherRoom {
-    pub breakout_room: Option<BreakoutRoomId>,
-    pub id: ParticipantId,
-}
 
 pub struct BreakoutRooms {
     id: ParticipantId,
