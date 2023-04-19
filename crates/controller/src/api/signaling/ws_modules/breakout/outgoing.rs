@@ -5,6 +5,7 @@
 use super::{AssocParticipantInOtherRoom, BreakoutRoom, BreakoutRoomId, ParticipantInOtherRoom};
 use chrono::{DateTime, Utc};
 use serde::Serialize;
+use types::signaling::breakout::event::Error;
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
 #[serde(tag = "message", rename_all = "snake_case")]
@@ -24,13 +25,6 @@ pub struct Started {
     pub rooms: Vec<BreakoutRoom>,
     pub expires: Option<DateTime<Utc>>,
     pub assignment: Option<BreakoutRoomId>,
-}
-
-#[derive(Debug, Serialize, PartialEq, Eq)]
-#[serde(tag = "error", rename_all = "snake_case")]
-pub enum Error {
-    Inactive,
-    InsufficientPermissions,
 }
 
 #[cfg(test)]

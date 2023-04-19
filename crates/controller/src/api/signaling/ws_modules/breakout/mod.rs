@@ -18,7 +18,10 @@ use std::time::{Duration, SystemTime};
 use tokio::time::sleep;
 use types::{
     core::{BreakoutRoomId, ParticipantId, ParticipationKind, RoomId, Timestamp},
-    signaling::{breakout::command::BreakoutCommand, Role},
+    signaling::{
+        breakout::{command::BreakoutCommand, event},
+        Role,
+    },
 };
 
 pub mod exchange;
@@ -294,9 +297,7 @@ impl BreakoutRooms {
         msg: BreakoutCommand,
     ) -> Result<()> {
         if ctx.role() != Role::Moderator {
-            ctx.ws_send(BreakoutEvent::Error(
-                outgoing::Error::InsufficientPermissions,
-            ));
+            ctx.ws_send(BreakoutEvent::Error(event::Error::InsufficientPermissions));
             return Ok(());
         }
 
@@ -349,7 +350,7 @@ impl BreakoutRooms {
                         exchange::Message::Stop,
                     );
                 } else {
-                    ctx.ws_send(BreakoutEvent::Error(outgoing::Error::Inactive));
+                    ctx.ws_send(BreakoutEvent::Error(event::Error::Inactive));
                 }
             }
         }

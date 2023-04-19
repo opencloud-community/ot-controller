@@ -5,3 +5,4 @@
 //! Signaling messages for the `breakout` namespace
 
 pub mod command;
+pub mod event;
