@@ -8,7 +8,7 @@ use types::core::ParticipantId;
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "action", rename_all = "snake_case")]
-pub enum Message {
+pub enum BreakoutCommand {
     Start(Start),
     Stop,
 }
@@ -57,10 +57,10 @@ mod test {
         }
         "#;
 
-        let msg: Message = serde_json::from_str(json).unwrap();
+        let msg: BreakoutCommand = serde_json::from_str(json).unwrap();
 
         match msg {
-            Message::Start(Start { rooms, duration }) => {
+            BreakoutCommand::Start(Start { rooms, duration }) => {
                 assert_eq!(
                     rooms,
                     vec![
@@ -76,7 +76,7 @@ mod test {
                 );
                 assert_eq!(duration, Some(Duration::from_secs(123454321)));
             }
-            Message::Stop => panic!(),
+            BreakoutCommand::Stop => panic!(),
         }
     }
 }

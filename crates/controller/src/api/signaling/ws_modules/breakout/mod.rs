@@ -4,6 +4,7 @@
 
 //! Breakout room module
 
+use self::incoming::BreakoutCommand;
 use self::storage::BreakoutConfig;
 use crate::api::signaling::SignalingRoomId;
 use crate::prelude::*;
@@ -74,7 +75,7 @@ impl SignalingModule for BreakoutRooms {
     const NAMESPACE: &'static str = "breakout";
 
     type Params = ();
-    type Incoming = incoming::Message;
+    type Incoming = BreakoutCommand;
     type Outgoing = outgoing::Message;
     type ExchangeMessage = exchange::Message;
     type ExtEvent = TimerEvent;
@@ -291,7 +292,7 @@ impl BreakoutRooms {
     async fn on_ws_msg(
         &mut self,
         mut ctx: ModuleContext<'_, Self>,
-        msg: incoming::Message,
+        msg: BreakoutCommand,
     ) -> Result<()> {
         if ctx.role() != Role::Moderator {
             ctx.ws_send(outgoing::Message::Error(
@@ -301,7 +302,7 @@ impl BreakoutRooms {
         }
 
         match msg {
-            incoming::Message::Start(start) => {
+            BreakoutCommand::Start(start) => {
                 if start.rooms.is_empty() {
                     // Discard message, case should be handled by frontend
                     return Ok(());
@@ -342,7 +343,7 @@ impl BreakoutRooms {
                     }),
                 );
             }
-            incoming::Message::Stop => {
+            BreakoutCommand::Stop => {
                 if storage::del_config(ctx.redis_conn(), self.parent).await? {
                     ctx.exchange_publish(
                         control::exchange::global_room_all_participants(self.parent),
