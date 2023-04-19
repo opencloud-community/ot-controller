@@ -5,6 +5,7 @@
 //! Breakout room module
 
 use self::incoming::BreakoutCommand;
+use self::outgoing::BreakoutEvent;
 use self::storage::BreakoutConfig;
 use crate::api::signaling::SignalingRoomId;
 use crate::prelude::*;
@@ -76,7 +77,7 @@ impl SignalingModule for BreakoutRooms {
 
     type Params = ();
     type Incoming = BreakoutCommand;
-    type Outgoing = outgoing::Message;
+    type Outgoing = BreakoutEvent;
     type ExchangeMessage = exchange::Message;
     type ExtEvent = TimerEvent;
     type FrontendData = FrontendData;
@@ -218,7 +219,7 @@ impl SignalingModule for BreakoutRooms {
             Event::WsMessage(msg) => self.on_ws_msg(ctx, msg).await,
             Event::Exchange(msg) => self.on_exchange_msg(ctx, msg).await,
             Event::Ext(TimerEvent::RoomExpired) => {
-                ctx.ws_send(outgoing::Message::Expired);
+                ctx.ws_send(BreakoutEvent::Expired);
 
                 if self.breakout_room.is_some() {
                     // Create timer to force leave the room after 5min
@@ -295,7 +296,7 @@ impl BreakoutRooms {
         msg: BreakoutCommand,
     ) -> Result<()> {
         if ctx.role() != Role::Moderator {
-            ctx.ws_send(outgoing::Message::Error(
+            ctx.ws_send(BreakoutEvent::Error(
                 outgoing::Error::InsufficientPermissions,
             ));
             return Ok(());
@@ -350,7 +351,7 @@ impl BreakoutRooms {
                         exchange::Message::Stop,
                     );
                 } else {
-                    ctx.ws_send(outgoing::Message::Error(outgoing::Error::Inactive));
+                    ctx.ws_send(BreakoutEvent::Error(outgoing::Error::Inactive));
                 }
             }
         }
@@ -373,14 +374,14 @@ impl BreakoutRooms {
                     None
                 };
 
-                ctx.ws_send(outgoing::Message::Started(outgoing::Started {
+                ctx.ws_send(BreakoutEvent::Started(outgoing::Started {
                     rooms: start.config.rooms,
                     expires,
                     assignment,
                 }));
             }
             exchange::Message::Stop => {
-                ctx.ws_send(outgoing::Message::Stopped);
+                ctx.ws_send(BreakoutEvent::Stopped);
 
                 if self.breakout_room.is_some() {
                     // Create timer to force leave the room after 5min
@@ -394,14 +395,14 @@ impl BreakoutRooms {
                     return Ok(());
                 }
 
-                ctx.ws_send(outgoing::Message::Joined(participant))
+                ctx.ws_send(BreakoutEvent::Joined(participant))
             }
             exchange::Message::Left(assoc_participant) => {
                 if self.breakout_room == assoc_participant.breakout_room {
                     return Ok(());
                 }
 
-                ctx.ws_send(outgoing::Message::Left(assoc_participant))
+                ctx.ws_send(BreakoutEvent::Left(assoc_participant))
             }
         }
 
