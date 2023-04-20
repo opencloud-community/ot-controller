@@ -1,4 +1,4 @@
-# Spacedeck
+# Whiteboard
 
 ## Terminology
 
@@ -6,7 +6,7 @@
 
 ## Overview
 
-The spacedeck module allows participants to collaboratively edit a whiteboard (space).
+The whiteboard module allows participants to collaboratively edit a whiteboard (space).
 
 A moderator has to initialize the space for a room with the [`initialize`](#initialize) action.
 Once initialized, every participant in a room will get an access URL to the created space via the [`space_url`](#spaceurl) message.
@@ -16,7 +16,7 @@ The access URL to the PDF is sent to every participant in the room.
 
 ## Joining the room
 
-When joining a room, the `join_success` message contains the current status of the spacedeck module.
+When joining a room, the `join_success` message contains the current status of the whiteboard module.
 
 The module data has the following structure:
 
@@ -28,7 +28,7 @@ The module data has the following structure:
 ```json
 {
     "status": "initialized",
-    "url": "https://spacedeck.opentalk.eu/s/0c5a6c7-00000000-0000-0000-0000-000000000000"
+    "url": "https://whiteboard.opentalk.eu/s/0c5a6c7-00000000-0000-0000-0000-000000000000"
 }
 ```
 
@@ -119,7 +119,7 @@ Is received by every participant when a moderator initialized the space.
 ```json
 {
     "message": "space_url",
-    "url": "https://spacedeck.opentalk.eu/s/0c5a6c7-00000000-0000-0000-0000-000000000000"
+    "url": "https://whiteboard.opentalk.eu/s/0c5a6c7-00000000-0000-0000-0000-000000000000"
 }
 ```
 
@@ -143,7 +143,7 @@ Is received by every participant when a moderator generates a PDF document for t
 ```json
 {
     "message": "generate_pdf",
-    "url": "https://spacedeck.opentalk.eu/<path-to-pdf>"
+    "url": "https://whiteboard.opentalk.eu/<path-to-pdf>"
 }
 ```
 
@@ -155,13 +155,13 @@ An error has occurred while issuing a command.
 
 #### Fields
 
-| Field                     | Type       | Required | Description                                                                             |
-| ------------------------- | ---------- | -------- | --------------------------------------------------------------------------------------- |
-| `message`                 | `enum`     | yes      | Is `"error"`.                                                                           |
-| `InsufficientPermissions` | `[string]` | yes      | The requesting user has insufficient permissions for the operation                      |
-| `CurrentlyInitializing`   | `[string]` | yes      | The spacedeck initialization was already issued and spacedeck is currently initializing |
-| `InitializationFailed`    | `[string]` | yes      | The spacedeck initialization failed                                                     |
-| `AlreadyInitialized`      | `[string]` | yes      | Spacedeck is already initialized and accessible                                         |
+| Field                     | Type       | Required | Description                                                                               |
+| ------------------------- | ---------- | -------- | ----------------------------------------------------------------------------------------- |
+| `message`                 | `enum`     | yes      | Is `"error"`.                                                                             |
+| `InsufficientPermissions` | `[string]` | yes      | The requesting user has insufficient permissions for the operation                        |
+| `CurrentlyInitializing`   | `[string]` | yes      | The whiteboard initialization was already issued and whiteboard is currently initializing |
+| `InitializationFailed`    | `[string]` | yes      | The whiteboard initialization failed                                                      |
+| `AlreadyInitialized`      | `[string]` | yes      | The whiteboard is already initialized and accessible                                           |
 
 #### Example
 
