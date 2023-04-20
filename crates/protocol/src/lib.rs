@@ -19,7 +19,7 @@ use outgoing::{AccessUrl, PdfAsset};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use types::core::ParticipantId;
+use types::{core::ParticipantId, signaling::Role};
 
 pub mod exchange;
 pub mod incoming;

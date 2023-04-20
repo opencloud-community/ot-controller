@@ -24,7 +24,7 @@ use std::sync::Arc;
 use tokio_stream::Stream;
 use types::{
     core::{BreakoutRoomId, ParticipantId, Timestamp},
-    signaling::{control::state::ControlState, NamespacedCommand, NamespacedEvent},
+    signaling::{control::state::ControlState, NamespacedCommand, NamespacedEvent, Role},
 };
 
 mod actor;

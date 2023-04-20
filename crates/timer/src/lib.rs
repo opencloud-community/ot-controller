@@ -14,7 +14,7 @@ use controller::prelude::tokio::time::sleep;
 use controller::prelude::uuid::Uuid;
 use controller::prelude::Event;
 use controller::prelude::{
-    async_trait, control, InitContext, ModuleContext, Role, SignalingModule, SignalingRoomId,
+    async_trait, control, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
 };
 use outgoing::StopKind;
 use redis_args::ToRedisArgs;
@@ -24,7 +24,10 @@ use std::fmt;
 use std::str::from_utf8;
 use std::str::FromStr;
 use storage::ready_status::ReadyStatus;
-use types::core::{ParticipantId, Timestamp};
+use types::{
+    core::{ParticipantId, Timestamp},
+    signaling::Role,
+};
 
 pub mod exchange;
 pub mod incoming;

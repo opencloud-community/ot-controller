@@ -5,11 +5,11 @@
 //! Control Module Stub
 //!
 //! Actual control 'module' code can be found inside `crate::api::signaling::ws::runner`
-use crate::prelude::*;
+use crate::{api::signaling::SignalingRoomId, prelude::*};
 use anyhow::Result;
 use types::{
     core::{ParticipantId, ParticipationKind, Timestamp},
-    signaling::control::state::ControlState,
+    signaling::{control::state::ControlState, Role},
 };
 
 pub mod exchange;

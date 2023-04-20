@@ -22,7 +22,10 @@ use std::fmt;
 use std::str::{from_utf8, FromStr};
 use std::sync::Arc;
 use storage::StoredMessage;
-use types::core::{GroupId, GroupName, ParticipantId, Timestamp, UserId};
+use types::{
+    core::{GroupId, GroupName, ParticipantId, Timestamp, UserId},
+    signaling::Role,
+};
 
 pub mod incoming;
 pub mod outgoing;

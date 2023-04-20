@@ -22,7 +22,6 @@ pub mod prelude {
     };
     pub use super::ws_modules::{breakout, control, moderation, recording};
     pub use super::SignalingRoomId;
-    pub use types::signaling::Role;
 }
 
 /// The complete room id

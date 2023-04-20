@@ -9,8 +9,9 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
     core::{ParticipantId, RoomId, UserId},
-    signaling::control::{
-        state::ControlState, AssociatedParticipant, Participant, WaitingRoomState,
+    signaling::{
+        control::{state::ControlState, AssociatedParticipant, Participant, WaitingRoomState},
+        Role,
     },
 };
 

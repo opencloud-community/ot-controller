@@ -11,9 +11,12 @@ use serial_test::serial;
 use test_util::{TestContext, ROOM_ID, USER_1, USER_2};
 use types::{
     core::{GroupName, Timestamp},
-    signaling::control::{
-        event::{ControlEvent, JoinSuccess},
-        AssociatedParticipant, Participant,
+    signaling::{
+        control::{
+            event::{ControlEvent, JoinSuccess},
+            AssociatedParticipant, Participant,
+        },
+        Role,
     },
 };
 

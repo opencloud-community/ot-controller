@@ -8,7 +8,7 @@ use anyhow::{Context, Result};
 use lapin_pool::{RabbitMqChannel, RabbitMqPool};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use types::core::ParticipantId;
+use types::{core::ParticipantId, signaling::Role};
 
 mod exchange;
 mod incoming;
