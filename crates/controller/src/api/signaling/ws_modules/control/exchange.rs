@@ -37,6 +37,8 @@ pub enum Message {
     ResetRaisedHands {
         issued_by: ParticipantId,
     },
+
+    RoomDeleted,
 }
 
 // ==== Current room routing-keys

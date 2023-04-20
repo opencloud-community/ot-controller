@@ -51,7 +51,7 @@ See [InWaitingRoom](moderation#inwaitingroom)
 
 ### Raise Hand
 
-Notify other users that your hand is raised.
+Notify other participants that a participant's hand is raised.
 
 #### Fields
 
@@ -71,7 +71,7 @@ Notify other users that your hand is raised.
 
 ### Lower Hand
 
-Notify other users that your hand is no longer raised.
+Notify other participants that a participant's hand is no longer raised.
 
 #### Fields
 
@@ -325,7 +325,7 @@ Received when the quota's time limit has elapsed.
 
 ### RoleUpdated
 
-Received when a moderator assigned you a new role.
+Received when a moderator assigned a new role to a participant.
 
 #### Fields
 
@@ -342,6 +342,16 @@ Received when a moderator assigned you a new role.
     "new_role": "moderator"
 }
 ```
+
+### RoomDeleted
+
+Received by a participant if removed from the room because the room has been deleted. Will be the last message before server-side websocket disconnection.
+
+#### Fields
+
+| Field     | Type   | Always | Description         |
+| ----------| ------ | ------ | ------------------- |
+| `message` | `enum` | yes    | Is `"room_deleted"` |
 
 ### Error
 

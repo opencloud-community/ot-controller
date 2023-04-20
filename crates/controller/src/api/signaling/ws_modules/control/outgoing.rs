@@ -27,6 +27,8 @@ pub enum Message {
         new_role: Role,
     },
 
+    RoomDeleted,
+
     Error(Error),
 }
 
