@@ -19,6 +19,60 @@ sequenceDiagram
     Server->>Joinee: JoinSuccess
 ```
 
+## Joining the room
+
+### JoinSuccess
+
+When joining a room, the `join_success` control event contains the module-specific fields decribed below.
+
+#### Fields
+
+| Field                       | Type            | Always | Description                                                                           |
+| --------------------------- | --------------- | ------ | ------------------------------------------------------------------------------------- |
+| `raise_hands_enabled`       | `bool`          | yes    | If raise hands feature is enabled                                                     |
+| `waiting_room_enabled`      | `bool`          | no     | If waiting room is enabled                                                            |
+| `waiting_room_participants` | `Participant[]` | no     | A list of participants in the waiting room; see [Participant](control.md#participant) |
+
+##### Example
+
+For a moderator, the message would look like:
+
+```json
+{
+    "waiting_room_enabled": true,
+    "waiting_room_participants": [
+        {
+            "id": "00000000-0000-0000-0000-000000000000",
+            "control": {
+                ...
+            },
+            ...
+        },
+        {
+            "id": "00000000-0000-0000-0000-000000000001",
+            "control": {
+                ...
+            },
+            ...
+        },
+        ...
+    ],
+    "raise_hands_enabled": true
+}
+```
+
+For a non-moderator participant, the message would look like:
+
+```json
+{
+    "raise_hands_enabled": true
+}
+```
+
+### Joined
+
+When joining a room, the `joined` control event sent to all other participants does not contain module-specific data.
+
 ## Commands
 
 ### Kick

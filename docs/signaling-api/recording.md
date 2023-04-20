@@ -6,7 +6,11 @@ The recording module allows for the recording of a room
 
 ## Joining the room
 
-When joining a room, the `join_success` message contains the recording status of the room.
+### JoinSuccess
+
+When joining a room with a timer running, the `join_success` message contains the recording status of the room.
+
+#### Fields
 
 The module data has the following structure:
 
@@ -17,6 +21,34 @@ The module data has the following structure:
 
 The participant list contains the recording-consent status in the `recording`-module namespace under the variable
 `recording_consent`.
+
+##### Example
+
+```json
+{
+    "status": "recording",
+    "recording_id": "00000000-0000-0000-0000-000000000000"
+}
+```
+
+### Joined
+
+When joining a room, the `joined` control event sent to all other participants contains the module-specific fields decribed below.
+
+#### Fields
+
+| Field                | Type   | Always | Description                                                  |
+| -------------------- | ------ | ------ | ------------------------------------------------------------ |
+| `consents_recording` | `bool` | yes    | Whether the joining participant consents to recording or not |
+
+##### Example
+
+```json
+    ...
+    "consents_recording": true
+    ...
+
+```
 
 ## Commands
 

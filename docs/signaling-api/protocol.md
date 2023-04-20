@@ -1,5 +1,19 @@
 # Protocol
 
+## Joining the room
+
+### JoinSuccess
+
+The `join_success` control event contains the module-specific fields decribed below.
+
+#### Fields
+
+The `protocol` module does not provide data in the `join_success` message.
+
+### Joined
+
+When joining a room, the `joined` control event sent to all other participants does not contain module-specific data.
+
 ---
 
 ## Commands

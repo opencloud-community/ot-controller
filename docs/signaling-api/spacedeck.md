@@ -25,6 +25,17 @@ The module data has the following structure:
 | `status` | `enum`   | yes                              | Either `"not_initialized"`, `"initializing"`, `"initialized"` |
 | `url`    | `string` | when `status` is `"initialized"` | The access url to the space of the room                       |
 
+```json
+{
+    "status": "initialized",
+    "url": "https://spacedeck.opentalk.eu/s/0c5a6c7-00000000-0000-0000-0000-000000000000"
+}
+```
+
+### Joined
+
+When joining a room, the `joined` control event sent to all other participants does not contain module-specific data.
+
 ## Commands
 
 ### Overview

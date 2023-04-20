@@ -1,5 +1,43 @@
 # Poll
 
+## Joining the room
+
+### JoinSuccess
+
+When joining a room with a poll running, the `join_success` control event contains the module-specific fields decribed below.
+
+#### Fields
+
+| Field      | Type       | Always | Description                                              |
+| ---------- | ---------- | ------ | -------------------------------------------------------- |
+| `id`       | `string`   | yes    | Id of the poll                                           |
+| `topic`    | `string`   | yes    | Topic of the poll                                        |
+| `live`     | `bool`     | yes    | The standings of the poll will be reported live          |
+| `choices`  | `Choice[]` | yes    | The available choices to vote on, see [Choice](#choice)  |
+| `started`  | `string`   | yes    | Timestamp for when the poll was started                  |
+| `duration` | `int`      | yes    | Duration of the poll in seconds                          |
+
+##### Example
+
+```json
+{
+    "id": "00000000-0000-0000-0000-000000000000",
+    "topic": "Yes or No?",
+    "live": true,
+    "choices": [
+        { "id": 0, "content": "first choice" },
+        { "id": 1, "content": "second choice" },
+        { "id": 2, "content": "third choice" }
+    ],
+    "started": "2022-10-22T11:22:33Z",
+    "duration": 60000
+}
+```
+
+### Joined
+
+When joining a room, the `joined` control event sent to all other participants does not contain module-specific data.
+
 ---
 
 ## Commands
@@ -108,21 +146,14 @@ A poll has been started.
 
 #### Fields
 
-| Field      | Type       | Always | Description                                     |
-| ---------- | ---------- | ------ | ----------------------------------------------- |
-| `message`  | `enum`     | yes    | Is `"started"`                                  |
-| `id`       | `string`   | yes    | Id of the poll                                  |
-| `topic`    | `string`   | yes    | Topic of the poll                               |
-| `live`     | `bool`     | yes    | The standings of the poll will be reported live |
-| `choices`  | `Choice[]` | yes    | The available choices to vote on                |
-| `duration` | `int`      | yes    | Duration of the poll in seconds                 |
-
-__`Choice` Fields:__
-
-| Field     | Type     | Always | Description                       |
-| --------- | -------- | ------ | --------------------------------- |
-| `id`      | `int`    | yes    | ID of the choice                  |
-| `content` | `string` | yes    | Content/Description of the choice |
+| Field      | Type       | Always | Description                                              |
+| ---------- | ---------- | ------ | -------------------------------------------------------- |
+| `message`  | `enum`     | yes    | Is `"started"`                                           |
+| `id`       | `string`   | yes    | Id of the poll                                           |
+| `topic`    | `string`   | yes    | Topic of the poll                                        |
+| `live`     | `bool`     | yes    | The standings of the poll will be reported live          |
+| `choices`  | `Choice[]` | yes    | The available choices to vote on, see [Choice](#choice)  |
+| `duration` | `int`      | yes    | Duration of the poll in seconds                          |
 
 ##### Example
 
@@ -233,3 +264,16 @@ An error has occurred when issuing a command
 | `invalid_duration`           | Invalid poll duration (must be greater than 2 seconds and shorter than 1 hour)                                |
 | `voted_already`              | Tried to vote twice on the same poll                                                                          |
 | `still_running`              | Tried to start a poll while a poll is still running                                                           |
+
+## Shared Types
+
+### Choice
+
+The description of a choice that can be voted on.
+
+#### Fields
+
+| Field     | Type     | Always | Description                       |
+| --------- | -------- | ------ | --------------------------------- |
+| `id`      | `int`    | yes    | ID of the choice                  |
+| `content` | `string` | yes    | Content/Description of the choice |
