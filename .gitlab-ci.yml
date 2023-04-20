@@ -202,10 +202,10 @@ build:
     VERGEN_GIT_SHA: $CI_COMMIT_SHA
     VERGEN_GIT_BRANCH: $CI_COMMIT_REF_NAME
   rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-    - if: $CI_COMMIT_TAG != null
     - if: $CI_PIPELINE_SOURCE == "pipeline"
       when: never
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG != null
   stage: build
   artifacts:
     paths:
@@ -218,9 +218,9 @@ build:
 
 package:controller-container-dev:
   rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_PIPELINE_SOURCE == "pipeline"
       when: never
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   stage: package
   image:
     name: gcr.io/kaniko-project/executor:debug
@@ -242,9 +242,9 @@ package:controller-container-dev:
 trigger-docs:
   stage: trigger
   rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_NAME !~ /^.*canary$/
     - if: $CI_PIPELINE_SOURCE == "pipeline"
       when: never
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_NAME !~ /^.*canary$/
   trigger:
     project: opentalk/backend/docs
 
