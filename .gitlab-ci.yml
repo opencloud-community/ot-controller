@@ -204,6 +204,8 @@ build:
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_COMMIT_TAG != null
+    - if: $CI_PIPELINE_SOURCE == "pipeline"
+      when: never
   stage: build
   artifacts:
     paths:
@@ -217,6 +219,8 @@ build:
 package:controller-container-dev:
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "pipeline"
+      when: never
   stage: package
   image:
     name: gcr.io/kaniko-project/executor:debug
@@ -239,6 +243,8 @@ trigger-docs:
   stage: trigger
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_NAME !~ /^.*canary$/
+    - if: $CI_PIPELINE_SOURCE == "pipeline"
+      when: never
   trigger:
     project: opentalk/backend/docs
 
