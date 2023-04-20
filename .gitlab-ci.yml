@@ -89,6 +89,9 @@ lint:dependency_check:
   image: git.opentalk.dev:5050/opentalk/backend/cargo-deny:latest
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+      changes:
+        - Cargo.lock
+        - deny.toml
     - if: $CI_PIPELINE_SOURCE == 'schedule'
   stage: lint
   script: cargo-deny --workspace check
