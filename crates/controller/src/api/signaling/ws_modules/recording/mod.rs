@@ -39,7 +39,7 @@ pub struct RecordingId(ParticipantId);
 pub struct RecordingState(Option<storage::RecordingState>);
 
 #[derive(Debug, Serialize)]
-pub struct PeerFrontendData {
+pub struct RecordingPeerState {
     consents_recording: bool,
 }
 
@@ -61,7 +61,7 @@ impl SignalingModule for Recording {
     type ExtEvent = ();
 
     type FrontendData = RecordingState;
-    type PeerFrontendData = PeerFrontendData;
+    type PeerFrontendData = RecordingPeerState;
 
     async fn init(
         ctx: InitContext<'_, Self>,
@@ -121,7 +121,7 @@ impl SignalingModule for Recording {
                     if let Some(consent) = consent {
                         participants.insert(
                             id,
-                            Some(PeerFrontendData {
+                            Some(RecordingPeerState {
                                 consents_recording: consent,
                             }),
                         );
@@ -149,7 +149,7 @@ impl SignalingModule for Recording {
                 .await?;
 
                 if let Some(consent) = consent {
-                    *data = Some(PeerFrontendData {
+                    *data = Some(RecordingPeerState {
                         consents_recording: consent,
                     })
                 }
