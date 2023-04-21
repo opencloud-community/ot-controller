@@ -5,7 +5,10 @@
 use serde::Serialize;
 use types::{
     core::ParticipantId,
-    signaling::control::{AssociatedParticipant, Participant},
+    signaling::{
+        control::{AssociatedParticipant, Participant},
+        moderation::event::Error,
+    },
 };
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
@@ -33,12 +36,6 @@ pub enum ModerationEvent {
     Error(Error),
 
     RaisedHandResetByModerator { issued_by: ParticipantId },
-}
-
-#[derive(Debug, Serialize, PartialEq, Eq)]
-#[serde(tag = "error", rename_all = "snake_case")]
-pub enum Error {
-    CannotBanGuest,
 }
 
 #[cfg(test)]

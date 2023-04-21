@@ -11,6 +11,7 @@ use types::{
     core::{ParticipantId, RoomId, UserId},
     signaling::{
         control::{state::ControlState, AssociatedParticipant, Participant, WaitingRoomState},
+        moderation::event::Error,
         Role,
     },
 };
@@ -205,7 +206,8 @@ impl SignalingModule for ModerationModule {
                 if let Some(user_id) = user_id {
                     storage::ban_user(ctx.redis_conn(), self.room.room_id(), user_id).await?;
                 } else {
-                    ctx.ws_send(ModerationEvent::Error(outgoing::Error::CannotBanGuest));
+                    ctx.ws_send(ModerationEvent::Error(Error::CannotBanGuest));
+
                     return Ok(());
                 }
 
