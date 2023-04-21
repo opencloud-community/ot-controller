@@ -11,7 +11,10 @@ use std::sync::Arc;
 use types::{
     core::ParticipantId,
     signaling::{
-        recording::{event::Error, RecordingId},
+        recording::{
+            event::{Error, Stopped},
+            RecordingId,
+        },
         Role,
     },
 };
@@ -228,7 +231,7 @@ impl SignalingModule for Recording {
                 }
                 exchange::Message::Stopped(recording_id) => {
                     if !self.i_am_the_recorder {
-                        ctx.ws_send(RecordingEvent::Stopped(outgoing::Stopped { recording_id }));
+                        ctx.ws_send(RecordingEvent::Stopped(Stopped { recording_id }));
                     }
                 }
             },

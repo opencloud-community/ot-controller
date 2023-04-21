@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use serde::Serialize;
-use types::signaling::recording::event::Error;
+use types::signaling::recording::event::{Error, Stopped};
 
 use super::RecordingId;
 
@@ -17,10 +17,5 @@ pub enum RecordingEvent {
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
 pub struct Started {
-    pub recording_id: RecordingId,
-}
-
-#[derive(Debug, Serialize, PartialEq, Eq)]
-pub struct Stopped {
     pub recording_id: RecordingId,
 }

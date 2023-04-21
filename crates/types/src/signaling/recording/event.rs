@@ -6,6 +6,16 @@
 
 use crate::imports::*;
 
+use super::RecordingId;
+
+/// Data for the `stopped` recording event
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct Stopped {
+    /// The id of the recording that was stopped
+    pub recording_id: RecordingId,
+}
+
 /// Error from the `recording` module namespace
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
