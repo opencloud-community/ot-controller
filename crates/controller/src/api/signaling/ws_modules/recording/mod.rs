@@ -6,7 +6,6 @@ use crate::api::signaling::prelude::*;
 use crate::api::Participant;
 use anyhow::{Context, Result};
 use lapin_pool::{RabbitMqChannel, RabbitMqPool};
-use serde::Serialize;
 use std::sync::Arc;
 use types::{
     core::ParticipantId,
@@ -14,6 +13,7 @@ use types::{
         recording::{
             command::{self, RecordingCommand},
             event::{Error, RecordingEvent, Started, Stopped},
+            peer_state::RecordingPeerState,
             state::RecordingState,
             RecordingId, RecordingStatus,
         },
@@ -33,11 +33,6 @@ pub struct Recording {
 
     /// RabbitMQ channel used to send the recording start command over
     rabbitmq_channel: RabbitMqChannel,
-}
-
-#[derive(Debug, Serialize)]
-pub struct RecordingPeerState {
-    consents_recording: bool,
 }
 
 #[derive(Clone)]

@@ -9,6 +9,7 @@ mod recording_status;
 
 pub mod command;
 pub mod event;
+pub mod peer_state;
 pub mod state;
 
 pub use recording_id::RecordingId;
