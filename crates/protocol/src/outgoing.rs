@@ -63,7 +63,7 @@ mod test {
                     .into(),
         });
 
-        let actual = serde_json::to_value(&message).unwrap();
+        let actual = serde_json::to_value(message).unwrap();
 
         assert_eq!(expected, actual);
     }
@@ -80,7 +80,7 @@ mod test {
                 .into(),
         });
 
-        let actual = serde_json::to_value(&message).unwrap();
+        let actual = serde_json::to_value(message).unwrap();
 
         assert_eq!(expected, actual);
     }
@@ -91,7 +91,7 @@ mod test {
 
         let message = Message::Error(Error::InsufficientPermissions);
 
-        let actual = serde_json::to_value(&message).unwrap();
+        let actual = serde_json::to_value(message).unwrap();
 
         assert_eq!(expected, actual);
     }
@@ -102,7 +102,7 @@ mod test {
 
         let message = Message::Error(Error::FailedInitialization);
 
-        let actual = serde_json::to_value(&message).unwrap();
+        let actual = serde_json::to_value(message).unwrap();
 
         assert_eq!(expected, actual);
     }
@@ -113,7 +113,7 @@ mod test {
 
         let message = Message::Error(Error::CurrentlyInitializing);
 
-        let actual = serde_json::to_value(&message).unwrap();
+        let actual = serde_json::to_value(message).unwrap();
 
         assert_eq!(expected, actual);
     }
@@ -124,7 +124,7 @@ mod test {
 
         let message = Message::Error(Error::InvalidParticipantSelection);
 
-        let actual = serde_json::to_value(&message).unwrap();
+        let actual = serde_json::to_value(message).unwrap();
 
         assert_eq!(expected, actual);
     }

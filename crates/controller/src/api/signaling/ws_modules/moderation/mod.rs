@@ -429,7 +429,7 @@ mod tests {
     #[test]
     fn frontend_data_for_moderator() {
         assert_eq!(
-            serde_json::to_value(&ModerationModuleFrontendData {
+            serde_json::to_value(ModerationModuleFrontendData {
                 moderator_data: Some(ModeratorFrontendData {
                     waiting_room_enabled: true,
                     waiting_room_participants: vec![Participant {
@@ -455,7 +455,7 @@ mod tests {
     #[test]
     fn frontend_data_for_user() {
         assert_eq!(
-            serde_json::to_value(&ModerationModuleFrontendData {
+            serde_json::to_value(ModerationModuleFrontendData {
                 moderator_data: None,
                 raise_hands_enabled: false
             })

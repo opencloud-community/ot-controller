@@ -56,7 +56,7 @@ mod test {
             "assignment": "00000000-0000-0000-0000-000000000000",
         });
 
-        let produced = serde_json::to_value(&Message::Started(Started {
+        let produced = serde_json::to_value(Message::Started(Started {
             rooms: vec![
                 BreakoutRoom {
                     id: BreakoutRoomId::from_u128(0),
@@ -79,7 +79,7 @@ mod test {
     fn stopped() {
         let expected = json!({"message": "stopped"});
 
-        let produced = serde_json::to_value(&Message::Stopped).unwrap();
+        let produced = serde_json::to_value(Message::Stopped).unwrap();
 
         assert_eq!(expected, produced);
     }
@@ -88,7 +88,7 @@ mod test {
     fn expired() {
         let expected = json!({"message": "expired"});
 
-        let produced = serde_json::to_value(&Message::Expired).unwrap();
+        let produced = serde_json::to_value(Message::Expired).unwrap();
 
         assert_eq!(expected, produced);
     }
@@ -125,7 +125,7 @@ mod test {
             "id": "00000000-0000-0000-0000-000000000000",
         });
 
-        let produced = serde_json::to_value(&Message::Left(AssocParticipantInOtherRoom {
+        let produced = serde_json::to_value(Message::Left(AssocParticipantInOtherRoom {
             breakout_room: Some(BreakoutRoomId::nil()),
             id: ParticipantId::nil(),
         }))
@@ -139,7 +139,7 @@ mod test {
         let expected = json!({"message": "error", "error": "insufficient_permissions"});
 
         let produced =
-            serde_json::to_value(&Message::Error(Error::InsufficientPermissions)).unwrap();
+            serde_json::to_value(Message::Error(Error::InsufficientPermissions)).unwrap();
 
         assert_eq!(expected, produced);
     }
