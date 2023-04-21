@@ -14,6 +14,7 @@ use types::{
         moderation::{
             command::ModerationCommand,
             event::{Error, ModerationEvent},
+            state::ModeratorFrontendData,
         },
         Role,
     },
@@ -29,12 +30,6 @@ pub const NAMESPACE: &str = "moderation";
 pub struct ModerationModule {
     room: SignalingRoomId,
     id: ParticipantId,
-}
-
-#[derive(Debug, Serialize)]
-pub struct ModeratorFrontendData {
-    pub waiting_room_enabled: bool,
-    pub waiting_room_participants: Vec<Participant>,
 }
 
 #[derive(Debug, Serialize)]

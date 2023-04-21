@@ -8,5 +8,6 @@ mod kick_scope;
 
 pub mod command;
 pub mod event;
+pub mod state;
 
 pub use kick_scope::KickScope;
