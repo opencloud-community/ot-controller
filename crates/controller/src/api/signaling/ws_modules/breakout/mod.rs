@@ -4,7 +4,6 @@
 
 //! Breakout room module
 
-use self::outgoing::BreakoutEvent;
 use self::storage::BreakoutConfig;
 use crate::api::signaling::SignalingRoomId;
 use crate::prelude::*;
@@ -20,15 +19,15 @@ use types::{
     core::{BreakoutRoomId, ParticipantId, RoomId},
     signaling::{
         breakout::{
-            command::BreakoutCommand, event, AssociatedParticipantInOtherRoom, BreakoutRoom,
-            ParticipantInOtherRoom,
+            command::BreakoutCommand,
+            event::{self, BreakoutEvent},
+            AssociatedParticipantInOtherRoom, BreakoutRoom, ParticipantInOtherRoom,
         },
         Role,
     },
 };
 
 pub mod exchange;
-pub mod outgoing;
 pub mod storage;
 
 pub struct BreakoutRooms {
