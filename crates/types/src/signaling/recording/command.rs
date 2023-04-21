@@ -6,6 +6,16 @@
 
 use crate::imports::*;
 
+use super::RecordingId;
+
+/// Data for the `stop` recording command
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct Stop {
+    /// Id of the recording to be stopped
+    pub recording_id: RecordingId,
+}
+
 /// Data for the `set_consent` recording command
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]

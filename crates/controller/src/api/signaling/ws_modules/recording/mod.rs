@@ -182,7 +182,7 @@ impl SignalingModule for Recording {
                         )
                         .await?;
                 }
-                RecordingCommand::Stop(incoming::Stop { recording_id }) => {
+                RecordingCommand::Stop(command::Stop { recording_id }) => {
                     if ctx.role() != Role::Moderator {
                         ctx.ws_send(RecordingEvent::Error(Error::InsufficientPermissions));
                         return Ok(());
