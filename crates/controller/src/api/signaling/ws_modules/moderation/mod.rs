@@ -15,7 +15,7 @@ use types::{
     },
 };
 
-use self::outgoing::ModerationEvent;
+use self::{incoming::ModerationCommand, outgoing::ModerationEvent};
 
 use super::control::ControlStateExt as _;
 
@@ -114,7 +114,7 @@ impl SignalingModule for ModerationModule {
     const NAMESPACE: &'static str = NAMESPACE;
 
     type Params = ();
-    type Incoming = incoming::Message;
+    type Incoming = ModerationCommand;
     type Outgoing = ModerationEvent;
     type ExchangeMessage = exchange::Message;
     type ExtEvent = ();
@@ -193,7 +193,7 @@ impl SignalingModule for ModerationModule {
             Event::ParticipantJoined(_, _) => {}
             Event::ParticipantLeft(_) => {}
             Event::ParticipantUpdated(_, _) => {}
-            Event::WsMessage(incoming::Message::Ban(incoming::Target { target })) => {
+            Event::WsMessage(ModerationCommand::Ban(incoming::Target { target })) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
                 }
@@ -214,7 +214,7 @@ impl SignalingModule for ModerationModule {
                     exchange::Message::Banned(target),
                 );
             }
-            Event::WsMessage(incoming::Message::Kick(incoming::Target { target })) => {
+            Event::WsMessage(ModerationCommand::Kick(incoming::Target { target })) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
                 }
@@ -224,7 +224,7 @@ impl SignalingModule for ModerationModule {
                     exchange::Message::Kicked(target),
                 );
             }
-            Event::WsMessage(incoming::Message::Debrief(kick_scope)) => {
+            Event::WsMessage(ModerationCommand::Debrief(kick_scope)) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
                 }
@@ -239,7 +239,7 @@ impl SignalingModule for ModerationModule {
                     },
                 );
             }
-            Event::WsMessage(incoming::Message::EnableWaitingRoom) => {
+            Event::WsMessage(ModerationCommand::EnableWaitingRoom) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
                 }
@@ -251,7 +251,7 @@ impl SignalingModule for ModerationModule {
                     exchange::Message::WaitingRoomEnableUpdated,
                 );
             }
-            Event::WsMessage(incoming::Message::DisableWaitingRoom) => {
+            Event::WsMessage(ModerationCommand::DisableWaitingRoom) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
                 }
@@ -263,7 +263,7 @@ impl SignalingModule for ModerationModule {
                     exchange::Message::WaitingRoomEnableUpdated,
                 );
             }
-            Event::WsMessage(incoming::Message::Accept(incoming::Target { target })) => {
+            Event::WsMessage(ModerationCommand::Accept(incoming::Target { target })) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
                 }
@@ -284,7 +284,7 @@ impl SignalingModule for ModerationModule {
                     control::exchange::Message::Accepted(target),
                 );
             }
-            Event::WsMessage(incoming::Message::ResetRaisedHands) => {
+            Event::WsMessage(ModerationCommand::ResetRaisedHands) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
                 }
@@ -295,7 +295,7 @@ impl SignalingModule for ModerationModule {
                 );
             }
 
-            Event::WsMessage(incoming::Message::EnableRaiseHands) => {
+            Event::WsMessage(ModerationCommand::EnableRaiseHands) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
                 }
@@ -309,7 +309,7 @@ impl SignalingModule for ModerationModule {
                 );
             }
 
-            Event::WsMessage(incoming::Message::DisableRaiseHands) => {
+            Event::WsMessage(ModerationCommand::DisableRaiseHands) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
                 }

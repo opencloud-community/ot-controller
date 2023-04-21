@@ -9,7 +9,7 @@ use super::KickScope;
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "action", rename_all = "snake_case")]
-pub enum Message {
+pub enum ModerationCommand {
     Kick(Target),
     Ban(Target),
 
@@ -45,9 +45,9 @@ mod test {
             "target": "00000000-0000-0000-0000-000000000000"
         });
 
-        let msg: Message = serde_json::from_value(json).unwrap();
+        let msg: ModerationCommand = serde_json::from_value(json).unwrap();
 
-        if let Message::Kick(Target { target }) = msg {
+        if let ModerationCommand::Kick(Target { target }) = msg {
             assert_eq!(target, ParticipantId::nil());
         } else {
             panic!()
@@ -61,9 +61,9 @@ mod test {
             "target": "00000000-0000-0000-0000-000000000000"
         });
 
-        let msg: Message = serde_json::from_value(json).unwrap();
+        let msg: ModerationCommand = serde_json::from_value(json).unwrap();
 
-        if let Message::Ban(Target { target }) = msg {
+        if let ModerationCommand::Ban(Target { target }) = msg {
             assert_eq!(target, ParticipantId::nil());
         } else {
             panic!()
@@ -77,9 +77,9 @@ mod test {
             "kick_scope": "users_and_guests"
         });
 
-        let msg: Message = serde_json::from_value(json).unwrap();
+        let msg: ModerationCommand = serde_json::from_value(json).unwrap();
 
-        if let Message::Debrief(KickScope::UsersAndGuests) = msg {
+        if let ModerationCommand::Debrief(KickScope::UsersAndGuests) = msg {
         } else {
             panic!()
         }
@@ -92,9 +92,9 @@ mod test {
             "target": "00000000-0000-0000-0000-000000000000"
         });
 
-        let msg: Message = serde_json::from_value(json).unwrap();
+        let msg: ModerationCommand = serde_json::from_value(json).unwrap();
 
-        if let Message::Accept(Target { target }) = msg {
+        if let ModerationCommand::Accept(Target { target }) = msg {
             assert_eq!(target, ParticipantId::nil());
         } else {
             panic!()
