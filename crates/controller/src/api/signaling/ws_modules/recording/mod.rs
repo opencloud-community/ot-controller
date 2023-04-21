@@ -20,6 +20,8 @@ use types::{
     },
 };
 
+use self::storage::RecordingStatus;
+
 mod exchange;
 mod rabbitmq;
 mod storage;
@@ -35,7 +37,7 @@ pub struct Recording {
 }
 
 #[derive(Debug, Serialize)]
-pub struct RecordingState(Option<storage::RecordingState>);
+pub struct RecordingState(Option<RecordingStatus>);
 
 #[derive(Debug, Serialize)]
 pub struct RecordingPeerState {
@@ -187,7 +189,7 @@ impl SignalingModule for Recording {
 
                     if !matches!(
                         storage::get_state(ctx.redis_conn(), self.room).await?,
-                        Some(storage::RecordingState::Recording(id)) if id == recording_id
+                        Some(RecordingStatus::Recording(id)) if id == recording_id
                     ) {
                         ctx.ws_send(RecordingEvent::Error(Error::InvalidRecordingId));
                         return Ok(());
