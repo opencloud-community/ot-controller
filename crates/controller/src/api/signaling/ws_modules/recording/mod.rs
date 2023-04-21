@@ -14,6 +14,7 @@ use types::{
         recording::{
             command::{self, RecordingCommand},
             event::{Error, RecordingEvent, Started, Stopped},
+            state::RecordingState,
             RecordingId, RecordingStatus,
         },
         Role,
@@ -33,9 +34,6 @@ pub struct Recording {
     /// RabbitMQ channel used to send the recording start command over
     rabbitmq_channel: RabbitMqChannel,
 }
-
-#[derive(Debug, Serialize)]
-pub struct RecordingState(Option<RecordingStatus>);
 
 #[derive(Debug, Serialize)]
 pub struct RecordingPeerState {
