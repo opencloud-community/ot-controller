@@ -9,9 +9,7 @@ use crate::api::signaling::SignalingRoomId;
 use crate::prelude::*;
 use actix_http::ws::CloseCode;
 use anyhow::{bail, Result};
-use chrono::{DateTime, Utc};
 use futures::FutureExt;
-use serde::Serialize;
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
 use tokio::time::sleep;
@@ -21,6 +19,7 @@ use types::{
         breakout::{
             command::BreakoutCommand,
             event::{self, BreakoutEvent},
+            state::BreakoutState,
             AssociatedParticipantInOtherRoom, BreakoutRoom, ParticipantInOtherRoom,
         },
         Role,
@@ -35,14 +34,6 @@ pub struct BreakoutRooms {
     parent: RoomId,
     room: SignalingRoomId,
     breakout_room: Option<BreakoutRoomId>,
-}
-
-#[derive(Debug, Serialize)]
-pub struct BreakoutState {
-    current: Option<BreakoutRoomId>,
-    expires: Option<DateTime<Utc>>,
-    rooms: Vec<BreakoutRoom>,
-    participants: Vec<ParticipantInOtherRoom>,
 }
 
 pub enum TimerEvent {
