@@ -11,7 +11,6 @@ use super::{
 };
 use crate::api;
 use crate::api::signaling::metrics::SignalingMetrics;
-use crate::api::signaling::prelude::moderation::outgoing::ModerationEvent;
 use crate::api::signaling::prelude::*;
 use crate::api::signaling::resumption::{ResumptionTokenKeepAlive, ResumptionTokenUsed};
 use crate::api::signaling::ws::actor::WsCommand;
@@ -58,6 +57,7 @@ use types::{
             state::ControlState,
             AssociatedParticipant, Participant,
         },
+        moderation::event::ModerationEvent,
         Role,
     },
 };

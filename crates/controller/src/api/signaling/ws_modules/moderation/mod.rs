@@ -11,18 +11,17 @@ use types::{
     core::{ParticipantId, RoomId, UserId},
     signaling::{
         control::{state::ControlState, AssociatedParticipant, Participant, WaitingRoomState},
-        moderation::event::Error,
+        moderation::event::{Error, ModerationEvent},
         Role,
     },
 };
 
-use self::{incoming::ModerationCommand, outgoing::ModerationEvent};
+use self::incoming::ModerationCommand;
 
 use super::control::ControlStateExt as _;
 
 pub mod exchange;
 pub mod incoming;
-pub mod outgoing;
 pub mod storage;
 
 pub const NAMESPACE: &str = "moderation";
@@ -207,7 +206,6 @@ impl SignalingModule for ModerationModule {
                     storage::ban_user(ctx.redis_conn(), self.room.room_id(), user_id).await?;
                 } else {
                     ctx.ws_send(ModerationEvent::Error(Error::CannotBanGuest));
-
                     return Ok(());
                 }
 
