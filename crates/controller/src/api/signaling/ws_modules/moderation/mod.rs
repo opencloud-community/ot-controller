@@ -46,7 +46,7 @@ pub struct ModeratorFrontendData {
 }
 
 #[derive(Debug, Serialize)]
-pub struct ModerationModuleFrontendData {
+pub struct ModerationState {
     #[serde(flatten)]
     moderator_data: Option<ModeratorFrontendData>,
     raise_hands_enabled: bool,
@@ -118,7 +118,7 @@ impl SignalingModule for ModerationModule {
     type Outgoing = ModerationEvent;
     type ExchangeMessage = exchange::Message;
     type ExtEvent = ();
-    type FrontendData = ModerationModuleFrontendData;
+    type FrontendData = ModerationState;
     type PeerFrontendData = ();
 
     async fn init(
@@ -182,7 +182,7 @@ impl SignalingModule for ModerationModule {
                 let raise_hands_enabled =
                     storage::is_raise_hands_enabled(ctx.redis_conn(), self.room.room_id()).await?;
 
-                *frontend_data = Some(ModerationModuleFrontendData {
+                *frontend_data = Some(ModerationState {
                     moderator_data,
                     raise_hands_enabled,
                 });
@@ -431,7 +431,7 @@ mod tests {
     #[test]
     fn frontend_data_for_moderator() {
         assert_eq!(
-            serde_json::to_value(ModerationModuleFrontendData {
+            serde_json::to_value(ModerationState {
                 moderator_data: Some(ModeratorFrontendData {
                     waiting_room_enabled: true,
                     waiting_room_participants: vec![Participant {
@@ -457,7 +457,7 @@ mod tests {
     #[test]
     fn frontend_data_for_user() {
         assert_eq!(
-            serde_json::to_value(ModerationModuleFrontendData {
+            serde_json::to_value(ModerationState {
                 moderator_data: None,
                 raise_hands_enabled: false
             })
