@@ -8,7 +8,7 @@ use super::RecordingId;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case", tag = "action")]
-pub enum Message {
+pub enum RecordingCommand {
     Start,
     Stop(Stop),
     SetConsent(SetConsent),

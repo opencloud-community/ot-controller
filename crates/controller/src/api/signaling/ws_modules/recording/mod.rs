@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use types::{core::ParticipantId, signaling::Role};
 
-use self::outgoing::RecordingEvent;
+use self::{incoming::RecordingCommand, outgoing::RecordingEvent};
 
 mod exchange;
 mod incoming;
@@ -54,7 +54,7 @@ impl SignalingModule for Recording {
 
     type Params = (Arc<RabbitMqPool>, RecordingParams);
 
-    type Incoming = incoming::Message;
+    type Incoming = RecordingCommand;
     type Outgoing = RecordingEvent;
     type ExchangeMessage = exchange::Message;
 
@@ -155,7 +155,7 @@ impl SignalingModule for Recording {
                 }
             }
             Event::WsMessage(msg) => match msg {
-                incoming::Message::Start => {
+                RecordingCommand::Start => {
                     if ctx.role() != Role::Moderator {
                         ctx.ws_send(RecordingEvent::Error(
                             outgoing::Error::InsufficientPermissions,
@@ -182,7 +182,7 @@ impl SignalingModule for Recording {
                         )
                         .await?;
                 }
-                incoming::Message::Stop(incoming::Stop { recording_id }) => {
+                RecordingCommand::Stop(incoming::Stop { recording_id }) => {
                     if ctx.role() != Role::Moderator {
                         ctx.ws_send(RecordingEvent::Error(
                             outgoing::Error::InsufficientPermissions,
@@ -206,7 +206,7 @@ impl SignalingModule for Recording {
                         exchange::Message::Stop,
                     );
                 }
-                incoming::Message::SetConsent(incoming::SetConsent { consent }) => {
+                RecordingCommand::SetConsent(incoming::SetConsent { consent }) => {
                     control::storage::set_attribute(
                         ctx.redis_conn(),
                         self.room,
