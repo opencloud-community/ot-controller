@@ -36,7 +36,7 @@ pub struct Recording {
 pub struct RecordingId(ParticipantId);
 
 #[derive(Debug, Serialize)]
-pub struct FrontendData(Option<storage::RecordingState>);
+pub struct RecordingState(Option<storage::RecordingState>);
 
 #[derive(Debug, Serialize)]
 pub struct PeerFrontendData {
@@ -60,7 +60,7 @@ impl SignalingModule for Recording {
 
     type ExtEvent = ();
 
-    type FrontendData = FrontendData;
+    type FrontendData = RecordingState;
     type PeerFrontendData = PeerFrontendData;
 
     async fn init(
@@ -101,7 +101,7 @@ impl SignalingModule for Recording {
                         exchange::Message::Started(recording_id),
                     );
                 } else {
-                    *frontend_data = Some(FrontendData(
+                    *frontend_data = Some(RecordingState(
                         storage::get_state(ctx.redis_conn(), self.room).await?,
                     ));
                 }
