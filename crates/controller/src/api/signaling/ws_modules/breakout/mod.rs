@@ -38,7 +38,7 @@ pub struct BreakoutRooms {
 }
 
 #[derive(Debug, Serialize)]
-pub struct FrontendData {
+pub struct BreakoutState {
     current: Option<BreakoutRoomId>,
     expires: Option<DateTime<Utc>>,
     rooms: Vec<BreakoutRoom>,
@@ -59,7 +59,7 @@ impl SignalingModule for BreakoutRooms {
     type Outgoing = BreakoutEvent;
     type ExchangeMessage = exchange::Message;
     type ExtEvent = TimerEvent;
-    type FrontendData = FrontendData;
+    type FrontendData = BreakoutState;
     type PeerFrontendData = ();
 
     async fn init(
@@ -162,7 +162,7 @@ impl SignalingModule for BreakoutRooms {
                         .await?;
                     }
 
-                    *frontend_data = Some(FrontendData {
+                    *frontend_data = Some(BreakoutState {
                         current: self.breakout_room,
                         expires,
                         rooms: config.rooms,
