@@ -11,17 +11,17 @@ use types::{
     core::{ParticipantId, RoomId, UserId},
     signaling::{
         control::{state::ControlState, AssociatedParticipant, Participant, WaitingRoomState},
-        moderation::event::{Error, ModerationEvent},
+        moderation::{
+            command::ModerationCommand,
+            event::{Error, ModerationEvent},
+        },
         Role,
     },
 };
 
-use self::incoming::ModerationCommand;
-
 use super::control::ControlStateExt as _;
 
 pub mod exchange;
-pub mod incoming;
 pub mod storage;
 
 pub const NAMESPACE: &str = "moderation";
@@ -175,7 +175,7 @@ impl SignalingModule for ModerationModule {
             Event::ParticipantJoined(_, _) => {}
             Event::ParticipantLeft(_) => {}
             Event::ParticipantUpdated(_, _) => {}
-            Event::WsMessage(incoming::ModerationCommand::Ban { target }) => {
+            Event::WsMessage(ModerationCommand::Ban { target }) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
                 }
@@ -196,7 +196,7 @@ impl SignalingModule for ModerationModule {
                     exchange::Message::Banned(target),
                 );
             }
-            Event::WsMessage(incoming::ModerationCommand::Kick { target }) => {
+            Event::WsMessage(ModerationCommand::Kick { target }) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
                 }
@@ -245,7 +245,7 @@ impl SignalingModule for ModerationModule {
                     exchange::Message::WaitingRoomEnableUpdated,
                 );
             }
-            Event::WsMessage(incoming::ModerationCommand::Accept { target }) => {
+            Event::WsMessage(ModerationCommand::Accept { target }) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
                 }

@@ -6,6 +6,7 @@
 
 mod kick_scope;
 
+pub mod command;
 pub mod event;
 
 pub use kick_scope::KickScope;
