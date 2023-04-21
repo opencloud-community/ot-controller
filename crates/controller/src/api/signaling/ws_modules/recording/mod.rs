@@ -12,7 +12,7 @@ use types::{
     core::ParticipantId,
     signaling::{
         recording::{
-            event::{Error, Stopped},
+            event::{Error, Started, Stopped},
             RecordingId,
         },
         Role,
@@ -226,7 +226,7 @@ impl SignalingModule for Recording {
                 }
                 exchange::Message::Started(recording_id) => {
                     if !self.i_am_the_recorder {
-                        ctx.ws_send(RecordingEvent::Started(outgoing::Started { recording_id }));
+                        ctx.ws_send(RecordingEvent::Started(Started { recording_id }));
                     }
                 }
                 exchange::Message::Stopped(recording_id) => {

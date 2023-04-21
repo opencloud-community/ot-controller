@@ -8,6 +8,14 @@ use crate::imports::*;
 
 use super::RecordingId;
 
+/// Data for the `started` recording event
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct Started {
+    /// The id of the recording that was started
+    pub recording_id: RecordingId,
+}
+
 /// Data for the `stopped` recording event
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
