@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use serde::Serialize;
+use types::signaling::recording::event::Error;
 
 use super::RecordingId;
 
@@ -22,12 +23,4 @@ pub struct Started {
 #[derive(Debug, Serialize, PartialEq, Eq)]
 pub struct Stopped {
     pub recording_id: RecordingId,
-}
-
-#[derive(Debug, Serialize, PartialEq, Eq)]
-#[serde(tag = "error", rename_all = "snake_case")]
-pub enum Error {
-    InsufficientPermissions,
-    AlreadyRecording,
-    InvalidRecordingId,
 }

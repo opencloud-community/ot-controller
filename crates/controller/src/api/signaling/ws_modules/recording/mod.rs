@@ -8,7 +8,10 @@ use anyhow::{Context, Result};
 use lapin_pool::{RabbitMqChannel, RabbitMqPool};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use types::{core::ParticipantId, signaling::Role};
+use types::{
+    core::ParticipantId,
+    signaling::{recording::event::Error, Role},
+};
 
 use self::{incoming::RecordingCommand, outgoing::RecordingEvent};
 
@@ -157,14 +160,12 @@ impl SignalingModule for Recording {
             Event::WsMessage(msg) => match msg {
                 RecordingCommand::Start => {
                     if ctx.role() != Role::Moderator {
-                        ctx.ws_send(RecordingEvent::Error(
-                            outgoing::Error::InsufficientPermissions,
-                        ));
+                        ctx.ws_send(RecordingEvent::Error(Error::InsufficientPermissions));
                         return Ok(());
                     }
 
                     if !storage::try_init(ctx.redis_conn(), self.room).await? {
-                        ctx.ws_send(RecordingEvent::Error(outgoing::Error::AlreadyRecording));
+                        ctx.ws_send(RecordingEvent::Error(Error::AlreadyRecording));
                         return Ok(());
                     }
 
@@ -184,9 +185,7 @@ impl SignalingModule for Recording {
                 }
                 RecordingCommand::Stop(incoming::Stop { recording_id }) => {
                     if ctx.role() != Role::Moderator {
-                        ctx.ws_send(RecordingEvent::Error(
-                            outgoing::Error::InsufficientPermissions,
-                        ));
+                        ctx.ws_send(RecordingEvent::Error(Error::InsufficientPermissions));
                         return Ok(());
                     }
 
@@ -194,7 +193,7 @@ impl SignalingModule for Recording {
                         storage::get_state(ctx.redis_conn(), self.room).await?,
                         Some(storage::RecordingState::Recording(id)) if id == recording_id
                     ) {
-                        ctx.ws_send(RecordingEvent::Error(outgoing::Error::InvalidRecordingId));
+                        ctx.ws_send(RecordingEvent::Error(Error::InvalidRecordingId));
                         return Ok(());
                     }
 
