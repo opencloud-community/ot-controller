@@ -12,18 +12,17 @@ use types::{
     core::ParticipantId,
     signaling::{
         recording::{
-            event::{Error, Started, Stopped},
+            event::{Error, RecordingEvent, Started, Stopped},
             RecordingId,
         },
         Role,
     },
 };
 
-use self::{incoming::RecordingCommand, outgoing::RecordingEvent};
+use self::incoming::RecordingCommand;
 
 mod exchange;
 mod incoming;
-mod outgoing;
 mod rabbitmq;
 mod storage;
 

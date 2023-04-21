@@ -8,6 +8,24 @@ use crate::imports::*;
 
 use super::RecordingId;
 
+/// Events sent out by the `recording` module
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(tag = "message", rename_all = "snake_case")
+)]
+pub enum RecordingEvent {
+    /// A recording has been started
+    Started(Started),
+
+    /// A recording has been stopped
+    Stopped(Stopped),
+
+    /// An error happened when executing a `recording` command
+    Error(Error),
+}
+
 /// Data for the `started` recording event
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
