@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use serde::Deserialize;
+use types::signaling::recording::command::SetConsent;
 
 use super::RecordingId;
 
@@ -17,9 +18,4 @@ pub enum RecordingCommand {
 #[derive(Debug, Deserialize)]
 pub struct Stop {
     pub recording_id: RecordingId,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct SetConsent {
-    pub consent: bool,
 }

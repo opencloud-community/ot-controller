@@ -6,6 +6,7 @@
 
 mod recording_id;
 
+pub mod command;
 pub mod event;
 
 pub use recording_id::RecordingId;

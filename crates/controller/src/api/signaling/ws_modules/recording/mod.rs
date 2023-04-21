@@ -12,6 +12,7 @@ use types::{
     core::ParticipantId,
     signaling::{
         recording::{
+            command,
             event::{Error, RecordingEvent, Started, Stopped},
             RecordingId,
         },
@@ -203,7 +204,7 @@ impl SignalingModule for Recording {
                         exchange::Message::Stop,
                     );
                 }
-                RecordingCommand::SetConsent(incoming::SetConsent { consent }) => {
+                RecordingCommand::SetConsent(command::SetConsent { consent }) => {
                     control::storage::set_attribute(
                         ctx.redis_conn(),
                         self.room,
