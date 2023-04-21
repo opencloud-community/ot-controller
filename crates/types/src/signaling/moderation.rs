@@ -4,4 +4,8 @@
 
 //! Signaling messages for the `moderation` namespace
 
+mod kick_scope;
+
 pub mod event;
+
+pub use kick_scope::KickScope;

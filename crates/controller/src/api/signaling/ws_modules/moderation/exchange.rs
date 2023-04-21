@@ -3,9 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use serde::{Deserialize, Serialize};
-use types::core::ParticipantId;
-
-use super::KickScope;
+use types::{core::ParticipantId, signaling::moderation::KickScope};
 
 /// Control messages sent between controller modules to communicate changes inside a room
 #[derive(Debug, Serialize, Deserialize)]

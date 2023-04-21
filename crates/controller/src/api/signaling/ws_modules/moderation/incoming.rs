@@ -3,9 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use serde::Deserialize;
-use types::core::ParticipantId;
-
-use super::KickScope;
+use types::{core::ParticipantId, signaling::moderation::KickScope};
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "action", rename_all = "snake_case")]

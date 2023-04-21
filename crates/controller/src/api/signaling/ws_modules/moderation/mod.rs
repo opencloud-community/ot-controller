@@ -5,7 +5,7 @@
 use crate::{api::signaling::prelude::*, redis_wrapper::RedisConnection};
 use actix_http::ws::CloseCode;
 use anyhow::Result;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::collections::HashMap;
 use types::{
     core::{ParticipantId, RoomId, UserId},
@@ -26,14 +26,6 @@ pub mod storage;
 
 pub const NAMESPACE: &str = "moderation";
 
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(tag = "kick_scope", rename_all = "snake_case")]
-pub enum KickScope {
-    Guests,
-    UsersAndGuests,
-    All,
-}
-
 pub struct ModerationModule {
     room: SignalingRoomId,
     id: ParticipantId,
@@ -50,16 +42,6 @@ pub struct ModerationState {
     #[serde(flatten)]
     moderator_data: Option<ModeratorFrontendData>,
     raise_hands_enabled: bool,
-}
-
-impl KickScope {
-    const fn kicks_role(self, role: Role) -> bool {
-        match self {
-            KickScope::Guests => matches!(role, Role::Guest),
-            KickScope::UsersAndGuests => !matches!(role, Role::Moderator),
-            KickScope::All => true,
-        }
-    }
 }
 
 async fn build_waiting_room_participants(
