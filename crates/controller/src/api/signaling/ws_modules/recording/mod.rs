@@ -14,13 +14,11 @@ use types::{
         recording::{
             command::{self, RecordingCommand},
             event::{Error, RecordingEvent, Started, Stopped},
-            RecordingId,
+            RecordingId, RecordingStatus,
         },
         Role,
     },
 };
-
-use self::storage::RecordingStatus;
 
 mod exchange;
 mod rabbitmq;

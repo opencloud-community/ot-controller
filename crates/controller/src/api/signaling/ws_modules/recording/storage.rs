@@ -6,8 +6,8 @@ use crate::api::signaling::SignalingRoomId;
 use crate::redis_wrapper::RedisConnection;
 use anyhow::{Context, Result};
 use redis::AsyncCommands;
-use redis_args::{FromRedisValue, ToRedisArgs};
-use serde::{Deserialize, Serialize};
+use redis_args::ToRedisArgs;
+use types::signaling::recording::RecordingStatus;
 
 use super::RecordingId;
 
@@ -16,18 +16,6 @@ use super::RecordingId;
 #[to_redis_args(fmt = "opentalk-signaling:room={room_id}:recording:init")]
 struct RecordingStateKey {
     room_id: SignalingRoomId,
-}
-
-/// Status of a recording
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
-#[serde(tag = "state", content = "recording_id", rename_all = "snake_case")]
-#[to_redis_args(serde)]
-#[from_redis_value(serde)]
-pub enum RecordingStatus {
-    /// Waiting for a recorder to connect and start the recording
-    Initializing,
-    /// A recorder is connected and capturing the conference
-    Recording(RecordingId),
 }
 
 pub(super) async fn try_init(
