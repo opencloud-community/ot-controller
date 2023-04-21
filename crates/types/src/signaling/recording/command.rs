@@ -8,6 +8,24 @@ use crate::imports::*;
 
 use super::RecordingId;
 
+/// Commands for the `recording` namespace
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(tag = "action", rename_all = "snake_case")
+)]
+pub enum RecordingCommand {
+    /// Start a recording
+    Start,
+
+    /// Stop a recording
+    Stop(Stop),
+
+    /// Set the consent status for a specific recording
+    SetConsent(SetConsent),
+}
+
 /// Data for the `stop` recording command
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
