@@ -15,6 +15,8 @@ use types::{
     },
 };
 
+use self::outgoing::ModerationEvent;
+
 use super::control::ControlStateExt as _;
 
 pub mod exchange;
@@ -113,7 +115,7 @@ impl SignalingModule for ModerationModule {
 
     type Params = ();
     type Incoming = incoming::Message;
-    type Outgoing = outgoing::Message;
+    type Outgoing = ModerationEvent;
     type ExchangeMessage = exchange::Message;
     type ExtEvent = ();
     type FrontendData = ModerationModuleFrontendData;
@@ -203,7 +205,7 @@ impl SignalingModule for ModerationModule {
                 if let Some(user_id) = user_id {
                     storage::ban_user(ctx.redis_conn(), self.room.room_id(), user_id).await?;
                 } else {
-                    ctx.ws_send(outgoing::Message::Error(outgoing::Error::CannotBanGuest));
+                    ctx.ws_send(ModerationEvent::Error(outgoing::Error::CannotBanGuest));
                     return Ok(());
                 }
 
@@ -323,13 +325,13 @@ impl SignalingModule for ModerationModule {
 
             Event::Exchange(exchange::Message::Banned(participant)) => {
                 if self.id == participant {
-                    ctx.ws_send(outgoing::Message::Banned);
+                    ctx.ws_send(ModerationEvent::Banned);
                     ctx.exit(Some(CloseCode::Normal));
                 }
             }
             Event::Exchange(exchange::Message::Kicked(participant)) => {
                 if self.id == participant {
-                    ctx.ws_send(outgoing::Message::Kicked);
+                    ctx.ws_send(ModerationEvent::Kicked);
                     ctx.exit(Some(CloseCode::Normal));
                 }
             }
@@ -338,10 +340,10 @@ impl SignalingModule for ModerationModule {
                 issued_by,
             }) => {
                 if kick_scope.kicks_role(ctx.role()) {
-                    ctx.ws_send(outgoing::Message::SessionEnded { issued_by });
+                    ctx.ws_send(ModerationEvent::SessionEnded { issued_by });
                     ctx.exit(Some(CloseCode::Normal));
                 } else {
-                    ctx.ws_send(outgoing::Message::DebriefingStarted { issued_by });
+                    ctx.ws_send(ModerationEvent::DebriefingStarted { issued_by });
                 }
             }
             Event::Exchange(exchange::Message::JoinedWaitingRoom(id)) => {
@@ -357,7 +359,7 @@ impl SignalingModule for ModerationModule {
                     serde_json::to_value(control_data)?,
                 )]);
 
-                ctx.ws_send(outgoing::Message::JoinedWaitingRoom(Participant {
+                ctx.ws_send(ModerationEvent::JoinedWaitingRoom(Participant {
                     id,
                     module_data,
                 }));
@@ -367,7 +369,7 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
-                ctx.ws_send(outgoing::Message::LeftWaitingRoom(AssociatedParticipant {
+                ctx.ws_send(ModerationEvent::LeftWaitingRoom(AssociatedParticipant {
                     id,
                 }));
             }
@@ -376,9 +378,9 @@ impl SignalingModule for ModerationModule {
                     storage::is_waiting_room_enabled(ctx.redis_conn(), self.room.room_id()).await?;
 
                 if enabled {
-                    ctx.ws_send(outgoing::Message::WaitingRoomEnabled);
+                    ctx.ws_send(ModerationEvent::WaitingRoomEnabled);
                 } else {
-                    ctx.ws_send(outgoing::Message::WaitingRoomDisabled);
+                    ctx.ws_send(ModerationEvent::WaitingRoomDisabled);
                 }
             }
             Event::Ext(_) => unreachable!(),

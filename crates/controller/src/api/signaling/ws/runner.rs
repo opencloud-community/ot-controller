@@ -11,6 +11,7 @@ use super::{
 };
 use crate::api;
 use crate::api::signaling::metrics::SignalingMetrics;
+use crate::api::signaling::prelude::moderation::outgoing::ModerationEvent;
 use crate::api::signaling::prelude::*;
 use crate::api::signaling::resumption::{ResumptionTokenKeepAlive, ResumptionTokenUsed};
 use crate::api::signaling::ws::actor::WsCommand;
@@ -1103,7 +1104,7 @@ impl Runner {
                 serde_json::to_string(&NamespacedEvent {
                     namespace: moderation::NAMESPACE,
                     timestamp,
-                    payload: moderation::outgoing::Message::InWaitingRoom,
+                    payload: ModerationEvent::InWaitingRoom,
                 })?
                 .into(),
             ))
@@ -1526,7 +1527,7 @@ impl Runner {
                                 serde_json::to_string(&NamespacedEvent {
                                     namespace: moderation::NAMESPACE,
                                     timestamp,
-                                    payload: moderation::outgoing::Message::Accepted,
+                                    payload: ModerationEvent::Accepted,
                                 })?
                                 .into(),
                             ))
@@ -1593,9 +1594,7 @@ impl Runner {
                         serde_json::to_string(&NamespacedEvent {
                             namespace: moderation::NAMESPACE,
                             timestamp,
-                            payload: moderation::outgoing::Message::RaisedHandResetByModerator {
-                                issued_by,
-                            },
+                            payload: ModerationEvent::RaisedHandResetByModerator { issued_by },
                         })?
                         .into(),
                     ))
@@ -1607,7 +1606,7 @@ impl Runner {
                         serde_json::to_string(&NamespacedEvent {
                             namespace: moderation::NAMESPACE,
                             timestamp,
-                            payload: moderation::outgoing::Message::RaiseHandsEnabled { issued_by },
+                            payload: ModerationEvent::RaiseHandsEnabled { issued_by },
                         })?
                         .into(),
                     ))
@@ -1630,9 +1629,7 @@ impl Runner {
                         serde_json::to_string(&NamespacedEvent {
                             namespace: moderation::NAMESPACE,
                             timestamp,
-                            payload: moderation::outgoing::Message::RaiseHandsDisabled {
-                                issued_by,
-                            },
+                            payload: ModerationEvent::RaiseHandsDisabled { issued_by },
                         })?
                         .into(),
                     ))
