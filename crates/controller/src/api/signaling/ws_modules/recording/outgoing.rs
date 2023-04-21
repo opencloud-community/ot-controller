@@ -8,7 +8,7 @@ use super::RecordingId;
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
 #[serde(tag = "message", rename_all = "snake_case")]
-pub enum Message {
+pub enum RecordingEvent {
     Started(Started),
     Stopped(Stopped),
     Error(Error),

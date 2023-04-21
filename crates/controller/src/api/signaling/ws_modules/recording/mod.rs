@@ -10,6 +10,8 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use types::{core::ParticipantId, signaling::Role};
 
+use self::outgoing::RecordingEvent;
+
 mod exchange;
 mod incoming;
 mod outgoing;
@@ -53,7 +55,7 @@ impl SignalingModule for Recording {
     type Params = (Arc<RabbitMqPool>, RecordingParams);
 
     type Incoming = incoming::Message;
-    type Outgoing = outgoing::Message;
+    type Outgoing = RecordingEvent;
     type ExchangeMessage = exchange::Message;
 
     type ExtEvent = ();
@@ -155,14 +157,14 @@ impl SignalingModule for Recording {
             Event::WsMessage(msg) => match msg {
                 incoming::Message::Start => {
                     if ctx.role() != Role::Moderator {
-                        ctx.ws_send(outgoing::Message::Error(
+                        ctx.ws_send(RecordingEvent::Error(
                             outgoing::Error::InsufficientPermissions,
                         ));
                         return Ok(());
                     }
 
                     if !storage::try_init(ctx.redis_conn(), self.room).await? {
-                        ctx.ws_send(outgoing::Message::Error(outgoing::Error::AlreadyRecording));
+                        ctx.ws_send(RecordingEvent::Error(outgoing::Error::AlreadyRecording));
                         return Ok(());
                     }
 
@@ -182,7 +184,7 @@ impl SignalingModule for Recording {
                 }
                 incoming::Message::Stop(incoming::Stop { recording_id }) => {
                     if ctx.role() != Role::Moderator {
-                        ctx.ws_send(outgoing::Message::Error(
+                        ctx.ws_send(RecordingEvent::Error(
                             outgoing::Error::InsufficientPermissions,
                         ));
                         return Ok(());
@@ -192,9 +194,7 @@ impl SignalingModule for Recording {
                         storage::get_state(ctx.redis_conn(), self.room).await?,
                         Some(storage::RecordingState::Recording(id)) if id == recording_id
                     ) {
-                        ctx.ws_send(outgoing::Message::Error(
-                            outgoing::Error::InvalidRecordingId,
-                        ));
+                        ctx.ws_send(RecordingEvent::Error(outgoing::Error::InvalidRecordingId));
                         return Ok(());
                     }
 
@@ -228,16 +228,12 @@ impl SignalingModule for Recording {
                 }
                 exchange::Message::Started(recording_id) => {
                     if !self.i_am_the_recorder {
-                        ctx.ws_send(outgoing::Message::Started(outgoing::Started {
-                            recording_id,
-                        }));
+                        ctx.ws_send(RecordingEvent::Started(outgoing::Started { recording_id }));
                     }
                 }
                 exchange::Message::Stopped(recording_id) => {
                     if !self.i_am_the_recorder {
-                        ctx.ws_send(outgoing::Message::Stopped(outgoing::Stopped {
-                            recording_id,
-                        }));
+                        ctx.ws_send(RecordingEvent::Stopped(outgoing::Stopped { recording_id }));
                     }
                 }
             },
