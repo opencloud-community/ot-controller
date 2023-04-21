@@ -5,7 +5,6 @@
 use crate::{api::signaling::prelude::*, redis_wrapper::RedisConnection};
 use actix_http::ws::CloseCode;
 use anyhow::Result;
-use serde::Serialize;
 use std::collections::HashMap;
 use types::{
     core::{ParticipantId, RoomId, UserId},
@@ -14,7 +13,7 @@ use types::{
         moderation::{
             command::ModerationCommand,
             event::{Error, ModerationEvent},
-            state::ModeratorFrontendData,
+            state::{ModerationState, ModeratorFrontendData},
         },
         Role,
     },
@@ -30,13 +29,6 @@ pub const NAMESPACE: &str = "moderation";
 pub struct ModerationModule {
     room: SignalingRoomId,
     id: ParticipantId,
-}
-
-#[derive(Debug, Serialize)]
-pub struct ModerationState {
-    #[serde(flatten)]
-    moderator_data: Option<ModeratorFrontendData>,
-    raise_hands_enabled: bool,
 }
 
 async fn build_waiting_room_participants(
