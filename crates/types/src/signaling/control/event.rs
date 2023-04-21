@@ -2,15 +2,28 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::api::signaling::Role;
-use crate::api::v1::tariffs::TariffResource;
-use serde::Serialize;
-use std::collections::HashMap;
-use types::core::{ParticipantId, Timestamp};
+//! Types related to signaling events in the `control` namespace
 
-#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
-#[serde(tag = "message", rename_all = "snake_case")]
-pub enum Message {
+use std::collections::HashMap;
+
+use crate::{
+    common::tariff::TariffResource,
+    core::{ParticipantId, Timestamp},
+    imports::*,
+    signaling::Role,
+};
+
+use super::{AssociatedParticipant, Participant};
+
+/// Events sent out by the `control` module
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(tag = "message", rename_all = "snake_case")
+)]
+pub enum ControlEvent {
+    /// The participant joined successfully
     JoinSuccess(JoinSuccess),
     /// Joining the room failed
     JoinBlocked(JoinBlockedReason),
@@ -23,88 +36,110 @@ pub enum Message {
     /// The quota's time limit has elapsed
     TimeLimitQuotaElapsed,
 
+    /// This participant's role in the meeting has been updated
     RoleUpdated {
+        /// The new role of the participant
         new_role: Role,
     },
 
+    /// The room has been deleted
     RoomDeleted,
 
+    /// An error happened when executing a `control` command
     Error(Error),
 }
 
-#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
+/// The data received by a participant upon successfully joining a meeting
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct JoinSuccess {
+    /// The id of the participant who joined
     pub id: ParticipantId,
 
+    /// The display name of the participant who joined
     pub display_name: String,
 
+    /// The URL to the avatar of the participant who joined
     #[serde(skip_serializing_if = "Option::is_none")]
     pub avatar_url: Option<String>,
 
+    /// The role of the participant in the meeting
     pub role: Role,
 
+    /// The timestamp when the meeting will close
     #[serde(skip_serializing_if = "Option::is_none")]
     pub closes_at: Option<Timestamp>,
 
+    /// The tariff of the meeting
     pub tariff: Box<TariffResource>,
 
+    /// The module data for the participant
     #[serde(flatten)]
-    pub module_data: HashMap<&'static str, serde_json::Value>,
+    pub module_data: HashMap<String, serde_json::Value>,
 
+    /// List of participants in the meeting
     pub participants: Vec<Participant>,
 }
 
-#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
-#[serde(tag = "reason", rename_all = "snake_case")]
+/// The reason for blocking a participant from joining a meeting
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(tag = "reason", rename_all = "snake_case")
+)]
 pub enum JoinBlockedReason {
+    /// The participant limit for the meeting's tariff has been reached
     ParticipantLimitReached,
 }
 
-#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
-pub struct AssociatedParticipant {
-    pub id: ParticipantId,
-}
-
-#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
-#[serde(tag = "error", rename_all = "snake_case")]
+/// Errors from the `control` module namespace
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(tag = "error", rename_all = "snake_case")
+)]
 pub enum Error {
+    /// Payload sent to the `control` module had the wrong JSON format
     InvalidJson,
+
+    /// Attempted to send data to a module namespace that does not exist
     InvalidNamespace,
+
+    /// The chosen user name does not meet the requirements
     InvalidUsername,
+
+    /// Participant attempted to join while already participating in the meeting
     AlreadyJoined,
+
+    /// Attempted to perform a command on a participant that has not yet joined the meeting
     NotYetJoined,
+
+    /// A participant attempted to join the meeting who is neither in the waiting room nor accepted
     NotAcceptedOrNotInWaitingRoom,
+
+    /// Attempted to raise hand while handraising is disabled for the meeting
     RaiseHandsDisabled,
+
+    /// Attempted to perform a command which requires more permissions
     InsufficientPermissions,
+
+    /// Attempted to grant or revoke moderation permissions to the room owner who implicitly has these permissions anyway
     TargetIsRoomOwner,
+
+    /// An issued command requires no further actions
     NothingToDo,
 }
-
-#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-pub enum WaitingRoomState {
-    Waiting,
-    Accepted,
-}
-
-#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
-pub struct Participant {
-    pub id: ParticipantId,
-
-    #[serde(flatten)]
-    pub module_data: HashMap<&'static str, serde_json::Value>,
-}
-
 #[cfg(test)]
 mod test {
     use std::str::FromStr;
 
     use super::*;
+    use crate::core::TariffId;
     use chrono::DateTime;
-    use db_storage::tariffs::Tariff;
     use pretty_assertions::assert_eq;
     use serde_json::json;
-    use types::core::TariffId;
 
     fn participant_tariff() -> TariffResource {
         TariffResource {
@@ -113,36 +148,6 @@ mod test {
             quotas: Default::default(),
             enabled_modules: Default::default(),
         }
-    }
-
-    #[test]
-    fn tariff_to_participant_tariff() {
-        let tariff = Tariff {
-            id: TariffId::nil(),
-            name: "test".into(),
-            created_at: Default::default(),
-            updated_at: Default::default(),
-            quotas: Default::default(),
-            disabled_modules: vec![
-                "whiteboard".to_string(),
-                "timer".to_string(),
-                "media".to_string(),
-                "polls".to_string(),
-            ],
-        };
-        let available_modules = vec!["chat", "media", "polls", "whiteboard", "timer"];
-
-        let expected = json!({
-            "id": "00000000-0000-0000-0000-000000000000",
-            "name": "test",
-            "quotas": {},
-            "enabled_modules": ["chat"],
-        });
-
-        let actual =
-            serde_json::to_value(TariffResource::from_tariff(tariff, &available_modules)).unwrap();
-
-        assert_eq!(actual, expected);
     }
 
     #[test]
@@ -158,7 +163,7 @@ mod test {
             "participants": [],
         });
 
-        let produced = serde_json::to_value(&Message::JoinSuccess(JoinSuccess {
+        let produced = serde_json::to_value(&ControlEvent::JoinSuccess(JoinSuccess {
             id: ParticipantId::nil(),
             display_name: "name".into(),
             avatar_url: Some("http://url".into()),
@@ -188,7 +193,7 @@ mod test {
             "participants": [],
         });
 
-        let produced = serde_json::to_value(&Message::JoinSuccess(JoinSuccess {
+        let produced = serde_json::to_value(&ControlEvent::JoinSuccess(JoinSuccess {
             id: ParticipantId::nil(),
             display_name: "name".into(),
             avatar_url: None,
@@ -207,7 +212,7 @@ mod test {
     fn update() {
         let expected = json!({"message": "update", "id": "00000000-0000-0000-0000-000000000000"});
 
-        let produced = serde_json::to_value(&Message::Update(Participant {
+        let produced = serde_json::to_value(&ControlEvent::Update(Participant {
             id: ParticipantId::nil(),
             module_data: Default::default(),
         }))
@@ -220,7 +225,7 @@ mod test {
     fn joined() {
         let expected = json!({"message": "joined", "id": "00000000-0000-0000-0000-000000000000"});
 
-        let produced = serde_json::to_value(&Message::Joined(Participant {
+        let produced = serde_json::to_value(&ControlEvent::Joined(Participant {
             id: ParticipantId::nil(),
             module_data: Default::default(),
         }))
@@ -233,7 +238,7 @@ mod test {
     fn left() {
         let expected = json!({"message": "left","id": "00000000-0000-0000-0000-000000000000"});
 
-        let produced = serde_json::to_value(&Message::Left(AssociatedParticipant {
+        let produced = serde_json::to_value(&ControlEvent::Left(AssociatedParticipant {
             id: ParticipantId::nil(),
         }))
         .unwrap();
@@ -245,7 +250,8 @@ mod test {
     fn error() {
         let expected = json!({"message": "error", "error": "raise_hands_disabled"});
 
-        let produced = serde_json::to_value(&Message::Error(Error::RaiseHandsDisabled)).unwrap();
+        let produced =
+            serde_json::to_value(&ControlEvent::Error(Error::RaiseHandsDisabled)).unwrap();
 
         assert_eq!(expected, produced);
     }

@@ -14,7 +14,7 @@ use outgoing::{AccessUrl, PdfAsset};
 use serde::Serialize;
 use state::{InitState, SpaceInfo};
 use std::sync::Arc;
-use types::core::Timestamp;
+use types::{core::Timestamp, signaling::Role};
 use url::Url;
 
 mod client;

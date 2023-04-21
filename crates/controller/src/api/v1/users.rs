@@ -9,7 +9,6 @@
 
 use super::response::{ApiError, NoContent};
 use crate::api::signaling::prelude::SignalingModules;
-use crate::api::v1::tariffs::TariffResource;
 use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json, Path, Query, ReqData};
 use actix_web::{get, patch, Either};
@@ -21,7 +20,7 @@ use db_storage::tenants::Tenant;
 use db_storage::users::{UpdateUser, User};
 use keycloak_admin::KeycloakAdminClient;
 use serde::{Deserialize, Serialize};
-use types::core::UserId;
+use types::{common::tariff::TariffResource, core::UserId};
 use validator::Validate;
 
 /// Public user details.
@@ -205,7 +204,7 @@ pub async fn get_me_tariff(
 
     let tariff = Tariff::get(&mut conn, current_user.tariff_id).await?;
 
-    let response = TariffResource::from_tariff(tariff, &modules.get_module_names());
+    let response = tariff.to_tariff_resource(&modules.get_module_names());
 
     Ok(Json(response))
 }

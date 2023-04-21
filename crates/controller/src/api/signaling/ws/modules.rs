@@ -7,9 +7,6 @@ use super::{SignalingModule, Timestamp};
 use crate::api::signaling::metrics::SignalingMetrics;
 use crate::api::signaling::ws::runner::Builder;
 use crate::api::signaling::ws::{DestroyContext, ExchangePublish, InitContext};
-use crate::api::signaling::ws_modules::control::outgoing::Participant;
-use crate::api::signaling::ws_modules::control::ControlData;
-use crate::api::signaling::Role;
 use crate::redis_wrapper::RedisConnection;
 use actix_http::ws::{CloseCode, Message};
 use anyhow::{Context, Result};
@@ -21,7 +18,13 @@ use std::marker::PhantomData;
 use std::pin::Pin;
 use std::sync::Arc;
 use tokio_stream::{Stream, StreamExt};
-use types::core::ParticipantId;
+use types::{
+    core::ParticipantId,
+    signaling::{
+        control::{state::ControlState, Participant},
+        Role,
+    },
+};
 
 pub type AnyStream = Pin<Box<dyn Stream<Item = (&'static str, Box<dyn Any + 'static>)>>>;
 
@@ -122,8 +125,8 @@ pub enum DynTargetedEvent {
 #[derive(Debug)]
 pub enum DynBroadcastEvent<'evt> {
     Joined(
-        &'evt ControlData,
-        &'evt mut HashMap<&'static str, Value>,
+        &'evt ControlState,
+        &'evt mut HashMap<String, Value>,
         &'evt mut Vec<Participant>,
     ),
     Leaving,
@@ -245,7 +248,7 @@ where
 
                 if let Some(frontend_data) = frontend_data {
                     module_data.insert(
-                        M::NAMESPACE,
+                        M::NAMESPACE.to_string(),
                         serde_json::to_value(frontend_data)
                             .context("Failed to convert frontend-data to value")?,
                     );
@@ -256,7 +259,9 @@ where
                         let value = serde_json::to_value(data)
                             .context("Failed to convert module peer frontend data to value")?;
 
-                        participant.module_data.insert(M::NAMESPACE, value);
+                        participant
+                            .module_data
+                            .insert(M::NAMESPACE.to_string(), value);
                     }
                 }
             }
@@ -280,7 +285,9 @@ where
                     let value = serde_json::to_value(data)
                         .context("Failed to convert module peer frontend data to value")?;
 
-                    participant.module_data.insert(M::NAMESPACE, value);
+                    participant
+                        .module_data
+                        .insert(M::NAMESPACE.to_string(), value);
                 }
             }
             DynBroadcastEvent::ParticipantLeft(participant) => {
@@ -299,7 +306,9 @@ where
                     let value = serde_json::to_value(data)
                         .context("Failed to convert module peer frontend data to value")?;
 
-                    participant.module_data.insert(M::NAMESPACE, value);
+                    participant
+                        .module_data
+                        .insert(M::NAMESPACE.to_string(), value);
                 }
             }
         }

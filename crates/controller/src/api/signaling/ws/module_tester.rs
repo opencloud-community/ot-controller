@@ -13,11 +13,9 @@ use super::modules::AnyStream;
 use super::{
     DestroyContext, Event, ExchangePublish, NamespacedCommand, NamespacedEvent, SignalingModule,
 };
-use crate::api::signaling::prelude::control::incoming::Join;
-use crate::api::signaling::prelude::control::{self, outgoing, storage, ControlData, NAMESPACE};
+use crate::api::signaling::prelude::control::{self, storage, ControlStateExt as _, NAMESPACE};
 use crate::api::signaling::prelude::{InitContext, ModuleContext};
-use crate::api::signaling::{Role, SignalingRoomId};
-use crate::api::v1::tariffs::TariffResource;
+use crate::api::signaling::SignalingRoomId;
 use crate::api::Participant;
 use crate::redis_wrapper::RedisConnection;
 use crate::storage::ObjectStorage;
@@ -41,7 +39,19 @@ use tokio::sync::{broadcast, mpsc};
 use tokio::task;
 use tokio::time::timeout;
 use tokio_stream::StreamExt;
-use types::core::{BreakoutRoomId, ParticipantId, ParticipationKind, TariffId, Timestamp, UserId};
+use types::{
+    common::tariff::TariffResource,
+    core::{BreakoutRoomId, ParticipantId, ParticipationKind, TariffId, Timestamp, UserId},
+    signaling::{
+        control::{
+            command::{ControlCommand, Join},
+            event::{ControlEvent, JoinSuccess},
+            state::ControlState,
+            AssociatedParticipant,
+        },
+        Role,
+    },
+};
 
 /// A module tester that simulates a runner environment for provided module.
 ///
@@ -119,11 +129,11 @@ where
 
         let runner_handle = task::spawn_local(runner.run());
 
-        runner_interface.ws.send(WsMessageIncoming::Control(
-            control::incoming::Message::Join(Join {
+        runner_interface
+            .ws
+            .send(WsMessageIncoming::Control(ControlCommand::Join(Join {
                 display_name: display_name.into(),
-            }),
-        ))?;
+            })))?;
 
         self.runner_interfaces
             .insert(participant_id, (runner_interface, runner_handle));
@@ -179,8 +189,8 @@ where
     /// Send a module specific WebSocket message to the underlying module that is mapped to `participant_id`.
     ///
     /// # Note
-    /// WebSocket control messages (e.g. [`RaiseHand`](control::incoming::Message::RaiseHand),
-    /// [`LowerHand`](control::incoming::Message::LowerHand)) have to be sent via their respective helper function.
+    /// WebSocket control messages (e.g. [`RaiseHand`](ControlCommand::RaiseHand),
+    /// [`LowerHand`](ControlCommand::LowerHand)) have to be sent via their respective helper function.
     pub fn send_ws_message(
         &self,
         participant_id: &ParticipantId,
@@ -229,21 +239,21 @@ where
         }
     }
 
-    /// Send a [`RaiseHand`](control::incoming::Message::RaiseHand) control message to the module/runner.
+    /// Send a [`RaiseHand`](ControlCommand::RaiseHand) control message to the module/runner.
     pub fn raise_hand(&mut self, participant_id: &ParticipantId) -> Result<()> {
         let interface = self.get_runner_interface(participant_id)?;
-        interface.ws.send(WsMessageIncoming::Control(
-            control::incoming::Message::RaiseHand,
-        ))
+        interface
+            .ws
+            .send(WsMessageIncoming::Control(ControlCommand::RaiseHand))
     }
 
-    /// Send a [`LowerHand`](control::incoming::Message::LowerHand) control message to the module/runner.
+    /// Send a [`LowerHand`](ControlCommand::LowerHand) control message to the module/runner.
     pub fn lower_hand(&mut self, participant_id: &ParticipantId) -> Result<()> {
         let interface = self.get_runner_interface(participant_id)?;
 
-        interface.ws.send(WsMessageIncoming::Control(
-            control::incoming::Message::LowerHand,
-        ))
+        interface
+            .ws
+            .send(WsMessageIncoming::Control(ControlCommand::LowerHand))
     }
 
     /// Close the WebSocket channel and leave the room with the participant
@@ -329,7 +339,7 @@ where
     participant_id: ParticipantId,
     participant: Participant<UserId>,
     role: Role,
-    control_data: Option<ControlData>,
+    control_data: Option<ControlState>,
     module: M,
     interface: ClientInterface<M>,
     exchange_sender: broadcast::Sender<ExchangePublish>,
@@ -391,7 +401,7 @@ where
             participant_id,
             participant,
             role,
-            control_data: Option::<ControlData>::None,
+            control_data: Option::<ControlState>::None,
             module,
             interface,
             exchange_sender,
@@ -471,13 +481,13 @@ where
     async fn handle_ws_control_message(
         &mut self,
         mut ctx: ModuleContext<'_, M>,
-        control_message: control::incoming::Message,
+        control_message: ControlCommand,
     ) -> Result<()> {
         let mut lock = storage::room_mutex(self.room_id);
         let guard = lock.lock(&mut self.redis_conn).await?;
 
         match control_message {
-            control::incoming::Message::Join(join) => {
+            ControlCommand::Join(join) => {
                 let mut attr_pipe = storage::AttrPipeline::new(self.room_id, self.participant_id);
 
                 match &self.participant {
@@ -539,7 +549,7 @@ where
                     _ => None,
                 };
 
-                let mut control_data = ControlData {
+                let mut control_data = ControlState {
                     display_name: join.display_name.clone(),
                     role: self.role,
                     avatar_url: avatar_url.clone(),
@@ -572,7 +582,7 @@ where
 
                 if let Some(frontend_data) = frontend_data {
                     module_data.insert(
-                        M::NAMESPACE,
+                        M::NAMESPACE.to_string(),
                         serde_json::to_value(frontend_data)
                             .context("Failed to convert frontend-data to value")?,
                     );
@@ -583,11 +593,13 @@ where
                         let value = serde_json::to_value(data)
                             .context("Failed to convert module peer frontend data to value")?;
 
-                        participant.module_data.insert(M::NAMESPACE, value);
+                        participant
+                            .module_data
+                            .insert(M::NAMESPACE.to_string(), value);
                     }
                 }
 
-                let join_success = control::outgoing::JoinSuccess {
+                let join_success = JoinSuccess {
                     id: self.participant_id,
                     display_name: join.display_name,
                     avatar_url,
@@ -604,9 +616,11 @@ where
                     participants,
                 };
 
-                self.interface.ws.send(WsMessageOutgoing::Control(
-                    outgoing::Message::JoinSuccess(join_success),
-                ))?;
+                self.interface
+                    .ws
+                    .send(WsMessageOutgoing::Control(ControlEvent::JoinSuccess(
+                        join_success,
+                    )))?;
 
                 self.publish_exchange_control(control::exchange::Message::Joined(
                     self.participant_id,
@@ -614,8 +628,8 @@ where
 
                 Ok(())
             }
-            control::incoming::Message::EnterRoom => unreachable!(),
-            control::incoming::Message::RaiseHand => {
+            ControlCommand::EnterRoom => unreachable!(),
+            ControlCommand::RaiseHand => {
                 storage::AttrPipeline::new(self.room_id, self.participant_id)
                     .set("hand_is_up", true)
                     .set("hand_updated_at", ctx.timestamp)
@@ -628,7 +642,7 @@ where
 
                 Ok(())
             }
-            control::incoming::Message::LowerHand => {
+            ControlCommand::LowerHand => {
                 storage::AttrPipeline::new(self.room_id, self.participant_id)
                     .set("hand_is_up", false)
                     .set("hand_updated_at", ctx.timestamp)
@@ -641,8 +655,8 @@ where
 
                 Ok(())
             }
-            control::incoming::Message::GrantModeratorRole(_) => unimplemented!(),
-            control::incoming::Message::RevokeModeratorRole(_) => unimplemented!(),
+            ControlCommand::GrantModeratorRole(_) => unimplemented!(),
+            ControlCommand::RevokeModeratorRole(_) => unimplemented!(),
         }
     }
 
@@ -671,12 +685,16 @@ where
                         "Failed to serialize PeerFrontendData for ParticipantJoined event",
                     )?;
 
-                    participant.module_data.insert(M::NAMESPACE, module_data);
+                    participant
+                        .module_data
+                        .insert(M::NAMESPACE.to_string(), module_data);
                 }
 
-                self.interface.ws.send(WsMessageOutgoing::Control(
-                    control::outgoing::Message::Joined(participant),
-                ))?;
+                self.interface
+                    .ws
+                    .send(WsMessageOutgoing::Control(ControlEvent::Joined(
+                        participant,
+                    )))?;
 
                 Ok(())
             }
@@ -690,11 +708,11 @@ where
                     .await
                     .context("Module error on ParticipantLeft event")?;
 
-                self.interface.ws.send(WsMessageOutgoing::Control(
-                    control::outgoing::Message::Left(control::outgoing::AssociatedParticipant {
-                        id: participant_id,
-                    }),
-                ))?;
+                self.interface
+                    .ws
+                    .send(WsMessageOutgoing::Control(ControlEvent::Left(
+                        AssociatedParticipant { id: participant_id },
+                    )))?;
 
                 Ok(())
             }
@@ -717,12 +735,16 @@ where
                         "Failed to serialize PeerFrontendData for ParticipantUpdated event",
                     )?;
 
-                    participant.module_data.insert(M::NAMESPACE, module_data);
+                    participant
+                        .module_data
+                        .insert(M::NAMESPACE.to_string(), module_data);
                 }
 
-                self.interface.ws.send(WsMessageOutgoing::Control(
-                    control::outgoing::Message::Update(participant),
-                ))?;
+                self.interface
+                    .ws
+                    .send(WsMessageOutgoing::Control(ControlEvent::Update(
+                        participant,
+                    )))?;
 
                 Ok(())
             }
@@ -888,16 +910,19 @@ where
         Ok(())
     }
 
-    async fn build_participant(&mut self, id: ParticipantId) -> Result<outgoing::Participant> {
-        let mut participant = outgoing::Participant {
+    async fn build_participant(
+        &mut self,
+        id: ParticipantId,
+    ) -> Result<types::signaling::control::Participant> {
+        let mut participant = types::signaling::control::Participant {
             id,
             module_data: Default::default(),
         };
 
-        let control_data = ControlData::from_redis(&mut self.redis_conn, self.room_id, id).await?;
+        let control_data = ControlState::from_redis(&mut self.redis_conn, self.room_id, id).await?;
 
         participant.module_data.insert(
-            NAMESPACE,
+            NAMESPACE.to_string(),
             serde_json::to_value(control_data)
                 .expect("Failed to convert ControlData to serde_json::Value"),
         );
@@ -959,7 +984,7 @@ where
     M: SignalingModule,
 {
     Module(M::Incoming),
-    Control(control::incoming::Message),
+    Control(ControlCommand),
     /// The 'WebSocket' was closed
     CloseWs,
 }
@@ -970,7 +995,7 @@ where
     M: SignalingModule,
 {
     Module(M::Outgoing),
-    Control(control::outgoing::Message),
+    Control(ControlEvent),
 }
 
 impl<M> Clone for WsMessageOutgoing<M>

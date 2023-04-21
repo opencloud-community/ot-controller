@@ -9,7 +9,16 @@ use pretty_assertions::assert_eq;
 use serde_json::json;
 use serial_test::serial;
 use test_util::{TestContext, ROOM_ID, USER_1, USER_2};
-use types::core::{GroupName, Timestamp};
+use types::{
+    core::{GroupName, Timestamp},
+    signaling::{
+        control::{
+            event::{ControlEvent, JoinSuccess},
+            AssociatedParticipant, Participant,
+        },
+        Role,
+    },
+};
 
 #[actix_rt::test]
 #[serial]
@@ -64,12 +73,9 @@ async fn last_seen_timestamps() {
             .await
             .unwrap();
         match join_success {
-            controller::prelude::WsMessageOutgoing::Control(
-                control::outgoing::Message::JoinSuccess(control::outgoing::JoinSuccess {
-                    module_data,
-                    ..
-                }),
-            ) => {
+            controller::prelude::WsMessageOutgoing::Control(ControlEvent::JoinSuccess(
+                JoinSuccess { module_data, .. },
+            )) => {
                 // check that last seen timestamps are not set
                 let chat_data = module_data.get("chat").unwrap();
                 let json = serde_json::to_value(chat_data).unwrap();
@@ -173,12 +179,9 @@ async fn last_seen_timestamps() {
 
     // verify that we receive the correct timestamp for group1
     match rejoin_success {
-        controller::prelude::WsMessageOutgoing::Control(
-            control::outgoing::Message::JoinSuccess(control::outgoing::JoinSuccess {
-                module_data,
-                ..
-            }),
-        ) => {
+        controller::prelude::WsMessageOutgoing::Control(ControlEvent::JoinSuccess(
+            JoinSuccess { module_data, .. },
+        )) => {
             // check own groups
             let chat_data = module_data.get("chat").unwrap();
             let json = serde_json::to_value(chat_data).unwrap();
@@ -262,13 +265,13 @@ async fn common_groups_on_join() {
         .unwrap();
 
     match join_success1 {
-        controller::prelude::WsMessageOutgoing::Control(
-            control::outgoing::Message::JoinSuccess(control::outgoing::JoinSuccess {
+        controller::prelude::WsMessageOutgoing::Control(ControlEvent::JoinSuccess(
+            JoinSuccess {
                 module_data,
                 participants,
                 ..
-            }),
-        ) => {
+            },
+        )) => {
             assert!(participants.is_empty());
 
             // check own groups
@@ -310,13 +313,13 @@ async fn common_groups_on_join() {
         .unwrap();
 
     match join_success2 {
-        controller::prelude::WsMessageOutgoing::Control(
-            control::outgoing::Message::JoinSuccess(control::outgoing::JoinSuccess {
+        controller::prelude::WsMessageOutgoing::Control(ControlEvent::JoinSuccess(
+            JoinSuccess {
                 module_data,
                 participants,
                 ..
-            }),
-        ) => {
+            },
+        )) => {
             assert_eq!(participants.len(), 1);
 
             // check common groups here
@@ -403,13 +406,13 @@ async fn private_chat_history_on_join() {
         .unwrap();
 
     match join_success1 {
-        controller::prelude::WsMessageOutgoing::Control(
-            control::outgoing::Message::JoinSuccess(control::outgoing::JoinSuccess {
+        controller::prelude::WsMessageOutgoing::Control(ControlEvent::JoinSuccess(
+            JoinSuccess {
                 module_data,
                 participants,
                 ..
-            }),
-        ) => {
+            },
+        )) => {
             assert!(participants.is_empty());
 
             // check own groups
@@ -442,13 +445,13 @@ async fn private_chat_history_on_join() {
         .unwrap();
 
     match join_success2 {
-        controller::prelude::WsMessageOutgoing::Control(
-            control::outgoing::Message::JoinSuccess(control::outgoing::JoinSuccess {
+        controller::prelude::WsMessageOutgoing::Control(ControlEvent::JoinSuccess(
+            JoinSuccess {
                 module_data,
                 participants,
                 ..
-            }),
-        ) => {
+            },
+        )) => {
             assert_eq!(participants.len(), 1);
 
             // check common groups here
@@ -482,8 +485,8 @@ async fn private_chat_history_on_join() {
 
     assert!(matches!(
         joined,
-        WsMessageOutgoing::Control(control::outgoing::Message::Joined(
-            control::outgoing::Participant {id, module_data: _}
+        WsMessageOutgoing::Control(ControlEvent::Joined(
+            Participant {id, module_data: _}
         )) if id == USER_2.participant_id
     ));
 
@@ -525,8 +528,8 @@ async fn private_chat_history_on_join() {
 
     assert!(matches!(
         user1_leave_message,
-        WsMessageOutgoing::Control(control::outgoing::Message::Left(
-            control::outgoing::AssociatedParticipant {id}
+        WsMessageOutgoing::Control(ControlEvent::Left(
+            AssociatedParticipant {id}
         )) if id == USER_1.participant_id
     ));
 
@@ -541,12 +544,9 @@ async fn private_chat_history_on_join() {
         .unwrap();
 
     match join_again_success {
-        controller::prelude::WsMessageOutgoing::Control(
-            control::outgoing::Message::JoinSuccess(control::outgoing::JoinSuccess {
-                module_data,
-                ..
-            }),
-        ) => {
+        controller::prelude::WsMessageOutgoing::Control(ControlEvent::JoinSuccess(
+            JoinSuccess { module_data, .. },
+        )) => {
             // check that last seen timestamps are not set
             let chat_data = module_data.get("chat").unwrap();
             let chat_state: ChatState = serde_json::from_value(chat_data.clone()).unwrap();

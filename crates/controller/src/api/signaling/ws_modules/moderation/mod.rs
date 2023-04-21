@@ -7,7 +7,15 @@ use actix_http::ws::CloseCode;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::core::{ParticipantId, RoomId, UserId};
+use types::{
+    core::{ParticipantId, RoomId, UserId},
+    signaling::{
+        control::{state::ControlState, AssociatedParticipant, Participant, WaitingRoomState},
+        Role,
+    },
+};
+
+use super::control::ControlStateExt as _;
 
 pub mod exchange;
 pub mod incoming;
@@ -32,7 +40,7 @@ pub struct ModerationModule {
 #[derive(Debug, Serialize)]
 pub struct ModeratorFrontendData {
     pub waiting_room_enabled: bool,
-    pub waiting_room_participants: Vec<control::outgoing::Participant>,
+    pub waiting_room_participants: Vec<Participant>,
 }
 
 #[derive(Debug, Serialize)]
@@ -56,24 +64,26 @@ async fn build_waiting_room_participants(
     redis_conn: &mut RedisConnection,
     room_id: RoomId,
     list: &Vec<ParticipantId>,
-    waiting_room_state: control::outgoing::WaitingRoomState,
-) -> Result<Vec<control::outgoing::Participant>> {
+    waiting_room_state: WaitingRoomState,
+) -> Result<Vec<Participant>> {
     let mut waiting_room = Vec::with_capacity(list.len());
 
     for id in list {
         let control_data =
-            control::ControlData::from_redis(redis_conn, SignalingRoomId(room_id, None), *id)
-                .await?;
+            ControlState::from_redis(redis_conn, SignalingRoomId(room_id, None), *id).await?;
 
         let module_data = HashMap::from([
-            (control::NAMESPACE, serde_json::to_value(control_data)?),
             (
-                "waiting_room_state",
+                control::NAMESPACE.to_string(),
+                serde_json::to_value(control_data)?,
+            ),
+            (
+                "waiting_room_state".to_string(),
                 serde_json::to_value(&waiting_room_state)?,
             ),
         ]);
 
-        waiting_room.push(control::outgoing::Participant {
+        waiting_room.push(Participant {
             id: *id,
             module_data,
         });
@@ -142,7 +152,7 @@ impl SignalingModule for ModerationModule {
                         ctx.redis_conn(),
                         self.room.room_id(),
                         &list,
-                        control::outgoing::WaitingRoomState::Waiting,
+                        WaitingRoomState::Waiting,
                     )
                     .await?;
 
@@ -153,7 +163,7 @@ impl SignalingModule for ModerationModule {
                         ctx.redis_conn(),
                         self.room.room_id(),
                         &list,
-                        control::outgoing::WaitingRoomState::Accepted,
+                        WaitingRoomState::Accepted,
                     )
                     .await?;
 
@@ -340,23 +350,26 @@ impl SignalingModule for ModerationModule {
                 }
 
                 let control_data =
-                    control::ControlData::from_redis(ctx.redis_conn(), self.room, id).await?;
+                    ControlState::from_redis(ctx.redis_conn(), self.room, id).await?;
 
-                let module_data =
-                    HashMap::from([(control::NAMESPACE, serde_json::to_value(control_data)?)]);
+                let module_data = HashMap::from([(
+                    control::NAMESPACE.to_string(),
+                    serde_json::to_value(control_data)?,
+                )]);
 
-                ctx.ws_send(outgoing::Message::JoinedWaitingRoom(
-                    control::outgoing::Participant { id, module_data },
-                ));
+                ctx.ws_send(outgoing::Message::JoinedWaitingRoom(Participant {
+                    id,
+                    module_data,
+                }));
             }
             Event::Exchange(exchange::Message::LeftWaitingRoom(id)) => {
                 if self.id == id {
                     return Ok(());
                 }
 
-                ctx.ws_send(outgoing::Message::LeftWaitingRoom(
-                    control::outgoing::AssociatedParticipant { id },
-                ));
+                ctx.ws_send(outgoing::Message::LeftWaitingRoom(AssociatedParticipant {
+                    id,
+                }));
             }
             Event::Exchange(exchange::Message::WaitingRoomEnableUpdated) => {
                 let enabled =
@@ -419,7 +432,7 @@ mod tests {
             serde_json::to_value(&ModerationModuleFrontendData {
                 moderator_data: Some(ModeratorFrontendData {
                     waiting_room_enabled: true,
-                    waiting_room_participants: vec![control::outgoing::Participant {
+                    waiting_room_participants: vec![Participant {
                         id: ParticipantId::from_u128(1),
                         module_data: HashMap::new()
                     }]

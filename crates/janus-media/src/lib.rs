@@ -27,7 +27,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
-use types::core::ParticipantId;
+use types::{core::ParticipantId, signaling::Role};
 
 mod exchange;
 mod focus;

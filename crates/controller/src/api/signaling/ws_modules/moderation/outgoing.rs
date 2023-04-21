@@ -2,9 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::api::signaling::prelude::*;
 use serde::Serialize;
-use types::core::ParticipantId;
+use types::{
+    core::ParticipantId,
+    signaling::control::{AssociatedParticipant, Participant},
+};
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
 #[serde(tag = "message", rename_all = "snake_case")]
@@ -17,8 +19,8 @@ pub enum Message {
 
     InWaitingRoom,
 
-    JoinedWaitingRoom(control::outgoing::Participant),
-    LeftWaitingRoom(control::outgoing::AssociatedParticipant),
+    JoinedWaitingRoom(Participant),
+    LeftWaitingRoom(AssociatedParticipant),
 
     WaitingRoomEnabled,
     WaitingRoomDisabled,

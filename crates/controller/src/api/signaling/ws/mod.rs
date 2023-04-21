@@ -4,8 +4,7 @@
 
 use super::metrics::SignalingMetrics;
 use super::prelude::*;
-use crate::api::signaling::ws_modules::control::ControlData;
-use crate::api::signaling::{Role, SignalingRoomId};
+use crate::api::signaling::SignalingRoomId;
 use crate::api::Participant;
 use crate::redis_wrapper::RedisConnection;
 use crate::storage::ObjectStorage;
@@ -25,7 +24,7 @@ use std::sync::Arc;
 use tokio_stream::Stream;
 use types::{
     core::{BreakoutRoomId, ParticipantId, Timestamp},
-    signaling::{NamespacedCommand, NamespacedEvent},
+    signaling::{control::state::ControlState, NamespacedCommand, NamespacedEvent, Role},
 };
 
 mod actor;
@@ -49,7 +48,7 @@ where
     Joined {
         /// Data set by the control module. Some modules require attributes specified by the
         /// control module which are provided here on join
-        control_data: &'evt ControlData,
+        control_data: &'evt ControlState,
 
         /// The module can set this option to Some(M::FrontendData) to populate
         /// the `join_success` message with additional information to the frontend module counterpart
