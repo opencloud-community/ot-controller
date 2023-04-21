@@ -10,8 +10,14 @@ use super::KickScope;
 #[derive(Debug, Deserialize)]
 #[serde(tag = "action", rename_all = "snake_case")]
 pub enum ModerationCommand {
-    Kick(Target),
-    Ban(Target),
+    Kick {
+        /// The participant to kick from the room
+        target: ParticipantId,
+    },
+    Ban {
+        /// The participant to ban from the room
+        target: ParticipantId,
+    },
 
     Debrief(KickScope),
 
@@ -21,15 +27,12 @@ pub enum ModerationCommand {
     EnableRaiseHands,
     DisableRaiseHands,
 
-    Accept(Target),
+    Accept {
+        /// The participant to accept into the room
+        target: ParticipantId,
+    },
 
     ResetRaisedHands,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct Target {
-    /// The participant to ban/kick from the room
-    pub target: ParticipantId,
 }
 
 #[cfg(test)]
@@ -47,7 +50,7 @@ mod test {
 
         let msg: ModerationCommand = serde_json::from_value(json).unwrap();
 
-        if let ModerationCommand::Kick(Target { target }) = msg {
+        if let ModerationCommand::Kick { target } = msg {
             assert_eq!(target, ParticipantId::nil());
         } else {
             panic!()
@@ -63,7 +66,7 @@ mod test {
 
         let msg: ModerationCommand = serde_json::from_value(json).unwrap();
 
-        if let ModerationCommand::Ban(Target { target }) = msg {
+        if let ModerationCommand::Ban { target } = msg {
             assert_eq!(target, ParticipantId::nil());
         } else {
             panic!()
@@ -94,7 +97,7 @@ mod test {
 
         let msg: ModerationCommand = serde_json::from_value(json).unwrap();
 
-        if let ModerationCommand::Accept(Target { target }) = msg {
+        if let ModerationCommand::Accept { target } = msg {
             assert_eq!(target, ParticipantId::nil());
         } else {
             panic!()

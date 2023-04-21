@@ -193,7 +193,7 @@ impl SignalingModule for ModerationModule {
             Event::ParticipantJoined(_, _) => {}
             Event::ParticipantLeft(_) => {}
             Event::ParticipantUpdated(_, _) => {}
-            Event::WsMessage(ModerationCommand::Ban(incoming::Target { target })) => {
+            Event::WsMessage(incoming::ModerationCommand::Ban { target }) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
                 }
@@ -214,7 +214,7 @@ impl SignalingModule for ModerationModule {
                     exchange::Message::Banned(target),
                 );
             }
-            Event::WsMessage(ModerationCommand::Kick(incoming::Target { target })) => {
+            Event::WsMessage(incoming::ModerationCommand::Kick { target }) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
                 }
@@ -263,7 +263,7 @@ impl SignalingModule for ModerationModule {
                     exchange::Message::WaitingRoomEnableUpdated,
                 );
             }
-            Event::WsMessage(ModerationCommand::Accept(incoming::Target { target })) => {
+            Event::WsMessage(incoming::ModerationCommand::Accept { target }) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
                 }
