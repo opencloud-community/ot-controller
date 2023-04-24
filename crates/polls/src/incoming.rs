@@ -39,7 +39,6 @@ mod test {
     use super::*;
     use controller::prelude::*;
     use pretty_assertions::assert_eq;
-    use uuid::Uuid;
 
     #[test]
     fn start() {
@@ -84,7 +83,7 @@ mod test {
         let message: PollsCommand = serde_json::from_str(json).unwrap();
 
         if let PollsCommand::Vote(Vote { poll_id, choice_id }) = message {
-            assert_eq!(poll_id, PollId(Uuid::nil()));
+            assert_eq!(poll_id, PollId::nil());
             assert_eq!(choice_id, ChoiceId(321));
         } else {
             panic!()

@@ -12,12 +12,12 @@ use outgoing::PollsEvent;
 use redis::{self, FromRedisValue, RedisResult};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
-use std::fmt;
-use std::str::{from_utf8, FromStr};
 use std::time::Duration;
 use tokio::time::sleep;
-use types::{core::Timestamp, signaling::Role};
-use uuid::Uuid;
+use types::{
+    core::Timestamp,
+    signaling::{polls::PollId, Role},
+};
 
 pub mod exchange;
 pub mod incoming;
@@ -201,7 +201,7 @@ impl Polls {
                     .collect();
 
                 let polls_state = PollsState {
-                    id: PollId(Uuid::new_v4()),
+                    id: PollId::generate(),
                     topic,
                     live,
                     choices,
@@ -345,35 +345,6 @@ impl Polls {
                 Ok(())
             }
         }
-    }
-}
-
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq, Hash, ToRedisArgs)]
-#[to_redis_args(fmt)]
-pub struct PollId(pub Uuid);
-
-impl FromRedisValue for PollId {
-    fn from_redis_value(v: &redis::Value) -> RedisResult<Self> {
-        match v {
-            redis::Value::Data(bytes) => {
-                Uuid::from_str(from_utf8(bytes)?).map(Self).map_err(|_| {
-                    redis::RedisError::from((
-                        redis::ErrorKind::TypeError,
-                        "invalid data for PollId",
-                    ))
-                })
-            }
-            _ => RedisResult::Err(redis::RedisError::from((
-                redis::ErrorKind::TypeError,
-                "invalid data type for PollId",
-            ))),
-        }
-    }
-}
-
-impl fmt::Display for PollId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.0.fmt(f)
     }
 }
 

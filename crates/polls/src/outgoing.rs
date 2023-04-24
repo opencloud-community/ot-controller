@@ -54,14 +54,12 @@ pub enum Error {
 #[cfg(test)]
 mod test {
     use super::*;
-    use controller::prelude::*;
     use test_util::assert_eq_json;
-    use uuid::Uuid;
 
     #[test]
     fn started() {
         let started = PollsEvent::Started(Started {
-            id: PollId(Uuid::nil()),
+            id: PollId::nil(),
             topic: "polling".into(),
             live: true,
             choices: vec![
@@ -102,7 +100,7 @@ mod test {
     #[test]
     fn live_update() {
         let live_update = PollsEvent::LiveUpdate(Results {
-            id: PollId(Uuid::nil()),
+            id: PollId::nil(),
             results: vec![
                 Item {
                     id: ChoiceId(0),
@@ -137,7 +135,7 @@ mod test {
     #[test]
     fn done() {
         let done = PollsEvent::Done(Results {
-            id: PollId(Uuid::nil()),
+            id: PollId::nil(),
             results: vec![
                 Item {
                     id: ChoiceId(0),
