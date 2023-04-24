@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use controller::prelude::*;
-use opentalk_polls::{incoming::PollsCommand, *};
+use opentalk_polls::{incoming::PollsCommand, outgoing::PollsEvent, *};
 use pretty_assertions::assert_eq;
 use serial_test::serial;
 use std::time::Duration;
@@ -33,7 +33,7 @@ async fn start_poll(module_tester: &mut ModuleTester<Polls>, live_poll: bool) ->
 
     assert_eq!(started1, started2);
 
-    if let WsMessageOutgoing::Module(outgoing::Message::Started(outgoing::Started {
+    if let WsMessageOutgoing::Module(PollsEvent::Started(outgoing::Started {
         id,
         topic,
         live,
@@ -102,10 +102,8 @@ async fn full_poll_with_2sec_duration() {
 
     assert_eq!(update1, update2);
 
-    if let WsMessageOutgoing::Module(outgoing::Message::LiveUpdate(outgoing::Results {
-        id,
-        results,
-    })) = update1
+    if let WsMessageOutgoing::Module(PollsEvent::LiveUpdate(outgoing::Results { id, results })) =
+        update1
     {
         assert_eq!(id, started.id);
         assert_eq!(
@@ -149,10 +147,8 @@ async fn full_poll_with_2sec_duration() {
 
     assert_eq!(update1, update2);
 
-    if let WsMessageOutgoing::Module(outgoing::Message::LiveUpdate(outgoing::Results {
-        id,
-        results,
-    })) = update1
+    if let WsMessageOutgoing::Module(PollsEvent::LiveUpdate(outgoing::Results { id, results })) =
+        update1
     {
         assert_eq!(id, started.id);
         assert_eq!(
@@ -189,9 +185,7 @@ async fn full_poll_with_2sec_duration() {
         .await
         .unwrap();
 
-    if let WsMessageOutgoing::Module(outgoing::Message::Error(outgoing::Error::VotedAlready)) =
-        error
-    {
+    if let WsMessageOutgoing::Module(PollsEvent::Error(outgoing::Error::VotedAlready)) = error {
         // OK
     } else {
         panic!("unexpected {error:?}")
@@ -204,7 +198,7 @@ async fn full_poll_with_2sec_duration() {
         .await
         .unwrap();
 
-    if let WsMessageOutgoing::Module(outgoing::Message::Done(outgoing::Results {
+    if let WsMessageOutgoing::Module(PollsEvent::Done(outgoing::Results {
         //
         id,
         results,

@@ -8,7 +8,7 @@ use std::time::Duration;
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
 #[serde(tag = "message", rename_all = "snake_case")]
-pub enum Message {
+pub enum PollsEvent {
     Started(Started),
     LiveUpdate(Results),
     Done(Results),
@@ -60,7 +60,7 @@ mod test {
 
     #[test]
     fn started() {
-        let started = Message::Started(Started {
+        let started = PollsEvent::Started(Started {
             id: PollId(Uuid::nil()),
             topic: "polling".into(),
             live: true,
@@ -101,7 +101,7 @@ mod test {
 
     #[test]
     fn live_update() {
-        let live_update = Message::LiveUpdate(Results {
+        let live_update = PollsEvent::LiveUpdate(Results {
             id: PollId(Uuid::nil()),
             results: vec![
                 Item {
@@ -136,7 +136,7 @@ mod test {
 
     #[test]
     fn done() {
-        let done = Message::Done(Results {
+        let done = PollsEvent::Done(Results {
             id: PollId(Uuid::nil()),
             results: vec![
                 Item {

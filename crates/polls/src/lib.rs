@@ -8,6 +8,7 @@ use controller::prelude::*;
 use futures::stream::once;
 use futures::FutureExt;
 use incoming::PollsCommand;
+use outgoing::PollsEvent;
 use redis::{self, FromRedisValue, RedisResult};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
@@ -37,7 +38,7 @@ impl SignalingModule for Polls {
     type Params = ();
 
     type Incoming = PollsCommand;
-    type Outgoing = outgoing::Message;
+    type Outgoing = PollsEvent;
     type ExchangeMessage = exchange::Message;
 
     type ExtEvent = ExpiredEvent;
@@ -93,7 +94,7 @@ impl SignalingModule for Polls {
                     let results =
                         storage::poll_results(ctx.redis_conn(), self.room, config).await?;
 
-                    ctx.ws_send(outgoing::Message::Done(outgoing::Results { id, results }));
+                    ctx.ws_send(PollsEvent::Done(outgoing::Results { id, results }));
                 }
 
                 Ok(())
@@ -145,15 +146,13 @@ impl Polls {
                 duration,
             }) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::InsufficientPermissions,
-                    ));
+                    ctx.ws_send(PollsEvent::Error(outgoing::Error::InsufficientPermissions));
 
                     return Ok(());
                 }
 
                 if self.is_running() {
-                    ctx.ws_send(outgoing::Message::Error(outgoing::Error::StillRunning));
+                    ctx.ws_send(PollsEvent::Error(outgoing::Error::StillRunning));
 
                     return Ok(());
                 }
@@ -163,23 +162,19 @@ impl Polls {
                 let max = Duration::from_secs(3600);
 
                 if duration > max || duration < min {
-                    ctx.ws_send(outgoing::Message::Error(outgoing::Error::InvalidDuration));
+                    ctx.ws_send(PollsEvent::Error(outgoing::Error::InvalidDuration));
 
                     return Ok(());
                 }
 
                 if !matches!(topic.len(), 2..=100) {
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::InvalidTopicLength,
-                    ));
+                    ctx.ws_send(PollsEvent::Error(outgoing::Error::InvalidTopicLength));
 
                     return Ok(());
                 }
 
                 if !matches!(choices.len(), 2..=64) {
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::InvalidChoiceCount,
-                    ));
+                    ctx.ws_send(PollsEvent::Error(outgoing::Error::InvalidChoiceCount));
 
                     return Ok(());
                 }
@@ -188,9 +183,7 @@ impl Polls {
                     .iter()
                     .any(|content| !matches!(content.len(), 1..=100))
                 {
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::InvalidChoiceDescription,
-                    ));
+                    ctx.ws_send(PollsEvent::Error(outgoing::Error::InvalidChoiceDescription));
 
                     return Ok(());
                 }
@@ -217,7 +210,7 @@ impl Polls {
                 let set = storage::set_config(ctx.redis_conn(), self.room, &config).await?;
 
                 if !set {
-                    ctx.ws_send(outgoing::Message::Error(outgoing::Error::StillRunning));
+                    ctx.ws_send(PollsEvent::Error(outgoing::Error::StillRunning));
 
                     return Ok(());
                 }
@@ -238,7 +231,7 @@ impl Polls {
                     .filter(|config| config.id == poll_id && !config.is_expired())
                 {
                     if config.voted {
-                        ctx.ws_send(outgoing::Message::Error(outgoing::Error::VotedAlready));
+                        ctx.ws_send(PollsEvent::Error(outgoing::Error::VotedAlready));
 
                         return Ok(());
                     }
@@ -255,19 +248,17 @@ impl Polls {
                             );
                         }
                     } else {
-                        ctx.ws_send(outgoing::Message::Error(outgoing::Error::InvalidChoiceId));
+                        ctx.ws_send(PollsEvent::Error(outgoing::Error::InvalidChoiceId));
                     }
                 } else {
-                    ctx.ws_send(outgoing::Message::Error(outgoing::Error::InvalidPollId));
+                    ctx.ws_send(PollsEvent::Error(outgoing::Error::InvalidPollId));
                 }
 
                 Ok(())
             }
             PollsCommand::Finish(finish) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::InsufficientPermissions,
-                    ));
+                    ctx.ws_send(PollsEvent::Error(outgoing::Error::InsufficientPermissions));
 
                     return Ok(());
                 }
@@ -286,7 +277,7 @@ impl Polls {
                         exchange::Message::Finish(finish.id),
                     );
                 } else {
-                    ctx.ws_send(outgoing::Message::Error(outgoing::Error::InvalidPollId));
+                    ctx.ws_send(PollsEvent::Error(outgoing::Error::InvalidPollId));
                 }
 
                 Ok(())
@@ -304,7 +295,7 @@ impl Polls {
                 let id = config.id;
 
                 ctx.ws_send_overwrite_timestamp(
-                    outgoing::Message::Started(outgoing::Started {
+                    PollsEvent::Started(outgoing::Started {
                         id,
                         topic: config.topic.clone(),
                         live: config.live,
@@ -325,10 +316,7 @@ impl Polls {
                     let results =
                         storage::poll_results(ctx.redis_conn(), self.room, config).await?;
 
-                    ctx.ws_send(outgoing::Message::LiveUpdate(outgoing::Results {
-                        id,
-                        results,
-                    }));
+                    ctx.ws_send(PollsEvent::LiveUpdate(outgoing::Results { id, results }));
                 }
 
                 Ok(())
@@ -338,7 +326,7 @@ impl Polls {
                     let results =
                         storage::poll_results(ctx.redis_conn(), self.room, &config).await?;
 
-                    ctx.ws_send(outgoing::Message::Done(outgoing::Results { id, results }));
+                    ctx.ws_send(PollsEvent::Done(outgoing::Results { id, results }));
                 }
 
                 Ok(())
