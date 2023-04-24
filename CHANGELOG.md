@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- controller-settings: Fixed a panic when trying to parse config values for `tenants` and `tariffs`, when their assignment was set to `static`
 - controller: cache access-token check results for a maximum of 5mins, reducing load on both keycloak and postgres ([#359](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/359))
 - janus-media: add `event_loops` options to specify how many event-loop the janus instance runs on. Used to send hints to janus on which event-loop to create a new webrtc-session (handle).
 - janus-media: add `resubscribe` message to allow clients to restart the webrtc session of a subscription.
