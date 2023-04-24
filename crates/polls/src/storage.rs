@@ -97,7 +97,7 @@ pub(super) async fn vote(
                 room,
                 poll: poll_id,
             },
-            choice_id.0,
+            u32::from(choice_id),
             1,
         )
         .await
@@ -124,7 +124,7 @@ pub(super) async fn poll_results(
 
     let votes = (0..config.choices.len())
         .map(|i| {
-            let id = ChoiceId(i as u32);
+            let id = ChoiceId::from(i as u32);
             let count = votes.get(&id).copied().unwrap_or_default();
             crate::outgoing::Item { id, count }
         })

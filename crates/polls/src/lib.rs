@@ -9,14 +9,16 @@ use futures::stream::once;
 use futures::FutureExt;
 use incoming::PollsCommand;
 use outgoing::PollsEvent;
-use redis::{self, FromRedisValue, RedisResult};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use tokio::time::sleep;
 use types::{
     core::Timestamp,
-    signaling::{polls::PollId, Role},
+    signaling::{
+        polls::{ChoiceId, PollId},
+        Role,
+    },
 };
 
 pub mod exchange;
@@ -195,7 +197,7 @@ impl Polls {
                     .into_iter()
                     .enumerate()
                     .map(|(i, content)| Choice {
-                        id: ChoiceId(i as u32),
+                        id: ChoiceId::from(i as u32),
                         content,
                     })
                     .collect();
@@ -345,15 +347,6 @@ impl Polls {
                 Ok(())
             }
         }
-    }
-}
-
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
-pub struct ChoiceId(pub u32);
-
-impl FromRedisValue for ChoiceId {
-    fn from_redis_value(v: &redis::Value) -> RedisResult<Self> {
-        u32::from_redis_value(v).map(Self)
     }
 }
 

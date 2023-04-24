@@ -8,6 +8,7 @@ use pretty_assertions::assert_eq;
 use serial_test::serial;
 use std::time::Duration;
 use test_util::*;
+use types::signaling::polls::ChoiceId;
 
 async fn start_poll(module_tester: &mut ModuleTester<Polls>, live_poll: bool) -> outgoing::Started {
     let start = PollsCommand::Start(incoming::Start {
@@ -47,11 +48,11 @@ async fn start_poll(module_tester: &mut ModuleTester<Polls>, live_poll: bool) ->
             choices,
             &[
                 Choice {
-                    id: ChoiceId(0),
+                    id: ChoiceId::from(0),
                     content: "yes".into()
                 },
                 Choice {
-                    id: ChoiceId(1),
+                    id: ChoiceId::from(1),
                     content: "no".into()
                 }
             ]
@@ -85,7 +86,7 @@ async fn full_poll_with_2sec_duration() {
             &USER_1.participant_id,
             PollsCommand::Vote(incoming::Vote {
                 poll_id: started.id,
-                choice_id: ChoiceId(0),
+                choice_id: ChoiceId::from(0),
             }),
         )
         .unwrap();
@@ -110,11 +111,11 @@ async fn full_poll_with_2sec_duration() {
             results,
             &[
                 outgoing::Item {
-                    id: ChoiceId(0),
+                    id: ChoiceId::from(0),
                     count: 1,
                 },
                 outgoing::Item {
-                    id: ChoiceId(1),
+                    id: ChoiceId::from(1),
                     count: 0
                 }
             ]
@@ -130,7 +131,7 @@ async fn full_poll_with_2sec_duration() {
             &USER_2.participant_id,
             PollsCommand::Vote(incoming::Vote {
                 poll_id: started.id,
-                choice_id: ChoiceId(1),
+                choice_id: ChoiceId::from(1),
             }),
         )
         .unwrap();
@@ -155,11 +156,11 @@ async fn full_poll_with_2sec_duration() {
             results,
             &[
                 outgoing::Item {
-                    id: ChoiceId(0),
+                    id: ChoiceId::from(0),
                     count: 1,
                 },
                 outgoing::Item {
-                    id: ChoiceId(1),
+                    id: ChoiceId::from(1),
                     count: 1
                 }
             ]
@@ -175,7 +176,7 @@ async fn full_poll_with_2sec_duration() {
             &USER_2.participant_id,
             PollsCommand::Vote(incoming::Vote {
                 poll_id: started.id,
-                choice_id: ChoiceId(0),
+                choice_id: ChoiceId::from(0),
             }),
         )
         .unwrap();
@@ -209,11 +210,11 @@ async fn full_poll_with_2sec_duration() {
             results,
             &[
                 outgoing::Item {
-                    id: ChoiceId(0),
+                    id: ChoiceId::from(0),
                     count: 1,
                 },
                 outgoing::Item {
-                    id: ChoiceId(1),
+                    id: ChoiceId::from(1),
                     count: 1,
                 }
             ]

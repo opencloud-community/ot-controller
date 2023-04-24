@@ -4,6 +4,8 @@
 
 //! Signaling messages for the `polls` namespace
 
+mod choice_id;
 mod poll_id;
 
+pub use choice_id::ChoiceId;
 pub use poll_id::PollId;

@@ -64,11 +64,11 @@ mod test {
             live: true,
             choices: vec![
                 Choice {
-                    id: ChoiceId(0),
+                    id: ChoiceId::from(0),
                     content: "yes".into(),
                 },
                 Choice {
-                    id: ChoiceId(1),
+                    id: ChoiceId::from(1),
                     content: "no".into(),
                 },
             ],
@@ -103,11 +103,11 @@ mod test {
             id: PollId::nil(),
             results: vec![
                 Item {
-                    id: ChoiceId(0),
+                    id: ChoiceId::from(0),
                     count: 32,
                 },
                 Item {
-                    id: ChoiceId(1),
+                    id: ChoiceId::from(1),
                     count: 64,
                 },
             ],
@@ -138,11 +138,11 @@ mod test {
             id: PollId::nil(),
             results: vec![
                 Item {
-                    id: ChoiceId(0),
+                    id: ChoiceId::from(0),
                     count: 32,
                 },
                 Item {
-                    id: ChoiceId(1),
+                    id: ChoiceId::from(1),
                     count: 64,
                 },
             ],

@@ -84,7 +84,7 @@ mod test {
 
         if let PollsCommand::Vote(Vote { poll_id, choice_id }) = message {
             assert_eq!(poll_id, PollId::nil());
-            assert_eq!(choice_id, ChoiceId(321));
+            assert_eq!(choice_id, ChoiceId::from(321));
         } else {
             panic!()
         }
