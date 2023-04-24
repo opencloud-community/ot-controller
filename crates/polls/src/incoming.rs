@@ -8,7 +8,7 @@ use std::time::Duration;
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "action", rename_all = "snake_case")]
-pub enum Message {
+pub enum PollsCommand {
     Start(Start),
     Vote(Vote),
     Finish(Finish),
@@ -53,9 +53,9 @@ mod test {
         }
         "#;
 
-        let message: Message = serde_json::from_str(json).unwrap();
+        let message: PollsCommand = serde_json::from_str(json).unwrap();
 
-        if let Message::Start(Start {
+        if let PollsCommand::Start(Start {
             topic,
             live,
             choices,
@@ -81,9 +81,9 @@ mod test {
          }
         "#;
 
-        let message: Message = serde_json::from_str(json).unwrap();
+        let message: PollsCommand = serde_json::from_str(json).unwrap();
 
-        if let Message::Vote(Vote { poll_id, choice_id }) = message {
+        if let PollsCommand::Vote(Vote { poll_id, choice_id }) = message {
             assert_eq!(poll_id, PollId(Uuid::nil()));
             assert_eq!(choice_id, ChoiceId(321));
         } else {

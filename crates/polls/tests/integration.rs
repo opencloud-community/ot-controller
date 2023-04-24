@@ -3,14 +3,14 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use controller::prelude::*;
-use opentalk_polls::*;
+use opentalk_polls::{incoming::PollsCommand, *};
 use pretty_assertions::assert_eq;
 use serial_test::serial;
 use std::time::Duration;
 use test_util::*;
 
 async fn start_poll(module_tester: &mut ModuleTester<Polls>, live_poll: bool) -> outgoing::Started {
-    let start = incoming::Message::Start(incoming::Start {
+    let start = PollsCommand::Start(incoming::Start {
         topic: "polling".into(),
         live: live_poll,
         choices: vec!["yes".into(), "no".into()],
@@ -83,7 +83,7 @@ async fn full_poll_with_2sec_duration() {
     module_tester
         .send_ws_message(
             &USER_1.participant_id,
-            incoming::Message::Vote(incoming::Vote {
+            PollsCommand::Vote(incoming::Vote {
                 poll_id: started.id,
                 choice_id: ChoiceId(0),
             }),
@@ -130,7 +130,7 @@ async fn full_poll_with_2sec_duration() {
     module_tester
         .send_ws_message(
             &USER_2.participant_id,
-            incoming::Message::Vote(incoming::Vote {
+            PollsCommand::Vote(incoming::Vote {
                 poll_id: started.id,
                 choice_id: ChoiceId(1),
             }),
@@ -177,7 +177,7 @@ async fn full_poll_with_2sec_duration() {
     module_tester
         .send_ws_message(
             &USER_2.participant_id,
-            incoming::Message::Vote(incoming::Vote {
+            PollsCommand::Vote(incoming::Vote {
                 poll_id: started.id,
                 choice_id: ChoiceId(0),
             }),

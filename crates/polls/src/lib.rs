@@ -7,6 +7,7 @@ use chrono::Utc;
 use controller::prelude::*;
 use futures::stream::once;
 use futures::FutureExt;
+use incoming::PollsCommand;
 use redis::{self, FromRedisValue, RedisResult};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
@@ -35,7 +36,7 @@ impl SignalingModule for Polls {
 
     type Params = ();
 
-    type Incoming = incoming::Message;
+    type Incoming = PollsCommand;
     type Outgoing = outgoing::Message;
     type ExchangeMessage = exchange::Message;
 
@@ -134,10 +135,10 @@ impl Polls {
     async fn on_ws_message(
         &mut self,
         mut ctx: ModuleContext<'_, Self>,
-        msg: incoming::Message,
+        msg: PollsCommand,
     ) -> Result<()> {
         match msg {
-            incoming::Message::Start(incoming::Start {
+            PollsCommand::Start(incoming::Start {
                 topic,
                 live,
                 choices,
@@ -230,7 +231,7 @@ impl Polls {
 
                 Ok(())
             }
-            incoming::Message::Vote(incoming::Vote { poll_id, choice_id }) => {
+            PollsCommand::Vote(incoming::Vote { poll_id, choice_id }) => {
                 if let Some(config) = self
                     .config
                     .as_mut()
@@ -262,7 +263,7 @@ impl Polls {
 
                 Ok(())
             }
-            incoming::Message::Finish(finish) => {
+            PollsCommand::Finish(finish) => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(outgoing::Message::Error(
                         outgoing::Error::InsufficientPermissions,
