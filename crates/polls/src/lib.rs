@@ -16,7 +16,7 @@ use tokio::time::sleep;
 use types::{
     core::Timestamp,
     signaling::{
-        polls::{Choice, ChoiceId, PollId},
+        polls::{event::Error, Choice, ChoiceId, PollId},
         Role,
     },
 };
@@ -151,13 +151,13 @@ impl Polls {
                 duration,
             }) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(PollsEvent::Error(outgoing::Error::InsufficientPermissions));
+                    ctx.ws_send(PollsEvent::Error(Error::InsufficientPermissions));
 
                     return Ok(());
                 }
 
                 if self.is_running() {
-                    ctx.ws_send(PollsEvent::Error(outgoing::Error::StillRunning));
+                    ctx.ws_send(PollsEvent::Error(Error::StillRunning));
 
                     return Ok(());
                 }
@@ -167,19 +167,19 @@ impl Polls {
                 let max = Duration::from_secs(3600);
 
                 if duration > max || duration < min {
-                    ctx.ws_send(PollsEvent::Error(outgoing::Error::InvalidDuration));
+                    ctx.ws_send(PollsEvent::Error(Error::InvalidDuration));
 
                     return Ok(());
                 }
 
                 if !matches!(topic.len(), 2..=100) {
-                    ctx.ws_send(PollsEvent::Error(outgoing::Error::InvalidTopicLength));
+                    ctx.ws_send(PollsEvent::Error(Error::InvalidTopicLength));
 
                     return Ok(());
                 }
 
                 if !matches!(choices.len(), 2..=64) {
-                    ctx.ws_send(PollsEvent::Error(outgoing::Error::InvalidChoiceCount));
+                    ctx.ws_send(PollsEvent::Error(Error::InvalidChoiceCount));
 
                     return Ok(());
                 }
@@ -188,7 +188,7 @@ impl Polls {
                     .iter()
                     .any(|content| !matches!(content.len(), 1..=100))
                 {
-                    ctx.ws_send(PollsEvent::Error(outgoing::Error::InvalidChoiceDescription));
+                    ctx.ws_send(PollsEvent::Error(Error::InvalidChoiceDescription));
 
                     return Ok(());
                 }
@@ -214,7 +214,7 @@ impl Polls {
                 let set = storage::set_state(ctx.redis_conn(), self.room, &polls_state).await?;
 
                 if !set {
-                    ctx.ws_send(PollsEvent::Error(outgoing::Error::StillRunning));
+                    ctx.ws_send(PollsEvent::Error(Error::StillRunning));
 
                     return Ok(());
                 }
@@ -235,7 +235,7 @@ impl Polls {
                     .filter(|config| config.state.id == poll_id && !config.state.is_expired())
                 {
                     if config.voted {
-                        ctx.ws_send(PollsEvent::Error(outgoing::Error::VotedAlready));
+                        ctx.ws_send(PollsEvent::Error(Error::VotedAlready));
 
                         return Ok(());
                     }
@@ -258,17 +258,17 @@ impl Polls {
                             );
                         }
                     } else {
-                        ctx.ws_send(PollsEvent::Error(outgoing::Error::InvalidChoiceId));
+                        ctx.ws_send(PollsEvent::Error(Error::InvalidChoiceId));
                     }
                 } else {
-                    ctx.ws_send(PollsEvent::Error(outgoing::Error::InvalidPollId));
+                    ctx.ws_send(PollsEvent::Error(Error::InvalidPollId));
                 }
 
                 Ok(())
             }
             PollsCommand::Finish(finish) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(PollsEvent::Error(outgoing::Error::InsufficientPermissions));
+                    ctx.ws_send(PollsEvent::Error(Error::InsufficientPermissions));
 
                     return Ok(());
                 }
@@ -287,7 +287,7 @@ impl Polls {
                         exchange::Message::Finish(finish.id),
                     );
                 } else {
-                    ctx.ws_send(PollsEvent::Error(outgoing::Error::InvalidPollId));
+                    ctx.ws_send(PollsEvent::Error(Error::InvalidPollId));
                 }
 
                 Ok(())

@@ -8,7 +8,7 @@ use pretty_assertions::assert_eq;
 use serial_test::serial;
 use std::time::Duration;
 use test_util::*;
-use types::signaling::polls::{Choice, ChoiceId};
+use types::signaling::polls::{event::Error, Choice, ChoiceId};
 
 async fn start_poll(module_tester: &mut ModuleTester<Polls>, live_poll: bool) -> outgoing::Started {
     let start = PollsCommand::Start(incoming::Start {
@@ -186,7 +186,7 @@ async fn full_poll_with_2sec_duration() {
         .await
         .unwrap();
 
-    if let WsMessageOutgoing::Module(PollsEvent::Error(outgoing::Error::VotedAlready)) = error {
+    if let WsMessageOutgoing::Module(PollsEvent::Error(Error::VotedAlready)) = error {
         // OK
     } else {
         panic!("unexpected {error:?}")

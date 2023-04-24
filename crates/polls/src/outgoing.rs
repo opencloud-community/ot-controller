@@ -5,6 +5,7 @@
 use crate::{Choice, ChoiceId, PollId};
 use serde::Serialize;
 use std::time::Duration;
+use types::signaling::polls::event::Error;
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
 #[serde(tag = "message", rename_all = "snake_case")]
@@ -35,20 +36,6 @@ pub struct Results {
 pub struct Item {
     pub id: ChoiceId,
     pub count: u32,
-}
-
-#[derive(Debug, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case", tag = "error")]
-pub enum Error {
-    InsufficientPermissions,
-    InvalidChoiceCount,
-    InvalidPollId,
-    InvalidChoiceId,
-    InvalidChoiceDescription,
-    InvalidDuration,
-    InvalidTopicLength,
-    VotedAlready,
-    StillRunning,
 }
 
 #[cfg(test)]

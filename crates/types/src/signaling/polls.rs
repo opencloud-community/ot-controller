@@ -8,6 +8,8 @@ mod choice;
 mod choice_id;
 mod poll_id;
 
+pub mod event;
+
 pub use choice::Choice;
 pub use choice_id::ChoiceId;
 pub use poll_id::PollId;
