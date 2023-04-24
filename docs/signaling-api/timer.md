@@ -1,5 +1,58 @@
 # Timer
 
+## Joining the room
+
+### JoinSuccess
+
+The `join_success` control event contains the module-specific fields decribed below.
+
+#### Fields
+
+| Field                 | Type     | Always                     | Description                                                          |
+| --------------------- | -------- | -------------------------- | -------------------------------------------------------------------- |
+| `timer_id`            | `string` | yes                        | The timer id (uuid)                                                  |
+| `started_at`          | `string` | yes                        | RFC 3339 timestamp of when the timer started                         |
+| `kind`                | `enum`   | yes                        | Either `"countdown"` or `"stopwatch"`                                |
+| `ends at`             | `string` | if `kind` is `"countdown"` | optional RFC 3339 timestamp of when the timer will end               |
+| `style`               | `string` | no                         | An optional style tag to identify a timer across frontend clients    |
+| `title`               | `string` | no                         | An optional title for the timer                                      |
+| `ready_check_enabled` | `bool`   | yes                        | Enables/Disables participants to send a `update_ready_status` action |
+
+##### Example
+
+Countdown:
+
+```json
+{
+    "message": "started",
+    "timer_id": "00000000-0000-0000-0000-000000000000",
+    "kind": "countdown",
+    "started_at": "1970-01-01T00:00:00Z",
+    "ends_at": "1970-01-01T00:00:00Z",
+    "title": "Testing the timer!",
+    "ready_check_enabled": false
+}
+```
+
+### Joined
+
+When joining a room with a timer running, the `joined` control event sent to all other participants contains the module-specific fields decribed below.
+
+#### Fields
+
+| Field          | Type   | Always | Description                                                      |
+| -------------- | ------ | ------ | ---------------------------------------------------------------- |
+| `ready_status` | `bool` | yes    | The ready status of the participant for a currently active timer |
+
+##### Example
+
+```json
+    ...
+    "ready_status": true,
+    ...
+
+```
+
 ---
 
 ## Overview
