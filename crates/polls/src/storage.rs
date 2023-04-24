@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::Config;
+use super::PollsState;
 use crate::{ChoiceId, PollId};
 use anyhow::{bail, Context, Result};
 use controller::prelude::*;
@@ -12,38 +12,38 @@ use std::collections::HashMap;
 
 /// Key to the current poll config
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "opentalk-signaling:room={room}:polls:config")]
-struct PollConfig {
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:polls:state")]
+struct PollsStateKey {
     room: SignalingRoomId,
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
-pub(super) async fn get_config(
+pub(super) async fn get_state(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
-) -> Result<Option<Config>> {
+) -> Result<Option<PollsState>> {
     redis_conn
-        .get(PollConfig { room })
+        .get(PollsStateKey { room })
         .await
-        .context("failed to get current config")
+        .context("failed to get current polls state")
 }
 
-/// Set the current config if one doesn't already exist returns true if set was successful
+/// Set the current polls state if one doesn't already exist returns true if set was successful
 #[tracing::instrument(level = "debug", skip(redis_conn))]
-pub(super) async fn set_config(
+pub(super) async fn set_state(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
-    config: &Config,
+    polls_state: &PollsState,
 ) -> Result<bool> {
     let value: redis::Value = redis::cmd("SET")
-        .arg(PollConfig { room })
-        .arg(config)
+        .arg(PollsStateKey { room })
+        .arg(polls_state)
         .arg("EX")
-        .arg(config.duration.as_secs())
+        .arg(polls_state.duration.as_secs())
         .arg("NX")
         .query_async(redis_conn)
         .await
-        .context("failed to set current config")?;
+        .context("failed to set current polls state")?;
 
     match value {
         redis::Value::Okay => Ok(true),
@@ -53,14 +53,14 @@ pub(super) async fn set_config(
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
-pub(super) async fn del_config(
+pub(super) async fn del_state(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
 ) -> Result<()> {
     redis_conn
-        .del(PollConfig { room })
+        .del(PollsStateKey { room })
         .await
-        .context("failed to del current config")
+        .context("failed to del current polls state")
 }
 
 /// Key to the current vote results
@@ -118,7 +118,7 @@ async fn results(
 pub(super) async fn poll_results(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
-    config: &Config,
+    config: &PollsState,
 ) -> Result<Vec<crate::outgoing::Item>> {
     let votes = results(redis_conn, room, config.id).await?;
 
