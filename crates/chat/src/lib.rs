@@ -778,7 +778,7 @@ mod test {
             "scope":"global",
         });
 
-        let produced = serde_json::to_value(&StoredMessage {
+        let produced = serde_json::to_value(StoredMessage {
             id: MessageId::nil(),
             source: ParticipantId::nil(),
             timestamp: DateTime::from_str("2021-06-24T14:00:11.873753715Z")

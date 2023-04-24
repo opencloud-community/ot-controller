@@ -51,7 +51,7 @@ mod test {
     fn kicked() {
         let expected = json!({"message": "kicked"});
 
-        let produced = serde_json::to_value(&Message::Kicked).unwrap();
+        let produced = serde_json::to_value(Message::Kicked).unwrap();
 
         assert_eq!(expected, produced);
     }
@@ -60,7 +60,7 @@ mod test {
     fn banned() {
         let expected = json!({"message": "banned"});
 
-        let produced = serde_json::to_value(&Message::Banned).unwrap();
+        let produced = serde_json::to_value(Message::Banned).unwrap();
 
         assert_eq!(expected, produced);
     }
@@ -72,7 +72,7 @@ mod test {
             "issued_by": "00000000-0000-0000-0000-000000000000"
         });
 
-        let produced = serde_json::to_value(&Message::SessionEnded {
+        let produced = serde_json::to_value(Message::SessionEnded {
             issued_by: ParticipantId::nil(),
         })
         .unwrap();
@@ -87,7 +87,7 @@ mod test {
             "issued_by": "00000000-0000-0000-0000-000000000000"
         });
 
-        let produced = serde_json::to_value(&Message::DebriefingStarted {
+        let produced = serde_json::to_value(Message::DebriefingStarted {
             issued_by: ParticipantId::nil(),
         })
         .unwrap();
@@ -99,7 +99,7 @@ mod test {
     fn in_waiting_room() {
         let expected = json!({"message": "in_waiting_room"});
 
-        let produced = serde_json::to_value(&Message::InWaitingRoom).unwrap();
+        let produced = serde_json::to_value(Message::InWaitingRoom).unwrap();
 
         assert_eq!(expected, produced);
     }
