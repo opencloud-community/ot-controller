@@ -399,7 +399,7 @@ pub struct Metrics {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "snake_case", tag = "assignment")]
 pub enum TenantAssignment {
     Static { static_tenant_id: String },
     ByExternalTenantId,
@@ -415,12 +415,12 @@ impl Default for TenantAssignment {
 
 #[derive(Default, Debug, Clone, Deserialize)]
 pub struct Tenants {
-    #[serde(default)]
+    #[serde(default, flatten)]
     pub assignment: TenantAssignment,
 }
 
 #[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "snake_case", tag = "assignment")]
 pub enum TariffAssignment {
     Static { static_tariff_name: String },
     ByExternalTariffId,
@@ -436,7 +436,7 @@ impl Default for TariffAssignment {
 
 #[derive(Default, Debug, Clone, Deserialize)]
 pub struct Tariffs {
-    #[serde(default)]
+    #[serde(default, flatten)]
     pub assignment: TariffAssignment,
 }
 
