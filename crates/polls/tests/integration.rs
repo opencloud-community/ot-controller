@@ -8,7 +8,7 @@ use pretty_assertions::assert_eq;
 use serial_test::serial;
 use std::time::Duration;
 use test_util::*;
-use types::signaling::polls::ChoiceId;
+use types::signaling::polls::{Choice, ChoiceId};
 
 async fn start_poll(module_tester: &mut ModuleTester<Polls>, live_poll: bool) -> outgoing::Started {
     let start = PollsCommand::Start(incoming::Start {

@@ -16,7 +16,7 @@ use tokio::time::sleep;
 use types::{
     core::Timestamp,
     signaling::{
-        polls::{ChoiceId, PollId},
+        polls::{Choice, ChoiceId, PollId},
         Role,
     },
 };
@@ -348,12 +348,6 @@ impl Polls {
             }
         }
     }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Choice {
-    pub id: ChoiceId,
-    pub content: String,
 }
 
 #[derive(Debug, Clone)]
