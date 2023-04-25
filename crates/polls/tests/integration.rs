@@ -8,7 +8,7 @@ use pretty_assertions::assert_eq;
 use serial_test::serial;
 use std::time::Duration;
 use test_util::*;
-use types::signaling::polls::{event::Error, Choice, ChoiceId, Item};
+use types::signaling::polls::{event::Error, Choice, ChoiceId, Item, Results};
 
 async fn start_poll(module_tester: &mut ModuleTester<Polls>, live_poll: bool) -> outgoing::Started {
     let start = PollsCommand::Start(incoming::Start {
@@ -103,9 +103,7 @@ async fn full_poll_with_2sec_duration() {
 
     assert_eq!(update1, update2);
 
-    if let WsMessageOutgoing::Module(PollsEvent::LiveUpdate(outgoing::Results { id, results })) =
-        update1
-    {
+    if let WsMessageOutgoing::Module(PollsEvent::LiveUpdate(Results { id, results })) = update1 {
         assert_eq!(id, started.id);
         assert_eq!(
             results,
@@ -148,9 +146,7 @@ async fn full_poll_with_2sec_duration() {
 
     assert_eq!(update1, update2);
 
-    if let WsMessageOutgoing::Module(PollsEvent::LiveUpdate(outgoing::Results { id, results })) =
-        update1
-    {
+    if let WsMessageOutgoing::Module(PollsEvent::LiveUpdate(Results { id, results })) = update1 {
         assert_eq!(id, started.id);
         assert_eq!(
             results,
@@ -199,12 +195,7 @@ async fn full_poll_with_2sec_duration() {
         .await
         .unwrap();
 
-    if let WsMessageOutgoing::Module(PollsEvent::Done(outgoing::Results {
-        //
-        id,
-        results,
-    })) = &done1
-    {
+    if let WsMessageOutgoing::Module(PollsEvent::Done(Results { id, results })) = &done1 {
         assert_eq!(*id, started.id);
         assert_eq!(
             results,

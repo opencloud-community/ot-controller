@@ -5,7 +5,7 @@
 use crate::{Choice, PollId};
 use serde::Serialize;
 use std::time::Duration;
-use types::signaling::polls::{event::Error, Item};
+use types::signaling::polls::{event::Error, Results};
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
 #[serde(tag = "message", rename_all = "snake_case")]
@@ -26,17 +26,11 @@ pub struct Started {
     pub duration: Duration,
 }
 
-#[derive(Debug, Serialize, PartialEq, Eq)]
-pub struct Results {
-    pub id: PollId,
-    pub results: Vec<Item>,
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
     use test_util::assert_eq_json;
-    use types::signaling::polls::ChoiceId;
+    use types::signaling::polls::{ChoiceId, Item};
 
     #[test]
     fn started() {

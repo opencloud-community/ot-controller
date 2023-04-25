@@ -16,7 +16,7 @@ use tokio::time::sleep;
 use types::{
     core::Timestamp,
     signaling::{
-        polls::{event::Error, Choice, ChoiceId, PollId},
+        polls::{event::Error, Choice, ChoiceId, PollId, Results},
         Role,
     },
 };
@@ -99,7 +99,7 @@ impl SignalingModule for Polls {
                     let results =
                         storage::poll_results(ctx.redis_conn(), self.room, &config.state).await?;
 
-                    ctx.ws_send(PollsEvent::Done(outgoing::Results { id, results }));
+                    ctx.ws_send(PollsEvent::Done(Results { id, results }));
                 }
 
                 Ok(())
@@ -331,7 +331,7 @@ impl Polls {
                     let results =
                         storage::poll_results(ctx.redis_conn(), self.room, &config.state).await?;
 
-                    ctx.ws_send(PollsEvent::LiveUpdate(outgoing::Results { id, results }));
+                    ctx.ws_send(PollsEvent::LiveUpdate(Results { id, results }));
                 }
 
                 Ok(())
@@ -341,7 +341,7 @@ impl Polls {
                     let results =
                         storage::poll_results(ctx.redis_conn(), self.room, &config.state).await?;
 
-                    ctx.ws_send(PollsEvent::Done(outgoing::Results { id, results }));
+                    ctx.ws_send(PollsEvent::Done(Results { id, results }));
                 }
 
                 Ok(())
