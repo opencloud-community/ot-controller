@@ -4,7 +4,32 @@
 
 //! Types related to signaling events in the `polls` namespace
 
+use std::time::Duration;
+
 use crate::imports::*;
+
+use super::{Choice, PollId};
+
+/// Event signaling to the participant that the poll has started
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct Started {
+    /// The id of the poll
+    pub id: PollId,
+
+    /// The description of the poll topic
+    pub topic: String,
+
+    /// Is the poll live
+    pub live: bool,
+
+    /// Choices of the poll
+    pub choices: Vec<Choice>,
+
+    /// Duration of the poll
+    #[cfg_attr(feature = "serde", serde(with = "crate::utils::duration_seconds"))]
+    pub duration: Duration,
+}
 
 /// Errors from the `polls` module namespace
 #[derive(Clone, Debug, PartialEq, Eq)]

@@ -16,7 +16,10 @@ use tokio::time::sleep;
 use types::{
     core::Timestamp,
     signaling::{
-        polls::{event::Error, Choice, ChoiceId, PollId, Results},
+        polls::{
+            event::{Error, Started},
+            Choice, ChoiceId, PollId, Results,
+        },
         Role,
     },
 };
@@ -305,7 +308,7 @@ impl Polls {
                 let id = polls_state.id;
 
                 ctx.ws_send_overwrite_timestamp(
-                    PollsEvent::Started(outgoing::Started {
+                    PollsEvent::Started(Started {
                         id,
                         topic: polls_state.topic.clone(),
                         live: polls_state.live,

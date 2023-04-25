@@ -8,9 +8,12 @@ use pretty_assertions::assert_eq;
 use serial_test::serial;
 use std::time::Duration;
 use test_util::*;
-use types::signaling::polls::{event::Error, Choice, ChoiceId, Item, Results};
+use types::signaling::polls::{
+    event::{Error, Started},
+    Choice, ChoiceId, Item, Results,
+};
 
-async fn start_poll(module_tester: &mut ModuleTester<Polls>, live_poll: bool) -> outgoing::Started {
+async fn start_poll(module_tester: &mut ModuleTester<Polls>, live_poll: bool) -> Started {
     let start = PollsCommand::Start(incoming::Start {
         topic: "polling".into(),
         live: live_poll,
@@ -34,7 +37,7 @@ async fn start_poll(module_tester: &mut ModuleTester<Polls>, live_poll: bool) ->
 
     assert_eq!(started1, started2);
 
-    if let WsMessageOutgoing::Module(PollsEvent::Started(outgoing::Started {
+    if let WsMessageOutgoing::Module(PollsEvent::Started(Started {
         id,
         topic,
         live,
@@ -59,7 +62,7 @@ async fn start_poll(module_tester: &mut ModuleTester<Polls>, live_poll: bool) ->
         );
         assert_eq!(duration.as_millis(), 2000);
 
-        outgoing::Started {
+        Started {
             id,
             topic,
             live,

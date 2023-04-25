@@ -27,3 +27,24 @@ pub mod duration_seconds_option {
         }
     }
 }
+
+#[cfg(feature = "serde")]
+pub mod duration_seconds {
+    use super::*;
+    use std::time::Duration;
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Duration, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let seconds: u64 = Deserialize::deserialize(deserializer)?;
+        Ok(Duration::from_secs(seconds))
+    }
+
+    pub fn serialize<S>(duration: &Duration, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_u64(duration.as_secs())
+    }
+}

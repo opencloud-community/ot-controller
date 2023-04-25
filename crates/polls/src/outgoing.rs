@@ -2,10 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::{Choice, PollId};
 use serde::Serialize;
-use std::time::Duration;
-use types::signaling::polls::{event::Error, Results};
+use types::signaling::polls::{
+    event::{Error, Started},
+    Results,
+};
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
 #[serde(tag = "message", rename_all = "snake_case")]
@@ -16,21 +17,13 @@ pub enum PollsEvent {
     Error(Error),
 }
 
-#[derive(Debug, Serialize, PartialEq, Eq)]
-pub struct Started {
-    pub id: PollId,
-    pub topic: String,
-    pub live: bool,
-    pub choices: Vec<Choice>,
-    #[serde(with = "super::duration_secs")]
-    pub duration: Duration,
-}
-
 #[cfg(test)]
 mod test {
+    use std::time::Duration;
+
     use super::*;
     use test_util::assert_eq_json;
-    use types::signaling::polls::{ChoiceId, Item};
+    use types::signaling::polls::{Choice, ChoiceId, Item, PollId};
 
     #[test]
     fn started() {
