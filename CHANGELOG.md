@@ -9,18 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- controller-settings: Fixed a panic when trying to parse config values for `tenants` and `tariffs`, when their assignment was set to `static`
 - controller: cache access-token check results for a maximum of 5mins, reducing load on both keycloak and postgres ([#359](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/359))
 - janus-media: add `event_loops` options to specify how many event-loop the janus instance runs on. Used to send hints to janus on which event-loop to create a new webrtc-session (handle).
-- janus-media: add `resubscribe` message to allow clients to restart the webrtc session of a subscription.
-- controller/db-storage: add initial tariff support. Requires JWT claims to include a `tariff_id`.
-- controller: invite verify response contains a `password_required` flag ([#329](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/329))
-- controller: add `participant_limit` quota to restrict the maximum amount of participants in a room ([#332](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/332))
-- controller: add `enabled_modules` ([#334](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/334)), `tariff` as part of `JoinSuccess` message, API endpoints for `users/me/tariff` and `rooms/{room_id}/tariff` ([#331](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/331))
-- controller: add `time_limit` quota to restrict the duration of a meeting ([#333](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/333))
-- controller/settings: remove `http.cors` section as CORS is now statically configured to allow any origin
-- controller/settings: add `tenants` and `tariffs` sections, which allow configuring how users are assigned to each tenant/tariff.
-- legal-vote: add option to set protocol timezone ([#338](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/338))
 - controller: add debriefing and kicking multiple users at once ([#350](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/350))
 - controller: always allow one moderator to join a room regardless of participant limit ([#352](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/352))
 - chat: add private chat history ([#327](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/327))
@@ -28,10 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- janus-media: use lapin-pool internally to recover from RabbitMQ connection failures ([#343](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/343))
-- lapin-pool: consider connection status when picking connections for new channels & reap disconnected connections ([#343](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/343))
-- controller: authenticated users can join meetings without a password ([#335](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/335))
-- controller: Traces are now exported directly via OTLP. The setting was renamed from `jaeger_agent_endpoint` to `otlp_tracing_endpoint` ([#301](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/301)).
 - naming: replace initial project code name `k3k` by `opentalk` in code, executable names and environment variables ([#279](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/279))
 
 ### Fixed
@@ -42,6 +28,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - types: Move `Namespaced` to `types::signaling::NamespacedCommand`
 - types: Move `NamespacedOutgoing` to `types::signaling::NamespacedEvent`
+
+## [0.3.1] - 2023-04-24
+
+### Fixed
+
+- controller-settings: Fixed a panic when trying to parse config values for `tenants` and `tariffs`, when their assignment was set to `static`
+
+## [0.3.0] - 2023-04-17
+
+### Added
+
+- controller/db-storage: add initial tariff support. Requires JWT claims to include a `tariff_id`.
+- controller: invite verify response contains a `password_required` flag ([#329](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/329))
+- controller: add `participant_limit` quota to restrict the maximum amount of participants in a room ([#332](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/332))
+- controller: add `enabled_modules` ([#334](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/334)), `tariff` as part of `JoinSuccess` message, API endpoints for `users/me/tariff` and `rooms/{room_id}/tariff` ([#331](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/331))
+- controller: add `time_limit` quota to restrict the duration of a meeting ([#333](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/333))
+- controller/settings: remove `http.cors` section as CORS is now statically configured to allow any origin
+- controller/settings: add `tenants` and `tariffs` sections, which allow configuring how users are assigned to each tenant/tariff.
+- legal-vote: add option to set protocol timezone ([#338](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/338))
+
+### Changed
+
+- controller: authenticated users can join meetings without a password ([#335](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/335))
+- janus-media: use lapin-pool internally to recover from RabbitMQ connection failures ([#343](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/343))
+- lapin-pool: consider connection status when picking connections for new channels & reap disconnected connections ([#343](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/343))
+- controller: Traces are now exported directly via OTLP. The setting was renamed from `jaeger_agent_endpoint` to `otlp_tracing_endpoint` ([#301](https://git.opentalk.dev/opentalk/k3k-controller/-/issues/301)).
+
+## [0.2.1] - 2023-03-16
+
+### Added
+
+- janus-media: add `resubscribe` message to allow clients to restart the webrtc session of a subscription.
 
 ## [0.2.0] - 2023-03-13
 
@@ -262,8 +280,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - initial release candidate
 
-[Unreleased]: https://git.opentalk.dev/opentalk/k3k-controller/-/compare/v0.2.0...main
+[Unreleased]: https://git.opentalk.dev/opentalk/k3k-controller/-/compare/v0.3.1...main
 
+[0.3.1]: https://git.opentalk.dev/opentalk/k3k-controller/-/compare/v0.3.0...v0.3.1
+[0.3.0]: https://git.opentalk.dev/opentalk/k3k-controller/-/compare/382d6f2d1ccac530431a1fe7f8379ed21769c052...v0.3.0
+
+[0.2.1]: https://git.opentalk.dev/opentalk/k3k-controller/-/compare/v0.2.0...v0.2.1
 [0.2.0]: https://git.opentalk.dev/opentalk/k3k-controller/-/compare/97c85ca10d136652bc1656792dcf1a539ea4e7a5...v0.2.0
 
 [0.1.0]: https://git.opentalk.dev/opentalk/k3k-controller/-/compare/8b6e62c700376aa82fab9eab07346207becf7c78...v0.1.0
