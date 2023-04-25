@@ -5,6 +5,7 @@
 use crate::{ChoiceId, PollId};
 use serde::Deserialize;
 use std::time::Duration;
+use types::signaling::polls::command::Finish;
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "action", rename_all = "snake_case")]
@@ -27,11 +28,6 @@ pub struct Start {
 pub struct Vote {
     pub poll_id: PollId,
     pub choice_id: ChoiceId,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct Finish {
-    pub id: PollId,
 }
 
 #[cfg(test)]

@@ -10,6 +10,7 @@ mod item;
 mod poll_id;
 mod results;
 
+pub mod command;
 pub mod event;
 
 pub use choice::Choice;
