@@ -3,13 +3,13 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use controller::prelude::*;
-use opentalk_polls::{incoming::PollsCommand, outgoing::PollsEvent, *};
+use opentalk_polls::{incoming::PollsCommand, *};
 use pretty_assertions::assert_eq;
 use serial_test::serial;
 use std::time::Duration;
 use test_util::*;
 use types::signaling::polls::{
-    event::{Error, Started},
+    event::{Error, PollsEvent, Started},
     Choice, ChoiceId, Item, Results,
 };
 
