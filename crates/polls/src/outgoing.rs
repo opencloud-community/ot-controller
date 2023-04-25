@@ -2,10 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::{Choice, ChoiceId, PollId};
+use crate::{Choice, PollId};
 use serde::Serialize;
 use std::time::Duration;
-use types::signaling::polls::event::Error;
+use types::signaling::polls::{event::Error, Item};
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
 #[serde(tag = "message", rename_all = "snake_case")]
@@ -32,16 +32,11 @@ pub struct Results {
     pub results: Vec<Item>,
 }
 
-#[derive(Debug, Serialize, PartialEq, Eq)]
-pub struct Item {
-    pub id: ChoiceId,
-    pub count: u32,
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
     use test_util::assert_eq_json;
+    use types::signaling::polls::ChoiceId;
 
     #[test]
     fn started() {

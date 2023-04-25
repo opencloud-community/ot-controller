@@ -9,6 +9,7 @@ use controller::prelude::*;
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
 use std::collections::HashMap;
+use types::signaling::polls::Item;
 
 /// Key to the current poll config
 #[derive(ToRedisArgs)]
@@ -119,14 +120,14 @@ pub(super) async fn poll_results(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     config: &PollsState,
-) -> Result<Vec<crate::outgoing::Item>> {
+) -> Result<Vec<Item>> {
     let votes = results(redis_conn, room, config.id).await?;
 
     let votes = (0..config.choices.len())
         .map(|i| {
             let id = ChoiceId::from(i as u32);
             let count = votes.get(&id).copied().unwrap_or_default();
-            crate::outgoing::Item { id, count }
+            Item { id, count }
         })
         .collect();
 
