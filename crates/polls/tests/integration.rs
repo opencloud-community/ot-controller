@@ -9,6 +9,7 @@ use serial_test::serial;
 use std::time::Duration;
 use test_util::*;
 use types::signaling::polls::{
+    command::Vote,
     event::{Error, PollsEvent, Started},
     Choice, ChoiceId, Item, Results,
 };
@@ -87,7 +88,7 @@ async fn full_poll_with_2sec_duration() {
     module_tester
         .send_ws_message(
             &USER_1.participant_id,
-            PollsCommand::Vote(incoming::Vote {
+            PollsCommand::Vote(Vote {
                 poll_id: started.id,
                 choice_id: ChoiceId::from(0),
             }),
@@ -130,7 +131,7 @@ async fn full_poll_with_2sec_duration() {
     module_tester
         .send_ws_message(
             &USER_2.participant_id,
-            PollsCommand::Vote(incoming::Vote {
+            PollsCommand::Vote(Vote {
                 poll_id: started.id,
                 choice_id: ChoiceId::from(1),
             }),
@@ -173,7 +174,7 @@ async fn full_poll_with_2sec_duration() {
     module_tester
         .send_ws_message(
             &USER_2.participant_id,
-            PollsCommand::Vote(incoming::Vote {
+            PollsCommand::Vote(Vote {
                 poll_id: started.id,
                 choice_id: ChoiceId::from(0),
             }),

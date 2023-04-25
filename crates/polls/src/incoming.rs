@@ -2,10 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::{ChoiceId, PollId};
 use serde::Deserialize;
 use std::time::Duration;
-use types::signaling::polls::command::Finish;
+use types::signaling::polls::command::{Finish, Vote};
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "action", rename_all = "snake_case")]
@@ -24,17 +23,12 @@ pub struct Start {
     pub duration: Duration,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct Vote {
-    pub poll_id: PollId,
-    pub choice_id: ChoiceId,
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
     use controller::prelude::*;
     use pretty_assertions::assert_eq;
+    use types::signaling::polls::{ChoiceId, PollId};
 
     #[test]
     fn start() {

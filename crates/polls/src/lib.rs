@@ -16,6 +16,7 @@ use types::{
     core::Timestamp,
     signaling::{
         polls::{
+            command::Vote,
             event::{Error, PollsEvent, Started},
             Choice, ChoiceId, PollId, Results,
         },
@@ -229,7 +230,7 @@ impl Polls {
 
                 Ok(())
             }
-            PollsCommand::Vote(incoming::Vote { poll_id, choice_id }) => {
+            PollsCommand::Vote(Vote { poll_id, choice_id }) => {
                 if let Some(config) = self
                     .config
                     .as_mut()
