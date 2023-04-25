@@ -7,7 +7,6 @@ use chrono::Utc;
 use controller::prelude::*;
 use futures::stream::once;
 use futures::FutureExt;
-use incoming::PollsCommand;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
@@ -16,7 +15,7 @@ use types::{
     core::Timestamp,
     signaling::{
         polls::{
-            command::{Start, Vote},
+            command::{PollsCommand, Start, Vote},
             event::{Error, PollsEvent, Started},
             Choice, ChoiceId, PollId, Results,
         },
@@ -25,7 +24,6 @@ use types::{
 };
 
 pub mod exchange;
-pub mod incoming;
 mod storage;
 
 pub struct ExpiredEvent(PollId);
