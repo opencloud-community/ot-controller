@@ -16,7 +16,7 @@ use types::{
     core::Timestamp,
     signaling::{
         polls::{
-            command::Vote,
+            command::{Start, Vote},
             event::{Error, PollsEvent, Started},
             Choice, ChoiceId, PollId, Results,
         },
@@ -146,7 +146,7 @@ impl Polls {
         msg: PollsCommand,
     ) -> Result<()> {
         match msg {
-            PollsCommand::Start(incoming::Start {
+            PollsCommand::Start(Start {
                 topic,
                 live,
                 choices,

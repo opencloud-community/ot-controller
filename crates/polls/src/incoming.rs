@@ -3,8 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use serde::Deserialize;
-use std::time::Duration;
-use types::signaling::polls::command::{Finish, Vote};
+use types::signaling::polls::command::{Finish, Start, Vote};
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "action", rename_all = "snake_case")]
@@ -14,17 +13,10 @@ pub enum PollsCommand {
     Finish(Finish),
 }
 
-#[derive(Debug, Deserialize)]
-pub struct Start {
-    pub topic: String,
-    pub live: bool,
-    pub choices: Vec<String>,
-    #[serde(with = "super::duration_secs")]
-    pub duration: Duration,
-}
-
 #[cfg(test)]
 mod test {
+    use std::time::Duration;
+
     use super::*;
     use controller::prelude::*;
     use pretty_assertions::assert_eq;

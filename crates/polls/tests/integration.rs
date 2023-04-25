@@ -9,13 +9,13 @@ use serial_test::serial;
 use std::time::Duration;
 use test_util::*;
 use types::signaling::polls::{
-    command::Vote,
+    command::{Start, Vote},
     event::{Error, PollsEvent, Started},
     Choice, ChoiceId, Item, Results,
 };
 
 async fn start_poll(module_tester: &mut ModuleTester<Polls>, live_poll: bool) -> Started {
-    let start = PollsCommand::Start(incoming::Start {
+    let start = PollsCommand::Start(Start {
         topic: "polling".into(),
         live: live_poll,
         choices: vec!["yes".into(), "no".into()],
