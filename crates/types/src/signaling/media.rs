@@ -4,8 +4,20 @@
 
 //! Signaling messages for the `media` namespace
 
+mod media_session_state;
+mod media_session_type;
 mod trickle_candidate;
 
+pub mod command;
 pub mod event;
+pub mod peer_state;
+pub mod state;
 
+use std::collections::HashMap;
+
+pub use media_session_state::MediaSessionState;
+pub use media_session_type::{MediaSessionType, MediaSessionTypeParseError};
 pub use trickle_candidate::TrickleCandidate;
+
+/// The media state of a participant
+pub type ParticipantMediaState = HashMap<MediaSessionType, MediaSessionState>;

@@ -3414,6 +3414,7 @@ dependencies = [
  "serde",
  "serde_json",
  "strum",
+ "thiserror",
  "uuid",
  "validator",
 ]

@@ -2,15 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::mcu::{
-    JanusPublisher, JanusSubscriber, McuPool, MediaSessionKey, MediaSessionType, WebRtcEvent,
-};
+use crate::mcu::{JanusPublisher, JanusSubscriber, McuPool, MediaSessionKey, WebRtcEvent};
 use crate::MediaSessionState;
 use anyhow::{ensure, Result};
 use std::collections::HashMap;
 use std::future::Future;
 use tokio::sync::mpsc;
-use types::core::ParticipantId;
+use types::{core::ParticipantId, signaling::media::MediaSessionType};
 
 pub struct MediaSessions {
     id: ParticipantId,

@@ -2,12 +2,19 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::exchange;
-use crate::incoming::Target;
-use crate::mcu::{self, MediaSessionKey, MediaSessionType};
-use janus_client::TrickleCandidate;
+use crate::mcu::{self, MediaSessionKey};
 use serde::Serialize;
-use types::{core::ParticipantId, signaling::media::event::LinkDirection};
+use types::{
+    core::ParticipantId,
+    signaling::media::{
+        command::Target,
+        TrickleCandidate,
+        {
+            event::{LinkDirection, RequestMute},
+            MediaSessionType,
+        },
+    },
+};
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
 #[serde(tag = "message")]
@@ -48,7 +55,7 @@ pub enum MediaEvent {
     FocusUpdate(FocusUpdate),
 
     #[serde(rename = "request_mute")]
-    RequestMute(exchange::RequestMute),
+    RequestMute(RequestMute),
 
     #[serde(rename = "presenter_granted")]
     PresenterGranted,
@@ -152,7 +159,6 @@ pub enum Error {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::exchange::RequestMute;
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use test_util::assert_eq_json;

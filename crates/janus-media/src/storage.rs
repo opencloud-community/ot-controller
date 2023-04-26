@@ -2,12 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::State;
 use anyhow::{Context, Result};
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
 use signaling_core::{RedisConnection, SignalingRoomId};
-use types::core::ParticipantId;
+use types::{core::ParticipantId, signaling::media::ParticipantMediaState};
 
 /// Data related to a module inside a participant
 // TODO can this be removed?
@@ -15,19 +14,19 @@ use types::core::ParticipantId;
 #[to_redis_args(
     fmt = "opentalk-signaling:room={room}:participant={participant}:namespace=media:state"
 )]
-struct MediaState {
+struct ParticipantMediaStateKey {
     room: SignalingRoomId,
     participant: ParticipantId,
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn get_state(
+pub async fn get_participant_media_state(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     participant: ParticipantId,
-) -> Result<Option<State>> {
+) -> Result<Option<ParticipantMediaState>> {
     let json: Option<Vec<u8>> = redis_conn
-        .get(MediaState { room, participant })
+        .get(ParticipantMediaStateKey { room, participant })
         .await
         .context("Failed to get media state")?;
 
@@ -39,16 +38,16 @@ pub async fn get_state(
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn set_state(
+pub async fn set_participant_media_state(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     participant: ParticipantId,
-    state: &State,
+    state: &ParticipantMediaState,
 ) -> Result<()> {
     let json = serde_json::to_vec(&state).context("Failed to convert media state to json")?;
 
     redis_conn
-        .set(MediaState { room, participant }, json)
+        .set(ParticipantMediaStateKey { room, participant }, json)
         .await
         .context("Failed to get media state")?;
 
@@ -56,13 +55,13 @@ pub async fn set_state(
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn del_state(
+pub async fn del_participant_media_state(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     participant: ParticipantId,
 ) -> Result<()> {
     redis_conn
-        .del(MediaState { room, participant })
+        .del(ParticipantMediaStateKey { room, participant })
         .await
         .context("Failed to delete media state")
 }
