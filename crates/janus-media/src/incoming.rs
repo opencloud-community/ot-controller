@@ -9,7 +9,7 @@ use types::{core::ParticipantId, signaling::media::TrickleCandidate};
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "action")]
-pub enum Message {
+pub enum MediaCommand {
     /// The participant successfully established a stream
     #[serde(rename = "publish_complete")]
     PublishComplete(MediaSessionInfo),
@@ -184,9 +184,9 @@ mod test {
         }
         "#;
 
-        let msg: Message = serde_json::from_str(json).unwrap();
+        let msg: MediaCommand = serde_json::from_str(json).unwrap();
 
-        if let Message::PublishComplete(MediaSessionInfo {
+        if let MediaCommand::PublishComplete(MediaSessionInfo {
             media_session_type,
             media_session_state,
         }) = msg
@@ -208,9 +208,9 @@ mod test {
         }
         "#;
 
-        let msg: Message = serde_json::from_str(json).unwrap();
+        let msg: MediaCommand = serde_json::from_str(json).unwrap();
 
-        if let Message::Unpublish(AssociatedMediaSession { media_session_type }) = msg {
+        if let MediaCommand::Unpublish(AssociatedMediaSession { media_session_type }) = msg {
             assert_eq!(media_session_type, MediaSessionType::Video);
         } else {
             panic!()
@@ -230,9 +230,9 @@ mod test {
         }
         "#;
 
-        let msg: Message = serde_json::from_str(json).unwrap();
+        let msg: MediaCommand = serde_json::from_str(json).unwrap();
 
-        if let Message::UpdateMediaSession(MediaSessionInfo {
+        if let MediaCommand::UpdateMediaSession(MediaSessionInfo {
             media_session_type,
             media_session_state,
         }) = msg
@@ -255,9 +255,9 @@ mod test {
         }
         "#;
 
-        let msg: Message = serde_json::from_str(json).unwrap();
+        let msg: MediaCommand = serde_json::from_str(json).unwrap();
 
-        if let Message::ModeratorMute(RequestMute { targets, force }) = msg {
+        if let MediaCommand::ModeratorMute(RequestMute { targets, force }) = msg {
             assert_eq!(targets, vec![ParticipantId::nil()]);
             assert!(force);
         } else {
@@ -275,9 +275,9 @@ mod test {
         }
         "#;
 
-        let msg: Message = serde_json::from_str(json).unwrap();
+        let msg: MediaCommand = serde_json::from_str(json).unwrap();
 
-        if let Message::ModeratorMute(RequestMute { targets, force }) = msg {
+        if let MediaCommand::ModeratorMute(RequestMute { targets, force }) = msg {
             assert_eq!(
                 targets,
                 [
@@ -303,9 +303,9 @@ mod test {
         }
         "#;
 
-        let msg: Message = serde_json::from_str(json).unwrap();
+        let msg: MediaCommand = serde_json::from_str(json).unwrap();
 
-        if let Message::Publish(TargetedSdp {
+        if let MediaCommand::Publish(TargetedSdp {
             sdp,
             target:
                 Target {
@@ -333,9 +333,9 @@ mod test {
         }
         "#;
 
-        let msg: Message = serde_json::from_str(json).unwrap();
+        let msg: MediaCommand = serde_json::from_str(json).unwrap();
 
-        if let Message::SdpAnswer(TargetedSdp {
+        if let MediaCommand::SdpAnswer(TargetedSdp {
             sdp,
             target:
                 Target {
@@ -366,9 +366,9 @@ mod test {
         }
         "#;
 
-        let msg: Message = serde_json::from_str(json).unwrap();
+        let msg: MediaCommand = serde_json::from_str(json).unwrap();
 
-        if let Message::SdpCandidate(TargetedCandidate {
+        if let MediaCommand::SdpCandidate(TargetedCandidate {
             candidate:
                 TrickleCandidate {
                     sdp_m_line_index,
@@ -403,9 +403,9 @@ mod test {
         }
         "#;
 
-        let msg: Message = serde_json::from_str(json).unwrap();
+        let msg: MediaCommand = serde_json::from_str(json).unwrap();
 
-        if let Message::SdpEndOfCandidates(Target {
+        if let MediaCommand::SdpEndOfCandidates(Target {
             target,
             media_session_type,
         }) = msg
@@ -427,9 +427,9 @@ mod test {
         }
         "#;
 
-        let msg: Message = serde_json::from_str(json).unwrap();
+        let msg: MediaCommand = serde_json::from_str(json).unwrap();
 
-        if let Message::Subscribe(TargetSubscribe {
+        if let MediaCommand::Subscribe(TargetSubscribe {
             target:
                 Target {
                     target,
@@ -455,9 +455,9 @@ mod test {
         }
         "#;
 
-        let msg: Message = serde_json::from_str(json).unwrap();
+        let msg: MediaCommand = serde_json::from_str(json).unwrap();
 
-        if let Message::GrantPresenterRole(ParticipantSelection { participant_ids }) = msg {
+        if let MediaCommand::GrantPresenterRole(ParticipantSelection { participant_ids }) = msg {
             assert_eq!(
                 participant_ids,
                 vec![ParticipantId::nil(), ParticipantId::nil()]
@@ -476,9 +476,9 @@ mod test {
         }
         "#;
 
-        let msg: Message = serde_json::from_str(json).unwrap();
+        let msg: MediaCommand = serde_json::from_str(json).unwrap();
 
-        if let Message::RevokePresenterRole(ParticipantSelection { participant_ids }) = msg {
+        if let MediaCommand::RevokePresenterRole(ParticipantSelection { participant_ids }) = msg {
             assert_eq!(
                 participant_ids,
                 vec![ParticipantId::nil(), ParticipantId::nil()]

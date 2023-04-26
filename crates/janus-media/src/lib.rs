@@ -10,12 +10,14 @@
 use anyhow::{bail, Context, Result};
 use controller_settings::SharedSettings;
 use focus::FocusDetection;
+use incoming::MediaCommand;
 use incoming::{RequestMute, TargetConfigure};
 use mcu::{
     LinkDirection, McuPool, MediaSessionKey, MediaSessionType, PublishConfiguration, Request,
     Response, TrickleMessage, WebRtcEvent,
 };
 use outgoing::Link;
+use outgoing::MediaEvent;
 use serde::{Deserialize, Serialize};
 use sessions::MediaSessions;
 use signaling_core::{
@@ -59,14 +61,14 @@ pub struct Media {
 type State = HashMap<MediaSessionType, MediaSessionState>;
 
 #[derive(Serialize)]
-pub struct PeerFrontendData {
+pub struct MediaPeerState {
     #[serde(flatten)]
     state: Option<State>,
     is_presenter: bool,
 }
 
 #[derive(Serialize)]
-pub struct FrontendData {
+pub struct MediaState {
     is_presenter: bool,
 }
 
@@ -108,14 +110,14 @@ impl SignalingModule for Media {
 
     type Params = Arc<McuPool>;
 
-    type Incoming = incoming::Message;
-    type Outgoing = outgoing::Message;
+    type Incoming = MediaCommand;
+    type Outgoing = MediaEvent;
     type ExchangeMessage = exchange::Message;
 
     type ExtEvent = (MediaSessionKey, WebRtcEvent);
 
-    type FrontendData = FrontendData;
-    type PeerFrontendData = PeerFrontendData;
+    type FrontendData = MediaState;
+    type PeerFrontendData = MediaPeerState;
 
     async fn init(
         mut ctx: InitContext<'_, Self>,
@@ -152,7 +154,7 @@ impl SignalingModule for Media {
         event: Event<'_, Self>,
     ) -> Result<()> {
         match event {
-            Event::WsMessage(incoming::Message::PublishComplete(info)) => {
+            Event::WsMessage(MediaCommand::PublishComplete(info)) => {
                 let previous_session_state = self.state.get(&info.media_session_type);
 
                 process_metrics_for_media_session_state(
@@ -177,12 +179,12 @@ impl SignalingModule for Media {
                         .await?;
                 }
             }
-            Event::WsMessage(incoming::Message::UpdateMediaSession(info)) => {
+            Event::WsMessage(MediaCommand::UpdateMediaSession(info)) => {
                 if info.media_session_type == MediaSessionType::Screen
                     && ctx.role() != Role::Moderator
                     && !storage::is_presenter(ctx.redis_conn(), self.room, self.id).await?
                 {
-                    ctx.ws_send(outgoing::Message::Error(outgoing::Error::PermissionDenied));
+                    ctx.ws_send(MediaEvent::Error(outgoing::Error::PermissionDenied));
                     return Ok(());
                 }
 
@@ -214,10 +216,10 @@ impl SignalingModule for Media {
                     }
                 }
             }
-            Event::WsMessage(incoming::Message::ModeratorMute(moderator_mute)) => {
+            Event::WsMessage(MediaCommand::ModeratorMute(moderator_mute)) => {
                 self.handle_moderator_mute(&mut ctx, moderator_mute).await?;
             }
-            Event::WsMessage(incoming::Message::Unpublish(assoc)) => {
+            Event::WsMessage(MediaCommand::Unpublish(assoc)) => {
                 self.media.remove_publisher(assoc.media_session_type).await;
                 let previous_session_state = self.state.remove(&assoc.media_session_type);
 
@@ -237,12 +239,12 @@ impl SignalingModule for Media {
 
                 ctx.invalidate_data();
             }
-            Event::WsMessage(incoming::Message::Publish(targeted)) => {
+            Event::WsMessage(MediaCommand::Publish(targeted)) => {
                 if targeted.target.media_session_type == MediaSessionType::Screen
                     && ctx.role() != Role::Moderator
                     && !storage::is_presenter(ctx.redis_conn(), self.room, self.id).await?
                 {
-                    ctx.ws_send(outgoing::Message::Error(outgoing::Error::PermissionDenied));
+                    ctx.ws_send(MediaEvent::Error(outgoing::Error::PermissionDenied));
 
                     return Ok(());
                 }
@@ -261,10 +263,10 @@ impl SignalingModule for Media {
                         targeted.target,
                         e
                     );
-                    ctx.ws_send(outgoing::Message::Error(outgoing::Error::InvalidSdpOffer));
+                    ctx.ws_send(MediaEvent::Error(outgoing::Error::InvalidSdpOffer));
                 }
             }
-            Event::WsMessage(incoming::Message::SdpAnswer(targeted)) => {
+            Event::WsMessage(MediaCommand::SdpAnswer(targeted)) => {
                 if let Err(e) = self
                     .handle_sdp_answer(
                         targeted.target.target,
@@ -274,10 +276,10 @@ impl SignalingModule for Media {
                     .await
                 {
                     log::error!("Failed to handle sdp answer {:?}, {:?}", targeted.target, e);
-                    ctx.ws_send(outgoing::Message::Error(outgoing::Error::HandleSdpAnswer));
+                    ctx.ws_send(MediaEvent::Error(outgoing::Error::HandleSdpAnswer));
                 }
             }
-            Event::WsMessage(incoming::Message::SdpCandidate(targeted)) => {
+            Event::WsMessage(MediaCommand::SdpCandidate(targeted)) => {
                 if let Err(e) = self
                     .handle_sdp_candidate(
                         targeted.target.target,
@@ -291,10 +293,10 @@ impl SignalingModule for Media {
                         targeted.target,
                         e
                     );
-                    ctx.ws_send(outgoing::Message::Error(outgoing::Error::InvalidCandidate));
+                    ctx.ws_send(MediaEvent::Error(outgoing::Error::InvalidCandidate));
                 }
             }
-            Event::WsMessage(incoming::Message::SdpEndOfCandidates(target)) => {
+            Event::WsMessage(MediaCommand::SdpEndOfCandidates(target)) => {
                 if let Err(e) = self
                     .handle_sdp_end_of_candidates(target.target, target.media_session_type)
                     .await
@@ -304,12 +306,10 @@ impl SignalingModule for Media {
                         target,
                         e
                     );
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::InvalidEndOfCandidates,
-                    ));
+                    ctx.ws_send(MediaEvent::Error(outgoing::Error::InvalidEndOfCandidates));
                 }
             }
-            Event::WsMessage(incoming::Message::Subscribe(subscribe)) => {
+            Event::WsMessage(MediaCommand::Subscribe(subscribe)) => {
                 // Check that the subscription target is inside the room
                 if !control::storage::participants_contains(
                     ctx.redis_conn(),
@@ -328,32 +328,32 @@ impl SignalingModule for Media {
                         subscribe,
                         e
                     );
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::InvalidRequestOffer(subscribe.target.into()),
-                    ));
+                    ctx.ws_send(MediaEvent::Error(outgoing::Error::InvalidRequestOffer(
+                        subscribe.target.into(),
+                    )));
                 }
             }
-            Event::WsMessage(incoming::Message::Resubscribe(target)) => {
+            Event::WsMessage(MediaCommand::Resubscribe(target)) => {
                 if let Err(e) = self.handle_sdp_re_request_offer(&mut ctx, target).await {
                     log::error!("Failed to handle resubscribe {:?}, {:?}", target, e);
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::InvalidRequestOffer(target.into()),
-                    ));
+                    ctx.ws_send(MediaEvent::Error(outgoing::Error::InvalidRequestOffer(
+                        target.into(),
+                    )));
                 }
             }
-            Event::WsMessage(incoming::Message::Configure(configure)) => {
+            Event::WsMessage(MediaCommand::Configure(configure)) => {
                 let target = configure.target;
                 if let Err(e) = self.handle_configure(configure).await {
                     log::error!("Failed to handle configure request {:?}", e);
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::InvalidConfigureRequest(target.into()),
-                    ));
+                    ctx.ws_send(MediaEvent::Error(outgoing::Error::InvalidConfigureRequest(
+                        target.into(),
+                    )));
                 }
             }
 
-            Event::WsMessage(incoming::Message::GrantPresenterRole(selection)) => {
+            Event::WsMessage(MediaCommand::GrantPresenterRole(selection)) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(outgoing::Message::Error(outgoing::Error::PermissionDenied));
+                    ctx.ws_send(MediaEvent::Error(outgoing::Error::PermissionDenied));
 
                     return Ok(());
                 }
@@ -363,9 +363,9 @@ impl SignalingModule for Media {
                     exchange::Message::PresenterGranted(selection),
                 )
             }
-            Event::WsMessage(incoming::Message::RevokePresenterRole(selection)) => {
+            Event::WsMessage(MediaCommand::RevokePresenterRole(selection)) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(outgoing::Message::Error(outgoing::Error::PermissionDenied));
+                    ctx.ws_send(MediaEvent::Error(outgoing::Error::PermissionDenied));
 
                     return Ok(());
                 }
@@ -380,16 +380,16 @@ impl SignalingModule for Media {
                 WebRtcEvent::AssociatedMcuDied => {
                     self.remove_broken_media_session(&mut ctx, media_session_key)
                         .await?;
-                    ctx.ws_send(outgoing::Message::WebRtcDown(media_session_key.into()))
+                    ctx.ws_send(MediaEvent::WebRtcDown(media_session_key.into()))
                 }
                 WebRtcEvent::WebRtcUp => {
-                    ctx.ws_send(outgoing::Message::WebRtcUp(media_session_key.into()))
+                    ctx.ws_send(MediaEvent::WebRtcUp(media_session_key.into()))
                 }
                 WebRtcEvent::Media(media) => {
-                    ctx.ws_send(outgoing::Message::Media((media_session_key, media).into()))
+                    ctx.ws_send(MediaEvent::Media((media_session_key, media).into()))
                 }
                 WebRtcEvent::WebRtcDown => {
-                    ctx.ws_send(outgoing::Message::WebRtcDown(media_session_key.into()));
+                    ctx.ws_send(MediaEvent::WebRtcDown(media_session_key.into()));
 
                     self.gracefully_remove_media_session(&mut ctx, media_session_key)
                         .await?;
@@ -400,7 +400,7 @@ impl SignalingModule for Media {
                         LinkDirection::Downstream => event::LinkDirection::Downstream,
                     };
 
-                    ctx.ws_send(outgoing::Message::WebRtcSlow(Link {
+                    ctx.ws_send(MediaEvent::WebRtcSlow(Link {
                         direction,
                         source: media_session_key.into(),
                     }))
@@ -408,12 +408,10 @@ impl SignalingModule for Media {
                 WebRtcEvent::Trickle(trickle_msg) => match trickle_msg {
                     // This send by Janus when in full-trickle mode.
                     TrickleMessage::Completed => {
-                        ctx.ws_send(outgoing::Message::SdpEndCandidates(
-                            media_session_key.into(),
-                        ));
+                        ctx.ws_send(MediaEvent::SdpEndCandidates(media_session_key.into()));
                     }
                     TrickleMessage::Candidate(candidate) => {
-                        ctx.ws_send(outgoing::Message::SdpCandidate(outgoing::SdpCandidate {
+                        ctx.ws_send(MediaEvent::SdpCandidate(outgoing::SdpCandidate {
                             candidate,
                             source: media_session_key.into(),
                         }));
@@ -430,20 +428,16 @@ impl SignalingModule for Media {
             },
             Event::Exchange(exchange::Message::StartedTalking(id)) => {
                 if let Some(focus) = self.focus_detection.on_started_talking(id) {
-                    ctx.ws_send(outgoing::Message::FocusUpdate(outgoing::FocusUpdate {
-                        focus,
-                    }));
+                    ctx.ws_send(MediaEvent::FocusUpdate(outgoing::FocusUpdate { focus }));
                 }
             }
             Event::Exchange(exchange::Message::StoppedTalking(id)) => {
                 if let Some(focus) = self.focus_detection.on_stopped_talking(id) {
-                    ctx.ws_send(outgoing::Message::FocusUpdate(outgoing::FocusUpdate {
-                        focus,
-                    }));
+                    ctx.ws_send(MediaEvent::FocusUpdate(outgoing::FocusUpdate { focus }));
                 }
             }
             Event::Exchange(exchange::Message::RequestMute(request_mute)) => {
-                ctx.ws_send(outgoing::Message::RequestMute(request_mute));
+                ctx.ws_send(MediaEvent::RequestMute(request_mute));
             }
             Event::Exchange(exchange::Message::PresenterGranted(selection)) => {
                 if !selection.participant_ids.contains(&self.id) {
@@ -457,7 +451,7 @@ impl SignalingModule for Media {
 
                 storage::set_presenter(ctx.redis_conn(), self.room, self.id).await?;
 
-                ctx.ws_send(outgoing::Message::PresenterGranted);
+                ctx.ws_send(MediaEvent::PresenterGranted);
 
                 ctx.invalidate_data();
             }
@@ -485,7 +479,7 @@ impl SignalingModule for Media {
                         .context("Failed to set state attribute in storage")?;
                 }
 
-                ctx.ws_send(outgoing::Message::PresenterRevoked);
+                ctx.ws_send(MediaEvent::PresenterRevoked);
 
                 ctx.invalidate_data();
             }
@@ -497,7 +491,7 @@ impl SignalingModule for Media {
 
                 let is_presenter = storage::is_presenter(ctx.redis_conn(), self.room, id).await?;
 
-                *evt_state = Some(PeerFrontendData {
+                *evt_state = Some(MediaPeerState {
                     state,
                     is_presenter,
                 })
@@ -512,9 +506,9 @@ impl SignalingModule for Media {
                     if let Some(video_state) = state.get(&MediaSessionType::Video) {
                         if !video_state.audio {
                             if let Some(focus) = self.focus_detection.on_stopped_talking(id) {
-                                ctx.ws_send(outgoing::Message::FocusUpdate(
-                                    outgoing::FocusUpdate { focus },
-                                ));
+                                ctx.ws_send(MediaEvent::FocusUpdate(outgoing::FocusUpdate {
+                                    focus,
+                                }));
                             }
                         }
                     }
@@ -526,7 +520,7 @@ impl SignalingModule for Media {
 
                 let is_presenter = storage::is_presenter(ctx.redis_conn(), self.room, id).await?;
 
-                *evt_state = Some(PeerFrontendData {
+                *evt_state = Some(MediaPeerState {
                     state,
                     is_presenter,
                 });
@@ -536,9 +530,7 @@ impl SignalingModule for Media {
 
                 // Unfocus leaving participants
                 if let Some(focus) = self.focus_detection.on_stopped_talking(id) {
-                    ctx.ws_send(outgoing::Message::FocusUpdate(outgoing::FocusUpdate {
-                        focus,
-                    }));
+                    ctx.ws_send(MediaEvent::FocusUpdate(outgoing::FocusUpdate { focus }));
                 }
             }
             Event::Joined {
@@ -554,7 +546,7 @@ impl SignalingModule for Media {
                     let is_presenter =
                         storage::is_presenter(ctx.redis_conn(), self.room, id).await?;
 
-                    *evt_state = Some(PeerFrontendData {
+                    *evt_state = Some(MediaPeerState {
                         state,
                         is_presenter,
                     })
@@ -563,7 +555,7 @@ impl SignalingModule for Media {
                 let is_presenter =
                     storage::is_presenter(ctx.redis_conn(), self.room, self.id).await?;
 
-                *frontend_data = Some(FrontendData { is_presenter })
+                *frontend_data = Some(MediaState { is_presenter })
             }
             Event::Leaving => {
                 if let Err(e) = storage::del_state(ctx.redis_conn(), self.room, self.id).await {
@@ -620,7 +612,7 @@ impl Media {
         moderator_mute: RequestMute,
     ) -> Result<()> {
         if ctx.role() != Role::Moderator {
-            ctx.ws_send(outgoing::Message::Error(outgoing::Error::PermissionDenied));
+            ctx.ws_send(MediaEvent::Error(outgoing::Error::PermissionDenied));
 
             return Ok(());
         }
@@ -727,7 +719,7 @@ impl Media {
 
             match response {
                 Response::SdpAnswer(answer) => {
-                    ctx.ws_send(outgoing::Message::SdpAnswer(outgoing::Sdp {
+                    ctx.ws_send(MediaEvent::SdpAnswer(outgoing::Sdp {
                         sdp: answer.sdp(),
                         source: outgoing::Source {
                             source: target,
@@ -866,7 +858,7 @@ impl Media {
 
         match response {
             Response::SdpOffer(offer) => {
-                ctx.ws_send(outgoing::Message::SdpOffer(outgoing::Sdp {
+                ctx.ws_send(MediaEvent::SdpOffer(outgoing::Sdp {
                     sdp: offer.sdp(),
                     source: outgoing::Source {
                         source: target,
@@ -902,7 +894,7 @@ impl Media {
 
         let sdp_offer = subscriber.restart().await?;
 
-        ctx.ws_send(outgoing::Message::SdpOffer(outgoing::Sdp {
+        ctx.ws_send(MediaEvent::SdpOffer(outgoing::Sdp {
             sdp: sdp_offer,
             source: outgoing::Source {
                 source: target,

@@ -11,7 +11,7 @@ use types::{core::ParticipantId, signaling::media::event::LinkDirection};
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
 #[serde(tag = "message")]
-pub enum Message {
+pub enum MediaEvent {
     /// SDP Offer, renegotiate publish
     #[serde(rename = "sdp_offer")]
     SdpOffer(Sdp),
@@ -159,7 +159,7 @@ mod test {
 
     #[test]
     fn sdp_offer() {
-        let sdp_offer = Message::SdpOffer(Sdp {
+        let sdp_offer = MediaEvent::SdpOffer(Sdp {
             sdp: "v=0...".into(),
             source: Source {
                 source: ParticipantId::nil(),
@@ -180,7 +180,7 @@ mod test {
 
     #[test]
     fn sdp_answer() {
-        let sdp_answer = Message::SdpAnswer(Sdp {
+        let sdp_answer = MediaEvent::SdpAnswer(Sdp {
             sdp: "v=0...".into(),
             source: Source {
                 source: ParticipantId::nil(),
@@ -201,7 +201,7 @@ mod test {
 
     #[test]
     fn sdp_candidate() {
-        let sdp_candidate = Message::SdpCandidate(SdpCandidate {
+        let sdp_candidate = MediaEvent::SdpCandidate(SdpCandidate {
             candidate: TrickleCandidate {
                 sdp_m_line_index: 1,
                 candidate: "candidate:4 1 UDP 123456 192.168.178.1 123456 typ host".into(),
@@ -228,7 +228,7 @@ mod test {
 
     #[test]
     fn test_webrtc_up() {
-        let webrtc_up = Message::WebRtcUp(Source {
+        let webrtc_up = MediaEvent::WebRtcUp(Source {
             source: ParticipantId::nil(),
             media_session_type: MediaSessionType::Video,
         });
@@ -245,7 +245,7 @@ mod test {
 
     #[test]
     fn test_webrtc_down() {
-        let webrtc_down = Message::WebRtcDown(Source {
+        let webrtc_down = MediaEvent::WebRtcDown(Source {
             source: ParticipantId::nil(),
             media_session_type: MediaSessionType::Video,
         });
@@ -262,7 +262,7 @@ mod test {
 
     #[test]
     fn test_media_status() {
-        let webrtc_down = Message::Media(Media {
+        let webrtc_down = MediaEvent::Media(Media {
             source: Source {
                 source: ParticipantId::nil(),
                 media_session_type: MediaSessionType::Video,
@@ -285,7 +285,7 @@ mod test {
 
     #[test]
     fn test_webrtc_slow() {
-        let web_rtc_slow = Message::WebRtcSlow(Link {
+        let web_rtc_slow = MediaEvent::WebRtcSlow(Link {
             direction: LinkDirection::Upstream,
             source: Source {
                 source: ParticipantId::nil(),
@@ -306,7 +306,7 @@ mod test {
 
     #[test]
     fn test_request_mute() {
-        let request_mute = Message::RequestMute(RequestMute {
+        let request_mute = MediaEvent::RequestMute(RequestMute {
             issuer: ParticipantId::nil(),
             force: false,
         });
@@ -373,7 +373,7 @@ mod test {
 
     #[test]
     fn presenter_granted() {
-        let presenter_granted = Message::PresenterGranted;
+        let presenter_granted = MediaEvent::PresenterGranted;
 
         assert_eq_json!(
             presenter_granted,
@@ -385,7 +385,7 @@ mod test {
 
     #[test]
     fn presenter_revoked() {
-        let presenter_revoked = Message::PresenterRevoked;
+        let presenter_revoked = MediaEvent::PresenterRevoked;
 
         assert_eq_json!(
             presenter_revoked,
