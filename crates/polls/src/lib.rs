@@ -3,24 +3,19 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use anyhow::Result;
-use chrono::Utc;
 use controller::prelude::*;
 use futures::stream::once;
 use futures::FutureExt;
-use redis_args::{FromRedisValue, ToRedisArgs};
-use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use tokio::time::sleep;
-use types::{
-    core::Timestamp,
-    signaling::{
-        polls::{
-            command::{PollsCommand, Start, Vote},
-            event::{Error, PollsEvent, Started},
-            Choice, ChoiceId, PollId, Results,
-        },
-        Role,
+use types::signaling::{
+    polls::{
+        command::{PollsCommand, Start, Vote},
+        event::{Error, PollsEvent, Started},
+        state::PollsState,
+        Choice, ChoiceId, PollId, Results,
     },
+    Role,
 };
 
 pub mod exchange;
@@ -354,56 +349,6 @@ impl Polls {
 pub struct Config {
     state: PollsState,
     voted: bool,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
-#[to_redis_args(serde)]
-#[from_redis_value(serde)]
-pub struct PollsState {
-    id: PollId,
-    topic: String,
-    live: bool,
-    choices: Vec<Choice>,
-    started: Timestamp,
-    #[serde(with = "duration_secs")]
-    duration: Duration,
-}
-
-impl PollsState {
-    fn remaining(&self) -> Option<Duration> {
-        let duration = chrono::Duration::from_std(self.duration)
-            .expect("duration as secs should never be larger than i64::MAX");
-
-        let expire = (*self.started) + duration;
-        let now = Utc::now();
-
-        // difference will be negative duration if expired.
-        // Conversion to std duration will fail -> returning None
-        (expire - now).to_std().ok()
-    }
-
-    fn is_expired(&self) -> bool {
-        self.remaining().is_none()
-    }
-}
-
-mod duration_secs {
-    use serde::{Deserialize, Deserializer, Serializer};
-    use std::time::Duration;
-
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<Duration, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        u64::deserialize(deserializer).map(Duration::from_secs)
-    }
-
-    pub fn serialize<S>(duration: &Duration, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_u64(duration.as_secs())
-    }
 }
 
 pub fn register(controller: &mut controller::Controller) {

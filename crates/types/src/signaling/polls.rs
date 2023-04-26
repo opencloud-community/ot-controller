@@ -12,6 +12,7 @@ mod results;
 
 pub mod command;
 pub mod event;
+pub mod state;
 
 pub use choice::Choice;
 pub use choice_id::ChoiceId;
