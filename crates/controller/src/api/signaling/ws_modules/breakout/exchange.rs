@@ -3,12 +3,14 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use super::storage::BreakoutConfig;
-use super::{AssocParticipantInOtherRoom, ParticipantInOtherRoom};
 use crate::api::signaling::BreakoutRoomId;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::SystemTime;
-use types::core::ParticipantId;
+use types::{
+    core::ParticipantId,
+    signaling::breakout::{AssociatedParticipantInOtherRoom, ParticipantInOtherRoom},
+};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -17,7 +19,7 @@ pub enum Message {
     Stop,
 
     Joined(ParticipantInOtherRoom),
-    Left(AssocParticipantInOtherRoom),
+    Left(AssociatedParticipantInOtherRoom),
 }
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -9,59 +9,31 @@ use crate::api::signaling::SignalingRoomId;
 use crate::prelude::*;
 use actix_http::ws::CloseCode;
 use anyhow::{bail, Result};
-use chrono::{DateTime, Utc};
 use futures::FutureExt;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
 use tokio::time::sleep;
 use types::{
-    core::{BreakoutRoomId, ParticipantId, ParticipationKind, RoomId, Timestamp},
-    signaling::Role,
+    core::{BreakoutRoomId, ParticipantId, RoomId},
+    signaling::{
+        breakout::{
+            command::BreakoutCommand,
+            event::{self, BreakoutEvent},
+            state::BreakoutState,
+            AssociatedParticipantInOtherRoom, BreakoutRoom, ParticipantInOtherRoom,
+        },
+        Role,
+    },
 };
 
 pub mod exchange;
-pub mod incoming;
-pub mod outgoing;
 pub mod storage;
-
-#[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct ParticipantInOtherRoom {
-    pub breakout_room: Option<BreakoutRoomId>,
-    pub id: ParticipantId,
-    pub display_name: String,
-    pub role: Role,
-    pub avatar_url: Option<String>,
-    pub participation_kind: ParticipationKind,
-    pub joined_at: Timestamp,
-    pub left_at: Option<Timestamp>,
-}
-
-#[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct AssocParticipantInOtherRoom {
-    pub breakout_room: Option<BreakoutRoomId>,
-    pub id: ParticipantId,
-}
 
 pub struct BreakoutRooms {
     id: ParticipantId,
     parent: RoomId,
     room: SignalingRoomId,
     breakout_room: Option<BreakoutRoomId>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct BreakoutRoom {
-    id: BreakoutRoomId,
-    name: String,
-}
-
-#[derive(Debug, Serialize)]
-pub struct FrontendData {
-    current: Option<BreakoutRoomId>,
-    expires: Option<DateTime<Utc>>,
-    rooms: Vec<BreakoutRoom>,
-    participants: Vec<ParticipantInOtherRoom>,
 }
 
 pub enum TimerEvent {
@@ -74,11 +46,11 @@ impl SignalingModule for BreakoutRooms {
     const NAMESPACE: &'static str = "breakout";
 
     type Params = ();
-    type Incoming = incoming::Message;
-    type Outgoing = outgoing::Message;
+    type Incoming = BreakoutCommand;
+    type Outgoing = BreakoutEvent;
     type ExchangeMessage = exchange::Message;
     type ExtEvent = TimerEvent;
-    type FrontendData = FrontendData;
+    type FrontendData = BreakoutState;
     type PeerFrontendData = ();
 
     async fn init(
@@ -181,7 +153,7 @@ impl SignalingModule for BreakoutRooms {
                         .await?;
                     }
 
-                    *frontend_data = Some(FrontendData {
+                    *frontend_data = Some(BreakoutState {
                         current: self.breakout_room,
                         expires,
                         rooms: config.rooms,
@@ -200,7 +172,7 @@ impl SignalingModule for BreakoutRooms {
                 if config.is_some() || self.breakout_room.is_some() {
                     ctx.exchange_publish(
                         control::exchange::global_room_all_participants(self.room.room_id()),
-                        exchange::Message::Left(AssocParticipantInOtherRoom {
+                        exchange::Message::Left(AssociatedParticipantInOtherRoom {
                             breakout_room: self.breakout_room,
                             id: self.id,
                         }),
@@ -217,7 +189,7 @@ impl SignalingModule for BreakoutRooms {
             Event::WsMessage(msg) => self.on_ws_msg(ctx, msg).await,
             Event::Exchange(msg) => self.on_exchange_msg(ctx, msg).await,
             Event::Ext(TimerEvent::RoomExpired) => {
-                ctx.ws_send(outgoing::Message::Expired);
+                ctx.ws_send(BreakoutEvent::Expired);
 
                 if self.breakout_room.is_some() {
                     // Create timer to force leave the room after 5min
@@ -291,17 +263,15 @@ impl BreakoutRooms {
     async fn on_ws_msg(
         &mut self,
         mut ctx: ModuleContext<'_, Self>,
-        msg: incoming::Message,
+        msg: BreakoutCommand,
     ) -> Result<()> {
         if ctx.role() != Role::Moderator {
-            ctx.ws_send(outgoing::Message::Error(
-                outgoing::Error::InsufficientPermissions,
-            ));
+            ctx.ws_send(BreakoutEvent::Error(event::Error::InsufficientPermissions));
             return Ok(());
         }
 
         match msg {
-            incoming::Message::Start(start) => {
+            BreakoutCommand::Start(start) => {
                 if start.rooms.is_empty() {
                     // Discard message, case should be handled by frontend
                     return Ok(());
@@ -342,14 +312,14 @@ impl BreakoutRooms {
                     }),
                 );
             }
-            incoming::Message::Stop => {
+            BreakoutCommand::Stop => {
                 if storage::del_config(ctx.redis_conn(), self.parent).await? {
                     ctx.exchange_publish(
                         control::exchange::global_room_all_participants(self.parent),
                         exchange::Message::Stop,
                     );
                 } else {
-                    ctx.ws_send(outgoing::Message::Error(outgoing::Error::Inactive));
+                    ctx.ws_send(BreakoutEvent::Error(event::Error::Inactive));
                 }
             }
         }
@@ -372,14 +342,14 @@ impl BreakoutRooms {
                     None
                 };
 
-                ctx.ws_send(outgoing::Message::Started(outgoing::Started {
+                ctx.ws_send(BreakoutEvent::Started(event::Started {
                     rooms: start.config.rooms,
                     expires,
                     assignment,
                 }));
             }
             exchange::Message::Stop => {
-                ctx.ws_send(outgoing::Message::Stopped);
+                ctx.ws_send(BreakoutEvent::Stopped);
 
                 if self.breakout_room.is_some() {
                     // Create timer to force leave the room after 5min
@@ -393,14 +363,14 @@ impl BreakoutRooms {
                     return Ok(());
                 }
 
-                ctx.ws_send(outgoing::Message::Joined(participant))
+                ctx.ws_send(BreakoutEvent::Joined(participant))
             }
             exchange::Message::Left(assoc_participant) => {
                 if self.breakout_room == assoc_participant.breakout_room {
                     return Ok(());
                 }
 
-                ctx.ws_send(outgoing::Message::Left(assoc_participant))
+                ctx.ws_send(BreakoutEvent::Left(assoc_participant))
             }
         }
 
