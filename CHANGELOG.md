@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - controller/db-storage: Email invites now get deleted, when converted to user invites. ([#320](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/320))
+- controller-settings: Fixed a panic when trying to parse config values for `tenants` and `tariffs`, when their assignment was set to `static`
 
 ### Moved
 
@@ -33,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- controller-settings: Fixed a panic when trying to parse config values for `tenants` and `tariffs`, when their assignment was set to `static`
+- `(backport):` controller-settings: Fixed a panic when trying to parse config values for `tenants` and `tariffs`, when their assignment was set to `static`
 
 ## [0.3.0] - 2023-04-17
 
@@ -47,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - controller/settings: remove `http.cors` section as CORS is now statically configured to allow any origin
 - controller/settings: add `tenants` and `tariffs` sections, which allow configuring how users are assigned to each tenant/tariff.
 - legal-vote: add option to set protocol timezone ([#338](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/338))
+- janus-media: add `resubscribe` message to allow clients to restart the webrtc session of a subscription.
 
 ### Changed
 
@@ -59,7 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- janus-media: add `resubscribe` message to allow clients to restart the webrtc session of a subscription.
+- `(backport):` janus-media: add `resubscribe` message to allow clients to restart the webrtc session of a subscription.
 
 ## [0.2.0] - 2023-03-13
 
