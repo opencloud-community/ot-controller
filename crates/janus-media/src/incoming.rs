@@ -4,9 +4,8 @@
 
 use crate::mcu::MediaSessionType;
 use crate::MediaSessionState;
-use janus_client::TrickleCandidate;
 use serde::{Deserialize, Serialize};
-use types::core::ParticipantId;
+use types::{core::ParticipantId, signaling::media::TrickleCandidate};
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "action")]

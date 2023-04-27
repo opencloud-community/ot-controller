@@ -4,4 +4,8 @@
 
 //! Signaling messages for the `media` namespace
 
+mod trickle_candidate;
+
 pub mod event;
+
+pub use trickle_candidate::TrickleCandidate;

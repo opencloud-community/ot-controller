@@ -11,7 +11,6 @@ use anyhow::{bail, Context, Result};
 use controller_settings::SharedSettings;
 use focus::FocusDetection;
 use incoming::{RequestMute, TargetConfigure};
-use janus_client::TrickleCandidate;
 use mcu::{
     LinkDirection, McuPool, MediaSessionKey, MediaSessionType, PublishConfiguration, Request,
     Response, TrickleMessage, WebRtcEvent,
@@ -27,7 +26,10 @@ use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 use types::{
     core::ParticipantId,
-    signaling::{media::event, Role},
+    signaling::{
+        media::{event, TrickleCandidate},
+        Role,
+    },
 };
 
 use std::collections::HashMap;
@@ -777,9 +779,15 @@ impl Media {
         &mut self,
         target: ParticipantId,
         media_session_type: MediaSessionType,
-        candidate: TrickleCandidate,
+        TrickleCandidate {
+            sdp_m_line_index,
+            candidate,
+        }: TrickleCandidate,
     ) -> Result<()> {
-        let req = Request::Candidate(candidate);
+        let req = Request::Candidate(janus_client::TrickleCandidate {
+            sdp_m_line_index,
+            candidate,
+        });
 
         if target == self.id {
             let publisher = self
