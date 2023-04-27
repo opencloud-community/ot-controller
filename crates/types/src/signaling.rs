@@ -8,6 +8,7 @@
 pub mod breakout;
 pub mod common;
 pub mod control;
+pub mod media;
 pub mod moderation;
 pub mod polls;
 pub mod recording;

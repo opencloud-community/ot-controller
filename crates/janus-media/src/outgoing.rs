@@ -7,7 +7,7 @@ use crate::incoming::Target;
 use crate::mcu::{self, MediaSessionKey, MediaSessionType};
 use janus_client::TrickleCandidate;
 use serde::Serialize;
-use types::core::ParticipantId;
+use types::{core::ParticipantId, signaling::media::event::LinkDirection};
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
 #[serde(tag = "message")]
@@ -122,13 +122,6 @@ impl From<(MediaSessionKey, mcu::Media)> for Media {
             receiving: value.1.receiving,
         }
     }
-}
-
-#[derive(Debug, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "lowercase")]
-pub enum LinkDirection {
-    Upstream,
-    Downstream,
 }
 
 #[derive(Debug, Serialize, PartialEq, Eq)]

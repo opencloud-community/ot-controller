@@ -25,7 +25,10 @@ use signaling_core::{
 };
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
-use types::{core::ParticipantId, signaling::Role};
+use types::{
+    core::ParticipantId,
+    signaling::{media::event, Role},
+};
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -391,8 +394,8 @@ impl SignalingModule for Media {
                 }
                 WebRtcEvent::SlowLink(link_direction) => {
                     let direction = match link_direction {
-                        LinkDirection::Upstream => outgoing::LinkDirection::Upstream,
-                        LinkDirection::Downstream => outgoing::LinkDirection::Downstream,
+                        LinkDirection::Upstream => event::LinkDirection::Upstream,
+                        LinkDirection::Downstream => event::LinkDirection::Downstream,
                     };
 
                     ctx.ws_send(outgoing::Message::WebRtcSlow(Link {
