@@ -5,12 +5,16 @@
 use crate::{api::signaling::prelude::*, redis_wrapper::RedisConnection};
 use actix_http::ws::CloseCode;
 use anyhow::Result;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
     core::{ParticipantId, RoomId, UserId},
     signaling::{
         control::{state::ControlState, AssociatedParticipant, Participant, WaitingRoomState},
+        moderation::{
+            command::ModerationCommand,
+            event::{Error, ModerationEvent},
+            state::{ModerationState, ModeratorFrontendData},
+        },
         Role,
     },
 };
@@ -18,46 +22,13 @@ use types::{
 use super::control::ControlStateExt as _;
 
 pub mod exchange;
-pub mod incoming;
-pub mod outgoing;
 pub mod storage;
 
 pub const NAMESPACE: &str = "moderation";
 
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(tag = "kick_scope", rename_all = "snake_case")]
-pub enum KickScope {
-    Guests,
-    UsersAndGuests,
-    All,
-}
-
 pub struct ModerationModule {
     room: SignalingRoomId,
     id: ParticipantId,
-}
-
-#[derive(Debug, Serialize)]
-pub struct ModeratorFrontendData {
-    pub waiting_room_enabled: bool,
-    pub waiting_room_participants: Vec<Participant>,
-}
-
-#[derive(Debug, Serialize)]
-pub struct ModerationModuleFrontendData {
-    #[serde(flatten)]
-    moderator_data: Option<ModeratorFrontendData>,
-    raise_hands_enabled: bool,
-}
-
-impl KickScope {
-    const fn kicks_role(self, role: Role) -> bool {
-        match self {
-            KickScope::Guests => matches!(role, Role::Guest),
-            KickScope::UsersAndGuests => !matches!(role, Role::Moderator),
-            KickScope::All => true,
-        }
-    }
 }
 
 async fn build_waiting_room_participants(
@@ -112,11 +83,11 @@ impl SignalingModule for ModerationModule {
     const NAMESPACE: &'static str = NAMESPACE;
 
     type Params = ();
-    type Incoming = incoming::Message;
-    type Outgoing = outgoing::Message;
+    type Incoming = ModerationCommand;
+    type Outgoing = ModerationEvent;
     type ExchangeMessage = exchange::Message;
     type ExtEvent = ();
-    type FrontendData = ModerationModuleFrontendData;
+    type FrontendData = ModerationState;
     type PeerFrontendData = ();
 
     async fn init(
@@ -180,7 +151,7 @@ impl SignalingModule for ModerationModule {
                 let raise_hands_enabled =
                     storage::is_raise_hands_enabled(ctx.redis_conn(), self.room.room_id()).await?;
 
-                *frontend_data = Some(ModerationModuleFrontendData {
+                *frontend_data = Some(ModerationState {
                     moderator_data,
                     raise_hands_enabled,
                 });
@@ -191,7 +162,7 @@ impl SignalingModule for ModerationModule {
             Event::ParticipantJoined(_, _) => {}
             Event::ParticipantLeft(_) => {}
             Event::ParticipantUpdated(_, _) => {}
-            Event::WsMessage(incoming::Message::Ban(incoming::Target { target })) => {
+            Event::WsMessage(ModerationCommand::Ban { target }) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
                 }
@@ -203,7 +174,7 @@ impl SignalingModule for ModerationModule {
                 if let Some(user_id) = user_id {
                     storage::ban_user(ctx.redis_conn(), self.room.room_id(), user_id).await?;
                 } else {
-                    ctx.ws_send(outgoing::Message::Error(outgoing::Error::CannotBanGuest));
+                    ctx.ws_send(ModerationEvent::Error(Error::CannotBanGuest));
                     return Ok(());
                 }
 
@@ -212,7 +183,7 @@ impl SignalingModule for ModerationModule {
                     exchange::Message::Banned(target),
                 );
             }
-            Event::WsMessage(incoming::Message::Kick(incoming::Target { target })) => {
+            Event::WsMessage(ModerationCommand::Kick { target }) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
                 }
@@ -222,7 +193,7 @@ impl SignalingModule for ModerationModule {
                     exchange::Message::Kicked(target),
                 );
             }
-            Event::WsMessage(incoming::Message::Debrief(kick_scope)) => {
+            Event::WsMessage(ModerationCommand::Debrief(kick_scope)) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
                 }
@@ -237,7 +208,7 @@ impl SignalingModule for ModerationModule {
                     },
                 );
             }
-            Event::WsMessage(incoming::Message::EnableWaitingRoom) => {
+            Event::WsMessage(ModerationCommand::EnableWaitingRoom) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
                 }
@@ -249,7 +220,7 @@ impl SignalingModule for ModerationModule {
                     exchange::Message::WaitingRoomEnableUpdated,
                 );
             }
-            Event::WsMessage(incoming::Message::DisableWaitingRoom) => {
+            Event::WsMessage(ModerationCommand::DisableWaitingRoom) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
                 }
@@ -261,7 +232,7 @@ impl SignalingModule for ModerationModule {
                     exchange::Message::WaitingRoomEnableUpdated,
                 );
             }
-            Event::WsMessage(incoming::Message::Accept(incoming::Target { target })) => {
+            Event::WsMessage(ModerationCommand::Accept { target }) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
                 }
@@ -282,7 +253,7 @@ impl SignalingModule for ModerationModule {
                     control::exchange::Message::Accepted(target),
                 );
             }
-            Event::WsMessage(incoming::Message::ResetRaisedHands) => {
+            Event::WsMessage(ModerationCommand::ResetRaisedHands) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
                 }
@@ -293,7 +264,7 @@ impl SignalingModule for ModerationModule {
                 );
             }
 
-            Event::WsMessage(incoming::Message::EnableRaiseHands) => {
+            Event::WsMessage(ModerationCommand::EnableRaiseHands) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
                 }
@@ -307,7 +278,7 @@ impl SignalingModule for ModerationModule {
                 );
             }
 
-            Event::WsMessage(incoming::Message::DisableRaiseHands) => {
+            Event::WsMessage(ModerationCommand::DisableRaiseHands) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
                 }
@@ -323,13 +294,13 @@ impl SignalingModule for ModerationModule {
 
             Event::Exchange(exchange::Message::Banned(participant)) => {
                 if self.id == participant {
-                    ctx.ws_send(outgoing::Message::Banned);
+                    ctx.ws_send(ModerationEvent::Banned);
                     ctx.exit(Some(CloseCode::Normal));
                 }
             }
             Event::Exchange(exchange::Message::Kicked(participant)) => {
                 if self.id == participant {
-                    ctx.ws_send(outgoing::Message::Kicked);
+                    ctx.ws_send(ModerationEvent::Kicked);
                     ctx.exit(Some(CloseCode::Normal));
                 }
             }
@@ -338,10 +309,10 @@ impl SignalingModule for ModerationModule {
                 issued_by,
             }) => {
                 if kick_scope.kicks_role(ctx.role()) {
-                    ctx.ws_send(outgoing::Message::SessionEnded { issued_by });
+                    ctx.ws_send(ModerationEvent::SessionEnded { issued_by });
                     ctx.exit(Some(CloseCode::Normal));
                 } else {
-                    ctx.ws_send(outgoing::Message::DebriefingStarted { issued_by });
+                    ctx.ws_send(ModerationEvent::DebriefingStarted { issued_by });
                 }
             }
             Event::Exchange(exchange::Message::JoinedWaitingRoom(id)) => {
@@ -357,7 +328,7 @@ impl SignalingModule for ModerationModule {
                     serde_json::to_value(control_data)?,
                 )]);
 
-                ctx.ws_send(outgoing::Message::JoinedWaitingRoom(Participant {
+                ctx.ws_send(ModerationEvent::JoinedWaitingRoom(Participant {
                     id,
                     module_data,
                 }));
@@ -367,7 +338,7 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
-                ctx.ws_send(outgoing::Message::LeftWaitingRoom(AssociatedParticipant {
+                ctx.ws_send(ModerationEvent::LeftWaitingRoom(AssociatedParticipant {
                     id,
                 }));
             }
@@ -376,9 +347,9 @@ impl SignalingModule for ModerationModule {
                     storage::is_waiting_room_enabled(ctx.redis_conn(), self.room.room_id()).await?;
 
                 if enabled {
-                    ctx.ws_send(outgoing::Message::WaitingRoomEnabled);
+                    ctx.ws_send(ModerationEvent::WaitingRoomEnabled);
                 } else {
-                    ctx.ws_send(outgoing::Message::WaitingRoomDisabled);
+                    ctx.ws_send(ModerationEvent::WaitingRoomDisabled);
                 }
             }
             Event::Ext(_) => unreachable!(),
@@ -429,7 +400,7 @@ mod tests {
     #[test]
     fn frontend_data_for_moderator() {
         assert_eq!(
-            serde_json::to_value(ModerationModuleFrontendData {
+            serde_json::to_value(ModerationState {
                 moderator_data: Some(ModeratorFrontendData {
                     waiting_room_enabled: true,
                     waiting_room_participants: vec![Participant {
@@ -455,7 +426,7 @@ mod tests {
     #[test]
     fn frontend_data_for_user() {
         assert_eq!(
-            serde_json::to_value(ModerationModuleFrontendData {
+            serde_json::to_value(ModerationState {
                 moderator_data: None,
                 raise_hands_enabled: false
             })
