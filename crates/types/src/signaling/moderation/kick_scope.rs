@@ -5,7 +5,7 @@
 use crate::{imports::*, signaling::Role};
 
 /// The scope of users to be kicked from the room
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -24,7 +24,7 @@ pub enum KickScope {
 
 impl KickScope {
     /// Query whether a specific role is kicked by the scope
-    pub const fn kicks_role(self, role: Role) -> bool {
+    pub const fn kicks_role(&self, role: Role) -> bool {
         match self {
             KickScope::Guests => matches!(role, Role::Guest),
             KickScope::UsersAndGuests => !matches!(role, Role::Moderator),

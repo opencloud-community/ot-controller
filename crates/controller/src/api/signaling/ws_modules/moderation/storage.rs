@@ -263,6 +263,18 @@ pub async fn waiting_room_accepted_remove(
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
+pub async fn waiting_room_accepted_remove_list(
+    redis_conn: &mut RedisConnection,
+    room: RoomId,
+    participant_ids: &[ParticipantId],
+) -> Result<()> {
+    redis_conn
+        .srem(AcceptedWaitingRoomList { room }, participant_ids)
+        .await
+        .context("Failed to SREM waiting_room_accepted_list")
+}
+
+#[tracing::instrument(level = "debug", skip(redis_conn))]
 pub async fn waiting_room_accepted_contains(
     redis_conn: &mut RedisConnection,
     room: RoomId,
