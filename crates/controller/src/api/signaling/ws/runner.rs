@@ -822,6 +822,7 @@ impl Runner {
                     hand_is_up: false,
                     hand_updated_at: timestamp,
                     left_at: None,
+                    is_room_owner: self.participant.user_id() == Some(self.room.created_by),
                 };
 
                 self.metrics.increment_participants_count(&self.participant);
@@ -1227,6 +1228,7 @@ impl Runner {
                 module_data,
                 participants,
                 event_info: event.as_ref().map(db_storage::events::Event::to_event_info),
+                is_room_owner: self.participant.user_id() == Some(self.room.created_by),
             }),
         )
         .await;

@@ -50,7 +50,7 @@ impl From<User> for Participant<User> {
 }
 
 impl Participant<User> {
-    /// Returns the UserId when the participant
+    /// Returns the UserId when the participant is a registered user
     pub fn user_id(&self) -> Option<UserId> {
         match self {
             Participant::User(user) => Some(user.id),

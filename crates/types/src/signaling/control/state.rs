@@ -41,4 +41,8 @@ pub struct ControlState {
 
     /// The timestamp when the hand raise was last updated
     pub hand_updated_at: Timestamp,
+
+    /// If the participant is the room owner
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub is_room_owner: bool,
 }

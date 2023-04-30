@@ -43,6 +43,7 @@ impl ControlStateExt for ControlState {
             hand_is_up,
             hand_updated_at,
             participation_kind,
+            is_room_owner,
         ): (
             Option<String>,
             Option<Role>,
@@ -52,6 +53,7 @@ impl ControlStateExt for ControlState {
             Option<bool>,
             Option<Timestamp>,
             Option<ParticipationKind>,
+            Option<bool>,
         ) = storage::AttrPipeline::new(room_id, participant_id)
             .get("display_name")
             .get("role")
@@ -61,6 +63,7 @@ impl ControlStateExt for ControlState {
             .get("hand_is_up")
             .get("hand_updated_at")
             .get("kind")
+            .get("is_room_owner")
             .query_async(redis_conn)
             .await?;
 
@@ -83,6 +86,7 @@ impl ControlStateExt for ControlState {
             // no default for left_at. If its not found by error,
             // worst case we have a ghost participant,
             left_at,
+            is_room_owner: is_room_owner.unwrap_or_default(),
         })
     }
 }
