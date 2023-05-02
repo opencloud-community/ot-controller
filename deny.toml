@@ -165,6 +165,7 @@ skip = [
     { name = "idna", version = "=0.2" },
     { name = "num-bigint", version = "=0.4.3" },
     { name = "spin", version = "=0.5.2" },
+    { name = "syn", version = "=1" },
     { name = "time", version = "=0.1.45" },
     { name = "memoffset", version = "=0.7.1" },
 ]
