@@ -24,6 +24,7 @@ strum = { version = "0.24", features = ["derive"] }
 thiserror.workspace = true
 uuid.workspace = true
 validator = { workspace = true, optional = true }
+url.workspace = true
 
 [features]
 default = ["frontend"]
@@ -38,6 +39,7 @@ serde = [
   "dep:validator",
   "chrono/serde",
   "chrono-tz/serde",
+  "url/serde",
   "uuid/serde",
 ]
 

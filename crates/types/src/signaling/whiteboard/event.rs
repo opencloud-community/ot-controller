@@ -5,6 +5,15 @@
 //! Signaling events for the `whiteboard` namespace
 
 use crate::{core::AssetId, imports::*};
+use url::Url;
+
+/// The access URL to a specific data
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct AccessUrl {
+    /// URL for the data
+    pub url: Url,
+}
 
 /// Handle to a PDF asset
 #[derive(Clone, Debug, PartialEq, Eq)]
