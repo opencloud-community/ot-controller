@@ -44,7 +44,7 @@ struct SessionInfo {
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub struct Access {
+pub struct ProtocolPeerState {
     readonly: bool,
 }
 
@@ -65,7 +65,7 @@ impl SignalingModule for Protocol {
     type ExchangeMessage = exchange::Event;
     type ExtEvent = ();
     type FrontendData = ();
-    type PeerFrontendData = Access;
+    type PeerFrontendData = ProtocolPeerState;
 
     async fn init(
         ctx: InitContext<'_, Self>,
@@ -109,7 +109,7 @@ impl SignalingModule for Protocol {
                             storage::session::get(ctx.redis_conn(), self.room_id, *participant_id)
                                 .await?;
 
-                        *access = session_info.map(|session_info| Access {
+                        *access = session_info.map(|session_info| ProtocolPeerState {
                             readonly: session_info.readonly,
                         });
                     }
@@ -136,7 +136,7 @@ impl SignalingModule for Protocol {
                 let session_info =
                     storage::session::get(ctx.redis_conn(), self.room_id, participant_id).await?;
 
-                *peer_frontend_data = session_info.map(|session_info| Access {
+                *peer_frontend_data = session_info.map(|session_info| ProtocolPeerState {
                     readonly: session_info.readonly,
                 });
             }
