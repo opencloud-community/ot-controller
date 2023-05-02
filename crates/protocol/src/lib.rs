@@ -9,7 +9,7 @@ use database::Db;
 use etherpad_client::EtherpadClient;
 use exchange::GenerateUrl;
 use futures::TryStreamExt;
-use incoming::ParticipantSelection;
+use incoming::{ParticipantSelection, ProtocolCommand};
 use outgoing::{AccessUrl, PdfAsset, ProtocolEvent};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
@@ -60,7 +60,7 @@ pub struct Protocol {
 impl SignalingModule for Protocol {
     const NAMESPACE: &'static str = "protocol";
     type Params = controller_settings::Etherpad;
-    type Incoming = incoming::Message;
+    type Incoming = ProtocolCommand;
     type Outgoing = ProtocolEvent;
     type ExchangeMessage = exchange::Event;
     type ExtEvent = ();
@@ -185,10 +185,10 @@ impl Protocol {
     async fn on_ws_message(
         &mut self,
         ctx: &mut ModuleContext<'_, Self>,
-        msg: incoming::Message,
+        msg: ProtocolCommand,
     ) -> Result<()> {
         match msg {
-            incoming::Message::SelectWriter(selection) => {
+            ProtocolCommand::SelectWriter(selection) => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(ProtocolEvent::Error(
                         outgoing::Error::InsufficientPermissions,
@@ -263,7 +263,7 @@ impl Protocol {
                     }
                 }
             }
-            incoming::Message::DeselectWriter(selection) => {
+            ProtocolCommand::DeselectWriter(selection) => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(ProtocolEvent::Error(
                         outgoing::Error::InsufficientPermissions,
@@ -325,7 +325,7 @@ impl Protocol {
                     );
                 }
             }
-            incoming::Message::GeneratePdf => {
+            ProtocolCommand::GeneratePdf => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(ProtocolEvent::Error(
                         outgoing::Error::InsufficientPermissions,

@@ -7,7 +7,7 @@ use types::core::ParticipantId;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case", tag = "action")]
-pub enum Message {
+pub enum ProtocolCommand {
     SelectWriter(ParticipantSelection),
     DeselectWriter(ParticipantSelection),
     /// Generates a pdf of the current protocol contents.
@@ -36,7 +36,7 @@ mod test {
         }
         "#;
 
-        if let Message::SelectWriter(ParticipantSelection { participant_ids }) =
+        if let ProtocolCommand::SelectWriter(ParticipantSelection { participant_ids }) =
             serde_json::from_str(json_str).unwrap()
         {
             assert_eq!(participant_ids[0], ParticipantId::from_u128(0));
@@ -55,7 +55,7 @@ mod test {
         }
         "#;
 
-        if let Message::DeselectWriter(ParticipantSelection { participant_ids }) =
+        if let ProtocolCommand::DeselectWriter(ParticipantSelection { participant_ids }) =
             serde_json::from_str(json_str).unwrap()
         {
             assert_eq!(participant_ids[0], ParticipantId::from_u128(0));
@@ -71,7 +71,7 @@ mod test {
             "action": "generate_pdf"
         });
 
-        if let Message::GeneratePdf = serde_json::from_value(json).unwrap() {
+        if let ProtocolCommand::GeneratePdf = serde_json::from_value(json).unwrap() {
         } else {
             panic!("expected GeneratePdf variant");
         }
