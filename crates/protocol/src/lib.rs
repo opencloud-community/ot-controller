@@ -10,7 +10,7 @@ use etherpad_client::EtherpadClient;
 use exchange::GenerateUrl;
 use futures::TryStreamExt;
 use incoming::ParticipantSelection;
-use outgoing::{AccessUrl, PdfAsset};
+use outgoing::{AccessUrl, PdfAsset, ProtocolEvent};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use signaling_core::{
@@ -61,7 +61,7 @@ impl SignalingModule for Protocol {
     const NAMESPACE: &'static str = "protocol";
     type Params = controller_settings::Etherpad;
     type Incoming = incoming::Message;
-    type Outgoing = outgoing::Message;
+    type Outgoing = ProtocolEvent;
     type ExchangeMessage = exchange::Event;
     type ExtEvent = ();
     type FrontendData = ();
@@ -102,7 +102,7 @@ impl SignalingModule for Protocol {
                 if matches!(state, Some(state) if state == InitState::Initialized) {
                     let read_url = self.generate_url(&mut ctx, true).await?;
 
-                    ctx.ws_send(outgoing::Message::ReadUrl(AccessUrl { url: read_url }));
+                    ctx.ws_send(ProtocolEvent::ReadUrl(AccessUrl { url: read_url }));
 
                     for (participant_id, access) in participants {
                         let session_info =
@@ -190,7 +190,7 @@ impl Protocol {
         match msg {
             incoming::Message::SelectWriter(selection) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(outgoing::Message::Error(
+                    ctx.ws_send(ProtocolEvent::Error(
                         outgoing::Error::InsufficientPermissions,
                     ));
 
@@ -198,7 +198,7 @@ impl Protocol {
                 }
 
                 if !self.verify_selection(ctx.redis_conn(), &selection).await? {
-                    ctx.ws_send(outgoing::Message::Error(
+                    ctx.ws_send(ProtocolEvent::Error(
                         outgoing::Error::InvalidParticipantSelection,
                     ));
                 }
@@ -216,7 +216,7 @@ impl Protocol {
                         match state {
                             storage::init::InitState::Initializing => {
                                 // Some other instance is currently initializing the etherpad
-                                ctx.ws_send(outgoing::Message::Error(
+                                ctx.ws_send(ProtocolEvent::Error(
                                     outgoing::Error::CurrentlyInitializing,
                                 ));
                                 return Ok(());
@@ -231,7 +231,7 @@ impl Protocol {
 
                             storage::init::del(redis_conn, self.room_id).await?;
 
-                            ctx.ws_send(outgoing::Message::Error(
+                            ctx.ws_send(ProtocolEvent::Error(
                                 outgoing::Error::FailedInitialization,
                             ));
 
@@ -265,7 +265,7 @@ impl Protocol {
             }
             incoming::Message::DeselectWriter(selection) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(outgoing::Message::Error(
+                    ctx.ws_send(ProtocolEvent::Error(
                         outgoing::Error::InsufficientPermissions,
                     ));
 
@@ -275,7 +275,7 @@ impl Protocol {
                 match storage::init::get(ctx.redis_conn(), self.room_id).await? {
                     Some(state) => match state {
                         InitState::Initializing => {
-                            ctx.ws_send(outgoing::Message::Error(
+                            ctx.ws_send(ProtocolEvent::Error(
                                 outgoing::Error::CurrentlyInitializing,
                             ));
 
@@ -284,14 +284,14 @@ impl Protocol {
                         InitState::Initialized => (),
                     },
                     None => {
-                        ctx.ws_send(outgoing::Message::Error(outgoing::Error::NotInitialized));
+                        ctx.ws_send(ProtocolEvent::Error(outgoing::Error::NotInitialized));
 
                         return Ok(());
                     }
                 }
 
                 if !self.verify_selection(ctx.redis_conn(), &selection).await? {
-                    ctx.ws_send(outgoing::Message::Error(
+                    ctx.ws_send(ProtocolEvent::Error(
                         outgoing::Error::InvalidParticipantSelection,
                     ));
 
@@ -327,7 +327,7 @@ impl Protocol {
             }
             incoming::Message::GeneratePdf => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(outgoing::Message::Error(
+                    ctx.ws_send(ProtocolEvent::Error(
                         outgoing::Error::InsufficientPermissions,
                     ));
                     return Ok(());
@@ -337,7 +337,7 @@ impl Protocol {
                     storage::init::get(ctx.redis_conn(), self.room_id).await?,
                     Some(InitState::Initialized)
                 ) {
-                    ctx.ws_send(outgoing::Message::Error(outgoing::Error::NotInitialized));
+                    ctx.ws_send(ProtocolEvent::Error(outgoing::Error::NotInitialized));
                     return Ok(());
                 }
 
@@ -374,7 +374,7 @@ impl Protocol {
                         exchange::Event::PdfAsset(PdfAsset { filename, asset_id }),
                     );
                 } else {
-                    ctx.ws_send(outgoing::Message::Error(outgoing::Error::NotInitialized));
+                    ctx.ws_send(ProtocolEvent::Error(outgoing::Error::NotInitialized));
                     return Ok(());
                 }
             }
@@ -393,18 +393,16 @@ impl Protocol {
                 if writers.contains(&self.participant_id) {
                     let write_url = self.generate_url(ctx, false).await?;
 
-                    ctx.ws_send(outgoing::Message::WriteUrl(AccessUrl { url: write_url }));
+                    ctx.ws_send(ProtocolEvent::WriteUrl(AccessUrl { url: write_url }));
                 } else {
                     let read_url = self.generate_url(ctx, true).await?;
 
-                    ctx.ws_send(outgoing::Message::ReadUrl(AccessUrl { url: read_url }));
+                    ctx.ws_send(ProtocolEvent::ReadUrl(AccessUrl { url: read_url }));
                 }
 
                 ctx.invalidate_data();
             }
-            exchange::Event::PdfAsset(pdf_asset) => {
-                ctx.ws_send(outgoing::Message::PdfAsset(pdf_asset))
-            }
+            exchange::Event::PdfAsset(pdf_asset) => ctx.ws_send(ProtocolEvent::PdfAsset(pdf_asset)),
         }
 
         Ok(())

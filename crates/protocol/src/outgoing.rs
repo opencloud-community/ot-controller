@@ -7,7 +7,7 @@ use types::core::AssetId;
 
 #[derive(Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case", tag = "message")]
-pub enum Message {
+pub enum ProtocolEvent {
     /// An access url containing a write session
     WriteUrl(AccessUrl),
     /// An access url containing a readonly session
@@ -56,7 +56,7 @@ mod test {
             "url": "http://localhost/auth_session?sessionID=s.session&padName=protocol&groupID=g.group",
         });
 
-        let message = Message::WriteUrl(AccessUrl {
+        let message = ProtocolEvent::WriteUrl(AccessUrl {
             url:
                 "http://localhost/auth_session?sessionID=s.session&padName=protocol&groupID=g.group"
                     .into(),
@@ -74,7 +74,7 @@ mod test {
             "url": "http://localhost:9001/auth_session?sessionID=s.session_id&padName=r.readonly_id",
         });
 
-        let message = Message::ReadUrl(AccessUrl {
+        let message = ProtocolEvent::ReadUrl(AccessUrl {
             url: "http://localhost:9001/auth_session?sessionID=s.session_id&padName=r.readonly_id"
                 .into(),
         });
@@ -88,7 +88,7 @@ mod test {
     fn insufficient_permissions() {
         let expected = json!({"message": "error", "error": "insufficient_permissions"});
 
-        let message = Message::Error(Error::InsufficientPermissions);
+        let message = ProtocolEvent::Error(Error::InsufficientPermissions);
 
         let actual = serde_json::to_value(message).unwrap();
 
@@ -99,7 +99,7 @@ mod test {
     fn currently_initialization() {
         let expected = json!({"message": "error", "error": "failed_initialization"});
 
-        let message = Message::Error(Error::FailedInitialization);
+        let message = ProtocolEvent::Error(Error::FailedInitialization);
 
         let actual = serde_json::to_value(message).unwrap();
 
@@ -110,7 +110,7 @@ mod test {
     fn failed_initializing() {
         let expected = json!({"message": "error", "error": "currently_initializing"});
 
-        let message = Message::Error(Error::CurrentlyInitializing);
+        let message = ProtocolEvent::Error(Error::CurrentlyInitializing);
 
         let actual = serde_json::to_value(message).unwrap();
 
@@ -121,7 +121,7 @@ mod test {
     fn invalid_participant_selection() {
         let expected = json!({"message": "error", "error": "invalid_participant_selection"});
 
-        let message = Message::Error(Error::InvalidParticipantSelection);
+        let message = ProtocolEvent::Error(Error::InvalidParticipantSelection);
 
         let actual = serde_json::to_value(message).unwrap();
 
