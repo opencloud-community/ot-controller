@@ -8,7 +8,7 @@ use url::Url;
 
 #[derive(Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case", tag = "message")]
-pub enum Message {
+pub enum WhiteboardEvent {
     SpaceUrl(AccessUrl),
     PdfAsset(PdfAsset),
     Error(Error),

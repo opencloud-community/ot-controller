@@ -7,7 +7,7 @@ use client::SpacedeckClient;
 use database::Db;
 use futures::stream::once;
 use futures::TryStreamExt;
-use outgoing::{AccessUrl, PdfAsset};
+use outgoing::{AccessUrl, PdfAsset, WhiteboardEvent};
 use serde::Serialize;
 use signaling_core::{
     assets::save_asset, control, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage,
@@ -61,7 +61,7 @@ impl SignalingModule for Whiteboard {
 
     type Incoming = incoming::Message;
 
-    type Outgoing = outgoing::Message;
+    type Outgoing = WhiteboardEvent;
 
     type ExchangeMessage = exchange::Event;
 
@@ -112,7 +112,7 @@ impl SignalingModule for Whiteboard {
                         if let Some(InitState::Initialized(space_info)) =
                             state::get(ctx.redis_conn(), self.room_id).await?
                         {
-                            ctx.ws_send(outgoing::Message::SpaceUrl(AccessUrl {
+                            ctx.ws_send(WhiteboardEvent::SpaceUrl(AccessUrl {
                                 url: space_info.url,
                             }));
                         } else {
@@ -120,7 +120,7 @@ impl SignalingModule for Whiteboard {
                         }
                     }
                     exchange::Event::PdfAsset(pdf_asset) => {
-                        ctx.ws_send(outgoing::Message::PdfAsset(pdf_asset));
+                        ctx.ws_send(WhiteboardEvent::PdfAsset(pdf_asset));
                     }
                 }
                 Ok(())
@@ -130,7 +130,7 @@ impl SignalingModule for Whiteboard {
                 match message {
                     incoming::Message::Initialize => {
                         if ctx.role() != Role::Moderator {
-                            ctx.ws_send(outgoing::Message::Error(
+                            ctx.ws_send(WhiteboardEvent::Error(
                                 outgoing::Error::InsufficientPermissions,
                             ));
                             return Ok(());
@@ -145,7 +145,7 @@ impl SignalingModule for Whiteboard {
 
                             self.cleanup(ctx.redis_conn()).await?;
 
-                            ctx.ws_send(outgoing::Message::Error(
+                            ctx.ws_send(WhiteboardEvent::Error(
                                 outgoing::Error::InitializationFailed,
                             ));
                         }
@@ -153,7 +153,7 @@ impl SignalingModule for Whiteboard {
 
                     incoming::Message::GeneratePdf => {
                         if ctx.role() != Role::Moderator {
-                            ctx.ws_send(outgoing::Message::Error(
+                            ctx.ws_send(WhiteboardEvent::Error(
                                 outgoing::Error::InsufficientPermissions,
                             ));
                             return Ok(());
@@ -254,12 +254,12 @@ impl Whiteboard {
     async fn create_space(&self, ctx: &mut ModuleContext<'_, Self>) -> Result<()> {
         match state::try_start_init(ctx.redis_conn(), self.room_id).await? {
             Some(state) => match state {
-                InitState::Initializing => ctx.ws_send(outgoing::Message::Error(
+                InitState::Initializing => ctx.ws_send(WhiteboardEvent::Error(
                     outgoing::Error::CurrentlyInitializing,
                 )),
-                InitState::Initialized(_) => ctx.ws_send(outgoing::Message::Error(
-                    outgoing::Error::AlreadyInitialized,
-                )),
+                InitState::Initialized(_) => {
+                    ctx.ws_send(WhiteboardEvent::Error(outgoing::Error::AlreadyInitialized))
+                }
             },
             None => {
                 let response = self
