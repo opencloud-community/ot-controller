@@ -170,22 +170,33 @@ Information about another participant provided by the `control` module
 | `left_at`            | `string` | no     | timestamp of when the participant left the room                 |
 | `hand_updated_at`    | `string` | yes    | timestamp of when the hand-raise status last changed            |
 
+#### EventInfo
+
+##### Fields
+
+Information about the event associated with a room.
+
+| Field   | Type          | Always | Description        |
+| ------- | ------------- | ------ | ------------------ |
+| `title` | `string`      | yes    | Title of the event |
+
 ### JoinSuccess
 
 Received after joining the room. Can be triggered bei either calling [Join](#join) or [EnterRoom](#enterroom).
 
 #### Fields
 
-| Field          | Type            | Always | Description                                                  |
-| -------------- | --------------- | ------ | ------------------------------------------------------------ |
-| `message`      | `enum`          | yes    | Is `"join_success"`                                          |
-| `id`           | `string`        | yes    | Your participant-id in this session                          |
-| `display_name` | `string`        | yes    | Your display_name in this session                            |
-| `avatar_url`   | `string`        | no     | url to your avatar image if logged                           |
-| `role`         | `enum`          | yes    | either `"guest"`, `"user"` or `"moderator"`                  |
-| `closes_at`    | `string`        | no     | the point in time the room closes           |
-| `tariff`       | `Tariff`        | yes    | tariff information, including `quotas` and `enabled_modules` |
-| `participants` | `Participant[]` | yes    | list of participants in the room                             |
+| Field          | Type            | Always | Description                                                                                |
+| -------------- | --------------- | ------ | ------------------------------------------------------------------------------------------ |
+| `message`      | `enum`          | yes    | Is `"join_success"`                                                                        |
+| `id`           | `string`        | yes    | Your participant-id in this session                                                        |
+| `display_name` | `string`        | yes    | Your display_name in this session                                                          |
+| `avatar_url`   | `string`        | no     | url to your avatar image if logged                                                         |
+| `role`         | `enum`          | yes    | either `"guest"`, `"user"` or `"moderator"`                                                |
+| `closes_at`    | `string`        | no     | the point in time the room closes                                                          |
+| `tariff`       | `Tariff`        | yes    | tariff information, including `quotas` and `enabled_modules`                               |
+| `participants` | `Participant[]` | yes    | list of participants in the room                                                           |
+| `event_info`   | `EventInfo`     | no     | Information about the event associated with the meeting room. See: [EventInfo](#eventinfo) |
 
 ##### Example
 
@@ -215,7 +226,10 @@ Received after joining the room. Can be triggered bei either calling [Join](#joi
         "participation_kind": "user"
       }
     }
-  ]
+  ],
+  "event_info": {
+    "title": "Daily"
+  }
 }
 ```
 
