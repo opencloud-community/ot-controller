@@ -2,15 +2,23 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use serde::Deserialize;
+//! Signaling commands for the `whiteboard` namespace
 
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "snake_case", tag = "action")]
+use crate::imports::*;
+
+/// Commands for the `whiteboard` namespace
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(tag = "action", rename_all = "snake_case")
+)]
 pub enum WhiteboardCommand {
     /// Initialize a new space for the room
     ///
     /// There can only be one space per room
     Initialize,
+
     /// Generates the current whiteboard as PDF.
     GeneratePdf,
 }
