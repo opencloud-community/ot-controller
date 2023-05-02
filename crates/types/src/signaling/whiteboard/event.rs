@@ -7,6 +7,24 @@
 use crate::{core::AssetId, imports::*};
 use url::Url;
 
+/// Events sent out by the `whiteboard` module
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(rename_all = "snake_case", tag = "message")
+)]
+pub enum WhiteboardEvent {
+    /// A Spacedeck instance has been initialized
+    SpaceUrl(AccessUrl),
+
+    /// A PDF asset has been created
+    PdfAsset(PdfAsset),
+
+    /// An error happened when executing a `whiteboard` command
+    Error(Error),
+}
+
 /// The access URL to a specific data
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]

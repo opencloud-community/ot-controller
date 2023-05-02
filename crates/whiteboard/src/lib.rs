@@ -8,7 +8,6 @@ use database::Db;
 use futures::stream::once;
 use futures::TryStreamExt;
 use incoming::WhiteboardCommand;
-use outgoing::WhiteboardEvent;
 use serde::Serialize;
 use signaling_core::{
     assets::save_asset, control, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage,
@@ -19,7 +18,7 @@ use std::sync::Arc;
 use types::{
     core::Timestamp,
     signaling::{
-        whiteboard::event::{AccessUrl, Error, PdfAsset},
+        whiteboard::event::{AccessUrl, Error, PdfAsset, WhiteboardEvent},
         Role,
     },
 };
@@ -28,7 +27,6 @@ use url::Url;
 mod client;
 mod exchange;
 mod incoming;
-mod outgoing;
 mod state;
 
 pub struct Whiteboard {
