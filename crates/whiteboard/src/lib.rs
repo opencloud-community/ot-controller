@@ -16,7 +16,10 @@ use signaling_core::{
 };
 use state::{InitState, SpaceInfo};
 use std::sync::Arc;
-use types::{core::Timestamp, signaling::Role};
+use types::{
+    core::Timestamp,
+    signaling::{whiteboard::event::Error, Role},
+};
 use url::Url;
 
 mod client;
@@ -131,9 +134,7 @@ impl SignalingModule for Whiteboard {
                 match message {
                     WhiteboardCommand::Initialize => {
                         if ctx.role() != Role::Moderator {
-                            ctx.ws_send(WhiteboardEvent::Error(
-                                outgoing::Error::InsufficientPermissions,
-                            ));
+                            ctx.ws_send(WhiteboardEvent::Error(Error::InsufficientPermissions));
                             return Ok(());
                         }
 
@@ -146,17 +147,13 @@ impl SignalingModule for Whiteboard {
 
                             self.cleanup(ctx.redis_conn()).await?;
 
-                            ctx.ws_send(WhiteboardEvent::Error(
-                                outgoing::Error::InitializationFailed,
-                            ));
+                            ctx.ws_send(WhiteboardEvent::Error(Error::InitializationFailed));
                         }
                     }
 
                     WhiteboardCommand::GeneratePdf => {
                         if ctx.role() != Role::Moderator {
-                            ctx.ws_send(WhiteboardEvent::Error(
-                                outgoing::Error::InsufficientPermissions,
-                            ));
+                            ctx.ws_send(WhiteboardEvent::Error(Error::InsufficientPermissions));
                             return Ok(());
                         }
 
@@ -255,11 +252,11 @@ impl Whiteboard {
     async fn create_space(&self, ctx: &mut ModuleContext<'_, Self>) -> Result<()> {
         match state::try_start_init(ctx.redis_conn(), self.room_id).await? {
             Some(state) => match state {
-                InitState::Initializing => ctx.ws_send(WhiteboardEvent::Error(
-                    outgoing::Error::CurrentlyInitializing,
-                )),
+                InitState::Initializing => {
+                    ctx.ws_send(WhiteboardEvent::Error(Error::CurrentlyInitializing))
+                }
                 InitState::Initialized(_) => {
-                    ctx.ws_send(WhiteboardEvent::Error(outgoing::Error::AlreadyInitialized))
+                    ctx.ws_send(WhiteboardEvent::Error(Error::AlreadyInitialized))
                 }
             },
             None => {

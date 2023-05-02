@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use serde::{Deserialize, Serialize};
-use types::core::AssetId;
+use types::{core::AssetId, signaling::whiteboard::event::Error};
 use url::Url;
 
 #[derive(Debug, PartialEq, Eq, Serialize)]
@@ -23,17 +23,4 @@ pub struct AccessUrl {
 pub struct PdfAsset {
     pub filename: String,
     pub asset_id: AssetId,
-}
-
-#[derive(Debug, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "snake_case", tag = "error")]
-pub enum Error {
-    /// The requesting user has insufficient permissions for the operation
-    InsufficientPermissions,
-    /// Is send when another instance is currently initializing spacedeck
-    CurrentlyInitializing,
-    /// The spacedeck initialization failed
-    InitializationFailed,
-    /// Spacedeck is already initialized
-    AlreadyInitialized,
 }

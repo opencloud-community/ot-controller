@@ -13,6 +13,7 @@ pub mod moderation;
 pub mod polls;
 pub mod recording;
 pub mod shared_folder;
+pub mod whiteboard;
 
 mod namespaced;
 mod role;
