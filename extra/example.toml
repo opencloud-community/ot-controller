@@ -161,6 +161,17 @@ secret_key = "minioadmin"
 #url = "http://localhost:9666"
 #api_key = "secret"
 
+# Shared folder configuration
+#[shared_folder]
+#provider = "nextcloud"
+#url = "https://nextcloud.example.org/"
+#username = "exampleuser"
+#password = "v3rys3cr3t"
+# Optional subdirectory under the user's folder
+#directory = "opentalk/meetings"
+# Optional expiry of folder shares in days
+#expiry = 48
+
 # Default/fallback values
 #[defaults]
 # Default language of a new user

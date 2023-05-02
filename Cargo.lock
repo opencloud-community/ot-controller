@@ -3013,6 +3013,7 @@ dependencies = [
  "pretty_assertions",
  "redis",
  "serde",
+ "serde_json",
  "url",
  "uuid",
 ]
