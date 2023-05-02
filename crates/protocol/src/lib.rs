@@ -23,6 +23,7 @@ use signaling_core::{
 use std::sync::Arc;
 use types::signaling::protocol::command::{ParticipantSelection, ProtocolCommand};
 use types::signaling::protocol::event::{AccessUrl, Error, PdfAsset, ProtocolEvent};
+use types::signaling::protocol::peer_state::ProtocolPeerState;
 use types::{core::ParticipantId, signaling::Role};
 
 pub mod exchange;
@@ -37,12 +38,6 @@ struct SessionInfo {
     author_id: String,
     group_id: String,
     session_id: String,
-    readonly: bool,
-}
-
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub struct ProtocolPeerState {
     readonly: bool,
 }
 
