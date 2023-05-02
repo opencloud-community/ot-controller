@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use serde::{Deserialize, Serialize};
-use types::{core::AssetId, signaling::whiteboard::event::Error};
+use serde::Serialize;
+use types::signaling::whiteboard::event::{Error, PdfAsset};
 use url::Url;
 
 #[derive(Debug, PartialEq, Eq, Serialize)]
@@ -17,10 +17,4 @@ pub enum WhiteboardEvent {
 #[derive(Debug, PartialEq, Eq, Serialize)]
 pub struct AccessUrl {
     pub url: Url,
-}
-
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct PdfAsset {
-    pub filename: String,
-    pub asset_id: AssetId,
 }
