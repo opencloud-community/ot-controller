@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use serde::Serialize;
-use types::signaling::protocol::event::{Error, PdfAsset};
+use types::signaling::protocol::event::{AccessUrl, Error, PdfAsset};
 
 #[derive(Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case", tag = "message")]
@@ -14,12 +14,6 @@ pub enum ProtocolEvent {
     ReadUrl(AccessUrl),
     PdfAsset(PdfAsset),
     Error(Error),
-}
-
-#[derive(Debug, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "snake_case")]
-pub struct AccessUrl {
-    pub url: String,
 }
 
 #[cfg(test)]

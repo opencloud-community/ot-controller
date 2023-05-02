@@ -6,6 +6,18 @@
 
 use crate::{core::AssetId, imports::*};
 
+/// The access URL to a specific data
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct AccessUrl {
+    /// URL for the data
+    pub url: String,
+}
+
 /// Handle to a PDF asset
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
