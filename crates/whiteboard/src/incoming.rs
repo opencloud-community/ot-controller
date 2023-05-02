@@ -6,7 +6,7 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case", tag = "action")]
-pub enum Message {
+pub enum WhiteboardCommand {
     /// Initialize a new space for the room
     ///
     /// There can only be one space per room

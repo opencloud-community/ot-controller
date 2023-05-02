@@ -7,6 +7,7 @@ use client::SpacedeckClient;
 use database::Db;
 use futures::stream::once;
 use futures::TryStreamExt;
+use incoming::WhiteboardCommand;
 use outgoing::{AccessUrl, PdfAsset, WhiteboardEvent};
 use serde::Serialize;
 use signaling_core::{
@@ -59,7 +60,7 @@ impl SignalingModule for Whiteboard {
 
     type Params = controller_settings::Spacedeck;
 
-    type Incoming = incoming::Message;
+    type Incoming = WhiteboardCommand;
 
     type Outgoing = WhiteboardEvent;
 
@@ -128,7 +129,7 @@ impl SignalingModule for Whiteboard {
 
             Event::WsMessage(message) => {
                 match message {
-                    incoming::Message::Initialize => {
+                    WhiteboardCommand::Initialize => {
                         if ctx.role() != Role::Moderator {
                             ctx.ws_send(WhiteboardEvent::Error(
                                 outgoing::Error::InsufficientPermissions,
@@ -151,7 +152,7 @@ impl SignalingModule for Whiteboard {
                         }
                     }
 
-                    incoming::Message::GeneratePdf => {
+                    WhiteboardCommand::GeneratePdf => {
                         if ctx.role() != Role::Moderator {
                             ctx.ws_send(WhiteboardEvent::Error(
                                 outgoing::Error::InsufficientPermissions,
