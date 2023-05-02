@@ -9,7 +9,7 @@ use database::Db;
 use etherpad_client::EtherpadClient;
 use exchange::GenerateUrl;
 use futures::TryStreamExt;
-use incoming::{ParticipantSelection, ProtocolCommand};
+use incoming::ProtocolCommand;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use signaling_core::{
@@ -22,6 +22,7 @@ use signaling_core::{
     SignalingModule, SignalingModuleInitData, SignalingRoomId,
 };
 use std::sync::Arc;
+use types::signaling::protocol::command::ParticipantSelection;
 use types::signaling::protocol::event::{AccessUrl, Error, PdfAsset, ProtocolEvent};
 use types::{core::ParticipantId, signaling::Role};
 

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use serde::Deserialize;
-use types::core::ParticipantId;
+use types::signaling::protocol::command::ParticipantSelection;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case", tag = "action")]
@@ -14,18 +14,11 @@ pub enum ProtocolCommand {
     GeneratePdf,
 }
 
-/// Give a list of participants write access to the protocol
-#[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub struct ParticipantSelection {
-    /// The targeted participants
-    pub participant_ids: Vec<ParticipantId>,
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
     use pretty_assertions::assert_eq;
+    use types::core::ParticipantId;
 
     #[test]
     fn select_writer() {
