@@ -7,7 +7,6 @@ use client::SpacedeckClient;
 use database::Db;
 use futures::stream::once;
 use futures::TryStreamExt;
-use serde::Serialize;
 use signaling_core::{
     assets::save_asset, control, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage,
     RedisConnection, SignalingModule, SignalingModuleInitData, SignalingRoomId,
@@ -20,6 +19,7 @@ use types::{
         whiteboard::{
             command::WhiteboardCommand,
             event::{AccessUrl, Error, PdfAsset, WhiteboardEvent},
+            state::WhiteboardState,
         },
         Role,
     },
@@ -35,14 +35,6 @@ pub struct Whiteboard {
     client: SpacedeckClient,
     db: Arc<Db>,
     storage: Arc<ObjectStorage>,
-}
-
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "snake_case", tag = "status", content = "url")]
-pub enum WhiteboardState {
-    NotInitialized,
-    Initializing,
-    Initialized(Url),
 }
 
 impl From<InitState> for WhiteboardState {
