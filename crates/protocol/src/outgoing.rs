@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use serde::{Deserialize, Serialize};
-use types::core::AssetId;
+use types::{core::AssetId, signaling::protocol::event::Error};
 
 #[derive(Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case", tag = "message")]
@@ -26,21 +26,6 @@ pub struct AccessUrl {
 pub struct PdfAsset {
     pub filename: String,
     pub asset_id: AssetId,
-}
-
-#[derive(Debug, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "snake_case", tag = "error")]
-pub enum Error {
-    /// The requesting user has insufficient permissions for the operation
-    InsufficientPermissions,
-    /// The request contains invalid participant ids
-    InvalidParticipantSelection,
-    /// Is send when another instance just started initializing and etherpad is not available yet
-    CurrentlyInitializing,
-    /// The etherpad initialization failed
-    FailedInitialization,
-    /// The etherpad is not yet initailized
-    NotInitialized,
 }
 
 #[cfg(test)]
