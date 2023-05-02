@@ -34,13 +34,13 @@ pub struct Whiteboard {
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "snake_case", tag = "status", content = "url")]
-pub enum FrontendData {
+pub enum WhiteboardState {
     NotInitialized,
     Initializing,
     Initialized(Url),
 }
 
-impl From<InitState> for FrontendData {
+impl From<InitState> for WhiteboardState {
     fn from(init_state: InitState) -> Self {
         match init_state {
             InitState::Initializing => Self::Initializing,
@@ -68,7 +68,7 @@ impl SignalingModule for Whiteboard {
 
     type ExtEvent = GetPdfEvent;
 
-    type FrontendData = FrontendData;
+    type FrontendData = WhiteboardState;
 
     type PeerFrontendData = ();
 
@@ -100,7 +100,7 @@ impl SignalingModule for Whiteboard {
             } => {
                 let data = match state::get(ctx.redis_conn(), self.room_id).await? {
                     Some(state) => state.into(),
-                    None => FrontendData::NotInitialized,
+                    None => WhiteboardState::NotInitialized,
                 };
 
                 *frontend_data = Some(data);
