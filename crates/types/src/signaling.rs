@@ -9,6 +9,7 @@ pub mod breakout;
 pub mod common;
 pub mod control;
 pub mod moderation;
+pub mod recording;
 
 mod namespaced;
 mod role;

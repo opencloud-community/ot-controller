@@ -6,28 +6,16 @@ use crate::api::signaling::SignalingRoomId;
 use crate::redis_wrapper::RedisConnection;
 use anyhow::{Context, Result};
 use redis::AsyncCommands;
-use redis_args::{FromRedisValue, ToRedisArgs};
-use serde::{Deserialize, Serialize};
+use redis_args::ToRedisArgs;
+use types::signaling::recording::RecordingStatus;
 
 use super::RecordingId;
 
-/// Stores the [`RecordingState`] of this room.
+/// Stores the [`RecordingStatus`] of this room.
 #[derive(ToRedisArgs)]
 #[to_redis_args(fmt = "opentalk-signaling:room={room_id}:recording:init")]
 struct RecordingStateKey {
     room_id: SignalingRoomId,
-}
-
-/// State of the recording
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
-#[serde(tag = "state", content = "recording_id", rename_all = "snake_case")]
-#[to_redis_args(serde)]
-#[from_redis_value(serde)]
-pub enum RecordingState {
-    /// Waiting for a recorder to connect and start the recording
-    Initializing,
-    /// A recorder is connected and capturing the conference
-    Recording(RecordingId),
 }
 
 pub(super) async fn try_init(
@@ -35,7 +23,7 @@ pub(super) async fn try_init(
     room_id: SignalingRoomId,
 ) -> Result<bool> {
     redis_conn
-        .set_nx(RecordingStateKey { room_id }, RecordingState::Initializing)
+        .set_nx(RecordingStateKey { room_id }, RecordingStatus::Initializing)
         .await
         .context("Failed to initialize recording state")
 }
@@ -46,7 +34,10 @@ pub(super) async fn set_recording(
     id: RecordingId,
 ) -> Result<()> {
     redis_conn
-        .set(RecordingStateKey { room_id }, RecordingState::Recording(id))
+        .set(
+            RecordingStateKey { room_id },
+            RecordingStatus::Recording(id),
+        )
         .await
         .context("Failed to set recording state to 'recording'")
 }
@@ -54,7 +45,7 @@ pub(super) async fn set_recording(
 pub(super) async fn get_state(
     redis_conn: &mut RedisConnection,
     room_id: SignalingRoomId,
-) -> Result<Option<RecordingState>> {
+) -> Result<Option<RecordingStatus>> {
     redis_conn
         .get(RecordingStateKey { room_id })
         .await
