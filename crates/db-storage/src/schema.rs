@@ -105,6 +105,7 @@ table! {
         recurrence_pattern -> Nullable<Varchar>,
         is_adhoc -> Bool,
         tenant_id -> Uuid,
+        revision -> Int4,
     }
 }
 

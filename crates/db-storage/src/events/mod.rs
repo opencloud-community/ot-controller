@@ -79,6 +79,8 @@ pub struct Event {
     pub is_adhoc: bool,
 
     pub tenant_id: TenantId,
+
+    pub revision: i32,
 }
 
 impl Event {
@@ -458,7 +460,7 @@ impl UpdateEvent {
     pub async fn apply(self, conn: &mut DbConnection, event_id: EventId) -> Result<Event> {
         let query = diesel::update(events::table)
             .filter(events::id.eq(event_id))
-            .set(self)
+            .set((self, events::revision.eq(events::revision + 1)))
             .returning(events::all_columns);
 
         let event = query.get_result(conn).await?;

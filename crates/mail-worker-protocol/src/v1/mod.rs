@@ -86,6 +86,7 @@ pub struct Event {
     pub description: String,
     pub room: Room,
     pub call_in: Option<CallIn>,
+    pub revision: i32,
 }
 
 #[derive(Deserialize, Serialize, PartialEq, Eq, Debug)]
@@ -167,6 +168,7 @@ mod test {
                     sip_id: "2".into(),
                     sip_password: "987".into(),
                 }),
+                revision: 0,
             },
             invitee: RegisteredUser {
                 email: "lastname@example.org".into(),
@@ -196,7 +198,8 @@ mod test {
                         "sip_tel": "+497652917",
                         "sip_id": "2",
                         "sip_password": "987"
-                    }
+                    },
+                    "revision": 0
                 },
                 "invitee": {
                     "email": "lastname@example.org",
@@ -243,6 +246,7 @@ mod test {
                     sip_id: "2".into(),
                     sip_password: "987".into(),
                 }),
+                revision: 0,
             },
             invitee: RegisteredUser {
                 email: "lastname@example.org".into(),
@@ -269,7 +273,8 @@ mod test {
                         "sip_tel": "+497652917",
                         "sip_id": "2",
                         "sip_password": "987"
-                    }
+                    },
+                    "revision": 0
                 },
                 "invitee": {
                     "email": "lastname@example.org",

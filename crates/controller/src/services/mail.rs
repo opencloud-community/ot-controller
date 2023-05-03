@@ -74,6 +74,7 @@ fn to_event(
             password: room.password,
         },
         call_in,
+        revision: event.revision,
     }
 }
 
@@ -253,12 +254,15 @@ impl MailService {
     pub async fn send_event_cancellation(
         &self,
         inviter: User,
-        event: Event,
+        mut event: Event,
         room: Room,
         sip_config: Option<SipConfig>,
         invitee: MailRecipient,
     ) -> Result<()> {
         let settings = &*self.settings.load();
+
+        // increment event sequence to satisfy icalendar spec
+        event.revision += 1;
 
         let mail_task = match invitee {
             MailRecipient::Registered(invitee) => MailTask::registered_event_cancellation(
