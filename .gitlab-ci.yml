@@ -8,6 +8,7 @@ image: git.opentalk.dev:5050/opentalk/backend/containers/rust:1.69.0
 stages:
   - lint
   - test
+  - check
   - build
   - package
   - trigger
@@ -137,6 +138,37 @@ lint:licensing:
     entrypoint: ['']
   script:
     - reuse lint
+
+check:opentalk-types:
+  # Ensures that the `types` crate can be built with each relevant feature individually
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  stage: check
+  needs: []
+  script:
+    - cargo check --package opentalk-types
+    - cargo check --package opentalk-types --no-default-features
+
+    - cargo check --package opentalk-types --features="frontend"
+    - cargo check --package opentalk-types --no-default-features --features="frontend"
+
+    - cargo check --package opentalk-types --features="backend"
+    - cargo check --package opentalk-types --no-default-features --features="backend"
+
+    - cargo check --package opentalk-types --features="diesel"
+    - cargo check --package opentalk-types --no-default-features --features="diesel"
+
+    - cargo check --package opentalk-types --features="kustos"
+    - cargo check --package opentalk-types --no-default-features --features="kustos"
+
+    - cargo check --package opentalk-types --features="redis"
+    - cargo check --package opentalk-types --no-default-features --features="redis"
+
+    - cargo check --package opentalk-types --features="rand"
+    - cargo check --package opentalk-types --no-default-features --features="rand"
+
+    - cargo check --package opentalk-types --features="serde"
+    - cargo check --package opentalk-types --no-default-features --features="serde"
 
 test:cargo_test:
   rules:
