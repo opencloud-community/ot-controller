@@ -9,11 +9,13 @@ use std::collections::HashMap;
 use crate::{
     common::tariff::TariffResource,
     core::{ParticipantId, Timestamp},
-    imports::*,
     signaling::Role,
 };
 
 use super::{AssociatedParticipant, EventInfo, Participant};
+
+#[allow(unused_imports)]
+use crate::imports::*;
 
 /// Events sent out by the `control` module
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -60,21 +62,21 @@ pub struct JoinSuccess {
     pub display_name: String,
 
     /// The URL to the avatar of the participant who joined
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub avatar_url: Option<String>,
 
     /// The role of the participant in the meeting
     pub role: Role,
 
     /// The timestamp when the meeting will close
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub closes_at: Option<Timestamp>,
 
     /// The tariff of the meeting
     pub tariff: Box<TariffResource>,
 
     /// The module data for the participant
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub module_data: HashMap<String, serde_json::Value>,
 
     /// List of participants in the meeting

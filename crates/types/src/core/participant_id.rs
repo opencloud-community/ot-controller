@@ -2,11 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::str::{from_utf8, FromStr};
-
+#[cfg(feature = "redis")]
 use redis::RedisError;
 use uuid::Uuid;
 
+#[allow(unused_imports)]
 use crate::imports::*;
 
 /// Unique id of a participant inside a single room
@@ -51,6 +51,7 @@ impl std::fmt::Display for ParticipantId {
 #[cfg(feature = "redis")]
 impl FromRedisValue for ParticipantId {
     fn from_redis_value(v: &redis::Value) -> RedisResult<Self> {
+        use std::str::{from_utf8, FromStr as _};
         match v {
             redis::Value::Data(bytes) => Uuid::from_str(from_utf8(bytes)?)
                 .map(ParticipantId)

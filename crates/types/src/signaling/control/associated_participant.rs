@@ -2,7 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::{core::ParticipantId, imports::*};
+use crate::core::ParticipantId;
+
+#[allow(unused_imports)]
+use crate::imports::*;
 
 /// AssociatedParticipant represents a participant in the same meeting
 #[derive(Clone, Debug, PartialEq, Eq)]

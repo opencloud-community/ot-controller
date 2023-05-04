@@ -4,6 +4,7 @@
 
 use uuid::Uuid;
 
+#[allow(unused_imports)]
 use crate::imports::*;
 
 /// The id of a breakout room

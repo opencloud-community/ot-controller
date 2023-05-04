@@ -4,7 +4,10 @@
 
 //! Frontend data for `moderation` namespace
 
-use crate::{imports::*, signaling::control::Participant};
+use crate::signaling::control::Participant;
+
+#[allow(unused_imports)]
+use crate::imports::*;
 
 /// The state of the `moderation` module.
 ///
@@ -14,7 +17,7 @@ use crate::{imports::*, signaling::control::Participant};
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ModerationState {
     /// Moderation module data that is only avaialble for moderators
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub moderator_data: Option<ModeratorFrontendData>,
 
     /// Is raise hands enabled

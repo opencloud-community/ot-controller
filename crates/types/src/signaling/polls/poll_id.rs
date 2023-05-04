@@ -5,6 +5,7 @@
 use derive_more::{AsRef, Display, From, FromStr, Into};
 use uuid::Uuid;
 
+#[allow(unused_imports)]
 use crate::imports::*;
 
 /// The id of the Poll

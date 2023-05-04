@@ -2,7 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::{core::Timestamp, imports::*};
+use crate::core::Timestamp;
+
+#[allow(unused_imports)]
+use crate::imports::*;
 
 /// An envelope of a command annotated with their respective module name.
 ///

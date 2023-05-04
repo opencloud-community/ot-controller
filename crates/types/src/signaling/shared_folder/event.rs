@@ -4,7 +4,10 @@
 
 //! Signaling events for the `shared_folder` namespace
 
-use crate::{common::shared_folder::SharedFolder, imports::*, signaling::Role};
+use crate::{common::shared_folder::SharedFolder, signaling::Role};
+
+#[allow(unused_imports)]
+use crate::imports::*;
 
 /// Events sent out by the `shared_folder` module
 #[derive(Clone, Debug, PartialEq, Eq)]

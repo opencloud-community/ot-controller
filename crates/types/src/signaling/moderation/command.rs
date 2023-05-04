@@ -4,9 +4,12 @@
 
 //! Signaling commands for the `moderation` namespace
 
-use crate::{core::ParticipantId, imports::*};
+use crate::core::ParticipantId;
 
 use super::KickScope;
+
+#[allow(unused_imports)]
+use crate::imports::*;
 
 /// Commands for the `moderation` namespace
 #[derive(Clone, Debug, PartialEq, Eq)]

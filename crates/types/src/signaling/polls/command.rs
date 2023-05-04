@@ -6,6 +6,7 @@
 
 use std::time::Duration;
 
+#[allow(unused_imports)]
 use crate::imports::*;
 
 use super::{ChoiceId, PollId};

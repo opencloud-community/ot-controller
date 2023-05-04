@@ -8,9 +8,12 @@ use std::time::Duration;
 
 use chrono::Utc;
 
-use crate::{core::Timestamp, imports::*};
+use crate::core::Timestamp;
 
 use super::{Choice, PollId};
+
+#[allow(unused_imports)]
+use crate::imports::*;
 
 /// The state of the `polls` module.
 ///

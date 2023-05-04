@@ -4,7 +4,10 @@
 
 //! Signaling messages for the `control` namespace
 
-use crate::{imports::*, signaling::common::TargetParticipant};
+use crate::signaling::common::TargetParticipant;
+
+#[allow(unused_imports)]
+use crate::imports::*;
 
 /// Commands received by the `control` module
 #[derive(Clone, Debug, PartialEq, Eq)]

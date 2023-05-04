@@ -6,7 +6,10 @@
 
 use std::collections::{HashMap, HashSet};
 
-use crate::{core::TariffId, imports::*};
+use crate::core::TariffId;
+
+#[allow(unused_imports)]
+use crate::imports::*;
 
 /// Information related to a specific tariff
 #[derive(Clone, Debug, PartialEq, Eq)]

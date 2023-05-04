@@ -4,10 +4,10 @@
 
 //! Frontend data for `breakout` namespace
 
-use crate::{
-    core::{BreakoutRoomId, Timestamp},
-    imports::*,
-};
+use crate::core::{BreakoutRoomId, Timestamp};
+
+#[allow(unused_imports)]
+use crate::imports::*;
 
 use super::{BreakoutRoom, ParticipantInOtherRoom};
 
