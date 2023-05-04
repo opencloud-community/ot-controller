@@ -5,7 +5,7 @@
 use crate::{api::signaling::prelude::*, redis_wrapper::RedisConnection};
 use actix_http::ws::CloseCode;
 use anyhow::Result;
-use std::collections::HashMap;
+use std::{collections::HashMap, iter::zip};
 use types::{
     core::{ParticipantId, RoomId, UserId},
     signaling::{
@@ -167,6 +167,13 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
+                storage::waiting_room_accepted_remove(
+                    ctx.redis_conn(),
+                    self.room.room_id(),
+                    target,
+                )
+                .await?;
+
                 let user_id: Option<UserId> =
                     control::storage::get_attribute(ctx.redis_conn(), self.room, target, "user_id")
                         .await?;
@@ -188,6 +195,13 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
+                storage::waiting_room_accepted_remove(
+                    ctx.redis_conn(),
+                    self.room.room_id(),
+                    target,
+                )
+                .await?;
+
                 ctx.exchange_publish(
                     control::exchange::current_room_by_participant_id(self.room, target),
                     exchange::Message::Kicked(target),
@@ -197,6 +211,39 @@ impl SignalingModule for ModerationModule {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
                 }
+
+                // Remove all debriefed participants from the waiting-room-accepted set
+                let all_participants =
+                    control::storage::get_all_participants(ctx.redis_conn(), self.room).await?;
+                let all_participants_role: Vec<Option<Role>> =
+                    control::storage::get_attribute_for_participants(
+                        ctx.redis_conn(),
+                        self.room,
+                        "role",
+                        &all_participants,
+                    )
+                    .await?;
+
+                let mut to_remove = vec![];
+
+                for (id, role) in zip(all_participants, all_participants_role) {
+                    let remove = if let Some(role) = role {
+                        kick_scope.kicks_role(role)
+                    } else {
+                        true
+                    };
+
+                    if remove {
+                        to_remove.push(id);
+                    }
+                }
+
+                storage::waiting_room_accepted_remove_list(
+                    ctx.redis_conn(),
+                    self.room.room_id(),
+                    &to_remove,
+                )
+                .await?;
 
                 set_waiting_room_enabled(&mut ctx, self.room.room_id(), true).await?;
 
