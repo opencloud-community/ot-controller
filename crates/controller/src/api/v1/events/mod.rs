@@ -47,6 +47,7 @@ use validator::{Validate, ValidationError};
 pub mod favorites;
 pub mod instances;
 pub mod invites;
+pub mod shared_folder;
 
 const LOCAL_DT_FORMAT: &str = "%Y%m%dT%H%M%S";
 const UTC_DT_FORMAT: &str = "%Y%m%dT%H%M%SZ";
@@ -1742,6 +1743,7 @@ pub(crate) fn associated_resource_ids(event_id: EventId) -> impl IntoIterator<It
         ResourceId::from(format!("/events/{event_id}/invites/*")),
         ResourceId::from(format!("/events/{event_id}/invite")),
         ResourceId::from(format!("/events/{event_id}/reschedule")),
+        ResourceId::from(format!("/events/{event_id}/shared_folder")),
         ResourceId::from(format!("/users/me/event_favorites/{event_id}")),
     ]
 }
@@ -2061,6 +2063,10 @@ where
                 [AccessMethod::Get],
             )
             .add_resource(
+                event_id.resource_id().with_suffix("/shared_folder"),
+                [AccessMethod::Get],
+            )
+            .add_resource(
                 format!("/users/me/event_favorites/{event_id}"),
                 [AccessMethod::Put, AccessMethod::Delete],
             )
@@ -2090,6 +2096,10 @@ where
         .add_resource(
             event_id.resource_id().with_suffix("/invites/*"),
             [AccessMethod::Delete],
+        )
+        .add_resource(
+            event_id.resource_id().with_suffix("/shared_folder"),
+            [AccessMethod::Put, AccessMethod::Delete],
         )
     }
 

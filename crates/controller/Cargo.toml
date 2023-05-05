@@ -18,6 +18,9 @@ db-storage = { path = "../db-storage", package = "opentalk-db-storage" }
 mail-worker-proto = { path = "../mail-worker-protocol", package = "opentalk-mail-worker-protocol", features = [
     "client",
 ] }
+nextcloud-client = { path = "../nextcloud-client", package = "opentalk-nextcloud-client", default-features = false, features = [
+    "rustls-tls",
+] }
 types = { path = "../types", package = "opentalk-types", features = ["backend"] }
 
 ### Logging utilities

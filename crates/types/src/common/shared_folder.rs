@@ -4,7 +4,7 @@
 
 //! Common types related to the shared_folder module
 
-use crate::imports::*;
+use crate::{imports::*, signaling::Role};
 
 /// Information required to access a shared folder
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -31,4 +31,31 @@ pub struct SharedFolder {
         serde(default, skip_serializing_if = "Option::is_none")
     )]
     pub read_write: Option<SharedFolderAccess>,
+}
+
+impl SharedFolder {
+    /// Get an equivalent shared folder, cut down to match the signaling role
+    pub fn for_signaling_role(self, role: Role) -> Self {
+        if role.is_moderator() {
+            self
+        } else {
+            self.without_write_access()
+        }
+    }
+
+    /// Get an equivalent shared folder, with write access removed
+    pub fn without_write_access(self) -> Self {
+        Self {
+            read_write: None,
+            ..self
+        }
+    }
+
+    /// Get an equivalent shared folder, with write access added or replaced
+    pub fn with_write_access(self, write_access: SharedFolderAccess) -> Self {
+        Self {
+            read_write: Some(write_access),
+            ..self
+        }
+    }
 }

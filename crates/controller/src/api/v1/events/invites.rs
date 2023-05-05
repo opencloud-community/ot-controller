@@ -483,6 +483,7 @@ pub async fn delete_invite_to_event(
         format!("/events/{event_id}/invites"),
         format!("/users/me/event_favorites/{event_id}"),
         format!("/events/{event_id}/invite"),
+        format!("/events/{event_id}/shared_folder"),
         format!("/rooms/{room_id}"),
         format!("/rooms/{room_id}/invites"),
         format!("/rooms/{room_id}/start"),

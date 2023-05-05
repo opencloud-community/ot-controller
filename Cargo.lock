@@ -2971,6 +2971,7 @@ dependencies = [
  "opentalk-database",
  "opentalk-db-storage",
  "opentalk-mail-worker-protocol",
+ "opentalk-nextcloud-client",
  "opentalk-redis-args",
  "opentalk-test-util",
  "opentalk-types",
