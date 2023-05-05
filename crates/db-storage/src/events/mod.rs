@@ -39,6 +39,7 @@ types::diesel_newtype! {
 }
 
 pub mod email_invites;
+pub mod shared_folders;
 
 #[derive(
     Debug,
