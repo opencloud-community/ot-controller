@@ -4,7 +4,8 @@
 
 use crate::rooms::Room;
 use crate::schema::{
-    event_exceptions, event_favorites, event_invites, events, rooms, sip_configs, users,
+    event_exceptions, event_favorites, event_invites, event_shared_folders, events, rooms,
+    sip_configs, users,
 };
 use crate::sip_configs::SipConfig;
 use crate::users::User;
@@ -29,6 +30,8 @@ use std::io::Write;
 use std::str::FromStr;
 use types::core::{EventId, RoomId, TenantId, TimeZone, UserId};
 use types::signaling::control::EventInfo;
+
+use self::shared_folders::EventSharedFolder;
 
 types::diesel_newtype! {
     #[derive(Copy)] EventSerialId(i64) => diesel::sql_types::BigInt,
@@ -184,11 +187,18 @@ impl Event {
 
     #[tracing::instrument(err, skip_all)]
     #[allow(clippy::type_complexity)]
-    pub async fn get_with_invite_and_room(
+    pub async fn get_with_related_items(
         conn: &mut DbConnection,
         user_id: UserId,
         event_id: EventId,
-    ) -> Result<(Event, Option<EventInvite>, Room, Option<SipConfig>, bool)> {
+    ) -> Result<(
+        Event,
+        Option<EventInvite>,
+        Room,
+        Option<SipConfig>,
+        bool,
+        Option<EventSharedFolder>,
+    )> {
         let query = events::table
             .left_join(
                 event_invites::table.on(event_invites::event_id
@@ -200,6 +210,9 @@ impl Event {
                     .eq(events::id)
                     .and(event_favorites::user_id.eq(user_id))),
             )
+            .left_join(
+                event_shared_folders::table.on(event_shared_folders::event_id.eq(events::id)),
+            )
             .inner_join(rooms::table.on(events::room.eq(rooms::id)))
             .left_join(sip_configs::table.on(rooms::id.eq(sip_configs::room)))
             .select((
@@ -208,12 +221,11 @@ impl Event {
                 rooms::all_columns,
                 sip_configs::all_columns.nullable(),
                 event_favorites::user_id.nullable().is_not_null(),
+                event_shared_folders::all_columns.nullable(),
             ))
             .filter(events::id.eq(event_id));
 
-        let (event, invite, room, sip_config, is_favorite) = query.first(conn).await?;
-
-        Ok((event, invite, room, sip_config, is_favorite))
+        Ok(query.first(conn).await?)
     }
 
     #[tracing::instrument(err, skip_all)]
@@ -258,6 +270,7 @@ impl Event {
             Option<SipConfig>,
             Vec<EventException>,
             bool,
+            Option<EventSharedFolder>,
         )>,
     > {
         // Filter applied to all events which validates that the event is either created by
@@ -278,6 +291,9 @@ impl Event {
                     .eq(events::id)
                     .and(event_favorites::user_id.eq(user.id))),
             )
+            .left_join(
+                event_shared_folders::table.on(event_shared_folders::event_id.eq(events::id)),
+            )
             .inner_join(rooms::table)
             .left_join(sip_configs::table.on(rooms::id.eq(sip_configs::room)))
             .select((
@@ -286,6 +302,7 @@ impl Event {
                 rooms::all_columns,
                 sip_configs::all_columns.nullable(),
                 event_favorites::user_id.nullable().is_not_null(),
+                event_shared_folders::all_columns.nullable(),
             ))
             .filter(events::tenant_id.eq(user.tenant_id))
             .filter(event_related_to_user_id)
@@ -379,12 +396,15 @@ impl Event {
             Room,
             Option<SipConfig>,
             bool,
+            Option<EventSharedFolder>,
         )> = query.load(conn).await?;
 
         let mut events_with_invite_room_and_exceptions =
             Vec::with_capacity(events_with_invite_and_room.len());
 
-        for (event, invite, room, sip_config, is_favorite) in events_with_invite_and_room {
+        for (event, invite, room, sip_config, is_favorite, shared_folders) in
+            events_with_invite_and_room
+        {
             let exceptions = if event.is_recurring.unwrap_or_default() {
                 event_exceptions::table
                     .filter(event_exceptions::event_id.eq(event.id))
@@ -401,6 +421,7 @@ impl Event {
                 sip_config,
                 exceptions,
                 is_favorite,
+                shared_folders,
             ));
         }
 

@@ -2322,6 +2322,7 @@ components:
         - status
         - invite_status
         - is_favorite
+        - shared_folder
       additionalProperties: false
       properties:
         id:
@@ -2397,6 +2398,8 @@ components:
         is_favorite:
           type: boolean
           description: Is the event in the current user's favorites list.
+        shared_folder:
+          $ref: '#/components/schemas/SharedFolder'
       if:
         properties:
           is_time_independent:

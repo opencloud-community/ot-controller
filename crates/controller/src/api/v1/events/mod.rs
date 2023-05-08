@@ -25,6 +25,7 @@ use chrono::{DateTime, Datelike, NaiveTime, TimeZone as _, Utc};
 use chrono_tz::Tz;
 use controller_settings::Settings;
 use database::{Db, DbConnection};
+use db_storage::events::shared_folders::EventSharedFolder;
 use db_storage::events::{
     email_invites::EventEmailInvite, Event, EventException, EventExceptionKind, EventInvite,
     EventInviteStatus, NewEvent, UpdateEvent,
@@ -41,7 +42,10 @@ use kustos::{Authz, Resource, ResourceId};
 use rrule::{Frequency, RRuleSet};
 use serde::de::Visitor;
 use serde::{Deserialize, Serialize};
-use types::core::{DateTimeTz, EventId, RoomId, TimeZone};
+use types::{
+    common::shared_folder::{SharedFolder, SharedFolderAccess},
+    core::{DateTimeTz, EventId, RoomId, TimeZone, UserId},
+};
 use validator::{Validate, ValidationError};
 
 pub mod favorites;
@@ -256,6 +260,10 @@ pub struct EventResource {
 
     /// Can the current user edit this resource
     pub can_edit: bool,
+
+    /// Information about the shared folder for the event
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub shared_folder: Option<SharedFolder>,
 }
 
 /// Event exception resource
@@ -707,6 +715,7 @@ async fn create_time_independent_event(
         is_favorite: false,
         can_edit: true, // just created by the current user
         is_adhoc,
+        shared_folder: None,
     })
 }
 
@@ -788,6 +797,7 @@ async fn create_time_dependent_event(
         is_favorite: false,
         can_edit: true, // just created by the current user
         is_adhoc,
+        shared_folder: None,
     })
 }
 
@@ -856,6 +866,7 @@ struct GetEventsCursorData {
 /// Return type of the `GET /events` endpoint
 #[derive(Serialize)]
 #[serde(untagged)]
+#[allow(clippy::large_enum_variant)]
 pub enum EventOrException {
     Event(EventResource),
     Exception(EventExceptionResource),
@@ -918,7 +929,7 @@ pub async fn get_events(
     )
     .await?;
 
-    for (event, _, _, _, exceptions, _) in &events {
+    for (event, _, _, _, exceptions, _, _) in &events {
         users.add(event);
         users.add(exceptions);
     }
@@ -956,7 +967,7 @@ pub async fn get_events(
     let mut ret_cursor_data = None;
 
     for (
-        (event, invite, room, sip_config, exceptions, is_favorite),
+        (event, invite, room, sip_config, exceptions, is_favorite, shared_folder),
         (mut invites_with_user, mut email_invites),
     ) in events.into_iter().zip(invites_grouped_by_event)
     {
@@ -997,6 +1008,9 @@ pub async fn get_events(
 
         let can_edit = can_edit(&event, &current_user);
 
+        let shared_folder =
+            shared_folder_for_user(shared_folder, event.created_by, current_user.id);
+
         event_resources.push(EventOrException::Event(EventResource {
             id: event.id,
             created_by,
@@ -1022,6 +1036,7 @@ pub async fn get_events(
             is_favorite,
             can_edit,
             is_adhoc: event.is_adhoc,
+            shared_folder,
         }));
 
         for exception in exceptions {
@@ -1092,8 +1107,8 @@ pub async fn get_event(
 
     let mut conn = db.get_conn().await?;
 
-    let (event, invite, room, sip_config, is_favorite) =
-        Event::get_with_invite_and_room(&mut conn, current_user.id, event_id).await?;
+    let (event, invite, room, sip_config, is_favorite, shared_folder) =
+        Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
     let (invitees, invitees_truncated) =
         get_invitees_for_event(&settings, &mut conn, event_id, query.invitees_max).await?;
 
@@ -1108,6 +1123,8 @@ pub async fn get_event(
     let ends_at = DateTimeTz::ends_at_of(&event);
 
     let can_edit = can_edit(&event, &current_user);
+
+    let shared_folder = shared_folder_for_user(shared_folder, event.created_by, current_user.id);
 
     let event_resource = EventResource {
         id: event.id,
@@ -1136,6 +1153,7 @@ pub async fn get_event(
         is_favorite,
         can_edit,
         is_adhoc: event.is_adhoc,
+        shared_folder,
     };
 
     let event_resource = EventResource {
@@ -1315,8 +1333,8 @@ pub async fn patch_event(
 
     let mut conn = db.get_conn().await?;
 
-    let (event, invite, room, sip_config, is_favorite) =
-        Event::get_with_invite_and_room(&mut conn, current_user.id, event_id).await?;
+    let (event, invite, room, sip_config, is_favorite, shared_folder) =
+        Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
 
     let room = if patch.password.is_some() || patch.waiting_room.is_some() {
         // Update the event's room if at least one of the fields is set
@@ -1382,6 +1400,8 @@ pub async fn patch_event(
 
     let can_edit = can_edit(&event, &current_user);
 
+    let shared_folder = shared_folder_for_user(shared_folder, event.created_by, current_user.id);
+
     let event_resource = EventResource {
         id: event.id,
         created_by: PublicUserProfile::from_db(&settings, created_by),
@@ -1409,6 +1429,7 @@ pub async fn patch_event(
         is_favorite,
         can_edit,
         is_adhoc: event.is_adhoc,
+        shared_folder,
     };
 
     if send_email_notification {
@@ -1672,8 +1693,8 @@ pub async fn delete_event(
     let mut conn = db.get_conn().await?;
 
     // TODO(w.rabl) Further DB access optimization (replacing call to get_with_invite_and_room)?
-    let (event, _invite, room, sip_config, _is_favorite) =
-        Event::get_with_invite_and_room(&mut conn, current_user.id, event_id).await?;
+    let (event, _invite, room, sip_config, _is_favorite, _shared_folder) =
+        Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
 
     let created_by = if event.created_by == current_user.id {
         current_user
@@ -2032,6 +2053,38 @@ fn can_edit(event: &Event, user: &User) -> bool {
     event.created_by == user.id
 }
 
+fn shared_folder_for_user(
+    shared_folder: Option<EventSharedFolder>,
+    event_created_by: UserId,
+    current_user: UserId,
+) -> Option<SharedFolder> {
+    shared_folder.map(|f| {
+        let EventSharedFolder {
+            write_password,
+            write_url,
+            read_password,
+            read_url,
+            ..
+        } = f;
+
+        let read_write = if event_created_by == current_user {
+            Some(SharedFolderAccess {
+                url: write_url,
+                password: write_password,
+            })
+        } else {
+            None
+        };
+
+        let read = SharedFolderAccess {
+            url: read_url,
+            password: read_password,
+        };
+
+        SharedFolder { read, read_write }
+    })
+}
+
 /// Helper trait to to reduce boilerplate in the single route handlers
 ///
 /// Bundles multiple resources into groups.
@@ -2200,6 +2253,7 @@ mod tests {
             is_favorite: false,
             can_edit: true,
             is_adhoc: false,
+            shared_folder: None,
         };
 
         assert_eq_json!(
@@ -2313,6 +2367,7 @@ mod tests {
             is_favorite: true,
             can_edit: false,
             is_adhoc: false,
+            shared_folder: None,
         };
 
         assert_eq_json!(
