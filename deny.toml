@@ -21,7 +21,10 @@
 # this list would mean the nix crate, as well as any of its exclusive
 # dependencies not shared by any other crates, would be ignored, as the target
 # list here is effectively saying which targets you are building for.
-targets = []
+targets = [
+    { triple = "x86_64-unknown-linux-gnu" },
+    { triple = "x86_64-unknown-linux-musl" },
+]
 
 # This section is considered when running `cargo deny check advisories`
 # More documentation for the advisories section can be found here:
@@ -159,14 +162,10 @@ skip = [
     { name = "ahash", version = "=0.7.6" },
     { name = "base64", version = "=0.13.1" },
     { name = "hashbrown", version = "=0.11.2" },
-    { name = "hermit-abi", version = "=0.2" },
     { name = "idna", version = "=0.2" },
     { name = "num-bigint", version = "=0.4.3" },
     { name = "spin", version = "=0.5.2" },
     { name = "time", version = "=0.1.45" },
-    { name = "wasi", version = "=0.10.0" },
-    { name = "windows-sys", version = "=0.42" },
-    { name = "cargo_metadata", version = "=0.14.2" },
     { name = "memoffset", version = "=0.7.1" },
 ]
 # Similarly to `skip` allows you to skip certain crates during duplicate
