@@ -5,6 +5,8 @@
 use crate::imports::*;
 
 crate::diesel_newtype! {
+    feature_gated:
+
     NumericId(String) => diesel::sql_types::Text,
     CallInId(NumericId) => diesel::sql_types::Text,
     CallInPassword(NumericId) => diesel::sql_types::Text

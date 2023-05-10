@@ -5,6 +5,8 @@
 use kustos::subject::PolicyUser;
 
 crate::diesel_newtype! {
+    feature_gated:
+
     #[derive(Copy, redis_args::ToRedisArgs, redis_args::FromRedisValue)]
     #[to_redis_args(fmt)]
     #[from_redis_value(FromStr)]

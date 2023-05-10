@@ -5,6 +5,8 @@
 use std::{convert::Infallible, str::FromStr};
 
 crate::diesel_newtype! {
+    feature_gated:
+
     #[cfg_attr(
         feature="redis",
         derive(redis_args::ToRedisArgs, redis_args::FromRedisValue),

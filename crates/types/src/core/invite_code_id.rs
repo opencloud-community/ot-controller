@@ -3,5 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 crate::diesel_newtype! {
+    feature_gated:
+
     #[derive(Copy)] InviteCodeId(uuid::Uuid) => diesel::sql_types::Uuid
 }
