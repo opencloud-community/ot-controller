@@ -5,7 +5,7 @@
 //! Provides various internal implementations
 use super::{ToCasbin, ToCasbinMultiple, ToCasbinString};
 use crate::{
-    policies_builder::{Finished, PoliciesBuilder},
+    policies_builder::{PoliciesBuilder, Ready},
     policy::{Policies, Policy},
     subject::{UserToGroup, UserToRole},
     AccessMethod, GroupToRole, IsSubject, PolicyGroup, PolicyRole, PolicyUser, ResourceId,
@@ -171,7 +171,7 @@ impl ToCasbin for UserToRole {
     }
 }
 
-impl ToCasbinMultiple for PoliciesBuilder<Finished> {
+impl ToCasbinMultiple for PoliciesBuilder<Ready> {
     fn to_casbin_policies(self) -> Vec<Vec<String>> {
         self.user_policies
             .into_iter()

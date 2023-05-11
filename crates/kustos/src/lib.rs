@@ -631,4 +631,15 @@ impl Authz {
             .await
             .map_err(Into::into)
     }
+
+    pub async fn clear_all_policies(&self) -> Result<()> {
+        let mut inner = self.inner.write().await;
+
+        inner.clear_policy().await?;
+
+        // clear_policy doesn't seem to update the role managers, so doing it manually here
+        inner.get_role_managers().for_each(|rm| rm.write().clear());
+
+        Ok(())
+    }
 }

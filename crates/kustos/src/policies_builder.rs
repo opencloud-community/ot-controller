@@ -35,35 +35,31 @@ pub struct PoliciesBuilder<B> {
     state: B,
 }
 
-/// Initial state of the builder
+/// New Values can be added to the builder
 #[derive(Debug)]
-pub struct Empty;
+pub struct Ready;
 
-impl BuilderState for Empty {
+impl BuilderState for Ready {
     fn finalize<B>(self, _: &mut PoliciesBuilder<B>) {}
 }
 
-impl PoliciesBuilder<Empty> {
+impl PoliciesBuilder<Ready> {
     /// Creates a new PoliciesBuilder in the `Empty` state
     pub fn new() -> Self {
         Self {
             user_policies: vec![],
             group_policies: vec![],
             role_policies: vec![],
-            state: Empty,
+            state: Ready,
         }
     }
 }
 
-impl Default for PoliciesBuilder<Empty> {
+impl Default for PoliciesBuilder<Ready> {
     fn default() -> Self {
         Self::new()
     }
 }
-
-/// Final state of the builder, only in this state may it be serialized
-#[derive(Debug)]
-pub struct Finished;
 
 impl<B: BuilderState> PoliciesBuilder<B> {
     /// Wraps up the previous state and switches to granting access to the given user
@@ -127,12 +123,12 @@ impl<B: BuilderState> PoliciesBuilder<B> {
     ///
     /// Only in the `Finished` state can the builder be passed to the [`add_policies`](super::Authz::add_policies)
     /// function of [Authz](super::Authz).
-    pub fn finish(self) -> PoliciesBuilder<Finished> {
+    pub fn finish(self) -> PoliciesBuilder<Ready> {
         let mut this = PoliciesBuilder {
             user_policies: self.user_policies,
             group_policies: self.group_policies,
             role_policies: self.role_policies,
-            state: Finished,
+            state: Ready,
         };
 
         self.state.finalize(&mut this);

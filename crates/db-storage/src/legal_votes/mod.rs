@@ -49,6 +49,17 @@ impl LegalVote {
         Ok(legal_vote)
     }
 
+    #[tracing::instrument(err, skip_all)]
+    pub async fn get_all_with_creator(
+        conn: &mut DbConnection,
+    ) -> Result<Vec<(LegalVoteId, UserId)>> {
+        let query = legal_votes::table.select((legal_votes::id, legal_votes::created_by));
+
+        let legal_votes = query.load(conn).await?;
+
+        Ok(legal_votes)
+    }
+
     /// Get all `LegalVote` filtered by ids and room, paginated
     #[tracing::instrument(err, skip_all)]
     pub async fn get_for_room_by_ids_paginated(

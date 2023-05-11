@@ -160,6 +160,27 @@ impl Event {
         Ok(event)
     }
 
+    pub async fn get_all_with_creator(conn: &mut DbConnection) -> Result<Vec<(EventId, UserId)>> {
+        let events = events::table
+            .select((events::id, events::created_by))
+            .load(conn)
+            .await?;
+
+        Ok(events)
+    }
+
+    pub async fn get_all_with_invitee(
+        conn: &mut DbConnection,
+    ) -> Result<Vec<(EventId, RoomId, UserId)>> {
+        let events = events::table
+            .inner_join(event_invites::table.on(event_invites::event_id.eq(events::id)))
+            .select((events::id, events::room, event_invites::invitee))
+            .load(conn)
+            .await?;
+
+        Ok(events)
+    }
+
     #[tracing::instrument(err, skip_all)]
     #[allow(clippy::type_complexity)]
     pub async fn get_with_invite_and_room(
