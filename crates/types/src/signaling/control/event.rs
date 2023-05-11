@@ -13,7 +13,7 @@ use crate::{
     signaling::Role,
 };
 
-use super::{AssociatedParticipant, Participant};
+use super::{AssociatedParticipant, EventInfo, Participant};
 
 /// Events sent out by the `control` module
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -79,6 +79,10 @@ pub struct JoinSuccess {
 
     /// List of participants in the meeting
     pub participants: Vec<Participant>,
+
+    /// Information about the event which is associated with the room
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub event_info: Option<EventInfo>,
 }
 
 /// The reason for blocking a participant from joining a meeting
@@ -161,6 +165,9 @@ mod test {
             "closes_at":"2021-06-24T14:00:11.873753715Z",
             "tariff": serde_json::to_value(participant_tariff()).unwrap(),
             "participants": [],
+            "event_info": {
+                "title": "Daily",
+            },
         });
 
         let produced = serde_json::to_value(&ControlEvent::JoinSuccess(JoinSuccess {
@@ -176,6 +183,9 @@ mod test {
             tariff: participant_tariff().into(),
             module_data: Default::default(),
             participants: vec![],
+            event_info: Some(EventInfo {
+                title: "Daily".to_string(),
+            }),
         }))
         .unwrap();
 
@@ -191,6 +201,9 @@ mod test {
             "role": "guest",
             "tariff": serde_json::to_value(participant_tariff()).unwrap(),
             "participants": [],
+            "event_info": {
+                "title": "Daily",
+            },
         });
 
         let produced = serde_json::to_value(&ControlEvent::JoinSuccess(JoinSuccess {
@@ -202,6 +215,9 @@ mod test {
             tariff: participant_tariff().into(),
             module_data: Default::default(),
             participants: vec![],
+            event_info: Some(EventInfo {
+                title: "Daily".to_string(),
+            }),
         }))
         .unwrap();
 

@@ -5,6 +5,7 @@
 use crate::api::signaling::SignalingRoomId;
 use crate::redis_wrapper::RedisConnection;
 use anyhow::{Context, Result};
+use db_storage::events::Event;
 use db_storage::tariffs::Tariff;
 use r3dlock::Mutex;
 use redis::{AsyncCommands, FromRedisValue, ToRedisArgs};
@@ -56,6 +57,15 @@ pub struct RoomParticipantCount {
 #[derive(ToRedisArgs)]
 #[to_redis_args(fmt = "opentalk-signaling:room={room_id}:tariff")]
 pub struct RoomTariff {
+    room_id: RoomId,
+}
+
+/// The associated [`Event`] for the room
+///
+/// Notice that this key only contains the [`RoomId`] as it applies to all breakout rooms as well
+#[derive(ToRedisArgs)]
+#[to_redis_args(fmt = "opentalk-signaling:room={room_id}:event")]
+pub struct RoomEvent {
     room_id: RoomId,
 }
 
@@ -479,7 +489,7 @@ pub async fn get_skip_waiting_room(
     Ok(value.unwrap_or_default())
 }
 
-/// Try to the set active tariff for the room. If the tariff is already set return the current one.
+/// Try to set the active tariff for the room. If the tariff is already set return the current one.
 #[tracing::instrument(level = "debug", skip(redis_conn))]
 pub async fn try_init_tariff(
     redis_conn: &mut RedisConnection,
@@ -511,6 +521,40 @@ pub async fn delete_tariff(redis_conn: &mut RedisConnection, room_id: RoomId) ->
         .del(RoomTariff { room_id })
         .await
         .context("Failed to delete room tariff")
+}
+
+/// Try to set the active event for the room. If the event is already set return the current one.
+#[tracing::instrument(level = "debug", skip(redis_conn))]
+pub async fn try_init_event(
+    redis_conn: &mut RedisConnection,
+    room_id: RoomId,
+    event: Option<Event>,
+) -> Result<Option<Event>> {
+    let (_, event): (bool, Option<Event>) = redis::pipe()
+        .atomic()
+        .set_nx(RoomEvent { room_id }, event)
+        .get(RoomEvent { room_id })
+        .query_async(redis_conn)
+        .await
+        .context("Failed to SET NX & GET room event")?;
+
+    Ok(event)
+}
+
+#[tracing::instrument(level = "debug", skip(redis_conn))]
+pub async fn get_event(redis_conn: &mut RedisConnection, room_id: RoomId) -> Result<Option<Event>> {
+    redis_conn
+        .get(RoomEvent { room_id })
+        .await
+        .context("Failed to get room event")
+}
+
+#[tracing::instrument(level = "debug", skip(redis_conn))]
+pub async fn delete_event(redis_conn: &mut RedisConnection, room_id: RoomId) -> Result<()> {
+    redis_conn
+        .del(RoomEvent { room_id })
+        .await
+        .context("Failed to delete room event")
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]

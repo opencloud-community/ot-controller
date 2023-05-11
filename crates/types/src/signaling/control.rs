@@ -9,9 +9,11 @@ pub mod event;
 pub mod state;
 
 mod associated_participant;
+mod event_info;
 mod participant;
 mod waiting_room_state;
 
 pub use associated_participant::AssociatedParticipant;
+pub use event_info::EventInfo;
 pub use participant::Participant;
 pub use waiting_room_state::WaitingRoomState;

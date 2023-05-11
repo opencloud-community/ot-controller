@@ -614,6 +614,7 @@ where
                     .into(),
                     module_data,
                     participants,
+                    event_info: None,
                 };
 
                 self.interface

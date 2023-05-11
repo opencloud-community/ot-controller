@@ -23,10 +23,12 @@ use diesel::{
 };
 use diesel_async::scoped_futures::ScopedFutureExt;
 use diesel_async::{AsyncConnection, RunQueryDsl};
-use serde::Serialize;
+use redis_args::{FromRedisValue, ToRedisArgs};
+use serde::{Deserialize, Serialize};
 use std::io::Write;
 use std::str::FromStr;
 use types::core::{EventId, RoomId, TenantId, TimeZone, UserId};
+use types::signaling::control::EventInfo;
 
 types::diesel_newtype! {
     #[derive(Copy)] EventSerialId(i64) => diesel::sql_types::BigInt,
@@ -38,9 +40,23 @@ types::diesel_newtype! {
 
 pub mod email_invites;
 
-#[derive(Debug, Clone, Queryable, Identifiable, Associations, PartialEq, Eq)]
+#[derive(
+    Debug,
+    Clone,
+    Queryable,
+    Identifiable,
+    Associations,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    ToRedisArgs,
+    FromRedisValue,
+)]
 #[diesel(table_name = events)]
 #[diesel(belongs_to(User, foreign_key = created_by))]
+#[to_redis_args(serde)]
+#[from_redis_value(serde)]
 pub struct Event {
     pub id: EventId,
     pub id_serial: EventSerialId,
@@ -101,6 +117,12 @@ impl Event {
             Some((dt, tz))
         } else {
             None
+        }
+    }
+
+    pub fn to_event_info(&self) -> EventInfo {
+        EventInfo {
+            title: self.title.clone(),
         }
     }
 }
@@ -373,9 +395,21 @@ impl Event {
         Ok(())
     }
 
+    /// Returns the first [`Event`] in the given [`RoomId`].
+    #[tracing::instrument(err, skip_all)]
+    pub async fn get_first_for_room(
+        conn: &mut DbConnection,
+        room_id: RoomId,
+    ) -> Result<Option<Event>> {
+        let event = events::table
+            .filter(events::room.eq(room_id))
+            .first::<Event>(conn)
+            .await
+            .optional()?;
+        Ok(event)
+    }
+
     /// Returns all [`Event`]s in the given [`RoomId`].
-    ///
-    /// This is needed because when rescheduling an Event from time x onwards, we create a new Event and both reference the room.
     #[tracing::instrument(err, skip_all)]
     pub async fn get_all_ids_for_room(
         conn: &mut DbConnection,

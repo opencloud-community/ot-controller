@@ -593,7 +593,8 @@ impl Runner {
     /// called once the main and all breakout rooms are empty.
     async fn cleanup_redis_for_global_room(&mut self) -> Result<()> {
         storage::delete_participant_count(&mut self.redis_conn, self.room.id).await?;
-        storage::delete_tariff(&mut self.redis_conn, self.room.id).await
+        storage::delete_tariff(&mut self.redis_conn, self.room.id).await?;
+        storage::delete_event(&mut self.redis_conn, self.room.id).await
     }
 
     /// Runs the runner until the peer closes its websocket connection or a fatal error occurres.
@@ -1134,10 +1135,10 @@ impl Runner {
         // If we haven't joined the waiting room yet, fetch, set and enforce the tariff for the room.
         // When in waiting-room this logic was already executed in `join_waiting_room`.
         let (guard, tariff) = if !joining_from_waiting_room {
-            let db = self.db.clone();
             let creator_id = self.room.created_by;
 
-            let mut tariff = Tariff::get_by_user_id(&mut db.get_conn().await?, &creator_id).await?;
+            let mut tariff =
+                Tariff::get_by_user_id(&mut self.db.get_conn().await?, &creator_id).await?;
 
             let guard = lock.lock(&mut self.redis_conn).await?;
 
@@ -1179,6 +1180,13 @@ impl Runner {
 
         unlock_res?;
 
+        let event = db_storage::events::Event::get_first_for_room(
+            &mut self.db.get_conn().await?,
+            self.room.id,
+        )
+        .await?;
+        let event = storage::try_init_event(&mut self.redis_conn, self.room.id, event).await?;
+
         let mut participants = vec![];
 
         for id in participant_ids {
@@ -1218,6 +1226,7 @@ impl Runner {
                 tariff: tariff.to_tariff_resource(&available_modules).into(),
                 module_data,
                 participants,
+                event_info: event.as_ref().map(db_storage::events::Event::to_event_info),
             }),
         )
         .await;
