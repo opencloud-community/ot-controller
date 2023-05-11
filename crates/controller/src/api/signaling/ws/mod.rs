@@ -83,6 +83,9 @@ where
     /// Participant data has changed, an options to `M::PeerFrontendData`
     ParticipantUpdated(ParticipantId, &'evt mut Option<M::PeerFrontendData>),
 
+    /// Role of the participant changed
+    RoleUpdated(Role),
+
     /// Received websocket message
     WsMessage(M::Incoming),
 

@@ -1583,6 +1583,17 @@ impl Runner {
                 )
                 .await?;
 
+                let actions = self
+                    .handle_module_broadcast_event(
+                        timestamp,
+                        DynBroadcastEvent::RoleUpdated(new_role),
+                        false,
+                    )
+                    .await;
+
+                self.handle_module_requested_actions(timestamp, actions)
+                    .await;
+
                 self.ws_send_control(timestamp, ControlEvent::RoleUpdated { new_role })
                     .await;
 

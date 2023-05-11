@@ -87,6 +87,7 @@ impl SignalingModule for Polls {
             Event::ParticipantJoined(_, _) => Ok(()),
             Event::ParticipantLeft(_) => Ok(()),
             Event::ParticipantUpdated(_, _) => Ok(()),
+            Event::RoleUpdated(_) => Ok(()),
             Event::WsMessage(msg) => self.on_ws_message(ctx, msg).await,
             Event::Exchange(msg) => self.on_exchange_message(ctx, msg).await,
             Event::Ext(ExpiredEvent(id)) => {

@@ -170,7 +170,8 @@ impl SignalingModule for Timer {
             | Event::LowerHand
             | Event::ParticipantJoined(..)
             | Event::ParticipantUpdated(..)
-            | Event::ParticipantLeft(_) => (),
+            | Event::ParticipantLeft(_)
+            | Event::RoleUpdated(_) => {}
         }
 
         Ok(())

@@ -162,6 +162,7 @@ impl SignalingModule for ModerationModule {
             Event::ParticipantJoined(_, _) => {}
             Event::ParticipantLeft(_) => {}
             Event::ParticipantUpdated(_, _) => {}
+            Event::RoleUpdated(_) => {}
             Event::WsMessage(ModerationCommand::Ban { target }) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());

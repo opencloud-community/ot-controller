@@ -186,6 +186,7 @@ impl SignalingModule for BreakoutRooms {
             Event::ParticipantJoined(_, _) => Ok(()),
             Event::ParticipantLeft(_) => Ok(()),
             Event::ParticipantUpdated(_, _) => Ok(()),
+            Event::RoleUpdated(_) => Ok(()),
             Event::WsMessage(msg) => self.on_ws_msg(ctx, msg).await,
             Event::Exchange(msg) => self.on_exchange_msg(ctx, msg).await,
             Event::Ext(TimerEvent::RoomExpired) => {
