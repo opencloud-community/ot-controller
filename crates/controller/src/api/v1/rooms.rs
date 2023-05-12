@@ -517,10 +517,12 @@ where
 
 pub(crate) fn associated_resource_ids(room_id: RoomId) -> impl IntoIterator<Item = ResourceId> {
     [
-        ResourceId::from(format!("/room/{room_id}")),
-        ResourceId::from(format!("/room/{room_id}/invites")),
-        ResourceId::from(format!("/room/{room_id}/invites/*")),
-        ResourceId::from(format!("/room/{room_id}/start")),
-        ResourceId::from(format!("/room/{room_id}/tariff")),
+        room_id.resource_id(),
+        room_id.resource_id().with_suffix("/invites"),
+        room_id.resource_id().with_suffix("/invites/*"),
+        room_id.resource_id().with_suffix("/start"),
+        room_id.resource_id().with_suffix("/tariff"),
+        room_id.resource_id().with_suffix("/assets"),
+        room_id.resource_id().with_suffix("/assets/*"),
     ]
 }
