@@ -8,9 +8,14 @@ use pretty_assertions::assert_eq;
 use serial_test::serial;
 use std::time::Duration;
 use test_util::*;
+use types::signaling::polls::{
+    command::{PollsCommand, Start, Vote},
+    event::{Error, PollsEvent, Started},
+    Choice, ChoiceId, Item, Results,
+};
 
-async fn start_poll(module_tester: &mut ModuleTester<Polls>, live_poll: bool) -> outgoing::Started {
-    let start = incoming::Message::Start(incoming::Start {
+async fn start_poll(module_tester: &mut ModuleTester<Polls>, live_poll: bool) -> Started {
+    let start = PollsCommand::Start(Start {
         topic: "polling".into(),
         live: live_poll,
         choices: vec!["yes".into(), "no".into()],
@@ -33,7 +38,7 @@ async fn start_poll(module_tester: &mut ModuleTester<Polls>, live_poll: bool) ->
 
     assert_eq!(started1, started2);
 
-    if let WsMessageOutgoing::Module(outgoing::Message::Started(outgoing::Started {
+    if let WsMessageOutgoing::Module(PollsEvent::Started(Started {
         id,
         topic,
         live,
@@ -47,18 +52,18 @@ async fn start_poll(module_tester: &mut ModuleTester<Polls>, live_poll: bool) ->
             choices,
             &[
                 Choice {
-                    id: ChoiceId(0),
+                    id: ChoiceId::from(0),
                     content: "yes".into()
                 },
                 Choice {
-                    id: ChoiceId(1),
+                    id: ChoiceId::from(1),
                     content: "no".into()
                 }
             ]
         );
         assert_eq!(duration.as_millis(), 2000);
 
-        outgoing::Started {
+        Started {
             id,
             topic,
             live,
@@ -83,9 +88,9 @@ async fn full_poll_with_2sec_duration() {
     module_tester
         .send_ws_message(
             &USER_1.participant_id,
-            incoming::Message::Vote(incoming::Vote {
+            PollsCommand::Vote(Vote {
                 poll_id: started.id,
-                choice_id: ChoiceId(0),
+                choice_id: ChoiceId::from(0),
             }),
         )
         .unwrap();
@@ -102,21 +107,17 @@ async fn full_poll_with_2sec_duration() {
 
     assert_eq!(update1, update2);
 
-    if let WsMessageOutgoing::Module(outgoing::Message::LiveUpdate(outgoing::Results {
-        id,
-        results,
-    })) = update1
-    {
+    if let WsMessageOutgoing::Module(PollsEvent::LiveUpdate(Results { id, results })) = update1 {
         assert_eq!(id, started.id);
         assert_eq!(
             results,
             &[
-                outgoing::Item {
-                    id: ChoiceId(0),
+                Item {
+                    id: ChoiceId::from(0),
                     count: 1,
                 },
-                outgoing::Item {
-                    id: ChoiceId(1),
+                Item {
+                    id: ChoiceId::from(1),
                     count: 0
                 }
             ]
@@ -130,9 +131,9 @@ async fn full_poll_with_2sec_duration() {
     module_tester
         .send_ws_message(
             &USER_2.participant_id,
-            incoming::Message::Vote(incoming::Vote {
+            PollsCommand::Vote(Vote {
                 poll_id: started.id,
-                choice_id: ChoiceId(1),
+                choice_id: ChoiceId::from(1),
             }),
         )
         .unwrap();
@@ -149,21 +150,17 @@ async fn full_poll_with_2sec_duration() {
 
     assert_eq!(update1, update2);
 
-    if let WsMessageOutgoing::Module(outgoing::Message::LiveUpdate(outgoing::Results {
-        id,
-        results,
-    })) = update1
-    {
+    if let WsMessageOutgoing::Module(PollsEvent::LiveUpdate(Results { id, results })) = update1 {
         assert_eq!(id, started.id);
         assert_eq!(
             results,
             &[
-                outgoing::Item {
-                    id: ChoiceId(0),
+                Item {
+                    id: ChoiceId::from(0),
                     count: 1,
                 },
-                outgoing::Item {
-                    id: ChoiceId(1),
+                Item {
+                    id: ChoiceId::from(1),
                     count: 1
                 }
             ]
@@ -177,9 +174,9 @@ async fn full_poll_with_2sec_duration() {
     module_tester
         .send_ws_message(
             &USER_2.participant_id,
-            incoming::Message::Vote(incoming::Vote {
+            PollsCommand::Vote(Vote {
                 poll_id: started.id,
-                choice_id: ChoiceId(0),
+                choice_id: ChoiceId::from(0),
             }),
         )
         .unwrap();
@@ -189,9 +186,7 @@ async fn full_poll_with_2sec_duration() {
         .await
         .unwrap();
 
-    if let WsMessageOutgoing::Module(outgoing::Message::Error(outgoing::Error::VotedAlready)) =
-        error
-    {
+    if let WsMessageOutgoing::Module(PollsEvent::Error(Error::VotedAlready)) = error {
         // OK
     } else {
         panic!("unexpected {error:?}")
@@ -204,22 +199,17 @@ async fn full_poll_with_2sec_duration() {
         .await
         .unwrap();
 
-    if let WsMessageOutgoing::Module(outgoing::Message::Done(outgoing::Results {
-        //
-        id,
-        results,
-    })) = &done1
-    {
+    if let WsMessageOutgoing::Module(PollsEvent::Done(Results { id, results })) = &done1 {
         assert_eq!(*id, started.id);
         assert_eq!(
             results,
             &[
-                outgoing::Item {
-                    id: ChoiceId(0),
+                Item {
+                    id: ChoiceId::from(0),
                     count: 1,
                 },
-                outgoing::Item {
-                    id: ChoiceId(1),
+                Item {
+                    id: ChoiceId::from(1),
                     count: 1,
                 }
             ]

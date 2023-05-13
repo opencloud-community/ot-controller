@@ -3,23 +3,22 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use anyhow::Result;
-use chrono::Utc;
 use controller::prelude::*;
 use futures::stream::once;
 use futures::FutureExt;
-use redis::{self, FromRedisValue, RedisResult};
-use redis_args::{FromRedisValue, ToRedisArgs};
-use serde::{Deserialize, Serialize};
-use std::fmt;
-use std::str::{from_utf8, FromStr};
 use std::time::Duration;
 use tokio::time::sleep;
-use types::{core::Timestamp, signaling::Role};
-use uuid::Uuid;
+use types::signaling::{
+    polls::{
+        command::{PollsCommand, Start, Vote},
+        event::{Error, PollsEvent, Started},
+        state::PollsState,
+        Choice, ChoiceId, PollId, Results,
+    },
+    Role,
+};
 
 pub mod exchange;
-pub mod incoming;
-pub mod outgoing;
 mod storage;
 
 pub struct ExpiredEvent(PollId);
@@ -35,13 +34,13 @@ impl SignalingModule for Polls {
 
     type Params = ();
 
-    type Incoming = incoming::Message;
-    type Outgoing = outgoing::Message;
+    type Incoming = PollsCommand;
+    type Outgoing = PollsEvent;
     type ExchangeMessage = exchange::Message;
 
     type ExtEvent = ExpiredEvent;
 
-    type FrontendData = Config;
+    type FrontendData = PollsState;
     type PeerFrontendData = ();
 
     async fn init(
@@ -66,12 +65,15 @@ impl SignalingModule for Polls {
                 frontend_data,
                 participants: _,
             } => {
-                if let Some(config) = storage::get_config(ctx.redis_conn(), self.room).await? {
-                    if let Some(duration) = config.remaining() {
-                        let id = config.id;
+                if let Some(polls_state) = storage::get_state(ctx.redis_conn(), self.room).await? {
+                    if let Some(duration) = polls_state.remaining() {
+                        let id = polls_state.id;
 
-                        self.config = Some(config.clone());
-                        *frontend_data = Some(config);
+                        self.config = Some(Config {
+                            state: polls_state.clone(),
+                            voted: false,
+                        });
+                        *frontend_data = Some(polls_state);
 
                         ctx.add_event_stream(once(sleep(duration).map(move |_| ExpiredEvent(id))));
                     }
@@ -88,11 +90,11 @@ impl SignalingModule for Polls {
             Event::WsMessage(msg) => self.on_ws_message(ctx, msg).await,
             Event::Exchange(msg) => self.on_exchange_message(ctx, msg).await,
             Event::Ext(ExpiredEvent(id)) => {
-                if let Some(config) = self.config.as_ref().filter(|config| config.id == id) {
+                if let Some(config) = self.config.as_ref().filter(|config| config.state.id == id) {
                     let results =
-                        storage::poll_results(ctx.redis_conn(), self.room, config).await?;
+                        storage::poll_results(ctx.redis_conn(), self.room, &config.state).await?;
 
-                    ctx.ws_send(outgoing::Message::Done(outgoing::Results { id, results }));
+                    ctx.ws_send(PollsEvent::Done(Results { id, results }));
                 }
 
                 Ok(())
@@ -102,7 +104,7 @@ impl SignalingModule for Polls {
 
     async fn on_destroy(self, mut ctx: DestroyContext<'_>) {
         if ctx.destroy_room() {
-            if let Err(e) = storage::del_config(ctx.redis_conn(), self.room).await {
+            if let Err(e) = storage::del_state(ctx.redis_conn(), self.room).await {
                 log::error!("failed to remove config from redis: {:?}", e);
             }
 
@@ -127,32 +129,30 @@ impl Polls {
     fn is_running(&self) -> bool {
         self.config
             .as_ref()
-            .map(|config| !config.is_expired())
+            .map(|config| !config.state.is_expired())
             .unwrap_or_default()
     }
 
     async fn on_ws_message(
         &mut self,
         mut ctx: ModuleContext<'_, Self>,
-        msg: incoming::Message,
+        msg: PollsCommand,
     ) -> Result<()> {
         match msg {
-            incoming::Message::Start(incoming::Start {
+            PollsCommand::Start(Start {
                 topic,
                 live,
                 choices,
                 duration,
             }) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::InsufficientPermissions,
-                    ));
+                    ctx.ws_send(PollsEvent::Error(Error::InsufficientPermissions));
 
                     return Ok(());
                 }
 
                 if self.is_running() {
-                    ctx.ws_send(outgoing::Message::Error(outgoing::Error::StillRunning));
+                    ctx.ws_send(PollsEvent::Error(Error::StillRunning));
 
                     return Ok(());
                 }
@@ -162,23 +162,19 @@ impl Polls {
                 let max = Duration::from_secs(3600);
 
                 if duration > max || duration < min {
-                    ctx.ws_send(outgoing::Message::Error(outgoing::Error::InvalidDuration));
+                    ctx.ws_send(PollsEvent::Error(Error::InvalidDuration));
 
                     return Ok(());
                 }
 
                 if !matches!(topic.len(), 2..=100) {
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::InvalidTopicLength,
-                    ));
+                    ctx.ws_send(PollsEvent::Error(Error::InvalidTopicLength));
 
                     return Ok(());
                 }
 
                 if !matches!(choices.len(), 2..=64) {
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::InvalidChoiceCount,
-                    ));
+                    ctx.ws_send(PollsEvent::Error(Error::InvalidChoiceCount));
 
                     return Ok(());
                 }
@@ -187,9 +183,7 @@ impl Polls {
                     .iter()
                     .any(|content| !matches!(content.len(), 1..=100))
                 {
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::InvalidChoiceDescription,
-                    ));
+                    ctx.ws_send(PollsEvent::Error(Error::InvalidChoiceDescription));
 
                     return Ok(());
                 }
@@ -198,75 +192,78 @@ impl Polls {
                     .into_iter()
                     .enumerate()
                     .map(|(i, content)| Choice {
-                        id: ChoiceId(i as u32),
+                        id: ChoiceId::from(i as u32),
                         content,
                     })
                     .collect();
 
-                let config = Config {
-                    id: PollId(Uuid::new_v4()),
+                let polls_state = PollsState {
+                    id: PollId::generate(),
                     topic,
                     live,
                     choices,
                     started: ctx.timestamp(),
                     duration,
-                    voted: false,
                 };
 
-                let set = storage::set_config(ctx.redis_conn(), self.room, &config).await?;
+                let set = storage::set_state(ctx.redis_conn(), self.room, &polls_state).await?;
 
                 if !set {
-                    ctx.ws_send(outgoing::Message::Error(outgoing::Error::StillRunning));
+                    ctx.ws_send(PollsEvent::Error(Error::StillRunning));
 
                     return Ok(());
                 }
 
-                storage::list_add(ctx.redis_conn(), self.room, config.id).await?;
+                storage::list_add(ctx.redis_conn(), self.room, polls_state.id).await?;
 
                 ctx.exchange_publish(
                     control::exchange::current_room_all_participants(self.room),
-                    exchange::Message::Started(config),
+                    exchange::Message::Started(polls_state),
                 );
 
                 Ok(())
             }
-            incoming::Message::Vote(incoming::Vote { poll_id, choice_id }) => {
+            PollsCommand::Vote(Vote { poll_id, choice_id }) => {
                 if let Some(config) = self
                     .config
                     .as_mut()
-                    .filter(|config| config.id == poll_id && !config.is_expired())
+                    .filter(|config| config.state.id == poll_id && !config.state.is_expired())
                 {
                     if config.voted {
-                        ctx.ws_send(outgoing::Message::Error(outgoing::Error::VotedAlready));
+                        ctx.ws_send(PollsEvent::Error(Error::VotedAlready));
 
                         return Ok(());
                     }
 
-                    if config.choices.iter().any(|choice| choice.id == choice_id) {
-                        storage::vote(ctx.redis_conn(), self.room, config.id, choice_id).await?;
+                    if config
+                        .state
+                        .choices
+                        .iter()
+                        .any(|choice| choice.id == choice_id)
+                    {
+                        storage::vote(ctx.redis_conn(), self.room, config.state.id, choice_id)
+                            .await?;
 
                         config.voted = true;
 
-                        if config.live {
+                        if config.state.live {
                             ctx.exchange_publish(
                                 control::exchange::current_room_all_participants(self.room),
                                 exchange::Message::Update(poll_id),
                             );
                         }
                     } else {
-                        ctx.ws_send(outgoing::Message::Error(outgoing::Error::InvalidChoiceId));
+                        ctx.ws_send(PollsEvent::Error(Error::InvalidChoiceId));
                     }
                 } else {
-                    ctx.ws_send(outgoing::Message::Error(outgoing::Error::InvalidPollId));
+                    ctx.ws_send(PollsEvent::Error(Error::InvalidPollId));
                 }
 
                 Ok(())
             }
-            incoming::Message::Finish(finish) => {
+            PollsCommand::Finish(finish) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::InsufficientPermissions,
-                    ));
+                    ctx.ws_send(PollsEvent::Error(Error::InsufficientPermissions));
 
                     return Ok(());
                 }
@@ -274,18 +271,18 @@ impl Polls {
                 if self
                     .config
                     .as_ref()
-                    .filter(|config| config.id == finish.id && !config.is_expired())
+                    .filter(|config| config.state.id == finish.id && !config.state.is_expired())
                     .is_some()
                 {
                     // Delete config from redis to stop vote
-                    storage::del_config(ctx.redis_conn(), self.room).await?;
+                    storage::del_state(ctx.redis_conn(), self.room).await?;
 
                     ctx.exchange_publish(
                         control::exchange::current_room_all_participants(self.room),
                         exchange::Message::Finish(finish.id),
                     );
                 } else {
-                    ctx.ws_send(outgoing::Message::Error(outgoing::Error::InvalidPollId));
+                    ctx.ws_send(PollsEvent::Error(Error::InvalidPollId));
                 }
 
                 Ok(())
@@ -299,35 +296,37 @@ impl Polls {
         msg: exchange::Message,
     ) -> Result<()> {
         match msg {
-            exchange::Message::Started(config) => {
-                let id = config.id;
+            exchange::Message::Started(polls_state) => {
+                let id = polls_state.id;
 
                 ctx.ws_send_overwrite_timestamp(
-                    outgoing::Message::Started(outgoing::Started {
+                    PollsEvent::Started(Started {
                         id,
-                        topic: config.topic.clone(),
-                        live: config.live,
-                        choices: config.choices.clone(),
-                        duration: config.duration,
+                        topic: polls_state.topic.clone(),
+                        live: polls_state.live,
+                        choices: polls_state.choices.clone(),
+                        duration: polls_state.duration,
                     }),
-                    config.started,
+                    polls_state.started,
                 );
 
-                ctx.add_event_stream(once(sleep(config.duration).map(move |_| ExpiredEvent(id))));
+                ctx.add_event_stream(once(
+                    sleep(polls_state.duration).map(move |_| ExpiredEvent(id)),
+                ));
 
-                self.config = Some(config);
+                self.config = Some(Config {
+                    state: polls_state,
+                    voted: false,
+                });
 
                 Ok(())
             }
             exchange::Message::Update(id) => {
                 if let Some(config) = &self.config {
                     let results =
-                        storage::poll_results(ctx.redis_conn(), self.room, config).await?;
+                        storage::poll_results(ctx.redis_conn(), self.room, &config.state).await?;
 
-                    ctx.ws_send(outgoing::Message::LiveUpdate(outgoing::Results {
-                        id,
-                        results,
-                    }));
+                    ctx.ws_send(PollsEvent::LiveUpdate(Results { id, results }));
                 }
 
                 Ok(())
@@ -335,9 +334,9 @@ impl Polls {
             exchange::Message::Finish(id) => {
                 if let Some(config) = self.config.take() {
                     let results =
-                        storage::poll_results(ctx.redis_conn(), self.room, &config).await?;
+                        storage::poll_results(ctx.redis_conn(), self.room, &config.state).await?;
 
-                    ctx.ws_send(outgoing::Message::Done(outgoing::Results { id, results }));
+                    ctx.ws_send(PollsEvent::Done(Results { id, results }));
                 }
 
                 Ok(())
@@ -346,103 +345,10 @@ impl Polls {
     }
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq, Hash, ToRedisArgs)]
-#[to_redis_args(fmt)]
-pub struct PollId(pub Uuid);
-
-impl FromRedisValue for PollId {
-    fn from_redis_value(v: &redis::Value) -> RedisResult<Self> {
-        match v {
-            redis::Value::Data(bytes) => {
-                Uuid::from_str(from_utf8(bytes)?).map(Self).map_err(|_| {
-                    redis::RedisError::from((
-                        redis::ErrorKind::TypeError,
-                        "invalid data for PollId",
-                    ))
-                })
-            }
-            _ => RedisResult::Err(redis::RedisError::from((
-                redis::ErrorKind::TypeError,
-                "invalid data type for PollId",
-            ))),
-        }
-    }
-}
-
-impl fmt::Display for PollId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.0.fmt(f)
-    }
-}
-
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
-pub struct ChoiceId(pub u32);
-
-impl FromRedisValue for ChoiceId {
-    fn from_redis_value(v: &redis::Value) -> RedisResult<Self> {
-        u32::from_redis_value(v).map(Self)
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Choice {
-    pub id: ChoiceId,
-    pub content: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
-#[to_redis_args(serde)]
-#[from_redis_value(serde)]
+#[derive(Debug, Clone)]
 pub struct Config {
-    id: PollId,
-    topic: String,
-    live: bool,
-    choices: Vec<Choice>,
-    started: Timestamp,
-    #[serde(with = "duration_secs")]
-    duration: Duration,
-
-    // skip flag, not serialized into redis and always false when reading from it
-    // Indicates if the user of the module has already voted for this config
-    #[serde(skip, default)]
+    state: PollsState,
     voted: bool,
-}
-
-impl Config {
-    fn remaining(&self) -> Option<Duration> {
-        let duration = chrono::Duration::from_std(self.duration)
-            .expect("duration as secs should never be larger than i64::MAX");
-
-        let expire = (*self.started) + duration;
-        let now = Utc::now();
-
-        // difference will be negative duration if expired.
-        // Conversion to std duration will fail -> returning None
-        (expire - now).to_std().ok()
-    }
-
-    fn is_expired(&self) -> bool {
-        self.remaining().is_none()
-    }
-}
-
-mod duration_secs {
-    use serde::{Deserialize, Deserializer, Serializer};
-    use std::time::Duration;
-
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<Duration, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        u64::deserialize(deserializer).map(Duration::from_secs)
-    }
-
-    pub fn serialize<S>(duration: &Duration, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_u64(duration.as_secs())
-    }
 }
 
 pub fn register(controller: &mut controller::Controller) {

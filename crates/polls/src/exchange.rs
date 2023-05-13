@@ -2,12 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::{Config, PollId};
 use serde::{Deserialize, Serialize};
+use types::signaling::polls::{state::PollsState, PollId};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Message {
-    Started(Config),
+    Started(PollsState),
     Update(PollId),
     Finish(PollId),
 }
