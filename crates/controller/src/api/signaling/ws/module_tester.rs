@@ -483,11 +483,11 @@ where
         mut ctx: ModuleContext<'_, M>,
         control_message: ControlCommand,
     ) -> Result<()> {
-        let mut lock = storage::room_mutex(self.room_id);
-        let guard = lock.lock(&mut self.redis_conn).await?;
-
         match control_message {
             ControlCommand::Join(join) => {
+                let mut lock = storage::room_mutex(self.room_id);
+                let guard = lock.lock(&mut self.redis_conn).await?;
+
                 let mut attr_pipe = storage::AttrPipeline::new(self.room_id, self.participant_id);
 
                 match &self.participant {
