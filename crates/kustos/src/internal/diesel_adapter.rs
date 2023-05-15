@@ -556,10 +556,6 @@ mod tests {
             .add_policy("g", "g", to_owned(vec!["alice", "data2_admin"]))
             .await
             .is_ok());
-        assert!(adapter
-            .add_policy("g", "g", to_owned(vec!["alice", "data2_admin"]))
-            .await
-            .is_err());
 
         assert!(!adapter
             .remove_filtered_policy(

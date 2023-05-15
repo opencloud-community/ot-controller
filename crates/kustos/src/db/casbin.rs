@@ -213,6 +213,9 @@ pub async fn load_policy(conn: &mut DbConnection) -> Result<Vec<CasbinRule>> {
 pub async fn add_policy(conn: &mut DbConnection, new_rule: NewCasbinRule) -> Result<()> {
     diesel::insert_into(casbin_rule)
         .values(&new_rule)
+        // This can only happen if every field (except the ID) is the same value.
+        // In that case the policy already exists, so we can safely ignore that conflict
+        .on_conflict_do_nothing()
         .execute(conn)
         .await?;
 
@@ -223,6 +226,9 @@ pub async fn add_policy(conn: &mut DbConnection, new_rule: NewCasbinRule) -> Res
 pub async fn add_policies(conn: &mut DbConnection, new_rules: Vec<NewCasbinRule>) -> Result<()> {
     diesel::insert_into(casbin_rule)
         .values(&new_rules)
+        // This can only happen if every field (except the ID) is the same value.
+        // In that case the policy already exists, so we can safely ignore that conflict
+        .on_conflict_do_nothing()
         .execute(conn)
         .await?;
 

@@ -38,18 +38,10 @@ pub struct Args {
 #[derive(Subcommand, Debug, Clone)]
 #[clap(rename_all = "kebab_case")]
 enum SubCommand {
-    /// Rebuild ACLs based on current data
-    FixAcl {
-        /// Do not add user roles
-        #[clap(long = "no-user-roles", default_value="true", action=ArgAction::SetFalse)]
-        user_roles: bool,
-        /// Do not add user groups
-        #[clap(long = "no-user-groups", default_value="true", action=ArgAction::SetFalse)]
-        user_groups: bool,
-        /// Do not add room owner read/write access
-        #[clap(long = "no-room-creators", default_value="true", action=ArgAction::SetFalse)]
-        room_creators: bool,
-    },
+    /// Recreate all ACL entries from the current database content. Existing entries will not be touched unless the
+    /// command is told to delete them all beforehand.
+    FixAcl(fix_acl::Args),
+
     /// Modify the ACLs.
     #[clap(subcommand)]
     Acl(AclSubCommand),
@@ -109,17 +101,8 @@ pub async fn parse_args() -> Result<Args> {
     if let Some(sub_command) = args.cmd.clone() {
         let settings = Settings::load(&args.config)?;
         match sub_command {
-            SubCommand::FixAcl {
-                user_roles,
-                user_groups,
-                room_creators,
-            } => {
-                let config = fix_acl::FixAclConfig {
-                    user_roles,
-                    user_groups,
-                    room_creators,
-                };
-                fix_acl::fix_acl(settings, config).await?;
+            SubCommand::FixAcl(args) => {
+                fix_acl::fix_acl(settings, args).await?;
             }
             SubCommand::Acl(subcommand) => {
                 acl::acl(settings, subcommand).await?;

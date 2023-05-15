@@ -3,25 +3,49 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Fixes acl rules based on the database content
-//! Currently it can add users to roles and their groups.
-//! Might fix invite acls and room access acl in the future too.
-// TODO(r.floren) We might want to change these to batched fixed in the future,
-// depending on the memory footprint
-use anyhow::{Context, Error, Result};
+
+use crate::{
+    acl::check_or_create_kustos_default_permissions,
+    api::v1::{events::EventPoliciesBuilderExt, rooms::RoomsPoliciesBuilderExt},
+};
+use anyhow::{bail, Context, Error, Result};
+use clap::Parser;
 use controller_settings::Settings;
 use database::{Db, DbConnection};
-use db_storage::{rooms::Room, users::User};
+use db_storage::{events::Event, legal_votes::LegalVote, rooms::Room, users::User};
 use kustos::prelude::*;
 use std::sync::Arc;
-use types::core::UserId;
 
-pub(crate) struct FixAclConfig {
-    pub(crate) user_roles: bool,
-    pub(crate) user_groups: bool,
-    pub(crate) room_creators: bool,
+#[derive(Debug, Clone, Parser)]
+pub(super) struct Args {
+    /// !DANGER! Removes all ACL entries before running any fixes.
+    ///
+    /// Requires all fixes to be run.
+    #[clap(long, default_value = "false")]
+    delete_acl_entries: bool,
+
+    /// Skip user role fix
+    #[clap(long, default_value = "false")]
+    skip_users: bool,
+
+    /// Skip group membership fix
+    #[clap(long, default_value = "false")]
+    skip_groups: bool,
+
+    /// Skip fix of room permissions
+    #[clap(long, default_value = "false")]
+    skip_rooms: bool,
+
+    /// Skip fix of legal-vote permissions
+    #[clap(long, default_value = "false")]
+    skip_legal_votes: bool,
+
+    /// Skip fix of event permission fixes
+    #[clap(long, default_value = "false")]
+    skip_events: bool,
 }
 
-pub(crate) async fn fix_acl(settings: Settings, config: FixAclConfig) -> Result<()> {
+pub(super) async fn fix_acl(settings: Settings, args: Args) -> Result<()> {
     let db = Arc::new(Db::connect(&settings.database).context("Failed to connect to database")?);
     let mut conn = db
         .get_conn()
@@ -30,31 +54,64 @@ pub(crate) async fn fix_acl(settings: Settings, config: FixAclConfig) -> Result<
 
     let authz = kustos::Authz::new(db.clone()).await?;
 
+    match &args {
+        Args {
+            delete_acl_entries: true,
+            skip_users: false,
+            skip_groups: false,
+            skip_rooms: false,
+            skip_legal_votes: false,
+            skip_events: false,
+        } => {
+            // Only remove all policies if none of the skips are specified
+            authz.clear_all_policies().await?;
+        }
+        Args {
+            delete_acl_entries: true,
+            ..
+        } => {
+            bail!("Refusing to delete acl entries if any of the subsequent checks are skipped");
+        }
+        _ => {}
+    }
+
+    check_or_create_kustos_default_permissions(&authz).await?;
+
     // Used to collect errors during looped operations
     let mut errors: Vec<Error> = Vec::new();
-    if config.user_groups || config.user_roles {
-        fix_user(&config, &mut conn, &authz, &mut errors).await?;
+
+    if !(args.skip_users && args.skip_groups) {
+        fix_user(&args, &mut conn, &authz, &mut errors).await?;
     }
-    if config.room_creators {
-        fix_rooms(&config, &mut conn, &authz, &mut errors).await?;
+
+    if !args.skip_rooms {
+        fix_rooms(&mut conn, &authz).await?;
+    }
+
+    if !args.skip_legal_votes {
+        fix_legal_votes(&mut conn, &authz).await?;
+    }
+
+    if !args.skip_events {
+        fix_events(&mut conn, &authz).await?;
     }
 
     if errors.is_empty() {
         println!("ACLs fixed");
         Ok(())
     } else {
-        Err(anyhow::anyhow!(
+        bail!(
             "{}",
             errors
                 .iter()
                 .map(|e| format!("{e:#} \n"))
                 .collect::<String>()
-        ))
+        )
     }
 }
 
 async fn fix_user(
-    config: &FixAclConfig,
+    args: &Args,
     conn: &mut DbConnection,
     authz: &kustos::Authz,
     errors: &mut Vec<Error>,
@@ -62,8 +119,9 @@ async fn fix_user(
     let users = User::get_all_with_groups(conn)
         .await
         .context("Failed to load users")?;
+
     for (user, groups) in users {
-        if config.user_roles {
+        if !args.skip_users {
             let needs_addition = !match authz.is_user_in_role(user.id, "user").await {
                 Ok(in_role) => in_role,
                 Err(e) => {
@@ -79,7 +137,8 @@ async fn fix_user(
                 }
             }
         }
-        if config.user_groups {
+
+        if !args.skip_groups {
             for group in groups {
                 let needs_addition = !match authz
                     .is_user_in_group(user.id, group.id)
@@ -109,69 +168,76 @@ async fn fix_user(
     Ok(())
 }
 
-async fn fix_rooms(
-    _config: &FixAclConfig,
-    conn: &mut DbConnection,
-    authz: &kustos::Authz,
-    errors: &mut Vec<Error>,
-) -> Result<()> {
+async fn fix_rooms(conn: &mut DbConnection, authz: &kustos::Authz) -> Result<()> {
     let rooms = Room::get_all_with_creator(conn)
         .await
         .context("failed to load rooms")?;
 
+    let mut policies = PoliciesBuilder::new();
+
     for (room, user) in rooms {
-        match maybe_grant_access_to_user(
-            authz,
-            user.id,
-            room.id.resource_id(),
-            &[AccessMethod::Get, AccessMethod::Put, AccessMethod::Delete],
-        )
-        .await
-        {
-            Ok(_) => {}
-            Err(e) => errors.push(e),
-        }
-        match maybe_grant_access_to_user(
-            authz,
-            user.id,
-            room.id.resource_id().with_suffix("/invites"),
-            &[AccessMethod::Post, AccessMethod::Get],
-        )
-        .await
-        {
-            Ok(_) => {}
-            Err(e) => errors.push(e),
-        }
-        match maybe_grant_access_to_user(
-            authz,
-            user.id,
-            room.id.resource_id().with_suffix("/start"),
-            &[AccessMethod::Post],
-        )
-        .await
-        {
-            Ok(_) => {}
-            Err(e) => errors.push(e),
-        }
+        policies = policies
+            .grant_user_access(user.id)
+            .room_read_access(room.id)
+            .room_write_access(room.id)
+            .finish();
     }
+
+    authz.add_policies(policies).await?;
+
     Ok(())
 }
 
-async fn maybe_grant_access_to_user(
-    authz: &kustos::Authz,
-    user: UserId,
-    res: kustos::ResourceId,
-    access: &[AccessMethod],
-) -> Result<()> {
-    let needs_addition = !authz
-        .is_permissions_present(PolicyUser::from(user), res.clone(), access)
+async fn fix_legal_votes(conn: &mut DbConnection, authz: &kustos::Authz) -> Result<()> {
+    let legal_votes_with_creator = LegalVote::get_all_with_creator(conn)
         .await
-        .with_context(|| format!("User: {user}, Resource: {res:?}"))?;
-    if needs_addition {
-        return authz
-            .grant_user_access(user, &[(&res, access)])
-            .await
-            .with_context(|| format!("User: {user}, Resource: {res:?}"));
+        .context("failed to load legal votes")?;
+
+    let mut policies = PoliciesBuilder::new();
+
+    for (legal_vote_id, creator_id) in legal_votes_with_creator {
+        policies = policies
+            .grant_user_access(creator_id)
+            .add_resource(
+                legal_vote_id.resource_id(),
+                [AccessMethod::Get, AccessMethod::Put, AccessMethod::Delete],
+            )
+            .finish();
     }
+
+    authz.add_policies(policies).await?;
+
+    Ok(())
+}
+
+async fn fix_events(conn: &mut DbConnection, authz: &kustos::Authz) -> Result<()> {
+    let events_with_creator = Event::get_all_with_creator(conn)
+        .await
+        .context("failed to load events")?;
+    let events_with_invitee = Event::get_all_with_invitee(conn)
+        .await
+        .context("failed to load events")?;
+
+    let mut policies = PoliciesBuilder::new();
+
+    for (event_id, creator_id) in events_with_creator {
+        policies = policies
+            .grant_user_access(creator_id)
+            .event_read_access(event_id)
+            .event_write_access(event_id)
+            .finish();
+    }
+
+    for (event_id, room_id, creator_id) in events_with_invitee {
+        policies = policies
+            .grant_user_access(creator_id)
+            .room_read_access(room_id)
+            .event_read_access(event_id)
+            .event_invite_invitee_access(event_id)
+            .finish();
+    }
+
+    authz.add_policies(policies).await?;
+
     Ok(())
 }
