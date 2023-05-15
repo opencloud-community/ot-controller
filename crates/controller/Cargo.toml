@@ -52,7 +52,6 @@ validator = { version = "0.16", features = ["derive"] }
 
 ### Database ORM
 diesel = { version = "2", features = [
-    "postgres",
     "uuid",
     "serde_json",
     "chrono",

@@ -8,7 +8,7 @@ use anyhow::Result;
 use database::query_helper;
 use db_storage::migrations::migrate_from_url;
 use devx_cmd::cmd;
-use diesel::{Connection, PgConnection, RunQueryDsl};
+use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
 use rand::Rng;
 use std::path::PathBuf;
 use unified_diff::diff;
@@ -39,8 +39,10 @@ pub async fn generate_db_schema(
         log::info!("Dropping temporary database");
 
         let (database, postgres_url) = change_database_of_url(&postgres_url, "postgres");
-        let mut conn = PgConnection::establish(&postgres_url)?;
-        query_helper::drop_database(&database).execute(&mut conn)?;
+        let mut conn = diesel_async::AsyncPgConnection::establish(&postgres_url).await?;
+        query_helper::drop_database(&database)
+            .execute(&mut conn)
+            .await?;
     } else {
         log::warn!("Did not drop database, as it was specified in an env var");
     }
@@ -81,8 +83,10 @@ pub async fn verify_db_schema(
         log::info!("Dropping temporary database");
 
         let (database, postgres_url) = change_database_of_url(&postgres_url, "postgres");
-        let mut conn = PgConnection::establish(&postgres_url)?;
-        query_helper::drop_database(&database).execute(&mut conn)?;
+        let mut conn = AsyncPgConnection::establish(&postgres_url).await?;
+        query_helper::drop_database(&database)
+            .execute(&mut conn)
+            .await?;
     } else {
         log::warn!("Did not drop database, as it was specified in an env var");
     }
@@ -105,11 +109,13 @@ async fn connect_and_migrate(
         .unwrap_or_else(|| (format!("opentalk_migration_{random}"), true));
     let postgres_url = format!("{base_url}/{db_name}");
 
-    if PgConnection::establish(&postgres_url).is_err() {
+    if AsyncPgConnection::establish(&postgres_url).await.is_err() {
         let (database, postgres_url) = change_database_of_url(&postgres_url, "postgres");
         log::info!("Creating database: {}", database);
-        let mut conn = PgConnection::establish(&postgres_url)?;
-        query_helper::create_database(&database).execute(&mut conn)?;
+        let mut conn = AsyncPgConnection::establish(&postgres_url).await?;
+        query_helper::create_database(&database)
+            .execute(&mut conn)
+            .await?;
     }
 
     log::info!("Applying migrations to database:");

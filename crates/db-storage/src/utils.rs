@@ -2,7 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use diesel::deserialize::FromSql;
+use diesel::deserialize::{FromSql, FromSqlRow};
+use diesel::expression::AsExpression;
 use diesel::pg::Pg;
 use diesel::serialize::{IsNull, ToSql};
 use diesel::sql_types;

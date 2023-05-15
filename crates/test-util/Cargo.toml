@@ -16,10 +16,11 @@ serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1" }
 tokio = { version = "1" }
 diesel = { version = "2", features = [
-    "postgres",
     "uuid",
     "serde_json",
 ] }
+diesel-async = { version = "0.2.1", features = ["postgres", "deadpool"] }
+
 fern = "0.6"
 pretty_assertions = "1.3"
 
