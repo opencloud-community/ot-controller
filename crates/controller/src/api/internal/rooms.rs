@@ -5,14 +5,17 @@
 use crate::api::internal::NoContent;
 use crate::api::signaling::prelude::*;
 use crate::api::v1::events::associated_resource_ids;
+use crate::api::v1::events::shared_folder::delete_shared_folders;
 use crate::api::v1::response::ApiError;
 use crate::exchange_task::ExchangeHandle;
+use crate::settings::SharedSettingsActix;
 use crate::storage::assets::asset_key;
 use crate::storage::ObjectStorage;
 use actix_web::delete;
 use actix_web::web::{Data, Path, ReqData};
 use database::{DatabaseError, Db};
 use db_storage::assets::Asset;
+use db_storage::events::shared_folders::EventSharedFolder;
 use db_storage::events::Event;
 use db_storage::legal_votes::LegalVote;
 use db_storage::rooms::Room;
@@ -36,6 +39,7 @@ use types::core::RoomId;
 /// Access checks should not be handled via a middleware but instead done inside, as this deletes multiple resources
 #[delete("/rooms/{room_id}")]
 pub async fn delete(
+    settings: SharedSettingsActix,
     db: Data<Db>,
     storage: Data<ObjectStorage>,
     exchange_handle: Data<ExchangeHandle>,
@@ -51,16 +55,23 @@ pub async fn delete(
 
     let mut linked_events = Event::get_all_ids_for_room(&mut conn, room_id).await?;
     let mut linked_legal_votes = LegalVote::get_all_ids_for_room(&mut conn, room_id).await?;
+    let mut linked_shared_folders = EventSharedFolder::get_all_for_room(&mut conn, room_id).await?;
 
     // Sort for improved equality comparison later on, inside the transaction.
     linked_events.sort();
     linked_legal_votes.sort();
+    linked_shared_folders.sort_by(|a, b| a.event_id.cmp(&b.event_id));
 
     // Enforce access to all DELETE operations
     let mut resources = linked_events
         .iter()
         .map(|e| e.resource_id())
         .chain(linked_legal_votes.iter().map(|e| e.resource_id()))
+        .chain(
+            linked_shared_folders
+                .iter()
+                .map(|f| f.event_id.resource_id().with_suffix("/shared_folder")),
+        )
         .collect::<Vec<_>>();
 
     resources.push(room_path.clone().into());
@@ -86,10 +97,17 @@ pub async fn delete(
         log::warn!("Failed to publish message to exchange, {}", e);
     }
 
+    delete_shared_folders(settings, &linked_shared_folders).await?;
+
     let resources: Vec<_> = linked_events
         .iter()
         .flat_map(|&event_id| associated_resource_ids(event_id))
         .chain(linked_legal_votes.iter().map(|e| e.resource_id()))
+        .chain(
+            linked_shared_folders
+                .iter()
+                .map(|f| f.event_id.resource_id().with_suffix("/shared_folder")),
+        )
         .chain(associated_room_resource_ids(room_id))
         .collect();
 
@@ -112,9 +130,22 @@ pub async fn delete(
                     return Err(DatabaseError::custom("Race-condition during access checks"));
                 }
 
+                let mut current_shared_folders =
+                    EventSharedFolder::get_all_for_room(conn, room_id).await?;
+                current_shared_folders.sort_by(|a, b| a.event_id.cmp(&b.event_id));
+                if current_shared_folders != linked_shared_folders {
+                    return Err(DatabaseError::custom("Race-condition during access checks"));
+                }
+
+                let shared_folder_event_ids = current_shared_folders
+                    .into_iter()
+                    .map(|e| e.event_id)
+                    .collect::<Vec<_>>();
+
                 let mut current_assets = Asset::get_all_ids_for_room(conn, room_id).await?;
                 current_assets.sort();
 
+                EventSharedFolder::delete_by_event_ids(conn, &shared_folder_event_ids).await?;
                 LegalVote::delete_by_room(conn, room_id).await?;
                 Event::delete_all_for_room(conn, room_id).await?;
                 SipConfig::delete_by_room(conn, room_id).await?;

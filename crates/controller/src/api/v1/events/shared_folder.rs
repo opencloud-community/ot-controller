@@ -232,51 +232,37 @@ pub struct DeleteQuery {
     force_delete_reference_if_shared_folder_deletion_fails: bool,
 }
 
-#[delete("/events/{event_id}/shared_folder")]
-pub async fn delete_shared_folder_for_event(
+pub async fn delete_shared_folders(
     settings: SharedSettingsActix,
-    db: Data<Db>,
-    event_id: Path<EventId>,
-    current_user: ReqData<User>,
-    query: Query<DeleteQuery>,
-) -> Result<NoContent, ApiError> {
-    let event_id = event_id.into_inner();
-    let current_user = current_user.into_inner();
-
-    let mut conn = db.get_conn().await?;
-
-    let event = Event::get(&mut conn, event_id).await?;
-
-    if current_user.id != event.created_by {
-        return Err(ApiError::forbidden());
+    shared_folders: &[EventSharedFolder],
+) -> Result<(), ApiError> {
+    if shared_folders.is_empty() {
+        return Ok(());
     }
+    let settings = settings.load_full();
 
-    let shared_folder = EventSharedFolder::get_for_event(&mut conn, event_id).await?;
+    let shared_folder_settings = if let Some(settings) = settings.shared_folder.as_ref() {
+        settings
+    } else {
+        return Err(
+            ApiError::bad_request().with_message("No shared folder configured for this server")
+        );
+    };
 
-    if let Some(shared_folder) = shared_folder {
-        let settings = settings.load_full();
-
-        let shared_folder_settings = if let Some(settings) = settings.shared_folder.as_ref() {
-            settings
-        } else {
-            return Err(
-                ApiError::bad_request().with_message("No shared folder configured for this server")
-            );
-        };
-
-        match shared_folder_settings {
-            controller_settings::SharedFolder::Nextcloud {
-                url,
-                username,
-                password,
-                ..
-            } => {
-                let client =
-                    nextcloud_client::Client::new(url.clone(), username.clone(), password.clone())
-                        .map_err(|e| {
-                            warn!("Error creating NextCloud client: {e}");
-                            ApiError::internal().with_message("Error creating NextCloud client")
-                        })?;
+    match shared_folder_settings {
+        controller_settings::SharedFolder::Nextcloud {
+            url,
+            username,
+            password,
+            ..
+        } => {
+            let client =
+                nextcloud_client::Client::new(url.clone(), username.clone(), password.clone())
+                    .map_err(|e| {
+                        warn!("Error creating NextCloud client: {e}");
+                        ApiError::internal().with_message("Error creating NextCloud client")
+                    })?;
+            for shared_folder in shared_folders {
                 let path = &shared_folder.path;
                 if path.trim_matches('/').is_empty() {
                     warn!("Preventing recursive deletion of empty shared folder path, this is probably harmful and not intended");
@@ -295,23 +281,47 @@ pub async fn delete_shared_folder_for_event(
                 {
                     warn!("Could not delete NextCloud write share: {e}");
                 }
-                let deletion_result = client.delete(&user_path).await;
-                match deletion_result {
-                    Ok(()) => {
-                        shared_folder.delete(&mut conn).await?;
-                        Ok(NoContent)
-                    }
-                    Err(e) => {
-                        warn!("Error deleting folder on NextCloud: {e}");
-                        if query.force_delete_reference_if_shared_folder_deletion_fails {
-                            warn!("Deleting local shared folder reference anyway, because `force_delete_reference_if_shared_folder_deletion_fails` is set to true");
-                            shared_folder.delete(&mut conn).await?;
-                            Ok(NoContent)
-                        } else {
-                            Err(ApiError::internal()
-                                .with_message("Error deleting folder on NextCloud"))
-                        }
-                    }
+                client.delete(&user_path).await.map_err(|e| {
+                    warn!("Error deleting folder on NextCloud: {e}");
+                    ApiError::internal().with_message("Error deleting folder on NextCloud")
+                })?;
+            }
+            Ok(())
+        }
+    }
+}
+
+#[delete("/events/{event_id}/shared_folder")]
+pub async fn delete_shared_folder_for_event(
+    settings: SharedSettingsActix,
+    db: Data<Db>,
+    event_id: Path<EventId>,
+    query: Query<DeleteQuery>,
+) -> Result<NoContent, ApiError> {
+    let event_id = event_id.into_inner();
+
+    let mut conn = db.get_conn().await?;
+
+    let shared_folder = EventSharedFolder::get_for_event(&mut conn, event_id).await?;
+
+    if let Some(shared_folder) = shared_folder {
+        let shared_folders = std::slice::from_ref(&shared_folder);
+        let deletion = delete_shared_folders(settings, shared_folders).await;
+        match deletion {
+            Ok(()) => {
+                shared_folder.delete(&mut conn).await?;
+                Ok(NoContent)
+            }
+            Err(e) => {
+                if query.force_delete_reference_if_shared_folder_deletion_fails {
+                    warn!(
+                        "Deleting local shared folder reference anyway, because \
+                        `force_delete_reference_if_shared_folder_deletion_fails` is set to true"
+                    );
+                    shared_folder.delete(&mut conn).await?;
+                    Ok(NoContent)
+                } else {
+                    Err(e)
                 }
             }
         }

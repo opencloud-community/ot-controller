@@ -8,12 +8,12 @@ use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use types::{
     common::shared_folder::{SharedFolder, SharedFolderAccess},
-    core::EventId,
+    core::{EventId, RoomId},
 };
 
 use super::Event;
 
-use crate::schema::event_shared_folders;
+use crate::schema::{event_shared_folders, events};
 
 #[derive(Insertable)]
 #[diesel(table_name = event_shared_folders)]
@@ -49,7 +49,7 @@ impl NewEventSharedFolder {
     }
 }
 
-#[derive(Debug, Associations, Identifiable, Queryable)]
+#[derive(Clone, Debug, PartialEq, Eq, Associations, Identifiable, Queryable)]
 #[diesel(table_name = event_shared_folders)]
 #[diesel(primary_key(event_id))]
 #[diesel(belongs_to(Event))]
@@ -81,11 +81,39 @@ impl EventSharedFolder {
         Ok(shared_folder)
     }
 
+    /// Returns all [`EventSharedFolder`]s in the given [`RoomId`].
+    #[tracing::instrument(err, skip_all)]
+    pub async fn get_all_for_room(
+        conn: &mut DbConnection,
+        room_id: RoomId,
+    ) -> Result<Vec<EventSharedFolder>> {
+        let query = event_shared_folders::table
+            .inner_join(events::table)
+            .filter(events::room.eq(room_id))
+            .select(event_shared_folders::all_columns);
+
+        let events = query.load(conn).await?;
+
+        Ok(events)
+    }
+
     /// Delete a shared folder using the given event id
     #[tracing::instrument(err, skip_all)]
     pub async fn delete_by_event_id(conn: &mut DbConnection, event_id: EventId) -> Result<()> {
         let query = diesel::delete(
             event_shared_folders::table.filter(event_shared_folders::event_id.eq(event_id)),
+        );
+
+        query.execute(conn).await?;
+
+        Ok(())
+    }
+
+    /// Delete shared folders using the given event ids
+    #[tracing::instrument(err, skip_all)]
+    pub async fn delete_by_event_ids(conn: &mut DbConnection, event_ids: &[EventId]) -> Result<()> {
+        let query = diesel::delete(
+            event_shared_folders::table.filter(event_shared_folders::event_id.eq_any(event_ids)),
         );
 
         query.execute(conn).await?;
