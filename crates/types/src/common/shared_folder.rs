@@ -21,6 +21,12 @@ pub struct SharedFolderAccess {
 /// read and optional write access
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "redis",
+    derive(ToRedisArgs, FromRedisValue),
+    to_redis_args(serde),
+    from_redis_value(serde)
+)]
 pub struct SharedFolder {
     /// Read access information for the shared folder
     pub read: SharedFolderAccess,

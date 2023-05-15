@@ -2908,6 +2908,7 @@ dependencies = [
  "opentalk-janus-media",
  "opentalk-polls",
  "opentalk-protocol",
+ "opentalk-shared-folder",
  "opentalk-timer",
  "opentalk-whiteboard",
 ]
@@ -3174,6 +3175,22 @@ dependencies = [
  "serde",
  "serde_json",
  "syn",
+]
+
+[[package]]
+name = "opentalk-shared-folder"
+version = "0.0.0-dev"
+dependencies = [
+ "actix-rt",
+ "opentalk-controller-core",
+ "opentalk-database",
+ "opentalk-db-storage",
+ "opentalk-redis-args",
+ "opentalk-test-util",
+ "opentalk-types",
+ "pretty_assertions",
+ "redis",
+ "serial_test",
 ]
 
 [[package]]
