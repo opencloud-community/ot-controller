@@ -16,8 +16,10 @@ use lapin_pool::{RabbitMqChannel, RabbitMqPool};
 use mail_worker_proto::*;
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use types::{common::shared_folder::SharedFolder, core::UserId};
 
 pub struct RegisteredMailRecipient {
+    pub id: UserId,
     pub email: String,
     pub title: String,
     pub first_name: String,
@@ -46,6 +48,7 @@ fn to_event(
     room: Room,
     sip: Option<SipConfig>,
     settings: &Settings,
+    shared_folder: Option<SharedFolder>,
 ) -> mail_worker_proto::v1::Event {
     let start_time: Option<v1::Time> = event.starts_at.zip(event.starts_at_tz).map(Into::into);
 
@@ -75,6 +78,7 @@ fn to_event(
         },
         call_in,
         revision: event.revision,
+        shared_folder,
     }
 }
 
@@ -142,13 +146,21 @@ impl MailService {
         room: Room,
         sip_config: Option<SipConfig>,
         invitee: User,
+        shared_folder: Option<SharedFolder>,
     ) -> Result<()> {
         let settings = &*self.settings.load();
+        let shared_folder = shared_folder.map(|sf| {
+            if inviter.id == invitee.id {
+                sf
+            } else {
+                sf.without_write_access()
+            }
+        });
 
         // Create MailTask
         let mail_task = MailTask::registered_event_invite(
             inviter,
-            to_event(event, room, sip_config, settings),
+            to_event(event, room, sip_config, settings, shared_folder),
             invitee,
         );
 
@@ -164,13 +176,20 @@ impl MailService {
         room: Room,
         sip_config: Option<SipConfig>,
         invitee: keycloak_admin::users::User,
+        shared_folder: Option<SharedFolder>,
     ) -> Result<()> {
         let settings = &*self.settings.load();
 
         // Create MailTask
         let mail_task = MailTask::unregistered_event_invite(
             inviter,
-            to_event(event, room, sip_config, settings),
+            to_event(
+                event,
+                room,
+                sip_config,
+                settings,
+                shared_folder.map(SharedFolder::without_write_access),
+            ),
             invitee,
         );
 
@@ -179,6 +198,7 @@ impl MailService {
     }
 
     /// Sends a external Invite mail task to the rabbit mq queue, if configured.
+    #[allow(clippy::too_many_arguments)]
     pub async fn send_external_invite(
         &self,
         inviter: User,
@@ -187,13 +207,20 @@ impl MailService {
         sip_config: Option<SipConfig>,
         invitee: &str,
         invite_code: String,
+        shared_folder: Option<SharedFolder>,
     ) -> Result<()> {
         let settings = &*self.settings.load();
 
         // Create MailTask
         let mail_task = MailTask::external_event_invite(
             inviter,
-            to_event(event, room, sip_config, settings),
+            to_event(
+                event,
+                room,
+                sip_config,
+                settings,
+                shared_folder.map(SharedFolder::without_write_access),
+            ),
             invitee.to_string(),
             invite_code,
         );
@@ -203,6 +230,7 @@ impl MailService {
     }
 
     /// Sends an Event Update mail task to the rabbit mq queue, if configured.
+    #[allow(clippy::too_many_arguments)]
     pub async fn send_event_update(
         &self,
         inviter: User,
@@ -211,24 +239,40 @@ impl MailService {
         sip_config: Option<SipConfig>,
         invitee: MailRecipient,
         invite_code: String,
+        shared_folder: Option<SharedFolder>,
     ) -> Result<()> {
         let settings = &*self.settings.load();
 
         let mail_task = match invitee {
-            MailRecipient::Registered(invitee) => MailTask::registered_event_update(
-                inviter,
-                to_event(event, room, sip_config, settings),
-                v1::RegisteredUser {
-                    email: v1::Email::new(invitee.email),
-                    title: invitee.title,
-                    first_name: invitee.first_name,
-                    last_name: invitee.last_name,
-                    language: invitee.language,
-                },
-            ),
+            MailRecipient::Registered(invitee) => {
+                let shared_folder = shared_folder.map(|sf| {
+                    if invitee.id == inviter.id {
+                        sf
+                    } else {
+                        sf.without_write_access()
+                    }
+                });
+                MailTask::registered_event_update(
+                    inviter,
+                    to_event(event, room, sip_config, settings, shared_folder),
+                    v1::RegisteredUser {
+                        email: v1::Email::new(invitee.email),
+                        title: invitee.title,
+                        first_name: invitee.first_name,
+                        last_name: invitee.last_name,
+                        language: invitee.language,
+                    },
+                )
+            }
             MailRecipient::Unregistered(invitee) => MailTask::unregistered_event_update(
                 inviter,
-                to_event(event, room, sip_config, settings),
+                to_event(
+                    event,
+                    room,
+                    sip_config,
+                    settings,
+                    shared_folder.map(SharedFolder::without_write_access),
+                ),
                 v1::UnregisteredUser {
                     email: v1::Email::new(invitee.email),
                     first_name: invitee.first_name,
@@ -237,7 +281,13 @@ impl MailService {
             ),
             MailRecipient::External(invitee) => MailTask::external_event_update(
                 inviter,
-                to_event(event, room, sip_config, settings),
+                to_event(
+                    event,
+                    room,
+                    sip_config,
+                    settings,
+                    shared_folder.map(SharedFolder::without_write_access),
+                ),
                 v1::ExternalUser {
                     email: v1::Email::new(invitee.email),
                 },
@@ -258,6 +308,7 @@ impl MailService {
         room: Room,
         sip_config: Option<SipConfig>,
         invitee: MailRecipient,
+        shared_folder: Option<SharedFolder>,
     ) -> Result<()> {
         let settings = &*self.settings.load();
 
@@ -265,20 +316,35 @@ impl MailService {
         event.revision += 1;
 
         let mail_task = match invitee {
-            MailRecipient::Registered(invitee) => MailTask::registered_event_cancellation(
-                inviter,
-                to_event(event, room, sip_config, settings),
-                v1::RegisteredUser {
-                    email: v1::Email::new(invitee.email),
-                    title: invitee.title,
-                    first_name: invitee.first_name,
-                    last_name: invitee.last_name,
-                    language: invitee.language,
-                },
-            ),
+            MailRecipient::Registered(invitee) => {
+                let shared_folder = shared_folder.map(|sf| {
+                    if inviter.id == invitee.id {
+                        sf
+                    } else {
+                        sf.without_write_access()
+                    }
+                });
+                MailTask::registered_event_cancellation(
+                    inviter,
+                    to_event(event, room, sip_config, settings, shared_folder),
+                    v1::RegisteredUser {
+                        email: v1::Email::new(invitee.email),
+                        title: invitee.title,
+                        first_name: invitee.first_name,
+                        last_name: invitee.last_name,
+                        language: invitee.language,
+                    },
+                )
+            }
             MailRecipient::Unregistered(invitee) => MailTask::unregistered_event_cancellation(
                 inviter,
-                to_event(event, room, sip_config, settings),
+                to_event(
+                    event,
+                    room,
+                    sip_config,
+                    settings,
+                    shared_folder.map(SharedFolder::without_write_access),
+                ),
                 v1::UnregisteredUser {
                     email: v1::Email::new(invitee.email),
                     first_name: invitee.first_name,
@@ -287,7 +353,13 @@ impl MailService {
             ),
             MailRecipient::External(invitee) => MailTask::external_event_cancellation(
                 inviter,
-                to_event(event, room, sip_config, settings),
+                to_event(
+                    event,
+                    room,
+                    sip_config,
+                    settings,
+                    shared_folder.map(SharedFolder::without_write_access),
+                ),
                 v1::ExternalUser {
                     email: v1::Email::new(invitee.email),
                 },

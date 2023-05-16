@@ -15,6 +15,7 @@ use actix_web::{delete, get, patch, post, Either};
 use anyhow::Context;
 use database::Db;
 use db_storage::events::email_invites::{EventEmailInvite, NewEventEmailInvite};
+use db_storage::events::shared_folders::EventSharedFolder;
 use db_storage::events::{
     Event, EventFavorite, EventInvite, EventInviteStatus, NewEventInvite, UpdateEventInvite,
 };
@@ -30,7 +31,10 @@ use keycloak_admin::KeycloakAdminClient;
 use kustos::policies_builder::PoliciesBuilder;
 use kustos::Authz;
 use serde::{Deserialize, Serialize};
-use types::core::{EventId, RoomId, UserId};
+use types::{
+    common::shared_folder::SharedFolder,
+    core::{EventId, RoomId, UserId},
+};
 
 /// API Endpoint `GET /events/{event_id}/invites`
 ///
@@ -171,6 +175,9 @@ async fn create_user_event_invite(
 
     let (event, room, sip_config) = Event::get_with_room(&mut conn, event_id).await?;
     let invitee = User::get_filtered_by_tenant(&mut conn, event.tenant_id, invitee_id).await?;
+    let shared_folder = EventSharedFolder::get_for_event(&mut conn, event_id)
+        .await?
+        .map(SharedFolder::from);
 
     if event.created_by == invitee_id {
         return Ok(Either::Right(NoContent));
@@ -201,7 +208,14 @@ async fn create_user_event_invite(
 
             if send_email_notification {
                 mail_service
-                    .send_registered_invite(inviter, event, room, sip_config, invitee)
+                    .send_registered_invite(
+                        inviter,
+                        event,
+                        room,
+                        sip_config,
+                        invitee,
+                        shared_folder,
+                    )
                     .await
                     .context("Failed to send with MailService")?;
             }
@@ -239,11 +253,13 @@ async fn create_email_event_invite(
             invitee: User,
             sip_config: Option<SipConfig>,
             invite: EventInvite,
+            shared_folder: Option<SharedFolder>,
         },
         DoesNotExist {
             event: Event,
             room: Room,
             sip_config: Option<SipConfig>,
+            shared_folder: Option<SharedFolder>,
         },
     }
 
@@ -255,6 +271,9 @@ async fn create_email_event_invite(
         let mut conn = db.get_conn().await?;
 
         let (event, room, sip_config) = Event::get_with_room(&mut conn, event_id).await?;
+        let shared_folder = EventSharedFolder::get_for_event(&mut conn, event_id)
+            .await?
+            .map(SharedFolder::from);
 
         let invitee_user =
             User::get_by_email(&mut conn, current_user.tenant_id, email.as_ref()).await?;
@@ -279,6 +298,7 @@ async fn create_email_event_invite(
                         invitee: invitee_user,
                         sip_config,
                         invite,
+                        shared_folder,
                     },
                     None => UserState::ExistsAndIsAlreadyInvited,
                 }
@@ -288,6 +308,7 @@ async fn create_email_event_invite(
                 event,
                 room,
                 sip_config,
+                shared_folder,
             }
         }
     };
@@ -300,6 +321,7 @@ async fn create_email_event_invite(
             invite,
             sip_config,
             invitee,
+            shared_folder,
         } => {
             let policies = PoliciesBuilder::new()
                 // Grant invitee access
@@ -313,7 +335,14 @@ async fn create_email_event_invite(
 
             if send_email_notification {
                 mail_service
-                    .send_registered_invite(current_user, event, room, sip_config, invitee)
+                    .send_registered_invite(
+                        current_user,
+                        event,
+                        room,
+                        sip_config,
+                        invitee,
+                        shared_folder,
+                    )
                     .await
                     .context("Failed to send with MailService")?;
             }
@@ -324,6 +353,7 @@ async fn create_email_event_invite(
             event,
             room,
             sip_config,
+            shared_folder,
         } => {
             create_invite_to_non_matching_email(
                 settings,
@@ -337,6 +367,7 @@ async fn create_email_event_invite(
                 room,
                 sip_config,
                 email,
+                shared_folder,
             )
             .await
         }
@@ -359,6 +390,7 @@ async fn create_invite_to_non_matching_email(
     room: Room,
     sip_config: Option<SipConfig>,
     email: EmailAddress,
+    shared_folder: Option<SharedFolder>,
 ) -> Result<Either<Created, NoContent>, ApiError> {
     let invitee_user = kc_admin_client
         .get_user_for_email(current_tenant.oidc_tenant_id.inner(), email.as_ref())
@@ -393,7 +425,14 @@ async fn create_invite_to_non_matching_email(
             Some(_) => {
                 if let (Some(invitee_user), true) = (invitee_user, send_email_notification) {
                     mail_service
-                        .send_unregistered_invite(inviter, event, room, sip_config, invitee_user)
+                        .send_unregistered_invite(
+                            inviter,
+                            event,
+                            room,
+                            sip_config,
+                            invitee_user,
+                            shared_folder,
+                        )
                         .await
                         .context("Failed to send with MailService")?;
                 } else {
@@ -416,6 +455,7 @@ async fn create_invite_to_non_matching_email(
                                 sip_config,
                                 invitee_email.as_ref(),
                                 invite.id.to_string(),
+                                shared_folder,
                             )
                             .await
                             .context("Failed to send with MailService")?;

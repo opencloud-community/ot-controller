@@ -1429,11 +1429,17 @@ pub async fn patch_event(
         is_favorite,
         can_edit,
         is_adhoc: event.is_adhoc,
-        shared_folder,
+        shared_folder: shared_folder.clone(),
     };
 
     if send_email_notification {
-        notify_invitees_about_update(notification_values, mail_service, &kc_admin_client).await;
+        notify_invitees_about_update(
+            notification_values,
+            mail_service,
+            &kc_admin_client,
+            shared_folder,
+        )
+        .await;
     }
 
     let event_resource = EventResource {
@@ -1456,6 +1462,7 @@ async fn notify_invitees_about_update(
     notification_values: UpdateNotificationValues,
     mail_service: Arc<MailService>,
     kc_admin_client: &Data<KeycloakAdminClient>,
+    shared_folder: Option<SharedFolder>,
 ) {
     for invited_user in notification_values.invited_users {
         let invited_user =
@@ -1469,6 +1476,7 @@ async fn notify_invitees_about_update(
                 notification_values.sip_config.clone(),
                 invited_user,
                 notification_values.invite_for_room.id.to_string(),
+                shared_folder.clone(),
             )
             .await
         {
@@ -1693,7 +1701,7 @@ pub async fn delete_event(
     let mut conn = db.get_conn().await?;
 
     // TODO(w.rabl) Further DB access optimization (replacing call to get_with_invite_and_room)?
-    let (event, _invite, room, sip_config, _is_favorite, _shared_folder) =
+    let (event, _invite, room, sip_config, _is_favorite, shared_folder) =
         Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
 
     let created_by = if event.created_by == current_user.id {
@@ -1718,7 +1726,13 @@ pub async fn delete_event(
     };
 
     if send_email_notification {
-        notify_invitees_about_delete(notification_values, mail_service, &kc_admin_client).await;
+        notify_invitees_about_delete(
+            notification_values,
+            mail_service,
+            &kc_admin_client,
+            shared_folder.map(SharedFolder::from),
+        )
+        .await;
     }
 
     let resources = associated_resource_ids(event_id);
@@ -1735,6 +1749,7 @@ async fn notify_invitees_about_delete(
     notification_values: CancellationNotificationValues,
     mail_service: Arc<MailService>,
     kc_admin_client: &Data<KeycloakAdminClient>,
+    shared_folder: Option<SharedFolder>,
 ) {
     for invited_user in notification_values.invited_users {
         let invited_user =
@@ -1747,6 +1762,7 @@ async fn notify_invitees_about_delete(
                 notification_values.room.clone(),
                 notification_values.sip_config.clone(),
                 invited_user,
+                shared_folder.clone(),
             )
             .await
         {
@@ -1847,6 +1863,7 @@ async fn get_invited_mail_recipients_for_event(
         EventInvite::get_for_event_paginated(conn, event_id, i64::MAX, 1).await?;
     let user_invitees = invites_with_user.into_iter().map(|(_, user)| {
         MailRecipient::Registered(RegisteredMailRecipient {
+            id: user.id,
             email: user.email,
             title: user.title,
             first_name: user.firstname,

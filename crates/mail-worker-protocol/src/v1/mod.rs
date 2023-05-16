@@ -5,6 +5,7 @@
 use chrono::Utc;
 use serde::Deserialize;
 use serde::Serialize;
+use types::common::shared_folder::SharedFolder;
 use uuid::Uuid;
 
 mod invites;
@@ -87,6 +88,7 @@ pub struct Event {
     pub room: Room,
     pub call_in: Option<CallIn>,
     pub revision: i32,
+    pub shared_folder: Option<SharedFolder>,
 }
 
 #[derive(Deserialize, Serialize, PartialEq, Eq, Debug)]
@@ -127,6 +129,7 @@ mod test {
     use crate::*;
     use chrono::FixedOffset;
     use pretty_assertions::assert_eq;
+    use types::common::shared_folder::SharedFolderAccess;
 
     #[test]
     fn test_basic_format() {
@@ -169,6 +172,13 @@ mod test {
                     sip_password: "987".into(),
                 }),
                 revision: 0,
+                shared_folder: Some(SharedFolder {
+                    read: SharedFolderAccess {
+                        url: "https://nextcloud.example.com/s/TArrLyC3K7c5Jbg".to_string(),
+                        password: "DLgoYrFEoy".to_string(),
+                    },
+                    read_write: None,
+                }),
             },
             invitee: RegisteredUser {
                 email: "lastname@example.org".into(),
@@ -199,7 +209,13 @@ mod test {
                         "sip_id": "2",
                         "sip_password": "987"
                     },
-                    "revision": 0
+                    "revision": 0,
+                    "shared_folder": {
+                        "read": {
+                            "url": "https://nextcloud.example.com/s/TArrLyC3K7c5Jbg",
+                            "password": "DLgoYrFEoy"
+                        },
+                    },
                 },
                 "invitee": {
                     "email": "lastname@example.org",
@@ -247,6 +263,13 @@ mod test {
                     sip_password: "987".into(),
                 }),
                 revision: 0,
+                shared_folder: Some(SharedFolder {
+                    read: SharedFolderAccess {
+                        url: "https://nextcloud.example.com/s/TArrLyC3K7c5Jbg".to_string(),
+                        password: "DLgoYrFEoy".to_string(),
+                    },
+                    read_write: None,
+                }),
             },
             invitee: RegisteredUser {
                 email: "lastname@example.org".into(),
@@ -274,7 +297,13 @@ mod test {
                         "sip_id": "2",
                         "sip_password": "987"
                     },
-                    "revision": 0
+                    "revision": 0,
+                    "shared_folder": {
+                        "read": {
+                            "url": "https://nextcloud.example.com/s/TArrLyC3K7c5Jbg",
+                            "password": "DLgoYrFEoy"
+                        },
+                    },
                 },
                 "invitee": {
                     "email": "lastname@example.org",
