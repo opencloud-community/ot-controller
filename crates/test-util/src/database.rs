@@ -10,7 +10,7 @@ use db_storage::rooms::{NewRoom, Room};
 use db_storage::tariffs::Tariff;
 use db_storage::tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId};
 use db_storage::users::{NewUser, User};
-use diesel::{Connection, PgConnection, RunQueryDsl};
+use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
 use std::sync::Arc;
 use types::core::{GroupName, RoomId, TenantId, UserId};
 
@@ -38,16 +38,20 @@ impl DatabaseContext {
         let db_name = std::env::var("DATABASE_NAME").unwrap_or_else(|_| "opentalk_test".to_owned());
 
         let postgres_url = format!("{base_url}/postgres");
-        let mut conn =
-            PgConnection::establish(&postgres_url).expect("Cannot connect to postgres database.");
+        let mut conn = AsyncPgConnection::establish(&postgres_url)
+            .await
+            .expect("Cannot connect to postgres database.");
 
         // Drop the target database in case it already exists to guarantee a clean state
-        drop_database(&mut conn, &db_name).expect("Database initialization cleanup failed");
+        drop_database(&mut conn, &db_name)
+            .await
+            .expect("Database initialization cleanup failed");
 
         // Create a new database for the test
         let query = diesel::sql_query(format!("CREATE DATABASE {db_name}"));
         query
             .execute(&mut conn)
+            .await
             .unwrap_or_else(|_| panic!("Could not create database {db_name}"));
 
         let db_url = format!("{base_url}/{db_name}");
@@ -132,20 +136,35 @@ impl DatabaseContext {
 impl Drop for DatabaseContext {
     fn drop(&mut self) {
         if self.drop_db_on_drop {
-            let postgres_url = format!("{}/postgres", self.base_url);
-            let mut conn = PgConnection::establish(&postgres_url)
-                .expect("Cannot connect to postgres database.");
+            // Hack to avoid the missing "async drop"
+            // Create a new runtime on a different thread, drop the database there and wait for the thread to complete.
+            // The new thread is needed as tokio prevents creating a new runtime on a runtime thread.
+            std::thread::scope(|s| {
+                s.spawn(|| {
+                    tokio::runtime::Runtime::new()
+                        .unwrap()
+                        .block_on(async move {
+                            let postgres_url = format!("{}/postgres", self.base_url);
+                            let db_name = self.db_name.clone();
 
-            drop_database(&mut conn, &self.db_name).unwrap();
+                            let mut conn = AsyncPgConnection::establish(&postgres_url)
+                                .await
+                                .expect("Cannot connect to postgres database.");
+
+                            drop_database(&mut conn, &db_name).await.unwrap();
+                        })
+                });
+            });
         }
     }
 }
 
 /// Disconnect all users from the database with `db_name` and drop it.
-fn drop_database(conn: &mut PgConnection, db_name: &str) -> Result<()> {
+async fn drop_database(conn: &mut AsyncPgConnection, db_name: &str) -> Result<()> {
     let query = diesel::sql_query(format!("DROP DATABASE IF EXISTS {db_name} WITH (FORCE)"));
     query
         .execute(conn)
+        .await
         .with_context(|| format!("Couldn't drop database {db_name}"))?;
 
     Ok(())

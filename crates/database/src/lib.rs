@@ -5,7 +5,7 @@
 //! OpenTalk Database connector, interface and connection handling
 
 use diesel::pg::Pg;
-use diesel::query_builder::{AstPass, Query, QueryFragment};
+use diesel::query_builder::{AstPass, Query, QueryFragment, QueryId};
 use diesel::result::Error;
 use diesel::sql_types::BigInt;
 use diesel::QueryResult;
@@ -13,9 +13,6 @@ use diesel_async::methods::LoadQuery;
 use diesel_async::pooled_connection::deadpool::{BuildError, Object, PoolError};
 use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
 use std::borrow::Cow;
-
-#[macro_use]
-extern crate diesel;
 
 mod db;
 mod metrics;

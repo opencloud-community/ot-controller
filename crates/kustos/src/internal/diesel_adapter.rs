@@ -348,7 +348,7 @@ fn normalize_policy(casbin_rule: &CasbinRule) -> Option<Vec<String>> {
 mod tests {
     use super::*;
     use database::{query_helper, Db};
-    use diesel::{Connection, PgConnection, RunQueryDsl};
+    use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
     use pretty_assertions::assert_eq;
     use serial_test::serial;
 
@@ -406,11 +406,13 @@ mod tests {
             "postgres://postgres:password123@localhost:5432/opentalk".to_string()
         });
 
-        if PgConnection::establish(&url).is_err() {
+        if AsyncPgConnection::establish(&url).await.is_err() {
             let (database, postgres_url) = change_database_of_url(&url, "postgres");
             log::info!("Creating database: {}", database);
-            let mut conn = PgConnection::establish(&postgres_url)?;
-            query_helper::create_database(&database).execute(&mut conn)?;
+            let mut conn = AsyncPgConnection::establish(&postgres_url).await?;
+            query_helper::create_database(&database)
+                .execute(&mut conn)
+                .await?;
         }
 
         db_storage::migrations::migrate_from_url(&url)
