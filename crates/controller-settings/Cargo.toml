@@ -13,20 +13,20 @@ publish = false
 
 [dependencies]
 # Settings related
-config = { version = "0.13.3", default-features = false, features = ["toml"] }
-arc-swap = "1.6"
-serde = { version = "1", features = ["derive"] }
-openidconnect = { version = "2" }
-chrono = "0.4"
-url = "2"
-uuid = { version = "1.3.0", features = ["serde", "v4"] }
-redis = { version = "0.22", features = ["tokio-comp", "connection-manager"] }
+config.workspace = true
+arc-swap.workspace = true
+serde.workspace = true
+openidconnect.workspace = true
+chrono.workspace = true
+url.workspace = true
+uuid = { workspace = true, features = ["serde", "v4"] }
+redis = { workspace = true, features = ["tokio-comp", "connection-manager"] }
 cidr = { version = "0.2", features = ["serde"] }
-phonenumber = "0.3"
+phonenumber.workspace = true
 redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
-anstream = "0.2"
-owo-colors = "3"
+anstream.workspace = true
+owo-colors.workspace = true
 
 [dev-dependencies]
-pretty_assertions = "1.3"
-serde_json = "1"
+pretty_assertions.workspace = true
+serde_json.workspace = true

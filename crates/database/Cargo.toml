@@ -14,13 +14,13 @@ publish = false
 controller-settings = { path = "../controller-settings", package = "opentalk-controller-settings" }
 
 ### ORM and Database connector
-diesel = { version = "2",features = [
+diesel = { workspace = true, features = [
     "uuid",
     "serde_json",
     "chrono",
     "i-implement-a-third-party-backend-and-opt-into-breaking-changes",
 ] }
-diesel-async = { version = "0.2.1", features = ["postgres", "deadpool"] }
+diesel-async = { workspace = true, features = ["postgres", "deadpool"] }
 deadpool-runtime = { version = "0.1", features = ["tokio_1"] }
 
 async-trait = "0.1"
@@ -28,11 +28,11 @@ futures-core = "0.3"
 
 
 ### Error handling
-thiserror = "1.0"
+thiserror.workspace = true
 
 ### Logging utilities
-log = { version = "0.4", features = ["serde"] }
-tracing = { version = "0.1" }
+log = { workspace = true, features = ["serde"] }
+tracing.workspace = true
 pin-project-lite = "0.2"
 
 ### Opentelementry metrics

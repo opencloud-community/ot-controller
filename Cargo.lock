@@ -3040,7 +3040,6 @@ dependencies = [
  "either",
  "email_address",
  "futures",
- "futures-util",
  "itertools",
  "jsonwebtoken",
  "keycloak-admin",

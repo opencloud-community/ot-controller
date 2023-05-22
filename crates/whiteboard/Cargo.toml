@@ -17,26 +17,26 @@ controller-settings = { path = "../controller-settings", package = "opentalk-con
 controller = { path = "../controller", package = "opentalk-controller-core" }
 db-storage = { path = "../db-storage", package = "opentalk-db-storage" }
 database = { path = "../database", package = "opentalk-database" }
-redis = "0.22"
+redis.workspace = true
 redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
 types = { path = "../types", package = "opentalk-types", features = ["backend"] }
-reqwest = { version = "0.11", default-features = false, features = [
+reqwest = { workspace = true, features = [
     "json",
     "cookies",
     "rustls-tls-native-roots",
     "stream",
 ] }
-serde = { version = "1", features = ["derive"] }
+serde.workspace =  true
 serde_repr = "0.1"
-serde_json = "1"
-anyhow = "1.0"
-tokio = { version = "1", features = ["time"] }
-chrono = "0.4"
+serde_json.workspace = true
+anyhow.workspace = true
+tokio = { workspace = true, features = ["time"] }
+chrono.workspace = true
 percent-encoding = "2.2"
-url = "2.3"
-bytes = "1.4"
-futures = "0.3"
+url.workspace = true
+bytes.workspace = true
+futures.workspace = true
 
 [dev-dependencies]
 actix-rt = "2.8"
-rand = "0.8"
+rand.workspace = true
