@@ -1798,8 +1798,6 @@ impl Runner {
         }
 
         if let Some(exit) = exit {
-            self.exit = true;
-
             self.ws.close(exit).await;
         }
     }
@@ -1873,6 +1871,7 @@ impl Ws {
 
         log::debug!("closing websocket with code {:?}", code);
 
+        self.state = State::Closed;
         if let Err(e) = self.to_actor.send(WsCommand::Close(reason)).await {
             log::error!("Failed to close websocket, {}", e);
             self.state = State::Error;
