@@ -5,7 +5,6 @@
 //! Utility to map a phone number to a users display name or convert it to a more readable format
 
 use crate::api::util::parse_phone_number;
-use crate::prelude::*;
 use controller_settings as settings;
 use database::Db;
 use db_storage::users::User;

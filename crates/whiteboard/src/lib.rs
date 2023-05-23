@@ -4,9 +4,14 @@
 
 use anyhow::Result;
 use client::SpacedeckClient;
-use controller::prelude::*;
-use controller::storage::assets::save_asset;
-use controller::storage::ObjectStorage;
+use controller::{
+    api::signaling::{
+        control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
+        SignalingRoomId,
+    },
+    storage::{assets::save_asset, ObjectStorage},
+    RedisConnection,
+};
 use database::Db;
 use futures::stream::once;
 use futures::TryStreamExt;

@@ -10,7 +10,10 @@
 
 use std::sync::Arc;
 
-use controller::prelude::*;
+use controller::api::signaling::{
+    control::storage::get_event, DestroyContext, Event, InitContext, ModuleContext,
+    SignalingModule, SignalingRoomId,
+};
 
 use anyhow::Result;
 use database::Db;
@@ -65,9 +68,7 @@ impl SignalingModule for SharedFolder {
                 participants: _,
             } => {
                 if !storage::is_shared_folder_initialized(ctx.redis_conn(), self.room).await? {
-                    if let Some(event) =
-                        control::storage::get_event(ctx.redis_conn(), self.room.room_id()).await?
-                    {
+                    if let Some(event) = get_event(ctx.redis_conn(), self.room.room_id()).await? {
                         let mut conn = self.db.get_conn().await?;
                         if let Some(shared_folder) =
                             EventSharedFolder::get_for_event(&mut conn, event.id).await?

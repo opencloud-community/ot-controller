@@ -12,7 +12,7 @@ use db_storage::users::User;
 use serde::{Deserialize, Serialize};
 use types::core::UserId;
 
-pub mod internal;
+pub(crate) mod internal;
 mod util;
 #[macro_use]
 pub mod signaling;

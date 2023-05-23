@@ -10,10 +10,12 @@
 use super::response::error::{ApiError, ValidationErrorEntry};
 use super::response::{NoContent, CODE_INVALID_VALUE};
 use super::users::PublicUserProfile;
-use crate::api::signaling::prelude::*;
-use crate::api::signaling::ticket::start_or_continue_signaling_session;
-use crate::api::v1::{ApiResponse, PagePaginationQuery};
-use crate::api::Participant;
+use crate::api::signaling::SignalingModules;
+use crate::api::{
+    signaling::{breakout, moderation, ticket::start_or_continue_signaling_session},
+    v1::{ApiResponse, PagePaginationQuery},
+    Participant,
+};
 use crate::redis_wrapper::RedisConnection;
 use crate::settings::SharedSettingsActix;
 use actix_web::web::{self, Data, Json, Path, ReqData};

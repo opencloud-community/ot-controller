@@ -2,10 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use controller::prelude::chrono::Duration;
-use controller::prelude::chrono::Utc;
-use controller::prelude::ModuleTester;
-use controller::prelude::WsMessageOutgoing;
+use chrono::{Duration, Utc};
+use controller::api::signaling::{ModuleTester, WsMessageOutgoing};
 use opentalk_timer::incoming;
 use opentalk_timer::incoming::Stop;
 use opentalk_timer::outgoing;

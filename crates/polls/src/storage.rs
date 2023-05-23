@@ -5,7 +5,7 @@
 use super::PollsState;
 use crate::{ChoiceId, PollId};
 use anyhow::{bail, Context, Result};
-use controller::prelude::*;
+use controller::{api::signaling::SignalingRoomId, RedisConnection};
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
 use std::collections::HashMap;

@@ -7,7 +7,6 @@ use crate::mcu::{
 };
 use crate::MediaSessionState;
 use anyhow::{ensure, Result};
-use controller::prelude::*;
 use std::collections::HashMap;
 use std::future::Future;
 use tokio::sync::mpsc;

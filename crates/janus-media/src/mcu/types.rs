@@ -4,7 +4,6 @@
 
 use crate::incoming::SubscriberConfiguration;
 use anyhow::anyhow;
-use controller::prelude::*;
 use janus_client::{Jsep, TrickleCandidate};
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;

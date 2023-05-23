@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use controller::prelude::redis::aio::ConnectionManager;
-use controller::prelude::*;
+use controller::RedisConnection;
+use redis::aio::ConnectionManager;
 
 pub async fn setup() -> RedisConnection {
     let redis_url =

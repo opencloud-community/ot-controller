@@ -12,17 +12,13 @@ pub(crate) mod ticket;
 mod ws;
 mod ws_modules;
 
+pub use ws::module_tester::{ModuleTester, WsMessageOutgoing};
 pub(crate) use ws::ws_service;
-
-pub mod prelude {
-    pub use super::ws::module_tester::*;
-    pub use super::ws::{
-        DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModules,
-        SignalingProtocols,
-    };
-    pub use super::ws_modules::{breakout, control, moderation, recording};
-    pub use super::SignalingRoomId;
-}
+pub use ws::{
+    DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModules,
+    SignalingProtocols,
+};
+pub use ws_modules::{breakout, control, moderation, recording};
 
 /// The complete room id
 ///

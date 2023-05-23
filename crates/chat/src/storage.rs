@@ -5,7 +5,7 @@
 use crate::{MessageId, Scope};
 
 use anyhow::{Context, Result};
-use controller::prelude::*;
+use controller::{api::signaling::SignalingRoomId, RedisConnection};
 use r3dlock::{Mutex, MutexGuard};
 use redis::AsyncCommands;
 use redis_args::{FromRedisValue, ToRedisArgs};

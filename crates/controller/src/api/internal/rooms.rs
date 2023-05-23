@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use crate::api::internal::NoContent;
-use crate::api::signaling::prelude::*;
+use crate::api::signaling::control;
 use crate::api::v1::events::associated_resource_ids;
 use crate::api::v1::events::shared_folder::delete_shared_folders;
 use crate::api::v1::response::ApiError;

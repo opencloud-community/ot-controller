@@ -3,9 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use anyhow::Result;
-use controller::prelude::*;
-use futures::stream::once;
-use futures::FutureExt;
+use controller::api::signaling::{
+    control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
+};
+use futures::{stream::once, FutureExt};
 use std::time::Duration;
 use tokio::time::sleep;
 use types::signaling::{

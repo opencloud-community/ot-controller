@@ -2,7 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use controller::prelude::{control, ModuleTester, RedisConnection, WsMessageOutgoing};
+use controller::{
+    api::signaling::{control::storage::try_init_event, ModuleTester, WsMessageOutgoing},
+    RedisConnection,
+};
 use database::DbConnection;
 use db_storage::{
     events::{
@@ -54,7 +57,7 @@ async fn make_event(
     .await
     .unwrap();
 
-    control::storage::try_init_event(redis_conn, room_id, Some(event))
+    try_init_event(redis_conn, room_id, Some(event))
         .await
         .unwrap()
         .unwrap()

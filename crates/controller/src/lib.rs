@@ -25,8 +25,10 @@
 //! ```
 
 use crate::acl::check_or_create_kustos_default_permissions;
-use crate::api::v1::middleware::metrics::RequestMetrics;
-use crate::api::v1::response::error::json_error_handler;
+use crate::api::signaling::{
+    breakout::BreakoutRooms, moderation::ModerationModule, SignalingProtocols,
+};
+use crate::api::v1::{middleware::metrics::RequestMetrics, response::error::json_error_handler};
 use crate::services::MailService;
 use crate::settings::{Settings, SharedSettings};
 use crate::trace::ReducedSpanBuilder;
@@ -34,15 +36,13 @@ use actix_cors::Cors;
 use actix_web::web::Data;
 use actix_web::{web, App, HttpServer, Scope};
 use anyhow::{anyhow, Context, Result};
+use api::signaling::{recording, SignalingModules};
 use arc_swap::ArcSwap;
-use breakout::BreakoutRooms;
 use database::Db;
 use exchange_task::ExchangeHandle;
 use keycloak_admin::KeycloakAdminClient;
 use lapin_pool::RabbitMqPool;
-use moderation::ModerationModule;
 use oidc::OidcContext;
-use prelude::*;
 use std::fs::File;
 use std::io::BufReader;
 use std::net::Ipv6Addr;
@@ -55,11 +55,6 @@ use tokio::sync::broadcast;
 use tokio::time::sleep;
 use tracing_actix_web::TracingLogger;
 
-#[cfg(not(doc))]
-mod api;
-#[cfg(doc)]
-pub mod api;
-
 mod acl;
 mod caches;
 mod cli;
@@ -67,37 +62,14 @@ mod exchange_task;
 mod metrics;
 mod oidc;
 mod redis_wrapper;
-pub mod storage;
+mod services;
 mod trace;
 
-mod services;
+pub mod api;
 pub mod settings;
+pub mod storage;
 
-pub mod prelude {
-    pub use crate::api::signaling::prelude::*;
-    pub use crate::api::Participant;
-    pub use crate::redis_wrapper::RedisConnection;
-
-    // re-export commonly used crates to reduce dependency management in module-crates
-    pub use actix_web;
-    pub use anyhow;
-    pub use async_trait;
-    pub use aws_sdk_s3;
-    pub use bytes;
-    pub use chrono;
-    pub use futures;
-    pub use lapin;
-    pub use log;
-    pub use r3dlock;
-    pub use redis;
-    pub use serde_json;
-    pub use thiserror;
-    pub use tokio;
-    pub use tokio_stream;
-    pub use tracing;
-    pub use url;
-    pub use uuid;
-}
+pub use redis_wrapper::RedisConnection;
 
 #[derive(Debug, thiserror::Error)]
 #[error("Blocking thread has panicked")]

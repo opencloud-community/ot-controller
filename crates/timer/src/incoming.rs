@@ -63,10 +63,10 @@ pub struct UpdateReadyStatus {
 #[cfg(test)]
 mod test {
     use super::*;
-    use controller::prelude::uuid::Uuid;
     use pretty_assertions::assert_eq;
     use test_util::serde_json;
     use test_util::serde_json::json;
+    use uuid::Uuid;
 
     #[test]
     fn countdown_start() {

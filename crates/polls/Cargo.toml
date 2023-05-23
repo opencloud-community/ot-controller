@@ -11,10 +11,16 @@ version.workspace = true
 publish = false
 
 [dependencies]
+anyhow.workspace = true
+async-trait.workspace = true
 controller = { path = "../controller", package = "opentalk-controller-core" }
+futures.workspace = true
+log.workspace = true
 redis.workspace = true
 redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
 serde.workspace = true
+tokio.workspace = true
+tracing.workspace = true
 types = { path = "../types", package = "opentalk-types", features = ["backend"] }
 
 [dev-dependencies]

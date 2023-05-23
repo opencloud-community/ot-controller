@@ -25,7 +25,6 @@ pub struct ParticipantSelection {
 #[cfg(test)]
 mod test {
     use super::*;
-    use controller::prelude::serde_json;
     use pretty_assertions::assert_eq;
 
     #[test]

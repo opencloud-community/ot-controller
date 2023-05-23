@@ -8,7 +8,7 @@
 //! structs are defined in the Database crate [`db_storage`] for database operations.
 
 use super::response::{ApiError, NoContent};
-use crate::api::signaling::prelude::SignalingModules;
+use crate::api::signaling::SignalingModules;
 use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json, Path, Query, ReqData};
 use actix_web::{get, patch, Either};

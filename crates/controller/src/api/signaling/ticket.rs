@@ -2,8 +2,14 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::resumption::{ResumptionData, ResumptionRedisKey};
-use crate::{api::v1::response::ApiError, prelude::*};
+use super::{
+    control,
+    resumption::{ResumptionData, ResumptionRedisKey},
+};
+use crate::{
+    api::{v1::response::ApiError, Participant},
+    redis_wrapper::RedisConnection,
+};
 use anyhow::Context;
 use redis::AsyncCommands;
 use redis_args::{FromRedisValue, ToRedisArgs};
