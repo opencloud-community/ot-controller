@@ -83,6 +83,10 @@ pub struct JoinSuccess {
     /// Information about the event which is associated with the room
     #[cfg_attr(feature = "serde", serde(default))]
     pub event_info: Option<EventInfo>,
+
+    /// Flag indicating if the participant is the room owner
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub is_room_owner: bool,
 }
 
 /// The reason for blocking a participant from joining a meeting
@@ -168,6 +172,7 @@ mod test {
             "event_info": {
                 "title": "Daily",
             },
+            "is_room_owner": false,
         });
 
         let produced = serde_json::to_value(&ControlEvent::JoinSuccess(JoinSuccess {
@@ -186,6 +191,7 @@ mod test {
             event_info: Some(EventInfo {
                 title: "Daily".to_string(),
             }),
+            is_room_owner: false,
         }))
         .unwrap();
 
@@ -204,6 +210,7 @@ mod test {
             "event_info": {
                 "title": "Daily",
             },
+            "is_room_owner": false,
         });
 
         let produced = serde_json::to_value(&ControlEvent::JoinSuccess(JoinSuccess {
@@ -218,6 +225,7 @@ mod test {
             event_info: Some(EventInfo {
                 title: "Daily".to_string(),
             }),
+            is_room_owner: false,
         }))
         .unwrap();
 

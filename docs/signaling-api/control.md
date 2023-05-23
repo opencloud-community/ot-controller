@@ -169,6 +169,7 @@ Information about another participant provided by the `control` module
 | `joined_at`          | `string` | yes    | timestamp of when the participant joined                        |
 | `left_at`            | `string` | no     | timestamp of when the participant left the room                 |
 | `hand_updated_at`    | `string` | yes    | timestamp of when the hand-raise status last changed            |
+| `is_room_owner`      | `bool`   | yes    | true if the user is the owner of the room                       |
 
 #### EventInfo
 
@@ -208,6 +209,7 @@ Received after joining the room. Can be triggered bei either calling [Join](#joi
   "avatar_url":"https://example.org/",
   "role": "moderator",
   "closes_at": "2023-03-10T16:52:54Z",
+  "is_room_owner": true,
   "tariff": {
     "id": "00000000-0000-0000-0000-000000000000",
     "name": "OpenTalkDefaultTariff",
@@ -223,7 +225,8 @@ Received after joining the room. Can be triggered bei either calling [Join](#joi
         "hand_updated_at": "2022-05-10T10:40:39Z",
         "joined_at": "2022-05-10T10:40:39Z",
         "left_at": "2022-05-10T10:40:42Z",
-        "participation_kind": "user"
+        "participation_kind": "user",
+        "is_room_owner": false
       }
     }
   ],

@@ -336,6 +336,7 @@ where
 {
     redis_conn: RedisConnection,
     room_id: SignalingRoomId,
+    room_owner: UserId,
     participant_id: ParticipantId,
     participant: Participant<UserId>,
     role: Role,
@@ -398,6 +399,7 @@ where
         Ok(Self {
             redis_conn,
             room_id: SignalingRoomId(room.id, breakout_room),
+            room_owner: room.created_by,
             participant_id,
             participant,
             role,
@@ -488,6 +490,9 @@ where
                 let mut lock = storage::room_mutex(self.room_id);
                 let guard = lock.lock(&mut self.redis_conn).await?;
 
+                let is_room_owner =
+                    matches!(self.participant, Participant::User(user) if user == self.room_owner);
+
                 let mut attr_pipe = storage::AttrPipeline::new(self.room_id, self.participant_id);
 
                 match &self.participant {
@@ -514,6 +519,7 @@ where
                     .set("joined_at", ctx.timestamp)
                     .set("hand_is_up", false)
                     .set("hand_updated_at", ctx.timestamp)
+                    .set("is_room_owner", is_room_owner)
                     .query_async(&mut self.redis_conn)
                     .await?;
 
@@ -563,6 +569,7 @@ where
                     joined_at: ctx.timestamp,
                     left_at: None,
                     hand_updated_at: ctx.timestamp,
+                    is_room_owner,
                 };
 
                 self.module
@@ -615,6 +622,7 @@ where
                     module_data,
                     participants,
                     event_info: None,
+                    is_room_owner,
                 };
 
                 self.interface
