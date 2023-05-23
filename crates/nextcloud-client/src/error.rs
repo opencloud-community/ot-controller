@@ -37,4 +37,11 @@ pub enum Error {
 
     #[error("Share {share_id} not found")]
     ShareNotFound { share_id: ShareId },
+
+    #[error("File {file_path} not found")]
+    FileNotFound {
+        file_path: String,
+        #[source]
+        source: reqwest_dav::DavError,
+    },
 }

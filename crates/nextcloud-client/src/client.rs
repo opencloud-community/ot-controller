@@ -5,7 +5,7 @@
 use log::warn;
 use reqwest::StatusCode;
 use reqwest_dav as dav;
-use std::sync::Arc;
+use std::{error::Error as _, sync::Arc};
 use url::Url;
 
 use crate::{Error, Result, ShareCreator, ShareId, ShareType, ShareUpdater};
@@ -57,8 +57,18 @@ impl Client {
     }
 
     pub async fn delete(&self, path: &str) -> Result<()> {
-        self.inner.dav_client.delete(path).await?;
-        Ok(())
+        if let Err(e) = self.inner.dav_client.delete(path).await {
+            Err(e
+                .source()
+                .and_then(|e| e.downcast_ref::<reqwest_dav::DavError>())
+                .map(|e| Error::FileNotFound {
+                    file_path: path.to_string(),
+                    source: e.clone(),
+                })
+                .unwrap_or_else(|| Error::from(e)))
+        } else {
+            Ok(())
+        }
     }
 
     pub fn create_share(&self, path: &str, share_type: ShareType) -> ShareCreator {

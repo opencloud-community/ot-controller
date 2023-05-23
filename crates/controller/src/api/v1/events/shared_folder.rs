@@ -281,10 +281,15 @@ pub async fn delete_shared_folders(
                 {
                     warn!("Could not delete NextCloud write share: {e}");
                 }
-                client.delete(&user_path).await.map_err(|e| {
-                    warn!("Error deleting folder on NextCloud: {e}");
-                    ApiError::internal().with_message("Error deleting folder on NextCloud")
-                })?;
+                match client.delete(&user_path).await {
+                    Ok(()) | Err(nextcloud_client::Error::FileNotFound { .. }) => {}
+                    Err(e) => {
+                        warn!("Error deleting folder on NextCloud: {e}");
+                        return Err(
+                            ApiError::internal().with_message("Error deleting folder on NextCloud")
+                        );
+                    }
+                };
             }
             Ok(())
         }
