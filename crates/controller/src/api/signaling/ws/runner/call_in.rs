@@ -15,7 +15,7 @@ use types::core::TenantId;
 
 /// Try to map the provided phone number to a user
 ///
-/// When the mapping fails, the phone number will be formatted to the international phone format.
+/// When the mapping fails or is disabled, the phone number may be formatted to the international phone format.
 ///
 /// Returns the display name for a given SIP display name, e.g. a phone number
 pub async fn display_name(
@@ -24,18 +24,27 @@ pub async fn display_name(
     tenant_id: TenantId,
     phone_number: String,
 ) -> String {
-    if let Some(parsed_number) = parse_phone_number(&phone_number, settings.default_country_code) {
-        let display_name = try_map_to_user_display_name(db, tenant_id, &parsed_number).await;
+    let parsed_number = if let Some(parsed_number) =
+        parse_phone_number(&phone_number, settings.default_country_code)
+    {
+        parsed_number
+    } else {
+        // Failed to parse, return input
+        return phone_number;
+    };
 
-        return display_name.unwrap_or_else(|| {
-            parsed_number
-                .format()
-                .mode(phonenumber::Mode::International)
-                .to_string()
-        });
+    if settings.enable_phone_mapping {
+        if let Some(display_name) =
+            try_map_to_user_display_name(db, tenant_id, &parsed_number).await
+        {
+            return display_name;
+        }
     }
 
-    phone_number
+    parsed_number
+        .format()
+        .mode(phonenumber::Mode::International)
+        .to_string()
 }
 
 /// Try to map the provided phone number to a user
