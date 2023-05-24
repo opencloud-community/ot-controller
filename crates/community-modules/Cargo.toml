@@ -21,5 +21,6 @@ chat = { path = "../chat", package = "opentalk-chat" }
 polls = { path = "../polls", package = "opentalk-polls" }
 kustos = { path = "../kustos" }
 protocol = { path = "../protocol", package = "opentalk-protocol" }
+shared_folder = { path = "../shared-folder", package = "opentalk-shared-folder" }
 timer = { path = "../timer", package = "opentalk-timer" }
 whiteboard = { path = "../whiteboard", package = "opentalk-whiteboard" }

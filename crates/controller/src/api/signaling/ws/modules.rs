@@ -135,6 +135,7 @@ pub enum DynBroadcastEvent<'evt> {
     ParticipantJoined(&'evt mut Participant),
     ParticipantLeft(ParticipantId),
     ParticipantUpdated(&'evt mut Participant),
+    RoleUpdated(Role),
 }
 
 /// Untyped version of a ModuleContext which is used in `on_event`
@@ -310,6 +311,9 @@ where
                         .module_data
                         .insert(M::NAMESPACE.to_string(), value);
                 }
+            }
+            DynBroadcastEvent::RoleUpdated(role) => {
+                self.module.on_event(ctx, Event::RoleUpdated(*role)).await?;
             }
         }
         Ok(())

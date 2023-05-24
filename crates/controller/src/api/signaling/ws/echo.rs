@@ -49,6 +49,7 @@ impl SignalingModule for Echo {
             Event::ParticipantJoined(..) => {}
             Event::ParticipantLeft(_) => {}
             Event::ParticipantUpdated(..) => {}
+            Event::RoleUpdated(_) => {}
         }
 
         Ok(())

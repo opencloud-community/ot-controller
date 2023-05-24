@@ -572,7 +572,7 @@ impl SignalingModule for Media {
                 // and should not block the leaving process
                 tokio::task::spawn_local(self.media.destroy());
             }
-            Event::RaiseHand | Event::LowerHand { .. } => {}
+            Event::RaiseHand | Event::LowerHand { .. } | Event::RoleUpdated(_) => {}
         }
 
         Ok(())

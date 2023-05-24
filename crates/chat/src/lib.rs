@@ -366,6 +366,7 @@ impl SignalingModule for Chat {
             }
             Event::ParticipantLeft(_) => {}
             Event::ParticipantUpdated(_, _) => {}
+            Event::RoleUpdated(_) => {}
             Event::WsMessage(incoming::Message::EnableChat) => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(outgoing::Message::Error(

@@ -146,6 +146,7 @@ impl SignalingModule for Recording {
                     })
                 }
             }
+            Event::RoleUpdated(_) => {}
             Event::WsMessage(msg) => match msg {
                 RecordingCommand::Start => {
                     if ctx.role() != Role::Moderator {

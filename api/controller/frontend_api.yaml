@@ -1287,6 +1287,73 @@ paths:
         500:
           $ref: '#/components/responses/InternalServerError'
 
+  /events/{event_id}/shared_folder:
+    get:
+      summary: Get the shared folder for an event
+      tags: [events, shared_folder]
+      parameters:
+        - $ref: '#/components/parameters/eventId'
+      responses:
+        200:
+          description: Successfully fetched shared folder for the event
+          content:
+            application_json:
+              schema:
+                $ref: '#/components/schemas/SharedFolder'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          description: The specified event could not be found or has no shared folder
+        500:
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      summary: Create a shared folder for an event
+      tags: [events, shared_folder]
+      parameters:
+        - $ref: '#/components/parameters/eventId'
+      responses:
+        200:
+          description: A shared folder was already present and is returned
+          content:
+            application_json:
+              schema:
+                $ref: '#/components/schemas/SharedFolder'
+        201:
+          description: A new shared folder has been created
+          content:
+            application_json:
+              schema:
+                $ref: '#/components/schemas/SharedFolder'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          description: The specified event could not be found
+        500:
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      summary: Delete the shared folder for an event
+      tags: [events, shared_folder]
+      parameters:
+        - $ref: '#/components/parameters/eventId'
+        - in: query
+          description: >
+            Delete shared folder information from the database, even if the shared folder
+            itself could not be deleted on the remote system that provides it (e.g. the
+            NextCloud instance)
+          name: force_delete_reference_if_shared_folder_deletion_fails
+          schema:
+            type: boolean
+            default: false
+      responses:
+        204:
+          description: The shared folder has been deleted
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          description: The specified event could not be found or has no shared folder
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
   /users/me/pending_invites:
     get:
       summary: Information about pending invites
@@ -1705,6 +1772,37 @@ components:
           description: The enabled modules for the tariff
           type: array
           items: string
+
+    # -------------- Shared folder definitions --------------
+    SharedFolder:
+      description: Shared folder referenced by URL and password
+      type: object
+      additionalProperties: false
+      required:
+        - read
+      properties:
+        read:
+          description: The read-only shared folder description
+          $ref: '#/components/schemas/SharedFolderAccess'
+        read_write:
+          description: The read-write shared folder description, only present for the creator of an event
+          $ref: '#/components/schemas/SharedFolderAccess'
+
+    SharedFolderAccess:
+      description: Access information for a shared folder
+      type: Object
+      additionalProperties: false
+      required:
+        - url
+        - password
+      properties:
+        url:
+          description: The URL of the shared folder
+          type: string
+          format: uri
+        password:
+          description: The password for accessing the shared folder
+          type: string
 
     # -------------- SIP definitions --------------
     SipConfig:
@@ -2224,6 +2322,7 @@ components:
         - status
         - invite_status
         - is_favorite
+        - shared_folder
       additionalProperties: false
       properties:
         id:
@@ -2299,6 +2398,8 @@ components:
         is_favorite:
           type: boolean
           description: Is the event in the current user's favorites list.
+        shared_folder:
+          $ref: '#/components/schemas/SharedFolder'
       if:
         properties:
           is_time_independent:

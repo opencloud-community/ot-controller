@@ -7,7 +7,9 @@ use super::{
     EventRoomInfo, EventStatus, EventType, InstanceId, LOCAL_DT_FORMAT,
 };
 use crate::api::v1::cursor::Cursor;
-use crate::api::v1::events::{enrich_invitees_from_keycloak, DateTimeTzFromDb};
+use crate::api::v1::events::{
+    enrich_invitees_from_keycloak, shared_folder_for_user, DateTimeTzFromDb,
+};
 use crate::api::v1::response::{ApiError, NoContent};
 use crate::api::v1::users::PublicUserProfile;
 use crate::api::v1::util::{GetUserProfilesBatched, UserProfilesBatch};
@@ -26,6 +28,7 @@ use db_storage::users::User;
 use keycloak_admin::KeycloakAdminClient;
 use rrule::RRuleSet;
 use serde::{Deserialize, Serialize};
+use types::common::shared_folder::SharedFolder;
 use types::core::EventId;
 use validator::Validate;
 
@@ -76,6 +79,9 @@ pub struct EventInstance {
     pub invite_status: EventInviteStatus,
     pub is_favorite: bool,
     pub can_edit: bool,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub shared_folder: Option<SharedFolder>,
 }
 
 #[derive(Deserialize)]
@@ -129,8 +135,8 @@ pub async fn get_event_instances(
 
     let mut conn = db.get_conn().await?;
 
-    let (event, invite, room, sip_config, is_favorite) =
-        Event::get_with_invite_and_room(&mut conn, current_user.id, event_id).await?;
+    let (event, invite, room, sip_config, is_favorite, shared_folder) =
+        Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
 
     let (invitees, invitees_truncated) =
         super::get_invitees_for_event(&settings, &mut conn, event.id, invitees_max).await?;
@@ -176,6 +182,8 @@ pub async fn get_event_instances(
 
     let can_edit = can_edit(&event, &current_user);
 
+    let shared_folder = shared_folder_for_user(shared_folder, event.created_by, current_user.id);
+
     let mut exceptions = exceptions.into_iter().peekable();
 
     let mut instances = vec![];
@@ -194,6 +202,7 @@ pub async fn get_event_instances(
             invitees.clone(),
             invitees_truncated,
             can_edit,
+            shared_folder.clone(),
         )?;
 
         instances.push(instance);
@@ -270,8 +279,8 @@ pub async fn get_event_instance(
 
     let mut conn = db.get_conn().await?;
 
-    let (event, invite, room, sip_config, is_favorite) =
-        Event::get_with_invite_and_room(&mut conn, current_user.id, event_id).await?;
+    let (event, invite, room, sip_config, is_favorite, shared_folder) =
+        Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
     verify_recurrence_date(&event, instance_id.0)?;
 
     let (invitees, invitees_truncated) =
@@ -289,6 +298,8 @@ pub async fn get_event_instance(
 
     let can_edit = can_edit(&event, &current_user);
 
+    let shared_folder = shared_folder_for_user(shared_folder, event.created_by, current_user.id);
+
     let event_instance = create_event_instance(
         &users,
         event,
@@ -302,6 +313,7 @@ pub async fn get_event_instance(
         invitees,
         invitees_truncated,
         can_edit,
+        shared_folder,
     )?;
 
     let event_instance = EventInstance {
@@ -401,8 +413,8 @@ pub async fn patch_event_instance(
 
     let mut conn = db.get_conn().await?;
 
-    let (event, invite, room, sip_config, is_favorite) =
-        Event::get_with_invite_and_room(&mut conn, current_user.id, event_id).await?;
+    let (event, invite, room, sip_config, is_favorite, shared_folder) =
+        Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
 
     if !event.is_recurring.unwrap_or_default() {
         return Err(ApiError::not_found());
@@ -495,6 +507,8 @@ pub async fn patch_event_instance(
 
     let can_edit = can_edit(&event, &current_user);
 
+    let shared_folder = shared_folder_for_user(shared_folder, event.created_by, current_user.id);
+
     drop(conn);
 
     let event_instance = create_event_instance(
@@ -510,6 +524,7 @@ pub async fn patch_event_instance(
         invitees,
         invitees_truncated,
         can_edit,
+        shared_folder,
     )?;
 
     let event_instance = EventInstance {
@@ -537,6 +552,7 @@ fn create_event_instance(
     invitees: Vec<EventInvitee>,
     invitees_truncated: bool,
     can_edit: bool,
+    shared_folder: Option<SharedFolder>,
 ) -> database::Result<EventInstance> {
     let mut status = EventStatus::Ok;
 
@@ -597,6 +613,7 @@ fn create_event_instance(
         invite_status,
         is_favorite,
         can_edit,
+        shared_folder,
     })
 }
 
@@ -720,6 +737,7 @@ mod tests {
             invite_status: EventInviteStatus::Accepted,
             is_favorite: false,
             can_edit: false,
+            shared_folder: None,
         };
 
         assert_eq_json!(

@@ -210,7 +210,8 @@ impl SignalingModule for Whiteboard {
             | Event::LowerHand
             | Event::ParticipantJoined(_, _)
             | Event::ParticipantLeft(_)
-            | Event::ParticipantUpdated(_, _) => Ok(()),
+            | Event::ParticipantUpdated(_, _)
+            | Event::RoleUpdated(_) => Ok(()),
         }
     }
 

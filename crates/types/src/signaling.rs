@@ -11,6 +11,7 @@ pub mod control;
 pub mod moderation;
 pub mod polls;
 pub mod recording;
+pub mod shared_folder;
 
 mod namespaced;
 mod role;

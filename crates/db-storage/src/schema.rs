@@ -84,6 +84,23 @@ table! {
 table! {
     use crate::sql_types::*;
 
+    event_shared_folders (event_id) {
+        event_id -> Uuid,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+        path -> Text,
+        write_share_id -> Text,
+        write_url -> Text,
+        write_password -> Text,
+        read_share_id -> Text,
+        read_url -> Text,
+        read_password -> Text,
+    }
+}
+
+table! {
+    use crate::sql_types::*;
+
     events (id) {
         id -> Uuid,
         id_serial -> Int8,
@@ -268,6 +285,7 @@ joinable!(event_exceptions -> users (created_by));
 joinable!(event_favorites -> events (event_id));
 joinable!(event_favorites -> users (user_id));
 joinable!(event_invites -> events (event_id));
+joinable!(event_shared_folders -> events (event_id));
 joinable!(events -> rooms (room));
 joinable!(events -> tenants (tenant_id));
 joinable!(external_tariffs -> tariffs (tariff_id));
@@ -293,6 +311,7 @@ allow_tables_to_appear_in_same_query!(
     event_exceptions,
     event_favorites,
     event_invites,
+    event_shared_folders,
     events,
     external_tariffs,
     groups,
