@@ -63,7 +63,7 @@ use types::{
 };
 use uuid::Uuid;
 
-mod sip;
+mod call_in;
 
 // The expiry in seconds for the `skip_waiting_room` key in Redis
 const SKIP_WAITING_ROOM_KEY_EXPIRY: usize = 120;
@@ -785,7 +785,7 @@ impl Runner {
                     api::Participant::Recorder => (join.display_name, None),
                     api::Participant::Sip => {
                         if let Some(call_in) = self.settings.load().call_in.as_ref() {
-                            let display_name = sip::display_name(
+                            let display_name = call_in::display_name(
                                 &self.db,
                                 call_in,
                                 self.room.tenant_id,
