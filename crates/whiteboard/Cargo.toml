@@ -23,7 +23,7 @@ types = { path = "../types", package = "opentalk-types", features = ["backend"] 
 reqwest = { version = "0.11", default-features = false, features = [
     "json",
     "cookies",
-    "rustls-tls",
+    "rustls-tls-native-roots",
     "stream",
 ] }
 serde = { version = "1", features = ["derive"] }
