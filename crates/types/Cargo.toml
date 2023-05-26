@@ -37,6 +37,7 @@ serde = [
   "dep:validator",
   "chrono/serde",
   "chrono-tz/serde",
+  "uuid/serde",
 ]
 
 [dev-dependencies]

@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 crate::diesel_newtype! {
+    feature_gated:
+
     #[derive(Copy, derive_more::FromStr)]
     #[cfg_attr(
         feature = "redis",
