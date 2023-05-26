@@ -19,7 +19,7 @@ mail-worker-proto = { path = "../mail-worker-protocol", package = "opentalk-mail
     "client",
 ] }
 nextcloud-client = { path = "../nextcloud-client", package = "opentalk-nextcloud-client", default-features = false, features = [
-    "rustls-tls",
+    "rustls-tls-native-roots",
 ] }
 types = { path = "../types", package = "opentalk-types", features = ["backend"] }
 
@@ -96,7 +96,7 @@ r3dlock = { path = "../r3dlock" }
 ### OpenID Connect & JWT
 openidconnect = { version = "2" }
 reqwest = { version = "0.11", default-features = false, features = [
-    "rustls-tls",
+    "rustls-tls-native-roots",
 ] }
 jsonwebtoken = "8.3.0"
 base64 = "0.13"
