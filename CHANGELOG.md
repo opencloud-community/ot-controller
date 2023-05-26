@@ -9,25 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- controller: add event information to `JoinSuccess` signaling message ([#266](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/266))
+
+### Changed
+
+- db-storage/mail-worker-protocol: added `revision` field to `events` to track the number of changes
 - cli: Update `fix-cli` subcommand, now also fixes access to events and legal-votes ([#387](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/387))
+
+### Fixed
+
+- signaling: Consider the `enable_phone_mapping` config value when trying to match the phone number to a opentalk user
+
+## [0.4.0] - 2023-05-25
+
+### Added
+
 - controller: cache access-token check results for a maximum of 5mins, reducing load on both keycloak and postgres ([#359](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/359))
 - janus-media: add `event_loops` options to specify how many event-loop the janus instance runs on. Used to send hints to janus on which event-loop to create a new webrtc-session (handle).
 - controller: add debriefing and kicking multiple users at once ([#350](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/350))
 - controller: always allow one moderator to join a room regardless of participant limit ([#352](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/352))
 - chat: add private chat history ([#327](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/327))
 - controller: kick users when the owner deletes the room ([#328](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/328))
-- controller: add event information to `JoinSuccess` signaling message ([#266](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/266))
 
 ### Changed
 
 - naming: replace initial project code name `k3k` by `opentalk` in code, executable names and environment variables ([#279](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/279))
-- db-storage/mail-worker-protocol: added `revision` field to `events` to track the number of changes
 
 ### Fixed
 
 - controller/db-storage: Email invites now get deleted, when converted to user invites. ([#320](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/320))
 - controller-settings: Fixed a panic when trying to parse config values for `tenants` and `tariffs`, when their assignment was set to `static`
-- signaling: Consider the `enable_phone_mapping` config value when trying to match the phone number to a opentalk user
 
 ### Moved
 
@@ -286,7 +297,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - initial release candidate
 
-[Unreleased]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.3.1...main
+[Unreleased]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.4.0...main
+
+[0.4.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/60b8af4daa0e0f2ed2ec9589fd1c9da3218baf8c...v0.4.0
 
 [0.3.1]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.3.0...v0.3.1
 [0.3.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/382d6f2d1ccac530431a1fe7f8379ed21769c052...v0.3.0
