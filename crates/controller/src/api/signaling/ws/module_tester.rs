@@ -978,6 +978,9 @@ where
                 .await?;
 
             storage::remove_attribute_key(&mut self.redis_conn, self.room_id, "user_id").await?;
+
+            storage::remove_attribute_key(&mut self.redis_conn, self.room_id, "is_room_owner")
+                .await?;
         }
 
         set_guard

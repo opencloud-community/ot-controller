@@ -1327,7 +1327,8 @@ impl Runner {
                         "avatar_url",
                         avatar_url.expect("user must have avatar_url set"),
                     )
-                    .set("user_id", user.id);
+                    .set("user_id", user.id)
+                    .set("is_room_owner", user.id == self.room.created_by);
             }
             api::Participant::Guest => {
                 pipe_attrs.set("kind", ParticipationKind::Guest);
