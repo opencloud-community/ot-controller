@@ -179,24 +179,25 @@ Information about the event associated with a room.
 
 | Field   | Type          | Always | Description        |
 | ------- | ------------- | ------ | ------------------ |
+| `id`    | `string`      | yes    | Id of the event    |
 | `title` | `string`      | yes    | Title of the event |
 
 ### JoinSuccess
 
-Received after joining the room. Can be triggered bei either calling [Join](#join) or [EnterRoom](#enterroom).
+Received after joining the room. Can be triggered by either calling [Join](#join) or [EnterRoom](#enterroom).
 
 #### Fields
 
 | Field          | Type            | Always | Description                                                                                |
 | -------------- | --------------- | ------ | ------------------------------------------------------------------------------------------ |
 | `message`      | `enum`          | yes    | Is `"join_success"`                                                                        |
-| `id`           | `string`        | yes    | Your participant-id in this session                                                        |
-| `display_name` | `string`        | yes    | Your display_name in this session                                                          |
-| `avatar_url`   | `string`        | no     | url to your avatar image if logged                                                         |
-| `role`         | `enum`          | yes    | either `"guest"`, `"user"` or `"moderator"`                                                |
-| `closes_at`    | `string`        | no     | the point in time the room closes                                                          |
-| `tariff`       | `Tariff`        | yes    | tariff information, including `quotas` and `enabled_modules`                               |
-| `participants` | `Participant[]` | yes    | list of participants in the room                                                           |
+| `id`           | `string`        | yes    | Your participant id in this session                                                        |
+| `display_name` | `string`        | yes    | Your display name in this session                                                          |
+| `avatar_url`   | `string`        | no     | Url to your avatar image if logged                                                         |
+| `role`         | `enum`          | yes    | Either `"guest"`, `"user"` or `"moderator"`                                                |
+| `closes_at`    | `string`        | no     | The point in time the room closes                                                          |
+| `tariff`       | `Tariff`        | yes    | Tariff information, including `quotas` and `enabled_modules`                               |
+| `participants` | `Participant[]` | yes    | List of participants in the room                                                           |
 | `event_info`   | `EventInfo`     | no     | Information about the event associated with the meeting room. See: [EventInfo](#eventinfo) |
 
 ##### Example
@@ -211,7 +212,7 @@ Received after joining the room. Can be triggered bei either calling [Join](#joi
   "closes_at": "2023-03-10T16:52:54Z",
   "is_room_owner": true,
   "tariff": {
-    "id": "00000000-0000-0000-0000-000000000000",
+    "id": "53db7cb1-12af-4715-9b17-4a5a57876085",
     "name": "OpenTalkDefaultTariff",
     "quotas": {},
     "enabled_modules": ["chat","breakout","moderation","media","polls","timer"]
@@ -231,7 +232,8 @@ Received after joining the room. Can be triggered bei either calling [Join](#joi
     }
   ],
   "event_info": {
-    "title": "Daily"
+    "id": "fa31b241-612d-4524-930e-b5b0af12acb1"
+    "title": "Daily",
   }
 }
 ```
