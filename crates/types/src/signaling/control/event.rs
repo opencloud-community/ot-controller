@@ -146,10 +146,11 @@ mod test {
     use std::str::FromStr;
 
     use super::*;
-    use crate::core::TariffId;
+    use crate::core::{EventId, TariffId};
     use chrono::DateTime;
     use pretty_assertions::assert_eq;
     use serde_json::json;
+    use uuid::uuid;
 
     fn participant_tariff() -> TariffResource {
         TariffResource {
@@ -172,6 +173,7 @@ mod test {
             "tariff": serde_json::to_value(participant_tariff()).unwrap(),
             "participants": [],
             "event_info": {
+                "id": "00000000-0000-0000-0000-000000000000",
                 "title": "Daily",
             },
             "is_room_owner": false,
@@ -191,6 +193,7 @@ mod test {
             module_data: Default::default(),
             participants: vec![],
             event_info: Some(EventInfo {
+                id: EventId::from(uuid!("00000000-0000-0000-0000-000000000000")),
                 title: "Daily".to_string(),
             }),
             is_room_owner: false,
@@ -210,6 +213,7 @@ mod test {
             "tariff": serde_json::to_value(participant_tariff()).unwrap(),
             "participants": [],
             "event_info": {
+                "id": "00000000-0000-0000-0000-000000000000",
                 "title": "Daily",
             },
             "is_room_owner": false,
@@ -225,6 +229,7 @@ mod test {
             module_data: Default::default(),
             participants: vec![],
             event_info: Some(EventInfo {
+                id: EventId::from(uuid!("00000000-0000-0000-0000-000000000000")),
                 title: "Daily".to_string(),
             }),
             is_room_owner: false,
