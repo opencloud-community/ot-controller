@@ -26,6 +26,8 @@ pub struct WebSocketActor {
 
     /// State for receiving fragmented messages
     continuation: Option<Continuation>,
+
+    close_sent: bool,
 }
 
 struct Continuation {
@@ -39,17 +41,19 @@ impl WebSocketActor {
             sender,
             last_pong: Instant::now(),
             continuation: None,
+            close_sent: false,
         }
     }
 
     /// Forward a websocket message to the runner
     ///
-    /// Closes the websocket if the channel to the runner is disconnected
+    /// Closes the websocket if the channel to the runner is disconnected and the socket hasn't been closed yet
     fn forward_to_runner(&mut self, ctx: &mut WebsocketContext<Self>, msg: Message) {
-        if self.sender.send(msg).is_err() {
+        if self.sender.send(msg).is_err() && !self.close_sent {
+            self.close_sent = true;
             ctx.close(Some(CloseReason {
                 code: CloseCode::Abnormal,
-                description: None,
+                description: Some("runner disconnected".to_owned()),
             }));
         }
     }
@@ -175,7 +179,10 @@ impl Handler<WsCommand> for WebSocketActor {
     fn handle(&mut self, msg: WsCommand, ctx: &mut Self::Context) -> Self::Result {
         match msg {
             WsCommand::Ws(msg) => ctx.write_raw(msg),
-            WsCommand::Close(reason) => ctx.close(Some(reason)),
+            WsCommand::Close(reason) => {
+                self.close_sent = true;
+                ctx.close(Some(reason))
+            }
         }
     }
 }
