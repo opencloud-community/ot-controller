@@ -6,9 +6,11 @@
 
 use crate::{
     core::ParticipantId,
-    imports::*,
     signaling::control::{AssociatedParticipant, Participant},
 };
+
+#[allow(unused_imports)]
+use crate::imports::*;
 
 /// Events sent out by the `moderation` module
 #[derive(Clone, Debug, PartialEq, Eq)]

@@ -4,8 +4,9 @@
 
 use std::{ops::Deref, time::SystemTime};
 
-use chrono::{DateTime, TimeZone as _, Utc};
+use chrono::{DateTime, Utc};
 
+#[allow(unused_imports)]
 use crate::imports::*;
 
 /// A UTC DateTime wrapper that implements ToRedisArgs and FromRedisValue.
@@ -57,6 +58,7 @@ impl ToRedisArgs for Timestamp {
 #[cfg(feature = "redis")]
 impl FromRedisValue for Timestamp {
     fn from_redis_value(v: &redis::Value) -> RedisResult<Timestamp> {
+        use chrono::TimeZone as _;
         let timestamp = Utc
             .timestamp_opt(i64::from_redis_value(v)?, 0)
             .latest()

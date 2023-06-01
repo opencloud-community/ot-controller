@@ -4,10 +4,10 @@
 
 //! Signaling events for the `breakout` namespace
 
-use crate::{
-    core::{BreakoutRoomId, Timestamp},
-    imports::*,
-};
+use crate::core::{BreakoutRoomId, Timestamp};
+
+#[allow(unused_imports)]
+use crate::imports::*;
 
 use super::{AssociatedParticipantInOtherRoom, BreakoutRoom, ParticipantInOtherRoom};
 

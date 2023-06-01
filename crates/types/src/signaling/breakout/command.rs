@@ -6,7 +6,10 @@
 
 use std::time::Duration;
 
-use crate::{core::ParticipantId, imports::*};
+use crate::core::ParticipantId;
+
+#[allow(unused_imports)]
+use crate::imports::*;
 
 /// Commands for breakout sessions
 #[derive(Clone, Debug, PartialEq, Eq)]

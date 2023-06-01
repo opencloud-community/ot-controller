@@ -4,6 +4,7 @@
 
 use strum::{AsRefStr, Display, EnumCount, EnumIter, EnumString, EnumVariantNames, IntoStaticStr};
 
+#[allow(unused_imports)]
 use crate::imports::*;
 
 /// Role of the participant inside a room

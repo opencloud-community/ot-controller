@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+#[allow(unused_imports)]
 use crate::imports::*;
 
 /// The waiting room state of a meeting participant

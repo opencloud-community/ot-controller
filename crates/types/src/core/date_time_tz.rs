@@ -4,7 +4,10 @@
 
 use chrono::{DateTime, Utc};
 
-use crate::{core::TimeZone, imports::*};
+use crate::core::TimeZone;
+
+#[allow(unused_imports)]
+use crate::imports::*;
 
 /// Representation of a datetime timezone
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

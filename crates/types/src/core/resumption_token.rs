@@ -2,8 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::imports::*;
 use derive_more::{Display, From, FromStr, Into};
+
+#[allow(unused_imports)]
+use crate::imports::*;
 
 /// A resumption token
 #[derive(Display, From, FromStr, Into, Debug, Clone, PartialEq, Eq, Hash)]

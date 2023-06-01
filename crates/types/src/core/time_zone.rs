@@ -4,6 +4,7 @@
 
 use derive_more::{AsRef, Display, From, FromStr, Into};
 
+#[allow(unused_imports)]
 use crate::imports::*;
 
 /// Representation of a timezone

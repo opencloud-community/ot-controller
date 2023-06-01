@@ -4,7 +4,10 @@
 
 //! Common types related to the shared_folder module
 
-use crate::{imports::*, signaling::Role};
+use crate::signaling::Role;
+
+#[allow(unused_imports)]
+use crate::imports::*;
 
 /// Information required to access a shared folder
 #[derive(Debug, Clone, PartialEq, Eq)]

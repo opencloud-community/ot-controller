@@ -4,7 +4,10 @@
 
 use std::collections::HashMap;
 
-use crate::{core::ParticipantId, imports::*};
+use crate::core::ParticipantId;
+
+#[allow(unused_imports)]
+use crate::imports::*;
 
 /// Status information about a participant
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -14,6 +17,6 @@ pub struct Participant {
     pub id: ParticipantId,
 
     /// Module data for the participant
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub module_data: HashMap<String, serde_json::Value>,
 }

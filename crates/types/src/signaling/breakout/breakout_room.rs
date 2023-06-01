@@ -2,7 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::{core::BreakoutRoomId, imports::*};
+use crate::core::BreakoutRoomId;
+
+#[allow(unused_imports)]
+use crate::imports::*;
 
 /// Description of a breakout room
 #[derive(Debug, Clone, PartialEq, Eq)]

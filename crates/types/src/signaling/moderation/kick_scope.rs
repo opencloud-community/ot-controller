@@ -2,7 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::{imports::*, signaling::Role};
+use crate::signaling::Role;
+
+#[allow(unused_imports)]
+use crate::imports::*;
 
 /// The scope of users to be kicked from the room
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
