@@ -193,11 +193,14 @@ impl Authz {
 
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn add_policies(&self, policies: impl ToCasbinMultiple) -> Result<()> {
-        self.inner
-            .write()
-            .await
-            .add_policies(policies.to_casbin_policies())
-            .await?;
+        // Applying the policies in chunks in order to avoid generating too large queries
+        for chunk in policies.to_casbin_policies().chunks(2000) {
+            self.inner
+                .write()
+                .await
+                .add_policies(Vec::from(chunk))
+                .await?;
+        }
 
         Ok(())
     }
