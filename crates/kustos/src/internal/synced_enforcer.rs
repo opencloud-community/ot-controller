@@ -134,7 +134,12 @@ impl CoreApi for SyncedEnforcer {
     {
         let mut enforcer = Enforcer::new_raw(m, a).await?;
 
-        enforcer.add_function("actMatch", |req, pol| super::act_match(&req, &pol));
+        enforcer.add_function("actMatch", |req, pol| {
+            super::custom_matcher::act_match(&req, &pol)
+        });
+        enforcer.add_function("objMatch", |req, pol| {
+            super::custom_matcher::obj_match(&req, &pol)
+        });
 
         let enforcer = SyncedEnforcer {
             enforcer,
