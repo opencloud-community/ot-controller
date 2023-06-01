@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - naming: replace initial project code name `k3k` by `opentalk` in code, executable names and environment variables ([#279](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/279))
+- controller: respect operating system CA certificates for all outgoing tls connections ([#382](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/382))
 
 ### Fixed
 
