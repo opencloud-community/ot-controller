@@ -8,6 +8,8 @@
 # Below are some example directives which are used by default
 # to reduce the extreme amount of spamming some crates do by default
 #default_directives = [
+#   "ERROR",
+#   "opentalk=INFO",
 #   "pinky_swear=OFF",
 #   "rustls=WARN",
 #   "mio=ERROR",
