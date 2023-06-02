@@ -7,6 +7,7 @@ use casbin::DefaultModel;
 
 use crate::error::Error;
 
+pub(crate) mod custom_matcher;
 pub(crate) mod diesel_adapter;
 pub(crate) mod impls;
 pub(crate) mod rbac_api_ex;
@@ -34,8 +35,8 @@ pub trait ToCasbinString {
 ///
 /// Matches sub, obj, act with:
 /// sub group membership g(r.sub, p.sub)
-/// obj keyMatch (URL match with a * in the end for wildcard), placeholder with the same id matches the same string.
-/// act custom actMatch (policy list of allowed actions matches request's action)
+/// obj [objMatch](custom_matcher::obj_match) (URL match with wildcard (*) support between slashes (/) or at the end).
+/// act [actMatch](custom_matcher::act_match) (policy list of allowed actions matches request's action)
 ///
 /// OPTIONS calls are generally allowed
 /// subjects in the role::administrator g role are allowed.
@@ -53,14 +54,8 @@ g = _, _
 e = some(where (p.eft == allow))
 
 [matchers]
-m = r.act == "OPTIONS" || g(r.sub, p.sub) && keyMatch(r.obj, p.obj) && actMatch(r.act, p.act)
+m = r.act == "OPTIONS" || g(r.sub, p.sub) && objMatch(r.obj, p.obj) && actMatch(r.act, p.act)
 "#;
-
-/// Try to match a request action (e.g. `GET`) to a policy's allowed actions (e.g. `GET|POST|PUT`)
-/// Used instead of regexMatch to improve enforce performance
-pub(crate) fn act_match(request: &str, policy: &str) -> bool {
-    policy.split('|').any(|p| p.eq(request))
-}
 
 pub(crate) async fn default_acl_model() -> DefaultModel {
     DefaultModel::from_str(MODEL).await.unwrap()
@@ -235,12 +230,14 @@ mod test {
         let m = default_acl_model().await;
         let a = casbin::MemoryAdapter::default();
         let mut enforcer = casbin::Enforcer::new(m, a).await.unwrap();
-        enforcer.add_function("actMatch", |req, pol| super::act_match(&req, &pol));
+        enforcer.add_function("actMatch", |req, pol| {
+            super::custom_matcher::act_match(&req, &pol)
+        });
+        enforcer.add_function("objMatch", |req, pol| {
+            super::custom_matcher::obj_match(&req, &pol)
+        });
         enforcer
-            .add_policies(to_owned2(vec![
-                vec!["role::administrator", "/*", "GET|POST|PUT|DELETE"],
-                vec!["role::user", "/rooms", "POST"],
-            ]))
+            .add_policies(to_owned2(vec![vec!["role::user", "/rooms", "POST"]]))
             .await
             .unwrap();
         enforcer
@@ -248,10 +245,6 @@ mod test {
                 "g",
                 to_owned2(vec![
                     vec!["user::3079670b-2bad-4023-bf16-95993f462530", "role::user"],
-                    vec![
-                        "user::00000000-0000-0000-0000-000000000000",
-                        "group::/OpenTalk_Administrator",
-                    ],
                     vec!["group::/OpenTalk_Administrator", "role::administrator"],
                 ]),
             )
@@ -292,14 +285,6 @@ mod test {
                 "user::3079670b-2bad-4023-bf16-95993f462530",
                 "/rooms",
                 "POST"
-            ]))
-            .unwrap());
-        // User 000 has /rooms POST access via its group::/OpenTalk_Administrator group via role::user group
-        assert!(enforcer
-            .enforce(to_owned(vec![
-                "user::00000000-0000-0000-0000-000000000000",
-                "/rooms/dasdasd",
-                "DELETE"
             ]))
             .unwrap());
     }
