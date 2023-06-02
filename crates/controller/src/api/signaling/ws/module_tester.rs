@@ -1002,6 +1002,7 @@ where
 }
 
 /// Represents a WebSocket message sent from the Module to the Client
+#[allow(clippy::large_enum_variant)]
 pub enum WsMessageOutgoing<M>
 where
     M: SignalingModule,

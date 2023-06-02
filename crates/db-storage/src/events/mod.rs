@@ -126,6 +126,7 @@ impl Event {
 
     pub fn to_event_info(&self) -> EventInfo {
         EventInfo {
+            id: self.id,
             title: self.title.clone(),
         }
     }
