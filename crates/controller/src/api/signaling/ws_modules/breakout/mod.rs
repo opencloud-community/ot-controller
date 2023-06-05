@@ -5,8 +5,9 @@
 //! Breakout room module
 
 use self::storage::BreakoutConfig;
-use crate::api::signaling::SignalingRoomId;
-use crate::prelude::*;
+use crate::api::signaling::{
+    DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
+};
 use actix_http::ws::CloseCode;
 use anyhow::{bail, Result};
 use futures::FutureExt;
@@ -25,6 +26,8 @@ use types::{
         Role,
     },
 };
+
+use super::control;
 
 pub mod exchange;
 pub mod storage;

@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use controller::prelude::*;
+use controller::api::signaling::{ModuleTester, WsMessageOutgoing};
 use opentalk_polls::*;
 use pretty_assertions::assert_eq;
 use serial_test::serial;

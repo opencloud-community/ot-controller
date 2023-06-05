@@ -170,7 +170,6 @@ pub struct SubscriberConfiguration {
 #[cfg(test)]
 mod test {
     use super::*;
-    use controller::prelude::*;
     use pretty_assertions::assert_eq;
 
     #[test]

@@ -2,8 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::metrics::SignalingMetrics;
-use super::prelude::*;
+use super::{control, metrics::SignalingMetrics};
 use crate::api::signaling::SignalingRoomId;
 use crate::api::Participant;
 use crate::redis_wrapper::RedisConnection;

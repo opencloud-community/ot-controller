@@ -24,8 +24,8 @@ nextcloud-client = { path = "../nextcloud-client", package = "opentalk-nextcloud
 types = { path = "../types", package = "opentalk-types", features = ["backend"] }
 
 ### Logging utilities
-log = { version = "0.4", features = ["serde"] }
-tracing = { version = "0.1" }
+log = { workspace = true, features = ["serde"] }
+tracing.workspace = true
 tracing-futures = "0.2"
 tracing-subscriber = { version = "0.3", features = [
     "parking_lot",
@@ -43,24 +43,24 @@ prometheus = "0.13"
 tracing-actix-web = { version = "0.7" }
 
 ### Config
-config = { version = "0.13.3", default-features = false, features = ["toml"] }
-serde = { version = "1", features = ["derive"] }
-clap = { version = "4", features = ["derive"] }
-arc-swap = "1.6"
+config.workspace = true
+serde.workspace = true
+clap.workspace = true
+arc-swap.workspace = true
 
 ### Error handling
-anyhow = "1.0"
-thiserror = "1.0"
-validator = { version = "0.16", features = ["derive"] }
+anyhow.workspace = true
+thiserror.workspace = true
+validator.workspace = true
 
 ### Database ORM
-diesel = { version = "2", features = [
+diesel = { workspace = true, features = [
     "uuid",
     "serde_json",
     "chrono",
 ] }
-diesel-async = "0.2.0"
-uuid = { package = "uuid", version = "1.3.0", features = ["serde", "v4"] }
+diesel-async.workspace = true
+uuid = { workspace = true, features = ["serde", "v4"] }
 cache = { path = "../cache" , package = "opentalk-cache" }
 
 ### S3 Storage
@@ -68,40 +68,39 @@ aws-config = "0.51"
 aws-sdk-s3 = "0.21"
 
 ### Web Framework & Runtime
-tokio = { version = "1", features = ["signal"] }
-tokio-stream = { version = "0.1.12", features = ["sync"] }
+tokio = { workspace = true, features = ["signal"] }
+tokio-stream.workspace = true
 actix-web = { version = "4", features = ["rustls"] }
 actix-rt = "2.8"
 actix-web-httpauth = "0.8"
 actix-cors = "0.6"
-futures-util = "0.3"
-async-trait = "0.1"
-futures = "0.3"
-bytes = "1"
-serde_json = "1"
-bincode = "1.3"
-parking_lot = "0.12"
+async-trait.workspace = true
+futures.workspace = true
+bytes.workspace = true
+serde_json.workspace = true
+bincode.workspace = true
+parking_lot.workspace = true
 mime = "0.3.16"
 bytestring = { version = "1", features = ["serde"] }
 
 ### RabbitMQ
-lapin = { version = "2", default-features = false }
+lapin.workspace = true
 lapin-pool = { path = "../lapin-pool" }
 
 ### Redis
-redis = { version = "0.22", features = ["tokio-comp", "connection-manager"] }
-url = "2"
+redis = { workspace = true, features = ["tokio-comp", "connection-manager"] }
+url.workspace = true
 r3dlock = { path = "../r3dlock" }
 
 ### OpenID Connect & JWT
-openidconnect = { version = "2" }
-reqwest = { version = "0.11", default-features = false, features = [
+openidconnect.workspace = true
+reqwest = { workspace = true, features = [
     "rustls-tls-native-roots",
 ] }
 jsonwebtoken = "8.3.0"
 base64 = "0.13"
-chrono = "0.4"
-chrono-tz = { version = "0.6", features = ["serde"] }
+chrono.workspace = true
+chrono-tz = { workspace = true, features = ["serde"] }
 
 ### Websockets
 actix = "0.13"
@@ -115,16 +114,16 @@ rustls-pemfile = "1.0"
 md5 = "0.7"
 
 ### QoL/Util
-either = "1.8.1"
-itertools = "0.10"
-phonenumber = "0.3"
+either.workspace = true
+itertools.workspace = true
+phonenumber.workspace = true
 email_address = "0.2.4"
 redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
 slotmap = "1"
 rustc-hash = "1.1"
 
 # Random Distributions etc. Used for RR
-rand = "0.8.5"
+rand.workspace = true
 
 ### Reload controller process
 sysinfo = { version = "0.28", default-features = false }
@@ -142,10 +141,10 @@ tabled = "0.10"
 
 [dev-dependencies]
 test-util = { path = "../test-util", package = "opentalk-test-util", features = ["database"] }
-pretty_assertions = "1.3"
+pretty_assertions.workspace = true
 
 [build-dependencies]
-anyhow = "1.0"
+anyhow.workspace = true
 vergen = { version = "7.5", default-features = false, features = [
     "build",
     "cargo",

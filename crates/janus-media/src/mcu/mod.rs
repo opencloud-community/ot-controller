@@ -5,10 +5,9 @@
 use crate::incoming::SubscriberConfiguration;
 use crate::settings::{self, Connection};
 use anyhow::{bail, Context, Result};
-use controller::prelude::futures::stream::FuturesUnordered;
-use controller::prelude::*;
-use controller::settings::SharedSettings;
-use futures::ready;
+use controller::RedisConnection;
+use controller_settings::SharedSettings;
+use futures::{ready, stream::FuturesUnordered};
 use janus_client::outgoing::{
     VideoRoomPluginConfigurePublisher, VideoRoomPluginConfigureSubscriber,
 };

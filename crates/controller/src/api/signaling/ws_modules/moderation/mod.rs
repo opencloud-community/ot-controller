@@ -2,7 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::{api::signaling::prelude::*, redis_wrapper::RedisConnection};
+use crate::{
+    api::signaling::{
+        DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
+    },
+    redis_wrapper::RedisConnection,
+};
 use actix_http::ws::CloseCode;
 use anyhow::Result;
 use std::{collections::HashMap, iter::zip};
@@ -19,7 +24,7 @@ use types::{
     },
 };
 
-use super::control::ControlStateExt as _;
+use super::control::{self, ControlStateExt as _};
 
 pub mod exchange;
 pub mod storage;

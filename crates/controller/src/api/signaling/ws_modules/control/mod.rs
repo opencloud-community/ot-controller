@@ -5,7 +5,7 @@
 //! Control Module Stub
 //!
 //! Actual control 'module' code can be found inside `crate::api::signaling::ws::runner`
-use crate::{api::signaling::SignalingRoomId, prelude::*};
+use crate::{api::signaling::SignalingRoomId, RedisConnection};
 use anyhow::Result;
 use types::{
     core::{ParticipantId, ParticipationKind, Timestamp},

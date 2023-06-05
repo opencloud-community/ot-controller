@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use anyhow::{Context, Result};
-use controller::prelude::redis::AsyncCommands;
-use controller::prelude::*;
+use controller::{api::signaling::SignalingRoomId, RedisConnection};
+use redis::AsyncCommands;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 

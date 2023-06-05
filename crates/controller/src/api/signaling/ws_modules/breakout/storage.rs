@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use super::BreakoutRoom;
-use crate::prelude::*;
 use crate::redis_wrapper::RedisConnection;
 use anyhow::{Context, Result};
 use redis::AsyncCommands;

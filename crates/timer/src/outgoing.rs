@@ -100,11 +100,9 @@ mod test {
     use std::time::SystemTime;
 
     use super::*;
-    use controller::prelude::{
-        chrono::{DateTime, Duration},
-        uuid::Uuid,
-    };
+    use chrono::{DateTime, Duration};
     use test_util::assert_eq_json;
+    use uuid::Uuid;
 
     #[test]
     fn countdown_started() {

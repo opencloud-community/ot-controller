@@ -2,21 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use controller::prelude::anyhow::Result;
-use controller::prelude::chrono::{self, Utc};
-use controller::prelude::futures::stream::once;
-use controller::prelude::futures::FutureExt;
-use controller::prelude::log;
-use controller::prelude::redis;
-use controller::prelude::redis::FromRedisValue;
-use controller::prelude::redis::RedisResult;
-use controller::prelude::tokio::time::sleep;
-use controller::prelude::uuid::Uuid;
-use controller::prelude::Event;
-use controller::prelude::{
-    async_trait, control, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
-};
+use anyhow::Result;
+use chrono::{self, Utc};
+use controller::api::signaling::{control, DestroyContext, SignalingRoomId};
+use controller::api::signaling::{Event, InitContext, ModuleContext, SignalingModule};
+use futures::{stream::once, FutureExt};
 use outgoing::StopKind;
+use redis::{self, FromRedisValue, RedisResult};
 use redis_args::ToRedisArgs;
 use serde::Deserialize;
 use serde::Serialize;
@@ -24,10 +16,12 @@ use std::fmt;
 use std::str::from_utf8;
 use std::str::FromStr;
 use storage::ready_status::ReadyStatus;
+use tokio::time::sleep;
 use types::{
     core::{ParticipantId, Timestamp},
     signaling::Role,
 };
+use uuid::Uuid;
 
 pub mod exchange;
 pub mod incoming;
@@ -177,7 +171,7 @@ impl SignalingModule for Timer {
         Ok(())
     }
 
-    async fn on_destroy(self, _ctx: controller::prelude::DestroyContext<'_>) {}
+    async fn on_destroy(self, _ctx: DestroyContext<'_>) {}
 }
 
 impl Timer {

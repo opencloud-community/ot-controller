@@ -13,10 +13,13 @@ use super::modules::AnyStream;
 use super::{
     DestroyContext, Event, ExchangePublish, NamespacedCommand, NamespacedEvent, SignalingModule,
 };
-use crate::api::signaling::prelude::control::{self, storage, ControlStateExt as _, NAMESPACE};
-use crate::api::signaling::prelude::{InitContext, ModuleContext};
-use crate::api::signaling::SignalingRoomId;
-use crate::api::Participant;
+use crate::api::{
+    signaling::{
+        control::{self, storage, ControlStateExt as _, NAMESPACE},
+        InitContext, ModuleContext, SignalingRoomId,
+    },
+    Participant,
+};
 use crate::redis_wrapper::RedisConnection;
 use crate::storage::ObjectStorage;
 use actix_http::ws::CloseCode;

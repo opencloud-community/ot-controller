@@ -11,16 +11,23 @@ version.workspace = true
 publish = false
 
 [dependencies]
+anyhow.workspace = true
+async-trait.workspace = true
+chrono.workspace = true
 controller-settings = { path = "../controller-settings", package = "opentalk-controller-settings" }
-etherpad-client = { path = "../etherpad-client", package = "etherpad-client" }
 controller = { path = "../controller", package = "opentalk-controller-core" }
 database = { path = "../database", package = "opentalk-database" }
 db-storage = { path = "../db-storage", package = "opentalk-db-storage" }
-serde = { version = "1", features = ["derive"] }
-redis = "0.22"
+etherpad-client = { path = "../etherpad-client", package = "etherpad-client" }
+futures.workspace = true
+log.workspace = true
+redis.workspace = true
 redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
 types = { path = "../types", package = "opentalk-types", features = ["backend"] }
 
 [dev-dependencies]
+pretty_assertions.workspace = true
 test-util = { path = "../test-util", package = "opentalk-test-util", features = ["database"] }
-pretty_assertions = "1.3"

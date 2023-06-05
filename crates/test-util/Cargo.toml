@@ -11,18 +11,21 @@ version.workspace = true
 publish = false
 
 [dependencies]
-anyhow = "1.0"
-serde = { version = "1", features = ["derive"] }
-serde_json = { version = "1" }
-tokio = { version = "1" }
-diesel = { version = "2", features = [
+anyhow.workspace = true
+log.workspace = true
+redis.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+diesel = { workspace = true, features = [
     "uuid",
     "serde_json",
 ] }
-diesel-async = { version = "0.2.1", features = ["postgres", "deadpool"] }
+diesel-async = { workspace = true, features = ["postgres", "deadpool"] }
 
 fern = "0.6"
-pretty_assertions = "1.3"
+pretty_assertions.workspace = true
+uuid.workspace = true
 
 controller = { path = "../controller", package = "opentalk-controller-core", optional = true }
 controller-settings = { path = "../controller-settings", package = "opentalk-controller-settings", optional = true }

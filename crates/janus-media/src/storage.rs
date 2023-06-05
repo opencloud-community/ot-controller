@@ -4,7 +4,7 @@
 
 use super::State;
 use anyhow::{Context, Result};
-use controller::prelude::*;
+use controller::{api::signaling::SignalingRoomId, RedisConnection};
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
 use types::core::ParticipantId;

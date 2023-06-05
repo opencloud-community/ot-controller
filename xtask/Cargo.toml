@@ -16,18 +16,18 @@ publish = false
 database = { path = "../crates//database", package = "opentalk-database" }
 db-storage = { path = "../crates/db-storage", package = "opentalk-db-storage" }
 
-tokio = { version = "1", features = ["macros"] }
-clap = { version = "4", features = ["derive", "env"] }
-anyhow = { version = "1.0" }
-url = { version = "2.3.1" }
+tokio = { workspace = true, features = ["macros"] }
+clap = { workspace = true, features = ["env"] }
+anyhow.workspace = true
+url.workspace = true
 cargo_metadata = { version = "0.15" }
 devx-cmd = { version = "0.5.0" }
 unified-diff = { version = "0.2.1" }
 
-log = { version = "0.4.17" }
-env_logger = { version = "0.10" }
+log.workspace = true
+env_logger.workspace = true
 
-diesel = { version = "2" }
-diesel-async = { version = "0.2.1", features = ["postgres", "deadpool"] }
+diesel.workspace = true
+diesel-async = { workspace = true, features = ["postgres", "deadpool"] }
 
-rand = { version = "0.8.5" }
+rand.workspace = true

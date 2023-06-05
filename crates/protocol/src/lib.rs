@@ -3,13 +3,19 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use crate::storage::init::InitState;
-use anyhow::Result;
-use controller::prelude::anyhow::Context;
-use controller::prelude::chrono::{Duration, Utc};
-use controller::prelude::control::storage::{get_all_participants, get_attribute};
-use controller::prelude::*;
-use controller::storage::assets::save_asset;
-use controller::storage::ObjectStorage;
+use anyhow::{Context, Result};
+use chrono::{Duration, Utc};
+use controller::{
+    api::signaling::{
+        control::{
+            self,
+            storage::{get_all_participants, get_attribute},
+        },
+        DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
+    },
+    storage::{assets::save_asset, ObjectStorage},
+    RedisConnection,
+};
 use database::Db;
 use etherpad_client::EtherpadClient;
 use exchange::GenerateUrl;

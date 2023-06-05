@@ -19,31 +19,31 @@ database = { path = "../database", package = "opentalk-database" }
 barrel = { version = "0.7", features = ["pg"] }
 
 ### Error handling
-thiserror = "1.0"
-anyhow = "1.0.69"
+thiserror.workspace = true
+anyhow.workspace = true
 http = "0.2.9"
 
 ### Database ORM
-diesel = { version = "2", features = [
+diesel = { workspace = true, features = [
     "uuid",
     "serde_json",
     "chrono",
 ] }
-diesel-async = "0.2"
-uuid = { version = "1.3.0", features = ["serde", "v4"] }
+diesel-async.workspace = true
+uuid = { workspace = true, features = ["serde", "v4"] }
 
 ### Logging utilities
-log = { version = "0.4", features = ["serde"] }
-tracing = { version = "0.1" }
+log = { workspace = true, features = ["serde"] }
+tracing.workspace = true
 tracing-futures = "0.2"
 
 ### QoL
-itertools = "0.10"
-futures = "0.3"
+itertools.workspace = true
+futures.workspace = true
 async-trait = "0.1"
 
-tokio = { version = "1", features = ["macros"] }
-parking_lot = "0.12"
+tokio = { workspace = true, features = ["macros"] }
+parking_lot.workspace = true
 
 ### TODO(r.floren) add this as a default feature
 actix-web = { version = "4" }
@@ -60,10 +60,9 @@ default-features = false
 features = ["runtime-tokio", "incremental"]
 
 [dev-dependencies]
-serial_test = "1"
-anyhow = "1.0"
+serial_test.workspace = true
 # TODO(r.floren) remove this in the future. Currently used to migrate in tests. Find something lighter.
 db-storage = { path = "../db-storage", package = "opentalk-db-storage" }
-url = "2"
-tokio = { version = "1", features = ["rt", "macros"] }
-pretty_assertions = "1.3"
+url.workspace = true
+tokio = { workspace = true, features = ["rt", "macros"] }
+pretty_assertions.workspace = true

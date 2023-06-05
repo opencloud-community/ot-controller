@@ -9,8 +9,16 @@
 //! Issues timestamp and messageIds to incoming chat messages and forwards them to other participants in the room or group.
 
 use anyhow::Result;
-use control::exchange;
-use controller::prelude::*;
+use controller::{
+    api::{
+        signaling::{
+            control::{self, exchange},
+            DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
+        },
+        Participant,
+    },
+    RedisConnection,
+};
 use database::Db;
 use db_storage::groups::Group;
 use outgoing::{ChatDisabled, ChatEnabled, HistoryCleared, MessageSent};
@@ -764,7 +772,7 @@ pub fn register(controller: &mut controller::Controller) {
 #[cfg(test)]
 mod test {
     use super::*;
-    use controller::prelude::chrono::DateTime;
+    use chrono::DateTime;
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use std::str::FromStr;

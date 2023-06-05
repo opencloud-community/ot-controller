@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use anyhow::{Context, Result};
-use controller::prelude::*;
 use serde::Deserialize;
 
 #[derive(Debug, Clone, Deserialize)]

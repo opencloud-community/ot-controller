@@ -5,7 +5,10 @@
 use crate::database::DatabaseContext;
 use crate::redis;
 use anyhow::{Context, Result};
-use controller::prelude::*;
+use controller::{
+    api::signaling::{ModuleTester, SignalingModule, WsMessageOutgoing},
+    RedisConnection,
+};
 use db_storage::users::User;
 use kustos::Authz;
 use pretty_assertions::assert_eq;

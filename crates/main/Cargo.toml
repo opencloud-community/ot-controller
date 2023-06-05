@@ -15,7 +15,7 @@ publish = false
 controller = { path = "../../crates/controller", package = "opentalk-controller-core" }
 community-modules = { path = "../../crates/community-modules", package = "opentalk-community-modules" }
 kustos = { path = "../../crates/kustos" }
-anyhow = "1.0"
+anyhow.workspace = true
 actix-web = { version = "4", default-features = false }
-anstream = "0.2"
-owo-colors = "3"
+anstream.workspace = true
+owo-colors.workspace = true

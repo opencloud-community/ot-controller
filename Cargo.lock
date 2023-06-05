@@ -2969,6 +2969,10 @@ name = "opentalk-chat"
 version = "0.0.0-dev"
 dependencies = [
  "actix-rt",
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "log",
  "opentalk-controller-core",
  "opentalk-controller-settings",
  "opentalk-database",
@@ -2977,9 +2981,14 @@ dependencies = [
  "opentalk-test-util",
  "opentalk-types",
  "pretty_assertions",
+ "r3dlock",
  "redis",
  "serde",
+ "serde_json",
  "serial_test",
+ "tokio",
+ "tracing",
+ "uuid",
 ]
 
 [[package]]
@@ -3040,7 +3049,6 @@ dependencies = [
  "either",
  "email_address",
  "futures",
- "futures-util",
  "itertools",
  "jsonwebtoken",
  "keycloak-admin",
@@ -3173,8 +3181,12 @@ dependencies = [
 name = "opentalk-janus-media"
 version = "0.0.0-dev"
 dependencies = [
+ "anyhow",
+ "async-trait",
+ "futures",
  "janus-client",
  "lapin-pool",
+ "log",
  "opentalk-controller-core",
  "opentalk-controller-settings",
  "opentalk-redis-args",
@@ -3184,6 +3196,10 @@ dependencies = [
  "pretty_assertions",
  "redis",
  "serde",
+ "serde_json",
+ "tokio",
+ "tokio-stream",
+ "tracing",
 ]
 
 [[package]]
@@ -3223,6 +3239,10 @@ name = "opentalk-polls"
 version = "0.0.0-dev"
 dependencies = [
  "actix-rt",
+ "anyhow",
+ "async-trait",
+ "futures",
+ "log",
  "opentalk-controller-core",
  "opentalk-redis-args",
  "opentalk-test-util",
@@ -3231,13 +3251,20 @@ dependencies = [
  "redis",
  "serde",
  "serial_test",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
 name = "opentalk-protocol"
 version = "0.0.0-dev"
 dependencies = [
+ "anyhow",
+ "async-trait",
+ "chrono",
  "etherpad-client",
+ "futures",
+ "log",
  "opentalk-controller-core",
  "opentalk-controller-settings",
  "opentalk-database",
@@ -3248,6 +3275,8 @@ dependencies = [
  "pretty_assertions",
  "redis",
  "serde",
+ "serde_json",
+ "tracing",
 ]
 
 [[package]]
@@ -3267,6 +3296,9 @@ name = "opentalk-shared-folder"
 version = "0.0.0-dev"
 dependencies = [
  "actix-rt",
+ "anyhow",
+ "async-trait",
+ "log",
  "opentalk-controller-core",
  "opentalk-database",
  "opentalk-db-storage",
@@ -3276,6 +3308,7 @@ dependencies = [
  "pretty_assertions",
  "redis",
  "serial_test",
+ "tracing",
 ]
 
 [[package]]
@@ -3287,15 +3320,18 @@ dependencies = [
  "diesel-async",
  "fern",
  "kustos",
+ "log",
  "opentalk-controller-core",
  "opentalk-controller-settings",
  "opentalk-database",
  "opentalk-db-storage",
  "opentalk-types",
  "pretty_assertions",
+ "redis",
  "serde",
  "serde_json",
  "tokio",
+ "uuid",
 ]
 
 [[package]]
@@ -3303,6 +3339,11 @@ name = "opentalk-timer"
 version = "0.0.0-dev"
 dependencies = [
  "actix-rt",
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "futures",
+ "log",
  "opentalk-controller-core",
  "opentalk-controller-settings",
  "opentalk-redis-args",
@@ -3311,7 +3352,11 @@ dependencies = [
  "pretty_assertions",
  "redis",
  "serde",
+ "serde_json",
  "serial_test",
+ "tokio",
+ "tracing",
+ "uuid",
 ]
 
 [[package]]
@@ -3340,9 +3385,11 @@ version = "0.0.0-dev"
 dependencies = [
  "actix-rt",
  "anyhow",
+ "async-trait",
  "bytes",
  "chrono",
  "futures",
+ "log",
  "opentalk-controller-core",
  "opentalk-controller-settings",
  "opentalk-database",
@@ -3357,6 +3404,7 @@ dependencies = [
  "serde_json",
  "serde_repr",
  "tokio",
+ "tracing",
  "url",
 ]
 

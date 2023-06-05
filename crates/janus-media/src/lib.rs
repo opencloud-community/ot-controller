@@ -8,9 +8,14 @@
 //!
 //! Handles media related messages and manages their respective forwarding to janus-gateway via rabbitmq.
 use anyhow::{bail, Context, Result};
-use controller::prelude::*;
-use controller::settings::SharedSettings;
-use controller::Controller;
+use controller::{
+    api::signaling::{
+        control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
+        SignalingRoomId,
+    },
+    settings::SharedSettings,
+    Controller,
+};
 use focus::FocusDetection;
 use incoming::{RequestMute, TargetConfigure};
 use janus_client::TrickleCandidate;
