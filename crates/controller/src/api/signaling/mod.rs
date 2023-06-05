@@ -12,7 +12,7 @@ pub(crate) mod ticket;
 mod ws;
 mod ws_modules;
 
-pub use ws::module_tester::{ModuleTester, WsMessageOutgoing};
+pub use ws::module_tester::{ModuleTester, NoInitError, WsMessageOutgoing};
 pub(crate) use ws::ws_service;
 pub use ws::{
     DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModules,
