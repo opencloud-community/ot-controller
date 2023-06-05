@@ -530,13 +530,19 @@ pub async fn try_init_event(
     room_id: RoomId,
     event: Option<Event>,
 ) -> Result<Option<Event>> {
-    let (_, event): (bool, Option<Event>) = redis::pipe()
-        .atomic()
-        .set_nx(RoomEvent { room_id }, event)
-        .get(RoomEvent { room_id })
-        .query_async(redis_conn)
-        .await
-        .context("Failed to SET NX & GET room event")?;
+    let event = if let Some(event) = event {
+        let (_, event): (bool, Event) = redis::pipe()
+            .atomic()
+            .set_nx(RoomEvent { room_id }, event)
+            .get(RoomEvent { room_id })
+            .query_async(redis_conn)
+            .await
+            .context("Failed to SET NX & GET room event")?;
+
+        Some(event)
+    } else {
+        event
+    };
 
     Ok(event)
 }
