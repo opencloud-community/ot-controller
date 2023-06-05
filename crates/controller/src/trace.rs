@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::collections::BTreeSet;
+
 use actix_web::dev::{ServiceRequest, ServiceResponse};
 use actix_web::http::header::USER_AGENT;
 use actix_web::{Error, HttpMessage};
@@ -19,12 +21,37 @@ use tracing_subscriber::{EnvFilter, Registry};
 use uuid::Uuid;
 
 pub fn init(settings: &Logging) -> Result<()> {
+    // If these default values are adjusted, that change should be synchronized
+    // into `extra/example.toml` for transparency towards administrators
+    // and documentation purposes.
+    let env_var = std::env::var(EnvFilter::DEFAULT_ENV).unwrap_or_else(|_| {
+        "error,opentalk=info,pinky_swear=off,rustls=warn,mio=error,lapin=warn".to_string()
+    });
+
+    let configured_scopes = env_var
+        .split(',')
+        .map(|filter| {
+            filter
+                .split_once('=')
+                .map(|(scope, _)| scope)
+                .unwrap_or_default()
+        })
+        .collect::<BTreeSet<_>>();
+
     // Layer which acts as filter of traces and spans.
     // The filter is created from enviroment (RUST_LOG) and config file
-    let mut filter = EnvFilter::from_default_env();
+    let mut filter = EnvFilter::new(&env_var);
 
-    for directive in &settings.default_directives {
-        filter = filter.add_directive(directive.parse()?);
+    if let Some(ref directives) = settings.default_directives {
+        for directive in directives {
+            let scope = directive
+                .split_once('=')
+                .map(|(scope, _)| scope)
+                .unwrap_or_default();
+            if !configured_scopes.contains(scope) {
+                filter = filter.add_directive(directive.parse()?);
+            }
+        }
     }
 
     // FMT layer prints the trace events into stdout
@@ -38,19 +65,25 @@ pub fn init(settings: &Logging) -> Result<()> {
         let otlp_exporter = opentelemetry_otlp::new_exporter()
             .tonic()
             .with_endpoint(endpoint);
+        let service_name = settings
+            .service_name
+            .clone()
+            .unwrap_or_else(|| "controller".into());
+        let service_namespace = settings
+            .service_namespace
+            .clone()
+            .unwrap_or_else(|| "opentalk".into());
+        let service_instance_id = settings
+            .service_instance_id
+            .clone()
+            .unwrap_or_else(|| Uuid::new_v4().to_string());
         let tracer = opentelemetry_otlp::new_pipeline()
             .tracing()
             .with_exporter(otlp_exporter)
             .with_trace_config(trace::config().with_resource(Resource::new(vec![
-                    KeyValue::new("service.name", settings.service_name.clone()),
-                    KeyValue::new("service.namespace", settings.service_namespace.clone()),
-                    KeyValue::new(
-                        "service.instance.id",
-                        settings
-                            .service_instance_id
-                            .clone()
-                            .unwrap_or_else(|| Uuid::new_v4().to_string())
-                    ),
+                    KeyValue::new("service.name", service_name),
+                    KeyValue::new("service.namespace", service_namespace),
+                    KeyValue::new("service.instance.id", service_instance_id),
                     KeyValue::new(
                         "service.version",
                         option_env!("VERGEN_GIT_SEMVER")

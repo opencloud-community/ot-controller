@@ -200,53 +200,17 @@ pub struct HttpTls {
     pub private_key: PathBuf,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Default, Debug, Clone, Deserialize)]
 pub struct Logging {
-    #[serde(default = "default_directives")]
-    pub default_directives: Vec<String>,
+    pub default_directives: Option<Vec<String>>,
 
-    #[serde(default)]
     pub otlp_tracing_endpoint: Option<String>,
 
-    #[serde(default = "default_service_name")]
-    pub service_name: String,
+    pub service_name: Option<String>,
 
-    #[serde(default = "default_service_namespace")]
-    pub service_namespace: String,
+    pub service_namespace: Option<String>,
 
-    #[serde(default)]
     pub service_instance_id: Option<String>,
-}
-
-impl Default for Logging {
-    fn default() -> Self {
-        Self {
-            default_directives: default_directives(),
-            otlp_tracing_endpoint: None,
-            service_name: default_service_name(),
-            service_namespace: default_service_namespace(),
-            service_instance_id: None,
-        }
-    }
-}
-
-fn default_service_name() -> String {
-    "controller".into()
-}
-
-fn default_service_namespace() -> String {
-    "opentalk".into()
-}
-
-fn default_directives() -> Vec<String> {
-    // Disable spamming noninformative traces
-    vec![
-        "opentalk=INFO".into(),
-        "pinky_swear=OFF".into(),
-        "rustls=WARN".into(),
-        "mio=ERROR".into(),
-        "lapin=WARN".into(),
-    ]
 }
 
 #[derive(Debug, Clone, Deserialize)]
