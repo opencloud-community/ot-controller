@@ -2,7 +2,6 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::ObjectStorage;
 use anyhow::{Context, Result};
 use aws_sdk_s3::types::ByteStream;
 use bytes::Bytes;
@@ -10,6 +9,7 @@ use database::Db;
 use db_storage::assets::{Asset, NewAsset};
 use db_storage::rooms::Room;
 use futures::Stream;
+use signaling_core::ObjectStorage;
 use std::sync::Arc;
 use types::core::{AssetId, RoomId};
 use uuid::Uuid;

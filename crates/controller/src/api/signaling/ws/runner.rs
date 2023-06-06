@@ -21,7 +21,6 @@ use crate::api::signaling::{
 };
 use crate::exchange_task::{ExchangeHandle, SubscriberHandle};
 use crate::redis_wrapper::RedisConnection;
-use crate::storage::ObjectStorage;
 use actix::Addr;
 use actix_http::ws::{CloseCode, CloseReason, Message};
 use actix_web_actors::ws;
@@ -37,7 +36,7 @@ use futures::Future;
 use itertools::Itertools;
 use kustos::Authz;
 use serde_json::Value;
-use signaling_core::Participant;
+use signaling_core::{ObjectStorage, Participant};
 use std::collections::HashMap;
 use std::future;
 use std::mem::replace;

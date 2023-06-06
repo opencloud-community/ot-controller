@@ -13,7 +13,7 @@ use controller::{
         },
         DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
     },
-    storage::{assets::save_asset, ObjectStorage},
+    storage::assets::save_asset,
     RedisConnection,
 };
 use database::Db;
@@ -24,6 +24,7 @@ use incoming::ParticipantSelection;
 use outgoing::{AccessUrl, PdfAsset};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
+use signaling_core::ObjectStorage;
 use std::sync::Arc;
 use types::{core::ParticipantId, signaling::Role};
 

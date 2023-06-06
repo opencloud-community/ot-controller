@@ -3274,6 +3274,7 @@ dependencies = [
  "opentalk-database",
  "opentalk-db-storage",
  "opentalk-redis-args",
+ "opentalk-signaling-core",
  "opentalk-test-util",
  "opentalk-types",
  "pretty_assertions",
@@ -3319,7 +3320,13 @@ dependencies = [
 name = "opentalk-signaling-core"
 version = "0.0.0-dev"
 dependencies = [
+ "anyhow",
+ "aws-sdk-s3",
+ "bytes",
  "diesel",
+ "futures",
+ "log",
+ "opentalk-controller-settings",
  "opentalk-db-storage",
  "opentalk-types",
  "pretty_assertions",
@@ -3410,6 +3417,7 @@ dependencies = [
  "opentalk-database",
  "opentalk-db-storage",
  "opentalk-redis-args",
+ "opentalk-signaling-core",
  "opentalk-types",
  "percent-encoding",
  "rand",

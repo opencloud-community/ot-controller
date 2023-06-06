@@ -4,7 +4,7 @@
 
 use super::response::{ApiError, NoContent};
 use super::{ApiResponse, PagePaginationQuery};
-use crate::storage::{self, ObjectStorage};
+use crate::storage;
 use actix_http::StatusCode;
 use actix_web::web::{Data, Path, Query};
 use actix_web::{delete, get, HttpResponse};
@@ -12,6 +12,7 @@ use chrono::{DateTime, Utc};
 use database::Db;
 use db_storage::assets::Asset;
 use serde::Serialize;
+use signaling_core::ObjectStorage;
 use types::core::{AssetId, RoomId};
 
 #[derive(Debug, Serialize)]

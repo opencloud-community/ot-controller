@@ -10,8 +10,14 @@ version.workspace = true
 publish = false
 
 [dependencies]
+anyhow.workspace = true
+aws-sdk-s3 = "0.21"
+bytes.workspace = true
+controller-settings = { path = "../controller-settings", package = "opentalk-controller-settings" }
 db-storage = { path = "../db-storage", package = "opentalk-db-storage" }
-diesel = { workspace = true }
+diesel.workspace = true
+futures.workspace = true
+log.workspace = true
 serde = { workspace = true, features = ["derive"] }
 types = { path = "../types", package = "opentalk-types", features = ["backend"] }
 

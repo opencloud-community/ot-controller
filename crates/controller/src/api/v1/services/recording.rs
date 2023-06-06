@@ -8,7 +8,6 @@ use crate::api::v1::response::NoContent;
 use crate::redis_wrapper::RedisConnection;
 use crate::settings::SharedSettingsActix;
 use crate::storage::assets::save_asset;
-use crate::storage::ObjectStorage;
 use actix_web::dev::HttpServiceFactory;
 use actix_web::post;
 use actix_web::web::Payload;
@@ -18,7 +17,7 @@ use database::Db;
 use db_storage::rooms::Room;
 use futures::TryStreamExt;
 use serde::{Deserialize, Serialize};
-use signaling_core::Participant;
+use signaling_core::{ObjectStorage, Participant};
 use types::core::{ResumptionToken, RoomId, TicketToken};
 
 const REQUIRED_RECORDING_ROLE: &str = "opentalk-recorder";

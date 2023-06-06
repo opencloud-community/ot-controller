@@ -20,6 +20,7 @@ database = { path = "../database", package = "opentalk-database" }
 log.workspace = true
 redis.workspace = true
 redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
+signaling-core = { path = "../signaling-core", package = "opentalk-signaling-core" }
 types = { path = "../types", package = "opentalk-types", features = ["backend"] }
 reqwest = { workspace = true, features = [
     "json",

@@ -10,7 +10,6 @@ use crate::api::v1::response::ApiError;
 use crate::exchange_task::ExchangeHandle;
 use crate::settings::SharedSettingsActix;
 use crate::storage::assets::asset_key;
-use crate::storage::ObjectStorage;
 use actix_web::delete;
 use actix_web::web::{Data, Path, ReqData};
 use database::{DatabaseError, Db};
@@ -24,6 +23,7 @@ use db_storage::users::User;
 use diesel_async::scoped_futures::ScopedFutureExt;
 use diesel_async::AsyncConnection;
 use kustos::prelude::*;
+use signaling_core::ObjectStorage;
 use types::core::RoomId;
 
 /// API Endpoint *DELETE /rooms/{room_id}*

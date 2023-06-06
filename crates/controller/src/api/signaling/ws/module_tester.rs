@@ -18,7 +18,6 @@ use crate::api::signaling::{
     InitContext, ModuleContext, SignalingRoomId,
 };
 use crate::redis_wrapper::RedisConnection;
-use crate::storage::ObjectStorage;
 use actix_http::ws::CloseCode;
 use actix_rt::task::JoinHandle;
 use anyhow::{bail, Context, Result};
@@ -28,7 +27,7 @@ use db_storage::users::User;
 use futures::stream::SelectAll;
 use kustos::Authz;
 use serde_json::Value;
-use signaling_core::Participant;
+use signaling_core::{ObjectStorage, Participant};
 use std::collections::{HashMap, HashSet};
 use std::marker::PhantomData;
 use std::panic;

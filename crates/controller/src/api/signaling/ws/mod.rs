@@ -5,7 +5,6 @@
 use super::{control, metrics::SignalingMetrics};
 use crate::api::signaling::SignalingRoomId;
 use crate::redis_wrapper::RedisConnection;
-use crate::storage::ObjectStorage;
 use actix_http::ws::CloseCode;
 use anyhow::Result;
 use database::Db;
@@ -15,7 +14,7 @@ use futures::stream::SelectAll;
 use kustos::Authz;
 use modules::{any_stream, AnyStream};
 use serde::{Deserialize, Serialize};
-use signaling_core::Participant;
+use signaling_core::{ObjectStorage, Participant};
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::marker::PhantomData;
