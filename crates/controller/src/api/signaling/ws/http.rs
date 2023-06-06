@@ -10,7 +10,6 @@ use crate::api::signaling::resumption::{ResumptionData, ResumptionTokenKeepAlive
 use crate::api::signaling::ticket::{TicketData, TicketRedisKey};
 use crate::api::signaling::ws::actor::WebSocketActor;
 use crate::api::v1::response::ApiError;
-use crate::api::Participant;
 use crate::exchange_task::ExchangeHandle;
 use crate::redis_wrapper::RedisConnection;
 use crate::settings::SharedSettingsActix;
@@ -24,6 +23,7 @@ use database::Db;
 use db_storage::rooms::Room;
 use db_storage::users::User;
 use kustos::Authz;
+use signaling_core::Participant;
 use std::marker::PhantomData;
 use std::time::Instant;
 use tokio::sync::{broadcast, mpsc};

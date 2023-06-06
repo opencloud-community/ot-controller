@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::api;
 use opentelemetry::metrics::{Counter, Histogram, UpDownCounter};
 use opentelemetry::{Context, Key};
+use signaling_core::Participant;
 
 const STARTUP_SUCCESSFUL: Key = Key::from_static_str("successful");
 const DESTROY_SUCCESSFUL: Key = Key::from_static_str("successful");
@@ -46,7 +46,7 @@ impl SignalingMetrics {
         self.destroyed_rooms_count.add(&Context::current(), 1, &[]);
     }
 
-    pub fn increment_participants_count<U>(&self, participant: &api::Participant<U>) {
+    pub fn increment_participants_count<U>(&self, participant: &Participant<U>) {
         self.participants_count.add(
             &Context::current(),
             1,
@@ -54,7 +54,7 @@ impl SignalingMetrics {
         );
     }
 
-    pub fn decrement_participants_count<U>(&self, participant: &api::Participant<U>) {
+    pub fn decrement_participants_count<U>(&self, participant: &Participant<U>) {
         self.participants_count.add(
             &Context::current(),
             -1,

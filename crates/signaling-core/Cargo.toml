@@ -1,0 +1,19 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+name = "opentalk-signaling-core"
+edition = "2021"
+authors.workspace = true
+version.workspace = true
+publish = false
+
+[dependencies]
+db-storage = { path = "../db-storage", package = "opentalk-db-storage" }
+diesel = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+types = { path = "../types", package = "opentalk-types", features = ["backend"] }
+
+[dev-dependencies]
+pretty_assertions.workspace = true

@@ -4,7 +4,6 @@
 
 use crate::api::signaling::ticket::start_or_continue_signaling_session;
 use crate::api::v1::response::ApiError;
-use crate::api::Participant;
 use crate::redis_wrapper::RedisConnection;
 use actix_web::dev::HttpServiceFactory;
 use actix_web::error::Result;
@@ -13,6 +12,7 @@ use actix_web::web::{Data, Json};
 use database::Db;
 use db_storage::sip_configs::SipConfig;
 use serde::{Deserialize, Serialize};
+use signaling_core::Participant;
 use types::core::{CallInId, CallInPassword, ResumptionToken, TicketToken};
 use validator::Validate;
 

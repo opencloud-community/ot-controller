@@ -10,12 +10,9 @@
 
 use anyhow::Result;
 use controller::{
-    api::{
-        signaling::{
-            control::{self, exchange},
-            DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
-        },
-        Participant,
+    api::signaling::{
+        control::{self, exchange},
+        DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
     },
     RedisConnection,
 };
@@ -25,6 +22,7 @@ use outgoing::{ChatDisabled, ChatEnabled, HistoryCleared, MessageSent};
 use r3dlock::Mutex;
 use redis_args::ToRedisArgs;
 use serde::{Deserialize, Serialize};
+use signaling_core::Participant;
 use std::collections::HashMap;
 use std::fmt;
 use std::str::{from_utf8, FromStr};

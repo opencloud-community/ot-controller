@@ -21,6 +21,7 @@ mail-worker-proto = { path = "../mail-worker-protocol", package = "opentalk-mail
 nextcloud-client = { path = "../nextcloud-client", package = "opentalk-nextcloud-client", default-features = false, features = [
     "rustls-tls-native-roots",
 ] }
+signaling-core = { path = "../signaling-core", package = "opentalk-signaling-core" }
 types = { path = "../types", package = "opentalk-types", features = ["backend"] }
 
 ### Logging utilities

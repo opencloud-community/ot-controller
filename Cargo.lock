@@ -2978,6 +2978,7 @@ dependencies = [
  "opentalk-database",
  "opentalk-db-storage",
  "opentalk-redis-args",
+ "opentalk-signaling-core",
  "opentalk-test-util",
  "opentalk-types",
  "pretty_assertions",
@@ -3067,6 +3068,7 @@ dependencies = [
  "opentalk-mail-worker-protocol",
  "opentalk-nextcloud-client",
  "opentalk-redis-args",
+ "opentalk-signaling-core",
  "opentalk-test-util",
  "opentalk-types",
  "opentelemetry",
@@ -3311,6 +3313,17 @@ dependencies = [
  "redis",
  "serial_test",
  "tracing",
+]
+
+[[package]]
+name = "opentalk-signaling-core"
+version = "0.0.0-dev"
+dependencies = [
+ "diesel",
+ "opentalk-db-storage",
+ "opentalk-types",
+ "pretty_assertions",
+ "serde",
 ]
 
 [[package]]

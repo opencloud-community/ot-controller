@@ -13,12 +13,9 @@ use super::modules::AnyStream;
 use super::{
     DestroyContext, Event, ExchangePublish, NamespacedCommand, NamespacedEvent, SignalingModule,
 };
-use crate::api::{
-    signaling::{
-        control::{self, storage, ControlStateExt as _, NAMESPACE},
-        InitContext, ModuleContext, SignalingRoomId,
-    },
-    Participant,
+use crate::api::signaling::{
+    control::{self, storage, ControlStateExt as _, NAMESPACE},
+    InitContext, ModuleContext, SignalingRoomId,
 };
 use crate::redis_wrapper::RedisConnection;
 use crate::storage::ObjectStorage;
@@ -31,6 +28,7 @@ use db_storage::users::User;
 use futures::stream::SelectAll;
 use kustos::Authz;
 use serde_json::Value;
+use signaling_core::Participant;
 use std::collections::{HashMap, HashSet};
 use std::marker::PhantomData;
 use std::panic;
