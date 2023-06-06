@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - signaling: Consider the `enable_phone_mapping` config value when trying to match the phone number to a opentalk user
+- janus-media: discard unhandled ack messages, log them on debug level only ([#252](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/252))
 
 ## [0.4.0] - 2023-05-25
 
