@@ -10,6 +10,8 @@ authors = ["OpenTalk Team <mail@opentalk.eu>"]
 version = "0.0.0-dev"
 
 [workspace.dependencies]
+actix-rt = "2"
+actix-web = { version = "4", default-features = true }
 anstream = "0.2"
 anyhow = "1"
 arc-swap = "1"

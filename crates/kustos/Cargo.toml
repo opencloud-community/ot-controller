@@ -46,7 +46,7 @@ tokio = { workspace = true, features = ["macros"] }
 parking_lot.workspace = true
 
 ### TODO(r.floren) add this as a default feature
-actix-web = { version = "4" }
+actix-web.workspace = true
 
 ### Opentelementry metrics
 opentelemetry = { version = "0.18", default-features = false, features = [
