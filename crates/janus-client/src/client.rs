@@ -843,6 +843,13 @@ async fn route_message(
 ) {
     // Route event messages
     match janus_result.as_ref() {
+        // Discard `Ack` message not mapped to a local transaction instead of forwarding it to the general channel
+        JanusMessage::Ack(incoming::Ack { transaction }) => {
+            log::debug!(
+                "Unhandled ack message for transaction {:?} discarded",
+                transaction
+            );
+        }
         JanusMessage::Event(incoming::Event {
             sender, session_id, ..
         })
