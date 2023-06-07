@@ -9,7 +9,6 @@
 //! Issues timestamp and messageIds to incoming chat messages and forwards them to other participants in the room or group.
 
 use anyhow::Result;
-use controller::api::signaling::control::{self, exchange};
 use database::Db;
 use db_storage::groups::Group;
 use outgoing::{ChatDisabled, ChatEnabled, HistoryCleared, MessageSent};
@@ -17,18 +16,20 @@ use r3dlock::Mutex;
 use redis_args::ToRedisArgs;
 use serde::{Deserialize, Serialize};
 use signaling_core::{
+    control::{self, exchange},
     DestroyContext, Event, InitContext, ModuleContext, Participant, RedisConnection,
     SignalingModule, SignalingRoomId,
 };
-use std::collections::HashMap;
-use std::fmt;
-use std::str::{from_utf8, FromStr};
-use std::sync::Arc;
 use storage::StoredMessage;
 use types::{
     core::{GroupId, GroupName, ParticipantId, Timestamp, UserId},
     signaling::Role,
 };
+
+use std::collections::HashMap;
+use std::fmt;
+use std::str::{from_utf8, FromStr};
+use std::sync::Arc;
 
 pub mod incoming;
 pub mod outgoing;

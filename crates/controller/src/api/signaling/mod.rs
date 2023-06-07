@@ -11,4 +11,4 @@ mod ws_modules;
 pub use ws::module_tester::{ModuleTester, NoInitError, WsMessageOutgoing};
 pub(crate) use ws::ws_service;
 pub use ws::{SignalingModules, SignalingProtocols};
-pub use ws_modules::{breakout, control, moderation, recording};
+pub use ws_modules::{breakout, moderation, recording};

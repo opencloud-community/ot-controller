@@ -8,7 +8,7 @@
 //!
 //! Handles media related messages and manages their respective forwarding to janus-gateway via rabbitmq.
 use anyhow::{bail, Context, Result};
-use controller::{api::signaling::control, settings::SharedSettings, Controller};
+use controller::{settings::SharedSettings, Controller};
 use focus::FocusDetection;
 use incoming::{RequestMute, TargetConfigure};
 use janus_client::TrickleCandidate;
@@ -20,7 +20,7 @@ use outgoing::Link;
 use serde::{Deserialize, Serialize};
 use sessions::MediaSessions;
 use signaling_core::{
-    DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
+    control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
 };
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;

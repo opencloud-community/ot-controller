@@ -9,13 +9,10 @@ use super::modules::{
 use super::{
     DestroyContext, ExchangeBinding, ExchangePublish, NamespacedCommand, NamespacedEvent, Timestamp,
 };
-use crate::api::signaling::control;
 use crate::api::signaling::{
     moderation,
     resumption::{ResumptionTokenKeepAlive, ResumptionTokenUsed},
     ws::actor::WsCommand,
-    ws_modules::control::storage::ParticipantIdRunnerLock,
-    ws_modules::control::{exchange, storage, ControlStateExt as _, NAMESPACE},
 };
 use crate::exchange_task::{ExchangeHandle, SubscriberHandle};
 use actix::Addr;
@@ -34,6 +31,11 @@ use itertools::Itertools;
 use kustos::Authz;
 use serde_json::Value;
 use signaling_core::{
+    control::{
+        self, exchange,
+        storage::{self, ParticipantIdRunnerLock},
+        ControlStateExt as _, NAMESPACE,
+    },
     AnyStream, ObjectStorage, Participant, RedisConnection, SignalingMetrics, SignalingRoomId,
 };
 use std::collections::HashMap;

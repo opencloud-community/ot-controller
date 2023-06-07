@@ -10,7 +10,6 @@
 //!
 //! The idea is to simulate a frontend websocket connection.
 use super::{DestroyContext, ExchangePublish, NamespacedCommand, NamespacedEvent, SignalingModule};
-use crate::api::signaling::control::{self, storage, ControlStateExt as _, NAMESPACE};
 use actix_http::ws::CloseCode;
 use actix_rt::task::JoinHandle;
 use anyhow::{bail, Context, Result};
@@ -21,6 +20,7 @@ use futures::stream::SelectAll;
 use kustos::Authz;
 use serde_json::Value;
 use signaling_core::{
+    control::{self, storage, ControlStateExt as _, NAMESPACE},
     AnyStream, Event, InitContext, ModuleContext, ObjectStorage, Participant, RedisConnection,
     SignalingRoomId,
 };

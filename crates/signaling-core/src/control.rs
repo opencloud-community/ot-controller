@@ -2,15 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Control Module Stub
-//!
-//! Actual control 'module' code can be found inside `crate::api::signaling::ws::runner`
 use anyhow::Result;
-use signaling_core::{RedisConnection, SignalingRoomId};
 use types::{
     core::{ParticipantId, ParticipationKind, Timestamp},
     signaling::{control::state::ControlState, Role},
 };
+
+use crate::{RedisConnection, SignalingRoomId};
 
 pub mod exchange;
 pub mod storage;

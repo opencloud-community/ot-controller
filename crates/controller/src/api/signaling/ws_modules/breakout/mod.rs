@@ -9,7 +9,7 @@ use actix_http::ws::CloseCode;
 use anyhow::{bail, Result};
 use futures::FutureExt;
 use signaling_core::{
-    DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
+    control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
 };
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
@@ -26,8 +26,6 @@ use types::{
         Role,
     },
 };
-
-use super::control;
 
 pub mod exchange;
 pub mod storage;

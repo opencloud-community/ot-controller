@@ -5,7 +5,7 @@
 use anyhow::{Context, Result};
 use lapin_pool::{RabbitMqChannel, RabbitMqPool};
 use signaling_core::{
-    DestroyContext, Event, InitContext, ModuleContext, Participant, SignalingModule,
+    control, DestroyContext, Event, InitContext, ModuleContext, Participant, SignalingModule,
     SignalingRoomId,
 };
 use std::sync::Arc;
@@ -22,8 +22,6 @@ use types::{
         Role,
     },
 };
-
-use super::control;
 
 mod exchange;
 mod rabbitmq;

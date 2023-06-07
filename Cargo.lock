@@ -3335,12 +3335,15 @@ dependencies = [
  "opentalk-controller-settings",
  "opentalk-database",
  "opentalk-db-storage",
+ "opentalk-redis-args",
  "opentalk-types",
  "opentelemetry",
  "pretty_assertions",
+ "r3dlock",
  "redis",
  "serde",
  "serde_json",
+ "tracing",
 ]
 
 [[package]]

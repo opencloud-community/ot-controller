@@ -14,6 +14,8 @@ mod redis_wrapper;
 mod signaling_module;
 mod signaling_room_id;
 
+pub mod control;
+
 pub use any_stream::{any_stream, AnyStream};
 pub use destroy_context::DestroyContext;
 pub use event::Event;

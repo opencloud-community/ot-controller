@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use crate::api::internal::NoContent;
-use crate::api::signaling::control;
 use crate::api::v1::events::associated_resource_ids;
 use crate::api::v1::events::shared_folder::delete_shared_folders;
 use crate::api::v1::response::ApiError;
@@ -23,7 +22,7 @@ use db_storage::users::User;
 use diesel_async::scoped_futures::ScopedFutureExt;
 use diesel_async::AsyncConnection;
 use kustos::prelude::*;
-use signaling_core::ObjectStorage;
+use signaling_core::{control, ObjectStorage};
 use types::core::RoomId;
 
 /// API Endpoint *DELETE /rooms/{room_id}*

@@ -5,6 +5,7 @@
 use actix_http::ws::CloseCode;
 use anyhow::Result;
 use signaling_core::{
+    control::{self, ControlStateExt as _},
     DestroyContext, Event, InitContext, ModuleContext, RedisConnection, SignalingModule,
     SignalingRoomId,
 };
@@ -23,8 +24,6 @@ use types::{
 };
 
 use crate::api::signaling::ws::ModuleContextExt;
-
-use super::control::{self, ControlStateExt as _};
 
 pub mod exchange;
 pub mod storage;

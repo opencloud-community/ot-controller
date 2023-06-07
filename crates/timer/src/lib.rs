@@ -4,22 +4,15 @@
 
 use anyhow::Result;
 use chrono::{self, Utc};
-use controller::api::signaling::control;
 use futures::{stream::once, FutureExt};
 use outgoing::StopKind;
 use redis::{self, FromRedisValue, RedisResult};
 use redis_args::ToRedisArgs;
 use serde::Deserialize;
 use serde::Serialize;
-use signaling_core::DestroyContext;
-use signaling_core::Event;
-use signaling_core::InitContext;
-use signaling_core::ModuleContext;
-use signaling_core::SignalingModule;
-use signaling_core::SignalingRoomId;
-use std::fmt;
-use std::str::from_utf8;
-use std::str::FromStr;
+use signaling_core::{
+    control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
+};
 use storage::ready_status::ReadyStatus;
 use tokio::time::sleep;
 use types::{
@@ -27,6 +20,10 @@ use types::{
     signaling::Role,
 };
 use uuid::Uuid;
+
+use std::fmt;
+use std::str::from_utf8;
+use std::str::FromStr;
 
 pub mod exchange;
 pub mod incoming;

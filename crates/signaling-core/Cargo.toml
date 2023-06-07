@@ -27,9 +27,12 @@ opentelemetry = { version = "0.18", default-features = false, features = [
     "rt-tokio-current-thread",
     "metrics",
 ] }
+r3dlock = { path = "../r3dlock" }
 redis = { workspace = true, features = ["tokio-comp", "connection-manager"] }
+redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
+tracing.workspace = true
 types = { path = "../types", package = "opentalk-types", features = ["backend"] }
 
 [dev-dependencies]

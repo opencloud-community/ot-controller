@@ -2,9 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::control;
 use signaling_core::{
-    DestroyContext, ExchangeBinding, ExchangePublish, ModuleContext, SignalingModule,
+    control, DestroyContext, ExchangeBinding, ExchangePublish, ModuleContext, SignalingModule,
 };
 use types::{
     core::Timestamp,

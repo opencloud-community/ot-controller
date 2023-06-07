@@ -5,13 +5,7 @@
 use crate::storage::init::InitState;
 use anyhow::{Context, Result};
 use chrono::{Duration, Utc};
-use controller::{
-    api::signaling::control::{
-        self,
-        storage::{get_all_participants, get_attribute},
-    },
-    storage::assets::save_asset,
-};
+use controller::storage::assets::save_asset;
 use database::Db;
 use etherpad_client::EtherpadClient;
 use exchange::GenerateUrl;
@@ -21,6 +15,10 @@ use outgoing::{AccessUrl, PdfAsset};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use signaling_core::{
+    control::{
+        self,
+        storage::{get_all_participants, get_attribute},
+    },
     DestroyContext, Event, InitContext, ModuleContext, ObjectStorage, RedisConnection,
     SignalingModule, SignalingRoomId,
 };
