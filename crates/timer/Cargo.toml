@@ -33,4 +33,4 @@ uuid.workspace = true
 test-util = { path = "../test-util", package = "opentalk-test-util", features = ["controller"] }
 pretty_assertions.workspace = true
 serial_test.workspace = true
-actix-rt = "2.8"
+actix-rt.workspace = true

@@ -41,5 +41,5 @@ async-trait.workspace = true
 tracing.workspace = true
 
 [dev-dependencies]
-actix-rt = "2.8"
+actix-rt.workspace = true
 rand.workspace = true

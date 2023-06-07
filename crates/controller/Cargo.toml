@@ -70,8 +70,8 @@ aws-sdk-s3 = "0.21"
 ### Web Framework & Runtime
 tokio = { workspace = true, features = ["signal"] }
 tokio-stream.workspace = true
-actix-web = { version = "4", features = ["rustls"] }
-actix-rt = "2.8"
+actix-web = { workspace = true, features = ["rustls"] }
+actix-rt.workspace = true
 actix-web-httpauth = "0.8"
 actix-cors = "0.6"
 async-trait.workspace = true
