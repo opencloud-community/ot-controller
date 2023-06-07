@@ -32,7 +32,7 @@ controller-settings = { path = "../controller-settings", package = "opentalk-con
 kustos = { path = "../kustos", package = "kustos", optional = true }
 database = { path = "../database", package = "opentalk-database", optional = true }
 db-storage = { path = "../db-storage", package = "opentalk-db-storage", optional = true }
-signaling-core = { path = "../signaling-core", package = "opentalk-signaling-core" }
+signaling-core = { path = "../signaling-core", package = "opentalk-signaling-core", features = ["module_tester"] }
 types = { path = "../types", package = "opentalk-types", features = ["backend"] }
 
 [features]

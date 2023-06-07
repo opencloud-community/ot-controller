@@ -13,7 +13,6 @@ use types::{
 mod actor;
 mod echo;
 mod http;
-pub mod module_tester;
 mod modules;
 mod runner;
 

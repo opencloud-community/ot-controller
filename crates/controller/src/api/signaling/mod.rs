@@ -8,7 +8,6 @@ pub(crate) mod ticket;
 mod ws;
 mod ws_modules;
 
-pub use ws::module_tester::{ModuleTester, NoInitError, WsMessageOutgoing};
 pub(crate) use ws::ws_service;
 pub use ws::{SignalingModules, SignalingProtocols};
 pub use ws_modules::{breakout, moderation, recording};

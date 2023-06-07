@@ -14,6 +14,9 @@ mod redis_wrapper;
 mod signaling_module;
 mod signaling_room_id;
 
+#[cfg(feature = "module_tester")]
+pub mod module_tester;
+
 pub mod control;
 
 pub use any_stream::{any_stream, AnyStream};

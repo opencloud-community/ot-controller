@@ -10,6 +10,7 @@ version.workspace = true
 publish = false
 
 [dependencies]
+actix-rt = { workspace = true, optional = true }
 actix-http.workspace = true
 anyhow.workspace = true
 async-trait.workspace = true
@@ -32,8 +33,14 @@ redis = { workspace = true, features = ["tokio-comp", "connection-manager"] }
 redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, optional = true }
 tracing.workspace = true
 types = { path = "../types", package = "opentalk-types", features = ["backend"] }
 
 [dev-dependencies]
 pretty_assertions.workspace = true
+
+[features]
+default = []
+module_tester = ["tokio", "actix-rt"]

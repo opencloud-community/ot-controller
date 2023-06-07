@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::{Duration, Utc};
-use controller::api::signaling::{ModuleTester, WsMessageOutgoing};
 use opentalk_timer::incoming;
 use opentalk_timer::incoming::Stop;
 use opentalk_timer::outgoing;
@@ -13,6 +12,7 @@ use opentalk_timer::Timer;
 use opentalk_timer::TimerId;
 use pretty_assertions::assert_eq;
 use serial_test::serial;
+use signaling_core::module_tester::{ModuleTester, WsMessageOutgoing};
 use test_util::USER_1;
 use test_util::USER_2;
 use test_util::{common, TestContext};

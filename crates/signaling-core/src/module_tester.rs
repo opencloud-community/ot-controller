@@ -5,11 +5,15 @@
 //! The ModuleTester simulates a runner environment for a specified module.
 //!
 //! This module is exclusively used for testing and does not contribute to the controllers behavior.
-//! As its basically a 'copy' of the [`super::runner::Runner`] it uses a few types from there. Due to
+//! As its basically a 'copy' of the Runner it uses a few types from there. Due to
 //! visibility restriction of those types, this module is located in the same folder.
 //!
 //! The idea is to simulate a frontend websocket connection.
-use super::{DestroyContext, ExchangePublish, NamespacedCommand, NamespacedEvent, SignalingModule};
+use crate::{
+    control::{self, storage, ControlStateExt as _, NAMESPACE},
+    AnyStream, DestroyContext, Event, ExchangePublish, InitContext, ModuleContext, ObjectStorage,
+    Participant, RedisConnection, SignalingModule, SignalingRoomId,
+};
 use actix_http::ws::CloseCode;
 use actix_rt::task::JoinHandle;
 use anyhow::{bail, Context, Result};
@@ -17,24 +21,18 @@ use database::Db;
 use db_storage::rooms::Room;
 use db_storage::users::User;
 use futures::stream::SelectAll;
+use futures::StreamExt;
 use kustos::Authz;
 use serde_json::Value;
-use signaling_core::{
-    control::{self, storage, ControlStateExt as _, NAMESPACE},
-    AnyStream, Event, InitContext, ModuleContext, ObjectStorage, Participant, RedisConnection,
-    SignalingRoomId,
+use tokio::{
+    select,
+    sync::{
+        broadcast,
+        mpsc::{self, UnboundedReceiver, UnboundedSender},
+    },
+    task,
+    time::timeout,
 };
-use std::collections::{HashMap, HashSet};
-use std::marker::PhantomData;
-use std::panic;
-use std::sync::Arc;
-use std::time::Duration;
-use tokio::select;
-use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
-use tokio::sync::{broadcast, mpsc};
-use tokio::task;
-use tokio::time::timeout;
-use tokio_stream::StreamExt;
 use types::{
     common::tariff::TariffResource,
     core::{BreakoutRoomId, ParticipantId, ParticipationKind, TariffId, Timestamp, UserId},
@@ -45,9 +43,15 @@ use types::{
             state::ControlState,
             AssociatedParticipant,
         },
-        Role,
+        NamespacedCommand, NamespacedEvent, Role,
     },
 };
+
+use std::collections::{HashMap, HashSet};
+use std::marker::PhantomData;
+use std::panic;
+use std::sync::Arc;
+use std::time::Duration;
 
 /// A module tester that simulates a runner environment for provided module.
 ///
