@@ -523,7 +523,7 @@ async fn global_receive_task(
                 }
             }
             Some((id, msg)) = events.recv() => {
-                log::debug!("Unhandled janus message mcu={:?} msg={:?}",id, msg);
+                log::warn!("Unhandled janus message mcu={:?} msg={:?}",id, msg);
                 // TODO Find out what we want to with these messages
                 // most of them are events which are not interesting to us
                 // and others expose where we ignore responses from janus
