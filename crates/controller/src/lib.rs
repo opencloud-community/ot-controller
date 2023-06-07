@@ -43,7 +43,7 @@ use exchange_task::ExchangeHandle;
 use keycloak_admin::KeycloakAdminClient;
 use lapin_pool::RabbitMqPool;
 use oidc::OidcContext;
-use signaling_core::ObjectStorage;
+use signaling_core::{ObjectStorage, RedisConnection};
 use std::fs::File;
 use std::io::BufReader;
 use std::net::Ipv6Addr;
@@ -61,15 +61,12 @@ mod cli;
 mod exchange_task;
 mod metrics;
 mod oidc;
-mod redis_wrapper;
 mod services;
 mod trace;
 
 pub mod api;
 pub mod settings;
 pub mod storage;
-
-pub use redis_wrapper::RedisConnection;
 
 #[derive(Debug, thiserror::Error)]
 #[error("Blocking thread has panicked")]

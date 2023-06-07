@@ -3,13 +3,13 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use crate::api::signaling::SignalingRoomId;
-use crate::redis_wrapper::RedisConnection;
 use anyhow::{Context, Result};
 use db_storage::events::Event;
 use db_storage::tariffs::Tariff;
 use r3dlock::Mutex;
 use redis::{AsyncCommands, FromRedisValue, ToRedisArgs};
 use redis_args::ToRedisArgs;
+use signaling_core::RedisConnection;
 use std::collections::HashSet;
 use std::fmt::Debug;
 use std::time::Duration;

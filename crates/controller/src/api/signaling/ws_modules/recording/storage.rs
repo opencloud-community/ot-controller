@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use crate::api::signaling::SignalingRoomId;
-use crate::redis_wrapper::RedisConnection;
 use anyhow::{Context, Result};
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
+use signaling_core::RedisConnection;
 use types::signaling::recording::RecordingStatus;
 
 use super::RecordingId;

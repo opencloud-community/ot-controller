@@ -5,10 +5,11 @@
 use crate::outgoing;
 use crate::TimerId;
 use anyhow::{Context, Result};
-use controller::{api::signaling::SignalingRoomId, RedisConnection};
+use controller::api::signaling::SignalingRoomId;
 use redis::AsyncCommands;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
+use signaling_core::RedisConnection;
 use types::core::{ParticipantId, Timestamp};
 
 /// The timer key holds a serialized [`Timer`].

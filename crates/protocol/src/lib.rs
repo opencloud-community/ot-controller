@@ -14,7 +14,6 @@ use controller::{
         DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
     },
     storage::assets::save_asset,
-    RedisConnection,
 };
 use database::Db;
 use etherpad_client::EtherpadClient;
@@ -24,7 +23,7 @@ use incoming::ParticipantSelection;
 use outgoing::{AccessUrl, PdfAsset};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
-use signaling_core::ObjectStorage;
+use signaling_core::{ObjectStorage, RedisConnection};
 use std::sync::Arc;
 use types::{core::ParticipantId, signaling::Role};
 

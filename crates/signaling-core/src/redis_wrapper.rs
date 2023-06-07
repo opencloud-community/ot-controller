@@ -12,7 +12,7 @@ use std::time::Instant;
 const COMMAND_KEY: Key = Key::from_static_str("command");
 
 pub struct RedisMetrics {
-    pub(crate) command_execution_time: Histogram<f64>,
+    pub command_execution_time: Histogram<f64>,
 }
 
 #[derive(Clone)]

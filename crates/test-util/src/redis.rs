@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use controller::RedisConnection;
 use redis::aio::ConnectionManager;
+use signaling_core::RedisConnection;
 
 pub async fn setup() -> RedisConnection {
     let redis_url =

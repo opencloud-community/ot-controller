@@ -3,11 +3,11 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use super::BreakoutRoom;
-use crate::redis_wrapper::RedisConnection;
 use anyhow::{Context, Result};
 use redis::AsyncCommands;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
+use signaling_core::RedisConnection;
 use std::fmt::Debug;
 use std::time::{Duration, SystemTime};
 use types::core::{BreakoutRoomId, RoomId};

@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use crate::api::signaling::metrics::SignalingMetrics;
-use crate::redis_wrapper::RedisMetrics;
 use crate::settings::SharedSettingsActix;
 use actix_http::body::BoxBody;
 use actix_http::StatusCode;
@@ -23,6 +22,7 @@ use opentelemetry::sdk::metrics::{controllers, processors};
 use opentelemetry::{global, Context, Key};
 use opentelemetry_prometheus::PrometheusExporter;
 use prometheus::{Encoder, TextEncoder};
+use signaling_core::RedisMetrics;
 use std::sync::Arc;
 
 const MAIL_TASK_KIND: Key = Key::from_static_str("mail_task_kind");
