@@ -4,12 +4,14 @@
 
 mod any_stream;
 mod exchange_binding;
+mod exchange_publish;
 mod object_storage;
 mod participant;
 mod redis_wrapper;
 
 pub use any_stream::{any_stream, AnyStream};
 pub use exchange_binding::ExchangeBinding;
+pub use exchange_publish::ExchangePublish;
 pub use object_storage::ObjectStorage;
 pub use participant::Participant;
 pub use redis_wrapper::{RedisConnection, RedisMetrics};

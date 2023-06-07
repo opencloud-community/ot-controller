@@ -13,7 +13,8 @@ use futures::stream::SelectAll;
 use kustos::Authz;
 use serde::{Deserialize, Serialize};
 use signaling_core::{
-    any_stream, AnyStream, ExchangeBinding, ObjectStorage, Participant, RedisConnection,
+    any_stream, AnyStream, ExchangeBinding, ExchangePublish, ObjectStorage, Participant,
+    RedisConnection,
 };
 use std::collections::HashMap;
 use std::fmt::Debug;
@@ -204,12 +205,6 @@ where
     exit: &'ctx mut Option<CloseCode>,
     metrics: Option<Arc<SignalingMetrics>>,
     m: PhantomData<fn() -> M>,
-}
-
-#[derive(Debug, Clone)]
-struct ExchangePublish {
-    routing_key: String,
-    message: String,
 }
 
 impl<M> ModuleContext<'_, M>
