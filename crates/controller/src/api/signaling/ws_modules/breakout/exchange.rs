@@ -3,12 +3,11 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use super::storage::BreakoutConfig;
-use crate::api::signaling::BreakoutRoomId;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::SystemTime;
 use types::{
-    core::ParticipantId,
+    core::{BreakoutRoomId, ParticipantId},
     signaling::breakout::{AssociatedParticipantInOtherRoom, ParticipantInOtherRoom},
 };
 

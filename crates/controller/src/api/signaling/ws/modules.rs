@@ -2,15 +2,15 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::{Event, ModuleContext};
+use super::ModuleContext;
 use super::{SignalingModule, Timestamp};
 use crate::api::signaling::ws::runner::Builder;
-use crate::api::signaling::ws::{DestroyContext, ExchangePublish, InitContext};
+use crate::api::signaling::ws::{DestroyContext, ExchangePublish};
 use actix_http::ws::{CloseCode, Message};
 use anyhow::{Context, Result};
 use futures::stream::SelectAll;
 use serde_json::Value;
-use signaling_core::{AnyStream, RedisConnection, SignalingMetrics};
+use signaling_core::{AnyStream, Event, InitContext, RedisConnection, SignalingMetrics};
 use std::any::Any;
 use std::collections::HashMap;
 use std::marker::PhantomData;

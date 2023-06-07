@@ -2,10 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::api::signaling::{Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId};
 use actix_http::ws::CloseCode;
 use anyhow::Result;
-use signaling_core::{DestroyContext, RedisConnection};
+use signaling_core::{
+    DestroyContext, Event, InitContext, ModuleContext, RedisConnection, SignalingModule,
+    SignalingRoomId,
+};
 use std::{collections::HashMap, iter::zip};
 use types::{
     core::{ParticipantId, RoomId, UserId},
@@ -19,6 +21,8 @@ use types::{
         Role,
     },
 };
+
+use crate::api::signaling::ws::ModuleContextExt;
 
 use super::control::{self, ControlStateExt as _};
 
@@ -42,7 +46,7 @@ async fn build_waiting_room_participants(
 
     for id in list {
         let control_data =
-            ControlState::from_redis(redis_conn, SignalingRoomId(room_id, None), *id).await?;
+            ControlState::from_redis(redis_conn, SignalingRoomId::new(room_id, None), *id).await?;
 
         let module_data = HashMap::from([
             (

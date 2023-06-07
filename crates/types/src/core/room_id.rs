@@ -7,3 +7,10 @@ crate::diesel_newtype! {
 
     #[derive(Copy)] RoomId(uuid::Uuid) => diesel::sql_types::Uuid, "/rooms/"
 }
+
+impl RoomId {
+    /// Create a ZERO room id, e.g. for testing purposes
+    pub const fn nil() -> Self {
+        Self::from(uuid::Uuid::nil())
+    }
+}

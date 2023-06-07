@@ -5,12 +5,11 @@
 use crate::{MessageId, Scope};
 
 use anyhow::{Context, Result};
-use controller::api::signaling::SignalingRoomId;
 use r3dlock::{Mutex, MutexGuard};
 use redis::AsyncCommands;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
-use signaling_core::RedisConnection;
+use signaling_core::{RedisConnection, SignalingRoomId};
 use std::{
     collections::{HashMap, HashSet},
     str::FromStr,
@@ -278,7 +277,7 @@ mod test {
     use types::core::RoomId;
     use uuid::uuid;
 
-    pub const ROOM: SignalingRoomId = SignalingRoomId::new_test(RoomId::from(uuid::Uuid::nil()));
+    pub const ROOM: SignalingRoomId = SignalingRoomId::nil();
     pub const SELF: ParticipantId = ParticipantId::nil();
     pub const BOB: ParticipantId = ParticipantId::from_u128(0xdeadbeef);
     pub const ALICE: ParticipantId = ParticipantId::from_u128(0xbadcafe);
@@ -465,7 +464,7 @@ mod test {
 
         {
             let id = RoomChatHistory {
-                room: SignalingRoomId::new_test(room_id),
+                room: SignalingRoomId::new_for_room(room_id),
             };
             assert_eq!(
                 id.to_redis_args(),

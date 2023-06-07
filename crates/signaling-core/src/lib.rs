@@ -4,18 +4,24 @@
 
 mod any_stream;
 mod destroy_context;
-mod exchange_binding;
-mod exchange_publish;
+mod event;
+mod init_context;
 mod metrics;
+mod module_context;
 mod object_storage;
 mod participant;
 mod redis_wrapper;
+mod signaling_module;
+mod signaling_room_id;
 
 pub use any_stream::{any_stream, AnyStream};
 pub use destroy_context::DestroyContext;
-pub use exchange_binding::ExchangeBinding;
-pub use exchange_publish::ExchangePublish;
+pub use event::Event;
+pub use init_context::{ExchangeBinding, InitContext};
 pub use metrics::SignalingMetrics;
+pub use module_context::{ExchangePublish, ModuleContext};
 pub use object_storage::ObjectStorage;
 pub use participant::Participant;
 pub use redis_wrapper::{RedisConnection, RedisMetrics};
+pub use signaling_module::SignalingModule;
+pub use signaling_room_id::SignalingRoomId;

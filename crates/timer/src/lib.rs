@@ -4,8 +4,7 @@
 
 use anyhow::Result;
 use chrono::{self, Utc};
-use controller::api::signaling::{control, SignalingRoomId};
-use controller::api::signaling::{Event, InitContext, ModuleContext, SignalingModule};
+use controller::api::signaling::control;
 use futures::{stream::once, FutureExt};
 use outgoing::StopKind;
 use redis::{self, FromRedisValue, RedisResult};
@@ -13,6 +12,11 @@ use redis_args::ToRedisArgs;
 use serde::Deserialize;
 use serde::Serialize;
 use signaling_core::DestroyContext;
+use signaling_core::Event;
+use signaling_core::InitContext;
+use signaling_core::ModuleContext;
+use signaling_core::SignalingModule;
+use signaling_core::SignalingRoomId;
 use std::fmt;
 use std::str::from_utf8;
 use std::str::FromStr;

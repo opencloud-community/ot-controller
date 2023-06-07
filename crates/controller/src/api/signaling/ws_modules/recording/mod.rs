@@ -2,10 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::api::signaling::{Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId};
 use anyhow::{Context, Result};
 use lapin_pool::{RabbitMqChannel, RabbitMqPool};
-use signaling_core::{DestroyContext, Participant};
+use signaling_core::{
+    DestroyContext, Event, InitContext, ModuleContext, Participant, SignalingModule,
+    SignalingRoomId,
+};
 use std::sync::Arc;
 use types::{
     core::ParticipantId,

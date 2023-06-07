@@ -6,12 +6,9 @@ use crate::storage::init::InitState;
 use anyhow::{Context, Result};
 use chrono::{Duration, Utc};
 use controller::{
-    api::signaling::{
-        control::{
-            self,
-            storage::{get_all_participants, get_attribute},
-        },
-        Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
+    api::signaling::control::{
+        self,
+        storage::{get_all_participants, get_attribute},
     },
     storage::assets::save_asset,
 };
@@ -23,7 +20,10 @@ use incoming::ParticipantSelection;
 use outgoing::{AccessUrl, PdfAsset};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
-use signaling_core::{DestroyContext, ObjectStorage, RedisConnection};
+use signaling_core::{
+    DestroyContext, Event, InitContext, ModuleContext, ObjectStorage, RedisConnection,
+    SignalingModule, SignalingRoomId,
+};
 use std::sync::Arc;
 use types::{core::ParticipantId, signaling::Role};
 

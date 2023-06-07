@@ -16,7 +16,6 @@ use crate::api::signaling::{
     ws::actor::WsCommand,
     ws_modules::control::storage::ParticipantIdRunnerLock,
     ws_modules::control::{exchange, storage, ControlStateExt as _, NAMESPACE},
-    SignalingRoomId,
 };
 use crate::exchange_task::{ExchangeHandle, SubscriberHandle};
 use actix::Addr;
@@ -34,7 +33,9 @@ use futures::Future;
 use itertools::Itertools;
 use kustos::Authz;
 use serde_json::Value;
-use signaling_core::{AnyStream, ObjectStorage, Participant, RedisConnection, SignalingMetrics};
+use signaling_core::{
+    AnyStream, ObjectStorage, Participant, RedisConnection, SignalingMetrics, SignalingRoomId,
+};
 use std::collections::HashMap;
 use std::future;
 use std::mem::replace;
@@ -141,7 +142,7 @@ impl Builder {
     ) -> Result<Runner> {
         self.aquire_participant_id().await?;
 
-        let room_id = SignalingRoomId(self.room.id, self.breakout_room);
+        let room_id = SignalingRoomId::new(self.room.id, self.breakout_room);
 
         // Create list of routing keys that address this runner
         let mut routing_keys = vec![
@@ -424,7 +425,7 @@ impl Runner {
 
             // if the room is empty check that the waiting room is empty
             let destroy_room = if room_is_empty {
-                if self.room_id.1.is_some() {
+                if self.room_id.breakout_room_id().is_some() {
                     // Breakout rooms are destroyed even with participants inside the waiting room
                     true
                 } else {
@@ -1001,7 +1002,7 @@ impl Runner {
         let roles_and_left_at_timestamps =
             control::storage::get_role_and_left_at_for_room_participants(
                 &mut self.redis_conn,
-                SignalingRoomId(self.room.id, None),
+                SignalingRoomId::new_for_room(self.room.id),
             )
             .await?;
 

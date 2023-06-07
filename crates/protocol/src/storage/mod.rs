@@ -3,8 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use anyhow::Result;
-use controller::api::signaling::SignalingRoomId;
-use signaling_core::RedisConnection;
+use signaling_core::{RedisConnection, SignalingRoomId};
 
 pub(crate) mod group;
 pub(crate) mod init;

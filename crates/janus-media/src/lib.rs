@@ -8,31 +8,26 @@
 //!
 //! Handles media related messages and manages their respective forwarding to janus-gateway via rabbitmq.
 use anyhow::{bail, Context, Result};
-use controller::{
-    api::signaling::{
-        control, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
-    },
-    settings::SharedSettings,
-    Controller,
-};
+use controller::{api::signaling::control, settings::SharedSettings, Controller};
 use focus::FocusDetection;
 use incoming::{RequestMute, TargetConfigure};
 use janus_client::TrickleCandidate;
-use mcu::McuPool;
-use mcu::PublishConfiguration;
 use mcu::{
-    LinkDirection, MediaSessionKey, MediaSessionType, Request, Response, TrickleMessage,
-    WebRtcEvent,
+    LinkDirection, McuPool, MediaSessionKey, MediaSessionType, PublishConfiguration, Request,
+    Response, TrickleMessage, WebRtcEvent,
 };
 use outgoing::Link;
 use serde::{Deserialize, Serialize};
 use sessions::MediaSessions;
-use signaling_core::DestroyContext;
-use std::collections::HashMap;
-use std::sync::Arc;
+use signaling_core::{
+    DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
+};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 use types::{core::ParticipantId, signaling::Role};
+
+use std::collections::HashMap;
+use std::sync::Arc;
 
 mod exchange;
 mod focus;

@@ -5,11 +5,11 @@
 use crate::database::DatabaseContext;
 use crate::redis;
 use anyhow::{Context, Result};
-use controller::api::signaling::{ModuleTester, SignalingModule, WsMessageOutgoing};
+use controller::api::signaling::{ModuleTester, WsMessageOutgoing};
 use db_storage::users::User;
 use kustos::Authz;
 use pretty_assertions::assert_eq;
-use signaling_core::RedisConnection;
+use signaling_core::{RedisConnection, SignalingModule};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::broadcast::Sender;

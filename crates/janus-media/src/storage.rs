@@ -4,10 +4,9 @@
 
 use super::State;
 use anyhow::{Context, Result};
-use controller::api::signaling::SignalingRoomId;
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
-use signaling_core::RedisConnection;
+use signaling_core::{RedisConnection, SignalingRoomId};
 use types::core::ParticipantId;
 
 /// Data related to a module inside a participant

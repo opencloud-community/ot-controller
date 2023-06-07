@@ -3,10 +3,9 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use anyhow::{Context, Result};
-use controller::api::signaling::SignalingRoomId;
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
-use signaling_core::RedisConnection;
+use signaling_core::{RedisConnection, SignalingRoomId};
 use types::common::shared_folder::SharedFolder;
 
 #[derive(ToRedisArgs)]

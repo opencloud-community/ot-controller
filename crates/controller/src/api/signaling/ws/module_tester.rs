@@ -9,13 +9,8 @@
 //! visibility restriction of those types, this module is located in the same folder.
 //!
 //! The idea is to simulate a frontend websocket connection.
-use super::{
-    DestroyContext, Event, ExchangePublish, NamespacedCommand, NamespacedEvent, SignalingModule,
-};
-use crate::api::signaling::{
-    control::{self, storage, ControlStateExt as _, NAMESPACE},
-    InitContext, ModuleContext, SignalingRoomId,
-};
+use super::{DestroyContext, ExchangePublish, NamespacedCommand, NamespacedEvent, SignalingModule};
+use crate::api::signaling::control::{self, storage, ControlStateExt as _, NAMESPACE};
 use actix_http::ws::CloseCode;
 use actix_rt::task::JoinHandle;
 use anyhow::{bail, Context, Result};
@@ -25,7 +20,10 @@ use db_storage::users::User;
 use futures::stream::SelectAll;
 use kustos::Authz;
 use serde_json::Value;
-use signaling_core::{AnyStream, ObjectStorage, Participant, RedisConnection};
+use signaling_core::{
+    AnyStream, Event, InitContext, ModuleContext, ObjectStorage, Participant, RedisConnection,
+    SignalingRoomId,
+};
 use std::collections::{HashMap, HashSet};
 use std::marker::PhantomData;
 use std::panic;
@@ -396,7 +394,7 @@ where
 
         Ok(Self {
             redis_conn,
-            room_id: SignalingRoomId(room.id, breakout_room),
+            room_id: SignalingRoomId::new(room.id, breakout_room),
             room_owner: room.created_by,
             participant_id,
             participant,

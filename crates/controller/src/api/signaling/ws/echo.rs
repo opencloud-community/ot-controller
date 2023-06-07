@@ -2,11 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::api::signaling::ws::{
-    DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
-};
 use anyhow::Result;
 use serde_json::Value;
+use signaling_core::{DestroyContext, Event, InitContext, ModuleContext, SignalingModule};
 
 /// A sample echo websocket module
 pub struct Echo;

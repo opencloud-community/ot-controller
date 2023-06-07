@@ -3323,19 +3323,24 @@ dependencies = [
 name = "opentalk-signaling-core"
 version = "0.0.0-dev"
 dependencies = [
+ "actix-http",
  "anyhow",
+ "async-trait",
  "aws-sdk-s3",
  "bytes",
  "diesel",
  "futures",
+ "kustos",
  "log",
  "opentalk-controller-settings",
+ "opentalk-database",
  "opentalk-db-storage",
  "opentalk-types",
  "opentelemetry",
  "pretty_assertions",
  "redis",
  "serde",
+ "serde_json",
 ]
 
 [[package]]
