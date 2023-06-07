@@ -5,7 +5,6 @@
 use super::modules::{ModuleBuilder, ModuleBuilderImpl};
 use super::runner::Runner;
 use super::SignalingModule;
-use crate::api::signaling::metrics::SignalingMetrics;
 use crate::api::signaling::resumption::{ResumptionData, ResumptionTokenKeepAlive};
 use crate::api::signaling::ticket::{TicketData, TicketRedisKey};
 use crate::api::signaling::ws::actor::WebSocketActor;
@@ -21,7 +20,7 @@ use database::Db;
 use db_storage::rooms::Room;
 use db_storage::users::User;
 use kustos::Authz;
-use signaling_core::{ObjectStorage, Participant, RedisConnection};
+use signaling_core::{ObjectStorage, Participant, RedisConnection, SignalingMetrics};
 use std::marker::PhantomData;
 use std::time::Instant;
 use tokio::sync::{broadcast, mpsc};

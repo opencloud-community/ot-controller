@@ -5,7 +5,6 @@
 use std::fmt;
 use types::core::{BreakoutRoomId, RoomId};
 
-pub(crate) mod metrics;
 pub(crate) mod resumption;
 pub(crate) mod ticket;
 

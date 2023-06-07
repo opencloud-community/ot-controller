@@ -4,14 +4,13 @@
 
 use super::{Event, ModuleContext};
 use super::{SignalingModule, Timestamp};
-use crate::api::signaling::metrics::SignalingMetrics;
 use crate::api::signaling::ws::runner::Builder;
 use crate::api::signaling::ws::{DestroyContext, ExchangePublish, InitContext};
 use actix_http::ws::{CloseCode, Message};
 use anyhow::{Context, Result};
 use futures::stream::SelectAll;
 use serde_json::Value;
-use signaling_core::{AnyStream, RedisConnection};
+use signaling_core::{AnyStream, RedisConnection, SignalingMetrics};
 use std::any::Any;
 use std::collections::HashMap;
 use std::marker::PhantomData;

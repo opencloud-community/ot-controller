@@ -11,7 +11,6 @@ use super::{
 };
 use crate::api::signaling::control;
 use crate::api::signaling::{
-    metrics::SignalingMetrics,
     moderation,
     resumption::{ResumptionTokenKeepAlive, ResumptionTokenUsed},
     ws::actor::WsCommand,
@@ -35,7 +34,7 @@ use futures::Future;
 use itertools::Itertools;
 use kustos::Authz;
 use serde_json::Value;
-use signaling_core::{AnyStream, ObjectStorage, Participant, RedisConnection};
+use signaling_core::{AnyStream, ObjectStorage, Participant, RedisConnection, SignalingMetrics};
 use std::collections::HashMap;
 use std::future;
 use std::mem::replace;

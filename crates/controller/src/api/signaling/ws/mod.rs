@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::{control, metrics::SignalingMetrics};
+use super::control;
 use crate::api::signaling::SignalingRoomId;
 use actix_http::ws::CloseCode;
 use anyhow::Result;
@@ -14,7 +14,7 @@ use kustos::Authz;
 use serde::{Deserialize, Serialize};
 use signaling_core::{
     any_stream, AnyStream, ExchangeBinding, ExchangePublish, ObjectStorage, Participant,
-    RedisConnection,
+    RedisConnection, SignalingMetrics,
 };
 use std::collections::HashMap;
 use std::fmt::Debug;
