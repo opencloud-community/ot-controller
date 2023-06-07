@@ -15,7 +15,7 @@ This root crate uses all crates to run the controller with its full feature set.
 ## Manual
 
 ```text
-opentalk-controller 0.5.0-rc.2
+opentalk-controller 0.5.0-rc.3
 
 USAGE:
     opentalk-controller [FLAGS] [OPTIONS] [SUBCOMMAND]
