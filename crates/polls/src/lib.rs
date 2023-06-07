@@ -4,9 +4,10 @@
 
 use anyhow::Result;
 use controller::api::signaling::{
-    control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
+    control, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
 };
 use futures::{stream::once, FutureExt};
+use signaling_core::DestroyContext;
 use std::time::Duration;
 use tokio::time::sleep;
 use types::signaling::{

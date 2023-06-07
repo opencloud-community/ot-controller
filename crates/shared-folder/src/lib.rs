@@ -11,13 +11,14 @@
 use std::sync::Arc;
 
 use controller::api::signaling::{
-    control::storage::get_event, DestroyContext, Event, InitContext, ModuleContext,
-    SignalingModule, SignalingRoomId,
+    control::storage::get_event, Event, InitContext, ModuleContext, SignalingModule,
+    SignalingRoomId,
 };
 
 use anyhow::Result;
 use database::Db;
 use db_storage::events::shared_folders::EventSharedFolder;
+use signaling_core::DestroyContext;
 use types::{
     common::shared_folder::SharedFolder as SharedFolderType,
     signaling::shared_folder::event::SharedFolderEvent,

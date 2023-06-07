@@ -5,12 +5,11 @@
 //! Breakout room module
 
 use self::storage::BreakoutConfig;
-use crate::api::signaling::{
-    DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
-};
+use crate::api::signaling::{Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId};
 use actix_http::ws::CloseCode;
 use anyhow::{bail, Result};
 use futures::FutureExt;
+use signaling_core::DestroyContext;
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
 use tokio::time::sleep;

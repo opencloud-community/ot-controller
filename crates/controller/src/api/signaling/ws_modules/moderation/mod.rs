@@ -2,12 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::api::signaling::{
-    DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
-};
+use crate::api::signaling::{Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId};
 use actix_http::ws::CloseCode;
 use anyhow::Result;
-use signaling_core::RedisConnection;
+use signaling_core::{DestroyContext, RedisConnection};
 use std::{collections::HashMap, iter::zip};
 use types::{
     core::{ParticipantId, RoomId, UserId},

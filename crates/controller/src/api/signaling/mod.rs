@@ -14,8 +14,7 @@ mod ws_modules;
 pub use ws::module_tester::{ModuleTester, NoInitError, WsMessageOutgoing};
 pub(crate) use ws::ws_service;
 pub use ws::{
-    DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModules,
-    SignalingProtocols,
+    Event, InitContext, ModuleContext, SignalingModule, SignalingModules, SignalingProtocols,
 };
 pub use ws_modules::{breakout, control, moderation, recording};
 

@@ -10,8 +10,7 @@
 use anyhow::{bail, Context, Result};
 use controller::{
     api::signaling::{
-        control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
-        SignalingRoomId,
+        control, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
     },
     settings::SharedSettings,
     Controller,
@@ -28,6 +27,7 @@ use mcu::{
 use outgoing::Link;
 use serde::{Deserialize, Serialize};
 use sessions::MediaSessions;
+use signaling_core::DestroyContext;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::mpsc;

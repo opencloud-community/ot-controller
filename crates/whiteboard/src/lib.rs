@@ -6,8 +6,7 @@ use anyhow::Result;
 use client::SpacedeckClient;
 use controller::{
     api::signaling::{
-        control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
-        SignalingRoomId,
+        control, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
     },
     storage::assets::save_asset,
 };
@@ -16,7 +15,7 @@ use futures::stream::once;
 use futures::TryStreamExt;
 use outgoing::{AccessUrl, PdfAsset};
 use serde::Serialize;
-use signaling_core::{ObjectStorage, RedisConnection};
+use signaling_core::{DestroyContext, ObjectStorage, RedisConnection};
 use state::{InitState, SpaceInfo};
 use std::sync::Arc;
 use types::{core::Timestamp, signaling::Role};

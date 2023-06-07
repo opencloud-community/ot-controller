@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 mod any_stream;
+mod destroy_context;
 mod exchange_binding;
 mod exchange_publish;
 mod metrics;
@@ -11,6 +12,7 @@ mod participant;
 mod redis_wrapper;
 
 pub use any_stream::{any_stream, AnyStream};
+pub use destroy_context::DestroyContext;
 pub use exchange_binding::ExchangeBinding;
 pub use exchange_publish::ExchangePublish;
 pub use metrics::SignalingMetrics;
