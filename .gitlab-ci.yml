@@ -25,6 +25,7 @@ variables:
   COMMUNITY_EDITION_UPSTREAM: $CI_PROJECT_PATH
 
 trigger_enterprise_ci:
+  needs: []
   stage: trigger
   rules:
     - if: $CI_COMMIT_BRANCH =~ /^main$/ || $CI_PIPELINE_SOURCE == 'merge_request_event'
@@ -60,6 +61,7 @@ trigger_enterprise_ci:
         "$CI_API_V4_URL/projects/$ENCODED_ENTERPRISE_PROJECT/trigger/pipeline"
 
 lint:fmt:
+  needs: []
   rules:
     # Run in merge requests (if there is one job with this instruction, all jobs without
     # it are ignored for the MR pipeline)
@@ -71,6 +73,7 @@ lint:fmt:
     - cargo fmt -- --check
 
 lint:clippy:
+  needs: []
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - if: $CI_PIPELINE_SOURCE == 'schedule'
@@ -78,6 +81,7 @@ lint:clippy:
   script: cargo clippy --workspace --all-features --tests -- --deny warnings
 
 lint:doc:
+  needs: []
   variables:
     RUSTDOCFLAGS: -Dwarnings
   rules:
@@ -87,6 +91,7 @@ lint:doc:
   script: cargo doc --workspace --no-deps
 
 lint:dependency_check:
+  needs: []
   image: git.opentalk.dev:5050/opentalk/backend/containers/cargo-deny:latest
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
@@ -98,6 +103,7 @@ lint:dependency_check:
   script: cargo-deny --workspace check
 
 lint:yaml:
+  needs: []
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - if: $CI_PIPELINE_SOURCE == 'schedule'
@@ -108,6 +114,7 @@ lint:yaml:
   script: yamllint .
 
 lint:openapi:
+  needs: []
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - if: $CI_PIPELINE_SOURCE == 'schedule'
@@ -129,6 +136,7 @@ lint:markdown:
     - mdl --style .markdown_style.rb  --warnings .
 
 lint:licensing:
+  needs: []
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - if: $CI_PIPELINE_SOURCE == 'schedule'
@@ -171,6 +179,7 @@ check:opentalk-types:
     - cargo check --package opentalk-types --no-default-features --features="serde"
 
 test:cargo_test:
+  needs: []
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - if: $CI_PIPELINE_SOURCE == 'schedule'
@@ -211,6 +220,7 @@ test:cargo_test:
     - RUST_LOG=error cargo xtask verify-db-schema --postgres-url="${POSTGRES_BASE_URL}"
 
 test:container:
+  needs: []
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - if: $CI_PIPELINE_SOURCE == 'schedule'
@@ -233,6 +243,7 @@ test:container:
       --force
 
 build:
+  needs: []
   variables:
     VERGEN_GIT_SHA: $CI_COMMIT_SHA
     VERGEN_GIT_BRANCH: $CI_COMMIT_REF_NAME
@@ -252,6 +263,7 @@ build:
     - cargo build --release --locked --workspace
 
 package:controller-container-dev:
+  needs: []
   rules:
     - if: $CI_PIPELINE_SOURCE == "pipeline"
       when: never
@@ -275,6 +287,7 @@ package:controller-container-dev:
       --force
 
 trigger-docs:
+  needs: []
   stage: trigger
   rules:
     - if: $CI_PIPELINE_SOURCE == "pipeline"
@@ -284,6 +297,7 @@ trigger-docs:
     project: opentalk/backend/docs
 
 package:controller-container-tag:
+  needs: []
   rules:
     - if: $CI_COMMIT_TAG != null
   stage: package
@@ -305,6 +319,7 @@ package:controller-container-tag:
       --force
 
 package:read-latest-tag:
+  needs: []
   rules:
     - if: $CI_COMMIT_TAG != null
   image:
@@ -320,15 +335,15 @@ package:read-latest-tag:
       dotenv: package.env
 
 package:controller-container-latest:
+  needs:
+    - build
+    - package:read-latest-tag
   rules:
     - if: $CI_COMMIT_TAG != null
   stage: package
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: ['']
-  needs:
-    - build
-    - package:read-latest-tag
   script:
     - mkdir -p /kaniko/.docker
     - >
