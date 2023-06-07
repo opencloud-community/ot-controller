@@ -14,7 +14,7 @@ use futures::stream::SelectAll;
 use kustos::Authz;
 use modules::{any_stream, AnyStream};
 use serde::{Deserialize, Serialize};
-use signaling_core::{ObjectStorage, Participant};
+use signaling_core::{ExchangeBinding, ObjectStorage, Participant};
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::marker::PhantomData;
@@ -114,10 +114,6 @@ where
     events: &'ctx mut SelectAll<AnyStream>,
     redis_conn: &'ctx mut RedisConnection,
     m: PhantomData<fn() -> M>,
-}
-
-struct ExchangeBinding {
-    routing_key: String,
 }
 
 impl<M> InitContext<'_, M>
