@@ -3428,7 +3428,6 @@ dependencies = [
  "chrono",
  "futures",
  "log",
- "opentalk-controller-core",
  "opentalk-controller-settings",
  "opentalk-database",
  "opentalk-db-storage",

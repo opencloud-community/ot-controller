@@ -4,7 +4,6 @@
 
 use super::response::{ApiError, NoContent};
 use super::{ApiResponse, PagePaginationQuery};
-use crate::storage;
 use actix_http::StatusCode;
 use actix_web::web::{Data, Path, Query};
 use actix_web::{delete, get, HttpResponse};
@@ -12,7 +11,10 @@ use chrono::{DateTime, Utc};
 use database::Db;
 use db_storage::assets::Asset;
 use serde::Serialize;
-use signaling_core::ObjectStorage;
+use signaling_core::{
+    assets::{delete_asset, get_asset},
+    ObjectStorage,
+};
 use types::core::{AssetId, RoomId};
 
 #[derive(Debug, Serialize)]
@@ -64,7 +66,7 @@ pub async fn room_asset(
 
     let asset = Asset::get(&mut db.get_conn().await?, asset_id, room_id).await?;
 
-    let data = storage::assets::get_asset(&storage, &asset.id).await?;
+    let data = get_asset(&storage, &asset.id).await?;
 
     Ok(HttpResponse::build(StatusCode::OK).streaming(data))
 }
@@ -77,7 +79,7 @@ pub async fn delete(
 ) -> Result<NoContent, ApiError> {
     let (room_id, asset_id) = path.into_inner();
 
-    storage::assets::delete_asset(&storage, db.into_inner(), room_id, asset_id).await?;
+    delete_asset(&storage, db.into_inner(), room_id, asset_id).await?;
 
     Ok(NoContent)
 }

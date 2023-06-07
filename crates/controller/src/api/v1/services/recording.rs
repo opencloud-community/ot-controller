@@ -6,7 +6,6 @@ use crate::api::signaling::ticket::start_or_continue_signaling_session;
 use crate::api::v1::response::ApiError;
 use crate::api::v1::response::NoContent;
 use crate::settings::SharedSettingsActix;
-use crate::storage::assets::save_asset;
 use actix_web::dev::HttpServiceFactory;
 use actix_web::post;
 use actix_web::web::Payload;
@@ -16,6 +15,7 @@ use database::Db;
 use db_storage::rooms::Room;
 use futures::TryStreamExt;
 use serde::{Deserialize, Serialize};
+use signaling_core::assets::save_asset;
 use signaling_core::{ObjectStorage, Participant, RedisConnection};
 use types::core::{ResumptionToken, RoomId, TicketToken};
 

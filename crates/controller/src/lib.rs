@@ -66,7 +66,6 @@ mod trace;
 
 pub mod api;
 pub mod settings;
-pub mod storage;
 
 #[derive(Debug, thiserror::Error)]
 #[error("Blocking thread has panicked")]
