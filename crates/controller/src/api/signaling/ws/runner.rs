@@ -4,7 +4,7 @@
 
 use super::actor::WebSocketActor;
 use super::modules::{
-    AnyStream, DynBroadcastEvent, DynEventCtx, DynTargetedEvent, Modules, NoSuchModuleError,
+    DynBroadcastEvent, DynEventCtx, DynTargetedEvent, Modules, NoSuchModuleError,
 };
 use super::{
     DestroyContext, ExchangeBinding, ExchangePublish, NamespacedCommand, NamespacedEvent, Timestamp,
@@ -36,7 +36,7 @@ use futures::Future;
 use itertools::Itertools;
 use kustos::Authz;
 use serde_json::Value;
-use signaling_core::{ObjectStorage, Participant};
+use signaling_core::{AnyStream, ObjectStorage, Participant};
 use std::collections::HashMap;
 use std::future;
 use std::mem::replace;

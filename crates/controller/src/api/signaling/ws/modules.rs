@@ -12,12 +12,11 @@ use actix_http::ws::{CloseCode, Message};
 use anyhow::{Context, Result};
 use futures::stream::SelectAll;
 use serde_json::Value;
+use signaling_core::AnyStream;
 use std::any::Any;
 use std::collections::HashMap;
 use std::marker::PhantomData;
-use std::pin::Pin;
 use std::sync::Arc;
-use tokio_stream::{Stream, StreamExt};
 use types::{
     core::ParticipantId,
     signaling::{
@@ -25,15 +24,6 @@ use types::{
         Role,
     },
 };
-
-pub type AnyStream = Pin<Box<dyn Stream<Item = (&'static str, Box<dyn Any + 'static>)>>>;
-
-pub fn any_stream<S>(namespace: &'static str, stream: S) -> AnyStream
-where
-    S: Stream + 'static,
-{
-    Box::pin(stream.map(move |item| -> (_, Box<dyn Any + 'static>) { (namespace, Box::new(item)) }))
-}
 
 #[derive(Debug, thiserror::Error)]
 #[error("invalid module namespace")]

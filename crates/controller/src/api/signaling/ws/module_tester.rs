@@ -9,7 +9,6 @@
 //! visibility restriction of those types, this module is located in the same folder.
 //!
 //! The idea is to simulate a frontend websocket connection.
-use super::modules::AnyStream;
 use super::{
     DestroyContext, Event, ExchangePublish, NamespacedCommand, NamespacedEvent, SignalingModule,
 };
@@ -27,7 +26,7 @@ use db_storage::users::User;
 use futures::stream::SelectAll;
 use kustos::Authz;
 use serde_json::Value;
-use signaling_core::{ObjectStorage, Participant};
+use signaling_core::{AnyStream, ObjectStorage, Participant};
 use std::collections::{HashMap, HashSet};
 use std::marker::PhantomData;
 use std::panic;
