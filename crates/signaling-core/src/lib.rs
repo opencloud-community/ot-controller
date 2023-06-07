@@ -28,5 +28,5 @@ pub use module_context::{ExchangePublish, ModuleContext};
 pub use object_storage::ObjectStorage;
 pub use participant::Participant;
 pub use redis_wrapper::{RedisConnection, RedisMetrics};
-pub use signaling_module::SignalingModule;
+pub use signaling_module::{SignalingModule, SignalingModuleInitData};
 pub use signaling_room_id::SignalingRoomId;

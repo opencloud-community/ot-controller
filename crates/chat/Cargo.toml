@@ -14,10 +14,10 @@ publish = false
 anyhow.workspace = true
 async-trait.workspace = true
 chrono.workspace = true
-controller = { path = "../controller", package = "opentalk-controller-core" }
 controller-settings = { path = "../controller-settings", package = "opentalk-controller-settings" }
 db-storage = { path = "../db-storage", package = "opentalk-db-storage" }
 database = { path = "../database", package = "opentalk-database" }
+lapin-pool = { path = "../lapin-pool" }
 log.workspace = true
 r3dlock = { path = "../r3dlock" }
 serde.workspace = true

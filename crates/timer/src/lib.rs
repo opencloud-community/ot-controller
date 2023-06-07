@@ -10,6 +10,7 @@ use redis::{self, FromRedisValue, RedisResult};
 use redis_args::ToRedisArgs;
 use serde::Deserialize;
 use serde::Serialize;
+use signaling_core::SignalingModuleInitData;
 use signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
 };
@@ -174,6 +175,10 @@ impl SignalingModule for Timer {
     }
 
     async fn on_destroy(self, _ctx: DestroyContext<'_>) {}
+
+    async fn build_params(_init: &SignalingModuleInitData) -> Result<Option<Self::Params>> {
+        Ok(Some(()))
+    }
 }
 
 impl Timer {
@@ -392,8 +397,4 @@ impl Timer {
 
         Ok(())
     }
-}
-
-pub fn register(controller: &mut controller::Controller) {
-    controller.signaling.add_module::<Timer>(());
 }

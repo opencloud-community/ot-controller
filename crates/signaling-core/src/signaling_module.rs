@@ -3,11 +3,24 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use anyhow::Result;
+use controller_settings::{Settings, SharedSettings};
+use lapin_pool::RabbitMqPool;
 use serde::{Deserialize, Serialize};
+use tokio::sync::broadcast;
 
-use std::fmt::Debug;
+use std::{fmt::Debug, sync::Arc};
 
-use crate::{DestroyContext, Event, InitContext, ModuleContext};
+use crate::{DestroyContext, Event, InitContext, ModuleContext, RedisConnection};
+
+#[derive(Clone)]
+pub struct SignalingModuleInitData<'a> {
+    pub startup_settings: &'a Arc<Settings>,
+    pub shared_settings: &'a SharedSettings,
+    pub rabbitmq_pool: &'a Arc<RabbitMqPool>,
+    pub redis: &'a RedisConnection,
+    pub shutdown: &'a broadcast::Sender<()>,
+    pub reload: &'a broadcast::Sender<()>,
+}
 
 /// Extension to a the signaling websocket
 #[async_trait::async_trait(?Send)]
@@ -63,4 +76,7 @@ pub trait SignalingModule: Sized + 'static {
 
     /// Before dropping the module this function will be called
     async fn on_destroy(self, ctx: DestroyContext<'_>);
+
+    /// Build the parameters for instantiating the signaling module
+    async fn build_params(init: &SignalingModuleInitData) -> Result<Option<Self::Params>>;
 }

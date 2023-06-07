@@ -18,7 +18,7 @@ use serde::{Deserialize, Serialize};
 use signaling_core::{
     control::{self, exchange},
     DestroyContext, Event, InitContext, ModuleContext, Participant, RedisConnection,
-    SignalingModule, SignalingRoomId,
+    SignalingModule, SignalingModuleInitData, SignalingRoomId,
 };
 use storage::StoredMessage;
 use types::{
@@ -759,10 +759,10 @@ impl SignalingModule for Chat {
             }
         }
     }
-}
 
-pub fn register(controller: &mut controller::Controller) {
-    controller.signaling.add_module::<Chat>(());
+    async fn build_params(_init: &SignalingModuleInitData) -> Result<Option<Self::Params>> {
+        Ok(Some(()))
+    }
 }
 
 #[cfg(test)]

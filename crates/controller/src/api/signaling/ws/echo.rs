@@ -4,7 +4,9 @@
 
 use anyhow::Result;
 use serde_json::Value;
-use signaling_core::{DestroyContext, Event, InitContext, ModuleContext, SignalingModule};
+use signaling_core::{
+    DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleInitData,
+};
 
 /// A sample echo websocket module
 pub struct Echo;
@@ -54,4 +56,8 @@ impl SignalingModule for Echo {
     }
 
     async fn on_destroy(self, _: DestroyContext<'_>) {}
+
+    async fn build_params(_init: &SignalingModuleInitData) -> Result<Option<Self::Params>> {
+        Ok(Some(()))
+    }
 }

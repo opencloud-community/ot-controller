@@ -12,7 +12,7 @@ use outgoing::{AccessUrl, PdfAsset};
 use serde::Serialize;
 use signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage, RedisConnection,
-    SignalingModule, SignalingRoomId,
+    SignalingModule, SignalingModuleInitData, SignalingRoomId,
 };
 use state::{InitState, SpaceInfo};
 use std::sync::Arc;
@@ -25,7 +25,7 @@ mod incoming;
 mod outgoing;
 mod state;
 
-struct Whiteboard {
+pub struct Whiteboard {
     room_id: SignalingRoomId,
     client: SpacedeckClient,
     db: Arc<Db>,
@@ -34,7 +34,7 @@ struct Whiteboard {
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "snake_case", tag = "status", content = "url")]
-enum FrontendData {
+pub enum FrontendData {
     NotInitialized,
     Initializing,
     Initialized(Url),
@@ -49,7 +49,7 @@ impl From<InitState> for FrontendData {
     }
 }
 
-struct GetPdfEvent {
+pub struct GetPdfEvent {
     url_result: Result<Url>,
     ts: Timestamp,
 }
@@ -231,6 +231,20 @@ impl SignalingModule for Whiteboard {
             }
         }
     }
+
+    async fn build_params(init: &SignalingModuleInitData) -> Result<Option<Self::Params>> {
+        let spacedeck = init.shared_settings.load_full().spacedeck.clone();
+
+        match spacedeck {
+            Some(spacedeck) => Ok(Some(spacedeck)),
+            None => {
+                log::warn!(
+                    "Skipping the Whiteboard module as no spacedeck is specified in the config"
+                );
+                Ok(None)
+            }
+        }
+    }
 }
 
 impl Whiteboard {
@@ -289,18 +303,5 @@ impl Whiteboard {
         }
 
         Ok(())
-    }
-}
-
-pub fn register(controller: &mut controller::Controller) {
-    let spacedeck = controller.shared_settings.load_full().spacedeck.clone();
-
-    match spacedeck {
-        Some(spacedeck) => {
-            controller.signaling.add_module::<Whiteboard>(spacedeck);
-        }
-        None => {
-            log::warn!("Skipping the Whiteboard module as no spacedeck is specified in the config")
-        }
     }
 }

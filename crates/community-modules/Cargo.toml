@@ -15,6 +15,7 @@ publish = false
 [dependencies]
 anyhow.workspace = true
 controller = { path = "../controller", package = "opentalk-controller-core" }
+signaling-core = { path = "../signaling-core", package = "opentalk-signaling-core" }
 
 janus-media = { path = "../janus-media", package = "opentalk-janus-media" }
 chat = { path = "../chat", package = "opentalk-chat" }

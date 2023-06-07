@@ -20,7 +20,7 @@ use signaling_core::{
         storage::{get_all_participants, get_attribute},
     },
     DestroyContext, Event, InitContext, ModuleContext, ObjectStorage, RedisConnection,
-    SignalingModule, SignalingRoomId,
+    SignalingModule, SignalingModuleInitData, SignalingRoomId,
 };
 use std::sync::Arc;
 use types::{core::ParticipantId, signaling::Role};
@@ -48,7 +48,7 @@ pub struct Access {
     readonly: bool,
 }
 
-struct Protocol {
+pub struct Protocol {
     etherpad: EtherpadClient,
     participant_id: ParticipantId,
     room_id: SignalingRoomId,
@@ -162,6 +162,20 @@ impl SignalingModule for Protocol {
                     self.room_id,
                     e
                 );
+            }
+        }
+    }
+
+    async fn build_params(init: &SignalingModuleInitData) -> Result<Option<Self::Params>> {
+        let etherpad = init.shared_settings.load_full().etherpad.clone();
+
+        match etherpad {
+            Some(etherpad) => Ok(Some(etherpad)),
+            None => {
+                log::warn!(
+                    "Skipping the Protocol module as no etherpad is specified in the config"
+                );
+                Ok(None)
             }
         }
     }
@@ -574,18 +588,5 @@ impl Protocol {
         self.etherpad.delete_group(&group_id).await?;
 
         Ok(())
-    }
-}
-
-pub fn register(controller: &mut controller::Controller) {
-    let etherpad = controller.shared_settings.load_full().etherpad.clone();
-
-    match etherpad {
-        Some(etherpad) => {
-            controller.signaling.add_module::<Protocol>(etherpad);
-        }
-        None => {
-            log::warn!("Skipping the Protocol module as no etherpad is specified in the config")
-        }
     }
 }

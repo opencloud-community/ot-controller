@@ -15,6 +15,7 @@ use actix_web::web::Data;
 use actix_web::{get, HttpMessage};
 use actix_web::{web, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
+use anyhow::Result;
 use database::Db;
 use db_storage::rooms::Room;
 use db_storage::users::User;

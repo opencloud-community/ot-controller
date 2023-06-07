@@ -7,7 +7,7 @@ use anyhow::Result;
 use signaling_core::{
     control::{self, ControlStateExt as _},
     DestroyContext, Event, InitContext, ModuleContext, RedisConnection, SignalingModule,
-    SignalingRoomId,
+    SignalingModuleInitData, SignalingRoomId,
 };
 use std::{collections::HashMap, iter::zip};
 use types::{
@@ -440,6 +440,10 @@ impl SignalingModule for ModerationModule {
                 log::error!("Failed to clean up accepted waiting room list {}", e);
             }
         }
+    }
+
+    async fn build_params(_init: &SignalingModuleInitData) -> Result<Option<Self::Params>> {
+        Ok(Some(()))
     }
 }
 

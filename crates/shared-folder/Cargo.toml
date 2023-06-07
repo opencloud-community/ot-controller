@@ -13,7 +13,6 @@ publish = false
 [dependencies]
 anyhow.workspace = true
 async-trait.workspace = true
-controller = { path = "../controller", package = "opentalk-controller-core" }
 db-storage = { path = "../db-storage", package = "opentalk-db-storage" }
 database = { path = "../database", package = "opentalk-database" }
 log.workspace = true

@@ -13,7 +13,6 @@ publish = false
 [dependencies]
 anyhow.workspace = true
 async-trait.workspace = true
-controller = { path = "../controller", package = "opentalk-controller-core" }
 futures.workspace = true
 log.workspace = true
 redis.workspace = true

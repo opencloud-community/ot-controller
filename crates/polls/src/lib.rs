@@ -5,7 +5,8 @@
 use anyhow::Result;
 use futures::{stream::once, FutureExt};
 use signaling_core::{
-    control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
+    control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
+    SignalingModuleInitData, SignalingRoomId,
 };
 use std::time::Duration;
 use tokio::time::sleep;
@@ -124,6 +125,10 @@ impl SignalingModule for Polls {
                 }
             }
         }
+    }
+
+    async fn build_params(_init: &SignalingModuleInitData) -> Result<Option<Self::Params>> {
+        Ok(Some(()))
     }
 }
 
@@ -351,8 +356,4 @@ impl Polls {
 pub struct Config {
     state: PollsState,
     voted: bool,
-}
-
-pub fn register(controller: &mut controller::Controller) {
-    controller.signaling.add_module::<Polls>(());
 }

@@ -16,7 +16,6 @@ publish = false
 anyhow.workspace = true
 async-trait.workspace = true
 chrono.workspace = true
-controller = { path = "../controller", package = "opentalk-controller-core" }
 controller-settings = { path = "../controller-settings", package = "opentalk-controller-settings" }
 futures.workspace = true
 log.workspace = true

@@ -6,7 +6,7 @@ use anyhow::{Context, Result};
 use lapin_pool::{RabbitMqChannel, RabbitMqPool};
 use signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, Participant, SignalingModule,
-    SignalingRoomId,
+    SignalingModuleInitData, SignalingRoomId,
 };
 use std::sync::Arc;
 use types::{
@@ -239,6 +239,23 @@ impl SignalingModule for Recording {
             if let Err(e) = storage::del_state(ctx.redis_conn(), self.room).await {
                 log::error!("failed to delete state, {:?}", e);
             }
+        }
+    }
+
+    async fn build_params(init: &SignalingModuleInitData) -> Result<Option<Self::Params>> {
+        if let Some(queue) = init
+            .shared_settings
+            .load_full()
+            .rabbit_mq
+            .recording_task_queue
+            .clone()
+        {
+            Ok(Some((
+                init.rabbitmq_pool.clone(),
+                RecordingParams { queue },
+            )))
+        } else {
+            Ok(None)
         }
     }
 }

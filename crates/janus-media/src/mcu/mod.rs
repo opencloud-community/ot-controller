@@ -113,7 +113,7 @@ pub struct McuPool {
 
 impl McuPool {
     pub async fn build(
-        settings: &controller::settings::Settings,
+        settings: &controller_settings::Settings,
         shared_settings: SharedSettings,
         rabbitmq_pool: Arc<RabbitMqPool>,
         mut redis: RedisConnection,

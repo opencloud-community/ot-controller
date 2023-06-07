@@ -9,7 +9,8 @@ use actix_http::ws::CloseCode;
 use anyhow::{bail, Result};
 use futures::FutureExt;
 use signaling_core::{
-    control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
+    control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
+    SignalingModuleInitData, SignalingRoomId,
 };
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
@@ -215,6 +216,10 @@ impl SignalingModule for BreakoutRooms {
     }
 
     async fn on_destroy(self, _ctx: DestroyContext<'_>) {}
+
+    async fn build_params(_init: &SignalingModuleInitData) -> Result<Option<Self::Params>> {
+        Ok(Some(()))
+    }
 }
 
 impl BreakoutRooms {

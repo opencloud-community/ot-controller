@@ -15,7 +15,7 @@ use database::Db;
 use db_storage::events::shared_folders::EventSharedFolder;
 use signaling_core::{
     control::storage::get_event, DestroyContext, Event, InitContext, ModuleContext,
-    SignalingModule, SignalingRoomId,
+    SignalingModule, SignalingModuleInitData, SignalingRoomId,
 };
 use types::{
     common::shared_folder::SharedFolder as SharedFolderType,
@@ -125,17 +125,13 @@ impl SignalingModule for SharedFolder {
             }
         }
     }
-}
 
-pub fn register(controller: &mut controller::Controller) {
-    if controller
-        .shared_settings
-        .load_full()
-        .shared_folder
-        .is_some()
-    {
-        controller.signaling.add_module::<SharedFolder>(());
-    } else {
-        log::warn!("Skipping the SharedFolder module as none is specified in the config")
+    async fn build_params(init: &SignalingModuleInitData) -> Result<Option<Self::Params>> {
+        if init.shared_settings.load_full().shared_folder.is_some() {
+            Ok(Some(()))
+        } else {
+            log::warn!("Skipping the SharedFolder module as none is specified in the config");
+            Ok(None)
+        }
     }
 }
