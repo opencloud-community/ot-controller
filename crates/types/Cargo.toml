@@ -20,8 +20,8 @@ redis = { workspace = true, optional = true }
 redis-args = { path = "../redis-args", package = "opentalk-redis-args", optional = true }
 serde = { workspace = true, optional = true }
 serde_json.workspace = true
-strum = { version = "0.24", features = ["derive"] }
 thiserror.workspace = true
+strum.workspace = true
 uuid.workspace = true
 validator = { workspace = true, optional = true }
 url.workspace = true

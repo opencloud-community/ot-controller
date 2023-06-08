@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use super::schema::sip_configs;
+use crate::rooms::Room;
+use crate::schema::rooms;
 use database::{DatabaseError, DbConnection, Result};
 use diesel::prelude::*;
 use diesel::{ExpressionMethods, Identifiable, QueryDsl, Queryable};
@@ -27,6 +29,20 @@ impl SipConfig {
         let sip_config = query.get_result(conn).await.optional()?;
 
         Ok(sip_config)
+    }
+
+    #[tracing::instrument(err, skip_all)]
+    pub async fn get_with_room(
+        conn: &mut DbConnection,
+        sip_id: &CallInId,
+    ) -> Result<Option<(SipConfig, Room)>> {
+        let query = sip_configs::table
+            .filter(sip_configs::sip_id.eq(sip_id))
+            .inner_join(rooms::table);
+
+        let result: Option<(SipConfig, Room)> = query.get_result(conn).await.optional()?;
+
+        Ok(result)
     }
 
     /// Get the sip config for the specified room

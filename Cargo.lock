@@ -3126,6 +3126,7 @@ dependencies = [
  "rustc-hash",
  "serde",
  "serde_json",
+ "strum",
  "url",
  "uuid",
 ]
@@ -3171,6 +3172,7 @@ dependencies = [
  "redis",
  "refinery",
  "refinery-core",
+ "rustc-hash",
  "serde",
  "serde_json",
  "serial_test",

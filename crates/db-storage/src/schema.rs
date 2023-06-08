@@ -234,6 +234,7 @@ table! {
         updated_at -> Timestamptz,
         quotas -> Jsonb,
         disabled_modules -> Array<Text>,
+        disabled_features -> Array<Text>,
     }
 }
 

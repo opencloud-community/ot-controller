@@ -27,6 +27,7 @@ redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
 rustc-hash.workspace = true
 anstream.workspace = true
 owo-colors.workspace = true
+strum.workspace = true
 
 [dev-dependencies]
 pretty_assertions.workspace = true

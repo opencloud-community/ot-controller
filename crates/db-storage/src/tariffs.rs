@@ -10,6 +10,7 @@ use database::{DbConnection, Result};
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use redis_args::{FromRedisValue, ToRedisArgs};
+use rustc_hash::FxHashSet;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use types::{
@@ -33,6 +34,7 @@ pub struct Tariff {
     pub updated_at: DateTime<Utc>,
     pub quotas: Jsonb<HashMap<String, u32>>,
     pub disabled_modules: Vec<String>,
+    pub disabled_features: Vec<String>,
 }
 
 impl Tariff {
@@ -90,15 +92,30 @@ impl Tariff {
         Ok(tariff)
     }
 
-    pub fn to_tariff_resource(&self, available_modules: &[&str]) -> TariffResource {
-        let disabled_modules: HashSet<&str> =
-            HashSet::from_iter(self.disabled_modules.iter().map(String::as_str));
-        let available_modules: HashSet<&str> =
-            HashSet::from_iter(available_modules.iter().cloned());
+    pub fn to_tariff_resource<T1, T2>(
+        &self,
+        available_modules: impl IntoIterator<Item = T1>,
+        disabled_features: impl IntoIterator<Item = T2>,
+    ) -> TariffResource
+    where
+        T1: Into<String>,
+        T2: Into<String>,
+    {
+        let disabled_modules: FxHashSet<String> =
+            HashSet::from_iter(self.disabled_modules.iter().cloned());
+        let available_modules: FxHashSet<String> =
+            HashSet::from_iter(available_modules.into_iter().map(Into::into));
 
         let enabled_modules = available_modules
             .difference(&disabled_modules)
-            .map(ToString::to_string)
+            .cloned()
+            .collect();
+
+        let disabled_features = self
+            .disabled_features
+            .iter()
+            .cloned()
+            .chain(disabled_features.into_iter().map(Into::into))
             .collect();
 
         TariffResource {
@@ -106,6 +123,7 @@ impl Tariff {
             name: self.name.clone(),
             quotas: self.quotas.0.clone(),
             enabled_modules,
+            disabled_features,
         }
     }
 }
@@ -213,6 +231,7 @@ mod test {
                 "media".to_string(),
                 "polls".to_string(),
             ],
+            disabled_features: vec!["call_in".to_string()],
         };
         let available_modules = vec!["chat", "media", "polls", "whiteboard", "timer"];
 
@@ -221,9 +240,13 @@ mod test {
             "name": "test",
             "quotas": {},
             "enabled_modules": ["chat"],
+            "disabled_features": ["call_in"],
         });
 
-        let actual = serde_json::to_value(tariff.to_tariff_resource(&available_modules)).unwrap();
+        let actual = serde_json::to_value(
+            tariff.to_tariff_resource(available_modules, Vec::<String>::new()),
+        )
+        .unwrap();
 
         assert_eq!(actual, expected);
     }

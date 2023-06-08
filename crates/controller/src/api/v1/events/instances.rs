@@ -712,10 +712,7 @@ mod tests {
                 id: RoomId::nil(),
                 password: None,
                 waiting_room: false,
-                sip_tel: None,
-                sip_uri: None,
-                sip_id: None,
-                sip_password: None,
+                call_in: None,
             },
             invitees_truncated: false,
             invitees: vec![EventInvitee {

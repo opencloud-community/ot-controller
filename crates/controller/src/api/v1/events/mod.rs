@@ -43,6 +43,7 @@ use rrule::{Frequency, RRuleSet};
 use serde::de::Visitor;
 use serde::{Deserialize, Serialize};
 use types::{
+    common::features,
     common::shared_folder::{SharedFolder, SharedFolderAccess},
     core::{DateTimeTz, EventId, RoomId, TimeZone, UserId},
 };
@@ -440,48 +441,58 @@ pub struct EventRoomInfo {
     /// Flag to check if the room has a waiting room enabled
     pub waiting_room: bool,
 
-    /// SIP Call-In phone number which must be used to reach the room
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub sip_tel: Option<String>,
+    pub call_in: Option<CallInInfo>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct CallInInfo {
+    /// SIP Call-In phone number which must be used to reach the room
+    pub tel: String,
 
     /// SIP Call-In sip uri
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub sip_uri: Option<String>,
+    pub uri: Option<String>,
 
     /// SIP ID which must transmitted via DTMF (number field on the phone) to identify this room
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub sip_id: Option<String>,
+    pub id: String,
 
     /// SIP password which must be transmitted via DTMF (number field on the phone) after entering the `sip_id`
     /// to enter the room
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub sip_password: Option<String>,
+    pub password: String,
 }
 
 impl EventRoomInfo {
+    /// Create a new [`EventRoomInfo`]
+    ///
+    /// The [`EventRoomInfo`] also contains a [`CallInInfo`] if the following conditions are true:
+    /// - a telephone number is configured in the call-in settings
+    /// - a [`SipConfig`] is provided
+    /// - the `CallIn` feature is not disabled in the settings
     fn from_room(settings: &Settings, room: Room, sip_config: Option<SipConfig>) -> Self {
-        let sip_tel = if sip_config.is_some() {
-            settings.call_in.as_ref().map(|c| c.tel.clone())
-        } else {
-            None
-        };
+        let call_in_feature_is_enabled = !settings
+            .defaults
+            .disabled_features
+            .contains(features::CALL_IN);
 
-        let (sip_id, sip_password) = if let Some(sip_config) = sip_config {
-            (
-                Some(sip_config.sip_id.into_inner().into_inner()),
-                Some(sip_config.password.into_inner().into_inner()),
-            )
-        } else {
-            (None, None)
-        };
+        let mut call_in = None;
+
+        if call_in_feature_is_enabled {
+            if let (Some(call_in_config), Some(sip_config)) = (&settings.call_in, sip_config) {
+                call_in = Some(CallInInfo {
+                    tel: call_in_config.tel.clone(),
+                    uri: None,
+                    id: sip_config.sip_id.into_inner().into_inner(),
+                    password: sip_config.password.into_inner().into_inner(),
+                });
+            }
+        }
+
         Self {
             id: room.id,
             password: room.password,
             waiting_room: room.waiting_room,
-            sip_tel,
-            sip_uri: None, // TODO SIP URI support
-            sip_id,
-            sip_password,
+            call_in,
         }
     }
 }
@@ -2247,10 +2258,7 @@ mod tests {
                 id: RoomId::nil(),
                 password: None,
                 waiting_room: false,
-                sip_tel: None,
-                sip_uri: None,
-                sip_id: None,
-                sip_password: None,
+                call_in: None,
             },
             invitees_truncated: false,
             invitees: vec![EventInvitee {
@@ -2367,10 +2375,12 @@ mod tests {
                 id: RoomId::nil(),
                 password: None,
                 waiting_room: false,
-                sip_tel: None,
-                sip_uri: None,
-                sip_id: None,
-                sip_password: None,
+                call_in: Some(CallInInfo {
+                    tel: "030123456".into(),
+                    uri: None,
+                    id: "1234567890".into(),
+                    password: "1234567890".into(),
+                }),
             },
             invitees_truncated: false,
             invitees: vec![EventInvitee {
@@ -2418,7 +2428,12 @@ mod tests {
                 "description": "Event description",
                 "room": {
                     "id": "00000000-0000-0000-0000-000000000000",
-                    "waiting_room": false
+                    "waiting_room": false,
+                    "call_in": {
+                        "tel": "030123456",
+                        "id": "1234567890",
+                        "password": "1234567890",
+                    }
                 },
                 "invitees_truncated": false,
                 "invitees": [

@@ -198,17 +198,23 @@ pub async fn get_me(
 /// Returns the [`TariffResource`] of the requesting user.
 #[get("/users/me/tariff")]
 pub async fn get_me_tariff(
+    settings: SharedSettingsActix,
     db: Data<Db>,
     modules: Data<SignalingModules>,
     current_user: ReqData<User>,
 ) -> Result<Json<TariffResource>, ApiError> {
+    let settings = settings.load_full();
+
     let current_user = current_user.into_inner();
 
     let mut conn = db.get_conn().await?;
 
     let tariff = Tariff::get(&mut conn, current_user.tariff_id).await?;
 
-    let response = tariff.to_tariff_resource(&modules.get_module_names());
+    let response = tariff.to_tariff_resource(
+        modules.get_module_names(),
+        &settings.defaults.disabled_features,
+    );
 
     Ok(Json(response))
 }

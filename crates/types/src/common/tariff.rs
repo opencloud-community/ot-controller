@@ -26,4 +26,7 @@ pub struct TariffResource {
 
     /// Enabled modules for the tariff
     pub enabled_modules: HashSet<String>,
+
+    /// Disabled features for the tariff
+    pub disabled_features: HashSet<String>,
 }

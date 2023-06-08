@@ -60,6 +60,8 @@ rand.workspace = true
 strum.workspace = true
 redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
 
+rustc-hash.workspace = true
+
 [dev-dependencies]
 actix-rt.workspace = true
 serial_test.workspace = true

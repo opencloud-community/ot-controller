@@ -2,12 +2,17 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use crate::settings::SharedSettingsActix;
+
 use super::response::error::ApiError;
+use super::util::require_feature;
 use actix_web::web::{Data, Json, Path};
 use actix_web::{delete, get, put, HttpResponse};
 use database::Db;
+use db_storage::rooms::Room;
 use db_storage::sip_configs::{NewSipConfig, SipConfig, UpdateSipConfig};
 use serde::{Deserialize, Serialize};
+use types::common::features;
 use types::core::{CallInId, CallInPassword, RoomId};
 use validator::{Validate, ValidationError};
 
@@ -43,10 +48,19 @@ fn disallow_empty(modify_room: &PutSipConfig) -> Result<(), ValidationError> {
 ///
 /// Get the sip config for the specified room.
 #[get("/rooms/{room_id}/sip")]
-pub async fn get(db: Data<Db>, room_id: Path<RoomId>) -> Result<Json<SipConfigResource>, ApiError> {
+pub async fn get(
+    settings: SharedSettingsActix,
+    db: Data<Db>,
+    room_id: Path<RoomId>,
+) -> Result<Json<SipConfigResource>, ApiError> {
+    let settings = settings.load();
     let room_id = room_id.into_inner();
 
     let mut conn = db.get_conn().await?;
+
+    let room = Room::get(&mut conn, room_id).await?;
+
+    require_feature(&mut conn, &settings, room.created_by, features::CALL_IN).await?;
 
     let config = SipConfig::get_by_room(&mut conn, room_id).await?;
 
@@ -66,16 +80,22 @@ pub async fn get(db: Data<Db>, room_id: Path<RoomId>) -> Result<Json<SipConfigRe
 /// Returns the new modified sip config.
 #[put("/rooms/{room_id}/sip")]
 pub async fn put(
+    settings: SharedSettingsActix,
     db: Data<Db>,
     room_id: Path<RoomId>,
     modify_sip_config: Json<PutSipConfig>,
 ) -> Result<HttpResponse, ApiError> {
+    let settings = settings.load();
     let room_id = room_id.into_inner();
     let modify_sip_config = modify_sip_config.into_inner();
 
     modify_sip_config.validate()?;
 
     let mut conn = db.get_conn().await?;
+
+    let room = Room::get(&mut conn, room_id).await?;
+
+    require_feature(&mut conn, &settings, room.created_by, features::CALL_IN).await?;
 
     let changeset = UpdateSipConfig {
         password: modify_sip_config.password.clone(),
@@ -128,10 +148,19 @@ pub async fn put(
 ///
 /// Deletes the sip config of the provided room.
 #[delete("/rooms/{room_id}/sip")]
-pub async fn delete(db: Data<Db>, room_id: Path<RoomId>) -> Result<HttpResponse, ApiError> {
+pub async fn delete(
+    settings: SharedSettingsActix,
+    db: Data<Db>,
+    room_id: Path<RoomId>,
+) -> Result<HttpResponse, ApiError> {
+    let settings = settings.load();
     let room_id = room_id.into_inner();
 
     let mut conn = db.get_conn().await?;
+
+    let room = Room::get(&mut conn, room_id).await?;
+
+    require_feature(&mut conn, &settings, room.created_by, features::CALL_IN).await?;
 
     SipConfig::delete_by_room(&mut conn, room_id).await?;
 
