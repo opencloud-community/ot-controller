@@ -11,7 +11,7 @@ use crate::oidc::{OidcContext, VerifyError};
 use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json};
 use actix_web::{get, post};
-use controller_settings::{TariffAssignment, TenantAssignment};
+use controller_settings::{TariffAssignment, TariffStatusMapping, TenantAssignment};
 use core::mem::take;
 use database::{Db, OptionalExt};
 use db_storage::groups::{get_or_create_groups_by_name, Group};
@@ -19,9 +19,10 @@ use db_storage::tariffs::{ExternalTariffId, Tariff};
 use db_storage::tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId};
 use db_storage::users::User;
 use kustos::prelude::PoliciesBuilder;
+use log::error;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
-use types::core::{EventId, GroupName, RoomId, TenantId};
+use types::core::{EventId, GroupName, RoomId, TariffStatus, TenantId};
 
 mod create_user;
 mod update_user;
@@ -77,10 +78,11 @@ pub async fn login(
     let mut conn = db.get_conn().await?;
 
     // Get tariff depending on the configured assignment
-    let tariff = match &settings.tariffs.assignment {
-        TariffAssignment::Static { static_tariff_name } => {
-            Tariff::get_by_name(&mut conn, static_tariff_name).await?
-        }
+    let (tariff, tariff_status) = match &settings.tariffs.assignment {
+        TariffAssignment::Static { static_tariff_name } => (
+            Tariff::get_by_name(&mut conn, static_tariff_name).await?,
+            TariffStatus::Default,
+        ),
         TariffAssignment::ByExternalTariffId => {
             let external_tariff_id = info.tariff_id.clone().ok_or_else(|| {
                 ApiError::bad_request()
@@ -88,14 +90,40 @@ pub async fn login(
                     .with_message("tariff_id missing in id_token claims")
             })?;
 
-            Tariff::get_by_external_id(&mut conn, &ExternalTariffId::from(external_tariff_id))
-                .await
-                .optional()?
-                .ok_or_else(|| {
-                    ApiError::internal()
-                        .with_code("invalid_tariff_id")
-                        .with_message("JWT contained unknown tariff_id")
-                })?
+            let tariff =
+                Tariff::get_by_external_id(&mut conn, &ExternalTariffId::from(external_tariff_id))
+                    .await
+                    .optional()?
+                    .ok_or_else(|| {
+                        ApiError::internal()
+                            .with_code("invalid_tariff_id")
+                            .with_message("JWT contained unknown tariff_id")
+                    })?;
+
+            if let Some(mapping) = settings.tariffs.status_mapping.as_ref() {
+                let status_name = info.tariff_status.clone().ok_or_else(|| {
+                    ApiError::bad_request()
+                        .with_code("invalid_claims")
+                        .with_message("tariff_status missing in id_token claims")
+                })?;
+
+                let status = map_tariff_status_name(mapping, &status_name);
+
+                let tariff = if matches!(status, TariffStatus::Downgraded) {
+                    Tariff::get_by_name(&mut conn, &mapping.downgraded_tariff_name)
+                        .await
+                        .map_err(|_| {
+                            ApiError::internal()
+                                .with_code("invalid_configuration")
+                                .with_message("Unable to load downgraded tariff")
+                        })?
+                } else {
+                    tariff
+                };
+                (tariff, status)
+            } else {
+                (tariff, TariffStatus::Default)
+            }
         }
     };
 
@@ -124,11 +152,29 @@ pub async fn login(
     let login_result = match user {
         Some(user) => {
             // Found a matching user, update its attributes, tenancy and groups
-            update_user::update_user(&settings, &mut conn, user, info, groups, tariff).await?
+            update_user::update_user(
+                &settings,
+                &mut conn,
+                user,
+                info,
+                groups,
+                tariff,
+                tariff_status,
+            )
+            .await?
         }
         None => {
             // No matching user, create a new one with inside the given tenants and groups
-            create_user::create_user(&settings, &mut conn, info, tenant, groups, tariff).await?
+            create_user::create_user(
+                &settings,
+                &mut conn,
+                info,
+                tenant,
+                groups,
+                tariff,
+                tariff_status,
+            )
+            .await?
         }
     };
 
@@ -140,6 +186,19 @@ pub async fn login(
         // TODO calculate permissions
         permissions: Default::default(),
     }))
+}
+
+fn map_tariff_status_name(mapping: &TariffStatusMapping, name: &String) -> TariffStatus {
+    if mapping.default.contains(name) {
+        TariffStatus::Default
+    } else if mapping.paid.contains(name) {
+        TariffStatus::Paid
+    } else if mapping.downgraded.contains(name) {
+        TariffStatus::Downgraded
+    } else {
+        error!("Invalid tariff status value found: \"{name}\"");
+        TariffStatus::Default
+    }
 }
 
 /// Wrapper struct for the oidc provider

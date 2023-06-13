@@ -14,6 +14,7 @@ use db_storage::tenants::Tenant;
 use db_storage::users::NewUser;
 use diesel_async::scoped_futures::ScopedFutureExt;
 use diesel_async::AsyncConnection;
+use types::core::TariffStatus;
 
 /// Called when `POST /auth/login` receives an id-token with a new `sub` + `tenant_id` field combination. Creates a new
 /// user in the given tenant using the information extracted from the id-token claims.
@@ -29,6 +30,7 @@ pub(super) async fn create_user(
     tenant: Tenant,
     groups: Vec<Group>,
     tariff: Tariff,
+    tariff_status: TariffStatus,
 ) -> database::Result<LoginResult> {
     let phone_number =
         if let Some((call_in, phone_number)) = settings.call_in.as_ref().zip(info.phone_number) {
@@ -57,6 +59,7 @@ pub(super) async fn create_user(
                 phone: phone_number,
                 tenant_id: tenant.id,
                 tariff_id: tariff.id,
+                tariff_status,
             }
             .insert(conn)
             .await?;

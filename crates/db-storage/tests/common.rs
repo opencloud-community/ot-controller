@@ -6,6 +6,7 @@ use database::DbConnection;
 use opentalk_db_storage::tariffs::Tariff;
 use opentalk_db_storage::tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId};
 use opentalk_db_storage::users::{NewUser, User};
+use types::core::TariffStatus;
 
 pub async fn make_user(
     conn: &mut DbConnection,
@@ -36,6 +37,7 @@ pub async fn make_user(
         phone: None,
         tenant_id: tenant.id,
         tariff_id: tariff.id,
+        tariff_status: TariffStatus::Default,
     }
     .insert(conn)
     .await

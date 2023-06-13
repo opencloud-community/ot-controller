@@ -104,6 +104,7 @@ impl OidcContext {
             display_name: claims.nickname,
             tenant_id: claims.tenant_id,
             tariff_id: claims.tariff_id,
+            tariff_status: claims.tariff_status,
         })
     }
 
@@ -135,4 +136,5 @@ pub struct IdTokenInfo {
     pub display_name: Option<String>,
     pub tenant_id: Option<String>,
     pub tariff_id: Option<String>,
+    pub tariff_status: Option<String>,
 }

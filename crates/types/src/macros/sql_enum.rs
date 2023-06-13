@@ -78,6 +78,7 @@ macro_rules! sql_enum {
             item:
             $(#[$type_meta])*
             #[derive(Debug)]
+            #[allow(missing_docs)]
             pub struct $type_ident;
         }
 

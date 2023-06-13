@@ -39,4 +39,5 @@ pub mod sql_types {
     pub use super::events::EventExceptionKindType as Event_exception_kind;
     pub use super::events::EventInviteStatusType as Event_invite_status;
     pub use diesel::sql_types::*;
+    pub use types::core::TariffStatusType as Tariff_status;
 }

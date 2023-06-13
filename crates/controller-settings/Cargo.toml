@@ -24,6 +24,7 @@ redis = { version = "0.22", features = ["tokio-comp", "connection-manager"] }
 cidr = { version = "0.2", features = ["serde"] }
 phonenumber = "0.3"
 redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
+rustc-hash = "1"
 anstream = "0.2"
 owo-colors = "3"
 

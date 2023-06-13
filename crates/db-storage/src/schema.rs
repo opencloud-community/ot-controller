@@ -274,6 +274,7 @@ table! {
         phone -> Nullable<Varchar>,
         tenant_id -> Uuid,
         tariff_id -> Uuid,
+        tariff_status -> Tariff_status,
     }
 }
 

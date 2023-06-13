@@ -12,7 +12,7 @@ use db_storage::tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId};
 use db_storage::users::{NewUser, User};
 use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
 use std::sync::Arc;
-use types::core::{GroupName, RoomId, TenantId, UserId};
+use types::core::{GroupName, RoomId, TariffStatus, TenantId, UserId};
 
 /// Contains the [`Db`] as well as information about the test database
 pub struct DatabaseContext {
@@ -94,6 +94,7 @@ impl DatabaseContext {
             phone: None,
             tenant_id: tenant.id,
             tariff_id: tariff.id,
+            tariff_status: TariffStatus::Default,
         }
         .insert(&mut conn)
         .await?;
