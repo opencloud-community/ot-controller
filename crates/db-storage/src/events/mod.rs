@@ -13,7 +13,6 @@ use crate::utils::HasUsers;
 use chrono::{DateTime, Utc};
 use chrono_tz::Tz;
 use database::{DatabaseError, DbConnection, Paginate, Result};
-use diesel::deserialize::FromSql;
 use diesel::expression::AsExpression;
 use diesel::pg::Pg;
 use diesel::prelude::*;
@@ -26,10 +25,10 @@ use diesel_async::scoped_futures::ScopedFutureExt;
 use diesel_async::{AsyncConnection, RunQueryDsl};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
-use std::io::Write;
 use std::str::FromStr;
 use types::core::{EventId, RoomId, TenantId, TimeZone, UserId};
 use types::signaling::control::EventInfo;
+use types::sql_enum;
 
 use self::shared_folders::EventSharedFolder;
 
@@ -689,7 +688,7 @@ impl UpdateEventException {
     }
 }
 
-sql_enum!(
+types::sql_enum!(
     #[derive(Serialize, PartialEq, Eq)]
     #[serde(rename_all = "snake_case")]
     EventInviteStatus,
