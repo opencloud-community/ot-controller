@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## unreleased
+## [0.5.0-rc.4] - 2023-06-13
 
 ### Changed
 
@@ -312,6 +312,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - initial release candidate
 
+[0.5.0-rc.4]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.5.0-rc.3...v0.5.0-rc.4
 [0.5.0-rc.3]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.5.0-rc.2...v0.5.0-rc.3
 [0.5.0-rc.2]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.5.0-rc.1...v0.5.0-rc.2
 [0.5.0-rc.1]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/941af95a8ee276da7c6f2a9a4c51ac91d95e3252...v0.5.0-rc.1
