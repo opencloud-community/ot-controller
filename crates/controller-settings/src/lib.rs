@@ -34,6 +34,7 @@
 use arc_swap::ArcSwap;
 use config::{Config, ConfigError, Environment, File, FileFormat};
 use openidconnect::{ClientId, ClientSecret};
+use rustc_hash::FxHashSet;
 use serde::{Deserialize, Deserializer};
 use std::collections::HashMap;
 use std::convert::TryFrom;
@@ -464,9 +465,20 @@ impl Default for TariffAssignment {
 }
 
 #[derive(Default, Debug, Clone, Deserialize)]
+pub struct TariffStatusMapping {
+    pub downgraded_tariff_name: String,
+    pub default: FxHashSet<String>,
+    pub paid: FxHashSet<String>,
+    pub downgraded: FxHashSet<String>,
+}
+
+#[derive(Default, Debug, Clone, Deserialize)]
 pub struct Tariffs {
     #[serde(default, flatten)]
     pub assignment: TariffAssignment,
+
+    #[serde(default)]
+    pub status_mapping: Option<TariffStatusMapping>,
 }
 
 #[cfg(test)]

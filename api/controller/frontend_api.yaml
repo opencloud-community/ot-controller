@@ -2062,6 +2062,7 @@ components:
             - dashboard_theme
             - conference_theme
             - language
+            - tariff_status
           properties:
             dashboard_theme:
               description: The users dashboard UI theme name
@@ -2072,6 +2073,10 @@ components:
             language:
               description: The users preferred language as specified in RFC 5646
               type: string
+            tariff_status:
+              description: The status of the tariff
+              type: string
+              enum: [default, paid, downgraded]
 
     UserFindResponseItem:
       description: User information accessible to all other users

@@ -121,7 +121,7 @@ phonenumber.workspace = true
 email_address = "0.2.4"
 redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
 slotmap = "1"
-rustc-hash = "1.1"
+rustc-hash.workspace = true
 
 # Random Distributions etc. Used for RR
 rand.workspace = true
