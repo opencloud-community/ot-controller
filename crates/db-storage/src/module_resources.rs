@@ -85,7 +85,110 @@ impl From<diesel::result::Error> for JsonOperationError {
     }
 }
 
-#[derive(Debug, Clone, Queryable, Identifiable, Insertable)]
+/// Helper struct for filtering module resources
+#[derive(Default)]
+pub struct Filter {
+    /// Filter by the UUID of the module resource
+    id: Option<ModuleResourceId>,
+    /// Filter by the namespace of the module resource
+    namespace: Option<String>,
+    /// Filter by the creator of the module resource
+    created_by: Option<UserId>,
+    /// Filter by the tag of the module resource
+    tag: Option<String>,
+    /// Filter by the content of the module resource
+    json: Option<serde_json::Value>,
+}
+
+type ResourceFilter =
+    Box<dyn BoxableExpression<module_resources::table, Pg, SqlType = diesel::sql_types::Bool>>;
+
+impl Filter {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn with_id(mut self, id: ModuleResourceId) -> Self {
+        self.id = Some(id);
+
+        self
+    }
+
+    pub fn with_namespace(mut self, namespace: String) -> Self {
+        self.namespace = Some(namespace);
+
+        self
+    }
+
+    pub fn with_created_by(mut self, created_by: UserId) -> Self {
+        self.created_by = Some(created_by);
+
+        self
+    }
+
+    pub fn with_tag(mut self, tag: String) -> Self {
+        self.tag = Some(tag);
+
+        self
+    }
+
+    pub fn with_json(mut self, json: serde_json::Value) -> Self {
+        self.json = Some(json);
+
+        self
+    }
+
+    fn into_diesel_filter(self) -> Option<ResourceFilter> {
+        fn append(query: &mut Option<ResourceFilter>, filter: ResourceFilter) {
+            if let Some(query_) = query.take() {
+                *query = Some(Box::new(query_.and(filter)));
+            } else {
+                *query = Some(filter);
+            }
+        }
+
+        let mut query: Option<ResourceFilter> = None;
+
+        if let Some(id) = self.id {
+            append(&mut query, Box::new(module_resources::id.eq(id)));
+        }
+
+        if let Some(namespace) = self.namespace {
+            append(
+                &mut query,
+                Box::new(module_resources::namespace.eq(namespace)),
+            );
+        }
+
+        if let Some(created_by) = self.created_by {
+            append(
+                &mut query,
+                Box::new(module_resources::created_by.eq(created_by)),
+            );
+        }
+
+        if let Some(tag) = self.tag {
+            // Unwrapping the Nullable<Bool> here with an if is_not_null then compare, else false
+            append(
+                &mut query,
+                Box::new(
+                    module_resources::tag
+                        .is_not_null()
+                        .and(module_resources::tag.eq(tag))
+                        .assume_not_null(),
+                ),
+            );
+        }
+
+        if let Some(json) = self.json {
+            append(&mut query, Box::new(module_resources::data.contains(json)));
+        }
+
+        query
+    }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Queryable, Identifiable, Insertable)]
 pub struct ModuleResource {
     pub id: ModuleResourceId,
     pub tenant_id: TenantId,
@@ -99,12 +202,17 @@ pub struct ModuleResource {
 }
 
 impl ModuleResource {
-    pub async fn get(conn: &mut DbConnection, id: ModuleResourceId) -> Result<Self> {
-        let query = module_resources::table.filter(module_resources::id.eq(id));
+    #[tracing::instrument(err, skip_all)]
+    pub async fn get(conn: &mut DbConnection, filter: Filter) -> Result<Vec<Self>> {
+        let filter = filter.into_diesel_filter().ok_or(DatabaseError::Custom(
+            "Missing filter for get module_resource query".into(),
+        ))?;
 
-        let module: ModuleResource = query.get_result(conn).await?;
+        let query = module_resources::table.filter(filter);
 
-        Ok(module)
+        let module_resources = query.get_results(conn).await?;
+
+        Ok(module_resources)
     }
 
     #[tracing::instrument(err, skip_all)]
@@ -137,8 +245,12 @@ impl ModuleResource {
     }
 
     #[tracing::instrument(err, skip_all)]
-    pub async fn delete_by_id(conn: &mut DbConnection, id: ModuleResourceId) -> Result<()> {
-        let query = diesel::delete(module_resources::table.filter(module_resources::id.eq(id)));
+    pub async fn delete(conn: &mut DbConnection, filter: Filter) -> Result<()> {
+        let filter = filter.into_diesel_filter().ok_or(DatabaseError::Custom(
+            "Missing filter for delete query".into(),
+        ))?;
+
+        let query = diesel::delete(module_resources::table).filter(filter);
 
         query.execute(conn).await?;
 
@@ -155,97 +267,20 @@ impl ModuleResource {
         Ok(())
     }
 
+    /// Update the targeted json data by a set of json patch [Operations](Operation)
     #[tracing::instrument(err, skip_all)]
-    pub async fn get_by_json(
+    pub async fn patch(
         conn: &mut DbConnection,
-        namespace: &str,
-        tag: Option<&str>,
-        filter: serde_json::Value,
-    ) -> Result<Option<Self>> {
-        Ok(ModuleResource::filter_by_json(conn, namespace, tag, filter)
-            .await?
-            .into_iter()
-            .next())
-    }
-
-    #[tracing::instrument(err, skip_all)]
-    pub async fn filter_by_json(
-        conn: &mut DbConnection,
-        namespace: &str,
-        tag: Option<&str>,
-        filter: serde_json::Value,
-    ) -> Result<Vec<Self>> {
-        let mut query = module_resources::table.into_boxed::<Pg>();
-
-        query = query.filter(
-            module_resources::namespace
-                .eq(namespace)
-                .and(module_resources::data.contains(filter)),
-        );
-
-        if let Some(tag) = tag {
-            query = query.filter(module_resources::tag.eq(tag))
-        }
-
-        let module_resources = query.get_results(conn).await?;
-
-        Ok(module_resources)
-    }
-
-    #[tracing::instrument(err, skip_all)]
-    pub async fn delete_by_json(
-        conn: &mut DbConnection,
-        namespace: &str,
-        tag: Option<&str>,
-        filter: serde_json::Value,
-    ) -> Result<()> {
-        let mut query = diesel::delete(module_resources::table).into_boxed::<Pg>();
-
-        query = query.filter(
-            module_resources::namespace
-                .eq(namespace)
-                .and(module_resources::data.contains(filter)),
-        );
-
-        if let Some(tag) = tag {
-            query = query.filter(module_resources::tag.eq(tag))
-        }
-
-        query.execute(conn).await?;
-
-        Ok(())
-    }
-
-    /// Update the targeted json by a set of [Operations](Operation)
-    #[tracing::instrument(err, skip_all)]
-    pub async fn update(
-        conn: &mut DbConnection,
-        namespace: &str,
-        filter_id: Option<ModuleResourceId>,
-        filter_created_by: Option<UserId>,
-        filter_tag: Option<&str>,
-        filter_json: Option<serde_json::Value>,
+        filter: Filter,
         operations: Vec<Operation>,
     ) -> Result<ModuleResource, JsonOperationError> {
-        let mut query = diesel::update(module_resources::table).into_boxed::<Pg>();
+        let filter = filter
+            .into_diesel_filter()
+            .ok_or(JsonOperationError::Database(DatabaseError::Custom(
+                "Missing filter for patch query".into(),
+            )))?;
 
-        query = query.filter(module_resources::namespace.eq(namespace));
-
-        if let Some(id) = filter_id {
-            query = query.filter(module_resources::id.eq(id));
-        }
-
-        if let Some(filter) = filter_json {
-            query = query.filter(module_resources::data.contains(filter));
-        }
-
-        if let Some(tag) = filter_tag {
-            query = query.filter(module_resources::tag.eq(tag))
-        }
-
-        if let Some(created_by) = filter_created_by {
-            query = query.filter(module_resources::created_by.eq(created_by))
-        }
+        let query = diesel::update(module_resources::table).filter(filter);
 
         let query = query.set(module_resources::data.eq(ot_patch_json(
             module_resources::data,
@@ -361,10 +396,13 @@ mod test {
             value: Value::String("bar".into()),
         }];
 
-        let updated =
-            ModuleResource::update(&mut db_conn, "test", None, None, None, None, operations)
-                .await
-                .unwrap();
+        let updated = ModuleResource::patch(
+            &mut db_conn,
+            Filter::new().with_namespace("test".into()),
+            operations,
+        )
+        .await
+        .unwrap();
 
         assert_eq_json!(updated.data,
         {
@@ -382,7 +420,12 @@ mod test {
             value: Value::String("bar".into()),
         }];
 
-        match ModuleResource::update(&mut db_conn, "test", None, None, None, None, operations).await
+        match ModuleResource::patch(
+            &mut db_conn,
+            Filter::new().with_namespace("test".into()),
+            operations,
+        )
+        .await
         {
             Err(JsonOperationError::JsonPatch(err)) => {
                 assert_eq!(JsonPatchErrorCode::InvalidPath, err.error_code)
@@ -401,7 +444,12 @@ mod test {
             value: Value::String("bar".into()),
         }];
 
-        match ModuleResource::update(&mut db_conn, "test", None, None, None, None, operations).await
+        match ModuleResource::patch(
+            &mut db_conn,
+            Filter::new().with_namespace("test".into()),
+            operations,
+        )
+        .await
         {
             Err(JsonOperationError::JsonPatch(err)) => {
                 assert_eq!(JsonPatchErrorCode::InvalidPath, err.error_code)
@@ -432,10 +480,13 @@ mod test {
             }
         }
 
-        let updated =
-            ModuleResource::update(&mut db_conn, "test", None, None, None, None, operations)
-                .await
-                .unwrap();
+        let updated = ModuleResource::patch(
+            &mut db_conn,
+            Filter::new().with_namespace("test".into()),
+            operations,
+        )
+        .await
+        .unwrap();
 
         assert_eq_json!(updated.data, json_compare);
     }
@@ -450,10 +501,13 @@ mod test {
             value: Value::String("bar".into()),
         }];
 
-        let updated =
-            ModuleResource::update(&mut db_conn, "test", None, None, None, None, operations)
-                .await
-                .unwrap();
+        let updated = ModuleResource::patch(
+            &mut db_conn,
+            Filter::new().with_namespace("test".into()),
+            operations,
+        )
+        .await
+        .unwrap();
 
         assert_eq_json!(updated.data, "bar");
     }
@@ -474,10 +528,13 @@ mod test {
             },
         ];
 
-        let updated =
-            ModuleResource::update(&mut db_conn, "test", None, None, None, None, operations)
-                .await
-                .unwrap();
+        let updated = ModuleResource::patch(
+            &mut db_conn,
+            Filter::new().with_namespace("test".into()),
+            operations,
+        )
+        .await
+        .unwrap();
 
         assert_eq_json!(updated.data,
         {
@@ -501,10 +558,13 @@ mod test {
             value: Value::String("b".into()),
         }];
 
-        let updated =
-            ModuleResource::update(&mut db_conn, "test", None, None, None, None, operations)
-                .await
-                .unwrap();
+        let updated = ModuleResource::patch(
+            &mut db_conn,
+            Filter::new().with_namespace("test".into()),
+            operations,
+        )
+        .await
+        .unwrap();
 
         assert_eq_json!(updated.data,
         {
@@ -522,10 +582,13 @@ mod test {
             value: Value::Array(vec![1.into(), 2.into(), 3.into()]),
         }];
 
-        let updated =
-            ModuleResource::update(&mut db_conn, "test", None, None, None, None, operations)
-                .await
-                .unwrap();
+        let updated = ModuleResource::patch(
+            &mut db_conn,
+            Filter::new().with_namespace("test".into()),
+            operations,
+        )
+        .await
+        .unwrap();
 
         assert_eq_json!(updated.data,
         {
@@ -549,10 +612,13 @@ mod test {
             },
         ];
 
-        let updated =
-            ModuleResource::update(&mut db_conn, "test", None, None, None, None, operations)
-                .await
-                .unwrap();
+        let updated = ModuleResource::patch(
+            &mut db_conn,
+            Filter::new().with_namespace("test".into()),
+            operations,
+        )
+        .await
+        .unwrap();
 
         assert_eq_json!(updated.data,
         {
@@ -581,10 +647,13 @@ mod test {
             },
         ];
 
-        let updated =
-            ModuleResource::update(&mut db_conn, "test", None, None, None, None, operations)
-                .await
-                .unwrap();
+        let updated = ModuleResource::patch(
+            &mut db_conn,
+            Filter::new().with_namespace("test".into()),
+            operations,
+        )
+        .await
+        .unwrap();
 
         assert_eq_json!(updated.data,
         {
@@ -607,10 +676,13 @@ mod test {
             path: "/foo".into(),
         }];
 
-        let updated =
-            ModuleResource::update(&mut db_conn, "test", None, None, None, None, operations)
-                .await
-                .unwrap();
+        let updated = ModuleResource::patch(
+            &mut db_conn,
+            Filter::new().with_namespace("test".into()),
+            operations,
+        )
+        .await
+        .unwrap();
 
         assert_eq_json!(updated.data,
         {
@@ -640,10 +712,13 @@ mod test {
             },
         ];
 
-        let updated =
-            ModuleResource::update(&mut db_conn, "test", None, None, None, None, operations)
-                .await
-                .unwrap();
+        let updated = ModuleResource::patch(
+            &mut db_conn,
+            Filter::new().with_namespace("test".into()),
+            operations,
+        )
+        .await
+        .unwrap();
 
         assert_eq_json!(updated.data,
         {
@@ -680,10 +755,13 @@ mod test {
             },
         ];
 
-        let updated =
-            ModuleResource::update(&mut db_conn, "test", None, None, None, None, operations)
-                .await
-                .unwrap();
+        let updated = ModuleResource::patch(
+            &mut db_conn,
+            Filter::new().with_namespace("test".into()),
+            operations,
+        )
+        .await
+        .unwrap();
 
         assert_eq_json!(updated.data,
         {
@@ -712,10 +790,13 @@ mod test {
             path: "/bar/qux".into(),
         }];
 
-        let updated =
-            ModuleResource::update(&mut db_conn, "test", None, None, None, None, operations)
-                .await
-                .unwrap();
+        let updated = ModuleResource::patch(
+            &mut db_conn,
+            Filter::new().with_namespace("test".into()),
+            operations,
+        )
+        .await
+        .unwrap();
 
         assert_eq_json!(updated.data,
         {
@@ -744,7 +825,12 @@ mod test {
             path: "/bar/qux".into(),
         }];
 
-        match ModuleResource::update(&mut db_conn, "test", None, None, None, None, operations).await
+        match ModuleResource::patch(
+            &mut db_conn,
+            Filter::new().with_namespace("test".into()),
+            operations,
+        )
+        .await
         {
             Err(JsonOperationError::JsonPatch(err)) => {
                 assert_eq!(JsonPatchErrorCode::InvalidFromPath, err.error_code)
@@ -771,7 +857,12 @@ mod test {
             path: to_path,
         }];
 
-        match ModuleResource::update(&mut db_conn, "test", None, None, None, None, operations).await
+        match ModuleResource::patch(
+            &mut db_conn,
+            Filter::new().with_namespace("test".into()),
+            operations,
+        )
+        .await
         {
             Err(JsonOperationError::JsonPatch(err)) => {
                 assert_eq!(JsonPatchErrorCode::InvalidFromPath, err.error_code)
@@ -792,10 +883,13 @@ mod test {
             path: "/foo/3".into(),
         }];
 
-        let updated =
-            ModuleResource::update(&mut db_conn, "test", None, None, None, None, operations)
-                .await
-                .unwrap();
+        let updated = ModuleResource::patch(
+            &mut db_conn,
+            Filter::new().with_namespace("test".into()),
+            operations,
+        )
+        .await
+        .unwrap();
 
         assert_eq_json!(updated.data,
             { "foo": [ "all", "cows", "eat", "grass" ] }
@@ -820,10 +914,13 @@ mod test {
             path: "/bar/baz/1".into(),
         }];
 
-        let updated =
-            ModuleResource::update(&mut db_conn, "test", None, None, None, None, operations)
-                .await
-                .unwrap();
+        let updated = ModuleResource::patch(
+            &mut db_conn,
+            Filter::new().with_namespace("test".into()),
+            operations,
+        )
+        .await
+        .unwrap();
 
         assert_eq_json!(updated.data,
         {
@@ -852,10 +949,13 @@ mod test {
             path: "/bar/qux".into(),
         }];
 
-        let updated =
-            ModuleResource::update(&mut db_conn, "test", None, None, None, None, operations)
-                .await
-                .unwrap();
+        let updated = ModuleResource::patch(
+            &mut db_conn,
+            Filter::new().with_namespace("test".into()),
+            operations,
+        )
+        .await
+        .unwrap();
 
         assert_eq_json!(updated.data,
         {
@@ -882,10 +982,13 @@ mod test {
             value: Value::Number(1.into()),
         }];
 
-        let updated =
-            ModuleResource::update(&mut db_conn, "test", None, None, None, None, operations)
-                .await
-                .unwrap();
+        let updated = ModuleResource::patch(
+            &mut db_conn,
+            Filter::new().with_namespace("test".into()),
+            operations,
+        )
+        .await
+        .unwrap();
 
         assert_eq_json!(updated.data,
         {
@@ -909,7 +1012,12 @@ mod test {
             value: Value::Number(99.into()),
         }];
 
-        match ModuleResource::update(&mut db_conn, "test", None, None, None, None, operations).await
+        match ModuleResource::patch(
+            &mut db_conn,
+            Filter::new().with_namespace("test".into()),
+            operations,
+        )
+        .await
         {
             Err(JsonOperationError::JsonPatch(err)) => {
                 assert_eq!(JsonPatchErrorCode::ValueNotEqual, err.error_code)
@@ -942,7 +1050,12 @@ mod test {
             },
         ];
 
-        match ModuleResource::update(&mut db_conn, "test", None, None, None, None, operations).await
+        match ModuleResource::patch(
+            &mut db_conn,
+            Filter::new().with_namespace("test".into()),
+            operations,
+        )
+        .await
         {
             Err(JsonOperationError::JsonPatch(err)) => {
                 assert_eq!(JsonPatchErrorCode::ValueNotEqual, err.error_code)
@@ -950,7 +1063,10 @@ mod test {
             unexpected => panic!("Expected failed compare error, got {:?}", unexpected),
         }
 
-        let resource = ModuleResource::get(&mut db_conn, id).await.unwrap();
+        let resource = ModuleResource::get(&mut db_conn, Filter::new().with_id(id))
+            .await
+            .unwrap()
+            .remove(0);
 
         // resource should not be changed
         assert_eq!(initial_json, resource.data);
@@ -975,10 +1091,13 @@ mod test {
             }),
         }];
 
-        let updated =
-            ModuleResource::update(&mut db_conn, "test", None, None, None, None, operations)
-                .await
-                .unwrap();
+        let updated = ModuleResource::patch(
+            &mut db_conn,
+            Filter::new().with_namespace("test".into()),
+            operations,
+        )
+        .await
+        .unwrap();
 
         assert_eq_json!(updated.data,
         {
@@ -1005,10 +1124,13 @@ mod test {
             value: Value::Number(99.into()),
         }];
 
-        let updated =
-            ModuleResource::update(&mut db_conn, "test", None, None, None, None, operations)
-                .await
-                .unwrap();
+        let updated = ModuleResource::patch(
+            &mut db_conn,
+            Filter::new().with_namespace("test".into()),
+            operations,
+        )
+        .await
+        .unwrap();
 
         assert_eq_json!(updated.data,
         {
@@ -1031,10 +1153,13 @@ mod test {
             value: Value::String("a".into()),
         }];
 
-        let updated =
-            ModuleResource::update(&mut db_conn, "test", None, None, None, None, operations)
-                .await
-                .unwrap();
+        let updated = ModuleResource::patch(
+            &mut db_conn,
+            Filter::new().with_namespace("test".into()),
+            operations,
+        )
+        .await
+        .unwrap();
 
         assert_eq_json!(updated.data,
         {
@@ -1056,7 +1181,12 @@ mod test {
             value: Value::String("d".into()),
         }];
 
-        match ModuleResource::update(&mut db_conn, "test", None, None, None, None, operations).await
+        match ModuleResource::patch(
+            &mut db_conn,
+            Filter::new().with_namespace("test".into()),
+            operations,
+        )
+        .await
         {
             Err(JsonOperationError::JsonPatch(err)) => {
                 assert_eq!(JsonPatchErrorCode::InvalidPath, err.error_code)
@@ -1079,12 +1209,93 @@ mod test {
             value: Value::String("2".into()),
         }];
 
-        match ModuleResource::update(&mut db_conn, "test", None, None, None, None, operations).await
+        match ModuleResource::patch(
+            &mut db_conn,
+            Filter::new().with_namespace("test".into()),
+            operations,
+        )
+        .await
         {
             Err(JsonOperationError::JsonPatch(err)) => {
                 assert_eq!(JsonPatchErrorCode::InvalidPath, err.error_code)
             }
             unexpected => panic!("Expected invalid path error, got {:?}", unexpected),
         }
+    }
+
+    #[actix_rt::test]
+    #[serial]
+    async fn test_filter() {
+        let db_ctx = test_util::database::DatabaseContext::new(false).await;
+
+        let mut db_conn = db_ctx.db.get_conn().await.unwrap();
+
+        let user = db_ctx.create_test_user(0, vec![]).await.unwrap();
+
+        let room = db_ctx
+            .create_test_room(RoomId::from(Uuid::from_u128(0)), user.id, false)
+            .await
+            .unwrap();
+
+        let tenant = get_or_create_tenant_by_oidc_id(
+            &mut db_conn,
+            &OidcTenantId::from("OpenTalkDefaultTenant".to_owned()),
+        )
+        .await
+        .unwrap();
+
+        let new_resource = NewModuleResource {
+            tenant_id: tenant.id,
+            created_by: user.id,
+            room_id: room.id,
+            namespace: "test".into(),
+            tag: Some("something".into()),
+            data: json! {
+                {
+                    "foo": "a",
+                    "bar": "b"
+                }
+            },
+        };
+
+        let module_resource = new_resource.insert(&mut db_conn).await.unwrap();
+
+        let resources = ModuleResource::get(
+            &mut db_conn,
+            Filter::new().with_namespace("not-test".into()),
+        )
+        .await
+        .unwrap();
+
+        assert!(resources.is_empty());
+
+        let resources = ModuleResource::get(&mut db_conn, Filter::new().with_tag("nothing".into()))
+            .await
+            .unwrap();
+
+        assert!(resources.is_empty());
+
+        let resources =
+            ModuleResource::get(&mut db_conn, Filter::new().with_json(json! {{"baz": "c"}}))
+                .await
+                .unwrap();
+
+        assert!(resources.is_empty());
+
+        let filter = Filter::new()
+            .with_id(module_resource.id)
+            .with_created_by(user.id)
+            .with_namespace("test".into())
+            .with_tag("something".into())
+            .with_json(json! {
+                {
+                    "foo": "a"
+                }
+            });
+
+        let resources = ModuleResource::get(&mut db_conn, filter).await.unwrap();
+
+        assert!(resources.len() == 1);
+        assert_eq!(module_resource, resources[0])
     }
 }
