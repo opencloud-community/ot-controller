@@ -1744,13 +1744,17 @@ pub async fn delete_event(
 
 /// Part of `DELETE /events/{event_id}` (see [`patch_event`])
 ///
-/// Notify invited users about the event update
+/// Notify invited users about the event deletion
 async fn notify_invitees_about_delete(
     notification_values: CancellationNotificationValues,
     mail_service: Arc<MailService>,
     kc_admin_client: &Data<KeycloakAdminClient>,
     shared_folder: Option<SharedFolder>,
 ) {
+    // Don't send mails for past events
+    if notification_values.event.ends_at < Some(Utc::now()) {
+        return;
+    }
     for invited_user in notification_values.invited_users {
         let invited_user =
             enrich_from_keycloak(invited_user, &notification_values.tenant, kc_admin_client).await;
