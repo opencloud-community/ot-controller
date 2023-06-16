@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - logging: `RUST_LOG` environment variable entries override settings from configuration file ([#69](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/69))
 - db-storage: replace the `legal-votes` database table with the `module-resources` table. ⚠️ permissions need to be updated with the `fix-acl` command ⚠️ ([#345](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/345))
 - controller: don't send mail notifications on deletion of past events ([#407](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/407))
+- controller: `x_grp` defaults to empty if not provided ([#414](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/414))
 
 ### Fixed
 
