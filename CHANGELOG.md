@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0-rc.5] - 2023-06-16
+
+### Added
+
+- controller: extend `JoinSuccess` signaling message's `Event` with `EventId` field ([#399](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/399))
+
+### Changed
+
+- logging: `RUST_LOG` environment variable entries override settings from configuration file ([#69](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/69))
+- controller: don't send mail notifications on deletion of past events ([#407](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/407))
+- controller: `x_grp` defaults to empty if not provided ([#414](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/414))
+
+### Fixed
+
+- controller: Avoid sending unnecessary close frames. ([#356](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/356))
+- janus-media: discard unhandled ack messages, log them on debug level only ([#252](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/252))
+
 ## [0.5.0-rc.4] - 2023-06-13
 
 ### Changed
@@ -25,20 +42,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - controller: add event information to `JoinSuccess` signaling message ([#266](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/266))
 - controller: add the `shared-folder` module, allowing users to create and connect a nextcloud share in their conferences ([#381](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/381))
-- controller: extend `JoinSuccess` signaling message's `Event` with `EventId` field ([#399](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/399))
 
 ### Changed
 
 - db-storage/mail-worker-protocol: added `revision` field to `events` to track the number of changes
 - cli: Update `fix-cli` subcommand, now also fixes access to events and legal-votes ([#387](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/387))
-- logging: `RUST_LOG` environment variable entries override settings from configuration file ([#69](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/69))
-- controller: don't send mail notifications on deletion of past events ([#407](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/407))
-- controller: `x_grp` defaults to empty if not provided ([#414](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/414))
 
 ### Fixed
 
 - signaling: Consider the `enable_phone_mapping` config value when trying to match the phone number to a opentalk user
-- janus-media: discard unhandled ack messages, log them on debug level only ([#252](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/252))
 
 ## [0.4.0] - 2023-05-25
 
@@ -59,7 +71,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - controller/db-storage: Email invites now get deleted, when converted to user invites. ([#320](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/320))
 - controller-settings: Fixed a panic when trying to parse config values for `tenants` and `tariffs`, when their assignment was set to `static`
-- controller: Avoid sending unnecessary close frames. ([#356](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/356))
 
 ### Moved
 
@@ -318,6 +329,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - initial release candidate
 
+[0.5.0-rc.5]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.5.0-rc.4...v0.5.0-rc.5
 [0.5.0-rc.4]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.5.0-rc.3...v0.5.0-rc.4
 [0.5.0-rc.3]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.5.0-rc.2...v0.5.0-rc.3
 [0.5.0-rc.2]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.5.0-rc.1...v0.5.0-rc.2
