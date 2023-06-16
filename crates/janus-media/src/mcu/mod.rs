@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::incoming::SubscriberConfiguration;
 use crate::settings::{self, Connection};
+use ::types::signaling::media::{command::SubscriberConfiguration, MediaSessionType};
 use anyhow::{bail, Context, Result};
 use controller_settings::SharedSettings;
 use futures::{ready, stream::FuturesUnordered};

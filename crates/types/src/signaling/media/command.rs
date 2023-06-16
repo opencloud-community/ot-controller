@@ -2,79 +2,192 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use serde::Deserialize;
-use types::signaling::media::command::{
-    AssociatedMediaSession, MediaSessionInfo, ParticipantSelection, RequestMute, Target,
-    TargetConfigure, TargetSubscribe, TargetedCandidate, TargetedSdp,
-};
+//! Signaling messages for the `media` namespace
 
-#[derive(Debug, Deserialize)]
-#[serde(tag = "action")]
+use crate::core::ParticipantId;
+
+#[allow(unused_imports)]
+use crate::imports::*;
+
+use super::{MediaSessionState, MediaSessionType, TrickleCandidate};
+
+/// Commands received by the `media` module
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(tag = "action", rename_all = "snake_case")
+)]
 pub enum MediaCommand {
     /// The participant successfully established a stream
-    #[serde(rename = "publish_complete")]
     PublishComplete(MediaSessionInfo),
 
     /// The participants publish stream has stopped (for whatever reason)
-    #[serde(rename = "unpublish")]
     Unpublish(AssociatedMediaSession),
 
     /// The participant updates its stream-state
     ///
     /// This can be mute/unmute of video or audio
-    #[serde(rename = "update_media_session")]
     UpdateMediaSession(MediaSessionInfo),
 
     /// A moderators request to mute one or more participants
-    #[serde(rename = "moderator_mute")]
     ModeratorMute(RequestMute),
 
     /// SDP offer
-    #[serde(rename = "publish")]
     Publish(TargetedSdp),
 
     /// SDP Answer
-    #[serde(rename = "sdp_answer")]
     SdpAnswer(TargetedSdp),
 
     /// SDP Candidate
-    #[serde(rename = "sdp_candidate")]
     SdpCandidate(TargetedCandidate),
 
     /// SDP EndOfCandidate
-    #[serde(rename = "sdp_end_of_candidates")]
     SdpEndOfCandidates(Target),
 
     /// SDP request offer
-    #[serde(rename = "subscribe")]
     Subscribe(TargetSubscribe),
 
     /// Restart an existing subscription
-    #[serde(rename = "resubscribe")]
     Resubscribe(Target),
 
     /// Grant the presenter role for a set of participants
-    #[serde(rename = "grant_presenter_role")]
     GrantPresenterRole(ParticipantSelection),
 
     /// Revoke the presenter role for a set of participants
-    #[serde(rename = "revoke_presenter_role")]
     RevokePresenterRole(ParticipantSelection),
 
     /// SDP request to configure subscription
-    #[serde(rename = "configure")]
     Configure(TargetConfigure),
+}
+
+/// Information about a media session
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct MediaSessionInfo {
+    /// The stream type that has been published
+    pub media_session_type: MediaSessionType,
+
+    /// The current state of the session
+    pub media_session_state: MediaSessionState,
+}
+
+/// An established media session
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct AssociatedMediaSession {
+    /// The stream type that has been published
+    pub media_session_type: MediaSessionType,
+}
+
+/// Specification of a target for media commands
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct Target {
+    /// The target of this message.
+    ///
+    /// If the own ID is specified it is used to negotiate the publish stream.
+    pub target: ParticipantId,
+
+    /// The type of stream
+    pub media_session_type: MediaSessionType,
+}
+
+/// Request a number of participants to mute themselves
+///
+/// May only be processed if the issuer is a moderator
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct RequestMute {
+    /// Participants that shall be muted
+    pub targets: Vec<ParticipantId>,
+
+    /// Force mute the participant(s)
+    pub force: bool,
+}
+
+/// Targeted SDP offer or answer
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct TargetedSdp {
+    /// The payload of the sdp message
+    pub sdp: String,
+
+    /// The target of this SDP message.
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub target: Target,
+}
+
+/// Command to inform the backend about a SDP candidate
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct TargetedCandidate {
+    /// The payload of the sdp message
+    pub candidate: TrickleCandidate,
+
+    /// The target of this Candidate
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub target: Target,
+}
+
+/// Command to subscribe for a target
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct TargetSubscribe {
+    /// The target of the subscription
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub target: Target,
+
+    /// Do not subscribe to the video stream.
+    /// Primarily used for SIP.
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub without_video: bool,
+}
+
+/// Give a list of participants write access to the protocol
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct ParticipantSelection {
+    /// The targeted participants
+    pub participant_ids: Vec<ParticipantId>,
+}
+
+/// Command to configure a target subscription
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct TargetConfigure {
+    /// The target of this configure
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub target: Target,
+
+    /// New Configuration
+    ///
+    /// Contains the configuration changes/settings to be applied.
+    pub configuration: SubscriberConfiguration,
+}
+
+/// Configuration of a video subscription
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct SubscriberConfiguration {
+    /// Video Feed
+    ///
+    /// If true, will configure the connection to receive the video stream.
+    /// If false, will disable the video feed relaying.
+    pub video: Option<bool>,
+
+    /// Substream
+    ///
+    /// If enabled, the selected substream of the three (0-2) available
+    pub substream: Option<u8>,
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::{core::ParticipantId, signaling::media::MediaSessionType};
     use pretty_assertions::assert_eq;
-    use test_util::serde_json::json;
-    use types::{
-        core::ParticipantId,
-        signaling::media::{mcu::MediaSessionType, TrickleCandidate},
-    };
+    use serde_json::json;
 
     #[test]
     fn publish() {

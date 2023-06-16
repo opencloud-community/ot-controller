@@ -239,22 +239,6 @@ impl std::fmt::Display for TransactionId {
     }
 }
 
-/// The streamtypes we utilize
-// todo move to opentalk-signaling
-pub enum StreamTypes {
-    Video,
-    Screen,
-}
-impl From<u64> for StreamTypes {
-    fn from(value: u64) -> Self {
-        match value {
-            1 => Self::Video,
-            2 => Self::Screen,
-            _ => unimplemented!(),
-        }
-    }
-}
-
 /// A candidate for ICE/SDP trickle
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TrickleCandidate {
