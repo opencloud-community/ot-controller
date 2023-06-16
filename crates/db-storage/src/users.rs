@@ -15,7 +15,7 @@ use diesel::{
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
 use std::fmt;
-use types::core::{TariffId, TenantId, UserId};
+use types::core::{TariffId, TariffStatus, TenantId, UserId};
 
 types::diesel_newtype! {
     #[derive(Copy)]
@@ -42,6 +42,7 @@ pub struct User {
     pub phone: Option<String>,
     pub tenant_id: TenantId,
     pub tariff_id: TariffId,
+    pub tariff_status: TariffStatus,
 }
 
 impl fmt::Debug for User {
@@ -293,6 +294,7 @@ pub struct NewUser {
     pub phone: Option<String>,
     pub tenant_id: TenantId,
     pub tariff_id: TariffId,
+    pub tariff_status: TariffStatus,
 }
 
 impl NewUser {
@@ -322,6 +324,7 @@ pub struct UpdateUser<'a> {
     // The tenant_id should never be updated!
     //pub tenant_id: Option<TenantId>,
     pub tariff_id: Option<TariffId>,
+    pub tariff_status: Option<TariffStatus>,
 }
 
 impl UpdateUser<'_> {

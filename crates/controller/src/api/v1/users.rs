@@ -20,6 +20,7 @@ use db_storage::tenants::Tenant;
 use db_storage::users::{UpdateUser, User};
 use keycloak_admin::KeycloakAdminClient;
 use serde::{Deserialize, Serialize};
+use types::core::TariffStatus;
 use types::{common::tariff::TariffResource, core::UserId};
 use validator::Validate;
 
@@ -74,6 +75,7 @@ pub struct PrivateUserProfile {
     pub dashboard_theme: String,
     pub conference_theme: String,
     pub language: String,
+    pub tariff_status: TariffStatus,
 }
 
 impl PrivateUserProfile {
@@ -95,6 +97,7 @@ impl PrivateUserProfile {
             conference_theme: user.conference_theme,
             avatar_url,
             language: user.language,
+            tariff_status: user.tariff_status,
         }
     }
 }
@@ -164,6 +167,7 @@ pub async fn patch_me(
         conference_theme: patch.conference_theme.as_deref(),
         id_token_exp: None,
         tariff_id: None,
+        tariff_status: None,
     };
 
     let user = changeset.apply(&mut conn, current_user.id).await?;

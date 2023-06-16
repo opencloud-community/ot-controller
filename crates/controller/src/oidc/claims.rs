@@ -57,6 +57,8 @@ pub struct UserClaims {
     pub tenant_id: Option<String>,
     /// Tariff ID of the user
     pub tariff_id: Option<String>,
+    /// Tariff status of the user
+    pub tariff_status: Option<String>,
     /// Groups the user belongs to.
     /// This is a custom field not specified by the OIDC Standard
     pub x_grp: Vec<String>,

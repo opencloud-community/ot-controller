@@ -218,7 +218,7 @@ secret_key = "minioadmin"
 #assignment = "by_external_tenant_id"
 
 #[tariffs]
-# Configure how tariffs are assignement to users
+# Configure how tariffs are assigned to users
 # The following assignment strategies are available:
 #   - "static" (default): Every user is assigned the same tariff with the tariff's name specified in a separate field
 #               called static_tariff_name. The default value is "OpenTalkDefaultTariff".
@@ -231,3 +231,28 @@ secret_key = "minioadmin"
 #
 # Assignemnt by JWT tariff_id example:
 #assignment = "by_external_tariff_id"
+#
+# Status mapping for tariff status. Can only be used if the tariff assignment
+# is configured as "by_external_tariff_id". If present, the controller will look
+# at the JWT attribute named "tariff_status" and transfer its value to its
+# internal tariff status based on the values of the "default", "paid" and
+# "downgraded" field values. An entry in any of the lists below must be unique
+# across all lists. For example, if the paid list contains "all_ok", then
+# "all_ok" must not appear in any other list.
+#[tariffs.status_mapping]
+#
+# The name of the tariff that gets applied when the user's tariff state is "downgraded".
+#downgraded_tariff_name = "basic"
+#
+# The default tariff status, usually a tariff that any user can get without paying
+# Any user with an invalid value in the "tariff_status" attribute will be set to
+# the default status, but a warning will be issued if the mapping does not contain
+# that attribute value.
+#default = ["default"]
+#
+# The user's tariff has been paid and is valid.
+#paid = ["paid", "all_ok"]
+#
+# The user has booked a specific tariff, but is not allowed to use it, e.g. because
+# it is unpaid. Therefore the user's tariff is downgraded to the fallback tariff.
+#downgraded = ["unpaid"]

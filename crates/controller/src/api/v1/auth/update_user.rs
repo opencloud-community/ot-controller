@@ -12,6 +12,7 @@ use db_storage::tariffs::Tariff;
 use db_storage::users::{UpdateUser, User};
 use diesel_async::scoped_futures::ScopedFutureExt;
 use diesel_async::AsyncConnection;
+use types::core::TariffStatus;
 
 /// Called when the `POST /auth/login` endpoint received an id-token with a `sub`+`tenant_id` combination that maps to
 /// an existing user. Resets the expiry time of the id-token for the user. Also updates all fields in the database that
@@ -28,8 +29,9 @@ pub(super) async fn update_user(
     info: IdTokenInfo,
     groups: Vec<Group>,
     tariff: Tariff,
+    tariff_status: TariffStatus,
 ) -> database::Result<LoginResult> {
-    let changeset = create_changeset(settings, &user, &info, tariff);
+    let changeset = create_changeset(settings, &user, &info, tariff, tariff_status);
 
     let user = changeset.apply(conn, user.id).await?;
 
@@ -66,6 +68,7 @@ fn create_changeset<'a>(
     user: &User,
     token_info: &'a IdTokenInfo,
     tariff: Tariff,
+    tariff_status: TariffStatus,
 ) -> UpdateUser<'a> {
     let User {
         id: _,
@@ -83,6 +86,7 @@ fn create_changeset<'a>(
         phone,
         tenant_id: _,
         tariff_id,
+        tariff_status: tariff_status_db,
     } = user;
 
     let mut changeset = UpdateUser {
@@ -119,6 +123,10 @@ fn create_changeset<'a>(
 
     if tariff_id != &tariff.id {
         changeset.tariff_id = Some(tariff.id)
+    }
+
+    if tariff_status != *tariff_status_db {
+        changeset.tariff_status = Some(tariff_status);
     }
 
     changeset
