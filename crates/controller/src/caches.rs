@@ -2,8 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use signaling_core::RedisConnection;
+
 use crate::api::v1::middleware::user_auth::UserAccessTokenCache;
-use crate::redis_wrapper::RedisConnection;
 use core::time::Duration;
 
 /// Holds all application level caches

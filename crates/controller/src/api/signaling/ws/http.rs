@@ -4,26 +4,25 @@
 
 use super::modules::{ModuleBuilder, ModuleBuilderImpl};
 use super::runner::Runner;
-use super::SignalingModule;
-use crate::api::signaling::metrics::SignalingMetrics;
 use crate::api::signaling::resumption::{ResumptionData, ResumptionTokenKeepAlive};
 use crate::api::signaling::ticket::{TicketData, TicketRedisKey};
 use crate::api::signaling::ws::actor::WebSocketActor;
 use crate::api::v1::response::ApiError;
-use crate::api::Participant;
 use crate::exchange_task::ExchangeHandle;
-use crate::redis_wrapper::RedisConnection;
 use crate::settings::SharedSettingsActix;
-use crate::storage::ObjectStorage;
 use actix_web::http::header;
 use actix_web::web::Data;
 use actix_web::{get, HttpMessage};
 use actix_web::{web, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
+use anyhow::Result;
 use database::Db;
 use db_storage::rooms::Room;
 use db_storage::users::User;
 use kustos::Authz;
+use signaling_core::{
+    ObjectStorage, Participant, RedisConnection, SignalingMetrics, SignalingModule,
+};
 use std::marker::PhantomData;
 use std::time::Instant;
 use tokio::sync::{broadcast, mpsc};

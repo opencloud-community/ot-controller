@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use anyhow::{Context, Result};
-use controller::{api::signaling::SignalingRoomId, RedisConnection};
 use redis::AsyncCommands;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
+use signaling_core::{RedisConnection, SignalingRoomId};
 use url::Url;
 
 /// Stores the [`InitState`] of this room.

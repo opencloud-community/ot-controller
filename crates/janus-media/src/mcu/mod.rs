@@ -5,7 +5,6 @@
 use crate::incoming::SubscriberConfiguration;
 use crate::settings::{self, Connection};
 use anyhow::{bail, Context, Result};
-use controller::RedisConnection;
 use controller_settings::SharedSettings;
 use futures::{ready, stream::FuturesUnordered};
 use janus_client::outgoing::{
@@ -16,6 +15,7 @@ use janus_client::{ClientId, JanusMessage, JsepType, RoomId as JanusRoomId, Tric
 use lapin_pool::{RabbitMqChannel, RabbitMqPool};
 use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
+use signaling_core::RedisConnection;
 use std::borrow::{Borrow, Cow};
 use std::cmp::min;
 use std::collections::HashSet;
@@ -113,7 +113,7 @@ pub struct McuPool {
 
 impl McuPool {
     pub async fn build(
-        settings: &controller::settings::Settings,
+        settings: &controller_settings::Settings,
         shared_settings: SharedSettings,
         rabbitmq_pool: Arc<RabbitMqPool>,
         mut redis: RedisConnection,

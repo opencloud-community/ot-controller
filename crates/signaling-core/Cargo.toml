@@ -3,35 +3,45 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "opentalk-chat"
+name = "opentalk-signaling-core"
 edition = "2021"
-license = "EUPL-1.2"
 authors.workspace = true
 version.workspace = true
 publish = false
 
 [dependencies]
+actix-rt = { workspace = true, optional = true }
+actix-http.workspace = true
 anyhow.workspace = true
 async-trait.workspace = true
-chrono.workspace = true
+aws-sdk-s3 = "0.21"
+bytes.workspace = true
 controller-settings = { path = "../controller-settings", package = "opentalk-controller-settings" }
-db-storage = { path = "../db-storage", package = "opentalk-db-storage" }
 database = { path = "../database", package = "opentalk-database" }
+db-storage = { path = "../db-storage", package = "opentalk-db-storage" }
+diesel.workspace = true
+futures.workspace = true
+kustos = { path = "../../crates/kustos" }
 lapin-pool = { path = "../lapin-pool" }
 log.workspace = true
+opentelemetry = { version = "0.18", default-features = false, features = [
+    "trace",
+    "rt-tokio-current-thread",
+    "metrics",
+] }
 r3dlock = { path = "../r3dlock" }
-serde.workspace = true
-serde_json.workspace = true
-redis.workspace = true
+redis = { workspace = true, features = ["tokio-comp", "connection-manager"] }
 redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
-signaling-core = { path = "../signaling-core", package = "opentalk-signaling-core" }
-tokio.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true }
 tracing.workspace = true
 types = { path = "../types", package = "opentalk-types", features = ["backend"] }
-uuid.workspace = true
 
 [dev-dependencies]
 pretty_assertions.workspace = true
-serial_test.workspace = true
-test-util = { path = "../test-util", package = "opentalk-test-util", features = ["controller"]}
-actix-rt.workspace = true
+
+[features]
+default = []
+module_tester = ["actix-rt"]

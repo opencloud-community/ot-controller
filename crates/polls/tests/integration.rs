@@ -2,10 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use controller::api::signaling::{ModuleTester, WsMessageOutgoing};
 use opentalk_polls::*;
 use pretty_assertions::assert_eq;
 use serial_test::serial;
+use signaling_core::module_tester::{ModuleTester, WsMessageOutgoing};
 use std::time::Duration;
 use test_util::*;
 use types::signaling::polls::{

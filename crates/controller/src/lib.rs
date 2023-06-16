@@ -36,19 +36,19 @@ use actix_cors::Cors;
 use actix_web::web::Data;
 use actix_web::{web, App, HttpServer, Scope};
 use anyhow::{anyhow, Context, Result};
-use api::signaling::{recording, SignalingModules};
+use api::signaling::{recording::Recording, SignalingModules};
 use arc_swap::ArcSwap;
 use database::Db;
 use exchange_task::ExchangeHandle;
 use keycloak_admin::KeycloakAdminClient;
 use lapin_pool::RabbitMqPool;
 use oidc::OidcContext;
+use signaling_core::{ObjectStorage, RedisConnection, SignalingModule, SignalingModuleInitData};
 use std::fs::File;
 use std::io::BufReader;
 use std::net::Ipv6Addr;
 use std::sync::Arc;
 use std::time::Duration;
-use storage::ObjectStorage;
 use tokio::signal::ctrl_c;
 use tokio::signal::unix::{signal, SignalKind};
 use tokio::sync::broadcast;
@@ -61,15 +61,11 @@ mod cli;
 mod exchange_task;
 mod metrics;
 mod oidc;
-mod redis_wrapper;
 mod services;
 mod trace;
 
 pub mod api;
 pub mod settings;
-pub mod storage;
-
-pub use redis_wrapper::RedisConnection;
 
 #[derive(Debug, thiserror::Error)]
 #[error("Blocking thread has panicked")]
@@ -241,19 +237,9 @@ impl Controller {
         let (shutdown, _) = broadcast::channel::<()>(1);
         let (reload, _) = broadcast::channel::<()>(4);
 
-        let mut signaling = SignalingModules::default();
+        let signaling = SignalingModules::default();
 
-        // Add default modules
-        signaling.add_module::<BreakoutRooms>(());
-        signaling.add_module::<ModerationModule>(());
-        if let Some(queue) = settings.rabbit_mq.recording_task_queue.clone() {
-            signaling.add_module::<recording::Recording>((
-                rabbitmq_pool.clone(),
-                recording::RecordingParams { queue },
-            ));
-        }
-
-        Ok(Self {
+        let mut controller = Self {
             startup_settings: settings,
             shared_settings,
             args,
@@ -268,7 +254,33 @@ impl Controller {
             reload,
             signaling,
             metrics,
-        })
+        };
+
+        // Add default modules
+        controller.register::<BreakoutRooms>().await?;
+        controller.register::<ModerationModule>().await?;
+        controller.register::<Recording>().await?;
+
+        Ok(controller)
+    }
+
+    pub async fn register<M: SignalingModule>(&mut self) -> Result<()> {
+        let init = SignalingModuleInitData {
+            startup_settings: &self.startup_settings,
+            shared_settings: &self.shared_settings,
+            rabbitmq_pool: &self.rabbitmq_pool,
+            redis: &self.redis,
+            shutdown: &self.shutdown,
+            reload: &self.reload,
+        };
+
+        let params = M::build_params(&init).await?;
+
+        if let Some(params) = params {
+            self.signaling.add_module::<M>(params);
+        }
+
+        Ok(())
     }
 
     /// Runs the controller until a fatal error occurred or a shutdown is requested (e.g. SIGTERM).

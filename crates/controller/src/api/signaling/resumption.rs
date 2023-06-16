@@ -10,10 +10,10 @@
 //! to receive the same participant when reconnecting to the room. This enables all participant id
 //! based features to recognize the reconnected client as the previously disconnected one.
 
-use crate::{api::Participant, redis_wrapper::RedisConnection};
 use anyhow::{bail, Context, Result};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
+use signaling_core::{Participant, RedisConnection};
 use std::time::{Duration, Instant};
 use tokio::time::sleep_until;
 use types::core::{BreakoutRoomId, ParticipantId, ResumptionToken, RoomId, UserId};

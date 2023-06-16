@@ -4,9 +4,9 @@
 
 use crate::SessionInfo;
 use anyhow::{Context, Result};
-use controller::{api::signaling::SignalingRoomId, RedisConnection};
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
+use signaling_core::{RedisConnection, SignalingRoomId};
 use types::core::ParticipantId;
 
 /// Contains the [`SessionInfo`] of the a participant.

@@ -2,17 +2,20 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::ObjectStorage;
+use std::sync::Arc;
+
 use anyhow::{Context, Result};
 use aws_sdk_s3::types::ByteStream;
 use bytes::Bytes;
 use database::Db;
-use db_storage::assets::{Asset, NewAsset};
-use db_storage::rooms::Room;
+use db_storage::{
+    assets::{Asset, NewAsset},
+    rooms::Room,
+};
 use futures::Stream;
-use std::sync::Arc;
 use types::core::{AssetId, RoomId};
-use uuid::Uuid;
+
+use crate::ObjectStorage;
 
 /// Save an asset in the long term storage
 ///
@@ -30,7 +33,7 @@ pub async fn save_asset(
     let filename = filename.into();
     let kind = kind.into();
 
-    let asset_id = AssetId::from(Uuid::new_v4());
+    let asset_id = AssetId::generate();
 
     // upload to s3 storage
     storage

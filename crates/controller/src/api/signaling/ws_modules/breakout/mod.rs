@@ -5,12 +5,13 @@
 //! Breakout room module
 
 use self::storage::BreakoutConfig;
-use crate::api::signaling::{
-    DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
-};
 use actix_http::ws::CloseCode;
 use anyhow::{bail, Result};
 use futures::FutureExt;
+use signaling_core::{
+    control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
+    SignalingModuleInitData, SignalingRoomId,
+};
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
 use tokio::time::sleep;
@@ -26,8 +27,6 @@ use types::{
         Role,
     },
 };
-
-use super::control;
 
 pub mod exchange;
 pub mod storage;
@@ -124,7 +123,7 @@ impl SignalingModule for BreakoutRooms {
 
                     // When inside a breakout room collect participants from the parent room
                     if self.breakout_room.is_some() {
-                        let parent_room_id = SignalingRoomId(self.room.0, None);
+                        let parent_room_id = SignalingRoomId::new_for_room(self.room.room_id());
 
                         self.add_room_to_participants_list(
                             &mut ctx,
@@ -146,7 +145,8 @@ impl SignalingModule for BreakoutRooms {
                         }
 
                         // get the full room id of the breakout room to access the storage and such
-                        let full_room_id = SignalingRoomId(self.room.0, Some(breakout_room.id));
+                        let full_room_id =
+                            SignalingRoomId::new(self.room.room_id(), Some(breakout_room.id));
 
                         self.add_room_to_participants_list(
                             &mut ctx,
@@ -216,6 +216,10 @@ impl SignalingModule for BreakoutRooms {
     }
 
     async fn on_destroy(self, _ctx: DestroyContext<'_>) {}
+
+    async fn build_params(_init: &SignalingModuleInitData) -> Result<Option<Self::Params>> {
+        Ok(Some(()))
+    }
 }
 
 impl BreakoutRooms {
@@ -242,7 +246,7 @@ impl BreakoutRooms {
             match res {
                 Ok((display_name, role, avatar_url, kind, joined_at, left_at)) => {
                     list.push(ParticipantInOtherRoom {
-                        breakout_room: room.1,
+                        breakout_room: room.breakout_room_id(),
                         id: participant,
                         display_name,
                         role,

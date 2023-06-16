@@ -3,11 +3,11 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::{DateTime, Utc};
-use controller::api::signaling::{ModuleTester, WsMessageOutgoing};
 use opentalk_chat::{incoming, outgoing, Chat, ChatState, Scope};
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use serial_test::serial;
+use signaling_core::module_tester::{ModuleTester, WsMessageOutgoing};
 use test_util::{TestContext, ROOM_ID, USER_1, USER_2};
 use types::{
     core::{GroupName, Timestamp},

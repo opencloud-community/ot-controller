@@ -4,27 +4,17 @@
 
 use super::actor::WebSocketActor;
 use super::modules::{
-    AnyStream, DynBroadcastEvent, DynEventCtx, DynTargetedEvent, Modules, NoSuchModuleError,
+    DynBroadcastEvent, DynEventCtx, DynTargetedEvent, Modules, NoSuchModuleError,
 };
 use super::{
     DestroyContext, ExchangeBinding, ExchangePublish, NamespacedCommand, NamespacedEvent, Timestamp,
 };
-use crate::api::signaling::control;
-use crate::api::{
-    self,
-    signaling::{
-        metrics::SignalingMetrics,
-        moderation,
-        resumption::{ResumptionTokenKeepAlive, ResumptionTokenUsed},
-        ws::actor::WsCommand,
-        ws_modules::control::storage::ParticipantIdRunnerLock,
-        ws_modules::control::{exchange, storage, ControlStateExt as _, NAMESPACE},
-        SignalingRoomId,
-    },
+use crate::api::signaling::{
+    moderation,
+    resumption::{ResumptionTokenKeepAlive, ResumptionTokenUsed},
+    ws::actor::WsCommand,
 };
 use crate::exchange_task::{ExchangeHandle, SubscriberHandle};
-use crate::redis_wrapper::RedisConnection;
-use crate::storage::ObjectStorage;
 use actix::Addr;
 use actix_http::ws::{CloseCode, CloseReason, Message};
 use actix_web_actors::ws;
@@ -40,6 +30,14 @@ use futures::Future;
 use itertools::Itertools;
 use kustos::Authz;
 use serde_json::Value;
+use signaling_core::{
+    control::{
+        self, exchange,
+        storage::{self, ParticipantIdRunnerLock},
+        ControlStateExt as _, NAMESPACE,
+    },
+    AnyStream, ObjectStorage, Participant, RedisConnection, SignalingMetrics, SignalingRoomId,
+};
 use std::collections::HashMap;
 use std::future;
 use std::mem::replace;
@@ -58,7 +56,7 @@ use types::{
             command::ControlCommand,
             event::{self as control_event, ControlEvent, JoinBlockedReason, JoinSuccess},
             state::ControlState,
-            AssociatedParticipant, Participant,
+            AssociatedParticipant,
         },
         moderation::event::ModerationEvent,
         Role,
@@ -81,7 +79,7 @@ pub struct Builder {
     resuming: bool,
     pub(super) room: Room,
     pub(super) breakout_room: Option<BreakoutRoomId>,
-    pub(super) participant: api::Participant<User>,
+    pub(super) participant: Participant<User>,
     pub(super) role: Role,
     pub(super) protocol: &'static str,
     pub(super) metrics: Arc<SignalingMetrics>,
@@ -146,7 +144,7 @@ impl Builder {
     ) -> Result<Runner> {
         self.aquire_participant_id().await?;
 
-        let room_id = SignalingRoomId(self.room.id, self.breakout_room);
+        let room_id = SignalingRoomId::new(self.room.id, self.breakout_room);
 
         // Create list of routing keys that address this runner
         let mut routing_keys = vec![
@@ -156,7 +154,7 @@ impl Builder {
             exchange::global_room_by_participant_id(room_id.room_id(), self.id),
         ];
 
-        if let api::Participant::User(user) = &self.participant {
+        if let Participant::User(user) = &self.participant {
             routing_keys.push(exchange::current_room_by_user_id(room_id, user.id));
             routing_keys.push(exchange::global_room_by_user_id(room_id.room_id(), user.id));
         }
@@ -224,7 +222,7 @@ pub struct Runner {
     room_id: SignalingRoomId,
 
     /// User behind the participant or Guest
-    participant: api::Participant<User>,
+    participant: Participant<User>,
 
     /// The role of the participant inside the room
     role: Role,
@@ -293,7 +291,7 @@ impl Runner {
         resuming: bool,
         room: Room,
         breakout_room: Option<BreakoutRoomId>,
-        participant: api::Participant<User>,
+        participant: Participant<User>,
         protocol: &'static str,
         metrics: Arc<SignalingMetrics>,
         db: Arc<Db>,
@@ -305,16 +303,14 @@ impl Runner {
     ) -> Builder {
         // TODO(r.floren) Change this when the permissions system gets introduced
         let role = match &participant {
-            api::Participant::User(user) => {
+            Participant::User(user) => {
                 if user.id == room.created_by {
                     Role::Moderator
                 } else {
                     Role::User
                 }
             }
-            api::Participant::Guest | api::Participant::Sip | api::Participant::Recorder => {
-                Role::Guest
-            }
+            Participant::Guest | Participant::Sip | Participant::Recorder => Role::Guest,
         };
 
         Builder {
@@ -431,7 +427,7 @@ impl Runner {
 
             // if the room is empty check that the waiting room is empty
             let destroy_room = if room_is_empty {
-                if self.room_id.1.is_some() {
+                if self.room_id.breakout_room_id().is_some() {
                     // Breakout rooms are destroyed even with participants inside the waiting room
                     true
                 } else {
@@ -527,7 +523,7 @@ impl Runner {
                         // messages are currently ignored by filtering in the `build_participant` function
                         // It'd might be nicer to have a "visibility" check before sending any "joined"/"updated"/"left"
                         // message
-                        if !matches!(&self.participant, api::Participant::Recorder) {
+                        if !matches!(&self.participant, Participant::Recorder) {
                             self.exchange_publish_control(
                                 Timestamp::now(),
                                 None,
@@ -775,7 +771,7 @@ impl Runner {
                 }
 
                 let (display_name, avatar_url) = match &self.participant {
-                    api::Participant::User(user) => {
+                    Participant::User(user) => {
                         let avatar_url = Some(format!(
                             "{}{:x}",
                             self.settings.load().avatar.libravatar_url,
@@ -784,9 +780,9 @@ impl Runner {
 
                         (trim_display_name(join.display_name), avatar_url)
                     }
-                    api::Participant::Guest => (trim_display_name(join.display_name), None),
-                    api::Participant::Recorder => (join.display_name, None),
-                    api::Participant::Sip => {
+                    Participant::Guest => (trim_display_name(join.display_name), None),
+                    Participant::Recorder => (join.display_name, None),
+                    Participant::Sip => {
                         if let Some(call_in) = self.settings.load().call_in.as_ref() {
                             let display_name = call_in::display_name(
                                 &self.db,
@@ -816,10 +812,10 @@ impl Runner {
                     role: self.role,
                     avatar_url,
                     participation_kind: match &self.participant {
-                        api::Participant::User(_) => ParticipationKind::User,
-                        api::Participant::Guest => ParticipationKind::Guest,
-                        api::Participant::Sip => ParticipationKind::Sip,
-                        api::Participant::Recorder => ParticipationKind::Recorder,
+                        Participant::User(_) => ParticipationKind::User,
+                        Participant::Guest => ParticipationKind::Guest,
+                        Participant::Sip => ParticipationKind::Sip,
+                        Participant::Recorder => ParticipationKind::Recorder,
                     },
                     joined_at: timestamp,
                     hand_is_up: false,
@@ -1008,7 +1004,7 @@ impl Runner {
         let roles_and_left_at_timestamps =
             control::storage::get_role_and_left_at_for_room_participants(
                 &mut self.redis_conn,
-                SignalingRoomId(self.room.id, None),
+                SignalingRoomId::new_for_room(self.room.id),
             )
             .await?;
 
@@ -1323,7 +1319,7 @@ impl Runner {
         let mut pipe_attrs = storage::AttrPipeline::new(self.room_id, self.id);
 
         match &self.participant {
-            api::Participant::User(ref user) => {
+            Participant::User(ref user) => {
                 pipe_attrs
                     .set("kind", ParticipationKind::User)
                     .set(
@@ -1333,13 +1329,13 @@ impl Runner {
                     .set("user_id", user.id)
                     .set("is_room_owner", user.id == self.room.created_by);
             }
-            api::Participant::Guest => {
+            Participant::Guest => {
                 pipe_attrs.set("kind", ParticipationKind::Guest);
             }
-            api::Participant::Sip => {
+            Participant::Sip => {
                 pipe_attrs.set("kind", ParticipationKind::Sip);
             }
-            api::Participant::Recorder => {
+            Participant::Recorder => {
                 pipe_attrs.set("kind", ParticipationKind::Recorder);
             }
         }
@@ -1361,8 +1357,11 @@ impl Runner {
     ///
     /// If the participant is an invisible service (like the recorder) and shouldn't be shown to other participants
     /// this function will return Ok(None)
-    async fn build_participant(&mut self, id: ParticipantId) -> Result<Option<Participant>> {
-        let mut participant = Participant {
+    async fn build_participant(
+        &mut self,
+        id: ParticipantId,
+    ) -> Result<Option<types::signaling::control::Participant>> {
+        let mut participant = types::signaling::control::Participant {
             id,
             module_data: Default::default(),
         };
@@ -1551,7 +1550,7 @@ impl Runner {
                 }
             }
             exchange::Message::SetModeratorStatus(grant_moderator) => {
-                let created_room = if let api::Participant::User(user) = &self.participant {
+                let created_room = if let Participant::User(user) = &self.participant {
                     self.room.created_by == user.id
                 } else {
                     false
@@ -1565,10 +1564,10 @@ impl Runner {
                     Role::Moderator
                 } else {
                     match &self.participant {
-                        api::Participant::User(_) => Role::User,
-                        api::Participant::Guest
-                        | api::Participant::Sip
-                        | api::Participant::Recorder => Role::Guest,
+                        Participant::User(_) => Role::User,
+                        Participant::Guest | Participant::Sip | Participant::Recorder => {
+                            Role::Guest
+                        }
                     }
                 };
 

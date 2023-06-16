@@ -2,14 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::{
-    api::signaling::{
-        DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
-    },
-    redis_wrapper::RedisConnection,
-};
 use actix_http::ws::CloseCode;
 use anyhow::Result;
+use signaling_core::{
+    control::{self, ControlStateExt as _},
+    DestroyContext, Event, InitContext, ModuleContext, RedisConnection, SignalingModule,
+    SignalingModuleInitData, SignalingRoomId,
+};
 use std::{collections::HashMap, iter::zip};
 use types::{
     core::{ParticipantId, RoomId, UserId},
@@ -24,7 +23,7 @@ use types::{
     },
 };
 
-use super::control::{self, ControlStateExt as _};
+use crate::api::signaling::ws::ModuleContextExt;
 
 pub mod exchange;
 pub mod storage;
@@ -46,7 +45,7 @@ async fn build_waiting_room_participants(
 
     for id in list {
         let control_data =
-            ControlState::from_redis(redis_conn, SignalingRoomId(room_id, None), *id).await?;
+            ControlState::from_redis(redis_conn, SignalingRoomId::new(room_id, None), *id).await?;
 
         let module_data = HashMap::from([
             (
@@ -441,6 +440,10 @@ impl SignalingModule for ModerationModule {
                 log::error!("Failed to clean up accepted waiting room list {}", e);
             }
         }
+    }
+
+    async fn build_params(_init: &SignalingModuleInitData) -> Result<Option<Self::Params>> {
+        Ok(Some(()))
     }
 }
 

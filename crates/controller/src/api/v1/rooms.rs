@@ -14,9 +14,7 @@ use crate::api::signaling::SignalingModules;
 use crate::api::{
     signaling::{breakout, moderation, ticket::start_or_continue_signaling_session},
     v1::{ApiResponse, PagePaginationQuery},
-    Participant,
 };
-use crate::redis_wrapper::RedisConnection;
 use crate::settings::SharedSettingsActix;
 use actix_web::web::{self, Data, Json, Path, ReqData};
 use actix_web::{delete, get, patch, post};
@@ -29,6 +27,7 @@ use db_storage::users::User;
 use kustos::policies_builder::{GrantingAccess, PoliciesBuilder};
 use kustos::prelude::*;
 use serde::{Deserialize, Serialize};
+use signaling_core::{Participant, RedisConnection};
 use std::str::FromStr;
 use types::{
     common::tariff::TariffResource,

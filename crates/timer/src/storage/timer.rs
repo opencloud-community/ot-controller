@@ -2,13 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::outgoing;
-use crate::TimerId;
+use crate::{outgoing, TimerId};
+
 use anyhow::{Context, Result};
-use controller::{api::signaling::SignalingRoomId, RedisConnection};
 use redis::AsyncCommands;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
+use signaling_core::{RedisConnection, SignalingRoomId};
 use types::core::{ParticipantId, Timestamp};
 
 /// The timer key holds a serialized [`Timer`].

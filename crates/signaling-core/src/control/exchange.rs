@@ -2,7 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::api::signaling::SignalingRoomId;
+use crate::SignalingRoomId;
+
 use serde::{Deserialize, Serialize};
 use types::core::{ParticipantId, RoomId, UserId};
 

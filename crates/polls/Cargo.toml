@@ -13,12 +13,12 @@ publish = false
 [dependencies]
 anyhow.workspace = true
 async-trait.workspace = true
-controller = { path = "../controller", package = "opentalk-controller-core" }
 futures.workspace = true
 log.workspace = true
 redis.workspace = true
 redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
 serde.workspace = true
+signaling-core = { path = "../signaling-core", package = "opentalk-signaling-core" }
 tokio.workspace = true
 tracing.workspace = true
 types = { path = "../types", package = "opentalk-types", features = ["backend"] }

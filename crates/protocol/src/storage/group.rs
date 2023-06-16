@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use anyhow::{Context, Result};
-use controller::{api::signaling::SignalingRoomId, RedisConnection};
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
+use signaling_core::{RedisConnection, SignalingRoomId};
 
 /// Stores the etherpad group_id that is associated with this room.
 #[derive(ToRedisArgs)]

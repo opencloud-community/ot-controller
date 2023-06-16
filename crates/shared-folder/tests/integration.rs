@@ -2,10 +2,6 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use controller::{
-    api::signaling::{control::storage::try_init_event, ModuleTester, WsMessageOutgoing},
-    RedisConnection,
-};
 use database::DbConnection;
 use db_storage::{
     events::{
@@ -16,6 +12,11 @@ use db_storage::{
 };
 use pretty_assertions::assert_eq;
 use serial_test::serial;
+use signaling_core::{
+    control::storage::try_init_event,
+    module_tester::{ModuleTester, WsMessageOutgoing},
+    RedisConnection,
+};
 use test_util::{serde_json, TestContext, ROOM_ID, USER_1, USER_2};
 use types::{
     common::shared_folder::SharedFolder,

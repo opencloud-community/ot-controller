@@ -8,31 +8,27 @@
 //!
 //! Handles media related messages and manages their respective forwarding to janus-gateway via rabbitmq.
 use anyhow::{bail, Context, Result};
-use controller::{
-    api::signaling::{
-        control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
-        SignalingRoomId,
-    },
-    settings::SharedSettings,
-    Controller,
-};
+use controller_settings::SharedSettings;
 use focus::FocusDetection;
 use incoming::{RequestMute, TargetConfigure};
 use janus_client::TrickleCandidate;
-use mcu::McuPool;
-use mcu::PublishConfiguration;
 use mcu::{
-    LinkDirection, MediaSessionKey, MediaSessionType, Request, Response, TrickleMessage,
-    WebRtcEvent,
+    LinkDirection, McuPool, MediaSessionKey, MediaSessionType, PublishConfiguration, Request,
+    Response, TrickleMessage, WebRtcEvent,
 };
 use outgoing::Link;
 use serde::{Deserialize, Serialize};
 use sessions::MediaSessions;
-use std::collections::HashMap;
-use std::sync::Arc;
+use signaling_core::{
+    control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
+    SignalingModuleInitData, SignalingRoomId,
+};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 use types::{core::ParticipantId, signaling::Role};
+
+use std::collections::HashMap;
+use std::sync::Arc;
 
 mod exchange;
 mod focus;
@@ -593,6 +589,20 @@ impl SignalingModule for Media {
             }
         }
     }
+
+    async fn build_params(init: &SignalingModuleInitData) -> Result<Option<Self::Params>> {
+        let mcu_pool = McuPool::build(
+            init.startup_settings,
+            init.shared_settings.clone(),
+            init.rabbitmq_pool.clone(),
+            init.redis.clone(),
+            init.shutdown.subscribe(),
+            init.reload.subscribe(),
+        )
+        .await?;
+
+        Ok(Some(mcu_pool))
+    }
 }
 
 impl Media {
@@ -927,22 +937,6 @@ impl Media {
 
         Ok(())
     }
-}
-
-pub async fn register(controller: &mut Controller) -> Result<()> {
-    let mcu_pool = McuPool::build(
-        &controller.startup_settings,
-        controller.shared_settings.clone(),
-        controller.rabbitmq_pool.clone(),
-        controller.redis.clone(),
-        controller.shutdown.subscribe(),
-        controller.reload.subscribe(),
-    )
-    .await?;
-
-    controller.signaling.add_module::<Media>(mcu_pool);
-
-    Ok(())
 }
 
 pub fn screen_share_requires_permission(shared_settings: &SharedSettings) -> bool {

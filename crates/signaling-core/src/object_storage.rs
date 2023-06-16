@@ -3,18 +3,15 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use anyhow::{Context, Result};
-use aws_sdk_s3::config::Builder;
-use aws_sdk_s3::model::{CompletedMultipartUpload, CompletedPart};
-use aws_sdk_s3::types::ByteStream;
-use aws_sdk_s3::Client;
-use aws_sdk_s3::Credentials as AwsCred;
-use aws_sdk_s3::Endpoint;
+use aws_sdk_s3::{
+    config::Builder,
+    model::{CompletedMultipartUpload, CompletedPart},
+    types::ByteStream,
+    Client, Credentials as AwsCred, Endpoint,
+};
 use bytes::Bytes;
 use controller_settings::MinIO;
-use futures::Stream;
-use futures::StreamExt;
-
-pub mod assets;
+use futures::{Stream, StreamExt};
 
 const CHUNK_SIZE: usize = 5_242_880; // 5 MebiByte (minimum for aws s3)
 
@@ -89,7 +86,7 @@ impl ObjectStorage {
     /// Depending on the data size, this function will either use the `put_object` or `multipart_upload` S3 API call.
     ///
     /// Returns the file size of the uploaded object
-    async fn put(
+    pub async fn put(
         &self,
         key: &str,
         data: impl Stream<Item = Result<Bytes>> + Unpin,
@@ -239,7 +236,7 @@ impl ObjectStorage {
         Ok(file_size)
     }
 
-    async fn get(&self, key: String) -> Result<ByteStream> {
+    pub async fn get(&self, key: String) -> Result<ByteStream> {
         let data = self
             .client
             .get_object()
@@ -251,7 +248,7 @@ impl ObjectStorage {
         Ok(data.body)
     }
 
-    pub(crate) async fn delete(&self, key: String) -> Result<()> {
+    pub async fn delete(&self, key: String) -> Result<()> {
         self.client
             .delete_object()
             .bucket(&self.bucket)

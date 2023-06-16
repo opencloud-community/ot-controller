@@ -2,18 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::{
-    control,
-    resumption::{ResumptionData, ResumptionRedisKey},
-};
-use crate::{
-    api::{v1::response::ApiError, Participant},
-    redis_wrapper::RedisConnection,
-};
+use super::resumption::{ResumptionData, ResumptionRedisKey};
+use crate::api::v1::response::ApiError;
 use anyhow::Context;
 use redis::AsyncCommands;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
+use signaling_core::{control, Participant, RedisConnection};
 use types::core::{BreakoutRoomId, ParticipantId, ResumptionToken, RoomId, TicketToken, UserId};
 
 /// Typed redis key for a signaling ticket containing [`TicketData`]

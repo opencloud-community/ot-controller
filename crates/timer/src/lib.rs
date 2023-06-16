@@ -4,17 +4,16 @@
 
 use anyhow::Result;
 use chrono::{self, Utc};
-use controller::api::signaling::{control, DestroyContext, SignalingRoomId};
-use controller::api::signaling::{Event, InitContext, ModuleContext, SignalingModule};
 use futures::{stream::once, FutureExt};
 use outgoing::StopKind;
 use redis::{self, FromRedisValue, RedisResult};
 use redis_args::ToRedisArgs;
 use serde::Deserialize;
 use serde::Serialize;
-use std::fmt;
-use std::str::from_utf8;
-use std::str::FromStr;
+use signaling_core::SignalingModuleInitData;
+use signaling_core::{
+    control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
+};
 use storage::ready_status::ReadyStatus;
 use tokio::time::sleep;
 use types::{
@@ -22,6 +21,10 @@ use types::{
     signaling::Role,
 };
 use uuid::Uuid;
+
+use std::fmt;
+use std::str::from_utf8;
+use std::str::FromStr;
 
 pub mod exchange;
 pub mod incoming;
@@ -172,6 +175,10 @@ impl SignalingModule for Timer {
     }
 
     async fn on_destroy(self, _ctx: DestroyContext<'_>) {}
+
+    async fn build_params(_init: &SignalingModuleInitData) -> Result<Option<Self::Params>> {
+        Ok(Some(()))
+    }
 }
 
 impl Timer {
@@ -390,8 +397,4 @@ impl Timer {
 
         Ok(())
     }
-}
-
-pub fn register(controller: &mut controller::Controller) {
-    controller.signaling.add_module::<Timer>(());
 }

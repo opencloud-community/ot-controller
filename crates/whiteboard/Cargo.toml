@@ -14,12 +14,12 @@ publish = false
 
 [dependencies]
 controller-settings = { path = "../controller-settings", package = "opentalk-controller-settings" }
-controller = { path = "../controller", package = "opentalk-controller-core" }
 db-storage = { path = "../db-storage", package = "opentalk-db-storage" }
 database = { path = "../database", package = "opentalk-database" }
 log.workspace = true
 redis.workspace = true
 redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
+signaling-core = { path = "../signaling-core", package = "opentalk-signaling-core" }
 types = { path = "../types", package = "opentalk-types", features = ["backend"] }
 reqwest = { workspace = true, features = [
     "json",

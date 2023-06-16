@@ -25,6 +25,7 @@ redis.workspace = true
 redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
 serde.workspace = true
 serde_json.workspace = true
+signaling-core = { path = "../signaling-core", package = "opentalk-signaling-core" }
 tracing.workspace = true
 types = { path = "../types", package = "opentalk-types", features = ["backend"] }
 
