@@ -185,6 +185,28 @@ paths:
           description: The specified room could not be found
         500:
           $ref: '#/components/responses/InternalServerError'
+    delete:
+      summary: Delete a room
+      description: Delete a room by id
+      tags: [rooms]
+      operationId: delete_room
+      parameters:
+        - in: path
+          description: Id of the requested room
+          name: room_id
+          schema:
+            type: string
+            format: uuid
+          required: true
+      responses:
+        204:
+          description: Successfully deleted the room
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalServerError'
 
   /rooms/{room_id}/tariff:
     get:
