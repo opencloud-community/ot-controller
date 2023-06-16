@@ -12,7 +12,7 @@ use anyhow::{bail, Context, Error, Result};
 use clap::Parser;
 use controller_settings::Settings;
 use database::{Db, DbConnection};
-use db_storage::{events::Event, legal_votes::LegalVote, rooms::Room, users::User};
+use db_storage::{events::Event, module_resources::ModuleResource, rooms::Room, users::User};
 use kustos::prelude::*;
 use std::sync::Arc;
 
@@ -36,9 +36,9 @@ pub(super) struct Args {
     #[clap(long, default_value = "false")]
     skip_rooms: bool,
 
-    /// Skip fix of legal-vote permissions
+    /// Skip fix of module resources permissions
     #[clap(long, default_value = "false")]
-    skip_legal_votes: bool,
+    skip_module_resources: bool,
 
     /// Skip fix of event permission fixes
     #[clap(long, default_value = "false")]
@@ -60,7 +60,7 @@ pub(super) async fn fix_acl(settings: Settings, args: Args) -> Result<()> {
             skip_users: false,
             skip_groups: false,
             skip_rooms: false,
-            skip_legal_votes: false,
+            skip_module_resources: false,
             skip_events: false,
         } => {
             // Only remove all policies if none of the skips are specified
@@ -88,8 +88,8 @@ pub(super) async fn fix_acl(settings: Settings, args: Args) -> Result<()> {
         fix_rooms(&mut conn, &authz).await?;
     }
 
-    if !args.skip_legal_votes {
-        fix_legal_votes(&mut conn, &authz).await?;
+    if !args.skip_module_resources {
+        fix_module_resources(&mut conn, &authz).await?;
     }
 
     if !args.skip_events {
@@ -188,18 +188,26 @@ async fn fix_rooms(conn: &mut DbConnection, authz: &kustos::Authz) -> Result<()>
     Ok(())
 }
 
-async fn fix_legal_votes(conn: &mut DbConnection, authz: &kustos::Authz) -> Result<()> {
-    let legal_votes_with_creator = LegalVote::get_all_with_creator(conn)
+async fn fix_module_resources(conn: &mut DbConnection, authz: &kustos::Authz) -> Result<()> {
+    let module_resources_with_creator = ModuleResource::get_all_with_creator_and_owner(conn)
         .await
-        .context("failed to load legal votes")?;
+        .context("failed to load module resources")?;
 
     let mut policies = PoliciesBuilder::new();
 
-    for (legal_vote_id, creator_id) in legal_votes_with_creator {
+    for (module_resource_id, creator_id, owner_id) in module_resources_with_creator {
         policies = policies
             .grant_user_access(creator_id)
             .add_resource(
-                legal_vote_id.resource_id(),
+                module_resource_id.resource_id(),
+                [AccessMethod::Get, AccessMethod::Put, AccessMethod::Delete],
+            )
+            .finish();
+
+        policies = policies
+            .grant_user_access(owner_id)
+            .add_resource(
+                module_resource_id.resource_id(),
                 [AccessMethod::Get, AccessMethod::Put, AccessMethod::Delete],
             )
             .finish();

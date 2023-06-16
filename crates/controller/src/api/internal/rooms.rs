@@ -17,7 +17,7 @@ use database::{DatabaseError, Db};
 use db_storage::assets::Asset;
 use db_storage::events::shared_folders::EventSharedFolder;
 use db_storage::events::Event;
-use db_storage::legal_votes::LegalVote;
+use db_storage::module_resources::ModuleResource;
 use db_storage::rooms::Room;
 use db_storage::sip_configs::SipConfig;
 use db_storage::users::User;
@@ -54,19 +54,20 @@ pub async fn delete(
     let mut conn = db.get_conn().await?;
 
     let mut linked_events = Event::get_all_ids_for_room(&mut conn, room_id).await?;
-    let mut linked_legal_votes = LegalVote::get_all_ids_for_room(&mut conn, room_id).await?;
+    let mut linked_module_resources =
+        ModuleResource::get_all_ids_for_room(&mut conn, room_id).await?;
     let mut linked_shared_folders = EventSharedFolder::get_all_for_room(&mut conn, room_id).await?;
 
     // Sort for improved equality comparison later on, inside the transaction.
     linked_events.sort();
-    linked_legal_votes.sort();
+    linked_module_resources.sort();
     linked_shared_folders.sort_by(|a, b| a.event_id.cmp(&b.event_id));
 
     // Enforce access to all DELETE operations
     let mut resources = linked_events
         .iter()
         .map(|e| e.resource_id())
-        .chain(linked_legal_votes.iter().map(|e| e.resource_id()))
+        .chain(linked_module_resources.iter().map(|e| e.resource_id()))
         .chain(
             linked_shared_folders
                 .iter()
@@ -102,7 +103,7 @@ pub async fn delete(
     let resources: Vec<_> = linked_events
         .iter()
         .flat_map(|&event_id| associated_resource_ids(event_id))
-        .chain(linked_legal_votes.iter().map(|e| e.resource_id()))
+        .chain(linked_module_resources.iter().map(|e| e.resource_id()))
         .chain(
             linked_shared_folders
                 .iter()
@@ -122,11 +123,11 @@ pub async fn delete(
                     return Err(DatabaseError::custom("Race-condition during access checks"));
                 }
 
-                let mut current_legal_votes =
-                    LegalVote::get_all_ids_for_room(conn, room_id).await?;
-                current_legal_votes.sort();
+                let mut current_module_resources =
+                    ModuleResource::get_all_ids_for_room(conn, room_id).await?;
+                current_module_resources.sort();
 
-                if current_legal_votes != linked_legal_votes {
+                if current_module_resources != linked_module_resources {
                     return Err(DatabaseError::custom("Race-condition during access checks"));
                 }
 
@@ -146,7 +147,7 @@ pub async fn delete(
                 current_assets.sort();
 
                 EventSharedFolder::delete_by_event_ids(conn, &shared_folder_event_ids).await?;
-                LegalVote::delete_by_room(conn, room_id).await?;
+                ModuleResource::delete_by_room(conn, room_id).await?;
                 Event::delete_all_for_room(conn, room_id).await?;
                 SipConfig::delete_by_room(conn, room_id).await?;
                 Asset::delete_by_ids(conn, &current_assets).await?;

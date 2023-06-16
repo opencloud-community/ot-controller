@@ -203,7 +203,7 @@ test:cargo_test:
     AMQP_ADDR: amqp://guest:guest@rabbitmq:5672
     REDIS_ADDR: redis://redis:6379/
   services:
-    - name: postgres:13-alpine
+    - name: postgres:15-alpine
       alias: postgres
     - name: rabbitmq:3.8
       alias: rabbitmq

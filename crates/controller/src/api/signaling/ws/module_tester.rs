@@ -8,7 +8,7 @@
 //! As its basically a 'copy' of the [`super::runner::Runner`] it uses a few types from there. Due to
 //! visibility restriction of those types, this module is located in the same folder.
 //!
-//! The idea is to simulate a frontend websocket connection. See the LegalVote integration tests for examples.
+//! The idea is to simulate a frontend websocket connection.
 use super::modules::AnyStream;
 use super::{
     DestroyContext, Event, ExchangePublish, NamespacedCommand, NamespacedEvent, SignalingModule,
