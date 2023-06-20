@@ -5,6 +5,8 @@
 #[cfg(feature = "kustos")]
 use kustos::subject::PolicyUser;
 
+use uuid::Uuid;
+
 crate::diesel_newtype! {
     feature_gated:
 
@@ -22,6 +24,24 @@ crate::diesel_newtype! {
         from_redis_value(FromStr)
     )]
     UserId(uuid::Uuid) => diesel::sql_types::Uuid, "/users/"
+}
+
+impl UserId {
+    /// Create a ZERO user id, e.g. for testing purposes
+    pub const fn nil() -> Self {
+        Self::from(Uuid::nil())
+    }
+
+    /// Create a user id from a number, e.g. for testing purposes
+    pub const fn from_u128(id: u128) -> Self {
+        Self::from(Uuid::from_u128(id))
+    }
+
+    /// Generate a new random user id
+    #[cfg(feature = "rand")]
+    pub fn generate() -> Self {
+        Self::from(Uuid::new_v4())
+    }
 }
 
 #[cfg(feature = "kustos")]
