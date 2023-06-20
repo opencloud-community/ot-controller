@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use uuid::Uuid;
+
 /// Trait to tag a type as a subject
 ///
 /// Types tagged with this trait need to implement the underlying internal conversion types as well.
@@ -15,6 +17,23 @@ pub trait IsSubject {}
 pub struct PolicyUser(pub(crate) uuid::Uuid);
 
 impl IsSubject for PolicyUser {}
+
+impl PolicyUser {
+    /// Create a ZERO policy user, e.g. for testing purposes
+    pub const fn nil() -> Self {
+        Self(Uuid::nil())
+    }
+
+    /// Create a policy user from a number, e.g. for testing purposes
+    pub const fn from_u128(id: u128) -> Self {
+        Self(Uuid::from_u128(id))
+    }
+
+    /// Generate a new random policy user
+    pub fn generate() -> Self {
+        Self(Uuid::new_v4())
+    }
+}
 
 impl From<uuid::Uuid> for PolicyUser {
     fn from(user: uuid::Uuid) -> Self {
