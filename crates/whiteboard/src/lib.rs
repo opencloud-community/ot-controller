@@ -7,21 +7,27 @@ use client::SpacedeckClient;
 use database::Db;
 use futures::stream::once;
 use futures::TryStreamExt;
-use outgoing::{AccessUrl, PdfAsset};
-use serde::Serialize;
 use signaling_core::{
     assets::save_asset, control, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage,
     RedisConnection, SignalingModule, SignalingModuleInitData, SignalingRoomId,
 };
 use state::{InitState, SpaceInfo};
 use std::sync::Arc;
-use types::{core::Timestamp, signaling::Role};
+use types::{
+    core::Timestamp,
+    signaling::{
+        whiteboard::{
+            command::WhiteboardCommand,
+            event::{AccessUrl, Error, PdfAsset, WhiteboardEvent},
+            state::WhiteboardState,
+        },
+        Role,
+    },
+};
 use url::Url;
 
 mod client;
 mod exchange;
-mod incoming;
-mod outgoing;
 mod state;
 
 pub struct Whiteboard {
@@ -31,15 +37,7 @@ pub struct Whiteboard {
     storage: Arc<ObjectStorage>,
 }
 
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "snake_case", tag = "status", content = "url")]
-pub enum FrontendData {
-    NotInitialized,
-    Initializing,
-    Initialized(Url),
-}
-
-impl From<InitState> for FrontendData {
+impl From<InitState> for WhiteboardState {
     fn from(init_state: InitState) -> Self {
         match init_state {
             InitState::Initializing => Self::Initializing,
@@ -59,15 +57,15 @@ impl SignalingModule for Whiteboard {
 
     type Params = controller_settings::Spacedeck;
 
-    type Incoming = incoming::Message;
+    type Incoming = WhiteboardCommand;
 
-    type Outgoing = outgoing::Message;
+    type Outgoing = WhiteboardEvent;
 
     type ExchangeMessage = exchange::Event;
 
     type ExtEvent = GetPdfEvent;
 
-    type FrontendData = FrontendData;
+    type FrontendData = WhiteboardState;
 
     type PeerFrontendData = ();
 
@@ -99,7 +97,7 @@ impl SignalingModule for Whiteboard {
             } => {
                 let data = match state::get(ctx.redis_conn(), self.room_id).await? {
                     Some(state) => state.into(),
-                    None => FrontendData::NotInitialized,
+                    None => WhiteboardState::NotInitialized,
                 };
 
                 *frontend_data = Some(data);
@@ -112,7 +110,7 @@ impl SignalingModule for Whiteboard {
                         if let Some(InitState::Initialized(space_info)) =
                             state::get(ctx.redis_conn(), self.room_id).await?
                         {
-                            ctx.ws_send(outgoing::Message::SpaceUrl(AccessUrl {
+                            ctx.ws_send(WhiteboardEvent::SpaceUrl(AccessUrl {
                                 url: space_info.url,
                             }));
                         } else {
@@ -120,7 +118,7 @@ impl SignalingModule for Whiteboard {
                         }
                     }
                     exchange::Event::PdfAsset(pdf_asset) => {
-                        ctx.ws_send(outgoing::Message::PdfAsset(pdf_asset));
+                        ctx.ws_send(WhiteboardEvent::PdfAsset(pdf_asset));
                     }
                 }
                 Ok(())
@@ -128,11 +126,9 @@ impl SignalingModule for Whiteboard {
 
             Event::WsMessage(message) => {
                 match message {
-                    incoming::Message::Initialize => {
+                    WhiteboardCommand::Initialize => {
                         if ctx.role() != Role::Moderator {
-                            ctx.ws_send(outgoing::Message::Error(
-                                outgoing::Error::InsufficientPermissions,
-                            ));
+                            ctx.ws_send(WhiteboardEvent::Error(Error::InsufficientPermissions));
                             return Ok(());
                         }
 
@@ -145,17 +141,13 @@ impl SignalingModule for Whiteboard {
 
                             self.cleanup(ctx.redis_conn()).await?;
 
-                            ctx.ws_send(outgoing::Message::Error(
-                                outgoing::Error::InitializationFailed,
-                            ));
+                            ctx.ws_send(WhiteboardEvent::Error(Error::InitializationFailed));
                         }
                     }
 
-                    incoming::Message::GeneratePdf => {
+                    WhiteboardCommand::GeneratePdf => {
                         if ctx.role() != Role::Moderator {
-                            ctx.ws_send(outgoing::Message::Error(
-                                outgoing::Error::InsufficientPermissions,
-                            ));
+                            ctx.ws_send(WhiteboardEvent::Error(Error::InsufficientPermissions));
                             return Ok(());
                         }
 
@@ -254,12 +246,12 @@ impl Whiteboard {
     async fn create_space(&self, ctx: &mut ModuleContext<'_, Self>) -> Result<()> {
         match state::try_start_init(ctx.redis_conn(), self.room_id).await? {
             Some(state) => match state {
-                InitState::Initializing => ctx.ws_send(outgoing::Message::Error(
-                    outgoing::Error::CurrentlyInitializing,
-                )),
-                InitState::Initialized(_) => ctx.ws_send(outgoing::Message::Error(
-                    outgoing::Error::AlreadyInitialized,
-                )),
+                InitState::Initializing => {
+                    ctx.ws_send(WhiteboardEvent::Error(Error::CurrentlyInitializing))
+                }
+                InitState::Initialized(_) => {
+                    ctx.ws_send(WhiteboardEvent::Error(Error::AlreadyInitialized))
+                }
             },
             None => {
                 let response = self
