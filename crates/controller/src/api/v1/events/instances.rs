@@ -682,15 +682,14 @@ mod tests {
     use std::time::SystemTime;
     use test_util::assert_eq_json;
     use types::core::{RoomId, TimeZone, UserId};
-    use uuid::Uuid;
 
     #[test]
     fn event_instance_serialize() {
         let unix_epoch: DateTime<Utc> = SystemTime::UNIX_EPOCH.into();
         let instance_id = InstanceId(unix_epoch);
-        let event_id = EventId::from(Uuid::nil());
+        let event_id = EventId::nil();
         let user_profile = PublicUserProfile {
-            id: UserId::from(Uuid::nil()),
+            id: UserId::nil(),
             email: "test@example.org".into(),
             title: "".into(),
             firstname: "Test".into(),
@@ -710,7 +709,7 @@ mod tests {
             title: "Instance title".into(),
             description: "Instance description".into(),
             room: EventRoomInfo {
-                id: RoomId::from(Uuid::nil()),
+                id: RoomId::nil(),
                 password: None,
                 waiting_room: false,
                 sip_tel: None,

@@ -102,7 +102,6 @@ mod test {
     use super::*;
     use chrono::{DateTime, Duration};
     use test_util::assert_eq_json;
-    use uuid::Uuid;
 
     #[test]
     fn countdown_started() {
@@ -113,7 +112,7 @@ mod test {
             .unwrap();
 
         let started = Message::Started(Started {
-            timer_id: TimerId(Uuid::nil()),
+            timer_id: TimerId::nil(),
             started_at,
             kind: Kind::Countdown { ends_at },
             style: Some("coffee_break".into()),
@@ -138,7 +137,7 @@ mod test {
         let started_at: Timestamp = DateTime::from(SystemTime::UNIX_EPOCH).into();
 
         let started = Message::Started(Started {
-            timer_id: TimerId(Uuid::nil()),
+            timer_id: TimerId::nil(),
             started_at,
             kind: Kind::Stopwatch,
             style: None,
@@ -160,7 +159,7 @@ mod test {
     #[test]
     fn stopped_by_moderator() {
         let stopped = Message::Stopped(Stopped {
-            timer_id: TimerId(Uuid::nil()),
+            timer_id: TimerId::nil(),
             kind: StopKind::ByModerator(ParticipantId::nil()),
             reason: Some("A good reason!".into()),
         });
@@ -178,7 +177,7 @@ mod test {
     #[test]
     fn expired() {
         let stopped = Message::Stopped(Stopped {
-            timer_id: TimerId(Uuid::nil()),
+            timer_id: TimerId::nil(),
             kind: StopKind::Expired,
             reason: None,
         });
