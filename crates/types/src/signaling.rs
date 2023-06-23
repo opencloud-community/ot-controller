@@ -11,6 +11,7 @@ pub mod control;
 pub mod media;
 pub mod moderation;
 pub mod polls;
+pub mod protocol;
 pub mod recording;
 pub mod shared_folder;
 pub mod whiteboard;

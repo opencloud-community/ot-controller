@@ -9,8 +9,6 @@ use database::Db;
 use etherpad_client::EtherpadClient;
 use exchange::GenerateUrl;
 use futures::TryStreamExt;
-use incoming::ParticipantSelection;
-use outgoing::{AccessUrl, PdfAsset};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use signaling_core::{
@@ -23,11 +21,12 @@ use signaling_core::{
     SignalingModule, SignalingModuleInitData, SignalingRoomId,
 };
 use std::sync::Arc;
+use types::signaling::protocol::command::{ParticipantSelection, ProtocolCommand};
+use types::signaling::protocol::event::{AccessUrl, Error, PdfAsset, ProtocolEvent};
+use types::signaling::protocol::peer_state::ProtocolPeerState;
 use types::{core::ParticipantId, signaling::Role};
 
 pub mod exchange;
-pub mod incoming;
-pub mod outgoing;
 pub mod storage;
 
 const PAD_NAME: &str = "protocol";
@@ -39,12 +38,6 @@ struct SessionInfo {
     author_id: String,
     group_id: String,
     session_id: String,
-    readonly: bool,
-}
-
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub struct Access {
     readonly: bool,
 }
 
@@ -60,12 +53,12 @@ pub struct Protocol {
 impl SignalingModule for Protocol {
     const NAMESPACE: &'static str = "protocol";
     type Params = controller_settings::Etherpad;
-    type Incoming = incoming::Message;
-    type Outgoing = outgoing::Message;
+    type Incoming = ProtocolCommand;
+    type Outgoing = ProtocolEvent;
     type ExchangeMessage = exchange::Event;
     type ExtEvent = ();
     type FrontendData = ();
-    type PeerFrontendData = Access;
+    type PeerFrontendData = ProtocolPeerState;
 
     async fn init(
         ctx: InitContext<'_, Self>,
@@ -102,14 +95,14 @@ impl SignalingModule for Protocol {
                 if matches!(state, Some(state) if state == InitState::Initialized) {
                     let read_url = self.generate_url(&mut ctx, true).await?;
 
-                    ctx.ws_send(outgoing::Message::ReadUrl(AccessUrl { url: read_url }));
+                    ctx.ws_send(ProtocolEvent::ReadUrl(AccessUrl { url: read_url }));
 
                     for (participant_id, access) in participants {
                         let session_info =
                             storage::session::get(ctx.redis_conn(), self.room_id, *participant_id)
                                 .await?;
 
-                        *access = session_info.map(|session_info| Access {
+                        *access = session_info.map(|session_info| ProtocolPeerState {
                             readonly: session_info.readonly,
                         });
                     }
@@ -136,7 +129,7 @@ impl SignalingModule for Protocol {
                 let session_info =
                     storage::session::get(ctx.redis_conn(), self.room_id, participant_id).await?;
 
-                *peer_frontend_data = session_info.map(|session_info| Access {
+                *peer_frontend_data = session_info.map(|session_info| ProtocolPeerState {
                     readonly: session_info.readonly,
                 });
             }
@@ -185,22 +178,18 @@ impl Protocol {
     async fn on_ws_message(
         &mut self,
         ctx: &mut ModuleContext<'_, Self>,
-        msg: incoming::Message,
+        msg: ProtocolCommand,
     ) -> Result<()> {
         match msg {
-            incoming::Message::SelectWriter(selection) => {
+            ProtocolCommand::SelectWriter(selection) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::InsufficientPermissions,
-                    ));
+                    ctx.ws_send(ProtocolEvent::Error(Error::InsufficientPermissions));
 
                     return Ok(());
                 }
 
                 if !self.verify_selection(ctx.redis_conn(), &selection).await? {
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::InvalidParticipantSelection,
-                    ));
+                    ctx.ws_send(ProtocolEvent::Error(Error::InvalidParticipantSelection));
                 }
 
                 let targets = selection.participant_ids;
@@ -216,9 +205,7 @@ impl Protocol {
                         match state {
                             storage::init::InitState::Initializing => {
                                 // Some other instance is currently initializing the etherpad
-                                ctx.ws_send(outgoing::Message::Error(
-                                    outgoing::Error::CurrentlyInitializing,
-                                ));
+                                ctx.ws_send(ProtocolEvent::Error(Error::CurrentlyInitializing));
                                 return Ok(());
                             }
                             storage::init::InitState::Initialized => false,
@@ -231,9 +218,7 @@ impl Protocol {
 
                             storage::init::del(redis_conn, self.room_id).await?;
 
-                            ctx.ws_send(outgoing::Message::Error(
-                                outgoing::Error::FailedInitialization,
-                            ));
+                            ctx.ws_send(ProtocolEvent::Error(Error::FailedInitialization));
 
                             return Ok(());
                         }
@@ -263,11 +248,9 @@ impl Protocol {
                     }
                 }
             }
-            incoming::Message::DeselectWriter(selection) => {
+            ProtocolCommand::DeselectWriter(selection) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::InsufficientPermissions,
-                    ));
+                    ctx.ws_send(ProtocolEvent::Error(Error::InsufficientPermissions));
 
                     return Ok(());
                 }
@@ -275,25 +258,21 @@ impl Protocol {
                 match storage::init::get(ctx.redis_conn(), self.room_id).await? {
                     Some(state) => match state {
                         InitState::Initializing => {
-                            ctx.ws_send(outgoing::Message::Error(
-                                outgoing::Error::CurrentlyInitializing,
-                            ));
+                            ctx.ws_send(ProtocolEvent::Error(Error::CurrentlyInitializing));
 
                             return Ok(());
                         }
                         InitState::Initialized => (),
                     },
                     None => {
-                        ctx.ws_send(outgoing::Message::Error(outgoing::Error::NotInitialized));
+                        ctx.ws_send(ProtocolEvent::Error(Error::NotInitialized));
 
                         return Ok(());
                     }
                 }
 
                 if !self.verify_selection(ctx.redis_conn(), &selection).await? {
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::InvalidParticipantSelection,
-                    ));
+                    ctx.ws_send(ProtocolEvent::Error(Error::InvalidParticipantSelection));
 
                     return Ok(());
                 }
@@ -325,11 +304,9 @@ impl Protocol {
                     );
                 }
             }
-            incoming::Message::GeneratePdf => {
+            ProtocolCommand::GeneratePdf => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::InsufficientPermissions,
-                    ));
+                    ctx.ws_send(ProtocolEvent::Error(Error::InsufficientPermissions));
                     return Ok(());
                 }
 
@@ -337,7 +314,7 @@ impl Protocol {
                     storage::init::get(ctx.redis_conn(), self.room_id).await?,
                     Some(InitState::Initialized)
                 ) {
-                    ctx.ws_send(outgoing::Message::Error(outgoing::Error::NotInitialized));
+                    ctx.ws_send(ProtocolEvent::Error(Error::NotInitialized));
                     return Ok(());
                 }
 
@@ -374,7 +351,7 @@ impl Protocol {
                         exchange::Event::PdfAsset(PdfAsset { filename, asset_id }),
                     );
                 } else {
-                    ctx.ws_send(outgoing::Message::Error(outgoing::Error::NotInitialized));
+                    ctx.ws_send(ProtocolEvent::Error(Error::NotInitialized));
                     return Ok(());
                 }
             }
@@ -393,18 +370,16 @@ impl Protocol {
                 if writers.contains(&self.participant_id) {
                     let write_url = self.generate_url(ctx, false).await?;
 
-                    ctx.ws_send(outgoing::Message::WriteUrl(AccessUrl { url: write_url }));
+                    ctx.ws_send(ProtocolEvent::WriteUrl(AccessUrl { url: write_url }));
                 } else {
                     let read_url = self.generate_url(ctx, true).await?;
 
-                    ctx.ws_send(outgoing::Message::ReadUrl(AccessUrl { url: read_url }));
+                    ctx.ws_send(ProtocolEvent::ReadUrl(AccessUrl { url: read_url }));
                 }
 
                 ctx.invalidate_data();
             }
-            exchange::Event::PdfAsset(pdf_asset) => {
-                ctx.ws_send(outgoing::Message::PdfAsset(pdf_asset))
-            }
+            exchange::Event::PdfAsset(pdf_asset) => ctx.ws_send(ProtocolEvent::PdfAsset(pdf_asset)),
         }
 
         Ok(())
