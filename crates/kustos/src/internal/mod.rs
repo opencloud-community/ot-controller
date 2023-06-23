@@ -87,7 +87,6 @@ mod test {
     use std::iter::FromIterator;
     use std::str::FromStr;
     use std::vec;
-    use uuid::Uuid;
 
     fn to_owned(v: Vec<&str>) -> Vec<String> {
         v.into_iter().map(|x| x.to_owned()).collect()
@@ -99,7 +98,7 @@ mod test {
 
     #[test]
     fn test_user_policy() {
-        let policy = UserPolicy::new(PolicyUser(uuid::Uuid::nil()), "/test", AccessMethod::Read);
+        let policy = UserPolicy::new(PolicyUser::nil(), "/test", AccessMethod::Read);
         assert_eq!(
             policy.to_casbin_policy(),
             vec![
@@ -113,7 +112,7 @@ mod test {
     #[test]
     fn test_user_polices() {
         let policies: Vec<Vec<String>> = UserPolicies::new(
-            &PolicyUser(uuid::Uuid::nil()),
+            &PolicyUser::nil(),
             &[(
                 &"/data/test".into(),
                 &[AccessMethod::Read, AccessMethod::Write],
@@ -131,7 +130,7 @@ mod test {
         );
 
         let policies: Vec<Vec<String>> = UserPolicies::new(
-            &PolicyUser(uuid::Uuid::nil()),
+            &PolicyUser::nil(),
             &[
                 (
                     &"/data/test".into(),
@@ -181,12 +180,12 @@ mod test {
         ];
         let should = vec![
             UserPolicy::new(
-                PolicyUser(Uuid::nil()),
+                PolicyUser::nil(),
                 "/room/00000000-0000-0000-0000-000000000000",
                 [AccessMethod::Get, AccessMethod::Put],
             ),
             UserPolicy::new(
-                PolicyUser(Uuid::from_u128(1)),
+                PolicyUser::from_u128(1),
                 "/room/00000000-0000-0000-0000-000000000001",
                 AccessMethod::Get,
             ),
@@ -217,7 +216,7 @@ mod test {
         // Valid input
         let input = "user::00000000-0000-0000-0000-000000000000";
         let is = PolicyUser::from_str(input).unwrap();
-        assert_eq!(is, PolicyUser(Uuid::nil()));
+        assert_eq!(is, PolicyUser::nil());
 
         // Invalid input
         let input = "nutzer::00000000-0000-0000-0000-000000000000";

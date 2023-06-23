@@ -2220,14 +2220,13 @@ mod tests {
     use std::time::SystemTime;
     use test_util::assert_eq_json;
     use types::core::{RoomId, TimeZone, UserId};
-    use uuid::Uuid;
 
     #[test]
     fn event_resource_serialize() {
         let unix_epoch: DateTime<Utc> = SystemTime::UNIX_EPOCH.into();
 
         let user_profile = PublicUserProfile {
-            id: UserId::from(Uuid::nil()),
+            id: UserId::nil(),
             email: "test@example.org".into(),
             title: "".into(),
             firstname: "Test".into(),
@@ -2237,7 +2236,7 @@ mod tests {
         };
 
         let event_resource = EventResource {
-            id: EventId::from(Uuid::nil()),
+            id: EventId::nil(),
             created_by: user_profile.clone(),
             created_at: unix_epoch,
             updated_by: user_profile.clone(),
@@ -2245,7 +2244,7 @@ mod tests {
             title: "Event title".into(),
             description: "Event description".into(),
             room: EventRoomInfo {
-                id: RoomId::from(Uuid::nil()),
+                id: RoomId::nil(),
                 password: None,
                 waiting_room: false,
                 sip_tel: None,
@@ -2347,7 +2346,7 @@ mod tests {
         let unix_epoch: DateTime<Utc> = SystemTime::UNIX_EPOCH.into();
 
         let user_profile = PublicUserProfile {
-            id: UserId::from(Uuid::nil()),
+            id: UserId::nil(),
             email: "test@example.org".into(),
             title: "".into(),
             firstname: "Test".into(),
@@ -2357,7 +2356,7 @@ mod tests {
         };
 
         let event_resource = EventResource {
-            id: EventId::from(Uuid::nil()),
+            id: EventId::nil(),
             created_by: user_profile.clone(),
             created_at: unix_epoch,
             updated_by: user_profile.clone(),
@@ -2365,7 +2364,7 @@ mod tests {
             title: "Event title".into(),
             description: "Event description".into(),
             room: EventRoomInfo {
-                id: RoomId::from(Uuid::nil()),
+                id: RoomId::nil(),
                 password: None,
                 waiting_room: false,
                 sip_tel: None,
@@ -2451,9 +2450,9 @@ mod tests {
     fn event_exception_serialize() {
         let unix_epoch: DateTime<Utc> = SystemTime::UNIX_EPOCH.into();
         let instance_id = InstanceId(unix_epoch);
-        let event_id = EventId::from(Uuid::nil());
+        let event_id = EventId::nil();
         let user_profile = PublicUserProfile {
-            id: UserId::from(Uuid::nil()),
+            id: UserId::nil(),
             email: "test@example.org".into(),
             title: "".into(),
             firstname: "Test".into(),

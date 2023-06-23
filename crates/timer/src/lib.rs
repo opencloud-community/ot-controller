@@ -35,6 +35,23 @@ mod storage;
 #[to_redis_args(fmt)]
 pub struct TimerId(pub Uuid);
 
+impl TimerId {
+    /// Create a ZERO TimerId, e.g. for testing purposes
+    pub const fn nil() -> Self {
+        Self(Uuid::nil())
+    }
+
+    /// Create a TimerId from a number, e.g. for testing purposes
+    pub const fn from_u128(id: u128) -> Self {
+        Self(Uuid::from_u128(id))
+    }
+
+    /// Generate a new random TimerId
+    pub fn generate() -> Self {
+        Self(Uuid::new_v4())
+    }
+}
+
 impl FromRedisValue for TimerId {
     fn from_redis_value(v: &redis::Value) -> RedisResult<Self> {
         match v {

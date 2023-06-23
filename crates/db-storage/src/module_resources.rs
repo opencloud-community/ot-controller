@@ -347,7 +347,6 @@ mod test {
     use serial_test::serial;
     use test_util::assert_eq;
     use test_util::*;
-    use uuid::Uuid;
 
     async fn init_resource(json: Value) -> (ModuleResourceId, DbConnection) {
         let db_ctx = test_util::database::DatabaseContext::new(false).await;
@@ -357,7 +356,7 @@ mod test {
         let user = db_ctx.create_test_user(0, vec![]).await.unwrap();
 
         let room = db_ctx
-            .create_test_room(RoomId::from(Uuid::from_u128(0)), user.id, false)
+            .create_test_room(RoomId::from_u128(0), user.id, false)
             .await
             .unwrap();
 
@@ -1233,7 +1232,7 @@ mod test {
         let user = db_ctx.create_test_user(0, vec![]).await.unwrap();
 
         let room = db_ctx
-            .create_test_room(RoomId::from(Uuid::from_u128(0)), user.id, false)
+            .create_test_room(RoomId::from_u128(0), user.id, false)
             .await
             .unwrap();
 

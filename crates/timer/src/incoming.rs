@@ -66,7 +66,6 @@ mod test {
     use pretty_assertions::assert_eq;
     use test_util::serde_json;
     use test_util::serde_json::json;
-    use uuid::Uuid;
 
     #[test]
     fn countdown_start() {
@@ -130,7 +129,7 @@ mod test {
         match serde_json::from_value(json).unwrap() {
             Message::Stop(Stop { timer_id, reason }) => {
                 assert_eq!(reason, Some("test".into()));
-                assert_eq!(timer_id, TimerId(Uuid::nil()))
+                assert_eq!(timer_id, TimerId::nil())
             }
             unexpected => panic!("Expected stop message, got: {unexpected:?}"),
         }
@@ -147,7 +146,7 @@ mod test {
         match serde_json::from_value(json).unwrap() {
             Message::UpdateReadyStatus(UpdateReadyStatus { timer_id, status }) => {
                 assert!(status);
-                assert_eq!(timer_id, TimerId(Uuid::nil()))
+                assert_eq!(timer_id, TimerId::nil())
             }
             unexpected => panic!("Expected ready message, got: {unexpected:?}"),
         }

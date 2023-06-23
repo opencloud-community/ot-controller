@@ -19,7 +19,6 @@ use types::{
     core::{ParticipantId, RoomId},
     signaling::{control::event::ControlEvent, Role},
 };
-use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct TestUser {
@@ -28,7 +27,7 @@ pub struct TestUser {
     pub name: &'static str,
 }
 
-pub const ROOM_ID: RoomId = RoomId::from(Uuid::from_u128(2000));
+pub const ROOM_ID: RoomId = RoomId::from_u128(2000);
 
 pub const USER_1: TestUser = TestUser {
     n: 1,
