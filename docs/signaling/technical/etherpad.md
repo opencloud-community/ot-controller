@@ -1,4 +1,4 @@
-# Protocol
+# Etherpad integration (Protocol)
 
 ## Terminology
 
