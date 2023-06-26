@@ -770,31 +770,41 @@ impl Runner {
                     return Ok(());
                 }
 
+                let join_display_name = join.display_name.unwrap_or_default();
+
                 let (display_name, avatar_url) = match &self.participant {
                     Participant::User(user) => {
+                        // Enforce the auto-generated display name if display name editing is prohibited
+                        let settings = self.settings.load();
+                        let user_display_name = if settings.endpoints.disallow_custom_display_name {
+                            user.display_name.clone()
+                        } else {
+                            join_display_name.clone()
+                        };
+
                         let avatar_url = Some(format!(
                             "{}{:x}",
-                            self.settings.load().avatar.libravatar_url,
+                            settings.avatar.libravatar_url,
                             md5::compute(&user.email)
                         ));
 
-                        (trim_display_name(join.display_name), avatar_url)
+                        (trim_display_name(user_display_name), avatar_url)
                     }
-                    Participant::Guest => (trim_display_name(join.display_name), None),
-                    Participant::Recorder => (join.display_name, None),
+                    Participant::Guest => (trim_display_name(join_display_name), None),
+                    Participant::Recorder => (join_display_name, None),
                     Participant::Sip => {
                         if let Some(call_in) = self.settings.load().call_in.as_ref() {
                             let display_name = call_in::display_name(
                                 &self.db,
                                 call_in,
                                 self.room.tenant_id,
-                                join.display_name,
+                                join_display_name,
                             )
                             .await;
 
                             (display_name, None)
                         } else {
-                            (trim_display_name(join.display_name), None)
+                            (trim_display_name(join_display_name), None)
                         }
                     }
                 };

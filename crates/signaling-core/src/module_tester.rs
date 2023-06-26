@@ -132,7 +132,7 @@ where
         runner_interface
             .ws
             .send(WsMessageIncoming::Control(ControlCommand::Join(Join {
-                display_name: display_name.into(),
+                display_name: Some(display_name.into()),
             })))?;
 
         self.runner_interfaces
@@ -556,7 +556,7 @@ where
                 };
 
                 let mut control_data = ControlState {
-                    display_name: join.display_name.clone(),
+                    display_name: join.display_name.clone().unwrap(),
                     role: self.role,
                     avatar_url: avatar_url.clone(),
                     participation_kind: match &self.participant {
@@ -608,7 +608,7 @@ where
 
                 let join_success = JoinSuccess {
                     id: self.participant_id,
-                    display_name: join.display_name,
+                    display_name: join.display_name.unwrap(),
                     avatar_url,
                     role: self.role,
                     closes_at: None,
