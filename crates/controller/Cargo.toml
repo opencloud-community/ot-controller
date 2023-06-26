@@ -112,7 +112,7 @@ actix-web-actors = "4.2"
 ring = "0.16"
 rustls = "0.20"
 rustls-pemfile = "1.0"
-md5 = "0.7"
+md5.workspace = true
 
 ### QoL/Util
 either.workspace = true

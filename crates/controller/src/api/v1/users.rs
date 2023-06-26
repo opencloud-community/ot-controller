@@ -13,127 +13,21 @@ use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json, Path, Query, ReqData};
 use actix_web::{get, patch, Either};
 use anyhow::Context;
-use controller_settings::{Settings, TenantAssignment};
+use controller_settings::TenantAssignment;
 use database::Db;
 use db_storage::tariffs::Tariff;
 use db_storage::tenants::Tenant;
-use db_storage::users::{UpdateUser, User};
+use db_storage::users::{email_to_libravatar_url, UpdateUser, User};
 use keycloak_admin::KeycloakAdminClient;
-use serde::{Deserialize, Serialize};
-use types::core::TariffStatus;
-use types::{common::tariff::TariffResource, core::UserId};
+use types::{
+    api::v1::users::{
+        GetFindQuery, GetFindResponseItem, PatchMeBody, PrivateUserProfile, PublicUserProfile,
+        UnregisteredUser,
+    },
+    common::tariff::TariffResource,
+    core::UserId,
+};
 use validator::Validate;
-
-/// Public user details.
-///
-/// Contains general "public" information about a user. Is accessible to all other users.
-#[derive(Debug, Clone, Serialize)]
-pub struct PublicUserProfile {
-    pub id: UserId,
-    pub email: String,
-    pub title: String,
-    pub firstname: String,
-    pub lastname: String,
-    pub display_name: String,
-    pub avatar_url: String,
-}
-
-impl PublicUserProfile {
-    pub fn from_db(settings: &Settings, user: User) -> Self {
-        let avatar_url = email_to_libravatar_url(&settings.avatar.libravatar_url, &user.email);
-
-        Self {
-            id: user.id,
-            email: user.email,
-            title: user.title,
-            firstname: user.firstname,
-            lastname: user.lastname,
-            display_name: user.display_name,
-            avatar_url,
-        }
-    }
-}
-
-pub fn email_to_libravatar_url(libravatar_url: &str, email: &str) -> String {
-    format!("{}{:x}", libravatar_url, md5::compute(email))
-}
-
-/// Private user profile.
-///
-/// Similar to [`PublicUserProfile`], but contains additional "private" information about a user.
-/// Is only accessible to the user himself.
-/// Is used on */users/me* endpoints.
-#[derive(Debug, Serialize)]
-pub struct PrivateUserProfile {
-    pub id: UserId,
-    pub email: String,
-    pub title: String,
-    pub firstname: String,
-    pub lastname: String,
-    pub display_name: String,
-    pub avatar_url: String,
-    pub dashboard_theme: String,
-    pub conference_theme: String,
-    pub language: String,
-    pub tariff_status: TariffStatus,
-}
-
-impl PrivateUserProfile {
-    pub fn from_db(settings: &Settings, user: User) -> Self {
-        let avatar_url = format!(
-            "{}{:x}",
-            settings.avatar.libravatar_url,
-            md5::compute(&user.email)
-        );
-
-        Self {
-            id: user.id,
-            email: user.email,
-            title: user.title,
-            firstname: user.firstname,
-            lastname: user.lastname,
-            display_name: user.display_name,
-            dashboard_theme: user.dashboard_theme,
-            conference_theme: user.conference_theme,
-            avatar_url,
-            language: user.language,
-            tariff_status: user.tariff_status,
-        }
-    }
-}
-
-// Used to modify user settings
-#[derive(Debug, Validate, Deserialize)]
-pub struct PatchMeBody {
-    #[validate(length(max = 255))]
-    pub title: Option<String>,
-    #[validate(length(max = 255))]
-    pub display_name: Option<String>,
-    #[validate(length(max = 35))]
-    pub language: Option<String>,
-    #[validate(length(max = 128))]
-    pub dashboard_theme: Option<String>,
-    #[validate(length(max = 128))]
-    pub conference_theme: Option<String>,
-}
-
-impl PatchMeBody {
-    fn is_empty(&self) -> bool {
-        let PatchMeBody {
-            title,
-            display_name,
-            language,
-            dashboard_theme,
-            conference_theme,
-        } = self;
-
-        title.is_none()
-            && display_name.is_none()
-            && language.is_none()
-            && dashboard_theme.is_none()
-            && conference_theme.is_none()
-    }
-}
 
 /// API Endpoint *PATCH /users/me*
 #[patch("/users/me")]
@@ -183,7 +77,7 @@ pub async fn patch_me(
 
     let user = changeset.apply(&mut conn, current_user.id).await?;
 
-    let user_profile = PrivateUserProfile::from_db(&settings, user);
+    let user_profile = user.to_private_user_profile(&settings);
 
     Ok(Either::Left(Json(user_profile)))
 }
@@ -199,7 +93,7 @@ pub async fn get_me(
     let settings = settings.load_full();
     let current_user = current_user.into_inner();
 
-    let user_profile = PrivateUserProfile::from_db(&settings, current_user);
+    let user_profile = current_user.to_private_user_profile(&settings);
 
     Ok(Json(user_profile))
 }
@@ -248,29 +142,9 @@ pub async fn get_user(
         User::get_filtered_by_tenant(&mut conn, current_user.tenant_id, user_id.into_inner())
             .await?;
 
-    let user_profile = PublicUserProfile::from_db(&settings, user);
+    let user_profile = user.to_public_user_profile(&settings);
 
     Ok(Json(user_profile))
-}
-
-#[derive(Deserialize)]
-pub struct FindQuery {
-    q: String,
-}
-
-#[derive(Serialize)]
-#[serde(tag = "kind", rename_all = "lowercase")]
-pub enum UserFindResponseItem {
-    Registered(PublicUserProfile),
-    Unregistered(UnregisteredUser),
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct UnregisteredUser {
-    pub email: String,
-    pub firstname: String,
-    pub lastname: String,
-    pub avatar_url: String,
 }
 
 /// API Endpoint *GET /users/find?name=$input*
@@ -282,8 +156,8 @@ pub async fn find(
     kc_admin_client: Data<KeycloakAdminClient>,
     db: Data<Db>,
     current_tenant: ReqData<Tenant>,
-    query: Query<FindQuery>,
-) -> Result<Json<Vec<UserFindResponseItem>>, ApiError> {
+    query: Query<GetFindQuery>,
+) -> Result<Json<Vec<GetFindResponseItem>>, ApiError> {
     let settings = settings.load_full();
 
     if settings.endpoints.disable_users_find {
@@ -329,14 +203,12 @@ pub async fn find(
 
         users
             .into_iter()
-            .map(|user| {
-                UserFindResponseItem::Registered(PublicUserProfile::from_db(&settings, user))
-            })
+            .map(|user| GetFindResponseItem::Registered(user.to_public_user_profile(&settings)))
             .chain(found_kc_users.into_iter().map(|kc_user| {
                 let avatar_url =
                     email_to_libravatar_url(&settings.avatar.libravatar_url, &kc_user.email);
 
-                UserFindResponseItem::Unregistered(UnregisteredUser {
+                GetFindResponseItem::Unregistered(UnregisteredUser {
                     email: kc_user.email,
                     firstname: kc_user.first_name,
                     lastname: kc_user.last_name,
@@ -351,9 +223,7 @@ pub async fn find(
 
         found_users
             .into_iter()
-            .map(|user| {
-                UserFindResponseItem::Registered(PublicUserProfile::from_db(&settings, user))
-            })
+            .map(|user| GetFindResponseItem::Registered(user.to_public_user_profile(&settings)))
             .collect()
     };
 

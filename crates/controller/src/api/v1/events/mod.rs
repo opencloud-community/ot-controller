@@ -8,7 +8,6 @@ use super::cursor::Cursor;
 use super::request::default_pagination_per_page;
 use super::response::error::ValidationErrorEntry;
 use super::response::{ApiError, NoContent, CODE_VALUE_REQUIRED};
-use super::users::{email_to_libravatar_url, PublicUserProfile, UnregisteredUser};
 use super::{ApiResponse, DefaultApiResult, PagePaginationQuery};
 use crate::api::v1::response::CODE_IGNORED_VALUE;
 use crate::api::v1::rooms::RoomsPoliciesBuilderExt;
@@ -35,7 +34,7 @@ use db_storage::rooms::{NewRoom, Room, UpdateRoom};
 use db_storage::sip_configs::{NewSipConfig, SipConfig};
 use db_storage::tariffs::Tariff;
 use db_storage::tenants::Tenant;
-use db_storage::users::User;
+use db_storage::users::{email_to_libravatar_url, User};
 use keycloak_admin::KeycloakAdminClient;
 use kustos::policies_builder::{GrantingAccess, PoliciesBuilder};
 use kustos::prelude::{AccessMethod, IsSubject};
@@ -44,6 +43,7 @@ use rrule::{Frequency, RRuleSet};
 use serde::de::Visitor;
 use serde::{Deserialize, Serialize};
 use types::{
+    api::v1::users::{PublicUserProfile, UnregisteredUser},
     common::features,
     common::shared_folder::{SharedFolder, SharedFolderAccess},
     core::{DateTimeTz, EventId, RoomId, TimeZone, UserId},
@@ -389,7 +389,7 @@ pub struct EventInvitee {
 impl EventInvitee {
     fn from_invite_with_user(invite: EventInvite, user: User, settings: &Settings) -> EventInvitee {
         EventInvitee {
-            profile: EventInviteeProfile::Registered(PublicUserProfile::from_db(settings, user)),
+            profile: EventInviteeProfile::Registered(user.to_public_user_profile(settings)),
             status: invite.status,
         }
     }
@@ -723,9 +723,9 @@ async fn create_time_independent_event(
         room: EventRoomInfo::from_room(settings, room, Some(sip_config), &tariff),
         invitees_truncated: false,
         invitees: vec![],
-        created_by: PublicUserProfile::from_db(settings, current_user.clone()),
+        created_by: current_user.to_public_user_profile(settings),
         created_at: event.created_at,
-        updated_by: PublicUserProfile::from_db(settings, current_user),
+        updated_by: current_user.to_public_user_profile(settings),
         updated_at: event.updated_at,
         is_time_independent: true,
         is_all_day: None,
@@ -803,9 +803,9 @@ async fn create_time_dependent_event(
         room: EventRoomInfo::from_room(settings, room, Some(sip_config), &tariff),
         invitees_truncated: false,
         invitees: vec![],
-        created_by: PublicUserProfile::from_db(settings, current_user.clone()),
+        created_by: current_user.to_public_user_profile(settings),
         created_at: event.created_at,
-        updated_by: PublicUserProfile::from_db(settings, current_user),
+        updated_by: current_user.to_public_user_profile(settings),
         updated_at: event.updated_at,
         is_time_independent: event.is_time_independent,
         is_all_day: event.is_all_day,
@@ -1428,9 +1428,9 @@ pub async fn patch_event(
 
     let event_resource = EventResource {
         id: event.id,
-        created_by: PublicUserProfile::from_db(&settings, created_by),
+        created_by: created_by.to_public_user_profile(&settings),
         created_at: event.created_at,
-        updated_by: PublicUserProfile::from_db(&settings, current_user),
+        updated_by: current_user.to_public_user_profile(&settings),
         updated_at: event.updated_at,
         title: event.title,
         description: event.description,

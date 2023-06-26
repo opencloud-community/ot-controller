@@ -11,7 +11,6 @@ use crate::api::v1::events::{
     enrich_invitees_from_keycloak, shared_folder_for_user, DateTimeTzFromDb,
 };
 use crate::api::v1::response::{ApiError, NoContent};
-use crate::api::v1::users::PublicUserProfile;
 use crate::api::v1::util::{GetUserProfilesBatched, UserProfilesBatch};
 use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json, Path, Query, ReqData};
@@ -27,6 +26,7 @@ use db_storage::users::User;
 use keycloak_admin::KeycloakAdminClient;
 use rrule::RRuleSet;
 use serde::{Deserialize, Serialize};
+use types::api::v1::users::PublicUserProfile;
 use types::common::shared_folder::SharedFolder;
 use types::core::EventId;
 use validator::Validate;

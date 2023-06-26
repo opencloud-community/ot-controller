@@ -61,6 +61,7 @@ strum.workspace = true
 redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
 
 rustc-hash.workspace = true
+md5.workspace = true
 
 [dev-dependencies]
 actix-rt.workspace = true

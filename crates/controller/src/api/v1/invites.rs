@@ -5,7 +5,6 @@
 //! Contains invite related REST endpoints.
 use super::response::{ApiError, NoContent};
 use super::DefaultApiResult;
-use crate::api::v1::users::PublicUserProfile;
 use crate::api::v1::{ApiResponse, PagePaginationQuery};
 use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json, Path, Query, ReqData};
@@ -16,6 +15,7 @@ use db_storage::invites::{Invite, NewInvite, UpdateInvite};
 use db_storage::rooms::Room;
 use db_storage::users::User;
 use serde::{Deserialize, Serialize};
+use types::api::v1::users::PublicUserProfile;
 use types::core::{InviteCodeId, RoomId};
 use validator::Validate;
 
@@ -87,8 +87,8 @@ pub async fn add_invite(
     .insert(&mut conn)
     .await?;
 
-    let created_by = PublicUserProfile::from_db(&settings, current_user.clone());
-    let updated_by = PublicUserProfile::from_db(&settings, current_user);
+    let created_by = current_user.to_public_user_profile(&settings);
+    let updated_by = current_user.to_public_user_profile(&settings);
 
     let invite = InviteResource::from_with_user(invite, created_by, updated_by);
 
@@ -119,8 +119,8 @@ pub async fn get_invites(
     let invites = invites_with_users
         .into_iter()
         .map(|(db_invite, created_by, updated_by)| {
-            let created_by = PublicUserProfile::from_db(&settings, created_by);
-            let updated_by = PublicUserProfile::from_db(&settings, updated_by);
+            let created_by = created_by.to_public_user_profile(&settings);
+            let updated_by = updated_by.to_public_user_profile(&settings);
 
             InviteResource::from_with_user(db_invite, created_by, updated_by)
         })
@@ -160,8 +160,8 @@ pub async fn get_invite(
         return Err(ApiError::not_found());
     }
 
-    let created_by = PublicUserProfile::from_db(&settings, created_by);
-    let updated_by = PublicUserProfile::from_db(&settings, updated_by);
+    let created_by = created_by.to_public_user_profile(&settings);
+    let updated_by = updated_by.to_public_user_profile(&settings);
 
     Ok(ApiResponse::new(InviteResource::from_with_user(
         invite, created_by, updated_by,
@@ -215,8 +215,8 @@ pub async fn update_invite(
 
     let invite = changeset.apply(&mut conn, room_id, invite_code).await?;
 
-    let created_by = PublicUserProfile::from_db(&settings, created_by);
-    let updated_by = PublicUserProfile::from_db(&settings, current_user);
+    let created_by = created_by.to_public_user_profile(&settings);
+    let updated_by = current_user.to_public_user_profile(&settings);
 
     Ok(ApiResponse::new(InviteResource::from_with_user(
         invite, created_by, updated_by,

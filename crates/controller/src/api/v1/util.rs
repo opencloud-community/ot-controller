@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use super::response::ApiError;
-use super::users::PublicUserProfile;
 use controller_settings::Settings;
 use database::DbConnection;
 use database::Result;
@@ -18,6 +17,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::marker::PhantomData;
 use std::str::FromStr;
+use types::api::v1::users::PublicUserProfile;
 use types::core::UserId;
 
 /// Utility to fetch user profiles batched
@@ -57,7 +57,7 @@ impl GetUserProfilesBatched {
             .map(|users| {
                 users
                     .into_iter()
-                    .map(|user| (user.id, PublicUserProfile::from_db(settings, user)))
+                    .map(|user| (user.id, user.to_public_user_profile(settings)))
                     .collect()
             })
             .map(|users| UserProfilesBatch { users })

@@ -9,7 +9,6 @@
 
 use super::response::error::{ApiError, ValidationErrorEntry};
 use super::response::{NoContent, CODE_INVALID_VALUE};
-use super::users::PublicUserProfile;
 use crate::api::signaling::SignalingModules;
 use crate::api::v1::util::require_feature;
 use crate::api::{
@@ -31,6 +30,7 @@ use serde::{Deserialize, Serialize};
 use signaling_core::{Participant, RedisConnection};
 use std::str::FromStr;
 use types::{
+    api::v1::users::PublicUserProfile,
     common::{features, tariff::TariffResource},
     core::{BreakoutRoomId, InviteCodeId, ResumptionToken, RoomId, TicketToken},
 };
@@ -83,7 +83,7 @@ pub async fn accessible(
         .into_iter()
         .map(|(room, user)| RoomResource {
             id: room.id,
-            created_by: PublicUserProfile::from_db(&settings, user),
+            created_by: user.to_public_user_profile(&settings),
             created_at: room.created_at,
             password: room.password,
             waiting_room: room.waiting_room,
@@ -146,7 +146,7 @@ pub async fn new(
 
     let room_resource = RoomResource {
         id: room.id,
-        created_by: PublicUserProfile::from_db(&settings, current_user.clone()),
+        created_by: current_user.to_public_user_profile(&settings),
         created_at: room.created_at,
         password: room.password,
         waiting_room: room.waiting_room,
@@ -203,7 +203,7 @@ pub async fn patch(
 
     let room_resource = RoomResource {
         id: room.id,
-        created_by: PublicUserProfile::from_db(&settings, current_user),
+        created_by: current_user.to_public_user_profile(&settings),
         created_at: room.created_at,
         password: room.password,
         waiting_room: room.waiting_room,
@@ -250,7 +250,7 @@ pub async fn get(
 
     let room_resource = RoomResource {
         id: room.id,
-        created_by: PublicUserProfile::from_db(&settings, created_by),
+        created_by: created_by.to_public_user_profile(&settings),
         created_at: room.created_at,
         password: room.password,
         waiting_room: room.waiting_room,
