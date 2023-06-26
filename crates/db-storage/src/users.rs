@@ -16,8 +16,10 @@ use diesel::{
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
 use std::fmt;
-use types::api::v1::users::{PrivateUserProfile, PublicUserProfile};
-use types::core::{TariffId, TariffStatus, TenantId, UserId};
+use types::{
+    api::v1::users::{PrivateUserProfile, PublicUserProfile},
+    core::{TariffId, TariffStatus, TenantId, UserId},
+};
 
 types::diesel_newtype! {
     #[derive(Copy)]

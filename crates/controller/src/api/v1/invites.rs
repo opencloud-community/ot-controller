@@ -5,8 +5,7 @@
 //! Contains invite related REST endpoints.
 use super::response::{ApiError, NoContent};
 use super::DefaultApiResult;
-use crate::api::v1::rooms::RoomsPoliciesBuilderExt;
-use crate::api::v1::{ApiResponse, PagePaginationQuery};
+use crate::api::v1::{rooms::RoomsPoliciesBuilderExt, ApiResponse, PagePaginationQuery};
 use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json, Path, Query, ReqData};
 use actix_web::{delete, get, post, put};

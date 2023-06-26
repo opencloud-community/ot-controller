@@ -43,12 +43,13 @@ use kustos::{Authz, Resource, ResourceId};
 use rrule::{Frequency, RRuleSet};
 use serde::de::Visitor;
 use serde::{Deserialize, Serialize};
-use types::core::InviteRole;
 use types::{
     api::v1::users::{PublicUserProfile, UnregisteredUser},
-    common::features,
-    common::shared_folder::{SharedFolder, SharedFolderAccess},
-    core::{DateTimeTz, EventId, RoomId, TimeZone, UserId},
+    common::{
+        features,
+        shared_folder::{SharedFolder, SharedFolderAccess},
+    },
+    core::{DateTimeTz, EventId, InviteRole, RoomId, TimeZone, UserId},
 };
 use validator::{Validate, ValidationError};
 
