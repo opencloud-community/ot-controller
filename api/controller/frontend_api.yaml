@@ -2620,19 +2620,30 @@ components:
           type: string
           readOnly: true
           description: Password of the room.
-        sip_tel:
+        call_in:
+          $ref: '#/components/schemas/CallInInfo'
+
+    CallInInfo:
+      description: Information about the rooms call in configuration
+      type: object
+      required:
+        - tel
+        - id
+        - password
+      properties:
+        tel:
           type: string
           readOnly: true
           description: A string containing a phone number which can be used to call into the room
-        sip_uri:
+        uri:
           type: string
           readOnly: true
           description: SIP uri which can be used to call into the room with a SIP client
-        sip_id:
+        id:
           type: string
           readOnly: true
           description: numeric Password to enter on the phone number-pad when calling into the conference
-        sip_password:
+        password:
           type: string
           readOnly: true
           description: numeric Password to enter on the phone number-pad when calling into the conference

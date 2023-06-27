@@ -4,6 +4,8 @@
 
 use crate::api::signaling::ticket::start_or_continue_signaling_session;
 use crate::api::v1::response::ApiError;
+use crate::api::v1::util::require_feature;
+use crate::settings::SharedSettingsActix;
 use actix_web::dev::HttpServiceFactory;
 use actix_web::error::Result;
 use actix_web::post;
@@ -12,6 +14,7 @@ use database::Db;
 use db_storage::sip_configs::SipConfig;
 use serde::{Deserialize, Serialize};
 use signaling_core::{Participant, RedisConnection};
+use types::common::features;
 use types::core::{CallInId, CallInPassword, ResumptionToken, TicketToken};
 use validator::Validate;
 
@@ -32,31 +35,36 @@ pub struct CallInStartResponse {
 /// API Endpoint *POST services/call_in/start* for the call-in service
 #[post("/start")]
 pub async fn start(
+    settings: SharedSettingsActix,
     db: Data<Db>,
     redis_ctx: Data<RedisConnection>,
     request: Json<CallInStartRequestBody>,
 ) -> Result<Json<CallInStartResponse>, ApiError> {
+    let settings = settings.load();
     let mut redis_conn = (**redis_ctx).clone();
     let request = request.into_inner();
+
+    let mut conn = db.get_conn().await?;
+
+    let (sip_config, room) = SipConfig::get_with_room(&mut conn, &request.id)
+        .await?
+        .ok_or(ApiError::not_found().with_message("given call-in id does not exist"))?;
+
+    require_feature(&mut conn, &settings, room.created_by, features::CALL_IN).await?;
 
     request.id.validate()?;
     request.pin.validate()?;
 
-    let mut conn = db.get_conn().await?;
-
-    let room_id = match SipConfig::get(&mut conn, request.id).await? {
-        Some(sip_config) if sip_config.password == request.pin => sip_config.room,
-        _ => {
-            return Err(ApiError::bad_request()
-                .with_code("invalid_credentials")
-                .with_message("given call-in id & pin combination is not valid"));
-        }
-    };
+    if sip_config.password != request.pin {
+        return Err(ApiError::bad_request()
+            .with_code("invalid_credentials")
+            .with_message("given call-in id & pin combination is not valid"));
+    }
 
     drop(conn);
 
     let (ticket, resumption) =
-        start_or_continue_signaling_session(&mut redis_conn, Participant::Sip, room_id, None, None)
+        start_or_continue_signaling_session(&mut redis_conn, Participant::Sip, room.id, None, None)
             .await?;
 
     Ok(Json(CallInStartResponse { ticket, resumption }))

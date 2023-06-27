@@ -2,10 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use super::response::ApiError;
 use super::users::PublicUserProfile;
 use controller_settings::Settings;
 use database::DbConnection;
 use database::Result;
+use db_storage::tariffs::Tariff;
 use db_storage::users::User;
 use db_storage::utils::HasUsers;
 use serde::de;
@@ -83,6 +85,38 @@ where
     D: Deserializer<'de>,
 {
     Deserialize::deserialize(deserializer).map(Some)
+}
+
+/// Checks if the given feature sting is disabled by the tariff of the given user or in the settings of the controller.
+///
+/// Return an [`ApiError`] if the given feature is disabled, differentiating between a config disable or tariff restriction.
+pub(crate) async fn require_feature(
+    db_conn: &mut DbConnection,
+    settings: &Settings,
+    user_id: UserId,
+    feature: &str,
+) -> Result<(), ApiError> {
+    if settings.defaults.disabled_features.contains(feature) {
+        return Err(ApiError::forbidden()
+            .with_code("feature_disabled")
+            .with_message(format!("The feature \"{feature}\" is disabled")));
+    }
+
+    let tariff = Tariff::get_by_user_id(db_conn, &user_id).await?;
+
+    if tariff
+        .disabled_features
+        .iter()
+        .any(|disabled_feature| disabled_feature == feature)
+    {
+        return Err(ApiError::forbidden()
+            .with_code("feature_disabled_by_tariff")
+            .with_message(format!(
+                "The user's tariff does not include the {feature} feature"
+            )));
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]

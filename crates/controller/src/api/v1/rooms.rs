@@ -11,6 +11,7 @@ use super::response::error::{ApiError, ValidationErrorEntry};
 use super::response::{NoContent, CODE_INVALID_VALUE};
 use super::users::PublicUserProfile;
 use crate::api::signaling::SignalingModules;
+use crate::api::v1::util::require_feature;
 use crate::api::{
     signaling::{breakout, moderation, ticket::start_or_continue_signaling_session},
     v1::{ApiResponse, PagePaginationQuery},
@@ -30,7 +31,7 @@ use serde::{Deserialize, Serialize};
 use signaling_core::{Participant, RedisConnection};
 use std::str::FromStr;
 use types::{
-    common::tariff::TariffResource,
+    common::{features, tariff::TariffResource},
     core::{BreakoutRoomId, InviteCodeId, ResumptionToken, RoomId, TicketToken},
 };
 use validator::Validate;
@@ -123,6 +124,10 @@ pub async fn new(
     room_parameters.validate()?;
 
     let mut conn = db.get_conn().await?;
+
+    if room_parameters.enable_sip {
+        require_feature(&mut conn, &settings, current_user.id, features::CALL_IN).await?;
+    }
 
     let new_room = db_rooms::NewRoom {
         created_by: current_user.id,
@@ -256,10 +261,13 @@ pub async fn get(
 
 #[get("/rooms/{room_id}/tariff")]
 pub async fn get_room_tariff(
+    shared_settings: SharedSettingsActix,
     db: Data<Db>,
     modules: Data<SignalingModules>,
     room_id: Path<RoomId>,
 ) -> Result<Json<TariffResource>, ApiError> {
+    let settings = shared_settings.load_full();
+
     let room_id = room_id.into_inner();
 
     let mut conn = db.get_conn().await?;
@@ -267,7 +275,10 @@ pub async fn get_room_tariff(
     let room = Room::get(&mut conn, room_id).await?;
     let tariff = room.get_tariff(&mut conn).await?;
 
-    let response = tariff.to_tariff_resource(&modules.get_module_names());
+    let response = tariff.to_tariff_resource(
+        modules.get_module_names(),
+        &settings.defaults.disabled_features,
+    );
 
     Ok(Json(response))
 }

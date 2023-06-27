@@ -36,7 +36,7 @@ use config::{Config, ConfigError, Environment, File, FileFormat};
 use openidconnect::{ClientId, ClientSecret};
 use rustc_hash::FxHashSet;
 use serde::{Deserialize, Deserializer};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::convert::TryFrom;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -399,6 +399,8 @@ pub struct Defaults {
     pub user_language: String,
     #[serde(default)]
     pub screen_share_requires_permission: bool,
+    #[serde(default)]
+    pub disabled_features: HashSet<String>,
 }
 
 fn default_user_language() -> String {

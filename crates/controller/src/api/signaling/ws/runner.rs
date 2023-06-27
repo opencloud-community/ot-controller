@@ -1211,9 +1211,17 @@ impl Runner {
             )
             .await;
 
-        let available_modules = self.modules.get_module_names();
         let closes_at =
             control::storage::get_room_closes_at(&mut self.redis_conn, self.room_id).await?;
+
+        let settings = self.settings.load_full();
+
+        let tariff_resource = tariff
+            .to_tariff_resource(
+                self.modules.get_module_names(),
+                &settings.defaults.disabled_features,
+            )
+            .into();
 
         self.ws_send_control(
             timestamp,
@@ -1223,7 +1231,7 @@ impl Runner {
                 avatar_url: control_data.avatar_url.clone(),
                 role: self.role,
                 closes_at,
-                tariff: tariff.to_tariff_resource(&available_modules).into(),
+                tariff: tariff_resource,
                 module_data,
                 participants,
                 event_info: event.as_ref().map(db_storage::events::Event::to_event_info),

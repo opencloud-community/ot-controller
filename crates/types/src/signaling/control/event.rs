@@ -157,6 +157,7 @@ mod test {
             name: "test".into(),
             quotas: Default::default(),
             enabled_modules: Default::default(),
+            disabled_features: Default::default(),
         }
     }
 

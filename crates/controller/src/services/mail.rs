@@ -16,7 +16,8 @@ use lapin_pool::{RabbitMqChannel, RabbitMqPool};
 use mail_worker_proto::*;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use types::{common::shared_folder::SharedFolder, core::UserId};
+use types::common::{features, shared_folder::SharedFolder};
+use types::core::UserId;
 
 pub struct RegisteredMailRecipient {
     pub id: UserId,
@@ -46,7 +47,7 @@ pub enum MailRecipient {
 fn to_event(
     event: Event,
     room: Room,
-    sip: Option<SipConfig>,
+    sip_config: Option<SipConfig>,
     settings: &Settings,
     shared_folder: Option<SharedFolder>,
 ) -> mail_worker_proto::v1::Event {
@@ -54,16 +55,22 @@ fn to_event(
 
     let end_time: Option<v1::Time> = event.ends_at_of_first_occurrence().map(Into::into);
 
-    let call_in =
-        if let Some((call_in_settings, sip_config)) = settings.call_in.as_ref().zip(sip.as_ref()) {
-            Some(v1::CallIn {
+    let call_in_feature_is_enabled = !settings
+        .defaults
+        .disabled_features
+        .contains(features::CALL_IN);
+
+    let mut call_in = None;
+
+    if call_in_feature_is_enabled {
+        if let (Some(call_in_settings), Some(sip_config)) = (&settings.call_in, sip_config) {
+            call_in = Some(v1::CallIn {
                 sip_tel: call_in_settings.tel.clone(),
                 sip_id: sip_config.sip_id.to_string(),
                 sip_password: sip_config.password.to_string(),
-            })
-        } else {
-            None
-        };
+            });
+        }
+    }
 
     mail_worker_proto::v1::Event {
         id: *event.id.inner(),
