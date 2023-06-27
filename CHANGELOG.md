@@ -5,55 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.5.0-rc.6] - 2023-06-19
-
-- controller: add tariff status and handle downgraded tariff ([#408](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/408))
-
-## [0.5.0-rc.5] - 2023-06-16
+## [0.5.0] - 2023-06-27
 
 ### Added
 
+- controller: add tariff status and handle downgraded tariff ([#408](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/408))
 - controller: extend `JoinSuccess` signaling message's `Event` with `EventId` field ([#399](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/399))
+- controller: add event information to `JoinSuccess` signaling message ([#266](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/266))
+- controller: add the `shared-folder` module, allowing users to create and connect a nextcloud share in their conferences ([#381](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/381))
 
 ### Changed
 
 - logging: `RUST_LOG` environment variable entries override settings from configuration file ([#69](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/69))
 - controller: don't send mail notifications on deletion of past events ([#407](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/407))
 - controller: `x_grp` defaults to empty if not provided ([#414](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/414))
-
-### Fixed
-
-- controller: Avoid sending unnecessary close frames. ([#356](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/356))
-- janus-media: discard unhandled ack messages, log them on debug level only ([#252](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/252))
-
-## [0.5.0-rc.4] - 2023-06-13
-
-### Changed
-
 - controller: respect operating system CA certificates for all outgoing tls connections ([#382](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/382))
-
-## [0.5.0-rc.3] - 2023-06-07
-
 - controller: fix signaling for rooms without events ([406](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/406))
-
-## [0.5.0-rc.2] - 2023-06-02
-
-- cli: fix a bug where the `fix-acl` command was not working when too many permissions were added ([403](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/403))
-
-## [0.5.0-rc.1] - 2023-05-26
-
-### Added
-
-- controller: add event information to `JoinSuccess` signaling message ([#266](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/266))
-- controller: add the `shared-folder` module, allowing users to create and connect a nextcloud share in their conferences ([#381](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/381))
-
-### Changed
-
 - db-storage/mail-worker-protocol: added `revision` field to `events` to track the number of changes
 - cli: Update `fix-cli` subcommand, now also fixes access to events and legal-votes ([#387](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/387))
 
 ### Fixed
 
+- controller: Avoid sending unnecessary close frames. ([#356](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/356))
+- janus-media: discard unhandled ack messages, log them on debug level only ([#252](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/252))
+- cli: fix a bug where the `fix-acl` command was not working when too many permissions were added ([403](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/403))
 - signaling: Consider the `enable_phone_mapping` config value when trying to match the phone number to a opentalk user
 
 ## [0.4.0] - 2023-05-25
@@ -333,12 +308,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - initial release candidate
 
-[0.5.0-rc.6]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.5.0-rc.5...v0.5.0-rc.6
-[0.5.0-rc.5]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.5.0-rc.4...v0.5.0-rc.5
-[0.5.0-rc.4]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.5.0-rc.3...v0.5.0-rc.4
-[0.5.0-rc.3]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.5.0-rc.2...v0.5.0-rc.3
-[0.5.0-rc.2]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.5.0-rc.1...v0.5.0-rc.2
-[0.5.0-rc.1]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/941af95a8ee276da7c6f2a9a4c51ac91d95e3252...v0.5.0-rc.1
+[0.5.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/2129f33efb8898d46f6dd1b43db43e5cbb929f99...v0.5.0
 
 [0.4.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/60b8af4daa0e0f2ed2ec9589fd1c9da3218baf8c...v0.4.0
 
