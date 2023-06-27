@@ -134,6 +134,7 @@ pub struct NewTariff {
     pub name: String,
     pub quotas: Jsonb<HashMap<String, u32>>,
     pub disabled_modules: Vec<String>,
+    pub disabled_features: Vec<String>,
 }
 
 impl NewTariff {
@@ -152,6 +153,7 @@ pub struct UpdateTariff {
     pub updated_at: DateTime<Utc>,
     pub quotas: Option<Jsonb<HashMap<String, u32>>>,
     pub disabled_modules: Option<Vec<String>>,
+    pub disabled_features: Option<Vec<String>>,
 }
 
 impl UpdateTariff {

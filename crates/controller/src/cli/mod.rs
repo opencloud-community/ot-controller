@@ -12,7 +12,6 @@ mod reload;
 mod tariffs;
 mod tenants;
 
-// TODO: renamed-to-opentalk
 #[derive(Parser, Debug, Clone)]
 #[clap(name = "opentalk-controller")]
 pub struct Args {
@@ -37,6 +36,7 @@ pub struct Args {
 
 #[derive(Subcommand, Debug, Clone)]
 #[clap(rename_all = "kebab_case")]
+#[allow(clippy::large_enum_variant)]
 enum SubCommand {
     /// Recreate all ACL entries from the current database content. Existing entries will not be touched unless the
     /// command is told to delete them all beforehand.

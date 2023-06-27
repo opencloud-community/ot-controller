@@ -29,6 +29,9 @@ pub enum Command {
         /// Comma-separated list of modules to disable
         #[clap(long, value_delimiter = ',')]
         disabled_modules: Vec<String>,
+        /// Comma-separated list of features to disable
+        #[clap(long, value_delimiter = ',')]
+        disabled_features: Vec<String>,
         /// Comma-separated list of key=value pairs
         #[clap(long, value_delimiter = ',', value_parser = parse_quota)]
         quotas: Vec<(String, u32)>,
@@ -64,6 +67,14 @@ pub enum Command {
         #[clap(long, value_delimiter = ',')]
         remove_disabled_modules: Vec<String>,
 
+        /// Comma-separated list of feature names to add
+        #[clap(long, value_delimiter = ',')]
+        add_disabled_features: Vec<String>,
+
+        /// Comma-separated list of feature names to remove
+        #[clap(long, value_delimiter = ',')]
+        remove_disabled_features: Vec<String>,
+
         /// Comma-separated list of key=value pairs to add, overwrites quotas with the same name
         #[clap(long, value_delimiter = ',', value_parser = parse_quota)]
         add_quotas: Vec<(String, u32)>,
@@ -90,6 +101,7 @@ pub async fn handle_command(settings: Settings, command: Command) -> Result<()> 
             tariff_name,
             external_tariff_id,
             disabled_modules,
+            disabled_features,
             quotas,
         } => {
             create_tariff(
@@ -97,6 +109,7 @@ pub async fn handle_command(settings: Settings, command: Command) -> Result<()> 
                 tariff_name,
                 external_tariff_id,
                 disabled_modules,
+                disabled_features,
                 quotas.into_iter().collect(),
             )
             .await
@@ -109,6 +122,8 @@ pub async fn handle_command(settings: Settings, command: Command) -> Result<()> 
             remove_external_tariff_ids,
             add_disabled_modules,
             remove_disabled_modules,
+            add_disabled_features,
+            remove_disabled_features,
             add_quotas,
             remove_quotas,
         } => {
@@ -120,6 +135,8 @@ pub async fn handle_command(settings: Settings, command: Command) -> Result<()> 
                 remove_external_tariff_ids,
                 add_disabled_modules,
                 remove_disabled_modules,
+                add_disabled_features,
+                remove_disabled_features,
                 add_quotas.into_iter().collect(),
                 remove_quotas,
             )
@@ -142,6 +159,7 @@ async fn create_tariff(
     name: String,
     external_tariff_id: String,
     disabled_modules: Vec<String>,
+    disabled_features: Vec<String>,
     quotas: HashMap<String, u32>,
 ) -> Result<()> {
     let db = Db::connect(&settings.database).context("Failed to connect to database")?;
@@ -152,6 +170,7 @@ async fn create_tariff(
             name: name.clone(),
             quotas: Jsonb(quotas),
             disabled_modules,
+            disabled_features,
         }
         .insert(conn).await?;
 
@@ -199,6 +218,8 @@ async fn edit_tariff(
     remove_external_tariff_ids: Vec<String>,
     add_disabled_modules: Vec<String>,
     remove_disabled_modules: Vec<String>,
+    add_disabled_features: Vec<String>,
+    remove_disabled_features: Vec<String>,
     add_quotas: HashMap<String, u32>,
     remove_quotas: Vec<String>,
 ) -> Result<()> {
@@ -245,6 +266,14 @@ async fn edit_tariff(
             disabled_modules.sort_unstable();
             disabled_modules.dedup();
 
+            // Modify the `disabled_features` list
+            let mut disabled_features = tariff.disabled_features;
+            disabled_features
+                .retain(|disabled_module| !remove_disabled_features.contains(disabled_module));
+            disabled_features.extend(add_disabled_features);
+            disabled_features.sort_unstable();
+            disabled_features.dedup();
+
             // Modify the `quotas` set
             let mut quotas = tariff.quotas.0;
             quotas.retain(|key, _| !remove_quotas.contains(key));
@@ -256,6 +285,7 @@ async fn edit_tariff(
                 updated_at: Utc::now(),
                 quotas: Some(Jsonb(quotas)),
                 disabled_modules: Some(disabled_modules),
+                disabled_features: Some(disabled_features),
             }
             .apply(conn, tariff.id)
             .await?;
@@ -281,6 +311,8 @@ async fn print_tariffs(
         ext: String,
         #[tabled(rename = "disabled modules")]
         disabled_modules: String,
+        #[tabled(rename = "disabled features")]
+        disabled_features: String,
         quotas: String,
     }
 
@@ -301,6 +333,11 @@ async fn print_tariffs(
             disabled_modules = "-".into();
         }
 
+        let mut disabled_features = tariff.disabled_features.into_iter().join("\n");
+        if disabled_features.is_empty() {
+            disabled_features = "-".into();
+        }
+
         let mut quotas = tariff
             .quotas
             .0
@@ -315,6 +352,7 @@ async fn print_tariffs(
             name: tariff.name,
             ext: ids,
             disabled_modules,
+            disabled_features,
             quotas,
         });
     }
