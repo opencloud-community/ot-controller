@@ -135,7 +135,7 @@ pub async fn get_event_instances(
 
     let mut conn = db.get_conn().await?;
 
-    let (event, invite, room, sip_config, is_favorite, shared_folder) =
+    let (event, invite, room, sip_config, is_favorite, shared_folder, tariff) =
         Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
 
     let (invitees, invitees_truncated) =
@@ -178,7 +178,7 @@ pub async fn get_event_instances(
 
     drop(conn);
 
-    let room = EventRoomInfo::from_room(&settings, room, sip_config);
+    let room = EventRoomInfo::from_room(&settings, room, sip_config, &tariff);
 
     let can_edit = can_edit(&event, &current_user);
 
@@ -279,7 +279,7 @@ pub async fn get_event_instance(
 
     let mut conn = db.get_conn().await?;
 
-    let (event, invite, room, sip_config, is_favorite, shared_folder) =
+    let (event, invite, room, sip_config, is_favorite, shared_folder, tariff) =
         Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
     verify_recurrence_date(&event, instance_id.0)?;
 
@@ -294,7 +294,7 @@ pub async fn get_event_instance(
         .fetch(&settings, &mut conn)
         .await?;
 
-    let room = EventRoomInfo::from_room(&settings, room, sip_config);
+    let room = EventRoomInfo::from_room(&settings, room, sip_config, &tariff);
 
     let can_edit = can_edit(&event, &current_user);
 
@@ -413,7 +413,7 @@ pub async fn patch_event_instance(
 
     let mut conn = db.get_conn().await?;
 
-    let (event, invite, room, sip_config, is_favorite, shared_folder) =
+    let (event, invite, room, sip_config, is_favorite, shared_folder, tariff) =
         Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
 
     if !event.is_recurring.unwrap_or_default() {
@@ -503,7 +503,7 @@ pub async fn patch_event_instance(
         .fetch(&settings, &mut conn)
         .await?;
 
-    let room = EventRoomInfo::from_room(&settings, room, sip_config);
+    let room = EventRoomInfo::from_room(&settings, room, sip_config, &tariff);
 
     let can_edit = can_edit(&event, &current_user);
 

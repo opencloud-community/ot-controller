@@ -33,6 +33,7 @@ use db_storage::events::{
 use db_storage::invites::Invite;
 use db_storage::rooms::{NewRoom, Room, UpdateRoom};
 use db_storage::sip_configs::{NewSipConfig, SipConfig};
+use db_storage::tariffs::Tariff;
 use db_storage::tenants::Tenant;
 use db_storage::users::User;
 use keycloak_admin::KeycloakAdminClient;
@@ -469,11 +470,19 @@ impl EventRoomInfo {
     /// - a telephone number is configured in the call-in settings
     /// - a [`SipConfig`] is provided
     /// - the `CallIn` feature is not disabled in the settings
-    fn from_room(settings: &Settings, room: Room, sip_config: Option<SipConfig>) -> Self {
+    fn from_room(
+        settings: &Settings,
+        room: Room,
+        sip_config: Option<SipConfig>,
+        tariff: &Tariff,
+    ) -> Self {
         let call_in_feature_is_enabled = !settings
             .defaults
             .disabled_features
-            .contains(features::CALL_IN);
+            .contains(features::CALL_IN)
+            && !tariff
+                .disabled_features
+                .contains(&features::CALL_IN.to_string());
 
         let mut call_in = None;
 
@@ -705,11 +714,13 @@ async fn create_time_independent_event(
     .insert(conn)
     .await?;
 
+    let tariff = Tariff::get_by_user_id(conn, &current_user.id).await?;
+
     Ok(EventResource {
         id: event.id,
         title: event.title,
         description: event.description,
-        room: EventRoomInfo::from_room(settings, room, Some(sip_config)),
+        room: EventRoomInfo::from_room(settings, room, Some(sip_config), &tariff),
         invitees_truncated: false,
         invitees: vec![],
         created_by: PublicUserProfile::from_db(settings, current_user.clone()),
@@ -783,11 +794,13 @@ async fn create_time_dependent_event(
     .insert(conn)
     .await?;
 
+    let tariff = Tariff::get_by_user_id(conn, &current_user.id).await?;
+
     Ok(EventResource {
         id: event.id,
         title: event.title,
         description: event.description,
-        room: EventRoomInfo::from_room(settings, room, Some(sip_config)),
+        room: EventRoomInfo::from_room(settings, room, Some(sip_config), &tariff),
         invitees_truncated: false,
         invitees: vec![],
         created_by: PublicUserProfile::from_db(settings, current_user.clone()),
@@ -940,7 +953,7 @@ pub async fn get_events(
     )
     .await?;
 
-    for (event, _, _, _, exceptions, _, _) in &events {
+    for (event, _, _, _, exceptions, _, _, _) in &events {
         users.add(event);
         users.add(exceptions);
     }
@@ -978,7 +991,7 @@ pub async fn get_events(
     let mut ret_cursor_data = None;
 
     for (
-        (event, invite, room, sip_config, exceptions, is_favorite, shared_folder),
+        (event, invite, room, sip_config, exceptions, is_favorite, shared_folder, tariff),
         (mut invites_with_user, mut email_invites),
     ) in events.into_iter().zip(invites_grouped_by_event)
     {
@@ -1030,7 +1043,7 @@ pub async fn get_events(
             updated_at: event.updated_at,
             title: event.title,
             description: event.description,
-            room: EventRoomInfo::from_room(&settings, room, sip_config),
+            room: EventRoomInfo::from_room(&settings, room, sip_config, &tariff),
             invitees_truncated,
             invitees,
             is_time_independent: event.is_time_independent,
@@ -1118,7 +1131,7 @@ pub async fn get_event(
 
     let mut conn = db.get_conn().await?;
 
-    let (event, invite, room, sip_config, is_favorite, shared_folder) =
+    let (event, invite, room, sip_config, is_favorite, shared_folder, tariff) =
         Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
     let (invitees, invitees_truncated) =
         get_invitees_for_event(&settings, &mut conn, event_id, query.invitees_max).await?;
@@ -1141,7 +1154,7 @@ pub async fn get_event(
         id: event.id,
         title: event.title,
         description: event.description,
-        room: EventRoomInfo::from_room(&settings, room, sip_config),
+        room: EventRoomInfo::from_room(&settings, room, sip_config, &tariff),
         invitees_truncated,
         invitees,
         created_by: users.get(event.created_by),
@@ -1344,7 +1357,7 @@ pub async fn patch_event(
 
     let mut conn = db.get_conn().await?;
 
-    let (event, invite, room, sip_config, is_favorite, shared_folder) =
+    let (event, invite, room, sip_config, is_favorite, shared_folder, tariff) =
         Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
 
     let room = if patch.password.is_some() || patch.waiting_room.is_some() {
@@ -1421,7 +1434,7 @@ pub async fn patch_event(
         updated_at: event.updated_at,
         title: event.title,
         description: event.description,
-        room: EventRoomInfo::from_room(&settings, room, sip_config),
+        room: EventRoomInfo::from_room(&settings, room, sip_config, &tariff),
         invitees_truncated,
         invitees,
         is_time_independent: event.is_time_independent,
@@ -1712,7 +1725,7 @@ pub async fn delete_event(
     let mut conn = db.get_conn().await?;
 
     // TODO(w.rabl) Further DB access optimization (replacing call to get_with_invite_and_room)?
-    let (event, _invite, room, sip_config, _is_favorite, shared_folder) =
+    let (event, _invite, room, sip_config, _is_favorite, shared_folder, _tariff) =
         Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
 
     let created_by = if event.created_by == current_user.id {
