@@ -5,9 +5,10 @@
 use crate::rooms::Room;
 use crate::schema::{
     event_exceptions, event_favorites, event_invites, event_shared_folders, events, rooms,
-    sip_configs, users,
+    sip_configs, tariffs, users,
 };
 use crate::sip_configs::SipConfig;
+use crate::tariffs::Tariff;
 use crate::users::User;
 use crate::utils::HasUsers;
 use chrono::{DateTime, Utc};
@@ -198,6 +199,7 @@ impl Event {
         Option<SipConfig>,
         bool,
         Option<EventSharedFolder>,
+        Tariff,
     )> {
         let query = events::table
             .left_join(
@@ -215,6 +217,8 @@ impl Event {
             )
             .inner_join(rooms::table.on(events::room.eq(rooms::id)))
             .left_join(sip_configs::table.on(rooms::id.eq(sip_configs::room)))
+            .inner_join(users::table.on(users::id.eq(rooms::created_by)))
+            .inner_join(tariffs::table.on(tariffs::id.eq(users::tariff_id)))
             .select((
                 events::all_columns,
                 event_invites::all_columns.nullable(),
@@ -222,6 +226,7 @@ impl Event {
                 sip_configs::all_columns.nullable(),
                 event_favorites::user_id.nullable().is_not_null(),
                 event_shared_folders::all_columns.nullable(),
+                tariffs::all_columns,
             ))
             .filter(events::id.eq(event_id));
 
@@ -271,6 +276,7 @@ impl Event {
             Vec<EventException>,
             bool,
             Option<EventSharedFolder>,
+            Tariff,
         )>,
     > {
         // Filter applied to all events which validates that the event is either created by
@@ -296,6 +302,8 @@ impl Event {
             )
             .inner_join(rooms::table)
             .left_join(sip_configs::table.on(rooms::id.eq(sip_configs::room)))
+            .inner_join(users::table.on(users::id.eq(rooms::created_by)))
+            .inner_join(tariffs::table.on(tariffs::id.eq(users::tariff_id)))
             .select((
                 events::all_columns,
                 event_invites::all_columns.nullable(),
@@ -303,6 +311,7 @@ impl Event {
                 sip_configs::all_columns.nullable(),
                 event_favorites::user_id.nullable().is_not_null(),
                 event_shared_folders::all_columns.nullable(),
+                tariffs::all_columns,
             ))
             .filter(events::tenant_id.eq(user.tenant_id))
             .filter(event_related_to_user_id)
@@ -397,12 +406,13 @@ impl Event {
             Option<SipConfig>,
             bool,
             Option<EventSharedFolder>,
+            Tariff,
         )> = query.load(conn).await?;
 
         let mut events_with_invite_room_and_exceptions =
             Vec::with_capacity(events_with_invite_and_room.len());
 
-        for (event, invite, room, sip_config, is_favorite, shared_folders) in
+        for (event, invite, room, sip_config, is_favorite, shared_folders, tariff) in
             events_with_invite_and_room
         {
             let exceptions = if event.is_recurring.unwrap_or_default() {
@@ -422,6 +432,7 @@ impl Event {
                 exceptions,
                 is_favorite,
                 shared_folders,
+                tariff,
             ));
         }
 
