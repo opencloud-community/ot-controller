@@ -13,8 +13,11 @@ pub struct User {
     pub username: String,
     pub enabled: bool,
     pub email_verified: bool,
+    #[serde(default)]
     pub first_name: String,
+    #[serde(default)]
     pub last_name: String,
+    #[serde(default)]
     pub email: String,
     #[serde(default)]
     pub attributes: Attributes,
@@ -23,6 +26,16 @@ pub struct User {
 impl User {
     fn is_in_tenant(&self, tenant_id: &str) -> bool {
         self.attributes.tenant_id.iter().any(|t| t == tenant_id)
+    }
+
+    /// Check if a deserialized user struct from Keycloak is valid or not
+    fn is_kc_valid(&self) -> bool {
+        if self.email.is_empty() || self.first_name.is_empty() || self.last_name.is_empty() {
+            log::warn!("User JSON object from KeyCloak has missing email, first_name, or last_name fields.");
+            return false;
+        }
+
+        true
     }
 }
 
@@ -58,7 +71,14 @@ impl KeycloakAdminClient {
             .send_authorized(move |c| c.get(url.clone()).query(&query))
             .await?;
 
-        Ok(response.json().await?)
+        let found_users = response
+            .json::<Vec<User>>()
+            .await?
+            .into_iter()
+            .filter(|user| user.is_kc_valid())
+            .collect();
+
+        Ok(found_users)
     }
 
     /// Query keycloak for users using the given search string, filtered by the tenant_id
@@ -83,11 +103,13 @@ impl KeycloakAdminClient {
             .send_authorized(move |c| c.get(url.clone()).query(&query))
             .await?;
 
-        let mut found_users: Vec<User> = response.json().await?;
-
-        found_users.retain(|user| user.is_in_tenant(tenant_id));
-
-        found_users.truncate(5);
+        let found_users = response
+            .json::<Vec<User>>()
+            .await?
+            .into_iter()
+            .filter(|user| user.is_in_tenant(tenant_id) && user.is_kc_valid())
+            .take(5)
+            .collect();
 
         Ok(found_users)
     }

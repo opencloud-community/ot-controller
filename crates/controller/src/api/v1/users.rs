@@ -288,7 +288,7 @@ pub async fn find(
     let found_users = if settings.endpoints.users_find_use_kc {
         let mut found_kc_users = match settings.tenants.assignment {
             TenantAssignment::Static { .. } => {
-                // Do not filter by tenant_id if the assignment is static, since thats used
+                // Do not filter by tenant_id if the assignment is static, since that's used
                 // when the keycloak does not provide any tenant information we can filter over anyway
                 kc_admin_client
                     .search_user(&query.q)
