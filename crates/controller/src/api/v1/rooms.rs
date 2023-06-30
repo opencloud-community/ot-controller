@@ -18,7 +18,6 @@ use crate::api::{
 use crate::settings::SharedSettingsActix;
 use actix_web::web::{self, Data, Json, Path, ReqData};
 use actix_web::{delete, get, patch, post};
-use chrono::{DateTime, Utc};
 use database::Db;
 use db_storage::invites::Invite;
 use db_storage::rooms::{self as db_rooms, Room};
@@ -30,24 +29,11 @@ use serde::{Deserialize, Serialize};
 use signaling_core::{Participant, RedisConnection};
 use std::str::FromStr;
 use types::{
-    api::v1::users::PublicUserProfile,
+    api::v1::rooms::RoomResource,
     common::{features, tariff::TariffResource},
     core::{BreakoutRoomId, InviteCodeId, ResumptionToken, RoomId, TicketToken},
 };
 use validator::Validate;
-
-/// A Room
-///
-/// Contains all room information. Is only be accessible to the owner and users with
-/// appropriate permissions.
-#[derive(Debug, Serialize)]
-pub struct RoomResource {
-    pub id: RoomId,
-    pub created_by: PublicUserProfile,
-    pub created_at: DateTime<Utc>,
-    pub password: Option<String>,
-    pub waiting_room: bool,
-}
 
 /// API Endpoint *GET /rooms*
 ///
