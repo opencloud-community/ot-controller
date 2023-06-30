@@ -79,6 +79,7 @@ impl UserProfilesBatch {
 
 /// Helper function to deserialize Option<Option<T>>
 /// https://github.com/serde-rs/serde/issues/984
+// TODO: Once api/v1/events types are moved to `types` crate, this can be removed
 pub(super) fn deserialize_some<'de, T, D>(deserializer: D) -> Result<Option<T>, D::Error>
 where
     T: Deserialize<'de>,

@@ -29,7 +29,7 @@ use serde::{Deserialize, Serialize};
 use signaling_core::{Participant, RedisConnection};
 use std::str::FromStr;
 use types::{
-    api::v1::rooms::{PostRoomsBody, RoomResource},
+    api::v1::rooms::{PatchRoomsBody, PostRoomsBody, RoomResource},
     common::{features, tariff::TariffResource},
     core::{BreakoutRoomId, InviteCodeId, ResumptionToken, RoomId, TicketToken},
 };
@@ -135,16 +135,6 @@ pub async fn new(
     authz.add_policies(policies).await?;
 
     Ok(Json(room_resource))
-}
-
-/// API request parameters to patch a room
-#[derive(Debug, Validate, Deserialize)]
-pub struct PatchRoomsBody {
-    #[validate(length(min = 1, max = 255))]
-    #[serde(default, deserialize_with = "super::util::deserialize_some")]
-    pub password: Option<Option<String>>,
-
-    pub waiting_room: Option<bool>,
 }
 
 /// API Endpoint *PATCH /rooms/{room_id}*

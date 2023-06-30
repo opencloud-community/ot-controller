@@ -52,3 +52,19 @@ pub struct PostRoomsBody {
     #[cfg_attr(feature = "serde", serde(default))]
     pub waiting_room: bool,
 }
+
+/// API request parameters to patch a room
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize, Validate))]
+pub struct PatchRoomsBody {
+    /// The password for the room
+    #[cfg_attr(
+        feature = "serde",
+        validate(length(min = 1, max = 255)),
+        serde(default, deserialize_with = "super::utils::deserialize_some")
+    )]
+    pub password: Option<Option<String>>,
+
+    /// If waiting room is enabled
+    pub waiting_room: Option<bool>,
+}
