@@ -25,15 +25,15 @@ use db_storage::sip_configs::NewSipConfig;
 use db_storage::users::User;
 use kustos::policies_builder::{GrantingAccess, PoliciesBuilder};
 use kustos::prelude::*;
-use serde::Deserialize;
 use signaling_core::{Participant, RedisConnection};
 use std::{convert::AsRef, str::FromStr};
 use types::{
     api::v1::rooms::{
-        PatchRoomsBody, PostRoomsBody, RoomResource, StartRequest, StartResponse, StartRoomError,
+        InvitedStartRequest, PatchRoomsBody, PostRoomsBody, RoomResource, StartRequest,
+        StartResponse, StartRoomError,
     },
     common::{features, tariff::TariffResource},
-    core::{BreakoutRoomId, InviteCodeId, ResumptionToken, RoomId},
+    core::{InviteCodeId, RoomId},
 };
 use validator::Validate;
 
@@ -330,15 +330,6 @@ pub async fn start(
     .await?;
 
     Ok(Json(StartResponse { ticket, resumption }))
-}
-
-/// The JSON body expected when making a *POST /rooms/{room_id}/start_invited*
-#[derive(Debug, Deserialize)]
-pub struct InvitedStartRequest {
-    password: Option<String>,
-    invite_code: String,
-    breakout_room: Option<BreakoutRoomId>,
-    resumption: Option<ResumptionToken>,
 }
 
 /// API Endpoint *POST /rooms/{room_id}/start_invited*

@@ -109,6 +109,23 @@ pub enum StartRoomError {
     BannedFromRoom,
 }
 
+/// The JSON body expected when making a *POST /rooms/{room_id}/start_invited*
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct InvitedStartRequest {
+    /// The invited user's password to the room
+    pub password: Option<String>,
+
+    /// The invite code
+    pub invite_code: String,
+
+    /// Optional breakout room ID
+    pub breakout_room: Option<BreakoutRoomId>,
+
+    /// The resumption token for the room
+    pub resumption: Option<ResumptionToken>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
