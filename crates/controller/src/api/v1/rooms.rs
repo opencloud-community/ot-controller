@@ -25,13 +25,15 @@ use db_storage::sip_configs::NewSipConfig;
 use db_storage::users::User;
 use kustos::policies_builder::{GrantingAccess, PoliciesBuilder};
 use kustos::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use signaling_core::{Participant, RedisConnection};
-use std::str::FromStr;
+use std::{convert::AsRef, str::FromStr};
 use types::{
-    api::v1::rooms::{PatchRoomsBody, PostRoomsBody, RoomResource},
+    api::v1::rooms::{
+        PatchRoomsBody, PostRoomsBody, RoomResource, StartRequest, StartResponse, StartRoomError,
+    },
     common::{features, tariff::TariffResource},
-    core::{BreakoutRoomId, InviteCodeId, ResumptionToken, RoomId, TicketToken},
+    core::{BreakoutRoomId, InviteCodeId, ResumptionToken, RoomId},
 };
 use validator::Validate;
 
@@ -247,45 +249,23 @@ pub async fn get_room_tariff(
     Ok(Json(response))
 }
 
-/// The JSON body expected when making a *POST /rooms/{room_id}/start*
-#[derive(Debug, Deserialize)]
-pub struct StartRequest {
-    breakout_room: Option<BreakoutRoomId>,
-    resumption: Option<ResumptionToken>,
-}
-
-/// The JSON body returned from the start endpoints supporting session resumption
-#[derive(Debug, Serialize)]
-pub struct StartResponse {
-    ticket: TicketToken,
-    resumption: ResumptionToken,
-}
-
-#[derive(Debug)]
-pub enum StartRoomError {
-    WrongRoomPassword,
-    NoBreakoutRooms,
-    InvalidBreakoutRoomId,
-    BannedFromRoom,
-}
-
 impl From<StartRoomError> for ApiError {
     fn from(start_room_error: StartRoomError) -> Self {
         match start_room_error {
             StartRoomError::WrongRoomPassword => ApiError::unauthorized()
-                .with_code("wrong_room_password")
+                .with_code(StartRoomError::WrongRoomPassword.as_ref())
                 .with_message("The provided password does not match the rooms password"),
 
             StartRoomError::NoBreakoutRooms => ApiError::bad_request()
-                .with_code("no_breakout_rooms")
+                .with_code(StartRoomError::NoBreakoutRooms.as_ref())
                 .with_message("The requested room has no breakout rooms"),
 
             StartRoomError::InvalidBreakoutRoomId => ApiError::bad_request()
-                .with_code("invalid_breakout_room_id")
+                .with_code(StartRoomError::InvalidBreakoutRoomId.as_ref())
                 .with_message("The provided breakout room ID is invalid"),
 
             StartRoomError::BannedFromRoom => ApiError::forbidden()
-                .with_code("banned_from_room")
+                .with_code(StartRoomError::BannedFromRoom.as_ref())
                 .with_message("This user has been banned from entering this room"),
         }
     }
