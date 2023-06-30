@@ -29,7 +29,7 @@ use serde::{Deserialize, Serialize};
 use signaling_core::{Participant, RedisConnection};
 use std::str::FromStr;
 use types::{
-    api::v1::rooms::RoomResource,
+    api::v1::rooms::{PostRoomsBody, RoomResource},
     common::{features, tariff::TariffResource},
     core::{BreakoutRoomId, InviteCodeId, ResumptionToken, RoomId, TicketToken},
 };
@@ -77,18 +77,6 @@ pub async fn accessible(
         .collect::<Vec<RoomResource>>();
 
     Ok(ApiResponse::new(rooms).with_page_pagination(per_page, page, room_count))
-}
-
-/// API request parameters to create a new room
-#[derive(Debug, Validate, Deserialize)]
-pub struct PostRoomsBody {
-    #[validate(length(min = 1, max = 255))]
-    pub password: Option<String>,
-    /// Enable/Disable sip for this room; defaults to false when not set
-    #[serde(default)]
-    pub enable_sip: bool,
-    #[serde(default)]
-    pub waiting_room: bool,
 }
 
 /// API Endpoint *POST /rooms*
