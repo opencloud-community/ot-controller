@@ -6,18 +6,31 @@ use super::Result;
 use crate::KeycloakAdminClient;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq, Eq)]
+#[serde(untagged)]
+enum ParseResult {
+    User(User),
+    Failure {},
+}
+
+impl From<ParseResult> for Option<User> {
+    fn from(result: ParseResult) -> Self {
+        match result {
+            ParseResult::User(user) => Some(user),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct User {
     pub id: String,
     pub username: String,
     pub enabled: bool,
     pub email_verified: bool,
-    #[serde(default)]
     pub first_name: String,
-    #[serde(default)]
     pub last_name: String,
-    #[serde(default)]
     pub email: String,
     #[serde(default)]
     pub attributes: Attributes,
@@ -27,19 +40,9 @@ impl User {
     fn is_in_tenant(&self, tenant_id: &str) -> bool {
         self.attributes.tenant_id.iter().any(|t| t == tenant_id)
     }
-
-    /// Check if a deserialized user struct from Keycloak is valid or not
-    fn is_kc_valid(&self) -> bool {
-        if self.email.is_empty() || self.first_name.is_empty() || self.last_name.is_empty() {
-            log::warn!("User JSON object from KeyCloak has missing email, first_name, or last_name fields.");
-            return false;
-        }
-
-        true
-    }
 }
 
-#[derive(Default, Clone, Debug, Deserialize)]
+#[derive(Default, Clone, Debug, Deserialize, PartialEq, Eq)]
 pub struct Attributes {
     #[serde(default)]
     pub tenant_id: Vec<String>,
@@ -71,12 +74,16 @@ impl KeycloakAdminClient {
             .send_authorized(move |c| c.get(url.clone()).query(&query))
             .await?;
 
-        let found_users = response
-            .json::<Vec<User>>()
-            .await?
+        let found_results = response.json::<Vec<ParseResult>>().await?;
+        let found_results_amount = found_results.len();
+        let found_users: Vec<_> = found_results
             .into_iter()
-            .filter(|user| user.is_kc_valid())
+            .filter_map(Option::<User>::from)
             .collect();
+
+        if found_results_amount != found_users.len() {
+            log::warn!("User JSON object from KeyCloak is missing at least one field.");
+        }
 
         Ok(found_users)
     }
@@ -103,13 +110,18 @@ impl KeycloakAdminClient {
             .send_authorized(move |c| c.get(url.clone()).query(&query))
             .await?;
 
-        let found_users = response
-            .json::<Vec<User>>()
-            .await?
+        let found_results = response.json::<Vec<ParseResult>>().await?;
+        let found_results_amount = found_results.len();
+        let found_users: Vec<_> = found_results
             .into_iter()
-            .filter(|user| user.is_in_tenant(tenant_id) && user.is_kc_valid())
+            .filter_map(Option::<User>::from)
+            .filter(|user| user.is_in_tenant(tenant_id))
             .take(5)
-            .collect();
+            .collect::<Vec<User>>();
+
+        if found_results_amount != found_users.len() {
+            log::warn!("User JSON object from KeyCloak is missing at least one field.");
+        }
 
         Ok(found_users)
     }
@@ -133,5 +145,38 @@ impl KeycloakAdminClient {
             return Ok(Some((*user).clone()));
         }
         Ok(None)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn deserialize_user() {
+        use super::*;
+
+        let json_with_email = serde_json::json!({
+            "id": "someid",
+            "username": "someuser",
+            "enabled": true,
+            "emailVerified": true,
+            "firstName": "somefirstname",
+            "lastName": "somelastname",
+            "email": "someemail",
+        });
+
+        let json_without_email = serde_json::json!({
+            "id": "someid",
+            "username": "someuser",
+            "enabled": true,
+            "emailVerified": true,
+            "firstName": "somefirstname",
+            "lastName": "somelastname",
+        });
+
+        let parse_result_user: ParseResult = serde_json::from_value(json_with_email).unwrap();
+        let parse_result_failure: ParseResult = serde_json::from_value(json_without_email).unwrap();
+
+        assert!(matches!(parse_result_user, ParseResult::User(_)));
+        assert!(matches!(parse_result_failure, ParseResult::Failure {}));
     }
 }
