@@ -17,43 +17,9 @@ use db_storage::users::User;
 use kustos::prelude::PoliciesBuilder;
 use kustos::Authz;
 use serde::{Deserialize, Serialize};
-use types::api::v1::users::PublicUserProfile;
+use types::api::v1::invites::InviteResource;
 use types::core::{InviteCodeId, RoomId};
 use validator::Validate;
-
-/// Public invite details
-///
-/// Contains general public information about a room.
-#[derive(Debug, Serialize)]
-pub struct InviteResource {
-    pub invite_code: InviteCodeId,
-    pub created: DateTime<Utc>,
-    pub created_by: PublicUserProfile,
-    pub updated: DateTime<Utc>,
-    pub updated_by: PublicUserProfile,
-    pub room_id: RoomId,
-    pub active: bool,
-    pub expiration: Option<DateTime<Utc>>,
-}
-
-impl InviteResource {
-    fn from_with_user(
-        val: Invite,
-        created_by: PublicUserProfile,
-        updated_by: PublicUserProfile,
-    ) -> Self {
-        InviteResource {
-            invite_code: val.id,
-            created: val.created_at,
-            created_by,
-            updated: val.updated_at,
-            updated_by,
-            room_id: val.room,
-            active: val.active,
-            expiration: val.expiration,
-        }
-    }
-}
 
 /// Body for *POST /rooms/{room_id}/invites*
 #[derive(Debug, Deserialize)]
@@ -101,7 +67,7 @@ pub async fn add_invite(
     let created_by = current_user.to_public_user_profile(&settings);
     let updated_by = current_user.to_public_user_profile(&settings);
 
-    let invite = InviteResource::from_with_user(invite, created_by, updated_by);
+    let invite = Invite::into_invite_resource(invite, created_by, updated_by);
 
     Ok(ApiResponse::new(invite))
 }
@@ -133,7 +99,7 @@ pub async fn get_invites(
             let created_by = created_by.to_public_user_profile(&settings);
             let updated_by = updated_by.to_public_user_profile(&settings);
 
-            InviteResource::from_with_user(db_invite, created_by, updated_by)
+            Invite::into_invite_resource(db_invite, created_by, updated_by)
         })
         .collect::<Vec<InviteResource>>();
 
@@ -174,7 +140,7 @@ pub async fn get_invite(
     let created_by = created_by.to_public_user_profile(&settings);
     let updated_by = updated_by.to_public_user_profile(&settings);
 
-    Ok(ApiResponse::new(InviteResource::from_with_user(
+    Ok(ApiResponse::new(Invite::into_invite_resource(
         invite, created_by, updated_by,
     )))
 }
@@ -229,7 +195,7 @@ pub async fn update_invite(
     let created_by = created_by.to_public_user_profile(&settings);
     let updated_by = current_user.to_public_user_profile(&settings);
 
-    Ok(ApiResponse::new(InviteResource::from_with_user(
+    Ok(ApiResponse::new(Invite::into_invite_resource(
         invite, created_by, updated_by,
     )))
 }

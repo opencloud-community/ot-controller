@@ -6,6 +6,7 @@
 //! API V1 endpoints.
 
 pub mod assets;
+pub mod invites;
 pub mod rooms;
 pub mod users;
 
