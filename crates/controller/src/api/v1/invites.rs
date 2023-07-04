@@ -9,23 +9,21 @@ use crate::api::v1::{rooms::RoomsPoliciesBuilderExt, ApiResponse, PagePagination
 use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json, Path, Query, ReqData};
 use actix_web::{delete, get, post, put};
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use database::Db;
 use db_storage::invites::{Invite, NewInvite, UpdateInvite};
 use db_storage::rooms::Room;
 use db_storage::users::User;
 use kustos::prelude::PoliciesBuilder;
 use kustos::Authz;
-use serde::{Deserialize, Serialize};
-use types::api::v1::invites::InviteResource;
-use types::core::{InviteCodeId, RoomId};
+use types::{
+    api::v1::invites::{
+        CodeVerified, InviteResource, PostInviteBody, PutInviteBody, RoomIdAndInviteCode,
+        VerifyBody,
+    },
+    core::RoomId,
+};
 use validator::Validate;
-
-/// Body for *POST /rooms/{room_id}/invites*
-#[derive(Debug, Deserialize)]
-pub struct PostInviteBody {
-    pub expiration: Option<DateTime<Utc>>,
-}
 
 /// API Endpoint *POST /rooms/{room_id}/invites*
 ///
@@ -106,12 +104,6 @@ pub async fn get_invites(
     Ok(ApiResponse::new(invites).with_page_pagination(per_page, page, total_invites))
 }
 
-#[derive(Debug, Deserialize)]
-pub struct RoomIdAndInviteCode {
-    room_id: RoomId,
-    invite_code: InviteCodeId,
-}
-
 /// API Endpoint *GET /rooms/{room_id}/invites/{invite_code}*
 ///
 /// Returns a single invite.
@@ -143,12 +135,6 @@ pub async fn get_invite(
     Ok(ApiResponse::new(Invite::into_invite_resource(
         invite, created_by, updated_by,
     )))
-}
-
-/// Body for *PUT /rooms/{room_id}/invites/{invite_code}*
-#[derive(Debug, Deserialize)]
-pub struct PutInviteBody {
-    pub expiration: Option<DateTime<Utc>>,
 }
 
 /// API Endpoint *PUT /rooms/{room_id}/invites/{invite_code}*
@@ -228,17 +214,6 @@ pub async fn delete_invite(
     changeset.apply(&mut conn, room_id, invite_code).await?;
 
     Ok(NoContent)
-}
-
-#[derive(Debug, Validate, Deserialize)]
-pub struct VerifyBody {
-    invite_code: InviteCodeId,
-}
-
-#[derive(Debug, Serialize)]
-pub struct CodeVerified {
-    room_id: RoomId,
-    password_required: bool,
 }
 
 /// API Endpoint *POST /invite/verify*

@@ -42,3 +42,49 @@ pub struct InviteResource {
     /// Optional expiration date of the invite
     pub expiration: Option<DateTime<Utc>>,
 }
+
+/// Body for *POST /rooms/{room_id}/invites*
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct PostInviteBody {
+    /// Optional expiration date of the invite
+    pub expiration: Option<DateTime<Utc>>,
+}
+
+/// Body for *GET /rooms/{room_id}/invites/{invite_code}*
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct RoomIdAndInviteCode {
+    /// The room id for the invite
+    pub room_id: RoomId,
+
+    /// The invite code id
+    pub invite_code: InviteCodeId,
+}
+
+/// Body for *PUT /rooms/{room_id}/invites/{invite_code}*
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct PutInviteBody {
+    /// Optional expiration date of the invite
+    pub expiration: Option<DateTime<Utc>>,
+}
+
+/// Verify body for *POST /invite/verify*
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize, Validate))]
+pub struct VerifyBody {
+    /// The invite code id
+    pub invite_code: InviteCodeId,
+}
+
+/// Verify response body for *POST /invite/verify*
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct CodeVerified {
+    /// The room id for the invite
+    pub room_id: RoomId,
+
+    /// If password is required
+    pub password_required: bool,
+}
