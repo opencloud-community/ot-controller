@@ -23,7 +23,10 @@ use storage::StoredMessage;
 use types::{
     core::{GroupId, GroupName, ParticipantId, Timestamp, UserId},
     signaling::{
-        chat::{command::SendMessage, MessageId, Scope},
+        chat::{
+            command::{ChatCommand, SendMessage},
+            MessageId, Scope,
+        },
         Role,
     },
 };
@@ -31,7 +34,6 @@ use types::{
 use std::collections::HashMap;
 use std::sync::Arc;
 
-pub mod incoming;
 pub mod outgoing;
 mod storage;
 
@@ -146,7 +148,7 @@ impl SignalingModule for Chat {
 
     type Params = ();
 
-    type Incoming = incoming::ChatCommand;
+    type Incoming = ChatCommand;
     type Outgoing = outgoing::ChatEvent;
     type ExchangeMessage = outgoing::ChatEvent;
 
@@ -311,7 +313,7 @@ impl SignalingModule for Chat {
             Event::ParticipantLeft(_) => {}
             Event::ParticipantUpdated(_, _) => {}
             Event::RoleUpdated(_) => {}
-            Event::WsMessage(incoming::ChatCommand::EnableChat) => {
+            Event::WsMessage(ChatCommand::EnableChat) => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(outgoing::ChatEvent::Error(
                         outgoing::Error::InsufficientPermissions,
@@ -326,7 +328,7 @@ impl SignalingModule for Chat {
                     outgoing::ChatEvent::ChatEnabled(ChatEnabled { issued_by: self.id }),
                 );
             }
-            Event::WsMessage(incoming::ChatCommand::DisableChat) => {
+            Event::WsMessage(ChatCommand::DisableChat) => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(outgoing::ChatEvent::Error(
                         outgoing::Error::InsufficientPermissions,
@@ -341,10 +343,7 @@ impl SignalingModule for Chat {
                     outgoing::ChatEvent::ChatDisabled(ChatDisabled { issued_by: self.id }),
                 );
             }
-            Event::WsMessage(incoming::ChatCommand::SendMessage(SendMessage {
-                scope,
-                mut content,
-            })) => {
+            Event::WsMessage(ChatCommand::SendMessage(SendMessage { scope, mut content })) => {
                 // Discard empty messages
                 if content.is_empty() {
                     return Ok(());
@@ -484,7 +483,7 @@ impl SignalingModule for Chat {
                     }
                 }
             }
-            Event::WsMessage(incoming::ChatCommand::ClearHistory) => {
+            Event::WsMessage(ChatCommand::ClearHistory) => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(outgoing::ChatEvent::Error(
                         outgoing::Error::InsufficientPermissions,
@@ -502,7 +501,7 @@ impl SignalingModule for Chat {
                     outgoing::ChatEvent::HistoryCleared(HistoryCleared { issued_by: self.id }),
                 );
             }
-            Event::WsMessage(incoming::ChatCommand::SetLastSeenTimestamp { scope, timestamp }) => {
+            Event::WsMessage(ChatCommand::SetLastSeenTimestamp { scope, timestamp }) => {
                 match scope {
                     Scope::Private(other_participant) => {
                         self.last_seen_timestamps_private

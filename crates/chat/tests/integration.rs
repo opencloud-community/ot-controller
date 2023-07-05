@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::{DateTime, Utc};
-use opentalk_chat::{incoming, outgoing, Chat, ChatState};
+use opentalk_chat::{outgoing, Chat, ChatState};
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use serial_test::serial;
@@ -12,7 +12,10 @@ use test_util::{TestContext, ROOM_ID, USER_1, USER_2};
 use types::{
     core::{GroupName, Timestamp},
     signaling::{
-        chat::{command::SendMessage, Scope},
+        chat::{
+            command::{ChatCommand, SendMessage},
+            Scope,
+        },
         control::{
             event::{ControlEvent, JoinSuccess},
             AssociatedParticipant, Participant,
@@ -130,7 +133,7 @@ async fn last_seen_timestamps() {
         let timestamp: Timestamp =
             DateTime::<Utc>::from(DateTime::parse_from_rfc3339(timestamp_global_raw).unwrap())
                 .into();
-        let message = incoming::ChatCommand::SetLastSeenTimestamp {
+        let message = ChatCommand::SetLastSeenTimestamp {
             scope: Scope::Global,
             timestamp,
         };
@@ -144,7 +147,7 @@ async fn last_seen_timestamps() {
         let timestamp: Timestamp =
             DateTime::<Utc>::from(DateTime::parse_from_rfc3339(timestamp_group_raw).unwrap())
                 .into();
-        let message = incoming::ChatCommand::SetLastSeenTimestamp {
+        let message = ChatCommand::SetLastSeenTimestamp {
             scope: Scope::Group(GroupName::from("group1".to_owned())),
             timestamp,
         };
@@ -158,7 +161,7 @@ async fn last_seen_timestamps() {
         let timestamp: Timestamp =
             DateTime::<Utc>::from(DateTime::parse_from_rfc3339(timestamp_private_raw).unwrap())
                 .into();
-        let message = incoming::ChatCommand::SetLastSeenTimestamp {
+        let message = ChatCommand::SetLastSeenTimestamp {
             scope: Scope::Private(USER_2.participant_id),
             timestamp,
         };
@@ -487,7 +490,7 @@ async fn private_chat_history_on_join() {
     module_tester
         .send_ws_message(
             &USER_1.participant_id,
-            incoming::ChatCommand::SendMessage(SendMessage {
+            ChatCommand::SendMessage(SendMessage {
                 content: "Low".into(),
                 scope: Scope::Private(USER_2.participant_id),
             }),
