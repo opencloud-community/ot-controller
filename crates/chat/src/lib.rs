@@ -23,7 +23,7 @@ use storage::StoredMessage;
 use types::{
     core::{GroupId, GroupName, ParticipantId, Timestamp, UserId},
     signaling::{
-        chat::{MessageId, Scope},
+        chat::{command::SendMessage, MessageId, Scope},
         Role,
     },
 };
@@ -341,7 +341,7 @@ impl SignalingModule for Chat {
                     outgoing::ChatEvent::ChatDisabled(ChatDisabled { issued_by: self.id }),
                 );
             }
-            Event::WsMessage(incoming::ChatCommand::SendMessage(incoming::SendMessage {
+            Event::WsMessage(incoming::ChatCommand::SendMessage(SendMessage {
                 scope,
                 mut content,
             })) => {

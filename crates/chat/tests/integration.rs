@@ -12,7 +12,7 @@ use test_util::{TestContext, ROOM_ID, USER_1, USER_2};
 use types::{
     core::{GroupName, Timestamp},
     signaling::{
-        chat::Scope,
+        chat::{command::SendMessage, Scope},
         control::{
             event::{ControlEvent, JoinSuccess},
             AssociatedParticipant, Participant,
@@ -487,7 +487,7 @@ async fn private_chat_history_on_join() {
     module_tester
         .send_ws_message(
             &USER_1.participant_id,
-            incoming::ChatCommand::SendMessage(incoming::SendMessage {
+            incoming::ChatCommand::SendMessage(SendMessage {
                 content: "Low".into(),
                 scope: Scope::Private(USER_2.participant_id),
             }),

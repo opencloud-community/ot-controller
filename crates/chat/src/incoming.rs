@@ -3,7 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use serde::Deserialize;
-use types::{core::Timestamp, signaling::chat::Scope};
+use types::{
+    core::Timestamp,
+    signaling::chat::{command::SendMessage, Scope},
+};
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "action", rename_all = "snake_case")]
@@ -17,13 +20,6 @@ pub enum ChatCommand {
         scope: Scope,
         timestamp: Timestamp,
     },
-}
-
-#[derive(Debug, Deserialize)]
-pub struct SendMessage {
-    pub content: String,
-    #[serde(flatten)]
-    pub scope: Scope,
 }
 
 #[cfg(test)]

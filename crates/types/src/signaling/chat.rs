@@ -4,6 +4,8 @@
 
 //! Signaling messages for the `chat` namespace
 
+pub mod command;
+
 mod message_id;
 mod scope;
 
