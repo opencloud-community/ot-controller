@@ -196,7 +196,7 @@ pub struct PrivateHistory {
 }
 
 #[derive(Serialize)]
-pub struct PeerFrontendData {
+pub struct ChatPeerState {
     groups: Vec<GroupName>,
 }
 
@@ -213,7 +213,7 @@ impl SignalingModule for Chat {
     type ExtEvent = ();
 
     type FrontendData = ChatState;
-    type PeerFrontendData = PeerFrontendData;
+    type PeerFrontendData = ChatPeerState;
 
     async fn init(
         mut ctx: InitContext<'_, Self>,
@@ -325,7 +325,7 @@ impl SignalingModule for Chat {
                 // into the PeerFrontendData
                 for (participant_id, common_groups) in participant_to_common_groups_mappings {
                     if let Some(participant_frontend_data) = participants.get_mut(&participant_id) {
-                        *participant_frontend_data = Some(PeerFrontendData {
+                        *participant_frontend_data = Some(ChatPeerState {
                             groups: common_groups,
                         });
                     } else {
@@ -363,7 +363,7 @@ impl SignalingModule for Chat {
                         .map(|group| group.name.clone())
                         .collect();
 
-                    *peer_frontend_data = Some(PeerFrontendData {
+                    *peer_frontend_data = Some(ChatPeerState {
                         groups: common_groups,
                     });
                 }
