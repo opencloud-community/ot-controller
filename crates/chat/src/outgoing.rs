@@ -3,7 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use serde::{Deserialize, Serialize};
-use types::{core::ParticipantId, signaling::chat::event::Error};
+use types::{
+    core::ParticipantId,
+    signaling::chat::event::{Error, HistoryCleared},
+};
 
 use crate::{MessageId, Scope};
 
@@ -34,11 +37,6 @@ pub struct MessageSent {
     pub content: String,
     #[serde(flatten)]
     pub scope: Scope,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
-pub struct HistoryCleared {
-    pub issued_by: ParticipantId,
 }
 
 #[cfg(test)]
