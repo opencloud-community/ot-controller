@@ -4,6 +4,8 @@
 
 //! Signaling messages for the `chat` namespace
 
+mod message_id;
 mod scope;
 
+pub use message_id::MessageId;
 pub use scope::Scope;

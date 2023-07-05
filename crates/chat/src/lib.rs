@@ -13,7 +13,6 @@ use database::Db;
 use db_storage::groups::Group;
 use outgoing::{ChatDisabled, ChatEnabled, HistoryCleared, MessageSent};
 use r3dlock::Mutex;
-use redis_args::ToRedisArgs;
 use serde::{Deserialize, Serialize};
 use signaling_core::{
     control::{self, exchange},
@@ -23,12 +22,13 @@ use signaling_core::{
 use storage::StoredMessage;
 use types::{
     core::{GroupId, GroupName, ParticipantId, Timestamp, UserId},
-    signaling::{chat::Scope, Role},
+    signaling::{
+        chat::{MessageId, Scope},
+        Role,
+    },
 };
 
 use std::collections::HashMap;
-use std::fmt;
-use std::str::{from_utf8, FromStr};
 use std::sync::Arc;
 
 pub mod incoming;
@@ -39,58 +39,6 @@ pub use storage::is_chat_enabled;
 
 fn current_room_by_group_id(room_id: SignalingRoomId, group_id: GroupId) -> String {
     format!("room={room_id}:group={group_id}")
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, Eq, PartialEq, ToRedisArgs)]
-#[to_redis_args(fmt)]
-pub struct MessageId(uuid::Uuid);
-
-impl MessageId {
-    pub fn new() -> Self {
-        MessageId(uuid::Uuid::new_v4())
-    }
-
-    /// Create a nil message id (all bytes are zero).
-    ///
-    /// This method should not be used in production code, but is only
-    /// available to allow tests the creation of nil message ids.
-    /// It is public because other crates might want to use it, but
-    /// it is explicitly hidden from the documentation.
-    #[doc(hidden)]
-    pub fn nil() -> Self {
-        MessageId(uuid::Uuid::nil())
-    }
-}
-
-impl Default for MessageId {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl fmt::Display for MessageId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.0.fmt(f)
-    }
-}
-
-impl redis::FromRedisValue for MessageId {
-    fn from_redis_value(v: &redis::Value) -> redis::RedisResult<Self> {
-        match v {
-            redis::Value::Data(bytes) => uuid::Uuid::from_str(from_utf8(bytes)?)
-                .map(MessageId)
-                .map_err(|_| {
-                    redis::RedisError::from((
-                        redis::ErrorKind::TypeError,
-                        "invalid data for MessageId",
-                    ))
-                }),
-            _ => redis::RedisResult::Err(redis::RedisError::from((
-                redis::ErrorKind::TypeError,
-                "invalid data type for MessageId",
-            ))),
-        }
-    }
 }
 
 pub struct Chat {
@@ -430,7 +378,7 @@ impl SignalingModule for Chat {
                 match scope {
                     Scope::Private(target) => {
                         let out_message_contents = MessageSent {
-                            id: MessageId::new(),
+                            id: MessageId::generate(),
                             source,
                             content,
                             scope: Scope::Private(target),
@@ -473,7 +421,7 @@ impl SignalingModule for Chat {
                     Scope::Group(group_name) => {
                         if let Some(group) = self.get_group(&group_name) {
                             let out_message_contents = MessageSent {
-                                id: MessageId::new(),
+                                id: MessageId::generate(),
                                 source,
                                 content,
                                 scope: Scope::Group(group_name),
@@ -506,7 +454,7 @@ impl SignalingModule for Chat {
                     }
                     Scope::Global => {
                         let out_message_contents = MessageSent {
-                            id: MessageId::new(),
+                            id: MessageId::generate(),
                             source,
                             content,
                             scope: Scope::Global,
