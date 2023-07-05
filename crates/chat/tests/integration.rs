@@ -501,7 +501,7 @@ async fn private_chat_history_on_join() {
 
         assert!(matches!(
             private_message,
-            WsMessageOutgoing::Module(outgoing::Message::MessageSent(outgoing::MessageSent {
+            WsMessageOutgoing::Module(outgoing::ChatEvent::MessageSent(outgoing::MessageSent {
                 id: _,
                 source,
                 content,

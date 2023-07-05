@@ -9,7 +9,7 @@ use crate::{MessageId, Scope};
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(tag = "message", rename_all = "snake_case")]
-pub enum Message {
+pub enum ChatEvent {
     ChatEnabled(ChatEnabled),
     ChatDisabled(ChatDisabled),
     MessageSent(MessageSent),
@@ -57,7 +57,7 @@ mod test {
 
     #[test]
     fn global_serialize() {
-        let produced = serde_json::to_value(Message::MessageSent(MessageSent {
+        let produced = serde_json::to_value(ChatEvent::MessageSent(MessageSent {
             id: MessageId::nil(),
             source: ParticipantId::nil(),
             content: "Hello All!".to_string(),
@@ -78,7 +78,7 @@ mod test {
 
     #[test]
     fn group_serialize() {
-        let produced = serde_json::to_value(Message::MessageSent(MessageSent {
+        let produced = serde_json::to_value(ChatEvent::MessageSent(MessageSent {
             id: MessageId::nil(),
             source: ParticipantId::nil(),
             content: "Hello managers!".to_string(),
@@ -98,7 +98,7 @@ mod test {
 
     #[test]
     fn private_serialize() {
-        let produced = serde_json::to_value(Message::MessageSent(MessageSent {
+        let produced = serde_json::to_value(ChatEvent::MessageSent(MessageSent {
             id: MessageId::nil(),
             source: ParticipantId::nil(),
             content: "Hello All!".to_string(),
@@ -119,7 +119,7 @@ mod test {
 
     #[test]
     fn error_serialize() {
-        let produced = serde_json::to_value(Message::Error(Error::ChatDisabled)).unwrap();
+        let produced = serde_json::to_value(ChatEvent::Error(Error::ChatDisabled)).unwrap();
         let expected = json!({
             "message": "error",
             "error": "chat_disabled",
