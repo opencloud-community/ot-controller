@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use serde::{Deserialize, Serialize};
-use types::core::ParticipantId;
+use types::{core::ParticipantId, signaling::chat::event::Error};
 
 use crate::{MessageId, Scope};
 
@@ -39,13 +39,6 @@ pub struct MessageSent {
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 pub struct HistoryCleared {
     pub issued_by: ParticipantId,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(tag = "error", rename_all = "snake_case")]
-pub enum Error {
-    ChatDisabled,
-    InsufficientPermissions,
 }
 
 #[cfg(test)]

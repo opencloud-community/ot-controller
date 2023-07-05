@@ -25,6 +25,7 @@ use types::{
     signaling::{
         chat::{
             command::{ChatCommand, SendMessage},
+            event::Error,
             MessageId, Scope,
         },
         Role,
@@ -315,9 +316,7 @@ impl SignalingModule for Chat {
             Event::RoleUpdated(_) => {}
             Event::WsMessage(ChatCommand::EnableChat) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(outgoing::ChatEvent::Error(
-                        outgoing::Error::InsufficientPermissions,
-                    ));
+                    ctx.ws_send(outgoing::ChatEvent::Error(Error::InsufficientPermissions));
                     return Ok(());
                 }
 
@@ -330,9 +329,7 @@ impl SignalingModule for Chat {
             }
             Event::WsMessage(ChatCommand::DisableChat) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(outgoing::ChatEvent::Error(
-                        outgoing::Error::InsufficientPermissions,
-                    ));
+                    ctx.ws_send(outgoing::ChatEvent::Error(Error::InsufficientPermissions));
                     return Ok(());
                 }
 
@@ -353,7 +350,7 @@ impl SignalingModule for Chat {
                     storage::is_chat_enabled(ctx.redis_conn(), self.room.room_id()).await?;
 
                 if !chat_enabled {
-                    ctx.ws_send(outgoing::ChatEvent::Error(outgoing::Error::ChatDisabled));
+                    ctx.ws_send(outgoing::ChatEvent::Error(Error::ChatDisabled));
                     return Ok(());
                 }
 
@@ -485,9 +482,7 @@ impl SignalingModule for Chat {
             }
             Event::WsMessage(ChatCommand::ClearHistory) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(outgoing::ChatEvent::Error(
-                        outgoing::Error::InsufficientPermissions,
-                    ));
+                    ctx.ws_send(outgoing::ChatEvent::Error(Error::InsufficientPermissions));
                     return Ok(());
                 }
 
