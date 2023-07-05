@@ -109,9 +109,13 @@ where
 
         Box::pin(
             async move {
-                let realm_roles = check_access_token(oidc_ctx, access_token).await?;
-                req.extensions_mut().insert(realm_roles);
-                service.call(req).await
+                match check_access_token(oidc_ctx, access_token).await {
+                    Ok(realm_roles) => {
+                        req.extensions_mut().insert(realm_roles);
+                        service.call(req).await
+                    }
+                    Err(err) => Ok(req.into_response(err.error_response())),
+                }
             }
             .instrument(tracing::trace_span!("ServiceAuthMiddleware::async::call")),
         )

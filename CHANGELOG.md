@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - controller: add the possibility to disable the `call-in` feature via config or tariff ([#395](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/395))
 - controller: add a settings option to prohibit the user from changing the display name ([#415](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/415))
 
+### Fixed
+
+- controller: fixed a bug where a response from the REST API was missing CORS information when an invalid access token was provided ([#436](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/436))
+
 ## [0.5.0] - 2023-06-27
 
 ### Added
