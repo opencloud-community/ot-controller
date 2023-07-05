@@ -8,7 +8,7 @@ use types::core::Timestamp;
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "action", rename_all = "snake_case")]
-pub enum Message {
+pub enum ChatCommand {
     EnableChat,
     DisableChat,
     SendMessage(SendMessage),
@@ -43,9 +43,9 @@ mod test {
             "content": "Hello Bob!"
         });
 
-        let msg: Message = serde_json::from_value(json).unwrap();
+        let msg: ChatCommand = serde_json::from_value(json).unwrap();
 
-        if let Message::SendMessage(SendMessage { content, scope }) = msg {
+        if let ChatCommand::SendMessage(SendMessage { content, scope }) = msg {
             assert_eq!(scope, Scope::Private(ParticipantId::nil()));
             assert_eq!(content, "Hello Bob!");
         } else {
@@ -62,9 +62,9 @@ mod test {
             "content": "Hello managers!"
         });
 
-        let msg: Message = serde_json::from_value(json).unwrap();
+        let msg: ChatCommand = serde_json::from_value(json).unwrap();
 
-        if let Message::SendMessage(SendMessage { content, scope }) = msg {
+        if let ChatCommand::SendMessage(SendMessage { content, scope }) = msg {
             assert_eq!(
                 scope,
                 Scope::Group(GroupName::from("management".to_owned()))
@@ -83,9 +83,9 @@ mod test {
             "content": "Hello all!"
         });
 
-        let msg: Message = serde_json::from_value(json).unwrap();
+        let msg: ChatCommand = serde_json::from_value(json).unwrap();
 
-        if let Message::SendMessage(SendMessage { content, scope }) = msg {
+        if let ChatCommand::SendMessage(SendMessage { content, scope }) = msg {
             assert_eq!(scope, Scope::Global);
             assert_eq!(content, "Hello all!");
         } else {

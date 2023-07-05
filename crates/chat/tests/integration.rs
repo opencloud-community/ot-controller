@@ -129,7 +129,7 @@ async fn last_seen_timestamps() {
         let timestamp: Timestamp =
             DateTime::<Utc>::from(DateTime::parse_from_rfc3339(timestamp_global_raw).unwrap())
                 .into();
-        let message = incoming::Message::SetLastSeenTimestamp {
+        let message = incoming::ChatCommand::SetLastSeenTimestamp {
             scope: Scope::Global,
             timestamp,
         };
@@ -143,7 +143,7 @@ async fn last_seen_timestamps() {
         let timestamp: Timestamp =
             DateTime::<Utc>::from(DateTime::parse_from_rfc3339(timestamp_group_raw).unwrap())
                 .into();
-        let message = incoming::Message::SetLastSeenTimestamp {
+        let message = incoming::ChatCommand::SetLastSeenTimestamp {
             scope: Scope::Group(GroupName::from("group1".to_owned())),
             timestamp,
         };
@@ -157,7 +157,7 @@ async fn last_seen_timestamps() {
         let timestamp: Timestamp =
             DateTime::<Utc>::from(DateTime::parse_from_rfc3339(timestamp_private_raw).unwrap())
                 .into();
-        let message = incoming::Message::SetLastSeenTimestamp {
+        let message = incoming::ChatCommand::SetLastSeenTimestamp {
             scope: Scope::Private(USER_2.participant_id),
             timestamp,
         };
@@ -486,7 +486,7 @@ async fn private_chat_history_on_join() {
     module_tester
         .send_ws_message(
             &USER_1.participant_id,
-            incoming::Message::SendMessage(incoming::SendMessage {
+            incoming::ChatCommand::SendMessage(incoming::SendMessage {
                 content: "Low".into(),
                 scope: Scope::Private(USER_2.participant_id),
             }),

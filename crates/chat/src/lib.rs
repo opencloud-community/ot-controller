@@ -206,7 +206,7 @@ impl SignalingModule for Chat {
 
     type Params = ();
 
-    type Incoming = incoming::Message;
+    type Incoming = incoming::ChatCommand;
     type Outgoing = outgoing::Message;
     type ExchangeMessage = outgoing::Message;
 
@@ -371,7 +371,7 @@ impl SignalingModule for Chat {
             Event::ParticipantLeft(_) => {}
             Event::ParticipantUpdated(_, _) => {}
             Event::RoleUpdated(_) => {}
-            Event::WsMessage(incoming::Message::EnableChat) => {
+            Event::WsMessage(incoming::ChatCommand::EnableChat) => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(outgoing::Message::Error(
                         outgoing::Error::InsufficientPermissions,
@@ -386,7 +386,7 @@ impl SignalingModule for Chat {
                     outgoing::Message::ChatEnabled(ChatEnabled { issued_by: self.id }),
                 );
             }
-            Event::WsMessage(incoming::Message::DisableChat) => {
+            Event::WsMessage(incoming::ChatCommand::DisableChat) => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(outgoing::Message::Error(
                         outgoing::Error::InsufficientPermissions,
@@ -401,7 +401,7 @@ impl SignalingModule for Chat {
                     outgoing::Message::ChatDisabled(ChatDisabled { issued_by: self.id }),
                 );
             }
-            Event::WsMessage(incoming::Message::SendMessage(incoming::SendMessage {
+            Event::WsMessage(incoming::ChatCommand::SendMessage(incoming::SendMessage {
                 scope,
                 mut content,
             })) => {
@@ -543,7 +543,7 @@ impl SignalingModule for Chat {
                     }
                 }
             }
-            Event::WsMessage(incoming::Message::ClearHistory) => {
+            Event::WsMessage(incoming::ChatCommand::ClearHistory) => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(outgoing::Message::Error(
                         outgoing::Error::InsufficientPermissions,
@@ -561,7 +561,7 @@ impl SignalingModule for Chat {
                     outgoing::Message::HistoryCleared(HistoryCleared { issued_by: self.id }),
                 );
             }
-            Event::WsMessage(incoming::Message::SetLastSeenTimestamp { scope, timestamp }) => {
+            Event::WsMessage(incoming::ChatCommand::SetLastSeenTimestamp { scope, timestamp }) => {
                 match scope {
                     Scope::Private(other_participant) => {
                         self.last_seen_timestamps_private
