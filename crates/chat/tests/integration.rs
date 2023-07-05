@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::{DateTime, Utc};
-use opentalk_chat::{incoming, outgoing, Chat, ChatState, Scope};
+use opentalk_chat::{incoming, outgoing, Chat, ChatState};
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use serial_test::serial;
@@ -12,6 +12,7 @@ use test_util::{TestContext, ROOM_ID, USER_1, USER_2};
 use types::{
     core::{GroupName, Timestamp},
     signaling::{
+        chat::Scope,
         control::{
             event::{ControlEvent, JoinSuccess},
             AssociatedParticipant, Participant,

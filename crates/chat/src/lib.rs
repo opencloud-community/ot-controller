@@ -23,7 +23,7 @@ use signaling_core::{
 use storage::StoredMessage;
 use types::{
     core::{GroupId, GroupName, ParticipantId, Timestamp, UserId},
-    signaling::Role,
+    signaling::{chat::Scope, Role},
 };
 
 use std::collections::HashMap;
@@ -39,14 +39,6 @@ pub use storage::is_chat_enabled;
 
 fn current_room_by_group_id(room_id: SignalingRoomId, group_id: GroupId) -> String {
     format!("room={room_id}:group={group_id}")
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(tag = "scope", content = "target", rename_all = "snake_case")]
-pub enum Scope {
-    Global,
-    Group(GroupName),
-    Private(ParticipantId),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Eq, PartialEq, ToRedisArgs)]
