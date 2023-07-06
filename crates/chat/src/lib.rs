@@ -24,7 +24,7 @@ use types::{
     signaling::{
         chat::{
             command::{ChatCommand, SendMessage},
-            event::{ChatDisabled, ChatEnabled, Error, HistoryCleared, MessageSent},
+            event::{ChatDisabled, ChatEnabled, ChatEvent, Error, HistoryCleared, MessageSent},
             MessageId, Scope,
         },
         Role,
@@ -34,7 +34,6 @@ use types::{
 use std::collections::HashMap;
 use std::sync::Arc;
 
-pub mod outgoing;
 mod storage;
 
 pub use storage::is_chat_enabled;
@@ -149,8 +148,8 @@ impl SignalingModule for Chat {
     type Params = ();
 
     type Incoming = ChatCommand;
-    type Outgoing = outgoing::ChatEvent;
-    type ExchangeMessage = outgoing::ChatEvent;
+    type Outgoing = ChatEvent;
+    type ExchangeMessage = ChatEvent;
 
     type ExtEvent = ();
 
@@ -315,7 +314,7 @@ impl SignalingModule for Chat {
             Event::RoleUpdated(_) => {}
             Event::WsMessage(ChatCommand::EnableChat) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(outgoing::ChatEvent::Error(Error::InsufficientPermissions));
+                    ctx.ws_send(ChatEvent::Error(Error::InsufficientPermissions));
                     return Ok(());
                 }
 
@@ -323,12 +322,12 @@ impl SignalingModule for Chat {
 
                 ctx.exchange_publish(
                     exchange::current_room_all_participants(self.room),
-                    outgoing::ChatEvent::ChatEnabled(ChatEnabled { issued_by: self.id }),
+                    ChatEvent::ChatEnabled(ChatEnabled { issued_by: self.id }),
                 );
             }
             Event::WsMessage(ChatCommand::DisableChat) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(outgoing::ChatEvent::Error(Error::InsufficientPermissions));
+                    ctx.ws_send(ChatEvent::Error(Error::InsufficientPermissions));
                     return Ok(());
                 }
 
@@ -336,7 +335,7 @@ impl SignalingModule for Chat {
 
                 ctx.exchange_publish(
                     exchange::current_room_all_participants(self.room),
-                    outgoing::ChatEvent::ChatDisabled(ChatDisabled { issued_by: self.id }),
+                    ChatEvent::ChatDisabled(ChatDisabled { issued_by: self.id }),
                 );
             }
             Event::WsMessage(ChatCommand::SendMessage(SendMessage { scope, mut content })) => {
@@ -349,7 +348,7 @@ impl SignalingModule for Chat {
                     storage::is_chat_enabled(ctx.redis_conn(), self.room.room_id()).await?;
 
                 if !chat_enabled {
-                    ctx.ws_send(outgoing::ChatEvent::Error(Error::ChatDisabled));
+                    ctx.ws_send(ChatEvent::Error(Error::ChatDisabled));
                     return Ok(());
                 }
 
@@ -404,7 +403,7 @@ impl SignalingModule for Chat {
                         )
                         .await?;
 
-                        let out_message = outgoing::ChatEvent::MessageSent(out_message_contents);
+                        let out_message = ChatEvent::MessageSent(out_message_contents);
 
                         ctx.exchange_publish(
                             exchange::current_room_by_participant_id(self.room, target),
@@ -438,8 +437,7 @@ impl SignalingModule for Chat {
                             )
                             .await?;
 
-                            let out_message =
-                                outgoing::ChatEvent::MessageSent(out_message_contents);
+                            let out_message = ChatEvent::MessageSent(out_message_contents);
 
                             ctx.exchange_publish(
                                 current_room_by_group_id(self.room, group.id),
@@ -470,7 +468,7 @@ impl SignalingModule for Chat {
                         )
                         .await?;
 
-                        let out_message = outgoing::ChatEvent::MessageSent(out_message_contents);
+                        let out_message = ChatEvent::MessageSent(out_message_contents);
 
                         ctx.exchange_publish(
                             exchange::current_room_all_participants(self.room),
@@ -481,7 +479,7 @@ impl SignalingModule for Chat {
             }
             Event::WsMessage(ChatCommand::ClearHistory) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(outgoing::ChatEvent::Error(Error::InsufficientPermissions));
+                    ctx.ws_send(ChatEvent::Error(Error::InsufficientPermissions));
                     return Ok(());
                 }
 
@@ -492,7 +490,7 @@ impl SignalingModule for Chat {
 
                 ctx.exchange_publish(
                     exchange::current_room_all_participants(self.room),
-                    outgoing::ChatEvent::HistoryCleared(HistoryCleared { issued_by: self.id }),
+                    ChatEvent::HistoryCleared(HistoryCleared { issued_by: self.id }),
                 );
             }
             Event::WsMessage(ChatCommand::SetLastSeenTimestamp { scope, timestamp }) => {

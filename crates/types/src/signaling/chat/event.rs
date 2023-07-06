@@ -11,6 +11,30 @@ use crate::imports::*;
 
 use super::{MessageId, Scope};
 
+/// A chat event which occured
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(tag = "message", rename_all = "snake_case")
+)]
+pub enum ChatEvent {
+    /// Chat event where chat was enabled see [ChatEnabled]
+    ChatEnabled(ChatEnabled),
+
+    /// Chat event where chat was disabled see [ChatDisabled]
+    ChatDisabled(ChatDisabled),
+
+    /// Chat event where a message was sent see [MessageSent]
+    MessageSent(MessageSent),
+
+    /// Chat event where history was cleared see [HistoryCleared]
+    HistoryCleared(HistoryCleared),
+
+    /// Chat event which errored see [Error]
+    Error(Error),
+}
+
 /// The chat was enabled
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -66,4 +90,85 @@ pub enum Error {
 
     /// Request user has insufficient permissions
     InsufficientPermissions,
+}
+
+#[cfg(test)]
+mod test {
+    use crate::core::GroupName;
+
+    use super::*;
+    use pretty_assertions::assert_eq;
+    use serde_json::json;
+
+    #[test]
+    fn global_serialize() {
+        let produced = serde_json::to_value(ChatEvent::MessageSent(MessageSent {
+            id: MessageId::nil(),
+            source: ParticipantId::nil(),
+            content: "Hello All!".to_string(),
+            scope: Scope::Global,
+        }))
+        .unwrap();
+
+        let expected = json!({
+            "message": "message_sent",
+            "id": "00000000-0000-0000-0000-000000000000",
+            "source": "00000000-0000-0000-0000-000000000000",
+            "content": "Hello All!",
+            "scope": "global"
+        });
+
+        assert_eq!(expected, produced);
+    }
+
+    #[test]
+    fn group_serialize() {
+        let produced = serde_json::to_value(ChatEvent::MessageSent(MessageSent {
+            id: MessageId::nil(),
+            source: ParticipantId::nil(),
+            content: "Hello managers!".to_string(),
+            scope: Scope::Group(GroupName::from("management".to_owned())),
+        }))
+        .unwrap();
+        let expected = json!({
+            "message":"message_sent",
+            "id":"00000000-0000-0000-0000-000000000000",
+            "source":"00000000-0000-0000-0000-000000000000",
+            "content":"Hello managers!",
+            "scope":"group",
+            "target":"management",
+        });
+        assert_eq!(expected, produced);
+    }
+
+    #[test]
+    fn private_serialize() {
+        let produced = serde_json::to_value(ChatEvent::MessageSent(MessageSent {
+            id: MessageId::nil(),
+            source: ParticipantId::nil(),
+            content: "Hello All!".to_string(),
+            scope: Scope::Private(ParticipantId::from_u128(1)),
+        }))
+        .unwrap();
+
+        let expected = json!({
+            "message": "message_sent",
+            "id": "00000000-0000-0000-0000-000000000000",
+            "source": "00000000-0000-0000-0000-000000000000",
+            "content": "Hello All!",
+            "scope": "private",
+            "target": "00000000-0000-0000-0000-000000000001",
+        });
+        assert_eq!(expected, produced);
+    }
+
+    #[test]
+    fn error_serialize() {
+        let produced = serde_json::to_value(ChatEvent::Error(Error::ChatDisabled)).unwrap();
+        let expected = json!({
+            "message": "error",
+            "error": "chat_disabled",
+        });
+        assert_eq!(expected, produced);
+    }
 }

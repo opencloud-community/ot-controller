@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::{DateTime, Utc};
-use opentalk_chat::{outgoing, Chat, ChatState};
+use opentalk_chat::{Chat, ChatState};
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use serial_test::serial;
@@ -14,7 +14,7 @@ use types::{
     signaling::{
         chat::{
             command::{ChatCommand, SendMessage},
-            event::MessageSent,
+            event::{ChatEvent, MessageSent},
             Scope,
         },
         control::{
@@ -506,7 +506,7 @@ async fn private_chat_history_on_join() {
 
         assert!(matches!(
             private_message,
-            WsMessageOutgoing::Module(outgoing::ChatEvent::MessageSent(MessageSent {
+            WsMessageOutgoing::Module(ChatEvent::MessageSent(MessageSent {
                 id: _,
                 source,
                 content,
