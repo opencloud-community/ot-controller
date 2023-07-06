@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::TimerId;
+use crate::{TimerConfig, TimerId};
 use serde::{Deserialize, Serialize};
-use types::core::{ParticipantId, Timestamp};
+use types::core::ParticipantId;
 
 /// Outgoing websocket messages
 #[derive(Debug, Serialize, PartialEq, Eq)]
@@ -20,34 +20,11 @@ pub enum Message {
     Error(Error),
 }
 
-/// The different timer variations
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case", tag = "kind")]
-pub enum Kind {
-    /// The timer continues to run until a moderator stops it.
-    Stopwatch,
-    /// The timer continues to run until its duration expires or if a moderator stops it beforehand.
-    Countdown { ends_at: Timestamp },
-}
-
 /// A timer has been started
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Started {
-    /// The timer id
-    pub timer_id: TimerId,
-    /// start time of the timer
-    pub started_at: Timestamp,
-    /// Timer kind
     #[serde(flatten)]
-    pub kind: Kind,
-    /// Style to use for the timer. Set by the sender.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub style: Option<String>,
-    /// The optional title of the timer
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub title: Option<String>,
-    /// Flag to allow/disallow participants to mark themselves as ready
-    pub ready_check_enabled: bool,
+    pub config: TimerConfig,
 }
 
 /// The current timer has been stopped
@@ -100,8 +77,10 @@ mod test {
     use std::time::SystemTime;
 
     use super::*;
+    use crate::Kind;
     use chrono::{DateTime, Duration};
     use test_util::assert_eq_json;
+    use types::core::Timestamp;
 
     #[test]
     fn countdown_started() {
@@ -112,12 +91,14 @@ mod test {
             .unwrap();
 
         let started = Message::Started(Started {
-            timer_id: TimerId::nil(),
-            started_at,
-            kind: Kind::Countdown { ends_at },
-            style: Some("coffee_break".into()),
-            title: None,
-            ready_check_enabled: true,
+            config: TimerConfig {
+                timer_id: TimerId::nil(),
+                started_at,
+                kind: Kind::Countdown { ends_at },
+                style: Some("coffee_break".into()),
+                title: None,
+                ready_check_enabled: true,
+            },
         });
 
         assert_eq_json!(started,
@@ -137,12 +118,14 @@ mod test {
         let started_at: Timestamp = DateTime::from(SystemTime::UNIX_EPOCH).into();
 
         let started = Message::Started(Started {
-            timer_id: TimerId::nil(),
-            started_at,
-            kind: Kind::Stopwatch,
-            style: None,
-            title: Some("Testing the timer!".into()),
-            ready_check_enabled: false,
+            config: TimerConfig {
+                timer_id: TimerId::nil(),
+                started_at,
+                kind: Kind::Stopwatch,
+                style: None,
+                title: Some("Testing the timer!".into()),
+                ready_check_enabled: false,
+            },
         });
 
         assert_eq_json!(started,

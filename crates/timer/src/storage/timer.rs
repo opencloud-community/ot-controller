@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::{outgoing, TimerId};
+use crate::{Kind, TimerId};
 
 use anyhow::{Context, Result};
 use redis::AsyncCommands;
@@ -36,7 +36,7 @@ pub(crate) struct Timer {
     /// Allows us to calculate the passed duration for joining participants
     pub(crate) started_at: Timestamp,
     /// The Timer kind
-    pub(crate) kind: outgoing::Kind,
+    pub(crate) kind: Kind,
     /// An optional string tag to flag this timer with a custom style
     pub(crate) style: Option<String>,
     /// The optional title

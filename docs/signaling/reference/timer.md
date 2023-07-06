@@ -4,7 +4,7 @@
 
 ### JoinSuccess
 
-The `join_success` control event contains the module-specific fields decribed below.
+When joining a room with a timer running, the `join_success` control event contains the module-specific fields decribed below.
 
 #### Fields
 
@@ -17,6 +17,7 @@ The `join_success` control event contains the module-specific fields decribed be
 | `style`               | `string` | no                         | An optional style tag to identify a timer across frontend clients    |
 | `title`               | `string` | no                         | An optional title for the timer                                      |
 | `ready_check_enabled` | `bool`   | yes                        | Enables/Disables participants to send a `update_ready_status` action |
+| `ready_status`        | `bool`   | no                         | The ready status of the participant for a currently active timer     |
 
 ##### Example
 
@@ -30,7 +31,8 @@ Countdown:
     "started_at": "1970-01-01T00:00:00Z",
     "ends_at": "1970-01-01T00:00:00Z",
     "title": "Testing the timer!",
-    "ready_check_enabled": false
+    "ready_check_enabled": false,
+    "ready_status": false
 }
 ```
 
@@ -42,7 +44,7 @@ When joining a room with a timer running, the `joined` control event sent to all
 
 | Field          | Type   | Always | Description                                                      |
 | -------------- | ------ | ------ | ---------------------------------------------------------------- |
-| `ready_status` | `bool` | yes    | The ready status of the participant for a currently active timer |
+| `ready_status` | `bool` | no     | The ready status of the participant for a currently active timer |
 
 ##### Example
 
@@ -99,7 +101,7 @@ Countdown:
     "kind": "countdown",
     "duration": 20,
     "title": "Testing the timer!",
-    "ready_check": false
+    "enable_ready_check": false
 }
 ```
 
@@ -111,7 +113,7 @@ Countdown with style:
     "kind": "countdown",
     "duration": 180,
     "style": "coffee_break",
-    "ready_check": true
+    "enable_ready_check": true
 }
 ```
 
@@ -122,7 +124,7 @@ Stopwatch:
     "action": "start",
     "kind": "stopwatch",
     "title": "Testing the stopwatch!",
-    "ready_check": false
+    "enable_ready_check": false
 }
 ```
 
@@ -195,8 +197,6 @@ Each participant receives a [Control Update](#control-update) event with the par
 ### Started
 
 A timer has been started.
-
-This message is also received in the `join_success` message when joining a room where a timer is active.
 
 #### Fields
 
