@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::LoginResult;
+use super::{build_info_display_name, LoginResult};
 use crate::api::util::parse_phone_number;
 use crate::oidc::IdTokenInfo;
 use controller_settings::Settings;
@@ -32,6 +32,8 @@ pub(super) async fn create_user(
     tariff: Tariff,
     tariff_status: TariffStatus,
 ) -> database::Result<LoginResult> {
+    let info_display_name = build_info_display_name(&info);
+
     let phone_number =
         if let Some((call_in, phone_number)) = settings.call_in.as_ref().zip(info.phone_number) {
             parse_phone_number(&phone_number, call_in.default_country_code)
@@ -40,17 +42,13 @@ pub(super) async fn create_user(
             None
         };
 
-    let display_name = info
-        .display_name
-        .unwrap_or_else(|| format!("{} {}", info.firstname, info.lastname));
-
     conn.transaction(|conn| {
         async move {
             let user = NewUser {
                 oidc_sub: info.sub,
                 email: info.email,
                 title: String::new(),
-                display_name,
+                display_name: info_display_name,
                 firstname: info.firstname,
                 lastname: info.lastname,
                 id_token_exp: info.expiration.timestamp(),

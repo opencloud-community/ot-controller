@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::LoginResult;
+use super::{build_info_display_name, LoginResult};
 use crate::api::util::parse_phone_number;
 use crate::oidc::IdTokenInfo;
 use controller_settings::Settings;
@@ -31,7 +31,21 @@ pub(super) async fn update_user(
     tariff: Tariff,
     tariff_status: TariffStatus,
 ) -> database::Result<LoginResult> {
-    let changeset = create_changeset(settings, &user, &info, tariff, tariff_status);
+    // Enforce the auto-generated display name if display name editing is prohibited
+    let enforced_display_name = if settings.endpoints.disallow_custom_display_name {
+        Some(build_info_display_name(&info))
+    } else {
+        None
+    };
+
+    let changeset = create_changeset(
+        settings,
+        &user,
+        &info,
+        enforced_display_name.as_deref(),
+        tariff,
+        tariff_status,
+    );
 
     let user = changeset.apply(conn, user.id).await?;
 
@@ -67,6 +81,7 @@ fn create_changeset<'a>(
     settings: &Settings,
     user: &User,
     token_info: &'a IdTokenInfo,
+    enforced_display_name: Option<&'a str>,
     tariff: Tariff,
     tariff_status: TariffStatus,
 ) -> UpdateUser<'a> {
@@ -80,7 +95,7 @@ fn create_changeset<'a>(
         lastname,
         id_token_exp: _,
         language: _,
-        display_name: _,
+        display_name,
         dashboard_theme: _,
         conference_theme: _,
         phone,
@@ -100,6 +115,12 @@ fn create_changeset<'a>(
 
     if lastname != &token_info.lastname {
         changeset.lastname = Some(&token_info.lastname)
+    }
+
+    if let Some(enforced_display_name) = enforced_display_name {
+        if display_name != enforced_display_name {
+            changeset.display_name = Some(enforced_display_name)
+        }
     }
 
     if email != &token_info.email {

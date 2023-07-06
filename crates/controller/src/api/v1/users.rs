@@ -155,6 +155,17 @@ pub async fn patch_me(
 
     let mut conn = db.get_conn().await?;
 
+    // Prohibit display name editing, if configured
+    if settings.endpoints.disallow_custom_display_name {
+        if let Some(display_name) = &patch.display_name {
+            if &current_user.display_name != display_name {
+                return Err(
+                    ApiError::bad_request().with_message("changing the display name is prohibited")
+                );
+            }
+        }
+    }
+
     let changeset = UpdateUser {
         title: patch.title.as_deref(),
         firstname: None,

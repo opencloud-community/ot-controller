@@ -48,7 +48,7 @@ pub async fn start(
 
     let (sip_config, room) = SipConfig::get_with_room(&mut conn, &request.id)
         .await?
-        .ok_or(ApiError::not_found().with_message("given call-in id does not exist"))?;
+        .ok_or_else(|| ApiError::not_found().with_message("given call-in id does not exist"))?;
 
     require_feature(&mut conn, &settings, room.created_by, features::CALL_IN).await?;
 

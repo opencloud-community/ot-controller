@@ -37,7 +37,11 @@ pub enum ControlCommand {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Join {
     /// The users display name
-    pub display_name: String,
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none",)
+    )]
+    pub display_name: Option<String>,
 }
 
 #[cfg(test)]
@@ -47,7 +51,7 @@ mod test {
     use serde_json::json;
 
     #[test]
-    fn hello() {
+    fn join_with_display_name() {
         let json = json!({
             "action": "join",
             "display_name": "Test!",
@@ -56,7 +60,22 @@ mod test {
         let msg: ControlCommand = serde_json::from_value(json).unwrap();
 
         if let ControlCommand::Join(Join { display_name }) = msg {
-            assert_eq!(display_name, "Test!");
+            assert_eq!(display_name, Some("Test!".to_owned()));
+        } else {
+            panic!()
+        }
+    }
+
+    #[test]
+    fn join_without_display_name() {
+        let json = json!({
+            "action": "join",
+        });
+
+        let msg: ControlCommand = serde_json::from_value(json).unwrap();
+
+        if let ControlCommand::Join(Join { display_name }) = msg {
+            assert_eq!(display_name, None);
         } else {
             panic!()
         }

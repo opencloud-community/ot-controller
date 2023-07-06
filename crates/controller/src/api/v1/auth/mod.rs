@@ -7,7 +7,7 @@ use super::events::EventPoliciesBuilderExt;
 use super::rooms::RoomsPoliciesBuilderExt;
 use crate::api::v1::response::error::AuthenticationError;
 use crate::api::v1::response::ApiError;
-use crate::oidc::{OidcContext, VerifyError};
+use crate::oidc::{IdTokenInfo, OidcContext, VerifyError};
 use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json};
 use actix_web::{get, post};
@@ -291,4 +291,10 @@ async fn update_core_user_permissions(
     }
 
     Ok(())
+}
+
+fn build_info_display_name(info: &IdTokenInfo) -> String {
+    info.display_name
+        .clone()
+        .unwrap_or_else(|| format!("{} {}", &info.firstname, &info.lastname))
 }
