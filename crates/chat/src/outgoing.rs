@@ -5,7 +5,7 @@
 use serde::{Deserialize, Serialize};
 use types::{
     core::ParticipantId,
-    signaling::chat::event::{Error, HistoryCleared, MessageSent},
+    signaling::chat::event::{ChatDisabled, Error, HistoryCleared, MessageSent},
 };
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
@@ -20,11 +20,6 @@ pub enum ChatEvent {
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 pub struct ChatEnabled {
-    pub issued_by: ParticipantId,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
-pub struct ChatDisabled {
     pub issued_by: ParticipantId,
 }
 

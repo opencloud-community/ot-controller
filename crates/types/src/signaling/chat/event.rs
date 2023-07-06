@@ -11,6 +11,14 @@ use crate::imports::*;
 
 use super::{MessageId, Scope};
 
+/// The chat was disabled
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct ChatDisabled {
+    /// Participant who disabled the chat
+    pub issued_by: ParticipantId,
+}
+
 /// A message
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]

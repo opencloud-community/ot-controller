@@ -11,7 +11,7 @@
 use anyhow::Result;
 use database::Db;
 use db_storage::groups::Group;
-use outgoing::{ChatDisabled, ChatEnabled};
+use outgoing::ChatEnabled;
 use r3dlock::Mutex;
 use serde::{Deserialize, Serialize};
 use signaling_core::{
@@ -25,7 +25,7 @@ use types::{
     signaling::{
         chat::{
             command::{ChatCommand, SendMessage},
-            event::{Error, HistoryCleared, MessageSent},
+            event::{ChatDisabled, Error, HistoryCleared, MessageSent},
             MessageId, Scope,
         },
         Role,
