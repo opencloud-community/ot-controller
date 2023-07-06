@@ -3,9 +3,8 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use serde::{Deserialize, Serialize};
-use types::{
-    core::ParticipantId,
-    signaling::chat::event::{ChatDisabled, Error, HistoryCleared, MessageSent},
+use types::signaling::chat::event::{
+    ChatDisabled, ChatEnabled, Error, HistoryCleared, MessageSent,
 };
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
@@ -18,18 +17,13 @@ pub enum ChatEvent {
     Error(Error),
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
-pub struct ChatEnabled {
-    pub issued_by: ParticipantId,
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use types::{
-        core::GroupName,
+        core::{GroupName, ParticipantId},
         signaling::chat::{MessageId, Scope},
     };
 
