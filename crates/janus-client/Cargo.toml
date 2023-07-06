@@ -14,7 +14,7 @@ publish = false
 # RabbitMQ
 lapin.workspace = true
 # Websockets
-tokio-tungstenite = { version = "0.18", features = ["rustls-tls-native-roots"] }
+tokio-tungstenite = { version = "0.19", features = ["rustls-tls-native-roots"] }
 
 # Random Generators
 rand = { workspace = true, features = ["std", "std_rng"] }
@@ -27,12 +27,12 @@ parking_lot.workspace = true
 # Used to serialize from and to JSON
 serde.workspace = true
 serde_json.workspace = true
-serde_repr = "0.1.11"
+serde_repr.workspace = true
 
 # Error handling
 thiserror.workspace = true
 # Reduce clutter arround docs/error strings
-displaydoc = "0.2.3"
+displaydoc.workspace = true
 # Logging
 tracing.workspace = true
 log.workspace = true

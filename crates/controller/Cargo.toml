@@ -33,7 +33,7 @@ tracing-subscriber = { version = "0.3", features = [
     "env-filter",
 ] }
 tracing-opentelemetry = "0.18"
-opentelemetry = { version = "0.18", default-features = false, features = [
+opentelemetry = { workspace = true, features = [
     "trace",
     "rt-tokio-current-thread",
     "metrics",
@@ -66,7 +66,7 @@ cache = { path = "../cache" , package = "opentalk-cache" }
 
 ### S3 Storage
 aws-config = "0.51"
-aws-sdk-s3 = "0.21"
+aws-sdk-s3.workspace = true
 
 ### Web Framework & Runtime
 tokio = { workspace = true, features = ["signal"] }
@@ -81,7 +81,7 @@ bytes.workspace = true
 serde_json.workspace = true
 bincode.workspace = true
 parking_lot.workspace = true
-mime = "0.3.16"
+mime = "0.3"
 bytestring = { version = "1", features = ["serde"] }
 
 ### RabbitMQ
@@ -127,13 +127,13 @@ rustc-hash.workspace = true
 rand.workspace = true
 
 ### Reload controller process
-sysinfo = { version = "0.28", default-features = false }
+sysinfo = { version = "0.29", default-features = false }
 nix = "0.26"
 
 ### Access Control
 kustos = { path = "../kustos" }
 keycloak-admin = { path = "../keycloak-admin" }
-regex = "1.7"
+regex = "1"
 
 rrule = "0.7"
 
