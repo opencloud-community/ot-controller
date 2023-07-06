@@ -8,7 +8,9 @@ use opentalk_timer::incoming::Stop;
 use opentalk_timer::outgoing;
 use opentalk_timer::outgoing::StopKind;
 use opentalk_timer::outgoing::Stopped;
+use opentalk_timer::Kind;
 use opentalk_timer::Timer;
+use opentalk_timer::TimerConfig;
 use opentalk_timer::TimerId;
 use pretty_assertions::assert_eq;
 use serial_test::serial;
@@ -110,17 +112,20 @@ async fn start_timer(
 
     let timer_id =
         if let WsMessageOutgoing::Module(outgoing::Message::Started(outgoing::Started {
-            timer_id,
-            started_at,
-            kind: received_kind,
-            style: received_style,
-            title: received_title,
-            ready_check_enabled: received_ready_check_enabled,
+            config:
+                TimerConfig {
+                    timer_id,
+                    started_at,
+                    kind: received_kind,
+                    style: received_style,
+                    title: received_title,
+                    ready_check_enabled: received_ready_check_enabled,
+                },
         })) = &started1
         {
             assert!(time_frame.contains(started_at));
 
-            if let outgoing::Kind::Countdown { ends_at } = received_kind {
+            if let Kind::Countdown { ends_at } = received_kind {
                 let configured_duration = match kind {
                     incoming::Kind::Countdown { duration } => duration,
                     incoming::Kind::Stopwatch => panic!("expected countdown kind"),
