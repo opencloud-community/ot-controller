@@ -5,10 +5,8 @@
 use serde::{Deserialize, Serialize};
 use types::{
     core::ParticipantId,
-    signaling::chat::event::{Error, HistoryCleared},
+    signaling::chat::event::{Error, HistoryCleared, MessageSent},
 };
-
-use crate::{MessageId, Scope};
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(tag = "message", rename_all = "snake_case")]
@@ -30,21 +28,15 @@ pub struct ChatDisabled {
     pub issued_by: ParticipantId,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
-pub struct MessageSent {
-    pub id: MessageId,
-    pub source: ParticipantId,
-    pub content: String,
-    #[serde(flatten)]
-    pub scope: Scope,
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
     use pretty_assertions::assert_eq;
     use serde_json::json;
-    use types::core::GroupName;
+    use types::{
+        core::GroupName,
+        signaling::chat::{MessageId, Scope},
+    };
 
     #[test]
     fn global_serialize() {
