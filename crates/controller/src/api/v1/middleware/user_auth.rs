@@ -117,19 +117,25 @@ where
         Box::pin(
             async move {
                 let settings = settings.load_full();
-                let (current_tenant, current_user) = check_access_token(
+
+                match check_access_token(
                     &settings,
                     db,
                     oidc_ctx,
                     &caches.user_access_tokens,
                     access_token,
                 )
-                .await?;
-                req.extensions_mut()
-                    .insert(kustos::actix_web::User::from(current_user.id.into_inner()));
-                req.extensions_mut().insert(current_tenant);
-                req.extensions_mut().insert(current_user);
-                service.call(req).await
+                .await
+                {
+                    Ok((current_tenant, current_user)) => {
+                        req.extensions_mut()
+                            .insert(kustos::actix_web::User::from(current_user.id.into_inner()));
+                        req.extensions_mut().insert(current_tenant);
+                        req.extensions_mut().insert(current_user);
+                        service.call(req).await
+                    }
+                    Err(err) => Ok(req.into_response(err.error_response())),
+                }
             }
             .instrument(tracing::trace_span!("OidcAuthMiddleware::async::call")),
         )

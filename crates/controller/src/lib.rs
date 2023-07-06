@@ -347,10 +347,10 @@ impl Controller {
                 let signaling_modules = Data::from(signaling_modules.upgrade().unwrap());
 
                 App::new()
-                    .wrap(api::v1::middleware::headers::Headers {})
-                    .wrap(TracingLogger::<ReducedSpanBuilder>::new())
-                    .wrap(cors)
                     .wrap(RequestMetrics::new(metrics.endpoint.clone()))
+                    .wrap(cors)
+                    .wrap(TracingLogger::<ReducedSpanBuilder>::new())
+                    .wrap(api::v1::middleware::headers::Headers {})
                     .app_data(web::JsonConfig::default().error_handler(json_error_handler))
                     .app_data(Data::from(shared_settings.clone()))
                     .app_data(db.clone())
