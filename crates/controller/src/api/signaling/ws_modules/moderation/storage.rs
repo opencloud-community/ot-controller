@@ -268,6 +268,10 @@ pub async fn waiting_room_accepted_remove_list(
     room: RoomId,
     participant_ids: &[ParticipantId],
 ) -> Result<()> {
+    if participant_ids.is_empty() {
+        return Ok(());
+    }
+
     redis_conn
         .srem(AcceptedWaitingRoomList { room }, participant_ids)
         .await
