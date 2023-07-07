@@ -65,7 +65,7 @@ uuid = { workspace = true, features = ["serde", "v4"] }
 cache = { path = "../cache" , package = "opentalk-cache" }
 
 ### S3 Storage
-aws-config = "0.51"
+aws-config = "0.55"
 aws-sdk-s3.workspace = true
 
 ### Web Framework & Runtime

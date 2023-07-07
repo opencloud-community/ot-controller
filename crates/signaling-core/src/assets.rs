@@ -5,7 +5,7 @@
 use std::sync::Arc;
 
 use anyhow::{Context, Result};
-use aws_sdk_s3::types::ByteStream;
+use aws_sdk_s3::primitives::ByteStream;
 use bytes::Bytes;
 use database::Db;
 use db_storage::{
