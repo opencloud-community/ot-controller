@@ -21,7 +21,7 @@ pub(crate) fn to_redis_args(input: TokenStream) -> TokenStream {
 fn get_to_redis_args_conversion(attrs: &[syn::Attribute]) -> ToRedisArgsConversion {
     let mut found_attr = None;
     for attr in attrs {
-        if let Some(segment) = attr.path.segments.iter().next() {
+        if let Some(segment) = attr.path().segments.iter().next() {
             if segment.ident == "to_redis_args" {
                 if found_attr.is_some() {
                     panic!("Multiple #[to_redis_args(...)] found");
@@ -33,7 +33,7 @@ fn get_to_redis_args_conversion(attrs: &[syn::Attribute]) -> ToRedisArgsConversi
     }
 
     if let Some(attr) = found_attr {
-        return parse_to_redis_args_attribute_parameters(attr.tokens.clone());
+        return parse_to_redis_args_attribute_meta(attr.meta.clone());
     }
 
     panic!("Attribute #[to_redis_args(...)] missing for #[derive(ToRedisArgs)]");
@@ -53,19 +53,22 @@ enum Fields {
     Empty,
 }
 
-fn parse_to_redis_args_attribute_parameters(
-    parameters: proc_macro2::TokenStream,
-) -> ToRedisArgsConversion {
+fn parse_to_redis_args_attribute_meta(meta: syn::Meta) -> ToRedisArgsConversion {
     fn fail_with_generic_message() -> ToRedisArgsConversion {
         panic!("Attribute #[to_redis_args(...)] requires either `fmt`, `fmt = \"...\"`, `serde`, or `Display`  parameter");
     }
-    match parameters.into_iter().next() {
-        Some(proc_macro2::TokenTree::Group(group)) => {
-            if group.delimiter() != proc_macro2::Delimiter::Parenthesis {
-                panic!("Attribute #[to_redis_args(...)] must have braces: '('");
-            }
-            let mut tokens = group.stream().into_iter();
 
+    match meta {
+        syn::Meta::List(syn::MetaList {
+            path: _,
+            delimiter,
+            tokens,
+        }) => {
+            if !matches!(delimiter, syn::MacroDelimiter::Paren(_)) {
+                panic!("Attribute #[to_redis_args(...)] must have parentheses: '('");
+            }
+
+            let mut tokens = tokens.into_iter();
             let conversion = match tokens.next() {
                 Some(proc_macro2::TokenTree::Ident(ident)) if ident == "fmt" => {
                     ToRedisArgsConversion::DirectFormat
@@ -83,8 +86,8 @@ fn parse_to_redis_args_attribute_parameters(
                 Some(proc_macro2::TokenTree::Punct(punct)) if punct.as_char() == '=' => {
                     if conversion == ToRedisArgsConversion::Serde {
                         panic!(
-                        "Attribute #[to_redis_args(serde)] does not allow additional parameters"
-                    );
+                            "Attribute #[to_redis_args(serde)] does not allow additional parameters"
+                        );
                     }
 
                     let tokens = proc_macro2::TokenStream::from_iter(tokens);
@@ -97,7 +100,10 @@ fn parse_to_redis_args_attribute_parameters(
                 None => conversion,
             }
         }
-        _ => fail_with_generic_message(),
+        syn::Meta::Path(_) => fail_with_generic_message(),
+        syn::Meta::NameValue(_) => {
+            panic!("Attribute #[from_redis_value(...)] does not allow assignments inside the parentheses");
+        }
     }
 }
 
