@@ -107,13 +107,10 @@ impl AggregatorSelector for OverrideAggregatorSelector {
 
 impl CombinedMetrics {
     pub fn init() -> Self {
-        let controller = controllers::basic(
-            processors::factory(
-                OverrideAggregatorSelector::default(),
-                aggregation::cumulative_temporality_selector(),
-            )
-            .with_memory(true),
-        )
+        let controller = controllers::basic(processors::factory(
+            OverrideAggregatorSelector::default(),
+            aggregation::cumulative_temporality_selector(),
+        ))
         .build();
 
         let exporter = opentelemetry_prometheus::exporter(controller).init();

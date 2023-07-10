@@ -32,14 +32,14 @@ tracing-subscriber = { version = "0.3", features = [
     "parking_lot",
     "env-filter",
 ] }
-tracing-opentelemetry = "0.18"
+tracing-opentelemetry.workspace = true
 opentelemetry = { workspace = true, features = [
     "trace",
     "rt-tokio-current-thread",
     "metrics",
 ] }
-opentelemetry-otlp = "0.11"
-opentelemetry-prometheus = "0.11"
+opentelemetry-otlp = "0.12"
+opentelemetry-prometheus = "0.12"
 prometheus = "0.13"
 tracing-actix-web = { version = "0.7" }
 
