@@ -147,9 +147,13 @@ pub async fn get_event_instances(
 
     let rruleset = build_rruleset(&event)?;
 
-    // limit of how far into the future we calculate instances (40 years)
-    let max_dt =
-        Utc::now().with_timezone(&rruleset.dt_start.timezone()) + chrono::Duration::weeks(12 * 40);
+    const MONTHS_PER_YEAR: u32 = 12;
+
+    // limit of how far into the future we calculate instances
+    let max_dt = Utc::now()
+        .with_timezone(&rruleset.dt_start.timezone())
+        .checked_add_months(chrono::Months::new(40 * MONTHS_PER_YEAR))
+        .expect("Could not add required duration");
 
     let mut iter: Box<dyn Iterator<Item = DateTime<Tz>>> =
         Box::new(rruleset.into_iter().skip_while(move |&dt| dt > max_dt));
