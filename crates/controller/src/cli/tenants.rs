@@ -8,7 +8,7 @@ use clap::Subcommand;
 use controller_settings::Settings;
 use database::Db;
 use db_storage::tenants::{OidcTenantId, Tenant, UpdateTenant};
-use tabled::{Style, Table, Tabled};
+use tabled::{settings::Style, Table, Tabled};
 use types::core::TenantId;
 use uuid::Uuid;
 

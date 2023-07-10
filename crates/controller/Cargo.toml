@@ -138,7 +138,7 @@ regex = "1"
 rrule = "0.7"
 
 ### CLI
-tabled = "0.10"
+tabled = "0.12"
 
 [dev-dependencies]
 test-util = { path = "../test-util", package = "opentalk-test-util", features = ["database"] }
