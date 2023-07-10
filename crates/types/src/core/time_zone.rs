@@ -24,7 +24,7 @@ mod diesel_traits {
 
     use chrono_tz::Tz;
     use diesel::{
-        backend::RawValue,
+        backend::Backend,
         deserialize::{self, FromSql},
         pg::Pg,
         serialize::{self, IsNull, Output, ToSql},
@@ -38,7 +38,7 @@ mod diesel_traits {
     }
 
     impl FromSql<diesel::sql_types::Text, Pg> for TimeZone {
-        fn from_sql(bytes: RawValue<Pg>) -> deserialize::Result<Self> {
+        fn from_sql(bytes: <Pg as Backend>::RawValue<'_>) -> deserialize::Result<Self> {
             let s = from_utf8(bytes.as_bytes())?;
             let tz = Tz::from_str(s)?;
 

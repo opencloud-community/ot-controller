@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use diesel::backend::Backend;
 use diesel::deserialize::{FromSql, FromSqlRow};
 use diesel::expression::AsExpression;
 use diesel::pg::Pg;
@@ -39,7 +40,7 @@ where
 pub struct Jsonb<T>(pub T);
 
 impl<T: for<'de> Deserialize<'de>> FromSql<sql_types::Jsonb, Pg> for Jsonb<T> {
-    fn from_sql(value: diesel::backend::RawValue<'_, Pg>) -> diesel::deserialize::Result<Self> {
+    fn from_sql(value: <Pg as Backend>::RawValue<'_>) -> diesel::deserialize::Result<Self> {
         let bytes = value.as_bytes();
         if bytes[0] != 1 {
             return Err("Unsupported JSONB encoding version".into());
