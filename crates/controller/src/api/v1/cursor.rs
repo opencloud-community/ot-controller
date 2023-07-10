@@ -4,6 +4,7 @@
 
 //! Implementation of opaque cursor for pagination
 
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use serde::de::{DeserializeOwned, Error, Unexpected, Visitor};
 use serde::Deserialize;
 use serde::Serialize;
@@ -22,10 +23,7 @@ where
 {
     /// Encode T using bincode and return it as base64 string
     pub fn to_base64(&self) -> String {
-        base64::encode_config(
-            bincode::serialize(&self.0).unwrap(),
-            base64::URL_SAFE_NO_PAD,
-        )
+        URL_SAFE_NO_PAD.encode(bincode::serialize(&self.0).unwrap())
     }
 }
 
@@ -83,7 +81,8 @@ where
     where
         E: serde::de::Error,
     {
-        let bytes = base64::decode_config(v, base64::URL_SAFE_NO_PAD)
+        let bytes = URL_SAFE_NO_PAD
+            .decode(v)
             .map_err(|_| Error::invalid_value(Unexpected::Str(v), &self))?;
         let data = bincode::deserialize(&bytes)
             .map_err(|_| Error::invalid_value(Unexpected::Bytes(&bytes), &self))?;
