@@ -18,13 +18,13 @@ use signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, Participant, RedisConnection,
     SignalingModule, SignalingModuleInitData, SignalingRoomId,
 };
-use storage::StoredMessage;
 use types::{
     core::{GroupId, GroupName, ParticipantId, Timestamp, UserId},
     signaling::{
         chat::{
             command::{ChatCommand, SendMessage},
             event::{ChatDisabled, ChatEnabled, ChatEvent, Error, HistoryCleared, MessageSent},
+            state::StoredMessage,
             MessageId, Scope,
         },
         Role,

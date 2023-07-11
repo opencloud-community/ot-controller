@@ -2,35 +2,20 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::{MessageId, Scope};
-
 use anyhow::{Context, Result};
 use r3dlock::{Mutex, MutexGuard};
 use redis::AsyncCommands;
 use redis_args::{FromRedisValue, ToRedisArgs};
-use serde::{Deserialize, Serialize};
 use signaling_core::{RedisConnection, SignalingRoomId};
 use std::{
     collections::{HashMap, HashSet},
     str::FromStr,
 };
-use types::core::{GroupId, GroupName, ParticipantId, RoomId, Timestamp};
+use types::{
+    core::{GroupId, GroupName, ParticipantId, RoomId, Timestamp},
+    signaling::chat::state::StoredMessage,
+};
 use uuid::Uuid;
-
-/// Message type stores in redis
-///
-/// This needs to have a inner timestamp.
-#[derive(Clone, Debug, Deserialize, Serialize, ToRedisArgs, FromRedisValue)]
-#[to_redis_args(serde)]
-#[from_redis_value(serde)]
-pub struct StoredMessage {
-    pub id: MessageId,
-    pub source: ParticipantId,
-    pub timestamp: Timestamp,
-    pub content: String,
-    #[serde(flatten)]
-    pub scope: Scope,
-}
 
 /// Key to the chat history inside a room
 #[derive(ToRedisArgs)]

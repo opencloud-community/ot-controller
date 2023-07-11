@@ -6,6 +6,7 @@
 
 pub mod command;
 pub mod event;
+pub mod state;
 
 mod message_id;
 mod scope;
