@@ -4,11 +4,22 @@
 
 //! Signaling state for the `chat` namespace
 
-use crate::core::{ParticipantId, Timestamp};
+use crate::core::{GroupName, ParticipantId, Timestamp};
 #[allow(unused_imports)]
 use crate::imports::*;
 
 use super::{MessageId, Scope};
+
+/// Group chat history
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct GroupHistory {
+    /// Name of the group
+    pub name: GroupName,
+
+    /// Group chat history
+    pub history: Vec<StoredMessage>,
+}
 
 /// Private chat history
 #[derive(Clone, Debug)]
