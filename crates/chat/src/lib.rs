@@ -25,7 +25,7 @@ use types::{
             command::{ChatCommand, SendMessage},
             event::{ChatDisabled, ChatEnabled, ChatEvent, Error, HistoryCleared, MessageSent},
             peer_state::ChatPeerState,
-            state::StoredMessage,
+            state::{PrivateHistory, StoredMessage},
             MessageId, Scope,
         },
         Role,
@@ -129,12 +129,6 @@ impl ChatState {
 pub struct GroupHistory {
     name: GroupName,
     history: Vec<StoredMessage>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct PrivateHistory {
-    pub correspondent: ParticipantId,
-    pub history: Vec<StoredMessage>,
 }
 
 #[async_trait::async_trait(? Send)]

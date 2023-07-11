@@ -10,6 +10,17 @@ use crate::imports::*;
 
 use super::{MessageId, Scope};
 
+/// Private chat history
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct PrivateHistory {
+    /// Private chat correspondent
+    pub correspondent: ParticipantId,
+
+    /// Private chat history
+    pub history: Vec<StoredMessage>,
+}
+
 /// Message type stores in redis
 ///
 /// This needs to have a inner timestamp.
