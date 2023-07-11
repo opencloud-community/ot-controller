@@ -12,7 +12,6 @@ use anyhow::Result;
 use database::Db;
 use db_storage::groups::Group;
 use r3dlock::Mutex;
-use serde::{Deserialize, Serialize};
 use signaling_core::{
     control::{self, exchange},
     DestroyContext, Event, InitContext, ModuleContext, Participant, RedisConnection,
@@ -25,7 +24,7 @@ use types::{
             command::{ChatCommand, SendMessage},
             event::{ChatDisabled, ChatEnabled, ChatEvent, Error, HistoryCleared, MessageSent},
             peer_state::ChatPeerState,
-            state::{GroupHistory, PrivateHistory, StoredMessage},
+            state::{ChatState, GroupHistory, PrivateHistory, StoredMessage},
             MessageId, Scope,
         },
         Role,
@@ -59,19 +58,19 @@ impl Chat {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct ChatState {
-    pub enabled: bool,
-    pub room_history: Vec<StoredMessage>,
-    pub groups_history: Vec<GroupHistory>,
-    pub private_history: Vec<PrivateHistory>,
-    pub last_seen_timestamp_global: Option<Timestamp>,
-    pub last_seen_timestamps_private: HashMap<ParticipantId, Timestamp>,
-    pub last_seen_timestamps_group: HashMap<GroupName, Timestamp>,
+#[async_trait::async_trait(?Send)]
+trait ChatStateExt: Sized {
+    async fn for_current_room_and_participant(
+        redis_conn: &mut RedisConnection,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        groups: &[Group],
+    ) -> Result<Self>;
 }
 
-impl ChatState {
-    pub async fn for_current_room_and_participant(
+#[async_trait::async_trait(?Send)]
+impl ChatStateExt for ChatState {
+    async fn for_current_room_and_participant(
         redis_conn: &mut RedisConnection,
         room: SignalingRoomId,
         participant: ParticipantId,
@@ -678,38 +677,5 @@ impl SignalingModule for Chat {
 
     async fn build_params(_init: &SignalingModuleInitData) -> Result<Option<Self::Params>> {
         Ok(Some(()))
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    use chrono::DateTime;
-    use pretty_assertions::assert_eq;
-    use serde_json::json;
-    use std::str::FromStr;
-
-    #[test]
-    fn server_message() {
-        let expected = json!({
-            "id":"00000000-0000-0000-0000-000000000000",
-            "source":"00000000-0000-0000-0000-000000000000",
-            "timestamp":"2021-06-24T14:00:11.873753715Z",
-            "content":"Hello All!",
-            "scope":"global",
-        });
-
-        let produced = serde_json::to_value(StoredMessage {
-            id: MessageId::nil(),
-            source: ParticipantId::nil(),
-            timestamp: DateTime::from_str("2021-06-24T14:00:11.873753715Z")
-                .unwrap()
-                .into(),
-            content: "Hello All!".to_string(),
-            scope: Scope::Global,
-        })
-        .unwrap();
-
-        assert_eq!(expected, produced);
     }
 }

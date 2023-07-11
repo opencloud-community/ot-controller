@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::{DateTime, Utc};
-use opentalk_chat::{Chat, ChatState};
+use opentalk_chat::Chat;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use serial_test::serial;
@@ -15,6 +15,7 @@ use types::{
         chat::{
             command::{ChatCommand, SendMessage},
             event::{ChatEvent, MessageSent},
+            state::ChatState,
             Scope,
         },
         control::{
