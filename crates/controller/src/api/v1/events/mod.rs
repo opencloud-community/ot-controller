@@ -2033,9 +2033,9 @@ fn parse_event_dt_params(
         };
 
         if rrule_set
-            .rrule
+            .get_rrule()
             .iter()
-            .any(|rrule| rrule.get_properties().freq > Frequency::Daily)
+            .any(|rrule| rrule.get_freq() > Frequency::Daily)
         {
             return Err(ApiError::unprocessable_entity()
                 .with_code(CODE_INVALID_EVENT)
@@ -2044,16 +2044,14 @@ fn parse_event_dt_params(
 
         // Figure out ends_at timestamp
         // Check if all RRULEs are reasonably bounded in how far they go
-        let is_bounded = rrule_set.rrule.iter().all(|rrule| {
-            let properties = rrule.get_properties();
-
-            if let Some(count) = properties.count {
+        let is_bounded = rrule_set.get_rrule().iter().all(|rrule| {
+            if let Some(count) = rrule.get_count() {
                 if count < 1000 {
                     return true;
                 }
             }
 
-            if let Some(until) = properties.until {
+            if let Some(until) = rrule.get_until() {
                 if (until.naive_utc() - starts_at.datetime.naive_utc()).num_days() <= 36525 {
                     return true;
                 }
@@ -2065,11 +2063,16 @@ fn parse_event_dt_params(
         let dt_of_last_occurrence = if is_bounded {
             // For bounded RRULEs calculate the date of the last occurrence
             // Still limiting the iterations - just in case
-            rrule_set.into_iter().take(36525).last().ok_or_else(|| {
-                ApiError::unprocessable_entity()
-                    .with_code(CODE_INVALID_EVENT)
-                    .with_message("recurrence_pattern does not yield any dates")
-            })?
+            rrule_set
+                .into_iter()
+                .take(36525)
+                .last()
+                .ok_or_else(|| {
+                    ApiError::unprocessable_entity()
+                        .with_code(CODE_INVALID_EVENT)
+                        .with_message("recurrence_pattern does not yield any dates")
+                })?
+                .with_timezone(ends_at.timezone.as_ref())
         } else {
             // For RRULEs for which calculating the last occurrence might take too
             // long, as they run forever or into the very far future, just take a
