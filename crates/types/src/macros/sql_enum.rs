@@ -119,7 +119,7 @@ macro_rules! sql_enum {
 
             impl ::diesel::deserialize::FromSql<$type_ident, ::diesel::pg::Pg> for $enum_ident {
                 fn from_sql(
-                    bytes: ::diesel::backend::RawValue<::diesel::pg::Pg>
+                    bytes: <::diesel::pg::Pg as ::diesel::backend::Backend>::RawValue<'_>
                 ) -> ::diesel::deserialize::Result<Self> {
                     match bytes.as_bytes() {
                         $($variant_lit => Ok(Self::$variant_ident),)*

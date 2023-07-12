@@ -4,10 +4,10 @@
 
 use anyhow::{Context, Result};
 use aws_sdk_s3::{
-    config::Builder,
-    model::{CompletedMultipartUpload, CompletedPart},
-    types::ByteStream,
-    Client, Credentials as AwsCred, Endpoint,
+    config::{Builder, Credentials as AwsCred, Region},
+    primitives::ByteStream,
+    types::{CompletedMultipartUpload, CompletedPart},
+    Client,
 };
 use bytes::Bytes;
 use controller_settings::MinIO;
@@ -33,11 +33,9 @@ impl ObjectStorage {
         );
 
         let conf = Builder::new()
-            .endpoint_resolver(Endpoint::immutable(
-                minio.uri.parse().context("Failed to parse MinIO URI")?,
-            ))
+            .endpoint_url(&minio.uri)
             .credentials_provider(credentials)
-            .region(aws_sdk_s3::Region::new(""))
+            .region(Region::new(""))
             .build();
 
         let client = Client::from_conf(conf);
@@ -68,9 +66,9 @@ impl ObjectStorage {
         let credentials = AwsCred::new("broken", "broken", None, None, "broken");
 
         let conf = Builder::new()
-            .endpoint_resolver(Endpoint::immutable("localhost".parse().unwrap()))
+            .endpoint_url("localhost")
             .credentials_provider(credentials)
-            .region(aws_sdk_s3::Region::new(""))
+            .region(Region::new(""))
             .build();
 
         let client = Client::from_conf(conf);

@@ -25,7 +25,7 @@ enum FromRedisValueConversion {
 fn get_from_redis_value_conversion(attrs: &[syn::Attribute]) -> FromRedisValueConversion {
     let mut found_attr = None;
     for attr in attrs {
-        if let Some(segment) = attr.path.segments.iter().next() {
+        if let Some(segment) = attr.path().segments.iter().next() {
             if segment.ident == "from_redis_value" {
                 if found_attr.is_some() {
                     panic!("Multiple #[from_redis_value(...)] found");
@@ -37,25 +37,28 @@ fn get_from_redis_value_conversion(attrs: &[syn::Attribute]) -> FromRedisValueCo
     }
 
     if let Some(attr) = found_attr {
-        return parse_from_redis_value_attribute_parameters(attr.tokens.clone());
+        return parse_from_redis_value_attribute_meta(attr.meta.clone());
     }
 
     panic!("Attribute #[from_redis_value(...)] missing for #[derive(FromRedisValue)]");
 }
 
-fn parse_from_redis_value_attribute_parameters(
-    parameters: proc_macro2::TokenStream,
-) -> FromRedisValueConversion {
+fn parse_from_redis_value_attribute_meta(meta: syn::Meta) -> FromRedisValueConversion {
     fn fail_with_generic_message() -> FromRedisValueConversion {
         panic!("Attribute #[from_redis_value(...)] requires either `FromStr` or `serde` parameter");
     }
-    match parameters.into_iter().next() {
-        Some(proc_macro2::TokenTree::Group(group)) => {
-            if group.delimiter() != proc_macro2::Delimiter::Parenthesis {
-                panic!("Attribute #[from_redis_value(...)] must have braces: '('");
-            }
-            let mut tokens = group.stream().into_iter();
 
+    match meta {
+        syn::Meta::List(syn::MetaList {
+            path: _,
+            delimiter,
+            tokens,
+        }) => {
+            if !matches!(delimiter, syn::MacroDelimiter::Paren(_)) {
+                panic!("Attribute #[from_redis_value(...)] must have parentheses: '('");
+            }
+
+            let mut tokens = tokens.into_iter();
             let conversion = match tokens.next() {
                 Some(proc_macro2::TokenTree::Ident(ident)) if ident == "FromStr" => {
                     FromRedisValueConversion::FromStr
@@ -72,7 +75,10 @@ fn parse_from_redis_value_attribute_parameters(
 
             conversion
         }
-        _ => fail_with_generic_message(),
+        syn::Meta::Path(_) => fail_with_generic_message(),
+        syn::Meta::NameValue(_) => {
+            panic!("Attribute #[from_redis_value(...)] does not allow assignments inside the parentheses");
+        }
     }
 }
 

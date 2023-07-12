@@ -13,7 +13,7 @@ use diesel_async::scoped_futures::ScopedFutureExt;
 use diesel_async::AsyncConnection;
 use itertools::Itertools;
 use std::collections::HashMap;
-use tabled::{Style, Table, Tabled};
+use tabled::{settings::Style, Table, Tabled};
 
 #[derive(Subcommand, Debug, Clone)]
 #[clap(rename_all = "kebab_case")]

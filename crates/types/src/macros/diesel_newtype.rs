@@ -140,7 +140,7 @@ macro_rules! diesel_newtype {
                 feature = "diesel";
 
                 const _: () = {
-                    use diesel::backend::{Backend, RawValue};
+                    use diesel::backend::Backend;
                     use diesel::deserialize::{self, FromSql};
                     use diesel::serialize::{self, Output, ToSql};
 
@@ -159,11 +159,11 @@ macro_rules! diesel_newtype {
                         DB: Backend,
                         $to_wrap: FromSql<$sql_type, DB>,
                     {
-                        fn from_sql(bytes: RawValue<DB>) -> deserialize::Result<Self> {
+                        fn from_sql(bytes: DB::RawValue<'_>) -> deserialize::Result<Self> {
                             <$to_wrap as FromSql<$sql_type, DB>>::from_sql(bytes).map(Self)
                         }
 
-                        fn from_nullable_sql(bytes: Option<RawValue<DB>>) -> deserialize::Result<Self> {
+                        fn from_nullable_sql(bytes: Option<DB::RawValue<'_>>) -> deserialize::Result<Self> {
                             <$to_wrap as FromSql<$sql_type, DB>>::from_nullable_sql(bytes).map(Self)
                         }
                     }

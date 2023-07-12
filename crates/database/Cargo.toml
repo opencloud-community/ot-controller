@@ -36,6 +36,4 @@ tracing.workspace = true
 pin-project-lite = "0.2"
 
 ### Opentelementry metrics
-opentelemetry = { version = "0.18", default-features = false, features = [
-    "metrics",
-] }
+opentelemetry.workspace = true

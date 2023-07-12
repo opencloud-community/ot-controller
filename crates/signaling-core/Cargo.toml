@@ -14,7 +14,7 @@ actix-rt = { workspace = true, optional = true }
 actix-http.workspace = true
 anyhow.workspace = true
 async-trait.workspace = true
-aws-sdk-s3 = "0.21"
+aws-sdk-s3.workspace = true
 bytes.workspace = true
 controller-settings = { path = "../controller-settings", package = "opentalk-controller-settings" }
 database = { path = "../database", package = "opentalk-database" }
@@ -24,7 +24,7 @@ futures.workspace = true
 kustos = { path = "../../crates/kustos" }
 lapin-pool = { path = "../lapin-pool" }
 log.workspace = true
-opentelemetry = { version = "0.18", default-features = false, features = [
+opentelemetry = { workspace = true, features = [
     "trace",
     "rt-tokio-current-thread",
     "metrics",

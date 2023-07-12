@@ -28,12 +28,12 @@ reqwest = { workspace = true, features = [
     "stream",
 ] }
 serde.workspace =  true
-serde_repr = "0.1"
+serde_repr.workspace = true
 serde_json.workspace = true
 anyhow.workspace = true
 tokio = { workspace = true, features = ["time"] }
 chrono.workspace = true
-percent-encoding = "2.2"
+percent-encoding.workspace = true
 url.workspace = true
 bytes.workspace = true
 futures.workspace = true

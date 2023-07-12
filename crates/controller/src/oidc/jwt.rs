@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use chrono::{DateTime, Utc};
 use jsonwebtoken::{self, decode, Algorithm, DecodingKey, Validation};
 use openidconnect::core::{CoreJsonWebKeySet, CoreJwsSigningAlgorithm};
@@ -76,7 +77,7 @@ pub fn verify<C: VerifyClaims>(key_set: &CoreJsonWebKeySet, token: &str) -> Resu
     };
 
     // Decode the JWT signature
-    let signature = base64::decode_config(signature, base64::URL_SAFE_NO_PAD).map_err({
+    let signature = URL_SAFE_NO_PAD.decode(signature).map_err({
         |e| {
             log::warn!("Token has invalid signature, {}", e);
             VerifyError::InvalidSignature
@@ -135,9 +136,10 @@ fn map_algorithm(alg: Algorithm) -> Option<CoreJwsSigningAlgorithm> {
 
 #[cfg(test)]
 mod test {
+    use super::*;
+
     use crate::oidc::UserClaims;
 
-    use super::VerifyError;
     use openidconnect::core::{CoreJsonWebKey, CoreJsonWebKeySet, CoreJwsSigningAlgorithm};
     use openidconnect::{JsonWebKey, JsonWebKeyId};
     use pretty_assertions::assert_eq;
@@ -150,7 +152,9 @@ mod test {
     static KID: &str = "MyKeyID";
 
     fn setup_keys() -> (RsaKeyPair, CoreJsonWebKeySet) {
-        let key = base64::decode(PKCS8).unwrap();
+        let key = base64::engine::general_purpose::STANDARD
+            .decode(PKCS8)
+            .unwrap();
         let key_pair = RsaKeyPair::from_pkcs8(&key).unwrap();
 
         let jwk = {
@@ -177,10 +181,9 @@ mod test {
     }
 
     fn build_jwt_message(iat: u64, exp: u64) -> String {
-        let header = base64::encode_config(
-            format!(r#"{{ "alg": "RS256", "typ": "JWT", "kid": "{KID}" }}"#),
-            base64::URL_SAFE_NO_PAD,
-        );
+        let header = URL_SAFE_NO_PAD.encode(format!(
+            r#"{{ "alg": "RS256", "typ": "JWT", "kid": "{KID}" }}"#
+        ));
 
         let payload = format!(
             r#"{{
@@ -198,7 +201,7 @@ mod test {
                 }}"#,
         );
 
-        let payload = base64::encode_config(payload, base64::URL_SAFE_NO_PAD);
+        let payload = URL_SAFE_NO_PAD.encode(payload);
 
         format!("{header}.{payload}")
     }
@@ -238,7 +241,7 @@ mod test {
 
         // Sign with our private key
         let signature = sign_data(&pair, message.as_ref());
-        let signature = base64::encode_config(signature.as_ref(), base64::URL_SAFE_NO_PAD);
+        let signature = URL_SAFE_NO_PAD.encode(signature.as_ref());
 
         // complete JWT
         let jwt_enc = format!("{message}.{signature}");
@@ -268,7 +271,7 @@ mod test {
 
         // Sign with our private key
         let signature = sign_data(&pair, message.as_ref());
-        let signature = base64::encode_config(signature.as_ref(), base64::URL_SAFE_NO_PAD);
+        let signature = URL_SAFE_NO_PAD.encode(signature.as_ref());
 
         // complete JWT
         let jwt_enc = format!("{message}.{signature}");
@@ -299,7 +302,7 @@ mod test {
 
         // Create a signature which is complete garbage
         let signature = b"Some garbage signature";
-        let signature = base64::encode_config(signature.as_ref(), base64::URL_SAFE_NO_PAD);
+        let signature = URL_SAFE_NO_PAD.encode(signature.as_ref());
 
         // complete JWT
         let jwt_enc = format!("{message}.{signature}");

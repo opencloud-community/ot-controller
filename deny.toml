@@ -48,9 +48,6 @@ notice = "deny"
 # output a note when they are encountered.
 ignore = [
     "RUSTSEC-2020-0071",
-
-    # opentelemtry-otlp update needed
-    "RUSTSEC-2023-0018",
 ]
 # Threshold for security vulnerabilities, any vulnerability with a CVSS score
 # lower than the range specified will be ignored. Note that ignored advisories
@@ -160,20 +157,33 @@ deny = []
 # Certain crates/versions that will be skipped when doing duplicate detection.
 skip = [
     { name = "ahash", version = "=0.7.6" },
-    { name = "base64", version = "=0.13.1" },
-    { name = "hashbrown", version = "=0.11.2" },
+    { name = "base64", version = "=0.13" },
+    { name = "hashbrown", version = "=0.11" },
+    { name = "hashbrown", version = "=0.12" },
+    { name = "hyper-rustls", version = "=0.23" },
     { name = "idna", version = "=0.2" },
-    { name = "num-bigint", version = "=0.4.3" },
-    { name = "spin", version = "=0.5.2" },
+    { name = "idna", version = "=0.3" },
+    { name = "indexmap", version = "=1" },
+    { name = "itertools", version = "=0.10" },
+    { name = "memoffset", version = "=0.7" },
+    { name = "num-bigint", version = "=0.4" },
+    { name = "regex-syntax", version = "=0.6" },
+    { name = "regex-automata", version = "=0.1" },
+    { name = "rustls", version = "=0.20" },
+    { name = "socket2", version = "=0.4" },
+    { name = "spin", version = "=0.5" },
     { name = "syn", version = "=1" },
-    { name = "time", version = "=0.1.45" },
-    { name = "memoffset", version = "=0.7.1" },
+    { name = "time", version = "=0.1" },
+    { name = "toml", version = "=0.5" },
+    { name = "tokio-rustls", version = "=0.23" },
 ]
 # Similarly to `skip` allows you to skip certain crates during duplicate
 # detection. Unlike skip, it also includes the entire tree of transitive
 # dependencies starting at the specified crate, up to a certain depth, which is
 # by default infinite
-skip-tree = []
+skip-tree = [
+    { name = "rustix", version = "=0.37" },
+]
 
 # This section is considered when running `cargo deny check sources`.
 # More documentation about the 'sources' section can be found here:

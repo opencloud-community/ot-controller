@@ -49,9 +49,7 @@ parking_lot.workspace = true
 actix-web.workspace = true
 
 ### Opentelementry metrics
-opentelemetry = { version = "0.18", default-features = false, features = [
-    "metrics",
-] }
+opentelemetry.workspace = true
 
 [dependencies.casbin]
 git = "https://github.com/kbalt/casbin-rs.git"

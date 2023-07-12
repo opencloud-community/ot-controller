@@ -14,8 +14,8 @@ proc-macro = true
 
 [dependencies]
 quote = "1"
-syn = { version = "1", features = ["extra-traits"] }
-proc-macro2 = "1.0.52"
+syn = { version = "2", features = ["extra-traits"] }
+proc-macro2 = "1"
 
 [dev-dependencies]
 redis.workspace = true

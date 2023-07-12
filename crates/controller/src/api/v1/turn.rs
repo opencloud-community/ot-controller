@@ -20,6 +20,7 @@ use actix_web::HttpRequest;
 use actix_web::{get, ResponseError};
 use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
 use arc_swap::ArcSwap;
+use base64::Engine;
 use database::{Db, OptionalExt};
 use db_storage::invites::Invite;
 use db_storage::users::User;
@@ -131,10 +132,12 @@ fn create_credentials<T: Rng + CryptoRng>(
     // TODO We should invest time to add SHA265 support to coturn or our own turn server.
     let key = hmac::Key::new(hmac::HMAC_SHA1_FOR_LEGACY_USE_ONLY, psk.as_bytes());
 
+    use base64::engine::general_purpose::STANDARD;
+
     // We append 16 bytes as a base64 encoded string to the prefix `turn_random_for_privacy_` for usage as application data in our username
-    let random_part: String = base64::encode(rng.gen::<[u8; 16]>().as_ref());
+    let random_part: String = STANDARD.encode(rng.gen::<[u8; 16]>().as_ref());
     let username = format!("{ttl}:turn_random_for_privacy_{random_part}",);
-    let password = base64::encode(hmac::sign(&key, username.as_bytes()).as_ref());
+    let password = STANDARD.encode(hmac::sign(&key, username.as_bytes()).as_ref());
 
     IceServer::Turn(Turn {
         username,
