@@ -135,7 +135,7 @@ kustos = { path = "../kustos" }
 keycloak-admin = { path = "../keycloak-admin" }
 regex = "1"
 
-rrule = "0.7"
+rrule = "0.10"
 
 ### CLI
 tabled = "0.12"

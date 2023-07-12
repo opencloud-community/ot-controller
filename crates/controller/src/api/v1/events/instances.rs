@@ -17,7 +17,6 @@ use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json, Path, Query, ReqData};
 use actix_web::{get, patch, Either};
 use chrono::{DateTime, Utc};
-use chrono_tz::Tz;
 use database::Db;
 use db_storage::events::{
     Event, EventException, EventExceptionKind, EventInviteStatus, NewEventException,
@@ -151,11 +150,11 @@ pub async fn get_event_instances(
 
     // limit of how far into the future we calculate instances
     let max_dt = Utc::now()
-        .with_timezone(&rruleset.dt_start.timezone())
+        .with_timezone(&rruleset.get_dt_start().timezone())
         .checked_add_months(chrono::Months::new(40 * MONTHS_PER_YEAR))
         .expect("Could not add required duration");
 
-    let mut iter: Box<dyn Iterator<Item = DateTime<Tz>>> =
+    let mut iter: Box<dyn Iterator<Item = DateTime<rrule::Tz>>> =
         Box::new(rruleset.into_iter().skip_while(move |&dt| dt > max_dt));
 
     if let Some(time_min) = time_min {
@@ -683,6 +682,7 @@ mod tests {
     use crate::api::v1::events::EventInviteeProfile;
 
     use super::*;
+    use chrono_tz::Tz;
     use std::time::SystemTime;
     use test_util::assert_eq_json;
     use types::core::{RoomId, TimeZone, UserId};
