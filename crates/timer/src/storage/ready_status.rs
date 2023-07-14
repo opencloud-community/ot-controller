@@ -19,7 +19,7 @@ struct ReadyStatusKey {
     participant_id: ParticipantId,
 }
 
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
+#[derive(Default, Debug, PartialEq, Eq, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
 #[to_redis_args(serde)]
 #[from_redis_value(serde)]
 pub struct ReadyStatus {

@@ -101,7 +101,7 @@ impl SignalingModule for Timer {
 
     type ExtEvent = ExpiredEvent;
 
-    type FrontendData = outgoing::Started;
+    type FrontendData = TimerStatus;
 
     type PeerFrontendData = ReadyStatus;
 
@@ -134,16 +134,34 @@ impl SignalingModule for Timer {
                     None => return Ok(()),
                 };
 
-                *frontend_data = Some(outgoing::Started {
-                    timer_id: timer.id,
-                    started_at: timer.started_at,
-                    kind: timer.kind,
-                    style: timer.style,
-                    title: timer.title,
-                    ready_check_enabled: timer.ready_check_enabled,
+                let ready_status = if timer.ready_check_enabled {
+                    Some(
+                        storage::ready_status::get(
+                            ctx.redis_conn(),
+                            self.room_id,
+                            self.participant_id,
+                        )
+                        .await?
+                        .unwrap_or_default()
+                        .ready_status,
+                    )
+                } else {
+                    None
+                };
+
+                *frontend_data = Some(TimerStatus {
+                    config: TimerConfig {
+                        timer_id: timer.id,
+                        started_at: timer.started_at,
+                        kind: timer.kind,
+                        style: timer.style,
+                        title: timer.title,
+                        ready_check_enabled: timer.ready_check_enabled,
+                    },
+                    ready_status,
                 });
 
-                if let outgoing::Kind::Countdown { ends_at } = timer.kind {
+                if let Kind::Countdown { ends_at } = timer.kind {
                     ctx.add_event_stream(once(
                         sleep(
                             ends_at
@@ -155,17 +173,17 @@ impl SignalingModule for Timer {
                     ));
                 }
 
+                if !timer.ready_check_enabled {
+                    return Ok(());
+                }
                 for (participant_id, status) in participants {
                     let ready_status =
                         storage::ready_status::get(ctx.redis_conn(), self.room_id, *participant_id)
-                            .await?;
+                            .await?
+                            .unwrap_or_default();
 
-                    *status = ready_status;
+                    *status = Some(ready_status);
                 }
-            }
-            Event::Leaving => {
-                storage::ready_status::delete(ctx.redis_conn(), self.room_id, self.participant_id)
-                    .await?;
             }
             Event::WsMessage(msg) => self.handle_ws_message(&mut ctx, msg).await?,
             Event::Exchange(event) => {
@@ -179,11 +197,29 @@ impl SignalingModule for Timer {
                     }
                 }
             }
-            // Unused events
-            Event::RaiseHand
+            Event::ParticipantJoined(id, data) => {
+                // As in Event::Joined, don't attach any timer-related information if no timer is active.
+                let timer = storage::timer::get(ctx.redis_conn(), self.room_id).await?;
+
+                let timer = match timer {
+                    Some(timer) => timer,
+                    None => return Ok(()),
+                };
+
+                if !timer.ready_check_enabled {
+                    return Ok(());
+                }
+                let ready_status = storage::ready_status::get(ctx.redis_conn(), self.room_id, id)
+                    .await?
+                    .unwrap_or_default();
+
+                *data = Some(ready_status);
+            }
+            // Unused
+            Event::Leaving
+            | Event::RaiseHand
             | Event::LowerHand
-            | Event::ParticipantJoined(..)
-            | Event::ParticipantUpdated(..)
+            | Event::ParticipantUpdated(_, _)
             | Event::ParticipantLeft(_)
             | Event::RoleUpdated(_) => {}
         }
@@ -233,7 +269,7 @@ impl Timer {
                         };
 
                         match started_at.checked_add_signed(chrono::Duration::seconds(duration)) {
-                            Some(ends_at) => outgoing::Kind::Countdown {
+                            Some(ends_at) => Kind::Countdown {
                                 ends_at: Timestamp::from(ends_at),
                             },
                             None => {
@@ -246,7 +282,7 @@ impl Timer {
                             }
                         }
                     }
-                    incoming::Kind::Stopwatch => outgoing::Kind::Stopwatch,
+                    incoming::Kind::Stopwatch => Kind::Stopwatch,
                 };
 
                 let timer = storage::timer::Timer {
@@ -269,12 +305,14 @@ impl Timer {
                 }
 
                 let started = outgoing::Started {
-                    timer_id,
-                    started_at,
-                    kind,
-                    style: start.style,
-                    title: start.title,
-                    ready_check_enabled: start.enable_ready_check,
+                    config: TimerConfig {
+                        timer_id,
+                        started_at,
+                        kind,
+                        style: start.style,
+                        title: start.title,
+                        ready_check_enabled: start.enable_ready_check,
+                    },
                 };
 
                 ctx.exchange_publish(
@@ -343,7 +381,7 @@ impl Timer {
     ) -> Result<()> {
         match event {
             exchange::Event::Start(started) => {
-                if let outgoing::Kind::Countdown { ends_at } = started.kind {
+                if let Kind::Countdown { ends_at } = started.config.kind {
                     ctx.add_event_stream(once(
                         sleep(
                             ends_at
@@ -352,7 +390,7 @@ impl Timer {
                                 .unwrap_or_default(),
                         )
                         .map(move |_| ExpiredEvent {
-                            timer_id: started.timer_id,
+                            timer_id: started.config.timer_id,
                         }),
                     ));
                 }
@@ -413,5 +451,151 @@ impl Timer {
         );
 
         Ok(())
+    }
+}
+
+/// The different timer variations
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case", tag = "kind")]
+pub enum Kind {
+    /// The timer continues to run until a moderator stops it.
+    Stopwatch,
+    /// The timer continues to run until its duration expires or if a moderator stops it beforehand.
+    Countdown { ends_at: Timestamp },
+}
+
+/// Status of a currently active timer
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TimerConfig {
+    /// The timer id
+    pub timer_id: TimerId,
+    /// start time of the timer
+    pub started_at: Timestamp,
+    /// Timer kind
+    #[serde(flatten)]
+    pub kind: Kind,
+    /// Style to use for the timer. Set by the sender.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub style: Option<String>,
+    /// The optional title of the timer
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub title: Option<String>,
+    /// Flag to allow/disallow participants to mark themselves as ready
+    pub ready_check_enabled: bool,
+}
+
+/// Status of and belonging to a currently active timer
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TimerStatus {
+    #[serde(flatten)]
+    pub config: TimerConfig,
+    /// Flag to indicate that the current participant has marked themselves as ready
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ready_status: Option<bool>,
+}
+
+#[cfg(test)]
+mod test {
+    use std::time::SystemTime;
+
+    use super::*;
+    use crate::Kind;
+    use chrono::{DateTime, Duration};
+    use test_util::assert_eq_json;
+    use types::core::Timestamp;
+
+    #[test]
+    fn timer_status_without_ready_status() {
+        let started_at: Timestamp = DateTime::from(SystemTime::UNIX_EPOCH).into();
+        let ends_at = started_at
+            .checked_add_signed(Duration::seconds(5))
+            .map(Timestamp::from)
+            .unwrap();
+
+        let timer_status = TimerStatus {
+            config: TimerConfig {
+                timer_id: TimerId::nil(),
+                started_at,
+                kind: Kind::Countdown { ends_at },
+                style: Some("coffee_break".into()),
+                title: None,
+                ready_check_enabled: false,
+            },
+            ready_status: None,
+        };
+
+        assert_eq_json!(timer_status,
+        {
+            "timer_id": "00000000-0000-0000-0000-000000000000",
+            "started_at": "1970-01-01T00:00:00Z",
+            "kind": "countdown",
+            "style": "coffee_break",
+            "ready_check_enabled": false,
+            "ends_at": "1970-01-01T00:00:05Z",
+        });
+    }
+
+    #[test]
+    fn timer_status_with_ready_status_true() {
+        let started_at: Timestamp = DateTime::from(SystemTime::UNIX_EPOCH).into();
+        let ends_at = started_at
+            .checked_add_signed(Duration::seconds(5))
+            .map(Timestamp::from)
+            .unwrap();
+
+        let timer_status = TimerStatus {
+            config: TimerConfig {
+                timer_id: TimerId::nil(),
+                started_at,
+                kind: Kind::Countdown { ends_at },
+                style: Some("coffee_break".into()),
+                title: None,
+                ready_check_enabled: true,
+            },
+            ready_status: Some(true),
+        };
+
+        assert_eq_json!(timer_status,
+        {
+            "timer_id": "00000000-0000-0000-0000-000000000000",
+            "started_at": "1970-01-01T00:00:00Z",
+            "kind": "countdown",
+            "style": "coffee_break",
+            "ready_check_enabled": true,
+            "ready_status": true,
+            "ends_at": "1970-01-01T00:00:05Z",
+        });
+    }
+
+    #[test]
+    fn timer_status_with_ready_status_false() {
+        let started_at: Timestamp = DateTime::from(SystemTime::UNIX_EPOCH).into();
+        let ends_at = started_at
+            .checked_add_signed(Duration::seconds(5))
+            .map(Timestamp::from)
+            .unwrap();
+
+        let timer_status = TimerStatus {
+            config: TimerConfig {
+                timer_id: TimerId::nil(),
+                started_at,
+                kind: Kind::Countdown { ends_at },
+                style: Some("coffee_break".into()),
+                title: None,
+                ready_check_enabled: true,
+            },
+            ready_status: Some(false),
+        };
+
+        assert_eq_json!(timer_status,
+        {
+            "timer_id": "00000000-0000-0000-0000-000000000000",
+            "started_at": "1970-01-01T00:00:00Z",
+            "kind": "countdown",
+            "style": "coffee_break",
+            "ready_check_enabled": true,
+            "ready_status": false,
+            "ends_at": "1970-01-01T00:00:05Z",
+        });
     }
 }
