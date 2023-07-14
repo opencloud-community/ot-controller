@@ -15,6 +15,8 @@ actix-http.workspace = true
 anyhow.workspace = true
 async-trait.workspace = true
 aws-sdk-s3.workspace = true
+aws-smithy-http = "0.55"
+aws-smithy-types = "0.55"
 bytes.workspace = true
 controller-settings = { path = "../controller-settings", package = "opentalk-controller-settings" }
 database = { path = "../database", package = "opentalk-database" }
@@ -38,6 +40,7 @@ thiserror.workspace = true
 tokio = { workspace = true }
 tracing.workspace = true
 types = { path = "../types", package = "opentalk-types", features = ["backend"] }
+url.workspace = true
 
 [dev-dependencies]
 pretty_assertions.workspace = true
