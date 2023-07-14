@@ -33,19 +33,19 @@ pub struct User {
     pub last_name: String,
     pub email: String,
     #[serde(default)]
-    pub attributes: Attributes,
+    pub attributes: serde_json::Map<String, serde_json::Value>,
 }
 
 impl User {
-    fn is_in_tenant(&self, tenant_id: &str) -> bool {
-        self.attributes.tenant_id.iter().any(|t| t == tenant_id)
-    }
-}
+    fn is_in_tenant(&self, tenant_id_user_attribute_name: &str, tenant_id: &str) -> bool {
+        if let Some(serde_json::Value::Array(tenant_id_vector)) =
+            &self.attributes.get(tenant_id_user_attribute_name)
+        {
+            return tenant_id_vector.iter().any(|t| t == tenant_id);
+        }
 
-#[derive(Default, Clone, Debug, Deserialize, PartialEq, Eq)]
-pub struct Attributes {
-    #[serde(default)]
-    pub tenant_id: Vec<String>,
+        false
+    }
 }
 
 #[derive(Serialize)]
@@ -91,6 +91,7 @@ impl KeycloakAdminClient {
     /// Query keycloak for users using the given search string, filtered by the tenant_id
     pub async fn search_user_filtered(
         &self,
+        tenant_id_user_attribute_name: &str,
         tenant_id: &str,
         search_str: &str,
     ) -> Result<Vec<User>> {
@@ -115,7 +116,7 @@ impl KeycloakAdminClient {
         let found_users: Vec<_> = found_results
             .into_iter()
             .filter_map(Option::<User>::from)
-            .filter(|user| user.is_in_tenant(tenant_id))
+            .filter(|user| user.is_in_tenant(tenant_id_user_attribute_name, tenant_id))
             .take(5)
             .collect::<Vec<User>>();
 
@@ -127,9 +128,9 @@ impl KeycloakAdminClient {
     }
 
     /// Query keycloak to get the first user that matches the given email
-    pub async fn get_user_for_email(
+    pub async fn get_user_for_email<'a>(
         &self,
-        tenant_id: Option<&str>,
+        tenant_filter: Option<TenantFilter<'a>>,
         email: &str,
     ) -> Result<Option<User>> {
         let url = self.url(["admin", "realms", &self.realm, "users"])?;
@@ -142,7 +143,12 @@ impl KeycloakAdminClient {
 
         let found_users: Vec<User> = response.json().await?;
         let first_matching_user = found_users.iter().find(|user| {
-            let tenant_matches = tenant_id.is_none() || user.is_in_tenant(tenant_id.unwrap());
+            let tenant_matches = match &tenant_filter {
+                Some(tenant_filter) => {
+                    user.is_in_tenant(tenant_filter.field_name, tenant_filter.id)
+                }
+                None => true,
+            };
             tenant_matches && user.email == email
         });
 
@@ -151,6 +157,11 @@ impl KeycloakAdminClient {
         }
         Ok(None)
     }
+}
+
+pub struct TenantFilter<'a> {
+    pub field_name: &'a str,
+    pub id: &'a str,
 }
 
 #[cfg(test)]

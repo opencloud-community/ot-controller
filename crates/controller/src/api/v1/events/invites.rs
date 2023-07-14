@@ -4,7 +4,7 @@
 
 use super::{ApiResponse, DefaultApiResult, PagePaginationQuery};
 use crate::api::v1::events::{
-    enrich_invitees_from_keycloak, EventInvitee, EventPoliciesBuilderExt,
+    enrich_invitees_from_keycloak, get_tenant_filter, EventInvitee, EventPoliciesBuilderExt,
 };
 use crate::api::v1::response::{ApiError, Created, NoContent};
 use crate::api::v1::rooms::RoomsPoliciesBuilderExt;
@@ -13,7 +13,6 @@ use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json, Path, Query, ReqData};
 use actix_web::{delete, get, patch, post, Either};
 use anyhow::Context;
-use controller_settings::TenantAssignment;
 use database::Db;
 use db_storage::events::email_invites::{EventEmailInvite, NewEventEmailInvite};
 use db_storage::events::shared_folders::EventSharedFolder;
@@ -396,13 +395,10 @@ async fn create_invite_to_non_matching_email(
 ) -> Result<Either<Created, NoContent>, ApiError> {
     let settings = settings.load();
 
-    let tenant_id = match &settings.tenants.assignment {
-        TenantAssignment::Static { .. } => None,
-        TenantAssignment::ByExternalTenantId => Some(current_tenant.oidc_tenant_id.inner()),
-    };
+    let tenant_filter = get_tenant_filter(&current_tenant, &settings.tenants.assignment);
 
     let invitee_user = kc_admin_client
-        .get_user_for_email(tenant_id.map(String::as_str), email.as_ref())
+        .get_user_for_email(tenant_filter, email.as_ref())
         .await
         .context("Failed to query user for email")?;
 
