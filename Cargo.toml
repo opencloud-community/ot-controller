@@ -33,6 +33,7 @@ futures = "0.3"
 itertools = "0.11"
 lapin = { version = "2", default-features = false }
 log = "0.4"
+md5 = "0.7"
 openidconnect = "3"
 opentelemetry = { version = "0.19", default-features = false, features = ["metrics"] }
 owo-colors = "3"

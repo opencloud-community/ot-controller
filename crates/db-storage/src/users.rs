@@ -6,6 +6,7 @@
 use super::groups::{Group, UserGroupRelation};
 use super::schema::{groups, users};
 use crate::{levenshtein, lower, soundex};
+use controller_settings::Settings;
 use database::{DbConnection, Paginate, Result};
 use diesel::prelude::*;
 use diesel::{
@@ -15,6 +16,7 @@ use diesel::{
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
 use std::fmt;
+use types::api::v1::users::{PrivateUserProfile, PublicUserProfile};
 use types::core::{TariffId, TariffStatus, TenantId, UserId};
 
 types::diesel_newtype! {
@@ -276,7 +278,45 @@ impl User {
 
         Ok(matches)
     }
+
+    pub fn to_public_user_profile(&self, settings: &Settings) -> PublicUserProfile {
+        let avatar_url = email_to_libravatar_url(&settings.avatar.libravatar_url, &self.email);
+
+        PublicUserProfile {
+            id: self.id,
+            email: self.email.clone(),
+            title: self.title.clone(),
+            firstname: self.firstname.clone(),
+            lastname: self.lastname.clone(),
+            display_name: self.display_name.clone(),
+            avatar_url,
+        }
+    }
+
+    pub fn to_private_user_profile(&self, settings: &Settings) -> PrivateUserProfile {
+        let avatar_url = email_to_libravatar_url(&settings.avatar.libravatar_url, &self.email);
+
+        PrivateUserProfile {
+            id: self.id,
+            email: self.email.clone(),
+            title: self.title.clone(),
+            firstname: self.firstname.clone(),
+            lastname: self.lastname.clone(),
+            display_name: self.display_name.clone(),
+            dashboard_theme: self.dashboard_theme.clone(),
+            conference_theme: self.conference_theme.clone(),
+            avatar_url,
+            language: self.language.clone(),
+            tariff_status: self.tariff_status,
+        }
+    }
 }
+
+/// Helper function to turn an email address into libravatar URL.
+pub fn email_to_libravatar_url(libravatar_url: &str, email: &str) -> String {
+    format!("{}{:x}", libravatar_url, md5::compute(email))
+}
+
 /// Diesel insertable user struct
 ///
 /// Represents fields that have to be provided on user insertion.
