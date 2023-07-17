@@ -146,9 +146,10 @@ pretty_assertions.workspace = true
 
 [build-dependencies]
 anyhow.workspace = true
-vergen = { version = "7.5", default-features = false, features = [
+vergen = { version = "8", features = [
     "build",
     "cargo",
     "rustc",
     "git",
+    "git2",
 ] }

@@ -3,37 +3,66 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use anyhow::Result;
-use vergen::{vergen, Config};
+use vergen::EmitBuilder;
 
-fn add_custom_environment_variable(name: &str, config_flag: &mut bool) {
+/// Use an environment variable instead of letting `vergen` determine the value.
+/// This allows reproducible builds by removing differences between subsequent builds.
+/// If the environment variable `name` is set, it will be used to print the cargo instructions,
+/// otherwise `enable_fn` will be called and `vergen` will determine what to print.
+fn add_custom_environment_variable<F: FnMut(&mut EmitBuilder) -> &mut EmitBuilder>(
+    name: &str,
+    builder: &mut EmitBuilder,
+    mut enable_fn: F,
+) {
     if let Ok(s) = std::env::var(name) {
-        *config_flag = false;
         println!("cargo:rustc-env={name}={s}");
+    } else {
+        enable_fn(builder);
     }
     println!("cargo:rerun-if-env-changed={name}");
 }
 
 fn main() -> Result<()> {
-    let mut config = if !git_at_cd_or_above()? {
-        // Setup your config without git disabled
-        let mut config = Config::default();
-        *config.git_mut().enabled_mut() = false;
-        config
-    } else {
-        // Setup your config with git enabled
-        Config::default()
-    };
+    let builder = &mut EmitBuilder::builder();
+    builder
+        .all_cargo()
+        .all_rustc()
+        // The following enables all git features except the ones we want to control manually
+        // Taken from `EmitBuilder::all_git`'s implementation
+        .git_commit_author_email()
+        .git_commit_author_name()
+        .git_commit_count()
+        .git_commit_date()
+        .git_commit_message()
+        .git_describe(false, false, None);
 
-    add_custom_environment_variable("VERGEN_BUILD_TIMESTAMP", config.build_mut().timestamp_mut());
-    add_custom_environment_variable("VERGEN_GIT_SHA", config.git_mut().sha_mut());
     add_custom_environment_variable(
-        "VERGEN_GIT_COMMIT_TIMESTAMP",
-        config.git_mut().commit_timestamp_mut(),
+        "VERGEN_BUILD_TIMESTAMP",
+        builder,
+        EmitBuilder::build_timestamp,
     );
-    add_custom_environment_variable("VERGEN_GIT_BRANCH", config.git_mut().branch_mut());
 
-    // Generate the default 'cargo:' instruction output
-    vergen(config)
+    if git_at_cd_or_above()? {
+        add_custom_environment_variable("VERGEN_GIT_SHA", builder, |builder| {
+            const USE_SHORT: bool = false;
+            builder.git_sha(USE_SHORT)
+        });
+
+        add_custom_environment_variable(
+            "VERGEN_GIT_COMMIT_TIMESTAMP",
+            builder,
+            EmitBuilder::git_commit_timestamp,
+        );
+
+        add_custom_environment_variable("VERGEN_GIT_BRANCH", builder, EmitBuilder::git_branch);
+    } else {
+        // Disable git for vergen builder
+        builder.disable_git();
+    }
+
+    builder.emit()?;
+
+    Ok(())
 }
 
 fn git_at_cd_or_above() -> Result<bool> {
