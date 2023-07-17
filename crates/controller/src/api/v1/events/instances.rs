@@ -227,6 +227,7 @@ pub async fn get_event_instances(
     // Enrich the invitees for the first instance only and reuse them as all instances have the same invitees.
     let event_instances = if let Some(instance) = instances_data.instances.first() {
         let enriched_invitees = enrich_invitees_from_keycloak(
+            settings,
             kc_admin_client_ref,
             &current_tenant,
             instance.invitees.clone(),
@@ -322,6 +323,7 @@ pub async fn get_event_instance(
 
     let event_instance = EventInstance {
         invitees: enrich_invitees_from_keycloak(
+            settings,
             &kc_admin_client,
             &current_tenant,
             event_instance.invitees,
@@ -533,6 +535,7 @@ pub async fn patch_event_instance(
 
     let event_instance = EventInstance {
         invitees: enrich_invitees_from_keycloak(
+            settings,
             &kc_admin_client,
             &current_tenant,
             event_instance.invitees,

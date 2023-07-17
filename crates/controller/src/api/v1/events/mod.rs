@@ -23,7 +23,7 @@ use actix_web::web::{Data, Json, Path, Query, ReqData};
 use actix_web::{delete, get, patch, post, Either};
 use chrono::{DateTime, Datelike, NaiveTime, TimeZone as _, Utc};
 use chrono_tz::Tz;
-use controller_settings::Settings;
+use controller_settings::{Settings, TenantAssignment};
 use database::{Db, DbConnection};
 use db_storage::events::shared_folders::EventSharedFolder;
 use db_storage::events::{
@@ -1085,6 +1085,7 @@ pub async fn get_events(
             match resource {
                 EventOrException::Event(inner) => EventOrException::Event(EventResource {
                     invitees: enrich_invitees_from_keycloak(
+                        settings.clone(),
                         kc_admin_client_ref,
                         &current_tenant,
                         inner.invitees,
@@ -1182,6 +1183,7 @@ pub async fn get_event(
 
     let event_resource = EventResource {
         invitees: enrich_invitees_from_keycloak(
+            settings,
             &kc_admin_client,
             &current_tenant,
             event_resource.invitees,
@@ -1458,6 +1460,7 @@ pub async fn patch_event(
 
     if send_email_notification {
         notify_invitees_about_update(
+            settings.clone(),
             notification_values,
             mail_service,
             &kc_admin_client,
@@ -1468,6 +1471,7 @@ pub async fn patch_event(
 
     let event_resource = EventResource {
         invitees: enrich_invitees_from_keycloak(
+            settings,
             &kc_admin_client,
             &current_tenant,
             event_resource.invitees,
@@ -1483,14 +1487,20 @@ pub async fn patch_event(
 ///
 /// Notify invited users about the event update
 async fn notify_invitees_about_update(
+    settings: Arc<Settings>,
     notification_values: UpdateNotificationValues,
     mail_service: Arc<MailService>,
     kc_admin_client: &Data<KeycloakAdminClient>,
     shared_folder: Option<SharedFolder>,
 ) {
     for invited_user in notification_values.invited_users {
-        let invited_user =
-            enrich_from_keycloak(invited_user, &notification_values.tenant, kc_admin_client).await;
+        let invited_user = enrich_from_keycloak(
+            settings.clone(),
+            invited_user,
+            &notification_values.tenant,
+            kc_admin_client,
+        )
+        .await;
 
         if let Err(e) = mail_service
             .send_event_update(
@@ -1707,6 +1717,7 @@ pub struct DeleteEventQuery {
 #[delete("/events/{event_id}")]
 #[allow(clippy::too_many_arguments)]
 pub async fn delete_event(
+    settings: SharedSettingsActix,
     db: Data<Db>,
     kc_admin_client: Data<KeycloakAdminClient>,
     current_tenant: ReqData<Tenant>,
@@ -1716,6 +1727,7 @@ pub async fn delete_event(
     event_id: Path<EventId>,
     mail_service: Data<MailService>,
 ) -> Result<NoContent, ApiError> {
+    let settings = settings.load_full();
     let current_user = current_user.into_inner();
     let event_id = event_id.into_inner();
     let mail_service = mail_service.into_inner();
@@ -1751,6 +1763,7 @@ pub async fn delete_event(
 
     if send_email_notification {
         notify_invitees_about_delete(
+            settings,
             notification_values,
             mail_service,
             &kc_admin_client,
@@ -1770,6 +1783,7 @@ pub async fn delete_event(
 ///
 /// Notify invited users about the event deletion
 async fn notify_invitees_about_delete(
+    settings: Arc<Settings>,
     notification_values: CancellationNotificationValues,
     mail_service: Arc<MailService>,
     kc_admin_client: &Data<KeycloakAdminClient>,
@@ -1780,8 +1794,13 @@ async fn notify_invitees_about_delete(
         return;
     }
     for invited_user in notification_values.invited_users {
-        let invited_user =
-            enrich_from_keycloak(invited_user, &notification_values.tenant, kc_admin_client).await;
+        let invited_user = enrich_from_keycloak(
+            settings.clone(),
+            invited_user,
+            &notification_values.tenant,
+            kc_admin_client,
+        )
+        .await;
 
         if let Err(e) = mail_service
             .send_event_cancellation(
@@ -1914,15 +1933,22 @@ async fn get_invited_mail_recipients_for_event(
 }
 
 async fn enrich_invitees_from_keycloak(
+    settings: Arc<Settings>,
     kc_admin_client: &Data<KeycloakAdminClient>,
     current_tenant: &Tenant,
     invitees: Vec<EventInvitee>,
 ) -> Vec<EventInvitee> {
+    let tenant_assignment = &settings.tenants.assignment;
     let invitee_mapping_futures = invitees.into_iter().map(|invitee| async move {
         if let EventInviteeProfile::Email(profile_details) = invitee.profile {
+            let tenant_id = match tenant_assignment {
+                TenantAssignment::Static { .. } => None,
+                TenantAssignment::ByExternalTenantId => Some(current_tenant.oidc_tenant_id.inner()),
+            };
+
             let user_for_email = kc_admin_client
                 .get_user_for_email(
-                    current_tenant.oidc_tenant_id.inner(),
+                    tenant_id.map(String::as_str),
                     profile_details.email.as_ref(),
                 )
                 .await
@@ -2211,16 +2237,20 @@ where
 }
 
 async fn enrich_from_keycloak(
+    settings: Arc<Settings>,
     recipient: MailRecipient,
     current_tenant: &Tenant,
     kc_admin_client: &Data<KeycloakAdminClient>,
 ) -> MailRecipient {
+    let tenant_assignment = &settings.tenants.assignment;
     if let MailRecipient::External(recipient) = recipient {
+        let tenant_id = match tenant_assignment {
+            TenantAssignment::Static { .. } => None,
+            TenantAssignment::ByExternalTenantId => Some(current_tenant.oidc_tenant_id.inner()),
+        };
+
         let keycloak_user = kc_admin_client
-            .get_user_for_email(
-                current_tenant.oidc_tenant_id.inner(),
-                recipient.email.as_ref(),
-            )
+            .get_user_for_email(tenant_id.map(String::as_str), recipient.email.as_ref())
             .await
             .unwrap_or_default();
 
