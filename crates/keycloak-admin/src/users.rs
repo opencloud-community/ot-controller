@@ -127,7 +127,11 @@ impl KeycloakAdminClient {
     }
 
     /// Query keycloak to get the first user that matches the given email
-    pub async fn get_user_for_email(&self, tenant_id: &str, email: &str) -> Result<Option<User>> {
+    pub async fn get_user_for_email(
+        &self,
+        tenant_id: Option<&str>,
+        email: &str,
+    ) -> Result<Option<User>> {
         let url = self.url(["admin", "realms", &self.realm, "users"])?;
 
         let query = VerifyEmailQuery { email, exact: true };
@@ -137,9 +141,10 @@ impl KeycloakAdminClient {
             .await?;
 
         let found_users: Vec<User> = response.json().await?;
-        let first_matching_user = found_users
-            .iter()
-            .find(|user| user.is_in_tenant(tenant_id) && user.email == email);
+        let first_matching_user = found_users.iter().find(|user| {
+            let tenant_matches = tenant_id.is_none() || user.is_in_tenant(tenant_id.unwrap());
+            tenant_matches && user.email == email
+        });
 
         if let Some(user) = first_matching_user {
             return Ok(Some((*user).clone()));
