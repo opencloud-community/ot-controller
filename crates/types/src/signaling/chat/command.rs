@@ -2,37 +2,64 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::Scope;
-use serde::Deserialize;
-use types::core::Timestamp;
+//! Signaling commands for the `chat` namespace
 
-#[derive(Debug, Deserialize)]
-#[serde(tag = "action", rename_all = "snake_case")]
-pub enum Message {
+use super::Scope;
+
+use crate::core::Timestamp;
+#[allow(unused_imports)]
+use crate::imports::*;
+
+/// Commands for the `chat` namespace
+#[derive(Debug, Clone)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(tag = "action", rename_all = "snake_case")
+)]
+pub enum ChatCommand {
+    /// Enable chat messaging
     EnableChat,
+
+    /// Disable chat messaging
     DisableChat,
+
+    /// Send chat message
     SendMessage(SendMessage),
+
+    /// Clear chat history
     ClearHistory,
+
+    /// Set last seen timestamp
     SetLastSeenTimestamp {
-        #[serde(flatten)]
+        /// Scope of the timestamp
+        #[cfg_attr(feature = "serde", serde(flatten))]
         scope: Scope,
+
+        /// Last seen timestamp
         timestamp: Timestamp,
     },
 }
 
-#[derive(Debug, Deserialize)]
+/// Send a chat message content with a specific scope
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct SendMessage {
+    /// The content of the message
     pub content: String,
-    #[serde(flatten)]
+
+    /// The scope of the message
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub scope: Scope,
 }
 
 #[cfg(test)]
 mod test {
+    use crate::core::{GroupName, ParticipantId};
+
     use super::*;
     use pretty_assertions::assert_eq;
     use serde_json::json;
-    use types::core::{GroupName, ParticipantId};
 
     #[test]
     fn user_private_message() {
@@ -43,9 +70,9 @@ mod test {
             "content": "Hello Bob!"
         });
 
-        let msg: Message = serde_json::from_value(json).unwrap();
+        let msg: ChatCommand = serde_json::from_value(json).unwrap();
 
-        if let Message::SendMessage(SendMessage { content, scope }) = msg {
+        if let ChatCommand::SendMessage(SendMessage { content, scope }) = msg {
             assert_eq!(scope, Scope::Private(ParticipantId::nil()));
             assert_eq!(content, "Hello Bob!");
         } else {
@@ -62,9 +89,9 @@ mod test {
             "content": "Hello managers!"
         });
 
-        let msg: Message = serde_json::from_value(json).unwrap();
+        let msg: ChatCommand = serde_json::from_value(json).unwrap();
 
-        if let Message::SendMessage(SendMessage { content, scope }) = msg {
+        if let ChatCommand::SendMessage(SendMessage { content, scope }) = msg {
             assert_eq!(
                 scope,
                 Scope::Group(GroupName::from("management".to_owned()))
@@ -83,9 +110,9 @@ mod test {
             "content": "Hello all!"
         });
 
-        let msg: Message = serde_json::from_value(json).unwrap();
+        let msg: ChatCommand = serde_json::from_value(json).unwrap();
 
-        if let Message::SendMessage(SendMessage { content, scope }) = msg {
+        if let ChatCommand::SendMessage(SendMessage { content, scope }) = msg {
             assert_eq!(scope, Scope::Global);
             assert_eq!(content, "Hello all!");
         } else {

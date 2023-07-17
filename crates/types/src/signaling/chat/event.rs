@@ -2,62 +2,107 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use serde::{Deserialize, Serialize};
-use types::core::ParticipantId;
+//! Signaling events for the `chat` namespace
 
-use crate::{MessageId, Scope};
+use crate::core::ParticipantId;
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(tag = "message", rename_all = "snake_case")]
-pub enum Message {
+#[allow(unused_imports)]
+use crate::imports::*;
+
+use super::{MessageId, Scope};
+
+/// A chat event which occured
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(tag = "message", rename_all = "snake_case")
+)]
+pub enum ChatEvent {
+    /// Chat event where chat was enabled see [ChatEnabled]
     ChatEnabled(ChatEnabled),
+
+    /// Chat event where chat was disabled see [ChatDisabled]
     ChatDisabled(ChatDisabled),
+
+    /// Chat event where a message was sent see [MessageSent]
     MessageSent(MessageSent),
+
+    /// Chat event where history was cleared see [HistoryCleared]
     HistoryCleared(HistoryCleared),
+
+    /// Chat event which errored see [Error]
     Error(Error),
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+/// The chat was enabled
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ChatEnabled {
+    /// Participant who enabled the chat
     pub issued_by: ParticipantId,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+/// The chat was disabled
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ChatDisabled {
+    /// Participant who disabled the chat
     pub issued_by: ParticipantId,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+/// A message was sent
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct MessageSent {
+    /// Id of the message
     pub id: MessageId,
+
+    /// Sender of the message
     pub source: ParticipantId,
+
+    /// Content of the message
     pub content: String,
-    #[serde(flatten)]
+
+    /// Scope of the message
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub scope: Scope,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+/// The chat history was cleared
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct HistoryCleared {
+    /// ID of the participant that cleared chat history
     pub issued_by: ParticipantId,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(tag = "error", rename_all = "snake_case")]
+/// Errors from the `chat` module namespace
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(tag = "error", rename_all = "snake_case")
+)]
 pub enum Error {
+    /// Request while chat is disabled
     ChatDisabled,
+
+    /// Request user has insufficient permissions
     InsufficientPermissions,
 }
 
 #[cfg(test)]
 mod test {
+    use crate::core::GroupName;
+
     use super::*;
     use pretty_assertions::assert_eq;
     use serde_json::json;
-    use types::core::GroupName;
 
     #[test]
     fn global_serialize() {
-        let produced = serde_json::to_value(Message::MessageSent(MessageSent {
+        let produced = serde_json::to_value(ChatEvent::MessageSent(MessageSent {
             id: MessageId::nil(),
             source: ParticipantId::nil(),
             content: "Hello All!".to_string(),
@@ -78,7 +123,7 @@ mod test {
 
     #[test]
     fn group_serialize() {
-        let produced = serde_json::to_value(Message::MessageSent(MessageSent {
+        let produced = serde_json::to_value(ChatEvent::MessageSent(MessageSent {
             id: MessageId::nil(),
             source: ParticipantId::nil(),
             content: "Hello managers!".to_string(),
@@ -98,7 +143,7 @@ mod test {
 
     #[test]
     fn private_serialize() {
-        let produced = serde_json::to_value(Message::MessageSent(MessageSent {
+        let produced = serde_json::to_value(ChatEvent::MessageSent(MessageSent {
             id: MessageId::nil(),
             source: ParticipantId::nil(),
             content: "Hello All!".to_string(),
@@ -119,7 +164,7 @@ mod test {
 
     #[test]
     fn error_serialize() {
-        let produced = serde_json::to_value(Message::Error(Error::ChatDisabled)).unwrap();
+        let produced = serde_json::to_value(ChatEvent::Error(Error::ChatDisabled)).unwrap();
         let expected = json!({
             "message": "error",
             "error": "chat_disabled",

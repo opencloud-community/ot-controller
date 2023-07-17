@@ -11,94 +11,35 @@
 use anyhow::Result;
 use database::Db;
 use db_storage::groups::Group;
-use outgoing::{ChatDisabled, ChatEnabled, HistoryCleared, MessageSent};
 use r3dlock::Mutex;
-use redis_args::ToRedisArgs;
-use serde::{Deserialize, Serialize};
 use signaling_core::{
     control::{self, exchange},
     DestroyContext, Event, InitContext, ModuleContext, Participant, RedisConnection,
     SignalingModule, SignalingModuleInitData, SignalingRoomId,
 };
-use storage::StoredMessage;
 use types::{
     core::{GroupId, GroupName, ParticipantId, Timestamp, UserId},
-    signaling::Role,
+    signaling::{
+        chat::{
+            command::{ChatCommand, SendMessage},
+            event::{ChatDisabled, ChatEnabled, ChatEvent, Error, HistoryCleared, MessageSent},
+            peer_state::ChatPeerState,
+            state::{ChatState, GroupHistory, PrivateHistory, StoredMessage},
+            MessageId, Scope,
+        },
+        Role,
+    },
 };
 
 use std::collections::HashMap;
-use std::fmt;
-use std::str::{from_utf8, FromStr};
 use std::sync::Arc;
 
-pub mod incoming;
-pub mod outgoing;
 mod storage;
 
 pub use storage::is_chat_enabled;
 
 fn current_room_by_group_id(room_id: SignalingRoomId, group_id: GroupId) -> String {
     format!("room={room_id}:group={group_id}")
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(tag = "scope", content = "target", rename_all = "snake_case")]
-pub enum Scope {
-    Global,
-    Group(GroupName),
-    Private(ParticipantId),
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, Eq, PartialEq, ToRedisArgs)]
-#[to_redis_args(fmt)]
-pub struct MessageId(uuid::Uuid);
-
-impl MessageId {
-    pub fn new() -> Self {
-        MessageId(uuid::Uuid::new_v4())
-    }
-
-    /// Create a nil message id (all bytes are zero).
-    ///
-    /// This method should not be used in production code, but is only
-    /// available to allow tests the creation of nil message ids.
-    /// It is public because other crates might want to use it, but
-    /// it is explicitly hidden from the documentation.
-    #[doc(hidden)]
-    pub fn nil() -> Self {
-        MessageId(uuid::Uuid::nil())
-    }
-}
-
-impl Default for MessageId {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl fmt::Display for MessageId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.0.fmt(f)
-    }
-}
-
-impl redis::FromRedisValue for MessageId {
-    fn from_redis_value(v: &redis::Value) -> redis::RedisResult<Self> {
-        match v {
-            redis::Value::Data(bytes) => uuid::Uuid::from_str(from_utf8(bytes)?)
-                .map(MessageId)
-                .map_err(|_| {
-                    redis::RedisError::from((
-                        redis::ErrorKind::TypeError,
-                        "invalid data for MessageId",
-                    ))
-                }),
-            _ => redis::RedisResult::Err(redis::RedisError::from((
-                redis::ErrorKind::TypeError,
-                "invalid data type for MessageId",
-            ))),
-        }
-    }
 }
 
 pub struct Chat {
@@ -117,19 +58,19 @@ impl Chat {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct ChatState {
-    pub enabled: bool,
-    pub room_history: Vec<StoredMessage>,
-    pub groups_history: Vec<GroupHistory>,
-    pub private_history: Vec<PrivateHistory>,
-    pub last_seen_timestamp_global: Option<Timestamp>,
-    pub last_seen_timestamps_private: HashMap<ParticipantId, Timestamp>,
-    pub last_seen_timestamps_group: HashMap<GroupName, Timestamp>,
+#[async_trait::async_trait(?Send)]
+trait ChatStateExt: Sized {
+    async fn for_current_room_and_participant(
+        redis_conn: &mut RedisConnection,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        groups: &[Group],
+    ) -> Result<Self>;
 }
 
-impl ChatState {
-    pub async fn for_current_room_and_participant(
+#[async_trait::async_trait(?Send)]
+impl ChatStateExt for ChatState {
+    async fn for_current_room_and_participant(
         redis_conn: &mut RedisConnection,
         room: SignalingRoomId,
         participant: ParticipantId,
@@ -183,37 +124,20 @@ impl ChatState {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct GroupHistory {
-    name: GroupName,
-    history: Vec<StoredMessage>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct PrivateHistory {
-    pub correspondent: ParticipantId,
-    pub history: Vec<StoredMessage>,
-}
-
-#[derive(Serialize)]
-pub struct PeerFrontendData {
-    groups: Vec<GroupName>,
-}
-
 #[async_trait::async_trait(? Send)]
 impl SignalingModule for Chat {
     const NAMESPACE: &'static str = "chat";
 
     type Params = ();
 
-    type Incoming = incoming::Message;
-    type Outgoing = outgoing::Message;
-    type ExchangeMessage = outgoing::Message;
+    type Incoming = ChatCommand;
+    type Outgoing = ChatEvent;
+    type ExchangeMessage = ChatEvent;
 
     type ExtEvent = ();
 
     type FrontendData = ChatState;
-    type PeerFrontendData = PeerFrontendData;
+    type PeerFrontendData = ChatPeerState;
 
     async fn init(
         mut ctx: InitContext<'_, Self>,
@@ -325,7 +249,7 @@ impl SignalingModule for Chat {
                 // into the PeerFrontendData
                 for (participant_id, common_groups) in participant_to_common_groups_mappings {
                     if let Some(participant_frontend_data) = participants.get_mut(&participant_id) {
-                        *participant_frontend_data = Some(PeerFrontendData {
+                        *participant_frontend_data = Some(ChatPeerState {
                             groups: common_groups,
                         });
                     } else {
@@ -363,7 +287,7 @@ impl SignalingModule for Chat {
                         .map(|group| group.name.clone())
                         .collect();
 
-                    *peer_frontend_data = Some(PeerFrontendData {
+                    *peer_frontend_data = Some(ChatPeerState {
                         groups: common_groups,
                     });
                 }
@@ -371,11 +295,9 @@ impl SignalingModule for Chat {
             Event::ParticipantLeft(_) => {}
             Event::ParticipantUpdated(_, _) => {}
             Event::RoleUpdated(_) => {}
-            Event::WsMessage(incoming::Message::EnableChat) => {
+            Event::WsMessage(ChatCommand::EnableChat) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::InsufficientPermissions,
-                    ));
+                    ctx.ws_send(ChatEvent::Error(Error::InsufficientPermissions));
                     return Ok(());
                 }
 
@@ -383,14 +305,12 @@ impl SignalingModule for Chat {
 
                 ctx.exchange_publish(
                     exchange::current_room_all_participants(self.room),
-                    outgoing::Message::ChatEnabled(ChatEnabled { issued_by: self.id }),
+                    ChatEvent::ChatEnabled(ChatEnabled { issued_by: self.id }),
                 );
             }
-            Event::WsMessage(incoming::Message::DisableChat) => {
+            Event::WsMessage(ChatCommand::DisableChat) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::InsufficientPermissions,
-                    ));
+                    ctx.ws_send(ChatEvent::Error(Error::InsufficientPermissions));
                     return Ok(());
                 }
 
@@ -398,13 +318,10 @@ impl SignalingModule for Chat {
 
                 ctx.exchange_publish(
                     exchange::current_room_all_participants(self.room),
-                    outgoing::Message::ChatDisabled(ChatDisabled { issued_by: self.id }),
+                    ChatEvent::ChatDisabled(ChatDisabled { issued_by: self.id }),
                 );
             }
-            Event::WsMessage(incoming::Message::SendMessage(incoming::SendMessage {
-                scope,
-                mut content,
-            })) => {
+            Event::WsMessage(ChatCommand::SendMessage(SendMessage { scope, mut content })) => {
                 // Discard empty messages
                 if content.is_empty() {
                     return Ok(());
@@ -414,7 +331,7 @@ impl SignalingModule for Chat {
                     storage::is_chat_enabled(ctx.redis_conn(), self.room.room_id()).await?;
 
                 if !chat_enabled {
-                    ctx.ws_send(outgoing::Message::Error(outgoing::Error::ChatDisabled));
+                    ctx.ws_send(ChatEvent::Error(Error::ChatDisabled));
                     return Ok(());
                 }
 
@@ -438,7 +355,7 @@ impl SignalingModule for Chat {
                 match scope {
                     Scope::Private(target) => {
                         let out_message_contents = MessageSent {
-                            id: MessageId::new(),
+                            id: MessageId::generate(),
                             source,
                             content,
                             scope: Scope::Private(target),
@@ -469,7 +386,7 @@ impl SignalingModule for Chat {
                         )
                         .await?;
 
-                        let out_message = outgoing::Message::MessageSent(out_message_contents);
+                        let out_message = ChatEvent::MessageSent(out_message_contents);
 
                         ctx.exchange_publish(
                             exchange::current_room_by_participant_id(self.room, target),
@@ -481,7 +398,7 @@ impl SignalingModule for Chat {
                     Scope::Group(group_name) => {
                         if let Some(group) = self.get_group(&group_name) {
                             let out_message_contents = MessageSent {
-                                id: MessageId::new(),
+                                id: MessageId::generate(),
                                 source,
                                 content,
                                 scope: Scope::Group(group_name),
@@ -503,7 +420,7 @@ impl SignalingModule for Chat {
                             )
                             .await?;
 
-                            let out_message = outgoing::Message::MessageSent(out_message_contents);
+                            let out_message = ChatEvent::MessageSent(out_message_contents);
 
                             ctx.exchange_publish(
                                 current_room_by_group_id(self.room, group.id),
@@ -513,7 +430,7 @@ impl SignalingModule for Chat {
                     }
                     Scope::Global => {
                         let out_message_contents = MessageSent {
-                            id: MessageId::new(),
+                            id: MessageId::generate(),
                             source,
                             content,
                             scope: Scope::Global,
@@ -534,7 +451,7 @@ impl SignalingModule for Chat {
                         )
                         .await?;
 
-                        let out_message = outgoing::Message::MessageSent(out_message_contents);
+                        let out_message = ChatEvent::MessageSent(out_message_contents);
 
                         ctx.exchange_publish(
                             exchange::current_room_all_participants(self.room),
@@ -543,11 +460,9 @@ impl SignalingModule for Chat {
                     }
                 }
             }
-            Event::WsMessage(incoming::Message::ClearHistory) => {
+            Event::WsMessage(ChatCommand::ClearHistory) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::InsufficientPermissions,
-                    ));
+                    ctx.ws_send(ChatEvent::Error(Error::InsufficientPermissions));
                     return Ok(());
                 }
 
@@ -558,10 +473,10 @@ impl SignalingModule for Chat {
 
                 ctx.exchange_publish(
                     exchange::current_room_all_participants(self.room),
-                    outgoing::Message::HistoryCleared(HistoryCleared { issued_by: self.id }),
+                    ChatEvent::HistoryCleared(HistoryCleared { issued_by: self.id }),
                 );
             }
-            Event::WsMessage(incoming::Message::SetLastSeenTimestamp { scope, timestamp }) => {
+            Event::WsMessage(ChatCommand::SetLastSeenTimestamp { scope, timestamp }) => {
                 match scope {
                     Scope::Private(other_participant) => {
                         self.last_seen_timestamps_private
@@ -762,38 +677,5 @@ impl SignalingModule for Chat {
 
     async fn build_params(_init: &SignalingModuleInitData) -> Result<Option<Self::Params>> {
         Ok(Some(()))
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    use chrono::DateTime;
-    use pretty_assertions::assert_eq;
-    use serde_json::json;
-    use std::str::FromStr;
-
-    #[test]
-    fn server_message() {
-        let expected = json!({
-            "id":"00000000-0000-0000-0000-000000000000",
-            "source":"00000000-0000-0000-0000-000000000000",
-            "timestamp":"2021-06-24T14:00:11.873753715Z",
-            "content":"Hello All!",
-            "scope":"global",
-        });
-
-        let produced = serde_json::to_value(StoredMessage {
-            id: MessageId::nil(),
-            source: ParticipantId::nil(),
-            timestamp: DateTime::from_str("2021-06-24T14:00:11.873753715Z")
-                .unwrap()
-                .into(),
-            content: "Hello All!".to_string(),
-            scope: Scope::Global,
-        })
-        .unwrap();
-
-        assert_eq!(expected, produced);
     }
 }
