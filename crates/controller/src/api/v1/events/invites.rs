@@ -13,6 +13,7 @@ use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json, Path, Query, ReqData};
 use actix_web::{delete, get, patch, post, Either};
 use anyhow::Context;
+use controller_settings::TenantAssignment;
 use database::Db;
 use db_storage::events::email_invites::{EventEmailInvite, NewEventEmailInvite};
 use db_storage::events::shared_folders::EventSharedFolder;
@@ -83,7 +84,8 @@ pub async fn get_invites_for_event(
         .take(per_page as usize)
         .collect();
 
-    let invitees = enrich_invitees_from_keycloak(&kc_admin_client, &current_tenant, invitees).await;
+    let invitees =
+        enrich_invitees_from_keycloak(settings, &kc_admin_client, &current_tenant, invitees).await;
 
     Ok(ApiResponse::new(invitees).with_page_pagination(
         per_page,
@@ -392,17 +394,19 @@ async fn create_invite_to_non_matching_email(
     email: EmailAddress,
     shared_folder: Option<SharedFolder>,
 ) -> Result<Either<Created, NoContent>, ApiError> {
+    let settings = settings.load();
+
+    let tenant_id = match &settings.tenants.assignment {
+        TenantAssignment::Static { .. } => None,
+        TenantAssignment::ByExternalTenantId => Some(current_tenant.oidc_tenant_id.inner()),
+    };
+
     let invitee_user = kc_admin_client
-        .get_user_for_email(current_tenant.oidc_tenant_id.inner(), email.as_ref())
+        .get_user_for_email(tenant_id.map(String::as_str), email.as_ref())
         .await
         .context("Failed to query user for email")?;
 
-    if invitee_user.is_some()
-        || settings
-            .load()
-            .endpoints
-            .event_invite_external_email_address
-    {
+    if invitee_user.is_some() || settings.endpoints.event_invite_external_email_address {
         let inviter = current_user.clone();
         let invitee_email = email.clone();
 
