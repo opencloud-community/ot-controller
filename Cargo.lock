@@ -1290,9 +1290,9 @@ dependencies = [
 
 [[package]]
 name = "chrono-tz"
-version = "0.6.3"
+version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "29c39203181991a7dd4343b8005bd804e7a9a37afb8ac070e43771e8c820bbde"
+checksum = "f1369bc6b9e9a7dfdae2055f6ec151fe9c554a9d23d357c0237cee2e25eaabb7"
 dependencies = [
  "chrono",
  "chrono-tz-build",
@@ -1302,9 +1302,9 @@ dependencies = [
 
 [[package]]
 name = "chrono-tz-build"
-version = "0.0.3"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f509c3a87b33437b05e2458750a0700e5bdd6956176773e6c7d6dd15a283a0c"
+checksum = "e2f5ebdc942f57ed96d560a6d1a459bae5851102a25d5bf89dc04ae453e31ecf"
 dependencies = [
  "parse-zoneinfo",
  "phf",
@@ -3927,7 +3927,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "90fcb95eef784c2ac79119d1dd819e162b5da872ce6f3c3abe1e8ca1c082f72b"
 dependencies = [
  "siphasher",
- "uncased",
 ]
 
 [[package]]
@@ -4567,9 +4566,9 @@ dependencies = [
 
 [[package]]
 name = "rrule"
-version = "0.10.0"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "822efdcd86c668b92c5ddc4c08906b731d184feb3e595575924737495ae928a7"
+checksum = "615777991e415d96aa97f6e45e809111911497c029e5d0df7f6d751d218d28e8"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -5817,15 +5816,6 @@ name = "typenum"
 version = "1.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "497961ef93d974e23eb6f433eb5fe1b7930b659f06d12dec6fc44a8f554c0bba"
-
-[[package]]
-name = "uncased"
-version = "0.9.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b9bc53168a4be7402ab86c3aad243a84dd7381d09be0eddc81280c1da95ca68"
-dependencies = [
- "version_check",
-]
 
 [[package]]
 name = "unicase"
