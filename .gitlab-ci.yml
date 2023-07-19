@@ -184,6 +184,14 @@ test:cargo_test:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - if: $CI_PIPELINE_SOURCE == 'schedule'
   stage: test
+  artifacts:
+    paths:
+      - target/coverage/html
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: target/coverage/cobertura.xml
+  coverage: '/Coverage: \d+(?:\.\d+)?/'
   variables:
     # Set ENV vars for services
     POSTGRES_DB: opentalk
@@ -202,6 +210,8 @@ test:cargo_test:
     KUSTOS_TESTS_DATABASE_URL: postgres://postgres:password123@postgres:5432/kustos
     AMQP_ADDR: amqp://guest:guest@rabbitmq:5672
     REDIS_ADDR: redis://redis:6379/
+    # Used for coverage
+    COVERAGE_XML_PATH: 'concat("Coverage: ", 100 * string(//coverage/@line-rate), "%")'
   services:
     - name: postgres:15-alpine
       alias: postgres
@@ -212,10 +222,29 @@ test:cargo_test:
     - name: redis:6-alpine
       alias: redis
   before_script:
-    - rustup component add rustfmt
+    - rustup component add rustfmt llvm-tools-preview
+    # libxml2-utils contains the xmllint command used below
+    - apt-get update && apt-get install -y libxml2-utils
+    - cargo install grcov
     - cargo install diesel_cli --version 1.4.1 --no-default-features --features="barrel-migrations,barrel/pg,postgres"
   script:
-    - cargo test --workspace --locked
+    - RUSTFLAGS="-C instrument-coverage -C link-arg=-fuse-ld=lld"
+      LLVM_PROFILE_FILE="$(pwd)/target/coverage/raw/coverage-%p-%m.profraw"
+      cargo test --workspace --locked
+
+    # Extract code coverage data
+    - grcov target/coverage/raw
+      --binary-path ./target/debug/
+      --source-dir .
+      --output-types cobertura,html
+      --branch
+      --ignore-not-existing
+      --ignore "*cargo*"
+      --output-path target/coverage
+
+    # Print out the coverage percentage for GitLab
+    - xmllint --xpath "$COVERAGE_XML_PATH" target/coverage/cobertura.xml
+
     # Verify that the HEAD schema.rs matches the actual HEAD migration database schema.
     - RUST_LOG=error cargo xtask verify-db-schema --postgres-url="${POSTGRES_BASE_URL}"
 
