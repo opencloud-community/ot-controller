@@ -4,7 +4,7 @@
 
 use super::{
     can_edit, ApiResponse, DateTimeTz, DefaultApiResult, EventAndInstanceId, EventInvitee,
-    EventRoomInfo, EventStatus, EventType, InstanceId, LOCAL_DT_FORMAT,
+    EventRoomInfo, EventStatus, EventType, InstanceId, LOCAL_DT_FORMAT, ONE_HUNDRED_YEARS_IN_DAYS,
 };
 use crate::api::v1::cursor::Cursor;
 use crate::api::v1::events::{
@@ -669,7 +669,7 @@ fn verify_recurrence_date(
     // And if it finds it it will break the loop
     let found = rruleset
         .into_iter()
-        .take(36525)
+        .take(ONE_HUNDRED_YEARS_IN_DAYS)
         .take_while(|x| x <= &requested_dt)
         .any(|x| x == requested_dt);
 
