@@ -5,4 +5,7 @@
 //! This module contains types that are used in different areas of the OpenTalk
 //! API V1 endpoints.
 
+pub mod rooms;
 pub mod users;
+
+mod utils;

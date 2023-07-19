@@ -18,7 +18,6 @@ use crate::api::{
 use crate::settings::SharedSettingsActix;
 use actix_web::web::{self, Data, Json, Path, ReqData};
 use actix_web::{delete, get, patch, post};
-use chrono::{DateTime, Utc};
 use database::Db;
 use db_storage::invites::Invite;
 use db_storage::rooms::{self as db_rooms, Room};
@@ -26,28 +25,17 @@ use db_storage::sip_configs::NewSipConfig;
 use db_storage::users::User;
 use kustos::policies_builder::{GrantingAccess, PoliciesBuilder};
 use kustos::prelude::*;
-use serde::{Deserialize, Serialize};
 use signaling_core::{Participant, RedisConnection};
-use std::str::FromStr;
+use std::{convert::AsRef, str::FromStr};
 use types::{
-    api::v1::users::PublicUserProfile,
+    api::v1::rooms::{
+        InvitedStartRequest, PatchRoomsBody, PostRoomsBody, RoomResource, StartRequest,
+        StartResponse, StartRoomError,
+    },
     common::{features, tariff::TariffResource},
-    core::{BreakoutRoomId, InviteCodeId, ResumptionToken, RoomId, TicketToken},
+    core::{InviteCodeId, RoomId},
 };
 use validator::Validate;
-
-/// A Room
-///
-/// Contains all room information. Is only be accessible to the owner and users with
-/// appropriate permissions.
-#[derive(Debug, Serialize)]
-pub struct RoomResource {
-    pub id: RoomId,
-    pub created_by: PublicUserProfile,
-    pub created_at: DateTime<Utc>,
-    pub password: Option<String>,
-    pub waiting_room: bool,
-}
 
 /// API Endpoint *GET /rooms*
 ///
@@ -91,18 +79,6 @@ pub async fn accessible(
         .collect::<Vec<RoomResource>>();
 
     Ok(ApiResponse::new(rooms).with_page_pagination(per_page, page, room_count))
-}
-
-/// API request parameters to create a new room
-#[derive(Debug, Validate, Deserialize)]
-pub struct PostRoomsBody {
-    #[validate(length(min = 1, max = 255))]
-    pub password: Option<String>,
-    /// Enable/Disable sip for this room; defaults to false when not set
-    #[serde(default)]
-    pub enable_sip: bool,
-    #[serde(default)]
-    pub waiting_room: bool,
 }
 
 /// API Endpoint *POST /rooms*
@@ -161,16 +137,6 @@ pub async fn new(
     authz.add_policies(policies).await?;
 
     Ok(Json(room_resource))
-}
-
-/// API request parameters to patch a room
-#[derive(Debug, Validate, Deserialize)]
-pub struct PatchRoomsBody {
-    #[validate(length(min = 1, max = 255))]
-    #[serde(default, deserialize_with = "super::util::deserialize_some")]
-    pub password: Option<Option<String>>,
-
-    pub waiting_room: Option<bool>,
 }
 
 /// API Endpoint *PATCH /rooms/{room_id}*
@@ -283,45 +249,23 @@ pub async fn get_room_tariff(
     Ok(Json(response))
 }
 
-/// The JSON body expected when making a *POST /rooms/{room_id}/start*
-#[derive(Debug, Deserialize)]
-pub struct StartRequest {
-    breakout_room: Option<BreakoutRoomId>,
-    resumption: Option<ResumptionToken>,
-}
-
-/// The JSON body returned from the start endpoints supporting session resumption
-#[derive(Debug, Serialize)]
-pub struct StartResponse {
-    ticket: TicketToken,
-    resumption: ResumptionToken,
-}
-
-#[derive(Debug)]
-pub enum StartRoomError {
-    WrongRoomPassword,
-    NoBreakoutRooms,
-    InvalidBreakoutRoomId,
-    BannedFromRoom,
-}
-
 impl From<StartRoomError> for ApiError {
     fn from(start_room_error: StartRoomError) -> Self {
         match start_room_error {
             StartRoomError::WrongRoomPassword => ApiError::unauthorized()
-                .with_code("wrong_room_password")
+                .with_code(StartRoomError::WrongRoomPassword.as_ref())
                 .with_message("The provided password does not match the rooms password"),
 
             StartRoomError::NoBreakoutRooms => ApiError::bad_request()
-                .with_code("no_breakout_rooms")
+                .with_code(StartRoomError::NoBreakoutRooms.as_ref())
                 .with_message("The requested room has no breakout rooms"),
 
             StartRoomError::InvalidBreakoutRoomId => ApiError::bad_request()
-                .with_code("invalid_breakout_room_id")
+                .with_code(StartRoomError::InvalidBreakoutRoomId.as_ref())
                 .with_message("The provided breakout room ID is invalid"),
 
             StartRoomError::BannedFromRoom => ApiError::forbidden()
-                .with_code("banned_from_room")
+                .with_code(StartRoomError::BannedFromRoom.as_ref())
                 .with_message("This user has been banned from entering this room"),
         }
     }
@@ -386,15 +330,6 @@ pub async fn start(
     .await?;
 
     Ok(Json(StartResponse { ticket, resumption }))
-}
-
-/// The JSON body expected when making a *POST /rooms/{room_id}/start_invited*
-#[derive(Debug, Deserialize)]
-pub struct InvitedStartRequest {
-    password: Option<String>,
-    invite_code: String,
-    breakout_room: Option<BreakoutRoomId>,
-    resumption: Option<ResumptionToken>,
 }
 
 /// API Endpoint *POST /rooms/{room_id}/start_invited*
