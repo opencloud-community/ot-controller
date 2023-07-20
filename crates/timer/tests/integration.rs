@@ -8,10 +8,8 @@ use opentalk_timer::incoming::Stop;
 use opentalk_timer::outgoing;
 use opentalk_timer::outgoing::StopKind;
 use opentalk_timer::outgoing::Stopped;
-use opentalk_timer::Kind;
 use opentalk_timer::Timer;
 use opentalk_timer::TimerConfig;
-use opentalk_timer::TimerId;
 use pretty_assertions::assert_eq;
 use serial_test::serial;
 use signaling_core::module_tester::{ModuleTester, WsMessageOutgoing};
@@ -20,6 +18,8 @@ use test_util::USER_2;
 use test_util::{common, TestContext};
 use tokio::time::Instant;
 use types::core::Timestamp;
+use types::signaling::timer::Kind;
+use types::signaling::timer::TimerId;
 
 /// Helps to compare expected timestamps.
 #[derive(Debug)]

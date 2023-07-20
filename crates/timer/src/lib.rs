@@ -6,8 +6,6 @@ use anyhow::Result;
 use chrono::{self, Utc};
 use futures::{stream::once, FutureExt};
 use outgoing::StopKind;
-use redis::{self, FromRedisValue, RedisResult};
-use redis_args::ToRedisArgs;
 use serde::Deserialize;
 use serde::Serialize;
 use signaling_core::SignalingModuleInitData;
@@ -16,66 +14,18 @@ use signaling_core::{
 };
 use storage::ready_status::ReadyStatus;
 use tokio::time::sleep;
+use types::signaling::timer::Kind;
+use types::signaling::timer::TimerId;
 use types::{
     core::{ParticipantId, Timestamp},
     signaling::Role,
 };
 use uuid::Uuid;
 
-use std::fmt;
-use std::str::from_utf8;
-use std::str::FromStr;
-
 pub mod exchange;
 pub mod incoming;
 pub mod outgoing;
 mod storage;
-
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq, Hash, ToRedisArgs)]
-#[to_redis_args(fmt)]
-pub struct TimerId(pub Uuid);
-
-impl TimerId {
-    /// Create a ZERO TimerId, e.g. for testing purposes
-    pub const fn nil() -> Self {
-        Self(Uuid::nil())
-    }
-
-    /// Create a TimerId from a number, e.g. for testing purposes
-    pub const fn from_u128(id: u128) -> Self {
-        Self(Uuid::from_u128(id))
-    }
-
-    /// Generate a new random TimerId
-    pub fn generate() -> Self {
-        Self(Uuid::new_v4())
-    }
-}
-
-impl FromRedisValue for TimerId {
-    fn from_redis_value(v: &redis::Value) -> RedisResult<Self> {
-        match v {
-            redis::Value::Data(bytes) => {
-                Uuid::from_str(from_utf8(bytes)?).map(Self).map_err(|_| {
-                    redis::RedisError::from((
-                        redis::ErrorKind::TypeError,
-                        "invalid data for TimerId",
-                    ))
-                })
-            }
-            _ => RedisResult::Err(redis::RedisError::from((
-                redis::ErrorKind::TypeError,
-                "invalid data type for TimerId",
-            ))),
-        }
-    }
-}
-
-impl fmt::Display for TimerId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.0.fmt(f)
-    }
-}
 
 /// The expiry event for a timer
 pub struct ExpiredEvent {
@@ -452,16 +402,6 @@ impl Timer {
 
         Ok(())
     }
-}
-
-/// The different timer variations
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case", tag = "kind")]
-pub enum Kind {
-    /// The timer continues to run until a moderator stops it.
-    Stopwatch,
-    /// The timer continues to run until its duration expires or if a moderator stops it beforehand.
-    Countdown { ends_at: Timestamp },
 }
 
 /// Status of a currently active timer

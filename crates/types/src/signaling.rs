@@ -15,6 +15,7 @@ pub mod polls;
 pub mod protocol;
 pub mod recording;
 pub mod shared_folder;
+pub mod timer;
 pub mod whiteboard;
 
 mod namespaced;
