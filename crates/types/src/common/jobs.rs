@@ -31,4 +31,7 @@ use crate::imports::*;
 pub enum JobType {
     /// A simple self-check of the job execution system
     SelfCheck,
+
+    /// A job for cleaning up events that ended at minimum a defined duration ago
+    EventCleanup,
 }

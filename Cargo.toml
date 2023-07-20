@@ -26,6 +26,7 @@ clap = { version = "4", features = ["derive"] }
 config = { version = "0.13", default-features = false, features = ["toml"] }
 diesel = "2"
 diesel-async = "0.2"
+displaydoc = "0.2"
 either = "1"
 env_logger = "0.10"
 futures = "0.3"

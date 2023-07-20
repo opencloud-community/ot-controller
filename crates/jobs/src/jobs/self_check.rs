@@ -2,11 +2,14 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::sync::Arc;
+
 use async_trait::async_trait;
-use database::DbConnection;
+use database::Db;
 use log::Log;
 use opentalk_log::{debug, error, info, trace, warn};
 use settings::Settings;
+use signaling_core::ExchangeHandle;
 
 use crate::{Error, Job};
 
@@ -20,7 +23,8 @@ impl Job for SelfCheck {
 
     async fn execute(
         logger: &dyn Log,
-        _conn: &mut DbConnection,
+        _db: Arc<Db>,
+        _exchange_handle: ExchangeHandle,
         _settings: &Settings,
         _parameters: Self::Parameters,
     ) -> Result<(), Error> {

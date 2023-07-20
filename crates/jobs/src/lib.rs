@@ -28,26 +28,71 @@ pub mod jobs;
 
 mod error;
 
-use std::time::Duration;
+use std::{
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 use async_trait::async_trait;
-use database::DbConnection;
+use database::Db;
 use log::Log;
+use opentalk_log::{error, info};
 use settings::Settings;
+use signaling_core::ExchangeHandle;
 
 pub use error::Error;
 
 /// Execute a job
 pub async fn execute<J: Job>(
     logger: &dyn Log,
-    conn: &mut DbConnection,
+    db: Arc<Db>,
+    exchange_handle: ExchangeHandle,
     settings: &Settings,
     parameters: serde_json::Value,
     timeout: Duration,
 ) -> Result<(), Error> {
-    let parameters = J::Parameters::try_from_json(parameters)?;
+    let start = Instant::now();
 
-    tokio::time::timeout(timeout, J::execute(logger, conn, settings, parameters)).await?
+    info!(log: logger, "Starting job execution");
+    info!(log: logger, "Loading parameters");
+
+    let parameters = match J::Parameters::try_from_json(parameters) {
+        Ok(parameters) => parameters,
+        Err(e) => {
+            error!(log: logger, "{e}");
+            return Err(e);
+        }
+    };
+
+    match tokio::time::timeout(
+        timeout,
+        J::execute(logger, db, exchange_handle, settings, parameters),
+    )
+    .await
+    {
+        Ok(Ok(())) => {
+            info!(log: logger, "");
+            info!(
+                log: logger,
+                "Job finished successfully, duration: {:?}",
+                start.elapsed()
+            );
+            Ok(())
+        }
+        Ok(Err(e)) => {
+            info!(log: logger, "");
+            error!(log: logger, "{}", e);
+            info!(log: logger, "Job failed, duration: {:?}", start.elapsed());
+            Err(e)
+        }
+        Err(e) => {
+            info!(log: logger, "");
+            let e = Error::from(e);
+            error!(log: logger, "{e}");
+            info!(log: logger, "Job failed, duration: {:?}", start.elapsed());
+            Err(e)
+        }
+    }
 }
 
 /// A trait for job parameters
@@ -71,7 +116,8 @@ pub trait Job {
     /// Execute the job
     async fn execute(
         logger: &dyn Log,
-        conn: &mut DbConnection,
+        db: Arc<Db>,
+        exchange_handle: ExchangeHandle,
         settings: &Settings,
         parameters: Self::Parameters,
     ) -> Result<(), Error>;

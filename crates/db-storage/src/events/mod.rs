@@ -174,6 +174,20 @@ impl Event {
         Ok(events)
     }
 
+    #[tracing::instrument(err, skip_all)]
+    pub async fn get_all_that_ended_before_including_rooms(
+        conn: &mut DbConnection,
+        date: DateTime<Utc>,
+    ) -> Result<Vec<(EventId, RoomId)>> {
+        events::table
+            .select((events::id, events::room))
+            .filter(events::ends_at.le(date))
+            .filter(events::is_recurring.ne(true))
+            .load(conn)
+            .await
+            .map_err(Into::into)
+    }
+
     pub async fn get_all_with_invitee(
         conn: &mut DbConnection,
     ) -> Result<Vec<(EventId, RoomId, UserId)>> {

@@ -13,6 +13,7 @@ COPY ./crates/chat/Cargo.toml ./crates/chat/Cargo.toml
 COPY ./crates/community-modules/Cargo.toml ./crates/community-modules/Cargo.toml
 COPY ./crates/controller/Cargo.toml ./crates/controller/Cargo.toml
 COPY ./crates/controller-settings/Cargo.toml ./crates/controller-settings/Cargo.toml
+COPY ./crates/controller-utils/Cargo.toml ./crates/controller-utils/Cargo.toml
 COPY ./crates/core/Cargo.toml ./crates/core/Cargo.toml
 COPY ./crates/database/Cargo.toml ./crates/database/Cargo.toml
 COPY ./crates/db-storage/Cargo.toml ./crates/db-storage/Cargo.toml

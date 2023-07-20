@@ -2,14 +2,16 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
 use anyhow::{ensure, Context, Result};
 use clap::Subcommand;
 use controller_settings::Settings;
 use database::Db;
+use lapin_pool::RabbitMqPool;
 use log::Log;
 use serde::{Deserialize, Serialize};
+use signaling_core::{ExchangeHandle, ExchangeTask};
 use types::common::jobs::JobType;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -53,24 +55,37 @@ async fn execute_job(
     parameters: String,
     timeout: u64,
 ) -> Result<()> {
-    let db = Db::connect(&settings.database).context("Failed to connect to database")?;
-    let mut conn = db.get_conn().await?;
+    let db = Arc::new(Db::connect(&settings.database).context("Failed to connect to database")?);
 
-    let timeout = Duration::from_secs(u64::try_from(timeout)?);
+    ensure!(timeout > 0, "Timeout must be a strictly positive number");
+    let timeout = Duration::from_secs(timeout);
 
     let logger = Logger;
 
     let parameters: serde_json::Value = serde_json::from_str(&parameters)?;
     ensure!(parameters.is_object(), "Parameters must be a JSON object");
 
+    let rabbitmq_pool = RabbitMqPool::from_config(
+        &settings.rabbit_mq.url,
+        settings.rabbit_mq.min_connections,
+        settings.rabbit_mq.max_channels_per_connection,
+    );
+
+    let exchange_handle = ExchangeTask::spawn(rabbitmq_pool.clone()).await?;
+
+    let data = JobExecutionData {
+        logger: &logger,
+        db,
+        exchange_handle,
+        settings: &settings,
+        parameters,
+        timeout,
+    };
+
     match job_type {
-        JobType::SelfCheck => {
-            jobs::execute::<jobs::jobs::SelfCheck>(
-                &logger, &mut conn, &settings, parameters, timeout,
-            )
-            .await?;
-        }
-    }
+        JobType::SelfCheck => data.execute::<jobs::jobs::SelfCheck>().await,
+        JobType::EventCleanup => data.execute::<jobs::jobs::EventCleanup>().await,
+    }?;
 
     Ok(())
 }
@@ -87,4 +102,27 @@ impl Log for Logger {
     }
 
     fn flush(&self) {}
+}
+
+struct JobExecutionData<'a> {
+    logger: &'a dyn Log,
+    db: Arc<Db>,
+    exchange_handle: ExchangeHandle,
+    settings: &'a Settings,
+    parameters: serde_json::Value,
+    timeout: Duration,
+}
+
+impl<'a> JobExecutionData<'a> {
+    async fn execute<J: jobs::Job>(self) -> Result<(), jobs::Error> {
+        jobs::execute::<J>(
+            self.logger,
+            self.db,
+            self.exchange_handle,
+            self.settings,
+            self.parameters,
+            self.timeout,
+        )
+        .await
+    }
 }
