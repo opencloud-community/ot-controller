@@ -3,18 +3,17 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "opentalk-jobs"
+name = "opentalk-controller-utils"
+description = "Utilities used in opentalk-controller"
 edition = "2021"
+license = "EUPL-1.2"
 authors.workspace = true
 version.workspace = true
 publish = false
-description = "OpenTalk job execution system"
 
 [dependencies]
 anyhow.workspace = true
 async-trait.workspace = true
-chrono.workspace = true
-controller-utils = { path = "../controller-utils", package = "opentalk-controller-utils" }
 database = { path = "../database", package = "opentalk-database" }
 db-storage = { path = "../db-storage", package = "opentalk-db-storage" }
 diesel-async.workspace = true
@@ -23,10 +22,8 @@ kustos = { path = "../kustos" }
 log.workspace = true
 nextcloud-client = { path = "../nextcloud-client", package = "opentalk-nextcloud-client" }
 opentalk_log = { path = "../log", package = "opentalk-log" }
-serde.workspace = true
 serde_json.workspace = true
 settings = { path = "../controller-settings", package = "opentalk-controller-settings" }
 signaling-core = { path = "../signaling-core", package = "opentalk-signaling-core" }
 thiserror.workspace = true
-tokio = { workspace = true, features = ["time"] }
 types = { path = "../types", package = "opentalk-types" }

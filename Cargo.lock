@@ -3267,6 +3267,7 @@ dependencies = [
  "openidconnect",
  "opentalk-cache",
  "opentalk-controller-settings",
+ "opentalk-controller-utils",
  "opentalk-database",
  "opentalk-db-storage",
  "opentalk-jobs",
@@ -3334,6 +3335,27 @@ dependencies = [
  "strum",
  "url",
  "uuid",
+]
+
+[[package]]
+name = "opentalk-controller-utils"
+version = "0.0.0-dev"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "diesel-async",
+ "displaydoc",
+ "kustos",
+ "log",
+ "opentalk-controller-settings",
+ "opentalk-database",
+ "opentalk-db-storage",
+ "opentalk-log",
+ "opentalk-nextcloud-client",
+ "opentalk-signaling-core",
+ "opentalk-types",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]
@@ -3445,12 +3467,22 @@ dependencies = [
 name = "opentalk-jobs"
 version = "0.0.0-dev"
 dependencies = [
+ "anyhow",
  "async-trait",
+ "chrono",
+ "diesel-async",
+ "displaydoc",
+ "kustos",
  "log",
  "opentalk-controller-settings",
+ "opentalk-controller-utils",
  "opentalk-database",
+ "opentalk-db-storage",
  "opentalk-log",
+ "opentalk-nextcloud-client",
+ "opentalk-signaling-core",
  "opentalk-types",
+ "serde",
  "serde_json",
  "thiserror",
  "tokio",
