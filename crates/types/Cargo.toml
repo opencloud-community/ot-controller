@@ -12,6 +12,7 @@ publish = false
 [dependencies]
 chrono.workspace = true
 chrono-tz.workspace = true
+clap = { workspace = true, optional = true }
 derive_more = "0.99"
 diesel = { workspace = true, features = ["uuid", "postgres"], optional = true }
 kustos = { path = "../kustos", optional = true }
@@ -29,6 +30,7 @@ url.workspace = true
 [features]
 default = ["frontend"]
 backend = ["diesel", "kustos", "rand", "redis", "serde"]
+clap = ["dep:clap"]
 diesel = ["serde", "dep:diesel"]
 frontend = ["serde"]
 kustos = ["dep:kustos"]

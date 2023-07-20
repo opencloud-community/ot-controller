@@ -114,6 +114,8 @@ Inside the crates folder following crates can be found:
     - Database types used for the controller and modules
 - [janus-media](crates/janus-media)
     - media signaling module using the `janus-client` crate
+- [jobs](crates/jobs)
+    - Job execution system for maintenance tasks such as removing old meeting information according to GDPR legislation
 - [community-modules](crates/community-modules)
     - functionality for registering all modules in the community edition
     - depends on all modules in the community edition

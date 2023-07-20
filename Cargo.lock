@@ -3069,6 +3069,7 @@ dependencies = [
  "opentalk-controller-settings",
  "opentalk-database",
  "opentalk-db-storage",
+ "opentalk-jobs",
  "opentalk-mail-worker-protocol",
  "opentalk-nextcloud-client",
  "opentalk-redis-args",
@@ -3237,6 +3238,21 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "tracing",
+]
+
+[[package]]
+name = "opentalk-jobs"
+version = "0.6.0-rc.1"
+dependencies = [
+ "async-trait",
+ "log",
+ "opentalk-controller-settings",
+ "opentalk-database",
+ "opentalk-log",
+ "opentalk-types",
+ "serde_json",
+ "thiserror",
+ "tokio",
 ]
 
 [[package]]
@@ -3451,6 +3467,7 @@ version = "0.6.0-rc.1"
 dependencies = [
  "chrono",
  "chrono-tz",
+ "clap",
  "derive_more",
  "diesel",
  "kustos",

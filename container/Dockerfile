@@ -19,6 +19,7 @@ COPY ./crates/db-storage/Cargo.toml ./crates/db-storage/Cargo.toml
 COPY ./crates/etherpad-client/Cargo.toml ./crates/etherpad-client/Cargo.toml
 COPY ./crates/janus-client/Cargo.toml ./crates/janus-client/Cargo.toml
 COPY ./crates/janus-media/Cargo.toml ./crates/janus-media/Cargo.toml
+COPY ./crates/jobs/Cargo.toml ./crates/jobs/Cargo.toml
 COPY ./crates/keycloak-admin/Cargo.toml ./crates/keycloak-admin/Cargo.toml
 COPY ./crates/kustos/Cargo.toml ./crates/kustos/Cargo.toml
 COPY ./crates/lapin-pool/Cargo.toml ./crates/lapin-pool/Cargo.toml

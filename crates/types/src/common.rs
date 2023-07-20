@@ -6,5 +6,6 @@
 //! such as the Web API and signaling.
 
 pub mod features;
+pub mod jobs;
 pub mod shared_folder;
 pub mod tariff;

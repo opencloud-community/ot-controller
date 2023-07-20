@@ -1,0 +1,22 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+name = "opentalk-jobs"
+edition = "2021"
+authors.workspace = true
+version.workspace = true
+publish = false
+description = "OpenTalk job execution system"
+
+[dependencies]
+async-trait.workspace = true
+database = { path = "../database", package = "opentalk-database" }
+log.workspace = true
+opentalk_log = { path = "../log", package = "opentalk-log" }
+serde_json.workspace = true
+settings = { path = "../controller-settings", package = "opentalk-controller-settings" }
+thiserror.workspace = true
+tokio = { workspace = true, features = ["time"] }
+types = { path = "../types", package = "opentalk-types" }

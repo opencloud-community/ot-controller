@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - controller: expose enabled features to the frontend (and make them module-specific) ([#471](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/471))
+- jobs: add subcommand to execute maintenance jobs from the comnand-line interface ([#486](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/486))
 
 ### Fixed
 
