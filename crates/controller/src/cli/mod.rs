@@ -8,6 +8,7 @@ use controller_settings::Settings;
 
 mod acl;
 mod fix_acl;
+mod jobs;
 mod reload;
 mod tariffs;
 mod tenants;
@@ -56,6 +57,10 @@ enum SubCommand {
     /// Manage tariffs
     #[clap(subcommand)]
     Tariffs(tariffs::Command),
+
+    /// Manage and execute maintenance jobs
+    #[clap(subcommand)]
+    Jobs(jobs::Command),
 }
 
 #[derive(Subcommand, Debug, Clone)]
@@ -118,6 +123,9 @@ pub async fn parse_args() -> Result<Args> {
             }
             SubCommand::Tariffs(command) => {
                 tariffs::handle_command(settings, command).await?;
+            }
+            SubCommand::Jobs(command) => {
+                jobs::handle_command(settings, command).await?;
             }
         }
     }
