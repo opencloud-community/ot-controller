@@ -4,6 +4,8 @@
 
 //! Signaling messages for the `timer` namespace
 
+pub mod command;
+
 mod kind;
 mod timer_id;
 

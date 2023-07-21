@@ -4,6 +4,7 @@
 
 use crate::TimerId;
 use serde::Deserialize;
+use types::signaling::timer::command::Kind;
 
 /// Incoming websocket messages
 #[derive(Debug, Deserialize)]
@@ -15,16 +16,6 @@ pub enum Message {
     Stop(Stop),
     /// Update the ready status
     UpdateReadyStatus(UpdateReadyStatus),
-}
-
-/// The different timer variations
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Deserialize)]
-#[serde(rename_all = "snake_case", tag = "kind")]
-pub enum Kind {
-    /// The timer continues to run until a moderator stops it.
-    Stopwatch,
-    /// The timer continues to run until its duration expires or if a moderator stops it beforehand.
-    Countdown { duration: u64 },
 }
 
 /// Start a new timer

@@ -18,6 +18,7 @@ use test_util::USER_2;
 use test_util::{common, TestContext};
 use tokio::time::Instant;
 use types::core::Timestamp;
+use types::signaling::timer::command;
 use types::signaling::timer::Kind;
 use types::signaling::timer::TimerId;
 
@@ -83,7 +84,7 @@ impl TimeFrame {
 /// Returns the timer id
 async fn start_timer(
     module_tester: &mut ModuleTester<Timer>,
-    kind: incoming::Kind,
+    kind: command::Kind,
     style: Option<String>,
     title: Option<String>,
     enable_ready_check: bool,
@@ -128,8 +129,8 @@ async fn start_timer(
 
             if let Kind::Countdown { ends_at } = received_kind {
                 let configured_duration = match kind {
-                    incoming::Kind::Countdown { duration } => duration,
-                    incoming::Kind::Stopwatch => panic!("expected countdown kind"),
+                    command::Kind::Countdown { duration } => duration,
+                    command::Kind::Stopwatch => panic!("expected countdown kind"),
                 };
 
                 let time_shift_ms = (configured_duration * 1000) as i64;
@@ -167,7 +168,7 @@ async fn simple_stopwatch() {
 
     start_timer(
         &mut module_tester,
-        incoming::Kind::Stopwatch,
+        command::Kind::Stopwatch,
         None,
         Some("This is a test".into()),
         false,
@@ -184,7 +185,7 @@ async fn coffee_break() {
 
     start_timer(
         &mut module_tester,
-        incoming::Kind::Countdown { duration: 2 },
+        command::Kind::Countdown { duration: 2 },
         Some("coffee_break".into()),
         None,
         true,
@@ -212,7 +213,7 @@ async fn simple_countdown(duration: u64) {
 
     start_timer(
         &mut module_tester,
-        incoming::Kind::Countdown { duration },
+        command::Kind::Countdown { duration },
         None,
         Some("This is a test".into()),
         false,
@@ -255,7 +256,7 @@ async fn manual_stop() {
 
     let start_id = start_timer(
         &mut module_tester,
-        incoming::Kind::Stopwatch,
+        command::Kind::Stopwatch,
         None,
         Some("This is a test".into()),
         false,
@@ -308,7 +309,7 @@ async fn ready_status() {
 
     let start_id = start_timer(
         &mut module_tester,
-        incoming::Kind::Stopwatch,
+        command::Kind::Stopwatch,
         None,
         Some("This is a test".into()),
         true,
@@ -354,7 +355,7 @@ async fn ready_status_toggle() {
 
     let start_id = start_timer(
         &mut module_tester,
-        incoming::Kind::Stopwatch,
+        command::Kind::Stopwatch,
         None,
         Some("This is a test".into()),
         true,
@@ -431,7 +432,7 @@ async fn timer_already_active() {
 
     start_timer(
         &mut module_tester,
-        incoming::Kind::Stopwatch,
+        command::Kind::Stopwatch,
         None,
         Some("This is a test".into()),
         true,
@@ -439,7 +440,7 @@ async fn timer_already_active() {
     .await;
 
     let start = incoming::Message::Start(incoming::Start {
-        kind: incoming::Kind::Stopwatch,
+        kind: command::Kind::Stopwatch,
         style: None,
         title: None,
         enable_ready_check: false,

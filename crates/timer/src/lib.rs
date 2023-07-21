@@ -14,8 +14,7 @@ use signaling_core::{
 };
 use storage::ready_status::ReadyStatus;
 use tokio::time::sleep;
-use types::signaling::timer::Kind;
-use types::signaling::timer::TimerId;
+use types::signaling::timer::{command, Kind, TimerId};
 use types::{
     core::{ParticipantId, Timestamp},
     signaling::Role,
@@ -206,7 +205,7 @@ impl Timer {
 
                 // determine the end time at the start of the timer to later calculate the remaining duration for joining participants
                 let kind = match start.kind {
-                    incoming::Kind::Countdown { duration } => {
+                    command::Kind::Countdown { duration } => {
                         let duration = match duration.try_into() {
                             Ok(duration) => duration,
                             Err(_) => {
@@ -232,7 +231,7 @@ impl Timer {
                             }
                         }
                     }
-                    incoming::Kind::Stopwatch => Kind::Stopwatch,
+                    command::Kind::Stopwatch => Kind::Stopwatch,
                 };
 
                 let timer = storage::timer::Timer {
