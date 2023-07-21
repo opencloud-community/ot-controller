@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::{Duration, Utc};
-use opentalk_timer::incoming;
-use opentalk_timer::incoming::Stop;
 use opentalk_timer::outgoing;
 use opentalk_timer::outgoing::StopKind;
 use opentalk_timer::outgoing::Stopped;
@@ -19,6 +17,10 @@ use test_util::{common, TestContext};
 use tokio::time::Instant;
 use types::core::Timestamp;
 use types::signaling::timer::command;
+use types::signaling::timer::command::Message;
+use types::signaling::timer::command::Start;
+use types::signaling::timer::command::Stop;
+use types::signaling::timer::command::UpdateReadyStatus;
 use types::signaling::timer::Kind;
 use types::signaling::timer::TimerId;
 
@@ -96,7 +98,7 @@ async fn start_timer(
     // from cpu limitation.
     let time_frame = TimeFrame::now(50);
 
-    let start = incoming::Message::Start(incoming::Start {
+    let start = Message::Start(Start {
         kind,
         style: style.clone(),
         title: title.clone(),
@@ -263,7 +265,7 @@ async fn manual_stop() {
     )
     .await;
 
-    let stop = incoming::Message::Stop(Stop {
+    let stop = Message::Stop(Stop {
         timer_id: start_id,
         reason: Some("It is over".into()),
     });
@@ -316,7 +318,7 @@ async fn ready_status() {
     )
     .await;
 
-    let update_ready_status = incoming::Message::UpdateReadyStatus(incoming::UpdateReadyStatus {
+    let update_ready_status = Message::UpdateReadyStatus(UpdateReadyStatus {
         timer_id: start_id,
         status: true,
     });
@@ -362,7 +364,7 @@ async fn ready_status_toggle() {
     )
     .await;
 
-    let update_ready_status = incoming::Message::UpdateReadyStatus(incoming::UpdateReadyStatus {
+    let update_ready_status = Message::UpdateReadyStatus(UpdateReadyStatus {
         timer_id: start_id,
         status: true,
     });
@@ -393,7 +395,7 @@ async fn ready_status_toggle() {
 
     // update ready status to false
 
-    let update_ready_status = incoming::Message::UpdateReadyStatus(incoming::UpdateReadyStatus {
+    let update_ready_status = Message::UpdateReadyStatus(UpdateReadyStatus {
         timer_id: start_id,
         status: false,
     });
@@ -439,7 +441,7 @@ async fn timer_already_active() {
     )
     .await;
 
-    let start = incoming::Message::Start(incoming::Start {
+    let start = Message::Start(Start {
         kind: command::Kind::Stopwatch,
         style: None,
         title: None,

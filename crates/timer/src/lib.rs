@@ -14,6 +14,7 @@ use signaling_core::{
 };
 use storage::ready_status::ReadyStatus;
 use tokio::time::sleep;
+use types::signaling::timer::command::Message;
 use types::signaling::timer::{command, Kind, TimerId};
 use types::{
     core::{ParticipantId, Timestamp},
@@ -22,7 +23,6 @@ use types::{
 use uuid::Uuid;
 
 pub mod exchange;
-pub mod incoming;
 pub mod outgoing;
 mod storage;
 
@@ -42,7 +42,7 @@ impl SignalingModule for Timer {
 
     type Params = ();
 
-    type Incoming = incoming::Message;
+    type Incoming = Message;
 
     type Outgoing = outgoing::Message;
 
@@ -188,10 +188,10 @@ impl Timer {
     async fn handle_ws_message(
         &self,
         ctx: &mut ModuleContext<'_, Self>,
-        msg: incoming::Message,
+        msg: Message,
     ) -> Result<()> {
         match msg {
-            incoming::Message::Start(start) => {
+            Message::Start(start) => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(outgoing::Message::Error(
                         outgoing::Error::InsufficientPermissions,
@@ -269,7 +269,7 @@ impl Timer {
                     exchange::Event::Start(started),
                 );
             }
-            incoming::Message::Stop(stop) => {
+            Message::Stop(stop) => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(outgoing::Message::Error(
                         outgoing::Error::InsufficientPermissions,
@@ -297,7 +297,7 @@ impl Timer {
                 )
                 .await?;
             }
-            incoming::Message::UpdateReadyStatus(update_ready_status) => {
+            Message::UpdateReadyStatus(update_ready_status) => {
                 if let Some(timer) = storage::timer::get(ctx.redis_conn(), self.room_id).await? {
                     if timer.ready_check_enabled && timer.id == update_ready_status.timer_id {
                         storage::ready_status::set(
