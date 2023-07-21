@@ -18,12 +18,14 @@ aws-sdk-s3.workspace = true
 aws-smithy-http = "0.55"
 aws-smithy-types = "0.55"
 bytes.workspace = true
+bytestring.workspace = true
 controller-settings = { path = "../controller-settings", package = "opentalk-controller-settings" }
 database = { path = "../database", package = "opentalk-database" }
 db-storage = { path = "../db-storage", package = "opentalk-db-storage" }
 diesel.workspace = true
 futures.workspace = true
 kustos = { path = "../../crates/kustos" }
+lapin.workspace = true
 lapin-pool = { path = "../lapin-pool" }
 log.workspace = true
 opentelemetry = { workspace = true, features = [
@@ -34,13 +36,17 @@ opentelemetry = { workspace = true, features = [
 r3dlock = { path = "../r3dlock" }
 redis = { workspace = true, features = ["tokio-comp", "connection-manager"] }
 redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
+rustc-hash.workspace = true
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
+slotmap = "1"
 thiserror.workspace = true
-tokio = { workspace = true }
+tokio.workspace = true
+tokio-stream.workspace = true
 tracing.workspace = true
 types = { path = "../types", package = "opentalk-types", features = ["backend"] }
 url.workspace = true
+uuid = { workspace = true, features = ["v4"] }
 
 [dev-dependencies]
 pretty_assertions.workspace = true

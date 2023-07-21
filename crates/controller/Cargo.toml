@@ -82,7 +82,7 @@ serde_json.workspace = true
 bincode.workspace = true
 parking_lot.workspace = true
 mime = "0.3"
-bytestring = { version = "1", features = ["serde"] }
+bytestring = { workspace = true, features = ["serde"] }
 
 ### RabbitMQ
 lapin.workspace = true
@@ -120,7 +120,6 @@ itertools.workspace = true
 phonenumber.workspace = true
 email_address = "0.2.4"
 redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
-slotmap = "1"
 rustc-hash.workspace = true
 
 # Random Distributions etc. Used for RR

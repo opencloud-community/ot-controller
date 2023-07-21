@@ -6,7 +6,6 @@ use crate::api::internal::NoContent;
 use crate::api::v1::events::associated_resource_ids;
 use crate::api::v1::events::shared_folder::delete_shared_folders;
 use crate::api::v1::response::ApiError;
-use crate::exchange_task::ExchangeHandle;
 use crate::settings::SharedSettingsActix;
 use actix_web::delete;
 use actix_web::web::{Data, Path, ReqData};
@@ -22,7 +21,7 @@ use diesel_async::scoped_futures::ScopedFutureExt;
 use diesel_async::AsyncConnection;
 use kustos::prelude::*;
 use signaling_core::assets::asset_key;
-use signaling_core::{control, ObjectStorage};
+use signaling_core::{control, ExchangeHandle, ObjectStorage};
 use types::core::RoomId;
 
 /// API Endpoint *DELETE /rooms/{room_id}*
