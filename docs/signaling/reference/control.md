@@ -189,14 +189,14 @@ Received after joining the room. Can be triggered by either calling [Join](#join
 #### Fields
 
 | Field          | Type            | Always | Description                                                                                |
-| -------------- | --------------- | ------ | ------------------------------------------------------------------------------------------ |
+| -------------- | --------------- | ------ |--------------------------------------------------------------------------------------------|
 | `message`      | `enum`          | yes    | Is `"join_success"`                                                                        |
 | `id`           | `string`        | yes    | Your participant id in this session                                                        |
 | `display_name` | `string`        | yes    | Your display name in this session                                                          |
 | `avatar_url`   | `string`        | no     | Url to your avatar image if logged                                                         |
 | `role`         | `enum`          | yes    | Either `"guest"`, `"user"` or `"moderator"`                                                |
 | `closes_at`    | `string`        | no     | The point in time the room closes                                                          |
-| `tariff`       | `Tariff`        | yes    | Tariff information, including `quotas` and `enabled_modules`                               |
+| `tariff`       | `Tariff`        | yes    | Tariff information, including `quotas` and `modules`                                       |
 | `participants` | `Participant[]` | yes    | List of participants in the room                                                           |
 | `event_info`   | `EventInfo`     | no     | Information about the event associated with the meeting room. See: [EventInfo](#eventinfo) |
 
@@ -215,7 +215,12 @@ Received after joining the room. Can be triggered by either calling [Join](#join
     "id": "53db7cb1-12af-4715-9b17-4a5a57876085",
     "name": "OpenTalkDefaultTariff",
     "quotas": {},
-    "enabled_modules": ["chat","breakout","moderation","media","polls","timer"]
+    "enabled_modules": ["core","chat"],
+    "disabled_features": ["core::feature1","feature1"],
+    "modules":{
+      "core": {"features": ["feature2", "feature3"]},
+      "chat": {}
+    }
   },
   "participants": [
     {

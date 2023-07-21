@@ -5,6 +5,7 @@
 use crate::schema::{external_tariffs, tariffs, users};
 use crate::utils::Jsonb;
 use chrono::{DateTime, Utc};
+use controller_settings::{DEFAULT_NAMESPACE, NAMESPACE_SEPARATOR};
 use core::fmt::Debug;
 use database::{DbConnection, Result};
 use diesel::prelude::*;
@@ -13,6 +14,7 @@ use redis_args::{FromRedisValue, ToRedisArgs};
 use rustc_hash::FxHashSet;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
+use types::common::tariff::TariffModuleResource;
 use types::{
     common::tariff::TariffResource,
     core::{TariffId, UserId},
@@ -92,38 +94,77 @@ impl Tariff {
         Ok(tariff)
     }
 
-    pub fn to_tariff_resource<T1, T2>(
+    pub fn to_tariff_resource<T1, T2, T3>(
         &self,
-        available_modules: impl IntoIterator<Item = T1>,
-        disabled_features: impl IntoIterator<Item = T2>,
+        disabled_features: impl IntoIterator<Item = T1>,
+        module_features: Vec<(T2, impl IntoIterator<Item = T3>)>,
     ) -> TariffResource
     where
         T1: Into<String>,
         T2: Into<String>,
+        T3: Into<String>,
     {
         let disabled_modules: FxHashSet<String> =
             HashSet::from_iter(self.disabled_modules.iter().cloned());
-        let available_modules: FxHashSet<String> =
-            HashSet::from_iter(available_modules.into_iter().map(Into::into));
 
-        let enabled_modules = available_modules
-            .difference(&disabled_modules)
-            .cloned()
-            .collect();
+        let disabled_features: HashSet<_> = HashSet::from_iter(
+            self.disabled_features
+                .clone()
+                .into_iter()
+                .chain(disabled_features.into_iter().map(Into::into)),
+        );
 
-        let disabled_features = self
-            .disabled_features
+        let mut enabled_module_names = HashSet::<String>::new();
+        let mut modules = HashMap::<String, TariffModuleResource>::new();
+
+        module_features
+            .into_iter()
+            .for_each(|(module_name, feature_name)| {
+                let module_name = module_name.into();
+                if !disabled_modules.contains(module_name.as_str()) {
+                    let features = HashSet::from_iter(
+                        feature_name.into_iter().map(Into::into).filter(|feature| {
+                            !disabled_features.contains(
+                                format!("{module_name}{NAMESPACE_SEPARATOR}{feature}").as_str(),
+                            )
+                        }),
+                    );
+                    let module_resource = TariffModuleResource { features };
+                    // The list of enabled module names is deprecated and provided only for backwards compatibility.
+                    // It is replaced by a list of modules including their features.
+                    enabled_module_names.insert(module_name.clone());
+                    modules.insert(module_name, module_resource);
+                }
+            });
+
+        // The list of disabled feature names is deprecated and provided only for backwards compatibility. Also for backwards
+        // compatibility, all features from the default namespace are listed twice in this deprecated field (with and without
+        // the namespace prefix).
+        let disabled_feature_names = disabled_features
             .iter()
-            .cloned()
-            .chain(disabled_features.into_iter().map(Into::into))
+            .flat_map(|item| {
+                match item
+                    .strip_prefix(format!("{DEFAULT_NAMESPACE}{NAMESPACE_SEPARATOR}").as_str())
+                {
+                    Some(stripped_item) => {
+                        vec![item.to_owned(), stripped_item.to_owned()]
+                    }
+                    None => {
+                        vec![item.to_owned()]
+                    }
+                }
+                .into_iter()
+            })
             .collect();
 
+        // The 'enabled_modules' and 'disabled_features' fields are deprecated.
         TariffResource {
             id: self.id,
             name: self.name.clone(),
             quotas: self.quotas.0.clone(),
-            enabled_modules,
-            disabled_features,
+            enabled_modules: enabled_module_names,
+            disabled_features: disabled_feature_names,
+            modules,
         }
     }
 }
@@ -233,22 +274,36 @@ mod test {
                 "media".to_string(),
                 "polls".to_string(),
             ],
-            disabled_features: vec!["call_in".to_string()],
+            disabled_features: vec!["chat::chat_feature_1".to_string()],
         };
-        let available_modules = vec!["chat", "media", "polls", "whiteboard", "timer"];
+
+        let module_features = Vec::from([
+            (
+                "chat".to_owned(),
+                HashSet::from(["chat_feature_1".to_owned(), "chat_feature_2".to_owned()]),
+            ),
+            ("media".to_owned(), HashSet::new()),
+            ("polls".to_owned(), HashSet::new()),
+            ("whiteboard".to_owned(), HashSet::new()),
+            ("timer".to_owned(), HashSet::new()),
+        ]);
 
         let expected = json!({
             "id": "00000000-0000-0000-0000-000000000000",
             "name": "test",
             "quotas": {},
             "enabled_modules": ["chat"],
-            "disabled_features": ["call_in"],
+            "disabled_features": ["chat::chat_feature_1"],
+            "modules": {
+                "chat": {
+                    "features": ["chat_feature_2"]
+                },
+            },
         });
 
-        let actual = serde_json::to_value(
-            tariff.to_tariff_resource(available_modules, Vec::<String>::new()),
-        )
-        .unwrap();
+        let actual =
+            serde_json::to_value(tariff.to_tariff_resource(Vec::<String>::new(), module_features))
+                .unwrap();
 
         assert_eq!(actual, expected);
     }

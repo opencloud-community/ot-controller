@@ -1,0 +1,36 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+name = "opentalk-core"
+edition = "2021"
+license = "EUPL-1.2"
+authors.workspace = true
+version.workspace = true
+publish = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow.workspace = true
+async-trait.workspace = true
+chrono.workspace = true
+controller-settings = { path = "../controller-settings", package = "opentalk-controller-settings" }
+futures.workspace = true
+log.workspace = true
+redis.workspace = true
+redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
+serde.workspace = true
+serde_json.workspace = true
+signaling-core = { path = "../signaling-core", package = "opentalk-signaling-core" }
+tokio.workspace = true
+tracing.workspace = true
+types = { path = "../types", package = "opentalk-types", features = ["backend"] }
+uuid.workspace = true
+
+[dev-dependencies]
+test-util = { path = "../test-util", package = "opentalk-test-util", features = ["controller"] }
+pretty_assertions.workspace = true
+serial_test.workspace = true
+actix-rt.workspace = true
