@@ -8,7 +8,6 @@ use crate::api::signaling::resumption::{ResumptionData, ResumptionTokenKeepAlive
 use crate::api::signaling::ticket::{TicketData, TicketRedisKey};
 use crate::api::signaling::ws::actor::WebSocketActor;
 use crate::api::v1::response::ApiError;
-use crate::exchange_task::ExchangeHandle;
 use crate::settings::SharedSettingsActix;
 use actix_web::http::header;
 use actix_web::web::Data;
@@ -21,7 +20,7 @@ use db_storage::rooms::Room;
 use db_storage::users::User;
 use kustos::Authz;
 use signaling_core::{
-    ObjectStorage, Participant, RedisConnection, SignalingMetrics, SignalingModule,
+    ExchangeHandle, ObjectStorage, Participant, RedisConnection, SignalingMetrics, SignalingModule,
 };
 use std::marker::PhantomData;
 use std::time::Instant;
