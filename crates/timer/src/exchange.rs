@@ -2,14 +2,17 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::{outgoing, TimerId};
+use crate::TimerId;
 use serde::{Deserialize, Serialize};
-use types::core::ParticipantId;
+use types::{
+    core::ParticipantId,
+    signaling::timer::event::{Started, Stopped},
+};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Event {
-    Start(outgoing::Started),
-    Stop(outgoing::Stopped),
+    Start(Started),
+    Stop(Stopped),
     /// A participant updated its ready status
     UpdateReadyStatus(UpdateReadyStatus),
 }

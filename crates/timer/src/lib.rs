@@ -5,7 +5,6 @@
 use anyhow::Result;
 use chrono::{self, Utc};
 use futures::{stream::once, FutureExt};
-use outgoing::StopKind;
 use serde::Deserialize;
 use serde::Serialize;
 use signaling_core::SignalingModuleInitData;
@@ -15,6 +14,9 @@ use signaling_core::{
 use storage::ready_status::ReadyStatus;
 use tokio::time::sleep;
 use types::signaling::timer::command::Message;
+use types::signaling::timer::event;
+use types::signaling::timer::event::StopKind;
+use types::signaling::timer::TimerConfig;
 use types::signaling::timer::{command, Kind, TimerId};
 use types::{
     core::{ParticipantId, Timestamp},
@@ -23,7 +25,6 @@ use types::{
 use uuid::Uuid;
 
 pub mod exchange;
-pub mod outgoing;
 mod storage;
 
 /// The expiry event for a timer
@@ -44,7 +45,7 @@ impl SignalingModule for Timer {
 
     type Incoming = Message;
 
-    type Outgoing = outgoing::Message;
+    type Outgoing = event::Message;
 
     type ExchangeMessage = exchange::Event;
 
@@ -193,9 +194,7 @@ impl Timer {
         match msg {
             Message::Start(start) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::InsufficientPermissions,
-                    ));
+                    ctx.ws_send(event::Message::Error(event::Error::InsufficientPermissions));
                     return Ok(());
                 }
 
@@ -209,9 +208,7 @@ impl Timer {
                         let duration = match duration.try_into() {
                             Ok(duration) => duration,
                             Err(_) => {
-                                ctx.ws_send(outgoing::Message::Error(
-                                    outgoing::Error::InvalidDuration,
-                                ));
+                                ctx.ws_send(event::Message::Error(event::Error::InvalidDuration));
 
                                 return Ok(());
                             }
@@ -223,9 +220,7 @@ impl Timer {
                             },
                             None => {
                                 log::error!("DateTime overflow in timer module");
-                                ctx.ws_send(outgoing::Message::Error(
-                                    outgoing::Error::InvalidDuration,
-                                ));
+                                ctx.ws_send(event::Message::Error(event::Error::InvalidDuration));
 
                                 return Ok(());
                             }
@@ -247,13 +242,11 @@ impl Timer {
                 if !storage::timer::set_if_not_exists(ctx.redis_conn(), self.room_id, &timer)
                     .await?
                 {
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::TimerAlreadyRunning,
-                    ));
+                    ctx.ws_send(event::Message::Error(event::Error::TimerAlreadyRunning));
                     return Ok(());
                 }
 
-                let started = outgoing::Started {
+                let started = event::Started {
                     config: TimerConfig {
                         timer_id,
                         started_at,
@@ -271,9 +264,7 @@ impl Timer {
             }
             Message::Stop(stop) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::InsufficientPermissions,
-                    ));
+                    ctx.ws_send(event::Message::Error(event::Error::InsufficientPermissions));
                     return Ok(());
                 }
 
@@ -344,14 +335,14 @@ impl Timer {
                     ));
                 }
 
-                ctx.ws_send(outgoing::Message::Started(started));
+                ctx.ws_send(event::Message::Started(started));
             }
             exchange::Event::Stop(stopped) => {
                 // remove the participants ready status when receiving 'stopped'
                 storage::ready_status::delete(ctx.redis_conn(), self.room_id, self.participant_id)
                     .await?;
 
-                ctx.ws_send(outgoing::Message::Stopped(stopped));
+                ctx.ws_send(event::Message::Stopped(stopped));
             }
             exchange::Event::UpdateReadyStatus(update_ready_status) => {
                 if let Some(ready_status) = storage::ready_status::get(
@@ -361,8 +352,8 @@ impl Timer {
                 )
                 .await?
                 {
-                    ctx.ws_send(outgoing::Message::UpdatedReadyStatus(
-                        outgoing::UpdatedReadyStatus {
+                    ctx.ws_send(event::Message::UpdatedReadyStatus(
+                        event::UpdatedReadyStatus {
                             timer_id: update_ready_status.timer_id,
                             participant_id: update_ready_status.participant_id,
                             status: ready_status.ready_status,
@@ -392,7 +383,7 @@ impl Timer {
 
         ctx.exchange_publish(
             control::exchange::current_room_all_participants(self.room_id),
-            exchange::Event::Stop(outgoing::Stopped {
+            exchange::Event::Stop(event::Stopped {
                 timer_id: timer.id,
                 kind: reason,
                 reason: message,
@@ -401,26 +392,6 @@ impl Timer {
 
         Ok(())
     }
-}
-
-/// Status of a currently active timer
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
-pub struct TimerConfig {
-    /// The timer id
-    pub timer_id: TimerId,
-    /// start time of the timer
-    pub started_at: Timestamp,
-    /// Timer kind
-    #[serde(flatten)]
-    pub kind: Kind,
-    /// Style to use for the timer. Set by the sender.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub style: Option<String>,
-    /// The optional title of the timer
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub title: Option<String>,
-    /// Flag to allow/disallow participants to mark themselves as ready
-    pub ready_check_enabled: bool,
 }
 
 /// Status of and belonging to a currently active timer

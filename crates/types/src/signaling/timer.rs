@@ -5,9 +5,12 @@
 //! Signaling messages for the `timer` namespace
 
 pub mod command;
+pub mod event;
 
+mod config;
 mod kind;
 mod timer_id;
 
+pub use config::TimerConfig;
 pub use kind::Kind;
 pub use timer_id::TimerId;

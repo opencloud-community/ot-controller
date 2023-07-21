@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Signaling commands for the `chat` namespace
+//! Signaling commands for the `timer` namespace
 
 #[allow(unused_imports)]
 use crate::imports::*;
