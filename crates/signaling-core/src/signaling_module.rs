@@ -66,6 +66,11 @@ pub trait SignalingModule: Sized + 'static {
         protocol: &'static str,
     ) -> Result<Option<Self>>;
 
+    /// Returns the features provided by a particular module.
+    fn get_provided_features() -> Vec<&'static str> {
+        vec![]
+    }
+
     /// Events related to this module will be passed into this function together with [`ModuleContext`]
     /// which gives access to the websocket and other related information.
     async fn on_event(

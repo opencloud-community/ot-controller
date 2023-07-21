@@ -5,6 +5,7 @@
 use anyhow::Result;
 use chat::Chat;
 use controller::Controller;
+use core::Core;
 use janus_media::Media;
 use polls::Polls;
 use protocol::Protocol;
@@ -13,6 +14,7 @@ use timer::Timer;
 use whiteboard::Whiteboard;
 
 pub async fn register(controller: &mut Controller) -> Result<()> {
+    controller.register::<Core>().await?;
     controller.register::<Chat>().await?;
     controller.register::<Media>().await?;
     controller.register::<Polls>().await?;

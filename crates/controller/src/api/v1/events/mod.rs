@@ -478,7 +478,7 @@ impl EventRoomInfo {
     ) -> Self {
         let call_in_feature_is_enabled = !settings
             .defaults
-            .disabled_features
+            .disabled_features()
             .contains(features::CALL_IN)
             && !tariff
                 .disabled_features

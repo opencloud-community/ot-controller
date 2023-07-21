@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.6.0-rc.2] - 2023-08-08
 
+### Added
+
+- controller: expose enabled features to the frontend (and make them module-specific) ([#471](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/471))
+
 ### Fixed
 
 - controller: fixed some issues related to the timer ready state reported to the frontend ([#411](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/411)

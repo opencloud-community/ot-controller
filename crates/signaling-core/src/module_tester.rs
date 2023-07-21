@@ -618,6 +618,7 @@ where
                         quotas: Default::default(),
                         enabled_modules: HashSet::from([M::NAMESPACE.into()]),
                         disabled_features: Default::default(),
+                        modules: Default::default(),
                     }
                     .into(),
                     module_data,

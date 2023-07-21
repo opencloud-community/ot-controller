@@ -1798,7 +1798,28 @@ components:
             minimum: 0
             maximum: 4294967295
         enabled_modules:
-          description: The enabled modules for the tariff
+          description: The enabled modules for the tariff (deprecated, use 'modules' instead)
+          type: array
+          items: string
+        disabled_features:
+          description: The disabled features for the tariff (deprecated, use 'modules' instead)
+          type: array
+          items: string
+        modules:
+          description: The enabled modules for the tariff and their enabled features
+          type: array
+          items:
+            $ref: '#/components/schemas/TariffModule'
+
+    TariffModule:
+      description: Tariff information related to a specific module
+      type: Object
+      additionalProperties: false
+      required:
+        - features
+      properties:
+        features:
+          description: The enabled features for the tariff
           type: array
           items: string
 

@@ -3002,6 +3002,7 @@ dependencies = [
  "kustos",
  "opentalk-chat",
  "opentalk-controller-core",
+ "opentalk-core",
  "opentalk-janus-media",
  "opentalk-polls",
  "opentalk-protocol",
@@ -3132,6 +3133,31 @@ dependencies = [
  "serde_path_to_error",
  "strum",
  "url",
+ "uuid",
+]
+
+[[package]]
+name = "opentalk-core"
+version = "0.6.0-rc.1"
+dependencies = [
+ "actix-rt",
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "futures",
+ "log",
+ "opentalk-controller-settings",
+ "opentalk-redis-args",
+ "opentalk-signaling-core",
+ "opentalk-test-util",
+ "opentalk-types",
+ "pretty_assertions",
+ "redis",
+ "serde",
+ "serde_json",
+ "serial_test",
+ "tokio",
+ "tracing",
  "uuid",
 ]
 

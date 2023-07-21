@@ -30,11 +30,12 @@ pub struct NoSuchModuleError(pub ());
 #[derive(Default)]
 pub(super) struct Modules {
     modules: HashMap<&'static str, Box<dyn ModuleCaller>>,
+    module_features: HashMap<&'static str, Vec<&'static str>>,
 }
 
 impl Modules {
-    pub fn get_module_names(&self) -> Vec<&'static str> {
-        self.modules.keys().copied().collect()
+    pub fn get_module_features(&self) -> HashMap<&'static str, Vec<&'static str>> {
+        self.module_features.clone()
     }
 
     pub async fn add_module<M>(&mut self, module: M)
@@ -45,6 +46,8 @@ impl Modules {
 
         self.modules
             .insert(M::NAMESPACE, Box::new(ModuleCallerImpl { module }));
+        self.module_features
+            .insert(M::NAMESPACE, M::get_provided_features());
     }
 
     pub async fn on_event_targeted(
@@ -404,6 +407,8 @@ pub trait ModuleBuilder: Send + Sync {
     fn clone_boxed(&self) -> Box<dyn ModuleBuilder>;
 
     fn namespace(&self) -> &'static str;
+
+    fn provided_features(&self) -> Vec<&'static str>;
 }
 
 pub struct ModuleBuilderImpl<M>
@@ -451,6 +456,10 @@ where
 
     fn namespace(&self) -> &'static str {
         M::NAMESPACE
+    }
+
+    fn provided_features(&self) -> Vec<&'static str> {
+        M::get_provided_features()
     }
 }
 

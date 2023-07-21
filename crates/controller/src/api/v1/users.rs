@@ -223,8 +223,8 @@ pub async fn get_me_tariff(
     let tariff = Tariff::get(&mut conn, current_user.tariff_id).await?;
 
     let response = tariff.to_tariff_resource(
-        modules.get_module_names(),
-        &settings.defaults.disabled_features,
+        settings.defaults.disabled_features(),
+        modules.get_module_features(),
     );
 
     Ok(Json(response))

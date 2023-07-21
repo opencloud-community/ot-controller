@@ -96,7 +96,7 @@ pub(crate) async fn require_feature(
     user_id: UserId,
     feature: &str,
 ) -> Result<(), ApiError> {
-    if settings.defaults.disabled_features.contains(feature) {
+    if settings.defaults.disabled_features().contains(feature) {
         return Err(ApiError::forbidden()
             .with_code("feature_disabled")
             .with_message(format!("The feature \"{feature}\" is disabled")));
