@@ -5,8 +5,6 @@
 use anyhow::Result;
 use chrono::{self, Utc};
 use futures::{stream::once, FutureExt};
-use serde::Deserialize;
-use serde::Serialize;
 use signaling_core::SignalingModuleInitData;
 use signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
@@ -16,6 +14,7 @@ use tokio::time::sleep;
 use types::signaling::timer::command::Message;
 use types::signaling::timer::event;
 use types::signaling::timer::event::StopKind;
+use types::signaling::timer::status::TimerStatus;
 use types::signaling::timer::TimerConfig;
 use types::signaling::timer::{command, Kind, TimerId};
 use types::{
@@ -394,16 +393,6 @@ impl Timer {
     }
 }
 
-/// Status of and belonging to a currently active timer
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
-pub struct TimerStatus {
-    #[serde(flatten)]
-    pub config: TimerConfig,
-    /// Flag to indicate that the current participant has marked themselves as ready
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub ready_status: Option<bool>,
-}
-
 #[cfg(test)]
 mod test {
     use std::time::SystemTime;
@@ -412,7 +401,7 @@ mod test {
     use crate::Kind;
     use chrono::{DateTime, Duration};
     use test_util::assert_eq_json;
-    use types::core::Timestamp;
+    use types::{core::Timestamp, signaling::timer::status::TimerStatus};
 
     #[test]
     fn timer_status_without_ready_status() {
