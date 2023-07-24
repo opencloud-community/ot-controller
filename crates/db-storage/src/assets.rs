@@ -13,6 +13,7 @@ use diesel::{
 use diesel_async::scoped_futures::ScopedFutureExt;
 use diesel_async::AsyncConnection;
 use diesel_async::RunQueryDsl;
+use types::api::v1::assets::AssetResource;
 use types::core::{AssetId, RoomId, TenantId};
 
 /// Diesel resource struct
@@ -151,6 +152,17 @@ impl Asset {
         query.execute(conn).await?;
 
         Ok(())
+    }
+}
+
+impl From<Asset> for AssetResource {
+    fn from(value: Asset) -> Self {
+        Self {
+            id: value.id,
+            filename: value.filename,
+            namespace: value.namespace,
+            created_at: value.created_at,
+        }
     }
 }
 

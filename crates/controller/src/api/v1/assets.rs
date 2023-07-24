@@ -7,35 +7,14 @@ use super::{ApiResponse, PagePaginationQuery};
 use actix_http::StatusCode;
 use actix_web::web::{Data, Path, Query};
 use actix_web::{delete, get, HttpResponse};
-use chrono::{DateTime, Utc};
 use database::Db;
 use db_storage::assets::Asset;
-use serde::Serialize;
 use signaling_core::{
     assets::{delete_asset, get_asset},
     ObjectStorage,
 };
+use types::api::v1::assets::AssetResource;
 use types::core::{AssetId, RoomId};
-
-#[derive(Debug, Serialize)]
-pub struct AssetResource {
-    id: AssetId,
-    filename: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    namespace: Option<String>,
-    created_at: DateTime<Utc>,
-}
-
-impl From<Asset> for AssetResource {
-    fn from(asset: Asset) -> Self {
-        AssetResource {
-            id: asset.id,
-            filename: asset.filename,
-            namespace: asset.namespace,
-            created_at: asset.created_at,
-        }
-    }
-}
 
 #[get("/rooms/{room_id}/assets")]
 pub async fn room_assets(
