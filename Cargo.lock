@@ -3442,6 +3442,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "opentalk-log"
+version = "0.0.0-dev"
+dependencies = [
+ "log",
+ "pretty_assertions",
+ "serial_test",
+]
+
+[[package]]
 name = "opentalk-mail-worker-protocol"
 version = "0.0.0-dev"
 dependencies = [
