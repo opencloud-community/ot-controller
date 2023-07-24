@@ -57,6 +57,7 @@ pub mod shared_folder;
 
 const LOCAL_DT_FORMAT: &str = "%Y%m%dT%H%M%S";
 const UTC_DT_FORMAT: &str = "%Y%m%dT%H%M%SZ";
+const ONE_HUNDRED_YEARS_IN_DAYS: usize = 36525;
 
 /// Opaque id of an EventInstance or EventException resource. Should only be used to sort/index the related resource.
 #[derive(Debug, Copy, Clone)]
@@ -2078,7 +2079,9 @@ fn parse_event_dt_params(
             }
 
             if let Some(until) = rrule.get_until() {
-                if (until.naive_utc() - starts_at.datetime.naive_utc()).num_days() <= 36525 {
+                if (until.naive_utc() - starts_at.datetime.naive_utc()).num_days()
+                    <= ONE_HUNDRED_YEARS_IN_DAYS as i64
+                {
                     return true;
                 }
             }
@@ -2091,7 +2094,7 @@ fn parse_event_dt_params(
             // Still limiting the iterations - just in case
             rrule_set
                 .into_iter()
-                .take(36525)
+                .take(ONE_HUNDRED_YEARS_IN_DAYS)
                 .last()
                 .ok_or_else(|| {
                     ApiError::unprocessable_entity()
