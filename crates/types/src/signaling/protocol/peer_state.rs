@@ -4,6 +4,7 @@
 
 //! Peer frontend data for `protocol` namespace
 
+#[allow(unused_imports)]
 use crate::imports::*;
 
 /// The state of other participants in the `recording` module.

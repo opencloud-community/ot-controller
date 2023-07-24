@@ -4,7 +4,10 @@
 
 //! Signaling commands for the `recording` namespace
 
-use crate::{core::ParticipantId, imports::*};
+use crate::core::ParticipantId;
+
+#[allow(unused_imports)]
+use crate::imports::*;
 
 /// Commands for the `protocol` namespace
 #[derive(Clone, Debug, PartialEq, Eq)]

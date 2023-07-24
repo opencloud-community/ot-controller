@@ -4,7 +4,11 @@
 
 //! Signaling events for the `whiteboard` namespace
 
-use crate::{core::AssetId, imports::*};
+use crate::core::AssetId;
+
+#[allow(unused_imports)]
+use crate::imports::*;
+
 use url::Url;
 
 /// Events sent out by the `whiteboard` module

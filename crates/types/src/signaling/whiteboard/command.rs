@@ -4,6 +4,7 @@
 
 //! Signaling commands for the `whiteboard` namespace
 
+#[allow(unused_imports)]
 use crate::imports::*;
 
 /// Commands for the `whiteboard` namespace
