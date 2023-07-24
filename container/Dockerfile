@@ -22,6 +22,7 @@ COPY ./crates/janus-media/Cargo.toml ./crates/janus-media/Cargo.toml
 COPY ./crates/keycloak-admin/Cargo.toml ./crates/keycloak-admin/Cargo.toml
 COPY ./crates/kustos/Cargo.toml ./crates/kustos/Cargo.toml
 COPY ./crates/lapin-pool/Cargo.toml ./crates/lapin-pool/Cargo.toml
+COPY ./crates/log/Cargo.toml ./crates/log/Cargo.toml
 COPY ./crates/mail-worker-protocol/Cargo.toml ./crates/mail-worker-protocol/Cargo.toml
 COPY ./crates/nextcloud-client/Cargo.toml ./crates/nextcloud-client/Cargo.toml
 COPY ./crates/timer/Cargo.toml ./crates/timer/Cargo.toml
