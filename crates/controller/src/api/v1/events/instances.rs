@@ -648,7 +648,7 @@ fn build_rruleset(event: &Event) -> Result<RRuleSet, ApiError> {
         .naive_local()
         .format(LOCAL_DT_FORMAT);
 
-    let rruleset = format!("DTSTART;TZID={starts_at_tz}:{starts_at};\n{recurrence_pattern}");
+    let rruleset = format!("DTSTART;TZID={starts_at_tz}:{starts_at}\n{recurrence_pattern}");
     let rruleset: RRuleSet = rruleset.parse().map_err(|e| {
         log::error!("failed to parse rrule from db {}", e);
         ApiError::internal()

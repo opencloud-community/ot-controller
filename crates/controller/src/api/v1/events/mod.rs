@@ -2048,7 +2048,7 @@ fn parse_event_dt_params(
         let starts_at_fmt = starts_at.datetime.format(LOCAL_DT_FORMAT);
 
         let rrule_set =
-            format!("DTSTART;TZID={starts_at_tz}:{starts_at_fmt};\n{recurrence_pattern}");
+            format!("DTSTART;TZID={starts_at_tz}:{starts_at_fmt}\n{recurrence_pattern}");
         let rrule_set = match rrule_set.parse::<RRuleSet>() {
             Ok(rrule) => rrule,
             Err(e) => {
@@ -2280,6 +2280,21 @@ mod tests {
     use std::time::SystemTime;
     use test_util::assert_eq_json;
     use types::core::{RoomId, TimeZone, UserId};
+
+    #[test]
+    fn rrulset_parse_works_as_used_in_this_crate() {
+        assert!(
+            "DTSTART;TZID=Europe/Vienna:20230723T080000\nRRULE:FREQ=DAILY;UNTIL=20240119T100000Z"
+                .parse::<RRuleSet>()
+                .is_ok()
+        );
+        // Note the semicolon before the `\n`
+        assert!(
+            "DTSTART;TZID=Europe/Vienna:20230723T080000;\nRRULE:FREQ=DAILY;UNTIL=20240119T100000Z"
+                .parse::<RRuleSet>()
+                .is_err()
+        );
+    }
 
     #[test]
     fn event_resource_serialize() {
