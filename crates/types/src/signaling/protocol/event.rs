@@ -4,7 +4,10 @@
 
 //! Types related to signaling events in the `protocol` namespace
 
-use crate::{core::AssetId, imports::*};
+use crate::core::AssetId;
+
+#[allow(unused_imports)]
+use crate::imports::*;
 
 /// Events sent out by the `protocol` module
 #[derive(Clone, Debug, PartialEq, Eq)]

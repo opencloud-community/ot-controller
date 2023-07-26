@@ -4,7 +4,9 @@
 
 //! Frontend data for `whiteboard` namespace
 
+#[allow(unused_imports)]
 use crate::imports::*;
+
 use url::Url;
 
 /// The state of the `whiteboard` module.

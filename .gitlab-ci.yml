@@ -149,6 +149,8 @@ lint:licensing:
 
 check:opentalk-types:
   # Ensures that the `types` crate can be built with each relevant feature individually
+  variables:
+    RUSTFLAGS: -D warnings
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
   stage: check
