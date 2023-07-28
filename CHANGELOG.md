@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - controller: fixed a bug where a debrief without enough participants led to an error ([#429](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/429))
 - controller: for static tenant setting, no longer filters users by tenant when searching them by email ([#469](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/469))
 
+### Changed
+
+- controller: changed the error messages for invalid configurations to be verbose and include the full path to the missing/invalid field ([#465](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/465))
+
 ## [0.6.0-rc.1] - 2023-07-07
 
 ### Added
