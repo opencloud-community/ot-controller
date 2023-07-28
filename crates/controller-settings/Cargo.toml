@@ -13,9 +13,11 @@ publish = false
 
 [dependencies]
 # Settings related
+anyhow.workspace = true
 config.workspace = true
 arc-swap.workspace = true
 serde.workspace = true
+serde_path_to_error = "0.1.14"
 openidconnect.workspace = true
 chrono.workspace = true
 url.workspace = true
