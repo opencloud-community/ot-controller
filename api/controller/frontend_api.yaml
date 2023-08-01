@@ -1741,6 +1741,9 @@ components:
         breakout_room:
           description: ID of the breakout room
           type: integer
+        resumption:
+          description: Token to resume previous session inside the same room
+          type: string
 
     RoomStartSuccess:
       description: Arguments for the room start endpoint
@@ -1752,6 +1755,10 @@ components:
         ticket:
           description: The ticket to be used in the [`Sec-WebSocket-Protocol`] header field
           type: string
+        resumption:
+          description: Token to resume the just created session in a future start request
+          type: string
+
     RoomStartError:
       description: Contains the error reason for the room start endpoint
       type: object
@@ -1762,7 +1769,7 @@ components:
         error:
           description: The error type
           type: string
-          enum: [wrong_room_password, invalid_credentials]
+          enum: [wrong_room_password, no_breakout_rooms, invalid_breakout_room_id, banned_from_room]
 
     # -------------- Tariff definitions --------------
     Tariff:
@@ -1910,6 +1917,9 @@ components:
           description: The invite_code
           type: string
           maxLength: 128
+        resumption:
+          description: Token to resume previous session inside the same room
+          type: string
 
     InviteCode:
       description: The complete invite object.
