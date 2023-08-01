@@ -242,8 +242,8 @@ pub async fn get_room_tariff(
     let tariff = room.get_tariff(&mut conn).await?;
 
     let response = tariff.to_tariff_resource(
-        modules.get_module_names(),
-        &settings.defaults.disabled_features,
+        settings.defaults.disabled_features(),
+        modules.get_module_features(),
     );
 
     Ok(Json(response))

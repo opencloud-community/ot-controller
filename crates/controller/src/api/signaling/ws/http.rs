@@ -43,8 +43,11 @@ impl SignalingModules {
         }));
     }
 
-    pub fn get_module_names(&self) -> Vec<&'static str> {
-        self.0.iter().map(|m| m.namespace()).collect()
+    pub fn get_module_features(&self) -> Vec<(&'static str, Vec<&'static str>)> {
+        self.0
+            .iter()
+            .map(|m| (m.namespace(), m.provided_features()))
+            .collect()
     }
 }
 

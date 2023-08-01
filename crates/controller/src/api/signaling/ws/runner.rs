@@ -1226,11 +1226,16 @@ impl Runner {
 
         let settings = self.settings.load_full();
 
+        let mut module_features = Vec::<(&str, Vec<&str>)>::new();
+        self.modules
+            .get_module_features()
+            .iter()
+            .for_each(|(k, v)| {
+                module_features.push((k, v.clone()));
+            });
+
         let tariff_resource = tariff
-            .to_tariff_resource(
-                self.modules.get_module_names(),
-                &settings.defaults.disabled_features,
-            )
+            .to_tariff_resource(settings.defaults.disabled_features(), module_features)
             .into();
 
         self.ws_send_control(

@@ -399,6 +399,12 @@ pub struct CallIn {
     pub default_country_code: phonenumber::country::Id,
 }
 
+/// The namespace that is used by default
+pub const DEFAULT_NAMESPACE: &str = "core";
+
+/// The namespace separator
+pub const NAMESPACE_SEPARATOR: &str = "::";
+
 #[derive(Clone, Default, Debug, Deserialize)]
 pub struct Defaults {
     #[serde(default = "default_user_language")]
@@ -406,7 +412,22 @@ pub struct Defaults {
     #[serde(default)]
     pub screen_share_requires_permission: bool,
     #[serde(default)]
-    pub disabled_features: HashSet<String>,
+    disabled_features: HashSet<String>,
+}
+
+impl Defaults {
+    pub fn disabled_features(&self) -> HashSet<String> {
+        self.disabled_features
+            .iter()
+            .map(|feature| {
+                if feature.contains(NAMESPACE_SEPARATOR) {
+                    feature.to_owned()
+                } else {
+                    format!("{DEFAULT_NAMESPACE}{NAMESPACE_SEPARATOR}{feature}")
+                }
+            })
+            .collect()
+    }
 }
 
 fn default_user_language() -> String {
