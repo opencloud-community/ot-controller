@@ -231,7 +231,7 @@ async fn check_access_token_inner(
     // Get the tenant_id depending on the configured assignment
     let oidc_tenant_id = match &settings.tenants.assignment {
         TenantAssignment::Static { static_tenant_id } => static_tenant_id.clone(),
-        TenantAssignment::ByExternalTenantId => claims.tenant_id.ok_or_else(|| {
+        TenantAssignment::ByExternalTenantId { .. } => claims.tenant_id.ok_or_else(|| {
             log::error!("Invalid access token, missing tenant_id");
             ApiError::unauthorized().with_www_authenticate(AuthenticationError::InvalidAccessToken)
         })?,

@@ -171,7 +171,7 @@ pub async fn find(
     }
 
     let found_users = if settings.endpoints.users_find_use_kc {
-        let mut found_kc_users = match settings.tenants.assignment {
+        let mut found_kc_users = match &settings.tenants.assignment {
             TenantAssignment::Static { .. } => {
                 // Do not filter by tenant_id if the assignment is static, since that's used
                 // when the keycloak does not provide any tenant information we can filter over anyway
@@ -180,11 +180,17 @@ pub async fn find(
                     .await
                     .context("Failed to search for user in keycloak")?
             }
-            TenantAssignment::ByExternalTenantId => {
+            TenantAssignment::ByExternalTenantId {
+                external_tenant_id_user_attribute_name,
+            } => {
                 // Keycloak must contain information about the tenancy of a user,
                 // so we pass in the tenant_id to filter the found users
                 kc_admin_client
-                    .search_user_filtered(current_tenant.oidc_tenant_id.inner(), &query.q)
+                    .search_user_filtered(
+                        external_tenant_id_user_attribute_name,
+                        current_tenant.oidc_tenant_id.inner(),
+                        &query.q,
+                    )
                     .await
                     .context("Failed to search for user in keycloak")?
             }

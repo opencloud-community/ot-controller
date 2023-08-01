@@ -215,8 +215,10 @@ secret_key = "minioadmin"
 # The following assignment strategies are available:
 #   - "static" (default): Every user is assigned to a single tenant with a tenant_id specified in the static_tenant_id field.
 #               static_tenant_id's default value is "OpenTalkDefaultTenant".
-#   - "by_external_tenant_id": The OIDC provider (Keycloak) must be configured to include a "tenant_id" field in it's
+#   - "by_external_tenant_id": The OIDC provider (Keycloak) must be configured to include a "tenant_id" field in its
 #                              id_token's JWT claims. It is used to assign users to the correct tenant.
+#                              The OIDC provider must also provide a user attribute holding the tenant_id. The name of this
+#                              field ist set here in external_tenant_id_user_attribute_name, the default field name is "tenant_id".
 #
 # Static Example (Default configuration if nothing is specified):
 #assignment = "static"
@@ -224,6 +226,7 @@ secret_key = "minioadmin"
 #
 # Assignment by JWT tenant_id example:
 #assignment = "by_external_tenant_id"
+#external_tenant_id_user_attribute_name = "tenant_id"
 
 #[tariffs]
 # Configure how tariffs are assigned to users

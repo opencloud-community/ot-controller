@@ -35,6 +35,7 @@ use db_storage::sip_configs::{NewSipConfig, SipConfig};
 use db_storage::tariffs::Tariff;
 use db_storage::tenants::Tenant;
 use db_storage::users::{email_to_libravatar_url, User};
+use keycloak_admin::users::TenantFilter;
 use keycloak_admin::KeycloakAdminClient;
 use kustos::policies_builder::{GrantingAccess, PoliciesBuilder};
 use kustos::prelude::{AccessMethod, IsSubject};
@@ -1942,16 +1943,10 @@ async fn enrich_invitees_from_keycloak(
     let tenant_assignment = &settings.tenants.assignment;
     let invitee_mapping_futures = invitees.into_iter().map(|invitee| async move {
         if let EventInviteeProfile::Email(profile_details) = invitee.profile {
-            let tenant_id = match tenant_assignment {
-                TenantAssignment::Static { .. } => None,
-                TenantAssignment::ByExternalTenantId => Some(current_tenant.oidc_tenant_id.inner()),
-            };
+            let tenant_filter = get_tenant_filter(current_tenant, tenant_assignment);
 
             let user_for_email = kc_admin_client
-                .get_user_for_email(
-                    tenant_id.map(String::as_str),
-                    profile_details.email.as_ref(),
-                )
+                .get_user_for_email(tenant_filter, profile_details.email.as_ref())
                 .await
                 .unwrap_or_default();
 
@@ -1977,6 +1972,21 @@ async fn enrich_invitees_from_keycloak(
         }
     });
     futures::future::join_all(invitee_mapping_futures).await
+}
+
+fn get_tenant_filter<'a>(
+    current_tenant: &'a Tenant,
+    tenant_assignment: &'a TenantAssignment,
+) -> Option<TenantFilter<'a>> {
+    match tenant_assignment {
+        TenantAssignment::Static { .. } => None,
+        TenantAssignment::ByExternalTenantId {
+            external_tenant_id_user_attribute_name,
+        } => Some(TenantFilter {
+            field_name: external_tenant_id_user_attribute_name,
+            id: current_tenant.oidc_tenant_id.inner(),
+        }),
+    }
 }
 
 fn recurrence_array_to_string(recurrence_pattern: Vec<String>) -> Option<String> {
@@ -2250,13 +2260,10 @@ async fn enrich_from_keycloak(
 ) -> MailRecipient {
     let tenant_assignment = &settings.tenants.assignment;
     if let MailRecipient::External(recipient) = recipient {
-        let tenant_id = match tenant_assignment {
-            TenantAssignment::Static { .. } => None,
-            TenantAssignment::ByExternalTenantId => Some(current_tenant.oidc_tenant_id.inner()),
-        };
+        let tenant_filter = get_tenant_filter(current_tenant, tenant_assignment);
 
         let keycloak_user = kc_admin_client
-            .get_user_for_email(tenant_id.map(String::as_str), recipient.email.as_ref())
+            .get_user_for_email(tenant_filter, recipient.email.as_ref())
             .await
             .unwrap_or_default();
 

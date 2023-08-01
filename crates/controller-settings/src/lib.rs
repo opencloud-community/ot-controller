@@ -462,8 +462,17 @@ pub struct Metrics {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "snake_case", tag = "assignment")]
 pub enum TenantAssignment {
-    Static { static_tenant_id: String },
-    ByExternalTenantId,
+    Static {
+        static_tenant_id: String,
+    },
+    ByExternalTenantId {
+        #[serde(default = "default_external_tenant_id_user_attribute_name")]
+        external_tenant_id_user_attribute_name: String,
+    },
+}
+
+fn default_external_tenant_id_user_attribute_name() -> String {
+    "tenant_id".to_owned()
 }
 
 impl Default for TenantAssignment {

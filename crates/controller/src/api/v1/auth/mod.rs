@@ -130,7 +130,7 @@ pub async fn login(
     // Get the tenant_id depending on the configured assignment
     let tenant_id = match &settings.tenants.assignment {
         TenantAssignment::Static { static_tenant_id } => static_tenant_id.clone(),
-        TenantAssignment::ByExternalTenantId => info.tenant_id.clone().ok_or_else(|| {
+        TenantAssignment::ByExternalTenantId { .. } => info.tenant_id.clone().ok_or_else(|| {
             ApiError::bad_request()
                 .with_code("invalid_claims")
                 .with_message("tenant_id missing in id_token claims")
