@@ -31,8 +31,9 @@
 //!
 //! Setting categories, in which all properties implement a default value, should also implement the [`Default`] trait.
 
+use anyhow::{anyhow, Context, Result};
 use arc_swap::ArcSwap;
-use config::{Config, ConfigError, Environment, File, FileFormat};
+use config::{Config, Environment, File, FileFormat};
 use openidconnect::{ClientId, ClientSecret};
 use rustc_hash::FxHashSet;
 use serde::{Deserialize, Deserializer};
@@ -136,8 +137,8 @@ where
 impl Settings {
     /// Creates a new Settings instance from the provided TOML file.
     /// Specific fields can be set or overwritten with environment variables (See struct level docs for more details).
-    pub fn load(file_name: &str) -> Result<Self, ConfigError> {
-        Config::builder()
+    pub fn load(file_name: &str) -> Result<Self> {
+        let config = Config::builder()
             .add_source(File::new(file_name, FileFormat::Toml))
             .add_source(WarningSource(
                 Environment::with_prefix("K3K_CTRL")
@@ -149,8 +150,13 @@ impl Settings {
                     .prefix_separator("_")
                     .separator("__"),
             )
-            .build()?
-            .try_deserialize()
+            .build()?;
+
+        serde_path_to_error::deserialize(config)
+            .map_err(|e| anyhow!("{} for `{}`", e.inner(), e.path()))
+            .with_context(|| {
+                format!("Failed to apply configuration from {file_name} or environment")
+            })
     }
 }
 
@@ -493,7 +499,7 @@ mod test {
     use std::env;
 
     #[test]
-    fn settings_env_vars_overwrite_config() -> Result<(), ConfigError> {
+    fn settings_env_vars_overwrite_config() -> Result<()> {
         // Sanity check
         let settings = Settings::load("../../extra/example.toml")?;
 
