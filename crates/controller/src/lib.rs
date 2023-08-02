@@ -39,11 +39,13 @@ use anyhow::{anyhow, Context, Result};
 use api::signaling::{recording::Recording, SignalingModules};
 use arc_swap::ArcSwap;
 use database::Db;
-use exchange_task::ExchangeHandle;
 use keycloak_admin::KeycloakAdminClient;
 use lapin_pool::RabbitMqPool;
 use oidc::OidcContext;
-use signaling_core::{ObjectStorage, RedisConnection, SignalingModule, SignalingModuleInitData};
+use signaling_core::{
+    ExchangeHandle, ExchangeTask, ObjectStorage, RedisConnection, SignalingModule,
+    SignalingModuleInitData,
+};
 use std::fs::File;
 use std::io::BufReader;
 use std::net::Ipv6Addr;
@@ -58,7 +60,6 @@ use tracing_actix_web::TracingLogger;
 mod acl;
 mod caches;
 mod cli;
-mod exchange_task;
 mod metrics;
 mod oidc;
 mod services;
@@ -203,7 +204,7 @@ impl Controller {
             settings.rabbit_mq.max_channels_per_connection,
         );
 
-        let exchange_handle = exchange_task::ExchangeTask::spawn(rabbitmq_pool.clone()).await?;
+        let exchange_handle = ExchangeTask::spawn(rabbitmq_pool.clone()).await?;
 
         // Connect to postgres
         let mut db = Db::connect(&settings.database).context("Failed to connect to database")?;

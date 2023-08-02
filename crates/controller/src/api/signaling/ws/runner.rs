@@ -14,7 +14,6 @@ use crate::api::signaling::{
     resumption::{ResumptionTokenKeepAlive, ResumptionTokenUsed},
     ws::actor::WsCommand,
 };
-use crate::exchange_task::{ExchangeHandle, SubscriberHandle};
 use actix::Addr;
 use actix_http::ws::{CloseCode, CloseReason, Message};
 use actix_web_actors::ws;
@@ -36,7 +35,8 @@ use signaling_core::{
         storage::{self, ParticipantIdRunnerLock},
         ControlStateExt as _, NAMESPACE,
     },
-    AnyStream, ObjectStorage, Participant, RedisConnection, SignalingMetrics, SignalingRoomId,
+    AnyStream, ExchangeHandle, ObjectStorage, Participant, RedisConnection, SignalingMetrics,
+    SignalingRoomId, SubscriberHandle,
 };
 use std::collections::HashMap;
 use std::future;

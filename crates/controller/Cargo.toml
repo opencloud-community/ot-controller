@@ -12,9 +12,11 @@ publish = false
 build = "build.rs"
 
 [dependencies]
+controller-utils = { path = "../controller-utils", package = "opentalk-controller-utils" }
 controller-settings = { path = "../controller-settings", package = "opentalk-controller-settings" }
 database = { path = "../database", package = "opentalk-database" }
 db-storage = { path = "../db-storage", package = "opentalk-db-storage" }
+jobs = { path = "../jobs", package = "opentalk-jobs"  }
 mail-worker-proto = { path = "../mail-worker-protocol", package = "opentalk-mail-worker-protocol", features = [
     "client",
 ] }
@@ -22,7 +24,7 @@ nextcloud-client = { path = "../nextcloud-client", package = "opentalk-nextcloud
     "rustls-tls-native-roots",
 ] }
 signaling-core = { path = "../signaling-core", package = "opentalk-signaling-core" }
-types = { path = "../types", package = "opentalk-types", features = ["backend"] }
+types = { path = "../types", package = "opentalk-types", features = ["backend", "clap"] }
 
 ### Logging utilities
 log = { workspace = true, features = ["serde"] }
@@ -82,7 +84,7 @@ serde_json.workspace = true
 bincode.workspace = true
 parking_lot.workspace = true
 mime = "0.3"
-bytestring = { version = "1", features = ["serde"] }
+bytestring = { workspace = true, features = ["serde"] }
 
 ### RabbitMQ
 lapin.workspace = true
@@ -120,7 +122,6 @@ itertools.workspace = true
 phonenumber.workspace = true
 email_address = "0.2.4"
 redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
-slotmap = "1"
 rustc-hash.workspace = true
 
 # Random Distributions etc. Used for RR

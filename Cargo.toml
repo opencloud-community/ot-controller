@@ -20,6 +20,7 @@ async-trait = "0.1"
 aws-sdk-s3 = "0.28"
 bincode = "1"
 bytes = "1"
+bytestring = "1"
 chrono = "0.4"
 chrono-tz = "0.8"
 clap = { version = "4", features = ["derive"] }
