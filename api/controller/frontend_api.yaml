@@ -239,7 +239,7 @@ paths:
 
   /rooms/{room_id}/start:
     post:
-      summary: Start a signaling session
+      summary: Start a signaling session as a registered user
       description: >
         Returns a ticket to be used with the /signaling endpoint.
         When joining a room, the ticket
@@ -289,7 +289,7 @@ paths:
 
   /rooms/{room_id}/start_invited:
     post:
-      summary: Start a signaling session
+      summary: Start a signaling session for an invition code
       description: >
         Returns a ticket to be used with the /signaling endpoint.
         When joining a room, the ticket
