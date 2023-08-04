@@ -15,7 +15,7 @@ DO $$
 DECLARE
 legal_vote RECORD;
 BEGIN
-    FOR legal_vote IN SELECT * FROM legal_votes
+    FOR legal_vote IN SELECT * FROM legal_votes WHERE room IS NOT NULL
     
     LOOP
         INSERT INTO module_resources
