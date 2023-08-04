@@ -14,8 +14,12 @@ servers:
 tags:
   - name: rooms
     description: Endpoints related to room functionality
-  - name: invites
+  - name: events
+    description: Endpoints related to event functionality
+  - name: invite_codes
     description: Endpoints related to invite code functionality
+  - name: event_invites
+    description: Endpoints related to invitations for events
   - name: signaling
     description: Endpoints related to signaling functionality
   - name: users
@@ -24,6 +28,20 @@ tags:
     description: Endpoints related to authentication
   - name: sip
     description: Endpoints related to sip configuration
+  - name: call_in
+    description: Endpoints related to call-in functionality
+  - name: tariff
+    description: Endpoints related to tariff functionality
+  - name: assets
+    description: Endpoints related to asset management
+  - name: turn
+    description: Endpoints related to TURN server functionality
+  - name: stun
+    description: Endpoints related to STUN functionality
+  - name: services
+    description: Endpoints that should be used by service integrations
+  - name: shared_folder
+    description: Endpoints related to shared folder functionality
 
 paths:
   /auth/login:
@@ -239,7 +257,7 @@ paths:
 
   /rooms/{room_id}/start:
     post:
-      summary: Start a signaling session
+      summary: Start a signaling session as a registered user
       description: >
         Returns a ticket to be used with the /signaling endpoint.
         When joining a room, the ticket
@@ -289,7 +307,7 @@ paths:
 
   /rooms/{room_id}/start_invited:
     post:
-      summary: Start a signaling session
+      summary: Start a signaling session for an invition code
       description: >
         Returns a ticket to be used with the /signaling endpoint.
         When joining a room, the ticket
@@ -298,7 +316,7 @@ paths:
         When the requested room has a password set, the requester has to provide the correct password
         through the requests body. When the room has no password set,
         the provided password will be ignored.
-      tags: [rooms, signaling, invites]
+      tags: [rooms, signaling, invite_codes]
       operationId: signaling_start_invited
       security: []
       parameters:
@@ -342,7 +360,7 @@ paths:
     get:
       summary: Get all invites
       description: Gets all invites the user has access to.
-      tags: [rooms, invites]
+      tags: [rooms, invite_codes]
       operationId: get_all_invites
       parameters:
         - in: path
@@ -376,7 +394,7 @@ paths:
         Create a new invite from the provided object. On success, the controller will create a new
         Invite and return the InviteCode object. Returns `404 Not Found` when the user has no
         access to the room.
-      tags: [rooms, invites]
+      tags: [rooms, invite_codes]
       operationId: create_invite
       parameters:
         - in: path
@@ -414,7 +432,7 @@ paths:
     get:
       summary: Get an invite
       description: Get the invite for the given room_id and invite_code.
-      tags: [rooms, invites]
+      tags: [rooms, invite_codes]
       operationId: get_invite
       parameters:
         - in: path
@@ -450,7 +468,7 @@ paths:
       summary: Update an invite code
       description: >
         Update an invite from the provided object. On success, the controller will return the updated InviteCode object.
-      tags: [rooms, invites]
+      tags: [rooms, invite_codes]
       operationId: put_invite
       parameters:
         - in: path
@@ -493,7 +511,7 @@ paths:
       summary: Delete an invite code
       description: >
         Delete the respective invite. On success, the controller will return 200 OK.
-      tags: [rooms, invites]
+      tags: [rooms, invite_codes]
       operationId: delete_invite
       parameters:
         - in: path
@@ -523,7 +541,7 @@ paths:
     post:
       summary: Verify an invite code
       description: Verifies the invite and returns the room_url for this invite_code
-      tags: [invites]
+      tags: [invite_codes]
       operationId: verify_invite
       requestBody:
         required: true
@@ -674,7 +692,7 @@ paths:
     get:
       summary: Get an asset
       description: Get the asset for the given `room_id` and `asset_id`.
-      tags: [rooms, asset]
+      tags: [rooms, assets]
       operationId: get_asset
       parameters:
         - in: path
