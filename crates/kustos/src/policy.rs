@@ -4,7 +4,7 @@
 
 use crate::{
     access::AccessMethod,
-    subject::{IsSubject, PolicyGroup, PolicyRole, PolicyUser},
+    subject::{IsSubject, PolicyGroup, PolicyInvite, PolicyRole, PolicyUser},
     ResourceId,
 };
 
@@ -33,8 +33,12 @@ impl<S: IsSubject> Policy<S> {
         }
     }
 }
+
 /// Short version type alias for a Policy with a PolicyUser subject
 pub type UserPolicy = Policy<PolicyUser>;
+
+/// Short version type alias for a Policy with a PolicyInvite subject
+pub type InvitePolicy = Policy<PolicyInvite>;
 
 /// Short version type alias for a Policy with a PolicyGroup subject
 pub type GroupPolicy = Policy<PolicyGroup>;
@@ -49,6 +53,7 @@ pub struct Policies<'a, T: IsSubject> {
 }
 
 pub type UserPolicies<'a> = Policies<'a, PolicyUser>;
+pub type InvitePolicies<'a> = Policies<'a, PolicyInvite>;
 pub type GroupPolicies<'a> = Policies<'a, PolicyGroup>;
 pub type RolePolicies<'a> = Policies<'a, PolicyRole>;
 

@@ -2,12 +2,28 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+#[cfg(feature = "kustos")]
+use kustos::subject::PolicyInvite;
+
 use uuid::Uuid;
 
 crate::diesel_newtype! {
     feature_gated:
 
-    #[derive(Copy)] InviteCodeId(uuid::Uuid) => diesel::sql_types::Uuid
+    #[derive(Copy)]
+    // If feature `kustos` is enabled, `FromStr` is implemented by the
+    // `diesel_newtype!(…)` macro.
+    #[cfg_attr(
+        not(feature = "kustos"),
+        derive(derive_more::FromStr),
+    )]
+    #[cfg_attr(
+        feature = "redis",
+        derive(redis_args::ToRedisArgs, redis_args::FromRedisValue),
+        to_redis_args(fmt),
+        from_redis_value(FromStr)
+    )]
+    InviteCodeId(uuid::Uuid) => diesel::sql_types::Uuid, "/invites/"
 }
 
 impl InviteCodeId {
@@ -25,5 +41,12 @@ impl InviteCodeId {
     #[cfg(feature = "rand")]
     pub fn generate() -> Self {
         Self::from(Uuid::new_v4())
+    }
+}
+
+#[cfg(feature = "kustos")]
+impl From<InviteCodeId> for PolicyInvite {
+    fn from(id: InviteCodeId) -> Self {
+        Self::from(id.into_inner())
     }
 }

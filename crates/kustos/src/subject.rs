@@ -41,6 +41,37 @@ impl From<uuid::Uuid> for PolicyUser {
     }
 }
 
+/// A uuid backed invite identifier.
+///
+/// This crates requires the invites codes to be identifiable by a uuid.
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub struct PolicyInvite(pub(crate) uuid::Uuid);
+
+impl IsSubject for PolicyInvite {}
+
+impl PolicyInvite {
+    /// Create a ZERO policy invite, e.g. for testing purposes
+    pub const fn nil() -> Self {
+        Self(Uuid::nil())
+    }
+
+    /// Create a policy invite from a number, e.g. for testing purposes
+    pub const fn from_u128(id: u128) -> Self {
+        Self(Uuid::from_u128(id))
+    }
+
+    /// Generate a new random policy invite
+    pub fn generate() -> Self {
+        Self(Uuid::new_v4())
+    }
+}
+
+impl From<uuid::Uuid> for PolicyInvite {
+    fn from(invite: uuid::Uuid) -> Self {
+        PolicyInvite(invite)
+    }
+}
+
 /// An internal group e.g. administrator, moderator, etc.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PolicyRole(pub(crate) String);

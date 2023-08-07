@@ -79,8 +79,8 @@ mod test {
     use super::*;
     use crate::access::AccessMethod;
     use crate::internal::rbac_api_ex::RbacApiEx;
-    use crate::subject::PolicyUser;
-    use crate::{UserPolicies, UserPolicy};
+    use crate::subject::{PolicyInvite, PolicyUser};
+    use crate::{InvitePolicy, UserPolicies, UserPolicy};
     use casbin::{CoreApi, MgmtApi};
     use pretty_assertions::assert_eq;
     use std::convert::TryInto;
@@ -103,6 +103,19 @@ mod test {
             policy.to_casbin_policy(),
             vec![
                 format!("user::{}", uuid::Uuid::nil()),
+                "/test".to_string(),
+                "read".to_string()
+            ]
+        )
+    }
+
+    #[test]
+    fn test_invite_policy() {
+        let policy = InvitePolicy::new(PolicyInvite::nil(), "/test", AccessMethod::Read);
+        assert_eq!(
+            policy.to_casbin_policy(),
+            vec![
+                format!("invite::{}", uuid::Uuid::nil()),
                 "/test".to_string(),
                 "read".to_string()
             ]

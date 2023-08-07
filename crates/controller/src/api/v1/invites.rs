@@ -5,6 +5,7 @@
 //! Contains invite related REST endpoints.
 use super::response::{ApiError, NoContent};
 use super::DefaultApiResult;
+use crate::api::v1::rooms::RoomsPoliciesBuilderExt;
 use crate::api::v1::{ApiResponse, PagePaginationQuery};
 use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json, Path, Query, ReqData};
@@ -14,6 +15,8 @@ use database::Db;
 use db_storage::invites::{Invite, NewInvite, UpdateInvite};
 use db_storage::rooms::Room;
 use db_storage::users::User;
+use kustos::prelude::PoliciesBuilder;
+use kustos::Authz;
 use serde::{Deserialize, Serialize};
 use types::api::v1::users::PublicUserProfile;
 use types::core::{InviteCodeId, RoomId};
@@ -66,6 +69,7 @@ pub struct PostInviteBody {
 pub async fn add_invite(
     settings: SharedSettingsActix,
     db: Data<Db>,
+    authz: Data<Authz>,
     current_user: ReqData<User>,
     room_id: Path<RoomId>,
     data: Json<PostInviteBody>,
@@ -86,6 +90,14 @@ pub async fn add_invite(
     }
     .insert(&mut conn)
     .await?;
+
+    let policies = PoliciesBuilder::new()
+        // Grant invitee access
+        .grant_invite_access(invite.id)
+        .room_guest_read_access(room_id)
+        .finish();
+
+    authz.add_policies(policies).await?;
 
     let created_by = current_user.to_public_user_profile(&settings);
     let updated_by = current_user.to_public_user_profile(&settings);

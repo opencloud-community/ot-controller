@@ -429,6 +429,7 @@ pub async fn start_invited(
 }
 
 pub trait RoomsPoliciesBuilderExt {
+    fn room_guest_read_access(self, room_id: RoomId) -> Self;
     fn room_read_access(self, room_id: RoomId) -> Self;
     fn room_write_access(self, room_id: RoomId) -> Self;
 }
@@ -437,6 +438,17 @@ impl<T> RoomsPoliciesBuilderExt for PoliciesBuilder<GrantingAccess<T>>
 where
     T: IsSubject + Clone,
 {
+    fn room_guest_read_access(self, room_id: RoomId) -> Self {
+        self.add_resource(
+            room_id.resource_id().with_suffix("/tariff"),
+            [AccessMethod::Get],
+        )
+        .add_resource(
+            room_id.resource_id().with_suffix("/event"),
+            [AccessMethod::Get],
+        )
+    }
+
     fn room_read_access(self, room_id: RoomId) -> Self {
         self.add_resource(room_id.resource_id(), [AccessMethod::Get])
             .add_resource(
@@ -449,6 +461,10 @@ where
             )
             .add_resource(
                 room_id.resource_id().with_suffix("/tariff"),
+                [AccessMethod::Get],
+            )
+            .add_resource(
+                room_id.resource_id().with_suffix("/event"),
                 [AccessMethod::Get],
             )
             .add_resource(
@@ -492,6 +508,7 @@ pub(crate) fn associated_resource_ids(room_id: RoomId) -> impl IntoIterator<Item
         room_id.resource_id().with_suffix("/invites/*"),
         room_id.resource_id().with_suffix("/start"),
         room_id.resource_id().with_suffix("/tariff"),
+        room_id.resource_id().with_suffix("/event"),
         room_id.resource_id().with_suffix("/assets"),
         room_id.resource_id().with_suffix("/assets/*"),
     ]

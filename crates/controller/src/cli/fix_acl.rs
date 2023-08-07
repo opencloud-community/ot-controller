@@ -12,7 +12,9 @@ use anyhow::{bail, Context, Error, Result};
 use clap::Parser;
 use controller_settings::Settings;
 use database::{Db, DbConnection};
-use db_storage::{events::Event, module_resources::ModuleResource, rooms::Room, users::User};
+use db_storage::{
+    events::Event, invites::Invite, module_resources::ModuleResource, rooms::Room, users::User,
+};
 use kustos::prelude::*;
 use std::sync::Arc;
 
@@ -169,17 +171,26 @@ async fn fix_user(
 }
 
 async fn fix_rooms(conn: &mut DbConnection, authz: &kustos::Authz) -> Result<()> {
+    let mut policies = PoliciesBuilder::new();
+
     let rooms = Room::get_all_with_creator(conn)
         .await
         .context("failed to load rooms")?;
-
-    let mut policies = PoliciesBuilder::new();
-
     for (room, user) in rooms {
         policies = policies
             .grant_user_access(user.id)
             .room_read_access(room.id)
             .room_write_access(room.id)
+            .finish();
+    }
+
+    let invites = Invite::get_all(conn)
+        .await
+        .context("failed to load invites")?;
+    for Invite { id, room, .. } in invites {
+        policies = policies
+            .grant_invite_access(id)
+            .room_guest_read_access(room)
             .finish();
     }
 

@@ -150,7 +150,7 @@ impl Deleter for RoomDeleter {
         };
 
         let checked = authz
-            .check_batched(
+            .check_user_batched(
                 user_id,
                 prepared_commit.resources.clone(),
                 AccessMethod::DELETE,

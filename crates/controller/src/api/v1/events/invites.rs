@@ -375,6 +375,7 @@ async fn create_email_event_invite(
             create_invite_to_non_matching_email(
                 settings,
                 db,
+                authz,
                 kc_admin_client,
                 mail_service,
                 send_email_notification,
@@ -398,6 +399,7 @@ async fn create_email_event_invite(
 async fn create_invite_to_non_matching_email(
     settings: SharedSettingsActix,
     db: Data<Db>,
+    authz: Data<Authz>,
     kc_admin_client: Data<KeycloakAdminClient>,
     mail_service: &MailService,
     send_email_notification: bool,
@@ -461,6 +463,14 @@ async fn create_invite_to_non_matching_email(
                     }
                     .insert(&mut conn)
                     .await?;
+
+                    let policies = PoliciesBuilder::new()
+                        // Grant invitee access
+                        .grant_invite_access(invite.id)
+                        .room_guest_read_access(room.id)
+                        .finish();
+
+                    authz.add_policies(policies).await?;
 
                     if send_email_notification {
                         mail_service
