@@ -27,9 +27,8 @@ use diesel_async::{AsyncConnection, RunQueryDsl};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-use types::core::InviteRole;
-use types::core::{EventId, RoomId, TenantId, TimeZone, UserId};
-use types::signaling::control::EventInfo;
+use types::common::event::EventInfo;
+use types::core::{EventId, InviteRole, RoomId, TenantId, TimeZone, UserId};
 use types::sql_enum;
 
 use self::shared_folders::EventSharedFolder;
@@ -124,11 +123,13 @@ impl Event {
             None
         }
     }
+}
 
-    pub fn to_event_info(&self) -> EventInfo {
+impl From<&Event> for EventInfo {
+    fn from(value: &Event) -> Self {
         EventInfo {
-            id: self.id,
-            title: self.title.clone(),
+            id: value.id,
+            title: value.title.clone(),
         }
     }
 }

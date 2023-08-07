@@ -19,6 +19,7 @@ use crate::settings::SharedSettingsActix;
 use actix_web::web::{self, Data, Json, Path, ReqData};
 use actix_web::{delete, get, patch, post};
 use database::Db;
+use db_storage::events::Event;
 use db_storage::invites::Invite;
 use db_storage::rooms::{self as db_rooms, Room};
 use db_storage::sip_configs::NewSipConfig;
@@ -27,6 +28,7 @@ use kustos::policies_builder::{GrantingAccess, PoliciesBuilder};
 use kustos::prelude::*;
 use signaling_core::{Participant, RedisConnection};
 use std::{convert::AsRef, str::FromStr};
+use types::api::v1::rooms::GetRoomEventResponse;
 use types::{
     api::v1::rooms::{
         InvitedStartRequest, PatchRoomsBody, PostRoomsBody, RoomResource, StartRequest,
@@ -247,6 +249,27 @@ pub async fn get_room_tariff(
     );
 
     Ok(Json(response))
+}
+
+#[get("/rooms/{room_id}/event")]
+pub async fn get_room_event(
+    db: Data<Db>,
+    room_id: Path<RoomId>,
+) -> Result<Json<GetRoomEventResponse>, ApiError> {
+    let room_id = room_id.into_inner();
+
+    let mut conn = db.get_conn().await?;
+
+    let event = Event::get_first_for_room(&mut conn, room_id).await?;
+
+    match event.as_ref() {
+        Some(event) => {
+            let response = GetRoomEventResponse(event.into());
+
+            Ok(Json(response))
+        }
+        None => Err(ApiError::not_found()),
+    }
 }
 
 impl From<StartRoomError> for ApiError {

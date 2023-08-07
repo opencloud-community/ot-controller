@@ -1261,7 +1261,7 @@ impl Runner {
                 tariff: tariff_resource,
                 module_data,
                 participants,
-                event_info: event.as_ref().map(db_storage::events::Event::to_event_info),
+                event_info: event.as_ref().map(Into::into),
                 is_room_owner: self.participant.user_id() == Some(self.room.created_by),
             }),
         )

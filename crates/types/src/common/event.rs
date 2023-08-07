@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+//! Common types related to event
+
 use crate::core::EventId;
 
 #[allow(unused_imports)]

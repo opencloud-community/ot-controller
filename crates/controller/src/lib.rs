@@ -503,6 +503,7 @@ fn v1_scope(
                 .service(api::v1::rooms::new)
                 .service(api::v1::rooms::patch)
                 .service(api::v1::rooms::get)
+                .service(api::v1::rooms::get_room_event)
                 .service(api::v1::rooms::get_room_tariff)
                 .service(api::v1::rooms::start)
                 .service(api::v1::rooms::delete)
