@@ -3203,6 +3203,7 @@ dependencies = [
  "opentalk-chat",
  "opentalk-controller-core",
  "opentalk-core",
+ "opentalk-integration",
  "opentalk-janus-media",
  "opentalk-polls",
  "opentalk-protocol",
@@ -3436,6 +3437,15 @@ dependencies = [
  "url",
  "uuid",
  "validator",
+]
+
+[[package]]
+name = "opentalk-integration"
+version = "0.0.0-dev"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "opentalk-signaling-core",
 ]
 
 [[package]]
