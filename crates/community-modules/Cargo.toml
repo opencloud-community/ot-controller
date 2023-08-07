@@ -20,6 +20,7 @@ signaling-core = { path = "../signaling-core", package = "opentalk-signaling-cor
 janus-media = { path = "../janus-media", package = "opentalk-janus-media" }
 chat = { path = "../chat", package = "opentalk-chat" }
 core = { path = "../core", package = "opentalk-core" }
+integration = { path = "../integration", package = "opentalk-integration" }
 polls = { path = "../polls", package = "opentalk-polls" }
 kustos = { path = "../kustos" }
 protocol = { path = "../protocol", package = "opentalk-protocol" }

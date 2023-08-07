@@ -18,6 +18,7 @@ COPY ./crates/core/Cargo.toml ./crates/core/Cargo.toml
 COPY ./crates/database/Cargo.toml ./crates/database/Cargo.toml
 COPY ./crates/db-storage/Cargo.toml ./crates/db-storage/Cargo.toml
 COPY ./crates/etherpad-client/Cargo.toml ./crates/etherpad-client/Cargo.toml
+COPY ./crates/integration/Cargo.toml ./crates/integration/Cargo.toml
 COPY ./crates/janus-client/Cargo.toml ./crates/janus-client/Cargo.toml
 COPY ./crates/janus-media/Cargo.toml ./crates/janus-media/Cargo.toml
 COPY ./crates/jobs/Cargo.toml ./crates/jobs/Cargo.toml
