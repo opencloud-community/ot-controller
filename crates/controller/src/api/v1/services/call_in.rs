@@ -48,7 +48,7 @@ pub async fn start(
 
     let (sip_config, room) = SipConfig::get_with_room(&mut conn, &request.id)
         .await?
-        .ok_or_else(|| ApiError::not_found().with_message("given call-in id does not exist"))?;
+        .ok_or_else(invalid_credentials_error)?;
 
     require_feature(&mut conn, &settings, room.created_by, features::CALL_IN).await?;
 
@@ -56,9 +56,7 @@ pub async fn start(
     request.pin.validate()?;
 
     if sip_config.password != request.pin {
-        return Err(ApiError::bad_request()
-            .with_code("invalid_credentials")
-            .with_message("given call-in id & pin combination is not valid"));
+        return Err(invalid_credentials_error());
     }
 
     drop(conn);
@@ -68,6 +66,12 @@ pub async fn start(
             .await?;
 
     Ok(Json(CallInStartResponse { ticket, resumption }))
+}
+
+fn invalid_credentials_error() -> ApiError {
+    ApiError::bad_request()
+        .with_code("invalid_credentials")
+        .with_message("given call-in id & pin combination is not valid")
 }
 
 pub fn services() -> impl HttpServiceFactory {
