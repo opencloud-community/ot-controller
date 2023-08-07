@@ -1,0 +1,18 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+name = "opentalk-integration"
+edition = "2021"
+license = "EUPL-1.2"
+authors.workspace = true
+version.workspace = true
+publish = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow.workspace = true
+async-trait.workspace = true
+signaling-core = { path = "../signaling-core", package = "opentalk-signaling-core" }
