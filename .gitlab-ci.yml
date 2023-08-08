@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 ---
-image: git.opentalk.dev:5050/opentalk/backend/containers/rust:1.69.0
+image: git.opentalk.dev:5050/opentalk/backend/containers/rust:1.71.0-bullseye
 
 stages:
   - lint
