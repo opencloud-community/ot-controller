@@ -16,7 +16,7 @@ async-trait.workspace = true
 futures.workspace = true
 log.workspace = true
 redis.workspace = true
-redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
+redis-args = { path = "../redis-args" }
 serde.workspace = true
 signaling-core = { path = "../signaling-core", package = "opentalk-signaling-core" }
 tokio.workspace = true

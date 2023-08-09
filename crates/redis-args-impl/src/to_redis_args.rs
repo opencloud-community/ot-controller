@@ -140,10 +140,10 @@ fn impl_to_redis_args_fmt(input: &syn::DeriveInput, fmt: &str) -> TokenStream {
                         }
                     });
                     let expanded = quote! {
-                        impl #generics ::redis::ToRedisArgs for #ident #generics {
+                        impl #generics ::redis_args::__exports::redis::ToRedisArgs for #ident #generics {
                             fn write_redis_args<W>(&self, out: &mut W)
                             where
-                                W: ?Sized + ::redis::RedisWrite,
+                                W: ?Sized + ::redis_args::__exports::redis::RedisWrite,
                             {
                                 out.write_arg(format!(#fmt, #(#field_args),*).as_bytes())
                             }
@@ -169,10 +169,10 @@ fn impl_to_redis_args_fmt(input: &syn::DeriveInput, fmt: &str) -> TokenStream {
                     });
 
                     let expanded = quote! {
-                        impl #generics redis::ToRedisArgs for #ident #generics {
+                        impl #generics ::redis_args::__exports::redis::ToRedisArgs for #ident #generics {
                             fn write_redis_args<W>(&self, out: &mut W)
                             where
-                                W: ?Sized + redis::RedisWrite,
+                                W: ?Sized + ::redis_args::__exports::redis::RedisWrite,
                             {
                                 out.write_arg(format!(#fmt, #(#field_args),*).as_bytes())
                             }
@@ -198,12 +198,12 @@ fn impl_to_redis_args_serde(input: &syn::DeriveInput) -> TokenStream {
     let ident = &input.ident;
 
     let expanded = quote! {
-        impl #generics redis::ToRedisArgs for #ident #generics {
+        impl #generics ::redis_args::__exports::redis::ToRedisArgs for #ident #generics {
             fn write_redis_args<W>(&self, out: &mut W)
             where
-                W: ?Sized + redis::RedisWrite
+                W: ?Sized + ::redis_args::__exports::redis::RedisWrite
             {
-                let json_val = serde_json::to_vec(self).expect("Failed to serialize");
+                let json_val = ::redis_args::__exports::serde_json::to_vec(self).expect("Failed to serialize");
                 out.write_arg(&json_val);
             }
         }
@@ -216,10 +216,10 @@ fn impl_to_redis_args_display(input: &syn::DeriveInput) -> TokenStream {
     let ident = &input.ident;
 
     let expanded = quote! {
-        impl #generics redis::ToRedisArgs for #ident #generics {
+        impl #generics ::redis_args::__exports::redis::ToRedisArgs for #ident #generics {
             fn write_redis_args<W>(&self, out: &mut W)
             where
-                W: ?Sized + redis::RedisWrite
+                W: ?Sized + ::redis_args::__exports::redis::RedisWrite
             {
                 out.write_arg_fmt(&self);
             }

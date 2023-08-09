@@ -21,7 +21,7 @@ serde_json.workspace = true
 janus-client = { path = "../janus-client" }
 pin-project-lite = "0.2"
 redis.workspace = true
-redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
+redis-args = { path = "../redis-args" }
 lapin-pool = { path = "../lapin-pool" }
 signaling-core = { path = "../signaling-core", package = "opentalk-signaling-core" }
 tokio.workspace = true

@@ -19,8 +19,8 @@ chrono.workspace = true
 controller-settings = { path = "../controller-settings", package = "opentalk-controller-settings" }
 futures.workspace = true
 log.workspace = true
+redis-args = { path = "../redis-args" }
 redis.workspace = true
-redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
 serde.workspace = true
 serde_json.workspace = true
 signaling-core = { path = "../signaling-core", package = "opentalk-signaling-core" }

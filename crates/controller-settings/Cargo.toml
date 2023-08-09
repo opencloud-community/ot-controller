@@ -25,7 +25,7 @@ uuid = { workspace = true, features = ["serde", "v4"] }
 redis = { workspace = true, features = ["tokio-comp", "connection-manager"] }
 cidr = { version = "0.2", features = ["serde"] }
 phonenumber.workspace = true
-redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
+redis-args = { path = "../redis-args" }
 rustc-hash.workspace = true
 anstream.workspace = true
 owo-colors.workspace = true

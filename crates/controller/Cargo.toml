@@ -121,7 +121,7 @@ either.workspace = true
 itertools.workspace = true
 phonenumber.workspace = true
 email_address = "0.2.4"
-redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
+redis-args = { path = "../redis-args" }
 rustc-hash.workspace = true
 
 # Random Distributions etc. Used for RR

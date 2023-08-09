@@ -35,7 +35,7 @@ opentelemetry = { workspace = true, features = [
 ] }
 r3dlock = { path = "../r3dlock" }
 redis = { workspace = true, features = ["tokio-comp", "connection-manager"] }
-redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
+redis-args = { path = "../redis-args" }
 rustc-hash.workspace = true
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true

@@ -33,6 +33,7 @@ COPY ./crates/whiteboard/Cargo.toml ./crates/whiteboard/Cargo.toml
 COPY ./crates/polls/Cargo.toml ./crates/polls/Cargo.toml
 COPY ./crates/r3dlock/Cargo.toml ./crates/r3dlock/Cargo.toml
 COPY ./crates/redis-args/Cargo.toml ./crates/redis-args/Cargo.toml
+COPY ./crates/redis-args-impl/Cargo.toml ./crates/redis-args-impl/Cargo.toml
 COPY ./crates/protocol/Cargo.toml ./crates/protocol/Cargo.toml
 COPY ./crates/shared-folder/Cargo.toml ./crates/shared-folder/Cargo.toml
 COPY ./crates/signaling-core/Cargo.toml ./crates/signaling-core/Cargo.toml

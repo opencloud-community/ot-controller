@@ -23,7 +23,7 @@ r3dlock = { path = "../r3dlock" }
 serde.workspace = true
 serde_json.workspace = true
 redis.workspace = true
-redis-args = { path = "../redis-args", package = "opentalk-redis-args" }
+redis-args = { path = "../redis-args" }
 signaling-core = { path = "../signaling-core", package = "opentalk-signaling-core" }
 tokio.workspace = true
 tracing.workspace = true
