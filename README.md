@@ -6,35 +6,23 @@ SPDX-License-Identifier: EUPL-1.2
 
 # OpenTalk Controller
 
-Authentication and scheduling backend for the OpenTalk conference system.
+See the [administration guide](docs/admin/README.md) for more information.
 
-The controller is split into multiple crates to allow for extensibility.
+## Configuration
 
-This root crate uses all crates to run the controller with its full feature set.
+See the [configuration](docs/admin/configuration.md) chapter of the
+administration guide for more information.
 
-## Manual
+An example configuration is available in the [`extra/example.toml`](extra/
+example.toml) file. It can be copied to the root directory:
 
-```text
-opentalk-controller 0.1.0-rc.1
-
-USAGE:
-    opentalk-controller [FLAGS] [OPTIONS] [SUBCOMMAND]
-
-FLAGS:
-    -h, --help       Prints help information
-        --reload     Triggers a reload of some controller settings
-    -V, --version    Prints version information
-
-OPTIONS:
-    -c, --config <config>    Specify path to configuration file [default: config.toml]
-
-SUBCOMMANDS:
-    acl           Modify the ACLs
-    fix-acl       Rebuild ACLs based on current data
-    help          Prints this message or the help of the given subcommand(s)
-    migrate-db    Migrate the db. This is done automatically during start of the controller, but can be done without
-                  starting the controller using this command
+```sh
+cp ./extra/example.toml ./config.toml
 ```
+
+## Upgrading
+
+See the [migration guide](docs/admin/migration.md) for information about upgrading.
 
 ## Build the container image
 
@@ -45,58 +33,6 @@ To build the image, execute in the root of the repository:
 ```bash
 docker build -f container/Dockerfile . --tag <your tag>
 ```
-
-## Configuration
-
-opentalk-controller looks for a config file `./config.toml` in the project root.
-
-There is an example config file in `extra/example.toml` that can be copied:
-
-```sh
-cp ./extra/example.toml ./config.toml
-```
-
-You can specify a different config file using the `-c` argument:
-
-```sh
-opentalk-controller -c other_config.toml
-```
-
-Settings specified in the config file can be overwritten by environment variables.
-To do so, set an environment variable with the prefix `OPENTALK_CTRL_` followed by the field names you want to set.
-Nested fields are separated by two underscores `__`.
-
-```sh
-OPENTALK_CTRL_<field>__<field-of-field>...
-```
-
-### Example
-
-set the `database.url` field:
-
-```sh
-OPENTALK_CTRL_DATABASE__URL=postgres://opentalk:s3cur3_p4ssw0rd@localhost:5432/opentalk
-```
-
-So the field 'database.max_connections' would resolve to:
-
-```sh
-OPENTALK_CTRL_DATABASE__MAX_CONNECTIONS=5
-```
-
-### Note
-
-Fields set via environment variables do not affect the underlying config file.
-
-## Upgrading
-
-After installing/deploying the new version you can run the `fix-acl` subcommand to update the authz rules/ACLs to match the newest version. This is most certainly needed when new endpoints are added for already present resources.
-
-## Configure ACLs
-
-A couple of ACLs can be set via the binary. For this use the `acl` subcommand.
-Currently only room access is a supported option for this subcommand.
-This subcommand is expected to change frequently when more features for access rules (e.g. invites) getting implemented.
 
 ## Sub-crates
 

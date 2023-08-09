@@ -43,6 +43,10 @@ pub enum Command {
         /// Timeout after which the job execution gets aborted, in seconds
         #[clap(long, default_value_t = 3600)]
         timeout: u64,
+
+        /// Don't show the duration it took to run a job. Useful for generating reproducible output
+        #[clap(long, default_value_t = false)]
+        hide_duration: bool,
     },
     /// Show the default parameter set for a job
     DefaultParameters {
@@ -60,7 +64,8 @@ pub async fn handle_command(settings: Settings, command: Command) -> Result<()> 
             job_type,
             parameters,
             timeout,
-        } => execute_job(settings, job_type, parameters, timeout).await,
+            hide_duration,
+        } => execute_job(settings, job_type, parameters, timeout, hide_duration).await,
         Command::DefaultParameters { job_type } => show_default_parameters(job_type),
     }
 }
@@ -70,6 +75,7 @@ async fn execute_job(
     job_type: JobType,
     parameters: String,
     timeout: u64,
+    hide_duration: bool,
 ) -> Result<()> {
     let db = Arc::new(Db::connect(&settings.database).context("Failed to connect to database")?);
 
@@ -96,6 +102,7 @@ async fn execute_job(
         settings: &settings,
         parameters,
         timeout,
+        hide_duration,
     };
 
     match job_type {
@@ -141,6 +148,7 @@ struct JobExecutionData<'a> {
     settings: &'a Settings,
     parameters: serde_json::Value,
     timeout: Duration,
+    hide_duration: bool,
 }
 
 impl<'a> JobExecutionData<'a> {
@@ -152,6 +160,7 @@ impl<'a> JobExecutionData<'a> {
             self.settings,
             self.parameters,
             self.timeout,
+            self.hide_duration,
         )
         .await
     }

@@ -180,6 +180,34 @@ check:opentalk-types:
     - cargo check --package opentalk-types --features="serde"
     - cargo check --package opentalk-types --no-default-features --features="serde"
 
+check:docs-generated-parts:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  stage: check
+  variables:
+    # Set ENV vars for services
+    POSTGRES_DB: opentalk
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: password123
+    RABBITMQ_DEFAULT_USER: guest
+    RABBITMQ_DEFAULT_PASS: guest
+    RABBITMQ_HOST: rabbitmq
+    RABBITMQ_PORT: '5672'
+    OPENTALK_CTRL_RABBIT_MQ__URL: amqp://guest:guest@rabbitmq:5672
+  services:
+    - name: postgres:15-alpine
+      alias: postgres
+    - name: rabbitmq:3.8
+      alias: rabbitmq
+  needs: []
+  script:
+    - ci/docs-update-generated-parts.sh
+    - |
+      if ! git diff --exit-code; then
+        echo "Generated parts of documentation changed, run ci/docs-update-generated-parts.sh and commit the result"
+        exit 1
+      fi
+
 test:cargo_test:
   needs: []
   rules:

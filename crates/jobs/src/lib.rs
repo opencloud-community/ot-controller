@@ -51,6 +51,7 @@ pub async fn execute<J: Job>(
     settings: &Settings,
     parameters: serde_json::Value,
     timeout: Duration,
+    hide_duration: bool,
 ) -> Result<(), Error> {
     let start = Instant::now();
 
@@ -73,20 +74,29 @@ pub async fn execute<J: Job>(
     {
         Ok(Ok(())) => {
             info!(log: logger, "");
-            info!(log: logger, "Job finished successfully, duration: {:?}", start.elapsed());
+            info!(log: logger, "Job finished successfully");
+            if !hide_duration {
+                info!(log: logger, "Duration: {:?}", start.elapsed());
+            }
             Ok(())
         }
         Ok(Err(e)) => {
             info!(log: logger, "");
             error!(log: logger, "{}", e);
-            info!(log: logger, "Job failed, duration: {:?}", start.elapsed());
+            info!(log: logger, "Job failed");
+            if !hide_duration {
+                info!(log: logger, "Duration: {:?}", start.elapsed());
+            }
             Err(e)
         }
         Err(e) => {
             info!(log: logger, "");
             let e = Error::from(e);
             error!(log: logger, "{e}");
-            info!(log: logger, "Job failed, duration: {:?}", start.elapsed());
+            info!(log: logger, "Job failed");
+            if !hide_duration {
+                info!(log: logger, "Duration: {:?}", start.elapsed());
+            }
             Err(e)
         }
     }
