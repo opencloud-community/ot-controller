@@ -31,7 +31,7 @@ use tokio::{
         mpsc::{self, UnboundedReceiver, UnboundedSender},
     },
     task,
-    time::timeout,
+    time::{timeout, timeout_at, Instant},
 };
 use types::{
     common::tariff::TariffResource,
@@ -210,7 +210,9 @@ where
     ///
     ///
     /// This function will yield when there is no available message and timeout after two seconds.
-    /// When a longer timeout is required, use [`ModuleTester::receive_ws_message_override_timeout`]
+    /// When a longer timeout or deadline is required, use
+    /// [`ModuleTester::receive_ws_message_override_timeout`] or
+    /// [`ModuleTester::receive_ws_message_override_timeout_at`].
     ///
     /// # Returns
     /// - Ok([`WsMessageOutgoing`]) when a message is available within the timeout window.
@@ -234,6 +236,22 @@ where
         let interface = self.get_runner_interface(participant_id)?;
 
         match timeout(timeout_duration, interface.ws.recv()).await? {
+            Some(message) => Ok(message),
+            None => bail!("Failed to receive ws message in module tester"),
+        }
+    }
+
+    /// Receive a WebSocket message from the underlying Module that is mapped to `participant_id`
+    ///
+    /// Behaves like [`ModuleTester::receive_ws_message`] but allows a custom deadline.
+    pub async fn receive_ws_message_override_timeout_at(
+        &mut self,
+        participant_id: &ParticipantId,
+        deadline: Instant,
+    ) -> Result<WsMessageOutgoing<M>> {
+        let interface = self.get_runner_interface(participant_id)?;
+
+        match timeout_at(deadline, interface.ws.recv()).await? {
             Some(message) => Ok(message),
             None => bail!("Failed to receive ws message in module tester"),
         }
