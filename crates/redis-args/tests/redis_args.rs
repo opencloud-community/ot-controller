@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_redis_args::ToRedisArgs;
 use redis::ToRedisArgs;
+use redis_args::ToRedisArgs;
 use serde::Serialize;
 
 #[test]

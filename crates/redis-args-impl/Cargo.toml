@@ -3,16 +3,22 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "redis-args"
+name = "redis-args-impl"
 edition = "2021"
 authors.workspace = true
 version.workspace = true
 publish = false
 
+[lib]
+proc-macro = true
+
 [dependencies]
-redis-args-impl = { path = "../redis-args-impl" }
-redis.workspace = true
-serde_json.workspace = true
+quote = "1"
+syn = { version = "2", features = ["extra-traits"] }
+proc-macro2 = "1"
 
 [dev-dependencies]
+redis.workspace = true
+redis-args = { path = "../redis-args" }
 serde.workspace = true
+serde_json.workspace = true
