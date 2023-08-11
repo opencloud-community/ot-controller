@@ -2,17 +2,22 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::sync::Arc;
+
 use super::{ApiResponse, DefaultApiResult, PagePaginationQuery};
 use crate::api::v1::events::{
-    enrich_invitees_from_keycloak, get_tenant_filter, EventInvitee, EventPoliciesBuilderExt,
+    enrich_from_keycloak, enrich_invitees_from_keycloak, get_invited_mail_recipients_for_event,
+    get_tenant_filter, EventInvitee, EventPoliciesBuilderExt,
 };
 use crate::api::v1::response::{ApiError, Created, NoContent};
 use crate::api::v1::rooms::RoomsPoliciesBuilderExt;
-use crate::services::MailService;
+use crate::services::{MailRecipient, MailService};
 use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json, Path, Query, ReqData};
 use actix_web::{delete, get, patch, post, Either};
 use anyhow::Context;
+use chrono::Utc;
+use controller_settings::Settings;
 use database::Db;
 use db_storage::events::email_invites::{EventEmailInvite, NewEventEmailInvite};
 use db_storage::events::shared_folders::EventSharedFolder;
@@ -475,26 +480,66 @@ async fn create_invite_to_non_matching_email(
     }
 }
 
-/// Path parameters for the `DELETE /events/{event_id}/invites/{invite_id}` endpoint
+/// Path parameters for the `DELETE /events/{event_id}/invites/{user_id}` endpoint
 #[derive(Deserialize)]
 pub struct DeleteEventInvitePath {
     pub event_id: EventId,
     pub user_id: UserId,
 }
 
-/// API Endpoint `DELETE /events/{event_id}/invites/{invite_id}`
+struct UninviteNotificationValues {
+    pub tenant: Tenant,
+    pub created_by: User,
+    pub event: Event,
+    pub room: Room,
+    pub sip_config: Option<SipConfig>,
+    pub users_to_notify: Vec<MailRecipient>,
+}
+
+/// Query parameters for the `DELETE /events/{event_id}/invites/{user_id}` endpoint
+#[derive(Deserialize, Debug, PartialEq, Eq)]
+pub struct DeleteEventInviteQuery {
+    /// Flag to suppress email notification
+    #[serde(default)]
+    suppress_email_notification: bool,
+}
+
+/// API Endpoint `DELETE /events/{event_id}/invites/{user_id}`
 ///
 /// Delete/Withdraw an event invitation made to a user
 #[delete("/events/{event_id}/invites/{user_id}")]
+#[allow(clippy::too_many_arguments)]
 pub async fn delete_invite_to_event(
+    settings: SharedSettingsActix,
     db: Data<Db>,
-    authz: Data<Authz>,
+    kc_admin_client: Data<KeycloakAdminClient>,
+    current_tenant: ReqData<Tenant>,
     current_user: ReqData<User>,
+    authz: Data<Authz>,
     path_params: Path<DeleteEventInvitePath>,
+    query: Query<crate::api::v1::events::DeleteEventQuery>,
+    mail_service: Data<MailService>,
 ) -> Result<NoContent, ApiError> {
+    let settings = settings.load_full();
+    let current_user = current_user.into_inner();
+
     let DeleteEventInvitePath { event_id, user_id } = path_params.into_inner();
 
+    let send_email_notification = !query.suppress_email_notification;
+
     let mut conn = db.get_conn().await?;
+
+    // TODO(w.rabl) Further DB access optimization (replacing call to get_with_invite_and_room)?
+    let (event, _invite, room, sip_config, _is_favorite, shared_folder, _tariff) =
+        Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
+
+    let created_by = if event.created_by == current_user.id {
+        current_user.clone()
+    } else {
+        User::get(&mut conn, event.created_by).await?
+    };
+
+    let invited_users = get_invited_mail_recipients_for_event(&mut conn, event_id).await?;
 
     let (room_id, invite) = conn
         .transaction(|conn| {
@@ -516,6 +561,39 @@ pub async fn delete_invite_to_event(
 
     drop(conn);
 
+    if send_email_notification {
+        // Notify just the specified user. Currently, unlike the create_invite_to_event counterpart, this endpoint
+        // only handles and notifies a single registered user. This somehow contradicts patch_event and delete_event
+        // as well.
+        // See this issue for more details: https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/499.
+        let users_to_notify: Vec<MailRecipient> = invited_users
+            .into_iter()
+            .filter(|user| match user {
+                MailRecipient::Registered(user) => user.id == user_id,
+                MailRecipient::Unregistered(_) => false,
+                MailRecipient::External(_) => false,
+            })
+            .collect();
+
+        let notification_values = UninviteNotificationValues {
+            tenant: current_tenant.into_inner(),
+            created_by,
+            event,
+            room,
+            sip_config,
+            users_to_notify,
+        };
+
+        notify_invitees_about_uninvite(
+            settings,
+            notification_values,
+            mail_service.into_inner(),
+            &kc_admin_client,
+            shared_folder.map(SharedFolder::from),
+        )
+        .await;
+    }
+
     let resources = vec![
         format!("/events/{event_id}"),
         format!("/events/{event_id}/instances"),
@@ -534,6 +612,48 @@ pub async fn delete_invite_to_event(
         .await?;
 
     Ok(NoContent)
+}
+
+/// Part of `DELETE /events/{event_id}/invites/{user_id}` (see [`delete_invite_to_event`])
+///
+/// Notify invited users about the event deletion
+async fn notify_invitees_about_uninvite(
+    settings: Arc<Settings>,
+    notification_values: UninviteNotificationValues,
+    mail_service: Arc<MailService>,
+    kc_admin_client: &Data<KeycloakAdminClient>,
+    shared_folder: Option<SharedFolder>,
+) {
+    // Don't send mails for past events
+    match notification_values.event.ends_at {
+        Some(ends_at) if ends_at < Utc::now() => {
+            return;
+        }
+        _ => {}
+    }
+    for user in notification_values.users_to_notify {
+        let invited_user = enrich_from_keycloak(
+            settings.clone(),
+            user,
+            &notification_values.tenant,
+            kc_admin_client,
+        )
+        .await;
+
+        if let Err(e) = mail_service
+            .send_event_uninvite(
+                notification_values.created_by.clone(),
+                notification_values.event.clone(),
+                notification_values.room.clone(),
+                notification_values.sip_config.clone(),
+                invited_user,
+                shared_folder.clone(),
+            )
+            .await
+        {
+            log::error!("Failed to send event uninvite with MailService, {}", e);
+        }
+    }
 }
 
 /// Response body for the `GET /event_invites/pending` endpoint

@@ -377,4 +377,75 @@ impl MailService {
 
         Ok(())
     }
+
+    /// Sends an Event Uninvite mail task to the rabbit mq queue, if configured.
+    pub async fn send_event_uninvite(
+        &self,
+        inviter: User,
+        mut event: Event,
+        room: Room,
+        sip_config: Option<SipConfig>,
+        invitee: MailRecipient,
+        shared_folder: Option<SharedFolder>,
+    ) -> Result<()> {
+        let settings = &*self.settings.load();
+
+        // increment event sequence to satisfy icalendar spec
+        event.revision += 1;
+
+        let mail_task = match invitee {
+            MailRecipient::Registered(invitee) => {
+                let shared_folder = shared_folder.map(|sf| {
+                    if inviter.id == invitee.id {
+                        sf
+                    } else {
+                        sf.without_write_access()
+                    }
+                });
+                MailTask::registered_event_uninvite(
+                    inviter,
+                    to_event(event, room, sip_config, settings, shared_folder),
+                    v1::RegisteredUser {
+                        email: v1::Email::new(invitee.email),
+                        title: invitee.title,
+                        first_name: invitee.first_name,
+                        last_name: invitee.last_name,
+                        language: invitee.language,
+                    },
+                )
+            }
+            MailRecipient::Unregistered(invitee) => MailTask::unregistered_event_uninvite(
+                inviter,
+                to_event(
+                    event,
+                    room,
+                    sip_config,
+                    settings,
+                    shared_folder.map(SharedFolder::without_write_access),
+                ),
+                v1::UnregisteredUser {
+                    email: v1::Email::new(invitee.email),
+                    first_name: invitee.first_name,
+                    last_name: invitee.last_name,
+                },
+            ),
+            MailRecipient::External(invitee) => MailTask::external_event_uninvite(
+                inviter,
+                to_event(
+                    event,
+                    room,
+                    sip_config,
+                    settings,
+                    shared_folder.map(SharedFolder::without_write_access),
+                ),
+                v1::ExternalUser {
+                    email: v1::Email::new(invitee.email),
+                },
+            ),
+        };
+
+        self.send_to_rabbitmq(mail_task).await?;
+
+        Ok(())
+    }
 }

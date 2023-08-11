@@ -170,6 +170,54 @@ impl MailTask {
         ))
     }
 
+    /// Creates an event uninvite MailTask for a registered invitee
+    pub fn registered_event_uninvite<E, I, U>(inviter: I, event: E, invitee: U) -> MailTask
+    where
+        I: Into<v1::RegisteredUser>,
+        E: Into<v1::Event>,
+        U: Into<v1::RegisteredUser>,
+    {
+        Self::V1(v1::Message::RegisteredEventUninvite(
+            v1::RegisteredEventUninvite {
+                invitee: invitee.into(),
+                event: event.into(),
+                inviter: inviter.into(),
+            },
+        ))
+    }
+
+    /// Creates an event uninvite MailTask for an unregistered invitee
+    pub fn unregistered_event_uninvite<E, I, U>(inviter: I, event: E, invitee: U) -> MailTask
+    where
+        I: Into<v1::RegisteredUser>,
+        E: Into<v1::Event>,
+        U: Into<v1::UnregisteredUser>,
+    {
+        Self::V1(v1::Message::UnregisteredEventUninvite(
+            v1::UnregisteredEventUninvite {
+                invitee: invitee.into(),
+                event: event.into(),
+                inviter: inviter.into(),
+            },
+        ))
+    }
+
+    /// Creates an event uninvite MailTask for an external invitee
+    pub fn external_event_uninvite<E, I, U>(inviter: I, event: E, invitee: U) -> MailTask
+    where
+        I: Into<v1::RegisteredUser>,
+        E: Into<v1::Event>,
+        U: Into<v1::ExternalUser>,
+    {
+        Self::V1(v1::Message::ExternalEventUninvite(
+            v1::ExternalEventUninvite {
+                invitee: invitee.into(),
+                event: event.into(),
+                inviter: inviter.into(),
+            },
+        ))
+    }
+
     pub fn as_kind_str(&self) -> &'static str {
         match self {
             MailTask::V1(message) => match message {
@@ -185,6 +233,10 @@ impl MailTask {
                 v1::Message::RegisteredEventCancellation(_) => "registered_cancellation",
                 v1::Message::UnregisteredEventCancellation(_) => "unregistered_cancellation",
                 v1::Message::ExternalEventCancellation(_) => "external_cancellation",
+                // Uninvites
+                v1::Message::RegisteredEventUninvite(_) => "registered_uninvite",
+                v1::Message::UnregisteredEventUninvite(_) => "unregistered_uninvite",
+                v1::Message::ExternalEventUninvite(_) => "external_uninvite",
             },
         }
     }

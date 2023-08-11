@@ -11,9 +11,10 @@ use uuid::Uuid;
 mod invites;
 
 pub use invites::{
-    ExternalEventCancellation, ExternalEventInvite, ExternalEventUpdate,
-    RegisteredEventCancellation, RegisteredEventInvite, RegisteredEventUpdate,
-    UnregisteredEventCancellation, UnregisteredEventInvite, UnregisteredEventUpdate,
+    ExternalEventCancellation, ExternalEventInvite, ExternalEventUninvite, ExternalEventUpdate,
+    RegisteredEventCancellation, RegisteredEventInvite, RegisteredEventUninvite,
+    RegisteredEventUpdate, UnregisteredEventCancellation, UnregisteredEventInvite,
+    UnregisteredEventUninvite, UnregisteredEventUpdate,
 };
 
 #[derive(Deserialize, Serialize, PartialEq, Eq, Debug)]
@@ -121,6 +122,10 @@ pub enum Message {
     RegisteredEventCancellation(RegisteredEventCancellation),
     UnregisteredEventCancellation(UnregisteredEventCancellation),
     ExternalEventCancellation(ExternalEventCancellation),
+    // Uninvites
+    RegisteredEventUninvite(RegisteredEventUninvite),
+    UnregisteredEventUninvite(UnregisteredEventUninvite),
+    ExternalEventUninvite(ExternalEventUninvite),
 }
 
 #[cfg(test)]

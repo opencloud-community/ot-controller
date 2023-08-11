@@ -69,3 +69,24 @@ pub struct ExternalEventCancellation {
     pub event: Event,
     pub inviter: RegisteredUser,
 }
+
+#[derive(Deserialize, Serialize, PartialEq, Eq, Debug)]
+pub struct RegisteredEventUninvite {
+    pub invitee: RegisteredUser,
+    pub event: Event,
+    pub inviter: RegisteredUser,
+}
+
+#[derive(Deserialize, Serialize, PartialEq, Eq, Debug)]
+pub struct UnregisteredEventUninvite {
+    pub invitee: UnregisteredUser,
+    pub event: Event,
+    pub inviter: RegisteredUser,
+}
+
+#[derive(Deserialize, Serialize, PartialEq, Eq, Debug)]
+pub struct ExternalEventUninvite {
+    pub invitee: ExternalUser,
+    pub event: Event,
+    pub inviter: RegisteredUser,
+}

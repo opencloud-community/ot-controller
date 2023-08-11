@@ -1318,7 +1318,7 @@ struct UpdateNotificationValues {
     pub event: Event,
     pub room: Room,
     pub sip_config: Option<SipConfig>,
-    pub invited_users: Vec<MailRecipient>,
+    pub users_to_notify: Vec<MailRecipient>,
     pub invite_for_room: Invite,
 }
 
@@ -1414,7 +1414,7 @@ pub async fn patch_event(
         event: event.clone(),
         room: room.clone(),
         sip_config: sip_config.clone(),
-        invited_users,
+        users_to_notify: invited_users,
         invite_for_room,
     };
 
@@ -1495,10 +1495,10 @@ async fn notify_invitees_about_update(
     kc_admin_client: &Data<KeycloakAdminClient>,
     shared_folder: Option<SharedFolder>,
 ) {
-    for invited_user in notification_values.invited_users {
+    for user in notification_values.users_to_notify {
         let invited_user = enrich_from_keycloak(
             settings.clone(),
-            invited_user,
+            user,
             &notification_values.tenant,
             kc_admin_client,
         )
@@ -1704,7 +1704,7 @@ struct CancellationNotificationValues {
     pub event: Event,
     pub room: Room,
     pub sip_config: Option<SipConfig>,
-    pub invited_users: Vec<MailRecipient>,
+    pub users_to_notify: Vec<MailRecipient>,
 }
 
 /// Query parameters for the `DELETE /events/{event_id}` endpoint
@@ -1754,16 +1754,16 @@ pub async fn delete_event(
 
     drop(conn);
 
-    let notification_values = CancellationNotificationValues {
-        tenant: current_tenant.into_inner(),
-        created_by,
-        event,
-        room,
-        sip_config,
-        invited_users,
-    };
-
     if send_email_notification {
+        let notification_values = CancellationNotificationValues {
+            tenant: current_tenant.into_inner(),
+            created_by,
+            event,
+            room,
+            sip_config,
+            users_to_notify: invited_users,
+        };
+
         notify_invitees_about_delete(
             settings,
             notification_values,
@@ -1781,7 +1781,7 @@ pub async fn delete_event(
     Ok(NoContent)
 }
 
-/// Part of `DELETE /events/{event_id}` (see [`patch_event`])
+/// Part of `DELETE /events/{event_id}` (see [`delete_event`])
 ///
 /// Notify invited users about the event deletion
 async fn notify_invitees_about_delete(
@@ -1792,13 +1792,16 @@ async fn notify_invitees_about_delete(
     shared_folder: Option<SharedFolder>,
 ) {
     // Don't send mails for past events
-    if notification_values.event.ends_at < Some(Utc::now()) {
-        return;
+    match notification_values.event.ends_at {
+        Some(ends_at) if ends_at < Utc::now() => {
+            return;
+        }
+        _ => {}
     }
-    for invited_user in notification_values.invited_users {
+    for user in notification_values.users_to_notify {
         let invited_user = enrich_from_keycloak(
             settings.clone(),
-            invited_user,
+            user,
             &notification_values.tenant,
             kc_admin_client,
         )
