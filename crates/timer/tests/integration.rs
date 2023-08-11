@@ -3,15 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::{Duration, Utc};
-use opentalk_timer::incoming;
-use opentalk_timer::incoming::Stop;
-use opentalk_timer::outgoing;
-use opentalk_timer::outgoing::StopKind;
-use opentalk_timer::outgoing::Stopped;
-use opentalk_timer::Kind;
 use opentalk_timer::Timer;
-use opentalk_timer::TimerConfig;
-use opentalk_timer::TimerId;
 use pretty_assertions::assert_eq;
 use serial_test::serial;
 use signaling_core::module_tester::{ModuleTester, WsMessageOutgoing};
@@ -20,6 +12,17 @@ use test_util::USER_2;
 use test_util::{common, TestContext};
 use tokio::time::Instant;
 use types::core::Timestamp;
+use types::signaling::timer::command;
+use types::signaling::timer::command::Message;
+use types::signaling::timer::command::Start;
+use types::signaling::timer::command::Stop;
+use types::signaling::timer::command::UpdateReadyStatus;
+use types::signaling::timer::event;
+use types::signaling::timer::event::StopKind;
+use types::signaling::timer::event::Stopped;
+use types::signaling::timer::Kind;
+use types::signaling::timer::TimerConfig;
+use types::signaling::timer::TimerId;
 
 /// Helps to compare expected timestamps.
 #[derive(Debug)]
@@ -83,7 +86,7 @@ impl TimeFrame {
 /// Returns the timer id
 async fn start_timer(
     module_tester: &mut ModuleTester<Timer>,
-    kind: incoming::Kind,
+    kind: command::Kind,
     style: Option<String>,
     title: Option<String>,
     enable_ready_check: bool,
@@ -95,7 +98,7 @@ async fn start_timer(
     // from cpu limitation.
     let time_frame = TimeFrame::now(50);
 
-    let start = incoming::Message::Start(incoming::Start {
+    let start = Message::Start(Start {
         kind,
         style: style.clone(),
         title: title.clone(),
@@ -111,42 +114,41 @@ async fn start_timer(
         .await
         .unwrap();
 
-    let timer_id =
-        if let WsMessageOutgoing::Module(outgoing::Message::Started(outgoing::Started {
-            config:
-                TimerConfig {
-                    timer_id,
-                    started_at,
-                    kind: received_kind,
-                    style: received_style,
-                    title: received_title,
-                    ready_check_enabled: received_ready_check_enabled,
-                },
-        })) = &started1
-        {
-            assert!(time_frame.contains(started_at));
+    let timer_id = if let WsMessageOutgoing::Module(event::Message::Started(event::Started {
+        config:
+            TimerConfig {
+                timer_id,
+                started_at,
+                kind: received_kind,
+                style: received_style,
+                title: received_title,
+                ready_check_enabled: received_ready_check_enabled,
+            },
+    })) = &started1
+    {
+        assert!(time_frame.contains(started_at));
 
-            if let Kind::Countdown { ends_at } = received_kind {
-                let configured_duration = match kind {
-                    incoming::Kind::Countdown { duration } => duration,
-                    incoming::Kind::Stopwatch => panic!("expected countdown kind"),
-                };
+        if let Kind::Countdown { ends_at } = received_kind {
+            let configured_duration = match kind {
+                command::Kind::Countdown { duration } => duration,
+                command::Kind::Stopwatch => panic!("expected countdown kind"),
+            };
 
-                let time_shift_ms = (configured_duration * 1000) as i64;
+            let time_shift_ms = (configured_duration * 1000) as i64;
 
-                assert!(time_frame.shifted_by(time_shift_ms).contains(ends_at));
-            }
+            assert!(time_frame.shifted_by(time_shift_ms).contains(ends_at));
+        }
 
-            assert_eq!(received_style, &style);
+        assert_eq!(received_style, &style);
 
-            assert_eq!(received_title, &title);
+        assert_eq!(received_title, &title);
 
-            assert_eq!(received_ready_check_enabled, &enable_ready_check);
+        assert_eq!(received_ready_check_enabled, &enable_ready_check);
 
-            *timer_id
-        } else {
-            panic!("Expected started message")
-        };
+        *timer_id
+    } else {
+        panic!("Expected started message")
+    };
 
     let started2 = module_tester
         .receive_ws_message(&USER_2.participant_id)
@@ -167,7 +169,7 @@ async fn simple_stopwatch() {
 
     start_timer(
         &mut module_tester,
-        incoming::Kind::Stopwatch,
+        command::Kind::Stopwatch,
         None,
         Some("This is a test".into()),
         false,
@@ -184,7 +186,7 @@ async fn coffee_break() {
 
     start_timer(
         &mut module_tester,
-        incoming::Kind::Countdown { duration: 2 },
+        command::Kind::Countdown { duration: 2 },
         Some("coffee_break".into()),
         None,
         true,
@@ -212,7 +214,7 @@ async fn simple_countdown(duration: u64) {
 
     start_timer(
         &mut module_tester,
-        incoming::Kind::Countdown { duration },
+        command::Kind::Countdown { duration },
         None,
         Some("This is a test".into()),
         false,
@@ -227,7 +229,7 @@ async fn simple_countdown(duration: u64) {
         panic!("Did not expect Ws message, but received: {anything:?}");
     }
 
-    if let WsMessageOutgoing::Module(outgoing::Message::Stopped(Stopped {
+    if let WsMessageOutgoing::Module(event::Message::Stopped(Stopped {
         timer_id: _,
         kind,
         reason,
@@ -255,14 +257,14 @@ async fn manual_stop() {
 
     let start_id = start_timer(
         &mut module_tester,
-        incoming::Kind::Stopwatch,
+        command::Kind::Stopwatch,
         None,
         Some("This is a test".into()),
         false,
     )
     .await;
 
-    let stop = incoming::Message::Stop(Stop {
+    let stop = Message::Stop(Stop {
         timer_id: start_id,
         reason: Some("It is over".into()),
     });
@@ -276,7 +278,7 @@ async fn manual_stop() {
         .await
         .unwrap();
 
-    if let WsMessageOutgoing::Module(outgoing::Message::Stopped(outgoing::Stopped {
+    if let WsMessageOutgoing::Module(event::Message::Stopped(event::Stopped {
         timer_id,
         kind,
         reason,
@@ -308,14 +310,14 @@ async fn ready_status() {
 
     let start_id = start_timer(
         &mut module_tester,
-        incoming::Kind::Stopwatch,
+        command::Kind::Stopwatch,
         None,
         Some("This is a test".into()),
         true,
     )
     .await;
 
-    let update_ready_status = incoming::Message::UpdateReadyStatus(incoming::UpdateReadyStatus {
+    let update_ready_status = Message::UpdateReadyStatus(UpdateReadyStatus {
         timer_id: start_id,
         status: true,
     });
@@ -329,8 +331,8 @@ async fn ready_status() {
         .await
         .unwrap();
 
-    if let WsMessageOutgoing::Module(outgoing::Message::UpdatedReadyStatus(
-        outgoing::UpdatedReadyStatus {
+    if let WsMessageOutgoing::Module(event::Message::UpdatedReadyStatus(
+        event::UpdatedReadyStatus {
             timer_id,
             participant_id,
             status,
@@ -354,14 +356,14 @@ async fn ready_status_toggle() {
 
     let start_id = start_timer(
         &mut module_tester,
-        incoming::Kind::Stopwatch,
+        command::Kind::Stopwatch,
         None,
         Some("This is a test".into()),
         true,
     )
     .await;
 
-    let update_ready_status = incoming::Message::UpdateReadyStatus(incoming::UpdateReadyStatus {
+    let update_ready_status = Message::UpdateReadyStatus(UpdateReadyStatus {
         timer_id: start_id,
         status: true,
     });
@@ -375,8 +377,8 @@ async fn ready_status_toggle() {
         .await
         .unwrap();
 
-    if let WsMessageOutgoing::Module(outgoing::Message::UpdatedReadyStatus(
-        outgoing::UpdatedReadyStatus {
+    if let WsMessageOutgoing::Module(event::Message::UpdatedReadyStatus(
+        event::UpdatedReadyStatus {
             timer_id,
             participant_id,
             status,
@@ -392,7 +394,7 @@ async fn ready_status_toggle() {
 
     // update ready status to false
 
-    let update_ready_status = incoming::Message::UpdateReadyStatus(incoming::UpdateReadyStatus {
+    let update_ready_status = Message::UpdateReadyStatus(UpdateReadyStatus {
         timer_id: start_id,
         status: false,
     });
@@ -406,8 +408,8 @@ async fn ready_status_toggle() {
         .await
         .unwrap();
 
-    if let WsMessageOutgoing::Module(outgoing::Message::UpdatedReadyStatus(
-        outgoing::UpdatedReadyStatus {
+    if let WsMessageOutgoing::Module(event::Message::UpdatedReadyStatus(
+        event::UpdatedReadyStatus {
             timer_id,
             participant_id,
             status,
@@ -431,15 +433,15 @@ async fn timer_already_active() {
 
     start_timer(
         &mut module_tester,
-        incoming::Kind::Stopwatch,
+        command::Kind::Stopwatch,
         None,
         Some("This is a test".into()),
         true,
     )
     .await;
 
-    let start = incoming::Message::Start(incoming::Start {
-        kind: incoming::Kind::Stopwatch,
+    let start = Message::Start(Start {
+        kind: command::Kind::Stopwatch,
         style: None,
         title: None,
         enable_ready_check: false,
@@ -449,12 +451,11 @@ async fn timer_already_active() {
         .send_ws_message(&USER_1.participant_id, start)
         .unwrap();
 
-    if let WsMessageOutgoing::Module(outgoing::Message::Error(
-        outgoing::Error::TimerAlreadyRunning,
-    )) = module_tester
-        .receive_ws_message(&USER_1.participant_id)
-        .await
-        .unwrap()
+    if let WsMessageOutgoing::Module(event::Message::Error(event::Error::TimerAlreadyRunning)) =
+        module_tester
+            .receive_ws_message(&USER_1.participant_id)
+            .await
+            .unwrap()
     {
     } else {
         panic!("Expected 'TimerAlreadyRunning' error ");

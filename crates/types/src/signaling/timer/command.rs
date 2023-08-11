@@ -2,12 +2,20 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::TimerId;
-use serde::Deserialize;
+//! Signaling commands for the `timer` namespace
+
+#[allow(unused_imports)]
+use crate::imports::*;
+
+use super::TimerId;
 
 /// Incoming websocket messages
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "snake_case", tag = "action")]
+#[derive(Debug)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Deserialize),
+    serde(rename_all = "snake_case", tag = "action")
+)]
 pub enum Message {
     /// Start a new timer
     Start(Start),
@@ -18,32 +26,41 @@ pub enum Message {
 }
 
 /// The different timer variations
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Deserialize)]
-#[serde(rename_all = "snake_case", tag = "kind")]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Deserialize),
+    serde(rename_all = "snake_case", tag = "kind")
+)]
 pub enum Kind {
     /// The timer continues to run until a moderator stops it.
     Stopwatch,
     /// The timer continues to run until its duration expires or if a moderator stops it beforehand.
-    Countdown { duration: u64 },
+    Countdown {
+        /// The duration of the countdown
+        duration: u64,
+    },
 }
 
 /// Start a new timer
-#[derive(Debug, Deserialize)]
+#[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
 pub struct Start {
     /// The timer kind
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub kind: Kind,
     /// An optional string tag to flag this timer with a custom style
     pub style: Option<String>,
     /// An optional title for the timer
     pub title: Option<String>,
     /// Flag to allow/disallow participants to mark themselves as ready
-    #[serde(default)]
+    #[cfg_attr(feature = "serde", serde(default))]
     pub enable_ready_check: bool,
 }
 
 /// Stop a running timer
-#[derive(Debug, Deserialize)]
+#[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
 pub struct Stop {
     /// The timer id
     pub timer_id: TimerId,
@@ -52,7 +69,8 @@ pub struct Stop {
 }
 
 /// Update the ready status
-#[derive(Debug, Deserialize)]
+#[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
 pub struct UpdateReadyStatus {
     /// The timer id
     pub timer_id: TimerId,
@@ -64,8 +82,7 @@ pub struct UpdateReadyStatus {
 mod test {
     use super::*;
     use pretty_assertions::assert_eq;
-    use test_util::serde_json;
-    use test_util::serde_json::json;
+    use serde_json::json;
 
     #[test]
     fn countdown_start() {

@@ -2,13 +2,21 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::{TimerConfig, TimerId};
-use serde::{Deserialize, Serialize};
-use types::core::ParticipantId;
+//! Signaling events for the `timer` namespace
+
+use crate::core::ParticipantId;
+#[allow(unused_imports)]
+use crate::imports::*;
+
+use super::{TimerConfig, TimerId};
 
 /// Outgoing websocket messages
-#[derive(Debug, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case", tag = "message")]
+#[derive(Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize),
+    serde(rename_all = "snake_case", tag = "message")
+)]
 pub enum Message {
     /// A timer has been started
     Started(Started),
@@ -21,28 +29,35 @@ pub enum Message {
 }
 
 /// A timer has been started
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Started {
-    #[serde(flatten)]
+    /// Config of the started timer
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub config: TimerConfig,
 }
 
 /// The current timer has been stopped
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Stopped {
     /// The timer id
     pub timer_id: TimerId,
     /// The stop kind
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub kind: StopKind,
     /// An optional reason to all participants. Set by moderator
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub reason: Option<String>,
 }
 
 /// The stop reason
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case", tag = "kind", content = "participant_id")]
+#[derive(Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(rename_all = "snake_case", tag = "kind", content = "participant_id")
+)]
 pub enum StopKind {
     /// The timer has been stopped by a moderator
     ByModerator(ParticipantId),
@@ -51,7 +66,8 @@ pub enum StopKind {
 }
 
 /// Update the ready status
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct UpdatedReadyStatus {
     /// The timer id that the update is for
     pub timer_id: TimerId,
@@ -61,8 +77,13 @@ pub struct UpdatedReadyStatus {
     pub status: bool,
 }
 
-#[derive(Debug, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case", tag = "error")]
+/// Errors from the `timer` module namespace
+#[derive(Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize),
+    serde(rename_all = "snake_case", tag = "error")
+)]
 pub enum Error {
     /// An invalid timer duration has been configured
     InvalidDuration,
@@ -76,11 +97,11 @@ pub enum Error {
 mod test {
     use std::time::SystemTime;
 
+    use crate::{core::Timestamp, signaling::timer::Kind};
+
     use super::*;
-    use crate::Kind;
     use chrono::{DateTime, Duration};
-    use test_util::assert_eq_json;
-    use types::core::Timestamp;
+    use serde_json::json;
 
     #[test]
     fn countdown_started() {
@@ -101,16 +122,18 @@ mod test {
             },
         });
 
-        assert_eq_json!(started,
-        {
-            "message": "started",
-            "timer_id": "00000000-0000-0000-0000-000000000000",
-            "started_at": "1970-01-01T00:00:00Z",
-            "kind": "countdown",
-            "ends_at": "1970-01-01T00:00:05Z",
-            "style": "coffee_break",
-            "ready_check_enabled": true
-        });
+        assert_eq!(
+            serde_json::to_value(started).unwrap(),
+            json!({
+                "message": "started",
+                "timer_id": "00000000-0000-0000-0000-000000000000",
+                "started_at": "1970-01-01T00:00:00Z",
+                "kind": "countdown",
+                "ends_at": "1970-01-01T00:00:05Z",
+                "style": "coffee_break",
+                "ready_check_enabled": true
+            }),
+        );
     }
 
     #[test]
@@ -128,15 +151,17 @@ mod test {
             },
         });
 
-        assert_eq_json!(started,
-        {
-            "message": "started",
-            "timer_id": "00000000-0000-0000-0000-000000000000",
-            "started_at": "1970-01-01T00:00:00Z",
-            "kind": "stopwatch",
-            "title": "Testing the timer!",
-            "ready_check_enabled": false
-        });
+        assert_eq!(
+            serde_json::to_value(started).unwrap(),
+            json!({
+                "message": "started",
+                "timer_id": "00000000-0000-0000-0000-000000000000",
+                "started_at": "1970-01-01T00:00:00Z",
+                "kind": "stopwatch",
+                "title": "Testing the timer!",
+                "ready_check_enabled": false
+            }),
+        )
     }
 
     #[test]
@@ -147,14 +172,16 @@ mod test {
             reason: Some("A good reason!".into()),
         });
 
-        assert_eq_json!(stopped,
-        {
-            "message": "stopped",
-            "timer_id": "00000000-0000-0000-0000-000000000000",
-            "kind": "by_moderator",
-            "participant_id": "00000000-0000-0000-0000-000000000000",
-            "reason": "A good reason!"
-        });
+        assert_eq!(
+            serde_json::to_value(stopped).unwrap(),
+            json!({
+                "message": "stopped",
+                "timer_id": "00000000-0000-0000-0000-000000000000",
+                "kind": "by_moderator",
+                "participant_id": "00000000-0000-0000-0000-000000000000",
+                "reason": "A good reason!"
+            }),
+        )
     }
 
     #[test]
@@ -165,22 +192,26 @@ mod test {
             reason: None,
         });
 
-        assert_eq_json!(stopped,
-        {
-            "message": "stopped",
-            "timer_id": "00000000-0000-0000-0000-000000000000",
-            "kind": "expired",
-        });
+        assert_eq!(
+            serde_json::to_value(stopped).unwrap(),
+            json!({
+                "message": "stopped",
+                "timer_id": "00000000-0000-0000-0000-000000000000",
+                "kind": "expired",
+            }),
+        )
     }
 
     #[test]
     fn error_insufficient_permission() {
         let stopped = Message::Error(Error::InsufficientPermissions);
 
-        assert_eq_json!(stopped,
-        {
-            "message": "error",
-            "error": "insufficient_permissions",
-        });
+        assert_eq!(
+            serde_json::to_value(stopped).unwrap(),
+            json!({
+                "message": "error",
+                "error": "insufficient_permissions",
+            }),
+        )
     }
 }

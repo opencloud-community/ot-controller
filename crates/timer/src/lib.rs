@@ -5,77 +5,26 @@
 use anyhow::Result;
 use chrono::{self, Utc};
 use futures::{stream::once, FutureExt};
-use outgoing::StopKind;
-use redis::{self, FromRedisValue, RedisResult};
-use redis_args::ToRedisArgs;
-use serde::Deserialize;
-use serde::Serialize;
 use signaling_core::SignalingModuleInitData;
 use signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
 };
 use storage::ready_status::ReadyStatus;
 use tokio::time::sleep;
+use types::signaling::timer::command::Message;
+use types::signaling::timer::event;
+use types::signaling::timer::event::StopKind;
+use types::signaling::timer::status::TimerStatus;
+use types::signaling::timer::TimerConfig;
+use types::signaling::timer::{command, Kind, TimerId};
 use types::{
     core::{ParticipantId, Timestamp},
     signaling::Role,
 };
 use uuid::Uuid;
 
-use std::fmt;
-use std::str::from_utf8;
-use std::str::FromStr;
-
 pub mod exchange;
-pub mod incoming;
-pub mod outgoing;
 mod storage;
-
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq, Hash, ToRedisArgs)]
-#[to_redis_args(fmt)]
-pub struct TimerId(pub Uuid);
-
-impl TimerId {
-    /// Create a ZERO TimerId, e.g. for testing purposes
-    pub const fn nil() -> Self {
-        Self(Uuid::nil())
-    }
-
-    /// Create a TimerId from a number, e.g. for testing purposes
-    pub const fn from_u128(id: u128) -> Self {
-        Self(Uuid::from_u128(id))
-    }
-
-    /// Generate a new random TimerId
-    pub fn generate() -> Self {
-        Self(Uuid::new_v4())
-    }
-}
-
-impl FromRedisValue for TimerId {
-    fn from_redis_value(v: &redis::Value) -> RedisResult<Self> {
-        match v {
-            redis::Value::Data(bytes) => {
-                Uuid::from_str(from_utf8(bytes)?).map(Self).map_err(|_| {
-                    redis::RedisError::from((
-                        redis::ErrorKind::TypeError,
-                        "invalid data for TimerId",
-                    ))
-                })
-            }
-            _ => RedisResult::Err(redis::RedisError::from((
-                redis::ErrorKind::TypeError,
-                "invalid data type for TimerId",
-            ))),
-        }
-    }
-}
-
-impl fmt::Display for TimerId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.0.fmt(f)
-    }
-}
 
 /// The expiry event for a timer
 pub struct ExpiredEvent {
@@ -93,9 +42,9 @@ impl SignalingModule for Timer {
 
     type Params = ();
 
-    type Incoming = incoming::Message;
+    type Incoming = Message;
 
-    type Outgoing = outgoing::Message;
+    type Outgoing = event::Message;
 
     type ExchangeMessage = exchange::Event;
 
@@ -239,14 +188,12 @@ impl Timer {
     async fn handle_ws_message(
         &self,
         ctx: &mut ModuleContext<'_, Self>,
-        msg: incoming::Message,
+        msg: Message,
     ) -> Result<()> {
         match msg {
-            incoming::Message::Start(start) => {
+            Message::Start(start) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::InsufficientPermissions,
-                    ));
+                    ctx.ws_send(event::Message::Error(event::Error::InsufficientPermissions));
                     return Ok(());
                 }
 
@@ -256,13 +203,11 @@ impl Timer {
 
                 // determine the end time at the start of the timer to later calculate the remaining duration for joining participants
                 let kind = match start.kind {
-                    incoming::Kind::Countdown { duration } => {
+                    command::Kind::Countdown { duration } => {
                         let duration = match duration.try_into() {
                             Ok(duration) => duration,
                             Err(_) => {
-                                ctx.ws_send(outgoing::Message::Error(
-                                    outgoing::Error::InvalidDuration,
-                                ));
+                                ctx.ws_send(event::Message::Error(event::Error::InvalidDuration));
 
                                 return Ok(());
                             }
@@ -274,15 +219,13 @@ impl Timer {
                             },
                             None => {
                                 log::error!("DateTime overflow in timer module");
-                                ctx.ws_send(outgoing::Message::Error(
-                                    outgoing::Error::InvalidDuration,
-                                ));
+                                ctx.ws_send(event::Message::Error(event::Error::InvalidDuration));
 
                                 return Ok(());
                             }
                         }
                     }
-                    incoming::Kind::Stopwatch => Kind::Stopwatch,
+                    command::Kind::Stopwatch => Kind::Stopwatch,
                 };
 
                 let timer = storage::timer::Timer {
@@ -298,13 +241,11 @@ impl Timer {
                 if !storage::timer::set_if_not_exists(ctx.redis_conn(), self.room_id, &timer)
                     .await?
                 {
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::TimerAlreadyRunning,
-                    ));
+                    ctx.ws_send(event::Message::Error(event::Error::TimerAlreadyRunning));
                     return Ok(());
                 }
 
-                let started = outgoing::Started {
+                let started = event::Started {
                     config: TimerConfig {
                         timer_id,
                         started_at,
@@ -320,11 +261,9 @@ impl Timer {
                     exchange::Event::Start(started),
                 );
             }
-            incoming::Message::Stop(stop) => {
+            Message::Stop(stop) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(outgoing::Message::Error(
-                        outgoing::Error::InsufficientPermissions,
-                    ));
+                    ctx.ws_send(event::Message::Error(event::Error::InsufficientPermissions));
                     return Ok(());
                 }
 
@@ -348,7 +287,7 @@ impl Timer {
                 )
                 .await?;
             }
-            incoming::Message::UpdateReadyStatus(update_ready_status) => {
+            Message::UpdateReadyStatus(update_ready_status) => {
                 if let Some(timer) = storage::timer::get(ctx.redis_conn(), self.room_id).await? {
                     if timer.ready_check_enabled && timer.id == update_ready_status.timer_id {
                         storage::ready_status::set(
@@ -395,14 +334,14 @@ impl Timer {
                     ));
                 }
 
-                ctx.ws_send(outgoing::Message::Started(started));
+                ctx.ws_send(event::Message::Started(started));
             }
             exchange::Event::Stop(stopped) => {
                 // remove the participants ready status when receiving 'stopped'
                 storage::ready_status::delete(ctx.redis_conn(), self.room_id, self.participant_id)
                     .await?;
 
-                ctx.ws_send(outgoing::Message::Stopped(stopped));
+                ctx.ws_send(event::Message::Stopped(stopped));
             }
             exchange::Event::UpdateReadyStatus(update_ready_status) => {
                 if let Some(ready_status) = storage::ready_status::get(
@@ -412,8 +351,8 @@ impl Timer {
                 )
                 .await?
                 {
-                    ctx.ws_send(outgoing::Message::UpdatedReadyStatus(
-                        outgoing::UpdatedReadyStatus {
+                    ctx.ws_send(event::Message::UpdatedReadyStatus(
+                        event::UpdatedReadyStatus {
                             timer_id: update_ready_status.timer_id,
                             participant_id: update_ready_status.participant_id,
                             status: ready_status.ready_status,
@@ -443,7 +382,7 @@ impl Timer {
 
         ctx.exchange_publish(
             control::exchange::current_room_all_participants(self.room_id),
-            exchange::Event::Stop(outgoing::Stopped {
+            exchange::Event::Stop(event::Stopped {
                 timer_id: timer.id,
                 kind: reason,
                 reason: message,
@@ -454,46 +393,6 @@ impl Timer {
     }
 }
 
-/// The different timer variations
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case", tag = "kind")]
-pub enum Kind {
-    /// The timer continues to run until a moderator stops it.
-    Stopwatch,
-    /// The timer continues to run until its duration expires or if a moderator stops it beforehand.
-    Countdown { ends_at: Timestamp },
-}
-
-/// Status of a currently active timer
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
-pub struct TimerConfig {
-    /// The timer id
-    pub timer_id: TimerId,
-    /// start time of the timer
-    pub started_at: Timestamp,
-    /// Timer kind
-    #[serde(flatten)]
-    pub kind: Kind,
-    /// Style to use for the timer. Set by the sender.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub style: Option<String>,
-    /// The optional title of the timer
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub title: Option<String>,
-    /// Flag to allow/disallow participants to mark themselves as ready
-    pub ready_check_enabled: bool,
-}
-
-/// Status of and belonging to a currently active timer
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
-pub struct TimerStatus {
-    #[serde(flatten)]
-    pub config: TimerConfig,
-    /// Flag to indicate that the current participant has marked themselves as ready
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub ready_status: Option<bool>,
-}
-
 #[cfg(test)]
 mod test {
     use std::time::SystemTime;
@@ -502,7 +401,7 @@ mod test {
     use crate::Kind;
     use chrono::{DateTime, Duration};
     use test_util::assert_eq_json;
-    use types::core::Timestamp;
+    use types::{core::Timestamp, signaling::timer::status::TimerStatus};
 
     #[test]
     fn timer_status_without_ready_status() {
