@@ -18,6 +18,7 @@ use signaling_core::module_tester::{ModuleTester, WsMessageOutgoing};
 use test_util::USER_1;
 use test_util::USER_2;
 use test_util::{common, TestContext};
+use tokio::time::Instant;
 use types::core::Timestamp;
 
 /// Helps to compare expected timestamps.
@@ -205,6 +206,7 @@ async fn auto_stop_zero_seconds() {
 
 async fn simple_countdown(duration: u64) {
     let test_ctx = TestContext::new().await;
+    let start = Instant::now();
 
     let (mut module_tester, _user1, _user2) = common::setup_users::<Timer>(&test_ctx, ()).await;
 
@@ -219,10 +221,7 @@ async fn simple_countdown(duration: u64) {
 
     // We should not have any messages in the ws que. Expect the receive_ws_message to timeout
     if let Ok(anything) = module_tester
-        .receive_ws_message_override_timeout(
-            &USER_1.participant_id,
-            std::time::Duration::from_secs(0),
-        )
+        .receive_ws_message_override_timeout_at(&USER_1.participant_id, start)
         .await
     {
         panic!("Did not expect Ws message, but received: {anything:?}");
