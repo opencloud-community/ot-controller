@@ -50,9 +50,6 @@ impl Invite {
     }
 
     /// Retrieve all invites
-    ///
-    /// Returns:
-    /// Vec<Invite> - A Vec of invites
     #[tracing::instrument(err, skip_all)]
     pub async fn get_all(conn: &mut DbConnection) -> Result<Vec<Invite>> {
         let query = invites::table;
@@ -171,7 +168,7 @@ impl Invite {
         let invite_for_room = if let Some(invite) = invite_for_room {
             invite
         } else {
-            let invite = NewInvite {
+            NewInvite {
                 active: true,
                 created_by: user_id,
                 updated_by: user_id,
@@ -179,9 +176,7 @@ impl Invite {
                 expiration: None,
             }
             .insert(conn)
-            .await?;
-
-            invite
+            .await?
         };
 
         Ok(invite_for_room)

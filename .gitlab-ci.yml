@@ -165,6 +165,9 @@ check:opentalk-types:
     - cargo check --package opentalk-types --features="backend"
     - cargo check --package opentalk-types --no-default-features --features="backend"
 
+    - cargo check --package opentalk-types --features="actix"
+    - cargo check --package opentalk-types --no-default-features --features="actix"
+
     - cargo check --package opentalk-types --features="diesel"
     - cargo check --package opentalk-types --no-default-features --features="diesel"
 

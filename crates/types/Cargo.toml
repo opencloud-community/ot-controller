@@ -10,6 +10,9 @@ version.workspace = true
 publish = false
 
 [dependencies]
+actix-http = { workspace = true, optional = true }
+actix-web-httpauth = { workspace = true, optional = true }
+bytes = { workspace = true, optional = true }
 chrono.workspace = true
 chrono-tz.workspace = true
 clap = { workspace = true, optional = true }
@@ -29,7 +32,8 @@ url.workspace = true
 
 [features]
 default = ["frontend"]
-backend = ["diesel", "kustos", "rand", "redis", "serde"]
+actix = ["dep:actix-http", "dep:actix-web-httpauth", "dep:bytes"]
+backend = ["actix", "diesel", "kustos", "rand", "redis", "serde"]
 clap = ["dep:clap"]
 diesel = ["serde", "dep:diesel"]
 frontend = ["serde"]

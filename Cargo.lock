@@ -3709,6 +3709,9 @@ dependencies = [
 name = "opentalk-types"
 version = "0.0.0-dev"
 dependencies = [
+ "actix-http",
+ "actix-web-httpauth",
+ "bytes",
  "chrono",
  "chrono-tz",
  "clap",
