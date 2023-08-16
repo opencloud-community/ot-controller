@@ -25,7 +25,7 @@ struct RawParameters {
 #[derive(Subcommand, Debug, Clone)]
 #[clap(rename_all = "kebab_case")]
 pub enum Command {
-    /// Execute a job by its id number
+    /// Execute a job by its job type id
     Execute {
         /// The type of the job to be executed
         #[clap(value_enum)]
