@@ -37,6 +37,7 @@ use async_trait::async_trait;
 use database::Db;
 use log::Log;
 use opentalk_log::{error, info};
+use serde_json::json;
 use settings::Settings;
 use signaling_core::ExchangeHandle;
 
@@ -95,11 +96,18 @@ pub async fn execute<J: Job>(
 pub trait JobParameters: Sized {
     /// Try to load the job parameters from JSON
     fn try_from_json(json: serde_json::Value) -> Result<Self, Error>;
+
+    /// Serialize the job parameters to JSON
+    fn to_json(&self) -> serde_json::Value;
 }
 
 impl JobParameters for () {
     fn try_from_json(_json: serde_json::Value) -> Result<Self, Error> {
         Ok(())
+    }
+
+    fn to_json(&self) -> serde_json::Value {
+        json!({})
     }
 }
 

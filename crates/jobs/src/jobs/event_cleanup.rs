@@ -32,6 +32,10 @@ impl JobParameters for EventCleanupParameters {
     fn try_from_json(json: serde_json::Value) -> Result<Self, Error> {
         serde_json::from_value(json).map_err(Into::into)
     }
+
+    fn to_json(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap()
+    }
 }
 
 /// A simple more or less empty job that checks whether job execution works
