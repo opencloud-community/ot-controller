@@ -32,6 +32,11 @@ pub enum Command {
         job_type: JobType,
 
         /// The parameters that the job uses when executed, encoded in a valid JSON object.
+        ///
+        /// When not provided, this will be an empty JSON object. That means
+        /// each job will fill in its own default parameter object fields. The
+        /// default parameters for a job can be queried using the
+        /// `jobs default-parameters <JOB_TYPE>` subcommand.
         #[clap(long, default_value = "{}")]
         parameters: String,
 
