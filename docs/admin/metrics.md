@@ -1,12 +1,17 @@
 <!--
 SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
-
 SPDX-License-Identifier: EUPL-1.2
 -->
 
 # Metrics
 
+<!-- TODO -->
+:construction: This section has not been finished yet.
+
 ## Web-API
+
+<!-- TODO -->
+:construction: This section has not been finished yet.
 
 | Key                                       | Type      | Labels                  | Description                                                     |
 | ----------------------------------------- | --------- | ----------------------- | --------------------------------------------------------------- |

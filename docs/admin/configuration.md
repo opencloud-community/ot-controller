@@ -1,3 +1,84 @@
+<!--
+SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+SPDX-License-Identifier: EUPL-1.2
+-->
+
+# Configuring OpenTalk-Controller
+
+When the controller gets started, it loads the configuration from the
+environment. It reads the settings in this order:
+
+- Read environment variables which have a specific name, see section
+  [Environment variables](#environment-variables).
+- Load from a configuration file which defaults to `config.toml` in the current
+  working directory, but can be set using the `--config` or `-c` CLI argument
+
+## Sections in the configuration file
+
+Functionality that can be configured through the configuration file:
+
+- [Logging](logging.md)
+- [Database](database.md)
+- [Shared folders on external storage systems](shared_folder.md)
+- [HTTP server](http_server.md)
+- [Room server](room_server.md)
+- [RabbitMQ](rabbitmq.md)
+- [Redis](redis.md)
+- [STUN and TURN](stun_turn.md)
+- [Authz](authz.md)
+- [Call-in](call_in.md)
+- [MinIO](minio.md)
+- [EtherPad](etherpad.md)
+- [SpaceDeck](spacedeck.md)
+- [Default and fallback values](defaults.md)
+- [Endpoints](endpoints.md)
+- [Metrics](metrics.md)
+- [Tenants](tenants.md)
+- [Tariffs](tariffs.md)
+
+## Environment variables
+
+Settings in the configuration file can be overwritten by environment variables,
+nested fields are separated by two underscores `__`. The pattern looks like
+this:
+
+```sh
+OPENTALK_CTRL_<field>__<nested-field>…
+```
+
+### Limitations
+
+Some settings can not be overwritten by environment variables. This is for
+example the case for entries in lists, because there is no environment variable
+naming pattern that could identify the index of the entry inside the list.
+
+### Examples
+
+In order to set the `database.url` field, this environment variable could be used:
+
+```sh
+OPENTALK_CTRL_DATABASE__URL=postgres://opentalk:s3cur3_p4ssw0rd@localhost:5432/opentalk
+```
+
+The field `database.max_connections` could be overwritten like this:
+
+```sh
+OPENTALK_CTRL_DATABASE__MAX_CONNECTIONS=5
+```
+
+The field `tariffs.status_mapping.downgraded_tariff_name` could be overwritten like this:
+
+```sh
+OPENTALK_CTRL_TARIFFS__STATUS_MAPPING__DOWNGRADED_TARIFF_NAME=downgraded_tariff
+```
+
+## Example configuration file
+
+This file can be found in the source code distribution under `extra/example.toml`
+
+<!-- begin:fromfile:toml:config/example.toml -->
+
+```toml
 # SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
 #
 # SPDX-License-Identifier: EUPL-1.2
@@ -267,3 +348,6 @@ secret_key = "minioadmin"
 # The user has booked a specific tariff, but is not allowed to use it, e.g. because
 # it is unpaid. Therefore the user's tariff is downgraded to the fallback tariff.
 #downgraded = ["unpaid"]
+```
+
+<!-- end:fromfile:toml:config/example.toml -->
