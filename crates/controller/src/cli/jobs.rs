@@ -8,9 +8,11 @@ use anyhow::{ensure, Context, Result};
 use clap::Subcommand;
 use controller_settings::Settings;
 use database::Db;
+use jobs::Job;
 use lapin_pool::RabbitMqPool;
 use log::Log;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use signaling_core::{ExchangeHandle, ExchangeTask};
 use types::common::jobs::JobType;
 
@@ -23,19 +25,32 @@ struct RawParameters {
 #[derive(Subcommand, Debug, Clone)]
 #[clap(rename_all = "kebab_case")]
 pub enum Command {
-    /// Execute a job by its id number
+    /// Execute a job by its job type id
     Execute {
         /// The type of the job to be executed
         #[clap(value_enum)]
         job_type: JobType,
 
         /// The parameters that the job uses when executed, encoded in a valid JSON object.
+        ///
+        /// When not provided, this will be an empty JSON object. That means
+        /// each job will fill in its own default parameter object fields. The
+        /// default parameters for a job can be queried using the
+        /// `jobs default-parameters <JOB_TYPE>` subcommand.
         #[clap(long, default_value = "{}")]
         parameters: String,
 
         /// Timeout after which the job execution gets aborted, in seconds
         #[clap(long, default_value_t = 3600)]
         timeout: u64,
+    },
+    /// Show the default parameter set for a job
+    DefaultParameters {
+        /// The type of the job for which the parameters should be shown
+        ///
+        /// The parameters are shown in plain pretty-printed JSON
+        #[clap(value_enum)]
+        job_type: JobType,
     },
 }
 
@@ -46,6 +61,7 @@ pub async fn handle_command(settings: Settings, command: Command) -> Result<()> 
             parameters,
             timeout,
         } => execute_job(settings, job_type, parameters, timeout).await,
+        Command::DefaultParameters { job_type } => show_default_parameters(job_type),
     }
 }
 
@@ -87,6 +103,20 @@ async fn execute_job(
         JobType::EventCleanup => data.execute::<jobs::jobs::EventCleanup>().await,
     }?;
 
+    Ok(())
+}
+
+fn show_default_parameters(job_type: JobType) -> Result<()> {
+    match job_type {
+        JobType::SelfCheck => show_job_type_default_parameters::<jobs::jobs::SelfCheck>(),
+        JobType::EventCleanup => show_job_type_default_parameters::<jobs::jobs::EventCleanup>(),
+    }
+}
+
+fn show_job_type_default_parameters<J: Job>() -> Result<()> {
+    use jobs::JobParameters;
+    let parameters = J::Parameters::try_from_json(json!({}))?;
+    println!("{}", serde_json::to_string_pretty(&parameters.to_json())?);
     Ok(())
 }
 
