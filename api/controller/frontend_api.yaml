@@ -274,6 +274,38 @@ paths:
         500:
           $ref: '#/components/responses/InternalServerError'
 
+  /rooms/{room_id}/event:
+    get:
+      summary: Get a room's event information
+      security:
+        - BearerAuth: []
+        - InviteCode: []
+      description: >
+        Returns a description of the event of the given room.
+      tags: [rooms, events]
+      operationId: get_room_event
+      parameters:
+        - in: path
+          description: The ID of the requested room
+          name: room_id
+          schema:
+            type: string
+            format: uuid
+          required: true
+      responses:
+        200:
+          description: Includes the event information in the response body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventInfo'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          description: The specified room could not be found or it has no event associated with it
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
   /rooms/{room_id}/start:
     post:
       summary: Start a signaling session as a registered user
@@ -2902,3 +2934,18 @@ components:
           type: string
           format: timezone
           description: IANA timezone string (e.g. 'Europe/Berlin') in which `datetime` was created
+
+    EventInfo:
+      description: Basic information about an event
+      type: object
+      required:
+        - id
+        - title
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID of the event
+        title:
+          type: string
+          description: Title of the event
