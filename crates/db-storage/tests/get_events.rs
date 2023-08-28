@@ -14,7 +14,7 @@ use opentalk_db_storage::rooms::NewRoom;
 use opentalk_db_storage::tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId};
 use pretty_assertions::assert_eq;
 use serial_test::serial;
-use types::core::{EventId, RoomId, TimeZone, UserId};
+use types::core::{EventId, InviteRole, RoomId, TimeZone, UserId};
 
 mod common;
 
@@ -57,7 +57,10 @@ async fn update_invite_status(
     event_id: EventId,
     new_status: EventInviteStatus,
 ) {
-    let changeset = UpdateEventInvite { status: new_status };
+    let changeset = UpdateEventInvite {
+        status: Some(new_status),
+        role: None,
+    };
 
     changeset.apply(conn, user_id, event_id).await.unwrap();
 }
@@ -351,6 +354,7 @@ async fn get_events_invite_filter() {
             invitee: invitee.id,
             created_by: inviter.id,
             created_at: None,
+            role: InviteRole::User,
         }
         .try_insert(&mut conn)
         .await
@@ -525,6 +529,7 @@ async fn get_event_invites() {
         invitee: louise.id,
         created_by: ferdinand.id,
         created_at: None,
+        role: InviteRole::User,
     }
     .try_insert(&mut conn)
     .await
@@ -535,6 +540,7 @@ async fn get_event_invites() {
         invitee: gerhard.id,
         created_by: ferdinand.id,
         created_at: None,
+        role: InviteRole::Moderator,
     }
     .try_insert(&mut conn)
     .await
@@ -548,6 +554,7 @@ async fn get_event_invites() {
         invitee: louise.id,
         created_by: gerhard.id,
         created_at: None,
+        role: InviteRole::User,
     }
     .try_insert(&mut conn)
     .await
@@ -558,6 +565,7 @@ async fn get_event_invites() {
         invitee: ferdinand.id,
         created_by: gerhard.id,
         created_at: None,
+        role: InviteRole::Moderator,
     }
     .try_insert(&mut conn)
     .await

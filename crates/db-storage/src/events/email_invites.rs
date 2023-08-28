@@ -11,7 +11,7 @@ use diesel::prelude::*;
 use diesel::{ExpressionMethods, QueryDsl, Queryable};
 use diesel_async::scoped_futures::ScopedFutureExt;
 use diesel_async::{AsyncConnection, RunQueryDsl};
-use types::core::{EventId, RoomId, UserId};
+use types::core::{EventId, InviteRole, RoomId, UserId};
 
 #[derive(Insertable)]
 #[diesel(table_name = event_email_invites)]
@@ -83,6 +83,7 @@ impl EventEmailInvite {
                     .map(|(email_invite, _)| NewEventInvite {
                         event_id: email_invite.event_id,
                         invitee: user.id,
+                        role: InviteRole::User,
                         created_by: email_invite.created_by,
                         created_at: Some(email_invite.created_at),
                     })

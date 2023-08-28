@@ -519,6 +519,7 @@ fn v1_scope(
                 .service(api::v1::events::invites::create_invite_to_event)
                 .service(api::v1::events::invites::get_invites_for_event)
                 .service(api::v1::events::invites::delete_invite_to_event)
+                .service(api::v1::events::invites::update_event_invite)
                 .service(api::v1::events::invites::accept_event_invite)
                 .service(api::v1::events::invites::decline_event_invite)
                 .service(api::v1::events::shared_folder::get_shared_folder_for_event)

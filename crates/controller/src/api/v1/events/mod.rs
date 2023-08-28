@@ -43,6 +43,7 @@ use kustos::{Authz, Resource, ResourceId};
 use rrule::{Frequency, RRuleSet};
 use serde::de::Visitor;
 use serde::{Deserialize, Serialize};
+use types::core::InviteRole;
 use types::{
     common::features,
     common::shared_folder::{SharedFolder, SharedFolderAccess},
@@ -366,9 +367,16 @@ impl EventExceptionResource {
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "kind", rename_all = "lowercase")]
 pub enum EventInviteeProfile {
-    Registered(PublicUserProfile),
+    Registered(PublicInviteUserProfile),
     Unregistered(UnregisteredUser),
     Email(EmailOnlyUser),
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct PublicInviteUserProfile {
+    #[serde(flatten)]
+    pub user_profile: PublicUserProfile,
+    pub role: InviteRole,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -389,7 +397,10 @@ pub struct EventInvitee {
 impl EventInvitee {
     fn from_invite_with_user(invite: EventInvite, user: User, settings: &Settings) -> EventInvitee {
         EventInvitee {
-            profile: EventInviteeProfile::Registered(PublicUserProfile::from_db(settings, user)),
+            profile: EventInviteeProfile::Registered(PublicInviteUserProfile {
+                user_profile: PublicUserProfile::from_db(settings, user),
+                role: invite.role,
+            }),
             status: invite.status,
         }
     }
@@ -2219,7 +2230,7 @@ where
         )
         .add_resource(
             event_id.resource_id().with_suffix("/invites/*"),
-            [AccessMethod::Delete],
+            [AccessMethod::Patch, AccessMethod::Delete],
         )
         .add_resource(
             event_id.resource_id().with_suffix("/shared_folder"),
@@ -2305,7 +2316,10 @@ mod tests {
             },
             invitees_truncated: false,
             invitees: vec![EventInvitee {
-                profile: EventInviteeProfile::Registered(user_profile),
+                profile: EventInviteeProfile::Registered(PublicInviteUserProfile {
+                    user_profile,
+                    role: InviteRole::Moderator,
+                }),
                 status: EventInviteStatus::Accepted,
             }],
             is_time_independent: false,
@@ -2368,7 +2382,8 @@ mod tests {
                             "firstname": "Test",
                             "lastname": "Test",
                             "display_name": "Tester",
-                            "avatar_url": "https://example.org/avatar"
+                            "avatar_url": "https://example.org/avatar",
+                            "role": "moderator"
                         },
                         "status": "accepted"
                     }
@@ -2427,7 +2442,10 @@ mod tests {
             },
             invitees_truncated: false,
             invitees: vec![EventInvitee {
-                profile: EventInviteeProfile::Registered(user_profile),
+                profile: EventInviteeProfile::Registered(PublicInviteUserProfile {
+                    user_profile,
+                    role: InviteRole::User,
+                }),
                 status: EventInviteStatus::Accepted,
             }],
             is_time_independent: true,
@@ -2489,7 +2507,8 @@ mod tests {
                             "firstname": "Test",
                             "lastname": "Test",
                             "display_name": "Tester",
-                            "avatar_url": "https://example.org/avatar"
+                            "avatar_url": "https://example.org/avatar",
+                            "role": "user"
                         },
                         "status": "accepted"
                     }

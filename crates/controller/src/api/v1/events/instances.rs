@@ -683,12 +683,12 @@ fn verify_recurrence_date(
 
 #[cfg(test)]
 mod tests {
-    use crate::api::v1::events::EventInviteeProfile;
+    use crate::api::v1::events::{EventInviteeProfile, PublicInviteUserProfile};
 
     use super::*;
     use std::time::SystemTime;
     use test_util::assert_eq_json;
-    use types::core::{RoomId, TimeZone, UserId};
+    use types::core::{InviteRole, RoomId, TimeZone, UserId};
 
     #[test]
     fn event_instance_serialize() {
@@ -723,7 +723,10 @@ mod tests {
             },
             invitees_truncated: false,
             invitees: vec![EventInvitee {
-                profile: EventInviteeProfile::Registered(user_profile),
+                profile: EventInviteeProfile::Registered(PublicInviteUserProfile {
+                    user_profile,
+                    role: InviteRole::User,
+                }),
                 status: EventInviteStatus::Accepted,
             }],
             is_all_day: false,
@@ -786,7 +789,9 @@ mod tests {
                             "firstname": "Test",
                             "lastname": "Test",
                             "display_name": "Tester",
-                            "avatar_url": "https://example.org/avatar"
+                            "avatar_url": "https://example.org/avatar",
+                            "role": "user"
+
                         },
                         "status": "accepted"
                     }

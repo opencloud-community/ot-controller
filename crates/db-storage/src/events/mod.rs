@@ -27,6 +27,7 @@ use diesel_async::{AsyncConnection, RunQueryDsl};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
+use types::core::InviteRole;
 use types::core::{EventId, RoomId, TenantId, TimeZone, UserId};
 use types::signaling::control::EventInfo;
 use types::sql_enum;
@@ -752,6 +753,7 @@ pub struct EventInvite {
     pub created_by: UserId,
     pub created_at: DateTime<Utc>,
     pub status: EventInviteStatus,
+    pub role: InviteRole,
 }
 
 impl EventInvite {
@@ -835,6 +837,26 @@ impl EventInvite {
     }
 
     #[tracing::instrument(err, skip_all)]
+    pub async fn get_for_user_and_room(
+        conn: &mut DbConnection,
+        user_id: UserId,
+        room_id: RoomId,
+    ) -> Result<Option<EventInvite>> {
+        let query = event_invites::table
+            .select(event_invites::all_columns)
+            .inner_join(
+                events::table.on(events::id
+                    .eq(event_invites::event_id)
+                    .and(events::room.eq(room_id))),
+            )
+            .filter(event_invites::invitee.eq(user_id));
+
+        let event_invite = query.first(conn).await.optional()?;
+
+        Ok(event_invite)
+    }
+
+    #[tracing::instrument(err, skip_all)]
     pub async fn delete_by_invitee(
         conn: &mut DbConnection,
         event_id: EventId,
@@ -859,6 +881,7 @@ impl EventInvite {
 pub struct NewEventInvite {
     pub event_id: EventId,
     pub invitee: UserId,
+    pub role: InviteRole,
     pub created_by: UserId,
     pub created_at: Option<DateTime<Utc>>,
 }
@@ -887,7 +910,8 @@ impl NewEventInvite {
 #[derive(AsChangeset)]
 #[diesel(table_name = event_invites)]
 pub struct UpdateEventInvite {
-    pub status: EventInviteStatus,
+    pub status: Option<EventInviteStatus>,
+    pub role: Option<InviteRole>,
 }
 
 impl UpdateEventInvite {
