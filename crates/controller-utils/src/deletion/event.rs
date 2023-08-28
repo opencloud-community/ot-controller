@@ -145,7 +145,7 @@ impl Deleter for EventDeleter {
             control::exchange::global_room_all_participants(room_id),
             serde_json::to_string(&message).expect("Failed to convert namespaced to json"),
         ) {
-            warn!(log: logger,"Failed to publish message to exchange, {}", e);
+            warn!(log: logger, "Failed to publish message to exchange, {}", e);
         }
 
         delete_shared_folders(

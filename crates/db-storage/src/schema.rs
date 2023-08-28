@@ -78,6 +78,7 @@ table! {
         created_by -> Uuid,
         created_at -> Timestamptz,
         status -> Event_invite_status,
+        role -> Invite_role,
     }
 }
 

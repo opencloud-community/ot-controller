@@ -116,7 +116,7 @@ pub(crate) async fn ws_service(
             .protocols(protocols.0)
             .start_with_addr()?;
 
-    let mut builder = Runner::builder(
+    let mut builder = match Runner::builder(
         request_id,
         ticket_data.participant_id,
         ticket_data.resuming,
@@ -131,7 +131,16 @@ pub(crate) async fn ws_service(
         redis_conn,
         (**exchange_handle).clone(),
         resumption_keep_alive,
-    );
+    )
+    .await
+    {
+        Ok(builder) => builder,
+        Err(e) => {
+            log::error!("Failed to initialize builder, {}", e);
+
+            return Ok(HttpResponse::InternalServerError().finish());
+        }
+    };
 
     let startup_start_time = Instant::now();
 

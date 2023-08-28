@@ -20,7 +20,8 @@ use actix_web_actors::ws;
 use anyhow::{bail, Context, Result};
 use bytestring::ByteString;
 use controller_settings::SharedSettings;
-use database::Db;
+use database::{Db, DbConnection};
+use db_storage::events::EventInvite;
 use db_storage::rooms::Room;
 use db_storage::tariffs::Tariff;
 use db_storage::users::User;
@@ -283,9 +284,30 @@ enum RunnerState {
     Joined,
 }
 
+async fn get_participant_role(
+    conn: &mut DbConnection,
+    participant: &Participant<User>,
+    room: &Room,
+) -> Result<Role> {
+    let user = if let Participant::User(user) = participant {
+        user
+    } else {
+        return Ok(Role::Guest);
+    };
+
+    if user.id == room.created_by {
+        return Ok(Role::Moderator);
+    }
+
+    match EventInvite::get_for_user_and_room(conn, user.id, room.id).await? {
+        Some(event_invite) => Ok(event_invite.role.into()),
+        None => Ok(Role::User),
+    }
+}
+
 impl Runner {
     #[allow(clippy::too_many_arguments)]
-    pub fn builder(
+    pub async fn builder(
         runner_id: Uuid,
         id: ParticipantId,
         resuming: bool,
@@ -300,20 +322,10 @@ impl Runner {
         redis_conn: RedisConnection,
         exchange_handle: ExchangeHandle,
         resumption_keep_alive: ResumptionTokenKeepAlive,
-    ) -> Builder {
-        // TODO(r.floren) Change this when the permissions system gets introduced
-        let role = match &participant {
-            Participant::User(user) => {
-                if user.id == room.created_by {
-                    Role::Moderator
-                } else {
-                    Role::User
-                }
-            }
-            Participant::Guest | Participant::Sip | Participant::Recorder => Role::Guest,
-        };
+    ) -> Result<Builder> {
+        let role = get_participant_role(&mut db.get_conn().await?, &participant, &room).await?;
 
-        Builder {
+        Ok(Builder {
             runner_id,
             id,
             resuming,
@@ -332,7 +344,7 @@ impl Runner {
             redis_conn,
             exchange_handle,
             resumption_keep_alive,
-        }
+        })
     }
 
     /// Destroys the runner and all associated resources
