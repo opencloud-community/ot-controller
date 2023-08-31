@@ -108,9 +108,9 @@ lint:yaml:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - if: $CI_PIPELINE_SOURCE == 'schedule'
   stage: lint
-  image: archlinux:latest
+  image: alpine:3.18
   before_script:
-    - pacman -Syy --noconfirm yamllint
+    - apk add --no-cache yamllint
   script: yamllint .
 
 lint:openapi:
