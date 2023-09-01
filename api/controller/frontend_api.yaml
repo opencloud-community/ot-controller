@@ -69,6 +69,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LoginResponse'
+        400:
+          description: The provided ID-Token is malformed or contains invalid claims
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                required:
+                  - code
+                  - message
+                properties:
+                  code:
+                    type: string
+                    enum: [bad_request, invalid_claims]
+                    description: |
+                      A code to distinguish between different error causes. When the `invalid_claims` code is returned,
+                      the provided token was syntactically correct but its claims were invalid.
+                  message:
+                    type: string
+                    description: A more detailed description of the error cause.
         401:
           description: The provided ID-Token is invalid.
         500:
