@@ -7,7 +7,8 @@ set -xe
 
 DOCS_TEMP_DIR=target/docs/temporary
 
-CONTROLLER_CMD=target/debug/opentalk-controller
+OPENTALK_CONTROLLER_PROJECT=${OPENTALK_CONTROLLER_PROJECT:-opentalk-controller}
+OPENTALK_CONTROLLER_CMD=${OPENTALK_CONTROLLER_CMD:-target/debug/opentalk-controller}
 
 CLI_DIR="$DOCS_TEMP_DIR"/cli-usage
 JOBS_DIR="$DOCS_TEMP_DIR"/jobs
@@ -18,27 +19,27 @@ mkdir -p "$CLI_DIR" "$JOBS_DIR" "$CONFIG_DIR"
 
 cp extra/example.toml "$CONFIG_DIR"/example.toml
 
-cargo build --package opentalk-controller
+cargo build --package "$OPENTALK_CONTROLLER_PROJECT"
 
-$CONTROLLER_CMD help > "$CLI_DIR"/"$CMDNAME"-help
-$CONTROLLER_CMD fix-acl --help > "$CLI_DIR"/"$CMDNAME"-fix-acl-help
-$CONTROLLER_CMD acl --help > "$CLI_DIR"/"$CMDNAME"-acl-help
-$CONTROLLER_CMD migrate-db --help > "$CLI_DIR"/"$CMDNAME"-migrate-db-help
-$CONTROLLER_CMD tenants --help > "$CLI_DIR"/"$CMDNAME"-tenants-help
-$CONTROLLER_CMD tariffs --help > "$CLI_DIR"/"$CMDNAME"-tariffs-help
-$CONTROLLER_CMD jobs --help > "$CLI_DIR"/"$CMDNAME"-jobs-help
-$CONTROLLER_CMD jobs execute --help > "$CLI_DIR"/"$CMDNAME"-jobs-execute-help
-$CONTROLLER_CMD \
+$OPENTALK_CONTROLLER_CMD help > "$CLI_DIR"/"$CMDNAME"-help
+$OPENTALK_CONTROLLER_CMD fix-acl --help > "$CLI_DIR"/"$CMDNAME"-fix-acl-help
+$OPENTALK_CONTROLLER_CMD acl --help > "$CLI_DIR"/"$CMDNAME"-acl-help
+$OPENTALK_CONTROLLER_CMD migrate-db --help > "$CLI_DIR"/"$CMDNAME"-migrate-db-help
+$OPENTALK_CONTROLLER_CMD tenants --help > "$CLI_DIR"/"$CMDNAME"-tenants-help
+$OPENTALK_CONTROLLER_CMD tariffs --help > "$CLI_DIR"/"$CMDNAME"-tariffs-help
+$OPENTALK_CONTROLLER_CMD jobs --help > "$CLI_DIR"/"$CMDNAME"-jobs-help
+$OPENTALK_CONTROLLER_CMD jobs execute --help > "$CLI_DIR"/"$CMDNAME"-jobs-execute-help
+$OPENTALK_CONTROLLER_CMD \
   --config extra/example.toml \
   jobs \
   execute \
   self-check \
   --hide-duration \
   > "$CLI_DIR"/"$CMDNAME"-jobs-execute-self-check
-$CONTROLLER_CMD jobs default-parameters --help > "$CLI_DIR"/"$CMDNAME"-jobs-default-parameters-help
+$OPENTALK_CONTROLLER_CMD jobs default-parameters --help > "$CLI_DIR"/"$CMDNAME"-jobs-default-parameters-help
 
-$CONTROLLER_CMD --config extra/example.toml jobs default-parameters self-check > "$JOBS_DIR"/parameters-self-check.json
-$CONTROLLER_CMD --config extra/example.toml jobs default-parameters event-cleanup > "$JOBS_DIR"/parameters-event-cleanup.json
+$OPENTALK_CONTROLLER_CMD --config extra/example.toml jobs default-parameters self-check > "$JOBS_DIR"/parameters-self-check.json
+$OPENTALK_CONTROLLER_CMD --config extra/example.toml jobs default-parameters event-cleanup > "$JOBS_DIR"/parameters-event-cleanup.json
 
 # Remove trailing spaces to prevent markdownlint from triggering *MD009 - Trailing spaces*
 # https://github.com/markdownlint/markdownlint/blob/main/docs/RULES.md#md009---trailing-spaces
