@@ -74,8 +74,7 @@ pub async fn delete_shared_folders(
                 } else {
                     debug!(
                         log: logger,
-                        "Deleted read share {:?} from NextCloud",
-                        shared_folder.read_share_id
+                        "Deleted read share {:?} from NextCloud", shared_folder.read_share_id
                     );
                 }
                 if let Err(e) = client
@@ -90,13 +89,15 @@ pub async fn delete_shared_folders(
                 } else {
                     debug!(
                         log: logger,
-                        "Deleted write share {:?} from NextCloud",
-                        shared_folder.write_share_id
+                        "Deleted write share {:?} from NextCloud", shared_folder.write_share_id
                     );
                 }
                 match client.delete(&user_path).await {
                     Ok(()) => {
-                        debug!(log: logger, "Deleted shared folder {user_path:?} from NextCloud");
+                        debug!(
+                            log: logger,
+                            "Deleted shared folder {user_path:?} from NextCloud"
+                        );
                     }
                     Err(nextcloud_client::Error::FileNotFound { file_path, .. }) => {
                         debug!(

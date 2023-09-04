@@ -36,6 +36,7 @@ use keycloak_admin::KeycloakAdminClient;
 use kustos::policies_builder::PoliciesBuilder;
 use kustos::Authz;
 use serde::{Deserialize, Serialize};
+use types::core::InviteRole;
 use types::{
     common::shared_folder::SharedFolder,
     core::{EventId, RoomId, UserId},
@@ -110,8 +111,15 @@ pub struct PostEventInviteQuery {
 #[derive(Deserialize)]
 #[serde(untagged)]
 pub enum PostEventInviteBody {
-    User { invitee: UserId },
+    User(UserInvite),
     Email { email: EmailAddress },
+}
+
+#[derive(Deserialize)]
+pub struct UserInvite {
+    invitee: UserId,
+    #[serde(default)]
+    role: InviteRole,
 }
 
 /// API Endpoint `POST /events/{event_id}/invites`
@@ -136,13 +144,13 @@ pub async fn create_invite_to_event(
     let send_email_notification = !query.suppress_email_notification;
 
     match create_invite.into_inner() {
-        PostEventInviteBody::User { invitee } => {
+        PostEventInviteBody::User(user_invite) => {
             create_user_event_invite(
                 db,
                 authz,
                 current_user.into_inner(),
                 event_id,
-                invitee,
+                user_invite,
                 &mail_service.into_inner(),
                 send_email_notification,
             )
@@ -171,7 +179,7 @@ async fn create_user_event_invite(
     authz: Data<Authz>,
     current_user: User,
     event_id: EventId,
-    invitee_id: UserId,
+    user_invite: UserInvite,
     mail_service: &MailService,
     send_email_notification: bool,
 ) -> Result<Either<Created, NoContent>, ApiError> {
@@ -180,18 +188,20 @@ async fn create_user_event_invite(
     let mut conn = db.get_conn().await?;
 
     let (event, room, sip_config) = Event::get_with_room(&mut conn, event_id).await?;
-    let invitee = User::get_filtered_by_tenant(&mut conn, event.tenant_id, invitee_id).await?;
+    let invitee =
+        User::get_filtered_by_tenant(&mut conn, event.tenant_id, user_invite.invitee).await?;
     let shared_folder = EventSharedFolder::get_for_event(&mut conn, event_id)
         .await?
         .map(SharedFolder::from);
 
-    if event.created_by == invitee_id {
+    if event.created_by == user_invite.invitee {
         return Ok(Either::Right(NoContent));
     }
 
     let res = NewEventInvite {
         event_id,
-        invitee: invitee_id,
+        invitee: user_invite.invitee,
+        role: user_invite.role,
         created_by: current_user.id,
         created_at: None,
     }
@@ -291,6 +301,7 @@ async fn create_email_event_invite(
                 let res = NewEventInvite {
                     event_id,
                     invitee: invitee_user.id,
+                    role: InviteRole::User,
                     created_by: current_user.id,
                     created_at: None,
                 }
@@ -478,6 +489,42 @@ async fn create_invite_to_non_matching_email(
                 "Only emails registered with the systems are allowed to be used for invites",
             ))
     }
+}
+
+/// Request body for the `PATCH /events/{event_id}/invites/{user_id}` endpoint
+#[derive(Deserialize)]
+pub struct PatchInviteBody {
+    pub role: InviteRole,
+}
+
+/// API Endpoint `PATCH /events/{event_id}/invites/{user_id}`
+///
+/// Update the role for an invited user
+#[patch("/events/{event_id}/invites/{user_id}")]
+pub async fn update_event_invite(
+    db: Data<Db>,
+    current_user: ReqData<User>,
+    path_parameters: Path<(EventId, UserId)>,
+    update_invite: Json<PatchInviteBody>,
+) -> Result<NoContent, ApiError> {
+    let (event_id, user_id) = path_parameters.into_inner();
+
+    let mut conn = db.get_conn().await?;
+
+    let event = Event::get(&mut conn, event_id).await?;
+
+    if event.created_by != current_user.id {
+        return Err(ApiError::forbidden());
+    }
+
+    let changeset = UpdateEventInvite {
+        status: None,
+        role: Some(update_invite.role),
+    };
+
+    changeset.apply(&mut conn, user_id, event_id).await?;
+
+    Ok(NoContent)
 }
 
 /// Path parameters for the `DELETE /events/{event_id}/invites/{user_id}` endpoint
@@ -691,7 +738,8 @@ pub async fn accept_event_invite(
     let mut conn = db.get_conn().await?;
 
     let changeset = UpdateEventInvite {
-        status: EventInviteStatus::Accepted,
+        status: Some(EventInviteStatus::Accepted),
+        role: None,
     };
 
     changeset
@@ -715,7 +763,8 @@ pub async fn decline_event_invite(
     let mut conn = db.get_conn().await?;
 
     let changeset = UpdateEventInvite {
-        status: EventInviteStatus::Declined,
+        status: Some(EventInviteStatus::Declined),
+        role: None,
     };
 
     changeset

@@ -1252,6 +1252,10 @@ paths:
                 invitee:
                   type: string
                   description: ID of the user to be invited
+                role:
+                  type: string
+                  enum: [user, moderator]
+                  description: The role for the invited user
       responses:
         201:
           description: Successfully invited user
@@ -1291,6 +1295,39 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 
   /events/{event_id}/invites/{user_id}:
+    patch:
+      summary: Update invite to an event
+      description: |
+        Update the invite to an event for a specified user
+      tags: [events, event_invites]
+      operationId: update_event_invite
+      parameters:
+        - $ref: '#/components/parameters/eventId'
+        - $ref: '#/components/parameters/userId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                role:
+                  type: string
+                  enum: [user, moderator]
+                  description: The role for the invited user
+      responses:
+        204:
+          description: The invite was successfully updated
+        403:
+          description: |
+            The requesting user does not have the required permissions to update the invite.
+            Only the creator of an event can update the invites.
+        404:
+          $ref: '#/components/responses/NotFound'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
     delete:
       summary: Delete invite to an event
       description: |
@@ -2223,6 +2260,10 @@ components:
         avatar_url:
           description: URL to an image of the users avatar
           type: string
+        role:
+          description: The role of the participant for the event, required if kind = registered
+          type: string
+          enum: [user, moderator]
 
     PatchUserBody:
       description: Has to be provided in order to modify the current users settings.
