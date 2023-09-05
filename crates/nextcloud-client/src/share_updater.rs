@@ -10,7 +10,7 @@ use reqwest::StatusCode;
 use serde::Serialize;
 
 use crate::{
-    types::{OcsShareAnswer, ShareAnswer},
+    types::{OcsShareAnswer, OcsShareData, ShareAnswer},
     Client, Error, Result, ShareId, SharePermission,
 };
 
@@ -58,7 +58,7 @@ impl ShareUpdater {
         Self { client, share_id }
     }
 
-    pub async fn public_upload(self, public_upload: bool) -> Result<OcsShareAnswer> {
+    pub async fn public_upload(self, public_upload: bool) -> Result<OcsShareAnswer<OcsShareData>> {
         self.send(ParameterUpdate::PublicUpload(public_upload))
             .await
     }
@@ -66,11 +66,14 @@ impl ShareUpdater {
     pub async fn permissions(
         self,
         permissions: HashSet<SharePermission>,
-    ) -> Result<OcsShareAnswer> {
+    ) -> Result<OcsShareAnswer<OcsShareData>> {
         self.send(ParameterUpdate::Permissions(permissions)).await
     }
 
-    pub async fn expire_date(self, expire_date: Option<NaiveDate>) -> Result<OcsShareAnswer> {
+    pub async fn expire_date(
+        self,
+        expire_date: Option<NaiveDate>,
+    ) -> Result<OcsShareAnswer<OcsShareData>> {
         self.send(ParameterUpdate::ExpireDate(
             expire_date
                 .map(|date| date.format("%Y-%m-%d").to_string())
@@ -79,15 +82,15 @@ impl ShareUpdater {
         .await
     }
 
-    pub async fn note<N: Into<String>>(self, note: N) -> Result<OcsShareAnswer> {
+    pub async fn note<N: Into<String>>(self, note: N) -> Result<OcsShareAnswer<OcsShareData>> {
         self.send(ParameterUpdate::Note(note.into())).await
     }
 
-    pub async fn label<L: Into<String>>(self, label: L) -> Result<OcsShareAnswer> {
+    pub async fn label<L: Into<String>>(self, label: L) -> Result<OcsShareAnswer<OcsShareData>> {
         self.send(ParameterUpdate::Label(label.into())).await
     }
 
-    async fn send(self, parameter: ParameterUpdate) -> Result<OcsShareAnswer> {
+    async fn send(self, parameter: ParameterUpdate) -> Result<OcsShareAnswer<OcsShareData>> {
         let Self { client, share_id } = self;
 
         let url = client
@@ -133,7 +136,7 @@ impl ShareUpdater {
                 return Err(Error::UnexpectedStatusCode { status_code });
             }
         }
-        let answer: ShareAnswer = answer.json().await?;
+        let answer: ShareAnswer<OcsShareData> = answer.json().await?;
         Ok(answer.ocs)
     }
 }

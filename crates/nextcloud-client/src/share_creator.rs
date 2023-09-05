@@ -10,7 +10,7 @@ use reqwest::StatusCode;
 use serde::Serialize;
 
 use crate::{
-    types::{OcsShareAnswer, ShareAnswer},
+    types::{OcsShareAnswer, OcsShareData, ShareAnswer},
     Client, Error, Result, SharePermission, ShareType,
 };
 
@@ -91,7 +91,7 @@ impl ShareCreator {
         self
     }
 
-    pub async fn send(self) -> Result<OcsShareAnswer> {
+    pub async fn send(self) -> Result<OcsShareAnswer<OcsShareData>> {
         let Self { client, parameters } = self;
 
         let url = client.share_api_base_url()?.join("shares")?;
@@ -134,7 +134,7 @@ impl ShareCreator {
                 return Err(Error::UnexpectedStatusCode { status_code });
             }
         }
-        let answer: ShareAnswer = answer.json().await?;
+        let answer: ShareAnswer<OcsShareData> = answer.json().await?;
         Ok(answer.ocs)
     }
 }
