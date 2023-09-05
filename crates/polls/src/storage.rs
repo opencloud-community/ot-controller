@@ -90,19 +90,40 @@ pub(super) async fn vote(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     poll_id: PollId,
-    choice_id: ChoiceId,
+    previous_choice_id: Option<ChoiceId>,
+    new_choice_id: Option<ChoiceId>,
 ) -> Result<()> {
-    redis_conn
-        .zincr(
-            PollResults {
-                room,
-                poll: poll_id,
-            },
-            u32::from(choice_id),
-            1,
-        )
-        .await
-        .context("failed to cast vote")
+    // Revoke any previous vote.
+    if let Some(choice_id) = previous_choice_id {
+        redis_conn
+            .zincr(
+                PollResults {
+                    room,
+                    poll: poll_id,
+                },
+                u32::from(choice_id),
+                -1,
+            )
+            .await
+            .context("failed to cast previous vote")?;
+    }
+
+    // Apply any new vote.
+    if let Some(choice_id) = new_choice_id {
+        redis_conn
+            .zincr(
+                PollResults {
+                    room,
+                    poll: poll_id,
+                },
+                u32::from(choice_id),
+                1,
+            )
+            .await
+            .context("failed to cast new vote")?;
+    }
+
+    Ok(())
 }
 
 async fn results(

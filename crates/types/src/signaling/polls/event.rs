@@ -82,9 +82,6 @@ pub enum Error {
     /// Attempted to perform a command with an invalid topic length
     InvalidTopicLength,
 
-    /// Attempted to vote again
-    VotedAlready,
-
     /// Attempted to start a new poll while an existing one is still running
     StillRunning,
 }

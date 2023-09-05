@@ -54,8 +54,12 @@ pub struct Vote {
     /// The id of the poll
     pub poll_id: PollId,
 
-    /// The id of the choice
-    pub choice_id: ChoiceId,
+    /// The id of the choice or `None` to abstain
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    pub choice_id: Option<ChoiceId>,
 }
 
 /// Command to finish the poll
@@ -112,7 +116,24 @@ mod test {
 
         if let PollsCommand::Vote(Vote { poll_id, choice_id }) = message {
             assert_eq!(poll_id, PollId::nil());
-            assert_eq!(choice_id, ChoiceId::from(321));
+            assert_eq!(choice_id, Some(ChoiceId::from(321)));
+        } else {
+            panic!()
+        }
+    }
+
+    #[test]
+    fn abstain() {
+        let json = json!({
+           "action": "vote",
+           "poll_id": "00000000-0000-0000-0000-000000000000"
+        });
+
+        let message: PollsCommand = serde_json::from_value(json).unwrap();
+
+        if let PollsCommand::Vote(Vote { poll_id, choice_id }) = message {
+            assert_eq!(poll_id, PollId::nil());
+            assert_eq!(choice_id, None);
         } else {
             panic!()
         }
