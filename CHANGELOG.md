@@ -9,15 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- controller: add a settings option for the name of the tenant id KeyCloak user attribute ([#463](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/463))
+- controller: send emails to users when they are removed from a meeting ([#480](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/480))
+- jobs: add subcommand to show default job parameters ([#500](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/480))
+- controller: add the option to specify the role of registered users when they are invited to an event ([#507](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/507))
+
+### Fixed
+
+- controller: fixed a bug where no emails were sent when deleting an event not having an end date ([#498](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/498))
+
+## [0.6.0] - 2023-31-08
+
+### Added
+
 - controller: add the capability to disable specific features in the config file or via a tariff ([#394](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/394))
 - controller: add the possibility to disable the `call-in` feature via config or tariff ([#395](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/395))
 - controller: add a settings option to prohibit the user from changing the display name ([#415](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/415))
 - controller: expose enabled features to the frontend (and make them module-specific) ([#471](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/471))
-- controller: add a settings option for the name of the tenant id KeyCloak user attribute ([#463](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/463))
 - jobs: add subcommand to execute maintenance jobs from the comnand-line interface ([#486](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/486))
-- controller: send emails to users when they are removed from a meeting ([#480](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/480))
-- jobs: add subcommand to show default job parameters ([#500](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/480))
-- controller: add the option to specify the role of registered users when they are invited to an event ([#507](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/507))
+
+### Changed
+
+- controller: changed the error messages for invalid configurations to be verbose and include the full path to the missing/invalid field ([#465](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/465))
 
 ### Fixed
 
@@ -26,11 +39,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - controller: fixed a bug where a debrief without enough participants led to an error ([#429](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/429))
 - controller: for static tenant setting, no longer filters users by tenant when searching them by email ([#469](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/469))
 - controller: fixed a bug where the V27 migration could not be applied when legal-votes without an associated room exist ([#494](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/494))
-- controller: fixed a bug where no emails were sent when deleting an event not having an end date ([#498](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/498))
-
-### Changed
-
-- controller: changed the error messages for invalid configurations to be verbose and include the full path to the missing/invalid field ([#465](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/465))
 
 ## [0.5.0] - 2023-06-27
 
@@ -337,7 +345,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - initial release candidate
 
-[Unreleased]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.5.0...main
+[Unreleased]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.6.0...main
+
+[0.6.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/32b4c96e3ad319c95baebdfa075d23543b38a8f2...v0.6.0
 
 [0.5.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/2129f33efb8898d46f6dd1b43db43e5cbb929f99...v0.5.0
 
