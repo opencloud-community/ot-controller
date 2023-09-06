@@ -7,7 +7,7 @@
 mod deleter;
 mod error;
 mod event;
-mod room;
+pub mod room;
 mod shared_folders;
 
 pub use deleter::Deleter;

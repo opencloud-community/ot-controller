@@ -9,6 +9,7 @@ use crate::{
     api::v1::{events::EventPoliciesBuilderExt, rooms::RoomsPoliciesBuilderExt},
 };
 use anyhow::{bail, Context, Error, Result};
+use chrono::Utc;
 use clap::Parser;
 use controller_settings::Settings;
 use database::{Db, DbConnection};
@@ -184,14 +185,24 @@ async fn fix_rooms(conn: &mut DbConnection, authz: &kustos::Authz) -> Result<()>
             .finish();
     }
 
+    let now = Utc::now();
     let invites = Invite::get_all(conn)
         .await
         .context("failed to load invites")?;
-    for Invite { id, room, .. } in invites {
-        policies = policies
-            .grant_invite_access(id)
-            .room_guest_read_access(room)
-            .finish();
+    for Invite {
+        id,
+        room,
+        active,
+        expiration,
+        ..
+    } in invites
+    {
+        if active && (expiration.is_none() || Some(now) <= expiration) {
+            policies = policies
+                .grant_invite_access(id)
+                .room_guest_read_access(room)
+                .finish();
+        }
     }
 
     authz.add_policies(policies).await?;

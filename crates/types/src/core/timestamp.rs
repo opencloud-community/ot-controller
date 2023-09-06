@@ -41,6 +41,12 @@ impl From<SystemTime> for Timestamp {
     }
 }
 
+impl From<Timestamp> for DateTime<Utc> {
+    fn from(value: Timestamp) -> Self {
+        value.0
+    }
+}
+
 #[cfg(feature = "redis")]
 impl ToRedisArgs for Timestamp {
     fn write_redis_args<W>(&self, out: &mut W)

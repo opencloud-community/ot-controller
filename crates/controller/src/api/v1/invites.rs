@@ -10,6 +10,7 @@ use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json, Path, Query, ReqData};
 use actix_web::{delete, get, post, put};
 use chrono::Utc;
+use controller_utils::deletion::room::associated_resource_ids_for_invite;
 use database::Db;
 use db_storage::invites::{Invite, NewInvite, UpdateInvite};
 use db_storage::rooms::Room;
@@ -201,6 +202,7 @@ pub async fn delete_invite(
         invite_code,
     } = path_params.into_inner();
 
+    let db = db.into_inner();
     let mut conn = db.get_conn().await?;
 
     let changeset = UpdateInvite {
@@ -212,6 +214,13 @@ pub async fn delete_invite(
     };
 
     changeset.apply(&mut conn, room_id, invite_code).await?;
+
+    let authz = Authz::new(db.clone()).await?;
+
+    let associated_resources = Vec::from_iter(associated_resource_ids_for_invite(room_id));
+    let _ = authz
+        .remove_all_invite_permission_for_resources(invite_code, associated_resources)
+        .await?;
 
     Ok(NoContent)
 }

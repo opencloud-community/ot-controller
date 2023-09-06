@@ -37,4 +37,7 @@ pub enum JobType {
 
     /// A job to cleanup adhoc events a certain duration after they were created
     AdhocEventCleanup,
+
+    /// A job for cleaning up expired invites
+    InviteCleanup,
 }
