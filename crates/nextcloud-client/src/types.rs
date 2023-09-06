@@ -3,20 +3,28 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use std::collections::HashSet;
+use std::fmt::Debug;
 
 use serde::Deserialize;
 
 use crate::{ShareId, SharePermission};
 
 #[derive(Debug, Deserialize)]
-pub struct ShareAnswer {
-    pub ocs: OcsShareAnswer,
+pub struct ShareAnswer<D: Debug> {
+    pub ocs: OcsShareAnswer<D>,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct OcsShareAnswer {
+pub struct OcsShareAnswer<D: Debug> {
     pub meta: Meta,
-    pub data: OcsShareData,
+    pub data: D,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Meta {
+    pub message: String,
+    pub status: String,
+    pub statuscode: u32,
 }
 
 #[derive(Debug, Deserialize)]
@@ -29,8 +37,6 @@ pub struct OcsShareData {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct Meta {
-    pub message: String,
-    pub status: String,
-    pub statuscode: u32,
+pub struct OcsPassword {
+    pub password: String,
 }

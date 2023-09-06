@@ -22,7 +22,6 @@ use db_storage::{
 };
 use log::warn;
 use nextcloud_client::{Client, ShareId, SharePermission, ShareType};
-use rand::distributions::DistString;
 use serde::Deserialize;
 use types::{
     common::shared_folder::{SharedFolder, SharedFolderAccess},
@@ -129,9 +128,9 @@ pub async fn put_shared_folder_for_event(
                     path: &str,
                     permissions: HashSet<SharePermission>,
                     label: &str,
+                    password: String,
                     expire_date: Option<NaiveDate>,
                 ) -> Result<(ShareId, SharedFolderAccess), ApiError> {
-                    let password = generate_password();
                     let mut creator = client
                         .create_share(path, ShareType::PublicLink)
                         .password(&password)
@@ -173,6 +172,9 @@ pub async fn put_shared_folder_for_event(
                     ))
                 }
 
+                let write_password = generate_password(&client).await?;
+                let read_password = generate_password(&client).await?;
+
                 let (
                     write_share_id,
                     SharedFolderAccess {
@@ -184,6 +186,7 @@ pub async fn put_shared_folder_for_event(
                     &path,
                     write_permissions,
                     "OpenTalk read-write",
+                    write_password,
                     expire_date,
                 )
                 .await?;
@@ -198,6 +201,7 @@ pub async fn put_shared_folder_for_event(
                     &path,
                     read_permissions,
                     "OpenTalk read-only",
+                    read_password,
                     expire_date,
                 )
                 .await?;
@@ -335,7 +339,9 @@ pub async fn delete_shared_folder_for_event(
     }
 }
 
-fn generate_password() -> String {
-    let length = 10;
-    rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), length)
+async fn generate_password(client: &Client) -> Result<String, ApiError> {
+    client.generate_password().await.map_err(|e| {
+        warn!("Error generating share password on NextCloud: {e}");
+        ApiError::internal().with_message("Error generating share password NextCloud")
+    })
 }

@@ -8,7 +8,10 @@ use reqwest_dav as dav;
 use std::{error::Error as _, sync::Arc};
 use url::Url;
 
-use crate::{Error, Result, ShareCreator, ShareId, ShareType, ShareUpdater};
+use crate::{
+    types::{OcsPassword, ShareAnswer},
+    Error, Result, ShareCreator, ShareId, ShareType, ShareUpdater,
+};
 
 #[derive(Clone)]
 pub struct Client {
@@ -116,6 +119,49 @@ impl Client {
             }
         }
         Ok(())
+    }
+
+    pub async fn generate_password(&self) -> Result<String> {
+        let url = self.password_policy_base_url()?.join("generate")?;
+
+        let request = self
+            .inner
+            .http_client
+            .get(url)
+            .basic_auth(&self.inner.username, Some(&self.inner.password));
+
+        let answer = request.send().await?;
+
+        match answer.status() {
+            StatusCode::CONTINUE | StatusCode::OK => {}
+            StatusCode::UNAUTHORIZED => {
+                // 401
+                return Err(Error::Unauthorized);
+            }
+            status_code => {
+                warn!("Received unexpected status code {status_code} from NextCloud server.");
+                match answer.text().await {
+                    Ok(text) => {
+                        warn!("Response for unexpected status code {status_code}:\n{text}");
+                    }
+                    Err(e) => {
+                        warn!("Error retrieving body from NextCloud: {}", e);
+                    }
+                }
+                return Err(Error::UnexpectedStatusCode { status_code });
+            }
+        }
+
+        let answer: ShareAnswer<OcsPassword> = answer.json().await?;
+
+        Ok(answer.ocs.data.password)
+    }
+
+    pub(crate) fn password_policy_base_url(&self) -> Result<Url> {
+        Ok(self
+            .inner
+            .base_url
+            .join("ocs/v2.php/apps/password_policy/api/v1/")?)
     }
 
     pub(crate) fn share_api_base_url(&self) -> Result<Url> {
