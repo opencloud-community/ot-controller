@@ -4,6 +4,7 @@
 
 [workspace]
 members = ["crates/*", "xtask"]
+resolver = "2"
 
 [workspace.package]
 authors = ["OpenTalk Team <mail@opentalk.eu>"]
