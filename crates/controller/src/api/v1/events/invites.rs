@@ -11,7 +11,10 @@ use crate::api::v1::events::{
 };
 use crate::api::v1::response::{ApiError, Created, NoContent};
 use crate::api::v1::rooms::RoomsPoliciesBuilderExt;
-use crate::services::{MailRecipient, MailService};
+use crate::services::{
+    ExternalMailRecipient, MailRecipient, MailService, RegisteredMailRecipient,
+    UnregisteredMailRecipient,
+};
 use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json, Path, Query, ReqData};
 use actix_web::{delete, get, patch, post, Either};
@@ -651,6 +654,132 @@ pub async fn delete_invite_to_event(
         .await;
     }
 
+    remove_invitee_permissions(&authz, event_id, room_id, invite.invitee).await?;
+
+    Ok(NoContent)
+}
+
+#[derive(Deserialize)]
+pub struct DeleteEmailInviteBody {
+    email: EmailAddress,
+}
+
+/// API Endpoint `DELETE /events/{event_id}/invites/email`
+///
+/// Delete/Withdraw an event invitation using the email address as the identifier.
+///
+/// This will also withdraw invites from registered users if the provided email address matches theirs.
+#[delete("/events/{event_id}/invites/email")]
+#[allow(clippy::too_many_arguments)]
+pub async fn delete_email_invite_to_event(
+    settings: SharedSettingsActix,
+    db: Data<Db>,
+    kc_admin_client: Data<KeycloakAdminClient>,
+    current_tenant: ReqData<Tenant>,
+    current_user: ReqData<User>,
+    authz: Data<Authz>,
+    path: Path<EventId>,
+    query: Query<crate::api::v1::events::DeleteEventQuery>,
+    mail_service: Data<MailService>,
+    body: Json<DeleteEmailInviteBody>,
+) -> Result<NoContent, ApiError> {
+    let settings = settings.load_full();
+    let current_user = current_user.into_inner();
+    let current_tenant = current_tenant.into_inner();
+    let event_id = path.into_inner();
+    let email = body.into_inner().email.to_string();
+    let tenant_filter = get_tenant_filter(&current_tenant, &settings.tenants.assignment);
+
+    let send_email_notification = !query.suppress_email_notification;
+
+    let mut conn = db.get_conn().await?;
+
+    let (event, _invite, room, sip_config, _is_favorite, shared_folder, _tariff) =
+        Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
+
+    let created_by = if event.created_by == current_user.id {
+        current_user.clone()
+    } else {
+        User::get(&mut conn, event.created_by).await?
+    };
+
+    let user_from_db = User::get_by_email(&mut conn, current_tenant.id, &email).await?;
+
+    let mail_recipient = if let Some(user) = user_from_db {
+        let user_id = user.id;
+
+        conn.transaction(|conn| {
+            async move {
+                // delete invite to the event
+                log::error!("deleting: {event_id}, {user_id}");
+
+                EventInvite::delete_by_invitee(conn, event_id, user_id).await?;
+
+                // user access is going to be removed for the event, remove favorite entry if it exists
+                EventFavorite::delete_by_id(conn, current_user.id, event_id).await?;
+
+                Ok(()) as database::Result<()>
+            }
+            .scope_boxed()
+        })
+        .await?;
+
+        remove_invitee_permissions(&authz, event_id, room.id, user_id).await?;
+
+        MailRecipient::Registered(RegisteredMailRecipient {
+            id: user.id,
+            email,
+            title: user.title,
+            first_name: user.firstname,
+            last_name: user.lastname,
+            language: user.language,
+        })
+    } else if let Ok(Some(user)) = kc_admin_client
+        .get_user_for_email(tenant_filter, email.as_ref())
+        .await
+    {
+        EventEmailInvite::delete(&mut conn, &event_id, &email).await?;
+
+        MailRecipient::Unregistered(UnregisteredMailRecipient {
+            email,
+            first_name: user.first_name,
+            last_name: user.last_name,
+        })
+    } else {
+        EventEmailInvite::delete(&mut conn, &event_id, &email).await?;
+
+        MailRecipient::External(ExternalMailRecipient { email })
+    };
+
+    if send_email_notification {
+        let notification_values = UninviteNotificationValues {
+            tenant: current_tenant,
+            created_by,
+            event,
+            room,
+            sip_config,
+            users_to_notify: vec![mail_recipient],
+        };
+
+        notify_invitees_about_uninvite(
+            settings,
+            notification_values,
+            mail_service.into_inner(),
+            &kc_admin_client,
+            shared_folder.map(SharedFolder::from),
+        )
+        .await;
+    }
+
+    Ok(NoContent)
+}
+
+async fn remove_invitee_permissions(
+    authz: &Authz,
+    event_id: EventId,
+    room_id: RoomId,
+    user_id: UserId,
+) -> Result<(), ApiError> {
     let resources = vec![
         format!("/events/{event_id}"),
         format!("/events/{event_id}/instances"),
@@ -669,10 +798,10 @@ pub async fn delete_invite_to_event(
     ];
 
     authz
-        .remove_all_user_permission_for_resources(invite.invitee, resources)
+        .remove_all_user_permission_for_resources(user_id, resources)
         .await?;
 
-    Ok(NoContent)
+    Ok(())
 }
 
 /// Part of `DELETE /events/{event_id}/invites/{user_id}` (see [`delete_invite_to_event`])

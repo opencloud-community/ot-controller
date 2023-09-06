@@ -1379,6 +1379,39 @@ paths:
         500:
           $ref: '#/components/responses/InternalServerError'
 
+  /events/{event_id}/invites/email:
+    delete:
+      summary: Delete an email invite to an event
+      description: |
+        Delete/Withdraw an event invitation using the email address as the identifier.
+
+        This will also withdraw invites from registered users if the provided email address matches theirs.
+      tags: [events. event_invites]
+      parameters:
+        - $ref: '#/components/parameters/eventId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              additionalProperties: false
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: The email address of the invited participant
+      responses:
+        204:
+          description: The invite was successfully deleted
+        404:
+          $ref: '#/components/responses/NotFound'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
   /events/{event_id}/invite:
     patch:
       summary: Accept an event invite
