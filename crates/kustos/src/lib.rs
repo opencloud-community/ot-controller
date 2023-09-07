@@ -636,13 +636,14 @@ impl Authz {
     {
         let mut inner = self.inner.write().await;
 
-        let user = user.into().0.to_string();
+        let user = user.into();
+        let user = user.to_casbin_string();
 
         let mut amount = 0;
 
         for resource in resources {
             let removed = inner
-                .remove_filtered_policy(1, vec![user.clone(), resource.into().0])
+                .remove_filtered_policy(0, vec![user.clone(), resource.into().0])
                 .await?;
 
             if removed {
