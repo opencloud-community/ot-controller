@@ -73,7 +73,7 @@ impl SignalingModule for Polls {
 
                         self.config = Some(Config {
                             state: polls_state.clone(),
-                            voted: false,
+                            voted_choice_id: None,
                         });
                         *frontend_data = Some(polls_state);
 
@@ -236,22 +236,23 @@ impl Polls {
                     .as_mut()
                     .filter(|config| config.state.id == poll_id && !config.state.is_expired())
                 {
-                    if config.voted {
-                        ctx.ws_send(PollsEvent::Error(Error::VotedAlready));
-
-                        return Ok(());
-                    }
-
-                    if config
-                        .state
-                        .choices
-                        .iter()
-                        .any(|choice| choice.id == choice_id)
+                    if choice_id.is_none()
+                        || config
+                            .state
+                            .choices
+                            .iter()
+                            .any(|choice| Some(choice.id) == choice_id)
                     {
-                        storage::vote(ctx.redis_conn(), self.room, config.state.id, choice_id)
-                            .await?;
+                        storage::vote(
+                            ctx.redis_conn(),
+                            self.room,
+                            config.state.id,
+                            config.voted_choice_id,
+                            choice_id,
+                        )
+                        .await?;
 
-                        config.voted = true;
+                        config.voted_choice_id = choice_id;
 
                         if config.state.live {
                             ctx.exchange_publish(
@@ -323,7 +324,7 @@ impl Polls {
 
                 self.config = Some(Config {
                     state: polls_state,
-                    voted: false,
+                    voted_choice_id: None,
                 });
 
                 Ok(())
@@ -355,5 +356,5 @@ impl Polls {
 #[derive(Debug, Clone)]
 pub struct Config {
     state: PollsState,
-    voted: bool,
+    voted_choice_id: Option<ChoiceId>,
 }

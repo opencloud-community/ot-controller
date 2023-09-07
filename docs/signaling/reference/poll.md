@@ -86,11 +86,11 @@ If a vote is started with the `live` flag set to `true` a [LiveUpdate](#liveupda
 
 #### Fields
 
-| Field       | Type     | Required | Description      |
-| ----------- | -------- | -------- | ---------------- |
-| `action`    | `enum`   | yes      | Must be `"vote"` |
-| `poll_id`   | `string` | yes      | ID of the poll   |
-| `choice_id` | `int`    | yes      | ID of the choice |
+| Field       | Type     | Required | Description                       |
+| ----------- | -------- | -------- |-----------------------------------|
+| `action`    | `enum`   | yes      | Must be `"vote"`                  |
+| `poll_id`   | `string` | yes      | ID of the poll                    |
+| `choice_id` | `int`    | no       | ID of the choice, none to abstain |
 
 ##### Example
 
@@ -104,7 +104,7 @@ If a vote is started with the `live` flag set to `true` a [LiveUpdate](#liveupda
 
 #### Response
 
-Can return [Error](#error) of kind `invalid_poll_id`, `invalid_choice_id` and `voted_already`.
+Can return [Error](#error) of kind `invalid_poll_id` and `invalid_choice_id`.
 
 ---
 
@@ -262,7 +262,6 @@ An error has occurred when issuing a command
 | `invalid_choice_description` | Given choice description was invalid (length must be between 2 and 100 bytes)                                 |
 | `invalid_topic_length`       | Given topic length was invalid (must be between 2 and 100 bytes)                                              |
 | `invalid_duration`           | Invalid poll duration (must be greater than 2 seconds and shorter than 1 hour)                                |
-| `voted_already`              | Tried to vote twice on the same poll                                                                          |
 | `still_running`              | Tried to start a poll while a poll is still running                                                           |
 
 ## Shared Types

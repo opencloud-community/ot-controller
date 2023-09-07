@@ -18,7 +18,7 @@ async fn start_poll(module_tester: &mut ModuleTester<Polls>, live_poll: bool) ->
     let start = PollsCommand::Start(Start {
         topic: "polling".into(),
         live: live_poll,
-        choices: vec!["yes".into(), "no".into()],
+        choices: vec!["yes".into(), "no".into(), "maybe".into()],
         duration: Duration::from_secs(2),
     });
 
@@ -58,6 +58,10 @@ async fn start_poll(module_tester: &mut ModuleTester<Polls>, live_poll: bool) ->
                 Choice {
                     id: ChoiceId::from(1),
                     content: "no".into()
+                },
+                Choice {
+                    id: ChoiceId::from(2),
+                    content: "maybe".into()
                 }
             ]
         );
@@ -84,13 +88,14 @@ async fn full_poll_with_2sec_duration() {
 
     let started = start_poll(&mut module_tester, true).await;
 
-    // User 1 vote yes
+    // User 1 vote: "yes"
+
     module_tester
         .send_ws_message(
             &USER_1.participant_id,
             PollsCommand::Vote(Vote {
                 poll_id: started.id,
-                choice_id: ChoiceId::from(0),
+                choice_id: Some(ChoiceId::from(0)),
             }),
         )
         .unwrap();
@@ -118,7 +123,11 @@ async fn full_poll_with_2sec_duration() {
                 },
                 Item {
                     id: ChoiceId::from(1),
-                    count: 0
+                    count: 0,
+                },
+                Item {
+                    id: ChoiceId::from(2),
+                    count: 0,
                 }
             ]
         );
@@ -126,14 +135,14 @@ async fn full_poll_with_2sec_duration() {
         panic!("unexpected {update1:?}")
     }
 
-    // User 2 vote
+    // User 2 vote: "no"
 
     module_tester
         .send_ws_message(
             &USER_2.participant_id,
             PollsCommand::Vote(Vote {
                 poll_id: started.id,
-                choice_id: ChoiceId::from(1),
+                choice_id: Some(ChoiceId::from(1)),
             }),
         )
         .unwrap();
@@ -161,7 +170,11 @@ async fn full_poll_with_2sec_duration() {
                 },
                 Item {
                     id: ChoiceId::from(1),
-                    count: 1
+                    count: 1,
+                },
+                Item {
+                    id: ChoiceId::from(2),
+                    count: 0,
                 }
             ]
         );
@@ -169,14 +182,61 @@ async fn full_poll_with_2sec_duration() {
         panic!("unexpected {update1:?}")
     }
 
-    // User 2 vote again but fails
+    // User 2 vote again: "maybe"
 
     module_tester
         .send_ws_message(
             &USER_2.participant_id,
             PollsCommand::Vote(Vote {
                 poll_id: started.id,
-                choice_id: ChoiceId::from(0),
+                choice_id: Some(ChoiceId::from(2)),
+            }),
+        )
+        .unwrap();
+
+    let update1 = module_tester
+        .receive_ws_message(&USER_1.participant_id)
+        .await
+        .unwrap();
+
+    let update2 = module_tester
+        .receive_ws_message(&USER_2.participant_id)
+        .await
+        .unwrap();
+
+    assert_eq!(update1, update2);
+
+    if let WsMessageOutgoing::Module(PollsEvent::LiveUpdate(Results { id, results })) = update1 {
+        assert_eq!(id, started.id);
+        assert_eq!(
+            results,
+            &[
+                Item {
+                    id: ChoiceId::from(0),
+                    count: 1,
+                },
+                Item {
+                    id: ChoiceId::from(1),
+                    count: 0,
+                },
+                Item {
+                    id: ChoiceId::from(2),
+                    count: 1,
+                }
+            ]
+        );
+    } else {
+        panic!("unexpected {update1:?}")
+    }
+
+    // User 2 vote again: invalid choice -> fails
+
+    module_tester
+        .send_ws_message(
+            &USER_2.participant_id,
+            PollsCommand::Vote(Vote {
+                poll_id: started.id,
+                choice_id: Some(ChoiceId::from(3)),
             }),
         )
         .unwrap();
@@ -186,10 +246,57 @@ async fn full_poll_with_2sec_duration() {
         .await
         .unwrap();
 
-    if let WsMessageOutgoing::Module(PollsEvent::Error(Error::VotedAlready)) = error {
+    if let WsMessageOutgoing::Module(PollsEvent::Error(Error::InvalidChoiceId)) = error {
         // OK
     } else {
         panic!("unexpected {error:?}")
+    }
+
+    // User 2 vote again: `None`
+
+    module_tester
+        .send_ws_message(
+            &USER_2.participant_id,
+            PollsCommand::Vote(Vote {
+                poll_id: started.id,
+                choice_id: None,
+            }),
+        )
+        .unwrap();
+
+    let update1 = module_tester
+        .receive_ws_message(&USER_1.participant_id)
+        .await
+        .unwrap();
+
+    let update2 = module_tester
+        .receive_ws_message(&USER_2.participant_id)
+        .await
+        .unwrap();
+
+    assert_eq!(update1, update2);
+
+    if let WsMessageOutgoing::Module(PollsEvent::LiveUpdate(Results { id, results })) = update1 {
+        assert_eq!(id, started.id);
+        assert_eq!(
+            results,
+            &[
+                Item {
+                    id: ChoiceId::from(0),
+                    count: 1,
+                },
+                Item {
+                    id: ChoiceId::from(1),
+                    count: 0,
+                },
+                Item {
+                    id: ChoiceId::from(2),
+                    count: 0,
+                }
+            ]
+        );
+    } else {
+        panic!("unexpected {update1:?}")
     }
 
     // Poll expired, getting results in `Done` event
@@ -198,6 +305,13 @@ async fn full_poll_with_2sec_duration() {
         .receive_ws_message_override_timeout(&USER_1.participant_id, Duration::from_secs(3))
         .await
         .unwrap();
+
+    let done2 = module_tester
+        .receive_ws_message(&USER_2.participant_id)
+        .await
+        .unwrap();
+
+    assert_eq!(done1, done2);
 
     if let WsMessageOutgoing::Module(PollsEvent::Done(Results { id, results })) = &done1 {
         assert_eq!(*id, started.id);
@@ -210,20 +324,17 @@ async fn full_poll_with_2sec_duration() {
                 },
                 Item {
                     id: ChoiceId::from(1),
-                    count: 1,
+                    count: 0,
+                },
+                Item {
+                    id: ChoiceId::from(2),
+                    count: 0,
                 }
             ]
         );
     } else {
         panic!("unexpected {done1:?}")
     }
-
-    let done2 = module_tester
-        .receive_ws_message(&USER_2.participant_id)
-        .await
-        .unwrap();
-
-    assert_eq!(done1, done2);
 
     module_tester.shutdown().await.unwrap()
 }
