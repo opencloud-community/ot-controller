@@ -75,7 +75,7 @@ tokio = { workspace = true, features = ["signal"] }
 tokio-stream.workspace = true
 actix-web = { workspace = true, features = ["rustls"] }
 actix-rt.workspace = true
-actix-web-httpauth = "0.8"
+actix-web-httpauth.workspace = true
 actix-cors = "0.6"
 async-trait.workspace = true
 futures.workspace = true

@@ -1345,6 +1345,7 @@ struct UpdateNotificationValues {
 pub async fn patch_event(
     settings: SharedSettingsActix,
     db: Data<Db>,
+    authz: Data<Authz>,
     kc_admin_client: Data<KeycloakAdminClient>,
     current_tenant: ReqData<Tenant>,
     current_user: ReqData<User>,
@@ -1419,6 +1420,17 @@ pub async fn patch_event(
 
     let invited_users = get_invited_mail_recipients_for_event(&mut conn, event_id).await?;
     let invite_for_room = Invite::get_first_for_room(&mut conn, room.id, current_user.id).await?;
+
+    // Add the access policy for the invite code, just in case it has been created by
+    // the `Invite::get_first_for_room(…)` call above. That function is not able to
+    // add the policy, because it has no access to the `RoomsPoliciesBuilderExt` trait.
+    let policies = PoliciesBuilder::new()
+        // Grant invitee access
+        .grant_invite_access(invite_for_room.id)
+        .room_guest_read_access(room.id)
+        .finish();
+    authz.add_policies(policies).await?;
+
     let notification_values = UpdateNotificationValues {
         tenant: current_tenant.clone(),
         created_by: created_by.clone(),

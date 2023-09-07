@@ -6,8 +6,8 @@
 use super::{ToCasbin, ToCasbinMultiple, ToCasbinString};
 use crate::{
     policies_builder::{PoliciesBuilder, Ready},
-    policy::{Policies, Policy},
-    subject::{UserToGroup, UserToRole},
+    policy::{InvitePolicy, Policies, Policy},
+    subject::{PolicyInvite, UserToGroup, UserToRole},
     AccessMethod, GroupToRole, IsSubject, PolicyGroup, PolicyRole, PolicyUser, ResourceId,
     UserPolicy,
 };
@@ -48,6 +48,26 @@ impl FromStr for PolicyUser {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s.starts_with("user::") {
             Ok(PolicyUser(Uuid::from_str(s.trim_start_matches("user::"))?))
+        } else {
+            Err(crate::ParsingError::PolicyUser(s.to_owned()))
+        }
+    }
+}
+
+impl ToCasbinString for PolicyInvite {
+    fn to_casbin_string(self) -> String {
+        format!("invite::{}", self.0)
+    }
+}
+
+impl FromStr for PolicyInvite {
+    type Err = crate::ParsingError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.starts_with("invite::") {
+            Ok(PolicyInvite(Uuid::from_str(
+                s.trim_start_matches("invite::"),
+            )?))
         } else {
             Err(crate::ParsingError::PolicyUser(s.to_owned()))
         }
@@ -153,6 +173,22 @@ impl EnforceArgs for UserPolicy {
     }
 }
 
+impl EnforceArgs for InvitePolicy {
+    fn try_into_vec(self) -> Result<Vec<Dynamic>, casbin::Error> {
+        Ok(vec![
+            Dynamic::from(self.sub.to_casbin_string()),
+            Dynamic::from(self.obj.into_inner()),
+            Dynamic::from(self.act.to_casbin_string()),
+        ])
+    }
+
+    fn cache_key(&self) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        self.hash(&mut hasher);
+        hasher.finish()
+    }
+}
+
 impl ToCasbin for GroupToRole {
     fn to_casbin_policy(self) -> Vec<String> {
         vec![self.0.to_casbin_string(), self.1.to_casbin_string()]
@@ -176,6 +212,11 @@ impl ToCasbinMultiple for PoliciesBuilder<Ready> {
         self.user_policies
             .into_iter()
             .map(ToCasbin::to_casbin_policy)
+            .chain(
+                self.invite_policies
+                    .into_iter()
+                    .map(ToCasbin::to_casbin_policy),
+            )
             .chain(
                 self.group_policies
                     .into_iter()

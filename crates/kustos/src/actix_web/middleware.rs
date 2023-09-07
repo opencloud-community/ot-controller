@@ -3,8 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Actix-web middleware based on <https://github.com/casbin-rs/actix-casbin-auth>
-use crate::actix_web::User;
+use crate::actix_web::{Invite, User};
 use crate::internal::block;
+use crate::policy::InvitePolicy;
+use crate::subject::PolicyInvite;
 use crate::{AccessMethod, PolicyUser, SyncedEnforcer, UserPolicy};
 use actix_web::dev::{Service, Transform};
 use actix_web::{
@@ -126,26 +128,36 @@ where
                     }
                 };
 
-                let option_user = req.extensions().get::<User>().cloned();
-                let user = match option_user {
-                    Some(value) => value,
-                    None => {
+                let span = tracing::Span::current();
+
+                let optional_user = req.extensions().get::<User>().cloned();
+                let optional_invite = req.extensions().get::<Invite>().cloned();
+
+                let enforce_result = match (optional_user, optional_invite) {
+                    (Some(user), _) => {
+                        let subject: PolicyUser = user.0.into();
+                        block(move || {
+                            let lock = cloned_enforcer.blocking_read();
+
+                            lock.enforce(UserPolicy::new(subject, path, action))
+                        })
+                        .await
+                    }
+                    (_, Some(invite)) => {
+                        let subject: PolicyInvite = invite.0.into();
+                        block(move || {
+                            let lock = cloned_enforcer.blocking_read();
+
+                            lock.enforce(InvitePolicy::new(subject, path, action))
+                        })
+                        .await
+                    }
+                    _ => {
                         // TODO(r.floren) This way we might leak the existence of resources. We might want to use NotFound in some cases.
                         log::trace!("No user found. Responding with 401");
                         return Ok(req.into_response(HttpResponse::Unauthorized().finish()));
                     }
                 };
-
-                let subject: PolicyUser = user.0.into();
-
-                let span = tracing::Span::current();
-
-                let enforce_result = block(move || {
-                    let lock = cloned_enforcer.blocking_read();
-
-                    lock.enforce(UserPolicy::new(subject, path, action))
-                })
-                .await;
 
                 match enforce_result {
                     Ok(Ok(true)) => {

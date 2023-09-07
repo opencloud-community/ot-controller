@@ -2,8 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::policy::{GroupPolicy, Policy, RolePolicy, UserPolicy};
+use crate::policy::{GroupPolicy, InvitePolicy, Policy, RolePolicy, UserPolicy};
 use crate::prelude::{PolicyGroup, PolicyRole, PolicyUser};
+use crate::subject::PolicyInvite;
 use crate::{AccessMethod, IsSubject, ResourceId};
 use std::fmt::Debug;
 use std::mem::take;
@@ -30,6 +31,7 @@ pub trait BuilderState: Debug {
 #[derive(Debug)]
 pub struct PoliciesBuilder<B> {
     pub(crate) user_policies: Vec<UserPolicy>,
+    pub(crate) invite_policies: Vec<InvitePolicy>,
     pub(crate) group_policies: Vec<GroupPolicy>,
     pub(crate) role_policies: Vec<RolePolicy>,
     state: B,
@@ -48,6 +50,7 @@ impl PoliciesBuilder<Ready> {
     pub fn new() -> Self {
         Self {
             user_policies: vec![],
+            invite_policies: vec![],
             group_policies: vec![],
             role_policies: vec![],
             state: Ready,
@@ -71,9 +74,30 @@ impl<B: BuilderState> PoliciesBuilder<B> {
     {
         let mut this = PoliciesBuilder {
             user_policies: self.user_policies,
+            invite_policies: self.invite_policies,
             group_policies: self.group_policies,
             role_policies: self.role_policies,
             state: GrantingAccess::new(user.into()),
+        };
+
+        self.state.finalize(&mut this);
+
+        this
+    }
+
+    /// Wraps up the previous state and switches to granting access to the given invite
+    ///
+    /// Until you call another `grant_*_access` method or [`finish()`](Self::finish()), all following [`add_resource()`](Self::add_resource()) calls will target this invite.
+    pub fn grant_invite_access<T>(self, invite: T) -> PoliciesBuilder<GrantingAccess<PolicyInvite>>
+    where
+        T: Into<PolicyInvite>,
+    {
+        let mut this = PoliciesBuilder {
+            user_policies: self.user_policies,
+            invite_policies: self.invite_policies,
+            group_policies: self.group_policies,
+            role_policies: self.role_policies,
+            state: GrantingAccess::new(invite.into()),
         };
 
         self.state.finalize(&mut this);
@@ -90,6 +114,7 @@ impl<B: BuilderState> PoliciesBuilder<B> {
     {
         let mut this = PoliciesBuilder {
             user_policies: self.user_policies,
+            invite_policies: self.invite_policies,
             group_policies: self.group_policies,
             role_policies: self.role_policies,
             state: GrantingAccess::new(group.into()),
@@ -109,6 +134,7 @@ impl<B: BuilderState> PoliciesBuilder<B> {
     {
         let mut this = PoliciesBuilder {
             user_policies: self.user_policies,
+            invite_policies: self.invite_policies,
             group_policies: self.group_policies,
             role_policies: self.role_policies,
             state: GrantingAccess::new(role.into()),
@@ -126,6 +152,7 @@ impl<B: BuilderState> PoliciesBuilder<B> {
     pub fn finish(self) -> PoliciesBuilder<Ready> {
         let mut this = PoliciesBuilder {
             user_policies: self.user_policies,
+            invite_policies: self.invite_policies,
             group_policies: self.group_policies,
             role_policies: self.role_policies,
             state: Ready,
@@ -197,6 +224,12 @@ impl<T: IsSubject + Clone> GrantingAccess<T> {
 impl BuilderState for GrantingAccess<PolicyUser> {
     fn finalize<B>(self, policies: &mut PoliciesBuilder<B>) {
         policies.user_policies.extend(self.resources_iter());
+    }
+}
+
+impl BuilderState for GrantingAccess<PolicyInvite> {
+    fn finalize<B>(self, policies: &mut PoliciesBuilder<B>) {
+        policies.invite_policies.extend(self.resources_iter());
     }
 }
 

@@ -64,7 +64,7 @@
 //!     .add_user_to_role(uuid::Uuid::nil(), "admin")
 //!     .await;
 //! authz
-//!     .check(
+//!     .check_user(
 //!         uuid::Uuid::nil(),
 //!         "/users/0",
 //!         AccessMethod::POST,
@@ -78,10 +78,13 @@ use casbin::{CoreApi, MgmtApi, RbacApi};
 use database::Db;
 use internal::{synced_enforcer::SyncedEnforcer, ToCasbin, ToCasbinMultiple, ToCasbinString};
 use metrics::KustosMetrics;
-use policy::{GroupPolicies, Policy, RolePolicies, UserPolicies, UserPolicy};
+use policy::{
+    GroupPolicies, InvitePolicies, InvitePolicy, Policy, RolePolicies, UserPolicies, UserPolicy,
+};
 use std::{str::FromStr, sync::Arc, time::Duration};
 use subject::{
-    GroupToRole, IsSubject, PolicyGroup, PolicyRole, PolicyUser, UserToGroup, UserToRole,
+    GroupToRole, IsSubject, PolicyGroup, PolicyInvite, PolicyRole, PolicyUser, UserToGroup,
+    UserToRole,
 };
 use tokio::{
     sync::{broadcast::Receiver, RwLock},
@@ -180,6 +183,31 @@ impl Authz {
     {
         let user = user.into();
         let policies = UserPolicies::new(&user, data_access);
+
+        // The return value of casbins add_policy means: true => newly added, false => already in model.
+        // Thus it is sane to just listen for errors here.
+        self.inner
+            .write()
+            .await
+            .add_policies(policies.to_casbin_policies())
+            .await?;
+        Ok(())
+    }
+
+    /// Grants the user access to the resources with access
+    ///
+    /// This takes multiple resources with access at once.
+    #[tracing::instrument(level = "debug", skip(self, invite, data_access))]
+    pub async fn grant_invite_access<'a, T>(
+        &self,
+        invite: T,
+        data_access: &'a [(&'a ResourceId, &'a [AccessMethod])],
+    ) -> Result<()>
+    where
+        T: Into<PolicyInvite>,
+    {
+        let invite = invite.into();
+        let policies = InvitePolicies::new(&invite, data_access);
 
         // The return value of casbins add_policy means: true => newly added, false => already in model.
         // Thus it is sane to just listen for errors here.
@@ -378,7 +406,7 @@ impl Authz {
 
     /// Checks if the given user has access to the resource
     #[tracing::instrument(level = "debug", skip(self, user, res, access))]
-    pub async fn check<U, R>(&self, user: U, res: R, access: AccessMethod) -> Result<bool>
+    pub async fn check_user<U, R>(&self, user: U, res: R, access: AccessMethod) -> Result<bool>
     where
         U: Into<PolicyUser>,
         R: Into<ResourceId>,
@@ -390,9 +418,23 @@ impl Authz {
             .enforce(UserPolicy::new(user.into(), res, access))?)
     }
 
+    /// Checks if the given invite code has access to the resource
+    #[tracing::instrument(level = "debug", skip(self, invite, res, access))]
+    pub async fn check_invite<I, R>(&self, invite: I, res: R, access: AccessMethod) -> Result<bool>
+    where
+        I: Into<PolicyInvite>,
+        R: Into<ResourceId>,
+    {
+        Ok(self
+            .inner
+            .read()
+            .await
+            .enforce(InvitePolicy::new(invite.into(), res, access))?)
+    }
+
     /// Checks in a batched way if the given user has access to the resources
     #[tracing::instrument(level = "debug", skip(self, user, res, access))]
-    pub async fn check_batched<U, R, I>(
+    pub async fn check_user_batched<U, R, I>(
         &self,
         user: U,
         res: I,

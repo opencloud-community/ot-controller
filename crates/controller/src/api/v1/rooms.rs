@@ -19,6 +19,7 @@ use crate::settings::SharedSettingsActix;
 use actix_web::web::{self, Data, Json, Path, ReqData};
 use actix_web::{delete, get, patch, post};
 use database::Db;
+use db_storage::events::Event;
 use db_storage::invites::Invite;
 use db_storage::rooms::{self as db_rooms, Room};
 use db_storage::sip_configs::NewSipConfig;
@@ -27,6 +28,7 @@ use kustos::policies_builder::{GrantingAccess, PoliciesBuilder};
 use kustos::prelude::*;
 use signaling_core::{Participant, RedisConnection};
 use std::{convert::AsRef, str::FromStr};
+use types::api::v1::rooms::GetRoomEventResponse;
 use types::{
     api::v1::rooms::{
         InvitedStartRequest, PatchRoomsBody, PostRoomsBody, RoomResource, StartRequest,
@@ -249,6 +251,27 @@ pub async fn get_room_tariff(
     Ok(Json(response))
 }
 
+#[get("/rooms/{room_id}/event")]
+pub async fn get_room_event(
+    db: Data<Db>,
+    room_id: Path<RoomId>,
+) -> Result<Json<GetRoomEventResponse>, ApiError> {
+    let room_id = room_id.into_inner();
+
+    let mut conn = db.get_conn().await?;
+
+    let event = Event::get_first_for_room(&mut conn, room_id).await?;
+
+    match event.as_ref() {
+        Some(event) => {
+            let response = GetRoomEventResponse(event.into());
+
+            Ok(Json(response))
+        }
+        None => Err(ApiError::not_found()),
+    }
+}
+
 impl From<StartRoomError> for ApiError {
     fn from(start_room_error: StartRoomError) -> Self {
         match start_room_error {
@@ -406,6 +429,7 @@ pub async fn start_invited(
 }
 
 pub trait RoomsPoliciesBuilderExt {
+    fn room_guest_read_access(self, room_id: RoomId) -> Self;
     fn room_read_access(self, room_id: RoomId) -> Self;
     fn room_write_access(self, room_id: RoomId) -> Self;
 }
@@ -414,6 +438,17 @@ impl<T> RoomsPoliciesBuilderExt for PoliciesBuilder<GrantingAccess<T>>
 where
     T: IsSubject + Clone,
 {
+    fn room_guest_read_access(self, room_id: RoomId) -> Self {
+        self.add_resource(
+            room_id.resource_id().with_suffix("/tariff"),
+            [AccessMethod::Get],
+        )
+        .add_resource(
+            room_id.resource_id().with_suffix("/event"),
+            [AccessMethod::Get],
+        )
+    }
+
     fn room_read_access(self, room_id: RoomId) -> Self {
         self.add_resource(room_id.resource_id(), [AccessMethod::Get])
             .add_resource(
@@ -426,6 +461,10 @@ where
             )
             .add_resource(
                 room_id.resource_id().with_suffix("/tariff"),
+                [AccessMethod::Get],
+            )
+            .add_resource(
+                room_id.resource_id().with_suffix("/event"),
                 [AccessMethod::Get],
             )
             .add_resource(
@@ -469,6 +508,7 @@ pub(crate) fn associated_resource_ids(room_id: RoomId) -> impl IntoIterator<Item
         room_id.resource_id().with_suffix("/invites/*"),
         room_id.resource_id().with_suffix("/start"),
         room_id.resource_id().with_suffix("/tariff"),
+        room_id.resource_id().with_suffix("/event"),
         room_id.resource_id().with_suffix("/assets"),
         room_id.resource_id().with_suffix("/assets/*"),
     ]

@@ -49,6 +49,14 @@ impl Invite {
         Ok(invite)
     }
 
+    /// Retrieve all invites
+    #[tracing::instrument(err, skip_all)]
+    pub async fn get_all(conn: &mut DbConnection) -> Result<Vec<Invite>> {
+        let query = invites::table;
+        let invites = query.load(conn).await?;
+        Ok(invites)
+    }
+
     /// Returns a invites with user metadata for id
     #[tracing::instrument(err, skip_all)]
     pub async fn get_with_users(
@@ -144,6 +152,11 @@ impl Invite {
         ))
     }
 
+    /// Get the first invite for a room.
+    ///
+    /// If no invite is found for the room, a new invite will be created.
+    /// The caller of this function must take care to create access rules
+    /// because this crate does not have access to that functionality.
     pub async fn get_first_for_room(
         conn: &mut DbConnection,
         room_id: RoomId,

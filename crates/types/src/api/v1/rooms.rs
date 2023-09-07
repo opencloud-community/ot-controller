@@ -7,7 +7,10 @@
 use chrono::{DateTime, Utc};
 use strum::AsRefStr;
 
-use crate::core::{BreakoutRoomId, ResumptionToken, RoomId, TicketToken};
+use crate::{
+    common::event::EventInfo,
+    core::{BreakoutRoomId, ResumptionToken, RoomId, TicketToken},
+};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -125,6 +128,11 @@ pub struct InvitedStartRequest {
     /// The resumption token for the room
     pub resumption: Option<ResumptionToken>,
 }
+
+/// The JSON body returned by the `/rooms/<room_id>/event` endpoint
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct GetRoomEventResponse(pub EventInfo);
 
 #[cfg(test)]
 mod tests {

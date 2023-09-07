@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Handles user Authentication in API requests
+use crate::api::v1::middleware::user_auth::bearer_or_invite_code::BearerOrInviteCode;
 use crate::api::v1::response::error::{AuthenticationError, CacheableApiError};
 use crate::api::v1::response::ApiError;
 use crate::caches::Caches;
@@ -12,7 +13,7 @@ use actix_web::error::Error;
 use actix_web::http::header::Header;
 use actix_web::web::Data;
 use actix_web::{HttpMessage, ResponseError};
-use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
+use actix_web_httpauth::headers::authorization::Authorization;
 use cache::Cache;
 use chrono::Utc;
 use controller_settings::{Settings, SharedSettings, TenantAssignment};
@@ -26,6 +27,9 @@ use std::pin::Pin;
 use std::rc::Rc;
 use std::task::{Context, Poll};
 use tracing_futures::Instrument;
+use types::core::InviteCodeId;
+
+mod bearer_or_invite_code;
 
 pub type UserAccessTokenCache = Cache<String, Result<(Tenant, User), CacheableApiError>>;
 
@@ -95,16 +99,18 @@ where
             .expect("Caches must be provided as AppData")
             .clone();
 
-        let parse_match_span =
-            tracing::span!(tracing::Level::TRACE, "Authorization::<Bearer>::parse");
+        let parse_match_span = tracing::span!(
+            tracing::Level::TRACE,
+            "Authorization::<BearerOrInviteCode>::parse"
+        );
 
         let _enter = parse_match_span.enter();
-        let auth = match Authorization::<Bearer>::parse(&req) {
+        let auth = match Authorization::<BearerOrInviteCode>::parse(&req) {
             Ok(a) => a,
             Err(e) => {
-                log::warn!("Unable to parse access token, {}", e);
+                log::warn!("Unable to parse access token or invite code, {}", e);
                 let error = ApiError::unauthorized()
-                    .with_message("Unable to parse access token")
+                    .with_message("Unable to parse access token or invite code")
                     .with_www_authenticate(AuthenticationError::InvalidAccessToken);
 
                 let response = req.into_response(error.error_response());
@@ -112,29 +118,48 @@ where
             }
         };
 
-        let access_token = AccessToken::new(auth.into_scheme().token().to_string());
+        enum AccessTokenOrInviteCode {
+            AccessToken(AccessToken),
+            InviteCode(InviteCodeId),
+        }
+
+        let access_token_or_invite_code = match auth.into_scheme() {
+            BearerOrInviteCode::Bearer(bearer) => {
+                AccessTokenOrInviteCode::AccessToken(AccessToken::new(bearer.token().to_string()))
+            }
+            BearerOrInviteCode::InviteCode(invite_code) => {
+                AccessTokenOrInviteCode::InviteCode(invite_code)
+            }
+        };
 
         Box::pin(
             async move {
                 let settings = settings.load_full();
 
-                match check_access_token(
-                    &settings,
-                    db,
-                    oidc_ctx,
-                    &caches.user_access_tokens,
-                    access_token,
-                )
-                .await
-                {
-                    Ok((current_tenant, current_user)) => {
-                        req.extensions_mut()
-                            .insert(kustos::actix_web::User::from(current_user.id.into_inner()));
-                        req.extensions_mut().insert(current_tenant);
-                        req.extensions_mut().insert(current_user);
+                match access_token_or_invite_code {
+                    AccessTokenOrInviteCode::AccessToken(access_token) => match check_access_token(
+                        &settings,
+                        db,
+                        oidc_ctx,
+                        &caches.user_access_tokens,
+                        access_token,
+                    )
+                    .await
+                    {
+                        Ok((current_tenant, current_user)) => {
+                            req.extensions_mut().insert(kustos::actix_web::User::from(
+                                current_user.id.into_inner(),
+                            ));
+                            req.extensions_mut().insert(current_tenant);
+                            req.extensions_mut().insert(current_user);
+                            service.call(req).await
+                        }
+                        Err(err) => Ok(req.into_response(err.error_response())),
+                    },
+                    AccessTokenOrInviteCode::InviteCode(current_invite_code) => {
+                        req.extensions_mut().insert(current_invite_code);
                         service.call(req).await
                     }
-                    Err(err) => Ok(req.into_response(err.error_response())),
                 }
             }
             .instrument(tracing::trace_span!("OidcAuthMiddleware::async::call")),

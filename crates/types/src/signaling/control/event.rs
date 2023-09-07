@@ -7,12 +7,12 @@
 use std::collections::HashMap;
 
 use crate::{
-    common::tariff::TariffResource,
+    common::{event::EventInfo, tariff::TariffResource},
     core::{ParticipantId, Timestamp},
     signaling::Role,
 };
 
-use super::{AssociatedParticipant, EventInfo, Participant};
+use super::{AssociatedParticipant, Participant};
 
 #[allow(unused_imports)]
 use crate::imports::*;
