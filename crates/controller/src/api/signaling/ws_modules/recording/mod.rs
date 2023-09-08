@@ -152,12 +152,12 @@ impl SignalingModule for Recording {
             Event::WsMessage(msg) => match msg {
                 RecordingCommand::Start => {
                     if ctx.role() != Role::Moderator {
-                        ctx.ws_send(RecordingEvent::Error(Error::InsufficientPermissions));
+                        ctx.ws_send(Error::InsufficientPermissions);
                         return Ok(());
                     }
 
                     if !storage::try_init(ctx.redis_conn(), self.room).await? {
-                        ctx.ws_send(RecordingEvent::Error(Error::AlreadyRecording));
+                        ctx.ws_send(Error::AlreadyRecording);
                         return Ok(());
                     }
 
@@ -177,7 +177,7 @@ impl SignalingModule for Recording {
                 }
                 RecordingCommand::Stop(command::Stop { recording_id }) => {
                     if ctx.role() != Role::Moderator {
-                        ctx.ws_send(RecordingEvent::Error(Error::InsufficientPermissions));
+                        ctx.ws_send(Error::InsufficientPermissions);
                         return Ok(());
                     }
 
@@ -185,7 +185,7 @@ impl SignalingModule for Recording {
                         storage::get_state(ctx.redis_conn(), self.room).await?,
                         Some(RecordingStatus::Recording(id)) if id == recording_id
                     ) {
-                        ctx.ws_send(RecordingEvent::Error(Error::InvalidRecordingId));
+                        ctx.ws_send(Error::InvalidRecordingId);
                         return Ok(());
                     }
 
@@ -219,12 +219,12 @@ impl SignalingModule for Recording {
                 }
                 exchange::Message::Started(recording_id) => {
                     if !self.i_am_the_recorder {
-                        ctx.ws_send(RecordingEvent::Started(Started { recording_id }));
+                        ctx.ws_send(Started { recording_id });
                     }
                 }
                 exchange::Message::Stopped(recording_id) => {
                     if !self.i_am_the_recorder {
-                        ctx.ws_send(RecordingEvent::Stopped(Stopped { recording_id }));
+                        ctx.ws_send(Stopped { recording_id });
                     }
                 }
             },
