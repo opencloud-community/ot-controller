@@ -86,6 +86,12 @@ pub struct RequestMute {
     pub force: bool,
 }
 
+impl From<RequestMute> for MediaEvent {
+    fn from(value: RequestMute) -> Self {
+        Self::RequestMute(value)
+    }
+}
+
 /// Specification of a source for media events
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -165,6 +171,12 @@ pub struct FocusUpdate {
     pub focus: Option<ParticipantId>,
 }
 
+impl From<FocusUpdate> for MediaEvent {
+    fn from(value: FocusUpdate) -> Self {
+        Self::FocusUpdate(value)
+    }
+}
+
 /// Errors from the `media` module namespace
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
@@ -193,6 +205,12 @@ pub enum Error {
 
     /// Insufficient permissions to perform a command
     PermissionDenied,
+}
+
+impl From<Error> for MediaEvent {
+    fn from(value: Error) -> Self {
+        Self::Error(value)
+    }
 }
 
 #[cfg(test)]

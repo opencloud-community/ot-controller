@@ -170,7 +170,7 @@ impl SignalingModule for Media {
                     && ctx.role() != Role::Moderator
                     && !storage::is_presenter(ctx.redis_conn(), self.room, self.id).await?
                 {
-                    ctx.ws_send(MediaEvent::Error(Error::PermissionDenied));
+                    ctx.ws_send(Error::PermissionDenied);
                     return Ok(());
                 }
 
@@ -240,7 +240,7 @@ impl SignalingModule for Media {
                     && ctx.role() != Role::Moderator
                     && !storage::is_presenter(ctx.redis_conn(), self.room, self.id).await?
                 {
-                    ctx.ws_send(MediaEvent::Error(Error::PermissionDenied));
+                    ctx.ws_send(Error::PermissionDenied);
 
                     return Ok(());
                 }
@@ -259,7 +259,7 @@ impl SignalingModule for Media {
                         targeted.target,
                         e
                     );
-                    ctx.ws_send(MediaEvent::Error(Error::InvalidSdpOffer));
+                    ctx.ws_send(Error::InvalidSdpOffer);
                 }
             }
             Event::WsMessage(MediaCommand::SdpAnswer(targeted)) => {
@@ -272,7 +272,7 @@ impl SignalingModule for Media {
                     .await
                 {
                     log::error!("Failed to handle sdp answer {:?}, {:?}", targeted.target, e);
-                    ctx.ws_send(MediaEvent::Error(Error::HandleSdpAnswer));
+                    ctx.ws_send(Error::HandleSdpAnswer);
                 }
             }
             Event::WsMessage(MediaCommand::SdpCandidate(targeted)) => {
@@ -289,7 +289,7 @@ impl SignalingModule for Media {
                         targeted.target,
                         e
                     );
-                    ctx.ws_send(MediaEvent::Error(Error::InvalidCandidate));
+                    ctx.ws_send(Error::InvalidCandidate);
                 }
             }
             Event::WsMessage(MediaCommand::SdpEndOfCandidates(target)) => {
@@ -302,7 +302,7 @@ impl SignalingModule for Media {
                         target,
                         e
                     );
-                    ctx.ws_send(MediaEvent::Error(Error::InvalidEndOfCandidates));
+                    ctx.ws_send(Error::InvalidEndOfCandidates);
                 }
             }
             Event::WsMessage(MediaCommand::Subscribe(subscribe)) => {
@@ -324,30 +324,26 @@ impl SignalingModule for Media {
                         subscribe,
                         e
                     );
-                    ctx.ws_send(MediaEvent::Error(Error::InvalidRequestOffer(
-                        subscribe.target.into(),
-                    )));
+                    ctx.ws_send(Error::InvalidRequestOffer(subscribe.target.into()));
                 }
             }
             Event::WsMessage(MediaCommand::Resubscribe(target)) => {
                 if let Err(e) = self.handle_sdp_re_request_offer(&mut ctx, target).await {
                     log::error!("Failed to handle resubscribe {:?}, {:?}", target, e);
-                    ctx.ws_send(MediaEvent::Error(Error::InvalidRequestOffer(target.into())));
+                    ctx.ws_send(Error::InvalidRequestOffer(target.into()));
                 }
             }
             Event::WsMessage(MediaCommand::Configure(configure)) => {
                 let target = configure.target;
                 if let Err(e) = self.handle_configure(configure).await {
                     log::error!("Failed to handle configure request {:?}", e);
-                    ctx.ws_send(MediaEvent::Error(Error::InvalidConfigureRequest(
-                        target.into(),
-                    )));
+                    ctx.ws_send(Error::InvalidConfigureRequest(target.into()));
                 }
             }
 
             Event::WsMessage(MediaCommand::GrantPresenterRole(selection)) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(MediaEvent::Error(Error::PermissionDenied));
+                    ctx.ws_send(Error::PermissionDenied);
 
                     return Ok(());
                 }
@@ -359,7 +355,7 @@ impl SignalingModule for Media {
             }
             Event::WsMessage(MediaCommand::RevokePresenterRole(selection)) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(MediaEvent::Error(Error::PermissionDenied));
+                    ctx.ws_send(Error::PermissionDenied);
 
                     return Ok(());
                 }
@@ -435,11 +431,11 @@ impl SignalingModule for Media {
             }
             Event::Exchange(exchange::Message::StoppedTalking(id)) => {
                 if let Some(focus) = self.focus_detection.on_stopped_talking(id) {
-                    ctx.ws_send(MediaEvent::FocusUpdate(FocusUpdate { focus }));
+                    ctx.ws_send(FocusUpdate { focus });
                 }
             }
             Event::Exchange(exchange::Message::RequestMute(request_mute)) => {
-                ctx.ws_send(MediaEvent::RequestMute(request_mute));
+                ctx.ws_send(request_mute);
             }
             Event::Exchange(exchange::Message::PresenterGranted(selection)) => {
                 if !selection.participant_ids.contains(&self.id) {
@@ -514,7 +510,7 @@ impl SignalingModule for Media {
                     if let Some(video_state) = state.get(&MediaSessionType::Video) {
                         if !video_state.audio {
                             if let Some(focus) = self.focus_detection.on_stopped_talking(id) {
-                                ctx.ws_send(MediaEvent::FocusUpdate(FocusUpdate { focus }));
+                                ctx.ws_send(FocusUpdate { focus });
                             }
                         }
                     }
@@ -536,7 +532,7 @@ impl SignalingModule for Media {
 
                 // Unfocus leaving participants
                 if let Some(focus) = self.focus_detection.on_stopped_talking(id) {
-                    ctx.ws_send(MediaEvent::FocusUpdate(FocusUpdate { focus }));
+                    ctx.ws_send(FocusUpdate { focus });
                 }
             }
             Event::Joined {
@@ -621,7 +617,7 @@ impl Media {
         moderator_mute: command::RequestMute,
     ) -> Result<()> {
         if ctx.role() != Role::Moderator {
-            ctx.ws_send(MediaEvent::Error(Error::PermissionDenied));
+            ctx.ws_send(Error::PermissionDenied);
 
             return Ok(());
         }
