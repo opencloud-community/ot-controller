@@ -20,7 +20,7 @@ use types::{
     signaling::{
         breakout::{
             command::BreakoutCommand,
-            event::{self, BreakoutEvent},
+            event::{BreakoutEvent, Error, Started},
             state::BreakoutState,
             AssociatedParticipantInOtherRoom, BreakoutRoom, ParticipantInOtherRoom,
         },
@@ -274,7 +274,7 @@ impl BreakoutRooms {
         msg: BreakoutCommand,
     ) -> Result<()> {
         if ctx.role() != Role::Moderator {
-            ctx.ws_send(BreakoutEvent::Error(event::Error::InsufficientPermissions));
+            ctx.ws_send(Error::InsufficientPermissions);
             return Ok(());
         }
 
@@ -327,7 +327,7 @@ impl BreakoutRooms {
                         exchange::Message::Stop,
                     );
                 } else {
-                    ctx.ws_send(BreakoutEvent::Error(event::Error::Inactive));
+                    ctx.ws_send(Error::Inactive);
                 }
             }
         }
@@ -350,11 +350,11 @@ impl BreakoutRooms {
                     None
                 };
 
-                ctx.ws_send(BreakoutEvent::Started(event::Started {
+                ctx.ws_send(Started {
                     rooms: start.config.rooms,
                     expires,
                     assignment,
-                }));
+                });
             }
             exchange::Message::Stop => {
                 ctx.ws_send(BreakoutEvent::Stopped);
