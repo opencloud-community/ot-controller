@@ -37,6 +37,12 @@ pub struct AccessUrl {
     pub url: Url,
 }
 
+impl From<AccessUrl> for WhiteboardEvent {
+    fn from(value: AccessUrl) -> Self {
+        Self::SpaceUrl(value)
+    }
+}
+
 /// Handle to a PDF asset
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -46,6 +52,12 @@ pub struct PdfAsset {
 
     /// The asset id for the PDF asset
     pub asset_id: AssetId,
+}
+
+impl From<PdfAsset> for WhiteboardEvent {
+    fn from(value: PdfAsset) -> Self {
+        Self::PdfAsset(value)
+    }
 }
 
 /// Error from the `whiteboard` module namespace
@@ -64,4 +76,10 @@ pub enum Error {
     InitializationFailed,
     /// Spacedeck is already initialized
     AlreadyInitialized,
+}
+
+impl From<Error> for WhiteboardEvent {
+    fn from(value: Error) -> Self {
+        Self::Error(value)
+    }
 }

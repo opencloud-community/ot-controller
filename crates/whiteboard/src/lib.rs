@@ -110,15 +110,15 @@ impl SignalingModule for Whiteboard {
                         if let Some(InitState::Initialized(space_info)) =
                             state::get(ctx.redis_conn(), self.room_id).await?
                         {
-                            ctx.ws_send(WhiteboardEvent::SpaceUrl(AccessUrl {
+                            ctx.ws_send(AccessUrl {
                                 url: space_info.url,
-                            }));
+                            });
                         } else {
                             log::error!("Whiteboard module received `Initialized` but spacedeck was not initialized");
                         }
                     }
                     exchange::Event::PdfAsset(pdf_asset) => {
-                        ctx.ws_send(WhiteboardEvent::PdfAsset(pdf_asset));
+                        ctx.ws_send(pdf_asset);
                     }
                 }
                 Ok(())
@@ -128,7 +128,7 @@ impl SignalingModule for Whiteboard {
                 match message {
                     WhiteboardCommand::Initialize => {
                         if ctx.role() != Role::Moderator {
-                            ctx.ws_send(WhiteboardEvent::Error(Error::InsufficientPermissions));
+                            ctx.ws_send(Error::InsufficientPermissions);
                             return Ok(());
                         }
 
@@ -141,13 +141,13 @@ impl SignalingModule for Whiteboard {
 
                             self.cleanup(ctx.redis_conn()).await?;
 
-                            ctx.ws_send(WhiteboardEvent::Error(Error::InitializationFailed));
+                            ctx.ws_send(Error::InitializationFailed);
                         }
                     }
 
                     WhiteboardCommand::GeneratePdf => {
                         if ctx.role() != Role::Moderator {
-                            ctx.ws_send(WhiteboardEvent::Error(Error::InsufficientPermissions));
+                            ctx.ws_send(Error::InsufficientPermissions);
                             return Ok(());
                         }
 
@@ -246,12 +246,8 @@ impl Whiteboard {
     async fn create_space(&self, ctx: &mut ModuleContext<'_, Self>) -> Result<()> {
         match state::try_start_init(ctx.redis_conn(), self.room_id).await? {
             Some(state) => match state {
-                InitState::Initializing => {
-                    ctx.ws_send(WhiteboardEvent::Error(Error::CurrentlyInitializing))
-                }
-                InitState::Initialized(_) => {
-                    ctx.ws_send(WhiteboardEvent::Error(Error::AlreadyInitialized))
-                }
+                InitState::Initializing => ctx.ws_send(Error::CurrentlyInitializing),
+                InitState::Initialized(_) => ctx.ws_send(Error::AlreadyInitialized),
             },
             None => {
                 let response = self
