@@ -183,13 +183,13 @@ impl Protocol {
         match msg {
             ProtocolCommand::SelectWriter(selection) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(ProtocolEvent::Error(Error::InsufficientPermissions));
+                    ctx.ws_send(Error::InsufficientPermissions);
 
                     return Ok(());
                 }
 
                 if !self.verify_selection(ctx.redis_conn(), &selection).await? {
-                    ctx.ws_send(ProtocolEvent::Error(Error::InvalidParticipantSelection));
+                    ctx.ws_send(Error::InvalidParticipantSelection);
                 }
 
                 let targets = selection.participant_ids;
@@ -205,7 +205,7 @@ impl Protocol {
                         match state {
                             storage::init::InitState::Initializing => {
                                 // Some other instance is currently initializing the etherpad
-                                ctx.ws_send(ProtocolEvent::Error(Error::CurrentlyInitializing));
+                                ctx.ws_send(Error::CurrentlyInitializing);
                                 return Ok(());
                             }
                             storage::init::InitState::Initialized => false,
@@ -218,7 +218,7 @@ impl Protocol {
 
                             storage::init::del(redis_conn, self.room_id).await?;
 
-                            ctx.ws_send(ProtocolEvent::Error(Error::FailedInitialization));
+                            ctx.ws_send(Error::FailedInitialization);
 
                             return Ok(());
                         }
@@ -250,7 +250,7 @@ impl Protocol {
             }
             ProtocolCommand::DeselectWriter(selection) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(ProtocolEvent::Error(Error::InsufficientPermissions));
+                    ctx.ws_send(Error::InsufficientPermissions);
 
                     return Ok(());
                 }
@@ -258,21 +258,21 @@ impl Protocol {
                 match storage::init::get(ctx.redis_conn(), self.room_id).await? {
                     Some(state) => match state {
                         InitState::Initializing => {
-                            ctx.ws_send(ProtocolEvent::Error(Error::CurrentlyInitializing));
+                            ctx.ws_send(Error::CurrentlyInitializing);
 
                             return Ok(());
                         }
                         InitState::Initialized => (),
                     },
                     None => {
-                        ctx.ws_send(ProtocolEvent::Error(Error::NotInitialized));
+                        ctx.ws_send(Error::NotInitialized);
 
                         return Ok(());
                     }
                 }
 
                 if !self.verify_selection(ctx.redis_conn(), &selection).await? {
-                    ctx.ws_send(ProtocolEvent::Error(Error::InvalidParticipantSelection));
+                    ctx.ws_send(Error::InvalidParticipantSelection);
 
                     return Ok(());
                 }
@@ -306,7 +306,7 @@ impl Protocol {
             }
             ProtocolCommand::GeneratePdf => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(ProtocolEvent::Error(Error::InsufficientPermissions));
+                    ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
                 }
 
@@ -314,7 +314,7 @@ impl Protocol {
                     storage::init::get(ctx.redis_conn(), self.room_id).await?,
                     Some(InitState::Initialized)
                 ) {
-                    ctx.ws_send(ProtocolEvent::Error(Error::NotInitialized));
+                    ctx.ws_send(Error::NotInitialized);
                     return Ok(());
                 }
 
@@ -351,7 +351,7 @@ impl Protocol {
                         exchange::Event::PdfAsset(PdfAsset { filename, asset_id }),
                     );
                 } else {
-                    ctx.ws_send(ProtocolEvent::Error(Error::NotInitialized));
+                    ctx.ws_send(Error::NotInitialized);
                     return Ok(());
                 }
             }
@@ -379,7 +379,7 @@ impl Protocol {
 
                 ctx.invalidate_data();
             }
-            exchange::Event::PdfAsset(pdf_asset) => ctx.ws_send(ProtocolEvent::PdfAsset(pdf_asset)),
+            exchange::Event::PdfAsset(pdf_asset) => ctx.ws_send(pdf_asset),
         }
 
         Ok(())
