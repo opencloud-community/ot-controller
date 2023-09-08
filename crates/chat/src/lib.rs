@@ -297,7 +297,7 @@ impl SignalingModule for Chat {
             Event::RoleUpdated(_) => {}
             Event::WsMessage(ChatCommand::EnableChat) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(ChatEvent::Error(Error::InsufficientPermissions));
+                    ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
                 }
 
@@ -310,7 +310,7 @@ impl SignalingModule for Chat {
             }
             Event::WsMessage(ChatCommand::DisableChat) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(ChatEvent::Error(Error::InsufficientPermissions));
+                    ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
                 }
 
@@ -331,7 +331,7 @@ impl SignalingModule for Chat {
                     storage::is_chat_enabled(ctx.redis_conn(), self.room.room_id()).await?;
 
                 if !chat_enabled {
-                    ctx.ws_send(ChatEvent::Error(Error::ChatDisabled));
+                    ctx.ws_send(Error::ChatDisabled);
                     return Ok(());
                 }
 
@@ -354,7 +354,7 @@ impl SignalingModule for Chat {
 
                 match scope {
                     Scope::Private(target) => {
-                        let out_message_contents = MessageSent {
+                        let out_message = MessageSent {
                             id: MessageId::generate(),
                             source,
                             content,
@@ -362,10 +362,10 @@ impl SignalingModule for Chat {
                         };
 
                         let stored_msg = StoredMessage {
-                            id: out_message_contents.id,
-                            source: out_message_contents.source,
-                            content: out_message_contents.content.clone(),
-                            scope: out_message_contents.scope.clone(),
+                            id: out_message.id,
+                            source: out_message.source,
+                            content: out_message.content.clone(),
+                            scope: out_message.scope.clone(),
                             timestamp: ctx.timestamp(),
                         };
 
@@ -386,11 +386,9 @@ impl SignalingModule for Chat {
                         )
                         .await?;
 
-                        let out_message = ChatEvent::MessageSent(out_message_contents);
-
                         ctx.exchange_publish(
                             exchange::current_room_by_participant_id(self.room, target),
-                            out_message.clone(),
+                            ChatEvent::MessageSent(out_message.clone()),
                         );
 
                         ctx.ws_send(out_message);
@@ -462,7 +460,7 @@ impl SignalingModule for Chat {
             }
             Event::WsMessage(ChatCommand::ClearHistory) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(ChatEvent::Error(Error::InsufficientPermissions));
+                    ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
                 }
 

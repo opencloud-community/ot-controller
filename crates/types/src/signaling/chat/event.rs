@@ -43,12 +43,24 @@ pub struct ChatEnabled {
     pub issued_by: ParticipantId,
 }
 
+impl From<ChatEnabled> for ChatEvent {
+    fn from(value: ChatEnabled) -> Self {
+        Self::ChatEnabled(value)
+    }
+}
+
 /// The chat was disabled
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ChatDisabled {
     /// Participant who disabled the chat
     pub issued_by: ParticipantId,
+}
+
+impl From<ChatDisabled> for ChatEvent {
+    fn from(value: ChatDisabled) -> Self {
+        Self::ChatDisabled(value)
+    }
 }
 
 /// A message was sent
@@ -69,12 +81,24 @@ pub struct MessageSent {
     pub scope: Scope,
 }
 
+impl From<MessageSent> for ChatEvent {
+    fn from(value: MessageSent) -> Self {
+        Self::MessageSent(value)
+    }
+}
+
 /// The chat history was cleared
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct HistoryCleared {
     /// ID of the participant that cleared chat history
     pub issued_by: ParticipantId,
+}
+
+impl From<HistoryCleared> for ChatEvent {
+    fn from(value: HistoryCleared) -> Self {
+        Self::HistoryCleared(value)
+    }
 }
 
 /// Errors from the `chat` module namespace
@@ -90,6 +114,12 @@ pub enum Error {
 
     /// Request user has insufficient permissions
     InsufficientPermissions,
+}
+
+impl From<Error> for ChatEvent {
+    fn from(value: Error) -> Self {
+        Self::Error(value)
+    }
 }
 
 #[cfg(test)]
