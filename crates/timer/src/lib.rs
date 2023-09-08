@@ -12,8 +12,7 @@ use signaling_core::{
 use storage::ready_status::ReadyStatus;
 use tokio::time::sleep;
 use types::signaling::timer::command::Message;
-use types::signaling::timer::event;
-use types::signaling::timer::event::StopKind;
+use types::signaling::timer::event::{self, Error, StopKind, UpdatedReadyStatus};
 use types::signaling::timer::status::TimerStatus;
 use types::signaling::timer::TimerConfig;
 use types::signaling::timer::{command, Kind, TimerId};
@@ -193,7 +192,7 @@ impl Timer {
         match msg {
             Message::Start(start) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(event::Message::Error(event::Error::InsufficientPermissions));
+                    ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
                 }
 
@@ -207,7 +206,7 @@ impl Timer {
                         let duration = match duration.try_into() {
                             Ok(duration) => duration,
                             Err(_) => {
-                                ctx.ws_send(event::Message::Error(event::Error::InvalidDuration));
+                                ctx.ws_send(Error::InvalidDuration);
 
                                 return Ok(());
                             }
@@ -219,7 +218,7 @@ impl Timer {
                             },
                             None => {
                                 log::error!("DateTime overflow in timer module");
-                                ctx.ws_send(event::Message::Error(event::Error::InvalidDuration));
+                                ctx.ws_send(Error::InvalidDuration);
 
                                 return Ok(());
                             }
@@ -241,7 +240,7 @@ impl Timer {
                 if !storage::timer::set_if_not_exists(ctx.redis_conn(), self.room_id, &timer)
                     .await?
                 {
-                    ctx.ws_send(event::Message::Error(event::Error::TimerAlreadyRunning));
+                    ctx.ws_send(Error::TimerAlreadyRunning);
                     return Ok(());
                 }
 
@@ -263,7 +262,7 @@ impl Timer {
             }
             Message::Stop(stop) => {
                 if ctx.role() != Role::Moderator {
-                    ctx.ws_send(event::Message::Error(event::Error::InsufficientPermissions));
+                    ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
                 }
 
@@ -334,14 +333,14 @@ impl Timer {
                     ));
                 }
 
-                ctx.ws_send(event::Message::Started(started));
+                ctx.ws_send(started);
             }
             exchange::Event::Stop(stopped) => {
                 // remove the participants ready status when receiving 'stopped'
                 storage::ready_status::delete(ctx.redis_conn(), self.room_id, self.participant_id)
                     .await?;
 
-                ctx.ws_send(event::Message::Stopped(stopped));
+                ctx.ws_send(stopped);
             }
             exchange::Event::UpdateReadyStatus(update_ready_status) => {
                 if let Some(ready_status) = storage::ready_status::get(
@@ -351,13 +350,11 @@ impl Timer {
                 )
                 .await?
                 {
-                    ctx.ws_send(event::Message::UpdatedReadyStatus(
-                        event::UpdatedReadyStatus {
-                            timer_id: update_ready_status.timer_id,
-                            participant_id: update_ready_status.participant_id,
-                            status: ready_status.ready_status,
-                        },
-                    ))
+                    ctx.ws_send(UpdatedReadyStatus {
+                        timer_id: update_ready_status.timer_id,
+                        participant_id: update_ready_status.participant_id,
+                        status: ready_status.ready_status,
+                    })
                 }
             }
         }
