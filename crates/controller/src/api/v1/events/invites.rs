@@ -662,6 +662,10 @@ pub async fn delete_invite_to_event(
         format!("/rooms/{room_id}"),
         format!("/rooms/{room_id}/invites"),
         format!("/rooms/{room_id}/start"),
+        format!("/rooms/{room_id}/tariff"),
+        format!("/rooms/{room_id}/event"),
+        format!("/rooms/{room_id}/assets"),
+        format!("/rooms/{room_id}/assets/*"),
     ];
 
     authz
