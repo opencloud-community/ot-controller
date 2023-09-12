@@ -129,6 +129,25 @@ impl EventEmailInvite {
     }
 
     #[tracing::instrument(err, skip_all)]
+    pub async fn delete(
+        conn: &mut DbConnection,
+        event_id: &EventId,
+        email: &String,
+    ) -> Result<EventEmailInvite> {
+        let query = diesel::delete(event_email_invites::table)
+            .filter(
+                event_email_invites::event_id
+                    .eq(event_id)
+                    .and(event_email_invites::email.eq(email)),
+            )
+            .returning(event_email_invites::all_columns);
+
+        let invite = query.get_result(conn).await?;
+
+        Ok(invite)
+    }
+
+    #[tracing::instrument(err, skip_all)]
     pub async fn get_for_event_paginated(
         conn: &mut DbConnection,
         event_id: EventId,
