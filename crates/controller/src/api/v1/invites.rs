@@ -5,62 +5,25 @@
 //! Contains invite related REST endpoints.
 use super::response::{ApiError, NoContent};
 use super::DefaultApiResult;
-use crate::api::v1::rooms::RoomsPoliciesBuilderExt;
-use crate::api::v1::{ApiResponse, PagePaginationQuery};
+use crate::api::v1::{rooms::RoomsPoliciesBuilderExt, ApiResponse, PagePaginationQuery};
 use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json, Path, Query, ReqData};
 use actix_web::{delete, get, post, put};
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use database::Db;
 use db_storage::invites::{Invite, NewInvite, UpdateInvite};
 use db_storage::rooms::Room;
 use db_storage::users::User;
 use kustos::prelude::PoliciesBuilder;
 use kustos::Authz;
-use serde::{Deserialize, Serialize};
-use types::api::v1::users::PublicUserProfile;
-use types::core::{InviteCodeId, RoomId};
+use types::{
+    api::v1::invites::{
+        CodeVerified, InviteResource, PostInviteBody, PutInviteBody, RoomIdAndInviteCode,
+        VerifyBody,
+    },
+    core::RoomId,
+};
 use validator::Validate;
-
-/// Public invite details
-///
-/// Contains general public information about a room.
-#[derive(Debug, Serialize)]
-pub struct InviteResource {
-    pub invite_code: InviteCodeId,
-    pub created: DateTime<Utc>,
-    pub created_by: PublicUserProfile,
-    pub updated: DateTime<Utc>,
-    pub updated_by: PublicUserProfile,
-    pub room_id: RoomId,
-    pub active: bool,
-    pub expiration: Option<DateTime<Utc>>,
-}
-
-impl InviteResource {
-    fn from_with_user(
-        val: Invite,
-        created_by: PublicUserProfile,
-        updated_by: PublicUserProfile,
-    ) -> Self {
-        InviteResource {
-            invite_code: val.id,
-            created: val.created_at,
-            created_by,
-            updated: val.updated_at,
-            updated_by,
-            room_id: val.room,
-            active: val.active,
-            expiration: val.expiration,
-        }
-    }
-}
-
-/// Body for *POST /rooms/{room_id}/invites*
-#[derive(Debug, Deserialize)]
-pub struct PostInviteBody {
-    pub expiration: Option<DateTime<Utc>>,
-}
 
 /// API Endpoint *POST /rooms/{room_id}/invites*
 ///
@@ -102,7 +65,7 @@ pub async fn add_invite(
     let created_by = current_user.to_public_user_profile(&settings);
     let updated_by = current_user.to_public_user_profile(&settings);
 
-    let invite = InviteResource::from_with_user(invite, created_by, updated_by);
+    let invite = Invite::into_invite_resource(invite, created_by, updated_by);
 
     Ok(ApiResponse::new(invite))
 }
@@ -134,17 +97,11 @@ pub async fn get_invites(
             let created_by = created_by.to_public_user_profile(&settings);
             let updated_by = updated_by.to_public_user_profile(&settings);
 
-            InviteResource::from_with_user(db_invite, created_by, updated_by)
+            Invite::into_invite_resource(db_invite, created_by, updated_by)
         })
         .collect::<Vec<InviteResource>>();
 
     Ok(ApiResponse::new(invites).with_page_pagination(per_page, page, total_invites))
-}
-
-#[derive(Debug, Deserialize)]
-pub struct RoomIdAndInviteCode {
-    room_id: RoomId,
-    invite_code: InviteCodeId,
 }
 
 /// API Endpoint *GET /rooms/{room_id}/invites/{invite_code}*
@@ -175,15 +132,9 @@ pub async fn get_invite(
     let created_by = created_by.to_public_user_profile(&settings);
     let updated_by = updated_by.to_public_user_profile(&settings);
 
-    Ok(ApiResponse::new(InviteResource::from_with_user(
+    Ok(ApiResponse::new(Invite::into_invite_resource(
         invite, created_by, updated_by,
     )))
-}
-
-/// Body for *PUT /rooms/{room_id}/invites/{invite_code}*
-#[derive(Debug, Deserialize)]
-pub struct PutInviteBody {
-    pub expiration: Option<DateTime<Utc>>,
 }
 
 /// API Endpoint *PUT /rooms/{room_id}/invites/{invite_code}*
@@ -230,7 +181,7 @@ pub async fn update_invite(
     let created_by = created_by.to_public_user_profile(&settings);
     let updated_by = current_user.to_public_user_profile(&settings);
 
-    Ok(ApiResponse::new(InviteResource::from_with_user(
+    Ok(ApiResponse::new(Invite::into_invite_resource(
         invite, created_by, updated_by,
     )))
 }
@@ -263,17 +214,6 @@ pub async fn delete_invite(
     changeset.apply(&mut conn, room_id, invite_code).await?;
 
     Ok(NoContent)
-}
-
-#[derive(Debug, Validate, Deserialize)]
-pub struct VerifyBody {
-    invite_code: InviteCodeId,
-}
-
-#[derive(Debug, Serialize)]
-pub struct CodeVerified {
-    room_id: RoomId,
-    password_required: bool,
 }
 
 /// API Endpoint *POST /invite/verify*

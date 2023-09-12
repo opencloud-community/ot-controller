@@ -11,7 +11,10 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use std::collections::{HashMap, HashSet};
-use types::core::{InviteCodeId, RoomId, UserId};
+use types::{
+    api::v1::{invites::InviteResource, users::PublicUserProfile},
+    core::{InviteCodeId, RoomId, UserId},
+};
 
 types::diesel_newtype! {
     #[derive(Copy)] InviteCodeSerialId(i64) => diesel::sql_types::BigInt
@@ -239,6 +242,23 @@ impl Invite {
                 .collect::<Vec<_>>(),
             total,
         ))
+    }
+
+    pub fn into_invite_resource(
+        invite: Invite,
+        created_by: PublicUserProfile,
+        updated_by: PublicUserProfile,
+    ) -> InviteResource {
+        InviteResource {
+            invite_code: invite.id,
+            created: invite.created_at,
+            created_by,
+            updated: invite.updated_at,
+            updated_by,
+            room_id: invite.room,
+            active: invite.active,
+            expiration: invite.expiration,
+        }
     }
 }
 
