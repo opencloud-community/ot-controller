@@ -37,6 +37,12 @@ pub struct Started {
     pub config: TimerConfig,
 }
 
+impl From<Started> for Message {
+    fn from(value: Started) -> Self {
+        Self::Started(value)
+    }
+}
+
 /// The current timer has been stopped
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -49,6 +55,12 @@ pub struct Stopped {
     /// An optional reason to all participants. Set by moderator
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub reason: Option<String>,
+}
+
+impl From<Stopped> for Message {
+    fn from(value: Stopped) -> Self {
+        Self::Stopped(value)
+    }
 }
 
 /// The stop reason
@@ -77,6 +89,12 @@ pub struct UpdatedReadyStatus {
     pub status: bool,
 }
 
+impl From<UpdatedReadyStatus> for Message {
+    fn from(value: UpdatedReadyStatus) -> Self {
+        Self::UpdatedReadyStatus(value)
+    }
+}
+
 /// Errors from the `timer` module namespace
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(
@@ -91,6 +109,12 @@ pub enum Error {
     InsufficientPermissions,
     /// A timer is already running
     TimerAlreadyRunning,
+}
+
+impl From<Error> for Message {
+    fn from(value: Error) -> Self {
+        Self::Error(value)
+    }
 }
 
 #[cfg(test)]

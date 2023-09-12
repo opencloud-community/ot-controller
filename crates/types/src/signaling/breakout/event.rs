@@ -50,6 +50,12 @@ pub struct Started {
     pub assignment: Option<BreakoutRoomId>,
 }
 
+impl From<Started> for BreakoutEvent {
+    fn from(value: Started) -> Self {
+        Self::Started(value)
+    }
+}
+
 /// Error from the `breakout` module namespace
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
@@ -62,6 +68,12 @@ pub enum Error {
     Inactive,
     /// Insufficient permissions to perform a command
     InsufficientPermissions,
+}
+
+impl From<Error> for BreakoutEvent {
+    fn from(value: Error) -> Self {
+        Self::Error(value)
+    }
 }
 
 #[cfg(test)]

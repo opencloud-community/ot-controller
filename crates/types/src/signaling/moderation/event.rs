@@ -90,6 +90,12 @@ pub enum Error {
     CannotBanGuest,
 }
 
+impl From<Error> for ModerationEvent {
+    fn from(value: Error) -> Self {
+        Self::Error(value)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

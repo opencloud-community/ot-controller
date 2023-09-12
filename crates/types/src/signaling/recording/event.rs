@@ -35,12 +35,24 @@ pub struct Started {
     pub recording_id: RecordingId,
 }
 
+impl From<Started> for RecordingEvent {
+    fn from(value: Started) -> Self {
+        Self::Started(value)
+    }
+}
+
 /// Data for the `stopped` recording event
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Stopped {
     /// The id of the recording that was stopped
     pub recording_id: RecordingId,
+}
+
+impl From<Stopped> for RecordingEvent {
+    fn from(value: Stopped) -> Self {
+        Self::Stopped(value)
+    }
 }
 
 /// Error from the `recording` module namespace
@@ -59,4 +71,10 @@ pub enum Error {
 
     /// Invalid recording id used
     InvalidRecordingId,
+}
+
+impl From<Error> for RecordingEvent {
+    fn from(value: Error) -> Self {
+        Self::Error(value)
+    }
 }

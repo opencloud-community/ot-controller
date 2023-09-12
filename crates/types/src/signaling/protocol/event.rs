@@ -53,6 +53,12 @@ pub struct PdfAsset {
     pub asset_id: AssetId,
 }
 
+impl From<PdfAsset> for ProtocolEvent {
+    fn from(value: PdfAsset) -> Self {
+        Self::PdfAsset(value)
+    }
+}
+
 /// Errors from the `protocol` module namespace
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
@@ -71,6 +77,12 @@ pub enum Error {
     FailedInitialization,
     /// The etherpad is not yet initailized
     NotInitialized,
+}
+
+impl From<Error> for ProtocolEvent {
+    fn from(value: Error) -> Self {
+        Self::Error(value)
+    }
 }
 
 #[cfg(test)]

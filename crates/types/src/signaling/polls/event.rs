@@ -53,6 +53,12 @@ pub struct Started {
     pub duration: Duration,
 }
 
+impl From<Started> for PollsEvent {
+    fn from(value: Started) -> Self {
+        Self::Started(value)
+    }
+}
+
 /// Errors from the `polls` module namespace
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
@@ -84,6 +90,12 @@ pub enum Error {
 
     /// Attempted to start a new poll while an existing one is still running
     StillRunning,
+}
+
+impl From<Error> for PollsEvent {
+    fn from(value: Error) -> Self {
+        Self::Error(value)
+    }
 }
 
 #[cfg(test)]
