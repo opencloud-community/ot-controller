@@ -5,10 +5,12 @@
 use anyhow::{Context, Result};
 use clap::{ArgAction, Parser, Subcommand};
 use controller_settings::Settings;
+use signaling_core::RegisterModules;
 
 mod acl;
 mod fix_acl;
 mod jobs;
+mod modules;
 mod reload;
 mod tariffs;
 mod tenants;
@@ -61,6 +63,10 @@ enum SubCommand {
     /// Manage and execute maintenance jobs
     #[clap(subcommand)]
     Jobs(jobs::Command),
+
+    /// Manage modules
+    #[clap(subcommand)]
+    Modules(modules::Command),
 }
 
 #[derive(Subcommand, Debug, Clone)]
@@ -93,7 +99,7 @@ impl Args {
 /// Parses the CLI-Arguments into [`Args`]
 ///
 /// Also runs (optional) cli commands if necessary
-pub async fn parse_args() -> Result<Args> {
+pub async fn parse_args<M: RegisterModules>() -> Result<Args> {
     let args = Args::parse();
 
     if args.version {
@@ -126,6 +132,9 @@ pub async fn parse_args() -> Result<Args> {
             }
             SubCommand::Jobs(command) => {
                 jobs::handle_command(settings, command).await?;
+            }
+            SubCommand::Modules(command) => {
+                modules::handle_command::<M>(command).await?;
             }
         }
     }
