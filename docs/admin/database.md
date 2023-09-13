@@ -5,15 +5,43 @@ SPDX-License-Identifier: EUPL-1.2
 
 # Database
 
-<!-- TODO -->
-:construction: This section has not been finished yet.
+The OpenTalk Controller uses PostgreSQL database.
+
+## Configuration
+
+The section in the [configuration file](configuration.md) is called `database`.
+
+| Field             | Type     | Required | Default value | Description                                                                    |
+| ----------------- | -------- | -------- | ------------- | ------------------------------------------------------------------------------ |
+| `url`             | `string` | yes      | -             | Database URL connection, with specified username, password, and database name  |                                                                            |
+| `max_connections` | `uint`   | no       | 100           | Maximum number of connection allowed to the database server                    |
+
+### Examples
+
+#### Default with URL
+
+```toml
+[database]
+url = "postgres://postgres:password123@localhost:5432/opentalk"
+```
+
+#### With Maximum Connections
+
+```toml
+[database]
+url = "postgres://postgres:password123@localhost:5432/opentalk"
+max_connections = 50
+```
 
 ## `opentalk-controller migrate-db` subcommand
 
-<!-- TODO -->
-:construction: This section has not been finished yet.
-
 This subcommand is used to migrate the database to the currently installed controller version.
+
+The following two examples show how to manually migrate the database:
+
+```shell
+opentalk-controller migrate-db
+```
 
 Help output looks like this:
 

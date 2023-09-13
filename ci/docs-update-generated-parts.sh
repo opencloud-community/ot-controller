@@ -27,6 +27,9 @@ $OPENTALK_CONTROLLER_CMD acl --help > "$CLI_DIR"/"$CMDNAME"-acl-help
 $OPENTALK_CONTROLLER_CMD migrate-db --help > "$CLI_DIR"/"$CMDNAME"-migrate-db-help
 $OPENTALK_CONTROLLER_CMD tenants --help > "$CLI_DIR"/"$CMDNAME"-tenants-help
 $OPENTALK_CONTROLLER_CMD tariffs --help > "$CLI_DIR"/"$CMDNAME"-tariffs-help
+$OPENTALK_CONTROLLER_CMD tariffs create --help > "$CLI_DIR"/"$CMDNAME"-tariffs-create
+$OPENTALK_CONTROLLER_CMD tariffs delete --help > "$CLI_DIR"/"$CMDNAME"-tariffs-delete
+$OPENTALK_CONTROLLER_CMD tariffs edit --help > "$CLI_DIR"/"$CMDNAME"-tariffs-edit
 $OPENTALK_CONTROLLER_CMD jobs --help > "$CLI_DIR"/"$CMDNAME"-jobs-help
 $OPENTALK_CONTROLLER_CMD jobs execute --help > "$CLI_DIR"/"$CMDNAME"-jobs-execute-help
 $OPENTALK_CONTROLLER_CMD \
