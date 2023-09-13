@@ -13,18 +13,18 @@ use std::{fmt::Debug, sync::Arc};
 use crate::{DestroyContext, Event, InitContext, ModuleContext, RedisConnection};
 
 #[derive(Clone)]
-pub struct SignalingModuleInitData<'a> {
-    pub startup_settings: &'a Arc<Settings>,
-    pub shared_settings: &'a SharedSettings,
-    pub rabbitmq_pool: &'a Arc<RabbitMqPool>,
-    pub redis: &'a RedisConnection,
-    pub shutdown: &'a broadcast::Sender<()>,
-    pub reload: &'a broadcast::Sender<()>,
+pub struct SignalingModuleInitData {
+    pub startup_settings: Arc<Settings>,
+    pub shared_settings: SharedSettings,
+    pub rabbitmq_pool: Arc<RabbitMqPool>,
+    pub redis: RedisConnection,
+    pub shutdown: broadcast::Sender<()>,
+    pub reload: broadcast::Sender<()>,
 }
 
 /// Extension to a the signaling websocket
 #[async_trait::async_trait(?Send)]
-pub trait SignalingModule: Sized + 'static {
+pub trait SignalingModule: Send + Sized + 'static {
     /// Defines the websocket message namespace
     ///
     /// Must be unique between all registered modules.
@@ -83,5 +83,5 @@ pub trait SignalingModule: Sized + 'static {
     async fn on_destroy(self, ctx: DestroyContext<'_>);
 
     /// Build the parameters for instantiating the signaling module
-    async fn build_params(init: &SignalingModuleInitData) -> Result<Option<Self::Params>>;
+    fn build_params(init: SignalingModuleInitData) -> Option<Self::Params>;
 }

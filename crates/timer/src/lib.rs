@@ -177,8 +177,8 @@ impl SignalingModule for Timer {
 
     async fn on_destroy(self, _ctx: DestroyContext<'_>) {}
 
-    async fn build_params(_init: &SignalingModuleInitData) -> Result<Option<Self::Params>> {
-        Ok(Some(()))
+    fn build_params(_init: SignalingModuleInitData) -> Option<Self::Params> {
+        Some(())
     }
 }
 

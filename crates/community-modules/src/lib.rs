@@ -2,27 +2,29 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::Result;
 use chat::Chat;
-use controller::Controller;
-use core::Core;
 use integration::Integration;
 use janus_media::Media;
+use opentalk_core::Core;
 use polls::Polls;
 use protocol::Protocol;
 use shared_folder::SharedFolder;
+use signaling_core::{ModulesRegistrar, RegisterModules};
 use timer::Timer;
 use whiteboard::Whiteboard;
 
-pub async fn register(controller: &mut Controller) -> Result<()> {
-    controller.register::<Core>().await?;
-    controller.register::<Chat>().await?;
-    controller.register::<Integration>().await?;
-    controller.register::<Media>().await?;
-    controller.register::<Polls>().await?;
-    controller.register::<Protocol>().await?;
-    controller.register::<SharedFolder>().await?;
-    controller.register::<Timer>().await?;
-    controller.register::<Whiteboard>().await?;
-    Ok(())
+pub struct CommunityModules;
+
+impl RegisterModules for CommunityModules {
+    fn register(registrar: &mut impl ModulesRegistrar) {
+        registrar.register::<Core>();
+        registrar.register::<Chat>();
+        registrar.register::<Integration>();
+        registrar.register::<Media>();
+        registrar.register::<Polls>();
+        registrar.register::<Protocol>();
+        registrar.register::<SharedFolder>();
+        registrar.register::<Timer>();
+        registrar.register::<Whiteboard>();
+    }
 }

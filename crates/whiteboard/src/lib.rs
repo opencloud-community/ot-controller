@@ -223,16 +223,16 @@ impl SignalingModule for Whiteboard {
         }
     }
 
-    async fn build_params(init: &SignalingModuleInitData) -> Result<Option<Self::Params>> {
+    fn build_params(init: SignalingModuleInitData) -> Option<Self::Params> {
         let spacedeck = init.shared_settings.load_full().spacedeck.clone();
 
         match spacedeck {
-            Some(spacedeck) => Ok(Some(spacedeck)),
+            Some(spacedeck) => Some(spacedeck),
             None => {
                 log::warn!(
                     "Skipping the Whiteboard module as no spacedeck is specified in the config"
                 );
-                Ok(None)
+                None
             }
         }
     }
