@@ -67,10 +67,6 @@ use uuid::Uuid;
 
 mod call_in;
 
-// The expiry in seconds for the `skip_waiting_room` key in Redis
-const SKIP_WAITING_ROOM_KEY_EXPIRY: usize = 120;
-const SKIP_WAITING_ROOM_KEY_REFRESH_INTERVAL: u64 = 60;
-
 /// Builder to the runner type.
 ///
 /// Passed into [`ModuleBuilder::build`](super::modules::ModuleBuilder::build) function to create an [`InitContext`](super::InitContext).
@@ -612,16 +608,12 @@ impl Runner {
     pub async fn run(mut self) {
         let mut manual_close_ws = false;
 
-        // Set default `skip_waiting_room` key value with the default expiration time in seconds
-        _ = storage::set_skip_waiting_room_with_expiry_nx(
-            &mut self.redis_conn,
-            self.id,
-            false,
-            SKIP_WAITING_ROOM_KEY_EXPIRY,
-        )
-        .await;
-        let mut skip_waiting_room_refresh_interval =
-            interval(Duration::from_secs(SKIP_WAITING_ROOM_KEY_REFRESH_INTERVAL));
+        // Set default `skip_waiting_room` key value with the default expiration time
+        _ = storage::set_skip_waiting_room_with_expiry_nx(&mut self.redis_conn, self.id, false)
+            .await;
+        let mut skip_waiting_room_refresh_interval = interval(Duration::from_secs(
+            signaling_core::control::storage::SKIP_WAITING_ROOM_KEY_REFRESH_INTERVAL,
+        ));
 
         while matches!(self.ws.state, State::Open) {
             if self.exit && matches!(self.ws.state, State::Open) {
@@ -668,7 +660,6 @@ impl Runner {
                     _ = storage::reset_skip_waiting_room_expiry(
                         &mut self.redis_conn,
                         self.id,
-                        SKIP_WAITING_ROOM_KEY_EXPIRY,
                     )
                     .await;
                 }
@@ -1561,13 +1552,11 @@ impl Runner {
                     if !*accepted {
                         *accepted = true;
 
-                        // Allow the participant to skip future waiting room once they are accepted
-                        // Set the key with the given expiration time in seconds
+                        // Allow the participant to skip the waiting room on next rejoin
                         storage::set_skip_waiting_room_with_expiry(
                             &mut self.redis_conn,
                             self.id,
                             true,
-                            SKIP_WAITING_ROOM_KEY_EXPIRY,
                         )
                         .await?;
 

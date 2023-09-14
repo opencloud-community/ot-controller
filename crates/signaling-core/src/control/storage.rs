@@ -18,6 +18,10 @@ use types::{
     signaling::Role,
 };
 
+// The expiry in seconds for the `skip_waiting_room` key in Redis
+const SKIP_WAITING_ROOM_KEY_EXPIRY: usize = 120;
+pub const SKIP_WAITING_ROOM_KEY_REFRESH_INTERVAL: u64 = 60;
+
 /// Describes a set of participants inside a room.
 /// This MUST always be locked before accessing it
 #[derive(ToRedisArgs)]
@@ -411,16 +415,19 @@ pub struct SkipWaitingRoom {
     participant: ParticipantId,
 }
 
-/// Set the `skip_waiting_room` key for participant with an expiry in seconds.
+/// Set the `skip_waiting_room` key for participant with an expiry.
 #[tracing::instrument(level = "debug", skip(redis_conn))]
 pub async fn set_skip_waiting_room_with_expiry(
     redis_conn: &mut RedisConnection,
     participant: ParticipantId,
     value: bool,
-    expiration: usize,
 ) -> Result<()> {
     redis_conn
-        .set_ex(SkipWaitingRoom { participant }, value, expiration)
+        .set_ex(
+            SkipWaitingRoom { participant },
+            value,
+            SKIP_WAITING_ROOM_KEY_EXPIRY,
+        )
         .await
         .with_context(|| {
             format!(
@@ -432,19 +439,20 @@ pub async fn set_skip_waiting_room_with_expiry(
     Ok(())
 }
 
-/// Set the `skip_waiting_room` key for participant with an expiry in seconds
-/// if the key does not exist.
+/// Set the `skip_waiting_room` key for participant with an expiry if the key does not exist.
 #[tracing::instrument(level = "debug", skip(redis_conn))]
 pub async fn set_skip_waiting_room_with_expiry_nx(
     redis_conn: &mut RedisConnection,
     participant: ParticipantId,
     value: bool,
-    expiry: usize,
 ) -> Result<()> {
     redis::pipe()
         .atomic()
         .set_nx(SkipWaitingRoom { participant }, value)
-        .expire(SkipWaitingRoom { participant }, expiry)
+        .expire(
+            SkipWaitingRoom { participant },
+            SKIP_WAITING_ROOM_KEY_EXPIRY,
+        )
         .query_async(redis_conn)
         .await
         .with_context(|| {
@@ -457,15 +465,17 @@ pub async fn set_skip_waiting_room_with_expiry_nx(
     Ok(())
 }
 
-/// Extend the `skip_waiting_room` key for participant with an expiry in seconds.
+/// Extend the `skip_waiting_room` key for participant with an expiry.
 #[tracing::instrument(level = "debug", skip(redis_conn))]
 pub async fn reset_skip_waiting_room_expiry(
     redis_conn: &mut RedisConnection,
     participant: ParticipantId,
-    expiry: usize,
 ) -> Result<()> {
     redis_conn
-        .expire(SkipWaitingRoom { participant }, expiry)
+        .expire(
+            SkipWaitingRoom { participant },
+            SKIP_WAITING_ROOM_KEY_EXPIRY,
+        )
         .await
         .with_context(|| {
             format!(
