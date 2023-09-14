@@ -24,7 +24,6 @@ pub use response::{ApiResponse, DefaultApiResult};
 
 pub mod assets;
 pub mod auth;
-mod cursor;
 pub mod events;
 pub mod invites;
 pub mod middleware;

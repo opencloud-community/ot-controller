@@ -3711,6 +3711,8 @@ version = "0.0.0-dev"
 dependencies = [
  "actix-http",
  "actix-web-httpauth",
+ "base64 0.21.2",
+ "bincode",
  "bytes",
  "chrono",
  "chrono-tz",

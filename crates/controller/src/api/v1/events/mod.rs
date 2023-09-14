@@ -4,7 +4,6 @@
 
 use std::sync::Arc;
 
-use super::cursor::Cursor;
 use super::request::default_pagination_per_page;
 use super::response::error::ValidationErrorEntry;
 use super::response::{ApiError, NoContent, CODE_VALUE_REQUIRED};
@@ -43,6 +42,7 @@ use kustos::{Authz, Resource, ResourceId};
 use rrule::{Frequency, RRuleSet};
 use serde::de::Visitor;
 use serde::{Deserialize, Serialize};
+use types::api::v1::Cursor;
 use types::{
     api::v1::users::{PublicUserProfile, UnregisteredUser},
     common::{

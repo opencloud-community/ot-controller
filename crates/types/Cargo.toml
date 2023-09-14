@@ -12,6 +12,8 @@ publish = false
 [dependencies]
 actix-http = { workspace = true, optional = true }
 actix-web-httpauth = { workspace = true, optional = true }
+base64 = { workspace = true, optional = true }
+bincode = { workspace = true, optional = true }
 bytes = { workspace = true, optional = true }
 chrono.workspace = true
 chrono-tz.workspace = true
@@ -41,6 +43,8 @@ kustos = ["dep:kustos"]
 rand = ["dep:rand", "uuid/v4"]
 redis = ["serde", "dep:redis", "dep:redis-args"]
 serde = [
+  "dep:base64",
+  "dep:bincode",
   "dep:serde",
   "dep:validator",
   "chrono/serde",
