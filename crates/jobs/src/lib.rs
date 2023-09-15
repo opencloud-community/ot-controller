@@ -27,6 +27,7 @@
 pub mod jobs;
 
 mod error;
+mod events;
 
 use std::{
     sync::Arc,

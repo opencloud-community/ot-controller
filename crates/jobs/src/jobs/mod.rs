@@ -4,8 +4,10 @@
 
 //! # Jobs that can be run in the OpenTalk job execution system
 
+mod adhoc_event_cleanup;
 mod event_cleanup;
 mod self_check;
 
+pub use adhoc_event_cleanup::AdhocEventCleanup;
 pub use event_cleanup::EventCleanup;
 pub use self_check::SelfCheck;

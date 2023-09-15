@@ -60,7 +60,7 @@ The default parameters for the job look like this:
 This job is intended to delete non-recurring events that have ended a certain
 duration ago. Its use case is to ensure GDPR compliance.
 
-In addition, all data associated with the event will be  deleted, such as:
+In addition, all data associated with the event will be deleted, such as:
 
 - assets stored in the [storage system](minio.md)
 - folders including the share links from a [shared folder system](shared_folder.md)
@@ -90,6 +90,42 @@ The default parameters for the job look like this:
 ```
 
 <!-- end:fromfile:json:jobs/parameters-event-cleanup.json -->
+
+### Job: `adhoc-event-cleanup`
+
+This job is intended to delete adhoc events that were created a certain
+duration ago. Its use case is to ensure GDPR compliance.
+
+In addition, all data associated with the event will be deleted, such as:
+
+- assets stored in the [storage system](minio.md)
+- folders including the share links from a [shared folder system](shared_folder.md)
+- all database content belonging to the event (e.g. invites)
+- the room which was associated to the event
+
+#### Parameters
+
+The job takes a JSON object with the following fields as a parameter. All
+fields are optional, if any of them is not included in the parameter object, the
+default value will be used.
+
+| Field                                  | Type   | Default value | Description                                                                                                                                                    |
+| -------------------------------------- | ------ | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fail_on_shared_folder_deletion_error` | `bool` | `false`       | When `true`, the job will consider failure during deletion of the shared folder an error and abort, otherwise it is considered a warning and the job continues |
+| `seconds_since_creation`               | `uint` | `86400`       | The minimum number of seconds since the creation of the adhoc event                                                                                            |
+
+The default parameters for the job look like this:
+
+<!-- begin:fromfile:json:jobs/parameters-adhoc-event-cleanup.json -->
+
+```json
+{
+  "fail_on_shared_folder_deletion_error": false,
+  "seconds_since_creation": 86400
+}
+```
+
+<!-- end:fromfile:json:jobs/parameters-adhoc-event-cleanup.json -->
 
 ## `opentalk-controller jobs` subcommand
 
@@ -136,8 +172,9 @@ Arguments:
           The type of the job to be executed
 
           Possible values:
-          - self-check:    A simple self-check of the job execution system
-          - event-cleanup: A job for cleaning up events that ended at minimum a defined duration ago
+          - self-check:          A simple self-check of the job execution system
+          - event-cleanup:       A job for cleaning up events that ended at minimum a defined duration ago
+          - adhoc-event-cleanup: A job to cleanup adhoc events a certain duration after they were created
 
 Options:
       --parameters <PARAMETERS>
@@ -181,8 +218,9 @@ Arguments:
           The parameters are shown in plain pretty-printed JSON
 
           Possible values:
-          - self-check:    A simple self-check of the job execution system
-          - event-cleanup: A job for cleaning up events that ended at minimum a defined duration ago
+          - self-check:          A simple self-check of the job execution system
+          - event-cleanup:       A job for cleaning up events that ended at minimum a defined duration ago
+          - adhoc-event-cleanup: A job to cleanup adhoc events a certain duration after they were created
 
 Options:
   -h, --help

@@ -108,6 +108,7 @@ async fn execute_job(
     match job_type {
         JobType::SelfCheck => data.execute::<jobs::jobs::SelfCheck>().await,
         JobType::EventCleanup => data.execute::<jobs::jobs::EventCleanup>().await,
+        JobType::AdhocEventCleanup => data.execute::<jobs::jobs::AdhocEventCleanup>().await,
     }?;
 
     Ok(())
@@ -117,6 +118,9 @@ fn show_default_parameters(job_type: JobType) -> Result<()> {
     match job_type {
         JobType::SelfCheck => show_job_type_default_parameters::<jobs::jobs::SelfCheck>(),
         JobType::EventCleanup => show_job_type_default_parameters::<jobs::jobs::EventCleanup>(),
+        JobType::AdhocEventCleanup => {
+            show_job_type_default_parameters::<jobs::jobs::AdhocEventCleanup>()
+        }
     }
 }
 

@@ -43,6 +43,7 @@ $OPENTALK_CONTROLLER_CMD jobs default-parameters --help > "$CLI_DIR"/"$CMDNAME"-
 
 $OPENTALK_CONTROLLER_CMD --config extra/example.toml jobs default-parameters self-check > "$JOBS_DIR"/parameters-self-check.json
 $OPENTALK_CONTROLLER_CMD --config extra/example.toml jobs default-parameters event-cleanup > "$JOBS_DIR"/parameters-event-cleanup.json
+$OPENTALK_CONTROLLER_CMD --config extra/example.toml jobs default-parameters adhoc-event-cleanup > "$JOBS_DIR"/parameters-adhoc-event-cleanup.json
 
 # Remove trailing spaces to prevent markdownlint from triggering *MD009 - Trailing spaces*
 # https://github.com/markdownlint/markdownlint/blob/main/docs/RULES.md#md009---trailing-spaces
