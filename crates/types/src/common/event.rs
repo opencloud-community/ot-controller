@@ -17,4 +17,6 @@ pub struct EventInfo {
     pub id: EventId,
     /// The title of the event
     pub title: String,
+    /// True if the event was created ad-hoc
+    pub is_adhoc: bool,
 }

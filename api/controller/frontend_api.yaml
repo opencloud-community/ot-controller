@@ -2974,6 +2974,7 @@ components:
       required:
         - id
         - title
+        - is_adhoc
       properties:
         id:
           type: string
@@ -2982,3 +2983,6 @@ components:
         title:
           type: string
           description: Title of the event
+        is_adhoc:
+          type: boolean
+          description: True if the event was created ad-hoc
