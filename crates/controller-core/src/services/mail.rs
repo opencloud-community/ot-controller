@@ -12,6 +12,7 @@ use crate::metrics::EndpointMetrics;
 use anyhow::{Context, Result};
 use lapin_pool::{RabbitMqChannel, RabbitMqPool};
 use opentalk_controller_settings::{Settings, SharedSettings};
+use opentalk_db_storage::events::{EventException, EventExceptionKind};
 use opentalk_db_storage::{events::Event, rooms::Room, sip_configs::SipConfig, users::User};
 use opentalk_mail_worker_protocol::*;
 use opentalk_types::common::{features, shared_folder::SharedFolder};
@@ -109,6 +110,41 @@ fn to_event(
         revision: event.revision,
         shared_folder,
         adhoc_retention_seconds,
+    }
+}
+
+fn to_event_exception(
+    exception: EventException,
+) -> opentalk_mail_worker_protocol::v1::EventException {
+    let exception_date = v1::Time {
+        time: exception.exception_date,
+        timezone: exception.exception_date_tz.to_string(),
+    };
+
+    let kind = match exception.kind {
+        EventExceptionKind::Modified => {
+            opentalk_mail_worker_protocol::v1::EventExceptionKind::Modified
+        }
+        EventExceptionKind::Cancelled => {
+            opentalk_mail_worker_protocol::v1::EventExceptionKind::Canceled
+        }
+    };
+
+    let starts_at: Option<v1::Time> = exception
+        .starts_at
+        .zip(exception.starts_at_tz)
+        .map(Into::into);
+
+    let ends_at: Option<v1::Time> = exception.ends_at.zip(exception.ends_at_tz).map(Into::into);
+
+    opentalk_mail_worker_protocol::v1::EventException {
+        exception_date,
+        kind,
+        title: exception.title,
+        description: exception.description,
+        is_all_day: exception.is_all_day,
+        starts_at,
+        ends_at,
     }
 }
 
@@ -265,6 +301,7 @@ impl MailService {
         &self,
         inviter: User,
         event: Event,
+        event_exception: Option<EventException>,
         room: Room,
         sip_config: Option<SipConfig>,
         invitee: MailRecipient,
@@ -285,6 +322,7 @@ impl MailService {
                 MailTask::registered_event_update(
                     inviter,
                     to_event(event, room, sip_config, settings, shared_folder),
+                    event_exception.map(to_event_exception),
                     v1::RegisteredUser {
                         email: v1::Email::new(invitee.email),
                         title: invitee.title,
@@ -303,6 +341,7 @@ impl MailService {
                     settings,
                     shared_folder.map(SharedFolder::without_write_access),
                 ),
+                event_exception.map(to_event_exception),
                 v1::UnregisteredUser {
                     email: v1::Email::new(invitee.email),
                     first_name: invitee.first_name,
@@ -318,6 +357,7 @@ impl MailService {
                     settings,
                     shared_folder.map(SharedFolder::without_write_access),
                 ),
+                event_exception.map(to_event_exception),
                 v1::ExternalUser {
                     email: v1::Email::new(invitee.email),
                 },

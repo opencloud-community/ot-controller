@@ -861,6 +861,7 @@ struct UpdateNotificationValues {
     pub tenant: Tenant,
     pub created_by: User,
     pub event: Event,
+    pub event_exception: Option<EventException>,
     pub room: Room,
     pub sip_config: Option<SipConfig>,
     pub users_to_notify: Vec<MailRecipient>,
@@ -974,6 +975,7 @@ pub async fn patch_event(
         tenant: current_tenant.clone(),
         created_by: created_by.clone(),
         event: event.clone(),
+        event_exception: None,
         room: room.clone(),
         sip_config: sip_config.clone(),
         users_to_notify,
@@ -1071,6 +1073,7 @@ async fn notify_invitees_about_update(
             .send_event_update(
                 notification_values.created_by.clone(),
                 notification_values.event.clone(),
+                notification_values.event_exception.clone(),
                 notification_values.room.clone(),
                 notification_values.sip_config.clone(),
                 invited_user,

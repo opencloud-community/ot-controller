@@ -71,52 +71,69 @@ impl MailTask {
     }
 
     /// Creates an event update MailTask for a registered invitee
-    pub fn registered_event_update<E, I, U>(inviter: I, event: E, invitee: U) -> MailTask
+    pub fn registered_event_update<E, EE, I, U>(
+        inviter: I,
+        event: E,
+        event_exception: Option<EE>,
+        invitee: U,
+    ) -> MailTask
     where
         I: Into<v1::RegisteredUser>,
         E: Into<v1::Event>,
+        EE: Into<v1::EventException>,
         U: Into<v1::RegisteredUser>,
     {
         Self::V1(v1::Message::RegisteredEventUpdate(
             v1::RegisteredEventUpdate {
                 invitee: invitee.into(),
                 event: event.into(),
+                event_exception: event_exception.map(Into::into),
                 inviter: inviter.into(),
             },
         ))
     }
 
     /// Creates an event update MailTask for an unregistered invitee
-    pub fn unregistered_event_update<E, I, U>(inviter: I, event: E, invitee: U) -> MailTask
+    pub fn unregistered_event_update<E, EE, I, U>(
+        inviter: I,
+        event: E,
+        event_exception: Option<EE>,
+        invitee: U,
+    ) -> MailTask
     where
         I: Into<v1::RegisteredUser>,
         E: Into<v1::Event>,
+        EE: Into<v1::EventException>,
         U: Into<v1::UnregisteredUser>,
     {
         Self::V1(v1::Message::UnregisteredEventUpdate(
             v1::UnregisteredEventUpdate {
                 invitee: invitee.into(),
                 event: event.into(),
+                event_exception: event_exception.map(Into::into),
                 inviter: inviter.into(),
             },
         ))
     }
 
     /// Creates an event update MailTask for an external invitee
-    pub fn external_event_update<E, I, U>(
+    pub fn external_event_update<E, EE, I, U>(
         inviter: I,
         event: E,
+        event_exception: Option<EE>,
         invitee: U,
         invite_code: String,
     ) -> MailTask
     where
         I: Into<v1::RegisteredUser>,
         E: Into<v1::Event>,
+        EE: Into<v1::EventException>,
         U: Into<v1::ExternalUser>,
     {
         Self::V1(v1::Message::ExternalEventUpdate(v1::ExternalEventUpdate {
             invitee: invitee.into(),
             event: event.into(),
+            event_exception: event_exception.map(Into::into),
             inviter: inviter.into(),
             invite_code,
         }))

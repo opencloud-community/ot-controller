@@ -3,22 +3,28 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use super::{
-    can_edit, ApiResponse, DateTimeTz, DefaultApiResult, EventInvitee, LOCAL_DT_FORMAT,
+    can_edit, get_invited_mail_recipients_for_event, notify_invitees_about_update, ApiResponse,
+    DateTimeTz, DefaultApiResult, EventInvitee, UpdateNotificationValues, LOCAL_DT_FORMAT,
     ONE_HUNDRED_YEARS_IN_DAYS,
 };
 use crate::api::v1::events::{
     enrich_invitees_from_keycloak, shared_folder_for_user, DateTimeTzFromDb, EventRoomInfoExt,
 };
 use crate::api::v1::response::{ApiError, NoContent};
+use crate::api::v1::rooms::RoomsPoliciesBuilderExt;
 use crate::api::v1::util::{GetUserProfilesBatched, UserProfilesBatch};
+use crate::services::MailService;
 use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json, Path, Query, ReqData};
 use actix_web::{get, patch, Either};
 use chrono::{DateTime, Utc};
+use kustos::prelude::PoliciesBuilder;
+use kustos::Authz;
 use opentalk_database::Db;
 use opentalk_db_storage::events::{
     Event, EventException, EventExceptionKind, NewEventException, UpdateEventException,
 };
+use opentalk_db_storage::invites::Invite;
 use opentalk_db_storage::tenants::Tenant;
 use opentalk_db_storage::users::User;
 use opentalk_keycloak_admin::KeycloakAdminClient;
@@ -265,19 +271,20 @@ pub async fn get_event_instance(
 ///
 /// Patch an instance of an recurring event. This creates oder modifies an exception for the event
 /// at the point of time of the given instance_id.
-///
 /// Returns the patched event instance
 #[patch("/events/{event_id}/instances/{instance_id}")]
 #[allow(clippy::too_many_arguments)]
 pub async fn patch_event_instance(
     settings: SharedSettingsActix,
     db: Data<Db>,
+    authz: Data<Authz>,
     kc_admin_client: Data<KeycloakAdminClient>,
     current_tenant: ReqData<Tenant>,
     current_user: ReqData<User>,
     path: Path<EventInstancePath>,
     query: Query<EventInstanceQuery>,
     patch: Json<PatchEventInstanceBody>,
+    mail_service: Data<MailService>,
 ) -> Result<Either<ApiResponse<EventInstance>, NoContent>, ApiError> {
     let patch = patch.into_inner();
 
@@ -385,11 +392,54 @@ pub async fn patch_event_instance(
         .fetch(&settings, &mut conn)
         .await?;
 
-    let room = EventRoomInfo::from_room(&settings, room, sip_config, &tariff);
+    let event_room_info =
+        EventRoomInfo::from_room(&settings, room.clone(), sip_config.clone(), &tariff);
 
     let can_edit = can_edit(&event, &current_user);
 
     let shared_folder = shared_folder_for_user(shared_folder, event.created_by, current_user.id);
+
+    if !query.suppress_email_notification {
+        let invited_users = get_invited_mail_recipients_for_event(&mut conn, event_id).await?;
+        let invite_for_room =
+            Invite::get_first_for_room(&mut conn, room.id, current_user.id).await?;
+
+        let created_by = if event.created_by == current_user.id {
+            current_user.into_inner()
+        } else {
+            User::get(&mut conn, event.created_by).await?
+        };
+
+        // Add the access policy for the invite code, just in case it has been created by
+        // the `Invite::get_first_for_room(…)` call above. That function is not able to
+        // add the policy, because it has no access to the `RoomsPoliciesBuilderExt` trait.
+        let policies = PoliciesBuilder::new()
+            // Grant invitee access
+            .grant_invite_access(invite_for_room.id)
+            .room_guest_read_access(room.id)
+            .finish();
+        authz.add_policies(policies).await?;
+
+        let notification_values = UpdateNotificationValues {
+            tenant: current_tenant.clone().into_inner(),
+            created_by,
+            event: event.clone(),
+            event_exception: Some(exception.clone()),
+            room,
+            sip_config,
+            users_to_notify: invited_users,
+            invite_for_room,
+        };
+
+        notify_invitees_about_update(
+            settings.clone(),
+            notification_values,
+            mail_service.into_inner(),
+            &kc_admin_client,
+            None,
+        )
+        .await;
+    }
 
     drop(conn);
 
@@ -401,7 +451,7 @@ pub async fn patch_event_instance(
             .unwrap_or(EventInviteStatus::Accepted),
         is_favorite,
         Some(exception),
-        room,
+        event_room_info,
         instance_id,
         invitees,
         invitees_truncated,
