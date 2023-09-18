@@ -177,10 +177,11 @@ Information about another participant provided by the `control` module
 
 Information about the event associated with a room.
 
-| Field   | Type          | Always | Description        |
-| ------- | ------------- | ------ | ------------------ |
-| `id`    | `string`      | yes    | Id of the event    |
-| `title` | `string`      | yes    | Title of the event |
+| Field      | Type     | Always | Description                          |
+| ---------- | -------- | ------ | ------------------------------------ |
+| `id`       | `string` | yes    | Id of the event                      |
+| `title`    | `string` | yes    | Title of the event                   |
+| `is_adhoc` | `bool`   | yes    | True if the event was created ad-hoc |
 
 ### JoinSuccess
 

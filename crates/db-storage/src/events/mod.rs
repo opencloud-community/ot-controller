@@ -130,6 +130,7 @@ impl From<&Event> for EventInfo {
         EventInfo {
             id: value.id,
             title: value.title.clone(),
+            is_adhoc: value.is_adhoc,
         }
     }
 }

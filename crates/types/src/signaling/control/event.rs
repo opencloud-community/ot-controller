@@ -176,6 +176,7 @@ mod test {
             "event_info": {
                 "id": "00000000-0000-0000-0000-000000000000",
                 "title": "Daily",
+                "is_adhoc": false,
             },
             "is_room_owner": false,
         });
@@ -196,6 +197,7 @@ mod test {
             event_info: Some(EventInfo {
                 id: EventId::nil(),
                 title: "Daily".to_string(),
+                is_adhoc: false,
             }),
             is_room_owner: false,
         }))
@@ -216,6 +218,7 @@ mod test {
             "event_info": {
                 "id": "00000000-0000-0000-0000-000000000000",
                 "title": "Daily",
+                "is_adhoc": false,
             },
             "is_room_owner": false,
         });
@@ -232,6 +235,7 @@ mod test {
             event_info: Some(EventInfo {
                 id: EventId::nil(),
                 title: "Daily".to_string(),
+                is_adhoc: false,
             }),
             is_room_owner: false,
         }))
