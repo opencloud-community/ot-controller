@@ -5,7 +5,7 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use chrono::{Days, Utc};
+use chrono::{Duration, Utc};
 use database::Db;
 use log::Log;
 use opentalk_log::{debug, error, info};
@@ -19,15 +19,15 @@ use crate::{
 };
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct EventCleanupParameters {
-    #[serde(default = "default_days_since_last_occurrence")]
-    days_since_last_occurrence: u64,
+pub struct AdhocEventCleanupParameters {
+    #[serde(default = "a_day_in_seconds")]
+    seconds_since_creation: u32,
 
     #[serde(default)]
     fail_on_shared_folder_deletion_error: bool,
 }
 
-impl JobParameters for EventCleanupParameters {
+impl JobParameters for AdhocEventCleanupParameters {
     fn try_from_json(json: serde_json::Value) -> Result<Self, Error> {
         serde_json::from_value(json).map_err(Into::into)
     }
@@ -37,13 +37,13 @@ impl JobParameters for EventCleanupParameters {
     }
 }
 
-/// A job to cleanup events a certain duration after the last occurence
+/// A job to cleanup adhoc events a certain duration after they were created
 #[derive(Debug)]
-pub struct EventCleanup;
+pub struct AdhocEventCleanup;
 
 #[async_trait]
-impl Job for EventCleanup {
-    type Parameters = EventCleanupParameters;
+impl Job for AdhocEventCleanup {
+    type Parameters = AdhocEventCleanupParameters;
 
     async fn execute(
         logger: &dyn Log,
@@ -52,25 +52,11 @@ impl Job for EventCleanup {
         settings: &Settings,
         parameters: Self::Parameters,
     ) -> Result<(), Error> {
-        info!(log: logger, "Starting data protection cleanup job");
+        info!(log: logger, "Starting ad-hoc event cleanup job");
         debug!(log: logger, "Job parameters: {parameters:?}");
 
-        info!(log: logger, "");
-
-        if parameters.days_since_last_occurrence < 1 {
-            error!(log: logger, "Number of retention days must be 1 or greater");
-            return Err(Error::JobExecutionFailed);
-        }
-
-        let now = Utc::now();
         let delete_before =
-            match now.checked_sub_days(Days::new(parameters.days_since_last_occurrence)) {
-                Some(d) => d,
-                None => {
-                    error!(log: logger, "Couldn't subtract number of retention days");
-                    return Err(Error::JobExecutionFailed);
-                }
-            };
+            Utc::now() - Duration::seconds(parameters.seconds_since_creation.into());
 
         if let Err(e) = perform_deletion(
             logger,
@@ -78,7 +64,7 @@ impl Job for EventCleanup {
             exchange_handle,
             settings,
             parameters.fail_on_shared_folder_deletion_error,
-            DeleteSelector::ScheduledThatEndedBefore(delete_before),
+            DeleteSelector::AdHocCreatedBefore(delete_before),
         )
         .await
         {
@@ -89,6 +75,6 @@ impl Job for EventCleanup {
     }
 }
 
-fn default_days_since_last_occurrence() -> u64 {
-    30
+const fn a_day_in_seconds() -> u32 {
+    24 * 60 * 60
 }

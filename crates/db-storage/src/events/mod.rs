@@ -191,6 +191,20 @@ impl Event {
             .map_err(Into::into)
     }
 
+    #[tracing::instrument(err, skip_all)]
+    pub async fn get_all_adhoc_created_before_including_rooms(
+        conn: &mut DbConnection,
+        date: DateTime<Utc>,
+    ) -> Result<Vec<(EventId, RoomId)>> {
+        events::table
+            .select((events::id, events::room))
+            .filter(events::created_at.le(date))
+            .filter(events::is_adhoc.eq(true))
+            .load(conn)
+            .await
+            .map_err(Into::into)
+    }
+
     pub async fn get_all_with_invitee(
         conn: &mut DbConnection,
     ) -> Result<Vec<(EventId, RoomId, UserId)>> {

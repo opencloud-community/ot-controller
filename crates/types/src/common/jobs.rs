@@ -34,4 +34,7 @@ pub enum JobType {
 
     /// A job for cleaning up events that ended at minimum a defined duration ago
     EventCleanup,
+
+    /// A job to cleanup adhoc events a certain duration after they were created
+    AdhocEventCleanup,
 }
