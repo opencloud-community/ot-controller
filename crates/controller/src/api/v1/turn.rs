@@ -9,8 +9,7 @@ use crate::api::v1::response::error::AuthenticationError;
 use crate::api::v1::response::NoContent;
 use crate::caches::Caches;
 use crate::oidc::OidcContext;
-use crate::settings::{self, SharedSettingsActix};
-use crate::settings::{Settings, TurnServer};
+use crate::settings::{Settings, SharedSettingsActix, TurnServer};
 use actix_http::StatusCode;
 use actix_web::http::header::Header;
 use actix_web::web::Data;
@@ -30,39 +29,11 @@ use rand::distributions::{Distribution, Uniform};
 use rand::prelude::SliceRandom;
 use rand::{CryptoRng, Rng};
 use ring::hmac;
-use serde::Serialize;
 use std::str::FromStr;
-use types::core::InviteCodeId;
-
-/// TURN access credentials for users.
-#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
-pub struct Turn {
-    pub username: String,
-    pub password: String,
-    pub ttl: String,
-    pub uris: Vec<String>,
-}
-
-/// STUN Server for users.
-#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
-pub struct Stun {
-    pub uris: Vec<String>,
-}
-
-impl From<&settings::Stun> for Stun {
-    fn from(stun: &settings::Stun) -> Self {
-        Stun {
-            uris: stun.uris.clone(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
-#[serde(untagged)]
-pub enum IceServer {
-    Turn(Turn),
-    Stun(Stun),
-}
+use types::{
+    api::v1::turn::{GetResponse, IceServer, Stun, Turn},
+    core::InviteCodeId,
+};
 
 /// API Endpoint *GET /turn*
 ///
@@ -74,7 +45,7 @@ pub async fn get(
     caches: Data<Caches>,
     oidc_ctx: Data<OidcContext>,
     req: HttpRequest,
-) -> Result<AWEither<Json<Vec<IceServer>>, NoContent>, ApiError> {
+) -> Result<AWEither<Json<GetResponse>, NoContent>, ApiError> {
     let settings: &ArcSwap<Settings> = &settings;
     let settings = settings.load();
 
@@ -120,7 +91,7 @@ pub async fn get(
         return Ok(AWEither::Right(NoContent {}));
     }
 
-    Ok(AWEither::Left(Json(ice_servers)))
+    Ok(AWEither::Left(Json(GetResponse(ice_servers))))
 }
 
 fn create_credentials<T: Rng + CryptoRng>(
