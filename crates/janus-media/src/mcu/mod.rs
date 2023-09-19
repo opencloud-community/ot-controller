@@ -123,20 +123,27 @@ impl McuPool {
         let mcu_config = settings::JanusMcuConfig::extract(settings)?;
 
         let (shutdown, _) = broadcast::channel(1);
+        let (reconnect_send, reconnect_recv) = mpsc::channel(1024);
 
         let mut clients = HashSet::with_capacity(mcu_config.connections.len());
         let (events_sender, events) = mpsc::channel(12);
 
-        let connections = mcu_config.connections.clone();
-
-        for connection in connections {
+        for config in &mcu_config.connections {
             let channel = rabbitmq_pool.create_channel().await?;
 
-            let client = McuClient::connect(channel, &mut redis, connection, events_sender.clone())
-                .await
-                .context("Failed to create mcu client")?;
+            log::info!("Connecting to janus-gateway via rabbitmq {config:?}");
 
-            clients.insert(client);
+            match McuClient::connect(channel, &mut redis, config.clone(), events_sender.clone())
+                .await
+            {
+                Ok(client) => {
+                    clients.insert(client);
+                }
+                Err(e) => {
+                    log::error!("Failed to create McuClient config={config:?} - {e:?}");
+                    let _ = reconnect_send.send(config.clone()).await;
+                }
+            }
         }
 
         let clients = RwLock::new(clients);
@@ -152,8 +159,6 @@ impl McuPool {
             redis,
             shutdown,
         });
-
-        let (reconnect_send, reconnect_recv) = mpsc::channel(1);
 
         tokio::spawn(global_receive_task(
             mcu_pool.clone(),
