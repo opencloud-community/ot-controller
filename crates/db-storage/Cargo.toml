@@ -43,6 +43,9 @@ refinery = { version = "0.8", features = ["tokio-postgres"] }
 refinery-core = "0.8"
 barrel = { version = "0.7", features = ["pg"] }
 
+### QoL/Util
+itertools.workspace = true
+
 ### Logging utilities
 log = { workspace = true, features = ["serde"] }
 tracing.workspace = true

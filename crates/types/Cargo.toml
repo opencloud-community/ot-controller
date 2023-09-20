@@ -15,6 +15,7 @@ chrono-tz.workspace = true
 clap = { workspace = true, optional = true }
 derive_more = "0.99"
 diesel = { workspace = true, features = ["uuid", "postgres"], optional = true }
+email_address.workspace = true
 kustos = { path = "../kustos", optional = true }
 rand = { workspace = true, optional = true }
 redis = { workspace = true, optional = true }

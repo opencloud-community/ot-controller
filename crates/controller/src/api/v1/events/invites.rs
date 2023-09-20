@@ -36,6 +36,7 @@ use types::core::InviteRole;
 use types::{
     common::shared_folder::SharedFolder,
     core::{EventId, RoomId, UserId},
+    strings::ToLowerCase,
 };
 
 /// API Endpoint `GET /events/{event_id}/invites`
@@ -161,7 +162,7 @@ pub async fn create_invite_to_event(
                 current_tenant.into_inner(),
                 current_user.into_inner(),
                 event_id,
-                email,
+                email.to_lowercase(),
                 &mail_service.into_inner(),
                 send_email_notification,
             )

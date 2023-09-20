@@ -90,6 +90,7 @@ mod utils;
 pub mod common;
 pub mod core;
 pub mod signaling;
+pub mod strings;
 
 mod imports {
     #[cfg(feature = "diesel")]
