@@ -43,6 +43,7 @@ use types::core::InviteRole;
 use types::{
     common::shared_folder::SharedFolder,
     core::{EventId, RoomId, UserId},
+    strings::ToLowerCase,
 };
 
 /// API Endpoint `GET /events/{event_id}/invites`
@@ -168,7 +169,7 @@ pub async fn create_invite_to_event(
                 current_tenant.into_inner(),
                 current_user.into_inner(),
                 event_id,
-                email,
+                email.to_lowercase(),
                 &mail_service.into_inner(),
                 send_email_notification,
             )
@@ -687,7 +688,7 @@ pub async fn delete_email_invite_to_event(
     let current_user = current_user.into_inner();
     let current_tenant = current_tenant.into_inner();
     let event_id = path.into_inner();
-    let email = body.into_inner().email.to_string();
+    let email = body.into_inner().email.to_lowercase().to_string();
     let tenant_filter = get_tenant_filter(&current_tenant, &settings.tenants.assignment);
 
     let send_email_notification = !query.suppress_email_notification;
