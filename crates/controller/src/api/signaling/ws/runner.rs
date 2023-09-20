@@ -817,6 +817,11 @@ impl Runner {
                         .await;
                 }
 
+                // Get the left_at timestamp to preserve it until the participant really enters the room.
+                let left_at: Option<Timestamp> =
+                    storage::get_attribute(&mut self.redis_conn, self.room_id, self.id, "left_at")
+                        .await?;
+
                 self.set_control_attributes(timestamp, &display_name, avatar_url.as_deref())
                     .await?;
 
@@ -833,7 +838,7 @@ impl Runner {
                     joined_at: timestamp,
                     hand_is_up: false,
                     hand_updated_at: timestamp,
-                    left_at: None,
+                    left_at,
                     is_room_owner: self.participant.user_id() == Some(self.room.created_by),
                 };
 
@@ -1145,6 +1150,13 @@ impl Runner {
     ) -> Result<()> {
         let mut lock = storage::room_mutex(self.room_id);
 
+        // Clear the left_at timestamp to indicate that the participant is in the real room (not just the waiting room).
+        let control_data = ControlState {
+            left_at: None,
+            ..control_data
+        };
+        storage::remove_attribute(&mut self.redis_conn, self.room_id, self.id, "left_at").await?;
+
         // If we haven't joined the waiting room yet, fetch, set and enforce the tariff for the room.
         // When in waiting-room this logic was already executed in `join_waiting_room`.
         let (guard, tariff) = if !joining_from_waiting_room {
@@ -1372,7 +1384,6 @@ impl Runner {
             .set("hand_updated_at", timestamp)
             .set("display_name", display_name)
             .set("joined_at", timestamp)
-            .del("left_at")
             .query_async(&mut self.redis_conn)
             .await?;
 
