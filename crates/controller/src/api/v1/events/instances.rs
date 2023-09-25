@@ -6,7 +6,6 @@ use super::{
     can_edit, ApiResponse, DateTimeTz, DefaultApiResult, EventAndInstanceId, EventInvitee,
     EventRoomInfo, EventStatus, EventType, InstanceId, LOCAL_DT_FORMAT, ONE_HUNDRED_YEARS_IN_DAYS,
 };
-use crate::api::v1::cursor::Cursor;
 use crate::api::v1::events::{
     enrich_invitees_from_keycloak, shared_folder_for_user, DateTimeTzFromDb,
 };
@@ -27,6 +26,7 @@ use keycloak_admin::KeycloakAdminClient;
 use rrule::RRuleSet;
 use serde::{Deserialize, Serialize};
 use types::api::v1::users::PublicUserProfile;
+use types::api::v1::Cursor;
 use types::common::shared_folder::SharedFolder;
 use types::core::EventId;
 use validator::Validate;

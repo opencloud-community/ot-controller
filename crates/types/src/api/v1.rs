@@ -11,4 +11,7 @@ pub mod rooms;
 pub mod turn;
 pub mod users;
 
+mod cursor;
 mod utils;
+
+pub use cursor::Cursor;
