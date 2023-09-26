@@ -8,6 +8,7 @@ use controller_settings as settings;
 use http::async_http_client;
 use openidconnect::{AccessToken, TokenIntrospectionResponse};
 use provider::ProviderClient;
+use types::strings::ToLowerCase;
 
 mod claims;
 mod http;
@@ -96,7 +97,7 @@ impl OidcContext {
             sub: claims.sub,
             issuer: claims.iss,
             expiration: claims.exp,
-            email: claims.email.into(),
+            email: claims.email.to_lowercase().into(),
             firstname: claims.given_name,
             lastname: claims.family_name,
             x_grp: claims.x_grp,
