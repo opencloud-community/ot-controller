@@ -28,6 +28,19 @@ pub struct RegisteredMailRecipient {
     pub language: String,
 }
 
+impl From<User> for RegisteredMailRecipient {
+    fn from(user: User) -> Self {
+        Self {
+            id: user.id,
+            email: user.email,
+            title: user.title,
+            first_name: user.firstname,
+            last_name: user.lastname,
+            language: user.language,
+        }
+    }
+}
+
 pub struct UnregisteredMailRecipient {
     pub email: String,
     pub first_name: String,

@@ -728,12 +728,8 @@ pub async fn delete_email_invite_to_event(
         remove_invitee_permissions(&authz, event_id, room.id, user_id).await?;
 
         MailRecipient::Registered(RegisteredMailRecipient {
-            id: user.id,
             email,
-            title: user.title,
-            first_name: user.firstname,
-            last_name: user.lastname,
-            language: user.language,
+            ..user.into()
         })
     } else if let Ok(Some(user)) = kc_admin_client
         .get_user_for_email(tenant_filter, email.as_ref())
