@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.6.3] - 2023-09-26
 
 ### Added
 
@@ -15,19 +15,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - controller: handle email addresses in a case-insensitive way ([#550](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/550))
 
-## [0.6.2] - 2023-12-09
+## [0.6.2] - 2023-09-12
 
 ### Fixed
 
 - Add missing release section in CHANGELOG.md
 
-## [0.6.1] - 2023-12-09
+## [0.6.1] - 2023-09-12
 
 ### Fixed
 
 - RUSTSEC-2023-0052
 
-## [0.6.0] - 2023-31-08
+## [0.6.0] - 2023-08-31
 
 ### Added
 
@@ -354,6 +354,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - initial release candidate
 
+[0.6.3]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.6.2...v0.6.3
 [0.6.2]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.6.1...v0.6.2
 [0.6.1]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.6.0...v0.6.1
 [0.6.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/32b4c96e3ad319c95baebdfa075d23543b38a8f2...v0.6.0
