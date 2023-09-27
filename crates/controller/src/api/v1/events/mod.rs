@@ -4,10 +4,9 @@
 
 use std::sync::Arc;
 
-use super::request::default_pagination_per_page;
 use super::response::error::ValidationErrorEntry;
 use super::response::{ApiError, NoContent, CODE_VALUE_REQUIRED};
-use super::{ApiResponse, DefaultApiResult, PagePaginationQuery};
+use super::{ApiResponse, DefaultApiResult};
 use crate::api::v1::response::CODE_IGNORED_VALUE;
 use crate::api::v1::rooms::RoomsPoliciesBuilderExt;
 use crate::api::v1::util::comma_separated;
@@ -42,9 +41,12 @@ use kustos::{Authz, Resource, ResourceId};
 use rrule::{Frequency, RRuleSet};
 use serde::de::Visitor;
 use serde::{Deserialize, Serialize};
-use types::api::v1::Cursor;
 use types::{
-    api::v1::users::{PublicUserProfile, UnregisteredUser},
+    api::v1::{
+        pagination::default_pagination_per_page,
+        users::{PublicUserProfile, UnregisteredUser},
+        Cursor,
+    },
     common::{
         features,
         shared_folder::{SharedFolder, SharedFolderAccess},
