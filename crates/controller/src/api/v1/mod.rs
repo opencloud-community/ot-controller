@@ -19,7 +19,6 @@
 //! - `/users/find` ([GET](users::find))
 //! - `/services/call_in/start ([POST](services::call_in::start))
 
-pub use request::{CursorPaginationQuery, PagePaginationQuery};
 pub use response::{ApiResponse, DefaultApiResult};
 
 pub mod assets;
@@ -27,7 +26,6 @@ pub mod auth;
 pub mod events;
 pub mod invites;
 pub mod middleware;
-mod request;
 pub mod response;
 pub mod rooms;
 pub mod services;

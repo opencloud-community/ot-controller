@@ -5,7 +5,7 @@
 //! Contains invite related REST endpoints.
 use super::response::{ApiError, NoContent};
 use super::DefaultApiResult;
-use crate::api::v1::{rooms::RoomsPoliciesBuilderExt, ApiResponse, PagePaginationQuery};
+use crate::api::v1::{rooms::RoomsPoliciesBuilderExt, ApiResponse};
 use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json, Path, Query, ReqData};
 use actix_web::{delete, get, post, put};
@@ -18,9 +18,12 @@ use db_storage::users::User;
 use kustos::prelude::PoliciesBuilder;
 use kustos::Authz;
 use types::{
-    api::v1::invites::{
-        CodeVerified, InviteResource, PostInviteBody, PutInviteBody, RoomIdAndInviteCode,
-        VerifyBody,
+    api::v1::{
+        invites::{
+            CodeVerified, InviteResource, PostInviteBody, PutInviteBody, RoomIdAndInviteCode,
+            VerifyBody,
+        },
+        pagination::PagePaginationQuery,
     },
     core::RoomId,
 };

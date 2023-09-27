@@ -13,7 +13,7 @@ use crate::api::signaling::SignalingModules;
 use crate::api::v1::util::require_feature;
 use crate::api::{
     signaling::{breakout, moderation, ticket::start_or_continue_signaling_session},
-    v1::{ApiResponse, PagePaginationQuery},
+    v1::ApiResponse,
 };
 use crate::settings::SharedSettingsActix;
 use actix_web::web::{self, Data, Json, Path, ReqData};
@@ -28,11 +28,13 @@ use kustos::policies_builder::{GrantingAccess, PoliciesBuilder};
 use kustos::prelude::*;
 use signaling_core::{Participant, RedisConnection};
 use std::{convert::AsRef, str::FromStr};
-use types::api::v1::rooms::GetRoomEventResponse;
 use types::{
-    api::v1::rooms::{
-        InvitedStartRequest, PatchRoomsBody, PostRoomsBody, RoomResource, StartRequest,
-        StartResponse, StartRoomError,
+    api::v1::{
+        pagination::PagePaginationQuery,
+        rooms::{
+            GetRoomEventResponse, InvitedStartRequest, PatchRoomsBody, PostRoomsBody, RoomResource,
+            StartRequest, StartResponse, StartRoomError,
+        },
     },
     common::{features, tariff::TariffResource},
     core::{InviteCodeId, RoomId},

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use super::response::{ApiError, NoContent};
-use super::{ApiResponse, PagePaginationQuery};
+use super::ApiResponse;
 use actix_http::StatusCode;
 use actix_web::web::{Data, Path, Query};
 use actix_web::{delete, get, HttpResponse};
@@ -13,8 +13,10 @@ use signaling_core::{
     assets::{delete_asset, get_asset},
     ObjectStorage,
 };
-use types::api::v1::assets::AssetResource;
-use types::core::{AssetId, RoomId};
+use types::{
+    api::v1::{assets::AssetResource, pagination::PagePaginationQuery},
+    core::{AssetId, RoomId},
+};
 
 #[get("/rooms/{room_id}/assets")]
 pub async fn room_assets(

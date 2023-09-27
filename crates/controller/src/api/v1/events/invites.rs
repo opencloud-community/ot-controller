@@ -4,7 +4,7 @@
 
 use std::sync::Arc;
 
-use super::{ApiResponse, DefaultApiResult, PagePaginationQuery};
+use super::{ApiResponse, DefaultApiResult};
 use crate::api::v1::events::{
     enrich_from_keycloak, enrich_invitees_from_keycloak, get_invited_mail_recipients_for_event,
     get_tenant_filter, EventInvitee, EventPoliciesBuilderExt,
@@ -39,10 +39,10 @@ use keycloak_admin::KeycloakAdminClient;
 use kustos::policies_builder::PoliciesBuilder;
 use kustos::Authz;
 use serde::{Deserialize, Serialize};
-use types::core::InviteRole;
 use types::{
+    api::v1::pagination::PagePaginationQuery,
     common::shared_folder::SharedFolder,
-    core::{EventId, RoomId, UserId},
+    core::{EventId, InviteRole, RoomId, UserId},
     strings::ToLowerCase,
 };
 

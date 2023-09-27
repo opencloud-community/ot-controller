@@ -7,6 +7,7 @@
 
 pub mod assets;
 pub mod invites;
+pub mod pagination;
 pub mod rooms;
 pub mod turn;
 pub mod users;
