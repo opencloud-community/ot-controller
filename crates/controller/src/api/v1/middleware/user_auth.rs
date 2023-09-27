@@ -157,6 +157,9 @@ where
                         Err(err) => Ok(req.into_response(err.error_response())),
                     },
                     AccessTokenOrInviteCode::InviteCode(current_invite_code) => {
+                        req.extensions_mut().insert(kustos::actix_web::Invite::from(
+                            current_invite_code.into_inner(),
+                        ));
                         req.extensions_mut().insert(current_invite_code);
                         service.call(req).await
                     }

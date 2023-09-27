@@ -299,9 +299,19 @@ async fn delete_associated_database_rows(
 
 fn associated_resource_ids(room_id: RoomId) -> impl IntoIterator<Item = ResourceId> {
     [
-        ResourceId::from(format!("/rooms/{room_id}")),
-        ResourceId::from(format!("/rooms/{room_id}/invites")),
-        ResourceId::from(format!("/rooms/{room_id}/invites/*")),
-        ResourceId::from(format!("/rooms/{room_id}/start")),
+        room_id.resource_id(),
+        room_id.resource_id().with_suffix("invites"),
+        room_id.resource_id().with_suffix("invites/*"),
+        room_id.resource_id().with_suffix("start"),
+    ]
+}
+
+/// Get the list of room resources for deletion of an invite code
+pub fn associated_resource_ids_for_invite(
+    room_id: RoomId,
+) -> impl IntoIterator<Item = ResourceId> + Send {
+    [
+        room_id.resource_id().with_suffix("/tariff"),
+        room_id.resource_id().with_suffix("/event"),
     ]
 }

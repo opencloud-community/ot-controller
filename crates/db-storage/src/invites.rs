@@ -260,6 +260,22 @@ impl Invite {
             expiration: invite.expiration,
         }
     }
+
+    #[tracing::instrument(err, skip_all)]
+    pub async fn get_inactive_or_expired_before(
+        conn: &mut DbConnection,
+        expiration_date: DateTime<Utc>,
+    ) -> Result<Vec<(InviteCodeId, RoomId)>> {
+        let query = invites::table
+            .filter(
+                invites::active.eq(false).or(invites::expiration
+                    .is_not_null()
+                    .and(invites::expiration.lt(expiration_date))),
+            )
+            .select((invites::id, invites::room));
+
+        Ok(query.get_results(conn).await?)
+    }
 }
 
 /// Diesel invites struct

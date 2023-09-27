@@ -6,8 +6,10 @@
 
 mod adhoc_event_cleanup;
 mod event_cleanup;
+mod invite_cleanup;
 mod self_check;
 
 pub use adhoc_event_cleanup::AdhocEventCleanup;
 pub use event_cleanup::EventCleanup;
+pub use invite_cleanup::InviteCleanup;
 pub use self_check::SelfCheck;

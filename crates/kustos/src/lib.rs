@@ -654,6 +654,37 @@ impl Authz {
         Ok(amount)
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub async fn remove_all_invite_permission_for_resources<S, R, I>(
+        &self,
+        invite: S,
+        resources: I,
+    ) -> Result<usize>
+    where
+        S: Into<PolicyInvite>,
+        R: Into<ResourceId>,
+        I: IntoIterator<Item = R>,
+    {
+        let mut inner = self.inner.write().await;
+
+        let invite = invite.into();
+        let invite = invite.to_casbin_string();
+
+        let mut amount = 0;
+
+        for resource in resources {
+            let removed = inner
+                .remove_filtered_policy(0, vec![invite.clone(), resource.into().0])
+                .await?;
+
+            if removed {
+                amount += 1;
+            }
+        }
+
+        Ok(amount)
+    }
+
     /// Removes access for role
     #[tracing::instrument(level = "debug", skip(self, user, resource, access))]
     pub async fn remove_role_permission<S, R, A>(
