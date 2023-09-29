@@ -18,6 +18,9 @@ use types::common::features;
 use types::core::{CallInId, CallInPassword, ResumptionToken, TicketToken};
 use validator::Validate;
 
+// Note to devs:
+// Please update `docs/admin/keycloak.md` service login documentation as well if
+// you change something here
 pub const REQUIRED_CALL_IN_ROLE: &str = "opentalk-call-in";
 
 #[derive(Deserialize)]
