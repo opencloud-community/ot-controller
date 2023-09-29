@@ -16,6 +16,8 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 pub enum Error {
     #[error(transparent)]
     Reqwest(#[from] reqwest::Error),
+    #[error("keycloak error response")]
+    KeyCloak,
     #[error("invalid credentials")]
     InvalidCredentials,
     #[error("given base url is not a base")]

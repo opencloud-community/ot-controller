@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use super::Result;
-use crate::KeycloakAdminClient;
+use crate::{Error, KeycloakAdminClient};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
@@ -74,6 +74,16 @@ impl KeycloakAdminClient {
             .send_authorized(move |c| c.get(url.clone()).query(&query))
             .await?;
 
+        let status = response.status();
+        if !status.is_success() {
+            log::warn!(
+                "Received unsuccessful status code {} from KeyCloak when attempting to search for a user",
+                status.as_u16(),
+            );
+            log::warn!("{}", response.text().await?);
+            return Err(Error::KeyCloak);
+        }
+
         let found_results = response.json::<Vec<ParseResult>>().await?;
         let found_results_amount = found_results.len();
         let found_users: Vec<_> = found_results
@@ -111,6 +121,16 @@ impl KeycloakAdminClient {
             .send_authorized(move |c| c.get(url.clone()).query(&query))
             .await?;
 
+        let status = response.status();
+        if !status.is_success() {
+            log::warn!(
+                "Received unsuccessful status code {} from KeyCloak when attempting to search for a user in a tenant",
+                status.as_u16(),
+            );
+            log::warn!("{}", response.text().await?);
+            return Err(Error::KeyCloak);
+        }
+
         let found_results = response.json::<Vec<ParseResult>>().await?;
         let found_results_amount = found_results.len();
         let found_users: Vec<_> = found_results
@@ -140,6 +160,16 @@ impl KeycloakAdminClient {
         let response = self
             .send_authorized(move |c| c.get(url.clone()).query(&query))
             .await?;
+
+        let status = response.status();
+        if !status.is_success() {
+            log::warn!(
+                "Received unsuccessful status code {} from KeyCloak when attempting to get the user for an e-mail address",
+                status.as_u16(),
+            );
+            log::warn!("{}", response.text().await?);
+            return Err(Error::KeyCloak);
+        }
 
         let found_users: Vec<User> = response.json().await?;
         let first_matching_user = found_users.iter().find(|user| {
