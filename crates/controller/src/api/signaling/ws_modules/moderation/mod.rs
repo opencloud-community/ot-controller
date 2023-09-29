@@ -458,8 +458,8 @@ impl SignalingModule for ModerationModule {
         }
     }
 
-    async fn build_params(_init: &SignalingModuleInitData) -> Result<Option<Self::Params>> {
-        Ok(Some(()))
+    fn build_params(_init: SignalingModuleInitData) -> Option<Self::Params> {
+        Some(())
     }
 }
 

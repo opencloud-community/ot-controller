@@ -126,12 +126,12 @@ impl SignalingModule for SharedFolder {
         }
     }
 
-    async fn build_params(init: &SignalingModuleInitData) -> Result<Option<Self::Params>> {
+    fn build_params(init: SignalingModuleInitData) -> Option<Self::Params> {
         if init.shared_settings.load_full().shared_folder.is_some() {
-            Ok(Some(()))
+            Some(())
         } else {
             log::warn!("Skipping the SharedFolder module as none is specified in the config");
-            Ok(None)
+            None
         }
     }
 }

@@ -14,6 +14,7 @@ SPDX-License-Identifier: EUPL-1.2
 - [Configuration of multiple tenants](tenants.md)
 - [Configuration of different tariffs and their capabilities](tariffs.md)
 - [Execution of maintenance jobs](jobs.md)
+- [Modules that can be used in meetings](modules.md)
 
 ## Interaction between OpenTalk Controller and other sevrices
 

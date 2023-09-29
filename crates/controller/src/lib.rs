@@ -10,13 +10,21 @@
 //! use opentalk_controller_core::Controller;
 //! use anyhow::Result;
 //!
+//! # use signaling_core::{ModulesRegistrar, RegisterModules};
+//! # struct CommunityModules;
+//! # impl RegisterModules for CommunityModules {
+//! #     fn register(registrar: &mut impl ModulesRegistrar) {
+//! #         unimplemented!();
+//! #     }
+//! # }
+//!
 //! #[actix_web::main]
 //! async fn main()  {
 //!     opentalk_controller_core::try_or_exit(run()).await;
 //! }
 //!
 //! async fn run() -> Result<()> {
-//!    if let Some(controller) = Controller::create("OpenTalk Controller Community Edition").await? {
+//!    if let Some(controller) = Controller::create::<CommunityModules>("OpenTalk Controller Community Edition").await? {
 //!         controller.run().await?;
 //!     }
 //!
@@ -43,11 +51,12 @@ use keycloak_admin::KeycloakAdminClient;
 use lapin_pool::RabbitMqPool;
 use oidc::OidcContext;
 use signaling_core::{
-    ExchangeHandle, ExchangeTask, ObjectStorage, RedisConnection, SignalingModule,
-    SignalingModuleInitData,
+    ExchangeHandle, ExchangeTask, ModulesRegistrar, ObjectStorage, RedisConnection,
+    RegisterModules, SignalingModule, SignalingModuleInitData,
 };
 use std::fs::File;
 use std::io::BufReader;
+use std::marker::PhantomData;
 use std::net::Ipv6Addr;
 use std::sync::Arc;
 use std::time::Duration;
@@ -110,6 +119,17 @@ where
     }
 }
 
+struct ControllerModules<M: RegisterModules>(PhantomData<M>);
+
+impl<M: RegisterModules> RegisterModules for ControllerModules<M> {
+    fn register(registrar: &mut impl ModulesRegistrar) {
+        registrar.register::<BreakoutRooms>();
+        registrar.register::<ModerationModule>();
+        registrar.register::<Recording>();
+        M::register(registrar);
+    }
+}
+
 /// Controller struct representation containing all fields required to extend and drive the controller
 pub struct Controller {
     /// Settings loaded on [Controller::create]
@@ -168,8 +188,8 @@ impl Controller {
     /// subprogram (e.g. `--reload`) and must now exit.
     ///
     /// Otherwise it will return itself which can be modified and then run using [`Controller::run`]
-    pub async fn create(program_name: &str) -> Result<Option<Self>> {
-        let args = cli::parse_args().await?;
+    pub async fn create<M: RegisterModules>(program_name: &str) -> Result<Option<Self>> {
+        let args = cli::parse_args::<ControllerModules<M>>().await?;
 
         // Some args run commands by them self and thus should exit here
         if !args.controller_should_start() {
@@ -182,13 +202,13 @@ impl Controller {
 
         log::info!("Starting {}", program_name);
 
-        let controller = Self::init(settings, args).await?;
+        let controller = Self::init::<ControllerModules<M>>(settings, args).await?;
 
         Ok(Some(controller))
     }
 
     #[tracing::instrument(err, skip(settings, args))]
-    async fn init(settings: Settings, args: cli::Args) -> Result<Self> {
+    async fn init<M: RegisterModules>(settings: Settings, args: cli::Args) -> Result<Self> {
         let settings = Arc::new(settings);
         let shared_settings: SharedSettings = Arc::new(ArcSwap::from(settings.clone()));
 
@@ -257,31 +277,26 @@ impl Controller {
             metrics,
         };
 
-        // Add default modules
-        controller.register::<BreakoutRooms>().await?;
-        controller.register::<ModerationModule>().await?;
-        controller.register::<Recording>().await?;
+        M::register(&mut controller);
 
         Ok(controller)
     }
 
-    pub async fn register<M: SignalingModule>(&mut self) -> Result<()> {
+    pub async fn register<M: SignalingModule>(&mut self) {
         let init = SignalingModuleInitData {
-            startup_settings: &self.startup_settings,
-            shared_settings: &self.shared_settings,
-            rabbitmq_pool: &self.rabbitmq_pool,
-            redis: &self.redis,
-            shutdown: &self.shutdown,
-            reload: &self.reload,
+            startup_settings: self.startup_settings.clone(),
+            shared_settings: self.shared_settings.clone(),
+            rabbitmq_pool: self.rabbitmq_pool.clone(),
+            redis: self.redis.clone(),
+            shutdown: self.shutdown.clone(),
+            reload: self.reload.clone(),
         };
 
-        let params = M::build_params(&init).await?;
+        let params = M::build_params(init);
 
         if let Some(params) = params {
             self.signaling.add_module::<M>(params);
         }
-
-        Ok(())
     }
 
     /// Runs the controller until a fatal error occurred or a shutdown is requested (e.g. SIGTERM).
@@ -461,6 +476,25 @@ impl Controller {
         }
 
         Ok(())
+    }
+}
+
+impl ModulesRegistrar for Controller {
+    fn register<M: SignalingModule>(&mut self) {
+        let init = SignalingModuleInitData {
+            startup_settings: self.startup_settings.clone(),
+            shared_settings: self.shared_settings.clone(),
+            rabbitmq_pool: self.rabbitmq_pool.clone(),
+            redis: self.redis.clone(),
+            shutdown: self.shutdown.clone(),
+            reload: self.reload.clone(),
+        };
+
+        let params = M::build_params(init);
+
+        if let Some(params) = params {
+            self.signaling.add_module::<M>(params);
+        }
     }
 }
 

@@ -242,7 +242,7 @@ impl SignalingModule for Recording {
         }
     }
 
-    async fn build_params(init: &SignalingModuleInitData) -> Result<Option<Self::Params>> {
+    fn build_params(init: SignalingModuleInitData) -> Option<Self::Params> {
         if let Some(queue) = init
             .shared_settings
             .load_full()
@@ -250,12 +250,9 @@ impl SignalingModule for Recording {
             .recording_task_queue
             .clone()
         {
-            Ok(Some((
-                init.rabbitmq_pool.clone(),
-                RecordingParams { queue },
-            )))
+            Some((init.rabbitmq_pool.clone(), RecordingParams { queue }))
         } else {
-            Ok(None)
+            None
         }
     }
 }

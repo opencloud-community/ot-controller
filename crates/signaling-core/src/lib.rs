@@ -33,3 +33,11 @@ pub use participant::Participant;
 pub use redis_wrapper::{RedisConnection, RedisMetrics};
 pub use signaling_module::{SignalingModule, SignalingModuleInitData};
 pub use signaling_room_id::SignalingRoomId;
+
+pub trait RegisterModules {
+    fn register(registrar: &mut impl ModulesRegistrar);
+}
+
+pub trait ModulesRegistrar {
+    fn register<M: SignalingModule>(&mut self);
+}
