@@ -1043,6 +1043,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PostEventsBody'
+      parameters:
+        - $ref: '#/components/parameters/suppressEmailNotification'
       responses:
         201:
           description: Successfully created a new event

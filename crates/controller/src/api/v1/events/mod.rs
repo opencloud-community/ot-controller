@@ -12,12 +12,12 @@ use crate::api::v1::rooms::RoomsPoliciesBuilderExt;
 use crate::api::v1::util::comma_separated;
 use crate::api::v1::util::{deserialize_some, GetUserProfilesBatched};
 use crate::services::{
-    ExternalMailRecipient, MailRecipient, MailService, RegisteredMailRecipient,
-    UnregisteredMailRecipient,
+    ExternalMailRecipient, MailRecipient, MailService, UnregisteredMailRecipient,
 };
 use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json, Path, Query, ReqData};
 use actix_web::{delete, get, patch, post, Either};
+use anyhow::Context;
 use chrono::{DateTime, Datelike, NaiveTime, TimeZone as _, Utc};
 use chrono_tz::Tz;
 use controller_settings::{Settings, TenantAssignment};
@@ -596,6 +596,8 @@ pub async fn new_event(
     authz: Data<Authz>,
     current_user: ReqData<User>,
     new_event: Json<PostEventsBody>,
+    query: Query<DeleteEventQuery>,
+    mail_service: Data<MailService>,
 ) -> DefaultApiResult<EventResource> {
     let settings = settings.load_full();
     let current_user = current_user.into_inner();
@@ -629,6 +631,8 @@ pub async fn new_event(
                 password,
                 waiting_room,
                 is_adhoc,
+                query,
+                mail_service,
             )
             .await?
         }
@@ -657,6 +661,8 @@ pub async fn new_event(
                 ends_at,
                 recurrence_pattern,
                 is_adhoc,
+                query,
+                mail_service,
             )
             .await?
         }
@@ -697,6 +703,8 @@ async fn create_time_independent_event(
     password: Option<String>,
     waiting_room: bool,
     is_adhoc: bool,
+    query: Query<DeleteEventQuery>,
+    mail_service: Data<MailService>,
 ) -> Result<EventResource, ApiError> {
     let room = NewRoom {
         created_by: current_user.id,
@@ -731,6 +739,20 @@ async fn create_time_independent_event(
     .await?;
 
     let tariff = Tariff::get_by_user_id(conn, &current_user.id).await?;
+
+    if !query.suppress_email_notification {
+        mail_service
+            .send_registered_invite(
+                current_user.clone(),
+                event.clone(),
+                room.clone(),
+                Some(sip_config.clone()),
+                current_user.clone(),
+                None,
+            )
+            .await
+            .context("Failed to send with MailService")?;
+    }
 
     Ok(EventResource {
         id: event.id,
@@ -772,6 +794,8 @@ async fn create_time_dependent_event(
     ends_at: DateTimeTz,
     recurrence_pattern: Vec<String>,
     is_adhoc: bool,
+    query: Query<DeleteEventQuery>,
+    mail_service: Data<MailService>,
 ) -> Result<EventResource, ApiError> {
     let recurrence_pattern = recurrence_array_to_string(recurrence_pattern);
 
@@ -811,6 +835,20 @@ async fn create_time_dependent_event(
     .await?;
 
     let tariff = Tariff::get_by_user_id(conn, &current_user.id).await?;
+
+    if !query.suppress_email_notification {
+        mail_service
+            .send_registered_invite(
+                current_user.clone(),
+                event.clone(),
+                room.clone(),
+                Some(sip_config.clone()),
+                current_user.clone(),
+                None,
+            )
+            .await
+            .context("Failed to send with MailService")?;
+    }
 
     Ok(EventResource {
         id: event.id,
@@ -1422,6 +1460,11 @@ pub async fn patch_event(
     };
 
     let invited_users = get_invited_mail_recipients_for_event(&mut conn, event_id).await?;
+    let current_user_mail_recipient = MailRecipient::Registered(current_user.clone().into());
+    let users_to_notify = invited_users
+        .into_iter()
+        .chain(std::iter::once(current_user_mail_recipient))
+        .collect::<Vec<_>>();
     let invite_for_room = Invite::get_first_for_room(&mut conn, room.id, current_user.id).await?;
 
     // Add the access policy for the invite code, just in case it has been created by
@@ -1440,7 +1483,7 @@ pub async fn patch_event(
         event: event.clone(),
         room: room.clone(),
         sip_config: sip_config.clone(),
-        users_to_notify: invited_users,
+        users_to_notify,
         invite_for_room,
     };
 
@@ -1741,7 +1784,7 @@ pub struct DeleteEventQuery {
     suppress_email_notification: bool,
 }
 
-/// API Endpoint `POST /events/{event_id}`
+/// API Endpoint `DELETE /events/{event_id}`
 #[delete("/events/{event_id}")]
 #[allow(clippy::too_many_arguments)]
 pub async fn delete_event(
@@ -1775,6 +1818,11 @@ pub async fn delete_event(
     };
 
     let invited_users = get_invited_mail_recipients_for_event(&mut conn, event_id).await?;
+    let created_by_mail_recipient = MailRecipient::Registered(created_by.clone().into());
+    let users_to_notify = invited_users
+        .into_iter()
+        .chain(std::iter::once(created_by_mail_recipient))
+        .collect::<Vec<_>>();
 
     Event::delete_by_id(&mut conn, event_id).await?;
 
@@ -1787,7 +1835,7 @@ pub async fn delete_event(
             event,
             room,
             sip_config,
-            users_to_notify: invited_users,
+            users_to_notify,
         };
 
         notify_invitees_about_delete(
@@ -1939,16 +1987,9 @@ async fn get_invited_mail_recipients_for_event(
     // TODO(w.rabl) Further DB access optimization (replacing call to get_for_event_paginated)?
     let (invites_with_user, _) =
         EventInvite::get_for_event_paginated(conn, event_id, i64::MAX, 1).await?;
-    let user_invitees = invites_with_user.into_iter().map(|(_, user)| {
-        MailRecipient::Registered(RegisteredMailRecipient {
-            id: user.id,
-            email: user.email,
-            title: user.title,
-            first_name: user.firstname,
-            last_name: user.lastname,
-            language: user.language,
-        })
-    });
+    let user_invitees = invites_with_user
+        .into_iter()
+        .map(|(_, user)| MailRecipient::Registered(user.into()));
 
     let (email_invites, _) =
         EventEmailInvite::get_for_event_paginated(conn, event_id, i64::MAX, 1).await?;
