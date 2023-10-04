@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - controller: fix deletion of permissions to room and event when a registered user gets uninvited ([#543](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/543))
 - controller: fixed a bug where waiting room users were displayed as in meeting room ([#542](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/542))
 - controller: fixed a bug where participants might circumvent the waiting room when rejoining ([#549](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/549))
+- keycloak-admin: log information when keycloak returns error responses ([#568](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/568))
 
 ## [0.6.0] - 2023-31-08
 
