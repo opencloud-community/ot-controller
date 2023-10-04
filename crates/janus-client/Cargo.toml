@@ -14,7 +14,7 @@ publish = false
 # RabbitMQ
 lapin.workspace = true
 # Websockets
-tokio-tungstenite = { version = "0.19", features = ["rustls-tls-native-roots"] }
+tokio-tungstenite = { version = "0.20", features = ["rustls-tls-native-roots"] }
 
 # Random Generators
 rand = { workspace = true, features = ["std", "std_rng"] }
