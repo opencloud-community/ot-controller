@@ -11,12 +11,10 @@ use types::{
 };
 
 mod actor;
-mod echo;
 mod http;
 mod modules;
 mod runner;
 
-pub use echo::Echo;
 pub use http::ws_service;
 pub use http::SignalingModules;
 pub use http::SignalingProtocols;

@@ -21,6 +21,7 @@ Example output for the community edition:
 <!-- begin:fromfile:text:cli-usage/opentalk-controller-modules-list -->
 
 ```text
+echo: []
 breakout: []
 moderation: []
 recording: []

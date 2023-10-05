@@ -44,6 +44,7 @@ use actix_cors::Cors;
 use actix_web::web::Data;
 use actix_web::{web, App, HttpServer, Scope};
 use anyhow::{anyhow, Context, Result};
+use api::signaling::echo::Echo;
 use api::signaling::{recording::Recording, SignalingModules};
 use arc_swap::ArcSwap;
 use database::Db;
@@ -123,6 +124,7 @@ struct ControllerModules<M: RegisterModules>(PhantomData<M>);
 
 impl<M: RegisterModules> RegisterModules for ControllerModules<M> {
     fn register(registrar: &mut impl ModulesRegistrar) {
+        registrar.register::<Echo>();
         registrar.register::<BreakoutRooms>();
         registrar.register::<ModerationModule>();
         registrar.register::<Recording>();
