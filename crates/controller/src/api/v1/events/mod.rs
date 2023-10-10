@@ -1899,14 +1899,14 @@ async fn notify_invitees_about_delete(
 
 pub(crate) fn associated_resource_ids(event_id: EventId) -> impl IntoIterator<Item = ResourceId> {
     [
-        ResourceId::from(format!("/events/{event_id}")),
-        ResourceId::from(format!("/events/{event_id}/instances")),
-        ResourceId::from(format!("/events/{event_id}/instances/*")),
-        ResourceId::from(format!("/events/{event_id}/invites")),
-        ResourceId::from(format!("/events/{event_id}/invites/*")),
-        ResourceId::from(format!("/events/{event_id}/invite")),
-        ResourceId::from(format!("/events/{event_id}/reschedule")),
-        ResourceId::from(format!("/events/{event_id}/shared_folder")),
+        event_id.resource_id(),
+        event_id.resource_id().with_suffix("/instances"),
+        event_id.resource_id().with_suffix("/instances/*"),
+        event_id.resource_id().with_suffix("/invites"),
+        event_id.resource_id().with_suffix("/invites/*"),
+        event_id.resource_id().with_suffix("/invite"),
+        event_id.resource_id().with_suffix("/reschedule"),
+        event_id.resource_id().with_suffix("/shared_folder"),
         ResourceId::from(format!("/users/me/event_favorites/{event_id}")),
     ]
 }

@@ -139,7 +139,7 @@ impl Deleter for RoomDeleter {
 
     async fn check_permissions(
         &self,
-        prepared_commit: &Self::PreparedCommit,
+        _prepared_commit: &Self::PreparedCommit,
         _logger: &dyn Log,
         authz: &Authz,
         user_id: Option<UserId>,
@@ -149,15 +149,12 @@ impl Deleter for RoomDeleter {
             None => return Ok(()),
         };
 
+        let room_id = self.room_id;
         let checked = authz
-            .check_user_batched(
-                user_id,
-                prepared_commit.resources.clone(),
-                AccessMethod::DELETE,
-            )
+            .check_user(user_id, room_id.resource_id(), AccessMethod::DELETE)
             .await?;
 
-        if checked.iter().any(|&res| !res) {
+        if !checked {
             return Err(Error::Forbidden);
         }
 
@@ -300,9 +297,13 @@ async fn delete_associated_database_rows(
 fn associated_resource_ids(room_id: RoomId) -> impl IntoIterator<Item = ResourceId> {
     [
         room_id.resource_id(),
-        room_id.resource_id().with_suffix("invites"),
-        room_id.resource_id().with_suffix("invites/*"),
-        room_id.resource_id().with_suffix("start"),
+        room_id.resource_id().with_suffix("/invites"),
+        room_id.resource_id().with_suffix("/invites/*"),
+        room_id.resource_id().with_suffix("/start"),
+        room_id.resource_id().with_suffix("/tariff"),
+        room_id.resource_id().with_suffix("/event"),
+        room_id.resource_id().with_suffix("/assets"),
+        room_id.resource_id().with_suffix("/assets/*"),
     ]
 }
 
