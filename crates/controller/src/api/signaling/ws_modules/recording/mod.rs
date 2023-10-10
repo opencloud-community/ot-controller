@@ -128,6 +128,14 @@ impl SignalingModule for Recording {
                         control::exchange::current_room_all_participants(self.room),
                         exchange::Message::Stopped(RecordingId::from(self.id)),
                     );
+                } else {
+                    control::storage::remove_attribute(
+                        ctx.redis_conn(),
+                        self.room,
+                        self.id,
+                        "recording_consent",
+                    )
+                    .await?;
                 }
             }
             Event::RaiseHand => {}
@@ -224,6 +232,14 @@ impl SignalingModule for Recording {
                 }
                 exchange::Message::Stopped(recording_id) => {
                     if !self.i_am_the_recorder {
+                        control::storage::remove_attribute(
+                            ctx.redis_conn(),
+                            self.room,
+                            self.id,
+                            "recording_consent",
+                        )
+                        .await?;
+
                         ctx.ws_send(Stopped { recording_id });
                     }
                 }
