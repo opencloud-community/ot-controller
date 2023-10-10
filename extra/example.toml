@@ -181,10 +181,11 @@ secret_key = "minioadmin"
 # Default presenter role for all users (defaults to false if not set)
 #screen_share_requires_permission = true
 # A list of disabled features in the controller. By default all features are enabled.
-# Format: <namespace>::<feature>. A missing namespace defaults to "core".
+# Format: <module>::<feature>. A missing module defaults to "core".
 # Currently supported features:
 # - core::call_in
-#disabled_features = ["core::call_in"]
+# - integration::outlook
+#disabled_features = ["core::call_in", "integration::outlook"]
 
 # Settings for endpoints
 #[endpoints]

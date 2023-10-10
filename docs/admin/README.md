@@ -16,7 +16,7 @@ SPDX-License-Identifier: EUPL-1.2
 - [Execution of maintenance jobs](jobs.md)
 - [Modules that can be used in meetings](modules.md)
 
-## Interaction between OpenTalk Controller and other sevrices
+## Interaction between OpenTalk Controller and other services
 
 ### Services required by OpenTalk Controller
 
