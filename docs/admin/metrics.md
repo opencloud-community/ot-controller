@@ -5,30 +5,63 @@ SPDX-License-Identifier: EUPL-1.2
 
 # Metrics
 
-<!-- TODO -->
-:construction: This section has not been finished yet.
+The OpenTalk controller is collecting metrics and is exposing them through the `/metrics` endpoint.
+
+## Configuration
+
+The section in the [configuration file](configuration.md) is called `metrics`.
+
+By default, the `/metrics` endpoint refuses all connections. The access can be configured with an allowlist.
+
+| Field       | Type     | Required | Default value | Description                                                       |
+| ----------- | -------- | -------- | ------------- | ----------------------------------------------------------------- |
+| `allowlist` | `string` | no       | -             | List of IP-Addresses or Subnet which are allowed to fetch metrics |
+
+### Examples
+
+#### Access Denied (default)
+
+```toml
+[metrics]
+allowlist = []
+```
+
+#### Only allow localhost
+
+```toml
+[metrics]
+allowlist = ["127.0.0.0/8", "::ffff:0:0/96"]
+```
+
+#### Allow IPs and Subnets
+
+```toml
+[metrics]
+allowlist = ["1.1.1.1", "127.0.0.0/8"]
+```
 
 ## Web-API
 
-<!-- TODO -->
-:construction: This section has not been finished yet.
+The metrics can be accessed via the `/metrics` endpoint in the [OpenMetrics Text Format](https://github.com/OpenObservability/OpenMetrics), which is utilized by [prometheus](https://prometheus.io/docs/instrumenting/exposition_formats/#openmetrics-text-format).
 
-| Key                                       | Type      | Labels                  | Description                                                     |
-| ----------------------------------------- | --------- | ----------------------- | --------------------------------------------------------------- |
-| web.request_durations                     | histogram | method, handler, status | summary of request durations                                    |
-| web.response_sizes                        | histogram | method, handler, status | summary of response sizes                                       |
-| web.issued_email_tasks_count              | counter   | mail_task_kind          | Number of issued email tasks                                    |
-| signaling.runner_startup_time_seconds     | histogram | successful              | Time the runner takes to initialize                             |
-| signaling.runner_destroy_time_seconds     | histogram | successful              | Time the runner takes to stop                                   |
-| signaling.created_rooms_count             | counter   |                         | Number of created rooms                                         |
-| signaling.destroyed_rooms_count           | counter   |                         | Number of destroyed rooms                                       |
-| signaling.participants_count              | gauge     | participation_kind      | Number of participants                                          |
-| signaling.participants_with_audio_count   | gauge     | media_session_type      | Number of participants with audio unmuted                       |
-| signaling.participants_with_video_count   | gauge     | media_session_type      | Number of participants with video unmuted                       |
-| sql.dbpool_connections                    | gauge     |                         | Number of currently non-idling db connections                   |
-| sql.dbpool_connections_idle               | gauge     |                         | Number of currently idling db connections                       |
-| sql.execution_time_seconds                | histogram |                         | SQL query execution time for whole queries during web operation |
-| sql.errors_total                          | counter   |                         | Counter of SQL errors                                           |
-| redis.command_execution_time_seconds      | histogram | command                 | Redis command execution time                                    |
-| kustos.enforce_execution_time_seconds     | histogram |                         | Kustos enforce execution time                                   |
-| kustos.load_policy_execution_time_seconds | histogram |                         | Kustos load policy execution time                               |
+### Metrics Exposed
+
+| Key                                              | Type      | Labels                  | Description                                                     |
+| ------------------------------------------------ | --------- | ----------------------- | --------------------------------------------------------------- |
+| web_request_durations_bucket                     | histogram | method, handler, status | summary of request durations                                    |
+| web_response_sizes_bucket                        | histogram | method, handler, status | summary of response sizes                                       |
+| web_issued_email_tasks_count_bucket              | counter   | mail_task_kind          | Number of issued email tasks                                    |
+| signaling_runner_startup_time_seconds_bucket     | histogram | successful              | Time the runner takes to initialize                             |
+| signaling_runner_destroy_time_seconds_bucket     | histogram | successful              | Time the runner takes to stop                                   |
+| signaling_created_rooms_count_bucket             | counter   |                         | Number of created rooms                                         |
+| signaling_destroyed_rooms_count_bucket           | counter   |                         | Number of destroyed rooms                                       |
+| signaling_participants_count_bucket              | gauge     | participation_kind      | Number of participants                                          |
+| signaling_participants_with_audio_count_bucket   | gauge     | media_session_type      | Number of participants with audio unmuted                       |
+| signaling_participants_with_video_count_bucket   | gauge     | media_session_type      | Number of participants with video unmuted                       |
+| sql_dbpool_connections_bucket                    | gauge     |                         | Number of currently non-idling db connections                   |
+| sql_dbpool_connections_idle_bucket               | gauge     |                         | Number of currently idling db connections                       |
+| sql_execution_time_seconds_bucket                | histogram |                         | SQL query execution time for whole queries during web operation |
+| sql_errors_total_bucket                          | counter   |                         | Counter of SQL errors                                           |
+| redis_command_execution_time_seconds_bucket      | histogram | command                 | Redis command execution time                                    |
+| kustos_enforce_execution_time_seconds_bucket     | histogram |                         | Kustos enforce execution time                                   |
+| kustos_load_policy_execution_time_seconds_bucket | histogram |                         | Kustos load policy execution time                               |
