@@ -9,13 +9,13 @@ SPDX-License-Identifier: EUPL-1.2
 
 The section in the [configuration file](configuration.md) is called `rabbit_mq`.
 
-| Field                  | Type     | Required | Default value                       | Description                                                                    |
-| ---------------------- | -------- | -------- | ----------------------------------- | ------------------------------------------------------------- |
-| `url`                  | `string` | no       | "amqp://guest:guest@localhost:5672" | The RabbitMQ broker URL connection                            |                                                                            |
-| `mail_task_queue`      | `string` | no       | -                                   | Name of the RabbitMQ queue for the mail worker                |
-| `recording_task_queue` | `string` | no       | -                                   | Name of the RabbitMQ queue for the recorder                   |
-| `min_connections`      | `uint`   | no       | 10                                  | Minimum connections to retain when removing stale connections |
-| `max_channels`         | `uint`   | no       | 100                                 | Maxmimum number of AMQP channels per connection allowed       |
+| Field                  | Type     | Required | Default value                       | Description                                                      |
+| ---------------------- | -------- | -------- | ----------------------------------- | ---------------------------------------------------------------- |
+| `url`                  | `string` | no       | "amqp://guest:guest@localhost:5672" | The RabbitMQ broker URL connection                               |
+| `mail_task_queue`      | `string` | no       | -                                   | Name of the RabbitMQ queue for the [SMTP-Mailer](smtp_mailer.md) |
+| `recording_task_queue` | `string` | no       | -                                   | Name of the RabbitMQ queue for the [recorder](recorder.md)       |
+| `min_connections`      | `uint`   | no       | 10                                  | Minimum connections to retain when removing stale connections    |
+| `max_channels`         | `uint`   | no       | 100                                 | Maxmimum number of AMQP channels per connection allowed          |
 
 ### Examples
 
