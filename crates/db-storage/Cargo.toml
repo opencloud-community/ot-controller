@@ -21,13 +21,9 @@ types = { path = "../types", package = "opentalk-types", features = ["backend"] 
 serde.workspace = true
 serde_json = { workspace = true, features = ["raw_value"] }
 
-### Base<n> encodings
-basen = "0.1.0"
-
 ### Error handling
 anyhow.workspace = true
 thiserror.workspace = true
-validator.workspace = true
 
 ### Database ORM
 diesel = { workspace = true, features = [
@@ -43,9 +39,6 @@ refinery = { version = "0.8", features = ["tokio-postgres"] }
 refinery-core = "0.8"
 barrel = { version = "0.7", features = ["pg"] }
 
-### QoL/Util
-itertools.workspace = true
-
 ### Logging utilities
 log = { workspace = true, features = ["serde"] }
 tracing.workspace = true
@@ -55,11 +48,6 @@ tokio = { workspace = true, features = ["signal"] }
 chrono.workspace = true
 chrono-tz = { workspace = true, features = ["serde"] }
 
-### Redis
-redis = { workspace = true, features = ["tokio-comp", "connection-manager"] }
-url.workspace = true
-
-rand.workspace = true
 strum.workspace = true
 redis-args = { path = "../redis-args" }
 

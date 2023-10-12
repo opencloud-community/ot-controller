@@ -22,3 +22,9 @@ redis.workspace = true
 redis-args = { path = "../redis-args" }
 serde.workspace = true
 serde_json.workspace = true
+
+[package.metadata.cargo-machete]
+ignored = [
+  # is used in doctests
+  "serde",
+]

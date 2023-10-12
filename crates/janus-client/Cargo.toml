@@ -54,3 +54,11 @@ tokio = { workspace = true, features = ["sync", "rt", "macros"] }
 default = ["videoroom", "echotest"]
 videoroom = []
 echotest = []
+
+[package.metadata.cargo-machete]
+ignored = [
+  # is used in doctests
+  "tokio_test",
+  # is required by #[tokio::test] macro
+  "env_logger",
+]

@@ -14,8 +14,6 @@ publish = false
 [dependencies]
 controller = { path = "../../crates/controller", package = "opentalk-controller-core" }
 community-modules = { path = "../../crates/community-modules", package = "opentalk-community-modules" }
-signaling-core = { path = "../../crates/signaling-core", package = "opentalk-signaling-core" }
-kustos = { path = "../../crates/kustos" }
 anyhow.workspace = true
 actix-web.workspace = true
 anstream.workspace = true
