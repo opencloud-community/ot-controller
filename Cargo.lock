@@ -3653,6 +3653,7 @@ dependencies = [
  "diesel",
  "email_address",
  "kustos",
+ "opentalk-client-shared",
  "pretty_assertions",
  "rand",
  "redis",

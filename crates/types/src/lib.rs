@@ -113,4 +113,7 @@ mod imports {
         serde::{de, Deserialize, Deserializer, Serialize, Serializer},
         validator::{Validate, ValidationError, ValidationErrors},
     };
+
+    #[cfg(feature = "frontend")]
+    pub use client_shared::{Method, Request};
 }

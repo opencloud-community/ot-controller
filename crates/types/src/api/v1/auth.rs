@@ -9,6 +9,9 @@ use std::collections::HashSet;
 #[allow(unused_imports)]
 use crate::imports::*;
 
+#[cfg(feature = "frontend")]
+const LOGIN_PATH: &str = "/v1/auth/login";
+
 /// Body of a *POST* request on `/auth/login`
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -17,12 +20,31 @@ pub struct PostLoginRequest {
     pub id_token: String,
 }
 
+#[cfg(feature = "frontend")]
+impl Request for PostLoginRequest {
+    type Response = PostLoginResponse;
+    const PATH: &'static str = LOGIN_PATH;
+    const METHOD: Method = Method::POST;
+}
+
 /// Body of the response to a *POST* request on `/auth/login`
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct PostLoginResponse {
     /// Permissions is a set of strings that each define a permission a user has.
     pub permissions: HashSet<String>,
+}
+
+/// *GET* request on `/auth/login`
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct GetLoginRequest;
+
+#[cfg(feature = "frontend")]
+impl Request for GetLoginRequest {
+    type Response = GetLoginResponse;
+    const PATH: &'static str = LOGIN_PATH;
+    const METHOD: Method = Method::GET;
 }
 
 /// Body of the response to a *GET* request on `/auth/login`
