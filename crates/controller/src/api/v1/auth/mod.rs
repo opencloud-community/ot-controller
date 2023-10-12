@@ -29,13 +29,13 @@ mod update_user;
 
 /// The JSON Body expected when making a *POST* request on `/auth/login`
 #[derive(Debug, Deserialize)]
-pub struct Login {
+pub struct PostLoginRequest {
     id_token: String,
 }
 
 /// JSON Body of the response coming from the *POST* request on `/auth/login/`
 #[derive(Debug, Serialize)]
-pub struct LoginResponse {
+pub struct PostLoginResponse {
     /// Permissions is a set of strings that each define a permission a user has.
     permissions: HashSet<String>,
 }
@@ -45,15 +45,15 @@ pub struct LoginResponse {
 /// Verifies the `id_token` inside the provided [`Json<Login>`] body. When the token is valid, a
 /// database lookup for the requesting user is issued, if no user is found, a new user will be created.
 ///
-/// Returns a [`LoginResponse`] containing the users permissions.
+/// Returns a [`PostLoginResponse`] containing the users permissions.
 #[post("/auth/login")]
-pub async fn login(
+pub async fn post_login(
     settings: SharedSettingsActix,
     db: Data<Db>,
     oidc_ctx: Data<OidcContext>,
-    body: Json<Login>,
+    body: Json<PostLoginRequest>,
     authz: Data<kustos::Authz>,
-) -> Result<Json<LoginResponse>, ApiError> {
+) -> Result<Json<PostLoginResponse>, ApiError> {
     let id_token = body.into_inner().id_token;
 
     let mut info = match oidc_ctx.verify_id_token(&id_token) {
@@ -182,7 +182,7 @@ pub async fn login(
 
     update_core_user_permissions(authz.as_ref(), login_result).await?;
 
-    Ok(Json(LoginResponse {
+    Ok(Json(PostLoginResponse {
         // TODO calculate permissions
         permissions: Default::default(),
     }))
@@ -203,7 +203,7 @@ fn map_tariff_status_name(mapping: &TariffStatusMapping, name: &String) -> Tarif
 
 /// Wrapper struct for the oidc provider
 #[derive(Debug, Serialize, Eq, PartialEq, Hash)]
-pub struct Provider {
+pub struct GetLoginResponse {
     oidc: OidcProvider,
 }
 
@@ -218,13 +218,13 @@ pub struct OidcProvider {
 ///
 /// Returns information about the OIDC provider
 #[get("/auth/login")]
-pub async fn oidc_provider(oidc_ctx: Data<OidcContext>) -> Json<Provider> {
+pub async fn get_login(oidc_ctx: Data<OidcContext>) -> Json<GetLoginResponse> {
     let provider = OidcProvider {
         name: "default".to_string(),
         url: oidc_ctx.provider_url(),
     };
 
-    Json(Provider { oidc: provider })
+    Json(GetLoginResponse { oidc: provider })
 }
 
 enum LoginResult {

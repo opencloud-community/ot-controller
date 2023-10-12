@@ -5,7 +5,7 @@
 //! REST API v1
 //!
 //! Current Endpoints. See their respective function:
-//! - `/auth/login` ([post](auth::login))
+//! - `/auth/login` ([GET](auth::get_login), [POST](auth::post_login))
 //! - `/rooms` ([GET](rooms::accessible), [POST](rooms::new))
 //! - `/rooms/{room_id}` ([GET](rooms::get), [PATCH](rooms::patch))
 //! - `/rooms/{room_id}/start` ([POST](rooms::start))
