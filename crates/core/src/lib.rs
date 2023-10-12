@@ -44,7 +44,7 @@ impl SignalingModule for Core {
 
     async fn on_destroy(self, _ctx: DestroyContext<'_>) {}
 
-    fn build_params(_init: SignalingModuleInitData) -> Option<Self::Params> {
-        Some(())
+    async fn build_params(_init: SignalingModuleInitData) -> Result<Option<Self::Params>> {
+        Ok(Some(()))
     }
 }

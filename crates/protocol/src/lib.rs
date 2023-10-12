@@ -159,16 +159,16 @@ impl SignalingModule for Protocol {
         }
     }
 
-    fn build_params(init: SignalingModuleInitData) -> Option<Self::Params> {
+    async fn build_params(init: SignalingModuleInitData) -> Result<Option<Self::Params>> {
         let etherpad = init.shared_settings.load_full().etherpad.clone();
 
         match etherpad {
-            Some(etherpad) => Some(etherpad),
+            Some(etherpad) => Ok(Some(etherpad)),
             None => {
                 log::warn!(
                     "Skipping the Protocol module as no etherpad is specified in the config"
                 );
-                None
+                Ok(None)
             }
         }
     }

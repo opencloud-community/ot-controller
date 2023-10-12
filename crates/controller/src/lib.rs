@@ -12,8 +12,9 @@
 //!
 //! # use signaling_core::{ModulesRegistrar, RegisterModules};
 //! # struct CommunityModules;
+//! # #[async_trait::async_trait(?Send)]
 //! # impl RegisterModules for CommunityModules {
-//! #     fn register(registrar: &mut impl ModulesRegistrar) {
+//! #     async fn register(registrar: &mut impl ModulesRegistrar) -> Result<()> {
 //! #         unimplemented!();
 //! #     }
 //! # }
@@ -47,6 +48,7 @@ use anyhow::{anyhow, Context, Result};
 use api::signaling::echo::Echo;
 use api::signaling::{recording::Recording, SignalingModules};
 use arc_swap::ArcSwap;
+use async_trait::async_trait;
 use database::Db;
 use keycloak_admin::KeycloakAdminClient;
 use lapin_pool::RabbitMqPool;
@@ -122,13 +124,14 @@ where
 
 struct ControllerModules<M: RegisterModules>(PhantomData<M>);
 
+#[async_trait(?Send)]
 impl<M: RegisterModules> RegisterModules for ControllerModules<M> {
-    fn register(registrar: &mut impl ModulesRegistrar) {
-        registrar.register::<Echo>();
-        registrar.register::<BreakoutRooms>();
-        registrar.register::<ModerationModule>();
-        registrar.register::<Recording>();
-        M::register(registrar);
+    async fn register(registrar: &mut impl ModulesRegistrar) -> Result<()> {
+        registrar.register::<Echo>().await?;
+        registrar.register::<BreakoutRooms>().await?;
+        registrar.register::<ModerationModule>().await?;
+        registrar.register::<Recording>().await?;
+        M::register(registrar).await
     }
 }
 
@@ -279,26 +282,9 @@ impl Controller {
             metrics,
         };
 
-        M::register(&mut controller);
+        M::register(&mut controller).await?;
 
         Ok(controller)
-    }
-
-    pub async fn register<M: SignalingModule>(&mut self) {
-        let init = SignalingModuleInitData {
-            startup_settings: self.startup_settings.clone(),
-            shared_settings: self.shared_settings.clone(),
-            rabbitmq_pool: self.rabbitmq_pool.clone(),
-            redis: self.redis.clone(),
-            shutdown: self.shutdown.clone(),
-            reload: self.reload.clone(),
-        };
-
-        let params = M::build_params(init);
-
-        if let Some(params) = params {
-            self.signaling.add_module::<M>(params);
-        }
     }
 
     /// Runs the controller until a fatal error occurred or a shutdown is requested (e.g. SIGTERM).
@@ -481,8 +467,9 @@ impl Controller {
     }
 }
 
+#[async_trait(?Send)]
 impl ModulesRegistrar for Controller {
-    fn register<M: SignalingModule>(&mut self) {
+    async fn register<M: SignalingModule>(&mut self) -> Result<()> {
         let init = SignalingModuleInitData {
             startup_settings: self.startup_settings.clone(),
             shared_settings: self.shared_settings.clone(),
@@ -492,11 +479,15 @@ impl ModulesRegistrar for Controller {
             reload: self.reload.clone(),
         };
 
-        let params = M::build_params(init);
+        let params = M::build_params(init)
+            .await
+            .with_context(|| format!("Failed to initialize module '{}'", M::NAMESPACE))?;
 
         if let Some(params) = params {
             self.signaling.add_module::<M>(params);
         }
+
+        Ok(())
     }
 }
 

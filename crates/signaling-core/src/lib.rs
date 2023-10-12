@@ -2,6 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use anyhow::Result;
+use async_trait::async_trait;
+
 mod any_stream;
 mod destroy_context;
 mod event;
@@ -34,10 +37,12 @@ pub use redis_wrapper::{RedisConnection, RedisMetrics};
 pub use signaling_module::{SignalingModule, SignalingModuleInitData};
 pub use signaling_room_id::SignalingRoomId;
 
+#[async_trait(?Send)]
 pub trait RegisterModules {
-    fn register(registrar: &mut impl ModulesRegistrar);
+    async fn register(registrar: &mut impl ModulesRegistrar) -> Result<()>;
 }
 
+#[async_trait(?Send)]
 pub trait ModulesRegistrar {
-    fn register<M: SignalingModule>(&mut self);
+    async fn register<M: SignalingModule>(&mut self) -> Result<()>;
 }
