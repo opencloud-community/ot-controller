@@ -25,7 +25,7 @@ Functionality that can be configured through the configuration file:
 - [RabbitMQ](rabbitmq.md)
 - [Redis](redis.md)
 - [STUN and TURN](stun_turn.md)
-- [Authz](authz.md)
+- [Authz](acl.md)
 - [Call-in](call_in.md)
 - [MinIO](minio.md)
 - [EtherPad](etherpad.md)

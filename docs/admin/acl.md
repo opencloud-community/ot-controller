@@ -5,13 +5,18 @@ SPDX-License-Identifier: EUPL-1.2
 
 # ACL management
 
-<!-- TODO -->
-:construction: This section has not been finished yet.
+OpenTalk uses an in-memory Access Control List to efficiently track permissions. The controller maintains that list in
+its database and periodically reads it back to synchronize permissions written out by other controllers.
+
+## Configuration
+
+The section in the [configuration file](configuration.md) is called `authz`.
+
+| Field             | Type  | Required | Default value | Description                                             |
+| ----------------- | ----- | -------- | ------------- | ------------------------------------------------------- |
+| `reload_interval` | `int` | yes      | 10            | Reload interval of the ACL from the database in seconds |
 
 ## `opentalk-controller acl` subcommand
-
-<!-- TODO -->
-:construction: This section has not been finished yet.
 
 This subcommand is used modify ACLs.
 
@@ -38,10 +43,8 @@ Options:
 
 ## `opentalk-controller fix-acl` subcommand
 
-<!-- TODO -->
-:construction: This section has not been finished yet.
-
-This subcommand is used to recreate all ACL entries from the current database content.
+This subcommand is used to recreate all ACL entries from the current database content. Some updates to OpenTalk require
+this command to be run after migration.
 
 ### Help output
 
