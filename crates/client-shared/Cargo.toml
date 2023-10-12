@@ -1,0 +1,17 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+name = "opentalk-client-shared"
+edition = "2021"
+authors.workspace = true
+version.workspace = true
+publish = false
+description = "Types and traits that are used by the OpenTalk client library crate"
+
+[dependencies]
+
+[features]
+
+[dev-dependencies]
