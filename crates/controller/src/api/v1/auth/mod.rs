@@ -20,25 +20,14 @@ use db_storage::tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId};
 use db_storage::users::User;
 use kustos::prelude::PoliciesBuilder;
 use log::error;
-use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
-use types::core::{EventId, GroupName, RoomId, TariffStatus, TenantId};
+use types::api::v1::auth::{GetLoginResponse, OidcProvider};
+use types::{
+    api::v1::auth::{PostLoginRequest, PostLoginResponse},
+    core::{EventId, GroupName, RoomId, TariffStatus, TenantId},
+};
 
 mod create_user;
 mod update_user;
-
-/// The JSON Body expected when making a *POST* request on `/auth/login`
-#[derive(Debug, Deserialize)]
-pub struct PostLoginRequest {
-    id_token: String,
-}
-
-/// JSON Body of the response coming from the *POST* request on `/auth/login/`
-#[derive(Debug, Serialize)]
-pub struct PostLoginResponse {
-    /// Permissions is a set of strings that each define a permission a user has.
-    permissions: HashSet<String>,
-}
 
 /// API Endpoint *POST /auth/login*
 ///
@@ -199,19 +188,6 @@ fn map_tariff_status_name(mapping: &TariffStatusMapping, name: &String) -> Tarif
         error!("Invalid tariff status value found: \"{name}\"");
         TariffStatus::Default
     }
-}
-
-/// Wrapper struct for the oidc provider
-#[derive(Debug, Serialize, Eq, PartialEq, Hash)]
-pub struct GetLoginResponse {
-    oidc: OidcProvider,
-}
-
-/// Represents an OIDC provider
-#[derive(Debug, Serialize, Eq, PartialEq, Hash)]
-pub struct OidcProvider {
-    name: String,
-    url: String,
 }
 
 /// API Endpoint *GET /auth/login*
