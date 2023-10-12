@@ -3183,6 +3183,9 @@ dependencies = [
 [[package]]
 name = "opentalk-client-shared"
 version = "0.0.0-dev"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "opentalk-community-modules"

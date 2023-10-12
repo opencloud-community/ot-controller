@@ -11,6 +11,7 @@ publish = false
 description = "Types and traits that are used by the OpenTalk client library crate"
 
 [dependencies]
+serde.workspace = true
 
 [features]
 
