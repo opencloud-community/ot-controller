@@ -89,7 +89,7 @@ fn process_metrics_for_media_session_state(
 impl SignalingModule for Media {
     const NAMESPACE: &'static str = "media";
 
-    type Params = SignalingModuleInitData;
+    type Params = Arc<McuPool>;
 
     type Incoming = MediaCommand;
     type Outgoing = MediaEvent;
@@ -102,19 +102,9 @@ impl SignalingModule for Media {
 
     async fn init(
         mut ctx: InitContext<'_, Self>,
-        data: &Self::Params,
+        mcu: &Self::Params,
         _protocol: &'static str,
     ) -> Result<Option<Self>> {
-        let mcu = McuPool::build(
-            data.startup_settings.as_ref(),
-            data.shared_settings.clone(),
-            data.rabbitmq_pool.clone(),
-            data.redis.clone(),
-            data.shutdown.subscribe(),
-            data.reload.subscribe(),
-        )
-        .await?;
-
         let (media_sender, janus_events) = mpsc::channel(12);
 
         let state = HashMap::new();
@@ -602,8 +592,18 @@ impl SignalingModule for Media {
         }
     }
 
-    fn build_params(init: SignalingModuleInitData) -> Option<Self::Params> {
-        Some(init)
+    async fn build_params(data: SignalingModuleInitData) -> Result<Option<Self::Params>> {
+        let mcu_pool = McuPool::build(
+            data.startup_settings.as_ref(),
+            data.shared_settings.clone(),
+            data.rabbitmq_pool.clone(),
+            data.redis.clone(),
+            data.shutdown.subscribe(),
+            data.reload.subscribe(),
+        )
+        .await?;
+
+        Ok(Some(mcu_pool))
     }
 }
 

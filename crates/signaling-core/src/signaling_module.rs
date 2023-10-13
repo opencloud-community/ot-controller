@@ -83,5 +83,5 @@ pub trait SignalingModule: Send + Sized + 'static {
     async fn on_destroy(self, ctx: DestroyContext<'_>);
 
     /// Build the parameters for instantiating the signaling module
-    fn build_params(init: SignalingModuleInitData) -> Option<Self::Params>;
+    async fn build_params(init: SignalingModuleInitData) -> Result<Option<Self::Params>>;
 }

@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use anyhow::Result;
+use async_trait::async_trait;
 use chat::Chat;
 use integration::Integration;
 use janus_media::Media;
@@ -15,16 +17,17 @@ use whiteboard::Whiteboard;
 
 pub struct CommunityModules;
 
+#[async_trait(?Send)]
 impl RegisterModules for CommunityModules {
-    fn register(registrar: &mut impl ModulesRegistrar) {
-        registrar.register::<Core>();
-        registrar.register::<Chat>();
-        registrar.register::<Integration>();
-        registrar.register::<Media>();
-        registrar.register::<Polls>();
-        registrar.register::<Protocol>();
-        registrar.register::<SharedFolder>();
-        registrar.register::<Timer>();
-        registrar.register::<Whiteboard>();
+    async fn register(registrar: &mut impl ModulesRegistrar) -> Result<()> {
+        registrar.register::<Core>().await?;
+        registrar.register::<Chat>().await?;
+        registrar.register::<Integration>().await?;
+        registrar.register::<Media>().await?;
+        registrar.register::<Polls>().await?;
+        registrar.register::<Protocol>().await?;
+        registrar.register::<SharedFolder>().await?;
+        registrar.register::<Timer>().await?;
+        registrar.register::<Whiteboard>().await
     }
 }

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use anyhow::Result;
+use async_trait::async_trait;
 use clap::Subcommand;
 use signaling_core::{ModulesRegistrar, RegisterModules, SignalingModule};
 
@@ -15,17 +16,16 @@ pub enum Command {
 
 struct ModuleConsolePrinter;
 
+#[async_trait(?Send)]
 impl ModulesRegistrar for ModuleConsolePrinter {
-    fn register<M: SignalingModule>(&mut self) {
+    async fn register<M: SignalingModule>(&mut self) -> Result<()> {
         println!("{}: {:?}", M::NAMESPACE, M::get_provided_features());
+        Ok(())
     }
 }
 
 pub async fn handle_command<M: RegisterModules>(command: Command) -> Result<()> {
     match command {
-        Command::List => {
-            M::register(&mut ModuleConsolePrinter);
-            Ok(())
-        }
+        Command::List => M::register(&mut ModuleConsolePrinter).await,
     }
 }
