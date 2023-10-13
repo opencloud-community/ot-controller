@@ -153,7 +153,7 @@ impl Client {
 
     /// Creates a Session
     ///
-    /// Returns a [`Session`](Session) or [`Error`](error::Error) if something went wrong
+    /// Returns a [`Session`] or [`Error`](error::Error) if something went wrong
     pub async fn create_session(&self) -> Result<Session, error::Error> {
         let session_id = self.inner.create_session().await?;
 
@@ -170,7 +170,7 @@ impl Client {
 
 /// Janus API Session
 ///
-/// Allows to receive events from Janus and to create a [`Handle`](Handle) for a specific janus plugin (e.g. videoroom)
+/// Allows to receive events from Janus and to create a [`Handle`] for a specific janus plugin (e.g. videoroom)
 // todo expose a broadcast::Receiver as well for a Session as there might be Janus events that have a session but no sender
 #[derive(Clone, Debug)]
 pub struct Session {
@@ -183,7 +183,7 @@ impl Session {
         self.inner.id
     }
 
-    /// Returns the [`Handle`](Handle) with the given `HandleId`
+    /// Returns the [`Handle`] with the given `HandleId`
     pub fn find_handle(&self, id: &HandleId) -> Result<Handle, error::Error> {
         Ok(Handle {
             inner: self.inner.find_handle(id)?,
@@ -192,7 +192,7 @@ impl Session {
 
     /// Attaches to the given plugin
     ///
-    /// Returns a [`Handle`](Handle) or [`Error`](error::Error) if something went wrong
+    /// Returns a [`Handle`] or [`Error`](error::Error) if something went wrong
     pub async fn attach_to_plugin(
         &self,
         plugin: JanusPlugin,
