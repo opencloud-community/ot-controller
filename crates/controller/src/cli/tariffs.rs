@@ -259,20 +259,16 @@ async fn edit_tariff(
             }
 
             // Modify the `disabled_modules` list
-            let mut disabled_modules = tariff.disabled_modules;
+            let mut disabled_modules = tariff.disabled_modules();
             disabled_modules
                 .retain(|disabled_module| !remove_disabled_modules.contains(disabled_module));
-            disabled_modules.extend(add_disabled_modules);
-            disabled_modules.sort_unstable();
-            disabled_modules.dedup();
+            disabled_modules.extend(add_disabled_modules.into_iter());
 
             // Modify the `disabled_features` list
-            let mut disabled_features = tariff.disabled_features;
+            let mut disabled_features = tariff.disabled_features();
             disabled_features
                 .retain(|disabled_module| !remove_disabled_features.contains(disabled_module));
             disabled_features.extend(add_disabled_features);
-            disabled_features.sort_unstable();
-            disabled_features.dedup();
 
             // Modify the `quotas` set
             let mut quotas = tariff.quotas.0;
@@ -284,8 +280,8 @@ async fn edit_tariff(
                 name: set_name,
                 updated_at: Utc::now(),
                 quotas: Some(Jsonb(quotas)),
-                disabled_modules: Some(disabled_modules),
-                disabled_features: Some(disabled_features),
+                disabled_modules: Some(Vec::from_iter(disabled_modules)),
+                disabled_features: Some(Vec::from_iter(disabled_features)),
             }
             .apply(conn, tariff.id)
             .await?;
@@ -328,12 +324,12 @@ async fn print_tariffs(
             ids = "-".into();
         }
 
-        let mut disabled_modules = tariff.disabled_modules.into_iter().join("\n");
+        let mut disabled_modules = tariff.disabled_modules().into_iter().join("\n");
         if disabled_modules.is_empty() {
             disabled_modules = "-".into();
         }
 
-        let mut disabled_features = tariff.disabled_features.into_iter().join("\n");
+        let mut disabled_features = tariff.disabled_features().into_iter().join("\n");
         if disabled_features.is_empty() {
             disabled_features = "-".into();
         }

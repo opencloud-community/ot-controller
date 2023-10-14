@@ -35,11 +35,23 @@ pub struct Tariff {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub quotas: Jsonb<HashMap<String, u32>>,
-    pub disabled_modules: Vec<String>,
-    pub disabled_features: Vec<String>,
+    disabled_modules: Vec<Option<String>>,
+    disabled_features: Vec<Option<String>>,
 }
 
 impl Tariff {
+    pub fn disabled_modules(&self) -> HashSet<String> {
+        self.disabled_modules.iter().flatten().cloned().collect()
+    }
+
+    pub fn disabled_features(&self) -> HashSet<String> {
+        self.disabled_features.iter().flatten().cloned().collect()
+    }
+
+    pub fn is_feature_disabled(&self, feature: &str) -> bool {
+        self.disabled_features.contains(&Some(feature.to_string()))
+    }
+
     pub async fn get(conn: &mut DbConnection, id: TariffId) -> Result<Self> {
         let tariff = tariffs::table
             .filter(tariffs::id.eq(id))
@@ -104,12 +116,10 @@ impl Tariff {
         T2: Into<String>,
         T3: Into<String>,
     {
-        let disabled_modules: FxHashSet<String> =
-            HashSet::from_iter(self.disabled_modules.iter().cloned());
+        let disabled_modules: FxHashSet<String> = HashSet::from_iter(self.disabled_modules());
 
         let disabled_features: HashSet<_> = HashSet::from_iter(
-            self.disabled_features
-                .clone()
+            self.disabled_features()
                 .into_iter()
                 .chain(disabled_features.into_iter().map(Into::into)),
         );
@@ -269,12 +279,12 @@ mod test {
             updated_at: Default::default(),
             quotas: Default::default(),
             disabled_modules: vec![
-                "whiteboard".to_string(),
-                "timer".to_string(),
-                "media".to_string(),
-                "polls".to_string(),
+                Some("whiteboard".to_string()),
+                Some("timer".to_string()),
+                Some("media".to_string()),
+                Some("polls".to_string()),
             ],
-            disabled_features: vec!["chat::chat_feature_1".to_string()],
+            disabled_features: vec![Some("chat::chat_feature_1".to_string())],
         };
 
         let module_features = Vec::from([
