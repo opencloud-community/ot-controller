@@ -33,7 +33,7 @@ The participant list contains the recording-consent status in the `recording`-mo
 
 ### Joined
 
-When joining a room, the `joined` control event sent to all other participants contains the module-specific fields decribed below.
+When joining a room, the `joined` control event sent to all other participants contains the module-specific fields described below.
 
 #### Fields
 

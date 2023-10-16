@@ -7,7 +7,7 @@ conference room, or to individual users.
 
 ### JoinSuccess
 
-When joining a room, the `join_success` control event contains the module-specific fields decribed below.
+When joining a room, the `join_success` control event contains the module-specific fields described below.
 
 #### Fields
 
@@ -77,7 +77,7 @@ When joining a room, the `join_success` control event contains the module-specif
 
 ### Joined
 
-When joining a room, the `joined` control event sent to all other participants contains the module-specific fields decribed below.
+When joining a room, the `joined` control event sent to all other participants contains the module-specific fields described below.
 
 #### Fields
 

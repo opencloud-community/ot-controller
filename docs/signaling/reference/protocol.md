@@ -4,7 +4,7 @@
 
 ### JoinSuccess
 
-The `join_success` control event contains the module-specific fields decribed below.
+The `join_success` control event contains the module-specific fields described below.
 
 #### Fields
 

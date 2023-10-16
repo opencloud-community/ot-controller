@@ -23,7 +23,7 @@ sequenceDiagram
 
 ### JoinSuccess
 
-When joining a room, the `join_success` control event contains the module-specific fields decribed below.
+When joining a room, the `join_success` control event contains the module-specific fields described below.
 
 #### Fields
 

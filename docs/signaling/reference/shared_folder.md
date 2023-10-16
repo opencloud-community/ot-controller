@@ -11,7 +11,7 @@ Currently supported service types:
 
 ### JoinSuccess
 
-When joining a room, the `join_success` control event contains the module-specific fields decribed below if a shared folder has been configured for the event associated with the meeting.
+When joining a room, the `join_success` control event contains the module-specific fields described below if a shared folder has been configured for the event associated with the meeting.
 
 #### Fields
 
