@@ -109,32 +109,6 @@ The job takes a JSON object with the following fields as a parameter. All
 fields are optional, if any of them is not included in the parameter object, the
 default value will be used.
 
-| Field               | Type               | Default value | Description                                                                                                                                                         |
-| ------------------- | ------------------ | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `expired_before`    | `string` or `null` | `null`        | Timestamp in ISO 8601 format. All invites that expired before this timestamp are deleted by this job. If no timestamp is provided, the current system time is used. |
-
-The default parameters for the job look like this:
-
-<!-- begin:fromfile:json:jobs/parameters-invite-cleanup.json -->
-
-```json
-{
-  "expired_before": null
-}
-```
-
-<!-- end:fromfile:json:jobs/parameters-invite-cleanup.json -->
-
-### Job: `invite-cleanup`
-
-This job is intended to clear REST API permissions for inactive or expired invites to events.
-
-#### Parameters
-
-The job takes a JSON object with the following fields as a parameter. All
-fields are optional, if any of them is not included in the parameter object, the
-default value will be used.
-
 | Field                                  | Type   | Default value | Description                                                                                                                                                    |
 | -------------------------------------- | ------ | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `fail_on_shared_folder_deletion_error` | `bool` | `false`       | When `true`, the job will consider failure during deletion of the shared folder an error and abort, otherwise it is considered a warning and the job continues |
@@ -152,6 +126,32 @@ The default parameters for the job look like this:
 ```
 
 <!-- end:fromfile:json:jobs/parameters-adhoc-event-cleanup.json -->
+
+### Job: `invite-cleanup`
+
+This job is intended to clear REST API permissions for inactive or expired invites to events.
+
+#### Parameters
+
+The job takes a JSON object with the following fields as a parameter. All
+fields are optional, if any of them is not included in the parameter object, the
+default value will be used.
+
+| Field               | Type               | Default value | Description                                                                                                                                                         |
+| ------------------- | ------------------ | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `expired_before`    | `string` or `null` | `null`        | Timestamp in ISO 8601 format. All invites that expired before this timestamp are deleted by this job. If no timestamp is provided, the current system time is used. |
+
+The default parameters for the job look like this:
+
+<!-- begin:fromfile:json:jobs/parameters-invite-cleanup.json -->
+
+```json
+{
+  "expired_before": null
+}
+```
+
+<!-- end:fromfile:json:jobs/parameters-invite-cleanup.json -->
 
 ## `opentalk-controller jobs` subcommand
 
