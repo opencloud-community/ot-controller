@@ -35,6 +35,9 @@ pub struct RealmAccess {
 }
 
 /// Claims provided for a logged-in user
+//
+// A note to devs:
+// Please also update fields in `docs/admin/keycloak.md`.
 #[derive(Deserialize)]
 pub struct UserClaims {
     /// Expires at

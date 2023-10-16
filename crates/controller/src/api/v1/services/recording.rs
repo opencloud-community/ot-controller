@@ -19,6 +19,9 @@ use signaling_core::assets::save_asset;
 use signaling_core::{ObjectStorage, Participant, RedisConnection};
 use types::core::{ResumptionToken, RoomId, TicketToken};
 
+// Note to devs:
+// Please update `docs/admin/keycloak.md` service login documentation as well if
+// you change something here
 const REQUIRED_RECORDING_ROLE: &str = "opentalk-recorder";
 
 #[derive(Debug, Deserialize)]
