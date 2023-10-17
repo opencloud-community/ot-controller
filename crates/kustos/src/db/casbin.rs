@@ -81,7 +81,7 @@ pub async fn remove_policies(
                     .execute(conn)
                     .await
                 {
-                    Ok(n) if n == 1 => continue,
+                    Ok(1) => continue,
                     _ => return Err(DieselError::RollbackTransaction.into()),
                 }
             }

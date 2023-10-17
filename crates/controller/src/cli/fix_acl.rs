@@ -103,12 +103,13 @@ pub(super) async fn fix_acl(settings: Settings, args: Args) -> Result<()> {
         println!("ACLs fixed");
         Ok(())
     } else {
+        use std::fmt::Write;
         bail!(
             "{}",
-            errors
-                .iter()
-                .map(|e| format!("{e:#} \n"))
-                .collect::<String>()
+            errors.iter().fold(String::new(), |mut out, e| {
+                let _ = writeln!(out, "{e:#} ");
+                out
+            })
         )
     }
 }
