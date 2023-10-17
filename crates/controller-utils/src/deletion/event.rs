@@ -99,7 +99,7 @@ impl Deleter for EventDeleter {
 
     async fn check_permissions(
         &self,
-        prepared_commit: &Self::PreparedCommit,
+        _prepared_commit: &Self::PreparedCommit,
         _logger: &dyn Log,
         authz: &Authz,
         user_id: Option<UserId>,
@@ -109,15 +109,12 @@ impl Deleter for EventDeleter {
             None => return Ok(()),
         };
 
+        let event_id = self.event_id;
         let checked = authz
-            .check_user_batched(
-                user_id,
-                prepared_commit.resources.clone(),
-                AccessMethod::DELETE,
-            )
+            .check_user(user_id, event_id.resource_id(), AccessMethod::DELETE)
             .await?;
 
-        if checked.iter().any(|&res| !res) {
+        if !checked {
             return Err(Error::Forbidden);
         }
 
@@ -214,14 +211,14 @@ impl Deleter for EventDeleter {
 
 pub fn associated_resource_ids(event_id: EventId) -> impl IntoIterator<Item = ResourceId> {
     [
-        ResourceId::from(format!("/events/{event_id}")),
-        ResourceId::from(format!("/events/{event_id}/instances")),
-        ResourceId::from(format!("/events/{event_id}/instances/*")),
-        ResourceId::from(format!("/events/{event_id}/invites")),
-        ResourceId::from(format!("/events/{event_id}/invites/*")),
-        ResourceId::from(format!("/events/{event_id}/invite")),
-        ResourceId::from(format!("/events/{event_id}/reschedule")),
-        ResourceId::from(format!("/events/{event_id}/shared_folder")),
+        event_id.resource_id(),
+        event_id.resource_id().with_suffix("/instances"),
+        event_id.resource_id().with_suffix("/instances/*"),
+        event_id.resource_id().with_suffix("/invites"),
+        event_id.resource_id().with_suffix("/invites/*"),
+        event_id.resource_id().with_suffix("/invite"),
+        event_id.resource_id().with_suffix("/reschedule"),
+        event_id.resource_id().with_suffix("/shared_folder"),
         ResourceId::from(format!("/users/me/event_favorites/{event_id}")),
     ]
 }
