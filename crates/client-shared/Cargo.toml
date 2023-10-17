@@ -11,7 +11,12 @@ publish = false
 description = "Types and traits that are used by the OpenTalk client library crate"
 
 [dependencies]
+async-trait.workspace = true
+http = "0.2.9"
 serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+url.workspace = true
 
 [features]
 

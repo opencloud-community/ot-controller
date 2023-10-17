@@ -3184,7 +3184,12 @@ dependencies = [
 name = "opentalk-client-shared"
 version = "0.0.0-dev"
 dependencies = [
+ "async-trait",
+ "http",
  "serde",
+ "serde_json",
+ "thiserror",
+ "url",
 ]
 
 [[package]]

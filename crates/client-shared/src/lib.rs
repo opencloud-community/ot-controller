@@ -21,35 +21,11 @@
     clippy::pedantic
 )]
 
-use serde::{de::DeserializeOwned, Serialize};
+mod api_error;
+mod client;
+mod query;
+mod request;
 
-/// Access methods used by client for accessing the API
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Method {
-    /// HTTP GET method
-    GET,
-
-    /// HTTP POST method
-    POST,
-
-    /// HTTP PUT method
-    PUT,
-
-    /// HTTP PATCH method
-    PATCH,
-
-    /// HTTP DELETE method
-    DELETE,
-}
-
-/// A trait implemented for types that are sent to the API as parameters
-pub trait Request: std::fmt::Debug + Serialize {
-    /// The response type that is expected to the request
-    type Response: DeserializeOwned;
-
-    /// The API endpoint path relative to the base URL
-    const PATH: &'static str;
-
-    /// The method used to send the data to the API endpoint
-    const METHOD: Method;
-}
+pub use api_error::ApiError;
+pub use client::{rest_client::RestClient, Client};
+pub use request::to_http_request::ToHttpRequest;
