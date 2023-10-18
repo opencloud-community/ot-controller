@@ -14,28 +14,31 @@ publish = false
 anyhow.workspace = true
 log.workspace = true
 redis.workspace = true
-serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true
 diesel = { workspace = true, features = [
-    "uuid",
     "serde_json",
 ] }
 diesel-async = { workspace = true, features = ["postgres", "deadpool"] }
 
 fern = "0.6"
 pretty_assertions.workspace = true
-uuid.workspace = true
 
-controller = { path = "../controller", package = "opentalk-controller-core", optional = true }
-controller-settings = { path = "../controller-settings", package = "opentalk-controller-settings", optional = true }
 kustos = { path = "../kustos", package = "kustos", optional = true }
 database = { path = "../database", package = "opentalk-database", optional = true }
 db-storage = { path = "../db-storage", package = "opentalk-db-storage", optional = true }
 signaling-core = { path = "../signaling-core", package = "opentalk-signaling-core", features = ["module_tester"] }
 types = { path = "../types", package = "opentalk-types", features = ["backend"] }
 
+[dev-dependencies]
+serde.workspace = true
+
 [features]
-controller = ["database", "dep:controller", "dep:controller-settings", "dep:kustos"]
+controller = ["database", "dep:kustos"]
 database = ["dep:database", "dep:db-storage"]
 
+[package.metadata.cargo-machete]
+ignored = [
+  # is used in doctests
+  "serde",
+]

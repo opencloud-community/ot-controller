@@ -102,6 +102,14 @@ lint:dependency_check:
   stage: lint
   script: cargo-deny --workspace check
 
+lint:unnecessary_dependencies:
+  needs: []
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  stage: lint
+  before_script: if ! cargo machete --version; then cargo install cargo-machete; fi
+  script: cargo machete --with-metadata
+
 lint:yaml:
   needs: []
   rules:

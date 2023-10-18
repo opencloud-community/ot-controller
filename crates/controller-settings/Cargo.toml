@@ -19,17 +19,12 @@ arc-swap.workspace = true
 serde.workspace = true
 serde_path_to_error = "0.1.14"
 openidconnect.workspace = true
-chrono.workspace = true
 url.workspace = true
-uuid = { workspace = true, features = ["serde", "v4"] }
-redis = { workspace = true, features = ["tokio-comp", "connection-manager"] }
 cidr = { version = "0.2", features = ["serde"] }
 phonenumber.workspace = true
-redis-args = { path = "../redis-args" }
 rustc-hash.workspace = true
 anstream.workspace = true
 owo-colors.workspace = true
-strum.workspace = true
 
 [dev-dependencies]
 pretty_assertions.workspace = true

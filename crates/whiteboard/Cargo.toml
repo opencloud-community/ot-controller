@@ -14,7 +14,6 @@ publish = false
 
 [dependencies]
 controller-settings = { path = "../controller-settings", package = "opentalk-controller-settings" }
-db-storage = { path = "../db-storage", package = "opentalk-db-storage" }
 database = { path = "../database", package = "opentalk-database" }
 log.workspace = true
 redis-args = { path = "../redis-args" }
@@ -28,18 +27,9 @@ reqwest = { workspace = true, features = [
     "stream",
 ] }
 serde.workspace =  true
-serde_repr.workspace = true
-serde_json.workspace = true
 anyhow.workspace = true
-tokio = { workspace = true, features = ["time"] }
-chrono.workspace = true
-percent-encoding.workspace = true
 url.workspace = true
 bytes.workspace = true
 futures.workspace = true
 async-trait.workspace = true
 tracing.workspace = true
-
-[dev-dependencies]
-actix-rt.workspace = true
-rand.workspace = true

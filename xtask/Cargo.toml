@@ -26,8 +26,6 @@ unified-diff = { version = "0.2.1" }
 
 log.workspace = true
 env_logger.workspace = true
-
-diesel.workspace = true
 diesel-async = { workspace = true, features = ["postgres", "deadpool"] }
 
 rand.workspace = true

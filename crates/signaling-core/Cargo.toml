@@ -22,7 +22,6 @@ bytestring.workspace = true
 controller-settings = { path = "../controller-settings", package = "opentalk-controller-settings" }
 database = { path = "../database", package = "opentalk-database" }
 db-storage = { path = "../db-storage", package = "opentalk-db-storage" }
-diesel.workspace = true
 futures.workspace = true
 kustos = { path = "../../crates/kustos" }
 lapin.workspace = true
@@ -47,9 +46,6 @@ tracing.workspace = true
 types = { path = "../types", package = "opentalk-types", features = ["backend"] }
 url.workspace = true
 uuid = { workspace = true, features = ["v4"] }
-
-[dev-dependencies]
-pretty_assertions.workspace = true
 
 [features]
 default = []
