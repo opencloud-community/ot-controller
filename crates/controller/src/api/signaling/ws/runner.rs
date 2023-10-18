@@ -10,6 +10,7 @@ use super::{
     DestroyContext, ExchangeBinding, ExchangePublish, NamespacedCommand, NamespacedEvent, Timestamp,
 };
 use crate::api::signaling::{
+    echo::Echo,
     moderation,
     resumption::{ResumptionTokenKeepAlive, ResumptionTokenUsed},
     ws::actor::WsCommand,
@@ -37,7 +38,7 @@ use signaling_core::{
         ControlStateExt as _, NAMESPACE,
     },
     AnyStream, ExchangeHandle, ObjectStorage, Participant, RedisConnection, SignalingMetrics,
-    SignalingRoomId, SubscriberHandle,
+    SignalingModule, SignalingRoomId, SubscriberHandle,
 };
 use std::collections::HashMap;
 use std::future;
@@ -737,8 +738,10 @@ impl Runner {
                         .await;
                 }
             }
-            // Do not handle any other messages than control-join before joined
-        } else if let RunnerState::Joined = &self.state {
+            // Do not handle any other messages than control-join or echo before joined
+        } else if matches!(&self.state, RunnerState::Joined)
+            || matches!(namespaced.namespace, Echo::NAMESPACE)
+        {
             match self
                 .handle_module_targeted_event(
                     namespaced.namespace,
