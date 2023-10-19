@@ -5,5 +5,76 @@ SPDX-License-Identifier: EUPL-1.2
 
 # Logging
 
-<!-- TODO -->
-:construction: This section has not been finished yet.
+The log output from each component of the OpenTalk Controller can be configured, allowing administrators to control the
+verbosity and granularity of log messages.
+
+## Configuration
+
+The section in the [configuration file](configuration.md) is called `logging`. The examples here will only cover
+the log output of the controller. The rest of the fields of the `logging` section are related to the `tracing` configuration.
+See [tracing](tracing.md) for more information.
+
+| Field                | Type       | Required | Default value                                                                         | Description                                                              |
+| -------------------- | ---------- | -------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `default_directives` | `string[]` | no       | `["ERROR","opentalk=INFO","pinky_swear=OFF","rustls=WARN","mio=ERROR","lapin=WARN",]` | The global log level as well as a list of components and their log level |
+
+One of the values in the list of the `default_directives` can be the global log level, being either `OFF`, `ERROR`, `WARN`, `INFO`, `DEBUG` or `TRACE`.
+The global log level affects all components that don't have a specific log level configured. The default global log level is `ERROR`.
+
+The other values in the `default_directives` list should be key-value pairs with the key being the component and the value being the log level.
+
+To change the default values (`["ERROR","opentalk=INFO","pinky_swear=OFF","rustls=WARN","mio=ERROR","lapin=WARN",]`) of
+the `default_directives`, each component must be explicitly overwritten in the `config.toml`, otherwise the default values
+persist alongside the other configured directives.
+
+However, configuring the `default_directives` with the `RUST_LOG` environment variable will remove all defaults
+
+### `RUST_LOG` environment variable
+
+The log level of the controller can also be configured with the `RUST_LOG` environment variable. The variable follows the
+same pattern as the `default_directives` field. Any manually set values for the `default_directives` will still be applied
+alongside the `RUST_LOG` values. However, in case of a conflict, the values from the `RUST_LOG` are prioritized higher
+than the `default_directives` from the `config.toml`.
+
+For example, the following command would overwrite any log level values for the `opentalk` component if they were set
+in the `config.toml`:
+
+```sh
+RUST_LOG=opentalk=DEBUG cargo run
+```
+
+Furthermore, setting the `RUST_LOG` environment variable will overwrite all the default values for the `default_directives`.
+
+## Examples
+
+### Set the global log level to `WARN`
+
+```toml
+[logging]
+default_directives = [
+  "WARN",
+]
+```
+
+### Very verbose logging for the Janus client
+
+```toml
+[logging]
+default_directives = [
+  "janus_client=TRACE",
+]
+```
+
+### Default Setup
+
+```toml
+[logging]
+default_directives = [
+  "ERROR",
+  "opentalk=INFO",
+  "pinky_swear=OFF",
+  "rustls=WARN",
+  "mio=ERROR",
+  "lapin=WARN",
+]
+```
