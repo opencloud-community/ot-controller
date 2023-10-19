@@ -496,9 +496,7 @@ impl EventRoomInfo {
             .defaults
             .disabled_features()
             .contains(features::CALL_IN)
-            && !tariff
-                .disabled_features
-                .contains(&features::CALL_IN.to_string());
+            && !tariff.is_feature_disabled(features::CALL_IN);
 
         let mut call_in = None;
 

@@ -105,11 +105,7 @@ pub(crate) async fn require_feature(
 
     let tariff = Tariff::get_by_user_id(db_conn, &user_id).await?;
 
-    if tariff
-        .disabled_features
-        .iter()
-        .any(|disabled_feature| disabled_feature == feature)
-    {
+    if tariff.is_feature_disabled(feature) {
         return Err(ApiError::forbidden()
             .with_code("feature_disabled_by_tariff")
             .with_message(format!(
