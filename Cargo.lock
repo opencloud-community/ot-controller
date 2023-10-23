@@ -3181,10 +3181,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "opentalk-client"
+version = "0.0.0-dev"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "http",
+ "opentalk-client-shared",
+ "opentalk-types",
+ "reqwest",
+ "tokio",
+ "url",
+]
+
+[[package]]
 name = "opentalk-client-shared"
 version = "0.0.0-dev"
 dependencies = [
  "async-trait",
+ "bytes",
+ "derive_more",
  "http",
  "serde",
  "serde_json",
@@ -3657,6 +3673,7 @@ dependencies = [
  "derive_more",
  "diesel",
  "email_address",
+ "http",
  "kustos",
  "opentalk-client-shared",
  "pretty_assertions",

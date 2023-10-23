@@ -5,6 +5,7 @@
 
 use std::error::Error;
 
+use bytes::Bytes;
 use thiserror::Error;
 
 /// Errors which may occur when using API endpoints.
@@ -37,7 +38,7 @@ where
         source: http::uri::InvalidUri,
     },
 
-    /// JSON deserialization from GitLab failed.
+    /// JSON deserialization from OpenTalk failed.
     #[error("could not parse JSON response: {}", source)]
     Json {
         /// The source of the error.
@@ -45,20 +46,20 @@ where
         source: serde_json::Error,
     },
 
-    /// GitLab returned an error message.
-    #[error("gitlab server error: {}", msg)]
+    /// OpenTalk returned an error message.
+    #[error("opentalk server error: {}", msg)]
     OpenTalk {
         /// The error message from OpenTalk.
         msg: String,
     },
 
-    /// GitLab returned an error without JSON information.
-    #[error("gitlab internal server error {}", status)]
+    /// OpenTalk returned an error without JSON information.
+    #[error("opentalk internal server error {}", status)]
     OpenTalkService {
         /// The status code for the return.
         status: http::StatusCode,
-        /// The error data from GitLab.
-        data: Vec<u8>,
+        /// The error data from OpenTalk.
+        data: Bytes,
     },
 
     /// Failed to parse an expected data type from JSON.
@@ -76,4 +77,8 @@ where
         /// The source of the error
         source: http::Error,
     },
+
+    /// Trying to perform an unauthorized request
+    #[error("trying to perfom an unauthorized request")]
+    Unauthorized,
 }

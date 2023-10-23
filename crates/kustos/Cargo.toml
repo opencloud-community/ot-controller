@@ -21,7 +21,7 @@ barrel = { version = "0.7", features = ["pg"] }
 ### Error handling
 thiserror.workspace = true
 anyhow.workspace = true
-http = "0.2.9"
+http.workspace = true
 
 ### Database ORM
 diesel = { workspace = true, features = [

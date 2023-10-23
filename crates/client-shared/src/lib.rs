@@ -23,9 +23,10 @@
 
 mod api_error;
 mod client;
-mod query;
+mod data_option;
 mod request;
 
 pub use api_error::ApiError;
 pub use client::{rest_client::RestClient, Client};
-pub use request::to_http_request::ToHttpRequest;
+pub use data_option::DataOption;
+pub use request::{from_http_response::FromHttpResponse, to_http_request::ToHttpRequest, Request};

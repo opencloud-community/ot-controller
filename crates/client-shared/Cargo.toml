@@ -12,7 +12,9 @@ description = "Types and traits that are used by the OpenTalk client library cra
 
 [dependencies]
 async-trait.workspace = true
-http = "0.2.9"
+bytes.workspace = true
+derive_more.workspace = true
+http.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true

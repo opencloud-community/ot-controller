@@ -115,5 +115,5 @@ mod imports {
     };
 
     #[cfg(feature = "frontend")]
-    pub use client_shared::{Method, Request};
+    pub use {client_shared::Request, http::Method};
 }

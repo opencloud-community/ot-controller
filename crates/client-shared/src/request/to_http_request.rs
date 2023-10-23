@@ -18,14 +18,14 @@ pub trait ToHttpRequest: Request {
     /// An error will be returned whenever the conversion fails, e.g. because serialization is not possible.
     fn to_http_request<C: RestClient>(
         &self,
-        c: C,
+        c: &C,
     ) -> Result<http::request::Request<Vec<u8>>, ApiError<C::Error>>;
 }
 
 impl<R: Serialize + Request> ToHttpRequest for R {
     fn to_http_request<C: RestClient>(
         &self,
-        c: C,
+        c: &C,
     ) -> Result<http::request::Request<Vec<u8>>, ApiError<C::Error>> {
         let uri = c.rest_endpoint(Self::PATH)?.as_str().parse::<Uri>()?;
         let body = serde_json::to_vec(&self)?;

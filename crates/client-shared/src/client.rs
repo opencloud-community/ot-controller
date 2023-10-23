@@ -5,7 +5,7 @@
 
 use async_trait::async_trait;
 
-use crate::{request::Request, ApiError};
+use crate::{ApiError, ToHttpRequest};
 
 use self::rest_client::RestClient;
 
@@ -15,5 +15,8 @@ pub(crate) mod rest_client;
 #[async_trait]
 pub trait Client: RestClient {
     /// Send a REST query asynchronously.
-    async fn rest<R: Request>(&self, request: R) -> Result<R::Response, ApiError<Self::Error>>;
+    async fn rest<R: ToHttpRequest + Send>(
+        &self,
+        request: R,
+    ) -> Result<R::Response, ApiError<Self::Error>>;
 }
