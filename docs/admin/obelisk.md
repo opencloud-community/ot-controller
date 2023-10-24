@@ -1,8 +1,3 @@
-<!--
-SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
-SPDX-License-Identifier: EUPL-1.2
--->
-
 # OpenTalk Obelisk
 
 [OpenTalk Obelisk](https://gitlab.opencode.de/opentalk/obelisk) is a service

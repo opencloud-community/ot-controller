@@ -1,8 +1,3 @@
-<!--
-SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
-SPDX-License-Identifier: EUPL-1.2
--->
-
 # Tariffs
 
 Tariffs in OpenTalk can be created, edited, and deleted with the commandline using `opentalk-controller tariffs <COMMAND>`.

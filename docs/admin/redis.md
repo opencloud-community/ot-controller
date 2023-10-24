@@ -1,8 +1,3 @@
-<!--
-SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
-SPDX-License-Identifier: EUPL-1.2
--->
-
 # Redis
 
 The OpenTalk controller uses the in-memory data store [Redis](https://redis.com/) for caching data related to a video conference session.

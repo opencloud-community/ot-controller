@@ -1,8 +1,3 @@
-<!--
-SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
-SPDX-License-Identifier: EUPL-1.2
--->
-
 # OpenTalk HTTP server
 
 The OpenTalk Controller provides its service to clients through a built-in HTTP

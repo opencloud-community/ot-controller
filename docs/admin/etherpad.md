@@ -1,8 +1,3 @@
-<!--
-SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
-SPDX-License-Identifier: EUPL-1.2
--->
-
 # EtherPad
 
 The OpenTalk Controller uses an [Etherpad](https://etherpad.org/) server to provide a collaborative text editor for the `protocol` module.
