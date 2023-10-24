@@ -4,7 +4,7 @@ The OpenTalk Controller uses an [Etherpad](https://etherpad.org/) server to prov
 
 When no Etherpad is configured, the `protocol` module is disabled.
 
-# Deploy Etherpad
+## Deploy Etherpad
 
 An Etherpad instance is required before any configuration can be done. You can find a pre-configured Etherpad in our
 [Open CoDE Etherpad repository](https://gitlab.opencode.de/opentalk/etherpad).

@@ -4,7 +4,7 @@ The OpenTalk Controller uses a [Spacedeck](https://github.com/spacedeck) server 
 
 When no Spacedeck is configured, the `whiteboard` module is disabled.
 
-# Deploy Spacedeck
+## Deploy Spacedeck
 
 A `Spacedeck` instance is required before any configuration can be done. You can find a modified Spacedeck image in our
 [Open CoDE Spacedeck repository](https://gitlab.opencode.de/opentalk/spacedeck).
