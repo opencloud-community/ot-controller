@@ -4,7 +4,7 @@
 
 ### JoinSuccess
 
-When joining a room with a poll running, the `join_success` control event contains the module-specific fields decribed below.
+When joining a room with a poll running, the `join_success` control event contains the module-specific fields described below.
 
 #### Fields
 

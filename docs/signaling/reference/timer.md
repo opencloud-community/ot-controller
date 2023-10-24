@@ -4,7 +4,7 @@
 
 ### JoinSuccess
 
-When joining a room with a timer running, the `join_success` control event contains the module-specific fields decribed below.
+When joining a room with a timer running, the `join_success` control event contains the module-specific fields described below.
 
 #### Fields
 
@@ -38,7 +38,7 @@ Countdown:
 
 ### Joined
 
-When joining a room with a timer running, the `joined` control event sent to all other participants contains the module-specific fields decribed below.
+When joining a room with a timer running, the `joined` control event sent to all other participants contains the module-specific fields described below.
 
 #### Fields
 
