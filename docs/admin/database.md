@@ -13,7 +13,7 @@ The section in the [configuration file](configuration.md) is called `database`.
 
 | Field             | Type     | Required | Default value | Description                                                                    |
 | ----------------- | -------- | -------- | ------------- | ------------------------------------------------------------------------------ |
-| `url`             | `string` | yes      | -             | Database URL connection, with specified username, password, and database name  |                                                                            |
+| `url`             | `string` | yes      | -             | Database URL connection, with specified username, password, and database name  |
 | `max_connections` | `uint`   | no       | 100           | Maximum number of connection allowed to the database server                    |
 
 ### Examples
