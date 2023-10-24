@@ -1,8 +1,3 @@
-<!--
-SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
-SPDX-License-Identifier: EUPL-1.2
--->
-
 # ACL management
 
 OpenTalk uses an in-memory Access Control List to efficiently track permissions. The controller maintains that list in

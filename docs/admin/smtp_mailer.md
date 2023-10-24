@@ -1,8 +1,3 @@
-<!--
-SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
-SPDX-License-Identifier: EUPL-1.2
--->
-
 # OpenTalk SMTP-Mailer
 
 The [OpenTalk SMTP-Mailer](https://gitlab.opencode.de/opentalk/smtp-mailer) is a service whose main purpose is to send out E-mail invites, updates and cancellations of meetings.

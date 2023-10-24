@@ -1,8 +1,3 @@
-<!--
-SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
-SPDX-License-Identifier: EUPL-1.2
--->
-
 # Modules
 
 Modules provide functionality that can be used inside meetings.

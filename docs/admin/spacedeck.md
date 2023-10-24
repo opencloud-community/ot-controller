@@ -1,15 +1,10 @@
-<!--
-SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
-SPDX-License-Identifier: EUPL-1.2
--->
-
 # Spacedeck
 
 The OpenTalk Controller uses a [Spacedeck](https://github.com/spacedeck) server to provide a collaborative whiteboard for the `whiteboard` module.
 
 When no Spacedeck is configured, the `whiteboard` module is disabled.
 
-# Deploy Spacedeck
+## Deploy Spacedeck
 
 A `Spacedeck` instance is required before any configuration can be done. You can find a modified Spacedeck image in our
 [Open CoDE Spacedeck repository](https://gitlab.opencode.de/opentalk/spacedeck).

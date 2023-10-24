@@ -1,8 +1,3 @@
-<!--
-SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
-SPDX-License-Identifier: EUPL-1.2
--->
-
 # MinIO
 
 The OpenTalk Controller uses [MinIO](https://min.io/) as its object storage.

@@ -1,15 +1,10 @@
-<!--
-SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
-SPDX-License-Identifier: EUPL-1.2
--->
-
 # EtherPad
 
 The OpenTalk Controller uses an [Etherpad](https://etherpad.org/) server to provide a collaborative text editor for the `protocol` module.
 
 When no Etherpad is configured, the `protocol` module is disabled.
 
-# Deploy Etherpad
+## Deploy Etherpad
 
 An Etherpad instance is required before any configuration can be done. You can find a pre-configured Etherpad in our
 [Open CoDE Etherpad repository](https://gitlab.opencode.de/opentalk/etherpad).
