@@ -1,7 +1,0 @@
----
-title: Signaling
----
-
-# Signaling
-
-:construction:
