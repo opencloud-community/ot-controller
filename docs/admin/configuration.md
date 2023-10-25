@@ -86,8 +86,9 @@ This file can be found in the source code distribution under `extra/example.toml
 [logging]
 # Default tracing directives that will always be applied after RUST_LOG's directives.
 # Each array entry may contain a single directive.
-# Below are some example directives which are used by default
-# to reduce the extreme amount of spamming some crates do by default
+# Below are some example directives which are used by default to reduce the amount of spamming some crates do by default.
+# The defaults will always apply, but they can be explicitly overwritten with this config or the RUST_LOG environment
+# variable. The priority of the different configuration options is: RUST_LOG > config file > defaults
 #default_directives = [
 #   "ERROR",
 #   "opentalk=INFO",

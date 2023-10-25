@@ -26,8 +26,6 @@ To change the default values (`["ERROR","opentalk=INFO","pinky_swear=OFF","rustl
 the `default_directives`, each component must be explicitly overwritten in the `config.toml`, otherwise the default values
 persist alongside the other configured directives.
 
-However, configuring the `default_directives` with the `RUST_LOG` environment variable will remove all defaults
-
 ### `RUST_LOG` environment variable
 
 The log level of the controller can also be configured with the `RUST_LOG` environment variable. The variable follows the
@@ -41,8 +39,6 @@ in the `config.toml`:
 ```sh
 RUST_LOG=opentalk=DEBUG cargo run
 ```
-
-Furthermore, setting the `RUST_LOG` environment variable will overwrite all the default values for the `default_directives`.
 
 ## Examples
 
