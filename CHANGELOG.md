@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - controller: add endpoint to withdraw invites to participants that were invited via email ([#499](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/499))
 - controller: add `is_adhoc` flag in meeting event information ([#554](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/554))
 - jobs: add job for cleanup of expired invites ([#506](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/506))
+- mail-worker-protocol: added `adhoc_retention_seconds` field to `Events`([#591](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/591))
 
 ### Changed
 
