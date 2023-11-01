@@ -47,7 +47,6 @@ notice = "deny"
 # A list of advisory IDs to ignore. Note that ignored advisories will still
 # output a note when they are encountered.
 ignore = [
-    "RUSTSEC-2020-0071",
 ]
 # Threshold for security vulnerabilities, any vulnerability with a CVSS score
 # lower than the range specified will be ignored. Note that ignored advisories
@@ -158,6 +157,7 @@ deny = []
 skip = [
     { name = "ahash", version = "=0.7" },
     { name = "base64", version = "=0.13" },
+    { name = "fastrand", version = "1" },
     { name = "hashbrown", version = "=0.11" },
     { name = "hashbrown", version = "=0.12" },
     { name = "hyper-rustls", version = "=0.23" },
@@ -170,10 +170,12 @@ skip = [
     { name = "regex-syntax", version = "=0.6" },
     { name = "regex-automata", version = "=0.1" },
     { name = "rustls", version = "=0.20" },
+    { name = "siphasher", version = "=0.3" },
     { name = "socket2", version = "=0.4" },
     { name = "spin", version = "=0.5" },
+    { name = "strum", version = "=0.24" },
+    { name = "strum_macros", version = "=0.24" },
     { name = "syn", version = "=1" },
-    { name = "time", version = "=0.1" },
     { name = "toml", version = "=0.5" },
     { name = "tokio-rustls", version = "=0.23" },
 ]

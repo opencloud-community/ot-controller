@@ -95,21 +95,21 @@ macro_rules! log {
         if lvl <= ::log::STATIC_MAX_LEVEL {
             $crate::__private_api_log(
                 logger,
-                ::log::__log_format_args!($($arg)+),
+                ::log::__private_api::format_args!($($arg)+),
                 lvl,
-                &($target, ::log::__log_module_path!(), ::log::__log_file!(), ::log::__log_line!()),
+                &($target, ::log::__private_api::module_path!(), ::log::__private_api::file!(), ::log::__private_api::line!()),
             );
         }
     });
 
     // log!(target: "my_target", Level::Info, "a {} event", "log");
-    (target: $target:expr, $lvl:expr, $($arg:tt)+) => ($crate::log!(target: ::log::__log_module_path!(), log: ::log::logger(), $lvl,  $($arg)+));
+    (target: $target:expr, $lvl:expr, $($arg:tt)+) => ($crate::log!(target: ::log::__private_api::module_path!(), log: ::log::logger(), $lvl,  $($arg)+));
 
     // log!(log: log::logger(), Level::Info, "a log event")
-    (log: $logger:expr, $lvl:expr, $($arg:tt)+) => ($crate::log!(target: ::log::__log_module_path!(), log: $logger, $lvl, $($arg)+));
+    (log: $logger:expr, $lvl:expr, $($arg:tt)+) => ($crate::log!(target: ::log::__private_api::module_path!(), log: $logger, $lvl, $($arg)+));
 
     // log!(Level::Info, "a log event")
-    ($lvl:expr, $($arg:tt)+) => ($crate::log!(target: ::log::__log_module_path!(), log: ::log::logger(), $lvl, $($arg)+));
+    ($lvl:expr, $($arg:tt)+) => ($crate::log!(target: ::log::__private_api::module_path!(), log: ::log::logger(), $lvl, $($arg)+));
 }
 
 /// Log a message at the error level.
