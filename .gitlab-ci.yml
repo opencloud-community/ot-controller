@@ -329,7 +329,7 @@ build:
   before_script:
     - apt-get update && apt-get install -y libpq-dev musl-tools protobuf-compiler
   script:
-    - cargo build --release --locked --workspace
+    - cargo auditable build --release --locked --workspace
 
 package:controller-container-dev:
   needs:
