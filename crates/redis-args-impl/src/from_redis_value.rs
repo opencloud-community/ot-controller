@@ -3,12 +3,26 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use proc_macro::TokenStream;
+use proc_macro2::Span;
 use quote::quote;
 
-pub(crate) fn from_redis_value(input: TokenStream) -> TokenStream {
-    let ast = syn::parse_macro_input!(input as syn::DeriveInput);
+pub(crate) fn from_redis_value(mut input: TokenStream) -> TokenStream {
+    let ast = {
+        let input = input.clone();
+        syn::parse_macro_input!(input as syn::DeriveInput)
+    };
 
-    let conversion = get_from_redis_value_conversion(&ast.attrs);
+    match try_from_redis_value(ast) {
+        Ok(k) => k,
+        Err(err) => {
+            input.extend(TokenStream::from(err.to_compile_error()));
+            input
+        }
+    }
+}
+
+fn try_from_redis_value(ast: syn::DeriveInput) -> Result<TokenStream, syn::Error> {
+    let conversion = get_from_redis_value_conversion(&ast.attrs)?;
 
     match conversion {
         FromRedisValueConversion::Serde => impl_from_redis_value_serde(&ast),
@@ -22,13 +36,15 @@ enum FromRedisValueConversion {
     FromStr,
 }
 
-fn get_from_redis_value_conversion(attrs: &[syn::Attribute]) -> FromRedisValueConversion {
+fn get_from_redis_value_conversion(
+    attrs: &[syn::Attribute],
+) -> Result<FromRedisValueConversion, syn::Error> {
     let mut found_attr = None;
     for attr in attrs {
         if let Some(segment) = attr.path().segments.iter().next() {
             if segment.ident == "from_redis_value" {
                 if found_attr.is_some() {
-                    panic!("Multiple #[from_redis_value(...)] found");
+                    syn::Error::new(Span::call_site(), "Multiple #[from_redis_value(...)] found");
                 } else {
                     found_attr = Some(attr);
                 }
@@ -40,12 +56,20 @@ fn get_from_redis_value_conversion(attrs: &[syn::Attribute]) -> FromRedisValueCo
         return parse_from_redis_value_attribute_meta(attr.meta.clone());
     }
 
-    panic!("Attribute #[from_redis_value(...)] missing for #[derive(FromRedisValue)]");
+    Err(syn::Error::new(
+        Span::call_site(),
+        "Attribute #[from_redis_value(...)] missing for #[derive(FromRedisValue)]",
+    ))
 }
 
-fn parse_from_redis_value_attribute_meta(meta: syn::Meta) -> FromRedisValueConversion {
-    fn fail_with_generic_message() -> FromRedisValueConversion {
-        panic!("Attribute #[from_redis_value(...)] requires either `FromStr` or `serde` parameter");
+fn parse_from_redis_value_attribute_meta(
+    meta: syn::Meta,
+) -> Result<FromRedisValueConversion, syn::Error> {
+    fn create_generic_error_message() -> syn::Error {
+        syn::Error::new(
+            Span::call_site(),
+            "Attribute #[from_redis_value(...)] requires either `FromStr` or `serde` parameter",
+        )
     }
 
     match meta {
@@ -55,7 +79,10 @@ fn parse_from_redis_value_attribute_meta(meta: syn::Meta) -> FromRedisValueConve
             tokens,
         }) => {
             if !matches!(delimiter, syn::MacroDelimiter::Paren(_)) {
-                panic!("Attribute #[from_redis_value(...)] must have parentheses: '('");
+                return Err(syn::Error::new(
+                    Span::call_site(),
+                    "Attribute #[from_redis_value(...)] must have parentheses: '('",
+                ));
             }
 
             let mut tokens = tokens.into_iter();
@@ -66,23 +93,27 @@ fn parse_from_redis_value_attribute_meta(meta: syn::Meta) -> FromRedisValueConve
                 Some(proc_macro2::TokenTree::Ident(ident)) if ident == "serde" => {
                     FromRedisValueConversion::Serde
                 }
-                _ => fail_with_generic_message(),
+                _ => return Err(create_generic_error_message()),
             };
 
             if tokens.next().is_some() {
-                panic!("Attribute #[from_redis_args(...)] does not allow additional parameters");
+                return Err(syn::Error::new(
+                    Span::call_site(),
+                    "Attribute #[from_redis_args(...)] does not allow additional parameters",
+                ));
             }
 
-            conversion
+            Ok(conversion)
         }
-        syn::Meta::Path(_) => fail_with_generic_message(),
-        syn::Meta::NameValue(_) => {
-            panic!("Attribute #[from_redis_value(...)] does not allow assignments inside the parentheses");
-        }
+        syn::Meta::Path(_) => Err(create_generic_error_message()),
+        syn::Meta::NameValue(_) => Err(syn::Error::new(
+            Span::call_site(),
+            "Attribute #[from_redis_value(...)] does not allow assignments inside the parentheses",
+        )),
     }
 }
 
-fn impl_from_redis_value_serde(input: &syn::DeriveInput) -> TokenStream {
+fn impl_from_redis_value_serde(input: &syn::DeriveInput) -> Result<TokenStream, syn::Error> {
     let generics = &input.generics;
     let ident = &input.ident;
 
@@ -104,10 +135,10 @@ fn impl_from_redis_value_serde(input: &syn::DeriveInput) -> TokenStream {
             }
         }
     };
-    TokenStream::from(expanded)
+    Ok(TokenStream::from(expanded))
 }
 
-fn impl_from_redis_value_from_str(input: &syn::DeriveInput) -> TokenStream {
+fn impl_from_redis_value_from_str(input: &syn::DeriveInput) -> Result<TokenStream, syn::Error> {
     let generics = &input.generics;
     let ident = &input.ident;
 
@@ -137,5 +168,5 @@ fn impl_from_redis_value_from_str(input: &syn::DeriveInput) -> TokenStream {
             }
         }
     };
-    TokenStream::from(expanded)
+    Ok(TokenStream::from(expanded))
 }
