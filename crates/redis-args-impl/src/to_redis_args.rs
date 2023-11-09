@@ -3,12 +3,26 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use proc_macro::TokenStream;
+use proc_macro2::Span;
 use quote::quote;
 
-pub(crate) fn to_redis_args(input: TokenStream) -> TokenStream {
-    let ast = syn::parse_macro_input!(input as syn::DeriveInput);
+pub(crate) fn to_redis_args(mut input: TokenStream) -> TokenStream {
+    let ast = {
+        let input = input.clone();
+        syn::parse_macro_input!(input as syn::DeriveInput)
+    };
 
-    let conversion = get_to_redis_args_conversion(&ast.attrs);
+    match try_to_redis_args(ast) {
+        Ok(k) => k,
+        Err(err) => {
+            input.extend(TokenStream::from(err.to_compile_error()));
+            input
+        }
+    }
+}
+
+fn try_to_redis_args(ast: syn::DeriveInput) -> Result<TokenStream, syn::Error> {
+    let conversion = get_to_redis_args_conversion(&ast.attrs)?;
 
     match conversion {
         ToRedisArgsConversion::Serde => impl_to_redis_args_serde(&ast),
@@ -18,13 +32,18 @@ pub(crate) fn to_redis_args(input: TokenStream) -> TokenStream {
     }
 }
 
-fn get_to_redis_args_conversion(attrs: &[syn::Attribute]) -> ToRedisArgsConversion {
+fn get_to_redis_args_conversion(
+    attrs: &[syn::Attribute],
+) -> Result<ToRedisArgsConversion, syn::Error> {
     let mut found_attr = None;
     for attr in attrs {
         if let Some(segment) = attr.path().segments.iter().next() {
             if segment.ident == "to_redis_args" {
                 if found_attr.is_some() {
-                    panic!("Multiple #[to_redis_args(...)] found");
+                    return Err(syn::Error::new(
+                        Span::call_site(),
+                        "Multiple #[to_redis_args(...)] found",
+                    ));
                 } else {
                     found_attr = Some(attr);
                 }
@@ -36,7 +55,10 @@ fn get_to_redis_args_conversion(attrs: &[syn::Attribute]) -> ToRedisArgsConversi
         return parse_to_redis_args_attribute_meta(attr.meta.clone());
     }
 
-    panic!("Attribute #[to_redis_args(...)] missing for #[derive(ToRedisArgs)]");
+    Err(syn::Error::new(
+        Span::call_site(),
+        "Attribute #[to_redis_args(...)] missing for #[derive(ToRedisArgs)]",
+    ))
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -53,9 +75,11 @@ enum Fields {
     Empty,
 }
 
-fn parse_to_redis_args_attribute_meta(meta: syn::Meta) -> ToRedisArgsConversion {
-    fn fail_with_generic_message() -> ToRedisArgsConversion {
-        panic!("Attribute #[to_redis_args(...)] requires either `fmt`, `fmt = \"...\"`, `serde`, or `Display`  parameter");
+fn parse_to_redis_args_attribute_meta(
+    meta: syn::Meta,
+) -> Result<ToRedisArgsConversion, syn::Error> {
+    fn create_generic_error_message() -> syn::Error {
+        syn::Error::new(Span::call_site(), "Attribute #[to_redis_args(...)] requires either `fmt`, `fmt = \"...\"`, `serde`, or `Display`  parameter")
     }
 
     match meta {
@@ -65,7 +89,10 @@ fn parse_to_redis_args_attribute_meta(meta: syn::Meta) -> ToRedisArgsConversion 
             tokens,
         }) => {
             if !matches!(delimiter, syn::MacroDelimiter::Paren(_)) {
-                panic!("Attribute #[to_redis_args(...)] must have parentheses: '('");
+                return Err(syn::Error::new(
+                    Span::call_site(),
+                    "Attribute #[to_redis_args(...)] must have parentheses: '('",
+                ));
             }
 
             let mut tokens = tokens.into_iter();
@@ -79,31 +106,30 @@ fn parse_to_redis_args_attribute_meta(meta: syn::Meta) -> ToRedisArgsConversion 
                 Some(proc_macro2::TokenTree::Ident(ident)) if ident == "Display" => {
                     ToRedisArgsConversion::Display
                 }
-                _ => fail_with_generic_message(),
+                _ => return Err(create_generic_error_message()),
             };
 
             match tokens.next() {
                 Some(proc_macro2::TokenTree::Punct(punct)) if punct.as_char() == '=' => {
                     if conversion == ToRedisArgsConversion::Serde {
-                        panic!(
+                        return Err(syn::Error::new(Span::call_site(),
                             "Attribute #[to_redis_args(serde)] does not allow additional parameters"
-                        );
+                        ));
                     }
 
                     let tokens = proc_macro2::TokenStream::from_iter(tokens);
                     let s = syn::parse2::<syn::LitStr>(tokens).unwrap();
-                    ToRedisArgsConversion::Format(s.value())
+                    Ok(ToRedisArgsConversion::Format(s.value()))
                 }
-                Some(_) => {
-                    panic!("Unexpected token");
-                }
-                None => conversion,
+                Some(_) => Err(syn::Error::new(Span::call_site(), "Unexpected token")),
+                None => Ok(conversion),
             }
         }
-        syn::Meta::Path(_) => fail_with_generic_message(),
-        syn::Meta::NameValue(_) => {
-            panic!("Attribute #[from_redis_value(...)] does not allow assignments inside the parentheses");
-        }
+        syn::Meta::Path(_) => Err(create_generic_error_message()),
+        syn::Meta::NameValue(_) => Err(syn::Error::new(
+            Span::call_site(),
+            "Attribute #[from_redis_value(...)] does not allow assignments inside the parentheses",
+        )),
     }
 }
 
@@ -121,7 +147,7 @@ fn get_fields(fields: &syn::Fields) -> Fields {
     }
 }
 
-fn impl_to_redis_args_fmt(input: &syn::DeriveInput, fmt: &str) -> TokenStream {
+fn impl_to_redis_args_fmt(input: &syn::DeriveInput, fmt: &str) -> Result<TokenStream, syn::Error> {
     let generics = &input.generics;
     let ident = &input.ident;
     match &input.data {
@@ -149,7 +175,7 @@ fn impl_to_redis_args_fmt(input: &syn::DeriveInput, fmt: &str) -> TokenStream {
                             }
                         }
                     };
-                    TokenStream::from(expanded)
+                    Ok(TokenStream::from(expanded))
                 }
                 Fields::Unnamed(count) => {
                     // A very naive and probably fragile way to get the number of arguments in the format string.
@@ -158,7 +184,10 @@ fn impl_to_redis_args_fmt(input: &syn::DeriveInput, fmt: &str) -> TokenStream {
                         fmt.replace("{{", "").replace("}}", "").matches('{').count();
 
                     if num_arguments > count {
-                        panic!("Too many arguments in #[redis_args] format string.")
+                        return Err(syn::Error::new(
+                            Span::call_site(),
+                            "Too many arguments in #[redis_args] format string.",
+                        ));
                     }
 
                     let field_args = (0..num_arguments).map(|i| {
@@ -178,22 +207,22 @@ fn impl_to_redis_args_fmt(input: &syn::DeriveInput, fmt: &str) -> TokenStream {
                             }
                         }
                     };
-                    TokenStream::from(expanded)
+                    Ok(TokenStream::from(expanded))
                 }
-                Fields::Empty => {
-                    panic!(
-                        "The #[redis_args] attribute can only be attached to structs with fields."
-                    );
-                }
+                Fields::Empty => Err(syn::Error::new(
+                    Span::call_site(),
+                    "The #[redis_args] attribute can only be attached to structs with fields.",
+                )),
             }
         }
-        syn::Data::Enum(_) | syn::Data::Union(_) => {
-            panic!("#[to_redis_args(fmt)] can only be used with structs")
-        }
+        syn::Data::Enum(_) | syn::Data::Union(_) => Err(syn::Error::new(
+            Span::call_site(),
+            "#[to_redis_args(fmt)] can only be used with structs",
+        )),
     }
 }
 
-fn impl_to_redis_args_serde(input: &syn::DeriveInput) -> TokenStream {
+fn impl_to_redis_args_serde(input: &syn::DeriveInput) -> Result<TokenStream, syn::Error> {
     let generics = &input.generics;
     let ident = &input.ident;
 
@@ -208,10 +237,10 @@ fn impl_to_redis_args_serde(input: &syn::DeriveInput) -> TokenStream {
             }
         }
     };
-    TokenStream::from(expanded)
+    Ok(TokenStream::from(expanded))
 }
 
-fn impl_to_redis_args_display(input: &syn::DeriveInput) -> TokenStream {
+fn impl_to_redis_args_display(input: &syn::DeriveInput) -> Result<TokenStream, syn::Error> {
     let generics = &input.generics;
     let ident = &input.ident;
 
@@ -225,5 +254,5 @@ fn impl_to_redis_args_display(input: &syn::DeriveInput) -> TokenStream {
             }
         }
     };
-    TokenStream::from(expanded)
+    Ok(TokenStream::from(expanded))
 }
