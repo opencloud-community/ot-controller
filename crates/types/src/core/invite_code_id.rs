@@ -51,6 +51,17 @@ impl From<InviteCodeId> for PolicyInvite {
     }
 }
 
+#[cfg(feature = "frontend")]
+impl client_shared::Authorization for InviteCodeId {
+    fn add_authorization_information(&self, request: &mut http::request::Request<Vec<u8>>) {
+        let _ = request.headers_mut().insert(
+            http::header::AUTHORIZATION,
+            http::HeaderValue::from_str(&format!("InviteCode {}", self))
+                .expect("valid header value"),
+        );
+    }
+}
+
 #[cfg(feature = "actix")]
 mod actix_impls {
     use std::str::FromStr;

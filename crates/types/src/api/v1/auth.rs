@@ -23,8 +23,11 @@ pub struct PostLoginRequest {
 #[cfg(feature = "frontend")]
 impl Request for PostLoginRequest {
     type Response = PostLoginResponse;
-    const PATH: &'static str = LOGIN_PATH;
     const METHOD: Method = Method::POST;
+
+    fn path(&self) -> String {
+        LOGIN_PATH.into()
+    }
 }
 
 /// Body of the response to a *POST* request on `/auth/login`
@@ -43,8 +46,11 @@ pub struct GetLoginRequest;
 #[cfg(feature = "frontend")]
 impl Request for GetLoginRequest {
     type Response = GetLoginResponse;
-    const PATH: &'static str = LOGIN_PATH;
     const METHOD: Method = Method::GET;
+
+    fn path(&self) -> String {
+        LOGIN_PATH.into()
+    }
 }
 
 /// Body of the response to a *GET* request on `/auth/login`

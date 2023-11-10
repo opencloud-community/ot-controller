@@ -22,11 +22,16 @@
 )]
 
 mod api_error;
+mod authorization;
 mod client;
 mod data_option;
 mod request;
 
 pub use api_error::ApiError;
+pub use authorization::Authorization;
 pub use client::{rest_client::RestClient, Client};
 pub use data_option::DataOption;
-pub use request::{from_http_response::FromHttpResponse, to_http_request::ToHttpRequest, Request};
+pub use request::{
+    authorized::Authorized as AuthorizedRequest, from_http_response::FromHttpResponse,
+    to_http_request::ToHttpRequest, with_authorization::WithAuthorization, Request,
+};

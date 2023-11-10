@@ -2,8 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+pub(crate) mod authorized;
 pub(crate) mod from_http_response;
 pub(crate) mod to_http_request;
+pub(crate) mod with_authorization;
 
 use std::error::Error;
 
@@ -18,11 +20,11 @@ pub trait Request: std::fmt::Debug {
     /// The response type that is expected to the request
     type Response: FromHttpResponse;
 
-    /// The API endpoint path relative to the base URL
-    const PATH: &'static str;
-
     /// The method used to send the data to the API endpoint
     const METHOD: http::Method;
+
+    /// Get the API endpoint path relative to the base URL
+    fn path(&self) -> String;
 
     /// Get query parameters for the `http::Request`
     fn query<T: Serialize + Sized>(&self) -> Option<T> {

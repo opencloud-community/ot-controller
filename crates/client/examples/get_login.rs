@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use anyhow::Context;
-use opentalk_client::{Client, OpenTalkRequests};
+use opentalk_client::{Client, OpenTalkApiClient};
 use url::Url;
 
 #[tokio::main]

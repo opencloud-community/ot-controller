@@ -129,6 +129,40 @@ pub struct InvitedStartRequest {
     pub resumption: Option<ResumptionToken>,
 }
 
+/// A GET request to the `/rooms/<room_id>/event` endpoint
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct GetRoomEventRequest(pub RoomId);
+
+#[cfg(feature = "frontend")]
+impl client_shared::ToHttpRequest for GetRoomEventRequest {
+    fn to_http_request<C: client_shared::RestClient>(
+        &self,
+        c: &C,
+    ) -> Result<http::request::Request<Vec<u8>>, client_shared::ApiError<C::Error>> {
+        let uri = c
+            .rest_endpoint(&self.path())?
+            .as_str()
+            .parse::<http::Uri>()?;
+
+        http::Request::builder()
+            .method(Self::METHOD)
+            .uri(uri)
+            .body(vec![])
+            .map_err(|source| client_shared::ApiError::Request { source })
+    }
+}
+
+#[cfg(feature = "frontend")]
+impl Request for GetRoomEventRequest {
+    type Response = GetRoomEventResponse;
+
+    const METHOD: Method = Method::GET;
+
+    fn path(&self) -> String {
+        format!("/v1/rooms/{}/event", self.0)
+    }
+}
+
 /// The JSON body returned by the `/rooms/<room_id>/event` endpoint
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]

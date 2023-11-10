@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use http::Uri;
+use http::{header::CONTENT_TYPE, Uri};
 use serde::Serialize;
 
 use crate::{ApiError, RestClient};
@@ -27,12 +27,13 @@ impl<R: Serialize + Request> ToHttpRequest for R {
         &self,
         c: &C,
     ) -> Result<http::request::Request<Vec<u8>>, ApiError<C::Error>> {
-        let uri = c.rest_endpoint(Self::PATH)?.as_str().parse::<Uri>()?;
+        let uri = c.rest_endpoint(&self.path())?.as_str().parse::<Uri>()?;
         let body = serde_json::to_vec(&self)?;
 
         http::request::Request::builder()
             .method(Self::METHOD)
             .uri(uri)
+            .header(CONTENT_TYPE, "application/json")
             .body(body)
             .map_err(|source| ApiError::Request { source })
     }
