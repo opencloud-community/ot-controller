@@ -18,7 +18,7 @@ use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json, Path, Query, ReqData};
 use actix_web::{delete, get, patch, post, Either};
 use anyhow::Context;
-use chrono::{DateTime, Datelike, NaiveTime, TimeZone as _, Utc};
+use chrono::{DateTime, Datelike, NaiveTime, Utc};
 use chrono_tz::Tz;
 use controller_settings::{Settings, TenantAssignment};
 use database::{Db, DbConnection};
@@ -117,8 +117,8 @@ impl<'de> Visitor<'de> for InstanceIdVisitor {
     where
         E: serde::de::Error,
     {
-        Utc.datetime_from_str(v, UTC_DT_FORMAT)
-            .map(InstanceId)
+        DateTime::parse_from_str(v, UTC_DT_FORMAT)
+            .map(|dt| InstanceId(dt.with_timezone(&Utc)))
             .map_err(|_| serde::de::Error::invalid_value(serde::de::Unexpected::Str(v), &self))
     }
 }
