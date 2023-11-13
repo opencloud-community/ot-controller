@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use std::ops::{Deref, DerefMut};
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
@@ -85,7 +85,8 @@ impl RabbitMqPool {
                 .with_executor(TokioExecutor::current())
                 .with_reactor(TokioReactor),
         )
-        .await?;
+        .await
+        .context("Failed to connect to RabbitMQ. Please check your configuration.")?;
 
         Ok(connection)
     }
