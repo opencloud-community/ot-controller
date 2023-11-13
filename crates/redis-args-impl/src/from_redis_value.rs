@@ -6,18 +6,12 @@ use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
 
-pub(crate) fn from_redis_value(mut input: TokenStream) -> TokenStream {
-    let ast = {
-        let input = input.clone();
-        syn::parse_macro_input!(input as syn::DeriveInput)
-    };
+pub(crate) fn from_redis_value(input: TokenStream) -> TokenStream {
+    let ast = syn::parse_macro_input!(input as syn::DeriveInput);
 
     match try_from_redis_value(ast) {
         Ok(k) => k,
-        Err(err) => {
-            input.extend(TokenStream::from(err.to_compile_error()));
-            input
-        }
+        Err(err) => TokenStream::from(err.to_compile_error()),
     }
 }
 
