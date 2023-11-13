@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - controller: add endpoints for storing room-related streaming targets ([#601](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/601))
 - mail-worker-protocol: create event update mail tasks when an event instance gets updated ([#504](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/504))
+- controller: add status filter to event invites endpoint ([#610](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/610))
 
 ### Changed
 

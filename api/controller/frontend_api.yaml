@@ -1222,6 +1222,7 @@ paths:
       operationId: get_event_invites
       parameters:
         - $ref: '#/components/parameters/eventId'
+        - $ref: '#/components/parameters/eventInviteStatus'
         - $ref: '#/components/parameters/PerPage'
         - $ref: '#/components/parameters/Page'
       responses:
@@ -1674,6 +1675,19 @@ components:
       schema:
         type: integer
         default: 0
+    eventInviteStatus:
+      in: query
+      name: status
+      description: |
+        Filter by an event invite status
+      example:
+        - pending
+        - accepted
+        - tentative
+        - declined
+      schema:
+        type: string
+        enum: [pending, accepted, tentative, declined]
     userId:
       in: path
       name: user_id

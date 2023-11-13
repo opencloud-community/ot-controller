@@ -38,6 +38,8 @@ mod post_events_body;
 mod public_invite_user_profile;
 mod user_invite;
 
+pub mod invites;
+
 pub use call_in_info::CallInInfo;
 pub use delete_email_invite_body::DeleteEmailInviteBody;
 pub use delete_event_invite_path::DeleteEventInvitePath;

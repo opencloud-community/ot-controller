@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::collections::BTreeSet;
+
 use crate::rooms::Room;
 use crate::schema::{
     event_exceptions, event_favorites, event_invites, event_shared_folders, events, rooms,
@@ -858,10 +860,19 @@ impl EventInvite {
         event_id: EventId,
         per_page: i64,
         page: i64,
+        filter_by_status: Option<EventInviteStatus>,
     ) -> Result<(Vec<(EventInvite, User)>, i64)> {
+        let allowed_states = filter_by_status
+            .map(|s| BTreeSet::from([s]))
+            .unwrap_or_else(EventInviteStatus::all_enum_values);
+
         let query = event_invites::table
             .inner_join(users::table.on(event_invites::invitee.eq(users::id)))
-            .filter(event_invites::columns::event_id.eq(event_id))
+            .filter(
+                event_invites::columns::event_id
+                    .eq(event_id)
+                    .and(event_invites::columns::status.eq_any(allowed_states)),
+            )
             .order(event_invites::created_at.desc())
             .then_order_by(event_invites::created_by.desc())
             .then_order_by(event_invites::invitee.desc())
