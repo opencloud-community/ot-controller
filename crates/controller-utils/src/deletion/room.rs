@@ -299,6 +299,8 @@ fn associated_resource_ids(room_id: RoomId) -> impl IntoIterator<Item = Resource
         room_id.resource_id(),
         room_id.resource_id().with_suffix("/invites"),
         room_id.resource_id().with_suffix("/invites/*"),
+        room_id.resource_id().with_suffix("/streaming_targets"),
+        room_id.resource_id().with_suffix("/streaming_targets/*"),
         room_id.resource_id().with_suffix("/start"),
         room_id.resource_id().with_suffix("/tariff"),
         room_id.resource_id().with_suffix("/event"),

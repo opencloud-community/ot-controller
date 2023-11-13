@@ -42,6 +42,8 @@ tags:
     description: Endpoints that should be used by service integrations
   - name: shared_folder
     description: Endpoints related to shared folder functionality
+  - name: streaming_targets
+    description: Endpoints related to streaming target functionality
 
 paths:
   /auth/login:
@@ -1578,6 +1580,113 @@ paths:
                 $ref: '#/components/schemas/RoomStartError'
         500:
           $ref: '#/components/responses/InternalServerError'
+  /rooms/{room_id}/streaming_targets:
+    get:
+      summary: List the streaming targets for a room
+      tags: [rooms, streaming_targets]
+      parameters:
+        - $ref: '#/components/parameters/roomId'
+      responses:
+        200:
+          description: Successfully fetched streaming targets for the room
+          content:
+            application/json:
+              schema:
+                description: A JSON Array of StreamingTarget
+                type: array
+                items:
+                  $ref: '#/components/schemas/RoomStreamingTarget'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          description: The specified room could not be found
+        500:
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      summary: Create a streaming target for a room
+      tags: [rooms, streaming_targets]
+      parameters:
+        - $ref: '#/components/parameters/roomId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StreamingTarget'
+      responses:
+        201:
+          description: Successfully created a new streaming target for a room
+          content:
+            application_json:
+              schema:
+                $ref: '#/components/schemas/RoomStreamingTarget'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          description: The specified room's could not be found
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /rooms/{room_id}/streaming_targets/{streaming_target_id}:
+    get:
+      summary: Get the streaming target for a room
+      tags: [rooms, streaming_targets]
+      parameters:
+        - $ref: '#/components/parameters/roomId'
+        - $ref: '#/components/parameters/streamingTargetId'
+      responses:
+        200:
+          description: Successfully fetched streaming target for the room
+          content:
+            application_json:
+              schema:
+                $ref: '#/components/schemas/RoomStreamingTarget'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          description: The specified streaming target could not be found
+        500:
+          $ref: '#/components/responses/InternalServerError'
+    patch:
+      summary: Update a streaming target for a room
+      tags: [rooms, streaming_targets]
+      parameters:
+        - $ref: '#/components/parameters/roomId'
+        - $ref: '#/components/parameters/streamingTargetId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStreamingTarget'
+      responses:
+        200:
+          description: Successfully updated a new streaming target for a room
+          content:
+            application_json:
+              schema:
+                $ref: '#/components/schemas/RoomStreamingTarget'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          description: The specified room's could not be found
+        500:
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      summary: Delete the streaming target for a room
+      tags: [rooms, streaming_targets]
+      parameters:
+        - $ref: '#/components/parameters/roomId'
+        - $ref: '#/components/parameters/streamingTargetId'
+      responses:
+        204:
+          description: The streaming target has been deleted
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          description: The specified streaming target could not be found
+        500:
+          $ref: '#/components/responses/InternalServerError'
 
 components:
   securitySchemes:
@@ -1669,6 +1778,26 @@ components:
       name: event_id
       description: |
         The id of the event.
+      example:
+        - 87f81f6f-35c5-4481-81ff-ec10c7e9d8b1
+      schema:
+        type: string
+      required: true
+    roomId:
+      in: path
+      name: room_id
+      description: |
+        The id of the room
+      example:
+        - 87f81f6f-35c5-4481-81ff-ec10c7e9d8b1
+      schema:
+        type: string
+      required: true
+    streamingTargetId:
+      in: path
+      name: streaming_target_id
+      description: |
+        The id of the room
       example:
         - 87f81f6f-35c5-4481-81ff-ec10c7e9d8b1
       schema:
@@ -1981,7 +2110,7 @@ components:
 
     SharedFolderAccess:
       description: Access information for a shared folder
-      type: Object
+      type: object
       additionalProperties: false
       required:
         - url
@@ -1994,6 +2123,89 @@ components:
         password:
           description: The password for accessing the shared folder
           type: string
+
+    # -------------- Streaming Target definitions --------------
+    RoomStreamingTarget:
+      description: Streaming target information
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          description: The streaming target identifier
+          type: string
+          format: uuid
+        name:
+          description: The name of the streaming target
+          type: string
+        kind:
+          description: The kind of the streaming target
+          type: string
+          enum: [custom]
+        streaming_endpoint:
+          description: The endpoint url of the streaming target
+          type: string
+          format: uri
+        streaming_key:
+          description: The streaming key
+          type: string
+        public_url:
+          description: The url from which the stream can be accessed
+          type: string
+          format: uri
+
+    StreamingTarget:
+      description: Provides the invite_code to verify
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - kind
+        - streaming_endpoint
+        - streaming_key
+        - public_url
+      properties:
+        name:
+          description: The name of the streaming target
+          type: string
+        kind:
+          description: The kind of the streaming target
+          type: string
+          enum: [custom]
+        streaming_endpoint:
+          description: The endpoint url of the streaming target
+          type: string
+          format: uri
+        streaming_key:
+          description: The streaming key
+          type: string
+        public_url:
+          description: The url from which the stream can be accessed
+          type: string
+          format: uri
+
+    UpdateStreamingTarget:
+      description: Provides the invite_code to verify
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          description: The name of the streaming target
+          type: string
+        kind:
+          description: The kind of the streaming target
+          type: string
+          enum: [custom]
+        streaming_endpoint:
+          description: The endpoint url of the streaming target
+          type: string
+          format: uri
+        streaming_key:
+          description: The streaming key
+          type: string
+        public_url:
+          description: The url from which the stream can be accessed
+          type: string
+          format: uri
 
     # -------------- SIP definitions --------------
     SipConfig:

@@ -564,7 +564,12 @@ fn v1_scope(
                 .service(api::v1::invites::delete_invite)
                 .service(api::v1::assets::room_assets)
                 .service(api::v1::assets::room_asset)
-                .service(api::v1::assets::delete),
+                .service(api::v1::assets::delete)
+                .service(api::v1::streaming_targets::get_streaming_targets)
+                .service(api::v1::streaming_targets::post_streaming_target)
+                .service(api::v1::streaming_targets::get_streaming_target)
+                .service(api::v1::streaming_targets::patch_streaming_target)
+                .service(api::v1::streaming_targets::delete_streaming_target),
         )
 }
 

@@ -9,4 +9,5 @@ pub mod event;
 pub mod features;
 pub mod jobs;
 pub mod shared_folder;
+pub mod streaming;
 pub mod tariff;

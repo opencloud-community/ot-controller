@@ -17,6 +17,8 @@ use crate::imports::*;
 
 use super::users::PublicUserProfile;
 
+pub mod streaming_targets;
+
 /// A Room
 ///
 /// Contains all room information. Is only be accessible to the owner and users with
