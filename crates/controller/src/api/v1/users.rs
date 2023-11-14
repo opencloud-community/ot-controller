@@ -29,6 +29,8 @@ use types::{
 };
 use validator::Validate;
 
+const MAX_USER_SEARCH_RESULTS: usize = 20;
+
 /// API Endpoint *PATCH /users/me*
 #[patch("/users/me")]
 pub async fn patch_me(
@@ -176,7 +178,7 @@ pub async fn find(
                 // Do not filter by tenant_id if the assignment is static, since that's used
                 // when the keycloak does not provide any tenant information we can filter over anyway
                 kc_admin_client
-                    .search_user(&query.q)
+                    .search_user(&query.q, MAX_USER_SEARCH_RESULTS)
                     .await
                     .context("Failed to search for user in keycloak")?
             }
@@ -190,6 +192,7 @@ pub async fn find(
                         external_tenant_id_user_attribute_name,
                         current_tenant.oidc_tenant_id.inner(),
                         &query.q,
+                        MAX_USER_SEARCH_RESULTS,
                     )
                     .await
                     .context("Failed to search for user in keycloak")?
@@ -225,7 +228,13 @@ pub async fn find(
     } else {
         let mut conn = db.get_conn().await?;
 
-        let found_users = User::find(&mut conn, current_tenant.id, &query.q).await?;
+        let found_users = User::find(
+            &mut conn,
+            current_tenant.id,
+            &query.q,
+            MAX_USER_SEARCH_RESULTS,
+        )
+        .await?;
 
         found_users
             .into_iter()
