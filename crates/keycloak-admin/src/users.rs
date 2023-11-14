@@ -6,6 +6,9 @@ use super::Result;
 use crate::{Error, KeycloakAdminClient};
 use serde::{Deserialize, Serialize};
 
+const MAX_NUM_KEYCLOAK_SEARCH_RESULTS: i32 = 100;
+const MAX_USER_SEARCH_RESULTS: usize = 50;
+
 #[derive(Debug, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 enum ParseResult {
@@ -62,12 +65,12 @@ struct VerifyEmailQuery<'s> {
 
 impl KeycloakAdminClient {
     /// Query keycloak for users using the given search string
-    pub async fn search_user(&self, search_str: &str) -> Result<Vec<User>> {
+    pub async fn search_user(&self, search_str: &str, max_users: usize) -> Result<Vec<User>> {
         let url = self.url(["admin", "realms", &self.realm, "users"])?;
 
         let query = SearchQuery {
             search: search_str,
-            max: 5,
+            max: MAX_USER_SEARCH_RESULTS.min(max_users) as i32,
         };
 
         let response = self
@@ -104,6 +107,7 @@ impl KeycloakAdminClient {
         tenant_id_user_attribute_name: &str,
         tenant_id: &str,
         search_str: &str,
+        max_users: usize,
     ) -> Result<Vec<User>> {
         let url = self.url(["admin", "realms", &self.realm, "users"])?;
 
@@ -114,7 +118,7 @@ impl KeycloakAdminClient {
         // tenant might match.
         let query = SearchQuery {
             search: search_str,
-            max: 100,
+            max: MAX_NUM_KEYCLOAK_SEARCH_RESULTS,
         };
 
         let response = self
@@ -137,7 +141,7 @@ impl KeycloakAdminClient {
             .into_iter()
             .filter_map(Option::<User>::from)
             .filter(|user| user.is_in_tenant(tenant_id_user_attribute_name, tenant_id))
-            .take(5)
+            .take(MAX_USER_SEARCH_RESULTS.min(max_users))
             .collect::<Vec<User>>();
 
         if found_results_amount != found_users.len() {

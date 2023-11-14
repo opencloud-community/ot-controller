@@ -26,6 +26,8 @@ types::diesel_newtype! {
     SerialUserId(i64) => diesel::sql_types::BigInt
 }
 
+const MAX_USER_SEARCH_RESULTS: usize = 50;
+
 /// Diesel user struct
 ///
 /// Is used as a result in various queries. Represents a user column
@@ -232,6 +234,7 @@ impl User {
         conn: &mut DbConnection,
         tenant_id: TenantId,
         search_str: &str,
+        max_users: usize,
     ) -> Result<Vec<User>> {
         // IMPORTANT: lowercase it to match the index of the db and
         // remove all existing % in name and to avoid manipulation of the LIKE query.
@@ -274,7 +277,7 @@ impl User {
             .order_by(levenshtein(lower_display_name, &search_str))
             .then_order_by(levenshtein(lower_first_lastname, &search_str))
             .then_order_by(users::id)
-            .limit(5)
+            .limit(MAX_USER_SEARCH_RESULTS.min(max_users) as i64)
             .load(conn)
             .await?;
 
