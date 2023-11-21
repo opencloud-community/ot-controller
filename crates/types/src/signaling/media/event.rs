@@ -60,9 +60,6 @@ pub enum MediaEvent {
     /// A webrtc connection experienced package loss
     WebrtcSlow(Link),
 
-    /// A specific participant should be focused
-    FocusUpdate(FocusUpdate),
-
     /// The participant is requested to mute themselves
     RequestMute(RequestMute),
 
@@ -161,20 +158,6 @@ pub struct Link {
     /// Source of the media link
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub source: Source,
-}
-
-/// Event signaling to the participant whether a specific participant should be focused on
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct FocusUpdate {
-    /// Id of the participant to focus on
-    pub focus: Option<ParticipantId>,
-}
-
-impl From<FocusUpdate> for MediaEvent {
-    fn from(value: FocusUpdate) -> Self {
-        Self::FocusUpdate(value)
-    }
 }
 
 /// Errors from the `media` module namespace

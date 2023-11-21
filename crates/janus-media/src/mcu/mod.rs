@@ -1267,18 +1267,6 @@ async fn forward_janus_message(
                             media_session_key
                         );
                     }
-                    opentalk_janus_client::incoming::VideoRoomPluginData::Talking(_) => {
-                        event_sink
-                            .send((media_session_key, WebRtcEvent::StartedTalking))
-                            .await?;
-                        return Ok(());
-                    }
-                    opentalk_janus_client::incoming::VideoRoomPluginData::StoppedTalking(_) => {
-                        event_sink
-                            .send((media_session_key, WebRtcEvent::StoppedTalking))
-                            .await?;
-                        return Ok(());
-                    }
                     _ => log::warn!(
                         "Invalid handle event for participant {}: {:?}",
                         media_session_key,

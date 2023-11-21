@@ -655,28 +655,6 @@ The SFU reports an update in the current status of the specified WebRTC session
 }
 ```
 
-<!-- EVENT FOCUS UPDATE -->
-
-### FocusUpdate
-
-A new participant has been selection to be focused/highlighted.
-
-#### Fields
-
-| Field     | Type     | Always | Description                                                                           |
-| --------- | -------- | ------ | ------------------------------------------------------------------------------------- |
-| `message` | `enum`   | yes    | Is `"focus_update"`                                                                   |
-| `focus`   | `string` | no     | Id of the participant to focus. If null or missing no one should focussed/highlighted |
-
-##### Example
-
-```json
-{
-    "message": "focus_update",
-    "focus": "84a2c872-94fb-4b41-aca7-13d784c92a72"
-}
-```
-
 <!-- EVENT PRESENTER GRANTED -->
 
 ### PresenterGranted

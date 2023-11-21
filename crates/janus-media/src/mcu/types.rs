@@ -42,8 +42,6 @@ pub enum WebRtcEvent {
     SlowLink(LinkDirection),
     Trickle(TrickleMessage),
     AssociatedMcuDied,
-    StartedTalking,
-    StoppedTalking,
 }
 
 #[derive(Debug)]

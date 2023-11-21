@@ -8,7 +8,6 @@
 //!
 //! Handles media related messages and manages their respective forwarding to janus-gateway via rabbitmq.
 use anyhow::{bail, Context, Result};
-use focus::FocusDetection;
 use mcu::{
     LinkDirection, McuPool, MediaSessionKey, PublishConfiguration, Request, Response,
     TrickleMessage, WebRtcEvent,
@@ -23,9 +22,7 @@ use opentalk_types::{
     signaling::{
         media::{
             command::{self, MediaCommand, Target, TargetConfigure, TargetSubscribe},
-            event::{
-                self, Error, FocusUpdate, Link, MediaEvent, MediaStatus, Sdp, SdpCandidate, Source,
-            },
+            event::{self, Error, Link, MediaEvent, MediaStatus, Sdp, SdpCandidate, Source},
             peer_state::MediaPeerState,
             state::MediaState,
             MediaSessionState, MediaSessionType, ParticipantMediaState, TrickleCandidate,
@@ -42,7 +39,6 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 mod exchange;
-mod focus;
 mod mcu;
 mod sessions;
 mod settings;
@@ -56,8 +52,6 @@ pub struct Media {
     media: MediaSessions,
 
     state: ParticipantMediaState,
-
-    focus_detection: FocusDetection,
 }
 
 fn process_metrics_for_media_session_state(
@@ -126,7 +120,6 @@ impl SignalingModule for Media {
             mcu: mcu.clone(),
             media: MediaSessions::new(ctx.participant_id(), media_sender),
             state,
-            focus_detection: Default::default(),
         }))
     }
 
@@ -416,25 +409,7 @@ impl SignalingModule for Media {
                         }));
                     }
                 },
-                WebRtcEvent::StartedTalking => ctx.exchange_publish(
-                    control::exchange::current_room_all_participants(self.room),
-                    exchange::Message::StartedTalking(media_session_key.0),
-                ),
-                WebRtcEvent::StoppedTalking => ctx.exchange_publish(
-                    control::exchange::current_room_all_participants(self.room),
-                    exchange::Message::StoppedTalking(media_session_key.0),
-                ),
             },
-            Event::Exchange(exchange::Message::StartedTalking(id)) => {
-                if let Some(focus) = self.focus_detection.on_started_talking(id) {
-                    ctx.ws_send(MediaEvent::FocusUpdate(FocusUpdate { focus }));
-                }
-            }
-            Event::Exchange(exchange::Message::StoppedTalking(id)) => {
-                if let Some(focus) = self.focus_detection.on_stopped_talking(id) {
-                    ctx.ws_send(FocusUpdate { focus });
-                }
-            }
             Event::Exchange(exchange::Message::RequestMute(request_mute)) => {
                 ctx.ws_send(request_mute);
             }
@@ -507,15 +482,6 @@ impl SignalingModule for Media {
                         .context("Failed to get peer participants state")?
                 {
                     self.media.remove_dangling_subscriber(id, &state).await;
-
-                    if let Some(video_state) = state.get(&MediaSessionType::Video) {
-                        if !video_state.audio {
-                            if let Some(focus) = self.focus_detection.on_stopped_talking(id) {
-                                ctx.ws_send(FocusUpdate { focus });
-                            }
-                        }
-                    }
-
                     Some(state)
                 } else {
                     None
@@ -530,11 +496,6 @@ impl SignalingModule for Media {
             }
             Event::ParticipantLeft(id) => {
                 self.media.remove_subscribers(id).await;
-
-                // Unfocus leaving participants
-                if let Some(focus) = self.focus_detection.on_stopped_talking(id) {
-                    ctx.ws_send(FocusUpdate { focus });
-                }
             }
             Event::Joined {
                 control_data: _,
