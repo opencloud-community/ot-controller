@@ -954,3 +954,20 @@ pub fn screen_share_requires_permission(shared_settings: &SharedSettings) -> boo
         .defaults
         .screen_share_requires_permission
 }
+
+/// Check for deprecated settings, and print warnings if any are found.
+pub fn check_for_deprecated_settings(
+    settings: &opentalk_controller_settings::Settings,
+) -> Result<Vec<&'static str>> {
+    let mcu_config = settings::JanusMcuConfig::extract(settings)?;
+
+    let mut found = Vec::new();
+    if mcu_config.speaker_focus_packets.is_some() {
+        found.push("room_server.speaker_focus_packets");
+    }
+    if mcu_config.speaker_focus_level.is_some() {
+        found.push("room_server.speaker_focus_level");
+    }
+
+    Ok(found)
+}
