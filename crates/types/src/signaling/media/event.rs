@@ -9,7 +9,7 @@ use crate::core::ParticipantId;
 #[allow(unused_imports)]
 use crate::imports::*;
 
-use super::{command::Target, MediaSessionType, TrickleCandidate};
+use super::{command::Target, MediaSessionType, ParticipantSpeakingState, TrickleCandidate};
 
 /// The direction of a media link
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -68,6 +68,9 @@ pub enum MediaEvent {
 
     /// Presenter role has been revoked from the participant
     PresenterRevoked,
+
+    /// Update of a speaker status
+    SpeakerUpdated(ParticipantSpeakingState),
 
     /// Contains a error about what request failed. See [`Error`]
     Error(Error),

@@ -12,7 +12,7 @@ must be run in order to update ACLs to match the newest version whenever
 new endpoints were added for already present resources. However, even if no
 endpoints were added, simply running the command does no harm.
 
-## Updating to 1.7
+## Updating to OpenTalk Controller v0.8.0
 
 ### Removal of server-side speaker detection
 

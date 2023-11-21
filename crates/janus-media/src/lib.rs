@@ -25,8 +25,8 @@ use opentalk_types::{
             event::{self, Error, Link, MediaEvent, MediaStatus, Sdp, SdpCandidate, Source},
             peer_state::MediaPeerState,
             state::MediaState,
-            MediaSessionState, MediaSessionType, ParticipantMediaState, TrickleCandidate,
-            NAMESPACE,
+            MediaSessionState, MediaSessionType, ParticipantMediaState, ParticipantSpeakingState,
+            SpeakingState, TrickleCandidate, UpdateSpeakingState, NAMESPACE,
         },
         Role,
     },
@@ -360,6 +360,24 @@ impl SignalingModule for Media {
                 )
             }
 
+            Event::WsMessage(MediaCommand::UpdateSpeakingState(UpdateSpeakingState {
+                is_speaking,
+            })) => {
+                let timestamp = ctx.timestamp();
+                storage::set_speaker(ctx.redis_conn(), self.room, self.id, is_speaking, timestamp)
+                    .await?;
+                ctx.exchange_publish(
+                    control::exchange::current_room_all_participants(self.room),
+                    exchange::Message::SpeakerStateUpdated(ParticipantSpeakingState {
+                        participant: self.id,
+                        speaker: SpeakingState {
+                            is_speaking,
+                            updated_at: timestamp,
+                        },
+                    }),
+                );
+            }
+
             Event::Ext((media_session_key, message)) => match message {
                 WebRtcEvent::AssociatedMcuDied => {
                     self.remove_broken_media_session(&mut ctx, media_session_key)
@@ -462,6 +480,9 @@ impl SignalingModule for Media {
 
                 ctx.invalidate_data();
             }
+            Event::Exchange(exchange::Message::SpeakerStateUpdated(participant_speaker)) => {
+                ctx.ws_send(MediaEvent::SpeakerUpdated(participant_speaker));
+            }
 
             Event::ParticipantJoined(id, evt_state) => {
                 let state = storage::get_participant_media_state(ctx.redis_conn(), self.room, id)
@@ -502,6 +523,7 @@ impl SignalingModule for Media {
                 frontend_data,
                 participants,
             } => {
+                let participant_ids = Vec::from_iter(participants.keys().cloned());
                 for (&id, evt_state) in participants {
                     let state =
                         storage::get_participant_media_state(ctx.redis_conn(), self.room, id)
@@ -519,8 +541,14 @@ impl SignalingModule for Media {
 
                 let is_presenter =
                     storage::is_presenter(ctx.redis_conn(), self.room, self.id).await?;
+                let speakers =
+                    storage::get_room_speakers(ctx.redis_conn(), self.room, &participant_ids)
+                        .await?;
 
-                *frontend_data = Some(MediaState { is_presenter })
+                *frontend_data = Some(MediaState {
+                    is_presenter,
+                    speakers,
+                })
             }
             Event::Leaving => {
                 if let Err(e) =
@@ -548,6 +576,22 @@ impl SignalingModule for Media {
             if let Err(e) = storage::delete_presenter_key(ctx.redis_conn(), self.room).await {
                 log::error!(
                     "Media module for failed to remove presenter key on room destoy, {}",
+                    e
+                );
+            }
+
+            let participants = control::storage::get_all_participants(ctx.redis_conn(), self.room)
+                .await
+                .unwrap_or_else(|e| {
+                    log::error!("Failed to load room participants, {}", e);
+                    Vec::new()
+                });
+
+            if let Err(e) =
+                storage::delete_room_speakers(ctx.redis_conn(), self.room, &participants).await
+            {
+                log::error!(
+                    "Media module for failed to remove speakers on room destoy, {}",
                     e
                 );
             }
