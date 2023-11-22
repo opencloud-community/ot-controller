@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - controller: handle email addresses in a case-insensitive way ([#550](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/550))
 - recording: remove consent after the recording has stopped or leaving the room ([#565](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/565))
 - controller: increase user search limit to 20 from 5 ([#596](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/596))
+- controller: don't send e-mail notification to creators of ad-hoc meetings ([#606](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/606))
 
 ### Fixed
 

@@ -738,7 +738,9 @@ async fn create_time_independent_event(
 
     let tariff = Tariff::get_by_user_id(conn, &current_user.id).await?;
 
-    if !query.suppress_email_notification {
+    let suppress_email_notification = is_adhoc || query.suppress_email_notification;
+
+    if !suppress_email_notification {
         mail_service
             .send_registered_invite(
                 current_user.clone(),
@@ -834,7 +836,9 @@ async fn create_time_dependent_event(
 
     let tariff = Tariff::get_by_user_id(conn, &current_user.id).await?;
 
-    if !query.suppress_email_notification {
+    let suppress_email_notification = is_adhoc || query.suppress_email_notification;
+
+    if !suppress_email_notification {
         mail_service
             .send_registered_invite(
                 current_user.clone(),
