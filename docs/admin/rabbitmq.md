@@ -1,3 +1,7 @@
+---
+sidebar_position: 201
+---
+
 # RabbitMQ
 
 ## Configuration

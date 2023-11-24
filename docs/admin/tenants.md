@@ -1,3 +1,8 @@
+---
+sidebar_position: 105
+title: Configuration of multiple tenants
+---
+
 # Tenants
 
 A deployment of OpenTalk is capable of handling multiple completely separated

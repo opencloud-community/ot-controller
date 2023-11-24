@@ -10,6 +10,13 @@
 - [Configuration of different tariffs and their capabilities](tariffs.md)
 - [Execution of maintenance jobs](jobs.md)
 - [Modules that can be used in meetings](modules.md)
+- [ACL management](acl.md)
+- [Call-in](call_in.md)
+- [Default and fallback values](defaults.md)
+- [Endpoints](endpoints.md)
+- [Logging](logging.md)
+- [Metrics](metrics.md)
+- [STUN and TURN](stun_turn.md)
 
 ## Interaction between OpenTalk Controller and other services
 
@@ -24,7 +31,7 @@
 ### Services that OpenTalk Controller can be integrated with
 
 - [Shared folders on external systems](shared_folder.md)
-- [OpenTelemetry](opentelemetry.md)
+- [Tracing](tracing.md)
 - [Etherpad](etherpad.md)
 - [SpaceDeck](spacedeck.md)
 

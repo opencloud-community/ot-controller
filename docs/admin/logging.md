@@ -1,3 +1,7 @@
+---
+sidebar_position: 113
+---
+
 # Logging
 
 The log output from each component of the OpenTalk Controller can be configured, allowing administrators to control the

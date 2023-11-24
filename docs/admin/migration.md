@@ -1,3 +1,7 @@
+---
+sidebar_position: 103
+---
+
 # Migration guide for updating to new versions
 
 <!-- TODO -->

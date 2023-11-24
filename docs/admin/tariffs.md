@@ -1,3 +1,8 @@
+---
+sidebar_position: 106
+title: Configuration of different tariffs and their capabilities
+---
+
 # Tariffs
 
 Tariffs in OpenTalk can be created, edited, and deleted with the commandline using `opentalk-controller tariffs <COMMAND>`.
