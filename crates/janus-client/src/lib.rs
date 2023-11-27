@@ -330,19 +330,21 @@ impl Handle {
             .upgrade()
             .ok_or(error::Error::NotConnected)?;
 
-        let sessions = client.sessions.lock();
+        {
+            let sessions = client.sessions.lock();
 
-        if let Some(session) = sessions.get(&self.inner.session_id).and_then(Weak::upgrade) {
-            session.handles.lock().remove(&self.inner.id);
-        } else {
-            log::trace!(
-                "Failed to detach handle {}, session no longer exists",
-                self.id()
-            );
-            return Ok(());
+            if let Some(session) = sessions.get(&self.inner.session_id).and_then(Weak::upgrade) {
+                session.handles.lock().remove(&self.inner.id);
+            } else {
+                log::trace!(
+                    "Failed to detach handle {}, session no longer exists",
+                    self.id()
+                );
+                return Ok(());
+            }
+
+            drop(sessions);
         }
-
-        drop(sessions);
 
         loop {
             if let Some(inner) = Arc::get_mut(&mut self.inner) {
