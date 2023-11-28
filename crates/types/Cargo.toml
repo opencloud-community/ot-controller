@@ -18,9 +18,11 @@ bytes = { workspace = true, optional = true }
 chrono.workspace = true
 chrono-tz.workspace = true
 clap = { workspace = true, optional = true }
+client-shared = { path = "../client-shared", package = "opentalk-client-shared", optional = true }
 derive_more = "0.99"
 diesel = { workspace = true, features = ["uuid", "postgres"], optional = true }
 email_address.workspace = true
+http = { workspace = true, optional = true }
 kustos = { path = "../kustos", optional = true }
 rand = { workspace = true, optional = true }
 redis = { workspace = true, optional = true }
@@ -34,12 +36,12 @@ validator = { workspace = true, optional = true }
 url.workspace = true
 
 [features]
-default = ["frontend"]
+default = []
 actix = ["dep:actix-http", "dep:actix-web-httpauth", "dep:bytes"]
 backend = ["actix", "diesel", "kustos", "rand", "redis", "serde"]
 clap = ["dep:clap"]
 diesel = ["serde", "dep:diesel"]
-frontend = ["serde"]
+frontend = ["serde", "dep:client-shared", "dep:http"]
 kustos = ["dep:kustos"]
 rand = ["dep:rand", "uuid/v4"]
 redis = ["serde", "dep:redis", "dep:redis-args"]

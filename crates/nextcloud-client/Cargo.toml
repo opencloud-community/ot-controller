@@ -13,7 +13,7 @@ publish = false
 
 [dependencies]
 chrono.workspace = true
-derive_more = "0.99"
+derive_more.workspace = true
 log.workspace = true
 reqwest = { workspace = true, features = ["json"] }
 reqwest_dav = { version = "0.1.3", default-features = false }

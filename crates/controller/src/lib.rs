@@ -499,8 +499,8 @@ fn v1_scope(
 ) -> Scope {
     // the latest version contains the root services
     web::scope("/v1")
-        .service(api::v1::auth::login)
-        .service(api::v1::auth::oidc_provider)
+        .service(api::v1::auth::post_login)
+        .service(api::v1::auth::get_login)
         .service(api::v1::rooms::start_invited)
         .service(api::v1::invites::verify_invite_code)
         .service(api::v1::turn::get)

@@ -1,0 +1,24 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+name = "opentalk-client"
+edition = "2021"
+authors.workspace = true
+version.workspace = true
+publish = false
+description = "OpenTalk client library"
+
+[dependencies]
+async-trait.workspace = true
+http.workspace = true
+reqwest.workspace = true
+shared = { path = "../client-shared", package = "opentalk-client-shared" }
+types = { path = "../types", package = "opentalk-types", features = ["frontend"] }
+url.workspace = true
+
+[dev-dependencies]
+anyhow.workspace = true
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread"] }
+reqwest = { workspace = true, features = ["rustls-tls-native-roots"] }

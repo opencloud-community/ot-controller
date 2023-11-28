@@ -28,6 +28,7 @@ chrono = "0.4"
 chrono-tz = "0.8"
 clap = { version = "4", features = ["derive"] }
 config = { version = "0.13", default-features = false, features = ["toml"] }
+derive_more = "0.99"
 diesel = "2"
 diesel-async = "0.3"
 displaydoc = "0.2"
@@ -35,6 +36,7 @@ either = "1"
 email_address = "0.2.4"
 env_logger = "0.10"
 futures = "0.3"
+http = "0.2"
 itertools = "0.11"
 lapin = { version = "2", default-features = false }
 log = "0.4"
