@@ -1217,7 +1217,7 @@ dependencies = [
 
 [[package]]
 name = "ci-doc-updater"
-version = "0.7.0"
+version = "0.7.1-rc.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -3068,7 +3068,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-cache"
-version = "0.7.0"
+version = "0.7.1-rc.1"
 dependencies = [
  "bincode",
  "moka",
@@ -3080,7 +3080,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-chat"
-version = "0.7.0"
+version = "0.7.1-rc.1"
 dependencies = [
  "actix-rt",
  "anyhow",
@@ -3105,7 +3105,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-community-modules"
-version = "0.7.0"
+version = "0.7.1-rc.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3123,7 +3123,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-controller"
-version = "0.7.0"
+version = "0.7.1-rc.1"
 dependencies = [
  "actix-web",
  "anstream",
@@ -3135,7 +3135,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-controller-core"
-version = "0.7.0"
+version = "0.7.1-rc.1"
 dependencies = [
  "actix",
  "actix-cors",
@@ -3214,7 +3214,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-controller-settings"
-version = "0.7.0"
+version = "0.7.1-rc.1"
 dependencies = [
  "anstream",
  "anyhow",
@@ -3234,7 +3234,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-controller-utils"
-version = "0.7.0"
+version = "0.7.1-rc.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3255,7 +3255,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-core"
-version = "0.7.0"
+version = "0.7.1-rc.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3264,7 +3264,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-database"
-version = "0.7.0"
+version = "0.7.1-rc.1"
 dependencies = [
  "async-trait",
  "deadpool-runtime",
@@ -3281,7 +3281,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-db-storage"
-version = "0.7.0"
+version = "0.7.1-rc.1"
 dependencies = [
  "actix-rt",
  "anyhow",
@@ -3314,7 +3314,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-integration"
-version = "0.7.0"
+version = "0.7.1-rc.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3323,7 +3323,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-janus-media"
-version = "0.7.0"
+version = "0.7.1-rc.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3348,7 +3348,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-jobs"
-version = "0.7.0"
+version = "0.7.1-rc.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3372,7 +3372,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-log"
-version = "0.7.0"
+version = "0.7.1-rc.1"
 dependencies = [
  "log",
  "serial_test",
@@ -3380,7 +3380,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-mail-worker-protocol"
-version = "0.7.0"
+version = "0.7.1-rc.1"
 dependencies = [
  "chrono",
  "keycloak-admin",
@@ -3394,7 +3394,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-nextcloud-client"
-version = "0.7.0"
+version = "0.7.1-rc.1"
 dependencies = [
  "anyhow",
  "chrono",
@@ -3412,7 +3412,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-polls"
-version = "0.7.0"
+version = "0.7.1-rc.1"
 dependencies = [
  "actix-rt",
  "anyhow",
@@ -3433,7 +3433,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-protocol"
-version = "0.7.0"
+version = "0.7.1-rc.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3453,7 +3453,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-shared-folder"
-version = "0.7.0"
+version = "0.7.1-rc.1"
 dependencies = [
  "actix-rt",
  "anyhow",
@@ -3473,7 +3473,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-signaling-core"
-version = "0.7.0"
+version = "0.7.1-rc.1"
 dependencies = [
  "actix-http",
  "actix-rt",
@@ -3511,7 +3511,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-test-util"
-version = "0.7.0"
+version = "0.7.1-rc.1"
 dependencies = [
  "anyhow",
  "diesel",
@@ -3532,7 +3532,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-timer"
-version = "0.7.0"
+version = "0.7.1-rc.1"
 dependencies = [
  "actix-rt",
  "anyhow",
@@ -3555,7 +3555,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types"
-version = "0.7.0"
+version = "0.7.1-rc.1"
 dependencies = [
  "actix-http",
  "actix-web-httpauth",
@@ -3584,7 +3584,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-whiteboard"
-version = "0.7.0"
+version = "0.7.1-rc.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -4267,7 +4267,7 @@ dependencies = [
 
 [[package]]
 name = "redis-args"
-version = "0.7.0"
+version = "0.7.1-rc.1"
 dependencies = [
  "redis",
  "redis-args-impl",
@@ -4277,7 +4277,7 @@ dependencies = [
 
 [[package]]
 name = "redis-args-impl"
-version = "0.7.0"
+version = "0.7.1-rc.1"
 dependencies = [
  "proc-macro2",
  "quote",
