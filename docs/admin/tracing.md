@@ -1,3 +1,7 @@
+---
+sidebar_position: 301
+---
+
 # Tracing
 
 The OpenTalk controller is able to provide tracing information. If configured, these are exported to an [OTLP](https://opentelemetry.io/docs/specs/otlp/) endpoint.

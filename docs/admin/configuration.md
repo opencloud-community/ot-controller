@@ -1,3 +1,8 @@
+---
+sidebar_position: 101
+title: Configuration
+---
+
 # Configuring OpenTalk-Controller
 
 When the controller gets started, it loads the configuration from the

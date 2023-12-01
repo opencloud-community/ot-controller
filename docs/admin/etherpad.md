@@ -1,3 +1,7 @@
+---
+sidebar_position: 302
+---
+
 # EtherPad
 
 The OpenTalk Controller uses an [Etherpad](https://etherpad.org/) server to provide a collaborative text editor for the `protocol` module.

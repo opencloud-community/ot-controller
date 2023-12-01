@@ -1,3 +1,7 @@
+---
+sidebar_position: 200
+---
+
 # Database
 
 The OpenTalk Controller uses PostgreSQL database.

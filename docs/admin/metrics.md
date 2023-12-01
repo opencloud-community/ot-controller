@@ -1,3 +1,7 @@
+---
+sidebar_position: 114
+---
+
 # Metrics
 
 The OpenTalk controller is collecting metrics and is exposing them through the `/metrics` endpoint.

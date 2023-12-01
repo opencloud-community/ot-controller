@@ -1,3 +1,7 @@
+---
+sidebar_position: 203
+---
+
 # KeyCloak
 
 The OpenTalk Controller uses [keycloak](https://www.keycloak.org/), an OpenID Connect compatible

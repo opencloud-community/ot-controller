@@ -1,3 +1,8 @@
+---
+sidebar_position: 102
+title: HTTP Server
+---
+
 # OpenTalk HTTP server
 
 The OpenTalk Controller provides its service to clients through a built-in HTTP

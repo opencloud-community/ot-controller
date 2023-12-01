@@ -1,3 +1,8 @@
+---
+sidebar_position: 108
+title: Modules that can be used in meetings
+---
+
 # Modules
 
 Modules provide functionality that can be used inside meetings.

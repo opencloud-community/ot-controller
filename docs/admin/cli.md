@@ -1,3 +1,7 @@
+---
+sidebar_position: 104
+---
+
 # Command-Line usage of `opentalk-controller`
 
 When started without a subcommand, the `opentalk-controller` command loads the

@@ -1,3 +1,7 @@
+---
+sidebar_position: 401
+---
+
 # OpenTalk Recorder
 
 The OpenTalk Controller has the ability to establish communication with the

@@ -1,3 +1,7 @@
+---
+sidebar_position: 204
+---
+
 # MinIO
 
 The OpenTalk Controller uses [MinIO](https://min.io/) as its object storage.

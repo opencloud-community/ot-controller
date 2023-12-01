@@ -1,3 +1,7 @@
+---
+sidebar_position: 400
+---
+
 # OpenTalk Obelisk
 
 [OpenTalk Obelisk](https://gitlab.opencode.de/opentalk/obelisk) is a service

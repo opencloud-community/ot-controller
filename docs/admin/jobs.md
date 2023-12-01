@@ -1,3 +1,8 @@
+---
+sidebar_position: 107
+title: Execution of maintenance jobs
+---
+
 # Jobs
 
 Jobs can be executed through the command-line in order to perform maintenance tasks.
