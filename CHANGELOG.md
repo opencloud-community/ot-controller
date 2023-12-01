@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1-rc.2] - 2023-12-20
+
+- controller: added `external_id_user_attribute_name` setting used for searching Keycloak users ([#609](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/609))
+
+### Added
+
 ## [0.7.1-rc.1] - 2023-11-30
 
 ### Changed
@@ -375,6 +381,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - initial release candidate
 
+[0.7.1-rc.2]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.7.1-rc.1...v0.7.1-rc.2
 [0.7.1-rc.1]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.7.0...v0.7.1-rc.1
 [0.7.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.7.0-rc.1...v0.7.0
 [0.7.0-rc.1]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/a79a32ead8943a1e0ecee9b34ecaabdf495b6112...v.0.7.0-rc.1

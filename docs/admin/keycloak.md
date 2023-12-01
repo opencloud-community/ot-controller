@@ -12,12 +12,22 @@ identity and access management software for single sign-on.
 
 The section in the [configuration file](configuration.md) is called `keycloak`.
 
-| Field           | Type     | Required | Default value | Description                                                                                                                            |
-| --------------- | -------- | -------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `base_url`      | `string` | yes      | -             | TCP port number where the Keycloak server can be reached                                                                               |
-| `realm`         | `string` | yes      | -             | The name of the default Keycloak realm, read more on [Keycloak](https://www.keycloak.org/docs/latest/server_admin/#configuring-realms) |
-| `client_id`     | `string` | yes      | -             | The unique identifier for the OpenTalk client                                                                                          |
-| `client_secret` | `string` | yes      | -             | The secret corresponding to the specified client ID                                                                                    |
+| Field                               | Type     | Required | Default value | Description                                                                                                                            |
+| ------------------------------------| -------- | -------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `base_url`                          | `string` | yes      | -             | TCP port number where the Keycloak server can be reached                                                                               |
+| `realm`                             | `string` | yes      | -             | The name of the default Keycloak realm, read more on [Keycloak](https://www.keycloak.org/docs/latest/server_admin/#configuring-realms) |
+| `client_id`                         | `string` | yes      | -             | The unique identifier for the OpenTalk client                                                                                          |
+| `client_secret`                     | `string` | yes      | -             | The secret corresponding to the specified client ID                                                                                    |
+| `external_id_user_attribute_name`   | `string` | no       | See below     | The attribute by which Keycloak and OpenTalk users are assigned to each other. See below for more details.                             |
+
+The `external_id_user_attribute_name` setting is used to configure how Keycloak users resulting from a search and registered
+Opentalk users are assigned to each other.
+The following assignment strategies are available:
+
+- by Keycloak id (default): This is used if `external_id_user_attribute_name` is not set. Keycloak users are assigned to
+  Opentalk users using Keycloak's id field.
+- by user attribute: Keycloak must provide a user attribute holding the user IDs. The name of this user attribute must be
+  set here in `external_id_user_attribute_name`.
 
 ### Examples
 
