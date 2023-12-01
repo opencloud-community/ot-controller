@@ -40,6 +40,19 @@ pub struct User {
 }
 
 impl User {
+    pub fn get_keycloak_user_id(&self, user_attribute_name: Option<&str>) -> Option<&str> {
+        if let Some(user_attribute_name) = user_attribute_name {
+            if let Some(serde_json::Value::Array(user_id_vector)) =
+                self.attributes.get(user_attribute_name)
+            {
+                return user_id_vector.iter().find_map(|v| v.as_str());
+            }
+            return None;
+        }
+
+        Some(self.id.as_str())
+    }
+
     fn is_in_tenant(&self, tenant_id_user_attribute_name: &str, tenant_id: &str) -> bool {
         if let Some(serde_json::Value::Array(tenant_id_vector)) =
             &self.attributes.get(tenant_id_user_attribute_name)

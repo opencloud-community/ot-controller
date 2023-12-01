@@ -172,11 +172,12 @@ pub async fn find(
             .with_message("query must be at least 3 characters long"));
     }
 
+    // Get all users from Keycloak matching the search criteria
     let found_users = if settings.endpoints.users_find_use_kc {
         let mut found_kc_users = match &settings.tenants.assignment {
             TenantAssignment::Static { .. } => {
                 // Do not filter by tenant_id if the assignment is static, since that's used
-                // when the keycloak does not provide any tenant information we can filter over anyway
+                // when Keycloak does not provide any tenant information we can filter over anyway
                 kc_admin_client
                     .search_user(&query.q, MAX_USER_SEARCH_RESULTS)
                     .await
@@ -201,16 +202,34 @@ pub async fn find(
 
         let mut conn = db.get_conn().await?;
 
-        let kc_subs: Vec<&str> = found_kc_users
+        // Get the name of the user attribute providing the Keycloak user ids. If set to None,
+        // Keycloak's id field is used for user assignment instead.
+        let user_attribute_name = settings.keycloak.external_id_user_attribute_name.as_deref();
+
+        // Get the Keycloak user ids for Keycloak users found above, omitting users for whom no Keycloak
+        // user id is provided
+        let keycloak_user_ids: Vec<&str> = found_kc_users
             .iter()
-            .map(|kc_user| kc_user.id.as_str())
+            .filter_map(|kc_user| kc_user.get_keycloak_user_id(user_attribute_name))
             .collect();
 
-        let users = User::get_all_by_oidc_subs(&mut conn, current_tenant.id, &kc_subs).await?;
+        // For all Keycloak users found above, get the according users already registered from the database
+        let registered_users =
+            User::get_all_by_oidc_subs(&mut conn, current_tenant.id, &keycloak_user_ids).await?;
 
-        found_kc_users.retain(|kc_user| !users.iter().any(|user| user.oidc_sub == kc_user.id));
+        // From the list of Keycloak users found above, remove all users already registered
+        found_kc_users.retain(|kc_user| {
+            if let Some(keycloak_user_id) = kc_user.get_keycloak_user_id(user_attribute_name) {
+                !registered_users
+                    .iter()
+                    .any(|user| user.oidc_sub == keycloak_user_id)
+            } else {
+                true
+            }
+        });
 
-        users
+        // Build a list of registered and unregistered users resulting from the search
+        registered_users
             .into_iter()
             .map(|user| GetFindResponseItem::Registered(user.to_public_user_profile(&settings)))
             .chain(found_kc_users.into_iter().map(|kc_user| {
