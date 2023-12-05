@@ -50,7 +50,7 @@ use types::{
         events::{
             CallInInfo, EmailOnlyUser, EventInviteeProfile, EventOrException, EventResource,
             EventRoomInfo, EventStatus, EventType, GetEventQuery, GetEventsCursorData,
-            GetEventsQuery,
+            GetEventsQuery, PatchEventQuery,
         },
         pagination::default_pagination_per_page,
         users::{PublicUserProfile, UnregisteredUser},
@@ -856,18 +856,6 @@ pub async fn get_event(
     };
 
     Ok(ApiResponse::new(event_resource))
-}
-
-/// Path query parameters for the `PATCH /events/{event_id}` endpoint
-#[derive(Debug, Deserialize)]
-pub struct PatchEventQuery {
-    /// Maximum number of invitees to include inside the event
-    #[serde(default)]
-    invitees_max: i64,
-
-    /// Flag to disable email notification
-    #[serde(default)]
-    suppress_email_notification: bool,
 }
 
 /// Body for the `PATCH /events/{event_id}` endpoint
