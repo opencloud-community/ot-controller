@@ -36,10 +36,10 @@ use email_address::EmailAddress;
 use keycloak_admin::KeycloakAdminClient;
 use kustos::policies_builder::PoliciesBuilder;
 use kustos::Authz;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use types::api::v1::events::{
-    DeleteEmailInviteBody, DeleteEventInvitePath, PatchInviteBody, PostEventInviteBody,
-    PostEventInviteQuery, UserInvite,
+    DeleteEmailInviteBody, DeleteEventInvitePath, GetEventInvitesPendingResponse, PatchInviteBody,
+    PostEventInviteBody, PostEventInviteQuery, UserInvite,
 };
 use types::{
     api::v1::pagination::PagePaginationQuery,
@@ -802,12 +802,6 @@ async fn notify_invitees_about_uninvite(
             log::error!("Failed to send event uninvite with MailService, {}", e);
         }
     }
-}
-
-/// Response body for the `GET /event_invites/pending` endpoint
-#[derive(Serialize)]
-pub struct GetEventInvitesPendingResponse {
-    total_pending_invites: u32,
 }
 
 /// API Endpoint `GET /users/me/pending_invites`
