@@ -37,7 +37,9 @@ use keycloak_admin::KeycloakAdminClient;
 use kustos::policies_builder::PoliciesBuilder;
 use kustos::Authz;
 use serde::{Deserialize, Serialize};
-use types::api::v1::events::{PostEventInviteBody, PostEventInviteQuery, UserInvite};
+use types::api::v1::events::{
+    PatchInviteBody, PostEventInviteBody, PostEventInviteQuery, UserInvite,
+};
 use types::{
     api::v1::pagination::PagePaginationQuery,
     common::shared_folder::SharedFolder,
@@ -479,12 +481,6 @@ async fn create_invite_to_non_matching_email(
                 "Only emails registered with the systems are allowed to be used for invites",
             ))
     }
-}
-
-/// Request body for the `PATCH /events/{event_id}/invites/{user_id}` endpoint
-#[derive(Deserialize)]
-pub struct PatchInviteBody {
-    pub role: InviteRole,
 }
 
 /// API Endpoint `PATCH /events/{event_id}/invites/{user_id}`
