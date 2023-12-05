@@ -48,7 +48,7 @@ use types::{
     api::v1::{
         events::{
             CallInInfo, EmailOnlyUser, EventInviteeProfile, EventRoomInfo, EventStatus, EventType,
-            GetEventsCursorData, GetEventsQuery, InstanceId,
+            GetEventQuery, GetEventsCursorData, GetEventsQuery, InstanceId,
         },
         pagination::default_pagination_per_page,
         users::{PublicUserProfile, UnregisteredUser},
@@ -945,16 +945,6 @@ pub async fn get_events(
 
     Ok(ApiResponse::new(event_resources)
         .with_cursor_pagination(events_data.before, events_data.after))
-}
-
-/// Path query parameters for the `GET /events/{event_id}` endpoint
-#[derive(Debug, Deserialize)]
-pub struct GetEventQuery {
-    /// Maximum number of invitees to return inside the event resource
-    ///
-    /// Default: 0
-    #[serde(default)]
-    invitees_max: i64,
 }
 
 /// API Endpoint `GET /events/{event_id}` endpoint
