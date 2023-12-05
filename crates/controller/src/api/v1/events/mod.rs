@@ -45,7 +45,7 @@ use types::api::v1::events::EventAndInstanceId;
 use types::core::Timestamp;
 use types::{
     api::v1::{
-        events::{EventStatus, EventType, GetEventsCursorData, InstanceId},
+        events::{CallInInfo, EventStatus, EventType, GetEventsCursorData, InstanceId},
         pagination::default_pagination_per_page,
         users::{PublicUserProfile, UnregisteredUser},
         Cursor,
@@ -385,23 +385,6 @@ pub struct EventRoomInfo {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub call_in: Option<CallInInfo>,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct CallInInfo {
-    /// SIP Call-In phone number which must be used to reach the room
-    pub tel: String,
-
-    /// SIP Call-In sip uri
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub uri: Option<String>,
-
-    /// SIP ID which must transmitted via DTMF (number field on the phone) to identify this room
-    pub id: String,
-
-    /// SIP password which must be transmitted via DTMF (number field on the phone) after entering the `sip_id`
-    /// to enter the room
-    pub password: String,
 }
 
 impl EventRoomInfo {

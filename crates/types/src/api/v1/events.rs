@@ -4,12 +4,14 @@
 
 //! This module contains types that are used for OpenTalk API V1 events endpoints.
 
+mod call_in_info;
 mod event_and_instance_id;
 mod event_status;
 mod event_type;
 mod get_events_cursor_data;
 mod instance_id;
 
+pub use call_in_info::CallInInfo;
 pub use event_and_instance_id::EventAndInstanceId;
 pub use event_status::EventStatus;
 pub use event_type::EventType;
