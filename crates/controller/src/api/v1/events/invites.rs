@@ -38,7 +38,7 @@ use kustos::policies_builder::PoliciesBuilder;
 use kustos::Authz;
 use serde::{Deserialize, Serialize};
 use types::api::v1::events::{
-    PatchInviteBody, PostEventInviteBody, PostEventInviteQuery, UserInvite,
+    DeleteEventInvitePath, PatchInviteBody, PostEventInviteBody, PostEventInviteQuery, UserInvite,
 };
 use types::{
     api::v1::pagination::PagePaginationQuery,
@@ -511,13 +511,6 @@ pub async fn update_event_invite(
     changeset.apply(&mut conn, user_id, event_id).await?;
 
     Ok(NoContent)
-}
-
-/// Path parameters for the `DELETE /events/{event_id}/invites/{user_id}` endpoint
-#[derive(Deserialize)]
-pub struct DeleteEventInvitePath {
-    pub event_id: EventId,
-    pub user_id: UserId,
 }
 
 struct UninviteNotificationValues {
