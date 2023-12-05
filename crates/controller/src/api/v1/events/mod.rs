@@ -46,8 +46,8 @@ use types::core::Timestamp;
 use types::{
     api::v1::{
         events::{
-            CallInInfo, EmailOnlyUser, EventRoomInfo, EventStatus, EventType, GetEventsCursorData,
-            InstanceId,
+            CallInInfo, EmailOnlyUser, EventInviteeProfile, EventRoomInfo, EventStatus, EventType,
+            GetEventsCursorData, InstanceId,
         },
         pagination::default_pagination_per_page,
         users::{PublicUserProfile, UnregisteredUser},
@@ -319,14 +319,6 @@ impl EventExceptionResource {
             can_edit,
         }
     }
-}
-
-#[derive(Debug, Clone, Serialize)]
-#[serde(tag = "kind", rename_all = "lowercase")]
-pub enum EventInviteeProfile {
-    Registered(PublicInviteUserProfile),
-    Unregistered(UnregisteredUser),
-    Email(EmailOnlyUser),
 }
 
 /// Invitee to an event

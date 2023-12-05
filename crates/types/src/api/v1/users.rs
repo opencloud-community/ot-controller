@@ -147,7 +147,7 @@ pub enum GetFindResponseItem {
 }
 
 /// Representation of a unregistered user
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct UnregisteredUser {
     /// Email of the unregistered user
