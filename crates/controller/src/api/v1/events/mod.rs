@@ -42,9 +42,10 @@ use kustos::{Authz, Resource, ResourceId};
 use rrule::{Frequency, RRuleSet};
 use serde::{Deserialize, Serialize};
 use types::api::v1::events::EventAndInstanceId;
+use types::core::Timestamp;
 use types::{
     api::v1::{
-        events::{EventStatus, EventType, InstanceId},
+        events::{EventStatus, EventType, GetEventsCursorData, InstanceId},
         pagination::default_pagination_per_page,
         users::{PublicUserProfile, UnregisteredUser},
         Cursor,
@@ -893,19 +894,6 @@ pub struct GetEventsQuery {
     time_independent: Option<bool>,
 }
 
-/// Data stored inside the `GET /events` query cursor
-#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
-struct GetEventsCursorData {
-    /// Last event in the list
-    event_id: EventId,
-
-    /// last event created at
-    event_created_at: DateTime<Utc>,
-
-    /// Last event starts_at
-    event_starts_at: Option<DateTime<Utc>>,
-}
-
 /// Return type of the `GET /events` endpoint
 #[derive(Serialize)]
 #[serde(untagged)]
@@ -952,8 +940,8 @@ pub async fn get_events(
         .after
         .map(|cursor| db_storage::events::GetEventsCursor {
             from_id: cursor.event_id,
-            from_created_at: cursor.event_created_at,
-            from_starts_at: cursor.event_starts_at,
+            from_created_at: cursor.event_created_at.into(),
+            from_starts_at: cursor.event_starts_at.map(DateTime::from),
         });
 
     let mut conn = db.get_conn().await?;
@@ -1016,8 +1004,8 @@ pub async fn get_events(
     {
         ret_cursor_data = Some(GetEventsCursorData {
             event_id: event.id,
-            event_created_at: event.created_at,
-            event_starts_at: event.starts_at,
+            event_created_at: event.created_at.into(),
+            event_starts_at: event.starts_at.map(Timestamp::from),
         });
 
         let created_by = users.get(event.created_by);
