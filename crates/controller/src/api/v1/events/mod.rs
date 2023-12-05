@@ -46,7 +46,8 @@ use types::core::Timestamp;
 use types::{
     api::v1::{
         events::{
-            CallInInfo, EventRoomInfo, EventStatus, EventType, GetEventsCursorData, InstanceId,
+            CallInInfo, EmailOnlyUser, EventRoomInfo, EventStatus, EventType, GetEventsCursorData,
+            InstanceId,
         },
         pagination::default_pagination_per_page,
         users::{PublicUserProfile, UnregisteredUser},
@@ -326,12 +327,6 @@ pub enum EventInviteeProfile {
     Registered(PublicInviteUserProfile),
     Unregistered(UnregisteredUser),
     Email(EmailOnlyUser),
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct EmailOnlyUser {
-    pub email: String,
-    pub avatar_url: String,
 }
 
 /// Invitee to an event
