@@ -9,7 +9,7 @@ use crate::core::EventId;
 use super::InstanceId;
 
 /// Opaque id of an EventInstance or EventException resource. Should only be used to sort/index the related resource.
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct EventAndInstanceId(pub EventId, pub InstanceId);
 
 #[cfg(feature = "serde")]

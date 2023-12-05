@@ -15,7 +15,9 @@ use crate::imports::*;
 ///
 /// Is created from the starts_at datetime of the original recurrence (original meaning that exceptions don't change
 /// the instance id).
-#[derive(Debug, Copy, Clone, derive_more::From, derive_more::Into, derive_more::AsRef)]
+#[derive(
+    Debug, Copy, Clone, PartialEq, Eq, derive_more::From, derive_more::Into, derive_more::AsRef,
+)]
 pub struct InstanceId(Timestamp);
 
 impl From<DateTime<Utc>> for InstanceId {

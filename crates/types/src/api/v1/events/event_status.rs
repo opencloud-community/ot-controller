@@ -6,7 +6,7 @@
 use crate::imports::*;
 
 /// Status of an event
-#[derive(Debug)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),

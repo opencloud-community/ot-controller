@@ -7,6 +7,7 @@
 mod call_in_info;
 mod email_only_user;
 mod event_and_instance_id;
+mod event_exception_ressource;
 mod event_invitee;
 mod event_invitee_profile;
 mod event_room_info;
@@ -22,6 +23,7 @@ mod public_invite_user_profile;
 pub use call_in_info::CallInInfo;
 pub use email_only_user::EmailOnlyUser;
 pub use event_and_instance_id::EventAndInstanceId;
+pub use event_exception_ressource::EventExceptionResource;
 pub use event_invitee::EventInvitee;
 pub use event_invitee_profile::EventInviteeProfile;
 pub use event_room_info::EventRoomInfo;

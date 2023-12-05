@@ -41,14 +41,15 @@ use kustos::{Authz, Resource, ResourceId};
 use rrule::{Frequency, RRuleSet};
 use serde::{Deserialize, Serialize};
 use types::api::v1::events::{
-    EventAndInstanceId, EventInvitee, PostEventsBody, PublicInviteUserProfile,
+    EventAndInstanceId, EventExceptionResource, EventInvitee, PostEventsBody,
+    PublicInviteUserProfile,
 };
 use types::core::Timestamp;
 use types::{
     api::v1::{
         events::{
             CallInInfo, EmailOnlyUser, EventInviteeProfile, EventRoomInfo, EventStatus, EventType,
-            GetEventQuery, GetEventsCursorData, GetEventsQuery, InstanceId,
+            GetEventQuery, GetEventsCursorData, GetEventsQuery,
         },
         pagination::default_pagination_per_page,
         users::{PublicUserProfile, UnregisteredUser},
@@ -227,82 +228,20 @@ pub struct EventResource {
     pub streaming_targets: Option<Vec<RoomStreamingTarget>>,
 }
 
-/// Event exception resource
-///
-/// Overrides event properties for a event recurrence. May only exist for events of type `recurring`.
-#[derive(Debug, Serialize)]
-pub struct EventExceptionResource {
-    /// Opaque ID of the exception
-    pub id: EventAndInstanceId,
-
-    /// ID of the event  the exception belongs to
-    pub recurring_event_id: EventId,
-
-    /// ID of the instance the exception overrides
-    pub instance_id: InstanceId,
-
-    /// Public user profile of the user which created the exception
-    pub created_by: PublicUserProfile,
-
-    /// Timestamp of the exceptions creation
-    pub created_at: DateTime<Utc>,
-
-    /// Public user profile of the user which last updated the exception
-    pub updated_by: PublicUserProfile,
-
-    /// Timestamp of the exceptions last update
-    pub updated_at: DateTime<Utc>,
-
-    /// Override the title of the instance
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub title: Option<String>,
-
-    /// Override the description of the instance
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub description: Option<String>,
-
-    /// Override the `is_all_day` property of the instance
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub is_all_day: Option<bool>,
-
-    /// Override the `starts_at` time of the instance
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub starts_at: Option<DateTimeTz>,
-
-    /// Override the `ends_at` time of the instance
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub ends_at: Option<DateTimeTz>,
-
-    /// The `starts_at` of the instance this exception modifies. Used to match the exception the instance
-    pub original_starts_at: DateTimeTz,
-
-    /// Must always be `exception`
-    #[serde(rename = "type")]
-    pub type_: EventType,
-
-    /// Override the status of the event instance
-    ///
-    /// This can be used to cancel a occurrence of an event
-    pub status: EventStatus,
-
-    /// Can the current user edit this resource
-    pub can_edit: bool,
+trait EventResourceExt {
+    fn from_db(exception: EventException, created_by: PublicUserProfile, can_edit: bool) -> Self;
 }
 
-impl EventExceptionResource {
-    pub fn from_db(
-        exception: EventException,
-        created_by: PublicUserProfile,
-        can_edit: bool,
-    ) -> Self {
+impl EventResourceExt for EventExceptionResource {
+    fn from_db(exception: EventException, created_by: PublicUserProfile, can_edit: bool) -> Self {
         Self {
             id: EventAndInstanceId(exception.event_id, exception.exception_date.into()),
             recurring_event_id: exception.event_id,
             instance_id: exception.exception_date.into(),
             created_by: created_by.clone(),
-            created_at: exception.created_at,
+            created_at: exception.created_at.into(),
             updated_by: created_by,
-            updated_at: exception.created_at,
+            updated_at: exception.created_at.into(),
             title: exception.title,
             description: exception.description,
             is_all_day: exception.is_all_day,
@@ -2397,7 +2336,7 @@ mod tests {
 
     #[test]
     fn event_exception_serialize() {
-        let unix_epoch: DateTime<Utc> = SystemTime::UNIX_EPOCH.into();
+        let unix_epoch: Timestamp = SystemTime::UNIX_EPOCH.into();
         let instance_id = unix_epoch.into();
         let event_id = EventId::nil();
         let user_profile = PublicUserProfile {
@@ -2422,15 +2361,15 @@ mod tests {
             description: Some("Instance description".into()),
             is_all_day: Some(false),
             starts_at: Some(DateTimeTz {
-                datetime: unix_epoch,
+                datetime: *unix_epoch,
                 timezone: TimeZone::from(Tz::Europe__Berlin),
             }),
             ends_at: Some(DateTimeTz {
-                datetime: unix_epoch,
+                datetime: *unix_epoch,
                 timezone: TimeZone::from(Tz::Europe__Berlin),
             }),
             original_starts_at: DateTimeTz {
-                datetime: unix_epoch,
+                datetime: *unix_epoch,
                 timezone: TimeZone::from(Tz::Europe__Berlin),
             },
             type_: EventType::Exception,
