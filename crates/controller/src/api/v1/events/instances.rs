@@ -25,7 +25,7 @@ use keycloak_admin::KeycloakAdminClient;
 use rrule::RRuleSet;
 use serde::Deserialize;
 use types::api::v1::events::{
-    EventAndInstanceId, EventInstance, EventRoomInfo, EventStatus, EventType,
+    EventAndInstanceId, EventInstance, EventInstancePath, EventRoomInfo, EventStatus, EventType,
     GetEventInstancesCursorData, GetEventInstancesQuery, InstanceId,
 };
 use types::api::v1::Cursor;
@@ -185,12 +185,6 @@ pub async fn get_event_instances(
 }
 
 #[derive(Deserialize)]
-pub struct GetEventInstancePath {
-    event_id: EventId,
-    instance_id: InstanceId,
-}
-
-#[derive(Deserialize)]
 pub struct GetEventInstanceQuery {
     #[serde(default)]
     invitees_max: i64,
@@ -206,11 +200,11 @@ pub async fn get_event_instance(
     kc_admin_client: Data<KeycloakAdminClient>,
     current_tenant: ReqData<Tenant>,
     current_user: ReqData<User>,
-    path: Path<GetEventInstancePath>,
+    path: Path<EventInstancePath>,
     query: Query<GetEventInstanceQuery>,
 ) -> DefaultApiResult<EventInstance> {
     let settings = settings.load_full();
-    let GetEventInstancePath {
+    let EventInstancePath {
         event_id,
         instance_id,
     } = path.into_inner();
@@ -267,13 +261,6 @@ pub async fn get_event_instance(
     };
 
     Ok(ApiResponse::new(event_instance))
-}
-
-/// Path parameters for the `PATCH /events/{event_id}/{instance_id}` endpoint
-#[derive(Deserialize)]
-pub struct PatchEventInstancePath {
-    event_id: EventId,
-    instance_id: InstanceId,
 }
 
 /// Path query for the `PATCH /events/{event_id}/{instance_id}` endpoint
@@ -333,7 +320,7 @@ pub async fn patch_event_instance(
     kc_admin_client: Data<KeycloakAdminClient>,
     current_tenant: ReqData<Tenant>,
     current_user: ReqData<User>,
-    path: Path<PatchEventInstancePath>,
+    path: Path<EventInstancePath>,
     query: Query<PatchEventInstanceQuery>,
     patch: Json<PatchEventInstanceBody>,
 ) -> Result<Either<ApiResponse<EventInstance>, NoContent>, ApiError> {
@@ -346,7 +333,7 @@ pub async fn patch_event_instance(
     patch.validate()?;
 
     let settings = settings.load_full();
-    let PatchEventInstancePath {
+    let EventInstancePath {
         event_id,
         instance_id,
     } = path.into_inner();
