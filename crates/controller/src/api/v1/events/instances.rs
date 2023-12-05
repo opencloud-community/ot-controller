@@ -26,22 +26,12 @@ use rrule::RRuleSet;
 use serde::Deserialize;
 use types::api::v1::events::{
     EventAndInstanceId, EventInstance, EventRoomInfo, EventStatus, EventType,
-    GetEventInstancesCursorData, InstanceId,
+    GetEventInstancesCursorData, GetEventInstancesQuery, InstanceId,
 };
 use types::api::v1::Cursor;
 use types::common::shared_folder::SharedFolder;
 use types::core::{EventId, EventInviteStatus};
 use validator::Validate;
-
-#[derive(Deserialize)]
-pub struct GetEventInstancesQuery {
-    #[serde(default)]
-    invitees_max: i64,
-    time_min: Option<DateTime<Utc>>,
-    time_max: Option<DateTime<Utc>>,
-    per_page: Option<i64>,
-    after: Option<Cursor<GetEventInstancesCursorData>>,
-}
 
 struct GetPaginatedEventInstancesData {
     instances: Vec<EventInstance>,
@@ -103,11 +93,11 @@ pub async fn get_event_instances(
         Box::new(rruleset.into_iter().skip_while(move |&dt| dt > max_dt));
 
     if let Some(time_min) = time_min {
-        iter = Box::new(iter.skip_while(move |&dt| dt <= time_min));
+        iter = Box::new(iter.skip_while(move |&dt| dt <= *time_min));
     }
 
     if let Some(time_max) = time_max {
-        iter = Box::new(iter.skip_while(move |&dt| dt >= time_max));
+        iter = Box::new(iter.skip_while(move |&dt| dt >= *time_max));
     }
 
     let datetimes: Vec<DateTime<Utc>> = iter

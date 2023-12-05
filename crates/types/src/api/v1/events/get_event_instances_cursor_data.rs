@@ -6,7 +6,7 @@
 use crate::imports::*;
 
 /// Data stored inside the `GET /events/{event_id}/instances` query cursor
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct GetEventInstancesCursorData {
     /// Page number

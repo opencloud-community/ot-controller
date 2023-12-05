@@ -10,7 +10,7 @@ use crate::imports::*;
 /// Opaque token which represents T as a base64 string (where T is encoded using bincode)
 ///
 /// Used for cursor based pagination
-#[derive(Deref, DerefMut, AsRef, Debug, Copy, Clone)]
+#[derive(Deref, DerefMut, AsRef, Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Cursor<T>(pub T);
 
 #[cfg(feature = "serde")]
