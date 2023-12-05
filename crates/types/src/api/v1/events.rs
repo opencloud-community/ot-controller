@@ -5,6 +5,7 @@
 //! This module contains types that are used for OpenTalk API V1 events endpoints.
 
 mod call_in_info;
+mod delete_event_query;
 mod email_only_user;
 mod event_and_instance_id;
 mod event_exception_ressource;
@@ -24,6 +25,7 @@ mod post_events_body;
 mod public_invite_user_profile;
 
 pub use call_in_info::CallInInfo;
+pub use delete_event_query::DeleteEventQuery;
 pub use email_only_user::EmailOnlyUser;
 pub use event_and_instance_id::EventAndInstanceId;
 pub use event_exception_ressource::EventExceptionResource;

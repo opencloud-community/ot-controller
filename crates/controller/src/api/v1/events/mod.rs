@@ -41,7 +41,7 @@ use kustos::{Authz, Resource, ResourceId};
 use rrule::{Frequency, RRuleSet};
 use serde::Deserialize;
 use types::api::v1::events::{
-    EventAndInstanceId, EventExceptionResource, EventInvitee, PostEventsBody,
+    DeleteEventQuery, EventAndInstanceId, EventExceptionResource, EventInvitee, PostEventsBody,
     PublicInviteUserProfile,
 };
 use types::core::Timestamp;
@@ -1372,14 +1372,6 @@ struct CancellationNotificationValues {
     pub room: Room,
     pub sip_config: Option<SipConfig>,
     pub users_to_notify: Vec<MailRecipient>,
-}
-
-/// Query parameters for the `DELETE /events/{event_id}` endpoint
-#[derive(Debug, Deserialize)]
-pub struct DeleteEventQuery {
-    /// Flag to disable email notification
-    #[serde(default)]
-    suppress_email_notification: bool,
 }
 
 /// API Endpoint `DELETE /events/{event_id}`
