@@ -23,10 +23,10 @@ use db_storage::tenants::Tenant;
 use db_storage::users::User;
 use keycloak_admin::KeycloakAdminClient;
 use rrule::RRuleSet;
-use serde::Deserialize;
 use types::api::v1::events::{
     EventAndInstanceId, EventInstance, EventInstancePath, EventInstanceQuery, EventRoomInfo,
     EventStatus, EventType, GetEventInstancesCursorData, GetEventInstancesQuery, InstanceId,
+    PatchEventInstanceBody,
 };
 use types::api::v1::Cursor;
 use types::common::shared_folder::SharedFolder;
@@ -255,39 +255,6 @@ pub async fn get_event_instance(
     };
 
     Ok(ApiResponse::new(event_instance))
-}
-
-/// Request body for the `PATCH /events/{event_id}/{instance_id}` endpoint
-#[derive(Debug, Deserialize, Validate)]
-pub struct PatchEventInstanceBody {
-    #[validate(length(max = 255))]
-    title: Option<String>,
-    #[validate(length(max = 4096))]
-    description: Option<String>,
-    is_all_day: Option<bool>,
-    starts_at: Option<DateTimeTz>,
-    ends_at: Option<DateTimeTz>,
-    status: Option<EventStatus>,
-}
-
-impl PatchEventInstanceBody {
-    fn is_empty(&self) -> bool {
-        let PatchEventInstanceBody {
-            title,
-            description,
-            is_all_day,
-            starts_at,
-            ends_at,
-            status,
-        } = self;
-
-        title.is_none()
-            && description.is_none()
-            && is_all_day.is_none()
-            && starts_at.is_none()
-            && ends_at.is_none()
-            && status.is_none()
-    }
 }
 
 /// API Endpoint `PATCH /events/{event_id}/{instance_id}`
