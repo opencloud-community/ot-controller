@@ -41,7 +41,7 @@ use kustos::prelude::{AccessMethod, IsSubject};
 use kustos::{Authz, Resource, ResourceId};
 use rrule::{Frequency, RRuleSet};
 use serde::{Deserialize, Serialize};
-use types::api::v1::events::EventAndInstanceId;
+use types::api::v1::events::{EventAndInstanceId, PostEventsBody};
 use types::core::Timestamp;
 use types::{
     api::v1::{
@@ -50,6 +50,7 @@ use types::{
         },
         pagination::default_pagination_per_page,
         users::{PublicUserProfile, UnregisteredUser},
+        utils::validate_recurrence_pattern,
         Cursor,
     },
     common::{
@@ -59,7 +60,7 @@ use types::{
     },
     core::{DateTimeTz, EventId, EventInviteStatus, InviteRole, TimeZone, UserId},
 };
-use validator::{Validate, ValidationError};
+use validator::Validate;
 
 pub mod favorites;
 pub mod instances;
@@ -420,76 +421,6 @@ impl EventRoomInfoExt for EventRoomInfo {
             call_in,
         }
     }
-}
-
-/// Body of the the `POST /events` endpoint
-#[derive(Debug, Deserialize, Validate)]
-pub struct PostEventsBody {
-    /// Title of the event
-    #[validate(length(max = 255))]
-    pub title: String,
-
-    /// Description of the event
-    #[validate(length(max = 4096))]
-    pub description: String,
-
-    /// Optional password for the room related to the event
-    #[validate(length(min = 1, max = 255))]
-    pub password: Option<String>,
-
-    /// Should the created event have a waiting room?
-    #[serde(default)]
-    pub waiting_room: bool,
-
-    /// Should the created event be time independent?
-    ///
-    /// If true, all following fields must be null
-    /// If false, requires `is_all_day`, `starts_at`, `ends_at`
-    pub is_time_independent: bool,
-
-    /// Should the event be all-day?
-    ///
-    /// If true, requires `starts_at.datetime` and `ends_at.datetime` to have a 00:00 time part
-    pub is_all_day: Option<bool>,
-
-    /// Start time of the event
-    ///
-    /// For recurring events these must contains the datetime of the first instance
-    pub starts_at: Option<DateTimeTz>,
-
-    /// End time of the event
-    ///
-    /// For recurring events these must contains the datetime of the first instance
-    pub ends_at: Option<DateTimeTz>,
-
-    /// List of recurrence patterns
-    ///
-    /// If the list if non-empty the created event will be of type `recurring`
-    ///
-    /// For more infos see the documentation of [`EventResource`]
-    #[validate(custom = "validate_recurrence_pattern")]
-    #[serde(default)]
-    pub recurrence_pattern: Vec<String>,
-
-    /// Is this an ad-hoc chatroom?
-    #[serde(default)]
-    pub is_adhoc: bool,
-
-    /// The streaming targets of the room associated with the event
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub streaming_targets: Option<Vec<StreamingTarget>>,
-}
-
-fn validate_recurrence_pattern(pattern: &[String]) -> Result<(), ValidationError> {
-    if pattern.len() > 4 {
-        return Err(ValidationError::new("too_many_recurrence_patterns"));
-    }
-
-    if pattern.iter().any(|p| p.len() > 1024) {
-        return Err(ValidationError::new("recurrence_pattern_too_large"));
-    }
-
-    Ok(())
 }
 
 /// API Endpoint `POST /events`

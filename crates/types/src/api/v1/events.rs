@@ -11,6 +11,7 @@ mod event_status;
 mod event_type;
 mod get_events_cursor_data;
 mod instance_id;
+mod post_events_body;
 
 pub use call_in_info::CallInInfo;
 pub use event_and_instance_id::EventAndInstanceId;
@@ -19,5 +20,6 @@ pub use event_status::EventStatus;
 pub use event_type::EventType;
 pub use get_events_cursor_data::GetEventsCursorData;
 pub use instance_id::InstanceId;
+pub use post_events_body::PostEventsBody;
 
 const UTC_DT_FORMAT: &str = "%Y%m%dT%H%M%SZ";

@@ -14,8 +14,8 @@ pub mod rooms;
 pub mod streaming_targets;
 pub mod turn;
 pub mod users;
+pub mod utils;
 
 mod cursor;
-mod utils;
 
 pub use cursor::Cursor;
