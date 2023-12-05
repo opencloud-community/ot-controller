@@ -44,7 +44,7 @@ use serde::{Deserialize, Serialize};
 use types::api::v1::events::EventAndInstanceId;
 use types::{
     api::v1::{
-        events::{EventStatus, InstanceId},
+        events::{EventStatus, EventType, InstanceId},
         pagination::default_pagination_per_page,
         users::{PublicUserProfile, UnregisteredUser},
         Cursor,
@@ -367,18 +367,6 @@ impl EventInvitee {
             status: EventInviteStatus::Pending,
         }
     }
-}
-
-/// Type of event resource.
-///
-/// Is used as type discriminator in field `type`.
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum EventType {
-    Single,
-    Recurring,
-    Instance,
-    Exception,
 }
 
 /// All information about a room in which an event takes place
