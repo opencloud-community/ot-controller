@@ -41,6 +41,7 @@ use kustos::prelude::{AccessMethod, IsSubject};
 use kustos::{Authz, Resource, ResourceId};
 use rrule::{Frequency, RRuleSet};
 use serde::{Deserialize, Serialize};
+use types::api::v1::events::EventAndInstanceId;
 use types::{
     api::v1::{
         events::InstanceId,
@@ -64,19 +65,6 @@ pub mod shared_folder;
 
 const LOCAL_DT_FORMAT: &str = "%Y%m%dT%H%M%S";
 const ONE_HUNDRED_YEARS_IN_DAYS: usize = 36525;
-
-/// Opaque id of an EventInstance or EventException resource. Should only be used to sort/index the related resource.
-#[derive(Debug, Copy, Clone)]
-pub struct EventAndInstanceId(EventId, InstanceId);
-
-impl Serialize for EventAndInstanceId {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        format!("{}_{}", self.0, self.1).serialize(serializer)
-    }
-}
 
 pub(crate) trait DateTimeTzFromDb: Sized {
     fn maybe_from_db(utc_dt: Option<DateTime<Utc>>, tz: Option<TimeZone>) -> Option<Self>;
