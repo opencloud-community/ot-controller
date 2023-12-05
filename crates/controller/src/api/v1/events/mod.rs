@@ -45,7 +45,9 @@ use types::api::v1::events::EventAndInstanceId;
 use types::core::Timestamp;
 use types::{
     api::v1::{
-        events::{CallInInfo, EventStatus, EventType, GetEventsCursorData, InstanceId},
+        events::{
+            CallInInfo, EventRoomInfo, EventStatus, EventType, GetEventsCursorData, InstanceId,
+        },
         pagination::default_pagination_per_page,
         users::{PublicUserProfile, UnregisteredUser},
         Cursor,
@@ -55,7 +57,7 @@ use types::{
         shared_folder::{SharedFolder, SharedFolderAccess},
         streaming::{RoomStreamingTarget, StreamingTarget},
     },
-    core::{DateTimeTz, EventId, EventInviteStatus, InviteRole, RoomId, TimeZone, UserId},
+    core::{DateTimeTz, EventId, EventInviteStatus, InviteRole, TimeZone, UserId},
 };
 use validator::{Validate, ValidationError};
 
@@ -370,24 +372,16 @@ impl EventInvitee {
     }
 }
 
-/// All information about a room in which an event takes place
-#[derive(Debug, Clone, Serialize)]
-pub struct EventRoomInfo {
-    /// ID of the room
-    pub id: RoomId,
-
-    /// Password of the room
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub password: Option<String>,
-
-    /// Flag to check if the room has a waiting room enabled
-    pub waiting_room: bool,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub call_in: Option<CallInInfo>,
+trait EventRoomInfoExt {
+    fn from_room(
+        settings: &Settings,
+        room: Room,
+        sip_config: Option<SipConfig>,
+        tariff: &Tariff,
+    ) -> Self;
 }
 
-impl EventRoomInfo {
+impl EventRoomInfoExt for EventRoomInfo {
     /// Create a new [`EventRoomInfo`]
     ///
     /// The [`EventRoomInfo`] also contains a [`CallInInfo`] if the following conditions are true:
