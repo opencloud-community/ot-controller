@@ -10,7 +10,6 @@ use super::{ApiResponse, DefaultApiResult};
 use crate::api::v1::response::CODE_IGNORED_VALUE;
 use crate::api::v1::rooms::RoomsPoliciesBuilderExt;
 use crate::api::v1::streaming_targets::{get_room_streaming_targets, insert_room_streaming_target};
-use crate::api::v1::util::comma_separated;
 use crate::api::v1::util::{deserialize_some, GetUserProfilesBatched};
 use crate::services::{
     ExternalMailRecipient, MailRecipient, MailService, UnregisteredMailRecipient,
@@ -53,7 +52,7 @@ use types::{
         },
         pagination::default_pagination_per_page,
         users::{PublicUserProfile, UnregisteredUser},
-        utils::validate_recurrence_pattern,
+        utils::{comma_separated, validate_recurrence_pattern},
         Cursor,
     },
     common::{

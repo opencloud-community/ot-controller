@@ -4,12 +4,16 @@
 
 //! This module contains functions that are used in different areas of the OpenTalk
 
+#![cfg(feature = "serde")]
+
+use core::fmt;
+use std::{marker::PhantomData, str::FromStr};
+
 #[allow(unused_imports)]
 use crate::imports::*;
 
 /// Helper function to deserialize Option<Option<T>>
 /// https://github.com/serde-rs/serde/issues/984
-#[cfg(feature = "serde")]
 pub(super) fn deserialize_some<'de, T, D>(deserializer: D) -> Result<Option<T>, D::Error>
 where
     T: Deserialize<'de>,
@@ -19,7 +23,6 @@ where
 }
 
 /// Validates a recurrence pattern for an event
-#[cfg(feature = "serde")]
 pub fn validate_recurrence_pattern(pattern: &[String]) -> Result<(), ValidationError> {
     if pattern.len() > 4 {
         return Err(ValidationError::new("too_many_recurrence_patterns"));
@@ -30,4 +33,39 @@ pub fn validate_recurrence_pattern(pattern: &[String]) -> Result<(), ValidationE
     }
 
     Ok(())
+}
+
+/// Helper function to deserialize comma-separated values
+pub fn comma_separated<'de, V, T, D>(deserializer: D) -> Result<V, D::Error>
+where
+    V: FromIterator<T>,
+    T: FromStr,
+    T::Err: fmt::Display,
+    D: Deserializer<'de>,
+{
+    struct CommaSeparated<V, T>(PhantomData<(T, V)>);
+
+    impl<'de, V, T> serde::de::Visitor<'de> for CommaSeparated<V, T>
+    where
+        V: FromIterator<T>,
+        T: FromStr,
+        T::Err: fmt::Display,
+    {
+        type Value = V;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("string containing comma-separated elements")
+        }
+
+        fn visit_str<E>(self, s: &str) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            let iter = s.split(',').map(FromStr::from_str);
+            iter.collect::<Result<_, _>>().map_err(de::Error::custom)
+        }
+    }
+
+    let visitor = CommaSeparated(PhantomData);
+    deserializer.deserialize_str(visitor)
 }
