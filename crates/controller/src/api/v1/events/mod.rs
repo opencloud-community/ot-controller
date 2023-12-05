@@ -41,7 +41,9 @@ use kustos::prelude::{AccessMethod, IsSubject};
 use kustos::{Authz, Resource, ResourceId};
 use rrule::{Frequency, RRuleSet};
 use serde::{Deserialize, Serialize};
-use types::api::v1::events::{EventAndInstanceId, PostEventsBody, PublicInviteUserProfile};
+use types::api::v1::events::{
+    EventAndInstanceId, EventInvitee, PostEventsBody, PublicInviteUserProfile,
+};
 use types::core::Timestamp;
 use types::{
     api::v1::{
@@ -321,16 +323,12 @@ impl EventExceptionResource {
     }
 }
 
-/// Invitee to an event
-///
-///  Contains user profile and invitee status
-#[derive(Debug, Clone, Serialize)]
-pub struct EventInvitee {
-    pub profile: EventInviteeProfile,
-    pub status: EventInviteStatus,
+trait EventInviteeExt {
+    fn from_invite_with_user(invite: EventInvite, user: User, settings: &Settings) -> Self;
+    fn from_email_invite(invite: EventEmailInvite, settings: &Settings) -> Self;
 }
 
-impl EventInvitee {
+impl EventInviteeExt for EventInvitee {
     fn from_invite_with_user(invite: EventInvite, user: User, settings: &Settings) -> EventInvitee {
         EventInvitee {
             profile: EventInviteeProfile::Registered(PublicInviteUserProfile {

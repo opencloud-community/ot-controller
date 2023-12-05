@@ -7,7 +7,7 @@ use std::sync::Arc;
 use super::{ApiResponse, DefaultApiResult};
 use crate::api::v1::events::{
     enrich_from_keycloak, enrich_invitees_from_keycloak, get_invited_mail_recipients_for_event,
-    get_tenant_filter, EventInvitee, EventPoliciesBuilderExt,
+    get_tenant_filter, EventInvitee, EventInviteeExt, EventPoliciesBuilderExt,
 };
 use crate::api::v1::response::{ApiError, Created, NoContent};
 use crate::api::v1::rooms::RoomsPoliciesBuilderExt;
