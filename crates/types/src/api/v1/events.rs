@@ -28,6 +28,7 @@ mod instance_id;
 mod patch_event_body;
 mod patch_event_instance_body;
 mod patch_event_query;
+mod post_event_invite_query;
 mod post_events_body;
 mod public_invite_user_profile;
 
@@ -55,6 +56,7 @@ pub use instance_id::InstanceId;
 pub use patch_event_body::PatchEventBody;
 pub use patch_event_instance_body::PatchEventInstanceBody;
 pub use patch_event_query::PatchEventQuery;
+pub use post_event_invite_query::PostEventInviteQuery;
 pub use post_events_body::PostEventsBody;
 pub use public_invite_user_profile::PublicInviteUserProfile;
 

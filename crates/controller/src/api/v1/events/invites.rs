@@ -37,6 +37,7 @@ use keycloak_admin::KeycloakAdminClient;
 use kustos::policies_builder::PoliciesBuilder;
 use kustos::Authz;
 use serde::{Deserialize, Serialize};
+use types::api::v1::events::PostEventInviteQuery;
 use types::{
     api::v1::pagination::PagePaginationQuery,
     common::shared_folder::SharedFolder,
@@ -99,14 +100,6 @@ pub async fn get_invites_for_event(
         page,
         event_invites_total + event_email_invites_total,
     ))
-}
-
-/// Query parameters for the `PATCH /events/{event_id}/invites` endpoint
-#[derive(Deserialize, Debug, PartialEq, Eq)]
-pub struct PostEventInviteQuery {
-    /// Flag to suppress email notification
-    #[serde(default)]
-    suppress_email_notification: bool,
 }
 
 /// Request body for the `POST /events/{event_id}/invites` endpoint
