@@ -48,11 +48,11 @@ use types::{
     api::v1::{
         events::{
             CallInInfo, EmailOnlyUser, EventInviteeProfile, EventRoomInfo, EventStatus, EventType,
-            GetEventsCursorData, InstanceId,
+            GetEventsCursorData, GetEventsQuery, InstanceId,
         },
         pagination::default_pagination_per_page,
         users::{PublicUserProfile, UnregisteredUser},
-        utils::{comma_separated, validate_recurrence_pattern},
+        utils::validate_recurrence_pattern,
         Cursor,
     },
     common::{
@@ -730,55 +730,6 @@ async fn create_time_dependent_event(
     })
 }
 
-/// Path query parameters of the `GET /events` endpoint
-///
-/// Allows for customization in the search for events
-#[derive(Debug, Deserialize)]
-pub struct GetEventsQuery {
-    /// Optional minimum time in which the event happens
-    time_min: Option<DateTime<Utc>>,
-
-    /// Optional maximum time in which the event happens
-    time_max: Option<DateTime<Utc>>,
-
-    /// Maximum number of invitees to return inside the event resource
-    ///
-    /// Default: 0
-    #[serde(default)]
-    invitees_max: u32,
-
-    /// Return only favorite events
-    #[serde(default)]
-    favorites: bool,
-
-    /// Filter the events by invite status
-    #[serde(default)]
-    #[serde(deserialize_with = "comma_separated")]
-    invite_status: Vec<EventInviteStatus>,
-
-    /// How many events to return per page
-    per_page: Option<i64>,
-
-    /// Cursor token to get the next page of events
-    ///
-    /// Returned by the endpoint if the maximum number of events per page has been hit
-    after: Option<Cursor<GetEventsCursorData>>,
-
-    /// Only get events that are either marked as adhoc or non-adhoc
-    ///
-    /// If present, all adhoc events will be returned when `true`, all non-adhoc
-    /// events will be returned when `false`. If not present, all events will
-    /// be returned regardless of their `adhoc` flag value.
-    adhoc: Option<bool>,
-
-    /// Only get events that are either time-independent or time-dependent
-    ///
-    /// If present, all time-independent events will be returned when `true`,
-    /// all time-dependent events will be returned when `false`. If absent,
-    /// all events will be returned regardless of their time dependency.
-    time_independent: Option<bool>,
-}
-
 /// Return type of the `GET /events` endpoint
 #[derive(Serialize)]
 #[serde(untagged)]
@@ -836,8 +787,8 @@ pub async fn get_events(
         &current_user,
         query.favorites,
         query.invite_status,
-        query.time_min,
-        query.time_max,
+        query.time_min.map(DateTime::from),
+        query.time_max.map(DateTime::from),
         query.adhoc,
         query.time_independent,
         get_events_cursor,
