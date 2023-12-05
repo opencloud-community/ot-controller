@@ -7,7 +7,7 @@ use crate::core::{InviteRole, UserId};
 use crate::imports::*;
 
 /// Request body variant for the `POST /events/{event_id}/invites` endpoint
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct UserInvite {
     /// ID of the user to invite
