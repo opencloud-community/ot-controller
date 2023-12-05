@@ -39,7 +39,7 @@ use kustos::policies_builder::{GrantingAccess, PoliciesBuilder};
 use kustos::prelude::{AccessMethod, IsSubject};
 use kustos::{Authz, Resource, ResourceId};
 use rrule::{Frequency, RRuleSet};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use types::api::v1::events::{
     EventAndInstanceId, EventExceptionResource, EventInvitee, PostEventsBody,
     PublicInviteUserProfile,
@@ -48,8 +48,9 @@ use types::core::Timestamp;
 use types::{
     api::v1::{
         events::{
-            CallInInfo, EmailOnlyUser, EventInviteeProfile, EventResource, EventRoomInfo,
-            EventStatus, EventType, GetEventQuery, GetEventsCursorData, GetEventsQuery,
+            CallInInfo, EmailOnlyUser, EventInviteeProfile, EventOrException, EventResource,
+            EventRoomInfo, EventStatus, EventType, GetEventQuery, GetEventsCursorData,
+            GetEventsQuery,
         },
         pagination::default_pagination_per_page,
         users::{PublicUserProfile, UnregisteredUser},
@@ -563,15 +564,6 @@ async fn create_time_dependent_event(
         shared_folder: None,
         streaming_targets,
     })
-}
-
-/// Return type of the `GET /events` endpoint
-#[derive(Serialize)]
-#[serde(untagged)]
-#[allow(clippy::large_enum_variant)]
-pub enum EventOrException {
-    Event(EventResource),
-    Exception(EventExceptionResource),
 }
 
 struct GetPaginatedEventsData {
@@ -2130,9 +2122,9 @@ mod tests {
         let event_resource = EventResource {
             id: EventId::nil(),
             created_by: user_profile.clone(),
-            created_at: unix_epoch.into(),
+            created_at: unix_epoch,
             updated_by: user_profile.clone(),
-            updated_at: unix_epoch.into(),
+            updated_at: unix_epoch,
             title: "Event title".into(),
             description: "Event description".into(),
             room: EventRoomInfo {
