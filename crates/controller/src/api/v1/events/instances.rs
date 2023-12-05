@@ -23,9 +23,10 @@ use db_storage::tenants::Tenant;
 use db_storage::users::User;
 use keycloak_admin::KeycloakAdminClient;
 use rrule::RRuleSet;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use types::api::v1::events::{
-    EventAndInstanceId, EventInstance, EventRoomInfo, EventStatus, EventType, InstanceId,
+    EventAndInstanceId, EventInstance, EventRoomInfo, EventStatus, EventType,
+    GetEventInstancesCursorData, InstanceId,
 };
 use types::api::v1::Cursor;
 use types::common::shared_folder::SharedFolder;
@@ -40,11 +41,6 @@ pub struct GetEventInstancesQuery {
     time_max: Option<DateTime<Utc>>,
     per_page: Option<i64>,
     after: Option<Cursor<GetEventInstancesCursorData>>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Copy)]
-struct GetEventInstancesCursorData {
-    page: i64,
 }
 
 struct GetPaginatedEventInstancesData {
