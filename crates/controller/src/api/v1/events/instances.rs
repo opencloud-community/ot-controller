@@ -25,8 +25,8 @@ use keycloak_admin::KeycloakAdminClient;
 use rrule::RRuleSet;
 use serde::Deserialize;
 use types::api::v1::events::{
-    EventAndInstanceId, EventInstance, EventInstancePath, EventRoomInfo, EventStatus, EventType,
-    GetEventInstancesCursorData, GetEventInstancesQuery, InstanceId,
+    EventAndInstanceId, EventInstance, EventInstancePath, EventInstanceQuery, EventRoomInfo,
+    EventStatus, EventType, GetEventInstancesCursorData, GetEventInstancesQuery, InstanceId,
 };
 use types::api::v1::Cursor;
 use types::common::shared_folder::SharedFolder;
@@ -184,12 +184,6 @@ pub async fn get_event_instances(
         .with_cursor_pagination(instances_data.before, instances_data.after))
 }
 
-#[derive(Deserialize)]
-pub struct GetEventInstanceQuery {
-    #[serde(default)]
-    invitees_max: i64,
-}
-
 /// API Endpoint *GET /events/{id}*
 ///
 /// Returns the event resource for the given id
@@ -201,7 +195,7 @@ pub async fn get_event_instance(
     current_tenant: ReqData<Tenant>,
     current_user: ReqData<User>,
     path: Path<EventInstancePath>,
-    query: Query<GetEventInstanceQuery>,
+    query: Query<EventInstanceQuery>,
 ) -> DefaultApiResult<EventInstance> {
     let settings = settings.load_full();
     let EventInstancePath {
@@ -263,16 +257,6 @@ pub async fn get_event_instance(
     Ok(ApiResponse::new(event_instance))
 }
 
-/// Path query for the `PATCH /events/{event_id}/{instance_id}` endpoint
-#[derive(Deserialize)]
-pub struct PatchEventInstanceQuery {
-    /// Maximum number of invitees to return inside the event instance resource
-    ///
-    /// Default: 0
-    #[serde(default)]
-    invitees_max: i64,
-}
-
 /// Request body for the `PATCH /events/{event_id}/{instance_id}` endpoint
 #[derive(Debug, Deserialize, Validate)]
 pub struct PatchEventInstanceBody {
@@ -321,7 +305,7 @@ pub async fn patch_event_instance(
     current_tenant: ReqData<Tenant>,
     current_user: ReqData<User>,
     path: Path<EventInstancePath>,
-    query: Query<PatchEventInstanceQuery>,
+    query: Query<EventInstanceQuery>,
     patch: Json<PatchEventInstanceBody>,
 ) -> Result<Either<ApiResponse<EventInstance>, NoContent>, ApiError> {
     let patch = patch.into_inner();
