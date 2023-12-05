@@ -31,6 +31,7 @@ mod patch_event_query;
 mod post_event_invite_query;
 mod post_events_body;
 mod public_invite_user_profile;
+mod user_invite;
 
 pub use call_in_info::CallInInfo;
 pub use delete_event_query::DeleteEventQuery;
@@ -59,5 +60,6 @@ pub use patch_event_query::PatchEventQuery;
 pub use post_event_invite_query::PostEventInviteQuery;
 pub use post_events_body::PostEventsBody;
 pub use public_invite_user_profile::PublicInviteUserProfile;
+pub use user_invite::UserInvite;
 
 const UTC_DT_FORMAT: &str = "%Y%m%dT%H%M%SZ";

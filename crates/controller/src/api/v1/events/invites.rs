@@ -37,7 +37,7 @@ use keycloak_admin::KeycloakAdminClient;
 use kustos::policies_builder::PoliciesBuilder;
 use kustos::Authz;
 use serde::{Deserialize, Serialize};
-use types::api::v1::events::PostEventInviteQuery;
+use types::api::v1::events::{PostEventInviteQuery, UserInvite};
 use types::{
     api::v1::pagination::PagePaginationQuery,
     common::shared_folder::SharedFolder,
@@ -108,13 +108,6 @@ pub async fn get_invites_for_event(
 pub enum PostEventInviteBody {
     User(UserInvite),
     Email { email: EmailAddress },
-}
-
-#[derive(Deserialize)]
-pub struct UserInvite {
-    invitee: UserId,
-    #[serde(default)]
-    role: InviteRole,
 }
 
 /// API Endpoint `POST /events/{event_id}/invites`
