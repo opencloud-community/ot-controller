@@ -38,7 +38,8 @@ use kustos::policies_builder::PoliciesBuilder;
 use kustos::Authz;
 use serde::{Deserialize, Serialize};
 use types::api::v1::events::{
-    DeleteEventInvitePath, PatchInviteBody, PostEventInviteBody, PostEventInviteQuery, UserInvite,
+    DeleteEmailInviteBody, DeleteEventInvitePath, PatchInviteBody, PostEventInviteBody,
+    PostEventInviteQuery, UserInvite,
 };
 use types::{
     api::v1::pagination::PagePaginationQuery,
@@ -623,11 +624,6 @@ pub async fn delete_invite_to_event(
     remove_invitee_permissions(&authz, event_id, room_id, invite.invitee).await?;
 
     Ok(NoContent)
-}
-
-#[derive(Deserialize)]
-pub struct DeleteEmailInviteBody {
-    email: EmailAddress,
 }
 
 /// API Endpoint `DELETE /events/{event_id}/invites/email`
