@@ -9,8 +9,6 @@ use database::Result;
 use db_storage::tariffs::Tariff;
 use db_storage::users::User;
 use db_storage::utils::HasUsers;
-use serde::Deserialize;
-use serde::Deserializer;
 use std::collections::HashMap;
 use types::api::v1::users::PublicUserProfile;
 use types::core::UserId;
@@ -72,17 +70,6 @@ impl UserProfilesBatch {
     }
 }
 
-/// Helper function to deserialize Option<Option<T>>
-/// https://github.com/serde-rs/serde/issues/984
-// TODO: Once api/v1/events types are moved to `types` crate, this can be removed
-pub(super) fn deserialize_some<'de, T, D>(deserializer: D) -> Result<Option<T>, D::Error>
-where
-    T: Deserialize<'de>,
-    D: Deserializer<'de>,
-{
-    Deserialize::deserialize(deserializer).map(Some)
-}
-
 /// Checks if the given feature sting is disabled by the tariff of the given user or in the settings of the controller.
 ///
 /// Return an [`ApiError`] if the given feature is disabled, differentiating between a config disable or tariff restriction.
@@ -109,38 +96,4 @@ pub(crate) async fn require_feature(
     }
 
     Ok(())
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    use pretty_assertions::assert_eq;
-
-    #[derive(Debug, Deserialize, PartialEq)]
-    struct Test {
-        #[serde(default, deserialize_with = "deserialize_some")]
-        test: Option<Option<String>>,
-    }
-
-    #[test]
-    fn deserialize_option_option() {
-        let none = "{}";
-        let some_none = r#"{"test":null}"#;
-        let some_some = r#"{"test":"test"}"#;
-
-        assert_eq!(
-            serde_json::from_str::<Test>(none).unwrap(),
-            Test { test: None }
-        );
-        assert_eq!(
-            serde_json::from_str::<Test>(some_none).unwrap(),
-            Test { test: Some(None) }
-        );
-        assert_eq!(
-            serde_json::from_str::<Test>(some_some).unwrap(),
-            Test {
-                test: Some(Some("test".into()))
-            }
-        );
-    }
 }

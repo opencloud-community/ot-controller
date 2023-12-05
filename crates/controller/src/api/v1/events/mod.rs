@@ -10,7 +10,7 @@ use super::{ApiResponse, DefaultApiResult};
 use crate::api::v1::response::CODE_IGNORED_VALUE;
 use crate::api::v1::rooms::RoomsPoliciesBuilderExt;
 use crate::api::v1::streaming_targets::{get_room_streaming_targets, insert_room_streaming_target};
-use crate::api::v1::util::{deserialize_some, GetUserProfilesBatched};
+use crate::api::v1::util::GetUserProfilesBatched;
 use crate::services::{
     ExternalMailRecipient, MailRecipient, MailService, UnregisteredMailRecipient,
 };
@@ -40,17 +40,15 @@ use kustos::prelude::{AccessMethod, IsSubject};
 use kustos::{Authz, Resource, ResourceId};
 use rrule::{Frequency, RRuleSet};
 use serde::Deserialize;
-use types::api::v1::events::{
-    DeleteEventQuery, EventAndInstanceId, EventExceptionResource, EventInvitee, PostEventsBody,
-    PublicInviteUserProfile,
-};
 use types::core::Timestamp;
 use types::{
     api::v1::{
         events::{
-            CallInInfo, EmailOnlyUser, EventInviteeProfile, EventOrException, EventResource,
-            EventRoomInfo, EventStatus, EventType, GetEventQuery, GetEventsCursorData,
-            GetEventsQuery, PatchEventQuery,
+            CallInInfo, DeleteEventQuery, EmailOnlyUser, EventAndInstanceId,
+            EventExceptionResource, EventInvitee, EventInviteeProfile, EventOrException,
+            EventResource, EventRoomInfo, EventStatus, EventType, GetEventQuery,
+            GetEventsCursorData, GetEventsQuery, PatchEventBody, PatchEventQuery, PostEventsBody,
+            PublicInviteUserProfile,
         },
         pagination::default_pagination_per_page,
         users::{PublicUserProfile, UnregisteredUser},
@@ -856,109 +854,6 @@ pub async fn get_event(
     };
 
     Ok(ApiResponse::new(event_resource))
-}
-
-/// Body for the `PATCH /events/{event_id}` endpoint
-#[derive(Deserialize, Validate)]
-pub struct PatchEventBody {
-    /// Patch the title of th event
-    #[validate(length(max = 255))]
-    title: Option<String>,
-
-    /// Patch the description of the event
-    #[validate(length(max = 4096))]
-    description: Option<String>,
-
-    /// Patch the password of the event's room
-    #[validate(length(min = 1, max = 255))]
-    #[serde(default, deserialize_with = "deserialize_some")]
-    password: Option<Option<String>>,
-
-    /// Patch the presence of a waiting room
-    waiting_room: Option<bool>,
-
-    /// Patch the adhoc flag.
-    is_adhoc: Option<bool>,
-
-    /// Patch the time independence of the event
-    ///
-    /// If it changes the independence from true false this body has to have
-    /// `is_all_day`, `starts_at` and `ends_at` set
-    ///
-    /// See documentation of [`PostEventsBody`] for more info
-    is_time_independent: Option<bool>,
-
-    /// Patch if the event is an all-day event
-    ///
-    /// If it changes the value from false to true this request must ensure
-    /// that the `starts_at.datetime` and `ends_at.datetime` have a 00:00 time part.
-    ///
-    /// See documentation of [`PostEventsBody`] for more info
-    is_all_day: Option<bool>,
-
-    starts_at: Option<DateTimeTz>,
-    ends_at: Option<DateTimeTz>,
-
-    /// Patch the events recurrence patterns
-    ///
-    /// If this list is non empty it override the events current one
-    #[validate(custom = "validate_recurrence_pattern")]
-    #[serde(default)]
-    recurrence_pattern: Vec<String>,
-}
-
-impl PatchEventBody {
-    fn is_empty(&self) -> bool {
-        let PatchEventBody {
-            title,
-            description,
-            password,
-            waiting_room,
-            is_adhoc,
-            is_time_independent,
-            is_all_day,
-            starts_at,
-            ends_at,
-            recurrence_pattern,
-        } = self;
-
-        title.is_none()
-            && description.is_none()
-            && password.is_none()
-            && waiting_room.is_none()
-            && is_adhoc.is_none()
-            && is_time_independent.is_none()
-            && is_all_day.is_none()
-            && starts_at.is_none()
-            && ends_at.is_none()
-            && recurrence_pattern.is_empty()
-    }
-
-    // special case to only patch the events room
-    fn only_modifies_room(&self) -> bool {
-        let PatchEventBody {
-            title,
-            description,
-            password,
-            waiting_room,
-            is_time_independent,
-            is_all_day,
-            starts_at,
-            ends_at,
-            recurrence_pattern,
-            is_adhoc,
-        } = self;
-
-        title.is_none()
-            && description.is_none()
-            && is_time_independent.is_none()
-            && is_all_day.is_none()
-            && starts_at.is_none()
-            && ends_at.is_none()
-            && recurrence_pattern.is_empty()
-            && is_adhoc.is_none()
-            && (password.is_some() || waiting_room.is_some())
-    }
 }
 
 struct UpdateNotificationValues {

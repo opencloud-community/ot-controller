@@ -69,3 +69,37 @@ where
     let visitor = CommaSeparated(PhantomData);
     deserializer.deserialize_str(visitor)
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use pretty_assertions::assert_eq;
+
+    #[derive(Debug, Deserialize, PartialEq)]
+    struct Test {
+        #[serde(default, deserialize_with = "deserialize_some")]
+        test: Option<Option<String>>,
+    }
+
+    #[test]
+    fn deserialize_option_option() {
+        let none = "{}";
+        let some_none = r#"{"test":null}"#;
+        let some_some = r#"{"test":"test"}"#;
+
+        assert_eq!(
+            serde_json::from_str::<Test>(none).unwrap(),
+            Test { test: None }
+        );
+        assert_eq!(
+            serde_json::from_str::<Test>(some_none).unwrap(),
+            Test { test: Some(None) }
+        );
+        assert_eq!(
+            serde_json::from_str::<Test>(some_some).unwrap(),
+            Test {
+                test: Some(Some("test".into()))
+            }
+        );
+    }
+}
