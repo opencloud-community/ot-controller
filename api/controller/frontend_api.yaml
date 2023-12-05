@@ -255,13 +255,7 @@ paths:
       tags: [rooms, tariff]
       operationId: get_room_tariff
       parameters:
-        - in: path
-          description: The ID of the requested room
-          name: room_id
-          schema:
-            type: string
-            format: uuid
-          required: true
+        - $ref: '#/components/parameters/roomId'
       responses:
         200:
           description: Includes the tariff information in the response body.
@@ -287,13 +281,7 @@ paths:
       tags: [rooms, events]
       operationId: get_room_event
       parameters:
-        - in: path
-          description: The ID of the requested room
-          name: room_id
-          schema:
-            type: string
-            format: uuid
-          required: true
+        - $ref: '#/components/parameters/roomId'
       responses:
         200:
           description: Includes the event information in the response body.
@@ -322,13 +310,7 @@ paths:
       tags: [rooms, signaling]
       operationId: signaling_start
       parameters:
-        - in: path
-          description: The ID of the requested room
-          name: room_id
-          schema:
-            type: string
-            format: uuid
-          required: true
+        - $ref: '#/components/parameters/roomId'
       requestBody:
         required: true
         content:
@@ -373,13 +355,7 @@ paths:
       operationId: signaling_start_invited
       security: []
       parameters:
-        - in: path
-          description: The ID of the requested room
-          name: room_id
-          schema:
-            type: string
-            format: uuid
-          required: true
+        - $ref: '#/components/parameters/roomId'
       requestBody:
         required: true
         content:
@@ -416,13 +392,7 @@ paths:
       tags: [rooms, invite_codes]
       operationId: get_all_invites
       parameters:
-        - in: path
-          description: The ID of the requested room
-          name: room_id
-          schema:
-            type: string
-            format: uuid
-          required: true
+        - $ref: '#/components/parameters/roomId'
         - $ref: '#/components/parameters/PerPage'
         - $ref: '#/components/parameters/Page'
       responses:
@@ -450,13 +420,7 @@ paths:
       tags: [rooms, invite_codes]
       operationId: create_invite
       parameters:
-        - in: path
-          description: The ID of the requested room
-          name: room_id
-          schema:
-            type: string
-            format: uuid
-          required: true
+        - $ref: '#/components/parameters/roomId'
       requestBody:
         required: true
         content:
@@ -488,13 +452,7 @@ paths:
       tags: [rooms, invite_codes]
       operationId: get_invite
       parameters:
-        - in: path
-          description: The ID of the requested room
-          name: room_id
-          schema:
-            type: string
-            format: uuid
-          required: true
+        - $ref: '#/components/parameters/roomId'
         - in: path
           description: The invite_code
           name: invite_code
@@ -524,13 +482,7 @@ paths:
       tags: [rooms, invite_codes]
       operationId: put_invite
       parameters:
-        - in: path
-          description: The ID of the requested room
-          name: room_id
-          schema:
-            type: string
-            format: uuid
-          required: true
+        - $ref: '#/components/parameters/roomId'
         - in: path
           description: The invite_code
           name: invite_code
@@ -567,13 +519,7 @@ paths:
       tags: [rooms, invite_codes]
       operationId: delete_invite
       parameters:
-        - in: path
-          description: The ID of the requested room
-          name: room_id
-          schema:
-            type: string
-            format: uuid
-          required: true
+        - $ref: '#/components/parameters/roomId'
         - in: path
           description: The invite_code
           name: invite_code
@@ -623,13 +569,7 @@ paths:
       tags: [rooms, sip]
       operationId: get_sip
       parameters:
-        - in: path
-          description: The ID of the requested room
-          name: room_id
-          schema:
-            type: string
-            format: uuid
-          required: true
+        - $ref: '#/components/parameters/roomId'
       responses:
         200:
           description: Contains the rooms SIP config
@@ -652,13 +592,7 @@ paths:
       tags: [rooms, sip]
       operationId: put_sip
       parameters:
-        - in: path
-          description: The ID of the requested room
-          name: room_id
-          schema:
-            type: string
-            format: uuid
-          required: true
+        - $ref: '#/components/parameters/roomId'
       requestBody:
         required: true
         content:
@@ -691,13 +625,7 @@ paths:
       tags: [rooms, sip]
       operationId: delete_sip
       parameters:
-        - in: path
-          description: The ID of the requested room
-          name: room_id
-          schema:
-            type: string
-            format: uuid
-          required: true
+        - $ref: '#/components/parameters/roomId'
       responses:
         204:
           description: Successfully deleted the specified sip config
@@ -715,13 +643,7 @@ paths:
       tags: [rooms, assets]
       operationId: get_all_assets
       parameters:
-        - in: path
-          description: The ID of the requested room
-          name: room_id
-          schema:
-            type: string
-            format: uuid
-          required: true
+        - $ref: '#/components/parameters/roomId'
         - $ref: '#/components/parameters/PerPage'
         - $ref: '#/components/parameters/Page'
       responses:
@@ -748,13 +670,7 @@ paths:
       tags: [rooms, assets]
       operationId: get_asset
       parameters:
-        - in: path
-          description: The ID of the requested room
-          name: room_id
-          schema:
-            type: string
-            format: uuid
-          required: true
+        - $ref: '#/components/parameters/roomId'
         - in: path
           description: The ID of the requested asset
           name: asset_id
@@ -783,13 +699,7 @@ paths:
       tags: [rooms, assets]
       operationId: delete_asset
       parameters:
-        - in: path
-          description: The ID of the requested room
-          name: room_id
-          schema:
-            type: string
-            format: uuid
-          required: true
+        - $ref: '#/components/parameters/roomId'
         - in: path
           description: The ID of the requested asset
           name: asset_id
