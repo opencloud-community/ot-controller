@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use super::{
-    can_edit, ApiResponse, DateTimeTz, DefaultApiResult, EventInvitee, EventRoomInfo, EventStatus,
-    EventType, LOCAL_DT_FORMAT, ONE_HUNDRED_YEARS_IN_DAYS,
+    can_edit, ApiResponse, DateTimeTz, DefaultApiResult, EventInvitee, EventRoomInfo, EventType,
+    LOCAL_DT_FORMAT, ONE_HUNDRED_YEARS_IN_DAYS,
 };
 use crate::api::v1::events::{
     enrich_invitees_from_keycloak, shared_folder_for_user, DateTimeTzFromDb,
@@ -24,7 +24,7 @@ use db_storage::users::User;
 use keycloak_admin::KeycloakAdminClient;
 use rrule::RRuleSet;
 use serde::{Deserialize, Serialize};
-use types::api::v1::events::{EventAndInstanceId, InstanceId};
+use types::api::v1::events::{EventAndInstanceId, EventStatus, InstanceId};
 use types::api::v1::users::PublicUserProfile;
 use types::api::v1::Cursor;
 use types::common::shared_folder::SharedFolder;

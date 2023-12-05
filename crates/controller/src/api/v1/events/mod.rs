@@ -44,7 +44,7 @@ use serde::{Deserialize, Serialize};
 use types::api::v1::events::EventAndInstanceId;
 use types::{
     api::v1::{
-        events::InstanceId,
+        events::{EventStatus, InstanceId},
         pagination::default_pagination_per_page,
         users::{PublicUserProfile, UnregisteredUser},
         Cursor,
@@ -379,17 +379,6 @@ pub enum EventType {
     Recurring,
     Instance,
     Exception,
-}
-
-/// Status of an event
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum EventStatus {
-    /// Default status, event is ok
-    Ok,
-
-    /// Event (or event instance) was cancelled
-    Cancelled,
 }
 
 /// All information about a room in which an event takes place
