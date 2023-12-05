@@ -26,7 +26,7 @@ use database::{Db, DbConnection};
 use db_storage::events::shared_folders::EventSharedFolder;
 use db_storage::events::{
     email_invites::EventEmailInvite, Event, EventException, EventExceptionKind, EventInvite,
-    EventInviteStatus, NewEvent, UpdateEvent,
+    NewEvent, UpdateEvent,
 };
 use db_storage::invites::Invite;
 use db_storage::rooms::{NewRoom, Room, UpdateRoom};
@@ -53,7 +53,7 @@ use types::{
         shared_folder::{SharedFolder, SharedFolderAccess},
         streaming::{RoomStreamingTarget, StreamingTarget},
     },
-    core::{DateTimeTz, EventId, InviteRole, RoomId, TimeZone, UserId},
+    core::{DateTimeTz, EventId, EventInviteStatus, InviteRole, RoomId, TimeZone, UserId},
 };
 use validator::{Validate, ValidationError};
 

@@ -17,8 +17,7 @@ use actix_web::{get, patch, Either};
 use chrono::{DateTime, Utc};
 use database::Db;
 use db_storage::events::{
-    Event, EventException, EventExceptionKind, EventInviteStatus, NewEventException,
-    UpdateEventException,
+    Event, EventException, EventExceptionKind, NewEventException, UpdateEventException,
 };
 use db_storage::tenants::Tenant;
 use db_storage::users::User;
@@ -28,7 +27,7 @@ use serde::{Deserialize, Serialize};
 use types::api::v1::users::PublicUserProfile;
 use types::api::v1::Cursor;
 use types::common::shared_folder::SharedFolder;
-use types::core::EventId;
+use types::core::{EventId, EventInviteStatus};
 use validator::Validate;
 
 /// Event instance resource

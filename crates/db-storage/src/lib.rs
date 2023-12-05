@@ -38,8 +38,8 @@ sql_function!(fn soundex(x: Text) -> Text);
 // SQL types reexport for schema.rs
 pub mod sql_types {
     pub use super::events::EventExceptionKindType as EventExceptionKind;
-    pub use super::events::EventInviteStatusType as EventInviteStatus;
     pub use diesel::sql_types::*;
+    pub use types::core::EventInviteStatusType as EventInviteStatus;
     pub use types::core::InviteRoleType as InviteRole;
     pub use types::core::StreamingKindType as StreamingKind;
     pub use types::core::TariffStatusType as TariffStatus;

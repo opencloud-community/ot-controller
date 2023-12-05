@@ -26,9 +26,8 @@ use diesel_async::scoped_futures::ScopedFutureExt;
 use diesel_async::{AsyncConnection, RunQueryDsl};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
 use types::common::event::EventInfo;
-use types::core::{EventId, InviteRole, RoomId, TenantId, TimeZone, UserId};
+use types::core::{EventId, EventInviteStatus, InviteRole, RoomId, TenantId, TimeZone, UserId};
 use types::sql_enum;
 
 use self::shared_folders::EventSharedFolder;
@@ -727,34 +726,6 @@ impl UpdateEventException {
         let exception = query.get_result(conn).await?;
 
         Ok(exception)
-    }
-}
-
-types::sql_enum!(
-    #[derive(Serialize, PartialEq, Eq)]
-    #[serde(rename_all = "snake_case")]
-    EventInviteStatus,
-    "event_invite_status",
-    EventInviteStatusType,
-    {
-        Pending = b"pending",
-        Accepted = b"accepted",
-        Tentative = b"tentative",
-        Declined = b"declined",
-    }
-);
-
-impl FromStr for EventInviteStatus {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "pending" => Ok(Self::Pending),
-            "accepted" => Ok(Self::Accepted),
-            "tentative" => Ok(Self::Tentative),
-            "declined" => Ok(Self::Declined),
-            _ => Err(format!("unknown invite_status {s:?}")),
-        }
     }
 }
 

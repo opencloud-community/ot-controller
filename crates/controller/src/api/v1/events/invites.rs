@@ -24,9 +24,7 @@ use controller_settings::Settings;
 use database::Db;
 use db_storage::events::email_invites::{EventEmailInvite, NewEventEmailInvite};
 use db_storage::events::shared_folders::EventSharedFolder;
-use db_storage::events::{
-    Event, EventFavorite, EventInvite, EventInviteStatus, NewEventInvite, UpdateEventInvite,
-};
+use db_storage::events::{Event, EventFavorite, EventInvite, NewEventInvite, UpdateEventInvite};
 use db_storage::invites::NewInvite;
 use db_storage::rooms::Room;
 use db_storage::sip_configs::SipConfig;
@@ -42,7 +40,7 @@ use serde::{Deserialize, Serialize};
 use types::{
     api::v1::pagination::PagePaginationQuery,
     common::shared_folder::SharedFolder,
-    core::{EventId, InviteRole, RoomId, UserId},
+    core::{EventId, EventInviteStatus, InviteRole, RoomId, UserId},
     strings::ToLowerCase,
 };
 
