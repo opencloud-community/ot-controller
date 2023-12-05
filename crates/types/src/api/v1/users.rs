@@ -12,7 +12,7 @@ use crate::imports::*;
 /// Public user details.
 ///
 /// Contains general "public" information about a user. Is accessible to all other users.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct PublicUserProfile {
     /// The user id

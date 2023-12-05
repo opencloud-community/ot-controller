@@ -41,7 +41,7 @@ use kustos::prelude::{AccessMethod, IsSubject};
 use kustos::{Authz, Resource, ResourceId};
 use rrule::{Frequency, RRuleSet};
 use serde::{Deserialize, Serialize};
-use types::api::v1::events::{EventAndInstanceId, PostEventsBody};
+use types::api::v1::events::{EventAndInstanceId, PostEventsBody, PublicInviteUserProfile};
 use types::core::Timestamp;
 use types::{
     api::v1::{
@@ -58,7 +58,7 @@ use types::{
         shared_folder::{SharedFolder, SharedFolderAccess},
         streaming::{RoomStreamingTarget, StreamingTarget},
     },
-    core::{DateTimeTz, EventId, EventInviteStatus, InviteRole, TimeZone, UserId},
+    core::{DateTimeTz, EventId, EventInviteStatus, TimeZone, UserId},
 };
 use validator::Validate;
 
@@ -326,13 +326,6 @@ pub enum EventInviteeProfile {
     Registered(PublicInviteUserProfile),
     Unregistered(UnregisteredUser),
     Email(EmailOnlyUser),
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct PublicInviteUserProfile {
-    #[serde(flatten)]
-    pub user_profile: PublicUserProfile,
-    pub role: InviteRole,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -2221,7 +2214,7 @@ mod tests {
     use super::*;
     use std::time::SystemTime;
     use test_util::assert_eq_json;
-    use types::core::{RoomId, TimeZone, UserId};
+    use types::core::{InviteRole, RoomId, TimeZone, UserId};
 
     #[test]
     fn rrulset_parse_works_as_used_in_this_crate() {
