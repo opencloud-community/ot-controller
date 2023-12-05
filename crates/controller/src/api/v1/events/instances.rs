@@ -25,65 +25,12 @@ use keycloak_admin::KeycloakAdminClient;
 use rrule::RRuleSet;
 use serde::{Deserialize, Serialize};
 use types::api::v1::events::{
-    EventAndInstanceId, EventRoomInfo, EventStatus, EventType, InstanceId,
+    EventAndInstanceId, EventInstance, EventRoomInfo, EventStatus, EventType, InstanceId,
 };
-use types::api::v1::users::PublicUserProfile;
 use types::api::v1::Cursor;
 use types::common::shared_folder::SharedFolder;
 use types::core::{EventId, EventInviteStatus};
 use validator::Validate;
-
-/// Event instance resource
-///
-/// An event instance is an occurrence of an recurring event
-///
-/// Exceptions for the instance are always already applied
-///
-/// For infos on undocumented fields see [`EventResource`](super::EventResource)
-#[derive(Debug, Serialize)]
-pub struct EventInstance {
-    /// Opaque id of the event instance resource
-    pub id: EventAndInstanceId,
-
-    /// ID of the recurring event this instance belongs to
-    pub recurring_event_id: EventId,
-
-    /// Opaque id of the instance
-    pub instance_id: InstanceId,
-
-    /// Public user profile of the user which created the event
-    pub created_by: PublicUserProfile,
-
-    /// Timestamp of the event creation
-    pub created_at: DateTime<Utc>,
-
-    /// Public user profile of the user which last updated the event
-    /// or created the exception which modified the instance
-    pub updated_by: PublicUserProfile,
-
-    /// Timestamp of the last update
-    pub updated_at: DateTime<Utc>,
-
-    pub title: String,
-    pub description: String,
-    pub room: EventRoomInfo,
-    pub invitees_truncated: bool,
-    pub invitees: Vec<EventInvitee>,
-    pub is_all_day: bool,
-    pub starts_at: DateTimeTz,
-    pub ends_at: DateTimeTz,
-
-    /// Must always be `instance`
-    #[serde(rename = "type")]
-    pub type_: EventType,
-    pub status: EventStatus,
-    pub invite_status: EventInviteStatus,
-    pub is_favorite: bool,
-    pub can_edit: bool,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub shared_folder: Option<SharedFolder>,
-}
 
 #[derive(Deserialize)]
 pub struct GetEventInstancesQuery {
@@ -602,9 +549,9 @@ fn create_event_instance(
         recurring_event_id: event.id,
         instance_id,
         created_by,
-        created_at: event.created_at,
+        created_at: event.created_at.into(),
         updated_by,
-        updated_at: event.updated_at,
+        updated_at: event.updated_at.into(),
         title: event.title,
         description: event.description,
         room,
@@ -693,11 +640,14 @@ mod tests {
     use chrono_tz::Tz;
     use std::time::SystemTime;
     use test_util::assert_eq_json;
-    use types::core::{InviteRole, RoomId, TimeZone, UserId};
+    use types::{
+        api::v1::users::PublicUserProfile,
+        core::{InviteRole, RoomId, TimeZone, Timestamp, UserId},
+    };
 
     #[test]
     fn event_instance_serialize() {
-        let unix_epoch: DateTime<Utc> = SystemTime::UNIX_EPOCH.into();
+        let unix_epoch: Timestamp = SystemTime::UNIX_EPOCH.into();
         let instance_id = unix_epoch.into();
         let event_id = EventId::nil();
         let user_profile = PublicUserProfile {
@@ -736,11 +686,11 @@ mod tests {
             }],
             is_all_day: false,
             starts_at: DateTimeTz {
-                datetime: unix_epoch,
+                datetime: *unix_epoch,
                 timezone: TimeZone::from(Tz::Europe__Berlin),
             },
             ends_at: DateTimeTz {
-                datetime: unix_epoch,
+                datetime: *unix_epoch,
                 timezone: TimeZone::from(Tz::Europe__Berlin),
             },
             type_: EventType::Instance,
