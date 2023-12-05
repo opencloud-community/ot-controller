@@ -40,10 +40,10 @@ use kustos::policies_builder::{GrantingAccess, PoliciesBuilder};
 use kustos::prelude::{AccessMethod, IsSubject};
 use kustos::{Authz, Resource, ResourceId};
 use rrule::{Frequency, RRuleSet};
-use serde::de::Visitor;
 use serde::{Deserialize, Serialize};
 use types::{
     api::v1::{
+        events::InstanceId,
         pagination::default_pagination_per_page,
         users::{PublicUserProfile, UnregisteredUser},
         Cursor,
@@ -63,7 +63,6 @@ pub mod invites;
 pub mod shared_folder;
 
 const LOCAL_DT_FORMAT: &str = "%Y%m%dT%H%M%S";
-const UTC_DT_FORMAT: &str = "%Y%m%dT%H%M%SZ";
 const ONE_HUNDRED_YEARS_IN_DAYS: usize = 36525;
 
 /// Opaque id of an EventInstance or EventException resource. Should only be used to sort/index the related resource.
@@ -75,53 +74,7 @@ impl Serialize for EventAndInstanceId {
     where
         S: serde::Serializer,
     {
-        format!("{}_{}", self.0, (self.1).0.format(UTC_DT_FORMAT)).serialize(serializer)
-    }
-}
-
-/// ID of an EventInstance
-///
-/// Is created from the starts_at datetime of the original recurrence (original meaning that exceptions don't change
-/// the instance id).
-#[derive(Debug, Copy, Clone)]
-pub struct InstanceId(DateTime<Utc>);
-
-impl Serialize for InstanceId {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        self.0
-            .format(UTC_DT_FORMAT)
-            .to_string()
-            .serialize(serializer)
-    }
-}
-
-impl<'de> Deserialize<'de> for InstanceId {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        deserializer.deserialize_str(InstanceIdVisitor)
-    }
-}
-
-struct InstanceIdVisitor;
-impl<'de> Visitor<'de> for InstanceIdVisitor {
-    type Value = InstanceId;
-
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(formatter, "timestamp in '{UTC_DT_FORMAT}' format")
-    }
-
-    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-    where
-        E: serde::de::Error,
-    {
-        DateTime::parse_from_str(v, UTC_DT_FORMAT)
-            .map(|dt| InstanceId(dt.with_timezone(&Utc)))
-            .map_err(|_| serde::de::Error::invalid_value(serde::de::Unexpected::Str(v), &self))
+        format!("{}_{}", self.0, self.1).serialize(serializer)
     }
 }
 
@@ -349,9 +302,9 @@ impl EventExceptionResource {
         can_edit: bool,
     ) -> Self {
         Self {
-            id: EventAndInstanceId(exception.event_id, InstanceId(exception.exception_date)),
+            id: EventAndInstanceId(exception.event_id, exception.exception_date.into()),
             recurring_event_id: exception.event_id,
-            instance_id: InstanceId(exception.exception_date),
+            instance_id: exception.exception_date.into(),
             created_by: created_by.clone(),
             created_at: exception.created_at,
             updated_by: created_by,
@@ -2666,7 +2619,7 @@ mod tests {
     #[test]
     fn event_exception_serialize() {
         let unix_epoch: DateTime<Utc> = SystemTime::UNIX_EPOCH.into();
-        let instance_id = InstanceId(unix_epoch);
+        let instance_id = unix_epoch.into();
         let event_id = EventId::nil();
         let user_profile = PublicUserProfile {
             id: UserId::nil(),
