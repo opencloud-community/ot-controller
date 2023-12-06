@@ -37,12 +37,15 @@ use keycloak_admin::KeycloakAdminClient;
 use kustos::policies_builder::PoliciesBuilder;
 use kustos::Authz;
 use serde::Deserialize;
-use types::api::v1::events::{
-    DeleteEmailInviteBody, DeleteEventInvitePath, GetEventInvitesPendingResponse, PatchInviteBody,
-    PostEventInviteBody, PostEventInviteQuery, UserInvite,
-};
 use types::{
-    api::v1::pagination::PagePaginationQuery,
+    api::v1::{
+        events::{
+            DeleteEmailInviteBody, DeleteEventInvitePath, PatchInviteBody, PostEventInviteBody,
+            PostEventInviteQuery, UserInvite,
+        },
+        pagination::PagePaginationQuery,
+        users::GetEventInvitesPendingResponse,
+    },
     common::shared_folder::SharedFolder,
     core::{EventId, EventInviteStatus, InviteRole, RoomId, UserId},
     strings::ToLowerCase,

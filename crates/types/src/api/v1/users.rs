@@ -162,3 +162,11 @@ pub struct UnregisteredUser {
     /// Avatar URL for the unregistered user
     pub avatar_url: String,
 }
+
+/// Response body for the `GET /users/me/pending_invites` endpoint
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct GetEventInvitesPendingResponse {
+    /// Number of pending invites
+    pub total_pending_invites: u32,
+}
