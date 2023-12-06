@@ -4,10 +4,12 @@
 
 use super::GetEventsCursorData;
 
+#[cfg(feature = "serde")]
+use crate::api::v1::utils::comma_separated;
 #[allow(unused_imports)]
 use crate::imports::*;
 use crate::{
-    api::v1::{utils::comma_separated, Cursor},
+    api::v1::Cursor,
     core::{EventInviteStatus, Timestamp},
 };
 

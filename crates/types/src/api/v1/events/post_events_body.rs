@@ -56,6 +56,8 @@ pub struct PostEventsBody {
     /// If the list if non-empty the created event will be of type `recurring`
     ///
     /// For more infos see the documentation of [`EventResource`]
+    ///
+    /// [`EventResource`]: ../event_ressource/struct.EventResource.html
     #[cfg_attr(
         feature = "serde",
         serde(default),

@@ -1,11 +1,9 @@
 // SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
 //
 // SPDX-License-Identifier: EUPL-1.2
-
-use crate::{
-    api::v1::utils::{deserialize_some, validate_recurrence_pattern},
-    core::DateTimeTz,
-};
+#[cfg(feature = "serde")]
+use crate::api::v1::utils::{deserialize_some, validate_recurrence_pattern};
+use crate::core::DateTimeTz;
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -42,6 +40,8 @@ pub struct PatchEventBody {
     /// `is_all_day`, `starts_at` and `ends_at` set
     ///
     /// See documentation of [`PostEventsBody`] for more info
+    ///
+    /// [`PostEventsBody`]: ../post_events_body/struct.PostEventsBody.html
     pub is_time_independent: Option<bool>,
 
     /// Patch if the event is an all-day event
@@ -50,6 +50,8 @@ pub struct PatchEventBody {
     /// that the `starts_at.datetime` and `ends_at.datetime` have a 00:00 time part.
     ///
     /// See documentation of [`PostEventsBody`] for more info
+    ///
+    /// [`PostEventsBody`]: ../post_events_body/struct.PostEventsBody.html
     pub is_all_day: Option<bool>,
 
     /// Patch the start time of the event

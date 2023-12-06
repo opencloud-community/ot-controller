@@ -19,6 +19,8 @@ use super::{EventAndInstanceId, EventInvitee, EventRoomInfo, EventStatus, EventT
 /// Exceptions for the instance are always already applied
 ///
 /// For infos on undocumented fields see [`EventResource`]
+///
+/// [`EventResource`]: ../event_ressource/struct.EventResource.html
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct EventInstance {

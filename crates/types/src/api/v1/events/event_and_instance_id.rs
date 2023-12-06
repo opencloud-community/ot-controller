@@ -2,7 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use serde::{Serialize, Serializer};
+#[allow(unused_imports)]
+use crate::imports::*;
 
 use crate::core::EventId;
 
