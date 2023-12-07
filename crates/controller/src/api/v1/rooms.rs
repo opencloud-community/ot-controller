@@ -458,6 +458,10 @@ where
                 [AccessMethod::Get],
             )
             .add_resource(
+                room_id.resource_id().with_suffix("/streaming_targets"),
+                [AccessMethod::Get],
+            )
+            .add_resource(
                 room_id.resource_id().with_suffix("/start"),
                 [AccessMethod::Post],
             )
@@ -489,8 +493,16 @@ where
             [AccessMethod::Post],
         )
         .add_resource(
+            room_id.resource_id().with_suffix("/streaming_targets"),
+            [AccessMethod::Post],
+        )
+        .add_resource(
             room_id.resource_id().with_suffix("/invites/*"),
-            [AccessMethod::GET, AccessMethod::PUT, AccessMethod::DELETE],
+            [AccessMethod::Get, AccessMethod::Put, AccessMethod::Delete],
+        )
+        .add_resource(
+            room_id.resource_id().with_suffix("/streaming_targets/*"),
+            [AccessMethod::Get, AccessMethod::Patch, AccessMethod::Delete],
         )
         .add_resource(
             room_id.resource_id().with_suffix("/assets"),
@@ -508,6 +520,8 @@ pub(crate) fn associated_resource_ids(room_id: RoomId) -> impl IntoIterator<Item
         room_id.resource_id(),
         room_id.resource_id().with_suffix("/invites"),
         room_id.resource_id().with_suffix("/invites/*"),
+        room_id.resource_id().with_suffix("/streaming_targets"),
+        room_id.resource_id().with_suffix("/streaming_targets/*"),
         room_id.resource_id().with_suffix("/start"),
         room_id.resource_id().with_suffix("/tariff"),
         room_id.resource_id().with_suffix("/event"),

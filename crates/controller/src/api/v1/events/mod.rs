@@ -9,6 +9,7 @@ use super::response::{ApiError, NoContent, CODE_VALUE_REQUIRED};
 use super::{ApiResponse, DefaultApiResult};
 use crate::api::v1::response::CODE_IGNORED_VALUE;
 use crate::api::v1::rooms::RoomsPoliciesBuilderExt;
+use crate::api::v1::streaming_targets::{get_room_streaming_targets, insert_room_streaming_target};
 use crate::api::v1::util::comma_separated;
 use crate::api::v1::util::{deserialize_some, GetUserProfilesBatched};
 use crate::services::{
@@ -50,6 +51,7 @@ use types::{
     common::{
         features,
         shared_folder::{SharedFolder, SharedFolderAccess},
+        streaming::{RoomStreamingTarget, StreamingTarget},
     },
     core::{DateTimeTz, EventId, InviteRole, RoomId, TimeZone, UserId},
 };
@@ -272,6 +274,10 @@ pub struct EventResource {
     /// Information about the shared folder for the event
     #[serde(skip_serializing_if = "Option::is_none")]
     pub shared_folder: Option<SharedFolder>,
+
+    /// The streaming targets of the room associated with the event
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub streaming_targets: Option<Vec<RoomStreamingTarget>>,
 }
 
 /// Event exception resource
@@ -572,6 +578,10 @@ pub struct PostEventsBody {
     /// Is this an ad-hoc chatroom?
     #[serde(default)]
     pub is_adhoc: bool,
+
+    /// The streaming targets of the room associated with the event
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub streaming_targets: Option<Vec<StreamingTarget>>,
 }
 
 fn validate_recurrence_pattern(pattern: &[String]) -> Result<(), ValidationError> {
@@ -619,6 +629,7 @@ pub async fn new_event(
             ends_at: None,
             recurrence_pattern,
             is_adhoc,
+            streaming_targets,
         } if recurrence_pattern.is_empty() => {
             create_time_independent_event(
                 &settings,
@@ -629,6 +640,7 @@ pub async fn new_event(
                 password,
                 waiting_room,
                 is_adhoc,
+                streaming_targets,
                 query,
                 mail_service,
             )
@@ -645,6 +657,7 @@ pub async fn new_event(
             ends_at: Some(ends_at),
             recurrence_pattern,
             is_adhoc,
+            streaming_targets,
         } => {
             create_time_dependent_event(
                 &settings,
@@ -659,6 +672,7 @@ pub async fn new_event(
                 ends_at,
                 recurrence_pattern,
                 is_adhoc,
+                streaming_targets,
                 query,
                 mail_service,
             )
@@ -690,6 +704,27 @@ pub async fn new_event(
     Ok(ApiResponse::new(event_resource))
 }
 
+async fn store_event_streaming_targets(
+    conn: &mut DbConnection,
+    event_id: EventId,
+    streaming_targets: Option<Vec<StreamingTarget>>,
+) -> Result<Option<Vec<RoomStreamingTarget>>, ApiError> {
+    let room_id = Event::get(conn, event_id).await?.room;
+
+    let streaming_targets = if let Some(streaming_targets) = streaming_targets {
+        let mut room_streaming_targets: Vec<RoomStreamingTarget> = Vec::new();
+        for streaming_target in streaming_targets {
+            room_streaming_targets
+                .push(insert_room_streaming_target(conn, room_id, streaming_target).await?);
+        }
+        Some(room_streaming_targets)
+    } else {
+        None
+    };
+
+    Ok(streaming_targets)
+}
+
 /// Part of `POST /events` endpoint
 #[allow(clippy::too_many_arguments)]
 async fn create_time_independent_event(
@@ -701,6 +736,7 @@ async fn create_time_independent_event(
     password: Option<String>,
     waiting_room: bool,
     is_adhoc: bool,
+    streaming_targets: Option<Vec<StreamingTarget>>,
     query: Query<DeleteEventQuery>,
     mail_service: Data<MailService>,
 ) -> Result<EventResource, ApiError> {
@@ -735,6 +771,9 @@ async fn create_time_independent_event(
     }
     .insert(conn)
     .await?;
+
+    let streaming_targets =
+        store_event_streaming_targets(conn, event.id, streaming_targets).await?;
 
     let tariff = Tariff::get_by_user_id(conn, &current_user.id).await?;
 
@@ -776,6 +815,7 @@ async fn create_time_independent_event(
         can_edit: true, // just created by the current user
         is_adhoc,
         shared_folder: None,
+        streaming_targets,
     })
 }
 
@@ -794,6 +834,7 @@ async fn create_time_dependent_event(
     ends_at: DateTimeTz,
     recurrence_pattern: Vec<String>,
     is_adhoc: bool,
+    streaming_targets: Option<Vec<StreamingTarget>>,
     query: Query<DeleteEventQuery>,
     mail_service: Data<MailService>,
 ) -> Result<EventResource, ApiError> {
@@ -833,6 +874,9 @@ async fn create_time_dependent_event(
     }
     .insert(conn)
     .await?;
+
+    let streaming_targets =
+        store_event_streaming_targets(conn, event.id, streaming_targets).await?;
 
     let tariff = Tariff::get_by_user_id(conn, &current_user.id).await?;
 
@@ -878,6 +922,7 @@ async fn create_time_dependent_event(
         can_edit: true, // just created by the current user
         is_adhoc,
         shared_folder: None,
+        streaming_targets,
     })
 }
 
@@ -1117,6 +1162,7 @@ pub async fn get_events(
             can_edit,
             is_adhoc: event.is_adhoc,
             shared_folder,
+            streaming_targets: None,
         }));
 
         for exception in exceptions {
@@ -1190,6 +1236,7 @@ pub async fn get_event(
 
     let (event, invite, room, sip_config, is_favorite, shared_folder, tariff) =
         Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
+    let room_streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
     let (invitees, invitees_truncated) =
         get_invitees_for_event(&settings, &mut conn, event_id, query.invitees_max).await?;
 
@@ -1235,6 +1282,7 @@ pub async fn get_event(
         can_edit,
         is_adhoc: event.is_adhoc,
         shared_folder,
+        streaming_targets: Some(room_streaming_targets),
     };
 
     let event_resource = EventResource {
@@ -1529,6 +1577,7 @@ pub async fn patch_event(
         can_edit,
         is_adhoc: event.is_adhoc,
         shared_folder: shared_folder.clone(),
+        streaming_targets: None,
     };
 
     if send_email_notification {
@@ -2428,6 +2477,7 @@ mod tests {
             can_edit: true,
             is_adhoc: false,
             shared_folder: None,
+            streaming_targets: None,
         };
 
         assert_eq_json!(
@@ -2548,6 +2598,7 @@ mod tests {
             can_edit: false,
             is_adhoc: false,
             shared_folder: None,
+            streaming_targets: None,
         };
 
         assert_eq_json!(

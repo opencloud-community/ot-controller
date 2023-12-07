@@ -224,6 +224,20 @@ diesel::table! {
 diesel::table! {
     use crate::sql_types::*;
 
+    room_streaming_targets (id) {
+        id -> Uuid,
+        room_id -> Uuid,
+        name -> Text,
+        kind -> StreamingKind,
+        streaming_endpoint -> Text,
+        streaming_key -> Text,
+        public_url -> Text,
+    }
+}
+
+diesel::table! {
+    use crate::sql_types::*;
+
     rooms (id) {
         id -> Uuid,
         id_serial -> Int8,
@@ -336,6 +350,7 @@ diesel::joinable!(module_resources -> tenants (tenant_id));
 diesel::joinable!(module_resources -> users (created_by));
 diesel::joinable!(room_assets -> assets (asset_id));
 diesel::joinable!(room_assets -> rooms (room_id));
+diesel::joinable!(room_streaming_targets -> rooms (room_id));
 diesel::joinable!(rooms -> tenants (tenant_id));
 diesel::joinable!(rooms -> users (created_by));
 diesel::joinable!(sip_configs -> rooms (room));
@@ -359,6 +374,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     module_resources,
     refinery_schema_history,
     room_assets,
+    room_streaming_targets,
     rooms,
     sip_configs,
     tariffs,
