@@ -11,7 +11,7 @@ use crate::imports::*;
 use crate::{common::streaming::StreamingTarget, core::DateTimeTz};
 
 /// Body of the the `POST /events` endpoint
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize, Validate))]
 pub struct PostEventsBody {
     /// Title of the event

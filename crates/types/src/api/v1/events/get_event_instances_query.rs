@@ -11,7 +11,7 @@ use crate::{
 use crate::imports::*;
 
 /// Query parameters for the `GET /events/{event_id}/instances` endpoint
-#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct GetEventInstancesQuery {
     /// Maximum number of invitees to include inside the event

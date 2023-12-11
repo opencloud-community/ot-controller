@@ -22,7 +22,7 @@ use super::{EventAndInstanceId, EventInvitee, EventRoomInfo, EventStatus, EventT
 ///
 /// [`EventResource`]: ../event_ressource/struct.EventResource.html
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct EventInstance {
     /// Opaque id of the event instance resource
     pub id: EventAndInstanceId,

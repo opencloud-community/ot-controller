@@ -6,7 +6,7 @@
 use crate::imports::*;
 
 /// Query parameters for the `DELETE /events/{event_id}` endpoint
-#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct DeleteEventQuery {
     /// Flag to disable email notification

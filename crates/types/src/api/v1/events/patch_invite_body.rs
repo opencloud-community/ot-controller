@@ -7,7 +7,7 @@ use crate::core::InviteRole;
 use crate::imports::*;
 
 /// Request body for the `PATCH /events/{event_id}/invites/{user_id}` endpoint
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct PatchInviteBody {
     /// Invite role of the user

@@ -16,7 +16,7 @@ use crate::{
 /// Path query parameters of the `GET /events` endpoint
 ///
 /// Allows for customization in the search for events
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct GetEventsQuery {
     /// Optional minimum time in which the event happens

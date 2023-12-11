@@ -8,7 +8,7 @@ use crate::{api::v1::users::PublicUserProfile, core::InviteRole};
 
 /// Profile of a public event invitee
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct PublicInviteUserProfile {
     #[cfg_attr(feature = "serde", serde(flatten))]
     /// Public user profile

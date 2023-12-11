@@ -11,7 +11,7 @@ sql_enum!(
     feature_gated:
 
     #[derive(PartialEq, Eq)]
-    #[cfg_attr(feature="serde", derive(Serialize), serde(rename_all = "snake_case"))]
+    #[cfg_attr(feature="serde", derive(Serialize, Deserialize), serde(rename_all = "snake_case"))]
     EventInviteStatus,
     "event_invite_status",
     EventInviteStatusType,

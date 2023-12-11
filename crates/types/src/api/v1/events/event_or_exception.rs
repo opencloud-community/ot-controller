@@ -8,8 +8,8 @@ use crate::imports::*;
 use super::{EventExceptionResource, EventResource};
 
 /// Return type of the `GET /events` endpoint
-#[derive(Debug)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(untagged))]
 #[allow(clippy::large_enum_variant)]
 pub enum EventOrException {
     /// Event resource

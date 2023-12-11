@@ -15,7 +15,7 @@ use super::{EventAndInstanceId, EventStatus, EventType, InstanceId};
 ///
 /// Overrides event properties for a event recurrence. May only exist for events of type `recurring`.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct EventExceptionResource {
     /// Opaque ID of the exception
     pub id: EventAndInstanceId,

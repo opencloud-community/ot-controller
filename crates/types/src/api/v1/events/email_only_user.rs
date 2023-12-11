@@ -7,7 +7,7 @@ use crate::imports::*;
 
 /// User profile with only email and avatar url
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct EmailOnlyUser {
     /// Email of the user
     pub email: String,

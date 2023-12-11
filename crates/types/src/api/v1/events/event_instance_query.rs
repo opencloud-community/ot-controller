@@ -6,7 +6,7 @@
 use crate::imports::*;
 
 /// Path query for the `PATCH /events/{event_id}/{instance_id}` endpoint
-#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct EventInstanceQuery {
     /// Maximum number of invitees to return inside the event instance resource

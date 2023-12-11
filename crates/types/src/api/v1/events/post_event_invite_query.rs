@@ -6,7 +6,7 @@
 use crate::imports::*;
 
 /// Query parameters for the `PATCH /events/{event_id}/invites` endpoint
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct PostEventInviteQuery {
     /// Flag to suppress email notification

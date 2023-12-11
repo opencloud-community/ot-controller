@@ -6,7 +6,7 @@
 use crate::imports::*;
 
 /// Path query parameters for the `GET /events/{event_id}` endpoint
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct GetEventQuery {
     /// Maximum number of invitees to return inside the event resource

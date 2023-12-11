@@ -12,7 +12,7 @@ use super::EventInviteeProfile;
 ///
 ///  Contains user profile and invitee status
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct EventInvitee {
     /// User profile of the invitee
     pub profile: EventInviteeProfile,

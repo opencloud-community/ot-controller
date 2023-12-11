@@ -12,7 +12,7 @@ use super::{EmailOnlyUser, PublicInviteUserProfile};
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize),
+    derive(Serialize, Deserialize),
     serde(tag = "kind", rename_all = "lowercase")
 )]
 pub enum EventInviteeProfile {

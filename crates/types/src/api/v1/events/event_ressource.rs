@@ -16,7 +16,7 @@ use super::{EventInvitee, EventRoomInfo, EventType};
 ///
 /// Returned from `GET /events/` and `GET /events/{event_id}`
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct EventResource {
     /// ID of the event
     pub id: EventId,

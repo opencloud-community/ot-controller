@@ -8,7 +8,7 @@ use crate::{api::v1::events::EventStatus, core::DateTimeTz};
 use crate::imports::*;
 
 /// Request body for the `PATCH /events/{event_id}/{instance_id}` endpoint
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize, Validate))]
 pub struct PatchEventInstanceBody {
     /// The title of th event

@@ -8,7 +8,7 @@ use email_address::EmailAddress;
 use crate::imports::*;
 
 /// Query parameters for the `DELETE /events/{event_id}/invites/email` endpoint
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct DeleteEmailInviteBody {
     /// Email address of the user to delete the invite for
