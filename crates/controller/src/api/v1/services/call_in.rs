@@ -13,7 +13,7 @@ use actix_web::web::{Data, Json};
 use database::Db;
 use db_storage::sip_configs::SipConfig;
 use signaling_core::{Participant, RedisConnection};
-use types::api::v1::services::{CallInStartRequestBody, CallInStartResponse};
+use types::api::v1::services::{CallInStartRequestBody, ServiceStartResponse};
 use types::common::features;
 use validator::Validate;
 
@@ -29,7 +29,7 @@ pub async fn start(
     db: Data<Db>,
     redis_ctx: Data<RedisConnection>,
     request: Json<CallInStartRequestBody>,
-) -> Result<Json<CallInStartResponse>, ApiError> {
+) -> Result<Json<ServiceStartResponse>, ApiError> {
     let settings = settings.load();
     let mut redis_conn = (**redis_ctx).clone();
     let request = request.into_inner();
@@ -55,7 +55,7 @@ pub async fn start(
         start_or_continue_signaling_session(&mut redis_conn, Participant::Sip, room.id, None, None)
             .await?;
 
-    Ok(Json(CallInStartResponse { ticket, resumption }))
+    Ok(Json(ServiceStartResponse { ticket, resumption }))
 }
 
 fn invalid_credentials_error() -> ApiError {

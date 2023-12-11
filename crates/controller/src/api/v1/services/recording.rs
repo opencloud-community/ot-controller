@@ -14,22 +14,16 @@ use actix_web::web::{Data, Json};
 use database::Db;
 use db_storage::rooms::Room;
 use futures::TryStreamExt;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use signaling_core::assets::save_asset;
 use signaling_core::{ObjectStorage, Participant, RedisConnection};
-use types::api::v1::services::RecorderStartBody;
-use types::core::{ResumptionToken, RoomId, TicketToken};
+use types::api::v1::services::{RecorderStartBody, ServiceStartResponse};
+use types::core::RoomId;
 
 // Note to devs:
 // Please update `docs/admin/keycloak.md` service login documentation as well if
 // you change something here
 const REQUIRED_RECORDING_ROLE: &str = "opentalk-recorder";
-
-#[derive(Serialize)]
-pub struct RecordingStartResponse {
-    ticket: TicketToken,
-    resumption: ResumptionToken,
-}
 
 #[post("/start")]
 pub async fn start(
@@ -37,7 +31,7 @@ pub async fn start(
     db: Data<Db>,
     redis_ctx: Data<RedisConnection>,
     body: Json<RecorderStartBody>,
-) -> Result<Json<RecordingStartResponse>, ApiError> {
+) -> Result<Json<ServiceStartResponse>, ApiError> {
     let settings = settings.load_full();
     if settings.rabbit_mq.recording_task_queue.is_none() {
         return Err(ApiError::not_found());
@@ -57,7 +51,7 @@ pub async fn start(
     )
     .await?;
 
-    Ok(Json(RecordingStartResponse { ticket, resumption }))
+    Ok(Json(ServiceStartResponse { ticket, resumption }))
 }
 
 #[derive(Deserialize)]
