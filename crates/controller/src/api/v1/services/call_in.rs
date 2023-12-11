@@ -12,23 +12,15 @@ use actix_web::post;
 use actix_web::web::{Data, Json};
 use database::Db;
 use db_storage::sip_configs::SipConfig;
-use serde::Serialize;
 use signaling_core::{Participant, RedisConnection};
-use types::api::v1::services::CallInStartRequestBody;
+use types::api::v1::services::{CallInStartRequestBody, CallInStartResponse};
 use types::common::features;
-use types::core::{ResumptionToken, TicketToken};
 use validator::Validate;
 
 // Note to devs:
 // Please update `docs/admin/keycloak.md` service login documentation as well if
 // you change something here
 pub const REQUIRED_CALL_IN_ROLE: &str = "opentalk-call-in";
-
-#[derive(Serialize)]
-pub struct CallInStartResponse {
-    ticket: TicketToken,
-    resumption: ResumptionToken,
-}
 
 /// API Endpoint *POST services/call_in/start* for the call-in service
 #[post("/start")]
