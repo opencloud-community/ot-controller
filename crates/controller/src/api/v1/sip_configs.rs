@@ -11,38 +11,10 @@ use actix_web::{delete, get, put, HttpResponse};
 use database::Db;
 use db_storage::rooms::Room;
 use db_storage::sip_configs::{NewSipConfig, SipConfig, UpdateSipConfig};
-use serde::{Deserialize, Serialize};
+use types::api::v1::sip_config_resource::{PutSipConfig, SipConfigResource};
 use types::common::features;
-use types::core::{CallInId, CallInPassword, RoomId};
-use validator::{Validate, ValidationError};
-
-/// The sip config returned by the API endpoints
-#[derive(Debug, Clone, Serialize)]
-pub struct SipConfigResource {
-    pub room: RoomId,
-    pub sip_id: CallInId,
-    pub password: CallInPassword,
-    pub lobby: bool,
-}
-
-/// API request parameters to create or modify a sip config.
-#[derive(Debug, Validate, Deserialize)]
-#[validate(schema(function = "disallow_empty"))]
-pub struct PutSipConfig {
-    #[validate]
-    pub password: Option<CallInPassword>,
-    pub lobby: Option<bool>,
-}
-
-fn disallow_empty(modify_room: &PutSipConfig) -> Result<(), ValidationError> {
-    let PutSipConfig { password, lobby } = modify_room;
-
-    if password.is_none() && lobby.is_none() {
-        Err(ValidationError::new("empty"))
-    } else {
-        Ok(())
-    }
-}
+use types::core::RoomId;
+use validator::Validate;
 
 /// API Endpoint *GET /rooms/{room_id}/sip*
 ///
