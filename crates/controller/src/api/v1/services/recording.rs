@@ -14,11 +14,10 @@ use actix_web::web::{Data, Json};
 use database::Db;
 use db_storage::rooms::Room;
 use futures::TryStreamExt;
-use serde::Deserialize;
 use signaling_core::assets::save_asset;
 use signaling_core::{ObjectStorage, Participant, RedisConnection};
+use types::api::v1::services::UploadRenderQuery;
 use types::api::v1::services::{RecorderStartBody, ServiceStartResponse};
-use types::core::RoomId;
 
 // Note to devs:
 // Please update `docs/admin/keycloak.md` service login documentation as well if
@@ -52,12 +51,6 @@ pub async fn start(
     .await?;
 
     Ok(Json(ServiceStartResponse { ticket, resumption }))
-}
-
-#[derive(Deserialize)]
-pub struct UploadRenderQuery {
-    room_id: RoomId,
-    filename: String,
 }
 
 #[post("/upload_render")]
