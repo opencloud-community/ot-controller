@@ -4,7 +4,7 @@
 
 //! Signaling events for the `recording` namespace
 
-use super::RecordingId;
+use super::StreamUpdated;
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -16,41 +16,16 @@ use crate::imports::*;
     serde(tag = "message", rename_all = "snake_case")
 )]
 pub enum RecordingEvent {
-    /// A recording has been started
-    Started(Started),
-
-    /// A recording has been stopped
-    Stopped(Stopped),
+    /// Stream has an update
+    StreamUpdated(StreamUpdated),
 
     /// An error happened when executing a `recording` command
     Error(Error),
 }
 
-/// Data for the `started` recording event
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Started {
-    /// The id of the recording that was started
-    pub recording_id: RecordingId,
-}
-
-impl From<Started> for RecordingEvent {
-    fn from(value: Started) -> Self {
-        Self::Started(value)
-    }
-}
-
-/// Data for the `stopped` recording event
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Stopped {
-    /// The id of the recording that was stopped
-    pub recording_id: RecordingId,
-}
-
-impl From<Stopped> for RecordingEvent {
-    fn from(value: Stopped) -> Self {
-        Self::Stopped(value)
+impl From<StreamUpdated> for RecordingEvent {
+    fn from(value: StreamUpdated) -> Self {
+        Self::StreamUpdated(value)
     }
 }
 
@@ -65,11 +40,11 @@ pub enum Error {
     /// The participant has insufficient permissions to perform a command
     InsufficientPermissions,
 
-    /// Attempted to start a recording while it is already running
-    AlreadyRecording,
+    /// Invalid streaming id used
+    InvalidStreamingId,
 
-    /// Invalid recording id used
-    InvalidRecordingId,
+    /// Recorder is not started
+    RecorderNotStarted,
 }
 
 impl From<Error> for RecordingEvent {

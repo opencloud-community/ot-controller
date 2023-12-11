@@ -5,7 +5,11 @@
 //! Signaling messages for the `recording` namespace
 
 mod recording_id;
-mod recording_status;
+mod stream_error_reason;
+mod stream_kind;
+mod stream_status;
+mod stream_target;
+mod stream_updated;
 
 pub mod command;
 pub mod event;
@@ -13,7 +17,11 @@ pub mod peer_state;
 pub mod state;
 
 pub use recording_id::RecordingId;
-pub use recording_status::RecordingStatus;
+pub use stream_error_reason::StreamErrorReason;
+pub use stream_kind::{StreamKind, StreamKindSecret};
+pub use stream_status::StreamStatus;
+pub use stream_target::{StreamTarget, StreamTargetSecret};
+pub use stream_updated::StreamUpdated;
 
 /// The namespace string for the signaling module
 pub const NAMESPACE: &str = "recording";

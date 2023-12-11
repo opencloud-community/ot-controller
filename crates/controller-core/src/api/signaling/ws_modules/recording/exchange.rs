@@ -2,16 +2,15 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+//! Signaling messages between runners
+
+use opentalk_types::signaling::recording::StreamUpdated;
 use serde::{Deserialize, Serialize};
 
-use super::RecordingId;
-
+/// The exchange message to send between runners
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case", tag = "message", content = "content")]
 pub enum Message {
-    /// Signals for the recording "participant"
-    Stop,
-
-    /// Messages sent to participants to signal changes in the recording
-    Started(RecordingId),
-    Stopped(RecordingId),
+    /// UpdateStream message
+    StreamUpdated(StreamUpdated),
 }

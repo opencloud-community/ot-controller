@@ -8,10 +8,17 @@ use opentalk_database::{DatabaseError, DbConnection, Result};
 use opentalk_types::{
     common::streaming::{RoomStreamingTarget, StreamingTarget, StreamingTargetKind},
     core::{RoomId, StreamingKey, StreamingKind, StreamingTargetId},
+    signaling::recording::{StreamKindSecret, StreamStatus, StreamTargetSecret},
 };
-use snafu::Report;
+use snafu::{Report, Snafu};
 
 use crate::{rooms::Room, schema::room_streaming_targets};
+
+#[derive(Debug, Snafu)]
+pub enum StreamTargetConversionError {
+    #[snafu(display("Parsing the url failed, because {target} is not a valid URL"))]
+    WrongUrl { target: String },
+}
 
 #[derive(Debug, Queryable, Identifiable, Associations, Insertable)]
 #[diesel(belongs_to(Room, foreign_key = room_id))]
@@ -73,6 +80,32 @@ impl RoomStreamingTargetRecord {
         .await?;
 
         Ok(())
+    }
+}
+
+impl TryFrom<RoomStreamingTargetRecord> for StreamTargetSecret {
+    type Error = StreamTargetConversionError;
+
+    fn try_from(value: RoomStreamingTargetRecord) -> Result<Self, Self::Error> {
+        Ok(Self {
+            name: value.name,
+            kind: StreamKindSecret::Livestream(match value.kind {
+                StreamingKind::Custom => StreamingTargetKind::Custom {
+                    streaming_endpoint: value.streaming_endpoint.parse().map_err(|_| {
+                        StreamTargetConversionError::WrongUrl {
+                            target: value.streaming_endpoint,
+                        }
+                    })?,
+                    streaming_key: value.streaming_key,
+                    public_url: value.public_url.parse().map_err(|_| {
+                        StreamTargetConversionError::WrongUrl {
+                            target: value.public_url,
+                        }
+                    })?,
+                },
+            }),
+            status: StreamStatus::Inactive,
+        })
     }
 }
 

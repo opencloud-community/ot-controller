@@ -99,6 +99,22 @@ pub struct JoinSuccess {
     pub is_room_owner: bool,
 }
 
+impl From<JoinSuccess> for ControlEvent {
+    fn from(value: JoinSuccess) -> Self {
+        Self::JoinSuccess(value)
+    }
+}
+
+impl JoinSuccess {
+    /// Gets the inner module of a JoinSuccess Message
+    #[cfg(feature = "serde")]
+    pub fn get_module<T: SignalingModuleFrontendData>(
+        &self,
+    ) -> Result<Option<T>, serde_json::Error> {
+        self.module_data.get()
+    }
+}
+
 /// The reason for blocking a participant from joining a meeting
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(

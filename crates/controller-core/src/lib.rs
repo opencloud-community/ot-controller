@@ -178,6 +178,7 @@ impl<M: RegisterModules> RegisterModules for ControllerModules<M> {
         registrar.register::<BreakoutRooms>().await?;
         registrar.register::<ModerationModule>().await?;
         registrar.register::<Recording>().await?;
+        registrar.register::<RecordingService>().await?;
         M::register(registrar).await
     }
 }

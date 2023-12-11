@@ -11,7 +11,7 @@ mod ws_modules;
 use itertools::Itertools;
 pub(crate) use ws::ws_service;
 pub use ws::{SignalingModules, SignalingProtocols};
-pub use ws_modules::{breakout, echo, moderation, recording};
+pub use ws_modules::{breakout, echo, moderation, recording, recording_service};
 
 /// Trim leading, trailing, and extra whitespaces between a given display name.
 fn trim_display_name(display_name: String) -> String {
@@ -39,3 +39,4 @@ mod test {
         assert_eq!("First Last", trim_display_name("First  Last".to_string()));
     }
 }
+

@@ -65,6 +65,10 @@ pub fn current_room_all_participants(room_id: SignalingRoomId) -> String {
     format!("room={room_id}:participants")
 }
 
+pub fn current_room_all_recorders(room_id: SignalingRoomId) -> String {
+    format!("room={room_id}:recorders")
+}
+
 // ==== Global room routing-keys
 
 /// Create a routing key addressing all participants by their user-id in the specified room and it's breakout rooms

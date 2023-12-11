@@ -180,9 +180,15 @@ impl Builder {
             exchange::global_room_by_participant_id(room_id.room_id(), self.id),
         ];
 
-        if let Participant::User(user) = &self.participant {
-            routing_keys.push(exchange::current_room_by_user_id(room_id, user.id));
-            routing_keys.push(exchange::global_room_by_user_id(room_id.room_id(), user.id));
+        match self.participant {
+            Participant::User(ref user) => {
+                routing_keys.push(exchange::current_room_by_user_id(room_id, user.id));
+                routing_keys.push(exchange::global_room_by_user_id(room_id.room_id(), user.id));
+            }
+            Participant::Recorder => {
+                routing_keys.push(exchange::current_room_all_recorders(room_id))
+            }
+            Participant::Guest | Participant::Sip => {}
         }
 
         for ExchangeBinding { routing_key } in self.exchange_bindings {
