@@ -5,14 +5,14 @@
 use anyhow::Result;
 use chrono::{self, Utc};
 use futures::{stream::once, FutureExt};
-use signaling_core::SignalingModuleInitData;
 use signaling_core::{
-    control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingRoomId,
+    control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
+    SignalingModuleInitData, SignalingRoomId,
 };
-use storage::ready_status::ReadyStatus;
 use tokio::time::sleep;
 use types::signaling::timer::command::Message;
 use types::signaling::timer::event::{self, Error, StopKind, UpdatedReadyStatus};
+use types::signaling::timer::ready_status::ReadyStatus;
 use types::signaling::timer::status::TimerStatus;
 use types::signaling::timer::TimerConfig;
 use types::signaling::timer::{command, Kind, TimerId};
