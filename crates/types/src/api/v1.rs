@@ -7,14 +7,15 @@
 
 pub mod assets;
 pub mod auth;
+pub mod events;
 pub mod invites;
 pub mod pagination;
 pub mod rooms;
 pub mod streaming_targets;
 pub mod turn;
 pub mod users;
+pub mod utils;
 
 mod cursor;
-mod utils;
 
 pub use cursor::Cursor;

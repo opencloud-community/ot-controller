@@ -7,14 +7,13 @@ use chrono::{TimeZone as _, Utc};
 use chrono_tz::Tz;
 use database::DbConnection;
 use opentalk_db_storage::events::{
-    Event, EventInvite, EventInviteStatus, GetEventsCursor, NewEvent, NewEventInvite,
-    UpdateEventInvite,
+    Event, EventInvite, GetEventsCursor, NewEvent, NewEventInvite, UpdateEventInvite,
 };
 use opentalk_db_storage::rooms::NewRoom;
 use opentalk_db_storage::tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId};
 use pretty_assertions::assert_eq;
 use serial_test::serial;
-use types::core::{EventId, InviteRole, RoomId, TimeZone, UserId};
+use types::core::{EventId, EventInviteStatus, InviteRole, RoomId, TimeZone, UserId};
 
 mod common;
 

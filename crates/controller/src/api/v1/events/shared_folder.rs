@@ -22,8 +22,8 @@ use db_storage::{
 };
 use log::warn;
 use nextcloud_client::{Client, ShareId, SharePermission, ShareType};
-use serde::Deserialize;
 use types::{
+    api::v1::events::DeleteQuery,
     common::shared_folder::{SharedFolder, SharedFolderAccess},
     core::EventId,
 };
@@ -228,12 +228,6 @@ pub async fn put_shared_folder_for_event(
             }
         }
     }
-}
-
-#[derive(Deserialize, Default)]
-pub struct DeleteQuery {
-    #[serde(default)]
-    force_delete_reference_if_shared_folder_deletion_fails: bool,
 }
 
 pub async fn delete_shared_folders(

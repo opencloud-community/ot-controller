@@ -3,11 +3,11 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use super::{
-    can_edit, ApiResponse, DateTimeTz, DefaultApiResult, EventAndInstanceId, EventInvitee,
-    EventRoomInfo, EventStatus, EventType, InstanceId, LOCAL_DT_FORMAT, ONE_HUNDRED_YEARS_IN_DAYS,
+    can_edit, ApiResponse, DateTimeTz, DefaultApiResult, EventInvitee, LOCAL_DT_FORMAT,
+    ONE_HUNDRED_YEARS_IN_DAYS,
 };
 use crate::api::v1::events::{
-    enrich_invitees_from_keycloak, shared_folder_for_user, DateTimeTzFromDb,
+    enrich_invitees_from_keycloak, shared_folder_for_user, DateTimeTzFromDb, EventRoomInfoExt,
 };
 use crate::api::v1::response::{ApiError, NoContent};
 use crate::api::v1::util::{GetUserProfilesBatched, UserProfilesBatch};
@@ -17,86 +17,21 @@ use actix_web::{get, patch, Either};
 use chrono::{DateTime, Utc};
 use database::Db;
 use db_storage::events::{
-    Event, EventException, EventExceptionKind, EventInviteStatus, NewEventException,
-    UpdateEventException,
+    Event, EventException, EventExceptionKind, NewEventException, UpdateEventException,
 };
 use db_storage::tenants::Tenant;
 use db_storage::users::User;
 use keycloak_admin::KeycloakAdminClient;
 use rrule::RRuleSet;
-use serde::{Deserialize, Serialize};
-use types::api::v1::users::PublicUserProfile;
+use types::api::v1::events::{
+    EventAndInstanceId, EventInstance, EventInstancePath, EventInstanceQuery, EventRoomInfo,
+    EventStatus, EventType, GetEventInstancesCursorData, GetEventInstancesQuery, InstanceId,
+    PatchEventInstanceBody,
+};
 use types::api::v1::Cursor;
 use types::common::shared_folder::SharedFolder;
-use types::core::EventId;
+use types::core::{EventId, EventInviteStatus};
 use validator::Validate;
-
-/// Event instance resource
-///
-/// An event instance is an occurrence of an recurring event
-///
-/// Exceptions for the instance are always already applied
-///
-/// For infos on undocumented fields see [`EventResource`](super::EventResource)
-#[derive(Debug, Serialize)]
-pub struct EventInstance {
-    /// Opaque id of the event instance resource
-    pub id: EventAndInstanceId,
-
-    /// ID of the recurring event this instance belongs to
-    pub recurring_event_id: EventId,
-
-    /// Opaque id of the instance
-    pub instance_id: InstanceId,
-
-    /// Public user profile of the user which created the event
-    pub created_by: PublicUserProfile,
-
-    /// Timestamp of the event creation
-    pub created_at: DateTime<Utc>,
-
-    /// Public user profile of the user which last updated the event
-    /// or created the exception which modified the instance
-    pub updated_by: PublicUserProfile,
-
-    /// Timestamp of the last update
-    pub updated_at: DateTime<Utc>,
-
-    pub title: String,
-    pub description: String,
-    pub room: EventRoomInfo,
-    pub invitees_truncated: bool,
-    pub invitees: Vec<EventInvitee>,
-    pub is_all_day: bool,
-    pub starts_at: DateTimeTz,
-    pub ends_at: DateTimeTz,
-
-    /// Must always be `instance`
-    #[serde(rename = "type")]
-    pub type_: EventType,
-    pub status: EventStatus,
-    pub invite_status: EventInviteStatus,
-    pub is_favorite: bool,
-    pub can_edit: bool,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub shared_folder: Option<SharedFolder>,
-}
-
-#[derive(Deserialize)]
-pub struct GetEventInstancesQuery {
-    #[serde(default)]
-    invitees_max: i64,
-    time_min: Option<DateTime<Utc>>,
-    time_max: Option<DateTime<Utc>>,
-    per_page: Option<i64>,
-    after: Option<Cursor<GetEventInstancesCursorData>>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Copy)]
-struct GetEventInstancesCursorData {
-    page: i64,
-}
 
 struct GetPaginatedEventInstancesData {
     instances: Vec<EventInstance>,
@@ -158,11 +93,11 @@ pub async fn get_event_instances(
         Box::new(rruleset.into_iter().skip_while(move |&dt| dt > max_dt));
 
     if let Some(time_min) = time_min {
-        iter = Box::new(iter.skip_while(move |&dt| dt <= time_min));
+        iter = Box::new(iter.skip_while(move |&dt| dt <= *time_min));
     }
 
     if let Some(time_max) = time_max {
-        iter = Box::new(iter.skip_while(move |&dt| dt >= time_max));
+        iter = Box::new(iter.skip_while(move |&dt| dt >= *time_max));
     }
 
     let datetimes: Vec<DateTime<Utc>> = iter
@@ -201,7 +136,7 @@ pub async fn get_event_instances(
             is_favorite,
             exception,
             room.clone(),
-            InstanceId(datetime),
+            datetime.into(),
             invitees.clone(),
             invitees_truncated,
             can_edit,
@@ -249,18 +184,6 @@ pub async fn get_event_instances(
         .with_cursor_pagination(instances_data.before, instances_data.after))
 }
 
-#[derive(Deserialize)]
-pub struct GetEventInstancePath {
-    event_id: EventId,
-    instance_id: InstanceId,
-}
-
-#[derive(Deserialize)]
-pub struct GetEventInstanceQuery {
-    #[serde(default)]
-    invitees_max: i64,
-}
-
 /// API Endpoint *GET /events/{id}*
 ///
 /// Returns the event resource for the given id
@@ -271,11 +194,11 @@ pub async fn get_event_instance(
     kc_admin_client: Data<KeycloakAdminClient>,
     current_tenant: ReqData<Tenant>,
     current_user: ReqData<User>,
-    path: Path<GetEventInstancePath>,
-    query: Query<GetEventInstanceQuery>,
+    path: Path<EventInstancePath>,
+    query: Query<EventInstanceQuery>,
 ) -> DefaultApiResult<EventInstance> {
     let settings = settings.load_full();
-    let GetEventInstancePath {
+    let EventInstancePath {
         event_id,
         instance_id,
     } = path.into_inner();
@@ -285,12 +208,12 @@ pub async fn get_event_instance(
 
     let (event, invite, room, sip_config, is_favorite, shared_folder, tariff) =
         Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
-    verify_recurrence_date(&event, instance_id.0)?;
+    verify_recurrence_date(&event, instance_id.into())?;
 
     let (invitees, invitees_truncated) =
         super::get_invitees_for_event(&settings, &mut conn, event_id, query.invitees_max).await?;
 
-    let exception = EventException::get_for_event(&mut conn, event_id, instance_id.0).await?;
+    let exception = EventException::get_for_event(&mut conn, event_id, instance_id.into()).await?;
 
     let users = GetUserProfilesBatched::new()
         .add(&event)
@@ -334,56 +257,6 @@ pub async fn get_event_instance(
     Ok(ApiResponse::new(event_instance))
 }
 
-/// Path parameters for the `PATCH /events/{event_id}/{instance_id}` endpoint
-#[derive(Deserialize)]
-pub struct PatchEventInstancePath {
-    event_id: EventId,
-    instance_id: InstanceId,
-}
-
-/// Path query for the `PATCH /events/{event_id}/{instance_id}` endpoint
-#[derive(Deserialize)]
-pub struct PatchEventInstanceQuery {
-    /// Maximum number of invitees to return inside the event instance resource
-    ///
-    /// Default: 0
-    #[serde(default)]
-    invitees_max: i64,
-}
-
-/// Request body for the `PATCH /events/{event_id}/{instance_id}` endpoint
-#[derive(Debug, Deserialize, Validate)]
-pub struct PatchEventInstanceBody {
-    #[validate(length(max = 255))]
-    title: Option<String>,
-    #[validate(length(max = 4096))]
-    description: Option<String>,
-    is_all_day: Option<bool>,
-    starts_at: Option<DateTimeTz>,
-    ends_at: Option<DateTimeTz>,
-    status: Option<EventStatus>,
-}
-
-impl PatchEventInstanceBody {
-    fn is_empty(&self) -> bool {
-        let PatchEventInstanceBody {
-            title,
-            description,
-            is_all_day,
-            starts_at,
-            ends_at,
-            status,
-        } = self;
-
-        title.is_none()
-            && description.is_none()
-            && is_all_day.is_none()
-            && starts_at.is_none()
-            && ends_at.is_none()
-            && status.is_none()
-    }
-}
-
 /// API Endpoint `PATCH /events/{event_id}/{instance_id}`
 ///
 /// Patch an instance of an recurring event. This creates oder modifies an exception for the event
@@ -398,8 +271,8 @@ pub async fn patch_event_instance(
     kc_admin_client: Data<KeycloakAdminClient>,
     current_tenant: ReqData<Tenant>,
     current_user: ReqData<User>,
-    path: Path<PatchEventInstancePath>,
-    query: Query<PatchEventInstanceQuery>,
+    path: Path<EventInstancePath>,
+    query: Query<EventInstanceQuery>,
     patch: Json<PatchEventInstanceBody>,
 ) -> Result<Either<ApiResponse<EventInstance>, NoContent>, ApiError> {
     let patch = patch.into_inner();
@@ -411,7 +284,7 @@ pub async fn patch_event_instance(
     patch.validate()?;
 
     let settings = settings.load_full();
-    let PatchEventInstancePath {
+    let EventInstancePath {
         event_id,
         instance_id,
     } = path.into_inner();
@@ -425,10 +298,10 @@ pub async fn patch_event_instance(
         return Err(ApiError::not_found());
     }
 
-    verify_recurrence_date(&event, instance_id.0)?;
+    verify_recurrence_date(&event, instance_id.into())?;
 
     let exception = if let Some(exception) =
-        EventException::get_for_event(&mut conn, event_id, instance_id.0).await?
+        EventException::get_for_event(&mut conn, event_id, instance_id.into()).await?
     {
         let is_all_day = patch
             .is_all_day
@@ -479,7 +352,7 @@ pub async fn patch_event_instance(
 
         let new_exception = NewEventException {
             event_id: event.id,
-            exception_date: instance_id.0,
+            exception_date: instance_id.into(),
             exception_date_tz: event.starts_at_tz.unwrap(),
             created_by: current_user.id,
             kind: if let Some(EventStatus::Cancelled) = patch.status {
@@ -562,11 +435,11 @@ fn create_event_instance(
 ) -> database::Result<EventInstance> {
     let mut status = EventStatus::Ok;
 
-    let mut instance_starts_at = instance_id.0;
+    let mut instance_starts_at = instance_id.into();
     let mut instance_starts_at_tz = event.starts_at_tz.unwrap();
 
     let mut instance_ends_at =
-        instance_id.0 + chrono::Duration::seconds(event.duration_secs.unwrap() as i64);
+        instance_id + chrono::Duration::seconds(event.duration_secs.unwrap() as i64);
     let mut instance_ends_at_tz = event.ends_at_tz.unwrap();
 
     if let Some(exception) = exception {
@@ -585,7 +458,10 @@ fn create_event_instance(
 
         patch(&mut instance_starts_at, exception.starts_at);
         patch(&mut instance_starts_at_tz, exception.starts_at_tz);
-        patch(&mut instance_ends_at, exception.ends_at);
+        patch(
+            &mut instance_ends_at,
+            exception.ends_at.map(InstanceId::from),
+        );
         patch(&mut instance_ends_at_tz, exception.ends_at_tz);
     }
 
@@ -597,9 +473,9 @@ fn create_event_instance(
         recurring_event_id: event.id,
         instance_id,
         created_by,
-        created_at: event.created_at,
+        created_at: event.created_at.into(),
         updated_by,
-        updated_at: event.updated_at,
+        updated_at: event.updated_at.into(),
         title: event.title,
         description: event.description,
         room,
@@ -611,7 +487,7 @@ fn create_event_instance(
             timezone: instance_starts_at_tz,
         },
         ends_at: DateTimeTz {
-            datetime: instance_ends_at,
+            datetime: instance_ends_at.into(),
             timezone: instance_ends_at_tz,
         },
         type_: EventType::Instance,
@@ -688,12 +564,15 @@ mod tests {
     use chrono_tz::Tz;
     use std::time::SystemTime;
     use test_util::assert_eq_json;
-    use types::core::{InviteRole, RoomId, TimeZone, UserId};
+    use types::{
+        api::v1::users::PublicUserProfile,
+        core::{InviteRole, RoomId, TimeZone, Timestamp, UserId},
+    };
 
     #[test]
     fn event_instance_serialize() {
-        let unix_epoch: DateTime<Utc> = SystemTime::UNIX_EPOCH.into();
-        let instance_id = InstanceId(unix_epoch);
+        let unix_epoch: Timestamp = SystemTime::UNIX_EPOCH.into();
+        let instance_id = unix_epoch.into();
         let event_id = EventId::nil();
         let user_profile = PublicUserProfile {
             id: UserId::nil(),
@@ -731,11 +610,11 @@ mod tests {
             }],
             is_all_day: false,
             starts_at: DateTimeTz {
-                datetime: unix_epoch,
+                datetime: *unix_epoch,
                 timezone: TimeZone::from(Tz::Europe__Berlin),
             },
             ends_at: DateTimeTz {
-                datetime: unix_epoch,
+                datetime: *unix_epoch,
                 timezone: TimeZone::from(Tz::Europe__Berlin),
             },
             type_: EventType::Instance,

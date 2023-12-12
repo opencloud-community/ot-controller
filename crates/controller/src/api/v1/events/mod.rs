@@ -10,8 +10,7 @@ use super::{ApiResponse, DefaultApiResult};
 use crate::api::v1::response::CODE_IGNORED_VALUE;
 use crate::api::v1::rooms::RoomsPoliciesBuilderExt;
 use crate::api::v1::streaming_targets::{get_room_streaming_targets, insert_room_streaming_target};
-use crate::api::v1::util::comma_separated;
-use crate::api::v1::util::{deserialize_some, GetUserProfilesBatched};
+use crate::api::v1::util::GetUserProfilesBatched;
 use crate::services::{
     ExternalMailRecipient, MailRecipient, MailService, UnregisteredMailRecipient,
 };
@@ -26,7 +25,7 @@ use database::{Db, DbConnection};
 use db_storage::events::shared_folders::EventSharedFolder;
 use db_storage::events::{
     email_invites::EventEmailInvite, Event, EventException, EventExceptionKind, EventInvite,
-    EventInviteStatus, NewEvent, UpdateEvent,
+    NewEvent, UpdateEvent,
 };
 use db_storage::invites::Invite;
 use db_storage::rooms::{NewRoom, Room, UpdateRoom};
@@ -40,12 +39,20 @@ use kustos::policies_builder::{GrantingAccess, PoliciesBuilder};
 use kustos::prelude::{AccessMethod, IsSubject};
 use kustos::{Authz, Resource, ResourceId};
 use rrule::{Frequency, RRuleSet};
-use serde::de::Visitor;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use types::core::Timestamp;
 use types::{
     api::v1::{
+        events::{
+            CallInInfo, DeleteEventQuery, EmailOnlyUser, EventAndInstanceId,
+            EventExceptionResource, EventInvitee, EventInviteeProfile, EventOrException,
+            EventResource, EventRoomInfo, EventStatus, EventType, GetEventQuery,
+            GetEventsCursorData, GetEventsQuery, PatchEventBody, PatchEventQuery, PostEventsBody,
+            PublicInviteUserProfile,
+        },
         pagination::default_pagination_per_page,
         users::{PublicUserProfile, UnregisteredUser},
+        utils::validate_recurrence_pattern,
         Cursor,
     },
     common::{
@@ -53,9 +60,9 @@ use types::{
         shared_folder::{SharedFolder, SharedFolderAccess},
         streaming::{RoomStreamingTarget, StreamingTarget},
     },
-    core::{DateTimeTz, EventId, InviteRole, RoomId, TimeZone, UserId},
+    core::{DateTimeTz, EventId, EventInviteStatus, TimeZone, UserId},
 };
-use validator::{Validate, ValidationError};
+use validator::Validate;
 
 pub mod favorites;
 pub mod instances;
@@ -63,67 +70,7 @@ pub mod invites;
 pub mod shared_folder;
 
 const LOCAL_DT_FORMAT: &str = "%Y%m%dT%H%M%S";
-const UTC_DT_FORMAT: &str = "%Y%m%dT%H%M%SZ";
 const ONE_HUNDRED_YEARS_IN_DAYS: usize = 36525;
-
-/// Opaque id of an EventInstance or EventException resource. Should only be used to sort/index the related resource.
-#[derive(Debug, Copy, Clone)]
-pub struct EventAndInstanceId(EventId, InstanceId);
-
-impl Serialize for EventAndInstanceId {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        format!("{}_{}", self.0, (self.1).0.format(UTC_DT_FORMAT)).serialize(serializer)
-    }
-}
-
-/// ID of an EventInstance
-///
-/// Is created from the starts_at datetime of the original recurrence (original meaning that exceptions don't change
-/// the instance id).
-#[derive(Debug, Copy, Clone)]
-pub struct InstanceId(DateTime<Utc>);
-
-impl Serialize for InstanceId {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        self.0
-            .format(UTC_DT_FORMAT)
-            .to_string()
-            .serialize(serializer)
-    }
-}
-
-impl<'de> Deserialize<'de> for InstanceId {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        deserializer.deserialize_str(InstanceIdVisitor)
-    }
-}
-
-struct InstanceIdVisitor;
-impl<'de> Visitor<'de> for InstanceIdVisitor {
-    type Value = InstanceId;
-
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(formatter, "timestamp in '{UTC_DT_FORMAT}' format")
-    }
-
-    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-    where
-        E: serde::de::Error,
-    {
-        DateTime::parse_from_str(v, UTC_DT_FORMAT)
-            .map(|dt| InstanceId(dt.with_timezone(&Utc)))
-            .map_err(|_| serde::de::Error::invalid_value(serde::de::Unexpected::Str(v), &self))
-    }
-}
 
 pub(crate) trait DateTimeTzFromDb: Sized {
     fn maybe_from_db(utc_dt: Option<DateTime<Utc>>, tz: Option<TimeZone>) -> Option<Self>;
@@ -176,186 +123,20 @@ impl DateTimeTzFromDb for DateTimeTz {
     }
 }
 
-/// Event Resource representation
-///
-/// Returned from `GET /events/` and `GET /events/{event_id}`
-#[derive(Debug, Serialize)]
-pub struct EventResource {
-    /// ID of the event
-    pub id: EventId,
-
-    /// Public user profile of the user which created the event
-    pub created_by: PublicUserProfile,
-
-    /// Timestamp of the event creation
-    pub created_at: DateTime<Utc>,
-
-    /// Public user profile of the user which last updated the event
-    pub updated_by: PublicUserProfile,
-
-    /// Timestamp of the last update
-    pub updated_at: DateTime<Utc>,
-
-    /// Title of the event
-    ///
-    /// For display purposes
-    pub title: String,
-
-    /// Description of the event
-    ///
-    /// For display purposes
-    pub description: String,
-
-    /// All information about the room the event takes place in
-    pub room: EventRoomInfo,
-
-    /// Flag which indicates if `invitees` contains all invites as far as known to the application
-    /// May also be true if there are no invitees but no invitees were requested
-    pub invitees_truncated: bool,
-
-    /// List of event invitees and their invite status. Might not be complete, see `invite_truncated`
-    pub invitees: Vec<EventInvitee>,
-
-    /// Is the event time independent?
-    ///
-    /// Time independent events are not bound to any time but instead are constantly available to join
-    pub is_time_independent: bool,
-
-    /// Is the event an all day event
-    ///
-    /// All-day events have no start/end time, they last the entire day(s)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub is_all_day: Option<bool>,
-
-    /// Start time of the event.
-    ///
-    /// Omitted if `is_time_independent` is true
-    ///
-    /// For events of type `recurring` the datetime contains the time of the first instance.
-    /// The datetimes of subsequent recurrences are computed using the datetime of the first instance and its timezone.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub starts_at: Option<DateTimeTz>,
-
-    /// End time of the event.
-    ///
-    /// Omitted if `is_time_independent` is true
-    ///
-    /// For events of type `recurring` the datetime contains the time of the first instance.
-    /// The datetimes of subsequent recurrences are computed using the datetime of the first instance and its timezone.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub ends_at: Option<DateTimeTz>,
-
-    /// Recurrence pattern(s) for recurring events
-    ///
-    /// May contain RRULE, EXRULE, RDATE and EXDATE strings
-    ///
-    /// Requires `type` to be `recurring`
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub recurrence_pattern: Vec<String>,
-
-    /// Flag indicating whether the event is ad-hoc created.
-    pub is_adhoc: bool,
-
-    /// Type of event
-    ///
-    /// Time independent events or events without recurrence are `single` while recurring events are `recurring`
-    #[serde(rename = "type")]
-    pub type_: EventType,
-
-    /// The invite status of the current user for this event
-    pub invite_status: EventInviteStatus,
-
-    /// Is this event in the current user's favorite list?
-    pub is_favorite: bool,
-
-    /// Can the current user edit this resource
-    pub can_edit: bool,
-
-    /// Information about the shared folder for the event
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub shared_folder: Option<SharedFolder>,
-
-    /// The streaming targets of the room associated with the event
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub streaming_targets: Option<Vec<RoomStreamingTarget>>,
+trait EventResourceExt {
+    fn from_db(exception: EventException, created_by: PublicUserProfile, can_edit: bool) -> Self;
 }
 
-/// Event exception resource
-///
-/// Overrides event properties for a event recurrence. May only exist for events of type `recurring`.
-#[derive(Debug, Serialize)]
-pub struct EventExceptionResource {
-    /// Opaque ID of the exception
-    pub id: EventAndInstanceId,
-
-    /// ID of the event  the exception belongs to
-    pub recurring_event_id: EventId,
-
-    /// ID of the instance the exception overrides
-    pub instance_id: InstanceId,
-
-    /// Public user profile of the user which created the exception
-    pub created_by: PublicUserProfile,
-
-    /// Timestamp of the exceptions creation
-    pub created_at: DateTime<Utc>,
-
-    /// Public user profile of the user which last updated the exception
-    pub updated_by: PublicUserProfile,
-
-    /// Timestamp of the exceptions last update
-    pub updated_at: DateTime<Utc>,
-
-    /// Override the title of the instance
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub title: Option<String>,
-
-    /// Override the description of the instance
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub description: Option<String>,
-
-    /// Override the `is_all_day` property of the instance
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub is_all_day: Option<bool>,
-
-    /// Override the `starts_at` time of the instance
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub starts_at: Option<DateTimeTz>,
-
-    /// Override the `ends_at` time of the instance
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub ends_at: Option<DateTimeTz>,
-
-    /// The `starts_at` of the instance this exception modifies. Used to match the exception the instance
-    pub original_starts_at: DateTimeTz,
-
-    /// Must always be `exception`
-    #[serde(rename = "type")]
-    pub type_: EventType,
-
-    /// Override the status of the event instance
-    ///
-    /// This can be used to cancel a occurrence of an event
-    pub status: EventStatus,
-
-    /// Can the current user edit this resource
-    pub can_edit: bool,
-}
-
-impl EventExceptionResource {
-    pub fn from_db(
-        exception: EventException,
-        created_by: PublicUserProfile,
-        can_edit: bool,
-    ) -> Self {
+impl EventResourceExt for EventExceptionResource {
+    fn from_db(exception: EventException, created_by: PublicUserProfile, can_edit: bool) -> Self {
         Self {
-            id: EventAndInstanceId(exception.event_id, InstanceId(exception.exception_date)),
+            id: EventAndInstanceId(exception.event_id, exception.exception_date.into()),
             recurring_event_id: exception.event_id,
-            instance_id: InstanceId(exception.exception_date),
+            instance_id: exception.exception_date.into(),
             created_by: created_by.clone(),
-            created_at: exception.created_at,
+            created_at: exception.created_at.into(),
             updated_by: created_by,
-            updated_at: exception.created_at,
+            updated_at: exception.created_at.into(),
             title: exception.title,
             description: exception.description,
             is_all_day: exception.is_all_day,
@@ -375,37 +156,12 @@ impl EventExceptionResource {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
-#[serde(tag = "kind", rename_all = "lowercase")]
-pub enum EventInviteeProfile {
-    Registered(PublicInviteUserProfile),
-    Unregistered(UnregisteredUser),
-    Email(EmailOnlyUser),
+trait EventInviteeExt {
+    fn from_invite_with_user(invite: EventInvite, user: User, settings: &Settings) -> Self;
+    fn from_email_invite(invite: EventEmailInvite, settings: &Settings) -> Self;
 }
 
-#[derive(Debug, Clone, Serialize)]
-pub struct PublicInviteUserProfile {
-    #[serde(flatten)]
-    pub user_profile: PublicUserProfile,
-    pub role: InviteRole,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct EmailOnlyUser {
-    pub email: String,
-    pub avatar_url: String,
-}
-
-/// Invitee to an event
-///
-///  Contains user profile and invitee status
-#[derive(Debug, Clone, Serialize)]
-pub struct EventInvitee {
-    pub profile: EventInviteeProfile,
-    pub status: EventInviteStatus,
-}
-
-impl EventInvitee {
+impl EventInviteeExt for EventInvitee {
     fn from_invite_with_user(invite: EventInvite, user: User, settings: &Settings) -> EventInvitee {
         EventInvitee {
             profile: EventInviteeProfile::Registered(PublicInviteUserProfile {
@@ -428,64 +184,16 @@ impl EventInvitee {
     }
 }
 
-/// Type of event resource.
-///
-/// Is used as type discriminator in field `type`.
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum EventType {
-    Single,
-    Recurring,
-    Instance,
-    Exception,
+trait EventRoomInfoExt {
+    fn from_room(
+        settings: &Settings,
+        room: Room,
+        sip_config: Option<SipConfig>,
+        tariff: &Tariff,
+    ) -> Self;
 }
 
-/// Status of an event
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum EventStatus {
-    /// Default status, event is ok
-    Ok,
-
-    /// Event (or event instance) was cancelled
-    Cancelled,
-}
-
-/// All information about a room in which an event takes place
-#[derive(Debug, Clone, Serialize)]
-pub struct EventRoomInfo {
-    /// ID of the room
-    pub id: RoomId,
-
-    /// Password of the room
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub password: Option<String>,
-
-    /// Flag to check if the room has a waiting room enabled
-    pub waiting_room: bool,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub call_in: Option<CallInInfo>,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct CallInInfo {
-    /// SIP Call-In phone number which must be used to reach the room
-    pub tel: String,
-
-    /// SIP Call-In sip uri
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub uri: Option<String>,
-
-    /// SIP ID which must transmitted via DTMF (number field on the phone) to identify this room
-    pub id: String,
-
-    /// SIP password which must be transmitted via DTMF (number field on the phone) after entering the `sip_id`
-    /// to enter the room
-    pub password: String,
-}
-
-impl EventRoomInfo {
+impl EventRoomInfoExt for EventRoomInfo {
     /// Create a new [`EventRoomInfo`]
     ///
     /// The [`EventRoomInfo`] also contains a [`CallInInfo`] if the following conditions are true:
@@ -524,76 +232,6 @@ impl EventRoomInfo {
             call_in,
         }
     }
-}
-
-/// Body of the the `POST /events` endpoint
-#[derive(Debug, Deserialize, Validate)]
-pub struct PostEventsBody {
-    /// Title of the event
-    #[validate(length(max = 255))]
-    pub title: String,
-
-    /// Description of the event
-    #[validate(length(max = 4096))]
-    pub description: String,
-
-    /// Optional password for the room related to the event
-    #[validate(length(min = 1, max = 255))]
-    pub password: Option<String>,
-
-    /// Should the created event have a waiting room?
-    #[serde(default)]
-    pub waiting_room: bool,
-
-    /// Should the created event be time independent?
-    ///
-    /// If true, all following fields must be null
-    /// If false, requires `is_all_day`, `starts_at`, `ends_at`
-    pub is_time_independent: bool,
-
-    /// Should the event be all-day?
-    ///
-    /// If true, requires `starts_at.datetime` and `ends_at.datetime` to have a 00:00 time part
-    pub is_all_day: Option<bool>,
-
-    /// Start time of the event
-    ///
-    /// For recurring events these must contains the datetime of the first instance
-    pub starts_at: Option<DateTimeTz>,
-
-    /// End time of the event
-    ///
-    /// For recurring events these must contains the datetime of the first instance
-    pub ends_at: Option<DateTimeTz>,
-
-    /// List of recurrence patterns
-    ///
-    /// If the list if non-empty the created event will be of type `recurring`
-    ///
-    /// For more infos see the documentation of [`EventResource`]
-    #[validate(custom = "validate_recurrence_pattern")]
-    #[serde(default)]
-    pub recurrence_pattern: Vec<String>,
-
-    /// Is this an ad-hoc chatroom?
-    #[serde(default)]
-    pub is_adhoc: bool,
-
-    /// The streaming targets of the room associated with the event
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub streaming_targets: Option<Vec<StreamingTarget>>,
-}
-
-fn validate_recurrence_pattern(pattern: &[String]) -> Result<(), ValidationError> {
-    if pattern.len() > 4 {
-        return Err(ValidationError::new("too_many_recurrence_patterns"));
-    }
-
-    if pattern.iter().any(|p| p.len() > 1024) {
-        return Err(ValidationError::new("recurrence_pattern_too_large"));
-    }
-
-    Ok(())
 }
 
 /// API Endpoint `POST /events`
@@ -801,9 +439,9 @@ async fn create_time_independent_event(
         invitees_truncated: false,
         invitees: vec![],
         created_by: current_user.to_public_user_profile(settings),
-        created_at: event.created_at,
+        created_at: event.created_at.into(),
         updated_by: current_user.to_public_user_profile(settings),
-        updated_at: event.updated_at,
+        updated_at: event.updated_at.into(),
         is_time_independent: true,
         is_all_day: None,
         starts_at: None,
@@ -904,9 +542,9 @@ async fn create_time_dependent_event(
         invitees_truncated: false,
         invitees: vec![],
         created_by: current_user.to_public_user_profile(settings),
-        created_at: event.created_at,
+        created_at: event.created_at.into(),
         updated_by: current_user.to_public_user_profile(settings),
-        updated_at: event.updated_at,
+        updated_at: event.updated_at.into(),
         is_time_independent: event.is_time_independent,
         is_all_day: event.is_all_day,
         starts_at: Some(starts_at),
@@ -924,77 +562,6 @@ async fn create_time_dependent_event(
         shared_folder: None,
         streaming_targets,
     })
-}
-
-/// Path query parameters of the `GET /events` endpoint
-///
-/// Allows for customization in the search for events
-#[derive(Debug, Deserialize)]
-pub struct GetEventsQuery {
-    /// Optional minimum time in which the event happens
-    time_min: Option<DateTime<Utc>>,
-
-    /// Optional maximum time in which the event happens
-    time_max: Option<DateTime<Utc>>,
-
-    /// Maximum number of invitees to return inside the event resource
-    ///
-    /// Default: 0
-    #[serde(default)]
-    invitees_max: u32,
-
-    /// Return only favorite events
-    #[serde(default)]
-    favorites: bool,
-
-    /// Filter the events by invite status
-    #[serde(default)]
-    #[serde(deserialize_with = "comma_separated")]
-    invite_status: Vec<EventInviteStatus>,
-
-    /// How many events to return per page
-    per_page: Option<i64>,
-
-    /// Cursor token to get the next page of events
-    ///
-    /// Returned by the endpoint if the maximum number of events per page has been hit
-    after: Option<Cursor<GetEventsCursorData>>,
-
-    /// Only get events that are either marked as adhoc or non-adhoc
-    ///
-    /// If present, all adhoc events will be returned when `true`, all non-adhoc
-    /// events will be returned when `false`. If not present, all events will
-    /// be returned regardless of their `adhoc` flag value.
-    adhoc: Option<bool>,
-
-    /// Only get events that are either time-independent or time-dependent
-    ///
-    /// If present, all time-independent events will be returned when `true`,
-    /// all time-dependent events will be returned when `false`. If absent,
-    /// all events will be returned regardless of their time dependency.
-    time_independent: Option<bool>,
-}
-
-/// Data stored inside the `GET /events` query cursor
-#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
-struct GetEventsCursorData {
-    /// Last event in the list
-    event_id: EventId,
-
-    /// last event created at
-    event_created_at: DateTime<Utc>,
-
-    /// Last event starts_at
-    event_starts_at: Option<DateTime<Utc>>,
-}
-
-/// Return type of the `GET /events` endpoint
-#[derive(Serialize)]
-#[serde(untagged)]
-#[allow(clippy::large_enum_variant)]
-pub enum EventOrException {
-    Event(EventResource),
-    Exception(EventExceptionResource),
 }
 
 struct GetPaginatedEventsData {
@@ -1034,8 +601,8 @@ pub async fn get_events(
         .after
         .map(|cursor| db_storage::events::GetEventsCursor {
             from_id: cursor.event_id,
-            from_created_at: cursor.event_created_at,
-            from_starts_at: cursor.event_starts_at,
+            from_created_at: cursor.event_created_at.into(),
+            from_starts_at: cursor.event_starts_at.map(DateTime::from),
         });
 
     let mut conn = db.get_conn().await?;
@@ -1045,8 +612,8 @@ pub async fn get_events(
         &current_user,
         query.favorites,
         query.invite_status,
-        query.time_min,
-        query.time_max,
+        query.time_min.map(DateTime::from),
+        query.time_max.map(DateTime::from),
         query.adhoc,
         query.time_independent,
         get_events_cursor,
@@ -1098,8 +665,8 @@ pub async fn get_events(
     {
         ret_cursor_data = Some(GetEventsCursorData {
             event_id: event.id,
-            event_created_at: event.created_at,
-            event_starts_at: event.starts_at,
+            event_created_at: event.created_at.into(),
+            event_starts_at: event.starts_at.map(Timestamp::from),
         });
 
         let created_by = users.get(event.created_by);
@@ -1139,9 +706,9 @@ pub async fn get_events(
         event_resources.push(EventOrException::Event(EventResource {
             id: event.id,
             created_by,
-            created_at: event.created_at,
+            created_at: event.created_at.into(),
             updated_by,
-            updated_at: event.updated_at,
+            updated_at: event.updated_at.into(),
             title: event.title,
             description: event.description,
             room: EventRoomInfo::from_room(&settings, room, sip_config, &tariff),
@@ -1205,16 +772,6 @@ pub async fn get_events(
         .with_cursor_pagination(events_data.before, events_data.after))
 }
 
-/// Path query parameters for the `GET /events/{event_id}` endpoint
-#[derive(Debug, Deserialize)]
-pub struct GetEventQuery {
-    /// Maximum number of invitees to return inside the event resource
-    ///
-    /// Default: 0
-    #[serde(default)]
-    invitees_max: i64,
-}
-
 /// API Endpoint `GET /events/{event_id}` endpoint
 ///
 /// Returns the event resource for the given id
@@ -1262,9 +819,9 @@ pub async fn get_event(
         invitees_truncated,
         invitees,
         created_by: users.get(event.created_by),
-        created_at: event.created_at,
+        created_at: event.created_at.into(),
         updated_by: users.get(event.updated_by),
-        updated_at: event.updated_at,
+        updated_at: event.updated_at.into(),
         is_time_independent: event.is_time_independent,
         is_all_day: event.is_all_day,
         starts_at,
@@ -1297,121 +854,6 @@ pub async fn get_event(
     };
 
     Ok(ApiResponse::new(event_resource))
-}
-
-/// Path query parameters for the `PATCH /events/{event_id}` endpoint
-#[derive(Debug, Deserialize)]
-pub struct PatchEventQuery {
-    /// Maximum number of invitees to include inside the event
-    #[serde(default)]
-    invitees_max: i64,
-
-    /// Flag to disable email notification
-    #[serde(default)]
-    suppress_email_notification: bool,
-}
-
-/// Body for the `PATCH /events/{event_id}` endpoint
-#[derive(Deserialize, Validate)]
-pub struct PatchEventBody {
-    /// Patch the title of th event
-    #[validate(length(max = 255))]
-    title: Option<String>,
-
-    /// Patch the description of the event
-    #[validate(length(max = 4096))]
-    description: Option<String>,
-
-    /// Patch the password of the event's room
-    #[validate(length(min = 1, max = 255))]
-    #[serde(default, deserialize_with = "deserialize_some")]
-    password: Option<Option<String>>,
-
-    /// Patch the presence of a waiting room
-    waiting_room: Option<bool>,
-
-    /// Patch the adhoc flag.
-    is_adhoc: Option<bool>,
-
-    /// Patch the time independence of the event
-    ///
-    /// If it changes the independence from true false this body has to have
-    /// `is_all_day`, `starts_at` and `ends_at` set
-    ///
-    /// See documentation of [`PostEventsBody`] for more info
-    is_time_independent: Option<bool>,
-
-    /// Patch if the event is an all-day event
-    ///
-    /// If it changes the value from false to true this request must ensure
-    /// that the `starts_at.datetime` and `ends_at.datetime` have a 00:00 time part.
-    ///
-    /// See documentation of [`PostEventsBody`] for more info
-    is_all_day: Option<bool>,
-
-    starts_at: Option<DateTimeTz>,
-    ends_at: Option<DateTimeTz>,
-
-    /// Patch the events recurrence patterns
-    ///
-    /// If this list is non empty it override the events current one
-    #[validate(custom = "validate_recurrence_pattern")]
-    #[serde(default)]
-    recurrence_pattern: Vec<String>,
-}
-
-impl PatchEventBody {
-    fn is_empty(&self) -> bool {
-        let PatchEventBody {
-            title,
-            description,
-            password,
-            waiting_room,
-            is_adhoc,
-            is_time_independent,
-            is_all_day,
-            starts_at,
-            ends_at,
-            recurrence_pattern,
-        } = self;
-
-        title.is_none()
-            && description.is_none()
-            && password.is_none()
-            && waiting_room.is_none()
-            && is_adhoc.is_none()
-            && is_time_independent.is_none()
-            && is_all_day.is_none()
-            && starts_at.is_none()
-            && ends_at.is_none()
-            && recurrence_pattern.is_empty()
-    }
-
-    // special case to only patch the events room
-    fn only_modifies_room(&self) -> bool {
-        let PatchEventBody {
-            title,
-            description,
-            password,
-            waiting_room,
-            is_time_independent,
-            is_all_day,
-            starts_at,
-            ends_at,
-            recurrence_pattern,
-            is_adhoc,
-        } = self;
-
-        title.is_none()
-            && description.is_none()
-            && is_time_independent.is_none()
-            && is_all_day.is_none()
-            && starts_at.is_none()
-            && ends_at.is_none()
-            && recurrence_pattern.is_empty()
-            && is_adhoc.is_none()
-            && (password.is_some() || waiting_room.is_some())
-    }
 }
 
 struct UpdateNotificationValues {
@@ -1552,9 +994,9 @@ pub async fn patch_event(
     let event_resource = EventResource {
         id: event.id,
         created_by: created_by.to_public_user_profile(&settings),
-        created_at: event.created_at,
+        created_at: event.created_at.into(),
         updated_by: current_user.to_public_user_profile(&settings),
-        updated_at: event.updated_at,
+        updated_at: event.updated_at.into(),
         title: event.title,
         description: event.description,
         room: EventRoomInfo::from_room(&settings, room, sip_config, &tariff),
@@ -1825,14 +1267,6 @@ struct CancellationNotificationValues {
     pub room: Room,
     pub sip_config: Option<SipConfig>,
     pub users_to_notify: Vec<MailRecipient>,
-}
-
-/// Query parameters for the `DELETE /events/{event_id}` endpoint
-#[derive(Debug, Deserialize)]
-pub struct DeleteEventQuery {
-    /// Flag to disable email notification
-    #[serde(default)]
-    suppress_email_notification: bool,
 }
 
 /// API Endpoint `DELETE /events/{event_id}`
@@ -2407,7 +1841,7 @@ mod tests {
     use super::*;
     use std::time::SystemTime;
     use test_util::assert_eq_json;
-    use types::core::{RoomId, TimeZone, UserId};
+    use types::core::{InviteRole, RoomId, TimeZone, UserId};
 
     #[test]
     fn rrulset_parse_works_as_used_in_this_crate() {
@@ -2426,7 +1860,7 @@ mod tests {
 
     #[test]
     fn event_resource_serialize() {
-        let unix_epoch: DateTime<Utc> = SystemTime::UNIX_EPOCH.into();
+        let unix_epoch: Timestamp = SystemTime::UNIX_EPOCH.into();
 
         let user_profile = PublicUserProfile {
             id: UserId::nil(),
@@ -2463,11 +1897,11 @@ mod tests {
             is_time_independent: false,
             is_all_day: Some(false),
             starts_at: Some(DateTimeTz {
-                datetime: unix_epoch,
+                datetime: *unix_epoch,
                 timezone: TimeZone::from(Tz::Europe__Berlin),
             }),
             ends_at: Some(DateTimeTz {
-                datetime: unix_epoch,
+                datetime: *unix_epoch,
                 timezone: TimeZone::from(Tz::Europe__Berlin),
             }),
             recurrence_pattern: vec![],
@@ -2548,7 +1982,7 @@ mod tests {
 
     #[test]
     fn event_resource_time_independent_serialize() {
-        let unix_epoch: DateTime<Utc> = SystemTime::UNIX_EPOCH.into();
+        let unix_epoch: Timestamp = SystemTime::UNIX_EPOCH.into();
 
         let user_profile = PublicUserProfile {
             id: UserId::nil(),
@@ -2665,8 +2099,8 @@ mod tests {
 
     #[test]
     fn event_exception_serialize() {
-        let unix_epoch: DateTime<Utc> = SystemTime::UNIX_EPOCH.into();
-        let instance_id = InstanceId(unix_epoch);
+        let unix_epoch: Timestamp = SystemTime::UNIX_EPOCH.into();
+        let instance_id = unix_epoch.into();
         let event_id = EventId::nil();
         let user_profile = PublicUserProfile {
             id: UserId::nil(),
@@ -2690,15 +2124,15 @@ mod tests {
             description: Some("Instance description".into()),
             is_all_day: Some(false),
             starts_at: Some(DateTimeTz {
-                datetime: unix_epoch,
+                datetime: *unix_epoch,
                 timezone: TimeZone::from(Tz::Europe__Berlin),
             }),
             ends_at: Some(DateTimeTz {
-                datetime: unix_epoch,
+                datetime: *unix_epoch,
                 timezone: TimeZone::from(Tz::Europe__Berlin),
             }),
             original_starts_at: DateTimeTz {
-                datetime: unix_epoch,
+                datetime: *unix_epoch,
                 timezone: TimeZone::from(Tz::Europe__Berlin),
             },
             type_: EventType::Exception,

@@ -7,7 +7,7 @@ use std::sync::Arc;
 use super::{ApiResponse, DefaultApiResult};
 use crate::api::v1::events::{
     enrich_from_keycloak, enrich_invitees_from_keycloak, get_invited_mail_recipients_for_event,
-    get_tenant_filter, EventInvitee, EventPoliciesBuilderExt,
+    get_tenant_filter, EventInvitee, EventInviteeExt, EventPoliciesBuilderExt,
 };
 use crate::api::v1::response::{ApiError, Created, NoContent};
 use crate::api::v1::rooms::RoomsPoliciesBuilderExt;
@@ -24,9 +24,7 @@ use controller_settings::Settings;
 use database::Db;
 use db_storage::events::email_invites::{EventEmailInvite, NewEventEmailInvite};
 use db_storage::events::shared_folders::EventSharedFolder;
-use db_storage::events::{
-    Event, EventFavorite, EventInvite, EventInviteStatus, NewEventInvite, UpdateEventInvite,
-};
+use db_storage::events::{Event, EventFavorite, EventInvite, NewEventInvite, UpdateEventInvite};
 use db_storage::invites::NewInvite;
 use db_storage::rooms::Room;
 use db_storage::sip_configs::SipConfig;
@@ -38,11 +36,18 @@ use email_address::EmailAddress;
 use keycloak_admin::KeycloakAdminClient;
 use kustos::policies_builder::PoliciesBuilder;
 use kustos::Authz;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use types::{
-    api::v1::pagination::PagePaginationQuery,
+    api::v1::{
+        events::{
+            DeleteEmailInviteBody, DeleteEventInvitePath, PatchInviteBody, PostEventInviteBody,
+            PostEventInviteQuery, UserInvite,
+        },
+        pagination::PagePaginationQuery,
+        users::GetEventInvitesPendingResponse,
+    },
     common::shared_folder::SharedFolder,
-    core::{EventId, InviteRole, RoomId, UserId},
+    core::{EventId, EventInviteStatus, InviteRole, RoomId, UserId},
     strings::ToLowerCase,
 };
 
@@ -101,29 +106,6 @@ pub async fn get_invites_for_event(
         page,
         event_invites_total + event_email_invites_total,
     ))
-}
-
-/// Query parameters for the `PATCH /events/{event_id}/invites` endpoint
-#[derive(Deserialize, Debug, PartialEq, Eq)]
-pub struct PostEventInviteQuery {
-    /// Flag to suppress email notification
-    #[serde(default)]
-    suppress_email_notification: bool,
-}
-
-/// Request body for the `POST /events/{event_id}/invites` endpoint
-#[derive(Deserialize)]
-#[serde(untagged)]
-pub enum PostEventInviteBody {
-    User(UserInvite),
-    Email { email: EmailAddress },
-}
-
-#[derive(Deserialize)]
-pub struct UserInvite {
-    invitee: UserId,
-    #[serde(default)]
-    role: InviteRole,
 }
 
 /// API Endpoint `POST /events/{event_id}/invites`
@@ -505,12 +487,6 @@ async fn create_invite_to_non_matching_email(
     }
 }
 
-/// Request body for the `PATCH /events/{event_id}/invites/{user_id}` endpoint
-#[derive(Deserialize)]
-pub struct PatchInviteBody {
-    pub role: InviteRole,
-}
-
 /// API Endpoint `PATCH /events/{event_id}/invites/{user_id}`
 ///
 /// Update the role for an invited user
@@ -539,13 +515,6 @@ pub async fn update_event_invite(
     changeset.apply(&mut conn, user_id, event_id).await?;
 
     Ok(NoContent)
-}
-
-/// Path parameters for the `DELETE /events/{event_id}/invites/{user_id}` endpoint
-#[derive(Deserialize)]
-pub struct DeleteEventInvitePath {
-    pub event_id: EventId,
-    pub user_id: UserId,
 }
 
 struct UninviteNotificationValues {
@@ -658,11 +627,6 @@ pub async fn delete_invite_to_event(
     remove_invitee_permissions(&authz, event_id, room_id, invite.invitee).await?;
 
     Ok(NoContent)
-}
-
-#[derive(Deserialize)]
-pub struct DeleteEmailInviteBody {
-    email: EmailAddress,
 }
 
 /// API Endpoint `DELETE /events/{event_id}/invites/email`
@@ -841,12 +805,6 @@ async fn notify_invitees_about_uninvite(
             log::error!("Failed to send event uninvite with MailService, {}", e);
         }
     }
-}
-
-/// Response body for the `GET /event_invites/pending` endpoint
-#[derive(Serialize)]
-pub struct GetEventInvitesPendingResponse {
-    total_pending_invites: u32,
 }
 
 /// API Endpoint `GET /users/me/pending_invites`

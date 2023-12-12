@@ -12,7 +12,7 @@ use crate::imports::*;
 /// Public user details.
 ///
 /// Contains general "public" information about a user. Is accessible to all other users.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct PublicUserProfile {
     /// The user id
@@ -147,7 +147,7 @@ pub enum GetFindResponseItem {
 }
 
 /// Representation of a unregistered user
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct UnregisteredUser {
     /// Email of the unregistered user
@@ -161,4 +161,12 @@ pub struct UnregisteredUser {
 
     /// Avatar URL for the unregistered user
     pub avatar_url: String,
+}
+
+/// Response body for the `GET /users/me/pending_invites` endpoint
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct GetEventInvitesPendingResponse {
+    /// Number of pending invites
+    pub total_pending_invites: u32,
 }

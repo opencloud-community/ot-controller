@@ -2,7 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::{ops::Deref, time::SystemTime};
+use std::{
+    ops::{Add, Deref},
+    time::SystemTime,
+};
 
 use chrono::{DateTime, Utc};
 
@@ -44,6 +47,14 @@ impl From<SystemTime> for Timestamp {
 impl From<Timestamp> for DateTime<Utc> {
     fn from(value: Timestamp) -> Self {
         value.0
+    }
+}
+
+impl Add<chrono::Duration> for Timestamp {
+    type Output = Timestamp;
+
+    fn add(self, rhs: chrono::Duration) -> Self::Output {
+        Timestamp(self.0 + rhs)
     }
 }
 
