@@ -48,8 +48,8 @@ use types::core::Timestamp;
 use types::{
     api::v1::{
         events::{
-            CallInInfo, EmailOnlyUser, EventInviteeProfile, EventRoomInfo, EventStatus, EventType,
-            GetEventQuery, GetEventsCursorData, GetEventsQuery,
+            CallInInfo, EmailOnlyUser, EventInviteeProfile, EventResource, EventRoomInfo,
+            EventStatus, EventType, GetEventQuery, GetEventsCursorData, GetEventsQuery,
         },
         pagination::default_pagination_per_page,
         users::{PublicUserProfile, UnregisteredUser},
@@ -122,110 +122,6 @@ impl DateTimeTzFromDb for DateTimeTz {
     fn to_datetime_tz(self) -> DateTime<Tz> {
         self.datetime.with_timezone(self.timezone.as_ref())
     }
-}
-
-/// Event Resource representation
-///
-/// Returned from `GET /events/` and `GET /events/{event_id}`
-#[derive(Debug, Serialize)]
-pub struct EventResource {
-    /// ID of the event
-    pub id: EventId,
-
-    /// Public user profile of the user which created the event
-    pub created_by: PublicUserProfile,
-
-    /// Timestamp of the event creation
-    pub created_at: DateTime<Utc>,
-
-    /// Public user profile of the user which last updated the event
-    pub updated_by: PublicUserProfile,
-
-    /// Timestamp of the last update
-    pub updated_at: DateTime<Utc>,
-
-    /// Title of the event
-    ///
-    /// For display purposes
-    pub title: String,
-
-    /// Description of the event
-    ///
-    /// For display purposes
-    pub description: String,
-
-    /// All information about the room the event takes place in
-    pub room: EventRoomInfo,
-
-    /// Flag which indicates if `invitees` contains all invites as far as known to the application
-    /// May also be true if there are no invitees but no invitees were requested
-    pub invitees_truncated: bool,
-
-    /// List of event invitees and their invite status. Might not be complete, see `invite_truncated`
-    pub invitees: Vec<EventInvitee>,
-
-    /// Is the event time independent?
-    ///
-    /// Time independent events are not bound to any time but instead are constantly available to join
-    pub is_time_independent: bool,
-
-    /// Is the event an all day event
-    ///
-    /// All-day events have no start/end time, they last the entire day(s)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub is_all_day: Option<bool>,
-
-    /// Start time of the event.
-    ///
-    /// Omitted if `is_time_independent` is true
-    ///
-    /// For events of type `recurring` the datetime contains the time of the first instance.
-    /// The datetimes of subsequent recurrences are computed using the datetime of the first instance and its timezone.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub starts_at: Option<DateTimeTz>,
-
-    /// End time of the event.
-    ///
-    /// Omitted if `is_time_independent` is true
-    ///
-    /// For events of type `recurring` the datetime contains the time of the first instance.
-    /// The datetimes of subsequent recurrences are computed using the datetime of the first instance and its timezone.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub ends_at: Option<DateTimeTz>,
-
-    /// Recurrence pattern(s) for recurring events
-    ///
-    /// May contain RRULE, EXRULE, RDATE and EXDATE strings
-    ///
-    /// Requires `type` to be `recurring`
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub recurrence_pattern: Vec<String>,
-
-    /// Flag indicating whether the event is ad-hoc created.
-    pub is_adhoc: bool,
-
-    /// Type of event
-    ///
-    /// Time independent events or events without recurrence are `single` while recurring events are `recurring`
-    #[serde(rename = "type")]
-    pub type_: EventType,
-
-    /// The invite status of the current user for this event
-    pub invite_status: EventInviteStatus,
-
-    /// Is this event in the current user's favorite list?
-    pub is_favorite: bool,
-
-    /// Can the current user edit this resource
-    pub can_edit: bool,
-
-    /// Information about the shared folder for the event
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub shared_folder: Option<SharedFolder>,
-
-    /// The streaming targets of the room associated with the event
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub streaming_targets: Option<Vec<RoomStreamingTarget>>,
 }
 
 trait EventResourceExt {
@@ -544,9 +440,9 @@ async fn create_time_independent_event(
         invitees_truncated: false,
         invitees: vec![],
         created_by: current_user.to_public_user_profile(settings),
-        created_at: event.created_at,
+        created_at: event.created_at.into(),
         updated_by: current_user.to_public_user_profile(settings),
-        updated_at: event.updated_at,
+        updated_at: event.updated_at.into(),
         is_time_independent: true,
         is_all_day: None,
         starts_at: None,
@@ -647,9 +543,9 @@ async fn create_time_dependent_event(
         invitees_truncated: false,
         invitees: vec![],
         created_by: current_user.to_public_user_profile(settings),
-        created_at: event.created_at,
+        created_at: event.created_at.into(),
         updated_by: current_user.to_public_user_profile(settings),
-        updated_at: event.updated_at,
+        updated_at: event.updated_at.into(),
         is_time_independent: event.is_time_independent,
         is_all_day: event.is_all_day,
         starts_at: Some(starts_at),
@@ -820,9 +716,9 @@ pub async fn get_events(
         event_resources.push(EventOrException::Event(EventResource {
             id: event.id,
             created_by,
-            created_at: event.created_at,
+            created_at: event.created_at.into(),
             updated_by,
-            updated_at: event.updated_at,
+            updated_at: event.updated_at.into(),
             title: event.title,
             description: event.description,
             room: EventRoomInfo::from_room(&settings, room, sip_config, &tariff),
@@ -933,9 +829,9 @@ pub async fn get_event(
         invitees_truncated,
         invitees,
         created_by: users.get(event.created_by),
-        created_at: event.created_at,
+        created_at: event.created_at.into(),
         updated_by: users.get(event.updated_by),
-        updated_at: event.updated_at,
+        updated_at: event.updated_at.into(),
         is_time_independent: event.is_time_independent,
         is_all_day: event.is_all_day,
         starts_at,
@@ -1223,9 +1119,9 @@ pub async fn patch_event(
     let event_resource = EventResource {
         id: event.id,
         created_by: created_by.to_public_user_profile(&settings),
-        created_at: event.created_at,
+        created_at: event.created_at.into(),
         updated_by: current_user.to_public_user_profile(&settings),
-        updated_at: event.updated_at,
+        updated_at: event.updated_at.into(),
         title: event.title,
         description: event.description,
         room: EventRoomInfo::from_room(&settings, room, sip_config, &tariff),
@@ -2097,7 +1993,7 @@ mod tests {
 
     #[test]
     fn event_resource_serialize() {
-        let unix_epoch: DateTime<Utc> = SystemTime::UNIX_EPOCH.into();
+        let unix_epoch: Timestamp = SystemTime::UNIX_EPOCH.into();
 
         let user_profile = PublicUserProfile {
             id: UserId::nil(),
@@ -2134,11 +2030,11 @@ mod tests {
             is_time_independent: false,
             is_all_day: Some(false),
             starts_at: Some(DateTimeTz {
-                datetime: unix_epoch,
+                datetime: *unix_epoch,
                 timezone: TimeZone::from(Tz::Europe__Berlin),
             }),
             ends_at: Some(DateTimeTz {
-                datetime: unix_epoch,
+                datetime: *unix_epoch,
                 timezone: TimeZone::from(Tz::Europe__Berlin),
             }),
             recurrence_pattern: vec![],
@@ -2219,7 +2115,7 @@ mod tests {
 
     #[test]
     fn event_resource_time_independent_serialize() {
-        let unix_epoch: DateTime<Utc> = SystemTime::UNIX_EPOCH.into();
+        let unix_epoch: Timestamp = SystemTime::UNIX_EPOCH.into();
 
         let user_profile = PublicUserProfile {
             id: UserId::nil(),
@@ -2234,9 +2130,9 @@ mod tests {
         let event_resource = EventResource {
             id: EventId::nil(),
             created_by: user_profile.clone(),
-            created_at: unix_epoch,
+            created_at: unix_epoch.into(),
             updated_by: user_profile.clone(),
-            updated_at: unix_epoch,
+            updated_at: unix_epoch.into(),
             title: "Event title".into(),
             description: "Event description".into(),
             room: EventRoomInfo {

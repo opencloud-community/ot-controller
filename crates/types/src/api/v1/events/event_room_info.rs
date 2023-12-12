@@ -10,7 +10,7 @@ use super::CallInInfo;
 use crate::imports::*;
 
 /// All information about a room in which an event takes place
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct EventRoomInfo {
     /// ID of the room

@@ -11,7 +11,7 @@ use super::EventInviteeProfile;
 /// Invitee to an event
 ///
 ///  Contains user profile and invitee status
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct EventInvitee {
     /// User profile of the invitee
