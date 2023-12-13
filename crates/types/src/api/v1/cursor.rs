@@ -45,7 +45,7 @@ mod serde_impls {
 
     impl<'de, T> Deserialize<'de> for Cursor<T>
     where
-        T: de::DeserializeOwned,
+        T: DeserializeOwned,
     {
         fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
         where
@@ -59,7 +59,7 @@ mod serde_impls {
 
     impl<'de, T> de::Visitor<'de> for CursorVisitor<T>
     where
-        T: de::DeserializeOwned,
+        T: DeserializeOwned,
     {
         type Value = Cursor<T>;
 
