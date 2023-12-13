@@ -81,4 +81,4 @@ expiry = 48
 ## Developer information
 
 - [REST API documentation](https://opentalk.eu/docs/developer/controller/rest/#tag/shared_folder)
-- [Signaling API](../../developer/controller/signaling/community/shared_folder)
+- [Signaling API](https://opentalk.eu/docs/developer/controller/signaling/community/shared_folder)
