@@ -89,7 +89,7 @@ impl SyncedEnforcer {
                 tokio::select! {
                     _ = ticker.tick() => {
                         if let Err(e)= cloned_enforcer.write().await.load_policy().await {
-                            return Err(crate::Error::CasbinError(e))
+                            log::error!("Failed to load policy: {e:?}")
                         }
                     },
                     _ = shutdown.recv() => {
