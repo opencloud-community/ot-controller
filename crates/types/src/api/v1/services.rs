@@ -4,12 +4,12 @@
 
 //! This module contains types that are used for OpenTalk API V1 events endpoints.
 
-mod call_in_start_request_body;
-mod recorder_start_body;
+mod call_in;
+mod recording;
 mod service_start_response;
 mod upload_render_query;
 
-pub use call_in_start_request_body::CallInStartRequestBody;
-pub use recorder_start_body::RecorderStartBody;
+pub use call_in::StartRequestBody;
+pub use recording::StartBody;
 pub use service_start_response::ServiceStartResponse;
 pub use upload_render_query::UploadRenderQuery;

@@ -11,7 +11,7 @@ use actix_web::{delete, get, put, HttpResponse};
 use database::Db;
 use db_storage::rooms::Room;
 use db_storage::sip_configs::{NewSipConfig, SipConfig, UpdateSipConfig};
-use types::api::v1::sip_config_resource::{PutSipConfig, SipConfigResource};
+use types::api::v1::rooms::sip_config_resource::{PutSipConfig, SipConfigResource};
 use types::common::features;
 use types::core::RoomId;
 use validator::Validate;

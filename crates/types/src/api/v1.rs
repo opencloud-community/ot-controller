@@ -12,7 +12,6 @@ pub mod invites;
 pub mod pagination;
 pub mod rooms;
 pub mod services;
-pub mod sip_config_resource;
 pub mod streaming_targets;
 pub mod turn;
 pub mod users;

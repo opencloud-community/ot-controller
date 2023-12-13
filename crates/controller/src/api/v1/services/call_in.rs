@@ -13,7 +13,7 @@ use actix_web::web::{Data, Json};
 use database::Db;
 use db_storage::sip_configs::SipConfig;
 use signaling_core::{Participant, RedisConnection};
-use types::api::v1::services::{CallInStartRequestBody, ServiceStartResponse};
+use types::api::v1::services::{ServiceStartResponse, StartRequestBody};
 use types::common::features;
 use validator::Validate;
 
@@ -28,7 +28,7 @@ pub async fn start(
     settings: SharedSettingsActix,
     db: Data<Db>,
     redis_ctx: Data<RedisConnection>,
-    request: Json<CallInStartRequestBody>,
+    request: Json<StartRequestBody>,
 ) -> Result<Json<ServiceStartResponse>, ApiError> {
     let settings = settings.load();
     let mut redis_conn = (**redis_ctx).clone();

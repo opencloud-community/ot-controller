@@ -17,7 +17,7 @@ use futures::TryStreamExt;
 use signaling_core::assets::save_asset;
 use signaling_core::{ObjectStorage, Participant, RedisConnection};
 use types::api::v1::services::UploadRenderQuery;
-use types::api::v1::services::{RecorderStartBody, ServiceStartResponse};
+use types::api::v1::services::{ServiceStartResponse, StartBody};
 
 // Note to devs:
 // Please update `docs/admin/keycloak.md` service login documentation as well if
@@ -29,7 +29,7 @@ pub async fn start(
     settings: SharedSettingsActix,
     db: Data<Db>,
     redis_ctx: Data<RedisConnection>,
-    body: Json<RecorderStartBody>,
+    body: Json<StartBody>,
 ) -> Result<Json<ServiceStartResponse>, ApiError> {
     let settings = settings.load_full();
     if settings.rabbit_mq.recording_task_queue.is_none() {
