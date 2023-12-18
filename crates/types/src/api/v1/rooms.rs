@@ -17,6 +17,7 @@ use crate::imports::*;
 
 use super::users::PublicUserProfile;
 
+pub mod sip_config_resource;
 pub mod streaming_targets;
 
 /// A Room

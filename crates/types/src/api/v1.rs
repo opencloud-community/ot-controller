@@ -11,6 +11,7 @@ pub mod events;
 pub mod invites;
 pub mod pagination;
 pub mod rooms;
+pub mod services;
 pub mod streaming_targets;
 pub mod turn;
 pub mod users;

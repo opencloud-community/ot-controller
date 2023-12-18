@@ -4,10 +4,9 @@
 
 use anyhow::{Context, Result};
 use redis::AsyncCommands;
-use redis_args::{FromRedisValue, ToRedisArgs};
-use serde::{Deserialize, Serialize};
+use redis_args::ToRedisArgs;
 use signaling_core::{RedisConnection, SignalingRoomId};
-use types::core::ParticipantId;
+use types::{core::ParticipantId, signaling::timer::ready_status::ReadyStatus};
 
 /// A key to track the participants ready status
 #[derive(ToRedisArgs)]
@@ -17,13 +16,6 @@ use types::core::ParticipantId;
 struct ReadyStatusKey {
     room_id: SignalingRoomId,
     participant_id: ParticipantId,
-}
-
-#[derive(Default, Debug, PartialEq, Eq, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
-#[to_redis_args(serde)]
-#[from_redis_value(serde)]
-pub struct ReadyStatus {
-    pub ready_status: bool,
 }
 
 /// Set the ready status of a participant

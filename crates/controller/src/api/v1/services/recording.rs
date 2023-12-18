@@ -14,34 +14,23 @@ use actix_web::web::{Data, Json};
 use database::Db;
 use db_storage::rooms::Room;
 use futures::TryStreamExt;
-use serde::{Deserialize, Serialize};
 use signaling_core::assets::save_asset;
 use signaling_core::{ObjectStorage, Participant, RedisConnection};
-use types::core::{ResumptionToken, RoomId, TicketToken};
+use types::api::v1::services::UploadRenderQuery;
+use types::api::v1::services::{ServiceStartResponse, StartBody};
 
 // Note to devs:
 // Please update `docs/admin/keycloak.md` service login documentation as well if
 // you change something here
 const REQUIRED_RECORDING_ROLE: &str = "opentalk-recorder";
 
-#[derive(Debug, Deserialize)]
-pub struct RecorderStartBody {
-    room_id: RoomId,
-}
-
-#[derive(Serialize)]
-pub struct RecordingStartResponse {
-    ticket: TicketToken,
-    resumption: ResumptionToken,
-}
-
 #[post("/start")]
 pub async fn start(
     settings: SharedSettingsActix,
     db: Data<Db>,
     redis_ctx: Data<RedisConnection>,
-    body: Json<RecorderStartBody>,
-) -> Result<Json<RecordingStartResponse>, ApiError> {
+    body: Json<StartBody>,
+) -> Result<Json<ServiceStartResponse>, ApiError> {
     let settings = settings.load_full();
     if settings.rabbit_mq.recording_task_queue.is_none() {
         return Err(ApiError::not_found());
@@ -61,13 +50,7 @@ pub async fn start(
     )
     .await?;
 
-    Ok(Json(RecordingStartResponse { ticket, resumption }))
-}
-
-#[derive(Deserialize)]
-pub struct UploadRenderQuery {
-    room_id: RoomId,
-    filename: String,
+    Ok(Json(ServiceStartResponse { ticket, resumption }))
 }
 
 #[post("/upload_render")]

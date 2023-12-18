@@ -12,10 +12,9 @@ use actix_web::post;
 use actix_web::web::{Data, Json};
 use database::Db;
 use db_storage::sip_configs::SipConfig;
-use serde::{Deserialize, Serialize};
 use signaling_core::{Participant, RedisConnection};
+use types::api::v1::services::{ServiceStartResponse, StartRequestBody};
 use types::common::features;
-use types::core::{CallInId, CallInPassword, ResumptionToken, TicketToken};
 use validator::Validate;
 
 // Note to devs:
@@ -23,26 +22,14 @@ use validator::Validate;
 // you change something here
 pub const REQUIRED_CALL_IN_ROLE: &str = "opentalk-call-in";
 
-#[derive(Deserialize)]
-pub struct CallInStartRequestBody {
-    id: CallInId,
-    pin: CallInPassword,
-}
-
-#[derive(Serialize)]
-pub struct CallInStartResponse {
-    ticket: TicketToken,
-    resumption: ResumptionToken,
-}
-
 /// API Endpoint *POST services/call_in/start* for the call-in service
 #[post("/start")]
 pub async fn start(
     settings: SharedSettingsActix,
     db: Data<Db>,
     redis_ctx: Data<RedisConnection>,
-    request: Json<CallInStartRequestBody>,
-) -> Result<Json<CallInStartResponse>, ApiError> {
+    request: Json<StartRequestBody>,
+) -> Result<Json<ServiceStartResponse>, ApiError> {
     let settings = settings.load();
     let mut redis_conn = (**redis_ctx).clone();
     let request = request.into_inner();
@@ -68,7 +55,7 @@ pub async fn start(
         start_or_continue_signaling_session(&mut redis_conn, Participant::Sip, room.id, None, None)
             .await?;
 
-    Ok(Json(CallInStartResponse { ticket, resumption }))
+    Ok(Json(ServiceStartResponse { ticket, resumption }))
 }
 
 fn invalid_credentials_error() -> ApiError {
