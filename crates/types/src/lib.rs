@@ -110,7 +110,7 @@ mod imports {
 
     #[cfg(feature = "serde")]
     pub use {
-        serde::{de, Deserialize, Deserializer, Serialize, Serializer},
+        serde::{de, de::DeserializeOwned, Deserialize, Deserializer, Serialize, Serializer},
         validator::{Validate, ValidationError, ValidationErrors},
     };
 

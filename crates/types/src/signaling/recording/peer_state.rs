@@ -11,7 +11,7 @@ use crate::imports::*;
 ///
 /// This struct is sent to the participant in the `join_success` message
 /// which will contain this information for each participant in the meeting.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct RecordingPeerState {
     /// Flag showing whether the participant consents to recording
