@@ -4425,6 +4425,7 @@ dependencies = [
 name = "redis-args-impl"
 version = "0.0.0-dev"
 dependencies = [
+ "proc-macro-fields-helper",
  "proc-macro2",
  "quote",
  "redis",
