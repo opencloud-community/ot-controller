@@ -4203,6 +4203,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "proc-macro-fields-helper"
+version = "0.0.0-dev"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.38",
+]
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
