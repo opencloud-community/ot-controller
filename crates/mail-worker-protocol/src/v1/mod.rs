@@ -90,6 +90,7 @@ pub struct Event {
     pub call_in: Option<CallIn>,
     pub revision: i32,
     pub shared_folder: Option<SharedFolder>,
+    pub adhoc_retention_seconds: Option<u64>,
 }
 
 #[derive(Deserialize, Serialize, PartialEq, Eq, Debug)]
@@ -184,6 +185,7 @@ mod test {
                     },
                     read_write: None,
                 }),
+                adhoc_retention_seconds: Some(86400),
             },
             invitee: RegisteredUser {
                 email: "lastname@example.org".into(),
@@ -221,6 +223,7 @@ mod test {
                             "password": "DLgoYrFEoy"
                         },
                     },
+                    "adhoc_retention_seconds" : 86400,
                 },
                 "invitee": {
                     "email": "lastname@example.org",
@@ -275,6 +278,7 @@ mod test {
                     },
                     read_write: None,
                 }),
+                adhoc_retention_seconds: None,
             },
             invitee: RegisteredUser {
                 email: "lastname@example.org".into(),

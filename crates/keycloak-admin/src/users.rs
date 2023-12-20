@@ -40,6 +40,19 @@ pub struct User {
 }
 
 impl User {
+    pub fn get_keycloak_user_id(&self, user_attribute_name: Option<&str>) -> Option<&str> {
+        if let Some(user_attribute_name) = user_attribute_name {
+            if let Some(serde_json::Value::Array(user_id_vector)) =
+                self.attributes.get(user_attribute_name)
+            {
+                return user_id_vector.iter().find_map(|v| v.as_str());
+            }
+            return None;
+        }
+
+        Some(self.id.as_str())
+    }
+
     fn is_in_tenant(&self, tenant_id_user_attribute_name: &str, tenant_id: &str) -> bool {
         if let Some(serde_json::Value::Array(tenant_id_vector)) =
             &self.attributes.get(tenant_id_user_attribute_name)
@@ -112,10 +125,11 @@ impl KeycloakAdminClient {
         let url = self.url(["admin", "realms", &self.realm, "users"])?;
 
         // TODO: Fix this code once https://github.com/keycloak/keycloak/issues/16687 is resolved.
-        // Currently we let keycloak give us 100 users matching the search_str and then filter by the tenant_id.
+        // Currently we let keycloak give us MAX_NUM_KEYCLOAK_SEARCH_RESULTS users matching the search_str
+        // and then filter by the tenant_id.
         // Ideally we want keycloak to filter these out for us. In a larger user base with more tenants this will
-        // will be insufficient to provide a good auto-completion, since more than 100 users outside of the searched
-        // tenant might match.
+        // be insufficient to provide a good auto-completion, since more than MAX_NUM_KEYCLOAK_SEARCH_RESULTS
+        // users outside of the searched tenant might match.
         let query = SearchQuery {
             search: search_str,
             max: MAX_NUM_KEYCLOAK_SEARCH_RESULTS,

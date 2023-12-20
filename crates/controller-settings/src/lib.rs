@@ -178,6 +178,7 @@ pub struct Keycloak {
     pub realm: String,
     pub client_id: ClientId,
     pub client_secret: ClientSecret,
+    pub external_id_user_attribute_name: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

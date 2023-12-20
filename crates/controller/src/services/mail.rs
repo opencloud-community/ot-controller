@@ -64,6 +64,8 @@ fn to_event(
     settings: &Settings,
     shared_folder: Option<SharedFolder>,
 ) -> mail_worker_proto::v1::Event {
+    const ONE_DAY_IN_SECONDS: u64 = 86400;
+
     let start_time: Option<v1::Time> = event.starts_at.zip(event.starts_at_tz).map(Into::into);
 
     let end_time: Option<v1::Time> = event.ends_at_of_first_occurrence().map(Into::into);
@@ -85,6 +87,12 @@ fn to_event(
         }
     }
 
+    let adhoc_retention_seconds = if event.is_adhoc {
+        Some(ONE_DAY_IN_SECONDS)
+    } else {
+        None
+    };
+
     mail_worker_proto::v1::Event {
         id: *event.id.inner(),
         name: event.title,
@@ -99,6 +107,7 @@ fn to_event(
         call_in,
         revision: event.revision,
         shared_folder,
+        adhoc_retention_seconds,
     }
 }
 
