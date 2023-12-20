@@ -7,9 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.7.1-rc.2] - 2023-12-20
 
+### Added
+
+- mail-worker-protocol: added `adhoc_retention_seconds` field to `Events`([#591](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/591))
 - controller: added `external_id_user_attribute_name` setting used for searching Keycloak users ([#609](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/609))
 
-### Added
+### Fixed
+
+- kustos: Do not exit load policy task if it fails once ([!615](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/615))
+- chore: ignore RUSTSEC-2023-0071 ([!621](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/621))
+- chore: update zerocopy to 0.7.31 ([!622](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/622))
 
 ## [0.7.1-rc.1] - 2023-11-30
 
@@ -33,7 +40,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - controller: add endpoint to withdraw invites to participants that were invited via email ([#499](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/499))
 - controller: add `is_adhoc` flag in meeting event information ([#554](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/554))
 - jobs: add job for cleanup of expired invites ([#506](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/506))
-- mail-worker-protocol: added `adhoc_retention_seconds` field to `Events`([#591](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/591))
 
 ### Changed
 
