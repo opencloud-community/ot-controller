@@ -486,7 +486,7 @@ where
     fn room_write_access(self, room_id: RoomId) -> Self {
         self.add_resource(
             room_id.resource_id(),
-            [AccessMethod::Put, AccessMethod::Delete],
+            [AccessMethod::Patch, AccessMethod::Delete],
         )
         .add_resource(
             room_id.resource_id().with_suffix("/invites"),
