@@ -31,6 +31,7 @@ COPY ./crates/lapin-pool/Cargo.toml ./crates/lapin-pool/Cargo.toml
 COPY ./crates/log/Cargo.toml ./crates/log/Cargo.toml
 COPY ./crates/mail-worker-protocol/Cargo.toml ./crates/mail-worker-protocol/Cargo.toml
 COPY ./crates/nextcloud-client/Cargo.toml ./crates/nextcloud-client/Cargo.toml
+COPY ./crates/proc-macro-fields-helper/Cargo.toml ./crates/proc-macro-fields-helper/Cargo.toml
 COPY ./crates/timer/Cargo.toml ./crates/timer/Cargo.toml
 COPY ./crates/whiteboard/Cargo.toml ./crates/whiteboard/Cargo.toml
 COPY ./crates/polls/Cargo.toml ./crates/polls/Cargo.toml

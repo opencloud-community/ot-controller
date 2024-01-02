@@ -13,9 +13,10 @@ publish = false
 proc-macro = true
 
 [dependencies]
+proc-macro-fields-helper = { path = "../proc-macro-fields-helper" }
+proc-macro2 = "1"                                                   #
 quote = "1"
 syn = { version = "2", features = ["extra-traits"] }
-proc-macro2 = "1"
 
 [dev-dependencies]
 redis.workspace = true
