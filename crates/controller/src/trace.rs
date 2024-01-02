@@ -2,8 +2,6 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::collections::BTreeSet;
-
 use actix_web::dev::{ServiceRequest, ServiceResponse};
 use actix_web::http::header::USER_AGENT;
 use actix_web::{Error, HttpMessage};
@@ -20,39 +18,20 @@ use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::{EnvFilter, Registry};
 use uuid::Uuid;
 
+// If these default values are adjusted, that change should be synchronized
+// into `extra/example.toml` for transparency towards administrators
+// and documentation purposes.
+const DEFAULT_LOGGING_DIRECTIVES: &str = "error,\
+    opentalk=info,\
+    pinky_swear=off,\
+    rustls=warn,\
+    mio=error,\
+    lapin=warn";
+
 pub fn init(settings: &Logging) -> Result<()> {
-    // If these default values are adjusted, that change should be synchronized
-    // into `extra/example.toml` for transparency towards administrators
-    // and documentation purposes.
-    let env_var = std::env::var(EnvFilter::DEFAULT_ENV).unwrap_or_else(|_| {
-        "error,opentalk=info,pinky_swear=off,rustls=warn,mio=error,lapin=warn".to_string()
-    });
-
-    let configured_scopes = env_var
-        .split(',')
-        .map(|filter| {
-            filter
-                .split_once('=')
-                .map(|(scope, _)| scope)
-                .unwrap_or_default()
-        })
-        .collect::<BTreeSet<_>>();
-
     // Layer which acts as filter of traces and spans.
     // The filter is created from enviroment (RUST_LOG) and config file
-    let mut filter = EnvFilter::new(&env_var);
-
-    if let Some(ref directives) = settings.default_directives {
-        for directive in directives {
-            let scope = directive
-                .split_once('=')
-                .map(|(scope, _)| scope)
-                .unwrap_or_default();
-            if !configured_scopes.contains(scope) {
-                filter = filter.add_directive(directive.parse()?);
-            }
-        }
-    }
+    let filter = create_filter(settings)?;
 
     // FMT layer prints the trace events into stdout
     let fmt = tracing_subscriber::fmt::Layer::default();
@@ -102,6 +81,38 @@ pub fn init(settings: &Logging) -> Result<()> {
     }
 
     Ok(())
+}
+
+/// Create the logging filter
+///
+/// The filter is a combination of the values from the RUST_LOG environment variable, the config file and
+/// the controllers defaults.
+///
+/// The priority of the different config options is RUST_LOG > config file > controller defaults.
+fn create_filter(settings: &Logging) -> Result<EnvFilter> {
+    // Read the config from the RUST_LOG environment variable
+    let env_directives = std::env::var(EnvFilter::DEFAULT_ENV)
+        .ok()
+        .filter(|v| !v.is_empty());
+
+    let config_directives = settings
+        .default_directives
+        .as_ref()
+        .filter(|v| !v.is_empty());
+
+    let mut directives = DEFAULT_LOGGING_DIRECTIVES.to_owned();
+
+    if let Some(config_directives) = config_directives {
+        directives = [directives, config_directives.join(",")].join(",")
+    }
+
+    if let Some(env_directives) = env_directives {
+        directives = [directives, env_directives].join(",")
+    }
+
+    let filter = EnvFilter::new(directives);
+
+    Ok(filter)
 }
 
 /// Flush remaining spans and traces
