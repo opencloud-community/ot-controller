@@ -35,6 +35,17 @@ async fn migrate(config: Config) -> Result<Report> {
     // The runner is specified through the `include_migration_mods` macro
     let report = migrations::runner().run_async(&mut client).await?;
 
+    if !report.applied_migrations().is_empty() {
+        let applied_migration_names = report
+            .applied_migrations()
+            .iter()
+            .map(|m| m.name().to_string())
+            .collect::<Vec<_>>()
+            .join(", ");
+
+        log::info!("Applied migration(s): {}", applied_migration_names);
+    }
+
     drop(client);
 
     // wait for the connection to close
