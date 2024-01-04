@@ -53,11 +53,7 @@ pub async fn set_config(
 ) -> Result<()> {
     if let Some(duration) = config.duration {
         redis_conn
-            .set_ex(
-                BreakoutRoomConfig { room },
-                config,
-                duration.as_secs() as usize,
-            )
+            .set_ex(BreakoutRoomConfig { room }, config, duration.as_secs())
             .await
             .context("Failed to set breakout-room config")
     } else {

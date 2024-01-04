@@ -134,7 +134,7 @@ where
                         hash_key: *hash_key,
                     },
                     bincode::serialize(&value)?,
-                    usize::try_from(ttl.as_secs()).unwrap(),
+                    ttl.as_secs(),
                 )
                 .await?;
         }
@@ -176,7 +176,7 @@ where
                         hash_key: *hash_key,
                     },
                     bincode::serialize(&value)?,
-                    usize::try_from(ttl.as_secs()).unwrap(),
+                    ttl.as_secs(),
                 )
                 .await?;
         }
