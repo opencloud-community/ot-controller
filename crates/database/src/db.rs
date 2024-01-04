@@ -73,6 +73,9 @@ impl Db {
                 let conn = MetricsConnection {
                     metrics: self.metrics.clone(),
                     conn,
+                    instrumentation: Arc::new(std::sync::Mutex::new(
+                        diesel::connection::get_default_instrumentation(),
+                    )),
                 };
 
                 Ok(conn)

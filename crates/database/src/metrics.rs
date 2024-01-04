@@ -7,9 +7,13 @@ use core::{
     pin::Pin,
     task::{ready, Poll},
 };
-use std::{sync::Arc, time::Instant};
+use std::{
+    sync::{Arc, Mutex},
+    time::Instant,
+};
 
 use diesel::{
+    connection::{Instrumentation, InstrumentationEvent},
     query_builder::{AsQuery, QueryFragment, QueryId},
     result::{ConnectionResult, QueryResult},
 };
@@ -37,6 +41,7 @@ pub struct DatabaseMetrics {
 pub struct MetricsConnection<Conn> {
     pub(crate) metrics: Option<Arc<DatabaseMetrics>>,
     pub(crate) conn: Conn,
+    pub(crate) instrumentation: Arc<Mutex<Option<Box<dyn Instrumentation>>>>,
 }
 
 fn get_metrics_label_for_error(error: &diesel::result::Error) -> &'static str {
@@ -85,17 +90,23 @@ impl AsyncConnection for MetricsConnection<Parent> {
     type TransactionManager = AnsiTransactionManager;
 
     async fn establish(database_url: &str) -> ConnectionResult<Self> {
+        let mut instrumentation = diesel::connection::get_default_instrumentation();
+        instrumentation.on_connection_event(InstrumentationEvent::start_establish_connection(
+            database_url,
+        ));
+
         Parent::establish(database_url).await.map(|conn| Self {
             metrics: None,
             conn,
+            instrumentation: Arc::new(Mutex::new(instrumentation)),
         })
     }
 
     #[doc(hidden)]
     fn load<'conn, 'query, T>(&'conn mut self, source: T) -> Self::LoadFuture<'conn, 'query>
     where
-        T: AsQuery + Send + 'query,
-        T::Query: QueryFragment<Self::Backend> + QueryId + Send + 'query,
+        T: AsQuery + 'query,
+        T::Query: QueryFragment<Self::Backend> + QueryId + 'query,
     {
         Instrument {
             metrics: self.metrics.clone(),
@@ -109,7 +120,7 @@ impl AsyncConnection for MetricsConnection<Parent> {
         source: T,
     ) -> Self::ExecuteFuture<'conn, 'query>
     where
-        T: QueryFragment<Self::Backend> + QueryId + Send + 'query,
+        T: QueryFragment<Self::Backend> + QueryId + 'query,
     {
         Instrument {
             metrics: self.metrics.clone(),
@@ -127,6 +138,18 @@ impl AsyncConnection for MetricsConnection<Parent> {
         &mut self,
     ) -> &mut <Self::TransactionManager as TransactionManager<Self>>::TransactionStateData {
         self.conn.transaction_state()
+    }
+
+    fn instrumentation(&mut self) -> &mut dyn Instrumentation {
+        let Some(instrumentation) = Arc::get_mut(&mut self.instrumentation) else {
+            panic!("Cannot access shared instrumentation")
+        };
+
+        instrumentation.get_mut().unwrap_or_else(|p| p.into_inner())
+    }
+
+    fn set_instrumentation(&mut self, instrumentation: impl Instrumentation) {
+        self.instrumentation = Arc::new(std::sync::Mutex::new(Some(Box::new(instrumentation))));
     }
 }
 

@@ -322,7 +322,7 @@ pub enum Operation {
     Test { path: String, value: Value },
 }
 
-sql_function! {
+define_sql_function! {
     fn ot_patch_json(target: Jsonb, changeset: Jsonb) -> Jsonb;
 }
 
