@@ -16,8 +16,6 @@ actix-rt = { workspace = true, optional = true }
 anyhow.workspace = true
 async-trait.workspace = true
 aws-sdk-s3.workspace = true
-aws-smithy-http = "0.60"
-aws-smithy-types = "0.101"
 bytes.workspace = true
 bytestring.workspace = true
 futures.workspace = true
