@@ -4,6 +4,8 @@
 
 use std::{fmt::Display, str::FromStr};
 
+use crate::error::ParsingError;
+
 /// Permission access variants
 ///
 /// Get, Put, Post, Delete are the respective HTTP methods.
@@ -33,7 +35,7 @@ impl AccessMethod {
 }
 
 impl FromStr for AccessMethod {
-    type Err = crate::ParsingError;
+    type Err = ParsingError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
@@ -44,7 +46,7 @@ impl FromStr for AccessMethod {
             "PUT" => AccessMethod::Put,
             "PATCH" => AccessMethod::Patch,
             "DELETE" => AccessMethod::Delete,
-            _ => return Err(crate::ParsingError::InvalidAccessMethod(s.to_owned())),
+            _ => return Err(ParsingError::InvalidAccessMethod(s.to_owned())),
         })
     }
 }

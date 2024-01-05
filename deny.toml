@@ -186,6 +186,7 @@ skip = [
     { name = "strum_macros", version = "=0.24" },
     { name = "syn", version = "=1" },
     { name = "toml", version = "=0.5" },
+    { name = "toml_edit", version = "=0.19" },
     { name = "tokio-rustls", version = "=0.23" },
 ]
 # Similarly to `skip` allows you to skip certain crates during duplicate

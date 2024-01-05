@@ -24,7 +24,7 @@ async fn make_event(
     hour: Option<u32>,
     is_adhoc: bool,
 ) -> Event {
-    let tenant = get_or_create_tenant_by_oidc_id(conn, &OidcTenantId::from("default".into()))
+    let tenant = get_or_create_tenant_by_oidc_id(conn, &OidcTenantId::from("default".to_string()))
         .await
         .unwrap();
     NewEvent {

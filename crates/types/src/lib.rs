@@ -95,12 +95,18 @@ pub mod strings;
 
 mod imports {
     #[cfg(feature = "diesel")]
-    pub use diesel::{
-        deserialize::{FromSql, FromSqlRow},
-        expression::AsExpression,
-        pg::Pg,
-        serialize::ToSql,
+    pub use {
+        diesel::{
+            deserialize::{FromSql, FromSqlRow},
+            expression::AsExpression,
+            pg::Pg,
+            serialize::ToSql,
+        },
+        diesel_newtype::DieselNewtype,
     };
+
+    #[cfg(feature = "kustos")]
+    pub use kustos_prefix::KustosPrefix;
 
     #[cfg(feature = "redis")]
     pub use {

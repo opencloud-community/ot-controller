@@ -28,6 +28,7 @@ use std::rc::Rc;
 use std::task::{Context, Poll};
 use tracing_futures::Instrument;
 use types::core::InviteCodeId;
+use uuid::Uuid;
 
 mod bearer_or_invite_code;
 
@@ -147,9 +148,8 @@ where
                     .await
                     {
                         Ok((current_tenant, current_user)) => {
-                            req.extensions_mut().insert(kustos::actix_web::User::from(
-                                current_user.id.into_inner(),
-                            ));
+                            req.extensions_mut()
+                                .insert(kustos::actix_web::User::from(Uuid::from(current_user.id)));
                             req.extensions_mut().insert(current_tenant);
                             req.extensions_mut().insert(current_user);
                             service.call(req).await
@@ -157,9 +157,10 @@ where
                         Err(err) => Ok(req.into_response(err.error_response())),
                     },
                     AccessTokenOrInviteCode::InviteCode(current_invite_code) => {
-                        req.extensions_mut().insert(kustos::actix_web::Invite::from(
-                            current_invite_code.into_inner(),
-                        ));
+                        req.extensions_mut()
+                            .insert(kustos::actix_web::Invite::from(Uuid::from(
+                                current_invite_code,
+                            )));
                         req.extensions_mut().insert(current_invite_code);
                         service.call(req).await
                     }

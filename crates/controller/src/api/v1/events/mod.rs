@@ -219,8 +219,8 @@ impl EventRoomInfoExt for EventRoomInfo {
                 call_in = Some(CallInInfo {
                     tel: call_in_config.tel.clone(),
                     uri: None,
-                    id: sip_config.sip_id.into_inner().into_inner(),
-                    password: sip_config.password.into_inner().into_inner(),
+                    id: sip_config.sip_id.to_string(),
+                    password: sip_config.password.to_string(),
                 });
             }
         }
@@ -1539,7 +1539,7 @@ fn get_tenant_filter<'a>(
             external_tenant_id_user_attribute_name,
         } => Some(TenantFilter {
             field_name: external_tenant_id_user_attribute_name,
-            id: current_tenant.oidc_tenant_id.inner(),
+            id: current_tenant.oidc_tenant_id.as_ref(),
         }),
     }
 }

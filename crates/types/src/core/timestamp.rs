@@ -2,12 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::{
-    ops::{Add, Deref},
-    time::SystemTime,
-};
+use std::{ops::Add, time::SystemTime};
 
 use chrono::{DateTime, Utc};
+use derive_more::{AsRef, Deref, Display, From, FromStr};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -15,13 +13,15 @@ use crate::imports::*;
 /// A UTC DateTime wrapper that implements ToRedisArgs and FromRedisValue.
 ///
 /// The values are stores as unix timestamps in redis.
-#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+#[derive(
+    AsRef, Deref, Display, From, FromStr, Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash,
+)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Timestamp(DateTime<Utc>);
 
 impl Timestamp {
     /// Create a timestamp with the date of the unix epoch start
-    /// (1970-01-01 00:00:00)
+    /// (1970-01-01 00:00:00 UTC)
     pub fn unix_epoch() -> Self {
         Self(chrono::DateTime::from(std::time::UNIX_EPOCH))
     }
@@ -29,12 +29,6 @@ impl Timestamp {
     /// Create a timestamp with the current system time
     pub fn now() -> Timestamp {
         Timestamp(Utc::now())
-    }
-}
-
-impl From<DateTime<Utc>> for Timestamp {
-    fn from(value: DateTime<Utc>) -> Self {
-        Timestamp(value)
     }
 }
 
@@ -81,13 +75,5 @@ impl FromRedisValue for Timestamp {
             .latest()
             .unwrap();
         Ok(Timestamp(timestamp))
-    }
-}
-
-impl Deref for Timestamp {
-    type Target = DateTime<Utc>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
     }
 }

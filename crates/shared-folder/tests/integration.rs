@@ -33,7 +33,7 @@ async fn make_event(
     user_id: UserId,
     room_id: RoomId,
 ) -> Event {
-    let tenant = get_or_create_tenant_by_oidc_id(conn, &OidcTenantId::from("default".into()))
+    let tenant = get_or_create_tenant_by_oidc_id(conn, &OidcTenantId::from("default".to_string()))
         .await
         .unwrap();
     let event = NewEvent {

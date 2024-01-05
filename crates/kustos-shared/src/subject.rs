@@ -4,6 +4,10 @@
 
 use uuid::Uuid;
 
+use std::str::FromStr;
+
+use crate::error::ParsingError;
+
 /// Trait to tag a type as a subject
 ///
 /// Types tagged with this trait need to implement the underlying internal conversion types as well.
@@ -35,9 +39,35 @@ impl PolicyUser {
     }
 }
 
+impl ToString for PolicyUser {
+    fn to_string(&self) -> String {
+        self.0.to_string()
+    }
+}
+
 impl From<uuid::Uuid> for PolicyUser {
     fn from(user: uuid::Uuid) -> Self {
         PolicyUser(user)
+    }
+}
+
+impl FromStr for PolicyUser {
+    type Err = ParsingError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.starts_with("user::") {
+            Ok(PolicyUser(uuid::Uuid::from_str(
+                s.trim_start_matches("user::"),
+            )?))
+        } else {
+            Err(ParsingError::PolicyUser(s.to_owned()))
+        }
+    }
+}
+
+impl AsRef<uuid::Uuid> for PolicyUser {
+    fn as_ref(&self) -> &uuid::Uuid {
+        &self.0
     }
 }
 
@@ -72,6 +102,26 @@ impl From<uuid::Uuid> for PolicyInvite {
     }
 }
 
+impl FromStr for PolicyInvite {
+    type Err = ParsingError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.starts_with("invite::") {
+            Ok(PolicyInvite(uuid::Uuid::from_str(
+                s.trim_start_matches("invite::"),
+            )?))
+        } else {
+            Err(ParsingError::PolicyInvite(s.to_owned()))
+        }
+    }
+}
+
+impl AsRef<uuid::Uuid> for PolicyInvite {
+    fn as_ref(&self) -> &uuid::Uuid {
+        &self.0
+    }
+}
+
 /// An internal group e.g. administrator, moderator, etc.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PolicyRole(pub(crate) String);
@@ -90,6 +140,24 @@ impl From<&str> for PolicyRole {
     }
 }
 
+impl FromStr for PolicyRole {
+    type Err = ParsingError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.starts_with("role::") {
+            Ok(PolicyRole(s.trim_start_matches("role::").to_string()))
+        } else {
+            Err(ParsingError::PolicyInternalGroup(s.to_owned()))
+        }
+    }
+}
+
+impl AsRef<str> for PolicyRole {
+    fn as_ref(&self) -> &str {
+        self.0.as_ref()
+    }
+}
+
 /// A user defined group, such as information from keycloak or LDAP
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PolicyGroup(pub(crate) String);
@@ -104,6 +172,18 @@ impl From<String> for PolicyGroup {
 impl From<&str> for PolicyGroup {
     fn from(group: &str) -> Self {
         PolicyGroup(group.to_string())
+    }
+}
+
+impl FromStr for PolicyGroup {
+    type Err = ParsingError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.starts_with("group::") {
+            Ok(PolicyGroup(s.trim_start_matches("group::").to_string()))
+        } else {
+            Err(ParsingError::PolicyOPGroup(s.to_owned()))
+        }
     }
 }
 

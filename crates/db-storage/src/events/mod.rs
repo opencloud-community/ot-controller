@@ -14,6 +14,7 @@ use crate::utils::HasUsers;
 use chrono::{DateTime, Utc};
 use chrono_tz::Tz;
 use database::{DatabaseError, DbConnection, Paginate, Result};
+use derive_more::{AsRef, Display, From, FromStr, Into};
 use diesel::expression::AsExpression;
 use diesel::pg::Pg;
 use diesel::prelude::*;
@@ -24,6 +25,7 @@ use diesel::{
 };
 use diesel_async::scoped_futures::ScopedFutureExt;
 use diesel_async::{AsyncConnection, RunQueryDsl};
+use diesel_newtype::DieselNewtype;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use types::common::event::EventInfo;
@@ -32,13 +34,74 @@ use types::sql_enum;
 
 use self::shared_folders::EventSharedFolder;
 
-types::diesel_newtype! {
-    #[derive(Copy)] EventSerialId(i64) => diesel::sql_types::BigInt,
+#[derive(
+    AsRef,
+    Display,
+    From,
+    FromStr,
+    Into,
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    AsExpression,
+    FromSqlRow,
+    DieselNewtype,
+)]
+#[diesel(sql_type = diesel::sql_types::BigInt)]
+pub struct EventSerialId(i64);
 
-    #[derive(Copy)] EventExceptionId(uuid::Uuid) => diesel::sql_types::Uuid,
+#[derive(
+    AsRef,
+    Display,
+    From,
+    FromStr,
+    Into,
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    AsExpression,
+    FromSqlRow,
+    DieselNewtype,
+)]
+#[diesel(sql_type = diesel::sql_types::Uuid)]
+pub struct EventExceptionId(uuid::Uuid);
 
-    #[derive(Copy)] EventInviteId(uuid::Uuid) => diesel::sql_types::Uuid
-}
+#[derive(
+    AsRef,
+    Display,
+    From,
+    FromStr,
+    Into,
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    AsExpression,
+    FromSqlRow,
+    DieselNewtype,
+)]
+#[diesel(sql_type = diesel::sql_types::Uuid)]
+pub struct EventInviteId(uuid::Uuid);
 
 pub mod email_invites;
 pub mod shared_folders;

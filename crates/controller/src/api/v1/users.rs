@@ -191,7 +191,7 @@ pub async fn find(
                 kc_admin_client
                     .search_user_filtered(
                         external_tenant_id_user_attribute_name,
-                        current_tenant.oidc_tenant_id.inner(),
+                        current_tenant.oidc_tenant_id.as_ref(),
                         &query.q,
                         MAX_USER_SEARCH_RESULTS,
                     )

@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use derive_more::{Display, From, FromStr, Into};
+use derive_more::{AsRef, Display, From, FromStr, Into};
 use uuid::Uuid;
 
 #[allow(unused_imports)]
@@ -13,15 +13,15 @@ use crate::imports::*;
 /// Generated as soon as the user connects to the websocket and authenticated himself,
 /// it is used to store all participant related data and relations.
 #[derive(
-    Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Display, Into, From, FromStr,
+    AsRef, Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Display, Into, From, FromStr,
 )]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(
     feature = "redis",
     derive(FromRedisValue, ToRedisArgs),
     from_redis_value(FromStr),
     to_redis_args(fmt)
 )]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ParticipantId(Uuid);
 
 impl ParticipantId {

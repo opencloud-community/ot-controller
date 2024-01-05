@@ -2,15 +2,25 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-crate::diesel_newtype! {
-    feature_gated:
+use derive_more::{AsRef, Display, From, FromStr, Into};
 
-    #[cfg_attr(
-        feature="redis",
-        derive(redis_args::ToRedisArgs, redis_args::FromRedisValue),
-        to_redis_args(fmt = "{0}"),
-        from_redis_value(FromStr)
-    )]
-    #[derive(derive_more::From, derive_more::Into, derive_more::FromStr)]
-    StreamingKey(String) => diesel::sql_types::Text
-}
+#[allow(unused_imports)]
+use crate::imports::*;
+
+/// The secret key of a streaming target
+#[derive(
+    AsRef, Display, From, FromStr, Into, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash,
+)]
+#[cfg_attr(
+    feature = "diesel",
+    derive(DieselNewtype, AsExpression, FromSqlRow),
+    diesel(sql_type = diesel::sql_types::Text)
+)]
+#[cfg_attr(
+    feature = "redis",
+    derive(ToRedisArgs, FromRedisValue,),
+    to_redis_args(fmt),
+    from_redis_value(FromStr)
+)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct StreamingKey(String);

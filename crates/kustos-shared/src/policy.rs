@@ -4,8 +4,8 @@
 
 use crate::{
     access::AccessMethod,
+    resource::ResourceId,
     subject::{IsSubject, PolicyGroup, PolicyInvite, PolicyRole, PolicyUser},
-    ResourceId,
 };
 
 /// A policy
@@ -31,6 +31,18 @@ impl<S: IsSubject> Policy<S> {
             obj: data.into(),
             act: access.into(),
         }
+    }
+
+    pub fn sub(&self) -> &S {
+        &self.sub
+    }
+
+    pub fn obj(&self) -> &ResourceId {
+        &self.obj
+    }
+
+    pub fn act(&self) -> &[AccessMethod] {
+        &self.act
     }
 }
 

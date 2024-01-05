@@ -318,7 +318,7 @@ async fn print_tariffs(
         let ids = ExternalTariff::get_all_for_tariff(conn, tariff.id).await?;
         let mut ids = ids
             .into_iter()
-            .map(|ext_tariff_id| ext_tariff_id.into_inner())
+            .map(|ext_tariff_id| ext_tariff_id.to_string())
             .join("\n");
         if ids.is_empty() {
             ids = "-".into();

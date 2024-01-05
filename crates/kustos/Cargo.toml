@@ -14,6 +14,7 @@ publish = false
 
 [dependencies]
 database = { path = "../database", package = "opentalk-database" }
+shared = { path = "../kustos-shared", package = "kustos-shared", features = ["internal"] }
 
 ## Database migration
 barrel = { version = "0.7", features = ["pg"] }
@@ -21,7 +22,6 @@ barrel = { version = "0.7", features = ["pg"] }
 ### Error handling
 thiserror.workspace = true
 anyhow.workspace = true
-http.workspace = true
 
 ### Database ORM
 diesel = { workspace = true, features = [
@@ -52,9 +52,7 @@ actix-web.workspace = true
 opentelemetry.workspace = true
 
 [dependencies.casbin]
-git = "https://github.com/kbalt/casbin-rs.git"
-rev = "a5cd79704726b423030942769779ea7d4e8129ee"
-default-features = false
+workspace = true
 features = ["runtime-tokio", "incremental"]
 
 [dev-dependencies]
