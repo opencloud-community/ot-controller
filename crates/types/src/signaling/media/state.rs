@@ -14,3 +14,8 @@ pub struct MediaState {
     /// Whether the participant has permission to share the screen
     pub is_presenter: bool,
 }
+
+#[cfg(feature = "serde")]
+impl SignalingModuleFrontendData for MediaState {
+    const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
+}

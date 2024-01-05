@@ -17,7 +17,7 @@ use types::{
             event::{Error, RecordingEvent, Started, Stopped},
             peer_state::RecordingPeerState,
             state::RecordingState,
-            RecordingId, RecordingStatus,
+            RecordingId, RecordingStatus, NAMESPACE,
         },
         Role,
     },
@@ -44,7 +44,7 @@ pub struct RecordingParams {
 
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for Recording {
-    const NAMESPACE: &'static str = "recording";
+    const NAMESPACE: &'static str = NAMESPACE;
 
     type Params = (Arc<RabbitMqPool>, RecordingParams);
 

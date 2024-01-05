@@ -23,3 +23,8 @@ pub struct MediaPeerState {
     /// Whether the participant has permission to share the screen
     pub is_presenter: bool,
 }
+
+#[cfg(feature = "serde")]
+impl SignalingModulePeerFrontendData for MediaPeerState {
+    const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
+}

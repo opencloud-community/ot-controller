@@ -17,3 +17,8 @@ pub struct RecordingPeerState {
     /// Flag showing whether the participant consents to recording
     pub consents_recording: bool,
 }
+
+#[cfg(feature = "serde")]
+impl SignalingModulePeerFrontendData for RecordingPeerState {
+    const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
+}

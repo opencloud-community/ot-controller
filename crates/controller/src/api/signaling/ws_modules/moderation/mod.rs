@@ -9,7 +9,7 @@ use signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, RedisConnection, SignalingModule,
     SignalingModuleInitData, SignalingRoomId,
 };
-use std::{collections::HashMap, iter::zip};
+use std::iter::zip;
 use types::{
     core::{ParticipantId, RoomId, UserId},
     signaling::{
@@ -19,16 +19,16 @@ use types::{
             event::{Error, ModerationEvent},
             state::{ModerationState, ModeratorFrontendData},
         },
-        Role,
+        ModulePeerData, Role,
     },
 };
+
+pub use types::signaling::moderation::NAMESPACE;
 
 use crate::api::signaling::ws::ModuleContextExt;
 
 pub mod exchange;
 pub mod storage;
-
-pub const NAMESPACE: &str = "moderation";
 
 pub struct ModerationModule {
     room: SignalingRoomId,
@@ -47,16 +47,9 @@ async fn build_waiting_room_participants(
         let control_data =
             ControlState::from_redis(redis_conn, SignalingRoomId::new(room_id, None), *id).await?;
 
-        let module_data = HashMap::from([
-            (
-                control::NAMESPACE.to_string(),
-                serde_json::to_value(control_data)?,
-            ),
-            (
-                "waiting_room_state".to_string(),
-                serde_json::to_value(&waiting_room_state)?,
-            ),
-        ]);
+        let mut module_data = ModulePeerData::new();
+        module_data.insert(&control_data)?;
+        module_data.insert(&waiting_room_state)?;
 
         waiting_room.push(Participant {
             id: *id,
@@ -391,10 +384,8 @@ impl SignalingModule for ModerationModule {
                 let control_data =
                     ControlState::from_redis(ctx.redis_conn(), self.room, id).await?;
 
-                let module_data = HashMap::from([(
-                    control::NAMESPACE.to_string(),
-                    serde_json::to_value(control_data)?,
-                )]);
+                let mut module_data = ModulePeerData::new();
+                module_data.insert(&control_data)?;
 
                 ctx.ws_send(ModerationEvent::JoinedWaitingRoom(Participant {
                     id,
@@ -477,7 +468,7 @@ mod tests {
                     waiting_room_enabled: true,
                     waiting_room_participants: vec![Participant {
                         id: ParticipantId::from_u128(1),
-                        module_data: HashMap::new()
+                        module_data: ModulePeerData::new()
                     }]
                 }),
                 raise_hands_enabled: false

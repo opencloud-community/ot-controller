@@ -21,3 +21,8 @@ pub struct ProtocolPeerState {
     /// Read-only access
     pub readonly: bool,
 }
+
+#[cfg(feature = "serde")]
+impl SignalingModulePeerFrontendData for ProtocolPeerState {
+    const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
+}

@@ -3,16 +3,16 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use anyhow::Result;
-use signaling_core::SignalingModuleInitData;
-use signaling_core::{DestroyContext, Event, InitContext, ModuleContext, SignalingModule};
-
-pub const CALL_IN_FEATURE: &str = "call_in";
+use signaling_core::{
+    DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleInitData,
+};
+use types::signaling::core::{CALL_IN_FEATURE, NAMESPACE};
 
 pub struct Core {}
 
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for Core {
-    const NAMESPACE: &'static str = "core";
+    const NAMESPACE: &'static str = NAMESPACE;
 
     type Params = ();
     type Incoming = ();

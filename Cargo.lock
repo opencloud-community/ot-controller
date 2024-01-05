@@ -3379,6 +3379,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "opentalk-signaling-core",
+ "opentalk-types",
 ]
 
 [[package]]
@@ -3459,6 +3460,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "opentalk-signaling-core",
+ "opentalk-types",
 ]
 
 [[package]]

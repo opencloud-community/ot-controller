@@ -39,6 +39,11 @@ pub struct ChatState {
     pub last_seen_timestamps_group: HashMap<GroupName, Timestamp>,
 }
 
+#[cfg(feature = "serde")]
+impl SignalingModuleFrontendData for ChatState {
+    const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
+}
+
 /// Group chat history
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]

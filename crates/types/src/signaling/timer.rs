@@ -16,3 +16,6 @@ mod timer_id;
 pub use config::TimerConfig;
 pub use kind::Kind;
 pub use timer_id::TimerId;
+
+/// The namespace string for the signaling module
+pub const NAMESPACE: &str = "timer";

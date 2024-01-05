@@ -7,6 +7,7 @@ use controller_settings::{Settings, SharedSettings};
 use lapin_pool::RabbitMqPool;
 use serde::{Deserialize, Serialize};
 use tokio::sync::broadcast;
+use types::signaling::{SignalingModuleFrontendData, SignalingModulePeerFrontendData};
 
 use std::{fmt::Debug, sync::Arc};
 
@@ -50,10 +51,10 @@ pub trait SignalingModule: Send + Sized + 'static {
     type ExtEvent;
 
     /// Data about the owning user of the ws-module which is sent to the frontend on join
-    type FrontendData: Serialize;
+    type FrontendData: SignalingModuleFrontendData;
 
     /// Data about a peer which is sent to the frontend
-    type PeerFrontendData: Serialize;
+    type PeerFrontendData: SignalingModulePeerFrontendData;
 
     /// Constructor of the module
     ///

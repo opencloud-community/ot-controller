@@ -2,11 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Signaling messages for the `protocl` namespace
-
-pub mod command;
-pub mod event;
-pub mod peer_state;
+//! Signaling messages for the `echo` namespace
 
 /// The namespace string for the signaling module
-pub const NAMESPACE: &str = "protocol";
+pub const NAMESPACE: &str = "echo";

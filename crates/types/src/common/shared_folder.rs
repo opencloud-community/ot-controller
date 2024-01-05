@@ -42,6 +42,11 @@ pub struct SharedFolder {
     pub read_write: Option<SharedFolderAccess>,
 }
 
+#[cfg(feature = "serde")]
+impl SignalingModuleFrontendData for SharedFolder {
+    const NAMESPACE: Option<&'static str> = Some(crate::signaling::shared_folder::NAMESPACE);
+}
+
 impl SharedFolder {
     /// Get an equivalent shared folder, cut down to match the signaling role
     pub fn for_signaling_role(self, role: Role) -> Self {

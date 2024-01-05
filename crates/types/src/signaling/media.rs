@@ -21,3 +21,6 @@ pub use trickle_candidate::TrickleCandidate;
 
 /// The media state of a participant
 pub type ParticipantMediaState = HashMap<MediaSessionType, MediaSessionState>;
+
+/// The namespace string for the signaling module
+pub const NAMESPACE: &str = "media";

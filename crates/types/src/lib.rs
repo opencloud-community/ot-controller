@@ -116,6 +116,7 @@ mod imports {
 
     #[cfg(feature = "serde")]
     pub use {
+        crate::signaling::{SignalingModuleFrontendData, SignalingModulePeerFrontendData},
         serde::{de, de::DeserializeOwned, Deserialize, Deserializer, Serialize, Serializer},
         validator::{Validate, ValidationError, ValidationErrors},
     };

@@ -40,7 +40,6 @@ use signaling_core::{
     AnyStream, ExchangeHandle, ObjectStorage, Participant, RedisConnection, SignalingMetrics,
     SignalingModule, SignalingRoomId, SubscriberHandle,
 };
-use std::collections::HashMap;
 use std::future;
 use std::mem::replace;
 use std::ops::ControlFlow;
@@ -50,6 +49,7 @@ use std::time::{Duration, Instant};
 use tokio::sync::{broadcast, mpsc};
 use tokio::time::{interval, sleep};
 use tokio_stream::StreamExt;
+use types::signaling::ModuleData;
 use types::{
     core::{BreakoutRoomId, ParticipantId, ParticipationKind, UserId},
     signaling::{
@@ -1229,7 +1229,7 @@ impl Runner {
             };
         }
 
-        let mut module_data = HashMap::new();
+        let mut module_data = ModuleData::new();
 
         let actions = self
             .handle_module_broadcast_event(
@@ -1413,11 +1413,10 @@ impl Runner {
             return Ok(None);
         };
 
-        participant.module_data.insert(
-            NAMESPACE.to_string(),
-            serde_json::to_value(control_data)
-                .expect("Failed to convert ControlData to serde_json::Value"),
-        );
+        participant
+            .module_data
+            .insert(&control_data)
+            .expect("Failed to convert ControlData to serde_json::Value");
 
         Ok(Some(participant))
     }

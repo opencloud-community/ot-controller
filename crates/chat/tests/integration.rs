@@ -15,6 +15,7 @@ use types::{
         chat::{
             command::{ChatCommand, SendMessage},
             event::{ChatEvent, MessageSent},
+            peer_state::ChatPeerState,
             state::ChatState,
             Scope,
         },
@@ -84,7 +85,7 @@ async fn last_seen_timestamps() {
                 ..
             })) => {
                 // check that last seen timestamps are not set
-                let chat_data = module_data.get("chat").unwrap();
+                let chat_data = module_data.get::<ChatState>().unwrap();
                 let json = serde_json::to_value(chat_data).unwrap();
                 assert_eq!(
                     json,
@@ -190,7 +191,7 @@ async fn last_seen_timestamps() {
             module_data, ..
         })) => {
             // check own groups
-            let chat_data = module_data.get("chat").unwrap();
+            let chat_data = module_data.get::<ChatState>().unwrap();
             let json = serde_json::to_value(chat_data).unwrap();
             assert_eq!(
                 json,
@@ -280,7 +281,7 @@ async fn common_groups_on_join() {
             assert!(participants.is_empty());
 
             // check own groups
-            let chat_data = module_data.get("chat").unwrap();
+            let chat_data = module_data.get::<ChatState>().unwrap();
             let json = serde_json::to_value(chat_data).unwrap();
             assert_eq!(
                 json,
@@ -326,12 +327,12 @@ async fn common_groups_on_join() {
             assert_eq!(participants.len(), 1);
 
             // check common groups here
-            let peer_frontend_data = participants[0].module_data.get("chat").unwrap();
+            let peer_frontend_data = participants[0].module_data.get::<ChatPeerState>().unwrap();
             let json = serde_json::to_value(peer_frontend_data).unwrap();
             assert_eq!(json, json!({"groups":["group1"]}));
 
             // check own groups
-            let chat_data = module_data.get("chat").unwrap();
+            let chat_data = module_data.get::<ChatState>().unwrap();
             let json = serde_json::to_value(chat_data).unwrap();
             assert_eq!(
                 json,
@@ -417,7 +418,7 @@ async fn private_chat_history_on_join() {
             assert!(participants.is_empty());
 
             // check own groups
-            let chat_data = module_data.get("chat").unwrap();
+            let chat_data = module_data.get::<ChatState>().unwrap();
             let json = serde_json::to_value(chat_data).unwrap();
             assert_eq!(
                 json,
@@ -454,12 +455,12 @@ async fn private_chat_history_on_join() {
             assert_eq!(participants.len(), 1);
 
             // check common groups here
-            let peer_frontend_data = participants[0].module_data.get("chat").unwrap();
+            let peer_frontend_data = participants[0].module_data.get::<ChatPeerState>().unwrap();
             let json = serde_json::to_value(peer_frontend_data).unwrap();
             assert_eq!(json, json!({"groups":[]}));
 
             // check own groups
-            let chat_data = module_data.get("chat").unwrap();
+            let chat_data = module_data.get::<ChatState>().unwrap();
             let json = serde_json::to_value(chat_data).unwrap();
             assert_eq!(
                 json,
@@ -547,8 +548,7 @@ async fn private_chat_history_on_join() {
             module_data, ..
         })) => {
             // check that last seen timestamps are not set
-            let chat_data = module_data.get("chat").unwrap();
-            let chat_state: ChatState = serde_json::from_value(chat_data.clone()).unwrap();
+            let chat_state = module_data.get::<ChatState>().unwrap();
             let ChatState {
                 enabled: _,
                 room_history: _,
@@ -557,7 +557,7 @@ async fn private_chat_history_on_join() {
                 last_seen_timestamp_global: _,
                 last_seen_timestamps_private: _,
                 last_seen_timestamps_group: _,
-            } = chat_state;
+            } = chat_state.expect("some chat state");
             assert!(private_history.len() == 1);
             let mut correspondence = private_history.pop().unwrap();
             assert_eq!(correspondence.correspondent, USER_2.participant_id);

@@ -48,6 +48,11 @@ pub struct PollsState {
     pub duration: Duration,
 }
 
+#[cfg(feature = "serde")]
+impl SignalingModuleFrontendData for PollsState {
+    const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
+}
+
 impl PollsState {
     /// Get the remaining duration of the poll
     pub fn remaining(&self) -> Option<Duration> {

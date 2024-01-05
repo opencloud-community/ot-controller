@@ -19,7 +19,7 @@ use signaling_core::{
 };
 use types::{
     common::shared_folder::SharedFolder as SharedFolderType,
-    signaling::shared_folder::event::SharedFolderEvent,
+    signaling::shared_folder::{event::SharedFolderEvent, NAMESPACE},
 };
 
 mod storage;
@@ -31,7 +31,7 @@ pub struct SharedFolder {
 
 #[async_trait::async_trait(? Send)]
 impl SignalingModule for SharedFolder {
-    const NAMESPACE: &'static str = "shared_folder";
+    const NAMESPACE: &'static str = NAMESPACE;
 
     type Params = ();
 

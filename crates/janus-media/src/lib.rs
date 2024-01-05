@@ -32,6 +32,7 @@ use types::{
             peer_state::MediaPeerState,
             state::MediaState,
             MediaSessionState, MediaSessionType, ParticipantMediaState, TrickleCandidate,
+            NAMESPACE,
         },
         Role,
     },
@@ -87,7 +88,7 @@ fn process_metrics_for_media_session_state(
 
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for Media {
-    const NAMESPACE: &'static str = "media";
+    const NAMESPACE: &'static str = NAMESPACE;
 
     type Params = Arc<McuPool>;
 

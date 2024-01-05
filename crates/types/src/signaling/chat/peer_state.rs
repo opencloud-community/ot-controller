@@ -14,8 +14,13 @@ use crate::imports::*;
 /// This struct is sent to the participant in the `join_success` message
 /// which will contain this information for each participant in the meeting.
 #[derive(Clone, Debug)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ChatPeerState {
     /// A list of group chats
     pub groups: Vec<GroupName>,
+}
+
+#[cfg(feature = "serde")]
+impl SignalingModulePeerFrontendData for ChatPeerState {
+    const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
 }

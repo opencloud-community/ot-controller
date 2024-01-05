@@ -48,3 +48,8 @@ pub struct ControlState {
     #[cfg_attr(feature = "serde", serde(default))]
     pub is_room_owner: bool,
 }
+
+#[cfg(feature = "serde")]
+impl SignalingModulePeerFrontendData for ControlState {
+    const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
+}

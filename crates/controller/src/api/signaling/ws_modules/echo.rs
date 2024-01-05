@@ -7,13 +7,14 @@ use serde_json::Value;
 use signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleInitData,
 };
+use types::signaling::echo::NAMESPACE;
 
 /// A sample echo websocket module
 pub struct Echo;
 
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for Echo {
-    const NAMESPACE: &'static str = "echo";
+    const NAMESPACE: &'static str = NAMESPACE;
     type Params = ();
     type Incoming = Value;
     type Outgoing = Value;

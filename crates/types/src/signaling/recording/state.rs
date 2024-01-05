@@ -16,3 +16,8 @@ use super::RecordingStatus;
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct RecordingState(pub Option<RecordingStatus>);
+
+#[cfg(feature = "serde")]
+impl SignalingModuleFrontendData for RecordingState {
+    const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
+}

@@ -20,6 +20,7 @@ use types::{
             command::WhiteboardCommand,
             event::{AccessUrl, Error, PdfAsset, WhiteboardEvent},
             state::WhiteboardState,
+            NAMESPACE,
         },
         Role,
     },
@@ -53,7 +54,7 @@ pub struct GetPdfEvent {
 
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for Whiteboard {
-    const NAMESPACE: &'static str = "whiteboard";
+    const NAMESPACE: &'static str = NAMESPACE;
 
     type Params = controller_settings::Spacedeck;
 

@@ -17,7 +17,7 @@ use signaling_core::{
     module_tester::{ModuleTester, WsMessageOutgoing},
     RedisConnection,
 };
-use test_util::{serde_json, TestContext, ROOM_ID, USER_1, USER_2};
+use test_util::{TestContext, ROOM_ID, USER_1, USER_2};
 use types::{
     common::shared_folder::SharedFolder,
     core::{EventId, RoomId, UserId},
@@ -330,11 +330,8 @@ async fn room_with_event_and_shared_folder() {
                 ..
             })) => {
                 // check that no shared folder information is available
-                let shared_folder = module_data.get("shared_folder").unwrap();
-                assert_eq!(
-                    *shared_folder,
-                    serde_json::to_value(&moderator_shared_folder).unwrap()
-                );
+                let shared_folder = module_data.get::<SharedFolder>().unwrap();
+                assert_eq!(shared_folder, Some(moderator_shared_folder));
             }
             _ => panic!(),
         }
@@ -362,11 +359,8 @@ async fn room_with_event_and_shared_folder() {
                 ..
             })) => {
                 // check that no shared folder information is available
-                let shared_folder = module_data.get("shared_folder").unwrap();
-                assert_eq!(
-                    *shared_folder,
-                    serde_json::to_value(&user_shared_folder).unwrap()
-                );
+                let shared_folder = module_data.get::<SharedFolder>().unwrap();
+                assert_eq!(shared_folder, Some(user_shared_folder));
             }
             _ => panic!(),
         }

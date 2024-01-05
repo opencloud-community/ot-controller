@@ -21,3 +21,8 @@ pub struct TimerStatus {
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub ready_status: Option<bool>,
 }
+
+#[cfg(feature = "serde")]
+impl SignalingModuleFrontendData for TimerStatus {
+    const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
+}

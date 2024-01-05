@@ -25,7 +25,7 @@ use types::{
             event::{ChatDisabled, ChatEnabled, ChatEvent, Error, HistoryCleared, MessageSent},
             peer_state::ChatPeerState,
             state::{ChatState, GroupHistory, PrivateHistory, StoredMessage},
-            MessageId, Scope,
+            MessageId, Scope, NAMESPACE,
         },
         Role,
     },
@@ -126,7 +126,7 @@ impl ChatStateExt for ChatState {
 
 #[async_trait::async_trait(? Send)]
 impl SignalingModule for Chat {
-    const NAMESPACE: &'static str = "chat";
+    const NAMESPACE: &'static str = NAMESPACE;
 
     type Params = ();
 
