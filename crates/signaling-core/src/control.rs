@@ -13,7 +13,7 @@ use crate::{RedisConnection, SignalingRoomId};
 pub mod exchange;
 pub mod storage;
 
-pub use types::signaling::core::NAMESPACE;
+pub use types::signaling::control::NAMESPACE;
 
 #[async_trait::async_trait]
 pub trait ControlStateExt: Sized {
