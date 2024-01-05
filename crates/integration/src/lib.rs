@@ -6,14 +6,13 @@ use anyhow::Result;
 use signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleInitData,
 };
-
-pub const OUTLOOK_FEATURE: &str = "outlook";
+use types::signaling::integration::{NAMESPACE, OUTLOOK_FEATURE};
 
 pub struct Integration;
 
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for Integration {
-    const NAMESPACE: &'static str = "integration";
+    const NAMESPACE: &'static str = NAMESPACE;
 
     type Params = ();
     type Incoming = ();

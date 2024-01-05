@@ -14,3 +14,6 @@ mod scope;
 
 pub use message_id::MessageId;
 pub use scope::Scope;
+
+/// The namespace string for the signaling module
+pub const NAMESPACE: &str = "chat";

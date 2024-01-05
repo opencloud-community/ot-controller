@@ -15,3 +15,6 @@ pub mod state;
 pub use associated_participant_in_other_room::AssociatedParticipantInOtherRoom;
 pub use breakout_room::BreakoutRoom;
 pub use participant_in_other_room::ParticipantInOtherRoom;
+
+/// The namespace string for the signaling module
+pub const NAMESPACE: &str = "breakout";

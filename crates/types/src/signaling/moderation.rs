@@ -11,3 +11,6 @@ pub mod event;
 pub mod state;
 
 pub use kick_scope::KickScope;
+
+/// The namespace string for the signaling module
+pub const NAMESPACE: &str = "moderation";

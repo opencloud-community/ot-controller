@@ -14,3 +14,6 @@ pub mod state;
 
 pub use recording_id::RecordingId;
 pub use recording_status::RecordingStatus;
+
+/// The namespace string for the signaling module
+pub const NAMESPACE: &str = "recording";

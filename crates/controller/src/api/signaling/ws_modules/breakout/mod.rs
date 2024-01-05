@@ -15,6 +15,7 @@ use signaling_core::{
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
 use tokio::time::sleep;
+use types::signaling::breakout::NAMESPACE;
 use types::{
     core::{BreakoutRoomId, ParticipantId, RoomId},
     signaling::{
@@ -45,7 +46,7 @@ pub enum TimerEvent {
 
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for BreakoutRooms {
-    const NAMESPACE: &'static str = "breakout";
+    const NAMESPACE: &'static str = NAMESPACE;
 
     type Params = ();
     type Incoming = BreakoutCommand;

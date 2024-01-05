@@ -14,8 +14,8 @@ use types::signaling::timer::command::Message;
 use types::signaling::timer::event::{self, Error, StopKind, UpdatedReadyStatus};
 use types::signaling::timer::ready_status::ReadyStatus;
 use types::signaling::timer::status::TimerStatus;
-use types::signaling::timer::TimerConfig;
 use types::signaling::timer::{command, Kind, TimerId};
+use types::signaling::timer::{TimerConfig, NAMESPACE};
 use types::{
     core::{ParticipantId, Timestamp},
     signaling::Role,
@@ -37,7 +37,7 @@ pub struct Timer {
 
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for Timer {
-    const NAMESPACE: &'static str = "timer";
+    const NAMESPACE: &'static str = NAMESPACE;
 
     type Params = ();
 

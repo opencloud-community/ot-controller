@@ -15,7 +15,7 @@ use types::signaling::{
         command::{PollsCommand, Start, Vote},
         event::{Error, PollsEvent, Started},
         state::PollsState,
-        Choice, ChoiceId, PollId, Results,
+        Choice, ChoiceId, PollId, Results, NAMESPACE,
     },
     Role,
 };
@@ -32,7 +32,7 @@ pub struct Polls {
 
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for Polls {
-    const NAMESPACE: &'static str = "polls";
+    const NAMESPACE: &'static str = NAMESPACE;
 
     type Params = ();
 

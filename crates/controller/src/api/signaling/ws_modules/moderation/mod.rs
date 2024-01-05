@@ -23,12 +23,12 @@ use types::{
     },
 };
 
+pub use types::signaling::moderation::NAMESPACE;
+
 use crate::api::signaling::ws::ModuleContextExt;
 
 pub mod exchange;
 pub mod storage;
-
-pub const NAMESPACE: &str = "moderation";
 
 pub struct ModerationModule {
     room: SignalingRoomId,

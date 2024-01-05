@@ -21,10 +21,18 @@ use signaling_core::{
     SignalingModule, SignalingModuleInitData, SignalingRoomId,
 };
 use std::sync::Arc;
-use types::signaling::protocol::command::{ParticipantSelection, ProtocolCommand};
-use types::signaling::protocol::event::{AccessUrl, Error, PdfAsset, ProtocolEvent};
-use types::signaling::protocol::peer_state::ProtocolPeerState;
-use types::{core::ParticipantId, signaling::Role};
+use types::{
+    core::ParticipantId,
+    signaling::{
+        protocol::{
+            command::{ParticipantSelection, ProtocolCommand},
+            event::{AccessUrl, Error, PdfAsset, ProtocolEvent},
+            peer_state::ProtocolPeerState,
+            NAMESPACE,
+        },
+        Role,
+    },
+};
 
 pub mod exchange;
 pub mod storage;
@@ -51,7 +59,7 @@ pub struct Protocol {
 
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for Protocol {
-    const NAMESPACE: &'static str = "protocol";
+    const NAMESPACE: &'static str = NAMESPACE;
     type Params = controller_settings::Etherpad;
     type Incoming = ProtocolCommand;
     type Outgoing = ProtocolEvent;
