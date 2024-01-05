@@ -4,8 +4,6 @@
 
 //! Types related to signaling events in the `control` namespace
 
-use std::collections::HashMap;
-
 use crate::{
     common::{event::EventInfo, tariff::TariffResource},
     core::{ParticipantId, Timestamp},
@@ -76,8 +74,9 @@ pub struct JoinSuccess {
     pub tariff: Box<TariffResource>,
 
     /// The module data for the participant
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub module_data: HashMap<String, serde_json::Value>,
+    #[cfg(feature = "serde")]
+    #[serde(flatten)]
+    pub module_data: crate::signaling::ModuleData,
 
     /// List of participants in the meeting
     pub participants: Vec<Participant>,

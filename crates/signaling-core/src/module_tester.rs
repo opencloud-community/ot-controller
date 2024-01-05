@@ -10,7 +10,7 @@
 //!
 //! The idea is to simulate a frontend websocket connection.
 use crate::{
-    control::{self, storage, ControlStateExt as _, NAMESPACE},
+    control::{self, storage, ControlStateExt as _},
     AnyStream, DestroyContext, Event, ExchangePublish, InitContext, ModuleContext, ObjectStorage,
     Participant, RedisConnection, SignalingModule, SignalingRoomId,
 };
@@ -41,9 +41,9 @@ use types::{
             command::{ControlCommand, Join},
             event::{ControlEvent, JoinSuccess},
             state::ControlState,
-            AssociatedParticipant,
+            AssociatedParticipant, NAMESPACE,
         },
-        NamespacedCommand, NamespacedEvent, Role,
+        ModuleData, NamespacedCommand, NamespacedEvent, Role,
     },
 };
 
@@ -603,24 +603,20 @@ where
 
                 self.control_data = Some(control_data);
 
-                let mut module_data = HashMap::new();
+                let mut module_data = ModuleData::new();
 
                 if let Some(frontend_data) = frontend_data {
-                    module_data.insert(
-                        M::NAMESPACE.to_string(),
-                        serde_json::to_value(frontend_data)
-                            .context("Failed to convert frontend-data to value")?,
-                    );
+                    module_data
+                        .insert(&frontend_data)
+                        .context("Failed to convert frontend-data to value")?;
                 }
 
                 for participant in participants.iter_mut() {
                     if let Some(data) = participants_data.remove(&participant.id).flatten() {
-                        let value = serde_json::to_value(data)
-                            .context("Failed to convert module peer frontend data to value")?;
-
                         participant
                             .module_data
-                            .insert(M::NAMESPACE.to_string(), value);
+                            .insert(&data)
+                            .context("Failed to convert module peer frontend data to value")?;
                     }
                 }
 
@@ -710,13 +706,9 @@ where
                     .context("Module error on ParticipantJoined event")?;
 
                 if let Some(data) = data {
-                    let module_data = serde_json::to_value(data).context(
+                    participant.module_data.insert(&data).context(
                         "Failed to serialize PeerFrontendData for ParticipantJoined event",
                     )?;
-
-                    participant
-                        .module_data
-                        .insert(M::NAMESPACE.to_string(), module_data);
                 }
 
                 self.interface
@@ -760,13 +752,9 @@ where
                     .context("Module error on ParticipantUpdated event")?;
 
                 if let Some(data) = data {
-                    let module_data = serde_json::to_value(data).context(
+                    participant.module_data.insert(&data).context(
                         "Failed to serialize PeerFrontendData for ParticipantUpdated event",
                     )?;
-
-                    participant
-                        .module_data
-                        .insert(M::NAMESPACE.to_string(), module_data);
                 }
 
                 self.interface
@@ -950,11 +938,10 @@ where
 
         let control_data = ControlState::from_redis(&mut self.redis_conn, self.room_id, id).await?;
 
-        participant.module_data.insert(
-            NAMESPACE.to_string(),
-            serde_json::to_value(control_data)
-                .expect("Failed to convert ControlData to serde_json::Value"),
-        );
+        participant
+            .module_data
+            .insert(&control_data)
+            .context("Failed to convert ControlData to serde_json::Value")?;
 
         Ok(participant)
     }

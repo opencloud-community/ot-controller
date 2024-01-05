@@ -5,6 +5,9 @@
 #[allow(unused_imports)]
 use crate::imports::*;
 
+/// The namespace string for the waiting room state
+pub const NAMESPACE: &str = "waiting_room_state";
+
 /// The waiting room state of a meeting participant
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(
@@ -18,4 +21,9 @@ pub enum WaitingRoomState {
 
     /// The participant has been accepted into the meeting
     Accepted,
+}
+
+#[cfg(feature = "serde")]
+impl SignalingModulePeerFrontendData for WaitingRoomState {
+    const NAMESPACE: Option<&'static str> = Some(NAMESPACE);
 }

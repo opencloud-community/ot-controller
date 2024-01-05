@@ -30,3 +30,8 @@ pub struct BreakoutState {
     /// The participants in the other breakout rooms
     pub participants: Vec<ParticipantInOtherRoom>,
 }
+
+#[cfg(feature = "serde")]
+impl SignalingModuleFrontendData for BreakoutState {
+    const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
+}

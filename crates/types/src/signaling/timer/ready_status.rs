@@ -4,6 +4,9 @@
 
 //! Ready status for `timer` namespace
 
+#[allow(unused_imports)]
+use crate::imports::*;
+
 /// A flag to track the participants ready status
 #[derive(Default, Debug, PartialEq, Eq, Clone)]
 #[cfg_attr(
@@ -20,4 +23,9 @@
 pub struct ReadyStatus {
     /// The ready status of the participant
     pub ready_status: bool,
+}
+
+#[cfg(feature = "serde")]
+impl SignalingModulePeerFrontendData for ReadyStatus {
+    const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
 }

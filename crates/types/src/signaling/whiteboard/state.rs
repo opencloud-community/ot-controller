@@ -29,3 +29,8 @@ pub enum WhiteboardState {
     /// Whiteboard is initialized
     Initialized(Url),
 }
+
+#[cfg(feature = "serde")]
+impl SignalingModuleFrontendData for WhiteboardState {
+    const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
+}

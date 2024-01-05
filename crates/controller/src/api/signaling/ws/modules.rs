@@ -19,7 +19,7 @@ use types::{
     core::ParticipantId,
     signaling::{
         control::{state::ControlState, Participant},
-        Role,
+        ModuleData, Role,
     },
 };
 
@@ -117,7 +117,7 @@ pub enum DynTargetedEvent {
 pub enum DynBroadcastEvent<'evt> {
     Joined(
         &'evt ControlState,
-        &'evt mut HashMap<String, Value>,
+        &'evt mut ModuleData,
         &'evt mut Vec<Participant>,
     ),
     Leaving,
@@ -239,21 +239,17 @@ where
                     .await?;
 
                 if let Some(frontend_data) = frontend_data {
-                    module_data.insert(
-                        M::NAMESPACE.to_string(),
-                        serde_json::to_value(frontend_data)
-                            .context("Failed to convert frontend-data to value")?,
-                    );
+                    module_data
+                        .insert(&frontend_data)
+                        .context("Failed to convert frontend-data to value")?;
                 }
 
                 for participant in participants.iter_mut() {
                     if let Some(data) = participants_data.remove(&participant.id).flatten() {
-                        let value = serde_json::to_value(data)
-                            .context("Failed to convert module peer frontend data to value")?;
-
                         participant
                             .module_data
-                            .insert(M::NAMESPACE.to_string(), value);
+                            .insert(&data)
+                            .context("Failed to convert module peer frontend data to value")?;
                     }
                 }
             }
@@ -274,12 +270,10 @@ where
                     .await?;
 
                 if let Some(data) = data {
-                    let value = serde_json::to_value(data)
-                        .context("Failed to convert module peer frontend data to value")?;
-
                     participant
                         .module_data
-                        .insert(M::NAMESPACE.to_string(), value);
+                        .insert(&data)
+                        .context("Failed to convert module peer frontend data to value")?;
                 }
             }
             DynBroadcastEvent::ParticipantLeft(participant) => {
@@ -295,12 +289,10 @@ where
                     .await?;
 
                 if let Some(data) = data {
-                    let value = serde_json::to_value(data)
-                        .context("Failed to convert module peer frontend data to value")?;
-
                     participant
                         .module_data
-                        .insert(M::NAMESPACE.to_string(), value);
+                        .insert(&data)
+                        .context("Failed to convert module peer frontend data to value")?;
                 }
             }
             DynBroadcastEvent::RoleUpdated(role) => {

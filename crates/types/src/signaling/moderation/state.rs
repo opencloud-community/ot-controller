@@ -24,6 +24,11 @@ pub struct ModerationState {
     pub raise_hands_enabled: bool,
 }
 
+#[cfg(feature = "serde")]
+impl SignalingModuleFrontendData for ModerationState {
+    const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
+}
+
 /// Moderation module state that is visible only to moderators
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
