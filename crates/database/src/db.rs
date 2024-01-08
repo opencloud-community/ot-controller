@@ -8,8 +8,6 @@ use deadpool_runtime::Runtime;
 use diesel_async::pooled_connection::deadpool::Pool;
 use diesel_async::pooled_connection::AsyncDieselConnectionManager;
 use diesel_async::AsyncPgConnection;
-use opentalk_controller_settings as settings;
-use opentelemetry::Context;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -26,7 +24,7 @@ pub struct Db {
 impl Db {
     /// Creates a new Db instance from the specified database settings.
     #[tracing::instrument(skip(db_settings))]
-    pub fn connect(db_settings: &settings::Database) -> crate::Result<Self> {
+    pub fn connect(db_settings: &opentalk_controller_settings::Database) -> crate::Result<Self> {
         Self::connect_url(&db_settings.url, db_settings.max_connections)
     }
 
@@ -58,14 +56,11 @@ impl Db {
         let state = self.pool.status();
 
         if let Some(metrics) = &self.metrics {
-            let context = Context::current();
-            metrics
-                .dbpool_connections
-                .record(&context, state.size as u64, &[]);
+            metrics.dbpool_connections.record(state.size as u64, &[]);
 
             metrics
                 .dbpool_connections_idle
-                .record(&context, state.available as i64, &[]);
+                .record(state.available as i64, &[]);
         }
 
         match res {

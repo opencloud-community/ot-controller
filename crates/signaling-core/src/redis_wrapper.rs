@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentelemetry::metrics::Histogram;
-use opentelemetry::{Context, Key};
+use opentelemetry::Key;
 use redis::aio::ConnectionLike;
 use redis::{Arg, RedisFuture};
 use std::sync::Arc;
@@ -56,11 +56,9 @@ impl ConnectionLike for RedisConnection {
                         COMMAND_KEY.string("UNKNOWN")
                     };
 
-                    metrics.command_execution_time.record(
-                        &Context::current(),
-                        start.elapsed().as_secs_f64(),
-                        &[command],
-                    );
+                    metrics
+                        .command_execution_time
+                        .record(start.elapsed().as_secs_f64(), &[command]);
                 }
 
                 res
@@ -88,7 +86,6 @@ impl ConnectionLike for RedisConnection {
 
                 if res.is_ok() {
                     metrics.command_execution_time.record(
-                        &Context::current(),
                         start.elapsed().as_secs_f64(),
                         &[COMMAND_KEY.string("MULTI")],
                     );
