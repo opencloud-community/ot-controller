@@ -42,6 +42,6 @@ pub enum Error {
     FileNotFound {
         file_path: String,
         #[source]
-        source: reqwest_dav::DavError,
+        source: reqwest_dav::Error,
     },
 }
