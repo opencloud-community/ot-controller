@@ -181,7 +181,6 @@ skip = [
     { name = "fastrand", version = "1" },
     { name = "hashbrown", version = "=0.11" },
     { name = "hashbrown", version = "=0.12" },
-    { name = "hyper-rustls", version = "=0.23" },
     { name = "idna", version = "=0.2" },
     { name = "idna", version = "=0.3" },
     { name = "indexmap", version = "=1" },
@@ -190,7 +189,6 @@ skip = [
     { name = "num-bigint", version = "=0.4" },
     { name = "regex-syntax", version = "=0.6" },
     { name = "regex-automata", version = "=0.1" },
-    { name = "rustls", version = "=0.20" },
     { name = "siphasher", version = "=0.3" },
     { name = "socket2", version = "=0.4" },
     { name = "spin", version = "=0.5" },
@@ -199,15 +197,28 @@ skip = [
     { name = "syn", version = "=1" },
     { name = "toml", version = "=0.5" },
     { name = "toml_edit", version = "=0.19" },
-    { name = "tokio-rustls", version = "=0.23" },
+    { name = "ring", version = "=0.16" },
+    # Mainly caused by aws-sdk-s3 (aws-sigv4) which uses an old version of `p256`, should be checked again after the next update 
+    { name = "untrusted", version = "=0.7" },
+    { name = "base16ct", version = "=0.1" },
+    { name = "crypto-bigint", version = "=0.4" },
+    { name = "der", version = "=0.6" },
+    { name = "ecdsa", version = "=0.14" },
+    { name = "elliptic-curve", version = "=0.12" },
+    { name = "ff", version = "=0.12" },
+    { name = "group", version = "=0.12" },
+    { name = "p256", version = "=0.11" },
+    { name = "pkcs8", version = "=0.9" },
+    { name = "rfc6979", version = "=0.3" },
+    { name = "signature", version = "=1.6" },
+    { name = "sec1", version = "=0.3" },
+    { name = "spki", version = "=0.6" },
 ]
 # Similarly to `skip` allows you to skip certain crates during duplicate
 # detection. Unlike skip, it also includes the entire tree of transitive
 # dependencies starting at the specified crate, up to a certain depth, which is
 # by default infinite
-skip-tree = [
-    { name = "rustix", version = "=0.37" },
-]
+skip-tree = [{ name = "rustix", version = "=0.37" }]
 
 # This section is considered when running `cargo deny check sources`.
 # More documentation about the 'sources' section can be found here:
@@ -227,9 +238,7 @@ allow-git = []
 
 [sources.allow-org]
 # 1 or more github.com organizations to allow git sources for
-github = [
-    "kbalt",
-]
+github = ["kbalt"]
 # 1 or more gitlab.com organizations to allow git sources for
 gitlab = []
 # 1 or more bitbucket.org organizations to allow git sources for

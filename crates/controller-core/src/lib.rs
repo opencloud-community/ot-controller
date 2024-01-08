@@ -389,7 +389,7 @@ impl Controller {
         let http_server = if let Some(tls) = &self.startup_settings.http.tls {
             let config = setup_rustls(tls).context("Failed to setup TLS context")?;
 
-            http_server.bind_rustls(address, config)
+            http_server.bind_rustls_021(address, config)
         } else {
             http_server.bind(address)
         };
