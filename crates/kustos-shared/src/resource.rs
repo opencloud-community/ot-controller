@@ -12,7 +12,7 @@
 //! Supporting relative resources (e.g. entities with a primary key consisting of a multiple foreign keys) are an open issue currently.
 //!
 //! All resources need to implement the [`Resource`] trait
-use crate::{error::ResourceParseError, policy::Policy, subject::IsSubject};
+use crate::error::ResourceParseError;
 use std::{fmt::Display, ops::Deref, str::FromStr};
 
 /// This trait is used to allow the retrieval of resource reduced URL prefixes as well as retrieving
@@ -54,12 +54,6 @@ impl<T: Resource + FromStr<Err = E>, E: Into<ResourceParseError>> KustosFromStr 
 /// * `/users/1` to represent the resource of user with id = 1
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct ResourceId(pub(crate) String);
-
-impl<T: IsSubject> From<Policy<T>> for ResourceId {
-    fn from(policy: Policy<T>) -> Self {
-        policy.obj
-    }
-}
 
 impl ResourceId {
     pub fn into_inner(self) -> String {
