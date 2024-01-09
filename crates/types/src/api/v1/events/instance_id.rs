@@ -2,11 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::{fmt::Display, ops::Add};
-
-use chrono::{DateTime, Utc};
-
 use crate::{api::v1::events::UTC_DT_FORMAT, core::Timestamp};
+use chrono::{DateTime, Utc};
+use std::{fmt::Display, ops::Add};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -48,27 +46,36 @@ impl Add<chrono::Duration> for InstanceId {
 
 #[cfg(feature = "serde")]
 mod serde_impls {
-    use super::{
-        super::UTC_DT_FORMAT, Deserialize, Deserializer, InstanceId, Serialize, Serializer,
-    };
-    use chrono::{DateTime, Utc};
+    use super::{Deserialize, Deserializer, InstanceId, Serialize, Serializer, UTC_DT_FORMAT};
+    use chrono::{DateTime, NaiveDateTime, Utc};
 
+    const DT_FORMAT: &str = "%Y%m%dT%H%M%S%z";
     struct InstanceIdVisitor;
 
     impl<'de> serde::de::Visitor<'de> for InstanceIdVisitor {
         type Value = InstanceId;
 
         fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-            write!(formatter, "timestamp in '{UTC_DT_FORMAT}' format")
+            write!(
+                formatter,
+                "timestamp in '{DT_FORMAT}' or '{UTC_DT_FORMAT}' format"
+            )
         }
 
         fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
         where
             E: serde::de::Error,
         {
-            DateTime::parse_from_str(v, UTC_DT_FORMAT)
-                .map(|dt| InstanceId(dt.with_timezone(&Utc).into()))
-                .map_err(|_| serde::de::Error::invalid_value(serde::de::Unexpected::Str(v), &self))
+            let utc_date_time = DateTime::parse_from_str(v, DT_FORMAT)
+                .map(|dt| dt.with_timezone(&Utc))
+                .or_else(|_| {
+                    NaiveDateTime::parse_from_str(v, UTC_DT_FORMAT).map(|ndt| ndt.and_utc())
+                })
+                .map_err(|_| {
+                    serde::de::Error::invalid_value(serde::de::Unexpected::Str(v), &self)
+                })?;
+
+            Ok(InstanceId(utc_date_time.into()))
         }
     }
 
@@ -91,5 +98,33 @@ mod serde_impls {
                 .to_string()
                 .serialize(serializer)
         }
+    }
+}
+
+#[cfg(test)]
+#[cfg(feature = "serde")]
+mod test {
+    use super::InstanceId;
+    use serde_json::Value;
+    use std::time::UNIX_EPOCH;
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn serialize_utc() {
+        let input = "19700101T000000Z";
+
+        let instance_id: InstanceId = serde_json::from_value(Value::String(input.into())).unwrap();
+
+        assert_eq!(instance_id.0, UNIX_EPOCH.into())
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn serialize_utc_plus_one() {
+        let input = "19700101T010000+0100";
+
+        let instance_id: InstanceId = serde_json::from_value(Value::String(input.into())).unwrap();
+
+        assert_eq!(instance_id.0, UNIX_EPOCH.into())
     }
 }
