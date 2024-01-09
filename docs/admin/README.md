@@ -17,6 +17,7 @@
 - [Logging](logging.md)
 - [Metrics](metrics.md)
 - [STUN and TURN](stun_turn.md)
+- [Personal Data Storage](personal_data_storage.md)
 
 ## Interaction between OpenTalk Controller and other services
 

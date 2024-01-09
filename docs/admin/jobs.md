@@ -5,7 +5,7 @@ title: Execution of maintenance jobs
 
 # Jobs
 
-Jobs can be executed through the command-line in order to perform maintenance tasks.
+Jobs can be executed through the command-line in order to perform maintenance tasks. Currently, these jobs are not executed automatically and require manual setup by the administrator. They can be executed via cronjobs or systemd timers, for example.
 
 ## Available jobs
 
@@ -137,9 +137,9 @@ The job takes a JSON object with the following fields as a parameter. All
 fields are optional, if any of them is not included in the parameter object, the
 default value will be used.
 
-| Field               | Type               | Default value | Description                                                                                                                                                         |
-| ------------------- | ------------------ | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `expired_before`    | `string` or `null` | `null`        | Timestamp in ISO 8601 format. All invites that expired before this timestamp are deleted by this job. If no timestamp is provided, the current system time is used. |
+| Field            | Type               | Default value | Description                                                                                                                                                         |
+| ---------------- | ------------------ | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `expired_before` | `string` or `null` | `null`        | Timestamp in ISO 8601 format. All invites that expired before this timestamp are deleted by this job. If no timestamp is provided, the current system time is used. |
 
 The default parameters for the job look like this:
 
