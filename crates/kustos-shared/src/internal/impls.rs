@@ -18,7 +18,6 @@ use super::{ToCasbin, ToCasbinMultiple, ToCasbinString};
 use crate::{
     access::AccessMethod,
     error::ParsingError,
-    policies_builder::{PoliciesBuilder, Ready},
     policy::{InvitePolicy, Policies, Policy, UserPolicy},
     resource::ResourceId,
     subject::{
@@ -160,29 +159,5 @@ impl ToCasbin for UserToGroup {
 impl ToCasbin for UserToRole {
     fn to_casbin_policy(self) -> Vec<String> {
         vec![self.0.to_casbin_string(), self.1.to_casbin_string()]
-    }
-}
-
-impl ToCasbinMultiple for PoliciesBuilder<Ready> {
-    fn to_casbin_policies(self) -> Vec<Vec<String>> {
-        self.user_policies
-            .into_iter()
-            .map(ToCasbin::to_casbin_policy)
-            .chain(
-                self.invite_policies
-                    .into_iter()
-                    .map(ToCasbin::to_casbin_policy),
-            )
-            .chain(
-                self.group_policies
-                    .into_iter()
-                    .map(ToCasbin::to_casbin_policy),
-            )
-            .chain(
-                self.role_policies
-                    .into_iter()
-                    .map(ToCasbin::to_casbin_policy),
-            )
-            .collect()
     }
 }

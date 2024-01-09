@@ -99,14 +99,14 @@ pub mod db;
 mod error;
 mod internal;
 pub mod metrics;
+pub mod policies_builder;
 pub mod prelude;
 
 pub use error::{Error, Result};
-pub use resource::*;
 pub use shared::{
     access::AccessMethod,
     error::ResourceParseError,
-    policies_builder, policy, resource,
+    policy, resource,
     resource::{AccessibleResources, Resource, ResourceId},
     subject,
 };

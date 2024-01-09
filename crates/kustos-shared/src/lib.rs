@@ -4,7 +4,6 @@
 
 pub mod access;
 pub mod error;
-pub mod policies_builder;
 pub mod policy;
 pub mod resource;
 pub mod subject;
