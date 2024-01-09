@@ -2616,7 +2616,6 @@ name = "kustos-shared"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "casbin",
  "http",
  "itertools 0.11.0",
  "pretty_assertions",
