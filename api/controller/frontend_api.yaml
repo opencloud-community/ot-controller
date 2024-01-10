@@ -1720,6 +1720,7 @@ components:
         Opaque id of an event instance
       example:
         - 20220215T180000Z
+        - 20220215T180000+0100
       schema:
         type: string
       required: true
