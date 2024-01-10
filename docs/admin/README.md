@@ -1,3 +1,7 @@
+---
+title: Controller
+---
+
 # Administration guide for the OpenTalk Controller
 
 ## General information about the service
