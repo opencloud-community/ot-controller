@@ -11,7 +11,7 @@ use diesel::sql_types::BigInt;
 use diesel::QueryResult;
 use diesel_async::methods::LoadQuery;
 use diesel_async::pooled_connection::deadpool::{BuildError, Object, PoolError};
-use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
+use diesel_async::{AsyncConnection, AsyncPgConnection};
 use std::borrow::Cow;
 
 mod db;
@@ -123,8 +123,16 @@ impl<T> Paginated<T> {
         U: Send + 'static,
         T: 'query,
     {
-        let results = self.load::<(U, i64)>(conn).await?;
-        let total = results.get(0).map(|x| x.1).unwrap_or(0);
+        let results: Vec<(U, i64)> = {
+            // When `diesel_async::RunQueryDsl` is imported globally, the call
+            // to `results.first()` below will cause compiler errors because the
+            // compiler mistakes it for `diesel_async::RunQueryDsl::first(…)`
+            // and fails finding a trait implementation of `results` that
+            // matches, so we restrict the import scope.
+            use diesel_async::RunQueryDsl;
+            self.load::<(U, i64)>(conn).await?
+        };
+        let total = results.first().map(|x| x.1).unwrap_or(0);
         let records = results.into_iter().map(|x| x.0).collect();
         Ok((records, total))
     }

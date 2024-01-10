@@ -94,6 +94,8 @@ pub mod signaling;
 pub mod strings;
 
 mod imports {
+    #![allow(unused)]
+
     #[cfg(feature = "diesel")]
     pub use {
         diesel::{
