@@ -93,7 +93,7 @@ pub struct MarkedSection<'a> {
 
 impl<'a> MarkedSection<'a> {
     fn retrieve_from_slice(lines: &[MarkerLine<'a>]) -> Result<MarkedSection<'a>> {
-        let begin = lines.get(0).context("No more marker lines left")?.clone();
+        let begin = lines.first().context("No more marker lines left")?.clone();
 
         ensure!(
             begin.kind() == MarkerKind::Begin,
@@ -195,7 +195,7 @@ The end.";
         assert_eq!(captures.len(), 2);
 
         {
-            let c = captures.get(0).unwrap();
+            let c = captures.first().unwrap();
 
             let marker = c.name("marker").unwrap().as_str();
             let filename = c.name("filename").unwrap().as_str();

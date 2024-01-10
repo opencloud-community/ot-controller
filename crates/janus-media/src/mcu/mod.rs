@@ -1294,10 +1294,7 @@ async fn forward_janus_message(
                 event
             );
             event_sink
-                .send((
-                    media_session_key,
-                    WebRtcEvent::Media(event.clone().try_into()?),
-                ))
+                .send((media_session_key, WebRtcEvent::Media(event.clone().into())))
                 .await?;
         }
         janus_client::JanusMessage::WebRtcUp(_) => {
