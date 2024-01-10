@@ -4,11 +4,12 @@
 
 [package]
 name = "kustos-shared"
-version = "0.1.0"
 edition = "2021"
 license = "EUPL-1.2"
 authors.workspace = true
-publish = false
+version.workspace = true
+publish = true
+description = "Shared types for kustos"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

@@ -107,7 +107,18 @@ default = "allow"
 confidence-threshold = 0.8
 # Allow 1 or more licenses on a per-crate basis, so that particular licenses
 # aren't accepted for every possible crate as with the normal allow list
-exceptions = []
+exceptions = [
+    { allow = ["EUPL-1.2"], name = "kustos-shared" },
+    { allow = ["EUPL-1.2"], name = "opentalk-client-shared" },
+    { allow = ["EUPL-1.2"], name = "opentalk-diesel-newtype" },
+    { allow = ["EUPL-1.2"], name = "opentalk-diesel-newtype-impl" },
+    { allow = ["EUPL-1.2"], name = "opentalk-kustos-prefix" },
+    { allow = ["EUPL-1.2"], name = "opentalk-kustos-prefix-impl" },
+    { allow = ["EUPL-1.2"], name = "opentalk-proc-macro-fields-helper" },
+    { allow = ["EUPL-1.2"], name = "opentalk-types" },
+    { allow = ["EUPL-1.2"], name = "redis-args" },
+    { allow = ["EUPL-1.2"], name = "redis-args-impl" },
+]
 
 # Some crates don't have (easily) machine readable licensing information,
 # adding a clarification entry for it allows you to manually specify the

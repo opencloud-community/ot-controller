@@ -5,9 +5,11 @@
 [package]
 name = "opentalk-kustos-prefix-impl"
 edition = "2021"
+license = "EUPL-1.2"
 authors.workspace = true
 version.workspace = true
-publish = false
+publish = true
+description = "Derive macro for defining kustos prefix - proc-macro implementation"
 
 [lib]
 proc-macro = true

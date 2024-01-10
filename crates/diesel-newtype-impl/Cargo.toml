@@ -5,9 +5,11 @@
 [package]
 name = "opentalk-diesel-newtype-impl"
 edition = "2021"
+license = "EUPL-1.2"
 authors.workspace = true
 version.workspace = true
-publish = false
+publish = true
+description = "Newtype derive for diesel types used in OpenTalk crates - proc-macro implementation"
 
 [lib]
 proc-macro = true

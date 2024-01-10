@@ -5,16 +5,18 @@
 [package]
 name = "redis-args-impl"
 edition = "2021"
+license = "EUPL-1.2"
 authors.workspace = true
 version.workspace = true
-publish = false
+publish = true
+description = "Derive macro for reading and writing types for redis usage, either through serde or format args - proc-macro implementation"
 
 [lib]
 proc-macro = true
 
 [dependencies]
-proc-macro-fields-helper = { path = "../proc-macro-fields-helper" }
-proc-macro2 = "1"                                                   #
+proc-macro-fields-helper = { path = "../proc-macro-fields-helper", package = "opentalk-proc-macro-fields-helper" }
+proc-macro2 = "1"
 quote = "1"
 syn = { version = "2", features = ["extra-traits"] }
 
