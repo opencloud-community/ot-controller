@@ -19,12 +19,8 @@ itertools = { workspace = true, optional = true }
 thiserror.workspace = true
 uuid = { workspace = true, features = [ "v4" ] }
 
-[dependencies.casbin]
-workspace = true
-optional = true
-
 [features]
-internal = ["dep:casbin", "dep:itertools"]
+internal = ["dep:itertools"]
 
 [dev-dependencies]
 pretty_assertions.workspace = true

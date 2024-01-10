@@ -2,8 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::{
+use shared::{
     access::AccessMethod,
+    internal::{ToCasbin, ToCasbinMultiple},
+};
+
+use crate::{
     policy::{GroupPolicy, InvitePolicy, Policy, RolePolicy, UserPolicy},
     resource::ResourceId,
     subject::{IsSubject, PolicyGroup, PolicyInvite, PolicyRole, PolicyUser},
@@ -22,7 +26,7 @@ pub trait BuilderState: Debug {
 /// # Example:
 /// ```
 /// # use uuid::Uuid;
-/// # use kustos_shared::{access::AccessMethod, policies_builder::PoliciesBuilder};
+/// # use kustos::{AccessMethod, policies_builder::PoliciesBuilder};
 /// let user_id = Uuid::nil();
 /// let policies = PoliciesBuilder::default()
 ///     .grant_user_access(user_id)
@@ -240,5 +244,29 @@ impl BuilderState for GrantingAccess<PolicyGroup> {
 impl BuilderState for GrantingAccess<PolicyRole> {
     fn finalize<B>(self, policies: &mut PoliciesBuilder<B>) {
         policies.role_policies.extend(self.resources_iter());
+    }
+}
+
+impl ToCasbinMultiple for PoliciesBuilder<Ready> {
+    fn to_casbin_policies(self) -> Vec<Vec<String>> {
+        self.user_policies
+            .into_iter()
+            .map(ToCasbin::to_casbin_policy)
+            .chain(
+                self.invite_policies
+                    .into_iter()
+                    .map(ToCasbin::to_casbin_policy),
+            )
+            .chain(
+                self.group_policies
+                    .into_iter()
+                    .map(ToCasbin::to_casbin_policy),
+            )
+            .chain(
+                self.role_policies
+                    .into_iter()
+                    .map(ToCasbin::to_casbin_policy),
+            )
+            .collect()
     }
 }

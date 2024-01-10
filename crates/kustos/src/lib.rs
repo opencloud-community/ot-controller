@@ -77,11 +77,11 @@ use casbin::{CoreApi, MgmtApi, RbacApi};
 use database::Db;
 use internal::synced_enforcer::SyncedEnforcer;
 use metrics::KustosMetrics;
+use policy::{
+    GroupPolicies, InvitePolicies, InvitePolicy, Policy, RolePolicies, UserPolicies, UserPolicy,
+};
 use shared::{
     internal::{ToCasbin, ToCasbinMultiple, ToCasbinString},
-    policy::{
-        GroupPolicies, InvitePolicies, InvitePolicy, Policy, RolePolicies, UserPolicies, UserPolicy,
-    },
     resource::KustosFromStr,
     subject::{
         GroupToRole, IsSubject, PolicyGroup, PolicyInvite, PolicyRole, PolicyUser, UserToGroup,
@@ -99,14 +99,15 @@ pub mod db;
 mod error;
 mod internal;
 pub mod metrics;
+pub mod policies_builder;
+pub mod policy;
 pub mod prelude;
 
 pub use error::{Error, Result};
-pub use resource::*;
 pub use shared::{
     access::AccessMethod,
     error::ResourceParseError,
-    policies_builder, policy, resource,
+    resource,
     resource::{AccessibleResources, Resource, ResourceId},
     subject,
 };
