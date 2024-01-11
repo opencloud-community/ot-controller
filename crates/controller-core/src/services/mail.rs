@@ -68,6 +68,11 @@ fn to_event(
 ) -> opentalk_mail_worker_protocol::v1::Event {
     const ONE_DAY_IN_SECONDS: u64 = 86400;
 
+    let created_at = v1::Time {
+        time: event.created_at,
+        timezone: event.created_at.timezone().to_string(),
+    };
+
     let start_time: Option<v1::Time> = event.starts_at.zip(event.starts_at_tz).map(Into::into);
 
     let end_time: Option<v1::Time> = event.ends_at_of_first_occurrence().map(Into::into);
@@ -99,6 +104,7 @@ fn to_event(
         id: Uuid::from(event.id),
         name: event.title,
         description: event.description,
+        created_at,
         start_time,
         end_time,
         rrule: event.recurrence_pattern,

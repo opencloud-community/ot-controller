@@ -82,6 +82,7 @@ pub struct Time {
 pub struct Event {
     pub id: Uuid,
     pub name: String,
+    pub created_at: Time,
     pub start_time: Option<Time>,
     pub end_time: Option<Time>,
     pub rrule: Option<String>,
@@ -169,6 +170,14 @@ mod test {
                 id: Uuid::from_u128(1),
                 name: "Guten Morgen Meeting".into(),
                 description: "".into(),
+                created_at: Time {
+                    time: chrono::DateTime::<FixedOffset>::parse_from_rfc3339(
+                        "2021-12-29T15:00:00+00:00",
+                    )
+                    .unwrap()
+                    .into(),
+                    timezone: "UTC".into(),
+                },
                 start_time: Some(Time {
                     time: chrono::DateTime::<FixedOffset>::parse_from_rfc3339(
                         "2021-12-29T15:00:00+02:00",
@@ -223,6 +232,7 @@ mod test {
                     "id": Uuid::from_u128(1),
                     "name": "Guten Morgen Meeting",
                     "description": "",
+                    "created_at": {"time":"2021-12-29T15:00:00+00:00", "timezone": "UTC"},
                     "start_time": {"time":"2021-12-29T15:00:00+02:00", "timezone": "Europe/Berlin"},
                     "end_time": {"time": "2021-12-29T15:30:00+02:00", "timezone": "Europe/Berlin"},
                     "room": {
@@ -276,6 +286,14 @@ mod test {
                 id: Uuid::from_u128(1),
                 name: "Guten Morgen Meeting".into(),
                 description: "".into(),
+                created_at: Time {
+                    time: chrono::DateTime::<FixedOffset>::parse_from_rfc3339(
+                        "2021-12-29T15:00:00+00:00",
+                    )
+                    .unwrap()
+                    .into(),
+                    timezone: "UTC".into(),
+                },
                 start_time: None,
                 end_time: None,
                 rrule: None,
@@ -315,6 +333,7 @@ mod test {
                 "event": {
                     "id": Uuid::from_u128(1),
                     "name": "Guten Morgen Meeting",
+                    "created_at": {"time":"2021-12-29T15:00:00+00:00", "timezone": "UTC"},
                     "description": "",
                     "room": {
                         "id": Uuid::from_u128(0),
