@@ -5,6 +5,7 @@
 [package]
 name = "opentalk-jobs"
 edition = "2021"
+license = "EUPL-1.2"
 authors.workspace = true
 version.workspace = true
 publish = false

@@ -5,9 +5,11 @@
 [package]
 name = "opentalk-types"
 edition = "2021"
+license = "EUPL-1.2"
 authors.workspace = true
 version.workspace = true
-publish = false
+publish = true
+description = "Shared types and traits for OpenTalk crates"
 
 [dependencies]
 actix-http = { workspace = true, optional = true }

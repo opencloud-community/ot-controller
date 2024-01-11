@@ -2613,7 +2613,7 @@ dependencies = [
 
 [[package]]
 name = "kustos-shared"
-version = "0.1.0"
+version = "0.0.0-dev"
 dependencies = [
  "anyhow",
  "http",
@@ -3591,6 +3591,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "opentalk-proc-macro-fields-helper"
+version = "0.0.0-dev"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.38",
+]
+
+[[package]]
 name = "opentalk-protocol"
 version = "0.0.0-dev"
 dependencies = [
@@ -4269,15 +4278,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "proc-macro-fields-helper"
-version = "0.0.0-dev"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.38",
-]
-
-[[package]]
 name = "proc-macro2"
 version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4491,7 +4491,7 @@ dependencies = [
 name = "redis-args-impl"
 version = "0.0.0-dev"
 dependencies = [
- "proc-macro-fields-helper",
+ "opentalk-proc-macro-fields-helper",
  "proc-macro2",
  "quote",
  "redis",

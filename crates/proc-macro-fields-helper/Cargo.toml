@@ -3,11 +3,13 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "proc-macro-fields-helper"
+name = "opentalk-proc-macro-fields-helper"
 edition = "2021"
+license = "EUPL-1.2"
 authors.workspace = true
 version.workspace = true
-publish = false
+publish = true
+description = "Helper function for working with fields in proc macros, used in OpenTalk crates"
 
 [dependencies]
 quote = "1"
