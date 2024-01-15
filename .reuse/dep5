@@ -8,6 +8,7 @@ Files:
  CHANGELOG.md
  crates/db-storage/src/migrations/*.sql
  crates/db-storage/src/schema.rs
+ crates/*/README.md
  .gitlab/issue_templates/*.md
  renovate.json
  docs/**.md
