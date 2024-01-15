@@ -2501,9 +2501,9 @@ dependencies = [
 
 [[package]]
 name = "itertools"
-version = "0.11.0"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1c173a5686ce8bfa551b3563d0c2170bf24ca44da99c7ca4bfdab5418c3fe57"
+checksum = "25db6b064527c5d482d0423354fcd07a89a2dfe07b67892e62411946db7f07b0"
 dependencies = [
  "either",
 ]
@@ -2594,7 +2594,7 @@ dependencies = [
  "diesel",
  "diesel-async",
  "futures",
- "itertools 0.11.0",
+ "itertools 0.12.0",
  "kustos-shared",
  "log",
  "opentalk-database",
@@ -2617,7 +2617,7 @@ version = "0.0.0-dev"
 dependencies = [
  "anyhow",
  "http",
- "itertools 0.11.0",
+ "itertools 0.12.0",
  "pretty_assertions",
  "thiserror",
  "uuid",
@@ -3275,7 +3275,7 @@ dependencies = [
  "either",
  "email_address",
  "futures",
- "itertools 0.11.0",
+ "itertools 0.12.0",
  "jsonwebtoken",
  "keycloak-admin",
  "kustos",
@@ -4058,7 +4058,7 @@ dependencies = [
  "bincode",
  "either",
  "fnv",
- "itertools 0.11.0",
+ "itertools 0.10.5",
  "lazy_static",
  "nom",
  "quick-xml",
