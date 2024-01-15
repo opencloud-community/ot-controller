@@ -69,7 +69,7 @@ tokio-stream.workspace = true
 actix-web = { workspace = true, features = ["rustls-0_21"] }
 actix-rt.workspace = true
 actix-web-httpauth.workspace = true
-actix-cors = "0.6"
+actix-cors = "0.7"
 async-trait.workspace = true
 futures.workspace = true
 bytes.workspace = true
