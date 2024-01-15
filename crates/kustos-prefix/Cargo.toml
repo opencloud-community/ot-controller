@@ -4,10 +4,13 @@
 
 [package]
 name = "opentalk-kustos-prefix"
+documentation = "https://docs.rs/opentalk-kustos-prefix"
 edition = "2021"
 license = "EUPL-1.2"
 authors.workspace = true
 version.workspace = true
+homepage.workspace = true
+repository.workspace = true
 publish = true
 description = "Derive macro for defining kustos prefix"
 

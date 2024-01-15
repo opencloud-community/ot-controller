@@ -9,6 +9,8 @@ resolver = "2"
 [workspace.package]
 authors = ["OpenTalk Team <mail@opentalk.eu>"]
 version = "0.0.0-dev"
+homepage = "https://opentalk.eu/"
+repository = "https://gitlab.opencode.de/opentalk/controller"
 
 [workspace.dependencies]
 ci-doc-updater = { path = "crates/ci-doc-updater", version = "0.0.0-dev" }

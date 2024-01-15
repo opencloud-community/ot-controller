@@ -4,10 +4,13 @@
 
 [package]
 name = "redis-args-impl"
+documentation = "https://docs.rs/redis-args-impl"
 edition = "2021"
 license = "EUPL-1.2"
 authors.workspace = true
 version.workspace = true
+homepage.workspace = true
+repository.workspace = true
 publish = true
 description = "Derive macro for reading and writing types for redis usage, either through serde or format args - proc-macro implementation"
 
