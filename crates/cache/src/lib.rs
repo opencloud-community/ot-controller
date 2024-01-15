@@ -81,7 +81,12 @@ where
     }
 
     pub async fn get(&self, key: &K) -> Result<Option<V>, CacheError> {
-        if let Some(entry) = self.local.get(key).filter(|entry| entry.still_valid()) {
+        if let Some(entry) = self
+            .local
+            .get(key)
+            .await
+            .filter(|entry| entry.still_valid())
+        {
             Ok(Some(entry.value))
         } else if let Some(RedisConfig {
             redis,
