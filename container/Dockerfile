@@ -14,7 +14,7 @@ COPY ./crates/ci-doc-updater/Cargo.toml ./crates/ci-doc-updater/Cargo.toml
 COPY ./crates/client/Cargo.toml ./crates/client/Cargo.toml
 COPY ./crates/client-shared/Cargo.toml ./crates/client-shared/Cargo.toml
 COPY ./crates/community-modules/Cargo.toml ./crates/community-modules/Cargo.toml
-COPY ./crates/controller/Cargo.toml ./crates/controller/Cargo.toml
+COPY ./crates/controller-core/Cargo.toml ./crates/controller-core/Cargo.toml
 COPY ./crates/controller-settings/Cargo.toml ./crates/controller-settings/Cargo.toml
 COPY ./crates/controller-utils/Cargo.toml ./crates/controller-utils/Cargo.toml
 COPY ./crates/core/Cargo.toml ./crates/core/Cargo.toml

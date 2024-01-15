@@ -5,11 +5,11 @@
 use super::PollsState;
 use crate::{ChoiceId, PollId};
 use anyhow::{bail, Context, Result};
+use opentalk_signaling_core::{RedisConnection, SignalingRoomId};
+use opentalk_types::signaling::polls::Item;
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
-use signaling_core::{RedisConnection, SignalingRoomId};
 use std::collections::HashMap;
-use types::signaling::polls::Item;
 
 /// Key to the current poll config
 #[derive(ToRedisArgs)]

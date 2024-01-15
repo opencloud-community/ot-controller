@@ -6,12 +6,12 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use chrono::{Days, Utc};
-use database::Db;
 use log::Log;
+use opentalk_controller_settings::Settings;
+use opentalk_database::Db;
 use opentalk_log::{debug, error, info};
+use opentalk_signaling_core::ExchangeHandle;
 use serde::{Deserialize, Serialize};
-use settings::Settings;
-use signaling_core::ExchangeHandle;
 
 use crate::{
     events::{perform_deletion, DeleteSelector},

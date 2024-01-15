@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use shared::{
+use kustos_shared::{
     access::AccessMethod,
     internal::{ToCasbin, ToCasbinMultiple},
 };

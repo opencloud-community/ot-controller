@@ -14,7 +14,7 @@ mod common;
 async fn test() {
     const MAX_USER_SEARCH_RESULTS: usize = 20;
 
-    let db_ctx = test_util::database::DatabaseContext::new(true).await;
+    let db_ctx = opentalk_test_util::database::DatabaseContext::new(true).await;
     let mut conn = db_ctx.db.get_conn().await.unwrap();
 
     // generate some random users with some made up names

@@ -3,11 +3,11 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use anyhow::Result;
-use controller_settings::{Settings, SharedSettings};
 use lapin_pool::RabbitMqPool;
+use opentalk_controller_settings::{Settings, SharedSettings};
+use opentalk_types::signaling::{SignalingModuleFrontendData, SignalingModulePeerFrontendData};
 use serde::{Deserialize, Serialize};
 use tokio::sync::broadcast;
-use types::signaling::{SignalingModuleFrontendData, SignalingModulePeerFrontendData};
 
 use std::{fmt::Debug, sync::Arc};
 

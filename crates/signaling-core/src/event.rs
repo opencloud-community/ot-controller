@@ -4,7 +4,7 @@
 
 use std::collections::HashMap;
 
-use types::{
+use opentalk_types::{
     core::ParticipantId,
     signaling::{control::state::ControlState, Role},
 };

@@ -5,18 +5,18 @@
 use crate::{RedisConnection, SignalingRoomId};
 
 use anyhow::{Context, Result};
-use db_storage::{events::Event, tariffs::Tariff};
-use r3dlock::Mutex;
+use opentalk_db_storage::{events::Event, tariffs::Tariff};
+use opentalk_r3dlock::Mutex;
+use opentalk_types::{
+    core::{ParticipantId, RoomId, Timestamp},
+    signaling::Role,
+};
 use redis::{AsyncCommands, FromRedisValue, ToRedisArgs};
 use redis_args::ToRedisArgs;
 use std::collections::HashSet;
 use std::fmt::Debug;
 use std::time::Duration;
 use std::{collections::HashMap, convert::identity};
-use types::{
-    core::{ParticipantId, RoomId, Timestamp},
-    signaling::Role,
-};
 
 // The expiry in seconds for the `skip_waiting_room` key in Redis
 const SKIP_WAITING_ROOM_KEY_EXPIRY: u64 = 120;

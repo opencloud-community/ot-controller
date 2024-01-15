@@ -20,7 +20,7 @@ impl BearerToken {
 }
 
 #[cfg(feature = "frontend")]
-impl client_shared::Authorization for BearerToken {
+impl opentalk_client_shared::Authorization for BearerToken {
     fn add_authorization_information(&self, request: &mut http::request::Request<Vec<u8>>) {
         let _ = request.headers_mut().insert(
             http::header::AUTHORIZATION,

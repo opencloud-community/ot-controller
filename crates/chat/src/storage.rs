@@ -3,17 +3,17 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use anyhow::{Context, Result};
-use r3dlock::{Mutex, MutexGuard};
+use opentalk_r3dlock::{Mutex, MutexGuard};
+use opentalk_signaling_core::{RedisConnection, SignalingRoomId};
+use opentalk_types::{
+    core::{GroupId, GroupName, ParticipantId, RoomId, Timestamp},
+    signaling::chat::state::StoredMessage,
+};
 use redis::AsyncCommands;
 use redis_args::{FromRedisValue, ToRedisArgs};
-use signaling_core::{RedisConnection, SignalingRoomId};
 use std::{
     collections::{HashMap, HashSet},
     str::FromStr,
-};
-use types::{
-    core::{GroupId, GroupName, ParticipantId, RoomId, Timestamp},
-    signaling::chat::state::StoredMessage,
 };
 use uuid::Uuid;
 
@@ -255,11 +255,11 @@ pub async fn delete_last_seen_timestamp_global(
 mod test {
     use super::*;
     use chrono::{DateTime, Utc};
+    use opentalk_types::core::RoomId;
     use redis::aio::ConnectionManager;
     use redis::ToRedisArgs;
     use serial_test::serial;
     use std::time::{Duration, SystemTime};
-    use types::core::RoomId;
     use uuid::uuid;
 
     pub const ROOM: SignalingRoomId = SignalingRoomId::nil();

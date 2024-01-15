@@ -13,13 +13,17 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-controller-settings = { path = "../controller-settings", package = "opentalk-controller-settings" }
-database = { path = "../database", package = "opentalk-database" }
+anyhow.workspace = true
+async-trait.workspace = true
+bytes.workspace = true
+futures.workspace = true
 log.workspace = true
-redis-args = { path = "../redis-args" }
+opentalk-controller-settings.workspace = true
+opentalk-database.workspace = true
+opentalk-signaling-core.workspace = true
+opentalk-types = { workspace = true, features = ["backend"] }
+redis-args.workspace = true
 redis.workspace = true
-signaling-core = { path = "../signaling-core", package = "opentalk-signaling-core" }
-types = { path = "../types", package = "opentalk-types", features = ["backend"] }
 reqwest = { workspace = true, features = [
     "json",
     "cookies",
@@ -27,9 +31,5 @@ reqwest = { workspace = true, features = [
     "stream",
 ] }
 serde.workspace =  true
-anyhow.workspace = true
-url.workspace = true
-bytes.workspace = true
-futures.workspace = true
-async-trait.workspace = true
 tracing.workspace = true
+url.workspace = true

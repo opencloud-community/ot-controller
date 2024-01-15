@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_types::{core::ParticipantId, signaling::protocol::event::PdfAsset};
 use serde::{Deserialize, Serialize};
-use types::{core::ParticipantId, signaling::protocol::event::PdfAsset};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

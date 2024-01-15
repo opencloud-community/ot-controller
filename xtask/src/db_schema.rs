@@ -5,10 +5,10 @@
 //! Helper binary that creates the schema.rs file
 use crate::locate_project_root;
 use anyhow::Result;
-use database::query_helper;
-use db_storage::migrations::migrate_from_url;
 use devx_cmd::cmd;
 use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
+use opentalk_database::query_helper;
+use opentalk_db_storage::migrations::migrate_from_url;
 use rand::Rng;
 use std::path::PathBuf;
 use unified_diff::diff;

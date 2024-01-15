@@ -12,7 +12,7 @@ publish = true
 description = "Derive macro for reading and writing types for redis usage, either through serde or format args"
 
 [dependencies]
-redis-args-impl = { path = "../redis-args-impl" }
+redis-args-impl.workspace = true
 redis.workspace = true
 serde_json.workspace = true
 

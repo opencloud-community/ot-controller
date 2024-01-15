@@ -5,11 +5,11 @@
 use super::schema::sip_configs;
 use crate::rooms::Room;
 use crate::schema::rooms;
-use database::{DatabaseError, DbConnection, Result};
 use diesel::prelude::*;
 use diesel::{ExpressionMethods, Identifiable, QueryDsl, Queryable};
 use diesel_async::RunQueryDsl;
-use types::core::{CallInId, CallInPassword, RoomId};
+use opentalk_database::{DatabaseError, DbConnection, Result};
+use opentalk_types::core::{CallInId, CallInPassword, RoomId};
 
 /// Diesel SipConfig struct
 #[derive(Debug, Clone, Queryable, Identifiable)]

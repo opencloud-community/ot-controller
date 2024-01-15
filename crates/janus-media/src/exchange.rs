@@ -2,11 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use serde::{Deserialize, Serialize};
-use types::{
+use opentalk_types::{
     core::ParticipantId,
     signaling::media::{command::ParticipantSelection, event::RequestMute},
 };
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Message {

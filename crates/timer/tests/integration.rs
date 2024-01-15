@@ -3,26 +3,20 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::{Duration, Utc};
+use opentalk_signaling_core::module_tester::{ModuleTester, WsMessageOutgoing};
+use opentalk_test_util::{common, TestContext, USER_1, USER_2};
 use opentalk_timer::Timer;
+use opentalk_types::{
+    core::Timestamp,
+    signaling::timer::{
+        command::{self, Message, Start, Stop, UpdateReadyStatus},
+        event::{self, StopKind, Stopped},
+        Kind, TimerConfig, TimerId,
+    },
+};
 use pretty_assertions::assert_eq;
 use serial_test::serial;
-use signaling_core::module_tester::{ModuleTester, WsMessageOutgoing};
-use test_util::USER_1;
-use test_util::USER_2;
-use test_util::{common, TestContext};
 use tokio::time::Instant;
-use types::core::Timestamp;
-use types::signaling::timer::command;
-use types::signaling::timer::command::Message;
-use types::signaling::timer::command::Start;
-use types::signaling::timer::command::Stop;
-use types::signaling::timer::command::UpdateReadyStatus;
-use types::signaling::timer::event;
-use types::signaling::timer::event::StopKind;
-use types::signaling::timer::event::Stopped;
-use types::signaling::timer::Kind;
-use types::signaling::timer::TimerConfig;
-use types::signaling::timer::TimerId;
 
 /// Helps to compare expected timestamps.
 #[derive(Debug)]

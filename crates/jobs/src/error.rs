@@ -14,7 +14,7 @@ pub enum Error {
     Timeout(#[from] tokio::time::error::Elapsed),
 
     /// Database error
-    Database(#[from] database::DatabaseError),
+    Database(#[from] opentalk_database::DatabaseError),
 
     /// Job execution failed
     JobExecutionFailed,
@@ -26,7 +26,7 @@ pub enum Error {
     SharedFoldersNotConfigured,
 
     /// Error communicating with NextCloud instance: {0:?}
-    NextcloudClient(#[from] nextcloud_client::Error),
+    NextcloudClient(#[from] opentalk_nextcloud_client::Error),
 
     /// Error performing changes in the object storage
     ObjectStorage(#[source] anyhow::Error),
@@ -35,5 +35,5 @@ pub enum Error {
     Custom(String),
 
     /// Event deletion failed: {0:?}
-    EventDeletionFailed(#[from] controller_utils::deletion::Error),
+    EventDeletionFailed(#[from] opentalk_controller_utils::deletion::Error),
 }

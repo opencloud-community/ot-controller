@@ -15,7 +15,7 @@ use casbin::{CoreApi, Result as CasbinResult};
 use futures::future::{ok, Ready};
 use futures::Future;
 use itertools::Itertools;
-use shared::{access::AccessMethod, subject::PolicyUser};
+use kustos_shared::{access::AccessMethod, subject::PolicyUser};
 use std::cell::RefCell;
 use std::ops::{Deref, DerefMut};
 use std::pin::Pin;

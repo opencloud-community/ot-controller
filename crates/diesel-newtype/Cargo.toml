@@ -12,6 +12,6 @@ publish = true
 description = "Newtype derive for diesel types used in OpenTalk crates"
 
 [dependencies]
-diesel-newtype-impl = { path = "../diesel-newtype-impl", package = "opentalk-diesel-newtype-impl" }
+opentalk-diesel-newtype-impl.workspace = true
 diesel = { workspace = true, features = ["postgres"] }
 serde = { workspace = true, features = ["derive"] }

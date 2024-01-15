@@ -24,18 +24,18 @@ diesel-async = { workspace = true, features = ["postgres", "deadpool"] }
 fern = "0.6"
 pretty_assertions.workspace = true
 
-kustos = { path = "../kustos", package = "kustos", optional = true }
-database = { path = "../database", package = "opentalk-database", optional = true }
-db-storage = { path = "../db-storage", package = "opentalk-db-storage", optional = true }
-signaling-core = { path = "../signaling-core", package = "opentalk-signaling-core", features = ["module_tester"] }
-types = { path = "../types", package = "opentalk-types", features = ["backend"] }
+kustos = { workspace = true, optional = true }
+opentalk-database = { workspace = true, optional = true }
+opentalk-db-storage = { workspace = true, optional = true }
+opentalk-signaling-core = { workspace = true, features = ["module_tester"] }
+opentalk-types = { workspace = true, features = ["backend"] }
 
 [dev-dependencies]
 serde.workspace = true
 
 [features]
 controller = ["database", "dep:kustos"]
-database = ["dep:database", "dep:db-storage"]
+database = ["dep:opentalk-database", "dep:opentalk-db-storage"]
 
 [package.metadata.cargo-machete]
 ignored = [

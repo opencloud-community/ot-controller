@@ -15,14 +15,14 @@ description = "Derive macro for reading and writing types for redis usage, eithe
 proc-macro = true
 
 [dependencies]
-proc-macro-fields-helper = { path = "../proc-macro-fields-helper", package = "opentalk-proc-macro-fields-helper" }
+opentalk-proc-macro-fields-helper.workspace = true
 proc-macro2 = "1"
 quote = "1"
 syn = { version = "2", features = ["extra-traits"] }
 
 [dev-dependencies]
 redis.workspace = true
-redis-args = { path = "../redis-args" }
+redis-args.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 

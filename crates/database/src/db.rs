@@ -4,11 +4,11 @@
 
 use crate::metrics::{DatabaseMetrics, MetricsConnection};
 use crate::{DatabaseError, DbConnection};
-use controller_settings as settings;
 use deadpool_runtime::Runtime;
 use diesel_async::pooled_connection::deadpool::Pool;
 use diesel_async::pooled_connection::AsyncDieselConnectionManager;
 use diesel_async::AsyncPgConnection;
+use opentalk_controller_settings as settings;
 use opentelemetry::Context;
 use std::sync::Arc;
 use std::time::Duration;

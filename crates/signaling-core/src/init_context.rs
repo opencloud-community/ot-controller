@@ -4,11 +4,11 @@
 
 use std::{marker::PhantomData, sync::Arc};
 
-use database::Db;
-use db_storage::{rooms::Room, users::User};
 use futures::{stream::SelectAll, Stream};
 use kustos::Authz;
-use types::{
+use opentalk_database::Db;
+use opentalk_db_storage::{rooms::Room, users::User};
+use opentalk_types::{
     core::{BreakoutRoomId, ParticipantId},
     signaling::Role,
 };

@@ -4,14 +4,14 @@
 
 use crate::schema::{tenants, users};
 use chrono::{DateTime, Utc};
-use database::{DbConnection, Result};
 use derive_more::{AsRef, Display, From, FromStr, Into};
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
-use diesel_newtype::DieselNewtype;
+use opentalk_database::{DbConnection, Result};
+use opentalk_diesel_newtype::DieselNewtype;
+use opentalk_types::core::{TenantId, UserId};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
-use types::core::{TenantId, UserId};
 
 #[derive(
     AsRef,

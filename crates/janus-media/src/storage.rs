@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use anyhow::{Context, Result};
+use opentalk_signaling_core::{RedisConnection, SignalingRoomId};
+use opentalk_types::{core::ParticipantId, signaling::media::ParticipantMediaState};
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
-use signaling_core::{RedisConnection, SignalingRoomId};
-use types::{core::ParticipantId, signaling::media::ParticipantMediaState};
 
 /// Data related to a module inside a participant
 // TODO can this be removed?

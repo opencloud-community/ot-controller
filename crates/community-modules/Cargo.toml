@@ -13,17 +13,17 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-signaling-core = { path = "../signaling-core", package = "opentalk-signaling-core" }
+opentalk-signaling-core.workspace = true
 
-janus-media = { path = "../janus-media", package = "opentalk-janus-media" }
-chat = { path = "../chat", package = "opentalk-chat" }
-opentalk_core = { path = "../core", package = "opentalk-core" }
-integration = { path = "../integration", package = "opentalk-integration" }
-polls = { path = "../polls", package = "opentalk-polls" }
-protocol = { path = "../protocol", package = "opentalk-protocol" }
-shared_folder = { path = "../shared-folder", package = "opentalk-shared-folder" }
-timer = { path = "../timer", package = "opentalk-timer" }
-whiteboard = { path = "../whiteboard", package = "opentalk-whiteboard" }
+opentalk-janus-media.workspace = true
+opentalk-chat.workspace = true
+opentalk-core.workspace = true
+opentalk-integration.workspace = true
+opentalk-polls.workspace = true
+opentalk-protocol.workspace = true
+opentalk-shared-folder.workspace = true
+opentalk-timer.workspace = true
+opentalk-whiteboard.workspace = true
 
 anyhow.workspace = true
 async-trait.workspace = true

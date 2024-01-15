@@ -4,16 +4,16 @@
 
 use anyhow::Result;
 use async_trait::async_trait;
-use chat::Chat;
-use integration::Integration;
-use janus_media::Media;
+use opentalk_chat::Chat;
 use opentalk_core::Core;
-use polls::Polls;
-use protocol::Protocol;
-use shared_folder::SharedFolder;
-use signaling_core::{ModulesRegistrar, RegisterModules};
-use timer::Timer;
-use whiteboard::Whiteboard;
+use opentalk_integration::Integration;
+use opentalk_janus_media::Media;
+use opentalk_polls::Polls;
+use opentalk_protocol::Protocol;
+use opentalk_shared_folder::SharedFolder;
+use opentalk_signaling_core::{ModulesRegistrar, RegisterModules};
+use opentalk_timer::Timer;
+use opentalk_whiteboard::Whiteboard;
 
 pub struct CommunityModules;
 

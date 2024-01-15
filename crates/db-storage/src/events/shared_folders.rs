@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::{DateTime, Utc};
-use database::{DbConnection, Result};
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
-use types::{
+use opentalk_database::{DbConnection, Result};
+use opentalk_types::{
     common::shared_folder::{SharedFolder, SharedFolderAccess},
     core::{EventId, RoomId},
 };

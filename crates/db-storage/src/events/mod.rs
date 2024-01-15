@@ -13,7 +13,6 @@ use crate::users::User;
 use crate::utils::HasUsers;
 use chrono::{DateTime, Utc};
 use chrono_tz::Tz;
-use database::{DatabaseError, DbConnection, Paginate, Result};
 use derive_more::{AsRef, Display, From, FromStr, Into};
 use diesel::expression::AsExpression;
 use diesel::pg::Pg;
@@ -25,12 +24,15 @@ use diesel::{
 };
 use diesel_async::scoped_futures::ScopedFutureExt;
 use diesel_async::{AsyncConnection, RunQueryDsl};
-use diesel_newtype::DieselNewtype;
+use opentalk_database::{DatabaseError, DbConnection, Paginate, Result};
+use opentalk_diesel_newtype::DieselNewtype;
+use opentalk_types::common::event::EventInfo;
+use opentalk_types::core::{
+    EventId, EventInviteStatus, InviteRole, RoomId, TenantId, TimeZone, UserId,
+};
+use opentalk_types::sql_enum;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
-use types::common::event::EventInfo;
-use types::core::{EventId, EventInviteStatus, InviteRole, RoomId, TenantId, TimeZone, UserId};
-use types::sql_enum;
 
 use self::shared_folders::EventSharedFolder;
 

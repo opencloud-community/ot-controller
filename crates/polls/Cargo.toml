@@ -16,15 +16,15 @@ async-trait.workspace = true
 futures.workspace = true
 log.workspace = true
 redis.workspace = true
-redis-args = { path = "../redis-args" }
+redis-args.workspace = true
 serde.workspace = true
-signaling-core = { path = "../signaling-core", package = "opentalk-signaling-core" }
+opentalk-signaling-core.workspace = true
 tokio.workspace = true
 tracing.workspace = true
-types = { path = "../types", package = "opentalk-types", features = ["backend"] }
+opentalk-types = { workspace = true, features = ["backend"] }
 
 [dev-dependencies]
-test-util = { path = "../test-util", package = "opentalk-test-util", features = ["controller"] }
+opentalk-test-util = { workspace = true, features = ["controller"] }
 pretty_assertions.workspace = true
 serial_test.workspace = true
 actix-rt.workspace = true

@@ -6,11 +6,11 @@
 
 use super::schema::casbin_rule::{self, dsl::*};
 use crate::eq_empty;
-use database::{DatabaseError, DbConnection, Result};
 use diesel::result::Error as DieselError;
 use diesel::{BoolExpressionMethods, ExpressionMethods, QueryDsl};
 use diesel_async::scoped_futures::ScopedFutureExt;
 use diesel_async::{AsyncConnection, RunQueryDsl};
+use opentalk_database::{DatabaseError, DbConnection, Result};
 
 #[derive(Queryable, Identifiable, Debug)]
 #[diesel(table_name = casbin_rule)]

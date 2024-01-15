@@ -2,11 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use db_storage::events::shared_folders::EventSharedFolder;
 use log::Log;
-use nextcloud_client::ShareId;
+use opentalk_controller_settings::Settings;
+use opentalk_db_storage::events::shared_folders::EventSharedFolder;
 use opentalk_log::{debug, warn};
-use settings::Settings;
+use opentalk_nextcloud_client::ShareId;
 
 use super::Error;
 
@@ -32,15 +32,18 @@ pub async fn delete_shared_folders(
         .ok_or(Error::SharedFoldersNotConfigured)?;
 
     match shared_folder_settings {
-        settings::SharedFolder::Nextcloud {
+        opentalk_controller_settings::SharedFolder::Nextcloud {
             url,
             username,
             password,
             ..
         } => {
             debug!(log: logger, "Creating NextCloud client");
-            let create_client_result =
-                nextcloud_client::Client::new(url.clone(), username.clone(), password.clone());
+            let create_client_result = opentalk_nextcloud_client::Client::new(
+                url.clone(),
+                username.clone(),
+                password.clone(),
+            );
             let client = match create_client_result {
                 Ok(c) => c,
                 Err(e) => {
@@ -99,7 +102,7 @@ pub async fn delete_shared_folders(
                             "Deleted shared folder {user_path:?} from NextCloud"
                         );
                     }
-                    Err(nextcloud_client::Error::FileNotFound { file_path, .. }) => {
+                    Err(opentalk_nextcloud_client::Error::FileNotFound { file_path, .. }) => {
                         debug!(
                             log: logger,
                             "Path {file_path:?} not found on the NextCloud instance, skipping deletion"

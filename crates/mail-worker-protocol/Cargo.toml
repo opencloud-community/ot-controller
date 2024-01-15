@@ -14,9 +14,9 @@ publish = false
 serde.workspace = true
 uuid = { workspace = true, features = ["serde"] }
 chrono = { workspace = true, features = ["serde"] }
-db-storage = { path = "../db-storage", package = "opentalk-db-storage", optional = true }
-keycloak-admin = { path = "../keycloak-admin", optional = true }
-types = { path = "../types", package = "opentalk-types" }
+opentalk-db-storage = { workspace = true, optional = true }
+opentalk-keycloak-admin = { workspace = true, optional = true }
+opentalk-types.workspace = true
 
 [dev-dependencies]
 serde_json.workspace = true
@@ -24,4 +24,4 @@ pretty_assertions.workspace = true
 
 [features]
 default = []
-client = ["db-storage", "keycloak-admin"]
+client = ["dep:opentalk-db-storage", "dep:opentalk-keycloak-admin"]

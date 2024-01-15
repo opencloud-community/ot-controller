@@ -12,5 +12,5 @@ publish = true
 description = "Derive macro for defining kustos prefix"
 
 [dependencies]
-kustos-prefix-impl = { path = "../kustos-prefix-impl", package = "opentalk-kustos-prefix-impl" }
-kustos-shared = { path = "../kustos-shared", package = "kustos-shared" }
+opentalk-kustos-prefix-impl.workspace = true
+kustos-shared.workspace = true

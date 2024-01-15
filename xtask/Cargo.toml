@@ -13,8 +13,8 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-database = { path = "../crates//database", package = "opentalk-database" }
-db-storage = { path = "../crates/db-storage", package = "opentalk-db-storage" }
+opentalk-database.workspace = true
+opentalk-db-storage.workspace = true
 
 tokio = { workspace = true, features = ["macros"] }
 clap = { workspace = true, features = ["env"] }

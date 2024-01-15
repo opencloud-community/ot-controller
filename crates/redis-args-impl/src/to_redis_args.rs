@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_proc_macro_fields_helper::{get_fields, get_format_macro_call, Fields};
 use proc_macro::TokenStream;
 use proc_macro2::Span;
-use proc_macro_fields_helper::{get_fields, get_format_macro_call, Fields};
 use quote::quote;
 
 const ATTRIBUTE_NAME: &str = "to_redis_args";

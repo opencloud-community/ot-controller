@@ -6,21 +6,21 @@
 use super::groups::{Group, UserGroupRelation};
 use super::schema::{groups, users};
 use crate::{levenshtein, lower, soundex};
-use controller_settings::Settings;
-use database::{DbConnection, Paginate, Result};
 use derive_more::{AsRef, Display, From, FromStr, Into};
 use diesel::{
     BelongingToDsl, BoolExpressionMethods, ExpressionMethods, GroupedBy, Identifiable, Insertable,
     OptionalExtension, QueryDsl, Queryable, TextExpressionMethods,
 };
 use diesel_async::RunQueryDsl;
-use diesel_newtype::DieselNewtype;
-use serde::{Deserialize, Serialize};
-use std::fmt;
-use types::{
+use opentalk_controller_settings::Settings;
+use opentalk_database::{DbConnection, Paginate, Result};
+use opentalk_diesel_newtype::DieselNewtype;
+use opentalk_types::{
     api::v1::users::{PrivateUserProfile, PublicUserProfile},
     core::{TariffId, TariffStatus, TenantId, UserId},
 };
+use serde::{Deserialize, Serialize};
+use std::fmt;
 
 #[derive(
     AsRef,

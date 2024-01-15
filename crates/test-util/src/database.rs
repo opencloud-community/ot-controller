@@ -3,16 +3,18 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use anyhow::{Context, Result};
-use database::Db;
-use db_storage::groups::{get_or_create_groups_by_name, insert_user_into_groups};
-use db_storage::migrations::migrate_from_url;
-use db_storage::rooms::{NewRoom, Room};
-use db_storage::tariffs::Tariff;
-use db_storage::tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId};
-use db_storage::users::{NewUser, User};
 use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
+use opentalk_database::Db;
+use opentalk_db_storage::{
+    groups::{get_or_create_groups_by_name, insert_user_into_groups},
+    migrations::migrate_from_url,
+    rooms::{NewRoom, Room},
+    tariffs::Tariff,
+    tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId},
+    users::{NewUser, User},
+};
+use opentalk_types::core::{GroupName, RoomId, TariffStatus, TenantId, UserId};
 use std::sync::Arc;
-use types::core::{GroupName, RoomId, TariffStatus, TenantId, UserId};
 
 /// Contains the [`Db`] as well as information about the test database
 pub struct DatabaseContext {

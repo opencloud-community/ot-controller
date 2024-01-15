@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use shared::error::{ParsingError, ResourceParseError};
+use kustos_shared::error::{ParsingError, ResourceParseError};
 use thiserror::Error;
 use tokio::task::JoinError;
 

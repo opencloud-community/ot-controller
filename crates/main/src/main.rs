@@ -3,12 +3,12 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use anyhow::Result;
-use community_modules::CommunityModules;
-use controller::Controller;
+use opentalk_community_modules::CommunityModules;
+use opentalk_controller_core::Controller;
 
 #[actix_web::main]
 async fn main() {
-    controller::try_or_exit(run()).await;
+    opentalk_controller_core::try_or_exit(run()).await;
 }
 
 async fn run() -> Result<()> {

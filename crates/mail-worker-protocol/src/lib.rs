@@ -243,8 +243,8 @@ impl MailTask {
 }
 
 #[cfg(feature = "client")]
-impl From<db_storage::users::User> for v1::RegisteredUser {
-    fn from(val: db_storage::users::User) -> Self {
+impl From<opentalk_db_storage::users::User> for v1::RegisteredUser {
+    fn from(val: opentalk_db_storage::users::User) -> Self {
         Self {
             email: val.email.into(),
             title: val.title,
@@ -256,8 +256,8 @@ impl From<db_storage::users::User> for v1::RegisteredUser {
 }
 
 #[cfg(feature = "client")]
-impl From<keycloak_admin::users::User> for v1::UnregisteredUser {
-    fn from(val: keycloak_admin::users::User) -> Self {
+impl From<opentalk_keycloak_admin::users::User> for v1::UnregisteredUser {
+    fn from(val: opentalk_keycloak_admin::users::User) -> Self {
         Self {
             email: val.email.into(),
             first_name: val.first_name,
@@ -276,8 +276,18 @@ impl From<String> for v1::ExternalUser {
 }
 
 #[cfg(feature = "client")]
-impl From<(chrono::DateTime<chrono::Utc>, types::core::TimeZone)> for v1::Time {
-    fn from((time, timezone): (chrono::DateTime<chrono::Utc>, types::core::TimeZone)) -> Self {
+impl
+    From<(
+        chrono::DateTime<chrono::Utc>,
+        opentalk_types::core::TimeZone,
+    )> for v1::Time
+{
+    fn from(
+        (time, timezone): (
+            chrono::DateTime<chrono::Utc>,
+            opentalk_types::core::TimeZone,
+        ),
+    ) -> Self {
         v1::Time {
             time,
             timezone: timezone.to_string(),

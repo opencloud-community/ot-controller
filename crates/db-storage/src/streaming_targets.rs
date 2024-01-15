@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use crate::schema::room_streaming_targets;
-use database::{DbConnection, Result};
 use diesel::{ExpressionMethods, Identifiable, QueryDsl, Queryable};
 use diesel_async::RunQueryDsl;
-use types::core::{RoomId, StreamingKey, StreamingKind, StreamingTargetId};
+use opentalk_database::{DbConnection, Result};
+use opentalk_types::core::{RoomId, StreamingKey, StreamingKind, StreamingTargetId};
 
 use crate::rooms::Room;
 

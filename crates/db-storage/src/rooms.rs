@@ -8,15 +8,15 @@ use crate::schema::{rooms, users};
 use crate::tariffs::Tariff;
 use crate::users::User;
 use chrono::{DateTime, Utc};
-use database::DbConnection;
-use database::{Paginate, Result};
 use derive_more::{AsRef, Display, From, FromStr, Into};
 use diesel::prelude::*;
 use diesel::{ExpressionMethods, Identifiable, QueryDsl, Queryable};
 use diesel_async::RunQueryDsl;
-use diesel_newtype::DieselNewtype;
+use opentalk_database::DbConnection;
+use opentalk_database::{Paginate, Result};
+use opentalk_diesel_newtype::DieselNewtype;
+use opentalk_types::core::{RoomId, TenantId, UserId};
 use serde::{Deserialize, Serialize};
-use types::core::{RoomId, TenantId, UserId};
 
 #[derive(
     AsRef,

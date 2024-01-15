@@ -13,8 +13,8 @@ use aws_sdk_s3::{
 use aws_smithy_http::endpoint::ResolveEndpoint;
 use aws_smithy_types::endpoint::Endpoint;
 use bytes::Bytes;
-use controller_settings::MinIO;
 use futures::{Stream, StreamExt};
+use opentalk_controller_settings::MinIO;
 use url::Url;
 
 const CHUNK_SIZE: usize = 5_242_880; // 5 MebiByte (minimum for aws s3)

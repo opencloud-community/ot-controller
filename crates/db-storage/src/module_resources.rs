@@ -4,16 +4,16 @@
 
 use crate::schema::{module_resources, rooms};
 use chrono::{DateTime, Utc};
-use database::{DatabaseError, DbConnection, Result};
 use diesel::pg::Pg;
 use diesel::prelude::*;
 use diesel::sql_types::Jsonb;
 use diesel::{ExpressionMethods, Identifiable, QueryDsl, Queryable};
 use diesel_async::RunQueryDsl;
+use opentalk_database::{DatabaseError, DbConnection, Result};
+use opentalk_types::core::{ModuleResourceId, RoomId, TenantId, UserId};
 use serde::Serialize;
 use serde_json::Value;
 use std::str::FromStr;
-use types::core::{ModuleResourceId, RoomId, TenantId, UserId};
 
 #[derive(
     Debug, PartialEq, Serialize, strum::Display, strum::FromRepr, strum::AsRefStr, strum::EnumString,
@@ -342,14 +342,13 @@ mod test {
     use super::*;
     use crate::tenants::get_or_create_tenant_by_oidc_id;
     use crate::tenants::OidcTenantId;
+    use opentalk_test_util::{assert_eq, *};
     use serde_json::json;
     use serde_json::Value;
     use serial_test::serial;
-    use test_util::assert_eq;
-    use test_util::*;
 
     async fn init_resource(json: Value) -> (ModuleResourceId, DbConnection) {
-        let db_ctx = test_util::database::DatabaseContext::new(false).await;
+        let db_ctx = opentalk_test_util::database::DatabaseContext::new(false).await;
 
         let mut db_conn = db_ctx.db.get_conn().await.unwrap();
 
@@ -1225,7 +1224,7 @@ mod test {
     #[actix_rt::test]
     #[serial]
     async fn test_filter() {
-        let db_ctx = test_util::database::DatabaseContext::new(false).await;
+        let db_ctx = opentalk_test_util::database::DatabaseContext::new(false).await;
 
         let mut db_conn = db_ctx.db.get_conn().await.unwrap();
 

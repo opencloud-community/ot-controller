@@ -12,9 +12,9 @@ version.workspace = true
 publish = false
 
 [dependencies]
-controller = { path = "../../crates/controller", package = "opentalk-controller-core" }
-community-modules = { path = "../../crates/community-modules", package = "opentalk-community-modules" }
-anyhow.workspace = true
 actix-web.workspace = true
 anstream.workspace = true
+anyhow.workspace = true
+opentalk-community-modules.workspace = true
+opentalk-controller-core.workspace = true
 owo-colors.workspace = true

@@ -3,16 +3,16 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_polls::*;
-use pretty_assertions::assert_eq;
-use serial_test::serial;
-use signaling_core::module_tester::{ModuleTester, WsMessageOutgoing};
-use std::time::Duration;
-use test_util::*;
-use types::signaling::polls::{
+use opentalk_signaling_core::module_tester::{ModuleTester, WsMessageOutgoing};
+use opentalk_test_util::*;
+use opentalk_types::signaling::polls::{
     command::{PollsCommand, Start, Vote},
     event::{Error, PollsEvent, Started},
     Choice, ChoiceId, Item, Results,
 };
+use pretty_assertions::assert_eq;
+use serial_test::serial;
+use std::time::Duration;
 
 async fn start_poll(module_tester: &mut ModuleTester<Polls>, live_poll: bool) -> Started {
     let start = PollsCommand::Start(Start {

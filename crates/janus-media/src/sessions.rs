@@ -5,10 +5,10 @@
 use crate::mcu::{JanusPublisher, JanusSubscriber, McuPool, MediaSessionKey, WebRtcEvent};
 use crate::MediaSessionState;
 use anyhow::{ensure, Result};
+use opentalk_types::{core::ParticipantId, signaling::media::MediaSessionType};
 use std::collections::HashMap;
 use std::future::Future;
 use tokio::sync::mpsc;
-use types::{core::ParticipantId, signaling::media::MediaSessionType};
 
 pub struct MediaSessions {
     id: ParticipantId,

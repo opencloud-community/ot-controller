@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use janus_client::{Jsep, TrickleCandidate};
-use types::{
+use opentalk_janus_client::{Jsep, TrickleCandidate};
+use opentalk_types::{
     core::ParticipantId,
     signaling::media::{command::SubscriberConfiguration, event::Source, MediaSessionType},
 };
@@ -52,8 +52,8 @@ pub struct Media {
     pub receiving: bool,
 }
 
-impl From<janus_client::incoming::Media> for Media {
-    fn from(value: janus_client::incoming::Media) -> Self {
+impl From<opentalk_janus_client::incoming::Media> for Media {
+    fn from(value: opentalk_janus_client::incoming::Media) -> Self {
         Self {
             kind: value.kind,
             receiving: value.receiving,

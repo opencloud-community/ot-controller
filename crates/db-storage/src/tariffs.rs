@@ -5,22 +5,21 @@
 use crate::schema::{external_tariffs, tariffs, users};
 use crate::utils::Jsonb;
 use chrono::{DateTime, Utc};
-use controller_settings::{DEFAULT_NAMESPACE, NAMESPACE_SEPARATOR};
 use core::fmt::Debug;
-use database::{DbConnection, Result};
 use derive_more::{AsRef, Display, From, FromStr, Into};
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
-use diesel_newtype::DieselNewtype;
+use opentalk_controller_settings::{DEFAULT_NAMESPACE, NAMESPACE_SEPARATOR};
+use opentalk_database::{DbConnection, Result};
+use opentalk_diesel_newtype::DieselNewtype;
+use opentalk_types::{
+    common::tariff::{TariffModuleResource, TariffResource},
+    core::{TariffId, UserId},
+};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use rustc_hash::FxHashSet;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use types::common::tariff::TariffModuleResource;
-use types::{
-    common::tariff::TariffResource,
-    core::{TariffId, UserId},
-};
 
 #[derive(
     AsRef,

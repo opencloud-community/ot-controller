@@ -39,7 +39,7 @@
 //! ```rust,no_run
 //! # use kustos::prelude::*;
 //! # use std::sync::Arc;
-//! # use database::Db;
+//! # use opentalk_database::Db;
 //! # use tokio::runtime::Runtime;
 //! # use tokio::task;
 //! # use std::time::Duration;
@@ -74,19 +74,19 @@
 //! ```
 use crate::actix_web::KustosService;
 use casbin::{CoreApi, MgmtApi, RbacApi};
-use database::Db;
 use internal::synced_enforcer::SyncedEnforcer;
-use metrics::KustosMetrics;
-use policy::{
-    GroupPolicies, InvitePolicies, InvitePolicy, Policy, RolePolicies, UserPolicies, UserPolicy,
-};
-use shared::{
+use kustos_shared::{
     internal::{ToCasbin, ToCasbinMultiple, ToCasbinString},
     resource::KustosFromStr,
     subject::{
         GroupToRole, IsSubject, PolicyGroup, PolicyInvite, PolicyRole, PolicyUser, UserToGroup,
         UserToRole,
     },
+};
+use metrics::KustosMetrics;
+use opentalk_database::Db;
+use policy::{
+    GroupPolicies, InvitePolicies, InvitePolicy, Policy, RolePolicies, UserPolicies, UserPolicy,
 };
 use std::{sync::Arc, time::Duration};
 use tokio::{
@@ -104,7 +104,7 @@ pub mod policy;
 pub mod prelude;
 
 pub use error::{Error, Result};
-pub use shared::{
+pub use kustos_shared::{
     access::AccessMethod,
     error::ResourceParseError,
     resource,

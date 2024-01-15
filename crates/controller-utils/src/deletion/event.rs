@@ -4,16 +4,16 @@
 
 //! Functionality to delete events including all associated resources
 
-use database::{DatabaseError, DbConnection};
-use db_storage::events::{shared_folders::EventSharedFolder, Event};
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
 use kustos::{Authz, Resource as _, ResourceId};
 use kustos_shared::access::AccessMethod;
 use log::Log;
+use opentalk_controller_settings::Settings;
+use opentalk_database::{DatabaseError, DbConnection};
+use opentalk_db_storage::events::{shared_folders::EventSharedFolder, Event};
 use opentalk_log::{debug, warn};
-use settings::Settings;
-use signaling_core::{control, ExchangeHandle, ObjectStorage};
-use types::core::{EventId, UserId};
+use opentalk_signaling_core::{control, ExchangeHandle, ObjectStorage};
+use opentalk_types::core::{EventId, UserId};
 
 use super::{shared_folders::delete_shared_folders, Deleter, Error};
 
@@ -133,9 +133,9 @@ impl Deleter for EventDeleter {
         let event = Event::get(conn, self.event_id).await?;
         let room_id = event.room;
 
-        let message = types::signaling::NamespacedEvent {
+        let message = opentalk_types::signaling::NamespacedEvent {
             namespace: control::NAMESPACE,
-            timestamp: types::core::Timestamp::now(),
+            timestamp: opentalk_types::core::Timestamp::now(),
             payload: control::exchange::Message::RoomDeleted,
         };
 

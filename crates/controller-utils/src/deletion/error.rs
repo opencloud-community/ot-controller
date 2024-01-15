@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use database::DatabaseError;
 use displaydoc::Display;
+use opentalk_database::DatabaseError;
 use thiserror::Error;
 
 /// Errors returned when deleting an event
@@ -25,7 +25,7 @@ pub enum Error {
     SharedFoldersNotConfigured,
 
     /// Nextcloud client error: {0}
-    NextcloudClient(#[from] nextcloud_client::Error),
+    NextcloudClient(#[from] opentalk_nextcloud_client::Error),
 
     /// Error: {0}
     Custom(String),
