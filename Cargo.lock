@@ -4660,9 +4660,9 @@ dependencies = [
 
 [[package]]
 name = "reqwest_dav"
-version = "0.1.4"
+version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb731945e2fa330114abcab8ea68ba22e4f5943853c45adb2cdd19c68a46930b"
+checksum = "ee31acc6353b65233c0e501cd2f7b96c497d8d540b64dd6c95fde438a3bebe02"
 dependencies = [
  "async-trait",
  "chrono",
