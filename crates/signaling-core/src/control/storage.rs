@@ -19,7 +19,7 @@ use types::{
 };
 
 // The expiry in seconds for the `skip_waiting_room` key in Redis
-const SKIP_WAITING_ROOM_KEY_EXPIRY: usize = 120;
+const SKIP_WAITING_ROOM_KEY_EXPIRY: u64 = 120;
 pub const SKIP_WAITING_ROOM_KEY_REFRESH_INTERVAL: u64 = 60;
 
 /// Describes a set of participants inside a room.
@@ -451,7 +451,7 @@ pub async fn set_skip_waiting_room_with_expiry_nx(
         .set_nx(SkipWaitingRoom { participant }, value)
         .expire(
             SkipWaitingRoom { participant },
-            SKIP_WAITING_ROOM_KEY_EXPIRY,
+            SKIP_WAITING_ROOM_KEY_EXPIRY.try_into()?,
         )
         .query_async(redis_conn)
         .await
@@ -474,7 +474,7 @@ pub async fn reset_skip_waiting_room_expiry(
     redis_conn
         .expire(
             SkipWaitingRoom { participant },
-            SKIP_WAITING_ROOM_KEY_EXPIRY,
+            SKIP_WAITING_ROOM_KEY_EXPIRY.try_into()?,
         )
         .await
         .with_context(|| {
