@@ -17,10 +17,12 @@ description = "Types and traits that are used by the OpenTalk client library cra
 [dependencies]
 async-trait.workspace = true
 bytes.workspace = true
+client-shared-impl = { package = "opentalk-client-shared-impl", path = "../client-shared-impl" }
 derive_more.workspace = true
 http.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+serde_url_params = { version = "0.2" }
 thiserror.workspace = true
 url.workspace = true
 

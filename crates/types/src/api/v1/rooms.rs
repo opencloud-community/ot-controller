@@ -134,37 +134,16 @@ pub struct InvitedStartRequest {
 
 /// A GET request to the `/rooms/<room_id>/event` endpoint
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "frontend",
+    derive(Request),
+    request(
+        method = "GET",
+        response = "GetRoomEventResponse",
+        path = "/v1/rooms/{0}/event"
+    )
+)]
 pub struct GetRoomEventRequest(pub RoomId);
-
-#[cfg(feature = "frontend")]
-impl opentalk_client_shared::ToHttpRequest for GetRoomEventRequest {
-    fn to_http_request<C: opentalk_client_shared::RestClient>(
-        &self,
-        c: &C,
-    ) -> Result<http::request::Request<Vec<u8>>, opentalk_client_shared::ApiError<C::Error>> {
-        let uri = c
-            .rest_endpoint(&self.path())?
-            .as_str()
-            .parse::<http::Uri>()?;
-
-        http::Request::builder()
-            .method(Self::METHOD)
-            .uri(uri)
-            .body(vec![])
-            .map_err(|source| opentalk_client_shared::ApiError::Request { source })
-    }
-}
-
-#[cfg(feature = "frontend")]
-impl Request for GetRoomEventRequest {
-    type Response = GetRoomEventResponse;
-
-    const METHOD: Method = Method::GET;
-
-    fn path(&self) -> String {
-        format!("/v1/rooms/{}/event", self.0)
-    }
-}
 
 /// The JSON body returned by the `/rooms/<room_id>/event` endpoint
 #[derive(Clone, Debug, PartialEq, Eq)]

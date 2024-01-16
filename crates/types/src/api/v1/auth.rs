@@ -9,25 +9,21 @@ use std::collections::HashSet;
 #[allow(unused_imports)]
 use crate::imports::*;
 
-#[cfg(feature = "frontend")]
-const LOGIN_PATH: &str = "/v1/auth/login";
-
 /// Body of a *POST* request on `/auth/login`
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "frontend",
+    derive(Request),
+    request(
+        method = "POST",
+        response = "PostLoginResponse",
+        path = "/v1/auth/login"
+    )
+)]
 pub struct PostLoginRequest {
     /// The id token to use for the login
     pub id_token: String,
-}
-
-#[cfg(feature = "frontend")]
-impl Request for PostLoginRequest {
-    type Response = PostLoginResponse;
-    const METHOD: Method = Method::POST;
-
-    fn path(&self) -> String {
-        LOGIN_PATH.into()
-    }
 }
 
 /// Body of the response to a *POST* request on `/auth/login`
@@ -40,18 +36,13 @@ pub struct PostLoginResponse {
 
 /// *GET* request on `/auth/login`
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(
+    feature = "frontend",
+    derive(Request),
+    request(method = "GET", response = "GetLoginResponse", path = "/v1/auth/login")
+)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct GetLoginRequest;
-
-#[cfg(feature = "frontend")]
-impl Request for GetLoginRequest {
-    type Response = GetLoginResponse;
-    const METHOD: Method = Method::GET;
-
-    fn path(&self) -> String {
-        LOGIN_PATH.into()
-    }
-}
 
 /// Body of the response to a *GET* request on `/auth/login`
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

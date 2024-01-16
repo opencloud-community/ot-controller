@@ -12,9 +12,6 @@ use crate::imports::*;
 
 use super::users::PublicUserProfile;
 
-#[cfg(feature = "frontend")]
-const VERIFY_PATH: &str = "/v1/invite/verify";
-
 /// Public invite details
 ///
 /// Contains general public information about a room.
@@ -75,20 +72,15 @@ pub struct PutInviteBody {
 
 /// Verify body for *POST /invite/verify*
 #[derive(Clone, Debug)]
+#[cfg_attr(
+    feature = "frontend",
+    derive(Request),
+    request(method = "POST", response = "CodeVerified", path = "/v1/invite/verify")
+)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize, Validate))]
 pub struct VerifyBody {
     /// The invite code id
     pub invite_code: InviteCodeId,
-}
-
-#[cfg(feature = "frontend")]
-impl Request for VerifyBody {
-    type Response = CodeVerified;
-    const METHOD: Method = Method::POST;
-
-    fn path(&self) -> String {
-        VERIFY_PATH.into()
-    }
 }
 
 /// Verify response body for *POST /invite/verify*
