@@ -120,7 +120,7 @@ rand.workspace = true
 
 ### Reload controller process
 sysinfo = { version = "0.29", default-features = false }
-nix = "0.27"
+nix = { version = "0.27", features = ["signal"] }
 
 ### Access Control
 kustos = { path = "../kustos" }
