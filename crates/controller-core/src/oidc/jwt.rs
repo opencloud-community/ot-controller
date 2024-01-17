@@ -144,7 +144,7 @@ mod test {
     use openidconnect::{JsonWebKey, JsonWebKeyId};
     use pretty_assertions::assert_eq;
     use ring::rand::SystemRandom;
-    use ring::signature::{KeyPair, RsaKeyPair, RSA_PKCS1_SHA256};
+    use ring::signature::{RsaKeyPair, RsaPublicKeyComponents, RSA_PKCS1_SHA256};
     use std::time::{SystemTime, UNIX_EPOCH};
 
     // Test PKCS8 Key Pair to sign and validate data
@@ -158,9 +158,7 @@ mod test {
         let key_pair = RsaKeyPair::from_pkcs8(&key).unwrap();
 
         let jwk = {
-            let public = key_pair.public_key();
-            let n = public.modulus().big_endian_without_leading_zero().to_vec();
-            let e = public.exponent().big_endian_without_leading_zero().to_vec();
+            let RsaPublicKeyComponents { n, e } = RsaPublicKeyComponents::from(key_pair.public());
 
             CoreJsonWebKey::new_rsa(n, e, Some(JsonWebKeyId::new(KID.into())))
         };

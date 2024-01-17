@@ -66,7 +66,7 @@ opentalk-cache.workspace = true
 ### Web Framework & Runtime
 tokio = { workspace = true, features = ["signal"] }
 tokio-stream.workspace = true
-actix-web = { workspace = true, features = ["rustls"] }
+actix-web = { workspace = true, features = ["rustls-0_21"] }
 actix-rt.workspace = true
 actix-web-httpauth.workspace = true
 actix-cors = "0.6"
@@ -90,19 +90,19 @@ openidconnect.workspace = true
 reqwest = { workspace = true, features = [
     "rustls-tls-native-roots",
 ] }
-jsonwebtoken = "8.3.0"
+jsonwebtoken = "9.2"
 base64.workspace = true
 chrono.workspace = true
 chrono-tz = { workspace = true, features = ["serde"] }
 
 ### Websockets
 actix = "0.13"
-actix-http = "3"
+actix-http = { version = "3", features = ["rustls-0_21"] }
 actix-web-actors = "4.2"
 
 ### Rust Encryption
-ring = "0.16"
-rustls = "0.20"
+ring = "0.17"
+rustls = "0.21"
 rustls-pemfile = "1.0"
 md5.workspace = true
 

@@ -2,9 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::sync::Arc;
+use std::{
+    pin::Pin,
+    sync::Arc,
+    task::{self, Poll},
+};
 
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use aws_sdk_s3::primitives::ByteStream;
 use bytes::Bytes;
 use futures::Stream;
@@ -74,9 +78,19 @@ pub async fn save_asset(
     Ok(asset_id)
 }
 
+pub struct ByStreamExt(ByteStream);
+
+impl futures::stream::Stream for ByStreamExt {
+    type Item = Result<Bytes, anyhow::Error>;
+
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut task::Context<'_>) -> Poll<Option<Self::Item>> {
+        Pin::new(&mut self.0).poll_next(cx).map_err(|e| anyhow!(e))
+    }
+}
+
 /// Get an asset from the object storage
-pub async fn get_asset(storage: &ObjectStorage, asset_id: &AssetId) -> Result<ByteStream> {
-    storage.get(asset_key(asset_id)).await
+pub async fn get_asset(storage: &ObjectStorage, asset_id: &AssetId) -> Result<ByStreamExt> {
+    Ok(ByStreamExt(storage.get(asset_key(asset_id)).await?))
 }
 
 /// Delete an asset from the object storage

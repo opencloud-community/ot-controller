@@ -4,14 +4,14 @@
 
 use anyhow::{ensure, Context, Result};
 use aws_sdk_s3::{
-    config::{Builder, Credentials as AwsCred, Region},
-    endpoint::Params,
+    config::{
+        endpoint::{Endpoint, EndpointFuture, Params, ResolveEndpoint},
+        Builder, Credentials as AwsCred, Region,
+    },
     primitives::ByteStream,
     types::{CompletedMultipartUpload, CompletedPart},
     Client,
 };
-use aws_smithy_http::endpoint::ResolveEndpoint;
-use aws_smithy_types::endpoint::Endpoint;
 use bytes::Bytes;
 use futures::{Stream, StreamExt};
 use opentalk_controller_settings::MinIO;
@@ -36,19 +36,22 @@ impl ObjectStorage {
             "opentalk",
         );
 
+        #[derive(Debug)]
         struct Resolver {
             minio_url: Url,
         }
 
-        impl ResolveEndpoint<Params> for Resolver {
-            fn resolve_endpoint(&self, params: &Params) -> aws_smithy_http::endpoint::Result {
+        impl ResolveEndpoint for Resolver {
+            fn resolve_endpoint(&self, params: &Params) -> EndpointFuture {
                 let url = if let Some(bucket) = params.bucket() {
                     self.minio_url.join(bucket).unwrap().to_string()
                 } else {
                     self.minio_url.to_string()
                 };
 
-                Ok(Endpoint::builder().url(url).build())
+                let endpoint = Endpoint::builder().url(url).build();
+
+                EndpointFuture::ready(Ok(endpoint))
             }
         }
 
@@ -70,8 +73,8 @@ impl ObjectStorage {
                 .await
                 .context("Cannot list buckets for configured MinIO storage")?
                 .buckets()
-                .map(|b| b.iter().any(|b| b.name() == Some(minio.bucket.as_str())))
-                .unwrap_or_default(),
+                .iter()
+                .any(|b| b.name() == Some(minio.bucket.as_str())),
             "Cannot find configured MinIO bucket"
         );
 
