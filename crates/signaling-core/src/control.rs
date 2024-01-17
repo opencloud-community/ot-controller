@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use anyhow::Result;
-use types::{
+use opentalk_types::{
     core::{ParticipantId, ParticipationKind, Timestamp},
     signaling::{control::state::ControlState, Role},
 };
@@ -13,7 +13,7 @@ use crate::{RedisConnection, SignalingRoomId};
 pub mod exchange;
 pub mod storage;
 
-pub use types::signaling::control::NAMESPACE;
+pub use opentalk_types::signaling::control::NAMESPACE;
 
 #[async_trait::async_trait]
 pub trait ControlStateExt: Sized {

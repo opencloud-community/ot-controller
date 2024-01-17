@@ -4,10 +4,13 @@
 
 [package]
 name = "opentalk-types"
+documentation = "https://docs.rs/opentalk-types"
 edition = "2021"
 license = "EUPL-1.2"
 authors.workspace = true
 version.workspace = true
+homepage.workspace = true
+repository.workspace = true
 publish = true
 description = "Shared types and traits for OpenTalk crates"
 
@@ -20,17 +23,17 @@ bytes = { workspace = true, optional = true }
 chrono.workspace = true
 chrono-tz.workspace = true
 clap = { workspace = true, optional = true }
-client-shared = { path = "../client-shared", package = "opentalk-client-shared", optional = true }
+opentalk-client-shared = { workspace = true, optional = true }
 derive_more = "0.99"
 diesel = { workspace = true, features = ["uuid"], optional = true }
-diesel-newtype = { path = "../diesel-newtype", package = "opentalk-diesel-newtype", optional = true }
+opentalk-diesel-newtype = { workspace = true, optional = true }
 email_address.workspace = true
 http = { workspace = true, optional = true }
-kustos-prefix = { path = "../kustos-prefix", package = "opentalk-kustos-prefix", optional = true }
-kustos-shared = { path = "../kustos-shared", optional = true }
+opentalk-kustos-prefix = { workspace = true, optional = true }
+kustos-shared = { workspace = true, optional = true }
 rand = { workspace = true, optional = true }
 redis = { workspace = true, optional = true }
-redis-args = { path = "../redis-args", optional = true }
+redis-args = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 serde_json.workspace = true
 thiserror.workspace = true
@@ -44,9 +47,9 @@ default = []
 actix = ["dep:actix-http", "dep:actix-web-httpauth", "dep:bytes"]
 backend = ["actix", "diesel", "kustos", "rand", "redis", "serde"]
 clap = ["dep:clap"]
-diesel = ["serde", "dep:diesel", "dep:diesel-newtype"]
-frontend = ["serde", "dep:client-shared", "dep:http"]
-kustos = ["dep:kustos-prefix", "dep:kustos-shared"]
+diesel = ["serde", "dep:diesel", "dep:opentalk-diesel-newtype"]
+frontend = ["serde", "dep:opentalk-client-shared", "dep:http"]
+kustos = ["dep:opentalk-kustos-prefix", "dep:kustos-shared"]
 rand = ["dep:rand", "uuid/v4"]
 redis = ["serde", "dep:redis", "dep:redis-args"]
 serde = [

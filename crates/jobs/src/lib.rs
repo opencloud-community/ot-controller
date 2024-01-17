@@ -35,12 +35,12 @@ use std::{
 };
 
 use async_trait::async_trait;
-use database::Db;
 use log::Log;
+use opentalk_controller_settings::Settings;
+use opentalk_database::Db;
 use opentalk_log::{error, info};
+use opentalk_signaling_core::ExchangeHandle;
 use serde_json::json;
-use settings::Settings;
-use signaling_core::ExchangeHandle;
 
 pub use error::Error;
 

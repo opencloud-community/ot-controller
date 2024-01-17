@@ -104,11 +104,11 @@ mod imports {
             pg::Pg,
             serialize::ToSql,
         },
-        diesel_newtype::DieselNewtype,
+        opentalk_diesel_newtype::DieselNewtype,
     };
 
     #[cfg(feature = "kustos")]
-    pub use kustos_prefix::KustosPrefix;
+    pub use opentalk_kustos_prefix::KustosPrefix;
 
     #[cfg(feature = "redis")]
     pub use {
@@ -124,5 +124,5 @@ mod imports {
     };
 
     #[cfg(feature = "frontend")]
-    pub use {client_shared::Request, http::Method};
+    pub use {http::Method, opentalk_client_shared::Request};
 }

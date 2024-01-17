@@ -4,8 +4,8 @@
 
 use crate::SignalingRoomId;
 
+use opentalk_types::core::{ParticipantId, RoomId, UserId};
 use serde::{Deserialize, Serialize};
-use types::core::{ParticipantId, RoomId, UserId};
 
 /// Control messages sent between controller modules to communicate changes inside a room
 #[derive(Debug, Serialize, Deserialize)]

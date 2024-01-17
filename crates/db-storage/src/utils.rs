@@ -8,10 +8,10 @@ use diesel::expression::AsExpression;
 use diesel::pg::Pg;
 use diesel::serialize::{IsNull, ToSql};
 use diesel::sql_types;
+use opentalk_types::core::UserId;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use std::io::Write;
-use types::core::UserId;
 
 /// Trait for models that have user-ids attached to them like created_by/updated_by fields
 ///

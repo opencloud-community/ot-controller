@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-pub use kustos_prefix_impl::KustosPrefix;
+pub use opentalk_kustos_prefix_impl::KustosPrefix;
 
 #[doc(hidden)]
 pub mod __exports {

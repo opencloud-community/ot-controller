@@ -14,21 +14,21 @@ publish = false
 anyhow.workspace = true
 async-trait.workspace = true
 chrono.workspace = true
-db-storage = { path = "../db-storage", package = "opentalk-db-storage" }
-database = { path = "../database", package = "opentalk-database" }
 log.workspace = true
-r3dlock = { path = "../r3dlock" }
-serde_json.workspace = true
+opentalk-database.workspace = true
+opentalk-db-storage.workspace = true
+opentalk-r3dlock.workspace = true
+opentalk-signaling-core.workspace = true
+opentalk-types = { workspace = true, features = ["backend"] }
+redis-args.workspace = true
 redis.workspace = true
-redis-args = { path = "../redis-args" }
-signaling-core = { path = "../signaling-core", package = "opentalk-signaling-core" }
+serde_json.workspace = true
 tokio.workspace = true
 tracing.workspace = true
-types = { path = "../types", package = "opentalk-types", features = ["backend"] }
 uuid.workspace = true
 
 [dev-dependencies]
+actix-rt.workspace = true
+opentalk-test-util = { workspace = true, features = ["controller"]}
 pretty_assertions.workspace = true
 serial_test.workspace = true
-test-util = { path = "../test-util", package = "opentalk-test-util", features = ["controller"]}
-actix-rt.workspace = true

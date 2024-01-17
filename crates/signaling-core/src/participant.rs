@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use db_storage::users::User;
+use opentalk_db_storage::users::User;
+use opentalk_types::core::UserId;
 use serde::{Deserialize, Serialize};
-use types::core::UserId;
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Participant<U> {

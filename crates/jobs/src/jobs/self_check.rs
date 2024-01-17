@@ -5,11 +5,11 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use database::Db;
 use log::Log;
+use opentalk_controller_settings::Settings;
+use opentalk_database::Db;
 use opentalk_log::{debug, error, info, trace, warn};
-use settings::Settings;
-use signaling_core::ExchangeHandle;
+use opentalk_signaling_core::ExchangeHandle;
 
 use crate::{Error, Job};
 

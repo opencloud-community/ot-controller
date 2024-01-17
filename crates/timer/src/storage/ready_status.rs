@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use anyhow::{Context, Result};
+use opentalk_signaling_core::{RedisConnection, SignalingRoomId};
+use opentalk_types::{core::ParticipantId, signaling::timer::ready_status::ReadyStatus};
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
-use signaling_core::{RedisConnection, SignalingRoomId};
-use types::{core::ParticipantId, signaling::timer::ready_status::ReadyStatus};
 
 /// A key to track the participants ready status
 #[derive(ToRedisArgs)]

@@ -14,14 +14,14 @@ publish = false
 anyhow.workspace = true
 async-trait.workspace = true
 chrono.workspace = true
-controller-settings = { path = "../controller-settings", package = "opentalk-controller-settings" }
-database = { path = "../database", package = "opentalk-database" }
-etherpad-client = { path = "../etherpad-client", package = "etherpad-client" }
+opentalk-controller-settings.workspace = true
+opentalk-database.workspace = true
+opentalk-etherpad-client.workspace = true
 futures.workspace = true
 log.workspace = true
-redis-args = { path = "../redis-args" }
+redis-args.workspace = true
 redis.workspace = true
 serde.workspace = true
-signaling-core = { path = "../signaling-core", package = "opentalk-signaling-core" }
+opentalk-signaling-core.workspace = true
 tracing.workspace = true
-types = { path = "../types", package = "opentalk-types", features = ["backend"] }
+opentalk-types = { workspace = true, features = ["backend"] }

@@ -34,7 +34,7 @@ pub struct JanusMcuConfig {
 }
 
 impl JanusMcuConfig {
-    pub fn extract(settings: &controller_settings::Settings) -> Result<Self> {
+    pub fn extract(settings: &opentalk_controller_settings::Settings) -> Result<Self> {
         let value = settings
             .extensions
             .get("room_server")

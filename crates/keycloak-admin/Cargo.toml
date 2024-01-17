@@ -3,11 +3,11 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "keycloak-admin"
-version = "0.1.0"
+name = "opentalk-keycloak-admin"
 edition = "2021"
 license = "EUPL-1.2"
 authors.workspace = true
+version.workspace = true
 publish = false
 
 [dependencies]

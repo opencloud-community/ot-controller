@@ -6,11 +6,11 @@ use std::{marker::PhantomData, sync::Arc};
 
 use actix_http::ws::CloseCode;
 use futures::{stream::SelectAll, Stream};
-use serde::Serialize;
-use types::{
+use opentalk_types::{
     core::Timestamp,
     signaling::{NamespacedEvent, Role},
 };
+use serde::Serialize;
 
 use crate::{any_stream, AnyStream, RedisConnection, SignalingMetrics, SignalingModule};
 

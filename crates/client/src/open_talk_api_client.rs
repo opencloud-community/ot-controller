@@ -4,8 +4,8 @@
 
 use std::error::Error;
 
-use shared::{ApiError, Authorization, WithAuthorization};
-use types::{
+use opentalk_client_shared::{ApiError, Authorization, WithAuthorization};
+use opentalk_types::{
     api::v1::{
         auth::{GetLoginRequest, OidcProvider},
         invites::{CodeVerified, VerifyBody},
@@ -33,7 +33,7 @@ where
 }
 
 #[async_trait::async_trait]
-impl<C: shared::Client + Sync> OpenTalkApiClient<C::Error> for C {
+impl<C: opentalk_client_shared::Client + Sync> OpenTalkApiClient<C::Error> for C {
     async fn get_login(&self) -> Result<OidcProvider, ApiError<C::Error>> {
         self.rest(GetLoginRequest)
             .await

@@ -3,19 +3,21 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use crate::settings::{self, Connection};
-use ::types::signaling::media::{command::SubscriberConfiguration, MediaSessionType};
 use anyhow::{bail, Context, Result};
-use controller_settings::SharedSettings;
 use futures::{ready, stream::FuturesUnordered};
-use janus_client::outgoing::{
+use lapin_pool::{RabbitMqChannel, RabbitMqPool};
+use opentalk_controller_settings::SharedSettings;
+use opentalk_janus_client::outgoing::{
     VideoRoomPluginConfigurePublisher, VideoRoomPluginConfigureSubscriber,
 };
-use janus_client::types::{SdpAnswer, SdpOffer};
-use janus_client::{ClientId, JanusMessage, JsepType, RoomId as JanusRoomId, TrickleCandidate};
-use lapin_pool::{RabbitMqChannel, RabbitMqPool};
+use opentalk_janus_client::types::{SdpAnswer, SdpOffer};
+use opentalk_janus_client::{
+    ClientId, JanusMessage, JsepType, RoomId as JanusRoomId, TrickleCandidate,
+};
+use opentalk_signaling_core::RedisConnection;
+use opentalk_types::signaling::media::{command::SubscriberConfiguration, MediaSessionType};
 use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
-use signaling_core::RedisConnection;
 use std::borrow::{Borrow, Cow};
 use std::cmp::min;
 use std::collections::HashSet;
@@ -113,7 +115,7 @@ pub struct McuPool {
 
 impl McuPool {
     pub async fn build(
-        settings: &controller_settings::Settings,
+        settings: &opentalk_controller_settings::Settings,
         shared_settings: SharedSettings,
         rabbitmq_pool: Arc<RabbitMqPool>,
         mut redis: RedisConnection,
@@ -350,10 +352,10 @@ impl McuPool {
         client: &McuClient,
         media_session_key: MediaSessionKey,
         loop_index: Option<usize>,
-    ) -> Result<(janus_client::Handle, JanusRoomId)> {
+    ) -> Result<(opentalk_janus_client::Handle, JanusRoomId)> {
         let handle = client
             .session
-            .attach_to_plugin(janus_client::JanusPlugin::VideoRoom, loop_index)
+            .attach_to_plugin(opentalk_janus_client::JanusPlugin::VideoRoom, loop_index)
             .await
             .context("Failed to attach session to videoroom plugin")?;
 
@@ -365,7 +367,7 @@ impl McuPool {
             MediaSessionType::Screen => settings.max_screen_bitrate,
         };
 
-        let request = janus_client::outgoing::VideoRoomPluginCreate {
+        let request = opentalk_janus_client::outgoing::VideoRoomPluginCreate {
             description: media_session_key.to_string(),
             // We publish every stream in its own Janus room.
             publishers: Some(1),
@@ -383,8 +385,8 @@ impl McuPool {
 
         let (response, _) = handle.send(request).await?;
         let room_id = match response {
-            janus_client::incoming::VideoRoomPluginDataCreated::Ok { room, .. } => room,
-            janus_client::incoming::VideoRoomPluginDataCreated::Err(e) => {
+            opentalk_janus_client::incoming::VideoRoomPluginDataCreated::Ok { room, .. } => room,
+            opentalk_janus_client::incoming::VideoRoomPluginDataCreated::Err(e) => {
                 bail!("Failed to create videoroom, got error response: {}", e);
             }
         };
@@ -396,7 +398,7 @@ impl McuPool {
             media_session_key.1,
         );
 
-        let join_request = janus_client::outgoing::VideoRoomPluginJoinPublisher {
+        let join_request = opentalk_janus_client::outgoing::VideoRoomPluginJoinPublisher {
             room: room_id,
             id: Some(media_session_key.1.into()),
             display: None,
@@ -406,7 +408,7 @@ impl McuPool {
         let (response, _) = handle.send(join_request).await?;
 
         match response {
-            janus_client::incoming::VideoRoomPluginDataJoined::Ok { .. } => {
+            opentalk_janus_client::incoming::VideoRoomPluginDataJoined::Ok { .. } => {
                 log::trace!(
                     "Publisher {} joined room {} successfully",
                     media_session_key.0,
@@ -415,7 +417,7 @@ impl McuPool {
 
                 Ok((handle, room_id))
             }
-            janus_client::incoming::VideoRoomPluginDataJoined::Err(e) => {
+            opentalk_janus_client::incoming::VideoRoomPluginDataJoined::Err(e) => {
                 bail!("Failed to join videoroom, got error response: {}", e);
             }
         }
@@ -445,7 +447,10 @@ impl McuPool {
 
         let handle = client
             .session
-            .attach_to_plugin(janus_client::JanusPlugin::VideoRoom, info.loop_index)
+            .attach_to_plugin(
+                opentalk_janus_client::JanusPlugin::VideoRoom,
+                info.loop_index,
+            )
             .await
             .context("Failed to attach to videoroom plugin")?;
 
@@ -683,8 +688,8 @@ struct McuClient {
 
     pub config: Connection,
 
-    session: janus_client::Session,
-    client: janus_client::Client,
+    session: opentalk_janus_client::Session,
+    client: opentalk_janus_client::Client,
 
     // shutdown signal specific to this client
     pubsub_shutdown: broadcast::Sender<ShutdownSignal>,
@@ -737,7 +742,7 @@ impl McuClient {
             &config.from_routing_key,
         );
 
-        let rabbit_mq_config = janus_client::RabbitMqConfig::new_from_channel(
+        let rabbit_mq_config = opentalk_janus_client::RabbitMqConfig::new_from_channel(
             rabbitmq_channel.clone(),
             config.to_routing_key.clone(),
             config.exchange.clone(),
@@ -759,7 +764,7 @@ impl McuClient {
                 .context("Failed to initialize handle count")?;
         }
 
-        let mut client = janus_client::Client::new(
+        let mut client = opentalk_janus_client::Client::new(
             rabbit_mq_config,
             ClientId(id.0.clone()),
             events_sender.clone(),
@@ -836,7 +841,7 @@ impl McuClient {
 }
 
 pub struct JanusPublisher {
-    handle: janus_client::Handle,
+    handle: opentalk_janus_client::Handle,
     room_id: JanusRoomId,
     mcu_id: McuId,
     loop_index: Option<usize>,
@@ -849,11 +854,13 @@ impl JanusPublisher {
     pub async fn send_message(&self, request: Request) -> Result<Response> {
         match request {
             Request::SdpOffer(offer) => {
-                let response: janus_client::Jsep =
-                    send_offer(&self.handle, (janus_client::JsepType::Offer, offer).into())
-                        .await
-                        .context("Failed to send SDP offer")?
-                        .into();
+                let response: opentalk_janus_client::Jsep = send_offer(
+                    &self.handle,
+                    (opentalk_janus_client::JsepType::Offer, offer).into(),
+                )
+                .await
+                .context("Failed to send SDP offer")?
+                .into();
 
                 log::trace!("Publisher Send received: {:?}", &response);
                 Ok(Response::SdpAnswer(response))
@@ -916,12 +923,14 @@ impl JanusPublisher {
 
         if let Err(e) = self
             .handle
-            .send(janus_client::types::outgoing::VideoRoomPluginDestroy {
-                room: self.room_id,
-                secret: None,
-                permanent: None,
-                token: None,
-            })
+            .send(
+                opentalk_janus_client::types::outgoing::VideoRoomPluginDestroy {
+                    room: self.room_id,
+                    secret: None,
+                    permanent: None,
+                    token: None,
+                },
+            )
             .await
         {
             log::error!(
@@ -1012,7 +1021,7 @@ impl JanusPublisher {
 }
 
 pub struct JanusSubscriber {
-    handle: janus_client::Handle,
+    handle: opentalk_janus_client::Handle,
     room_id: JanusRoomId,
     mcu_id: McuId,
     loop_index: Option<usize>,
@@ -1025,7 +1034,7 @@ impl JanusSubscriber {
     pub async fn send_message(&self, request: Request) -> Result<Response> {
         match request {
             Request::RequestOffer { without_video } => {
-                let response: janus_client::Jsep = self
+                let response: opentalk_janus_client::Jsep = self
                     .join_room(without_video)
                     .await
                     .context("Failed to join room")?;
@@ -1078,17 +1087,22 @@ impl JanusSubscriber {
     }
 
     /// Joins the room of the publisher this [JanusSubscriber](JanusSubscriber) is subscriber to
-    async fn join_room(&self, without_video: bool) -> Result<janus_client::Jsep> {
-        let feed = janus_client::FeedId::new(self.media_session_key.1.into());
-        let join_request =
-            janus_client::outgoing::VideoRoomPluginJoinSubscriber::builder(self.room_id, feed)
-                .offer_video(if without_video { Some(false) } else { None })
-                .build();
+    async fn join_room(&self, without_video: bool) -> Result<opentalk_janus_client::Jsep> {
+        let feed = opentalk_janus_client::FeedId::new(self.media_session_key.1.into());
+        let join_request = opentalk_janus_client::outgoing::VideoRoomPluginJoinSubscriber::builder(
+            self.room_id,
+            feed,
+        )
+        .offer_video(if without_video { Some(false) } else { None })
+        .build();
 
         let join_response = self.handle.send(join_request).await;
 
         match join_response {
-            Ok((janus_client::incoming::VideoRoomPluginDataAttached { .. }, Some(jsep))) => {
+            Ok((
+                opentalk_janus_client::incoming::VideoRoomPluginDataAttached { .. },
+                Some(jsep),
+            )) => {
                 log::debug!("Join room got Jsep/SDP: {:?}", jsep);
                 Ok(jsep)
             }
@@ -1196,19 +1210,19 @@ impl JanusSubscriber {
     }
 }
 
-impl TryFrom<janus_client::incoming::TrickleMessage> for TrickleMessage {
+impl TryFrom<opentalk_janus_client::incoming::TrickleMessage> for TrickleMessage {
     type Error = anyhow::Error;
 
-    fn try_from(value: janus_client::incoming::TrickleMessage) -> Result<Self> {
+    fn try_from(value: opentalk_janus_client::incoming::TrickleMessage) -> Result<Self> {
         match value.candidate {
-            janus_client::incoming::TrickleInnerMessage::Completed { completed } => {
+            opentalk_janus_client::incoming::TrickleInnerMessage::Completed { completed } => {
                 if completed {
                     Ok(Self::Completed)
                 } else {
                     bail!("invalid trickle message. Recieved completed == false")
                 }
             }
-            janus_client::incoming::TrickleInnerMessage::Candidate(candidate) => {
+            opentalk_janus_client::incoming::TrickleInnerMessage::Candidate(candidate) => {
                 Ok(Self::Candidate(TrickleCandidate {
                     sdp_m_line_index: candidate.sdp_m_line_index,
                     candidate: candidate.candidate,
@@ -1233,35 +1247,35 @@ async fn forward_janus_message(
     event_sink: &mpsc::Sender<(MediaSessionKey, WebRtcEvent)>,
 ) -> Result<()> {
     match message {
-        janus_client::JanusMessage::Event(event) => {
-            let janus_client::incoming::Event { plugindata, .. } = event;
-            if let janus_client::PluginData::VideoRoom(plugindata) = plugindata {
+        opentalk_janus_client::JanusMessage::Event(event) => {
+            let opentalk_janus_client::incoming::Event { plugindata, .. } = event;
+            if let opentalk_janus_client::PluginData::VideoRoom(plugindata) = plugindata {
                 match plugindata {
-                    janus_client::incoming::VideoRoomPluginData::Destroyed(_) => {
+                    opentalk_janus_client::incoming::VideoRoomPluginData::Destroyed(_) => {
                         log::trace!(
                             "Participant {}: The room of this participant got destroyed",
                             media_session_key
                         );
                     }
-                    janus_client::incoming::VideoRoomPluginData::SlowLink(_) => {
+                    opentalk_janus_client::incoming::VideoRoomPluginData::SlowLink(_) => {
                         log::trace!(
                             "Participant {}: Got a slow link event for its room",
                             media_session_key
                         );
                     }
-                    janus_client::incoming::VideoRoomPluginData::Event(_) => {
+                    opentalk_janus_client::incoming::VideoRoomPluginData::Event(_) => {
                         log::trace!(
                             "Participant {}: Got a plugin event for its room",
                             media_session_key
                         );
                     }
-                    janus_client::incoming::VideoRoomPluginData::Talking(_) => {
+                    opentalk_janus_client::incoming::VideoRoomPluginData::Talking(_) => {
                         event_sink
                             .send((media_session_key, WebRtcEvent::StartedTalking))
                             .await?;
                         return Ok(());
                     }
-                    janus_client::incoming::VideoRoomPluginData::StoppedTalking(_) => {
+                    opentalk_janus_client::incoming::VideoRoomPluginData::StoppedTalking(_) => {
                         event_sink
                             .send((media_session_key, WebRtcEvent::StoppedTalking))
                             .await?;
@@ -1275,19 +1289,19 @@ async fn forward_janus_message(
                 }
             }
         }
-        janus_client::JanusMessage::Hangup(_) => {
+        opentalk_janus_client::JanusMessage::Hangup(_) => {
             event_sink
                 .send((media_session_key, WebRtcEvent::WebRtcDown))
                 .await?;
             return Ok(());
         }
-        janus_client::JanusMessage::Detached(_) => {
+        opentalk_janus_client::JanusMessage::Detached(_) => {
             event_sink
                 .send((media_session_key, WebRtcEvent::WebRtcDown))
                 .await?;
             return Ok(());
         }
-        janus_client::JanusMessage::Media(event) => {
+        opentalk_janus_client::JanusMessage::Media(event) => {
             log::debug!(
                 "Participant {}: Received Media Event: {:?}",
                 media_session_key,
@@ -1297,12 +1311,12 @@ async fn forward_janus_message(
                 .send((media_session_key, WebRtcEvent::Media(event.clone().into())))
                 .await?;
         }
-        janus_client::JanusMessage::WebRtcUp(_) => {
+        opentalk_janus_client::JanusMessage::WebRtcUp(_) => {
             event_sink
                 .send((media_session_key, WebRtcEvent::WebRtcUp))
                 .await?;
         }
-        janus_client::JanusMessage::SlowLink(event) => {
+        opentalk_janus_client::JanusMessage::SlowLink(event) => {
             let slow_link = if event.uplink {
                 WebRtcEvent::SlowLink(LinkDirection::Upstream)
             } else {
@@ -1311,7 +1325,7 @@ async fn forward_janus_message(
 
             event_sink.send((media_session_key, slow_link)).await?;
         }
-        janus_client::JanusMessage::Trickle(event) => {
+        opentalk_janus_client::JanusMessage::Trickle(event) => {
             event_sink
                 .send((
                     media_session_key,
@@ -1331,7 +1345,7 @@ async fn forward_janus_message(
     Ok(())
 }
 
-async fn send_offer(handle: &janus_client::Handle, offer: SdpOffer) -> Result<SdpAnswer> {
+async fn send_offer(handle: &opentalk_janus_client::Handle, offer: SdpOffer) -> Result<SdpAnswer> {
     match handle
         .send_with_jsep(VideoRoomPluginConfigurePublisher::new(), offer.into())
         .await
@@ -1345,10 +1359,10 @@ async fn send_offer(handle: &janus_client::Handle, offer: SdpOffer) -> Result<Sd
     }
 }
 
-async fn send_answer(handle: &janus_client::Handle, answer: SdpAnswer) -> Result<()> {
+async fn send_answer(handle: &opentalk_janus_client::Handle, answer: SdpAnswer) -> Result<()> {
     match handle
         .send_with_jsep(
-            janus_client::outgoing::VideoRoomPluginStart {},
+            opentalk_janus_client::outgoing::VideoRoomPluginStart {},
             answer.into(),
         )
         .await
@@ -1359,12 +1373,12 @@ async fn send_answer(handle: &janus_client::Handle, answer: SdpAnswer) -> Result
 }
 
 async fn send_candidate(
-    handle: &janus_client::Handle,
-    candidate: janus_client::TrickleCandidate,
+    handle: &opentalk_janus_client::Handle,
+    candidate: opentalk_janus_client::TrickleCandidate,
 ) -> Result<()> {
     match handle
         .trickle(
-            janus_client::types::outgoing::TrickleMessage::new(&[candidate])
+            opentalk_janus_client::types::outgoing::TrickleMessage::new(&[candidate])
                 .context("Failed to create trickle message from candidates")?,
         )
         .await
@@ -1374,9 +1388,9 @@ async fn send_candidate(
     }
 }
 
-async fn send_end_of_candidates(handle: &janus_client::Handle) -> Result<()> {
+async fn send_end_of_candidates(handle: &opentalk_janus_client::Handle) -> Result<()> {
     match handle
-        .trickle(janus_client::types::outgoing::TrickleMessage::end())
+        .trickle(opentalk_janus_client::types::outgoing::TrickleMessage::end())
         .await
     {
         Ok(_) => Ok(()),

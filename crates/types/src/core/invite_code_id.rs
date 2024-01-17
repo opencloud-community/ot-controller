@@ -50,7 +50,7 @@ impl From<InviteCodeId> for PolicyInvite {
 }
 
 #[cfg(feature = "frontend")]
-impl client_shared::Authorization for InviteCodeId {
+impl opentalk_client_shared::Authorization for InviteCodeId {
     fn add_authorization_information(&self, request: &mut http::request::Request<Vec<u8>>) {
         let _ = request.headers_mut().insert(
             http::header::AUTHORIZATION,

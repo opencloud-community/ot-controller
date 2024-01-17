@@ -5,16 +5,16 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use controller_utils::deletion::room::associated_resource_ids_for_invite;
-use database::Db;
-use db_storage::invites::Invite;
 use kustos::Authz;
 use log::Log;
+use opentalk_controller_settings::Settings;
+use opentalk_controller_utils::deletion::room::associated_resource_ids_for_invite;
+use opentalk_database::Db;
+use opentalk_db_storage::invites::Invite;
 use opentalk_log::{debug, info};
+use opentalk_signaling_core::ExchangeHandle;
+use opentalk_types::core::Timestamp;
 use serde::{Deserialize, Serialize};
-use settings::Settings;
-use signaling_core::ExchangeHandle;
-use types::core::Timestamp;
 
 use crate::{Error, Job, JobParameters};
 

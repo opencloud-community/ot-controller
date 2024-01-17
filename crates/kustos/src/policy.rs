@@ -9,7 +9,7 @@ use std::{
 };
 
 use casbin::{rhai::Dynamic, EnforceArgs};
-use shared::{
+use kustos_shared::{
     access::AccessMethod,
     error::ParsingError,
     internal::{ToCasbin, ToCasbinMultiple, ToCasbinString},

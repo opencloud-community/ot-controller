@@ -5,13 +5,11 @@
 use crate::storage::init::InitState;
 use anyhow::{Context, Result};
 use chrono::{Duration, Utc};
-use database::Db;
-use etherpad_client::EtherpadClient;
 use exchange::GenerateUrl;
 use futures::TryStreamExt;
-use redis_args::{FromRedisValue, ToRedisArgs};
-use serde::{Deserialize, Serialize};
-use signaling_core::{
+use opentalk_database::Db;
+use opentalk_etherpad_client::EtherpadClient;
+use opentalk_signaling_core::{
     assets::save_asset,
     control::{
         self,
@@ -20,8 +18,7 @@ use signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, ObjectStorage, RedisConnection,
     SignalingModule, SignalingModuleInitData, SignalingRoomId,
 };
-use std::sync::Arc;
-use types::{
+use opentalk_types::{
     core::ParticipantId,
     signaling::{
         protocol::{
@@ -33,6 +30,9 @@ use types::{
         Role,
     },
 };
+use redis_args::{FromRedisValue, ToRedisArgs};
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 pub mod exchange;
 pub mod storage;
@@ -60,7 +60,7 @@ pub struct Protocol {
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for Protocol {
     const NAMESPACE: &'static str = NAMESPACE;
-    type Params = controller_settings::Etherpad;
+    type Params = opentalk_controller_settings::Etherpad;
     type Incoming = ProtocolCommand;
     type Outgoing = ProtocolEvent;
     type ExchangeMessage = exchange::Event;

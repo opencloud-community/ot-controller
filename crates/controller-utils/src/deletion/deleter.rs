@@ -2,12 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use database::DbConnection;
 use kustos::Authz;
 use log::Log;
-use settings::Settings;
-use signaling_core::{ExchangeHandle, ObjectStorage};
-use types::core::UserId;
+use opentalk_controller_settings::Settings;
+use opentalk_database::DbConnection;
+use opentalk_signaling_core::{ExchangeHandle, ObjectStorage};
+use opentalk_types::core::UserId;
 
 use super::Error;
 

@@ -17,23 +17,13 @@ use crate::{
 use actix_http::ws::CloseCode;
 use actix_rt::task::JoinHandle;
 use anyhow::{bail, Context, Result};
-use database::Db;
-use db_storage::rooms::Room;
-use db_storage::users::User;
 use futures::stream::SelectAll;
 use futures::StreamExt;
 use kustos::Authz;
-use serde_json::Value;
-use tokio::{
-    select,
-    sync::{
-        broadcast,
-        mpsc::{self, UnboundedReceiver, UnboundedSender},
-    },
-    task,
-    time::{timeout, timeout_at, Instant},
-};
-use types::{
+use opentalk_database::Db;
+use opentalk_db_storage::rooms::Room;
+use opentalk_db_storage::users::User;
+use opentalk_types::{
     common::tariff::TariffResource,
     core::{BreakoutRoomId, ParticipantId, ParticipationKind, TariffId, Timestamp, UserId},
     signaling::{
@@ -45,6 +35,16 @@ use types::{
         },
         ModuleData, NamespacedCommand, NamespacedEvent, Role,
     },
+};
+use serde_json::Value;
+use tokio::{
+    select,
+    sync::{
+        broadcast,
+        mpsc::{self, UnboundedReceiver, UnboundedSender},
+    },
+    task,
+    time::{timeout, timeout_at, Instant},
 };
 
 use std::collections::{HashMap, HashSet};
@@ -930,8 +930,8 @@ where
     async fn build_participant(
         &mut self,
         id: ParticipantId,
-    ) -> Result<types::signaling::control::Participant> {
-        let mut participant = types::signaling::control::Participant {
+    ) -> Result<opentalk_types::signaling::control::Participant> {
+        let mut participant = opentalk_types::signaling::control::Participant {
             id,
             module_data: Default::default(),
         };

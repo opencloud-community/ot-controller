@@ -14,17 +14,17 @@ publish = false
 [dependencies]
 anyhow.workspace = true
 async-trait.workspace = true
-database = { path = "../database", package = "opentalk-database" }
-db-storage = { path = "../db-storage", package = "opentalk-db-storage" }
+opentalk-database.workspace = true
+opentalk-db-storage.workspace = true
 diesel-async.workspace = true
 displaydoc.workspace = true
-kustos = { path = "../kustos" }
-kustos-shared = { path = "../kustos-shared" }
+kustos.workspace = true
+kustos-shared.workspace = true
 log.workspace = true
-nextcloud-client = { path = "../nextcloud-client", package = "opentalk-nextcloud-client" }
-opentalk_log = { path = "../log", package = "opentalk-log" }
+opentalk-nextcloud-client = { workspace = true, default-features = true }
+opentalk-log.workspace = true
 serde_json.workspace = true
-settings = { path = "../controller-settings", package = "opentalk-controller-settings" }
-signaling-core = { path = "../signaling-core", package = "opentalk-signaling-core" }
+opentalk-controller-settings.workspace = true
+opentalk-signaling-core.workspace = true
 thiserror.workspace = true
-types = { path = "../types", package = "opentalk-types" }
+opentalk-types.workspace = true

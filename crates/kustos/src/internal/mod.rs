@@ -63,8 +63,8 @@ mod test {
     use crate::AccessMethod;
     use crate::{InvitePolicy, UserPolicies, UserPolicy};
     use casbin::{CoreApi, MgmtApi};
+    use kustos_shared::{error::ParsingError, internal::ToCasbin};
     use pretty_assertions::assert_eq;
-    use shared::{error::ParsingError, internal::ToCasbin};
     use std::convert::TryInto;
     use std::iter::FromIterator;
     use std::str::FromStr;

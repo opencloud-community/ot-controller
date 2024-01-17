@@ -5,15 +5,15 @@
 use std::{collections::HashSet, sync::Arc};
 
 use chrono::{DateTime, Utc};
-use controller_utils::deletion::{Deleter, EventDeleter, RoomDeleter};
-use database::{Db, DbConnection};
-use db_storage::events::Event;
 use kustos::Authz;
 use log::Log;
+use opentalk_controller_settings::Settings;
+use opentalk_controller_utils::deletion::{Deleter, EventDeleter, RoomDeleter};
+use opentalk_database::{Db, DbConnection};
+use opentalk_db_storage::events::Event;
 use opentalk_log::{debug, info, warn};
-use settings::Settings;
-use signaling_core::{ExchangeHandle, ObjectStorage};
-use types::core::{EventId, RoomId};
+use opentalk_signaling_core::{ExchangeHandle, ObjectStorage};
+use opentalk_types::core::{EventId, RoomId};
 
 use crate::Error;
 

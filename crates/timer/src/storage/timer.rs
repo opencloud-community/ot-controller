@@ -5,11 +5,11 @@
 use crate::{Kind, TimerId};
 
 use anyhow::{Context, Result};
+use opentalk_signaling_core::{RedisConnection, SignalingRoomId};
+use opentalk_types::core::{ParticipantId, Timestamp};
 use redis::AsyncCommands;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
-use signaling_core::{RedisConnection, SignalingRoomId};
-use types::core::{ParticipantId, Timestamp};
 
 /// The timer key holds a serialized [`Timer`].
 #[derive(ToRedisArgs)]

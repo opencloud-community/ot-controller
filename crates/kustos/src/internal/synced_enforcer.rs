@@ -13,9 +13,9 @@ use casbin::{
     RbacApi, RoleManager, TryIntoAdapter, TryIntoModel,
 };
 use casbin::{EventEmitter, Result};
+use kustos_shared::internal::{ToCasbin, ToCasbinString};
 use opentelemetry::Context;
 use parking_lot as pl;
-use shared::internal::{ToCasbin, ToCasbinString};
 use std::collections::HashMap;
 use std::convert::TryInto;
 use std::sync::Arc;

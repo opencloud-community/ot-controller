@@ -2,13 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use janus_client::transport::RabbitMqConfig;
-use janus_client::transport::WebSocketConfig;
-use janus_client::types::incoming;
-use janus_client::types::outgoing;
-use janus_client::*;
-use lapin::Connection;
-use lapin::ConnectionProperties;
+use lapin::{Connection, ConnectionProperties};
+use opentalk_janus_client::{
+    transport::{RabbitMqConfig, WebSocketConfig},
+    types::{incoming, outgoing},
+    Client, ClientId, JanusPlugin,
+};
 use pretty_assertions::assert_eq;
 use std::sync::Arc;
 use test_log::test;

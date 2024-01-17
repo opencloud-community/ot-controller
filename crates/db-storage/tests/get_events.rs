@@ -5,15 +5,15 @@
 use crate::common::make_user;
 use chrono::{TimeZone as _, Utc};
 use chrono_tz::Tz;
-use database::DbConnection;
+use opentalk_database::DbConnection;
 use opentalk_db_storage::events::{
     Event, EventInvite, GetEventsCursor, NewEvent, NewEventInvite, UpdateEventInvite,
 };
 use opentalk_db_storage::rooms::NewRoom;
 use opentalk_db_storage::tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId};
+use opentalk_types::core::{EventId, EventInviteStatus, InviteRole, RoomId, TimeZone, UserId};
 use pretty_assertions::assert_eq;
 use serial_test::serial;
-use types::core::{EventId, EventInviteStatus, InviteRole, RoomId, TimeZone, UserId};
 
 mod common;
 
@@ -67,7 +67,7 @@ async fn update_invite_status(
 #[tokio::test]
 #[serial]
 async fn test() {
-    let db_ctx = test_util::database::DatabaseContext::new(true).await;
+    let db_ctx = opentalk_test_util::database::DatabaseContext::new(true).await;
 
     let mut conn = db_ctx.db.get_conn().await.unwrap();
 
@@ -269,7 +269,7 @@ async fn test() {
 #[tokio::test]
 #[serial]
 async fn get_events_invite_filter() {
-    let db_ctx = test_util::database::DatabaseContext::new(true).await;
+    let db_ctx = opentalk_test_util::database::DatabaseContext::new(true).await;
 
     let mut conn = db_ctx.db.get_conn().await.unwrap();
 
@@ -502,7 +502,7 @@ async fn get_events_invite_filter() {
 #[tokio::test]
 #[serial]
 async fn get_event_invites() {
-    let db_ctx = test_util::database::DatabaseContext::new(true).await;
+    let db_ctx = opentalk_test_util::database::DatabaseContext::new(true).await;
 
     let mut conn = db_ctx.db.get_conn().await.unwrap();
 
@@ -591,7 +591,7 @@ async fn get_event_invites() {
 #[tokio::test]
 #[serial]
 async fn get_event_adhoc() {
-    let db_ctx = test_util::database::DatabaseContext::new(true).await;
+    let db_ctx = opentalk_test_util::database::DatabaseContext::new(true).await;
 
     let mut conn = db_ctx.db.get_conn().await.unwrap();
 
@@ -676,7 +676,7 @@ async fn get_event_adhoc() {
 #[tokio::test]
 #[serial]
 async fn get_event_time_independent() {
-    let db_ctx = test_util::database::DatabaseContext::new(true).await;
+    let db_ctx = opentalk_test_util::database::DatabaseContext::new(true).await;
 
     let mut conn = db_ctx.db.get_conn().await.unwrap();
 
@@ -763,7 +763,7 @@ async fn get_event_time_independent() {
 #[tokio::test]
 #[serial]
 async fn get_event_min_max_time() {
-    let db_ctx = test_util::database::DatabaseContext::new(true).await;
+    let db_ctx = opentalk_test_util::database::DatabaseContext::new(true).await;
 
     let mut conn = db_ctx.db.get_conn().await.unwrap();
 

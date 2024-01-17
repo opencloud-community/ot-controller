@@ -11,13 +11,13 @@
 use std::sync::Arc;
 
 use anyhow::Result;
-use database::Db;
-use db_storage::events::shared_folders::EventSharedFolder;
-use signaling_core::{
+use opentalk_database::Db;
+use opentalk_db_storage::events::shared_folders::EventSharedFolder;
+use opentalk_signaling_core::{
     control::storage::get_event, DestroyContext, Event, InitContext, ModuleContext,
     SignalingModule, SignalingModuleInitData, SignalingRoomId,
 };
-use types::{
+use opentalk_types::{
     common::shared_folder::SharedFolder as SharedFolderType,
     signaling::shared_folder::{event::SharedFolderEvent, NAMESPACE},
 };

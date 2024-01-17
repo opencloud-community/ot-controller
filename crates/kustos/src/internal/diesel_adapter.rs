@@ -9,7 +9,7 @@ use crate::db::{
 };
 use async_trait::async_trait;
 use casbin::{error::AdapterError, Adapter, Error as CasbinError, Filter, Model, Result};
-use database::Db;
+use opentalk_database::Db;
 use std::sync::Arc;
 
 impl From<crate::Error> for CasbinError {
@@ -347,8 +347,8 @@ fn normalize_policy(casbin_rule: &CasbinRule) -> Option<Vec<String>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use database::{query_helper, Db};
     use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
+    use opentalk_database::{query_helper, Db};
     use pretty_assertions::assert_eq;
     use serial_test::serial;
 
@@ -415,7 +415,7 @@ mod tests {
                 .await?;
         }
 
-        db_storage::migrations::migrate_from_url(&url)
+        opentalk_db_storage::migrations::migrate_from_url(&url)
             .await
             .context("Migration failed")?;
 

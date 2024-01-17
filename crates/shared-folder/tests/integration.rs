@@ -2,23 +2,21 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use database::DbConnection;
-use db_storage::{
+use opentalk_database::DbConnection;
+use opentalk_db_storage::{
     events::{
         shared_folders::{EventSharedFolder, NewEventSharedFolder},
         Event, NewEvent,
     },
     tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId},
 };
-use pretty_assertions::assert_eq;
-use serial_test::serial;
-use signaling_core::{
+use opentalk_signaling_core::{
     control::storage::try_init_event,
     module_tester::{ModuleTester, WsMessageOutgoing},
     RedisConnection,
 };
-use test_util::{TestContext, ROOM_ID, USER_1, USER_2};
-use types::{
+use opentalk_test_util::{TestContext, ROOM_ID, USER_1, USER_2};
+use opentalk_types::{
     common::shared_folder::SharedFolder,
     core::{EventId, RoomId, UserId},
     signaling::{
@@ -26,6 +24,8 @@ use types::{
         Role,
     },
 };
+use pretty_assertions::assert_eq;
+use serial_test::serial;
 
 async fn make_event(
     conn: &mut DbConnection,

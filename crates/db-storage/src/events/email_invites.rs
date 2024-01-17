@@ -6,12 +6,12 @@ use super::{Event, NewEventInvite};
 use crate::schema::{event_email_invites, event_invites, events};
 use crate::users::User;
 use chrono::{DateTime, Utc};
-use database::{DbConnection, Paginate, Result};
 use diesel::prelude::*;
 use diesel::{ExpressionMethods, QueryDsl, Queryable};
 use diesel_async::scoped_futures::ScopedFutureExt;
 use diesel_async::{AsyncConnection, RunQueryDsl};
-use types::core::{EventId, InviteRole, RoomId, UserId};
+use opentalk_database::{DbConnection, Paginate, Result};
+use opentalk_types::core::{EventId, InviteRole, RoomId, UserId};
 
 #[derive(Insertable)]
 #[diesel(table_name = event_email_invites)]

@@ -5,19 +5,19 @@
 use crate::schema::{invites, users};
 use crate::users::User;
 use chrono::{DateTime, Utc};
-use database::{DbConnection, Paginate, Result};
 use derive_more::{AsRef, Display, From, FromStr, Into};
 use diesel::{
     BoolExpressionMethods, ExpressionMethods, Identifiable, JoinOnDsl, QueryDsl, Queryable,
 };
 use diesel_async::RunQueryDsl;
-use diesel_newtype::DieselNewtype;
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
-use types::{
+use opentalk_database::{DbConnection, Paginate, Result};
+use opentalk_diesel_newtype::DieselNewtype;
+use opentalk_types::{
     api::v1::{invites::InviteResource, users::PublicUserProfile},
     core::{InviteCodeId, RoomId, UserId},
 };
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
 
 #[derive(
     AsRef,

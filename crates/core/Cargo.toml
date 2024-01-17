@@ -15,5 +15,5 @@ publish = false
 [dependencies]
 anyhow.workspace = true
 async-trait.workspace = true
-signaling-core = { path = "../signaling-core", package = "opentalk-signaling-core" }
-types = { path = "../types", package = "opentalk-types" }
+opentalk-signaling-core.workspace = true
+opentalk-types.workspace = true

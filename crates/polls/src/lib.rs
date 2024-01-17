@@ -4,13 +4,11 @@
 
 use anyhow::Result;
 use futures::{stream::once, FutureExt};
-use signaling_core::{
+use opentalk_signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
     SignalingModuleInitData, SignalingRoomId,
 };
-use std::time::Duration;
-use tokio::time::sleep;
-use types::signaling::{
+use opentalk_types::signaling::{
     polls::{
         command::{PollsCommand, Start, Vote},
         event::{Error, PollsEvent, Started},
@@ -19,6 +17,8 @@ use types::signaling::{
     },
     Role,
 };
+use std::time::Duration;
+use tokio::time::sleep;
 
 pub mod exchange;
 mod storage;

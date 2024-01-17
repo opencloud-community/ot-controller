@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use anyhow::Result;
-use signaling_core::{
+use opentalk_signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleInitData,
 };
-use types::signaling::core::{CALL_IN_FEATURE, NAMESPACE};
+use opentalk_types::signaling::core::{CALL_IN_FEATURE, NAMESPACE};
 
 pub struct Core {}
 

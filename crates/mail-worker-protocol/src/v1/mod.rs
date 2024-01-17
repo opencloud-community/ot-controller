@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::Utc;
+use opentalk_types::common::shared_folder::SharedFolder;
 use serde::Deserialize;
 use serde::Serialize;
-use types::common::shared_folder::SharedFolder;
 use uuid::Uuid;
 
 mod invites;
@@ -134,8 +134,8 @@ mod test {
     use super::*;
     use crate::*;
     use chrono::FixedOffset;
+    use opentalk_types::common::shared_folder::SharedFolderAccess;
     use pretty_assertions::assert_eq;
-    use types::common::shared_folder::SharedFolderAccess;
 
     #[test]
     fn test_basic_format() {

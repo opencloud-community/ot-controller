@@ -39,8 +39,8 @@ sql_function!(fn soundex(x: Text) -> Text);
 pub mod sql_types {
     pub use super::events::EventExceptionKindType as EventExceptionKind;
     pub use diesel::sql_types::*;
-    pub use types::core::EventInviteStatusType as EventInviteStatus;
-    pub use types::core::InviteRoleType as InviteRole;
-    pub use types::core::StreamingKindType as StreamingKind;
-    pub use types::core::TariffStatusType as TariffStatus;
+    pub use opentalk_types::core::{
+        EventInviteStatusType as EventInviteStatus, InviteRoleType as InviteRole,
+        StreamingKindType as StreamingKind, TariffStatusType as TariffStatus,
+    };
 }

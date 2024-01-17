@@ -10,8 +10,8 @@
 //!
 //! # Examples
 //!```no_run
-//! # use janus_client::types::outgoing;
-//! # use janus_client::{JanusPlugin, Client, RabbitMqConfig, ClientId};
+//! # use opentalk_janus_client::types::outgoing;
+//! # use opentalk_janus_client::{JanusPlugin, Client, RabbitMqConfig, ClientId};
 //! # use tokio::sync::{broadcast,mpsc};
 //! # use std::sync::Arc;
 //! # tokio_test::block_on(async {
@@ -38,11 +38,11 @@
 //!
 //! Furtermore you can wrap the API and build upon that similar to spreed
 //! ```no_run
-//! # use janus_client::{Client, Handle, JanusPlugin, RabbitMqConfig};
-//! # use janus_client::types::{TrickleCandidate, RoomId, FeedId};
-//! # use janus_client::types::outgoing::{TrickleMessage, PluginBody, VideoRoomPluginJoin, VideoRoomPluginJoinSubscriber};
+//! # use opentalk_janus_client::{Client, Handle, JanusPlugin, RabbitMqConfig};
+//! # use opentalk_janus_client::types::{TrickleCandidate, RoomId, FeedId};
+//! # use opentalk_janus_client::types::outgoing::{TrickleMessage, PluginBody, VideoRoomPluginJoin, VideoRoomPluginJoinSubscriber};
 //! # use tokio::sync::{broadcast, mpsc};
-//! # use janus_client::ClientId;
+//! # use opentalk_janus_client::ClientId;
 //! # use std::sync::Arc;
 //! pub struct SubscriberClient(Handle);
 //! impl SubscriberClient {
@@ -71,7 +71,7 @@
 //! let connection = lapin::Connection::connect("amqp://janus-backend:5672", lapin::ConnectionProperties::default()).await.unwrap();
 //! let channel = connection.create_channel().await.unwrap();
 //! let config = RabbitMqConfig::new_from_channel(channel, "janus-gateway".into(), "to-janus".into(), "from-janus".into(), "opentalk-signaling".into());
-//! let client = janus_client::Client::new(config, ClientId(Arc::from("")), sink).await.unwrap();
+//! let client = opentalk_janus_client::Client::new(config, ClientId(Arc::from("")), sink).await.unwrap();
 //! let session = client.create_session().await.unwrap();
 //!
 //! let echo_handle = session

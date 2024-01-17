@@ -4,22 +4,22 @@
 
 //! Functionality to delete events including all associated resources
 
-use database::{DatabaseError, DbConnection};
-use db_storage::{
+use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
+use kustos::{Authz, Resource as _, ResourceId};
+use kustos_shared::access::AccessMethod;
+use log::Log;
+use opentalk_controller_settings::Settings;
+use opentalk_database::{DatabaseError, DbConnection};
+use opentalk_db_storage::{
     assets::Asset,
     events::{shared_folders::EventSharedFolder, Event},
     module_resources::ModuleResource,
     rooms::Room,
     sip_configs::SipConfig,
 };
-use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
-use kustos::{Authz, Resource as _, ResourceId};
-use kustos_shared::access::AccessMethod;
-use log::Log;
 use opentalk_log::{debug, warn};
-use settings::Settings;
-use signaling_core::{assets::asset_key, control, ExchangeHandle, ObjectStorage};
-use types::core::{AssetId, EventId, ModuleResourceId, RoomId, UserId};
+use opentalk_signaling_core::{assets::asset_key, control, ExchangeHandle, ObjectStorage};
+use opentalk_types::core::{AssetId, EventId, ModuleResourceId, RoomId, UserId};
 
 use crate::deletion::shared_folders::delete_shared_folders;
 
@@ -170,9 +170,9 @@ impl Deleter for RoomDeleter {
         exchange_handle: ExchangeHandle,
         settings: &Settings,
     ) -> Result<(), Error> {
-        let message = types::signaling::NamespacedEvent {
+        let message = opentalk_types::signaling::NamespacedEvent {
             namespace: control::NAMESPACE,
-            timestamp: types::core::Timestamp::now(),
+            timestamp: opentalk_types::core::Timestamp::now(),
             payload: control::exchange::Message::RoomDeleted,
         };
 

@@ -19,7 +19,7 @@ pub mod __exports {
     pub use diesel;
 }
 
-pub use diesel_newtype_impl::DieselNewtype;
+pub use opentalk_diesel_newtype_impl::DieselNewtype;
 
 pub trait DieselNewtype<T>:
     Debug

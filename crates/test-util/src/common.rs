@@ -5,20 +5,20 @@
 use crate::database::DatabaseContext;
 use crate::redis;
 use anyhow::{Context, Result};
-use db_storage::users::User;
 use kustos::Authz;
-use pretty_assertions::assert_eq;
-use signaling_core::{
+use opentalk_db_storage::users::User;
+use opentalk_signaling_core::{
     module_tester::{ModuleTester, WsMessageOutgoing},
     RedisConnection, SignalingModule,
 };
-use std::sync::Arc;
-use std::time::Duration;
-use tokio::sync::broadcast::Sender;
-use types::{
+use opentalk_types::{
     core::{ParticipantId, RoomId},
     signaling::{control::event::ControlEvent, Role},
 };
+use pretty_assertions::assert_eq;
+use std::sync::Arc;
+use std::time::Duration;
+use tokio::sync::broadcast::Sender;
 
 #[derive(Debug)]
 pub struct TestUser {

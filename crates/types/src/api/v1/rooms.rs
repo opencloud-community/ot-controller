@@ -137,11 +137,11 @@ pub struct InvitedStartRequest {
 pub struct GetRoomEventRequest(pub RoomId);
 
 #[cfg(feature = "frontend")]
-impl client_shared::ToHttpRequest for GetRoomEventRequest {
-    fn to_http_request<C: client_shared::RestClient>(
+impl opentalk_client_shared::ToHttpRequest for GetRoomEventRequest {
+    fn to_http_request<C: opentalk_client_shared::RestClient>(
         &self,
         c: &C,
-    ) -> Result<http::request::Request<Vec<u8>>, client_shared::ApiError<C::Error>> {
+    ) -> Result<http::request::Request<Vec<u8>>, opentalk_client_shared::ApiError<C::Error>> {
         let uri = c
             .rest_endpoint(&self.path())?
             .as_str()
@@ -151,7 +151,7 @@ impl client_shared::ToHttpRequest for GetRoomEventRequest {
             .method(Self::METHOD)
             .uri(uri)
             .body(vec![])
-            .map_err(|source| client_shared::ApiError::Request { source })
+            .map_err(|source| opentalk_client_shared::ApiError::Request { source })
     }
 }
 

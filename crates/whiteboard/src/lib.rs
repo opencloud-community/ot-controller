@@ -4,16 +4,14 @@
 
 use anyhow::Result;
 use client::SpacedeckClient;
-use database::Db;
 use futures::stream::once;
 use futures::TryStreamExt;
-use signaling_core::{
+use opentalk_database::Db;
+use opentalk_signaling_core::{
     assets::save_asset, control, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage,
     RedisConnection, SignalingModule, SignalingModuleInitData, SignalingRoomId,
 };
-use state::{InitState, SpaceInfo};
-use std::sync::Arc;
-use types::{
+use opentalk_types::{
     core::Timestamp,
     signaling::{
         whiteboard::{
@@ -25,6 +23,8 @@ use types::{
         Role,
     },
 };
+use state::{InitState, SpaceInfo};
+use std::sync::Arc;
 use url::Url;
 
 mod client;
@@ -56,7 +56,7 @@ pub struct GetPdfEvent {
 impl SignalingModule for Whiteboard {
     const NAMESPACE: &'static str = NAMESPACE;
 
-    type Params = controller_settings::Spacedeck;
+    type Params = opentalk_controller_settings::Spacedeck;
 
     type Incoming = WhiteboardCommand;
 

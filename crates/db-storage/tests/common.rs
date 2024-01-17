@@ -2,11 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use database::DbConnection;
-use opentalk_db_storage::tariffs::Tariff;
-use opentalk_db_storage::tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId};
-use opentalk_db_storage::users::{NewUser, User};
-use types::core::TariffStatus;
+use opentalk_database::DbConnection;
+use opentalk_db_storage::{
+    tariffs::Tariff,
+    tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId},
+    users::{NewUser, User},
+};
+use opentalk_types::core::TariffStatus;
 
 pub async fn make_user(
     conn: &mut DbConnection,

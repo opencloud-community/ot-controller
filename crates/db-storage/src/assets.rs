@@ -5,7 +5,6 @@
 use crate::schema::assets;
 use crate::schema::room_assets;
 use chrono::{DateTime, Utc};
-use database::{DbConnection, Paginate, Result};
 use diesel::{
     BoolExpressionMethods, ExpressionMethods, Identifiable, Insertable, JoinOnDsl, QueryDsl,
     Queryable,
@@ -13,8 +12,9 @@ use diesel::{
 use diesel_async::scoped_futures::ScopedFutureExt;
 use diesel_async::AsyncConnection;
 use diesel_async::RunQueryDsl;
-use types::api::v1::assets::AssetResource;
-use types::core::{AssetId, RoomId, TenantId};
+use opentalk_database::{DbConnection, Paginate, Result};
+use opentalk_types::api::v1::assets::AssetResource;
+use opentalk_types::core::{AssetId, RoomId, TenantId};
 
 /// Diesel resource struct
 #[derive(Debug, Clone, Queryable, Identifiable)]

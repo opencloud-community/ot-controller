@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use types::core::{BreakoutRoomId, RoomId};
+use opentalk_types::core::{BreakoutRoomId, RoomId};
 
 /// The complete room id
 ///

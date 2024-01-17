@@ -15,18 +15,18 @@ description = "OpenTalk job execution system"
 anyhow.workspace = true
 async-trait.workspace = true
 chrono.workspace = true
-controller-utils = { path = "../controller-utils", package = "opentalk-controller-utils" }
-database = { path = "../database", package = "opentalk-database" }
-db-storage = { path = "../db-storage", package = "opentalk-db-storage" }
+opentalk-controller-utils.workspace = true
+opentalk-database.workspace = true
+opentalk-db-storage.workspace = true
 displaydoc.workspace = true
-kustos = { path = "../kustos" }
+kustos.workspace = true
 log.workspace = true
-nextcloud-client = { path = "../nextcloud-client", package = "opentalk-nextcloud-client" }
-opentalk_log = { path = "../log", package = "opentalk-log" }
+opentalk-nextcloud-client = { workspace = true, default-features = true }
+opentalk-log.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-settings = { path = "../controller-settings", package = "opentalk-controller-settings" }
-signaling-core = { path = "../signaling-core", package = "opentalk-signaling-core" }
+opentalk-controller-settings.workspace = true
+opentalk-signaling-core.workspace = true
 thiserror.workspace = true
 tokio = { workspace = true, features = ["time"] }
-types = { path = "../types", package = "opentalk-types" }
+opentalk-types.workspace = true

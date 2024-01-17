@@ -8,20 +8,17 @@
 //!
 //! Handles media related messages and manages their respective forwarding to janus-gateway via rabbitmq.
 use anyhow::{bail, Context, Result};
-use controller_settings::SharedSettings;
 use focus::FocusDetection;
 use mcu::{
     LinkDirection, McuPool, MediaSessionKey, PublishConfiguration, Request, Response,
     TrickleMessage, WebRtcEvent,
 };
-use sessions::MediaSessions;
-use signaling_core::{
+use opentalk_controller_settings::SharedSettings;
+use opentalk_signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
     SignalingModuleInitData, SignalingRoomId,
 };
-use tokio::sync::mpsc;
-use tokio_stream::wrappers::ReceiverStream;
-use types::{
+use opentalk_types::{
     core::ParticipantId,
     signaling::{
         media::{
@@ -37,6 +34,9 @@ use types::{
         Role,
     },
 };
+use sessions::MediaSessions;
+use tokio::sync::mpsc;
+use tokio_stream::wrappers::ReceiverStream;
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -403,7 +403,7 @@ impl SignalingModule for Media {
                     TrickleMessage::Completed => {
                         ctx.ws_send(MediaEvent::SdpEndOfCandidates(media_session_key.into()));
                     }
-                    TrickleMessage::Candidate(janus_client::TrickleCandidate {
+                    TrickleMessage::Candidate(opentalk_janus_client::TrickleCandidate {
                         sdp_m_line_index,
                         candidate,
                     }) => {
@@ -782,7 +782,7 @@ impl Media {
             candidate,
         }: TrickleCandidate,
     ) -> Result<()> {
-        let req = Request::Candidate(janus_client::TrickleCandidate {
+        let req = Request::Candidate(opentalk_janus_client::TrickleCandidate {
             sdp_m_line_index,
             candidate,
         });

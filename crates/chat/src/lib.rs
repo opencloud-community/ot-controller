@@ -9,15 +9,15 @@
 //! Issues timestamp and messageIds to incoming chat messages and forwards them to other participants in the room or group.
 
 use anyhow::Result;
-use database::Db;
-use db_storage::groups::Group;
-use r3dlock::Mutex;
-use signaling_core::{
+use opentalk_database::Db;
+use opentalk_db_storage::groups::Group;
+use opentalk_r3dlock::Mutex;
+use opentalk_signaling_core::{
     control::{self, exchange},
     DestroyContext, Event, InitContext, ModuleContext, Participant, RedisConnection,
     SignalingModule, SignalingModuleInitData, SignalingRoomId,
 };
-use types::{
+use opentalk_types::{
     core::{GroupId, GroupName, ParticipantId, Timestamp, UserId},
     signaling::{
         chat::{

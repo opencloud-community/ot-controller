@@ -5,21 +5,24 @@
 use anyhow::Result;
 use chrono::{self, Utc};
 use futures::{stream::once, FutureExt};
-use signaling_core::{
+use opentalk_signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
     SignalingModuleInitData, SignalingRoomId,
 };
-use tokio::time::sleep;
-use types::signaling::timer::command::Message;
-use types::signaling::timer::event::{self, Error, StopKind, UpdatedReadyStatus};
-use types::signaling::timer::ready_status::ReadyStatus;
-use types::signaling::timer::status::TimerStatus;
-use types::signaling::timer::{command, Kind, TimerId};
-use types::signaling::timer::{TimerConfig, NAMESPACE};
-use types::{
+use opentalk_types::{
     core::{ParticipantId, Timestamp},
-    signaling::Role,
+    signaling::{
+        timer::{
+            command::{self, Message},
+            event::{self, Error, StopKind, UpdatedReadyStatus},
+            ready_status::ReadyStatus,
+            status::TimerStatus,
+            Kind, TimerConfig, TimerId, NAMESPACE,
+        },
+        Role,
+    },
 };
+use tokio::time::sleep;
 use uuid::Uuid;
 
 pub mod exchange;
@@ -397,8 +400,8 @@ mod test {
     use super::*;
     use crate::Kind;
     use chrono::{DateTime, Duration};
-    use test_util::assert_eq_json;
-    use types::{core::Timestamp, signaling::timer::status::TimerStatus};
+    use opentalk_test_util::assert_eq_json;
+    use opentalk_types::{core::Timestamp, signaling::timer::status::TimerStatus};
 
     #[test]
     fn timer_status_without_ready_status() {

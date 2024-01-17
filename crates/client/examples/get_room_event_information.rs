@@ -4,7 +4,7 @@
 
 use anyhow::Context;
 use opentalk_client::{Client, OpenTalkApiClient};
-use types::core::InviteCodeId;
+use opentalk_types::core::InviteCodeId;
 use url::Url;
 
 #[tokio::main]

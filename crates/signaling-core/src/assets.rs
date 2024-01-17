@@ -7,13 +7,13 @@ use std::sync::Arc;
 use anyhow::{Context, Result};
 use aws_sdk_s3::primitives::ByteStream;
 use bytes::Bytes;
-use database::Db;
-use db_storage::{
+use futures::Stream;
+use opentalk_database::Db;
+use opentalk_db_storage::{
     assets::{Asset, NewAsset},
     rooms::Room,
 };
-use futures::Stream;
-use types::core::{AssetId, RoomId};
+use opentalk_types::core::{AssetId, RoomId};
 
 use crate::ObjectStorage;
 

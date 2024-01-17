@@ -91,7 +91,7 @@ mod migration_tests {
     #[serial]
     async fn test_migration() -> Result<()> {
         // This will create a database and migrate it
-        test_util::database::DatabaseContext::new(false).await;
+        opentalk_test_util::database::DatabaseContext::new(false).await;
 
         Ok(())
     }

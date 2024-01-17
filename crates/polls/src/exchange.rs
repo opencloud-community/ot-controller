@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_types::signaling::polls::{state::PollsState, PollId};
 use serde::{Deserialize, Serialize};
-use types::signaling::polls::{state::PollsState, PollId};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Message {
