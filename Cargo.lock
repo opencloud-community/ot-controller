@@ -3153,10 +3153,25 @@ dependencies = [
  "bytes",
  "derive_more",
  "http",
+ "opentalk-client-shared-impl",
  "serde",
  "serde_json",
+ "serde_url_params",
  "thiserror",
  "url",
+]
+
+[[package]]
+name = "opentalk-client-shared-impl"
+version = "0.0.0-dev"
+dependencies = [
+ "http",
+ "opentalk-proc-macro-fields-helper",
+ "proc-macro-crate",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "syn 2.0.48",
 ]
 
 [[package]]
@@ -5061,6 +5076,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "12022b835073e5b11e90a14f86838ceb1c8fb0325b72416845c487ac0fa95e80"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "serde_url_params"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2c43307d0640738af32fe8d01e47119bc0fc8a686be470a44a586caff76dfb34"
+dependencies = [
+ "serde",
+ "url",
 ]
 
 [[package]]

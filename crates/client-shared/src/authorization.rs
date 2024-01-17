@@ -4,6 +4,6 @@
 
 /// Trait for augmenting requests with authentication information
 pub trait Authorization: std::fmt::Debug {
-    /// Augment a request with authorization information
-    fn add_authorization_information(&self, request: &mut http::request::Request<Vec<u8>>);
+    /// Add authorization headers
+    fn apply_authorization_headers(&self, headers: &mut http::HeaderMap);
 }

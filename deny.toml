@@ -110,6 +110,7 @@ confidence-threshold = 0.8
 exceptions = [
     { allow = ["EUPL-1.2"], name = "kustos-shared" },
     { allow = ["EUPL-1.2"], name = "opentalk-client-shared" },
+    { allow = ["EUPL-1.2"], name = "opentalk-client-shared-impl" },
     { allow = ["EUPL-1.2"], name = "opentalk-diesel-newtype" },
     { allow = ["EUPL-1.2"], name = "opentalk-diesel-newtype-impl" },
     { allow = ["EUPL-1.2"], name = "opentalk-kustos-prefix" },

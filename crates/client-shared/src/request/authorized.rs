@@ -2,16 +2,18 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::{Authorization, Request, ToHttpRequest};
+use http::StatusCode;
+
+use crate::{ApiError, Authorization, Request};
 
 /// Wrapper type that adds authorization information to a request
 #[derive(Debug)]
-pub struct Authorized<A: Authorization, R: ToHttpRequest> {
+pub struct Authorized<A: Authorization, R: Request> {
     authorization: A,
     request: R,
 }
 
-impl<A: Authorization, R: ToHttpRequest> Authorized<A, R> {
+impl<A: Authorization, R: Request> Authorized<A, R> {
     /// Create a new authorized request
     pub const fn new(authorization: A, request: R) -> Self {
         Self {
@@ -21,8 +23,12 @@ impl<A: Authorization, R: ToHttpRequest> Authorized<A, R> {
     }
 }
 
-impl<A: Authorization, R: ToHttpRequest> Request for Authorized<A, R> {
+impl<A: Authorization, R: Request> Request for Authorized<A, R> {
     type Response = R::Response;
+
+    type Query = R::Query;
+
+    type Body = R::Body;
 
     const METHOD: http::Method = R::METHOD;
 
@@ -30,30 +36,28 @@ impl<A: Authorization, R: ToHttpRequest> Request for Authorized<A, R> {
         self.request.path()
     }
 
-    fn query<T: serde::Serialize + Sized>(&self) -> Option<T> {
+    fn query(&self) -> Option<&Self::Query> {
         self.request.query()
+    }
+
+    fn body(&self) -> Option<&Self::Body> {
+        self.request.body()
+    }
+
+    fn apply_headers(&self, headers: &mut http::HeaderMap) {
+        self.request.apply_headers(headers);
+        self.authorization.apply_authorization_headers(headers);
     }
 
     fn read_response<E>(
         response: http::Response<bytes::Bytes>,
-    ) -> Result<Self::Response, crate::ApiError<E>>
+    ) -> Result<Self::Response, ApiError<E>>
     where
         E: std::error::Error + Send + Sync + 'static,
     {
-        R::read_response(response)
-    }
-}
-
-impl<A: Authorization, R: ToHttpRequest> ToHttpRequest for Authorized<A, R> {
-    fn to_http_request<C: crate::RestClient>(
-        &self,
-        c: &C,
-    ) -> Result<http::request::Request<Vec<u8>>, crate::ApiError<C::Error>> {
-        let mut request = self.request.to_http_request(c)?;
-
-        self.authorization
-            .add_authorization_information(&mut request);
-
-        Ok(request)
+        match response.status() {
+            StatusCode::UNAUTHORIZED => Err(ApiError::Unauthorized),
+            _ => R::read_response(response),
+        }
     }
 }
