@@ -258,7 +258,7 @@ test:cargo_test:
       alias: postgres
     - name: rabbitmq:3.8
       alias: rabbitmq
-    - name: git.opentalk.dev:5050/opentalk/backend/containers/janus-gateway:v0.13.2
+    - name: git.opentalk.dev:5050/opentalk/backend/containers/janus-gateway:v0.14.1
       alias: janus-gateway
     - name: redis:6-alpine
       alias: redis
