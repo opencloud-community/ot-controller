@@ -17,7 +17,7 @@ pub use invites::{
     UnregisteredEventUninvite, UnregisteredEventUpdate,
 };
 
-#[derive(Deserialize, Serialize, PartialEq, Eq, Debug)]
+#[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Debug)]
 pub struct Email(String);
 
 impl Email {
@@ -44,7 +44,7 @@ impl AsRef<str> for Email {
     }
 }
 
-#[derive(Deserialize, Serialize, PartialEq, Eq, Debug)]
+#[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Debug)]
 pub struct RegisteredUser {
     pub email: Email,
     pub title: String,
@@ -53,35 +53,36 @@ pub struct RegisteredUser {
     pub language: String,
 }
 
-#[derive(Deserialize, Serialize, PartialEq, Eq, Debug)]
+#[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Debug)]
 pub struct UnregisteredUser {
     pub email: Email,
     pub first_name: String,
     pub last_name: String,
 }
 
-#[derive(Deserialize, Serialize, PartialEq, Eq, Debug)]
+#[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Debug)]
 pub struct ExternalUser {
     pub email: Email,
 }
 
-#[derive(Deserialize, Serialize, PartialEq, Eq, Debug)]
+#[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Debug)]
 pub enum User {
     Registered(RegisteredUser),
     Unregistered(UnregisteredUser),
     External(ExternalUser),
 }
 
-#[derive(Deserialize, Serialize, PartialEq, Eq, Debug)]
+#[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Debug)]
 pub struct Time {
     pub time: chrono::DateTime<Utc>,
     pub timezone: String,
 }
 
-#[derive(Deserialize, Serialize, PartialEq, Eq, Debug)]
+#[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Debug)]
 pub struct Event {
     pub id: Uuid,
     pub name: String,
+    pub created_at: Time,
     pub start_time: Option<Time>,
     pub end_time: Option<Time>,
     pub rrule: Option<String>,
@@ -93,13 +94,31 @@ pub struct Event {
     pub adhoc_retention_seconds: Option<u64>,
 }
 
-#[derive(Deserialize, Serialize, PartialEq, Eq, Debug)]
+#[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Debug)]
+pub struct EventException {
+    pub exception_date: Time,
+    pub kind: EventExceptionKind,
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub is_all_day: Option<bool>,
+    pub starts_at: Option<Time>,
+    pub ends_at: Option<Time>,
+}
+
+#[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Debug)]
+#[serde(rename_all = "snake_case")]
+pub enum EventExceptionKind {
+    Modified,
+    Canceled,
+}
+
+#[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Debug)]
 pub struct Room {
     pub id: Uuid,
     pub password: Option<String>,
 }
 
-#[derive(Deserialize, Serialize, PartialEq, Eq, Debug)]
+#[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Debug)]
 pub struct CallIn {
     pub sip_tel: String,
     pub sip_id: String,
@@ -151,6 +170,14 @@ mod test {
                 id: Uuid::from_u128(1),
                 name: "Guten Morgen Meeting".into(),
                 description: "".into(),
+                created_at: Time {
+                    time: chrono::DateTime::<FixedOffset>::parse_from_rfc3339(
+                        "2021-12-29T15:00:00+00:00",
+                    )
+                    .unwrap()
+                    .into(),
+                    timezone: "UTC".into(),
+                },
                 start_time: Some(Time {
                     time: chrono::DateTime::<FixedOffset>::parse_from_rfc3339(
                         "2021-12-29T15:00:00+02:00",
@@ -205,6 +232,7 @@ mod test {
                     "id": Uuid::from_u128(1),
                     "name": "Guten Morgen Meeting",
                     "description": "",
+                    "created_at": {"time":"2021-12-29T15:00:00+00:00", "timezone": "UTC"},
                     "start_time": {"time":"2021-12-29T15:00:00+02:00", "timezone": "Europe/Berlin"},
                     "end_time": {"time": "2021-12-29T15:30:00+02:00", "timezone": "Europe/Berlin"},
                     "room": {
@@ -258,6 +286,14 @@ mod test {
                 id: Uuid::from_u128(1),
                 name: "Guten Morgen Meeting".into(),
                 description: "".into(),
+                created_at: Time {
+                    time: chrono::DateTime::<FixedOffset>::parse_from_rfc3339(
+                        "2021-12-29T15:00:00+00:00",
+                    )
+                    .unwrap()
+                    .into(),
+                    timezone: "UTC".into(),
+                },
                 start_time: None,
                 end_time: None,
                 rrule: None,
@@ -297,6 +333,7 @@ mod test {
                 "event": {
                     "id": Uuid::from_u128(1),
                     "name": "Guten Morgen Meeting",
+                    "created_at": {"time":"2021-12-29T15:00:00+00:00", "timezone": "UTC"},
                     "description": "",
                     "room": {
                         "id": Uuid::from_u128(0),

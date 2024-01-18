@@ -1160,6 +1160,7 @@ paths:
         - $ref: '#/components/parameters/eventId'
         - $ref: '#/components/parameters/eventInstanceId'
         - $ref: '#/components/parameters/inviteesMax'
+        - $ref: '#/components/parameters/suppressEmailNotification'
       requestBody:
         required: true
         content:

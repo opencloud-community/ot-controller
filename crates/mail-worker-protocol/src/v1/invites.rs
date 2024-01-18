@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::{Event, ExternalUser, RegisteredUser, UnregisteredUser};
+use super::{Event, EventException, ExternalUser, RegisteredUser, UnregisteredUser};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, PartialEq, Eq, Debug)]
@@ -31,6 +31,7 @@ pub struct ExternalEventInvite {
 pub struct RegisteredEventUpdate {
     pub invitee: RegisteredUser,
     pub event: Event,
+    pub event_exception: Option<EventException>,
     pub inviter: RegisteredUser,
 }
 
@@ -38,6 +39,7 @@ pub struct RegisteredEventUpdate {
 pub struct UnregisteredEventUpdate {
     pub invitee: UnregisteredUser,
     pub event: Event,
+    pub event_exception: Option<EventException>,
     pub inviter: RegisteredUser,
 }
 
@@ -45,6 +47,7 @@ pub struct UnregisteredEventUpdate {
 pub struct ExternalEventUpdate {
     pub invitee: ExternalUser,
     pub event: Event,
+    pub event_exception: Option<EventException>,
     pub inviter: RegisteredUser,
     pub invite_code: String,
 }

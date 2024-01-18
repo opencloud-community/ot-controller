@@ -662,7 +662,7 @@ sql_enum!(
     }
 );
 
-#[derive(Debug, Queryable, Identifiable, Associations)]
+#[derive(Debug, Clone, Queryable, Identifiable, Associations)]
 #[diesel(table_name = event_exceptions)]
 #[diesel(belongs_to(Event, foreign_key = event_id))]
 #[diesel(belongs_to(User, foreign_key = created_by))]

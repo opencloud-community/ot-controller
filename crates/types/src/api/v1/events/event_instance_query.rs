@@ -14,4 +14,8 @@ pub struct EventInstanceQuery {
     /// Default: 0
     #[cfg_attr(feature = "serde", serde(default))]
     pub invitees_max: i64,
+
+    /// Flag to suppress email notification
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub suppress_email_notification: bool,
 }
