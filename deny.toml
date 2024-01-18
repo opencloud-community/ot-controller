@@ -185,7 +185,6 @@ skip = [
     { name = "idna", version = "=0.3" },
     { name = "indexmap", version = "=1" },
     { name = "itertools", version = "=0.10" },
-    { name = "memoffset", version = "=0.7" },
     { name = "num-bigint", version = "=0.4" },
     { name = "regex-syntax", version = "=0.6" },
     { name = "regex-automata", version = "=0.1" },
