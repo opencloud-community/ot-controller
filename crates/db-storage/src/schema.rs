@@ -229,9 +229,10 @@ diesel::table! {
         room_id -> Uuid,
         name -> Text,
         kind -> StreamingKind,
-        streaming_endpoint -> Text,
-        streaming_key -> Text,
-        public_url -> Text,
+        streaming_url -> Nullable<Text>,
+        streaming_key -> Nullable<Text>,
+        public_url -> Nullable<Text>,
+        service_id -> Uuid,
     }
 }
 
@@ -261,6 +262,19 @@ diesel::table! {
         #[max_length = 10]
         password -> Varchar,
         enable_lobby -> Bool,
+    }
+}
+
+diesel::table! {
+    use crate::sql_types::*;
+
+    streaming_services (id) {
+        id -> Uuid,
+        name -> Text,
+        kind -> StreamingKind,
+        streaming_url -> Nullable<Text>,
+        streaming_key_regex -> Nullable<Text>,
+        public_url_regex -> Nullable<Text>,
     }
 }
 
@@ -377,6 +391,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     room_streaming_targets,
     rooms,
     sip_configs,
+    streaming_services,
     tariffs,
     tenants,
     user_groups,

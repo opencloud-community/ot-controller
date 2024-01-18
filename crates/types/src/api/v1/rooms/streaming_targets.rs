@@ -44,10 +44,7 @@ pub struct ChangeRoomStreamingTargetResponse(pub RoomStreamingTarget);
 
 #[cfg(test)]
 mod test {
-    use crate::{
-        common::streaming::StreamingTargetKind,
-        core::{StreamingKey, StreamingTargetId},
-    };
+    use crate::core::{StreamingKey, StreamingServiceId, StreamingTargetId};
 
     use super::*;
     use pretty_assertions::assert_eq;
@@ -57,9 +54,9 @@ mod test {
     fn streaming_target_basic() {
         let expected = json!({
             "id": "00000000-0000-0000-0000-000000000000",
+            "service_id": "00000000-0000-0000-0000-000000000000",
             "name": "my streaming target",
-            "kind": "custom",
-            "streaming_endpoint": "http://127.0.0.1/",
+            "streaming_url": "http://127.0.0.1/",
             "streaming_key": "1337",
             "public_url": "https://localhost/",
         });
@@ -67,12 +64,11 @@ mod test {
         let produced = serde_json::to_value(RoomStreamingTarget {
             id: StreamingTargetId::nil(),
             streaming_target: StreamingTarget {
+                service_id: StreamingServiceId::nil(),
                 name: "my streaming target".to_string(),
-                kind: StreamingTargetKind::Custom {
-                    streaming_endpoint: "http://127.0.0.1/".parse().unwrap(),
-                    streaming_key: StreamingKey::from("1337".to_string()),
-                    public_url: "https://localhost/".parse().unwrap(),
-                },
+                streaming_url: Some("http://127.0.0.1/".parse().unwrap()),
+                streaming_key: Some(StreamingKey::from("1337".to_string())),
+                public_url: Some("https://localhost/".parse().unwrap()),
             },
         })
         .unwrap();

@@ -65,7 +65,7 @@ Options:
 
 #### Delete an Existing Tariff
 
-Run `opentalk-controller tariffs delete <TariffName> <ExternalTariffId>` to delete an existing tariff.
+Run `opentalk-controller tariffs delete <TariffName>` to delete an existing tariff.
 
 <!-- begin:fromfile:text:cli-usage/opentalk-controller-tariffs-delete -->
 

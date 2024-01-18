@@ -167,29 +167,34 @@ async fn create_tariff(
     let db = Db::connect(&settings.database).context("Failed to connect to database")?;
     let mut conn = db.get_conn().await?;
 
-    conn.transaction(|conn| async move {
-        let tariff = NewTariff {
-            name: name.clone(),
-            quotas: Jsonb(quotas),
-            disabled_modules,
-            disabled_features,
+    conn.transaction(|conn| {
+        async move {
+            let tariff = NewTariff {
+                name: name.clone(),
+                quotas: Jsonb(quotas),
+                disabled_modules,
+                disabled_features,
+            }
+            .insert(conn)
+            .await?;
+
+            ExternalTariff {
+                external_id: ExternalTariffId::from(external_tariff_id.clone()),
+                tariff_id: tariff.id,
+            }
+            .insert(conn)
+            .await?;
+
+            println!(
+                "Created tariff {name} with external tariff id {external_tariff_id} ({})",
+                tariff.id
+            );
+
+            Ok(())
         }
-        .insert(conn).await?;
-
-        ExternalTariff {
-            external_id: ExternalTariffId::from(external_tariff_id.clone()),
-            tariff_id: tariff.id,
-        }
-        .insert(conn).await?;
-
-        println!(
-            "Created tariff name={name:?} with external external_tariff_id={external_tariff_id:?} ({})",
-            tariff.id
-        );
-
-        Ok(())
-    }
-    .scope_boxed()).await
+        .scope_boxed()
+    })
+    .await
 }
 
 async fn delete_tariff(settings: Settings, name: String) -> Result<()> {
@@ -202,7 +207,7 @@ async fn delete_tariff(settings: Settings, name: String) -> Result<()> {
             ExternalTariff::delete_all_for_tariff(conn, tariff.id).await?;
             Tariff::delete_by_id(conn, tariff.id).await?;
 
-            println!("Deleted tariff name={name:?} ({})", tariff.id);
+            println!("Deleted tariff {name} ({})", tariff.id);
 
             Ok(())
         }
@@ -256,7 +261,7 @@ async fn edit_tariff(
                     }
                     .insert(conn)
                     .await
-                    .with_context(|| format!("Failed to add external tariff_id {to_add:?}"))?;
+                    .with_context(|| format!("Failed to add external tariff_id {to_add}"))?;
                 }
             }
 
@@ -288,7 +293,7 @@ async fn edit_tariff(
             .apply(conn, tariff.id)
             .await?;
 
-            println!("Updated tariff name={:?} ({})", tariff.name, tariff.id);
+            println!("Updated tariff {} ({})", tariff.name, tariff.id);
             print_tariffs(conn, [tariff]).await
         }
         .scope_boxed()

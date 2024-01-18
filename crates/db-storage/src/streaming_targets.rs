@@ -2,13 +2,14 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use crate::rooms::Room;
 use crate::schema::room_streaming_targets;
 use diesel::{ExpressionMethods, Identifiable, QueryDsl, Queryable};
 use diesel_async::RunQueryDsl;
 use opentalk_database::{DbConnection, Result};
-use opentalk_types::core::{RoomId, StreamingKey, StreamingKind, StreamingTargetId};
-
-use crate::rooms::Room;
+use opentalk_types::core::{
+    RoomId, StreamingKey, StreamingKind, StreamingServiceId, StreamingTargetId,
+};
 
 #[derive(Debug, Queryable, Identifiable, Associations, Insertable)]
 #[diesel(belongs_to(Room, foreign_key = room_id))]
@@ -18,9 +19,10 @@ pub struct RoomStreamingTargetRecord {
     pub room_id: RoomId,
     pub name: String,
     pub kind: StreamingKind,
-    pub streaming_endpoint: String,
-    pub streaming_key: StreamingKey,
-    pub public_url: String,
+    pub streaming_url: Option<String>,
+    pub streaming_key: Option<StreamingKey>,
+    pub public_url: Option<String>,
+    pub service_id: StreamingServiceId,
 }
 
 impl RoomStreamingTargetRecord {
@@ -76,16 +78,16 @@ impl RoomStreamingTargetRecord {
 #[derive(Debug, Associations, Insertable)]
 #[diesel(belongs_to(Room, foreign_key = room_id))]
 #[diesel(table_name = room_streaming_targets)]
-pub struct RoomStreamingTargetNew {
+pub struct NewRoomStreamingTarget {
+    pub service_id: StreamingServiceId,
     pub room_id: RoomId,
     pub name: String,
-    pub kind: StreamingKind,
-    pub streaming_endpoint: String,
-    pub streaming_key: String,
-    pub public_url: String,
+    pub streaming_url: Option<String>,
+    pub streaming_key: Option<String>,
+    pub public_url: Option<String>,
 }
 
-impl RoomStreamingTargetNew {
+impl NewRoomStreamingTarget {
     #[tracing::instrument(err, skip_all)]
     pub async fn insert(self, conn: &mut DbConnection) -> Result<RoomStreamingTargetRecord> {
         let query = diesel::insert_into(room_streaming_targets::table).values(self);
@@ -96,17 +98,13 @@ impl RoomStreamingTargetNew {
     }
 }
 
-/// Diesel streaming target struct
-///
-/// Represents a changeset of in invite
 #[derive(Debug, AsChangeset)]
 #[diesel(table_name = room_streaming_targets)]
 pub struct UpdateRoomStreamingTarget {
     pub name: Option<String>,
-    pub kind: Option<StreamingKind>,
-    pub streaming_endpoint: Option<String>,
-    pub streaming_key: Option<String>,
-    pub public_url: Option<String>,
+    pub streaming_url: Option<Option<String>>,
+    pub streaming_key: Option<Option<String>>,
+    pub public_url: Option<Option<String>>,
 }
 
 impl UpdateRoomStreamingTarget {
