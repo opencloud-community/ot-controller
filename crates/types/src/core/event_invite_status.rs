@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::{collections::BTreeSet, str::FromStr};
+
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -10,7 +12,7 @@ use crate::sql_enum;
 sql_enum!(
     feature_gated:
 
-    #[derive(PartialEq, Eq)]
+    #[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
     #[cfg_attr(feature="serde", derive(Serialize, Deserialize), serde(rename_all = "snake_case"))]
     EventInviteStatus,
     "event_invite_status",
@@ -23,7 +25,7 @@ sql_enum!(
     }
 );
 
-impl std::str::FromStr for EventInviteStatus {
+impl FromStr for EventInviteStatus {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -34,5 +36,17 @@ impl std::str::FromStr for EventInviteStatus {
             "declined" => Ok(Self::Declined),
             _ => Err(format!("unknown invite_status {s:?}")),
         }
+    }
+}
+
+impl EventInviteStatus {
+    /// Get all values for this enumeration type
+    pub fn all_enum_values() -> BTreeSet<Self> {
+        BTreeSet::from_iter([
+            Self::Pending,
+            Self::Accepted,
+            Self::Tentative,
+            Self::Declined,
+        ])
     }
 }

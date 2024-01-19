@@ -43,8 +43,8 @@ use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_types::{
     api::v1::{
         events::{
-            DeleteEmailInviteBody, DeleteEventInvitePath, PatchInviteBody, PostEventInviteBody,
-            PostEventInviteQuery, UserInvite,
+            invites::GetEventsInvitesQuery, DeleteEmailInviteBody, DeleteEventInvitePath,
+            PatchInviteBody, PostEventInviteBody, PostEventInviteQuery, UserInvite,
         },
         pagination::PagePaginationQuery,
         users::GetEventInvitesPendingResponse,
@@ -65,11 +65,14 @@ pub async fn get_invites_for_event(
     kc_admin_client: Data<KeycloakAdminClient>,
     current_tenant: ReqData<Tenant>,
     event_id: Path<EventId>,
-    pagination: Query<PagePaginationQuery>,
+    query: Query<GetEventsInvitesQuery>,
 ) -> DefaultApiResult<Vec<EventInvitee>> {
     let settings = settings.load_full();
     let event_id = event_id.into_inner();
-    let PagePaginationQuery { per_page, page } = pagination.into_inner();
+    let GetEventsInvitesQuery {
+        pagination: PagePaginationQuery { per_page, page },
+        status: status_filter,
+    } = query.into_inner();
 
     let mut conn = db.get_conn().await?;
 
@@ -77,8 +80,14 @@ pub async fn get_invites_for_event(
     // As in #[get("/events")], we simply get all invitees and truncate them afterwards.
     // Note that get_for_event_paginated returns a total record count of 0 when paging beyond the end.
 
-    let (event_invites_with_user, event_invites_total) =
-        EventInvite::get_for_event_paginated(&mut conn, event_id, i64::max_value(), 1).await?;
+    let (event_invites_with_user, event_invites_total) = EventInvite::get_for_event_paginated(
+        &mut conn,
+        event_id,
+        i64::max_value(),
+        1,
+        status_filter,
+    )
+    .await?;
 
     let event_invitees_iter = event_invites_with_user
         .into_iter()

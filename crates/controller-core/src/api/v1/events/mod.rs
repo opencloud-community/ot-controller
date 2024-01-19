@@ -1434,7 +1434,7 @@ async fn get_invitees_for_event(
         // Get regular invitees up to the maximum invitee count specified.
 
         let (invites_with_user, total_invites_count) =
-            EventInvite::get_for_event_paginated(conn, event_id, invitees_max, 1).await?;
+            EventInvite::get_for_event_paginated(conn, event_id, invitees_max, 1, None).await?;
 
         let mut invitees: Vec<EventInvitee> = invites_with_user
             .into_iter()
@@ -1475,7 +1475,7 @@ async fn get_invited_mail_recipients_for_event(
 ) -> opentalk_database::Result<Vec<MailRecipient>> {
     // TODO(w.rabl) Further DB access optimization (replacing call to get_for_event_paginated)?
     let (invites_with_user, _) =
-        EventInvite::get_for_event_paginated(conn, event_id, i64::MAX, 1).await?;
+        EventInvite::get_for_event_paginated(conn, event_id, i64::MAX, 1, None).await?;
     let user_invitees = invites_with_user
         .into_iter()
         .map(|(_, user)| MailRecipient::Registered(user.into()));
