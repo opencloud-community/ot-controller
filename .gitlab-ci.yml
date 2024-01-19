@@ -349,12 +349,26 @@ package:container-controller-mr:
       echo
       "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n ${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD} | base64)\"}}}" >
       /kaniko/.docker/config.json
+    # According to https://docs.docker.com/engine/reference/commandline/tag/
+    # the tag may contain lowercase and uppercase letters, digits, underscores,
+    # periods, and hyphens, so we replace everything else by '_'. It cannot start
+    # with a period or hyphen, so we replace those if we find them at the start of a line.
+    # It must be no longer than 128 characters, so we truncate it in addition.
+    #
+    # tr -c means the same as --complement, but busybox tr doesn't have that
+    - >
+      IMAGE_TAG=$(
+          echo -n "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" |
+          tr -c '[:alnum:]_.-' '_' |
+          sed 's/^[.-]/_/' |
+          cut -c -128
+      )
     - >
       /kaniko/executor
       --registry-mirror=mirror.gcr.io
       --context $CI_PROJECT_DIR
       --dockerfile $CI_PROJECT_DIR/ci/Dockerfile
-      --destination $CI_REGISTRY_IMAGE:$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
+      --destination $CI_REGISTRY_IMAGE:$IMAGE_TAG
       --force
 
 package:controller-container-dev:
