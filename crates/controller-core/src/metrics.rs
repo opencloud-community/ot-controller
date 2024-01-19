@@ -8,20 +8,15 @@ use actix_http::StatusCode;
 use actix_web::dev::PeerAddr;
 use actix_web::web::Data;
 use actix_web::{get, HttpResponse};
+use anyhow::Result;
 use kustos::metrics::KustosMetrics;
 use opentalk_database::DatabaseMetrics;
 use opentalk_mail_worker_protocol::MailTask;
 use opentalk_signaling_core::{RedisMetrics, SignalingMetrics};
 use opentelemetry::metrics::{Counter, Histogram, MetricsError, Unit};
-use opentelemetry::sdk::export::metrics::aggregation;
-use opentelemetry::sdk::export::metrics::AggregatorSelector;
-use opentelemetry::sdk::metrics::aggregators::Aggregator;
-use opentelemetry::sdk::metrics::sdk_api::Descriptor;
-use opentelemetry::sdk::metrics::selectors::simple::histogram;
-use opentelemetry::sdk::metrics::{controllers, processors};
-use opentelemetry::{global, Context, Key};
-use opentelemetry_prometheus::PrometheusExporter;
-use prometheus::{Encoder, TextEncoder};
+use opentelemetry::{global, Key};
+use opentelemetry_sdk::metrics::{new_view, Aggregation, Instrument, MeterProvider, Stream};
+use prometheus::{Encoder, Registry, TextEncoder};
 use std::sync::Arc;
 
 const MAIL_TASK_KIND: Key = Key::from_static_str("mail_task_kind");
@@ -34,16 +29,13 @@ pub struct EndpointMetrics {
 
 impl EndpointMetrics {
     pub fn increment_issued_email_tasks_count(&self, mail_task: &MailTask) {
-        self.issued_email_tasks_count.add(
-            &Context::current(),
-            1,
-            &[MAIL_TASK_KIND.string(mail_task.as_kind_str())],
-        );
+        self.issued_email_tasks_count
+            .add(1, &[MAIL_TASK_KIND.string(mail_task.as_kind_str())]);
     }
 }
 
 pub struct CombinedMetrics {
-    exporter: PrometheusExporter,
+    registry: Registry,
     pub(super) endpoint: Arc<EndpointMetrics>,
     pub(super) signaling: Arc<SignalingMetrics>,
     pub(super) database: Arc<DatabaseMetrics>,
@@ -51,70 +43,82 @@ pub struct CombinedMetrics {
     pub(super) redis: Arc<RedisMetrics>,
 }
 
-/// Overrides the default OTel aggregation method
-///
-/// This is needed as currently it is not possible to say which aggregator is used for which meter.
-/// The current implementation uses fixed boundaries for histograms
-// Fixme when https://github.com/open-telemetry/opentelemetry-rust/issues/673 is resolved
-pub struct OverrideAggregatorSelector {
-    fallback: Box<dyn AggregatorSelector + Send + Sync>,
-}
-
-impl Default for OverrideAggregatorSelector {
-    fn default() -> Self {
-        Self {
-            fallback: Box::new(histogram(vec![0.5, 0.9, 0.99])),
-        }
-    }
-}
-
-impl AggregatorSelector for OverrideAggregatorSelector {
-    fn aggregator_for(&self, descriptor: &Descriptor) -> Option<Arc<dyn Aggregator + Send + Sync>> {
-        use opentelemetry::sdk::metrics::aggregators;
-
-        match descriptor.name() {
-            "web.request_duration_seconds" => Some(Arc::new(aggregators::histogram(&[
-                0.005, 0.01, 0.25, 0.5, 1.0, 2.0,
-            ]))),
-            "web.response_sizes_bytes" => Some(Arc::new(aggregators::histogram(&[
-                100.0, 1_000.0, 10_000.0, 100_000.0,
-            ]))),
-            "signaling.runner_startup_time_seconds" | "signaling.runner_destroy_time_seconds" => {
-                Some(Arc::new(aggregators::histogram(&[
-                    0.01, 0.25, 0.5, 1.0, 2.0, 5.0,
-                ])))
-            }
-            "sql.execution_time_seconds" => Some(Arc::new(aggregators::histogram(&[
-                0.01, 0.05, 0.1, 0.25, 0.5,
-            ]))),
-            "sql.dbpool_connections" => Some(Arc::new(aggregators::last_value())),
-            "sql.dbpool_connections_idle" => Some(Arc::new(aggregators::last_value())),
-            "kustos.enforce_execution_time_seconds" => Some(Arc::new(aggregators::histogram(&[
-                0.01, 0.05, 0.1, 0.25, 0.5,
-            ]))),
-            "kustos.load_policy_execution_time_seconds" => {
-                Some(Arc::new(aggregators::histogram(&[
-                    0.01, 0.05, 0.1, 0.25, 0.5,
-                ])))
-            }
-            "redis.command_execution_time_seconds" => Some(Arc::new(aggregators::histogram(&[
-                0.001, 0.0025, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5,
-            ]))),
-            _ => self.fallback.aggregator_for(descriptor),
-        }
-    }
-}
-
 impl CombinedMetrics {
-    pub fn init() -> Self {
-        let controller = controllers::basic(processors::factory(
-            OverrideAggregatorSelector::default(),
-            aggregation::cumulative_temporality_selector(),
-        ))
-        .build();
+    pub fn try_init() -> Result<Self> {
+        let registry = prometheus::Registry::new();
+        let exporter = opentelemetry_prometheus::exporter()
+            .with_registry(registry.clone())
+            .build()?;
 
-        let exporter = opentelemetry_prometheus::exporter(controller).init();
+        let provider = MeterProvider::builder()
+            .with_reader(exporter)
+            .with_view(new_view(
+                Instrument::new().name("web.request_duration_seconds"),
+                Stream::new().aggregation(Aggregation::ExplicitBucketHistogram {
+                    boundaries: vec![0.005, 0.01, 0.25, 0.5, 1.0, 2.0],
+                    record_min_max: false,
+                }),
+            )?)
+            .with_view(new_view(
+                Instrument::new().name("web.response_sizes_bytes"),
+                Stream::new().aggregation(Aggregation::ExplicitBucketHistogram {
+                    boundaries: vec![100.0, 1_000.0, 10_000.0, 100_000.0],
+                    record_min_max: false,
+                }),
+            )?)
+            .with_view(new_view(
+                Instrument::new().name("signaling.runner_startup_time_seconds"),
+                Stream::new().aggregation(Aggregation::ExplicitBucketHistogram {
+                    boundaries: vec![0.01, 0.25, 0.5, 1.0, 2.0, 5.0],
+                    record_min_max: false,
+                }),
+            )?)
+            .with_view(new_view(
+                Instrument::new().name("signaling.runner_destroy_time_seconds"),
+                Stream::new().aggregation(Aggregation::ExplicitBucketHistogram {
+                    boundaries: vec![0.01, 0.25, 0.5, 1.0, 2.0, 5.0],
+                    record_min_max: false,
+                }),
+            )?)
+            .with_view(new_view(
+                Instrument::new().name("sql.execution_time_seconds"),
+                Stream::new().aggregation(Aggregation::ExplicitBucketHistogram {
+                    boundaries: vec![0.01, 0.05, 0.1, 0.25, 0.5],
+                    record_min_max: false,
+                }),
+            )?)
+            .with_view(new_view(
+                Instrument::new().name("sql.dbpool_connections"),
+                Stream::new().aggregation(Aggregation::Default),
+            )?)
+            .with_view(new_view(
+                Instrument::new().name("sql.dbpool_connections_idle"),
+                Stream::new().aggregation(Aggregation::Default),
+            )?)
+            .with_view(new_view(
+                Instrument::new().name("kustos.enforce_execution_time_seconds"),
+                Stream::new().aggregation(Aggregation::ExplicitBucketHistogram {
+                    boundaries: vec![0.01, 0.05, 0.1, 0.25, 0.5],
+                    record_min_max: false,
+                }),
+            )?)
+            .with_view(new_view(
+                Instrument::new().name("kustos.load_policy_execution_time_seconds"),
+                Stream::new().aggregation(Aggregation::ExplicitBucketHistogram {
+                    boundaries: vec![0.01, 0.05, 0.1, 0.25, 0.5],
+                    record_min_max: false,
+                }),
+            )?)
+            .with_view(new_view(
+                Instrument::new().name("redis.command_execution_time_seconds"),
+                Stream::new().aggregation(Aggregation::ExplicitBucketHistogram {
+                    boundaries: vec![0.001, 0.0025, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5],
+                    record_min_max: false,
+                }),
+            )?)
+            .build();
 
+        global::set_meter_provider(provider);
         let meter = global::meter("ot-controller");
 
         let endpoint = Arc::new(EndpointMetrics {
@@ -210,14 +214,14 @@ impl CombinedMetrics {
                 .init(),
         });
 
-        Self {
-            exporter,
+        Ok(Self {
+            registry,
             endpoint,
             signaling,
             database,
             kustos,
             redis,
-        }
+        })
     }
 }
 
@@ -240,7 +244,7 @@ pub async fn metrics(
     }
 
     let encoder = TextEncoder::new();
-    let metric_families = metrics.exporter.registry().gather();
+    let metric_families = metrics.registry.gather();
     let mut buf = Vec::new();
     if let Err(err) = encoder.encode(&metric_families[..], &mut buf) {
         global::handle_error(MetricsError::Other(err.to_string()));

@@ -212,6 +212,8 @@ skip = [
     { name = "signature", version = "=1.6" },
     { name = "sec1", version = "=0.3" },
     { name = "spki", version = "=0.6" },
+    { name = "tokio-rustls", version = "=0.23" },
+    { name = "ordered-float", version = "=2.10" },
 ]
 # Similarly to `skip` allows you to skip certain crates during duplicate
 # detection. Unlike skip, it also includes the entire tree of transitive

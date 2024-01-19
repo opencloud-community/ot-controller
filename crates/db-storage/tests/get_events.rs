@@ -305,7 +305,7 @@ async fn get_events_invite_filter() {
         100,
     )
     .await
-    .unwrap();
+    .expect("Failed to get events: ");
 
     assert_eq!(all_events.len(), 4);
     assert!(all_events

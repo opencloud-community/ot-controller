@@ -8,9 +8,9 @@ use actix_web::{Error, HttpMessage};
 use anyhow::Result;
 use opentalk_controller_settings::Logging;
 use opentelemetry::global;
-use opentelemetry::sdk::{trace, Resource};
 use opentelemetry::KeyValue;
 use opentelemetry_otlp::WithExportConfig;
+use opentelemetry_sdk::{trace, Resource};
 use tracing::Span;
 use tracing_actix_web::{RequestId, RootSpanBuilder};
 use tracing_subscriber::layer::SubscriberExt;
@@ -70,7 +70,7 @@ pub fn init(settings: &Logging) -> Result<()> {
                             .unwrap_or("unknown"),
                     ),
                 ])))
-            .install_batch(opentelemetry::runtime::TokioCurrentThread)?;
+            .install_batch(opentelemetry_sdk::runtime::TokioCurrentThread)?;
         let telemetry = tracing_opentelemetry::layer().with_tracer(tracer);
 
         // Initialize the global logging with telemetry

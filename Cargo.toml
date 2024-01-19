@@ -85,7 +85,7 @@ lapin = { version = "2", default-features = false }
 log = "0.4"
 md5 = "0.7"
 openidconnect = "3"
-opentelemetry = { version = "0.19", default-features = false, features = ["metrics"] }
+opentelemetry = { version = "0.21", default-features = false, features = ["metrics"] }
 owo-colors = "3"
 parking_lot = "0.12"
 percent-encoding = "2"
@@ -108,7 +108,7 @@ thiserror = "1"
 tokio = "1"
 tokio-stream = { version = "0.1", features = ["sync"] }
 tracing = "0.1"
-tracing-opentelemetry = "0.19"
+tracing-opentelemetry = "0.22"
 url = "2"
 uuid = "1"
 validator = { version = "0.16", features = ["derive"] }

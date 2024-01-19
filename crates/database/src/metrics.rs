@@ -15,7 +15,7 @@ use diesel_async::{
 use futures_core::future::BoxFuture;
 use futures_core::stream::BoxStream;
 use opentelemetry::metrics::{Counter, Histogram};
-use opentelemetry::{Context, Key};
+use opentelemetry::Key;
 use std::sync::Arc;
 use std::time::Instant;
 
@@ -152,17 +152,15 @@ where
 
             match ready!(this.future.poll(cx)) {
                 res @ (Ok(_) | Err(diesel::result::Error::NotFound)) => {
-                    metrics.sql_execution_time.record(
-                        &Context::current(),
-                        start.elapsed().as_secs_f64(),
-                        &[],
-                    );
+                    metrics
+                        .sql_execution_time
+                        .record(start.elapsed().as_secs_f64(), &[]);
 
                     Poll::Ready(res)
                 }
                 Err(e) => {
                     let labels = &[ERROR_KEY.string(get_metrics_label_for_error(&e))];
-                    metrics.sql_error.add(&Context::current(), 1, labels);
+                    metrics.sql_error.add(1, labels);
 
                     Poll::Ready(Err(e))
                 }

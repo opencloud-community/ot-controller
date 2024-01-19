@@ -14,7 +14,6 @@ use casbin::{
 };
 use casbin::{EventEmitter, Result};
 use kustos_shared::internal::{ToCasbin, ToCasbinString};
-use opentelemetry::Context;
 use parking_lot as pl;
 use std::collections::HashMap;
 use std::convert::TryInto;
@@ -232,11 +231,9 @@ impl CoreApi for SyncedEnforcer {
         let res = self.enforcer.enforce(rvals)?;
 
         if let Some(metrics) = &self.metrics {
-            metrics.enforce_execution_time.record(
-                &Context::current(),
-                start.elapsed().as_secs_f64(),
-                &[],
-            );
+            metrics
+                .enforce_execution_time
+                .record(start.elapsed().as_secs_f64(), &[]);
         }
 
         Ok(res)
@@ -250,11 +247,9 @@ impl CoreApi for SyncedEnforcer {
         let res = self.enforcer.enforce_mut(rvals)?;
 
         if let Some(metrics) = &self.metrics {
-            metrics.enforce_execution_time.record(
-                &Context::current(),
-                start.elapsed().as_secs_f64(),
-                &[],
-            );
+            metrics
+                .enforce_execution_time
+                .record(start.elapsed().as_secs_f64(), &[]);
         }
 
         Ok(res)
@@ -279,11 +274,9 @@ impl CoreApi for SyncedEnforcer {
         self.enforcer.load_policy().await?;
 
         if let Some(metrics) = &self.metrics {
-            metrics.load_policy_execution_time.record(
-                &Context::current(),
-                start.elapsed().as_secs_f64(),
-                &[],
-            );
+            metrics
+                .load_policy_execution_time
+                .record(start.elapsed().as_secs_f64(), &[]);
         }
 
         Ok(())
