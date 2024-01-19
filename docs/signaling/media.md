@@ -24,15 +24,33 @@ When joining a room, the `join_success` control event contains the module-specif
 
 #### Fields
 
-| Field          | Type   | Always | Description                                                            |
-| -------------- | ------ | ------ | ---------------------------------------------------------------------- |
-| `is_presenter` | `bool` | yes    | Represents if the current participant has permissions for screen share |
+| Field          | Type                         | Always | Description                                                            |
+| -------------- | ---------------------------- | ------ | ---------------------------------------------------------------------- |
+| `is_presenter` | `bool`                       | yes    | Represents if the current participant has permissions for screen share |
+| `speakers`     | `ParticipantSpeakingState[]` | yes    | The list of current or previous speakers in the meeting                |
 
 ##### Example
 
 ```json
 {
-    "is_presenter": true
+    "is_presenter": true,
+    "speakers": [
+        {
+            "participant": "6802d547-06ff-493a-bcce-da7f3bc37248",
+            "is_speaking": false,
+            "updated_at": "2023-01-13T12:29:01Z"
+        },
+        {
+            "participant": "0605e657-27b8-443e-81de-31d5921e9a42",
+            "is_speaking": true,
+            "updated_at": "2023-01-13T12:37:42Z"
+        },
+        {
+            "participant": "69068e53-eb60-4c1d-bfc1-fc31a0dc45a3",
+            "is_speaking": false,
+            "updated_at": "2023-01-13T12:22:08Z"
+        }
+    ]
 }
 ```
 
@@ -446,6 +464,33 @@ Request another participant to mute their microphone.
 }
 ```
 
+<!-- COMMAND UPDATE SPEAKING STATE -->
+
+### UpdateSpeakingState
+
+Update the client's speaking state. This should be sent to the service by the
+client when it detects either start or end of a speaking period.
+
+After receiving this message, the service sends out a
+[`SpeakerUpdated`](#speakerupdated) event to all participants, including the
+one that changed their state.
+
+#### Fields
+
+| Field         | Type   | Required | Description                                                                              |
+| ------------- | ------ | -------- | ---------------------------------------------------------------------------------------- |
+| `action`      | `enum` | yes      | Must be `"update_speaking_state"`                                                        |
+| `is_speaking` | `bool` | yes      | The flag indicating whether the client states that the participant is currently speaking |
+
+##### Example
+
+```json
+{
+    "action": "update_speaking_state",
+    "is_speaking": true
+}
+```
+
 ## Events
 
 <!-- EVENT SDP ANSWER -->
@@ -655,28 +700,6 @@ The SFU reports an update in the current status of the specified WebRTC session
 }
 ```
 
-<!-- EVENT FOCUS UPDATE -->
-
-### FocusUpdate
-
-A new participant has been selection to be focused/highlighted.
-
-#### Fields
-
-| Field     | Type     | Always | Description                                                                           |
-| --------- | -------- | ------ | ------------------------------------------------------------------------------------- |
-| `message` | `enum`   | yes    | Is `"focus_update"`                                                                   |
-| `focus`   | `string` | no     | Id of the participant to focus. If null or missing no one should focussed/highlighted |
-
-##### Example
-
-```json
-{
-    "message": "focus_update",
-    "focus": "84a2c872-94fb-4b41-aca7-13d784c92a72"
-}
-```
-
 <!-- EVENT PRESENTER GRANTED -->
 
 ### PresenterGranted
@@ -741,6 +764,32 @@ You are being asked to mute yourself
 }
 ```
 
+<!-- EVENT SPEAKERS UPDATED -->
+
+### SpeakerUpdated
+
+The speaking state of a participant has been updated because they started or stopped speaking.
+
+#### Fields
+
+| Field         | Type     | Always | Description                                                                              |
+| ------------- | -------- | ------ | ---------------------------------------------------------------------------------------- |
+| `message`     | `enum`   | yes    | Is `"speaker_updated"`                                                                   |
+| `participant` | `string` | yes    | Id of the participant whose speaking state changed                                       |
+| `is_speaking` | `bool`   | yes    | The flag indicating whether the client states that the participant is currently speaking |
+| `updated_at`  | `string` | yes    | Timestamp of the last change of `is_speaking` for this participant                       |
+
+##### Example
+
+```json
+{
+    "message": "speaker_updated",
+    "participant": "84a2c872-94fb-4b41-aca7-13d784c92a72",
+    "is_speaking": true,
+    "updated_at": "2023-01-13T12:37:08Z"
+}
+```
+
 <!-- EVENT ERROR -->
 
 ### Error
@@ -800,6 +849,14 @@ This object represent the current mute status of a media session.
 | ------- | ------ | ------ | -------------------------- |
 | `video` | `bool` | yes    | Video is enabled (unmuted) |
 | `audio` | `bool` | yes    | Audio is enabled (unmuted) |
+
+### ParticipantSpeakingState
+
+| Field           | Type     | Required | Description                                                        |
+| --------------- | -------- | -------- | ------------------------------------------------------------------ |
+| `participant`   | `string` | yes      | The id of the participant                                          |
+| `is_speaking`   | `bool`   | yes      | A flag indicating whether the participant is currently speaking    |
+| `updated_at`    | `string` | yes      | Timestamp of the last change of `is_speaking` for this participant |
 
 ### TrickleCandidate
 

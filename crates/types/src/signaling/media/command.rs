@@ -9,7 +9,7 @@ use crate::core::ParticipantId;
 #[allow(unused_imports)]
 use crate::imports::*;
 
-use super::{MediaSessionState, MediaSessionType, TrickleCandidate};
+use super::{MediaSessionState, MediaSessionType, TrickleCandidate, UpdateSpeakingState};
 
 /// Commands received by the `media` module
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -59,6 +59,9 @@ pub enum MediaCommand {
 
     /// SDP request to configure subscription
     Configure(TargetConfigure),
+
+    /// Update speaking status of the current participant
+    UpdateSpeakingState(UpdateSpeakingState),
 }
 
 /// Information about a media session

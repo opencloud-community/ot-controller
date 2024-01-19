@@ -9,7 +9,7 @@ use crate::core::ParticipantId;
 #[allow(unused_imports)]
 use crate::imports::*;
 
-use super::{command::Target, MediaSessionType, TrickleCandidate};
+use super::{command::Target, MediaSessionType, ParticipantSpeakingState, TrickleCandidate};
 
 /// The direction of a media link
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -60,9 +60,6 @@ pub enum MediaEvent {
     /// A webrtc connection experienced package loss
     WebrtcSlow(Link),
 
-    /// A specific participant should be focused
-    FocusUpdate(FocusUpdate),
-
     /// The participant is requested to mute themselves
     RequestMute(RequestMute),
 
@@ -71,6 +68,9 @@ pub enum MediaEvent {
 
     /// Presenter role has been revoked from the participant
     PresenterRevoked,
+
+    /// Update of a speaker status
+    SpeakerUpdated(ParticipantSpeakingState),
 
     /// Contains a error about what request failed. See [`Error`]
     Error(Error),
@@ -161,20 +161,6 @@ pub struct Link {
     /// Source of the media link
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub source: Source,
-}
-
-/// Event signaling to the participant whether a specific participant should be focused on
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct FocusUpdate {
-    /// Id of the participant to focus on
-    pub focus: Option<ParticipantId>,
-}
-
-impl From<FocusUpdate> for MediaEvent {
-    fn from(value: FocusUpdate) -> Self {
-        Self::FocusUpdate(value)
-    }
 }
 
 /// Errors from the `media` module namespace

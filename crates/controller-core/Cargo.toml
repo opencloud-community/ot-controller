@@ -16,6 +16,7 @@ opentalk-controller-utils.workspace = true
 opentalk-controller-settings.workspace = true
 opentalk-database.workspace = true
 opentalk-db-storage.workspace = true
+opentalk-janus-media.workspace = true
 opentalk-jobs.workspace = true
 opentalk-mail-worker-protocol = { workspace = true, features = [ "client" ] }
 opentalk-nextcloud-client = { workspace = true, default-features = false, features = [
@@ -25,6 +26,8 @@ opentalk-signaling-core.workspace = true
 opentalk-types = { workspace = true, features = ["backend", "clap"] }
 
 ### Logging utilities
+anstream.workspace = true
+owo-colors.workspace = true
 log = { workspace = true, features = ["serde"] }
 tracing.workspace = true
 tracing-futures = "0.2"

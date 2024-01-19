@@ -20,17 +20,15 @@ pub struct JanusMcuConfig {
     /// Number of packets with with given `speaker_focus_level`
     /// needed to detect a speaking participant.
     ///
-    /// Default: 50 packets (1 second of audio)
-    #[serde(default = "default_speaker_focus_packets")]
-    pub speaker_focus_packets: i64,
+    /// This is no longer used and will be removed in the future
+    #[serde(default)]
+    pub speaker_focus_packets: Option<i64>,
 
     /// Average value of audio level needed per packet.
     ///
-    /// min: 127 (muted)  
-    /// max: 0   (loud)  
-    /// default: 50  
-    #[serde(default = "default_speaker_focus_level")]
-    pub speaker_focus_level: i64,
+    /// This is no longer used and will be removed in the future
+    #[serde(default)]
+    pub speaker_focus_level: Option<i64>,
 }
 
 impl JanusMcuConfig {
@@ -68,14 +66,6 @@ const fn default_max_video_bitrate() -> u64 {
 const fn default_max_screen_bitrate() -> u64 {
     // 1 MB/s
     8_000_000
-}
-
-const fn default_speaker_focus_packets() -> i64 {
-    50
-}
-
-const fn default_speaker_focus_level() -> i64 {
-    50
 }
 
 fn default_to_janus_routing_key() -> String {

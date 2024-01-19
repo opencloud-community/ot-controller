@@ -14,7 +14,20 @@ use crate::imports::*;
 ///
 /// The values are stores as unix timestamps in redis.
 #[derive(
-    AsRef, Deref, Display, From, FromStr, Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash,
+    AsRef,
+    Deref,
+    Display,
+    From,
+    FromStr,
+    Debug,
+    Default,
+    Copy,
+    Clone,
+    Ord,
+    PartialOrd,
+    Eq,
+    PartialEq,
+    Hash,
 )]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Timestamp(DateTime<Utc>);

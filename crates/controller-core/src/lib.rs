@@ -202,6 +202,7 @@ impl Controller {
         }
 
         let settings = settings::load_settings(&args)?;
+        check_for_deprecated_settings(&settings)?;
 
         trace::init(&settings.logging)?;
 
@@ -633,4 +634,18 @@ fn setup_rustls(tls: &settings::HttpTls) -> Result<rustls::ServerConfig> {
         .with_single_cert(certs, rustls::PrivateKey(key.remove(0)))?;
 
     Ok(config)
+}
+
+/// Check for deprecated settings, and print warnings if any are found.
+fn check_for_deprecated_settings(settings: &Settings) -> Result<()> {
+    use owo_colors::OwoColorize as _;
+
+    for deprecated_setting in opentalk_janus_media::check_for_deprecated_settings(settings)? {
+        anstream::eprintln!(
+            "{}: {} setting found in the configuration file. This option is no longer needed.",
+            "DEPRECATION WARNING".yellow().bold(),
+            deprecated_setting.bold()
+        );
+    }
+    Ok(())
 }

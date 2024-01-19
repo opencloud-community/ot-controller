@@ -8,7 +8,6 @@
 //!
 //! Handles media related messages and manages their respective forwarding to janus-gateway via rabbitmq.
 use anyhow::{bail, Context, Result};
-use focus::FocusDetection;
 use mcu::{
     LinkDirection, McuPool, MediaSessionKey, PublishConfiguration, Request, Response,
     TrickleMessage, WebRtcEvent,
@@ -23,13 +22,11 @@ use opentalk_types::{
     signaling::{
         media::{
             command::{self, MediaCommand, Target, TargetConfigure, TargetSubscribe},
-            event::{
-                self, Error, FocusUpdate, Link, MediaEvent, MediaStatus, Sdp, SdpCandidate, Source,
-            },
+            event::{self, Error, Link, MediaEvent, MediaStatus, Sdp, SdpCandidate, Source},
             peer_state::MediaPeerState,
             state::MediaState,
-            MediaSessionState, MediaSessionType, ParticipantMediaState, TrickleCandidate,
-            NAMESPACE,
+            MediaSessionState, MediaSessionType, ParticipantMediaState, ParticipantSpeakingState,
+            SpeakingState, TrickleCandidate, UpdateSpeakingState, NAMESPACE,
         },
         Role,
     },
@@ -42,7 +39,6 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 mod exchange;
-mod focus;
 mod mcu;
 mod sessions;
 mod settings;
@@ -56,8 +52,6 @@ pub struct Media {
     media: MediaSessions,
 
     state: ParticipantMediaState,
-
-    focus_detection: FocusDetection,
 }
 
 fn process_metrics_for_media_session_state(
@@ -126,7 +120,6 @@ impl SignalingModule for Media {
             mcu: mcu.clone(),
             media: MediaSessions::new(ctx.participant_id(), media_sender),
             state,
-            focus_detection: Default::default(),
         }))
     }
 
@@ -367,6 +360,24 @@ impl SignalingModule for Media {
                 )
             }
 
+            Event::WsMessage(MediaCommand::UpdateSpeakingState(UpdateSpeakingState {
+                is_speaking,
+            })) => {
+                let timestamp = ctx.timestamp();
+                storage::set_speaker(ctx.redis_conn(), self.room, self.id, is_speaking, timestamp)
+                    .await?;
+                ctx.exchange_publish(
+                    control::exchange::current_room_all_participants(self.room),
+                    exchange::Message::SpeakerStateUpdated(ParticipantSpeakingState {
+                        participant: self.id,
+                        speaker: SpeakingState {
+                            is_speaking,
+                            updated_at: timestamp,
+                        },
+                    }),
+                );
+            }
+
             Event::Ext((media_session_key, message)) => match message {
                 WebRtcEvent::AssociatedMcuDied => {
                     self.remove_broken_media_session(&mut ctx, media_session_key)
@@ -416,25 +427,7 @@ impl SignalingModule for Media {
                         }));
                     }
                 },
-                WebRtcEvent::StartedTalking => ctx.exchange_publish(
-                    control::exchange::current_room_all_participants(self.room),
-                    exchange::Message::StartedTalking(media_session_key.0),
-                ),
-                WebRtcEvent::StoppedTalking => ctx.exchange_publish(
-                    control::exchange::current_room_all_participants(self.room),
-                    exchange::Message::StoppedTalking(media_session_key.0),
-                ),
             },
-            Event::Exchange(exchange::Message::StartedTalking(id)) => {
-                if let Some(focus) = self.focus_detection.on_started_talking(id) {
-                    ctx.ws_send(MediaEvent::FocusUpdate(FocusUpdate { focus }));
-                }
-            }
-            Event::Exchange(exchange::Message::StoppedTalking(id)) => {
-                if let Some(focus) = self.focus_detection.on_stopped_talking(id) {
-                    ctx.ws_send(FocusUpdate { focus });
-                }
-            }
             Event::Exchange(exchange::Message::RequestMute(request_mute)) => {
                 ctx.ws_send(request_mute);
             }
@@ -487,6 +480,9 @@ impl SignalingModule for Media {
 
                 ctx.invalidate_data();
             }
+            Event::Exchange(exchange::Message::SpeakerStateUpdated(participant_speaker)) => {
+                ctx.ws_send(MediaEvent::SpeakerUpdated(participant_speaker));
+            }
 
             Event::ParticipantJoined(id, evt_state) => {
                 let state = storage::get_participant_media_state(ctx.redis_conn(), self.room, id)
@@ -507,15 +503,6 @@ impl SignalingModule for Media {
                         .context("Failed to get peer participants state")?
                 {
                     self.media.remove_dangling_subscriber(id, &state).await;
-
-                    if let Some(video_state) = state.get(&MediaSessionType::Video) {
-                        if !video_state.audio {
-                            if let Some(focus) = self.focus_detection.on_stopped_talking(id) {
-                                ctx.ws_send(FocusUpdate { focus });
-                            }
-                        }
-                    }
-
                     Some(state)
                 } else {
                     None
@@ -530,17 +517,13 @@ impl SignalingModule for Media {
             }
             Event::ParticipantLeft(id) => {
                 self.media.remove_subscribers(id).await;
-
-                // Unfocus leaving participants
-                if let Some(focus) = self.focus_detection.on_stopped_talking(id) {
-                    ctx.ws_send(FocusUpdate { focus });
-                }
             }
             Event::Joined {
                 control_data: _,
                 frontend_data,
                 participants,
             } => {
+                let participant_ids = Vec::from_iter(participants.keys().cloned());
                 for (&id, evt_state) in participants {
                     let state =
                         storage::get_participant_media_state(ctx.redis_conn(), self.room, id)
@@ -558,8 +541,14 @@ impl SignalingModule for Media {
 
                 let is_presenter =
                     storage::is_presenter(ctx.redis_conn(), self.room, self.id).await?;
+                let speakers =
+                    storage::get_room_speakers(ctx.redis_conn(), self.room, &participant_ids)
+                        .await?;
 
-                *frontend_data = Some(MediaState { is_presenter })
+                *frontend_data = Some(MediaState {
+                    is_presenter,
+                    speakers,
+                })
             }
             Event::Leaving => {
                 if let Err(e) =
@@ -587,6 +576,22 @@ impl SignalingModule for Media {
             if let Err(e) = storage::delete_presenter_key(ctx.redis_conn(), self.room).await {
                 log::error!(
                     "Media module for failed to remove presenter key on room destoy, {}",
+                    e
+                );
+            }
+
+            let participants = control::storage::get_all_participants(ctx.redis_conn(), self.room)
+                .await
+                .unwrap_or_else(|e| {
+                    log::error!("Failed to load room participants, {}", e);
+                    Vec::new()
+                });
+
+            if let Err(e) =
+                storage::delete_room_speakers(ctx.redis_conn(), self.room, &participants).await
+            {
+                log::error!(
+                    "Media module for failed to remove speakers on room destoy, {}",
                     e
                 );
             }
@@ -953,4 +958,21 @@ pub fn screen_share_requires_permission(shared_settings: &SharedSettings) -> boo
         .load()
         .defaults
         .screen_share_requires_permission
+}
+
+/// Check for deprecated settings, and print warnings if any are found.
+pub fn check_for_deprecated_settings(
+    settings: &opentalk_controller_settings::Settings,
+) -> Result<Vec<&'static str>> {
+    let mcu_config = settings::JanusMcuConfig::extract(settings)?;
+
+    let mut found = Vec::new();
+    if mcu_config.speaker_focus_packets.is_some() {
+        found.push("room_server.speaker_focus_packets");
+    }
+    if mcu_config.speaker_focus_level.is_some() {
+        found.push("room_server.speaker_focus_level");
+    }
+
+    Ok(found)
 }
