@@ -130,7 +130,7 @@ opentalk-keycloak-admin.workspace = true
 rrule = "0.11"
 
 ### CLI
-tabled = "0.12"
+tabled = "0.15"
 
 [dev-dependencies]
 opentalk-test-util = { workspace = true, features = ["database"] }
