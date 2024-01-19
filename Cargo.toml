@@ -86,7 +86,7 @@ log = "0.4"
 md5 = "0.7"
 openidconnect = "3"
 opentelemetry = { version = "0.21", default-features = false, features = ["metrics"] }
-owo-colors = "3"
+owo-colors = "4"
 parking_lot = "0.12"
 percent-encoding = "2"
 phonenumber = "0.3"
