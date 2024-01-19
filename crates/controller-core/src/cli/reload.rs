@@ -4,10 +4,7 @@
 
 use anyhow::{Context, Error, Result};
 use nix::sys::signal::{kill, SIGHUP};
-use sysinfo::{
-    self, get_current_pid, Pid, PidExt, Process, ProcessExt, ProcessRefreshKind, RefreshKind,
-    System, SystemExt,
-};
+use sysinfo::{self, get_current_pid, Pid, Process, ProcessRefreshKind, RefreshKind, System};
 
 /// Sends SIGHUP to all process with a different pid and the same name
 pub fn trigger_reload() -> Result<()> {

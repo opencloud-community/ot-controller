@@ -120,7 +120,7 @@ redis-args.workspace = true
 rand.workspace = true
 
 ### Reload controller process
-sysinfo = { version = "0.29", default-features = false }
+sysinfo = { version = "0.30", default-features = false }
 nix = { version = "0.27", features = ["signal"] }
 
 ### Access Control
