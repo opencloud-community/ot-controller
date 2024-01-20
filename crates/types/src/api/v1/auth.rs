@@ -9,9 +9,8 @@ use std::collections::HashSet;
 #[allow(unused_imports)]
 use crate::imports::*;
 
-/// Body of a *POST* request on `/auth/login`
+/// A POST request to the `/auth/login` endpoint
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(
     feature = "frontend",
     derive(HttpRequest),
@@ -21,7 +20,14 @@ use crate::imports::*;
         path = "/v1/auth/login"
     )
 )]
-pub struct PostLoginRequest {
+pub struct PostLoginRequest(
+    #[cfg_attr(feature = "frontend", http_request(body))] PostLoginRequestBody,
+);
+
+/// Body of a *POST* request on `/auth/login`
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct PostLoginRequestBody {
     /// The id token to use for the login
     pub id_token: String,
 }
