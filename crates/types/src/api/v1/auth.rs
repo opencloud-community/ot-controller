@@ -47,7 +47,6 @@ pub struct PostLoginResponse {
     derive(HttpRequest),
     http_request(method = "GET", response = GetLoginResponse, path = "/v1/auth/login")
 )]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct GetLoginRequest;
 
 /// Body of the response to a *GET* request on `/auth/login`
