@@ -98,6 +98,10 @@ pub fn verify<C: VerifyClaims>(key_set: &CoreJsonWebKeySet, token: &str) -> Resu
     // This is done manually at the end currently.
     validation.validate_exp = false;
 
+    // Ignore `aud` field, this is the same behavior that was present before updating `jsonwebtoken`
+    // to 0.9.x.
+    validation.validate_aud = false;
+
     // Just parse the token out, no verification
     let token = decode::<C>(token, &DecodingKey::from_secret(&[]), &validation).map_err(|e| {
         log::warn!("Unable to decode claims from provided id token, {}", e);
