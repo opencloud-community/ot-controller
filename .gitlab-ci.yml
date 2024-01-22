@@ -6,6 +6,7 @@
 image: git.opentalk.dev:5050/opentalk/backend/containers/rust:1.76.0-bullseye
 
 stages:
+  - setup
   - lint
   - test
   - check
@@ -23,10 +24,38 @@ variables:
   ENTERPRISE_PROJECT: $CI_PROJECT_NAMESPACE/controller-enterprise
   ENTERPRISE_REF: main
   COMMUNITY_EDITION_UPSTREAM: $CI_PROJECT_PATH
+  KANIKO_IMAGE: gcr.io/kaniko-project/executor:debug
+  # Used for caching
+  CARGO_HOME: $CI_PROJECT_DIR/cargo
+  CARGO_INCREMENTAL: 0
+  CACHE_COMPRESSION_LEVEL: fastest
+  FF_USE_FASTZIP: 'true'
+
+.default_job_condition: &default_job_condition
+  needs: []
+  rules:
+    # Run in merge requests (if there is one job with this instruction, all jobs without
+    # it are ignored for the MR pipeline)
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    # Run on scheduled pipeline runs
+    - if: $CI_PIPELINE_SOURCE == 'schedule'
+
+.build_cache: &build_cache
+  cache:
+    - key: cargo_home
+      policy: pull
+      when: always
+      paths:
+        - ${CARGO_HOME}
+    - key: ${CI_COMMIT_REF_SLUG}
+      policy: pull
+      when: always
+      paths:
+        - target/
 
 trigger_enterprise_ci:
-  needs: []
   stage: trigger
+  needs: []
   rules:
     - if: $CI_COMMIT_BRANCH =~ /^main$/ || $CI_PIPELINE_SOURCE == 'merge_request_event'
       exists:
@@ -60,37 +89,74 @@ trigger_enterprise_ci:
         --form "variables[COMMUNITY_EDITION_UPSTREAM]=$COMMUNITY_EDITION_UPSTREAM" \
         "$CI_API_V4_URL/projects/$ENCODED_ENTERPRISE_PROJECT/trigger/pipeline"
 
+setup:build:
+  stage: setup
+  tags:
+    - runner01
+  <<: *default_job_condition
+  cache:
+    - key: cargo_home
+      policy: pull-push
+      when: always
+      paths:
+        - ${CARGO_HOME}
+    - key: ${CI_COMMIT_REF_SLUG}
+      policy: pull-push
+      when: always
+      paths:
+        - target/
+  script:
+    # Execute caching commands via a script to save time by aborting the last step of compilation
+    - ci/cargo_cache_abort.sh
+
+setup:test:
+  stage: setup
+  tags:
+    - runner02
+  <<: *default_job_condition
+  cache:
+    - key: cargo_home-cargo_test
+      policy: pull-push
+      when: always
+      paths:
+        - ${CARGO_HOME}
+    - key: ${CI_COMMIT_REF_SLUG}-cargo_test
+      policy: pull-push
+      when: always
+      paths:
+        - target/
+  script:
+    - cargo install diesel_cli --version ~2 --no-default-features --features="postgres"
+    - RUSTFLAGS="-C instrument-coverage -C link-arg=-fuse-ld=lld"
+      LLVM_PROFILE_FILE="$(pwd)/target/coverage/raw/coverage-%p-%m.profraw"
+      cargo test --workspace --locked --no-run
+
 lint:fmt:
-  needs: []
-  rules:
-    # Run in merge requests (if there is one job with this instruction, all jobs without
-    # it are ignored for the MR pipeline)
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-    # Run on scheduled pipeline runs
-    - if: $CI_PIPELINE_SOURCE == 'schedule'
   stage: lint
+  <<: *default_job_condition
   script:
     - cargo fmt -- --check
 
 lint:clippy:
-  needs: []
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-    - if: $CI_PIPELINE_SOURCE == 'schedule'
   stage: lint
-  script: cargo clippy --workspace --all-features --tests -- --deny warnings
+  tags:
+    - runner01
+  <<: [*default_job_condition, *build_cache]
+  needs:
+    - job: setup:build
+      optional: true
+  script:
+    - cargo clippy --workspace --all-features --tests -- --deny warnings
 
 lint:doc:
-  needs: []
+  stage: lint
+  <<: *default_job_condition
   variables:
     RUSTDOCFLAGS: -Dwarnings
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-    - if: $CI_PIPELINE_SOURCE == 'schedule'
-  stage: lint
   script: cargo doc --workspace --no-deps
 
 lint:dependency_check:
+  stage: lint
   needs: []
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
@@ -98,34 +164,27 @@ lint:dependency_check:
         - Cargo.lock
         - deny.toml
     - if: $CI_PIPELINE_SOURCE == 'schedule'
-  stage: lint
   script: cargo-deny --workspace check
 
 lint:unnecessary_dependencies:
+  stage: lint
   needs: []
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-  stage: lint
   before_script: if ! cargo machete --version; then cargo install cargo-machete; fi
   script: cargo machete --with-metadata
 
 lint:yaml:
-  needs: []
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-    - if: $CI_PIPELINE_SOURCE == 'schedule'
   stage: lint
+  <<: *default_job_condition
   image: alpine:3.18
   before_script:
     - apk add --no-cache yamllint
   script: yamllint .
 
 lint:openapi:
-  needs: []
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-    - if: $CI_PIPELINE_SOURCE == 'schedule'
   stage: lint
+  <<: *default_job_condition
   image:
     name: redocly/openapi-cli
     entrypoint: ['']
@@ -133,21 +192,15 @@ lint:openapi:
     - /usr/local/bin/openapi lint api/controller/frontend_api.yaml
 
 lint:markdown:
-  needs: []
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-    - if: $CI_PIPELINE_SOURCE == 'schedule'
   stage: lint
+  <<: *default_job_condition
   image: registry.gitlab.com/pipeline-components/markdownlint:latest
   script:
     - mdl --style .markdown_style.rb  --warnings .
 
 lint:licensing:
-  needs: []
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-    - if: $CI_PIPELINE_SOURCE == 'schedule'
   stage: lint
+  <<: *default_job_condition
   image:
     name: fsfe/reuse:latest
     entrypoint: ['']
@@ -155,13 +208,18 @@ lint:licensing:
     - reuse lint
 
 check:opentalk-types:
+  stage: check
+  tags:
+    - runner01
+  <<: *build_cache
+  needs:
+    - job: setup:build
+      optional: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
   # Ensures that the `types` crate can be built with each relevant feature individually
   variables:
     RUSTFLAGS: -D warnings
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-  stage: check
-  needs: []
   parallel:
     matrix:
       - FEATURES: ['', frontend, backend, actix, diesel, kustos, redis, rand, serde]
@@ -170,9 +228,15 @@ check:opentalk-types:
     - cargo check --package opentalk-types $EXTRA_ARGS --features=$FEATURES
 
 check:docs-generated-parts:
+  stage: check
+  tags:
+    - runner01
+  <<: *build_cache
+  needs:
+    - job: setup:build
+      optional: true
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-  stage: check
   variables:
     # Set ENV vars for services
     POSTGRES_DB: opentalk
@@ -188,7 +252,6 @@ check:docs-generated-parts:
       alias: postgres
     - name: rabbitmq:3.8
       alias: rabbitmq
-  needs: []
   script:
     - ci/docs-update-generated-parts.sh
     - |
@@ -198,11 +261,22 @@ check:docs-generated-parts:
       fi
 
 test:cargo_test:
-  needs: []
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-    - if: $CI_PIPELINE_SOURCE == 'schedule'
   stage: test
+  tags:
+    - runner02
+  <<: [*default_job_condition]
+  needs:
+    - job: setup:test
+      optional: true
+  cache:
+    - key: cargo_home-cargo_test
+      policy: pull
+      paths:
+        - ${CARGO_HOME}
+    - key: ${CI_COMMIT_REF_SLUG}-cargo_test
+      policy: pull
+      paths:
+        - target/
   artifacts:
     paths:
       - target/coverage/html
@@ -263,17 +337,36 @@ test:cargo_test:
     # Print out the coverage percentage for GitLab
     - xmllint --xpath "$COVERAGE_XML_PATH" target/coverage/cobertura.xml
 
+test:cargo_xtask:
+  stage: test
+  tags:
+    - runner01
+  <<: [*default_job_condition, *build_cache]
+  needs:
+    - job: setup:build
+      optional: true
+  variables:
+    POSTGRES_DB: opentalk
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: password123
+    POSTGRES_HOST_AUTH_METHOD: trust
+    POSTGRES_BASE_URL: postgres://postgres:password123@postgres:5432
+    DATABASE_NAME: opentalk
+  services:
+    - name: postgres:15-alpine
+      alias: postgres
+  script:
+    - cargo install diesel_cli --version ~2 --no-default-features --features="postgres"
     # Verify that the HEAD schema.rs matches the actual HEAD migration database schema.
     - RUST_LOG=error cargo xtask verify-db-schema --postgres-url="${POSTGRES_BASE_URL}"
 
 test:container:
-  needs: []
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-    - if: $CI_PIPELINE_SOURCE == 'schedule'
   stage: test
+  tags:
+    - runner01
+  <<: [*default_job_condition, *build_cache]
   image:
-    name: gcr.io/kaniko-project/executor:debug
+    name: $KANIKO_IMAGE
     entrypoint: ['']
   script:
     - mkdir -p /kaniko/.docker
@@ -290,17 +383,22 @@ test:container:
       --force
 
 build:
-  needs: []
-  variables:
-    VERGEN_GIT_SHA: $CI_COMMIT_SHA
-    VERGEN_GIT_BRANCH: $CI_COMMIT_REF_NAME
+  stage: build
+  tags:
+    - runner01
+  <<: *build_cache
+  needs:
+    - job: setup:build
+      optional: true
   rules:
     - if: $CI_PIPELINE_SOURCE == "pipeline"
       when: never
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_COMMIT_TAG != null
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-  stage: build
+  variables:
+    VERGEN_GIT_SHA: $CI_COMMIT_SHA
+    VERGEN_GIT_BRANCH: $CI_COMMIT_REF_NAME
   artifacts:
     paths:
       - target/release/opentalk-controller
@@ -319,7 +417,7 @@ package:container-controller-mr:
       when: never
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
   image:
-    name: gcr.io/kaniko-project/executor:debug
+    name: $KANIKO_IMAGE
     entrypoint: ['']
   script:
     - mkdir -p /kaniko/.docker
@@ -350,15 +448,15 @@ package:container-controller-mr:
       --force
 
 package:controller-container-dev:
+  stage: package
   needs:
     - build
   rules:
     - if: $CI_PIPELINE_SOURCE == "pipeline"
       when: never
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-  stage: package
   image:
-    name: gcr.io/kaniko-project/executor:debug
+    name: $KANIKO_IMAGE
     entrypoint: ['']
   script:
     - mkdir -p /kaniko/.docker
@@ -375,8 +473,8 @@ package:controller-container-dev:
       --force
 
 trigger-docs:
-  needs: []
   stage: trigger
+  needs: []
   rules:
     - if: $CI_PIPELINE_SOURCE == "pipeline"
       when: never
@@ -385,13 +483,13 @@ trigger-docs:
     project: opentalk/backend/docs
 
 package:controller-container-tag:
+  stage: package
   needs:
     - build
   rules:
     - if: $CI_COMMIT_TAG != null
-  stage: package
   image:
-    name: gcr.io/kaniko-project/executor:debug
+    name: $KANIKO_IMAGE
     entrypoint: ['']
   script:
     - mkdir -p /kaniko/.docker
@@ -408,13 +506,13 @@ package:controller-container-tag:
       --force
 
 package:read-latest-tag:
+  stage: package
   needs: []
   rules:
     - if: $CI_COMMIT_TAG != null
   image:
     name: alpine/git
     entrypoint: ['']
-  stage: package
   script:
     - git fetch --tags
     - LATEST_TAG=$(git tag --list | grep "^v[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+$" | sort -V | tail -n1)
@@ -424,14 +522,14 @@ package:read-latest-tag:
       dotenv: package.env
 
 package:controller-container-latest:
+  stage: package
   needs:
     - build
     - package:read-latest-tag
   rules:
     - if: $CI_COMMIT_TAG != null
-  stage: package
   image:
-    name: gcr.io/kaniko-project/executor:debug
+    name: $KANIKO_IMAGE
     entrypoint: ['']
   script:
     - mkdir -p /kaniko/.docker
