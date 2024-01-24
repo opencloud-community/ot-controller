@@ -165,7 +165,7 @@ Information about another participant provided by the `control` module
 | `role`               | `enum`   | yes    | either `"guest,`, `"user"` or `"moderator"`                     |
 | `avatar_url`         | `string` | no     | url to your avatar image if the participant is a logged in user |
 | `participation_kind` | `enum`   | yes    | either `"user"`, `"guest"` or `"sip"`                           |
-| `hand_is_up`         | `bool`   | yes    | true if the user is currently raising his hand                  |
+| `hand_is_up`         | `bool`   | yes    | true if the user is currently raising their hand                |
 | `joined_at`          | `string` | yes    | timestamp of when the participant joined                        |
 | `left_at`            | `string` | no     | timestamp of when the participant left the room                 |
 | `hand_updated_at`    | `string` | yes    | timestamp of when the hand-raise status last changed            |
@@ -266,7 +266,7 @@ If a tariff is configured for a room, an issued [Join](#join) action may result 
 
 ### Update
 
-Received when a participant changes his state. Wraps a [Participant](#participant).
+Received when a participant changes their state. Wraps a [Participant](#participant).
 
 #### Fields
 
@@ -347,6 +347,26 @@ Received when the quota's time limit has elapsed.
 | Field     | Type   | Always | Description                               |
 | ----------| ------ | ------ | ----------------------------------------- |
 | `message` | `enum` | yes    | Is `"time_limit_quota_elapsed"`           |
+
+### HandRaised
+
+Received by a participant after they have raised their hand.
+
+#### Fields
+
+| Field     | Type   | Always | Description        |
+| ----------| ------ | ------ | ------------------ |
+| `message` | `enum` | yes    | Is `"hand_raised"` |
+
+### HandLowered
+
+Received by a participant after they have lowered their hand.
+
+#### Fields
+
+| Field     | Type   | Always | Description         |
+| ----------| ------ | ------ | ------------------- |
+| `message` | `enum` | yes    | Is `"hand_lowered"` |
 
 ### RoleUpdated
 

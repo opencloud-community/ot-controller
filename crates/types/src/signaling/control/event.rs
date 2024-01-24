@@ -36,6 +36,11 @@ pub enum ControlEvent {
     /// The quota's time limit has elapsed
     TimeLimitQuotaElapsed,
 
+    /// This participant raised a hand
+    HandRaised,
+    /// This participant lowered a hand
+    HandLowered,
+
     /// This participant's role in the meeting has been updated
     RoleUpdated {
         /// The new role of the participant

@@ -917,9 +917,13 @@ impl Runner {
                 }
 
                 self.handle_raise_hand_change(timestamp, true).await?;
+                self.ws_send_control(timestamp, ControlEvent::HandRaised)
+                    .await;
             }
             ControlCommand::LowerHand => {
                 self.handle_raise_hand_change(timestamp, false).await?;
+                self.ws_send_control(timestamp, ControlEvent::HandLowered)
+                    .await;
             }
             ControlCommand::GrantModeratorRole(TargetParticipant { target }) => {
                 if !matches!(self.state, RunnerState::Joined) {
