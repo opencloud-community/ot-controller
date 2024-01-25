@@ -11,16 +11,10 @@ use crate::core::{InviteCodeId, RoomId};
 use crate::imports::*;
 
 mod invite_resource;
+mod post_invite_request_body;
 
 pub use invite_resource::InviteResource;
-
-/// Body for *POST /rooms/{room_id}/invites*
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct PostInviteRequestBody {
-    /// Optional expiration date of the invite
-    pub expiration: Option<DateTime<Utc>>,
-}
+pub use post_invite_request_body::PostInviteRequestBody;
 
 /// Body for *GET /rooms/{room_id}/invites/{invite_code}*
 #[derive(Clone, Debug)]
