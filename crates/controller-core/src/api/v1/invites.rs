@@ -27,8 +27,8 @@ use opentalk_db_storage::{
 use opentalk_types::{
     api::v1::{
         invites::{
-            CodeVerified, InviteResource, PostInviteBody, PutInviteBody, RoomIdAndInviteCode,
-            VerifyBody,
+            CodeVerified, InviteResource, PostInviteRequestBody, PutInviteBody,
+            RoomIdAndInviteCode, VerifyBody,
         },
         pagination::PagePaginationQuery,
     },
@@ -46,7 +46,7 @@ pub async fn add_invite(
     authz: Data<Authz>,
     current_user: ReqData<User>,
     room_id: Path<RoomId>,
-    data: Json<PostInviteBody>,
+    data: Json<PostInviteRequestBody>,
 ) -> DefaultApiResult<InviteResource> {
     let settings = settings.load_full();
     let room_id = room_id.into_inner();

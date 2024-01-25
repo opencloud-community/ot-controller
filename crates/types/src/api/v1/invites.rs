@@ -15,9 +15,9 @@ mod invite_resource;
 pub use invite_resource::InviteResource;
 
 /// Body for *POST /rooms/{room_id}/invites*
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct PostInviteBody {
+pub struct PostInviteRequestBody {
     /// Optional expiration date of the invite
     pub expiration: Option<DateTime<Utc>>,
 }
