@@ -30,7 +30,7 @@ pub use room_resource::RoomResource;
 /// The JSON body returned from the start endpoints supporting session resumption
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct StartResponse {
+pub struct RoomsStartResponse {
     /// The ticket token for the room
     pub ticket: TicketToken,
 

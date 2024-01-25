@@ -46,7 +46,7 @@ use opentalk_types::{
         pagination::PagePaginationQuery,
         rooms::{
             GetRoomEventResponse, InvitedStartRequest, PatchRoomsRequestBody, PostRoomsRequestBody,
-            PostRoomsStartRequestBody, RoomResource, StartResponse, StartRoomError,
+            PostRoomsStartRequestBody, RoomResource, RoomsStartResponse, StartRoomError,
         },
     },
     common::{features, tariff::TariffResource},
@@ -319,7 +319,7 @@ impl From<StartRoomError> for ApiError {
 /// through the [`PostRoomsStartRequestBody`] JSON in the requests body. When the room has no password set,
 /// the provided password will be ignored.
 ///
-/// Returns a [`StartResponse`] containing the ticket for the specified room.
+/// Returns a [`RoomsStartResponse`] containing the ticket for the specified room.
 ///
 /// # Errors
 ///
@@ -333,7 +333,7 @@ pub async fn start(
     current_user: ReqData<User>,
     room_id: Path<RoomId>,
     request: Json<PostRoomsStartRequestBody>,
-) -> Result<Json<StartResponse>, ApiError> {
+) -> Result<Json<RoomsStartResponse>, ApiError> {
     let request = request.into_inner();
     let room_id = room_id.into_inner();
 
@@ -367,7 +367,7 @@ pub async fn start(
     )
     .await?;
 
-    Ok(Json(StartResponse { ticket, resumption }))
+    Ok(Json(RoomsStartResponse { ticket, resumption }))
 }
 
 /// API Endpoint *POST /rooms/{room_id}/start_invited*
@@ -379,7 +379,7 @@ pub async fn start_invited(
     redis_ctx: Data<RedisConnection>,
     room_id: Path<RoomId>,
     request: Json<InvitedStartRequest>,
-) -> Result<ApiResponse<StartResponse>, ApiError> {
+) -> Result<ApiResponse<RoomsStartResponse>, ApiError> {
     let request = request.into_inner();
     let room_id = room_id.into_inner();
 
@@ -440,7 +440,7 @@ pub async fn start_invited(
     )
     .await?;
 
-    Ok(ApiResponse::new(StartResponse { ticket, resumption }))
+    Ok(ApiResponse::new(RoomsStartResponse { ticket, resumption }))
 }
 
 pub trait RoomsPoliciesBuilderExt {
