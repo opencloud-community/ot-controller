@@ -2,35 +2,17 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::api::internal::NoContent;
-use crate::api::v1::response::ApiError;
-use crate::settings::SharedSettingsActix;
 use actix_web::delete;
 use actix_web::web::{Data, Path, ReqData};
 use kustos::prelude::*;
-use opentalk_controller_utils::deletion::{Deleter as _, Error, RoomDeleter};
+use opentalk_controller_utils::deletion::{Deleter as _, RoomDeleter};
 use opentalk_database::Db;
 use opentalk_db_storage::users::User;
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage};
-use opentalk_types::core::RoomId;
+use opentalk_types::{api::error::ApiError, core::RoomId};
 
-impl From<Error> for ApiError {
-    fn from(value: Error) -> Self {
-        match value {
-            Error::Database(e) => ApiError::from(e),
-            Error::Kustos(e) => ApiError::from(e),
-            Error::Forbidden => ApiError::forbidden(),
-            Error::ObjectDeletion(e) => ApiError::from(e),
-            Error::SharedFoldersNotConfigured => {
-                ApiError::bad_request().with_message("No shared folder configured for this server")
-            }
-            Error::NextcloudClient(_e) => {
-                ApiError::internal().with_message("Error performing actions on the NextCloud")
-            }
-            Error::Custom(e) => ApiError::internal().with_message(e.to_string()),
-        }
-    }
-}
+use crate::api::internal::NoContent;
+use crate::settings::SharedSettingsActix;
 
 /// API Endpoint *DELETE /rooms/{room_id}*
 ///

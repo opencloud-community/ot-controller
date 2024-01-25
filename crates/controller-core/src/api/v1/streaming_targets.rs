@@ -3,17 +3,15 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Contains invite related REST endpoints.
-use super::{
-    response::{ApiError, NoContent},
-    DefaultApiResult,
+use super::{response::NoContent, DefaultApiResult};
+use crate::{
+    api::v1::{events::notify_event_invitees_by_room_about_update, ApiResponse},
+    services::MailService,
+    settings::SharedSettingsActix,
 };
-use crate::api::v1::{events::notify_event_invitees_by_room_about_update, ApiResponse};
-use crate::services::MailService;
-use crate::settings::SharedSettingsActix;
-use actix_web::web::ReqData;
 use actix_web::{
     delete, get, patch, post,
-    web::{Data, Json, Path, Query},
+    web::{Data, Json, Path, Query, ReqData},
 };
 use anyhow::Context;
 use opentalk_database::{Db, DbConnection};
@@ -25,14 +23,17 @@ use opentalk_db_storage::users::User;
 use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_types::api::v1::events::StreamingTargetOptionsQuery;
 use opentalk_types::{
-    api::v1::{
-        pagination::PagePaginationQuery,
-        rooms::streaming_targets::{
-            ChangeRoomStreamingTargetRequest, ChangeRoomStreamingTargetResponse,
-            GetRoomStreamingTargetResponse, GetRoomStreamingTargetsResponse,
-            PostRoomStreamingTargetRequest, PostRoomStreamingTargetResponse,
+    api::{
+        error::ApiError,
+        v1::{
+            pagination::PagePaginationQuery,
+            rooms::streaming_targets::{
+                ChangeRoomStreamingTargetRequest, ChangeRoomStreamingTargetResponse,
+                GetRoomStreamingTargetResponse, GetRoomStreamingTargetsResponse,
+                PostRoomStreamingTargetRequest, PostRoomStreamingTargetResponse,
+            },
+            streaming_targets::{RoomAndStreamingTargetId, UpdateStreamingTargetKind},
         },
-        streaming_targets::{RoomAndStreamingTargetId, UpdateStreamingTargetKind},
     },
     common::streaming::{RoomStreamingTarget, StreamingTarget, StreamingTargetKind},
     core::RoomId,

@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::response::{ApiError, NoContent};
+use super::response::NoContent;
 use super::ApiResponse;
 use actix_http::StatusCode;
 use actix_web::web::{Data, Path, Query};
@@ -14,7 +14,10 @@ use opentalk_signaling_core::{
     ObjectStorage,
 };
 use opentalk_types::{
-    api::v1::{assets::AssetResource, pagination::PagePaginationQuery},
+    api::{
+        error::ApiError,
+        v1::{assets::AssetResource, pagination::PagePaginationQuery},
+    },
     core::{AssetId, RoomId},
 };
 

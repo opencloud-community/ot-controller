@@ -5,7 +5,6 @@
 //! Auth related API structs and Endpoints
 use super::{events::EventPoliciesBuilderExt, rooms::RoomsPoliciesBuilderExt};
 use crate::{
-    api::v1::response::ApiError,
     oidc::{IdTokenInfo, OidcContext, VerifyError},
     settings::SharedSettingsActix,
 };
@@ -26,7 +25,7 @@ use opentalk_db_storage::{
 };
 use opentalk_types::{
     api::{
-        error::AuthenticationError,
+        error::{ApiError, AuthenticationError},
         v1::auth::{GetLoginResponse, OidcProvider, PostLoginRequestBody, PostLoginResponse},
     },
     core::{EventId, GroupName, RoomId, TariffStatus, TenantId},

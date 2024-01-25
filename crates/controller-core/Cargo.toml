@@ -57,11 +57,6 @@ thiserror.workspace = true
 validator.workspace = true
 
 ### Database ORM
-diesel = { workspace = true, features = [
-    "uuid",
-    "serde_json",
-    "chrono",
-] }
 diesel-async.workspace = true
 uuid = { workspace = true, features = ["serde", "v4"] }
 opentalk-cache.workspace = true

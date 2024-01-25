@@ -3,11 +3,11 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use super::resumption::{ResumptionData, ResumptionRedisKey};
-use crate::api::v1::response::ApiError;
 use anyhow::Context;
 use opentalk_signaling_core::{control, Participant, RedisConnection};
-use opentalk_types::core::{
-    BreakoutRoomId, ParticipantId, ResumptionToken, RoomId, TicketToken, UserId,
+use opentalk_types::{
+    api::error::ApiError,
+    core::{BreakoutRoomId, ParticipantId, ResumptionToken, RoomId, TicketToken, UserId},
 };
 use redis::AsyncCommands;
 use redis_args::{FromRedisValue, ToRedisArgs};

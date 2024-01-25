@@ -21,7 +21,10 @@ use opentalk_db_storage::{
     tariffs::Tariff,
     users::User,
 };
-use opentalk_types::core::{AssetId, RoomId, UserId};
+use opentalk_types::{
+    api::error::ApiError,
+    core::{AssetId, RoomId, UserId},
+};
 use thiserror::Error;
 
 use crate::ObjectStorage;
@@ -138,4 +141,20 @@ pub enum AssetError {
     /// The user has exceeded their storage
     #[error("The storage limit of your tariff is exceeded.")]
     StorageExceeded,
+}
+
+impl From<AssetError> for ApiError {
+    fn from(asset_error: AssetError) -> Self {
+        match asset_error {
+            AssetError::StorageExceeded => Self::bad_request()
+                .with_code("storage_exceeded")
+                .with_message("The storage limit of your tariff is exceeded"),
+        }
+    }
+}
+
+impl From<&AssetError> for ApiError {
+    fn from(asset_error: &AssetError) -> Self {
+        Self::from(*asset_error)
+    }
 }

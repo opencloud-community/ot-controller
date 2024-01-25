@@ -3,10 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Contains invite related REST endpoints.
-use super::{
-    response::{ApiError, NoContent},
-    DefaultApiResult,
-};
+use super::{response::NoContent, DefaultApiResult};
 use crate::{
     api::v1::{rooms::RoomsPoliciesBuilderExt, ApiResponse},
     settings::SharedSettingsActix,
@@ -25,12 +22,15 @@ use opentalk_db_storage::{
     users::User,
 };
 use opentalk_types::{
-    api::v1::{
-        invites::{
-            CodeVerified, InviteResource, PostInviteRequestBody, PutInviteRequestBody,
-            RoomIdAndInviteCode, VerifyBody,
+    api::{
+        error::ApiError,
+        v1::{
+            invites::{
+                CodeVerified, InviteResource, PostInviteRequestBody, PutInviteRequestBody,
+                RoomIdAndInviteCode, VerifyBody,
+            },
+            pagination::PagePaginationQuery,
         },
-        pagination::PagePaginationQuery,
     },
     core::RoomId,
 };

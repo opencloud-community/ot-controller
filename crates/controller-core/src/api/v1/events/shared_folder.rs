@@ -26,7 +26,10 @@ use opentalk_db_storage::{
 use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_nextcloud_client::{Client, ShareId, SharePermission, ShareType};
 use opentalk_types::{
-    api::v1::events::{DeleteSharedFolderQuery, PutSharedFolderQuery},
+    api::{
+        error::ApiError,
+        v1::events::{DeleteSharedFolderQuery, PutSharedFolderQuery},
+    },
     common::shared_folder::{SharedFolder, SharedFolderAccess},
     core::EventId,
 };
@@ -34,7 +37,7 @@ use opentalk_types::{
 use crate::{
     api::v1::{
         events::{notify_event_invitees_about_update, shared_folder_for_user},
-        response::{ApiError, NoContent},
+        response::NoContent,
     },
     services::MailService,
     settings::SharedSettingsActix,

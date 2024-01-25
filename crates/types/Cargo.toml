@@ -16,37 +16,61 @@ description = "Shared types and traits for OpenTalk crates"
 
 [dependencies]
 actix-http = { workspace = true, optional = true }
+actix-web = { workspace = true, optional = true }
 actix-web-httpauth = { workspace = true, optional = true }
+anyhow = { workspace = true, optional = true }
 base64 = { workspace = true, optional = true }
 bincode = { workspace = true, optional = true }
 bytes = { workspace = true, optional = true }
-chrono.workspace = true
 chrono-tz.workspace = true
+chrono.workspace = true
 clap = { workspace = true, optional = true }
-opentalk-client-shared = { workspace = true, optional = true }
 derive_more = "0.99"
 diesel = { workspace = true, features = ["uuid"], optional = true }
-opentalk-diesel-newtype = { workspace = true, optional = true }
 email_address.workspace = true
 http = { workspace = true, optional = true }
 http-request-derive = { workspace = true, features = ["serde"], optional = true }
-opentalk-kustos-prefix = { workspace = true, optional = true }
+itertools.workspace = true
 kustos-shared = { workspace = true, optional = true }
+log = { workspace = true, optional = true }
+opentalk-cache = { workspace = true, optional = true }
+opentalk-client-shared = { workspace = true, optional = true }
+opentalk-database = { workspace = true, optional = true }
+opentalk-diesel-newtype = { workspace = true, optional = true }
+opentalk-kustos-prefix = { workspace = true, optional = true }
 rand = { workspace = true, optional = true }
 redis = { workspace = true, optional = true }
 redis-args = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 serde_json.workspace = true
-thiserror.workspace = true
 strum.workspace = true
+thiserror.workspace = true
+url.workspace = true
 uuid.workspace = true
 validator = { workspace = true, optional = true }
-url.workspace = true
 
 [features]
 default = []
-actix = ["dep:actix-http", "dep:actix-web-httpauth", "dep:bytes", "dep:http"]
-backend = ["actix", "diesel", "kustos", "rand", "redis", "serde"]
+actix = [
+  "dep:actix-http",
+  "dep:actix-web",
+  "dep:actix-web-httpauth",
+  "dep:bytes",
+  "dep:http",
+  "dep:log",
+  "dep:validator",
+]
+backend = [
+  "actix",
+  "diesel",
+  "kustos",
+  "rand",
+  "redis",
+  "serde",
+  "dep:anyhow",
+  "dep:opentalk-cache",
+  "dep:opentalk-database",
+]
 clap = ["dep:clap"]
 diesel = ["serde", "dep:diesel", "dep:opentalk-diesel-newtype"]
 frontend = ["serde", "dep:opentalk-client-shared", "dep:http", "dep:http-request-derive"]

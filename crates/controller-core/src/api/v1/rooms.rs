@@ -7,9 +7,9 @@
 //! The defined structs are exposed to the REST API and will be serialized/deserialized. Similar
 //! structs are defined in the Database crate [`opentalk_db_storage`] for database operations.
 
-use std::{convert::AsRef, str::FromStr};
+use std::str::FromStr;
 
-use super::response::{error::ApiError, NoContent, CODE_INVALID_VALUE};
+use super::response::NoContent;
 use crate::{
     api::{
         signaling::{
@@ -40,7 +40,7 @@ use opentalk_db_storage::{
 use opentalk_signaling_core::{Participant, RedisConnection};
 use opentalk_types::{
     api::{
-        error::ValidationErrorEntry,
+        error::{ApiError, ValidationErrorEntry, ERROR_CODE_INVALID_VALUE},
         v1::{
             pagination::PagePaginationQuery,
             rooms::{
@@ -288,28 +288,6 @@ pub async fn get_room_event(
     }
 }
 
-impl From<StartRoomError> for ApiError {
-    fn from(start_room_error: StartRoomError) -> Self {
-        match start_room_error {
-            StartRoomError::WrongRoomPassword => ApiError::unauthorized()
-                .with_code(StartRoomError::WrongRoomPassword.as_ref())
-                .with_message("The provided password does not match the rooms password"),
-
-            StartRoomError::NoBreakoutRooms => ApiError::bad_request()
-                .with_code(StartRoomError::NoBreakoutRooms.as_ref())
-                .with_message("The requested room has no breakout rooms"),
-
-            StartRoomError::InvalidBreakoutRoomId => ApiError::bad_request()
-                .with_code(StartRoomError::InvalidBreakoutRoomId.as_ref())
-                .with_message("The provided breakout room ID is invalid"),
-
-            StartRoomError::BannedFromRoom => ApiError::forbidden()
-                .with_code(StartRoomError::BannedFromRoom.as_ref())
-                .with_message("This user has been banned from entering this room"),
-        }
-    }
-}
-
 /// API Endpoint *POST /rooms/{room_id}/start*
 ///
 /// This endpoint has to be called in order to get a room ticket. When joining a room, the ticket
@@ -387,7 +365,7 @@ pub async fn start_invited(
     let invite_code_as_uuid = uuid::Uuid::from_str(&request.invite_code).map_err(|_| {
         ApiError::unprocessable_entities([ValidationErrorEntry::new(
             "invite_code",
-            CODE_INVALID_VALUE,
+            ERROR_CODE_INVALID_VALUE,
             Some("Bad invite code format"),
         )])
     })?;

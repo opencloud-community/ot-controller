@@ -10,7 +10,7 @@ use super::{
 use crate::api::v1::events::{
     enrich_invitees_from_keycloak, shared_folder_for_user, DateTimeTzFromDb, EventRoomInfoExt,
 };
-use crate::api::v1::response::{ApiError, NoContent};
+use crate::api::v1::response::NoContent;
 use crate::api::v1::rooms::RoomsPoliciesBuilderExt;
 use crate::api::v1::util::{GetUserProfilesBatched, UserProfilesBatch};
 use crate::services::MailService;
@@ -28,6 +28,7 @@ use opentalk_db_storage::invites::Invite;
 use opentalk_db_storage::tenants::Tenant;
 use opentalk_db_storage::users::User;
 use opentalk_keycloak_admin::KeycloakAdminClient;
+use opentalk_types::api::error::ApiError;
 use opentalk_types::{
     api::v1::{
         events::{
