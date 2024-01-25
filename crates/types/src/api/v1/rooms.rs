@@ -8,7 +8,7 @@ use strum::AsRefStr;
 
 use crate::{
     common::event::EventInfo,
-    core::{BreakoutRoomId, ResumptionToken, RoomId, TicketToken},
+    core::{BreakoutRoomId, ResumptionToken, RoomId},
 };
 
 #[allow(unused_imports)]
@@ -18,6 +18,7 @@ mod patch_rooms_request_body;
 mod post_rooms_request_body;
 mod post_rooms_start_request_body;
 mod room_resource;
+mod rooms_start_response;
 
 pub mod sip_config_resource;
 pub mod streaming_targets;
@@ -26,17 +27,7 @@ pub use patch_rooms_request_body::PatchRoomsRequestBody;
 pub use post_rooms_request_body::PostRoomsRequestBody;
 pub use post_rooms_start_request_body::PostRoomsStartRequestBody;
 pub use room_resource::RoomResource;
-
-/// The JSON body returned from the start endpoints supporting session resumption
-#[derive(Clone, Debug)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct RoomsStartResponse {
-    /// The ticket token for the room
-    pub ticket: TicketToken,
-
-    /// The resumption token for the room
-    pub resumption: ResumptionToken,
-}
+pub use rooms_start_response::RoomsStartResponse;
 
 /// Errors for the /rooms/{room_id}/start* endpoint
 #[derive(Clone, Debug, AsRefStr)]
