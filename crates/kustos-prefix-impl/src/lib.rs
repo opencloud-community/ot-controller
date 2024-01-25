@@ -7,6 +7,8 @@ use proc_macro2::Span;
 use proc_macro_crate::{crate_name, FoundCrate};
 use quote::quote;
 
+const ATTRIBUTE_NAME: &str = "kustos_prefix";
+
 #[proc_macro_derive(KustosPrefix, attributes(kustos_prefix))]
 pub fn derive_kustos_prefix(input: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input!(input as syn::DeriveInput);
@@ -62,12 +64,12 @@ fn try_derive_kustos_prefix(ast: syn::DeriveInput) -> Result<TokenStream, syn::E
 fn get_prefix_from_attributes(attrs: &[syn::Attribute]) -> Result<syn::LitStr, syn::Error> {
     let mut found_attr = None;
     for attr in attrs {
-        if let Some(segment) = attr.path.segments.iter().next() {
-            if segment.ident == "kustos_prefix" {
+        if let Some(segment) = attr.path().segments.iter().next() {
+            if segment.ident == ATTRIBUTE_NAME {
                 if found_attr.is_some() {
                     return Err(syn::Error::new(
                         Span::call_site(),
-                        "Multiple #[kustos_prefix(...)] found",
+                        format!("Multiple #[{ATTRIBUTE_NAME}(...)] found"),
                     ));
                 } else {
                     found_attr = Some(attr);
@@ -77,31 +79,34 @@ fn get_prefix_from_attributes(attrs: &[syn::Attribute]) -> Result<syn::LitStr, s
     }
 
     if let Some(attr) = found_attr {
-        return parse_attribute(attr.tokens.clone());
+        return parse_attribute(attr.meta.clone());
     }
 
     Err(syn::Error::new(
         Span::call_site(),
-        "Attribute #[kustos_prefix(...)] missing for #[derive(KustosPrefix)]",
+        format!("Attribute #[{ATTRIBUTE_NAME}(...)] missing for #[derive(KustosPrefix)]"),
     ))
 }
 
-fn parse_attribute(parameters: proc_macro2::TokenStream) -> Result<syn::LitStr, syn::Error> {
-    let msg = "Attribute #[kustos_prefix(...)] must have braces: '('";
-
-    match parameters.into_iter().next() {
-        Some(proc_macro2::TokenTree::Group(group)) => {
-            if group.delimiter() != proc_macro2::Delimiter::Parenthesis {
-                return Err(syn::Error::new(Span::call_site(), msg));
+fn parse_attribute(meta: syn::Meta) -> Result<syn::LitStr, syn::Error> {
+    match meta {
+        syn::Meta::List(syn::MetaList {
+            path: _,
+            delimiter,
+            tokens,
+        }) => {
+            if !matches!(delimiter, syn::MacroDelimiter::Paren(_)) {
+                return Err(syn::Error::new(
+                    Span::call_site(),
+                    format!("Attribute #[{ATTRIBUTE_NAME}(...)] requires parentheses: `(...)`"),
+                ));
             }
-
-            let tokens = group.stream();
 
             syn::parse2::<syn::LitStr>(tokens)
         }
-        _ => Err(syn::Error::new(
+        syn::Meta::Path(_) | syn::Meta::NameValue(_) => Err(syn::Error::new(
             Span::call_site(),
-            "Attribute #[kustos_prefix(...)] must have a string parameter",
+            format!("Attribute #[{ATTRIBUTE_NAME}(...)] requires parentheses: `(...)`"),
         )),
     }
 }

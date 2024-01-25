@@ -6,7 +6,8 @@ use proc_macro::TokenStream;
 use proc_macro2::Span;
 use proc_macro_crate::{crate_name, FoundCrate};
 use quote::quote;
-use syn::Ident;
+
+const ATTRIBUTE_NAME: &str = "diesel";
 
 #[proc_macro_derive(DieselNewtype, attributes(diesel))]
 pub fn derive_diesel_newtype(input: TokenStream) -> TokenStream {
@@ -29,7 +30,7 @@ fn try_derive_diesel_newtype(ast: syn::DeriveInput) -> Result<TokenStream, syn::
             quote!(crate::__exports)
         }
         FoundCrate::Name(name) => {
-            let ident = Ident::new(&name, Span::call_site());
+            let ident = syn::Ident::new(&name, Span::call_site());
             quote!(#ident::__exports)
         }
     };
@@ -96,12 +97,12 @@ fn try_derive_diesel_newtype(ast: syn::DeriveInput) -> Result<TokenStream, syn::
 fn get_sql_type_from_attributes(attrs: &[syn::Attribute]) -> Result<syn::Type, syn::Error> {
     let mut found_attr = None;
     for attr in attrs {
-        if let Some(segment) = attr.path.segments.iter().next() {
-            if segment.ident == "diesel" {
+        if let Some(segment) = attr.path().segments.iter().next() {
+            if segment.ident == ATTRIBUTE_NAME {
                 if found_attr.is_some() {
                     return Err(syn::Error::new(
                         Span::call_site(),
-                        "Multiple #[diesel(...)] found",
+                        format!("Multiple #[{ATTRIBUTE_NAME}(...)] found"),
                     ));
                 }
 
@@ -111,31 +112,35 @@ fn get_sql_type_from_attributes(attrs: &[syn::Attribute]) -> Result<syn::Type, s
     }
 
     if let Some(attr) = found_attr {
-        return parse_attribute_parameters(attr.tokens.clone());
+        return parse_attribute_parameters(attr.meta.clone());
     }
 
     Err(syn::Error::new(
         Span::call_site(),
-        "Attribute #[diesel(...)] missing for #[derive(DieselNewtype)]",
+        format!("Attribute #[{ATTRIBUTE_NAME}(...)] missing for #[derive(DieselNewtype)]"),
     ))
 }
 
-fn parse_attribute_parameters(
-    parameters: proc_macro2::TokenStream,
-) -> Result<syn::Type, syn::Error> {
-    match parameters.into_iter().next() {
-        Some(proc_macro2::TokenTree::Group(group)) => {
-            if group.delimiter() != proc_macro2::Delimiter::Parenthesis {
+fn parse_attribute_parameters(meta: syn::Meta) -> Result<syn::Type, syn::Error> {
+    match meta {
+        syn::Meta::List(syn::MetaList {
+            path: _,
+            delimiter,
+            tokens,
+        }) => {
+            if !matches!(delimiter, syn::MacroDelimiter::Paren(_)) {
                 return Err(syn::Error::new(
                     Span::call_site(),
-                    "Attribute #[diesel(...)] must have braces: '('",
+                    format!("Attribute #[{ATTRIBUTE_NAME}(...)] requires parentheses: `(...)`"),
                 ));
             }
-            let mut tokens = group.stream().into_iter();
 
-            parse_sql_type(&mut tokens)
+            parse_sql_type(&mut tokens.into_iter())
         }
-        _ => Err(syn::Error::new(Span::call_site(), "Unexpected token")),
+        syn::Meta::Path(_) | syn::Meta::NameValue(_) => Err(syn::Error::new(
+            Span::call_site(),
+            format!("Attribute #[{ATTRIBUTE_NAME}(...)] requires parentheses: `(...)`"),
+        )),
     }
 }
 
@@ -148,7 +153,7 @@ where
         None => {
             return Err(syn::Error::new(
                 Span::call_site(),
-                "No `sql_type = ...` parameter found for #[diesel(...)]",
+                format!("No `sql_type = ...` parameter found for #[{ATTRIBUTE_NAME}(...)]"),
             ))
         }
         _ => {
