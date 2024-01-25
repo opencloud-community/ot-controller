@@ -16,6 +16,7 @@ use crate::imports::*;
 
 mod patch_rooms_request_body;
 mod post_rooms_request_body;
+mod post_rooms_start_request_body;
 mod room_resource;
 
 pub mod sip_config_resource;
@@ -23,18 +24,8 @@ pub mod streaming_targets;
 
 pub use patch_rooms_request_body::PatchRoomsRequestBody;
 pub use post_rooms_request_body::PostRoomsRequestBody;
+pub use post_rooms_start_request_body::PostRoomsStartRequestBody;
 pub use room_resource::RoomResource;
-
-/// The JSON body expected when making a *POST /rooms/{room_id}/start*
-#[derive(Clone, Debug)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct PostRoomsStartRequestBody {
-    /// Optional breakout room ID
-    pub breakout_room: Option<BreakoutRoomId>,
-
-    /// The resumption token for the room
-    pub resumption: Option<ResumptionToken>,
-}
 
 /// The JSON body returned from the start endpoints supporting session resumption
 #[derive(Clone, Debug)]
