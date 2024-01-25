@@ -18,7 +18,9 @@ use diesel::result::DatabaseErrorKind;
 use itertools::Itertools;
 use opentalk_database::DatabaseError;
 use opentalk_signaling_core::assets::AssetError;
-use opentalk_types::api::error::{StandardErrorBody, ValidationErrorBody, ValidationErrorEntry};
+use opentalk_types::api::error::{
+    ErrorBody, StandardErrorBody, ValidationErrorBody, ValidationErrorEntry,
+};
 use serde::Deserialize;
 use serde::Serialize;
 use std::borrow::Cow;
@@ -42,25 +44,6 @@ pub fn json_error_handler(err: JsonPayloadError, _: &HttpRequest) -> actix_web::
         .with_code(error_code)
         .with_message(err.to_string())
         .into()
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-enum ErrorBody {
-    /// The standard error body
-    Standard(StandardErrorBody),
-    /// Special error body for validation errors
-    Validation(ValidationErrorBody),
-}
-
-impl ErrorBody {
-    /// Get the content type for the corresponding body
-    fn content_type(&self) -> HeaderValue {
-        match self {
-            Self::Standard(..) => HeaderValue::from_static("text/json; charset=utf-8"),
-            Self::Validation(..) => header::HeaderValue::from_static("text/json; charset=utf-8"),
-        }
-    }
 }
 
 /// Error variants for the WWW Authenticate header

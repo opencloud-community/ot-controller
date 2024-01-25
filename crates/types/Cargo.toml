@@ -45,7 +45,7 @@ url.workspace = true
 
 [features]
 default = []
-actix = ["dep:actix-http", "dep:actix-web-httpauth", "dep:bytes"]
+actix = ["dep:actix-http", "dep:actix-web-httpauth", "dep:bytes", "dep:http"]
 backend = ["actix", "diesel", "kustos", "rand", "redis", "serde"]
 clap = ["dep:clap"]
 diesel = ["serde", "dep:diesel", "dep:opentalk-diesel-newtype"]
