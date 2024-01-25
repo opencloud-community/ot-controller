@@ -9,10 +9,7 @@
 
 use std::{convert::AsRef, str::FromStr};
 
-use super::response::{
-    error::{ApiError, ValidationErrorEntry},
-    NoContent, CODE_INVALID_VALUE,
-};
+use super::response::{error::ApiError, NoContent, CODE_INVALID_VALUE};
 use crate::{
     api::{
         signaling::{
@@ -42,12 +39,15 @@ use opentalk_db_storage::{
 };
 use opentalk_signaling_core::{Participant, RedisConnection};
 use opentalk_types::{
-    api::v1::{
-        pagination::PagePaginationQuery,
-        rooms::{
-            GetRoomEventResponse, PatchRoomsRequestBody, PostRoomsRequestBody,
-            PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody, RoomResource,
-            RoomsStartResponse, StartRoomError,
+    api::{
+        error::ValidationErrorEntry,
+        v1::{
+            pagination::PagePaginationQuery,
+            rooms::{
+                GetRoomEventResponse, PatchRoomsRequestBody, PostRoomsRequestBody,
+                PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody, RoomResource,
+                RoomsStartResponse, StartRoomError,
+            },
         },
     },
     common::{features, tariff::TariffResource},

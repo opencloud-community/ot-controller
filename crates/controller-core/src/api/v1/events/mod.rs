@@ -4,7 +4,6 @@
 
 use std::sync::Arc;
 
-use super::response::error::ValidationErrorEntry;
 use super::response::{ApiError, NoContent, CODE_VALUE_REQUIRED};
 use super::{ApiResponse, DefaultApiResult};
 use crate::api::v1::events::shared_folder::put_shared_folder;
@@ -44,17 +43,21 @@ use opentalk_keycloak_admin::users::TenantFilter;
 use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_types::core::RoomId;
 use opentalk_types::{
-    api::v1::{
-        events::{
-            CallInInfo, EmailOnlyUser, EventAndInstanceId, EventExceptionResource, EventInvitee,
-            EventInviteeProfile, EventOptionsQuery, EventOrException, EventResource, EventRoomInfo,
-            EventStatus, EventType, GetEventQuery, GetEventsCursorData, GetEventsQuery,
-            PatchEventBody, PatchEventQuery, PostEventsBody, PublicInviteUserProfile,
+    api::{
+        error::ValidationErrorEntry,
+        v1::{
+            events::{
+                CallInInfo, EmailOnlyUser, EventAndInstanceId, EventExceptionResource,
+                EventInvitee, EventInviteeProfile, EventOptionsQuery, EventOrException,
+                EventResource, EventRoomInfo, EventStatus, EventType, GetEventQuery,
+                GetEventsCursorData, GetEventsQuery, PatchEventBody, PatchEventQuery,
+                PostEventsBody, PublicInviteUserProfile,
+            },
+            pagination::default_pagination_per_page,
+            users::{PublicUserProfile, UnregisteredUser},
+            utils::validate_recurrence_pattern,
+            Cursor,
         },
-        pagination::default_pagination_per_page,
-        users::{PublicUserProfile, UnregisteredUser},
-        utils::validate_recurrence_pattern,
-        Cursor,
     },
     common::{
         features,

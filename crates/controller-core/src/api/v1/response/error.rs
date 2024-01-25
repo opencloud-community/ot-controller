@@ -18,7 +18,7 @@ use diesel::result::DatabaseErrorKind;
 use itertools::Itertools;
 use opentalk_database::DatabaseError;
 use opentalk_signaling_core::assets::AssetError;
-use opentalk_types::api::error::StandardErrorBody;
+use opentalk_types::api::error::{StandardErrorBody, ValidationErrorEntry};
 use serde::Deserialize;
 use serde::Serialize;
 use std::borrow::Cow;
@@ -42,47 +42,6 @@ pub fn json_error_handler(err: JsonPayloadError, _: &HttpRequest) -> actix_web::
         .with_code(error_code)
         .with_message(err.to_string())
         .into()
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ValidationErrorEntry {
-    /// The field related to the error
-    /// It's a struct level error when no field is set
-    #[serde(skip_serializing_if = "Option::is_none")]
-    field: Option<Cow<'static, str>>,
-    /// Machine readable error message
-    code: Cow<'static, str>,
-    /// Human readable error message
-    #[serde(skip_serializing_if = "Option::is_none")]
-    message: Option<Cow<'static, str>>,
-}
-
-impl ValidationErrorEntry {
-    pub fn new<F, C, M>(field: F, code: C, message: Option<M>) -> Self
-    where
-        F: Into<Cow<'static, str>>,
-        C: Into<Cow<'static, str>>,
-        M: Into<Cow<'static, str>>,
-    {
-        Self {
-            field: Some(field.into()),
-            code: code.into(),
-            message: message.map(|m| m.into()),
-        }
-    }
-
-    #[allow(dead_code)]
-    pub fn new_struct_level<C, M>(code: C, message: Option<M>) -> Self
-    where
-        C: Into<Cow<'static, str>>,
-        M: Into<Cow<'static, str>>,
-    {
-        Self {
-            field: None,
-            code: code.into(),
-            message: message.map(|m| m.into()),
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
