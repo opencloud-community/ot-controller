@@ -14,30 +14,16 @@ use crate::{
 #[allow(unused_imports)]
 use crate::imports::*;
 
+mod patch_rooms_request_body;
 mod post_rooms_request_body;
 mod room_resource;
 
 pub mod sip_config_resource;
 pub mod streaming_targets;
 
+pub use patch_rooms_request_body::PatchRoomsRequestBody;
 pub use post_rooms_request_body::PostRoomsRequestBody;
 pub use room_resource::RoomResource;
-
-/// API request parameters to patch a room
-#[derive(Clone, Debug)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize, Validate))]
-pub struct PatchRoomsRequestBody {
-    /// The password for the room
-    #[cfg_attr(
-        feature = "serde",
-        validate(length(min = 1, max = 255)),
-        serde(default, deserialize_with = "super::utils::deserialize_some")
-    )]
-    pub password: Option<Option<String>>,
-
-    /// If waiting room is enabled
-    pub waiting_room: Option<bool>,
-}
 
 /// The JSON body expected when making a *POST /rooms/{room_id}/start*
 #[derive(Clone, Debug)]
