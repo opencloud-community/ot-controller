@@ -5,4 +5,5 @@
 //! This module contains types that are used in different areas of the OpenTalk API endpoints,
 //! such as types for the V1 endpoints.
 
+pub mod error;
 pub mod v1;

@@ -18,6 +18,7 @@ use diesel::result::DatabaseErrorKind;
 use itertools::Itertools;
 use opentalk_database::DatabaseError;
 use opentalk_signaling_core::assets::AssetError;
+use opentalk_types::api::error::StandardErrorBody;
 use serde::Deserialize;
 use serde::Serialize;
 use std::borrow::Cow;
@@ -41,14 +42,6 @@ pub fn json_error_handler(err: JsonPayloadError, _: &HttpRequest) -> actix_web::
         .with_code(error_code)
         .with_message(err.to_string())
         .into()
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct StandardErrorBody {
-    // Machine readable error code
-    code: Cow<'static, str>,
-    // Human readable message
-    message: Cow<'static, str>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
