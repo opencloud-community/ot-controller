@@ -28,7 +28,7 @@ pub use room_resource::RoomResource;
 /// The JSON body expected when making a *POST /rooms/{room_id}/start*
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct StartRequest {
+pub struct PostRoomsStartRequestBody {
     /// Optional breakout room ID
     pub breakout_room: Option<BreakoutRoomId>,
 

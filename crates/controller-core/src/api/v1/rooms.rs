@@ -46,7 +46,7 @@ use opentalk_types::{
         pagination::PagePaginationQuery,
         rooms::{
             GetRoomEventResponse, InvitedStartRequest, PatchRoomsRequestBody, PostRoomsRequestBody,
-            RoomResource, StartRequest, StartResponse, StartRoomError,
+            PostRoomsStartRequestBody, RoomResource, StartResponse, StartRoomError,
         },
     },
     common::{features, tariff::TariffResource},
@@ -316,7 +316,7 @@ impl From<StartRoomError> for ApiError {
 /// connection.
 ///
 /// When the requested room has a password set, the requester has to provide the correct password
-/// through the [`StartRequest`] JSON in the requests body. When the room has no password set,
+/// through the [`PostRoomsStartRequestBody`] JSON in the requests body. When the room has no password set,
 /// the provided password will be ignored.
 ///
 /// Returns a [`StartResponse`] containing the ticket for the specified room.
@@ -332,7 +332,7 @@ pub async fn start(
     redis_conn: Data<RedisConnection>,
     current_user: ReqData<User>,
     room_id: Path<RoomId>,
-    request: Json<StartRequest>,
+    request: Json<PostRoomsStartRequestBody>,
 ) -> Result<Json<StartResponse>, ApiError> {
     let request = request.into_inner();
     let room_id = room_id.into_inner();
