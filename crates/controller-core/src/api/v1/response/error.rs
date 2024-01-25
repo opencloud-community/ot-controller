@@ -18,7 +18,7 @@ use diesel::result::DatabaseErrorKind;
 use itertools::Itertools;
 use opentalk_database::DatabaseError;
 use opentalk_signaling_core::assets::AssetError;
-use opentalk_types::api::error::{StandardErrorBody, ValidationErrorEntry};
+use opentalk_types::api::error::{StandardErrorBody, ValidationErrorBody, ValidationErrorEntry};
 use serde::Deserialize;
 use serde::Serialize;
 use std::borrow::Cow;
@@ -42,30 +42,6 @@ pub fn json_error_handler(err: JsonPayloadError, _: &HttpRequest) -> actix_web::
         .with_code(error_code)
         .with_message(err.to_string())
         .into()
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct ValidationErrorBody {
-    /// Machine readable error message
-    code: Cow<'static, str>,
-    // Human readable message
-    message: Cow<'static, str>,
-    // A list validation errors
-    errors: Vec<ValidationErrorEntry>,
-}
-
-impl ValidationErrorBody {
-    pub fn new<C, M>(code: C, message: M, errors: Vec<ValidationErrorEntry>) -> Self
-    where
-        C: Into<Cow<'static, str>>,
-        M: Into<Cow<'static, str>>,
-    {
-        Self {
-            code: code.into(),
-            message: message.into(),
-            errors,
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
