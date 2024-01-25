@@ -27,7 +27,7 @@ use opentalk_db_storage::{
 use opentalk_types::{
     api::v1::{
         invites::{
-            CodeVerified, InviteResource, PostInviteRequestBody, PutInviteBody,
+            CodeVerified, InviteResource, PostInviteRequestBody, PutInviteRequestBody,
             RoomIdAndInviteCode, VerifyBody,
         },
         pagination::PagePaginationQuery,
@@ -150,7 +150,7 @@ pub async fn get_invite(
 
 /// API Endpoint *PUT /rooms/{room_id}/invites/{invite_code}*
 ///
-/// Uses the provided [`PutInviteBody`] to modify a specified invite.
+/// Uses the provided [`PutInviteRequestBody`] to modify a specified invite.
 /// Returns the modified [`InviteResource`]
 #[put("/rooms/{room_id}/invites/{invite_code}")]
 pub async fn update_invite(
@@ -158,7 +158,7 @@ pub async fn update_invite(
     db: Data<Db>,
     current_user: ReqData<User>,
     path_params: Path<RoomIdAndInviteCode>,
-    update_invite: Json<PutInviteBody>,
+    update_invite: Json<PutInviteRequestBody>,
 ) -> DefaultApiResult<InviteResource> {
     let settings = settings.load_full();
     let current_user = current_user.into_inner();

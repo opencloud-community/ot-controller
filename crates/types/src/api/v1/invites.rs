@@ -19,9 +19,9 @@ pub use post_invite_request_body::PostInviteRequestBody;
 pub use room_id_and_invite_code::RoomIdAndInviteCode;
 
 /// Body for *PUT /rooms/{room_id}/invites/{invite_code}*
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct PutInviteBody {
+pub struct PutInviteRequestBody {
     /// Optional expiration date of the invite
     pub expiration: Option<DateTime<Utc>>,
 }
