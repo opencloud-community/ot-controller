@@ -195,7 +195,7 @@ pub async fn check_access_token(
         // Hit! Return the cached result
         match result {
             Ok(tenant_and_user) => Ok(tenant_and_user),
-            Err(err) => Err(ApiError::from_cacheable(err)?),
+            Err(err) => Err(ApiError::try_from(err)?),
         }
     } else {
         // Miss, do the check and cache the result
@@ -238,7 +238,7 @@ pub async fn check_access_token(
                     cache
                         .insert_with_ttl(
                             access_token.secret().clone(),
-                            Err(e.to_cacheable()),
+                            Err(CacheableApiError::from(&e)),
                             token_ttl.to_std().expect("duration was previously checked"),
                         )
                         .await?;

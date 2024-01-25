@@ -198,28 +198,6 @@ impl ApiError {
             "An internal server error occurred",
         )
     }
-
-    pub fn from_cacheable(cachable: CacheableApiError) -> anyhow::Result<Self> {
-        Ok(Self {
-            status: StatusCode::from_u16(cachable.status)?,
-            www_authenticate: cachable
-                .www_authenticate
-                .map(|b| HeaderValue::from_bytes(&b))
-                .transpose()?,
-            body: cachable.body,
-        })
-    }
-
-    pub fn to_cacheable(&self) -> CacheableApiError {
-        CacheableApiError {
-            status: self.status.as_u16(),
-            www_authenticate: self
-                .www_authenticate
-                .as_ref()
-                .map(|h| h.as_bytes().to_owned()),
-            body: self.body.clone(),
-        }
-    }
 }
 
 impl std::fmt::Display for ApiError {
@@ -465,6 +443,34 @@ pub struct CacheableApiError {
     status: u16,
     www_authenticate: Option<Vec<u8>>,
     body: ErrorBody,
+}
+
+impl TryFrom<CacheableApiError> for ApiError {
+    type Error = anyhow::Error;
+
+    fn try_from(value: CacheableApiError) -> Result<Self, Self::Error> {
+        Ok(ApiError {
+            status: StatusCode::from_u16(value.status)?,
+            www_authenticate: value
+                .www_authenticate
+                .map(|b| HeaderValue::from_bytes(&b))
+                .transpose()?,
+            body: value.body,
+        })
+    }
+}
+
+impl From<&ApiError> for CacheableApiError {
+    fn from(value: &ApiError) -> Self {
+        Self {
+            status: value.status.as_u16(),
+            www_authenticate: value
+                .www_authenticate
+                .as_ref()
+                .map(|h| h.as_bytes().to_owned()),
+            body: value.body.clone(),
+        }
+    }
 }
 
 #[cfg(test)]
