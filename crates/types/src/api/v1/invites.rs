@@ -12,20 +12,11 @@ use crate::imports::*;
 
 mod invite_resource;
 mod post_invite_request_body;
+mod room_id_and_invite_code;
 
 pub use invite_resource::InviteResource;
 pub use post_invite_request_body::PostInviteRequestBody;
-
-/// Body for *GET /rooms/{room_id}/invites/{invite_code}*
-#[derive(Clone, Debug)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct RoomIdAndInviteCode {
-    /// The room id for the invite
-    pub room_id: RoomId,
-
-    /// The invite code id
-    pub invite_code: InviteCodeId,
-}
+pub use room_id_and_invite_code::RoomIdAndInviteCode;
 
 /// Body for *PUT /rooms/{room_id}/invites/{invite_code}*
 #[derive(Clone, Debug)]
