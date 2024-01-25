@@ -32,7 +32,7 @@ pub use start_room_error::StartRoomError;
 /// The JSON body expected when making a *POST /rooms/{room_id}/start_invited*
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct InvitedStartRequest {
+pub struct PostRoomsStartInvitedRequestBody {
     /// The invited user's password to the room
     pub password: Option<String>,
 

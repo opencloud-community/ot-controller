@@ -45,8 +45,9 @@ use opentalk_types::{
     api::v1::{
         pagination::PagePaginationQuery,
         rooms::{
-            GetRoomEventResponse, InvitedStartRequest, PatchRoomsRequestBody, PostRoomsRequestBody,
-            PostRoomsStartRequestBody, RoomResource, RoomsStartResponse, StartRoomError,
+            GetRoomEventResponse, PatchRoomsRequestBody, PostRoomsRequestBody,
+            PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody, RoomResource,
+            RoomsStartResponse, StartRoomError,
         },
     },
     common::{features, tariff::TariffResource},
@@ -378,7 +379,7 @@ pub async fn start_invited(
     db: Data<Db>,
     redis_ctx: Data<RedisConnection>,
     room_id: Path<RoomId>,
-    request: Json<InvitedStartRequest>,
+    request: Json<PostRoomsStartInvitedRequestBody>,
 ) -> Result<ApiResponse<RoomsStartResponse>, ApiError> {
     let request = request.into_inner();
     let room_id = room_id.into_inner();
