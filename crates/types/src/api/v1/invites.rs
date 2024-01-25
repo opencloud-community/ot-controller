@@ -4,27 +4,19 @@
 
 //! This module contains types that are used for OpenTalk API V1 invites endpoints.
 
-use chrono::{DateTime, Utc};
-
 use crate::core::{InviteCodeId, RoomId};
 #[allow(unused_imports)]
 use crate::imports::*;
 
 mod invite_resource;
 mod post_invite_request_body;
+mod put_invite_request_body;
 mod room_id_and_invite_code;
 
 pub use invite_resource::InviteResource;
 pub use post_invite_request_body::PostInviteRequestBody;
+pub use put_invite_request_body::PutInviteRequestBody;
 pub use room_id_and_invite_code::RoomIdAndInviteCode;
-
-/// Body for *PUT /rooms/{room_id}/invites/{invite_code}*
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct PutInviteRequestBody {
-    /// Optional expiration date of the invite
-    pub expiration: Option<DateTime<Utc>>,
-}
 
 /// Verify body for *POST /invite/verify*
 #[derive(Clone, Debug)]
