@@ -24,7 +24,7 @@ pub use room_resource::RoomResource;
 /// API request parameters to create a new room
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize, Validate))]
-pub struct PostRoomsBody {
+pub struct PostRoomsRequestBody {
     /// The password to the room, if any
     #[cfg_attr(feature = "serde", validate(length(min = 1, max = 255)))]
     pub password: Option<String>,
@@ -41,7 +41,7 @@ pub struct PostRoomsBody {
 /// API request parameters to patch a room
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize, Validate))]
-pub struct PatchRoomsBody {
+pub struct PatchRoomsRequestBody {
     /// The password for the room
     #[cfg_attr(
         feature = "serde",

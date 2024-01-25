@@ -45,8 +45,8 @@ use opentalk_types::{
     api::v1::{
         pagination::PagePaginationQuery,
         rooms::{
-            GetRoomEventResponse, InvitedStartRequest, PatchRoomsBody, PostRoomsBody, RoomResource,
-            StartRequest, StartResponse, StartRoomError,
+            GetRoomEventResponse, InvitedStartRequest, PatchRoomsRequestBody, PostRoomsRequestBody,
+            RoomResource, StartRequest, StartResponse, StartRoomError,
         },
     },
     common::{features, tariff::TariffResource},
@@ -100,7 +100,7 @@ pub async fn accessible(
 
 /// API Endpoint *POST /rooms*
 ///
-/// Uses the provided [`PostRoomsBody`] to create a new room.
+/// Uses the provided [`PostRoomsRequestBody`] to create a new room.
 /// Returns the created [`RoomResource`].
 #[post("/rooms")]
 pub async fn new(
@@ -108,7 +108,7 @@ pub async fn new(
     db: Data<Db>,
     authz: Data<Authz>,
     current_user: ReqData<User>,
-    body: Json<PostRoomsBody>,
+    body: Json<PostRoomsRequestBody>,
 ) -> Result<Json<RoomResource>, ApiError> {
     let settings = settings.load();
     let current_user = current_user.into_inner();
@@ -158,7 +158,7 @@ pub async fn new(
 
 /// API Endpoint *PATCH /rooms/{room_id}*
 ///
-/// Uses the provided [`PatchRoomsBody`] to modify a specified room.
+/// Uses the provided [`PatchRoomsRequestBody`] to modify a specified room.
 /// Returns the modified [`RoomResource`]
 #[patch("/rooms/{room_id}")]
 pub async fn patch(
@@ -166,7 +166,7 @@ pub async fn patch(
     db: Data<Db>,
     current_user: ReqData<User>,
     room_id: Path<RoomId>,
-    body: Json<PatchRoomsBody>,
+    body: Json<PatchRoomsRequestBody>,
 ) -> Result<Json<RoomResource>, ApiError> {
     let settings = settings.load();
     let current_user = current_user.into_inner();
