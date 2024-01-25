@@ -14,29 +14,14 @@ use crate::{
 #[allow(unused_imports)]
 use crate::imports::*;
 
+mod post_rooms_request_body;
 mod room_resource;
 
 pub mod sip_config_resource;
 pub mod streaming_targets;
 
+pub use post_rooms_request_body::PostRoomsRequestBody;
 pub use room_resource::RoomResource;
-
-/// API request parameters to create a new room
-#[derive(Clone, Debug)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize, Validate))]
-pub struct PostRoomsRequestBody {
-    /// The password to the room, if any
-    #[cfg_attr(feature = "serde", validate(length(min = 1, max = 255)))]
-    pub password: Option<String>,
-
-    /// Enable/Disable sip for this room; defaults to false when not set
-    #[cfg_attr(feature = "serde", serde(default))]
-    pub enable_sip: bool,
-
-    /// If waiting room is enabled
-    #[cfg_attr(feature = "serde", serde(default))]
-    pub waiting_room: bool,
-}
 
 /// API request parameters to patch a room
 #[derive(Clone, Debug)]
