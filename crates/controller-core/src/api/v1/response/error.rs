@@ -13,13 +13,13 @@ use actix_web::error::JsonPayloadError;
 use actix_web::http::{header, StatusCode};
 use actix_web::HttpRequest;
 use actix_web::{body::BoxBody, HttpResponse, ResponseError};
-use actix_web_httpauth::headers::www_authenticate::bearer::{Bearer, Error};
+use actix_web_httpauth::headers::www_authenticate::bearer::Bearer;
 use diesel::result::DatabaseErrorKind;
 use itertools::Itertools;
 use opentalk_database::DatabaseError;
 use opentalk_signaling_core::assets::AssetError;
 use opentalk_types::api::error::{
-    ErrorBody, StandardErrorBody, ValidationErrorBody, ValidationErrorEntry,
+    AuthenticationError, ErrorBody, StandardErrorBody, ValidationErrorBody, ValidationErrorEntry,
 };
 use serde::Deserialize;
 use serde::Serialize;
@@ -44,35 +44,6 @@ pub fn json_error_handler(err: JsonPayloadError, _: &HttpRequest) -> actix_web::
         .with_code(error_code)
         .with_message(err.to_string())
         .into()
-}
-
-/// Error variants for the WWW Authenticate header
-#[derive(Debug)]
-pub enum AuthenticationError {
-    InvalidIdToken,
-    InvalidAccessToken,
-    AccessTokenInactive,
-    SessionExpired,
-}
-
-impl AuthenticationError {
-    fn error(&self) -> Error {
-        match self {
-            Self::InvalidIdToken | Self::InvalidAccessToken | Self::AccessTokenInactive => {
-                Error::InvalidToken
-            }
-            Self::SessionExpired => Error::InvalidRequest,
-        }
-    }
-
-    fn message(&self) -> &'static str {
-        match self {
-            Self::InvalidIdToken => "The provided id token is invalid",
-            Self::InvalidAccessToken => "The provided access token is invalid",
-            Self::AccessTokenInactive => "The provided access token expired",
-            Self::SessionExpired => "The user session expired",
-        }
-    }
 }
 
 /// The default REST API error
@@ -133,7 +104,7 @@ impl ApiError {
     pub fn with_www_authenticate(mut self, authentication_error: AuthenticationError) -> Self {
         let header_value = Bearer::build()
             .error_description(authentication_error.message())
-            .error(authentication_error.error())
+            .error(authentication_error.into())
             .finish()
             .try_into_value()
             .expect("All error descriptions must be convertible to header value");

@@ -4,7 +4,7 @@
 
 //! Handles user Authentication in API requests
 use crate::api::v1::middleware::user_auth::bearer_or_invite_code::BearerOrInviteCode;
-use crate::api::v1::response::error::{AuthenticationError, CacheableApiError};
+use crate::api::v1::response::error::CacheableApiError;
 use crate::api::v1::response::ApiError;
 use crate::caches::Caches;
 use crate::oidc::{OidcContext, UserClaims};
@@ -22,7 +22,7 @@ use opentalk_controller_settings::{Settings, SharedSettings, TenantAssignment};
 use opentalk_database::Db;
 use opentalk_db_storage::tenants::{OidcTenantId, Tenant};
 use opentalk_db_storage::users::User;
-use opentalk_types::core::InviteCodeId;
+use opentalk_types::{api::error::AuthenticationError, core::InviteCodeId};
 use std::future::{Future, Ready};
 use std::pin::Pin;
 use std::rc::Rc;
