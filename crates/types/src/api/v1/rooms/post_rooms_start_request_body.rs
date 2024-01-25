@@ -8,7 +8,7 @@ use crate::core::{BreakoutRoomId, ResumptionToken};
 use crate::imports::*;
 
 /// The JSON body expected when making a *POST /rooms/{room_id}/start*
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct PostRoomsStartRequestBody {
     /// Optional breakout room ID
