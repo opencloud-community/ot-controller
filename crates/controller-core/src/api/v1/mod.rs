@@ -30,7 +30,6 @@ pub mod response;
 pub mod rooms;
 pub mod services;
 pub mod sip_configs;
-pub mod streaming_services;
 pub mod streaming_targets;
 pub mod turn;
 pub mod users;

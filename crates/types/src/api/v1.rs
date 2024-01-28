@@ -12,11 +12,11 @@ pub mod invites;
 pub mod pagination;
 pub mod rooms;
 pub mod services;
-pub mod streaming_services;
 pub mod streaming_targets;
 pub mod turn;
 pub mod users;
 pub mod utils;
 
 mod cursor;
+
 pub use cursor::Cursor;
