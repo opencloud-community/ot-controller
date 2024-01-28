@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use strum::{AsRefStr, Display, EnumCount, EnumIter, EnumString, EnumVariantNames, IntoStaticStr};
+use strum::{AsRefStr, Display, EnumCount, EnumIter, EnumString, IntoStaticStr, VariantNames};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -19,7 +19,7 @@ use crate::imports::*;
     EnumCount,
     EnumIter,
     EnumString,
-    EnumVariantNames,
+    VariantNames,
     IntoStaticStr,
 )]
 #[cfg_attr(

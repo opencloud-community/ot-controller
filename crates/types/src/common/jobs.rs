@@ -19,7 +19,7 @@ use crate::imports::*;
     strum::EnumCount,
     strum::EnumIter,
     strum::EnumString,
-    strum::EnumVariantNames,
+    strum::VariantNames,
     strum::IntoStaticStr,
 )]
 #[cfg_attr(feature = "clap", derive(clap::ValueEnum))]

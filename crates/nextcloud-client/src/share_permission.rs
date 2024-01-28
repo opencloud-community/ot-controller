@@ -16,7 +16,7 @@ use std::collections::HashSet;
     strum::EnumCount,
     strum::EnumIter,
     strum::EnumString,
-    strum::EnumVariantNames,
+    strum::VariantNames,
     strum::IntoStaticStr,
 )]
 #[strum(serialize_all = "snake_case")]
