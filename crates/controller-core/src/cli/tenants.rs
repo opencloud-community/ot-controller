@@ -61,7 +61,7 @@ async fn list_all_tenants(settings: Settings) -> Result<()> {
         .map(TenantTableRow::from_tenant)
         .collect();
 
-    println!("{}", Table::new(rows).with(Style::ascii()));
+    println!("{}", Table::new(rows).with(Style::psql()));
 
     Ok(())
 }

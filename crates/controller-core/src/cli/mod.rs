@@ -12,7 +12,6 @@ mod fix_acl;
 mod jobs;
 mod modules;
 mod reload;
-mod streaming;
 mod tariffs;
 mod tenants;
 
@@ -56,10 +55,6 @@ enum SubCommand {
     /// Manage existing tenants
     #[clap(subcommand)]
     Tenants(tenants::Command),
-
-    /// Manage streaming services
-    #[clap(subcommand)]
-    StreamingServices(streaming::Command),
 
     /// Manage tariffs
     #[clap(subcommand)]
@@ -130,9 +125,6 @@ pub async fn parse_args<M: RegisterModules>() -> Result<Args> {
                         .context("Failed to migrate database")?;
                 println!("{result:?}");
             }
-            SubCommand::StreamingServices(command) => {
-                streaming::handle_command(settings, command).await?;
-            }
             SubCommand::Tenants(command) => {
                 tenants::handle_command(settings, command).await?;
             }
@@ -170,22 +162,5 @@ const BUILD_INFO: [(&str, Option<&str>); 10] = [
 fn print_version() {
     for (label, value) in BUILD_INFO {
         println!("{}: {}", label, value.unwrap_or("N/A"));
-    }
-}
-
-/// Converts an optional set value and a clear flag to an Option<Option<T>> suitable for Diesel database editing.
-///
-/// Returns either:
-/// - None:          value remains unchanged
-/// - Some(None):    value is cleared
-/// - Some(Some(T)): value is set
-fn map_set_clear_to_option_option<T>(set_value: Option<T>, clear_flag: bool) -> Option<Option<T>>
-where
-    T: Clone,
-{
-    if clear_flag {
-        Some(None)
-    } else {
-        set_value.map(Some)
     }
 }

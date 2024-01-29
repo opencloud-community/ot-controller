@@ -29,20 +29,6 @@ pub(crate) async fn check_or_create_kustos_default_permissions(authz: &Authz) ->
     check_or_create_kustos_role_policy(
         authz,
         "user",
-        "/users/me/streaming_services",
-        [AccessMethod::Get],
-    )
-    .await?;
-    check_or_create_kustos_role_policy(
-        authz,
-        "user",
-        "/users/me/streaming_services/*",
-        [AccessMethod::Get],
-    )
-    .await?;
-    check_or_create_kustos_role_policy(
-        authz,
-        "user",
         "/users/me/pending_invites",
         [AccessMethod::Get],
     )

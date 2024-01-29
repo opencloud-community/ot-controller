@@ -566,8 +566,6 @@ fn v1_scope(
                 .service(api::v1::assets::room_assets)
                 .service(api::v1::assets::room_asset)
                 .service(api::v1::assets::delete)
-                .service(api::v1::streaming_services::get_me_streaming_services)
-                .service(api::v1::streaming_services::get_me_streaming_service)
                 .service(api::v1::streaming_targets::get_streaming_targets)
                 .service(api::v1::streaming_targets::post_streaming_target)
                 .service(api::v1::streaming_targets::get_streaming_target)
