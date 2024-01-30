@@ -21,7 +21,7 @@ proc-macro = true
 opentalk-proc-macro-fields-helper.workspace = true
 proc-macro2 = "1"
 quote = "1"
-syn = { version = "2", features = ["extra-traits"] }
+syn = { workspace = true, features = ["extra-traits"] }
 
 [dev-dependencies]
 redis.workspace = true

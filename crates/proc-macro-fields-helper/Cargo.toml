@@ -16,5 +16,5 @@ description = "Helper function for working with fields in proc macros, used in O
 
 [dependencies]
 quote = "1"
-syn = { version = "2" }
+syn = { workspace = true }
 proc-macro2 = "1"
