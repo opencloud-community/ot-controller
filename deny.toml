@@ -197,6 +197,12 @@ skip = [
     { name = "toml", version = "=0.5" },
     { name = "toml_edit", version = "=0.19" },
     { name = "ring", version = "=0.16" },
+    { name = "tokio-rustls", version = "=0.24" },
+    { name = "rustls", version = "=0.21" },
+    { name = "rustls-webpki", version = "=0.101" },
+    { name = "rustls-pemfile", version = "=1.0" },
+    { name = "rustls-native-certs", version = "=0.6" },
+    { name = "http", version = "=0.2" },
     # Mainly caused by aws-sdk-s3 (aws-sigv4) which uses an old version of `p256`, should be checked again after the next update 
     { name = "untrusted", version = "=0.7" },
     { name = "base16ct", version = "=0.1" },
