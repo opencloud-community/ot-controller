@@ -2621,6 +2621,16 @@ components:
         is_all_day:
           type: boolean
           description: Marks this event as an event that has no start time / end time but only start and end date
+        streaming_targets:
+          description: The streaming targets of the room associated with the event
+          type: array
+          items:
+            $ref: '#/components/schemas/StreamingTarget'
+        has_shared_folder:
+          type: boolean
+          description: |
+            Indicates whether the meeting room should have a shared folder.
+            If absent, no shared folder will be created.
         starts_at:
           $ref: '#/components/schemas/DateTimeTZ'
           description: Start time of the event. For all-day events the time-part must be zero (00:00).
@@ -2707,6 +2717,11 @@ components:
         is_all_day:
           type: boolean
           description: Marks this event as an event that has no start time / end time but only start and end date
+        streaming_targets:
+          description: The streaming targets of the room associated with the event
+          type: array
+          items:
+            $ref: '#/components/schemas/RoomStreamingTarget'
         starts_at:
           $ref: '#/components/schemas/DateTimeTZ'
           description: Start time of the event. This is used to match exceptions.

@@ -10,7 +10,7 @@ use crate::imports::*;
 
 use crate::{common::streaming::StreamingTarget, core::DateTimeTz};
 
-/// Body of the the `POST /events` endpoint
+/// Body of the `POST /events` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize, Validate))]
 pub struct PostEventsBody {
@@ -43,12 +43,12 @@ pub struct PostEventsBody {
 
     /// Start time of the event
     ///
-    /// For recurring events these must contains the datetime of the first instance
+    /// For recurring events these must contain the datetime of the first instance
     pub starts_at: Option<DateTimeTz>,
 
     /// End time of the event
     ///
-    /// For recurring events these must contains the datetime of the first instance
+    /// For recurring events these must contain the datetime of the first instance
     pub ends_at: Option<DateTimeTz>,
 
     /// List of recurrence patterns
@@ -75,4 +75,8 @@ pub struct PostEventsBody {
         serde(default, skip_serializing_if = "Option::is_none")
     )]
     pub streaming_targets: Option<Vec<StreamingTarget>>,
+
+    /// Should the created event have a shared folder?
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub has_shared_folder: bool,
 }

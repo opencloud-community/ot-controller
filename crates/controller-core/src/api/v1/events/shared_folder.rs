@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use std::collections::HashSet;
+use std::sync::Arc;
 
 use actix_http::StatusCode;
 use actix_web::{
@@ -13,7 +14,8 @@ use actix_web::{
 use anyhow::Result;
 use chrono::{Days, NaiveDate, Utc};
 use log::warn;
-use opentalk_database::Db;
+use opentalk_controller_settings::Settings;
+use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
     events::{
         shared_folders::{EventSharedFolder, NewEventSharedFolder},
@@ -70,18 +72,32 @@ pub async fn put_shared_folder_for_event(
     db: Data<Db>,
     event_id: Path<EventId>,
 ) -> Result<CustomizeResponder<Json<SharedFolder>>, ApiError> {
+    let settings = settings.load_full();
     let event_id = event_id.into_inner();
 
     let mut conn = db.get_conn().await?;
-    let shared_folder = EventSharedFolder::get_for_event(&mut conn, event_id).await?;
 
-    if let Some(shared_folder) = shared_folder {
-        Ok(Json(SharedFolder::from(shared_folder))
-            .customize()
-            .with_status(StatusCode::OK))
+    let (shared_folder, created) = put_shared_folder(settings, event_id, &mut conn).await?;
+
+    Ok(Json(SharedFolder::from(shared_folder))
+        .customize()
+        .with_status(if created {
+            StatusCode::CREATED
+        } else {
+            StatusCode::OK
+        }))
+}
+
+pub(crate) async fn put_shared_folder(
+    settings: Arc<Settings>,
+    event_id: EventId,
+    conn: &mut DbConnection,
+) -> Result<(EventSharedFolder, bool), ApiError> {
+    let shared_folder = EventSharedFolder::get_for_event(conn, event_id).await?;
+
+    let (shared_folder, created) = if let Some(shared_folder) = shared_folder {
+        (shared_folder, false)
     } else {
-        let settings = settings.load_full();
-
         let shared_folder_settings = settings.shared_folder.as_ref().ok_or_else(|| {
             ApiError::bad_request().with_message("No shared folder configured for this server")
         })?;
@@ -220,17 +236,16 @@ pub async fn put_shared_folder_for_event(
                     read_password,
                 };
 
-                let share = new_shared_folder
-                    .try_insert(&mut conn)
+                let shared_folder = new_shared_folder
+                    .try_insert(conn)
                     .await?
                     .ok_or_else(ApiError::internal)?;
 
-                Ok(Json(SharedFolder::from(share))
-                    .customize()
-                    .with_status(StatusCode::CREATED))
+                (shared_folder, true)
             }
         }
-    }
+    };
+    Ok((shared_folder, created))
 }
 
 pub async fn delete_shared_folders(

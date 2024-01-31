@@ -420,6 +420,13 @@ impl From<anyhow::Error> for ApiError {
     }
 }
 
+impl From<diesel::result::Error> for ApiError {
+    fn from(e: diesel::result::Error) -> Self {
+        log::error!("REST API threw internal error from Diesel error: {}", e);
+        Self::internal()
+    }
+}
+
 impl From<DatabaseError> for ApiError {
     fn from(db_error: DatabaseError) -> Self {
         match db_error {

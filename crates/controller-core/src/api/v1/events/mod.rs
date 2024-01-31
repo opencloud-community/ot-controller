@@ -7,6 +7,7 @@ use std::sync::Arc;
 use super::response::error::ValidationErrorEntry;
 use super::response::{ApiError, NoContent, CODE_VALUE_REQUIRED};
 use super::{ApiResponse, DefaultApiResult};
+use crate::api::v1::events::shared_folder::put_shared_folder;
 use crate::api::v1::response::CODE_IGNORED_VALUE;
 use crate::api::v1::rooms::RoomsPoliciesBuilderExt;
 use crate::api::v1::streaming_targets::{get_room_streaming_targets, insert_room_streaming_target};
@@ -20,6 +21,8 @@ use actix_web::{delete, get, patch, post, Either};
 use anyhow::Context;
 use chrono::{DateTime, Datelike, NaiveTime, Utc};
 use chrono_tz::Tz;
+use diesel_async::scoped_futures::ScopedFutureExt;
+use diesel_async::AsyncConnection;
 use kustos::policies_builder::{GrantingAccess, PoliciesBuilder};
 use kustos::prelude::{AccessMethod, IsSubject};
 use kustos::{Authz, Resource, ResourceId};
@@ -252,79 +255,93 @@ pub async fn new_event(
 
     let mut conn = db.get_conn().await?;
 
-    // simplify logic by splitting the event creation
-    // into two paths: time independent and time dependent
-    let event_resource = match new_event {
-        PostEventsBody {
-            title,
-            description,
-            password,
-            waiting_room,
-            is_time_independent: true,
-            is_all_day: None,
-            starts_at: None,
-            ends_at: None,
-            recurrence_pattern,
-            is_adhoc,
-            streaming_targets,
-        } if recurrence_pattern.is_empty() => {
-            create_time_independent_event(
-                &settings,
-                &mut conn,
-                current_user,
-                title,
-                description,
-                password,
-                waiting_room,
-                is_adhoc,
-                streaming_targets,
-                query,
-                mail_service,
-            )
-            .await?
-        }
-        PostEventsBody {
-            title,
-            description,
-            password,
-            waiting_room,
-            is_time_independent: false,
-            is_all_day: Some(is_all_day),
-            starts_at: Some(starts_at),
-            ends_at: Some(ends_at),
-            recurrence_pattern,
-            is_adhoc,
-            streaming_targets,
-        } => {
-            create_time_dependent_event(
-                &settings,
-                &mut conn,
-                current_user,
-                title,
-                description,
-                password,
-                waiting_room,
-                is_all_day,
-                starts_at,
-                ends_at,
-                recurrence_pattern,
-                is_adhoc,
-                streaming_targets,
-                query,
-                mail_service,
-            )
-            .await?
-        }
-        new_event => {
-            let msg = if new_event.is_time_independent {
-                "time independent events must not have is_all_day, starts_at, ends_at or recurrence_pattern set"
-            } else {
-                "time dependent events must have title, description, is_all_day, starts_at and ends_at set"
-            };
+    let (event_resource, mail_resource) = conn
+        .transaction(|conn| {
+            async move {
+                // simplify logic by splitting the event creation
+                // into two paths: time independent and time dependent
+                let (mut event_resource, mail_resource) = match new_event {
+                    PostEventsBody {
+                        title,
+                        description,
+                        password,
+                        waiting_room,
+                        is_time_independent: true,
+                        is_all_day: None,
+                        starts_at: None,
+                        ends_at: None,
+                        recurrence_pattern,
+                        is_adhoc,
+                        streaming_targets,
+                        has_shared_folder: _,
+                    } if recurrence_pattern.is_empty() => {
+                        create_time_independent_event(
+                            &settings,
+                            conn,
+                            current_user,
+                            title,
+                            description,
+                            password,
+                            waiting_room,
+                            is_adhoc,
+                            streaming_targets,
+                            query,
+                        )
+                            .await?
+                    }
+                    PostEventsBody {
+                        title,
+                        description,
+                        password,
+                        waiting_room,
+                        is_time_independent: false,
+                        is_all_day: Some(is_all_day),
+                        starts_at: Some(starts_at),
+                        ends_at: Some(ends_at),
+                        recurrence_pattern,
+                        is_adhoc,
+                        streaming_targets,
+                        has_shared_folder: _,
+                    } => {
+                        create_time_dependent_event(
+                            &settings,
+                            conn,
+                            current_user,
+                            title,
+                            description,
+                            password,
+                            waiting_room,
+                            is_all_day,
+                            starts_at,
+                            ends_at,
+                            recurrence_pattern,
+                            is_adhoc,
+                            streaming_targets,
+                            query,
+                        )
+                            .await?
+                    }
+                    new_event => {
+                        let msg = if new_event.is_time_independent {
+                            "time independent events must not have is_all_day, starts_at, ends_at or recurrence_pattern set"
+                        } else {
+                            "time dependent events must have title, description, is_all_day, starts_at and ends_at set"
+                        };
 
-            return Err(ApiError::bad_request().with_message(msg));
-        }
-    };
+                        return Err(ApiError::bad_request().with_message(msg));
+                    }
+                };
+
+                if new_event.has_shared_folder {
+                    let (shared_folder, _) = put_shared_folder(settings, event_resource.id, conn).await?;
+                    event_resource.shared_folder = Some(SharedFolder::from(shared_folder));
+                }
+
+                Ok((event_resource, mail_resource))
+            }
+            .scope_boxed()
+        })
+        .await?;
 
     drop(conn);
 
@@ -337,6 +354,20 @@ pub async fn new_event(
         .finish();
 
     authz.add_policies(policies).await?;
+
+    if let Some(mail_resource) = mail_resource {
+        mail_service
+            .send_registered_invite(
+                mail_resource.current_user.clone(),
+                mail_resource.event,
+                mail_resource.room,
+                mail_resource.sip_config,
+                mail_resource.current_user,
+                event_resource.shared_folder.clone(),
+            )
+            .await
+            .context("Failed to send with MailService")?;
+    }
 
     Ok(ApiResponse::new(event_resource))
 }
@@ -362,6 +393,13 @@ async fn store_event_streaming_targets(
     Ok(streaming_targets)
 }
 
+struct MailResource {
+    pub current_user: User,
+    pub event: Event,
+    pub room: Room,
+    pub sip_config: Option<SipConfig>,
+}
+
 /// Part of `POST /events` endpoint
 #[allow(clippy::too_many_arguments)]
 async fn create_time_independent_event(
@@ -375,8 +413,7 @@ async fn create_time_independent_event(
     is_adhoc: bool,
     streaming_targets: Option<Vec<StreamingTarget>>,
     query: Query<EventOptionsQuery>,
-    mail_service: Data<MailService>,
-) -> Result<EventResource, ApiError> {
+) -> Result<(EventResource, Option<MailResource>), ApiError> {
     let room = NewRoom {
         created_by: current_user.id,
         password,
@@ -416,44 +453,44 @@ async fn create_time_independent_event(
 
     let suppress_email_notification = is_adhoc || query.suppress_email_notification;
 
-    if !suppress_email_notification {
-        mail_service
-            .send_registered_invite(
-                current_user.clone(),
-                event.clone(),
-                room.clone(),
-                Some(sip_config.clone()),
-                current_user.clone(),
-                None,
-            )
-            .await
-            .context("Failed to send with MailService")?;
-    }
+    let mail_resource = if !suppress_email_notification {
+        Some(MailResource {
+            current_user: current_user.clone(),
+            event: event.clone(),
+            room: room.clone(),
+            sip_config: Some(sip_config.clone()),
+        })
+    } else {
+        None
+    };
 
-    Ok(EventResource {
-        id: event.id,
-        title: event.title,
-        description: event.description,
-        room: EventRoomInfo::from_room(settings, room, Some(sip_config), &tariff),
-        invitees_truncated: false,
-        invitees: vec![],
-        created_by: current_user.to_public_user_profile(settings),
-        created_at: event.created_at.into(),
-        updated_by: current_user.to_public_user_profile(settings),
-        updated_at: event.updated_at.into(),
-        is_time_independent: true,
-        is_all_day: None,
-        starts_at: None,
-        ends_at: None,
-        recurrence_pattern: vec![],
-        type_: EventType::Single,
-        invite_status: EventInviteStatus::Accepted,
-        is_favorite: false,
-        can_edit: true, // just created by the current user
-        is_adhoc,
-        shared_folder: None,
-        streaming_targets,
-    })
+    Ok((
+        EventResource {
+            id: event.id,
+            title: event.title,
+            description: event.description,
+            room: EventRoomInfo::from_room(settings, room, Some(sip_config), &tariff),
+            invitees_truncated: false,
+            invitees: vec![],
+            created_by: current_user.to_public_user_profile(settings),
+            created_at: event.created_at.into(),
+            updated_by: current_user.to_public_user_profile(settings),
+            updated_at: event.updated_at.into(),
+            is_time_independent: true,
+            is_all_day: None,
+            starts_at: None,
+            ends_at: None,
+            recurrence_pattern: vec![],
+            type_: EventType::Single,
+            invite_status: EventInviteStatus::Accepted,
+            is_favorite: false,
+            can_edit: true, // just created by the current user
+            is_adhoc,
+            shared_folder: None,
+            streaming_targets,
+        },
+        mail_resource,
+    ))
 }
 
 /// Part of `POST /events` endpoint
@@ -473,8 +510,7 @@ async fn create_time_dependent_event(
     is_adhoc: bool,
     streaming_targets: Option<Vec<StreamingTarget>>,
     query: Query<EventOptionsQuery>,
-    mail_service: Data<MailService>,
-) -> Result<EventResource, ApiError> {
+) -> Result<(EventResource, Option<MailResource>), ApiError> {
     let recurrence_pattern = recurrence_array_to_string(recurrence_pattern);
 
     let (duration_secs, ends_at_dt, ends_at_tz) =
@@ -519,48 +555,48 @@ async fn create_time_dependent_event(
 
     let suppress_email_notification = is_adhoc || query.suppress_email_notification;
 
-    if !suppress_email_notification {
-        mail_service
-            .send_registered_invite(
-                current_user.clone(),
-                event.clone(),
-                room.clone(),
-                Some(sip_config.clone()),
-                current_user.clone(),
-                None,
-            )
-            .await
-            .context("Failed to send with MailService")?;
-    }
+    let mail_resource = if !suppress_email_notification {
+        Some(MailResource {
+            current_user: current_user.clone(),
+            event: event.clone(),
+            room: room.clone(),
+            sip_config: Some(sip_config.clone()),
+        })
+    } else {
+        None
+    };
 
-    Ok(EventResource {
-        id: event.id,
-        title: event.title,
-        description: event.description,
-        room: EventRoomInfo::from_room(settings, room, Some(sip_config), &tariff),
-        invitees_truncated: false,
-        invitees: vec![],
-        created_by: current_user.to_public_user_profile(settings),
-        created_at: event.created_at.into(),
-        updated_by: current_user.to_public_user_profile(settings),
-        updated_at: event.updated_at.into(),
-        is_time_independent: event.is_time_independent,
-        is_all_day: event.is_all_day,
-        starts_at: Some(starts_at),
-        ends_at: Some(ends_at),
-        recurrence_pattern: recurrence_string_to_array(event.recurrence_pattern),
-        type_: if event.is_recurring.unwrap_or_default() {
-            EventType::Recurring
-        } else {
-            EventType::Single
+    Ok((
+        EventResource {
+            id: event.id,
+            title: event.title,
+            description: event.description,
+            room: EventRoomInfo::from_room(settings, room, Some(sip_config), &tariff),
+            invitees_truncated: false,
+            invitees: vec![],
+            created_by: current_user.to_public_user_profile(settings),
+            created_at: event.created_at.into(),
+            updated_by: current_user.to_public_user_profile(settings),
+            updated_at: event.updated_at.into(),
+            is_time_independent: event.is_time_independent,
+            is_all_day: event.is_all_day,
+            starts_at: Some(starts_at),
+            ends_at: Some(ends_at),
+            recurrence_pattern: recurrence_string_to_array(event.recurrence_pattern),
+            type_: if event.is_recurring.unwrap_or_default() {
+                EventType::Recurring
+            } else {
+                EventType::Single
+            },
+            invite_status: EventInviteStatus::Accepted,
+            is_favorite: false,
+            can_edit: true, // just created by the current user
+            is_adhoc,
+            shared_folder: None,
+            streaming_targets,
         },
-        invite_status: EventInviteStatus::Accepted,
-        is_favorite: false,
-        can_edit: true, // just created by the current user
-        is_adhoc,
-        shared_folder: None,
-        streaming_targets,
-    })
+        mail_resource,
+    ))
 }
 
 struct GetPaginatedEventsData {
