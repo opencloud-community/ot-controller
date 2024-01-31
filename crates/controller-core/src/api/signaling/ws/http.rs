@@ -188,65 +188,59 @@ fn read_request_header<'t>(
     request: &'t HttpRequest,
     allowed_protocols: &'static [&'static str],
 ) -> Result<(TicketRedisKey<'t>, &'static str), ApiError> {
-    let mut protocol = None;
-    let mut ticket = None;
-
-    // read the SEC_WEBSOCKET_PROTOCOL header
-    if let Some(value) = request
+    let Some(protocol_header) = request
         .headers()
         .get(header::SEC_WEBSOCKET_PROTOCOL)
         .and_then(|v| v.to_str().ok())
-    {
-        let values = value.split(',').map(str::trim);
+    else {
+        log::debug!(
+            "Rejecting websocket request, missing protocol header. Headers: {:?}",
+            request.headers()
+        );
+        return Err(ApiError::bad_request()
+            .with_code("missing_protocol")
+            .with_message("Missing sec-websocket-protocol header"));
+    };
 
-        for value in values {
-            if value.starts_with("ticket#") {
-                let (_, tmp_ticket) = value.split_once('#').unwrap();
-                ticket = Some(tmp_ticket);
-                continue;
-            } else if protocol.is_some() {
-                continue;
-            } else if let Some(value) = allowed_protocols.iter().find(|&&v| v == value) {
-                protocol = Some(value);
-            }
-        }
+    let protocol_parts = protocol_header
+        .split(',')
+        .map(str::trim)
+        .collect::<Vec<&str>>();
+
+    let Some(protocol) = protocol_parts.iter().find_map(|part| {
+        allowed_protocols
+            .iter()
+            .find(|&allowed_protocol| allowed_protocol == part)
+    }) else {
+        log::debug!("Rejecting websocket request, invalid protocol header: {protocol_header:?}");
+        return Err(ApiError::bad_request()
+            .with_code("invalid_protocol")
+            .with_message("Missing valid protocol"));
+    };
+
+    let Some(ticket) = protocol_parts
+        .iter()
+        .find_map(|part| part.strip_prefix("ticket#"))
+    else {
+        log::debug!("Rejecting websocket request, missing ticket in header '{protocol_header}'");
+        return Err(ApiError::unauthorized()
+            .with_code("missing_ticket")
+            .with_message(
+                "Missing ticket. Please request a new ticket from /v1/rooms/<room_id>/start",
+            ));
+    };
+
+    if ticket.len() != 64 {
+        log::warn!(
+            "got ticket with invalid ticket length expected 64, got '{ticket}' ({ticket_len})",
+            ticket_len = ticket.len()
+        );
+        return Err(ApiError::unauthorized()
+            .with_code("invalid_ticket")
+            .with_message(
+                "Invalid ticket. Please request a new ticket from /v1/rooms/<room_id>/start",
+            ));
     }
-
-    // look if valid protocol exists
-    let protocol = match protocol {
-        Some(protocol) => protocol,
-        None => {
-            log::debug!("Rejecting websocket request, missing valid protocol");
-            return Err(ApiError::bad_request()
-                .with_code("missing_protocol")
-                .with_message("Missing valid protocol"));
-        }
-    };
-
-    // verify ticket existence and validity
-    let ticket = match ticket {
-        Some(ticket) if ticket.len() == 64 => ticket,
-        Some(ticket) => {
-            log::warn!(
-                "got ticket with invalid ticket length expected 64, got {} ",
-                ticket.len()
-            );
-
-            return Err(ApiError::unauthorized()
-                .with_code("invalid_ticket")
-                .with_message(
-                    "Invalid ticket. Please request a new ticket from /v1/rooms/<room_id>/start",
-                ));
-        }
-        None => {
-            log::debug!("Rejecting websocket request, missing ticket");
-            return Err(ApiError::unauthorized()
-                .with_code("missing_ticket")
-                .with_message(
-                    "Missing ticket. Please request a new ticket from /v1/rooms/<room_id>/start",
-                ));
-        }
-    };
 
     Ok((TicketRedisKey { ticket }, protocol))
 }
