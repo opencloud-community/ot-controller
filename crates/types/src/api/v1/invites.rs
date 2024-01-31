@@ -26,7 +26,7 @@ pub use room_id_and_invite_code::RoomIdAndInviteCode;
     http_request(method = "POST", response = CodeVerified, path = "/v1/invite/verify")
 )]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize, Validate))]
-pub struct VerifyBody {
+pub struct PostInviteVerifyRequest {
     /// The invite code id
     pub invite_code: InviteCodeId,
 }

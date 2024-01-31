@@ -26,8 +26,8 @@ use opentalk_types::{
         error::ApiError,
         v1::{
             invites::{
-                CodeVerified, InviteResource, PostInviteRequestBody, PutInviteRequestBody,
-                RoomIdAndInviteCode, VerifyBody,
+                CodeVerified, InviteResource, PostInviteRequestBody, PostInviteVerifyRequest,
+                PutInviteRequestBody, RoomIdAndInviteCode,
             },
             pagination::PagePaginationQuery,
         },
@@ -242,7 +242,7 @@ pub async fn delete_invite(
 #[post("/invite/verify")]
 pub async fn verify_invite_code(
     db: Data<Db>,
-    data: Json<VerifyBody>,
+    data: Json<PostInviteVerifyRequest>,
 ) -> DefaultApiResult<CodeVerified> {
     let data = data.into_inner();
 
