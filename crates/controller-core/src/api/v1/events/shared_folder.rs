@@ -23,7 +23,7 @@ use opentalk_db_storage::{
 };
 use opentalk_nextcloud_client::{Client, ShareId, SharePermission, ShareType};
 use opentalk_types::{
-    api::v1::events::DeleteQuery,
+    api::v1::events::DeleteSharedFolderQuery,
     common::shared_folder::{SharedFolder, SharedFolderAccess},
     core::EventId,
 };
@@ -305,7 +305,7 @@ pub async fn delete_shared_folder_for_event(
     settings: SharedSettingsActix,
     db: Data<Db>,
     event_id: Path<EventId>,
-    query: Query<DeleteQuery>,
+    query: Query<DeleteSharedFolderQuery>,
 ) -> Result<NoContent, ApiError> {
     let event_id = event_id.into_inner();
 

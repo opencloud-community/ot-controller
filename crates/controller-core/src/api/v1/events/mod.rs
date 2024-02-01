@@ -42,11 +42,10 @@ use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_types::{
     api::v1::{
         events::{
-            CallInInfo, DeleteEventQuery, EmailOnlyUser, EventAndInstanceId,
-            EventExceptionResource, EventInvitee, EventInviteeProfile, EventOrException,
-            EventResource, EventRoomInfo, EventStatus, EventType, GetEventQuery,
-            GetEventsCursorData, GetEventsQuery, PatchEventBody, PatchEventQuery, PostEventsBody,
-            PublicInviteUserProfile,
+            CallInInfo, EmailOnlyUser, EventAndInstanceId, EventExceptionResource, EventInvitee,
+            EventInviteeProfile, EventOptionsQuery, EventOrException, EventResource, EventRoomInfo,
+            EventStatus, EventType, GetEventQuery, GetEventsCursorData, GetEventsQuery,
+            PatchEventBody, PatchEventQuery, PostEventsBody, PublicInviteUserProfile,
         },
         pagination::default_pagination_per_page,
         users::{PublicUserProfile, UnregisteredUser},
@@ -242,7 +241,7 @@ pub async fn new_event(
     authz: Data<Authz>,
     current_user: ReqData<User>,
     new_event: Json<PostEventsBody>,
-    query: Query<DeleteEventQuery>,
+    query: Query<EventOptionsQuery>,
     mail_service: Data<MailService>,
 ) -> DefaultApiResult<EventResource> {
     let settings = settings.load_full();
@@ -375,7 +374,7 @@ async fn create_time_independent_event(
     waiting_room: bool,
     is_adhoc: bool,
     streaming_targets: Option<Vec<StreamingTarget>>,
-    query: Query<DeleteEventQuery>,
+    query: Query<EventOptionsQuery>,
     mail_service: Data<MailService>,
 ) -> Result<EventResource, ApiError> {
     let room = NewRoom {
@@ -473,7 +472,7 @@ async fn create_time_dependent_event(
     recurrence_pattern: Vec<String>,
     is_adhoc: bool,
     streaming_targets: Option<Vec<StreamingTarget>>,
-    query: Query<DeleteEventQuery>,
+    query: Query<EventOptionsQuery>,
     mail_service: Data<MailService>,
 ) -> Result<EventResource, ApiError> {
     let recurrence_pattern = recurrence_array_to_string(recurrence_pattern);
@@ -1283,7 +1282,7 @@ pub async fn delete_event(
     current_tenant: ReqData<Tenant>,
     current_user: ReqData<User>,
     authz: Data<Authz>,
-    query: Query<DeleteEventQuery>,
+    query: Query<EventOptionsQuery>,
     event_id: Path<EventId>,
     mail_service: Data<MailService>,
 ) -> Result<NoContent, ApiError> {
