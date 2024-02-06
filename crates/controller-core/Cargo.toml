@@ -101,7 +101,7 @@ chrono-tz = { workspace = true, features = ["serde"] }
 ### Websockets
 actix = "0.13"
 actix-http = { version = "3", features = ["rustls-0_21"] }
-actix-web-actors = "4.2"
+actix-web-actors = "4.3"
 
 ### Rust Encryption
 ring = "0.17"
