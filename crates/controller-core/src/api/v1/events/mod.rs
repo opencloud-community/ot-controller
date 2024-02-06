@@ -1077,6 +1077,57 @@ pub async fn patch_event(
     Ok(Either::Left(ApiResponse::new(event_resource)))
 }
 
+// TODO(w.rabl) There's some potential for refactoring the PATCH endpoint functions `patch_event`
+// and `patch_event_instance` using this function.
+#[allow(clippy::too_many_arguments)]
+async fn notify_event_invitees_about_update(
+    kc_admin_client: &Data<KeycloakAdminClient>,
+    settings: Arc<Settings>,
+    mail_service: Arc<MailService>,
+    current_tenant: Tenant,
+    current_user: User,
+    conn: &mut DbConnection,
+    event: Event,
+    room: Room,
+    sip_config: Option<SipConfig>,
+    shared_folder_for_user: Option<SharedFolder>,
+) -> anyhow::Result<(), ApiError> {
+    let created_by = if event.created_by == current_user.id {
+        current_user.clone()
+    } else {
+        User::get(conn, event.created_by).await?
+    };
+
+    let invited_users = get_invited_mail_recipients_for_event(conn, event.id).await?;
+    let current_user_mail_recipient = MailRecipient::Registered(current_user.clone().into());
+    let users_to_notify = invited_users
+        .into_iter()
+        .chain(std::iter::once(current_user_mail_recipient))
+        .collect::<Vec<_>>();
+    let invite_for_room = Invite::get_first_for_room(conn, room.id, current_user.id).await?;
+
+    let notification_values = UpdateNotificationValues {
+        tenant: current_tenant,
+        created_by,
+        event,
+        event_exception: None,
+        room,
+        sip_config,
+        users_to_notify,
+        invite_for_room,
+    };
+
+    notify_invitees_about_update(
+        settings,
+        notification_values,
+        mail_service,
+        kc_admin_client,
+        shared_folder_for_user,
+    )
+    .await;
+    Ok(())
+}
+
 /// Part of `PATCH /events/{event_id}` (see [`patch_event`])
 ///
 /// Notify invited users about the event update
