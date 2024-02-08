@@ -3,17 +3,18 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use http::StatusCode;
+use http_request_derive::HttpRequest;
 
-use crate::{ApiError, Authorization, Request};
+use crate::Authorization;
 
 /// Wrapper type that adds authorization information to a request
 #[derive(Debug)]
-pub struct Authorized<A: Authorization, R: Request> {
+pub struct Authorized<A: Authorization, R: HttpRequest> {
     authorization: A,
     request: R,
 }
 
-impl<A: Authorization, R: Request> Authorized<A, R> {
+impl<A: Authorization, R: HttpRequest> Authorized<A, R> {
     /// Create a new authorized request
     pub const fn new(authorization: A, request: R) -> Self {
         Self {
@@ -23,7 +24,7 @@ impl<A: Authorization, R: Request> Authorized<A, R> {
     }
 }
 
-impl<A: Authorization, R: Request> Request for Authorized<A, R> {
+impl<A: Authorization, R: HttpRequest> HttpRequest for Authorized<A, R> {
     type Response = R::Response;
 
     type Query = R::Query;
@@ -49,14 +50,11 @@ impl<A: Authorization, R: Request> Request for Authorized<A, R> {
         self.authorization.apply_authorization_headers(headers);
     }
 
-    fn read_response<E>(
+    fn read_response(
         response: http::Response<bytes::Bytes>,
-    ) -> Result<Self::Response, ApiError<E>>
-    where
-        E: std::error::Error + Send + Sync + 'static,
-    {
+    ) -> Result<Self::Response, http_request_derive::Error> {
         match response.status() {
-            StatusCode::UNAUTHORIZED => Err(ApiError::Unauthorized),
+            StatusCode::UNAUTHORIZED => Err(http_request_derive::Error::Unauthorized),
             _ => R::read_response(response),
         }
     }

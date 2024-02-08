@@ -2,13 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::error::Error;
-
 use bytes::Bytes;
 use http::StatusCode;
+use http_request_derive::FromHttpResponse;
 use serde::de::DeserializeOwned;
-
-use crate::{ApiError, FromHttpResponse};
 
 /// A wrapper around [`Option`] for deserializing from optional data from a HTTP response.
 ///
@@ -19,15 +16,18 @@ use crate::{ApiError, FromHttpResponse};
 pub struct DataOption<T>(pub Option<T>);
 
 impl<D: DeserializeOwned> FromHttpResponse for DataOption<D> {
-    fn from_http_response<E>(http_response: http::Response<Bytes>) -> Result<Self, ApiError<E>>
+    fn from_http_response(
+        http_response: http::Response<Bytes>,
+    ) -> Result<Self, http_request_derive::Error>
     where
-        E: Error + Send + Sync + 'static,
         Self: Sized,
     {
         if http_response.status() == StatusCode::NO_CONTENT {
             return Ok(None.into());
         };
-        let data = serde_json::from_slice(http_response.body())?;
+        let data = serde_json::from_slice(http_response.body()).map_err(|e| {
+            http_request_derive::Error::custom(format!("Couldn't deserialize JSON: {e:?}"))
+        })?;
         Ok(Some(data).into())
     }
 }

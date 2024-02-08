@@ -14,10 +14,10 @@ use crate::imports::*;
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(
     feature = "frontend",
-    derive(Request),
-    request(
+    derive(HttpRequest),
+    http_request(
         method = "POST",
-        response = "PostLoginResponse",
+        response = PostLoginResponse,
         path = "/v1/auth/login"
     )
 )]
@@ -38,8 +38,8 @@ pub struct PostLoginResponse {
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(
     feature = "frontend",
-    derive(Request),
-    request(method = "GET", response = "GetLoginResponse", path = "/v1/auth/login")
+    derive(HttpRequest),
+    http_request(method = "GET", response = GetLoginResponse, path = "/v1/auth/login")
 )]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct GetLoginRequest;

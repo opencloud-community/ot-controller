@@ -124,5 +124,5 @@ mod imports {
     };
 
     #[cfg(feature = "frontend")]
-    pub use {http::Method, opentalk_client_shared::Request};
+    pub use {http::Method, http_request_derive::HttpRequest};
 }

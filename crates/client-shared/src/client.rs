@@ -4,8 +4,9 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use async_trait::async_trait;
+use http_request_derive::HttpRequest;
 
-use crate::{ApiError, Request};
+use crate::ApiError;
 
 use self::rest_client::RestClient;
 
@@ -15,7 +16,7 @@ pub(crate) mod rest_client;
 #[async_trait]
 pub trait Client: RestClient {
     /// Send a REST query asynchronously.
-    async fn rest<R: Request + Send>(
+    async fn rest<R: HttpRequest + Send>(
         &self,
         request: R,
     ) -> Result<R::Response, ApiError<Self::Error>>;

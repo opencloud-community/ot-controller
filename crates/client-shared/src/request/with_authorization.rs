@@ -2,14 +2,19 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::{Authorization, AuthorizedRequest, Request};
+use http_request_derive::HttpRequest;
+
+use crate::{Authorization, AuthorizedHttpRequest};
 
 /// Trait for adding authorization information to http requests
-pub trait WithAuthorization: Request + Sized {
+pub trait WithAuthorization: HttpRequest + Sized {
     /// Augment the request with authorization information
-    fn with_authorization<A: Authorization>(self, authorization: A) -> AuthorizedRequest<A, Self> {
-        AuthorizedRequest::new(authorization, self)
+    fn with_authorization<A: Authorization>(
+        self,
+        authorization: A,
+    ) -> AuthorizedHttpRequest<A, Self> {
+        AuthorizedHttpRequest::new(authorization, self)
     }
 }
 
-impl<R: Request + Sized> WithAuthorization for R {}
+impl<R: HttpRequest + Sized> WithAuthorization for R {}

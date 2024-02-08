@@ -136,10 +136,10 @@ pub struct InvitedStartRequest {
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "frontend",
-    derive(Request),
-    request(
+    derive(HttpRequest),
+    http_request(
         method = "GET",
-        response = "GetRoomEventResponse",
+        response = GetRoomEventResponse,
         path = "/v1/rooms/{0}/event"
     )
 )]

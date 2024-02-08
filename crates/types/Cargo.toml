@@ -29,6 +29,7 @@ diesel = { workspace = true, features = ["uuid"], optional = true }
 opentalk-diesel-newtype = { workspace = true, optional = true }
 email_address.workspace = true
 http = { workspace = true, optional = true }
+http-request-derive = { workspace = true, features = ["serde"], optional = true }
 opentalk-kustos-prefix = { workspace = true, optional = true }
 kustos-shared = { workspace = true, optional = true }
 rand = { workspace = true, optional = true }
@@ -48,7 +49,7 @@ actix = ["dep:actix-http", "dep:actix-web-httpauth", "dep:bytes"]
 backend = ["actix", "diesel", "kustos", "rand", "redis", "serde"]
 clap = ["dep:clap"]
 diesel = ["serde", "dep:diesel", "dep:opentalk-diesel-newtype"]
-frontend = ["serde", "dep:opentalk-client-shared", "dep:http"]
+frontend = ["serde", "dep:opentalk-client-shared", "dep:http", "dep:http-request-derive"]
 kustos = ["dep:opentalk-kustos-prefix", "dep:kustos-shared"]
 rand = ["dep:rand", "uuid/v4"]
 redis = ["serde", "dep:redis", "dep:redis-args"]
