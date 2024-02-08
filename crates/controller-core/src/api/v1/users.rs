@@ -9,10 +9,15 @@
 
 use super::response::{ApiError, NoContent};
 use crate::api::signaling::SignalingModules;
+use crate::caches::Caches;
+use crate::oidc::decode_token;
+use crate::oidc::UserClaims;
 use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json, Path, Query, ReqData};
 use actix_web::{get, patch, Either};
 use anyhow::Context;
+use chrono::Utc;
+use openidconnect::AccessToken;
 use opentalk_controller_settings::TenantAssignment;
 use opentalk_database::Db;
 use opentalk_db_storage::{
@@ -38,7 +43,10 @@ const MAX_USER_SEARCH_RESULTS: usize = 20;
 pub async fn patch_me(
     settings: SharedSettingsActix,
     db: Data<Db>,
+    caches: Data<Caches>,
     current_user: ReqData<User>,
+    current_tenant: ReqData<Tenant>,
+    access_token: ReqData<AccessToken>,
     patch: Json<PatchMeBody>,
 ) -> Result<Either<Json<PrivateUserProfile>, NoContent>, ApiError> {
     let patch = patch.into_inner();
@@ -82,6 +90,28 @@ pub async fn patch_me(
     let user = changeset.apply(&mut conn, current_user.id).await?;
 
     let user_profile = user.to_private_user_profile(&settings);
+
+    let user_claims = decode_token::<UserClaims>(access_token.clone().secret())
+        .context("failed to decode access token for user profile update")?;
+
+    let token_ttl = user_claims.exp - Utc::now();
+    if token_ttl > chrono::Duration::seconds(10) {
+        match token_ttl.to_std() {
+            Ok(token_ttl_std) => {
+                caches
+                    .user_access_tokens
+                    .insert_with_ttl(
+                        access_token.secret().clone(),
+                        Ok((current_tenant.into_inner(), user)),
+                        token_ttl_std,
+                    )
+                    .await?;
+            }
+            Err(e) => {
+                log::debug!("abort user profile cache update due to invalid token TTL, {e}");
+            }
+        }
+    }
 
     Ok(Either::Left(Json(user_profile)))
 }

@@ -91,6 +91,10 @@ pub fn verify<C: VerifyClaims>(key_set: &CoreJsonWebKeySet, token: &str) -> Resu
         .verify_signature(&signing_alg, message.as_ref(), signature.as_ref())
         .map_err(|_| VerifyError::InvalidSignature)?;
 
+    decode_token(token)
+}
+
+pub fn decode_token<C: VerifyClaims>(token: &str) -> Result<C, VerifyError> {
     // We can ignore the signature check of jsonwebtokens
     // TODO use jsonwebtokens validation
     let mut validation = Validation::default();

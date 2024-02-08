@@ -143,7 +143,7 @@ where
                         db,
                         oidc_ctx,
                         &caches.user_access_tokens,
-                        access_token,
+                        &access_token,
                     )
                     .await
                     {
@@ -152,6 +152,7 @@ where
                                 .insert(kustos::actix_web::User::from(Uuid::from(current_user.id)));
                             req.extensions_mut().insert(current_tenant);
                             req.extensions_mut().insert(current_user);
+                            req.extensions_mut().insert(access_token);
                             service.call(req).await
                         }
                         Err(err) => Ok(req.into_response(err.error_response())),
@@ -177,10 +178,10 @@ pub async fn check_access_token(
     db: Data<Db>,
     oidc_ctx: Data<OidcContext>,
     cache: &UserAccessTokenCache,
-    access_token: AccessToken,
+    access_token: &AccessToken,
 ) -> Result<(Tenant, User), ApiError> {
     // First verify the access-token's signature, expiry and claims
-    let user_claims = match oidc_ctx.verify_access_token::<UserClaims>(&access_token) {
+    let user_claims = match oidc_ctx.verify_access_token::<UserClaims>(access_token) {
         Ok(user_claims) => user_claims,
         Err(e) => {
             log::debug!("Invalid access token, {}", e);
@@ -203,7 +204,7 @@ pub async fn check_access_token(
         let token_ttl = user_claims.exp - Utc::now();
 
         let check_result =
-            check_access_token_inner(settings, db, oidc_ctx, &access_token, user_claims).await;
+            check_access_token_inner(settings, db, oidc_ctx, access_token, user_claims).await;
 
         match check_result {
             Ok((tenant, user)) => {

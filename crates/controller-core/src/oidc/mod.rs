@@ -16,7 +16,7 @@ mod jwt;
 mod provider;
 
 pub use claims::{ServiceClaims, UserClaims};
-pub use jwt::VerifyError;
+pub use jwt::{decode_token, VerifyError};
 
 /// The `OidcContext` contains all information about the Oidc provider and permissions matrix.
 #[derive(Debug)]
