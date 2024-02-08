@@ -42,6 +42,7 @@ use opentalk_db_storage::{
 };
 use opentalk_keycloak_admin::users::TenantFilter;
 use opentalk_keycloak_admin::KeycloakAdminClient;
+use opentalk_types::core::RoomId;
 use opentalk_types::{
     api::v1::{
         events::{
@@ -1077,8 +1078,41 @@ pub async fn patch_event(
     Ok(Either::Left(ApiResponse::new(event_resource)))
 }
 
-// TODO(w.rabl) There's some potential for refactoring the PATCH endpoint functions `patch_event`
-// and `patch_event_instance` using this function.
+pub async fn notify_event_invitees_by_room_about_update(
+    kc_admin_client: &Data<KeycloakAdminClient>,
+    settings: Arc<Settings>,
+    mail_service: Arc<MailService>,
+    current_tenant: Tenant,
+    current_user: User,
+    conn: &mut DbConnection,
+    room_id: RoomId,
+) -> Result<(), ApiError> {
+    let event = Event::get_first_for_room(conn, room_id).await?;
+
+    if let Some(event) = event {
+        let (event, _invite, room, sip_config, _is_favorite, shared_folder, _tariff) =
+            Event::get_with_related_items(conn, current_user.id, event.id).await?;
+
+        let shared_folder_for_user =
+            shared_folder_for_user(shared_folder, event.created_by, current_user.id);
+
+        notify_event_invitees_about_update(
+            kc_admin_client,
+            settings,
+            mail_service,
+            current_tenant,
+            current_user,
+            conn,
+            event,
+            room,
+            sip_config,
+            shared_folder_for_user,
+        )
+        .await?;
+    }
+    Ok(())
+}
+
 #[allow(clippy::too_many_arguments)]
 async fn notify_event_invitees_about_update(
     kc_admin_client: &Data<KeycloakAdminClient>,
@@ -1128,9 +1162,6 @@ async fn notify_event_invitees_about_update(
     Ok(())
 }
 
-/// Part of `PATCH /events/{event_id}` (see [`patch_event`])
-///
-/// Notify invited users about the event update
 async fn notify_invitees_about_update(
     settings: Arc<Settings>,
     notification_values: UpdateNotificationValues,
