@@ -8,7 +8,7 @@
 ///
 /// # Examples
 ///
-/// ```
+/// ```no_run
 /// use serde::Serialize;
 ///
 /// #[derive(Debug, Serialize)]
