@@ -92,7 +92,6 @@ lint:doc:
 
 lint:dependency_check:
   needs: []
-  image: git.opentalk.dev:5050/opentalk/backend/containers/cargo-deny:latest
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
       changes:
