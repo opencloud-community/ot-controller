@@ -294,7 +294,7 @@ fn extract_parameter(
         .collect::<Vec<_>>();
 
     match filtered_params.split_first() {
-        Some((first, rest)) if rest.is_empty() => Ok((*first).clone()),
+        Some((first, [])) => Ok((*first).clone()),
         _ => Err(syn::Error::new(
             Span::call_site(),
             format!(
