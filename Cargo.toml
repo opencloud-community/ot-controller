@@ -21,6 +21,7 @@ opentalk-cache = { path = "crates/cache", version = "0.0.0-dev" }
 opentalk-chat = { path = "crates/chat", version = "0.0.0-dev" }
 opentalk-client = { path = "crates/client", version = "0.0.0-dev" }
 opentalk-client-shared = { path = "crates/client-shared", version = "0.0.0-dev" }
+opentalk-client-shared-impl = { path = "crates/client-shared-impl", version = "0.0.0-dev" }
 opentalk-community-modules = { path = "crates/community-modules", version = "0.0.0-dev" }
 opentalk-controller-core = { path = "crates/controller-core", version = "0.0.0-dev" }
 opentalk-controller-settings = { path = "crates/controller-settings", version = "0.0.0-dev" }

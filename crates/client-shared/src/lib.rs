@@ -85,7 +85,7 @@ pub use request_body::RequestBody;
 ///     #[request(header)]
 ///     pub header: `http::HeaderMap`,
 /// }
-pub use client_shared_impl::Request;
+pub use opentalk_client_shared_impl::Request;
 
 #[doc(hidden)]
 pub mod __exports {
