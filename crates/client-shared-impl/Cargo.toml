@@ -19,7 +19,7 @@ quote = "1"
 syn = { workspace = true, features = ["extra-traits", "parsing"] }
 proc-macro2 = "1"
 proc-macro-crate = "3"
-opentalk-proc-macro-fields-helper = { path = "../proc-macro-fields-helper" }
+opentalk-proc-macro-fields-helper.workspace = true
 http.workspace = true
 
 [dev-dependencies]
