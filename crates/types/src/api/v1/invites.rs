@@ -74,8 +74,8 @@ pub struct PutInviteBody {
 #[derive(Clone, Debug)]
 #[cfg_attr(
     feature = "frontend",
-    derive(Request),
-    request(method = "POST", response = "CodeVerified", path = "/v1/invite/verify")
+    derive(HttpRequest),
+    http_request(method = "POST", response = CodeVerified, path = "/v1/invite/verify")
 )]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize, Validate))]
 pub struct VerifyBody {

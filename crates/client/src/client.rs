@@ -2,7 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_client_shared::{ApiError, Request, RestClient};
+use http_request_derive::HttpRequest;
+use opentalk_client_shared::{ApiError, RestClient};
 use url::Url;
 
 pub struct Client {
@@ -29,11 +30,11 @@ impl RestClient for Client {
 
 #[async_trait::async_trait]
 impl opentalk_client_shared::Client for Client {
-    async fn rest<R: Request + Send>(
+    async fn rest<R: HttpRequest + Send>(
         &self,
         request: R,
     ) -> Result<R::Response, ApiError<Self::Error>> {
-        let request = request.to_http_request(self)?;
+        let request = request.to_http_request(&self.base_url)?;
         let request =
             reqwest::Request::try_from(request).map_err(|source| ApiError::Client { source })?;
         let response = self
@@ -54,6 +55,6 @@ impl opentalk_client_shared::Client for Client {
         let http_response = http_response
             .body(body)
             .map_err(|source| ApiError::Request { source })?;
-        R::read_response::<Self::Error>(http_response)
+        R::read_response(http_response).map_err(Into::into)
     }
 }

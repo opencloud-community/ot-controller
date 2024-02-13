@@ -71,6 +71,10 @@ where
         typename: &'static str,
     },
 
+    /// Error from the http-request-derive crate
+    #[error("error in http-request-derive crate")]
+    HttpRequestDerive(#[from] http_request_derive::Error),
+
     /// Couldn't build a HTTP request, probably a bug.
     #[error("could not build HTTP request: {}", source)]
     Request {
