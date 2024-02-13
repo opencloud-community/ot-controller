@@ -453,16 +453,12 @@ async fn create_time_independent_event(
 
     let suppress_email_notification = is_adhoc || query.suppress_email_notification;
 
-    let mail_resource = if !suppress_email_notification {
-        Some(MailResource {
-            current_user: current_user.clone(),
-            event: event.clone(),
-            room: room.clone(),
-            sip_config: Some(sip_config.clone()),
-        })
-    } else {
-        None
-    };
+    let mail_resource = (!suppress_email_notification).then(|| MailResource {
+        current_user: current_user.clone(),
+        event: event.clone(),
+        room: room.clone(),
+        sip_config: Some(sip_config.clone()),
+    });
 
     Ok((
         EventResource {
@@ -555,16 +551,12 @@ async fn create_time_dependent_event(
 
     let suppress_email_notification = is_adhoc || query.suppress_email_notification;
 
-    let mail_resource = if !suppress_email_notification {
-        Some(MailResource {
-            current_user: current_user.clone(),
-            event: event.clone(),
-            room: room.clone(),
-            sip_config: Some(sip_config.clone()),
-        })
-    } else {
-        None
-    };
+    let mail_resource = (!suppress_email_notification).then(|| MailResource {
+        current_user: current_user.clone(),
+        event: event.clone(),
+        room: room.clone(),
+        sip_config: Some(sip_config.clone()),
+    });
 
     Ok((
         EventResource {
