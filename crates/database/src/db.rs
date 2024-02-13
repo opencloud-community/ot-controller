@@ -2,15 +2,19 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::metrics::{DatabaseMetrics, MetricsConnection};
-use crate::{DatabaseError, DbConnection};
+use std::{sync::Arc, time::Duration};
+
 use deadpool_runtime::Runtime;
-use diesel_async::pooled_connection::deadpool::Pool;
-use diesel_async::pooled_connection::AsyncDieselConnectionManager;
-use diesel_async::AsyncPgConnection;
+use diesel_async::{
+    pooled_connection::{deadpool::Pool, AsyncDieselConnectionManager},
+    AsyncPgConnection,
+};
 use snafu::Report;
-use std::sync::Arc;
-use std::time::Duration;
+
+use crate::{
+    metrics::{DatabaseMetrics, MetricsConnection},
+    DatabaseError, DbConnection,
+};
 
 type DbPool = Pool<AsyncPgConnection>;
 

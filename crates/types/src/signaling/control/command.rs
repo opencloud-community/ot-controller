@@ -4,10 +4,9 @@
 
 //! Signaling messages for the `control` namespace
 
-use crate::signaling::common::TargetParticipant;
-
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::signaling::common::TargetParticipant;
 
 /// Commands received by the `control` module
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -46,9 +45,10 @@ pub struct Join {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use pretty_assertions::assert_eq;
     use serde_json::json;
+
+    use super::*;
 
     #[test]
     fn join_with_display_name() {

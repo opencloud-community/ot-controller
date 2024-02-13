@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::sync::Arc;
+
 use client::SpacedeckClient;
 use futures::stream::once;
 use opentalk_database::Db;
@@ -24,7 +26,6 @@ use opentalk_types::{
 };
 use snafu::{whatever, Report};
 use state::{InitState, SpaceInfo};
-use std::sync::Arc;
 use url::Url;
 
 mod client;

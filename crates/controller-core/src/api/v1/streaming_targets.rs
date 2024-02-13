@@ -3,29 +3,25 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Contains invite related REST endpoints.
-use super::{response::NoContent, DefaultApiResult};
-use crate::{
-    api::v1::{events::notify_event_invitees_by_room_about_update, ApiResponse},
-    services::MailService,
-    settings::SharedSettingsActix,
-};
 use actix_web::{
     delete, get, patch, post,
     web::{Data, Json, Path, Query, ReqData},
 };
 use opentalk_database::Db;
-use opentalk_db_storage::streaming_targets::{
-    get_room_streaming_targets, insert_room_streaming_target, RoomStreamingTargetRecord,
-    UpdateRoomStreamingTarget,
+use opentalk_db_storage::{
+    streaming_targets::{
+        get_room_streaming_targets, insert_room_streaming_target, RoomStreamingTargetRecord,
+        UpdateRoomStreamingTarget,
+    },
+    tenants::Tenant,
+    users::User,
 };
-use opentalk_db_storage::tenants::Tenant;
-use opentalk_db_storage::users::User;
 use opentalk_keycloak_admin::KeycloakAdminClient;
-use opentalk_types::api::v1::events::StreamingTargetOptionsQuery;
 use opentalk_types::{
     api::{
         error::ApiError,
         v1::{
+            events::StreamingTargetOptionsQuery,
             pagination::PagePaginationQuery,
             rooms::streaming_targets::{
                 ChangeRoomStreamingTargetRequest, ChangeRoomStreamingTargetResponse,
@@ -36,10 +32,16 @@ use opentalk_types::{
         },
     },
     common::streaming::{RoomStreamingTarget, StreamingTarget, StreamingTargetKind},
-    core::RoomId,
-    core::StreamingKind,
+    core::{RoomId, StreamingKind},
 };
 use snafu::Report;
+
+use super::{response::NoContent, DefaultApiResult};
+use crate::{
+    api::v1::{events::notify_event_invitees_by_room_about_update, ApiResponse},
+    services::MailService,
+    settings::SharedSettingsActix,
+};
 
 /// API Endpoint *GET /rooms/{room_id}/streaming_targets*
 ///

@@ -3,9 +3,8 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Contains the user specific database structs amd queries
-use super::groups::{Group, UserGroupRelation};
-use super::schema::{assets, groups, room_assets, rooms, users};
-use crate::{levenshtein, lower, soundex};
+use std::fmt;
+
 use bigdecimal::{BigDecimal, ToPrimitive};
 use derive_more::{AsRef, Display, From, FromStr, Into};
 use diesel::{
@@ -21,7 +20,12 @@ use opentalk_types::{
     core::{TariffId, TariffStatus, TenantId, UserId},
 };
 use serde::{Deserialize, Serialize};
-use std::fmt;
+
+use super::{
+    groups::{Group, UserGroupRelation},
+    schema::{assets, groups, room_assets, rooms, users},
+};
+use crate::{levenshtein, lower, soundex};
 
 #[derive(
     AsRef,

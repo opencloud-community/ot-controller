@@ -57,18 +57,18 @@ where
 
 #[cfg(test)]
 mod test {
-    use super::*;
-    use crate::internal::rbac_api_ex::RbacApiEx;
-    use crate::subject::{PolicyInvite, PolicyUser};
-    use crate::AccessMethod;
-    use crate::{InvitePolicy, UserPolicies, UserPolicy};
+    use std::{convert::TryInto, iter::FromIterator, str::FromStr, vec};
+
     use casbin::{CoreApi, MgmtApi};
     use kustos_shared::{internal::ToCasbin, subject::ParsingError};
     use pretty_assertions::assert_eq;
-    use std::convert::TryInto;
-    use std::iter::FromIterator;
-    use std::str::FromStr;
-    use std::vec;
+
+    use super::*;
+    use crate::{
+        internal::rbac_api_ex::RbacApiEx,
+        subject::{PolicyInvite, PolicyUser},
+        AccessMethod, InvitePolicy, UserPolicies, UserPolicy,
+    };
 
     fn to_owned(v: Vec<&str>) -> Vec<String> {
         v.into_iter().map(|x| x.to_owned()).collect()

@@ -4,13 +4,15 @@
 
 //! Utility to map a phone number to a users display name or convert it to a more readable format
 
-use crate::api::util::parse_phone_number;
+use std::{convert::TryFrom, sync::Arc};
+
 use opentalk_controller_settings as settings;
 use opentalk_database::Db;
 use opentalk_db_storage::users::User;
 use opentalk_types::core::TenantId;
 use phonenumber::PhoneNumber;
-use std::{convert::TryFrom, sync::Arc};
+
+use crate::api::util::parse_phone_number;
 
 /// Try to map the provided phone number to a user
 ///

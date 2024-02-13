@@ -4,6 +4,8 @@
 
 //! Fixes acl rules based on the database content
 
+use std::sync::Arc;
+
 use chrono::Utc;
 use clap::Parser;
 use kustos::prelude::*;
@@ -13,7 +15,6 @@ use opentalk_db_storage::{
     events::Event, invites::Invite, module_resources::ModuleResource, rooms::Room, users::User,
 };
 use snafu::{whatever, ResultExt};
-use std::sync::Arc;
 
 use crate::{
     acl::check_or_create_kustos_default_permissions,

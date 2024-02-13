@@ -2,41 +2,32 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::{
-    can_edit, get_invited_mail_recipients_for_event, notify_invitees_about_update, ApiResponse,
-    DateTimeTz, DefaultApiResult, EventInvitee, UpdateNotificationValues, LOCAL_DT_FORMAT,
-    ONE_HUNDRED_YEARS_IN_DAYS,
+use actix_web::{
+    get, patch,
+    web::{Data, Json, Path, Query, ReqData},
+    Either,
 };
-use crate::api::v1::events::{
-    enrich_invitees_from_keycloak, shared_folder_for_user, DateTimeTzFromDb, EventRoomInfoExt,
-};
-use crate::api::v1::response::NoContent;
-use crate::api::v1::rooms::RoomsPoliciesBuilderExt;
-use crate::api::v1::util::{GetUserProfilesBatched, UserProfilesBatch};
-use crate::services::MailService;
-use crate::settings::SharedSettingsActix;
-use actix_web::web::{Data, Json, Path, Query, ReqData};
-use actix_web::{get, patch, Either};
 use chrono::{DateTime, Utc};
-use kustos::prelude::PoliciesBuilder;
-use kustos::Authz;
+use kustos::{prelude::PoliciesBuilder, Authz};
 use opentalk_database::Db;
-use opentalk_db_storage::events::{
-    Event, EventException, EventExceptionKind, NewEventException, UpdateEventException,
+use opentalk_db_storage::{
+    events::{Event, EventException, EventExceptionKind, NewEventException, UpdateEventException},
+    invites::Invite,
+    tenants::Tenant,
+    users::User,
 };
-use opentalk_db_storage::invites::Invite;
-use opentalk_db_storage::tenants::Tenant;
-use opentalk_db_storage::users::User;
 use opentalk_keycloak_admin::KeycloakAdminClient;
-use opentalk_types::api::error::ApiError;
 use opentalk_types::{
-    api::v1::{
-        events::{
-            EventAndInstanceId, EventInstance, EventInstancePath, EventInstanceQuery,
-            EventRoomInfo, EventStatus, EventType, GetEventInstancesCursorData,
-            GetEventInstancesQuery, InstanceId, PatchEventInstanceBody,
+    api::{
+        error::ApiError,
+        v1::{
+            events::{
+                EventAndInstanceId, EventInstance, EventInstancePath, EventInstanceQuery,
+                EventRoomInfo, EventStatus, EventType, GetEventInstancesCursorData,
+                GetEventInstancesQuery, InstanceId, PatchEventInstanceBody,
+            },
+            Cursor,
         },
-        Cursor,
     },
     common::shared_folder::SharedFolder,
     core::{EventId, EventInviteStatus},
@@ -44,6 +35,25 @@ use opentalk_types::{
 use rrule::RRuleSet;
 use snafu::Report;
 use validator::Validate;
+
+use super::{
+    can_edit, get_invited_mail_recipients_for_event, notify_invitees_about_update, ApiResponse,
+    DateTimeTz, DefaultApiResult, EventInvitee, UpdateNotificationValues, LOCAL_DT_FORMAT,
+    ONE_HUNDRED_YEARS_IN_DAYS,
+};
+use crate::{
+    api::v1::{
+        events::{
+            enrich_invitees_from_keycloak, shared_folder_for_user, DateTimeTzFromDb,
+            EventRoomInfoExt,
+        },
+        response::NoContent,
+        rooms::RoomsPoliciesBuilderExt,
+        util::{GetUserProfilesBatched, UserProfilesBatch},
+    },
+    services::MailService,
+    settings::SharedSettingsActix,
+};
 
 struct GetPaginatedEventInstancesData {
     instances: Vec<EventInstance>,
@@ -614,16 +624,17 @@ fn verify_recurrence_date(
 
 #[cfg(test)]
 mod tests {
-    use crate::api::v1::events::{EventInviteeProfile, PublicInviteUserProfile};
+    use std::time::SystemTime;
 
-    use super::*;
     use chrono_tz::Tz;
     use opentalk_test_util::assert_eq_json;
     use opentalk_types::{
         api::v1::users::PublicUserProfile,
         core::{InviteRole, RoomId, TimeZone, Timestamp, UserId},
     };
-    use std::time::SystemTime;
+
+    use super::*;
+    use crate::api::v1::events::{EventInviteeProfile, PublicInviteUserProfile};
 
     #[test]
     fn event_instance_serialize() {

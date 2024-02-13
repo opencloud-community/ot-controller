@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use super::{EventAndInstanceId, EventInvitee, EventRoomInfo, EventStatus, EventType, InstanceId};
 #[allow(unused_imports)]
 use crate::imports::*;
 use crate::{
@@ -9,8 +10,6 @@ use crate::{
     common::shared_folder::SharedFolder,
     core::{DateTimeTz, EventId, EventInviteStatus, Timestamp},
 };
-
-use super::{EventAndInstanceId, EventInvitee, EventRoomInfo, EventStatus, EventType, InstanceId};
 
 /// Event instance resource
 ///

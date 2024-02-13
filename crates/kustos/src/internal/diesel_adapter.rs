@@ -4,10 +4,11 @@
 
 //! Casbin-rs adapter taken from <https://github.com/casbin-rs/diesel-adapter> but inlined to allow for our migration
 
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use casbin::{error::AdapterError, Adapter, Error as CasbinError, Filter, Model, Result};
 use opentalk_database::Db;
-use std::sync::Arc;
 
 use crate::db::{
     self,
@@ -351,12 +352,13 @@ fn normalize_policy(casbin_rule: &CasbinRule) -> Option<Vec<String>> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
     use opentalk_database::{query_helper, Db};
     use pretty_assertions::assert_eq;
     use serial_test::serial;
     use snafu::{ResultExt, Whatever};
+
+    use super::*;
 
     const MODEL: &str = r#"
     [request_definition]

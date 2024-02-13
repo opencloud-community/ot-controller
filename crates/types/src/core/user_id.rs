@@ -3,13 +3,12 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use derive_more::{AsRef, Display, From, FromStr, Into};
+#[cfg(feature = "kustos")]
+use kustos_shared::subject::PolicyUser;
 use uuid::Uuid;
 
 #[allow(unused_imports)]
 use crate::imports::*;
-
-#[cfg(feature = "kustos")]
-use kustos_shared::subject::PolicyUser;
 
 /// The id of a user
 #[derive(

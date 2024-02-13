@@ -6,12 +6,10 @@
 
 use std::collections::HashMap;
 
+use super::{MessageId, Scope};
 use crate::core::{GroupName, ParticipantId, Timestamp};
-
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::{MessageId, Scope};
 
 /// The state of the `chat` module
 #[derive(Clone, Debug)]
@@ -97,11 +95,13 @@ pub struct StoredMessage {
 
 #[cfg(test)]
 mod test {
-    use super::*;
+    use std::str::FromStr;
+
     use chrono::DateTime;
     use pretty_assertions::assert_eq;
     use serde_json::json;
-    use std::str::FromStr;
+
+    use super::*;
 
     #[test]
     fn server_message() {

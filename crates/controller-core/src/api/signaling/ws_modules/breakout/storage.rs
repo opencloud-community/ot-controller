@@ -2,15 +2,19 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::BreakoutRoom;
+use std::{
+    fmt::Debug,
+    time::{Duration, SystemTime},
+};
+
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError};
 use opentalk_types::core::{BreakoutRoomId, RoomId};
 use redis::AsyncCommands;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use snafu::ResultExt;
-use std::fmt::Debug;
-use std::time::{Duration, SystemTime};
+
+use super::BreakoutRoom;
 
 /// Typed key to a set which contains all breakout-room ids
 #[derive(ToRedisArgs)]

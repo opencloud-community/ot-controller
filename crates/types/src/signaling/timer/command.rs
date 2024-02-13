@@ -4,10 +4,9 @@
 
 //! Signaling commands for the `timer` namespace
 
+use super::TimerId;
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::TimerId;
 
 /// Incoming websocket messages
 #[derive(Debug)]
@@ -80,9 +79,10 @@ pub struct UpdateReadyStatus {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use pretty_assertions::assert_eq;
     use serde_json::json;
+
+    use super::*;
 
     #[test]
     fn countdown_start() {

@@ -4,13 +4,12 @@
 
 //! This module contains types that are used for OpenTalk API V1 streaming target endpoints for specific rooms.
 
+#[allow(unused_imports)]
+use crate::imports::*;
 use crate::{
     api::v1::streaming_targets::UpdateStreamingTarget,
     common::streaming::{RoomStreamingTarget, StreamingTarget},
 };
-
-#[allow(unused_imports)]
-use crate::imports::*;
 
 /// The body of a *GET /rooms/{room_id}/streaming_targets* response
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -44,14 +43,14 @@ pub struct ChangeRoomStreamingTargetResponse(pub RoomStreamingTarget);
 
 #[cfg(test)]
 mod test {
+    use pretty_assertions::assert_eq;
+    use serde_json::json;
+
+    use super::*;
     use crate::{
         common::streaming::StreamingTargetKind,
         core::{StreamingKey, StreamingTargetId},
     };
-
-    use super::*;
-    use pretty_assertions::assert_eq;
-    use serde_json::json;
 
     #[test]
     fn streaming_target_basic() {

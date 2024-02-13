@@ -5,7 +5,6 @@
 use std::collections::BTreeMap;
 
 use super::SignalingModuleFrontendData;
-
 #[allow(unused_imports)]
 use crate::imports::*;
 

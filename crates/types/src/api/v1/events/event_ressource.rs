@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use super::{EventInvitee, EventRoomInfo, EventType};
 #[allow(unused_imports)]
 use crate::imports::*;
 use crate::{
@@ -9,8 +10,6 @@ use crate::{
     common::{shared_folder::SharedFolder, streaming::RoomStreamingTarget},
     core::{DateTimeTz, EventId, EventInviteStatus, Timestamp},
 };
-
-use super::{EventInvitee, EventRoomInfo, EventType};
 
 /// Event Resource representation
 ///

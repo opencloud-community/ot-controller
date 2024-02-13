@@ -6,9 +6,8 @@
 use async_trait::async_trait;
 use http_request_derive::HttpRequest;
 
-use crate::ApiError;
-
 use self::rest_client::RestClient;
+use crate::ApiError;
 
 pub(crate) mod rest_client;
 

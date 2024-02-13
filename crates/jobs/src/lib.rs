@@ -35,14 +35,13 @@ use std::{
 };
 
 use async_trait::async_trait;
+pub use error::Error;
 use log::Log;
 use opentalk_controller_settings::Settings;
 use opentalk_database::Db;
 use opentalk_log::{error, info};
 use opentalk_signaling_core::ExchangeHandle;
 use serde_json::json;
-
-pub use error::Error;
 use snafu::Report;
 
 /// Execute a job

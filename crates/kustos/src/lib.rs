@@ -72,7 +72,8 @@
 //!     .await;
 //! # });
 //! ```
-use crate::actix_web::KustosService;
+use std::{sync::Arc, time::Duration};
+
 use casbin::{CoreApi, MgmtApi, RbacApi};
 use internal::synced_enforcer::SyncedEnforcer;
 use kustos_shared::{
@@ -88,11 +89,12 @@ use opentalk_database::Db;
 use policy::{
     GroupPolicies, InvitePolicies, InvitePolicy, Policy, RolePolicies, UserPolicies, UserPolicy,
 };
-use std::{sync::Arc, time::Duration};
 use tokio::{
     sync::{broadcast::Receiver, RwLock},
     task::JoinHandle,
 };
+
+use crate::actix_web::KustosService;
 
 pub mod actix_web;
 pub mod db;

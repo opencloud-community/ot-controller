@@ -2,10 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::schema::{external_tariffs, tariffs, users};
-use crate::utils::Jsonb;
-use chrono::{DateTime, Utc};
 use core::fmt::Debug;
+use std::collections::{HashMap, HashSet};
+
+use chrono::{DateTime, Utc};
 use derive_more::{AsRef, Display, From, FromStr, Into};
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
@@ -19,7 +19,11 @@ use opentalk_types::{
 use redis_args::{FromRedisValue, ToRedisArgs};
 use rustc_hash::FxHashSet;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+
+use crate::{
+    schema::{external_tariffs, tariffs, users},
+    utils::Jsonb,
+};
 
 #[derive(
     AsRef,
@@ -285,9 +289,10 @@ impl ExternalTariff {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use pretty_assertions::assert_eq;
     use serde_json::json;
+
+    use super::*;
 
     #[test]
     fn tariff_to_tariff_resource() {

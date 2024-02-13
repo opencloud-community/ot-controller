@@ -2,14 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use super::{EventAndInstanceId, EventStatus, EventType, InstanceId};
 #[allow(unused_imports)]
 use crate::imports::*;
 use crate::{
     api::v1::users::PublicUserProfile,
     core::{DateTimeTz, EventId, Timestamp},
 };
-
-use super::{EventAndInstanceId, EventStatus, EventType, InstanceId};
 
 /// Event exception resource
 ///

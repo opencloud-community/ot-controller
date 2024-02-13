@@ -4,12 +4,10 @@
 
 //! Signaling events for the `breakout` namespace
 
+use super::{AssociatedParticipantInOtherRoom, BreakoutRoom, ParticipantInOtherRoom};
 use crate::core::{BreakoutRoomId, Timestamp};
-
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::{AssociatedParticipantInOtherRoom, BreakoutRoom, ParticipantInOtherRoom};
 
 /// Events sent out by the `breakout` module
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -78,13 +76,14 @@ impl From<Error> for BreakoutEvent {
 
 #[cfg(test)]
 mod test {
+    use pretty_assertions::assert_eq;
+    use serde_json::json;
+
     use super::*;
     use crate::{
         core::{BreakoutRoomId, ParticipantId, ParticipationKind, Timestamp},
         signaling::{breakout::BreakoutRoom, Role},
     };
-    use pretty_assertions::assert_eq;
-    use serde_json::json;
 
     #[test]
     fn started() {

@@ -3,8 +3,9 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Expands the RbacApi of casbin of some missing functions that are present in casbin go implementation
-use casbin::RbacApi;
 use std::collections::HashSet;
+
+use casbin::RbacApi;
 
 pub trait RbacApiEx: RbacApi {
     /// Gets implicit users for a role
@@ -74,10 +75,12 @@ impl<T: RbacApi> RbacApiEx for T {}
 
 #[cfg(test)]
 mod test {
-    use super::*;
+    use std::iter::FromIterator;
+
     use casbin::{CoreApi, DefaultModel, Enforcer, MemoryAdapter, MgmtApi};
     use pretty_assertions::assert_eq;
-    use std::iter::FromIterator;
+
+    use super::*;
 
     fn to_owned(v: Vec<&str>) -> Vec<String> {
         v.into_iter().map(|x| x.to_owned()).collect()

@@ -2,14 +2,17 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::mcu::{JanusPublisher, JanusSubscriber, McuPool, MediaSessionKey, WebRtcEvent};
+use std::{collections::HashMap, future::Future};
+
 use opentalk_signaling_core::SignalingModuleError;
-use opentalk_types::signaling::media::ParticipantMediaState;
-use opentalk_types::{core::ParticipantId, signaling::media::MediaSessionType};
+use opentalk_types::{
+    core::ParticipantId,
+    signaling::media::{MediaSessionType, ParticipantMediaState},
+};
 use snafu::{ensure_whatever, Report};
-use std::collections::HashMap;
-use std::future::Future;
 use tokio::sync::mpsc;
+
+use crate::mcu::{JanusPublisher, JanusSubscriber, McuPool, MediaSessionKey, WebRtcEvent};
 
 pub struct MediaSessions {
     id: ParticipantId,

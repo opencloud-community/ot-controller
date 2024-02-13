@@ -2,12 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::{api::v1::events::UTC_DT_FORMAT, core::Timestamp};
-use chrono::{DateTime, Utc};
 use std::{fmt::Display, ops::Add};
+
+use chrono::{DateTime, Utc};
 
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::{api::v1::events::UTC_DT_FORMAT, core::Timestamp};
 
 /// ID of an EventInstance
 ///
@@ -46,8 +47,9 @@ impl Add<chrono::Duration> for InstanceId {
 
 #[cfg(feature = "serde")]
 mod serde_impls {
-    use super::{Deserialize, Deserializer, InstanceId, Serialize, Serializer, UTC_DT_FORMAT};
     use chrono::{DateTime, NaiveDateTime, Utc};
+
+    use super::{Deserialize, Deserializer, InstanceId, Serialize, Serializer, UTC_DT_FORMAT};
 
     const DT_FORMAT: &str = "%Y%m%dT%H%M%S%z";
     struct InstanceIdVisitor;
@@ -104,9 +106,11 @@ mod serde_impls {
 #[cfg(test)]
 #[cfg(feature = "serde")]
 mod test {
-    use super::InstanceId;
-    use serde_json::Value;
     use std::time::UNIX_EPOCH;
+
+    use serde_json::Value;
+
+    use super::InstanceId;
 
     #[test]
     #[cfg(feature = "serde")]

@@ -5,7 +5,6 @@
 //! Peer frontend data for `chat` namespace
 
 use crate::core::GroupName;
-
 #[allow(unused_imports)]
 use crate::imports::*;
 

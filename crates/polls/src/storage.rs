@@ -2,14 +2,16 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::PollsState;
-use crate::{ChoiceId, PollId};
+use std::collections::HashMap;
+
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 use opentalk_types::signaling::polls::Item;
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
 use snafu::{whatever, ResultExt};
-use std::collections::HashMap;
+
+use super::PollsState;
+use crate::{ChoiceId, PollId};
 
 /// Key to the current poll config
 #[derive(ToRedisArgs)]

@@ -9,12 +9,14 @@
 //! visibility restriction of those types, this module is located in the same folder.
 //!
 //! The idea is to simulate a frontend websocket connection.
-use crate::{
-    control::{self, storage, ControlStateExt as _},
-    AnyStream, DestroyContext, Event, ExchangePublish, InitContext, ModuleContext, ObjectStorage,
-    Participant, RedisConnection, RedisSnafu, SerdeJsonSnafu, SignalingModule,
-    SignalingModuleError, SignalingRoomId,
+use std::{
+    collections::{HashMap, HashSet},
+    marker::PhantomData,
+    panic,
+    sync::Arc,
+    time::Duration,
 };
+
 use actix_http::ws::CloseCode;
 use actix_rt::task::JoinHandle;
 use futures::{stream::SelectAll, StreamExt};
@@ -46,12 +48,11 @@ use tokio::{
     time::{timeout, timeout_at, Instant},
 };
 
-use std::{
-    collections::{HashMap, HashSet},
-    marker::PhantomData,
-    panic,
-    sync::Arc,
-    time::Duration,
+use crate::{
+    control::{self, storage, ControlStateExt as _},
+    AnyStream, DestroyContext, Event, ExchangePublish, InitContext, ModuleContext, ObjectStorage,
+    Participant, RedisConnection, RedisSnafu, SerdeJsonSnafu, SignalingModule,
+    SignalingModuleError, SignalingRoomId,
 };
 
 /// A module tester that simulates a runner environment for provided module.

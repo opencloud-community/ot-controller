@@ -2,8 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentelemetry::metrics::{Counter, Histogram, UpDownCounter};
-use opentelemetry::Key;
+use opentelemetry::{
+    metrics::{Counter, Histogram, UpDownCounter},
+    Key,
+};
 
 use crate::Participant;
 

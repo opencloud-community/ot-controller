@@ -4,12 +4,10 @@
 
 //! Signaling events for the `chat` namespace
 
+use super::{MessageId, Scope};
 use crate::core::ParticipantId;
-
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::{MessageId, Scope};
 
 /// A chat event which occured
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -124,11 +122,11 @@ impl From<Error> for ChatEvent {
 
 #[cfg(test)]
 mod test {
-    use crate::core::GroupName;
-
-    use super::*;
     use pretty_assertions::assert_eq;
     use serde_json::json;
+
+    use super::*;
+    use crate::core::GroupName;
 
     #[test]
     fn global_serialize() {

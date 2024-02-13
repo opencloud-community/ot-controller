@@ -2,11 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use super::{Kind, TimerId};
 use crate::core::Timestamp;
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::{Kind, TimerId};
 
 /// Status of a currently active timer
 #[derive(Debug, PartialEq, Eq)]

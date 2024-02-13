@@ -66,8 +66,9 @@ pub enum AssetSorting {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "serde")]

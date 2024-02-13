@@ -2,14 +2,15 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::storage::BreakoutConfig;
+use std::{collections::HashMap, time::SystemTime};
+
 use opentalk_types::{
     core::{BreakoutRoomId, ParticipantId},
     signaling::breakout::{AssociatedParticipantInOtherRoom, ParticipantInOtherRoom},
 };
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::time::SystemTime;
+
+use super::storage::BreakoutConfig;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

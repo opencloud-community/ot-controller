@@ -9,17 +9,6 @@
 
 use std::str::FromStr;
 
-use super::response::NoContent;
-use crate::{
-    api::{
-        signaling::{
-            breakout, moderation, ticket::start_or_continue_signaling_session, SignalingModules,
-        },
-        v1::{util::require_feature, ApiResponse},
-    },
-    settings::SharedSettingsActix,
-};
-
 use actix_web::{
     delete, get, patch, post,
     web::{self, Data, Json, Path, ReqData},
@@ -30,13 +19,13 @@ use kustos::{
     AccessMethod, Authz, Resource, ResourceId,
 };
 use opentalk_database::Db;
-use opentalk_db_storage::utils::build_event_info;
 use opentalk_db_storage::{
     events::Event,
     invites::Invite,
     rooms::{self as db_rooms, Room},
     sip_configs::NewSipConfig,
     users::User,
+    utils::build_event_info,
 };
 use opentalk_signaling_core::{Participant, RedisConnection};
 use opentalk_types::{
@@ -55,6 +44,17 @@ use opentalk_types::{
     core::{InviteCodeId, RoomId},
 };
 use validator::Validate;
+
+use super::response::NoContent;
+use crate::{
+    api::{
+        signaling::{
+            breakout, moderation, ticket::start_or_continue_signaling_session, SignalingModules,
+        },
+        v1::{util::require_feature, ApiResponse},
+    },
+    settings::SharedSettingsActix,
+};
 
 /// API Endpoint *GET /rooms*
 ///

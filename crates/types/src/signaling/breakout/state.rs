@@ -4,12 +4,10 @@
 
 //! Frontend data for `breakout` namespace
 
+use super::{BreakoutRoom, ParticipantInOtherRoom};
 use crate::core::{BreakoutRoomId, Timestamp};
-
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::{BreakoutRoom, ParticipantInOtherRoom};
 
 /// The state the `breakout` module.
 ///

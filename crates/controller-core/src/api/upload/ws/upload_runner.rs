@@ -2,10 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::sync::Arc;
+
 use opentalk_database::Db;
 use opentalk_signaling_core::{assets, ObjectStorage, ObjectStorageError};
 use opentalk_types::core::RoomId;
-use std::sync::Arc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 pub async fn run_upload(

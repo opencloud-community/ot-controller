@@ -3,11 +3,6 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Contains invite related REST endpoints.
-use super::{response::NoContent, DefaultApiResult};
-use crate::{
-    api::v1::{rooms::RoomsPoliciesBuilderExt, ApiResponse},
-    settings::SharedSettingsActix,
-};
 use actix_web::{
     delete, get, post, put,
     web::{Data, Json, Path, Query, ReqData},
@@ -35,6 +30,12 @@ use opentalk_types::{
     core::RoomId,
 };
 use validator::Validate;
+
+use super::{response::NoContent, DefaultApiResult};
+use crate::{
+    api::v1::{rooms::RoomsPoliciesBuilderExt, ApiResponse},
+    settings::SharedSettingsActix,
+};
 
 /// API Endpoint *POST /rooms/{room_id}/invites*
 ///

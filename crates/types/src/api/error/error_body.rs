@@ -2,10 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use super::{StandardErrorBody, ValidationErrorBody};
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::{StandardErrorBody, ValidationErrorBody};
 
 /// The body of an error response
 #[derive(Debug, Clone, PartialEq, Eq)]

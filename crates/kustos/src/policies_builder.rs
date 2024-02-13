@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::{fmt::Debug, mem::take};
+
 use kustos_shared::{
     access::AccessMethod,
     internal::{ToCasbin, ToCasbinMultiple},
@@ -12,7 +14,6 @@ use crate::{
     resource::ResourceId,
     subject::{IsSubject, PolicyGroup, PolicyInvite, PolicyRole, PolicyUser},
 };
-use std::{fmt::Debug, mem::take};
 
 #[doc(hidden)]
 pub trait BuilderState: Debug {

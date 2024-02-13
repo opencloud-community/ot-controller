@@ -5,7 +5,6 @@
 use derive_more::{AsRef, Display, From, Into};
 
 use crate::core::ParticipantId;
-
 #[allow(unused_imports)]
 use crate::imports::*;
 

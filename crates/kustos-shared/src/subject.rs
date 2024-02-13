@@ -2,10 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::str::FromStr;
+
 use snafu::Snafu;
 use uuid::Uuid;
-
-use std::str::FromStr;
 
 /// The error type is returned when parsing invalid values from strings.
 ///

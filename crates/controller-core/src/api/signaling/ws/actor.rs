@@ -2,14 +2,17 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::{
+    convert::TryFrom,
+    time::{Duration, Instant},
+};
+
 use actix::{Actor, ActorContext, AsyncContext, Handler, StreamHandler};
 use actix_http::ws::{CloseCode, CloseReason, Item, ProtocolError};
 use actix_web_actors::ws::{Message, WebsocketContext};
 use bytes::BytesMut;
 use bytestring::ByteString;
 use snafu::Report;
-use std::convert::TryFrom;
-use std::time::{Duration, Instant};
 use tokio::sync::mpsc::UnboundedSender;
 
 use super::RunnerMessage;

@@ -4,12 +4,10 @@
 
 //! Signaling messages for the `media` namespace
 
+use super::{MediaSessionState, MediaSessionType, TrickleCandidate, UpdateSpeakingState};
 use crate::core::ParticipantId;
-
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::{MediaSessionState, MediaSessionType, TrickleCandidate, UpdateSpeakingState};
 
 /// Commands received by the `media` module
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -187,10 +185,11 @@ pub struct SubscriberConfiguration {
 
 #[cfg(test)]
 mod test {
-    use super::*;
-    use crate::{core::ParticipantId, signaling::media::MediaSessionType};
     use pretty_assertions::assert_eq;
     use serde_json::json;
+
+    use super::*;
+    use crate::{core::ParticipantId, signaling::media::MediaSessionType};
 
     #[test]
     fn publish() {

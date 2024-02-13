@@ -12,7 +12,6 @@ use opentalk_types::{
 };
 
 use super::Event;
-
 use crate::schema::{event_shared_folders, events};
 
 #[derive(Insertable)]

@@ -2,13 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+#[allow(unused_imports)]
+use crate::imports::*;
 use crate::{
     api::v1::{events::GetEventInstancesCursorData, Cursor},
     core::Timestamp,
 };
-
-#[allow(unused_imports)]
-use crate::imports::*;
 
 /// Query parameters for the `GET /events/{event_id}/instances` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -22,9 +22,8 @@ use opentalk_signaling_core::{assets::asset_key, control, ExchangeHandle, Object
 use opentalk_types::core::{AssetId, EventId, ModuleResourceId, RoomId, UserId};
 use snafu::ResultExt;
 
-use crate::deletion::{error::ObjectDeletionSnafu, shared_folders::delete_shared_folders};
-
 use super::{Deleter, Error};
+use crate::deletion::{error::ObjectDeletionSnafu, shared_folders::delete_shared_folders};
 
 /// Delete a room by id including the resources it references.
 #[derive(Debug)]

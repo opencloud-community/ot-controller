@@ -3,33 +3,47 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Handles user Authentication in API requests
-use crate::api::v1::middleware::user_auth::bearer_or_invite_code::BearerOrInviteCode;
-use crate::api::v1::response::error::CacheableApiError;
-use crate::caches::Caches;
-use crate::oidc::{OidcContext, UserClaims};
-use actix_web::dev::{Service, ServiceRequest, ServiceResponse, Transform};
-use actix_web::error::Error;
-use actix_web::http::header::Header;
-use actix_web::web::Data;
-use actix_web::{HttpMessage, ResponseError};
+use core::future::ready;
+use std::{
+    future::{Future, Ready},
+    pin::Pin,
+    rc::Rc,
+    task::{Context, Poll},
+};
+
+use actix_web::{
+    dev::{Service, ServiceRequest, ServiceResponse, Transform},
+    error::Error,
+    http::header::Header,
+    web::Data,
+    HttpMessage, ResponseError,
+};
 use actix_web_httpauth::headers::authorization::Authorization;
 use chrono::Utc;
-use core::future::ready;
 use openidconnect::AccessToken;
 use opentalk_cache::Cache;
 use opentalk_controller_settings::{Settings, SharedSettings, TenantAssignment};
 use opentalk_database::Db;
-use opentalk_db_storage::tenants::{OidcTenantId, Tenant};
-use opentalk_db_storage::users::User;
-use opentalk_types::api::error::ApiError;
-use opentalk_types::{api::error::AuthenticationError, core::InviteCodeId};
+use opentalk_db_storage::{
+    tenants::{OidcTenantId, Tenant},
+    users::User,
+};
+use opentalk_types::{
+    api::error::{ApiError, AuthenticationError},
+    core::InviteCodeId,
+};
 use snafu::Report;
-use std::future::{Future, Ready};
-use std::pin::Pin;
-use std::rc::Rc;
-use std::task::{Context, Poll};
 use tracing_futures::Instrument;
 use uuid::Uuid;
+
+use crate::{
+    api::v1::{
+        middleware::user_auth::bearer_or_invite_code::BearerOrInviteCode,
+        response::error::CacheableApiError,
+    },
+    caches::Caches,
+    oidc::{OidcContext, UserClaims},
+};
 
 mod bearer_or_invite_code;
 

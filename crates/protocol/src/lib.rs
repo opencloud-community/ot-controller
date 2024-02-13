@@ -2,7 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::storage::init::InitState;
+use std::sync::Arc;
+
 use chrono::{Duration, Utc};
 use exchange::GenerateUrl;
 use opentalk_database::Db;
@@ -31,7 +32,8 @@ use opentalk_types::{
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use snafu::{whatever, OptionExt, Report};
-use std::sync::Arc;
+
+use crate::storage::init::InitState;
 
 pub mod exchange;
 pub mod storage;

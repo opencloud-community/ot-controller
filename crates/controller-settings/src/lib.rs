@@ -31,17 +31,20 @@
 //!
 //! Setting categories, in which all properties implement a default value, should also implement the [`Default`] trait.
 
+use std::{
+    collections::{HashMap, HashSet},
+    convert::TryFrom,
+    path::PathBuf,
+    sync::Arc,
+    time::Duration,
+};
+
 use arc_swap::ArcSwap;
 use config::{Config, Environment, File, FileFormat};
 use openidconnect::{ClientId, ClientSecret};
 use rustc_hash::FxHashSet;
 use serde::{Deserialize, Deserializer};
 use snafu::{ResultExt, Snafu};
-use std::collections::{HashMap, HashSet};
-use std::convert::TryFrom;
-use std::path::PathBuf;
-use std::sync::Arc;
-use std::time::Duration;
 use url::Url;
 
 #[derive(Debug, Snafu)]
@@ -537,10 +540,12 @@ pub struct Tariffs {
 
 #[cfg(test)]
 mod test {
-    use super::*;
+    use std::env;
+
     use pretty_assertions::assert_eq;
     use serde_json::json;
-    use std::env;
+
+    use super::*;
 
     #[test]
     fn settings_env_vars_overwrite_config() -> Result<()> {

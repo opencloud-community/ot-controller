@@ -2,10 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use email_address::EmailAddress;
+
 use crate::core::EmailInviteRole;
 #[allow(unused_imports)]
 use crate::imports::*;
-use email_address::EmailAddress;
 
 /// Request body for the `PATCH /events/{event_id}/invites/email` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]

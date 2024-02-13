@@ -8,6 +8,8 @@
 //!
 //! Issues timestamp and messageIds to incoming chat messages and forwards them to other participants in the room or group.
 
+use std::{collections::HashMap, sync::Arc};
+
 use opentalk_database::Db;
 use opentalk_db_storage::groups::Group;
 use opentalk_r3dlock::Mutex;
@@ -30,9 +32,6 @@ use opentalk_types::{
     },
 };
 use snafu::Report;
-
-use std::collections::HashMap;
-use std::sync::Arc;
 
 mod storage;
 

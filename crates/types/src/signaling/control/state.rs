@@ -4,13 +4,12 @@
 
 //! Frontend data for `control` namespace
 
+#[allow(unused_imports)]
+use crate::imports::*;
 use crate::{
     core::{ParticipationKind, Timestamp},
     signaling::Role,
 };
-
-#[allow(unused_imports)]
-use crate::imports::*;
 
 /// The state of a participant in the `control` module.
 ///

@@ -15,8 +15,6 @@ pub struct TimeZone(chrono_tz::Tz);
 
 #[cfg(feature = "diesel")]
 mod diesel_traits {
-    use super::*;
-
     use std::{
         io::Write,
         str::{from_utf8, FromStr},
@@ -29,6 +27,8 @@ mod diesel_traits {
         pg::Pg,
         serialize::{self, IsNull, Output, ToSql},
     };
+
+    use super::*;
 
     impl ToSql<diesel::sql_types::Text, Pg> for TimeZone {
         fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Pg>) -> serialize::Result {

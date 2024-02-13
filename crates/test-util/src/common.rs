@@ -2,8 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::sync::Arc;
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
 use kustos::Authz;
 use opentalk_db_storage::users::User;
@@ -19,8 +18,7 @@ use pretty_assertions::assert_eq;
 use snafu::{ResultExt, Whatever};
 use tokio::sync::broadcast::Sender;
 
-use crate::database::DatabaseContext;
-use crate::redis;
+use crate::{database::DatabaseContext, redis};
 
 #[derive(Debug)]
 pub struct TestUser {

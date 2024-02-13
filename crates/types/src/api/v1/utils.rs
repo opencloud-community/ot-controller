@@ -72,8 +72,9 @@ where
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[derive(Debug, Deserialize, PartialEq)]
     struct Test {

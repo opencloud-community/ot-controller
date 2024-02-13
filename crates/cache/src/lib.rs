@@ -2,16 +2,14 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use core::fmt::Display;
-use core::time::Duration;
+use core::{fmt::Display, time::Duration};
+use std::{hash::Hash, time::Instant};
+
 use moka::future::Cache as LocalCache;
 use redis::{AsyncCommands, RedisError, ToRedisArgs};
-use serde::de::DeserializeOwned;
-use serde::Serialize;
+use serde::{de::DeserializeOwned, Serialize};
 use siphasher::sip128::{Hasher128, SipHasher24};
 use snafu::Snafu;
-use std::hash::Hash;
-use std::time::Instant;
 
 type RedisConnection = redis::aio::ConnectionManager;
 

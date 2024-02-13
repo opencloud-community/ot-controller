@@ -4,19 +4,20 @@
 
 //! Contains the room specific database structs and queries
 
-use crate::schema::{rooms, users};
-use crate::tariffs::Tariff;
-use crate::users::User;
 use chrono::{DateTime, Utc};
 use derive_more::{AsRef, Display, From, FromStr, Into};
-use diesel::prelude::*;
-use diesel::{ExpressionMethods, Identifiable, QueryDsl, Queryable};
+use diesel::{prelude::*, ExpressionMethods, Identifiable, QueryDsl, Queryable};
 use diesel_async::RunQueryDsl;
-use opentalk_database::DbConnection;
-use opentalk_database::{Paginate, Result};
+use opentalk_database::{DbConnection, Paginate, Result};
 use opentalk_diesel_newtype::DieselNewtype;
 use opentalk_types::core::{RoomId, TenantId, UserId};
 use serde::{Deserialize, Serialize};
+
+use crate::{
+    schema::{rooms, users},
+    tariffs::Tariff,
+    users::User,
+};
 
 #[derive(
     AsRef,

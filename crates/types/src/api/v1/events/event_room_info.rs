@@ -2,10 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::core::RoomId;
-
 use super::CallInInfo;
-
+use crate::core::RoomId;
 #[allow(unused_imports)]
 use crate::imports::*;
 

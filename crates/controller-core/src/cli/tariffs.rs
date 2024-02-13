@@ -2,20 +2,19 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::{collections::HashMap, num::ParseIntError};
+
 use chrono::Utc;
 use clap::Subcommand;
-use diesel_async::scoped_futures::ScopedFutureExt;
-use diesel_async::AsyncConnection;
+use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
 use itertools::Itertools;
 use opentalk_controller_settings::Settings;
 use opentalk_database::{DatabaseError, Db, DbConnection};
-use opentalk_db_storage::tariffs::{
-    ExternalTariff, ExternalTariffId, NewTariff, Tariff, UpdateTariff,
+use opentalk_db_storage::{
+    tariffs::{ExternalTariff, ExternalTariffId, NewTariff, Tariff, UpdateTariff},
+    utils::Jsonb,
 };
-use opentalk_db_storage::utils::Jsonb;
 use snafu::{OptionExt, ResultExt, Snafu};
-use std::collections::HashMap;
-use std::num::ParseIntError;
 use tabled::{settings::Style, Table, Tabled};
 
 #[derive(Subcommand, Debug, Clone)]

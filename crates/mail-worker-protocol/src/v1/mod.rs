@@ -4,8 +4,7 @@
 
 use chrono::Utc;
 use opentalk_types::common::shared_folder::SharedFolder;
-use serde::Deserialize;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 mod invites;
@@ -150,11 +149,12 @@ pub enum Message {
 
 #[cfg(test)]
 mod test {
-    use super::*;
-    use crate::*;
     use chrono::FixedOffset;
     use opentalk_types::common::shared_folder::SharedFolderAccess;
     use pretty_assertions::assert_eq;
+
+    use super::*;
+    use crate::*;
 
     #[test]
     fn test_basic_format() {

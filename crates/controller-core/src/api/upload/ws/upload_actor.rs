@@ -2,12 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::time::{Duration, Instant};
+
 use actix::{Actor, ActorContext, AsyncContext, StreamHandler};
 use actix_http::ws::{CloseCode, CloseReason, Item, ProtocolError};
 use actix_web_actors::ws::{Message, WebsocketContext};
 use bytes::BytesMut;
 use opentalk_signaling_core::ObjectStorageError;
-use std::time::{Duration, Instant};
 use tokio::sync::mpsc::UnboundedSender;
 
 /// Define HTTP Websocket actor

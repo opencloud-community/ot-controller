@@ -7,7 +7,6 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::core::TariffId;
-
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -44,9 +43,10 @@ pub struct TariffModuleResource {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use pretty_assertions::assert_eq;
     use serde_json::json;
+
+    use super::*;
 
     #[test]
     fn tariff_resource() {

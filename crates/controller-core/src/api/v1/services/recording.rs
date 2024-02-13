@@ -2,27 +2,34 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::api::signaling::ticket::start_or_continue_signaling_session;
-use crate::api::upload::{run_upload, UploadWebSocketActor};
-use crate::api::v1::response::NoContent;
-use crate::settings::SharedSettingsActix;
-use actix_web::dev::HttpServiceFactory;
-use actix_web::web::Payload;
-use actix_web::web::Query;
-use actix_web::web::{Data, Json};
-use actix_web::{get, post, web, HttpRequest, HttpResponse};
+use actix_web::{
+    dev::HttpServiceFactory,
+    get, post, web,
+    web::{Data, Json, Payload, Query},
+    HttpRequest, HttpResponse,
+};
 use actix_web_actors::ws;
 use futures::TryStreamExt;
 use opentalk_database::Db;
 use opentalk_db_storage::rooms::Room;
-use opentalk_signaling_core::assets::{save_asset, verify_storage_usage};
-use opentalk_signaling_core::{ObjectStorage, Participant, RedisConnection};
+use opentalk_signaling_core::{
+    assets::{save_asset, verify_storage_usage},
+    ObjectStorage, Participant, RedisConnection,
+};
 use opentalk_types::api::{
     error::ApiError,
     v1::services::{ServiceStartResponse, StartBody, UploadRenderQuery},
 };
-use tokio::sync::mpsc;
-use tokio::task;
+use tokio::{sync::mpsc, task};
+
+use crate::{
+    api::{
+        signaling::ticket::start_or_continue_signaling_session,
+        upload::{run_upload, UploadWebSocketActor},
+        v1::response::NoContent,
+    },
+    settings::SharedSettingsActix,
+};
 
 // Note to devs:
 // Please update `docs/admin/keycloak.md` service login documentation as well if

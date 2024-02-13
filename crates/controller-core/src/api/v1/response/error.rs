@@ -4,12 +4,9 @@
 
 //! Error response types for REST APIv1
 use actix_http::header::HeaderValue;
-use actix_web::error::JsonPayloadError;
-use actix_web::http::StatusCode;
-use actix_web::HttpRequest;
+use actix_web::{error::JsonPayloadError, http::StatusCode, HttpRequest};
 use opentalk_types::api::error::{ApiError, ErrorBody};
-use serde::Deserialize;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use snafu::ResultExt;
 
 /// Error handler for the actix JSON extractor

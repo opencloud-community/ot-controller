@@ -2,22 +2,28 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::api::signaling::ticket::start_or_continue_signaling_session;
-use crate::api::v1::util::require_feature;
-use crate::settings::SharedSettingsActix;
-use actix_web::dev::HttpServiceFactory;
-use actix_web::error::Result;
-use actix_web::post;
-use actix_web::web::{Data, Json};
+use actix_web::{
+    dev::HttpServiceFactory,
+    error::Result,
+    post,
+    web::{Data, Json},
+};
 use opentalk_database::Db;
 use opentalk_db_storage::sip_configs::SipConfig;
 use opentalk_signaling_core::{Participant, RedisConnection};
-use opentalk_types::api::error::ApiError;
 use opentalk_types::{
-    api::v1::services::{ServiceStartResponse, StartRequestBody},
+    api::{
+        error::ApiError,
+        v1::services::{ServiceStartResponse, StartRequestBody},
+    },
     common::features,
 };
 use validator::Validate;
+
+use crate::{
+    api::{signaling::ticket::start_or_continue_signaling_session, v1::util::require_feature},
+    settings::SharedSettingsActix,
+};
 
 // Note to devs:
 // Please update `docs/admin/keycloak.md` service login documentation as well if

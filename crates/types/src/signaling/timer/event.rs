@@ -4,11 +4,10 @@
 
 //! Signaling events for the `timer` namespace
 
+use super::{TimerConfig, TimerId};
 use crate::core::ParticipantId;
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::{TimerConfig, TimerId};
 
 /// Outgoing websocket messages
 #[derive(Debug, PartialEq, Eq)]
@@ -121,11 +120,11 @@ impl From<Error> for Message {
 mod test {
     use std::time::SystemTime;
 
-    use crate::{core::Timestamp, signaling::timer::Kind};
-
-    use super::*;
     use chrono::{DateTime, Duration};
     use serde_json::json;
+
+    use super::*;
+    use crate::{core::Timestamp, signaling::timer::Kind};
 
     #[test]
     fn countdown_started() {

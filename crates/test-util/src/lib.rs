@@ -4,10 +4,9 @@
 
 //! Test utility functions for use with the module tester and the controller
 pub use ::serde_json;
-pub use pretty_assertions::assert_eq;
-
 #[cfg(feature = "controller")]
 pub use common::{TestContext, TestUser, ROOM_ID, USERS, USER_1, USER_2};
+pub use pretty_assertions::assert_eq;
 
 #[cfg(feature = "controller")]
 pub mod common;

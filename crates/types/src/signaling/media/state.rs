@@ -4,10 +4,9 @@
 
 //! Frontend data for `media` namespace
 
+use super::ParticipantSpeakingState;
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::ParticipantSpeakingState;
 
 /// The state of the `media` module.
 #[derive(Clone, Debug, PartialEq, Eq)]

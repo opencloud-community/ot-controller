@@ -2,9 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use serde::{Deserialize, Serialize};
+
 use super::Result;
 use crate::{Error, KeycloakAdminClient};
-use serde::{Deserialize, Serialize};
 
 const MAX_NUM_KEYCLOAK_SEARCH_RESULTS: i32 = 100;
 const MAX_USER_SEARCH_RESULTS: usize = 50;

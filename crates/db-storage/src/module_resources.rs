@@ -2,19 +2,20 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::schema::{module_resources, rooms};
+use std::str::FromStr;
+
 use chrono::{DateTime, Utc};
-use diesel::pg::Pg;
-use diesel::prelude::*;
-use diesel::sql_types::Jsonb;
-use diesel::{ExpressionMethods, Identifiable, QueryDsl, Queryable};
+use diesel::{
+    pg::Pg, prelude::*, sql_types::Jsonb, ExpressionMethods, Identifiable, QueryDsl, Queryable,
+};
 use diesel_async::RunQueryDsl;
 use opentalk_database::{DatabaseError, DbConnection, Result};
 use opentalk_types::core::{ModuleResourceId, RoomId, TenantId, UserId};
 use serde::Serialize;
 use serde_json::Value;
 use snafu::Snafu;
-use std::str::FromStr;
+
+use crate::schema::{module_resources, rooms};
 
 #[derive(
     Debug, PartialEq, Serialize, strum::Display, strum::FromRepr, strum::AsRefStr, strum::EnumString,
@@ -350,13 +351,12 @@ impl NewModuleResource {
 
 #[cfg(test)]
 mod test {
-    use super::*;
-    use crate::tenants::get_or_create_tenant_by_oidc_id;
-    use crate::tenants::OidcTenantId;
     use opentalk_test_util::{assert_eq, *};
-    use serde_json::json;
-    use serde_json::Value;
+    use serde_json::{json, Value};
     use serial_test::serial;
+
+    use super::*;
+    use crate::tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId};
 
     async fn init_resource(json: Value) -> (ModuleResourceId, DbConnection) {
         let db_ctx = opentalk_test_util::database::DatabaseContext::new(false).await;

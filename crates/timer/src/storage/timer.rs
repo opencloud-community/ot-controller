@@ -2,14 +2,14 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::{Kind, TimerId};
-
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 use opentalk_types::core::{ParticipantId, Timestamp};
 use redis::AsyncCommands;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use snafu::ResultExt;
+
+use crate::{Kind, TimerId};
 
 /// The timer key holds a serialized [`Timer`].
 #[derive(ToRedisArgs)]

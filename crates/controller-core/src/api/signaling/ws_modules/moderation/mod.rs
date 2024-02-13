@@ -2,12 +2,15 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::iter::zip;
+
 use actix_http::ws::CloseCode;
 use opentalk_signaling_core::{
     control::{self, ControlStateExt as _},
     DestroyContext, Event, InitContext, ModuleContext, RedisConnection, SerdeJsonSnafu,
     SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
+pub use opentalk_types::signaling::moderation::NAMESPACE;
 use opentalk_types::{
     core::{ParticipantId, ParticipationKind, RoomId, UserId},
     signaling::{
@@ -21,9 +24,6 @@ use opentalk_types::{
     },
 };
 use snafu::{Report, ResultExt};
-use std::iter::zip;
-
-pub use opentalk_types::signaling::moderation::NAMESPACE;
 
 use crate::api::signaling::{trim_display_name, ws::ModuleContextExt};
 

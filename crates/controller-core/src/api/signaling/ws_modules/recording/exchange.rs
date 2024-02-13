@@ -2,8 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::RecordingId;
 use serde::{Deserialize, Serialize};
+
+use super::RecordingId;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Message {

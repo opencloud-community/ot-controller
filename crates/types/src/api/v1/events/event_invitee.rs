@@ -2,11 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use super::EventInviteeProfile;
 use crate::core::EventInviteStatus;
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::EventInviteeProfile;
 
 /// Invitee to an event
 ///

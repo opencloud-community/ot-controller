@@ -4,13 +4,17 @@
 
 //! OpenTalk Database connector, interface and connection handling
 
-use diesel::pg::Pg;
-use diesel::query_builder::{AstPass, Query, QueryFragment, QueryId};
-use diesel::sql_types::BigInt;
-use diesel::QueryResult;
-use diesel_async::methods::LoadQuery;
-use diesel_async::pooled_connection::deadpool::{BuildError, Object, PoolError};
-use diesel_async::{AsyncConnection, AsyncPgConnection};
+use diesel::{
+    pg::Pg,
+    query_builder::{AstPass, Query, QueryFragment, QueryId},
+    sql_types::BigInt,
+    QueryResult,
+};
+use diesel_async::{
+    methods::LoadQuery,
+    pooled_connection::deadpool::{BuildError, Object, PoolError},
+    AsyncConnection, AsyncPgConnection,
+};
 use snafu::Snafu;
 
 mod db;

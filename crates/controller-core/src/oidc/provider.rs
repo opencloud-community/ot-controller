@@ -2,9 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use openidconnect::core::CoreClient;
-use openidconnect::url::Url;
-use openidconnect::{ClientId, IntrospectionUrl, IssuerUrl};
+use openidconnect::{core::CoreClient, url::Url, ClientId, IntrospectionUrl, IssuerUrl};
 use opentalk_controller_settings as settings;
 use serde::{Deserialize, Serialize};
 use snafu::{Backtrace, ResultExt};

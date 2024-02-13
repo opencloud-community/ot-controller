@@ -8,10 +8,8 @@ use std::time::Duration;
 
 use chrono::Utc;
 
-use crate::core::Timestamp;
-
 use super::{Choice, PollId};
-
+use crate::core::Timestamp;
 #[allow(unused_imports)]
 use crate::imports::*;
 

@@ -4,26 +4,15 @@
 
 use std::sync::Arc;
 
-use super::{ApiResponse, DefaultApiResult};
-use crate::api::v1::events::{
-    enrich_from_keycloak, enrich_invitees_from_keycloak, get_invited_mail_recipients_for_event,
-    get_tenant_filter, EventInvitee, EventInviteeExt, EventPoliciesBuilderExt,
+use actix_web::{
+    delete, get, patch, post,
+    web::{Data, Json, Path, Query, ReqData},
+    Either,
 };
-use crate::api::v1::response::{Created, NoContent};
-use crate::api::v1::rooms::RoomsPoliciesBuilderExt;
-use crate::services::{
-    ExternalMailRecipient, MailRecipient, MailService, RegisteredMailRecipient,
-    UnregisteredMailRecipient,
-};
-use crate::settings::SharedSettingsActix;
-use actix_web::web::{Data, Json, Path, Query, ReqData};
-use actix_web::{delete, get, patch, post, Either};
 use chrono::Utc;
-use diesel_async::scoped_futures::ScopedFutureExt;
-use diesel_async::AsyncConnection;
+use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
 use email_address::EmailAddress;
-use kustos::policies_builder::PoliciesBuilder;
-use kustos::Authz;
+use kustos::{policies_builder::PoliciesBuilder, Authz};
 use opentalk_controller_settings::Settings;
 use opentalk_database::Db;
 use opentalk_db_storage::{
@@ -58,6 +47,24 @@ use opentalk_types::{
 };
 use serde::Deserialize;
 use snafu::Report;
+
+use super::{ApiResponse, DefaultApiResult};
+use crate::{
+    api::v1::{
+        events::{
+            enrich_from_keycloak, enrich_invitees_from_keycloak,
+            get_invited_mail_recipients_for_event, get_tenant_filter, EventInvitee,
+            EventInviteeExt, EventPoliciesBuilderExt,
+        },
+        response::{Created, NoContent},
+        rooms::RoomsPoliciesBuilderExt,
+    },
+    services::{
+        ExternalMailRecipient, MailRecipient, MailService, RegisteredMailRecipient,
+        UnregisteredMailRecipient,
+    },
+    settings::SharedSettingsActix,
+};
 
 /// API Endpoint `GET /events/{event_id}/invites`
 ///

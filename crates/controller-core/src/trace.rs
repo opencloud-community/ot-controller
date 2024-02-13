@@ -2,20 +2,19 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use actix_web::dev::{ServiceRequest, ServiceResponse};
-use actix_web::http::header::USER_AGENT;
-use actix_web::{Error, HttpMessage};
+use actix_web::{
+    dev::{ServiceRequest, ServiceResponse},
+    http::header::USER_AGENT,
+    Error, HttpMessage,
+};
 use opentalk_controller_settings::Logging;
-use opentelemetry::global;
-use opentelemetry::KeyValue;
+use opentelemetry::{global, KeyValue};
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::{trace, Resource};
 use snafu::ResultExt;
 use tracing::Span;
 use tracing_actix_web::{RequestId, RootSpanBuilder};
-use tracing_subscriber::layer::SubscriberExt;
-use tracing_subscriber::util::SubscriberInitExt;
-use tracing_subscriber::{EnvFilter, Registry};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Registry};
 use uuid::Uuid;
 
 use crate::Result;

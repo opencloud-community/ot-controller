@@ -6,7 +6,6 @@ use std::{collections::BTreeSet, str::FromStr};
 
 #[allow(unused_imports)]
 use crate::imports::*;
-
 use crate::sql_enum;
 
 sql_enum!(

@@ -6,10 +6,9 @@
 
 use std::time::Duration;
 
+use super::{ChoiceId, PollId};
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::{ChoiceId, PollId};
 
 /// Commands received by the `polls` module
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -72,9 +71,10 @@ pub struct Finish {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use pretty_assertions::assert_eq;
     use serde_json::json;
+
+    use super::*;
 
     #[test]
     fn start() {

@@ -4,10 +4,9 @@
 
 use std::borrow::Cow;
 
+use super::ValidationErrorEntry;
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::ValidationErrorEntry;
 
 /// The body of a validation error response
 #[derive(Debug, Clone, PartialEq, Eq)]

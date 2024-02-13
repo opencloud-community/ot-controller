@@ -5,7 +5,6 @@
 use std::collections::BTreeMap;
 
 use super::SignalingModulePeerFrontendData;
-
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -112,7 +111,6 @@ mod test {
     use serde::{Deserialize, Serialize};
 
     use crate::imports::SignalingModulePeerFrontendData;
-
     // NOTE: Clippy is not understanding that the import is necessary
     #[allow(unused_imports)]
     use crate::signaling::ModulePeerData;

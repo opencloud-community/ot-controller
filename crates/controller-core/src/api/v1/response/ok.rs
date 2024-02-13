@@ -7,13 +7,16 @@
 //! These all implement the [`Responder`] trait.
 //! The current Pagination support follows the GitHub REST APIv3, i.e. page hints are included inside the Link HTTP header.
 
-use actix_web::body::BoxBody;
-use actix_web::http::header::{self, HeaderMap};
-use actix_web::{HttpResponse, Responder};
+use std::collections::HashMap;
+
+use actix_web::{
+    body::BoxBody,
+    http::header::{self, HeaderMap},
+    HttpResponse, Responder,
+};
 use either::Either;
 use serde::Serialize;
 use snafu::ResultExt;
-use std::collections::HashMap;
 use url::Url;
 
 #[derive(Debug, Clone, Serialize)]

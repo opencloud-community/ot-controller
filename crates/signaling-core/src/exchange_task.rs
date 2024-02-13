@@ -4,27 +4,29 @@
 
 //! Controller to controller messaging
 
+use core::{hash::BuildHasherDefault, time::Duration};
+use std::{borrow::Cow, collections::HashMap, sync::Arc};
+
 use bytestring::ByteString;
-use core::hash::BuildHasherDefault;
-use core::time::Duration;
-use lapin::message::Delivery;
-use lapin::options::{
-    BasicConsumeOptions, BasicPublishOptions, ExchangeDeclareOptions, QueueBindOptions,
-    QueueDeclareOptions,
+use lapin::{
+    message::Delivery,
+    options::{
+        BasicConsumeOptions, BasicPublishOptions, ExchangeDeclareOptions, QueueBindOptions,
+        QueueDeclareOptions,
+    },
+    types::FieldTable,
+    BasicProperties, ChannelState, Consumer, ExchangeKind,
 };
-use lapin::types::FieldTable;
-use lapin::{BasicProperties, ChannelState, Consumer, ExchangeKind};
 use lapin_pool::{RabbitMqChannel, RabbitMqPool};
 use rustc_hash::FxHasher;
 use serde::{Deserialize, Serialize};
 use slotmap::{new_key_type, SlotMap};
 use snafu::{Report, Snafu};
-use std::borrow::Cow;
-use std::collections::HashMap;
-use std::sync::Arc;
-use tokio::select;
-use tokio::sync::{mpsc, oneshot};
-use tokio::time::sleep;
+use tokio::{
+    select,
+    sync::{mpsc, oneshot},
+    time::sleep,
+};
 use tokio_stream::StreamExt;
 use uuid::Uuid;
 

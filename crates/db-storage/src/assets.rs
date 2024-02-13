@@ -2,28 +2,26 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::diesel::NullableExpressionMethods;
-use crate::schema::assets;
-use crate::schema::events;
-use crate::schema::room_assets;
-use crate::schema::rooms;
 use chrono::{DateTime, Utc};
 use diesel::{
     BoolExpressionMethods, ExpressionMethods, Identifiable, Insertable, JoinOnDsl, QueryDsl,
     Queryable,
 };
-use diesel_async::scoped_futures::ScopedFutureExt;
-use diesel_async::AsyncConnection;
-use diesel_async::RunQueryDsl;
+use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection, RunQueryDsl};
 use opentalk_database::{DbConnection, Paginate, Result};
-use opentalk_types::api::v1::assets::AssetResource;
-use opentalk_types::api::v1::order::AssetSorting;
-use opentalk_types::api::v1::order::Ordering;
-use opentalk_types::api::v1::order::SortingQuery;
-use opentalk_types::api::v1::users::UserAssetResource;
-use opentalk_types::core::EventId;
-use opentalk_types::core::UserId;
-use opentalk_types::core::{AssetId, RoomId, TenantId};
+use opentalk_types::{
+    api::v1::{
+        assets::AssetResource,
+        order::{AssetSorting, Ordering, SortingQuery},
+        users::UserAssetResource,
+    },
+    core::{AssetId, EventId, RoomId, TenantId, UserId},
+};
+
+use crate::{
+    diesel::NullableExpressionMethods,
+    schema::{assets, events, room_assets, rooms},
+};
 
 /// Diesel resource struct
 #[derive(Debug, Clone, Queryable, Identifiable)]

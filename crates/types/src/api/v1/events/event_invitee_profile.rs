@@ -2,11 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use super::{EmailOnlyUser, PublicInviteUserProfile};
 use crate::api::v1::users::UnregisteredUser;
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::{EmailOnlyUser, PublicInviteUserProfile};
 
 /// Profile of an event invitee
 #[derive(Debug, Clone, PartialEq, Eq)]

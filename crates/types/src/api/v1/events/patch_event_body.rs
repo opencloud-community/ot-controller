@@ -4,7 +4,6 @@
 #[cfg(feature = "serde")]
 use crate::api::v1::utils::{deserialize_some, validate_recurrence_pattern};
 use crate::core::DateTimeTz;
-
 #[allow(unused_imports)]
 use crate::imports::*;
 

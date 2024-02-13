@@ -96,6 +96,14 @@ pub mod strings;
 mod imports {
     #![allow(unused)]
 
+    #[cfg(feature = "kustos")]
+    pub use opentalk_kustos_prefix::KustosPrefix;
+    #[cfg(feature = "serde")]
+    pub use {
+        crate::signaling::{SignalingModuleFrontendData, SignalingModulePeerFrontendData},
+        serde::{de, de::DeserializeOwned, Deserialize, Deserializer, Serialize, Serializer},
+        validator::{Validate, ValidationError, ValidationErrors},
+    };
     #[cfg(feature = "diesel")]
     pub use {
         diesel::{
@@ -106,23 +114,11 @@ mod imports {
         },
         opentalk_diesel_newtype::DieselNewtype,
     };
-
-    #[cfg(feature = "kustos")]
-    pub use opentalk_kustos_prefix::KustosPrefix;
-
+    #[cfg(feature = "frontend")]
+    pub use {http::Method, http_request_derive::HttpRequest};
     #[cfg(feature = "redis")]
     pub use {
         redis::{FromRedisValue, RedisResult, ToRedisArgs},
         redis_args::{FromRedisValue, ToRedisArgs},
     };
-
-    #[cfg(feature = "serde")]
-    pub use {
-        crate::signaling::{SignalingModuleFrontendData, SignalingModulePeerFrontendData},
-        serde::{de, de::DeserializeOwned, Deserialize, Deserializer, Serialize, Serializer},
-        validator::{Validate, ValidationError, ValidationErrors},
-    };
-
-    #[cfg(feature = "frontend")]
-    pub use {http::Method, http_request_derive::HttpRequest};
 }
