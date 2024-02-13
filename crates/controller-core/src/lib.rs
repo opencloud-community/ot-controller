@@ -58,6 +58,7 @@ use opentalk_signaling_core::{
     RegisterModules, SignalingModule, SignalingModuleInitData,
 };
 use opentalk_types::api::error::ApiError;
+use rustls_pki_types::{CertificateDer, PrivatePkcs8KeyDer};
 use std::fs::File;
 use std::io::BufReader;
 use std::marker::PhantomData;
@@ -398,7 +399,7 @@ impl Controller {
         let http_server = if let Some(tls) = &self.startup_settings.http.tls {
             let config = setup_rustls(tls).context("Failed to setup TLS context")?;
 
-            http_server.bind_rustls_021(address, config)
+            http_server.bind_rustls_0_22(address, config)
         } else {
             http_server.bind(address)
         };
@@ -625,8 +626,8 @@ fn setup_rustls(tls: &settings::HttpTls) -> Result<rustls::ServerConfig> {
     let cert_file = File::open(&tls.certificate)
         .with_context(|| format!("Failed to open certificate file {:?}", &tls.certificate))?;
     let certs = rustls_pemfile::certs(&mut BufReader::new(cert_file))
+        .collect::<Result<Vec<CertificateDer>, _>>()
         .map_err(|_| anyhow!("Invalid certificate"))?;
-    let certs = certs.into_iter().map(rustls::Certificate).collect();
 
     let private_key_file = File::open(&tls.private_key).with_context(|| {
         format!(
@@ -634,13 +635,13 @@ fn setup_rustls(tls: &settings::HttpTls) -> Result<rustls::ServerConfig> {
             &tls.private_key
         )
     })?;
-    let mut key = rustls_pemfile::rsa_private_keys(&mut BufReader::new(private_key_file))
+    let mut key = rustls_pemfile::pkcs8_private_keys(&mut BufReader::new(private_key_file))
+        .collect::<Result<Vec<PrivatePkcs8KeyDer>, _>>()
         .map_err(|_| anyhow!("Invalid pkcs8 private key"))?;
 
     let config = rustls::ServerConfig::builder()
-        .with_safe_defaults()
         .with_no_client_auth()
-        .with_single_cert(certs, rustls::PrivateKey(key.remove(0)))?;
+        .with_single_cert(certs, rustls_pki_types::PrivateKeyDer::Pkcs8(key.remove(0)))?;
 
     Ok(config)
 }
