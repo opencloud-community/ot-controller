@@ -560,7 +560,7 @@ pub async fn delete_invite_to_event(
     current_user: ReqData<User>,
     authz: Data<Authz>,
     path_params: Path<DeleteEventInvitePath>,
-    query: Query<crate::api::v1::events::DeleteEventQuery>,
+    query: Query<crate::api::v1::events::EventOptionsQuery>,
     mail_service: Data<MailService>,
 ) -> Result<NoContent, ApiError> {
     let settings = settings.load_full();
@@ -657,7 +657,7 @@ pub async fn delete_email_invite_to_event(
     current_user: ReqData<User>,
     authz: Data<Authz>,
     path: Path<EventId>,
-    query: Query<crate::api::v1::events::DeleteEventQuery>,
+    query: Query<crate::api::v1::events::EventOptionsQuery>,
     mail_service: Data<MailService>,
     body: Json<DeleteEmailInviteBody>,
 ) -> Result<NoContent, ApiError> {

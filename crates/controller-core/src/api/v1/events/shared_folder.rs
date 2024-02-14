@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use std::collections::HashSet;
+use std::sync::Arc;
 
 use actix_http::StatusCode;
 use actix_web::{
@@ -13,7 +14,8 @@ use actix_web::{
 use anyhow::Result;
 use chrono::{Days, NaiveDate, Utc};
 use log::warn;
-use opentalk_database::Db;
+use opentalk_controller_settings::Settings;
+use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
     events::{
         shared_folders::{EventSharedFolder, NewEventSharedFolder},
@@ -23,7 +25,7 @@ use opentalk_db_storage::{
 };
 use opentalk_nextcloud_client::{Client, ShareId, SharePermission, ShareType};
 use opentalk_types::{
-    api::v1::events::DeleteQuery,
+    api::v1::events::DeleteSharedFolderQuery,
     common::shared_folder::{SharedFolder, SharedFolderAccess},
     core::EventId,
 };
@@ -70,165 +72,176 @@ pub async fn put_shared_folder_for_event(
     db: Data<Db>,
     event_id: Path<EventId>,
 ) -> Result<CustomizeResponder<Json<SharedFolder>>, ApiError> {
+    let settings = settings.load_full();
     let event_id = event_id.into_inner();
 
     let mut conn = db.get_conn().await?;
-    let shared_folder = EventSharedFolder::get_for_event(&mut conn, event_id).await?;
+
+    let (shared_folder, created) = put_shared_folder(settings, event_id, &mut conn).await?;
+
+    Ok(Json(SharedFolder::from(shared_folder))
+        .customize()
+        .with_status(if created {
+            StatusCode::CREATED
+        } else {
+            StatusCode::OK
+        }))
+}
+
+pub(crate) async fn put_shared_folder(
+    settings: Arc<Settings>,
+    event_id: EventId,
+    conn: &mut DbConnection,
+) -> Result<(EventSharedFolder, bool), ApiError> {
+    let shared_folder = EventSharedFolder::get_for_event(conn, event_id).await?;
 
     if let Some(shared_folder) = shared_folder {
-        Ok(Json(SharedFolder::from(shared_folder))
-            .customize()
-            .with_status(StatusCode::OK))
-    } else {
-        let settings = settings.load_full();
+        return Ok((shared_folder, false));
+    }
 
-        let shared_folder_settings = settings.shared_folder.as_ref().ok_or_else(|| {
-            ApiError::bad_request().with_message("No shared folder configured for this server")
-        })?;
+    let shared_folder_settings = settings.shared_folder.as_ref().ok_or_else(|| {
+        ApiError::bad_request().with_message("No shared folder configured for this server")
+    })?;
 
-        match shared_folder_settings {
-            opentalk_controller_settings::SharedFolder::Nextcloud {
-                url,
-                username,
-                password,
-                directory,
-                expiry,
-            } => {
-                let client = opentalk_nextcloud_client::Client::new(
-                    url.clone(),
-                    username.clone(),
-                    password.clone(),
-                )
-                .map_err(|e| {
-                    warn!("Error creating NextCloud client: {e}");
-                    ApiError::internal().with_message("Error creating NextCloud client")
+    match shared_folder_settings {
+        opentalk_controller_settings::SharedFolder::Nextcloud {
+            url,
+            username,
+            password,
+            directory,
+            expiry,
+        } => {
+            let client = opentalk_nextcloud_client::Client::new(
+                url.clone(),
+                username.clone(),
+                password.clone(),
+            )
+            .map_err(|e| {
+                warn!("Error creating NextCloud client: {e}");
+                ApiError::internal().with_message("Error creating NextCloud client")
+            })?;
+            let path = format!(
+                "{}/opentalk-event-{}",
+                directory.trim_matches('/'),
+                event_id
+            );
+            let user_path = format!("files/{username}/{path}");
+            client.create_folder(&user_path).await.map_err(|e| {
+                warn!("Error creating folder on NextCloud: {e}");
+                ApiError::internal().with_message("Error creating folder on NextCloud")
+            })?;
+
+            let expire_date = expiry
+                .as_ref()
+                .map(|days| Utc::now().date_naive() + Days::new(*days));
+
+            let write_permissions = HashSet::from([
+                SharePermission::Read,
+                SharePermission::Create,
+                SharePermission::Update,
+                SharePermission::Delete,
+            ]);
+            let read_permissions = HashSet::from([SharePermission::Read]);
+
+            async fn create_share(
+                client: &Client,
+                path: &str,
+                permissions: HashSet<SharePermission>,
+                label: &str,
+                password: String,
+                expire_date: Option<NaiveDate>,
+            ) -> Result<(ShareId, SharedFolderAccess), ApiError> {
+                let mut creator = client
+                    .create_share(path, ShareType::PublicLink)
+                    .password(&password)
+                    .label(label);
+                for permission in &permissions {
+                    creator = creator.permission(*permission);
+                }
+                if let Some(expire_date) = expire_date {
+                    creator = creator.expire_date(expire_date);
+                }
+                let share = creator.send().await.map_err(|e| {
+                    warn!("Error creating share on NextCloud: {e}");
+                    ApiError::internal().with_message("Error creating share on NextCloud")
                 })?;
-                let path = format!(
-                    "{}/opentalk-event-{}",
-                    directory.trim_matches('/'),
-                    event_id
-                );
-                let user_path = format!("files/{username}/{path}");
-                client.create_folder(&user_path).await.map_err(|e| {
-                    warn!("Error creating folder on NextCloud: {e}");
-                    ApiError::internal().with_message("Error creating folder on NextCloud")
-                })?;
 
-                let expire_date = expiry
-                    .as_ref()
-                    .map(|days| Utc::now().date_naive() + Days::new(*days));
-
-                let write_permissions = HashSet::from([
-                    SharePermission::Read,
-                    SharePermission::Create,
-                    SharePermission::Update,
-                    SharePermission::Delete,
-                ]);
-                let read_permissions = HashSet::from([SharePermission::Read]);
-
-                async fn create_share(
-                    client: &Client,
-                    path: &str,
-                    permissions: HashSet<SharePermission>,
-                    label: &str,
-                    password: String,
-                    expire_date: Option<NaiveDate>,
-                ) -> Result<(ShareId, SharedFolderAccess), ApiError> {
-                    let mut creator = client
-                        .create_share(path, ShareType::PublicLink)
-                        .password(&password)
-                        .label(label);
-                    for permission in &permissions {
-                        creator = creator.permission(*permission);
-                    }
-                    if let Some(expire_date) = expire_date {
-                        creator = creator.expire_date(expire_date);
-                    }
-                    let share = creator.send().await.map_err(|e| {
-                        warn!("Error creating share on NextCloud: {e}");
-                        ApiError::internal().with_message("Error creating share on NextCloud")
-                    })?;
-
-                    // Workaround for NextCloud up to version 25 not processing the share permissions
-                    // on folder creation. We just need to change them with a subsequent update request.
-                    //
-                    // See: https://github.com/nextcloud/server/issues/32611
-                    if share.data.permissions != permissions {
-                        client
-                            .update_share(share.data.id.clone())
-                            .permissions(permissions)
-                            .await
-                            .map_err(|e| {
-                                warn!("Error setting permissions for share on NextCloud: {e}");
-                                ApiError::internal().with_message(
-                                    "Error setting permissions for share on NextCloud",
-                                )
-                            })?;
-                    }
-
-                    Ok((
-                        share.data.id,
-                        SharedFolderAccess {
-                            url: share.data.url,
-                            password,
-                        },
-                    ))
+                // Workaround for NextCloud up to version 25 not processing the share permissions
+                // on folder creation. We just need to change them with a subsequent update request.
+                //
+                // See: https://github.com/nextcloud/server/issues/32611
+                if share.data.permissions != permissions {
+                    client
+                        .update_share(share.data.id.clone())
+                        .permissions(permissions)
+                        .await
+                        .map_err(|e| {
+                            warn!("Error setting permissions for share on NextCloud: {e}");
+                            ApiError::internal()
+                                .with_message("Error setting permissions for share on NextCloud")
+                        })?;
                 }
 
-                let write_password = generate_password(&client).await?;
-                let read_password = generate_password(&client).await?;
-
-                let (
-                    write_share_id,
+                Ok((
+                    share.data.id,
                     SharedFolderAccess {
-                        url: write_url,
-                        password: write_password,
+                        url: share.data.url,
+                        password,
                     },
-                ) = create_share(
-                    &client,
-                    &path,
-                    write_permissions,
-                    "OpenTalk read-write",
-                    write_password,
-                    expire_date,
-                )
-                .await?;
-                let (
-                    read_share_id,
-                    SharedFolderAccess {
-                        url: read_url,
-                        password: read_password,
-                    },
-                ) = create_share(
-                    &client,
-                    &path,
-                    read_permissions,
-                    "OpenTalk read-only",
-                    read_password,
-                    expire_date,
-                )
-                .await?;
-
-                let new_shared_folder = NewEventSharedFolder {
-                    event_id,
-                    path,
-                    write_share_id: write_share_id.to_string(),
-                    write_url,
-                    write_password,
-                    read_share_id: read_share_id.to_string(),
-                    read_url,
-                    read_password,
-                };
-
-                let share = new_shared_folder
-                    .try_insert(&mut conn)
-                    .await?
-                    .ok_or_else(ApiError::internal)?;
-
-                Ok(Json(SharedFolder::from(share))
-                    .customize()
-                    .with_status(StatusCode::CREATED))
+                ))
             }
+
+            let write_password = generate_password(&client).await?;
+            let read_password = generate_password(&client).await?;
+
+            let (
+                write_share_id,
+                SharedFolderAccess {
+                    url: write_url,
+                    password: write_password,
+                },
+            ) = create_share(
+                &client,
+                &path,
+                write_permissions,
+                "OpenTalk read-write",
+                write_password,
+                expire_date,
+            )
+            .await?;
+            let (
+                read_share_id,
+                SharedFolderAccess {
+                    url: read_url,
+                    password: read_password,
+                },
+            ) = create_share(
+                &client,
+                &path,
+                read_permissions,
+                "OpenTalk read-only",
+                read_password,
+                expire_date,
+            )
+            .await?;
+
+            let new_shared_folder = NewEventSharedFolder {
+                event_id,
+                path,
+                write_share_id: write_share_id.to_string(),
+                write_url,
+                write_password,
+                read_share_id: read_share_id.to_string(),
+                read_url,
+                read_password,
+            };
+
+            let shared_folder = new_shared_folder
+                .try_insert(conn)
+                .await?
+                .ok_or_else(ApiError::internal)?;
+
+            Ok((shared_folder, true))
         }
     }
 }
@@ -305,7 +318,7 @@ pub async fn delete_shared_folder_for_event(
     settings: SharedSettingsActix,
     db: Data<Db>,
     event_id: Path<EventId>,
-    query: Query<DeleteQuery>,
+    query: Query<DeleteSharedFolderQuery>,
 ) -> Result<NoContent, ApiError> {
     let event_id = event_id.into_inner();
 
