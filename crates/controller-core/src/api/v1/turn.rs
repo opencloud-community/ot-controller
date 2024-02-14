@@ -173,7 +173,7 @@ async fn check_access_token_or_invite(
         db.clone(),
         oidc_ctx,
         &caches.user_access_tokens,
-        AccessToken::new(access_token.clone()),
+        &AccessToken::new(access_token.clone()),
     )
     .await;
 
