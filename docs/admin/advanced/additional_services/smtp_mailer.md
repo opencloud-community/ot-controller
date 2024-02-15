@@ -2,7 +2,7 @@
 sidebar_position: 402
 ---
 
-# OpenTalk SMTP-Mailer
+# SMTP Mailer
 
 The [OpenTalk SMTP-Mailer](https://gitlab.opencode.de/opentalk/smtp-mailer) is a service whose main purpose is to send out E-mail invites, updates and cancellations of meetings.
 
@@ -17,7 +17,7 @@ Note that the Controller and Mailer have to use the same rabbitmq service.
 
 ## Configuration
 
-The SMTP-Mailer configuration is part of the [`rabbitmq`](rabbitmq.md) section in the [configuration file](configuration.md).
+The SMTP-Mailer configuration is part of the [`rabbitmq`](../../core/rabbitmq.md) section in the [configuration file](../../core/configuration.md).
 
 | Field             | Type     | Required | Default value | Description                                                                                                                           |
 | ----------------- | -------- | -------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------- |

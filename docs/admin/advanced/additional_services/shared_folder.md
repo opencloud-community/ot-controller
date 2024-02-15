@@ -49,11 +49,11 @@ client.
 
 ## NextCloud
 
-A NextCloud instance can be configured through the [configuration file](configuration.md).
+A NextCloud instance can be configured through the [configuration file](../../core/configuration.md).
 
 ### Configuration fields
 
-The section in the [configuration file](configuration.md) is called `shared_folder`, and it knows these fields:
+The section in the [configuration file](../../core/configuration.md) is called `shared_folder`, and it knows these fields:
 
 | Field       | Type     | Required | Default value | Description                                                                                                             |
 | ----------- | -------- | -------- | ------------- | ----------------------------------------------------------------------------------------------------------------------- |

@@ -1,14 +1,10 @@
----
-sidebar_position: 301
----
-
 # Tracing
 
 The OpenTalk controller is able to provide tracing information. If configured, these are exported to an [OTLP](https://opentelemetry.io/docs/specs/otlp/) endpoint.
 
 ## Configuration
 
-The configuration values for the tracing capabilities are in the `logging` section of the [configuration file](configuration.md).
+The configuration values for the tracing capabilities are in the `logging` section of the [configuration file](../configuration.md).
 
 | Field                   | Type     | Required | Default value | Description                                                       |
 | ----------------------- | -------- | -------- | ------------- | ----------------------------------------------------------------- |
@@ -27,4 +23,4 @@ service_namespace = "opentalk"
 service_instance_id = "627cc493-f310-47de-96bd-71410b7dec09"
 ```
 
-This is not an exhaustive list of the configuration values in the logging section, just the ones related to tracing. For more information look into the [logging docs](logging.md).
+This is not an exhaustive list of the configuration values in the logging section, just the ones related to tracing. For more information look into the [logging docs](log_output.md).

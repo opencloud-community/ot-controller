@@ -1,8 +1,8 @@
 ---
-sidebar_position: 116
+sidebar_position: 105
 ---
 
-# Personal Data Storage Documentation
+# Retention of Personal Data
 
 This document describes how the OpenTalk service stores personal data, e.g. to cover GPDR compliance.
 
@@ -34,9 +34,9 @@ Object Storage is used to provide access to recordings and whiteboard data.
 
 ## Where do we store your data
 
-Personal identification data is stored in a postgres [database](database.md).
+Personal identification data is stored in a postgres [database](core/database.md).
 
-Object Storage (recordings, whiteboard) is stored on a [MinIO](minio.md) object storage instance.
+Object Storage (recordings, whiteboard) is stored on a [MinIO](core/minio.md) object storage instance.
 
 Voting and protocol responses are temporarily stored in a Redis database. Entries are automatically deleted after a meeting concludes, which occurs when the last participant leaves the meeting or upon service restarts
 
@@ -51,5 +51,5 @@ Voting and protocol responses are temporarily stored in a Redis database. Entrie
 
 These jobs ensure the deletion of data associated with their event types, with the threshold for deletion being configurable via a parameter. Currently, these jobs are not executed automatically and require manual setup by the administrator.
 
-- The [`event-cleanup` job](jobs.md#job-event-cleanup) is for deleting non-recurring events after a certain duration.
-- The [`adhoc-event-cleanup` job](jobs.md#job-adhoc-event-cleanup) is for deleting adhoc events created a certain duration ago.
+- The [`event-cleanup` job](cli/jobs.md#job-event-cleanup) is for deleting non-recurring events after a certain duration.
+- The [`adhoc-event-cleanup` job](cli/jobs.md#job-adhoc-event-cleanup) is for deleting adhoc events created a certain duration ago.

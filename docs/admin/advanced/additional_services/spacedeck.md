@@ -2,7 +2,7 @@
 sidebar_position: 303
 ---
 
-# Spacedeck
+# Whiteboard (Spacedeck)
 
 The OpenTalk Controller uses a [Spacedeck](https://github.com/spacedeck) server to provide a collaborative whiteboard for the `whiteboard` module.
 
@@ -20,7 +20,7 @@ variable will be the API token that the Controller uses for requests to the Spac
 
 ## Configuration
 
-The section in the [configuration file](configuration.md) is called `spacedeck`.
+The section in the [configuration file](../../core/configuration.md) is called `spacedeck`.
 
 | Field     | Type     | Required | Default value | Description                                                                                                                                                          |
 | --------- | -------- | -------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

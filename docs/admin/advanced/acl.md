@@ -1,7 +1,3 @@
----
-sidebar_position: 109
----
-
 # ACL management
 
 OpenTalk uses an in-memory Access Control List to efficiently track permissions. The controller maintains that list in
@@ -9,7 +5,7 @@ its database and periodically reads it back to synchronize permissions written o
 
 ## Configuration
 
-The section in the [configuration file](configuration.md) is called `authz`.
+The section in the [configuration file](../core/configuration.md) is called `authz`.
 
 | Field             | Type  | Required | Default value | Description                                             |
 | ----------------- | ----- | -------- | ------------- | ------------------------------------------------------- |

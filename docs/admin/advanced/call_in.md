@@ -1,7 +1,3 @@
----
-sidebar_position: 110
----
-
 # Call-in
 
 The call-in module provides a user-friendly solution that not only allows
@@ -10,7 +6,7 @@ number, ensuring a straightforward and accessible joining process.
 
 ## Configuration
 
-The section in the [configuration file](configuration.md) is called `call_in`.
+The section in the [configuration file](../core/configuration.md) is called `call_in`.
 
 | Field                  | Type     | Required | Default value | Description                                            |
 | ---------------------- | -------- | -------- | ------------- | ------------------------------------------------------ |

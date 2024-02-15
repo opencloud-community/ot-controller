@@ -1,5 +1,6 @@
 ---
-sidebar_position: 103
+sidebar_position: 104
+title: Update Migration Guide
 ---
 
 # Migration guide for updating to new versions
@@ -7,7 +8,7 @@ sidebar_position: 103
 ## General information
 
 After installing/deploying the new version
-[`opentalk-controller fix-acl`](acl.md#opentalk-controller-fix-acl-subcommand)
+[`opentalk-controller fix-acl`](advanced/acl.md#opentalk-controller-fix-acl-subcommand)
 must be run in order to update ACLs to match the newest version whenever
 new endpoints were added for already present resources. However, even if no
 endpoints were added, simply running the command does no harm.

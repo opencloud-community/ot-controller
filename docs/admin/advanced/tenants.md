@@ -1,8 +1,3 @@
----
-sidebar_position: 105
-title: Configuration of multiple tenants
----
-
 # Tenants
 
 A deployment of OpenTalk is capable of handling multiple completely separated
@@ -17,7 +12,7 @@ don't matter need no extra configuration.
 
 ## Configuration
 
-The section in the [configuration file](configuration.md) is called `tenants`.
+The section in the [configuration file](../core/configuration.md) is called `tenants`.
 
 | Field                                    | Type     | Required | Default value             | Description                                                                        |
 | ---------------------------------------- | -------- | -------- | ------------------------- | ---------------------------------------------------------------------------------- |
@@ -33,13 +28,13 @@ the default value.
 
 In order to use multiple tenants, `assignment` must be set to
 `"by_external_tenant_id"`. This requires the `tenant_id` field
-in the [authentication information sent by KeyCloak](keycloak.md#jwt-fields-for-user-login).
+in the [authentication information sent by KeyCloak](../core/keycloak.md#jwt-fields-for-user-login).
 Whenever a user logs in with a `tenant_id` that is unknown to the OpenTalk
 controller, a new entry for this tenant is created in the database. Because of
 that, the command-line tooling provides no option for adding tenants to the
 database.
 
-If the [find endpoint allows searching users on the KeyCloak](endpoints.md),
+If the [find endpoint allows searching users on the KeyCloak](../core/endpoints.md),
 then the results found on the KeyCloak will be filtered by the tenant of the
 currently logged-in user. The KeyCloak attribute used for filtering is defined
 by the value of `external_tenant_id_user_attribute_name` which defaults to

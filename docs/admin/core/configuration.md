@@ -1,5 +1,4 @@
 ---
-sidebar_position: 101
 title: Configuration
 ---
 
@@ -17,24 +16,24 @@ environment. It reads the settings in this order:
 
 Functionality that can be configured through the configuration file:
 
-- [Logging](logging.md)
+- [Logging](logging/log_output.md)
 - [Database](database.md)
-- [Shared folders on external storage systems](shared_folder.md)
+- [Shared folders on external storage systems](../advanced/additional_services/shared_folder.md)
 - [HTTP server](http_server.md)
 - [Room server](room_server.md)
 - [RabbitMQ](rabbitmq.md)
 - [Redis](redis.md)
 - [STUN and TURN](stun_turn.md)
-- [Authz](acl.md)
-- [Call-in](call_in.md)
+- [Authz](../advanced/acl.md)
+- [Call-in](../advanced/call_in.md)
 - [MinIO](minio.md)
-- [EtherPad](etherpad.md)
-- [SpaceDeck](spacedeck.md)
-- [Default and fallback values](defaults.md)
+- [EtherPad](../advanced/additional_services/etherpad.md)
+- [SpaceDeck](../advanced/additional_services/spacedeck.md)
+- [Default and fallback values](../advanced/defaults.md)
 - [Endpoints](endpoints.md)
-- [Metrics](metrics.md)
-- [Tenants](tenants.md)
-- [Tariffs](tariffs.md)
+- [Metrics](logging/metrics.md)
+- [Tenants](../advanced/tenants.md)
+- [Tariffs](../advanced/tariffs.md)
 
 ## Environment variables
 
