@@ -198,6 +198,29 @@ impl SignalingModule for Media {
                             info.media_session_state,
                         )
                         .await?;
+
+                        if old_state.audio && !info.media_session_state.audio {
+                            let timestamp = ctx.timestamp();
+                            let is_speaking = false;
+                            storage::set_speaker(
+                                ctx.redis_conn(),
+                                self.room,
+                                self.id,
+                                is_speaking,
+                                timestamp,
+                            )
+                            .await?;
+                            ctx.exchange_publish(
+                                control::exchange::current_room_all_participants(self.room),
+                                exchange::Message::SpeakerStateUpdated(ParticipantSpeakingState {
+                                    participant: self.id,
+                                    speaker: SpeakingState {
+                                        is_speaking,
+                                        updated_at: timestamp,
+                                    },
+                                }),
+                            );
+                        }
                     }
                 }
             }
