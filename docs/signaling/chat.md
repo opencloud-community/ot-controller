@@ -210,7 +210,7 @@ Set the last seen timestamp for either global chat messages, group or private
 messages with a specific participant.
 
 The values that are set in `SetLastSeenTimestamp`, will be included in the `chat` field of
-`module_data` inside the [JoinSuccess](control#joinsuccess) message when
+`module_data` inside the [JoinSuccess](control.md#joinsuccess) message when
 reconnecting to the same room after leaving.
 
 #### Fields
