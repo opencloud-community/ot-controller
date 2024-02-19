@@ -7,8 +7,7 @@ use super::{
     response::{ApiError, NoContent},
     DefaultApiResult,
 };
-use crate::api::v1::events::notify_event_invitees_by_room_about_update;
-use crate::api::v1::ApiResponse;
+use crate::api::v1::{events::notify_event_invitees_by_room_about_update, ApiResponse};
 use crate::services::MailService;
 use crate::settings::SharedSettingsActix;
 use actix_web::web::ReqData;
@@ -147,6 +146,7 @@ pub async fn post_streaming_target(
         room_streaming_target,
     )))
 }
+
 pub(super) async fn insert_room_streaming_target(
     conn: &mut DbConnection,
     room_id: RoomId,

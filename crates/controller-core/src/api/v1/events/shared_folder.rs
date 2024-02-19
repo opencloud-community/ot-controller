@@ -2,8 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::collections::HashSet;
-use std::sync::Arc;
+use std::{collections::HashSet, sync::Arc};
 
 use actix_http::StatusCode;
 use actix_web::{
@@ -16,12 +15,12 @@ use chrono::{Days, NaiveDate, Utc};
 use log::warn;
 use opentalk_controller_settings::Settings;
 use opentalk_database::{Db, DbConnection};
-use opentalk_db_storage::tenants::Tenant;
 use opentalk_db_storage::{
     events::{
         shared_folders::{EventSharedFolder, NewEventSharedFolder},
         Event,
     },
+    tenants::Tenant,
     users::User,
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
@@ -32,10 +31,12 @@ use opentalk_types::{
     core::EventId,
 };
 
-use crate::api::v1::events::{notify_event_invitees_about_update, shared_folder_for_user};
-use crate::services::MailService;
 use crate::{
-    api::v1::response::{ApiError, NoContent},
+    api::v1::{
+        events::{notify_event_invitees_about_update, shared_folder_for_user},
+        response::{ApiError, NoContent},
+    },
+    services::MailService,
     settings::SharedSettingsActix,
 };
 

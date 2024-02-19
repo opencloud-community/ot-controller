@@ -1126,12 +1126,6 @@ async fn notify_event_invitees_about_update(
     sip_config: Option<SipConfig>,
     shared_folder_for_user: Option<SharedFolder>,
 ) -> anyhow::Result<(), ApiError> {
-    let created_by = if event.created_by == current_user.id {
-        current_user.clone()
-    } else {
-        User::get(conn, event.created_by).await?
-    };
-
     let invited_users = get_invited_mail_recipients_for_event(conn, event.id).await?;
     let current_user_mail_recipient = MailRecipient::Registered(current_user.clone().into());
     let users_to_notify = invited_users
@@ -1139,6 +1133,11 @@ async fn notify_event_invitees_about_update(
         .chain(std::iter::once(current_user_mail_recipient))
         .collect::<Vec<_>>();
     let invite_for_room = Invite::get_first_for_room(conn, room.id, current_user.id).await?;
+    let created_by = if event.created_by == current_user.id {
+        current_user
+    } else {
+        User::get(conn, event.created_by).await?
+    };
 
     let notification_values = UpdateNotificationValues {
         tenant: current_tenant,
