@@ -28,4 +28,13 @@ impl Participant {
     ) -> Result<Option<T>, serde_json::Error> {
         self.module_data.get::<T>()
     }
+
+    /// Updates the inner module data of a Participant and returns the new data
+    #[cfg(feature = "serde")]
+    pub fn update_module<T: SignalingModulePeerFrontendData, F: FnOnce(&mut T)>(
+        &mut self,
+        update: F,
+    ) -> Result<Option<T>, serde_json::Error> {
+        self.module_data.update::<T, F>(update)
+    }
 }
