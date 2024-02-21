@@ -36,6 +36,8 @@ mod post_event_invite_body;
 mod post_event_invite_query;
 mod post_events_body;
 mod public_invite_user_profile;
+mod put_shared_folder_query;
+mod streaming_target_options_query;
 mod user_invite;
 
 pub mod invites;
@@ -72,6 +74,8 @@ pub use post_event_invite_body::PostEventInviteBody;
 pub use post_event_invite_query::PostEventInviteQuery;
 pub use post_events_body::PostEventsBody;
 pub use public_invite_user_profile::PublicInviteUserProfile;
+pub use put_shared_folder_query::PutSharedFolderQuery;
+pub use streaming_target_options_query::StreamingTargetOptionsQuery;
 pub use user_invite::UserInvite;
 
 const UTC_DT_FORMAT: &str = "%Y%m%dT%H%M%SZ";

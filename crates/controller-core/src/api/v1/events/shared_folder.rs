@@ -2,8 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::collections::HashSet;
-use std::sync::Arc;
+use std::{collections::HashSet, sync::Arc};
 
 use actix_http::StatusCode;
 use actix_web::{
@@ -21,17 +20,23 @@ use opentalk_db_storage::{
         shared_folders::{EventSharedFolder, NewEventSharedFolder},
         Event,
     },
+    tenants::Tenant,
     users::User,
 };
+use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_nextcloud_client::{Client, ShareId, SharePermission, ShareType};
 use opentalk_types::{
-    api::v1::events::DeleteSharedFolderQuery,
+    api::v1::events::{DeleteSharedFolderQuery, PutSharedFolderQuery},
     common::shared_folder::{SharedFolder, SharedFolderAccess},
     core::EventId,
 };
 
 use crate::{
-    api::v1::response::{ApiError, NoContent},
+    api::v1::{
+        events::{notify_event_invitees_about_update, shared_folder_for_user},
+        response::{ApiError, NoContent},
+    },
+    services::MailService,
     settings::SharedSettingsActix,
 };
 
@@ -67,17 +72,54 @@ pub async fn get_shared_folder_for_event(
 }
 
 #[put("/events/{event_id}/shared_folder")]
+#[allow(clippy::too_many_arguments)]
 pub async fn put_shared_folder_for_event(
     settings: SharedSettingsActix,
     db: Data<Db>,
+    kc_admin_client: Data<KeycloakAdminClient>,
+    mail_service: Data<MailService>,
+    current_tenant: ReqData<Tenant>,
+    current_user: ReqData<User>,
     event_id: Path<EventId>,
+    query: Query<PutSharedFolderQuery>,
 ) -> Result<CustomizeResponder<Json<SharedFolder>>, ApiError> {
     let settings = settings.load_full();
+    let mail_service = mail_service.into_inner();
+    let current_tenant = current_tenant.into_inner();
+    let current_user = current_user.into_inner();
     let event_id = event_id.into_inner();
+    let query = query.into_inner();
+
+    let send_email_notification = !query.suppress_email_notification;
 
     let mut conn = db.get_conn().await?;
 
-    let (shared_folder, created) = put_shared_folder(settings, event_id, &mut conn).await?;
+    let (shared_folder, created) = put_shared_folder(settings.clone(), event_id, &mut conn).await?;
+
+    let (event, _invite, room, sip_config, _is_favorite, _shared_folder, _tariff) =
+        Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
+
+    if send_email_notification {
+        let shared_folder_for_user = shared_folder_for_user(
+            Some(shared_folder.clone()),
+            event.created_by,
+            current_user.id,
+        );
+
+        notify_event_invitees_about_update(
+            &kc_admin_client,
+            settings,
+            mail_service,
+            current_tenant,
+            current_user,
+            &mut conn,
+            event,
+            room,
+            sip_config,
+            shared_folder_for_user,
+        )
+        .await?;
+    }
 
     Ok(Json(SharedFolder::from(shared_folder))
         .customize()
@@ -98,7 +140,6 @@ pub(crate) async fn put_shared_folder(
     if let Some(shared_folder) = shared_folder {
         return Ok((shared_folder, false));
     }
-
     let shared_folder_settings = settings.shared_folder.as_ref().ok_or_else(|| {
         ApiError::bad_request().with_message("No shared folder configured for this server")
     })?;
@@ -247,13 +288,12 @@ pub(crate) async fn put_shared_folder(
 }
 
 pub async fn delete_shared_folders(
-    settings: SharedSettingsActix,
+    settings: Arc<Settings>,
     shared_folders: &[EventSharedFolder],
 ) -> Result<(), ApiError> {
     if shared_folders.is_empty() {
         return Ok(());
     }
-    let settings = settings.load_full();
 
     let shared_folder_settings = if let Some(settings) = settings.shared_folder.as_ref() {
         settings
@@ -314,24 +354,55 @@ pub async fn delete_shared_folders(
 }
 
 #[delete("/events/{event_id}/shared_folder")]
+#[allow(clippy::too_many_arguments)]
 pub async fn delete_shared_folder_for_event(
     settings: SharedSettingsActix,
     db: Data<Db>,
+    kc_admin_client: Data<KeycloakAdminClient>,
+    mail_service: Data<MailService>,
+    current_tenant: ReqData<Tenant>,
+    current_user: ReqData<User>,
     event_id: Path<EventId>,
     query: Query<DeleteSharedFolderQuery>,
 ) -> Result<NoContent, ApiError> {
+    let settings = settings.load_full();
+    let mail_service = mail_service.into_inner();
+    let current_tenant = current_tenant.into_inner();
+    let current_user = current_user.into_inner();
     let event_id = event_id.into_inner();
+    let query = query.into_inner();
+
+    let send_email_notification = !query.suppress_email_notification;
 
     let mut conn = db.get_conn().await?;
 
-    let shared_folder = EventSharedFolder::get_for_event(&mut conn, event_id).await?;
+    let (event, _invite, room, sip_config, _is_favorite, shared_folder, _tariff) =
+        Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
 
     if let Some(shared_folder) = shared_folder {
         let shared_folders = std::slice::from_ref(&shared_folder);
-        let deletion = delete_shared_folders(settings, shared_folders).await;
+        let deletion = delete_shared_folders(settings.clone(), shared_folders).await;
+
         match deletion {
             Ok(()) => {
                 shared_folder.delete(&mut conn).await?;
+
+                if send_email_notification {
+                    notify_event_invitees_about_update(
+                        &kc_admin_client,
+                        settings,
+                        mail_service,
+                        current_tenant,
+                        current_user,
+                        &mut conn,
+                        event,
+                        room,
+                        sip_config,
+                        None,
+                    )
+                    .await?;
+                }
+
                 Ok(NoContent)
             }
             Err(e) => {
@@ -341,6 +412,23 @@ pub async fn delete_shared_folder_for_event(
                         `force_delete_reference_if_shared_folder_deletion_fails` is set to true"
                     );
                     shared_folder.delete(&mut conn).await?;
+
+                    if send_email_notification {
+                        notify_event_invitees_about_update(
+                            &kc_admin_client,
+                            settings,
+                            mail_service,
+                            current_tenant,
+                            current_user,
+                            &mut conn,
+                            event,
+                            room,
+                            sip_config,
+                            None,
+                        )
+                        .await?;
+                    }
+
                     Ok(NoContent)
                 } else {
                     Err(e)

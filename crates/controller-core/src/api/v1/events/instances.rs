@@ -269,7 +269,7 @@ pub async fn get_event_instance(
 
 /// API Endpoint `PATCH /events/{event_id}/{instance_id}`
 ///
-/// Patch an instance of an recurring event. This creates oder modifies an exception for the event
+/// Patch an instance of a recurring event. This creates or modifies an exception for the event
 /// at the point of time of the given instance_id.
 /// Returns the patched event instance
 #[patch("/events/{event_id}/instances/{instance_id}")]
