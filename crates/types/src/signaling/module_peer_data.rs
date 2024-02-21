@@ -52,6 +52,20 @@ where
         Ok(())
     }
 
+    /// Updates the module data and returns the new data
+    pub fn update<T: SignalingModulePeerFrontendData, F: FnOnce(&mut T)>(
+        &mut self,
+        update: F,
+    ) -> Result<Option<T>, serde_json::Error> {
+        if let Some(mut data) = self.get::<T>()? {
+            update(&mut data);
+            self.insert(&data)?;
+            return Ok(Some(data));
+        }
+
+        Ok(None)
+    }
+
     /// Query whether the module data contains a value for this key
     pub fn contains_key<Q: ?Sized>(&self, key: &Q) -> bool
     where
@@ -91,5 +105,53 @@ where
         let entry = self.get::<T>()?;
         self.remove::<T>();
         Ok(entry)
+    }
+}
+
+mod test {
+    use serde::{Deserialize, Serialize};
+
+    use crate::imports::SignalingModulePeerFrontendData;
+
+    // NOTE: Clippy is not understanding that the import is necessary
+    #[allow(unused_imports)]
+    use crate::signaling::ModulePeerData;
+
+    #[derive(Debug, Eq, PartialEq, Deserialize, Serialize)]
+    struct TestState {
+        flag: bool,
+    }
+
+    impl SignalingModulePeerFrontendData for TestState {
+        const NAMESPACE: Option<&'static str> = Some("TEST");
+    }
+
+    #[test]
+    fn update_should_update_on_existing_data() {
+        let mut module_data: ModulePeerData<String> = ModulePeerData::new();
+        let old_state = TestState { flag: false };
+        module_data.insert(&old_state).unwrap();
+
+        let new_state = module_data
+            .update::<TestState, _>(|state| {
+                state.flag = !old_state.flag;
+            })
+            .expect("update call should work without errors")
+            .expect("data should be returned");
+
+        assert_ne!(new_state, old_state);
+    }
+
+    #[test]
+    fn update_should_not_update_on_missing_data() {
+        let mut module_data: ModulePeerData<String> = ModulePeerData::new();
+
+        let new_state = module_data
+            .update::<TestState, _>(|_| {
+                panic!("this should not be called");
+            })
+            .expect("update call should work without errors");
+
+        assert!(new_state.is_none());
     }
 }
