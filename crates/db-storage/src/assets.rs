@@ -26,6 +26,7 @@ pub struct Asset {
     pub kind: String,
     pub filename: String,
     pub tenant_id: TenantId,
+    pub file_size: i64,
 }
 
 impl Asset {
