@@ -11,13 +11,14 @@ use diesel::{ExpressionMethods, QueryDsl, Queryable};
 use diesel_async::scoped_futures::ScopedFutureExt;
 use diesel_async::{AsyncConnection, RunQueryDsl};
 use opentalk_database::{DbConnection, Paginate, Result};
-use opentalk_types::core::{EventId, InviteRole, RoomId, UserId};
+use opentalk_types::core::{EmailInviteRole, EventId, RoomId, UserId};
 
 #[derive(Insertable)]
 #[diesel(table_name = event_email_invites)]
 pub struct NewEventEmailInvite {
     pub event_id: EventId,
     pub email: String,
+    pub role: EmailInviteRole,
     pub created_by: UserId,
 }
 
@@ -51,6 +52,7 @@ pub struct EventEmailInvite {
     pub email: String,
     pub created_by: UserId,
     pub created_at: DateTime<Utc>,
+    pub role: EmailInviteRole,
 }
 
 impl EventEmailInvite {
@@ -83,7 +85,7 @@ impl EventEmailInvite {
                     .map(|(email_invite, _)| NewEventInvite {
                         event_id: email_invite.event_id,
                         invitee: user.id,
-                        role: InviteRole::User,
+                        role: email_invite.role.into(),
                         created_by: email_invite.created_by,
                         created_at: Some(email_invite.created_at),
                     })
@@ -164,5 +166,36 @@ impl EventEmailInvite {
         let invites: (Vec<EventEmailInvite>, i64) = query.load_and_count(conn).await?;
 
         Ok(invites)
+    }
+}
+
+#[derive(AsChangeset)]
+#[diesel(table_name = event_email_invites)]
+pub struct UpdateEventEmailInvite {
+    pub role: Option<EmailInviteRole>,
+}
+
+impl UpdateEventEmailInvite {
+    /// Apply the update to the invite where `email` is the invitee's email address
+    #[tracing::instrument(err, skip_all)]
+    pub async fn apply(
+        self,
+        conn: &mut DbConnection,
+        email: String,
+        event_id: EventId,
+    ) -> Result<EventEmailInvite> {
+        // TODO: Check if the update actually applied a change (see comments in fn `apply` of `UpdateEventInvite`)
+        let query = diesel::update(event_email_invites::table)
+            .filter(
+                event_email_invites::event_id
+                    .eq(event_id)
+                    .and(event_email_invites::email.eq(email)),
+            )
+            .set(self)
+            .returning(event_email_invites::all_columns);
+
+        let event_invite = query.get_result(conn).await?;
+
+        Ok(event_invite)
     }
 }

@@ -2,12 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use email_address::EmailAddress;
-
 #[allow(unused_imports)]
 use crate::imports::*;
 
-use super::UserInvite;
+use super::{EmailInvite, UserInvite};
 
 /// Request body for the `POST /events/{event_id}/invites` endpoint
 #[derive(Debug, Eq, PartialEq, Clone)]
@@ -16,8 +14,5 @@ pub enum PostEventInviteBody {
     /// Invite a registered user
     User(UserInvite),
     /// Invite a user by email
-    Email {
-        /// Email address of the user to invite
-        email: EmailAddress,
-    },
+    Email(EmailInvite),
 }

@@ -5,7 +5,6 @@
 #[allow(unused_imports)]
 use crate::imports::*;
 
-use crate::core::EmailInviteRole;
 use crate::{signaling::Role, sql_enum};
 
 sql_enum!(
@@ -13,34 +12,25 @@ sql_enum!(
 
     #[derive(PartialEq, Eq)]
     #[cfg_attr(feature="serde", derive(Serialize, Deserialize), serde(rename_all = "snake_case"))]
-    InviteRole,
-    "invite_role",
-    InviteRoleType,
+    EmailInviteRole,
+    "email_invite_role",
+    EmailInviteRoleType,
     {
-        User = b"user",
+        Guest = b"guest",
         Moderator = b"moderator",
     }
 );
 
-impl Default for InviteRole {
+impl Default for EmailInviteRole {
     fn default() -> Self {
-        Self::User
+        Self::Guest
     }
 }
 
-impl From<InviteRole> for Role {
-    fn from(value: InviteRole) -> Self {
-        match value {
-            InviteRole::User => Self::User,
-            InviteRole::Moderator => Self::Moderator,
-        }
-    }
-}
-
-impl From<EmailInviteRole> for InviteRole {
+impl From<EmailInviteRole> for Role {
     fn from(value: EmailInviteRole) -> Self {
         match value {
-            EmailInviteRole::Guest => Self::User,
+            EmailInviteRole::Guest => Self::Guest,
             EmailInviteRole::Moderator => Self::Moderator,
         }
     }

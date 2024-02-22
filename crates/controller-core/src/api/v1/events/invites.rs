@@ -29,7 +29,7 @@ use opentalk_controller_settings::Settings;
 use opentalk_database::Db;
 use opentalk_db_storage::{
     events::{
-        email_invites::{EventEmailInvite, NewEventEmailInvite},
+        email_invites::{EventEmailInvite, NewEventEmailInvite, UpdateEventEmailInvite},
         shared_folders::EventSharedFolder,
         Event, EventFavorite, EventInvite, NewEventInvite, UpdateEventInvite,
     },
@@ -40,17 +40,20 @@ use opentalk_db_storage::{
     users::User,
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
+use opentalk_types::api::v1::events::EmailInvite;
+use opentalk_types::core::EmailInviteRole;
 use opentalk_types::{
     api::v1::{
         events::{
             invites::GetEventsInvitesQuery, DeleteEmailInviteBody, DeleteEventInvitePath,
-            PatchInviteBody, PostEventInviteBody, PostEventInviteQuery, UserInvite,
+            PatchEmailInviteBody, PatchInviteBody, PostEventInviteBody, PostEventInviteQuery,
+            UserInvite,
         },
         pagination::PagePaginationQuery,
         users::GetEventInvitesPendingResponse,
     },
     common::shared_folder::SharedFolder,
-    core::{EventId, EventInviteStatus, InviteRole, RoomId, UserId},
+    core::{EventId, EventInviteStatus, RoomId, UserId},
     strings::ToLowerCase,
 };
 use serde::Deserialize;
@@ -155,7 +158,7 @@ pub async fn create_invite_to_event(
             )
             .await
         }
-        PostEventInviteBody::Email { email } => {
+        PostEventInviteBody::Email(email_invite) => {
             create_email_event_invite(
                 settings,
                 db,
@@ -164,7 +167,7 @@ pub async fn create_invite_to_event(
                 current_tenant.into_inner(),
                 current_user.into_inner(),
                 event_id,
-                email.to_lowercase(),
+                email_invite,
                 &mail_service.into_inner(),
                 send_email_notification,
             )
@@ -244,7 +247,7 @@ async fn create_user_event_invite(
 /// Create an invite to an event via email address
 ///
 /// Checks first if a user exists with the email address in our database and creates a regular invite,
-/// else checks if the email is registered with the keycloak (or external intvitee support is configured)
+/// else checks if the email is registered with the keycloak (or external invitee support is configured)
 /// and then creates an email invite
 #[allow(clippy::too_many_arguments)]
 async fn create_email_event_invite(
@@ -255,10 +258,12 @@ async fn create_email_event_invite(
     current_tenant: Tenant,
     current_user: User,
     event_id: EventId,
-    email: EmailAddress,
+    email_invite: EmailInvite,
     mail_service: &MailService,
     send_email_notification: bool,
 ) -> Result<Either<Created, NoContent>, ApiError> {
+    let email = email_invite.email.to_lowercase();
+
     #[allow(clippy::large_enum_variant)]
     enum UserState {
         ExistsAndIsAlreadyInvited,
@@ -279,7 +284,6 @@ async fn create_email_event_invite(
     }
 
     let state = {
-        let email = email.clone();
         let current_user = current_user.clone();
         let db = db.clone();
 
@@ -300,7 +304,7 @@ async fn create_email_event_invite(
                 let res = NewEventInvite {
                     event_id,
                     invitee: invitee_user.id,
-                    role: InviteRole::User,
+                    role: email_invite.role.into(),
                     created_by: current_user.id,
                     created_at: None,
                 }
@@ -384,6 +388,7 @@ async fn create_email_event_invite(
                 room,
                 sip_config,
                 email,
+                email_invite.role,
                 shared_folder,
             )
             .await
@@ -408,6 +413,7 @@ async fn create_invite_to_non_matching_email(
     room: Room,
     sip_config: Option<SipConfig>,
     email: EmailAddress,
+    role: EmailInviteRole,
     shared_folder: Option<SharedFolder>,
 ) -> Result<Either<Created, NoContent>, ApiError> {
     let settings = settings.load();
@@ -432,6 +438,7 @@ async fn create_invite_to_non_matching_email(
             NewEventEmailInvite {
                 event_id,
                 email: email.into(),
+                role,
                 created_by: current_user_id,
             }
             .try_insert(&mut conn)
@@ -504,7 +511,7 @@ async fn create_invite_to_non_matching_email(
 ///
 /// Update the role for an invited user
 #[patch("/events/{event_id}/invites/{user_id}")]
-pub async fn update_event_invite(
+pub async fn update_invite_to_event(
     db: Data<Db>,
     current_user: ReqData<User>,
     path_parameters: Path<(EventId, UserId)>,
@@ -522,10 +529,41 @@ pub async fn update_event_invite(
 
     let changeset = UpdateEventInvite {
         status: None,
-        role: Some(update_invite.role),
+        role: update_invite.role,
     };
 
     changeset.apply(&mut conn, user_id, event_id).await?;
+
+    Ok(NoContent)
+}
+
+/// API Endpoint `PATCH /events/{event_id}/invites/email`
+///
+/// Update the role for an invited email user
+#[patch("/events/{event_id}/invites/email")]
+pub async fn update_email_invite_to_event(
+    db: Data<Db>,
+    current_user: ReqData<User>,
+    path_parameters: Path<EventId>,
+    update_invite: Json<PatchEmailInviteBody>,
+) -> Result<NoContent, ApiError> {
+    let event_id = path_parameters.into_inner();
+
+    let mut conn = db.get_conn().await?;
+
+    let event = Event::get(&mut conn, event_id).await?;
+
+    if event.created_by != current_user.id {
+        return Err(ApiError::forbidden());
+    }
+
+    let changeset = UpdateEventEmailInvite {
+        role: update_invite.role,
+    };
+
+    changeset
+        .apply(&mut conn, update_invite.email.to_string(), event_id)
+        .await?;
 
     Ok(NoContent)
 }

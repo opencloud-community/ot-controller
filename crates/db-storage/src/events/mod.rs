@@ -986,7 +986,7 @@ impl UpdateEventInvite {
         user_id: UserId,
         event_id: EventId,
     ) -> Result<EventInvite> {
-        // TODO: Check if the update actually applied a change
+        // TODO: Check if the update actually applied a change (also have a look at fn `apply` of `UpdateEventEmailInvite`)
         // Use something like
         // UPDATE event_invites SET status = $status WHERE id = $id RETURNING id, status, (SELECT status FROM tmp WHERE id = $id);
         // or

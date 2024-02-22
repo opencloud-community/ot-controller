@@ -43,6 +43,7 @@ diesel::table! {
         email -> Varchar,
         created_by -> Uuid,
         created_at -> Timestamptz,
+        role -> EmailInviteRole,
     }
 }
 
