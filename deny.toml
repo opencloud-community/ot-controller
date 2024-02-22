@@ -56,6 +56,8 @@ ignore = [
     # - openidconnect switches to a different dependency
     # - rsa releases a fixed version
     "RUSTSEC-2023-0071",
+
+    "RUSTSEC-2024-0013",
 ]
 # Threshold for security vulnerabilities, any vulnerability with a CVSS score
 # lower than the range specified will be ignored. Note that ignored advisories
