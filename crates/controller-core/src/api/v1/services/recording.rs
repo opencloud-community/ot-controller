@@ -14,7 +14,7 @@ use actix_web::web::{Data, Json};
 use futures::TryStreamExt;
 use opentalk_database::Db;
 use opentalk_db_storage::rooms::Room;
-use opentalk_signaling_core::assets::save_asset;
+use opentalk_signaling_core::assets::{save_asset, verify_storage_usage, AssetError};
 use opentalk_signaling_core::{ObjectStorage, Participant, RedisConnection};
 use opentalk_types::api::v1::services::{ServiceStartResponse, StartBody, UploadRenderQuery};
 
@@ -30,6 +30,7 @@ pub async fn start(
     redis_ctx: Data<RedisConnection>,
     body: Json<StartBody>,
 ) -> Result<Json<ServiceStartResponse>, ApiError> {
+    let mut conn = db.get_conn().await?;
     let settings = settings.load_full();
     if settings.rabbit_mq.recording_task_queue.is_none() {
         return Err(ApiError::not_found());
@@ -38,7 +39,15 @@ pub async fn start(
     let mut redis_conn = (**redis_ctx).clone();
     let body = body.into_inner();
 
-    let room = Room::get(&mut db.get_conn().await?, body.room_id).await?;
+    let room = Room::get(&mut conn, body.room_id).await?;
+
+    if let Err(e) = verify_storage_usage(&mut conn, room.created_by).await {
+        if let Some(asset_err) = e.downcast_ref::<AssetError>() {
+            return Err(ApiError::from(asset_err));
+        }
+
+        return Err(e.into());
+    }
 
     let (ticket, resumption) = start_or_continue_signaling_session(
         &mut redis_conn,
@@ -62,7 +71,7 @@ pub async fn upload_render(
     // Assert that the room exists
     Room::get(&mut db.get_conn().await?, query.room_id).await?;
 
-    save_asset(
+    if let Err(e) = save_asset(
         &storage,
         db.into_inner(),
         query.room_id,
@@ -71,7 +80,15 @@ pub async fn upload_render(
         "recording-render",
         data.into_stream().map_err(anyhow::Error::from),
     )
-    .await?;
+    .await
+    {
+        if let Some(asset_err) = e.downcast_ref::<AssetError>() {
+            return Err(ApiError::from(asset_err));
+        }
+
+        log::error!("Failed to save asset {}: {e}", query.filename);
+        return Err(e.into());
+    }
 
     Ok(NoContent)
 }

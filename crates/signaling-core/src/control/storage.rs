@@ -79,6 +79,13 @@ struct RoomClosesAt {
     room: SignalingRoomId,
 }
 
+/// The maximum storage allocated to the room
+#[derive(ToRedisArgs)]
+#[to_redis_args(fmt = "opentalk-signaling:room={room_id}:max_storage")]
+struct RoomMaxStorage {
+    room_id: RoomId,
+}
+
 /// The room's mutex
 ///
 /// Must be taken when joining and leaving the room.

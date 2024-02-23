@@ -88,8 +88,9 @@ pub async fn patch_me(
     };
 
     let user = changeset.apply(&mut conn, current_user.id).await?;
+    let used_storage = User::get_used_storage_u64(&mut conn, &current_user.id).await?;
 
-    let user_profile = user.to_private_user_profile(&settings);
+    let user_profile = user.to_private_user_profile(&settings, used_storage);
 
     let user_claims = decode_token::<UserClaims>(access_token.clone().secret())
         .context("failed to decode access token for user profile update")?;
@@ -122,12 +123,16 @@ pub async fn patch_me(
 #[get("/users/me")]
 pub async fn get_me(
     settings: SharedSettingsActix,
+    db: Data<Db>,
     current_user: ReqData<User>,
 ) -> Result<Json<PrivateUserProfile>, ApiError> {
     let settings = settings.load_full();
     let current_user = current_user.into_inner();
 
-    let user_profile = current_user.to_private_user_profile(&settings);
+    let used_storage =
+        User::get_used_storage_u64(&mut db.get_conn().await?, &current_user.id).await?;
+
+    let user_profile = current_user.to_private_user_profile(&settings, used_storage);
 
     Ok(Json(user_profile))
 }

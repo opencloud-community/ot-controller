@@ -10,7 +10,7 @@ use futures::TryStreamExt;
 use opentalk_database::Db;
 use opentalk_etherpad_client::EtherpadClient;
 use opentalk_signaling_core::{
-    assets::save_asset,
+    assets::{save_asset, AssetError},
     control::{
         self,
         storage::{get_all_participants, get_attribute},
@@ -343,7 +343,8 @@ impl Protocol {
                         .map_err(Into::into);
 
                     let filename = format!("protocol_{}.pdf", ctx.timestamp().to_rfc3339());
-                    let asset_id = save_asset(
+
+                    let asset_id = match save_asset(
                         &self.storage,
                         self.db.clone(),
                         self.room_id.room_id(),
@@ -352,7 +353,19 @@ impl Protocol {
                         "protocol_pdf",
                         data,
                     )
-                    .await?;
+                    .await
+                    {
+                        Ok(asset_id) => asset_id,
+                        Err(e) => {
+                            if e.downcast_ref::<AssetError>().is_some() {
+                                ctx.ws_send(Error::StorageExceeded);
+                                return Ok(());
+                            }
+
+                            log::error!("Failed to save asset {filename}: {e}");
+                            return Err(e);
+                        }
+                    };
 
                     ctx.exchange_publish(
                         control::exchange::current_room_all_participants(self.room_id),

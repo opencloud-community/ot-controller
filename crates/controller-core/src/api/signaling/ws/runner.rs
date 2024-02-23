@@ -1194,7 +1194,7 @@ impl Runner {
 
             (guard, tariff)
         } else {
-            let tariff = control::storage::get_tariff(&mut self.redis_conn, self.room.id).await?;
+            let tariff = storage::get_tariff(&mut self.redis_conn, self.room.id).await?;
             (lock.lock(&mut self.redis_conn).await?, tariff)
         };
 

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use std::{
+    mem,
     pin::Pin,
     sync::Arc,
     task::{self, Poll},
@@ -10,14 +11,18 @@ use std::{
 
 use anyhow::{anyhow, Context, Result};
 use aws_sdk_s3::primitives::ByteStream;
+use bigdecimal::BigDecimal;
 use bytes::Bytes;
 use futures::Stream;
-use opentalk_database::Db;
+use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
     assets::{Asset, NewAsset},
     rooms::Room,
+    tariffs::Tariff,
+    users::User,
 };
-use opentalk_types::core::{AssetId, RoomId};
+use opentalk_types::core::{AssetId, RoomId, UserId};
+use thiserror::Error;
 
 use crate::ObjectStorage;
 
@@ -33,11 +38,16 @@ pub async fn save_asset(
     kind: impl Into<String>,
     data: impl Stream<Item = Result<Bytes>> + Unpin,
 ) -> Result<AssetId> {
+    let mut db_conn = db.get_conn().await.context("failed to get db connection")?;
     let namespace = namespace.map(Into::into);
     let filename = filename.into();
     let kind = kind.into();
 
     let asset_id = AssetId::generate();
+    let size = mem::size_of_val(&data) as i64;
+
+    let room = Room::get(&mut db_conn, room_id).await?;
+    verify_storage_usage(&mut db_conn, room.created_by).await?;
 
     // upload to s3 storage
     storage
@@ -46,7 +56,6 @@ pub async fn save_asset(
         .context("failed to upload asset file to storage")?;
 
     // create db entry
-    let mut db_conn = db.get_conn().await?;
 
     let room = Room::get(&mut db_conn, room_id).await?;
 
@@ -56,6 +65,7 @@ pub async fn save_asset(
         filename,
         kind,
         tenant_id: room.tenant_id,
+        size,
     }
     .insert_for_room(&mut db_conn, room_id)
     .await;
@@ -107,4 +117,25 @@ pub async fn delete_asset(
 
 pub fn asset_key(asset_id: &AssetId) -> String {
     format!("assets/{asset_id}")
+}
+
+pub async fn verify_storage_usage(db_conn: &mut DbConnection, user_id: UserId) -> Result<()> {
+    let used_storage = User::get_used_storage(db_conn, &user_id).await?;
+    let user_tariff = Tariff::get_by_user_id(db_conn, &user_id).await?;
+
+    if let Some(max_storage) = user_tariff.quotas.0.get("max_storage") {
+        if used_storage > BigDecimal::from(*max_storage) {
+            return Err(AssetError::StorageExceeded.into());
+        }
+    }
+
+    Ok(())
+}
+
+/// Error when attempting to access an asset
+#[derive(Error, Debug, Clone, Copy)]
+pub enum AssetError {
+    /// The user has exceeded their storage
+    #[error("The storage limit of your tariff is exceeded.")]
+    StorageExceeded,
 }

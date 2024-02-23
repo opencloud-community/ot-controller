@@ -76,6 +76,8 @@ pub enum Error {
     InitializationFailed,
     /// Spacedeck is already initialized
     AlreadyInitialized,
+    /// The requesting user has exceeded their storage
+    StorageExceeded,
 }
 
 impl From<Error> for WhiteboardEvent {

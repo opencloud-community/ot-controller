@@ -77,6 +77,8 @@ pub enum Error {
     FailedInitialization,
     /// The etherpad is not yet initailized
     NotInitialized,
+    /// The requesting user has exceeded their storage
+    StorageExceeded,
 }
 
 impl From<Error> for ProtocolEvent {

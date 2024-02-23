@@ -4,12 +4,13 @@
 
 //! Contains the user specific database structs amd queries
 use super::groups::{Group, UserGroupRelation};
-use super::schema::{groups, users};
+use super::schema::{assets, groups, room_assets, rooms, users};
 use crate::{levenshtein, lower, soundex};
+use bigdecimal::{BigDecimal, ToPrimitive};
 use derive_more::{AsRef, Display, From, FromStr, Into};
 use diesel::{
-    BelongingToDsl, BoolExpressionMethods, ExpressionMethods, GroupedBy, Identifiable, Insertable,
-    OptionalExtension, QueryDsl, Queryable, TextExpressionMethods,
+    dsl::sum, BelongingToDsl, BoolExpressionMethods, ExpressionMethods, GroupedBy, Identifiable,
+    Insertable, OptionalExtension, QueryDsl, Queryable, TextExpressionMethods,
 };
 use diesel_async::RunQueryDsl;
 use opentalk_controller_settings::Settings;
@@ -303,6 +304,29 @@ impl User {
         Ok(matches)
     }
 
+    pub async fn get_used_storage(conn: &mut DbConnection, user_id: &UserId) -> Result<BigDecimal> {
+        let used_storage: Option<BigDecimal> = assets::table
+            .inner_join(room_assets::table.inner_join(rooms::table))
+            .filter(rooms::created_by.eq(user_id))
+            .select(sum(assets::size))
+            .first(conn)
+            .await?;
+
+        Ok(used_storage.unwrap_or_default())
+    }
+
+    pub async fn get_used_storage_u64(conn: &mut DbConnection, user_id: &UserId) -> Result<u64> {
+        let used_storage = Self::get_used_storage(conn, user_id).await?;
+
+        Ok(used_storage.to_u64().map_or_else(
+            || {
+                log::warn!("failed to convert used storage: {used_storage} to u64");
+                u64::MAX
+            },
+            |used_storage_u64| used_storage_u64,
+        ))
+    }
+
     pub fn to_public_user_profile(&self, settings: &Settings) -> PublicUserProfile {
         let avatar_url = email_to_libravatar_url(&settings.avatar.libravatar_url, &self.email);
 
@@ -317,7 +341,11 @@ impl User {
         }
     }
 
-    pub fn to_private_user_profile(&self, settings: &Settings) -> PrivateUserProfile {
+    pub fn to_private_user_profile(
+        &self,
+        settings: &Settings,
+        used_storage: u64,
+    ) -> PrivateUserProfile {
         let avatar_url = email_to_libravatar_url(&settings.avatar.libravatar_url, &self.email);
 
         PrivateUserProfile {
@@ -332,6 +360,7 @@ impl User {
             avatar_url,
             language: self.language.clone(),
             tariff_status: self.tariff_status,
+            used_storage,
         }
     }
 }

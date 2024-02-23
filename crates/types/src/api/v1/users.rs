@@ -77,6 +77,9 @@ pub struct PrivateUserProfile {
 
     /// The tariff status of the user
     pub tariff_status: TariffStatus,
+
+    /// The user's used storage
+    pub used_storage: u64,
 }
 
 /// Used to modify user settings.

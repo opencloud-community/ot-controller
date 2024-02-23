@@ -209,16 +209,22 @@ This event is received by every participant when a moderator generates a PDF doc
 
 ### Error
 
-An error has occurred while issuing a command.
+Received when something went wrong processing messages sent to the server.
 
 #### Fields
 
-| Field                     | Type       | Required | Description                                                                                          |
-| ------------------------- | ---------- | -------- | ---------------------------------------------------------------------------------------------------- |
-| `InsufficientPermissions` | `string[]` | yes      | The requesting user has insufficient permissions for the operation                                   |
-| `CurrentlyInitializing`   | `string[]` | yes      | A moderator just send a [SelectWriter](#selectwriter) message and the etherpad is still initializing |
-| `FailedInitialization`    | `string[]` | yes      | The etherpad initialization failed                                                                   |
-| `NotInitialized`          | `string[]` | yes      | The etherpad is not yet initialized                                                                  |
+| Field     | Type   | Always | Description                                       |
+| --------- | ------ | ------ | ------------------------------------------------- |
+| `message` | `enum` | yes    | Is `"error"`                                      |
+| `error`   | `enum` | yes    | Exhaustive list of error strings, see table below |
+
+| Error                      | Description                                                                                          |
+| -------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `insufficient_permissions` | The requesting user has insufficient permissions for the operation                                   |
+| `currently_initializing`   | A moderator just send a [SelectWriter](#selectwriter) message and the etherpad is still initializing |
+| `failed_initialization`    | The etherpad initialization failed                                                                   |
+| `not_initialized`          | The etherpad is not yet initialized                                                                  |
+| `storage_exceeded`         | The requesting user has exceeded their storage                                                       |
 
 ##### Example
 

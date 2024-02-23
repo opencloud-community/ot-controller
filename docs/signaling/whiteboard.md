@@ -151,17 +151,22 @@ Is received by every participant when a moderator generates a PDF document for t
 
 ### Error
 
-An error has occurred while issuing a command.
+Received when something went wrong processing messages sent to the server.
 
 #### Fields
 
-| Field                     | Type       | Required | Description                                                                               |
-| ------------------------- | ---------- | -------- | ----------------------------------------------------------------------------------------- |
-| `message`                 | `enum`     | yes      | Is `"error"`.                                                                             |
-| `InsufficientPermissions` | `[string]` | yes      | The requesting user has insufficient permissions for the operation                        |
-| `CurrentlyInitializing`   | `[string]` | yes      | The whiteboard initialization was already issued and whiteboard is currently initializing |
-| `InitializationFailed`    | `[string]` | yes      | The whiteboard initialization failed                                                      |
-| `AlreadyInitialized`      | `[string]` | yes      | The whiteboard is already initialized and accessible                                           |
+| Field     | Type   | Always | Description                                       |
+| --------- | ------ | ------ | ------------------------------------------------- |
+| `message` | `enum` | yes    | Is `"error"`                                      |
+| `error`   | `enum` | yes    | Exhaustive list of error strings, see table below |
+
+| Error                      | Description                                                                               |
+| -------------------------- | ----------------------------------------------------------------------------------------- |
+| `insufficient_permissions` | The requesting user has insufficient permissions for the operation                        |
+| `currently_initializing`   | The whiteboard initialization was already issued and whiteboard is currently initializing |
+| `initialization_failed`    | The whiteboard initialization failed                                                      |
+| `already_initialized`      | The whiteboard is already initialized and accessible                                      |
+| `storage_exceeded`         | The requesting user has exceeded their storage                                            |
 
 #### Example
 
