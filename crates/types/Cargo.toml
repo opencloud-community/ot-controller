@@ -90,3 +90,4 @@ serde = [
 
 [dev-dependencies]
 pretty_assertions.workspace = true
+serde_urlencoded.workspace = true

@@ -3,8 +3,11 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use crate::schema::assets;
+use crate::schema::events;
 use crate::schema::room_assets;
+use crate::schema::rooms;
 use chrono::{DateTime, Utc};
+use diesel::NullableExpressionMethods;
 use diesel::{
     BoolExpressionMethods, ExpressionMethods, Identifiable, Insertable, JoinOnDsl, QueryDsl,
     Queryable,
@@ -14,6 +17,9 @@ use diesel_async::AsyncConnection;
 use diesel_async::RunQueryDsl;
 use opentalk_database::{DbConnection, Paginate, Result};
 use opentalk_types::api::v1::assets::AssetResource;
+use opentalk_types::api::v1::users::UserAssetResource;
+use opentalk_types::core::EventId;
+use opentalk_types::core::UserId;
 use opentalk_types::core::{AssetId, RoomId, TenantId};
 
 /// Diesel resource struct
@@ -163,6 +169,8 @@ impl From<Asset> for AssetResource {
             filename: value.filename,
             namespace: value.namespace,
             created_at: value.created_at,
+            kind: value.kind,
+            size: value.size,
         }
     }
 }
@@ -205,4 +213,32 @@ impl NewAsset {
         })
         .await
     }
+}
+
+#[tracing::instrument(err, skip_all)]
+pub async fn get_all_for_room_owner_paginated(
+    conn: &mut DbConnection,
+    user_id: UserId,
+    limit: i64,
+    page: i64,
+) -> Result<(Vec<UserAssetResource>, i64)> {
+    let query = room_assets::table
+        .inner_join(assets::table)
+        .inner_join(rooms::table.left_join(events::table))
+        .filter(rooms::created_by.eq(user_id))
+        .select((
+            assets::all_columns,
+            rooms::columns::id,
+            events::columns::id.nullable(),
+        ))
+        .paginate_by(limit, page);
+
+    let (resources, total): (Vec<(Asset, RoomId, Option<EventId>)>, i64) =
+        query.load_and_count(conn).await?;
+    let resources = resources
+        .into_iter()
+        .map(|(asset, room_id, event_id)| UserAssetResource::new(asset.into(), room_id, event_id))
+        .collect();
+
+    Ok((resources, total))
 }

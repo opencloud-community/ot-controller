@@ -11,7 +11,7 @@ use crate::core::AssetId;
 use crate::imports::*;
 
 /// Representation of an asset resource
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct AssetResource {
     /// The ID of an asset
@@ -26,4 +26,10 @@ pub struct AssetResource {
 
     /// The timestamp the asset was created
     pub created_at: DateTime<Utc>,
+
+    /// The asset kind
+    pub kind: String,
+
+    /// The size of the asset in bytes
+    pub size: i64,
 }
