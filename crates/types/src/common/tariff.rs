@@ -22,7 +22,7 @@ pub struct TariffResource {
     pub name: String,
 
     /// The quotas of the tariff
-    pub quotas: HashMap<String, u32>,
+    pub quotas: HashMap<String, u64>,
 
     /// Enabled modules for the tariff (deprecated, use 'modules' instead)
     pub enabled_modules: HashSet<String>,
@@ -68,7 +68,7 @@ mod test {
         let produced = serde_json::to_value(TariffResource {
             id: TariffId::nil(),
             name: "tariff name".to_string(),
-            quotas: HashMap::from([("quota_a".to_owned(), 11u32)]),
+            quotas: HashMap::from([("quota_a".to_owned(), 11u64)]),
             enabled_modules: HashSet::from(["mod_a".to_owned()]),
             disabled_features: HashSet::from(["feat_a".to_owned()]),
             modules: HashMap::from([(

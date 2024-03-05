@@ -36,7 +36,7 @@ pub enum Command {
         disabled_features: Vec<String>,
         /// Comma-separated list of key=value pairs
         #[clap(long, value_delimiter = ',', value_parser = parse_quota)]
-        quotas: Vec<(String, u32)>,
+        quotas: Vec<(String, u64)>,
     },
     /// Delete a tariff by name
     Delete {
@@ -79,7 +79,7 @@ pub enum Command {
 
         /// Comma-separated list of key=value pairs to add, overwrites quotas with the same name
         #[clap(long, value_delimiter = ',', value_parser = parse_quota)]
-        add_quotas: Vec<(String, u32)>,
+        add_quotas: Vec<(String, u64)>,
 
         /// Comma-separated list of quota keys to remove
         #[clap(long, value_delimiter = ',')]
@@ -87,12 +87,12 @@ pub enum Command {
     },
 }
 
-fn parse_quota(s: &str) -> Result<(String, u32)> {
+fn parse_quota(s: &str) -> Result<(String, u64)> {
     let (name, value) = s.split_once('=').context("invalid key=value pair")?;
     let value = value
         .trim()
         .parse()
-        .context("invalid quota value, expected u32")?;
+        .context("invalid quota value, expected u64")?;
     Ok((name.trim().into(), value))
 }
 
@@ -162,7 +162,7 @@ async fn create_tariff(
     external_tariff_id: String,
     disabled_modules: Vec<String>,
     disabled_features: Vec<String>,
-    quotas: HashMap<String, u32>,
+    quotas: HashMap<String, u64>,
 ) -> Result<()> {
     let db = Db::connect(&settings.database).context("Failed to connect to database")?;
     let mut conn = db.get_conn().await?;
@@ -222,7 +222,7 @@ async fn edit_tariff(
     remove_disabled_modules: Vec<String>,
     add_disabled_features: Vec<String>,
     remove_disabled_features: Vec<String>,
-    add_quotas: HashMap<String, u32>,
+    add_quotas: HashMap<String, u64>,
     remove_quotas: Vec<String>,
 ) -> Result<()> {
     let db = Db::connect(&settings.database).context("Failed to connect to database")?;

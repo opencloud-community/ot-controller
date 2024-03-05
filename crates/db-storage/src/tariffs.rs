@@ -53,7 +53,7 @@ pub struct Tariff {
     pub name: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-    pub quotas: Jsonb<HashMap<String, u32>>,
+    pub quotas: Jsonb<HashMap<String, u64>>,
     disabled_modules: Vec<Option<String>>,
     disabled_features: Vec<Option<String>>,
 }
@@ -202,7 +202,7 @@ impl Tariff {
 #[diesel(table_name = tariffs)]
 pub struct NewTariff {
     pub name: String,
-    pub quotas: Jsonb<HashMap<String, u32>>,
+    pub quotas: Jsonb<HashMap<String, u64>>,
     pub disabled_modules: Vec<String>,
     pub disabled_features: Vec<String>,
 }
@@ -221,7 +221,7 @@ impl NewTariff {
 pub struct UpdateTariff {
     pub name: Option<String>,
     pub updated_at: DateTime<Utc>,
-    pub quotas: Option<Jsonb<HashMap<String, u32>>>,
+    pub quotas: Option<Jsonb<HashMap<String, u64>>>,
     pub disabled_modules: Option<Vec<String>>,
     pub disabled_features: Option<Vec<String>>,
 }
