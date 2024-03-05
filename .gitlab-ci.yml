@@ -162,33 +162,12 @@ check:opentalk-types:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
   stage: check
   needs: []
+  parallel:
+    matrix:
+      - FEATURES: ['', frontend, backend, actix, diesel, kustos, redis, rand, serde]
+        EXTRA_ARGS: ['', --no-default-features]
   script:
-    - cargo check --package opentalk-types
-    - cargo check --package opentalk-types --no-default-features
-
-    - cargo check --package opentalk-types --features="frontend"
-    - cargo check --package opentalk-types --no-default-features --features="frontend"
-
-    - cargo check --package opentalk-types --features="backend"
-    - cargo check --package opentalk-types --no-default-features --features="backend"
-
-    - cargo check --package opentalk-types --features="actix"
-    - cargo check --package opentalk-types --no-default-features --features="actix"
-
-    - cargo check --package opentalk-types --features="diesel"
-    - cargo check --package opentalk-types --no-default-features --features="diesel"
-
-    - cargo check --package opentalk-types --features="kustos"
-    - cargo check --package opentalk-types --no-default-features --features="kustos"
-
-    - cargo check --package opentalk-types --features="redis"
-    - cargo check --package opentalk-types --no-default-features --features="redis"
-
-    - cargo check --package opentalk-types --features="rand"
-    - cargo check --package opentalk-types --no-default-features --features="rand"
-
-    - cargo check --package opentalk-types --features="serde"
-    - cargo check --package opentalk-types --no-default-features --features="serde"
+    - cargo check --package opentalk-types $EXTRA_ARGS --features=$FEATURES
 
 check:docs-generated-parts:
   rules:
