@@ -778,6 +778,30 @@ paths:
         500:
           $ref: '#/components/responses/InternalServerError'
 
+  /users/me/assets:
+    get:
+      summary: Get the assets created by the current user.
+      description: >
+        Returns a list of assets that where created by a user.
+      tags: [users, assets]
+      operationId: get_me_assets
+      parameters:
+        - $ref: '#/components/parameters/PerPage'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/AssetSort'
+      responses:
+        200:
+          description: Includes the list of assets in the response body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAssets'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
   /users/me/tariff:
     get:
       summary: Get the current user's tariff information
@@ -1686,6 +1710,29 @@ components:
       schema:
         type: integer
         default: 1
+    Order:
+      name: order
+      description: The direction of the sorting that is applied to the return collection.
+      in: query
+      example:
+        - ascending
+        - descending
+      schema:
+        type: string
+        enum: [ascending, descending]
+    AssetSort:
+      name: sort
+      description: The property by which a collection of assets is sorted.
+      in: query
+      example:
+        - filename
+        - size
+        - namespace
+        - kind
+        - created_at
+      schema:
+        type: string
+        enum: [filename, size, namespace, kind, created_at]
     pageCursor:
       name: cursor
       description: Page cursor. Needs to be handled opaque
@@ -2565,6 +2612,63 @@ components:
           description: The users conference UI theme name
           type: string
           maxLength: 128
+
+    UserAssets:
+      description: Assets owned by a user
+      type: object
+      additionalProperties: false
+      required:
+        owned_assets
+      properties:
+        owned_assets:
+          description: Collection of assets associated with the user
+          schema:
+            ref: '#/components/schema/UserAssetCollection'
+
+    UserAssetCollection:
+      description: A collection of user assets
+      type: array
+      items:
+        ref: '#/components/schema/UserAssetItems'
+
+      additionalProperties: false
+
+    UserAssetItems:
+      description: Asset that belongs to a user
+      type: object
+      additionalProperties: false
+      required:
+        id
+        filename
+        created_at
+        kind
+        room_id
+      properties:
+        id:
+          description: The asset ID
+          type: string
+          format: uuid
+        filename:
+          description: The file name of the asset
+          type: string
+        namespace:
+          description: Namespace of the module responsible for asset
+          type: string
+        created_at:
+          description: Asset created at
+          type: string
+          format: date-time
+        kind:
+          description: The kind of the asset
+          type: string
+        room_id:
+          description:
+          type: string
+          format: uuid
+        event_id:
+          description:
+          type: string
+          format: uuid
 
     # -------------- Turn Definitions --------------
     StunTurnCredentials:

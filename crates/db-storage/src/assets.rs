@@ -2,12 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use crate::diesel::NullableExpressionMethods;
 use crate::schema::assets;
 use crate::schema::events;
 use crate::schema::room_assets;
 use crate::schema::rooms;
 use chrono::{DateTime, Utc};
-use diesel::NullableExpressionMethods;
 use diesel::{
     BoolExpressionMethods, ExpressionMethods, Identifiable, Insertable, JoinOnDsl, QueryDsl,
     Queryable,
@@ -17,6 +17,9 @@ use diesel_async::AsyncConnection;
 use diesel_async::RunQueryDsl;
 use opentalk_database::{DbConnection, Paginate, Result};
 use opentalk_types::api::v1::assets::AssetResource;
+use opentalk_types::api::v1::order::AssetSorting;
+use opentalk_types::api::v1::order::Ordering;
+use opentalk_types::api::v1::order::SortingQuery;
 use opentalk_types::api::v1::users::UserAssetResource;
 use opentalk_types::core::EventId;
 use opentalk_types::core::UserId;
@@ -216,13 +219,14 @@ impl NewAsset {
 }
 
 #[tracing::instrument(err, skip_all)]
-pub async fn get_all_for_room_owner_paginated(
+pub async fn get_all_for_room_owner_paginated_ordered(
     conn: &mut DbConnection,
     user_id: UserId,
     limit: i64,
     page: i64,
+    sorting: SortingQuery<AssetSorting>,
 ) -> Result<(Vec<UserAssetResource>, i64)> {
-    let query = room_assets::table
+    let mut query = room_assets::table
         .inner_join(assets::table)
         .inner_join(rooms::table.left_join(events::table))
         .filter(rooms::created_by.eq(user_id))
@@ -231,10 +235,29 @@ pub async fn get_all_for_room_owner_paginated(
             rooms::columns::id,
             events::columns::id.nullable(),
         ))
-        .paginate_by(limit, page);
+        .into_boxed();
+
+    // There was no sane approach to move this block to it's own function or call asc/desc on a
+    // generalized column.
+    query = match (sorting.order, sorting.sort) {
+        (Ordering::Ascending, AssetSorting::Filename) => query.order(assets::filename.asc()),
+        (Ordering::Ascending, AssetSorting::Size) => query.order(assets::size.asc()),
+        (Ordering::Ascending, AssetSorting::Namespace) => query.order(assets::namespace.asc()),
+        (Ordering::Ascending, AssetSorting::Kind) => query.order(assets::kind.asc()),
+        (Ordering::Ascending, AssetSorting::CreatedAt) => query.order(assets::created_at.asc()),
+
+        (Ordering::Descending, AssetSorting::Filename) => query.order(assets::filename.desc()),
+        (Ordering::Descending, AssetSorting::Size) => query.order(assets::size.desc()),
+        (Ordering::Descending, AssetSorting::Namespace) => query.order(assets::namespace.desc()),
+        (Ordering::Descending, AssetSorting::Kind) => query.order(assets::kind.desc()),
+        (Ordering::Descending, AssetSorting::CreatedAt) => query.order(assets::created_at.desc()),
+    };
+
+    let query = query.paginate_by(limit, page);
 
     let (resources, total): (Vec<(Asset, RoomId, Option<EventId>)>, i64) =
         query.load_and_count(conn).await?;
+
     let resources = resources
         .into_iter()
         .map(|(asset, room_id, event_id)| UserAssetResource::new(asset.into(), room_id, event_id))

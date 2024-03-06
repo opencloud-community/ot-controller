@@ -75,18 +75,18 @@ mod test {
     #[test]
     #[cfg(feature = "serde")]
     fn pagination_query() -> Result<(), Box<dyn std::error::Error>> {
-        let asset_resource = PagePaginationQuery {
+        let paging = PagePaginationQuery {
             per_page: 12,
             page: 2,
         };
 
-        let expected_json = "per_page=12&page=2";
+        let paging_urlencoded = "per_page=12&page=2";
 
-        let serialized: String = serde_urlencoded::to_string(&asset_resource)?;
-        assert_eq!(expected_json, serialized);
+        let serialize_output: String = serde_urlencoded::to_string(&paging)?;
+        assert_eq!(paging_urlencoded, serialize_output);
 
-        let deserialized = serde_urlencoded::from_str(expected_json)?;
-        assert_eq!(asset_resource, deserialized);
+        let deserialized = serde_urlencoded::from_str(paging_urlencoded)?;
+        assert_eq!(paging, deserialized);
 
         Ok(())
     }
@@ -97,52 +97,52 @@ mod test {
         use serde::de::Error;
 
         assert_eq!(
+            serde_urlencoded::from_str::<PagePaginationQuery>("per_page=12&page=-2"),
             Err(serde_urlencoded::de::Error::custom(
                 "page must be greater than 0"
             )),
-            serde_urlencoded::from_str::<PagePaginationQuery>("per_page=12&page=-2")
         );
         assert_eq!(
+            serde_urlencoded::from_str::<PagePaginationQuery>("per_page=-12&page=2"),
             Err(serde_urlencoded::de::Error::custom("per_page <= 0")),
-            serde_urlencoded::from_str::<PagePaginationQuery>("per_page=-12&page=2")
         );
         assert_eq!(
+            serde_urlencoded::from_str::<PagePaginationQuery>("per_page=101&page=2"),
             Err(serde_urlencoded::de::Error::custom("per_page too large")),
-            serde_urlencoded::from_str::<PagePaginationQuery>("per_page=101&page=2")
         );
     }
 
     #[test]
     #[cfg(feature = "serde")]
-    fn default_page() {
+    fn default_values() {
         use crate::api::v1::pagination::default_pagination_per_page;
 
-        let query_default_page = PagePaginationQuery {
+        let default_page = PagePaginationQuery {
             per_page: 12,
             page: default_pagination_page(),
         };
 
         assert_eq!(
-            Ok(query_default_page),
+            Ok(default_page),
             serde_urlencoded::from_str::<PagePaginationQuery>("per_page=12")
         );
 
-        let query_default_page = PagePaginationQuery {
+        let default_per_page = PagePaginationQuery {
             per_page: default_pagination_per_page(),
             page: 13,
         };
 
         assert_eq!(
-            Ok(query_default_page),
+            Ok(default_per_page),
             serde_urlencoded::from_str::<PagePaginationQuery>("page=13")
         );
 
-        let query_default = PagePaginationQuery {
+        let default_query = PagePaginationQuery {
             per_page: default_pagination_per_page(),
             page: default_pagination_page(),
         };
         assert_eq!(
-            Ok(query_default),
+            Ok(default_query),
             serde_urlencoded::from_str::<PagePaginationQuery>("")
         );
     }
