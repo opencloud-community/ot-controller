@@ -17,6 +17,7 @@ use actix_web_httpauth::headers::www_authenticate::bearer::{Bearer, Error};
 use diesel::result::DatabaseErrorKind;
 use itertools::Itertools;
 use opentalk_database::DatabaseError;
+use opentalk_signaling_core::assets::AssetError;
 use serde::Deserialize;
 use serde::Serialize;
 use std::borrow::Cow;
@@ -501,6 +502,22 @@ impl From<ValidationErrors> for ApiError {
         collect_validation_errors(validation_errors, &mut entries);
 
         Self::unprocessable_entities(entries)
+    }
+}
+
+impl From<AssetError> for ApiError {
+    fn from(asset_error: AssetError) -> Self {
+        match asset_error {
+            AssetError::StorageExceeded => Self::bad_request()
+                .with_code("storage_exceeded")
+                .with_message("The storage limit of your tariff is exceeded"),
+        }
+    }
+}
+
+impl From<&AssetError> for ApiError {
+    fn from(asset_error: &AssetError) -> Self {
+        Self::from(*asset_error)
     }
 }
 

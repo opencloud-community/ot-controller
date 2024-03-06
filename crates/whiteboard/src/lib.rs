@@ -8,8 +8,9 @@ use futures::stream::once;
 use futures::TryStreamExt;
 use opentalk_database::Db;
 use opentalk_signaling_core::{
-    assets::save_asset, control, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage,
-    RedisConnection, SignalingModule, SignalingModuleInitData, SignalingRoomId,
+    assets::{save_asset, AssetError},
+    control, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage, RedisConnection,
+    SignalingModule, SignalingModuleInitData, SignalingRoomId,
 };
 use opentalk_types::{
     core::Timestamp,
@@ -180,7 +181,7 @@ impl SignalingModule for Whiteboard {
 
                 let filename = format!("whiteboard_{}.pdf", ts.to_rfc3339());
 
-                let asset_id = save_asset(
+                let asset_id = match save_asset(
                     &self.storage,
                     self.db.clone(),
                     self.room_id.room_id(),
@@ -189,7 +190,19 @@ impl SignalingModule for Whiteboard {
                     "whiteboard_pdf",
                     data,
                 )
-                .await?;
+                .await
+                {
+                    Ok(asset_id) => asset_id,
+                    Err(e) => {
+                        if e.downcast_ref::<AssetError>().is_some() {
+                            ctx.ws_send(Error::StorageExceeded);
+                            return Ok(());
+                        }
+
+                        log::error!("Failed to save asset {filename}: {e}");
+                        return Err(e);
+                    }
+                };
 
                 ctx.exchange_publish(
                     control::exchange::current_room_all_participants(self.room_id),

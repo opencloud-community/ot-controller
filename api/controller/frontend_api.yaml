@@ -2378,6 +2378,7 @@ components:
             - conference_theme
             - language
             - tariff_status
+            - used_storage
           properties:
             dashboard_theme:
               description: The users dashboard UI theme name
@@ -2392,6 +2393,9 @@ components:
               description: The status of the tariff
               type: string
               enum: [default, paid, downgraded]
+            used_storage:
+              description: The users used storage in bytes
+              type: number
 
     UserFindResponseItem:
       description: User information accessible to all other users

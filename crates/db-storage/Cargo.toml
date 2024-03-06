@@ -26,11 +26,8 @@ anyhow.workspace = true
 thiserror.workspace = true
 
 ### Database ORM
-diesel = { workspace = true, features = [
-    "uuid",
-    "serde_json",
-    "chrono",
-] }
+bigdecimal.workspace = true
+diesel = { workspace = true, features = ["uuid", "serde_json", "chrono", "numeric"] }
 diesel-async.workspace = true
 uuid = { workspace = true, features = ["serde", "v4"] }
 

@@ -26,6 +26,7 @@ pub struct Asset {
     pub kind: String,
     pub filename: String,
     pub tenant_id: TenantId,
+    pub size: i64,
 }
 
 impl Asset {
@@ -180,6 +181,7 @@ pub struct NewAsset {
     pub kind: String,
     pub filename: String,
     pub tenant_id: TenantId,
+    pub size: i64,
 }
 
 impl NewAsset {

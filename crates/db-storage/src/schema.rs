@@ -14,6 +14,7 @@ diesel::table! {
         #[max_length = 512]
         filename -> Varchar,
         tenant_id -> Uuid,
+        size -> Int8,
     }
 }
 
