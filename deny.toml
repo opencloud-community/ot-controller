@@ -180,6 +180,7 @@ skip = [
     { name = "async-lock", version = "=2" },
     { name = "base16ct", version = "=0.1" },
     { name = "base64", version = "=0.13" },
+    { name = "base64", version = "=0.21" },
     { name = "cookie", version = "=0.16" },
     { name = "crypto-bigint", version = "=0.4" },
     { name = "der", version = "=0.6" },
