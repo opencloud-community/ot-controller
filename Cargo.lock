@@ -2468,9 +2468,9 @@ dependencies = [
 
 [[package]]
 name = "http-request-derive"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8ca0226aed572bede9d606684a52bb7464d1d346db951f682c79117919b3042"
+checksum = "3624de92eb00f7632976cf5ec5d132c2592c3b282822b5f48f448c8d09e856c5"
 dependencies = [
  "bytes",
  "http 0.2.11",
@@ -2484,9 +2484,9 @@ dependencies = [
 
 [[package]]
 name = "http-request-derive-macros"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "956e2049879a5e9dc125385e14d0d1cf6ad0d057f607079fcb1f9efe5adb081f"
+checksum = "80ccc5486df1fbe2128e92f5c82b79c874547291c00700966f6f6159fc257704"
 dependencies = [
  "darling",
  "proc-macro2",
