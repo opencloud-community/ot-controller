@@ -27,7 +27,7 @@ pub struct DatabaseMetrics {
     pub sql_execution_time: Histogram<f64>,
     pub sql_error: Counter<u64>,
     pub dbpool_connections: Histogram<u64>,
-    pub dbpool_connections_idle: Histogram<i64>,
+    pub dbpool_connections_idle: Histogram<u64>,
 }
 
 pub struct MetricsConnection<Conn> {

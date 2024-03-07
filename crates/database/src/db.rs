@@ -60,7 +60,7 @@ impl Db {
 
             metrics
                 .dbpool_connections_idle
-                .record(state.available as i64, &[]);
+                .record(u64::try_from(state.available).unwrap_or_default(), &[]);
         }
 
         match res {

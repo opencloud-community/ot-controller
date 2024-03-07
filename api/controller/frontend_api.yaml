@@ -1195,14 +1195,9 @@ paths:
         content:
           application/json:
             schema:
-              properties:
-                invitee:
-                  type: string
-                  description: ID of the user to be invited
-                role:
-                  type: string
-                  enum: [user, moderator]
-                  description: The role for the invited user
+              oneOf:
+                - $ref: '#/components/schemas/EmailInvite'
+                - $ref: '#/components/schemas/UserInvite'
       responses:
         201:
           description: Successfully invited user
@@ -1296,6 +1291,44 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 
   /events/{event_id}/invites/email:
+    patch:
+      summary: Update invite to an event using the email address as the identifier.
+      description: |
+        Update the invite to an event for a specified email address
+      tags: [events, event_invites]
+      parameters:
+        - $ref: '#/components/parameters/eventId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              additionalProperties: false
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: The email address of the invited participant
+                role:
+                  type: string
+                  enum: [guest, moderator]
+                  description: The role for the invited user
+      responses:
+        204:
+          description: The invite was successfully updated
+        403:
+          description: |
+            The requesting user does not have the required permissions to update the invite.
+            Only the creator of an event can update the invites.
+        404:
+          $ref: '#/components/responses/NotFound'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
     delete:
       summary: Delete an email invite to an event
       description: |
@@ -2201,6 +2234,33 @@ components:
             Numeric string with 10 characters to secure room access
           type: string
           maxLength: 10
+
+    # -------------- Invite Definitions --------------
+    UserInvite:
+      description: Invite a user to an event by its ID
+      type: object
+      additionalProperties: false
+      properties:
+        invitee:
+          type: string
+          description: ID of the user to be invited
+        role:
+          type: string
+          enum: [user, moderator]
+          description: The role for the invited user
+
+    EmailInvite:
+      description: Invite a user to an event by its email address
+      type: object
+      additionalProperties: false
+      properties:
+        email:
+          type: string
+          description: Email address of the user to be invited
+        role:
+          type: string
+          enum: [guest, moderator]
+          description: The role for the invited user
 
     # -------------- InviteCode Definitions --------------
     InvitedRoomStart:

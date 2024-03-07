@@ -15,7 +15,7 @@ use opentalk_mail_worker_protocol::MailTask;
 use opentalk_signaling_core::{RedisMetrics, SignalingMetrics};
 use opentelemetry::metrics::{Counter, Histogram, MetricsError, Unit};
 use opentelemetry::{global, Key};
-use opentelemetry_sdk::metrics::{new_view, Aggregation, Instrument, MeterProvider, Stream};
+use opentelemetry_sdk::metrics::{new_view, Aggregation, Instrument, SdkMeterProvider, Stream};
 use prometheus::{Encoder, Registry, TextEncoder};
 use std::sync::Arc;
 
@@ -50,7 +50,7 @@ impl CombinedMetrics {
             .with_registry(registry.clone())
             .build()?;
 
-        let provider = MeterProvider::builder()
+        let provider = SdkMeterProvider::builder()
             .with_reader(exporter)
             .with_view(new_view(
                 Instrument::new().name("web.request_duration_seconds"),
@@ -188,7 +188,7 @@ impl CombinedMetrics {
                 .with_description("Number of currently non-idling db connections")
                 .init(),
             dbpool_connections_idle: meter
-                .i64_histogram("sql.dbpool_connections_idle")
+                .u64_histogram("sql.dbpool_connections_idle")
                 .with_description("Number of currently idling db connections")
                 .init(),
         });

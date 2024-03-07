@@ -11,5 +11,5 @@ use crate::imports::*;
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct PatchInviteBody {
     /// Invite role of the user
-    pub role: InviteRole,
+    pub role: Option<InviteRole>,
 }
