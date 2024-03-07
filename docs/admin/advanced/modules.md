@@ -22,7 +22,7 @@ opentalk-controller modules list
 
 Example output for the community edition:
 
-<!-- begin:fromfile:text:cli-usage/opentalk-controller-modules-list -->
+<!-- begin:fromfile:cli-usage/opentalk-controller-modules-list.md -->
 
 ```text
 echo: []
@@ -40,4 +40,4 @@ timer: []
 whiteboard: []
 ```
 
-<!-- end:fromfile:text:cli-usage/opentalk-controller-modules-list -->
+<!-- end:fromfile:cli-usage/opentalk-controller-modules-list.md -->

@@ -23,7 +23,7 @@ opentalk-controller jobs execute self-check
 
 Example output:
 
-<!-- begin:fromfile:text:cli-usage/opentalk-controller-jobs-execute-self-check -->
+<!-- begin:fromfile:cli-usage/opentalk-controller-jobs-execute-self-check.md -->
 
 ```text
 [INFO ] Starting job execution
@@ -39,7 +39,7 @@ Example output:
 [INFO ] Job finished successfully
 ```
 
-<!-- end:fromfile:text:cli-usage/opentalk-controller-jobs-execute-self-check -->
+<!-- end:fromfile:cli-usage/opentalk-controller-jobs-execute-self-check.md -->
 
 #### Parameters
 
@@ -47,13 +47,13 @@ The job takes an empty JSON object as its parameter.
 
 The default parameters for the job look like this:
 
-<!-- begin:fromfile:json:jobs/parameters-self-check.json -->
+<!-- begin:fromfile:jobs/parameters-self-check.json.md -->
 
 ```json
 {}
 ```
 
-<!-- end:fromfile:json:jobs/parameters-self-check.json -->
+<!-- end:fromfile:jobs/parameters-self-check.json.md -->
 
 ### Job: `event-cleanup`
 
@@ -80,7 +80,7 @@ default value will be used.
 
 The default parameters for the job look like this:
 
-<!-- begin:fromfile:json:jobs/parameters-event-cleanup.json -->
+<!-- begin:fromfile:jobs/parameters-event-cleanup.json.md -->
 
 ```json
 {
@@ -89,7 +89,7 @@ The default parameters for the job look like this:
 }
 ```
 
-<!-- end:fromfile:json:jobs/parameters-event-cleanup.json -->
+<!-- end:fromfile:jobs/parameters-event-cleanup.json.md -->
 
 ### Job: `adhoc-event-cleanup`
 
@@ -116,7 +116,7 @@ default value will be used.
 
 The default parameters for the job look like this:
 
-<!-- begin:fromfile:json:jobs/parameters-adhoc-event-cleanup.json -->
+<!-- begin:fromfile:jobs/parameters-adhoc-event-cleanup.json.md -->
 
 ```json
 {
@@ -125,7 +125,7 @@ The default parameters for the job look like this:
 }
 ```
 
-<!-- end:fromfile:json:jobs/parameters-adhoc-event-cleanup.json -->
+<!-- end:fromfile:jobs/parameters-adhoc-event-cleanup.json.md -->
 
 ### Job: `invite-cleanup`
 
@@ -143,7 +143,7 @@ default value will be used.
 
 The default parameters for the job look like this:
 
-<!-- begin:fromfile:json:jobs/parameters-invite-cleanup.json -->
+<!-- begin:fromfile:jobs/parameters-invite-cleanup.json.md -->
 
 ```json
 {
@@ -151,7 +151,7 @@ The default parameters for the job look like this:
 }
 ```
 
-<!-- end:fromfile:json:jobs/parameters-invite-cleanup.json -->
+<!-- end:fromfile:jobs/parameters-invite-cleanup.json.md -->
 
 ## `opentalk-controller jobs` subcommand
 
@@ -159,7 +159,7 @@ This subcommand is the top-level entrypoint to manage and execute maintenance jo
 
 Help output looks like this:
 
-<!-- begin:fromfile:text:cli-usage/opentalk-controller-jobs-help -->
+<!-- begin:fromfile:cli-usage/opentalk-controller-jobs-help.md -->
 
 ```text
 Manage and execute maintenance jobs
@@ -175,7 +175,7 @@ Options:
   -h, --help  Print help
 ```
 
-<!-- end:fromfile:text:cli-usage/opentalk-controller-jobs-help -->
+<!-- end:fromfile:cli-usage/opentalk-controller-jobs-help.md -->
 
 ## `opentalk-controller jobs execute` subcommand
 
@@ -186,7 +186,7 @@ and the command exits with a non-zero exit code.
 
 Help output looks like this:
 
-<!-- begin:fromfile:text:cli-usage/opentalk-controller-jobs-execute-help -->
+<!-- begin:fromfile:cli-usage/opentalk-controller-jobs-execute-help.md -->
 
 ```text
 Execute a job by its job type id
@@ -223,7 +223,7 @@ Options:
           Print help (see a summary with '-h')
 ```
 
-<!-- end:fromfile:text:cli-usage/opentalk-controller-jobs-execute-help -->
+<!-- end:fromfile:cli-usage/opentalk-controller-jobs-execute-help.md -->
 
 ## `opentalk-controller jobs default-parameters` subcommand
 
@@ -231,7 +231,7 @@ This subcommand is used to query the default parameters used when executing main
 
 Help output looks like this:
 
-<!-- begin:fromfile:text:cli-usage/opentalk-controller-jobs-default-parameters-help -->
+<!-- begin:fromfile:cli-usage/opentalk-controller-jobs-default-parameters-help.md -->
 
 ```text
 Show the default parameter set for a job
@@ -255,4 +255,4 @@ Options:
           Print help (see a summary with '-h')
 ```
 
-<!-- end:fromfile:text:cli-usage/opentalk-controller-jobs-default-parameters-help -->
+<!-- end:fromfile:cli-usage/opentalk-controller-jobs-default-parameters-help.md -->

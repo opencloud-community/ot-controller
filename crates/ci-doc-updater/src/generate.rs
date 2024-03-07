@@ -30,11 +30,7 @@ impl<'a> FilesProvider for DirectoryFilesProvider<'a> {
     }
 }
 
-pub fn generate(
-    filename: &Path,
-    contents: &str,
-    raw_files: &dyn FilesProvider,
-) -> Result<String, Whatever> {
+pub fn generate(contents: &str, raw_files: &dyn FilesProvider) -> Result<String, Whatever> {
     let markers = analyze(contents)?;
 
     let mut lines = contents.lines();
@@ -44,10 +40,9 @@ pub fn generate(
 
     for section in &markers.sections {
         let included_filename = section.begin.filename();
-        let included_filetype = section.begin.filetype();
 
-        println!("Updating file {included_filename} inside {filename:?}",);
-        let raw_file = raw_files.get_file_contents(section.begin.filename())?;
+        println!("-- updating section {included_filename}",);
+        let raw_file = raw_files.get_file_contents(included_filename)?;
         let raw_file = raw_file.trim();
 
         while line < section.begin.line() {
@@ -65,13 +60,11 @@ pub fn generate(
         // triggering "MD031 Fenced code blocks should be surrounded by blank lines" warnings
         // from markdownlint
         let new_section = format!(
-            r"<!-- begin:fromfile:{included_filetype}:{included_filename} -->
+            r"<!-- begin:fromfile:{included_filename} -->
 
-```{included_filetype}
 {raw_file}
-```
 
-<!-- end:fromfile:{included_filetype}:{included_filename} -->",
+<!-- end:fromfile:{included_filename} -->",
         );
 
         for new_line in new_section.lines() {
@@ -99,8 +92,8 @@ mod tests {
         let original = r"
 hello
 
-<!-- begin:fromfile:text:abc -->
-<!-- end:fromfile:text:abc -->
+<!-- begin:fromfile:abc -->
+<!-- end:fromfile:abc -->
 
 world
 ";
@@ -108,13 +101,13 @@ world
         let expected = r"
 hello
 
-<!-- begin:fromfile:text:abc -->
+<!-- begin:fromfile:abc -->
 
 ```text
 foobar
 ```
 
-<!-- end:fromfile:text:abc -->
+<!-- end:fromfile:abc -->
 
 world
 ";
@@ -122,11 +115,14 @@ world
         struct DummyFilesProvider;
         impl FilesProvider for DummyFilesProvider {
             fn get_file_contents(&self, _filename: &str) -> Result<String, Whatever> {
-                Ok("foobar".to_string())
+                Ok(r"```text
+foobar
+```"
+                .to_string())
             }
         }
 
-        let generated = generate(Path::new("xyz"), original, &DummyFilesProvider).unwrap();
+        let generated = generate(original, &DummyFilesProvider).unwrap();
 
         assert_eq!(generated.as_str(), expected);
     }
@@ -136,18 +132,18 @@ world
         let original = r"
 hello
 
-<!-- begin:fromfile:text:abc -->
+<!-- begin:fromfile:abc -->
 
 this is abc
 
-<!-- end:fromfile:text:abc -->
+<!-- end:fromfile:abc -->
 
 world
-<!-- begin:fromfile:text:cba -->
+<!-- begin:fromfile:cba -->
 
 this is cba
 
-<!-- end:fromfile:text:cba -->
+<!-- end:fromfile:cba -->
 
 !
 ";
@@ -155,22 +151,22 @@ this is cba
         let expected = r"
 hello
 
-<!-- begin:fromfile:text:abc -->
+<!-- begin:fromfile:abc -->
 
 ```text
 foobar abc
 ```
 
-<!-- end:fromfile:text:abc -->
+<!-- end:fromfile:abc -->
 
 world
-<!-- begin:fromfile:text:cba -->
+<!-- begin:fromfile:cba -->
 
 ```text
 foobar cba
 ```
 
-<!-- end:fromfile:text:cba -->
+<!-- end:fromfile:cba -->
 
 !
 ";
@@ -178,11 +174,15 @@ foobar cba
         struct DummyFilesProvider;
         impl FilesProvider for DummyFilesProvider {
             fn get_file_contents(&self, filename: &str) -> Result<String, Whatever> {
-                Ok(format!("foobar {filename}"))
+                Ok(format!(
+                    r"```text
+foobar {filename}
+```"
+                ))
             }
         }
 
-        let generated = generate(Path::new("xyz"), original, &DummyFilesProvider).unwrap();
+        let generated = generate(original, &DummyFilesProvider).unwrap();
 
         assert_eq!(generated.as_str(), expected);
     }

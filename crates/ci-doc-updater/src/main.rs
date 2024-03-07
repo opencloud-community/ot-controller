@@ -59,7 +59,7 @@ fn generate_files(raw_files_dir: &Path, documentation_dir: &Path) -> Result<(), 
                 println!("Updating file {path:?}");
                 let contents = std::fs::read_to_string(&path)
                     .with_whatever_context(|err| format!("Couldn't read file {path:?}: {err}"))?;
-                let new_contents = generate::generate(&path, &contents, &files_provider)?;
+                let new_contents = generate::generate(&contents, &files_provider)?;
                 if contents != new_contents {
                     std::fs::write(&path, new_contents).with_whatever_context(|err| {
                         format!("Couldn't write file {path:?}: {err}")

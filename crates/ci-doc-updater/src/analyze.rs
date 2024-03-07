@@ -9,7 +9,7 @@ use regex::{Captures, Regex};
 use snafu::{ensure_whatever, whatever, OptionExt, Whatever};
 
 static RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"(?m)^\s*<!-- (?<marker>(begin|end)):fromfile:(?<filetype>[-_.a-zA-Z]+):(?<filename>[-_./a-zA-Z]+) -->$")
+    Regex::new(r"(?m)^\s*<!-- (?<marker>(begin|end)):fromfile:(?<filename>[-_./a-zA-Z]+) -->$")
         .unwrap()
 });
 
@@ -36,25 +36,20 @@ pub struct MarkerLine<'a> {
     kind: MarkerKind,
     line: usize,
     filename: &'a str,
-    filetype: &'a str,
 }
 
 #[allow(dead_code)]
 impl<'a> MarkerLine<'a> {
-    pub fn kind(&self) -> MarkerKind {
+    pub const fn kind(&self) -> MarkerKind {
         self.kind
     }
 
-    pub fn line(&self) -> usize {
+    pub const fn line(&self) -> usize {
         self.line
     }
 
-    pub fn filename(&self) -> &'a str {
+    pub const fn filename(&self) -> &'a str {
         self.filename
-    }
-
-    pub fn filetype(&self) -> &'a str {
-        self.filetype
     }
 }
 
@@ -63,11 +58,6 @@ impl<'a> MarkerLine<'a> {
         let filename = captures
             .name("filename")
             .whatever_context("filename not found")?
-            .as_str();
-
-        let filetype = captures
-            .name("filetype")
-            .whatever_context("filetype not found")?
             .as_str();
 
         let kind = captures
@@ -80,7 +70,6 @@ impl<'a> MarkerLine<'a> {
             kind,
             line,
             filename,
-            filetype,
         })
     }
 }
@@ -165,13 +154,13 @@ mod tests {
     #[test]
     fn regex_line() {
         check_regex_line(
-            "<!-- begin:fromfile:text:opentalk-controller-help -->",
+            "<!-- begin:fromfile:opentalk-controller-help -->",
             "begin",
             "opentalk-controller-help",
         );
 
         check_regex_line(
-            "<!-- end:fromfile:text:opentalk_controller_help -->",
+            "<!-- end:fromfile:opentalk_controller_help -->",
             "end",
             "opentalk_controller_help",
         );
@@ -181,13 +170,13 @@ mod tests {
     fn regex_text() {
         let text: &str = r"blah
 blub
-<!-- begin:fromfile:text:opentalk-controller-help -->
+<!-- begin:fromfile:opentalk-controller-help -->
 ```text
 hello
 
 world
 ```
- <!-- end:fromfile:text:opentalk-controller-help -->
+ <!-- end:fromfile:opentalk-controller-help -->
 
 The end.";
         println!("{}", text);

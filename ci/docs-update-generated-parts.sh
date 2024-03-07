@@ -15,19 +15,24 @@ JOBS_DIR="$DOCS_TEMP_DIR"/jobs
 CONFIG_DIR="$DOCS_TEMP_DIR"/config
 CMDNAME=opentalk-controller
 
-mkdir -p "$CLI_DIR" "$JOBS_DIR" "$CONFIG_DIR"
-
-cp extra/example.toml "$CONFIG_DIR"/example.toml
-
-cargo build --package "$OPENTALK_CONTROLLER_PROJECT"
-
 codify() {
-  echo '```'"$1"
-  while read -r data; do
+  if [ -z "$1" ]; then
+    echo "Error: no language specified"
+    return 1
+  fi
+
+  echo "\`\`\`$1"
+  while IFS= read -r data; do
     echo "$data"
   done
   echo '```'
 }
+
+mkdir -p "$CLI_DIR" "$JOBS_DIR" "$CONFIG_DIR"
+
+cargo build --package "$OPENTALK_CONTROLLER_PROJECT"
+
+codify toml < extra/example.toml > "$CONFIG_DIR"/example.toml.md
 
 $OPENTALK_CONTROLLER_CMD help | codify text > "$CLI_DIR"/"$CMDNAME"-help.md
 $OPENTALK_CONTROLLER_CMD fix-acl --help | codify text > "$CLI_DIR"/"$CMDNAME"-fix-acl-help.md
@@ -63,7 +68,13 @@ $OPENTALK_CONTROLLER_CMD --config extra/example.toml modules list | codify text 
 # Remove trailing spaces to prevent markdownlint from triggering *MD009 - Trailing spaces*
 # https://github.com/markdownlint/markdownlint/blob/main/docs/RULES.md#md009---trailing-spaces
 for file in "$CLI_DIR"/*; do
-  sed --regexp-extended --in-place 's#[[:space:]]+$##g' "$file"
+ # Check if the script is running on macOS or BSD
+ if [[ "$(uname)" == "Darwin" ]] || [[ "$(uname)" == "BSD" ]]; then
+    sed -i '' -E 's/[[:space:]]+$//' "$file"
+ else
+    # For other Linux/Unix-like systems
+    sed --in-place --regexp-extended 's/[[:space:]]+$//' "$file"
+ fi
 done
 
 cargo run --bin ci-doc-updater -- generate --raw-files-dir target/docs/temporary/ --documentation-dir docs/

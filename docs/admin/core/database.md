@@ -40,7 +40,7 @@ opentalk-controller migrate-db
 
 Help output looks like this:
 
-<!-- begin:fromfile:text:cli-usage/opentalk-controller-migrate-db-help -->
+<!-- begin:fromfile:cli-usage/opentalk-controller-migrate-db-help.md -->
 
 ```text
 Migrate the db. This is done automatically during start of the controller, but can be done without starting the controller using this command
@@ -51,4 +51,4 @@ Options:
   -h, --help  Print help
 ```
 
-<!-- end:fromfile:text:cli-usage/opentalk-controller-migrate-db-help -->
+<!-- end:fromfile:cli-usage/opentalk-controller-migrate-db-help.md -->

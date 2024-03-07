@@ -28,7 +28,7 @@ These subcommands are available:
 
 Help output looks like this:
 
-<!-- begin:fromfile:text:cli-usage/opentalk-controller-help -->
+<!-- begin:fromfile:cli-usage/opentalk-controller-help.md -->
 
 ```text
 Usage: opentalk-controller [OPTIONS] [COMMAND]
@@ -50,4 +50,4 @@ Options:
   -h, --help             Print help
 ```
 
-<!-- end:fromfile:text:cli-usage/opentalk-controller-help -->
+<!-- end:fromfile:cli-usage/opentalk-controller-help.md -->
