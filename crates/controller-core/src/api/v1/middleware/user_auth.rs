@@ -4,8 +4,7 @@
 
 //! Handles user Authentication in API requests
 use crate::api::v1::middleware::user_auth::bearer_or_invite_code::BearerOrInviteCode;
-use crate::api::v1::response::error::{AuthenticationError, CacheableApiError};
-use crate::api::v1::response::ApiError;
+use crate::api::v1::response::error::CacheableApiError;
 use crate::caches::Caches;
 use crate::oidc::{OidcContext, UserClaims};
 use actix_web::dev::{Service, ServiceRequest, ServiceResponse, Transform};
@@ -22,7 +21,8 @@ use opentalk_controller_settings::{Settings, SharedSettings, TenantAssignment};
 use opentalk_database::Db;
 use opentalk_db_storage::tenants::{OidcTenantId, Tenant};
 use opentalk_db_storage::users::User;
-use opentalk_types::core::InviteCodeId;
+use opentalk_types::api::error::ApiError;
+use opentalk_types::{api::error::AuthenticationError, core::InviteCodeId};
 use std::future::{Future, Ready};
 use std::pin::Pin;
 use std::rc::Rc;
@@ -195,7 +195,7 @@ pub async fn check_access_token(
         // Hit! Return the cached result
         match result {
             Ok(tenant_and_user) => Ok(tenant_and_user),
-            Err(err) => Err(ApiError::from_cacheable(err)?),
+            Err(err) => Err(ApiError::try_from(err)?),
         }
     } else {
         // Miss, do the check and cache the result
@@ -238,7 +238,7 @@ pub async fn check_access_token(
                     cache
                         .insert_with_ttl(
                             access_token.secret().clone(),
-                            Err(e.to_cacheable()),
+                            Err(CacheableApiError::from(&e)),
                             token_ttl.to_std().expect("duration was previously checked"),
                         )
                         .await?;

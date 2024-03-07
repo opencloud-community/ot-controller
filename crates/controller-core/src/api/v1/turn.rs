@@ -3,9 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! TURN related API structs and Endpoints
-use super::response::ApiError;
 use crate::api::v1::middleware::user_auth::check_access_token;
-use crate::api::v1::response::error::AuthenticationError;
 use crate::api::v1::response::NoContent;
 use crate::caches::Caches;
 use crate::oidc::OidcContext;
@@ -26,7 +24,10 @@ use opentalk_database::{Db, OptionalExt};
 use opentalk_db_storage::invites::Invite;
 use opentalk_db_storage::users::User;
 use opentalk_types::{
-    api::v1::turn::{GetResponse, IceServer, Stun, Turn},
+    api::{
+        error::{ApiError, AuthenticationError},
+        v1::turn::{GetResponse, IceServer, Stun, Turn},
+    },
     core::InviteCodeId,
 };
 use rand::distributions::{Distribution, Uniform};

@@ -8,7 +8,7 @@ use opentalk_client_shared::{ApiError, Authorization, WithAuthorization};
 use opentalk_types::{
     api::v1::{
         auth::{GetLoginRequest, OidcProvider},
-        invites::{CodeVerified, VerifyBody},
+        invites::{CodeVerified, PostInviteVerifyRequest, PostInviteVerifyRequestBody},
         rooms::GetRoomEventRequest,
     },
     common::event::EventInfo,
@@ -44,7 +44,10 @@ impl<C: opentalk_client_shared::Client + Sync> OpenTalkApiClient<C::Error> for C
         &self,
         invite_code: InviteCodeId,
     ) -> Result<CodeVerified, ApiError<C::Error>> {
-        self.rest(VerifyBody { invite_code }).await
+        self.rest(PostInviteVerifyRequest(PostInviteVerifyRequestBody {
+            invite_code,
+        }))
+        .await
     }
 
     async fn get_room_event<A: Authorization + Send>(

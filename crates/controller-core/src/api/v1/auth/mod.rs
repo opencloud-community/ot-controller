@@ -5,7 +5,6 @@
 //! Auth related API structs and Endpoints
 use super::{events::EventPoliciesBuilderExt, rooms::RoomsPoliciesBuilderExt};
 use crate::{
-    api::v1::response::{error::AuthenticationError, ApiError},
     oidc::{IdTokenInfo, OidcContext, VerifyError},
     settings::SharedSettingsActix,
 };
@@ -25,7 +24,10 @@ use opentalk_db_storage::{
     users::User,
 };
 use opentalk_types::{
-    api::v1::auth::{GetLoginResponse, OidcProvider, PostLoginRequest, PostLoginResponse},
+    api::{
+        error::{ApiError, AuthenticationError},
+        v1::auth::{GetLoginResponse, OidcProvider, PostLoginRequestBody, PostLoginResponse},
+    },
     core::{EventId, GroupName, RoomId, TariffStatus, TenantId},
 };
 
@@ -43,7 +45,7 @@ pub async fn post_login(
     settings: SharedSettingsActix,
     db: Data<Db>,
     oidc_ctx: Data<OidcContext>,
-    body: Json<PostLoginRequest>,
+    body: Json<PostLoginRequestBody>,
     authz: Data<kustos::Authz>,
 ) -> Result<Json<PostLoginResponse>, ApiError> {
     let id_token = body.into_inner().id_token;

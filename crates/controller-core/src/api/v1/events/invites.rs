@@ -9,7 +9,7 @@ use crate::api::v1::events::{
     enrich_from_keycloak, enrich_invitees_from_keycloak, get_invited_mail_recipients_for_event,
     get_tenant_filter, EventInvitee, EventInviteeExt, EventPoliciesBuilderExt,
 };
-use crate::api::v1::response::{ApiError, Created, NoContent};
+use crate::api::v1::response::{Created, NoContent};
 use crate::api::v1::rooms::RoomsPoliciesBuilderExt;
 use crate::services::{
     ExternalMailRecipient, MailRecipient, MailService, RegisteredMailRecipient,
@@ -40,20 +40,21 @@ use opentalk_db_storage::{
     users::User,
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
-use opentalk_types::api::v1::events::EmailInvite;
-use opentalk_types::core::EmailInviteRole;
 use opentalk_types::{
-    api::v1::{
-        events::{
-            invites::GetEventsInvitesQuery, DeleteEmailInviteBody, DeleteEventInvitePath,
-            PatchEmailInviteBody, PatchInviteBody, PostEventInviteBody, PostEventInviteQuery,
-            UserInvite,
+    api::{
+        error::ApiError,
+        v1::{
+            events::{
+                invites::GetEventsInvitesQuery, DeleteEmailInviteBody, DeleteEventInvitePath,
+                EmailInvite, PatchEmailInviteBody, PatchInviteBody, PostEventInviteBody,
+                PostEventInviteQuery, UserInvite,
+            },
+            pagination::PagePaginationQuery,
+            users::GetEventInvitesPendingResponse,
         },
-        pagination::PagePaginationQuery,
-        users::GetEventInvitesPendingResponse,
     },
     common::shared_folder::SharedFolder,
-    core::{EventId, EventInviteStatus, RoomId, UserId},
+    core::{EmailInviteRole, EventId, EventInviteStatus, RoomId, UserId},
     strings::ToLowerCase,
 };
 use serde::Deserialize;

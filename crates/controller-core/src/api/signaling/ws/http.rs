@@ -7,7 +7,6 @@ use super::runner::Runner;
 use crate::api::signaling::resumption::{ResumptionData, ResumptionTokenKeepAlive};
 use crate::api::signaling::ticket::{TicketData, TicketRedisKey};
 use crate::api::signaling::ws::actor::WebSocketActor;
-use crate::api::v1::response::ApiError;
 use crate::settings::SharedSettingsActix;
 use actix_web::http::header;
 use actix_web::web::Data;
@@ -22,6 +21,7 @@ use opentalk_db_storage::users::User;
 use opentalk_signaling_core::{
     ExchangeHandle, ObjectStorage, Participant, RedisConnection, SignalingMetrics, SignalingModule,
 };
+use opentalk_types::api::error::ApiError;
 use std::marker::PhantomData;
 use std::time::Instant;
 use tokio::sync::{broadcast, mpsc};

@@ -7,12 +7,9 @@
 //! The defined structs are exposed to the REST API and will be serialized/deserialized. Similar
 //! structs are defined in the Database crate [`opentalk_db_storage`] for database operations.
 
-use std::{convert::AsRef, str::FromStr};
+use std::str::FromStr;
 
-use super::response::{
-    error::{ApiError, ValidationErrorEntry},
-    NoContent, CODE_INVALID_VALUE,
-};
+use super::response::NoContent;
 use crate::{
     api::{
         signaling::{
@@ -42,11 +39,15 @@ use opentalk_db_storage::{
 };
 use opentalk_signaling_core::{Participant, RedisConnection};
 use opentalk_types::{
-    api::v1::{
-        pagination::PagePaginationQuery,
-        rooms::{
-            GetRoomEventResponse, InvitedStartRequest, PatchRoomsBody, PostRoomsBody, RoomResource,
-            StartRequest, StartResponse, StartRoomError,
+    api::{
+        error::{ApiError, ValidationErrorEntry, ERROR_CODE_INVALID_VALUE},
+        v1::{
+            pagination::PagePaginationQuery,
+            rooms::{
+                GetRoomEventResponse, PatchRoomsRequestBody, PostRoomsRequestBody,
+                PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody, RoomResource,
+                RoomsStartResponse, StartRoomError,
+            },
         },
     },
     common::{features, tariff::TariffResource},
@@ -100,7 +101,7 @@ pub async fn accessible(
 
 /// API Endpoint *POST /rooms*
 ///
-/// Uses the provided [`PostRoomsBody`] to create a new room.
+/// Uses the provided [`PostRoomsRequestBody`] to create a new room.
 /// Returns the created [`RoomResource`].
 #[post("/rooms")]
 pub async fn new(
@@ -108,7 +109,7 @@ pub async fn new(
     db: Data<Db>,
     authz: Data<Authz>,
     current_user: ReqData<User>,
-    body: Json<PostRoomsBody>,
+    body: Json<PostRoomsRequestBody>,
 ) -> Result<Json<RoomResource>, ApiError> {
     let settings = settings.load();
     let current_user = current_user.into_inner();
@@ -158,7 +159,7 @@ pub async fn new(
 
 /// API Endpoint *PATCH /rooms/{room_id}*
 ///
-/// Uses the provided [`PatchRoomsBody`] to modify a specified room.
+/// Uses the provided [`PatchRoomsRequestBody`] to modify a specified room.
 /// Returns the modified [`RoomResource`]
 #[patch("/rooms/{room_id}")]
 pub async fn patch(
@@ -166,7 +167,7 @@ pub async fn patch(
     db: Data<Db>,
     current_user: ReqData<User>,
     room_id: Path<RoomId>,
-    body: Json<PatchRoomsBody>,
+    body: Json<PatchRoomsRequestBody>,
 ) -> Result<Json<RoomResource>, ApiError> {
     let settings = settings.load();
     let current_user = current_user.into_inner();
@@ -287,28 +288,6 @@ pub async fn get_room_event(
     }
 }
 
-impl From<StartRoomError> for ApiError {
-    fn from(start_room_error: StartRoomError) -> Self {
-        match start_room_error {
-            StartRoomError::WrongRoomPassword => ApiError::unauthorized()
-                .with_code(StartRoomError::WrongRoomPassword.as_ref())
-                .with_message("The provided password does not match the rooms password"),
-
-            StartRoomError::NoBreakoutRooms => ApiError::bad_request()
-                .with_code(StartRoomError::NoBreakoutRooms.as_ref())
-                .with_message("The requested room has no breakout rooms"),
-
-            StartRoomError::InvalidBreakoutRoomId => ApiError::bad_request()
-                .with_code(StartRoomError::InvalidBreakoutRoomId.as_ref())
-                .with_message("The provided breakout room ID is invalid"),
-
-            StartRoomError::BannedFromRoom => ApiError::forbidden()
-                .with_code(StartRoomError::BannedFromRoom.as_ref())
-                .with_message("This user has been banned from entering this room"),
-        }
-    }
-}
-
 /// API Endpoint *POST /rooms/{room_id}/start*
 ///
 /// This endpoint has to be called in order to get a room ticket. When joining a room, the ticket
@@ -316,10 +295,10 @@ impl From<StartRoomError> for ApiError {
 /// connection.
 ///
 /// When the requested room has a password set, the requester has to provide the correct password
-/// through the [`StartRequest`] JSON in the requests body. When the room has no password set,
+/// through the [`PostRoomsStartRequestBody`] JSON in the requests body. When the room has no password set,
 /// the provided password will be ignored.
 ///
-/// Returns a [`StartResponse`] containing the ticket for the specified room.
+/// Returns a [`RoomsStartResponse`] containing the ticket for the specified room.
 ///
 /// # Errors
 ///
@@ -332,8 +311,8 @@ pub async fn start(
     redis_conn: Data<RedisConnection>,
     current_user: ReqData<User>,
     room_id: Path<RoomId>,
-    request: Json<StartRequest>,
-) -> Result<Json<StartResponse>, ApiError> {
+    request: Json<PostRoomsStartRequestBody>,
+) -> Result<Json<RoomsStartResponse>, ApiError> {
     let request = request.into_inner();
     let room_id = room_id.into_inner();
 
@@ -367,7 +346,7 @@ pub async fn start(
     )
     .await?;
 
-    Ok(Json(StartResponse { ticket, resumption }))
+    Ok(Json(RoomsStartResponse { ticket, resumption }))
 }
 
 /// API Endpoint *POST /rooms/{room_id}/start_invited*
@@ -378,15 +357,15 @@ pub async fn start_invited(
     db: Data<Db>,
     redis_ctx: Data<RedisConnection>,
     room_id: Path<RoomId>,
-    request: Json<InvitedStartRequest>,
-) -> Result<ApiResponse<StartResponse>, ApiError> {
+    request: Json<PostRoomsStartInvitedRequestBody>,
+) -> Result<ApiResponse<RoomsStartResponse>, ApiError> {
     let request = request.into_inner();
     let room_id = room_id.into_inner();
 
     let invite_code_as_uuid = uuid::Uuid::from_str(&request.invite_code).map_err(|_| {
         ApiError::unprocessable_entities([ValidationErrorEntry::new(
             "invite_code",
-            CODE_INVALID_VALUE,
+            ERROR_CODE_INVALID_VALUE,
             Some("Bad invite code format"),
         )])
     })?;
@@ -440,7 +419,7 @@ pub async fn start_invited(
     )
     .await?;
 
-    Ok(ApiResponse::new(StartResponse { ticket, resumption }))
+    Ok(ApiResponse::new(RoomsStartResponse { ticket, resumption }))
 }
 
 pub trait RoomsPoliciesBuilderExt {

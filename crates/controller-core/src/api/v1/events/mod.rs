@@ -4,11 +4,9 @@
 
 use std::sync::Arc;
 
-use super::response::error::ValidationErrorEntry;
-use super::response::{ApiError, NoContent, CODE_VALUE_REQUIRED};
+use super::response::NoContent;
 use super::{ApiResponse, DefaultApiResult};
 use crate::api::v1::events::shared_folder::put_shared_folder;
-use crate::api::v1::response::CODE_IGNORED_VALUE;
 use crate::api::v1::rooms::RoomsPoliciesBuilderExt;
 use crate::api::v1::streaming_targets::{get_room_streaming_targets, insert_room_streaming_target};
 use crate::api::v1::util::GetUserProfilesBatched;
@@ -44,17 +42,23 @@ use opentalk_keycloak_admin::users::TenantFilter;
 use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_types::core::RoomId;
 use opentalk_types::{
-    api::v1::{
-        events::{
-            CallInInfo, EmailOnlyUser, EventAndInstanceId, EventExceptionResource, EventInvitee,
-            EventInviteeProfile, EventOptionsQuery, EventOrException, EventResource, EventRoomInfo,
-            EventStatus, EventType, GetEventQuery, GetEventsCursorData, GetEventsQuery,
-            PatchEventBody, PatchEventQuery, PostEventsBody, PublicInviteUserProfile,
+    api::{
+        error::{
+            ApiError, ValidationErrorEntry, ERROR_CODE_IGNORED_VALUE, ERROR_CODE_VALUE_REQUIRED,
         },
-        pagination::default_pagination_per_page,
-        users::{PublicUserProfile, UnregisteredUser},
-        utils::validate_recurrence_pattern,
-        Cursor,
+        v1::{
+            events::{
+                CallInInfo, EmailOnlyUser, EventAndInstanceId, EventExceptionResource,
+                EventInvitee, EventInviteeProfile, EventOptionsQuery, EventOrException,
+                EventResource, EventRoomInfo, EventStatus, EventType, GetEventQuery,
+                GetEventsCursorData, GetEventsQuery, PatchEventBody, PatchEventQuery,
+                PostEventsBody, PublicInviteUserProfile,
+            },
+            pagination::default_pagination_per_page,
+            users::{PublicUserProfile, UnregisteredUser},
+            utils::validate_recurrence_pattern,
+            Cursor,
+        },
     },
     common::{
         features,
@@ -1234,7 +1238,7 @@ fn patch_event_change_to_time_dependent(
         if patch.is_all_day.is_some() {
             entries.push(ValidationErrorEntry::new(
                 "is_all_day",
-                CODE_VALUE_REQUIRED,
+                ERROR_CODE_VALUE_REQUIRED,
                 MSG,
             ))
         }
@@ -1242,7 +1246,7 @@ fn patch_event_change_to_time_dependent(
         if patch.starts_at.is_some() {
             entries.push(ValidationErrorEntry::new(
                 "starts_at",
-                CODE_VALUE_REQUIRED,
+                ERROR_CODE_VALUE_REQUIRED,
                 MSG,
             ))
         }
@@ -1250,7 +1254,7 @@ fn patch_event_change_to_time_dependent(
         if patch.ends_at.is_some() {
             entries.push(ValidationErrorEntry::new(
                 "ends_at",
-                CODE_VALUE_REQUIRED,
+                ERROR_CODE_VALUE_REQUIRED,
                 MSG,
             ))
         }
@@ -1276,7 +1280,7 @@ async fn patch_time_independent_event(
         if patch.is_all_day.is_some() {
             entries.push(ValidationErrorEntry::new(
                 "is_all_day",
-                CODE_IGNORED_VALUE,
+                ERROR_CODE_IGNORED_VALUE,
                 MSG,
             ))
         }
@@ -1284,7 +1288,7 @@ async fn patch_time_independent_event(
         if patch.starts_at.is_some() {
             entries.push(ValidationErrorEntry::new(
                 "starts_at",
-                CODE_IGNORED_VALUE,
+                ERROR_CODE_IGNORED_VALUE,
                 MSG,
             ))
         }
@@ -1292,7 +1296,7 @@ async fn patch_time_independent_event(
         if patch.ends_at.is_some() {
             entries.push(ValidationErrorEntry::new(
                 "ends_at",
-                CODE_IGNORED_VALUE,
+                ERROR_CODE_IGNORED_VALUE,
                 MSG,
             ))
         }

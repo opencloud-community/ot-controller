@@ -2,11 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::response::ApiError;
 use opentalk_controller_settings::Settings;
 use opentalk_database::{DbConnection, Result};
 use opentalk_db_storage::{tariffs::Tariff, users::User, utils::HasUsers};
-use opentalk_types::{api::v1::users::PublicUserProfile, core::UserId};
+use opentalk_types::{
+    api::{error::ApiError, v1::users::PublicUserProfile},
+    core::UserId,
+};
 use std::collections::HashMap;
 
 /// Utility to fetch user profiles batched

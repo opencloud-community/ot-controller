@@ -57,6 +57,7 @@ use opentalk_signaling_core::{
     ExchangeHandle, ExchangeTask, ModulesRegistrar, ObjectStorage, RedisConnection,
     RegisterModules, SignalingModule, SignalingModuleInitData,
 };
+use opentalk_types::api::error::ApiError;
 use std::fs::File;
 use std::io::BufReader;
 use std::marker::PhantomData;
@@ -83,6 +84,13 @@ pub mod settings;
 #[derive(Debug, thiserror::Error)]
 #[error("Blocking thread has panicked")]
 pub struct BlockingError;
+
+impl From<BlockingError> for ApiError {
+    fn from(e: BlockingError) -> Self {
+        log::error!("REST API threw internal error from blocking error: {}", e);
+        Self::internal()
+    }
+}
 
 /// Custom version of `actix_web::web::block` which retains the current tracing span
 pub async fn block<F, R>(f: F) -> Result<R, BlockingError>

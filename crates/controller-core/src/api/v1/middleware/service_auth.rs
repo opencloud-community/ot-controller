@@ -2,8 +2,6 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::api::v1::response::error::AuthenticationError;
-use crate::api::v1::response::ApiError;
 use crate::oidc::{OidcContext, ServiceClaims};
 use actix_http::header::Header;
 use actix_http::HttpMessage;
@@ -16,6 +14,7 @@ use core::future::{ready, Future, Ready};
 use core::pin::Pin;
 use core::task::{Context, Poll};
 use openidconnect::AccessToken;
+use opentalk_types::api::error::{ApiError, AuthenticationError};
 use std::rc::Rc;
 use tracing::Instrument;
 

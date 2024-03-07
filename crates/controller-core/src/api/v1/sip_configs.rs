@@ -4,7 +4,6 @@
 
 use crate::settings::SharedSettingsActix;
 
-use super::response::error::ApiError;
 use super::util::require_feature;
 use actix_web::web::{Data, Json, Path};
 use actix_web::{delete, get, put, HttpResponse};
@@ -12,7 +11,10 @@ use opentalk_database::Db;
 use opentalk_db_storage::rooms::Room;
 use opentalk_db_storage::sip_configs::{NewSipConfig, SipConfig, UpdateSipConfig};
 use opentalk_types::{
-    api::v1::rooms::sip_config_resource::{PutSipConfig, SipConfigResource},
+    api::{
+        error::ApiError,
+        v1::rooms::sip_config_resource::{PutSipConfig, SipConfigResource},
+    },
     common::features,
     core::RoomId,
 };

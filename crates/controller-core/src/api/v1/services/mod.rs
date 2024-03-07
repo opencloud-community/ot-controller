@@ -3,13 +3,13 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use super::middleware::service_auth::RealmRoles;
-use super::response::ApiError;
 use actix_http::HttpMessage;
 use actix_web::dev::{Service, ServiceRequest, ServiceResponse, Transform};
 use actix_web::Error;
 use core::future::{ready, Ready};
 use core::task::{Context, Poll};
 use futures::future::Either;
+use opentalk_types::api::error::ApiError;
 use std::rc::Rc;
 
 pub mod call_in;

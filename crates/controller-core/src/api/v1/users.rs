@@ -7,7 +7,7 @@
 //! The defined structs are exposed to the REST API and will be serialized/deserialized. Similar
 //! structs are defined in the Database crate [`opentalk_db_storage`] for database operations.
 
-use super::response::{ApiError, NoContent};
+use super::response::NoContent;
 use crate::api::signaling::SignalingModules;
 use crate::caches::Caches;
 use crate::oidc::decode_token;
@@ -27,9 +27,12 @@ use opentalk_db_storage::{
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_types::{
-    api::v1::users::{
-        GetFindQuery, GetFindResponseItem, PatchMeBody, PrivateUserProfile, PublicUserProfile,
-        UnregisteredUser,
+    api::{
+        error::ApiError,
+        v1::users::{
+            GetFindQuery, GetFindResponseItem, PatchMeBody, PrivateUserProfile, PublicUserProfile,
+            UnregisteredUser,
+        },
     },
     common::tariff::TariffResource,
     core::UserId,

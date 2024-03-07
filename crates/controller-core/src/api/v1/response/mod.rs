@@ -6,11 +6,11 @@
 //!
 //! These all implement the [`Responder`] trait.
 use actix_web::{body::BoxBody, HttpResponse, Responder};
+use opentalk_types::api::error::ApiError;
 
 pub mod error;
 mod ok;
 
-pub use error::ApiError;
 pub use ok::ApiResponse;
 
 /// The default API Result
@@ -48,12 +48,3 @@ impl Responder for NotModified {
         HttpResponse::NotModified().finish()
     }
 }
-
-pub const CODE_INVALID_URL: &str = "invalid_url";
-pub const CODE_INVALID_EMAIL: &str = "invalid_email";
-pub const CODE_INVALID_LENGTH: &str = "invalid_length";
-pub const CODE_OUT_OF_RANGE: &str = "out_of_range";
-pub const CODE_VALUE_REQUIRED: &str = "value_required";
-pub const CODE_IGNORED_VALUE: &str = "ignored_value";
-pub const CODE_MISSING_VALUE: &str = "missing_values";
-pub const CODE_INVALID_VALUE: &str = "invalid_value";

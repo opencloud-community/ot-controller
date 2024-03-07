@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use crate::api::signaling::ticket::start_or_continue_signaling_session;
-use crate::api::v1::response::ApiError;
 use crate::api::v1::response::NoContent;
 use crate::settings::SharedSettingsActix;
 use actix_web::dev::HttpServiceFactory;
@@ -16,7 +15,10 @@ use opentalk_database::Db;
 use opentalk_db_storage::rooms::Room;
 use opentalk_signaling_core::assets::{save_asset, verify_storage_usage, AssetError};
 use opentalk_signaling_core::{ObjectStorage, Participant, RedisConnection};
-use opentalk_types::api::v1::services::{ServiceStartResponse, StartBody, UploadRenderQuery};
+use opentalk_types::api::{
+    error::ApiError,
+    v1::services::{ServiceStartResponse, StartBody, UploadRenderQuery},
+};
 
 // Note to devs:
 // Please update `docs/admin/keycloak.md` service login documentation as well if

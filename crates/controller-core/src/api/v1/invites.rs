@@ -3,10 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Contains invite related REST endpoints.
-use super::{
-    response::{ApiError, NoContent},
-    DefaultApiResult,
-};
+use super::{response::NoContent, DefaultApiResult};
 use crate::{
     api::v1::{rooms::RoomsPoliciesBuilderExt, ApiResponse},
     settings::SharedSettingsActix,
@@ -25,12 +22,15 @@ use opentalk_db_storage::{
     users::User,
 };
 use opentalk_types::{
-    api::v1::{
-        invites::{
-            CodeVerified, InviteResource, PostInviteBody, PutInviteBody, RoomIdAndInviteCode,
-            VerifyBody,
+    api::{
+        error::ApiError,
+        v1::{
+            invites::{
+                CodeVerified, InviteResource, PostInviteRequestBody, PostInviteVerifyRequestBody,
+                PutInviteRequestBody, RoomIdAndInviteCode,
+            },
+            pagination::PagePaginationQuery,
         },
-        pagination::PagePaginationQuery,
     },
     core::RoomId,
 };
@@ -46,7 +46,7 @@ pub async fn add_invite(
     authz: Data<Authz>,
     current_user: ReqData<User>,
     room_id: Path<RoomId>,
-    data: Json<PostInviteBody>,
+    data: Json<PostInviteRequestBody>,
 ) -> DefaultApiResult<InviteResource> {
     let settings = settings.load_full();
     let room_id = room_id.into_inner();
@@ -150,7 +150,7 @@ pub async fn get_invite(
 
 /// API Endpoint *PUT /rooms/{room_id}/invites/{invite_code}*
 ///
-/// Uses the provided [`PutInviteBody`] to modify a specified invite.
+/// Uses the provided [`PutInviteRequestBody`] to modify a specified invite.
 /// Returns the modified [`InviteResource`]
 #[put("/rooms/{room_id}/invites/{invite_code}")]
 pub async fn update_invite(
@@ -158,7 +158,7 @@ pub async fn update_invite(
     db: Data<Db>,
     current_user: ReqData<User>,
     path_params: Path<RoomIdAndInviteCode>,
-    update_invite: Json<PutInviteBody>,
+    update_invite: Json<PutInviteRequestBody>,
 ) -> DefaultApiResult<InviteResource> {
     let settings = settings.load_full();
     let current_user = current_user.into_inner();
@@ -242,7 +242,7 @@ pub async fn delete_invite(
 #[post("/invite/verify")]
 pub async fn verify_invite_code(
     db: Data<Db>,
-    data: Json<VerifyBody>,
+    data: Json<PostInviteVerifyRequestBody>,
 ) -> DefaultApiResult<CodeVerified> {
     let data = data.into_inner();
 

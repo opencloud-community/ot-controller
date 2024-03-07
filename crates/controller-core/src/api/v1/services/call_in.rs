@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use crate::api::signaling::ticket::start_or_continue_signaling_session;
-use crate::api::v1::response::ApiError;
 use crate::api::v1::util::require_feature;
 use crate::settings::SharedSettingsActix;
 use actix_web::dev::HttpServiceFactory;
@@ -13,6 +12,7 @@ use actix_web::web::{Data, Json};
 use opentalk_database::Db;
 use opentalk_db_storage::sip_configs::SipConfig;
 use opentalk_signaling_core::{Participant, RedisConnection};
+use opentalk_types::api::error::ApiError;
 use opentalk_types::{
     api::v1::services::{ServiceStartResponse, StartRequestBody},
     common::features,
