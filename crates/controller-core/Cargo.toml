@@ -40,9 +40,9 @@ opentelemetry = { workspace = true, features = [
     "trace",
     "metrics",
 ] }
-opentelemetry-otlp = "0.14"
-opentelemetry-prometheus = "0.14"
-opentelemetry_sdk = { version = "0.21", features = ["rt-tokio-current-thread", "metrics"] }
+opentelemetry-otlp = "0.15"
+opentelemetry-prometheus = "0.15"
+opentelemetry_sdk = { version = "0.22", features = ["rt-tokio-current-thread", "metrics"] }
 prometheus = "0.13"
 tracing-actix-web = { version = "0.7" }
 
