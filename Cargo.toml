@@ -81,7 +81,7 @@ email_address = "0.2.4"
 env_logger = "0.11"
 futures = "0.3"
 http = "0.2"
-http-request-derive = "0.1.1"
+http-request-derive = "0.1.2"
 itertools = "0.12"
 lapin = { version = "2", default-features = false }
 log = "0.4"
