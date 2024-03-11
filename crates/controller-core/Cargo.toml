@@ -18,7 +18,7 @@ opentalk-database.workspace = true
 opentalk-db-storage.workspace = true
 opentalk-janus-media.workspace = true
 opentalk-jobs.workspace = true
-opentalk-mail-worker-protocol = { workspace = true, features = [ "client" ] }
+opentalk-mail-worker-protocol = { workspace = true, features = ["client"] }
 opentalk-nextcloud-client = { workspace = true, default-features = false, features = [
     "rustls-tls-native-roots",
 ] }
@@ -64,7 +64,7 @@ opentalk-cache.workspace = true
 ### Web Framework & Runtime
 tokio = { workspace = true, features = ["signal"] }
 tokio-stream.workspace = true
-actix-web = { workspace = true, features = ["rustls-0_21"] }
+actix-web = { workspace = true, features = ["rustls-0_22"] }
 actix-rt.workspace = true
 actix-web-httpauth.workspace = true
 actix-cors = "0.7"
@@ -85,9 +85,7 @@ opentalk-r3dlock.workspace = true
 
 ### OpenID Connect & JWT
 openidconnect.workspace = true
-reqwest = { workspace = true, features = [
-    "rustls-tls-native-roots",
-] }
+reqwest = { workspace = true, features = ["rustls-tls-native-roots"] }
 jsonwebtoken = "9.2"
 base64.workspace = true
 chrono.workspace = true
@@ -100,8 +98,9 @@ actix-web-actors = "4.3"
 
 ### Rust Encryption
 ring = "0.17"
-rustls = "0.21"
-rustls-pemfile = "1.0"
+rustls = "0.22"
+rustls-pemfile = "2.0"
+rustls-pki-types = "1.2"
 md5.workspace = true
 
 ### QoL/Util
@@ -143,6 +142,6 @@ vergen = { version = "8", features = [
 
 [package.metadata.cargo-machete]
 ignored = [
-  # is used during build
-  "vergen",
+    # is used during build
+    "vergen",
 ]
