@@ -12,15 +12,12 @@ publish = false
 
 [dependencies]
 log.workspace = true
-reqwest = { workspace = true, features = [
-    "rustls-tls-native-roots",
-    "json",
-] }
+reqwest = { workspace = true, features = ["rustls-tls-native-roots", "json"] }
+serde_json.workspace = true
+serde.workspace = true
+snafu.workspace = true
 tokio.workspace = true
 url.workspace = true
-serde.workspace = true
-serde_json.workspace = true
-thiserror.workspace = true
 
 [dev-dependencies]
 serde_json.workspace = true

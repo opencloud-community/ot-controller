@@ -3726,7 +3726,7 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
- "thiserror",
+ "snafu",
  "tokio",
  "url",
 ]
