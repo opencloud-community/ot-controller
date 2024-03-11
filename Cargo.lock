@@ -3330,7 +3330,7 @@ dependencies = [
  "redis",
  "serde",
  "siphasher 1.0.0",
- "thiserror",
+ "snafu",
 ]
 
 [[package]]

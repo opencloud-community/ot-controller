@@ -11,9 +11,9 @@ version.workspace = true
 publish = false
 
 [dependencies]
+bincode.workspace = true
 moka = { version = "0.12", default-features = false, features = ["quanta", "atomic64", "future"] }
 redis = { workspace = true, features = ["connection-manager", "tokio-comp"] }
 serde.workspace = true
-bincode.workspace = true
-thiserror.workspace = true
 siphasher = "1.0"
+snafu.workspace = true
