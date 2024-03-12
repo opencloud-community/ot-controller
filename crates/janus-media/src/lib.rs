@@ -510,7 +510,8 @@ impl SignalingModule for Media {
             Event::ParticipantJoined(id, evt_state) => {
                 let state = storage::get_participant_media_state(ctx.redis_conn(), self.room, id)
                     .await
-                    .context("Failed to get peer participants state")?;
+                    .context("Failed to get peer participants state")?
+                    .unwrap_or_default();
 
                 let is_presenter = storage::is_presenter(ctx.redis_conn(), self.room, id).await?;
 
@@ -520,21 +521,18 @@ impl SignalingModule for Media {
                 })
             }
             Event::ParticipantUpdated(id, evt_state) => {
-                let state = if let Some(state) =
-                    storage::get_participant_media_state(ctx.redis_conn(), self.room, id)
-                        .await
-                        .context("Failed to get peer participants state")?
-                {
-                    self.media.remove_dangling_subscriber(id, &state).await;
-                    Some(state)
-                } else {
-                    None
-                };
+                let state = storage::get_participant_media_state(ctx.redis_conn(), self.room, id)
+                    .await
+                    .context("Failed to get peer participants state")?;
+
+                if let Some(state) = &state {
+                    self.media.remove_dangling_subscriber(id, state).await;
+                }
 
                 let is_presenter = storage::is_presenter(ctx.redis_conn(), self.room, id).await?;
 
                 *evt_state = Some(MediaPeerState {
-                    state,
+                    state: state.unwrap_or_default(),
                     is_presenter,
                 });
             }
@@ -551,7 +549,8 @@ impl SignalingModule for Media {
                     let state =
                         storage::get_participant_media_state(ctx.redis_conn(), self.room, id)
                             .await
-                            .context("Failed to get peer participants state")?;
+                            .context("Failed to get peer participants state")?
+                            .unwrap_or_default();
 
                     let is_presenter =
                         storage::is_presenter(ctx.redis_conn(), self.room, id).await?;
