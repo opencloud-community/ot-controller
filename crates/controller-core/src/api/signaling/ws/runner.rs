@@ -353,7 +353,7 @@ impl Runner {
 
             let room_guard = match room_mutex.lock(&mut self.redis_conn).await {
                 Ok(guard) => guard,
-                Err(opentalk_r3dlock::Error::Redis(e)) => {
+                Err(opentalk_r3dlock::Error::Redis { source: e }) => {
                     log::error!("Failed to acquire r3dlock, {}", e);
                     // There is a problem when accessing redis which could
                     // mean either the network or redis is broken.

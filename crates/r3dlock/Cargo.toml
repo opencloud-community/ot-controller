@@ -15,8 +15,7 @@ redis = { workspace = true, features = ["tokio-comp"] }
 tokio = { workspace = true, features = ["time"] }
 
 rand.workspace = true
-thiserror.workspace = true
-displaydoc.workspace = true
+snafu.workspace = true
 
 [dev-dependencies]
 pretty_assertions.workspace = true
