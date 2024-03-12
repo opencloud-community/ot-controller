@@ -11,11 +11,11 @@ use crate::imports::*;
 #[derive(Hash, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum MediaSessionType {
-    /// A media session of type video
+    /// Participant publishes "video" media, which is moving picture with lower quality and higher framerate (e.g. webcam)
     #[cfg_attr(feature = "serde", serde(rename = "video"))]
     Video,
 
-    /// A media session of type screen
+    /// Participant publishes "screen" media, which has a higher resolution but lower framerate (e.g. desktop/presentations)
     #[cfg_attr(feature = "serde", serde(rename = "screen"))]
     Screen,
 }
