@@ -1,7 +1,3 @@
----
-sidebar_position: 115
----
-
 # STUN and TURN
 
 The backend provides an endpoint that offers information about the STUN and

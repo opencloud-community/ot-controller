@@ -62,8 +62,8 @@ duration ago. Its use case is to ensure GDPR compliance.
 
 In addition, all data associated with the event will be deleted, such as:
 
-- assets stored in the [storage system](minio.md)
-- folders including the share links from a [shared folder system](shared_folder.md)
+- assets stored in the [storage system](../core/minio.md)
+- folders including the share links from a [shared folder system](../advanced/additional_services/shared_folder.md)
 - all database content belonging to the event (e.g. invites)
 - the room which was associated to the event
 
@@ -98,8 +98,8 @@ duration ago. Its use case is to ensure GDPR compliance.
 
 In addition, all data associated with the event will be deleted, such as:
 
-- assets stored in the [storage system](minio.md)
-- folders including the share links from a [shared folder system](shared_folder.md)
+- assets stored in the [storage system](../core/minio.md)
+- folders including the share links from a [shared folder system](../advanced/additional_services/shared_folder.md)
 - all database content belonging to the event (e.g. invites)
 - the room which was associated to the event
 

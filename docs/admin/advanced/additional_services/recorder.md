@@ -2,7 +2,7 @@
 sidebar_position: 401
 ---
 
-# OpenTalk Recorder
+# Meeting Recorder
 
 The OpenTalk Controller has the ability to establish communication with the
 OpenTalk Recorder and initiate recording sessions. This interaction between the
@@ -15,7 +15,7 @@ To activate the recording functionality, it is necessary to configure the
 configuration, the controller will not possess the capability to commence
 recording sessions.
 
-The section in the [configuration file](configuration.md) is called `rabbit_mq`.
+The section in the [configuration file](../../core/configuration.md) is called `rabbit_mq`.
 
 ### Usage Examples
 

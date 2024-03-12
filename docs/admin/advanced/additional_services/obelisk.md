@@ -2,7 +2,7 @@
 sidebar_position: 400
 ---
 
-# OpenTalk Obelisk
+# Obelisk Call-In SIP Gateway
 
 [OpenTalk Obelisk](https://gitlab.opencode.de/opentalk/obelisk) is a service
 that functions as a middleware layer, bridging the gap between your SIP gate,

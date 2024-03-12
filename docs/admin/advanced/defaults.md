@@ -1,12 +1,8 @@
----
-sidebar_position: 111
----
-
 # Default and fallback values
 
 ## Features
 
-In the [configuration file](configuration.md), the format of a [`feature`](modules.md#features) is: `[<module>::]<feature>`.
+In the [configuration file](../core/configuration.md), the format of a [`feature`](modules.md#features) is: `[<module>::]<feature>`.
 A missing module specifier defaults to `"core"`. The features currently supported are:
 
 - `core::call_in`
@@ -17,7 +13,7 @@ available in the OpenTalk controller, including the features that can be enabled
 
 ## Configuration
 
-The section in the [configuration file](configuration.md) is called `defaults`.
+The section in the [configuration file](../core/configuration.md) is called `defaults`.
 
 | Field                              | Type       | Required | Default value | Description                                              |
 | ---------------------------------- | ---------- | -------- | ------------- | -------------------------------------------------------- |

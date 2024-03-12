@@ -12,6 +12,7 @@ Files:
  .gitlab/issue_templates/*.md
  renovate.json
  docs/**.md
+ docs/**.yml
  api/**.yaml
 Copyright: OpenTalk GmbH <mail@opentalk.eu>
 License: EUPL-1.2

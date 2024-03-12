@@ -1,8 +1,3 @@
----
-sidebar_position: 108
-title: Modules that can be used in meetings
----
-
 # Modules
 
 Modules provide functionality that can be used inside meetings.
@@ -10,7 +5,7 @@ Modules provide functionality that can be used inside meetings.
 ## Features
 
 A module might have features that can be enabled or disabled in the
-[configuration file](configuration.md) or using [tariffs](tariffs.md). The
+[configuration file](../core/configuration.md) or using [tariffs](tariffs.md). The
 features available can be obtained using the
 [`modules`](#opentalk-controller-modules-subcommand) subcommand.
 

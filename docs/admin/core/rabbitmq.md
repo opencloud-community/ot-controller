@@ -1,8 +1,4 @@
----
-sidebar_position: 201
----
-
-# RabbitMQ
+# Message Queue (RabbitMQ)
 
 ## Configuration
 
@@ -11,8 +7,8 @@ The section in the [configuration file](configuration.md) is called `rabbit_mq`.
 | Field                  | Type     | Required | Default value                       | Description                                                      |
 | ---------------------- | -------- | -------- | ----------------------------------- | ---------------------------------------------------------------- |
 | `url`                  | `string` | no       | "amqp://guest:guest@localhost:5672" | The RabbitMQ broker URL connection                               |
-| `mail_task_queue`      | `string` | no       | -                                   | Name of the RabbitMQ queue for the [SMTP-Mailer](smtp_mailer.md) |
-| `recording_task_queue` | `string` | no       | -                                   | Name of the RabbitMQ queue for the [recorder](recorder.md)       |
+| `mail_task_queue`      | `string` | no       | -                                   | Name of the RabbitMQ queue for the [SMTP-Mailer](../advanced/additional_services/smtp_mailer.md) |
+| `recording_task_queue` | `string` | no       | -                                   | Name of the RabbitMQ queue for the [recorder](../advanced/additional_services/recorder.md)       |
 | `min_connections`      | `uint`   | no       | 10                                  | Minimum connections to retain when removing stale connections    |
 | `max_channels`         | `uint`   | no       | 100                                 | Maxmimum number of AMQP channels per connection allowed          |
 

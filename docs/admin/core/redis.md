@@ -1,8 +1,4 @@
----
-sidebar_position: 202
----
-
-# Redis
+# Session Data (Redis)
 
 The OpenTalk controller uses the in-memory data store [Redis](https://redis.com/) for caching data related to a video conference session.
 

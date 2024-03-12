@@ -1,15 +1,11 @@
----
-sidebar_position: 113
----
-
-# Logging
+# Log Output
 
 The log output from each component of the OpenTalk Controller can be configured, allowing administrators to control the
 verbosity and granularity of log messages.
 
 ## Configuration
 
-The section in the [configuration file](configuration.md) is called `logging`. The examples here will only cover
+The section in the [configuration file](../configuration.md) is called `logging`. The examples here will only cover
 the log output of the controller. The rest of the fields of the `logging` section are related to the `tracing` configuration.
 See [tracing](tracing.md) for more information.
 

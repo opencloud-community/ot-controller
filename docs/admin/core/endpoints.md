@@ -1,8 +1,4 @@
----
-sidebar_position: 112
----
-
-# Endpoints
+# HTTP Endpoints
 
 The behavior of some API endpoints of the OpenTalk Controller can be modified.
 

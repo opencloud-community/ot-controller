@@ -1,8 +1,4 @@
----
-sidebar_position: 203
----
-
-# KeyCloak
+# Identity Provider (KeyCloak)
 
 The OpenTalk Controller uses [keycloak](https://www.keycloak.org/), an OpenID Connect compatible
 identity and access management software for single sign-on.
@@ -55,9 +51,9 @@ KeyCloak can provide some fields in the JWT to the OpenTalk Controller. These fi
 | `email`         | `string`   | yes                                                               | E-Mail address of the user                                                                |
 | `given_name`    | `string`   | yes                                                               | The given name (also known as first name) of the user                                     |
 | `family_name`   | `string`   | yes                                                               | The family name (also know as last name) of the user                                      |
-| `tenant_id`     | `string`   | if [tenant `assignment`](tenants.md) is `"by_external_tenant_id"` | Contains the identifier of the user's tenant                                              |
-| `tariff_id`     | `string`   | if [tariffs](tariffs.md) are used                                 | The external id of the tariff. See [tariffs](tariffs.md) for further details              |
-| `tariff_status` | `string`   | if [tariffs](tariffs.md) are used                                 | The external id of the tariff status. See [tariffs](tariffs.md) for further details       |
+| `tenant_id`     | `string`   | if [tenant `assignment`](../advanced/tenants.md) is `"by_external_tenant_id"` | Contains the identifier of the user's tenant                                              |
+| `tariff_id`     | `string`   | if [tariffs](../advanced/tariffs.md) are used                                 | The external id of the tariff. See [tariffs](../advanced/tariffs.md) for further details              |
+| `tariff_status` | `string`   | if [tariffs](../advanced/tariffs.md) are used                                 | The external id of the tariff status. See [tariffs](../advanced/tariffs.md) for further details       |
 | `x_grp`         | `string[]` | no                                                                | A list of groups which the user is part of                                                |
 | `phone_number`  | `string`   | no                                                                | The phone number of the user                                                              |
 | `nickname`      | `string`   | no                                                                | Nickname of the user, typically used to prefill the display name of a meeting participant |
@@ -79,5 +75,5 @@ The `RealmAccess` object contains these fields:
 
 The list of known service roles is:
 
-- `"opentalk-call-in"`: The service is allowed to provide a meeting [phone call-in service](call_in.md).
-- `"opentalk-recorder"`: The service is allowed to provide a meeting [recording service](recorder.md).
+- `"opentalk-call-in"`: The service is allowed to provide a meeting [phone call-in service](../advanced/call_in.md).
+- `"opentalk-recorder"`: The service is allowed to provide a meeting [recording service](../advanced/additional_services/recorder.md).

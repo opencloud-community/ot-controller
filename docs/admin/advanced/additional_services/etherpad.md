@@ -2,7 +2,7 @@
 sidebar_position: 302
 ---
 
-# EtherPad
+# Meeting Minutes (EtherPad)
 
 The OpenTalk Controller uses an [Etherpad](https://etherpad.org/) server to provide a collaborative text editor for the `protocol` module.
 
@@ -22,7 +22,7 @@ Set the `TRUST_PROXY` environment variable if the Etherpad is running behind a r
 
 ## Configuration
 
-The section in the [configuration file](configuration.md) is called `etherpad`.
+The section in the [configuration file](../../core/configuration.md) is called `etherpad`.
 
 | Field     | Type     | Required | Default value | Description                                                                                                                                            |
 | --------- | -------- | -------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |

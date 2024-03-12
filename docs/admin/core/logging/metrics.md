@@ -1,14 +1,10 @@
----
-sidebar_position: 114
----
-
 # Metrics
 
 The OpenTalk controller is collecting metrics and is exposing them through the `/metrics` endpoint.
 
 ## Configuration
 
-The section in the [configuration file](configuration.md) is called `metrics`.
+The section in the [configuration file](../configuration.md) is called `metrics`.
 
 By default, the `/metrics` endpoint refuses all connections. The access can be configured with an allowlist.
 
