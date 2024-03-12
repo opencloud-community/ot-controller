@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::{Context, Result};
+use snafu::{ResultExt, Snafu};
 use std::ops::{Deref, DerefMut};
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
@@ -11,6 +11,19 @@ use tokio::sync::Mutex;
 use tokio::time::interval;
 use tokio_executor_trait::Tokio as TokioExecutor;
 use tokio_reactor_trait::Tokio as TokioReactor;
+
+/// Errors that occur while using the RabbitMQ connection pool.
+#[derive(Debug, Snafu)]
+pub enum Error {
+    #[snafu(display("Failed to connect to RabbitMQ: {source}"))]
+    Connection { source: lapin::Error },
+
+    #[snafu(display("Failed to create channel: {source}"))]
+    Channel { source: lapin::Error },
+
+    #[snafu(display("Failed to close connection: {source}"))]
+    Close { source: lapin::Error },
+}
 
 /// [`lapin::Channel`] wrapper which maintains a ref counter to the channels underlying connection
 pub struct RabbitMqChannel {
@@ -78,7 +91,7 @@ impl RabbitMqPool {
     ///
     /// This just creates a connection and does not add it to its pool. Connections will automatically be created when
     /// creating channels.
-    pub async fn make_connection(&self) -> Result<lapin::Connection> {
+    pub async fn make_connection(&self) -> Result<lapin::Connection, Error> {
         let connection = lapin::Connection::connect(
             &self.url,
             lapin::ConnectionProperties::default()
@@ -86,7 +99,7 @@ impl RabbitMqPool {
                 .with_reactor(TokioReactor),
         )
         .await
-        .context("Failed to connect to RabbitMQ. Please check your configuration.")?;
+        .context(ConnectionSnafu)?;
 
         Ok(connection)
     }
@@ -95,7 +108,7 @@ impl RabbitMqPool {
     ///
     /// If there are no connections available or all connections are at the channel cap
     /// a new connection will be created
-    pub async fn create_channel(&self) -> Result<RabbitMqChannel> {
+    pub async fn create_channel(&self) -> Result<RabbitMqChannel, Error> {
         let mut connections = self.connections.lock().await;
 
         let entry = connections.iter().find(|entry| {
@@ -115,10 +128,14 @@ impl RabbitMqPool {
                 channels,
             });
 
-            connections.last().unwrap()
+            connections.last().expect("Item was just pushed.")
         };
 
-        let channel = entry.connection.create_channel().await?;
+        let channel = entry
+            .connection
+            .create_channel()
+            .await
+            .context(ChannelSnafu)?;
 
         entry.channels.fetch_add(1, Ordering::Relaxed);
 
@@ -129,11 +146,15 @@ impl RabbitMqPool {
     }
 
     /// Close all connections managed by the pool with the given code and message
-    pub async fn close(&self, reply_code: u16, reply_message: &str) -> Result<()> {
+    pub async fn close(&self, reply_code: u16, reply_message: &str) -> Result<(), Error> {
         let mut connections = self.connections.lock().await;
 
         for entry in connections.drain(..) {
-            entry.connection.close(reply_code, reply_message).await?;
+            entry
+                .connection
+                .close(reply_code, reply_message)
+                .await
+                .context(CloseSnafu)?;
         }
 
         Ok(())
