@@ -4,7 +4,7 @@
 
 use std::{fmt::Display, str::FromStr};
 
-use crate::error::ParsingError;
+use crate::subject::ParsingError;
 
 /// Permission access variants
 ///
@@ -46,7 +46,11 @@ impl FromStr for AccessMethod {
             "PUT" => AccessMethod::Put,
             "PATCH" => AccessMethod::Patch,
             "DELETE" => AccessMethod::Delete,
-            _ => return Err(ParsingError::InvalidAccessMethod(s.to_owned())),
+            _ => {
+                return Err(ParsingError::InvalidAccessMethod {
+                    method: s.to_owned(),
+                })
+            }
         })
     }
 }

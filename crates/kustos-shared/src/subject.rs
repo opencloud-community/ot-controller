@@ -2,11 +2,45 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use snafu::Snafu;
 use uuid::Uuid;
 
 use std::str::FromStr;
 
-use crate::error::ParsingError;
+/// The error type is returned when parsing invalid values from strings.
+///
+/// Derived using [snafu::Snafu]
+#[derive(Debug, Snafu)]
+pub enum ParsingError {
+    #[snafu(display("Invalid access method: `{method}`"))]
+    InvalidAccessMethod { method: String },
+
+    #[snafu(display("String was not a PolicyUser casbin string: `{user}`"))]
+    PolicyUser { user: String },
+
+    #[snafu(display("String was not a PolicyInvite casbin string: `{invite}`"))]
+    PolicyInvite { invite: String },
+
+    #[snafu(display("String was not a PolicyInternalGroup casbin string: `{group}"))]
+    PolicyInternalGroup { group: String },
+
+    #[snafu(display("String was not a PolicyOPGroup casbin string: `{group}`"))]
+    PolicyOPGroup { group: String },
+
+    #[snafu(display("Invalid UUID: {source}"), context(false))]
+    Uuid {
+        #[snafu(source(from(uuid::Error, Box::new)))]
+        source: Box<uuid::Error>,
+    },
+
+    #[snafu(display("Custom: {message}"), whatever)]
+    Custom {
+        message: String,
+
+        #[snafu(source(from(Box<dyn std::error::Error + Send + Sync>, Some)))]
+        source: Option<Box<dyn std::error::Error + Send + Sync>>,
+    },
+}
 
 /// Trait to tag a type as a subject
 ///
@@ -60,7 +94,7 @@ impl FromStr for PolicyUser {
                 s.trim_start_matches("user::"),
             )?))
         } else {
-            Err(ParsingError::PolicyUser(s.to_owned()))
+            PolicyUserSnafu { user: s.to_owned() }.fail()
         }
     }
 }
@@ -111,7 +145,10 @@ impl FromStr for PolicyInvite {
                 s.trim_start_matches("invite::"),
             )?))
         } else {
-            Err(ParsingError::PolicyInvite(s.to_owned()))
+            PolicyInviteSnafu {
+                invite: s.to_owned(),
+            }
+            .fail()
         }
     }
 }
@@ -147,7 +184,10 @@ impl FromStr for PolicyRole {
         if s.starts_with("role::") {
             Ok(PolicyRole(s.trim_start_matches("role::").to_string()))
         } else {
-            Err(ParsingError::PolicyInternalGroup(s.to_owned()))
+            PolicyInternalGroupSnafu {
+                group: s.to_owned(),
+            }
+            .fail()
         }
     }
 }
@@ -182,7 +222,10 @@ impl FromStr for PolicyGroup {
         if s.starts_with("group::") {
             Ok(PolicyGroup(s.trim_start_matches("group::").to_string()))
         } else {
-            Err(ParsingError::PolicyOPGroup(s.to_owned()))
+            PolicyOPGroupSnafu {
+                group: s.to_owned(),
+            }
+            .fail()
         }
     }
 }
@@ -195,3 +238,32 @@ pub struct UserToGroup(pub PolicyUser, pub PolicyGroup);
 
 /// Maps a PolicyGroup to a PolicyRole
 pub struct GroupToRole(pub PolicyGroup, pub PolicyRole);
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use crate::subject::{ParsingError, PolicyInvite, PolicyUser};
+
+    #[test]
+    fn test_policy_invite_invalid_uuid() {
+        let raw_invite = "invite::00000000-0000-0000c0000-000000000000";
+        let parsing_result = PolicyInvite::from_str(raw_invite);
+        assert!(
+            matches!(parsing_result, Err(ParsingError::Uuid { source: _ }),),
+            "Expected Uuid error, Got: {:?}",
+            parsing_result,
+        );
+    }
+
+    #[test]
+    fn test_policy_user_invalid_uuid() {
+        let raw_invite = "user::00000000-0000-0000c0000-000000000000";
+        let parsing_result = PolicyUser::from_str(raw_invite);
+        assert!(
+            matches!(parsing_result, Err(ParsingError::Uuid { source: _ }),),
+            "Expected Uuid error, Got: {:?}",
+            parsing_result,
+        );
+    }
+}

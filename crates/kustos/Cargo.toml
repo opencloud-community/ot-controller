@@ -21,6 +21,7 @@ kustos-shared = { workspace = true, features = ["internal"] }
 barrel = { version = "0.7", features = ["pg"] }
 
 ### Error handling
+snafu.workspace = true
 thiserror.workspace = true
 anyhow.workspace = true
 

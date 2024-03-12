@@ -77,7 +77,7 @@ use casbin::{CoreApi, MgmtApi, RbacApi};
 use internal::synced_enforcer::SyncedEnforcer;
 use kustos_shared::{
     internal::{ToCasbin, ToCasbinMultiple, ToCasbinString},
-    resource::KustosFromStr,
+    resource::{KustosFromStr, ResourceParseError},
     subject::{
         GroupToRole, IsSubject, PolicyGroup, PolicyInvite, PolicyRole, PolicyUser, UserToGroup,
         UserToRole,
@@ -106,7 +106,6 @@ pub mod prelude;
 pub use error::{Error, Result};
 pub use kustos_shared::{
     access::AccessMethod,
-    error::ResourceParseError,
     resource,
     resource::{AccessibleResources, Resource, ResourceId},
     subject,
