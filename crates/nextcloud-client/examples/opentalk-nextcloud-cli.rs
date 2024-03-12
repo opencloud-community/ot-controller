@@ -4,10 +4,9 @@
 
 use std::collections::HashSet;
 
-use anyhow::Result;
 use chrono::NaiveDate;
 use clap::{ArgAction, Args, Parser, Subcommand};
-use opentalk_nextcloud_client::{Client, ShareId, SharePermission, ShareType};
+use opentalk_nextcloud_client::{Client, Error, ShareId, SharePermission, ShareType};
 use url::Url;
 
 #[derive(Args)]
@@ -102,7 +101,7 @@ enum Commands {
 }
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() -> Result<(), Error> {
     let cli = Cli::parse();
 
     match cli.command {

@@ -3766,7 +3766,6 @@ dependencies = [
 name = "opentalk-nextcloud-client"
 version = "0.0.0-dev"
 dependencies = [
- "anyhow",
  "chrono",
  "clap",
  "derive_more",
@@ -3774,8 +3773,8 @@ dependencies = [
  "reqwest",
  "reqwest_dav",
  "serde",
+ "snafu",
  "strum 0.26.1",
- "thiserror",
  "tokio",
  "url",
 ]

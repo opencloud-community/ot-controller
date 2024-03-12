@@ -18,19 +18,15 @@ log.workspace = true
 reqwest = { workspace = true, features = ["json"] }
 reqwest_dav = { version = "0.1.9", default-features = false }
 serde.workspace = true
+snafu.workspace = true
 strum.workspace = true
-thiserror.workspace = true
 url.workspace = true
 
 [dev-dependencies]
-anyhow.workspace = true
 clap = { workspace = true, features = ["derive", "env"] }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 
 [features]
 rustls-tls = ["reqwest/rustls-tls", "reqwest_dav/rustls-tls"]
 native-tls = ["reqwest/native-tls", "reqwest_dav/native-tls"]
-rustls-tls-native-roots = [
-  "reqwest/rustls-tls-native-roots",
-  "reqwest_dav/rustls-tls-native-roots",
-]
+rustls-tls-native-roots = ["reqwest/rustls-tls-native-roots", "reqwest_dav/rustls-tls-native-roots"]
