@@ -27,7 +27,7 @@ mod client;
 mod data_option;
 mod request;
 
-pub use api_error::ApiError;
+pub use api_error::*;
 pub use authorization::Authorization;
 pub use client::{rest_client::RestClient, Client};
 pub use data_option::DataOption;
