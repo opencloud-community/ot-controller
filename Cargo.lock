@@ -3985,6 +3985,7 @@ dependencies = [
  "redis-args",
  "serde",
  "serde_json",
+ "serde_urlencoded",
  "strum 0.26.1",
  "thiserror",
  "url",

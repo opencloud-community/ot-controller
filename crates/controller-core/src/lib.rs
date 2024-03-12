@@ -535,6 +535,7 @@ fn v1_scope(
                 .service(api::v1::users::patch_me)
                 .service(api::v1::users::get_me)
                 .service(api::v1::users::get_me_tariff)
+                .service(api::v1::users::get_me_assets)
                 .service(api::v1::users::get_user)
                 .service(api::v1::rooms::accessible)
                 .service(api::v1::rooms::new)

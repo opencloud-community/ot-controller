@@ -9,6 +9,7 @@
 
 use super::response::NoContent;
 use crate::api::signaling::SignalingModules;
+use crate::api::v1::ApiResponse;
 use crate::caches::Caches;
 use crate::oidc::decode_token;
 use crate::oidc::UserClaims;
@@ -20,12 +21,17 @@ use chrono::Utc;
 use openidconnect::AccessToken;
 use opentalk_controller_settings::TenantAssignment;
 use opentalk_database::Db;
+use opentalk_db_storage::assets;
 use opentalk_db_storage::{
     tariffs::Tariff,
     tenants::Tenant,
     users::{email_to_libravatar_url, UpdateUser, User},
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
+use opentalk_types::api::v1::order::AssetSorting;
+use opentalk_types::api::v1::order::SortingQuery;
+use opentalk_types::api::v1::pagination::PagePaginationQuery;
+use opentalk_types::api::v1::users::GetUserAssetsResponse;
 use opentalk_types::{
     api::{
         error::ApiError,
@@ -164,6 +170,37 @@ pub async fn get_me_tariff(
     );
 
     Ok(Json(response))
+}
+
+#[get("/users/me/assets")]
+pub async fn get_me_assets(
+    db: Data<Db>,
+    current_user: ReqData<User>,
+    sorting: Query<SortingQuery<AssetSorting>>,
+    pagination: Query<PagePaginationQuery>,
+) -> Result<ApiResponse<GetUserAssetsResponse>, ApiError> {
+    let current_user = current_user.into_inner();
+    let pagination = pagination.into_inner();
+    let sorting = sorting.into_inner();
+
+    let mut conn = db.get_conn().await?;
+
+    let (owned_assets, asset_count) = assets::get_all_for_room_owner_paginated_ordered(
+        &mut conn,
+        current_user.id,
+        pagination.per_page,
+        pagination.page,
+        sorting,
+    )
+    .await?;
+
+    Ok(
+        ApiResponse::new(GetUserAssetsResponse { owned_assets }).with_page_pagination(
+            pagination.per_page,
+            pagination.page,
+            asset_count,
+        ),
+    )
 }
 
 /// API Endpoint *GET /users/{user_id}*
