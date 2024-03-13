@@ -9,12 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- controller: add streaming and shared folder information to POST /v1/events ([#652](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/652))
-- controller: update user related cache entry after calling `PATCH /users/me` ([#660](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/660))
-- controller: send update mails for changes to streaming targets and shared folder ([#653](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/653))
 - controller: set & enforce maximum storage via `max_storage` quota ([#651](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/651))
 - controller: add the option to specify the role of email users when they are invited to an event ([#661](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/661))
 - controller: Add API endpoint to query assets associated with a user ([#737](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/737))
+
+## [0.10.0]
+
+### Added
+
+- controller: add streaming and shared folder information to POST /v1/events ([#652](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/652))
+- controller: update user related cache entry after calling `PATCH /users/me` ([#660](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/660))
+- controller: send update mails for changes to streaming targets and shared folder ([#653](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/653))
 
 ### Fixed
 
@@ -423,7 +428,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.9.0...main
+[Unreleased]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.10.0...main
+
+[0.10.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/61a936a1a88a63804a2b8cfa3d602cb941ef3944...v0.10.0
 
 [0.9.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/1ef2d3091f427c258266a968aa2ffdc5116cc0af...v0.9.0
 
