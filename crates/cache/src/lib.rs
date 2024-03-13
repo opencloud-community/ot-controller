@@ -9,6 +9,7 @@ use redis::{AsyncCommands, RedisError, ToRedisArgs};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use siphasher::sip128::{Hasher128, SipHasher24};
+use snafu::Snafu;
 use std::hash::Hash;
 use std::time::Instant;
 
@@ -27,12 +28,12 @@ struct RedisConfig {
     hash_key: bool,
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, Snafu)]
 pub enum CacheError {
-    #[error(transparent)]
-    Redis(#[from] RedisError),
-    #[error(transparent)]
-    Serde(#[from] bincode::Error),
+    #[snafu(display("Redis error: {}", source), context(false))]
+    Redis { source: RedisError },
+    #[snafu(display("Serde error: {}", source), context(false))]
+    Serde { source: bincode::Error },
 }
 
 impl<K, V> Cache<K, V>
