@@ -837,8 +837,8 @@ impl EventInvite {
                         let user = users
                             .iter()
                             .find(|user| user.id == invite.invitee)
-                            .ok_or_else(|| {
-                                DatabaseError::Custom("bug: user invite invitee missing".into())
+                            .ok_or_else(|| DatabaseError::Custom {
+                                message: "bug: user invite invitee missing".to_owned(),
                             })?;
 
                         invites_with_users.push((invite, user.clone()))

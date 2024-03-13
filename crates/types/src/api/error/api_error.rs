@@ -286,10 +286,13 @@ impl From<opentalk_database::DatabaseError> for ApiError {
 
         match value {
             DatabaseError::NotFound => ApiError::not_found(),
-            DatabaseError::DieselError(diesel::result::Error::DatabaseError(
-                diesel::result::DatabaseErrorKind::ForeignKeyViolation,
-                _,
-            )) => ApiError::conflict(),
+            DatabaseError::DieselError {
+                source:
+                    diesel::result::Error::DatabaseError(
+                        diesel::result::DatabaseErrorKind::ForeignKeyViolation,
+                        _,
+                    ),
+            } => ApiError::conflict(),
             e => {
                 log::error!("REST API threw internal error from database error: {}", e);
                 ApiError::internal()

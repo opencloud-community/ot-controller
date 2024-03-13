@@ -58,7 +58,9 @@ impl EventDeleterPreparedCommit {
 
         let current_shared_folder = EventSharedFolder::get_for_event(conn, event_id).await?;
         if current_shared_folder != self.linked_shared_folder {
-            return Err(DatabaseError::custom(ERROR_MESSAGE));
+            return Err(DatabaseError::Custom {
+                message: ERROR_MESSAGE.to_owned(),
+            });
         }
 
         Ok(())
