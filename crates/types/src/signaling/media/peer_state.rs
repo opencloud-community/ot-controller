@@ -18,7 +18,7 @@ use super::ParticipantMediaState;
 pub struct MediaPeerState {
     /// The media state of the peer
     #[cfg_attr(feature = "serde", serde(flatten))]
-    pub state: Option<ParticipantMediaState>,
+    pub state: ParticipantMediaState,
 
     /// Whether the participant has permission to share the screen
     pub is_presenter: bool,

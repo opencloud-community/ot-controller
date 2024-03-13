@@ -16,8 +16,6 @@ pub mod event;
 pub mod peer_state;
 pub mod state;
 
-use std::collections::HashMap;
-
 pub use media_session_state::MediaSessionState;
 pub use media_session_type::{MediaSessionType, MediaSessionTypeParseError};
 pub use participant_speaking_state::ParticipantSpeakingState;
@@ -25,8 +23,60 @@ pub use speaking_state::SpeakingState;
 pub use trickle_candidate::TrickleCandidate;
 pub use update_speaking_state::UpdateSpeakingState;
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 /// The media state of a participant
-pub type ParticipantMediaState = HashMap<MediaSessionType, MediaSessionState>;
+#[derive(Debug, Default, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct ParticipantMediaState {
+    /// See [`MediaSessionType::Video`]
+    pub video: Option<MediaSessionState>,
+
+    /// See [`MediaSessionType::Screen`]
+    pub screen: Option<MediaSessionState>,
+}
+
+impl ParticipantMediaState {
+    /// Insert a new state for a media session type, returning the old state
+    pub fn insert(
+        &mut self,
+        media_session_type: MediaSessionType,
+        state: MediaSessionState,
+    ) -> Option<MediaSessionState> {
+        match media_session_type {
+            MediaSessionType::Video => self.video.replace(state),
+            MediaSessionType::Screen => self.screen.replace(state),
+        }
+    }
+
+    /// Get the media session state for the given type
+    pub fn get(&self, media_session_type: MediaSessionType) -> Option<MediaSessionState> {
+        match media_session_type {
+            MediaSessionType::Video => self.video,
+            MediaSessionType::Screen => self.screen,
+        }
+    }
+
+    /// Get a mutable reference to the media session state for the given type
+    pub fn get_mut(
+        &mut self,
+        media_session_type: MediaSessionType,
+    ) -> Option<&mut MediaSessionState> {
+        match media_session_type {
+            MediaSessionType::Video => self.video.as_mut(),
+            MediaSessionType::Screen => self.screen.as_mut(),
+        }
+    }
+
+    /// Remove the media session state for the given type
+    pub fn remove(&mut self, media_session_type: MediaSessionType) -> Option<MediaSessionState> {
+        match media_session_type {
+            MediaSessionType::Video => self.video.take(),
+            MediaSessionType::Screen => self.screen.take(),
+        }
+    }
+}
 
 /// The namespace string for the signaling module
 pub const NAMESPACE: &str = "media";

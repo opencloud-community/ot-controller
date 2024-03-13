@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use crate::mcu::{JanusPublisher, JanusSubscriber, McuPool, MediaSessionKey, WebRtcEvent};
-use crate::MediaSessionState;
 use anyhow::{ensure, Result};
+use opentalk_types::signaling::media::ParticipantMediaState;
 use opentalk_types::{core::ParticipantId, signaling::media::MediaSessionType};
 use std::collections::HashMap;
 use std::future::Future;
@@ -129,12 +129,12 @@ impl MediaSessions {
     pub async fn remove_dangling_subscriber(
         &mut self,
         participant: ParticipantId,
-        new_media_state: &HashMap<MediaSessionType, MediaSessionState>,
+        new_media_state: &ParticipantMediaState,
     ) {
         let to_remove = self
             .subscribers
             .keys()
-            .filter(|key| key.0 == participant && !new_media_state.contains_key(&key.1))
+            .filter(|key| key.0 == participant && new_media_state.get(key.1).is_none())
             .copied()
             .collect::<Vec<MediaSessionKey>>();
 

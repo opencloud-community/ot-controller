@@ -32,11 +32,9 @@ use opentalk_types::{
     },
 };
 use sessions::MediaSessions;
+use std::sync::Arc;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
-
-use std::collections::HashMap;
-use std::sync::Arc;
 
 mod exchange;
 mod mcu;
@@ -102,7 +100,7 @@ impl SignalingModule for Media {
     ) -> Result<Option<Self>> {
         let (media_sender, janus_events) = mpsc::channel(12);
 
-        let state = HashMap::new();
+        let state = ParticipantMediaState::default();
 
         let id = ctx.participant_id();
         let room = ctx.room_id();
@@ -130,12 +128,12 @@ impl SignalingModule for Media {
     ) -> Result<()> {
         match event {
             Event::WsMessage(MediaCommand::PublishComplete(info)) => {
-                let previous_session_state = self.state.get(&info.media_session_type);
+                let previous_session_state = self.state.get(info.media_session_type);
 
                 process_metrics_for_media_session_state(
                     &ctx,
                     &info.media_session_type,
-                    &previous_session_state.copied(),
+                    &previous_session_state,
                     &info.media_session_state,
                 );
 
@@ -168,16 +166,16 @@ impl SignalingModule for Media {
                     return Ok(());
                 }
 
-                let previous_session_state = self.state.get(&info.media_session_type);
+                let previous_session_state = self.state.get(info.media_session_type);
 
                 process_metrics_for_media_session_state(
                     &ctx,
                     &info.media_session_type,
-                    &previous_session_state.copied(),
+                    &previous_session_state,
                     &info.media_session_state,
                 );
 
-                if let Some(state) = self.state.get_mut(&info.media_session_type) {
+                if let Some(state) = self.state.get_mut(info.media_session_type) {
                     let old_state = *state;
                     *state = info.media_session_state;
 
@@ -229,7 +227,7 @@ impl SignalingModule for Media {
             }
             Event::WsMessage(MediaCommand::Unpublish(assoc)) => {
                 self.media.remove_publisher(assoc.media_session_type).await;
-                let previous_session_state = self.state.remove(&assoc.media_session_type);
+                let previous_session_state = self.state.remove(assoc.media_session_type);
 
                 process_metrics_for_media_session_state(
                     &ctx,
@@ -483,11 +481,11 @@ impl SignalingModule for Media {
                 storage::delete_presenter(ctx.redis_conn(), self.room, self.id).await?;
 
                 // terminate screen share
-                if self.state.contains_key(&MediaSessionType::Screen)
+                if self.state.get(MediaSessionType::Screen).is_some()
                     && ctx.role() != Role::Moderator
                 {
                     self.media.remove_publisher(MediaSessionType::Screen).await;
-                    self.state.remove(&MediaSessionType::Screen);
+                    self.state.remove(MediaSessionType::Screen);
 
                     storage::set_participant_media_state(
                         ctx.redis_conn(),
@@ -510,7 +508,8 @@ impl SignalingModule for Media {
             Event::ParticipantJoined(id, evt_state) => {
                 let state = storage::get_participant_media_state(ctx.redis_conn(), self.room, id)
                     .await
-                    .context("Failed to get peer participants state")?;
+                    .context("Failed to get peer participants state")?
+                    .unwrap_or_default();
 
                 let is_presenter = storage::is_presenter(ctx.redis_conn(), self.room, id).await?;
 
@@ -520,21 +519,18 @@ impl SignalingModule for Media {
                 })
             }
             Event::ParticipantUpdated(id, evt_state) => {
-                let state = if let Some(state) =
-                    storage::get_participant_media_state(ctx.redis_conn(), self.room, id)
-                        .await
-                        .context("Failed to get peer participants state")?
-                {
-                    self.media.remove_dangling_subscriber(id, &state).await;
-                    Some(state)
-                } else {
-                    None
-                };
+                let state = storage::get_participant_media_state(ctx.redis_conn(), self.room, id)
+                    .await
+                    .context("Failed to get peer participants state")?;
+
+                if let Some(state) = &state {
+                    self.media.remove_dangling_subscriber(id, state).await;
+                }
 
                 let is_presenter = storage::is_presenter(ctx.redis_conn(), self.room, id).await?;
 
                 *evt_state = Some(MediaPeerState {
-                    state,
+                    state: state.unwrap_or_default(),
                     is_presenter,
                 });
             }
@@ -551,7 +547,8 @@ impl SignalingModule for Media {
                     let state =
                         storage::get_participant_media_state(ctx.redis_conn(), self.room, id)
                             .await
-                            .context("Failed to get peer participants state")?;
+                            .context("Failed to get peer participants state")?
+                            .unwrap_or_default();
 
                     let is_presenter =
                         storage::is_presenter(ctx.redis_conn(), self.room, id).await?;
@@ -685,7 +682,7 @@ impl Media {
         if media_session_key.0 == self.id {
             log::trace!("Removing publisher {}", media_session_key);
             self.media.remove_publisher(media_session_key.1).await;
-            self.state.remove(&media_session_key.1);
+            self.state.remove(media_session_key.1);
 
             storage::set_participant_media_state(ctx.redis_conn(), self.room, self.id, &self.state)
                 .await
@@ -714,7 +711,7 @@ impl Media {
             self.media
                 .remove_broken_publisher(media_session_key.1)
                 .await;
-            self.state.remove(&media_session_key.1);
+            self.state.remove(media_session_key.1);
 
             storage::set_participant_media_state(ctx.redis_conn(), self.room, self.id, &self.state)
                 .await
