@@ -3506,7 +3506,6 @@ name = "opentalk-controller-settings"
 version = "0.0.0-dev"
 dependencies = [
  "anstream",
- "anyhow",
  "arc-swap",
  "cidr",
  "config",
@@ -3518,6 +3517,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_path_to_error",
+ "snafu",
  "url",
 ]
 

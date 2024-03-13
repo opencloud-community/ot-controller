@@ -31,18 +31,33 @@
 //!
 //! Setting categories, in which all properties implement a default value, should also implement the [`Default`] trait.
 
-use anyhow::{anyhow, Context, Result};
 use arc_swap::ArcSwap;
 use config::{Config, Environment, File, FileFormat};
 use openidconnect::{ClientId, ClientSecret};
 use rustc_hash::FxHashSet;
 use serde::{Deserialize, Deserializer};
+use snafu::{ResultExt, Snafu};
 use std::collections::{HashMap, HashSet};
 use std::convert::TryFrom;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 use url::Url;
+
+#[derive(Debug, Snafu)]
+pub enum SettingsError {
+    #[snafu(display("Failed to read data as config: {}", source), context(false))]
+    BuildConfig { source: config::ConfigError },
+
+    #[snafu(display("Failed to apply configuration from {} or environment", file_name))]
+    DeserializeConfig {
+        file_name: String,
+        #[snafu(source(from(serde_path_to_error::Error<config::ConfigError>, Box::new)))]
+        source: Box<serde_path_to_error::Error<config::ConfigError>>,
+    },
+}
+
+type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
 pub type SharedSettings = Arc<ArcSwap<Settings>>;
 
@@ -152,11 +167,9 @@ impl Settings {
             )
             .build()?;
 
-        serde_path_to_error::deserialize(config)
-            .map_err(|e| anyhow!("{} for `{}`", e.inner(), e.path()))
-            .with_context(|| {
-                format!("Failed to apply configuration from {file_name} or environment")
-            })
+        serde_path_to_error::deserialize(config).context(DeserializeConfigSnafu {
+            file_name: file_name.to_owned(),
+        })
     }
 }
 

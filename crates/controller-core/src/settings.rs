@@ -46,7 +46,7 @@ pub(crate) fn reload_settings(shared_settings: SharedSettings, config_path: &str
 ///
 /// The settings specified in the CLI-Arguments have a higher priority than the settings specified in the config file
 pub fn load_settings(args: &Args) -> Result<Settings> {
-    Settings::load(&args.config)
+    Settings::load(&args.config).map_err(Into::into)
 }
 
 #[cfg(test)]
