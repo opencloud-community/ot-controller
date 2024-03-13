@@ -3,21 +3,21 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "ci-doc-updater"
+authors.workspace = true
 edition = "2021"
 license = "EUPL-1.2"
-authors.workspace = true
-version.workspace = true
+name = "ci-doc-updater"
 publish = false
+version.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow.workspace = true
 clap.workspace = true
 glob = "0.3"
 once_cell = "1"
 regex = "1"
+snafu.workspace = true
 
 [dev-dependencies]
 pretty_assertions.workspace = true

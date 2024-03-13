@@ -1269,12 +1269,12 @@ dependencies = [
 name = "ci-doc-updater"
 version = "0.0.0-dev"
 dependencies = [
- "anyhow",
  "clap",
  "glob",
  "once_cell",
  "pretty_assertions",
  "regex",
+ "snafu",
 ]
 
 [[package]]

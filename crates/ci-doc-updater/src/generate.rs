@@ -4,12 +4,12 @@
 
 use std::path::Path;
 
-use anyhow::Result;
+use snafu::{ResultExt, Whatever};
 
 use crate::analyze::analyze;
 
 pub trait FilesProvider {
-    fn get_file_contents(&self, filename: &str) -> Result<String>;
+    fn get_file_contents(&self, filename: &str) -> Result<String, Whatever>;
 }
 
 pub struct DirectoryFilesProvider<'a> {
@@ -23,13 +23,18 @@ impl<'a> DirectoryFilesProvider<'a> {
 }
 
 impl<'a> FilesProvider for DirectoryFilesProvider<'a> {
-    fn get_file_contents(&self, filename: &str) -> Result<String> {
+    fn get_file_contents(&self, filename: &str) -> Result<String, Whatever> {
         let file = self.base_dir.join(filename);
-        std::fs::read_to_string(file).map_err(From::from)
+        std::fs::read_to_string(file)
+            .with_whatever_context(|err| format!("Couldn't write file {}: {}", filename, err))
     }
 }
 
-pub fn generate(filename: &Path, contents: &str, raw_files: &dyn FilesProvider) -> Result<String> {
+pub fn generate(
+    filename: &Path,
+    contents: &str,
+    raw_files: &dyn FilesProvider,
+) -> Result<String, Whatever> {
     let markers = analyze(contents)?;
 
     let mut lines = contents.lines();
@@ -116,7 +121,7 @@ world
 
         struct DummyFilesProvider;
         impl FilesProvider for DummyFilesProvider {
-            fn get_file_contents(&self, _filename: &str) -> Result<String> {
+            fn get_file_contents(&self, _filename: &str) -> Result<String, Whatever> {
                 Ok("foobar".to_string())
             }
         }
@@ -172,7 +177,7 @@ foobar cba
 
         struct DummyFilesProvider;
         impl FilesProvider for DummyFilesProvider {
-            fn get_file_contents(&self, filename: &str) -> Result<String> {
+            fn get_file_contents(&self, filename: &str) -> Result<String, Whatever> {
                 Ok(format!("foobar {filename}"))
             }
         }
