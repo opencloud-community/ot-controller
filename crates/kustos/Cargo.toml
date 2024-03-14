@@ -22,15 +22,9 @@ barrel = { version = "0.7", features = ["pg"] }
 
 ### Error handling
 snafu.workspace = true
-thiserror.workspace = true
-anyhow.workspace = true
 
 ### Database ORM
-diesel = { workspace = true, features = [
-    "uuid",
-    "serde_json",
-    "chrono",
-] }
+diesel = { workspace = true, features = ["uuid", "serde_json", "chrono"] }
 diesel-async.workspace = true
 uuid = { workspace = true, features = ["serde", "v4"] }
 

@@ -43,7 +43,7 @@ pub(crate) async fn default_acl_model() -> DefaultModel {
 }
 
 /// Internal use only, copy from controller
-pub(crate) async fn block<F, R>(f: F) -> std::result::Result<R, Error>
+pub(crate) async fn block<F, R>(f: F) -> Result<R, Error>
 where
     F: FnOnce() -> R + Send + 'static,
     R: Send + 'static,
@@ -52,7 +52,7 @@ where
 
     let fut = tokio::task::spawn_blocking(move || span.in_scope(f));
 
-    fut.await.map_err(Error::BlockingError)
+    fut.await.map_err(Into::into)
 }
 
 #[cfg(test)]

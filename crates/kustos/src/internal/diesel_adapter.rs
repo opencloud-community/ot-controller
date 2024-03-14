@@ -3,14 +3,16 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Casbin-rs adapter taken from <https://github.com/casbin-rs/diesel-adapter> but inlined to allow for our migration
-use crate::db::{
-    self,
-    casbin::{CasbinRule, NewCasbinRule},
-};
+
 use async_trait::async_trait;
 use casbin::{error::AdapterError, Adapter, Error as CasbinError, Filter, Model, Result};
 use opentalk_database::Db;
 use std::sync::Arc;
+
+use crate::db::{
+    self,
+    casbin::{CasbinRule, NewCasbinRule},
+};
 
 impl From<crate::Error> for CasbinError {
     fn from(e: crate::Error) -> Self {
@@ -154,7 +156,10 @@ impl Adapter for CasbinAdapter {
                 db::add_policy(&mut conn, new_rule).await.map_err(adapter)?;
                 Ok(true)
             }
-            None => Err(crate::Error::Custom("Invalid policy".to_string()).into()),
+            None => Err(crate::Error::Custom {
+                message: "Invalid policy".to_string(),
+            }
+            .into()),
         }
     }
 
@@ -351,6 +356,7 @@ mod tests {
     use opentalk_database::{query_helper, Db};
     use pretty_assertions::assert_eq;
     use serial_test::serial;
+    use snafu::{ResultExt, Whatever};
 
     const MODEL: &str = r#"
     [request_definition]
@@ -400,8 +406,7 @@ mod tests {
         (database, new_url.into())
     }
 
-    async fn setup() -> anyhow::Result<Arc<Db>> {
-        use anyhow::Context;
+    async fn setup() -> std::result::Result<Arc<Db>, Whatever> {
         let url = std::env::var("KUSTOS_TESTS_DATABASE_URL").unwrap_or_else(|_| {
             "postgres://postgres:password123@localhost:5432/kustos".to_string()
         });
@@ -409,21 +414,30 @@ mod tests {
         if AsyncPgConnection::establish(&url).await.is_err() {
             let (database, postgres_url) = change_database_of_url(&url, "postgres");
             log::info!("Creating database: {}", database);
-            let mut conn = AsyncPgConnection::establish(&postgres_url).await?;
+            let mut conn = AsyncPgConnection::establish(&postgres_url)
+                .await
+                .with_whatever_context(|err| format!("failed to connect to database: {err}"))?;
             query_helper::create_database(&database)
                 .execute(&mut conn)
-                .await?;
+                .await
+                .with_whatever_context(|err| format!("Failed to create database: {err}"))?;
         }
 
         opentalk_db_storage::migrations::migrate_from_url(&url)
             .await
-            .context("Migration failed")?;
+            .whatever_context("Migration failed")?;
 
-        let db = Arc::new(Db::connect_url(&url, 10).context("Failed to connect to database")?);
+        let db =
+            Arc::new(Db::connect_url(&url, 10).whatever_context("Failed to connect to database")?);
 
-        let mut conn = db.get_conn().await?;
+        let mut conn = db
+            .get_conn()
+            .await
+            .with_whatever_context(|err| format!("Connection failed {err}"))?;
 
-        db::clear_policy(&mut conn).await?;
+        db::clear_policy(&mut conn)
+            .await
+            .with_whatever_context(|err| format!("Clear policy failed: {err}"))?;
 
         Ok(db)
     }
