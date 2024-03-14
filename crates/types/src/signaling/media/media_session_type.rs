@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use thiserror::Error;
+use snafu::Snafu;
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -31,8 +31,10 @@ impl MediaSessionType {
 }
 
 /// Error when attempting to parse a [`MediaSessionType`]
-#[derive(Error, Debug)]
-#[error("Invalid media session type, {value}")]
+///
+/// Derived using [`snafu::Snafu`]
+#[derive(Debug, Snafu)]
+#[snafu(display("Invalid media session type, {value}"))]
 pub struct MediaSessionTypeParseError {
     value: u64,
 }
