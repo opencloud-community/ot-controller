@@ -6,14 +6,25 @@
 
 use rand::{thread_rng, Rng};
 use redis::aio::ConnectionLike;
-use redis::{Script, ToRedisArgs, Value};
+use redis::{RedisError, Script, ToRedisArgs, Value};
+use snafu::Snafu;
 use std::ops::Range;
 use std::time::{Duration, Instant};
 use tokio::time::sleep;
 
-mod error;
+pub type Result<T> = std::result::Result<T, Error>;
 
-pub use error::{Error, Result};
+#[derive(Snafu, Debug, PartialEq)]
+pub enum Error {
+    #[snafu(display("Failed to unlock because redis returned no success"))]
+    FailedToUnlock,
+    #[snafu(display("Failed to unlock because the lock already expired in redis"))]
+    AlreadyExpired,
+    #[snafu(display("Failed to acquire the lock"))]
+    CouldNotAcquireLock,
+    #[snafu(display("Failed to connect to RabbitMQ: {source}"), context(false))]
+    Redis { source: RedisError },
+}
 
 const LOCK_TIME: Duration = Duration::from_secs(30);
 
@@ -75,7 +86,7 @@ where
     {
         self.locked = false;
         if self.is_expired() {
-            return Err(Error::AlreadyExpired);
+            return AlreadyExpiredSnafu.fail();
         }
 
         let script = Script::new(UNLOCK_SCRIPT);
@@ -88,7 +99,7 @@ where
         if result == 1 {
             Ok(())
         } else {
-            Err(Error::FailedToUnlock)
+            FailedToUnlockSnafu.fail()
         }
     }
 }
@@ -171,7 +182,7 @@ where
             }
         }
 
-        Err(Error::CouldNotAcquireLock)
+        CouldNotAcquireLockSnafu.fail()
     }
 }
 
