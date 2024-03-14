@@ -5,6 +5,7 @@
 use reqwest::header::AUTHORIZATION;
 use reqwest::{Client, RequestBuilder, Response, StatusCode};
 use serde::{Deserialize, Serialize};
+use snafu::Snafu;
 use tokio::sync::RwLock;
 use url::Url;
 
@@ -12,15 +13,15 @@ pub mod users;
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, Snafu)]
 pub enum Error {
-    #[error(transparent)]
-    Reqwest(#[from] reqwest::Error),
-    #[error("keycloak error response")]
+    #[snafu(display("Reqwest error: {}", source), context(false))]
+    Reqwest { source: reqwest::Error },
+    #[snafu(display("Keycloak error response"))]
     KeyCloak,
-    #[error("invalid credentials")]
+    #[snafu(display("Invalid credentials"))]
     InvalidCredentials,
-    #[error("given base url is not a base")]
+    #[snafu(display("Given base URL is not a base"))]
     NotBaseUrl,
 }
 
