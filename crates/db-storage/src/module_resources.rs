@@ -13,6 +13,7 @@ use opentalk_database::{DatabaseError, DbConnection, Result};
 use opentalk_types::core::{ModuleResourceId, RoomId, TenantId, UserId};
 use serde::Serialize;
 use serde_json::Value;
+use snafu::Snafu;
 use std::str::FromStr;
 
 #[derive(
@@ -34,8 +35,8 @@ pub enum JsonPatchErrorCode {
     InvalidFromPath,
 }
 
-#[derive(Debug, thiserror::Error, Serialize)]
-#[error("Json operation failed at index {at_index}: {error_code} - {details} ")]
+#[derive(Debug, Serialize, Snafu)]
+#[snafu(display("Json operation failed at index {at_index}: {error_code} - {details} "))]
 pub struct JsonPatchError {
     pub error_code: JsonPatchErrorCode,
     /// Human readable error details
@@ -68,19 +69,23 @@ impl JsonPatchError {
     }
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, Snafu)]
 pub enum JsonOperationError {
-    #[error("{0}")]
-    JsonPatch(JsonPatchError),
-    #[error("{0}")]
-    Database(DatabaseError),
+    #[snafu(transparent)]
+    JsonPatch { source: JsonPatchError },
+    #[snafu(transparent)]
+    Database { source: DatabaseError },
 }
 
 impl From<diesel::result::Error> for JsonOperationError {
     fn from(value: diesel::result::Error) -> Self {
         match JsonPatchError::try_from_diesel_error(&value) {
-            Some(json_patch_error) => Self::JsonPatch(json_patch_error),
-            None => Self::Database(value.into()),
+            Some(json_patch_error) => Self::JsonPatch {
+                source: json_patch_error,
+            },
+            None => Self::Database {
+                source: value.into(),
+            },
         }
     }
 }
@@ -276,9 +281,9 @@ impl ModuleResource {
     ) -> Result<ModuleResource, JsonOperationError> {
         let filter = filter
             .into_diesel_filter()
-            .ok_or(JsonOperationError::Database(DatabaseError::Custom(
-                "Missing filter for patch query".into(),
-            )))?;
+            .ok_or(JsonOperationError::Database {
+                source: DatabaseError::Custom("Missing filter for patch query".into()),
+            })?;
 
         let query = diesel::update(module_resources::table).filter(filter);
 
@@ -425,8 +430,8 @@ mod test {
         )
         .await
         {
-            Err(JsonOperationError::JsonPatch(err)) => {
-                assert_eq!(JsonPatchErrorCode::InvalidPath, err.error_code)
+            Err(JsonOperationError::JsonPatch { source }) => {
+                assert_eq!(JsonPatchErrorCode::InvalidPath, source.error_code)
             }
             unexpected => panic!("Expected invalid_path error, got {:?}", unexpected),
         }
@@ -449,8 +454,8 @@ mod test {
         )
         .await
         {
-            Err(JsonOperationError::JsonPatch(err)) => {
-                assert_eq!(JsonPatchErrorCode::InvalidPath, err.error_code)
+            Err(JsonOperationError::JsonPatch { source }) => {
+                assert_eq!(JsonPatchErrorCode::InvalidPath, source.error_code)
             }
             unexpected => panic!("Expected invalid_path error, got {:?}", unexpected),
         }
@@ -830,8 +835,8 @@ mod test {
         )
         .await
         {
-            Err(JsonOperationError::JsonPatch(err)) => {
-                assert_eq!(JsonPatchErrorCode::InvalidFromPath, err.error_code)
+            Err(JsonOperationError::JsonPatch { source }) => {
+                assert_eq!(JsonPatchErrorCode::InvalidFromPath, source.error_code)
             }
             unexpected => panic!("Expected invalid_from_path error, got {:?}", unexpected),
         }
@@ -862,8 +867,8 @@ mod test {
         )
         .await
         {
-            Err(JsonOperationError::JsonPatch(err)) => {
-                assert_eq!(JsonPatchErrorCode::InvalidFromPath, err.error_code)
+            Err(JsonOperationError::JsonPatch { source }) => {
+                assert_eq!(JsonPatchErrorCode::InvalidFromPath, source.error_code)
             }
             unexpected => panic!("Expected invalid_source_path error, got {:?}", unexpected),
         }
@@ -1017,8 +1022,8 @@ mod test {
         )
         .await
         {
-            Err(JsonOperationError::JsonPatch(err)) => {
-                assert_eq!(JsonPatchErrorCode::ValueNotEqual, err.error_code)
+            Err(JsonOperationError::JsonPatch { source }) => {
+                assert_eq!(JsonPatchErrorCode::ValueNotEqual, source.error_code)
             }
             unexpected => panic!("Expected failed compare error, got {:?}", unexpected),
         }
@@ -1055,8 +1060,8 @@ mod test {
         )
         .await
         {
-            Err(JsonOperationError::JsonPatch(err)) => {
-                assert_eq!(JsonPatchErrorCode::ValueNotEqual, err.error_code)
+            Err(JsonOperationError::JsonPatch { source }) => {
+                assert_eq!(JsonPatchErrorCode::ValueNotEqual, source.error_code)
             }
             unexpected => panic!("Expected failed compare error, got {:?}", unexpected),
         }
@@ -1186,8 +1191,8 @@ mod test {
         )
         .await
         {
-            Err(JsonOperationError::JsonPatch(err)) => {
-                assert_eq!(JsonPatchErrorCode::InvalidPath, err.error_code)
+            Err(JsonOperationError::JsonPatch { source }) => {
+                assert_eq!(JsonPatchErrorCode::InvalidPath, source.error_code)
             }
             unexpected => panic!("Expected invalid path error, got {:?}", unexpected),
         }
@@ -1214,8 +1219,8 @@ mod test {
         )
         .await
         {
-            Err(JsonOperationError::JsonPatch(err)) => {
-                assert_eq!(JsonPatchErrorCode::InvalidPath, err.error_code)
+            Err(JsonOperationError::JsonPatch { source }) => {
+                assert_eq!(JsonPatchErrorCode::InvalidPath, source.error_code)
             }
             unexpected => panic!("Expected invalid path error, got {:?}", unexpected),
         }
