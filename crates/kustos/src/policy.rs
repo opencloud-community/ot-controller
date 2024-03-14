@@ -11,9 +11,10 @@ use std::{
 use casbin::{rhai::Dynamic, EnforceArgs};
 use kustos_shared::{
     access::AccessMethod,
-    error::ParsingError,
     internal::{ToCasbin, ToCasbinMultiple, ToCasbinString},
+    subject::ParsingError,
 };
+use snafu::whatever;
 
 use crate::{
     resource::ResourceId,
@@ -106,9 +107,7 @@ impl<T: FromStr<Err = ParsingError> + IsSubject> TryFrom<Vec<String>> for Policy
 
     fn try_from(value: Vec<String>) -> Result<Self, Self::Error> {
         if value.len() != 3 {
-            return Err(ParsingError::Custom(format!(
-                "Wrong amount of casbin args: {value:?}",
-            )));
+            whatever!("Wrong amount of cabin args: {value:?}");
         }
 
         Ok(Policy {

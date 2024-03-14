@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use kustos_shared::error::{ParsingError, ResourceParseError};
+use kustos_shared::{resource::ResourceParseError, subject::ParsingError};
 use opentalk_types::api::error::ApiError;
 use thiserror::Error;
 use tokio::task::JoinError;

@@ -12,8 +12,35 @@
 //! Supporting relative resources (e.g. entities with a primary key consisting of a multiple foreign keys) are an open issue currently.
 //!
 //! All resources need to implement the [`Resource`] trait
-use crate::error::ResourceParseError;
-use std::{fmt::Display, ops::Deref, str::FromStr};
+use std::{fmt::Display, num::ParseIntError, ops::Deref, str::FromStr};
+
+use snafu::Snafu;
+
+/// The error is returned when a resource failed to be parsed.
+///
+/// Currently supported types are only uuids and integers, all other use the fallback Other variant.
+#[derive(Debug, Snafu)]
+pub enum ResourceParseError {
+    #[snafu(display("Invalid UUID: {source}"), context(false))]
+    Uuid {
+        #[snafu(source(from(uuid::Error, Box::new)))]
+        source: Box<uuid::Error>,
+    },
+
+    #[snafu(display("Invalid integer: {source}"), context(false))]
+    ParseInt {
+        #[snafu(source(from(ParseIntError, Box::new)))]
+        source: Box<ParseIntError>,
+    },
+
+    #[snafu(whatever)]
+    Other {
+        message: String,
+
+        #[snafu(source(from(Box<dyn std::error::Error + Send + Sync>, Some)))]
+        source: Option<Box<dyn std::error::Error + Send + Sync>>,
+    },
+}
 
 /// This trait is used to allow the retrieval of resource reduced URL prefixes as well as retrieving
 /// the reduced URL
@@ -134,7 +161,7 @@ mod tests {
     impl FromStr for ResourceX {
         type Err = ResourceParseError;
         fn from_str(s: &str) -> Result<Self, Self::Err> {
-            s.parse().map(Self).map_err(ResourceParseError::Uuid)
+            s.parse().map(Self).map_err(Into::into)
         }
     }
 

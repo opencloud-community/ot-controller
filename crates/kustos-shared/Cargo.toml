@@ -17,10 +17,9 @@ description = "Shared types for kustos"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow.workspace = true
 http.workspace = true
 itertools = { workspace = true, optional = true }
-thiserror.workspace = true
+snafu.workspace = true
 uuid = { workspace = true, features = [ "v4" ] }
 
 [features]
