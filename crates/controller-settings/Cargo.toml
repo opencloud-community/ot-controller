@@ -13,18 +13,18 @@ publish = false
 
 [dependencies]
 # Settings related
-anyhow.workspace = true
-config.workspace = true
+anstream.workspace = true
 arc-swap.workspace = true
-serde.workspace = true
-serde_path_to_error = "0.1.15"
-openidconnect.workspace = true
-url.workspace = true
 cidr = { version = "0.2", features = ["serde"] }
+config.workspace = true
+openidconnect.workspace = true
+owo-colors.workspace = true
 phonenumber.workspace = true
 rustc-hash.workspace = true
-anstream.workspace = true
-owo-colors.workspace = true
+serde_path_to_error = "0.1.15"
+serde.workspace = true
+snafu.workspace = true
+url.workspace = true
 
 [dev-dependencies]
 pretty_assertions.workspace = true
