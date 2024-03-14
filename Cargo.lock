@@ -3519,7 +3519,6 @@ dependencies = [
  "anyhow",
  "async-trait",
  "diesel-async",
- "displaydoc",
  "kustos",
  "kustos-shared",
  "log",
@@ -3531,7 +3530,7 @@ dependencies = [
  "opentalk-signaling-core",
  "opentalk-types",
  "serde_json",
- "thiserror",
+ "snafu",
 ]
 
 [[package]]
