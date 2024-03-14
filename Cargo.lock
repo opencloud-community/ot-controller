@@ -3629,13 +3629,14 @@ dependencies = [
 name = "opentalk-etherpad-client"
 version = "0.0.0-dev"
 dependencies = [
- "anyhow",
  "bytes",
  "futures",
  "reqwest",
  "serde",
  "serde_json",
  "serde_repr",
+ "snafu",
+ "url",
 ]
 
 [[package]]

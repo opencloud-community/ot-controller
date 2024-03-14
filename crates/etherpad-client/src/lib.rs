@@ -4,12 +4,29 @@
 
 use bytes::Bytes;
 
-use anyhow::{bail, Context, Result};
 use futures::Stream;
 use reqwest::header::COOKIE;
 use reqwest::{Client, Response, StatusCode, Url};
 use serde::Deserialize;
 use serde_repr::Deserialize_repr;
+use snafu::{OptionExt, Snafu};
+
+#[derive(Debug, Snafu)]
+pub enum EtherpadError {
+    #[snafu(display("HTTP request failed: {}", source), context(false))]
+    HttpRequest { source: reqwest::Error },
+    #[snafu(display("Failed to parse URL: {}", source), context(false))]
+    UrlParse { source: url::ParseError },
+    #[snafu(display("Etherpad API error: {}", message))]
+    ApiError { message: String },
+    #[snafu(display("Failed to call etherpad endpoint '{}': {}", endpoint, source))]
+    EndpointError {
+        endpoint: String,
+        source: Box<EtherpadError>,
+    },
+}
+
+type Result<T, E = EtherpadError> = std::result::Result<T, E>;
 
 #[derive(Clone)]
 /// The client for the etherpad API
@@ -39,19 +56,19 @@ impl EtherpadResponse {
         let str_data = self
             .data
             .get(key)
-            .with_context(|| {
-                format!(
+            .with_context(|| ApiSnafu {
+                message: format!(
                     "Missing data '{}' in etherpad response. Got: {}",
                     key, self.data
-                )
+                ),
             })?
             .as_str()
-            .with_context(|| {
-                format!(
+            .with_context(|| ApiSnafu {
+                message: format!(
                     "Data '{}' in etherpad response is not a string. Got:  {:?}",
                     key,
                     self.data.get(key)
-                )
+                ),
             })?;
         Ok(str_data)
     }
@@ -96,9 +113,12 @@ impl EtherpadClient {
 
         let response = self.client.get(url).send().await?;
 
-        let response = verify_etherpad_response(response)
-            .await
-            .context("Failed to call etherpad endpoint 'createAuthorIfNotExistsFor'")?;
+        let response = verify_etherpad_response(response).await.map_err(|source| {
+            EtherpadError::EndpointError {
+                endpoint: "createAuthorIfNotExistsFor".to_string(),
+                source: Box::new(source),
+            }
+        })?;
 
         let author_id = response.get_str_data("authorID")?;
 
@@ -115,9 +135,12 @@ impl EtherpadClient {
 
         let response = self.client.get(url).send().await?;
 
-        let response = verify_etherpad_response(response)
-            .await
-            .context("Failed to call etherpad endpoint 'createGroupIfNotExistsFor'")?;
+        let response = verify_etherpad_response(response).await.map_err(|source| {
+            EtherpadError::EndpointError {
+                endpoint: "createGroupIfNotExistsFor".to_string(),
+                source: Box::new(source),
+            }
+        })?;
 
         let group_id = response.get_str_data("groupID")?;
 
@@ -133,9 +156,12 @@ impl EtherpadClient {
 
         let response = self.client.get(url).send().await?;
 
-        verify_etherpad_response(response)
-            .await
-            .context("Failed to call etherpad endpoint 'deleteGroup'")?;
+        verify_etherpad_response(response).await.map_err(|source| {
+            EtherpadError::EndpointError {
+                endpoint: "deleteGroup".to_string(),
+                source: Box::new(source),
+            }
+        })?;
 
         Ok(())
     }
@@ -161,9 +187,12 @@ impl EtherpadClient {
 
         let response = request.send().await?;
 
-        verify_etherpad_response(response)
-            .await
-            .context("Failed to call etherpad endpoint 'createGroupPad'")?;
+        verify_etherpad_response(response).await.map_err(|source| {
+            EtherpadError::EndpointError {
+                endpoint: "createGroupPad".to_string(),
+                source: Box::new(source),
+            }
+        })?;
 
         Ok(())
     }
@@ -177,9 +206,12 @@ impl EtherpadClient {
 
         let response = self.client.get(url).send().await?;
 
-        verify_etherpad_response(response)
-            .await
-            .context("Failed to call etherpad endpoint 'deletePad'")?;
+        verify_etherpad_response(response).await.map_err(|source| {
+            EtherpadError::EndpointError {
+                endpoint: "deletePad".to_string(),
+                source: Box::new(source),
+            }
+        })?;
 
         Ok(())
     }
@@ -193,9 +225,12 @@ impl EtherpadClient {
 
         let response = self.client.get(url).send().await?;
 
-        let response = verify_etherpad_response(response)
-            .await
-            .context("Failed to call etherpad endpoint 'getReadOnlyID'")?;
+        let response = verify_etherpad_response(response).await.map_err(|source| {
+            EtherpadError::EndpointError {
+                endpoint: "getReadOnlyID".to_string(),
+                source: Box::new(source),
+            }
+        })?;
 
         let readonly_id = response.get_str_data("readOnlyID")?;
 
@@ -220,9 +255,13 @@ impl EtherpadClient {
 
         let response = verify_etherpad_response(response).await?;
 
-        let session_id = response
-            .get_str_data("sessionID")
-            .context("Failed to call etherpad endpoint 'createSession'")?;
+        let session_id =
+            response
+                .get_str_data("sessionID")
+                .map_err(|source| EtherpadError::EndpointError {
+                    endpoint: "createSession".to_string(),
+                    source: Box::new(source),
+                })?;
 
         Ok(session_id.into())
     }
@@ -245,9 +284,13 @@ impl EtherpadClient {
 
         let response = verify_etherpad_response(response).await?;
 
-        let session_id = response
-            .get_str_data("sessionID")
-            .context("Failed to call etherpad endpoint 'createReadSession'")?;
+        let session_id =
+            response
+                .get_str_data("sessionID")
+                .map_err(|source| EtherpadError::EndpointError {
+                    endpoint: "createReadSession".to_string(),
+                    source: Box::new(source),
+                })?;
 
         Ok(session_id.into())
     }
@@ -290,14 +333,14 @@ impl EtherpadClient {
             .await?;
 
         match response.status() {
-            StatusCode::OK => (),
-            error_status => bail!(
-                "Failed to export pad as PDF document, got StatusCode :{}",
-                error_status
-            ),
+            StatusCode::OK => Ok(response.bytes_stream()),
+            error_status => Err(EtherpadError::ApiError {
+                message: format!(
+                    "Failed to export pad as PDF document, got StatusCode :{}",
+                    error_status
+                ),
+            }),
         }
-
-        Ok(response.bytes_stream())
     }
 
     /// The auth_session endpoint sets the session cookie on the client browser and forwards
@@ -330,15 +373,12 @@ async fn verify_etherpad_response(response: Response) -> Result<EtherpadResponse
     let etherpad_response = response.json::<EtherpadResponse>().await?;
 
     match etherpad_response.code {
-        ResponseCode::Ok => (),
-        failed => {
-            bail!(
-                "Non-success response from etherpad: {:?}, {}",
-                failed,
+        ResponseCode::Ok => Ok(etherpad_response),
+        failed => Err(EtherpadError::ApiError {
+            message: format!(
+                "Non-success response from Etherpad: {failed:?}, {}",
                 etherpad_response.message
-            );
-        }
+            ),
+        }),
     }
-
-    Ok(etherpad_response)
 }
