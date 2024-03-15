@@ -21,7 +21,7 @@ execute_and_check_for_abort_condition() {
 
     eval "$cmd" 2>&1 | while read -r line; do
 
-        if [[ $line == *"Compiling opentalk-controller"* ]]; then
+        if [[ $line == *"Compiling opentalk-controller "* ]]; then
             echo "Output contains 'Compiling opentalk-controller', continue with next command."
             return  1 # Return a non-zero status to indicate the command was cancelled
         fi
