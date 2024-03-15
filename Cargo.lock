@@ -2845,10 +2845,10 @@ dependencies = [
 name = "lapin-pool"
 version = "0.0.0-dev"
 dependencies = [
- "anyhow",
  "lapin",
  "log",
  "pretty_assertions",
+ "snafu",
  "tokio",
  "tokio-executor-trait",
  "tokio-reactor-trait",

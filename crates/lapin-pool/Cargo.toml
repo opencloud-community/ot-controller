@@ -3,20 +3,20 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "lapin-pool"
+authors.workspace = true
 edition = "2021"
 license = "EUPL-1.2"
-authors.workspace = true
-version.workspace = true
+name = "lapin-pool"
 publish = false
+version.workspace = true
 
 [dependencies]
 lapin.workspace = true
-anyhow.workspace = true
-tokio.workspace = true
-tokio-reactor-trait = "1"
-tokio-executor-trait = "2"
 log.workspace = true
+snafu.workspace = true
+tokio-executor-trait = "2"
+tokio-reactor-trait = "1"
+tokio.workspace = true
 
 [dev-dependencies]
 pretty_assertions.workspace = true
