@@ -3,27 +3,27 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "opentalk-community-modules"
+authors.workspace = true
 edition = "2021"
 license = "EUPL-1.2"
-authors.workspace = true
-version.workspace = true
+name = "opentalk-community-modules"
 publish = false
+version.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 opentalk-signaling-core.workspace = true
 
-opentalk-janus-media.workspace = true
 opentalk-chat.workspace = true
 opentalk-core.workspace = true
 opentalk-integration.workspace = true
+opentalk-janus-media.workspace = true
 opentalk-polls.workspace = true
 opentalk-protocol.workspace = true
 opentalk-shared-folder.workspace = true
 opentalk-timer.workspace = true
 opentalk-whiteboard.workspace = true
 
-anyhow.workspace = true
 async-trait.workspace = true
+snafu.workspace = true

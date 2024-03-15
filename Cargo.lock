@@ -3372,7 +3372,6 @@ dependencies = [
 name = "opentalk-community-modules"
 version = "0.0.0-dev"
 dependencies = [
- "anyhow",
  "async-trait",
  "opentalk-chat",
  "opentalk-core",
@@ -3384,6 +3383,7 @@ dependencies = [
  "opentalk-signaling-core",
  "opentalk-timer",
  "opentalk-whiteboard",
+ "snafu",
 ]
 
 [[package]]

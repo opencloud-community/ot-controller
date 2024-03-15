@@ -18,6 +18,8 @@ struct ModuleConsolePrinter;
 
 #[async_trait(?Send)]
 impl ModulesRegistrar for ModuleConsolePrinter {
+    type Error = anyhow::Error;
+
     async fn register<M: SignalingModule>(&mut self) -> Result<()> {
         println!("{}: {:?}", M::NAMESPACE, M::get_provided_features());
         Ok(())

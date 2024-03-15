@@ -135,7 +135,9 @@ struct ControllerModules<M: RegisterModules>(PhantomData<M>);
 
 #[async_trait(?Send)]
 impl<M: RegisterModules> RegisterModules for ControllerModules<M> {
-    async fn register(registrar: &mut impl ModulesRegistrar) -> Result<()> {
+    async fn register<E>(
+        registrar: &mut impl ModulesRegistrar<Error = E>,
+    ) -> std::result::Result<(), E> {
         registrar.register::<Echo>().await?;
         registrar.register::<BreakoutRooms>().await?;
         registrar.register::<ModerationModule>().await?;
@@ -479,6 +481,8 @@ impl Controller {
 
 #[async_trait(?Send)]
 impl ModulesRegistrar for Controller {
+    type Error = anyhow::Error;
+
     async fn register<M: SignalingModule>(&mut self) -> Result<()> {
         let init = SignalingModuleInitData {
             startup_settings: self.startup_settings.clone(),

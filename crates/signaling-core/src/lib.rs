@@ -39,10 +39,12 @@ pub use signaling_room_id::SignalingRoomId;
 
 #[async_trait(?Send)]
 pub trait RegisterModules {
-    async fn register(registrar: &mut impl ModulesRegistrar) -> Result<()>;
+    async fn register<E>(registrar: &mut impl ModulesRegistrar<Error = E>) -> Result<(), E>;
 }
 
 #[async_trait(?Send)]
 pub trait ModulesRegistrar {
-    async fn register<M: SignalingModule>(&mut self) -> Result<()>;
+    type Error: Send + Sync;
+
+    async fn register<M: SignalingModule>(&mut self) -> Result<(), Self::Error>;
 }
