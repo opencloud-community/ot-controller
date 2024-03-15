@@ -3575,7 +3575,6 @@ name = "opentalk-db-storage"
 version = "0.0.0-dev"
 dependencies = [
  "actix-rt",
- "anyhow",
  "barrel",
  "bigdecimal",
  "chrono",
@@ -3599,8 +3598,8 @@ dependencies = [
  "serde",
  "serde_json",
  "serial_test",
+ "snafu",
  "strum 0.26.1",
- "thiserror",
  "tokio",
  "tracing",
  "uuid",

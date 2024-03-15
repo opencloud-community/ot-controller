@@ -2,22 +2,37 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::{Context, Result};
 use refinery::{embed_migrations, Report};
 use refinery_core::tokio_postgres::{Config, NoTls};
+use snafu::Snafu;
 use tokio::sync::oneshot;
 use tracing::Instrument;
 
 embed_migrations!(".");
 
+#[derive(Debug, Snafu)]
+pub enum Error {
+    #[snafu(display("Unable to connect to database: {}", source), context(false))]
+    DatabaseConnect {
+        source: refinery_core::tokio_postgres::Error,
+    },
+
+    #[snafu(display("Migration failed: {}", source), context(false))]
+    MigrationFailed { source: refinery::Error },
+
+    #[snafu(context(false))]
+    SenderDropped {
+        source: tokio::sync::oneshot::error::RecvError,
+    },
+}
+
+type Result<T, E = Error> = std::result::Result<T, E>;
+
 #[tracing::instrument(skip(config))]
 async fn migrate(config: Config) -> Result<Report> {
     log::debug!("config: {:?}", config);
 
-    let (mut client, conn) = config
-        .connect(NoTls)
-        .await
-        .context("Unable to connect to database")?;
+    let (mut client, conn) = config.connect(NoTls).await?;
 
     let (tx, rx) = oneshot::channel();
 
@@ -80,7 +95,7 @@ mod type_polyfills {
 }
 #[cfg(test)]
 mod migration_tests {
-    use anyhow::Result;
+    use super::Result;
     use serial_test::serial;
 
     /// Tests the refinery database migration.
