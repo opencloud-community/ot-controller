@@ -6,13 +6,12 @@
 
 use diesel::pg::Pg;
 use diesel::query_builder::{AstPass, Query, QueryFragment, QueryId};
-use diesel::result::Error;
 use diesel::sql_types::BigInt;
 use diesel::QueryResult;
 use diesel_async::methods::LoadQuery;
 use diesel_async::pooled_connection::deadpool::{BuildError, Object, PoolError};
 use diesel_async::{AsyncConnection, AsyncPgConnection};
-use std::borrow::Cow;
+use snafu::Snafu;
 
 mod db;
 mod metrics;
@@ -28,27 +27,22 @@ pub type DbConnection = metrics::MetricsConnection<Object<AsyncPgConnection>>;
 pub type Result<T, E = DatabaseError> = std::result::Result<T, E>;
 
 /// Error types for the database abstraction
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, Snafu)]
 pub enum DatabaseError {
-    #[error("Database Error: `{0}`")]
-    Custom(Cow<'static, str>),
-    #[error("Diesel Error: `{0}`")]
-    DieselError(diesel::result::Error),
-    #[error("A requested resource could not be found")]
-    NotFound,
-    #[error("Deadpool build error: `{0}`")]
-    DeadpoolBuildError(#[from] BuildError),
-    #[error("Deadpool error: `{0}`")]
-    DeadpoolError(#[from] PoolError),
-}
+    #[snafu(display("Database Error: `{message}`",))]
+    Custom { message: String },
 
-impl DatabaseError {
-    pub fn custom<I>(error_string: I) -> Self
-    where
-        I: Into<Cow<'static, str>>,
-    {
-        Self::Custom(error_string.into())
-    }
+    #[snafu(display("Diesel Error: `{source}`",), context(false))]
+    DieselError { source: diesel::result::Error },
+
+    #[snafu(display("A requested resource could not be found"))]
+    NotFound,
+
+    #[snafu(display("Deadpool build error: `{source}`",), context(false))]
+    DeadpoolBuildError { source: BuildError },
+
+    #[snafu(display("Deadpool error: `{source}`",))]
+    DeadpoolError { source: PoolError },
 }
 
 pub trait OptionalExt<T, E> {
@@ -65,14 +59,6 @@ impl<T> OptionalExt<T, DatabaseError> for Result<T, DatabaseError> {
     }
 }
 
-impl From<diesel::result::Error> for DatabaseError {
-    fn from(err: diesel::result::Error) -> Self {
-        match err {
-            Error::NotFound => Self::NotFound,
-            err => DatabaseError::DieselError(err),
-        }
-    }
-}
 /// Pagination trait for diesel
 pub trait Paginate: Sized {
     fn paginate(self, page: i64) -> Paginated<Self>;

@@ -3566,7 +3566,7 @@ dependencies = [
  "opentalk-controller-settings",
  "opentelemetry",
  "pin-project-lite",
- "thiserror",
+ "snafu",
  "tracing",
 ]
 

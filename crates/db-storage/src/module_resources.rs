@@ -209,9 +209,11 @@ pub struct ModuleResource {
 impl ModuleResource {
     #[tracing::instrument(err, skip_all)]
     pub async fn get(conn: &mut DbConnection, filter: Filter) -> Result<Vec<Self>> {
-        let filter = filter.into_diesel_filter().ok_or(DatabaseError::Custom(
-            "Missing filter for get module_resource query".into(),
-        ))?;
+        let filter = filter
+            .into_diesel_filter()
+            .ok_or_else(|| DatabaseError::Custom {
+                message: "Missing filter for get module_resource query".to_owned(),
+            })?;
 
         let query = module_resources::table.filter(filter);
 
@@ -251,9 +253,11 @@ impl ModuleResource {
 
     #[tracing::instrument(err, skip_all)]
     pub async fn delete(conn: &mut DbConnection, filter: Filter) -> Result<()> {
-        let filter = filter.into_diesel_filter().ok_or(DatabaseError::Custom(
-            "Missing filter for delete query".into(),
-        ))?;
+        let filter = filter
+            .into_diesel_filter()
+            .ok_or_else(|| DatabaseError::Custom {
+                message: "Missing filter for delete query".to_owned(),
+            })?;
 
         let query = diesel::delete(module_resources::table).filter(filter);
 
@@ -281,8 +285,10 @@ impl ModuleResource {
     ) -> Result<ModuleResource, JsonOperationError> {
         let filter = filter
             .into_diesel_filter()
-            .ok_or(JsonOperationError::Database {
-                source: DatabaseError::Custom("Missing filter for patch query".into()),
+            .ok_or_else(|| JsonOperationError::Database {
+                source: DatabaseError::Custom {
+                    message: "Missing filter for patch query".to_owned(),
+                },
             })?;
 
         let query = diesel::update(module_resources::table).filter(filter);

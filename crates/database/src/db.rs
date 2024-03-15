@@ -81,7 +81,7 @@ impl Db {
                                     {state:?}",
                 );
                 log::error!("{}", &msg);
-                Err(DatabaseError::DeadpoolError(e))
+                Err(DatabaseError::DeadpoolError { source: e })
             }
         }
     }

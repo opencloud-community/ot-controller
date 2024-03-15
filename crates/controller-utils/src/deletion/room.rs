@@ -68,7 +68,9 @@ impl RoomDeleterPreparedCommit {
         current_events.sort();
 
         if current_events != self.linked_events {
-            return Err(DatabaseError::custom(ERROR_MESSAGE));
+            return Err(DatabaseError::Custom {
+                message: ERROR_MESSAGE.to_owned(),
+            });
         }
 
         let mut current_module_resources =
@@ -76,13 +78,17 @@ impl RoomDeleterPreparedCommit {
         current_module_resources.sort();
 
         if current_module_resources != self.linked_module_resources {
-            return Err(DatabaseError::custom(ERROR_MESSAGE));
+            return Err(DatabaseError::Custom {
+                message: ERROR_MESSAGE.to_owned(),
+            });
         }
 
         let mut current_shared_folders = EventSharedFolder::get_all_for_room(conn, room_id).await?;
         current_shared_folders.sort_by(|a, b| a.event_id.cmp(&b.event_id));
         if current_shared_folders != self.linked_shared_folders {
-            return Err(DatabaseError::custom(ERROR_MESSAGE));
+            return Err(DatabaseError::Custom {
+                message: ERROR_MESSAGE.to_owned(),
+            });
         }
 
         Ok(())
