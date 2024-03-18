@@ -3,45 +3,46 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use reqwest::StatusCode;
+use snafu::Snafu;
 
 use crate::ShareId;
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, Snafu)]
+#[snafu(visibility(pub(crate)))]
 pub enum Error {
-    #[error(transparent)]
-    UrlParse(#[from] url::ParseError),
+    #[snafu(context(false), display("URL parse error: {source}",))]
+    UrlParse { source: url::ParseError },
 
-    #[error(transparent)]
-    ReqwestDav(#[from] reqwest_dav::Error),
+    #[snafu(context(false), display("Reqwest DAV error: {source}",))]
+    ReqwestDav { source: reqwest_dav::Error },
 
-    #[error(transparent)]
-    Reqwest(#[from] reqwest::Error),
+    #[snafu(context(false), display("Reqwest error: {source}",))]
+    Reqwest { source: reqwest::Error },
 
-    #[error("Server returned unauthorized error")]
+    #[snafu(display("Server returned unauthorized error"))]
     Unauthorized,
 
-    #[error("Unknown share type")]
+    #[snafu(display("Unknown share type"))]
     UnknownShareType,
 
-    #[error("Public upload was disabled by the admin")]
+    #[snafu(display("Public upload was disabled by the admin"))]
     PublicUploadDisabledByAdmin,
 
-    #[error("File could not be shared")]
+    #[snafu(display("File could not be shared"))]
     FileCouldNotBeShared,
 
-    #[error("Server sent unexpected status code {status_code}")]
+    #[snafu(display("Server sent unexpected status code: {status_code}",))]
     UnexpectedStatusCode { status_code: StatusCode },
 
-    #[error("Wrong or no update parameter given")]
+    #[snafu(display("Wrong or no update parameter given"))]
     WrongParameter,
 
-    #[error("Share {share_id} not found")]
+    #[snafu(display("Share {share_id} not found",))]
     ShareNotFound { share_id: ShareId },
 
-    #[error("File {file_path} not found")]
+    #[snafu(display("File {file_path} not found",))]
     FileNotFound {
         file_path: String,
-        #[source]
         source: reqwest_dav::Error,
     },
 }
