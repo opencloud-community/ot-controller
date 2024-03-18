@@ -4,9 +4,9 @@
 
 use std::str::FromStr;
 
-use anyhow::{anyhow, bail, ensure, Context, Result};
 use once_cell::sync::Lazy;
 use regex::{Captures, Regex};
+use snafu::{ensure_whatever, whatever, OptionExt, Whatever};
 
 static RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"(?m)^\s*<!-- (?<marker>(begin|end)):fromfile:(?<filetype>[-_.a-zA-Z]+):(?<filename>[-_./a-zA-Z]+) -->$")
@@ -20,19 +20,18 @@ pub enum MarkerKind {
 }
 
 impl FromStr for MarkerKind {
-    type Err = anyhow::Error;
+    type Err = Whatever;
 
-    fn from_str(s: &str) -> Result<Self> {
+    fn from_str(s: &str) -> Result<Self, Whatever> {
         match s {
             "begin" => Ok(Self::Begin),
             "end" => Ok(Self::End),
-            s => bail!("Unknown marker kind: {s}"),
+            s => whatever!("Unknown marker kind: {s}"),
         }
     }
 }
 
 #[derive(Clone, Debug)]
-#[allow(dead_code)]
 pub struct MarkerLine<'a> {
     kind: MarkerKind,
     line: usize,
@@ -60,20 +59,20 @@ impl<'a> MarkerLine<'a> {
 }
 
 impl<'a> MarkerLine<'a> {
-    fn try_from_captures(captures: &Captures<'a>, line: usize) -> Result<Self> {
+    fn try_from_captures(captures: &Captures<'a>, line: usize) -> Result<Self, Whatever> {
         let filename = captures
             .name("filename")
-            .context("filename not found")?
+            .whatever_context("filename not found")?
             .as_str();
 
         let filetype = captures
             .name("filetype")
-            .context("filetype not found")?
+            .whatever_context("filetype not found")?
             .as_str();
 
         let kind = captures
             .name("marker")
-            .context("marker not found")?
+            .whatever_context("marker not found")?
             .as_str();
         let kind: MarkerKind = kind.parse()?;
 
@@ -92,10 +91,13 @@ pub struct MarkedSection<'a> {
 }
 
 impl<'a> MarkedSection<'a> {
-    fn retrieve_from_slice(lines: &[MarkerLine<'a>]) -> Result<MarkedSection<'a>> {
-        let begin = lines.first().context("No more marker lines left")?.clone();
+    fn retrieve_from_slice(lines: &[MarkerLine<'a>]) -> Result<MarkedSection<'a>, Whatever> {
+        let begin = lines
+            .first()
+            .whatever_context("No more marker lines left")?
+            .clone();
 
-        ensure!(
+        ensure_whatever!(
             begin.kind() == MarkerKind::Begin,
             "Found end marker line for file {:?} without matching begin",
             begin.filename
@@ -103,17 +105,17 @@ impl<'a> MarkedSection<'a> {
 
         let end = lines
             .get(1)
-            .context(anyhow!("Missing end marker for file {:?}", begin.filename))?
+            .with_whatever_context(|| format!("Missing end marker for file {:?}", begin.filename))?
             .clone();
 
-        ensure!(
+        ensure_whatever!(
             end.kind() == MarkerKind::End,
             "Found begin marker for file {:?} instead of end marker for file {:?}",
             end.filename(),
             begin.filename()
         );
 
-        ensure!(
+        ensure_whatever!(
             begin.filename() == end.filename(),
             "Found begin marker for filename {:?}, but end marker for filename {:?}",
             begin.filename(),
@@ -128,7 +130,7 @@ pub struct FileMarkers<'a> {
     pub sections: Vec<MarkedSection<'a>>,
 }
 
-pub fn analyze(text: &str) -> Result<FileMarkers<'_>> {
+pub fn analyze(text: &str) -> Result<FileMarkers<'_>, Whatever> {
     let marker_lines = text
         .lines()
         .enumerate()
@@ -141,7 +143,7 @@ pub fn analyze(text: &str) -> Result<FileMarkers<'_>> {
     let sections = marker_lines
         .chunks(2)
         .map(MarkedSection::retrieve_from_slice)
-        .collect::<Result<Vec<_>>>()?;
+        .collect::<Result<Vec<_>, Whatever>>()?;
 
     Ok(FileMarkers { sections })
 }
