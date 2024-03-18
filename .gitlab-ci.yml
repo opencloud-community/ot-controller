@@ -27,9 +27,8 @@ variables:
   KANIKO_IMAGE: gcr.io/kaniko-project/executor:debug
   # Used for caching
   CARGO_HOME: $CI_PROJECT_DIR/cargo
+  CARGO_TARGET_DIR: $CI_PROJECT_DIR/target
   CARGO_INCREMENTAL: 0
-  CARGO_PROFILE_DEV_DEBUG: 0
-  CARGO_PROFILE_RELEASE_DEBUG: 0
   CACHE_COMPRESSION_LEVEL: fastest
   FF_USE_FASTZIP: 'true'
 
@@ -106,10 +105,14 @@ setup:build:
       policy: pull-push
       when: always
       paths:
-        - target/
+        - ${CARGO_TARGET_DIR}
+  before_script:
+    - cargo install diesel_cli --version ~2 --no-default-features --features="postgres"
   script:
-    # Execute caching commands via a script to save time by aborting the last step of compilation
-    - ci/cargo_cache_abort.sh
+    - cargo check --package opentalk-controller
+    - cargo check --release --locked
+    - cargo xtask --help
+    - cargo auditable build --release --locked --workspace
 
 setup:test:
   stage: setup
@@ -126,7 +129,7 @@ setup:test:
       policy: pull-push
       when: always
       paths:
-        - target/
+        - ${CARGO_TARGET_DIR}
   script:
     - cargo install diesel_cli --version ~2 --no-default-features --features="postgres"
     - RUSTFLAGS="-C instrument-coverage -C link-arg=-fuse-ld=lld"
