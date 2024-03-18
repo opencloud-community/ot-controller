@@ -4,12 +4,12 @@
 
 use crate::{Kind, TimerId};
 
-use anyhow::{Context, Result};
-use opentalk_signaling_core::{RedisConnection, SignalingRoomId};
+use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 use opentalk_types::core::{ParticipantId, Timestamp};
 use redis::AsyncCommands;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
+use snafu::ResultExt;
 
 /// The timer key holds a serialized [`Timer`].
 #[derive(ToRedisArgs)]
@@ -54,11 +54,13 @@ pub(crate) async fn set_if_not_exists(
     redis_conn: &mut RedisConnection,
     room_id: SignalingRoomId,
     timer: &Timer,
-) -> Result<bool> {
+) -> Result<bool, SignalingModuleError> {
     redis_conn
         .set_nx(TimerKey { room_id }, timer)
         .await
-        .context("Failed to set meeting timer")
+        .context(RedisSnafu {
+            message: "Failed to set meeting timer",
+        })
 }
 
 /// Get the current meeting timer
@@ -66,11 +68,13 @@ pub(crate) async fn set_if_not_exists(
 pub(crate) async fn get(
     redis_conn: &mut RedisConnection,
     room_id: SignalingRoomId,
-) -> Result<Option<Timer>> {
+) -> Result<Option<Timer>, SignalingModuleError> {
     redis_conn
         .get(TimerKey { room_id })
         .await
-        .context("Failed to get meeting timer")
+        .context(RedisSnafu {
+            message: "Failed to get meeting timer",
+        })
 }
 
 /// Delete the current timer
@@ -80,10 +84,12 @@ pub(crate) async fn get(
 pub(crate) async fn delete(
     redis_conn: &mut RedisConnection,
     room_id: SignalingRoomId,
-) -> Result<Option<Timer>> {
+) -> Result<Option<Timer>, SignalingModuleError> {
     redis::cmd("GETDEL")
         .arg(TimerKey { room_id })
         .query_async(redis_conn)
         .await
-        .context("Failed to delete meeting timer")
+        .context(RedisSnafu {
+            message: "Failed to delete meeting timer",
+        })
 }

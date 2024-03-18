@@ -2,11 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::{Context, Result};
-use opentalk_signaling_core::{RedisConnection, SignalingRoomId};
+use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 use opentalk_types::{core::ParticipantId, signaling::timer::ready_status::ReadyStatus};
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
+use snafu::ResultExt;
 
 /// A key to track the participants ready status
 #[derive(ToRedisArgs)]
@@ -25,7 +25,7 @@ pub(crate) async fn set(
     room_id: SignalingRoomId,
     participant_id: ParticipantId,
     ready_status: bool,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .set(
             ReadyStatusKey {
@@ -35,7 +35,9 @@ pub(crate) async fn set(
             &ReadyStatus { ready_status },
         )
         .await
-        .context("Failed to set ready state")
+        .context(RedisSnafu {
+            message: "Failed to set ready state",
+        })
 }
 
 /// Get the ready status of a participant
@@ -44,14 +46,16 @@ pub(crate) async fn get(
     redis_conn: &mut RedisConnection,
     room_id: SignalingRoomId,
     participant_id: ParticipantId,
-) -> Result<Option<ReadyStatus>> {
+) -> Result<Option<ReadyStatus>, SignalingModuleError> {
     redis_conn
         .get(ReadyStatusKey {
             room_id,
             participant_id,
         })
         .await
-        .context("Failed to get ready state")
+        .context(RedisSnafu {
+            message: "Failed to get ready state",
+        })
 }
 
 /// Delete the ready status of a participant
@@ -60,12 +64,14 @@ pub(crate) async fn delete(
     redis_conn: &mut RedisConnection,
     room_id: SignalingRoomId,
     participant_id: ParticipantId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .del(ReadyStatusKey {
             room_id,
             participant_id,
         })
         .await
-        .context("Failed to delete ready state")
+        .context(RedisSnafu {
+            message: "Failed to delete ready state",
+        })
 }

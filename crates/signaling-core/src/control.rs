@@ -6,9 +6,9 @@ use opentalk_types::{
     core::{ParticipantId, ParticipationKind, Timestamp},
     signaling::{control::state::ControlState, Role},
 };
-use snafu::{ResultExt, Whatever};
+use snafu::ResultExt;
 
-use crate::{RedisConnection, SignalingRoomId};
+use crate::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 
 pub mod exchange;
 pub mod storage;
@@ -28,13 +28,13 @@ pub trait ControlStateExt: Sized {
 
 #[async_trait::async_trait]
 impl ControlStateExt for ControlState {
-    type Error = Whatever;
+    type Error = SignalingModuleError;
 
     async fn from_redis(
         redis_conn: &mut RedisConnection,
         room_id: SignalingRoomId,
         participant_id: ParticipantId,
-    ) -> Result<Self, Whatever> {
+    ) -> Result<Self, SignalingModuleError> {
         #[allow(clippy::type_complexity)]
         let (
             display_name,
@@ -68,7 +68,9 @@ impl ControlStateExt for ControlState {
             .get("is_room_owner")
             .query_async(redis_conn)
             .await
-            .whatever_context("Couldn't query control state from redis")?;
+            .context(RedisSnafu {
+                message: "Couldn't query control state from redis",
+            })?;
 
         if display_name.is_none()
             || joined_at.is_none()

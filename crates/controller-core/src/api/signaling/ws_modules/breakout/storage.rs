@@ -3,12 +3,12 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use super::BreakoutRoom;
-use anyhow::{Context, Result};
-use opentalk_signaling_core::RedisConnection;
+use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError};
 use opentalk_types::core::{BreakoutRoomId, RoomId};
 use redis::AsyncCommands;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
+use snafu::ResultExt;
 use std::fmt::Debug;
 use std::time::{Duration, SystemTime};
 
@@ -50,33 +50,44 @@ pub async fn set_config(
     redis_conn: &mut RedisConnection,
     room: RoomId,
     config: &BreakoutConfig,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     if let Some(duration) = config.duration {
         redis_conn
             .set_ex(BreakoutRoomConfig { room }, config, duration.as_secs())
             .await
-            .context("Failed to set breakout-room config")
+            .context(RedisSnafu {
+                message: "Failed to set breakout-room config",
+            })
     } else {
         redis_conn
             .set(BreakoutRoomConfig { room }, config)
             .await
-            .context("Failed to set breakout-room config")
+            .context(RedisSnafu {
+                message: "Failed to set breakout-room config",
+            })
     }
 }
 
 pub async fn get_config(
     redis_conn: &mut RedisConnection,
     room: RoomId,
-) -> Result<Option<BreakoutConfig>> {
+) -> Result<Option<BreakoutConfig>, SignalingModuleError> {
     redis_conn
         .get(BreakoutRoomConfig { room })
         .await
-        .context("Failed to get breakout-room config")
+        .context(RedisSnafu {
+            message: "Failed to get breakout-room config",
+        })
 }
 
-pub async fn del_config(redis_conn: &mut RedisConnection, room: RoomId) -> Result<bool> {
+pub async fn del_config(
+    redis_conn: &mut RedisConnection,
+    room: RoomId,
+) -> Result<bool, SignalingModuleError> {
     redis_conn
         .del(BreakoutRoomConfig { room })
         .await
-        .context("Failed to del breakout-room config")
+        .context(RedisSnafu {
+            message: "Failed to del breakout-room config",
+        })
 }

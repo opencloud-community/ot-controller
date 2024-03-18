@@ -2,11 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::{Context, Result};
 use lapin_pool::{RabbitMqChannel, RabbitMqPool};
 use opentalk_signaling_core::{
-    control, DestroyContext, Event, InitContext, ModuleContext, Participant, SignalingModule,
-    SignalingModuleInitData, SignalingRoomId,
+    control, DestroyContext, Event, InitContext, ModuleContext, Participant, SerdeJsonSnafu,
+    SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
 use opentalk_types::{
     core::ParticipantId,
@@ -21,6 +20,7 @@ use opentalk_types::{
         Role,
     },
 };
+use snafu::ResultExt;
 use std::sync::Arc;
 
 mod exchange;
@@ -61,7 +61,7 @@ impl SignalingModule for Recording {
         ctx: InitContext<'_, Self>,
         params: &Self::Params,
         _protocol: &'static str,
-    ) -> Result<Option<Self>> {
+    ) -> Result<Option<Self>, SignalingModuleError> {
         let (rabbitmq_pool, params) = params;
 
         let rabbitmq_channel = rabbitmq_pool.create_channel().await?;
@@ -79,7 +79,7 @@ impl SignalingModule for Recording {
         &mut self,
         mut ctx: ModuleContext<'_, Self>,
         event: Event<'_, Self>,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         match event {
             Event::Joined {
                 control_data: _,
@@ -178,10 +178,15 @@ impl SignalingModule for Recording {
                                 room: self.room.room_id(),
                                 breakout: self.room.breakout_room_id(),
                             })
-                            .context("failed to serialize StartRecording")?,
+                            .context(SerdeJsonSnafu {
+                                message: "failed to serialize StartRecording",
+                            })?,
                             Default::default(),
                         )
-                        .await?;
+                        .await
+                        .whatever_context::<&str, SignalingModuleError>(
+                            "Failed to start recording",
+                        )?;
                 }
                 RecordingCommand::Stop(command::Stop { recording_id }) => {
                     if ctx.role() != Role::Moderator {
@@ -258,7 +263,9 @@ impl SignalingModule for Recording {
         }
     }
 
-    async fn build_params(init: SignalingModuleInitData) -> Result<Option<Self::Params>> {
+    async fn build_params(
+        init: SignalingModuleInitData,
+    ) -> Result<Option<Self::Params>, SignalingModuleError> {
         if let Some(queue) = init
             .shared_settings
             .load_full()

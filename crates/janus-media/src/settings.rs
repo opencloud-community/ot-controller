@@ -2,8 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::{Context, Result};
+use opentalk_signaling_core::{ConfigSnafu, SignalingModuleError};
 use serde::Deserialize;
+use snafu::{OptionExt, ResultExt};
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct JanusMcuConfig {
@@ -32,16 +33,16 @@ pub struct JanusMcuConfig {
 }
 
 impl JanusMcuConfig {
-    pub fn extract(settings: &opentalk_controller_settings::Settings) -> Result<Self> {
+    pub fn extract(
+        settings: &opentalk_controller_settings::Settings,
+    ) -> Result<Self, SignalingModuleError> {
         let value = settings
             .extensions
             .get("room_server")
             .cloned()
-            .context("missing room server")?;
+            .whatever_context::<&str, SignalingModuleError>("missing room server")?;
 
-        value
-            .try_deserialize()
-            .context("failed to deserialize room_server config")
+        value.try_deserialize().context(ConfigSnafu)
     }
 }
 

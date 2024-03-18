@@ -2,14 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::Result;
 use client::SpacedeckClient;
 use futures::stream::once;
 use opentalk_database::Db;
 use opentalk_signaling_core::{
     assets::{save_asset, AssetError},
     control, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage, RedisConnection,
-    SignalingModule, SignalingModuleInitData, SignalingRoomId,
+    SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
 use opentalk_types::{
     core::Timestamp,
@@ -23,6 +22,7 @@ use opentalk_types::{
         Role,
     },
 };
+use snafu::whatever;
 use state::{InitState, SpaceInfo};
 use std::sync::Arc;
 use url::Url;
@@ -48,7 +48,7 @@ impl From<InitState> for WhiteboardState {
 }
 
 pub struct GetPdfEvent {
-    url_result: Result<Url>,
+    url_result: Result<Url, SignalingModuleError>,
     ts: Timestamp,
 }
 
@@ -74,7 +74,7 @@ impl SignalingModule for Whiteboard {
         ctx: InitContext<'_, Self>,
         params: &Self::Params,
         _protocol: &'static str,
-    ) -> anyhow::Result<Option<Self>> {
+    ) -> Result<Option<Self>, SignalingModuleError> {
         let client = SpacedeckClient::new(params.url.clone(), params.api_key.clone());
 
         Ok(Some(Self {
@@ -89,7 +89,7 @@ impl SignalingModule for Whiteboard {
         &mut self,
         mut ctx: ModuleContext<'_, Self>,
         event: Event<'_, Self>,
-    ) -> anyhow::Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         match event {
             Event::Joined {
                 control_data: _,
@@ -193,8 +193,10 @@ impl SignalingModule for Whiteboard {
                         return Ok(());
                     }
                     Err(e) => {
-                        log::error!("Failed to save asset {filename}: {e}");
-                        return Err(anyhow::anyhow!("error: {e}"));
+                        let message = format!("Failed to save asset {filename}: {e}");
+
+                        log::error!("{message}");
+                        whatever!("{message}");
                     }
                 };
 
@@ -231,7 +233,9 @@ impl SignalingModule for Whiteboard {
         }
     }
 
-    async fn build_params(init: SignalingModuleInitData) -> Result<Option<Self::Params>> {
+    async fn build_params(
+        init: SignalingModuleInitData,
+    ) -> Result<Option<Self::Params>, SignalingModuleError> {
         let spacedeck = init.shared_settings.load_full().spacedeck.clone();
 
         match spacedeck {
@@ -251,7 +255,10 @@ impl Whiteboard {
     ///
     /// When spacedeck gets initialized here, this function will send the [`exchange::Event::Initialized`] to all
     /// participants in the room
-    async fn create_space(&self, ctx: &mut ModuleContext<'_, Self>) -> Result<()> {
+    async fn create_space(
+        &self,
+        ctx: &mut ModuleContext<'_, Self>,
+    ) -> Result<(), SignalingModuleError> {
         match state::try_start_init(ctx.redis_conn(), self.room_id).await? {
             Some(state) => match state {
                 InitState::Initializing => ctx.ws_send(Error::CurrentlyInitializing),
@@ -285,7 +292,7 @@ impl Whiteboard {
         Ok(())
     }
 
-    async fn cleanup(&self, redis_conn: &mut RedisConnection) -> Result<()> {
+    async fn cleanup(&self, redis_conn: &mut RedisConnection) -> Result<(), SignalingModuleError> {
         let state = match state::get(redis_conn, self.room_id).await? {
             Some(state) => state,
             None => return Ok(()),

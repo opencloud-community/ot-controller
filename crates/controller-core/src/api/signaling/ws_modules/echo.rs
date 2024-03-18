@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::Result;
 use opentalk_signaling_core::{
-    DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleInitData,
+    DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
+    SignalingModuleInitData,
 };
 use opentalk_types::signaling::echo::NAMESPACE;
 use serde_json::Value;
@@ -27,7 +27,7 @@ impl SignalingModule for Echo {
         _: InitContext<'_, Self>,
         _: &Self::Params,
         _: &'static str,
-    ) -> Result<Option<Self>> {
+    ) -> Result<Option<Self>, SignalingModuleError> {
         Ok(Some(Self))
     }
 
@@ -35,7 +35,7 @@ impl SignalingModule for Echo {
         &mut self,
         mut ctx: ModuleContext<'_, Self>,
         event: Event<'_, Self>,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         match event {
             Event::WsMessage(incoming) => {
                 ctx.ws_send(incoming);
@@ -58,7 +58,9 @@ impl SignalingModule for Echo {
 
     async fn on_destroy(self, _: DestroyContext<'_>) {}
 
-    async fn build_params(_init: SignalingModuleInitData) -> Result<Option<Self::Params>> {
+    async fn build_params(
+        _init: SignalingModuleInitData,
+    ) -> Result<Option<Self::Params>, SignalingModuleError> {
         Ok(Some(()))
     }
 }

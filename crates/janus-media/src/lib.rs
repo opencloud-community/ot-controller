@@ -7,7 +7,6 @@
 //! ## Functionality
 //!
 //! Handles media related messages and manages their respective forwarding to janus-gateway via rabbitmq.
-use anyhow::{bail, Context, Result};
 use mcu::{
     LinkDirection, McuPool, MediaSessionKey, PublishConfiguration, Request, Response,
     TrickleMessage, WebRtcEvent,
@@ -15,7 +14,7 @@ use mcu::{
 use opentalk_controller_settings::SharedSettings;
 use opentalk_signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
-    SignalingModuleInitData, SignalingRoomId,
+    SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
 use opentalk_types::{
     core::ParticipantId,
@@ -32,6 +31,7 @@ use opentalk_types::{
     },
 };
 use sessions::MediaSessions;
+use snafu::{whatever, OptionExt};
 use std::sync::Arc;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
@@ -97,7 +97,7 @@ impl SignalingModule for Media {
         mut ctx: InitContext<'_, Self>,
         mcu: &Self::Params,
         _protocol: &'static str,
-    ) -> Result<Option<Self>> {
+    ) -> Result<Option<Self>, SignalingModuleError> {
         let (media_sender, janus_events) = mpsc::channel(12);
 
         let state = ParticipantMediaState::default();
@@ -125,7 +125,7 @@ impl SignalingModule for Media {
         &mut self,
         mut ctx: ModuleContext<'_, Self>,
         event: Event<'_, Self>,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         match event {
             Event::WsMessage(MediaCommand::PublishComplete(info)) => {
                 let previous_session_state = self.state.get(info.media_session_type);
@@ -147,8 +147,7 @@ impl SignalingModule for Media {
                     self.id,
                     &self.state,
                 )
-                .await
-                .context("Failed to set state attribute in storage")?;
+                .await?;
 
                 ctx.invalidate_data();
 
@@ -185,8 +184,7 @@ impl SignalingModule for Media {
                         self.id,
                         &self.state,
                     )
-                    .await
-                    .context("Failed to set state attribute in storage")?;
+                    .await?;
 
                     ctx.invalidate_data();
 
@@ -245,8 +243,7 @@ impl SignalingModule for Media {
                     self.id,
                     &self.state,
                 )
-                .await
-                .context("Failed to set state attribute in storage")?;
+                .await?;
 
                 ctx.invalidate_data();
             }
@@ -493,8 +490,7 @@ impl SignalingModule for Media {
                         self.id,
                         &self.state,
                     )
-                    .await
-                    .context("Failed to set state attribute in storage")?;
+                    .await?;
                 }
 
                 ctx.ws_send(MediaEvent::PresenterRevoked);
@@ -507,8 +503,7 @@ impl SignalingModule for Media {
 
             Event::ParticipantJoined(id, evt_state) => {
                 let state = storage::get_participant_media_state(ctx.redis_conn(), self.room, id)
-                    .await
-                    .context("Failed to get peer participants state")?
+                    .await?
                     .unwrap_or_default();
 
                 let is_presenter = storage::is_presenter(ctx.redis_conn(), self.room, id).await?;
@@ -519,9 +514,8 @@ impl SignalingModule for Media {
                 })
             }
             Event::ParticipantUpdated(id, evt_state) => {
-                let state = storage::get_participant_media_state(ctx.redis_conn(), self.room, id)
-                    .await
-                    .context("Failed to get peer participants state")?;
+                let state =
+                    storage::get_participant_media_state(ctx.redis_conn(), self.room, id).await?;
 
                 if let Some(state) = &state {
                     self.media.remove_dangling_subscriber(id, state).await;
@@ -546,8 +540,7 @@ impl SignalingModule for Media {
                 for (&id, evt_state) in participants {
                     let state =
                         storage::get_participant_media_state(ctx.redis_conn(), self.room, id)
-                            .await
-                            .context("Failed to get peer participants state")?
+                            .await?
                             .unwrap_or_default();
 
                     let is_presenter =
@@ -618,7 +611,9 @@ impl SignalingModule for Media {
         }
     }
 
-    async fn build_params(data: SignalingModuleInitData) -> Result<Option<Self::Params>> {
+    async fn build_params(
+        data: SignalingModuleInitData,
+    ) -> Result<Option<Self::Params>, SignalingModuleError> {
         let mcu_pool = McuPool::build(
             data.startup_settings.as_ref(),
             data.shared_settings.clone(),
@@ -641,7 +636,7 @@ impl Media {
         &self,
         ctx: &mut ModuleContext<'_, Self>,
         moderator_mute: command::RequestMute,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         if ctx.role() != Role::Moderator {
             ctx.ws_send(Error::PermissionDenied);
 
@@ -678,15 +673,14 @@ impl Media {
         &mut self,
         ctx: &mut ModuleContext<'_, Self>,
         media_session_key: MediaSessionKey,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         if media_session_key.0 == self.id {
             log::trace!("Removing publisher {}", media_session_key);
             self.media.remove_publisher(media_session_key.1).await;
             self.state.remove(media_session_key.1);
 
             storage::set_participant_media_state(ctx.redis_conn(), self.room, self.id, &self.state)
-                .await
-                .context("Failed to set state attribute in storage")?;
+                .await?;
 
             ctx.invalidate_data();
         } else {
@@ -705,7 +699,7 @@ impl Media {
         &mut self,
         ctx: &mut ModuleContext<'_, Self>,
         media_session_key: MediaSessionKey,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         if media_session_key.0 == self.id {
             log::trace!("Removing broken publisher {}", media_session_key);
             self.media
@@ -714,8 +708,7 @@ impl Media {
             self.state.remove(media_session_key.1);
 
             storage::set_participant_media_state(ctx.redis_conn(), self.room, self.id, &self.state)
-                .await
-                .context("Failed to set state attribute in storage")?;
+                .await?;
 
             ctx.invalidate_data();
         } else {
@@ -734,7 +727,7 @@ impl Media {
         target: ParticipantId,
         media_session_type: MediaSessionType,
         offer: String,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         if target == self.id {
             // Get the publisher and create if it doesn't exists
             let publisher = if let Some(publisher) = self.media.get_publisher(media_session_type) {
@@ -759,13 +752,13 @@ impl Media {
                     }));
                 }
                 Response::SdpOffer(_) | Response::None => {
-                    bail!("Expected McuResponse::SdpAnswer(..), got {:?}", response)
+                    whatever!("Expected McuResponse::SdpAnswer(..), got {:?}", response)
                 }
             }
 
             Ok(())
         } else {
-            bail!("Invalid target id, cannot send offer to other participants");
+            whatever!("Invalid target id, cannot send offer to other participants")
         }
     }
 
@@ -775,13 +768,15 @@ impl Media {
         target: ParticipantId,
         media_session_type: MediaSessionType,
         answer: String,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         if target == self.id {
             // Get the publisher and create if it doesn't exists
             let publisher = self
                 .media
                 .get_publisher(media_session_type)
-                .context("SDP Answer for nonexistent publisher received")?;
+                .whatever_context::<&str, SignalingModuleError>(
+                    "SDP Answer for nonexistent publisher received",
+                )?;
 
             // Send to offer and await the result
             publisher.send_message(Request::SdpAnswer(answer)).await?;
@@ -789,7 +784,9 @@ impl Media {
             let subscriber = self
                 .media
                 .get_subscriber(target, media_session_type)
-                .context("SDP Answer for nonexisting subscriber received")?;
+                .whatever_context::<&str, SignalingModuleError>(
+                "SDP Answer for nonexisting subscriber received",
+            )?;
 
             subscriber.send_message(Request::SdpAnswer(answer)).await?;
         }
@@ -806,7 +803,7 @@ impl Media {
             sdp_m_line_index,
             candidate,
         }: TrickleCandidate,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         let req = Request::Candidate(opentalk_janus_client::TrickleCandidate {
             sdp_m_line_index,
             candidate,
@@ -816,14 +813,18 @@ impl Media {
             let publisher = self
                 .media
                 .get_publisher(media_session_type)
-                .context("SDP candidate for nonexistent publisher received")?;
+                .whatever_context::<&str, SignalingModuleError>(
+                    "SDP candidate for nonexistent publisher received",
+                )?;
 
             publisher.send_message(req).await?;
         } else {
             let subscriber = self
                 .media
                 .get_subscriber(target, media_session_type)
-                .context("SDP candidate for nonexisting subscriber received")?;
+                .whatever_context::<&str, SignalingModuleError>(
+                "SDP candidate for nonexisting subscriber received",
+            )?;
 
             subscriber.send_message(req).await?;
         }
@@ -836,19 +837,23 @@ impl Media {
         &mut self,
         target: ParticipantId,
         media_session_type: MediaSessionType,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         if target == self.id {
             let publisher = self
                 .media
                 .get_publisher(media_session_type)
-                .context("SDP end-of-candidates for nonexistent publisher received")?;
+                .whatever_context::<&str, SignalingModuleError>(
+                    "SDP end-of-candidates for nonexistent publisher received",
+                )?;
 
             publisher.send_message(Request::EndOfCandidates).await?;
         } else {
             let subscriber = self
                 .media
                 .get_subscriber(target, media_session_type)
-                .context("SDP end-of-candidates for nonexisting subscriber received")?;
+                .whatever_context::<&str, SignalingModuleError>(
+                "SDP end-of-candidates for nonexisting subscriber received",
+            )?;
 
             subscriber.send_message(Request::EndOfCandidates).await?;
         }
@@ -861,7 +866,7 @@ impl Media {
         &mut self,
         ctx: &mut ModuleContext<'_, Self>,
         subscribe: TargetSubscribe,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         let target = subscribe.target.target;
         let media_session_type = subscribe.target.media_session_type;
 
@@ -869,7 +874,7 @@ impl Media {
             // Usually subscribing to self should be possible but cannot be realized with the
             // current messaging model. The frontend wouldn't know if a sdp-offer is an update
             // to the publish or a response to the requestOffer (subscribe)
-            bail!("Cannot request offer for self");
+            whatever!("Cannot request offer for self");
         }
 
         let subscriber =
@@ -898,7 +903,7 @@ impl Media {
                 }));
             }
             Response::SdpAnswer(_) | Response::None => {
-                bail!("Expected McuResponse::SdpOffer(..) got {:?}", response)
+                whatever!("Expected McuResponse::SdpOffer(..) got {:?}", response)
             }
         }
 
@@ -910,18 +915,18 @@ impl Media {
         &mut self,
         ctx: &mut ModuleContext<'_, Self>,
         target: Target,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         let media_session_type = target.media_session_type;
         let target = target.target;
 
         if self.id == target {
-            bail!("Cannot re-request offer for self");
+            whatever!("Cannot re-request offer for self");
         }
 
-        let subscriber = self
-            .media
-            .get_subscriber(target, media_session_type)
-            .context("No subscriber for target found")?;
+        let subscriber =
+            self.media
+                .get_subscriber(target, media_session_type)
+                .whatever_context::<&str, SignalingModuleError>("No subscriber for target found")?;
 
         let sdp_offer = subscriber.restart().await?;
 
@@ -941,7 +946,7 @@ impl Media {
         &mut self,
         media_session_type: MediaSessionType,
         state: MediaSessionState,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         if let Some(publisher) = self.media.get_publisher(media_session_type) {
             publisher
                 .send_message(Request::PublisherConfigure(PublishConfiguration {
@@ -957,7 +962,10 @@ impl Media {
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
-    async fn handle_configure(&mut self, configure: TargetConfigure) -> Result<()> {
+    async fn handle_configure(
+        &mut self,
+        configure: TargetConfigure,
+    ) -> Result<(), SignalingModuleError> {
         if let Some(subscriber) = self
             .media
             .get_subscriber(configure.target.target, configure.target.media_session_type)
@@ -983,7 +991,7 @@ pub fn screen_share_requires_permission(shared_settings: &SharedSettings) -> boo
 /// Check for deprecated settings, and print warnings if any are found.
 pub fn check_for_deprecated_settings(
     settings: &opentalk_controller_settings::Settings,
-) -> Result<Vec<&'static str>> {
+) -> Result<Vec<&'static str>, SignalingModuleError> {
     let mcu_config = settings::JanusMcuConfig::extract(settings)?;
 
     let mut found = Vec::new();

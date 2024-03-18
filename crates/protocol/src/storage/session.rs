@@ -3,11 +3,11 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use crate::SessionInfo;
-use anyhow::{Context, Result};
-use opentalk_signaling_core::{RedisConnection, SignalingRoomId};
+use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 use opentalk_types::core::ParticipantId;
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
+use snafu::ResultExt;
 
 /// Contains the [`SessionInfo`] of the a participant.
 #[derive(ToRedisArgs)]
@@ -25,7 +25,7 @@ pub(crate) async fn set(
     room_id: SignalingRoomId,
     participant_id: ParticipantId,
     session_info: &SessionInfo,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .set(
             SessionInfoKey {
@@ -35,7 +35,9 @@ pub(crate) async fn set(
             session_info,
         )
         .await
-        .context("Failed to set protocol session info key")
+        .context(RedisSnafu {
+            message: "Failed to set protocol session info key",
+        })
 }
 
 #[tracing::instrument(name = "get_protocol_session_info", skip(redis_conn))]
@@ -43,14 +45,16 @@ pub(crate) async fn get(
     redis_conn: &mut RedisConnection,
     room_id: SignalingRoomId,
     participant_id: ParticipantId,
-) -> Result<Option<SessionInfo>> {
+) -> Result<Option<SessionInfo>, SignalingModuleError> {
     redis_conn
         .get(SessionInfoKey {
             room_id,
             participant_id,
         })
         .await
-        .context("Failed to get protocol session info key")
+        .context(RedisSnafu {
+            message: "Failed to get protocol session info key",
+        })
 }
 
 #[tracing::instrument(name = "get_del_protocol_session_info", skip(redis_conn))]
@@ -58,7 +62,7 @@ pub(crate) async fn get_del(
     redis_conn: &mut RedisConnection,
     room_id: SignalingRoomId,
     participant_id: ParticipantId,
-) -> Result<Option<SessionInfo>> {
+) -> Result<Option<SessionInfo>, SignalingModuleError> {
     redis::cmd("GETDEL")
         .arg(SessionInfoKey {
             room_id,
@@ -66,5 +70,7 @@ pub(crate) async fn get_del(
         })
         .query_async(redis_conn)
         .await
-        .context("Failed to get_del protocol session info key")
+        .context(RedisSnafu {
+            message: "Failed to get_del protocol session info key",
+        })
 }

@@ -4,11 +4,11 @@
 
 use super::PollsState;
 use crate::{ChoiceId, PollId};
-use anyhow::{bail, Context, Result};
-use opentalk_signaling_core::{RedisConnection, SignalingRoomId};
+use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 use opentalk_types::signaling::polls::Item;
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
+use snafu::{whatever, ResultExt};
 use std::collections::HashMap;
 
 /// Key to the current poll config
@@ -22,11 +22,13 @@ struct PollsStateKey {
 pub(super) async fn get_state(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
-) -> Result<Option<PollsState>> {
+) -> Result<Option<PollsState>, SignalingModuleError> {
     redis_conn
         .get(PollsStateKey { room })
         .await
-        .context("failed to get current polls state")
+        .context(RedisSnafu {
+            message: "Failed to get current polls state",
+        })
 }
 
 /// Set the current polls state if one doesn't already exist returns true if set was successful
@@ -35,7 +37,7 @@ pub(super) async fn set_state(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     polls_state: &PollsState,
-) -> Result<bool> {
+) -> Result<bool, SignalingModuleError> {
     let value: redis::Value = redis::cmd("SET")
         .arg(PollsStateKey { room })
         .arg(polls_state)
@@ -44,12 +46,14 @@ pub(super) async fn set_state(
         .arg("NX")
         .query_async(redis_conn)
         .await
-        .context("failed to set current polls state")?;
+        .context(RedisSnafu {
+            message: "Failed to set current polls state",
+        })?;
 
     match value {
         redis::Value::Okay => Ok(true),
         redis::Value::Nil => Ok(false),
-        _ => bail!("got invalid value from SET EX NX: {:?}", value),
+        _ => whatever!("got invalid value from SET EX NX: {:?}", value),
     }
 }
 
@@ -57,11 +61,13 @@ pub(super) async fn set_state(
 pub(super) async fn del_state(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .del(PollsStateKey { room })
         .await
-        .context("failed to del current polls state")
+        .context(RedisSnafu {
+            message: "Failed to del current polls state",
+        })
 }
 
 /// Key to the current vote results
@@ -76,14 +82,16 @@ pub(super) async fn del_results(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     poll_id: PollId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .del(PollResults {
             room,
             poll: poll_id,
         })
         .await
-        .context("failed to delete results")
+        .context(RedisSnafu {
+            message: "Failed to delete results",
+        })
 }
 
 pub(super) async fn vote(
@@ -92,7 +100,7 @@ pub(super) async fn vote(
     poll_id: PollId,
     previous_choice_id: Option<ChoiceId>,
     new_choice_id: Option<ChoiceId>,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     // Revoke any previous vote.
     if let Some(choice_id) = previous_choice_id {
         redis_conn
@@ -105,7 +113,9 @@ pub(super) async fn vote(
                 -1,
             )
             .await
-            .context("failed to cast previous vote")?;
+            .context(RedisSnafu {
+                message: "Failed to cast previous vote",
+            })?;
     }
 
     // Apply any new vote.
@@ -120,7 +130,9 @@ pub(super) async fn vote(
                 1,
             )
             .await
-            .context("failed to cast new vote")?;
+            .context(RedisSnafu {
+                message: "Failed to cast new vote",
+            })?;
     }
 
     Ok(())
@@ -130,18 +142,20 @@ async fn results(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     poll: PollId,
-) -> Result<HashMap<ChoiceId, u32>> {
+) -> Result<HashMap<ChoiceId, u32>, SignalingModuleError> {
     redis_conn
         .zrange_withscores(PollResults { room, poll }, 0, -1)
         .await
-        .context("failed to zrange vote results")
+        .context(RedisSnafu {
+            message: "failed to zrange vote results",
+        })
 }
 
 pub(super) async fn poll_results(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     config: &PollsState,
-) -> Result<Vec<Item>> {
+) -> Result<Vec<Item>, SignalingModuleError> {
     let votes = results(redis_conn, room, config.id).await?;
 
     let votes = (0..config.choices.len())
@@ -167,20 +181,24 @@ pub(super) async fn list_add(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     poll_id: PollId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .sadd(PollList { room }, poll_id)
         .await
-        .context("failed to sadd poll list")
+        .context(RedisSnafu {
+            message: "Failed to sadd poll list",
+        })
 }
 
 /// Get all polls for the room
 pub(super) async fn list_members(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
-) -> Result<Vec<PollId>> {
+) -> Result<Vec<PollId>, SignalingModuleError> {
     redis_conn
         .smembers(PollList { room })
         .await
-        .context("failed to get members from poll list")
+        .context(RedisSnafu {
+            message: "Failed to get members from poll list",
+        })
 }

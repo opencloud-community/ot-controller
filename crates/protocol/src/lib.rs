@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use crate::storage::init::InitState;
-use anyhow::{Context, Result};
 use chrono::{Duration, Utc};
 use exchange::GenerateUrl;
 use opentalk_database::Db;
@@ -15,7 +14,7 @@ use opentalk_signaling_core::{
         storage::{get_all_participants, get_attribute},
     },
     DestroyContext, Event, InitContext, ModuleContext, ObjectStorage, RedisConnection,
-    SignalingModule, SignalingModuleInitData, SignalingRoomId,
+    SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
 use opentalk_types::{
     core::ParticipantId,
@@ -31,6 +30,7 @@ use opentalk_types::{
 };
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
+use snafu::{whatever, OptionExt};
 use std::sync::Arc;
 
 pub mod exchange;
@@ -71,7 +71,7 @@ impl SignalingModule for Protocol {
         ctx: InitContext<'_, Self>,
         params: &Self::Params,
         _protocol: &'static str,
-    ) -> Result<Option<Self>> {
+    ) -> Result<Option<Self>, SignalingModuleError> {
         let etherpad = EtherpadClient::new(params.url.clone(), params.api_key.clone());
 
         Ok(Some(Self {
@@ -87,7 +87,7 @@ impl SignalingModule for Protocol {
         &mut self,
         mut ctx: ModuleContext<'_, Self>,
         event: Event<'_, Self>,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         match event {
             // Create a readonly session for every joining participant when the protocol module is already initialized
             //
@@ -166,7 +166,9 @@ impl SignalingModule for Protocol {
         }
     }
 
-    async fn build_params(init: SignalingModuleInitData) -> Result<Option<Self::Params>> {
+    async fn build_params(
+        init: SignalingModuleInitData,
+    ) -> Result<Option<Self::Params>, SignalingModuleError> {
         let etherpad = init.shared_settings.load_full().etherpad.clone();
 
         match etherpad {
@@ -186,7 +188,7 @@ impl Protocol {
         &mut self,
         ctx: &mut ModuleContext<'_, Self>,
         msg: ProtocolCommand,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         match msg {
             ProtocolCommand::SelectWriter(selection) => {
                 if ctx.role() != Role::Moderator {
@@ -360,8 +362,9 @@ impl Protocol {
                         }
 
                         Err(e) => {
-                            log::error!("Failed to save asset {filename}: {e}");
-                            return Err(anyhow::anyhow!("Error: {e}"));
+                            let message = format!("Failed to save asset {filename}: {e}");
+                            log::error!("{message}");
+                            whatever!("{message}");
                         }
                     };
 
@@ -383,7 +386,7 @@ impl Protocol {
         &mut self,
         ctx: &mut ModuleContext<'_, Self>,
         event: exchange::Event,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         match event {
             exchange::Event::GenerateUrl(GenerateUrl { writers }) => {
                 if writers.contains(&self.participant_id) {
@@ -405,7 +408,10 @@ impl Protocol {
     }
 
     /// Initializes the etherpad-group and -pad for this room
-    async fn init_etherpad(&self, redis_conn: &mut RedisConnection) -> Result<()> {
+    async fn init_etherpad(
+        &self,
+        redis_conn: &mut RedisConnection,
+    ) -> Result<(), SignalingModuleError> {
         let group_id = self
             .etherpad
             .create_group_for(self.room_id.to_string())
@@ -426,15 +432,17 @@ impl Protocol {
     /// Creates a new etherpad author for the participant
     ///
     /// Returns the generated author id
-    async fn create_author(&self, redis_conn: &mut RedisConnection) -> Result<String> {
+    async fn create_author(
+        &self,
+        redis_conn: &mut RedisConnection,
+    ) -> Result<String, SignalingModuleError> {
         let display_name: String = get_attribute(
             redis_conn,
             self.room_id,
             self.participant_id,
             "display_name",
         )
-        .await
-        .context("Failed to get display_name attribute")?;
+        .await?;
 
         let author_id = self
             .etherpad
@@ -453,10 +461,10 @@ impl Protocol {
         author_id: &str,
         expire_duration: Duration,
         readonly: bool,
-    ) -> Result<String> {
+    ) -> Result<String, SignalingModuleError> {
         let expires = Utc::now()
             .checked_add_signed(expire_duration)
-            .context("DateTime overflow")?
+            .whatever_context::<&str, SignalingModuleError>("DateTime overflow")?
             .timestamp();
 
         let session_id = if readonly {
@@ -479,15 +487,14 @@ impl Protocol {
         &mut self,
         redis_conn: &mut RedisConnection,
         readonly: bool,
-    ) -> Result<SessionInfo> {
-        let author_id = self
-            .create_author(redis_conn)
-            .await
-            .context("Failed to create author while preparing a new session")?;
+    ) -> Result<SessionInfo, SignalingModuleError> {
+        let author_id = self.create_author(redis_conn).await?;
 
         let group_id = storage::group::get(redis_conn, self.room_id)
             .await?
-            .context("Missing group for room while preparing a new session")?;
+            .whatever_context::<&str, SignalingModuleError>(
+                "Missing group for room while preparing a new session",
+            )?;
 
         // Currently there is no proper session refresh in etherpad. Due to the the difficulty of setting new sessions
         // on the client across domains, we set the expire duration to 14 days and hope for the best.
@@ -517,7 +524,7 @@ impl Protocol {
         &mut self,
         ctx: &mut ModuleContext<'_, Self>,
         readonly: bool,
-    ) -> Result<String> {
+    ) -> Result<String, SignalingModuleError> {
         let redis_conn = ctx.redis_conn();
 
         // remove existing sessions from redis
@@ -552,7 +559,7 @@ impl Protocol {
         &self,
         redis_conn: &mut RedisConnection,
         selection: &ParticipantSelection,
-    ) -> Result<bool> {
+    ) -> Result<bool, SignalingModuleError> {
         let room_participants = get_all_participants(redis_conn, self.room_id).await?;
 
         Ok(selection
@@ -562,7 +569,10 @@ impl Protocol {
     }
 
     /// Removes the room related pad and group from etherpad
-    async fn cleanup_etherpad(&self, redis_conn: &mut RedisConnection) -> Result<()> {
+    async fn cleanup_etherpad(
+        &self,
+        redis_conn: &mut RedisConnection,
+    ) -> Result<(), SignalingModuleError> {
         let init_state = storage::init::get(redis_conn, self.room_id).await?;
 
         if init_state.is_none() {

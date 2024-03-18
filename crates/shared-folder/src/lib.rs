@@ -10,12 +10,11 @@
 
 use std::sync::Arc;
 
-use anyhow::Result;
 use opentalk_database::Db;
 use opentalk_db_storage::events::shared_folders::EventSharedFolder;
 use opentalk_signaling_core::{
     control::storage::get_event, DestroyContext, Event, InitContext, ModuleContext,
-    SignalingModule, SignalingModuleInitData, SignalingRoomId,
+    SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
 use opentalk_types::{
     common::shared_folder::SharedFolder as SharedFolderType,
@@ -48,7 +47,7 @@ impl SignalingModule for SharedFolder {
         ctx: InitContext<'_, Self>,
         _params: &Self::Params,
         _protocol: &'static str,
-    ) -> Result<Option<Self>> {
+    ) -> Result<Option<Self>, SignalingModuleError> {
         Ok(Some(Self {
             room: ctx.room_id(),
             db: ctx.db().clone(),
@@ -59,7 +58,7 @@ impl SignalingModule for SharedFolder {
         &mut self,
         mut ctx: ModuleContext<'_, Self>,
         event: Event<'_, Self>,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         match event {
             Event::Joined {
                 control_data,
@@ -126,7 +125,9 @@ impl SignalingModule for SharedFolder {
         }
     }
 
-    async fn build_params(init: SignalingModuleInitData) -> Result<Option<Self::Params>> {
+    async fn build_params(
+        init: SignalingModuleInitData,
+    ) -> Result<Option<Self::Params>, SignalingModuleError> {
         if init.shared_settings.load_full().shared_folder.is_some() {
             Ok(Some(()))
         } else {

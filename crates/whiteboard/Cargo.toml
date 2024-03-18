@@ -13,7 +13,6 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow.workspace = true
 async-trait.workspace = true
 bytes.workspace = true
 futures.workspace = true
@@ -24,12 +23,8 @@ opentalk-signaling-core.workspace = true
 opentalk-types = { workspace = true, features = ["backend"] }
 redis-args.workspace = true
 redis.workspace = true
-reqwest = { workspace = true, features = [
-    "json",
-    "cookies",
-    "rustls-tls-native-roots",
-    "stream",
-] }
-serde.workspace =  true
+reqwest = { workspace = true, features = ["json", "cookies", "rustls-tls-native-roots", "stream"] }
+serde.workspace = true
+snafu.workspace = true
 tracing.workspace = true
 url.workspace = true

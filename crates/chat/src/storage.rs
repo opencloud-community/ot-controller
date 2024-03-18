@@ -2,15 +2,15 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::{Context, Result};
 use opentalk_r3dlock::{Mutex, MutexGuard};
-use opentalk_signaling_core::{RedisConnection, SignalingRoomId};
+use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 use opentalk_types::{
     core::{GroupId, GroupName, ParticipantId, RoomId, Timestamp},
     signaling::chat::state::StoredMessage,
 };
 use redis::AsyncCommands;
 use redis_args::{FromRedisValue, ToRedisArgs};
+use snafu::{OptionExt, ResultExt};
 use std::{
     collections::{HashMap, HashSet},
     str::FromStr,
@@ -28,13 +28,13 @@ struct RoomChatHistory {
 pub async fn get_room_chat_history(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
-) -> Result<Vec<StoredMessage>> {
-    let messages = redis_conn
+) -> Result<Vec<StoredMessage>, SignalingModuleError> {
+    redis_conn
         .lrange(RoomChatHistory { room }, 0, -1)
         .await
-        .with_context(|| format!("Failed to get chat history: room={room}"))?;
-
-    Ok(messages)
+        .with_context(|_| RedisSnafu {
+            message: format!("Failed to get chat history: room={room}"),
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn, message))]
@@ -42,26 +42,26 @@ pub async fn add_message_to_room_chat_history(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     message: &StoredMessage,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .lpush(RoomChatHistory { room }, message)
         .await
-        .with_context(|| format!("Failed to add message to room chat history, room={room}"))?;
-
-    Ok(())
+        .with_context(|_| RedisSnafu {
+            message: format!("Failed to add message to room chat history, room={room}"),
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
 pub async fn delete_room_chat_history(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .del(RoomChatHistory { room })
         .await
-        .with_context(|| format!("Failed to delete room chat history, room={room}"))?;
-
-    Ok(())
+        .with_context(|_| RedisSnafu {
+            message: format!("Failed to delete room chat history, room={room}"),
+        })
 }
 
 /// If set to true the chat is enabled
@@ -76,28 +76,40 @@ pub async fn set_chat_enabled(
     redis_conn: &mut RedisConnection,
     room: RoomId,
     enabled: bool,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .set(ChatEnabled { room }, enabled)
         .await
-        .context("Failed to SET chat_enabled")
+        .context(RedisSnafu {
+            message: "Failed to SET chat_enabled",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn is_chat_enabled(redis_conn: &mut RedisConnection, room: RoomId) -> Result<bool> {
+pub async fn is_chat_enabled(
+    redis_conn: &mut RedisConnection,
+    room: RoomId,
+) -> Result<bool, SignalingModuleError> {
     redis_conn
         .get(ChatEnabled { room })
         .await
-        .context("Failed to GET chat_enabled")
+        .context(RedisSnafu {
+            message: "Failed to GET chat_enabled",
+        })
         .map(|result: Option<bool>| result.unwrap_or(true))
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn delete_chat_enabled(redis_conn: &mut RedisConnection, room: RoomId) -> Result<()> {
+pub async fn delete_chat_enabled(
+    redis_conn: &mut RedisConnection,
+    room: RoomId,
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .del(ChatEnabled { room })
         .await
-        .context("Failed to DEL chat_enabled")
+        .context(RedisSnafu {
+            message: "Failed to DEL chat_enabled",
+        })
 }
 
 /// A hash of last-seen timestamps
@@ -116,14 +128,16 @@ pub async fn set_last_seen_timestamps_private(
     room: SignalingRoomId,
     participant: ParticipantId,
     timestamps: &[(ParticipantId, Timestamp)],
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .hset_multiple(
             RoomParticipantLastSeenTimestampPrivate { room, participant },
             timestamps,
         )
         .await
-        .context("Failed to HSET messages last seen timestamp for private chat")
+        .context(RedisSnafu {
+            message: "Failed to HSET messages last seen timestamp for private chat",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -131,11 +145,13 @@ pub async fn get_last_seen_timestamps_private(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     participant: ParticipantId,
-) -> Result<HashMap<ParticipantId, Timestamp>> {
+) -> Result<HashMap<ParticipantId, Timestamp>, SignalingModuleError> {
     redis_conn
         .hgetall(RoomParticipantLastSeenTimestampPrivate { room, participant })
         .await
-        .context("Failed to HGETALL messages last seen timestamps for private chats")
+        .context(RedisSnafu {
+            message: "Failed to HGETALL messages last seen timestamps for private chats",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -143,11 +159,13 @@ pub async fn delete_last_seen_timestamps_private(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     participant: ParticipantId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .del(RoomParticipantLastSeenTimestampPrivate { room, participant })
         .await
-        .context("Failed to DEL messages last seen timestamps for private chats")
+        .context(RedisSnafu {
+            message: "Failed to DEL messages last seen timestamps for private chats",
+        })
 }
 
 /// A hash of last-seen timestamps
@@ -166,14 +184,16 @@ pub async fn set_last_seen_timestamps_group(
     room: SignalingRoomId,
     participant: ParticipantId,
     timestamps: &[(GroupName, Timestamp)],
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .hset_multiple(
             RoomParticipantLastSeenTimestampsGroup { room, participant },
             timestamps,
         )
         .await
-        .context("Failed to HSET messages last seen timestamp for group chats")
+        .context(RedisSnafu {
+            message: "Failed to HSET messages last seen timestamp for group chats",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -181,11 +201,13 @@ pub async fn get_last_seen_timestamps_group(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     participant: ParticipantId,
-) -> Result<HashMap<GroupName, Timestamp>> {
+) -> Result<HashMap<GroupName, Timestamp>, SignalingModuleError> {
     redis_conn
         .hgetall(RoomParticipantLastSeenTimestampsGroup { room, participant })
         .await
-        .context("Failed to HGETALL messages last seen timestamp for group chats")
+        .context(RedisSnafu {
+            message: "Failed to HGETALL messages last seen timestamp for group chats",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -193,11 +215,13 @@ pub async fn delete_last_seen_timestamps_group(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     participant: ParticipantId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .del(RoomParticipantLastSeenTimestampsGroup { room, participant })
         .await
-        .context("Failed to DEL last seen timestamp for group chats")
+        .context(RedisSnafu {
+            message: "Failed to DEL last seen timestamp for group chats",
+        })
 }
 
 /// A hash of last-seen timestamps
@@ -216,14 +240,16 @@ pub async fn set_last_seen_timestamp_global(
     room: SignalingRoomId,
     participant: ParticipantId,
     timestamp: Timestamp,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .set(
             RoomParticipantLastSeenTimestampGlobal { room, participant },
             timestamp,
         )
         .await
-        .context("Failed to HSET messages last seen timestamp for global chat")
+        .context(RedisSnafu {
+            message: "Failed to HSET messages last seen timestamp for global chat",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -231,12 +257,11 @@ pub async fn get_last_seen_timestamp_global(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     participant: ParticipantId,
-) -> Result<Option<Timestamp>> {
+) -> Result<Option<Timestamp>, SignalingModuleError> {
     let key = RoomParticipantLastSeenTimestampGlobal { room, participant };
-    redis_conn
-        .get(&key)
-        .await
-        .context("Failed to GET messages last seen timestamp for global chat")
+    redis_conn.get(&key).await.context(RedisSnafu {
+        message: "Failed to GET messages last seen timestamp for global chat",
+    })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -244,11 +269,13 @@ pub async fn delete_last_seen_timestamp_global(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     participant: ParticipantId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .del(RoomParticipantLastSeenTimestampGlobal { room, participant })
         .await
-        .context("Failed to DEL messages last seen timestamp for global chat")
+        .context(RedisSnafu {
+            message: "Failed to DEL messages last seen timestamp for global chat",
+        })
 }
 
 #[cfg(test)]
@@ -497,23 +524,19 @@ pub async fn add_participant_to_set(
     room: SignalingRoomId,
     group: GroupId,
     participant: ParticipantId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     let mut mutex = Mutex::new(RoomGroupParticipantsLock { room, group });
 
-    let guard = mutex
-        .lock(redis_conn)
-        .await
-        .context("Failed to lock participant list")?;
+    let guard = mutex.lock(redis_conn).await?;
 
     redis_conn
         .sadd(RoomGroupParticipants { room, group }, participant)
         .await
-        .context("Failed to add own participant id to set")?;
+        .context(RedisSnafu {
+            message: "Failed to add own participant id to set",
+        })?;
 
-    guard
-        .unlock(redis_conn)
-        .await
-        .context("Failed to unlock participant list")?;
+    guard.unlock(redis_conn).await?;
 
     Ok(())
 }
@@ -524,16 +547,20 @@ pub async fn remove_participant_from_set(
     room: SignalingRoomId,
     group: GroupId,
     participant: ParticipantId,
-) -> Result<usize> {
+) -> Result<usize, SignalingModuleError> {
     redis_conn
         .srem(RoomGroupParticipants { room, group }, participant)
         .await
-        .context("Failed to remove participant from participants-set")?;
+        .context(RedisSnafu {
+            message: "Failed to remove participant from participants-set",
+        })?;
 
     redis_conn
         .scard(RoomGroupParticipants { room, group })
         .await
-        .context("Failed to get number of remaining participants inside the set")
+        .context(RedisSnafu {
+            message: "Failed to get number of remaining participants inside the set",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -541,11 +568,13 @@ pub async fn get_group_chat_history(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     group: GroupId,
-) -> Result<Vec<StoredMessage>> {
+) -> Result<Vec<StoredMessage>, SignalingModuleError> {
     redis_conn
         .lrange(RoomGroupChatHistory { room, group }, 0, -1)
         .await
-        .with_context(|| format!("Failed to get chat history, {room}, group={group}"))
+        .with_context(|_| RedisSnafu {
+            message: format!("Failed to get chat history, {room}, group={group}"),
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn, message))]
@@ -554,12 +583,12 @@ pub async fn add_message_to_group_chat_history(
     room: SignalingRoomId,
     group: GroupId,
     message: &StoredMessage,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .lpush(RoomGroupChatHistory { room, group }, message)
         .await
-        .with_context(|| {
-            format!("Failed to add message to room chat history, {room}, group={group}",)
+        .with_context(|_| RedisSnafu {
+            message: format!("Failed to add message to room chat history, {room}, group={group}",),
         })
 }
 
@@ -568,13 +597,13 @@ pub async fn delete_group_chat_history(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     group: GroupId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .del(RoomGroupChatHistory { room, group })
         .await
-        .with_context(
-            || format!("Failed to delete room group chat history, {room}, group={group}",),
-        )
+        .with_context(|_| RedisSnafu {
+            message: format!("Failed to delete room group chat history, {room}, group={group}",),
+        })
 }
 
 /// A set of private chat correspondents for a participant in a room
@@ -593,12 +622,14 @@ struct RoomPrivateChatCorrespondents {
 }
 
 impl FromStr for RoomPrivateChatCorrespondents {
-    type Err = anyhow::Error;
+    type Err = SignalingModuleError;
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         let participants = s
             .split_once(':')
-            .context("Failed to split RoomPrivateChatCorrespondents")?;
+            .whatever_context::<&str, SignalingModuleError>(
+                "Failed to split RoomPrivateChatCorrespondents",
+            )?;
 
         Ok(Self {
             participant_one: ParticipantId::from(Uuid::from_str(participants.0)?),
@@ -638,7 +669,7 @@ pub async fn add_private_chat_correspondents(
     room: SignalingRoomId,
     participant_one: ParticipantId,
     participant_two: ParticipantId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     let participants = (participant_one, participant_two).ordered();
     redis_conn
         .sadd(
@@ -649,33 +680,35 @@ pub async fn add_private_chat_correspondents(
             },
         )
         .await
-        .context("Failed to add private chat correspondents to set")?;
-
-    Ok(())
+        .context(RedisSnafu {
+            message: "Failed to add private chat correspondents to set",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
 pub async fn delete_private_chat_correspondents(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .del(RoomPrivateChatCorrespondentsKey { room })
         .await
-        .context("Failed to delete private chat correspondents")?;
-
-    Ok(())
+        .context(RedisSnafu {
+            message: "Failed to delete private chat correspondents",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
 pub async fn get_private_chat_correspondents(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
-) -> Result<HashSet<(ParticipantId, ParticipantId)>> {
+) -> Result<HashSet<(ParticipantId, ParticipantId)>, SignalingModuleError> {
     let correspondents: HashSet<RoomPrivateChatCorrespondents> = redis_conn
         .smembers(RoomPrivateChatCorrespondentsKey { room })
         .await
-        .context("Failed to get private chat correspondents")?;
+        .context(RedisSnafu {
+            message: "Failed to get private chat correspondents",
+        })?;
 
     Ok(correspondents.into_iter().map(From::from).collect())
 }
@@ -685,7 +718,7 @@ pub async fn get_private_chat_correspondents_for_participant(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     participant: ParticipantId,
-) -> Result<HashSet<ParticipantId>> {
+) -> Result<HashSet<ParticipantId>, SignalingModuleError> {
     Ok(get_private_chat_correspondents(redis_conn, room)
         .await?
         .into_iter()
@@ -733,7 +766,7 @@ pub async fn get_private_chat_history(
     room: SignalingRoomId,
     participant_one: ParticipantId,
     participant_two: ParticipantId,
-) -> Result<Vec<StoredMessage>> {
+) -> Result<Vec<StoredMessage>, SignalingModuleError> {
     redis_conn
         .lrange(
             RoomPrivateChatHistory::new(room, participant_one, participant_two),
@@ -741,11 +774,11 @@ pub async fn get_private_chat_history(
             -1,
         )
         .await
-        .with_context(|| {
-            format!(
+        .with_context(|_| RedisSnafu {
+            message: format!(
                 "Failed to get room private chat history, {room}, \
                 participants {participant_one} and {participant_two}"
-            )
+            ),
         })
 }
 
@@ -756,18 +789,18 @@ pub async fn add_message_to_private_chat_history(
     participant_one: ParticipantId,
     participant_two: ParticipantId,
     message: &StoredMessage,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .lpush(
             RoomPrivateChatHistory::new(room, participant_one, participant_two),
             message,
         )
         .await
-        .with_context(|| {
-            format!(
+        .with_context(|_| RedisSnafu {
+            message: format!(
                 "Failed to add message to room private chat history, {room}, \
                 participants {participant_one} and {participant_two}",
-            )
+            ),
         })
 }
 
@@ -777,7 +810,7 @@ pub async fn delete_private_chat_history(
     room: SignalingRoomId,
     participant_one: ParticipantId,
     participant_two: ParticipantId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .del(RoomPrivateChatHistory::new(
             room,
@@ -785,10 +818,10 @@ pub async fn delete_private_chat_history(
             participant_two,
         ))
         .await
-        .with_context(|| {
-            format!(
+        .with_context(|_| RedisSnafu {
+            message: format!(
                 "Failed to delete room private chat history, {room}, \
                 participants {participant_one} and {participant_two}"
-            )
+            ),
         })
 }

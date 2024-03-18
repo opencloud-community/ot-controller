@@ -11,19 +11,19 @@ version.workspace = true
 publish = false
 
 [dependencies]
-anyhow.workspace = true
 async-trait.workspace = true
-opentalk-db-storage.workspace = true
-opentalk-database.workspace = true
 log.workspace = true
+opentalk-database.workspace = true
+opentalk-db-storage.workspace = true
+opentalk-signaling-core.workspace = true
+opentalk-types = { workspace = true, features = ["backend"] }
 redis-args.workspace = true
 redis.workspace = true
-opentalk-signaling-core.workspace = true
+snafu.workspace = true
 tracing.workspace = true
-opentalk-types = { workspace = true, features = ["backend"] }
 
 [dev-dependencies]
+actix-rt.workspace = true
+opentalk-test-util = { workspace = true, features = ["controller"] }
 pretty_assertions.workspace = true
 serial_test.workspace = true
-opentalk-test-util = { workspace = true, features = ["controller"]}
-actix-rt.workspace = true

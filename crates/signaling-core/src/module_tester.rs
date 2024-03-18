@@ -968,7 +968,9 @@ where
             module_data: Default::default(),
         };
 
-        let control_data = ControlState::from_redis(&mut self.redis_conn, self.room_id, id).await?;
+        let control_data = ControlState::from_redis(&mut self.redis_conn, self.room_id, id)
+            .await
+            .whatever_context("Failed to get control state")?;
 
         participant
             .module_data

@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::Result;
 use opentalk_signaling_core::{
-    DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleInitData,
+    DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
+    SignalingModuleInitData,
 };
 use opentalk_types::signaling::integration::{NAMESPACE, OUTLOOK_FEATURE};
 
@@ -26,7 +26,7 @@ impl SignalingModule for Integration {
         _ctx: InitContext<'_, Self>,
         _params: &Self::Params,
         _protocol: &'static str,
-    ) -> Result<Option<Self>> {
+    ) -> Result<Option<Self>, SignalingModuleError> {
         Ok(Some(Self {}))
     }
 
@@ -38,13 +38,15 @@ impl SignalingModule for Integration {
         &mut self,
         mut _ctx: ModuleContext<'_, Self>,
         _event: Event<'_, Self>,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         Ok(())
     }
 
     async fn on_destroy(self, _ctx: DestroyContext<'_>) {}
 
-    async fn build_params(_init: SignalingModuleInitData) -> Result<Option<Self::Params>> {
+    async fn build_params(
+        _init: SignalingModuleInitData,
+    ) -> Result<Option<Self::Params>, SignalingModuleError> {
         Ok(Some(()))
     }
 }

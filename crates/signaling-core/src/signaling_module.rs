@@ -2,16 +2,93 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::Result;
 use lapin_pool::RabbitMqPool;
 use opentalk_controller_settings::{Settings, SharedSettings};
-use opentalk_types::signaling::{SignalingModuleFrontendData, SignalingModulePeerFrontendData};
+use opentalk_types::{
+    api::error::ApiError,
+    signaling::{SignalingModuleFrontendData, SignalingModulePeerFrontendData},
+};
 use serde::{Deserialize, Serialize};
+use snafu::Snafu;
 use tokio::sync::broadcast;
 
 use std::{fmt::Debug, sync::Arc};
 
 use crate::{DestroyContext, Event, InitContext, ModuleContext, RedisConnection};
+
+type Result<T> = std::result::Result<T, SignalingModuleError>;
+
+#[derive(Debug, Snafu)]
+#[snafu(visibility(pub))]
+pub enum SignalingModuleError {
+    #[snafu(display("Redis error: {message}",))]
+    RedisError {
+        message: String,
+        source: redis::RedisError,
+    },
+
+    #[snafu(context(false))]
+    UrlParseError { source: url::ParseError },
+
+    #[snafu(context(false))]
+    UuidError { source: uuid::Error },
+
+    #[snafu(context(false))]
+    ReqwestError { source: reqwest::Error },
+
+    #[snafu(context(false))]
+    R3dlockError { source: opentalk_r3dlock::Error },
+
+    #[snafu(context(false))]
+    DatabaseError {
+        source: opentalk_database::DatabaseError,
+    },
+
+    #[snafu(context(false))]
+    LapinError { source: lapin_pool::Error },
+
+    #[snafu(context(false))]
+    EtherpadError {
+        source: opentalk_etherpad_client::EtherpadError,
+    },
+
+    #[snafu(display("Failed to deserialize config",))]
+    ConfigError { source: config::ConfigError },
+
+    #[snafu(display("SerdeJson error: {message}",))]
+    SerdeJsonError {
+        message: String,
+        source: serde_json::Error,
+    },
+
+    // TODO:(m.fuss) remove once snafu migration of signaling-core is complete
+    #[snafu(display("Storage error: {message}"))]
+    StorageError {
+        message: String,
+        source: anyhow::Error,
+    },
+
+    #[snafu(display("Janus error: {message}"))]
+    JanusClientError {
+        message: String,
+        source: opentalk_janus_client::error::Error,
+    },
+
+    #[snafu(display("Custom error: {message}"), whatever)]
+    CustomError {
+        message: String,
+
+        #[snafu(source(from(Box<dyn std::error::Error + Send + Sync>, Some)))]
+        source: Option<Box<dyn std::error::Error + Send + Sync>>,
+    },
+}
+
+impl From<SignalingModuleError> for ApiError {
+    fn from(value: SignalingModuleError) -> Self {
+        log::error!("SignalingModule error: {value}");
+        ApiError::internal()
+    }
+}
 
 #[derive(Clone)]
 pub struct SignalingModuleInitData {
