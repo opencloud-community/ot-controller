@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use std::{
-    mem,
     pin::Pin,
     sync::Arc,
     task::{self, Poll},
@@ -47,16 +46,16 @@ pub async fn save_asset(
     let kind = kind.into();
 
     let asset_id = AssetId::generate();
-    let size = mem::size_of_val(&data) as i64;
 
     let room = Room::get(&mut db_conn, room_id).await?;
     verify_storage_usage(&mut db_conn, room.created_by).await?;
 
     // upload to s3 storage
-    storage
+    let size = storage
         .put(&asset_key(&asset_id), data)
         .await
-        .context("failed to upload asset file to storage")?;
+        .context("failed to upload asset file to storage")?
+        .try_into()?;
 
     // create db entry
 
