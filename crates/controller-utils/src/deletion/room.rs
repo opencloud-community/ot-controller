@@ -20,8 +20,9 @@ use opentalk_db_storage::{
 use opentalk_log::{debug, warn};
 use opentalk_signaling_core::{assets::asset_key, control, ExchangeHandle, ObjectStorage};
 use opentalk_types::core::{AssetId, EventId, ModuleResourceId, RoomId, UserId};
+use snafu::ResultExt;
 
-use crate::deletion::shared_folders::delete_shared_folders;
+use crate::deletion::{error::ObjectDeletionSnafu, shared_folders::delete_shared_folders};
 
 use super::{Deleter, Error};
 
@@ -261,7 +262,7 @@ impl Deleter for RoomDeleter {
             storage
                 .delete(asset_key(&asset_id))
                 .await
-                .map_err(Error::ObjectDeletion)?;
+                .context(ObjectDeletionSnafu)?;
         }
 
         debug!(log: logger, "Deleting auth information");

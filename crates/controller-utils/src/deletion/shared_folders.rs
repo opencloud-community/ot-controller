@@ -7,8 +7,9 @@ use opentalk_controller_settings::Settings;
 use opentalk_db_storage::events::shared_folders::EventSharedFolder;
 use opentalk_log::{debug, warn};
 use opentalk_nextcloud_client::ShareId;
+use snafu::whatever;
 
-use super::Error;
+use super::error::Error;
 
 /// Delete a list of shared folders from the remote system and the database
 pub async fn delete_shared_folders(
@@ -47,9 +48,10 @@ pub async fn delete_shared_folders(
             let client = match create_client_result {
                 Ok(c) => c,
                 Err(e) => {
-                    warn!(log: logger, "Error creating NextCloud client: {e}");
+                    let msg = "Error creating NextCloud client";
+                    warn!(log: logger, "{msg}: {e}");
                     if fail_on_error {
-                        return Err(Error::NextcloudClient(e));
+                        return Err(e.into());
                     }
                     return Ok(());
                 }
@@ -60,7 +62,7 @@ pub async fn delete_shared_folders(
                 if path.trim_matches('/').is_empty() {
                     let message = "Preventing recursive deletion of empty shared folder path, this is probably harmful and not intended";
                     if fail_on_error {
-                        return Err(Error::Custom(message.to_string()));
+                        whatever!("{message}");
                     }
                     warn!(log: logger, "{}", message);
                 }
@@ -71,7 +73,7 @@ pub async fn delete_shared_folders(
                 {
                     let message = format!("Could not delete NextCloud read share: {e}");
                     if fail_on_error {
-                        return Err(Error::Custom(message));
+                        whatever!("{message}");
                     }
                     warn!(log: logger, "{}", message);
                 } else {
@@ -86,7 +88,7 @@ pub async fn delete_shared_folders(
                 {
                     let message = format!("Could not delete NextCloud write share: {e}");
                     if fail_on_error {
-                        return Err(Error::Custom(message));
+                        whatever!("{message}");
                     }
                     warn!(log: logger, "{}", message);
                 } else {
@@ -111,7 +113,7 @@ pub async fn delete_shared_folders(
                     Err(e) => {
                         let message = format!("Error deleting folder on NextCloud: {e}");
                         if fail_on_error {
-                            return Err(Error::Custom(message));
+                            whatever!("{message}");
                         }
                         warn!(log: logger, "{}", message);
                     }

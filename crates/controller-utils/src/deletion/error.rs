@@ -2,50 +2,76 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use displaydoc::Display;
 use opentalk_database::DatabaseError;
 use opentalk_types::api::error::ApiError;
-use thiserror::Error;
+use snafu::Snafu;
 
 /// Errors returned when deleting an event
-#[derive(Display, Error, Debug)]
+#[derive(Debug, Snafu)]
+#[snafu(visibility(pub(crate)))]
 pub enum Error {
-    /// Error from the database
-    Database(#[from] DatabaseError),
+    /// Database error
+    #[snafu(display("Database error: {source}"), context(false))]
+    Database {
+        /// the cause of the error
+        source: DatabaseError,
+    },
 
-    /// Error from the permissions system (kustos)
-    Kustos(#[from] kustos::Error),
+    /// Kustos error
+    #[snafu(display("Authorization error (kustos): {source}"), context(false))]
+    Kustos {
+        /// the cause of the error
+        source: kustos::Error,
+    },
 
-    /// Tried to perform an action that is forbidden for the user
+    /// Forbidden action by user
+    #[snafu(display("Tried to perform an action that is forbidden for the user"))]
     Forbidden,
 
-    /// Object deletion error: {0}
-    ObjectDeletion(#[source] anyhow::Error),
+    /// Object deletion error
+    #[snafu(display("Object deletion error: {source}"))]
+    ObjectDeletion {
+        /// the cause of the error
+        // TODO:(a.weiche) remove once snafu migration of signaling-core is complete
+        source: anyhow::Error,
+    },
 
     /// Shared folders not configured
+    #[snafu(display("Shared folders not configured"))]
     SharedFoldersNotConfigured,
 
-    /// Nextcloud client error: {0}
-    NextcloudClient(#[from] opentalk_nextcloud_client::Error),
+    /// Nextcloud client error
+    #[snafu(display("Nextcloud client error: {source}"), context(false))]
+    NextcloudClient {
+        /// the cause of the error
+        source: opentalk_nextcloud_client::Error,
+    },
 
-    /// Error: {0}
-    Custom(String),
+    /// Custom error
+    #[snafu(display("{message}: "), whatever)]
+    Custom {
+        /// Error message
+        message: String,
+        /// the cause of the error
+        #[snafu(source(from(Box<dyn std::error::Error + Sync + Send>, Some)))]
+        source: Option<Box<dyn std::error::Error + Sync + Send>>,
+    },
 }
 
 impl From<Error> for ApiError {
     fn from(value: Error) -> Self {
         match value {
-            Error::Database(e) => Self::from(e),
-            Error::Kustos(e) => Self::from(e),
+            Error::Database { source } => Self::from(source),
+            Error::Kustos { source } => Self::from(source),
             Error::Forbidden => Self::forbidden(),
-            Error::ObjectDeletion(e) => Self::from(e),
+            Error::ObjectDeletion { source } => Self::from(source),
             Error::SharedFoldersNotConfigured => {
                 Self::bad_request().with_message("No shared folder configured for this server")
             }
-            Error::NextcloudClient(_e) => {
+            Error::NextcloudClient { .. } => {
                 Self::internal().with_message("Error performing actions on the NextCloud")
             }
-            Error::Custom(e) => Self::internal().with_message(e.to_string()),
+            Error::Custom { message, source: _ } => Self::internal().with_message(message),
         }
     }
 }

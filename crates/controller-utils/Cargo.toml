@@ -3,28 +3,27 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "opentalk-controller-utils"
+authors.workspace = true
 description = "Utilities used in opentalk-controller"
 edition = "2021"
 license = "EUPL-1.2"
-authors.workspace = true
-version.workspace = true
+name = "opentalk-controller-utils"
 publish = false
+version.workspace = true
 
 [dependencies]
 anyhow.workspace = true
 async-trait.workspace = true
+diesel-async.workspace = true
+kustos-shared.workspace = true
+kustos.workspace = true
+log.workspace = true
+opentalk-controller-settings.workspace = true
 opentalk-database.workspace = true
 opentalk-db-storage.workspace = true
-diesel-async.workspace = true
-displaydoc.workspace = true
-kustos.workspace = true
-kustos-shared.workspace = true
-log.workspace = true
-opentalk-nextcloud-client = { workspace = true, default-features = true }
 opentalk-log.workspace = true
-serde_json.workspace = true
-opentalk-controller-settings.workspace = true
+opentalk-nextcloud-client = { workspace = true, default-features = true }
 opentalk-signaling-core.workspace = true
-thiserror.workspace = true
 opentalk-types.workspace = true
+serde_json.workspace = true
+snafu.workspace = true

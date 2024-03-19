@@ -272,6 +272,15 @@ impl From<StartRoomError> for ApiError {
 }
 
 #[cfg(feature = "backend")]
+impl From<snafu::Whatever> for ApiError {
+    fn from(value: snafu::Whatever) -> Self {
+        log::error!("REST API threw generic internal error: {value:?}");
+        ApiError::internal()
+    }
+}
+
+// TODO:(a.weiche) remove once snafu migration is complete.
+#[cfg(feature = "backend")]
 impl From<anyhow::Error> for ApiError {
     fn from(value: anyhow::Error) -> Self {
         log::error!("REST API threw internal error from anyhow error: {value:?}");
