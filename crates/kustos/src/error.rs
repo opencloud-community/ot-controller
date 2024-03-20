@@ -4,28 +4,34 @@
 
 use kustos_shared::{resource::ResourceParseError, subject::ParsingError};
 use opentalk_types::api::error::ApiError;
-use thiserror::Error;
+use snafu::Snafu;
 use tokio::task::JoinError;
 
 /// A combining error type which is returned by most major kustos methods
 ///
-/// Derived using [`thiserror::Error`]
-#[derive(Debug, Error)]
+/// Derived using [`snafu::Snafu`]
+#[derive(Debug, Snafu)]
 pub enum Error {
-    #[error("Not Authorized")]
-    NotAuthorized,
-    #[error("Failed to convert string to type, {0}")]
-    ParsingError(#[from] ParsingError),
-    #[error("Failed to convert Resource to type, {0}")]
-    ResourceParsingError(#[from] ResourceParseError),
-    #[error("Blocking error, {0}")]
-    BlockingError(#[from] JoinError),
-    #[error("Casbin error {0}")]
-    CasbinError(#[from] casbin::Error),
-    #[error("Tried to start already running authz enforcer autoload")]
+    #[snafu(display("Failed to convert string to type, {source}"), context(false))]
+    ParsingError { source: ParsingError },
+
+    #[snafu(
+        display("Failed to convert Resource to type, {source}"),
+        context(false)
+    )]
+    ResourceParsingError { source: ResourceParseError },
+
+    #[snafu(display("Blocking error, {source}"), context(false))]
+    BlockingError { source: JoinError },
+
+    #[snafu(display("Casbin error {source}"), context(false))]
+    CasbinError { source: casbin::Error },
+
+    #[snafu(display("Tried to start already running authz enforcer autoload"))]
     AutoloadRunning,
-    #[error("{0}")]
-    Custom(String),
+
+    #[snafu(whatever)]
+    Custom { message: String },
 }
 
 /// A default specialized Result type for kustos
