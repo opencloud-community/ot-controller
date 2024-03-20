@@ -4,22 +4,41 @@
 
 use crate::{RedisConnection, SignalingRoomId};
 
-use anyhow::{Context, Result};
 use opentalk_db_storage::{events::Event, tariffs::Tariff};
 use opentalk_r3dlock::Mutex;
 use opentalk_types::{
+    api::error::ApiError,
     core::{ParticipantId, RoomId, Timestamp},
     signaling::Role,
 };
 use redis::{AsyncCommands, FromRedisValue, ToRedisArgs};
 use redis_args::ToRedisArgs;
-use std::collections::HashSet;
-use std::fmt::Debug;
-use std::time::Duration;
-use std::{collections::HashMap, convert::identity};
+use snafu::{ResultExt, Snafu};
+use std::{
+    collections::{HashMap, HashSet},
+    convert::identity,
+    fmt::Debug,
+    time::Duration,
+};
+
+#[derive(Debug, Snafu)]
+#[snafu(display("{}:{}", message, source))]
+pub struct StorageError {
+    source: redis::RedisError,
+    message: String,
+}
+
+type Result<T, E = StorageError> = std::result::Result<T, E>;
+
+impl From<StorageError> for ApiError {
+    fn from(value: StorageError) -> Self {
+        log::error!("Storage error: {value}");
+        ApiError::internal()
+    }
+}
 
 // The expiry in seconds for the `skip_waiting_room` key in Redis
-const SKIP_WAITING_ROOM_KEY_EXPIRY: u64 = 120;
+const SKIP_WAITING_ROOM_KEY_EXPIRY: u32 = 120;
 pub const SKIP_WAITING_ROOM_KEY_REFRESH_INTERVAL: u64 = 60;
 
 /// Describes a set of participants inside a room.
@@ -106,7 +125,9 @@ pub async fn participant_set_exists(
     redis_conn
         .exists(RoomParticipants { room })
         .await
-        .context("Failed to check if participants exist")
+        .context(StorageSnafu {
+            message: "Failed to check if participants exist",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -117,7 +138,9 @@ pub async fn get_all_participants(
     redis_conn
         .smembers(RoomParticipants { room })
         .await
-        .context("Failed to get participants")
+        .context(StorageSnafu {
+            message: "Failed to get participants",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -128,7 +151,9 @@ pub async fn remove_participant_set(
     redis_conn
         .del(RoomParticipants { room })
         .await
-        .context("Failed to del participants")
+        .context(StorageSnafu {
+            message: "Failed to del participants",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -140,7 +165,9 @@ pub async fn participants_contains(
     redis_conn
         .sismember(RoomParticipants { room }, participant)
         .await
-        .context("Failed to check if participants contains participant")
+        .context(StorageSnafu {
+            message: "Failed to check if participants contains participant",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -154,7 +181,9 @@ pub async fn check_participants_exist(
         .arg(participants)
         .query_async(redis_conn)
         .await
-        .context("Failed to check if participants contains participant")?;
+        .context(StorageSnafu {
+            message: "Failed to check if participants contains participant",
+        })?;
 
     Ok(bools.into_iter().all(identity))
 }
@@ -168,7 +197,9 @@ pub async fn add_participant_to_set(
     redis_conn
         .sadd(RoomParticipants { room }, participant)
         .await
-        .context("Failed to add own participant id to set")
+        .context(StorageSnafu {
+            message: "Failed to add own participant id to set",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -196,7 +227,9 @@ pub async fn remove_attribute_key(
             attribute_name: name,
         })
         .await
-        .with_context(|| format!("Failed to remove participant attribute key, {name}"))
+        .with_context(|_| StorageSnafu {
+            message: format!("Failed to remove participant attribute key, {name}"),
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -215,7 +248,9 @@ pub async fn remove_attribute(
             participant,
         )
         .await
-        .with_context(|| format!("Failed to remove participant attribute key, {name}"))
+        .with_context(|_| StorageSnafu {
+            message: format!("Failed to remove participant attribute key, {name}"),
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -239,7 +274,9 @@ where
             value,
         )
         .await
-        .with_context(|| format!("Failed to set attribute {name}"))?;
+        .with_context(|_| StorageSnafu {
+            message: format!("Failed to set attribute {name}"),
+        })?;
 
     Ok(())
 }
@@ -331,7 +368,9 @@ where
             participant,
         )
         .await
-        .with_context(|| format!("Failed to get attribute {name}"))?;
+        .with_context(|_| StorageSnafu {
+            message: format!("Failed to get attribute {name}"),
+        })?;
 
     Ok(value)
 }
@@ -361,7 +400,9 @@ where
             .arg(participants)
             .query_async(redis_conn)
             .await
-            .with_context(|| format!("Failed to get attribute '{name}' for all participants "))
+            .with_context(|_| StorageSnafu {
+                message: format!("Failed to get attribute '{name}' for all participants "),
+            })
     }
 }
 
@@ -383,10 +424,9 @@ pub async fn get_role_and_left_at_for_room_participants(
     let (mut roles, mut left_at_timestamps): (
         HashMap<ParticipantId, Role>,
         HashMap<ParticipantId, Timestamp>,
-    ) = pipe
-        .query_async(redis_conn)
-        .await
-        .with_context(|| "Failed to get attributes")?;
+    ) = pipe.query_async(redis_conn).await.context(StorageSnafu {
+        message: "Failed to get attributes",
+    })?;
     let participants: HashSet<ParticipantId> = roles
         .keys()
         .chain(left_at_timestamps.keys())
@@ -412,7 +452,9 @@ pub async fn participant_id_in_use(
     redis_conn
         .exists(ParticipantIdRunnerLock { id: participant_id })
         .await
-        .context("failed to check if participant id is in use")
+        .context(StorageSnafu {
+            message: "failed to check if participant id is in use",
+        })
 }
 
 /// Key used for setting the `skip_waiting_room` attribute for a participant
@@ -433,14 +475,14 @@ pub async fn set_skip_waiting_room_with_expiry(
         .set_ex(
             SkipWaitingRoom { participant },
             value,
-            SKIP_WAITING_ROOM_KEY_EXPIRY,
+            SKIP_WAITING_ROOM_KEY_EXPIRY.into(),
         )
         .await
-        .with_context(|| {
-            format!(
+        .with_context(|_| StorageSnafu {
+            message: format!(
                 "Failed to set skip_waiting_room key to {} for participant {}",
                 value, participant,
-            )
+            ),
         })?;
 
     Ok(())
@@ -458,15 +500,15 @@ pub async fn set_skip_waiting_room_with_expiry_nx(
         .set_nx(SkipWaitingRoom { participant }, value)
         .expire(
             SkipWaitingRoom { participant },
-            SKIP_WAITING_ROOM_KEY_EXPIRY.try_into()?,
+            SKIP_WAITING_ROOM_KEY_EXPIRY.into(),
         )
         .query_async(redis_conn)
         .await
-        .with_context(|| {
-            format!(
+        .with_context(|_| StorageSnafu {
+            message: format!(
                 "Failed to set SkipWaitingRoom key to {} for participant {}",
                 value, participant,
-            )
+            ),
         })?;
 
     Ok(())
@@ -481,14 +523,14 @@ pub async fn reset_skip_waiting_room_expiry(
     redis_conn
         .expire(
             SkipWaitingRoom { participant },
-            SKIP_WAITING_ROOM_KEY_EXPIRY.try_into()?,
+            SKIP_WAITING_ROOM_KEY_EXPIRY.into(),
         )
         .await
-        .with_context(|| {
-            format!(
+        .with_context(|_| StorageSnafu {
+            message: format!(
                 "Failed to extend skip_waiting_room key expiry for participant {}",
                 participant,
-            )
+            ),
         })?;
 
     Ok(())
@@ -501,7 +543,12 @@ pub async fn get_skip_waiting_room(
     redis_conn: &mut RedisConnection,
     participant: ParticipantId,
 ) -> Result<bool> {
-    let value: Option<bool> = redis_conn.get(SkipWaitingRoom { participant }).await?;
+    let value: Option<bool> = redis_conn
+        .get(SkipWaitingRoom { participant })
+        .await
+        .context(StorageSnafu {
+            message: "Failed to get 'skip waiting room'",
+        })?;
     Ok(value.unwrap_or_default())
 }
 
@@ -518,7 +565,9 @@ pub async fn try_init_tariff(
         .get(RoomTariff { room_id })
         .query_async(redis_conn)
         .await
-        .context("Failed to SET NX & GET room tariff")?;
+        .context(StorageSnafu {
+            message: "Failed to SET NX & GET room tariff",
+        })?;
 
     Ok(tariff)
 }
@@ -528,7 +577,9 @@ pub async fn get_tariff(redis_conn: &mut RedisConnection, room_id: RoomId) -> Re
     redis_conn
         .get(RoomTariff { room_id })
         .await
-        .context("Failed to get room tariff")
+        .context(StorageSnafu {
+            message: "Failed to get room tariff",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -536,7 +587,9 @@ pub async fn delete_tariff(redis_conn: &mut RedisConnection, room_id: RoomId) ->
     redis_conn
         .del(RoomTariff { room_id })
         .await
-        .context("Failed to delete room tariff")
+        .context(StorageSnafu {
+            message: "Failed to delete room tariff",
+        })
 }
 
 /// Try to set the active event for the room. If the event is already set return the current one.
@@ -553,7 +606,9 @@ pub async fn try_init_event(
             .get(RoomEvent { room_id })
             .query_async(redis_conn)
             .await
-            .context("Failed to SET NX & GET room event")?;
+            .context(StorageSnafu {
+                message: "Failed to SET NX & GET room event",
+            })?;
 
         Some(event)
     } else {
@@ -568,7 +623,9 @@ pub async fn get_event(redis_conn: &mut RedisConnection, room_id: RoomId) -> Res
     redis_conn
         .get(RoomEvent { room_id })
         .await
-        .context("Failed to get room event")
+        .context(StorageSnafu {
+            message: "Failed to get room event",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -576,7 +633,9 @@ pub async fn delete_event(redis_conn: &mut RedisConnection, room_id: RoomId) -> 
     redis_conn
         .del(RoomEvent { room_id })
         .await
-        .context("Failed to delete room event")
+        .context(StorageSnafu {
+            message: "Failed to delete room event",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -587,7 +646,9 @@ pub async fn increment_participant_count(
     redis_conn
         .incr(RoomParticipantCount { room_id }, 1)
         .await
-        .context("Failed to increment room participant count")
+        .context(StorageSnafu {
+            message: "Failed to increment room participant count",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -598,7 +659,9 @@ pub async fn decrement_participant_count(
     redis_conn
         .decr(RoomParticipantCount { room_id }, 1)
         .await
-        .context("Failed to decrement room participant count")
+        .context(StorageSnafu {
+            message: "Failed to decrement room participant count",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -609,7 +672,9 @@ pub async fn get_participant_count(
     redis_conn
         .get(RoomParticipantCount { room_id })
         .await
-        .context("Failed to get room participant count")
+        .context(StorageSnafu {
+            message: "Failed to get room participant count",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -620,7 +685,9 @@ pub async fn delete_participant_count(
     redis_conn
         .del(RoomParticipantCount { room_id })
         .await
-        .context("Failed to delete room participant count key")
+        .context(StorageSnafu {
+            message: "Failed to delete room participant count key",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -632,7 +699,9 @@ pub async fn set_room_closes_at(
     redis_conn
         .set(RoomClosesAt { room }, timestamp)
         .await
-        .context("Failed to SET the point in time the room closes")
+        .context(StorageSnafu {
+            message: "Failed to SET the point in time the room closes",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -641,10 +710,9 @@ pub async fn get_room_closes_at(
     room: SignalingRoomId,
 ) -> Result<Option<Timestamp>> {
     let key = RoomClosesAt { room };
-    redis_conn
-        .get(&key)
-        .await
-        .context("Failed to GET the point in time the room closes")
+    redis_conn.get(&key).await.context(StorageSnafu {
+        message: "Failed to GET the point in time the room closes",
+    })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -655,5 +723,7 @@ pub async fn remove_room_closes_at(
     redis_conn
         .del(RoomClosesAt { room })
         .await
-        .context("Failed to DEL the point in time the room closes")
+        .context(StorageSnafu {
+            message: "Failed to DEL the point in time the room closes",
+        })
 }

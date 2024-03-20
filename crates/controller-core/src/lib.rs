@@ -14,7 +14,7 @@
 //! # struct CommunityModules;
 //! # #[async_trait::async_trait(?Send)]
 //! # impl RegisterModules for CommunityModules {
-//! #     async fn register(registrar: &mut impl ModulesRegistrar) -> Result<()> {
+//! #     async fn register<E>(registrar: &mut impl ModulesRegistrar<Error=E>) -> Result<(), E> {
 //! #         unimplemented!();
 //! #     }
 //! # }
@@ -249,7 +249,11 @@ impl Controller {
         let db = Arc::new(db);
 
         // Connect to MinIO
-        let storage = Arc::new(ObjectStorage::new(&settings.minio).await?);
+        let storage = Arc::new(
+            ObjectStorage::new(&settings.minio)
+                .await
+                .map_err(|e| anyhow::anyhow!("{e}"))?,
+        );
 
         // Discover OIDC Provider
         let oidc = Arc::new(

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_database::DatabaseError;
+use opentalk_signaling_core::ObjectStorageError;
 use opentalk_types::api::error::ApiError;
 use snafu::Snafu;
 
@@ -32,8 +33,7 @@ pub enum Error {
     #[snafu(display("Object deletion error: {source}"))]
     ObjectDeletion {
         /// the cause of the error
-        // TODO:(a.weiche) remove once snafu migration of signaling-core is complete
-        source: anyhow::Error,
+        source: ObjectStorageError,
     },
 
     /// Shared folders not configured
@@ -64,7 +64,10 @@ impl From<Error> for ApiError {
             Error::Database { source } => Self::from(source),
             Error::Kustos { source } => Self::from(source),
             Error::Forbidden => Self::forbidden(),
-            Error::ObjectDeletion { source } => Self::from(source),
+            Error::ObjectDeletion { source } => {
+                log::error!("REST API threw internal error from object storage: {source}");
+                ApiError::internal()
+            }
             Error::SharedFoldersNotConfigured => {
                 Self::bad_request().with_message("No shared folder configured for this server")
             }

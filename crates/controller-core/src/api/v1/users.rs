@@ -16,7 +16,6 @@ use crate::oidc::UserClaims;
 use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json, Path, Query, ReqData};
 use actix_web::{get, patch, Either};
-use anyhow::Context;
 use chrono::Utc;
 use openidconnect::AccessToken;
 use opentalk_controller_settings::TenantAssignment;
@@ -43,6 +42,7 @@ use opentalk_types::{
     common::tariff::TariffResource,
     core::UserId,
 };
+use snafu::{ResultExt, Whatever};
 use validator::Validate;
 
 const MAX_USER_SEARCH_RESULTS: usize = 20;
@@ -102,7 +102,9 @@ pub async fn patch_me(
     let user_profile = user.to_private_user_profile(&settings, used_storage);
 
     let user_claims = decode_token::<UserClaims>(access_token.clone().secret())
-        .context("failed to decode access token for user profile update")?;
+        .whatever_context::<&str, Whatever>(
+            "failed to decode access token for user profile update",
+        )?;
 
     let token_ttl = user_claims.exp - Utc::now();
     if token_ttl > chrono::Duration::seconds(10) {
@@ -258,7 +260,7 @@ pub async fn find(
                 kc_admin_client
                     .search_user(&query.q, MAX_USER_SEARCH_RESULTS)
                     .await
-                    .context("Failed to search for user in keycloak")?
+                    .whatever_context::<&str, Whatever>("Failed to search for user in keycloak")?
             }
             TenantAssignment::ByExternalTenantId {
                 external_tenant_id_user_attribute_name,
@@ -273,7 +275,7 @@ pub async fn find(
                         MAX_USER_SEARCH_RESULTS,
                     )
                     .await
-                    .context("Failed to search for user in keycloak")?
+                    .whatever_context::<&str, Whatever>("Failed to search for user in keycloak")?
             }
         };
 

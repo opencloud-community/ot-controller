@@ -26,4 +26,3 @@ opentalk-timer.workspace = true
 opentalk-whiteboard.workspace = true
 
 async-trait.workspace = true
-snafu.workspace = true

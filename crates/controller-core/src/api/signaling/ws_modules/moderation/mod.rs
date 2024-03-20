@@ -45,7 +45,9 @@ async fn build_waiting_room_participants(
 
     for id in list {
         let control_data =
-            ControlState::from_redis(redis_conn, SignalingRoomId::new(room_id, None), *id).await?;
+            ControlState::from_redis(redis_conn, SignalingRoomId::new(room_id, None), *id)
+                .await
+                .map_err(|e| anyhow::anyhow!("{e}"))?;
 
         let mut module_data = ModulePeerData::new();
         module_data.insert(&control_data)?;
@@ -381,8 +383,9 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
-                let control_data =
-                    ControlState::from_redis(ctx.redis_conn(), self.room, id).await?;
+                let control_data = ControlState::from_redis(ctx.redis_conn(), self.room, id)
+                    .await
+                    .map_err(|e| anyhow::anyhow!("Error: {e}"))?;
 
                 let mut module_data = ModulePeerData::new();
                 module_data.insert(&control_data)?;

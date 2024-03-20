@@ -11,9 +11,10 @@ publish = false
 version.workspace = true
 
 [dependencies]
+reqwest.workspace = true
+anyhow.workspace = true
 actix-http.workspace = true
 actix-rt = { workspace = true, optional = true }
-anyhow.workspace = true
 async-trait.workspace = true
 aws-sdk-s3.workspace = true
 bigdecimal.workspace = true
@@ -36,7 +37,7 @@ rustc-hash.workspace = true
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 slotmap = "1"
-thiserror.workspace = true
+snafu.workspace = true
 tokio-stream.workspace = true
 tokio.workspace = true
 tracing.workspace = true

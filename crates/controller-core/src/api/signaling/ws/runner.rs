@@ -584,16 +584,21 @@ impl Runner {
     async fn cleanup_redis_keys_for_current_room(&mut self) -> Result<()> {
         storage::remove_room_closes_at(&mut self.redis_conn, self.room_id).await?;
         storage::remove_participant_set(&mut self.redis_conn, self.room_id).await?;
-        storage::remove_attribute_key(&mut self.redis_conn, self.room_id, "display_name").await?;
-        storage::remove_attribute_key(&mut self.redis_conn, self.room_id, "role").await?;
-        storage::remove_attribute_key(&mut self.redis_conn, self.room_id, "joined_at").await?;
-        storage::remove_attribute_key(&mut self.redis_conn, self.room_id, "left_at").await?;
-        storage::remove_attribute_key(&mut self.redis_conn, self.room_id, "hand_is_up").await?;
-        storage::remove_attribute_key(&mut self.redis_conn, self.room_id, "hand_updated_at")
-            .await?;
-        storage::remove_attribute_key(&mut self.redis_conn, self.room_id, "kind").await?;
-        storage::remove_attribute_key(&mut self.redis_conn, self.room_id, "user_id").await?;
-        storage::remove_attribute_key(&mut self.redis_conn, self.room_id, "avatar_url").await
+        for key in [
+            "display_name",
+            "role",
+            "joined_at",
+            "left_at",
+            "hand_is_up",
+            "hand_updated_at",
+            "kind",
+            "user_id",
+            "avatar_url",
+        ] {
+            storage::remove_attribute_key(&mut self.redis_conn, self.room_id, key).await?;
+        }
+
+        Ok(())
     }
 
     /// Remove all room and control module related redis keys that are used across all 'sub'-rooms. This must only be
@@ -601,7 +606,9 @@ impl Runner {
     async fn cleanup_redis_for_global_room(&mut self) -> Result<()> {
         storage::delete_participant_count(&mut self.redis_conn, self.room.id).await?;
         storage::delete_tariff(&mut self.redis_conn, self.room.id).await?;
-        storage::delete_event(&mut self.redis_conn, self.room.id).await
+        storage::delete_event(&mut self.redis_conn, self.room.id).await?;
+
+        Ok(())
     }
 
     /// Runs the runner until the peer closes its websocket connection or a fatal error occurres.
@@ -1409,7 +1416,9 @@ impl Runner {
             module_data: Default::default(),
         };
 
-        let control_data = ControlState::from_redis(&mut self.redis_conn, self.room_id, id).await?;
+        let control_data = ControlState::from_redis(&mut self.redis_conn, self.room_id, id)
+            .await
+            .map_err(|e| anyhow::anyhow!("{e}"))?;
 
         // Do not build participants for invisible services
         if !control_data.participation_kind.is_visible() {

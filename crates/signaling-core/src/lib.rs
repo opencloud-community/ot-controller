@@ -2,7 +2,6 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::Result;
 use async_trait::async_trait;
 
 mod any_stream;
@@ -31,7 +30,7 @@ pub use exchange_task::{ExchangeHandle, ExchangeTask, SubscriberHandle};
 pub use init_context::{ExchangeBinding, InitContext};
 pub use metrics::SignalingMetrics;
 pub use module_context::{ExchangePublish, ModuleContext};
-pub use object_storage::ObjectStorage;
+pub use object_storage::{ObjectStorage, ObjectStorageError};
 pub use participant::Participant;
 pub use redis_wrapper::{RedisConnection, RedisMetrics};
 pub use signaling_module::{SignalingModule, SignalingModuleInitData};

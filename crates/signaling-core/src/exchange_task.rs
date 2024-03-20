@@ -4,7 +4,6 @@
 
 //! Controller to controller messaging
 
-use anyhow::Result;
 use bytestring::ByteString;
 use core::hash::BuildHasherDefault;
 use core::time::Duration;
@@ -19,6 +18,7 @@ use lapin_pool::{RabbitMqChannel, RabbitMqPool};
 use rustc_hash::FxHasher;
 use serde::{Deserialize, Serialize};
 use slotmap::{new_key_type, SlotMap};
+use snafu::Snafu;
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -27,6 +27,18 @@ use tokio::sync::{mpsc, oneshot};
 use tokio::time::sleep;
 use tokio_stream::StreamExt;
 use uuid::Uuid;
+
+#[derive(Debug, Snafu)]
+pub enum Error {
+    #[snafu(display("failed open channel"), context(false))]
+    CreateChannel { source: lapin_pool::Error },
+
+    #[snafu(display("failed to make consumer"), context(false))]
+    Consumer { source: lapin::Error },
+
+    #[snafu(display("received invalid message from rabbitMQ"), context(false))]
+    InvalidRmqMessage { source: serde_json::Error },
+}
 
 const EXCHANGE: &str = "opentalk_controller";
 
@@ -79,7 +91,7 @@ struct SubscriberEntry {
 
 impl ExchangeTask {
     /// Spawn the exchange task and return a [`ExchangeHandle`] to it
-    pub async fn spawn(pool: Arc<RabbitMqPool>) -> Result<ExchangeHandle> {
+    pub async fn spawn(pool: Arc<RabbitMqPool>) -> Result<ExchangeHandle, Error> {
         let channel = pool.create_channel().await?;
         let consumer = make_consumer(&channel).await?;
 
@@ -222,7 +234,7 @@ impl ExchangeTask {
         }
     }
 
-    async fn handle_rmq_message(&mut self, data: &[u8]) -> Result<()> {
+    async fn handle_rmq_message(&mut self, data: &[u8]) -> Result<(), Error> {
         let wrapper: RabbitMqMessage = serde_json::from_slice(data)?;
 
         if wrapper.sender == self.id {
@@ -246,7 +258,7 @@ impl ExchangeTask {
     }
 }
 
-async fn make_consumer(channel: &lapin::Channel) -> Result<Consumer> {
+async fn make_consumer(channel: &lapin::Channel) -> Result<Consumer, Error> {
     channel
         .exchange_declare(
             EXCHANGE,
@@ -300,12 +312,12 @@ pub struct ExchangeHandle {
     command_sender: mpsc::UnboundedSender<Command>,
 }
 
-#[derive(Debug, thiserror::Error)]
-#[error("Cannot create subscriber. Exchange task is not available, receiver dropped")]
+#[derive(Debug, Snafu)]
+#[snafu(display("Cannot create subscriber. Exchange task is not available, receiver dropped"))]
 pub struct CreateSubscriberError;
 
-#[derive(Debug, thiserror::Error)]
-#[error("Cannot publish message. Exchange task is not available, receiver dropped")]
+#[derive(Debug, Snafu)]
+#[snafu(display("Cannot publish message. Exchange task is not available, receiver dropped"))]
 pub struct PublishError;
 
 impl ExchangeHandle {

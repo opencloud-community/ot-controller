@@ -35,7 +35,7 @@ pub(crate) async fn perform_deletion(
     let mut conn = db.get_conn().await?;
     let object_storage = ObjectStorage::new(&settings.minio)
         .await
-        .map_err(Error::ObjectStorage)?;
+        .map_err(|e| Error::ObjectStorage(anyhow::anyhow!("{e}")))?;
 
     let orphaned_rooms = delete_events(
         logger,
