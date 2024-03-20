@@ -28,3 +28,93 @@ pub struct MediaPeerState {
 impl SignalingModulePeerFrontendData for MediaPeerState {
     const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn serialize_with_video_and_screen() {
+        use serde_json::json;
+
+        use crate::signaling::media::MediaSessionState;
+
+        let state = MediaPeerState {
+            state: ParticipantMediaState {
+                video: Some(MediaSessionState {
+                    video: true,
+                    audio: true,
+                }),
+                screen: Some(MediaSessionState {
+                    video: true,
+                    audio: false,
+                }),
+            },
+            is_presenter: true,
+        };
+
+        let expected = json!({
+            "video": {
+                "video": true,
+                "audio": true,
+            },
+            "screen": {
+                "video": true,
+                "audio": false,
+            },
+            "is_presenter": true,
+        });
+
+        assert_eq!(serde_json::to_value(state).unwrap(), expected);
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn serialize_with_video() {
+        use serde_json::json;
+
+        use crate::signaling::media::MediaSessionState;
+
+        let state = MediaPeerState {
+            state: ParticipantMediaState {
+                video: Some(MediaSessionState {
+                    video: true,
+                    audio: true,
+                }),
+                screen: None,
+            },
+            is_presenter: false,
+        };
+
+        let expected = json!({
+            "video": {
+                "video": true,
+                "audio": true,
+            },
+            "is_presenter": false,
+        });
+
+        assert_eq!(serde_json::to_value(state).unwrap(), expected);
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn serialize_without_media() {
+        use serde_json::json;
+
+        let state = MediaPeerState {
+            state: ParticipantMediaState {
+                video: None,
+                screen: None,
+            },
+            is_presenter: false,
+        };
+
+        let expected = json!({
+            "is_presenter": false,
+        });
+
+        assert_eq!(serde_json::to_value(state).unwrap(), expected);
+    }
+}

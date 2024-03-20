@@ -31,9 +31,11 @@ use serde::{Deserialize, Serialize};
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ParticipantMediaState {
     /// See [`MediaSessionType::Video`]
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub video: Option<MediaSessionState>,
 
     /// See [`MediaSessionType::Screen`]
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub screen: Option<MediaSessionState>,
 }
 
@@ -80,3 +82,99 @@ impl ParticipantMediaState {
 
 /// The namespace string for the signaling module
 pub const NAMESPACE: &str = "media";
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn serialize_with_video_and_screen() {
+        use serde_json::json;
+
+        let state = ParticipantMediaState {
+            video: Some(MediaSessionState {
+                video: true,
+                audio: true,
+            }),
+            screen: Some(MediaSessionState {
+                video: true,
+                audio: false,
+            }),
+        };
+
+        let expected = json!({
+            "video": {
+                "video": true,
+                "audio": true,
+            },
+            "screen": {
+                "video": true,
+                "audio": false,
+            },
+        });
+
+        assert_eq!(serde_json::to_value(state).unwrap(), expected);
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn serialize_with_video() {
+        use serde_json::json;
+
+        let state = ParticipantMediaState {
+            video: Some(MediaSessionState {
+                video: true,
+                audio: true,
+            }),
+            screen: None,
+        };
+
+        let expected = json!({
+            "video": {
+                "video": true,
+                "audio": true,
+            },
+        });
+
+        assert_eq!(serde_json::to_value(state).unwrap(), expected);
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn serialize_with_screen() {
+        use serde_json::json;
+
+        let state = ParticipantMediaState {
+            video: None,
+            screen: Some(MediaSessionState {
+                video: true,
+                audio: false,
+            }),
+        };
+
+        let expected = json!({
+            "screen": {
+                "video": true,
+                "audio": false,
+            },
+        });
+
+        assert_eq!(serde_json::to_value(state).unwrap(), expected);
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn serialize_without_media() {
+        use serde_json::json;
+
+        let state = ParticipantMediaState {
+            video: None,
+            screen: None,
+        };
+
+        let expected = json!({});
+
+        assert_eq!(serde_json::to_value(state).unwrap(), expected);
+    }
+}
