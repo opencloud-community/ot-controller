@@ -8,7 +8,7 @@ This subcommand is used to manage tariffs.
 
 Help output looks like this:
 
-<!-- begin:fromfile:text:cli-usage/opentalk-controller-tariffs-help -->
+<!-- begin:fromfile:cli-usage/opentalk-controller-tariffs-help.md -->
 
 ```text
 Manage tariffs
@@ -26,7 +26,7 @@ Options:
   -h, --help  Print help
 ```
 
-<!-- end:fromfile:text:cli-usage/opentalk-controller-tariffs-help -->
+<!-- end:fromfile:cli-usage/opentalk-controller-tariffs-help.md -->
 
 ### Examples
 
@@ -38,7 +38,7 @@ Run `opentalk-controller tariffs list` to show all existing tariffs.
 
 Run `opentalk-controller tariffs create <TariffName> <ExternalTariffId>` to create a new tariff.
 
-<!-- begin:fromfile:text:cli-usage/opentalk-controller-tariffs-create -->
+<!-- begin:fromfile:cli-usage/opentalk-controller-tariffs-create.md -->
 
 ```text
 Create a new tariff
@@ -56,13 +56,13 @@ Options:
   -h, --help                                   Print help
 ```
 
-<!-- end:fromfile:text:cli-usage/opentalk-controller-tariffs-create -->
+<!-- end:fromfile:cli-usage/opentalk-controller-tariffs-create.md -->
 
 #### Delete an Existing Tariff
 
 Run `opentalk-controller tariffs delete <TariffName> <ExternalTariffId>` to delete an existing tariff.
 
-<!-- begin:fromfile:text:cli-usage/opentalk-controller-tariffs-delete -->
+<!-- begin:fromfile:cli-usage/opentalk-controller-tariffs-delete.md -->
 
 ```text
 Delete a tariff by name
@@ -76,7 +76,7 @@ Options:
   -h, --help  Print help
 ```
 
-<!-- end:fromfile:text:cli-usage/opentalk-controller-tariffs-delete -->
+<!-- end:fromfile:cli-usage/opentalk-controller-tariffs-delete.md -->
 
 #### Edit an Existing Tariff
 
@@ -84,7 +84,7 @@ Run `opentalk-controller tariffs edit <TariffName>` to edit an existing tariff.
 
 Help output looks like this:
 
-<!-- begin:fromfile:text:cli-usage/opentalk-controller-tariffs-edit -->
+<!-- begin:fromfile:cli-usage/opentalk-controller-tariffs-edit.md -->
 
 ```text
 Modify an existing tariff
@@ -117,6 +117,6 @@ Options:
           Print help
 ```
 
-<!-- end:fromfile:text:cli-usage/opentalk-controller-tariffs-edit -->
+<!-- end:fromfile:cli-usage/opentalk-controller-tariffs-edit.md -->
 
 These subcommand options enable the modification of tariff names, external tariff IDs, disabled modules and features as well as quotas.

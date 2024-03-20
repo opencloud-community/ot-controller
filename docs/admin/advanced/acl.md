@@ -19,7 +19,7 @@ This subcommand is used modify ACLs.
 
 Help output looks like this:
 
-<!-- begin:fromfile:text:cli-usage/opentalk-controller-acl-help -->
+<!-- begin:fromfile:cli-usage/opentalk-controller-acl-help.md -->
 
 ```text
 Modify the ACLs
@@ -34,7 +34,7 @@ Options:
   -h, --help  Print help
 ```
 
-<!-- end:fromfile:text:cli-usage/opentalk-controller-acl-help -->
+<!-- end:fromfile:cli-usage/opentalk-controller-acl-help.md -->
 
 ## `opentalk-controller fix-acl` subcommand
 
@@ -45,7 +45,7 @@ this command to be run after migration.
 
 Help output looks like this:
 
-<!-- begin:fromfile:text:cli-usage/opentalk-controller-fix-acl-help -->
+<!-- begin:fromfile:cli-usage/opentalk-controller-fix-acl-help.md -->
 
 ```text
 Recreate all ACL entries from the current database content. Existing entries will not be touched unless the command is told to delete them all beforehand
@@ -77,4 +77,4 @@ Options:
           Print help (see a summary with '-h')
 ```
 
-<!-- end:fromfile:text:cli-usage/opentalk-controller-fix-acl-help -->
+<!-- end:fromfile:cli-usage/opentalk-controller-fix-acl-help.md -->

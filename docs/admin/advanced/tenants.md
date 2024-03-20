@@ -70,7 +70,7 @@ This subcommand is used to manage tenants.
 
 Help output looks like this:
 
-<!-- begin:fromfile:text:cli-usage/opentalk-controller-tenants-help -->
+<!-- begin:fromfile:cli-usage/opentalk-controller-tenants-help.md -->
 
 ```text
 Manage existing tenants
@@ -86,11 +86,11 @@ Options:
   -h, --help  Print help
 ```
 
-<!-- end:fromfile:text:cli-usage/opentalk-controller-tenants-help -->
+<!-- end:fromfile:cli-usage/opentalk-controller-tenants-help.md -->
 
 ## `opentalk-controller tenants list` subcommand
 
-<!-- begin:fromfile:text:cli-usage/opentalk-controller-tenants-list-help -->
+<!-- begin:fromfile:cli-usage/opentalk-controller-tenants-list-help.md -->
 
 ```text
 List all available tenants
@@ -101,11 +101,11 @@ Options:
   -h, --help  Print help
 ```
 
-<!-- end:fromfile:text:cli-usage/opentalk-controller-tenants-list-help -->
+<!-- end:fromfile:cli-usage/opentalk-controller-tenants-list-help.md -->
 
 ## `opentalk-controller tenants set-oidc-id` subcommand
 
-<!-- begin:fromfile:text:cli-usage/opentalk-controller-tenants-set-oidc-id-help -->
+<!-- begin:fromfile:cli-usage/opentalk-controller-tenants-set-oidc-id-help.md -->
 
 ```text
 Change a tenants oidc-id
@@ -120,4 +120,4 @@ Options:
   -h, --help  Print help
 ```
 
-<!-- end:fromfile:text:cli-usage/opentalk-controller-tenants-set-oidc-id-help -->
+<!-- end:fromfile:cli-usage/opentalk-controller-tenants-set-oidc-id-help.md -->

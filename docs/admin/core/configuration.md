@@ -75,7 +75,7 @@ OPENTALK_CTRL_TARIFFS__STATUS_MAPPING__DOWNGRADED_TARIFF_NAME=downgraded_tariff
 
 This file can be found in the source code distribution under `extra/example.toml`
 
-<!-- begin:fromfile:toml:config/example.toml -->
+<!-- begin:fromfile:config/example.toml.md -->
 
 ```toml
 # SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
@@ -345,4 +345,4 @@ secret_key = "minioadmin"
 #downgraded = ["unpaid"]
 ```
 
-<!-- end:fromfile:toml:config/example.toml -->
+<!-- end:fromfile:config/example.toml.md -->
