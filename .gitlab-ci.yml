@@ -292,27 +292,16 @@ test:cargo_test:
     POSTGRES_USER: postgres
     POSTGRES_PASSWORD: password123
     POSTGRES_HOST_AUTH_METHOD: trust
-    RABBITMQ_DEFAULT_USER: guest
-    RABBITMQ_DEFAULT_PASS: guest
-    RABBITMQ_HOST: rabbitmq
-    RABBITMQ_PORT: '5672'
-    JANUS_EXCHANGE_TYPE: topic
     # Used for integration tests
-    JANUS_HOST: ws://janus-gateway:8188
     POSTGRES_BASE_URL: postgres://postgres:password123@postgres:5432
     DATABASE_NAME: opentalk
     KUSTOS_TESTS_DATABASE_URL: postgres://postgres:password123@postgres:5432/kustos
-    AMQP_ADDR: amqp://guest:guest@rabbitmq:5672
     REDIS_ADDR: redis://redis:6379/
     # Used for coverage
     COVERAGE_XML_PATH: 'concat("Coverage: ", 100 * string(//coverage/@line-rate), "%")'
   services:
     - name: postgres:15-alpine
       alias: postgres
-    - name: rabbitmq:3.8
-      alias: rabbitmq
-    - name: git.opentalk.dev:5050/opentalk/backend/containers/janus-gateway:v0.14.1
-      alias: janus-gateway
     - name: redis:6-alpine
       alias: redis
   before_script:
