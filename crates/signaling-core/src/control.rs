@@ -2,11 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::Result;
 use opentalk_types::{
     core::{ParticipantId, ParticipationKind, Timestamp},
     signaling::{control::state::ControlState, Role},
 };
+use snafu::{ResultExt, Whatever};
 
 use crate::{RedisConnection, SignalingRoomId};
 
@@ -17,20 +17,24 @@ pub use opentalk_types::signaling::control::NAMESPACE;
 
 #[async_trait::async_trait]
 pub trait ControlStateExt: Sized {
+    type Error;
+
     async fn from_redis(
         redis_conn: &mut RedisConnection,
         room_id: SignalingRoomId,
         participant_id: ParticipantId,
-    ) -> Result<Self>;
+    ) -> Result<Self, Self::Error>;
 }
 
 #[async_trait::async_trait]
 impl ControlStateExt for ControlState {
+    type Error = Whatever;
+
     async fn from_redis(
         redis_conn: &mut RedisConnection,
         room_id: SignalingRoomId,
         participant_id: ParticipantId,
-    ) -> Result<Self> {
+    ) -> Result<Self, Whatever> {
         #[allow(clippy::type_complexity)]
         let (
             display_name,
@@ -63,7 +67,8 @@ impl ControlStateExt for ControlState {
             .get("kind")
             .get("is_room_owner")
             .query_async(redis_conn)
-            .await?;
+            .await
+            .whatever_context("Couldn't query control state from redis")?;
 
         if display_name.is_none()
             || joined_at.is_none()

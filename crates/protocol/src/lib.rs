@@ -6,7 +6,6 @@ use crate::storage::init::InitState;
 use anyhow::{Context, Result};
 use chrono::{Duration, Utc};
 use exchange::GenerateUrl;
-use futures::TryStreamExt;
 use opentalk_database::Db;
 use opentalk_etherpad_client::EtherpadClient;
 use opentalk_signaling_core::{
@@ -339,8 +338,7 @@ impl Protocol {
                     let data = self
                         .etherpad
                         .download_pdf(&session_info.session_id, &pad_id)
-                        .await?
-                        .map_err(Into::into);
+                        .await?;
 
                     let filename = format!("protocol_{}.pdf", ctx.timestamp().to_rfc3339());
 
@@ -356,14 +354,14 @@ impl Protocol {
                     .await
                     {
                         Ok(asset_id) => asset_id,
-                        Err(e) => {
-                            if e.downcast_ref::<AssetError>().is_some() {
-                                ctx.ws_send(Error::StorageExceeded);
-                                return Ok(());
-                            }
+                        Err(AssetError::AssetStorageExceeded) => {
+                            ctx.ws_send(Error::StorageExceeded);
+                            return Ok(());
+                        }
 
+                        Err(e) => {
                             log::error!("Failed to save asset {filename}: {e}");
-                            return Err(e);
+                            return Err(anyhow::anyhow!("Error: {e}"));
                         }
                     };
 

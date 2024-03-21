@@ -3372,7 +3372,6 @@ dependencies = [
 name = "opentalk-community-modules"
 version = "0.0.0-dev"
 dependencies = [
- "anyhow",
  "async-trait",
  "opentalk-chat",
  "opentalk-core",
@@ -3465,6 +3464,7 @@ dependencies = [
  "rustls-pki-types",
  "serde",
  "serde_json",
+ "snafu",
  "sysinfo",
  "tabled",
  "thiserror",
@@ -3505,7 +3505,6 @@ dependencies = [
 name = "opentalk-controller-utils"
 version = "0.0.0-dev"
 dependencies = [
- "anyhow",
  "async-trait",
  "diesel-async",
  "kustos",
@@ -3802,7 +3801,6 @@ dependencies = [
  "anyhow",
  "async-trait",
  "chrono",
- "futures",
  "log",
  "opentalk-controller-settings",
  "opentalk-database",
@@ -3871,11 +3869,12 @@ dependencies = [
  "opentelemetry",
  "redis",
  "redis-args",
+ "reqwest",
  "rustc-hash",
  "serde",
  "serde_json",
  "slotmap",
- "thiserror",
+ "snafu",
  "tokio",
  "tokio-stream",
  "tracing",

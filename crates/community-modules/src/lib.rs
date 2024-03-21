@@ -2,7 +2,6 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::Result;
 use async_trait::async_trait;
 use opentalk_chat::Chat;
 use opentalk_core::Core;
@@ -19,7 +18,7 @@ pub struct CommunityModules;
 
 #[async_trait(?Send)]
 impl RegisterModules for CommunityModules {
-    async fn register(registrar: &mut impl ModulesRegistrar) -> Result<()> {
+    async fn register<E>(registrar: &mut impl ModulesRegistrar<Error = E>) -> Result<(), E> {
         registrar.register::<Core>().await?;
         registrar.register::<Chat>().await?;
         registrar.register::<Integration>().await?;

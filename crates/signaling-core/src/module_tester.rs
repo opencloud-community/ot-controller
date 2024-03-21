@@ -16,13 +16,10 @@ use crate::{
 };
 use actix_http::ws::CloseCode;
 use actix_rt::task::JoinHandle;
-use anyhow::{bail, Context, Result};
-use futures::stream::SelectAll;
-use futures::StreamExt;
+use futures::{stream::SelectAll, StreamExt};
 use kustos::Authz;
 use opentalk_database::Db;
-use opentalk_db_storage::rooms::Room;
-use opentalk_db_storage::users::User;
+use opentalk_db_storage::{rooms::Room, users::User};
 use opentalk_types::{
     common::tariff::TariffResource,
     core::{BreakoutRoomId, ParticipantId, ParticipationKind, TariffId, Timestamp, UserId},
@@ -37,6 +34,7 @@ use opentalk_types::{
     },
 };
 use serde_json::Value;
+use snafu::{whatever, OptionExt, ResultExt, Snafu, Whatever};
 use tokio::{
     select,
     sync::{
@@ -47,11 +45,13 @@ use tokio::{
     time::{timeout, timeout_at, Instant},
 };
 
-use std::collections::{HashMap, HashSet};
-use std::marker::PhantomData;
-use std::panic;
-use std::sync::Arc;
-use std::time::Duration;
+use std::{
+    collections::{HashMap, HashSet},
+    marker::PhantomData,
+    panic,
+    sync::Arc,
+    time::Duration,
+};
 
 /// A module tester that simulates a runner environment for provided module.
 ///
@@ -108,7 +108,7 @@ where
         role: Role,
         display_name: &str,
         params: M::Params,
-    ) -> Result<()> {
+    ) -> Result<(), Whatever> {
         let (client_interface, runner_interface) = create_interfaces::<M>().await;
 
         let runner = MockRunner::<M>::new(
@@ -125,7 +125,8 @@ where
             client_interface,
             self.exchange_sender.clone(),
         )
-        .await?;
+        .await
+        .whatever_context("Mock runner failed")?;
 
         let runner_handle = task::spawn_local(runner.run());
 
@@ -152,7 +153,7 @@ where
         role: Role,
         display_name: &str,
         params: M::Params,
-    ) -> Result<()> {
+    ) -> Result<(), Whatever> {
         self.join_internal(
             participant_id,
             Participant::User(user),
@@ -173,7 +174,7 @@ where
         participant_id: ParticipantId,
         display_name: &str,
         params: M::Params,
-    ) -> Result<()> {
+    ) -> Result<(), Whatever> {
         self.join_internal(
             participant_id,
             Participant::Guest,
@@ -195,7 +196,7 @@ where
         &self,
         participant_id: &ParticipantId,
         message: M::Incoming,
-    ) -> Result<()> {
+    ) -> Result<(), Whatever> {
         let (interface, ..) = self
             .runner_interfaces
             .get(participant_id)
@@ -216,11 +217,11 @@ where
     ///
     /// # Returns
     /// - Ok([`WsMessageOutgoing`]) when a message is available within the timeout window.
-    /// - Err([`anyhow::Error`]) on timeout or when the internal channel has been closed.
+    /// - Err([`snafu::Whatever`]) on timeout or when the internal channel has been closed.
     pub async fn receive_ws_message(
         &mut self,
         participant_id: &ParticipantId,
-    ) -> Result<WsMessageOutgoing<M>> {
+    ) -> Result<WsMessageOutgoing<M>, Whatever> {
         self.receive_ws_message_override_timeout(participant_id, Duration::from_secs(2))
             .await
     }
@@ -232,12 +233,15 @@ where
         &mut self,
         participant_id: &ParticipantId,
         timeout_duration: Duration,
-    ) -> Result<WsMessageOutgoing<M>> {
+    ) -> Result<WsMessageOutgoing<M>, Whatever> {
         let interface = self.get_runner_interface(participant_id)?;
 
-        match timeout(timeout_duration, interface.ws.recv()).await? {
+        match timeout(timeout_duration, interface.ws.recv())
+            .await
+            .whatever_context("receive timeout")?
+        {
             Some(message) => Ok(message),
-            None => bail!("Failed to receive ws message in module tester"),
+            None => whatever!("Failed to receive ws message in module tester"),
         }
     }
 
@@ -248,17 +252,20 @@ where
         &mut self,
         participant_id: &ParticipantId,
         deadline: Instant,
-    ) -> Result<WsMessageOutgoing<M>> {
+    ) -> Result<WsMessageOutgoing<M>, Whatever> {
         let interface = self.get_runner_interface(participant_id)?;
 
-        match timeout_at(deadline, interface.ws.recv()).await? {
+        match timeout_at(deadline, interface.ws.recv())
+            .await
+            .whatever_context("receive timeout")?
+        {
             Some(message) => Ok(message),
-            None => bail!("Failed to receive ws message in module tester"),
+            None => whatever!("Failed to receive ws message in module tester"),
         }
     }
 
     /// Send a [`RaiseHand`](ControlCommand::RaiseHand) control message to the module/runner.
-    pub fn raise_hand(&mut self, participant_id: &ParticipantId) -> Result<()> {
+    pub fn raise_hand(&mut self, participant_id: &ParticipantId) -> Result<(), Whatever> {
         let interface = self.get_runner_interface(participant_id)?;
         interface
             .ws
@@ -266,7 +273,7 @@ where
     }
 
     /// Send a [`LowerHand`](ControlCommand::LowerHand) control message to the module/runner.
-    pub fn lower_hand(&mut self, participant_id: &ParticipantId) -> Result<()> {
+    pub fn lower_hand(&mut self, participant_id: &ParticipantId) -> Result<(), Whatever> {
         let interface = self.get_runner_interface(participant_id)?;
 
         interface
@@ -278,7 +285,7 @@ where
     ///
     /// # Panics
     /// When the participants runner panicked
-    pub async fn leave(&mut self, participant_id: &ParticipantId) -> Result<()> {
+    pub async fn leave(&mut self, participant_id: &ParticipantId) -> Result<(), Whatever> {
         let (interface, handle) = self.get_runner(participant_id)?;
 
         interface.ws.send(WsMessageIncoming::CloseWs)?;
@@ -286,7 +293,7 @@ where
         // expect the runner to shutdown within 3 seconds
         match timeout(Duration::from_secs(3), handle)
             .await
-            .context("Failed to shutdown MockRunner within 3 seconds after leave event")?
+            .whatever_context("Failed to shutdown MockRunner within 3 seconds after leave event")?
         {
             Ok(_) => {
                 self.runner_interfaces.remove(participant_id);
@@ -296,8 +303,7 @@ where
                 if join_error.is_panic() {
                     panic::resume_unwind(join_error.into_panic());
                 }
-
-                bail!(join_error);
+                Err(join_error).whatever_context("MockRunner failed")
             }
         }
     }
@@ -306,7 +312,7 @@ where
     fn get_runner_interface(
         &mut self,
         participant_id: &ParticipantId,
-    ) -> Result<&mut RunnerInterface<M>> {
+    ) -> Result<&mut RunnerInterface<M>, Whatever> {
         Ok(&mut self.get_runner(participant_id)?.0)
     }
 
@@ -314,11 +320,11 @@ where
     fn get_runner(
         &mut self,
         participant_id: &ParticipantId,
-    ) -> Result<&mut (RunnerInterface<M>, JoinHandle<()>)> {
+    ) -> Result<&mut (RunnerInterface<M>, JoinHandle<()>), Whatever> {
         self.runner_interfaces
             .get_mut(participant_id)
-            .with_context(|| {
-                format!("Participant {participant_id} does not exist in module tester",)
+            .with_whatever_context(|| {
+                format!("Participant {participant_id} does not exist in module tester")
             })
     }
 
@@ -332,7 +338,7 @@ where
     /// Shutdown the ModuleTester
     ///
     /// Leave the room with all participants. Continues to unwind panics that happened in any runner.
-    pub async fn shutdown(mut self) -> Result<()> {
+    pub async fn shutdown(mut self) -> Result<(), Whatever> {
         let participants = self.get_participants();
 
         for participant_id in participants {
@@ -343,8 +349,8 @@ where
     }
 }
 
-#[derive(Debug, thiserror::Error)]
-#[error("Module did not initialize")]
+#[derive(Debug, Snafu)]
+#[snafu(display("Module did not initialize"))]
 pub struct NoInitError;
 
 /// Acts like a [Runner](super::runner::Runner) for a single specific module.
@@ -385,7 +391,7 @@ where
         params: M::Params,
         interface: ClientInterface<M>,
         exchange_sender: broadcast::Sender<ExchangePublish>,
-    ) -> Result<Self> {
+    ) -> Result<Self, NoInitError> {
         let mut events = SelectAll::new();
 
         let init_context = InitContext {
@@ -502,11 +508,14 @@ where
         &mut self,
         mut ctx: ModuleContext<'_, M>,
         control_message: ControlCommand,
-    ) -> Result<()> {
+    ) -> Result<(), Whatever> {
         match control_message {
             ControlCommand::Join(join) => {
                 let mut lock = storage::room_mutex(self.room_id);
-                let guard = lock.lock(&mut self.redis_conn).await?;
+                let guard = lock
+                    .lock(&mut self.redis_conn)
+                    .await
+                    .whatever_context("lock poisoned")?;
 
                 let is_room_owner =
                     matches!(self.participant, Participant::User(user) if user == self.room_owner);
@@ -539,12 +548,13 @@ where
                     .set("hand_updated_at", ctx.timestamp)
                     .set("is_room_owner", is_room_owner)
                     .query_async(&mut self.redis_conn)
-                    .await?;
+                    .await
+                    .whatever_context("redis query failed")?;
 
                 let participant_set =
                     storage::get_all_participants(&mut self.redis_conn, self.room_id)
                         .await
-                        .context("Failed to get all active participants")?;
+                        .whatever_context("Failed to get all active participants")?;
 
                 storage::add_participant_to_set(
                     &mut self.redis_conn,
@@ -552,16 +562,19 @@ where
                     self.participant_id,
                 )
                 .await
-                .context("Failed to add self to participants set")?;
+                .whatever_context("Failed to add self to participants set")?;
 
-                guard.unlock(&mut self.redis_conn).await?;
+                guard
+                    .unlock(&mut self.redis_conn)
+                    .await
+                    .whatever_context("Unlock failed")?;
 
                 let mut participants = vec![];
 
                 for id in participant_set {
                     match self.build_participant(id).await {
                         Ok(participant) => participants.push(participant),
-                        Err(e) => bail!("Failed to build participant {}, {}", id, e),
+                        Err(e) => whatever!("Failed to build participant {}, {}", id, e),
                     };
                 }
 
@@ -599,7 +612,9 @@ where
                             control_data: &mut control_data,
                         },
                     )
-                    .await?;
+                    .await
+                    // TODO:(a.weiche) review once SignalingModule was migrated
+                    .whatever_context("Module error")?;
 
                 self.control_data = Some(control_data);
 
@@ -608,15 +623,14 @@ where
                 if let Some(frontend_data) = frontend_data {
                     module_data
                         .insert(&frontend_data)
-                        .context("Failed to convert frontend-data to value")?;
+                        .whatever_context("Failed to convert frontend-data to value")?;
                 }
 
                 for participant in participants.iter_mut() {
                     if let Some(data) = participants_data.remove(&participant.id).flatten() {
-                        participant
-                            .module_data
-                            .insert(&data)
-                            .context("Failed to convert module peer frontend data to value")?;
+                        participant.module_data.insert(&data).whatever_context(
+                            "Failed to convert module peer frontend data to value",
+                        )?;
                     }
                 }
 
@@ -659,11 +673,16 @@ where
                     .set("hand_is_up", true)
                     .set("hand_updated_at", ctx.timestamp)
                     .query_async(&mut self.redis_conn)
-                    .await?;
+                    .await
+                    .whatever_context("RaiseHand query failed")?;
 
                 ctx.invalidate_data();
 
-                self.module.on_event(ctx, Event::RaiseHand).await?;
+                self.module
+                    .on_event(ctx, Event::RaiseHand)
+                    .await
+                    // TODO:(a.weiche) review once SignalingModule was migrated
+                    .whatever_context("Module error")?;
 
                 Ok(())
             }
@@ -672,11 +691,16 @@ where
                     .set("hand_is_up", false)
                     .set("hand_updated_at", ctx.timestamp)
                     .query_async(&mut self.redis_conn)
-                    .await?;
+                    .await
+                    .whatever_context("LowerHand query failed")?;
 
                 ctx.invalidate_data();
 
-                self.module.on_event(ctx, Event::LowerHand).await?;
+                self.module
+                    .on_event(ctx, Event::LowerHand)
+                    .await
+                    // TODO:(a.weiche) review once SignalingModule was migrated
+                    .whatever_context("Module error")?;
 
                 Ok(())
             }
@@ -689,7 +713,7 @@ where
         &mut self,
         ctx: ModuleContext<'_, M>,
         control_message: control::exchange::Message,
-    ) -> Result<()> {
+    ) -> Result<(), Whatever> {
         match control_message {
             control::exchange::Message::Joined(participant_id) => {
                 if self.participant_id == participant_id {
@@ -703,10 +727,11 @@ where
                 self.module
                     .on_event(ctx, Event::ParticipantJoined(participant.id, &mut data))
                     .await
-                    .context("Module error on ParticipantJoined event")?;
+                    // TODO:(a.weiche) review once SignalingModule was migrated
+                    .whatever_context("Module error on ParticipantJoined event")?;
 
                 if let Some(data) = data {
-                    participant.module_data.insert(&data).context(
+                    participant.module_data.insert(&data).whatever_context(
                         "Failed to serialize PeerFrontendData for ParticipantJoined event",
                     )?;
                 }
@@ -727,7 +752,7 @@ where
                 self.module
                     .on_event(ctx, Event::ParticipantLeft(participant_id))
                     .await
-                    .context("Module error on ParticipantLeft event")?;
+                    .whatever_context("Module error on ParticipantLeft event")?;
 
                 self.interface
                     .ws
@@ -749,10 +774,10 @@ where
                 self.module
                     .on_event(ctx, Event::ParticipantUpdated(participant.id, &mut data))
                     .await
-                    .context("Module error on ParticipantUpdated event")?;
+                    .whatever_context("Module error on ParticipantUpdated event")?;
 
                 if let Some(data) = data {
-                    participant.module_data.insert(&data).context(
+                    participant.module_data.insert(&data).whatever_context(
                         "Failed to serialize PeerFrontendData for ParticipantUpdated event",
                     )?;
                 }
@@ -776,11 +801,15 @@ where
         }
     }
 
-    fn publish_exchange_control(&mut self, message: control::exchange::Message) -> Result<()> {
+    fn publish_exchange_control(
+        &mut self,
+        message: control::exchange::Message,
+    ) -> Result<(), Whatever> {
         let message = serde_json::to_string(&NamespacedCommand {
             namespace: NAMESPACE,
             payload: message,
-        })?;
+        })
+        .whatever_context("Failed to serialize")?;
 
         let exchange_publish = ExchangePublish {
             routing_key: control::exchange::current_room_all_participants(self.room_id),
@@ -789,7 +818,7 @@ where
 
         self.exchange_sender
             .send(exchange_publish)
-            .map_err(|e| anyhow::Error::msg(format!("Unable to send exchange_publish, {e}")))?;
+            .whatever_context("Unable to send exchange_publish")?;
         Ok(())
     }
 
@@ -798,7 +827,7 @@ where
         &mut self,
         ctx: ModuleContext<'_, M>,
         exchange_publish: ExchangePublish,
-    ) -> Result<()> {
+    ) -> Result<(), Whatever> {
         let participant_routing_key =
             control::exchange::current_room_by_participant_id(self.room_id, self.participant_id);
         match self.participant {
@@ -826,30 +855,32 @@ where
 
         let namespaced =
             serde_json::from_str::<NamespacedCommand<Value>>(&exchange_publish.message)
-                .context("Failed to read incoming exchange message")?;
+                .whatever_context("Failed to read incoming exchange message")?;
 
         if namespaced.namespace == NAMESPACE {
-            let control_message = serde_json::from_value(namespaced.payload)?;
+            let control_message = serde_json::from_value(namespaced.payload)
+                .whatever_context("Failed to serialize")?;
 
             self.handle_exchange_control_message(ctx, control_message)
                 .await
-                .context("Error when handling ws control message")?;
+                .whatever_context("Error when handling ws control message")?;
 
             Ok(())
         } else if namespaced.namespace == M::NAMESPACE {
-            let module_message = serde_json::from_value(namespaced.payload)?;
+            let module_message = serde_json::from_value(namespaced.payload)
+                .whatever_context("Failed to serialize")?;
 
             self.module
                 .on_event(ctx, Event::Exchange(module_message))
                 .await
-                .context("Module error on exchange event")?;
+                .whatever_context("Module error on exchange event")?;
 
             Ok(())
         } else {
-            bail!(
+            whatever!(
                 "Got exchange message with unknown namespace '{}'",
                 namespaced.namespace
-            )
+            );
         }
     }
 
@@ -890,7 +921,7 @@ where
         }
     }
 
-    async fn leave_room(&mut self) -> Result<()> {
+    async fn leave_room(&mut self) -> Result<(), Whatever> {
         let mut ws_messages = vec![];
         let mut exchange_publish = vec![];
         let mut invalidate_data = false;
@@ -913,7 +944,8 @@ where
         self.module
             .on_event(ctx, Event::Leaving)
             .await
-            .context("Module error on Leaving event")?;
+            // TODO:(a.weiche) review once SignalingModule was migrated
+            .whatever_context("Module error on Leaving event")?;
 
         self.handle_module_requested_actions(
             ws_messages,
@@ -930,7 +962,7 @@ where
     async fn build_participant(
         &mut self,
         id: ParticipantId,
-    ) -> Result<opentalk_types::signaling::control::Participant> {
+    ) -> Result<opentalk_types::signaling::control::Participant, Whatever> {
         let mut participant = opentalk_types::signaling::control::Participant {
             id,
             module_data: Default::default(),
@@ -941,15 +973,18 @@ where
         participant
             .module_data
             .insert(&control_data)
-            .context("Failed to convert ControlData to serde_json::Value")?;
+            .whatever_context("Failed to convert ControlData to serde_json::Value")?;
 
         Ok(participant)
     }
 
-    async fn destroy(mut self) -> Result<()> {
+    async fn destroy(mut self) -> Result<(), Whatever> {
         let mut set_lock = storage::room_mutex(self.room_id);
 
-        let set_guard = set_lock.lock(&mut self.redis_conn).await?;
+        let set_guard = set_lock
+            .lock(&mut self.redis_conn)
+            .await
+            .whatever_context("lock poisoned")?;
 
         storage::set_attribute(
             &mut self.redis_conn,
@@ -958,13 +993,15 @@ where
             "left_at",
             Timestamp::now(),
         )
-        .await?;
+        .await
+        .whatever_context("failed to set attribute")?;
 
-        let destroy_room =
-            storage::participants_all_left(&mut self.redis_conn, self.room_id).await?;
+        let destroy_room = storage::participants_all_left(&mut self.redis_conn, self.room_id)
+            .await
+            .whatever_context("failed to check that all participants left")?;
 
         self.publish_exchange_control(control::exchange::Message::Left(self.participant_id))
-            .context("Failed to send exchange participant-left message on destroy")?;
+            .whatever_context("Failed to send exchange participant-left message on destroy")?;
 
         let ctx = DestroyContext {
             redis_conn: &mut self.redis_conn.clone(),
@@ -975,25 +1012,27 @@ where
         module.on_destroy(ctx).await;
 
         if destroy_room {
-            storage::remove_attribute_key(&mut self.redis_conn, self.room_id, "display_name")
-                .await?;
-            storage::remove_attribute_key(&mut self.redis_conn, self.room_id, "kind").await?;
-            storage::remove_attribute_key(&mut self.redis_conn, self.room_id, "joined_at").await?;
-
-            storage::remove_attribute_key(&mut self.redis_conn, self.room_id, "hand_is_up").await?;
-            storage::remove_attribute_key(&mut self.redis_conn, self.room_id, "hand_updated_at")
-                .await?;
-
-            storage::remove_attribute_key(&mut self.redis_conn, self.room_id, "user_id").await?;
-
-            storage::remove_attribute_key(&mut self.redis_conn, self.room_id, "is_room_owner")
-                .await?;
+            for key in [
+                "display_name",
+                "kind",
+                "joined_at",
+                "hand_is_up",
+                "hand_updated_at",
+                "user_id",
+                "is_room_owner",
+            ] {
+                storage::remove_attribute_key(&mut self.redis_conn, self.room_id, key)
+                    .await
+                    .with_whatever_context(|_| {
+                        format!("failed to remove attribute key '{}'", key)
+                    })?
+            }
         }
 
         set_guard
             .unlock(&mut self.redis_conn)
             .await
-            .context("Failed to unlock set_guard r3dlock while destroying mockrunner")
+            .whatever_context("Failed to unlock set_guard r3dlock while destroying mockrunner")
     }
 }
 
@@ -1082,10 +1121,11 @@ impl<S, R> Interface<S, R> {
         Self { sender, receiver }
     }
 
-    fn send(&self, value: S) -> Result<()> {
+    fn send(&self, value: S) -> Result<(), Whatever> {
         self.sender
             .send(value)
-            .map_err(|e| anyhow::Error::msg(format!("MockWs failed to send message, {e}")))
+            .map_err(|e| format!("Failed to send: {e}"))
+            .whatever_context("MockWs failed to send message")
     }
 
     async fn recv(&mut self) -> Option<R> {

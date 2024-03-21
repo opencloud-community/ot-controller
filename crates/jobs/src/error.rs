@@ -35,5 +35,5 @@ pub enum Error {
     Custom(String),
 
     /// Event deletion failed: {0:?}
-    EventDeletionFailed(#[from] opentalk_controller_utils::deletion::Error),
+    EventDeletionFailed(#[from] anyhow::Error),
 }

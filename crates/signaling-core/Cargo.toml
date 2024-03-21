@@ -3,17 +3,18 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "opentalk-signaling-core"
+authors.workspace = true
 edition = "2021"
 license = "EUPL-1.2"
-authors.workspace = true
-version.workspace = true
+name = "opentalk-signaling-core"
 publish = false
+version.workspace = true
 
 [dependencies]
+reqwest.workspace = true
+anyhow.workspace = true
 actix-http.workspace = true
 actix-rt = { workspace = true, optional = true }
-anyhow.workspace = true
 async-trait.workspace = true
 aws-sdk-s3.workspace = true
 bigdecimal.workspace = true
@@ -29,14 +30,14 @@ opentalk-database.workspace = true
 opentalk-db-storage.workspace = true
 opentalk-r3dlock.workspace = true
 opentalk-types = { workspace = true, features = ["backend"] }
-opentelemetry = { workspace = true, features = ["trace", "metrics"] }
-redis = { workspace = true, features = ["tokio-comp", "connection-manager"] }
+opentelemetry = { workspace = true, features = ["metrics", "trace"] }
+redis = { workspace = true, features = ["connection-manager", "tokio-comp"] }
 redis-args.workspace = true
 rustc-hash.workspace = true
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 slotmap = "1"
-thiserror.workspace = true
+snafu.workspace = true
 tokio-stream.workspace = true
 tokio.workspace = true
 tracing.workspace = true

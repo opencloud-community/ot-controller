@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::{ensure, Context, Result};
+use actix_http::error::PayloadError;
 use aws_sdk_s3::{
     config::{
         endpoint::{Endpoint, EndpointFuture, Params, ResolveEndpoint},
@@ -15,10 +15,83 @@ use aws_sdk_s3::{
 use bytes::Bytes;
 use futures::{Stream, StreamExt};
 use opentalk_controller_settings::MinIO;
+use opentalk_types::api::error::ApiError;
+use snafu::{ensure, OptionExt, ResultExt, Snafu};
 use url::Url;
 
 const CHUNK_SIZE: usize = 5_242_880; // 5 MebiByte (minimum for aws s3)
 
+#[derive(Debug, Snafu)]
+pub enum ObjectStorageError {
+    #[snafu(display("{message}: {source}"))]
+    InvalidSettings {
+        message: String,
+        source: Box<dyn std::error::Error>,
+    },
+
+    InvalidResponse {
+        message: String,
+    },
+
+    Upload {
+        message: String,
+        source: Box<dyn std::error::Error>,
+    },
+
+    Put {
+        message: String,
+        source: Box<dyn std::error::Error>,
+    },
+
+    Get {
+        source: Box<dyn std::error::Error>,
+    },
+
+    Delete {
+        source: Box<dyn std::error::Error>,
+    },
+
+    #[snafu(display("the following bucket is missing: {name}"))]
+    MissingBucket {
+        name: String,
+    },
+
+    #[snafu(whatever)]
+    Other {
+        message: String,
+        #[snafu(source(from(Box<dyn std::error::Error>, Some)))]
+        source: Option<Box<dyn std::error::Error>>,
+    },
+}
+
+impl From<reqwest::Error> for ObjectStorageError {
+    fn from(value: reqwest::Error) -> Self {
+        Self::Other {
+            message: "Reqwest error".into(),
+            source: Some(value.into()),
+        }
+    }
+}
+
+impl From<PayloadError> for ObjectStorageError {
+    fn from(value: PayloadError) -> Self {
+        Self::Other {
+            message: "Actix error".into(),
+            source: Some(value.into()),
+        }
+    }
+}
+
+impl From<ObjectStorageError> for ApiError {
+    fn from(value: ObjectStorageError) -> Self {
+        log::error!("Internal Error: {value}");
+        ApiError::internal()
+    }
+}
+
+type Result<T, E = ObjectStorageError> = std::result::Result<T, E>;
+
+#[derive(Debug, Clone)]
 pub struct ObjectStorage {
     /// The s3 client
     client: Client,
@@ -43,25 +116,30 @@ impl ObjectStorage {
 
         impl ResolveEndpoint for Resolver {
             fn resolve_endpoint(&self, params: &Params) -> EndpointFuture {
-                let url = if let Some(bucket) = params.bucket() {
-                    self.minio_url.join(bucket).unwrap().to_string()
-                } else {
-                    self.minio_url.to_string()
+                let url = params.bucket().map(|bucket| self.minio_url.join(bucket));
+                let url = match url {
+                    Some(Ok(url)) => url.to_string(),
+                    Some(Err(e)) => return EndpointFuture::ready(Err(e.into())),
+                    None => self.minio_url.to_string(),
                 };
-
                 let endpoint = Endpoint::builder().url(url).build();
 
                 EndpointFuture::ready(Ok(endpoint))
             }
         }
 
-        let conf = Builder::new()
-            .endpoint_resolver(Resolver {
-                minio_url: minio.uri.parse()?,
-            })
-            .credentials_provider(credentials)
-            .region(Region::new("unknown"))
-            .build();
+        let conf =
+            Builder::new()
+                .endpoint_resolver(Resolver {
+                    minio_url: minio.uri.parse().map_err(Into::into).context(
+                        InvalidSettingsSnafu {
+                            message: "Invalid minio URI",
+                        },
+                    )?,
+                })
+                .credentials_provider(credentials)
+                .region(Region::new("unknown"))
+                .build();
 
         let client = Client::from_conf(conf);
 
@@ -71,11 +149,16 @@ impl ObjectStorage {
                 .list_buckets()
                 .send()
                 .await
-                .context("Cannot list buckets for configured MinIO storage")?
+                .map_err(Into::into)
+                .context(InvalidSettingsSnafu {
+                    message: "Cannot list buckets for configured MinIO storage",
+                })?
                 .buckets()
                 .iter()
                 .any(|b| b.name() == Some(minio.bucket.as_str())),
-            "Cannot find configured MinIO bucket"
+            MissingBucketSnafu {
+                name: minio.bucket.as_str(),
+            },
         );
 
         log::info!("Using MinIO S3 bucket: {} ", minio.bucket,);
@@ -114,11 +197,14 @@ impl ObjectStorage {
     /// Depending on the data size, this function will either use the `put_object` or `multipart_upload` S3 API call.
     ///
     /// Returns the file size of the uploaded object
-    pub async fn put(
+    pub async fn put<E>(
         &self,
         key: &str,
-        data: impl Stream<Item = Result<Bytes>> + Unpin,
-    ) -> Result<usize> {
+        data: impl Stream<Item = Result<Bytes, E>> + Unpin,
+    ) -> Result<usize>
+    where
+        ObjectStorageError: From<E>,
+    {
         let mut multipart_context = None;
 
         let res = self.put_inner(key, data, &mut multipart_context).await;
@@ -140,7 +226,10 @@ impl ObjectStorage {
                         )
                         .send()
                         .await
-                        .context("failed to complete multipart upload")?;
+                        .map_err(Into::into)
+                        .context(UploadSnafu {
+                            message: "failed to complete multipart upload",
+                        })?;
                 }
                 Err(_) => {
                     // abort the multi part upload in case of error
@@ -151,7 +240,10 @@ impl ObjectStorage {
                         .upload_id(ctx.upload_id)
                         .send()
                         .await
-                        .context("failed to abort multipart upload")?;
+                        .map_err(Into::into)
+                        .context(UploadSnafu {
+                            message: "failed to abort multipart upload",
+                        })?;
                 }
             }
         }
@@ -159,17 +251,22 @@ impl ObjectStorage {
         res
     }
 
-    async fn put_inner(
+    async fn put_inner<E>(
         &self,
         key: &str,
-        mut data: impl Stream<Item = Result<Bytes>> + Unpin,
+        mut data: impl Stream<Item = Result<Bytes, E>> + Unpin,
         multipart_context: &mut Option<MultipartUploadContext>,
-    ) -> Result<usize> {
+    ) -> Result<usize>
+    where
+        ObjectStorageError: From<E>,
+    {
         let mut count = 0;
         let mut file_size = 0;
-        let mut buf = Vec::with_capacity(CHUNK_SIZE * 2);
 
         loop {
+            // This buffer must be reallocated with each iteration since the aws
+            // crate takes ownership and drops the buffer internally.
+            let mut buf = Vec::with_capacity(CHUNK_SIZE * 2);
             let mut last_part = false;
 
             // Read chunk to upload
@@ -206,7 +303,10 @@ impl ObjectStorage {
                     .body(buf.into())
                     .send()
                     .await
-                    .context("failed to put object")?;
+                    .map_err(Into::into)
+                    .context(PutSnafu {
+                        message: "failed to put object",
+                    })?;
             } else {
                 let ctx = if let Some(ctx) = multipart_context {
                     ctx
@@ -218,13 +318,16 @@ impl ObjectStorage {
                         .key(key)
                         .send()
                         .await
-                        .context("failed to create multipart upload")?;
+                        .map_err(Into::into)
+                        .context(PutSnafu {
+                            message: "failed to create multipart upload",
+                        })?;
 
                     // initialize multipart upload lazily once there is data to upload
                     multipart_context.insert(MultipartUploadContext {
-                        upload_id: output
-                            .upload_id
-                            .context("no upload_id in create_multipart_upload response")?,
+                        upload_id: output.upload_id.context(InvalidResponseSnafu {
+                            message: "no upload_id in create_multipart_upload response",
+                        })?,
                         parts: Vec::new(),
                     })
                 };
@@ -241,14 +344,16 @@ impl ObjectStorage {
                     .body(buf.into())
                     .send()
                     .await
-                    .context("failed to upload part")?;
+                    .map_err(Into::into)
+                    .context(PutSnafu {
+                        message: "failed to upload part",
+                    })?;
 
                 ctx.parts.push(
                     CompletedPart::builder()
-                        .e_tag(
-                            part.e_tag()
-                                .context("missing etag in upload_part response")?,
-                        )
+                        .e_tag(part.e_tag().context(InvalidResponseSnafu {
+                            message: "missing etag in upload_part response",
+                        })?)
                         .part_number(count)
                         .build(),
                 );
@@ -257,8 +362,6 @@ impl ObjectStorage {
             if last_part {
                 break;
             }
-
-            buf = Vec::with_capacity(CHUNK_SIZE * 2);
         }
 
         Ok(file_size)
@@ -271,7 +374,9 @@ impl ObjectStorage {
             .bucket(&self.bucket)
             .key(key)
             .send()
-            .await?;
+            .await
+            .map_err(Into::into)
+            .context(GetSnafu)?;
 
         Ok(data.body)
     }
@@ -282,7 +387,9 @@ impl ObjectStorage {
             .bucket(&self.bucket)
             .key(key)
             .send()
-            .await?;
+            .await
+            .map_err(Into::into)
+            .context(DeleteSnafu)?;
 
         Ok(())
     }

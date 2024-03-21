@@ -13,7 +13,7 @@ use actix_web::web::{Data, Json};
 use futures::TryStreamExt;
 use opentalk_database::Db;
 use opentalk_db_storage::rooms::Room;
-use opentalk_signaling_core::assets::{save_asset, verify_storage_usage, AssetError};
+use opentalk_signaling_core::assets::{save_asset, verify_storage_usage};
 use opentalk_signaling_core::{ObjectStorage, Participant, RedisConnection};
 use opentalk_types::api::{
     error::ApiError,
@@ -43,13 +43,7 @@ pub async fn start(
 
     let room = Room::get(&mut conn, body.room_id).await?;
 
-    if let Err(e) = verify_storage_usage(&mut conn, room.created_by).await {
-        if let Some(asset_err) = e.downcast_ref::<AssetError>() {
-            return Err(ApiError::from(asset_err));
-        }
-
-        return Err(e.into());
-    }
+    verify_storage_usage(&mut conn, room.created_by).await?;
 
     let (ticket, resumption) = start_or_continue_signaling_session(
         &mut redis_conn,
@@ -73,24 +67,16 @@ pub async fn upload_render(
     // Assert that the room exists
     Room::get(&mut db.get_conn().await?, query.room_id).await?;
 
-    if let Err(e) = save_asset(
+    save_asset(
         &storage,
         db.into_inner(),
         query.room_id,
         Some("recording"),
         &query.filename,
         "recording-render",
-        data.into_stream().map_err(anyhow::Error::from),
+        data.into_stream(),
     )
-    .await
-    {
-        if let Some(asset_err) = e.downcast_ref::<AssetError>() {
-            return Err(ApiError::from(asset_err));
-        }
-
-        log::error!("Failed to save asset {}: {e}", query.filename);
-        return Err(e.into());
-    }
+    .await?;
 
     Ok(NoContent)
 }

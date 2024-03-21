@@ -2,7 +2,6 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::Result;
 use async_trait::async_trait;
 
 mod any_stream;
@@ -31,7 +30,7 @@ pub use exchange_task::{ExchangeHandle, ExchangeTask, SubscriberHandle};
 pub use init_context::{ExchangeBinding, InitContext};
 pub use metrics::SignalingMetrics;
 pub use module_context::{ExchangePublish, ModuleContext};
-pub use object_storage::ObjectStorage;
+pub use object_storage::{ObjectStorage, ObjectStorageError};
 pub use participant::Participant;
 pub use redis_wrapper::{RedisConnection, RedisMetrics};
 pub use signaling_module::{SignalingModule, SignalingModuleInitData};
@@ -39,10 +38,12 @@ pub use signaling_room_id::SignalingRoomId;
 
 #[async_trait(?Send)]
 pub trait RegisterModules {
-    async fn register(registrar: &mut impl ModulesRegistrar) -> Result<()>;
+    async fn register<E>(registrar: &mut impl ModulesRegistrar<Error = E>) -> Result<(), E>;
 }
 
 #[async_trait(?Send)]
 pub trait ModulesRegistrar {
-    async fn register<M: SignalingModule>(&mut self) -> Result<()>;
+    type Error: Send + Sync;
+
+    async fn register<M: SignalingModule>(&mut self) -> Result<(), Self::Error>;
 }

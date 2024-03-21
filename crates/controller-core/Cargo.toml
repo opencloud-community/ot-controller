@@ -52,6 +52,7 @@ clap.workspace = true
 arc-swap.workspace = true
 
 ### Error handling
+snafu.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
 validator.workspace = true

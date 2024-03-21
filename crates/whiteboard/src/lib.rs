@@ -5,7 +5,6 @@
 use anyhow::Result;
 use client::SpacedeckClient;
 use futures::stream::once;
-use futures::TryStreamExt;
 use opentalk_database::Db;
 use opentalk_signaling_core::{
     assets::{save_asset, AssetError},
@@ -173,11 +172,7 @@ impl SignalingModule for Whiteboard {
             Event::Ext(GetPdfEvent { url_result, ts }) => {
                 let url = url_result?;
 
-                let data = self
-                    .client
-                    .download_pdf(url.clone())
-                    .await?
-                    .map_err(Into::into);
+                let data = self.client.download_pdf(url.clone()).await?;
 
                 let filename = format!("whiteboard_{}.pdf", ts.to_rfc3339());
 
@@ -193,14 +188,13 @@ impl SignalingModule for Whiteboard {
                 .await
                 {
                     Ok(asset_id) => asset_id,
+                    Err(AssetError::AssetStorageExceeded) => {
+                        ctx.ws_send(Error::StorageExceeded);
+                        return Ok(());
+                    }
                     Err(e) => {
-                        if e.downcast_ref::<AssetError>().is_some() {
-                            ctx.ws_send(Error::StorageExceeded);
-                            return Ok(());
-                        }
-
                         log::error!("Failed to save asset {filename}: {e}");
-                        return Err(e);
+                        return Err(anyhow::anyhow!("error: {e}"));
                     }
                 };
 

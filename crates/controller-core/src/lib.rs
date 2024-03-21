@@ -14,7 +14,7 @@
 //! # struct CommunityModules;
 //! # #[async_trait::async_trait(?Send)]
 //! # impl RegisterModules for CommunityModules {
-//! #     async fn register(registrar: &mut impl ModulesRegistrar) -> Result<()> {
+//! #     async fn register<E>(registrar: &mut impl ModulesRegistrar<Error=E>) -> Result<(), E> {
 //! #         unimplemented!();
 //! #     }
 //! # }
@@ -135,7 +135,9 @@ struct ControllerModules<M: RegisterModules>(PhantomData<M>);
 
 #[async_trait(?Send)]
 impl<M: RegisterModules> RegisterModules for ControllerModules<M> {
-    async fn register(registrar: &mut impl ModulesRegistrar) -> Result<()> {
+    async fn register<E>(
+        registrar: &mut impl ModulesRegistrar<Error = E>,
+    ) -> std::result::Result<(), E> {
         registrar.register::<Echo>().await?;
         registrar.register::<BreakoutRooms>().await?;
         registrar.register::<ModerationModule>().await?;
@@ -247,7 +249,11 @@ impl Controller {
         let db = Arc::new(db);
 
         // Connect to MinIO
-        let storage = Arc::new(ObjectStorage::new(&settings.minio).await?);
+        let storage = Arc::new(
+            ObjectStorage::new(&settings.minio)
+                .await
+                .map_err(|e| anyhow::anyhow!("{e}"))?,
+        );
 
         // Discover OIDC Provider
         let oidc = Arc::new(
@@ -479,6 +485,8 @@ impl Controller {
 
 #[async_trait(?Send)]
 impl ModulesRegistrar for Controller {
+    type Error = anyhow::Error;
+
     async fn register<M: SignalingModule>(&mut self) -> Result<()> {
         let init = SignalingModuleInitData {
             startup_settings: self.startup_settings.clone(),
