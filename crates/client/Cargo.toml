@@ -13,14 +13,14 @@ description = "OpenTalk client library"
 
 [dependencies]
 async-trait.workspace = true
-http.workspace = true
 http-request-derive.workspace = true
-reqwest.workspace = true
+http.workspace = true
 opentalk-client-shared.workspace = true
 opentalk-types = { workspace = true, features = ["frontend"] }
+snafu.workspace = true
+reqwest.workspace = true
 url.workspace = true
 
 [dev-dependencies]
-anyhow.workspace = true
-tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread"] }
 reqwest = { workspace = true, features = ["rustls-tls-native-roots"] }
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread"] }

@@ -3342,13 +3342,13 @@ dependencies = [
 name = "opentalk-client"
 version = "0.0.0-dev"
 dependencies = [
- "anyhow",
  "async-trait",
  "http 0.2.11",
  "http-request-derive",
  "opentalk-client-shared",
  "opentalk-types",
  "reqwest",
+ "snafu",
  "tokio",
  "url",
 ]
@@ -3364,7 +3364,7 @@ dependencies = [
  "http-request-derive",
  "serde",
  "serde_json",
- "thiserror",
+ "snafu",
  "url",
 ]
 

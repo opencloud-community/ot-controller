@@ -18,11 +18,11 @@ description = "Types and traits that are used by the OpenTalk client library cra
 async-trait.workspace = true
 bytes.workspace = true
 derive_more.workspace = true
-http.workspace = true
 http-request-derive.workspace = true
-serde.workspace = true
+http.workspace = true
 serde_json.workspace = true
-thiserror.workspace = true
+serde.workspace = true
+snafu.workspace = true
 url.workspace = true
 
 [features]
