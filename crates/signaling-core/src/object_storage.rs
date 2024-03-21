@@ -213,42 +213,54 @@ impl ObjectStorage {
         if let Some(ctx) = multipart_context {
             match &res {
                 Ok(_) => {
-                    // complete the multipart upload
-                    self.client
-                        .complete_multipart_upload()
-                        .bucket(&self.bucket)
-                        .key(key)
-                        .upload_id(ctx.upload_id)
-                        .multipart_upload(
-                            CompletedMultipartUpload::builder()
-                                .set_parts(Some(ctx.parts))
-                                .build(),
-                        )
-                        .send()
-                        .await
-                        .map_err(Into::into)
-                        .context(UploadSnafu {
-                            message: "failed to complete multipart upload",
-                        })?;
+                    self.complete_multipart_upload(key, ctx).await?;
                 }
                 Err(_) => {
-                    // abort the multi part upload in case of error
-                    self.client
-                        .abort_multipart_upload()
-                        .bucket(&self.bucket)
-                        .key(key)
-                        .upload_id(ctx.upload_id)
-                        .send()
-                        .await
-                        .map_err(Into::into)
-                        .context(UploadSnafu {
-                            message: "failed to abort multipart upload",
-                        })?;
+                    self.abort_multipart_upload(key, ctx).await?;
                 }
             }
         }
 
         res
+    }
+
+    async fn complete_multipart_upload(
+        &self,
+        key: &str,
+        ctx: MultipartUploadContext,
+    ) -> Result<()> {
+        self.client
+            .complete_multipart_upload()
+            .bucket(&self.bucket)
+            .key(key)
+            .upload_id(ctx.upload_id)
+            .multipart_upload(
+                CompletedMultipartUpload::builder()
+                    .set_parts(Some(ctx.parts))
+                    .build(),
+            )
+            .send()
+            .await
+            .map_err(Into::into)
+            .context(UploadSnafu {
+                message: "failed to complete multipart upload",
+            })?;
+        Ok(())
+    }
+
+    async fn abort_multipart_upload(&self, key: &str, ctx: MultipartUploadContext) -> Result<()> {
+        self.client
+            .abort_multipart_upload()
+            .bucket(&self.bucket)
+            .key(key)
+            .upload_id(ctx.upload_id)
+            .send()
+            .await
+            .map_err(Into::into)
+            .context(UploadSnafu {
+                message: "failed to abort multipart upload",
+            })?;
+        Ok(())
     }
 
     async fn put_inner<E>(
@@ -264,28 +276,7 @@ impl ObjectStorage {
         let mut file_size = 0;
 
         loop {
-            // This buffer must be reallocated with each iteration since the aws
-            // crate takes ownership and drops the buffer internally.
-            let mut buf = Vec::with_capacity(CHUNK_SIZE * 2);
-            let mut last_part = false;
-
-            // Read chunk to upload
-            loop {
-                match data.next().await {
-                    Some(bytes) => {
-                        buf.extend_from_slice(&bytes?);
-
-                        if buf.len() >= CHUNK_SIZE {
-                            break;
-                        }
-                    }
-                    None => {
-                        // EOS
-                        last_part = true;
-                        break;
-                    }
-                }
-            }
+            let (buf, last_part) = Self::read_bytes_into_buffer(&mut data).await?;
 
             count += 1;
             file_size += buf.len();
@@ -295,68 +286,9 @@ impl ObjectStorage {
             let put_object = last_part && count == 1;
 
             if put_object {
-                self.client
-                    .put_object()
-                    .bucket(&self.bucket)
-                    .key(key)
-                    .content_length(buf.len() as i64)
-                    .body(buf.into())
-                    .send()
-                    .await
-                    .map_err(Into::into)
-                    .context(PutSnafu {
-                        message: "failed to put object",
-                    })?;
+                self.put_object(key, buf).await?;
             } else {
-                let ctx = if let Some(ctx) = multipart_context {
-                    ctx
-                } else {
-                    let output = self
-                        .client
-                        .create_multipart_upload()
-                        .bucket(&self.bucket)
-                        .key(key)
-                        .send()
-                        .await
-                        .map_err(Into::into)
-                        .context(PutSnafu {
-                            message: "failed to create multipart upload",
-                        })?;
-
-                    // initialize multipart upload lazily once there is data to upload
-                    multipart_context.insert(MultipartUploadContext {
-                        upload_id: output.upload_id.context(InvalidResponseSnafu {
-                            message: "no upload_id in create_multipart_upload response",
-                        })?,
-                        parts: Vec::new(),
-                    })
-                };
-
-                // upload a part of the multipart
-                let part = self
-                    .client
-                    .upload_part()
-                    .bucket(&self.bucket)
-                    .key(key)
-                    .upload_id(&ctx.upload_id)
-                    .part_number(count)
-                    .content_length(buf.len() as i64)
-                    .body(buf.into())
-                    .send()
-                    .await
-                    .map_err(Into::into)
-                    .context(PutSnafu {
-                        message: "failed to upload part",
-                    })?;
-
-                ctx.parts.push(
-                    CompletedPart::builder()
-                        .e_tag(part.e_tag().context(InvalidResponseSnafu {
-                            message: "missing etag in upload_part response",
-                        })?)
-                        .part_number(count)
-                        .build(),
-                );
+                self.put_part(key, multipart_context, count, buf).await?;
             }
 
             if last_part {
@@ -365,6 +297,116 @@ impl ObjectStorage {
         }
 
         Ok(file_size)
+    }
+
+    async fn read_bytes_into_buffer<E>(
+        data: &mut (impl Stream<Item = Result<Bytes, E>> + Unpin + Sized),
+    ) -> Result<(Vec<u8>, bool), ObjectStorageError>
+    where
+        ObjectStorageError: From<E>,
+    {
+        let mut buf = Self::initialize_buffer();
+        let mut last_part = false;
+
+        // Read chunk to upload
+        loop {
+            match data.next().await {
+                Some(bytes) => {
+                    buf.extend_from_slice(&bytes?);
+
+                    if buf.len() >= CHUNK_SIZE {
+                        break;
+                    }
+                }
+                None => {
+                    // EOS
+                    last_part = true;
+                    break;
+                }
+            }
+        }
+        Ok((buf, last_part))
+    }
+
+    fn initialize_buffer() -> Vec<u8> {
+        // This buffer must be reallocated on each call since the aws
+        // crate takes ownership and drops the buffer internally.
+        Vec::with_capacity(CHUNK_SIZE * 2)
+    }
+
+    async fn put_object(&self, key: &str, buf: Vec<u8>) -> Result<()> {
+        self.client
+            .put_object()
+            .bucket(&self.bucket)
+            .key(key)
+            .content_length(buf.len() as i64)
+            .body(buf.into())
+            .send()
+            .await
+            .map_err(Into::into)
+            .context(PutSnafu {
+                message: "failed to put object",
+            })?;
+        Ok(())
+    }
+
+    async fn put_part(
+        &self,
+        key: &str,
+        multipart_context: &mut Option<MultipartUploadContext>,
+        count: i32,
+        buf: Vec<u8>,
+    ) -> Result<()> {
+        let ctx = if let Some(ctx) = multipart_context {
+            ctx
+        } else {
+            let output = self
+                .client
+                .create_multipart_upload()
+                .bucket(&self.bucket)
+                .key(key)
+                .send()
+                .await
+                .map_err(Into::into)
+                .context(PutSnafu {
+                    message: "failed to create multipart upload",
+                })?;
+
+            // initialize multipart upload lazily once there is data to upload
+            multipart_context.insert(MultipartUploadContext {
+                upload_id: output.upload_id.context(InvalidResponseSnafu {
+                    message: "no upload_id in create_multipart_upload response",
+                })?,
+                parts: Vec::new(),
+            })
+        };
+
+        // upload a part of the multipart
+        let part = self
+            .client
+            .upload_part()
+            .bucket(&self.bucket)
+            .key(key)
+            .upload_id(&ctx.upload_id)
+            .part_number(count)
+            .content_length(buf.len() as i64)
+            .body(buf.into())
+            .send()
+            .await
+            .map_err(Into::into)
+            .context(PutSnafu {
+                message: "failed to upload part",
+            })?;
+
+        ctx.parts.push(
+            CompletedPart::builder()
+                .e_tag(part.e_tag().context(InvalidResponseSnafu {
+                    message: "missing etag in upload_part response",
+                })?)
+                .part_number(count)
+                .build(),
+        );
+        Ok(())
     }
 
     pub async fn get(&self, key: String) -> Result<ByteStream> {

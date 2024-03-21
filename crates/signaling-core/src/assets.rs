@@ -85,67 +85,44 @@ pub async fn save_asset<E>(
 where
     ObjectStorageError: From<E>,
 {
-    /// rollback s3 storage if errors occurred
-    async fn rollback(storage: &ObjectStorage, asset_id: &AssetId) -> Result<()> {
-        log::info!("Rollback asset upload since room update failed");
-        if let Err(rollback_err) = storage.delete(asset_key(asset_id)).await {
-            log::error!(
-                "Failed to rollback s3 asset after database error, leaking asset: {}",
-                &asset_key(asset_id)
-            );
-            Err(ObjectStorageSnafu.into_error(rollback_err))
-        } else {
-            Ok(())
-        }
-    }
-
-    let mut db_conn = db.get_conn().await.context(DbConnectionSnafu)?;
+    let mut conn = db.get_conn().await.context(DbConnectionSnafu)?;
     let namespace = namespace.map(Into::into);
     let filename = filename.into();
     let kind = kind.into();
 
+    let room = prepare_storage(room_id, &mut conn).await?;
+
     let asset_id = AssetId::generate();
 
-    let room = Room::get(&mut db_conn, room_id)
-        .await
-        .context(DbQuerySnafu)?;
-
-    verify_storage_usage(&mut db_conn, room.created_by).await?;
-
-    // upload to s3 storage
+    // Upload to s3 storage
     let size: Result<i64, _> = storage
         .put(&asset_key(&asset_id), data)
         .await
         .context(ObjectStorageSnafu)?
         .try_into()
         .context(FileSizeSnafu);
+
     let size = match size {
         Ok(size) => size,
         Err(e) => {
-            drop(db_conn);
-            rollback(storage, &asset_id).await?;
+            drop(conn);
+            rollback_object_storage(storage, &asset_id).await?;
             return Err(e);
         }
     };
 
-    // create db entry
-    let result = NewAsset {
-        id: asset_id,
-        namespace,
-        filename,
-        kind,
-        tenant_id: room.tenant_id,
-        size,
-    }
-    .insert_for_room(&mut db_conn, room_id)
-    .await
-    .context(DbQuerySnafu);
+    // Create a database entry for the uploaded asset
+    let result =
+        insert_asset_into_database(&mut conn, namespace, filename, kind, asset_id, room, size)
+            .await
+            .context(DbQuerySnafu);
+
     if let Err(e) = result {
-        drop(db_conn);
+        drop(conn);
         // if there was an error, we roll back and return the original error.
         // if the rollback fails, we return a rollback error with the cause of
         // the rollback and the reason why the rollback failed.
-        return match rollback(storage, &asset_id).await {
+        return match rollback_object_storage(storage, &asset_id).await {
             Ok(_) => Err(e),
             Err(rollback_err) => Err(rollback_err)
                 .with_context(|_| RollbackSnafu::<AssetError> { rollback_reason: e }),
@@ -153,6 +130,46 @@ where
     }
 
     Ok(asset_id)
+}
+
+async fn rollback_object_storage(storage: &ObjectStorage, asset_id: &AssetId) -> Result<()> {
+    log::info!("Rollback asset upload since room update failed");
+    if let Err(rollback_err) = storage.delete(asset_key(asset_id)).await {
+        log::error!(
+            "Failed to rollback s3 asset after database error, leaking asset: {}",
+            &asset_key(asset_id)
+        );
+        Err(ObjectStorageSnafu.into_error(rollback_err))
+    } else {
+        Ok(())
+    }
+}
+
+async fn insert_asset_into_database(
+    db_conn: &mut DbConnection,
+    namespace: Option<String>,
+    filename: String,
+    kind: String,
+    asset_id: AssetId,
+    room: Room,
+    size: i64,
+) -> opentalk_database::Result<Asset> {
+    NewAsset {
+        id: asset_id,
+        namespace,
+        filename,
+        kind,
+        tenant_id: room.tenant_id,
+        size,
+    }
+    .insert_for_room(db_conn, room.id)
+    .await
+}
+
+async fn prepare_storage(room_id: RoomId, conn: &mut DbConnection) -> Result<Room, AssetError> {
+    let room = Room::get(conn, room_id).await.context(DbQuerySnafu)?;
+    verify_storage_usage(conn, room.created_by).await?;
+    Ok(room)
 }
 
 pub struct ByStreamExt(ByteStream);
