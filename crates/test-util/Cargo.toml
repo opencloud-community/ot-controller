@@ -3,23 +3,21 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "opentalk-test-util"
+authors.workspace = true
 edition = "2021"
 license = "EUPL-1.2"
-authors.workspace = true
-version.workspace = true
+name = "opentalk-test-util"
 publish = false
+version.workspace = true
 
 [dependencies]
-anyhow.workspace = true
+diesel = { workspace = true, features = ["serde_json"] }
+diesel-async = { workspace = true, features = ["deadpool", "postgres"] }
 log.workspace = true
 redis.workspace = true
 serde_json.workspace = true
+snafu.workspace = true
 tokio.workspace = true
-diesel = { workspace = true, features = [
-    "serde_json",
-] }
-diesel-async = { workspace = true, features = ["postgres", "deadpool"] }
 
 fern = "0.6"
 pretty_assertions.workspace = true

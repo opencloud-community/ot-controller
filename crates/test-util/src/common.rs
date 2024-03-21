@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::database::DatabaseContext;
-use crate::redis;
-use anyhow::{Context, Result};
+use std::sync::Arc;
+use std::time::Duration;
+
 use kustos::Authz;
 use opentalk_db_storage::users::User;
 use opentalk_signaling_core::{
@@ -16,9 +16,11 @@ use opentalk_types::{
     signaling::{control::event::ControlEvent, Role},
 };
 use pretty_assertions::assert_eq;
-use std::sync::Arc;
-use std::time::Duration;
+use snafu::{ResultExt, Whatever};
 use tokio::sync::broadcast::Sender;
+
+use crate::database::DatabaseContext;
+use crate::redis;
 
 #[derive(Debug)]
 pub struct TestUser {
@@ -77,7 +79,7 @@ impl TestContext {
     }
 }
 
-pub fn setup_logging() -> Result<()> {
+pub fn setup_logging() -> Result<(), Whatever> {
     fern::Dispatch::new()
         .format(|out, message, record| {
             out.finish(format_args!(
@@ -90,7 +92,7 @@ pub fn setup_logging() -> Result<()> {
         .level(log::LevelFilter::Info)
         .chain(std::io::stdout())
         .apply()
-        .context("Failed to setup logging utility")
+        .whatever_context("Failed to setup logging utility")
 }
 
 /// Creates a new [`ModuleTester`] with two users
