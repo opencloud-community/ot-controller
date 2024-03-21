@@ -20,6 +20,7 @@ type Result<T> = std::result::Result<T, SignalingModuleError>;
 
 #[derive(Debug, Snafu)]
 #[snafu(visibility(pub))]
+#[non_exhaustive]
 pub enum SignalingModuleError {
     #[snafu(display("Redis error: {message}",))]
     RedisError {
@@ -38,6 +39,12 @@ pub enum SignalingModuleError {
 
     #[snafu(context(false))]
     R3dlockError { source: opentalk_r3dlock::Error },
+
+    #[cfg(feature = "module_tester")]
+    #[snafu(transparent)]
+    NoInitError {
+        source: crate::module_tester::NoInitError,
+    },
 
     #[snafu(context(false))]
     DatabaseError {
@@ -59,13 +66,6 @@ pub enum SignalingModuleError {
     SerdeJsonError {
         message: String,
         source: serde_json::Error,
-    },
-
-    // TODO:(m.fuss) remove once snafu migration of signaling-core is complete
-    #[snafu(display("Storage error: {message}"))]
-    StorageError {
-        message: String,
-        source: anyhow::Error,
     },
 
     #[snafu(display("Janus error: {message}"))]

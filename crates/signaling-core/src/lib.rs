@@ -34,7 +34,6 @@ pub use object_storage::{ObjectStorage, ObjectStorageError};
 pub use participant::Participant;
 pub use redis_wrapper::{RedisConnection, RedisMetrics};
 pub use signaling_module::*;
-// pub use signaling_module::{SignalingModule, SignalingModuleError, SignalingModuleInitData};
 pub use signaling_room_id::SignalingRoomId;
 
 #[async_trait(?Send)]

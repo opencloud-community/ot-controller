@@ -3796,7 +3796,6 @@ version = "0.0.0-dev"
 dependencies = [
  "async-trait",
  "chrono",
- "futures",
  "log",
  "opentalk-controller-settings",
  "opentalk-database",
@@ -3847,7 +3846,6 @@ version = "0.0.0-dev"
 dependencies = [
  "actix-http",
  "actix-rt",
- "anyhow",
  "async-trait",
  "aws-sdk-s3",
  "bigdecimal",
