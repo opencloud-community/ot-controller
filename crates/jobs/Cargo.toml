@@ -3,30 +3,28 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "opentalk-jobs"
+authors.workspace = true
+description = "OpenTalk job execution system"
 edition = "2021"
 license = "EUPL-1.2"
-authors.workspace = true
-version.workspace = true
+name = "opentalk-jobs"
 publish = false
-description = "OpenTalk job execution system"
+version.workspace = true
 
 [dependencies]
-anyhow.workspace = true
 async-trait.workspace = true
 chrono.workspace = true
+kustos.workspace = true
+log.workspace = true
+opentalk-controller-settings.workspace = true
 opentalk-controller-utils.workspace = true
 opentalk-database.workspace = true
 opentalk-db-storage.workspace = true
-displaydoc.workspace = true
-kustos.workspace = true
-log.workspace = true
-opentalk-nextcloud-client = { workspace = true, default-features = true }
 opentalk-log.workspace = true
+opentalk-nextcloud-client = { workspace = true, default-features = true }
+opentalk-signaling-core.workspace = true
+opentalk-types.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-opentalk-controller-settings.workspace = true
-opentalk-signaling-core.workspace = true
-thiserror.workspace = true
+snafu.workspace = true
 tokio = { workspace = true, features = ["time"] }
-opentalk-types.workspace = true

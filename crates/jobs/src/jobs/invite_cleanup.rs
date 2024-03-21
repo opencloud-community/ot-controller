@@ -15,8 +15,12 @@ use opentalk_log::{debug, info};
 use opentalk_signaling_core::ExchangeHandle;
 use opentalk_types::core::Timestamp;
 use serde::{Deserialize, Serialize};
+use snafu::ResultExt;
 
-use crate::{Error, Job, JobParameters};
+use crate::{
+    error::{ParameterLoadingSnafu, ParameterSerializingSnafu},
+    Error, Job, JobParameters,
+};
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct InviteCleanupParameters {
@@ -25,11 +29,11 @@ pub struct InviteCleanupParameters {
 
 impl JobParameters for InviteCleanupParameters {
     fn try_from_json(json: serde_json::Value) -> Result<Self, Error> {
-        serde_json::from_value(json).map_err(Into::into)
+        serde_json::from_value(json).context(ParameterLoadingSnafu)
     }
 
-    fn to_json(&self) -> serde_json::Value {
-        serde_json::to_value(self).unwrap()
+    fn to_json(&self) -> Result<serde_json::Value, Error> {
+        serde_json::to_value(self).context(ParameterSerializingSnafu)
     }
 }
 

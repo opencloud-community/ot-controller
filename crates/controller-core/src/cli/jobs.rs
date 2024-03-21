@@ -113,7 +113,8 @@ async fn execute_job(
                 .await
         }
         JobType::InviteCleanup => data.execute::<opentalk_jobs::jobs::InviteCleanup>().await,
-    }?;
+    }
+    .map_err(|e| anyhow::anyhow!("{e}"))?;
 
     Ok(())
 }
@@ -135,8 +136,11 @@ fn show_default_parameters(job_type: JobType) -> Result<()> {
 
 fn show_job_type_default_parameters<J: Job>() -> Result<()> {
     use opentalk_jobs::JobParameters;
-    let parameters = J::Parameters::try_from_json(json!({}))?;
-    println!("{}", serde_json::to_string_pretty(&parameters.to_json())?);
+    let parameters = J::Parameters::try_from_json(json!({})).map_err(|e| anyhow::anyhow!("{e}"))?;
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&parameters.to_json().map_err(|e| anyhow::anyhow!("{e}"))?)?
+    );
     Ok(())
 }
 

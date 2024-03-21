@@ -12,8 +12,10 @@ use opentalk_database::Db;
 use opentalk_log::{debug, error, info};
 use opentalk_signaling_core::ExchangeHandle;
 use serde::{Deserialize, Serialize};
+use snafu::ResultExt;
 
 use crate::{
+    error::{ParameterLoadingSnafu, ParameterSerializingSnafu},
     events::{perform_deletion, DeleteSelector},
     Error, Job, JobParameters,
 };
@@ -29,11 +31,11 @@ pub struct AdhocEventCleanupParameters {
 
 impl JobParameters for AdhocEventCleanupParameters {
     fn try_from_json(json: serde_json::Value) -> Result<Self, Error> {
-        serde_json::from_value(json).map_err(Into::into)
+        serde_json::from_value(json).context(ParameterLoadingSnafu)
     }
 
-    fn to_json(&self) -> serde_json::Value {
-        serde_json::to_value(self).unwrap()
+    fn to_json(&self) -> Result<serde_json::Value, Error> {
+        serde_json::to_value(self).context(ParameterSerializingSnafu)
     }
 }
 
@@ -58,7 +60,7 @@ impl Job for AdhocEventCleanup {
         let delete_before =
             Utc::now() - Duration::seconds(parameters.seconds_since_creation.into());
 
-        if let Err(e) = perform_deletion(
+        perform_deletion(
             logger,
             db.clone(),
             exchange_handle,
@@ -67,10 +69,10 @@ impl Job for AdhocEventCleanup {
             DeleteSelector::AdHocCreatedBefore(delete_before),
         )
         .await
-        {
+        .map_err(|e| {
             error!(log: logger, "{e:?}");
-            return Err(Error::JobExecutionFailed);
-        }
+            Error::JobExecutionFailed
+        })?;
         Ok(())
     }
 }
