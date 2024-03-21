@@ -49,6 +49,16 @@ pub enum AssetError {
 
     #[snafu(display("The storage quota was exceeded"))]
     AssetStorageExceeded,
+
+    #[snafu(display("The storage quota was exceeded"))]
+    // Use AssetError instead of Self, since self will refer to the RollbackSnafu inside the expanded code
+    Rollback {
+        /// The error that caused the rollback to fail
+        #[snafu(source(from(AssetError, Box::new)))]
+        source: Box<AssetError>,
+        /// The error that required a rollback
+        rollback_reason: Box<AssetError>,
+    },
 }
 
 impl From<AssetError> for ApiError {
@@ -75,6 +85,20 @@ pub async fn save_asset<E>(
 where
     ObjectStorageError: From<E>,
 {
+    /// rollback s3 storage if errors occurred
+    async fn rollback(storage: &ObjectStorage, asset_id: &AssetId) -> Result<()> {
+        log::info!("Rollback asset upload since room update failed");
+        if let Err(rollback_err) = storage.delete(asset_key(asset_id)).await {
+            log::error!(
+                "Failed to rollback s3 asset after database error, leaking asset: {}",
+                &asset_key(asset_id)
+            );
+            Err(ObjectStorageSnafu.into_error(rollback_err))
+        } else {
+            Ok(())
+        }
+    }
+
     let mut db_conn = db.get_conn().await.context(DbConnectionSnafu)?;
     let namespace = namespace.map(Into::into);
     let filename = filename.into();
@@ -89,17 +113,23 @@ where
     verify_storage_usage(&mut db_conn, room.created_by).await?;
 
     // upload to s3 storage
-    let size = storage
+    let size: Result<i64, _> = storage
         .put(&asset_key(&asset_id), data)
         .await
         .context(ObjectStorageSnafu)?
         .try_into()
-        // FIXME: if the size is too big we need to rollback otherwise the asset will
-        //        remain in the object storage without a DB entry.
-        .context(FileSizeSnafu)?;
+        .context(FileSizeSnafu);
+    let size = match size {
+        Ok(size) => size,
+        Err(e) => {
+            drop(db_conn);
+            rollback(storage, &asset_id).await?;
+            return Err(e);
+        }
+    };
 
     // create db entry
-    let db_insert_res = NewAsset {
+    let result = NewAsset {
         id: asset_id,
         namespace,
         filename,
@@ -108,22 +138,18 @@ where
         size,
     }
     .insert_for_room(&mut db_conn, room_id)
-    .await;
-
-    drop(db_conn);
-
-    // rollback s3 storage if errors occurred
-    if let Err(insert_err) = db_insert_res {
-        log::info!("Rollback asset upload since room update failed");
-        if let Err(rollback_err) = storage.delete(asset_key(&asset_id)).await {
-            log::error!(
-                "Failed to rollback s3 asset after database error, leaking asset: {}",
-                &asset_key(&asset_id)
-            );
-            return Err(ObjectStorageSnafu.into_error(rollback_err));
-        }
-
-        return Err(DbQuerySnafu.into_error(insert_err));
+    .await
+    .context(DbQuerySnafu);
+    if let Err(e) = result {
+        drop(db_conn);
+        // if there was an error, we roll back and return the original error.
+        // if the rollback fails, we return a rollback error with the cause of
+        // the rollback and the reason why the rollback failed.
+        return match rollback(storage, &asset_id).await {
+            Ok(_) => Err(e),
+            Err(rollback_err) => Err(rollback_err)
+                .with_context(|_| RollbackSnafu::<AssetError> { rollback_reason: e }),
+        };
     }
 
     Ok(asset_id)
