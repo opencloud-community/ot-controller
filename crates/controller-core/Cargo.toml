@@ -79,7 +79,7 @@ opentalk-r3dlock.workspace = true
 ### OpenID Connect & JWT
 openidconnect.workspace = true
 reqwest = { workspace = true, features = ["rustls-tls-native-roots"] }
-jsonwebtoken = "9.2"
+jsonwebtoken = "9.3"
 base64.workspace = true
 chrono.workspace = true
 chrono-tz = { workspace = true, features = ["serde"] }
