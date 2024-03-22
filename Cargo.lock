@@ -3886,7 +3886,6 @@ dependencies = [
 name = "opentalk-test-util"
 version = "0.0.0-dev"
 dependencies = [
- "anyhow",
  "diesel",
  "diesel-async",
  "fern",
@@ -3900,6 +3899,7 @@ dependencies = [
  "redis",
  "serde",
  "serde_json",
+ "snafu",
  "tokio",
 ]
 

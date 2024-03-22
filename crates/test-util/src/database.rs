@@ -2,7 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::{Context, Result};
+use std::sync::Arc;
+
 use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
 use opentalk_database::Db;
 use opentalk_db_storage::{
@@ -14,7 +15,7 @@ use opentalk_db_storage::{
     users::{NewUser, User},
 };
 use opentalk_types::core::{GroupName, RoomId, TariffStatus, TenantId, UserId};
-use std::sync::Arc;
+use snafu::{ResultExt, Whatever};
 
 /// Contains the [`Db`] as well as information about the test database
 pub struct DatabaseContext {
@@ -72,14 +73,19 @@ impl DatabaseContext {
         }
     }
 
-    pub async fn create_test_user(&self, n: u32, groups: Vec<String>) -> Result<User> {
-        let mut conn = self.db.get_conn().await?;
+    pub async fn create_test_user(&self, n: u32, groups: Vec<String>) -> Result<User, Whatever> {
+        let mut conn = self
+            .db
+            .get_conn()
+            .await
+            .whatever_context("db connect failed")?;
 
         let tenant = get_or_create_tenant_by_oidc_id(
             &mut conn,
             &OidcTenantId::from("OpenTalkDefaultTenant".to_owned()),
         )
-        .await?;
+        .await
+        .whatever_context("get/create tenant failed")?;
         let tariff = Tariff::get_by_name(&mut conn, "OpenTalkDefaultTariff")
             .await
             .unwrap();
@@ -99,14 +105,19 @@ impl DatabaseContext {
             tariff_status: TariffStatus::Default,
         }
         .insert(&mut conn)
-        .await?;
+        .await
+        .whatever_context("Insert user failed")?;
 
         let groups: Vec<(TenantId, GroupName)> = groups
             .into_iter()
             .map(|name| (tenant.id, GroupName::from(name)))
             .collect();
-        let groups = get_or_create_groups_by_name(&mut conn, &groups).await?;
-        insert_user_into_groups(&mut conn, &user, &groups).await?;
+        let groups = get_or_create_groups_by_name(&mut conn, &groups)
+            .await
+            .whatever_context("create group failed")?;
+        insert_user_into_groups(&mut conn, &user, &groups)
+            .await
+            .whatever_context("add user to group failed")?;
 
         Ok(user)
     }
@@ -116,12 +127,17 @@ impl DatabaseContext {
         _room_id: RoomId,
         created_by: UserId,
         waiting_room: bool,
-    ) -> Result<Room> {
-        let mut conn = self.db.get_conn().await?;
+    ) -> Result<Room, Whatever> {
+        let mut conn = self
+            .db
+            .get_conn()
+            .await
+            .whatever_context("db connect failed")?;
 
         let tenant =
             get_or_create_tenant_by_oidc_id(&mut conn, &OidcTenantId::from("default".to_owned()))
-                .await?;
+                .await
+                .whatever_context("get or create tenant failed")?;
 
         let new_room = NewRoom {
             created_by,
@@ -130,7 +146,10 @@ impl DatabaseContext {
             tenant_id: tenant.id,
         };
 
-        let room = new_room.insert(&mut conn).await?;
+        let room = new_room
+            .insert(&mut conn)
+            .await
+            .whatever_context("insert room failed")?;
 
         Ok(room)
     }
@@ -163,12 +182,12 @@ impl Drop for DatabaseContext {
 }
 
 /// Disconnect all users from the database with `db_name` and drop it.
-async fn drop_database(conn: &mut AsyncPgConnection, db_name: &str) -> Result<()> {
+async fn drop_database(conn: &mut AsyncPgConnection, db_name: &str) -> Result<(), Whatever> {
     let query = diesel::sql_query(format!("DROP DATABASE IF EXISTS {db_name} WITH (FORCE)"));
     query
         .execute(conn)
         .await
-        .with_context(|| format!("Couldn't drop database {db_name}"))?;
+        .with_whatever_context(|_| format!("Couldn't drop database {db_name}"))?;
 
     Ok(())
 }
