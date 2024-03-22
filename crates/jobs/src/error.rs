@@ -2,38 +2,66 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use displaydoc::Display;
+use opentalk_signaling_core::ObjectStorageError;
+use snafu::Snafu;
 
 /// Errors that can occur during job execution
-#[derive(Debug, Display, thiserror::Error)]
+#[derive(Debug, Snafu)]
+#[snafu(visibility(pub(crate)))]
 pub enum Error {
     /// Could not load job parameters
-    ParameterLoading(#[from] serde_json::Error),
+    ParameterLoading {
+        /// The error source
+        source: serde_json::Error,
+    },
+
+    /// Could not serialize job parameters
+    ParameterSerializing {
+        /// The error source
+        source: serde_json::Error,
+    },
 
     /// Job execution timed out
-    Timeout(#[from] tokio::time::error::Elapsed),
+    #[snafu(context(false))]
+    Timeout {
+        /// The error source
+        source: tokio::time::error::Elapsed,
+    },
 
     /// Database error
-    Database(#[from] opentalk_database::DatabaseError),
+    #[snafu(context(false))]
+    Database {
+        /// The error source
+        source: opentalk_database::DatabaseError,
+    },
 
     /// Job execution failed
     JobExecutionFailed,
 
     /// Permission system error
-    Kustos(#[from] kustos::Error),
+    #[snafu(context(false))]
+    Kustos {
+        /// The error source
+        source: kustos::Error,
+    },
 
     /// Found shared folders in the database, but the configuration file contains no shared folder settings
     SharedFoldersNotConfigured,
 
-    /// Error communicating with NextCloud instance: {0:?}
-    NextcloudClient(#[from] opentalk_nextcloud_client::Error),
+    /// Error communicating with NextCloud instance: {source}
+    #[snafu(context(false))]
+    NextcloudClient {
+        /// The error source
+        source: opentalk_nextcloud_client::Error,
+    },
 
     /// Error performing changes in the object storage
-    ObjectStorage(#[source] anyhow::Error),
+    #[snafu(context(false))]
+    ObjectStorage {
+        /// The error source
+        source: ObjectStorageError,
+    },
 
-    /// {0}
-    Custom(String),
-
-    /// Event deletion failed: {0:?}
-    EventDeletionFailed(#[from] anyhow::Error),
+    /// Event deletion failed
+    EventDeletionFailed,
 }

@@ -109,7 +109,7 @@ pub trait JobParameters: Sized {
     fn try_from_json(json: serde_json::Value) -> Result<Self, Error>;
 
     /// Serialize the job parameters to JSON
-    fn to_json(&self) -> serde_json::Value;
+    fn to_json(&self) -> Result<serde_json::Value, Error>;
 }
 
 impl JobParameters for () {
@@ -117,8 +117,8 @@ impl JobParameters for () {
         Ok(())
     }
 
-    fn to_json(&self) -> serde_json::Value {
-        json!({})
+    fn to_json(&self) -> Result<serde_json::Value, Error> {
+        Ok(json!({}))
     }
 }
 

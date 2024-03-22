@@ -3674,10 +3674,8 @@ dependencies = [
 name = "opentalk-jobs"
 version = "0.0.0-dev"
 dependencies = [
- "anyhow",
  "async-trait",
  "chrono",
- "displaydoc",
  "kustos",
  "log",
  "opentalk-controller-settings",
@@ -3690,7 +3688,7 @@ dependencies = [
  "opentalk-types",
  "serde",
  "serde_json",
- "thiserror",
+ "snafu",
  "tokio",
 ]
 
