@@ -11,7 +11,7 @@ use actix_web::dev::{Service, Transform};
 use actix_web::{
     dev::ServiceRequest, dev::ServiceResponse, Error, HttpMessage, HttpResponse, Result,
 };
-use casbin::{CoreApi, Result as CasbinResult};
+use casbin::CoreApi;
 use futures::future::{ok, Ready};
 use futures::Future;
 use itertools::Itertools;
@@ -33,14 +33,11 @@ pub struct KustosService {
 }
 
 impl KustosService {
-    pub async fn new(
-        enforcer: Arc<RwLock<SyncedEnforcer>>,
-        strip_versioned_path: bool,
-    ) -> CasbinResult<Self> {
-        Ok(KustosService {
+    pub async fn new(enforcer: Arc<RwLock<SyncedEnforcer>>, strip_versioned_path: bool) -> Self {
+        KustosService {
             strip_versioned_path,
             enforcer,
-        })
+        }
     }
 
     pub fn get_enforcer(&self) -> Arc<RwLock<SyncedEnforcer>> {
@@ -231,16 +228,16 @@ mod tests {
 
     const MODEL: &str = r#"[request_definition]
     r = sub, dom, obj, act
-    
+
     [policy_definition]
     p = sub, dom, obj, act
-    
+
     [role_definition]
     g = _, _, _
-    
+
     [policy_effect]
     e = some(where (p.eft == allow))
-    
+
     [matchers]
     m = g(r.sub, p.sub, r.dom) && r.dom == p.dom && keyMatch2(r.obj,p.obj) && r.act == p.act || r.sub == "admin"  || r.act == "OPTIONS""#;
 
@@ -276,7 +273,7 @@ mod tests {
         let adapter = casbin::MemoryAdapter::default();
         let enforcer = Arc::new(RwLock::new(SyncedEnforcer::new(model, adapter).await?));
 
-        let casbin_middleware = KustosService::new(enforcer, false).await.unwrap();
+        let casbin_middleware = KustosService::new(enforcer, false).await;
         assert!(casbin_middleware
             .get_enforcer()
             .write()

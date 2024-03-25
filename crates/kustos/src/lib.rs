@@ -169,8 +169,8 @@ impl Authz {
     }
 
     // TODO(r.floren) would be place for a feature gate to use this with other frameworks as well.
-    pub async fn actix_web_middleware(&self, strip_versioned_path: bool) -> Result<KustosService> {
-        Ok(crate::actix_web::KustosService::new(self.inner.clone(), strip_versioned_path).await?)
+    pub async fn actix_web_middleware(&self, strip_versioned_path: bool) -> KustosService {
+        crate::actix_web::KustosService::new(self.inner.clone(), strip_versioned_path).await
     }
 
     /// Grants the user access to the resources with access

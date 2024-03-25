@@ -343,7 +343,7 @@ impl Controller {
             log::info!("Making sure the default permissions are set");
             check_or_create_kustos_default_permissions(&authz).await?;
 
-            let authz_middleware = authz.actix_web_middleware(true).await?;
+            let authz_middleware = authz.actix_web_middleware(true).await;
 
             let metrics = Data::new(self.metrics);
 
