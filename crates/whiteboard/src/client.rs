@@ -2,11 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::{bail, Context, Result};
 use bytes::Bytes;
 use futures::Stream;
+use opentalk_signaling_core::SignalingModuleError;
 use reqwest::{Client, Url};
 use serde::{Deserialize, Serialize};
+use snafu::whatever;
 
 const API_TOKEN_HEADER: &str = "x-spacedeck-api-token";
 
@@ -62,7 +63,7 @@ impl SpacedeckClient {
         &self,
         name: &str,
         parent_id: Option<&str>,
-    ) -> Result<PostSpacesResponse> {
+    ) -> Result<PostSpacesResponse, SignalingModuleError> {
         let url = self.base_url.join("api/spaces")?;
 
         let body = PostSpacesRequest {
@@ -81,7 +82,7 @@ impl SpacedeckClient {
             .await?;
 
         if !response.status().is_success() {
-            bail!("Failed to create space, status code: {}", response.status())
+            whatever!("Failed to create space, status code: {}", response.status())
         }
 
         let response = response.json().await?;
@@ -92,7 +93,7 @@ impl SpacedeckClient {
     /// Generates the current whiteboard as PDF document.
     ///
     /// Returns the URL to the document
-    pub(crate) async fn get_pdf(&self, id: &str) -> Result<Url> {
+    pub(crate) async fn get_pdf(&self, id: &str) -> Result<Url, SignalingModuleError> {
         let url = self.base_url.join(&format!("api/spaces/{id}/pdf"))?;
 
         let response = self
@@ -103,7 +104,7 @@ impl SpacedeckClient {
             .await?;
 
         if !response.status().is_success() {
-            bail!(
+            whatever!(
                 "Failed to get space `{}` as PDF document, status code: {}",
                 id,
                 response.status()
@@ -112,19 +113,20 @@ impl SpacedeckClient {
 
         let response: GetPdfResponse = response.json().await?;
 
-        self.base_url
-            .join(response.url.as_str())
-            .context("Failed to join PDF url with spacedeck base url")
+        let url = self.base_url.join(response.url.as_str())?;
+
+        Ok(url)
     }
 
     pub(crate) async fn download_pdf(
         &self,
         pdf_url: Url,
-    ) -> Result<impl Stream<Item = reqwest::Result<Bytes>> + std::marker::Unpin> {
+    ) -> Result<impl Stream<Item = reqwest::Result<Bytes>> + std::marker::Unpin, SignalingModuleError>
+    {
         let response = self.client.get(pdf_url).send().await?;
 
         if !response.status().is_success() {
-            bail!(
+            whatever!(
                 "Failed to get binary pdf data, status code: {}",
                 response.status()
             )
@@ -134,7 +136,7 @@ impl SpacedeckClient {
     }
 
     /// Delete the space with the provided `id`
-    pub(crate) async fn delete_space(&self, id: &str) -> Result<()> {
+    pub(crate) async fn delete_space(&self, id: &str) -> Result<(), SignalingModuleError> {
         let url = self.base_url.join(&format!("api/spaces/{id}"))?;
 
         let response = self
@@ -145,7 +147,7 @@ impl SpacedeckClient {
             .await?;
 
         if !response.status().is_success() {
-            bail!(
+            whatever!(
                 "Failed to delete space `{}`, status code: {}",
                 id,
                 response.status()

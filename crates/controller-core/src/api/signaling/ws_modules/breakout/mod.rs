@@ -6,11 +6,10 @@
 
 use self::storage::BreakoutConfig;
 use actix_http::ws::CloseCode;
-use anyhow::{bail, Result};
 use futures::FutureExt;
 use opentalk_signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
-    SignalingModuleInitData, SignalingRoomId,
+    SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
 use opentalk_types::{
     core::{BreakoutRoomId, ParticipantId, RoomId},
@@ -24,6 +23,7 @@ use opentalk_types::{
         Role,
     },
 };
+use snafu::whatever;
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
 use tokio::time::sleep;
@@ -59,7 +59,7 @@ impl SignalingModule for BreakoutRooms {
         ctx: InitContext<'_, Self>,
         _params: &Self::Params,
         _protocol: &'static str,
-    ) -> Result<Option<Self>> {
+    ) -> Result<Option<Self>, SignalingModuleError> {
         Ok(Some(Self {
             id: ctx.participant_id(),
             parent: ctx.room().id,
@@ -72,7 +72,7 @@ impl SignalingModule for BreakoutRooms {
         &mut self,
         mut ctx: ModuleContext<'_, Self>,
         event: Event<'_, Self>,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         match event {
             Event::Joined {
                 control_data,
@@ -100,7 +100,7 @@ impl SignalingModule for BreakoutRooms {
                         } else if self.breakout_room.is_some() {
                             // The breakout room is expired and we tried to join it, exit here
                             ctx.exit(None);
-                            bail!("joined already expired room")
+                            whatever!("joined already expired room")
                         }
                     }
 
@@ -164,7 +164,7 @@ impl SignalingModule for BreakoutRooms {
                     });
                 } else if self.breakout_room.is_some() {
                     ctx.exit(Some(CloseCode::Error));
-                    bail!("Inside breakout room, but no config is set");
+                    whatever!("Inside breakout room, but no config is set")
                 }
 
                 Ok(())
@@ -217,7 +217,9 @@ impl SignalingModule for BreakoutRooms {
 
     async fn on_destroy(self, _ctx: DestroyContext<'_>) {}
 
-    async fn build_params(_init: SignalingModuleInitData) -> Result<Option<Self::Params>> {
+    async fn build_params(
+        _init: SignalingModuleInitData,
+    ) -> Result<Option<Self::Params>, SignalingModuleError> {
         Ok(Some(()))
     }
 }
@@ -228,7 +230,7 @@ impl BreakoutRooms {
         ctx: &mut ModuleContext<'_, Self>,
         room: SignalingRoomId,
         list: &mut Vec<ParticipantInOtherRoom>,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         let breakout_room_participants =
             control::storage::get_all_participants(ctx.redis_conn(), room).await?;
 
@@ -272,7 +274,7 @@ impl BreakoutRooms {
         &mut self,
         mut ctx: ModuleContext<'_, Self>,
         msg: BreakoutCommand,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         if ctx.role() != Role::Moderator {
             ctx.ws_send(Error::InsufficientPermissions);
             return Ok(());
@@ -339,7 +341,7 @@ impl BreakoutRooms {
         &mut self,
         mut ctx: ModuleContext<'_, Self>,
         msg: exchange::Message,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         match msg {
             exchange::Message::Start(start) => {
                 let assignment = start.assignments.get(&self.id).copied();

@@ -3,11 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use actix_http::ws::CloseCode;
-use anyhow::Result;
 use opentalk_signaling_core::{
     control::{self, ControlStateExt as _},
-    DestroyContext, Event, InitContext, ModuleContext, RedisConnection, SignalingModule,
-    SignalingModuleInitData, SignalingRoomId,
+    DestroyContext, Event, InitContext, ModuleContext, RedisConnection, SerdeJsonSnafu,
+    SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
 use opentalk_types::{
     core::{ParticipantId, RoomId, UserId},
@@ -21,6 +20,7 @@ use opentalk_types::{
         ModulePeerData, Role,
     },
 };
+use snafu::ResultExt;
 use std::iter::zip;
 
 pub use opentalk_types::signaling::moderation::NAMESPACE;
@@ -40,18 +40,23 @@ async fn build_waiting_room_participants(
     room_id: RoomId,
     list: &Vec<ParticipantId>,
     waiting_room_state: WaitingRoomState,
-) -> Result<Vec<Participant>> {
+) -> Result<Vec<Participant>, SignalingModuleError> {
     let mut waiting_room = Vec::with_capacity(list.len());
 
     for id in list {
         let control_data =
-            ControlState::from_redis(redis_conn, SignalingRoomId::new(room_id, None), *id)
-                .await
-                .map_err(|e| anyhow::anyhow!("{e}"))?;
+            ControlState::from_redis(redis_conn, SignalingRoomId::new(room_id, None), *id).await?;
+        // .whatever_context::<&str, SignalingModuleError>("Failed to get control state")?;
 
         let mut module_data = ModulePeerData::new();
-        module_data.insert(&control_data)?;
-        module_data.insert(&waiting_room_state)?;
+        module_data.insert(&control_data).context(SerdeJsonSnafu {
+            message: "Failed to serialize control state",
+        })?;
+        module_data
+            .insert(&waiting_room_state)
+            .context(SerdeJsonSnafu {
+                message: "Failed to serialize waiting room state",
+            })?;
 
         waiting_room.push(Participant {
             id: *id,
@@ -66,7 +71,7 @@ async fn set_waiting_room_enabled(
     ctx: &mut ModuleContext<'_, ModerationModule>,
     room_id: RoomId,
     enabled: bool,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     storage::set_waiting_room_enabled(ctx.redis_conn(), room_id, enabled).await?;
 
     ctx.exchange_publish(
@@ -93,7 +98,7 @@ impl SignalingModule for ModerationModule {
         ctx: InitContext<'_, Self>,
         _params: &Self::Params,
         _protocol: &'static str,
-    ) -> Result<Option<Self>> {
+    ) -> Result<Option<Self>, SignalingModuleError> {
         Ok(Some(Self {
             room: ctx.room_id(),
             id: ctx.participant_id(),
@@ -104,7 +109,7 @@ impl SignalingModule for ModerationModule {
         &mut self,
         mut ctx: ModuleContext<'_, Self>,
         event: Event<'_, Self>,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         match event {
             Event::Joined {
                 control_data: _,
@@ -383,12 +388,13 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
-                let control_data = ControlState::from_redis(ctx.redis_conn(), self.room, id)
-                    .await
-                    .map_err(|e| anyhow::anyhow!("Error: {e}"))?;
+                let control_data =
+                    ControlState::from_redis(ctx.redis_conn(), self.room, id).await?;
 
                 let mut module_data = ModulePeerData::new();
-                module_data.insert(&control_data)?;
+                module_data.insert(&control_data).context(SerdeJsonSnafu {
+                    message: "Failed to serialize control state",
+                })?;
 
                 ctx.ws_send(ModerationEvent::JoinedWaitingRoom(Participant {
                     id,
@@ -452,7 +458,9 @@ impl SignalingModule for ModerationModule {
         }
     }
 
-    async fn build_params(_init: SignalingModuleInitData) -> Result<Option<Self::Params>> {
+    async fn build_params(
+        _init: SignalingModuleInitData,
+    ) -> Result<Option<Self::Params>, SignalingModuleError> {
         Ok(Some(()))
     }
 }

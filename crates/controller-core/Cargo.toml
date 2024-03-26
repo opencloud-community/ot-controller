@@ -19,9 +19,7 @@ opentalk-db-storage.workspace = true
 opentalk-janus-media.workspace = true
 opentalk-jobs.workspace = true
 opentalk-mail-worker-protocol = { workspace = true, features = ["client"] }
-opentalk-nextcloud-client = { workspace = true, default-features = false, features = [
-    "rustls-tls-native-roots",
-] }
+opentalk-nextcloud-client = { workspace = true, default-features = false, features = ["rustls-tls-native-roots"] }
 opentalk-signaling-core.workspace = true
 opentalk-types = { workspace = true, features = ["backend", "clap"] }
 
@@ -31,15 +29,9 @@ owo-colors.workspace = true
 log = { workspace = true, features = ["serde"] }
 tracing.workspace = true
 tracing-futures = "0.2"
-tracing-subscriber = { version = "0.3", features = [
-    "parking_lot",
-    "env-filter",
-] }
+tracing-subscriber = { version = "0.3", features = ["parking_lot", "env-filter"] }
 tracing-opentelemetry.workspace = true
-opentelemetry = { workspace = true, features = [
-    "trace",
-    "metrics",
-] }
+opentelemetry = { workspace = true, features = ["trace", "metrics"] }
 opentelemetry-otlp = "0.15"
 opentelemetry-prometheus = "0.15"
 opentelemetry_sdk = { version = "0.22", features = ["rt-tokio-current-thread", "metrics"] }
@@ -52,8 +44,8 @@ clap.workspace = true
 arc-swap.workspace = true
 
 ### Error handling
-snafu.workspace = true
 anyhow.workspace = true
+snafu.workspace = true
 thiserror.workspace = true
 validator.workspace = true
 
@@ -133,13 +125,7 @@ pretty_assertions.workspace = true
 
 [build-dependencies]
 anyhow.workspace = true
-vergen = { version = "8", features = [
-    "build",
-    "cargo",
-    "rustc",
-    "git",
-    "git2",
-] }
+vergen = { version = "8", features = ["build", "cargo", "rustc", "git", "git2"] }
 
 [package.metadata.cargo-machete]
 ignored = [

@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use crate::settings::{self, Connection};
-use anyhow::{bail, Context, Result};
 use futures::{ready, stream::FuturesUnordered};
 use lapin_pool::{RabbitMqChannel, RabbitMqPool};
 use opentalk_controller_settings::SharedSettings;
@@ -14,10 +13,13 @@ use opentalk_janus_client::types::{SdpAnswer, SdpOffer};
 use opentalk_janus_client::{
     ClientId, JanusMessage, JsepType, RoomId as JanusRoomId, TrickleCandidate,
 };
-use opentalk_signaling_core::RedisConnection;
+use opentalk_signaling_core::{
+    JanusClientSnafu, RedisConnection, RedisSnafu, SerdeJsonSnafu, SignalingModuleError,
+};
 use opentalk_types::signaling::media::{command::SubscriberConfiguration, MediaSessionType};
 use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
+use snafu::{whatever, OptionExt, ResultExt};
 use std::borrow::{Borrow, Cow};
 use std::cmp::min;
 use std::collections::HashSet;
@@ -121,7 +123,7 @@ impl McuPool {
         mut redis: RedisConnection,
         controller_shutdown_sig: broadcast::Receiver<()>,
         controller_reload_sig: broadcast::Receiver<()>,
-    ) -> Result<Arc<Self>> {
+    ) -> Result<Arc<Self>, SignalingModuleError> {
         let mcu_config = settings::JanusMcuConfig::extract(settings)?;
 
         let (shutdown, _) = broadcast::channel(1);
@@ -193,7 +195,7 @@ impl McuPool {
     /// This function will gracefully remove an active janus client if it happens to be missing
     /// in the new config. The Publishers & Subscribers on the removed janus will get a WebRtcDown
     /// event and should reconnect in order to use a different janus.
-    pub async fn reload_janus_config(&self) -> Result<()> {
+    pub async fn reload_janus_config(&self) -> Result<(), SignalingModuleError> {
         let mut mcu_settings = self.mcu_config.write().await;
 
         let settings = self.shared_settings.load_full();
@@ -262,20 +264,24 @@ impl McuPool {
         &self,
         redis: &mut RedisConnection,
         clients: &'guard RwLockReadGuard<'guard, HashSet<McuClient>>,
-    ) -> Result<(&'guard McuClient, Option<usize>)> {
+    ) -> Result<(&'guard McuClient, Option<usize>), SignalingModuleError> {
         // Get all mcu's in order lowest to highest
-        let ids: Vec<String> = redis.zrangebyscore(MCU_LOAD, "-inf", "+inf").await?;
+        let ids: Vec<String> = redis
+            .zrangebyscore(MCU_LOAD, "-inf", "+inf")
+            .await
+            .context(RedisSnafu {
+                message: "Failed to get mcu ids",
+            })?;
 
         // choose the first available mcu
         for id in ids {
             let (id, loop_index) = if let Some((id, loop_index)) = id.rsplit_once('@') {
                 (
                     id,
-                    Some(
-                        loop_index
-                            .parse::<usize>()
-                            .context("Failed to parse loop_index")?,
-                    ),
+                    Some(whatever!(
+                        loop_index.parse::<usize>(),
+                        "Failed to parse loop_index"
+                    )),
                 )
             } else {
                 (id.as_str(), None)
@@ -286,26 +292,22 @@ impl McuPool {
             }
         }
 
-        bail!("Failed to choose client")
+        whatever!("Failed to choose client")
     }
 
     pub async fn new_publisher(
         &self,
         event_sink: mpsc::Sender<(MediaSessionKey, WebRtcEvent)>,
         media_session_key: MediaSessionKey,
-    ) -> Result<JanusPublisher> {
+    ) -> Result<JanusPublisher, SignalingModuleError> {
         let mut redis = self.redis.clone();
 
         let clients = self.clients.read().await;
-        let (client, loop_index) = self
-            .choose_client(&mut redis, &clients)
-            .await
-            .context("Failed to choose McuClient")?;
+        let (client, loop_index) = self.choose_client(&mut redis, &clients).await?;
 
         let (handle, room_id) = self
             .create_publisher_handle(client, media_session_key, loop_index)
-            .await
-            .context("Failed to get or create publisher handle")?;
+            .await?;
 
         let (destroy, destroy_sig) = oneshot::channel();
 
@@ -314,17 +316,23 @@ impl McuPool {
             mcu_id: Cow::Borrowed(client.id.0.as_ref()),
             loop_index,
         })
-        .context("Failed to serialize publisher info")?;
+        .context(SerdeJsonSnafu {
+            message: "Failed to serialize publisher info",
+        })?;
 
         redis
             .hset(PUBLISHER_INFO, media_session_key.to_string(), info)
             .await
-            .context("Failed to set publisher info")?;
+            .context(RedisSnafu {
+                message: "Failed to set publisher info",
+            })?;
 
         redis
             .zincr(MCU_LOAD, mcu_load_key(&client.id, loop_index), 1)
             .await
-            .context("Failed to increment handle count")?;
+            .context(RedisSnafu {
+                message: "Failed to increment handle count",
+            })?;
 
         tokio::spawn(JanusPublisher::run(
             media_session_key,
@@ -352,12 +360,14 @@ impl McuPool {
         client: &McuClient,
         media_session_key: MediaSessionKey,
         loop_index: Option<usize>,
-    ) -> Result<(opentalk_janus_client::Handle, JanusRoomId)> {
+    ) -> Result<(opentalk_janus_client::Handle, JanusRoomId), SignalingModuleError> {
         let handle = client
             .session
             .attach_to_plugin(opentalk_janus_client::JanusPlugin::VideoRoom, loop_index)
             .await
-            .context("Failed to attach session to videoroom plugin")?;
+            .context(JanusClientSnafu {
+                message: "Failed to attach session to videoroom plugin",
+            })?;
 
         // TODO in the original code there was a check if a room for this publisher exists, check if necessary
 
@@ -381,11 +391,13 @@ impl McuPool {
             ..Default::default()
         };
 
-        let (response, _) = handle.send(request).await?;
+        let (response, _) = handle.send(request).await.context(JanusClientSnafu {
+            message: "Failed to create VideoRoomPlugin",
+        })?;
         let room_id = match response {
             opentalk_janus_client::incoming::VideoRoomPluginDataCreated::Ok { room, .. } => room,
             opentalk_janus_client::incoming::VideoRoomPluginDataCreated::Err(e) => {
-                bail!("Failed to create videoroom, got error response: {}", e);
+                whatever!("Failed to create videoroom, got error response: {}", e);
             }
         };
 
@@ -403,7 +415,9 @@ impl McuPool {
             token: None,
         };
 
-        let (response, _) = handle.send(join_request).await?;
+        let (response, _) = handle.send(join_request).await.context(JanusClientSnafu {
+            message: "Failed to join publisher",
+        })?;
 
         match response {
             opentalk_janus_client::incoming::VideoRoomPluginDataJoined::Ok { .. } => {
@@ -416,7 +430,7 @@ impl McuPool {
                 Ok((handle, room_id))
             }
             opentalk_janus_client::incoming::VideoRoomPluginDataJoined::Err(e) => {
-                bail!("Failed to join videoroom, got error response: {}", e);
+                whatever!("Failed to join videoroom, got error response: {}", e);
             }
         }
     }
@@ -425,23 +439,25 @@ impl McuPool {
         &self,
         event_sink: mpsc::Sender<(MediaSessionKey, WebRtcEvent)>,
         media_session_key: MediaSessionKey,
-    ) -> Result<JanusSubscriber> {
+    ) -> Result<JanusSubscriber, SignalingModuleError> {
         let mut redis = self.redis.clone();
 
         let publisher_info_json: String = redis
             .hget(PUBLISHER_INFO, media_session_key.to_string())
             .await
-            .with_context(|| {
-                format!("Failed to get mcu id for media session key {media_session_key}",)
+            .with_context(|_| RedisSnafu {
+                message: format!("Failed to get mcu id for media session key {media_session_key}",),
             })?;
 
-        let info: PublisherInfo = serde_json::from_str(&publisher_info_json)
-            .context("Failed to deserialize publisher info")?;
+        let info: PublisherInfo =
+            serde_json::from_str(&publisher_info_json).context(SerdeJsonSnafu {
+                message: "Failed to deserialize publisher info",
+            })?;
 
         let clients = self.clients.read().await;
         let client = clients
             .get(info.mcu_id.as_ref())
-            .context("Publisher stored unknown mcu id")?;
+            .whatever_context::<&str, SignalingModuleError>("Publisher stored unknown mcu id")?;
 
         let handle = client
             .session
@@ -450,12 +466,16 @@ impl McuPool {
                 info.loop_index,
             )
             .await
-            .context("Failed to attach to videoroom plugin")?;
+            .context(JanusClientSnafu {
+                message: "Failed to attach to videoroom plugin",
+            })?;
 
         redis
             .zincr(MCU_LOAD, mcu_load_key(&client.id, info.loop_index), 1)
             .await
-            .context("Failed to increment handle count")?;
+            .context(RedisSnafu {
+                message: "Failed to increment handle count",
+            })?;
 
         let (destroy, destroy_sig) = oneshot::channel();
 
@@ -730,7 +750,7 @@ impl McuClient {
         redis: &mut RedisConnection,
         config: settings::Connection,
         events_sender: mpsc::Sender<(ClientId, Arc<JanusMessage>)>,
-    ) -> Result<Self> {
+    ) -> Result<Self, SignalingModuleError> {
         // We sent at most two signals
         let (pubsub_shutdown, _) = broadcast::channel::<ShutdownSignal>(1);
 
@@ -753,13 +773,17 @@ impl McuClient {
                 redis
                     .zincr(MCU_LOAD, mcu_load_key(&id, Some(loop_index)), 0)
                     .await
-                    .context("Failed to initialize handle count")?;
+                    .context(RedisSnafu {
+                        message: "Failed to initialize handle count",
+                    })?;
             }
         } else {
             redis
                 .zincr(MCU_LOAD, mcu_load_key(&id, None), 0)
                 .await
-                .context("Failed to initialize handle count")?;
+                .context(RedisSnafu {
+                    message: "Failed to initialize handle count",
+                })?;
         }
 
         let mut client = opentalk_janus_client::Client::new(
@@ -768,14 +792,16 @@ impl McuClient {
             events_sender.clone(),
         )
         .await
-        .context("Failed to create janus client")?;
+        .context(JanusClientSnafu {
+            message: "Failed to create janus client",
+        })?;
 
         let session = match client.create_session().await {
             Ok(session) => session,
             Err(e) => {
                 // destroy client to clean up rabbitmq consumer
                 client.destroy().await;
-                bail!("Failed to create session, {}", e);
+                whatever!("Failed to create session, {}", e);
             }
         };
 
@@ -849,31 +875,29 @@ pub struct JanusPublisher {
 }
 
 impl JanusPublisher {
-    pub async fn send_message(&self, request: Request) -> Result<Response> {
+    pub async fn send_message(&self, request: Request) -> Result<Response, SignalingModuleError> {
         match request {
             Request::SdpOffer(offer) => {
-                let response: opentalk_janus_client::Jsep = send_offer(
-                    &self.handle,
-                    (opentalk_janus_client::JsepType::Offer, offer).into(),
+                let response: opentalk_janus_client::Jsep = whatever!(
+                    send_offer(
+                        &self.handle,
+                        (opentalk_janus_client::JsepType::Offer, offer).into(),
+                    )
+                    .await,
+                    "Failed to send offer"
                 )
-                .await
-                .context("Failed to send SDP offer")?
                 .into();
 
                 log::trace!("Publisher Send received: {:?}", &response);
                 Ok(Response::SdpAnswer(response))
             }
             Request::Candidate(candidate) => {
-                send_candidate(&self.handle, candidate)
-                    .await
-                    .context("Failed to send SDP candidate")?;
+                send_candidate(&self.handle, candidate).await?;
 
                 Ok(Response::None)
             }
             Request::EndOfCandidates => {
-                send_end_of_candidates(&self.handle)
-                    .await
-                    .context("Failed to send SDP end-of-candidates")?;
+                send_end_of_candidates(&self.handle).await?;
 
                 Ok(Response::None)
             }
@@ -886,7 +910,10 @@ impl JanusPublisher {
     }
 
     /// Configure the publisher
-    async fn configure_publisher(&self, configuration: PublishConfiguration) -> Result<()> {
+    async fn configure_publisher(
+        &self,
+        configuration: PublishConfiguration,
+    ) -> Result<(), SignalingModuleError> {
         let configure_request = VideoRoomPluginConfigurePublisher::new()
             .video(Some(configuration.video))
             .audio(Some(configuration.audio));
@@ -901,11 +928,11 @@ impl JanusPublisher {
                 log::debug!("Configure publisher got Event: {:?}", configured_event);
                 Ok(())
             }
-            Err(e) => bail!("Failed to configure publisher, {}", e),
+            Err(e) => whatever!("Failed to configure publisher, {}", e),
         }
     }
 
-    pub async fn destroy(mut self) -> Result<()> {
+    pub async fn destroy(mut self) -> Result<(), SignalingModuleError> {
         if let Err(e) = self
             .redis
             .hdel::<_, _, ()>(PUBLISHER_INFO, self.media_session_key.to_string())
@@ -917,7 +944,9 @@ impl JanusPublisher {
         self.redis
             .zincr(MCU_LOAD, mcu_load_key(&self.mcu_id, self.loop_index), -1)
             .await
-            .context("Failed to decrease handle count")?;
+            .context(RedisSnafu {
+                message: "Failed to decrease handle count",
+            })?;
 
         if let Err(e) = self
             .handle
@@ -941,13 +970,17 @@ impl JanusPublisher {
 
         let _ = self.destroy.send(());
 
-        detach_result.map_err(From::from)
+        detach_result.context(JanusClientSnafu {
+            message: "Failed to detach from plugin",
+        })
     }
 
-    pub async fn destroy_broken(mut self) -> Result<()> {
+    pub async fn destroy_broken(mut self) -> Result<(), SignalingModuleError> {
         let _ = self.destroy.send(());
 
-        self.handle.detach(true).await?;
+        self.handle.detach(true).await.context(JanusClientSnafu {
+            message: "Failed to detach from plugin",
+        })?;
 
         if let Err(e) = self
             .redis
@@ -1029,41 +1062,30 @@ pub struct JanusSubscriber {
 }
 
 impl JanusSubscriber {
-    pub async fn send_message(&self, request: Request) -> Result<Response> {
+    pub async fn send_message(&self, request: Request) -> Result<Response, SignalingModuleError> {
         match request {
             Request::RequestOffer { without_video } => {
-                let response: opentalk_janus_client::Jsep = self
-                    .join_room(without_video)
-                    .await
-                    .context("Failed to join room")?;
+                let response: opentalk_janus_client::Jsep = self.join_room(without_video).await?;
 
                 Ok(Response::SdpOffer(response))
             }
             Request::SdpAnswer(e) => {
-                send_answer(&self.handle, (JsepType::Answer, e).into())
-                    .await
-                    .context("Failed to send SDP answer")?;
+                send_answer(&self.handle, (JsepType::Answer, e).into()).await?;
 
                 Ok(Response::None)
             }
             Request::Candidate(candidate) => {
-                send_candidate(&self.handle, candidate)
-                    .await
-                    .context("Failed to send SDP candidate")?;
+                send_candidate(&self.handle, candidate).await?;
 
                 Ok(Response::None)
             }
             Request::EndOfCandidates => {
-                send_end_of_candidates(&self.handle)
-                    .await
-                    .context("Failed to send SDP end-of-candidates")?;
+                send_end_of_candidates(&self.handle).await?;
 
                 Ok(Response::None)
             }
             Request::SubscriberConfigure(configuration) => {
-                self.configure_subscriber(configuration)
-                    .await
-                    .context("Failed to configure subscriber")?;
+                self.configure_subscriber(configuration).await?;
 
                 Ok(Response::None)
             }
@@ -1071,7 +1093,7 @@ impl JanusSubscriber {
         }
     }
 
-    pub async fn destroy(mut self, broken: bool) -> Result<()> {
+    pub async fn destroy(mut self, broken: bool) -> Result<(), SignalingModuleError> {
         let detach_result = self.handle.detach(broken).await;
 
         let _ = self.destroy.send(());
@@ -1079,13 +1101,20 @@ impl JanusSubscriber {
         self.redis
             .zincr(MCU_LOAD, mcu_load_key(&self.mcu_id, self.loop_index), -1)
             .await
-            .context("Failed to decrease handle count")?;
+            .context(RedisSnafu {
+                message: "Failed to decrease handle count",
+            })?;
 
-        detach_result.map_err(From::from)
+        detach_result.context(JanusClientSnafu {
+            message: "Failed to detach from plugin",
+        })
     }
 
     /// Joins the room of the publisher this [JanusSubscriber](JanusSubscriber) is subscriber to
-    async fn join_room(&self, without_video: bool) -> Result<opentalk_janus_client::Jsep> {
+    async fn join_room(
+        &self,
+        without_video: bool,
+    ) -> Result<opentalk_janus_client::Jsep, SignalingModuleError> {
         let feed = opentalk_janus_client::FeedId::new(self.media_session_key.1.into());
         let join_request = opentalk_janus_client::outgoing::VideoRoomPluginJoinSubscriber::builder(
             self.room_id,
@@ -1104,16 +1133,19 @@ impl JanusSubscriber {
                 log::debug!("Join room got Jsep/SDP: {:?}", jsep);
                 Ok(jsep)
             }
-            Ok((data, None)) => bail!(
+            Ok((data, None)) => whatever!(
                 "Got invalid response on join_room, missing jsep. Got {:?}",
                 data
             ),
-            Err(e) => bail!("Failed to join room, {}", e),
+            Err(e) => whatever!("Failed to join room, {}", e),
         }
     }
 
     /// Configure the subscriber
-    async fn configure_subscriber(&self, configuration: SubscriberConfiguration) -> Result<()> {
+    async fn configure_subscriber(
+        &self,
+        configuration: SubscriberConfiguration,
+    ) -> Result<(), SignalingModuleError> {
         let configure_request = VideoRoomPluginConfigureSubscriber::builder()
             .substream(configuration.substream)
             .video(configuration.video)
@@ -1130,26 +1162,28 @@ impl JanusSubscriber {
                 Ok(())
             }
 
-            Err(e) => bail!("Failed to configure subscriber, {}", e),
+            Err(e) => whatever!("Failed to configure subscriber, {}", e),
         }
     }
 
     /// Restart the webrtc session and return a new SDP Offer
-    pub async fn restart(&self) -> Result<String> {
+    pub async fn restart(&self) -> Result<String, SignalingModuleError> {
         let configure_request = VideoRoomPluginConfigureSubscriber::builder()
             .restart(Some(true))
             .build();
 
-        let (_event, jsep) = self
-            .handle
-            .send(configure_request)
-            .await
-            .context("Failed to restart subscriber")?;
+        let (_event, jsep) = whatever!(
+            self.handle.send(configure_request).await,
+            "Failed to restart subscriber"
+        );
 
-        let jsep = jsep.context("Missing jsep in response when restarting subscriber")?;
+        let jsep = jsep.ok_or_else(|| SignalingModuleError::CustomError {
+            message: "Jsep is missing".to_owned(),
+            source: None,
+        })?;
 
         if let JsepType::Answer = jsep.kind() {
-            bail!("Expected SDP offer, got answer when restarting subscriber")
+            whatever!("Expected SDP offer, got answer when restarting subscriber")
         }
 
         Ok(jsep.sdp())
@@ -1209,15 +1243,17 @@ impl JanusSubscriber {
 }
 
 impl TryFrom<opentalk_janus_client::incoming::TrickleMessage> for TrickleMessage {
-    type Error = anyhow::Error;
+    type Error = SignalingModuleError;
 
-    fn try_from(value: opentalk_janus_client::incoming::TrickleMessage) -> Result<Self> {
+    fn try_from(
+        value: opentalk_janus_client::incoming::TrickleMessage,
+    ) -> Result<Self, SignalingModuleError> {
         match value.candidate {
             opentalk_janus_client::incoming::TrickleInnerMessage::Completed { completed } => {
                 if completed {
                     Ok(Self::Completed)
                 } else {
-                    bail!("invalid trickle message. Recieved completed == false")
+                    whatever!("invalid trickle message. Recieved completed == false")
                 }
             }
             opentalk_janus_client::incoming::TrickleInnerMessage::Candidate(candidate) => {
@@ -1243,7 +1279,7 @@ async fn forward_janus_message(
     message: &JanusMessage,
     media_session_key: MediaSessionKey,
     event_sink: &mpsc::Sender<(MediaSessionKey, WebRtcEvent)>,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     match message {
         opentalk_janus_client::JanusMessage::Event(event) => {
             let opentalk_janus_client::incoming::Event { plugindata, .. } = event;
@@ -1276,15 +1312,21 @@ async fn forward_janus_message(
             }
         }
         opentalk_janus_client::JanusMessage::Hangup(_) => {
-            event_sink
-                .send((media_session_key, WebRtcEvent::WebRtcDown))
-                .await?;
+            whatever!(
+                event_sink
+                    .send((media_session_key, WebRtcEvent::WebRtcDown))
+                    .await,
+                "Failed to send WebRtcDown event"
+            );
             return Ok(());
         }
         opentalk_janus_client::JanusMessage::Detached(_) => {
-            event_sink
-                .send((media_session_key, WebRtcEvent::WebRtcDown))
-                .await?;
+            whatever!(
+                event_sink
+                    .send((media_session_key, WebRtcEvent::WebRtcDown))
+                    .await,
+                "Failed to send WebRtcDown event"
+            );
             return Ok(());
         }
         opentalk_janus_client::JanusMessage::Media(event) => {
@@ -1293,14 +1335,20 @@ async fn forward_janus_message(
                 media_session_key,
                 event
             );
-            event_sink
-                .send((media_session_key, WebRtcEvent::Media(event.clone().into())))
-                .await?;
+            whatever!(
+                event_sink
+                    .send((media_session_key, WebRtcEvent::Media(event.clone().into())))
+                    .await,
+                "Failed to send WebRtcDown event"
+            );
         }
         opentalk_janus_client::JanusMessage::WebRtcUp(_) => {
-            event_sink
-                .send((media_session_key, WebRtcEvent::WebRtcUp))
-                .await?;
+            whatever!(
+                event_sink
+                    .send((media_session_key, WebRtcEvent::WebRtcUp))
+                    .await,
+                "Failed to send WebRtcDown event"
+            );
         }
         opentalk_janus_client::JanusMessage::SlowLink(event) => {
             let slow_link = if event.uplink {
@@ -1308,16 +1356,21 @@ async fn forward_janus_message(
             } else {
                 WebRtcEvent::SlowLink(LinkDirection::Downstream)
             };
-
-            event_sink.send((media_session_key, slow_link)).await?;
+            whatever!(
+                event_sink.send((media_session_key, slow_link)).await,
+                "Failed to send WebRtcDown event"
+            );
         }
         opentalk_janus_client::JanusMessage::Trickle(event) => {
-            event_sink
-                .send((
-                    media_session_key,
-                    WebRtcEvent::Trickle(event.clone().try_into()?),
-                ))
-                .await?;
+            whatever!(
+                event_sink
+                    .send((
+                        media_session_key,
+                        WebRtcEvent::Trickle(event.clone().try_into()?),
+                    ))
+                    .await,
+                "Failed to send WebRtcDown event"
+            );
         }
         event => {
             log::debug!(
@@ -1331,21 +1384,28 @@ async fn forward_janus_message(
     Ok(())
 }
 
-async fn send_offer(handle: &opentalk_janus_client::Handle, offer: SdpOffer) -> Result<SdpAnswer> {
+async fn send_offer(
+    handle: &opentalk_janus_client::Handle,
+    offer: SdpOffer,
+) -> Result<SdpAnswer, SignalingModuleError> {
     match handle
         .send_with_jsep(VideoRoomPluginConfigurePublisher::new(), offer.into())
         .await
     {
-        Ok((_, Some(answer))) => Ok(answer
-            .try_into()
-            .context("Failed to convert response to SdpAnswer")?),
-        Ok((_, None)) => bail!("Invalid response from send_offer, missing jsep"),
+        Ok((_, Some(answer))) => Ok(whatever!(
+            answer.try_into(),
+            "Failed to convert response to SdpAnswer"
+        )),
+        Ok((_, None)) => whatever!("Invalid response from send_offer, missing jsep"),
 
-        Err(e) => bail!("Failed to send sdp offer, {}", e),
+        Err(e) => whatever!("Failed to send sdp offer, {}", e),
     }
 }
 
-async fn send_answer(handle: &opentalk_janus_client::Handle, answer: SdpAnswer) -> Result<()> {
+async fn send_answer(
+    handle: &opentalk_janus_client::Handle,
+    answer: SdpAnswer,
+) -> Result<(), SignalingModuleError> {
     match handle
         .send_with_jsep(
             opentalk_janus_client::outgoing::VideoRoomPluginStart {},
@@ -1354,32 +1414,37 @@ async fn send_answer(handle: &opentalk_janus_client::Handle, answer: SdpAnswer) 
         .await
     {
         Ok(_) => Ok(()),
-        Err(e) => bail!("Failed to send sdp answer, {}", e),
+        Err(e) => whatever!("Failed to send sdp answer, {}", e),
     }
 }
 
 async fn send_candidate(
     handle: &opentalk_janus_client::Handle,
     candidate: opentalk_janus_client::TrickleCandidate,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     match handle
         .trickle(
-            opentalk_janus_client::types::outgoing::TrickleMessage::new(&[candidate])
-                .context("Failed to create trickle message from candidates")?,
+            opentalk_janus_client::types::outgoing::TrickleMessage::new(&[candidate]).context(
+                JanusClientSnafu {
+                    message: "Failed to create trickle message from candidates",
+                },
+            )?,
         )
         .await
     {
         Ok(_) => Ok(()),
-        Err(e) => bail!("Failed to send sdp candidate, {}", e),
+        Err(e) => whatever!("Failed to send sdp candidate, {}", e),
     }
 }
 
-async fn send_end_of_candidates(handle: &opentalk_janus_client::Handle) -> Result<()> {
+async fn send_end_of_candidates(
+    handle: &opentalk_janus_client::Handle,
+) -> Result<(), SignalingModuleError> {
     match handle
         .trickle(opentalk_janus_client::types::outgoing::TrickleMessage::end())
         .await
     {
         Ok(_) => Ok(()),
-        Err(e) => bail!("Failed to send sdp end-of-candidates, {}", e),
+        Err(e) => whatever!("Failed to send sdp end-of-candidates, {}", e),
     }
 }

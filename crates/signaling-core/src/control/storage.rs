@@ -2,40 +2,23 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::{RedisConnection, SignalingRoomId};
+use crate::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 
 use opentalk_db_storage::{events::Event, tariffs::Tariff};
 use opentalk_r3dlock::Mutex;
 use opentalk_types::{
-    api::error::ApiError,
     core::{ParticipantId, RoomId, Timestamp},
     signaling::Role,
 };
 use redis::{AsyncCommands, FromRedisValue, ToRedisArgs};
 use redis_args::ToRedisArgs;
-use snafu::{ResultExt, Snafu};
+use snafu::ResultExt;
 use std::{
     collections::{HashMap, HashSet},
     convert::identity,
     fmt::Debug,
     time::Duration,
 };
-
-#[derive(Debug, Snafu)]
-#[snafu(display("{}:{}", message, source))]
-pub struct StorageError {
-    source: redis::RedisError,
-    message: String,
-}
-
-type Result<T, E = StorageError> = std::result::Result<T, E>;
-
-impl From<StorageError> for ApiError {
-    fn from(value: StorageError) -> Self {
-        log::error!("Storage error: {value}");
-        ApiError::internal()
-    }
-}
 
 // The expiry in seconds for the `skip_waiting_room` key in Redis
 const SKIP_WAITING_ROOM_KEY_EXPIRY: u32 = 120;
@@ -121,11 +104,11 @@ pub fn room_mutex(room: SignalingRoomId) -> Mutex<RoomLock> {
 pub async fn participant_set_exists(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
-) -> Result<bool> {
+) -> Result<bool, SignalingModuleError> {
     redis_conn
         .exists(RoomParticipants { room })
         .await
-        .context(StorageSnafu {
+        .context(RedisSnafu {
             message: "Failed to check if participants exist",
         })
 }
@@ -134,11 +117,11 @@ pub async fn participant_set_exists(
 pub async fn get_all_participants(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
-) -> Result<Vec<ParticipantId>> {
+) -> Result<Vec<ParticipantId>, SignalingModuleError> {
     redis_conn
         .smembers(RoomParticipants { room })
         .await
-        .context(StorageSnafu {
+        .context(RedisSnafu {
             message: "Failed to get participants",
         })
 }
@@ -147,11 +130,11 @@ pub async fn get_all_participants(
 pub async fn remove_participant_set(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .del(RoomParticipants { room })
         .await
-        .context(StorageSnafu {
+        .context(RedisSnafu {
             message: "Failed to del participants",
         })
 }
@@ -161,11 +144,11 @@ pub async fn participants_contains(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     participant: ParticipantId,
-) -> Result<bool> {
+) -> Result<bool, SignalingModuleError> {
     redis_conn
         .sismember(RoomParticipants { room }, participant)
         .await
-        .context(StorageSnafu {
+        .context(RedisSnafu {
             message: "Failed to check if participants contains participant",
         })
 }
@@ -175,13 +158,13 @@ pub async fn check_participants_exist(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     participants: &[ParticipantId],
-) -> Result<bool> {
+) -> Result<bool, SignalingModuleError> {
     let bools: Vec<bool> = redis::cmd("SMISMEMBER")
         .arg(RoomParticipants { room })
         .arg(participants)
         .query_async(redis_conn)
         .await
-        .context(StorageSnafu {
+        .context(RedisSnafu {
             message: "Failed to check if participants contains participant",
         })?;
 
@@ -193,11 +176,11 @@ pub async fn add_participant_to_set(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     participant: ParticipantId,
-) -> Result<usize> {
+) -> Result<usize, SignalingModuleError> {
     redis_conn
         .sadd(RoomParticipants { room }, participant)
         .await
-        .context(StorageSnafu {
+        .context(RedisSnafu {
             message: "Failed to add own participant id to set",
         })
 }
@@ -206,7 +189,7 @@ pub async fn add_participant_to_set(
 pub async fn participants_all_left(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
-) -> Result<bool> {
+) -> Result<bool, SignalingModuleError> {
     let participants = get_all_participants(redis_conn, room).await?;
 
     let left_at_attrs: Vec<Option<Timestamp>> =
@@ -220,14 +203,14 @@ pub async fn remove_attribute_key(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     name: &str,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .del(RoomParticipantAttributes {
             room,
             attribute_name: name,
         })
         .await
-        .with_context(|_| StorageSnafu {
+        .with_context(|_| RedisSnafu {
             message: format!("Failed to remove participant attribute key, {name}"),
         })
 }
@@ -238,7 +221,7 @@ pub async fn remove_attribute(
     room: SignalingRoomId,
     participant: ParticipantId,
     name: &str,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .hdel(
             RoomParticipantAttributes {
@@ -248,7 +231,7 @@ pub async fn remove_attribute(
             participant,
         )
         .await
-        .with_context(|_| StorageSnafu {
+        .with_context(|_| RedisSnafu {
             message: format!("Failed to remove participant attribute key, {name}"),
         })
 }
@@ -260,7 +243,7 @@ pub async fn set_attribute<V>(
     participant: ParticipantId,
     name: &str,
     value: V,
-) -> Result<()>
+) -> Result<(), SignalingModuleError>
 where
     V: Debug + ToRedisArgs + Send + Sync,
 {
@@ -274,7 +257,7 @@ where
             value,
         )
         .await
-        .with_context(|_| StorageSnafu {
+        .with_context(|_| RedisSnafu {
             message: format!("Failed to set attribute {name}"),
         })?;
 
@@ -355,7 +338,7 @@ pub async fn get_attribute<V>(
     room: SignalingRoomId,
     participant: ParticipantId,
     name: &str,
-) -> Result<V>
+) -> Result<V, SignalingModuleError>
 where
     V: FromRedisValue,
 {
@@ -368,7 +351,7 @@ where
             participant,
         )
         .await
-        .with_context(|_| StorageSnafu {
+        .with_context(|_| RedisSnafu {
             message: format!("Failed to get attribute {name}"),
         })?;
 
@@ -383,7 +366,7 @@ pub async fn get_attribute_for_participants<V>(
     room: SignalingRoomId,
     name: &str,
     participants: &[ParticipantId],
-) -> Result<Vec<Option<V>>>
+) -> Result<Vec<Option<V>>, SignalingModuleError>
 where
     V: FromRedisValue,
 {
@@ -400,7 +383,7 @@ where
             .arg(participants)
             .query_async(redis_conn)
             .await
-            .with_context(|_| StorageSnafu {
+            .with_context(|_| RedisSnafu {
                 message: format!("Failed to get attribute '{name}' for all participants "),
             })
     }
@@ -409,7 +392,7 @@ where
 pub async fn get_role_and_left_at_for_room_participants(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
-) -> Result<HashMap<ParticipantId, (Option<Role>, Option<Timestamp>)>> {
+) -> Result<HashMap<ParticipantId, (Option<Role>, Option<Timestamp>)>, SignalingModuleError> {
     let mut pipe = redis::pipe();
     pipe.atomic();
     pipe.hgetall(RoomParticipantAttributes {
@@ -424,7 +407,7 @@ pub async fn get_role_and_left_at_for_room_participants(
     let (mut roles, mut left_at_timestamps): (
         HashMap<ParticipantId, Role>,
         HashMap<ParticipantId, Timestamp>,
-    ) = pipe.query_async(redis_conn).await.context(StorageSnafu {
+    ) = pipe.query_async(redis_conn).await.context(RedisSnafu {
         message: "Failed to get attributes",
     })?;
     let participants: HashSet<ParticipantId> = roles
@@ -448,11 +431,11 @@ pub struct ParticipantIdRunnerLock {
 pub async fn participant_id_in_use(
     redis_conn: &mut RedisConnection,
     participant_id: ParticipantId,
-) -> Result<bool> {
+) -> Result<bool, SignalingModuleError> {
     redis_conn
         .exists(ParticipantIdRunnerLock { id: participant_id })
         .await
-        .context(StorageSnafu {
+        .context(RedisSnafu {
             message: "failed to check if participant id is in use",
         })
 }
@@ -470,7 +453,7 @@ pub async fn set_skip_waiting_room_with_expiry(
     redis_conn: &mut RedisConnection,
     participant: ParticipantId,
     value: bool,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .set_ex(
             SkipWaitingRoom { participant },
@@ -478,7 +461,7 @@ pub async fn set_skip_waiting_room_with_expiry(
             SKIP_WAITING_ROOM_KEY_EXPIRY.into(),
         )
         .await
-        .with_context(|_| StorageSnafu {
+        .with_context(|_| RedisSnafu {
             message: format!(
                 "Failed to set skip_waiting_room key to {} for participant {}",
                 value, participant,
@@ -494,7 +477,7 @@ pub async fn set_skip_waiting_room_with_expiry_nx(
     redis_conn: &mut RedisConnection,
     participant: ParticipantId,
     value: bool,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis::pipe()
         .atomic()
         .set_nx(SkipWaitingRoom { participant }, value)
@@ -504,7 +487,7 @@ pub async fn set_skip_waiting_room_with_expiry_nx(
         )
         .query_async(redis_conn)
         .await
-        .with_context(|_| StorageSnafu {
+        .with_context(|_| RedisSnafu {
             message: format!(
                 "Failed to set SkipWaitingRoom key to {} for participant {}",
                 value, participant,
@@ -519,14 +502,14 @@ pub async fn set_skip_waiting_room_with_expiry_nx(
 pub async fn reset_skip_waiting_room_expiry(
     redis_conn: &mut RedisConnection,
     participant: ParticipantId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .expire(
             SkipWaitingRoom { participant },
             SKIP_WAITING_ROOM_KEY_EXPIRY.into(),
         )
         .await
-        .with_context(|_| StorageSnafu {
+        .with_context(|_| RedisSnafu {
             message: format!(
                 "Failed to extend skip_waiting_room key expiry for participant {}",
                 participant,
@@ -542,11 +525,11 @@ pub async fn reset_skip_waiting_room_expiry(
 pub async fn get_skip_waiting_room(
     redis_conn: &mut RedisConnection,
     participant: ParticipantId,
-) -> Result<bool> {
+) -> Result<bool, SignalingModuleError> {
     let value: Option<bool> = redis_conn
         .get(SkipWaitingRoom { participant })
         .await
-        .context(StorageSnafu {
+        .context(RedisSnafu {
             message: "Failed to get 'skip waiting room'",
         })?;
     Ok(value.unwrap_or_default())
@@ -558,14 +541,14 @@ pub async fn try_init_tariff(
     redis_conn: &mut RedisConnection,
     room_id: RoomId,
     tariff: Tariff,
-) -> Result<Tariff> {
+) -> Result<Tariff, SignalingModuleError> {
     let (_, tariff): (bool, Tariff) = redis::pipe()
         .atomic()
         .set_nx(RoomTariff { room_id }, tariff)
         .get(RoomTariff { room_id })
         .query_async(redis_conn)
         .await
-        .context(StorageSnafu {
+        .context(RedisSnafu {
             message: "Failed to SET NX & GET room tariff",
         })?;
 
@@ -573,21 +556,27 @@ pub async fn try_init_tariff(
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn get_tariff(redis_conn: &mut RedisConnection, room_id: RoomId) -> Result<Tariff> {
+pub async fn get_tariff(
+    redis_conn: &mut RedisConnection,
+    room_id: RoomId,
+) -> Result<Tariff, SignalingModuleError> {
     redis_conn
         .get(RoomTariff { room_id })
         .await
-        .context(StorageSnafu {
+        .context(RedisSnafu {
             message: "Failed to get room tariff",
         })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn delete_tariff(redis_conn: &mut RedisConnection, room_id: RoomId) -> Result<()> {
+pub async fn delete_tariff(
+    redis_conn: &mut RedisConnection,
+    room_id: RoomId,
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .del(RoomTariff { room_id })
         .await
-        .context(StorageSnafu {
+        .context(RedisSnafu {
             message: "Failed to delete room tariff",
         })
 }
@@ -598,7 +587,7 @@ pub async fn try_init_event(
     redis_conn: &mut RedisConnection,
     room_id: RoomId,
     event: Option<Event>,
-) -> Result<Option<Event>> {
+) -> Result<Option<Event>, SignalingModuleError> {
     let event = if let Some(event) = event {
         let (_, event): (bool, Event) = redis::pipe()
             .atomic()
@@ -606,7 +595,7 @@ pub async fn try_init_event(
             .get(RoomEvent { room_id })
             .query_async(redis_conn)
             .await
-            .context(StorageSnafu {
+            .context(RedisSnafu {
                 message: "Failed to SET NX & GET room event",
             })?;
 
@@ -619,21 +608,27 @@ pub async fn try_init_event(
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn get_event(redis_conn: &mut RedisConnection, room_id: RoomId) -> Result<Option<Event>> {
+pub async fn get_event(
+    redis_conn: &mut RedisConnection,
+    room_id: RoomId,
+) -> Result<Option<Event>, SignalingModuleError> {
     redis_conn
         .get(RoomEvent { room_id })
         .await
-        .context(StorageSnafu {
+        .context(RedisSnafu {
             message: "Failed to get room event",
         })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn delete_event(redis_conn: &mut RedisConnection, room_id: RoomId) -> Result<()> {
+pub async fn delete_event(
+    redis_conn: &mut RedisConnection,
+    room_id: RoomId,
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .del(RoomEvent { room_id })
         .await
-        .context(StorageSnafu {
+        .context(RedisSnafu {
             message: "Failed to delete room event",
         })
 }
@@ -642,11 +637,11 @@ pub async fn delete_event(redis_conn: &mut RedisConnection, room_id: RoomId) -> 
 pub async fn increment_participant_count(
     redis_conn: &mut RedisConnection,
     room_id: RoomId,
-) -> Result<isize> {
+) -> Result<isize, SignalingModuleError> {
     redis_conn
         .incr(RoomParticipantCount { room_id }, 1)
         .await
-        .context(StorageSnafu {
+        .context(RedisSnafu {
             message: "Failed to increment room participant count",
         })
 }
@@ -655,11 +650,11 @@ pub async fn increment_participant_count(
 pub async fn decrement_participant_count(
     redis_conn: &mut RedisConnection,
     room_id: RoomId,
-) -> Result<isize> {
+) -> Result<isize, SignalingModuleError> {
     redis_conn
         .decr(RoomParticipantCount { room_id }, 1)
         .await
-        .context(StorageSnafu {
+        .context(RedisSnafu {
             message: "Failed to decrement room participant count",
         })
 }
@@ -668,11 +663,11 @@ pub async fn decrement_participant_count(
 pub async fn get_participant_count(
     redis_conn: &mut RedisConnection,
     room_id: RoomId,
-) -> Result<Option<isize>> {
+) -> Result<Option<isize>, SignalingModuleError> {
     redis_conn
         .get(RoomParticipantCount { room_id })
         .await
-        .context(StorageSnafu {
+        .context(RedisSnafu {
             message: "Failed to get room participant count",
         })
 }
@@ -681,11 +676,11 @@ pub async fn get_participant_count(
 pub async fn delete_participant_count(
     redis_conn: &mut RedisConnection,
     room_id: RoomId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .del(RoomParticipantCount { room_id })
         .await
-        .context(StorageSnafu {
+        .context(RedisSnafu {
             message: "Failed to delete room participant count key",
         })
 }
@@ -695,11 +690,11 @@ pub async fn set_room_closes_at(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     timestamp: Timestamp,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .set(RoomClosesAt { room }, timestamp)
         .await
-        .context(StorageSnafu {
+        .context(RedisSnafu {
             message: "Failed to SET the point in time the room closes",
         })
 }
@@ -708,9 +703,9 @@ pub async fn set_room_closes_at(
 pub async fn get_room_closes_at(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
-) -> Result<Option<Timestamp>> {
+) -> Result<Option<Timestamp>, SignalingModuleError> {
     let key = RoomClosesAt { room };
-    redis_conn.get(&key).await.context(StorageSnafu {
+    redis_conn.get(&key).await.context(RedisSnafu {
         message: "Failed to GET the point in time the room closes",
     })
 }
@@ -719,11 +714,11 @@ pub async fn get_room_closes_at(
 pub async fn remove_room_closes_at(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .del(RoomClosesAt { room })
         .await
-        .context(StorageSnafu {
+        .context(RedisSnafu {
             message: "Failed to DEL the point in time the room closes",
         })
 }

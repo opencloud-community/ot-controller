@@ -2,10 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::{Context, Result};
-use opentalk_signaling_core::{RedisConnection, SignalingRoomId};
+use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
+use snafu::ResultExt;
 
 /// Stores the etherpad group_id that is associated with this room.
 #[derive(ToRedisArgs)]
@@ -19,28 +19,37 @@ pub(crate) async fn set(
     redis_conn: &mut RedisConnection,
     room_id: SignalingRoomId,
     group_id: &str,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .set(GroupKey { room_id }, group_id)
         .await
-        .context("Failed to set protocol group key")
+        .context(RedisSnafu {
+            message: "Failed to set protocol group key",
+        })
 }
 
 #[tracing::instrument(name = "get_protocol_group", skip(redis_conn))]
 pub(crate) async fn get(
     redis_conn: &mut RedisConnection,
     room_id: SignalingRoomId,
-) -> Result<Option<String>> {
+) -> Result<Option<String>, SignalingModuleError> {
     redis_conn
         .get(GroupKey { room_id })
         .await
-        .context("Failed to get protocol group key")
+        .context(RedisSnafu {
+            message: "Failed to get protocol group key",
+        })
 }
 
 #[tracing::instrument(name = "delete_protocol_group", skip(redis_conn))]
-pub(crate) async fn del(redis_conn: &mut RedisConnection, room_id: SignalingRoomId) -> Result<()> {
+pub(crate) async fn del(
+    redis_conn: &mut RedisConnection,
+    room_id: SignalingRoomId,
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .del(GroupKey { room_id })
         .await
-        .context("Failed to delete protocol group key")
+        .context(RedisSnafu {
+            message: "Failed to delete protocol group key",
+        })
 }

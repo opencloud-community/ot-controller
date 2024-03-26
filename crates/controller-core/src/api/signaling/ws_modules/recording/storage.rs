@@ -2,11 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::{Context, Result};
-use opentalk_signaling_core::{RedisConnection, SignalingRoomId};
+use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 use opentalk_types::signaling::recording::RecordingStatus;
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
+use snafu::ResultExt;
 
 use super::RecordingId;
 
@@ -20,43 +20,51 @@ struct RecordingStateKey {
 pub(super) async fn try_init(
     redis_conn: &mut RedisConnection,
     room_id: SignalingRoomId,
-) -> Result<bool> {
+) -> Result<bool, SignalingModuleError> {
     redis_conn
         .set_nx(RecordingStateKey { room_id }, RecordingStatus::Initializing)
         .await
-        .context("Failed to initialize recording state")
+        .context(RedisSnafu {
+            message: "Failed to initialize recording state",
+        })
 }
 
 pub(super) async fn set_recording(
     redis_conn: &mut RedisConnection,
     room_id: SignalingRoomId,
     id: RecordingId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .set(
             RecordingStateKey { room_id },
             RecordingStatus::Recording(id),
         )
         .await
-        .context("Failed to set recording state to 'recording'")
+        .context(RedisSnafu {
+            message: "Failed to set recording state to 'recording'",
+        })
 }
 
 pub(super) async fn get_state(
     redis_conn: &mut RedisConnection,
     room_id: SignalingRoomId,
-) -> Result<Option<RecordingStatus>> {
+) -> Result<Option<RecordingStatus>, SignalingModuleError> {
     redis_conn
         .get(RecordingStateKey { room_id })
         .await
-        .context("Failed to get recording state")
+        .context(RedisSnafu {
+            message: "Failed to get recording state",
+        })
 }
 
 pub(super) async fn del_state(
     redis_conn: &mut RedisConnection,
     room_id: SignalingRoomId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .del(RecordingStateKey { room_id })
         .await
-        .context("Failed to delete recording state")
+        .context(RedisSnafu {
+            message: "Failed to delete recording state",
+        })
 }

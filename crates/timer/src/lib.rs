@@ -2,12 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::Result;
 use chrono::{self, Utc};
 use futures::{stream::once, FutureExt};
 use opentalk_signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
-    SignalingModuleInitData, SignalingRoomId,
+    SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
 use opentalk_types::{
     core::{ParticipantId, Timestamp},
@@ -60,7 +59,7 @@ impl SignalingModule for Timer {
         ctx: InitContext<'_, Self>,
         _params: &Self::Params,
         _protocol: &'static str,
-    ) -> Result<Option<Self>> {
+    ) -> Result<Option<Self>, SignalingModuleError> {
         Ok(Some(Self {
             room_id: ctx.room_id(),
             participant_id: ctx.participant_id(),
@@ -71,7 +70,7 @@ impl SignalingModule for Timer {
         &mut self,
         mut ctx: ModuleContext<'_, Self>,
         event: Event<'_, Self>,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         match event {
             Event::Joined {
                 control_data: _,
@@ -180,7 +179,9 @@ impl SignalingModule for Timer {
 
     async fn on_destroy(self, _ctx: DestroyContext<'_>) {}
 
-    async fn build_params(_init: SignalingModuleInitData) -> Result<Option<Self::Params>> {
+    async fn build_params(
+        _init: SignalingModuleInitData,
+    ) -> Result<Option<Self::Params>, SignalingModuleError> {
         Ok(Some(()))
     }
 }
@@ -191,7 +192,7 @@ impl Timer {
         &self,
         ctx: &mut ModuleContext<'_, Self>,
         msg: Message,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         match msg {
             Message::Start(start) => {
                 if ctx.role() != Role::Moderator {
@@ -319,7 +320,7 @@ impl Timer {
         &self,
         ctx: &mut ModuleContext<'_, Self>,
         event: exchange::Event,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         match event {
             exchange::Event::Start(started) => {
                 if let Kind::Countdown { ends_at } = started.config.kind {
@@ -373,7 +374,7 @@ impl Timer {
         ctx: &mut ModuleContext<'_, Self>,
         reason: StopKind,
         message: Option<String>,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         let timer = match storage::timer::delete(ctx.redis_conn(), self.room_id).await? {
             Some(timer) => timer,
             // there was no key to delete because the timer was not running

@@ -2,11 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::{Context, Result};
-use opentalk_signaling_core::{RedisConnection, SignalingRoomId};
+use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 use redis::AsyncCommands;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
+use snafu::ResultExt;
 use url::Url;
 
 /// Stores the [`InitState`] of this room.
@@ -44,19 +44,24 @@ pub struct SpaceInfo {
 pub(crate) async fn try_start_init(
     redis_conn: &mut RedisConnection,
     room_id: SignalingRoomId,
-) -> Result<Option<InitState>> {
+) -> Result<Option<InitState>, SignalingModuleError> {
     let affected_entries: i64 = redis_conn
         .set_nx(InitStateKey { room_id }, InitState::Initializing)
         .await
-        .context("Failed to set spacedeck init state")?;
+        .context(RedisSnafu {
+            message: "Failed to set spacedeck init state",
+        })?;
 
     if affected_entries == 1 {
         Ok(None)
     } else {
-        let state: InitState = redis_conn
-            .get(InitStateKey { room_id })
-            .await
-            .context("Failed to get spacedeck init state")?;
+        let state: InitState =
+            redis_conn
+                .get(InitStateKey { room_id })
+                .await
+                .context(RedisSnafu {
+                    message: "Failed to get spacedeck init state",
+                })?;
 
         Ok(Some(state))
     }
@@ -68,32 +73,41 @@ pub(crate) async fn set_initialized(
     redis_conn: &mut RedisConnection,
     room_id: SignalingRoomId,
     space_info: SpaceInfo,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     let initialized = InitState::Initialized(space_info);
 
     redis_conn
         .set(InitStateKey { room_id }, &initialized)
         .await
-        .context("Failed to set spacedeck init state to `Initialized`")
+        .context(RedisSnafu {
+            message: "Failed to set spacedeck init state to `Initialized",
+        })
 }
 
 #[tracing::instrument(name = "get_spacedeck_init_state", skip(redis_conn))]
 pub(crate) async fn get(
     redis_conn: &mut RedisConnection,
     room_id: SignalingRoomId,
-) -> Result<Option<InitState>> {
+) -> Result<Option<InitState>, SignalingModuleError> {
     redis_conn
         .get(InitStateKey { room_id })
         .await
-        .context("Failed to get spacedeck init state")
+        .context(RedisSnafu {
+            message: "Failed to get spacedeck init state",
+        })
 }
 
 #[tracing::instrument(name = "delete_spacedeck _init_state", skip(redis_conn))]
-pub(crate) async fn del(redis_conn: &mut RedisConnection, room_id: SignalingRoomId) -> Result<()> {
+pub(crate) async fn del(
+    redis_conn: &mut RedisConnection,
+    room_id: SignalingRoomId,
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .del::<_, i64>(InitStateKey { room_id })
         .await
-        .context("Failed to delete spacedeck init key")?;
+        .context(RedisSnafu {
+            message: "Failed to delete spacedeck init key",
+        })?;
 
     Ok(())
 }

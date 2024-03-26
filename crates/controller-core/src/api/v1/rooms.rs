@@ -321,12 +321,17 @@ pub async fn start(
     let mut redis_conn = (**redis_conn).clone();
 
     // check if user is banned from room
-    if moderation::storage::is_banned(&mut redis_conn, room.id, current_user.id).await? {
+    if moderation::storage::is_banned(&mut redis_conn, room.id, current_user.id)
+        .await
+        .map_err(Into::<ApiError>::into)?
+    {
         return Err(StartRoomError::BannedFromRoom.into());
     }
 
     if let Some(breakout_room) = request.breakout_room {
-        let config = breakout::storage::get_config(&mut redis_conn, room.id).await?;
+        let config = breakout::storage::get_config(&mut redis_conn, room.id)
+            .await
+            .map_err(Into::<ApiError>::into)?;
 
         if let Some(config) = config {
             if !config.is_valid_id(breakout_room) {
@@ -399,7 +404,9 @@ pub async fn start_invited(
     let mut redis_conn = (**redis_ctx).clone();
 
     if let Some(breakout_room) = request.breakout_room {
-        let config = breakout::storage::get_config(&mut redis_conn, room.id).await?;
+        let config = breakout::storage::get_config(&mut redis_conn, room.id)
+            .await
+            .map_err(Into::<ApiError>::into)?;
 
         if let Some(config) = config {
             if !config.is_valid_id(breakout_room) {

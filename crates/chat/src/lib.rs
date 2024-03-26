@@ -8,14 +8,13 @@
 //!
 //! Issues timestamp and messageIds to incoming chat messages and forwards them to other participants in the room or group.
 
-use anyhow::Result;
 use opentalk_database::Db;
 use opentalk_db_storage::groups::Group;
 use opentalk_r3dlock::Mutex;
 use opentalk_signaling_core::{
     control::{self, exchange},
     DestroyContext, Event, InitContext, ModuleContext, Participant, RedisConnection,
-    SignalingModule, SignalingModuleInitData, SignalingRoomId,
+    SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
 use opentalk_types::{
     core::{GroupId, GroupName, ParticipantId, Timestamp, UserId},
@@ -65,7 +64,7 @@ trait ChatStateExt: Sized {
         room: SignalingRoomId,
         participant: ParticipantId,
         groups: &[Group],
-    ) -> Result<Self>;
+    ) -> Result<Self, SignalingModuleError>;
 }
 
 #[async_trait::async_trait(?Send)]
@@ -75,7 +74,7 @@ impl ChatStateExt for ChatState {
         room: SignalingRoomId,
         participant: ParticipantId,
         groups: &[Group],
-    ) -> Result<Self> {
+    ) -> Result<Self, SignalingModuleError> {
         let enabled = storage::is_chat_enabled(redis_conn, room.room_id()).await?;
 
         let room_history = storage::get_room_chat_history(redis_conn, room).await?;
@@ -143,7 +142,7 @@ impl SignalingModule for Chat {
         mut ctx: InitContext<'_, Self>,
         _params: &Self::Params,
         _protocol: &'static str,
-    ) -> Result<Option<Self>> {
+    ) -> Result<Option<Self>, SignalingModuleError> {
         let id = ctx.participant_id();
         let room = ctx.room_id();
 
@@ -177,7 +176,7 @@ impl SignalingModule for Chat {
         &mut self,
         mut ctx: ModuleContext<'_, Self>,
         event: Event<'_, Self>,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         match event {
             Event::Joined {
                 control_data: _,
@@ -673,7 +672,9 @@ impl SignalingModule for Chat {
         }
     }
 
-    async fn build_params(_init: SignalingModuleInitData) -> Result<Option<Self::Params>> {
+    async fn build_params(
+        _init: SignalingModuleInitData,
+    ) -> Result<Option<Self::Params>, SignalingModuleError> {
         Ok(Some(()))
     }
 }

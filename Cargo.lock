@@ -3318,7 +3318,6 @@ name = "opentalk-chat"
 version = "0.0.0-dev"
 dependencies = [
  "actix-rt",
- "anyhow",
  "async-trait",
  "chrono",
  "log",
@@ -3333,6 +3332,7 @@ dependencies = [
  "redis-args",
  "serde_json",
  "serial_test",
+ "snafu",
  "tokio",
  "tracing",
  "uuid",
@@ -3525,7 +3525,6 @@ dependencies = [
 name = "opentalk-core"
 version = "0.0.0-dev"
 dependencies = [
- "anyhow",
  "async-trait",
  "opentalk-signaling-core",
  "opentalk-types",
@@ -3620,7 +3619,6 @@ dependencies = [
 name = "opentalk-integration"
 version = "0.0.0-dev"
 dependencies = [
- "anyhow",
  "async-trait",
  "opentalk-signaling-core",
  "opentalk-types",
@@ -3651,7 +3649,6 @@ dependencies = [
 name = "opentalk-janus-media"
 version = "0.0.0-dev"
 dependencies = [
- "anyhow",
  "async-trait",
  "futures",
  "lapin-pool",
@@ -3665,6 +3662,7 @@ dependencies = [
  "redis-args",
  "serde",
  "serde_json",
+ "snafu",
  "tokio",
  "tokio-stream",
  "tracing",
@@ -3767,7 +3765,6 @@ name = "opentalk-polls"
 version = "0.0.0-dev"
 dependencies = [
  "actix-rt",
- "anyhow",
  "async-trait",
  "futures",
  "log",
@@ -3779,6 +3776,7 @@ dependencies = [
  "redis-args",
  "serde",
  "serial_test",
+ "snafu",
  "tokio",
  "tracing",
 ]
@@ -3796,7 +3794,6 @@ dependencies = [
 name = "opentalk-protocol"
 version = "0.0.0-dev"
 dependencies = [
- "anyhow",
  "async-trait",
  "chrono",
  "log",
@@ -3808,6 +3805,7 @@ dependencies = [
  "redis",
  "redis-args",
  "serde",
+ "snafu",
  "tracing",
 ]
 
@@ -3827,7 +3825,6 @@ name = "opentalk-shared-folder"
 version = "0.0.0-dev"
 dependencies = [
  "actix-rt",
- "anyhow",
  "async-trait",
  "log",
  "opentalk-database",
@@ -3839,6 +3836,7 @@ dependencies = [
  "redis",
  "redis-args",
  "serial_test",
+ "snafu",
  "tracing",
 ]
 
@@ -3848,12 +3846,12 @@ version = "0.0.0-dev"
 dependencies = [
  "actix-http",
  "actix-rt",
- "anyhow",
  "async-trait",
  "aws-sdk-s3",
  "bigdecimal",
  "bytes",
  "bytestring",
+ "config",
  "futures",
  "kustos",
  "lapin",
@@ -3862,6 +3860,8 @@ dependencies = [
  "opentalk-controller-settings",
  "opentalk-database",
  "opentalk-db-storage",
+ "opentalk-etherpad-client",
+ "opentalk-janus-client",
  "opentalk-r3dlock",
  "opentalk-types",
  "opentelemetry",
@@ -3906,7 +3906,6 @@ name = "opentalk-timer"
 version = "0.0.0-dev"
 dependencies = [
  "actix-rt",
- "anyhow",
  "async-trait",
  "chrono",
  "futures",
@@ -3919,6 +3918,7 @@ dependencies = [
  "redis-args",
  "serde",
  "serial_test",
+ "snafu",
  "tokio",
  "tracing",
  "uuid",
@@ -3969,7 +3969,6 @@ dependencies = [
 name = "opentalk-whiteboard"
 version = "0.0.0-dev"
 dependencies = [
- "anyhow",
  "async-trait",
  "bytes",
  "futures",
@@ -3982,6 +3981,7 @@ dependencies = [
  "redis-args",
  "reqwest",
  "serde",
+ "snafu",
  "tracing",
  "url",
 ]

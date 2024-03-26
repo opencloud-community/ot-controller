@@ -2,11 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::{Context, Result};
-use opentalk_signaling_core::{RedisConnection, SignalingRoomId};
+use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 use redis::AsyncCommands;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
+use snafu::ResultExt;
 
 /// Stores the [`InitState`] of this room.
 #[derive(ToRedisArgs)]
@@ -34,11 +34,13 @@ pub enum InitState {
 pub(crate) async fn try_start_init(
     redis_conn: &mut RedisConnection,
     room_id: SignalingRoomId,
-) -> Result<Option<InitState>> {
+) -> Result<Option<InitState>, SignalingModuleError> {
     let affected_entries: i64 = redis_conn
         .set_nx(InitKey { room_id }, InitState::Initializing)
         .await
-        .context("Failed to set protocol init state")?;
+        .context(RedisSnafu {
+            message: "Failed to set protocol init state",
+        })?;
 
     if affected_entries == 1 {
         Ok(None)
@@ -46,7 +48,9 @@ pub(crate) async fn try_start_init(
         let state: InitState = redis_conn
             .get(InitKey { room_id })
             .await
-            .context("Failed to get protocol init state")?;
+            .context(RedisSnafu {
+                message: "Failed to get protocol init state",
+            })?;
 
         Ok(Some(state))
     }
@@ -59,7 +63,7 @@ pub(crate) async fn try_start_init(
     //     .arg("GET")
     //     .query_async::<_, Option<InitState>>(redis_conn)
     //     .await
-    //     .context("Failed to set protocol init state")
+    //     .context( RedisSnafu {message: "Failed to set protocol init state"})
 }
 
 /// Sets the room state to [`InitState::Initialized`]
@@ -67,30 +71,39 @@ pub(crate) async fn try_start_init(
 pub(crate) async fn set_initialized(
     redis_conn: &mut RedisConnection,
     room_id: SignalingRoomId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .set(InitKey { room_id }, InitState::Initialized)
         .await
-        .context("Failed to set protocol init state to `Initialized`")
+        .context(RedisSnafu {
+            message: "Failed to set protocol init state to `Initialized`",
+        })
 }
 
 #[tracing::instrument(name = "get_protocol_init_state", skip(redis_conn))]
 pub(crate) async fn get(
     redis_conn: &mut RedisConnection,
     room_id: SignalingRoomId,
-) -> Result<Option<InitState>> {
+) -> Result<Option<InitState>, SignalingModuleError> {
     redis_conn
         .get(InitKey { room_id })
         .await
-        .context("Failed to get protocol init state")
+        .context(RedisSnafu {
+            message: "Failed to get protocol init state",
+        })
 }
 
 #[tracing::instrument(name = "delete_protocol_init_state", skip(redis_conn))]
-pub(crate) async fn del(redis_conn: &mut RedisConnection, room_id: SignalingRoomId) -> Result<()> {
+pub(crate) async fn del(
+    redis_conn: &mut RedisConnection,
+    room_id: SignalingRoomId,
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .del::<_, i64>(InitKey { room_id })
         .await
-        .context("Failed to delete protocol init key")?;
+        .context(RedisSnafu {
+            message: "Failed to delete protocol init key",
+        })?;
 
     Ok(())
 }

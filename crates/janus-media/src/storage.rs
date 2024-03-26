@@ -2,14 +2,16 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::{Context, Result};
-use opentalk_signaling_core::{RedisConnection, SignalingRoomId};
+use opentalk_signaling_core::{
+    RedisConnection, RedisSnafu, SerdeJsonSnafu, SignalingModuleError, SignalingRoomId,
+};
 use opentalk_types::{
     core::{ParticipantId, Timestamp},
     signaling::media::{ParticipantMediaState, ParticipantSpeakingState, SpeakingState},
 };
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
+use snafu::ResultExt;
 
 /// Data related to a module inside a participant
 #[derive(ToRedisArgs)]
@@ -26,14 +28,18 @@ pub async fn get_participant_media_state(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     participant: ParticipantId,
-) -> Result<Option<ParticipantMediaState>> {
+) -> Result<Option<ParticipantMediaState>, SignalingModuleError> {
     let json: Option<Vec<u8>> = redis_conn
         .get(ParticipantMediaStateKey { room, participant })
         .await
-        .context("Failed to get media state")?;
+        .context(RedisSnafu {
+            message: "Failed to get media state",
+        })?;
 
     if let Some(json) = json {
-        serde_json::from_slice(&json).context("Failed to convert json to media state")
+        serde_json::from_slice(&json).context(SerdeJsonSnafu {
+            message: "Failed to convert json to media state",
+        })
     } else {
         Ok(None)
     }
@@ -45,13 +51,17 @@ pub async fn set_participant_media_state(
     room: SignalingRoomId,
     participant: ParticipantId,
     state: &ParticipantMediaState,
-) -> Result<()> {
-    let json = serde_json::to_vec(&state).context("Failed to convert media state to json")?;
+) -> Result<(), SignalingModuleError> {
+    let json = serde_json::to_vec(&state).context(SerdeJsonSnafu {
+        message: "Failed to convert media state to json",
+    })?;
 
     redis_conn
         .set(ParticipantMediaStateKey { room, participant }, json)
         .await
-        .context("Failed to get media state")?;
+        .context(RedisSnafu {
+            message: "Failed to get media state",
+        })?;
 
     Ok(())
 }
@@ -61,11 +71,13 @@ pub async fn del_participant_media_state(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     participant: ParticipantId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .del(ParticipantMediaStateKey { room, participant })
         .await
-        .context("Failed to delete media state")
+        .context(RedisSnafu {
+            message: "Failed to delete media state",
+        })
 }
 
 #[derive(ToRedisArgs)]
@@ -79,8 +91,13 @@ pub async fn set_presenter(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     participant: ParticipantId,
-) -> Result<()> {
-    redis_conn.sadd(Presenters { room }, participant).await?;
+) -> Result<(), SignalingModuleError> {
+    redis_conn
+        .sadd(Presenters { room }, participant)
+        .await
+        .context(RedisSnafu {
+            message: "Failed to set presenter",
+        })?;
 
     Ok(())
 }
@@ -90,10 +107,13 @@ pub async fn is_presenter(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     participant: ParticipantId,
-) -> Result<bool> {
+) -> Result<bool, SignalingModuleError> {
     let value: bool = redis_conn
         .sismember(Presenters { room }, participant)
-        .await?;
+        .await
+        .context(RedisSnafu {
+            message: "Failed to check if participant is presenter",
+        })?;
 
     Ok(value)
 }
@@ -103,8 +123,13 @@ pub async fn delete_presenter(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     participant: ParticipantId,
-) -> Result<()> {
-    redis_conn.srem(Presenters { room }, participant).await?;
+) -> Result<(), SignalingModuleError> {
+    redis_conn
+        .srem(Presenters { room }, participant)
+        .await
+        .context(RedisSnafu {
+            message: "Failed to delete presenter",
+        })?;
 
     Ok(())
 }
@@ -113,8 +138,13 @@ pub async fn delete_presenter(
 pub async fn delete_presenter_key(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
-) -> Result<()> {
-    redis_conn.del(Presenters { room }).await?;
+) -> Result<(), SignalingModuleError> {
+    redis_conn
+        .del(Presenters { room })
+        .await
+        .context(RedisSnafu {
+            message: "Failed to delete presenter key",
+        })?;
 
     Ok(())
 }
@@ -136,7 +166,7 @@ pub async fn set_speaker(
     participant: ParticipantId,
     is_speaking: bool,
     updated_at: Timestamp,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .set(
             SpeakerKey { room, participant },
@@ -146,7 +176,9 @@ pub async fn set_speaker(
             }),
         )
         .await
-        .context("Failed to set speaker state")
+        .context(RedisSnafu {
+            message: "Failed to set speaker state",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -154,11 +186,13 @@ pub async fn get_speaker(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     participant: ParticipantId,
-) -> Result<Option<SpeakingState>> {
+) -> Result<Option<SpeakingState>, SignalingModuleError> {
     redis_conn
         .get(SpeakerKey { room, participant })
         .await
-        .context("Failed to get speaker state")
+        .context(RedisSnafu {
+            message: "Failed to get speaker state",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -166,18 +200,20 @@ pub async fn delete_speaker(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     participant: ParticipantId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .del(SpeakerKey { room, participant })
         .await
-        .context("Failed to delete speaker state")
+        .context(RedisSnafu {
+            message: "Failed to delete speaker state",
+        })
 }
 
 pub async fn delete_room_speakers(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     participants: &[ParticipantId],
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     for &participant in participants {
         delete_speaker(redis_conn, room, participant).await?;
     }
@@ -188,7 +224,7 @@ pub async fn get_room_speakers(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     participants: &[ParticipantId],
-) -> Result<Vec<ParticipantSpeakingState>> {
+) -> Result<Vec<ParticipantSpeakingState>, SignalingModuleError> {
     let mut participant_speakers = Vec::new();
 
     for &participant in participants {

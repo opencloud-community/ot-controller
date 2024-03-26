@@ -11,16 +11,16 @@ version.workspace = true
 publish = false
 
 [dependencies]
-anyhow.workspace = true
 async-trait.workspace = true
 chrono.workspace = true
+log.workspace = true
 opentalk-controller-settings.workspace = true
 opentalk-database.workspace = true
 opentalk-etherpad-client.workspace = true
-log.workspace = true
+opentalk-signaling-core.workspace = true
+opentalk-types = { workspace = true, features = ["backend"] }
 redis-args.workspace = true
 redis.workspace = true
 serde.workspace = true
-opentalk-signaling-core.workspace = true
+snafu.workspace = true
 tracing.workspace = true
-opentalk-types = { workspace = true, features = ["backend"] }

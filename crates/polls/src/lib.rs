@@ -2,11 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::Result;
 use futures::{stream::once, FutureExt};
 use opentalk_signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
-    SignalingModuleInitData, SignalingRoomId,
+    SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
 use opentalk_types::signaling::{
     polls::{
@@ -49,7 +48,7 @@ impl SignalingModule for Polls {
         ctx: InitContext<'_, Self>,
         _: &Self::Params,
         _: &'static str,
-    ) -> Result<Option<Self>> {
+    ) -> Result<Option<Self>, SignalingModuleError> {
         Ok(Some(Self {
             room: ctx.room_id(),
             config: None,
@@ -60,7 +59,7 @@ impl SignalingModule for Polls {
         &mut self,
         mut ctx: ModuleContext<'_, Self>,
         event: Event<'_, Self>,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         match event {
             Event::Joined {
                 control_data: _,
@@ -127,7 +126,9 @@ impl SignalingModule for Polls {
         }
     }
 
-    async fn build_params(_init: SignalingModuleInitData) -> Result<Option<Self::Params>> {
+    async fn build_params(
+        _init: SignalingModuleInitData,
+    ) -> Result<Option<Self::Params>, SignalingModuleError> {
         Ok(Some(()))
     }
 }
@@ -144,7 +145,7 @@ impl Polls {
         &mut self,
         mut ctx: ModuleContext<'_, Self>,
         msg: PollsCommand,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         match msg {
             PollsCommand::Start(Start {
                 topic,
@@ -302,7 +303,7 @@ impl Polls {
         &mut self,
         mut ctx: ModuleContext<'_, Self>,
         msg: exchange::Message,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         match msg {
             exchange::Message::Started(polls_state) => {
                 let id = polls_state.id;

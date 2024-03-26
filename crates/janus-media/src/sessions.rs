@@ -3,9 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use crate::mcu::{JanusPublisher, JanusSubscriber, McuPool, MediaSessionKey, WebRtcEvent};
-use anyhow::{ensure, Result};
+use opentalk_signaling_core::SignalingModuleError;
 use opentalk_types::signaling::media::ParticipantMediaState;
 use opentalk_types::{core::ParticipantId, signaling::media::MediaSessionType};
+use snafu::ensure_whatever;
 use std::collections::HashMap;
 use std::future::Future;
 use tokio::sync::mpsc;
@@ -40,8 +41,8 @@ impl MediaSessions {
         &mut self,
         mcu_client: &McuPool,
         media_session_type: MediaSessionType,
-    ) -> Result<&JanusPublisher> {
-        ensure!(
+    ) -> Result<&JanusPublisher, SignalingModuleError> {
+        ensure_whatever!(
             !self.publishers.contains_key(&media_session_type),
             "There can only be one publisher per media_session_type"
         );
@@ -74,9 +75,9 @@ impl MediaSessions {
         mcu_client: &McuPool,
         participant: ParticipantId,
         media_session_type: MediaSessionType,
-    ) -> Result<&JanusSubscriber> {
+    ) -> Result<&JanusSubscriber, SignalingModuleError> {
         let key = MediaSessionKey(participant, media_session_type);
-        ensure!(
+        ensure_whatever!(
             !self.subscribers.contains_key(&key),
             "There should only be one subscriber per media session key"
         );

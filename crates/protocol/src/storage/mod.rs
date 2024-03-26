@@ -2,8 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::Result;
-use opentalk_signaling_core::{RedisConnection, SignalingRoomId};
+use opentalk_signaling_core::{RedisConnection, SignalingModuleError, SignalingRoomId};
 
 pub(crate) mod group;
 pub(crate) mod init;
@@ -14,7 +13,7 @@ pub(crate) mod session;
 pub(crate) async fn cleanup(
     redis_conn: &mut RedisConnection,
     room_id: SignalingRoomId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     init::del(redis_conn, room_id).await?;
     group::del(redis_conn, room_id).await?;
 

@@ -11,8 +11,6 @@ publish = false
 version.workspace = true
 
 [dependencies]
-reqwest.workspace = true
-anyhow.workspace = true
 actix-http.workspace = true
 actix-rt = { workspace = true, optional = true }
 async-trait.workspace = true
@@ -20,6 +18,7 @@ aws-sdk-s3.workspace = true
 bigdecimal.workspace = true
 bytes.workspace = true
 bytestring.workspace = true
+config.workspace = true
 futures.workspace = true
 kustos.workspace = true
 lapin-pool.workspace = true
@@ -28,11 +27,14 @@ log.workspace = true
 opentalk-controller-settings.workspace = true
 opentalk-database.workspace = true
 opentalk-db-storage.workspace = true
+opentalk-etherpad-client.workspace = true
+opentalk-janus-client.workspace = true
 opentalk-r3dlock.workspace = true
 opentalk-types = { workspace = true, features = ["backend"] }
 opentelemetry = { workspace = true, features = ["metrics", "trace"] }
 redis = { workspace = true, features = ["connection-manager", "tokio-comp"] }
 redis-args.workspace = true
+reqwest.workspace = true
 rustc-hash.workspace = true
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true

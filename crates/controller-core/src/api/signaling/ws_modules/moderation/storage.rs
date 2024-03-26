@@ -2,11 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::{Context, Result};
-use opentalk_signaling_core::RedisConnection;
+use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError};
 use opentalk_types::core::{ParticipantId, RoomId, UserId};
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
+use snafu::ResultExt;
 
 /// Set of user-ids banned in a room
 #[derive(ToRedisArgs)]
@@ -20,11 +20,13 @@ pub async fn ban_user(
     redis_conn: &mut RedisConnection,
     room: RoomId,
     user_id: UserId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .sadd(Bans { room }, user_id)
         .await
-        .context("Failed to SADD user_id to bans")
+        .context(RedisSnafu {
+            message: "Failed to SADD user_id to bans",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -32,11 +34,13 @@ pub async fn unban_user(
     redis_conn: &mut RedisConnection,
     room: RoomId,
     user_id: UserId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .srem(Bans { room }, user_id)
         .await
-        .context("Failed to SREM user_id to bans")
+        .context(RedisSnafu {
+            message: "Failed to SREM user_id to bans",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -44,19 +48,23 @@ pub async fn is_banned(
     redis_conn: &mut RedisConnection,
     room: RoomId,
     user_id: UserId,
-) -> Result<bool> {
+) -> Result<bool, SignalingModuleError> {
     redis_conn
         .sismember(Bans { room }, user_id)
         .await
-        .context("Failed to SISMEMBER user_id on bans")
+        .context(RedisSnafu {
+            message: "Failed to SISMEMBER user_id on bans",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn delete_bans(redis_conn: &mut RedisConnection, room: RoomId) -> Result<()> {
-    redis_conn
-        .del(Bans { room })
-        .await
-        .context("Failed to DEL bans")
+pub async fn delete_bans(
+    redis_conn: &mut RedisConnection,
+    room: RoomId,
+) -> Result<(), SignalingModuleError> {
+    redis_conn.del(Bans { room }).await.context(RedisSnafu {
+        message: "Failed to DEL bans",
+    })
 }
 
 /// If set to true the waiting room is enabled
@@ -71,11 +79,13 @@ pub async fn set_waiting_room_enabled(
     redis_conn: &mut RedisConnection,
     room: RoomId,
     enabled: bool,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .set(WaitingRoomEnabled { room }, enabled)
         .await
-        .context("Failed to SET waiting_room_enabled")
+        .context(RedisSnafu {
+            message: "Failed to SET waiting_room_enabled",
+        })
 }
 
 /// Return the `waiting_room` flag, and optionally set it to a defined value
@@ -85,14 +95,16 @@ pub async fn init_waiting_room_key(
     redis_conn: &mut RedisConnection,
     room: RoomId,
     enabled: bool,
-) -> Result<bool> {
+) -> Result<bool, SignalingModuleError> {
     let was_enabled: (bool, bool) = redis::pipe()
         .atomic()
         .set_nx(WaitingRoomEnabled { room }, enabled)
         .get(WaitingRoomEnabled { room })
         .query_async(redis_conn)
         .await
-        .context("Failed to GET waiting_room_enabled")?;
+        .context(RedisSnafu {
+            message: "Failed to GET waiting_room_enabled",
+        })?;
     Ok(was_enabled.1)
 }
 
@@ -100,11 +112,13 @@ pub async fn init_waiting_room_key(
 pub async fn is_waiting_room_enabled(
     redis_conn: &mut RedisConnection,
     room: RoomId,
-) -> Result<bool> {
+) -> Result<bool, SignalingModuleError> {
     redis_conn
         .get(WaitingRoomEnabled { room })
         .await
-        .context("Failed to GET waiting_room_enabled")
+        .context(RedisSnafu {
+            message: "Failed to GET waiting_room_enabled",
+        })
         .map(Option::<bool>::unwrap_or_default)
 }
 
@@ -112,11 +126,13 @@ pub async fn is_waiting_room_enabled(
 pub async fn delete_waiting_room_enabled(
     redis_conn: &mut RedisConnection,
     room: RoomId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .del(WaitingRoomEnabled { room })
         .await
-        .context("Failed to DEL waiting_room_enabled")
+        .context(RedisSnafu {
+            message: "Failed to DEL waiting_room_enabled",
+        })
 }
 
 /// If set to true the raise hands is enabled
@@ -131,22 +147,26 @@ pub async fn set_raise_hands_enabled(
     redis_conn: &mut RedisConnection,
     room: RoomId,
     enabled: bool,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .set(RaiseHandsEnabled { room }, enabled)
         .await
-        .context("Failed to SET raise_hands_enabled")
+        .context(RedisSnafu {
+            message: "Failed to SET raise_hands_enabled",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
 pub async fn is_raise_hands_enabled(
     redis_conn: &mut RedisConnection,
     room: RoomId,
-) -> Result<bool> {
+) -> Result<bool, SignalingModuleError> {
     redis_conn
         .get(RaiseHandsEnabled { room })
         .await
-        .context("Failed to GET raise_hands_enabled")
+        .context(RedisSnafu {
+            message: "Failed to GET raise_hands_enabled",
+        })
         .map(|result: Option<bool>| result.unwrap_or(true))
 }
 
@@ -154,11 +174,13 @@ pub async fn is_raise_hands_enabled(
 pub async fn delete_raise_hands_enabled(
     redis_conn: &mut RedisConnection,
     room: RoomId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .del(RaiseHandsEnabled { room })
         .await
-        .context("Failed to DEL raise_hands_enabled")
+        .context(RedisSnafu {
+            message: "Failed to DEL raise_hands_enabled",
+        })
 }
 
 /// Set of participant ids inside the waiting room
@@ -173,11 +195,13 @@ pub async fn waiting_room_add(
     redis_conn: &mut RedisConnection,
     room: RoomId,
     participant_id: ParticipantId,
-) -> Result<usize> {
+) -> Result<usize, SignalingModuleError> {
     redis_conn
         .sadd(WaitingRoomList { room }, participant_id)
         .await
-        .context("Failed to SADD waiting_room_list")
+        .context(RedisSnafu {
+            message: "Failed to SADD waiting_room_list",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -185,11 +209,13 @@ pub async fn waiting_room_remove(
     redis_conn: &mut RedisConnection,
     room: RoomId,
     participant_id: ParticipantId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .srem(WaitingRoomList { room }, participant_id)
         .await
-        .context("Failed to SREM waiting_room_list")
+        .context(RedisSnafu {
+            message: "Failed to SREM waiting_room_list",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -197,38 +223,52 @@ pub async fn waiting_room_contains(
     redis_conn: &mut RedisConnection,
     room: RoomId,
     participant_id: ParticipantId,
-) -> Result<bool> {
+) -> Result<bool, SignalingModuleError> {
     redis_conn
         .sismember(WaitingRoomList { room }, participant_id)
         .await
-        .context("Failed to SISMEMBER waiting_room_list")
+        .context(RedisSnafu {
+            message: "Failed to SISMEMBER waiting_room_list",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
 pub async fn waiting_room_all(
     redis_conn: &mut RedisConnection,
     room: RoomId,
-) -> Result<Vec<ParticipantId>> {
+) -> Result<Vec<ParticipantId>, SignalingModuleError> {
     redis_conn
         .smembers(WaitingRoomList { room })
         .await
-        .context("Failed to SMEMBERS waiting_room_list")
+        .context(RedisSnafu {
+            message: "Failed to SMEMBERS waiting_room_list",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn waiting_room_len(redis_conn: &mut RedisConnection, room: RoomId) -> Result<usize> {
+pub async fn waiting_room_len(
+    redis_conn: &mut RedisConnection,
+    room: RoomId,
+) -> Result<usize, SignalingModuleError> {
     redis_conn
         .scard(WaitingRoomList { room })
         .await
-        .context("Failed to SCARD waiting_room_list")
+        .context(RedisSnafu {
+            message: "Failed to SCARD waiting_room_list",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn delete_waiting_room(redis_conn: &mut RedisConnection, room: RoomId) -> Result<()> {
+pub async fn delete_waiting_room(
+    redis_conn: &mut RedisConnection,
+    room: RoomId,
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .del(WaitingRoomList { room })
         .await
-        .context("Failed to DEL waiting_room_list")
+        .context(RedisSnafu {
+            message: "Failed to DEL waiting_room_list",
+        })
 }
 
 /// Set of participant ids inside the waiting room but accepted
@@ -243,11 +283,13 @@ pub async fn waiting_room_accepted_add(
     redis_conn: &mut RedisConnection,
     room: RoomId,
     participant_id: ParticipantId,
-) -> Result<usize> {
+) -> Result<usize, SignalingModuleError> {
     redis_conn
         .sadd(AcceptedWaitingRoomList { room }, participant_id)
         .await
-        .context("Failed to SADD waiting_room_accepted_list")
+        .context(RedisSnafu {
+            message: "Failed to SADD waiting_room_accepted_list",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -255,11 +297,13 @@ pub async fn waiting_room_accepted_remove(
     redis_conn: &mut RedisConnection,
     room: RoomId,
     participant_id: ParticipantId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .srem(AcceptedWaitingRoomList { room }, participant_id)
         .await
-        .context("Failed to SREM waiting_room_accepted_list")
+        .context(RedisSnafu {
+            message: "Failed to SREM waiting_room_accepted_list",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -267,7 +311,7 @@ pub async fn waiting_room_accepted_remove_list(
     redis_conn: &mut RedisConnection,
     room: RoomId,
     participant_ids: &[ParticipantId],
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     if participant_ids.is_empty() {
         return Ok(());
     }
@@ -275,7 +319,9 @@ pub async fn waiting_room_accepted_remove_list(
     redis_conn
         .srem(AcceptedWaitingRoomList { room }, participant_ids)
         .await
-        .context("Failed to SREM waiting_room_accepted_list")
+        .context(RedisSnafu {
+            message: "Failed to SREM waiting_room_accepted_list",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -283,42 +329,50 @@ pub async fn waiting_room_accepted_contains(
     redis_conn: &mut RedisConnection,
     room: RoomId,
     participant_id: ParticipantId,
-) -> Result<bool> {
+) -> Result<bool, SignalingModuleError> {
     redis_conn
         .sismember(AcceptedWaitingRoomList { room }, participant_id)
         .await
-        .context("Failed to SISMEMBER waiting_room_accepted_list")
+        .context(RedisSnafu {
+            message: "Failed to SISMEMBER waiting_room_accepted_list",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
 pub async fn waiting_room_accepted_all(
     redis_conn: &mut RedisConnection,
     room: RoomId,
-) -> Result<Vec<ParticipantId>> {
+) -> Result<Vec<ParticipantId>, SignalingModuleError> {
     redis_conn
         .smembers(AcceptedWaitingRoomList { room })
         .await
-        .context("Failed to SMEMBERS waiting_room_accepted_list")
+        .context(RedisSnafu {
+            message: "Failed to SMEMBERS waiting_room_accepted_list",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
 pub async fn waiting_room_accepted_len(
     redis_conn: &mut RedisConnection,
     room: RoomId,
-) -> Result<usize> {
+) -> Result<usize, SignalingModuleError> {
     redis_conn
         .scard(AcceptedWaitingRoomList { room })
         .await
-        .context("Failed to SCARD waiting_room_accepted_list")
+        .context(RedisSnafu {
+            message: "Failed to SCARD waiting_room_accepted_list",
+        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
 pub async fn delete_waiting_room_accepted(
     redis_conn: &mut RedisConnection,
     room: RoomId,
-) -> Result<()> {
+) -> Result<(), SignalingModuleError> {
     redis_conn
         .del(AcceptedWaitingRoomList { room })
         .await
-        .context("Failed to DEL waiting_room_accepted_list")
+        .context(RedisSnafu {
+            message: "Failed to DEL waiting_room_accepted_list",
+        })
 }
