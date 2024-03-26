@@ -26,7 +26,7 @@ pub mod control;
 pub use any_stream::{any_stream, AnyStream};
 pub use destroy_context::DestroyContext;
 pub use event::Event;
-pub use exchange_task::{ExchangeHandle, ExchangeTask, SubscriberHandle};
+pub use exchange_task::{Error as ExchangeError, ExchangeHandle, ExchangeTask, SubscriberHandle};
 pub use init_context::{ExchangeBinding, InitContext};
 pub use metrics::SignalingMetrics;
 pub use module_context::{ExchangePublish, ModuleContext};
