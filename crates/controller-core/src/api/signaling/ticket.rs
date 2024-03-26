@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use super::resumption::{ResumptionData, ResumptionRedisKey};
-use anyhow::Context;
 use opentalk_signaling_core::{control, Participant, RedisConnection};
 use opentalk_types::{
     api::error::ApiError,
@@ -120,11 +119,11 @@ async fn use_resumption_token(
             .with_message("the session of the given resumption token is still running"));
     }
 
-    if redis_conn
-        .del(&resumption_redis_key)
-        .await
-        .context("failed to remove resumption token")?
-    {
+    let delete_success = redis_conn.del(&resumption_redis_key).await.map_err(|e| {
+        log::warn!("Internal error: {e}");
+        ApiError::internal()
+    })?;
+    if delete_success {
         Ok(Some(data.participant_id))
     } else {
         Err(ApiError::internal())

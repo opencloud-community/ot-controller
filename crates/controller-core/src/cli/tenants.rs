@@ -2,11 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::{Context, Result};
 use chrono::Utc;
 use clap::Subcommand;
 use opentalk_controller_settings::Settings;
-use opentalk_database::Db;
+use opentalk_database::{DatabaseError, Db};
 use opentalk_db_storage::tenants::{OidcTenantId, Tenant, UpdateTenant};
 use opentalk_types::core::TenantId;
 use tabled::{settings::Style, Table, Tabled};
@@ -21,7 +20,7 @@ pub enum Command {
     SetOidcId { id: Uuid, new_oidc_id: String },
 }
 
-pub async fn handle_command(settings: Settings, command: Command) -> Result<()> {
+pub async fn handle_command(settings: Settings, command: Command) -> Result<(), DatabaseError> {
     match command {
         Command::List => list_all_tenants(settings).await,
         Command::SetOidcId { id, new_oidc_id } => {
@@ -51,8 +50,8 @@ impl TenantTableRow {
 }
 
 /// Implementation of the `opentalk-controller tenants list` command
-async fn list_all_tenants(settings: Settings) -> Result<()> {
-    let db = Db::connect(&settings.database).context("Failed to connect to database")?;
+async fn list_all_tenants(settings: Settings) -> Result<(), DatabaseError> {
+    let db = Db::connect(&settings.database)?;
     let mut conn = db.get_conn().await?;
 
     let tenants = Tenant::get_all(&mut conn).await?;
@@ -67,8 +66,12 @@ async fn list_all_tenants(settings: Settings) -> Result<()> {
 }
 
 /// Implementation of the `opentalk-controller tenants set-oidc-id <tenant-id> <new-oidc-id>` command
-async fn set_oidc_id(settings: Settings, id: TenantId, new_oidc_id: OidcTenantId) -> Result<()> {
-    let db = Db::connect(&settings.database).context("Failed to connect to database")?;
+async fn set_oidc_id(
+    settings: Settings,
+    id: TenantId,
+    new_oidc_id: OidcTenantId,
+) -> Result<(), DatabaseError> {
+    let db = Db::connect(&settings.database)?;
     let mut conn = db.get_conn().await?;
 
     let tenant = Tenant::get(&mut conn, id).await?;

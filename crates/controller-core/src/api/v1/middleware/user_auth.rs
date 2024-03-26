@@ -195,7 +195,10 @@ pub async fn check_access_token(
         // Hit! Return the cached result
         match result {
             Ok(tenant_and_user) => Ok(tenant_and_user),
-            Err(err) => Err(ApiError::try_from(err)?),
+            Err(err) => Err(ApiError::try_from(err).map_err(|err| {
+                log::warn!("Error while creating error: {err}");
+                ApiError::internal()
+            })?),
         }
     } else {
         // Miss, do the check and cache the result

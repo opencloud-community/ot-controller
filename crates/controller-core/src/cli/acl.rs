@@ -4,13 +4,17 @@
 
 //! Allows to manipulate the acls
 //! Currently supported is enabling/disabling room access for all users.
-use super::AclSubCommand;
-use crate::acl::{check_or_create_kustos_role_policy, maybe_remove_kustos_role_policy};
-use anyhow::{Context, Result};
 use kustos::prelude::AccessMethod;
 use opentalk_controller_settings::Settings;
 use opentalk_database::Db;
+use snafu::ResultExt;
 use std::sync::Arc;
+
+use super::AclSubCommand;
+use crate::{
+    acl::{check_or_create_kustos_role_policy, maybe_remove_kustos_role_policy},
+    Result,
+};
 
 pub(crate) async fn acl(settings: Settings, e: AclSubCommand) -> Result<()> {
     match e {
@@ -23,8 +27,12 @@ pub(crate) async fn acl(settings: Settings, e: AclSubCommand) -> Result<()> {
 }
 
 async fn enable_user_access_to_all_rooms(settings: &Settings) -> Result<()> {
-    let db = Arc::new(Db::connect(&settings.database).context("Failed to connect to database")?);
-    let authz = kustos::Authz::new(db.clone()).await?;
+    let db = Arc::new(
+        Db::connect(&settings.database).whatever_context("Failed to connect to database")?,
+    );
+    let authz = kustos::Authz::new(db.clone())
+        .await
+        .whatever_context("Failed to initialize kustos/authz")?;
 
     check_or_create_kustos_role_policy(&authz, "user", "/rooms/*/start", AccessMethod::POST)
         .await?;
@@ -34,8 +42,12 @@ async fn enable_user_access_to_all_rooms(settings: &Settings) -> Result<()> {
 }
 
 async fn disable_user_access_to_all_rooms(settings: &Settings) -> Result<()> {
-    let db = Arc::new(Db::connect(&settings.database).context("Failed to connect to database")?);
-    let authz = kustos::Authz::new(db.clone()).await?;
+    let db = Arc::new(
+        Db::connect(&settings.database).whatever_context("Failed to connect to database")?,
+    );
+    let authz = kustos::Authz::new(db.clone())
+        .await
+        .whatever_context("Failed to initialize kustos/authz")?;
 
     maybe_remove_kustos_role_policy(&authz, "user", "/rooms/*/start", AccessMethod::POST).await?;
     maybe_remove_kustos_role_policy(&authz, "user", "/rooms/*", AccessMethod::GET).await?;

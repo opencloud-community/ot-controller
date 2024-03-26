@@ -57,11 +57,12 @@ pub async fn post_login(
                 VerifyError::InvalidClaims => Err(ApiError::bad_request()
                     .with_code("invalid_claims")
                     .with_message("some required attributes are missing or malformed")),
-                VerifyError::Expired(_) => Err(ApiError::unauthorized()
+                VerifyError::Expired { .. } => Err(ApiError::unauthorized()
                     .with_www_authenticate(AuthenticationError::SessionExpired)),
                 VerifyError::MissingKeyID
                 | VerifyError::UnknownKeyID
-                | VerifyError::InvalidJwt(_)
+                | VerifyError::MalformedSignature
+                | VerifyError::InvalidJwt { .. }
                 | VerifyError::InvalidSignature => Err(ApiError::unauthorized()
                     .with_www_authenticate(AuthenticationError::InvalidIdToken)),
             };

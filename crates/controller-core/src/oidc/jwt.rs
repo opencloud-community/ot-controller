@@ -8,24 +8,30 @@ use jsonwebtoken::{self, decode, Algorithm, DecodingKey, Validation};
 use openidconnect::core::{CoreJsonWebKeySet, CoreJwsSigningAlgorithm};
 use openidconnect::JsonWebKey;
 use serde::de::DeserializeOwned;
+use snafu::{ResultExt, Snafu};
 use std::time::SystemTime;
 
 /// Token Verification errors
 ///
 /// The error messages will get displayed in a HTTP 401 response
-#[derive(Debug, thiserror::Error, PartialEq, Eq)]
+#[derive(Debug, Snafu, PartialEq, Eq)]
 pub enum VerifyError {
-    #[error("Not a valid JWT ({0})")]
-    InvalidJwt(String),
-    #[error("JWT has invalid claims")]
+    #[snafu(display("Not a valid JWT ({message})"))]
+    InvalidJwt {
+        message: String,
+        source: jsonwebtoken::errors::Error,
+    },
+    #[snafu(display("Unable to parse signature from JWT"))]
+    MalformedSignature,
+    #[snafu(display("JWT has invalid claims"))]
     InvalidClaims,
-    #[error("JWT token expired ({0})")]
-    Expired(String),
-    #[error("JWT header does not specify a KeyID (kid)")]
+    #[snafu(display("JWT token expired ({message})"))]
+    Expired { message: String },
+    #[snafu(display("JWT header does not specify a KeyID (kid)"))]
     MissingKeyID,
-    #[error("JWT header specified an unknown KeyID (kid)")]
+    #[snafu(display("JWT header specified an unknown KeyID (kid)"))]
     UnknownKeyID,
-    #[error("JWT has an invalid signature")]
+    #[snafu(display("JWT has an invalid signature"))]
     InvalidSignature,
 }
 
@@ -38,9 +44,11 @@ pub trait VerifyClaims: DeserializeOwned {
 ///
 /// Returns `Err(_)` if the JWT is invalid or expired.
 pub fn verify<C: VerifyClaims>(key_set: &CoreJsonWebKeySet, token: &str) -> Result<C, VerifyError> {
-    let header = jsonwebtoken::decode_header(token).map_err(|e| {
+    let header = jsonwebtoken::decode_header(token).with_context(|e| {
         log::warn!("Unable to parse token header, {}", e);
-        VerifyError::InvalidJwt("Unable to parse token header".to_string())
+        InvalidJwtSnafu {
+            message: "Unable to parse token header",
+        }
     })?;
 
     // Get the token key id
@@ -69,9 +77,8 @@ pub fn verify<C: VerifyClaims>(key_set: &CoreJsonWebKeySet, token: &str) -> Resu
 
     let (message, signature) = match token.rsplit_once('.') {
         None => {
-            let msg = "Unable to parse signature from JWT token";
-            log::warn!("{}", msg);
-            return Err(VerifyError::InvalidJwt(msg.to_string()));
+            log::warn!("Unable to parse signature from JWT token");
+            return MalformedSignatureSnafu.fail();
         }
         Some((message, signature)) => (message, signature),
     };
@@ -118,7 +125,7 @@ pub fn decode_token<C: VerifyClaims>(token: &str) -> Result<C, VerifyError> {
     if now > token.claims.exp() {
         let msg = format!("The provided token expired at {}", token.claims.exp());
         log::warn!("{}", msg);
-        return Err(VerifyError::Expired(msg));
+        return ExpiredSnafu { message: msg }.fail();
     }
 
     Ok(token.claims)
@@ -285,13 +292,8 @@ mod test {
         // Verify should success
         match super::verify::<UserClaims>(&jwks, &jwt_enc) {
             Ok(_) => panic!("Test must fail, exp is set in the past"),
-            Err(e) => {
-                if let VerifyError::Expired(_) = e {
-                    // Test successful
-                } else {
-                    panic!("Test must fail with VerifyError::Expired(...)")
-                }
-            }
+            Err(VerifyError::Expired { .. }) => { /* Test successful */ }
+            Err(_) => panic!("Test must fail with VerifyError::Expired(...)"),
         }
     }
 

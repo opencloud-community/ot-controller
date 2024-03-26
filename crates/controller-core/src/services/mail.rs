@@ -7,9 +7,7 @@
 //! Used to have a clean interface for various kinds of mails
 //! that are sent from the Web-API and possibly other connected services.
 //!
-// TODO We probably can avoid the conversion to MailTasks if no rabbit_mq_queue is set in all mail fns
-use crate::metrics::EndpointMetrics;
-use anyhow::{Context, Result};
+// TODO: We probably can avoid the conversion to MailTasks if no rabbit_mq_queue is set in all mail fns
 use lapin_pool::{RabbitMqChannel, RabbitMqPool};
 use opentalk_controller_settings::{Settings, SharedSettings};
 use opentalk_db_storage::events::{EventException, EventExceptionKind};
@@ -17,9 +15,12 @@ use opentalk_db_storage::{events::Event, rooms::Room, sip_configs::SipConfig, us
 use opentalk_mail_worker_protocol::*;
 use opentalk_types::common::{features, shared_folder::SharedFolder};
 use opentalk_types::core::UserId;
+use snafu::ResultExt;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use uuid::Uuid;
+
+use crate::{metrics::EndpointMetrics, Result};
 
 pub struct RegisteredMailRecipient {
     pub id: UserId,
@@ -188,7 +189,7 @@ impl MailService {
                         .rabbitmq_pool
                         .create_channel()
                         .await
-                        .context("Failed to get a rabbitmq_channel replacement")?;
+                        .whatever_context("Failed to get a rabbitmq_channel replacement")?;
                 }
 
                 channel.clone()
@@ -199,10 +200,12 @@ impl MailService {
                     "",
                     queue_name,
                     Default::default(),
-                    &serde_json::to_vec(&mail_task).context("Failed to serialize mail_task")?,
+                    &serde_json::to_vec(&mail_task)
+                        .whatever_context("Failed to serialize mail_task")?,
                     Default::default(),
                 )
-                .await?;
+                .await
+                .whatever_context("Failed to publish to channel")?;
         }
 
         self.metrics.increment_issued_email_tasks_count(&mail_task);

@@ -2,13 +2,15 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::http::async_http_client;
-use anyhow::{anyhow, Context, Result};
 use openidconnect::core::CoreClient;
 use openidconnect::url::Url;
 use openidconnect::{ClientId, IntrospectionUrl, IssuerUrl};
 use opentalk_controller_settings as settings;
 use serde::{Deserialize, Serialize};
+use snafu::{Backtrace, ResultExt};
+
+use super::http::async_http_client;
+use crate::{Result, Whatever};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AdditionalProviderMetadata {
@@ -52,7 +54,11 @@ impl ProviderClient {
         let mut issuer_url = config.base_url.clone();
         issuer_url
             .path_segments_mut()
-            .map_err(|_| anyhow!("keycloak base url cannot be a base"))?
+            .map_err(|_| Whatever {
+                source: None,
+                message: "Keycloak base url cannot be a base".to_owned(),
+                backtrace: Backtrace::capture(),
+            })?
             .extend(["realms", &config.realm]);
 
         let metadata = ProviderMetadata::discover_async(
@@ -60,7 +66,7 @@ impl ProviderClient {
             async_http_client(http_client),
         )
         .await
-        .context("Failed to discover provider metadata")?;
+        .whatever_context("Failed to discover provider metadata")?;
 
         let client = CoreClient::new(
             config.client_id.clone(),

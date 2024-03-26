@@ -2,12 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::ModuleContext;
-use super::{SignalingModule, Timestamp};
-use crate::api::signaling::ws::runner::Builder;
-use crate::api::signaling::ws::{DestroyContext, ExchangePublish};
 use actix_http::ws::{CloseCode, Message};
-use anyhow::{Context, Result};
 use futures::stream::SelectAll;
 use opentalk_signaling_core::{AnyStream, Event, InitContext, RedisConnection, SignalingMetrics};
 use opentalk_types::{
@@ -18,14 +13,22 @@ use opentalk_types::{
     },
 };
 use serde_json::Value;
+use snafu::{ResultExt, Snafu};
 use std::any::Any;
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
-#[derive(Debug, thiserror::Error)]
-#[error("invalid module namespace")]
-pub struct NoSuchModuleError(pub ());
+use crate::{
+    api::signaling::ws::{
+        runner::Builder, DestroyContext, ExchangePublish, ModuleContext, SignalingModule, Timestamp,
+    },
+    Result,
+};
+
+#[derive(Debug, Snafu)]
+#[snafu(display("Invalid module namespace"))]
+pub struct NoSuchModuleError;
 
 #[derive(Default)]
 pub(super) struct Modules {
@@ -56,7 +59,7 @@ impl Modules {
         module: &str,
         dyn_event: DynTargetedEvent,
     ) -> Result<(), NoSuchModuleError> {
-        let module = self.modules.get_mut(module).ok_or(NoSuchModuleError(()))?;
+        let module = self.modules.get_mut(module).ok_or(NoSuchModuleError)?;
 
         if let Err(e) = module.on_event_targeted(ctx, dyn_event).await {
             log::error!("Failed to handle event {:?}", e);
@@ -186,18 +189,26 @@ where
 
         match dyn_event {
             DynTargetedEvent::WsMessage(msg) => {
-                let msg = serde_json::from_value(msg).context("Failed to parse WS message")?;
-                self.module.on_event(ctx, Event::WsMessage(msg)).await?;
+                let msg =
+                    serde_json::from_value(msg).whatever_context("Failed to parse WS message")?;
+                self.module
+                    .on_event(ctx, Event::WsMessage(msg))
+                    .await
+                    .whatever_context("Failed to process ws event")?;
             }
             DynTargetedEvent::ExchangeMessage(msg) => {
-                let msg =
-                    serde_json::from_value(msg).context("Failed to parse exchange message")?;
-                self.module.on_event(ctx, Event::Exchange(msg)).await?;
+                let msg = serde_json::from_value(msg)
+                    .whatever_context("Failed to parse exchange message")?;
+                self.module
+                    .on_event(ctx, Event::Exchange(msg))
+                    .await
+                    .whatever_context("Failed to process exchange event")?;
             }
             DynTargetedEvent::Ext(ext) => {
                 self.module
                     .on_event(ctx, Event::Ext(*ext.downcast().expect("invalid ext type")))
-                    .await?;
+                    .await
+                    .whatever_context("Failed to process ext event")?;
             }
         }
 
@@ -236,67 +247,82 @@ where
                             participants: &mut participants_data,
                         },
                     )
-                    .await?;
+                    .await
+                    .whatever_context("Failed to process joined event")?;
 
                 if let Some(frontend_data) = frontend_data {
                     module_data
                         .insert(&frontend_data)
-                        .context("Failed to convert frontend-data to value")?;
+                        .whatever_context("Failed to convert frontend-data to value")?;
                 }
 
                 for participant in participants.iter_mut() {
                     if let Some(data) = participants_data.remove(&participant.id).flatten() {
-                        participant
-                            .module_data
-                            .insert(&data)
-                            .context("Failed to convert module peer frontend data to value")?;
+                        participant.module_data.insert(&data).whatever_context(
+                            "Failed to convert module peer frontend data to value",
+                        )?;
                     }
                 }
             }
             DynBroadcastEvent::Leaving => {
-                self.module.on_event(ctx, Event::Leaving).await?;
+                self.module
+                    .on_event(ctx, Event::Leaving)
+                    .await
+                    .whatever_context("Failed to process leaving event")?;
             }
             DynBroadcastEvent::RaiseHand => {
-                self.module.on_event(ctx, Event::RaiseHand).await?;
+                self.module
+                    .on_event(ctx, Event::RaiseHand)
+                    .await
+                    .whatever_context("Failed to process raised hand event")?;
             }
             DynBroadcastEvent::LowerHand => {
-                self.module.on_event(ctx, Event::LowerHand).await?;
+                self.module
+                    .on_event(ctx, Event::LowerHand)
+                    .await
+                    .whatever_context("Failed to process lower hand event")?;
             }
             DynBroadcastEvent::ParticipantJoined(participant) => {
                 let mut data = None;
 
                 self.module
                     .on_event(ctx, Event::ParticipantJoined(participant.id, &mut data))
-                    .await?;
+                    .await
+                    .whatever_context("Failed to process participant joined event")?;
 
                 if let Some(data) = data {
                     participant
                         .module_data
                         .insert(&data)
-                        .context("Failed to convert module peer frontend data to value")?;
+                        .whatever_context("Failed to convert module peer frontend data to value")?;
                 }
             }
             DynBroadcastEvent::ParticipantLeft(participant) => {
                 self.module
                     .on_event(ctx, Event::ParticipantLeft(*participant))
-                    .await?;
+                    .await
+                    .whatever_context("Failed to process participant left event")?;
             }
             DynBroadcastEvent::ParticipantUpdated(participant) => {
                 let mut data = None;
 
                 self.module
                     .on_event(ctx, Event::ParticipantUpdated(participant.id, &mut data))
-                    .await?;
+                    .await
+                    .whatever_context("Failed to process participant updated event")?;
 
                 if let Some(data) = data {
                     participant
                         .module_data
                         .insert(&data)
-                        .context("Failed to convert module peer frontend data to value")?;
+                        .whatever_context("Failed to convert module peer frontend data to value")?;
                 }
             }
             DynBroadcastEvent::RoleUpdated(role) => {
-                self.module.on_event(ctx, Event::RoleUpdated(*role)).await?;
+                self.module
+                    .on_event(ctx, Event::RoleUpdated(*role))
+                    .await
+                    .whatever_context("Failed to process role updated event")?;
             }
         }
         Ok(())
@@ -432,7 +458,10 @@ where
             m: PhantomData::<fn() -> M>,
         };
 
-        if let Some(module) = M::init(ctx, &self.params, builder.protocol).await? {
+        if let Some(module) = M::init(ctx, &self.params, builder.protocol)
+            .await
+            .whatever_context("Failed to init module")?
+        {
             builder.modules.add_module(module).await;
         }
 

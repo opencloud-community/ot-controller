@@ -44,9 +44,7 @@ clap.workspace = true
 arc-swap.workspace = true
 
 ### Error handling
-anyhow.workspace = true
 snafu.workspace = true
-thiserror.workspace = true
 validator.workspace = true
 
 ### Database ORM
@@ -124,7 +122,7 @@ opentalk-test-util = { workspace = true, features = ["database"] }
 pretty_assertions.workspace = true
 
 [build-dependencies]
-anyhow.workspace = true
+snafu.workspace = true
 vergen = { version = "8", features = ["build", "cargo", "rustc", "git", "git2"] }
 
 [package.metadata.cargo-machete]

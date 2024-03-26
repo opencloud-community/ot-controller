@@ -13,7 +13,6 @@ use actix_web::web::Data;
 use actix_web::{get, HttpMessage};
 use actix_web::{web, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
-use anyhow::Result;
 use kustos::Authz;
 use opentalk_database::Db;
 use opentalk_db_storage::rooms::Room;

@@ -16,7 +16,6 @@ use crate::services::{
 use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json, Path, Query, ReqData};
 use actix_web::{delete, get, patch, post, Either};
-use anyhow::Context;
 use chrono::{DateTime, Datelike, NaiveTime, Utc};
 use chrono_tz::Tz;
 use diesel_async::scoped_futures::ScopedFutureExt;
@@ -371,7 +370,10 @@ pub async fn new_event(
                 event_resource.shared_folder.clone(),
             )
             .await
-            .context("Failed to send with MailService")?;
+            .map_err(|err| {
+                log::warn!("Failed to send with MailService: {err}");
+                ApiError::internal()
+            })?;
     }
 
     Ok(ApiResponse::new(event_resource))
@@ -1129,7 +1131,7 @@ async fn notify_event_invitees_about_update(
     room: Room,
     sip_config: Option<SipConfig>,
     shared_folder_for_user: Option<SharedFolder>,
-) -> anyhow::Result<(), ApiError> {
+) -> Result<(), ApiError> {
     let invited_users = get_invited_mail_recipients_for_event(conn, event.id).await?;
     let current_user_mail_recipient = MailRecipient::Registered(current_user.clone().into());
     let users_to_notify = invited_users

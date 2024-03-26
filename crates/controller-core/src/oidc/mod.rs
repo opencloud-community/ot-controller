@@ -2,13 +2,15 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
 use http::async_http_client;
 use openidconnect::{AccessToken, TokenIntrospectionResponse};
 use opentalk_controller_settings as settings;
 use opentalk_types::strings::ToLowerCase;
 use provider::ProviderClient;
+use snafu::ResultExt;
+
+use crate::Result;
 
 mod claims;
 mod http;
@@ -33,9 +35,11 @@ impl OidcContext {
     pub async fn from_config(config: settings::Keycloak) -> Result<Self> {
         log::debug!("OIDC config: {:?}", config);
 
-        let http_client = http::make_client()?;
+        let http_client = http::make_client().whatever_context("Failed to make http client")?;
 
-        let client = ProviderClient::discover(http_client.clone(), config).await?;
+        let client = ProviderClient::discover(http_client.clone(), config)
+            .await
+            .whatever_context("Failed to discover provider client")?;
 
         Ok(Self {
             provider: client,
@@ -74,10 +78,11 @@ impl OidcContext {
         let response = self
             .provider
             .client
-            .introspect(access_token)?
+            .introspect(access_token)
+            .whatever_context("Invalid access token")?
             .request_async(async_http_client(self.http_client.clone()))
             .await
-            .context("Failed to verify token using the introspect endpoint")?;
+            .whatever_context("Failed to verify token using the introspect endpoint")?;
 
         tracing::Span::current().record("active", response.active());
 

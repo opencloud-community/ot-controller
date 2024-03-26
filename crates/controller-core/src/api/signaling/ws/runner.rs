@@ -2,23 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::actor::WebSocketActor;
-use super::modules::{
-    DynBroadcastEvent, DynEventCtx, DynTargetedEvent, Modules, NoSuchModuleError,
-};
-use super::{
-    DestroyContext, ExchangeBinding, ExchangePublish, NamespacedCommand, NamespacedEvent, Timestamp,
-};
-use crate::api::signaling::{
-    echo::Echo,
-    moderation,
-    resumption::{ResumptionTokenKeepAlive, ResumptionTokenUsed},
-    ws::actor::WsCommand,
-};
 use actix::Addr;
 use actix_http::ws::{CloseCode, CloseReason, Message};
 use actix_web_actors::ws;
-use anyhow::{bail, Context, Result};
 use bytestring::ByteString;
 use futures::stream::SelectAll;
 use futures::Future;
@@ -34,7 +20,7 @@ use opentalk_signaling_core::{
         ControlStateExt as _, NAMESPACE,
     },
     AnyStream, ExchangeHandle, ObjectStorage, Participant, RedisConnection, SignalingMetrics,
-    SignalingModule, SignalingRoomId, SubscriberHandle,
+    SignalingModule, SignalingModuleError, SignalingRoomId, SubscriberHandle,
 };
 use opentalk_types::{
     core::{BreakoutRoomId, ParticipantId, ParticipationKind, UserId},
@@ -51,6 +37,7 @@ use opentalk_types::{
     },
 };
 use serde_json::Value;
+use snafu::{whatever, ResultExt, Snafu};
 use std::future;
 use std::mem::replace;
 use std::ops::ControlFlow;
@@ -62,7 +49,46 @@ use tokio::time::{interval, sleep};
 use tokio_stream::StreamExt;
 use uuid::Uuid;
 
+use super::actor::WebSocketActor;
+use super::modules::{
+    DynBroadcastEvent, DynEventCtx, DynTargetedEvent, Modules, NoSuchModuleError,
+};
+use super::{
+    DestroyContext, ExchangeBinding, ExchangePublish, NamespacedCommand, NamespacedEvent, Timestamp,
+};
+use crate::api::signaling::{
+    echo::Echo, moderation, resumption::ResumptionError, resumption::ResumptionTokenKeepAlive,
+    ws::actor::WsCommand,
+};
+
 mod call_in;
+
+#[derive(Debug, Snafu)]
+pub enum RunnerError {
+    /// Couldn't get database connection.
+    #[snafu(context(false))]
+    DbConnection {
+        source: opentalk_database::DatabaseError,
+    },
+
+    #[snafu(context(false))]
+    R3dLock { source: opentalk_r3dlock::Error },
+
+    #[snafu(context(false))]
+    Redis { source: redis::RedisError },
+
+    #[snafu(context(false))]
+    Signaling { source: SignalingModuleError },
+
+    #[snafu(whatever)]
+    Other {
+        message: String,
+        #[snafu(source(from(Box<dyn std::error::Error + Sync + Send>, Some)))]
+        source: Option<Box<dyn std::error::Error + Sync + Send>>,
+    },
+}
+
+type Result<T, E = RunnerError> = std::result::Result<T, E>;
 
 /// Builder to the runner type.
 ///
@@ -101,11 +127,11 @@ impl Builder {
         self.modules.destroy(ctx).await
     }
 
-    async fn aquire_participant_id(&mut self) -> Result<()> {
+    async fn acquire_participant_id(&mut self) -> Result<()> {
         let key = ParticipantIdRunnerLock { id: self.id };
         let runner_id = self.runner_id.to_string();
 
-        // Try for up to 10 secs to aquire the key
+        // Try for up to 10 secs to acquire the key
         for _ in 0..10 {
             let value: redis::Value = redis::cmd("SET")
                 .arg(&key)
@@ -117,14 +143,14 @@ impl Builder {
             match value {
                 redis::Value::Nil => sleep(Duration::from_secs(1)).await,
                 redis::Value::Okay => return Ok(()),
-                _ => bail!(
-                    "got unexpected value while acquiring runner id, value={:?}",
+                _ => whatever!(
+                    "Got unexpected value while acquiring runner id, value={:?}",
                     value
                 ),
             }
         }
 
-        bail!("failed to aquire runner id");
+        whatever!("Failed to acquire runner id");
     }
 
     /// Build to runner from the data inside the builder and provided websocket
@@ -136,7 +162,7 @@ impl Builder {
         shutdown_sig: broadcast::Receiver<()>,
         settings: SharedSettings,
     ) -> Result<Runner> {
-        self.aquire_participant_id().await?;
+        self.acquire_participant_id().await?;
 
         let room_id = SignalingRoomId::new(self.room.id, self.breakout_room);
 
@@ -157,7 +183,11 @@ impl Builder {
             routing_keys.push(routing_key);
         }
 
-        let subscriber_handle = self.exchange_handle.create_subscriber(routing_keys).await?;
+        let subscriber_handle =
+            self.exchange_handle
+                .create_subscriber(routing_keys)
+                .await
+                .whatever_context::<_, RunnerError>("Failed to create subscriber")?;
 
         self.resumption_keep_alive
             .set_initial(&mut self.redis_conn)
@@ -292,7 +322,10 @@ async fn get_participant_role(
         return Ok(Role::Moderator);
     }
 
-    match EventInvite::get_for_user_and_room(conn, user.id, room.id).await? {
+    match EventInvite::get_for_user_and_room(conn, user.id, room.id)
+        .await
+        .whatever_context::<_, RunnerError>("Failed to get invite events")?
+    {
         Some(event_invite) => Ok(event_invite.role.into()),
         None => Ok(Role::User),
     }
@@ -680,12 +713,14 @@ impl Runner {
                     break;
                 }
                 _ = self.resumption_keep_alive.wait() => {
-                    if let Err(e) = self.resumption_keep_alive.refresh(&mut self.redis_conn).await {
-                        if e.is::<ResumptionTokenUsed>() {
+                    match self.resumption_keep_alive.refresh(&mut self.redis_conn).await {
+                        Ok(_) => {},
+                        Err(ResumptionError::Used) => {
                             log::warn!("Closing connection of this runner as its resumption token was used");
 
                             self.ws.close(CloseCode::Normal).await;
-                        } else {
+                        },
+                        Err(e) => {
                             log::error!("failed to set resumption token in redis, {:?}", e);
                         }
                     }
@@ -760,7 +795,7 @@ impl Runner {
                     self.handle_module_requested_actions(timestamp, actions)
                         .await
                 }
-                Err(NoSuchModuleError(())) => {
+                Err(NoSuchModuleError) => {
                     self.ws_send_control_error(timestamp, control_event::Error::InvalidNamespace)
                         .await;
                 }
@@ -1088,7 +1123,9 @@ impl Runner {
         let db = self.db.clone();
         let creator_id = self.room.created_by;
 
-        let tariff = Tariff::get_by_user_id(&mut db.get_conn().await?, &creator_id).await?;
+        let tariff = Tariff::get_by_user_id(&mut db.get_conn().await?, &creator_id)
+            .await
+            .whatever_context::<_, RunnerError>("Failed to get user")?;
 
         let mut lock = storage::room_mutex(self.room_id);
         let guard = lock.lock(&mut self.redis_conn).await?;
@@ -1123,7 +1160,7 @@ impl Runner {
         // Check that SADD doesn't return 0. That would mean that the participant id would be a
         // duplicate which cannot be allowed. Since this should never happen just error and exit.
         if !self.resuming && num_added == 0 {
-            bail!("participant-id is already taken inside waiting-room set");
+            whatever!("participant-id is already taken inside waiting-room set");
         }
 
         self.state = RunnerState::Waiting {
@@ -1137,7 +1174,8 @@ impl Runner {
                     namespace: moderation::NAMESPACE,
                     timestamp,
                     payload: ModerationEvent::InWaitingRoom,
-                })?
+                })
+                .whatever_context::<_, RunnerError>("Failed to send")?
                 .into(),
             ))
             .await;
@@ -1175,8 +1213,9 @@ impl Runner {
         let (guard, tariff) = if !joining_from_waiting_room {
             let creator_id = self.room.created_by;
 
-            let mut tariff =
-                Tariff::get_by_user_id(&mut self.db.get_conn().await?, &creator_id).await?;
+            let mut tariff = Tariff::get_by_user_id(&mut self.db.get_conn().await?, &creator_id)
+                .await
+                .whatever_context::<_, RunnerError>("Failed to get user")?;
 
             let guard = lock.lock(&mut self.redis_conn).await?;
 
@@ -1212,7 +1251,7 @@ impl Runner {
         let participant_ids = match res {
             Ok(participants) => participants,
             Err(e) => {
-                bail!("Failed to join room, {e:?}\nUnlocked room lock, {unlock_res:?}");
+                whatever!("Failed to join room, {e:?}\nUnlocked room lock, {unlock_res:?}");
             }
         };
 
@@ -1222,7 +1261,8 @@ impl Runner {
             &mut self.db.get_conn().await?,
             self.room.id,
         )
-        .await?;
+        .await
+        .whatever_context::<_, RunnerError>("Failed to get first event for room")?;
         let event = storage::try_init_event(&mut self.redis_conn, self.room.id, event).await?;
 
         let mut participants = vec![];
@@ -1303,25 +1343,22 @@ impl Runner {
         }
         self.activate_room_time_limit().await?;
 
-        let participants = storage::get_all_participants(&mut self.redis_conn, self.room_id)
-            .await
-            .context("Failed to get all active participants")?;
+        let participants =
+            storage::get_all_participants(&mut self.redis_conn, self.room_id).await?;
 
         let num_added =
-            storage::add_participant_to_set(&mut self.redis_conn, self.room_id, self.id)
-                .await
-                .context("Failed to add self to participants set")?;
+            storage::add_participant_to_set(&mut self.redis_conn, self.room_id, self.id).await?;
 
         // Check that SADD doesn't return 0. That would mean that the participant id would be a
         // duplicate which cannot be allowed. Since this should never happen just error and exit.
         if !self.resuming && num_added == 0 {
-            bail!("participant-id is already taken inside participant set");
+            whatever!("participant-id is already taken inside participant set");
         }
 
         Ok(participants)
     }
 
-    async fn set_room_time_limit(&mut self) -> Result<(), anyhow::Error> {
+    async fn set_room_time_limit(&mut self) -> Result<()> {
         let tariff = storage::get_tariff(&mut self.redis_conn, self.room.id).await?;
 
         let quotas = tariff.quotas.0;
@@ -1348,7 +1385,7 @@ impl Runner {
         Ok(())
     }
 
-    async fn activate_room_time_limit(&mut self) -> Result<(), anyhow::Error> {
+    async fn activate_room_time_limit(&mut self) -> Result<()> {
         let closes_at =
             control::storage::get_room_closes_at(&mut self.redis_conn, self.room_id).await?;
 
@@ -1416,9 +1453,7 @@ impl Runner {
             module_data: Default::default(),
         };
 
-        let control_data = ControlState::from_redis(&mut self.redis_conn, self.room_id, id)
-            .await
-            .map_err(|e| anyhow::anyhow!("{e}"))?;
+        let control_data = ControlState::from_redis(&mut self.redis_conn, self.room_id, id).await?;
 
         // Do not build participants for invisible services
         if !control_data.participation_kind.is_visible() {
@@ -1477,7 +1512,7 @@ impl Runner {
                     self.handle_module_requested_actions(namespaced.timestamp, actions)
                         .await
                 }
-                Err(NoSuchModuleError(())) => log::warn!("Got invalid exchange message"),
+                Err(NoSuchModuleError) => log::warn!("Got invalid exchange message"),
             }
         }
     }
@@ -1591,7 +1626,8 @@ impl Runner {
                                     namespace: moderation::NAMESPACE,
                                     timestamp,
                                     payload: ModerationEvent::Accepted,
-                                })?
+                                })
+                                .whatever_context::<_, RunnerError>("Failed to send ws message")?
                                 .into(),
                             ))
                             .await;
@@ -1669,7 +1705,8 @@ impl Runner {
                             namespace: moderation::NAMESPACE,
                             timestamp,
                             payload: ModerationEvent::RaisedHandResetByModerator { issued_by },
-                        })?
+                        })
+                        .whatever_context::<_, RunnerError>("Failed to send ws message")?
                         .into(),
                     ))
                     .await;
@@ -1681,7 +1718,8 @@ impl Runner {
                             namespace: moderation::NAMESPACE,
                             timestamp,
                             payload: ModerationEvent::RaiseHandsEnabled { issued_by },
-                        })?
+                        })
+                        .whatever_context::<_, RunnerError>("Failed to send ws message")?
                         .into(),
                     ))
                     .await;
@@ -1704,7 +1742,8 @@ impl Runner {
                             namespace: moderation::NAMESPACE,
                             timestamp,
                             payload: ModerationEvent::RaiseHandsDisabled { issued_by },
-                        })?
+                        })
+                        .whatever_context::<_, RunnerError>("Failed to send ws message")?
                         .into(),
                     ))
                     .await;
@@ -1943,7 +1982,7 @@ impl Ws {
     }
 }
 
-/// Trim leading, trailing, and extra whitespaces between a given display name.
+/// Trim leading, trailing, and extra whitespace characters between a given display name.
 fn trim_display_name(display_name: String) -> String {
     display_name.split_whitespace().join(" ")
 }

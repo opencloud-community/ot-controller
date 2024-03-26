@@ -2,8 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::{Context, Result};
 use kustos::prelude::*;
+use snafu::ResultExt;
+
+use crate::Result;
 
 /// Checks whether the default permissions are present. These are the mandatory permissions.
 ///
@@ -63,12 +65,13 @@ where
 
     if !authz
         .is_permissions_present(role.clone(), res.clone(), access.clone())
-        .await?
+        .await
+        .whatever_context("Failed to check if permissions are present")?
     {
         authz
             .grant_role_access(role.clone(), &[(&res, access.as_ref())])
             .await
-            .with_context(|| {
+            .with_whatever_context(|_| {
                 format!(
                     "granting role {:?} {} access to {:?}",
                     role,
@@ -101,12 +104,13 @@ where
 
     if authz
         .is_permissions_present(role.clone(), res.clone(), access.clone())
-        .await?
+        .await
+        .whatever_context("Failed to check if permissions are present")?
     {
         authz
             .remove_role_permission(role.clone(), res.clone(), access.clone())
             .await
-            .with_context(|| {
+            .with_whatever_context(|_| {
                 format!(
                     "removing role {:?} {} access to {:?}",
                     role,

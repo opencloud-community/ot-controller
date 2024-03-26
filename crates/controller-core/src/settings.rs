@@ -3,11 +3,12 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Handles the application settings via a config file and environment variables.
-use crate::cli::Args;
 use actix_web::web::Data;
-use anyhow::Result;
 use arc_swap::ArcSwap;
+use snafu::ResultExt;
 use std::sync::Arc;
+
+use crate::{cli::Args, Result};
 
 pub use opentalk_controller_settings::*;
 
@@ -18,7 +19,7 @@ pub type SharedSettingsActix = Data<ArcSwap<Settings>>;
 /// Not all settings are used, as most of the settings are not reloadable while the
 /// controller is running.
 pub(crate) fn reload_settings(shared_settings: SharedSettings, config_path: &str) -> Result<()> {
-    let new_settings = Settings::load(config_path)?;
+    let new_settings = Settings::load(config_path).whatever_context("Failed to load settings")?;
     let mut current_settings = (*shared_settings.load_full()).clone();
 
     // reload extensions config
@@ -45,17 +46,16 @@ pub(crate) fn reload_settings(shared_settings: SharedSettings, config_path: &str
 /// Loads settings from program arguments and config file
 ///
 /// The settings specified in the CLI-Arguments have a higher priority than the settings specified in the config file
-pub fn load_settings(args: &Args) -> Result<Settings> {
-    Settings::load(&args.config).map_err(Into::into)
+pub fn load_settings(args: &Args) -> Result<Settings, SettingsError> {
+    Settings::load(&args.config)
 }
 
 #[cfg(test)]
 mod test {
-    use anyhow::Result;
-    use opentalk_controller_settings::Settings;
+    use opentalk_controller_settings::{Settings, SettingsError};
 
     #[test]
-    fn example_toml() -> Result<()> {
+    fn example_toml() -> Result<(), SettingsError> {
         Settings::load("../../extra/example.toml")?;
         Ok(())
     }
