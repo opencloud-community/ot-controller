@@ -30,6 +30,12 @@ pub enum ModerationCommand {
         target: ParticipantId,
     },
 
+    /// Same behavior as the Kick command, but implies different handling from the client
+    SendToWaitingRoom {
+        /// The participant to move to the waiting room
+        target: ParticipantId,
+    },
+
     /// Start the debriefing
     Debrief(KickScope),
 

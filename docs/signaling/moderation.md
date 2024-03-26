@@ -124,6 +124,36 @@ be banned from the room for the remainder of the session.
 
 ---
 
+### SendToWaitingRoom
+
+Requires moderator role.
+
+Behaves like a `Kick` command and removes a participant from the room, but also implies that the frontend client should
+attempt to re-join the room to end up in the waiting room.
+
+The frontend client should enable the waiting room with the [EnableWaitingRoom](#enablewaitingroom) command before
+sending this command.
+
+Returns an [Error](#error) with variant `cannot_send_room_owner_to_waiting_room` when the target is the room owner.
+
+#### Fields
+
+| Field    | Type     | Required | Description                                       |
+| -------- | -------- | -------- | ------------------------------------------------- |
+| `action` | `enum`   | yes      | Must be `"send_to_waiting_room"`                  |
+| `target` | `string` | yes      | Id of the participant to send to the waiting room |
+
+##### Example
+
+```json
+{
+    "action": "send_to_waiting_room",
+    "target": "00000000-0000-0000-0000-000000000000"
+}
+```
+
+---
+
 ### Debrief
 
 Starts a debriefing.
@@ -131,7 +161,7 @@ Starts a debriefing.
 #### Fields
 
 | Field        | Type   | Required | Description                                        |
-| ------------ | -------| -------- | -------------------------------------------------- |
+| ------------ | ------ | -------- | -------------------------------------------------- |
 | `action`     | `enum` | yes      | Must be `"debrief"`                                |
 | `kick_scope` | `enum` | yes      | Either `"guests"`, `"users_and_guests"` or `"all"` |
 
@@ -276,9 +306,9 @@ Reset all raised hands in the room.
 
 #### Fields
 
-| Field    | Type     | Required | Description                    |
-| -------- | -------- | -------- | ------------------------------ |
-| `action` | `enum`   | yes      | Must be `"reset_raised_hands"` |
+| Field    | Type   | Required | Description                    |
+| -------- | ------ | -------- | ------------------------------ |
+| `action` | `enum` | yes      | Must be `"reset_raised_hands"` |
 
 ##### Example
 
@@ -333,6 +363,29 @@ Received by a participant if banned from the room. Will be the last message befo
 
 ---
 
+### SentToWaitingRoom
+
+Received by a participant if they were sent to the waiting room with the [SendToWaitingRoom](#sendtowaitingroom) Command.
+This will be the last message before the websocket is closed by the server-side.
+
+The frontend client is responsible for actually retrying to join the room and ending up in the waiting room.
+
+#### Fields
+
+| Field     | Type   | Always | Description                 |
+| --------- | ------ | ------ | --------------------------- |
+| `message` | `enum` | yes    | Is `"sent_to_waiting_room"` |
+
+##### Example
+
+```json
+{
+    "message": "sent_to_waiting_room"
+}
+```
+
+---
+
 ### SessionEnded
 
 Received by a participant if removed from the room (e.g. due to debriefing). Will be the last message before server-side websocket disconnection.
@@ -340,7 +393,7 @@ Received by a participant if removed from the room (e.g. due to debriefing). Wil
 #### Fields
 
 | Field       | Type     | Always | Description                 |
-| ------------| -------- | ------ | --------------------------- |
+| ----------- | -------- | ------ | --------------------------- |
 | `message`   | `enum`   | yes    | Is `"session_ended"`        |
 | `issued_by` | `string` | yes    | Id of the issuing moderator |
 
@@ -353,7 +406,7 @@ Received when a debriefing has started that a participant is part of.
 #### Fields
 
 | Field       | Type     | Always | Description                 |
-| ------------| -------- | ------ | --------------------------- |
+| ----------- | -------- | ------ | --------------------------- |
 | `message`   | `enum`   | yes    | Is `"debriefing_started"`   |
 | `issued_by` | `string` | yes    | Id of the issuing moderator |
 
@@ -538,10 +591,15 @@ Can only be received while in the waiting room. A moderator accepted this you in
 
 #### Fields
 
-| Field     | Type   | Always | Description                       |
-| --------- | ------ | ------ | --------------------------------- |
-| `message` | `enum` | yes    | Is `"error"`                      |
-| `error`   | `enum` | yes    | currently only `cannot_ban_guest` |
+| Field     | Type   | Always | Description                           |
+| --------- | ------ | ------ | ------------------------------------- |
+| `message` | `enum` | yes    | Is `"error"`                          |
+| `error`   | `enum` | yes    | Variant of the error, see table below |
+
+| Error                                    | Description                                                                              |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `cannot_ban_guest`                       | Issued when the [`Ban`](#ban) command targets a guest                                    |
+| `cannot_send_room_owner_to_waiting_room` | Issued when the [`SendToWaitingRoom`](#sendtowaitingroom) command targets the room owner |
 
 ##### Example
 
