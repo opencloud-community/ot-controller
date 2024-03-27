@@ -26,7 +26,7 @@ pub enum ObjectStorageError {
     #[snafu(display("{message}: {source}"))]
     InvalidSettings {
         message: String,
-        source: Box<dyn std::error::Error>,
+        source: Box<dyn std::error::Error + Send + Sync>,
     },
 
     InvalidResponse {
@@ -35,20 +35,20 @@ pub enum ObjectStorageError {
 
     Upload {
         message: String,
-        source: Box<dyn std::error::Error>,
+        source: Box<dyn std::error::Error + Send + Sync>,
     },
 
     Put {
         message: String,
-        source: Box<dyn std::error::Error>,
+        source: Box<dyn std::error::Error + Send + Sync>,
     },
 
     Get {
-        source: Box<dyn std::error::Error>,
+        source: Box<dyn std::error::Error + Send + Sync>,
     },
 
     Delete {
-        source: Box<dyn std::error::Error>,
+        source: Box<dyn std::error::Error + Send + Sync>,
     },
 
     #[snafu(display("the following bucket is missing: {name}"))]
@@ -59,8 +59,8 @@ pub enum ObjectStorageError {
     #[snafu(whatever)]
     Other {
         message: String,
-        #[snafu(source(from(Box<dyn std::error::Error>, Some)))]
-        source: Option<Box<dyn std::error::Error>>,
+        #[snafu(source(from(Box<dyn std::error::Error + Send + Sync>, Some)))]
+        source: Option<Box<dyn std::error::Error + Send + Sync>>,
     },
 }
 

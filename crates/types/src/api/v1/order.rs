@@ -71,7 +71,7 @@ mod test {
 
     #[test]
     #[cfg(feature = "serde")]
-    fn asset_sort_query() -> Result<(), Box<dyn std::error::Error>> {
+    fn asset_sort_query() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let paging = SortingQuery {
             sort: AssetSorting::CreatedAt,
             order: Ordering::Descending,
