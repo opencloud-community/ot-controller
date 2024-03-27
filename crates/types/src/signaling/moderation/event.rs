@@ -93,6 +93,10 @@ pub enum Error {
     CannotBanGuest,
     /// Cannot send the room owner to the waiting room
     CannotSendRoomOwnerToWaitingRoom,
+    /// Cannot change the display name of registered users
+    CannotChangeNameOfRegisteredUsers,
+    /// Invalid display name
+    InvalidDisplayName,
 }
 
 impl From<Error> for ModerationEvent {

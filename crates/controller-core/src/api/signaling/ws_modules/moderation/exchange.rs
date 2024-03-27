@@ -16,6 +16,7 @@ pub enum Message {
         kick_scope: KickScope,
         issued_by: ParticipantId,
     },
+    DisplayNameChanged,
     JoinedWaitingRoom(ParticipantId),
     LeftWaitingRoom(ParticipantId),
     WaitingRoomEnableUpdated,

@@ -9,7 +9,7 @@ use opentalk_signaling_core::{
     SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
 use opentalk_types::{
-    core::{ParticipantId, RoomId, UserId},
+    core::{ParticipantId, ParticipationKind, RoomId, UserId},
     signaling::{
         control::{state::ControlState, AssociatedParticipant, Participant, WaitingRoomState},
         moderation::{
@@ -25,7 +25,7 @@ use std::iter::zip;
 
 pub use opentalk_types::signaling::moderation::NAMESPACE;
 
-use crate::api::signaling::ws::ModuleContextExt;
+use crate::api::signaling::{trim_display_name, ws::ModuleContextExt};
 
 pub mod exchange;
 pub mod storage;
@@ -315,6 +315,46 @@ impl SignalingModule for ModerationModule {
                     },
                 );
             }
+
+            Event::WsMessage(ModerationCommand::ChangeDisplayName { new_name, target }) => {
+                if ctx.role() != Role::Moderator {
+                    return Ok(());
+                }
+
+                let kind: Option<ParticipationKind> =
+                    control::storage::get_attribute(ctx.redis_conn(), self.room, target, "kind")
+                        .await?;
+
+                if !matches!(
+                    kind,
+                    Some(ParticipationKind::Guest) | Some(ParticipationKind::Sip)
+                ) {
+                    ctx.ws_send(Error::CannotChangeNameOfRegisteredUsers);
+                    return Ok(());
+                }
+
+                let new_name = trim_display_name(new_name);
+
+                if new_name.is_empty() || new_name.len() > 100 {
+                    ctx.ws_send(Error::InvalidDisplayName);
+                    return Ok(());
+                }
+
+                control::storage::set_attribute(
+                    ctx.redis_conn(),
+                    self.room,
+                    target,
+                    "display_name",
+                    new_name,
+                )
+                .await?;
+
+                ctx.exchange_publish(
+                    control::exchange::current_room_by_participant_id(self.room, target),
+                    exchange::Message::DisplayNameChanged,
+                );
+            }
+
             Event::WsMessage(ModerationCommand::EnableWaitingRoom) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
@@ -428,6 +468,7 @@ impl SignalingModule for ModerationModule {
                     ctx.ws_send(ModerationEvent::DebriefingStarted { issued_by });
                 }
             }
+            Event::Exchange(exchange::Message::DisplayNameChanged) => ctx.invalidate_data(),
             Event::Exchange(exchange::Message::JoinedWaitingRoom(id)) => {
                 if self.id == id {
                     return Ok(());
