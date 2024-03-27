@@ -219,7 +219,7 @@ mod test {
 
     #[test]
     #[cfg(feature = "serde")]
-    fn user_asset_resource() -> Result<(), Box<dyn std::error::Error>> {
+    fn user_asset_resource() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         use crate::core::AssetId;
 
         let asset_resource = UserAssetResource {

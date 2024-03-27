@@ -74,7 +74,7 @@ mod test {
 
     #[test]
     #[cfg(feature = "serde")]
-    fn pagination_query() -> Result<(), Box<dyn std::error::Error>> {
+    fn pagination_query() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let paging = PagePaginationQuery {
             per_page: 12,
             page: 2,
