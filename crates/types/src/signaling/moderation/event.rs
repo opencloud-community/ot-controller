@@ -26,6 +26,9 @@ pub enum ModerationEvent {
     /// Sent to a participant when they are banned from a meeting
     Banned,
 
+    /// Sent to a participant that is moved to the waiting room
+    SentToWaitingRoom,
+
     /// Sent out when a session is ended by a moderator
     SessionEnded {
         /// The moderator who ended the session
@@ -88,6 +91,8 @@ pub enum ModerationEvent {
 pub enum Error {
     /// Cannot ban a guest participant
     CannotBanGuest,
+    /// Cannot send the room owner to the waiting room
+    CannotSendRoomOwnerToWaitingRoom,
 }
 
 impl From<Error> for ModerationEvent {

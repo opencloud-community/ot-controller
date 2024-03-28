@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 pub enum Message {
     Kicked(ParticipantId),
     Banned(ParticipantId),
+    SentToWaitingRoom(ParticipantId),
     Debriefed {
         kick_scope: KickScope,
         issued_by: ParticipantId,

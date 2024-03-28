@@ -220,6 +220,45 @@ impl SignalingModule for ModerationModule {
                     exchange::Message::Kicked(target),
                 );
             }
+            Event::WsMessage(ModerationCommand::SendToWaitingRoom { target }) => {
+                if ctx.role() != Role::Moderator {
+                    return Ok(());
+                }
+
+                // The room owner cannot be sent to the waiting room
+                if control::storage::get_attribute(
+                    ctx.redis_conn(),
+                    self.room,
+                    target,
+                    "is_room_owner",
+                )
+                .await?
+                {
+                    ctx.ws_send(Error::CannotSendRoomOwnerToWaitingRoom);
+                    return Ok(());
+                }
+
+                // Enforce the participant to enter the waiting room (if enabled) on next rejoin
+                control::storage::set_skip_waiting_room_with_expiry(
+                    ctx.redis_conn(),
+                    target,
+                    false,
+                )
+                .await?;
+
+                storage::waiting_room_accepted_remove(
+                    ctx.redis_conn(),
+                    self.room.room_id(),
+                    target,
+                )
+                .await?;
+
+                ctx.exchange_publish(
+                    control::exchange::current_room_by_participant_id(self.room, target),
+                    exchange::Message::SentToWaitingRoom(target),
+                );
+            }
+
             Event::WsMessage(ModerationCommand::Debrief(kick_scope)) => {
                 if ctx.role() != Role::Moderator {
                     return Ok(());
@@ -369,6 +408,12 @@ impl SignalingModule for ModerationModule {
             Event::Exchange(exchange::Message::Kicked(participant)) => {
                 if self.id == participant {
                     ctx.ws_send(ModerationEvent::Kicked);
+                    ctx.exit(Some(CloseCode::Normal));
+                }
+            }
+            Event::Exchange(exchange::Message::SentToWaitingRoom(participant)) => {
+                if self.id == participant {
+                    ctx.ws_send(ModerationEvent::SentToWaitingRoom);
                     ctx.exit(Some(CloseCode::Normal));
                 }
             }
