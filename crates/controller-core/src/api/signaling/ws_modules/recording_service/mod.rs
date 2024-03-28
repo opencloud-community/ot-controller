@@ -4,11 +4,9 @@
 
 use std::collections::BTreeMap;
 
-use anyhow::Result;
-
 use opentalk_signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, Participant, RedisConnection,
-    SignalingModule, SignalingModuleInitData, SignalingRoomId,
+    SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
 use opentalk_types::{
     core::StreamingTargetId,
@@ -52,7 +50,7 @@ impl SignalingModule for RecordingService {
         ctx: InitContext<'_, Self>,
         _params: &Self::Params,
         _protocol: &'static str,
-    ) -> Result<Option<Self>> {
+    ) -> Result<Option<Self>, SignalingModuleError> {
         let i_am_the_recorder = matches!(ctx.participant(), Participant::Recorder);
         Ok(Some(Self {
             room: ctx.room_id(),
@@ -64,7 +62,7 @@ impl SignalingModule for RecordingService {
         &mut self,
         mut ctx: ModuleContext<'_, Self>,
         event: Event<'_, Self>,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         match event {
             Event::Joined {
                 control_data: _,
@@ -104,7 +102,9 @@ impl SignalingModule for RecordingService {
 
     async fn on_destroy(self, mut _ctx: DestroyContext<'_>) {}
 
-    async fn build_params(_init: SignalingModuleInitData) -> Result<Option<Self::Params>> {
+    async fn build_params(
+        _init: SignalingModuleInitData,
+    ) -> Result<Option<Self::Params>, SignalingModuleError> {
         Ok(Some(()))
     }
 }
@@ -114,7 +114,7 @@ impl RecordingService {
         &self,
         ctx: &mut ModuleContext<'_, Self>,
         stream_updated: StreamUpdated,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         let mut stream =
             recording::storage::get_stream(ctx.redis_conn(), self.room, stream_updated.target_id)
                 .await?;
@@ -136,7 +136,10 @@ impl RecordingService {
         Ok(())
     }
 
-    pub async fn handle_leaving(&self, mut ctx: ModuleContext<'_, Self>) -> Result<()> {
+    pub async fn handle_leaving(
+        &self,
+        mut ctx: ModuleContext<'_, Self>,
+    ) -> Result<(), SignalingModuleError> {
         let mut targets = recording::storage::get_streams(ctx.redis_conn(), self.room).await?;
 
         targets.values_mut().for_each(|target| {
@@ -163,7 +166,7 @@ impl RecordingService {
         &self,
         redis_conn: &mut RedisConnection,
         frontend_data: &mut Option<RecordingServiceState>,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         let streams = recording::storage::get_streams(redis_conn, self.room)
             .await?
             .into_iter()

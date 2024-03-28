@@ -12,7 +12,7 @@ use opentalk_database::Db;
 use opentalk_db_storage::streaming_targets::RoomStreamingTargetRecord;
 use opentalk_signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, RedisConnection, SignalingModule,
-    SignalingModuleInitData, SignalingRoomId,
+    SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
 use opentalk_types::{
     core::{ParticipantId, StreamingTargetId},
@@ -191,8 +191,15 @@ impl SignalingModule for Recording {
 }
 
 impl Recording {
-    async fn initialize_streaming(&self, redis_conn: &mut RedisConnection) -> Result<()> {
-        let mut conn = self.db.get_conn().await?;
+    async fn initialize_streaming(
+        &self,
+        redis_conn: &mut RedisConnection,
+    ) -> Result<(), SignalingModuleError> {
+        let mut conn = self
+            .db
+            .get_conn()
+            .await
+            .with_whatever_context::<_, String, SignalingModuleError>(|err| format!("{err}"))?;
 
         let recorder_stream = (
             StreamingTargetId::generate(),
@@ -202,18 +209,26 @@ impl Recording {
             BTreeMap::from([recorder_stream])
         } else {
             let streaming_targets =
-                RoomStreamingTargetRecord::get_all_for_room(&mut conn, self.room.room_id()).await?;
+                RoomStreamingTargetRecord::get_all_for_room(&mut conn, self.room.room_id())
+                    .await
+                    .with_whatever_context::<_, String, SignalingModuleError>(|err| {
+                        format!("{err}")
+                    })?;
             std::iter::once(Ok(recorder_stream))
                 .chain(streaming_targets.into_iter().map(|target| {
                     let id = target.id;
                     StreamTargetSecret::try_from(target)
                         .map(|stream_target_secret| (id, stream_target_secret))
-                        .map_err(|err| anyhow!("{err}"))
+                        .with_whatever_context::<_, String, SignalingModuleError>(|err| {
+                            format!("{err}")
+                        })
                 }))
-                .collect::<Result<_>>()?
+                .collect::<Result<_, SignalingModuleError>>()?
         };
 
-        storage::set_streams(redis_conn, self.room, &streams).await?;
+        storage::set_streams(redis_conn, self.room, &streams)
+            .await
+            .with_whatever_context::<_, String, SignalingModuleError>(|err| format!("{err}"))?;
 
         Ok(())
     }
@@ -223,12 +238,18 @@ impl Recording {
         mut ctx: ModuleContext<'_, Self>,
         frontend_data: &mut Option<RecordingState>,
         participants: &mut HashMap<ParticipantId, Option<RecordingPeerState>>,
-    ) -> Result<()> {
-        if !storage::is_streaming_initialized(ctx.redis_conn(), self.room).await? {
+    ) -> Result<(), SignalingModuleError> {
+        if !storage::is_streaming_initialized(ctx.redis_conn(), self.room)
+            .await
+            .with_whatever_context::<_, String, SignalingModuleError>(|err| format!("{err}"))?
+        {
             self.initialize_streaming(ctx.redis_conn()).await?;
         }
 
-        let streams_res = storage::get_streams(ctx.redis_conn(), self.room).await?;
+        let streams_res =
+            storage::get_streams(ctx.redis_conn(), self.room)
+                .await
+                .with_whatever_context::<_, String, SignalingModuleError>(|err| format!("{err}"))?;
         *frontend_data = Some({
             RecordingState {
                 targets: BTreeMap::from_iter(
@@ -240,7 +261,8 @@ impl Recording {
         });
 
         self.collect_participants_consents(ctx.redis_conn(), participants)
-            .await?;
+            .await
+            .with_whatever_context::<_, String, SignalingModuleError>(|err| format!("{err}"))?;
 
         Ok(())
     }
@@ -249,7 +271,7 @@ impl Recording {
         &mut self,
         ctx: &mut ModuleContext<'_, Self>,
         target_ids: BTreeSet<StreamingTargetId>,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         if ctx.role() != Role::Moderator {
             ctx.ws_send(Error::InsufficientPermissions);
             return Ok(());
@@ -295,10 +317,13 @@ impl Recording {
                         room: self.room.room_id(),
                         breakout: self.room.breakout_room_id(),
                     })
-                    .context("failed to initialize streaming")?,
+                    .with_whatever_context::<_, String, SignalingModuleError>(|_| {
+                        "failed to initialize streaming".to_string()
+                    })?,
                     Default::default(),
                 )
-                .await?;
+                .await
+                .with_whatever_context::<_, String, SignalingModuleError>(|err| format!("{err}"))?;
         }
 
         Ok(())
@@ -308,7 +333,7 @@ impl Recording {
         &mut self,
         ctx: &mut ModuleContext<'_, Self>,
         target_ids: BTreeSet<StreamingTargetId>,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         if ctx.role() != Role::Moderator {
             ctx.ws_send(Error::InsufficientPermissions);
             return Ok(());
@@ -332,7 +357,7 @@ impl Recording {
         &mut self,
         ctx: &mut ModuleContext<'_, Self>,
         target_ids: BTreeSet<StreamingTargetId>,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         if ctx.role() != Role::Moderator {
             ctx.ws_send(Error::InsufficientPermissions);
             return Ok(());
@@ -372,7 +397,7 @@ impl Recording {
         &self,
         redis_conn: &mut RedisConnection,
         participants: &mut HashMap<ParticipantId, Option<RecordingPeerState>>,
-    ) -> Result<()> {
+    ) -> Result<(), SignalingModuleError> {
         let participant_ids: Vec<ParticipantId> = participants.keys().copied().collect();
         let participant_consents: Vec<Option<bool>> =
             control::storage::get_attribute_for_participants(
@@ -401,7 +426,7 @@ impl Recording {
         &self,
         redis_conn: &mut RedisConnection,
         target_ids: &BTreeSet<StreamingTargetId>,
-    ) -> Result<bool> {
+    ) -> Result<bool, SignalingModuleError> {
         for target_id in target_ids {
             if !storage::stream_exists(redis_conn, self.room, *target_id).await? {
                 return Ok(false);
