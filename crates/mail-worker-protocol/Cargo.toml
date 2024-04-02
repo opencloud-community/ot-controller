@@ -4,10 +4,14 @@
 
 [package]
 authors.workspace = true
+description = "Protocol datatypes for communicating mail tasks from OpenTalk Controller to OpenTalk Mailer"
+documentation = "https://docs.rs/opentalk-mail-worker-protocol"
 edition = "2021"
+homepage.workspace = true
 license = "EUPL-1.2"
 name = "opentalk-mail-worker-protocol"
-publish = false
+publish = true
+repository.workspace = true
 version.workspace = true
 
 [dependencies]
