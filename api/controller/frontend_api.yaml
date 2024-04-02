@@ -363,6 +363,23 @@ paths:
             schema:
               $ref: '#/components/schemas/InvitedRoomStart'
       responses:
+        400:
+          description: >
+            The requested room doesn't exist or the guest doesn't have a valid invite for this room.
+            Guests shall not be able to distinguish between non existing rooms and rooms they don't
+            have permission to enter.
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                required:
+                  - code
+                  - message
+                properties:
+                  code:
+                    const: bad_request
+                  message:
+                    const: Room id mismatch
         200:
           description: Includes the information needed to connect to the signaling endpoint in the response body.
           content:
