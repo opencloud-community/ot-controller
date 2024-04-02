@@ -57,7 +57,6 @@ async fn build_waiting_room_participants(
     for id in list {
         let control_data =
             ControlState::from_storage(storage, SignalingRoomId::new(room_id, None), *id).await?;
-        // .whatever_context::<&str, SignalingModuleError>("Failed to get control state")?;
 
         let mut module_data = ModulePeerData::new();
         module_data.insert(&control_data).context(SerdeJsonSnafu {

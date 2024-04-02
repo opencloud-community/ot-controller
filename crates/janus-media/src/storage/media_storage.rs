@@ -7,8 +7,10 @@ use opentalk_signaling_core::{
     control::storage::ControlStorageParticipantSet, SignalingModuleError, SignalingRoomId,
 };
 use opentalk_types::{
-    core::{ParticipantId, Timestamp},
-    signaling::media::{ParticipantMediaState, ParticipantSpeakingState, SpeakingState},
+    core::{ParticipantId, RoomId, Timestamp},
+    signaling::media::{
+        state::ForceMuteState, ParticipantMediaState, ParticipantSpeakingState, SpeakingState,
+    },
 };
 
 use crate::mcu::{McuId, MediaSessionKey, PublisherInfo};
@@ -124,4 +126,26 @@ pub(crate) trait MediaStorage: ControlStorageParticipantSet + Send {
         &mut self,
         key: MediaSessionKey,
     ) -> Result<(), redis::RedisError>;
+
+    /// Set enable the force mute state and allow only the participants contained in the provided slice to unmute.
+    ///
+    /// If `participants` is empty, the force mute state will be disabled and everyone is allowed to unmute again.
+    async fn set_force_mute_allow_list(
+        &mut self,
+        room: RoomId,
+        participants: &[ParticipantId],
+    ) -> Result<(), SignalingModuleError>;
+
+    async fn is_unmute_allowed(
+        &mut self,
+        room: RoomId,
+        participant: ParticipantId,
+    ) -> Result<bool, SignalingModuleError>;
+
+    async fn disable_force_mute(&mut self, room: RoomId) -> Result<(), SignalingModuleError>;
+
+    async fn get_force_mute_state(
+        &mut self,
+        room: RoomId,
+    ) -> Result<ForceMuteState, SignalingModuleError>;
 }

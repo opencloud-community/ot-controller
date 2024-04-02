@@ -31,6 +31,15 @@ pub enum MediaCommand {
     /// A moderators request to mute one or more participants
     ModeratorMute(RequestMute),
 
+    /// Enables the force mute state where only the participants that are part of the
+    /// [`EnableForceMute::allow_list`] are allowed to unmute themselves. This will mute all
+    /// participants who are not allowed to unmute themselves, but are currently not muted.
+    ModeratorEnableForceMute(EnableForceMute),
+
+    /// Disable the force mute state which will allow all participants to unmute their microphone
+    /// again.
+    ModeratorDisableForceMute,
+
     /// SDP offer
     Publish(TargetedSdp),
 
@@ -105,6 +114,16 @@ pub struct RequestMute {
 
     /// Force mute the participant(s)
     pub force: bool,
+}
+
+/// Request a number of participants to mute themselves
+///
+/// May only be processed if the issuer is a moderator
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct EnableForceMute {
+    /// Participants that are still allowed to unmute
+    pub allow_list: Vec<ParticipantId>,
 }
 
 /// Targeted SDP offer or answer

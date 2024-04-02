@@ -2,8 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types::signaling::media::{
-    command::ParticipantSelection, event::RequestMute, ParticipantSpeakingState,
+use opentalk_types::{
+    core::ParticipantId,
+    signaling::media::{
+        command::ParticipantSelection, event::RequestMute, ParticipantSpeakingState,
+    },
 };
 use serde::{Deserialize, Serialize};
 
@@ -13,4 +16,11 @@ pub enum Message {
     PresenterGranted(ParticipantSelection),
     PresenterRevoked(ParticipantSelection),
     SpeakerStateUpdated(ParticipantSpeakingState),
+    ForceMuteEnabled {
+        issued_by: ParticipantId,
+        allow_list: Vec<ParticipantId>,
+    },
+    ForceMuteDisabled {
+        issued_by: ParticipantId,
+    },
 }

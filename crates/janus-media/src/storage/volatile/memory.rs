@@ -6,8 +6,10 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use opentalk_signaling_core::SignalingRoomId;
 use opentalk_types::{
-    core::{ParticipantId, Timestamp},
-    signaling::media::{ParticipantMediaState, ParticipantSpeakingState, SpeakingState},
+    core::{ParticipantId, RoomId, Timestamp},
+    signaling::media::{
+        state::ForceMuteState, ParticipantMediaState, ParticipantSpeakingState, SpeakingState,
+    },
 };
 
 use crate::mcu::{McuId, MediaSessionKey, PublisherInfo};
@@ -19,6 +21,7 @@ pub(super) struct MemoryMediaState {
     speakers: HashMap<(SignalingRoomId, ParticipantId), SpeakingState>,
     mcu_load: HashMap<(McuId, Option<usize>), usize>,
     publisher_info: HashMap<MediaSessionKey, PublisherInfo>,
+    force_mute: HashMap<RoomId, BTreeSet<ParticipantId>>,
 }
 
 impl MemoryMediaState {
@@ -172,5 +175,38 @@ impl MemoryMediaState {
 
     pub(super) fn delete_publisher_info(&mut self, media_session_key: MediaSessionKey) {
         self.publisher_info.remove(&media_session_key);
+    }
+
+    pub(super) fn force_mute_set_allow_unmute(
+        &mut self,
+        room: RoomId,
+        participants: &[ParticipantId],
+    ) {
+        if participants.is_empty() {
+            self.disable_force_mute(room);
+            return;
+        }
+        self.force_mute
+            .insert(room, BTreeSet::from_iter(participants.iter().copied()));
+    }
+
+    pub(super) fn disable_force_mute(&mut self, room: RoomId) {
+        self.force_mute.remove(&room);
+    }
+
+    pub(super) fn get_force_mute_state(&self, room: RoomId) -> ForceMuteState {
+        match self.force_mute.get(&room).cloned() {
+            None => ForceMuteState::Disabled,
+            Some(allow_list) => ForceMuteState::Enabled {
+                allow_list: allow_list.clone(),
+            },
+        }
+    }
+
+    pub(super) fn is_unmute_allowed(&self, room: RoomId, participant: ParticipantId) -> bool {
+        match self.force_mute.get(&room) {
+            None => false,
+            Some(allow_list) => allow_list.contains(&participant),
+        }
     }
 }

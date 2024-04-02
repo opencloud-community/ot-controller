@@ -41,3 +41,9 @@ impl ParticipantId {
         Self(Uuid::new_v4())
     }
 }
+
+impl From<u128> for ParticipantId {
+    fn from(value: u128) -> Self {
+        Self::from_u128(value)
+    }
+}

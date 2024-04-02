@@ -9,8 +9,10 @@ use opentalk_signaling_core::{
     NotFoundSnafu, SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage,
 };
 use opentalk_types::{
-    core::{ParticipantId, Timestamp},
-    signaling::media::{ParticipantMediaState, ParticipantSpeakingState, SpeakingState},
+    core::{ParticipantId, RoomId, Timestamp},
+    signaling::media::{
+        state::ForceMuteState, ParticipantMediaState, ParticipantSpeakingState, SpeakingState,
+    },
 };
 use parking_lot::RwLock;
 use snafu::OptionExt as _;
@@ -223,6 +225,40 @@ impl MediaStorage for VolatileStaticMemoryStorage {
         state().write().delete_publisher_info(media_session_key);
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_force_mute_allow_list(
+        &mut self,
+        room: RoomId,
+        participants: &[ParticipantId],
+    ) -> Result<(), SignalingModuleError> {
+        state()
+            .write()
+            .force_mute_set_allow_unmute(room, participants);
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn is_unmute_allowed(
+        &mut self,
+        room: RoomId,
+        participant: ParticipantId,
+    ) -> Result<bool, SignalingModuleError> {
+        Ok(state().read().is_unmute_allowed(room, participant))
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn disable_force_mute(&mut self, room: RoomId) -> Result<(), SignalingModuleError> {
+        state().write().disable_force_mute(room);
+        Ok(())
+    }
+
+    async fn get_force_mute_state(
+        &mut self,
+        room: RoomId,
+    ) -> Result<ForceMuteState, SignalingModuleError> {
+        Ok(state().read().get_force_mute_state(room))
+    }
 }
 
 #[cfg(test)]
@@ -265,5 +301,11 @@ mod test {
     #[serial]
     async fn publisher_info() {
         test_common::publisher_info(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn force_mute() {
+        test_common::force_mute(&mut storage().await).await;
     }
 }

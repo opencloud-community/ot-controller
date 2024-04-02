@@ -24,10 +24,11 @@ When joining a room, the `join_success` control event contains the module-specif
 
 #### Fields
 
-| Field          | Type                         | Always | Description                                                            |
-| -------------- | ---------------------------- | ------ | ---------------------------------------------------------------------- |
-| `is_presenter` | `bool`                       | yes    | Represents if the current participant has permissions for screen share |
-| `speakers`     | `ParticipantSpeakingState[]` | yes    | The list of current or previous speakers in the meeting                |
+| Field          | Type                                                      | Always | Description                                                            |
+| -------------- | --------------------------------------------------------- | ------ | ---------------------------------------------------------------------- |
+| `is_presenter` | `bool`                                                    | yes    | Represents if the current participant has permissions for screen share |
+| `speakers`     | (`ParticipantSpeakingState[]`)(#ParticipantSpeakingState) | yes    | The list of current or previous speakers in the meeting                |
+| `force_mute`   | [`ForceMuteState`](#ForceMuteState)                       | yes    | The current force mute state                                           |
 
 ##### Example
 
@@ -50,7 +51,13 @@ When joining a room, the `join_success` control event contains the module-specif
             "is_speaking": false,
             "updated_at": "2023-01-13T12:22:08Z"
         }
-    ]
+    ],
+    "force_mute": {
+        "type": "enabled",
+        "allow_list": [
+            "07d32d3e-9510-49bf-82b7-e21fef9db120"
+        ]
+    }
 }
 ```
 
@@ -129,6 +136,8 @@ A [SdpAnswer](#sdpanswer) will return an SDP response.
 Signal that the WebRTC publish process is complete and set the initial mute status. Other participants will be notified
 by an [`Update`](control.md#update) that the media is now available to be subscribed to and if the audio or video track
 is muted.
+If the force-mute state is enabled, the `media_session_state.video.audio` field must be set to `false` unless the
+participant is included in the `allow_list`.
 
 #### Fields
 
@@ -296,7 +305,7 @@ forwarded to the SFU.
 
 ### SdpEndOfCandidates
 
-Signal the establishing WebRTC session that there are no more ICE trickle candidates.  This is part of the WebRTC
+Signal the establishing WebRTC session that there are no more ICE trickle candidates. This is part of the WebRTC
 establishment and is forwarded to the SFU.
 
 #### Fields
@@ -323,6 +332,8 @@ establishment and is forwarded to the SFU.
 
 Update the mute state for a WebRTC publish session. This information is forwarded to all other participants using inside
 an [`Update`](control.md#update).
+If the force-mute state is enabled, the field `media_session_state.audio` must be set to `false` unless the participant
+is included in the `allow_list`.
 
 #### Fields
 
@@ -461,6 +472,51 @@ Request another participant to mute their microphone.
         "2375602f-c74c-4935-9933-bfd67d4e8ae5"
     ],
     "force": true
+}
+```
+
+<!-- COMMAND MODERATOR ENABLE FORCE MUTE -->
+
+### ModeratorEnableForceMute
+
+Enables the force mute state which mutes all participants and disallows enabling the microphone except for participants included in the `allow_list`.
+
+#### Fields
+
+| Field        | Type       | Required | Description                                               |
+| ------------ | ---------- | -------- | --------------------------------------------------------- |
+| `action`     | `enum`     | yes      | Must be `moderator_enable_force_mute`                     |
+| `allow_list` | `string[]` | yes      | The list of participants that are still allowed to unmute |
+
+#### Example
+
+```json
+{
+    "action": "moderator_enable_force_mute",
+    "allow_list": [
+        "84a2c872-94fb-4b41-aca7-13d784c92a72",
+        "2375602f-c74c-4935-9933-bfd67d4e8ae5"
+    ]
+}
+```
+
+<!-- COMMAND MODERATOR DISABLE FORCE MUTE -->
+
+### ModeratorDisableForceMute
+
+Disables the force-mute state and allows participants to enable their microphones again.
+
+#### Fields
+
+| Field    | Type   | Required | Description                            |
+| -------- | ------ | -------- | -------------------------------------- |
+| `action` | `enum` | yes      | Must be `moderator_disable_force_mute` |
+
+#### Example
+
+```json
+{
+    "action": "moderator_disable_force_mute"
 }
 ```
 
@@ -744,7 +800,7 @@ Presenter rights have been revoked
 
 ### RequestMute
 
-You are being asked to mute yourself
+You are being asked to mute yourself.
 
 #### Fields
 
@@ -763,6 +819,27 @@ You are being asked to mute yourself
     "force": true
 }
 ```
+
+<!-- EVENT FORCE MUTE ENABLED -->
+
+### ForceMuteEnabled
+
+The force-mute state was enabled. Only the participants listed in `allow_list` are allowed to enable their microphones.
+
+| Field        | Type       | Always | Description                                           |
+| ------------ | ---------- | ------ | ----------------------------------------------------- |
+| `message`    | `enum`     | yes    | Is `"force_mute_enabled"`                             |
+| `allow_list` | `string[]` | yes    | List of participants that are still allowed to unmute |
+
+<!-- EVENT FORCE MUTE DISABLED -->
+
+### ForceMuteDisabled
+
+The force-mute state was disabled. All participants are allowed to enabled their microphones.
+
+| Field     | Type   | Always | Description                |
+| --------- | ------ | ------ | -------------------------- |
+| `message` | `enum` | yes    | Is `"force_mute_disabled"` |
 
 <!-- EVENT SPEAKERS UPDATED -->
 
@@ -852,11 +929,11 @@ This object represent the current mute status of a media session.
 
 ### ParticipantSpeakingState
 
-| Field           | Type     | Required | Description                                                        |
-| --------------- | -------- | -------- | ------------------------------------------------------------------ |
-| `participant`   | `string` | yes      | The id of the participant                                          |
-| `is_speaking`   | `bool`   | yes      | A flag indicating whether the participant is currently speaking    |
-| `updated_at`    | `string` | yes      | Timestamp of the last change of `is_speaking` for this participant |
+| Field         | Type     | Required | Description                                                        |
+| ------------- | -------- | -------- | ------------------------------------------------------------------ |
+| `participant` | `string` | yes      | The id of the participant                                          |
+| `is_speaking` | `bool`   | yes      | A flag indicating whether the participant is currently speaking    |
+| `updated_at`  | `string` | yes      | Timestamp of the last change of `is_speaking` for this participant |
 
 ### TrickleCandidate
 
@@ -864,3 +941,10 @@ This object represent the current mute status of a media session.
 | --------------- | -------- | -------- | -------------------------------------------------------------------------------------------------------- |
 | `sdpMLineIndex` | `int`    | yes      | [MDN web docs reference](https://developer.mozilla.org/en-US/docs/Web/API/RTCIceCandidate/sdpMLineIndex) |
 | `candidate`     | `string` | yes      | [MDN web docs reference](https://developer.mozilla.org/en-US/docs/Web/API/RTCIceCandidate/candidate)     |
+
+### ForceMuteState
+
+| Field      | Type       | Required | Description                                                                                                 |
+| ---------- | ---------- | -------- | ----------------------------------------------------------------------------------------------------------- |
+| type       | `enum`     | yes      | Either `enabled` if the force-mute state is enabled, otherwise `disabled`                                   |
+| allow_list | `string[]` | no       | If `type` is `enabled`, the `allow_list` contains the list of participants that are still allowed to unmute |

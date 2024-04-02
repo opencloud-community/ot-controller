@@ -2,13 +2,17 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::collections::BTreeSet;
+
 use async_trait::async_trait;
 use opentalk_signaling_core::{
     RedisConnection, RedisSnafu, SerdeJsonSnafu, SignalingModuleError, SignalingRoomId,
 };
 use opentalk_types::{
-    core::{ParticipantId, Timestamp},
-    signaling::media::{ParticipantMediaState, ParticipantSpeakingState, SpeakingState},
+    core::{ParticipantId, RoomId, Timestamp},
+    signaling::media::{
+        state::ForceMuteState, ParticipantMediaState, ParticipantSpeakingState, SpeakingState,
+    },
 };
 use redis::AsyncCommands as _;
 use redis_args::ToRedisArgs;
@@ -302,6 +306,77 @@ impl MediaStorage for RedisConnection {
     ) -> Result<(), redis::RedisError> {
         self.hdel::<_, _, ()>(PUBLISHER_INFO, key.to_string()).await
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_force_mute_allow_list(
+        &mut self,
+        room: RoomId,
+        participant_id: &[ParticipantId],
+    ) -> Result<(), SignalingModuleError> {
+        if participant_id.is_empty() {
+            return self.disable_force_mute(room).await;
+        }
+
+        redis::pipe()
+            .del(AllowedUnmuteList { room })
+            .sadd(AllowedUnmuteList { room }, participant_id)
+            .query_async(self)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to SADD allow_unmute_list",
+            })
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn is_unmute_allowed(
+        &mut self,
+        room: RoomId,
+        participant_id: ParticipantId,
+    ) -> Result<bool, SignalingModuleError> {
+        let length: usize = self
+            .scard(AllowedUnmuteList { room })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to SCARD allow_unmute_list",
+            })?;
+        if length == 0 {
+            // the set is empty, the force-mute-state is disabled, everyone can unmute
+            return Ok(true);
+        }
+        self.sismember(AllowedUnmuteList { room }, participant_id)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to SISMEMBER allow_unmute_list",
+            })
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn disable_force_mute(&mut self, room: RoomId) -> Result<(), SignalingModuleError> {
+        self.del(AllowedUnmuteList { room })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to DEL force_mute state",
+            })
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_force_mute_state(
+        &mut self,
+        room: RoomId,
+    ) -> Result<ForceMuteState, SignalingModuleError> {
+        let allow_list: BTreeSet<ParticipantId> = self
+            .smembers(AllowedUnmuteList { room })
+            .await
+            .context(RedisSnafu {
+            message: "Failed to SMEMBERS allow_unmute_list",
+        })?;
+
+        if allow_list.is_empty() {
+            Ok(ForceMuteState::Disabled)
+        } else {
+            Ok(ForceMuteState::Enabled { allow_list })
+        }
+    }
 }
 
 /// Data related to a module inside a participant
@@ -364,6 +439,13 @@ fn parse_mcu_load(s: &str) -> Result<(McuId, Option<usize>), SignalingModuleErro
     Ok((McuId::from(id.to_string()), index))
 }
 
+/// The set participants that are allowed to unmute themselves even if the forced mute state is enabled
+#[derive(ToRedisArgs)]
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:allowed_unmute")]
+struct AllowedUnmuteList {
+    room: RoomId,
+}
+
 #[cfg(test)]
 mod test {
     use redis::aio::ConnectionManager;
@@ -414,5 +496,11 @@ mod test {
     #[serial]
     async fn publisher_info() {
         test_common::publisher_info(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn force_mute() {
+        test_common::force_mute(&mut storage().await).await;
     }
 }
