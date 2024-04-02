@@ -61,7 +61,7 @@ anstream = "0.6"
 anyhow = "1"
 arc-swap = "1"
 async-trait = "0.1"
-aws-sdk-s3 = { version = "1.20.0", features = ["behavior-version-latest"] }
+aws-sdk-s3 = { version = "1.21.0", features = ["behavior-version-latest"] }
 base64 = "0.22"
 bigdecimal = "0.4"
 bincode = "1"
