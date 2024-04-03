@@ -144,6 +144,7 @@ lint:licensing:
 
 check:opentalk-types:
   stage: check
+  needs: []
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
   # Ensures that the `types` crate can be built with each relevant feature individually
@@ -158,6 +159,7 @@ check:opentalk-types:
 
 check:docs-generated-parts:
   stage: check
+  needs: []
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
   variables:
@@ -275,6 +277,7 @@ test:container:
 
 build:
   stage: build
+  needs: []
   rules:
     - if: $CI_PIPELINE_SOURCE == "pipeline"
       when: never
