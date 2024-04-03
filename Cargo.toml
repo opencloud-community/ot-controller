@@ -28,8 +28,6 @@ opentalk-controller-utils = { path = "crates/controller-utils", version = "0.0.0
 opentalk-core = { path = "crates/core", version = "0.0.0-dev" }
 opentalk-database = { path = "crates/database", version = "0.0.0-dev" }
 opentalk-db-storage = { path = "crates/db-storage", version = "0.0.0-dev" }
-opentalk-diesel-newtype = { path = "crates/diesel-newtype", version = "0.0.0-dev" }
-opentalk-diesel-newtype-impl = { path = "crates/diesel-newtype-impl", version = "0.0.0-dev" }
 opentalk-etherpad-client = { path = "crates/etherpad-client", version = "0.0.0-dev" }
 opentalk-integration = { path = "crates/integration", version = "0.0.0-dev" }
 opentalk-janus-media = { path = "crates/janus-media", version = "0.0.0-dev" }
@@ -86,6 +84,7 @@ lapin = { version = "2", default-features = false }
 log = "0.4"
 md5 = "0.7"
 openidconnect = "3"
+opentalk-diesel-newtype = "0.12"
 opentalk-janus-client = "0.1"
 opentelemetry = { version = "0.22", default-features = false, features = [
     "metrics",
