@@ -8,7 +8,6 @@ use actix_web_actors::ws;
 use bytestring::ByteString;
 use futures::stream::SelectAll;
 use futures::Future;
-use itertools::Itertools;
 use kustos::Authz;
 use opentalk_controller_settings::SharedSettings;
 use opentalk_database::{Db, DbConnection};
@@ -58,7 +57,7 @@ use super::{
 };
 use crate::api::signaling::{
     echo::Echo, moderation, resumption::ResumptionError, resumption::ResumptionTokenKeepAlive,
-    ws::actor::WsCommand,
+    trim_display_name, ws::actor::WsCommand,
 };
 
 mod call_in;
@@ -1979,31 +1978,5 @@ impl Ws {
                 Ok(None)
             }
         }
-    }
-}
-
-/// Trim leading, trailing, and extra whitespace characters between a given display name.
-fn trim_display_name(display_name: String) -> String {
-    display_name.split_whitespace().join(" ")
-}
-
-#[cfg(test)]
-mod test {
-    use super::trim_display_name;
-    use pretty_assertions::assert_eq;
-
-    #[test]
-    fn trim_display_name_leading_spaces() {
-        assert_eq!("First Last", trim_display_name("  First Last".to_string()));
-    }
-
-    #[test]
-    fn trim_display_name_trailing_spaces() {
-        assert_eq!("First Last", trim_display_name("First Last  ".to_string()));
-    }
-
-    #[test]
-    fn trim_display_name_spaces_between() {
-        assert_eq!("First Last", trim_display_name("First  Last".to_string()));
     }
 }

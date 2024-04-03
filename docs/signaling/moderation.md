@@ -176,6 +176,37 @@ Starts a debriefing.
 
 ---
 
+### ChangeDisplayName
+
+Requires moderator role.
+
+Change the display name of a guest or phone user for the duration of the meeting.
+
+This will trigger a [Control/Update](control.md#update) message for the targeted participant.
+
+Can return [Error](#error) of kind `cannot_change_name_of_registered_users` when the targeted participant is not a guest
+or dial-in user or kind `invalid_display_name` when the `new_name` is empty or longer than 100 characters.
+
+#### Fields
+
+| Field      | Type     | Required | Description                                                    |
+| ---------- | -------- | -------- | -------------------------------------------------------------- |
+| `action`   | `enum`   | yes      | Must be `"change_display_name"`                                |
+| `new_name` | `string` | yes      | The new display name                                           |
+| `target`   | `string` | yes      | The id of the participant that gets their display name changed |
+
+##### Example
+
+```json
+{
+    "action": "change_display_name",
+    "new_name": "Foo Bar",
+    "target": "00000000-0000-0000-0000-000000000000"
+}
+```
+
+---
+
 ### EnableWaitingRoom
 
 Requires moderator role.
@@ -596,10 +627,12 @@ Can only be received while in the waiting room. A moderator accepted this you in
 | `message` | `enum` | yes    | Is `"error"`                          |
 | `error`   | `enum` | yes    | Variant of the error, see table below |
 
-| Error                                    | Description                                                                              |
-| ---------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `cannot_ban_guest`                       | Issued when the [`Ban`](#ban) command targets a guest                                    |
-| `cannot_send_room_owner_to_waiting_room` | Issued when the [`SendToWaitingRoom`](#sendtowaitingroom) command targets the room owner |
+| Error                                    | Description                                                                                        |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `cannot_ban_guest`                       | Issued when the [`Ban`](#ban) command targets a guest                                              |
+| `cannot_send_room_owner_to_waiting_room` | Issued when the [`SendToWaitingRoom`](#sendtowaitingroom) command targets the room owner           |
+| `cannot_change_name_of_registered_users` | Issued when the [`ChangeDisplayName`](#changedisplayname) command targets a registered user        |
+| `invalid_display_name`                   | Issued when the [`ChangeDisplayName`](#changedisplayname) command contains an invalid display name |
 
 ##### Example
 

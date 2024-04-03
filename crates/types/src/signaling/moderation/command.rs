@@ -39,6 +39,14 @@ pub enum ModerationCommand {
     /// Start the debriefing
     Debrief(KickScope),
 
+    /// Change the display name of the targeted guest
+    ChangeDisplayName {
+        /// The new display name
+        new_name: String,
+        /// The participant that will have their name changed
+        target: ParticipantId,
+    },
+
     /// Enable waiting room for the meeting
     EnableWaitingRoom,
 
