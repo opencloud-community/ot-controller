@@ -3,13 +3,16 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "opentalk-controller-settings"
-description = "Settings for opentalk-controller"
-edition = "2021"
-license = "EUPL-1.2"
 authors.workspace = true
+description = "Settings for opentalk-controller"
+documentation = "https://docs.rs/opentalk-controller-settings"
+edition = "2021"
+homepage.workspace = true
+license = "EUPL-1.2"
+name = "opentalk-controller-settings"
+publish = true
+repository.workspace = true
 version.workspace = true
-publish = false
 
 [dependencies]
 # Settings related

@@ -79,6 +79,8 @@ exceptions = [
     { allow = ["EUPL-1.2"], name = "kustos-shared" },
     { allow = ["EUPL-1.2"], name = "opentalk-cache" },
     { allow = ["EUPL-1.2"], name = "opentalk-client-shared" },
+    { allow = ["EUPL-1.2"], name = "opentalk-controller-settings" },
+    { allow = ["EUPL-1.2"], name = "opentalk-database" },
     { allow = ["EUPL-1.2"], name = "opentalk-diesel-newtype" },
     { allow = ["EUPL-1.2"], name = "opentalk-diesel-newtype-impl" },
     { allow = ["EUPL-1.2"], name = "opentalk-janus-client" },

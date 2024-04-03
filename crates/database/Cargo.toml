@@ -3,12 +3,16 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "opentalk-database"
-edition = "2021"
-license = "EUPL-1.2"
 authors.workspace = true
+description = "OpenTalk database functionality"
+documentation = "https://docs.rs/opentalk-database"
+edition = "2021"
+homepage.workspace = true
+license = "EUPL-1.2"
+name = "opentalk-database"
+publish = true
+repository.workspace = true
 version.workspace = true
-publish = false
 
 [dependencies]
 opentalk-controller-settings.workspace = true
