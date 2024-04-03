@@ -9,7 +9,6 @@ use actix_web::{
     get,
     web::{Data, Path},
 };
-use anyhow::Context;
 use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::streaming_services::StreamingServiceRecord;
 use opentalk_types::{

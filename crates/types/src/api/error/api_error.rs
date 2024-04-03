@@ -279,15 +279,6 @@ impl From<snafu::Whatever> for ApiError {
     }
 }
 
-// TODO:(a.weiche) remove once snafu migration is complete.
-#[cfg(feature = "backend")]
-impl From<anyhow::Error> for ApiError {
-    fn from(value: anyhow::Error) -> Self {
-        log::error!("REST API threw internal error from anyhow error: {value:?}");
-        ApiError::internal()
-    }
-}
-
 #[cfg(feature = "backend")]
 impl From<opentalk_database::DatabaseError> for ApiError {
     fn from(value: opentalk_database::DatabaseError) -> ApiError {

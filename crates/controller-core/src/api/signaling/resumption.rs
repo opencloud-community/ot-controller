@@ -10,13 +10,16 @@
 //! to receive the same participant when reconnecting to the room. This enables all participant id
 //! based features to recognize the reconnected client as the previously disconnected one.
 
-use anyhow::{bail, Context, Result};
 use opentalk_signaling_core::{Participant, RedisConnection};
 use opentalk_types::core::{BreakoutRoomId, ParticipantId, ResumptionToken, RoomId, UserId};
+use redis::RedisError;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
+use snafu::{whatever, ResultExt, Snafu};
 use std::time::{Duration, Instant};
 use tokio::time::sleep_until;
+
+use crate::Result;
 
 /// Redis key for a resumption token containing [`ResumptionData`].
 #[derive(Debug, ToRedisArgs)]
@@ -41,9 +44,17 @@ pub struct ResumptionTokenKeepAlive {
     next_refresh: Instant,
 }
 
-#[derive(Debug, thiserror::Error)]
-#[error("resumption token could not be refreshed as it was used")]
-pub struct ResumptionTokenUsed(());
+#[derive(Debug, Snafu)]
+pub enum ResumptionError {
+    #[snafu(display("Resumption token could not be refreshed as it was used"))]
+    Used,
+    #[snafu(whatever)]
+    Other {
+        message: String,
+        #[snafu(source(from(Box<dyn std::error::Error + Send + Sync>, Some)))]
+        source: Option<Box<dyn std::error::Error + Send + Sync>>,
+    },
+}
 
 impl ResumptionTokenKeepAlive {
     pub fn new(token: ResumptionToken, data: ResumptionData) -> Self {
@@ -54,7 +65,10 @@ impl ResumptionTokenKeepAlive {
         }
     }
 
-    pub async fn set_initial(&mut self, redis_conn: &mut RedisConnection) -> Result<()> {
+    pub async fn set_initial(
+        &mut self,
+        redis_conn: &mut RedisConnection,
+    ) -> Result<(), RedisError> {
         redis::cmd("SET")
             .arg(&self.redis_key)
             .arg(&self.data)
@@ -63,14 +77,16 @@ impl ResumptionTokenKeepAlive {
             .arg("NX")
             .query_async(redis_conn)
             .await
-            .context("failed to set initial resumption token")
     }
 
     pub async fn wait(&mut self) {
         sleep_until(self.next_refresh.into()).await;
     }
 
-    pub async fn refresh(&mut self, redis_conn: &mut RedisConnection) -> Result<()> {
+    pub async fn refresh(
+        &mut self,
+        redis_conn: &mut RedisConnection,
+    ) -> Result<(), ResumptionError> {
         self.next_refresh = Instant::now() + Duration::from_secs(60);
 
         // Set the value with an timeout of 120 seconds (EX 120)
@@ -83,12 +99,12 @@ impl ResumptionTokenKeepAlive {
             .arg("XX")
             .query_async(redis_conn)
             .await
-            .context("failed to SET EX XX resumption data")?;
+            .whatever_context("Failed to SET EX XX resumption data")?;
 
         match value {
-            redis::Value::Nil => bail!(ResumptionTokenUsed(())),
+            redis::Value::Nil => UsedSnafu.fail(),
             redis::Value::Okay => Ok(()),
-            _ => bail!("unexpected redis response expected OK/nil got {:?}", value),
+            _ => whatever!("Unexpected redis response expected OK/nil got {:?}", value),
         }
     }
 }

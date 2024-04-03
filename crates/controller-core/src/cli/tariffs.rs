@@ -2,19 +2,20 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::{Context, Result};
 use chrono::Utc;
 use clap::Subcommand;
 use diesel_async::scoped_futures::ScopedFutureExt;
 use diesel_async::AsyncConnection;
 use itertools::Itertools;
 use opentalk_controller_settings::Settings;
-use opentalk_database::{Db, DbConnection};
+use opentalk_database::{DatabaseError, Db, DbConnection};
 use opentalk_db_storage::tariffs::{
     ExternalTariff, ExternalTariffId, NewTariff, Tariff, UpdateTariff,
 };
 use opentalk_db_storage::utils::Jsonb;
+use snafu::{OptionExt, ResultExt, Snafu};
 use std::collections::HashMap;
+use std::num::ParseIntError;
 use tabled::{settings::Style, Table, Tabled};
 
 #[derive(Subcommand, Debug, Clone)]
@@ -87,16 +88,21 @@ pub enum Command {
     },
 }
 
-fn parse_quota(s: &str) -> Result<(String, u64)> {
-    let (name, value) = s.split_once('=').context("invalid key=value pair")?;
-    let value = value
-        .trim()
-        .parse()
-        .context("invalid quota value, expected u64")?;
+#[derive(Debug, Snafu)]
+enum CliParameterError {
+    /// Invalid key-value-pair, must be of form `key=value`
+    InvalidKeyValuePair,
+    /// invalid quota value, expected 64-bit unsigned integer
+    InvalidQuota { source: ParseIntError },
+}
+
+fn parse_quota(s: &str) -> Result<(String, u64), CliParameterError> {
+    let (name, value) = s.split_once('=').context(InvalidKeyValuePairSnafu)?;
+    let value = value.trim().parse().context(InvalidQuotaSnafu)?;
     Ok((name.trim().into(), value))
 }
 
-pub async fn handle_command(settings: Settings, command: Command) -> Result<()> {
+pub async fn handle_command(settings: Settings, command: Command) -> Result<(), DatabaseError> {
     match command {
         Command::List => list_all_tariffs(settings).await,
         Command::Create {
@@ -147,8 +153,8 @@ pub async fn handle_command(settings: Settings, command: Command) -> Result<()> 
     }
 }
 
-async fn list_all_tariffs(settings: Settings) -> Result<()> {
-    let db = Db::connect(&settings.database).context("Failed to connect to database")?;
+async fn list_all_tariffs(settings: Settings) -> Result<(), DatabaseError> {
+    let db = Db::connect(&settings.database)?;
     let mut conn = db.get_conn().await?;
 
     let tariffs = Tariff::get_all(&mut conn).await?;
@@ -163,8 +169,8 @@ async fn create_tariff(
     disabled_modules: Vec<String>,
     disabled_features: Vec<String>,
     quotas: HashMap<String, u64>,
-) -> Result<()> {
-    let db = Db::connect(&settings.database).context("Failed to connect to database")?;
+) -> Result<(), DatabaseError> {
+    let db = Db::connect(&settings.database)?;
     let mut conn = db.get_conn().await?;
 
     conn.transaction(|conn| async move {
@@ -192,8 +198,8 @@ async fn create_tariff(
     .scope_boxed()).await
 }
 
-async fn delete_tariff(settings: Settings, name: String) -> Result<()> {
-    let db = Db::connect(&settings.database).context("Failed to connect to database")?;
+async fn delete_tariff(settings: Settings, name: String) -> Result<(), DatabaseError> {
+    let db = Db::connect(&settings.database)?;
     let mut conn = db.get_conn().await?;
 
     conn.transaction(|conn| {
@@ -224,8 +230,8 @@ async fn edit_tariff(
     remove_disabled_features: Vec<String>,
     add_quotas: HashMap<String, u64>,
     remove_quotas: Vec<String>,
-) -> Result<()> {
-    let db = Db::connect(&settings.database).context("Failed to connect to database")?;
+) -> Result<(), DatabaseError> {
+    let db = Db::connect(&settings.database)?;
     let mut conn = db.get_conn().await?;
 
     conn.transaction(|conn| {
@@ -255,8 +261,7 @@ async fn edit_tariff(
                         tariff_id: tariff.id,
                     }
                     .insert(conn)
-                    .await
-                    .with_context(|| format!("Failed to add external tariff_id {to_add:?}"))?;
+                    .await?;
                 }
             }
 
@@ -300,7 +305,7 @@ async fn edit_tariff(
 async fn print_tariffs(
     conn: &mut DbConnection,
     tariffs: impl IntoIterator<Item = Tariff>,
-) -> Result<()> {
+) -> Result<(), opentalk_database::DatabaseError> {
     #[derive(Tabled)]
     struct TariffTableRow {
         #[tabled(rename = "name (internal)")]

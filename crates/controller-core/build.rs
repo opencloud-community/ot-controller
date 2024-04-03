@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::Result;
+use snafu::{ResultExt, Whatever};
 use vergen::EmitBuilder;
 
 /// Use an environment variable instead of letting `vergen` determine the value.
@@ -22,7 +22,7 @@ fn add_custom_environment_variable<F: FnMut(&mut EmitBuilder) -> &mut EmitBuilde
     println!("cargo:rerun-if-env-changed={name}");
 }
 
-fn main() -> Result<()> {
+fn main() -> Result<(), Whatever> {
     let builder = &mut EmitBuilder::builder();
     builder
         .all_cargo()
@@ -60,15 +60,17 @@ fn main() -> Result<()> {
         builder.disable_git();
     }
 
-    builder.emit()?;
+    builder.emit().whatever_context("Failed to emit")?;
 
     Ok(())
 }
 
-fn git_at_cd_or_above() -> Result<bool> {
-    let current_dir = std::env::current_dir()?;
+fn git_at_cd_or_above() -> Result<bool, Whatever> {
+    let current_dir = std::env::current_dir().whatever_context("Failed to get current dir")?;
     let mut parents = vec![];
-    let mut path = &*current_dir.canonicalize()?;
+    let mut path = &*current_dir
+        .canonicalize()
+        .whatever_context("Failed to canonicalize path")?;
     while let Some(parent) = path.parent() {
         parents.push(parent);
         path = parent;

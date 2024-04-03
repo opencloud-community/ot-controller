@@ -2,16 +2,15 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::Result;
 use opentalk_community_modules::CommunityModules;
-use opentalk_controller_core::Controller;
+use opentalk_controller_core::{Controller, Whatever};
 
 #[actix_web::main]
 async fn main() {
     opentalk_controller_core::try_or_exit(run()).await;
 }
 
-async fn run() -> Result<()> {
+async fn run() -> Result<(), Whatever> {
     match std::env::args().next() {
         Some(s) if s.ends_with("k3k-controller") => {
             use owo_colors::OwoColorize as _;

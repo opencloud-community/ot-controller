@@ -4,11 +4,6 @@
 
 //! Fixes acl rules based on the database content
 
-use crate::{
-    acl::check_or_create_kustos_default_permissions,
-    api::v1::{events::EventPoliciesBuilderExt, rooms::RoomsPoliciesBuilderExt},
-};
-use anyhow::{bail, Context, Error, Result};
 use chrono::Utc;
 use clap::Parser;
 use kustos::prelude::*;
@@ -17,7 +12,14 @@ use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
     events::Event, invites::Invite, module_resources::ModuleResource, rooms::Room, users::User,
 };
+use snafu::{whatever, ResultExt};
 use std::sync::Arc;
+
+use crate::{
+    acl::check_or_create_kustos_default_permissions,
+    api::v1::{events::EventPoliciesBuilderExt, rooms::RoomsPoliciesBuilderExt},
+    Result,
+};
 
 #[derive(Debug, Clone, Parser)]
 pub(super) struct Args {
@@ -49,13 +51,17 @@ pub(super) struct Args {
 }
 
 pub(super) async fn fix_acl(settings: Settings, args: Args) -> Result<()> {
-    let db = Arc::new(Db::connect(&settings.database).context("Failed to connect to database")?);
+    let db = Arc::new(
+        Db::connect(&settings.database).whatever_context("Failed to connect to database")?,
+    );
     let mut conn = db
         .get_conn()
         .await
-        .context("Failed to get connection from connection pool")?;
+        .whatever_context("Failed to get connection from connection pool")?;
 
-    let authz = kustos::Authz::new(db.clone()).await?;
+    let authz = kustos::Authz::new(db.clone())
+        .await
+        .whatever_context("Failed to initialize kustos/authz")?;
 
     match &args {
         Args {
@@ -67,13 +73,16 @@ pub(super) async fn fix_acl(settings: Settings, args: Args) -> Result<()> {
             skip_events: false,
         } => {
             // Only remove all policies if none of the skips are specified
-            authz.clear_all_policies().await?;
+            authz
+                .clear_all_policies()
+                .await
+                .whatever_context("Failed to clear policies")?;
         }
         Args {
             delete_acl_entries: true,
             ..
         } => {
-            bail!("Refusing to delete acl entries if any of the subsequent checks are skipped");
+            whatever!("Refusing to delete acl entries if any of the subsequent checks are skipped");
         }
         _ => {}
     }
@@ -81,7 +90,7 @@ pub(super) async fn fix_acl(settings: Settings, args: Args) -> Result<()> {
     check_or_create_kustos_default_permissions(&authz).await?;
 
     // Used to collect errors during looped operations
-    let mut errors: Vec<Error> = Vec::new();
+    let mut errors: Vec<kustos::Error> = Vec::new();
 
     if !(args.skip_users && args.skip_groups) {
         fix_user(&args, &mut conn, &authz, &mut errors).await?;
@@ -104,7 +113,7 @@ pub(super) async fn fix_acl(settings: Settings, args: Args) -> Result<()> {
         Ok(())
     } else {
         use std::fmt::Write;
-        bail!(
+        whatever!(
             "{}",
             errors.iter().fold(String::new(), |mut out, e| {
                 let _ = writeln!(out, "{e:#} ");
@@ -118,18 +127,18 @@ async fn fix_user(
     args: &Args,
     conn: &mut DbConnection,
     authz: &kustos::Authz,
-    errors: &mut Vec<Error>,
+    errors: &mut Vec<kustos::Error>,
 ) -> Result<()> {
     let users = User::get_all_with_groups(conn)
         .await
-        .context("Failed to load users")?;
+        .whatever_context("Failed to load users")?;
 
     for (user, groups) in users {
         if !args.skip_users {
             let needs_addition = !match authz.is_user_in_role(user.id, "user").await {
                 Ok(in_role) => in_role,
                 Err(e) => {
-                    errors.push(e.into());
+                    errors.push(e);
                     false
                 }
             };
@@ -137,18 +146,14 @@ async fn fix_user(
             if needs_addition {
                 match authz.add_user_to_role(user.id, "user").await {
                     Ok(_) => {}
-                    Err(e) => errors.push(e.into()),
+                    Err(e) => errors.push(e),
                 }
             }
         }
 
         if !args.skip_groups {
             for group in groups {
-                let needs_addition = !match authz
-                    .is_user_in_group(user.id, group.id)
-                    .await
-                    .with_context(|| format!("User: {}, Group: {}", user.id, group.id))
-                {
+                let needs_addition = !match authz.is_user_in_group(user.id, group.id).await {
                     Ok(in_group) => in_group,
                     Err(e) => {
                         errors.push(e);
@@ -157,11 +162,7 @@ async fn fix_user(
                 };
 
                 if needs_addition {
-                    match authz
-                        .add_user_to_group(user.id, group.id)
-                        .await
-                        .with_context(|| format!("User: {}, Group: {}", user.id, group.id))
-                    {
+                    match authz.add_user_to_group(user.id, group.id).await {
                         Ok(_) => {}
                         Err(e) => errors.push(e),
                     }
@@ -177,7 +178,7 @@ async fn fix_rooms(conn: &mut DbConnection, authz: &kustos::Authz) -> Result<()>
 
     let rooms = Room::get_all_with_creator(conn)
         .await
-        .context("failed to load rooms")?;
+        .whatever_context("Failed to load rooms")?;
     for (room, user) in rooms {
         policies = policies
             .grant_user_access(user.id)
@@ -189,7 +190,7 @@ async fn fix_rooms(conn: &mut DbConnection, authz: &kustos::Authz) -> Result<()>
     let now = Utc::now();
     let invites = Invite::get_all(conn)
         .await
-        .context("failed to load invites")?;
+        .whatever_context("Failed to load invites")?;
     for Invite {
         id,
         room,
@@ -206,7 +207,10 @@ async fn fix_rooms(conn: &mut DbConnection, authz: &kustos::Authz) -> Result<()>
         }
     }
 
-    authz.add_policies(policies).await?;
+    authz
+        .add_policies(policies)
+        .await
+        .whatever_context("Failed to add room policies")?;
 
     Ok(())
 }
@@ -214,7 +218,7 @@ async fn fix_rooms(conn: &mut DbConnection, authz: &kustos::Authz) -> Result<()>
 async fn fix_module_resources(conn: &mut DbConnection, authz: &kustos::Authz) -> Result<()> {
     let module_resources_with_creator = ModuleResource::get_all_with_creator_and_owner(conn)
         .await
-        .context("failed to load module resources")?;
+        .whatever_context("Failed to load module resources")?;
 
     let mut policies = PoliciesBuilder::new();
 
@@ -236,7 +240,10 @@ async fn fix_module_resources(conn: &mut DbConnection, authz: &kustos::Authz) ->
             .finish();
     }
 
-    authz.add_policies(policies).await?;
+    authz
+        .add_policies(policies)
+        .await
+        .whatever_context("Failed to add module policies")?;
 
     Ok(())
 }
@@ -244,10 +251,10 @@ async fn fix_module_resources(conn: &mut DbConnection, authz: &kustos::Authz) ->
 async fn fix_events(conn: &mut DbConnection, authz: &kustos::Authz) -> Result<()> {
     let events_with_creator = Event::get_all_with_creator(conn)
         .await
-        .context("failed to load events")?;
+        .whatever_context("Failed to load events")?;
     let events_with_invitee = Event::get_all_with_invitee(conn)
         .await
-        .context("failed to load events")?;
+        .whatever_context("Failed to load events")?;
 
     let mut policies = PoliciesBuilder::new();
 
@@ -268,7 +275,10 @@ async fn fix_events(conn: &mut DbConnection, authz: &kustos::Authz) -> Result<()
             .finish();
     }
 
-    authz.add_policies(policies).await?;
+    authz
+        .add_policies(policies)
+        .await
+        .whatever_context("Failed to add events policies")?;
 
     Ok(())
 }

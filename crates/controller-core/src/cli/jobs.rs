@@ -4,7 +4,6 @@
 
 use std::{sync::Arc, time::Duration};
 
-use anyhow::{ensure, Context, Result};
 use clap::Subcommand;
 use lapin_pool::RabbitMqPool;
 use log::Log;
@@ -15,6 +14,9 @@ use opentalk_signaling_core::{ExchangeHandle, ExchangeTask};
 use opentalk_types::common::jobs::JobType;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use snafu::{ensure_whatever, ResultExt};
+
+use crate::Result;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct RawParameters {
@@ -77,15 +79,18 @@ async fn execute_job(
     timeout: u64,
     hide_duration: bool,
 ) -> Result<()> {
-    let db = Arc::new(Db::connect(&settings.database).context("Failed to connect to database")?);
+    let db = Arc::new(
+        Db::connect(&settings.database).whatever_context("Failed to connect to database")?,
+    );
 
-    ensure!(timeout > 0, "Timeout must be a strictly positive number");
+    ensure_whatever!(timeout > 0, "Timeout must be a strictly positive number");
     let timeout = Duration::from_secs(timeout);
 
     let logger = Logger;
 
-    let parameters: serde_json::Value = serde_json::from_str(&parameters)?;
-    ensure!(parameters.is_object(), "Parameters must be a JSON object");
+    let parameters: serde_json::Value =
+        serde_json::from_str(&parameters).whatever_context("Failed to serialize parameter")?;
+    ensure_whatever!(parameters.is_object(), "Parameters must be a JSON object");
 
     let rabbitmq_pool = RabbitMqPool::from_config(
         &settings.rabbit_mq.url,
@@ -93,7 +98,9 @@ async fn execute_job(
         settings.rabbit_mq.max_channels_per_connection,
     );
 
-    let exchange_handle = ExchangeTask::spawn(rabbitmq_pool.clone()).await?;
+    let exchange_handle = ExchangeTask::spawn(rabbitmq_pool.clone())
+        .await
+        .whatever_context("Failed to spawn exchange task")?;
 
     let data = JobExecutionData {
         logger: &logger,
@@ -114,7 +121,7 @@ async fn execute_job(
         }
         JobType::InviteCleanup => data.execute::<opentalk_jobs::jobs::InviteCleanup>().await,
     }
-    .map_err(|e| anyhow::anyhow!("{e}"))?;
+    .whatever_context("Failed to execute job")?;
 
     Ok(())
 }
@@ -136,10 +143,16 @@ fn show_default_parameters(job_type: JobType) -> Result<()> {
 
 fn show_job_type_default_parameters<J: Job>() -> Result<()> {
     use opentalk_jobs::JobParameters;
-    let parameters = J::Parameters::try_from_json(json!({})).map_err(|e| anyhow::anyhow!("{e}"))?;
+    let parameters = J::Parameters::try_from_json(json!({}))
+        .whatever_context("Failed to load parameter from empty object")?;
     println!(
         "{}",
-        serde_json::to_string_pretty(&parameters.to_json().map_err(|e| anyhow::anyhow!("{e}"))?)?
+        serde_json::to_string_pretty(
+            &parameters
+                .to_json()
+                .whatever_context("Parameter isn't json serializable")?
+        )
+        .whatever_context("Failed to serialize parameter")?
     );
     Ok(())
 }

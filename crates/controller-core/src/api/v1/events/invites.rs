@@ -18,7 +18,6 @@ use crate::services::{
 use crate::settings::SharedSettingsActix;
 use actix_web::web::{Data, Json, Path, Query, ReqData};
 use actix_web::{delete, get, patch, post, Either};
-use anyhow::Context;
 use chrono::Utc;
 use diesel_async::scoped_futures::ScopedFutureExt;
 use diesel_async::AsyncConnection;
@@ -236,7 +235,10 @@ async fn create_user_event_invite(
                         shared_folder,
                     )
                     .await
-                    .context("Failed to send with MailService")?;
+                    .map_err(|err| {
+                        log::warn!("Failed to send with MailService: {err}");
+                        ApiError::internal()
+                    })?;
             }
 
             Ok(Either::Left(Created))
@@ -365,7 +367,10 @@ async fn create_email_event_invite(
                         shared_folder,
                     )
                     .await
-                    .context("Failed to send with MailService")?;
+                    .map_err(|err| {
+                        log::warn!("Failed to send with MailService: {err}");
+                        ApiError::internal()
+                    })?;
             }
 
             Ok(Either::Left(Created))
@@ -424,7 +429,10 @@ async fn create_invite_to_non_matching_email(
     let invitee_user = kc_admin_client
         .get_user_for_email(tenant_filter, email.as_ref())
         .await
-        .context("Failed to query user for email")?;
+        .map_err(|err| {
+            log::warn!("Failed to query user for email: {err}");
+            ApiError::internal()
+        })?;
 
     if invitee_user.is_some() || settings.endpoints.event_invite_external_email_address {
         let inviter = current_user.clone();
@@ -459,7 +467,10 @@ async fn create_invite_to_non_matching_email(
                             shared_folder,
                         )
                         .await
-                        .context("Failed to send with MailService")?;
+                        .map_err(|err| {
+                            log::warn!("Failed to send with MailService: {err}");
+                            ApiError::internal()
+                        })?;
                 } else {
                     let invite = NewInvite {
                         active: true,
@@ -491,7 +502,10 @@ async fn create_invite_to_non_matching_email(
                                 shared_folder,
                             )
                             .await
-                            .context("Failed to send with MailService")?;
+                            .map_err(|err| {
+                                log::warn!("Failed to send with MailService: {err}");
+                                ApiError::internal()
+                            })?;
                     }
                 }
 

@@ -2,13 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::settings::SharedSettingsActix;
 use actix_http::body::BoxBody;
 use actix_http::StatusCode;
 use actix_web::dev::PeerAddr;
 use actix_web::web::Data;
 use actix_web::{get, HttpResponse};
-use anyhow::Result;
 use kustos::metrics::KustosMetrics;
 use opentalk_database::DatabaseMetrics;
 use opentalk_mail_worker_protocol::MailTask;
@@ -17,9 +15,19 @@ use opentelemetry::metrics::{Counter, Histogram, MetricsError, Unit};
 use opentelemetry::{global, Key};
 use opentelemetry_sdk::metrics::{new_view, Aggregation, Instrument, SdkMeterProvider, Stream};
 use prometheus::{Encoder, Registry, TextEncoder};
+use snafu::{Backtrace, Snafu};
 use std::sync::Arc;
 
+use crate::{settings::SharedSettingsActix, Result};
+
 const MAIL_TASK_KIND: Key = Key::from_static_str("mail_task_kind");
+
+#[derive(Debug, Snafu)]
+#[snafu(context(false))]
+pub struct MetricViewError {
+    source: MetricsError,
+    backtrace: Backtrace,
+}
 
 pub struct EndpointMetrics {
     pub(crate) request_durations: Histogram<f64>,
@@ -44,7 +52,7 @@ pub struct CombinedMetrics {
 }
 
 impl CombinedMetrics {
-    pub fn try_init() -> Result<Self> {
+    pub fn try_init() -> Result<Self, MetricViewError> {
         let registry = prometheus::Registry::new();
         let exporter = opentelemetry_prometheus::exporter()
             .with_registry(registry.clone())

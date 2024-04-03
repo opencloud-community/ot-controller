@@ -7,8 +7,7 @@
 //! # Example
 //!
 //! ```no_run
-//! use opentalk_controller_core::Controller;
-//! use anyhow::Result;
+//! use opentalk_controller_core::{Controller, Whatever};
 //!
 //! # use opentalk_signaling_core::{ModulesRegistrar, RegisterModules};
 //! # struct CommunityModules;
@@ -20,11 +19,11 @@
 //! # }
 //!
 //! #[actix_web::main]
-//! async fn main()  {
+//! async fn main() {
 //!     opentalk_controller_core::try_or_exit(run()).await;
 //! }
 //!
-//! async fn run() -> Result<()> {
+//! async fn run() -> Result<(), Whatever> {
 //!    if let Some(controller) = Controller::create::<CommunityModules>("OpenTalk Controller Community Edition").await? {
 //!         controller.run().await?;
 //!     }
@@ -44,7 +43,6 @@ use crate::trace::ReducedSpanBuilder;
 use actix_cors::Cors;
 use actix_web::web::Data;
 use actix_web::{web, App, HttpServer, Scope};
-use anyhow::{anyhow, Context, Result};
 use api::signaling::echo::Echo;
 use api::signaling::{recording::Recording, SignalingModules};
 use arc_swap::ArcSwap;
@@ -59,6 +57,7 @@ use opentalk_signaling_core::{
 };
 use opentalk_types::api::error::ApiError;
 use rustls_pki_types::{CertificateDer, PrivatePkcs8KeyDer};
+use snafu::{Backtrace, ResultExt, Snafu};
 use std::fs::File;
 use std::io::BufReader;
 use std::marker::PhantomData;
@@ -68,6 +67,7 @@ use std::time::Duration;
 use tokio::signal::ctrl_c;
 use tokio::signal::unix::{signal, SignalKind};
 use tokio::sync::broadcast;
+use tokio::task::JoinError;
 use tokio::time::sleep;
 use tracing_actix_web::TracingLogger;
 
@@ -82,9 +82,11 @@ mod trace;
 pub mod api;
 pub mod settings;
 
-#[derive(Debug, thiserror::Error)]
-#[error("Blocking thread has panicked")]
-pub struct BlockingError;
+#[derive(Debug, Snafu)]
+/// Blocking thread has panicked
+pub struct BlockingError {
+    source: JoinError,
+}
 
 impl From<BlockingError> for ApiError {
     fn from(e: BlockingError) -> Self {
@@ -92,6 +94,21 @@ impl From<BlockingError> for ApiError {
         Self::internal()
     }
 }
+
+/// Send and Sync variant of [`snafu::Whatever`]
+#[derive(Debug, Snafu)]
+#[snafu(whatever)]
+#[snafu(display("{message}"))]
+#[snafu(provide(opt, ref, chain, dyn std::error::Error => source.as_deref()))]
+pub struct Whatever {
+    #[snafu(source(from(Box<dyn std::error::Error + Send + Sync>, Some)))]
+    #[snafu(provide(false))]
+    source: Option<Box<dyn std::error::Error + Send + Sync>>,
+    message: String,
+    backtrace: Backtrace,
+}
+
+type Result<T, E = Whatever> = std::result::Result<T, E>;
 
 /// Custom version of `actix_web::web::block` which retains the current tracing span
 pub async fn block<F, R>(f: F) -> Result<R, BlockingError>
@@ -103,7 +120,7 @@ where
 
     let fut = actix_rt::task::spawn_blocking(move || span.in_scope(f));
 
-    fut.await.map_err(|_| BlockingError)
+    fut.await.context(BlockingSnafu)
 }
 
 /// Wrapper of the main function. Correctly outputs the error to the logging utility or stderr.
@@ -205,21 +222,26 @@ impl Controller {
     ///
     /// Otherwise it will return itself which can be modified and then run using [`Controller::run`]
     pub async fn create<M: RegisterModules>(program_name: &str) -> Result<Option<Self>> {
-        let args = cli::parse_args::<ControllerModules<M>>().await?;
+        let args = cli::parse_args::<ControllerModules<M>>()
+            .await
+            .whatever_context("Failed to parse cli arguments")?;
 
         // Some args run commands by them self and thus should exit here
         if !args.controller_should_start() {
             return Ok(None);
         }
 
-        let settings = settings::load_settings(&args)?;
+        let settings =
+            settings::load_settings(&args).whatever_context("Failed to load settings")?;
         check_for_deprecated_settings(&settings)?;
 
-        trace::init(&settings.logging)?;
+        trace::init(&settings.logging).whatever_context("Failed to initialize tracing")?;
 
         log::info!("Starting {}", program_name);
 
-        let controller = Self::init::<ControllerModules<M>>(settings, args).await?;
+        let controller = Self::init::<ControllerModules<M>>(settings, args)
+            .await
+            .whatever_context("Failed to init controller")?;
 
         Ok(Some(controller))
     }
@@ -229,11 +251,12 @@ impl Controller {
         let settings = Arc::new(settings);
         let shared_settings: SharedSettings = Arc::new(ArcSwap::from(settings.clone()));
 
-        let metrics = metrics::CombinedMetrics::try_init()?;
+        let metrics = metrics::CombinedMetrics::try_init()
+            .whatever_context("Failed to initialize metrics")?;
 
         opentalk_db_storage::migrations::migrate_from_url(&settings.database.url)
             .await
-            .context("Failed to migrate database")?;
+            .whatever_context("Failed to migrate database")?;
 
         let rabbitmq_pool = RabbitMqPool::from_config(
             &settings.rabbit_mq.url,
@@ -241,10 +264,13 @@ impl Controller {
             settings.rabbit_mq.max_channels_per_connection,
         );
 
-        let exchange_handle = ExchangeTask::spawn(rabbitmq_pool.clone()).await?;
+        let exchange_handle = ExchangeTask::spawn(rabbitmq_pool.clone())
+            .await
+            .whatever_context("Failed to spawn exchange task")?;
 
         // Connect to postgres
-        let mut db = Db::connect(&settings.database).context("Failed to connect to database")?;
+        let mut db =
+            Db::connect(&settings.database).whatever_context("Failed to connect to database")?;
         db.set_metrics(metrics.database.clone());
         let db = Arc::new(db);
 
@@ -252,28 +278,32 @@ impl Controller {
         let storage = Arc::new(
             ObjectStorage::new(&settings.minio)
                 .await
-                .map_err(|e| anyhow::anyhow!("{e}"))?,
+                .whatever_context("Failed to initialize object storage")?,
         );
 
         // Discover OIDC Provider
         let oidc = Arc::new(
             OidcContext::from_config(settings.keycloak.clone())
                 .await
-                .context("Failed to initialize OIDC Context")?,
+                .whatever_context("Failed to initialize OIDC Context")?,
         );
 
-        let kc_admin_client = Arc::new(KeycloakAdminClient::new(
-            settings.keycloak.base_url.clone(),
-            settings.keycloak.realm.clone(),
-            settings.keycloak.client_id.clone().into(),
-            settings.keycloak.client_secret.secret().clone(),
-        )?);
+        let kc_admin_client = Arc::new(
+            KeycloakAdminClient::new(
+                settings.keycloak.base_url.clone(),
+                settings.keycloak.realm.clone(),
+                settings.keycloak.client_id.clone().into(),
+                settings.keycloak.client_secret.secret().clone(),
+            )
+            .whatever_context("Failed to initialize keycloak")?,
+        );
 
         // Build redis client. Does not check if redis is reachable.
-        let redis = redis::Client::open(settings.redis.url.clone()).context("Invalid redis url")?;
+        let redis = redis::Client::open(settings.redis.url.clone())
+            .whatever_context("Invalid redis url")?;
         let redis_conn = redis::aio::ConnectionManager::new(redis)
             .await
-            .context("Failed to create redis connection manager")?;
+            .whatever_context("Failed to create redis connection manager")?;
         let redis_conn = RedisConnection::new(redis_conn).with_metrics(metrics.redis.clone());
 
         let (shutdown, _) = broadcast::channel::<()>(1);
@@ -298,7 +328,9 @@ impl Controller {
             metrics,
         };
 
-        M::register(&mut controller).await?;
+        M::register(&mut controller)
+            .await
+            .whatever_context("Failed to register modules")?;
 
         Ok(controller)
     }
@@ -328,22 +360,28 @@ impl Controller {
                 self.shared_settings.clone(),
                 self.metrics.endpoint.clone(),
                 self.rabbitmq_pool.clone(),
-                self.rabbitmq_pool.create_channel().await?,
+                self.rabbitmq_pool
+                    .create_channel()
+                    .await
+                    .whatever_context("Failed to create rabbitmq channel")?,
             ));
 
             // TODO(r.floren) what to do with the handle
             let (authz, _) = kustos::Authz::new_with_autoload_and_metrics(
-                db.upgrade().unwrap(),
+                self.db.clone(),
                 self.shutdown.subscribe(),
                 self.startup_settings.authz.reload_interval,
                 self.metrics.kustos.clone(),
             )
-            .await?;
+            .await
+            .whatever_context("Failed to initialize kustos/authz")?;
 
             log::info!("Making sure the default permissions are set");
-            check_or_create_kustos_default_permissions(&authz).await?;
+            check_or_create_kustos_default_permissions(&authz)
+                .await
+                .whatever_context("Failed to create default permissions")?;
 
-            let authz_middleware = authz.actix_web_middleware(true).await?;
+            let authz_middleware = authz.actix_web_middleware(true).await;
 
             let metrics = Data::new(self.metrics);
 
@@ -403,14 +441,14 @@ impl Controller {
         let address = (Ipv6Addr::UNSPECIFIED, self.startup_settings.http.port);
 
         let http_server = if let Some(tls) = &self.startup_settings.http.tls {
-            let config = setup_rustls(tls).context("Failed to setup TLS context")?;
+            let config = setup_rustls(tls).whatever_context("Failed to setup TLS context")?;
 
             http_server.bind_rustls_0_22(address, config)
         } else {
             http_server.bind(address)
         };
 
-        let http_server = http_server.with_context(|| {
+        let http_server = http_server.with_whatever_context(|_| {
             format!("Failed to bind http server to {}:{}", address.0, address.1)
         })?;
 
@@ -419,8 +457,8 @@ impl Controller {
         let http_server = http_server.disable_signals().run();
         let http_server_handle = http_server.handle();
 
-        let mut reload_signal =
-            signal(SignalKind::hangup()).context("Failed to register SIGHUP signal handler")?;
+        let mut reload_signal = signal(SignalKind::hangup())
+            .whatever_context("Failed to register SIGHUP signal handler")?;
 
         actix_rt::spawn(http_server);
 
@@ -485,7 +523,7 @@ impl Controller {
 
 #[async_trait(?Send)]
 impl ModulesRegistrar for Controller {
-    type Error = anyhow::Error;
+    type Error = Whatever;
 
     async fn register<M: SignalingModule>(&mut self) -> Result<()> {
         let init = SignalingModuleInitData {
@@ -499,7 +537,7 @@ impl ModulesRegistrar for Controller {
 
         let params = M::build_params(init)
             .await
-            .with_context(|| format!("Failed to initialize module '{}'", M::NAMESPACE))?;
+            .with_whatever_context(|_| format!("Failed to initialize module '{}'", M::NAMESPACE))?;
 
         if let Some(params) = params {
             self.signaling.add_module::<M>(params);
@@ -632,13 +670,14 @@ fn setup_cors() -> Cors {
 /// which contains the path to the private key and the certificate files
 /// from where the TLS configuration is loaded and set up.
 fn setup_rustls(tls: &settings::HttpTls) -> Result<rustls::ServerConfig> {
-    let cert_file = File::open(&tls.certificate)
-        .with_context(|| format!("Failed to open certificate file {:?}", &tls.certificate))?;
+    let cert_file = File::open(&tls.certificate).with_whatever_context(|_| {
+        format!("Failed to open certificate file {:?}", &tls.certificate)
+    })?;
     let certs = rustls_pemfile::certs(&mut BufReader::new(cert_file))
         .collect::<Result<Vec<CertificateDer>, _>>()
-        .map_err(|_| anyhow!("Invalid certificate"))?;
+        .whatever_context("Invalid certificate")?;
 
-    let private_key_file = File::open(&tls.private_key).with_context(|| {
+    let private_key_file = File::open(&tls.private_key).with_whatever_context(|_| {
         format!(
             "Failed to open pkcs8 private key file {:?}",
             &tls.private_key
@@ -646,11 +685,12 @@ fn setup_rustls(tls: &settings::HttpTls) -> Result<rustls::ServerConfig> {
     })?;
     let mut key = rustls_pemfile::pkcs8_private_keys(&mut BufReader::new(private_key_file))
         .collect::<Result<Vec<PrivatePkcs8KeyDer>, _>>()
-        .map_err(|_| anyhow!("Invalid pkcs8 private key"))?;
+        .whatever_context("Invalid pkcs8 private key")?;
 
     let config = rustls::ServerConfig::builder()
         .with_no_client_auth()
-        .with_single_cert(certs, rustls_pki_types::PrivateKeyDer::Pkcs8(key.remove(0)))?;
+        .with_single_cert(certs, rustls_pki_types::PrivateKeyDer::Pkcs8(key.remove(0)))
+        .whatever_context("Invalid DER-encoded key ")?;
 
     Ok(config)
 }
@@ -659,7 +699,9 @@ fn setup_rustls(tls: &settings::HttpTls) -> Result<rustls::ServerConfig> {
 fn check_for_deprecated_settings(settings: &Settings) -> Result<()> {
     use owo_colors::OwoColorize as _;
 
-    for deprecated_setting in opentalk_janus_media::check_for_deprecated_settings(settings)? {
+    for deprecated_setting in opentalk_janus_media::check_for_deprecated_settings(settings)
+        .whatever_context("Failed to check deprecated settings")?
+    {
         anstream::eprintln!(
             "{}: {} setting found in the configuration file. This option is no longer needed.",
             "DEPRECATION WARNING".yellow().bold(),

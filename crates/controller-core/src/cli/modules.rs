@@ -2,7 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::Result;
+use std::convert::Infallible;
+
 use async_trait::async_trait;
 use clap::Subcommand;
 use opentalk_signaling_core::{ModulesRegistrar, RegisterModules, SignalingModule};
@@ -18,15 +19,15 @@ struct ModuleConsolePrinter;
 
 #[async_trait(?Send)]
 impl ModulesRegistrar for ModuleConsolePrinter {
-    type Error = anyhow::Error;
+    type Error = Infallible;
 
-    async fn register<M: SignalingModule>(&mut self) -> Result<()> {
+    async fn register<M: SignalingModule>(&mut self) -> Result<(), Infallible> {
         println!("{}: {:?}", M::NAMESPACE, M::get_provided_features());
         Ok(())
     }
 }
 
-pub async fn handle_command<M: RegisterModules>(command: Command) -> Result<()> {
+pub async fn handle_command<M: RegisterModules>(command: Command) -> Result<(), Infallible> {
     match command {
         Command::List => M::register(&mut ModuleConsolePrinter).await,
     }

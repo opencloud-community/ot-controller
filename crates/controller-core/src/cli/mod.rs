@@ -2,10 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::{Context, Result};
 use clap::{ArgAction, Parser, Subcommand};
 use opentalk_controller_settings::Settings;
 use opentalk_signaling_core::RegisterModules;
+use snafu::ResultExt;
+
+use crate::Result;
 
 mod acl;
 mod fix_acl;
@@ -110,7 +112,7 @@ pub async fn parse_args<M: RegisterModules>() -> Result<Args> {
         reload::trigger_reload()?;
     }
     if let Some(sub_command) = args.cmd.clone() {
-        let settings = Settings::load(&args.config)?;
+        let settings = Settings::load(&args.config).whatever_context("Failed to load settings")?;
         match sub_command {
             SubCommand::FixAcl(args) => {
                 fix_acl::fix_acl(settings, args).await?;
@@ -122,20 +124,28 @@ pub async fn parse_args<M: RegisterModules>() -> Result<Args> {
                 let result =
                     opentalk_db_storage::migrations::migrate_from_url(&settings.database.url)
                         .await
-                        .context("Failed to migrate database")?;
+                        .whatever_context("Failed to migrate database")?;
                 println!("{result:?}");
             }
             SubCommand::Tenants(command) => {
-                tenants::handle_command(settings, command).await?;
+                tenants::handle_command(settings, command)
+                    .await
+                    .whatever_context("Tenants command failed")?;
             }
             SubCommand::Tariffs(command) => {
-                tariffs::handle_command(settings, command).await?;
+                tariffs::handle_command(settings, command)
+                    .await
+                    .whatever_context("Tariffs command failed")?;
             }
             SubCommand::Jobs(command) => {
-                jobs::handle_command(settings, command).await?;
+                jobs::handle_command(settings, command)
+                    .await
+                    .whatever_context("Jobs command failed")?;
             }
             SubCommand::Modules(command) => {
-                modules::handle_command::<M>(command).await?;
+                modules::handle_command::<M>(command)
+                    .await
+                    .whatever_context("Modules command failed")?;
             }
         }
     }

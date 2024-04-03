@@ -10,7 +10,6 @@ use actix_web::{
     web::{Data, Json, Path, Query, ReqData},
     CustomizeResponder, Responder as _,
 };
-use anyhow::Result;
 use chrono::{Days, NaiveDate, Utc};
 use log::warn;
 use opentalk_controller_settings::Settings;

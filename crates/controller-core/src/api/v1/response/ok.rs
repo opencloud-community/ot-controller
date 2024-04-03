@@ -12,6 +12,7 @@ use actix_web::http::header::{self, HeaderMap};
 use actix_web::{HttpResponse, Responder};
 use either::Either;
 use serde::Serialize;
+use snafu::ResultExt;
 use std::collections::HashMap;
 use url::Url;
 
@@ -257,14 +258,16 @@ fn vec_to_header_value(
     header::HeaderValue::from_str(&buf)
 }
 
-fn extract_full_url_from_request(req: &actix_web::HttpRequest) -> Result<Url, anyhow::Error> {
+fn extract_full_url_from_request(req: &actix_web::HttpRequest) -> Result<Url, crate::Whatever> {
     let conn = req.connection_info();
 
     let url = Url::parse(&format!(
         "{scheme}://{host}/",
         scheme = conn.scheme(),
         host = conn.host()
-    ))?;
+    ))
+    .whatever_context("Failed to parse URL")?;
 
-    Ok(url.join(&req.uri().to_string())?)
+    url.join(&req.uri().to_string())
+        .whatever_context("Failed to build URL")
 }

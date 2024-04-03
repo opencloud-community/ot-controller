@@ -14,7 +14,6 @@ publish = false
 [dependencies]
 actix-web.workspace = true
 anstream.workspace = true
-anyhow.workspace = true
 opentalk-community-modules.workspace = true
 opentalk-controller-core.workspace = true
 owo-colors.workspace = true

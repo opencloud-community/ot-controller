@@ -5,18 +5,20 @@
 use actix_web::dev::{ServiceRequest, ServiceResponse};
 use actix_web::http::header::USER_AGENT;
 use actix_web::{Error, HttpMessage};
-use anyhow::Result;
 use opentalk_controller_settings::Logging;
 use opentelemetry::global;
 use opentelemetry::KeyValue;
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::{trace, Resource};
+use snafu::ResultExt;
 use tracing::Span;
 use tracing_actix_web::{RequestId, RootSpanBuilder};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::{EnvFilter, Registry};
 use uuid::Uuid;
+
+use crate::Result;
 
 // If these default values are adjusted, that change should be synchronized
 // into `extra/example.toml` for transparency towards administrators
@@ -70,7 +72,8 @@ pub fn init(settings: &Logging) -> Result<()> {
                             .unwrap_or("unknown"),
                     ),
                 ])))
-            .install_batch(opentelemetry_sdk::runtime::TokioCurrentThread)?;
+            .install_batch(opentelemetry_sdk::runtime::TokioCurrentThread)
+            .whatever_context("Failed to install batch")?;
         let telemetry = tracing_opentelemetry::layer().with_tracer(tracer);
 
         // Initialize the global logging with telemetry

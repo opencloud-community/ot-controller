@@ -2,9 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::{Context, Error, Result};
 use nix::sys::signal::{kill, SIGHUP};
+use snafu::{OptionExt, ResultExt};
 use sysinfo::{self, get_current_pid, Pid, Process, ProcessRefreshKind, RefreshKind, System};
+
+use crate::Result;
 
 /// Sends SIGHUP to all process with a different pid and the same name
 pub fn trigger_reload() -> Result<()> {
@@ -31,15 +33,15 @@ fn send_sighup_to_proccesses(processes: Vec<Pid>) -> Result<()> {
     processes
         .into_iter()
         .try_for_each(|pid| kill(nix::unistd::Pid::from_raw(pid.as_u32() as i32), SIGHUP))
-        .map_err(Error::from)
+        .whatever_context("Failed to get PIDs")
 }
 
 /// Returns the [`Process`] of the current running application
 fn get_current_process(system: &System) -> Result<&Process> {
-    let pid = get_current_pid().map_err(Error::msg)?;
+    let pid = get_current_pid().whatever_context("Failed to get current process PID")?;
     system
         .process(pid)
-        .context("Failed to get current process, that was not to expect")
+        .whatever_context("Failed to get current process, that was not to expect")
 }
 
 /// Iterates over all processes to find processes with same name as the current process and a different pid

@@ -13,7 +13,6 @@ use actix_web::{
     delete, get, patch, post,
     web::{Data, Json, Path, Query, ReqData},
 };
-use anyhow::Context;
 use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::streaming_targets::{
     RoomStreamingTargetNew, RoomStreamingTargetRecord, UpdateRoomStreamingTarget,
@@ -72,14 +71,14 @@ pub(super) async fn get_room_streaming_targets(
     let room_streaming_targets = streaming_targets
         .into_iter()
         .map(|st| {
-            let streaming_endpoint = st
-                .streaming_endpoint
-                .parse()
-                .context("invalid streaming endpoint url entry in db")?;
-            let public_url = st
-                .public_url
-                .parse()
-                .context("invalid public url entry in db")?;
+            let streaming_endpoint = st.streaming_endpoint.parse().map_err(|err| {
+                log::warn!("Failed to parse streaming endpoint: {err}");
+                ApiError::internal()
+            })?;
+            let public_url = st.public_url.parse().map_err(|err| {
+                log::warn!("Invalid public url entry in db: {err}");
+                ApiError::internal()
+            })?;
 
             let room_streaming_target = RoomStreamingTarget {
                 id: st.id,
@@ -203,15 +202,17 @@ pub async fn get_streaming_target(
             streaming_target: StreamingTarget {
                 name: room_streaming_target.name,
                 kind: StreamingTargetKind::Custom {
-                    streaming_endpoint: room_streaming_target
-                        .streaming_endpoint
-                        .parse()
-                        .context("invalid streaming endpoint url entry in db")?,
+                    streaming_endpoint: room_streaming_target.streaming_endpoint.parse().map_err(
+                        |err| {
+                            log::warn!("Invalid streaming endpoint url entry in db: {err}");
+                            ApiError::internal()
+                        },
+                    )?,
                     streaming_key: room_streaming_target.streaming_key,
-                    public_url: room_streaming_target
-                        .public_url
-                        .parse()
-                        .context("invalid public url entry in db")?,
+                    public_url: room_streaming_target.public_url.parse().map_err(|err| {
+                        log::warn!("Invalid streaming endpoint url entry in db: {err}");
+                        ApiError::internal()
+                    })?,
                 },
             },
         },
@@ -287,12 +288,18 @@ pub async fn patch_streaming_target(
             streaming_endpoint: room_streaming_target_table
                 .streaming_endpoint
                 .parse()
-                .context("invalid streaming endpoint url entry in db")?,
+                .map_err(|err| {
+                    log::warn!("Invalid streaming endpoint url entry in db: {err}");
+                    ApiError::internal()
+                })?,
             streaming_key: room_streaming_target_table.streaming_key,
             public_url: room_streaming_target_table
                 .public_url
                 .parse()
-                .context("invalid public url entry in db")?,
+                .map_err(|err| {
+                    log::warn!("Invalid public url entry in db: {err}");
+                    ApiError::internal()
+                })?,
         },
     };
 

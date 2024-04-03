@@ -10,6 +10,7 @@ use actix_web::HttpRequest;
 use opentalk_types::api::error::{ApiError, ErrorBody};
 use serde::Deserialize;
 use serde::Serialize;
+use snafu::ResultExt;
 
 /// Error handler for the actix JSON extractor
 ///
@@ -39,15 +40,16 @@ pub struct CacheableApiError {
 }
 
 impl TryFrom<CacheableApiError> for ApiError {
-    type Error = anyhow::Error;
+    type Error = crate::Whatever;
 
     fn try_from(value: CacheableApiError) -> Result<Self, Self::Error> {
         Ok(ApiError {
-            status: StatusCode::from_u16(value.status)?,
+            status: StatusCode::from_u16(value.status).whatever_context("Invalid status code")?,
             www_authenticate: value
                 .www_authenticate
                 .map(|b| HeaderValue::from_bytes(&b))
-                .transpose()?,
+                .transpose()
+                .whatever_context("Failed to parse header from bytes")?,
             body: value.body,
         })
     }
