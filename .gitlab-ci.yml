@@ -6,7 +6,6 @@
 image: git.opentalk.dev:5050/opentalk/backend/containers/rust:1.77.0-bullseye
 
 stages:
-  - setup
   - lint
   - test
   - check
@@ -26,12 +25,6 @@ variables:
   ENTERPRISE_REF: main
   COMMUNITY_EDITION_UPSTREAM: $CI_PROJECT_PATH
   KANIKO_IMAGE: gcr.io/kaniko-project/executor:debug
-  # Used for caching
-  CARGO_HOME: $CI_PROJECT_DIR/cargo
-  CARGO_TARGET_DIR: $CI_PROJECT_DIR/target
-  CARGO_INCREMENTAL: 0
-  CACHE_COMPRESSION_LEVEL: fastest
-  FF_USE_FASTZIP: 'true'
 
 .default_job_condition: &default_job_condition
   needs: []
@@ -41,19 +34,6 @@ variables:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     # Run on scheduled pipeline runs
     - if: $CI_PIPELINE_SOURCE == 'schedule'
-
-.build_cache: &build_cache
-  cache:
-    - key: cargo_home
-      policy: pull
-      when: always
-      paths:
-        - ${CARGO_HOME}
-    - key: ${CI_COMMIT_REF_SLUG}
-      policy: pull
-      when: always
-      paths:
-        - target/
 
 trigger_enterprise_ci:
   stage: trigger
@@ -91,52 +71,6 @@ trigger_enterprise_ci:
         --form "variables[COMMUNITY_EDITION_UPSTREAM]=$COMMUNITY_EDITION_UPSTREAM" \
         "$CI_API_V4_URL/projects/$ENCODED_ENTERPRISE_PROJECT/trigger/pipeline"
 
-setup:build:
-  stage: setup
-  tags:
-    - runner01
-  <<: *default_job_condition
-  cache:
-    - key: cargo_home
-      policy: pull-push
-      when: always
-      paths:
-        - ${CARGO_HOME}
-    - key: ${CI_COMMIT_REF_SLUG}
-      policy: pull-push
-      when: always
-      paths:
-        - ${CARGO_TARGET_DIR}
-  before_script:
-    - cargo install diesel_cli --version ~2 --no-default-features --features="postgres"
-  script:
-    - cargo check --package $OPENTALK_CONTROLLER_PROJECT
-    - cargo check --release --locked
-    - cargo xtask --help
-    - cargo auditable build --release --locked --workspace
-
-setup:test:
-  stage: setup
-  tags:
-    - runner02
-  <<: *default_job_condition
-  cache:
-    - key: cargo_home-cargo_test
-      policy: pull-push
-      when: always
-      paths:
-        - ${CARGO_HOME}
-    - key: ${CI_COMMIT_REF_SLUG}-cargo_test
-      policy: pull-push
-      when: always
-      paths:
-        - ${CARGO_TARGET_DIR}
-  script:
-    - cargo install diesel_cli --version ~2 --no-default-features --features="postgres"
-    - RUSTFLAGS="-C instrument-coverage -C link-arg=-fuse-ld=lld"
-      LLVM_PROFILE_FILE="$(pwd)/target/coverage/raw/coverage-%p-%m.profraw"
-      cargo test --workspace --locked --no-run
-
 lint:fmt:
   stage: lint
   <<: *default_job_condition
@@ -145,12 +79,7 @@ lint:fmt:
 
 lint:clippy:
   stage: lint
-  tags:
-    - runner01
-  <<: [*default_job_condition, *build_cache]
-  needs:
-    - job: setup:build
-      optional: true
+  <<: *default_job_condition
   script:
     - cargo clippy --workspace --all-features --tests -- --deny warnings
 
@@ -215,11 +144,6 @@ lint:licensing:
 
 check:opentalk-types:
   stage: check
-  tags:
-    - runner01
-  needs:
-    - job: setup:build
-      optional: true
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
   # Ensures that the `types` crate can be built with each relevant feature individually
@@ -234,12 +158,6 @@ check:opentalk-types:
 
 check:docs-generated-parts:
   stage: check
-  tags:
-    - runner01
-  <<: *build_cache
-  needs:
-    - job: setup:build
-      optional: true
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
   variables:
@@ -267,21 +185,7 @@ check:docs-generated-parts:
 
 test:cargo_test:
   stage: test
-  tags:
-    - runner02
-  <<: [*default_job_condition]
-  needs:
-    - job: setup:test
-      optional: true
-  cache:
-    - key: cargo_home-cargo_test
-      policy: pull
-      paths:
-        - ${CARGO_HOME}
-    - key: ${CI_COMMIT_REF_SLUG}-cargo_test
-      policy: pull
-      paths:
-        - target/
+  <<: *default_job_condition
   artifacts:
     paths:
       - target/coverage/html
@@ -333,12 +237,7 @@ test:cargo_test:
 
 test:cargo_xtask:
   stage: test
-  tags:
-    - runner01
-  <<: [*default_job_condition, *build_cache]
-  needs:
-    - job: setup:build
-      optional: true
+  <<: *default_job_condition
   variables:
     POSTGRES_DB: opentalk
     POSTGRES_USER: postgres
@@ -356,9 +255,7 @@ test:cargo_xtask:
 
 test:container:
   stage: test
-  tags:
-    - runner01
-  <<: [*default_job_condition, *build_cache]
+  <<: *default_job_condition
   image:
     name: $KANIKO_IMAGE
     entrypoint: ['']
@@ -378,12 +275,6 @@ test:container:
 
 build:
   stage: build
-  tags:
-    - runner01
-  <<: *build_cache
-  needs:
-    - job: setup:build
-      optional: true
   rules:
     - if: $CI_PIPELINE_SOURCE == "pipeline"
       when: never
