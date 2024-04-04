@@ -53,7 +53,7 @@ impl RoomDeleter {
 #[derive(Debug)]
 pub struct RoomDeleterPreparedCommit {
     resources: Vec<ResourceId>,
-    linked_events: Vec<EventId>,
+    linked_event: Option<EventId>,
     linked_module_resources: Vec<ModuleResourceId>,
     linked_shared_folders: Vec<EventSharedFolder>,
 }
@@ -65,10 +65,9 @@ impl RoomDeleterPreparedCommit {
         room_id: RoomId,
     ) -> Result<(), DatabaseError> {
         const ERROR_MESSAGE: &str = "Race-condition during database commit preparation";
-        let mut current_events = Event::get_all_ids_for_room(conn, room_id).await?;
-        current_events.sort();
+        let current_event = Event::get_id_for_room(conn, room_id).await?;
 
-        if current_events != self.linked_events {
+        if current_event != self.linked_event {
             return Err(DatabaseError::Custom {
                 message: ERROR_MESSAGE.to_owned(),
             });
@@ -113,20 +112,18 @@ impl Deleter for RoomDeleter {
         _logger: &dyn Log,
         conn: &mut DbConnection,
     ) -> Result<Self::PreparedCommit, Error> {
-        let mut linked_events = Event::get_all_ids_for_room(conn, self.room_id).await?;
+        let linked_event = Event::get_id_for_room(conn, self.room_id).await?;
         let mut linked_module_resources =
             ModuleResource::get_all_ids_for_room(conn, self.room_id).await?;
         let mut linked_shared_folders =
             EventSharedFolder::get_all_for_room(conn, self.room_id).await?;
 
         // Sort for improved equality comparison later on, inside the transaction.
-        linked_events.sort();
         linked_module_resources.sort();
         linked_shared_folders.sort_by(|a, b| a.event_id.cmp(&b.event_id));
 
-        let resources = linked_events
-            .iter()
-            .cloned()
+        let resources = linked_event
+            .into_iter()
             .flat_map(super::event::associated_resource_ids)
             .chain(linked_module_resources.iter().map(|e| e.resource_id()))
             .chain(
@@ -139,7 +136,7 @@ impl Deleter for RoomDeleter {
 
         Ok(RoomDeleterPreparedCommit {
             resources,
-            linked_events,
+            linked_event,
             linked_module_resources,
             linked_shared_folders,
         })
@@ -288,7 +285,7 @@ async fn delete_associated_database_rows(
     ModuleResource::delete_by_room(conn, room_id).await?;
 
     debug!(log: logger, "Deleting event from database");
-    Event::delete_all_for_room(conn, room_id).await?;
+    Event::delete_for_room(conn, room_id).await?;
 
     debug!(log: logger, "Deleting sip config from database");
     SipConfig::delete_by_room(conn, room_id).await?;

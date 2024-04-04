@@ -1093,7 +1093,7 @@ pub async fn notify_event_invitees_by_room_about_update(
     conn: &mut DbConnection,
     room_id: RoomId,
 ) -> Result<(), ApiError> {
-    let event = Event::get_first_for_room(conn, room_id).await?;
+    let event = Event::get_for_room(conn, room_id).await?;
 
     if let Some(event) = event {
         let (event, _invite, room, sip_config, _is_favorite, shared_folder, _tariff) =

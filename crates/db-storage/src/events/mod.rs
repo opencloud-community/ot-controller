@@ -546,12 +546,9 @@ impl Event {
         Ok(())
     }
 
-    /// Returns the first [`Event`] in the given [`RoomId`].
+    /// Returns the [`Event`] in the given [`RoomId`].
     #[tracing::instrument(err, skip_all)]
-    pub async fn get_first_for_room(
-        conn: &mut DbConnection,
-        room_id: RoomId,
-    ) -> Result<Option<Event>> {
+    pub async fn get_for_room(conn: &mut DbConnection, room_id: RoomId) -> Result<Option<Event>> {
         let event = events::table
             .filter(events::room.eq(room_id))
             .first::<Event>(conn)
@@ -560,17 +557,17 @@ impl Event {
         Ok(event)
     }
 
-    /// Returns all [`Event`]s in the given [`RoomId`].
+    /// Returns a [`EventId`] for the given [`RoomId`].
     #[tracing::instrument(err, skip_all)]
-    pub async fn get_all_ids_for_room(
+    pub async fn get_id_for_room(
         conn: &mut DbConnection,
         room_id: RoomId,
-    ) -> Result<Vec<EventId>> {
+    ) -> Result<Option<EventId>> {
         let query = events::table
             .select(events::id)
             .filter(events::room.eq(room_id));
 
-        let events = query.load(conn).await?;
+        let events = query.first(conn).await.optional()?;
 
         Ok(events)
     }
@@ -579,7 +576,7 @@ impl Event {
     ///
     /// Fastpath for deleting multiple events in room
     #[tracing::instrument(err, skip_all)]
-    pub async fn delete_all_for_room(conn: &mut DbConnection, room_id: RoomId) -> Result<()> {
+    pub async fn delete_for_room(conn: &mut DbConnection, room_id: RoomId) -> Result<()> {
         diesel::delete(events::table)
             .filter(events::room.eq(room_id))
             .execute(conn)

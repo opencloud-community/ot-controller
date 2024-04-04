@@ -11,7 +11,8 @@ use opentalk_db_storage::events::{
 };
 use opentalk_db_storage::rooms::NewRoom;
 use opentalk_db_storage::tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId};
-use opentalk_types::core::{EventId, EventInviteStatus, InviteRole, RoomId, TimeZone, UserId};
+use opentalk_db_storage::users::User;
+use opentalk_types::core::{EventId, EventInviteStatus, InviteRole, TimeZone, UserId};
 use pretty_assertions::assert_eq;
 use serial_test::serial;
 
@@ -19,20 +20,30 @@ mod common;
 
 async fn make_event(
     conn: &mut DbConnection,
-    user_id: UserId,
-    room_id: RoomId,
+    user: &User,
     hour: Option<u32>,
     is_adhoc: bool,
 ) -> Event {
     let tenant = get_or_create_tenant_by_oidc_id(conn, &OidcTenantId::from("default".to_string()))
         .await
         .unwrap();
+
+    let room = NewRoom {
+        created_by: user.id,
+        password: None,
+        waiting_room: false,
+        tenant_id: user.tenant_id,
+    }
+    .insert(conn)
+    .await
+    .unwrap();
+
     NewEvent {
         title: "Test Event".into(),
         description: "Test Event".into(),
-        room: room_id,
-        created_by: user_id,
-        updated_by: user_id,
+        room: room.id,
+        created_by: user.id,
+        updated_by: user.id,
         is_time_independent: hour.is_none(),
         is_all_day: Some(false),
         starts_at: hour.map(|h| Tz::UTC.with_ymd_and_hms(2020, 1, 1, h, 0, 0).unwrap()),
@@ -73,32 +84,22 @@ async fn test() {
 
     let user = make_user(&mut conn, "Test", "Tester", "Test Tester").await;
 
-    let room = NewRoom {
-        created_by: user.id,
-        password: None,
-        waiting_room: false,
-        tenant_id: user.tenant_id,
-    }
-    .insert(&mut conn)
-    .await
-    .unwrap();
-
     // create events. The variable number indicates its expected ordering
 
     // first two events, first on on hour 2 then 1.
     // This tests the ordering of comparison of times (e.g. starts_at, then created_at)
-    let event2 = make_event(&mut conn, user.id, room.id, Some(2), true).await;
-    let event1 = make_event(&mut conn, user.id, room.id, Some(1), true).await;
+    let event2 = make_event(&mut conn, &user, Some(2), true).await;
+    let event1 = make_event(&mut conn, &user, Some(1), true).await;
 
     // this event should come last because starts_at is largest
-    let event8 = make_event(&mut conn, user.id, room.id, Some(10), true).await;
+    let event8 = make_event(&mut conn, &user, Some(10), true).await;
 
     // Test that created_at is being honored if starts_at is equal
-    let event3 = make_event(&mut conn, user.id, room.id, Some(3), true).await;
-    let event4 = make_event(&mut conn, user.id, room.id, Some(3), true).await;
-    let event5 = make_event(&mut conn, user.id, room.id, Some(3), true).await;
-    let event6 = make_event(&mut conn, user.id, room.id, Some(3), true).await;
-    let event7 = make_event(&mut conn, user.id, room.id, Some(3), true).await;
+    let event3 = make_event(&mut conn, &user, Some(3), true).await;
+    let event4 = make_event(&mut conn, &user, Some(3), true).await;
+    let event5 = make_event(&mut conn, &user, Some(3), true).await;
+    let event6 = make_event(&mut conn, &user, Some(3), true).await;
+    let event7 = make_event(&mut conn, &user, Some(3), true).await;
 
     {
         // Test cursor
@@ -276,20 +277,10 @@ async fn get_events_invite_filter() {
     let inviter = make_user(&mut conn, "Ingo", "Inviter", "inviter").await;
     let invitee = make_user(&mut conn, "Ingrid", "Invitee", "invitee").await;
 
-    let room = NewRoom {
-        created_by: inviter.id,
-        password: None,
-        waiting_room: false,
-        tenant_id: inviter.tenant_id,
-    }
-    .insert(&mut conn)
-    .await
-    .unwrap();
-
-    let accept_event = make_event(&mut conn, inviter.id, room.id, Some(1), true).await;
-    let decline_event = make_event(&mut conn, inviter.id, room.id, Some(1), true).await;
-    let tentative_event = make_event(&mut conn, inviter.id, room.id, Some(1), true).await;
-    let pending_event = make_event(&mut conn, inviter.id, room.id, Some(1), true).await;
+    let accept_event = make_event(&mut conn, &inviter, Some(1), true).await;
+    let decline_event = make_event(&mut conn, &inviter, Some(1), true).await;
+    let tentative_event = make_event(&mut conn, &inviter, Some(1), true).await;
+    let pending_event = make_event(&mut conn, &inviter, Some(1), true).await;
 
     // Check that the creator of the events gets created events when filtering by `Accepted` invite status
     let all_events = Event::get_all_for_user_paginated(
@@ -510,18 +501,8 @@ async fn get_event_invites() {
     let louise = make_user(&mut conn, "Jeez", "Louise", "Jesus").await;
     let gerhard = make_user(&mut conn, "Gerhard", "Bauer", "Hardi").await;
 
-    let room = NewRoom {
-        created_by: ferdinand.id,
-        password: None,
-        waiting_room: false,
-        tenant_id: ferdinand.tenant_id,
-    }
-    .insert(&mut conn)
-    .await
-    .unwrap();
-
     // EVENT 1 MIT JEEZ LOUISE AND GERHARD
-    let event1 = make_event(&mut conn, ferdinand.id, room.id, Some(1), true).await;
+    let event1 = make_event(&mut conn, &ferdinand, Some(1), true).await;
 
     NewEventInvite {
         event_id: event1.id,
@@ -546,7 +527,7 @@ async fn get_event_invites() {
     .unwrap();
 
     // EVENT 2 MIT JEEZ LOUSE UND FERDINAND
-    let event2 = make_event(&mut conn, gerhard.id, room.id, Some(1), true).await;
+    let event2 = make_event(&mut conn, &gerhard, Some(1), true).await;
 
     NewEventInvite {
         event_id: event2.id,
@@ -597,21 +578,11 @@ async fn get_event_adhoc() {
 
     let user = make_user(&mut conn, "Test", "Tester", "Test Tester").await;
 
-    let room = NewRoom {
-        created_by: user.id,
-        password: None,
-        waiting_room: false,
-        tenant_id: user.tenant_id,
-    }
-    .insert(&mut conn)
-    .await
-    .unwrap();
-
-    let event1 = make_event(&mut conn, user.id, room.id, Some(1), true).await;
-    let event2 = make_event(&mut conn, user.id, room.id, Some(1), false).await;
-    let event3 = make_event(&mut conn, user.id, room.id, Some(1), false).await;
-    let event4 = make_event(&mut conn, user.id, room.id, Some(1), true).await;
-    let event5 = make_event(&mut conn, user.id, room.id, Some(1), true).await;
+    let event1 = make_event(&mut conn, &user, Some(1), true).await;
+    let event2 = make_event(&mut conn, &user, Some(1), false).await;
+    let event3 = make_event(&mut conn, &user, Some(1), false).await;
+    let event4 = make_event(&mut conn, &user, Some(1), true).await;
+    let event5 = make_event(&mut conn, &user, Some(1), true).await;
 
     let all = Event::get_all_for_user_paginated(
         &mut conn,
@@ -682,21 +653,11 @@ async fn get_event_time_independent() {
 
     let user = make_user(&mut conn, "Test", "Tester", "Test Tester").await;
 
-    let room = NewRoom {
-        created_by: user.id,
-        password: None,
-        waiting_room: false,
-        tenant_id: user.tenant_id,
-    }
-    .insert(&mut conn)
-    .await
-    .unwrap();
-
-    let event1 = make_event(&mut conn, user.id, room.id, None, false).await;
-    let event2 = make_event(&mut conn, user.id, room.id, None, false).await;
-    let event3 = make_event(&mut conn, user.id, room.id, Some(1), false).await;
-    let event4 = make_event(&mut conn, user.id, room.id, None, false).await;
-    let event5 = make_event(&mut conn, user.id, room.id, Some(2), false).await;
+    let event1 = make_event(&mut conn, &user, None, false).await;
+    let event2 = make_event(&mut conn, &user, None, false).await;
+    let event3 = make_event(&mut conn, &user, Some(1), false).await;
+    let event4 = make_event(&mut conn, &user, None, false).await;
+    let event5 = make_event(&mut conn, &user, Some(2), false).await;
 
     let all = Event::get_all_for_user_paginated(
         &mut conn,
@@ -769,7 +730,7 @@ async fn get_event_min_max_time() {
 
     let user = make_user(&mut conn, "Test", "Tester", "Test Tester").await;
 
-    let room = NewRoom {
+    let room1 = NewRoom {
         created_by: user.id,
         password: None,
         waiting_room: false,
@@ -782,7 +743,7 @@ async fn get_event_min_max_time() {
     let event1 = NewEvent {
         title: "Test Event".into(),
         description: "Test Event".into(),
-        room: room.id,
+        room: room1.id,
         created_by: user.id,
         updated_by: user.id,
         is_time_independent: false,
@@ -801,10 +762,20 @@ async fn get_event_min_max_time() {
     .await
     .unwrap();
 
+    let room2 = NewRoom {
+        created_by: user.id,
+        password: None,
+        waiting_room: false,
+        tenant_id: user.tenant_id,
+    }
+    .insert(&mut conn)
+    .await
+    .unwrap();
+
     let event2 = NewEvent {
         title: "Test Event".into(),
         description: "Test Event".into(),
-        room: room.id,
+        room: room2.id,
         created_by: user.id,
         updated_by: user.id,
         is_time_independent: false,
