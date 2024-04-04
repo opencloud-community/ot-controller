@@ -2,11 +2,38 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use anyhow::Result;
 use clap::Parser;
+use snafu::Snafu;
 use std::path::PathBuf;
 
 mod db_schema;
+
+#[derive(Debug, Snafu)]
+pub enum Error {
+    #[snafu(context(false))]
+    DatabaseConnection {
+        source: diesel::result::ConnectionError,
+    },
+
+    #[snafu(context(false))]
+    DatabaseOperation { source: diesel::result::Error },
+
+    #[snafu(display("Failed to read file: {}", source), context(false))]
+    FileRead { source: std::io::Error },
+
+    #[snafu(display("Failed to execute command: {}", source), context(false))]
+    CommandExecution { source: devx_cmd::Error },
+
+    #[snafu(display("Custom error: {message}"), whatever)]
+    CustomError {
+        message: String,
+
+        #[snafu(source(from(Box<dyn std::error::Error >, Some)))]
+        source: Option<Box<dyn std::error::Error>>,
+    },
+}
+
+type Result<T, E = Error> = std::result::Result<T, E>;
 
 #[derive(Debug, Parser)]
 #[command(
@@ -61,11 +88,11 @@ async fn main() -> Result<()> {
 ///
 /// [cargo-metadata]: https://doc.rust-lang.org/cargo/commands/cargo-metadata.html
 /// [cargo-workspace]: https://doc.rust-lang.org/book/ch14-03-cargo-workspaces.html
-pub fn locate_project_root() -> Result<PathBuf> {
+pub fn locate_project_root() -> PathBuf {
     let cmd = cargo_metadata::MetadataCommand::new();
 
     let metadata = cmd.exec().unwrap();
     let workspace_root = metadata.workspace_root;
 
-    Ok(workspace_root.into())
+    workspace_root.into()
 }

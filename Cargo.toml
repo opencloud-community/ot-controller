@@ -56,7 +56,6 @@ actix-rt = "2"
 actix-web = { version = "4", default-features = true }
 actix-web-httpauth = "0.8"
 anstream = "0.6"
-anyhow = "1"
 arc-swap = "1"
 async-trait = "0.1"
 aws-sdk-s3 = { version = "1.21.0", features = ["behavior-version-latest"] }
@@ -109,7 +108,6 @@ serial_test = "3"
 snafu = "0.8"
 strum = { version = "0.26", features = ["derive"] }
 syn = "2"
-thiserror = "1"
 tokio = "1"
 tokio-stream = { version = "0.1", features = ["sync"] }
 tracing = "0.1"

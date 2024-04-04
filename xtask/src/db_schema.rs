@@ -3,13 +3,13 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Helper binary that creates the schema.rs file
-use crate::locate_project_root;
-use anyhow::Result;
+use crate::{locate_project_root, Result};
 use devx_cmd::cmd;
 use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
 use opentalk_database::query_helper;
 use opentalk_db_storage::migrations::migrate_from_url;
 use rand::Rng;
+use snafu::whatever;
 use std::path::PathBuf;
 use unified_diff::diff;
 
@@ -63,9 +63,9 @@ pub async fn verify_db_schema(
 
         let schema_rs_path =
             std::env::var("SCHEMA_RS_PATH").unwrap_or_else(|_| SCHEMA_RS_PATH.to_string());
-        let schema_rs_on_disk = std::fs::read(locate_project_root()?.join(schema_rs_path))?;
+        let schema_rs_on_disk = std::fs::read(locate_project_root().join(schema_rs_path))?;
         if rustfmt_output != schema_rs_on_disk {
-            anyhow::bail!(
+            whatever!(
                 "schema.rs on disk differs.\n{}",
                 String::from_utf8_lossy(&diff(
                     &rustfmt_output,
@@ -156,7 +156,7 @@ fn run_rustfmt(stdin: Vec<u8>) -> Result<Vec<u8>> {
 }
 
 fn write_schema(content: Vec<u8>) -> Result<PathBuf> {
-    let target_file = locate_project_root()?.join(SCHEMA_RS_PATH);
+    let target_file = locate_project_root().join(SCHEMA_RS_PATH);
 
     let file_exist = match std::fs::metadata(&target_file) {
         Ok(_) => Ok(true),
