@@ -8,8 +8,8 @@ image: git.opentalk.dev:5050/opentalk/backend/containers/rust:1.77.0-bullseye
 stages:
   - lint
   - test
-  - check
   - build
+  - check
   - package
   - trigger
 
@@ -142,49 +142,6 @@ lint:licensing:
   script:
     - reuse lint
 
-check:opentalk-types:
-  stage: check
-  needs: []
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-  # Ensures that the `types` crate can be built with each relevant feature individually
-  variables:
-    RUSTFLAGS: -D warnings
-  parallel:
-    matrix:
-      - FEATURES: ['', frontend, backend, actix, diesel, kustos, redis, rand, serde]
-        EXTRA_ARGS: ['', --no-default-features]
-  script:
-    - cargo check --package opentalk-types $EXTRA_ARGS --features=$FEATURES
-
-check:docs-generated-parts:
-  stage: check
-  needs: []
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-  variables:
-    # Set ENV vars for services
-    POSTGRES_DB: opentalk
-    POSTGRES_USER: postgres
-    POSTGRES_PASSWORD: password123
-    RABBITMQ_DEFAULT_USER: guest
-    RABBITMQ_DEFAULT_PASS: guest
-    RABBITMQ_HOST: rabbitmq
-    RABBITMQ_PORT: '5672'
-    OPENTALK_CTRL_RABBIT_MQ__URL: amqp://guest:guest@rabbitmq:5672
-  services:
-    - name: postgres:15-alpine
-      alias: postgres
-    - name: rabbitmq:3.8
-      alias: rabbitmq
-  script:
-    - ci/docs-update-generated-parts.sh
-    - |
-      if ! git diff --exit-code; then
-        echo "Generated parts of documentation changed, run ci/docs-update-generated-parts.sh and commit the result"
-        exit 1
-      fi
-
 test:cargo_test:
   stage: test
   <<: *default_job_condition
@@ -295,6 +252,56 @@ build:
     - apt-get update && apt-get install -y libpq-dev musl-tools protobuf-compiler
   script:
     - cargo auditable build --release --locked --workspace
+
+check:opentalk-types:
+  stage: check
+  needs: []
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  # Ensures that the `types` crate can be built with each relevant feature individually
+  variables:
+    RUSTFLAGS: -D warnings
+  parallel:
+    matrix:
+      - FEATURES: ['', frontend, backend, actix, diesel, kustos, redis, rand, serde]
+        EXTRA_ARGS: ['', --no-default-features]
+  script:
+    - cargo check --package opentalk-types $EXTRA_ARGS --features=$FEATURES
+
+check:docs-generated-parts:
+  stage: check
+  image:
+    name: git.opentalk.dev:5050/opentalk/tools/opentalk-ci-doc-updater:v0.1.0
+    entrypoint: ['']
+  needs:
+    - job: build
+      artifacts: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  variables:
+    # Set ENV vars for services
+    POSTGRES_DB: opentalk
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: password123
+    RABBITMQ_DEFAULT_USER: guest
+    RABBITMQ_DEFAULT_PASS: guest
+    RABBITMQ_HOST: rabbitmq
+    RABBITMQ_PORT: '5672'
+    OPENTALK_CTRL_RABBIT_MQ__URL: amqp://guest:guest@rabbitmq:5672
+  services:
+    - name: postgres:15-alpine
+      alias: postgres
+    - name: rabbitmq:3.8
+      alias: rabbitmq
+  before_script:
+    - apt-get update && apt-get install -y git
+  script:
+    - ci/docs-update-generated-parts.sh
+    - |
+      if ! git diff --exit-code; then
+        echo "Generated parts of documentation changed, run ci/docs-update-generated-parts.sh and commit the result"
+        exit 1
+      fi
 
 package:container-controller-mr:
   stage: package
