@@ -128,7 +128,7 @@ pub(super) async fn update_streams(
         .map(|id| {
             let mut stream_target = streams
                 .remove(id)
-                .with_whatever_context::<_, String, SignalingModuleError>(|| {
+                .with_whatever_context::<_, _, SignalingModuleError>(|| {
                     format!("Requested id: '{id}' not found")
                 })?;
             stream_target.status = status.clone();

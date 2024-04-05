@@ -195,11 +195,7 @@ impl Recording {
         &self,
         redis_conn: &mut RedisConnection,
     ) -> Result<(), SignalingModuleError> {
-        let mut conn = self
-            .db
-            .get_conn()
-            .await
-            .with_whatever_context::<_, String, SignalingModuleError>(|err| format!("{err}"))?;
+        let mut conn = self.db.get_conn().await?;
 
         let recorder_stream = (
             StreamingTargetId::generate(),
@@ -209,26 +205,18 @@ impl Recording {
             BTreeMap::from([recorder_stream])
         } else {
             let streaming_targets =
-                RoomStreamingTargetRecord::get_all_for_room(&mut conn, self.room.room_id())
-                    .await
-                    .with_whatever_context::<_, String, SignalingModuleError>(|err| {
-                        format!("{err}")
-                    })?;
+                RoomStreamingTargetRecord::get_all_for_room(&mut conn, self.room.room_id()).await?;
             std::iter::once(Ok(recorder_stream))
                 .chain(streaming_targets.into_iter().map(|target| {
                     let id = target.id;
                     StreamTargetSecret::try_from(target)
                         .map(|stream_target_secret| (id, stream_target_secret))
-                        .with_whatever_context::<_, String, SignalingModuleError>(|err| {
-                            format!("{err}")
-                        })
+                        .with_whatever_context::<_, _, SignalingModuleError>(|err| format!("{err}"))
                 }))
                 .collect::<Result<_, SignalingModuleError>>()?
         };
 
-        storage::set_streams(redis_conn, self.room, &streams)
-            .await
-            .with_whatever_context::<_, String, SignalingModuleError>(|err| format!("{err}"))?;
+        storage::set_streams(redis_conn, self.room, &streams).await?;
 
         Ok(())
     }
@@ -239,17 +227,11 @@ impl Recording {
         frontend_data: &mut Option<RecordingState>,
         participants: &mut HashMap<ParticipantId, Option<RecordingPeerState>>,
     ) -> Result<(), SignalingModuleError> {
-        if !storage::is_streaming_initialized(ctx.redis_conn(), self.room)
-            .await
-            .with_whatever_context::<_, String, SignalingModuleError>(|err| format!("{err}"))?
-        {
+        if !storage::is_streaming_initialized(ctx.redis_conn(), self.room).await? {
             self.initialize_streaming(ctx.redis_conn()).await?;
         }
 
-        let streams_res =
-            storage::get_streams(ctx.redis_conn(), self.room)
-                .await
-                .with_whatever_context::<_, String, SignalingModuleError>(|err| format!("{err}"))?;
+        let streams_res = storage::get_streams(ctx.redis_conn(), self.room).await?;
         *frontend_data = Some({
             RecordingState {
                 targets: BTreeMap::from_iter(
@@ -261,8 +243,7 @@ impl Recording {
         });
 
         self.collect_participants_consents(ctx.redis_conn(), participants)
-            .await
-            .with_whatever_context::<_, String, SignalingModuleError>(|err| format!("{err}"))?;
+            .await?;
 
         Ok(())
     }
@@ -317,13 +298,13 @@ impl Recording {
                         room: self.room.room_id(),
                         breakout: self.room.breakout_room_id(),
                     })
-                    .with_whatever_context::<_, String, SignalingModuleError>(|_| {
-                        "failed to initialize streaming".to_string()
-                    })?,
+                    .with_whatever_context::<_, _, SignalingModuleError>(
+                        |_| "failed to initialize streaming".to_string(),
+                    )?,
                     Default::default(),
                 )
                 .await
-                .with_whatever_context::<_, String, SignalingModuleError>(|err| format!("{err}"))?;
+                .with_whatever_context::<_, _, SignalingModuleError>(|err| format!("{err}"))?;
         }
 
         Ok(())

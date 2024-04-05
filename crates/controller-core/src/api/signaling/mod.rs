@@ -39,4 +39,3 @@ mod test {
         assert_eq!("First Last", trim_display_name("First  Last".to_string()));
     }
 }
-
