@@ -19,7 +19,7 @@ opentalk-db-storage.workspace = true
 opentalk-janus-media.workspace = true
 opentalk-jobs.workspace = true
 opentalk-mail-worker-protocol = { workspace = true, features = ["client"] }
-opentalk-nextcloud-client = { workspace = true, default-features = false, features = ["rustls-tls-native-roots"] }
+opentalk-nextcloud-client.workspace = true
 opentalk-signaling-core.workspace = true
 opentalk-types = { workspace = true, features = ["backend", "clap"] }
 

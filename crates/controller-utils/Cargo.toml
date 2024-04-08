@@ -21,7 +21,7 @@ opentalk-controller-settings.workspace = true
 opentalk-database.workspace = true
 opentalk-db-storage.workspace = true
 opentalk-log.workspace = true
-opentalk-nextcloud-client = { workspace = true, default-features = true }
+opentalk-nextcloud-client.workspace = true
 opentalk-signaling-core.workspace = true
 opentalk-types.workspace = true
 serde_json.workspace = true
