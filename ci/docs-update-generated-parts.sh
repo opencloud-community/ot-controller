@@ -8,7 +8,7 @@ set -xe
 DOCS_TEMP_DIR=target/docs/temporary
 
 OPENTALK_CONTROLLER_PROJECT=${OPENTALK_CONTROLLER_PROJECT:-opentalk-controller}
-OPENTALK_CONTROLLER_CMD=${OPENTALK_CONTROLLER_CMD:-target/debug/opentalk-controller}
+OPENTALK_CONTROLLER_CMD=${OPENTALK_CONTROLLER_CMD:-target/release/opentalk-controller}
 
 CLI_DIR="$DOCS_TEMP_DIR"/cli-usage
 JOBS_DIR="$DOCS_TEMP_DIR"/jobs
@@ -29,8 +29,6 @@ codify() {
 }
 
 mkdir -p "$CLI_DIR" "$JOBS_DIR" "$CONFIG_DIR"
-
-cargo build --package "$OPENTALK_CONTROLLER_PROJECT"
 
 codify toml < extra/example.toml > "$CONFIG_DIR"/example.toml.md
 
@@ -77,4 +75,4 @@ for file in "$CLI_DIR"/*; do
  fi
 done
 
-cargo run --bin ci-doc-updater -- generate --raw-files-dir target/docs/temporary/ --documentation-dir docs/
+opentalk-ci-doc-updater generate --raw-files-dir target/docs/temporary/ --documentation-dir docs/

@@ -13,7 +13,6 @@ homepage = "https://opentalk.eu/"
 repository = "https://gitlab.opencode.de/opentalk/controller"
 
 [workspace.dependencies]
-ci-doc-updater = { path = "crates/ci-doc-updater", version = "0.0.0-dev" }
 kustos = { path = "crates/kustos", version = "0.0.0-dev" }
 kustos-shared = { path = "crates/kustos-shared", version = "0.0.0-dev" }
 lapin-pool = { path = "crates/lapin-pool", version = "0.0.0-dev" }
