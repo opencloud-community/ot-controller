@@ -110,7 +110,7 @@ async fn delete_events(
             continue;
         }
 
-        match Event::get_first_for_room(conn, room_id).await {
+        match Event::get_for_room(conn, room_id).await {
             Ok(Some(_)) => {}
             Ok(None) => {
                 let _ = orphaned_rooms.insert(room_id);

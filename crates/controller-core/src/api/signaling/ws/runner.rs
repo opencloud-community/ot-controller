@@ -1256,7 +1256,7 @@ impl Runner {
 
         unlock_res?;
 
-        let event = opentalk_db_storage::events::Event::get_first_for_room(
+        let event = opentalk_db_storage::events::Event::get_for_room(
             &mut self.db.get_conn().await?,
             self.room.id,
         )

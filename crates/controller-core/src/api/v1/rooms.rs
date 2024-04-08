@@ -276,7 +276,7 @@ pub async fn get_room_event(
 
     let mut conn = db.get_conn().await?;
 
-    let event = Event::get_first_for_room(&mut conn, room_id).await?;
+    let event = Event::get_for_room(&mut conn, room_id).await?;
 
     match event.as_ref() {
         Some(event) => {
