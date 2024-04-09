@@ -83,6 +83,7 @@ exceptions = [
     { allow = ["EUPL-1.2"], name = "opentalk-database" },
     { allow = ["EUPL-1.2"], name = "opentalk-diesel-newtype" },
     { allow = ["EUPL-1.2"], name = "opentalk-diesel-newtype-impl" },
+    { allow = ["EUPL-1.2"], name = "opentalk-etherpad-client" },
     { allow = ["EUPL-1.2"], name = "opentalk-janus-client" },
     { allow = ["EUPL-1.2"], name = "opentalk-kustos-prefix" },
     { allow = ["EUPL-1.2"], name = "opentalk-kustos-prefix-impl" },
