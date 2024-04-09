@@ -15,11 +15,11 @@ pub fn trigger_reload() -> Result<()> {
         println!("There is currently no other controller process running");
         Ok(())
     } else {
-        send_sighup_to_proccesses(target_processes)
+        send_sighup_to_processes(target_processes)
     }
 }
 
-/// Looks for a proccess with the same name and a different pid, returns [`Option<Pid>`]
+/// Looks for a process with the same name and a different pid, returns [`Option<Pid>`]
 fn find_target_processes() -> Result<Vec<Pid>> {
     let system = System::new_with_specifics(
         RefreshKind::default().with_processes(ProcessRefreshKind::everything()),
@@ -29,7 +29,7 @@ fn find_target_processes() -> Result<Vec<Pid>> {
 }
 
 /// Send SIGHUP to each process in [`Vec<Pid>`]
-fn send_sighup_to_proccesses(processes: Vec<Pid>) -> Result<()> {
+fn send_sighup_to_processes(processes: Vec<Pid>) -> Result<()> {
     processes
         .into_iter()
         .try_for_each(|pid| kill(nix::unistd::Pid::from_raw(pid.as_u32() as i32), SIGHUP))
