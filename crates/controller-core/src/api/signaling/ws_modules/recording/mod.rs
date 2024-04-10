@@ -282,13 +282,7 @@ impl Recording {
         )
         .await?;
 
-        if is_recorder_running {
-            ctx.exchange_publish_to_namespace(
-                control::exchange::current_room_all_recorders(self.room),
-                RecordingService::NAMESPACE,
-                recording_service::exchange::Message::StartStreams { target_ids },
-            );
-        } else {
+        if !is_recorder_running {
             self.rabbitmq_channel
                 .basic_publish(
                     "",
@@ -305,7 +299,15 @@ impl Recording {
                 )
                 .await
                 .with_whatever_context::<_, _, SignalingModuleError>(|err| format!("{err}"))?;
+
+            return Ok(());
         }
+
+        ctx.exchange_publish_to_namespace(
+            control::exchange::current_room_all_recorders(self.room),
+            RecordingService::NAMESPACE,
+            recording_service::exchange::Message::StartStreams { target_ids },
+        );
 
         Ok(())
     }

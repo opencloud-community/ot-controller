@@ -186,41 +186,4 @@ mod tests {
         assert!(deserialized.is_ok());
         assert_eq!(value, deserialized.unwrap(), "deserialized JSON matches");
     }
-
-    /*
-    #[test]
-    fn simple_de_serialization_from_recorder() {
-        let json = json!({
-            "action": "from_recorder",
-            "recording_status_type": "stream_status_update",
-            "target_id": "00000000-0000-0000-0000-000000000000",
-            "status": "error",
-            "reason": {
-                "code": "unreachable",
-                "message": "target died",
-            }
-        });
-
-        let value =
-            RecordingCommand::FromRecorder(FromRecorder::StreamStatusUpdate(StreamUpdated {
-                target_id: StreamingTargetId::nil(),
-                status: crate::signaling::recording::StreamStatus::Error {
-                    reason: StreamErrorReason {
-                        code: "unreachable".to_string(),
-                        message: "target died".to_string(),
-                    },
-                },
-            }));
-
-        let serialized = serde_json::to_value(&value);
-
-        assert!(serialized.is_ok());
-        assert_eq!(json, serialized.unwrap(), "serialized JSON matches");
-
-        let deserialized = serde_json::from_value(json);
-
-        assert!(deserialized.is_ok());
-        assert_eq!(value, deserialized.unwrap(), "deserialized JSON matches");
-    }
-    */
 }

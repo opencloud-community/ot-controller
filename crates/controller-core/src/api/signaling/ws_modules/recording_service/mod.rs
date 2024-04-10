@@ -27,7 +27,7 @@ pub(crate) mod exchange;
 pub struct RecordingService {
     room: SignalingRoomId,
     /// Whether or not the current participant is the recorder
-    i_am_the_recorder: bool,
+    is_recorder: bool,
 }
 
 #[async_trait::async_trait(?Send)]
@@ -51,10 +51,10 @@ impl SignalingModule for RecordingService {
         _params: &Self::Params,
         _protocol: &'static str,
     ) -> Result<Option<Self>, SignalingModuleError> {
-        let i_am_the_recorder = matches!(ctx.participant(), Participant::Recorder);
+        let is_recorder = matches!(ctx.participant(), Participant::Recorder);
         Ok(Some(Self {
             room: ctx.room_id(),
-            i_am_the_recorder,
+            is_recorder,
         }))
     }
 
@@ -71,13 +71,13 @@ impl SignalingModule for RecordingService {
             } => self.handle_joined(ctx.redis_conn(), frontend_data).await?,
 
             Event::Leaving => {
-                if self.i_am_the_recorder {
+                if self.is_recorder {
                     self.handle_leaving(ctx).await?;
                 }
             }
             Event::WsMessage(msg) => match msg {
                 RecordingServiceEvent::StreamUpdated(stream_updated) => {
-                    if self.i_am_the_recorder {
+                    if self.is_recorder {
                         self.handle_stream_updated(&mut ctx, stream_updated).await?;
                     }
                 }
