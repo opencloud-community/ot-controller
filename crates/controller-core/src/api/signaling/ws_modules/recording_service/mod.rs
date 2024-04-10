@@ -140,12 +140,11 @@ impl RecordingService {
         &self,
         mut ctx: ModuleContext<'_, Self>,
     ) -> Result<(), SignalingModuleError> {
-        let mut targets = recording::storage::get_streams(ctx.redis_conn(), self.room).await?;
-
-        for target in targets.values_mut() {
-            target.status = StreamStatus::Inactive;
-        }
-
+        let targets = recording::storage::get_streams(ctx.redis_conn(), self.room).await?;
+        let targets = targets
+            .into_iter()
+            .filter(|(_, target)| target.status != StreamStatus::Active)
+            .collect();
         recording::storage::set_streams(ctx.redis_conn(), self.room, &targets).await?;
 
         for stream_updated in targets.iter().map(|(target_id, target)| StreamUpdated {
