@@ -35,7 +35,6 @@ opentalk-kustos-prefix = { path = "crates/kustos-prefix", version = "0.0.0-dev" 
 opentalk-kustos-prefix-impl = { path = "crates/kustos-prefix-impl", version = "0.0.0-dev" }
 opentalk-log = { path = "crates/log", version = "0.0.0-dev" }
 opentalk-mail-worker-protocol = { path = "crates/mail-worker-protocol", version = "0.0.0-dev" }
-opentalk-nextcloud-client = { path = "crates/nextcloud-client", version = "0.0.0-dev", default-features = false }
 opentalk-polls = { path = "crates/polls", version = "0.0.0-dev" }
 opentalk-proc-macro-fields-helper = { path = "crates/proc-macro-fields-helper", version = "0.0.0-dev" }
 opentalk-protocol = { path = "crates/protocol", version = "0.0.0-dev" }
@@ -86,6 +85,9 @@ opentalk-etherpad-client = { version = "0.1.0", default-features = false, featur
   "rustls-tls-native-roots",
 ] }
 opentalk-janus-client = "0.1"
+opentalk-nextcloud-client = { version = "0.1.1", default-features = false, features = [
+  "rustls-tls-native-roots",
+] }
 opentelemetry = { version = "0.22", default-features = false, features = [
   "metrics",
 ] }

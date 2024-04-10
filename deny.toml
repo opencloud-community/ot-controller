@@ -87,6 +87,7 @@ exceptions = [
     { allow = ["EUPL-1.2"], name = "opentalk-janus-client" },
     { allow = ["EUPL-1.2"], name = "opentalk-kustos-prefix" },
     { allow = ["EUPL-1.2"], name = "opentalk-kustos-prefix-impl" },
+    { allow = ["EUPL-1.2"], name = "opentalk-nextcloud-client" },
     { allow = ["EUPL-1.2"], name = "opentalk-proc-macro-fields-helper" },
     { allow = ["EUPL-1.2"], name = "opentalk-types" },
     { allow = ["EUPL-1.2"], name = "redis-args" },
