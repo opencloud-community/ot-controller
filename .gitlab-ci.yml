@@ -273,6 +273,30 @@ check:opentalk-types:
   script:
     - cargo check --package opentalk-types $EXTRA_ARGS --features=$FEATURES
 
+check:er-diagram:
+  stage: check
+  needs:
+    - job: build
+      artifacts: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  artifacts:
+    paths:
+      - target/docs/temporary/database/er-diagram.mermaid
+  variables:
+    # Set ENV vars for services
+    POSTGRES_DB: opentalk
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: password123
+    POSTGRES_HOST_AUTH_METHOD: trust
+    POSTGRES_BASE_URL: postgres://postgres:password123@postgres:5432
+    OPENTALK_CTRL_DATABASE__URL: postgres://postgres:password123@postgres:5432/opentalk
+  services:
+    - name: postgres:15-alpine
+      alias: postgres
+  script:
+    - ci/docs-generate-mermaid.sh
+
 check:docs-generated-parts:
   stage: check
   image:
@@ -281,21 +305,18 @@ check:docs-generated-parts:
   needs:
     - job: build
       artifacts: true
+    - job: check:er-diagram
+      artifacts: true
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
   variables:
     # Set ENV vars for services
-    POSTGRES_DB: opentalk
-    POSTGRES_USER: postgres
-    POSTGRES_PASSWORD: password123
     RABBITMQ_DEFAULT_USER: guest
     RABBITMQ_DEFAULT_PASS: guest
     RABBITMQ_HOST: rabbitmq
     RABBITMQ_PORT: '5672'
     OPENTALK_CTRL_RABBIT_MQ__URL: amqp://guest:guest@rabbitmq:5672
   services:
-    - name: postgres:15-alpine
-      alias: postgres
     - name: rabbitmq:3.8
       alias: rabbitmq
   before_script:
