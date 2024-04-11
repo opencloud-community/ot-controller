@@ -8,10 +8,18 @@ use diesel::expression::AsExpression;
 use diesel::pg::Pg;
 use diesel::serialize::{IsNull, ToSql};
 use diesel::sql_types;
-use opentalk_types::core::UserId;
+use opentalk_database::{DatabaseError, DbConnection};
+use opentalk_types::common::event::{CallIn, EventInfo, MeetingDetails};
+use opentalk_types::common::streaming::get_public_urls_from_streaming_targets;
+use opentalk_types::core::{RoomId, UserId};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use std::io::Write;
+
+use crate::events::Event;
+use crate::invites::Invite;
+use crate::sip_configs::SipConfig;
+use crate::streaming_targets::get_room_streaming_targets;
 
 /// Trait for models that have user-ids attached to them like created_by/updated_by fields
 ///
@@ -61,4 +69,42 @@ impl<T: Serialize + Debug> ToSql<sql_types::Jsonb, Pg> for Jsonb<T> {
             .map(|_| IsNull::No)
             .map_err(Into::into)
     }
+}
+
+pub async fn build_event_info(
+    conn: &mut DbConnection,
+    call_in_tel: Option<String>,
+    room_id: RoomId,
+    event: &Event,
+) -> Result<EventInfo, DatabaseError> {
+    let event_info = if event.show_meeting_details {
+        let invite = Invite::get_first_for_room(conn, room_id).await?;
+
+        let call_in = if let Some(call_in_tel) = call_in_tel {
+            match SipConfig::get_by_room(conn, room_id).await {
+                Ok(sip_config) => Some(CallIn {
+                    tel: call_in_tel,
+                    id: sip_config.sip_id.to_string(),
+                    password: sip_config.password.to_string(),
+                }),
+                Err(DatabaseError::NotFound) => None,
+                Err(e) => return Err(e),
+            }
+        } else {
+            None
+        };
+
+        let streaming_targets = get_room_streaming_targets(conn, room_id).await?;
+        let streaming_links = get_public_urls_from_streaming_targets(streaming_targets).await;
+
+        EventInfo::from(event).with_meeting_details(MeetingDetails {
+            invite_code_id: invite.map(|invite| invite.id),
+            call_in,
+            streaming_links,
+        })
+    } else {
+        EventInfo::from(event)
+    };
+
+    Ok(event_info)
 }

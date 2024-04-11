@@ -13,9 +13,10 @@ use actix_web::{
     delete, get, patch, post,
     web::{Data, Json, Path, Query, ReqData},
 };
-use opentalk_database::{Db, DbConnection};
+use opentalk_database::Db;
 use opentalk_db_storage::streaming_targets::{
-    RoomStreamingTargetNew, RoomStreamingTargetRecord, UpdateRoomStreamingTarget,
+    get_room_streaming_targets, insert_room_streaming_target, RoomStreamingTargetRecord,
+    UpdateRoomStreamingTarget,
 };
 use opentalk_db_storage::tenants::Tenant;
 use opentalk_db_storage::users::User;
@@ -61,45 +62,6 @@ pub async fn get_streaming_targets(
         ApiResponse::new(GetRoomStreamingTargetsResponse(room_streaming_targets))
             .with_page_pagination(per_page, page, len as i64),
     )
-}
-
-pub(super) async fn get_room_streaming_targets(
-    conn: &mut DbConnection,
-    room_id: RoomId,
-) -> Result<Vec<RoomStreamingTarget>, ApiError> {
-    let streaming_targets = RoomStreamingTargetRecord::get_all_for_room(conn, room_id).await?;
-
-    let room_streaming_targets = streaming_targets
-        .into_iter()
-        .map(|st| {
-            let streaming_endpoint = st.streaming_endpoint.parse().map_err(|e| {
-                log::warn!(
-                    "Failed to parse streaming endpoint: {}",
-                    Report::from_error(e)
-                );
-                ApiError::internal()
-            })?;
-            let public_url = st.public_url.parse().map_err(|e| {
-                log::warn!("Invalid public url entry in db: {}", Report::from_error(e));
-                ApiError::internal()
-            })?;
-
-            let room_streaming_target = RoomStreamingTarget {
-                id: st.id,
-                streaming_target: StreamingTarget {
-                    name: st.name,
-                    kind: StreamingTargetKind::Custom {
-                        streaming_endpoint,
-                        streaming_key: st.streaming_key,
-                        public_url,
-                    },
-                },
-            };
-
-            Ok(room_streaming_target)
-        })
-        .collect::<Result<Vec<_>, ApiError>>()?;
-    Ok(room_streaming_targets)
 }
 
 /// API Endpoint *POST /rooms/{room_id}/streaming_targets*
@@ -149,37 +111,6 @@ pub async fn post_streaming_target(
     Ok(ApiResponse::new(PostRoomStreamingTargetResponse(
         room_streaming_target,
     )))
-}
-
-pub(super) async fn insert_room_streaming_target(
-    conn: &mut DbConnection,
-    room_id: RoomId,
-    streaming_target: StreamingTarget,
-) -> Result<RoomStreamingTarget, ApiError> {
-    let streaming_target_clone = streaming_target.clone();
-
-    let streaming_target_record = match streaming_target.kind {
-        StreamingTargetKind::Custom {
-            streaming_endpoint,
-            streaming_key,
-            public_url,
-        } => RoomStreamingTargetNew {
-            room_id,
-            name: streaming_target_clone.name.clone(),
-            kind: StreamingKind::Custom,
-            streaming_endpoint: streaming_endpoint.into(),
-            streaming_key: streaming_key.into(),
-            public_url: public_url.into(),
-        },
-    }
-    .insert(conn)
-    .await?;
-
-    let room_streaming_target = RoomStreamingTarget {
-        id: streaming_target_record.id,
-        streaming_target: streaming_target_clone,
-    };
-    Ok(room_streaming_target)
 }
 
 /// API Endpoint *GET /rooms/{room_id}/streaming_targets/{streaming_target_id}*

@@ -177,11 +177,48 @@ Information about another participant provided by the `control` module
 
 Information about the event associated with a room.
 
-| Field      | Type     | Always | Description                          |
-| ---------- | -------- | ------ | ------------------------------------ |
-| `id`       | `string` | yes    | Id of the event                      |
-| `title`    | `string` | yes    | Title of the event                   |
-| `is_adhoc` | `bool`   | yes    | True if the event was created ad-hoc |
+| Field             | Type             | Always | Description                                                                         |
+| ----------------- | ---------------- | ------ | ----------------------------------------------------------------------------------- |
+| `id`              | `string`         | yes    | Id of the event                                                                     |
+| `room_id`         | `string`         | yes    | Id of the room belonging to the event                                               |
+| `title`           | `string`         | yes    | Title of the event                                                                  |
+| `is_adhoc`        | `bool`           | yes    | True if the event was created ad-hoc                                                |
+| `meeting_details` | `MeetingDetails` | no     | Meeting for an event associated with a room. See: [MeetingDetails](#meetingdetails) |
+
+#### MeetingDetails
+
+##### Fields
+
+Meeting details for an event associated with a room.
+
+| Field             | Type              | Always | Description                                                          |
+| ----------------- | ----------------- | ------ | -------------------------------------------------------------------- |
+| `invite_code_id`  | `string`          | no     | Invite code id of the event                                          |
+| `call_in`         | `CallIn`          | no     | Dial-in information for the event. See: [CallIn](#callin)            |
+| `streaming_links` | `StreamingLink[]` | yes    | Links for accessing the stream. See: [StreamingLink](#streaminglink) |
+
+#### CallIn
+
+##### Fields
+
+Meeting details for an event associated with a room.
+
+| Field      | Type     | Always | Description                                                   |
+| ---------- | -------- | ------ | ------------------------------------------------------------- |
+| `tel`      | `string` | yes    | SIP call-in phone number which must be used to reach the room |
+| `id`       | `string` | yes    | SIP ID which must transmitted via DTMF                        |
+| `password` | `string` | yes    | SIP password which must be transmitted via DTMF               |
+
+#### StreamingLink
+
+##### Fields
+
+Meeting details for an event associated with a room.
+
+| Field  | Type     | Always | Description                |
+| ------ | -------- | ------ | -------------------------- |
+| `name` | `string` | yes    | Name of the streaming link |
+| `url`  | `string` | yes    | Url of the streaming link  |
 
 ### JoinSuccess
 
@@ -238,8 +275,8 @@ Received after joining the room. Can be triggered by either calling [Join](#join
     }
   ],
   "event_info": {
-    "id": "fa31b241-612d-4524-930e-b5b0af12acb1"
-    "title": "Daily",
+    "id": "fa31b241-612d-4524-930e-b5b0af12acb1",
+    "title": "Daily"
   }
 }
 ```
@@ -252,7 +289,7 @@ If a tariff is configured for a room, an issued [Join](#join) action may result 
 
 | Field     | Type   | Always | Description                      |
 | --------- | ------ | ------ | -------------------------------- |
-| `message` | `enum` | yes    | Is `"join_blocked"`               |
+| `message` | `enum` | yes    | Is `"join_blocked"`              |
 | `reason`  | `enum` | yes    | Is `"participant_limit_reached"` |
 
 ##### Example

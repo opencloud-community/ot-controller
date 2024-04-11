@@ -143,6 +143,7 @@ diesel::table! {
         is_adhoc -> Bool,
         tenant_id -> Uuid,
         revision -> Int4,
+        show_meeting_details -> Bool,
     }
 }
 

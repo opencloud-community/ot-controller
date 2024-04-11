@@ -5,8 +5,12 @@
 use crate::schema::room_streaming_targets;
 use diesel::{ExpressionMethods, Identifiable, QueryDsl, Queryable};
 use diesel_async::RunQueryDsl;
-use opentalk_database::{DbConnection, Result};
+use opentalk_database::{DatabaseError, DbConnection, Result};
+use opentalk_types::common::streaming::{
+    RoomStreamingTarget, StreamingTarget, StreamingTargetKind,
+};
 use opentalk_types::core::{RoomId, StreamingKey, StreamingKind, StreamingTargetId};
+use snafu::Report;
 
 use crate::rooms::Room;
 
@@ -127,4 +131,80 @@ impl UpdateRoomStreamingTarget {
 
         Ok(invite)
     }
+}
+
+pub async fn get_room_streaming_targets(
+    conn: &mut DbConnection,
+    room_id: RoomId,
+) -> Result<Vec<RoomStreamingTarget>> {
+    let streaming_targets = RoomStreamingTargetRecord::get_all_for_room(conn, room_id).await?;
+
+    let room_streaming_targets = streaming_targets
+        .into_iter()
+        .map(|st| {
+            let streaming_endpoint = st.streaming_endpoint.parse().map_err(|err| {
+                log::warn!(
+                    "Failed to parse streaming endpoint: {}",
+                    Report::from_error(err)
+                );
+                DatabaseError::Custom {
+                    message: "Inconsistent data".to_string(),
+                }
+            })?;
+            let public_url = st.public_url.parse().map_err(|err| {
+                log::warn!(
+                    "Invalid public url entry in db: {}",
+                    Report::from_error(err)
+                );
+                DatabaseError::Custom {
+                    message: "Inconsistent data".to_string(),
+                }
+            })?;
+
+            let room_streaming_target = RoomStreamingTarget {
+                id: st.id,
+                streaming_target: StreamingTarget {
+                    name: st.name,
+                    kind: StreamingTargetKind::Custom {
+                        streaming_endpoint,
+                        streaming_key: st.streaming_key,
+                        public_url,
+                    },
+                },
+            };
+
+            Ok(room_streaming_target)
+        })
+        .collect::<Result<Vec<_>>>()?;
+
+    Ok(room_streaming_targets)
+}
+
+pub async fn insert_room_streaming_target(
+    conn: &mut DbConnection,
+    room_id: RoomId,
+    streaming_target: StreamingTarget,
+) -> Result<RoomStreamingTarget> {
+    let streaming_target_record = match &streaming_target.kind {
+        StreamingTargetKind::Custom {
+            streaming_endpoint,
+            streaming_key,
+            public_url,
+        } => RoomStreamingTargetNew {
+            room_id,
+            name: streaming_target.name.clone(),
+            kind: StreamingKind::Custom,
+            streaming_endpoint: streaming_endpoint.clone().into(),
+            streaming_key: streaming_key.clone().into(),
+            public_url: public_url.clone().into(),
+        },
+    }
+    .insert(conn)
+    .await?;
+
+    let room_streaming_target = RoomStreamingTarget {
+        id: streaming_target_record.id,
+        streaming_target,
+    };
+    Ok(room_streaming_target)
 }

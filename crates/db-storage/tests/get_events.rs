@@ -55,6 +55,7 @@ async fn make_event(
         recurrence_pattern: None,
         is_adhoc,
         tenant_id: tenant.id,
+        show_meeting_details: false,
     }
     .insert(conn)
     .await
@@ -757,6 +758,7 @@ async fn get_event_min_max_time() {
         recurrence_pattern: None,
         is_adhoc: false,
         tenant_id: user.tenant_id,
+        show_meeting_details: false,
     }
     .insert(&mut conn)
     .await
@@ -789,6 +791,7 @@ async fn get_event_min_max_time() {
         recurrence_pattern: None,
         is_adhoc: false,
         tenant_id: user.tenant_id,
+        show_meeting_details: false,
     }
     .insert(&mut conn)
     .await

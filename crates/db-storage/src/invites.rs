@@ -178,11 +178,22 @@ impl Invite {
     }
 
     /// Get the first invite for a room.
+    pub async fn get_first_for_room(
+        conn: &mut DbConnection,
+        room_id: RoomId,
+    ) -> Result<Option<Invite>> {
+        let (invites_for_room, _) = Invite::get_all_for_room_paginated(conn, room_id, 1, 1).await?;
+        let invite_for_room = invites_for_room.into_iter().next();
+
+        Ok(invite_for_room)
+    }
+
+    /// Get the first invite for a room or create one.
     ///
     /// If no invite is found for the room, a new invite will be created.
     /// The caller of this function must take care to create access rules
     /// because this crate does not have access to that functionality.
-    pub async fn get_first_for_room(
+    pub async fn get_first_or_create_for_room(
         conn: &mut DbConnection,
         room_id: RoomId,
         user_id: UserId,

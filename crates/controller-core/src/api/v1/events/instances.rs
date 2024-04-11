@@ -404,7 +404,7 @@ pub async fn patch_event_instance(
     if !query.suppress_email_notification {
         let invited_users = get_invited_mail_recipients_for_event(&mut conn, event_id).await?;
         let invite_for_room =
-            Invite::get_first_for_room(&mut conn, room.id, current_user.id).await?;
+            Invite::get_first_or_create_for_room(&mut conn, room.id, current_user.id).await?;
 
         let created_by = if event.created_by == current_user.id {
             current_user.into_inner()

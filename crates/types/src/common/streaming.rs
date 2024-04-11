@@ -4,6 +4,7 @@
 
 //! This module contains commonly used types for streaming target endpoints.
 
+use crate::common::event::StreamingLink;
 use url::Url;
 
 use crate::core::{StreamingKey, StreamingTargetId};
@@ -52,4 +53,23 @@ pub struct RoomStreamingTarget {
     /// The streaming target
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub streaming_target: StreamingTarget,
+}
+
+/// Extracts the public URLs from streaming targets
+pub async fn get_public_urls_from_streaming_targets(
+    streaming_targets: Vec<RoomStreamingTarget>,
+) -> Vec<StreamingLink> {
+    streaming_targets
+        .into_iter()
+        .map(|target| match target.streaming_target.kind {
+            StreamingTargetKind::Custom {
+                streaming_endpoint: _,
+                streaming_key: _,
+                public_url,
+            } => StreamingLink {
+                name: target.streaming_target.name,
+                url: public_url,
+            },
+        })
+        .collect()
 }

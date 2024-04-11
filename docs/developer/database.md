@@ -93,6 +93,7 @@ events {
     boolean is_time_independent
     character_varying recurrence_pattern
     integer revision
+    boolean show_meeting_details
     timestamp_with_time_zone starts_at
     character_varying starts_at_tz
     character_varying title
