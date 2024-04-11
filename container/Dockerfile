@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y libpq-dev protobuf-compiler
 
 RUN cargo build --release --locked
 
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 RUN apt-get update && apt-get install -y libpq5 ca-certificates
 
