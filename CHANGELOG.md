@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - controller: Add signaling messages to send participants to the waiting room ([#709](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/709))
 - controller: Add the `change_display_name` command to change the display name of a guest or phone user ([#721](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/721))
 
+### Changed
+
+- controller: upgrade debian image in ci & container creation to bookworm ([#742](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/742))
+
 ## [0.11.0]
 
 ### Added
