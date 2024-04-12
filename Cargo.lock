@@ -1798,17 +1798,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "displaydoc"
-version = "0.2.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "487585f4d0c6655fe74905e2504d8ad6908e4db67f744eb140876906c2f3175d"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.49",
-]
-
-[[package]]
 name = "doc-comment"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3559,11 +3548,10 @@ dependencies = [
 
 [[package]]
 name = "opentalk-janus-client"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d38f68924f7391d434e3f9ecba250afa347854dbaaaecef7a284f206f477be74"
+checksum = "9c3dcadf2a8841ef57a157c7a7987e16becfe3174f3d1ec8c18cfdc572e23c0b"
 dependencies = [
- "displaydoc",
  "futures",
  "lapin",
  "log",
@@ -3572,7 +3560,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_repr",
- "thiserror",
+ "snafu",
  "tokio",
  "tokio-tungstenite",
  "tracing",
