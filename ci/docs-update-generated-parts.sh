@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 set -xe
+set -o pipefail
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
