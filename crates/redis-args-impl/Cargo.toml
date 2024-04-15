@@ -3,16 +3,16 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "redis-args-impl"
+authors.workspace = true
+description = "Derive macro for reading and writing types for redis usage, either through serde or format args - proc-macro implementation"
 documentation = "https://docs.rs/redis-args-impl"
 edition = "2021"
-license = "EUPL-1.2"
-authors.workspace = true
-version.workspace = true
 homepage.workspace = true
-repository.workspace = true
+license = "EUPL-1.2"
+name = "redis-args-impl"
 publish = true
-description = "Derive macro for reading and writing types for redis usage, either through serde or format args - proc-macro implementation"
+repository.workspace = true
+version.workspace = true
 
 [lib]
 proc-macro = true

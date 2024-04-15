@@ -14,8 +14,8 @@ version.workspace = true
 [dependencies]
 async-trait.workspace = true
 diesel-async.workspace = true
-kustos-shared.workspace = true
 kustos.workspace = true
+kustos-shared.workspace = true
 log.workspace = true
 opentalk-controller-settings.workspace = true
 opentalk-database.workspace = true

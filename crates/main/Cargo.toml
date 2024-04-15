@@ -3,13 +3,13 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
+authors.workspace = true
 default-run = "opentalk-controller"
-name = "opentalk-controller"
 edition = "2021"
 license = "EUPL-1.2"
-authors.workspace = true
-version.workspace = true
+name = "opentalk-controller"
 publish = false
+version.workspace = true
 
 [dependencies]
 actix-web.workspace = true

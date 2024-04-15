@@ -3,17 +3,17 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "opentalk-kustos-prefix"
+authors.workspace = true
+description = "Derive macro for defining kustos prefix"
 documentation = "https://docs.rs/opentalk-kustos-prefix"
 edition = "2021"
-license = "EUPL-1.2"
-authors.workspace = true
-version.workspace = true
 homepage.workspace = true
-repository.workspace = true
+license = "EUPL-1.2"
+name = "opentalk-kustos-prefix"
 publish = true
-description = "Derive macro for defining kustos prefix"
+repository.workspace = true
+version.workspace = true
 
 [dependencies]
-opentalk-kustos-prefix-impl.workspace = true
 kustos-shared.workspace = true
+opentalk-kustos-prefix-impl.workspace = true

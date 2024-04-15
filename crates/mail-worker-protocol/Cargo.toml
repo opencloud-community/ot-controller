@@ -3,25 +3,25 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "opentalk-mail-worker-protocol"
+authors.workspace = true
 edition = "2021"
 license = "EUPL-1.2"
-authors.workspace = true
-version.workspace = true
+name = "opentalk-mail-worker-protocol"
 publish = false
+version.workspace = true
 
 [dependencies]
-serde.workspace = true
-uuid = { workspace = true, features = ["serde"] }
 chrono = { workspace = true, features = ["serde"] }
 opentalk-db-storage = { workspace = true, optional = true }
 opentalk-keycloak-admin = { workspace = true, optional = true }
 opentalk-types.workspace = true
+serde.workspace = true
+uuid = { workspace = true, features = ["serde"] }
 
 [dev-dependencies]
-serde_json.workspace = true
 pretty_assertions.workspace = true
+serde_json.workspace = true
 
 [features]
-default = []
 client = ["dep:opentalk-db-storage", "dep:opentalk-keycloak-admin"]
+default = []

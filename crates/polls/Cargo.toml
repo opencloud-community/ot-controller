@@ -3,12 +3,12 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "opentalk-polls"
+authors.workspace = true
 edition = "2021"
 license = "EUPL-1.2"
-authors.workspace = true
-version.workspace = true
+name = "opentalk-polls"
 publish = false
+version.workspace = true
 
 [dependencies]
 async-trait.workspace = true
@@ -16,15 +16,15 @@ futures.workspace = true
 log.workspace = true
 opentalk-signaling-core.workspace = true
 opentalk-types = { workspace = true, features = ["backend"] }
-redis-args.workspace = true
 redis.workspace = true
+redis-args.workspace = true
 serde.workspace = true
 snafu.workspace = true
 tokio.workspace = true
 tracing.workspace = true
 
 [dev-dependencies]
+actix-rt.workspace = true
 opentalk-test-util = { workspace = true, features = ["controller"] }
 pretty_assertions.workspace = true
 serial_test.workspace = true
-actix-rt.workspace = true

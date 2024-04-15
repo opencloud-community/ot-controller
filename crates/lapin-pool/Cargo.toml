@@ -14,9 +14,9 @@ version.workspace = true
 lapin.workspace = true
 log.workspace = true
 snafu.workspace = true
+tokio.workspace = true
 tokio-executor-trait = "2"
 tokio-reactor-trait = "1"
-tokio.workspace = true
 
 [dev-dependencies]
 pretty_assertions.workspace = true
