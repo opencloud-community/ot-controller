@@ -17,6 +17,7 @@ use opentalk_types::{
             Scope,
         },
         control::{
+            self,
             event::{ControlEvent, JoinSuccess},
             AssociatedParticipant, Participant,
         },
@@ -528,9 +529,10 @@ async fn private_chat_history_on_join() {
 
     assert!(matches!(
         user1_leave_message,
-        WsMessageOutgoing::Control(ControlEvent::Left(
-            AssociatedParticipant {id}
-        )) if id == USER_1.participant_id
+        WsMessageOutgoing::Control(ControlEvent::Left{
+            id: AssociatedParticipant { id },
+            reason: control::Reason::Quit,
+        }) if id == USER_1.participant_id
     ));
 
     module_tester

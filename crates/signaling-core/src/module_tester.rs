@@ -29,7 +29,7 @@ use opentalk_types::{
             command::{ControlCommand, Join},
             event::{ControlEvent, JoinSuccess},
             state::ControlState,
-            AssociatedParticipant, NAMESPACE,
+            AssociatedParticipant, Reason, NAMESPACE,
         },
         ModuleData, NamespacedCommand, NamespacedEvent, Role,
     },
@@ -758,9 +758,10 @@ where
 
                 self.interface
                     .ws
-                    .send(WsMessageOutgoing::Control(ControlEvent::Left(
-                        AssociatedParticipant { id: participant_id },
-                    )))?;
+                    .send(WsMessageOutgoing::Control(ControlEvent::Left {
+                        id: AssociatedParticipant { id: participant_id },
+                        reason: Reason::Quit,
+                    }))?;
 
                 Ok(())
             }

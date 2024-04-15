@@ -30,7 +30,7 @@ use opentalk_types::{
             command::ControlCommand,
             event::{self as control_event, ControlEvent, JoinBlockedReason, JoinSuccess},
             state::ControlState,
-            AssociatedParticipant,
+            AssociatedParticipant, Reason,
         },
         moderation::event::ModerationEvent,
         ModuleData, Role,
@@ -1613,8 +1613,14 @@ impl Runner {
                     )
                     .await;
 
-                self.ws_send_control(timestamp, ControlEvent::Left(AssociatedParticipant { id }))
-                    .await;
+                self.ws_send_control(
+                    timestamp,
+                    ControlEvent::Left {
+                        id: AssociatedParticipant { id },
+                        reason: Reason::Quit,
+                    },
+                )
+                .await;
 
                 self.handle_module_requested_actions(timestamp, actions)
                     .await;
