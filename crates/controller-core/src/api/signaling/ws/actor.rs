@@ -12,6 +12,8 @@ use std::convert::TryFrom;
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc::UnboundedSender;
 
+use super::RunnerMessage;
+
 /// Define HTTP Websocket actor
 ///
 /// This actor will relay all text and binary received websocket messages to the given unbounded sender
@@ -20,7 +22,7 @@ use tokio::sync::mpsc::UnboundedSender;
 /// Handling timeouts is also done in this actor.
 pub struct WebSocketActor {
     /// Sender to signaling runner
-    sender: UnboundedSender<Message>,
+    sender: UnboundedSender<RunnerMessage>,
 
     /// Timestamp of last pong received
     last_pong: Instant,
@@ -37,7 +39,7 @@ struct Continuation {
 }
 
 impl WebSocketActor {
-    pub fn new(sender: UnboundedSender<Message>) -> Self {
+    pub fn new(sender: UnboundedSender<RunnerMessage>) -> Self {
         Self {
             sender,
             last_pong: Instant::now(),
@@ -50,7 +52,7 @@ impl WebSocketActor {
     ///
     /// Closes the websocket if the channel to the runner is disconnected and the socket hasn't been closed yet
     fn forward_to_runner(&mut self, ctx: &mut WebsocketContext<Self>, msg: Message) {
-        if self.sender.send(msg).is_err() && !self.close_sent {
+        if self.sender.send(RunnerMessage::Message(msg)).is_err() && !self.close_sent {
             self.close_sent = true;
             ctx.close(Some(CloseReason {
                 code: CloseCode::Abnormal,
@@ -122,11 +124,15 @@ impl Actor for WebSocketActor {
     type Context = WebsocketContext<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
+        let sender = self.sender.clone();
+
         // Start an interval for connection checks via ping-pong
-        ctx.run_interval(Duration::from_secs(15), |this, ctx| {
+        ctx.run_interval(Duration::from_secs(15), move |this, ctx| {
             if Instant::now().duration_since(this.last_pong) > Duration::from_secs(20) {
                 // no response to ping, exit
                 ctx.stop();
+                // in this case we don't really need to take care of the error
+                let _ = sender.send(RunnerMessage::Timeout);
             } else {
                 ctx.ping(b"heartbeat");
             }

@@ -747,20 +747,20 @@ where
 
                 Ok(())
             }
-            control::exchange::Message::Left(participant_id) => {
-                if self.participant_id == participant_id {
+            control::exchange::Message::Left { id, reason } => {
+                if self.participant_id == id {
                     return Ok(());
                 }
 
                 self.module
-                    .on_event(ctx, Event::ParticipantLeft(participant_id))
+                    .on_event(ctx, Event::ParticipantLeft(id))
                     .await?;
 
                 self.interface
                     .ws
                     .send(WsMessageOutgoing::Control(ControlEvent::Left {
-                        id: AssociatedParticipant { id: participant_id },
-                        reason: Reason::Quit,
+                        id: AssociatedParticipant { id },
+                        reason,
                     }))?;
 
                 Ok(())
@@ -1009,7 +1009,10 @@ where
         let destroy_room =
             storage::participants_all_left(&mut self.redis_conn, self.room_id).await?;
 
-        self.publish_exchange_control(control::exchange::Message::Left(self.participant_id))?;
+        self.publish_exchange_control(control::exchange::Message::Left {
+            id: self.participant_id,
+            reason: Reason::Quit,
+        })?;
 
         let ctx = DestroyContext {
             redis_conn: &mut self.redis_conn.clone(),

@@ -34,7 +34,7 @@ pub enum ControlEvent {
     /// This participant left the room
     Left {
         /// The participant that left
-        #[serde(flatten)]
+        #[cfg_attr(feature = "serde", serde(flatten))]
         id: AssociatedParticipant,
         /// The reason as to why the participant left
         reason: reason::Reason,

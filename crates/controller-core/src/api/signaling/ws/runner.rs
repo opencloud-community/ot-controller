@@ -4,7 +4,6 @@
 
 use actix::Addr;
 use actix_http::ws::{CloseCode, CloseReason, Message};
-use actix_web_actors::ws;
 use bytestring::ByteString;
 use futures::stream::SelectAll;
 use futures::Future;
@@ -49,10 +48,10 @@ use tokio::time::{interval, sleep};
 use tokio_stream::StreamExt;
 use uuid::Uuid;
 
-use super::actor::WebSocketActor;
 use super::modules::{
     DynBroadcastEvent, DynEventCtx, DynTargetedEvent, Modules, NoSuchModuleError,
 };
+use super::{actor::WebSocketActor, RunnerMessage};
 use super::{
     DestroyContext, ExchangeBinding, ExchangePublish, NamespacedCommand, NamespacedEvent, Timestamp,
 };
@@ -158,7 +157,7 @@ impl Builder {
     pub async fn build(
         mut self,
         to_ws_actor: Addr<WebSocketActor>,
-        from_ws_actor: mpsc::UnboundedReceiver<Message>,
+        from_ws_actor: mpsc::UnboundedReceiver<RunnerMessage>,
         shutdown_sig: broadcast::Receiver<()>,
         settings: SharedSettings,
     ) -> Result<Runner> {
@@ -375,7 +374,7 @@ impl Runner {
 
     /// Destroys the runner and all associated resources
     #[tracing::instrument(skip(self), fields(id = %self.id))]
-    pub async fn destroy(mut self, close_ws: bool) {
+    pub async fn destroy(mut self, close_ws: bool, reason: Reason) {
         let destroy_start_time = Instant::now();
         let mut encountered_error = false;
 
@@ -589,7 +588,10 @@ impl Runner {
                             self.exchange_publish_control(
                                 Timestamp::now(),
                                 None,
-                                exchange::Message::Left(self.id),
+                                exchange::Message::Left {
+                                    id: self.id,
+                                    reason,
+                                },
                             );
                         }
                     }
@@ -676,6 +678,8 @@ impl Runner {
             opentalk_signaling_core::control::storage::SKIP_WAITING_ROOM_KEY_REFRESH_INTERVAL,
         ));
 
+        let mut reason = Reason::Quit;
+
         while matches!(self.ws.state, State::Open) {
             if self.exit && matches!(self.ws.state, State::Open) {
                 // This case handles exit on errors unrelated to websocket or controller shutdown
@@ -685,18 +689,18 @@ impl Runner {
             tokio::select! {
                 res = self.ws.receive() => {
                     match res {
-                        Ok(Some(Message::Close(_))) => {
+                        Some(RunnerMessage::Timeout) => reason = Reason::Timeout,
+                        Some(RunnerMessage::Message(Message::Close(_))) => {
                             // Received Close frame from ws actor, break to destroy the runner
                             manual_close_ws = true;
                             break;
                         }
-                        Ok(Some(msg)) => self.handle_ws_message(msg).await,
-                        Ok(None) => {
-                            // Ws was in closing state, runner will now exit gracefully
+                        Some(RunnerMessage::Message(msg)) => {
+                            self.handle_ws_message(msg).await;
                         }
-                        Err(e) => {
+                        None => {
                             // Ws is now going to be in error state and cause the runner to exit
-                            log::error!("Failed to receive ws message for participant {}, {}", self.id, Report::from_error(e));
+                            log::error!("Failed to receive ws message for participant {}", self.id);
                         }
                     }
                 }
@@ -758,7 +762,7 @@ impl Runner {
 
         log::debug!("Stopping ws-runner task for participant {}", self.id);
 
-        self.destroy(manual_close_ws).await;
+        self.destroy(manual_close_ws, reason).await;
     }
 
     #[tracing::instrument(skip(self, message), fields(id = %self.id))]
@@ -1599,7 +1603,7 @@ impl Runner {
                 self.handle_module_requested_actions(timestamp, actions)
                     .await;
             }
-            exchange::Message::Left(id) => {
+            exchange::Message::Left { id, reason } => {
                 // Ignore events of self and only if runner is joined
                 if self.id == id || !matches!(&self.state, RunnerState::Joined) {
                     return Ok(());
@@ -1617,7 +1621,7 @@ impl Runner {
                     timestamp,
                     ControlEvent::Left {
                         id: AssociatedParticipant { id },
-                        reason: Reason::Quit,
+                        reason,
                     },
                 )
                 .await;
@@ -1979,7 +1983,7 @@ struct ModuleRequestedActions {
 
 struct Ws {
     to_actor: Addr<WebSocketActor>,
-    from_actor: mpsc::UnboundedReceiver<ws::Message>,
+    from_actor: mpsc::UnboundedReceiver<RunnerMessage>,
 
     state: State,
 }
@@ -2031,12 +2035,12 @@ impl Ws {
     /// Receive a message from the websocket
     ///
     /// Sends a health check ping message every WS_TIMEOUT.
-    async fn receive(&mut self) -> Result<Option<Message>> {
+    async fn receive(&mut self) -> Option<RunnerMessage> {
         match self.from_actor.recv().await {
-            Some(msg) => Ok(Some(msg)),
+            Some(msg) => Some(msg),
             None => {
                 self.state = State::Closed;
-                Ok(None)
+                None
             }
         }
     }
