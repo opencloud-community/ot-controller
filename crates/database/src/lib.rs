@@ -32,7 +32,7 @@ pub enum DatabaseError {
     #[snafu(display("Database Error: `{message}`",))]
     Custom { message: String },
 
-    #[snafu(display("Diesel Error: `{source}`",), context(false))]
+    #[snafu(display("Diesel Error: `{source}`",))]
     DieselError { source: diesel::result::Error },
 
     #[snafu(display("A requested resource could not be found"))]
@@ -43,6 +43,15 @@ pub enum DatabaseError {
 
     #[snafu(display("Deadpool error: `{source}`",))]
     DeadpoolError { source: PoolError },
+}
+
+impl From<diesel::result::Error> for DatabaseError {
+    fn from(err: diesel::result::Error) -> Self {
+        match err {
+            diesel::result::Error::NotFound => Self::NotFound,
+            source => Self::DieselError { source },
+        }
+    }
 }
 
 pub trait OptionalExt<T, E> {
@@ -140,5 +149,33 @@ where
         out.push_sql(" OFFSET ");
         out.push_bind_param::<BigInt, _>(&self.offset)?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::DatabaseError;
+
+    #[test]
+    fn test_database_error_from_implementation() {
+        // The `diesel::result::Error::NotFound` should also be a
+        // `DatabaseError::NotFound` and never be a `DatabaseError::DieselError`
+        // All other cases should be `DatabaseError::DieselError`
+        assert!(matches!(
+            Into::<DatabaseError>::into(diesel::result::Error::NotFound),
+            DatabaseError::NotFound,
+        ));
+        assert!(!matches!(
+            Into::<DatabaseError>::into(diesel::result::Error::NotFound),
+            DatabaseError::DieselError {
+                source: diesel::result::Error::NotFound
+            },
+        ));
+        assert!(matches!(
+            Into::<DatabaseError>::into(diesel::result::Error::NotInTransaction),
+            DatabaseError::DieselError {
+                source: diesel::result::Error::NotInTransaction
+            },
+        ));
     }
 }
