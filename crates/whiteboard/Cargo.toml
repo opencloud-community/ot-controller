@@ -3,12 +3,12 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "opentalk-whiteboard"
+authors.workspace = true
 edition = "2021"
 license = "EUPL-1.2"
-authors.workspace = true
-version.workspace = true
+name = "opentalk-whiteboard"
 publish = false
+version.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -21,9 +21,14 @@ opentalk-controller-settings.workspace = true
 opentalk-database.workspace = true
 opentalk-signaling-core.workspace = true
 opentalk-types = { workspace = true, features = ["backend"] }
-redis-args.workspace = true
 redis.workspace = true
-reqwest = { workspace = true, features = ["json", "cookies", "rustls-tls-native-roots", "stream"] }
+redis-args.workspace = true
+reqwest = { workspace = true, features = [
+  "cookies",
+  "json",
+  "rustls-tls-native-roots",
+  "stream",
+] }
 serde.workspace = true
 snafu.workspace = true
 tracing.workspace = true

@@ -2,4 +2,8 @@
 #
 # SPDX-License-Identifier: EUPL-1.2
 
-doc-valid-idents = ["..", "OpenTalk"]
+include = ["**/*.toml"]
+
+[formatting]
+reorder_arrays = true
+reorder_keys = true

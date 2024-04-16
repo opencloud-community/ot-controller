@@ -12,8 +12,8 @@
 # dependencies not shared by any other crates, would be ignored, as the target
 # list here is effectively saying which targets you are building for.
 targets = [
-    { triple = "x86_64-unknown-linux-gnu" },
-    { triple = "x86_64-unknown-linux-musl" },
+  { triple = "x86_64-unknown-linux-gnu" },
+  { triple = "x86_64-unknown-linux-musl" },
 ]
 
 # This section is considered when running `cargo deny check advisories`
@@ -28,15 +28,15 @@ yanked = "deny"
 # A list of advisory IDs to ignore. Note that ignored advisories will still
 # output a note when they are encountered.
 ignore = [
-    # Marvin Attack: potential key recovery through timing sidechannels
-    # in `rsa 0.9.3`.
-    # Solution: No safe upgrade is available!
-    #
-    # This library is used as a dependency of `openidconnect 3.4.0`, so unless we
-    # want to replace that no further action is available until either:
-    # - openidconnect switches to a different dependency
-    # - rsa releases a fixed version
-    "RUSTSEC-2023-0071",
+  # Marvin Attack: potential key recovery through timing sidechannels
+  # in `rsa 0.9.3`.
+  # Solution: No safe upgrade is available!
+  #
+  # This library is used as a dependency of `openidconnect 3.4.0`, so unless we
+  # want to replace that no further action is available until either:
+  # - openidconnect switches to a different dependency
+  # - rsa releases a fixed version
+  "RUSTSEC-2023-0071",
 ]
 # Threshold for security vulnerabilities, any vulnerability with a CVSS score
 # lower than the range specified will be ignored. Note that ignored advisories
@@ -57,16 +57,16 @@ version = 2
 # See https://spdx.org/licenses/ for list of possible licenses
 # [possible values: any SPDX 3.11 short identifier (+ optional exception)].
 allow = [
-    "Apache-2.0",
-    "BSD-2-Clause",
-    "BSD-3-Clause",
-    "CC0-1.0",
-    "ISC",
-    "MIT",
-    "MPL-2.0",
-    "OpenSSL",
-    "Unicode-DFS-2016",
-    "Zlib",
+  "Apache-2.0",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "CC0-1.0",
+  "ISC",
+  "MIT",
+  "MPL-2.0",
+  "OpenSSL",
+  "Unicode-DFS-2016",
+  "Zlib",
 ]
 # The confidence threshold for detecting a license from license text.
 # The higher the value, the more closely the license text must be to the
@@ -76,22 +76,54 @@ confidence-threshold = 0.8
 # Allow 1 or more licenses on a per-crate basis, so that particular licenses
 # aren't accepted for every possible crate as with the normal allow list
 exceptions = [
-    { allow = ["EUPL-1.2"], name = "kustos-shared" },
-    { allow = ["EUPL-1.2"], name = "opentalk-cache" },
-    { allow = ["EUPL-1.2"], name = "opentalk-client-shared" },
-    { allow = ["EUPL-1.2"], name = "opentalk-controller-settings" },
-    { allow = ["EUPL-1.2"], name = "opentalk-database" },
-    { allow = ["EUPL-1.2"], name = "opentalk-diesel-newtype" },
-    { allow = ["EUPL-1.2"], name = "opentalk-diesel-newtype-impl" },
-    { allow = ["EUPL-1.2"], name = "opentalk-etherpad-client" },
-    { allow = ["EUPL-1.2"], name = "opentalk-janus-client" },
-    { allow = ["EUPL-1.2"], name = "opentalk-kustos-prefix" },
-    { allow = ["EUPL-1.2"], name = "opentalk-kustos-prefix-impl" },
-    { allow = ["EUPL-1.2"], name = "opentalk-nextcloud-client" },
-    { allow = ["EUPL-1.2"], name = "opentalk-proc-macro-fields-helper" },
-    { allow = ["EUPL-1.2"], name = "opentalk-types" },
-    { allow = ["EUPL-1.2"], name = "redis-args" },
-    { allow = ["EUPL-1.2"], name = "redis-args-impl" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "kustos-shared" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "opentalk-cache" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "opentalk-client-shared" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "opentalk-controller-settings" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "opentalk-database" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "opentalk-diesel-newtype" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "opentalk-diesel-newtype-impl" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "opentalk-etherpad-client" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "opentalk-janus-client" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "opentalk-kustos-prefix" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "opentalk-kustos-prefix-impl" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "opentalk-nextcloud-client" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "opentalk-proc-macro-fields-helper" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "opentalk-types" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "redis-args" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "redis-args-impl" },
 ]
 
 # Some crates don't have (easily) machine readable licensing information,
@@ -115,10 +147,10 @@ exceptions = [
 #]
 
 [[licenses.clarify]]
-name = "ring"
-version = "*"
 expression = "MIT AND ISC AND OpenSSL"
 license-files = [{ path = "LICENSE", hash = 0xbd0eed23 }]
+name = "ring"
+version = "*"
 
 [licenses.private]
 # If true, ignores workspace crates that aren't published, or are only
@@ -149,57 +181,57 @@ allow = []
 deny = []
 # Certain crates/versions that will be skipped when doing duplicate detection.
 skip = [
-    { name = "ahash", version = "=0.7" },
-    { name = "async-io", version = "=1" },
-    { name = "async-lock", version = "=2" },
-    { name = "base16ct", version = "=0.1" },
-    { name = "base64", version = "=0.13" },
-    { name = "base64", version = "=0.21" },
-    { name = "cookie", version = "=0.16" },
-    { name = "crypto-bigint", version = "=0.4" },
-    { name = "der", version = "=0.6" },
-    { name = "ecdsa", version = "=0.14" },
-    { name = "elliptic-curve", version = "=0.12" },
-    { name = "event-listener", version = "=2" },
-    { name = "event-listener", version = "=4" },
-    { name = "event-listener-strategy", version = "=0.4" },
-    { name = "fastrand", version = "1" },
-    { name = "ff", version = "=0.12" },
-    { name = "flume", version = "=0.10" },
-    { name = "futures-lite", version = "=1" },
-    { name = "group", version = "=0.12" },
-    { name = "hashbrown", version = "=0.11" },
-    { name = "hashbrown", version = "=0.12" },
-    { name = "http", version = "=0.2" },
-    { name = "idna", version = "=0.3" },
-    { name = "idna", version = "=0.4" },
-    { name = "indexmap", version = "=1" },
-    { name = "itertools", version = "=0.10" },
-    { name = "num-bigint", version = "=0.4" },
-    { name = "ordered-float", version = "=2.10" },
-    { name = "p256", version = "=0.11" },
-    { name = "pkcs8", version = "=0.9" },
-    { name = "polling", version = "=2" },
-    { name = "regex-automata", version = "=0.1" },
-    { name = "regex-syntax", version = "=0.6" },
-    { name = "rfc6979", version = "=0.3" },
-    { name = "rustls", version = "=0.21" },
-    { name = "rustls-native-certs", version = "=0.6" },
-    { name = "rustls-pemfile", version = "=1.0" },
-    { name = "rustls-webpki", version = "=0.101" },
-    { name = "sec1", version = "=0.3" },
-    { name = "signature", version = "=1.6" },
-    { name = "siphasher", version = "=0.3" },
-    { name = "socket2", version = "=0.4" },
-    { name = "spin", version = "=0.5" },
-    { name = "spki", version = "=0.6" },
-    { name = "strsim", version = "=0.10" },
-    { name = "strum", version = "=0.24" },
-    { name = "strum_macros", version = "=0.24" },
-    { name = "syn", version = "=1" },
-    { name = "tokio-rustls", version = "=0.24" },
-    { name = "toml_edit", version = "=0.21" },
-    { name = "winnow", version = "=0.5" },
+  { name = "ahash", version = "=0.7" },
+  { name = "async-io", version = "=1" },
+  { name = "async-lock", version = "=2" },
+  { name = "base16ct", version = "=0.1" },
+  { name = "base64", version = "=0.13" },
+  { name = "base64", version = "=0.21" },
+  { name = "cookie", version = "=0.16" },
+  { name = "crypto-bigint", version = "=0.4" },
+  { name = "der", version = "=0.6" },
+  { name = "ecdsa", version = "=0.14" },
+  { name = "elliptic-curve", version = "=0.12" },
+  { name = "event-listener", version = "=2" },
+  { name = "event-listener", version = "=4" },
+  { name = "event-listener-strategy", version = "=0.4" },
+  { name = "fastrand", version = "1" },
+  { name = "ff", version = "=0.12" },
+  { name = "flume", version = "=0.10" },
+  { name = "futures-lite", version = "=1" },
+  { name = "group", version = "=0.12" },
+  { name = "hashbrown", version = "=0.11" },
+  { name = "hashbrown", version = "=0.12" },
+  { name = "http", version = "=0.2" },
+  { name = "idna", version = "=0.3" },
+  { name = "idna", version = "=0.4" },
+  { name = "indexmap", version = "=1" },
+  { name = "itertools", version = "=0.10" },
+  { name = "num-bigint", version = "=0.4" },
+  { name = "ordered-float", version = "=2.10" },
+  { name = "p256", version = "=0.11" },
+  { name = "pkcs8", version = "=0.9" },
+  { name = "polling", version = "=2" },
+  { name = "regex-automata", version = "=0.1" },
+  { name = "regex-syntax", version = "=0.6" },
+  { name = "rfc6979", version = "=0.3" },
+  { name = "rustls", version = "=0.21" },
+  { name = "rustls-native-certs", version = "=0.6" },
+  { name = "rustls-pemfile", version = "=1.0" },
+  { name = "rustls-webpki", version = "=0.101" },
+  { name = "sec1", version = "=0.3" },
+  { name = "signature", version = "=1.6" },
+  { name = "siphasher", version = "=0.3" },
+  { name = "socket2", version = "=0.4" },
+  { name = "spin", version = "=0.5" },
+  { name = "spki", version = "=0.6" },
+  { name = "strsim", version = "=0.10" },
+  { name = "strum", version = "=0.24" },
+  { name = "strum_macros", version = "=0.24" },
+  { name = "syn", version = "=1" },
+  { name = "tokio-rustls", version = "=0.24" },
+  { name = "toml_edit", version = "=0.21" },
+  { name = "winnow", version = "=0.5" },
 ]
 # Similarly to `skip` allows you to skip certain crates during duplicate
 # detection. Unlike skip, it also includes the entire tree of transitive

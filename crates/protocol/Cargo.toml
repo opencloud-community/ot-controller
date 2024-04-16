@@ -3,12 +3,12 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "opentalk-protocol"
+authors.workspace = true
 edition = "2021"
 license = "EUPL-1.2"
-authors.workspace = true
-version.workspace = true
+name = "opentalk-protocol"
 publish = false
+version.workspace = true
 
 [dependencies]
 async-trait.workspace = true
@@ -19,8 +19,8 @@ opentalk-database.workspace = true
 opentalk-etherpad-client.workspace = true
 opentalk-signaling-core.workspace = true
 opentalk-types = { workspace = true, features = ["backend"] }
-redis-args.workspace = true
 redis.workspace = true
+redis-args.workspace = true
 serde.workspace = true
 snafu.workspace = true
 tracing.workspace = true

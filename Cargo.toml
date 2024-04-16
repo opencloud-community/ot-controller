@@ -8,9 +8,9 @@ resolver = "2"
 
 [workspace.package]
 authors = ["OpenTalk Team <mail@opentalk.eu>"]
-version = "0.0.0-dev"
 homepage = "https://opentalk.eu/"
 repository = "https://gitlab.opencode.de/opentalk/controller"
+version = "0.0.0-dev"
 
 [workspace.dependencies]
 kustos = { path = "crates/kustos", version = "0.0.0-dev" }
@@ -120,6 +120,6 @@ uuid = "1"
 validator = { version = "0.16", features = ["derive"] }
 
 [workspace.dependencies.casbin]
+default-features = false
 git = "https://github.com/kbalt/casbin-rs.git"
 rev = "a5cd79704726b423030942769779ea7d4e8129ee"
-default-features = false

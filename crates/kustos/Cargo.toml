@@ -3,19 +3,19 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "kustos"
+authors.workspace = true
 edition = "2021"
 license = "EUPL-1.2"
-authors.workspace = true
-version.workspace = true
+name = "kustos"
 publish = false
+version.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+kustos-shared = { workspace = true, features = ["internal"] }
 opentalk-database.workspace = true
 opentalk-types.workspace = true
-kustos-shared = { workspace = true, features = ["internal"] }
 
 ## Database migration
 barrel = { version = "0.7", features = ["pg"] }
@@ -24,7 +24,7 @@ barrel = { version = "0.7", features = ["pg"] }
 snafu.workspace = true
 
 ### Database ORM
-diesel = { workspace = true, features = ["uuid", "serde_json", "chrono"] }
+diesel = { workspace = true, features = ["chrono", "serde_json", "uuid"] }
 diesel-async.workspace = true
 uuid = { workspace = true, features = ["serde", "v4"] }
 
@@ -34,12 +34,12 @@ tracing.workspace = true
 tracing-futures = "0.2"
 
 ### QoL
-itertools.workspace = true
-futures.workspace = true
 async-trait = "0.1"
+futures.workspace = true
+itertools.workspace = true
 
-tokio = { workspace = true, features = ["macros"] }
 parking_lot.workspace = true
+tokio = { workspace = true, features = ["macros"] }
 
 ### TODO(r.floren) add this as a default feature
 actix-web.workspace = true
@@ -48,13 +48,13 @@ actix-web.workspace = true
 opentelemetry.workspace = true
 
 [dependencies.casbin]
+features = ["incremental", "runtime-tokio"]
 workspace = true
-features = ["runtime-tokio", "incremental"]
 
 [dev-dependencies]
 serial_test.workspace = true
 # TODO(r.floren) remove this in the future. Currently used to migrate in tests. Find something lighter.
 opentalk-db-storage.workspace = true
-url.workspace = true
-tokio = { workspace = true, features = ["rt", "macros"] }
 pretty_assertions.workspace = true
+tokio = { workspace = true, features = ["macros", "rt"] }
+url.workspace = true

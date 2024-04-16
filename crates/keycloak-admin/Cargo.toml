@@ -3,18 +3,18 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "opentalk-keycloak-admin"
+authors.workspace = true
 edition = "2021"
 license = "EUPL-1.2"
-authors.workspace = true
-version.workspace = true
+name = "opentalk-keycloak-admin"
 publish = false
+version.workspace = true
 
 [dependencies]
 log.workspace = true
-reqwest = { workspace = true, features = ["rustls-tls-native-roots", "json"] }
-serde_json.workspace = true
+reqwest = { workspace = true, features = ["json", "rustls-tls-native-roots"] }
 serde.workspace = true
+serde_json.workspace = true
 snafu.workspace = true
 tokio.workspace = true
 url.workspace = true

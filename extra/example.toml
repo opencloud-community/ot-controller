@@ -72,9 +72,9 @@ max_screen_bitrate = "8000000"
 # Currently these should be equal to the settings in janus.transport.rabbitmq.jcfg
 # of the respective janus instance.
 [[room_server.connections]]
-to_routing_key = "to-janus"
 exchange = "janus-exchange"
 from_routing_key = "from-janus"
+to_routing_key = "to-janus"
 
 # Optional setting to specify how many event loops are configured for this janus server
 # This value is used to balance new webrtc sessions on specific event-loops.

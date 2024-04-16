@@ -21,8 +21,8 @@ actix-web-httpauth = { workspace = true, optional = true }
 base64 = { workspace = true, optional = true }
 bincode = { workspace = true, optional = true }
 bytes = { workspace = true, optional = true }
-chrono-tz.workspace = true
 chrono.workspace = true
+chrono-tz.workspace = true
 clap = { workspace = true, optional = true }
 derive_more = "0.99"
 diesel = { workspace = true, features = ["uuid"], optional = true }
@@ -62,28 +62,26 @@ actix = [
 ]
 backend = [
   "actix",
+  "dep:opentalk-cache",
+  "dep:opentalk-database",
   "diesel",
   "kustos",
   "rand",
   "redis",
   "serde",
-
-  "dep:opentalk-cache",
-  "dep:opentalk-database",
 ]
 clap = ["dep:clap"]
 default = []
-diesel = ["serde", "dep:diesel", "dep:opentalk-diesel-newtype"]
+diesel = ["dep:diesel", "dep:opentalk-diesel-newtype", "serde"]
 frontend = [
-  "serde",
-
   "dep:http",
   "dep:http-request-derive",
   "dep:opentalk-client-shared",
+  "serde",
 ]
 kustos = ["dep:kustos-shared", "dep:opentalk-kustos-prefix"]
-rand = ["uuid/v4", "dep:rand"]
-redis = ["serde", "dep:redis", "dep:redis-args"]
+rand = ["dep:rand", "uuid/v4"]
+redis = ["dep:redis", "dep:redis-args", "serde"]
 serde = [
   "chrono-tz/serde",
   "chrono/serde",

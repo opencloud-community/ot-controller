@@ -16,7 +16,11 @@ version.workspace = true
 
 [dependencies]
 bincode.workspace = true
-moka = { version = "0.12", default-features = false, features = ["quanta", "atomic64", "future"] }
+moka = { version = "0.12", default-features = false, features = [
+  "atomic64",
+  "future",
+  "quanta",
+] }
 redis = { workspace = true, features = ["connection-manager", "tokio-comp"] }
 serde.workspace = true
 siphasher = "1.0"

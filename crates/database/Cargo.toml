@@ -18,9 +18,14 @@ version.workspace = true
 opentalk-controller-settings.workspace = true
 
 ### ORM and Database connector
-diesel = { workspace = true, features = ["uuid", "serde_json", "chrono", "i-implement-a-third-party-backend-and-opt-into-breaking-changes"] }
-diesel-async = { workspace = true, features = ["postgres", "deadpool"] }
 deadpool-runtime = { version = "0.1", features = ["tokio_1"] }
+diesel = { workspace = true, features = [
+  "chrono",
+  "i-implement-a-third-party-backend-and-opt-into-breaking-changes",
+  "serde_json",
+  "uuid",
+] }
+diesel-async = { workspace = true, features = ["deadpool", "postgres"] }
 
 async-trait = "0.1"
 futures-core = "0.3"
@@ -31,8 +36,8 @@ snafu.workspace = true
 
 ### Logging utilities
 log = { workspace = true, features = ["serde"] }
-tracing.workspace = true
 pin-project-lite = "0.2"
+tracing.workspace = true
 
 ### Opentelementry metrics
 opentelemetry.workspace = true

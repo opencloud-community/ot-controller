@@ -3,12 +3,12 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 [package]
-name = "opentalk-log"
+authors.workspace = true
 edition = "2021"
 license = "EUPL-1.2"
-authors.workspace = true
-version.workspace = true
+name = "opentalk-log"
 publish = false
+version.workspace = true
 
 [dependencies]
 log.workspace = true
