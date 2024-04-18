@@ -57,7 +57,7 @@ use opentalk_signaling_core::{
 };
 use opentalk_types::api::error::ApiError;
 use rustls_pki_types::{CertificateDer, PrivatePkcs8KeyDer};
-use snafu::{Backtrace, ResultExt, Snafu};
+use snafu::{Backtrace, ErrorCompat, Report, ResultExt, Snafu};
 use std::fs::File;
 use std::io::BufReader;
 use std::marker::PhantomData;
@@ -135,10 +135,25 @@ where
             ok
         }
         Err(err) => {
-            if log::log_enabled!(log::Level::Error) {
-                log::error!("Crashed with error: {:?}", err);
+            let show_backtrace = std::env::var("RUST_BACKTRACE").map_or(false, |v| v != "0");
+
+            let backtrace = if show_backtrace {
+                err.backtrace()
+                    .map(|e| format!("\nBacktrace:\n{e}"))
+                    .unwrap_or_else(|| "No backtrace available".to_string())
             } else {
-                eprintln!("Crashed with error: {err:?}");
+                "NOTE: run with `RUST_BACKTRACE=1` environment variable to display a backtrace"
+                    .to_string()
+            };
+
+            let report = Report::from_error(err);
+
+            let message = format!("Error: {report}{backtrace}");
+
+            if log::log_enabled!(log::Level::Error) {
+                log::error!("{message}");
+            } else {
+                eprintln!("{message}");
             }
 
             trace::destroy().await;
