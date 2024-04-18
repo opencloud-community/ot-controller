@@ -57,6 +57,7 @@ use opentalk_types::{
     strings::ToLowerCase,
 };
 use serde::Deserialize;
+use snafu::Report;
 
 /// API Endpoint `GET /events/{event_id}/invites`
 ///
@@ -235,8 +236,8 @@ async fn create_user_event_invite(
                         shared_folder,
                     )
                     .await
-                    .map_err(|err| {
-                        log::warn!("Failed to send with MailService: {err}");
+                    .map_err(|e| {
+                        log::warn!("Failed to send with MailService: {}", Report::from_error(e));
                         ApiError::internal()
                     })?;
             }
@@ -367,8 +368,8 @@ async fn create_email_event_invite(
                         shared_folder,
                     )
                     .await
-                    .map_err(|err| {
-                        log::warn!("Failed to send with MailService: {err}");
+                    .map_err(|e| {
+                        log::warn!("Failed to send with MailService: {}", Report::from_error(e));
                         ApiError::internal()
                     })?;
             }
@@ -429,8 +430,8 @@ async fn create_invite_to_non_matching_email(
     let invitee_user = kc_admin_client
         .get_user_for_email(tenant_filter, email.as_ref())
         .await
-        .map_err(|err| {
-            log::warn!("Failed to query user for email: {err}");
+        .map_err(|e| {
+            log::warn!("Failed to query user for email: {}", Report::from_error(e));
             ApiError::internal()
         })?;
 
@@ -467,8 +468,11 @@ async fn create_invite_to_non_matching_email(
                             shared_folder,
                         )
                         .await
-                        .map_err(|err| {
-                            log::warn!("Failed to send with MailService: {err}");
+                        .map_err(|e| {
+                            log::warn!(
+                                "Failed to send with MailService: {}",
+                                Report::from_error(e)
+                            );
                             ApiError::internal()
                         })?;
                 } else {
@@ -502,8 +506,11 @@ async fn create_invite_to_non_matching_email(
                                 shared_folder,
                             )
                             .await
-                            .map_err(|err| {
-                                log::warn!("Failed to send with MailService: {err}");
+                            .map_err(|e| {
+                                log::warn!(
+                                    "Failed to send with MailService: {}",
+                                    Report::from_error(e)
+                                );
                                 ApiError::internal()
                             })?;
                     }
@@ -868,7 +875,10 @@ async fn notify_invitees_about_uninvite(
             )
             .await
         {
-            log::error!("Failed to send event uninvite with MailService, {}", e);
+            log::error!(
+                "Failed to send event uninvite with MailService, {}",
+                Report::from_error(e)
+            );
         }
     }
 }

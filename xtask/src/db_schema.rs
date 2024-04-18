@@ -9,7 +9,7 @@ use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
 use opentalk_database::query_helper;
 use opentalk_db_storage::migrations::migrate_from_url;
 use rand::Rng;
-use snafu::whatever;
+use snafu::{whatever, Report};
 use std::path::PathBuf;
 use unified_diff::diff;
 
@@ -32,7 +32,7 @@ pub async fn generate_db_schema(
 
     match outcome {
         Ok(output_path) => log::info!("Generated db schema file: {} ", output_path.display()),
-        Err(e) => log::error!("Failed to generate db schema: {}", e),
+        Err(e) => log::error!("Failed to generate db schema: {}", Report::from_error(e)),
     };
 
     if drop_db {

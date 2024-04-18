@@ -20,7 +20,7 @@ use opentalk_types::{
         ModulePeerData, Role,
     },
 };
-use snafu::ResultExt;
+use snafu::{Report, ResultExt};
 use std::iter::zip;
 
 pub use opentalk_types::signaling::moderation::NAMESPACE;
@@ -515,31 +515,43 @@ impl SignalingModule for ModerationModule {
     async fn on_destroy(self, mut ctx: DestroyContext<'_>) {
         if ctx.destroy_room() {
             if let Err(e) = storage::delete_bans(ctx.redis_conn(), self.room.room_id()).await {
-                log::error!("Failed to clean up bans list {}", e);
+                log::error!("Failed to clean up bans list {}", Report::from_error(e));
             }
 
             if let Err(e) =
                 storage::delete_waiting_room_enabled(ctx.redis_conn(), self.room.room_id()).await
             {
-                log::error!("Failed to clean up waiting room enabled flag {}", e);
+                log::error!(
+                    "Failed to clean up waiting room enabled flag {}",
+                    Report::from_error(e)
+                );
             }
 
             if let Err(e) =
                 storage::delete_raise_hands_enabled(ctx.redis_conn(), self.room.room_id()).await
             {
-                log::error!("Failed to clean up raise hands enabled flag {}", e);
+                log::error!(
+                    "Failed to clean up raise hands enabled flag {}",
+                    Report::from_error(e)
+                );
             }
 
             if let Err(e) =
                 storage::delete_waiting_room(ctx.redis_conn(), self.room.room_id()).await
             {
-                log::error!("Failed to clean up waiting room list {}", e);
+                log::error!(
+                    "Failed to clean up waiting room list {}",
+                    Report::from_error(e)
+                );
             }
 
             if let Err(e) =
                 storage::delete_waiting_room_accepted(ctx.redis_conn(), self.room.room_id()).await
             {
-                log::error!("Failed to clean up accepted waiting room list {}", e);
+                log::error!(
+                    "Failed to clean up accepted waiting room list {}",
+                    Report::from_error(e)
+                );
             }
         }
     }

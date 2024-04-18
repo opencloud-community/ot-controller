@@ -11,6 +11,7 @@ use opentalk_types::{
 use redis::AsyncCommands;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
+use snafu::Report;
 
 /// Typed redis key for a signaling ticket containing [`TicketData`]
 #[derive(Debug, Copy, Clone, ToRedisArgs)]
@@ -78,7 +79,7 @@ pub async fn start_or_continue_signaling_session(
         )
         .await
         .map_err(|e| {
-            log::error!("Unable to store ticket in redis, {}", e);
+            log::error!("Unable to store ticket in redis, {}", Report::from_error(e));
             ApiError::internal()
         })?;
 
@@ -96,7 +97,10 @@ async fn use_resumption_token(
     // Check for resumption data behind resumption token
     let resumption_data: Option<ResumptionData> =
         redis_conn.get(&resumption_redis_key).await.map_err(|e| {
-            log::error!("Failed to fetch resumption token from redis, {}", e);
+            log::error!(
+                "Failed to fetch resumption token from redis, {}",
+                Report::from_error(e)
+            );
             ApiError::internal()
         })?;
 
@@ -120,7 +124,7 @@ async fn use_resumption_token(
     }
 
     let delete_success = redis_conn.del(&resumption_redis_key).await.map_err(|e| {
-        log::warn!("Internal error: {e}");
+        log::warn!("Internal error: {}", Report::from_error(e));
         ApiError::internal()
     })?;
     if delete_success {

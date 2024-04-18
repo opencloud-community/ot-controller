@@ -8,7 +8,7 @@ use jsonwebtoken::{self, decode, Algorithm, DecodingKey, Validation};
 use openidconnect::core::{CoreJsonWebKeySet, CoreJwsSigningAlgorithm};
 use openidconnect::JsonWebKey;
 use serde::de::DeserializeOwned;
-use snafu::{ResultExt, Snafu};
+use snafu::{Report, ResultExt, Snafu};
 use std::time::SystemTime;
 
 /// Token Verification errors
@@ -45,7 +45,7 @@ pub trait VerifyClaims: DeserializeOwned {
 /// Returns `Err(_)` if the JWT is invalid or expired.
 pub fn verify<C: VerifyClaims>(key_set: &CoreJsonWebKeySet, token: &str) -> Result<C, VerifyError> {
     let header = jsonwebtoken::decode_header(token).with_context(|e| {
-        log::warn!("Unable to parse token header, {}", e);
+        log::warn!("Unable to parse token header, {e}");
         InvalidJwtSnafu {
             message: "Unable to parse token header",
         }
@@ -86,7 +86,7 @@ pub fn verify<C: VerifyClaims>(key_set: &CoreJsonWebKeySet, token: &str) -> Resu
     // Decode the JWT signature
     let signature = URL_SAFE_NO_PAD.decode(signature).map_err({
         |e| {
-            log::warn!("Token has invalid signature, {}", e);
+            log::warn!("Token has invalid signature, {}", Report::from_error(e));
             VerifyError::InvalidSignature
         }
     })?;
@@ -115,7 +115,10 @@ pub fn decode_token<C: VerifyClaims>(token: &str) -> Result<C, VerifyError> {
 
     // Just parse the token out, no verification
     let token = decode::<C>(token, &DecodingKey::from_secret(&[]), &validation).map_err(|e| {
-        log::warn!("Unable to decode claims from provided id token, {}", e);
+        log::warn!(
+            "Unable to decode claims from provided id token, {}",
+            Report::from_error(e)
+        );
         VerifyError::InvalidClaims
     })?;
 

@@ -43,6 +43,7 @@ use opentalk_signaling_core::ExchangeHandle;
 use serde_json::json;
 
 pub use error::Error;
+use snafu::Report;
 
 /// Execute a job
 pub async fn execute<J: Job>(
@@ -62,7 +63,7 @@ pub async fn execute<J: Job>(
     let parameters = match J::Parameters::try_from_json(parameters) {
         Ok(parameters) => parameters,
         Err(e) => {
-            error!(log: logger, "{e}");
+            error!(log: logger, "{}", Report::from_error(&e));
             return Err(e);
         }
     };
@@ -93,7 +94,7 @@ pub async fn execute<J: Job>(
         Err(e) => {
             info!(log: logger, "");
             let e = Error::from(e);
-            error!(log: logger, "{e}");
+            error!(log: logger, "{}", Report::from_error(&e));
             info!(log: logger, "Job failed");
             if !hide_duration {
                 info!(log: logger, "Duration: {:?}", start.elapsed());

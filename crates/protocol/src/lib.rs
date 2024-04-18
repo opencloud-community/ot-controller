@@ -30,7 +30,7 @@ use opentalk_types::{
 };
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
-use snafu::{whatever, OptionExt};
+use snafu::{whatever, OptionExt, Report};
 use std::sync::Arc;
 
 pub mod exchange;
@@ -223,7 +223,11 @@ impl Protocol {
                     None => {
                         // No init state was set before -> Initialize the etherpad in this module instance
                         if let Err(e) = self.init_etherpad(redis_conn).await {
-                            log::error!("Failed to init etherpad for room {}, {}", self.room_id, e);
+                            log::error!(
+                                "Failed to init etherpad for room {}, {}",
+                                self.room_id,
+                                Report::from_error(e)
+                            );
 
                             storage::init::del(redis_conn, self.room_id).await?;
 
@@ -362,7 +366,10 @@ impl Protocol {
                         }
 
                         Err(e) => {
-                            let message = format!("Failed to save asset {filename}: {e}");
+                            let message = format!(
+                                "Failed to save asset {filename}: {}",
+                                Report::from_error(e)
+                            );
                             log::error!("{message}");
                             whatever!("{message}");
                         }

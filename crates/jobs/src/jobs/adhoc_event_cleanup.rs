@@ -12,7 +12,7 @@ use opentalk_database::Db;
 use opentalk_log::{debug, error, info};
 use opentalk_signaling_core::ExchangeHandle;
 use serde::{Deserialize, Serialize};
-use snafu::ResultExt;
+use snafu::{Report, ResultExt};
 
 use crate::{
     error::{ParameterLoadingSnafu, ParameterSerializingSnafu},
@@ -70,7 +70,7 @@ impl Job for AdhocEventCleanup {
         )
         .await
         .map_err(|e| {
-            error!(log: logger, "{e:?}");
+            error!(log: logger, "{}", Report::from_error(e));
             Error::JobExecutionFailed
         })?;
         Ok(())

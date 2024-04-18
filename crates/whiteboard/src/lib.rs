@@ -22,7 +22,7 @@ use opentalk_types::{
         Role,
     },
 };
-use snafu::whatever;
+use snafu::{whatever, Report};
 use state::{InitState, SpaceInfo};
 use std::sync::Arc;
 use url::Url;
@@ -193,7 +193,8 @@ impl SignalingModule for Whiteboard {
                         return Ok(());
                     }
                     Err(e) => {
-                        let message = format!("Failed to save asset {filename}: {e}");
+                        let message =
+                            format!("Failed to save asset {filename}: {}", Report::from_error(e));
 
                         log::error!("{message}");
                         whatever!("{message}");

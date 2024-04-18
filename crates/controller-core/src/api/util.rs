@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use phonenumber::PhoneNumber;
+use snafu::Report;
 
 /// Try to parse a phone number and check its validity
 ///
@@ -22,15 +23,12 @@ pub fn parse_phone_number(
     // check if phonenumber crate panicked or failed to parse
     let phone_number = match result {
         Ok(Ok(phone)) => phone,
-        Ok(Err(err)) => {
-            log::warn!("failed to parse phone number: {:?}", err);
+        Ok(Err(e)) => {
+            log::warn!("failed to parse phone number: {}", Report::from_error(e));
             return None;
         }
-        Err(err) => {
-            log::error!(
-                "phonenumber crate panicked while parsing phone number: {:?}",
-                err
-            );
+        Err(e) => {
+            log::error!("phonenumber crate panicked while parsing phone number: {e:?}");
             return None;
         }
     };

@@ -16,6 +16,7 @@ use opentalk_types::signaling::{
     },
     Role,
 };
+use snafu::Report;
 use std::time::Duration;
 use tokio::time::sleep;
 
@@ -107,20 +108,30 @@ impl SignalingModule for Polls {
     async fn on_destroy(self, mut ctx: DestroyContext<'_>) {
         if ctx.destroy_room() {
             if let Err(e) = storage::del_state(ctx.redis_conn(), self.room).await {
-                log::error!("failed to remove config from redis: {:?}", e);
+                log::error!(
+                    "failed to remove config from redis: {}",
+                    Report::from_error(e)
+                );
             }
 
             let list = match storage::list_members(ctx.redis_conn(), self.room).await {
                 Ok(list) => list,
                 Err(e) => {
-                    log::error!("failed to get list of poll results to clean up, {:?}", e);
+                    log::error!(
+                        "failed to get list of poll results to clean up, {}",
+                        Report::from_error(e)
+                    );
                     return;
                 }
             };
 
             for id in list {
                 if let Err(e) = storage::del_results(ctx.redis_conn(), self.room, id).await {
-                    log::error!("failed to remove poll results for id {}, {:?}", id, e);
+                    log::error!(
+                        "failed to remove poll results for id {}, {}",
+                        id,
+                        Report::from_error(e)
+                    );
                 }
             }
         }

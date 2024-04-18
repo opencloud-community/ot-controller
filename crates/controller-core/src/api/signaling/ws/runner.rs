@@ -36,7 +36,7 @@ use opentalk_types::{
     },
 };
 use serde_json::Value;
-use snafu::{whatever, ResultExt, Snafu};
+use snafu::{whatever, Report, ResultExt, Snafu};
 use std::future;
 use std::mem::replace;
 use std::ops::ControlFlow;
@@ -386,7 +386,7 @@ impl Runner {
             let room_guard = match room_mutex.lock(&mut self.redis_conn).await {
                 Ok(guard) => guard,
                 Err(opentalk_r3dlock::Error::Redis { source: e }) => {
-                    log::error!("Failed to acquire r3dlock, {}", e);
+                    log::error!("Failed to acquire r3dlock, {}", Report::from_error(e));
                     // There is a problem when accessing redis which could
                     // mean either the network or redis is broken.
                     // Both cases cannot be handled here, abort the cleanup
@@ -423,7 +423,10 @@ impl Runner {
                 )
                 .await
                 {
-                    log::error!("failed to mark participant as left, {:?}", e);
+                    log::error!(
+                        "failed to mark participant as left, {}",
+                        Report::from_error(e)
+                    );
                     encountered_error = true;
                 }
             } else if let RunnerState::Waiting { .. } = &self.state {
@@ -459,7 +462,7 @@ impl Runner {
                 match storage::participants_all_left(&mut self.redis_conn, self.room_id).await {
                     Ok(room_is_empty) => room_is_empty,
                     Err(e) => {
-                        log::error!("Failed to check if room is empty {:?}", e);
+                        log::error!("Failed to check if room is empty {}", Report::from_error(e));
                         encountered_error = true;
                         false
                     }
@@ -480,7 +483,10 @@ impl Runner {
                     {
                         Ok(waiting_room_len) => waiting_room_len == 0,
                         Err(e) => {
-                            log::error!("failed to get waiting room len, {:?}", e);
+                            log::error!(
+                                "failed to get waiting room len, {}",
+                                Report::from_error(e)
+                            );
                             encountered_error = true;
                             false
                         }
@@ -494,7 +500,10 @@ impl Runner {
                         {
                             Ok(waiting_room_len) => waiting_room_len == 0,
                             Err(e) => {
-                                log::error!("failed to get accepted waiting room len, {:?}", e);
+                                log::error!(
+                                    "failed to get accepted waiting room len, {}",
+                                    Report::from_error(e)
+                                );
                                 encountered_error = true;
                                 false
                             }
@@ -509,13 +518,19 @@ impl Runner {
                 Ok(remaining_participant_count) => {
                     if remaining_participant_count == 0 {
                         if let Err(e) = self.cleanup_redis_for_global_room().await {
-                            log::error!("failed to mark participant as left, {:?}", e);
+                            log::error!(
+                                "failed to mark participant as left, {}",
+                                Report::from_error(e)
+                            );
                             encountered_error = true;
                         }
                     }
                 }
                 Err(e) => {
-                    log::error!("failed to decrement participant count, {:?}", e);
+                    log::error!(
+                        "failed to decrement participant count, {}",
+                        Report::from_error(e)
+                    );
                     encountered_error = true;
                 }
             }
@@ -529,7 +544,10 @@ impl Runner {
 
             if destroy_room {
                 if let Err(e) = self.cleanup_redis_keys_for_current_room().await {
-                    log::error!("Failed to remove all control attributes, {}", e);
+                    log::error!(
+                        "Failed to remove all control attributes, {}",
+                        Report::from_error(e)
+                    );
                     encountered_error = true;
                 }
 
@@ -539,7 +557,10 @@ impl Runner {
             self.metrics.decrement_participants_count(&self.participant);
 
             if let Err(e) = room_guard.unlock(&mut self.redis_conn).await {
-                log::error!("Failed to unlock set_guard r3dlock, {}", e);
+                log::error!(
+                    "Failed to unlock set_guard r3dlock, {}",
+                    Report::from_error(e)
+                );
                 encountered_error = true;
             }
 
@@ -595,7 +616,7 @@ impl Runner {
                 }
             }
             Err(e) => {
-                log::error!("failed to remove participant id, {}", e);
+                log::error!("failed to remove participant id, {}", Report::from_error(e));
                 encountered_error = true;
             }
         }
@@ -674,7 +695,7 @@ impl Runner {
                         }
                         Err(e) => {
                             // Ws is now going to be in error state and cause the runner to exit
-                            log::error!("Failed to receive ws message for participant {}, {}", self.id, e);
+                            log::error!("Failed to receive ws message for participant {}, {}", self.id, Report::from_error(e));
                         }
                     }
                 }
@@ -720,7 +741,7 @@ impl Runner {
                             self.ws.close(CloseCode::Normal).await;
                         },
                         Err(e) => {
-                            log::error!("failed to set resumption token in redis, {:?}", e);
+                            log::error!("failed to set resumption token in redis, {}", Report::from_error(e));
                         }
                     }
                 }
@@ -754,7 +775,10 @@ impl Runner {
         let namespaced = match value {
             Ok(value) => value,
             Err(e) => {
-                log::error!("Failed to parse namespaced message, {}", e);
+                log::error!(
+                    "Failed to parse namespaced message, {}",
+                    Report::from_error(e)
+                );
 
                 self.ws_send_control_error(timestamp, control_event::Error::InvalidJson)
                     .await;
@@ -767,12 +791,12 @@ impl Runner {
             match serde_json::from_value(namespaced.payload) {
                 Ok(msg) => {
                     if let Err(e) = self.handle_control_msg(timestamp, msg).await {
-                        log::error!("Failed to handle control msg, {}", e);
+                        log::error!("Failed to handle control msg, {}", Report::from_error(e));
                         self.exit = true;
                     }
                 }
                 Err(e) => {
-                    log::error!("Failed to parse control payload, {}", e);
+                    log::error!("Failed to parse control payload, {}", Report::from_error(e));
 
                     self.ws_send_control_error(timestamp, control_event::Error::InvalidJson)
                         .await;
@@ -1274,7 +1298,11 @@ impl Runner {
             match self.build_participant(id).await {
                 Ok(Some(participant)) => participants.push(participant),
                 Ok(None) => { /* ignore invisible participants */ }
-                Err(e) => log::error!("Failed to build participant {}, {}", id, e),
+                Err(e) => log::error!(
+                    "Failed to build participant {}, {}",
+                    id,
+                    Report::from_error(e)
+                ),
             };
         }
 
@@ -1477,7 +1505,10 @@ impl Runner {
         let namespaced = match serde_json::from_str::<NamespacedEvent<Value>>(&msg) {
             Ok(namespaced) => namespaced,
             Err(e) => {
-                log::error!("Failed to read incoming exchange message, {}", e);
+                log::error!(
+                    "Failed to read incoming exchange message, {}",
+                    Report::from_error(e)
+                );
                 return;
             }
         };
@@ -1486,7 +1517,10 @@ impl Runner {
             let msg = match serde_json::from_value::<exchange::Message>(namespaced.payload) {
                 Ok(msg) => msg,
                 Err(e) => {
-                    log::error!("Failed to read incoming control exchange message, {}", e);
+                    log::error!(
+                        "Failed to read incoming control exchange message, {}",
+                        Report::from_error(e)
+                    );
                     return;
                 }
             };
@@ -1495,7 +1529,10 @@ impl Runner {
                 .handle_exchange_control_msg(namespaced.timestamp, msg)
                 .await
             {
-                log::error!("Failed to handle incoming exchange control msg, {}", e);
+                log::error!(
+                    "Failed to handle incoming exchange control msg, {}",
+                    Report::from_error(e)
+                );
             }
         } else if let RunnerState::Joined = &self.state {
             // Only allow rmq messages outside the control namespace if the participant is fully joined
@@ -1786,7 +1823,10 @@ impl Runner {
 
     fn exchange_publish(&mut self, routing_key: String, message: String) {
         if let Err(e) = self.exchange_handle.publish(routing_key, message) {
-            log::warn!("Failed to publish message to exchange, {}", e);
+            log::warn!(
+                "Failed to publish message to exchange, {}",
+                Report::from_error(e)
+            );
             self.exit = true;
         }
     }
@@ -1939,7 +1979,10 @@ impl Ws {
             log::trace!("Send message to websocket: {:?}", message);
 
             if let Err(e) = self.to_actor.send(WsCommand::Ws(message)).await {
-                log::error!("Failed to send websocket message, {}", e);
+                log::error!(
+                    "Failed to send websocket message, {}",
+                    Report::from_error(e)
+                );
                 self.state = State::Error;
             }
         } else {
@@ -1962,7 +2005,7 @@ impl Ws {
 
         self.state = State::Closed;
         if let Err(e) = self.to_actor.send(WsCommand::Close(reason)).await {
-            log::error!("Failed to close websocket, {}", e);
+            log::error!("Failed to close websocket, {}", Report::from_error(e));
             self.state = State::Error;
         }
     }

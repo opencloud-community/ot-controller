@@ -6,7 +6,7 @@ use crate::mcu::{JanusPublisher, JanusSubscriber, McuPool, MediaSessionKey, WebR
 use opentalk_signaling_core::SignalingModuleError;
 use opentalk_types::signaling::media::ParticipantMediaState;
 use opentalk_types::{core::ParticipantId, signaling::media::MediaSessionType};
-use snafu::ensure_whatever;
+use snafu::{ensure_whatever, Report};
 use std::collections::HashMap;
 use std::future::Future;
 use tokio::sync::mpsc;
@@ -108,7 +108,7 @@ impl MediaSessions {
     pub async fn remove_publisher(&mut self, media_session_type: MediaSessionType) {
         if let Some(publisher) = self.publishers.remove(&media_session_type) {
             if let Err(e) = publisher.destroy().await {
-                log::error!("Failed to destroy publisher, {}", e);
+                log::error!("Failed to destroy publisher, {}", Report::from_error(e));
             }
         }
     }
@@ -117,7 +117,10 @@ impl MediaSessions {
     pub async fn remove_broken_publisher(&mut self, media_session_type: MediaSessionType) {
         if let Some(publisher) = self.publishers.remove(&media_session_type) {
             if let Err(e) = publisher.destroy_broken().await {
-                log::error!("Failed to remove broken publisher, {}", e);
+                log::error!(
+                    "Failed to remove broken publisher, {}",
+                    Report::from_error(e)
+                );
             }
         }
     }
@@ -144,7 +147,7 @@ impl MediaSessions {
             let subscriber = self.subscribers.remove(&key).unwrap();
 
             if let Err(e) = subscriber.destroy(false).await {
-                log::error!("Failed to destroy subscriber, {}", e);
+                log::error!("Failed to destroy subscriber, {}", Report::from_error(e));
             }
         }
     }
@@ -153,7 +156,7 @@ impl MediaSessions {
     pub async fn remove_subscriber(&mut self, media_session_key: &MediaSessionKey) {
         if let Some(subscriber) = self.subscribers.remove(media_session_key) {
             if let Err(e) = subscriber.destroy(false).await {
-                log::error!("Failed to destroy subscriber, {}", e);
+                log::error!("Failed to destroy subscriber, {}", Report::from_error(e));
             }
         } else {
             log::error!(
@@ -166,7 +169,10 @@ impl MediaSessions {
     pub async fn remove_broken_subscriber(&mut self, media_session_key: &MediaSessionKey) {
         if let Some(subscriber) = self.subscribers.remove(media_session_key) {
             if let Err(e) = subscriber.destroy(true).await {
-                log::error!("Failed to remove broken subscriber, {}", e);
+                log::error!(
+                    "Failed to remove broken subscriber, {}",
+                    Report::from_error(e)
+                );
             }
         } else {
             log::error!(
@@ -199,14 +205,14 @@ impl MediaSessions {
             for (_, subscriber) in subscribers {
                 log::debug!("Destroy subscriber {}", id);
                 if let Err(e) = subscriber.destroy(false).await {
-                    log::error!("Failed to destroy subscriber, {}", e);
+                    log::error!("Failed to destroy subscriber, {}", Report::from_error(e));
                 }
             }
 
             for (_, publisher) in publishers {
                 log::debug!("Destroy publisher {}", id);
                 if let Err(e) = publisher.destroy().await {
-                    log::error!("Failed to destroy publisher, {}", e);
+                    log::error!("Failed to destroy publisher, {}", Report::from_error(e));
                 }
             }
 

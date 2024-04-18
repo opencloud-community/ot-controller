@@ -16,6 +16,7 @@ use futures::future::{ok, Ready};
 use futures::Future;
 use itertools::Itertools;
 use kustos_shared::{access::AccessMethod, subject::PolicyUser};
+use snafu::Report;
 use std::cell::RefCell;
 use std::ops::{Deref, DerefMut};
 use std::pin::Pin;
@@ -120,7 +121,7 @@ where
                 let action = match AccessMethod::from_str(action) {
                     Ok(action) => action,
                     Err(e) => {
-                        log::error!("Invalid method {}", e);
+                        log::error!("Invalid method {}", Report::from_error(e));
                         return Ok(req.into_response(HttpResponse::Unauthorized().finish()));
                     }
                 };
@@ -166,7 +167,7 @@ where
                         Ok(req.into_response(HttpResponse::Forbidden().finish()))
                     }
                     Ok(Err(e)) => {
-                        log::error!("Enforce error {}", e);
+                        log::error!("Enforce error {}", Report::from_error(e));
                         Ok(req.into_response(HttpResponse::BadGateway().finish()))
                     }
                     Err(_) => {

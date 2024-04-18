@@ -23,6 +23,7 @@ use opentalk_db_storage::tenants::{OidcTenantId, Tenant};
 use opentalk_db_storage::users::User;
 use opentalk_types::api::error::ApiError;
 use opentalk_types::{api::error::AuthenticationError, core::InviteCodeId};
+use snafu::Report;
 use std::future::{Future, Ready};
 use std::pin::Pin;
 use std::rc::Rc;
@@ -109,7 +110,10 @@ where
         let auth = match Authorization::<BearerOrInviteCode>::parse(&req) {
             Ok(a) => a,
             Err(e) => {
-                log::warn!("Unable to parse access token or invite code, {}", e);
+                log::warn!(
+                    "Unable to parse access token or invite code, {}",
+                    Report::from_error(e)
+                );
                 let error = ApiError::unauthorized()
                     .with_message("Unable to parse access token or invite code")
                     .with_www_authenticate(AuthenticationError::InvalidAccessToken);
@@ -184,7 +188,7 @@ pub async fn check_access_token(
     let user_claims = match oidc_ctx.verify_access_token::<UserClaims>(access_token) {
         Ok(user_claims) => user_claims,
         Err(e) => {
-            log::debug!("Invalid access token, {}", e);
+            log::debug!("Invalid access token, {}", Report::from_error(e));
             return Err(ApiError::unauthorized()
                 .with_www_authenticate(AuthenticationError::InvalidAccessToken));
         }
@@ -195,8 +199,8 @@ pub async fn check_access_token(
         // Hit! Return the cached result
         match result {
             Ok(tenant_and_user) => Ok(tenant_and_user),
-            Err(err) => Err(ApiError::try_from(err).map_err(|err| {
-                log::warn!("Error while creating error: {err}");
+            Err(err) => Err(ApiError::try_from(err).map_err(|e| {
+                log::warn!("Error while creating error: {}", Report::from_error(e));
                 ApiError::internal()
             })?),
         }
@@ -293,7 +297,10 @@ async fn check_access_token_inner(
     let info = match oidc_ctx.introspect_access_token(access_token).await {
         Ok(info) => info,
         Err(e) => {
-            log::error!("Failed to check if AccessToken is active, {}", e);
+            log::error!(
+                "Failed to check if AccessToken is active, {}",
+                Report::from_error(e)
+            );
             return Err(ApiError::internal());
         }
     };

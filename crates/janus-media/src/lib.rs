@@ -31,7 +31,7 @@ use opentalk_types::{
     },
 };
 use sessions::MediaSessions;
-use snafu::{whatever, OptionExt};
+use snafu::{whatever, OptionExt, Report};
 use std::sync::Arc;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
@@ -283,7 +283,11 @@ impl SignalingModule for Media {
                     )
                     .await
                 {
-                    log::error!("Failed to handle sdp answer {:?}, {:?}", targeted.target, e);
+                    log::error!(
+                        "Failed to handle sdp answer {:?}, {}",
+                        targeted.target,
+                        Report::from_error(e)
+                    );
                     ctx.ws_send(Error::HandleSdpAnswer);
                 }
             }
@@ -341,14 +345,21 @@ impl SignalingModule for Media {
             }
             Event::WsMessage(MediaCommand::Resubscribe(target)) => {
                 if let Err(e) = self.handle_sdp_re_request_offer(&mut ctx, target).await {
-                    log::error!("Failed to handle resubscribe {:?}, {:?}", target, e);
+                    log::error!(
+                        "Failed to handle resubscribe {:?}, {}",
+                        target,
+                        Report::from_error(e)
+                    );
                     ctx.ws_send(Error::InvalidRequestOffer(target.into()));
                 }
             }
             Event::WsMessage(MediaCommand::Configure(configure)) => {
                 let target = configure.target;
                 if let Err(e) = self.handle_configure(configure).await {
-                    log::error!("Failed to handle configure request {:?}", e);
+                    log::error!(
+                        "Failed to handle configure request {}",
+                        Report::from_error(e)
+                    );
                     ctx.ws_send(Error::InvalidConfigureRequest(target.into()));
                 }
             }
@@ -596,7 +607,10 @@ impl SignalingModule for Media {
             let participants = control::storage::get_all_participants(ctx.redis_conn(), self.room)
                 .await
                 .unwrap_or_else(|e| {
-                    log::error!("Failed to load room participants, {}", e);
+                    log::error!(
+                        "Failed to load room participants, {}",
+                        Report::from_error(e)
+                    );
                     Vec::new()
                 });
 

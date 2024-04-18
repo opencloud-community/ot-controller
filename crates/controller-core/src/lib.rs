@@ -90,7 +90,10 @@ pub struct BlockingError {
 
 impl From<BlockingError> for ApiError {
     fn from(e: BlockingError) -> Self {
-        log::error!("REST API threw internal error from blocking error: {}", e);
+        log::error!(
+            "REST API threw internal error from blocking error: {}",
+            Report::from_error(e)
+        );
         Self::internal()
     }
 }
@@ -488,7 +491,7 @@ impl Controller {
                     log::info!("Got reload signal, reloading");
 
                     if let Err(e) = settings::reload_settings(self.shared_settings.clone(), &self.args.config) {
-                        log::error!("Failed to reload settings, {}", e);
+                        log::error!("Failed to reload settings, {}", Report::from_error(e));
                         continue
                     }
 
@@ -523,7 +526,10 @@ impl Controller {
         // Close all rabbitmq connections
         // TODO what code and text to use here
         if let Err(e) = self.rabbitmq_pool.close(0, "shutting down").await {
-            log::error!("Failed to close RabbitMQ connections, {}", e);
+            log::error!(
+                "Failed to close RabbitMQ connections, {}",
+                Report::from_error(e)
+            );
         }
 
         if self.shutdown.receiver_count() > 0 {

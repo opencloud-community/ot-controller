@@ -42,6 +42,7 @@ use opentalk_types::{
     core::{EventId, EventInviteStatus},
 };
 use rrule::RRuleSet;
+use snafu::Report;
 use validator::Validate;
 
 struct GetPaginatedEventInstancesData {
@@ -581,7 +582,7 @@ fn build_rruleset(event: &Event) -> Result<RRuleSet, ApiError> {
 
     let rruleset = format!("DTSTART;TZID={starts_at_tz}:{starts_at}\n{recurrence_pattern}");
     let rruleset: RRuleSet = rruleset.parse().map_err(|e| {
-        log::error!("failed to parse rrule from db {}", e);
+        log::error!("failed to parse rrule from db {}", Report::from_error(e));
         ApiError::internal()
     })?;
 

@@ -39,7 +39,7 @@ async fn migrate(config: Config) -> Result<Report> {
     tokio::spawn(
         async move {
             if let Err(e) = conn.await {
-                log::error!("connection error: {}", e)
+                log::error!("connection error: {}", snafu::Report::from_error(e))
             }
 
             tx.send(()).expect("Channel unexpectedly dropped");

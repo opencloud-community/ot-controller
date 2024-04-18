@@ -19,7 +19,7 @@ use opentalk_signaling_core::{
 use opentalk_types::signaling::media::{command::SubscriberConfiguration, MediaSessionType};
 use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
-use snafu::{whatever, OptionExt, ResultExt};
+use snafu::{whatever, OptionExt, Report, ResultExt};
 use std::borrow::{Borrow, Cow};
 use std::cmp::min;
 use std::collections::HashSet;
@@ -144,7 +144,10 @@ impl McuPool {
                     clients.insert(client);
                 }
                 Err(e) => {
-                    log::error!("Failed to create McuClient config={config:?} - {e:?}");
+                    log::error!(
+                        "Failed to create McuClient config={config:?} - {}",
+                        Report::from_error(e)
+                    );
                     let _ = reconnect_send.send(config.clone()).await;
                 }
             }
@@ -547,7 +550,7 @@ async fn global_receive_task(
             _ = controller_reload_sig.recv() => {
                 log::debug!("mcu pool receive/keepalive task got controller reload signal");
                 if let Err(e) = mcu_pool.reload_janus_config().await {
-                    log::error!("mcu pool reload failed, {:?}", e);
+                    log::error!("mcu pool reload failed, {}", Report::from_error(e));
                 }
             }
             Some((id, msg)) = events.recv() => {
@@ -624,7 +627,10 @@ async fn attempt_reconnect(
     let channel = match mcu_pool.rabbitmq_pool.create_channel().await {
         Ok(channel) => channel,
         Err(e) => {
-            log::error!("Failed to create channel for McuClient when trying to reconnect, backing off. {e:?}");
+            log::error!(
+                "Failed to create channel for McuClient when trying to reconnect, backing off. {}",
+                Report::from_error(e)
+            );
             disco_clients.push(ReconnectBackoff::new(duration, config_to_reconnect));
             return;
         }
@@ -855,7 +861,10 @@ impl McuClient {
         log::trace!("All subscribers & publishers shutdown");
 
         if let Err(e) = self.session.destroy(broken).await {
-            log::error!("Failed to destroy broken session, {}", e);
+            log::error!(
+                "Failed to destroy broken session, {}",
+                Report::from_error(e)
+            );
         }
 
         self.client.destroy().await;
@@ -938,7 +947,7 @@ impl JanusPublisher {
             .hdel::<_, _, ()>(PUBLISHER_INFO, self.media_session_key.to_string())
             .await
         {
-            log::error!("Failed to remove publisher info, {}", e);
+            log::error!("Failed to remove publisher info, {}", Report::from_error(e));
         }
 
         self.redis
@@ -987,7 +996,7 @@ impl JanusPublisher {
             .hdel::<_, _, ()>(PUBLISHER_INFO, self.media_session_key.to_string())
             .await
         {
-            log::error!("Failed to remove publisher info, {}", e);
+            log::error!("Failed to remove publisher info, {}", Report::from_error(e));
         }
 
         Ok(())

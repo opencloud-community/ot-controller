@@ -8,6 +8,7 @@ use deadpool_runtime::Runtime;
 use diesel_async::pooled_connection::deadpool::Pool;
 use diesel_async::pooled_connection::AsyncDieselConnectionManager;
 use diesel_async::AsyncPgConnection;
+use snafu::Report;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -74,13 +75,13 @@ impl Db {
             }
             Err(e) => {
                 let state = self.pool.status();
-                let msg = format!(
+                log::error!(
                     "Unable to get connection from connection pool.
-                                Error: {e}
+                                Error: {}
                                 Pool State:
                                     {state:?}",
+                    Report::from_error(&e)
                 );
-                log::error!("{}", &msg);
                 Err(DatabaseError::DeadpoolError { source: e })
             }
         }
