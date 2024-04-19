@@ -68,7 +68,11 @@ impl SignalingModule for RecordingService {
                 control_data: _,
                 frontend_data,
                 participants: _,
-            } => self.handle_joined(ctx.redis_conn(), frontend_data).await?,
+            } => {
+                if self.is_recorder {
+                    self.handle_joined(ctx.redis_conn(), frontend_data).await?;
+                }
+            }
 
             Event::Leaving => {
                 if self.is_recorder {
