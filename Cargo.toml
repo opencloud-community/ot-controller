@@ -62,7 +62,7 @@ bincode = "1"
 bytes = "1"
 bytestring = "1"
 chrono = "0.4"
-chrono-tz = "0.8"
+chrono-tz = "0.9"
 clap = { version = "4", features = ["derive"] }
 config = { version = "0.14", default-features = false, features = ["toml"] }
 derive_more = "0.99"
