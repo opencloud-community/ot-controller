@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - controller: upgrade debian image in ci & container creation to bookworm ([#742](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/742))
 - controller: improve output structure when an error is encountered ([#748](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/748))
 
+### Fixed
+
+- controller: display names longer than 100 bytes are rejected ([#744](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/744))
+
 ## [0.11.0]
 
 ### Added
