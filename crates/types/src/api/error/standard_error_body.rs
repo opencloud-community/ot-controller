@@ -10,6 +10,7 @@ use crate::imports::*;
 /// Standard API error body
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct StandardErrorBody {
     /// Machine readable error code
     pub code: Cow<'static, str>,

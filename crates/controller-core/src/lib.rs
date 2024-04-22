@@ -54,6 +54,7 @@ use opentalk_signaling_core::{
 use opentalk_types::api::error::ApiError;
 use rustls_pki_types::{CertificateDer, PrivatePkcs8KeyDer};
 use snafu::{Backtrace, ErrorCompat, Report, ResultExt, Snafu};
+use swagger::WithSwagger as _;
 use tokio::{
     signal::{
         ctrl_c,
@@ -82,6 +83,7 @@ mod cli;
 mod metrics;
 mod oidc;
 mod services;
+mod swagger;
 mod trace;
 
 pub mod api;
@@ -490,6 +492,7 @@ impl Controller {
                     .app_data(mail_service)
                     .service(api::signaling::ws_service)
                     .service(metrics::metrics)
+                    .with_swagger_service_if(!settings.load_full().endpoints.disable_openapi)
                     .service(v1_scope(
                         settings.clone(),
                         db.clone(),
@@ -611,6 +614,88 @@ impl ModulesRegistrar for Controller {
     }
 }
 
+#[derive(utoipa::OpenApi)]
+#[openapi(
+    info(
+        title = "OpenTalk Controller Frontend API",
+        description = "Specifies the endpoints and structure of the OpenTalk Controller Frontend API",
+    ),
+    tags(
+        (
+            name = "api::v1::auth",
+            description = "Endpoints related to authentication"
+        ),
+        (
+            name = "api::v1::invites",
+            description = "Endpoints related to meeting invites"
+        ),
+        (
+            name = "api::v1::rooms",
+            description = "Endpoints related to meeting rooms"
+        ),
+        (
+            name = "api::v1::assets",
+            description = "Endpoints related to file assets"
+        ),
+        (
+            name = "api::v1::sip_configs",
+            description = "Endpoints related to SIP configuration"
+        ),
+        (
+            name = "api::v1::services::recording",
+            description = "Endpoints related to the meeting recording service"
+        ),
+        (
+            name = "api::v1::turn",
+            description = "Endpoints related TURN server usage"
+        ),
+        (
+            name = "api::v1::users",
+            description = "Endpoints related to user information and management"
+        ),
+    ),
+    paths(
+        api::v1::auth::post_login,
+        api::v1::auth::get_login,
+        api::v1::users::get_me,
+    ),
+    components(
+        schemas(
+            opentalk_types::api::error::ErrorBody,
+            opentalk_types::api::error::StandardErrorBody,
+            opentalk_types::api::error::ValidationErrorBody,
+            opentalk_types::api::error::ValidationErrorEntry,
+            opentalk_types::api::v1::auth::GetLoginResponse,
+            opentalk_types::api::v1::auth::OidcProvider,
+            opentalk_types::api::v1::auth::PostLoginRequestBody,
+            opentalk_types::api::v1::auth::PostLoginResponse,
+            opentalk_types::api::v1::users::PrivateUserProfile,
+            opentalk_types::core::TariffStatus,
+            opentalk_types::core::UserId,
+        ),
+        responses(
+            crate::api::responses::InternalServerError,
+            crate::api::responses::Unauthorized,
+        ),
+    ),
+    modifiers(&SecurityAddon),
+)]
+struct ApiDoc;
+
+struct SecurityAddon;
+
+impl utoipa::Modify for SecurityAddon {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        use utoipa::openapi::security::{Http, HttpAuthScheme, SecurityScheme};
+
+        let components = openapi.components.as_mut().unwrap();
+        components.add_security_scheme(
+            "BearerAuth",
+            SecurityScheme::Http(Http::new(HttpAuthScheme::Bearer)),
+        )
+    }
+}
+
 fn v1_scope(
     settings: SharedSettings,
     db: Data<Db>,
@@ -618,7 +703,10 @@ fn v1_scope(
     acl: kustos::actix_web::KustosService,
 ) -> Scope {
     // the latest version contains the root services
-    web::scope("/v1")
+
+    let scope = web::scope("/v1");
+
+    scope
         .service(api::v1::auth::post_login)
         .service(api::v1::auth::get_login)
         .service(api::v1::rooms::start_invited)

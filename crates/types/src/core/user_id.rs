@@ -26,6 +26,7 @@ use crate::imports::*;
     from_redis_value(FromStr)
 )]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct UserId(Uuid);
 
 impl UserId {

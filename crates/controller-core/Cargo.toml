@@ -92,6 +92,10 @@ tracing-subscriber = { version = "0.3", features = [
   "parking_lot",
 ] }
 url.workspace = true
+utoipa = { workspace = true, features = ["actix_extras"] }
+utoipa-swagger-ui = { workspace = true, features = [
+  "actix-web",
+], optional = true }
 uuid = { workspace = true, features = ["serde", "v4"] }
 validator.workspace = true
 
@@ -104,6 +108,10 @@ serial_test.workspace = true
 snafu.workspace = true
 vergen = { version = "9", features = ["build", "cargo", "rustc"] }
 vergen-gix = { version = "1" }
+
+[features]
+default = []
+swagger = ["dep:utoipa-swagger-ui"]
 
 [package.metadata.cargo-machete]
 ignored = [

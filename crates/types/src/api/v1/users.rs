@@ -44,6 +44,7 @@ pub struct PublicUserProfile {
 /// Is used on */users/me* endpoints.
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct PrivateUserProfile {
     /// The user id
     pub id: UserId,

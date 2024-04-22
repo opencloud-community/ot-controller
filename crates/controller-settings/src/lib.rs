@@ -474,6 +474,8 @@ pub struct Endpoints {
     pub event_invite_external_email_address: bool,
     #[serde(default)]
     pub disallow_custom_display_name: bool,
+    #[serde(default)]
+    pub disable_openapi: bool,
 }
 
 #[derive(Clone, Debug, Deserialize)]

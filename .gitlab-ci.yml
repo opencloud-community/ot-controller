@@ -313,6 +313,7 @@ check:opentalk-types:
             redis,
             rand,
             serde,
+            utoipa,
           ]
         EXTRA_ARGS: ['', --no-default-features]
   script:

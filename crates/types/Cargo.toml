@@ -87,6 +87,7 @@ backend = [
   "rand",
   "redis",
   "serde",
+  "utoipa",
 ]
 clap = ["dep:clap"]
 diesel = ["dep:diesel", "dep:opentalk-diesel-newtype", "serde"]

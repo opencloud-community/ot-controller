@@ -43,7 +43,11 @@ use validator::Validate;
 
 use super::response::NoContent;
 use crate::{
-    api::{signaling::SignalingModules, v1::ApiResponse},
+    api::{
+        responses::{InternalServerError, Unauthorized},
+        signaling::SignalingModules,
+        v1::ApiResponse,
+    },
     caches::Caches,
     oidc::{decode_token, UserClaims},
     settings::SharedSettingsActix,
@@ -137,9 +141,27 @@ pub async fn patch_me(
     Ok(Either::Left(Json(user_profile)))
 }
 
-/// API Endpoint *GET /users/me*
-///
-/// Returns the [`PrivateUserProfile`] of the requesting user.
+/// Get the current user's profile
+#[utoipa::path(
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Information about the logged in user",
+            body = PrivateUserProfile,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/users/me")]
 pub async fn get_me(
     settings: SharedSettingsActix,

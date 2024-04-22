@@ -12,14 +12,20 @@ use crate::imports::*;
 /// Body of a *POST* request on `/auth/login`
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct PostLoginRequestBody {
     /// The id token to use for the login
+    #[cfg_attr(
+        feature = "utoipa",
+        schema(example = "bG9yZW0gaXBzdW0sIHF1aWEgZG9sb3Igc2")
+    )]
     pub id_token: String,
 }
 
 /// Body of the response to a *POST* request on `/auth/login`
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct PostLoginResponse {
     /// Permissions is a set of strings that each define a permission a user has.
     pub permissions: HashSet<String>,
@@ -37,6 +43,7 @@ pub struct GetLoginRequest;
 /// Body of the response to a *GET* request on `/auth/login`
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GetLoginResponse {
     /// Description of the OIDC provider to use for the login
     pub oidc: OidcProvider,
@@ -45,6 +52,7 @@ pub struct GetLoginResponse {
 /// Represents an OIDC provider
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct OidcProvider {
     /// The name of the provider
     pub name: String,
