@@ -6,7 +6,6 @@
 
 #[allow(unused_imports)]
 use crate::imports::*;
-
 use crate::signaling::recording::StreamUpdated;
 
 /// Commands for the `recording_service` namespace

@@ -2,12 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use super::StreamStatus;
 use crate::core::StreamingTargetId;
-
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::StreamStatus;
 
 /// A streaming target has been updated
 #[derive(Clone, Debug, PartialEq, Eq)]

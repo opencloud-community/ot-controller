@@ -145,10 +145,19 @@ impl RecordingService {
         mut ctx: ModuleContext<'_, Self>,
     ) -> Result<(), SignalingModuleError> {
         let targets = recording::storage::get_streams(ctx.redis_conn(), self.room).await?;
-        let targets = targets
+        let targets: BTreeMap<StreamingTargetId, StreamTargetSecret> = targets
             .into_iter()
-            .filter(|(_, target)| target.status != StreamStatus::Active)
+            .filter(|(_, target)| target.status != StreamStatus::Inactive)
+            .map(|(id, mut target)| {
+                target.status = StreamStatus::Inactive;
+                (id, target)
+            })
             .collect();
+
+        if targets.is_empty() {
+            return Ok(());
+        }
+
         recording::storage::set_streams(ctx.redis_conn(), self.room, &targets).await?;
 
         for stream_updated in targets.iter().map(|(target_id, target)| StreamUpdated {

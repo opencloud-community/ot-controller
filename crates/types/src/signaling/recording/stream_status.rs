@@ -2,10 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use super::StreamErrorReason;
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::StreamErrorReason;
 
 /// The current status of a stream
 #[derive(Debug, Clone, PartialEq, Eq)]

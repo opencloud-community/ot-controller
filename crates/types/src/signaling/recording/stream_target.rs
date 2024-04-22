@@ -2,10 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use super::{stream_kind::StreamKindSecret, StreamKind, StreamStatus};
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::{stream_kind::StreamKindSecret, StreamKind, StreamStatus};
 
 /// The state information about a stream target
 #[derive(Debug, Clone, PartialEq, Eq)]

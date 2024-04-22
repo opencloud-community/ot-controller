@@ -9,7 +9,6 @@ use std::collections::BTreeMap;
 use url::Url;
 
 use super::{StreamKindSecret, StreamStatus, StreamTarget, StreamTargetSecret};
-
 #[allow(unused_imports)]
 use crate::{core::StreamingTargetId, imports::*};
 
@@ -136,12 +135,11 @@ mod tests {
 
     use pretty_assertions::assert_eq;
 
+    use super::RecordingState;
     use crate::{
         core::StreamingTargetId,
         signaling::recording::{StreamErrorReason, StreamKind, StreamStatus, StreamTarget},
     };
-
-    use super::RecordingState;
 
     #[test]
     fn recording_state_de_serialize() {

@@ -6,10 +6,9 @@
 
 use std::collections::BTreeSet;
 
+use crate::core::StreamingTargetId;
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use crate::core::StreamingTargetId;
 
 /// Events sent out by the `recording_service` module to the recorder
 #[derive(Clone, Debug, PartialEq, Eq)]

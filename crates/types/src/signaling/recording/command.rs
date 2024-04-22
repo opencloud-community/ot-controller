@@ -85,9 +85,8 @@ mod tests {
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
-    use crate::core::StreamingTargetId;
-
     use super::RecordingCommand;
+    use crate::core::StreamingTargetId;
 
     #[test]
     fn simple_de_serialization_consent() {
