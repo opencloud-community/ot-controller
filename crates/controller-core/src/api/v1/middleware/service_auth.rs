@@ -15,6 +15,7 @@ use core::pin::Pin;
 use core::task::{Context, Poll};
 use openidconnect::AccessToken;
 use opentalk_types::api::error::{ApiError, AuthenticationError};
+use snafu::Report;
 use std::rc::Rc;
 use tracing::Instrument;
 
@@ -94,7 +95,7 @@ where
         let auth = match Authorization::<Bearer>::parse(&req) {
             Ok(a) => a,
             Err(e) => {
-                log::warn!("Unable to parse access token, {}", e);
+                log::warn!("Unable to parse access token, {}", Report::from_error(e));
                 let error = ApiError::unauthorized()
                     .with_message("Unable to parse access token")
                     .with_www_authenticate(AuthenticationError::InvalidAccessToken);
@@ -129,7 +130,7 @@ async fn check_access_token(
     let claims = match oidc_ctx.verify_access_token::<ServiceClaims>(&access_token) {
         Ok(claims) => claims,
         Err(e) => {
-            log::error!("Invalid access token, {}", e);
+            log::error!("Invalid access token, {}", Report::from_error(e));
             return Err(ApiError::unauthorized()
                 .with_www_authenticate(AuthenticationError::InvalidAccessToken));
         }
@@ -138,7 +139,10 @@ async fn check_access_token(
     let info = match oidc_ctx.introspect_access_token(&access_token).await {
         Ok(info) => info,
         Err(e) => {
-            log::error!("Failed to check if AccessToken is active, {}", e);
+            log::error!(
+                "Failed to check if AccessToken is active, {}",
+                Report::from_error(e)
+            );
             return Err(ApiError::internal());
         }
     };

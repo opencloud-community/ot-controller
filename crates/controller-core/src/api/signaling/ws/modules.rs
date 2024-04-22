@@ -13,7 +13,7 @@ use opentalk_types::{
     },
 };
 use serde_json::Value;
-use snafu::{ResultExt, Snafu};
+use snafu::{Report, ResultExt, Snafu};
 use std::any::Any;
 use std::collections::HashMap;
 use std::marker::PhantomData;
@@ -62,7 +62,7 @@ impl Modules {
         let module = self.modules.get_mut(module).ok_or(NoSuchModuleError)?;
 
         if let Err(e) = module.on_event_targeted(ctx, dyn_event).await {
-            log::error!("Failed to handle event {:?}", e);
+            log::error!("Failed to handle event {}", Report::from_error(e));
         }
 
         Ok(())
@@ -88,7 +88,7 @@ impl Modules {
             };
 
             if let Err(e) = module.on_event_broadcast(ctx, &mut dyn_event).await {
-                log::error!("Failed to handle event, {:?}", e);
+                log::error!("Failed to handle event, {}", Report::from_error(e));
             }
         }
     }

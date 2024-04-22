@@ -244,7 +244,10 @@ impl From<actix_web::Error> for ApiError {
 #[cfg(feature = "diesel")]
 impl From<diesel::result::Error> for ApiError {
     fn from(e: diesel::result::Error) -> Self {
-        log::error!("REST API threw internal error from Diesel error: {}", e);
+        log::error!(
+            "REST API threw internal error from Diesel error: {}",
+            snafu::Report::from_error(e)
+        );
         Self::internal()
     }
 }
@@ -294,7 +297,10 @@ impl From<opentalk_database::DatabaseError> for ApiError {
                     ),
             } => ApiError::conflict(),
             e => {
-                log::error!("REST API threw internal error from database error: {}", e);
+                log::error!(
+                    "REST API threw internal error from database error: {}",
+                    snafu::Report::from_error(e)
+                );
                 ApiError::internal()
             }
         }

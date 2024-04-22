@@ -7,6 +7,7 @@ use actix_http::ws::{CloseCode, CloseReason, Item, ProtocolError};
 use actix_web_actors::ws::{Message, WebsocketContext};
 use bytes::BytesMut;
 use bytestring::ByteString;
+use snafu::Report;
 use std::convert::TryFrom;
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc::UnboundedSender;
@@ -156,7 +157,10 @@ impl StreamHandler<Result<Message, ProtocolError>> for WebSocketActor {
             }
             Ok(Message::Nop) => {}
             Err(e) => {
-                log::warn!("Protocol error in websocket - exiting, {}", e);
+                log::warn!(
+                    "Protocol error in websocket - exiting, {}",
+                    Report::from_error(e)
+                );
 
                 ctx.stop();
             }

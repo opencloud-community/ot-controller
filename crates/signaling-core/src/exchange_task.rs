@@ -18,7 +18,7 @@ use lapin_pool::{RabbitMqChannel, RabbitMqPool};
 use rustc_hash::FxHasher;
 use serde::{Deserialize, Serialize};
 use slotmap::{new_key_type, SlotMap};
-use snafu::Snafu;
+use snafu::{Report, Snafu};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -192,7 +192,10 @@ impl ExchangeTask {
         match delivery {
             Some(Ok(delivery)) => {
                 if let Err(e) = self.handle_rmq_message(&delivery.data).await {
-                    log::warn!("Failed to handle incoming RMQ message, {e:?}");
+                    log::warn!(
+                        "Failed to handle incoming RMQ message, {}",
+                        Report::from_error(e)
+                    );
                 }
             }
             Some(Err(_)) | None => {
@@ -223,7 +226,10 @@ impl ExchangeTask {
                         log::info!("Reconnected to RabbitMQ");
                         return;
                     }
-                    Err(e) => log::warn!("Was able to create channel but not consumer, {e:?}"),
+                    Err(e) => log::warn!(
+                        "Was able to create channel but not consumer, {}",
+                        Report::from_error(e)
+                    ),
                 },
                 Err(_) => {
                     log::warn!("RabbitMQ reconnect attempt failed, waiting {wait_duration:?} before next attempt");

@@ -68,6 +68,7 @@ use opentalk_types::{
 };
 use rrule::{Frequency, RRuleSet};
 use serde::Deserialize;
+use snafu::Report;
 use validator::Validate;
 
 pub mod favorites;
@@ -370,8 +371,8 @@ pub async fn new_event(
                 event_resource.shared_folder.clone(),
             )
             .await
-            .map_err(|err| {
-                log::warn!("Failed to send with MailService: {err}");
+            .map_err(|e| {
+                log::warn!("Failed to send with MailService: {}", Report::from_error(e));
                 ApiError::internal()
             })?;
     }
@@ -1196,7 +1197,10 @@ async fn notify_invitees_about_update(
             )
             .await
         {
-            log::error!("Failed to send event update with MailService, {}", e);
+            log::error!(
+                "Failed to send event update with MailService, {}",
+                Report::from_error(e)
+            );
         }
     }
 }
@@ -1495,7 +1499,10 @@ async fn notify_invitees_about_delete(
             )
             .await
         {
-            log::error!("Failed to send event cancellation with MailService, {}", e);
+            log::error!(
+                "Failed to send event cancellation with MailService, {}",
+                Report::from_error(e)
+            );
         }
     }
 }
@@ -1735,7 +1742,7 @@ fn parse_event_dt_params(
         let rrule_set = match rrule_set.parse::<RRuleSet>() {
             Ok(rrule) => rrule,
             Err(e) => {
-                log::warn!("failed to parse rrule {:?}", e);
+                log::warn!("failed to parse rrule {}", Report::from_error(e));
                 return Err(ApiError::unprocessable_entity()
                     .with_code(CODE_INVALID_EVENT)
                     .with_message("Invalid recurrence pattern"));

@@ -42,6 +42,7 @@ use opentalk_types::{
     common::tariff::TariffResource,
     core::UserId,
 };
+use snafu::Report;
 use snafu::{ResultExt, Whatever};
 use validator::Validate;
 
@@ -120,7 +121,10 @@ pub async fn patch_me(
                     .await?;
             }
             Err(e) => {
-                log::debug!("abort user profile cache update due to invalid token TTL, {e}");
+                log::debug!(
+                    "abort user profile cache update due to invalid token TTL, {}",
+                    Report::from_error(e)
+                );
             }
         }
     }

@@ -32,6 +32,7 @@ use opentalk_types::{
     common::shared_folder::{SharedFolder, SharedFolderAccess},
     core::EventId,
 };
+use snafu::Report;
 
 use crate::{
     api::v1::{
@@ -160,7 +161,7 @@ pub(crate) async fn put_shared_folder(
                 password.clone(),
             )
             .map_err(|e| {
-                warn!("Error creating NextCloud client: {e}");
+                warn!("Error creating NextCloud client: {}", Report::from_error(e));
                 ApiError::internal().with_message("Error creating NextCloud client")
             })?;
             let path = format!(
@@ -170,7 +171,10 @@ pub(crate) async fn put_shared_folder(
             );
             let user_path = format!("files/{username}/{path}");
             client.create_folder(&user_path).await.map_err(|e| {
-                warn!("Error creating folder on NextCloud: {e}");
+                warn!(
+                    "Error creating folder on NextCloud: {}",
+                    Report::from_error(e)
+                );
                 ApiError::internal().with_message("Error creating folder on NextCloud")
             })?;
 
@@ -205,7 +209,10 @@ pub(crate) async fn put_shared_folder(
                     creator = creator.expire_date(expire_date);
                 }
                 let share = creator.send().await.map_err(|e| {
-                    warn!("Error creating share on NextCloud: {e}");
+                    warn!(
+                        "Error creating share on NextCloud: {}",
+                        Report::from_error(e)
+                    );
                     ApiError::internal().with_message("Error creating share on NextCloud")
                 })?;
 
@@ -219,7 +226,10 @@ pub(crate) async fn put_shared_folder(
                         .permissions(permissions)
                         .await
                         .map_err(|e| {
-                            warn!("Error setting permissions for share on NextCloud: {e}");
+                            warn!(
+                                "Error setting permissions for share on NextCloud: {}",
+                                Report::from_error(e)
+                            );
                             ApiError::internal()
                                 .with_message("Error setting permissions for share on NextCloud")
                         })?;
@@ -318,7 +328,7 @@ pub async fn delete_shared_folders(
                 password.clone(),
             )
             .map_err(|e| {
-                warn!("Error creating NextCloud client: {e}");
+                warn!("Error creating NextCloud client: {}", Report::from_error(e));
                 ApiError::internal().with_message("Error creating NextCloud client")
             })?;
             for shared_folder in shared_folders {
@@ -332,18 +342,27 @@ pub async fn delete_shared_folders(
                     .delete_share(ShareId::from(shared_folder.read_share_id.clone()))
                     .await
                 {
-                    warn!("Could not delete NextCloud read share: {e}");
+                    warn!(
+                        "Could not delete NextCloud read share: {}",
+                        Report::from_error(e)
+                    );
                 }
                 if let Err(e) = client
                     .delete_share(ShareId::from(shared_folder.write_share_id.clone()))
                     .await
                 {
-                    warn!("Could not delete NextCloud write share: {e}");
+                    warn!(
+                        "Could not delete NextCloud write share: {}",
+                        Report::from_error(e)
+                    );
                 }
                 match client.delete(&user_path).await {
                     Ok(()) | Err(opentalk_nextcloud_client::Error::FileNotFound { .. }) => {}
                     Err(e) => {
-                        warn!("Error deleting folder on NextCloud: {e}");
+                        warn!(
+                            "Error deleting folder on NextCloud: {}",
+                            Report::from_error(e)
+                        );
                         return Err(
                             ApiError::internal().with_message("Error deleting folder on NextCloud")
                         );
@@ -444,7 +463,10 @@ pub async fn delete_shared_folder_for_event(
 
 async fn generate_password(client: &Client) -> Result<String, ApiError> {
     client.generate_password().await.map_err(|e| {
-        warn!("Error generating share password on NextCloud: {e}");
+        warn!(
+            "Error generating share password on NextCloud: {}",
+            Report::from_error(e)
+        );
         ApiError::internal().with_message("Error generating share password NextCloud")
     })
 }

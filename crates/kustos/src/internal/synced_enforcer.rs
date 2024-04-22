@@ -15,6 +15,7 @@ use casbin::{
 use casbin::{EventEmitter, Result};
 use kustos_shared::internal::{ToCasbin, ToCasbinString};
 use parking_lot as pl;
+use snafu::Report;
 use std::collections::HashMap;
 use std::convert::TryInto;
 use std::sync::Arc;
@@ -88,7 +89,7 @@ impl SyncedEnforcer {
                 tokio::select! {
                     _ = ticker.tick() => {
                         if let Err(e)= cloned_enforcer.write().await.load_policy().await {
-                            log::error!("Failed to load policy: {e:?}")
+                            log::error!("Failed to load policy: {}", Report::from_error(e))
                         }
                     },
                     _ = shutdown.recv() => {

@@ -14,6 +14,7 @@ use opentalk_db_storage::events::Event;
 use opentalk_log::{debug, info, warn};
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage};
 use opentalk_types::core::{EventId, RoomId};
+use snafu::Report;
 
 use crate::Error;
 
@@ -105,7 +106,7 @@ async fn delete_events(
             )
             .await
         {
-            warn!(log: logger, "Failed deletion: {e}");
+            warn!(log: logger, "Failed deletion: {}", Report::from_error(e));
             deleter_failures += 1;
             continue;
         }
@@ -116,7 +117,7 @@ async fn delete_events(
                 let _ = orphaned_rooms.insert(room_id);
             }
             Err(e) => {
-                warn!(log: logger, "Failed to retrieve events connected to room: {e}");
+                warn!(log: logger, "Failed to retrieve events connected to room: {}", Report::from_error(e));
             }
         }
     }
@@ -163,7 +164,7 @@ async fn delete_orphaned_rooms(
             )
             .await
         {
-            warn!(log: logger, "Failed deletion: {e}");
+            warn!(log: logger, "Failed deletion: {}", Report::from_error(e));
             deleter_failures += 1;
         }
     }

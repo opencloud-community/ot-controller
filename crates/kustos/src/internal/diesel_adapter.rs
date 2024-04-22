@@ -416,11 +416,11 @@ mod tests {
             log::info!("Creating database: {}", database);
             let mut conn = AsyncPgConnection::establish(&postgres_url)
                 .await
-                .with_whatever_context(|err| format!("failed to connect to database: {err}"))?;
+                .with_whatever_context(|e| format!("failed to connect to database: {e}"))?;
             query_helper::create_database(&database)
                 .execute(&mut conn)
                 .await
-                .with_whatever_context(|err| format!("Failed to create database: {err}"))?;
+                .with_whatever_context(|e| format!("Failed to create database: {e}"))?;
         }
 
         opentalk_db_storage::migrations::migrate_from_url(&url)
@@ -433,11 +433,11 @@ mod tests {
         let mut conn = db
             .get_conn()
             .await
-            .with_whatever_context(|err| format!("Connection failed {err}"))?;
+            .with_whatever_context(|e| format!("Connection failed {e}"))?;
 
         db::clear_policy(&mut conn)
             .await
-            .with_whatever_context(|err| format!("Clear policy failed: {err}"))?;
+            .with_whatever_context(|e| format!("Clear policy failed: {e}"))?;
 
         Ok(db)
     }

@@ -7,7 +7,7 @@ use opentalk_controller_settings::Settings;
 use opentalk_db_storage::events::shared_folders::EventSharedFolder;
 use opentalk_log::{debug, warn};
 use opentalk_nextcloud_client::ShareId;
-use snafu::whatever;
+use snafu::{whatever, Report};
 
 use super::error::Error;
 
@@ -49,7 +49,7 @@ pub async fn delete_shared_folders(
                 Ok(c) => c,
                 Err(e) => {
                     let msg = "Error creating NextCloud client";
-                    warn!(log: logger, "{msg}: {e}");
+                    warn!(log: logger, "{msg}: {}", Report::from_error(&e));
                     if fail_on_error {
                         return Err(e.into());
                     }
@@ -71,7 +71,10 @@ pub async fn delete_shared_folders(
                     .delete_share(ShareId::from(shared_folder.read_share_id.clone()))
                     .await
                 {
-                    let message = format!("Could not delete NextCloud read share: {e}");
+                    let message = format!(
+                        "Could not delete NextCloud read share: {}",
+                        Report::from_error(e)
+                    );
                     if fail_on_error {
                         whatever!("{message}");
                     }
@@ -86,7 +89,10 @@ pub async fn delete_shared_folders(
                     .delete_share(ShareId::from(shared_folder.write_share_id.clone()))
                     .await
                 {
-                    let message = format!("Could not delete NextCloud write share: {e}");
+                    let message = format!(
+                        "Could not delete NextCloud write share: {}",
+                        Report::from_error(e)
+                    );
                     if fail_on_error {
                         whatever!("{message}");
                     }
@@ -111,7 +117,10 @@ pub async fn delete_shared_folders(
                         );
                     }
                     Err(e) => {
-                        let message = format!("Error deleting folder on NextCloud: {e}");
+                        let message = format!(
+                            "Error deleting folder on NextCloud: {}",
+                            Report::from_error(e)
+                        );
                         if fail_on_error {
                             whatever!("{message}");
                         }

@@ -35,7 +35,7 @@ use opentalk_types::{
     },
 };
 use serde_json::Value;
-use snafu::{whatever, OptionExt, ResultExt, Snafu};
+use snafu::{whatever, OptionExt, Report, ResultExt, Snafu};
 use tokio::{
     select,
     sync::{
@@ -1127,7 +1127,7 @@ impl<S, R> Interface<S, R> {
     fn send(&self, value: S) -> Result<(), SignalingModuleError> {
         self.sender
             .send(value)
-            .map_err(|e| format!("Failed to send: {e}"))
+            .map_err(|e| format!("Failed to send: {}", Report::from_error(e)))
             .whatever_context("MockWs failed to send message")
     }
 

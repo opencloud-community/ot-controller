@@ -20,6 +20,7 @@ use opentalk_types::{
     common::shared_folder::SharedFolder as SharedFolderType,
     signaling::shared_folder::{event::SharedFolderEvent, NAMESPACE},
 };
+use snafu::Report;
 
 mod storage;
 
@@ -120,7 +121,10 @@ impl SignalingModule for SharedFolder {
                 );
             }
             if let Err(e) = storage::delete_shared_folder(ctx.redis_conn(), self.room).await {
-                log::error!("Failed to remove shared folder on room destroy, {}", e);
+                log::error!(
+                    "Failed to remove shared folder on room destroy, {}",
+                    Report::from_error(e)
+                );
             }
         }
     }

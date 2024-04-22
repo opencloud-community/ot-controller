@@ -20,7 +20,7 @@ use opentalk_types::{
         Role,
     },
 };
-use snafu::ResultExt;
+use snafu::{Report, ResultExt};
 use std::sync::Arc;
 
 mod exchange;
@@ -258,7 +258,7 @@ impl SignalingModule for Recording {
     async fn on_destroy(self, mut ctx: DestroyContext<'_>) {
         if self.i_am_the_recorder {
             if let Err(e) = storage::del_state(ctx.redis_conn(), self.room).await {
-                log::error!("failed to delete state, {:?}", e);
+                log::error!("failed to delete state, {}", Report::from_error(e));
             }
         }
     }

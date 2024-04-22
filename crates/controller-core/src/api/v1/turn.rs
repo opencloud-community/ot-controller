@@ -34,6 +34,7 @@ use rand::distributions::{Distribution, Uniform};
 use rand::prelude::SliceRandom;
 use rand::{CryptoRng, Rng};
 use ring::hmac;
+use snafu::Report;
 use std::str::FromStr;
 
 /// API Endpoint *GET /turn*
@@ -162,7 +163,7 @@ async fn check_access_token_or_invite(
     oidc_ctx: Data<OidcContext>,
 ) -> Result<Either<User, Invite>, ApiError> {
     let auth = Authorization::<Bearer>::parse(req).map_err(|e| {
-        log::warn!("Unable to parse access token, {}", e);
+        log::warn!("Unable to parse access token, {}", Report::from_error(e));
         ApiError::unauthorized()
             .with_message("Unable to parse Authentication Bearer header")
             .with_www_authenticate(AuthenticationError::InvalidAccessToken)

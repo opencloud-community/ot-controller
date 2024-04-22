@@ -21,6 +21,7 @@ use opentalk_signaling_core::{
     ExchangeHandle, ObjectStorage, Participant, RedisConnection, SignalingMetrics, SignalingModule,
 };
 use opentalk_types::api::error::ApiError;
+use snafu::Report;
 use std::marker::PhantomData;
 use std::time::Instant;
 use tokio::sync::{broadcast, mpsc};
@@ -135,7 +136,7 @@ pub(crate) async fn ws_service(
     {
         Ok(builder) => builder,
         Err(e) => {
-            log::error!("Failed to initialize builder, {}", e);
+            log::error!("Failed to initialize builder, {}", Report::from_error(e));
 
             return Ok(HttpResponse::InternalServerError().finish());
         }
@@ -146,7 +147,7 @@ pub(crate) async fn ws_service(
     // add all modules
     for module in modules.0.iter() {
         if let Err(e) = module.build(&mut builder).await {
-            log::error!("Failed to initialize module, {:?}", e);
+            log::error!("Failed to initialize module, {}", Report::from_error(e));
 
             metrics.record_startup_time(startup_start_time.elapsed().as_secs_f64(), false);
 
@@ -167,7 +168,7 @@ pub(crate) async fn ws_service(
     {
         Ok(runner) => runner,
         Err(e) => {
-            log::error!("Failed to initialize runner, {}", e);
+            log::error!("Failed to initialize runner, {}", Report::from_error(e));
 
             metrics.record_startup_time(startup_start_time.elapsed().as_secs_f64(), false);
 
@@ -254,7 +255,10 @@ async fn get_ticket_data_from_redis(
         .query_async(redis_conn)
         .await
         .map_err(|e| {
-            log::warn!("Unable to get ticket data in redis: {}", e);
+            log::warn!(
+                "Unable to get ticket data in redis: {}",
+                Report::from_error(e)
+            );
             ApiError::internal()
         })?;
 
