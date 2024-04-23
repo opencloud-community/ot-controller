@@ -1568,6 +1568,55 @@ paths:
                 $ref: '#/components/schemas/RoomStartError'
         500:
           $ref: '#/components/responses/InternalServerError'
+
+  /services/recording/upload:
+    get:
+      summary: Upload Websocket
+      description: The upload websocket. transfers binary upload contents.
+      tags: [upload]
+      operationId: upload_websocket
+      parameters:
+        - in: header
+          name: Sec-WebSocket-Protocol
+          required: true
+          schema:
+            $ref: '#/components/schemas/SignalingProtocolHeader'
+          example: opentalk-signaling-json-v1.0
+        - in: header
+          name: Connection
+          required: true
+          schema:
+            type: string
+            enum:
+              - Upgrade
+          example: Upgrade
+        - in: header
+          name: Upgrade
+          required: true
+          schema:
+            type: string
+            enum:
+              - websocket
+          example: websocket
+        - in: query
+          name: room_id
+          description: The id of the room the asset belongs to
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: filename
+          description: The filename of the asset
+          schema:
+            type: string
+      responses:
+        200:
+          description: Successful
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
   /rooms/{room_id}/streaming_targets:
     get:
       summary: List the streaming targets for a room

@@ -664,7 +664,7 @@ impl Runner {
         Ok(())
     }
 
-    /// Runs the runner until the peer closes its websocket connection or a fatal error occurres.
+    /// Runs the runner until the peer closes its websocket connection or a fatal error occurs.
     pub async fn run(mut self) {
         let mut manual_close_ws = false;
 

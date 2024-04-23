@@ -12,4 +12,5 @@ pub(crate) mod internal;
 mod util;
 #[macro_use]
 pub mod signaling;
+pub mod upload;
 pub mod v1;

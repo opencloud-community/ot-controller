@@ -3,13 +3,15 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use crate::api::signaling::ticket::start_or_continue_signaling_session;
+use crate::api::upload::{run_upload, UploadWebSocketActor};
 use crate::api::v1::response::NoContent;
 use crate::settings::SharedSettingsActix;
 use actix_web::dev::HttpServiceFactory;
-use actix_web::post;
 use actix_web::web::Payload;
 use actix_web::web::Query;
 use actix_web::web::{Data, Json};
+use actix_web::{get, post, web, HttpRequest, HttpResponse};
+use actix_web_actors::ws;
 use futures::TryStreamExt;
 use opentalk_database::Db;
 use opentalk_db_storage::rooms::Room;
@@ -19,6 +21,8 @@ use opentalk_types::api::{
     error::ApiError,
     v1::services::{ServiceStartResponse, StartBody, UploadRenderQuery},
 };
+use tokio::sync::mpsc;
+use tokio::task;
 
 // Note to devs:
 // Please update `docs/admin/keycloak.md` service login documentation as well if
@@ -81,9 +85,39 @@ pub async fn upload_render(
     Ok(NoContent)
 }
 
+#[get("/upload")]
+pub(crate) async fn ws_upload(
+    db: Data<Db>,
+    storage: Data<ObjectStorage>,
+    request: HttpRequest,
+    query: Query<UploadRenderQuery>,
+    stream: web::Payload,
+) -> actix_web::Result<HttpResponse> {
+    let query = query.into_inner();
+
+    // Finish websocket handshake
+    let (sender, receiver) = mpsc::unbounded_channel();
+    let receiver_stream = tokio_stream::wrappers::UnboundedReceiverStream::new(receiver);
+    let (_addr, response) =
+        ws::WsResponseBuilder::new(UploadWebSocketActor::new(sender), &request, stream)
+            .start_with_addr()?;
+
+    // Spawn the runner task
+    task::spawn_local(run_upload(
+        storage.into_inner(),
+        db.into_inner(),
+        query.room_id,
+        query.filename,
+        receiver_stream,
+    ));
+
+    Ok(response)
+}
+
 pub fn services() -> impl HttpServiceFactory {
     actix_web::web::scope("/recording")
         .wrap(super::RequiredRealmRole::new(REQUIRED_RECORDING_ROLE))
         .service(start)
         .service(upload_render)
+        .service(ws_upload)
 }
