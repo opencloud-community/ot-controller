@@ -882,6 +882,7 @@ impl Runner {
                 if display_name.is_empty() || display_name.len() > 100 {
                     self.ws_send_control_error(timestamp, control_event::Error::InvalidUsername)
                         .await;
+                    return Ok(());
                 }
 
                 // Get the left_at timestamp to preserve it until the participant really enters the room.
