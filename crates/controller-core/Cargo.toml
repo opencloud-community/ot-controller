@@ -69,7 +69,7 @@ redis = { workspace = true, features = ["connection-manager", "tokio-comp"] }
 redis-args.workspace = true
 reqwest = { workspace = true, features = ["rustls-tls-native-roots"] }
 ring = "0.17"
-rrule = "0.11"
+rrule = "0.12"
 rustls = "0.22"
 rustls-pemfile = "2.0"
 rustls-pki-types = "1.3"

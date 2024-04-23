@@ -11,7 +11,7 @@ use crate::imports::*;
 pub struct TrickleCandidate {
     /// The SDP m-line index
     #[cfg_attr(feature = "serde", serde(rename = "sdpMLineIndex"))]
-    pub sdp_m_line_index: u64,
+    pub sdp_m_line_index: u32,
 
     /// The ICE candidate string
     pub candidate: String,
