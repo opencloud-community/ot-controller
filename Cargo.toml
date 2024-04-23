@@ -84,7 +84,7 @@ opentalk-diesel-newtype = "0.12"
 opentalk-etherpad-client = { version = "0.1.0", default-features = false, features = [
   "rustls-tls-native-roots",
 ] }
-opentalk-janus-client = "0.2"
+opentalk-janus-client = "0.3"
 opentalk-nextcloud-client = { version = "0.1.1", default-features = false, features = [
   "rustls-tls-native-roots",
 ] }
