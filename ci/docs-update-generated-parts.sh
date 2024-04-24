@@ -4,6 +4,9 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 set -xe
+set -o pipefail
+
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 DOCS_TEMP_DIR=target/docs/temporary
 
@@ -13,7 +16,9 @@ OPENTALK_CONTROLLER_CMD=${OPENTALK_CONTROLLER_CMD:-target/release/opentalk-contr
 CLI_DIR="$DOCS_TEMP_DIR"/cli-usage
 JOBS_DIR="$DOCS_TEMP_DIR"/jobs
 CONFIG_DIR="$DOCS_TEMP_DIR"/config
+DB_DIR="$DOCS_TEMP_DIR"/database
 CMDNAME=opentalk-controller
+ER_DIAGRAM_MERMAID="$DB_DIR/er-diagram.mermaid"
 
 codify() {
   if [ -z "$1" ]; then
@@ -28,7 +33,20 @@ codify() {
   echo '```'
 }
 
-mkdir -p "$CLI_DIR" "$JOBS_DIR" "$CONFIG_DIR"
+mkdir -p "$CLI_DIR" "$JOBS_DIR" "$CONFIG_DIR" "$DB_DIR"
+
+# Generate mermaid diagrams only if sqlant is available. Otherwise use already provided mermaid
+# sources (e.g. provided by other ci jobs).
+if command -v sqlant; then
+  $SCRIPT_DIR/docs-generate-mermaid.sh
+fi
+
+if [ ! -f $ER_DIAGRAM_MERMAID ]; then
+  echo "Mermaid diagram file ($ER_DIAGRAM_MERMAID) not found."
+  exit 1
+fi
+
+cat $ER_DIAGRAM_MERMAID | codify mermaid > $DB_DIR/er-diagram.md
 
 codify toml < extra/example.toml > "$CONFIG_DIR"/example.toml.md
 
