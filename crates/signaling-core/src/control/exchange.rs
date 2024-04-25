@@ -4,7 +4,10 @@
 
 use crate::SignalingRoomId;
 
-use opentalk_types::core::{ParticipantId, RoomId, UserId};
+use opentalk_types::{
+    core::{ParticipantId, RoomId, UserId},
+    signaling::control,
+};
 use serde::{Deserialize, Serialize};
 
 /// Control messages sent between controller modules to communicate changes inside a room
@@ -15,7 +18,10 @@ pub enum Message {
     Joined(ParticipantId),
 
     /// Participant with the given id left the current room
-    Left(ParticipantId),
+    Left {
+        id: ParticipantId,
+        reason: control::Reason,
+    },
 
     /// Participant with the given id updated its status
     Update(ParticipantId),

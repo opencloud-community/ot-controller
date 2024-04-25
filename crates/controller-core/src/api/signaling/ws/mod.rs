@@ -19,6 +19,11 @@ pub use http::ws_service;
 pub use http::SignalingModules;
 pub use http::SignalingProtocols;
 
+pub enum RunnerMessage {
+    Message(actix_web_actors::ws::Message),
+    Timeout,
+}
+
 pub(crate) trait ModuleContextExt {
     fn exchange_publish_control(
         &mut self,

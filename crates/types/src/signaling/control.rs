@@ -10,10 +10,12 @@ pub mod state;
 
 mod associated_participant;
 mod participant;
+mod reason;
 mod waiting_room_state;
 
 pub use associated_participant::AssociatedParticipant;
 pub use participant::Participant;
+pub use reason::Reason;
 pub use waiting_room_state::{WaitingRoomState, NAMESPACE as WAITING_ROOM_STATE_NAMESPACE};
 
 /// The namespace string for the signaling module
