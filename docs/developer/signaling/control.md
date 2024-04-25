@@ -227,7 +227,7 @@ Received after joining the room. Can be triggered by either calling [Join](#join
 #### Fields
 
 | Field          | Type            | Always | Description                                                                                |
-| -------------- | --------------- | ------ |--------------------------------------------------------------------------------------------|
+| -------------- | --------------- | ------ | ------------------------------------------------------------------------------------------ |
 | `message`      | `enum`          | yes    | Is `"join_success"`                                                                        |
 | `id`           | `string`        | yes    | Your participant id in this session                                                        |
 | `display_name` | `string`        | yes    | Your display name in this session                                                          |
@@ -361,17 +361,19 @@ Received when a participant left the room.
 
 #### Fields
 
-| Field     | Type     | Always | Description                         |
-| --------- | -------- | ------ | ----------------------------------- |
-| `message` | `enum`   | yes    | Is `"left"`                         |
-| `id`      | `string` | yes    | Id of the participant that has left |
+| Field     | Type     | Always | Description                                                              |
+| --------- | -------- | ------ | ------------------------------------------------------------------------ |
+| `message` | `enum`   | yes    | Is `"left"`                                                              |
+| `id`      | `string` | yes    | Id of the participant that has left                                      |
+| `reason`  | `enum`   | yes    | The reason as to why the participant left either `"quit"` or `"timeout"` |
 
 ##### Example
 
 ```json
 {
     "message": "left",
-    "id": "00000000-0000-0000-0000-000000000000"
+    "id": "00000000-0000-0000-0000-000000000000",
+    "reason": "quit"
 }
 ```
 
@@ -381,9 +383,9 @@ Received when the quota's time limit has elapsed.
 
 #### Fields
 
-| Field     | Type   | Always | Description                               |
-| ----------| ------ | ------ | ----------------------------------------- |
-| `message` | `enum` | yes    | Is `"time_limit_quota_elapsed"`           |
+| Field     | Type   | Always | Description                     |
+| --------- | ------ | ------ | ------------------------------- |
+| `message` | `enum` | yes    | Is `"time_limit_quota_elapsed"` |
 
 ### HandRaised
 
@@ -392,7 +394,7 @@ Received by a participant after they have raised their hand.
 #### Fields
 
 | Field     | Type   | Always | Description        |
-| ----------| ------ | ------ | ------------------ |
+| --------- | ------ | ------ | ------------------ |
 | `message` | `enum` | yes    | Is `"hand_raised"` |
 
 ### HandLowered
@@ -402,7 +404,7 @@ Received by a participant after they have lowered their hand.
 #### Fields
 
 | Field     | Type   | Always | Description         |
-| ----------| ------ | ------ | ------------------- |
+| --------- | ------ | ------ | ------------------- |
 | `message` | `enum` | yes    | Is `"hand_lowered"` |
 
 ### RoleUpdated
@@ -432,7 +434,7 @@ Received by a participant if removed from the room because the room has been del
 #### Fields
 
 | Field     | Type   | Always | Description         |
-| ----------| ------ | ------ | ------------------- |
+| --------- | ------ | ------ | ------------------- |
 | `message` | `enum` | yes    | Is `"room_deleted"` |
 
 ### Error
