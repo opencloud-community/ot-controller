@@ -79,4 +79,8 @@ pub struct PostEventsBody {
     /// Should the created event have a shared folder?
     #[cfg_attr(feature = "serde", serde(default))]
     pub has_shared_folder: bool,
+
+    /// Should it be able to show the meeting details?
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub show_meeting_details: bool,
 }

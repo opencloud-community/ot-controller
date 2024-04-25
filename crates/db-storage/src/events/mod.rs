@@ -167,6 +167,8 @@ pub struct Event {
     pub tenant_id: TenantId,
 
     pub revision: i32,
+
+    pub show_meeting_details: bool,
 }
 
 impl Event {
@@ -195,8 +197,10 @@ impl From<&Event> for EventInfo {
     fn from(value: &Event) -> Self {
         EventInfo {
             id: value.id,
+            room_id: value.room,
             title: value.title.clone(),
             is_adhoc: value.is_adhoc,
+            meeting_details: None,
         }
     }
 }
@@ -605,6 +609,7 @@ pub struct NewEvent {
     pub recurrence_pattern: Option<String>,
     pub is_adhoc: bool,
     pub tenant_id: TenantId,
+    pub show_meeting_details: bool,
 }
 
 impl NewEvent {

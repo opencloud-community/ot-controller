@@ -11,6 +11,7 @@ use futures::Future;
 use kustos::Authz;
 use opentalk_controller_settings::SharedSettings;
 use opentalk_database::{Db, DbConnection};
+use opentalk_db_storage::utils::build_event_info;
 use opentalk_db_storage::{events::EventInvite, rooms::Room, tariffs::Tariff, users::User};
 use opentalk_signaling_core::{
     control::{
@@ -1334,6 +1335,16 @@ impl Runner {
             .to_tariff_resource(settings.defaults.disabled_features(), module_features)
             .into();
 
+        let mut conn = self.db.get_conn().await?;
+        let room_id = self.room.id;
+        let event_info = match event.as_ref() {
+            Some(event) => {
+                let call_in_tel = settings.call_in.as_ref().map(|call_in| call_in.tel.clone());
+                Some(build_event_info(&mut conn, call_in_tel, room_id, event).await?)
+            }
+            _ => None,
+        };
+
         self.ws_send_control(
             timestamp,
             ControlEvent::JoinSuccess(JoinSuccess {
@@ -1345,7 +1356,7 @@ impl Runner {
                 tariff: tariff_resource,
                 module_data,
                 participants,
-                event_info: event.as_ref().map(Into::into),
+                event_info,
                 is_room_owner: self.participant.user_id() == Some(self.room.created_by),
             }),
         )

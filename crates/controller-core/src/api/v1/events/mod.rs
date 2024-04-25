@@ -8,7 +8,6 @@ use super::response::NoContent;
 use super::{ApiResponse, DefaultApiResult};
 use crate::api::v1::events::shared_folder::put_shared_folder;
 use crate::api::v1::rooms::RoomsPoliciesBuilderExt;
-use crate::api::v1::streaming_targets::{get_room_streaming_targets, insert_room_streaming_target};
 use crate::api::v1::util::GetUserProfilesBatched;
 use crate::services::{
     ExternalMailRecipient, MailRecipient, MailService, UnregisteredMailRecipient,
@@ -33,6 +32,7 @@ use opentalk_db_storage::{
     invites::Invite,
     rooms::{NewRoom, Room, UpdateRoom},
     sip_configs::{NewSipConfig, SipConfig},
+    streaming_targets::{get_room_streaming_targets, insert_room_streaming_target},
     tariffs::Tariff,
     tenants::Tenant,
     users::{email_to_libravatar_url, User},
@@ -279,6 +279,7 @@ pub async fn new_event(
                         is_adhoc,
                         streaming_targets,
                         has_shared_folder: _,
+                        show_meeting_details,
                     } if recurrence_pattern.is_empty() => {
                         create_time_independent_event(
                             &settings,
@@ -290,6 +291,7 @@ pub async fn new_event(
                             waiting_room,
                             is_adhoc,
                             streaming_targets,
+                            show_meeting_details,
                             query,
                         )
                             .await?
@@ -307,6 +309,7 @@ pub async fn new_event(
                         is_adhoc,
                         streaming_targets,
                         has_shared_folder: _,
+                        show_meeting_details,
                     } => {
                         create_time_dependent_event(
                             &settings,
@@ -322,6 +325,7 @@ pub async fn new_event(
                             recurrence_pattern,
                             is_adhoc,
                             streaming_targets,
+                            show_meeting_details,
                             query,
                         )
                             .await?
@@ -420,6 +424,7 @@ async fn create_time_independent_event(
     waiting_room: bool,
     is_adhoc: bool,
     streaming_targets: Option<Vec<StreamingTarget>>,
+    show_meeting_details: bool,
     query: Query<EventOptionsQuery>,
 ) -> Result<(EventResource, Option<MailResource>), ApiError> {
     let room = NewRoom {
@@ -449,6 +454,7 @@ async fn create_time_independent_event(
         is_recurring: None,
         recurrence_pattern: None,
         is_adhoc,
+        show_meeting_details,
         tenant_id: current_user.tenant_id,
     }
     .insert(conn)
@@ -513,6 +519,7 @@ async fn create_time_dependent_event(
     recurrence_pattern: Vec<String>,
     is_adhoc: bool,
     streaming_targets: Option<Vec<StreamingTarget>>,
+    show_meeting_details: bool,
     query: Query<EventOptionsQuery>,
 ) -> Result<(EventResource, Option<MailResource>), ApiError> {
     let recurrence_pattern = recurrence_array_to_string(recurrence_pattern);
@@ -547,6 +554,7 @@ async fn create_time_dependent_event(
         is_recurring: Some(recurrence_pattern.is_some()),
         recurrence_pattern,
         is_adhoc,
+        show_meeting_details,
         tenant_id: current_user.tenant_id,
     }
     .insert(conn)
@@ -994,7 +1002,8 @@ pub async fn patch_event(
         .into_iter()
         .chain(std::iter::once(current_user_mail_recipient))
         .collect::<Vec<_>>();
-    let invite_for_room = Invite::get_first_for_room(&mut conn, room.id, current_user.id).await?;
+    let invite_for_room =
+        Invite::get_first_or_create_for_room(&mut conn, room.id, current_user.id).await?;
 
     // Add the access policy for the invite code, just in case it has been created by
     // the `Invite::get_first_for_room(…)` call above. That function is not able to
@@ -1139,7 +1148,8 @@ async fn notify_event_invitees_about_update(
         .into_iter()
         .chain(std::iter::once(current_user_mail_recipient))
         .collect::<Vec<_>>();
-    let invite_for_room = Invite::get_first_for_room(conn, room.id, current_user.id).await?;
+    let invite_for_room =
+        Invite::get_first_or_create_for_room(conn, room.id, current_user.id).await?;
     let created_by = if event.created_by == current_user.id {
         current_user
     } else {

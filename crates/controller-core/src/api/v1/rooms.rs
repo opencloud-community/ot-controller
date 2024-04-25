@@ -30,6 +30,7 @@ use kustos::{
     AccessMethod, Authz, Resource, ResourceId,
 };
 use opentalk_database::Db;
+use opentalk_db_storage::utils::build_event_info;
 use opentalk_db_storage::{
     events::Event,
     invites::Invite,
@@ -269,9 +270,11 @@ pub async fn get_room_tariff(
 
 #[get("/rooms/{room_id}/event")]
 pub async fn get_room_event(
+    settings: SharedSettingsActix,
     db: Data<Db>,
     room_id: Path<RoomId>,
 ) -> Result<Json<GetRoomEventResponse>, ApiError> {
+    let settings = settings.load();
     let room_id = room_id.into_inner();
 
     let mut conn = db.get_conn().await?;
@@ -280,9 +283,9 @@ pub async fn get_room_event(
 
     match event.as_ref() {
         Some(event) => {
-            let response = GetRoomEventResponse(event.into());
-
-            Ok(Json(response))
+            let call_in_tel = settings.call_in.as_ref().map(|call_in| call_in.tel.clone());
+            let event_info = build_event_info(&mut conn, call_in_tel, room_id, event).await?;
+            Ok(Json(GetRoomEventResponse(event_info)))
         }
         None => Err(ApiError::not_found()),
     }

@@ -150,7 +150,7 @@ mod test {
     use std::str::FromStr;
 
     use super::*;
-    use crate::core::{EventId, TariffId};
+    use crate::core::{EventId, RoomId, TariffId};
     use chrono::DateTime;
     use pretty_assertions::assert_eq;
     use serde_json::json;
@@ -179,6 +179,7 @@ mod test {
             "participants": [],
             "event_info": {
                 "id": "00000000-0000-0000-0000-000000000000",
+                "room_id": "00000000-0000-0000-0000-000000000000",
                 "title": "Daily",
                 "is_adhoc": false,
             },
@@ -200,8 +201,10 @@ mod test {
             participants: vec![],
             event_info: Some(EventInfo {
                 id: EventId::nil(),
+                room_id: RoomId::nil(),
                 title: "Daily".to_string(),
                 is_adhoc: false,
+                meeting_details: None,
             }),
             is_room_owner: false,
         }))
@@ -221,6 +224,7 @@ mod test {
             "participants": [],
             "event_info": {
                 "id": "00000000-0000-0000-0000-000000000000",
+                "room_id": "00000000-0000-0000-0000-000000000000",
                 "title": "Daily",
                 "is_adhoc": false,
             },
@@ -238,8 +242,10 @@ mod test {
             participants: vec![],
             event_info: Some(EventInfo {
                 id: EventId::nil(),
+                room_id: RoomId::nil(),
                 title: "Daily".to_string(),
                 is_adhoc: false,
+                meeting_details: None,
             }),
             is_room_owner: false,
         }))
