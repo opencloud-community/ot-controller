@@ -8,14 +8,15 @@ When joining a room with a poll running, the `join_success` control event contai
 
 #### Fields
 
-| Field      | Type       | Always | Description                                              |
-| ---------- | ---------- | ------ | -------------------------------------------------------- |
-| `id`       | `string`   | yes    | Id of the poll                                           |
-| `topic`    | `string`   | yes    | Topic of the poll                                        |
-| `live`     | `bool`     | yes    | The standings of the poll will be reported live          |
-| `choices`  | `Choice[]` | yes    | The available choices to vote on, see [Choice](#choice)  |
-| `started`  | `string`   | yes    | Timestamp for when the poll was started                  |
-| `duration` | `int`      | yes    | Duration of the poll in seconds                          |
+| Field             | Type       | Always | Description                                              |
+| ----------------- | ---------- | ------ | -------------------------------------------------------- |
+| `id`              | `string`   | yes    | Id of the poll                                           |
+| `topic`           | `string`   | yes    | Topic of the poll                                        |
+| `live`            | `bool`     | yes    | The state of the poll is reported immediately            |
+| `multiple_choice` | `bool`     | yes    | Multiple choices can be selected                         |
+| `choices`         | `Choice[]` | yes    | The available choices to vote on, see [Choice](#choice)  |
+| `started`         | `string`   | yes    | Timestamp for when the poll was started                  |
+| `duration`        | `int`      | yes    | Duration of the poll in seconds                          |
 
 ##### Example
 
@@ -24,6 +25,7 @@ When joining a room with a poll running, the `join_success` control event contai
     "id": "00000000-0000-0000-0000-000000000000",
     "topic": "Yes or No?",
     "live": true,
+    "multiple_choice": true,
     "choices": [
         { "id": 0, "content": "first choice" },
         { "id": 1, "content": "second choice" },
@@ -50,13 +52,14 @@ The `Start` message can be send by a user to start a new poll. New polls can onl
 
 #### Fields
 
-| Field      | Type       | Required | Description                                             |
-| ---------- | ---------- | -------- | ------------------------------------------------------- |
-| `action`   | `enum`     | yes      | Must be `"start"`                                       |
-| `topic`    | `string`   | yes      | Topic of the poll                                       |
-| `live`     | `bool`     | yes      | Enable/Disable live updates on the poll                 |
-| `choices`  | `string[]` | yes      | Non empty array of strings which each describe a choice |
-| `duration` | `int`      | no       | Duration of the poll in seconds                         |
+| Field             | Type       | Required | Description                                                        |
+| ----------------- | ---------- | -------- | ------------------------------------------------------------------ |
+| `action`          | `enum`     | yes      | Must be `"start"`                                                  |
+| `topic`           | `string`   | yes      | Topic of the poll                                                  |
+| `live`            | `bool`     | no       | The state of the poll is reported immediately, defaults to `false` |
+| `multiple_choice` | `bool`     | no       | Multiple choices can be selected, defaults to `false`              |
+| `choices`         | `string[]` | yes      | Non empty array of strings which each describe a choice            |
+| `duration`        | `int`      | no       | Duration of the poll in seconds                                    |
 
 ##### Example
 
@@ -65,6 +68,7 @@ The `Start` message can be send by a user to start a new poll. New polls can onl
     "action": "start",
     "topic": "some topic",
     "live": true,
+    "multiple_choice": true,
     "choices": ["first choice", "seconds choice", "third choice"],
     "duration": 60000
 }
@@ -84,13 +88,19 @@ Cast your vote for a poll with the specified `poll_id`. Each participant can onl
 
 If a vote is started with the `live` flag set to `true` a [LiveUpdate](#liveupdate) is sent to all participants.
 
+For backwards compatibility, both an array of choice ids as well as a single choice id can be specified.
+The `choice_id` single value field takes precedence over the `choice_ids` array field.
+
 #### Fields
 
-| Field       | Type     | Required | Description                       |
-| ----------- | -------- | -------- |-----------------------------------|
-| `action`    | `enum`   | yes      | Must be `"vote"`                  |
-| `poll_id`   | `string` | yes      | ID of the poll                    |
-| `choice_id` | `int`    | no       | ID of the choice, none to abstain |
+| Field        | Type     | Required | Description                                                                        |
+| ------------ | -------- | -------- | ---------------------------------------------------------------------------------- |
+| `action`     | `enum`   | yes      | Must be `"vote"`                                                                   |
+| `poll_id`    | `string` | yes      | ID of the poll                                                                     |
+| `choice_id`  | `int`    | no       | ID of a single choice, takes precedence over `choice_ids`                          |
+| `choice_ids` | `int[]`  | no       | ID of multiple choices, empty to abstain, only evaluated if `choice_id` is missing |
+
+To abstain, both `choice_id` and `choice_ids` can be omitted.
 
 ##### Example
 
@@ -98,7 +108,7 @@ If a vote is started with the `live` flag set to `true` a [LiveUpdate](#liveupda
 {
     "action": "vote",
     "poll_id": "00000000-0000-0000-0000-000000000000",
-    "choice_id": 1,
+    "choice_id": 1
 }
 ```
 
@@ -146,14 +156,15 @@ A poll has been started.
 
 #### Fields
 
-| Field      | Type       | Always | Description                                              |
-| ---------- | ---------- | ------ | -------------------------------------------------------- |
-| `message`  | `enum`     | yes    | Is `"started"`                                           |
-| `id`       | `string`   | yes    | Id of the poll                                           |
-| `topic`    | `string`   | yes    | Topic of the poll                                        |
-| `live`     | `bool`     | yes    | The standings of the poll will be reported live          |
-| `choices`  | `Choice[]` | yes    | The available choices to vote on, see [Choice](#choice)  |
-| `duration` | `int`      | yes    | Duration of the poll in seconds                          |
+| Field             | Type       | Always | Description                                              |
+| ----------------- | ---------- | ------ | -------------------------------------------------------- |
+| `message`         | `enum`     | yes    | Is `"started"`                                           |
+| `id`              | `string`   | yes    | Id of the poll                                           |
+| `topic`           | `string`   | yes    | Topic of the poll                                        |
+| `live`            | `bool`     | yes    | The state of the poll is reported immediately            |
+| `multiple_choice` | `bool`     | yes    | Multiple choices can be selected                         |
+| `choices`         | `Choice[]` | yes    | The available choices to vote on, see [Choice](#choice)  |
+| `duration`        | `int`      | yes    | Duration of the poll in seconds                          |
 
 ##### Example
 
@@ -163,6 +174,7 @@ A poll has been started.
     "id": "00000000-0000-0000-0000-000000000000",
     "topic": "Yes or No?",
     "live": true,
+    "multiple_choice": true,
     "choices": [
         { "id": 0, "content": "first choice" },
         { "id": 1, "content": "second choice" },

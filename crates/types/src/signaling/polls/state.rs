@@ -32,8 +32,11 @@ pub struct PollsState {
     /// The description of the poll topic
     pub topic: String,
 
-    /// Is the poll live
+    /// True if the poll is live
     pub live: bool,
+
+    /// True if the poll accepts multiple choices
+    pub multiple_choice: bool,
 
     /// Choices of the poll
     pub choices: Vec<Choice>,

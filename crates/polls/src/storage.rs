@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 use opentalk_types::signaling::polls::Item;
@@ -100,18 +100,18 @@ pub(super) async fn vote(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     poll_id: PollId,
-    previous_choice_id: Option<ChoiceId>,
-    new_choice_id: Option<ChoiceId>,
+    previous_choice_ids: &HashSet<ChoiceId>,
+    new_choice_ids: &HashSet<ChoiceId>,
 ) -> Result<(), SignalingModuleError> {
     // Revoke any previous vote.
-    if let Some(choice_id) = previous_choice_id {
+    for choice_id in previous_choice_ids {
         redis_conn
             .zincr(
                 PollResults {
                     room,
                     poll: poll_id,
                 },
-                u32::from(choice_id),
+                u32::from(*choice_id),
                 -1,
             )
             .await
@@ -121,14 +121,14 @@ pub(super) async fn vote(
     }
 
     // Apply any new vote.
-    if let Some(choice_id) = new_choice_id {
+    for choice_id in new_choice_ids {
         redis_conn
             .zincr(
                 PollResults {
                     room,
                     poll: poll_id,
                 },
-                u32::from(choice_id),
+                u32::from(*choice_id),
                 1,
             )
             .await
