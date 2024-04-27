@@ -15,7 +15,6 @@ version = "0.0.0-dev"
 [workspace.dependencies]
 kustos = { path = "crates/kustos", version = "0.0.0-dev" }
 kustos-shared = { path = "crates/kustos-shared", version = "0.0.0-dev" }
-lapin-pool = { path = "crates/lapin-pool", version = "0.0.0-dev" }
 opentalk-cache = { path = "crates/cache", version = "0.0.0-dev" }
 opentalk-chat = { path = "crates/chat", version = "0.0.0-dev" }
 opentalk-client = { path = "crates/client", version = "0.0.0-dev" }
@@ -77,6 +76,7 @@ http = "0.2"
 http-request-derive = "0.1.2"
 itertools = "0.12"
 lapin = { version = "2", default-features = false }
+lapin-pool = "0.1"
 log = "0.4"
 md5 = "0.7"
 openidconnect = "3"

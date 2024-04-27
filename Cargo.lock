@@ -2799,11 +2799,12 @@ dependencies = [
 
 [[package]]
 name = "lapin-pool"
-version = "0.0.0-dev"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "328ea153c1665b15a3e0c6cbc7630e32c1ff13693aabef13e6f6b12e80b54046"
 dependencies = [
  "lapin",
  "log",
- "pretty_assertions",
  "snafu",
  "tokio",
  "tokio-executor-trait",
