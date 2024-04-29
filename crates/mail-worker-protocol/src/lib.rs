@@ -9,10 +9,9 @@ pub mod v1;
 
 /// Versioned Mail Task Protocol
 #[derive(Deserialize, PartialEq, Eq, Debug)]
-#[cfg_attr(any(test, feature = "client"), derive(Serialize))]
-#[serde(tag = "version")]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "version"))]
 pub enum MailTask {
-    #[serde(rename = "1")]
+    #[cfg_attr(feature = "serde", serde(rename = "1"))]
     V1(v1::Message),
 }
 
@@ -255,30 +254,6 @@ impl MailTask {
                 v1::Message::UnregisteredEventUninvite(_) => "unregistered_uninvite",
                 v1::Message::ExternalEventUninvite(_) => "external_uninvite",
             },
-        }
-    }
-}
-
-#[cfg(feature = "client")]
-impl From<opentalk_db_storage::users::User> for v1::RegisteredUser {
-    fn from(val: opentalk_db_storage::users::User) -> Self {
-        Self {
-            email: val.email.into(),
-            title: val.title,
-            first_name: val.firstname,
-            last_name: val.lastname,
-            language: val.language,
-        }
-    }
-}
-
-#[cfg(feature = "client")]
-impl From<opentalk_keycloak_admin::users::User> for v1::UnregisteredUser {
-    fn from(val: opentalk_keycloak_admin::users::User) -> Self {
-        Self {
-            email: val.email.into(),
-            first_name: val.first_name,
-            last_name: val.last_name,
         }
     }
 }
