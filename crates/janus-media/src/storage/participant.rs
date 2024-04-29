@@ -1,0 +1,78 @@
+// SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+//
+// SPDX-License-Identifier: EUPL-1.2
+
+use opentalk_signaling_core::{
+    RedisConnection, RedisSnafu, SerdeJsonSnafu, SignalingModuleError, SignalingRoomId,
+};
+use opentalk_types::{core::ParticipantId, signaling::media::ParticipantMediaState};
+use redis::AsyncCommands;
+use redis_args::ToRedisArgs;
+use snafu::ResultExt;
+
+/// Data related to a module inside a participant
+#[derive(ToRedisArgs)]
+#[to_redis_args(
+    fmt = "opentalk-signaling:room={room}:participant={participant}:namespace=media:state"
+)]
+pub(crate) struct ParticipantMediaStateKey {
+    pub(crate) room: SignalingRoomId,
+    pub(crate) participant: ParticipantId,
+}
+
+#[tracing::instrument(level = "debug", skip(redis_conn))]
+pub async fn get_media_state(
+    redis_conn: &mut RedisConnection,
+    room: SignalingRoomId,
+    participant: ParticipantId,
+) -> Result<Option<ParticipantMediaState>, SignalingModuleError> {
+    let json: Option<Vec<u8>> = redis_conn
+        .get(ParticipantMediaStateKey { room, participant })
+        .await
+        .context(RedisSnafu {
+            message: "Failed to get media state",
+        })?;
+
+    if let Some(json) = json {
+        serde_json::from_slice(&json).context(SerdeJsonSnafu {
+            message: "Failed to convert json to media state",
+        })
+    } else {
+        Ok(None)
+    }
+}
+
+#[tracing::instrument(level = "debug", skip(redis_conn))]
+pub async fn set_media_state(
+    redis_conn: &mut RedisConnection,
+    room: SignalingRoomId,
+    participant: ParticipantId,
+    state: &ParticipantMediaState,
+) -> Result<(), SignalingModuleError> {
+    let json = serde_json::to_vec(&state).context(SerdeJsonSnafu {
+        message: "Failed to convert media state to json",
+    })?;
+
+    redis_conn
+        .set(ParticipantMediaStateKey { room, participant }, json)
+        .await
+        .context(RedisSnafu {
+            message: "Failed to get media state",
+        })?;
+
+    Ok(())
+}
+
+#[tracing::instrument(level = "debug", skip(redis_conn))]
+pub async fn delete_media_state(
+    redis_conn: &mut RedisConnection,
+    room: SignalingRoomId,
+    participant: ParticipantId,
+) -> Result<(), SignalingModuleError> {
+    redis_conn
+        .del(ParticipantMediaStateKey { room, participant })
+        .await
+        .context(RedisSnafu {
+            message: "Failed to delete media state",
+        })
+}
