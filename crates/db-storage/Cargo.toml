@@ -16,6 +16,7 @@ version.workspace = true
 kustos.workspace = true
 opentalk-controller-settings.workspace = true
 opentalk-database.workspace = true
+opentalk-mail-worker-protocol = { workspace = true, features = ["client"] }
 opentalk-types = { workspace = true, features = ["backend"] }
 
 serde.workspace = true

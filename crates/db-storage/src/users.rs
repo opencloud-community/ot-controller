@@ -431,3 +431,15 @@ impl UpdateUser<'_> {
         Ok(user)
     }
 }
+
+impl From<User> for opentalk_mail_worker_protocol::v1::RegisteredUser {
+    fn from(val: User) -> Self {
+        Self {
+            email: val.email.into(),
+            title: val.title,
+            first_name: val.firstname,
+            last_name: val.lastname,
+            language: val.language,
+        }
+    }
+}

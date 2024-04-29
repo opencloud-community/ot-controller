@@ -262,6 +262,12 @@ impl MailService {
     ) -> Result<()> {
         let settings = &*self.settings.load();
 
+        let invitee = opentalk_mail_worker_protocol::v1::UnregisteredUser {
+            email: invitee.email.into(),
+            first_name: invitee.first_name,
+            last_name: invitee.last_name,
+        };
+
         // Create MailTask
         let mail_task = MailTask::unregistered_event_invite(
             inviter,

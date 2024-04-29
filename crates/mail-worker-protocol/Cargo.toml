@@ -11,17 +11,16 @@ publish = false
 version.workspace = true
 
 [dependencies]
-chrono = { workspace = true, features = ["serde"] }
-opentalk-db-storage = { workspace = true, optional = true }
-opentalk-keycloak-admin = { workspace = true, optional = true }
+chrono = { workspace = true }
 opentalk-types.workspace = true
-serde.workspace = true
-uuid = { workspace = true, features = ["serde"] }
+serde = { workspace = true, features = ["derive"], optional = true }
+uuid = { workspace = true }
 
 [dev-dependencies]
 pretty_assertions.workspace = true
 serde_json.workspace = true
 
 [features]
-client = ["dep:opentalk-db-storage", "dep:opentalk-keycloak-admin"]
-default = []
+client = ["serde"]
+default = ["serde"]
+serde = ["chrono/serde", "dep:serde", "uuid/serde"]

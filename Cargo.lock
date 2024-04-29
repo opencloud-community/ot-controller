@@ -3491,6 +3491,7 @@ dependencies = [
  "opentalk-controller-settings",
  "opentalk-database",
  "opentalk-diesel-newtype",
+ "opentalk-mail-worker-protocol",
  "opentalk-test-util",
  "opentalk-types",
  "pretty_assertions",
@@ -3665,8 +3666,6 @@ name = "opentalk-mail-worker-protocol"
 version = "0.0.0-dev"
 dependencies = [
  "chrono",
- "opentalk-db-storage",
- "opentalk-keycloak-admin",
  "opentalk-types",
  "pretty_assertions",
  "serde",
