@@ -4,11 +4,12 @@
 
 //! Allows to manipulate the acls
 //! Currently supported is enabling/disabling room access for all users.
+use std::sync::Arc;
+
 use kustos::prelude::AccessMethod;
 use opentalk_controller_settings::Settings;
 use opentalk_database::Db;
 use snafu::ResultExt;
-use std::sync::Arc;
 
 use super::AclSubCommand;
 use crate::{

@@ -4,9 +4,9 @@
 
 //! This module contains types that are used for OpenTalk API V1 streaming target endpoints.
 
-use crate::core::{RoomId, StreamingKey, StreamingTargetId};
 use url::Url;
 
+use crate::core::{RoomId, StreamingKey, StreamingTargetId};
 #[allow(unused_imports)]
 use crate::imports::*;
 

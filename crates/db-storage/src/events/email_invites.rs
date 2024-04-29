@@ -2,16 +2,17 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::{Event, NewEventInvite};
-use crate::schema::{event_email_invites, event_invites, events};
-use crate::users::User;
 use chrono::{DateTime, Utc};
-use diesel::prelude::*;
-use diesel::{ExpressionMethods, QueryDsl, Queryable};
-use diesel_async::scoped_futures::ScopedFutureExt;
-use diesel_async::{AsyncConnection, RunQueryDsl};
+use diesel::{prelude::*, ExpressionMethods, QueryDsl, Queryable};
+use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection, RunQueryDsl};
 use opentalk_database::{DbConnection, Paginate, Result};
 use opentalk_types::core::{EmailInviteRole, EventId, RoomId, UserId};
+
+use super::{Event, NewEventInvite};
+use crate::{
+    schema::{event_email_invites, event_invites, events},
+    users::User,
+};
 
 #[derive(Insertable)]
 #[diesel(table_name = event_email_invites)]

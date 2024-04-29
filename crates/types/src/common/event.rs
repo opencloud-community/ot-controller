@@ -4,9 +4,9 @@
 
 //! Common types related to event
 
-use crate::core::{EventId, InviteCodeId, RoomId};
 use url::Url;
 
+use crate::core::{EventId, InviteCodeId, RoomId};
 #[allow(unused_imports)]
 use crate::imports::*;
 

@@ -398,11 +398,12 @@ impl Timer {
 mod test {
     use std::time::SystemTime;
 
-    use super::*;
-    use crate::Kind;
     use chrono::{DateTime, Duration};
     use opentalk_test_util::assert_eq_json;
     use opentalk_types::{core::Timestamp, signaling::timer::status::TimerStatus};
+
+    use super::*;
+    use crate::Kind;
 
     #[test]
     fn timer_status_without_ready_status() {

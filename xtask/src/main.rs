@@ -2,9 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::path::PathBuf;
+
 use clap::Parser;
 use snafu::Snafu;
-use std::path::PathBuf;
 
 mod db_schema;
 

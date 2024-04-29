@@ -3,16 +3,12 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Auth related API structs and Endpoints
-use super::{events::EventPoliciesBuilderExt, rooms::RoomsPoliciesBuilderExt};
-use crate::{
-    oidc::{IdTokenInfo, OidcContext, VerifyError},
-    settings::SharedSettingsActix,
-};
+use core::mem::take;
+
 use actix_web::{
     get, post,
     web::{Data, Json},
 };
-use core::mem::take;
 use kustos::prelude::PoliciesBuilder;
 use log::error;
 use opentalk_controller_settings::{TariffAssignment, TariffStatusMapping, TenantAssignment};
@@ -29,6 +25,12 @@ use opentalk_types::{
         v1::auth::{GetLoginResponse, OidcProvider, PostLoginRequestBody, PostLoginResponse},
     },
     core::{EventId, GroupName, RoomId, TariffStatus, TenantId},
+};
+
+use super::{events::EventPoliciesBuilderExt, rooms::RoomsPoliciesBuilderExt};
+use crate::{
+    oidc::{IdTokenInfo, OidcContext, VerifyError},
+    settings::SharedSettingsActix,
 };
 
 mod create_user;

@@ -4,13 +4,12 @@
 
 //! Signaling events for the `moderation` namespace
 
+#[allow(unused_imports)]
+use crate::imports::*;
 use crate::{
     core::ParticipantId,
     signaling::control::{AssociatedParticipant, Participant},
 };
-
-#[allow(unused_imports)]
-use crate::imports::*;
 
 /// Events sent out by the `moderation` module
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -107,9 +106,10 @@ impl From<Error> for ModerationEvent {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use pretty_assertions::assert_eq;
     use serde_json::json;
+
+    use super::*;
 
     #[test]
     fn kicked() {

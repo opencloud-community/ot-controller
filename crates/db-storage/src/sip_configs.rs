@@ -2,14 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::schema::sip_configs;
-use crate::rooms::Room;
-use crate::schema::rooms;
-use diesel::prelude::*;
-use diesel::{ExpressionMethods, Identifiable, QueryDsl, Queryable};
+use diesel::{prelude::*, ExpressionMethods, Identifiable, QueryDsl, Queryable};
 use diesel_async::RunQueryDsl;
 use opentalk_database::{DatabaseError, DbConnection, Result};
 use opentalk_types::core::{CallInId, CallInPassword, RoomId};
+
+use super::schema::sip_configs;
+use crate::{rooms::Room, schema::rooms};
 
 /// Diesel SipConfig struct
 #[derive(Debug, Clone, Queryable, Identifiable)]

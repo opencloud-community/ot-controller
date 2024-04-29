@@ -5,7 +5,6 @@
 //! Signaling commands for the `recording` namespace
 
 use crate::core::ParticipantId;
-
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -41,9 +40,10 @@ pub struct ParticipantSelection {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use pretty_assertions::assert_eq;
     use serde_json::json;
+
+    use super::*;
 
     #[test]
     fn select_writer() {

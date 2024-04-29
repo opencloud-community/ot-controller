@@ -2,10 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use super::ChoiceId;
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::ChoiceId;
 
 /// Represents the polling count for a poll choice
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -4,12 +4,10 @@
 
 //! Types related to signaling events in the `media` namespace
 
+use super::{command::Target, MediaSessionType, ParticipantSpeakingState, TrickleCandidate};
 use crate::core::ParticipantId;
-
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::{command::Target, MediaSessionType, ParticipantSpeakingState, TrickleCandidate};
 
 /// The direction of a media link
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -201,9 +199,10 @@ impl From<Error> for MediaEvent {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use pretty_assertions::assert_eq;
     use serde_json::json;
+
+    use super::*;
 
     #[test]
     fn sdp_offer() {

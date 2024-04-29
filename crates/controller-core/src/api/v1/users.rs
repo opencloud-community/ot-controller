@@ -7,44 +7,47 @@
 //! The defined structs are exposed to the REST API and will be serialized/deserialized. Similar
 //! structs are defined in the Database crate [`opentalk_db_storage`] for database operations.
 
-use super::response::NoContent;
-use crate::api::signaling::SignalingModules;
-use crate::api::v1::ApiResponse;
-use crate::caches::Caches;
-use crate::oidc::decode_token;
-use crate::oidc::UserClaims;
-use crate::settings::SharedSettingsActix;
-use actix_web::web::{Data, Json, Path, Query, ReqData};
-use actix_web::{get, patch, Either};
+use actix_web::{
+    get, patch,
+    web::{Data, Json, Path, Query, ReqData},
+    Either,
+};
 use chrono::Utc;
 use openidconnect::AccessToken;
 use opentalk_controller_settings::TenantAssignment;
 use opentalk_database::Db;
-use opentalk_db_storage::assets;
 use opentalk_db_storage::{
+    assets,
     tariffs::Tariff,
     tenants::Tenant,
     users::{email_to_libravatar_url, UpdateUser, User},
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
-use opentalk_types::api::v1::order::AssetSorting;
-use opentalk_types::api::v1::order::SortingQuery;
-use opentalk_types::api::v1::pagination::PagePaginationQuery;
-use opentalk_types::api::v1::users::GetUserAssetsResponse;
 use opentalk_types::{
     api::{
         error::ApiError,
-        v1::users::{
-            GetFindQuery, GetFindResponseItem, PatchMeBody, PrivateUserProfile, PublicUserProfile,
-            UnregisteredUser,
+        v1::{
+            order::{AssetSorting, SortingQuery},
+            pagination::PagePaginationQuery,
+            users::{
+                GetFindQuery, GetFindResponseItem, GetUserAssetsResponse, PatchMeBody,
+                PrivateUserProfile, PublicUserProfile, UnregisteredUser,
+            },
         },
     },
     common::tariff::TariffResource,
     core::UserId,
 };
-use snafu::Report;
-use snafu::{ResultExt, Whatever};
+use snafu::{Report, ResultExt, Whatever};
 use validator::Validate;
+
+use super::response::NoContent;
+use crate::{
+    api::{signaling::SignalingModules, v1::ApiResponse},
+    caches::Caches,
+    oidc::{decode_token, UserClaims},
+    settings::SharedSettingsActix,
+};
 
 const MAX_USER_SEARCH_RESULTS: usize = 20;
 

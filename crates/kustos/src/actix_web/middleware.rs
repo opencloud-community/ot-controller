@@ -3,29 +3,37 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Actix-web middleware based on <https://github.com/casbin-rs/actix-casbin-auth>
-use crate::actix_web::{Invite, User};
-use crate::internal::{block, synced_enforcer::SyncedEnforcer};
-use crate::policy::{InvitePolicy, UserPolicy};
-use crate::subject::PolicyInvite;
-use actix_web::dev::{Service, Transform};
+use std::{
+    cell::RefCell,
+    ops::{Deref, DerefMut},
+    pin::Pin,
+    rc::Rc,
+    str::FromStr,
+    sync::Arc,
+    task::{Context, Poll},
+};
+
 use actix_web::{
-    dev::ServiceRequest, dev::ServiceResponse, Error, HttpMessage, HttpResponse, Result,
+    dev::{Service, ServiceRequest, ServiceResponse, Transform},
+    Error, HttpMessage, HttpResponse, Result,
 };
 use casbin::CoreApi;
-use futures::future::{ok, Ready};
-use futures::Future;
+use futures::{
+    future::{ok, Ready},
+    Future,
+};
 use itertools::Itertools;
 use kustos_shared::{access::AccessMethod, subject::PolicyUser};
 use snafu::Report;
-use std::cell::RefCell;
-use std::ops::{Deref, DerefMut};
-use std::pin::Pin;
-use std::rc::Rc;
-use std::str::FromStr;
-use std::sync::Arc;
-use std::task::{Context, Poll};
 use tokio::sync::RwLock;
 use tracing_futures::Instrument;
+
+use crate::{
+    actix_web::{Invite, User},
+    internal::{block, synced_enforcer::SyncedEnforcer},
+    policy::{InvitePolicy, UserPolicy},
+    subject::PolicyInvite,
+};
 
 #[derive(Clone)]
 pub struct KustosService {
@@ -214,11 +222,10 @@ fn get_unprefixed_path(input_path: &str) -> Result<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use casbin::function_map::key_match2;
-    use casbin::prelude::*;
-    use casbin::{DefaultModel, Result};
+    use casbin::{function_map::key_match2, prelude::*, DefaultModel, Result};
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     fn to_owned(v: Vec<&str>) -> Vec<String> {
         v.into_iter().map(ToOwned::to_owned).collect()

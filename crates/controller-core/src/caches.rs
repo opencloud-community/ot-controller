@@ -2,10 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use core::time::Duration;
+
 use opentalk_signaling_core::RedisConnection;
 
 use crate::api::v1::middleware::user_auth::UserAccessTokenCache;
-use core::time::Duration;
 
 /// Holds all application level caches
 pub struct Caches {

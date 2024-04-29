@@ -4,7 +4,11 @@
 
 //! Breakout room module
 
-use self::storage::BreakoutConfig;
+use std::{
+    collections::HashMap,
+    time::{Duration, SystemTime},
+};
+
 use actix_http::ws::CloseCode;
 use futures::FutureExt;
 use opentalk_signaling_core::{
@@ -24,9 +28,9 @@ use opentalk_types::{
     },
 };
 use snafu::whatever;
-use std::collections::HashMap;
-use std::time::{Duration, SystemTime};
 use tokio::time::sleep;
+
+use self::storage::BreakoutConfig;
 
 pub mod exchange;
 pub mod storage;

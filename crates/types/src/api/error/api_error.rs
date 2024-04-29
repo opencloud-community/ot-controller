@@ -8,11 +8,10 @@ use std::borrow::Cow;
 use http::{HeaderValue, StatusCode};
 use itertools::Itertools;
 
+use super::{ErrorBody, StandardErrorBody, ValidationErrorBody, ValidationErrorEntry};
 use crate::api::v1::rooms::StartRoomError;
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::{ErrorBody, StandardErrorBody, ValidationErrorBody, ValidationErrorEntry};
 
 /// The default REST API error
 ///
@@ -427,10 +426,11 @@ fn convert_validation_code(code: &str) -> &'static str {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use validator::Validate;
+
+    use super::*;
 
     #[derive(Debug, Validate)]
     struct ValidationTester {

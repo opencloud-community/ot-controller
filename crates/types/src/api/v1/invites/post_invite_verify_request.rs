@@ -2,10 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use super::PostInviteVerifyRequestBody;
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::PostInviteVerifyRequestBody;
 
 /// Verify body for *POST /invite/verify*
 #[derive(Clone, Debug, PartialEq, Eq)]

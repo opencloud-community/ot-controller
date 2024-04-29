@@ -4,24 +4,19 @@
 
 use std::sync::Arc;
 
-use super::response::NoContent;
-use super::{ApiResponse, DefaultApiResult};
-use crate::api::v1::events::shared_folder::put_shared_folder;
-use crate::api::v1::rooms::RoomsPoliciesBuilderExt;
-use crate::api::v1::util::GetUserProfilesBatched;
-use crate::services::{
-    ExternalMailRecipient, MailRecipient, MailService, UnregisteredMailRecipient,
+use actix_web::{
+    delete, get, patch, post,
+    web::{Data, Json, Path, Query, ReqData},
+    Either,
 };
-use crate::settings::SharedSettingsActix;
-use actix_web::web::{Data, Json, Path, Query, ReqData};
-use actix_web::{delete, get, patch, post, Either};
 use chrono::{DateTime, Datelike, NaiveTime, Utc};
 use chrono_tz::Tz;
-use diesel_async::scoped_futures::ScopedFutureExt;
-use diesel_async::AsyncConnection;
-use kustos::policies_builder::{GrantingAccess, PoliciesBuilder};
-use kustos::prelude::{AccessMethod, IsSubject};
-use kustos::{Authz, Resource, ResourceId};
+use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
+use kustos::{
+    policies_builder::{GrantingAccess, PoliciesBuilder},
+    prelude::{AccessMethod, IsSubject},
+    Authz, Resource, ResourceId,
+};
 use opentalk_controller_settings::{Settings, TenantAssignment};
 use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
@@ -37,9 +32,7 @@ use opentalk_db_storage::{
     tenants::Tenant,
     users::{email_to_libravatar_url, User},
 };
-use opentalk_keycloak_admin::users::TenantFilter;
-use opentalk_keycloak_admin::KeycloakAdminClient;
-use opentalk_types::core::RoomId;
+use opentalk_keycloak_admin::{users::TenantFilter, KeycloakAdminClient};
 use opentalk_types::{
     api::{
         error::{
@@ -64,12 +57,22 @@ use opentalk_types::{
         shared_folder::{SharedFolder, SharedFolderAccess},
         streaming::{RoomStreamingTarget, StreamingTarget},
     },
-    core::{DateTimeTz, EventId, EventInviteStatus, TimeZone, Timestamp, UserId},
+    core::{DateTimeTz, EventId, EventInviteStatus, RoomId, TimeZone, Timestamp, UserId},
 };
 use rrule::{Frequency, RRuleSet};
 use serde::Deserialize;
 use snafu::Report;
 use validator::Validate;
+
+use super::{response::NoContent, ApiResponse, DefaultApiResult};
+use crate::{
+    api::v1::{
+        events::shared_folder::put_shared_folder, rooms::RoomsPoliciesBuilderExt,
+        util::GetUserProfilesBatched,
+    },
+    services::{ExternalMailRecipient, MailRecipient, MailService, UnregisteredMailRecipient},
+    settings::SharedSettingsActix,
+};
 
 pub mod favorites;
 pub mod instances;
@@ -1973,10 +1976,12 @@ async fn enrich_from_keycloak(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use std::time::SystemTime;
+
     use opentalk_test_util::assert_eq_json;
     use opentalk_types::core::{InviteRole, RoomId, TimeZone, UserId};
-    use std::time::SystemTime;
+
+    use super::*;
 
     #[test]
     fn rrulset_parse_works_as_used_in_this_crate() {

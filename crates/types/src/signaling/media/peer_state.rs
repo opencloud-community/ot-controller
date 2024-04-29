@@ -4,10 +4,9 @@
 
 //! Peer frontend data for `recording` namespace
 
+use super::ParticipantMediaState;
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::ParticipantMediaState;
 
 /// The state of other participants in the `recording` module.
 ///

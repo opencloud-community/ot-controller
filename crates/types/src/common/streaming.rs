@@ -4,13 +4,14 @@
 
 //! This module contains commonly used types for streaming target endpoints.
 
-use crate::common::event::StreamingLink;
 use url::Url;
-
-use crate::core::{StreamingKey, StreamingTargetId};
 
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::{
+    common::event::StreamingLink,
+    core::{StreamingKey, StreamingTargetId},
+};
 
 /// A streaming target kind
 #[derive(Clone, Debug, PartialEq, Eq)]

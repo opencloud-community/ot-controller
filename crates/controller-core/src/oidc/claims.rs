@@ -2,10 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::jwt;
 use chrono::{DateTime, Utc};
 use email_address::EmailAddress;
 use serde::Deserialize;
+
+use super::jwt;
 
 #[derive(Deserialize)]
 pub struct ServiceClaims {

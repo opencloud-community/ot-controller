@@ -5,7 +5,6 @@
 //! Signaling commands for the `chat` namespace
 
 use super::Scope;
-
 use crate::core::Timestamp;
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -55,11 +54,11 @@ pub struct SendMessage {
 
 #[cfg(test)]
 mod test {
-    use crate::core::{GroupName, ParticipantId};
-
-    use super::*;
     use pretty_assertions::assert_eq;
     use serde_json::json;
+
+    use super::*;
+    use crate::core::{GroupName, ParticipantId};
 
     #[test]
     fn user_private_message() {

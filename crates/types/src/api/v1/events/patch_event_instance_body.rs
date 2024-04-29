@@ -2,10 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::{api::v1::events::EventStatus, core::DateTimeTz};
-
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::{api::v1::events::EventStatus, core::DateTimeTz};
 
 /// Request body for the `PATCH /events/{event_id}/{instance_id}` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]

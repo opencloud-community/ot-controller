@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::pin::Pin;
+
 use actix_web::{
     dev::{Service, ServiceRequest, ServiceResponse, Transform},
     http::header::{HeaderName, HeaderValue},
@@ -11,7 +13,6 @@ use futures::{
     future::{ready, Ready},
     Future, FutureExt,
 };
-use std::pin::Pin;
 use tracing_actix_web::RequestId;
 
 #[derive(Clone)]

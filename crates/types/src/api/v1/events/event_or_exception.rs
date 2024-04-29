@@ -2,10 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use super::{EventExceptionResource, EventResource};
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::{EventExceptionResource, EventResource};
 
 /// Return type of the `GET /events` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]

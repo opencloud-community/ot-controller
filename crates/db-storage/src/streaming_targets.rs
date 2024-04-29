@@ -2,17 +2,16 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::schema::room_streaming_targets;
 use diesel::{ExpressionMethods, Identifiable, QueryDsl, Queryable};
 use diesel_async::RunQueryDsl;
 use opentalk_database::{DatabaseError, DbConnection, Result};
-use opentalk_types::common::streaming::{
-    RoomStreamingTarget, StreamingTarget, StreamingTargetKind,
+use opentalk_types::{
+    common::streaming::{RoomStreamingTarget, StreamingTarget, StreamingTargetKind},
+    core::{RoomId, StreamingKey, StreamingKind, StreamingTargetId},
 };
-use opentalk_types::core::{RoomId, StreamingKey, StreamingKind, StreamingTargetId};
 use snafu::Report;
 
-use crate::rooms::Room;
+use crate::{rooms::Room, schema::room_streaming_targets};
 
 #[derive(Debug, Queryable, Identifiable, Associations, Insertable)]
 #[diesel(belongs_to(Room, foreign_key = room_id))]

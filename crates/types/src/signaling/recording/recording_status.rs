@@ -2,10 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use super::RecordingId;
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::RecordingId;
 
 /// Status of a recording
 #[derive(Debug, Clone, PartialEq, Eq)]

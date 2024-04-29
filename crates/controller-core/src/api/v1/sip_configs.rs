@@ -2,14 +2,16 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::settings::SharedSettingsActix;
-
-use super::util::require_feature;
-use actix_web::web::{Data, Json, Path};
-use actix_web::{delete, get, put, HttpResponse};
+use actix_web::{
+    delete, get, put,
+    web::{Data, Json, Path},
+    HttpResponse,
+};
 use opentalk_database::Db;
-use opentalk_db_storage::rooms::Room;
-use opentalk_db_storage::sip_configs::{NewSipConfig, SipConfig, UpdateSipConfig};
+use opentalk_db_storage::{
+    rooms::Room,
+    sip_configs::{NewSipConfig, SipConfig, UpdateSipConfig},
+};
 use opentalk_types::{
     api::{
         error::ApiError,
@@ -19,6 +21,9 @@ use opentalk_types::{
     core::RoomId,
 };
 use validator::Validate;
+
+use super::util::require_feature;
+use crate::settings::SharedSettingsActix;
 
 /// API Endpoint *GET /rooms/{room_id}/sip*
 ///

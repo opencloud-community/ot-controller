@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::time::Duration;
+
 use futures::{stream::once, FutureExt};
 use opentalk_signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
@@ -17,7 +19,6 @@ use opentalk_types::signaling::{
     Role,
 };
 use snafu::Report;
-use std::time::Duration;
 use tokio::time::sleep;
 
 pub mod exchange;

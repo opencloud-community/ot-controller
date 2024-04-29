@@ -2,13 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::SignalingRoomId;
-
 use opentalk_types::{
     core::{ParticipantId, RoomId, UserId},
     signaling::control,
 };
 use serde::{Deserialize, Serialize};
+
+use crate::SignalingRoomId;
 
 /// Control messages sent between controller modules to communicate changes inside a room
 #[derive(Debug, Serialize, Deserialize)]

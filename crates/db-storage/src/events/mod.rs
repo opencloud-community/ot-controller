@@ -4,39 +4,40 @@
 
 use std::collections::BTreeSet;
 
-use crate::rooms::Room;
-use crate::schema::{
-    event_exceptions, event_favorites, event_invites, event_shared_folders, events, rooms,
-    sip_configs, tariffs, users,
-};
-use crate::sip_configs::SipConfig;
-use crate::tariffs::Tariff;
-use crate::users::User;
-use crate::utils::HasUsers;
 use chrono::{DateTime, Utc};
 use chrono_tz::Tz;
 use derive_more::{AsRef, Display, From, FromStr, Into};
-use diesel::expression::AsExpression;
-use diesel::pg::Pg;
-use diesel::prelude::*;
-use diesel::sql_types::{Nullable, Record, Timestamptz, Uuid};
 use diesel::{
+    expression::AsExpression,
+    pg::Pg,
+    prelude::*,
+    sql_types::{Nullable, Record, Timestamptz, Uuid},
     BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods,
     OptionalExtension, PgSortExpressionMethods, QueryDsl, Queryable,
 };
-use diesel_async::scoped_futures::ScopedFutureExt;
-use diesel_async::{AsyncConnection, RunQueryDsl};
+use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection, RunQueryDsl};
 use opentalk_database::{DatabaseError, DbConnection, Paginate, Result};
 use opentalk_diesel_newtype::DieselNewtype;
-use opentalk_types::common::event::EventInfo;
-use opentalk_types::core::{
-    EventId, EventInviteStatus, InviteRole, RoomId, TenantId, TimeZone, UserId,
+use opentalk_types::{
+    common::event::EventInfo,
+    core::{EventId, EventInviteStatus, InviteRole, RoomId, TenantId, TimeZone, UserId},
+    sql_enum,
 };
-use opentalk_types::sql_enum;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 
 use self::shared_folders::EventSharedFolder;
+use crate::{
+    rooms::Room,
+    schema::{
+        event_exceptions, event_favorites, event_invites, event_shared_folders, events, rooms,
+        sip_configs, tariffs, users,
+    },
+    sip_configs::SipConfig,
+    tariffs::Tariff,
+    users::User,
+    utils::HasUsers,
+};
 
 #[derive(
     AsRef,

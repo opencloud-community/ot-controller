@@ -2,12 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use super::PostRoomsStartRequestBody;
 use crate::core::RoomId;
-
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::PostRoomsStartRequestBody;
 
 /// POST request to */rooms/{room_id}/start*
 #[derive(Clone, Debug, PartialEq, Eq)]

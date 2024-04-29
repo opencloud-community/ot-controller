@@ -2,11 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::response::NoContent;
-use super::ApiResponse;
 use actix_http::StatusCode;
-use actix_web::web::{Data, Path, Query};
-use actix_web::{delete, get, HttpResponse};
+use actix_web::{
+    delete, get,
+    web::{Data, Path, Query},
+    HttpResponse,
+};
 use opentalk_database::Db;
 use opentalk_db_storage::assets::Asset;
 use opentalk_signaling_core::{
@@ -20,6 +21,8 @@ use opentalk_types::{
     },
     core::{AssetId, RoomId},
 };
+
+use super::{response::NoContent, ApiResponse};
 
 #[get("/rooms/{room_id}/assets")]
 pub async fn room_assets(

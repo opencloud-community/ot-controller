@@ -3,24 +3,26 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Includes an enforcer that supports a background task which reloads the adapter every n seconds
-use super::rbac_api_ex::RbacApiEx;
-use crate::metrics::KustosMetrics;
-use crate::{PolicyUser, UserPolicy};
-use async_trait::async_trait;
-use casbin::rhai::ImmutableString;
-use casbin::{
-    Adapter, CoreApi, Effector, EnforceArgs, Enforcer, Event, EventData, Filter, MgmtApi, Model,
-    RbacApi, RoleManager, TryIntoAdapter, TryIntoModel,
+use std::{
+    collections::HashMap,
+    convert::TryInto,
+    sync::Arc,
+    time::{Duration, Instant},
 };
-use casbin::{EventEmitter, Result};
+
+use async_trait::async_trait;
+use casbin::{
+    rhai::ImmutableString, Adapter, CoreApi, Effector, EnforceArgs, Enforcer, Event, EventData,
+    EventEmitter, Filter, MgmtApi, Model, RbacApi, Result, RoleManager, TryIntoAdapter,
+    TryIntoModel,
+};
 use kustos_shared::internal::{ToCasbin, ToCasbinString};
 use parking_lot as pl;
 use snafu::Report;
-use std::collections::HashMap;
-use std::convert::TryInto;
-use std::sync::Arc;
-use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
+
+use super::rbac_api_ex::RbacApiEx;
+use crate::{metrics::KustosMetrics, PolicyUser, UserPolicy};
 
 type EventCallback = fn(&mut SyncedEnforcer, EventData);
 

@@ -15,11 +15,11 @@ pub struct Cursor<T>(pub T);
 
 #[cfg(feature = "serde")]
 mod serde_impls {
-    use super::*;
-
     use std::marker::PhantomData;
 
     use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
+
+    use super::*;
 
     impl<T> Cursor<T>
     where

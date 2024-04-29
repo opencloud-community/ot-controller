@@ -20,8 +20,9 @@ fn trim_display_name(display_name: String) -> String {
 
 #[cfg(test)]
 mod test {
-    use super::trim_display_name;
     use pretty_assertions::assert_eq;
+
+    use super::trim_display_name;
 
     #[test]
     fn trim_display_name_leading_spaces() {

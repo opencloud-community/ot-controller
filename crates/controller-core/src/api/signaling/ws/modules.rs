@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::{any::Any, collections::HashMap, marker::PhantomData, sync::Arc};
+
 use actix_http::ws::{CloseCode, Message};
 use futures::stream::SelectAll;
 use opentalk_signaling_core::{AnyStream, Event, InitContext, RedisConnection, SignalingMetrics};
@@ -14,10 +16,6 @@ use opentalk_types::{
 };
 use serde_json::Value;
 use snafu::{Report, ResultExt, Snafu};
-use std::any::Any;
-use std::collections::HashMap;
-use std::marker::PhantomData;
-use std::sync::Arc;
 
 use crate::{
     api::signaling::ws::{

@@ -2,19 +2,20 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::common::make_user;
 use chrono::{TimeZone as _, Utc};
 use chrono_tz::Tz;
 use opentalk_database::DbConnection;
-use opentalk_db_storage::events::{
-    Event, EventInvite, GetEventsCursor, NewEvent, NewEventInvite, UpdateEventInvite,
+use opentalk_db_storage::{
+    events::{Event, EventInvite, GetEventsCursor, NewEvent, NewEventInvite, UpdateEventInvite},
+    rooms::NewRoom,
+    tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId},
+    users::User,
 };
-use opentalk_db_storage::rooms::NewRoom;
-use opentalk_db_storage::tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId};
-use opentalk_db_storage::users::User;
 use opentalk_types::core::{EventId, EventInviteStatus, InviteRole, TimeZone, UserId};
 use pretty_assertions::assert_eq;
 use serial_test::serial;
+
+use crate::common::make_user;
 
 mod common;
 

@@ -4,10 +4,9 @@
 
 //! Signaling events for the `recording` namespace
 
+use super::RecordingId;
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::RecordingId;
 
 /// Events sent out by the `recording` module
 #[derive(Clone, Debug, PartialEq, Eq)]

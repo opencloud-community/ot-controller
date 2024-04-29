@@ -2,16 +2,25 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::{
+    future,
+    mem::replace,
+    ops::ControlFlow,
+    pin::Pin,
+    sync::Arc,
+    time::{Duration, Instant},
+};
+
 use actix::Addr;
 use actix_http::ws::{CloseCode, CloseReason, Message};
 use bytestring::ByteString;
-use futures::stream::SelectAll;
-use futures::Future;
+use futures::{stream::SelectAll, Future};
 use kustos::Authz;
 use opentalk_controller_settings::SharedSettings;
 use opentalk_database::{Db, DbConnection};
-use opentalk_db_storage::utils::build_event_info;
-use opentalk_db_storage::{events::EventInvite, rooms::Room, tariffs::Tariff, users::User};
+use opentalk_db_storage::{
+    events::EventInvite, rooms::Room, tariffs::Tariff, users::User, utils::build_event_info,
+};
 use opentalk_signaling_core::{
     control::{
         self, exchange,
@@ -37,27 +46,25 @@ use opentalk_types::{
 };
 use serde_json::Value;
 use snafu::{whatever, Report, ResultExt, Snafu};
-use std::future;
-use std::mem::replace;
-use std::ops::ControlFlow;
-use std::pin::Pin;
-use std::sync::Arc;
-use std::time::{Duration, Instant};
-use tokio::sync::{broadcast, mpsc};
-use tokio::time::{interval, sleep};
+use tokio::{
+    sync::{broadcast, mpsc},
+    time::{interval, sleep},
+};
 use tokio_stream::StreamExt;
 use uuid::Uuid;
 
-use super::modules::{
-    DynBroadcastEvent, DynEventCtx, DynTargetedEvent, Modules, NoSuchModuleError,
-};
-use super::{actor::WebSocketActor, RunnerMessage};
 use super::{
-    DestroyContext, ExchangeBinding, ExchangePublish, NamespacedCommand, NamespacedEvent, Timestamp,
+    actor::WebSocketActor,
+    modules::{DynBroadcastEvent, DynEventCtx, DynTargetedEvent, Modules, NoSuchModuleError},
+    DestroyContext, ExchangeBinding, ExchangePublish, NamespacedCommand, NamespacedEvent,
+    RunnerMessage, Timestamp,
 };
 use crate::api::signaling::{
-    echo::Echo, moderation, resumption::ResumptionError, resumption::ResumptionTokenKeepAlive,
-    trim_display_name, ws::actor::WsCommand,
+    echo::Echo,
+    moderation,
+    resumption::{ResumptionError, ResumptionTokenKeepAlive},
+    trim_display_name,
+    ws::actor::WsCommand,
 };
 
 mod call_in;

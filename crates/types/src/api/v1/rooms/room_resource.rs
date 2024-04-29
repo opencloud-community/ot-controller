@@ -4,10 +4,9 @@
 
 use chrono::{DateTime, Utc};
 
-use crate::{api::v1::users::PublicUserProfile, core::RoomId};
-
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::{api::v1::users::PublicUserProfile, core::RoomId};
 
 /// A Room
 ///

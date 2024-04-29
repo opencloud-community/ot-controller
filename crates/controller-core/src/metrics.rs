@@ -2,21 +2,22 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use actix_http::body::BoxBody;
-use actix_http::StatusCode;
-use actix_web::dev::PeerAddr;
-use actix_web::web::Data;
-use actix_web::{get, HttpResponse};
+use std::sync::Arc;
+
+use actix_http::{body::BoxBody, StatusCode};
+use actix_web::{dev::PeerAddr, get, web::Data, HttpResponse};
 use kustos::metrics::KustosMetrics;
 use opentalk_database::DatabaseMetrics;
 use opentalk_mail_worker_protocol::MailTask;
 use opentalk_signaling_core::{RedisMetrics, SignalingMetrics};
-use opentelemetry::metrics::{Counter, Histogram, MetricsError, Unit};
-use opentelemetry::{global, Key};
+use opentelemetry::{
+    global,
+    metrics::{Counter, Histogram, MetricsError, Unit},
+    Key,
+};
 use opentelemetry_sdk::metrics::{new_view, Aggregation, Instrument, SdkMeterProvider, Stream};
 use prometheus::{Encoder, Registry, TextEncoder};
 use snafu::{Backtrace, Snafu};
-use std::sync::Arc;
 
 use crate::{settings::SharedSettingsActix, Result};
 

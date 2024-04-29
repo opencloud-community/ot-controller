@@ -19,12 +19,11 @@ pub mod state;
 pub use media_session_state::MediaSessionState;
 pub use media_session_type::{MediaSessionType, MediaSessionTypeParseError};
 pub use participant_speaking_state::ParticipantSpeakingState;
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 pub use speaking_state::SpeakingState;
 pub use trickle_candidate::TrickleCandidate;
 pub use update_speaking_state::UpdateSpeakingState;
-
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
 
 /// The media state of a participant
 #[derive(Debug, Default, PartialEq, Eq, Clone)]

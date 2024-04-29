@@ -2,15 +2,24 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::settings::{self, Connection};
+use std::{
+    borrow::{Borrow, Cow},
+    cmp::min,
+    collections::HashSet,
+    convert::{TryFrom, TryInto},
+    future::Future,
+    hash::{Hash, Hasher},
+    sync::Arc,
+    task::Poll,
+    time::Duration,
+};
+
 use futures::{ready, stream::FuturesUnordered};
 use lapin_pool::{RabbitMqChannel, RabbitMqPool};
 use opentalk_controller_settings::SharedSettings;
-use opentalk_janus_client::outgoing::{
-    VideoRoomPluginConfigurePublisher, VideoRoomPluginConfigureSubscriber,
-};
-use opentalk_janus_client::types::{SdpAnswer, SdpOffer};
 use opentalk_janus_client::{
+    outgoing::{VideoRoomPluginConfigurePublisher, VideoRoomPluginConfigureSubscriber},
+    types::{SdpAnswer, SdpOffer},
     ClientId, JanusMessage, JsepType, RoomId as JanusRoomId, TrickleCandidate,
 };
 use opentalk_signaling_core::{
@@ -20,20 +29,16 @@ use opentalk_types::signaling::media::{command::SubscriberConfiguration, MediaSe
 use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
 use snafu::{whatever, OptionExt, Report, ResultExt};
-use std::borrow::{Borrow, Cow};
-use std::cmp::min;
-use std::collections::HashSet;
-use std::convert::{TryFrom, TryInto};
-use std::future::Future;
-use std::hash::{Hash, Hasher};
-use std::sync::Arc;
-use std::task::Poll;
-use std::time::Duration;
-use tokio::sync::{broadcast, mpsc, oneshot, RwLock, RwLockReadGuard};
-use tokio::time::{interval_at, sleep, Instant, MissedTickBehavior};
-use tokio_stream::wrappers::errors::BroadcastStreamRecvError;
-use tokio_stream::wrappers::BroadcastStream;
-use tokio_stream::StreamExt;
+use tokio::{
+    sync::{broadcast, mpsc, oneshot, RwLock, RwLockReadGuard},
+    time::{interval_at, sleep, Instant, MissedTickBehavior},
+};
+use tokio_stream::{
+    wrappers::{errors::BroadcastStreamRecvError, BroadcastStream},
+    StreamExt,
+};
+
+use crate::settings::{self, Connection};
 
 mod types;
 

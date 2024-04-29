@@ -2,11 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use super::InstanceId;
 use crate::core::EventId;
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::InstanceId;
 
 /// Path parameters for the `GET /events/{event_id}/instances/{instance_id}` endpoint
 #[derive(Debug, Eq, PartialEq, Clone)]

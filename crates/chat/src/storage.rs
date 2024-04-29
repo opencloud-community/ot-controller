@@ -2,6 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::{
+    collections::{HashMap, HashSet},
+    str::FromStr,
+};
+
 use opentalk_r3dlock::{Mutex, MutexGuard};
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 use opentalk_types::{
@@ -11,10 +16,6 @@ use opentalk_types::{
 use redis::AsyncCommands;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use snafu::{OptionExt, ResultExt};
-use std::{
-    collections::{HashMap, HashSet},
-    str::FromStr,
-};
 use uuid::Uuid;
 
 /// Key to the chat history inside a room
@@ -280,14 +281,15 @@ pub async fn delete_last_seen_timestamp_global(
 
 #[cfg(test)]
 mod test {
-    use super::*;
+    use std::time::{Duration, SystemTime};
+
     use chrono::{DateTime, Utc};
     use opentalk_types::core::RoomId;
-    use redis::aio::ConnectionManager;
-    use redis::ToRedisArgs;
+    use redis::{aio::ConnectionManager, ToRedisArgs};
     use serial_test::serial;
-    use std::time::{Duration, SystemTime};
     use uuid::uuid;
+
+    use super::*;
 
     pub const ROOM: SignalingRoomId = SignalingRoomId::nil();
     pub const SELF: ParticipantId = ParticipantId::nil();

@@ -7,7 +7,6 @@
 use std::time::Duration;
 
 use crate::core::ParticipantId;
-
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -58,10 +57,11 @@ pub struct RoomParameter {
 mod test {
     use std::time::Duration;
 
-    use super::*;
-    use crate::{core::ParticipantId, signaling::breakout::command::RoomParameter};
     use pretty_assertions::assert_eq;
     use serde_json::json;
+
+    use super::*;
+    use crate::{core::ParticipantId, signaling::breakout::command::RoomParameter};
 
     #[test]
     fn breakout_start() {

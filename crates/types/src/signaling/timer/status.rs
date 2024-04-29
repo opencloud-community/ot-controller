@@ -4,10 +4,9 @@
 
 //! Status data for `timer` namespace
 
+use super::TimerConfig;
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::TimerConfig;
 
 /// Status of and belonging to a currently active timer
 #[derive(Debug, PartialEq, Eq)]

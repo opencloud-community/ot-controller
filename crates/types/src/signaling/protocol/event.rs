@@ -5,7 +5,6 @@
 //! Types related to signaling events in the `protocol` namespace
 
 use crate::core::AssetId;
-
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -89,10 +88,10 @@ impl From<Error> for ProtocolEvent {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use pretty_assertions::assert_eq;
-    use serde_json;
-    use serde_json::json;
+    use serde_json::{self, json};
+
+    use super::*;
 
     #[test]
     fn write_url() {

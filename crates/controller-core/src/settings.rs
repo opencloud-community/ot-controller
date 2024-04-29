@@ -3,14 +3,14 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Handles the application settings via a config file and environment variables.
-use actix_web::web::Data;
-use arc_swap::ArcSwap;
-use snafu::ResultExt;
 use std::sync::Arc;
 
-use crate::{cli::Args, Result};
-
+use actix_web::web::Data;
+use arc_swap::ArcSwap;
 pub use opentalk_controller_settings::*;
+use snafu::ResultExt;
+
+use crate::{cli::Args, Result};
 
 pub type SharedSettingsActix = Data<ArcSwap<Settings>>;
 

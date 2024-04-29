@@ -2,16 +2,20 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::metrics::EndpointMetrics;
+use std::{pin::Pin, sync::Arc, time::Instant};
+
 use actix_http::body::{BodySize, MessageBody};
-use actix_web::dev::{Service, ServiceRequest, ServiceResponse, Transform};
-use actix_web::Error;
-use futures::future::{ready, Ready};
-use futures::{Future, FutureExt};
+use actix_web::{
+    dev::{Service, ServiceRequest, ServiceResponse, Transform},
+    Error,
+};
+use futures::{
+    future::{ready, Ready},
+    Future, FutureExt,
+};
 use opentelemetry::Key;
-use std::pin::Pin;
-use std::sync::Arc;
-use std::time::Instant;
+
+use crate::metrics::EndpointMetrics;
 
 #[derive(Clone)]
 pub struct RequestMetrics {

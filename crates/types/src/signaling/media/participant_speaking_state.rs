@@ -2,12 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use super::SpeakingState;
 use crate::core::ParticipantId;
-
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::SpeakingState;
 
 /// The state of a recent or current speaker in the conference
 #[derive(Clone, Debug, PartialEq, Eq)]

@@ -4,10 +4,9 @@
 
 //! Signaling commands for the `recording` namespace
 
+use super::RecordingId;
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::RecordingId;
 
 /// Commands for the `recording` namespace
 #[derive(Clone, Debug, PartialEq, Eq)]

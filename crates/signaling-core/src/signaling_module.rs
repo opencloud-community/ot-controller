@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::{fmt::Debug, sync::Arc};
+
 use lapin_pool::RabbitMqPool;
 use opentalk_controller_settings::{Settings, SharedSettings};
 use opentalk_types::{
@@ -11,8 +13,6 @@ use opentalk_types::{
 use serde::{Deserialize, Serialize};
 use snafu::Snafu;
 use tokio::sync::broadcast;
-
-use std::{fmt::Debug, sync::Arc};
 
 use crate::{DestroyContext, Event, InitContext, ModuleContext, RedisConnection};
 

@@ -4,10 +4,9 @@
 
 //! Frontend data for `moderation` namespace
 
-use crate::signaling::control::Participant;
-
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::signaling::control::Participant;
 
 /// The state of the `moderation` module.
 ///

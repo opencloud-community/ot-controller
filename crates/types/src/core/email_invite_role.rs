@@ -4,7 +4,6 @@
 
 #[allow(unused_imports)]
 use crate::imports::*;
-
 use crate::{signaling::Role, sql_enum};
 
 sql_enum!(

@@ -2,7 +2,6 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::schema::{tenants, users};
 use chrono::{DateTime, Utc};
 use derive_more::{AsRef, Display, From, FromStr, Into};
 use diesel::prelude::*;
@@ -12,6 +11,8 @@ use opentalk_diesel_newtype::DieselNewtype;
 use opentalk_types::core::{TenantId, UserId};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
+
+use crate::schema::{tenants, users};
 
 #[derive(
     AsRef,

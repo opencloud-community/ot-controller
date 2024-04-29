@@ -2,31 +2,36 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::modules::{ModuleBuilder, ModuleBuilderImpl};
-use super::runner::Runner;
-use crate::api::signaling::resumption::{ResumptionData, ResumptionTokenKeepAlive};
-use crate::api::signaling::ticket::{TicketData, TicketRedisKey};
-use crate::api::signaling::ws::actor::WebSocketActor;
-use crate::settings::SharedSettingsActix;
-use actix_web::http::header;
-use actix_web::web::Data;
-use actix_web::{get, HttpMessage};
-use actix_web::{web, HttpRequest, HttpResponse};
+use std::{marker::PhantomData, time::Instant};
+
+use actix_web::{get, http::header, web, web::Data, HttpMessage, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
 use kustos::Authz;
 use opentalk_database::Db;
-use opentalk_db_storage::rooms::Room;
-use opentalk_db_storage::users::User;
+use opentalk_db_storage::{rooms::Room, users::User};
 use opentalk_signaling_core::{
     ExchangeHandle, ObjectStorage, Participant, RedisConnection, SignalingMetrics, SignalingModule,
 };
 use opentalk_types::api::error::ApiError;
 use snafu::Report;
-use std::marker::PhantomData;
-use std::time::Instant;
-use tokio::sync::{broadcast, mpsc};
-use tokio::task;
+use tokio::{
+    sync::{broadcast, mpsc},
+    task,
+};
 use tracing_actix_web::RequestId;
+
+use super::{
+    modules::{ModuleBuilder, ModuleBuilderImpl},
+    runner::Runner,
+};
+use crate::{
+    api::signaling::{
+        resumption::{ResumptionData, ResumptionTokenKeepAlive},
+        ticket::{TicketData, TicketRedisKey},
+        ws::actor::WebSocketActor,
+    },
+    settings::SharedSettingsActix,
+};
 
 #[derive(Default)]
 pub struct SignalingModules(Vec<Box<dyn ModuleBuilder>>);

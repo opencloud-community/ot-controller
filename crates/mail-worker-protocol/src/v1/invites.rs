@@ -2,8 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::{Event, EventException, ExternalUser, RegisteredUser, UnregisteredUser};
 use serde::{Deserialize, Serialize};
+
+use super::{Event, EventException, ExternalUser, RegisteredUser, UnregisteredUser};
 
 #[derive(Deserialize, Serialize, PartialEq, Eq, Debug)]
 pub struct RegisteredEventInvite {

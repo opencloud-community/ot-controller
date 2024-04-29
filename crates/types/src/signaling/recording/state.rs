@@ -4,10 +4,9 @@
 
 //! Frontend data for `recording` namespace
 
+use super::RecordingStatus;
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::RecordingStatus;
 
 /// The state of the `recording` module.
 ///

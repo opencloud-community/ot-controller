@@ -7,6 +7,8 @@
 //! ## Functionality
 //!
 //! Handles media related messages and manages their respective forwarding to janus-gateway via rabbitmq.
+use std::sync::Arc;
+
 use mcu::{
     LinkDirection, McuPool, MediaSessionKey, PublishConfiguration, Request, Response,
     TrickleMessage, WebRtcEvent,
@@ -32,7 +34,6 @@ use opentalk_types::{
 };
 use sessions::MediaSessions;
 use snafu::{whatever, OptionExt, Report};
-use std::sync::Arc;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 

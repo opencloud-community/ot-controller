@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use crate::core::{BreakoutRoomId, ParticipantId};
-
 #[allow(unused_imports)]
 use crate::imports::*;
 

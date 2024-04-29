@@ -37,11 +37,12 @@ sql_function!(fn soundex(x: Text) -> Text);
 
 // SQL types reexport for schema.rs
 pub mod sql_types {
-    pub use super::events::EventExceptionKindType as EventExceptionKind;
     pub use diesel::sql_types::*;
     pub use opentalk_types::core::{
         EmailInviteRoleType as EmailInviteRole, EventInviteStatusType as EventInviteStatus,
         InviteRoleType as InviteRole, StreamingKindType as StreamingKind,
         TariffStatusType as TariffStatus,
     };
+
+    pub use super::events::EventExceptionKindType as EventExceptionKind;
 }

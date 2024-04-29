@@ -4,10 +4,8 @@
 
 #[cfg(feature = "serde")]
 use crate::api::v1::utils::validate_recurrence_pattern;
-
 #[allow(unused_imports)]
 use crate::imports::*;
-
 use crate::{common::streaming::StreamingTarget, core::DateTimeTz};
 
 /// Body of the `POST /events` endpoint

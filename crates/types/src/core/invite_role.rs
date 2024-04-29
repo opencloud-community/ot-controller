@@ -4,9 +4,7 @@
 
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use crate::core::EmailInviteRole;
-use crate::{signaling::Role, sql_enum};
+use crate::{core::EmailInviteRole, signaling::Role, sql_enum};
 
 sql_enum!(
     feature_gated:

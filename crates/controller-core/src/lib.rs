@@ -32,19 +32,11 @@
 //! }
 //! ```
 
-use crate::acl::check_or_create_kustos_default_permissions;
-use crate::api::signaling::{
-    breakout::BreakoutRooms, moderation::ModerationModule, SignalingProtocols,
-};
-use crate::api::v1::{middleware::metrics::RequestMetrics, response::error::json_error_handler};
-use crate::services::MailService;
-use crate::settings::{Settings, SharedSettings};
-use crate::trace::ReducedSpanBuilder;
+use std::{fs::File, io::BufReader, marker::PhantomData, net::Ipv6Addr, sync::Arc, time::Duration};
+
 use actix_cors::Cors;
-use actix_web::web::Data;
-use actix_web::{web, App, HttpServer, Scope};
-use api::signaling::echo::Echo;
-use api::signaling::{recording::Recording, SignalingModules};
+use actix_web::{web, web::Data, App, HttpServer, Scope};
+use api::signaling::{echo::Echo, recording::Recording, SignalingModules};
 use arc_swap::ArcSwap;
 use async_trait::async_trait;
 use lapin_pool::RabbitMqPool;
@@ -58,18 +50,27 @@ use opentalk_signaling_core::{
 use opentalk_types::api::error::ApiError;
 use rustls_pki_types::{CertificateDer, PrivatePkcs8KeyDer};
 use snafu::{Backtrace, ErrorCompat, Report, ResultExt, Snafu};
-use std::fs::File;
-use std::io::BufReader;
-use std::marker::PhantomData;
-use std::net::Ipv6Addr;
-use std::sync::Arc;
-use std::time::Duration;
-use tokio::signal::ctrl_c;
-use tokio::signal::unix::{signal, SignalKind};
-use tokio::sync::broadcast;
-use tokio::task::JoinError;
-use tokio::time::sleep;
+use tokio::{
+    signal::{
+        ctrl_c,
+        unix::{signal, SignalKind},
+    },
+    sync::broadcast,
+    task::JoinError,
+    time::sleep,
+};
 use tracing_actix_web::TracingLogger;
+
+use crate::{
+    acl::check_or_create_kustos_default_permissions,
+    api::{
+        signaling::{breakout::BreakoutRooms, moderation::ModerationModule, SignalingProtocols},
+        v1::{middleware::metrics::RequestMetrics, response::error::json_error_handler},
+    },
+    services::MailService,
+    settings::{Settings, SharedSettings},
+    trace::ReducedSpanBuilder,
+};
 
 mod acl;
 mod caches;
@@ -666,8 +667,7 @@ fn internal_scope(settings: SharedSettings, db: Data<Db>, oidc_ctx: Data<OidcCon
 }
 
 fn setup_cors() -> Cors {
-    use actix_web::http::header::*;
-    use actix_web::http::Method;
+    use actix_web::http::{header::*, Method};
 
     // Use a permissive CORS configuration.
     // The HTTP API is using Bearer tokens for authentication, which are handled by the application and not the browser.

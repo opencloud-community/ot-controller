@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use super::GetEventsCursorData;
-
 #[cfg(feature = "serde")]
 use crate::api::v1::utils::comma_separated;
 #[allow(unused_imports)]

@@ -2,12 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::SessionInfo;
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 use opentalk_types::core::ParticipantId;
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
 use snafu::ResultExt;
+
+use crate::SessionInfo;
 
 /// Contains the [`SessionInfo`] of the a participant.
 #[derive(ToRedisArgs)]

@@ -7,8 +7,9 @@ use crate::imports::*;
 
 #[cfg(feature = "serde")]
 pub mod duration_seconds_option {
-    use super::*;
     use std::time::Duration;
+
+    use super::*;
 
     pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<Duration>, D::Error>
     where
@@ -31,8 +32,9 @@ pub mod duration_seconds_option {
 
 #[cfg(feature = "serde")]
 pub mod duration_seconds {
-    use super::*;
     use std::time::Duration;
+
+    use super::*;
 
     pub fn deserialize<'de, D>(deserializer: D) -> Result<Duration, D::Error>
     where

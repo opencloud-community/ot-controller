@@ -2,22 +2,27 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::oidc::{OidcContext, ServiceClaims};
-use actix_http::header::Header;
-use actix_http::HttpMessage;
-use actix_web::dev::{Service, ServiceRequest, ServiceResponse, Transform};
-use actix_web::error::Error;
-use actix_web::web::Data;
-use actix_web::ResponseError;
+use core::{
+    future::{ready, Future, Ready},
+    pin::Pin,
+    task::{Context, Poll},
+};
+use std::rc::Rc;
+
+use actix_http::{header::Header, HttpMessage};
+use actix_web::{
+    dev::{Service, ServiceRequest, ServiceResponse, Transform},
+    error::Error,
+    web::Data,
+    ResponseError,
+};
 use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
-use core::future::{ready, Future, Ready};
-use core::pin::Pin;
-use core::task::{Context, Poll};
 use openidconnect::AccessToken;
 use opentalk_types::api::error::{ApiError, AuthenticationError};
 use snafu::Report;
-use std::rc::Rc;
 use tracing::Instrument;
+
+use crate::oidc::{OidcContext, ServiceClaims};
 
 /// Contains a list of string representing the service-account's roles in a realm
 ///

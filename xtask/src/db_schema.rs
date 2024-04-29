@@ -3,15 +3,17 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Helper binary that creates the schema.rs file
-use crate::{locate_project_root, Result};
+use std::path::PathBuf;
+
 use devx_cmd::cmd;
 use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
 use opentalk_database::query_helper;
 use opentalk_db_storage::migrations::migrate_from_url;
 use rand::Rng;
 use snafu::{whatever, Report};
-use std::path::PathBuf;
 use unified_diff::diff;
+
+use crate::{locate_project_root, Result};
 
 const SCHEMA_RS_PATH: &str = "crates/db-storage/src/schema.rs";
 const DATABASE_DEFAULT_URL: &str = "postgres://postgres:password123@localhost:5432";

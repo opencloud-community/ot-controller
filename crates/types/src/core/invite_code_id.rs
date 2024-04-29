@@ -2,10 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use derive_more::{AsRef, Display, From, FromStr, Into};
 #[cfg(feature = "kustos")]
 use kustos_shared::subject::PolicyInvite;
-
-use derive_more::{AsRef, Display, From, FromStr, Into};
 use uuid::Uuid;
 
 #[allow(unused_imports)]
@@ -64,11 +63,11 @@ impl opentalk_client_shared::Authorization for InviteCodeId {
 mod actix_impls {
     use std::str::FromStr;
 
-    use super::*;
-
     use actix_http::header::{HeaderValue, InvalidHeaderValue, TryIntoHeaderValue};
     use actix_web_httpauth::headers::authorization::{ParseError, Scheme};
     use bytes::{BufMut, BytesMut};
+
+    use super::*;
 
     const IDENTIFIER_LENGTH: usize = 10;
     const SPACE_LENGTH: usize = 1;

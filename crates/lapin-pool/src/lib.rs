@@ -2,13 +2,17 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::{
+    ops::{Deref, DerefMut},
+    sync::{
+        atomic::{AtomicU32, Ordering},
+        Arc,
+    },
+    time::Duration,
+};
+
 use snafu::{Report, ResultExt, Snafu};
-use std::ops::{Deref, DerefMut};
-use std::sync::atomic::{AtomicU32, Ordering};
-use std::sync::Arc;
-use std::time::Duration;
-use tokio::sync::Mutex;
-use tokio::time::interval;
+use tokio::{sync::Mutex, time::interval};
 use tokio_executor_trait::Tokio as TokioExecutor;
 use tokio_reactor_trait::Tokio as TokioReactor;
 

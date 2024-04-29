@@ -4,12 +4,10 @@
 
 //! This module contains types that are used in OpenTalk API V1 users endpoints.
 
+use super::assets::AssetResource;
 use crate::core::{EventId, RoomId, TariffStatus, UserId};
-
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::assets::AssetResource;
 
 /// Public user details.
 ///
@@ -212,10 +210,11 @@ impl UserAssetResource {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use pretty_assertions::assert_eq;
     #[cfg(feature = "serde")]
     use serde_json::json;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "serde")]

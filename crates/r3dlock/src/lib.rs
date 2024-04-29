@@ -4,12 +4,14 @@
 
 //! Implementation of a redlock mutex for a single redis instance
 
+use std::{
+    ops::Range,
+    time::{Duration, Instant},
+};
+
 use rand::{thread_rng, Rng};
-use redis::aio::ConnectionLike;
-use redis::{RedisError, Script, ToRedisArgs, Value};
+use redis::{aio::ConnectionLike, RedisError, Script, ToRedisArgs, Value};
 use snafu::Snafu;
-use std::ops::Range;
-use std::time::{Duration, Instant};
 use tokio::time::sleep;
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -203,8 +205,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_lock_unlock_and_relock() {

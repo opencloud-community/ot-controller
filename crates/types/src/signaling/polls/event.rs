@@ -6,10 +6,9 @@
 
 use std::time::Duration;
 
+use super::{Choice, PollId, Results};
 #[allow(unused_imports)]
 use crate::imports::*;
-
-use super::{Choice, PollId, Results};
 
 /// Events sent out by the `polls` module
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -100,11 +99,11 @@ impl From<Error> for PollsEvent {
 
 #[cfg(test)]
 mod test {
-    use crate::signaling::polls::{ChoiceId, Item};
-
-    use super::*;
     use pretty_assertions::assert_eq;
     use serde_json::json;
+
+    use super::*;
+    use crate::signaling::polls::{ChoiceId, Item};
 
     #[test]
     fn started() {

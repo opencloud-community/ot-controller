@@ -2,13 +2,19 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::api::v1::response::{Created, NoContent};
-use actix_web::web::{Data, Path, ReqData};
-use actix_web::{delete, put, Either};
+use actix_web::{
+    delete, put,
+    web::{Data, Path, ReqData},
+    Either,
+};
 use opentalk_database::Db;
-use opentalk_db_storage::events::{Event, EventFavorite, NewEventFavorite};
-use opentalk_db_storage::users::User;
+use opentalk_db_storage::{
+    events::{Event, EventFavorite, NewEventFavorite},
+    users::User,
+};
 use opentalk_types::{api::error::ApiError, core::EventId};
+
+use crate::api::v1::response::{Created, NoContent};
 
 /// API Endpoint *PUT /users/me/event_favorites/{event_id}*
 ///

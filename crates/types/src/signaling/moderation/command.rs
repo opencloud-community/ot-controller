@@ -4,10 +4,8 @@
 
 //! Signaling commands for the `moderation` namespace
 
-use crate::core::ParticipantId;
-
 use super::KickScope;
-
+use crate::core::ParticipantId;
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -71,9 +69,10 @@ pub enum ModerationCommand {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use pretty_assertions::assert_eq;
     use serde_json::json;
+
+    use super::*;
 
     #[test]
     fn kick() {

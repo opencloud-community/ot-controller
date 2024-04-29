@@ -2,7 +2,6 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::resumption::{ResumptionData, ResumptionRedisKey};
 use opentalk_signaling_core::{control, Participant, RedisConnection};
 use opentalk_types::{
     api::error::ApiError,
@@ -12,6 +11,8 @@ use redis::AsyncCommands;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use snafu::Report;
+
+use super::resumption::{ResumptionData, ResumptionRedisKey};
 
 /// Typed redis key for a signaling ticket containing [`TicketData`]
 #[derive(Debug, Copy, Clone, ToRedisArgs)]

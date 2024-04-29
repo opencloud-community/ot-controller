@@ -2,13 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+#[allow(unused_imports)]
+use crate::imports::*;
 use crate::{
     core::{BreakoutRoomId, ParticipantId, ParticipationKind, Timestamp},
     signaling::Role,
 };
-
-#[allow(unused_imports)]
-use crate::imports::*;
 
 /// Information about a participant in another breakout room
 #[derive(Clone, Debug, PartialEq, Eq)]

@@ -3,26 +3,22 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! TURN related API structs and Endpoints
-use crate::api::v1::middleware::user_auth::check_access_token;
-use crate::api::v1::response::NoContent;
-use crate::caches::Caches;
-use crate::oidc::OidcContext;
-use crate::settings::{Settings, SharedSettingsActix, TurnServer};
+use std::str::FromStr;
+
 use actix_http::StatusCode;
-use actix_web::http::header::Header;
-use actix_web::web::Data;
-use actix_web::web::Json;
-use actix_web::Either as AWEither;
-use actix_web::HttpRequest;
-use actix_web::{get, ResponseError};
+use actix_web::{
+    get,
+    http::header::Header,
+    web::{Data, Json},
+    Either as AWEither, HttpRequest, ResponseError,
+};
 use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
 use arc_swap::ArcSwap;
 use base64::Engine;
 use either::Either;
 use openidconnect::AccessToken;
 use opentalk_database::{Db, OptionalExt};
-use opentalk_db_storage::invites::Invite;
-use opentalk_db_storage::users::User;
+use opentalk_db_storage::{invites::Invite, users::User};
 use opentalk_types::{
     api::{
         error::{ApiError, AuthenticationError},
@@ -30,12 +26,20 @@ use opentalk_types::{
     },
     core::InviteCodeId,
 };
-use rand::distributions::{Distribution, Uniform};
-use rand::prelude::SliceRandom;
-use rand::{CryptoRng, Rng};
+use rand::{
+    distributions::{Distribution, Uniform},
+    prelude::SliceRandom,
+    CryptoRng, Rng,
+};
 use ring::hmac;
 use snafu::Report;
-use std::str::FromStr;
+
+use crate::{
+    api::v1::{middleware::user_auth::check_access_token, response::NoContent},
+    caches::Caches,
+    oidc::OidcContext,
+    settings::{Settings, SharedSettingsActix, TurnServer},
+};
 
 /// API Endpoint *GET /turn*
 ///
@@ -211,13 +215,13 @@ async fn check_access_token_or_invite(
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[test]
     fn test_create_credentials() {
-        use rand::prelude::*;
-        use rand::SeedableRng;
+        use rand::{prelude::*, SeedableRng};
         let mut rng = StdRng::seed_from_u64(1234567890);
         let credentials =
             create_credentials(&mut rng, "PSK", 3400, &["turn:turn.turn.turn".to_owned()]);
@@ -234,8 +238,7 @@ mod test {
 
     #[test]
     fn test_round_robin() {
-        use rand::prelude::*;
-        use rand::SeedableRng;
+        use rand::{prelude::*, SeedableRng};
 
         // No configured servers
         let mut rng = StdRng::seed_from_u64(1234567890);

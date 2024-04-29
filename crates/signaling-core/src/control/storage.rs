@@ -2,7 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
+use std::{
+    collections::{HashMap, HashSet},
+    convert::identity,
+    fmt::Debug,
+    time::Duration,
+};
 
 use opentalk_db_storage::{events::Event, tariffs::Tariff};
 use opentalk_r3dlock::Mutex;
@@ -13,12 +18,8 @@ use opentalk_types::{
 use redis::{AsyncCommands, FromRedisValue, ToRedisArgs};
 use redis_args::ToRedisArgs;
 use snafu::ResultExt;
-use std::{
-    collections::{HashMap, HashSet},
-    convert::identity,
-    fmt::Debug,
-    time::Duration,
-};
+
+use crate::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 
 // The expiry in seconds for the `skip_waiting_room` key in Redis
 const SKIP_WAITING_ROOM_KEY_EXPIRY: u32 = 120;

@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::schema::{invites, users};
-use crate::users::User;
+use std::collections::{HashMap, HashSet};
+
 use chrono::{DateTime, Utc};
 use derive_more::{AsRef, Display, From, FromStr, Into};
 use diesel::{
@@ -17,7 +17,11 @@ use opentalk_types::{
     core::{InviteCodeId, RoomId, UserId},
 };
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+
+use crate::{
+    schema::{invites, users},
+    users::User,
+};
 
 #[derive(
     AsRef,

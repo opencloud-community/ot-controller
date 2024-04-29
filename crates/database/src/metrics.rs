@@ -2,22 +2,26 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use core::future::Future;
-use core::pin::Pin;
-use core::task::{ready, Poll};
-use diesel::query_builder::{AsQuery, QueryFragment, QueryId};
-use diesel::result::{ConnectionResult, QueryResult};
-use diesel_async::pooled_connection::deadpool::Object;
-use diesel_async::{
-    AnsiTransactionManager, AsyncConnection, AsyncPgConnection, SimpleAsyncConnection,
-    TransactionManager,
+use core::{
+    future::Future,
+    pin::Pin,
+    task::{ready, Poll},
 };
-use futures_core::future::BoxFuture;
-use futures_core::stream::BoxStream;
-use opentelemetry::metrics::{Counter, Histogram};
-use opentelemetry::Key;
-use std::sync::Arc;
-use std::time::Instant;
+use std::{sync::Arc, time::Instant};
+
+use diesel::{
+    query_builder::{AsQuery, QueryFragment, QueryId},
+    result::{ConnectionResult, QueryResult},
+};
+use diesel_async::{
+    pooled_connection::deadpool::Object, AnsiTransactionManager, AsyncConnection,
+    AsyncPgConnection, SimpleAsyncConnection, TransactionManager,
+};
+use futures_core::{future::BoxFuture, stream::BoxStream};
+use opentelemetry::{
+    metrics::{Counter, Histogram},
+    Key,
+};
 
 type Parent = Object<AsyncPgConnection>;
 

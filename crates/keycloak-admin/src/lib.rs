@@ -2,8 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use reqwest::header::AUTHORIZATION;
-use reqwest::{Client, RequestBuilder, Response, StatusCode};
+use reqwest::{header::AUTHORIZATION, Client, RequestBuilder, Response, StatusCode};
 use serde::{Deserialize, Serialize};
 use snafu::Snafu;
 use tokio::sync::RwLock;

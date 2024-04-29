@@ -95,8 +95,9 @@ mod type_polyfills {
 }
 #[cfg(test)]
 mod migration_tests {
-    use super::Result;
     use serial_test::serial;
+
+    use super::Result;
 
     /// Tests the refinery database migration.
     /// A database config has to be specified via the environment variables

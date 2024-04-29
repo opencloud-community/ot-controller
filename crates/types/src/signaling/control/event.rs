@@ -4,16 +4,14 @@
 
 //! Types related to signaling events in the `control` namespace
 
+use super::{reason, AssociatedParticipant, Participant};
+#[allow(unused_imports)]
+use crate::imports::*;
 use crate::{
     common::{event::EventInfo, tariff::TariffResource},
     core::{ParticipantId, Timestamp},
     signaling::Role,
 };
-
-use super::{reason, AssociatedParticipant, Participant};
-
-#[allow(unused_imports)]
-use crate::imports::*;
 
 /// Events sent out by the `control` module
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -155,14 +153,15 @@ pub enum Error {
 mod test {
     use std::str::FromStr;
 
+    use chrono::DateTime;
+    use pretty_assertions::assert_eq;
+    use serde_json::json;
+
     use super::*;
     use crate::{
         core::{EventId, RoomId, TariffId},
         signaling::control,
     };
-    use chrono::DateTime;
-    use pretty_assertions::assert_eq;
-    use serde_json::json;
 
     fn participant_tariff() -> TariffResource {
         TariffResource {

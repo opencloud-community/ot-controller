@@ -2,24 +2,30 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use diesel::backend::Backend;
-use diesel::deserialize::{FromSql, FromSqlRow};
-use diesel::expression::AsExpression;
-use diesel::pg::Pg;
-use diesel::serialize::{IsNull, ToSql};
-use diesel::sql_types;
-use opentalk_database::{DatabaseError, DbConnection};
-use opentalk_types::common::event::{CallIn, EventInfo, MeetingDetails};
-use opentalk_types::common::streaming::get_public_urls_from_streaming_targets;
-use opentalk_types::core::{RoomId, UserId};
-use serde::{Deserialize, Serialize};
-use std::fmt::Debug;
-use std::io::Write;
+use std::{fmt::Debug, io::Write};
 
-use crate::events::Event;
-use crate::invites::Invite;
-use crate::sip_configs::SipConfig;
-use crate::streaming_targets::get_room_streaming_targets;
+use diesel::{
+    backend::Backend,
+    deserialize::{FromSql, FromSqlRow},
+    expression::AsExpression,
+    pg::Pg,
+    serialize::{IsNull, ToSql},
+    sql_types,
+};
+use opentalk_database::{DatabaseError, DbConnection};
+use opentalk_types::{
+    common::{
+        event::{CallIn, EventInfo, MeetingDetails},
+        streaming::get_public_urls_from_streaming_targets,
+    },
+    core::{RoomId, UserId},
+};
+use serde::{Deserialize, Serialize};
+
+use crate::{
+    events::Event, invites::Invite, sip_configs::SipConfig,
+    streaming_targets::get_room_streaming_targets,
+};
 
 /// Trait for models that have user-ids attached to them like created_by/updated_by fields
 ///

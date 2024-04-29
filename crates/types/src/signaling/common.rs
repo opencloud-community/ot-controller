@@ -6,7 +6,6 @@
 //! (typically through websockets)
 
 use crate::core::ParticipantId;
-
 #[allow(unused_imports)]
 use crate::imports::*;
 

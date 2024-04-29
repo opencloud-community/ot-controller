@@ -2,8 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use actix_web::delete;
-use actix_web::web::{Data, Path, ReqData};
+use actix_web::{
+    delete,
+    web::{Data, Path, ReqData},
+};
 use kustos::prelude::*;
 use opentalk_controller_utils::deletion::{Deleter as _, RoomDeleter};
 use opentalk_database::Db;
@@ -11,8 +13,7 @@ use opentalk_db_storage::users::User;
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage};
 use opentalk_types::{api::error::ApiError, core::RoomId};
 
-use crate::api::internal::NoContent;
-use crate::settings::SharedSettingsActix;
+use crate::{api::internal::NoContent, settings::SharedSettingsActix};
 
 /// API Endpoint *DELETE /rooms/{room_id}*
 ///

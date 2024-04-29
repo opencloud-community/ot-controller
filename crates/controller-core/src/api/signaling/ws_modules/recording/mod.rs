@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::sync::Arc;
+
 use lapin_pool::{RabbitMqChannel, RabbitMqPool};
 use opentalk_signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, Participant, SerdeJsonSnafu,
@@ -21,7 +23,6 @@ use opentalk_types::{
     },
 };
 use snafu::{Report, ResultExt};
-use std::sync::Arc;
 
 mod exchange;
 mod rabbitmq;

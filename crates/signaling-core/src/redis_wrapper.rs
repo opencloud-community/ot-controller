@@ -2,12 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentelemetry::metrics::Histogram;
-use opentelemetry::Key;
-use redis::aio::ConnectionLike;
-use redis::{Arg, RedisFuture};
-use std::sync::Arc;
-use std::time::Instant;
+use std::{sync::Arc, time::Instant};
+
+use opentelemetry::{metrics::Histogram, Key};
+use redis::{aio::ConnectionLike, Arg, RedisFuture};
 
 const COMMAND_KEY: Key = Key::from_static_str("command");
 

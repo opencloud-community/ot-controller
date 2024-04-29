@@ -8,15 +8,22 @@
 //! that are sent from the Web-API and possibly other connected services.
 //!
 // TODO: We probably can avoid the conversion to MailTasks if no rabbit_mq_queue is set in all mail fns
+use std::sync::Arc;
+
 use lapin_pool::{RabbitMqChannel, RabbitMqPool};
 use opentalk_controller_settings::{Settings, SharedSettings};
-use opentalk_db_storage::events::{EventException, EventExceptionKind};
-use opentalk_db_storage::{events::Event, rooms::Room, sip_configs::SipConfig, users::User};
+use opentalk_db_storage::{
+    events::{Event, EventException, EventExceptionKind},
+    rooms::Room,
+    sip_configs::SipConfig,
+    users::User,
+};
 use opentalk_mail_worker_protocol::*;
-use opentalk_types::common::{features, shared_folder::SharedFolder};
-use opentalk_types::core::UserId;
+use opentalk_types::{
+    common::{features, shared_folder::SharedFolder},
+    core::UserId,
+};
 use snafu::ResultExt;
-use std::sync::Arc;
 use tokio::sync::Mutex;
 use uuid::Uuid;
 

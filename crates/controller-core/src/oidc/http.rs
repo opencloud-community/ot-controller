@@ -2,10 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use openidconnect::reqwest::Error;
-use openidconnect::{HttpRequest, HttpResponse};
-use std::future::Future;
-use std::pin::Pin;
+use std::{future::Future, pin::Pin};
+
+use openidconnect::{reqwest::Error, HttpRequest, HttpResponse};
 
 pub fn make_client() -> Result<reqwest::Client, reqwest::Error> {
     reqwest::Client::builder()
