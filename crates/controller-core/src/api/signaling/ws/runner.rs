@@ -46,7 +46,7 @@ use opentalk_types::{
     },
 };
 use serde_json::Value;
-use snafu::{whatever, Report, ResultExt, Snafu};
+use snafu::{ensure, whatever, Report, ResultExt, Snafu};
 use tokio::{
     sync::{broadcast, mpsc},
     time::{interval, sleep},
@@ -72,8 +72,7 @@ mod call_in;
 
 #[derive(Debug, Snafu)]
 pub enum RunnerError {
-    /// Couldn't get database connection.
-    #[snafu(context(false))]
+    #[snafu(context(false), display("Couldn't get database connection."))]
     DbConnection {
         source: opentalk_database::DatabaseError,
     },
@@ -95,7 +94,17 @@ pub enum RunnerError {
 
     InvalidDisplayName,
 
-    #[snafu(whatever)]
+    #[snafu(display("InvalidState: {message}"))]
+    InvalidState {
+        message: String,
+    },
+
+    #[snafu(display("InvalidParticipant: {message}"))]
+    InvalidParticipant {
+        message: String,
+    },
+
+    #[snafu(whatever, display("Error: {message}"))]
     Other {
         message: String,
         #[snafu(source(from(Box<dyn std::error::Error + Sync + Send>, Some)))]
@@ -314,6 +323,7 @@ pub struct Runner {
 }
 
 /// Current state of the runner
+#[derive(Debug, Clone, PartialEq, Eq)]
 enum RunnerState {
     /// Runner and its message exchange resources are created
     /// but has not joined the room yet (no redis resources set)
@@ -438,16 +448,15 @@ impl Runner {
             };
 
             if let RunnerState::Joined = &self.state {
-                // first check if the list of joined participant is empty
-                if let Err(e) = storage::set_attribute(
+                let res = storage::set_attribute(
                     &mut self.redis_conn,
                     self.room_id,
                     self.id,
                     "left_at",
                     Timestamp::now(),
                 )
-                .await
-                {
+                .await;
+                if let Err(e) = res {
                     log::error!(
                         "failed to mark participant as left, {}",
                         Report::from_error(e)
@@ -1603,30 +1612,14 @@ impl Runner {
                     .await;
             }
             exchange::Message::Left { id, reason } => {
-                // Ignore events of self and only if runner is joined
-                if self.id == id || !matches!(&self.state, RunnerState::Joined) {
-                    return Ok(());
+                if self.id == id && reason == Reason::SentToWaitingRoom {
+                    // we are sent to the waiting room
+                    self.notify_left(id, reason, timestamp).await;
+                    self.reenter_waiting_room(timestamp).await?;
+                } else if self.id != id && self.state == RunnerState::Joined {
+                    // Ignore events of self and ensure runner is in joined state
+                    self.notify_left(id, reason, timestamp).await;
                 }
-
-                let actions = self
-                    .handle_module_broadcast_event(
-                        timestamp,
-                        DynBroadcastEvent::ParticipantLeft(id),
-                        false,
-                    )
-                    .await;
-
-                self.ws_send_control(
-                    timestamp,
-                    ControlEvent::Left {
-                        id: AssociatedParticipant { id },
-                        reason,
-                    },
-                )
-                .await;
-
-                self.handle_module_requested_actions(timestamp, actions)
-                    .await;
             }
             exchange::Message::Update(id) => {
                 // Ignore updates of self and only if runner is joined
@@ -1815,6 +1808,72 @@ impl Runner {
         Ok(())
     }
 
+    async fn reenter_waiting_room(&mut self, timestamp: Timestamp) -> Result<(), RunnerError> {
+        ensure!(
+            self.state == RunnerState::Joined,
+            InvalidStateSnafu {
+                message: "Can only reenter the waiting room if already joined",
+            }
+        );
+
+        storage::set_attribute(
+            &mut self.redis_conn,
+            self.room_id,
+            self.id,
+            "left_at",
+            Timestamp::now(),
+        )
+        .await?;
+
+        let actions = self
+            .handle_module_broadcast_event(timestamp, DynBroadcastEvent::Leaving, false)
+            .await;
+
+        self.handle_module_requested_actions(timestamp, actions)
+            .await;
+
+        // resuming ensures that we can reuse the same participant ID
+        self.resuming = true;
+        moderation::storage::waiting_room_add(
+            &mut self.redis_conn,
+            self.room_id.room_id(),
+            self.id,
+        )
+        .await?;
+
+        let control_data =
+            ControlState::from_redis(&mut self.redis_conn, self.room_id, self.id).await?;
+
+        self.state = RunnerState::Waiting {
+            accepted: false,
+            control_data,
+        };
+
+        self.ws
+            .send(Message::Text(
+                serde_json::to_string(&NamespacedEvent {
+                    namespace: moderation::NAMESPACE,
+                    timestamp,
+                    payload: ModerationEvent::InWaitingRoom,
+                })
+                .whatever_context::<_, RunnerError>("Failed to send")?
+                .into(),
+            ))
+            .await;
+
+        self.exchange_publish(
+            control::exchange::global_room_all_participants(self.room_id.room_id()),
+            serde_json::to_string(&NamespacedEvent {
+                namespace: moderation::NAMESPACE,
+                timestamp,
+                payload: moderation::exchange::Message::JoinedWaitingRoom(self.id),
+            })
+            .expect("Failed to convert namespaced to json"),
+        );
+
+        Ok(())
+    }
+
     /// Send a control message via the message exchange
     ///
     /// If recipient is `None` the message is sent to all inside the room
@@ -1971,6 +2030,26 @@ impl Runner {
             .await;
     }
 
+    async fn notify_left(&mut self, id: ParticipantId, reason: Reason, timestamp: Timestamp) {
+        let actions: ModuleRequestedActions = self
+            .handle_module_broadcast_event(timestamp, DynBroadcastEvent::ParticipantLeft(id), false)
+            .await;
+
+        if self.id != id {
+            self.ws_send_control(
+                timestamp,
+                ControlEvent::Left {
+                    id: AssociatedParticipant { id },
+                    reason,
+                },
+            )
+            .await;
+        }
+
+        self.handle_module_requested_actions(timestamp, actions)
+            .await;
+    }
+
     async fn username_or(&self, join_display_name: Option<String>) -> String {
         let join_display_name = join_display_name.unwrap_or_default();
 
@@ -1990,15 +2069,8 @@ impl Runner {
             Participant::Recorder => join_display_name,
             Participant::Sip => {
                 if let Some(call_in) = self.settings.load().call_in.as_ref() {
-                    let display_name = call_in::display_name(
-                        &self.db,
-                        call_in,
-                        self.room.tenant_id,
-                        join_display_name,
-                    )
-                    .await;
-
-                    display_name
+                    call_in::display_name(&self.db, call_in, self.room.tenant_id, join_display_name)
+                        .await
                 } else {
                     trim_display_name(join_display_name)
                 }
@@ -2010,13 +2082,11 @@ impl Runner {
         match &self.participant {
             Participant::User(user) => {
                 let settings = self.settings.load();
-                let avatar_url = Some(format!(
+                Some(format!(
                     "{}{:x}",
                     settings.avatar.libravatar_url,
                     md5::compute(&user.email)
-                ));
-
-                avatar_url
+                ))
             }
             Participant::Guest | Participant::Recorder | Participant::Sip => None,
         }

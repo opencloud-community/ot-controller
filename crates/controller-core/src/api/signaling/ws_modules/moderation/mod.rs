@@ -14,7 +14,9 @@ pub use opentalk_types::signaling::moderation::NAMESPACE;
 use opentalk_types::{
     core::{ParticipantId, ParticipationKind, RoomId, UserId},
     signaling::{
-        control::{state::ControlState, AssociatedParticipant, Participant, WaitingRoomState},
+        control::{
+            state::ControlState, AssociatedParticipant, Participant, Reason, WaitingRoomState,
+        },
         moderation::{
             command::ModerationCommand,
             event::{Error, ModerationEvent},
@@ -241,6 +243,10 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
+                if !storage::is_waiting_room_enabled(ctx.redis_conn, self.room.room_id()).await? {
+                    set_waiting_room_enabled(&mut ctx, self.room.room_id(), true).await?;
+                }
+
                 // Enforce the participant to enter the waiting room (if enabled) on next rejoin
                 control::storage::set_skip_waiting_room_with_expiry(
                     ctx.redis_conn(),
@@ -462,7 +468,14 @@ impl SignalingModule for ModerationModule {
             Event::Exchange(exchange::Message::SentToWaitingRoom(participant)) => {
                 if self.id == participant {
                     ctx.ws_send(ModerationEvent::SentToWaitingRoom);
-                    ctx.exit(Some(CloseCode::Normal));
+
+                    ctx.exchange_publish_control(
+                        control::exchange::current_room_all_participants(self.room),
+                        control::exchange::Message::Left {
+                            id: self.id,
+                            reason: Reason::SentToWaitingRoom,
+                        },
+                    );
                 }
             }
             Event::Exchange(exchange::Message::Debriefed {

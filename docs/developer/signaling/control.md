@@ -365,7 +365,7 @@ Received when a participant left the room.
 | --------- | -------- | ------ | ------------------------------------------------------------------------ |
 | `message` | `enum`   | yes    | Is `"left"`                                                              |
 | `id`      | `string` | yes    | Id of the participant that has left                                      |
-| `reason`  | `enum`   | yes    | The reason as to why the participant left either `"quit"` or `"timeout"` |
+| `reason`  | `enum`   | yes    | The reason as to why the participant left either `"quit"`, `"timeout"` or `"sent_to_waiting_room"` |
 
 ##### Example
 

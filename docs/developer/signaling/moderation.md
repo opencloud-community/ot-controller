@@ -399,9 +399,7 @@ Received by a participant if banned from the room. Will be the last message befo
 ### SentToWaitingRoom
 
 Received by a participant if they were sent to the waiting room with the [SendToWaitingRoom](#sendtowaitingroom) Command.
-This will be the last message before the websocket is closed by the server-side.
-
-The frontend client is responsible for actually retrying to join the room and ending up in the waiting room.
+The websocket connection will be kept open, but the participant state will be reset as if the participant just joined the waiting room.
 
 #### Fields
 
