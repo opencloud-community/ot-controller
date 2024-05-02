@@ -2568,7 +2568,8 @@ components:
               enum: [default, paid, downgraded]
             used_storage:
               description: The users used storage in bytes
-              type: number
+              type: integer
+              minimum: 0
 
     UserFindResponseItem:
       description: User information accessible to all other users
@@ -2819,6 +2820,13 @@ components:
         namespace:
           description: Namespace of the module responsible for asset
           type: string
+        kind:
+          description: Kind of the asset, defined by the module that is responsible for the asset
+          type: string
+        size:
+          description: Size of the asset, in bytes
+          type: integer
+          minimum: 0
         created_at:
           description: Asset created at
           type: string
