@@ -22,6 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - controller: display names longer than 100 bytes are rejected ([#744](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/744))
 
+## [0.12.1]
+
+### Fixed
+
+- [RUSTSEC-2024-0336](https://rustsec.org/advisories/RUSTSEC-2024-0336)
+
 ## [0.12.0]
 
 ### Fixed
@@ -462,6 +468,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [Unreleased]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/b3f2b0c5b48f9d940a33a9fd6f8408fb7f17a888...main
 
+[0.12.1]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.12.0...v0.12.1
 [0.12.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/da834e3e401c6a9e3e3d03c1d77ff7ff758f6e23...v0.12.0
 
 [0.11.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/61a936a1a88a63804a2b8cfa3d602cb941ef3944...v0.11.0
