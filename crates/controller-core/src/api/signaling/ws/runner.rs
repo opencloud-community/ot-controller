@@ -79,13 +79,21 @@ pub enum RunnerError {
     },
 
     #[snafu(context(false))]
-    R3dLock { source: opentalk_r3dlock::Error },
+    R3dLock {
+        source: opentalk_r3dlock::Error,
+    },
 
     #[snafu(context(false))]
-    Redis { source: redis::RedisError },
+    Redis {
+        source: redis::RedisError,
+    },
 
     #[snafu(context(false))]
-    Signaling { source: SignalingModuleError },
+    Signaling {
+        source: SignalingModuleError,
+    },
+
+    InvalidDisplayName,
 
     #[snafu(whatever)]
     Other {
@@ -862,34 +870,19 @@ impl Runner {
                     return Ok(());
                 }
 
-                let display_name = self.username_or(join.display_name).await;
-                let avatar_url = self.avatar_url().await;
-
-                if display_name.is_empty() || display_name.len() > 100 {
-                    self.ws_send_control_error(timestamp, control_event::Error::InvalidUsername)
+                let control_data = match self.query_control_data(join.display_name, timestamp).await
+                {
+                    Err(RunnerError::InvalidDisplayName) => {
+                        self.ws_send_control_error(
+                            timestamp,
+                            control_event::Error::InvalidUsername,
+                        )
                         .await;
-                    return Ok(());
-                }
 
-                // Get the left_at timestamp to preserve it until the participant really enters the room.
-                let left_at: Option<Timestamp> =
-                    storage::get_attribute(&mut self.redis_conn, self.room_id, self.id, "left_at")
-                        .await?;
-
-                self.set_control_attributes(timestamp, &display_name, avatar_url.as_deref())
-                    .await?;
-
-                let control_data = ControlState {
-                    display_name,
-                    role: self.role,
-                    avatar_url,
-                    participation_kind: self.participant.kind(),
-                    joined_at: timestamp,
-                    hand_is_up: false,
-                    hand_updated_at: timestamp,
-                    left_at,
-                    is_room_owner: self.participant.user_id() == Some(self.room.created_by),
-                };
+                        return Ok(());
+                    }
+                    other => other,
+                }?;
 
                 self.metrics.increment_participants_count(&self.participant);
 
@@ -997,6 +990,36 @@ impl Runner {
         }
 
         Ok(())
+    }
+
+    async fn query_control_data(
+        &mut self,
+        join_display_name: Option<String>,
+        timestamp: Timestamp,
+    ) -> Result<ControlState, RunnerError> {
+        let display_name = self.username_or(join_display_name).await;
+        let avatar_url = self.avatar_url().await;
+
+        if display_name.is_empty() || display_name.len() > 100 {
+            return InvalidDisplayNameSnafu.fail();
+        }
+
+        let left_at: Option<Timestamp> =
+            storage::get_attribute(&mut self.redis_conn, self.room_id, self.id, "left_at").await?;
+        self.set_control_attributes(timestamp, &display_name, avatar_url.as_deref())
+            .await?;
+
+        Ok(ControlState {
+            display_name,
+            role: self.role,
+            avatar_url,
+            participation_kind: self.participant.kind(),
+            joined_at: timestamp,
+            hand_is_up: false,
+            hand_updated_at: timestamp,
+            left_at,
+            is_room_owner: self.participant.user_id() == Some(self.room.created_by),
+        })
     }
 
     async fn handle_grant_moderator_msg(
