@@ -13,4 +13,10 @@ use serde::{Deserialize, Serialize};
 pub enum Message {
     /// UpdateStream message
     StreamUpdated(StreamUpdated),
+
+    /// Indicates that the recorder started.
+    RecorderStarting,
+
+    /// Indicates that the recorder is about to stop.
+    RecorderStopping,
 }

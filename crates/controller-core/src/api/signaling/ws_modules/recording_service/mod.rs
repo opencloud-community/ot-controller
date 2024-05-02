@@ -5,8 +5,8 @@
 use std::collections::BTreeMap;
 
 use opentalk_signaling_core::{
-    control, DestroyContext, Event, InitContext, ModuleContext, Participant, RedisConnection,
-    SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
+    control, DestroyContext, Event, InitContext, ModuleContext, Participant, SignalingModule,
+    SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
 use opentalk_types::{
     core::StreamingTargetId,
@@ -70,7 +70,7 @@ impl SignalingModule for RecordingService {
                 participants: _,
             } => {
                 if self.is_recorder {
-                    self.handle_joined(ctx.redis_conn(), frontend_data).await?;
+                    self.handle_joined(ctx, frontend_data).await?;
                 }
             }
 
@@ -144,6 +144,13 @@ impl RecordingService {
         &self,
         mut ctx: ModuleContext<'_, Self>,
     ) -> Result<(), SignalingModuleError> {
+        // notify recording module that the recorder is leaving
+        ctx.exchange_publish_to_namespace(
+            control::exchange::current_room_all_recorders(self.room),
+            Recording::NAMESPACE,
+            recording::exchange::Message::RecorderStopping,
+        );
+
         let targets = recording::storage::get_streams(ctx.redis_conn(), self.room).await?;
         let targets: BTreeMap<StreamingTargetId, StreamTargetSecret> = targets
             .into_iter()
@@ -176,10 +183,17 @@ impl RecordingService {
 
     pub async fn handle_joined(
         &self,
-        redis_conn: &mut RedisConnection,
+        mut ctx: ModuleContext<'_, Self>,
         frontend_data: &mut Option<RecordingServiceState>,
     ) -> Result<(), SignalingModuleError> {
-        let streams = recording::storage::get_streams(redis_conn, self.room)
+        // Signal recording module that the recorder is started
+        ctx.exchange_publish_to_namespace(
+            control::exchange::current_room_all_recorders(self.room),
+            Recording::NAMESPACE,
+            recording::exchange::Message::RecorderStarting,
+        );
+
+        let streams = recording::storage::get_streams(ctx.redis_conn(), self.room)
             .await?
             .into_iter()
             .map(|(id, target)| {

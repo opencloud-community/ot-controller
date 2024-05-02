@@ -21,6 +21,9 @@ pub enum RecordingEvent {
 
     /// An error happened when executing a `recording` command
     Error(Error),
+
+    /// Indicates that the recorder was not started
+    RecorderError(RecorderError),
 }
 
 impl From<StreamUpdated> for RecordingEvent {
@@ -50,5 +53,23 @@ pub enum Error {
 impl From<Error> for RecordingEvent {
     fn from(value: Error) -> Self {
         Self::Error(value)
+    }
+}
+
+/// Recorder not started
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(tag = "reason", rename_all = "snake_case")
+)]
+pub enum RecorderError {
+    /// Indicates, that the recorder timed out when attempting to start
+    Timeout,
+}
+
+impl From<RecorderError> for RecordingEvent {
+    fn from(value: RecorderError) -> Self {
+        Self::RecorderError(value)
     }
 }

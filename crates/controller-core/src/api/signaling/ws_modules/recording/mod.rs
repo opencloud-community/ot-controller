@@ -7,6 +7,7 @@ use std::{
     sync::Arc,
 };
 
+use futures::{stream::once, FutureExt};
 use lapin_pool::{RabbitMqChannel, RabbitMqPool};
 use opentalk_database::Db;
 use opentalk_db_storage::streaming_targets::RoomStreamingTargetRecord;
@@ -19,7 +20,7 @@ use opentalk_types::{
     signaling::{
         recording::{
             command::{self, RecordingCommand},
-            event::{Error, RecordingEvent},
+            event::{Error, RecorderError, RecordingEvent},
             peer_state::RecordingPeerState,
             state::RecordingState,
             StreamStatus, StreamTargetSecret, NAMESPACE,
@@ -28,6 +29,7 @@ use opentalk_types::{
     },
 };
 use snafu::{Report, ResultExt};
+use tokio::time::Duration;
 
 use super::recording_service::{self, RecordingService};
 
@@ -39,6 +41,7 @@ pub struct Recording {
     id: ParticipantId,
     room: SignalingRoomId,
     params: RecordingParams,
+    recorder_started: bool,
     /// Whether or not the current participant is the recorder
     db: Arc<Db>,
 
@@ -51,6 +54,11 @@ pub struct RecordingParams {
     pub queue: String,
 }
 
+pub enum RecorderExtEvent {
+    /// The timeout message
+    Timeout(BTreeSet<StreamingTargetId>),
+}
+
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for Recording {
     const NAMESPACE: &'static str = NAMESPACE;
@@ -61,7 +69,7 @@ impl SignalingModule for Recording {
     type Outgoing = RecordingEvent;
     type ExchangeMessage = exchange::Message;
 
-    type ExtEvent = ();
+    type ExtEvent = RecorderExtEvent;
 
     type FrontendData = RecordingState;
     type PeerFrontendData = RecordingPeerState;
@@ -81,6 +89,7 @@ impl SignalingModule for Recording {
             params: params.clone(),
             db: ctx.db().clone(),
             rabbitmq_channel,
+            recorder_started: false,
         }))
     }
 
@@ -155,8 +164,47 @@ impl SignalingModule for Recording {
                 exchange::Message::StreamUpdated(stream_updated) => {
                     ctx.ws_send(stream_updated);
                 }
+                exchange::Message::RecorderStarting => {
+                    self.recorder_started = true;
+                }
+                exchange::Message::RecorderStopping => {
+                    self.recorder_started = false;
+                }
             },
-            Event::Ext(_) => {}
+            Event::Ext(msg) => match msg {
+                RecorderExtEvent::Timeout(ids) => {
+                    if ids.is_empty() {
+                        return Ok(());
+                    }
+
+                    if self.recorder_started {
+                        return Ok(());
+                    }
+
+                    let streams = storage::get_streams(ctx.redis_conn(), self.room).await?;
+
+                    if streams
+                        .iter()
+                        .any(|(_, target)| target.status == StreamStatus::Active)
+                    {
+                        return Ok(());
+                    }
+
+                    let streams = streams
+                        .into_iter()
+                        .filter(|(id, _)| ids.contains(id))
+                        .map(|(id, mut target)| {
+                            target.status = StreamStatus::Inactive;
+                            (id, target)
+                        })
+                        .collect();
+
+                    storage::set_streams(ctx.redis_conn(), self.room, &streams).await?;
+
+                    log::warn!("Recorder ran into a timeout!");
+                    ctx.ws_send(RecorderError::Timeout);
+                }
+            },
         }
 
         Ok(())
@@ -299,6 +347,11 @@ impl Recording {
                 )
                 .await
                 .with_whatever_context::<_, _, SignalingModuleError>(|err| format!("{err}"))?;
+
+            ctx.add_event_stream(once(
+                tokio::time::sleep(Duration::from_secs(5u64))
+                    .map(move |_| RecorderExtEvent::Timeout(target_ids)),
+            ));
 
             return Ok(());
         }
