@@ -862,44 +862,8 @@ impl Runner {
                     return Ok(());
                 }
 
-                let join_display_name = join.display_name.unwrap_or_default();
-
-                let (display_name, avatar_url) = match &self.participant {
-                    Participant::User(user) => {
-                        // Enforce the auto-generated display name if display name editing is prohibited
-                        let settings = self.settings.load();
-                        let user_display_name = if settings.endpoints.disallow_custom_display_name {
-                            user.display_name.clone()
-                        } else {
-                            join_display_name.clone()
-                        };
-
-                        let avatar_url = Some(format!(
-                            "{}{:x}",
-                            settings.avatar.libravatar_url,
-                            md5::compute(&user.email)
-                        ));
-
-                        (trim_display_name(user_display_name), avatar_url)
-                    }
-                    Participant::Guest => (trim_display_name(join_display_name), None),
-                    Participant::Recorder => (join_display_name, None),
-                    Participant::Sip => {
-                        if let Some(call_in) = self.settings.load().call_in.as_ref() {
-                            let display_name = call_in::display_name(
-                                &self.db,
-                                call_in,
-                                self.room.tenant_id,
-                                join_display_name,
-                            )
-                            .await;
-
-                            (display_name, None)
-                        } else {
-                            (trim_display_name(join_display_name), None)
-                        }
-                    }
-                };
+                let display_name = self.username_or(join.display_name).await;
+                let avatar_url = self.avatar_url().await;
 
                 if display_name.is_empty() || display_name.len() > 100 {
                     self.ws_send_control_error(timestamp, control_event::Error::InvalidUsername)
@@ -1982,6 +1946,57 @@ impl Runner {
                 .into(),
             ))
             .await;
+    }
+
+    async fn username_or(&self, join_display_name: Option<String>) -> String {
+        let join_display_name = join_display_name.unwrap_or_default();
+
+        match &self.participant {
+            Participant::User(user) => {
+                // Enforce the auto-generated display name if display name editing is prohibited
+                let settings = self.settings.load();
+                let user_display_name = if settings.endpoints.disallow_custom_display_name {
+                    user.display_name.clone()
+                } else {
+                    join_display_name.clone()
+                };
+
+                trim_display_name(user_display_name)
+            }
+            Participant::Guest => trim_display_name(join_display_name),
+            Participant::Recorder => join_display_name,
+            Participant::Sip => {
+                if let Some(call_in) = self.settings.load().call_in.as_ref() {
+                    let display_name = call_in::display_name(
+                        &self.db,
+                        call_in,
+                        self.room.tenant_id,
+                        join_display_name,
+                    )
+                    .await;
+
+                    display_name
+                } else {
+                    trim_display_name(join_display_name)
+                }
+            }
+        }
+    }
+
+    async fn avatar_url(&self) -> Option<String> {
+        match &self.participant {
+            Participant::User(user) => {
+                let settings = self.settings.load();
+                let avatar_url = Some(format!(
+                    "{}{:x}",
+                    settings.avatar.libravatar_url,
+                    md5::compute(&user.email)
+                ));
+
+                avatar_url
+            }
+            Participant::Guest | Participant::Recorder | Participant::Sip => None,
+        }
     }
 }
 
