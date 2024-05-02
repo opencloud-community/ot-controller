@@ -919,12 +919,7 @@ impl Runner {
                     display_name,
                     role: self.role,
                     avatar_url,
-                    participation_kind: match &self.participant {
-                        Participant::User(_) => ParticipationKind::User,
-                        Participant::Guest => ParticipationKind::Guest,
-                        Participant::Sip => ParticipationKind::Sip,
-                        Participant::Recorder => ParticipationKind::Recorder,
-                    },
+                    participation_kind: self.participant.kind(),
                     joined_at: timestamp,
                     hand_is_up: false,
                     hand_updated_at: timestamp,

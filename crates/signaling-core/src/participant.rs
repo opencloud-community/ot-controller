@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_db_storage::users::User;
-use opentalk_types::core::UserId;
+use opentalk_types::core::{ParticipationKind, UserId};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -21,6 +21,15 @@ impl<U> Participant<U> {
             Participant::Guest => "guest",
             Participant::Sip => "sip",
             Participant::Recorder => "recorder",
+        }
+    }
+
+    pub fn kind(&self) -> ParticipationKind {
+        match self {
+            Participant::User(_) => ParticipationKind::User,
+            Participant::Guest => ParticipationKind::Guest,
+            Participant::Sip => ParticipationKind::Sip,
+            Participant::Recorder => ParticipationKind::Recorder,
         }
     }
 }
