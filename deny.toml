@@ -81,6 +81,9 @@ exceptions = [
   ], name = "kustos-shared" },
   { allow = [
     "EUPL-1.2",
+  ], name = "lapin-pool" },
+  { allow = [
+    "EUPL-1.2",
   ], name = "opentalk-cache" },
   { allow = [
     "EUPL-1.2",
@@ -109,6 +112,9 @@ exceptions = [
   { allow = [
     "EUPL-1.2",
   ], name = "opentalk-kustos-prefix-impl" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "opentalk-mail-worker-protocol" },
   { allow = [
     "EUPL-1.2",
   ], name = "opentalk-nextcloud-client" },
