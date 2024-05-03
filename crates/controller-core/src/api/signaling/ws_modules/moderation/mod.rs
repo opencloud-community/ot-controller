@@ -361,11 +361,6 @@ impl SignalingModule for ModerationModule {
                 }
 
                 set_waiting_room_enabled(&mut ctx, self.room.room_id(), true).await?;
-
-                ctx.exchange_publish(
-                    control::exchange::global_room_all_participants(self.room.room_id()),
-                    exchange::Message::WaitingRoomEnableUpdated,
-                );
             }
             Event::WsMessage(ModerationCommand::DisableWaitingRoom) => {
                 if ctx.role() != Role::Moderator {
@@ -373,11 +368,6 @@ impl SignalingModule for ModerationModule {
                 }
 
                 set_waiting_room_enabled(&mut ctx, self.room.room_id(), false).await?;
-
-                ctx.exchange_publish(
-                    control::exchange::global_room_all_participants(self.room.room_id()),
-                    exchange::Message::WaitingRoomEnableUpdated,
-                );
             }
             Event::WsMessage(ModerationCommand::Accept { target }) => {
                 if ctx.role() != Role::Moderator {
