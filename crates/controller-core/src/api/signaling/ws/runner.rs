@@ -31,6 +31,7 @@ use opentalk_signaling_core::{
     SignalingModule, SignalingModuleError, SignalingRoomId, SubscriberHandle,
 };
 use opentalk_types::{
+    common::tariff::TariffResource,
     core::{BreakoutRoomId, ParticipantId, ParticipationKind, UserId},
     signaling::{
         common::TargetParticipant,
@@ -104,6 +105,7 @@ pub struct Builder {
     pub(super) id: ParticipantId,
     resuming: bool,
     pub(super) room: Room,
+    pub(super) room_tariff: TariffResource,
     pub(super) breakout_room: Option<BreakoutRoomId>,
     pub(super) participant: Participant<User>,
     pub(super) role: Role,
@@ -350,6 +352,7 @@ impl Runner {
         id: ParticipantId,
         resuming: bool,
         room: Room,
+        room_tariff: TariffResource,
         breakout_room: Option<BreakoutRoomId>,
         participant: Participant<User>,
         protocol: &'static str,
@@ -368,6 +371,7 @@ impl Runner {
             id,
             resuming,
             room,
+            room_tariff,
             breakout_room,
             participant,
             role,

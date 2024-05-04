@@ -24,7 +24,7 @@ use kustos::Authz;
 use opentalk_database::Db;
 use opentalk_db_storage::{rooms::Room, users::User};
 use opentalk_types::{
-    common::tariff::TariffResource,
+    common::tariff::{TariffModuleResource, TariffResource},
     core::{BreakoutRoomId, ParticipantId, ParticipationKind, TariffId, Timestamp, UserId},
     signaling::{
         control::{
@@ -403,12 +403,31 @@ where
     ) -> Result<Self, NoInitError> {
         let mut events = SelectAll::new();
 
+        // Create an allow-all tariff
+        let room_tariff = TariffResource {
+            id: TariffId::nil(),
+            name: "OpenTalkDefaultTariff".to_string(),
+            quotas: HashMap::new(),
+            enabled_modules: HashSet::from([M::NAMESPACE.to_string()]),
+            disabled_features: HashSet::new(),
+            modules: HashMap::from([(
+                M::NAMESPACE.to_string(),
+                TariffModuleResource {
+                    features: M::get_provided_features()
+                        .into_iter()
+                        .map(ToString::to_string)
+                        .collect(),
+                },
+            )]),
+        };
+
         let init_context = InitContext {
             id: participant_id,
             room: &mut room,
             breakout_room,
             participant: &mut participant,
             role,
+            room_tariff: &room_tariff,
             db: &db,
             storage: &storage,
             authz: &authz,

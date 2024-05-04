@@ -23,7 +23,7 @@ use opentalk_types::{
             event::{Error, RecorderError, RecordingEvent},
             peer_state::RecordingPeerState,
             state::RecordingState,
-            StreamStatus, StreamTargetSecret, NAMESPACE,
+            StreamStatus, StreamTargetSecret, NAMESPACE, RECORD_FEATURE, STREAM_FEATURE,
         },
         Role,
     },
@@ -37,11 +37,20 @@ pub(crate) mod exchange;
 mod rabbitmq;
 pub(crate) mod storage;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+enum RecordingFeature {
+    Record,
+    Stream,
+}
+
 pub struct Recording {
     id: ParticipantId,
     room: SignalingRoomId,
     params: RecordingParams,
     recorder_started: bool,
+
+    enabled_features: BTreeSet<RecordingFeature>,
+
     /// Whether or not the current participant is the recorder
     db: Arc<Db>,
 
@@ -83,14 +92,31 @@ impl SignalingModule for Recording {
 
         let rabbitmq_channel = rabbitmq_pool.create_channel().await?;
 
+        let enabled_features = ctx
+            .room_tariff
+            .module_features(NAMESPACE)
+            .into_iter()
+            .flatten()
+            .filter_map(|feature| match feature.as_str() {
+                RECORD_FEATURE => Some(RecordingFeature::Record),
+                STREAM_FEATURE => Some(RecordingFeature::Stream),
+                _ => None,
+            })
+            .collect();
+
         Ok(Some(Self {
             id: ctx.participant_id(),
             room: ctx.room_id(),
             params: params.clone(),
+            enabled_features,
             db: ctx.db().clone(),
             rabbitmq_channel,
             recorder_started: false,
         }))
+    }
+
+    fn get_provided_features() -> Vec<&'static str> {
+        vec![RECORD_FEATURE, STREAM_FEATURE]
     }
 
     async fn on_event(
@@ -245,16 +271,21 @@ impl Recording {
     ) -> Result<(), SignalingModuleError> {
         let mut conn = self.db.get_conn().await?;
 
-        let recorder_stream = (
+        let can_record = self.enabled_features.contains(&RecordingFeature::Record);
+        let can_stream = self.enabled_features.contains(&RecordingFeature::Stream);
+
+        let stock_streams = can_record.then_some((
             StreamingTargetId::generate(),
             StreamTargetSecret::recording(),
-        );
-        let streams = if self.room.breakout_room_id().is_some() {
-            BTreeMap::from([recorder_stream])
+        ));
+        let streams = if self.room.breakout_room_id().is_some() || !can_stream {
+            BTreeMap::from_iter(stock_streams)
         } else {
             let streaming_targets =
                 RoomStreamingTargetRecord::get_all_for_room(&mut conn, self.room.room_id()).await?;
-            std::iter::once(Ok(recorder_stream))
+            stock_streams
+                .into_iter()
+                .map(Ok)
                 .chain(streaming_targets.into_iter().map(|target| {
                     let id = target.id;
                     StreamTargetSecret::try_from(target)

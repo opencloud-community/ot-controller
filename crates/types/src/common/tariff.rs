@@ -33,12 +33,34 @@ pub struct TariffResource {
     pub modules: HashMap<String, TariffModuleResource>,
 }
 
+impl TariffResource {
+    /// Query whether a specific feature for a module tariff is enabled
+    pub fn has_feature_enabled(&self, module: &str, feature: &str) -> bool {
+        self.modules
+            .get(&module.to_string())
+            .map(|m| m.has_feature_enabled(feature))
+            .unwrap_or_default()
+    }
+
+    /// Get the features for a module
+    pub fn module_features(&self, module: &str) -> Option<&HashSet<String>> {
+        self.modules.get(&module.to_string()).map(|m| &m.features)
+    }
+}
+
 /// Tariff information related to a specific module
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Default, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TariffModuleResource {
     /// Enabled features for the tariff
     pub features: HashSet<String>,
+}
+
+impl TariffModuleResource {
+    /// Query whether a specific feature for a module tariff is enabled
+    pub fn has_feature_enabled(&self, feature: &str) -> bool {
+        self.features.contains(&feature.to_string())
+    }
 }
 
 #[cfg(test)]
