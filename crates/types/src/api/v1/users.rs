@@ -14,6 +14,7 @@ use crate::imports::*;
 /// Contains general "public" information about a user. Is accessible to all other users.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct PublicUserProfile {
     /// The user id
     pub id: UserId,

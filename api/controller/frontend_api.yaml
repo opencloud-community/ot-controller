@@ -77,6 +77,48 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
       security: []
+  /rooms:
+    get:
+      tags:
+        - "api::v1::rooms"
+      summary: Get a list of rooms accessible by the requesting user
+      description: |
+        All rooms accessible to the requesting user are returned in a list. If no
+        pagination query is added, the default page size is used.
+      operationId: accessible
+      parameters:
+        - name: per_page
+          in: query
+          description: The number of entries per page
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: page
+          in: query
+          description: The number of the page
+          required: false
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: List of accessible rooms successfully returned
+          headers:
+            link:
+              schema:
+                $ref: "#/components/schemas/PageLink"
+              description: Links for paging through the results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetRoomsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   /users/me:
     get:
       tags:
@@ -115,6 +157,11 @@ components:
       properties:
         oidc:
           $ref: "#/components/schemas/OidcProvider"
+    GetRoomsResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/RoomResource"
+      description: "The JSON body returned by the `/rooms` `GET` endpoint"
     OidcProvider:
       type: object
       description: Represents an OIDC provider
@@ -128,6 +175,9 @@ components:
         url:
           type: string
           description: The url of the provider
+    PageLink:
+      type: string
+      example: "<https://api.example.org/resource?page=2>; rel='next', <https://api.example.org/resource?page=5>; rel='last'"
     PostLoginRequestBody:
       type: object
       description: "Body of a *POST* request on `/auth/login`"
@@ -208,6 +258,71 @@ components:
           format: int64
           description: "The user's used storage"
           minimum: 0
+    PublicUserProfile:
+      type: object
+      description: |
+        Public user details.
+        
+        Contains general "public" information about a user. Is accessible to all other users.
+      required:
+        - id
+        - email
+        - title
+        - firstname
+        - lastname
+        - display_name
+        - avatar_url
+      properties:
+        avatar_url:
+          type: string
+          description: "The user's avatar URL"
+        display_name:
+          type: string
+          description: "The user's display name"
+        email:
+          type: string
+          description: The email of the user
+        firstname:
+          type: string
+          description: "The user's first name"
+        id:
+          $ref: "#/components/schemas/UserId"
+        lastname:
+          type: string
+          description: "The user's last name"
+        title:
+          type: string
+          description: The title of the user
+    RoomId:
+      type: string
+      format: uuid
+      description: The id of a room
+    RoomResource:
+      type: object
+      description: |
+        A Room
+        
+        Contains all room information. Is only be accessible to the owner and users with
+        appropriate permissions.
+      required:
+        - id
+        - created_by
+        - created_at
+        - waiting_room
+      properties:
+        created_at:
+          $ref: "#/components/schemas/Timestamp"
+        created_by:
+          $ref: "#/components/schemas/PublicUserProfile"
+        id:
+          $ref: "#/components/schemas/RoomId"
+        password:
+          type: string
+          description: "The password of the room, if any"
+          nullable: true
+        waiting_room:
+          type: boolean
+          description: If waiting room is enabled
     StandardErrorBody:
       type: object
       description: Standard API error body
@@ -227,6 +342,13 @@ components:
         - default
         - paid
         - downgraded
+    Timestamp:
+      type: string
+      format: date-time
+      description: |
+        A UTC DateTime wrapper that implements ToRedisArgs and FromRedisValue.
+        
+        The values are stores as unix timestamps in redis.
     UserId:
       type: string
       format: uuid

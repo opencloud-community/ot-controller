@@ -655,12 +655,14 @@ impl ModulesRegistrar for Controller {
         ),
     ),
     paths(
-        api::v1::auth::post_login,
         api::v1::auth::get_login,
+        api::v1::auth::post_login,
+        api::v1::rooms::accessible,
         api::v1::users::get_me,
     ),
     components(
         schemas(
+            api::headers::PageLink,
             opentalk_types::api::error::ErrorBody,
             opentalk_types::api::error::StandardErrorBody,
             opentalk_types::api::error::ValidationErrorBody,
@@ -669,8 +671,13 @@ impl ModulesRegistrar for Controller {
             opentalk_types::api::v1::auth::OidcProvider,
             opentalk_types::api::v1::auth::PostLoginRequestBody,
             opentalk_types::api::v1::auth::PostLoginResponse,
+            opentalk_types::api::v1::rooms::GetRoomsResponse,
+            opentalk_types::api::v1::rooms::RoomResource,
             opentalk_types::api::v1::users::PrivateUserProfile,
+            opentalk_types::api::v1::users::PublicUserProfile,
+            opentalk_types::core::RoomId,
             opentalk_types::core::TariffStatus,
+            opentalk_types::core::Timestamp,
             opentalk_types::core::UserId,
         ),
         responses(

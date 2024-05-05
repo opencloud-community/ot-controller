@@ -38,9 +38,9 @@ use opentalk_types::{
         v1::{
             pagination::PagePaginationQuery,
             rooms::{
-                DeleteRoomQuery, GetRoomEventResponse, PatchRoomsRequestBody, PostRoomsRequestBody,
-                PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody, RoomResource,
-                RoomsStartResponse, StartRoomError,
+                DeleteRoomQuery, GetRoomEventResponse, GetRoomsResponse, PatchRoomsRequestBody,
+                PostRoomsRequestBody, PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody,
+                RoomResource, RoomsStartResponse, StartRoomError,
             },
         },
     },
@@ -55,6 +55,7 @@ use super::{
 };
 use crate::{
     api::{
+        responses::{InternalServerError, Unauthorized},
         signaling::{
             breakout::BreakoutStorageProvider as _, moderation::ModerationStorageProvider as _,
             ticket::start_or_continue_signaling_session, SignalingModules,
@@ -65,9 +66,34 @@ use crate::{
     settings::SharedSettingsActix,
 };
 
-/// API Endpoint *GET /rooms*
+/// Get a list of rooms accessible by the requesting user
 ///
-/// Returns a JSON array of all accessible rooms as [`Room`]
+/// All rooms accessible to the requesting user are returned in a list. If no
+/// pagination query is added, the default page size is used.
+#[utoipa::path(
+    params(PagePaginationQuery),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "List of accessible rooms successfully returned",
+            body = GetRoomsResponse,
+            headers(
+                ("link" = PageLink, description = "Links for paging through the results"),
+            ),
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/rooms")]
 pub async fn accessible(
     settings: SharedSettingsActix,
@@ -75,7 +101,7 @@ pub async fn accessible(
     current_user: ReqData<User>,
     pagination: web::Query<PagePaginationQuery>,
     authz: Data<Authz>,
-) -> Result<ApiResponse<Vec<RoomResource>>, ApiError> {
+) -> Result<ApiResponse<GetRoomsResponse>, ApiError> {
     let settings = settings.load();
     let current_user = current_user.into_inner();
     let PagePaginationQuery { per_page, page } = pagination.into_inner();
@@ -100,13 +126,13 @@ pub async fn accessible(
         .map(|(room, user)| RoomResource {
             id: room.id,
             created_by: user.to_public_user_profile(&settings),
-            created_at: room.created_at,
+            created_at: room.created_at.into(),
             password: room.password,
             waiting_room: room.waiting_room,
         })
         .collect::<Vec<RoomResource>>();
 
-    Ok(ApiResponse::new(rooms).with_page_pagination(per_page, page, room_count))
+    Ok(ApiResponse::new(GetRoomsResponse(rooms)).with_page_pagination(per_page, page, room_count))
 }
 
 /// API Endpoint *POST /rooms*
@@ -151,7 +177,7 @@ pub async fn new(
     let room_resource = RoomResource {
         id: room.id,
         created_by: current_user.to_public_user_profile(&settings),
-        created_at: room.created_at,
+        created_at: room.created_at.into(),
         password: room.password,
         waiting_room: room.waiting_room,
     };
@@ -198,7 +224,7 @@ pub async fn patch(
     let room_resource = RoomResource {
         id: room.id,
         created_by: current_user.to_public_user_profile(&settings),
-        created_at: room.created_at,
+        created_at: room.created_at.into(),
         password: room.password,
         waiting_room: room.waiting_room,
     };
@@ -325,7 +351,7 @@ pub async fn get(
     let room_resource = RoomResource {
         id: room.id,
         created_by: created_by.to_public_user_profile(&settings),
-        created_at: room.created_at,
+        created_at: room.created_at.into(),
         password: room.password,
         waiting_room: room.waiting_room,
     };
