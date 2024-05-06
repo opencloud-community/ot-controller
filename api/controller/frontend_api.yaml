@@ -285,6 +285,44 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+  /services/recording/start:
+    post:
+      tags:
+        - "api::v1::services::recording"
+      summary: Starts a signaling session for recording
+      description: |
+        This endpoint is provided for participation of recording and streaming clients
+        which will join incognito and receive all the information and media streams required
+        for creating a recording or livestream of the meeting.
+      operationId: start_recording
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartRecordingRequestBody"
+        required: true
+      responses:
+        "200":
+          description: The recording participant has successfully authenticated for the room. Information needed for connecting to the signaling is contained in the response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceStartResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Recording has not been configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardErrorBody"
+              example:
+                code: not_found
+                message: A requested resource could not be found
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   /turn:
     get:
       tags:
@@ -647,6 +685,18 @@ components:
           $ref: "#/components/schemas/CallInId"
         pin:
           $ref: "#/components/schemas/CallInPassword"
+    StartRecordingRequestBody:
+      type: object
+      description: "Response for the `POST /services/recording/start` endpoint"
+      required:
+        - room_id
+      properties:
+        breakout_room:
+          allOf:
+            - $ref: "#/components/schemas/BreakoutRoomId"
+          nullable: true
+        room_id:
+          $ref: "#/components/schemas/RoomId"
     Stun:
       type: object
       description: STUN Server for users.

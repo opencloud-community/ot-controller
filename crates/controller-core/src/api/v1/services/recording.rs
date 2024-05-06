@@ -20,12 +20,13 @@ use opentalk_signaling_core::{
 };
 use opentalk_types::api::{
     error::ApiError,
-    v1::services::{ServiceStartResponse, StartBody, UploadRenderQuery},
+    v1::services::{ServiceStartResponse, StartRecordingRequestBody, UploadRenderQuery},
 };
 use tokio::{sync::mpsc, task};
 
 use crate::{
     api::{
+        responses::{InternalServerError, Unauthorized},
         signaling::ticket::start_or_continue_signaling_session,
         upload::{UploadWebSocketActor, MAXIMUM_WEBSOCKET_BUFFER_SIZE},
         v1::response::NoContent,
@@ -38,12 +39,48 @@ use crate::{
 // you change something here
 const REQUIRED_RECORDING_ROLE: &str = "opentalk-recorder";
 
+/// Starts a signaling session for recording
+///
+/// This endpoint is provided for participation of recording and streaming clients
+/// which will join incognito and receive all the information and media streams required
+/// for creating a recording or livestream of the meeting.
+#[utoipa::path(
+    context_path = "/services/recording",
+    request_body = StartRecordingRequestBody,
+    operation_id = "start_recording",
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "The recording participant has successfully \
+                authenticated for the room. Information needed for connecting to the signaling \
+                is contained in the response",
+            body = ServiceStartResponse,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            description = "Recording has not been configured",
+            body = StandardErrorBody,
+            example = json!(ApiError::not_found().body),
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[post("/start")]
 pub async fn start(
     settings: SharedSettingsActix,
     db: Data<Db>,
     volatile: Data<VolatileStorage>,
-    body: Json<StartBody>,
+    body: Json<StartRecordingRequestBody>,
 ) -> Result<Json<ServiceStartResponse>, ApiError> {
     let mut conn = db.get_conn().await?;
     let settings = settings.load_full();
