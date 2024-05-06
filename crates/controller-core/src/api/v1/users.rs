@@ -30,8 +30,8 @@ use opentalk_types::{
             order::{AssetSorting, SortingQuery},
             pagination::PagePaginationQuery,
             users::{
-                GetFindQuery, GetFindResponseItem, GetUserAssetsResponse, PatchMeBody,
-                PrivateUserProfile, PublicUserProfile, UnregisteredUser,
+                GetFindQuery, GetFindResponse, GetFindResponseItem, GetUserAssetsResponse,
+                PatchMeBody, PrivateUserProfile, PublicUserProfile, UnregisteredUser,
             },
         },
     },
@@ -263,9 +263,30 @@ pub async fn get_user(
     Ok(Json(user_profile))
 }
 
-/// API Endpoint *GET /users/find?name=$input*
+/// Find users
 ///
-/// Returns a list with a limited size of users matching the query
+/// Query users for autocomplete fields
+#[utoipa::path(
+    params(GetFindQuery),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Search results",
+            body = GetFindResponse,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/users/find")]
 pub async fn find(
     settings: SharedSettingsActix,
@@ -273,7 +294,7 @@ pub async fn find(
     db: Data<Db>,
     current_tenant: ReqData<Tenant>,
     query: Query<GetFindQuery>,
-) -> Result<Json<Vec<GetFindResponseItem>>, ApiError> {
+) -> Result<Json<GetFindResponse>, ApiError> {
     let settings = settings.load_full();
 
     if settings.endpoints.disable_users_find {
@@ -375,5 +396,5 @@ pub async fn find(
             .collect()
     };
 
-    Ok(Json(found_users))
+    Ok(Json(GetFindResponse(found_users)))
 }

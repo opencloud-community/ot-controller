@@ -348,6 +348,33 @@ paths:
       security:
         - BearerAuth: []
         - InviteCode: []
+  /users/find:
+    get:
+      tags:
+        - "api::v1::users"
+      summary: Find users
+      description: Query users for autocomplete fields
+      operationId: find
+      parameters:
+        - name: q
+          in: query
+          description: The query string
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetFindResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   /users/me:
     get:
       tags:
@@ -398,6 +425,36 @@ components:
         - $ref: "#/components/schemas/StandardErrorBody"
         - $ref: "#/components/schemas/ValidationErrorBody"
       description: The body of an error response
+    GetFindResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/GetFindResponseItem"
+      description: The response for the find endpoint
+    GetFindResponseItem:
+      oneOf:
+        - allOf:
+            - $ref: "#/components/schemas/PublicUserProfile"
+            - type: object
+              required:
+                - kind
+              properties:
+                kind:
+                  type: string
+                  enum:
+                    - registered
+        - allOf:
+            - $ref: "#/components/schemas/UnregisteredUser"
+            - type: object
+              required:
+                - kind
+              properties:
+                kind:
+                  type: string
+                  enum:
+                    - unregistered
+      description: The response for users found
+      discriminator:
+        propertyName: kind
     GetLoginResponse:
       type: object
       description: "Body of the response to a *GET* request on `/auth/login`"
@@ -747,6 +804,27 @@ components:
         username:
           type: string
           description: The TURN access username
+    UnregisteredUser:
+      type: object
+      description: Representation of a unregistered user
+      required:
+        - email
+        - firstname
+        - lastname
+        - avatar_url
+      properties:
+        avatar_url:
+          type: string
+          description: Avatar URL for the unregistered user
+        email:
+          type: string
+          description: Email of the unregistered user
+        firstname:
+          type: string
+          description: First name of the unregistered user
+        lastname:
+          type: string
+          description: Last name of the unregistered user
     UserId:
       type: string
       format: uuid

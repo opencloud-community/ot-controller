@@ -129,20 +129,28 @@ impl PatchMeBody {
 }
 
 /// The query string for finding a user
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::IntoParams))]
 pub struct GetFindQuery {
     /// The query string
     pub q: String,
 }
 
+/// The response for the find endpoint
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct GetFindResponse(pub Vec<GetFindResponseItem>);
+
 /// The response for users found
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
     serde(tag = "kind", rename_all = "lowercase")
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum GetFindResponseItem {
     /// Registered user
     Registered(PublicUserProfile),
@@ -154,6 +162,7 @@ pub enum GetFindResponseItem {
 /// Representation of a unregistered user
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct UnregisteredUser {
     /// Email of the unregistered user
     pub email: String,
