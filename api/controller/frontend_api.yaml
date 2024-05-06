@@ -77,6 +77,35 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
       security: []
+  /invite/verify:
+    post:
+      tags:
+        - "api::v1::invites"
+      summary: Verify an invite code
+      description: Verifies the invite and returns the room url for the invite code
+      operationId: verify_invite_code
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostInviteVerifyRequestBody"
+        required: true
+      responses:
+        "200":
+          description: "Invite is valid, the response body tells the room id"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CodeVerified"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          description: Invalid body contents received
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security: []
   /rooms:
     get:
       tags:
@@ -244,6 +273,18 @@ components:
       type: string
       format: uuid
       description: The id of a breakout room
+    CodeVerified:
+      type: object
+      description: Verify response body for *POST /invite/verify*
+      required:
+        - room_id
+        - password_required
+      properties:
+        password_required:
+          type: boolean
+          description: If password is required
+        room_id:
+          $ref: "#/components/schemas/RoomId"
     ErrorBody:
       oneOf:
         - $ref: "#/components/schemas/StandardErrorBody"
@@ -262,6 +303,10 @@ components:
       items:
         $ref: "#/components/schemas/RoomResource"
       description: "The JSON body returned by the `/rooms` `GET` endpoint"
+    InviteCodeId:
+      type: string
+      format: uuid
+      description: An invite code
     OidcProvider:
       type: object
       description: Represents an OIDC provider
@@ -278,6 +323,14 @@ components:
     PageLink:
       type: string
       example: "<https://api.example.org/resource?page=2>; rel='next', <https://api.example.org/resource?page=5>; rel='last'"
+    PostInviteVerifyRequestBody:
+      type: object
+      description: Verify body for *POST /invite/verify*
+      required:
+        - invite_code
+      properties:
+        invite_code:
+          $ref: "#/components/schemas/InviteCodeId"
     PostLoginRequestBody:
       type: object
       description: "Body of a *POST* request on `/auth/login`"

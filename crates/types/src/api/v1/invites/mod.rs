@@ -25,6 +25,7 @@ pub use room_id_and_invite_code::RoomIdAndInviteCode;
 /// Verify response body for *POST /invite/verify*
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct CodeVerified {
     /// The room id for the invite
     pub room_id: RoomId,

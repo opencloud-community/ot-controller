@@ -21,6 +21,7 @@ use crate::imports::*;
 )]
 #[cfg_attr(feature = "kustos", derive(KustosPrefix), kustos_prefix("/invites/"))]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct InviteCodeId(Uuid);
 
 impl InviteCodeId {

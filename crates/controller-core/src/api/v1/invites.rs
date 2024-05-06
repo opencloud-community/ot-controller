@@ -33,7 +33,10 @@ use validator::Validate;
 
 use super::{response::NoContent, DefaultApiResult};
 use crate::{
-    api::v1::{rooms::RoomsPoliciesBuilderExt, ApiResponse},
+    api::{
+        responses::{InternalServerError, NotFound, Unauthorized},
+        v1::{rooms::RoomsPoliciesBuilderExt, ApiResponse},
+    },
     settings::SharedSettingsActix,
 };
 
@@ -236,10 +239,36 @@ pub async fn delete_invite(
     Ok(NoContent)
 }
 
-/// API Endpoint *POST /invite/verify*
+/// Verify an invite code
 ///
-/// Used to verify a invite_code via POST.
-/// As the GET request might not be Idempotent this should be the prioritized endpoint to verify invite_codes.
+/// Verifies the invite and returns the room url for the invite code
+#[utoipa::path(
+    request_body = PostInviteVerifyRequestBody,
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Invite is valid, the response body tells the room id",
+            body = CodeVerified,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::UNPROCESSABLE_ENTITY,
+            description = "Invalid body contents received",
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(),
+)]
 #[post("/invite/verify")]
 pub async fn verify_invite_code(
     db: Data<Db>,
