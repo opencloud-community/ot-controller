@@ -267,3 +267,25 @@ An error has occurred while issuing a command.
     "error": "insufficient_permissions"
 }
 ```
+
+---
+
+### Recorder Error
+
+An error has occurred while trying to start the recorder.
+
+#### Fields
+
+| Field     | Type   | Required | Description                                                                         |
+| --------- | ------ | -------- | ----------------------------------------------------------------------------------- |
+| `message` | `enum` | yes      | Is `recorder_error`.                                                                |
+| `reason`  | `enum` | yes      | Is currently only `timeout`                                                         |
+
+#### Example
+
+```json
+{
+    "message": "recorder_error",
+    "reason": "timeout"
+}
+```
