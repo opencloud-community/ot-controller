@@ -36,7 +36,9 @@ use std::{fs::File, io::BufReader, marker::PhantomData, net::Ipv6Addr, sync::Arc
 
 use actix_cors::Cors;
 use actix_web::{web, web::Data, App, HttpServer, Scope};
-use api::signaling::{echo::Echo, recording::Recording, SignalingModules};
+use api::signaling::{
+    echo::Echo, recording::Recording, recording_service::RecordingService, SignalingModules,
+};
 use arc_swap::ArcSwap;
 use async_trait::async_trait;
 use lapin_pool::RabbitMqPool;
@@ -178,6 +180,7 @@ impl<M: RegisterModules> RegisterModules for ControllerModules<M> {
         registrar.register::<BreakoutRooms>().await?;
         registrar.register::<ModerationModule>().await?;
         registrar.register::<Recording>().await?;
+        registrar.register::<RecordingService>().await?;
         M::register(registrar).await
     }
 }

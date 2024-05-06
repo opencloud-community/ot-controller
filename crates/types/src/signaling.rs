@@ -17,6 +17,7 @@ pub mod moderation;
 pub mod polls;
 pub mod protocol;
 pub mod recording;
+pub mod recording_service;
 pub mod shared_folder;
 pub mod timer;
 pub mod whiteboard;

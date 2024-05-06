@@ -24,3 +24,10 @@ use crate::imports::*;
 )]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct StreamingKey(String);
+
+impl StreamingKey {
+    /// Get a &str to the key
+    pub fn as_str(&self) -> &str {
+        self.as_ref()
+    }
+}

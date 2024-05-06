@@ -6,8 +6,8 @@ use opentalk_types::core::{BreakoutRoomId, RoomId};
 use serde::Serialize;
 
 /// Message sent to the recording service instructing it to record the given room
-#[derive(Debug, Serialize)]
-pub struct StartRecording {
+#[derive(Debug, Clone, Serialize)]
+pub struct InitializeRecorder {
     pub room: RoomId,
     pub breakout: Option<BreakoutRoomId>,
 }

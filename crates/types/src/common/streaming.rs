@@ -32,6 +32,26 @@ pub enum StreamingTargetKind {
     },
 }
 
+impl StreamingTargetKind {
+    /// Return streaming_endpoint + streaming_key
+    pub fn get_stream_target_location(&self) -> Option<Url> {
+        match self {
+            StreamingTargetKind::Custom {
+                streaming_endpoint,
+                streaming_key,
+                public_url: _,
+            } => {
+                let mut endpoint = streaming_endpoint.clone();
+                if !endpoint.as_str().ends_with('/') {
+                    endpoint.set_path(&format!("{}/", endpoint.path()));
+                }
+
+                endpoint.join(streaming_key.as_str()).ok()
+            }
+        }
+    }
+}
+
 /// A streaming target
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]

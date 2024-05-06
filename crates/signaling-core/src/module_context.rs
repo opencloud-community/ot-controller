@@ -67,13 +67,27 @@ where
     }
 
     /// Queue a outgoing message to be sent via the message exchange
-    pub fn exchange_publish(&mut self, routing_key: String, message: M::ExchangeMessage) {
+    pub fn exchange_publish(
+        &mut self,
+        routing_key: String,
+        message: impl Into<M::ExchangeMessage>,
+    ) {
+        self.exchange_publish_to_namespace(routing_key, M::NAMESPACE, message.into())
+    }
+
+    /// Queue a outgoing message to be sent via the message exchange
+    pub fn exchange_publish_to_namespace(
+        &mut self,
+        routing_key: String,
+        namespace: &str,
+        payload: impl Serialize,
+    ) {
         self.exchange_publish_any(
             routing_key,
             NamespacedEvent {
-                namespace: M::NAMESPACE,
+                namespace,
                 timestamp: self.timestamp,
-                payload: message,
+                payload,
             },
         );
     }
