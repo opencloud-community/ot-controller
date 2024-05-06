@@ -119,6 +119,35 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+    post:
+      tags:
+        - "api::v1::rooms"
+      summary: Create a new room
+      description: Creates a new room withh the settings given in the request body.
+      operationId: new
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostRoomsRequestBody"
+        required: true
+      responses:
+        "201":
+          description: Room successfully created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoomResource"
+        "400":
+          description: Wrong syntax or bad values such as invalid owner id received in the body
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          description: Invalid body contents received
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   /users/me:
     get:
       tags:
@@ -200,6 +229,24 @@ components:
             type: string
           description: Permissions is a set of strings that each define a permission a user has.
           uniqueItems: true
+    PostRoomsRequestBody:
+      type: object
+      description: API request parameters to create a new room
+      properties:
+        enable_sip:
+          type: boolean
+          description: Enable/Disable sip for this room; defaults to false when not set
+        password:
+          type: string
+          description: "The password to the room, if any"
+          nullable: true
+          maxLength: 255
+          minLength: 1
+        waiting_room:
+          type: boolean
+          description: |
+            Indicates whether the meeting room should have the waiting room enabled.
+            When not present, the waiting room will be disabled.
     PrivateUserProfile:
       type: object
       description: |

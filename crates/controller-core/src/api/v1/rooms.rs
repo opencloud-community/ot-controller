@@ -135,10 +135,38 @@ pub async fn accessible(
     Ok(ApiResponse::new(GetRoomsResponse(rooms)).with_page_pagination(per_page, page, room_count))
 }
 
-/// API Endpoint *POST /rooms*
+/// Create a new room
 ///
-/// Uses the provided [`PostRoomsRequestBody`] to create a new room.
-/// Returns the created [`RoomResource`].
+/// Creates a new room withh the settings given in the request body.
+#[utoipa::path(
+    request_body = PostRoomsRequestBody,
+    responses(
+        (
+            status = StatusCode::CREATED,
+            description = "Room successfully created",
+            body = RoomResource,
+        ),
+        (
+            status = StatusCode::BAD_REQUEST,
+            description = "Wrong syntax or bad values such as invalid owner id received in the body",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::UNPROCESSABLE_ENTITY,
+            description = "Invalid body contents received",
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[post("/rooms")]
 pub async fn new(
     settings: SharedSettingsActix,

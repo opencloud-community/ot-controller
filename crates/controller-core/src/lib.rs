@@ -658,6 +658,7 @@ impl ModulesRegistrar for Controller {
         api::v1::auth::get_login,
         api::v1::auth::post_login,
         api::v1::rooms::accessible,
+        api::v1::rooms::new,
         api::v1::users::get_me,
     ),
     components(
@@ -672,6 +673,7 @@ impl ModulesRegistrar for Controller {
             opentalk_types::api::v1::auth::PostLoginRequestBody,
             opentalk_types::api::v1::auth::PostLoginResponse,
             opentalk_types::api::v1::rooms::GetRoomsResponse,
+            opentalk_types::api::v1::rooms::PostRoomsRequestBody,
             opentalk_types::api::v1::rooms::RoomResource,
             opentalk_types::api::v1::users::PrivateUserProfile,
             opentalk_types::api::v1::users::PublicUserProfile,
