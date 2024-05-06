@@ -148,6 +148,73 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+  "/rooms/{room_id}/start_invited":
+    post:
+      tags:
+        - "api::v1::rooms"
+      summary: Start a signaling session for an invitation code
+      description: |
+        Returns a ticket to be used with the `/signaling` endpoint. When joining a
+        room, the ticket must be provided as `Sec-WebSocket-Protocol` header field
+        when starting the WebSocket connection. When the requested room has a
+        password set, the requester must provide the correct password through the
+        requests body. When the request has no password set, the provided password
+        will be ignored.
+      operationId: start_invited
+      parameters:
+        - name: room_id
+          in: path
+          description: The id of the room
+          required: true
+          schema:
+            $ref: "#/components/schemas/RoomId"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostRoomsStartInvitedRequestBody"
+        required: true
+      responses:
+        "200":
+          description: Response body includes the information needed to connect to the signaling endpoint
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoomsStartResponse"
+        "400":
+          description: The provided ID token is malformed or contains invalid claims
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardErrorBody"
+              example:
+                code: bad_request
+                message: Room id mismatch
+        "401":
+          description: |
+            Either: the provided access token is expired or the
+                            provided id or access token is invalid. The WWW-Authenticate
+                            header will contain an error description 'session expired' to
+                            distinguish between an invalid and an expired token.
+                            Or: the provided password was incorrect, in which case the body
+                            contains more information.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardErrorBody"
+        "403":
+          description: The specified room could not be found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardErrorBody"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          description: Invalid body contents received
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security: []
   /users/me:
     get:
       tags:
@@ -173,6 +240,10 @@ paths:
         - BearerAuth: []
 components:
   schemas:
+    BreakoutRoomId:
+      type: string
+      format: uuid
+      description: The id of a breakout room
     ErrorBody:
       oneOf:
         - $ref: "#/components/schemas/StandardErrorBody"
@@ -247,6 +318,27 @@ components:
           description: |
             Indicates whether the meeting room should have the waiting room enabled.
             When not present, the waiting room will be disabled.
+    PostRoomsStartInvitedRequestBody:
+      type: object
+      description: "The JSON body expected when making a *POST /rooms/{room_id}/start_invited*"
+      required:
+        - invite_code
+      properties:
+        breakout_room:
+          allOf:
+            - $ref: "#/components/schemas/BreakoutRoomId"
+          nullable: true
+        invite_code:
+          type: string
+          description: The invite code
+        password:
+          type: string
+          description: "The invited user's password to the room"
+          nullable: true
+        resumption:
+          allOf:
+            - $ref: "#/components/schemas/ResumptionToken"
+          nullable: true
     PrivateUserProfile:
       type: object
       description: |
@@ -340,6 +432,9 @@ components:
         title:
           type: string
           description: The title of the user
+    ResumptionToken:
+      type: string
+      description: A resumption token
     RoomId:
       type: string
       format: uuid
@@ -370,6 +465,17 @@ components:
         waiting_room:
           type: boolean
           description: If waiting room is enabled
+    RoomsStartResponse:
+      type: object
+      description: The JSON body returned from the start endpoints supporting session resumption
+      required:
+        - ticket
+        - resumption
+      properties:
+        resumption:
+          $ref: "#/components/schemas/ResumptionToken"
+        ticket:
+          $ref: "#/components/schemas/TicketToken"
     StandardErrorBody:
       type: object
       description: Standard API error body
@@ -389,6 +495,9 @@ components:
         - default
         - paid
         - downgraded
+    TicketToken:
+      type: string
+      description: A ticket token
     Timestamp:
       type: string
       format: date-time
@@ -442,6 +551,8 @@ components:
   responses:
     InternalServerError:
       description: An internal server error occurred
+    NotFound:
+      description: The requested data could not be found
     Unauthorized:
       description: |
         The provided access token is expired or the provided id or access token is invalid.

@@ -34,7 +34,7 @@ use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage, Participant, VolatileStorage};
 use opentalk_types::{
     api::{
-        error::{ApiError, ValidationErrorEntry, ERROR_CODE_INVALID_VALUE},
+        error::{ApiError, StandardErrorBody, ValidationErrorEntry, ERROR_CODE_INVALID_VALUE},
         v1::{
             pagination::PagePaginationQuery,
             rooms::{
@@ -55,7 +55,7 @@ use super::{
 };
 use crate::{
     api::{
-        responses::{InternalServerError, Unauthorized},
+        responses::{InternalServerError, NotFound, Unauthorized},
         signaling::{
             breakout::BreakoutStorageProvider as _, moderation::ModerationStorageProvider as _,
             ticket::start_or_continue_signaling_session, SignalingModules,
@@ -504,9 +504,63 @@ pub async fn start(
     Ok(Json(RoomsStartResponse { ticket, resumption }))
 }
 
-/// API Endpoint *POST /rooms/{room_id}/start_invited*
+/// Start a signaling session for an invitation code
 ///
-/// See [`start`]
+/// Returns a ticket to be used with the `/signaling` endpoint. When joining a
+/// room, the ticket must be provided as `Sec-WebSocket-Protocol` header field
+/// when starting the WebSocket connection. When the requested room has a
+/// password set, the requester must provide the correct password through the
+/// requests body. When the request has no password set, the provided password
+/// will be ignored.
+#[utoipa::path(
+    params(
+        ("room_id" = RoomId, description = "The id of the room"),
+    ),
+    request_body = PostRoomsStartInvitedRequestBody,
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Response body includes the information needed to connect to the signaling endpoint",
+            body = RoomsStartResponse,
+        ),
+        (
+            status = StatusCode::BAD_REQUEST,
+            description = "The provided ID token is malformed or contains invalid claims",
+            body = StandardErrorBody,
+            example = json!(
+                StandardErrorBody { code: "bad_request".into(), message: "Room id mismatch".into() }
+            ),
+        ),
+        (
+            status = StatusCode::UNPROCESSABLE_ENTITY,
+            description = "Invalid body contents received",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            description = r"Either: the provided access token is expired or the
+                provided id or access token is invalid. The WWW-Authenticate
+                header will contain an error description 'session expired' to
+                distinguish between an invalid and an expired token.
+                Or: the provided password was incorrect, in which case the body
+                contains more information.",
+            body = StandardErrorBody,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            description = "The specified room could not be found.",
+            body = StandardErrorBody,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(),
+)]
 #[post("/rooms/{room_id}/start_invited")]
 pub async fn start_invited(
     db: Data<Db>,

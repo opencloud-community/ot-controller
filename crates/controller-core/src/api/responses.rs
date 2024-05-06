@@ -11,6 +11,11 @@ use utoipa::{ToResponse, ToSchema};
 #[response(description = "An internal server error occurred")]
 pub struct InternalServerError;
 
+/// Internal reusable dummy type for utoipa not found error
+#[derive(ToResponse)]
+#[response(description = "The requested data could not be found")]
+pub struct NotFound;
+
 /// Internal reusable dummy type for utoipa unauthorized error
 #[derive(ToResponse)]
 #[response(

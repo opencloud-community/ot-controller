@@ -9,6 +9,7 @@ use crate::imports::*;
 /// The JSON body expected when making a *POST /rooms/{room_id}/start_invited*
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct PostRoomsStartInvitedRequestBody {
     /// The invited user's password to the room
     pub password: Option<String>,

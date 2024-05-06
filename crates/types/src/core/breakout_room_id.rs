@@ -14,6 +14,7 @@ use crate::imports::*;
 )]
 #[cfg_attr(feature = "redis", derive(ToRedisArgs), to_redis_args(fmt))]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct BreakoutRoomId(Uuid);
 
 impl BreakoutRoomId {
