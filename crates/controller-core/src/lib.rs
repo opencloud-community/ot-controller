@@ -642,6 +642,10 @@ impl ModulesRegistrar for Controller {
             description = "Endpoints related to SIP configuration"
         ),
         (
+            name = "api::v1::services::call_in",
+            description = "Endpoints related to the meeting call-in service"
+        ),
+        (
             name = "api::v1::services::recording",
             description = "Endpoints related to the meeting recording service"
         ),
@@ -661,6 +665,7 @@ impl ModulesRegistrar for Controller {
         api::v1::rooms::accessible,
         api::v1::rooms::new,
         api::v1::rooms::start_invited,
+        api::v1::services::call_in::start,
         api::v1::turn::get,
         api::v1::users::get_me,
     ),
@@ -683,6 +688,8 @@ impl ModulesRegistrar for Controller {
             opentalk_types::api::v1::rooms::RoomResource,
             opentalk_types::api::v1::rooms::RoomsStartResponse,
             opentalk_types::api::v1::rooms::RoomsStartResponse,
+            opentalk_types::api::v1::services::ServiceStartResponse,
+            opentalk_types::api::v1::services::StartCallInRequestBody,
             opentalk_types::api::v1::turn::GetTurnServersResponse,
             opentalk_types::api::v1::turn::IceServer,
             opentalk_types::api::v1::turn::Stun,
@@ -690,7 +697,10 @@ impl ModulesRegistrar for Controller {
             opentalk_types::api::v1::users::PrivateUserProfile,
             opentalk_types::api::v1::users::PublicUserProfile,
             opentalk_types::core::BreakoutRoomId,
+            opentalk_types::core::CallInId,
+            opentalk_types::core::CallInPassword,
             opentalk_types::core::InviteCodeId,
+            opentalk_types::core::NumericId,
             opentalk_types::core::ResumptionToken,
             opentalk_types::core::RoomId,
             opentalk_types::core::TariffStatus,

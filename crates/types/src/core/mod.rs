@@ -41,7 +41,7 @@ mod user_id;
 pub use asset_id::AssetId;
 pub use bearer_token::BearerToken;
 pub use breakout_room_id::BreakoutRoomId;
-pub use call_in::{CallInId, CallInPassword};
+pub use call_in::{CallInId, CallInPassword, NumericId};
 pub use date_time_tz::DateTimeTz;
 pub use email_invite_role::{EmailInviteRole, EmailInviteRoleType};
 pub use event_id::EventId;

@@ -9,7 +9,8 @@ use crate::imports::*;
 /// Body for the `POST /services/call_in/start` endpoint
 #[derive(Debug, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct StartRequestBody {
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct StartCallInRequestBody {
     /// The call-in ID
     pub id: CallInId,
     /// The call-in password

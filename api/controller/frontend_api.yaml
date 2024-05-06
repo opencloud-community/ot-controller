@@ -244,6 +244,47 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
       security: []
+  /services/call_in/start:
+    post:
+      tags:
+        - "api::v1::services::call_in"
+      summary: Starts a signaling session
+      description: |
+        Takes call-in id and pin and returns a ticket for the `/signaling` endpoint. Behaves similar to the
+        `/rooms/{room_id}/start` endpoint.
+        
+        This endpoint is provided for call-in gateways to start a room connection
+        for call-in participants. The participant typically has to provide the
+        credentials (id and pin) via DTMF (the number pad).
+      operationId: start
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartCallInRequestBody"
+        required: true
+      responses:
+        "200":
+          description: The dial-in participant has successfully authenticated for the room. Information needed for connecting to the signaling is contained in the response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceStartResponse"
+        "400":
+          description: "`id` and `pin` are not valid for any room."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardErrorBody"
+              example:
+                code: invalid_credentials
+                message: given call-in id & pin combination is not valid
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   /turn:
     get:
       tags:
@@ -298,6 +339,10 @@ components:
       type: string
       format: uuid
       description: The id of a breakout room
+    CallInId:
+      $ref: "#/components/schemas/NumericId"
+    CallInPassword:
+      $ref: "#/components/schemas/NumericId"
     CodeVerified:
       type: object
       description: Verify response body for *POST /invite/verify*
@@ -342,6 +387,9 @@ components:
       type: string
       format: uuid
       description: An invite code
+    NumericId:
+      type: string
+      description: Base type for numeric identifieirs
     OidcProvider:
       type: object
       description: Represents an OIDC provider
@@ -564,6 +612,17 @@ components:
           $ref: "#/components/schemas/ResumptionToken"
         ticket:
           $ref: "#/components/schemas/TicketToken"
+    ServiceStartResponse:
+      type: object
+      description: "Response for `POST /**/**/start` endpoints"
+      required:
+        - ticket
+        - resumption
+      properties:
+        resumption:
+          $ref: "#/components/schemas/ResumptionToken"
+        ticket:
+          $ref: "#/components/schemas/TicketToken"
     StandardErrorBody:
       type: object
       description: Standard API error body
@@ -577,6 +636,17 @@ components:
         message:
           type: string
           description: Human readable message
+    StartCallInRequestBody:
+      type: object
+      description: "Body for the `POST /services/call_in/start` endpoint"
+      required:
+        - id
+        - pin
+      properties:
+        id:
+          $ref: "#/components/schemas/CallInId"
+        pin:
+          $ref: "#/components/schemas/CallInPassword"
     Stun:
       type: object
       description: STUN Server for users.
@@ -725,6 +795,8 @@ tags:
     description: Endpoints related to file assets
   - name: "api::v1::sip_configs"
     description: Endpoints related to SIP configuration
+  - name: "api::v1::services::call_in"
+    description: Endpoints related to the meeting call-in service
   - name: "api::v1::services::recording"
     description: Endpoints related to the meeting recording service
   - name: "api::v1::turn"
