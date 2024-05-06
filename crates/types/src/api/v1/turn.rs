@@ -10,6 +10,7 @@ use crate::imports::*;
 /// TURN access credentials for users.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Turn {
     /// The TURN access username
     pub username: String,
@@ -27,6 +28,7 @@ pub struct Turn {
 /// STUN Server for users.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Stun {
     /// STUN URIs for this TURN server following rfc7065
     pub uris: Vec<String>,
@@ -35,6 +37,7 @@ pub struct Stun {
 /// Description of an ICE server
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(untagged))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum IceServer {
     /// TURN ICE server type
     Turn(Turn),
@@ -46,4 +49,5 @@ pub enum IceServer {
 /// Response to the *GET /turn* endpoint request
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct GetResponse(pub Vec<IceServer>);
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct GetTurnServersResponse(pub Vec<IceServer>);

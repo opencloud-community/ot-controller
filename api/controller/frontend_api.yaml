@@ -244,6 +244,31 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
       security: []
+  /turn:
+    get:
+      tags:
+        - "api::v1::turn"
+      summary: Get a TURN server and corresponding credentials
+      description: |
+        The returned TURN server can be used with the credentials to circumvent
+        NAT restrictions.
+      operationId: get
+      responses:
+        "200":
+          description: TURN server and corresponding credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetTurnServersResponse"
+        "204":
+          description: No TURN servers have been configured
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+        - InviteCode: []
   /users/me:
     get:
       tags:
@@ -303,6 +328,16 @@ components:
       items:
         $ref: "#/components/schemas/RoomResource"
       description: "The JSON body returned by the `/rooms` `GET` endpoint"
+    GetTurnServersResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/IceServer"
+      description: Response to the *GET /turn* endpoint request
+    IceServer:
+      oneOf:
+        - $ref: "#/components/schemas/Turn"
+        - $ref: "#/components/schemas/Stun"
+      description: Description of an ICE server
     InviteCodeId:
       type: string
       format: uuid
@@ -542,6 +577,17 @@ components:
         message:
           type: string
           description: Human readable message
+    Stun:
+      type: object
+      description: STUN Server for users.
+      required:
+        - uris
+      properties:
+        uris:
+          type: array
+          items:
+            type: string
+          description: STUN URIs for this TURN server following rfc7065
     TariffStatus:
       type: string
       enum:
@@ -558,6 +604,29 @@ components:
         A UTC DateTime wrapper that implements ToRedisArgs and FromRedisValue.
         
         The values are stores as unix timestamps in redis.
+    Turn:
+      type: object
+      description: TURN access credentials for users.
+      required:
+        - username
+        - password
+        - ttl
+        - uris
+      properties:
+        password:
+          type: string
+          description: The TURN access username
+        ttl:
+          type: string
+          description: Time to live of the TURN service
+        uris:
+          type: array
+          items:
+            type: string
+          description: URIs of the TURN service
+        username:
+          type: string
+          description: The TURN access username
     UserId:
       type: string
       format: uuid
@@ -640,6 +709,9 @@ components:
                 description: Human readable message
   securitySchemes:
     BearerAuth:
+      type: http
+      scheme: bearer
+    InviteCode:
       type: http
       scheme: bearer
 tags:

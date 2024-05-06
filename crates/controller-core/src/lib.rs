@@ -661,6 +661,7 @@ impl ModulesRegistrar for Controller {
         api::v1::rooms::accessible,
         api::v1::rooms::new,
         api::v1::rooms::start_invited,
+        api::v1::turn::get,
         api::v1::users::get_me,
     ),
     components(
@@ -682,6 +683,10 @@ impl ModulesRegistrar for Controller {
             opentalk_types::api::v1::rooms::RoomResource,
             opentalk_types::api::v1::rooms::RoomsStartResponse,
             opentalk_types::api::v1::rooms::RoomsStartResponse,
+            opentalk_types::api::v1::turn::GetTurnServersResponse,
+            opentalk_types::api::v1::turn::IceServer,
+            opentalk_types::api::v1::turn::Stun,
+            opentalk_types::api::v1::turn::Turn,
             opentalk_types::api::v1::users::PrivateUserProfile,
             opentalk_types::api::v1::users::PublicUserProfile,
             opentalk_types::core::BreakoutRoomId,
@@ -713,7 +718,16 @@ impl utoipa::Modify for SecurityAddon {
         components.add_security_scheme(
             "BearerAuth",
             SecurityScheme::Http(Http::new(HttpAuthScheme::Bearer)),
-        )
+        );
+        // TODO: this is strictly speaking no bearer authentication, so we
+        // need to find out whether we can properly describe what we implemented with
+        // the `Authorization: InviteCode …` header.
+        // Supported authentication schemes:
+        // https://www.iana.org/assignments/http-authschemes/http-authschemes.xhtml
+        components.add_security_scheme(
+            "InviteCode",
+            SecurityScheme::Http(Http::new(HttpAuthScheme::Bearer)),
+        );
     }
 }
 
