@@ -444,6 +444,7 @@ where
         let ctx = InitContext {
             id: builder.id,
             room: &builder.room,
+            room_tariff: &builder.room_tariff,
             breakout_room: builder.breakout_room,
             participant: &builder.participant,
             role: builder.role,

@@ -25,3 +25,9 @@ pub use stream_updated::StreamUpdated;
 
 /// The namespace string for the signaling module
 pub const NAMESPACE: &str = "recording";
+
+/// The feature for allowing recording of meetings
+pub const RECORD_FEATURE: &str = "record";
+
+/// The feature for allowing streaming of meetings
+pub const STREAM_FEATURE: &str = "stream";

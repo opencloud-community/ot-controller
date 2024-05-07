@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::{marker::PhantomData, time::Instant};
+use std::{collections::HashSet, marker::PhantomData, time::Instant};
 
 use actix_web::{get, http::header, web, web::Data, HttpMessage, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
@@ -12,7 +12,7 @@ use opentalk_db_storage::{rooms::Room, users::User};
 use opentalk_signaling_core::{
     ExchangeHandle, ObjectStorage, Participant, RedisConnection, SignalingMetrics, SignalingModule,
 };
-use opentalk_types::api::error::ApiError;
+use opentalk_types::{api::error::ApiError, common::tariff::TariffResource};
 use snafu::Report;
 use tokio::{
     sync::{broadcast, mpsc},
@@ -110,6 +110,14 @@ pub(crate) async fn ws_service(
         breakout_room: ticket_data.breakout_room,
     };
 
+    let room_tariff = get_tariff_for_room(
+        db.clone(),
+        &room,
+        settings.load_full().defaults.disabled_features(),
+        modules.get_module_features(),
+    )
+    .await?;
+
     // Create keep-alive util for resumption data
     let resumption_keep_alive =
         ResumptionTokenKeepAlive::new(ticket_data.resumption, resumption_data);
@@ -126,6 +134,7 @@ pub(crate) async fn ws_service(
         ticket_data.participant_id,
         ticket_data.resuming,
         room,
+        room_tariff,
         ticket_data.breakout_room,
         participant,
         protocol,
@@ -301,4 +310,17 @@ async fn get_user_and_room_from_ticket_data(
     let room = Room::get(&mut conn, room_id).await?;
 
     Ok((participant, room))
+}
+
+async fn get_tariff_for_room(
+    db: Data<Db>,
+    room: &Room,
+    disabled_features: HashSet<String>,
+    module_features: Vec<(&str, Vec<&str>)>,
+) -> Result<TariffResource, ApiError> {
+    let mut conn = db.get_conn().await?;
+
+    let tariff = room.get_tariff(&mut conn).await?;
+
+    Ok(tariff.to_tariff_resource(disabled_features, module_features))
 }

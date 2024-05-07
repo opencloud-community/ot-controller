@@ -28,7 +28,7 @@ Example output for the community edition:
 echo: []
 breakout: []
 moderation: []
-recording: []
+recording: ["record", "stream"]
 recording_service: []
 core: ["call_in"]
 chat: []

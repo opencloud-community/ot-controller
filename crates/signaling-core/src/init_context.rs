@@ -9,6 +9,7 @@ use kustos::Authz;
 use opentalk_database::Db;
 use opentalk_db_storage::{rooms::Room, users::User};
 use opentalk_types::{
+    common::tariff::TariffResource,
     core::{BreakoutRoomId, ParticipantId},
     signaling::Role,
 };
@@ -29,6 +30,7 @@ where
 {
     pub id: ParticipantId,
     pub room: &'ctx Room,
+    pub room_tariff: &'ctx TariffResource,
     pub breakout_room: Option<BreakoutRoomId>,
     pub participant: &'ctx Participant<User>,
     pub role: Role,
