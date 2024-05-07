@@ -4,6 +4,7 @@ Upstream-Name: OpenTalk Controller
 Upstream-Contact: OpenTalk GmbH <mail@opentalk.eu>
 
 Files:
+ .commitlintrc.json
  Cargo.lock
  CHANGELOG.md
  crates/db-storage/src/migrations/*.sql

@@ -147,6 +147,18 @@ lint:licensing:
   script:
     - reuse lint
 
+lint:commit:
+  allow_failure: true
+  cache: {}
+  image: node:lts-alpine
+  stage: lint
+  <<: *default_job_condition
+  before_script:
+    - apk add --no-cache git
+    - npm install -g @commitlint/cli @commitlint/config-conventional
+  script:
+    - npx commitlint --from $CI_MERGE_REQUEST_DIFF_BASE_SHA --to HEAD --verbose
+
 test:cargo_test:
   stage: test
   <<: *default_job_condition
@@ -268,7 +280,8 @@ check:opentalk-types:
     RUSTFLAGS: -D warnings
   parallel:
     matrix:
-      - FEATURES: ['', frontend, backend, actix, diesel, kustos, redis, rand, serde]
+      - FEATURES:
+          ['', frontend, backend, actix, diesel, kustos, redis, rand, serde]
         EXTRA_ARGS: ['', --no-default-features]
   script:
     - cargo check --package opentalk-types $EXTRA_ARGS --features=$FEATURES
