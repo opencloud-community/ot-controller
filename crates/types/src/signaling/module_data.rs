@@ -52,10 +52,10 @@ where
     }
 
     /// Query whether the module data contains a value for this key
-    pub fn contains_key<Q: ?Sized>(&self, key: &Q) -> bool
+    pub fn contains_key<Q>(&self, key: &Q) -> bool
     where
         K: std::borrow::Borrow<Q> + Ord,
-        Q: Ord,
+        Q: Ord + ?Sized,
     {
         self.0.contains_key(key)
     }
@@ -72,10 +72,10 @@ where
     }
 
     /// Remove an entry by its key if it exists.
-    pub fn remove_key<Q: ?Sized>(&mut self, key: &Q)
+    pub fn remove_key<Q>(&mut self, key: &Q)
     where
         K: std::borrow::Borrow<Q> + Ord,
-        Q: Ord,
+        Q: Ord + ?Sized,
     {
         let _ = self.0.remove(key);
     }

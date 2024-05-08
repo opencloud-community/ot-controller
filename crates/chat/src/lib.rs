@@ -191,10 +191,10 @@ impl SignalingModule for Chat {
                 )
                 .await?;
                 self.last_seen_timestamp_global = module_frontend_data.last_seen_timestamp_global;
-                self.last_seen_timestamps_private =
-                    module_frontend_data.last_seen_timestamps_private.clone();
-                self.last_seen_timestamps_group =
-                    module_frontend_data.last_seen_timestamps_group.clone();
+                self.last_seen_timestamps_private
+                    .clone_from(&module_frontend_data.last_seen_timestamps_private);
+                self.last_seen_timestamps_group
+                    .clone_from(&module_frontend_data.last_seen_timestamps_group);
 
                 *frontend_data = Some(module_frontend_data);
 

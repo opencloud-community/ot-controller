@@ -42,9 +42,9 @@ where
     if per_page <= 100 && per_page > 0 {
         Ok(per_page)
     } else if per_page <= 0 {
-        Err(serde::de::Error::custom("per_page <= 0"))
+        Err(de::Error::custom("per_page <= 0"))
     } else {
-        Err(serde::de::Error::custom("per_page too large"))
+        Err(de::Error::custom("per_page too large"))
     }
 }
 
@@ -63,7 +63,7 @@ where
     if page > 0 {
         Ok(page)
     } else {
-        Err(serde::de::Error::custom("page must be greater than 0"))
+        Err(de::Error::custom("page must be greater than 0"))
     }
 }
 
@@ -95,7 +95,7 @@ mod test {
     #[test]
     #[cfg(feature = "serde")]
     fn pagination_query_out_of_bounds() {
-        use serde::de::Error;
+        use de::Error;
 
         assert_eq!(
             serde_urlencoded::from_str::<PagePaginationQuery>("per_page=12&page=-2"),

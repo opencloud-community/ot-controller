@@ -101,9 +101,9 @@ impl ResourceId {
     }
 }
 
-impl ToString for ResourceId {
-    fn to_string(&self) -> String {
-        self.as_str().to_string()
+impl Display for ResourceId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
     }
 }
 

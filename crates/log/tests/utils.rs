@@ -27,6 +27,12 @@ impl DummyLogger {
     }
 }
 
+impl Default for DummyLogger {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl log::Log for DummyLogger {
     fn enabled(&self, _metadata: &log::Metadata) -> bool {
         true

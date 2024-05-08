@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::str::FromStr;
+use std::{fmt::Display, str::FromStr};
 
 use snafu::Snafu;
 use uuid::Uuid;
@@ -73,9 +73,9 @@ impl PolicyUser {
     }
 }
 
-impl ToString for PolicyUser {
-    fn to_string(&self) -> String {
-        self.0.to_string()
+impl Display for PolicyUser {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 

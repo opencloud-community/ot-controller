@@ -36,7 +36,7 @@ impl Timestamp {
     /// Create a timestamp with the date of the unix epoch start
     /// (1970-01-01 00:00:00 UTC)
     pub fn unix_epoch() -> Self {
-        Self(chrono::DateTime::from(std::time::UNIX_EPOCH))
+        Self(DateTime::from(std::time::UNIX_EPOCH))
     }
 
     /// Create a timestamp with the current system time

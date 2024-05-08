@@ -45,7 +45,7 @@ mod serde_impls {
                 return Err(D::Error::custom("too many parts"));
             }
 
-            let instance_id: DateTime<Utc> = chrono::DateTime::parse_from_rfc3339(instance_id_str)
+            let instance_id: DateTime<Utc> = DateTime::parse_from_rfc3339(instance_id_str)
                 .map_err(D::Error::custom)?
                 .into();
 
