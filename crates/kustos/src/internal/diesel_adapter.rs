@@ -270,10 +270,10 @@ fn save_policy_line(ptype: &str, rule: &[String]) -> Option<NewCasbinRule> {
         v5: String::new(),
     };
 
-    new_rule.v0 = rule[0].to_owned();
+    rule[0].clone_into(&mut new_rule.v0);
 
     if let Some(v1) = rule.get(1) {
-        new_rule.v1 = v1.to_owned();
+        new_rule.v1 = v1.into();
     }
 
     if let Some(v2) = rule.get(2) {

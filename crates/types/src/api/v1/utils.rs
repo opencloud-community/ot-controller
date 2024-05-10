@@ -45,7 +45,7 @@ where
 {
     struct CommaSeparated<V, T>(PhantomData<(T, V)>);
 
-    impl<'de, V, T> serde::de::Visitor<'de> for CommaSeparated<V, T>
+    impl<'de, V, T> de::Visitor<'de> for CommaSeparated<V, T>
     where
         V: FromIterator<T>,
         T: FromStr,

@@ -16,13 +16,6 @@ use snafu::ResultExt;
 
 use super::BreakoutRoom;
 
-/// Typed key to a set which contains all breakout-room ids
-#[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "opentalk-signaling:room={room}:breakout:rooms")]
-struct BreakoutRooms {
-    room: RoomId,
-}
-
 /// Typed key to the breakout-room config for the specified room
 #[derive(ToRedisArgs)]
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:breakout:config")]
