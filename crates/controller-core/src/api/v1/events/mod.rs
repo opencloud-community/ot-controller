@@ -1540,7 +1540,7 @@ pub struct EventRescheduleBody {
     _is_all_day: Option<bool>,
     _starts_at: Option<bool>,
     _ends_at: Option<bool>,
-    #[validate(custom = "validate_recurrence_pattern")]
+    #[validate(custom(function = "validate_recurrence_pattern"))]
     _recurrence_pattern: Vec<String>,
 }
 

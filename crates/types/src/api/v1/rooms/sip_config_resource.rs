@@ -31,7 +31,7 @@ pub struct SipConfigResource {
 )]
 pub struct PutSipConfig {
     /// The SIP password
-    #[cfg_attr(feature = "serde", validate)]
+    #[cfg_attr(feature = "serde", validate(nested))]
     pub password: Option<CallInPassword>,
     /// Flag if the room is a lobby
     pub lobby: Option<bool>,

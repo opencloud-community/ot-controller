@@ -444,7 +444,7 @@ mod test {
         range: usize,
         #[validate(required)]
         required: Option<bool>,
-        #[validate]
+        #[validate(nested)]
         inner_struct: InnerValidationTester,
     }
 

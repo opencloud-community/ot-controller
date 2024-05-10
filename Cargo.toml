@@ -117,7 +117,7 @@ tracing = "0.1"
 tracing-opentelemetry = "0.23"
 url = "2"
 uuid = "1"
-validator = { version = "0.16", features = ["derive"] }
+validator = { version = "0.18", features = ["derive"] }
 
 [workspace.dependencies.casbin]
 default-features = false
