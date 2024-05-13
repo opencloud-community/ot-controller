@@ -4,7 +4,7 @@
 
 //! Signaling messages for the `polls` namespace
 
-use std::time::Duration;
+use std::{collections::HashSet, time::Duration};
 
 use super::{ChoiceId, PollId};
 #[allow(unused_imports)]
@@ -35,8 +35,13 @@ pub struct Start {
     /// The description of the poll topic
     pub topic: String,
 
-    /// Is the poll live
+    /// True if the poll is live
+    #[cfg_attr(feature = "serde", serde(default))]
     pub live: bool,
+
+    /// True if the poll accepts multiple choices
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub multiple_choice: bool,
 
     /// The choices of the poll
     pub choices: Vec<String>,
@@ -53,12 +58,36 @@ pub struct Vote {
     /// The id of the poll
     pub poll_id: PollId,
 
-    /// The id of the choice or `None` to abstain
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
-    pub choice_id: Option<ChoiceId>,
+    /// The choices
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub choices: Choices,
+}
+
+/// The choices of a vote
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(untagged))]
+pub enum Choices {
+    /// A single choice. Takes precedence over `Multiple` during deserialization
+    Single {
+        /// The choice id
+        choice_id: ChoiceId,
+    },
+    /// A multiple choice, `choice_ids` might be empty to abstain
+    Multiple {
+        /// The set of choice ids
+        #[cfg_attr(feature = "serde", serde(default))]
+        choice_ids: HashSet<ChoiceId>,
+    },
+}
+
+impl Choices {
+    /// Returns the choices as a hashset
+    pub fn to_hash_set(self) -> HashSet<ChoiceId> {
+        match self {
+            Self::Single { choice_id } => HashSet::from_iter(vec![choice_id]),
+            Self::Multiple { choice_ids } => choice_ids,
+        }
+    }
 }
 
 /// Command to finish the poll
@@ -91,12 +120,14 @@ mod test {
         if let PollsCommand::Start(Start {
             topic,
             live,
+            multiple_choice,
             choices,
             duration,
         }) = message
         {
             assert_eq!(topic, "abc");
             assert!(live);
+            assert!(!multiple_choice);
             assert_eq!(choices, vec!["a", "b", "c"]);
             assert_eq!(duration, Duration::from_secs(30));
         } else {
@@ -105,18 +136,70 @@ mod test {
     }
 
     #[test]
-    fn vote() {
+    fn single_choice_vote() {
         let json = json!({
            "action": "vote",
            "poll_id": "00000000-0000-0000-0000-000000000000",
-           "choice_id": 321
+           "choice_id": 321,
         });
 
         let message: PollsCommand = serde_json::from_value(json).unwrap();
 
-        if let PollsCommand::Vote(Vote { poll_id, choice_id }) = message {
+        if let PollsCommand::Vote(Vote { poll_id, choices }) = message {
             assert_eq!(poll_id, PollId::nil());
-            assert_eq!(choice_id, Some(ChoiceId::from(321)));
+            assert_eq!(
+                choices,
+                Choices::Single {
+                    choice_id: ChoiceId::from(321),
+                }
+            );
+        } else {
+            panic!()
+        }
+    }
+
+    #[test]
+    fn multiple_choice_vote() {
+        let json = json!({
+           "action": "vote",
+           "poll_id": "00000000-0000-0000-0000-000000000000",
+           "choice_ids": [322, 322, 323]
+        });
+
+        let message: PollsCommand = serde_json::from_value(json).unwrap();
+
+        if let PollsCommand::Vote(Vote { poll_id, choices }) = message {
+            assert_eq!(poll_id, PollId::nil());
+            assert_eq!(
+                choices,
+                Choices::Multiple {
+                    choice_ids: HashSet::from_iter(vec![ChoiceId::from(322), ChoiceId::from(323)]),
+                }
+            );
+        } else {
+            panic!()
+        }
+    }
+
+    #[test]
+    fn conflicting_choice_vote() {
+        let json = json!({
+           "action": "vote",
+           "poll_id": "00000000-0000-0000-0000-000000000000",
+           "choice_id": 321,
+           "choice_ids": [322, 322, 323]
+        });
+
+        let message: PollsCommand = serde_json::from_value(json).unwrap();
+
+        if let PollsCommand::Vote(Vote { poll_id, choices }) = message {
+            assert_eq!(poll_id, PollId::nil());
+            assert_eq!(
+                choices,
+                Choices::Single {
+                    choice_id: ChoiceId::from(321),
+                }
+            );
         } else {
             panic!()
         }
@@ -131,9 +214,14 @@ mod test {
 
         let message: PollsCommand = serde_json::from_value(json).unwrap();
 
-        if let PollsCommand::Vote(Vote { poll_id, choice_id }) = message {
+        if let PollsCommand::Vote(Vote { poll_id, choices }) = message {
             assert_eq!(poll_id, PollId::nil());
-            assert_eq!(choice_id, None);
+            assert_eq!(
+                choices,
+                Choices::Multiple {
+                    choice_ids: HashSet::new(),
+                }
+            );
         } else {
             panic!()
         }

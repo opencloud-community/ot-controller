@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::time::Duration;
+use std::{collections::HashSet, time::Duration};
 
 use futures::{stream::once, FutureExt};
 use opentalk_signaling_core::{
@@ -74,7 +74,7 @@ impl SignalingModule for Polls {
 
                         self.config = Some(Config {
                             state: polls_state.clone(),
-                            voted_choice_id: None,
+                            voted_choice_ids: HashSet::new(),
                         });
                         *frontend_data = Some(polls_state);
 
@@ -162,6 +162,7 @@ impl Polls {
             PollsCommand::Start(Start {
                 topic,
                 live,
+                multiple_choice,
                 choices,
                 duration,
             }) => {
@@ -221,6 +222,7 @@ impl Polls {
                     id: PollId::generate(),
                     topic,
                     live,
+                    multiple_choice,
                     choices,
                     started: ctx.timestamp(),
                     duration,
@@ -243,41 +245,53 @@ impl Polls {
 
                 Ok(())
             }
-            PollsCommand::Vote(Vote { poll_id, choice_id }) => {
-                if let Some(config) = self
+            PollsCommand::Vote(Vote { poll_id, choices }) => {
+                let Some(config) = self
                     .config
                     .as_mut()
                     .filter(|config| config.state.id == poll_id && !config.state.is_expired())
-                {
-                    if choice_id.is_none()
-                        || config
-                            .state
-                            .choices
-                            .iter()
-                            .any(|choice| Some(choice.id) == choice_id)
-                    {
-                        storage::vote(
-                            ctx.redis_conn(),
-                            self.room,
-                            config.state.id,
-                            config.voted_choice_id,
-                            choice_id,
-                        )
-                        .await?;
+                else {
+                    ctx.ws_send(Error::InvalidPollId);
+                    return Ok(());
+                };
 
-                        config.voted_choice_id = choice_id;
+                let choice_ids = choices.to_hash_set();
 
-                        if config.state.live {
-                            ctx.exchange_publish(
-                                control::exchange::current_room_all_participants(self.room),
-                                exchange::Message::Update(poll_id),
-                            );
-                        }
-                    } else {
-                        ctx.ws_send(Error::InvalidChoiceId);
+                if choice_ids.len() > 1 && !config.state.multiple_choice {
+                    ctx.ws_send(Error::MultipleChoicesNotAllowed);
+                    return Ok(());
+                }
+
+                // TODO(w.rabl) Currently the user's choices are stored in-memory only and thus they are lost after reconnecting.
+                // In this case, if the user sends a new set of choices, the previous choices can't be properly reverted.
+                // This leads to an inconsistent poll result.
+                let valid_choice_ids: HashSet<ChoiceId> = config
+                    .state
+                    .choices
+                    .iter()
+                    .map(|choice| choice.id)
+                    .collect();
+
+                if choice_ids.is_subset(&valid_choice_ids) {
+                    storage::vote(
+                        ctx.redis_conn(),
+                        self.room,
+                        config.state.id,
+                        &config.voted_choice_ids,
+                        &choice_ids,
+                    )
+                    .await?;
+
+                    config.voted_choice_ids = choice_ids;
+
+                    if config.state.live {
+                        ctx.exchange_publish(
+                            control::exchange::current_room_all_participants(self.room),
+                            exchange::Message::Update(poll_id),
+                        );
                     }
                 } else {
-                    ctx.ws_send(Error::InvalidPollId);
+                    ctx.ws_send(Error::InvalidChoiceId);
                 }
 
                 Ok(())
@@ -325,6 +339,7 @@ impl Polls {
                         id,
                         topic: polls_state.topic.clone(),
                         live: polls_state.live,
+                        multiple_choice: polls_state.multiple_choice,
                         choices: polls_state.choices.clone(),
                         duration: polls_state.duration,
                     }),
@@ -337,7 +352,7 @@ impl Polls {
 
                 self.config = Some(Config {
                     state: polls_state,
-                    voted_choice_id: None,
+                    voted_choice_ids: HashSet::new(),
                 });
 
                 Ok(())
@@ -369,5 +384,5 @@ impl Polls {
 #[derive(Debug, Clone)]
 pub struct Config {
     state: PollsState,
-    voted_choice_id: Option<ChoiceId>,
+    voted_choice_ids: HashSet<ChoiceId>,
 }

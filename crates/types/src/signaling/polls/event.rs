@@ -41,8 +41,11 @@ pub struct Started {
     /// The description of the poll topic
     pub topic: String,
 
-    /// Is the poll live
+    /// True if the poll is live
     pub live: bool,
+
+    /// True if the poll accepts multiple choices
+    pub multiple_choice: bool,
 
     /// Choices of the poll
     pub choices: Vec<Choice>,
@@ -78,6 +81,9 @@ pub enum Error {
     /// Attempted to perform a command with an invalid choice id
     InvalidChoiceId,
 
+    /// Attempted to vote for multiple choices although this is not allowed
+    MultipleChoicesNotAllowed,
+
     /// Attempted to perform a command with an invalid choice description
     InvalidChoiceDescription,
 
@@ -111,6 +117,7 @@ mod test {
             id: PollId::nil(),
             topic: "polling".into(),
             live: true,
+            multiple_choice: false,
             choices: vec![
                 Choice {
                     id: ChoiceId::from(0),
@@ -131,6 +138,7 @@ mod test {
                 "id": "00000000-0000-0000-0000-000000000000",
                 "topic": "polling",
                 "live": true,
+                "multiple_choice": false,
                 "choices": [
                     {
                         "id": 0,
