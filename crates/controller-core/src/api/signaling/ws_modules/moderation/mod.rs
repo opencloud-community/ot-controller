@@ -169,6 +169,7 @@ impl SignalingModule for ModerationModule {
             Event::RoleUpdated(_) => {}
             Event::WsMessage(ModerationCommand::Ban { target }) => {
                 if ctx.role() != Role::Moderator {
+                    ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
                 }
 
@@ -197,6 +198,7 @@ impl SignalingModule for ModerationModule {
             }
             Event::WsMessage(ModerationCommand::Kick { target }) => {
                 if ctx.role() != Role::Moderator {
+                    ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
                 }
 
@@ -222,6 +224,7 @@ impl SignalingModule for ModerationModule {
             }
             Event::WsMessage(ModerationCommand::SendToWaitingRoom { target }) => {
                 if ctx.role() != Role::Moderator {
+                    ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
                 }
 
@@ -261,6 +264,7 @@ impl SignalingModule for ModerationModule {
 
             Event::WsMessage(ModerationCommand::Debrief(kick_scope)) => {
                 if ctx.role() != Role::Moderator {
+                    ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
                 }
 
@@ -318,6 +322,7 @@ impl SignalingModule for ModerationModule {
 
             Event::WsMessage(ModerationCommand::ChangeDisplayName { new_name, target }) => {
                 if ctx.role() != Role::Moderator {
+                    ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
                 }
 
@@ -357,6 +362,7 @@ impl SignalingModule for ModerationModule {
 
             Event::WsMessage(ModerationCommand::EnableWaitingRoom) => {
                 if ctx.role() != Role::Moderator {
+                    ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
                 }
 
@@ -364,6 +370,7 @@ impl SignalingModule for ModerationModule {
             }
             Event::WsMessage(ModerationCommand::DisableWaitingRoom) => {
                 if ctx.role() != Role::Moderator {
+                    ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
                 }
 
@@ -371,6 +378,7 @@ impl SignalingModule for ModerationModule {
             }
             Event::WsMessage(ModerationCommand::Accept { target }) => {
                 if ctx.role() != Role::Moderator {
+                    ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
                 }
 
@@ -392,6 +400,7 @@ impl SignalingModule for ModerationModule {
             }
             Event::WsMessage(ModerationCommand::ResetRaisedHands) => {
                 if ctx.role() != Role::Moderator {
+                    ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
                 }
 
@@ -403,6 +412,7 @@ impl SignalingModule for ModerationModule {
 
             Event::WsMessage(ModerationCommand::EnableRaiseHands) => {
                 if ctx.role() != Role::Moderator {
+                    ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
                 }
 
@@ -417,6 +427,7 @@ impl SignalingModule for ModerationModule {
 
             Event::WsMessage(ModerationCommand::DisableRaiseHands) => {
                 if ctx.role() != Role::Moderator {
+                    ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
                 }
 

@@ -633,6 +633,7 @@ Can only be received while in the waiting room. A moderator accepted this you in
 | `cannot_send_room_owner_to_waiting_room` | Issued when the [`SendToWaitingRoom`](#sendtowaitingroom) command targets the room owner           |
 | `cannot_change_name_of_registered_users` | Issued when the [`ChangeDisplayName`](#changedisplayname) command targets a registered user        |
 | `invalid_display_name`                   | Issued when the [`ChangeDisplayName`](#changedisplayname) command contains an invalid display name |
+| `permission_denied`                      | Issued when the sender of a command wasn't a moderator                                             |
 
 ##### Example
 

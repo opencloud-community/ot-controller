@@ -96,6 +96,8 @@ pub enum Error {
     CannotChangeNameOfRegisteredUsers,
     /// Invalid display name
     InvalidDisplayName,
+    /// Insufficient permissions to perform a command
+    InsufficientPermissions,
 }
 
 impl From<Error> for ModerationEvent {
