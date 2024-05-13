@@ -3,6 +3,17 @@
 # SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
 # SPDX-License-Identifier: EUPL-1.2
 
+# This script generates parts of the documatation that are stored at `docs/`.
+# When ever the documentation gets outdated, this script can be used to update the documentation.
+# 'docs-generate-mermaid.sh' is called during execution to update the ER diagrams.
+#
+# prerequisites:
+# * rabbitMQ is running
+# * a postgres database is running
+# * 'OPENTALK_CTRL_DATABASE__URL' is set to the postgres database URL
+# * sqlant is installed (Or the er diagram is already generated): https://github.com/kurotych/sqlant
+# * opentalk-ci-doc-updater is installed: https://git.opentalk.dev/opentalk/tools/opentalk-ci-doc-updater
+
 set -xe
 set -o pipefail
 
@@ -19,6 +30,18 @@ CONFIG_DIR="$DOCS_TEMP_DIR"/config
 DB_DIR="$DOCS_TEMP_DIR"/database
 CMDNAME=opentalk-controller
 ER_DIAGRAM_MERMAID="$DB_DIR/er-diagram.mermaid"
+
+if ! command -v opentalk-ci-doc-updater; then
+  echo "please install 'opentalk-ci-doc-updater' https://git.opentalk.dev/opentalk/tools/opentalk-ci-doc-updater"
+  exit 1
+fi
+
+if [! command -v $OPENTALK_CONTROLLER_CMD ] || [ ! -f $OPENTALK_CONTROLLER_CMD ]; then
+  echo "The variable 'OPENTALK_CONTROLLER_CMD' needs to be set to a path pointing \
+to a valid controller binary or the controller needs to be build using \
+'cargo build --release' prior to executing this script"
+  exit 1
+fi
 
 codify() {
   if [ -z "$1" ]; then
