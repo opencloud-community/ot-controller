@@ -64,7 +64,7 @@ pub struct PatchEventBody {
     #[cfg_attr(
         feature = "serde",
         serde(default),
-        validate(custom = "validate_recurrence_pattern")
+        validate(custom(function = "validate_recurrence_pattern"))
     )]
     pub recurrence_pattern: Vec<String>,
 }
