@@ -24,8 +24,7 @@ use tokio::{sync::mpsc, task};
 
 use crate::{
     api::{
-        signaling::ticket::start_or_continue_signaling_session,
-        upload::{run_upload, UploadWebSocketActor},
+        signaling::ticket::start_or_continue_signaling_session, upload::UploadWebSocketActor,
         v1::response::NoContent,
     },
     settings::SharedSettingsActix,
@@ -110,13 +109,24 @@ pub(crate) async fn ws_upload(
             .start_with_addr()?;
 
     // Spawn the runner task
-    task::spawn_local(run_upload(
-        storage.into_inner(),
-        db.into_inner(),
-        query.room_id,
-        query.filename,
-        receiver_stream,
-    ));
+    task::spawn_local({
+        async move {
+            let result = save_asset(
+                &storage,
+                db.into_inner(),
+                query.room_id,
+                Some("recording"),
+                query.filename,
+                "recording-render",
+                receiver_stream,
+            )
+            .await;
+
+            if let Err(e) = result {
+                log::error!("Error saving asset, {}", e);
+            }
+        }
+    });
 
     Ok(response)
 }

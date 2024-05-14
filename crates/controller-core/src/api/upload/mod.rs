@@ -4,4 +4,4 @@
 
 mod ws;
 
-pub use ws::{run_upload, UploadWebSocketActor};
+pub use ws::UploadWebSocketActor;
