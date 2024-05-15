@@ -46,4 +46,13 @@ impl ControlStorage for VolatileStaticMemoryStorage {
         state().write().remove_participant_set(room);
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn participants_contains(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<bool, SignalingModuleError> {
+        Ok(state().read().participants_contains(room, participant))
+    }
 }

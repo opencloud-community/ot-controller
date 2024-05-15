@@ -31,4 +31,15 @@ impl MemoryControlState {
     pub(super) fn remove_participant_set(&mut self, room: SignalingRoomId) {
         self.room_participants.remove(&room);
     }
+
+    pub(super) fn participants_contains(
+        &self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> bool {
+        self.room_participants
+            .get(&room)
+            .map(|p| p.contains(&participant))
+            .unwrap_or_default()
+    }
 }

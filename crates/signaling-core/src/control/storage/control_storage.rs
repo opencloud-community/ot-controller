@@ -23,4 +23,10 @@ pub trait ControlStorage {
         &mut self,
         room: SignalingRoomId,
     ) -> Result<(), SignalingModuleError>;
+
+    async fn participants_contains(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<bool, SignalingModuleError>;
 }

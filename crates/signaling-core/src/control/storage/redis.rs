@@ -60,6 +60,19 @@ impl ControlStorage for RedisConnection {
                 message: "Failed to del participants",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn participants_contains(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<bool, SignalingModuleError> {
+        self.sismember(RoomParticipants { room }, participant)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to check if participants contains participant",
+            })
+    }
 }
 
 /// Describes a set of participants inside a room.
@@ -130,20 +143,6 @@ pub fn room_mutex(room: SignalingRoomId) -> Mutex<RoomLock> {
     Mutex::new(RoomLock { room })
         .with_wait_time(Duration::from_millis(20)..Duration::from_millis(60))
         .with_retries(20)
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn participants_contains(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    participant: ParticipantId,
-) -> Result<bool, SignalingModuleError> {
-    redis_conn
-        .sismember(RoomParticipants { room }, participant)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to check if participants contains participant",
-        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]

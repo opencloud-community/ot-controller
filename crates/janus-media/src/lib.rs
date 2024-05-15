@@ -327,12 +327,10 @@ impl SignalingModule for Media {
             }
             Event::WsMessage(MediaCommand::Subscribe(subscribe)) => {
                 // Check that the subscription target is inside the room
-                if !control::storage::participants_contains(
-                    ctx.redis_conn(),
-                    self.room,
-                    subscribe.target.target,
-                )
-                .await?
+                if !ctx
+                    .redis_conn()
+                    .participants_contains(self.room, subscribe.target.target)
+                    .await?
                 {
                     // just discard, shouldn't happen often
                     return Ok(());
