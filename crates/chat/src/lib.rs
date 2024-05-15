@@ -13,7 +13,7 @@ use std::{collections::HashMap, sync::Arc};
 use opentalk_database::Db;
 use opentalk_db_storage::groups::Group;
 use opentalk_signaling_core::{
-    control::{self, exchange},
+    control::{self, exchange, storage::ControlStorage as _},
     DestroyContext, Event, InitContext, ModuleContext, Participant, RedisConnection,
     SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
@@ -553,7 +553,9 @@ impl SignalingModule for Chat {
                 }
             }
 
-            let participants = control::storage::get_all_participants(ctx.redis_conn(), self.room)
+            let participants = ctx
+                .redis_conn()
+                .get_all_participants(self.room)
                 .await
                 .unwrap_or_else(|e| {
                     log::error!(

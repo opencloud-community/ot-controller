@@ -49,7 +49,11 @@ use tokio::{
 };
 
 use crate::{
-    control::{self, storage, ControlStateExt as _},
+    control::{
+        self,
+        storage::{self, ControlStorage as _},
+        ControlStateExt as _,
+    },
     AnyStream, DestroyContext, Event, ExchangePublish, InitContext, ModuleContext, ObjectStorage,
     Participant, RedisConnection, RedisSnafu, SerdeJsonSnafu, SignalingModule,
     SignalingModuleError, SignalingRoomId,
@@ -581,8 +585,7 @@ where
                         message: "redis query failed",
                     })?;
 
-                let participant_set =
-                    storage::get_all_participants(&mut self.redis_conn, self.room_id).await?;
+                let participant_set = self.redis_conn.get_all_participants(self.room_id).await?;
 
                 storage::add_participant_to_set(
                     &mut self.redis_conn,

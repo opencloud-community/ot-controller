@@ -3855,6 +3855,7 @@ dependencies = [
  "opentalk-r3dlock",
  "opentalk-types",
  "opentelemetry",
+ "parking_lot",
  "pretty_assertions",
  "redis",
  "redis-args",

@@ -15,8 +15,9 @@ use mcu::{
 };
 use opentalk_controller_settings::SharedSettings;
 use opentalk_signaling_core::{
-    control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
-    SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
+    control::{self, storage::ControlStorage as _},
+    DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
+    SignalingModuleInitData, SignalingRoomId,
 };
 use opentalk_types::{
     core::ParticipantId,
@@ -613,7 +614,9 @@ impl SignalingModule for Media {
                 );
             }
 
-            let participants = control::storage::get_all_participants(ctx.redis_conn(), self.room)
+            let participants = ctx
+                .redis_conn()
+                .get_all_participants(self.room)
                 .await
                 .unwrap_or_else(|e| {
                     log::error!(
@@ -667,8 +670,7 @@ impl Media {
             return Ok(());
         }
 
-        let room_participants =
-            control::storage::get_all_participants(ctx.redis_conn(), self.room).await?;
+        let room_participants = ctx.redis_conn().get_all_participants(self.room).await?;
 
         let request_mute = event::RequestMute {
             issuer: self.id,

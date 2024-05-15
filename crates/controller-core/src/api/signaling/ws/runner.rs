@@ -24,7 +24,7 @@ use opentalk_db_storage::{
 use opentalk_signaling_core::{
     control::{
         self, exchange,
-        storage::{self, ParticipantIdRunnerLock},
+        storage::{self, ControlStorage as _, ParticipantIdRunnerLock},
         ControlStateExt as _, NAMESPACE,
     },
     AnyStream, ExchangeHandle, ObjectStorage, Participant, RedisConnection, SignalingMetrics,
@@ -1385,8 +1385,7 @@ impl Runner {
     }
 
     async fn join_room_locked(&mut self) -> Result<Vec<ParticipantId>> {
-        let participant_set_exists =
-            control::storage::participant_set_exists(&mut self.redis_conn, self.room_id).await?;
+        let participant_set_exists = self.redis_conn.participant_set_exists(self.room_id).await?;
 
         if !participant_set_exists {
             self.set_room_time_limit().await?;
@@ -1394,8 +1393,7 @@ impl Runner {
         }
         self.activate_room_time_limit().await?;
 
-        let participants =
-            storage::get_all_participants(&mut self.redis_conn, self.room_id).await?;
+        let participants = self.redis_conn.get_all_participants(self.room_id).await?;
 
         let num_added =
             storage::add_participant_to_set(&mut self.redis_conn, self.room_id, self.id).await?;

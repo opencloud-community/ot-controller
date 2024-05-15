@@ -6,7 +6,7 @@ use std::iter::zip;
 
 use actix_http::ws::CloseCode;
 use opentalk_signaling_core::{
-    control::{self, ControlStateExt as _},
+    control::{self, storage::ControlStorage as _, ControlStateExt as _},
     DestroyContext, Event, InitContext, ModuleContext, RedisConnection, SerdeJsonSnafu,
     SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
@@ -275,8 +275,7 @@ impl SignalingModule for ModerationModule {
                 }
 
                 // Remove all debriefed participants from the waiting-room-accepted set
-                let all_participants =
-                    control::storage::get_all_participants(ctx.redis_conn(), self.room).await?;
+                let all_participants = ctx.redis_conn().get_all_participants(self.room).await?;
                 let all_participants_role: Vec<Option<Role>> =
                     control::storage::get_attribute_for_participants(
                         ctx.redis_conn(),

@@ -12,7 +12,7 @@ use opentalk_signaling_core::{
     assets::{save_asset, AssetError, NewAssetFileName},
     control::{
         self,
-        storage::{get_all_participants, get_attribute},
+        storage::{get_attribute, ControlStorage as _},
     },
     DestroyContext, Event, InitContext, ModuleContext, ObjectStorage, RedisConnection,
     SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
@@ -573,7 +573,7 @@ impl Protocol {
         redis_conn: &mut RedisConnection,
         selection: &ParticipantSelection,
     ) -> Result<bool, SignalingModuleError> {
-        let room_participants = get_all_participants(redis_conn, self.room_id).await?;
+        let room_participants = redis_conn.get_all_participants(self.room_id).await?;
 
         Ok(selection
             .participant_ids

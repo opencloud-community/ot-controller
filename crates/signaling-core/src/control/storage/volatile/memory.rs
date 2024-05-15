@@ -1,0 +1,30 @@
+// SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+//
+// SPDX-License-Identifier: EUPL-1.2
+
+use std::collections::{HashMap, HashSet};
+
+use opentalk_types::core::ParticipantId;
+
+use crate::SignalingRoomId;
+
+#[derive(Debug, Clone, Default)]
+pub(super) struct MemoryControlState {
+    room_participants: HashMap<SignalingRoomId, HashSet<ParticipantId>>,
+}
+
+impl MemoryControlState {
+    pub(super) fn participant_set_exists(&self, room: SignalingRoomId) -> bool {
+        self.room_participants.contains_key(&room)
+    }
+
+    pub(super) fn get_all_participants(&self, room: SignalingRoomId) -> Vec<ParticipantId> {
+        Vec::from_iter(
+            self.room_participants
+                .get(&room)
+                .into_iter()
+                .flatten()
+                .cloned(),
+        )
+    }
+}

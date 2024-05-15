@@ -12,8 +12,9 @@ use std::{
 use actix_http::ws::CloseCode;
 use futures::FutureExt;
 use opentalk_signaling_core::{
-    control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
-    SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
+    control::{self, storage::ControlStorage as _},
+    DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
+    SignalingModuleInitData, SignalingRoomId,
 };
 use opentalk_types::{
     core::{BreakoutRoomId, ParticipantId, RoomId},
@@ -235,8 +236,7 @@ impl BreakoutRooms {
         room: SignalingRoomId,
         list: &mut Vec<ParticipantInOtherRoom>,
     ) -> Result<(), SignalingModuleError> {
-        let breakout_room_participants =
-            control::storage::get_all_participants(ctx.redis_conn(), room).await?;
+        let breakout_room_participants = ctx.redis_conn().get_all_participants(room).await?;
 
         for participant in breakout_room_participants {
             let res = control::storage::AttrPipeline::new(room, participant)
