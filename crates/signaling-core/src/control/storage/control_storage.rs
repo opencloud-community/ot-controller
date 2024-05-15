@@ -35,4 +35,11 @@ pub trait ControlStorage {
         room: SignalingRoomId,
         participants: &[ParticipantId],
     ) -> Result<bool, SignalingModuleError>;
+
+    /// Returns `true` if the participant id was added, `false` if it already were present
+    async fn add_participant_to_set(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<bool, SignalingModuleError>;
 }

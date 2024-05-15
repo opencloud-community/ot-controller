@@ -587,12 +587,9 @@ where
 
                 let participant_set = self.redis_conn.get_all_participants(self.room_id).await?;
 
-                storage::add_participant_to_set(
-                    &mut self.redis_conn,
-                    self.room_id,
-                    self.participant_id,
-                )
-                .await?;
+                self.redis_conn
+                    .add_participant_to_set(self.room_id, self.participant_id)
+                    .await?;
 
                 guard.unlock(&mut self.redis_conn).await?;
 

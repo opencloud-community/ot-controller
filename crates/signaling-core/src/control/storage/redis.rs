@@ -91,6 +91,20 @@ impl ControlStorage for RedisConnection {
 
         Ok(bools.into_iter().all(identity))
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn add_participant_to_set(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<bool, SignalingModuleError> {
+        self.sadd(RoomParticipants { room }, participant)
+            .await
+            .map(|num_added: usize| num_added > 0)
+            .context(RedisSnafu {
+                message: "Failed to add own participant id to set",
+            })
+    }
 }
 
 /// Describes a set of participants inside a room.
@@ -161,20 +175,6 @@ pub fn room_mutex(room: SignalingRoomId) -> Mutex<RoomLock> {
     Mutex::new(RoomLock { room })
         .with_wait_time(Duration::from_millis(20)..Duration::from_millis(60))
         .with_retries(20)
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn add_participant_to_set(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    participant: ParticipantId,
-) -> Result<usize, SignalingModuleError> {
-    redis_conn
-        .sadd(RoomParticipants { room }, participant)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to add own participant id to set",
-        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]

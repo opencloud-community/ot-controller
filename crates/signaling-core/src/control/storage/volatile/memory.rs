@@ -55,4 +55,16 @@ impl MemoryControlState {
             .map(|p| p.is_superset(&query_participants))
             .unwrap_or_default()
     }
+
+    /// Returns `true` if the participant was added
+    pub(super) fn add_participant_to_set(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> bool {
+        self.room_participants
+            .entry(room)
+            .or_default()
+            .insert(participant)
+    }
 }

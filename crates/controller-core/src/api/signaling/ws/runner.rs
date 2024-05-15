@@ -1395,12 +1395,14 @@ impl Runner {
 
         let participants = self.redis_conn.get_all_participants(self.room_id).await?;
 
-        let num_added =
-            storage::add_participant_to_set(&mut self.redis_conn, self.room_id, self.id).await?;
+        let added = self
+            .redis_conn
+            .add_participant_to_set(self.room_id, self.id)
+            .await?;
 
         // Check that SADD doesn't return 0. That would mean that the participant id would be a
         // duplicate which cannot be allowed. Since this should never happen just error and exit.
-        if !self.resuming && num_added == 0 {
+        if !self.resuming && !added {
             whatever!("participant-id is already taken inside participant set");
         }
 
