@@ -85,6 +85,10 @@ pub struct Settings {
     pub avatar: Avatar,
     #[serde(default)]
     pub metrics: Metrics,
+
+    #[serde(default)]
+    pub etcd: Option<Etcd>,
+
     #[serde(default)]
     pub etherpad: Option<Etherpad>,
 
@@ -354,6 +358,11 @@ impl Default for Authz {
 
 fn default_authz_reload_interval() -> Duration {
     Duration::from_secs(10)
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct Etcd {
+    pub urls: Vec<url::Url>,
 }
 
 #[derive(Clone, Debug, Deserialize)]

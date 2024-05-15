@@ -120,6 +120,28 @@ invites {
     bigint id_serial
     timestamp_with_time_zone updated_at
 }
+job_execution_logs {
+    bigint id PK
+    bigint execution_id FK
+    log_level log_level
+    text log_message
+    timestamp_with_time_zone logged_at
+}
+job_executions {
+    bigint id PK
+    bigint job_id FK
+    timestamp_with_time_zone ended_at
+    job_status job_status
+    timestamp_with_time_zone started_at
+}
+jobs {
+    bigint id PK
+    job_type kind
+    text name
+    jsonb parameters
+    text recurrence
+    integer timeout_secs
+}
 module_resources {
     uuid id PK
     uuid created_by FK
@@ -225,6 +247,8 @@ groups }o--|| tenants: ""
 invites }o--|| users: ""
 invites }o--|| users: ""
 invites }o--|| rooms: ""
+job_execution_logs }o--|| job_executions: ""
+job_executions }o--|| jobs: ""
 module_resources }o--|| tenants: ""
 module_resources }o--|| rooms: ""
 module_resources }o--|| users: ""

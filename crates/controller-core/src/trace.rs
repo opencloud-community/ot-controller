@@ -27,7 +27,8 @@ const DEFAULT_LOGGING_DIRECTIVES: &str = "error,\
     pinky_swear=off,\
     rustls=warn,\
     mio=error,\
-    lapin=warn";
+    lapin=warn,\
+    execution_id=trace";
 
 pub fn init(settings: &Logging) -> Result<()> {
     // Layer which acts as filter of traces and spans.

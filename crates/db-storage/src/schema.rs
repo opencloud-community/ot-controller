@@ -186,6 +186,43 @@ diesel::table! {
 diesel::table! {
     use crate::sql_types::*;
 
+    job_execution_logs (id) {
+        id -> Int8,
+        execution_id -> Int8,
+        logged_at -> Timestamptz,
+        log_level -> LogLevel,
+        log_message -> Text,
+    }
+}
+
+diesel::table! {
+    use crate::sql_types::*;
+
+    job_executions (id) {
+        id -> Int8,
+        job_id -> Int8,
+        started_at -> Timestamptz,
+        ended_at -> Nullable<Timestamptz>,
+        job_status -> JobStatus,
+    }
+}
+
+diesel::table! {
+    use crate::sql_types::*;
+
+    jobs (id) {
+        id -> Int8,
+        name -> Text,
+        kind -> JobType,
+        parameters -> Jsonb,
+        timeout_secs -> Int4,
+        recurrence -> Text,
+    }
+}
+
+diesel::table! {
+    use crate::sql_types::*;
+
     module_resources (id) {
         id -> Uuid,
         tenant_id -> Uuid,
@@ -348,6 +385,8 @@ diesel::joinable!(events -> tenants (tenant_id));
 diesel::joinable!(external_tariffs -> tariffs (tariff_id));
 diesel::joinable!(groups -> tenants (tenant_id));
 diesel::joinable!(invites -> rooms (room));
+diesel::joinable!(job_execution_logs -> job_executions (execution_id));
+diesel::joinable!(job_executions -> jobs (job_id));
 diesel::joinable!(module_resources -> rooms (room_id));
 diesel::joinable!(module_resources -> tenants (tenant_id));
 diesel::joinable!(module_resources -> users (created_by));
@@ -374,6 +413,9 @@ diesel::allow_tables_to_appear_in_same_query!(
     external_tariffs,
     groups,
     invites,
+    job_execution_logs,
+    job_executions,
+    jobs,
     module_resources,
     refinery_schema_history,
     room_assets,
