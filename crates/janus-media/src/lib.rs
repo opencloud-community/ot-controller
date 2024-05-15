@@ -7,7 +7,7 @@
 //! ## Functionality
 //!
 //! Handles media related messages and manages their respective forwarding to janus-gateway via rabbitmq.
-use std::sync::Arc;
+use std::{collections::BTreeSet, sync::Arc};
 
 use mcu::{
     LinkDirection, McuPool, MediaSessionKey, PublishConfiguration, Request, Response,
@@ -621,12 +621,15 @@ impl SignalingModule for Media {
                         "Failed to load room participants, {}",
                         Report::from_error(e)
                     );
-                    Vec::new()
+                    BTreeSet::new()
                 });
 
-            if let Err(e) =
-                storage::speaker::delete_all_for_room(ctx.redis_conn(), self.room, &participants)
-                    .await
+            if let Err(e) = storage::speaker::delete_all_for_room(
+                ctx.redis_conn(),
+                self.room,
+                &Vec::from_iter(participants),
+            )
+            .await
             {
                 log::error!(
                     "Media module for failed to remove speakers on room destoy, {}",

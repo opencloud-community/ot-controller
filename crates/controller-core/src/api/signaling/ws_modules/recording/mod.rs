@@ -12,7 +12,8 @@ use lapin_pool::{RabbitMqChannel, RabbitMqPool};
 use opentalk_database::Db;
 use opentalk_db_storage::streaming_targets::RoomStreamingTargetRecord;
 use opentalk_signaling_core::{
-    control, DestroyContext, Event, InitContext, ModuleContext, RedisConnection, SignalingModule,
+    control::{self, storage::ControlStorage as _},
+    DestroyContext, Event, InitContext, ModuleContext, RedisConnection, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
 use opentalk_types::{
@@ -134,25 +135,18 @@ impl SignalingModule for Recording {
                     .await?
             }
             Event::Leaving => {
-                control::storage::remove_attribute(
-                    ctx.redis_conn(),
-                    self.room,
-                    self.id,
-                    "recording_consent",
-                )
-                .await?;
+                ctx.redis_conn()
+                    .remove_attribute(self.room, self.id, "recording_consent")
+                    .await?;
             }
             Event::RaiseHand => {}
             Event::LowerHand => {}
             Event::ParticipantLeft(_) => {}
             Event::ParticipantJoined(id, data) | Event::ParticipantUpdated(id, data) => {
-                let consent: Option<bool> = control::storage::get_attribute(
-                    ctx.redis_conn(),
-                    self.room,
-                    id,
-                    "recording_consent",
-                )
-                .await?;
+                let consent: Option<bool> = ctx
+                    .redis_conn()
+                    .get_attribute(self.room, id, "recording_consent")
+                    .await?;
 
                 if let Some(consent) = consent {
                     *data = Some(RecordingPeerState {
@@ -164,14 +158,9 @@ impl SignalingModule for Recording {
             // Messages from frontend (Command)
             Event::WsMessage(msg) => match msg {
                 RecordingCommand::SetConsent(command::SetConsent { consent }) => {
-                    control::storage::set_attribute(
-                        ctx.redis_conn(),
-                        self.room,
-                        self.id,
-                        "recording_consent",
-                        consent,
-                    )
-                    .await?;
+                    ctx.redis_conn()
+                        .set_attribute(self.room, self.id, "recording_consent", consent)
+                        .await?;
 
                     ctx.invalidate_data();
                 }

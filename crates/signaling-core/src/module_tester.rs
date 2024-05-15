@@ -1017,14 +1017,14 @@ where
             .await
             .expect("lock poisoned");
 
-        storage::set_attribute(
-            &mut self.redis_conn,
-            self.room_id,
-            self.participant_id,
-            "left_at",
-            Timestamp::now(),
-        )
-        .await?;
+        self.redis_conn
+            .set_attribute(
+                self.room_id,
+                self.participant_id,
+                "left_at",
+                Timestamp::now(),
+            )
+            .await?;
 
         let destroy_room =
             storage::participants_all_left(&mut self.redis_conn, self.room_id).await?;

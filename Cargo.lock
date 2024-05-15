@@ -3863,6 +3863,7 @@ dependencies = [
  "rustc-hash",
  "serde",
  "serde_json",
+ "serial_test",
  "slotmap",
  "snafu",
  "tokio",

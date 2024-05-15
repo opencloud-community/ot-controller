@@ -10,10 +10,7 @@ use opentalk_database::Db;
 use opentalk_etherpad_client::EtherpadClient;
 use opentalk_signaling_core::{
     assets::{save_asset, AssetError, NewAssetFileName},
-    control::{
-        self,
-        storage::{get_attribute, ControlStorage as _},
-    },
+    control::{self, storage::ControlStorage as _},
     DestroyContext, Event, InitContext, ModuleContext, ObjectStorage, RedisConnection,
     SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
@@ -449,13 +446,9 @@ impl Protocol {
         &self,
         redis_conn: &mut RedisConnection,
     ) -> Result<String, SignalingModuleError> {
-        let display_name: String = get_attribute(
-            redis_conn,
-            self.room_id,
-            self.participant_id,
-            "display_name",
-        )
-        .await?;
+        let display_name: String = redis_conn
+            .get_attribute(self.room_id, self.participant_id, "display_name")
+            .await?;
 
         let author_id = self
             .etherpad

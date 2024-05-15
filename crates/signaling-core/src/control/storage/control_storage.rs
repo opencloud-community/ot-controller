@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::collections::BTreeSet;
+
 use async_trait::async_trait;
 use opentalk_types::core::ParticipantId;
 
@@ -17,7 +19,7 @@ pub trait ControlStorage {
     async fn get_all_participants(
         &mut self,
         room: SignalingRoomId,
-    ) -> Result<Vec<ParticipantId>, SignalingModuleError>;
+    ) -> Result<BTreeSet<ParticipantId>, SignalingModuleError>;
 
     async fn remove_participant_set(
         &mut self,
@@ -42,4 +44,30 @@ pub trait ControlStorage {
         room: SignalingRoomId,
         participant: ParticipantId,
     ) -> Result<bool, SignalingModuleError>;
+
+    async fn get_attribute<V>(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        name: &str,
+    ) -> Result<V, SignalingModuleError>
+    where
+        V: redis::FromRedisValue;
+
+    async fn set_attribute<V>(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        name: &str,
+        value: V,
+    ) -> Result<(), SignalingModuleError>
+    where
+        V: core::fmt::Debug + redis::ToRedisArgs + Send + Sync;
+
+    async fn remove_attribute(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        name: &str,
+    ) -> Result<(), SignalingModuleError>;
 }

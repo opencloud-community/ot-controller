@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use std::{
+    collections::BTreeSet,
     future,
     mem::replace,
     ops::ControlFlow,
@@ -448,14 +449,10 @@ impl Runner {
             };
 
             if let RunnerState::Joined = &self.state {
-                let res = storage::set_attribute(
-                    &mut self.redis_conn,
-                    self.room_id,
-                    self.id,
-                    "left_at",
-                    Timestamp::now(),
-                )
-                .await;
+                let res = self
+                    .redis_conn
+                    .set_attribute(self.room_id, self.id, "left_at", Timestamp::now())
+                    .await;
                 if let Err(e) = res {
                     log::error!(
                         "failed to mark participant as left, {}",
@@ -1013,8 +1010,10 @@ impl Runner {
             return InvalidDisplayNameSnafu.fail();
         }
 
-        let left_at: Option<Timestamp> =
-            storage::get_attribute(&mut self.redis_conn, self.room_id, self.id, "left_at").await?;
+        let left_at: Option<Timestamp> = self
+            .redis_conn
+            .get_attribute(self.room_id, self.id, "left_at")
+            .await?;
         self.set_control_attributes(timestamp, &display_name, avatar_url.as_deref())
             .await?;
 
@@ -1044,8 +1043,10 @@ impl Runner {
             return Ok(());
         }
 
-        let role: Option<Role> =
-            storage::get_attribute(&mut self.redis_conn, self.room_id, target, "role").await?;
+        let role: Option<Role> = self
+            .redis_conn
+            .get_attribute(self.room_id, target, "role")
+            .await?;
 
         let is_moderator = matches!(role, Some(Role::Moderator));
 
@@ -1056,8 +1057,10 @@ impl Runner {
             return Ok(());
         }
 
-        let user_id: Option<UserId> =
-            storage::get_attribute(&mut self.redis_conn, self.room_id, target, "user_id").await?;
+        let user_id: Option<UserId> = self
+            .redis_conn
+            .get_attribute(self.room_id, target, "user_id")
+            .await?;
 
         if let Some(user_id) = user_id {
             if user_id == self.room.created_by {
@@ -1243,7 +1246,9 @@ impl Runner {
             left_at: None,
             ..control_data
         };
-        storage::remove_attribute(&mut self.redis_conn, self.room_id, self.id, "left_at").await?;
+        self.redis_conn
+            .remove_attribute(self.room_id, self.id, "left_at")
+            .await?;
 
         // If we haven't joined the waiting room yet, fetch, set and enforce the tariff for the room.
         // When in waiting-room this logic was already executed in `join_waiting_room`.
@@ -1384,7 +1389,7 @@ impl Runner {
         Ok(())
     }
 
-    async fn join_room_locked(&mut self) -> Result<Vec<ParticipantId>> {
+    async fn join_room_locked(&mut self) -> Result<BTreeSet<ParticipantId>> {
         let participant_set_exists = self.redis_conn.participant_set_exists(self.room_id).await?;
 
         if !participant_set_exists {
@@ -1712,14 +1717,9 @@ impl Runner {
 
                 self.role = new_role;
 
-                storage::set_attribute(
-                    &mut self.redis_conn,
-                    self.room_id,
-                    self.id,
-                    "role",
-                    new_role,
-                )
-                .await?;
+                self.redis_conn
+                    .set_attribute(self.room_id, self.id, "role", new_role)
+                    .await?;
 
                 let actions = self
                     .handle_module_broadcast_event(
@@ -1738,13 +1738,10 @@ impl Runner {
                 self.exchange_publish_control(timestamp, None, exchange::Message::Update(self.id));
             }
             exchange::Message::ResetRaisedHands { issued_by } => {
-                let raised: Option<bool> = storage::get_attribute(
-                    &mut self.redis_conn,
-                    self.room_id,
-                    self.id,
-                    "hand_is_up",
-                )
-                .await?;
+                let raised: Option<bool> = self
+                    .redis_conn
+                    .get_attribute(self.room_id, self.id, "hand_is_up")
+                    .await?;
                 if matches!(raised, Some(true)) {
                     self.handle_raise_hand_change(timestamp, false).await?;
 
@@ -1775,13 +1772,10 @@ impl Runner {
                     .await;
             }
             exchange::Message::DisableRaiseHands { issued_by } => {
-                let raised: Option<bool> = storage::get_attribute(
-                    &mut self.redis_conn,
-                    self.room_id,
-                    self.id,
-                    "hand_is_up",
-                )
-                .await?;
+                let raised: Option<bool> = self
+                    .redis_conn
+                    .get_attribute(self.room_id, self.id, "hand_is_up")
+                    .await?;
                 if matches!(raised, Some(true)) {
                     self.handle_raise_hand_change(timestamp, false).await?;
                 }
@@ -1816,14 +1810,9 @@ impl Runner {
             }
         );
 
-        storage::set_attribute(
-            &mut self.redis_conn,
-            self.room_id,
-            self.id,
-            "left_at",
-            Timestamp::now(),
-        )
-        .await?;
+        self.redis_conn
+            .set_attribute(self.room_id, self.id, "left_at", Timestamp::now())
+            .await?;
 
         let actions = self
             .handle_module_broadcast_event(timestamp, DynBroadcastEvent::Leaving, false)

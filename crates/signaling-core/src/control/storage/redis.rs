@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeSet, HashMap, HashSet},
     convert::identity,
     fmt::Debug,
     time::Duration,
@@ -41,7 +41,7 @@ impl ControlStorage for RedisConnection {
     async fn get_all_participants(
         &mut self,
         room: SignalingRoomId,
-    ) -> Result<Vec<ParticipantId>, SignalingModuleError> {
+    ) -> Result<BTreeSet<ParticipantId>, SignalingModuleError> {
         self.smembers(RoomParticipants { room })
             .await
             .context(RedisSnafu {
@@ -104,6 +104,79 @@ impl ControlStorage for RedisConnection {
             .context(RedisSnafu {
                 message: "Failed to add own participant id to set",
             })
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_attribute<V>(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        name: &str,
+    ) -> Result<V, SignalingModuleError>
+    where
+        V: FromRedisValue,
+    {
+        let value = self
+            .hget(
+                RoomParticipantAttributes {
+                    room,
+                    attribute_name: name,
+                },
+                participant,
+            )
+            .await
+            .with_context(|_| RedisSnafu {
+                message: format!("Failed to get attribute {name}"),
+            })?;
+
+        Ok(value)
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_attribute<V>(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        name: &str,
+        value: V,
+    ) -> Result<(), SignalingModuleError>
+    where
+        V: Debug + ToRedisArgs + Send + Sync,
+    {
+        self.hset(
+            RoomParticipantAttributes {
+                room,
+                attribute_name: name,
+            },
+            participant,
+            value,
+        )
+        .await
+        .with_context(|_| RedisSnafu {
+            message: format!("Failed to set attribute {name}"),
+        })?;
+
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn remove_attribute(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        name: &str,
+    ) -> Result<(), SignalingModuleError> {
+        self.hdel(
+            RoomParticipantAttributes {
+                room,
+                attribute_name: name,
+            },
+            participant,
+        )
+        .await
+        .with_context(|_| RedisSnafu {
+            message: format!("Failed to remove participant attribute key, {name}"),
+        })
     }
 }
 
@@ -185,7 +258,8 @@ pub async fn participants_all_left(
     let participants = redis_conn.get_all_participants(room).await?;
 
     let left_at_attrs: Vec<Option<Timestamp>> =
-        get_attribute_for_participants(redis_conn, room, "left_at", &participants).await?;
+        get_attribute_for_participants(redis_conn, room, "left_at", &Vec::from_iter(participants))
+            .await?;
 
     Ok(left_at_attrs.iter().all(Option::is_some))
 }
@@ -205,55 +279,6 @@ pub async fn remove_attribute_key(
         .with_context(|_| RedisSnafu {
             message: format!("Failed to remove participant attribute key, {name}"),
         })
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn remove_attribute(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    participant: ParticipantId,
-    name: &str,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .hdel(
-            RoomParticipantAttributes {
-                room,
-                attribute_name: name,
-            },
-            participant,
-        )
-        .await
-        .with_context(|_| RedisSnafu {
-            message: format!("Failed to remove participant attribute key, {name}"),
-        })
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn set_attribute<V>(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    participant: ParticipantId,
-    name: &str,
-    value: V,
-) -> Result<(), SignalingModuleError>
-where
-    V: Debug + ToRedisArgs + Send + Sync,
-{
-    redis_conn
-        .hset(
-            RoomParticipantAttributes {
-                room,
-                attribute_name: name,
-            },
-            participant,
-            value,
-        )
-        .await
-        .with_context(|_| RedisSnafu {
-            message: format!("Failed to set attribute {name}"),
-        })?;
-
-    Ok(())
 }
 
 pub struct AttrPipeline {
@@ -322,32 +347,6 @@ impl AttrPipeline {
     ) -> redis::RedisResult<T> {
         self.pipe.query_async(redis_conn).await
     }
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn get_attribute<V>(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    participant: ParticipantId,
-    name: &str,
-) -> Result<V, SignalingModuleError>
-where
-    V: FromRedisValue,
-{
-    let value = redis_conn
-        .hget(
-            RoomParticipantAttributes {
-                room,
-                attribute_name: name,
-            },
-            participant,
-        )
-        .await
-        .with_context(|_| RedisSnafu {
-            message: format!("Failed to get attribute {name}"),
-        })?;
-
-    Ok(value)
 }
 
 /// Get attribute values for multiple participants
@@ -713,4 +712,41 @@ pub async fn remove_room_closes_at(
         .context(RedisSnafu {
             message: "Failed to DEL the point in time the room closes",
         })
+}
+
+#[cfg(test)]
+mod test {
+    use redis::aio::ConnectionManager;
+    use serial_test::serial;
+
+    use super::{super::test_common, *};
+
+    async fn setup() -> RedisConnection {
+        let redis_url =
+            std::env::var("REDIS_ADDR").unwrap_or_else(|_| "redis://0.0.0.0:6379/".to_owned());
+        let redis = redis::Client::open(redis_url).expect("Invalid redis url");
+
+        let mut mgr = ConnectionManager::new(redis).await.unwrap();
+
+        redis::cmd("FLUSHALL")
+            .query_async::<_, ()>(&mut mgr)
+            .await
+            .unwrap();
+
+        RedisConnection::new(mgr)
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn participant_set() {
+        let mut redis_conn = setup().await;
+        test_common::participant_set(&mut redis_conn).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn participant_attribute() {
+        let mut redis_conn = setup().await;
+        test_common::participant_attribute(&mut redis_conn).await;
+    }
 }

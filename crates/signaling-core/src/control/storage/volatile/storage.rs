@@ -2,11 +2,15 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::sync::{Arc, OnceLock};
+use std::{
+    collections::BTreeSet,
+    sync::{Arc, OnceLock},
+};
 
 use async_trait::async_trait;
 use opentalk_types::core::ParticipantId;
 use parking_lot::RwLock;
+use redis::FromRedisValue;
 
 use super::memory::MemoryControlState;
 use crate::{
@@ -34,7 +38,7 @@ impl ControlStorage for VolatileStaticMemoryStorage {
     async fn get_all_participants(
         &mut self,
         room: SignalingRoomId,
-    ) -> Result<Vec<ParticipantId>, SignalingModuleError> {
+    ) -> Result<BTreeSet<ParticipantId>, SignalingModuleError> {
         Ok(state().read().get_all_participants(room))
     }
 
@@ -72,5 +76,64 @@ impl ControlStorage for VolatileStaticMemoryStorage {
         participant: ParticipantId,
     ) -> Result<bool, SignalingModuleError> {
         Ok(state().write().add_participant_to_set(room, participant))
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_attribute<V>(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        name: &str,
+    ) -> Result<V, SignalingModuleError>
+    where
+        V: FromRedisValue,
+    {
+        state().read().get_attribute(room, participant, name)
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_attribute<V>(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        name: &str,
+        value: V,
+    ) -> Result<(), SignalingModuleError>
+    where
+        V: core::fmt::Debug + redis::ToRedisArgs + Send + Sync,
+    {
+        state()
+            .write()
+            .set_attribute(room, participant, name, value)
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn remove_attribute(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        name: &str,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().remove_attribute(room, participant, name)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use serial_test::serial;
+
+    use super::super::super::test_common;
+    use crate::VolatileStaticMemoryStorage;
+
+    #[tokio::test]
+    #[serial]
+    async fn participant_set() {
+        test_common::participant_set(&mut VolatileStaticMemoryStorage).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn participant_attribute() {
+        test_common::participant_attribute(&mut VolatileStaticMemoryStorage).await;
     }
 }

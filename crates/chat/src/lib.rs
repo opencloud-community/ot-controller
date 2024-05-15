@@ -8,7 +8,10 @@
 //!
 //! Issues timestamp and messageIds to incoming chat messages and forwards them to other participants in the room or group.
 
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::{BTreeSet, HashMap},
+    sync::Arc,
+};
 
 use opentalk_database::Db;
 use opentalk_db_storage::groups::Group;
@@ -265,13 +268,10 @@ impl SignalingModule for Chat {
             Event::LowerHand => {}
             Event::ParticipantJoined(participant_id, peer_frontend_data) => {
                 // Get user id of the joined participant
-                let user_id: Option<UserId> = control::storage::get_attribute(
-                    ctx.redis_conn(),
-                    self.room,
-                    participant_id,
-                    "user_id",
-                )
-                .await?;
+                let user_id: Option<UserId> = ctx
+                    .redis_conn()
+                    .get_attribute(self.room, participant_id, "user_id")
+                    .await?;
 
                 if let Some(user_id) = user_id {
                     let db = self.db.clone();
@@ -562,7 +562,7 @@ impl SignalingModule for Chat {
                         "Failed to load room participants, {}",
                         Report::from_error(e)
                     );
-                    Vec::new()
+                    BTreeSet::new()
                 });
             for participant in participants {
                 if let Err(e) = ctx

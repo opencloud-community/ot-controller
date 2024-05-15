@@ -182,9 +182,10 @@ impl SignalingModule for ModerationModule {
                 )
                 .await?;
 
-                let user_id: Option<UserId> =
-                    control::storage::get_attribute(ctx.redis_conn(), self.room, target, "user_id")
-                        .await?;
+                let user_id: Option<UserId> = ctx
+                    .redis_conn()
+                    .get_attribute(self.room, target, "user_id")
+                    .await?;
 
                 if let Some(user_id) = user_id {
                     storage::ban_user(ctx.redis_conn(), self.room.room_id(), user_id).await?;
@@ -231,13 +232,10 @@ impl SignalingModule for ModerationModule {
                 }
 
                 // The room owner cannot be sent to the waiting room
-                if control::storage::get_attribute(
-                    ctx.redis_conn(),
-                    self.room,
-                    target,
-                    "is_room_owner",
-                )
-                .await?
+                if ctx
+                    .redis_conn()
+                    .get_attribute(self.room, target, "is_room_owner")
+                    .await?
                 {
                     ctx.ws_send(Error::CannotSendRoomOwnerToWaitingRoom);
                     return Ok(());
@@ -275,7 +273,8 @@ impl SignalingModule for ModerationModule {
                 }
 
                 // Remove all debriefed participants from the waiting-room-accepted set
-                let all_participants = ctx.redis_conn().get_all_participants(self.room).await?;
+                let all_participants =
+                    Vec::from_iter(ctx.redis_conn().get_all_participants(self.room).await?);
                 let all_participants_role: Vec<Option<Role>> =
                     control::storage::get_attribute_for_participants(
                         ctx.redis_conn(),
@@ -331,9 +330,10 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
-                let kind: Option<ParticipationKind> =
-                    control::storage::get_attribute(ctx.redis_conn(), self.room, target, "kind")
-                        .await?;
+                let kind: Option<ParticipationKind> = ctx
+                    .redis_conn()
+                    .get_attribute(self.room, target, "kind")
+                    .await?;
 
                 if !matches!(
                     kind,
@@ -350,14 +350,9 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
-                control::storage::set_attribute(
-                    ctx.redis_conn(),
-                    self.room,
-                    target,
-                    "display_name",
-                    new_name,
-                )
-                .await?;
+                ctx.redis_conn()
+                    .set_attribute(self.room, target, "display_name", new_name)
+                    .await?;
 
                 ctx.exchange_publish(
                     control::exchange::current_room_by_participant_id(self.room, target),
