@@ -12,7 +12,6 @@ use std::{collections::HashMap, sync::Arc};
 
 use opentalk_database::Db;
 use opentalk_db_storage::groups::Group;
-use opentalk_r3dlock::Mutex;
 use opentalk_signaling_core::{
     control::{self, exchange},
     DestroyContext, Event, InitContext, ModuleContext, Participant, RedisConnection,
@@ -35,7 +34,7 @@ use snafu::Report;
 
 mod storage;
 
-pub use storage::is_chat_enabled;
+use storage::ChatStorage;
 
 fn current_room_by_group_id(room_id: SignalingRoomId, group_id: GroupId) -> String {
     format!("room={room_id}:group={group_id}")
@@ -75,14 +74,16 @@ impl ChatStateExt for ChatState {
         participant: ParticipantId,
         groups: &[Group],
     ) -> Result<Self, SignalingModuleError> {
-        let enabled = storage::is_chat_enabled(redis_conn, room.room_id()).await?;
+        let enabled = redis_conn.is_chat_enabled(room.room_id()).await?;
 
-        let room_history = storage::get_room_chat_history(redis_conn, room).await?;
+        let room_history = redis_conn.get_room_history(room).await?;
         let mut groups_history = Vec::new();
         for group in groups {
-            storage::add_participant_to_set(redis_conn, room, group.id, participant).await?;
+            redis_conn
+                .add_participant_to_group(room, group.id, participant)
+                .await?;
 
-            let history = storage::get_group_chat_history(redis_conn, room, group.id).await?;
+            let history = redis_conn.get_group_chat_history(room, group.id).await?;
 
             groups_history.push(GroupHistory {
                 name: group.name.clone(),
@@ -91,25 +92,28 @@ impl ChatStateExt for ChatState {
         }
 
         let mut private_history = Vec::new();
-        let correspondents =
-            storage::get_private_chat_correspondents_for_participant(redis_conn, room, participant)
-                .await?;
+        let correspondents = redis_conn
+            .get_private_chat_correspondents_for_participant(room, participant)
+            .await?;
         for correspondent in correspondents {
-            let history =
-                storage::get_private_chat_history(redis_conn, room, participant, correspondent)
-                    .await?;
+            let history = redis_conn
+                .get_private_chat_history(room, participant, correspondent)
+                .await?;
             private_history.push(PrivateHistory {
                 correspondent,
                 history,
             });
         }
 
-        let last_seen_timestamp_global =
-            storage::get_last_seen_timestamp_global(redis_conn, room, participant).await?;
-        let last_seen_timestamps_private =
-            storage::get_last_seen_timestamps_private(redis_conn, room, participant).await?;
-        let last_seen_timestamps_group =
-            storage::get_last_seen_timestamps_group(redis_conn, room, participant).await?;
+        let last_seen_timestamp_global = redis_conn
+            .get_last_seen_timestamp_global(room, participant)
+            .await?;
+        let last_seen_timestamps_private = redis_conn
+            .get_last_seen_timestamps_private(room, participant)
+            .await?;
+        let last_seen_timestamps_group = redis_conn
+            .get_last_seen_timestamps_group(room, participant)
+            .await?;
 
         Ok(Self {
             room_history,
@@ -300,7 +304,9 @@ impl SignalingModule for Chat {
                     return Ok(());
                 }
 
-                storage::set_chat_enabled(ctx.redis_conn(), self.room.room_id(), true).await?;
+                ctx.redis_conn()
+                    .set_chat_enabled(self.room.room_id(), true)
+                    .await?;
 
                 ctx.exchange_publish(
                     exchange::current_room_all_participants(self.room),
@@ -313,7 +319,9 @@ impl SignalingModule for Chat {
                     return Ok(());
                 }
 
-                storage::set_chat_enabled(ctx.redis_conn(), self.room.room_id(), false).await?;
+                ctx.redis_conn()
+                    .set_chat_enabled(self.room.room_id(), false)
+                    .await?;
 
                 ctx.exchange_publish(
                     exchange::current_room_all_participants(self.room),
@@ -326,8 +334,10 @@ impl SignalingModule for Chat {
                     return Ok(());
                 }
 
-                let chat_enabled =
-                    storage::is_chat_enabled(ctx.redis_conn(), self.room.room_id()).await?;
+                let chat_enabled = ctx
+                    .redis_conn()
+                    .is_chat_enabled(self.room.room_id())
+                    .await?;
 
                 if !chat_enabled {
                     ctx.ws_send(Error::ChatDisabled);
@@ -368,22 +378,18 @@ impl SignalingModule for Chat {
                             timestamp: ctx.timestamp(),
                         };
 
-                        storage::add_private_chat_correspondents(
-                            ctx.redis_conn(),
-                            self.room,
-                            self.id,
-                            target,
-                        )
-                        .await?;
+                        ctx.redis_conn()
+                            .add_private_chat_correspondents(self.room, self.id, target)
+                            .await?;
 
-                        storage::add_message_to_private_chat_history(
-                            ctx.redis_conn(),
-                            self.room,
-                            self.id,
-                            target,
-                            &stored_msg,
-                        )
-                        .await?;
+                        ctx.redis_conn()
+                            .add_message_to_private_chat_history(
+                                self.room,
+                                self.id,
+                                target,
+                                &stored_msg,
+                            )
+                            .await?;
 
                         ctx.exchange_publish(
                             exchange::current_room_by_participant_id(self.room, target),
@@ -409,13 +415,9 @@ impl SignalingModule for Chat {
                                 timestamp: ctx.timestamp(),
                             };
 
-                            storage::add_message_to_group_chat_history(
-                                ctx.redis_conn(),
-                                self.room,
-                                group.id,
-                                &stored_msg,
-                            )
-                            .await?;
+                            ctx.redis_conn()
+                                .add_message_to_group_chat_history(self.room, group.id, &stored_msg)
+                                .await?;
 
                             let out_message = ChatEvent::MessageSent(out_message_contents);
 
@@ -441,12 +443,9 @@ impl SignalingModule for Chat {
                             timestamp: ctx.timestamp(),
                         };
 
-                        storage::add_message_to_room_chat_history(
-                            ctx.redis_conn(),
-                            self.room,
-                            &stored_msg,
-                        )
-                        .await?;
+                        ctx.redis_conn()
+                            .add_message_to_room_history(self.room, &stored_msg)
+                            .await?;
 
                         let out_message = ChatEvent::MessageSent(out_message_contents);
 
@@ -463,8 +462,7 @@ impl SignalingModule for Chat {
                     return Ok(());
                 }
 
-                if let Err(e) = storage::delete_room_chat_history(ctx.redis_conn(), self.room).await
-                {
+                if let Err(e) = ctx.redis_conn().delete_room_history(self.room).await {
                     log::error!(
                         "Failed to clear room chat history, {}",
                         Report::from_error(e)
@@ -504,34 +502,49 @@ impl SignalingModule for Chat {
     async fn on_destroy(self, mut ctx: DestroyContext<'_>) {
         // ==== Cleanup room ====
         if ctx.destroy_room() {
-            if let Err(e) = storage::delete_room_chat_history(ctx.redis_conn(), self.room).await {
+            if let Err(e) = ctx.redis_conn().delete_room_history(self.room).await {
                 log::error!(
                     "Failed to remove room chat history on room destroy, {}",
                     Report::from_error(e)
                 );
             }
-            if let Err(e) =
-                storage::delete_chat_enabled(ctx.redis_conn(), self.room.room_id()).await
+            if let Err(e) = ctx
+                .redis_conn()
+                .delete_chat_enabled(self.room.room_id())
+                .await
             {
                 log::error!(
                     "Failed to clean up chat enabled flag {}",
                     Report::from_error(e)
                 );
             }
+            if let Err(e) = ctx
+                .redis_conn()
+                .delete_private_chat_correspondents(self.room)
+                .await
+            {
+                log::error!(
+                    "Failed to remove room chat correspondents on room destroy, {}",
+                    Report::from_error(e)
+                );
+            }
 
-            let correspondents =
-                storage::get_private_chat_correspondents(ctx.redis_conn(), self.room)
-                    .await
-                    .unwrap_or_else(|e| {
-                        log::error!(
-                            "Failed to load room private chat correspondents, {}",
-                            Report::from_error(e)
-                        );
-                        Default::default()
-                    });
+            let correspondents = ctx
+                .redis_conn()
+                .get_private_chat_correspondents(self.room)
+                .await
+                .unwrap_or_else(|e| {
+                    log::error!(
+                        "Failed to load room private chat correspondents, {}",
+                        Report::from_error(e)
+                    );
+                    Default::default()
+                });
             for (a, b) in correspondents {
-                if let Err(e) =
-                    storage::delete_private_chat_history(ctx.redis_conn(), self.room, a, b).await
+                if let Err(e) = ctx
+                    .redis_conn()
+                    .delete_private_chat_history(self.room, a, b)
+                    .await
                 {
                     log::error!(
                         "Failed to remove room private chat history, {}",
@@ -550,36 +563,30 @@ impl SignalingModule for Chat {
                     Vec::new()
                 });
             for participant in participants {
-                if let Err(e) = storage::delete_last_seen_timestamp_global(
-                    ctx.redis_conn(),
-                    self.room,
-                    participant,
-                )
-                .await
+                if let Err(e) = ctx
+                    .redis_conn()
+                    .delete_last_seen_timestamp_global(self.room, participant)
+                    .await
                 {
                     log::error!(
                         "Failed to clean up last seen timestamp for global chat, {}",
                         e
                     );
                 }
-                if let Err(e) = storage::delete_last_seen_timestamps_group(
-                    ctx.redis_conn(),
-                    self.room,
-                    participant,
-                )
-                .await
+                if let Err(e) = ctx
+                    .redis_conn()
+                    .delete_last_seen_timestamps_group(self.room, participant)
+                    .await
                 {
                     log::error!(
                         "Failed to clean up last seen timestamps for group chats, {}",
                         e
                     );
                 }
-                if let Err(e) = storage::delete_last_seen_timestamps_private(
-                    ctx.redis_conn(),
-                    self.room,
-                    participant,
-                )
-                .await
+                if let Err(e) = ctx
+                    .redis_conn()
+                    .delete_last_seen_timestamps_private(self.room, participant)
+                    .await
                 {
                     log::error!(
                         "Failed to clean up last seen timestamps for private chats, {}",
@@ -589,13 +596,10 @@ impl SignalingModule for Chat {
             }
         } else {
             if let Some(timestamp) = self.last_seen_timestamp_global {
-                if let Err(e) = storage::set_last_seen_timestamp_global(
-                    ctx.redis_conn(),
-                    self.room,
-                    self.id,
-                    timestamp,
-                )
-                .await
+                if let Err(e) = ctx
+                    .redis_conn()
+                    .set_last_seen_timestamp_global(self.room, self.id, timestamp)
+                    .await
                 {
                     log::error!(
                         "Failed to set last seen timestamp for global chat, {}",
@@ -609,13 +613,10 @@ impl SignalingModule for Chat {
                     .iter()
                     .map(|(k, v)| (k.to_owned(), *v))
                     .collect();
-                if let Err(e) = storage::set_last_seen_timestamps_group(
-                    ctx.redis_conn(),
-                    self.room,
-                    self.id,
-                    &timestamps,
-                )
-                .await
+                if let Err(e) = ctx
+                    .redis_conn()
+                    .set_last_seen_timestamps_group(self.room, self.id, &timestamps)
+                    .await
                 {
                     log::error!(
                         "Failed to set last seen timestamps for group chat, {}",
@@ -633,13 +634,10 @@ impl SignalingModule for Chat {
                     .iter()
                     .map(|(k, v)| (*k, *v))
                     .collect();
-                if let Err(e) = storage::set_last_seen_timestamps_private(
-                    ctx.redis_conn(),
-                    self.room,
-                    self.id,
-                    &timestamps,
-                )
-                .await
+                if let Err(e) = ctx
+                    .redis_conn()
+                    .set_last_seen_timestamps_private(self.room, self.id, &timestamps)
+                    .await
                 {
                     log::error!(
                         "Failed to set last seen timestamps for private chat, {}",
@@ -651,57 +649,9 @@ impl SignalingModule for Chat {
 
         // ==== Cleanup groups ====
         for group in self.groups {
-            let mut mutex = Mutex::new(storage::RoomGroupParticipantsLock {
-                room: self.room,
-                group: group.id,
-            });
-
-            let guard = match mutex.lock(ctx.redis_conn()).await {
-                Ok(guard) => guard,
-                Err(e) => {
-                    log::error!(
-                        "Failed to acquire lock to cleanup group {:?}, {}",
-                        group.id,
-                        e
-                    );
-
-                    continue;
-                }
-            };
-
-            let remove_history = match storage::remove_participant_from_set(
-                &guard,
-                ctx.redis_conn(),
-                self.room,
-                group.id,
-                self.id,
-            )
-            .await
-            {
-                Ok(n) => n == 0,
-                Err(e) => {
-                    log::error!(
-                        "Failed to remove participant from group set, {}",
-                        Report::from_error(e)
-                    );
-                    false
-                }
-            };
-
-            if remove_history {
-                if let Err(e) =
-                    storage::delete_group_chat_history(ctx.redis_conn(), self.room, group.id).await
-                {
-                    log::error!(
-                        "Failed to remove room group chat history, {}",
-                        Report::from_error(e)
-                    );
-                }
-            }
-
-            if let Err(e) = guard.unlock(ctx.redis_conn()).await {
-                log::error!("Failed to unlock r3dlock, {}", Report::from_error(e));
-            }
+            ctx.redis_conn()
+                .remove_participant_from_group(self.room, group.id, self.id)
+                .await;
         }
     }
 

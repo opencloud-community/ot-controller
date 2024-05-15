@@ -1,0 +1,192 @@
+// SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+//
+// SPDX-License-Identifier: EUPL-1.2
+
+use std::collections::{HashMap, HashSet};
+
+use async_trait::async_trait;
+use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId};
+use opentalk_types::{
+    core::{GroupId, GroupName, ParticipantId, RoomId, Timestamp},
+    signaling::chat::state::StoredMessage,
+};
+
+#[async_trait(?Send)]
+pub(crate) trait ChatStorage {
+    async fn get_room_history(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<Vec<StoredMessage>, SignalingModuleError>;
+
+    async fn add_message_to_room_history(
+        &mut self,
+        room: SignalingRoomId,
+        message: &StoredMessage,
+    ) -> Result<(), SignalingModuleError>;
+
+    async fn delete_room_history(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<(), SignalingModuleError>;
+
+    async fn set_chat_enabled(
+        &mut self,
+        room: RoomId,
+        enabled: bool,
+    ) -> Result<(), SignalingModuleError>;
+
+    async fn is_chat_enabled(&mut self, room: RoomId) -> Result<bool, SignalingModuleError>;
+
+    async fn delete_chat_enabled(&mut self, room: RoomId) -> Result<(), SignalingModuleError>;
+
+    async fn set_last_seen_timestamps_private(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        timestamps: &[(ParticipantId, Timestamp)],
+    ) -> Result<(), SignalingModuleError>;
+
+    async fn get_last_seen_timestamps_private(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<HashMap<ParticipantId, Timestamp>, SignalingModuleError>;
+
+    async fn delete_last_seen_timestamps_private(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<(), SignalingModuleError>;
+
+    async fn set_last_seen_timestamps_group(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        timestamps: &[(GroupName, Timestamp)],
+    ) -> Result<(), SignalingModuleError>;
+
+    async fn get_last_seen_timestamps_group(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<HashMap<GroupName, Timestamp>, SignalingModuleError>;
+
+    async fn delete_last_seen_timestamps_group(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<(), SignalingModuleError>;
+
+    async fn set_last_seen_timestamp_global(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        timestamp: Timestamp,
+    ) -> Result<(), SignalingModuleError>;
+
+    async fn get_last_seen_timestamp_global(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<Option<Timestamp>, SignalingModuleError>;
+
+    async fn delete_last_seen_timestamp_global(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<(), SignalingModuleError>;
+
+    async fn add_private_chat_correspondents(
+        &mut self,
+        room: SignalingRoomId,
+        participant_one: ParticipantId,
+        participant_two: ParticipantId,
+    ) -> Result<(), SignalingModuleError>;
+
+    async fn delete_private_chat_correspondents(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<(), SignalingModuleError>;
+
+    async fn get_private_chat_correspondents(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<HashSet<(ParticipantId, ParticipantId)>, SignalingModuleError>;
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_private_chat_correspondents_for_participant(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<HashSet<ParticipantId>, SignalingModuleError> {
+        Ok(self
+            .get_private_chat_correspondents(room)
+            .await?
+            .into_iter()
+            .filter_map(|(a, b)| {
+                if a == participant {
+                    Some(b)
+                } else if b == participant {
+                    Some(a)
+                } else {
+                    None
+                }
+            })
+            .collect())
+    }
+
+    async fn get_group_chat_history(
+        &mut self,
+        room: SignalingRoomId,
+        group: GroupId,
+    ) -> Result<Vec<StoredMessage>, SignalingModuleError>;
+
+    async fn add_message_to_group_chat_history(
+        &mut self,
+        room: SignalingRoomId,
+        group: GroupId,
+        message: &StoredMessage,
+    ) -> Result<(), SignalingModuleError>;
+
+    async fn delete_group_chat_history(
+        &mut self,
+        room: SignalingRoomId,
+        group: GroupId,
+    ) -> Result<(), SignalingModuleError>;
+
+    async fn get_private_chat_history(
+        &mut self,
+        room: SignalingRoomId,
+        participant_one: ParticipantId,
+        participant_two: ParticipantId,
+    ) -> Result<Vec<StoredMessage>, SignalingModuleError>;
+
+    async fn add_message_to_private_chat_history(
+        &mut self,
+        room: SignalingRoomId,
+        participant_one: ParticipantId,
+        participant_two: ParticipantId,
+        message: &StoredMessage,
+    ) -> Result<(), SignalingModuleError>;
+
+    async fn delete_private_chat_history(
+        &mut self,
+        room: SignalingRoomId,
+        participant_one: ParticipantId,
+        participant_two: ParticipantId,
+    ) -> Result<(), SignalingModuleError>;
+
+    async fn add_participant_to_group(
+        &mut self,
+        room: SignalingRoomId,
+        group: GroupId,
+        participant: ParticipantId,
+    ) -> Result<(), SignalingModuleError>;
+
+    async fn remove_participant_from_group(
+        &mut self,
+        room: SignalingRoomId,
+        group: GroupId,
+        participant: ParticipantId,
+    );
+}

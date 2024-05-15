@@ -16,6 +16,7 @@ mod participant;
 mod redis_wrapper;
 mod signaling_module;
 mod signaling_room_id;
+mod volatile_storage;
 
 #[cfg(feature = "module_tester")]
 pub mod module_tester;
@@ -35,6 +36,7 @@ pub use participant::Participant;
 pub use redis_wrapper::{RedisConnection, RedisMetrics};
 pub use signaling_module::*;
 pub use signaling_room_id::SignalingRoomId;
+pub use volatile_storage::{VolatileStaticMemoryStorage, VolatileStorage};
 
 #[async_trait(?Send)]
 pub trait RegisterModules {

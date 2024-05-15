@@ -29,16 +29,26 @@ pub enum SignalingModuleError {
     },
 
     #[snafu(context(false))]
-    UrlParseError { source: url::ParseError },
+    UrlParseError {
+        source: url::ParseError,
+    },
 
     #[snafu(context(false))]
-    UuidError { source: uuid::Error },
+    UuidError {
+        source: uuid::Error,
+    },
 
     #[snafu(context(false))]
-    ReqwestError { source: reqwest::Error },
+    ReqwestError {
+        source: reqwest::Error,
+    },
+
+    NotFoundError,
 
     #[snafu(context(false))]
-    R3dlockError { source: opentalk_r3dlock::Error },
+    R3dlockError {
+        source: opentalk_r3dlock::Error,
+    },
 
     #[cfg(feature = "module_tester")]
     #[snafu(transparent)]
@@ -52,7 +62,9 @@ pub enum SignalingModuleError {
     },
 
     #[snafu(context(false))]
-    LapinError { source: lapin_pool::Error },
+    LapinError {
+        source: lapin_pool::Error,
+    },
 
     #[snafu(context(false))]
     EtherpadError {
@@ -60,7 +72,9 @@ pub enum SignalingModuleError {
     },
 
     #[snafu(display("Failed to deserialize config",))]
-    ConfigError { source: config::ConfigError },
+    ConfigError {
+        source: config::ConfigError,
+    },
 
     #[snafu(display("SerdeJson error: {message}",))]
     SerdeJsonError {
