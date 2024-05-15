@@ -673,7 +673,7 @@ impl Runner {
     /// touch any keys that contain 'global' data that is used across all 'sub'-rooms (main & breakout rooms).
     async fn cleanup_redis_keys_for_current_room(&mut self) -> Result<()> {
         storage::remove_room_closes_at(&mut self.redis_conn, self.room_id).await?;
-        storage::remove_participant_set(&mut self.redis_conn, self.room_id).await?;
+        self.redis_conn.remove_participant_set(self.room_id).await?;
         for key in [
             "display_name",
             "role",

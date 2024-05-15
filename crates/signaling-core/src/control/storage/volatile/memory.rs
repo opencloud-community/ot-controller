@@ -27,4 +27,8 @@ impl MemoryControlState {
                 .cloned(),
         )
     }
+
+    pub(super) fn remove_participant_set(&mut self, room: SignalingRoomId) {
+        self.room_participants.remove(&room);
+    }
 }

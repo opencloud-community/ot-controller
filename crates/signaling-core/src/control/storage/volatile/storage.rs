@@ -37,4 +37,13 @@ impl ControlStorage for VolatileStaticMemoryStorage {
     ) -> Result<Vec<ParticipantId>, SignalingModuleError> {
         Ok(state().read().get_all_participants(room))
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn remove_participant_set(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().remove_participant_set(room);
+        Ok(())
+    }
 }

@@ -18,4 +18,9 @@ pub trait ControlStorage {
         &mut self,
         room: SignalingRoomId,
     ) -> Result<Vec<ParticipantId>, SignalingModuleError>;
+
+    async fn remove_participant_set(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<(), SignalingModuleError>;
 }

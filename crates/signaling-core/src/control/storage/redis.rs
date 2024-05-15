@@ -48,6 +48,18 @@ impl ControlStorage for RedisConnection {
                 message: "Failed to get participants",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn remove_participant_set(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<(), SignalingModuleError> {
+        self.del(RoomParticipants { room })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to del participants",
+            })
+    }
 }
 
 /// Describes a set of participants inside a room.
@@ -118,19 +130,6 @@ pub fn room_mutex(room: SignalingRoomId) -> Mutex<RoomLock> {
     Mutex::new(RoomLock { room })
         .with_wait_time(Duration::from_millis(20)..Duration::from_millis(60))
         .with_retries(20)
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn remove_participant_set(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .del(RoomParticipants { room })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to del participants",
-        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
