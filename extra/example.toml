@@ -15,6 +15,7 @@
 #   "rustls=WARN",
 #   "mio=ERROR",
 #   "lapin=WARN",
+#   "execution_id=trace"
 #]
 
 # Specify an optional OTLP tracing endpoint to export traces to
@@ -146,6 +147,11 @@ bucket = "controller"
 access_key = "minioadmin"
 # Secret key for the MinIO bucket
 secret_key = "minioadmin"
+
+# Etcd configuration
+[etcd]
+# A list urls of a etcd cluster
+urls = ["localhost:2379"]
 
 # The etherpad configuration for the protocol module
 #[etherpad]

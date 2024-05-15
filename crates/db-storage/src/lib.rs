@@ -21,6 +21,7 @@ pub mod assets;
 pub mod events;
 pub mod groups;
 pub mod invites;
+pub mod jobs;
 pub mod migrations;
 pub mod module_resources;
 pub mod rooms;
@@ -37,6 +38,7 @@ sql_function!(fn soundex(x: Text) -> Text);
 
 // SQL types reexport for schema.rs
 pub mod sql_types {
+
     pub use diesel::sql_types::*;
     pub use opentalk_types::core::{
         EmailInviteRoleType as EmailInviteRole, EventInviteStatusType as EventInviteStatus,
@@ -44,5 +46,8 @@ pub mod sql_types {
         TariffStatusType as TariffStatus,
     };
 
-    pub use super::events::EventExceptionKindType as EventExceptionKind;
+    pub use super::{
+        events::EventExceptionKindType as EventExceptionKind,
+        jobs::{JobStatusType as JobStatus, JobTypeType as JobType, LogLevelType as LogLevel},
+    };
 }

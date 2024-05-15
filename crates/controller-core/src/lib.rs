@@ -44,6 +44,7 @@ use async_trait::async_trait;
 use lapin_pool::RabbitMqPool;
 use oidc::OidcContext;
 use opentalk_database::Db;
+use opentalk_jobs::job_runner::JobRunner;
 use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_signaling_core::{
     ExchangeHandle, ExchangeTask, ModulesRegistrar, ObjectStorage, RedisConnection,
@@ -360,6 +361,16 @@ impl Controller {
     /// Runs the controller until a fatal error occurred or a shutdown is requested (e.g. SIGTERM).
     pub async fn run(self) -> Result<()> {
         let signaling_modules = Arc::new(self.signaling);
+
+        // Start JobExecuter
+        JobRunner::start(
+            self.db.clone(),
+            self.shutdown.subscribe(),
+            self.startup_settings.clone(),
+            self.exchange_handle.clone(),
+        )
+        .await
+        .whatever_context("Failed to start Job Runner")?;
 
         // Start HTTP Server
         let http_server = {

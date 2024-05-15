@@ -14,6 +14,7 @@ version.workspace = true
 [dependencies]
 async-trait.workspace = true
 chrono.workspace = true
+etcd-client = "0.12"
 kustos.workspace = true
 log.workspace = true
 opentalk-controller-settings.workspace = true
@@ -28,3 +29,5 @@ serde.workspace = true
 serde_json.workspace = true
 snafu.workspace = true
 tokio = { workspace = true, features = ["time"] }
+tokio-cron-scheduler = "0.10"
+uuid.workspace = true

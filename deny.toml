@@ -240,6 +240,7 @@ skip = [
   { name = "syn", version = "=1" },
   { name = "tokio-rustls", version = "=0.24" },
   { name = "toml_edit", version = "=0.21" },
+  { name = "tonic", version = "=0.10" },
   { name = "winnow", version = "=0.5" },
 ]
 # Similarly to `skip` allows you to skip certain crates during duplicate

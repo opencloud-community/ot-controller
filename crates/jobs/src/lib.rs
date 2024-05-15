@@ -10,8 +10,6 @@
 
 #![warn(
     bad_style,
-    missing_debug_implementations,
-    missing_docs,
     overflowing_literals,
     patterns_in_fns_without_body,
     trivial_casts,
@@ -20,12 +18,12 @@
     unused,
     unused_extern_crates,
     unused_import_braces,
-    unused_qualifications,
-    unused_results
+    unused_qualifications
 )]
 
 pub mod jobs;
 
+mod distributed;
 mod error;
 mod events;
 
@@ -35,6 +33,7 @@ use std::{
 };
 
 use async_trait::async_trait;
+pub use distributed::job_runner;
 pub use error::Error;
 use log::Log;
 use opentalk_controller_settings::Settings;

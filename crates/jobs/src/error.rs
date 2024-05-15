@@ -5,6 +5,58 @@
 use opentalk_signaling_core::ObjectStorageError;
 use snafu::Snafu;
 
+#[derive(Debug, Snafu)]
+#[snafu(visibility(pub(crate)))]
+pub enum EtcdError {
+    #[snafu(display("Failed to connect to etcd"))]
+    ConnectError { source: etcd_client::Error },
+
+    #[snafu(display("Failed to parse value for key `{key}`"))]
+    ParseError {
+        key: String,
+        source: etcd_client::Error,
+    },
+
+    #[snafu(display("Failed to add key `{key}`"))]
+    Add {
+        key: String,
+        source: etcd_client::Error,
+    },
+
+    #[snafu(display("Failed to get key(s) `{key}`"))]
+    Get {
+        key: String,
+        source: etcd_client::Error,
+    },
+
+    #[snafu(display("Failed to remove key(s) `{key}`"))]
+    Remove {
+        key: String,
+        source: etcd_client::Error,
+    },
+
+    #[snafu(display("Failed to create a lease"))]
+    Lease { source: etcd_client::Error },
+
+    #[snafu(display("Failed to create keep alive stream"))]
+    CreateKeepAlive { source: etcd_client::Error },
+
+    #[snafu(display("Failed to keep alive"))]
+    KeepAlive { source: etcd_client::Error },
+
+    #[snafu(display("Failed to create watch stream"))]
+    CreateWatch { source: etcd_client::Error },
+
+    #[snafu(display("Failed to request progress for the watch stream"))]
+    WatchProgress { source: etcd_client::Error },
+
+    #[snafu(display("The watch stream threw an error"))]
+    WatchStream { source: etcd_client::Error },
+
+    #[snafu(display("The watch stream was closed by etcd"))]
+    WatchClosed,
+}
+
 /// Errors that can occur during job execution
 #[derive(Debug, Snafu)]
 #[snafu(visibility(pub(crate)))]
@@ -64,4 +116,8 @@ pub enum Error {
 
     /// Event deletion failed
     EventDeletionFailed,
+
+    /// File error
+    #[snafu(context(false))]
+    FileError { source: std::io::Error },
 }
