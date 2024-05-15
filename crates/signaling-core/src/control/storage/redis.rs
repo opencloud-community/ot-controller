@@ -73,6 +73,24 @@ impl ControlStorage for RedisConnection {
                 message: "Failed to check if participants contains participant",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn check_participants_exist(
+        &mut self,
+        room: SignalingRoomId,
+        participants: &[ParticipantId],
+    ) -> Result<bool, SignalingModuleError> {
+        let bools: Vec<bool> = redis::cmd("SMISMEMBER")
+            .arg(RoomParticipants { room })
+            .arg(participants)
+            .query_async(self)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to check if participants contains participant",
+            })?;
+
+        Ok(bools.into_iter().all(identity))
+    }
 }
 
 /// Describes a set of participants inside a room.
@@ -143,24 +161,6 @@ pub fn room_mutex(room: SignalingRoomId) -> Mutex<RoomLock> {
     Mutex::new(RoomLock { room })
         .with_wait_time(Duration::from_millis(20)..Duration::from_millis(60))
         .with_retries(20)
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn check_participants_exist(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    participants: &[ParticipantId],
-) -> Result<bool, SignalingModuleError> {
-    let bools: Vec<bool> = redis::cmd("SMISMEMBER")
-        .arg(RoomParticipants { room })
-        .arg(participants)
-        .query_async(redis_conn)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to check if participants contains participant",
-        })?;
-
-    Ok(bools.into_iter().all(identity))
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]

@@ -29,4 +29,10 @@ pub trait ControlStorage {
         room: SignalingRoomId,
         participant: ParticipantId,
     ) -> Result<bool, SignalingModuleError>;
+
+    async fn check_participants_exist(
+        &mut self,
+        room: SignalingRoomId,
+        participants: &[ParticipantId],
+    ) -> Result<bool, SignalingModuleError>;
 }

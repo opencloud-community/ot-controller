@@ -42,4 +42,17 @@ impl MemoryControlState {
             .map(|p| p.contains(&participant))
             .unwrap_or_default()
     }
+
+    pub(super) fn check_participants_exist(
+        &self,
+        room: SignalingRoomId,
+        participants: &[ParticipantId],
+    ) -> bool {
+        let query_participants = HashSet::from_iter(participants.iter().cloned());
+
+        self.room_participants
+            .get(&room)
+            .map(|p| p.is_superset(&query_participants))
+            .unwrap_or_default()
+    }
 }

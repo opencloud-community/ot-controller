@@ -55,4 +55,13 @@ impl ControlStorage for VolatileStaticMemoryStorage {
     ) -> Result<bool, SignalingModuleError> {
         Ok(state().read().participants_contains(room, participant))
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn check_participants_exist(
+        &mut self,
+        room: SignalingRoomId,
+        participants: &[ParticipantId],
+    ) -> Result<bool, SignalingModuleError> {
+        Ok(state().read().check_participants_exist(room, participants))
+    }
 }
