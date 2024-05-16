@@ -14,11 +14,11 @@ pub const SKIP_WAITING_ROOM_KEY_REFRESH_INTERVAL: u64 = 60;
 
 // TODO: remove all these re-exports once the functionality is migrated into the ControlStorage trait
 pub use redis::{
-    decrement_participant_count, delete_event, delete_participant_count, get_event,
-    get_participant_count, get_room_closes_at, get_skip_waiting_room, increment_participant_count,
-    participant_id_in_use, remove_room_closes_at, reset_skip_waiting_room_expiry, room_mutex,
-    set_room_closes_at, set_skip_waiting_room_with_expiry, set_skip_waiting_room_with_expiry_nx,
-    AttrPipeline, ParticipantIdRunnerLock,
+    decrement_participant_count, delete_event, delete_participant_count, get_participant_count,
+    get_room_closes_at, get_skip_waiting_room, increment_participant_count, participant_id_in_use,
+    remove_room_closes_at, reset_skip_waiting_room_expiry, room_mutex, set_room_closes_at,
+    set_skip_waiting_room_with_expiry, set_skip_waiting_room_with_expiry_nx, AttrPipeline,
+    ParticipantIdRunnerLock,
 };
 
 #[cfg(test)]
@@ -26,9 +26,12 @@ mod test_common {
     use std::collections::{BTreeMap, BTreeSet};
 
     use chrono::{TimeZone, Utc};
-    use opentalk_db_storage::tariffs::Tariff;
+    use opentalk_db_storage::{
+        events::{Event, EventSerialId},
+        tariffs::Tariff,
+    };
     use opentalk_types::{
-        core::{ParticipantId, RoomId, TariffId},
+        core::{EventId, ParticipantId, RoomId, TariffId, TenantId, UserId},
         signaling::Role,
     };
     use pretty_assertions::assert_eq;
@@ -318,5 +321,80 @@ mod test_common {
         storage.delete_tariff(room_id).await.unwrap();
 
         assert!(storage.get_tariff(room_id).await.is_err());
+    }
+
+    pub(super) async fn event(storage: &mut impl ControlStorage) {
+        let room_id = RoomId::generate();
+
+        assert!(storage.get_event(room_id).await.unwrap().is_none());
+
+        let event_1 = Some(Event {
+            id: EventId::generate(),
+            created_at: Utc.with_ymd_and_hms(2024, 5, 16, 1, 2, 3).unwrap(),
+            updated_at: Utc.with_ymd_and_hms(2024, 5, 16, 1, 2, 3).unwrap(),
+            id_serial: EventSerialId::from(55i64),
+            title: "Event 1".to_string(),
+            description: "Event 1 description".to_string(),
+            room: room_id,
+            created_by: UserId::generate(),
+            updated_by: UserId::generate(),
+            is_time_independent: true,
+            is_all_day: None,
+            starts_at: None,
+            starts_at_tz: None,
+            ends_at: None,
+            ends_at_tz: None,
+            duration_secs: None,
+            is_recurring: None,
+            recurrence_pattern: None,
+            is_adhoc: true,
+            tenant_id: TenantId::generate(),
+            revision: 77,
+            show_meeting_details: true,
+        });
+
+        let event_2 = Some(Event {
+            id: EventId::generate(),
+            created_at: Utc.with_ymd_and_hms(2021, 2, 2, 1, 2, 3).unwrap(),
+            updated_at: Utc.with_ymd_and_hms(2021, 2, 2, 1, 2, 3).unwrap(),
+            id_serial: EventSerialId::from(4234i64),
+            title: "Event 2".to_string(),
+            description: "Event 2 description".to_string(),
+            room: room_id,
+            created_by: UserId::generate(),
+            updated_by: UserId::generate(),
+            is_time_independent: true,
+            is_all_day: None,
+            starts_at: None,
+            starts_at_tz: None,
+            ends_at: None,
+            ends_at_tz: None,
+            duration_secs: None,
+            is_recurring: None,
+            recurrence_pattern: None,
+            is_adhoc: true,
+            tenant_id: TenantId::generate(),
+            revision: 24,
+            show_meeting_details: false,
+        });
+
+        assert_eq!(
+            storage
+                .try_init_event(room_id, event_1.clone())
+                .await
+                .unwrap(),
+            event_1
+        );
+
+        assert_eq!(storage.get_event(room_id).await.unwrap(), event_1);
+
+        // Verify that we still get event 1 returned when attempting to set to event 2 after initialization
+        assert_eq!(
+            storage
+                .try_init_event(room_id, event_2.clone())
+                .await
+                .unwrap(),
+            event_1
+        );
     }
 }

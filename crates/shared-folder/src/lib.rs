@@ -13,7 +13,7 @@ use std::sync::Arc;
 use opentalk_database::Db;
 use opentalk_db_storage::events::shared_folders::EventSharedFolder;
 use opentalk_signaling_core::{
-    control::storage::get_event, DestroyContext, Event, InitContext, ModuleContext,
+    control::storage::ControlStorage as _, DestroyContext, Event, InitContext, ModuleContext,
     SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
 use opentalk_types::{
@@ -67,7 +67,7 @@ impl SignalingModule for SharedFolder {
                 participants: _,
             } => {
                 if !storage::is_shared_folder_initialized(ctx.redis_conn(), self.room).await? {
-                    if let Some(event) = get_event(ctx.redis_conn(), self.room.room_id()).await? {
+                    if let Some(event) = ctx.redis_conn().get_event(self.room.room_id()).await? {
                         let mut conn = self.db.get_conn().await?;
                         if let Some(shared_folder) =
                             EventSharedFolder::get_for_event(&mut conn, event.id).await?

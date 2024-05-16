@@ -195,6 +195,10 @@ impl MemoryControlState {
     ) -> Option<Event> {
         self.room_events.entry(room_id).or_insert(event).clone()
     }
+
+    pub(super) fn get_event(&self, room_id: RoomId) -> Result<Option<Event>, SignalingModuleError> {
+        Ok(self.room_events.get(&room_id).cloned().unwrap_or_default())
+    }
 }
 
 #[cfg(test)]

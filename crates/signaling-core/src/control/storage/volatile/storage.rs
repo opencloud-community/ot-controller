@@ -189,6 +189,11 @@ impl ControlStorage for VolatileStaticMemoryStorage {
     ) -> Result<Option<Event>, SignalingModuleError> {
         Ok(state().write().try_init_event(room_id, event))
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_event(&mut self, room_id: RoomId) -> Result<Option<Event>, SignalingModuleError> {
+        state().read().get_event(room_id)
+    }
 }
 
 #[cfg(test)]
@@ -237,5 +242,11 @@ mod tests {
     #[serial]
     async fn tariff() {
         test_common::tariff(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn event() {
+        test_common::event(&mut storage().await).await;
     }
 }

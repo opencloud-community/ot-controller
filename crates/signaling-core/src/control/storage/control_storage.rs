@@ -128,4 +128,6 @@ pub trait ControlStorage {
         room_id: RoomId,
         event: Option<Event>,
     ) -> Result<Option<Event>, SignalingModuleError>;
+
+    async fn get_event(&mut self, room_id: RoomId) -> Result<Option<Event>, SignalingModuleError>;
 }

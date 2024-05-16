@@ -316,6 +316,13 @@ impl ControlStorage for RedisConnection {
 
         Ok(event)
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_event(&mut self, room_id: RoomId) -> Result<Option<Event>, SignalingModuleError> {
+        self.get(RoomEvent { room_id }).await.context(RedisSnafu {
+            message: "Failed to get room event",
+        })
+    }
 }
 
 /// Describes a set of participants inside a room.
@@ -570,19 +577,6 @@ pub async fn get_skip_waiting_room(
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn get_event(
-    redis_conn: &mut RedisConnection,
-    room_id: RoomId,
-) -> Result<Option<Event>, SignalingModuleError> {
-    redis_conn
-        .get(RoomEvent { room_id })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to get room event",
-        })
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
 pub async fn delete_event(
     redis_conn: &mut RedisConnection,
     room_id: RoomId,
@@ -741,5 +735,11 @@ mod test {
     #[serial]
     async fn tariff() {
         test_common::tariff(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn event() {
+        test_common::event(&mut storage().await).await;
     }
 }
