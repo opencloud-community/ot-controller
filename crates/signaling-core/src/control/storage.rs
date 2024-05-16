@@ -14,7 +14,7 @@ pub const SKIP_WAITING_ROOM_KEY_REFRESH_INTERVAL: u64 = 60;
 
 // TODO: remove all these re-exports once the functionality is migrated into the ControlStorage trait
 pub use redis::{
-    get_room_closes_at, get_skip_waiting_room, participant_id_in_use, remove_room_closes_at,
+    get_skip_waiting_room, participant_id_in_use, remove_room_closes_at,
     reset_skip_waiting_room_expiry, room_mutex, set_skip_waiting_room_with_expiry,
     set_skip_waiting_room_with_expiry_nx, AttrPipeline, ParticipantIdRunnerLock,
 };
@@ -29,7 +29,7 @@ mod test_common {
         tariffs::Tariff,
     };
     use opentalk_types::{
-        core::{EventId, ParticipantId, RoomId, TariffId, TenantId, UserId},
+        core::{EventId, ParticipantId, RoomId, TariffId, TenantId, Timestamp, UserId},
         signaling::Role,
     };
     use pretty_assertions::assert_eq;
@@ -420,5 +420,17 @@ mod test_common {
 
         s.delete_participant_count(room_id).await.unwrap();
         assert_eq!(s.get_participant_count(room_id).await.unwrap(), None);
+    }
+
+    pub(super) async fn room_closes_at(s: &mut impl ControlStorage) {
+        // redis only deserializes full seconds, therefore we can only compare
+        // the values if both values are rounded to seconds
+        let closes_at = Timestamp::now().rounded_to_seconds();
+
+        assert_eq!(s.get_room_closes_at(ROOM).await.unwrap(), None);
+
+        s.set_room_closes_at(ROOM, closes_at).await.unwrap();
+
+        assert_eq!(s.get_room_closes_at(ROOM).await.unwrap(), Some(closes_at));
     }
 }

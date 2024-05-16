@@ -158,4 +158,9 @@ pub trait ControlStorage {
         room: SignalingRoomId,
         timestamp: Timestamp,
     ) -> Result<(), SignalingModuleError>;
+
+    async fn get_room_closes_at(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<Option<Timestamp>, SignalingModuleError>;
 }

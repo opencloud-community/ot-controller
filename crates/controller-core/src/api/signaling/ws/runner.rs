@@ -1343,8 +1343,7 @@ impl Runner {
             )
             .await;
 
-        let closes_at =
-            control::storage::get_room_closes_at(&mut self.redis_conn, self.room_id).await?;
+        let closes_at = self.redis_conn.get_room_closes_at(self.room_id).await?;
 
         let settings = self.settings.load_full();
 
@@ -1447,8 +1446,7 @@ impl Runner {
     }
 
     async fn activate_room_time_limit(&mut self) -> Result<()> {
-        let closes_at =
-            control::storage::get_room_closes_at(&mut self.redis_conn, self.room_id).await?;
+        let closes_at = self.redis_conn.get_room_closes_at(self.room_id).await?;
 
         if let Some(closes_at) = closes_at {
             let remaining_seconds = (*closes_at - *Timestamp::now()).num_seconds();

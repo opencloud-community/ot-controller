@@ -243,6 +243,14 @@ impl ControlStorage for VolatileStaticMemoryStorage {
         state().write().set_room_closes_at(room, timestamp);
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_room_closes_at(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<Option<Timestamp>, SignalingModuleError> {
+        Ok(state().read().get_room_closes_at(room))
+    }
 }
 
 #[cfg(test)]
@@ -303,5 +311,11 @@ mod tests {
     #[serial]
     async fn participant_count() {
         test_common::participant_count(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn room_closes_at() {
+        test_common::room_closes_at(&mut storage().await).await;
     }
 }

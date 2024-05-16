@@ -391,6 +391,17 @@ impl ControlStorage for RedisConnection {
                 message: "Failed to SET the point in time the room closes",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_room_closes_at(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<Option<Timestamp>, SignalingModuleError> {
+        let key = RoomClosesAt { room };
+        self.get(&key).await.context(RedisSnafu {
+            message: "Failed to GET the point in time the room closes",
+        })
+    }
 }
 
 /// Describes a set of participants inside a room.
@@ -645,17 +656,6 @@ pub async fn get_skip_waiting_room(
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn get_room_closes_at(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-) -> Result<Option<Timestamp>, SignalingModuleError> {
-    let key = RoomClosesAt { room };
-    redis_conn.get(&key).await.context(RedisSnafu {
-        message: "Failed to GET the point in time the room closes",
-    })
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
 pub async fn remove_room_closes_at(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
@@ -736,5 +736,11 @@ mod test {
     #[serial]
     async fn participant_count() {
         test_common::participant_count(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn room_closes_at() {
+        test_common::room_closes_at(&mut storage().await).await;
     }
 }
