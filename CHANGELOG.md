@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.13.0-rc.1]
+## [0.13.0]
 
 ### Added
 
@@ -460,7 +460,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[0.13.0-rc.1]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/b3f2b0c5b48f9d940a33a9fd6f8408fb7f17a888...v0.13.0-rc.1
+[0.13.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/b3f2b0c5b48f9d940a33a9fd6f8408fb7f17a888...v0.13.0
 
 [0.12.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/da834e3e401c6a9e3e3d03c1d77ff7ff758f6e23...v0.12.0
 
