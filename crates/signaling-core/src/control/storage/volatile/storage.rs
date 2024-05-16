@@ -251,6 +251,15 @@ impl ControlStorage for VolatileStaticMemoryStorage {
     ) -> Result<Option<Timestamp>, SignalingModuleError> {
         Ok(state().read().get_room_closes_at(room))
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn remove_room_closes_at(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().remove_room_closes_at(room);
+        Ok(())
+    }
 }
 
 #[cfg(test)]

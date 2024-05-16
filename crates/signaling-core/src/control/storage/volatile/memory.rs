@@ -235,6 +235,10 @@ impl MemoryControlState {
     pub(super) fn get_room_closes_at(&self, room: SignalingRoomId) -> Option<Timestamp> {
         self.rooms_close_at.get(&room).cloned()
     }
+
+    pub(super) fn remove_room_closes_at(&mut self, room: SignalingRoomId) {
+        self.rooms_close_at.remove(&room);
+    }
 }
 
 #[cfg(test)]
