@@ -199,6 +199,10 @@ impl MemoryControlState {
     pub(super) fn get_event(&self, room_id: RoomId) -> Result<Option<Event>, SignalingModuleError> {
         Ok(self.room_events.get(&room_id).cloned().unwrap_or_default())
     }
+
+    pub(super) fn delete_event(&mut self, room_id: RoomId) {
+        self.room_events.remove(&room_id);
+    }
 }
 
 #[cfg(test)]

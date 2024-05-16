@@ -194,6 +194,12 @@ impl ControlStorage for VolatileStaticMemoryStorage {
     async fn get_event(&mut self, room_id: RoomId) -> Result<Option<Event>, SignalingModuleError> {
         state().read().get_event(room_id)
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_event(&mut self, room_id: RoomId) -> Result<(), SignalingModuleError> {
+        state().write().delete_event(room_id);
+        Ok(())
+    }
 }
 
 #[cfg(test)]
