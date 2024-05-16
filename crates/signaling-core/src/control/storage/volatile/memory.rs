@@ -218,6 +218,10 @@ impl MemoryControlState {
         }
         *count
     }
+
+    pub(super) fn get_participant_count(&self, room_id: RoomId) -> Option<isize> {
+        self.participant_count.get(&room_id).cloned()
+    }
 }
 
 #[cfg(test)]

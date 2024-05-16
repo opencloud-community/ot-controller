@@ -1145,9 +1145,7 @@ impl Runner {
         }
 
         if let Some(participant_limit) = tariff.quotas.0.get("room_participant_limit") {
-            if let Some(count) =
-                control::storage::get_participant_count(&mut self.redis_conn, self.room.id).await?
-            {
+            if let Some(count) = self.redis_conn.get_participant_count(self.room.id).await? {
                 if count >= *participant_limit as isize {
                     return Ok(ControlFlow::Break(
                         JoinBlockedReason::ParticipantLimitReached,
