@@ -2,10 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use async_trait::async_trait;
-use opentalk_types::core::{ParticipantId, Timestamp};
+use opentalk_types::{
+    core::{ParticipantId, Timestamp},
+    signaling::Role,
+};
 
 use crate::{SignalingModuleError, SignalingRoomId};
 
@@ -101,4 +104,9 @@ pub trait ControlStorage {
         room: SignalingRoomId,
         name: &str,
     ) -> Result<(), SignalingModuleError>;
+
+    async fn get_role_and_left_at_for_room_participants(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<BTreeMap<ParticipantId, (Option<Role>, Option<Timestamp>)>, SignalingModuleError>;
 }

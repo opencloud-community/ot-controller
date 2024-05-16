@@ -1108,11 +1108,9 @@ impl Runner {
     }
 
     async fn room_has_moderator_besides_me(&mut self) -> Result<bool> {
-        let roles_and_left_at_timestamps =
-            control::storage::get_role_and_left_at_for_room_participants(
-                &mut self.redis_conn,
-                SignalingRoomId::new_for_room(self.room.id),
-            )
+        let roles_and_left_at_timestamps = self
+            .redis_conn
+            .get_role_and_left_at_for_room_participants(SignalingRoomId::new_for_room(self.room.id))
             .await?;
 
         Ok(roles_and_left_at_timestamps

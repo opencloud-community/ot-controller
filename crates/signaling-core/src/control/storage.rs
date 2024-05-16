@@ -15,18 +15,18 @@ pub const SKIP_WAITING_ROOM_KEY_REFRESH_INTERVAL: u64 = 60;
 // TODO: remove all these re-exports once the functionality is migrated into the ControlStorage trait
 pub use redis::{
     decrement_participant_count, delete_event, delete_participant_count, delete_tariff, get_event,
-    get_participant_count, get_role_and_left_at_for_room_participants, get_room_closes_at,
-    get_skip_waiting_room, get_tariff, increment_participant_count, participant_id_in_use,
-    remove_room_closes_at, reset_skip_waiting_room_expiry, room_mutex, set_room_closes_at,
+    get_participant_count, get_room_closes_at, get_skip_waiting_room, get_tariff,
+    increment_participant_count, participant_id_in_use, remove_room_closes_at,
+    reset_skip_waiting_room_expiry, room_mutex, set_room_closes_at,
     set_skip_waiting_room_with_expiry, set_skip_waiting_room_with_expiry_nx, try_init_event,
     try_init_tariff, AttrPipeline, ParticipantIdRunnerLock,
 };
 
 #[cfg(test)]
 mod test_common {
-    use std::collections::BTreeSet;
+    use std::collections::{BTreeMap, BTreeSet};
 
-    use opentalk_types::core::ParticipantId;
+    use opentalk_types::{core::ParticipantId, signaling::Role};
     use pretty_assertions::assert_eq;
     use redis_args::{FromRedisValue, ToRedisArgs};
     use serde::{Deserialize, Serialize};
@@ -240,6 +240,30 @@ mod test_common {
                 .await
                 .unwrap(),
             vec![Some("alice_line".to_string()), None]
+        );
+    }
+
+    pub(super) async fn get_role_and_left_for_room_participants(storage: &mut impl ControlStorage) {
+        storage.add_participant_to_set(ROOM, ALICE).await.unwrap();
+        storage.add_participant_to_set(ROOM, BOB).await.unwrap();
+        storage
+            .set_attribute(ROOM, ALICE, "role", Role::Guest)
+            .await
+            .unwrap();
+        storage
+            .set_attribute(ROOM, BOB, "role", Role::User)
+            .await
+            .unwrap();
+
+        assert_eq!(
+            storage
+                .get_role_and_left_at_for_room_participants(ROOM)
+                .await
+                .unwrap(),
+            BTreeMap::from_iter([
+                (ALICE, (Some(Role::Guest), None)),
+                (BOB, (Some(Role::User), None))
+            ])
         );
     }
 }

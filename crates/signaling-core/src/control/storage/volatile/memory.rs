@@ -2,9 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
-use opentalk_types::core::ParticipantId;
+use opentalk_types::{
+    core::{ParticipantId, Timestamp},
+    signaling::Role,
+};
 use redis::{FromRedisValue, ToRedisArgs};
 use snafu::ResultExt as _;
 
@@ -17,6 +20,11 @@ pub(super) struct MemoryControlState {
 }
 
 impl MemoryControlState {
+    #[cfg(test)]
+    pub(super) fn reset(&mut self) {
+        *self = Default::default();
+    }
+
     pub(super) fn participant_set_exists(&self, room: SignalingRoomId) -> bool {
         self.room_participants.contains_key(&room)
     }
@@ -143,6 +151,23 @@ impl MemoryControlState {
         if let Some(attributes) = self.participant_attributes.get_mut(&room) {
             attributes.retain(|k, _v| k.1 != name)
         };
+    }
+
+    #[allow(clippy::type_complexity)]
+    pub(super) fn get_role_and_left_at_for_room_participants(
+        &self,
+        room: SignalingRoomId,
+    ) -> Result<BTreeMap<ParticipantId, (Option<Role>, Option<Timestamp>)>, SignalingModuleError>
+    {
+        let participants = Vec::from_iter(self.get_all_participants(room));
+
+        let roles = self.get_attribute_for_participants(room, "role", &participants)?;
+        let left_at = self.get_attribute_for_participants(room, "left_at", &participants)?;
+
+        Ok(participants
+            .into_iter()
+            .zip(std::iter::zip(roles, left_at))
+            .collect())
     }
 }
 

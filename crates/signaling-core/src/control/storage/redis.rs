@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use std::{
-    collections::{BTreeSet, HashMap, HashSet},
+    collections::{BTreeMap, BTreeSet, HashMap, HashSet},
     convert::identity,
     fmt::Debug,
     time::Duration,
@@ -223,6 +223,41 @@ impl ControlStorage for RedisConnection {
             message: format!("Failed to remove participant attribute key, {name}"),
         })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_role_and_left_at_for_room_participants(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<BTreeMap<ParticipantId, (Option<Role>, Option<Timestamp>)>, SignalingModuleError>
+    {
+        let mut pipe = redis::pipe();
+        pipe.atomic();
+        pipe.hgetall(RoomParticipantAttributes {
+            room,
+            attribute_name: "role",
+        });
+        pipe.hgetall(RoomParticipantAttributes {
+            room,
+            attribute_name: "left_at",
+        });
+
+        let (mut roles, mut left_at_timestamps): (
+            HashMap<ParticipantId, Role>,
+            HashMap<ParticipantId, Timestamp>,
+        ) = pipe.query_async(self).await.context(RedisSnafu {
+            message: "Failed to get attributes",
+        })?;
+        let participants: HashSet<ParticipantId> = roles
+            .keys()
+            .chain(left_at_timestamps.keys())
+            .copied()
+            .collect();
+
+        Ok(participants
+            .into_iter()
+            .map(|p| (p, (roles.remove(&p), left_at_timestamps.remove(&p))))
+            .collect())
+    }
 }
 
 /// Describes a set of participants inside a room.
@@ -361,39 +396,6 @@ impl AttrPipeline {
     ) -> redis::RedisResult<T> {
         self.pipe.query_async(redis_conn).await
     }
-}
-
-pub async fn get_role_and_left_at_for_room_participants(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-) -> Result<HashMap<ParticipantId, (Option<Role>, Option<Timestamp>)>, SignalingModuleError> {
-    let mut pipe = redis::pipe();
-    pipe.atomic();
-    pipe.hgetall(RoomParticipantAttributes {
-        room,
-        attribute_name: "role",
-    });
-    pipe.hgetall(RoomParticipantAttributes {
-        room,
-        attribute_name: "left_at",
-    });
-
-    let (mut roles, mut left_at_timestamps): (
-        HashMap<ParticipantId, Role>,
-        HashMap<ParticipantId, Timestamp>,
-    ) = pipe.query_async(redis_conn).await.context(RedisSnafu {
-        message: "Failed to get attributes",
-    })?;
-    let participants: HashSet<ParticipantId> = roles
-        .keys()
-        .chain(left_at_timestamps.keys())
-        .copied()
-        .collect();
-
-    Ok(participants
-        .into_iter()
-        .map(|p| (p, (roles.remove(&p), left_at_timestamps.remove(&p))))
-        .collect())
 }
 
 #[derive(Debug, ToRedisArgs)]
@@ -722,28 +724,35 @@ mod test {
     #[tokio::test]
     #[serial]
     async fn participant_set() {
-        let mut redis_conn = setup().await;
-        test_common::participant_set(&mut redis_conn).await;
+        let mut storage = setup().await;
+        test_common::participant_set(&mut storage).await;
     }
 
     #[tokio::test]
     #[serial]
     async fn participant_attribute() {
-        let mut redis_conn = setup().await;
-        test_common::participant_attribute(&mut redis_conn).await;
+        let mut storage = setup().await;
+        test_common::participant_attribute(&mut storage).await;
     }
 
     #[tokio::test]
     #[serial]
     async fn participant_attributes() {
-        let mut redis_conn = setup().await;
-        test_common::participant_attributes(&mut redis_conn).await;
+        let mut storage = setup().await;
+        test_common::participant_attributes(&mut storage).await;
     }
 
     #[tokio::test]
     #[serial]
     async fn participant_remove_attributes() {
-        let mut redis_conn = setup().await;
-        test_common::participant_remove_attributes(&mut redis_conn).await;
+        let mut storage = setup().await;
+        test_common::participant_remove_attributes(&mut storage).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn get_role_and_left_for_room_participants() {
+        let mut storage = setup().await;
+        test_common::get_role_and_left_for_room_participants(&mut storage).await;
     }
 }

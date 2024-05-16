@@ -3,12 +3,15 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use std::{
-    collections::BTreeSet,
+    collections::{BTreeMap, BTreeSet},
     sync::{Arc, OnceLock},
 };
 
 use async_trait::async_trait;
-use opentalk_types::core::ParticipantId;
+use opentalk_types::{
+    core::{ParticipantId, Timestamp},
+    signaling::Role,
+};
 use parking_lot::RwLock;
 use redis::FromRedisValue;
 use snafu::OptionExt as _;
@@ -145,36 +148,58 @@ impl ControlStorage for VolatileStaticMemoryStorage {
         state().write().remove_attribute_key(room, name);
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_role_and_left_at_for_room_participants(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<BTreeMap<ParticipantId, (Option<Role>, Option<Timestamp>)>, SignalingModuleError>
+    {
+        state()
+            .read()
+            .get_role_and_left_at_for_room_participants(room)
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use serial_test::serial;
 
-    use super::super::super::test_common;
+    use super::{super::super::test_common, state};
     use crate::VolatileStaticMemoryStorage;
+
+    async fn storage() -> VolatileStaticMemoryStorage {
+        state().write().reset();
+        VolatileStaticMemoryStorage
+    }
 
     #[tokio::test]
     #[serial]
     async fn participant_set() {
-        test_common::participant_set(&mut VolatileStaticMemoryStorage).await;
+        test_common::participant_set(&mut storage().await).await;
     }
 
     #[tokio::test]
     #[serial]
     async fn participant_attribute() {
-        test_common::participant_attribute(&mut VolatileStaticMemoryStorage).await;
+        test_common::participant_attribute(&mut storage().await).await;
     }
 
     #[tokio::test]
     #[serial]
     async fn participant_attributes() {
-        test_common::participant_attributes(&mut VolatileStaticMemoryStorage).await;
+        test_common::participant_attributes(&mut storage().await).await;
     }
 
     #[tokio::test]
     #[serial]
     async fn participant_remove_attributes() {
-        test_common::participant_remove_attributes(&mut VolatileStaticMemoryStorage).await;
+        test_common::participant_remove_attributes(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn get_role_and_left_for_room_participants() {
+        test_common::get_role_and_left_for_room_participants(&mut storage().await).await;
     }
 }
