@@ -19,7 +19,7 @@ pub use redis::{
     increment_participant_count, participant_id_in_use, remove_room_closes_at,
     reset_skip_waiting_room_expiry, room_mutex, set_room_closes_at,
     set_skip_waiting_room_with_expiry, set_skip_waiting_room_with_expiry_nx, try_init_event,
-    try_init_tariff, AttrPipeline, ParticipantIdRunnerLock,
+    AttrPipeline, ParticipantIdRunnerLock,
 };
 
 #[cfg(test)]

@@ -4,8 +4,9 @@
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
+use opentalk_db_storage::tariffs::Tariff;
 use opentalk_types::{
-    core::{ParticipantId, Timestamp},
+    core::{ParticipantId, RoomId, Timestamp},
     signaling::Role,
 };
 use redis::{FromRedisValue, ToRedisArgs};
@@ -17,6 +18,7 @@ use crate::{RedisSnafu, SignalingModuleError, SignalingRoomId};
 pub(super) struct MemoryControlState {
     room_participants: HashMap<SignalingRoomId, BTreeSet<ParticipantId>>,
     participant_attributes: HashMap<SignalingRoomId, HashMap<(ParticipantId, String), Vec<u8>>>,
+    room_tariffs: HashMap<RoomId, Tariff>,
 }
 
 impl MemoryControlState {
@@ -168,6 +170,10 @@ impl MemoryControlState {
             .into_iter()
             .zip(std::iter::zip(roles, left_at))
             .collect())
+    }
+
+    pub(super) fn try_init_tariff(&mut self, room_id: RoomId, tariff: Tariff) -> Tariff {
+        self.room_tariffs.entry(room_id).or_insert(tariff).clone()
     }
 }
 

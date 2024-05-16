@@ -8,8 +8,9 @@ use std::{
 };
 
 use async_trait::async_trait;
+use opentalk_db_storage::tariffs::Tariff;
 use opentalk_types::{
-    core::{ParticipantId, Timestamp},
+    core::{ParticipantId, RoomId, Timestamp},
     signaling::Role,
 };
 use parking_lot::RwLock;
@@ -158,6 +159,15 @@ impl ControlStorage for VolatileStaticMemoryStorage {
         state()
             .read()
             .get_role_and_left_at_for_room_participants(room)
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn try_init_tariff(
+        &mut self,
+        room_id: RoomId,
+        tariff: Tariff,
+    ) -> Result<Tariff, SignalingModuleError> {
+        Ok(state().write().try_init_tariff(room_id, tariff))
     }
 }
 

@@ -5,8 +5,9 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use async_trait::async_trait;
+use opentalk_db_storage::tariffs::Tariff;
 use opentalk_types::{
-    core::{ParticipantId, Timestamp},
+    core::{ParticipantId, RoomId, Timestamp},
     signaling::Role,
 };
 
@@ -109,4 +110,11 @@ pub trait ControlStorage {
         &mut self,
         room: SignalingRoomId,
     ) -> Result<BTreeMap<ParticipantId, (Option<Role>, Option<Timestamp>)>, SignalingModuleError>;
+
+    /// Try to set the active tariff for the room. If the tariff is already set return the current one.
+    async fn try_init_tariff(
+        &mut self,
+        room_id: RoomId,
+        tariff: Tariff,
+    ) -> Result<Tariff, SignalingModuleError>;
 }

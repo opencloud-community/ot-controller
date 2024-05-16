@@ -1128,8 +1128,10 @@ impl Runner {
         &mut self,
         tariff: Tariff,
     ) -> Result<ControlFlow<JoinBlockedReason, Tariff>> {
-        let tariff =
-            control::storage::try_init_tariff(&mut self.redis_conn, self.room.id, tariff).await?;
+        let tariff = self
+            .redis_conn
+            .try_init_tariff(self.room.id, tariff)
+            .await?;
 
         if self.role == Role::Moderator && !self.room_has_moderator_besides_me().await? {
             control::storage::increment_participant_count(&mut self.redis_conn, self.room.id)
