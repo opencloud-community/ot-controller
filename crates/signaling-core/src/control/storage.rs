@@ -17,9 +17,9 @@ pub use redis::{
     decrement_participant_count, delete_event, delete_participant_count, delete_tariff, get_event,
     get_participant_count, get_role_and_left_at_for_room_participants, get_room_closes_at,
     get_skip_waiting_room, get_tariff, increment_participant_count, participant_id_in_use,
-    remove_attribute_key, remove_room_closes_at, reset_skip_waiting_room_expiry, room_mutex,
-    set_room_closes_at, set_skip_waiting_room_with_expiry, set_skip_waiting_room_with_expiry_nx,
-    try_init_event, try_init_tariff, AttrPipeline, ParticipantIdRunnerLock,
+    remove_room_closes_at, reset_skip_waiting_room_expiry, room_mutex, set_room_closes_at,
+    set_skip_waiting_room_with_expiry, set_skip_waiting_room_with_expiry_nx, try_init_event,
+    try_init_tariff, AttrPipeline, ParticipantIdRunnerLock,
 };
 
 #[cfg(test)]
@@ -190,6 +190,56 @@ mod test_common {
                 .await
                 .unwrap(),
             vec![Some(bob_point.clone()), None]
+        );
+    }
+
+    pub(super) async fn participant_remove_attributes(storage: &mut impl ControlStorage) {
+        storage
+            .set_attribute(ROOM, ALICE, "point", "alice_point")
+            .await
+            .unwrap();
+        storage
+            .set_attribute(ROOM, BOB, "point", "bob_point")
+            .await
+            .unwrap();
+        storage
+            .set_attribute(ROOM, ALICE, "line", "alice_line")
+            .await
+            .unwrap();
+
+        assert_eq!(
+            storage
+                .get_attribute_for_participants::<String>(ROOM, "point", &[ALICE, BOB])
+                .await
+                .unwrap(),
+            vec![
+                Some("alice_point".to_string()),
+                Some("bob_point".to_string())
+            ]
+        );
+        assert_eq!(
+            storage
+                .get_attribute_for_participants::<String>(ROOM, "line", &[ALICE, BOB])
+                .await
+                .unwrap(),
+            vec![Some("alice_line".to_string()), None]
+        );
+
+        storage.remove_attribute_key(ROOM, "point").await.unwrap();
+
+        assert_eq!(
+            storage
+                .get_attribute_for_participants::<String>(ROOM, "point", &[ALICE, BOB])
+                .await
+                .unwrap(),
+            vec![None, None]
+        );
+        assert_eq!(
+            storage
+                .get_attribute_for_participants::<String>(ROOM, "line", &[ALICE, BOB])
+                .await
+                .unwrap(),
+            vec![Some("alice_line".to_string()), None]
         );
     }
 }

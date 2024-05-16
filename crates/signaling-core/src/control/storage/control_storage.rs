@@ -95,4 +95,10 @@ pub trait ControlStorage {
 
         Ok(left_at_attrs.iter().all(Option::is_some))
     }
+
+    async fn remove_attribute_key(
+        &mut self,
+        room: SignalingRoomId,
+        name: &str,
+    ) -> Result<(), SignalingModuleError>;
 }

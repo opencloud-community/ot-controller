@@ -207,6 +207,22 @@ impl ControlStorage for RedisConnection {
                 })
         }
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn remove_attribute_key(
+        &mut self,
+        room: SignalingRoomId,
+        name: &str,
+    ) -> Result<(), SignalingModuleError> {
+        self.del(RoomParticipantAttributes {
+            room,
+            attribute_name: name,
+        })
+        .await
+        .with_context(|_| RedisSnafu {
+            message: format!("Failed to remove participant attribute key, {name}"),
+        })
+    }
 }
 
 /// Describes a set of participants inside a room.
@@ -277,23 +293,6 @@ pub fn room_mutex(room: SignalingRoomId) -> Mutex<RoomLock> {
     Mutex::new(RoomLock { room })
         .with_wait_time(Duration::from_millis(20)..Duration::from_millis(60))
         .with_retries(20)
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn remove_attribute_key(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    name: &str,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .del(RoomParticipantAttributes {
-            room,
-            attribute_name: name,
-        })
-        .await
-        .with_context(|_| RedisSnafu {
-            message: format!("Failed to remove participant attribute key, {name}"),
-        })
 }
 
 pub struct AttrPipeline {
@@ -739,5 +738,12 @@ mod test {
     async fn participant_attributes() {
         let mut redis_conn = setup().await;
         test_common::participant_attributes(&mut redis_conn).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn participant_remove_attributes() {
+        let mut redis_conn = setup().await;
+        test_common::participant_remove_attributes(&mut redis_conn).await;
     }
 }

@@ -135,6 +135,16 @@ impl ControlStorage for VolatileStaticMemoryStorage {
             .read()
             .get_attribute_for_participants(room, name, participants)
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn remove_attribute_key(
+        &mut self,
+        room: SignalingRoomId,
+        name: &str,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().remove_attribute_key(room, name);
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -160,5 +170,11 @@ mod tests {
     #[serial]
     async fn participant_attributes() {
         test_common::participant_attributes(&mut VolatileStaticMemoryStorage).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn participant_remove_attributes() {
+        test_common::participant_remove_attributes(&mut VolatileStaticMemoryStorage).await;
     }
 }

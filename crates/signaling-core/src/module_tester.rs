@@ -1051,7 +1051,9 @@ where
                 "user_id",
                 "is_room_owner",
             ] {
-                storage::remove_attribute_key(&mut self.redis_conn, self.room_id, key).await?
+                self.redis_conn
+                    .remove_attribute_key(self.room_id, key)
+                    .await?
             }
         }
 

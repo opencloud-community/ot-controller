@@ -138,6 +138,12 @@ impl MemoryControlState {
             .map(|p| self.get_attribute::<V>(room, *p, name))
             .collect()
     }
+
+    pub(super) fn remove_attribute_key(&mut self, room: SignalingRoomId, name: &str) {
+        if let Some(attributes) = self.participant_attributes.get_mut(&room) {
+            attributes.retain(|k, _v| k.1 != name)
+        };
+    }
 }
 
 #[cfg(test)]
