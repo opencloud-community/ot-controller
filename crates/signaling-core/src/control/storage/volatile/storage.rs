@@ -8,7 +8,7 @@ use std::{
 };
 
 use async_trait::async_trait;
-use opentalk_db_storage::tariffs::Tariff;
+use opentalk_db_storage::{events::Event, tariffs::Tariff};
 use opentalk_types::{
     core::{ParticipantId, RoomId, Timestamp},
     signaling::Role,
@@ -179,6 +179,15 @@ impl ControlStorage for VolatileStaticMemoryStorage {
     async fn delete_tariff(&mut self, room_id: RoomId) -> Result<(), SignalingModuleError> {
         state().write().delete_tariff(room_id);
         Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn try_init_event(
+        &mut self,
+        room_id: RoomId,
+        event: Option<Event>,
+    ) -> Result<Option<Event>, SignalingModuleError> {
+        Ok(state().write().try_init_event(room_id, event))
     }
 }
 

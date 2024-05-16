@@ -291,6 +291,31 @@ impl ControlStorage for RedisConnection {
             message: "Failed to delete room tariff",
         })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn try_init_event(
+        &mut self,
+        room_id: RoomId,
+        event: Option<Event>,
+    ) -> Result<Option<Event>, SignalingModuleError> {
+        let event = if let Some(event) = event {
+            let (_, event): (bool, Event) = redis::pipe()
+                .atomic()
+                .set_nx(RoomEvent { room_id }, event)
+                .get(RoomEvent { room_id })
+                .query_async(self)
+                .await
+                .context(RedisSnafu {
+                    message: "Failed to SET NX & GET room event",
+                })?;
+
+            Some(event)
+        } else {
+            event
+        };
+
+        Ok(event)
+    }
 }
 
 /// Describes a set of participants inside a room.
@@ -542,32 +567,6 @@ pub async fn get_skip_waiting_room(
             message: "Failed to get 'skip waiting room'",
         })?;
     Ok(value.unwrap_or_default())
-}
-
-/// Try to set the active event for the room. If the event is already set return the current one.
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn try_init_event(
-    redis_conn: &mut RedisConnection,
-    room_id: RoomId,
-    event: Option<Event>,
-) -> Result<Option<Event>, SignalingModuleError> {
-    let event = if let Some(event) = event {
-        let (_, event): (bool, Event) = redis::pipe()
-            .atomic()
-            .set_nx(RoomEvent { room_id }, event)
-            .get(RoomEvent { room_id })
-            .query_async(redis_conn)
-            .await
-            .context(RedisSnafu {
-                message: "Failed to SET NX & GET room event",
-            })?;
-
-        Some(event)
-    } else {
-        event
-    };
-
-    Ok(event)
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]

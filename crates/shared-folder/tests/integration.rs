@@ -11,7 +11,7 @@ use opentalk_db_storage::{
     tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId},
 };
 use opentalk_signaling_core::{
-    control::storage::try_init_event,
+    control::storage::ControlStorage as _,
     module_tester::{ModuleTester, WsMessageOutgoing},
     RedisConnection,
 };
@@ -59,7 +59,8 @@ async fn make_event(
     .await
     .unwrap();
 
-    try_init_event(redis_conn, room_id, Some(event))
+    redis_conn
+        .try_init_event(room_id, Some(event))
         .await
         .unwrap()
         .unwrap()

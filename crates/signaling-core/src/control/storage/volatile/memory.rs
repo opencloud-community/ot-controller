@@ -4,7 +4,7 @@
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
-use opentalk_db_storage::tariffs::Tariff;
+use opentalk_db_storage::{events::Event, tariffs::Tariff};
 use opentalk_types::{
     core::{ParticipantId, RoomId, Timestamp},
     signaling::Role,
@@ -19,6 +19,7 @@ pub(super) struct MemoryControlState {
     room_participants: HashMap<SignalingRoomId, BTreeSet<ParticipantId>>,
     participant_attributes: HashMap<SignalingRoomId, HashMap<(ParticipantId, String), Vec<u8>>>,
     room_tariffs: HashMap<RoomId, Tariff>,
+    room_events: HashMap<RoomId, Option<Event>>,
 }
 
 impl MemoryControlState {
@@ -176,7 +177,7 @@ impl MemoryControlState {
         self.room_tariffs.entry(room_id).or_insert(tariff).clone()
     }
 
-    pub(super) fn get_tariff(&mut self, room_id: RoomId) -> Result<Tariff, SignalingModuleError> {
+    pub(super) fn get_tariff(&self, room_id: RoomId) -> Result<Tariff, SignalingModuleError> {
         self.room_tariffs
             .get(&room_id)
             .with_context(|| NotFoundSnafu)
@@ -185,6 +186,14 @@ impl MemoryControlState {
 
     pub(super) fn delete_tariff(&mut self, room_id: RoomId) {
         self.room_tariffs.remove(&room_id);
+    }
+
+    pub(super) fn try_init_event(
+        &mut self,
+        room_id: RoomId,
+        event: Option<Event>,
+    ) -> Option<Event> {
+        self.room_events.entry(room_id).or_insert(event).clone()
     }
 }
 

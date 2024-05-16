@@ -1306,7 +1306,7 @@ impl Runner {
         )
         .await
         .whatever_context::<_, RunnerError>("Failed to get first event for room")?;
-        let event = storage::try_init_event(&mut self.redis_conn, self.room.id, event).await?;
+        let event = self.redis_conn.try_init_event(self.room.id, event).await?;
 
         let mut participants = vec![];
 
