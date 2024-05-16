@@ -222,6 +222,10 @@ impl MemoryControlState {
     pub(super) fn get_participant_count(&self, room_id: RoomId) -> Option<isize> {
         self.participant_count.get(&room_id).cloned()
     }
+
+    pub(super) fn delete_participant_count(&mut self, room_id: RoomId) {
+        self.participant_count.remove(&room_id);
+    }
 }
 
 #[cfg(test)]
