@@ -233,6 +233,16 @@ impl ControlStorage for VolatileStaticMemoryStorage {
         state().write().delete_participant_count(room_id);
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_room_closes_at(
+        &mut self,
+        room: SignalingRoomId,
+        timestamp: Timestamp,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().set_room_closes_at(room, timestamp);
+        Ok(())
+    }
 }
 
 #[cfg(test)]

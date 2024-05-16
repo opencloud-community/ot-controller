@@ -1435,12 +1435,9 @@ impl Runner {
                 Timestamp::now().checked_add_signed(chrono::Duration::seconds(remaining_seconds));
 
             if let Some(closes_at) = closes_at {
-                control::storage::set_room_closes_at(
-                    &mut self.redis_conn,
-                    self.room_id,
-                    closes_at.into(),
-                )
-                .await?;
+                self.redis_conn
+                    .set_room_closes_at(self.room_id, closes_at.into())
+                    .await?;
             } else {
                 log::error!("DateTime overflow for closes_at");
             }

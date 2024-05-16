@@ -378,6 +378,19 @@ impl ControlStorage for RedisConnection {
                 message: "Failed to delete room participant count key",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_room_closes_at(
+        &mut self,
+        room: SignalingRoomId,
+        timestamp: Timestamp,
+    ) -> Result<(), SignalingModuleError> {
+        self.set(RoomClosesAt { room }, timestamp)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to SET the point in time the room closes",
+            })
+    }
 }
 
 /// Describes a set of participants inside a room.
@@ -629,20 +642,6 @@ pub async fn get_skip_waiting_room(
             message: "Failed to get 'skip waiting room'",
         })?;
     Ok(value.unwrap_or_default())
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn set_room_closes_at(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    timestamp: Timestamp,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .set(RoomClosesAt { room }, timestamp)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to SET the point in time the room closes",
-        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]

@@ -15,9 +15,8 @@ pub const SKIP_WAITING_ROOM_KEY_REFRESH_INTERVAL: u64 = 60;
 // TODO: remove all these re-exports once the functionality is migrated into the ControlStorage trait
 pub use redis::{
     get_room_closes_at, get_skip_waiting_room, participant_id_in_use, remove_room_closes_at,
-    reset_skip_waiting_room_expiry, room_mutex, set_room_closes_at,
-    set_skip_waiting_room_with_expiry, set_skip_waiting_room_with_expiry_nx, AttrPipeline,
-    ParticipantIdRunnerLock,
+    reset_skip_waiting_room_expiry, room_mutex, set_skip_waiting_room_with_expiry,
+    set_skip_waiting_room_with_expiry_nx, AttrPipeline, ParticipantIdRunnerLock,
 };
 
 #[cfg(test)]

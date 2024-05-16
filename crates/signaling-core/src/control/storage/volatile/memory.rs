@@ -21,6 +21,7 @@ pub(super) struct MemoryControlState {
     room_tariffs: HashMap<RoomId, Tariff>,
     room_events: HashMap<RoomId, Option<Event>>,
     participant_count: HashMap<RoomId, isize>,
+    rooms_close_at: HashMap<SignalingRoomId, Timestamp>,
 }
 
 impl MemoryControlState {
@@ -225,6 +226,10 @@ impl MemoryControlState {
 
     pub(super) fn delete_participant_count(&mut self, room_id: RoomId) {
         self.participant_count.remove(&room_id);
+    }
+
+    pub(super) fn set_room_closes_at(&mut self, room: SignalingRoomId, timestamp: Timestamp) {
+        self.rooms_close_at.entry(room).or_insert(timestamp);
     }
 }
 
