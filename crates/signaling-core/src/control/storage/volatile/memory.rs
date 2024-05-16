@@ -20,6 +20,7 @@ pub(super) struct MemoryControlState {
     participant_attributes: HashMap<SignalingRoomId, HashMap<(ParticipantId, String), Vec<u8>>>,
     room_tariffs: HashMap<RoomId, Tariff>,
     room_events: HashMap<RoomId, Option<Event>>,
+    participant_count: HashMap<RoomId, isize>,
 }
 
 impl MemoryControlState {
@@ -202,6 +203,12 @@ impl MemoryControlState {
 
     pub(super) fn delete_event(&mut self, room_id: RoomId) {
         self.room_events.remove(&room_id);
+    }
+
+    pub(super) fn increment_participant_count(&mut self, room_id: RoomId) -> isize {
+        let count: &mut isize = self.participant_count.entry(room_id).or_default();
+        *count += 1;
+        *count
     }
 }
 

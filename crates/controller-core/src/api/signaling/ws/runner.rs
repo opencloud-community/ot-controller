@@ -1134,7 +1134,8 @@ impl Runner {
             .await?;
 
         if self.role == Role::Moderator && !self.room_has_moderator_besides_me().await? {
-            control::storage::increment_participant_count(&mut self.redis_conn, self.room.id)
+            self.redis_conn
+                .increment_participant_count(self.room.id)
                 .await?;
             return Ok(ControlFlow::Continue(tariff));
         }
@@ -1151,7 +1152,9 @@ impl Runner {
             }
         }
 
-        control::storage::increment_participant_count(&mut self.redis_conn, self.room.id).await?;
+        self.redis_conn
+            .increment_participant_count(self.room.id)
+            .await?;
 
         Ok(ControlFlow::Continue(tariff))
     }

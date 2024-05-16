@@ -330,6 +330,18 @@ impl ControlStorage for RedisConnection {
             message: "Failed to delete room event",
         })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn increment_participant_count(
+        &mut self,
+        room_id: RoomId,
+    ) -> Result<isize, SignalingModuleError> {
+        self.incr(RoomParticipantCount { room_id }, 1)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to increment room participant count",
+            })
+    }
 }
 
 /// Describes a set of participants inside a room.
@@ -581,19 +593,6 @@ pub async fn get_skip_waiting_room(
             message: "Failed to get 'skip waiting room'",
         })?;
     Ok(value.unwrap_or_default())
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn increment_participant_count(
-    redis_conn: &mut RedisConnection,
-    room_id: RoomId,
-) -> Result<isize, SignalingModuleError> {
-    redis_conn
-        .incr(RoomParticipantCount { room_id }, 1)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to increment room participant count",
-        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]

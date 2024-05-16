@@ -132,4 +132,9 @@ pub trait ControlStorage {
     async fn get_event(&mut self, room_id: RoomId) -> Result<Option<Event>, SignalingModuleError>;
 
     async fn delete_event(&mut self, room_id: RoomId) -> Result<(), SignalingModuleError>;
+
+    async fn increment_participant_count(
+        &mut self,
+        room_id: RoomId,
+    ) -> Result<isize, SignalingModuleError>;
 }

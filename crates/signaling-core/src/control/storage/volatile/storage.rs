@@ -200,6 +200,14 @@ impl ControlStorage for VolatileStaticMemoryStorage {
         state().write().delete_event(room_id);
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn increment_participant_count(
+        &mut self,
+        room_id: RoomId,
+    ) -> Result<isize, SignalingModuleError> {
+        Ok(state().write().increment_participant_count(room_id))
+    }
 }
 
 #[cfg(test)]
