@@ -178,6 +178,35 @@ impl ControlStorage for RedisConnection {
             message: format!("Failed to remove participant attribute key, {name}"),
         })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_attribute_for_participants<V>(
+        &mut self,
+        room: SignalingRoomId,
+        name: &str,
+        participants: &[ParticipantId],
+    ) -> Result<Vec<Option<V>>, SignalingModuleError>
+    where
+        V: FromRedisValue,
+    {
+        // Special case: HMGET cannot handle empty arrays (missing arguments)
+        if participants.is_empty() {
+            Ok(vec![])
+        } else {
+            // need manual HMGET command as the HGET command wont work with single value vector input
+            redis::cmd("HMGET")
+                .arg(RoomParticipantAttributes {
+                    room,
+                    attribute_name: name,
+                })
+                .arg(participants)
+                .query_async(self)
+                .await
+                .with_context(|_| RedisSnafu {
+                    message: format!("Failed to get attribute '{name}' for all participants "),
+                })
+        }
+    }
 }
 
 /// Describes a set of participants inside a room.
@@ -257,9 +286,9 @@ pub async fn participants_all_left(
 ) -> Result<bool, SignalingModuleError> {
     let participants = redis_conn.get_all_participants(room).await?;
 
-    let left_at_attrs: Vec<Option<Timestamp>> =
-        get_attribute_for_participants(redis_conn, room, "left_at", &Vec::from_iter(participants))
-            .await?;
+    let left_at_attrs: Vec<Option<Timestamp>> = redis_conn
+        .get_attribute_for_participants(room, "left_at", &Vec::from_iter(participants))
+        .await?;
 
     Ok(left_at_attrs.iter().all(Option::is_some))
 }
@@ -346,37 +375,6 @@ impl AttrPipeline {
         redis_conn: &mut RedisConnection,
     ) -> redis::RedisResult<T> {
         self.pipe.query_async(redis_conn).await
-    }
-}
-
-/// Get attribute values for multiple participants
-///
-/// The index of the attributes in the returned vector is a direct mapping to the provided list of participants.
-pub async fn get_attribute_for_participants<V>(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    name: &str,
-    participants: &[ParticipantId],
-) -> Result<Vec<Option<V>>, SignalingModuleError>
-where
-    V: FromRedisValue,
-{
-    // Special case: HMGET cannot handle empty arrays (missing arguments)
-    if participants.is_empty() {
-        Ok(vec![])
-    } else {
-        // need manual HMGET command as the HGET command wont work with single value vector input
-        redis::cmd("HMGET")
-            .arg(RoomParticipantAttributes {
-                room,
-                attribute_name: name,
-            })
-            .arg(participants)
-            .query_async(redis_conn)
-            .await
-            .with_context(|_| RedisSnafu {
-                message: format!("Failed to get attribute '{name}' for all participants "),
-            })
     }
 }
 
@@ -748,5 +746,12 @@ mod test {
     async fn participant_attribute() {
         let mut redis_conn = setup().await;
         test_common::participant_attribute(&mut redis_conn).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn participant_attributes() {
+        let mut redis_conn = setup().await;
+        test_common::participant_attributes(&mut redis_conn).await;
     }
 }

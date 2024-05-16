@@ -73,7 +73,7 @@ impl MemoryControlState {
         room: SignalingRoomId,
         participant: ParticipantId,
         name: &str,
-    ) -> Result<V, SignalingModuleError>
+    ) -> Result<Option<V>, SignalingModuleError>
     where
         V: FromRedisValue,
     {
@@ -81,8 +81,7 @@ impl MemoryControlState {
             .get(&room)
             .and_then(|p| p.get(&(participant, name.to_string())))
             .map(|b| V::from_redis_value(&redis::Value::Data(b.to_owned())))
-            .ok_or_else(|| (redis::ErrorKind::ParseError, "parse error").into())
-            .and_then(|r| r)
+            .transpose()
             .with_context(|_| RedisSnafu {
                 message: format!("Failed to get attribute {name}"),
             })
@@ -124,6 +123,21 @@ impl MemoryControlState {
         }
         Ok(())
     }
+
+    pub(super) fn get_attribute_for_participants<V>(
+        &self,
+        room: SignalingRoomId,
+        name: &str,
+        participants: &[ParticipantId],
+    ) -> Result<Vec<Option<V>>, SignalingModuleError>
+    where
+        V: FromRedisValue,
+    {
+        participants
+            .iter()
+            .map(|p| self.get_attribute::<V>(room, *p, name))
+            .collect()
+    }
 }
 
 #[cfg(test)]
@@ -158,8 +172,8 @@ mod tests {
             .set_attribute(room, participant, "point", point.clone())
             .unwrap();
 
-        let loaded: Point = state.get_attribute(room, participant, "point").unwrap();
+        let loaded: Option<Point> = state.get_attribute(room, participant, "point").unwrap();
 
-        assert_eq!(loaded, point);
+        assert_eq!(loaded, Some(point));
     }
 }

@@ -70,4 +70,16 @@ pub trait ControlStorage {
         participant: ParticipantId,
         name: &str,
     ) -> Result<(), SignalingModuleError>;
+
+    /// Get attribute values for multiple participants
+    ///
+    /// The index of the attributes in the returned vector is a direct mapping to the provided list of participants.
+    async fn get_attribute_for_participants<V>(
+        &mut self,
+        room: SignalingRoomId,
+        name: &str,
+        participants: &[ParticipantId],
+    ) -> Result<Vec<Option<V>>, SignalingModuleError>
+    where
+        V: redis::FromRedisValue;
 }

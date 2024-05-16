@@ -275,13 +275,9 @@ impl SignalingModule for ModerationModule {
                 // Remove all debriefed participants from the waiting-room-accepted set
                 let all_participants =
                     Vec::from_iter(ctx.redis_conn().get_all_participants(self.room).await?);
-                let all_participants_role: Vec<Option<Role>> =
-                    control::storage::get_attribute_for_participants(
-                        ctx.redis_conn(),
-                        self.room,
-                        "role",
-                        &all_participants,
-                    )
+                let all_participants_role: Vec<Option<Role>> = ctx
+                    .redis_conn()
+                    .get_attribute_for_participants(self.room, "role", &all_participants)
                     .await?;
 
                 let mut to_remove = vec![];

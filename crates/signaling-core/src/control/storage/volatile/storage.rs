@@ -11,11 +11,12 @@ use async_trait::async_trait;
 use opentalk_types::core::ParticipantId;
 use parking_lot::RwLock;
 use redis::FromRedisValue;
+use snafu::OptionExt as _;
 
 use super::memory::MemoryControlState;
 use crate::{
-    control::storage::control_storage::ControlStorage, SignalingModuleError, SignalingRoomId,
-    VolatileStaticMemoryStorage,
+    control::storage::control_storage::ControlStorage, NotFoundSnafu, SignalingModuleError,
+    SignalingRoomId, VolatileStaticMemoryStorage,
 };
 
 static STATE: OnceLock<Arc<RwLock<MemoryControlState>>> = OnceLock::new();
@@ -88,7 +89,10 @@ impl ControlStorage for VolatileStaticMemoryStorage {
     where
         V: FromRedisValue,
     {
-        state().read().get_attribute(room, participant, name)
+        state()
+            .read()
+            .get_attribute(room, participant, name)?
+            .with_context(|| NotFoundSnafu)
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
@@ -116,6 +120,21 @@ impl ControlStorage for VolatileStaticMemoryStorage {
     ) -> Result<(), SignalingModuleError> {
         state().write().remove_attribute(room, participant, name)
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_attribute_for_participants<V>(
+        &mut self,
+        room: SignalingRoomId,
+        name: &str,
+        participants: &[ParticipantId],
+    ) -> Result<Vec<Option<V>>, SignalingModuleError>
+    where
+        V: FromRedisValue,
+    {
+        state()
+            .read()
+            .get_attribute_for_participants(room, name, participants)
+    }
 }
 
 #[cfg(test)]
@@ -135,5 +154,11 @@ mod tests {
     #[serial]
     async fn participant_attribute() {
         test_common::participant_attribute(&mut VolatileStaticMemoryStorage).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn participant_attributes() {
+        test_common::participant_attributes(&mut VolatileStaticMemoryStorage).await;
     }
 }

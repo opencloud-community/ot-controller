@@ -16,7 +16,7 @@ use std::{
 use opentalk_database::Db;
 use opentalk_db_storage::groups::Group;
 use opentalk_signaling_core::{
-    control::{self, exchange, storage::ControlStorage as _},
+    control::{exchange, storage::ControlStorage as _},
     DestroyContext, Event, InitContext, ModuleContext, Participant, RedisConnection,
     SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
@@ -210,13 +210,9 @@ impl SignalingModule for Chat {
                     participants.iter().map(|(id, _)| *id).collect();
 
                 // Get all user_ids for each participant in the room
-                let user_ids: Vec<Option<UserId>> =
-                    control::storage::get_attribute_for_participants(
-                        ctx.redis_conn(),
-                        self.room,
-                        "user_id",
-                        &participant_ids,
-                    )
+                let user_ids: Vec<Option<UserId>> = ctx
+                    .redis_conn()
+                    .get_attribute_for_participants(self.room, "user_id", &participant_ids)
                     .await?;
 
                 // Filter out guest/bots and map each user-id to a participant id
