@@ -5,7 +5,7 @@
 use std::collections::BTreeSet;
 
 use async_trait::async_trait;
-use opentalk_types::core::ParticipantId;
+use opentalk_types::core::{ParticipantId, Timestamp};
 
 use crate::{SignalingModuleError, SignalingRoomId};
 
@@ -82,4 +82,17 @@ pub trait ControlStorage {
     ) -> Result<Vec<Option<V>>, SignalingModuleError>
     where
         V: redis::FromRedisValue;
+
+    async fn participants_all_left(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<bool, SignalingModuleError> {
+        let participants = self.get_all_participants(room).await?;
+
+        let left_at_attrs: Vec<Option<Timestamp>> = self
+            .get_attribute_for_participants(room, "left_at", &Vec::from_iter(participants))
+            .await?;
+
+        Ok(left_at_attrs.iter().all(Option::is_some))
+    }
 }

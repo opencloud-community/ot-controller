@@ -1026,8 +1026,7 @@ where
             )
             .await?;
 
-        let destroy_room =
-            storage::participants_all_left(&mut self.redis_conn, self.room_id).await?;
+        let destroy_room = self.redis_conn.participants_all_left(self.room_id).await?;
 
         self.publish_exchange_control(control::exchange::Message::Left {
             id: self.participant_id,

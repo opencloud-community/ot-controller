@@ -489,15 +489,14 @@ impl Runner {
                 }
             };
 
-            let room_is_empty =
-                match storage::participants_all_left(&mut self.redis_conn, self.room_id).await {
-                    Ok(room_is_empty) => room_is_empty,
-                    Err(e) => {
-                        log::error!("Failed to check if room is empty {}", Report::from_error(e));
-                        encountered_error = true;
-                        false
-                    }
-                };
+            let room_is_empty = match self.redis_conn.participants_all_left(self.room_id).await {
+                Ok(room_is_empty) => room_is_empty,
+                Err(e) => {
+                    log::error!("Failed to check if room is empty {}", Report::from_error(e));
+                    encountered_error = true;
+                    false
+                }
+            };
 
             // if the room is empty check that the waiting room is empty
             let destroy_room = if room_is_empty {

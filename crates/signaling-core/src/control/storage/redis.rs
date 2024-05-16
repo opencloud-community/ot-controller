@@ -280,20 +280,6 @@ pub fn room_mutex(room: SignalingRoomId) -> Mutex<RoomLock> {
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn participants_all_left(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-) -> Result<bool, SignalingModuleError> {
-    let participants = redis_conn.get_all_participants(room).await?;
-
-    let left_at_attrs: Vec<Option<Timestamp>> = redis_conn
-        .get_attribute_for_participants(room, "left_at", &Vec::from_iter(participants))
-        .await?;
-
-    Ok(left_at_attrs.iter().all(Option::is_some))
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
 pub async fn remove_attribute_key(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,

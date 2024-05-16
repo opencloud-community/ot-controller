@@ -17,10 +17,9 @@ pub use redis::{
     decrement_participant_count, delete_event, delete_participant_count, delete_tariff, get_event,
     get_participant_count, get_role_and_left_at_for_room_participants, get_room_closes_at,
     get_skip_waiting_room, get_tariff, increment_participant_count, participant_id_in_use,
-    participants_all_left, remove_attribute_key, remove_room_closes_at,
-    reset_skip_waiting_room_expiry, room_mutex, set_room_closes_at,
-    set_skip_waiting_room_with_expiry, set_skip_waiting_room_with_expiry_nx, try_init_event,
-    try_init_tariff, AttrPipeline, ParticipantIdRunnerLock,
+    remove_attribute_key, remove_room_closes_at, reset_skip_waiting_room_expiry, room_mutex,
+    set_room_closes_at, set_skip_waiting_room_with_expiry, set_skip_waiting_room_with_expiry_nx,
+    try_init_event, try_init_tariff, AttrPipeline, ParticipantIdRunnerLock,
 };
 
 #[cfg(test)]
