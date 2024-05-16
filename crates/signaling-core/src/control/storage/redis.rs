@@ -284,6 +284,13 @@ impl ControlStorage for RedisConnection {
             message: "Failed to get room tariff",
         })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_tariff(&mut self, room_id: RoomId) -> Result<(), SignalingModuleError> {
+        self.del(RoomTariff { room_id }).await.context(RedisSnafu {
+            message: "Failed to delete room tariff",
+        })
+    }
 }
 
 /// Describes a set of participants inside a room.
@@ -535,19 +542,6 @@ pub async fn get_skip_waiting_room(
             message: "Failed to get 'skip waiting room'",
         })?;
     Ok(value.unwrap_or_default())
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn delete_tariff(
-    redis_conn: &mut RedisConnection,
-    room_id: RoomId,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .del(RoomTariff { room_id })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to delete room tariff",
-        })
 }
 
 /// Try to set the active event for the room. If the event is already set return the current one.

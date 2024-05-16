@@ -174,6 +174,12 @@ impl ControlStorage for VolatileStaticMemoryStorage {
     async fn get_tariff(&mut self, room_id: RoomId) -> Result<Tariff, SignalingModuleError> {
         state().write().get_tariff(room_id)
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_tariff(&mut self, room_id: RoomId) -> Result<(), SignalingModuleError> {
+        state().write().delete_tariff(room_id);
+        Ok(())
+    }
 }
 
 #[cfg(test)]

@@ -182,6 +182,10 @@ impl MemoryControlState {
             .with_context(|| NotFoundSnafu)
             .cloned()
     }
+
+    pub(super) fn delete_tariff(&mut self, room_id: RoomId) {
+        self.room_tariffs.remove(&room_id);
+    }
 }
 
 #[cfg(test)]

@@ -693,7 +693,7 @@ impl Runner {
     /// called once the main and all breakout rooms are empty.
     async fn cleanup_redis_for_global_room(&mut self) -> Result<()> {
         storage::delete_participant_count(&mut self.redis_conn, self.room.id).await?;
-        storage::delete_tariff(&mut self.redis_conn, self.room.id).await?;
+        self.redis_conn.delete_tariff(self.room.id).await?;
         storage::delete_event(&mut self.redis_conn, self.room.id).await?;
 
         Ok(())

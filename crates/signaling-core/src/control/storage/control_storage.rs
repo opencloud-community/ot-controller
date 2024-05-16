@@ -119,4 +119,6 @@ pub trait ControlStorage {
     ) -> Result<Tariff, SignalingModuleError>;
 
     async fn get_tariff(&mut self, room_id: RoomId) -> Result<Tariff, SignalingModuleError>;
+
+    async fn delete_tariff(&mut self, room_id: RoomId) -> Result<(), SignalingModuleError>;
 }
