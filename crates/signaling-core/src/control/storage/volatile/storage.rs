@@ -169,6 +169,11 @@ impl ControlStorage for VolatileStaticMemoryStorage {
     ) -> Result<Tariff, SignalingModuleError> {
         Ok(state().write().try_init_tariff(room_id, tariff))
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_tariff(&mut self, room_id: RoomId) -> Result<Tariff, SignalingModuleError> {
+        state().write().get_tariff(room_id)
+    }
 }
 
 #[cfg(test)]
@@ -211,5 +216,11 @@ mod tests {
     #[serial]
     async fn get_role_and_left_for_room_participants() {
         test_common::get_role_and_left_for_room_participants(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn tariff() {
+        test_common::tariff(&mut storage().await).await;
     }
 }

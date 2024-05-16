@@ -10,9 +10,9 @@ use opentalk_types::{
     signaling::Role,
 };
 use redis::{FromRedisValue, ToRedisArgs};
-use snafu::ResultExt as _;
+use snafu::{OptionExt as _, ResultExt as _};
 
-use crate::{RedisSnafu, SignalingModuleError, SignalingRoomId};
+use crate::{NotFoundSnafu, RedisSnafu, SignalingModuleError, SignalingRoomId};
 
 #[derive(Debug, Clone, Default)]
 pub(super) struct MemoryControlState {
@@ -174,6 +174,13 @@ impl MemoryControlState {
 
     pub(super) fn try_init_tariff(&mut self, room_id: RoomId, tariff: Tariff) -> Tariff {
         self.room_tariffs.entry(room_id).or_insert(tariff).clone()
+    }
+
+    pub(super) fn get_tariff(&mut self, room_id: RoomId) -> Result<Tariff, SignalingModuleError> {
+        self.room_tariffs
+            .get(&room_id)
+            .with_context(|| NotFoundSnafu)
+            .cloned()
     }
 }
 

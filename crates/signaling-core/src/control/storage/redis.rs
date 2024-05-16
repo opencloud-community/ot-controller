@@ -277,6 +277,13 @@ impl ControlStorage for RedisConnection {
 
         Ok(tariff)
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_tariff(&mut self, room_id: RoomId) -> Result<Tariff, SignalingModuleError> {
+        self.get(RoomTariff { room_id }).await.context(RedisSnafu {
+            message: "Failed to get room tariff",
+        })
+    }
 }
 
 /// Describes a set of participants inside a room.
@@ -531,19 +538,6 @@ pub async fn get_skip_waiting_room(
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn get_tariff(
-    redis_conn: &mut RedisConnection,
-    room_id: RoomId,
-) -> Result<Tariff, SignalingModuleError> {
-    redis_conn
-        .get(RoomTariff { room_id })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to get room tariff",
-        })
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
 pub async fn delete_tariff(
     redis_conn: &mut RedisConnection,
     room_id: RoomId,
@@ -705,7 +699,7 @@ mod test {
 
     use super::{super::test_common, *};
 
-    async fn setup() -> RedisConnection {
+    async fn storage() -> RedisConnection {
         let redis_url =
             std::env::var("REDIS_ADDR").unwrap_or_else(|_| "redis://0.0.0.0:6379/".to_owned());
         let redis = redis::Client::open(redis_url).expect("Invalid redis url");
@@ -723,35 +717,36 @@ mod test {
     #[tokio::test]
     #[serial]
     async fn participant_set() {
-        let mut storage = setup().await;
-        test_common::participant_set(&mut storage).await;
+        test_common::participant_set(&mut storage().await).await;
     }
 
     #[tokio::test]
     #[serial]
     async fn participant_attribute() {
-        let mut storage = setup().await;
-        test_common::participant_attribute(&mut storage).await;
+        test_common::participant_attribute(&mut storage().await).await;
     }
 
     #[tokio::test]
     #[serial]
     async fn participant_attributes() {
-        let mut storage = setup().await;
-        test_common::participant_attributes(&mut storage).await;
+        test_common::participant_attributes(&mut storage().await).await;
     }
 
     #[tokio::test]
     #[serial]
     async fn participant_remove_attributes() {
-        let mut storage = setup().await;
-        test_common::participant_remove_attributes(&mut storage).await;
+        test_common::participant_remove_attributes(&mut storage().await).await;
     }
 
     #[tokio::test]
     #[serial]
     async fn get_role_and_left_for_room_participants() {
-        let mut storage = setup().await;
-        test_common::get_role_and_left_for_room_participants(&mut storage).await;
+        test_common::get_role_and_left_for_room_participants(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn tariff() {
+        test_common::tariff(&mut storage().await).await;
     }
 }

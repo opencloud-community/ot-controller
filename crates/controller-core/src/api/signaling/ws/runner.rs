@@ -1283,7 +1283,7 @@ impl Runner {
 
             (guard, tariff)
         } else {
-            let tariff = storage::get_tariff(&mut self.redis_conn, self.room.id).await?;
+            let tariff = self.redis_conn.get_tariff(self.room.id).await?;
             (lock.lock(&mut self.redis_conn).await?, tariff)
         };
 
@@ -1416,7 +1416,7 @@ impl Runner {
     }
 
     async fn set_room_time_limit(&mut self) -> Result<()> {
-        let tariff = storage::get_tariff(&mut self.redis_conn, self.room.id).await?;
+        let tariff = self.redis_conn.get_tariff(self.room.id).await?;
 
         let quotas = tariff.quotas.0;
         let remaining_seconds = quotas

@@ -15,18 +15,22 @@ pub const SKIP_WAITING_ROOM_KEY_REFRESH_INTERVAL: u64 = 60;
 // TODO: remove all these re-exports once the functionality is migrated into the ControlStorage trait
 pub use redis::{
     decrement_participant_count, delete_event, delete_participant_count, delete_tariff, get_event,
-    get_participant_count, get_room_closes_at, get_skip_waiting_room, get_tariff,
-    increment_participant_count, participant_id_in_use, remove_room_closes_at,
-    reset_skip_waiting_room_expiry, room_mutex, set_room_closes_at,
-    set_skip_waiting_room_with_expiry, set_skip_waiting_room_with_expiry_nx, try_init_event,
-    AttrPipeline, ParticipantIdRunnerLock,
+    get_participant_count, get_room_closes_at, get_skip_waiting_room, increment_participant_count,
+    participant_id_in_use, remove_room_closes_at, reset_skip_waiting_room_expiry, room_mutex,
+    set_room_closes_at, set_skip_waiting_room_with_expiry, set_skip_waiting_room_with_expiry_nx,
+    try_init_event, AttrPipeline, ParticipantIdRunnerLock,
 };
 
 #[cfg(test)]
 mod test_common {
     use std::collections::{BTreeMap, BTreeSet};
 
-    use opentalk_types::{core::ParticipantId, signaling::Role};
+    use chrono::{TimeZone, Utc};
+    use opentalk_db_storage::tariffs::Tariff;
+    use opentalk_types::{
+        core::{ParticipantId, RoomId, TariffId},
+        signaling::Role,
+    };
     use pretty_assertions::assert_eq;
     use redis_args::{FromRedisValue, ToRedisArgs};
     use serde::{Deserialize, Serialize};
@@ -264,6 +268,51 @@ mod test_common {
                 (ALICE, (Some(Role::Guest), None)),
                 (BOB, (Some(Role::User), None))
             ])
+        );
+    }
+
+    pub(super) async fn tariff(storage: &mut impl ControlStorage) {
+        let room_id = RoomId::generate();
+
+        assert!(storage.get_tariff(room_id).await.is_err());
+
+        let tariff_1 = Tariff {
+            id: TariffId::generate(),
+            name: "Tariff 1".to_string(),
+            created_at: Utc.with_ymd_and_hms(2024, 5, 16, 1, 2, 3).unwrap(),
+            updated_at: Utc.with_ymd_and_hms(2024, 5, 16, 1, 2, 3).unwrap(),
+            quotas: Default::default(),
+            disabled_modules: Default::default(),
+            disabled_features: Default::default(),
+        };
+
+        let tariff_2 = Tariff {
+            id: TariffId::generate(),
+            name: "Tariff 2".to_string(),
+            created_at: Utc.with_ymd_and_hms(2023, 3, 21, 14, 20, 31).unwrap(),
+            updated_at: Utc.with_ymd_and_hms(2023, 12, 11, 23, 42, 45).unwrap(),
+            quotas: Default::default(),
+            disabled_modules: Default::default(),
+            disabled_features: Default::default(),
+        };
+
+        assert_eq!(
+            storage
+                .try_init_tariff(room_id, tariff_1.clone())
+                .await
+                .unwrap(),
+            tariff_1
+        );
+
+        assert_eq!(storage.get_tariff(room_id).await.unwrap(), tariff_1);
+
+        // Verify that we still get tariff 1 returned when attempting to set to tariff 2 after initialization
+        assert_eq!(
+            storage
+                .try_init_tariff(room_id, tariff_2.clone())
+                .await
+                .unwrap(),
+            tariff_1
         );
     }
 }
