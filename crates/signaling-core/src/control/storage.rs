@@ -14,11 +14,10 @@ pub const SKIP_WAITING_ROOM_KEY_REFRESH_INTERVAL: u64 = 60;
 
 // TODO: remove all these re-exports once the functionality is migrated into the ControlStorage trait
 pub use redis::{
-    decrement_participant_count, delete_participant_count, get_participant_count,
-    get_room_closes_at, get_skip_waiting_room, participant_id_in_use, remove_room_closes_at,
-    reset_skip_waiting_room_expiry, room_mutex, set_room_closes_at,
-    set_skip_waiting_room_with_expiry, set_skip_waiting_room_with_expiry_nx, AttrPipeline,
-    ParticipantIdRunnerLock,
+    delete_participant_count, get_participant_count, get_room_closes_at, get_skip_waiting_room,
+    participant_id_in_use, remove_room_closes_at, reset_skip_waiting_room_expiry, room_mutex,
+    set_room_closes_at, set_skip_waiting_room_with_expiry, set_skip_waiting_room_with_expiry_nx,
+    AttrPipeline, ParticipantIdRunnerLock,
 };
 
 #[cfg(test)]
@@ -400,5 +399,16 @@ mod test_common {
         storage.delete_event(room_id).await.unwrap();
 
         assert!(storage.get_event(room_id).await.unwrap().is_none());
+    }
+
+    pub(super) async fn participant_count(s: &mut impl ControlStorage) {
+        let room_id = RoomId::generate();
+
+        assert_eq!(s.increment_participant_count(room_id).await.unwrap(), 1);
+        assert_eq!(s.increment_participant_count(room_id).await.unwrap(), 2);
+        assert_eq!(s.increment_participant_count(room_id).await.unwrap(), 3);
+        assert_eq!(s.decrement_participant_count(room_id).await.unwrap(), 2);
+        assert_eq!(s.decrement_participant_count(room_id).await.unwrap(), 1);
+        assert_eq!(s.decrement_participant_count(room_id).await.unwrap(), 0);
     }
 }

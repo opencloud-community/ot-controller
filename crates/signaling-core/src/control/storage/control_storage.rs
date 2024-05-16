@@ -137,4 +137,9 @@ pub trait ControlStorage {
         &mut self,
         room_id: RoomId,
     ) -> Result<isize, SignalingModuleError>;
+
+    async fn decrement_participant_count(
+        &mut self,
+        room_id: RoomId,
+    ) -> Result<isize, SignalingModuleError>;
 }

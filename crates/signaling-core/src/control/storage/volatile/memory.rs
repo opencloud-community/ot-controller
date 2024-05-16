@@ -210,6 +210,14 @@ impl MemoryControlState {
         *count += 1;
         *count
     }
+
+    pub(super) fn decrement_participant_count(&mut self, room_id: RoomId) -> isize {
+        let count: &mut isize = self.participant_count.entry(room_id).or_default();
+        if *count > 0 {
+            *count -= 1;
+        }
+        *count
+    }
 }
 
 #[cfg(test)]

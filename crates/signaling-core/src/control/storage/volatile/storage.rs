@@ -208,6 +208,14 @@ impl ControlStorage for VolatileStaticMemoryStorage {
     ) -> Result<isize, SignalingModuleError> {
         Ok(state().write().increment_participant_count(room_id))
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn decrement_participant_count(
+        &mut self,
+        room_id: RoomId,
+    ) -> Result<isize, SignalingModuleError> {
+        Ok(state().write().decrement_participant_count(room_id))
+    }
 }
 
 #[cfg(test)]
@@ -262,5 +270,11 @@ mod tests {
     #[serial]
     async fn event() {
         test_common::event(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn participant_count() {
+        test_common::participant_count(&mut storage().await).await;
     }
 }

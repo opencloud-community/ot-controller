@@ -544,7 +544,11 @@ impl Runner {
                 false
             };
 
-            match storage::decrement_participant_count(&mut self.redis_conn, self.room.id).await {
+            match self
+                .redis_conn
+                .decrement_participant_count(self.room.id)
+                .await
+            {
                 Ok(remaining_participant_count) => {
                     if remaining_participant_count == 0 {
                         if let Err(e) = self.cleanup_redis_for_global_room().await {

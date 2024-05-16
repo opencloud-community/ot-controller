@@ -342,6 +342,18 @@ impl ControlStorage for RedisConnection {
                 message: "Failed to increment room participant count",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn decrement_participant_count(
+        &mut self,
+        room_id: RoomId,
+    ) -> Result<isize, SignalingModuleError> {
+        self.decr(RoomParticipantCount { room_id }, 1)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to decrement room participant count",
+            })
+    }
 }
 
 /// Describes a set of participants inside a room.
@@ -596,19 +608,6 @@ pub async fn get_skip_waiting_room(
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn decrement_participant_count(
-    redis_conn: &mut RedisConnection,
-    room_id: RoomId,
-) -> Result<isize, SignalingModuleError> {
-    redis_conn
-        .decr(RoomParticipantCount { room_id }, 1)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to decrement room participant count",
-        })
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
 pub async fn get_participant_count(
     redis_conn: &mut RedisConnection,
     room_id: RoomId,
@@ -734,5 +733,11 @@ mod test {
     #[serial]
     async fn event() {
         test_common::event(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn participant_count() {
+        test_common::participant_count(&mut storage().await).await;
     }
 }
