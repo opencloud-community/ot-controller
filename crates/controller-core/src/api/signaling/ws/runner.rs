@@ -25,7 +25,7 @@ use opentalk_db_storage::{
 use opentalk_signaling_core::{
     control::{
         self, exchange,
-        storage::{self, ControlStorage as _, ParticipantIdRunnerLock},
+        storage::{self, AttributeActions as _, ControlStorage, ParticipantIdRunnerLock},
         ControlStateExt as _, NAMESPACE,
     },
     AnyStream, ExchangeHandle, ObjectStorage, Participant, RedisConnection, SignalingMetrics,
@@ -1092,10 +1092,11 @@ impl Runner {
         timestamp: Timestamp,
         hand_raised: bool,
     ) -> Result<()> {
-        storage::AttrPipeline::new(self.room_id, self.id)
+        self.redis_conn
+            .bulk_attribute_actions(self.room_id, self.id)
             .set("hand_is_up", hand_raised)
             .set("hand_updated_at", timestamp)
-            .query_async(&mut self.redis_conn)
+            .apply(&mut self.redis_conn)
             .await?;
 
         let broadcast_event = if hand_raised {
@@ -1463,11 +1464,13 @@ impl Runner {
         display_name: &str,
         avatar_url: Option<&str>,
     ) -> Result<()> {
-        let mut pipe_attrs = storage::AttrPipeline::new(self.room_id, self.id);
+        let mut actions = self
+            .redis_conn
+            .bulk_attribute_actions(self.room_id, self.id);
 
         match &self.participant {
             Participant::User(ref user) => {
-                pipe_attrs
+                actions
                     .set("kind", ParticipationKind::User)
                     .set(
                         "avatar_url",
@@ -1477,23 +1480,23 @@ impl Runner {
                     .set("is_room_owner", user.id == self.room.created_by);
             }
             Participant::Guest => {
-                pipe_attrs.set("kind", ParticipationKind::Guest);
+                actions.set("kind", ParticipationKind::Guest);
             }
             Participant::Sip => {
-                pipe_attrs.set("kind", ParticipationKind::Sip);
+                actions.set("kind", ParticipationKind::Sip);
             }
             Participant::Recorder => {
-                pipe_attrs.set("kind", ParticipationKind::Recorder);
+                actions.set("kind", ParticipationKind::Recorder);
             }
         }
 
-        pipe_attrs
+        actions
             .set("role", self.role)
             .set("hand_is_up", false)
             .set("hand_updated_at", timestamp)
             .set("display_name", display_name)
             .set("joined_at", timestamp)
-            .query_async(&mut self.redis_conn)
+            .apply(&mut self.redis_conn)
             .await?;
 
         Ok(())

@@ -6,16 +6,17 @@ use opentalk_types::{
     core::{ParticipantId, ParticipationKind, Timestamp},
     signaling::{control::state::ControlState, Role},
 };
-use snafu::ResultExt;
 
-use crate::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
+use crate::{RedisConnection, SignalingModuleError, SignalingRoomId};
 
 pub mod exchange;
 pub mod storage;
 
 pub use opentalk_types::signaling::control::NAMESPACE;
 
-#[async_trait::async_trait]
+use self::storage::{AttributeActions as _, ControlStorage};
+
+#[async_trait::async_trait(?Send)]
 pub trait ControlStateExt: Sized {
     type Error;
 
@@ -26,7 +27,7 @@ pub trait ControlStateExt: Sized {
     ) -> Result<Self, Self::Error>;
 }
 
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 impl ControlStateExt for ControlState {
     type Error = SignalingModuleError;
 
@@ -56,21 +57,21 @@ impl ControlStateExt for ControlState {
             Option<Timestamp>,
             Option<ParticipationKind>,
             Option<bool>,
-        ) = storage::AttrPipeline::new(room_id, participant_id)
-            .get("display_name")
-            .get("role")
-            .get("avatar_url")
-            .get("joined_at")
-            .get("left_at")
-            .get("hand_is_up")
-            .get("hand_updated_at")
-            .get("kind")
-            .get("is_room_owner")
-            .query_async(redis_conn)
-            .await
-            .context(RedisSnafu {
-                message: "Couldn't query control state from redis",
-            })?;
+        ) = {
+            redis_conn
+                .bulk_attribute_actions(room_id, participant_id)
+                .get("display_name")
+                .get("role")
+                .get("avatar_url")
+                .get("joined_at")
+                .get("left_at")
+                .get("hand_is_up")
+                .get("hand_updated_at")
+                .get("kind")
+                .get("is_room_owner")
+                .apply(redis_conn)
+                .await
+        }?;
 
         if display_name.is_none()
             || joined_at.is_none()

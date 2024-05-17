@@ -4,6 +4,7 @@
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
+use async_trait::async_trait;
 use opentalk_db_storage::{events::Event, tariffs::Tariff};
 use opentalk_types::{
     core::{ParticipantId, RoomId, Timestamp},
@@ -12,16 +13,70 @@ use opentalk_types::{
 use redis::{FromRedisValue, ToRedisArgs};
 use snafu::{OptionExt as _, ResultExt as _};
 
-use crate::{NotFoundSnafu, RedisSnafu, SignalingModuleError, SignalingRoomId};
+use crate::{
+    control::storage::AttributeActions, NotFoundSnafu, RedisSnafu, SignalingModuleError,
+    SignalingRoomId,
+};
+
+type AttributeMap = HashMap<(ParticipantId, String), Vec<Vec<u8>>>;
 
 #[derive(Debug, Clone, Default)]
 pub(super) struct MemoryControlState {
     room_participants: HashMap<SignalingRoomId, BTreeSet<ParticipantId>>,
-    participant_attributes: HashMap<SignalingRoomId, HashMap<(ParticipantId, String), Vec<u8>>>,
+    participant_attributes: HashMap<SignalingRoomId, AttributeMap>,
     room_tariffs: HashMap<RoomId, Tariff>,
     room_events: HashMap<RoomId, Option<Event>>,
     participant_count: HashMap<RoomId, isize>,
     rooms_close_at: HashMap<SignalingRoomId, Timestamp>,
+}
+
+pub struct VolatileStaticMemoryAttributeActions {
+    room: SignalingRoomId,
+    participant: ParticipantId,
+    actions: Vec<AttributeAction>,
+}
+
+impl VolatileStaticMemoryAttributeActions {
+    pub(super) fn new(room: SignalingRoomId, participant: ParticipantId) -> Self {
+        Self {
+            room,
+            participant,
+            actions: Vec::new(),
+        }
+    }
+}
+
+#[derive(Debug)]
+enum AttributeAction {
+    Set { name: String, value: Vec<Vec<u8>> },
+    Get { name: String },
+    Delete { name: String },
+}
+
+#[async_trait(?Send)]
+impl AttributeActions for VolatileStaticMemoryAttributeActions {
+    fn set<V: ToRedisArgs>(&mut self, name: &str, value: V) -> &mut Self {
+        self.actions.push(AttributeAction::Set {
+            name: name.to_string(),
+            // to_redis_args will always contain at least one element
+            value: value.to_redis_args(),
+        });
+        self
+    }
+
+    fn get(&mut self, name: &str) -> &mut Self {
+        self.actions.push(AttributeAction::Get {
+            name: name.to_string(),
+        });
+        self
+    }
+
+    fn del(&mut self, name: &str) -> &mut Self {
+        self.actions.push(AttributeAction::Delete {
+            name: name.to_string(),
+        });
+        self
+    }
 }
 
 impl MemoryControlState {
@@ -90,14 +145,34 @@ impl MemoryControlState {
     where
         V: FromRedisValue,
     {
-        self.participant_attributes
-            .get(&room)
-            .and_then(|p| p.get(&(participant, name.to_string())))
-            .map(|b| V::from_redis_value(&redis::Value::Data(b.to_owned())))
+        self.get_attribute_raw(room, participant, name)
+            .map(|b| V::from_redis_value(&redis::Value::load_from_redis_u8_vec_vec(b)))
             .transpose()
             .with_context(|_| RedisSnafu {
                 message: format!("Failed to get attribute {name}"),
             })
+    }
+
+    fn get_attribute_raw(
+        &self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        name: &str,
+    ) -> Option<&Vec<Vec<u8>>> {
+        self.participant_attributes
+            .get(&room)
+            .and_then(|p| p.get(&(participant, name.to_string())))
+    }
+
+    fn get_attribute_raw_redis_value(
+        &self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        name: &str,
+    ) -> redis::Value {
+        self.get_attribute_raw(room, participant, name)
+            .map(|v| redis::Value::load_from_redis_u8_vec_vec(v))
+            .unwrap_or(redis::Value::Nil)
     }
 
     pub(super) fn set_attribute<V>(
@@ -106,15 +181,23 @@ impl MemoryControlState {
         participant: ParticipantId,
         name: &str,
         value: V,
-    ) -> Result<(), SignalingModuleError>
-    where
+    ) where
         V: core::fmt::Debug + ToRedisArgs + Send + Sync,
     {
-        self.participant_attributes.entry(room).or_default().insert(
-            (participant, name.to_string()),
-            value.to_redis_args().into_iter().next().unwrap(),
-        );
-        Ok(())
+        self.set_attribute_raw(room, participant, name, value.to_redis_args());
+    }
+
+    fn set_attribute_raw(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        name: &str,
+        value: Vec<Vec<u8>>,
+    ) {
+        self.participant_attributes
+            .entry(room)
+            .or_default()
+            .insert((participant, name.to_string()), value);
     }
 
     pub(super) fn remove_attribute(
@@ -122,7 +205,7 @@ impl MemoryControlState {
         room: SignalingRoomId,
         participant: ParticipantId,
         name: &str,
-    ) -> Result<(), SignalingModuleError> {
+    ) {
         let is_empty = self
             .participant_attributes
             .get_mut(&room)
@@ -134,7 +217,41 @@ impl MemoryControlState {
         if is_empty {
             self.participant_attributes.remove(&room);
         }
-        Ok(())
+    }
+
+    pub(super) fn perform_bulk_attribute_actions<T: FromRedisValue>(
+        &mut self,
+        actions: &VolatileStaticMemoryAttributeActions,
+    ) -> Result<T, SignalingModuleError> {
+        let mut response = None;
+
+        for action in &actions.actions {
+            match action {
+                AttributeAction::Set { name, value } => {
+                    self.set_attribute_raw(actions.room, actions.participant, name, value.clone());
+                }
+                AttributeAction::Get { name } => {
+                    let value =
+                        self.get_attribute_raw_redis_value(actions.room, actions.participant, name);
+
+                    response = match response {
+                        None => Some(value),
+                        Some(redis::Value::Bulk(mut b)) => {
+                            b.push(value);
+                            Some(redis::Value::Bulk(b))
+                        }
+                        Some(v) => Some(redis::Value::Bulk(vec![v, value])),
+                    }
+                }
+                AttributeAction::Delete { name } => {
+                    self.remove_attribute(actions.room, actions.participant, name);
+                }
+            }
+        }
+
+        T::from_redis_value(&response.unwrap_or(redis::Value::Nil)).with_context(|e| RedisSnafu {
+            message: format!("Failed to read result from bulk attribute actions, {e}"),
+        })
     }
 
     pub(super) fn get_attribute_for_participants<V>(
@@ -241,6 +358,24 @@ impl MemoryControlState {
     }
 }
 
+trait FromRedisU8VecVec {
+    fn load_from_redis_u8_vec_vec(value: &[Vec<u8>]) -> redis::Value;
+}
+
+impl FromRedisU8VecVec for redis::Value {
+    fn load_from_redis_u8_vec_vec(value: &[Vec<u8>]) -> redis::Value {
+        let loaded = value
+            .iter()
+            .map(|v| redis::Value::Data(v.clone()))
+            .collect::<Vec<_>>();
+        if loaded.len() == 1 {
+            loaded.into_iter().next().unwrap()
+        } else {
+            redis::Value::Bulk(loaded)
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use opentalk_types::core::RoomId;
@@ -269,9 +404,7 @@ mod tests {
 
         let point = Point { x: 32, y: 42 };
 
-        state
-            .set_attribute(room, participant, "point", point.clone())
-            .unwrap();
+        state.set_attribute(room, participant, "point", point.clone());
 
         let loaded: Option<Point> = state.get_attribute(room, participant, "point").unwrap();
 

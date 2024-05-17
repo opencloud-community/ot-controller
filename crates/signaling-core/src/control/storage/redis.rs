@@ -20,11 +20,13 @@ use redis::{AsyncCommands, FromRedisValue, ToRedisArgs};
 use redis_args::ToRedisArgs;
 use snafu::ResultExt;
 
-use super::{control_storage::ControlStorage, SKIP_WAITING_ROOM_KEY_EXPIRY};
+use super::{AttributeActions, ControlStorage, SKIP_WAITING_ROOM_KEY_EXPIRY};
 use crate::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 
 #[async_trait(?Send)]
 impl ControlStorage for RedisConnection {
+    type BulkAttributeActions = RedisBulkAttributeActions;
+
     #[tracing::instrument(level = "debug", skip(self))]
     async fn participant_set_exists(
         &mut self,
@@ -179,6 +181,27 @@ impl ControlStorage for RedisConnection {
         })
     }
 
+    fn bulk_attribute_actions(
+        &self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Self::BulkAttributeActions {
+        RedisBulkAttributeActions::new(room, participant)
+    }
+
+    #[tracing::instrument(level = "debug", skip(self, actions))]
+    async fn perform_bulk_attribute_actions<T: FromRedisValue>(
+        &mut self,
+        actions: &Self::BulkAttributeActions,
+    ) -> Result<T, SignalingModuleError> {
+        actions
+            .query_async(self)
+            .await
+            .with_context(|_| RedisSnafu {
+                message: "Failed to perform bulk attribute actions".to_string(),
+            })
+    }
+
     #[tracing::instrument(level = "debug", skip(self))]
     async fn get_attribute_for_participants<V>(
         &mut self,
@@ -203,7 +226,7 @@ impl ControlStorage for RedisConnection {
                 .query_async(self)
                 .await
                 .with_context(|_| RedisSnafu {
-                    message: format!("Failed to get attribute '{name}' for all participants "),
+                    message: format!("Failed to get attribute '{name}' for all participants"),
                 })
         }
     }
@@ -484,26 +507,15 @@ pub fn room_mutex(room: SignalingRoomId) -> Mutex<RoomLock> {
         .with_retries(20)
 }
 
-pub struct AttrPipeline {
+pub struct RedisBulkAttributeActions {
     room: SignalingRoomId,
     participant: ParticipantId,
     pipe: redis::Pipeline,
 }
 
-// FIXME: Make the type inference better. e.g. by passing the type to get and letting get extend the final type.
-impl AttrPipeline {
-    pub fn new(room: SignalingRoomId, participant: ParticipantId) -> Self {
-        let mut pipe = redis::pipe();
-        pipe.atomic();
-
-        Self {
-            room,
-            participant,
-            pipe: redis::pipe(),
-        }
-    }
-
-    pub fn set<V: ToRedisArgs>(&mut self, name: &str, value: V) -> &mut Self {
+#[async_trait(?Send)]
+impl AttributeActions for RedisBulkAttributeActions {
+    fn set<V: ToRedisArgs>(&mut self, name: &str, value: V) -> &mut Self {
         self.pipe
             .hset(
                 RoomParticipantAttributes {
@@ -518,7 +530,7 @@ impl AttrPipeline {
         self
     }
 
-    pub fn get(&mut self, name: &str) -> &mut Self {
+    fn get(&mut self, name: &str) -> &mut Self {
         self.pipe.hget(
             RoomParticipantAttributes {
                 room: self.room,
@@ -530,7 +542,7 @@ impl AttrPipeline {
         self
     }
 
-    pub fn del(&mut self, name: &str) -> &mut Self {
+    fn del(&mut self, name: &str) -> &mut Self {
         self.pipe
             .hdel(
                 RoomParticipantAttributes {
@@ -543,9 +555,23 @@ impl AttrPipeline {
 
         self
     }
+}
+
+// FIXME: Make the type inference better. e.g. by passing the type to get and letting get extend the final type.
+impl RedisBulkAttributeActions {
+    fn new(room: SignalingRoomId, participant: ParticipantId) -> Self {
+        let mut pipe = redis::pipe();
+        pipe.atomic();
+
+        Self {
+            room,
+            participant,
+            pipe: redis::pipe(),
+        }
+    }
 
     pub async fn query_async<T: FromRedisValue>(
-        &mut self,
+        &self,
         redis_conn: &mut RedisConnection,
     ) -> redis::RedisResult<T> {
         self.pipe.query_async(redis_conn).await
@@ -715,6 +741,12 @@ mod test {
     #[serial]
     async fn get_role_and_left_for_room_participants() {
         test_common::get_role_and_left_for_room_participants(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn participant_attributes_bulk() {
+        test_common::participant_attributes_bulk(&mut storage().await).await;
     }
 
     #[tokio::test]

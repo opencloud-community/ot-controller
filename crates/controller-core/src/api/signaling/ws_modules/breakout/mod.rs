@@ -12,7 +12,10 @@ use std::{
 use actix_http::ws::CloseCode;
 use futures::FutureExt;
 use opentalk_signaling_core::{
-    control::{self, storage::ControlStorage as _},
+    control::{
+        self,
+        storage::{AttributeActions as _, ControlStorage},
+    },
     DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
     SignalingModuleInitData, SignalingRoomId,
 };
@@ -239,14 +242,16 @@ impl BreakoutRooms {
         let breakout_room_participants = ctx.redis_conn().get_all_participants(room).await?;
 
         for participant in breakout_room_participants {
-            let res = control::storage::AttrPipeline::new(room, participant)
+            let res = ctx
+                .redis_conn()
+                .bulk_attribute_actions(room, participant)
                 .get("display_name")
                 .get("role")
                 .get("avatar_url")
                 .get("kind")
                 .get("joined_at")
                 .get("left_at")
-                .query_async(ctx.redis_conn())
+                .apply(ctx.redis_conn())
                 .await;
 
             match res {

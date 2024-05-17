@@ -10,11 +10,28 @@ use opentalk_types::{
     core::{ParticipantId, RoomId, Timestamp},
     signaling::Role,
 };
+use redis::{FromRedisValue, ToRedisArgs};
 
 use crate::{SignalingModuleError, SignalingRoomId};
 
+#[async_trait::async_trait(?Send)]
+pub trait AttributeActions {
+    fn set<V: ToRedisArgs>(&mut self, name: &str, value: V) -> &mut Self;
+    fn get(&mut self, name: &str) -> &mut Self;
+    fn del(&mut self, name: &str) -> &mut Self;
+
+    async fn apply<T: FromRedisValue>(
+        &self,
+        target: &mut impl ControlStorage<BulkAttributeActions = Self>,
+    ) -> Result<T, SignalingModuleError> {
+        target.perform_bulk_attribute_actions(self).await
+    }
+}
+
 #[async_trait(?Send)]
 pub trait ControlStorage {
+    type BulkAttributeActions: AttributeActions;
+
     async fn participant_set_exists(
         &mut self,
         room: SignalingRoomId,
@@ -74,6 +91,17 @@ pub trait ControlStorage {
         participant: ParticipantId,
         name: &str,
     ) -> Result<(), SignalingModuleError>;
+
+    fn bulk_attribute_actions(
+        &self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Self::BulkAttributeActions;
+
+    async fn perform_bulk_attribute_actions<T: FromRedisValue>(
+        &mut self,
+        actions: &Self::BulkAttributeActions,
+    ) -> Result<T, SignalingModuleError>;
 
     /// Get attribute values for multiple participants
     ///

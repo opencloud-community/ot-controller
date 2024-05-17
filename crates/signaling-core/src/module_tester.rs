@@ -51,12 +51,12 @@ use tokio::{
 use crate::{
     control::{
         self,
-        storage::{self, ControlStorage as _},
+        storage::{self, AttributeActions as _, ControlStorage},
         ControlStateExt as _,
     },
     AnyStream, DestroyContext, Event, ExchangePublish, InitContext, ModuleContext, ObjectStorage,
-    Participant, RedisConnection, RedisSnafu, SerdeJsonSnafu, SignalingModule,
-    SignalingModuleError, SignalingRoomId,
+    Participant, RedisConnection, SerdeJsonSnafu, SignalingModule, SignalingModuleError,
+    SignalingRoomId,
 };
 
 /// A module tester that simulates a runner environment for provided module.
@@ -552,38 +552,37 @@ where
                 let is_room_owner =
                     matches!(self.participant, Participant::User(user) if user == self.room_owner);
 
-                let mut attr_pipe = storage::AttrPipeline::new(self.room_id, self.participant_id);
+                let mut actions = self
+                    .redis_conn
+                    .bulk_attribute_actions(self.room_id, self.participant_id);
 
                 match &self.participant {
                     Participant::User(user) => {
-                        attr_pipe
+                        actions
                             .set("kind", ParticipationKind::User)
                             .set("user_id", user);
                     }
                     Participant::Guest => {
-                        attr_pipe.set("kind", ParticipationKind::Guest);
+                        actions.set("kind", ParticipationKind::Guest);
                     }
                     Participant::Sip => {
-                        attr_pipe.set("kind", ParticipationKind::Sip);
+                        actions.set("kind", ParticipationKind::Sip);
                     }
                     Participant::Recorder => {
-                        attr_pipe.set("kind", ParticipationKind::Recorder);
+                        actions.set("kind", ParticipationKind::Recorder);
                     }
                 }
 
-                attr_pipe
+                actions
                     .set("display_name", &join.display_name)
                     .set("role", self.role)
                     .set("avatar_url", &join.display_name)
                     .set("joined_at", ctx.timestamp)
                     .set("hand_is_up", false)
                     .set("hand_updated_at", ctx.timestamp)
-                    .set("is_room_owner", is_room_owner)
-                    .query_async(&mut self.redis_conn)
-                    .await
-                    .context(RedisSnafu {
-                        message: "redis query failed",
-                    })?;
+                    .set("is_room_owner", is_room_owner);
+
+                actions.apply(&mut self.redis_conn).await?;
 
                 let participant_set = self.redis_conn.get_all_participants(self.room_id).await?;
 
@@ -694,14 +693,12 @@ where
             }
             ControlCommand::EnterRoom => unreachable!(),
             ControlCommand::RaiseHand => {
-                storage::AttrPipeline::new(self.room_id, self.participant_id)
+                self.redis_conn
+                    .bulk_attribute_actions(self.room_id, self.participant_id)
                     .set("hand_is_up", true)
                     .set("hand_updated_at", ctx.timestamp)
-                    .query_async(&mut self.redis_conn)
-                    .await
-                    .context(RedisSnafu {
-                        message: "RaiseHand query failed",
-                    })?;
+                    .apply(&mut self.redis_conn)
+                    .await?;
 
                 ctx.invalidate_data();
 
@@ -710,14 +707,12 @@ where
                 Ok(())
             }
             ControlCommand::LowerHand => {
-                storage::AttrPipeline::new(self.room_id, self.participant_id)
+                self.redis_conn
+                    .bulk_attribute_actions(self.room_id, self.participant_id)
                     .set("hand_is_up", false)
                     .set("hand_updated_at", ctx.timestamp)
-                    .query_async(&mut self.redis_conn)
-                    .await
-                    .context(RedisSnafu {
-                        message: "LowerHand query failed",
-                    })?;
+                    .apply(&mut self.redis_conn)
+                    .await?;
 
                 ctx.invalidate_data();
 

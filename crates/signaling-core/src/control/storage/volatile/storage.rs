@@ -17,10 +17,10 @@ use parking_lot::RwLock;
 use redis::FromRedisValue;
 use snafu::OptionExt as _;
 
-use super::memory::MemoryControlState;
+use super::memory::{MemoryControlState, VolatileStaticMemoryAttributeActions};
 use crate::{
-    control::storage::control_storage::ControlStorage, NotFoundSnafu, SignalingModuleError,
-    SignalingRoomId, VolatileStaticMemoryStorage,
+    control::storage::ControlStorage, NotFoundSnafu, SignalingModuleError, SignalingRoomId,
+    VolatileStaticMemoryStorage,
 };
 
 static STATE: OnceLock<Arc<RwLock<MemoryControlState>>> = OnceLock::new();
@@ -31,6 +31,8 @@ fn state() -> &'static Arc<RwLock<MemoryControlState>> {
 
 #[async_trait(?Send)]
 impl ControlStorage for VolatileStaticMemoryStorage {
+    type BulkAttributeActions = VolatileStaticMemoryAttributeActions;
+
     #[tracing::instrument(level = "debug", skip(self))]
     async fn participant_set_exists(
         &mut self,
@@ -112,7 +114,8 @@ impl ControlStorage for VolatileStaticMemoryStorage {
     {
         state()
             .write()
-            .set_attribute(room, participant, name, value)
+            .set_attribute(room, participant, name, value);
+        Ok(())
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
@@ -122,7 +125,24 @@ impl ControlStorage for VolatileStaticMemoryStorage {
         participant: ParticipantId,
         name: &str,
     ) -> Result<(), SignalingModuleError> {
-        state().write().remove_attribute(room, participant, name)
+        state().write().remove_attribute(room, participant, name);
+        Ok(())
+    }
+
+    fn bulk_attribute_actions(
+        &self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Self::BulkAttributeActions {
+        VolatileStaticMemoryAttributeActions::new(room, participant)
+    }
+
+    #[tracing::instrument(level = "debug", skip(self, actions))]
+    async fn perform_bulk_attribute_actions<T: FromRedisValue>(
+        &mut self,
+        actions: &Self::BulkAttributeActions,
+    ) -> Result<T, SignalingModuleError> {
+        state().write().perform_bulk_attribute_actions(actions)
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
@@ -302,6 +322,12 @@ mod tests {
     #[serial]
     async fn get_role_and_left_for_room_participants() {
         test_common::get_role_and_left_for_room_participants(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn participant_attributes_bulk() {
+        test_common::participant_attributes_bulk(&mut storage().await).await;
     }
 
     #[tokio::test]

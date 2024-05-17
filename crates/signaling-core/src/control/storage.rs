@@ -6,7 +6,7 @@ mod control_storage;
 mod redis;
 mod volatile;
 
-pub use control_storage::ControlStorage;
+pub use control_storage::{AttributeActions, ControlStorage};
 
 // The expiry in seconds for the `skip_waiting_room` key in Redis
 const SKIP_WAITING_ROOM_KEY_EXPIRY: u32 = 120;
@@ -15,7 +15,7 @@ pub const SKIP_WAITING_ROOM_KEY_REFRESH_INTERVAL: u64 = 60;
 // TODO: remove all these re-exports once the functionality is migrated into the ControlStorage trait
 pub use redis::{
     get_skip_waiting_room, participant_id_in_use, reset_skip_waiting_room_expiry, room_mutex,
-    set_skip_waiting_room_with_expiry, set_skip_waiting_room_with_expiry_nx, AttrPipeline,
+    set_skip_waiting_room_with_expiry, set_skip_waiting_room_with_expiry_nx,
     ParticipantIdRunnerLock,
 };
 
@@ -269,6 +269,40 @@ mod test_common {
                 (ALICE, (Some(Role::Guest), None)),
                 (BOB, (Some(Role::User), None))
             ])
+        );
+    }
+
+    pub(super) async fn participant_attributes_bulk(storage: &mut impl ControlStorage) {
+        let point = Point { x: 44, y: 55 };
+
+        let results: (Option<String>, Option<String>, Option<String>) = storage
+            .bulk_attribute_actions(ROOM, ALICE)
+            .get("point")
+            .set("point", "alice_point")
+            .get("point")
+            .del("point")
+            .get("point")
+            .set("point", point.clone())
+            .set("line", "alice_line")
+            .apply(storage)
+            .await
+            .unwrap();
+
+        assert_eq!(results, (None, Some("alice_point".to_string()), None));
+
+        assert_eq!(
+            storage
+                .get_attribute::<Point>(ROOM, ALICE, "point")
+                .await
+                .unwrap(),
+            point
+        );
+        assert_eq!(
+            storage
+                .get_attribute::<String>(ROOM, ALICE, "line")
+                .await
+                .unwrap(),
+            "alice_line".to_string()
         );
     }
 
