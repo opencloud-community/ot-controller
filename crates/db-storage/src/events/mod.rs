@@ -641,6 +641,7 @@ pub struct UpdateEvent {
     pub is_recurring: Option<Option<bool>>,
     pub recurrence_pattern: Option<Option<String>>,
     pub is_adhoc: Option<bool>,
+    pub show_meeting_details: Option<bool>,
 }
 
 impl UpdateEvent {

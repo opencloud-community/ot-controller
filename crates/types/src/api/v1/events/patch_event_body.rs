@@ -67,6 +67,9 @@ pub struct PatchEventBody {
         validate(custom(function = "validate_recurrence_pattern"))
     )]
     pub recurrence_pattern: Vec<String>,
+
+    /// Patch wether the meeting details are displayed or not
+    pub show_meeting_details: Option<bool>,
 }
 
 impl PatchEventBody {
@@ -83,6 +86,7 @@ impl PatchEventBody {
             starts_at,
             ends_at,
             recurrence_pattern,
+            show_meeting_details,
         } = self;
 
         title.is_none()
@@ -95,6 +99,7 @@ impl PatchEventBody {
             && starts_at.is_none()
             && ends_at.is_none()
             && recurrence_pattern.is_empty()
+            && show_meeting_details.is_none()
     }
 
     // special case to only patch the events room
@@ -111,6 +116,7 @@ impl PatchEventBody {
             ends_at,
             recurrence_pattern,
             is_adhoc,
+            show_meeting_details,
         } = self;
 
         title.is_none()
@@ -121,6 +127,7 @@ impl PatchEventBody {
             && ends_at.is_none()
             && recurrence_pattern.is_empty()
             && is_adhoc.is_none()
+            && show_meeting_details.is_none()
             && (password.is_some() || waiting_room.is_some())
     }
 }
