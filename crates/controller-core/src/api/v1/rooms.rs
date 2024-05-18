@@ -49,7 +49,8 @@ use super::response::NoContent;
 use crate::{
     api::{
         signaling::{
-            breakout, moderation, ticket::start_or_continue_signaling_session, SignalingModules,
+            breakout::storage::BreakoutStorage as _, moderation,
+            ticket::start_or_continue_signaling_session, SignalingModules,
         },
         v1::{util::require_feature, ApiResponse},
     },
@@ -332,7 +333,8 @@ pub async fn start(
     }
 
     if let Some(breakout_room) = request.breakout_room {
-        let config = breakout::storage::get_config(&mut redis_conn, room.id)
+        let config = redis_conn
+            .get_breakout_config(room.id)
             .await
             .map_err(Into::<ApiError>::into)?;
 
@@ -407,7 +409,8 @@ pub async fn start_invited(
     let mut redis_conn = (**redis_ctx).clone();
 
     if let Some(breakout_room) = request.breakout_room {
-        let config = breakout::storage::get_config(&mut redis_conn, room.id)
+        let config = redis_conn
+            .get_breakout_config(room.id)
             .await
             .map_err(Into::<ApiError>::into)?;
 

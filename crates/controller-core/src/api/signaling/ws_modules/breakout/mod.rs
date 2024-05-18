@@ -34,7 +34,7 @@ use opentalk_types::{
 use snafu::whatever;
 use tokio::time::sleep;
 
-use self::storage::BreakoutConfig;
+use self::storage::{BreakoutConfig, BreakoutStorage as _};
 
 pub mod exchange;
 pub mod storage;
@@ -87,7 +87,7 @@ impl SignalingModule for BreakoutRooms {
                 frontend_data,
                 participants: _,
             } => {
-                if let Some(config) = storage::get_config(ctx.redis_conn(), self.parent).await? {
+                if let Some(config) = ctx.redis_conn().get_breakout_config(self.parent).await? {
                     let mut expires = None;
 
                     // If the breakout rooms have an expiry, calculate a rough `Duration` to sleep.
@@ -178,7 +178,7 @@ impl SignalingModule for BreakoutRooms {
                 Ok(())
             }
             Event::Leaving => {
-                let config = storage::get_config(ctx.redis_conn(), self.parent).await?;
+                let config = ctx.redis_conn().get_breakout_config(self.parent).await?;
 
                 if config.is_some() || self.breakout_room.is_some() {
                     ctx.exchange_publish(
@@ -320,7 +320,9 @@ impl BreakoutRooms {
                     duration: start.duration,
                 };
 
-                storage::set_config(ctx.redis_conn(), self.parent, &config).await?;
+                ctx.redis_conn()
+                    .set_breakout_config(self.parent, &config)
+                    .await?;
 
                 ctx.exchange_publish(
                     control::exchange::global_room_all_participants(self.parent),
@@ -332,7 +334,7 @@ impl BreakoutRooms {
                 );
             }
             BreakoutCommand::Stop => {
-                if storage::del_config(ctx.redis_conn(), self.parent).await? {
+                if ctx.redis_conn().del_breakout_config(self.parent).await? {
                     ctx.exchange_publish(
                         control::exchange::global_room_all_participants(self.parent),
                         exchange::Message::Stop,
