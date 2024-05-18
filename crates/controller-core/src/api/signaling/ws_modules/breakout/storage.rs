@@ -7,21 +7,15 @@ use std::{
     time::{Duration, SystemTime},
 };
 
-use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError};
-use opentalk_types::core::{BreakoutRoomId, RoomId};
-use redis::AsyncCommands;
+use opentalk_types::core::BreakoutRoomId;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
-use snafu::ResultExt;
 
 use super::BreakoutRoom;
 
-/// Typed key to the breakout-room config for the specified room
-#[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "opentalk-signaling:room={room}:breakout:config")]
-struct BreakoutRoomConfig {
-    room: RoomId,
-}
+mod redis;
+
+pub(crate) use redis::{del_config, get_config, set_config};
 
 /// Configuration of the current breakout rooms which lives inside redis
 ///
@@ -41,50 +35,4 @@ impl BreakoutConfig {
     pub fn is_valid_id(&self, id: BreakoutRoomId) -> bool {
         self.rooms.iter().any(|room| room.id == id)
     }
-}
-
-pub async fn set_config(
-    redis_conn: &mut RedisConnection,
-    room: RoomId,
-    config: &BreakoutConfig,
-) -> Result<(), SignalingModuleError> {
-    if let Some(duration) = config.duration {
-        redis_conn
-            .set_ex(BreakoutRoomConfig { room }, config, duration.as_secs())
-            .await
-            .context(RedisSnafu {
-                message: "Failed to set breakout-room config",
-            })
-    } else {
-        redis_conn
-            .set(BreakoutRoomConfig { room }, config)
-            .await
-            .context(RedisSnafu {
-                message: "Failed to set breakout-room config",
-            })
-    }
-}
-
-pub async fn get_config(
-    redis_conn: &mut RedisConnection,
-    room: RoomId,
-) -> Result<Option<BreakoutConfig>, SignalingModuleError> {
-    redis_conn
-        .get(BreakoutRoomConfig { room })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to get breakout-room config",
-        })
-}
-
-pub async fn del_config(
-    redis_conn: &mut RedisConnection,
-    room: RoomId,
-) -> Result<bool, SignalingModuleError> {
-    redis_conn
-        .del(BreakoutRoomConfig { room })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to del breakout-room config",
-        })
 }
