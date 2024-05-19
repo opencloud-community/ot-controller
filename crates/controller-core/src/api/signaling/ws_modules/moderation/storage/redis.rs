@@ -95,6 +95,19 @@ impl ModerationStorage for RedisConnection {
                 message: "Failed to DEL waiting_room_enabled",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_raise_hands_enabled(
+        &mut self,
+        room: RoomId,
+        enabled: bool,
+    ) -> Result<(), SignalingModuleError> {
+        self.set(RaiseHandsEnabled { room }, enabled)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to SET raise_hands_enabled",
+            })
+    }
 }
 
 /// Set of user-ids banned in a room
@@ -116,20 +129,6 @@ struct WaitingRoomEnabled {
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:raise_hands_enabled")]
 struct RaiseHandsEnabled {
     room: RoomId,
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn set_raise_hands_enabled(
-    redis_conn: &mut RedisConnection,
-    room: RoomId,
-    enabled: bool,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .set(RaiseHandsEnabled { room }, enabled)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to SET raise_hands_enabled",
-        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]

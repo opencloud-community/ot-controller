@@ -10,6 +10,7 @@ use opentalk_types::core::{RoomId, UserId};
 pub(super) struct MemoryModerationState {
     banned_users: HashMap<RoomId, HashSet<UserId>>,
     waiting_room_enabled: HashMap<RoomId, bool>,
+    raise_hands_enabled: HashMap<RoomId, bool>,
 }
 
 impl MemoryModerationState {
@@ -50,5 +51,9 @@ impl MemoryModerationState {
 
     pub(super) fn delete_waiting_room_enabled(&mut self, room: RoomId) {
         self.waiting_room_enabled.remove(&room);
+    }
+
+    pub(super) fn set_raise_hands_enabled(&mut self, room: RoomId, enabled: bool) {
+        self.raise_hands_enabled.insert(room, enabled);
     }
 }

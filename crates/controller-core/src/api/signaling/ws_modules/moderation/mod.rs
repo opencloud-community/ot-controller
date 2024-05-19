@@ -420,7 +420,8 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
-                storage::set_raise_hands_enabled(ctx.redis_conn(), self.room.room_id(), true)
+                ctx.redis_conn()
+                    .set_raise_hands_enabled(self.room.room_id(), true)
                     .await?;
 
                 ctx.exchange_publish_control(
@@ -435,7 +436,8 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
-                storage::set_raise_hands_enabled(ctx.redis_conn(), self.room.room_id(), false)
+                ctx.redis_conn()
+                    .set_raise_hands_enabled(self.room.room_id(), false)
                     .await?;
 
                 ctx.exchange_publish_control(

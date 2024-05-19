@@ -39,4 +39,10 @@ pub(crate) trait ModerationStorage {
         &mut self,
         room: RoomId,
     ) -> Result<(), SignalingModuleError>;
+
+    async fn set_raise_hands_enabled(
+        &mut self,
+        room: RoomId,
+        enabled: bool,
+    ) -> Result<(), SignalingModuleError>;
 }

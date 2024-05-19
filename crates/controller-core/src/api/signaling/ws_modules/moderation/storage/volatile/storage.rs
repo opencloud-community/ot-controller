@@ -76,6 +76,16 @@ impl ModerationStorage for VolatileStaticMemoryStorage {
         state().write().delete_waiting_room_enabled(room);
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_raise_hands_enabled(
+        &mut self,
+        room: RoomId,
+        enabled: bool,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().set_raise_hands_enabled(room, enabled);
+        Ok(())
+    }
 }
 
 #[cfg(test)]
