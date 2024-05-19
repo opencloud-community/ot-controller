@@ -35,6 +35,7 @@ use opentalk_types::{
 };
 use sessions::MediaSessions;
 use snafu::{whatever, OptionExt, Report};
+use storage::MediaStorage as _;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 
@@ -515,7 +516,9 @@ impl SignalingModule for Media {
             }
 
             Event::ParticipantJoined(id, evt_state) => {
-                let state = storage::participant::get_media_state(ctx.redis_conn(), self.room, id)
+                let state = ctx
+                    .redis_conn()
+                    .get_media_state(self.room, id)
                     .await?
                     .unwrap_or_default();
 
@@ -528,8 +531,7 @@ impl SignalingModule for Media {
                 })
             }
             Event::ParticipantUpdated(id, evt_state) => {
-                let state =
-                    storage::participant::get_media_state(ctx.redis_conn(), self.room, id).await?;
+                let state = ctx.redis_conn().get_media_state(self.room, id).await?;
 
                 if let Some(state) = &state {
                     self.media.remove_dangling_subscriber(id, state).await;
@@ -553,10 +555,11 @@ impl SignalingModule for Media {
             } => {
                 let participant_ids = Vec::from_iter(participants.keys().cloned());
                 for (&id, evt_state) in participants {
-                    let state =
-                        storage::participant::get_media_state(ctx.redis_conn(), self.room, id)
-                            .await?
-                            .unwrap_or_default();
+                    let state = ctx
+                        .redis_conn()
+                        .get_media_state(self.room, id)
+                        .await?
+                        .unwrap_or_default();
 
                     let is_presenter =
                         storage::presenter::is_presenter(ctx.redis_conn(), self.room, id).await?;

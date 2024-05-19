@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use async_trait::async_trait;
+use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId};
+use opentalk_types::{core::ParticipantId, signaling::media::ParticipantMediaState};
 
 #[async_trait(?Send)]
-pub(crate) trait MediaStorage {}
+pub(crate) trait MediaStorage {
+    async fn get_media_state(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<Option<ParticipantMediaState>, SignalingModuleError>;
+}

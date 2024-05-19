@@ -21,28 +21,6 @@ pub(crate) struct ParticipantMediaStateKey {
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn get_media_state(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    participant: ParticipantId,
-) -> Result<Option<ParticipantMediaState>, SignalingModuleError> {
-    let json: Option<Vec<u8>> = redis_conn
-        .get(ParticipantMediaStateKey { room, participant })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to get media state",
-        })?;
-
-    if let Some(json) = json {
-        serde_json::from_slice(&json).context(SerdeJsonSnafu {
-            message: "Failed to convert json to media state",
-        })
-    } else {
-        Ok(None)
-    }
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
 pub async fn set_media_state(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
