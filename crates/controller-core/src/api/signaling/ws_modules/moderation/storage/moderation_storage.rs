@@ -17,4 +17,12 @@ pub(crate) trait ModerationStorage {
     ) -> Result<bool, SignalingModuleError>;
 
     async fn delete_user_bans(&mut self, room: RoomId) -> Result<(), SignalingModuleError>;
+
+    /// Return the `waiting_room` flag, and optionally set it to a defined value
+    /// given by the `enabled` parameter beforehand if the flag is not present yet.
+    async fn init_waiting_room_enabled(
+        &mut self,
+        room: RoomId,
+        enabled: bool,
+    ) -> Result<bool, SignalingModuleError>;
 }

@@ -63,7 +63,7 @@ use super::{
 };
 use crate::api::signaling::{
     echo::Echo,
-    moderation,
+    moderation::{self, storage::ModerationStorage},
     resumption::{ResumptionError, ResumptionTokenKeepAlive},
     trim_display_name,
     ws::actor::WsCommand,
@@ -908,12 +908,10 @@ impl Runner {
                     || !control_data.participation_kind.is_visible()
                     || can_skip_waiting_room;
 
-                let waiting_room_enabled = moderation::storage::init_waiting_room_key(
-                    &mut self.redis_conn,
-                    self.room_id.room_id(),
-                    self.room.waiting_room,
-                )
-                .await?;
+                let waiting_room_enabled = self
+                    .redis_conn
+                    .init_waiting_room_enabled(self.room_id.room_id(), self.room.waiting_room)
+                    .await?;
 
                 if !skip_waiting_room && waiting_room_enabled {
                     // Waiting room is enabled; join the waiting room

@@ -40,6 +40,15 @@ impl ModerationStorage for VolatileStaticMemoryStorage {
         state().write().delete_user_bans(room);
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn init_waiting_room_enabled(
+        &mut self,
+        room: RoomId,
+        enabled: bool,
+    ) -> Result<bool, SignalingModuleError> {
+        Ok(state().write().init_waiting_room_enabled(room, enabled))
+    }
 }
 
 #[cfg(test)]
@@ -58,5 +67,11 @@ mod test {
     #[serial]
     async fn user_bans() {
         test_common::user_bans(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn waiting_room_enabled_flag() {
+        test_common::waiting_room_enabled_flag(&mut storage().await).await;
     }
 }

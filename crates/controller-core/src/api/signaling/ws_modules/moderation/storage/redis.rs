@@ -39,6 +39,24 @@ impl ModerationStorage for RedisConnection {
             message: "Failed to DEL bans",
         })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn init_waiting_room_enabled(
+        &mut self,
+        room: RoomId,
+        enabled: bool,
+    ) -> Result<bool, SignalingModuleError> {
+        let was_enabled: (bool, bool) = redis::pipe()
+            .atomic()
+            .set_nx(WaitingRoomEnabled { room }, enabled)
+            .get(WaitingRoomEnabled { room })
+            .query_async(self)
+            .await
+            .context(RedisSnafu {
+                message: "Failed SET-or-GET waiting_room_enabled",
+            })?;
+        Ok(was_enabled.1)
+    }
 }
 
 /// Set of user-ids banned in a room
@@ -67,26 +85,6 @@ pub async fn set_waiting_room_enabled(
         .context(RedisSnafu {
             message: "Failed to SET waiting_room_enabled",
         })
-}
-
-/// Return the `waiting_room` flag, and optionally set it to a defined value
-/// given by the `enabled` parameter beforehand if the flag is not present yet.
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn init_waiting_room_key(
-    redis_conn: &mut RedisConnection,
-    room: RoomId,
-    enabled: bool,
-) -> Result<bool, SignalingModuleError> {
-    let was_enabled: (bool, bool) = redis::pipe()
-        .atomic()
-        .set_nx(WaitingRoomEnabled { room }, enabled)
-        .get(WaitingRoomEnabled { room })
-        .query_async(redis_conn)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to GET waiting_room_enabled",
-        })?;
-    Ok(was_enabled.1)
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -384,5 +382,11 @@ mod test {
     #[serial]
     async fn user_bans() {
         test_common::user_bans(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn waiting_room_enabled_flag() {
+        test_common::waiting_room_enabled_flag(&mut storage().await).await;
     }
 }
