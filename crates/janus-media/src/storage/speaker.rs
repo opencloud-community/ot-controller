@@ -18,17 +18,6 @@ pub(crate) struct SpeakerKey {
     pub(crate) participant: ParticipantId,
 }
 
-pub async fn delete_all_for_room(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    participants: &[ParticipantId],
-) -> Result<(), SignalingModuleError> {
-    for &participant in participants {
-        redis_conn.delete_speaking_state(room, participant).await?;
-    }
-    Ok(())
-}
-
 pub async fn get_all_for_room(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,

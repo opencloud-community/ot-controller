@@ -125,6 +125,18 @@ impl MediaStorage for VolatileStaticMemoryStorage {
         state().write().delete_speaking_state(room, participant);
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_speaking_state_multiple_participants(
+        &mut self,
+        room: SignalingRoomId,
+        participants: &[ParticipantId],
+    ) -> Result<(), SignalingModuleError> {
+        state()
+            .write()
+            .delete_speaking_state_multiple_participants(room, participants);
+        Ok(())
+    }
 }
 
 #[cfg(test)]

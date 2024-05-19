@@ -604,12 +604,13 @@ impl SignalingModule for Media {
                     BTreeSet::new()
                 });
 
-            if let Err(e) = storage::speaker::delete_all_for_room(
-                ctx.redis_conn(),
-                self.room,
-                &Vec::from_iter(participants),
-            )
-            .await
+            if let Err(e) = ctx
+                .redis_conn()
+                .delete_speaking_state_multiple_participants(
+                    self.room,
+                    &Vec::from_iter(participants),
+                )
+                .await
             {
                 log::error!(
                     "Media module for failed to remove speakers on room destoy, {}",

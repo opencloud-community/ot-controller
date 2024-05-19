@@ -177,6 +177,18 @@ impl MediaStorage for RedisConnection {
                 message: "Failed to delete speaker state",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_speaking_state_multiple_participants(
+        &mut self,
+        room: SignalingRoomId,
+        participants: &[ParticipantId],
+    ) -> Result<(), SignalingModuleError> {
+        for &participant in participants {
+            self.delete_speaking_state(room, participant).await?;
+        }
+        Ok(())
+    }
 }
 
 /// Data related to a module inside a participant

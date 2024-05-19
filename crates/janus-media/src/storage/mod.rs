@@ -116,5 +116,26 @@ mod test_common {
             .await
             .unwrap()
             .is_some());
+
+        storage
+            .set_speaking_state(ROOM, BOB, false, bob_started_speaking_at)
+            .await
+            .unwrap();
+
+        storage
+            .delete_speaking_state_multiple_participants(ROOM, &[ALICE, BOB])
+            .await
+            .unwrap();
+
+        assert!(storage
+            .get_speaking_state(ROOM, BOB)
+            .await
+            .unwrap()
+            .is_none());
+        assert!(storage
+            .get_speaking_state(ROOM, ALICE)
+            .await
+            .unwrap()
+            .is_none());
     }
 }

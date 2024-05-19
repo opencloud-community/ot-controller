@@ -98,4 +98,14 @@ impl MemoryMediaState {
     ) {
         self.speakers.remove(&(room, participant));
     }
+
+    pub(super) fn delete_speaking_state_multiple_participants(
+        &mut self,
+        room: SignalingRoomId,
+        participants: &[ParticipantId],
+    ) {
+        for k in participants.iter().copied().map(|p| (room, p)) {
+            self.speakers.remove(&k);
+        }
+    }
 }
