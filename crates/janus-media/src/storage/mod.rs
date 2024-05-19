@@ -89,5 +89,32 @@ mod test_common {
                 updated_at: bob_started_speaking_at
             })
         );
+
+        let alice_started_speaking_at = Timestamp::now();
+        storage
+            .set_speaking_state(ROOM, ALICE, false, alice_started_speaking_at)
+            .await
+            .unwrap();
+
+        assert_eq!(
+            storage.get_speaking_state(ROOM, ALICE).await.unwrap(),
+            Some(SpeakingState {
+                is_speaking: false,
+                updated_at: alice_started_speaking_at
+            })
+        );
+
+        storage.delete_speaking_state(ROOM, BOB).await.unwrap();
+
+        assert!(storage
+            .get_speaking_state(ROOM, BOB)
+            .await
+            .unwrap()
+            .is_none());
+        assert!(storage
+            .get_speaking_state(ROOM, ALICE)
+            .await
+            .unwrap()
+            .is_some());
     }
 }

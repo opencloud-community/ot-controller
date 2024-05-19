@@ -90,4 +90,12 @@ impl MemoryMediaState {
     ) -> Option<SpeakingState> {
         self.speakers.get(&(room, participant)).cloned()
     }
+
+    pub(super) fn delete_speaking_state(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) {
+        self.speakers.remove(&(room, participant));
+    }
 }

@@ -2,11 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
+use opentalk_signaling_core::{RedisConnection, SignalingModuleError, SignalingRoomId};
 use opentalk_types::{core::ParticipantId, signaling::media::ParticipantSpeakingState};
-use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
-use snafu::ResultExt;
 
 use super::MediaStorage as _;
 
@@ -20,27 +18,13 @@ pub(crate) struct SpeakerKey {
     pub(crate) participant: ParticipantId,
 }
 
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn delete(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    participant: ParticipantId,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .del(SpeakerKey { room, participant })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to delete speaker state",
-        })
-}
-
 pub async fn delete_all_for_room(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     participants: &[ParticipantId],
 ) -> Result<(), SignalingModuleError> {
     for &participant in participants {
-        delete(redis_conn, room, participant).await?;
+        redis_conn.delete_speaking_state(room, participant).await?;
     }
     Ok(())
 }

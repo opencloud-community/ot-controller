@@ -64,4 +64,10 @@ pub(crate) trait MediaStorage {
         room: SignalingRoomId,
         participant: ParticipantId,
     ) -> Result<Option<SpeakingState>, SignalingModuleError>;
+
+    async fn delete_speaking_state(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<(), SignalingModuleError>;
 }
