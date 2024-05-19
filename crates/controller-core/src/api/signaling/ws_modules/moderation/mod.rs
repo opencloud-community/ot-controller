@@ -122,9 +122,10 @@ impl SignalingModule for ModerationModule {
                 participants: _,
             } => {
                 let moderator_data = if ctx.role() == Role::Moderator {
-                    let waiting_room_enabled =
-                        storage::is_waiting_room_enabled(ctx.redis_conn(), self.room.room_id())
-                            .await?;
+                    let waiting_room_enabled = ctx
+                        .redis_conn()
+                        .is_waiting_room_enabled(self.room.room_id())
+                        .await?;
 
                     let list =
                         storage::waiting_room_all(ctx.redis_conn(), self.room.room_id()).await?;
@@ -243,7 +244,11 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
-                if !storage::is_waiting_room_enabled(ctx.redis_conn, self.room.room_id()).await? {
+                if !ctx
+                    .redis_conn
+                    .is_waiting_room_enabled(self.room.room_id())
+                    .await?
+                {
                     set_waiting_room_enabled(&mut ctx, self.room.room_id(), true).await?;
                 }
 
@@ -504,8 +509,10 @@ impl SignalingModule for ModerationModule {
                 }));
             }
             Event::Exchange(exchange::Message::WaitingRoomEnableUpdated) => {
-                let enabled =
-                    storage::is_waiting_room_enabled(ctx.redis_conn(), self.room.room_id()).await?;
+                let enabled = ctx
+                    .redis_conn()
+                    .is_waiting_room_enabled(self.room.room_id())
+                    .await?;
 
                 if enabled {
                     ctx.ws_send(ModerationEvent::WaitingRoomEnabled);

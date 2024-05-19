@@ -40,4 +40,11 @@ impl MemoryModerationState {
     pub(super) fn set_waiting_room_enabled(&mut self, room: RoomId, enabled: bool) {
         self.waiting_room_enabled.insert(room, enabled);
     }
+
+    pub(super) fn is_waiting_room_enabled(&self, room: RoomId) -> bool {
+        self.waiting_room_enabled
+            .get(&room)
+            .copied()
+            .unwrap_or_default()
+    }
 }

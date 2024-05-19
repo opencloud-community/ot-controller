@@ -10,11 +10,10 @@ pub(crate) use moderation_storage::ModerationStorage;
 // TODO: remove once everything is exposed through the ModerationStorage trait.
 pub(crate) use redis::{
     delete_raise_hands_enabled, delete_waiting_room, delete_waiting_room_accepted,
-    delete_waiting_room_enabled, is_raise_hands_enabled, is_waiting_room_enabled,
-    set_raise_hands_enabled, waiting_room_accepted_add, waiting_room_accepted_all,
-    waiting_room_accepted_len, waiting_room_accepted_remove, waiting_room_accepted_remove_list,
-    waiting_room_add, waiting_room_all, waiting_room_contains, waiting_room_len,
-    waiting_room_remove,
+    delete_waiting_room_enabled, is_raise_hands_enabled, set_raise_hands_enabled,
+    waiting_room_accepted_add, waiting_room_accepted_all, waiting_room_accepted_len,
+    waiting_room_accepted_remove, waiting_room_accepted_remove_list, waiting_room_add,
+    waiting_room_all, waiting_room_contains, waiting_room_len, waiting_room_remove,
 };
 
 #[cfg(test)]
@@ -49,10 +48,14 @@ mod test_common {
     }
 
     pub(super) async fn waiting_room_enabled_flag(storage: &mut dyn ModerationStorage) {
+        assert!(!storage.is_waiting_room_enabled(ROOM).await.unwrap());
+
         assert_eq!(
             storage.init_waiting_room_enabled(ROOM, true).await.unwrap(),
             true
         );
+
+        assert!(storage.is_waiting_room_enabled(ROOM).await.unwrap());
 
         // Ensure that the waiting room flag will not be changed when attempting to initialize
         // after it has been initialized already
@@ -63,7 +66,10 @@ mod test_common {
                 .unwrap(),
             true
         );
+        assert!(storage.is_waiting_room_enabled(ROOM).await.unwrap());
 
         storage.set_waiting_room_enabled(ROOM, false).await.unwrap();
+
+        assert!(!storage.is_waiting_room_enabled(ROOM).await.unwrap());
     }
 }
