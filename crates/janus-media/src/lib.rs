@@ -158,8 +158,7 @@ impl SignalingModule for Media {
             Event::WsMessage(MediaCommand::UpdateMediaSession(info)) => {
                 if info.media_session_type == MediaSessionType::Screen
                     && ctx.role() != Role::Moderator
-                    && !storage::presenter::is_presenter(ctx.redis_conn(), self.room, self.id)
-                        .await?
+                    && !ctx.redis_conn().is_presenter(self.room, self.id).await?
                 {
                     ctx.ws_send(Error::PermissionDenied);
                     return Ok(());
@@ -242,8 +241,7 @@ impl SignalingModule for Media {
             Event::WsMessage(MediaCommand::Publish(targeted)) => {
                 if targeted.target.media_session_type == MediaSessionType::Screen
                     && ctx.role() != Role::Moderator
-                    && !storage::presenter::is_presenter(ctx.redis_conn(), self.room, self.id)
-                        .await?
+                    && !ctx.redis_conn().is_presenter(self.room, self.id).await?
                 {
                     ctx.ws_send(Error::PermissionDenied);
 
@@ -456,7 +454,7 @@ impl SignalingModule for Media {
                     return Ok(());
                 }
 
-                if storage::presenter::is_presenter(ctx.redis_conn(), self.room, self.id).await? {
+                if ctx.redis_conn().is_presenter(self.room, self.id).await? {
                     // already presenter
                     return Ok(());
                 }
@@ -472,7 +470,7 @@ impl SignalingModule for Media {
                     return Ok(());
                 }
 
-                if !storage::presenter::is_presenter(ctx.redis_conn(), self.room, self.id).await? {
+                if !ctx.redis_conn().is_presenter(self.room, self.id).await? {
                     // already not a presenter
                     return Ok(());
                 }
@@ -506,8 +504,7 @@ impl SignalingModule for Media {
                     .await?
                     .unwrap_or_default();
 
-                let is_presenter =
-                    storage::presenter::is_presenter(ctx.redis_conn(), self.room, id).await?;
+                let is_presenter = ctx.redis_conn().is_presenter(self.room, id).await?;
 
                 *evt_state = Some(MediaPeerState {
                     state,
@@ -521,8 +518,7 @@ impl SignalingModule for Media {
                     self.media.remove_dangling_subscriber(id, state).await;
                 }
 
-                let is_presenter =
-                    storage::presenter::is_presenter(ctx.redis_conn(), self.room, id).await?;
+                let is_presenter = ctx.redis_conn().is_presenter(self.room, id).await?;
 
                 *evt_state = Some(MediaPeerState {
                     state: state.unwrap_or_default(),
@@ -545,8 +541,7 @@ impl SignalingModule for Media {
                         .await?
                         .unwrap_or_default();
 
-                    let is_presenter =
-                        storage::presenter::is_presenter(ctx.redis_conn(), self.room, id).await?;
+                    let is_presenter = ctx.redis_conn().is_presenter(self.room, id).await?;
 
                     *evt_state = Some(MediaPeerState {
                         state,
@@ -554,8 +549,7 @@ impl SignalingModule for Media {
                     })
                 }
 
-                let is_presenter =
-                    storage::presenter::is_presenter(ctx.redis_conn(), self.room, self.id).await?;
+                let is_presenter = ctx.redis_conn().is_presenter(self.room, self.id).await?;
                 let speakers = storage::speaker::get_all_for_room(
                     ctx.redis_conn(),
                     self.room,

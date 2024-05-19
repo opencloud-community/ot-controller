@@ -46,4 +46,12 @@ impl MemoryMediaState {
     pub(super) fn set_is_presenter(&mut self, room: SignalingRoomId, participant: ParticipantId) {
         self.presenters.entry(room).or_default().insert(participant);
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    pub(super) fn is_presenter(&self, room: SignalingRoomId, participant: ParticipantId) -> bool {
+        self.presenters
+            .get(&room)
+            .map(|p| p.contains(&participant))
+            .unwrap_or_default()
+    }
 }

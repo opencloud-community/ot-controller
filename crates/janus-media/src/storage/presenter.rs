@@ -15,22 +15,6 @@ pub(crate) struct Presenters {
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn is_presenter(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    participant: ParticipantId,
-) -> Result<bool, SignalingModuleError> {
-    let value: bool = redis_conn
-        .sismember(Presenters { room }, participant)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to check if participant is presenter",
-        })?;
-
-    Ok(value)
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
 pub async fn delete(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,

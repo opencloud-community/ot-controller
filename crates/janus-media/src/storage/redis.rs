@@ -84,6 +84,22 @@ impl MediaStorage for RedisConnection {
 
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn is_presenter(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<bool, SignalingModuleError> {
+        let value: bool = self
+            .sismember(Presenters { room }, participant)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to check if participant is presenter",
+            })?;
+
+        Ok(value)
+    }
 }
 
 /// Data related to a module inside a participant
