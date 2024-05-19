@@ -5,7 +5,8 @@
 use std::sync::{Arc, OnceLock};
 
 use async_trait::async_trait;
-use opentalk_signaling_core::VolatileStaticMemoryStorage;
+use opentalk_signaling_core::{SignalingModuleError, VolatileStaticMemoryStorage};
+use opentalk_types::core::{RoomId, UserId};
 use parking_lot::RwLock;
 
 use super::memory::MemoryModerationState;
@@ -18,4 +19,10 @@ fn state() -> &'static Arc<RwLock<MemoryModerationState>> {
 }
 
 #[async_trait(?Send)]
-impl ModerationStorage for VolatileStaticMemoryStorage {}
+impl ModerationStorage for VolatileStaticMemoryStorage {
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn ban_user(&mut self, room: RoomId, user: UserId) -> Result<(), SignalingModuleError> {
+        state().write().ban_user(room, user);
+        Ok(())
+    }
+}

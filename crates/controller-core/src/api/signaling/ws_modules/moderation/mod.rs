@@ -27,6 +27,7 @@ use opentalk_types::{
 };
 use snafu::{Report, ResultExt};
 
+use self::storage::ModerationStorage as _;
 use crate::api::signaling::{trim_display_name, ws::ModuleContextExt};
 
 pub mod exchange;
@@ -188,7 +189,9 @@ impl SignalingModule for ModerationModule {
                     .await?;
 
                 if let Some(user_id) = user_id {
-                    storage::ban_user(ctx.redis_conn(), self.room.room_id(), user_id).await?;
+                    ctx.redis_conn()
+                        .ban_user(self.room.room_id(), user_id)
+                        .await?;
                 } else {
                     ctx.ws_send(Error::CannotBanGuest);
                     return Ok(());

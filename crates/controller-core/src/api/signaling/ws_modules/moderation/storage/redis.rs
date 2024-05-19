@@ -12,27 +12,20 @@ use snafu::ResultExt;
 use super::ModerationStorage;
 
 #[async_trait(?Send)]
-impl ModerationStorage for RedisConnection {}
+impl ModerationStorage for RedisConnection {
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn ban_user(&mut self, room: RoomId, user: UserId) -> Result<(), SignalingModuleError> {
+        self.sadd(Bans { room }, user).await.context(RedisSnafu {
+            message: "Failed to SADD user_id to bans",
+        })
+    }
+}
 
 /// Set of user-ids banned in a room
 #[derive(ToRedisArgs)]
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:bans")]
 struct Bans {
     room: RoomId,
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn ban_user(
-    redis_conn: &mut RedisConnection,
-    room: RoomId,
-    user_id: UserId,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .sadd(Bans { room }, user_id)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to SADD user_id to bans",
-        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
