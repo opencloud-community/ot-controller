@@ -4,7 +4,10 @@
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId};
-use opentalk_types::{core::ParticipantId, signaling::media::ParticipantMediaState};
+use opentalk_types::{
+    core::{ParticipantId, Timestamp},
+    signaling::media::ParticipantMediaState,
+};
 
 #[async_trait(?Send)]
 pub(crate) trait MediaStorage {
@@ -47,4 +50,12 @@ pub(crate) trait MediaStorage {
 
     async fn clear_presenters(&mut self, room: SignalingRoomId)
         -> Result<(), SignalingModuleError>;
+
+    async fn set_speaking_state(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        is_speaking: bool,
+        updated_at: Timestamp,
+    ) -> Result<(), SignalingModuleError>;
 }

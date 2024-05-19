@@ -6,7 +6,10 @@ use std::sync::{Arc, OnceLock};
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage};
-use opentalk_types::{core::ParticipantId, signaling::media::ParticipantMediaState};
+use opentalk_types::{
+    core::{ParticipantId, Timestamp},
+    signaling::media::ParticipantMediaState,
+};
 use parking_lot::RwLock;
 
 use super::memory::MemoryMediaState;
@@ -87,6 +90,20 @@ impl MediaStorage for VolatileStaticMemoryStorage {
         room: SignalingRoomId,
     ) -> Result<(), SignalingModuleError> {
         state().write().clear_presenters(room);
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_speaking_state(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        is_speaking: bool,
+        updated_at: Timestamp,
+    ) -> Result<(), SignalingModuleError> {
+        state()
+            .write()
+            .set_speaking_state(room, participant, is_speaking, updated_at);
         Ok(())
     }
 }

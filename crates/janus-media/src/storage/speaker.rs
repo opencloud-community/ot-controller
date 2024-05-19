@@ -4,7 +4,7 @@
 
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 use opentalk_types::{
-    core::{ParticipantId, Timestamp},
+    core::ParticipantId,
     signaling::media::{ParticipantSpeakingState, SpeakingState},
 };
 use redis::AsyncCommands;
@@ -19,28 +19,6 @@ use snafu::ResultExt;
 pub(crate) struct SpeakerKey {
     pub(crate) room: SignalingRoomId,
     pub(crate) participant: ParticipantId,
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn set(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    participant: ParticipantId,
-    is_speaking: bool,
-    updated_at: Timestamp,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .set(
-            SpeakerKey { room, participant },
-            Some(SpeakingState {
-                is_speaking,
-                updated_at,
-            }),
-        )
-        .await
-        .context(RedisSnafu {
-            message: "Failed to set speaker state",
-        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]

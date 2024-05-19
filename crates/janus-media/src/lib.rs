@@ -193,14 +193,9 @@ impl SignalingModule for Media {
                         if old_state.audio && !info.media_session_state.audio {
                             let timestamp = ctx.timestamp();
                             let is_speaking = false;
-                            storage::speaker::set(
-                                ctx.redis_conn(),
-                                self.room,
-                                self.id,
-                                is_speaking,
-                                timestamp,
-                            )
-                            .await?;
+                            ctx.redis_conn()
+                                .set_speaking_state(self.room, self.id, is_speaking, timestamp)
+                                .await?;
                             ctx.exchange_publish(
                                 control::exchange::current_room_all_participants(self.room),
                                 exchange::Message::SpeakerStateUpdated(ParticipantSpeakingState {
@@ -382,7 +377,8 @@ impl SignalingModule for Media {
                 is_speaking,
             })) => {
                 let timestamp = ctx.timestamp();
-                storage::speaker::set(ctx.redis_conn(), self.room, self.id, is_speaking, timestamp)
+                ctx.redis_conn()
+                    .set_speaking_state(self.room, self.id, is_speaking, timestamp)
                     .await?;
                 ctx.exchange_publish(
                     control::exchange::current_room_all_participants(self.room),

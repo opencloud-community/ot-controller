@@ -5,12 +5,16 @@
 use std::collections::{HashMap, HashSet};
 
 use opentalk_signaling_core::SignalingRoomId;
-use opentalk_types::{core::ParticipantId, signaling::media::ParticipantMediaState};
+use opentalk_types::{
+    core::{ParticipantId, Timestamp},
+    signaling::media::{ParticipantMediaState, SpeakingState},
+};
 
 #[derive(Debug, Clone, Default)]
 pub(super) struct MemoryMediaState {
     participant_media_states: HashMap<(SignalingRoomId, ParticipantId), ParticipantMediaState>,
     presenters: HashMap<SignalingRoomId, HashSet<ParticipantId>>,
+    speakers: HashMap<(SignalingRoomId, ParticipantId), SpeakingState>,
 }
 
 impl MemoryMediaState {
@@ -62,5 +66,20 @@ impl MemoryMediaState {
 
     pub(super) fn clear_presenters(&mut self, room: SignalingRoomId) {
         self.presenters.remove(&room);
+    }
+
+    pub(super) fn set_speaking_state(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        is_speaking: bool,
+        updated_at: Timestamp,
+    ) {
+        self.speakers
+            .entry((room, participant))
+            .or_insert_with(|| SpeakingState {
+                is_speaking,
+                updated_at,
+            });
     }
 }

@@ -6,12 +6,15 @@ use async_trait::async_trait;
 use opentalk_signaling_core::{
     RedisConnection, RedisSnafu, SerdeJsonSnafu, SignalingModuleError, SignalingRoomId,
 };
-use opentalk_types::{core::ParticipantId, signaling::media::ParticipantMediaState};
+use opentalk_types::{
+    core::{ParticipantId, Timestamp},
+    signaling::media::{ParticipantMediaState, SpeakingState},
+};
 use redis::AsyncCommands as _;
 use redis_args::ToRedisArgs;
 use snafu::ResultExt as _;
 
-use super::MediaStorage;
+use super::{speaker::SpeakerKey, MediaStorage};
 
 #[async_trait(?Send)]
 impl MediaStorage for RedisConnection {
@@ -126,6 +129,27 @@ impl MediaStorage for RedisConnection {
         })?;
 
         Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_speaking_state(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        is_speaking: bool,
+        updated_at: Timestamp,
+    ) -> Result<(), SignalingModuleError> {
+        self.set(
+            SpeakerKey { room, participant },
+            Some(SpeakingState {
+                is_speaking,
+                updated_at,
+            }),
+        )
+        .await
+        .context(RedisSnafu {
+            message: "Failed to set speaker state",
+        })
     }
 }
 
