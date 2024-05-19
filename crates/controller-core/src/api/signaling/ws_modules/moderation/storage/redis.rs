@@ -29,20 +29,6 @@ struct Bans {
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn unban_user(
-    redis_conn: &mut RedisConnection,
-    room: RoomId,
-    user_id: UserId,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .srem(Bans { room }, user_id)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to SREM user_id to bans",
-        })
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
 pub async fn is_banned(
     redis_conn: &mut RedisConnection,
     room: RoomId,
