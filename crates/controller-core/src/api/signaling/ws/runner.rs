@@ -959,9 +959,7 @@ impl Runner {
                 }
             }
             ControlCommand::RaiseHand => {
-                if !moderation::storage::is_raise_hands_enabled(&mut self.redis_conn, self.room.id)
-                    .await?
-                {
+                if !self.redis_conn.is_raise_hands_enabled(self.room.id).await? {
                     self.ws_send_control_error(timestamp, control_event::Error::RaiseHandsDisabled)
                         .await;
 

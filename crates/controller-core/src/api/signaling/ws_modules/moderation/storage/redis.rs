@@ -108,6 +108,16 @@ impl ModerationStorage for RedisConnection {
                 message: "Failed to SET raise_hands_enabled",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn is_raise_hands_enabled(&mut self, room: RoomId) -> Result<bool, SignalingModuleError> {
+        self.get(RaiseHandsEnabled { room })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to GET raise_hands_enabled",
+            })
+            .map(|result: Option<bool>| result.unwrap_or(true))
+    }
 }
 
 /// Set of user-ids banned in a room
@@ -129,20 +139,6 @@ struct WaitingRoomEnabled {
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:raise_hands_enabled")]
 struct RaiseHandsEnabled {
     room: RoomId,
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn is_raise_hands_enabled(
-    redis_conn: &mut RedisConnection,
-    room: RoomId,
-) -> Result<bool, SignalingModuleError> {
-    redis_conn
-        .get(RaiseHandsEnabled { room })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to GET raise_hands_enabled",
-        })
-        .map(|result: Option<bool>| result.unwrap_or(true))
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -384,5 +380,11 @@ mod test {
     #[serial]
     async fn waiting_room_enabled_flag() {
         test_common::waiting_room_enabled_flag(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn raise_hands_enabled_flag() {
+        test_common::raise_hands_enabled_flag(&mut storage().await).await;
     }
 }

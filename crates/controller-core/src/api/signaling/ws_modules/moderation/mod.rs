@@ -158,8 +158,10 @@ impl SignalingModule for ModerationModule {
                     None
                 };
 
-                let raise_hands_enabled =
-                    storage::is_raise_hands_enabled(ctx.redis_conn(), self.room.room_id()).await?;
+                let raise_hands_enabled = ctx
+                    .redis_conn()
+                    .is_raise_hands_enabled(self.room.room_id())
+                    .await?;
 
                 *frontend_data = Some(ModerationState {
                     moderator_data,

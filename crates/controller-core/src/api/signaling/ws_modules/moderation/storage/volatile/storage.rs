@@ -86,6 +86,11 @@ impl ModerationStorage for VolatileStaticMemoryStorage {
         state().write().set_raise_hands_enabled(room, enabled);
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn is_raise_hands_enabled(&mut self, room: RoomId) -> Result<bool, SignalingModuleError> {
+        Ok(state().read().is_raise_hands_enabled(room))
+    }
 }
 
 #[cfg(test)]
@@ -110,5 +115,11 @@ mod test {
     #[serial]
     async fn waiting_room_enabled_flag() {
         test_common::waiting_room_enabled_flag(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn raise_hands_enabled_flag() {
+        test_common::raise_hands_enabled_flag(&mut storage().await).await;
     }
 }
