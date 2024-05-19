@@ -2,7 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::{
+    collections::{BTreeMap, BTreeSet, HashMap},
+    time::Duration,
+};
 
 use async_trait::async_trait;
 use opentalk_db_storage::{events::Event, tariffs::Tariff};
@@ -14,8 +17,8 @@ use redis::{FromRedisValue, ToRedisArgs};
 use snafu::{OptionExt as _, ResultExt as _};
 
 use crate::{
-    control::storage::AttributeActions, NotFoundSnafu, RedisSnafu, SignalingModuleError,
-    SignalingRoomId,
+    control::storage::{AttributeActions, SKIP_WAITING_ROOM_KEY_EXPIRY},
+    ExpiringData, NotFoundSnafu, RedisSnafu, SignalingModuleError, SignalingRoomId,
 };
 
 type AttributeMap = HashMap<(ParticipantId, String), Vec<Vec<u8>>>;
@@ -28,6 +31,7 @@ pub(super) struct MemoryControlState {
     room_events: HashMap<RoomId, Option<Event>>,
     participant_count: HashMap<RoomId, isize>,
     rooms_close_at: HashMap<SignalingRoomId, Timestamp>,
+    participants_skip_waiting_room: HashMap<ParticipantId, ExpiringData<bool>>,
 }
 
 pub struct VolatileStaticMemoryAttributeActions {
@@ -355,6 +359,20 @@ impl MemoryControlState {
 
     pub(super) fn remove_room_closes_at(&mut self, room: SignalingRoomId) {
         self.rooms_close_at.remove(&room);
+    }
+
+    pub(super) fn set_skip_waiting_room_with_expiry(
+        &mut self,
+        participant: ParticipantId,
+        value: bool,
+    ) {
+        self.participants_skip_waiting_room.insert(
+            participant,
+            ExpiringData::new_ex(
+                value,
+                Duration::from_secs(SKIP_WAITING_ROOM_KEY_EXPIRY.into()),
+            ),
+        );
     }
 }
 

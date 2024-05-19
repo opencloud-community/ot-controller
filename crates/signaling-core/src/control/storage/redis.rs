@@ -435,6 +435,28 @@ impl ControlStorage for RedisConnection {
             message: "Failed to DEL the point in time the room closes",
         })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_skip_waiting_room_with_expiry(
+        &mut self,
+        participant: ParticipantId,
+        value: bool,
+    ) -> Result<(), SignalingModuleError> {
+        self.set_ex(
+            SkipWaitingRoom { participant },
+            value,
+            SKIP_WAITING_ROOM_KEY_EXPIRY.into(),
+        )
+        .await
+        .with_context(|_| RedisSnafu {
+            message: format!(
+                "Failed to set skip_waiting_room key to {} for participant {}",
+                value, participant,
+            ),
+        })?;
+
+        Ok(())
+    }
 }
 
 /// Describes a set of participants inside a room.
@@ -601,30 +623,6 @@ pub async fn participant_id_in_use(
 #[to_redis_args(fmt = "opentalk-signaling:participant={participant}:skip_waiting_room")]
 pub struct SkipWaitingRoom {
     participant: ParticipantId,
-}
-
-/// Set the `skip_waiting_room` key for participant with an expiry.
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn set_skip_waiting_room_with_expiry(
-    redis_conn: &mut RedisConnection,
-    participant: ParticipantId,
-    value: bool,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .set_ex(
-            SkipWaitingRoom { participant },
-            value,
-            SKIP_WAITING_ROOM_KEY_EXPIRY.into(),
-        )
-        .await
-        .with_context(|_| RedisSnafu {
-            message: format!(
-                "Failed to set skip_waiting_room key to {} for participant {}",
-                value, participant,
-            ),
-        })?;
-
-    Ok(())
 }
 
 /// Set the `skip_waiting_room` key for participant with an expiry if the key does not exist.

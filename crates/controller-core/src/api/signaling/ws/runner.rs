@@ -1674,12 +1674,9 @@ impl Runner {
                         *accepted = true;
 
                         // Allow the participant to skip the waiting room on next rejoin
-                        storage::set_skip_waiting_room_with_expiry(
-                            &mut self.redis_conn,
-                            self.id,
-                            true,
-                        )
-                        .await?;
+                        self.redis_conn
+                            .set_skip_waiting_room_with_expiry(self.id, true)
+                            .await?;
 
                         self.ws
                             .send(Message::Text(

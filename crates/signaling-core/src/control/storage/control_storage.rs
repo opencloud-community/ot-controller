@@ -196,4 +196,11 @@ pub trait ControlStorage {
         &mut self,
         room: SignalingRoomId,
     ) -> Result<(), SignalingModuleError>;
+
+    /// Set the `skip_waiting_room` flag for participant with an expiry.
+    async fn set_skip_waiting_room_with_expiry(
+        &mut self,
+        participant: ParticipantId,
+        value: bool,
+    ) -> Result<(), SignalingModuleError>;
 }

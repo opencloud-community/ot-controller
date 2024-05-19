@@ -206,12 +206,9 @@ impl SignalingModule for ModerationModule {
                 }
 
                 // Enforce the participant to enter the waiting room (if enabled) on next rejoin
-                control::storage::set_skip_waiting_room_with_expiry(
-                    ctx.redis_conn(),
-                    target,
-                    false,
-                )
-                .await?;
+                ctx.redis_conn()
+                    .set_skip_waiting_room_with_expiry(target, false)
+                    .await?;
 
                 storage::waiting_room_accepted_remove(
                     ctx.redis_conn(),
@@ -246,12 +243,9 @@ impl SignalingModule for ModerationModule {
                 }
 
                 // Enforce the participant to enter the waiting room (if enabled) on next rejoin
-                control::storage::set_skip_waiting_room_with_expiry(
-                    ctx.redis_conn(),
-                    target,
-                    false,
-                )
-                .await?;
+                ctx.redis_conn()
+                    .set_skip_waiting_room_with_expiry(target, false)
+                    .await?;
 
                 storage::waiting_room_accepted_remove(
                     ctx.redis_conn(),
@@ -291,12 +285,9 @@ impl SignalingModule for ModerationModule {
 
                     if remove {
                         // Enforce the participant to enter the waiting room on next rejoin
-                        control::storage::set_skip_waiting_room_with_expiry(
-                            ctx.redis_conn(),
-                            id,
-                            false,
-                        )
-                        .await?;
+                        ctx.redis_conn()
+                            .set_skip_waiting_room_with_expiry(id, false)
+                            .await?;
 
                         to_remove.push(id);
                     }
