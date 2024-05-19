@@ -457,6 +457,31 @@ impl ControlStorage for RedisConnection {
 
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_skip_waiting_room_with_expiry_nx(
+        &mut self,
+        participant: ParticipantId,
+        value: bool,
+    ) -> Result<(), SignalingModuleError> {
+        redis::pipe()
+            .atomic()
+            .set_nx(SkipWaitingRoom { participant }, value)
+            .expire(
+                SkipWaitingRoom { participant },
+                SKIP_WAITING_ROOM_KEY_EXPIRY.into(),
+            )
+            .query_async(self)
+            .await
+            .with_context(|_| RedisSnafu {
+                message: format!(
+                    "Failed to set SkipWaitingRoom key to {} for participant {}",
+                    value, participant,
+                ),
+            })?;
+
+        Ok(())
+    }
 }
 
 /// Describes a set of participants inside a room.
@@ -623,32 +648,6 @@ pub async fn participant_id_in_use(
 #[to_redis_args(fmt = "opentalk-signaling:participant={participant}:skip_waiting_room")]
 pub struct SkipWaitingRoom {
     participant: ParticipantId,
-}
-
-/// Set the `skip_waiting_room` key for participant with an expiry if the key does not exist.
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn set_skip_waiting_room_with_expiry_nx(
-    redis_conn: &mut RedisConnection,
-    participant: ParticipantId,
-    value: bool,
-) -> Result<(), SignalingModuleError> {
-    redis::pipe()
-        .atomic()
-        .set_nx(SkipWaitingRoom { participant }, value)
-        .expire(
-            SkipWaitingRoom { participant },
-            SKIP_WAITING_ROOM_KEY_EXPIRY.into(),
-        )
-        .query_async(redis_conn)
-        .await
-        .with_context(|_| RedisSnafu {
-            message: format!(
-                "Failed to set SkipWaitingRoom key to {} for participant {}",
-                value, participant,
-            ),
-        })?;
-
-    Ok(())
 }
 
 /// Extend the `skip_waiting_room` key for participant with an expiry.

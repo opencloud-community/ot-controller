@@ -710,7 +710,9 @@ impl Runner {
         let mut manual_close_ws = false;
 
         // Set default `skip_waiting_room` key value with the default expiration time
-        _ = storage::set_skip_waiting_room_with_expiry_nx(&mut self.redis_conn, self.id, false)
+        _ = self
+            .redis_conn
+            .set_skip_waiting_room_with_expiry_nx(self.id, false)
             .await;
         let mut skip_waiting_room_refresh_interval = interval(Duration::from_secs(
             opentalk_signaling_core::control::storage::SKIP_WAITING_ROOM_KEY_REFRESH_INTERVAL,

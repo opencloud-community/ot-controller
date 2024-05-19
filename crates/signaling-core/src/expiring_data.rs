@@ -40,6 +40,10 @@ impl<T: Clone> ExpiringData<T> {
     pub fn is_expired(&self) -> bool {
         self.expiry.is_some_and(|e| Instant::now() > e)
     }
+
+    pub fn set_expiry(&mut self, expires_after: Duration) {
+        self.expiry = Instant::now().checked_add(expires_after);
+    }
 }
 
 #[cfg(test)]

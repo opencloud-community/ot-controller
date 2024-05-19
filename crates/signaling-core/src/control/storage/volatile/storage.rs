@@ -292,6 +292,18 @@ impl ControlStorage for VolatileStaticMemoryStorage {
             .set_skip_waiting_room_with_expiry(participant, value);
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_skip_waiting_room_with_expiry_nx(
+        &mut self,
+        participant: ParticipantId,
+        value: bool,
+    ) -> Result<(), SignalingModuleError> {
+        state()
+            .write()
+            .set_skip_waiting_room_with_expiry_nx(participant, value);
+        Ok(())
+    }
 }
 
 #[cfg(test)]

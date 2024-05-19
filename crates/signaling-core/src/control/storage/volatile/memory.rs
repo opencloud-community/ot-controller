@@ -374,6 +374,24 @@ impl MemoryControlState {
             ),
         );
     }
+
+    pub(super) fn set_skip_waiting_room_with_expiry_nx(
+        &mut self,
+        participant: ParticipantId,
+        value: bool,
+    ) {
+        let expiry = Duration::from_secs(SKIP_WAITING_ROOM_KEY_EXPIRY.into());
+        let entry = self
+            .participants_skip_waiting_room
+            .entry(participant)
+            .or_insert_with(|| ExpiringData::new_ex(value, expiry));
+
+        if entry.is_expired() {
+            *entry = ExpiringData::new_ex(value, expiry);
+        } else {
+            entry.set_expiry(expiry);
+        }
+    }
 }
 
 trait FromRedisU8VecVec {
