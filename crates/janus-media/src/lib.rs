@@ -475,7 +475,9 @@ impl SignalingModule for Media {
                     return Ok(());
                 }
 
-                storage::presenter::delete(ctx.redis_conn(), self.room, self.id).await?;
+                ctx.redis_conn()
+                    .remove_presenter(self.room, self.id)
+                    .await?;
 
                 // terminate screen share
                 if self.state.get(MediaSessionType::Screen).is_some()

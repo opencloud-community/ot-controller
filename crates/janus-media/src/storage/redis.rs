@@ -86,6 +86,21 @@ impl MediaStorage for RedisConnection {
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
+    async fn remove_presenter(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<(), SignalingModuleError> {
+        self.srem(Presenters { room }, participant)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to delete presenter",
+            })?;
+
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
     async fn is_presenter(
         &mut self,
         room: SignalingRoomId,
@@ -139,5 +154,12 @@ mod test {
     async fn media_state() {
         let mut redis_conn = setup().await;
         test_common::media_state(&mut redis_conn).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn presenter() {
+        let mut redis_conn = setup().await;
+        test_common::presenter(&mut redis_conn).await;
     }
 }

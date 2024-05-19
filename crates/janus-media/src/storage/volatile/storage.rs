@@ -58,7 +58,7 @@ impl MediaStorage for VolatileStaticMemoryStorage {
         room: SignalingRoomId,
         participant: ParticipantId,
     ) -> Result<(), SignalingModuleError> {
-        state().write().set_is_presenter(room, participant);
+        state().write().add_presenter(room, participant);
         Ok(())
     }
 
@@ -69,6 +69,16 @@ impl MediaStorage for VolatileStaticMemoryStorage {
         participant: ParticipantId,
     ) -> Result<bool, SignalingModuleError> {
         Ok(state().read().is_presenter(room, participant))
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn remove_presenter(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().remove_presenter(room, participant);
+        Ok(())
     }
 }
 
@@ -88,5 +98,11 @@ mod test {
     #[serial]
     async fn media_state() {
         test_common::media_state(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn presenter() {
+        test_common::presenter(&mut storage().await).await;
     }
 }

@@ -33,6 +33,12 @@ pub(crate) trait MediaStorage {
         participant: ParticipantId,
     ) -> Result<(), SignalingModuleError>;
 
+    async fn remove_presenter(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<(), SignalingModuleError>;
+
     async fn is_presenter(
         &mut self,
         room: SignalingRoomId,

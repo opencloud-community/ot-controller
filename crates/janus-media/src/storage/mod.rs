@@ -20,7 +20,7 @@ mod test_common {
     };
     use pretty_assertions::assert_eq;
 
-    use super::*;
+    use super::MediaStorage;
 
     pub const ROOM: SignalingRoomId = SignalingRoomId::nil();
     pub const BOB: ParticipantId = ParticipantId::from_u128(0xdeadbeef);
@@ -48,5 +48,17 @@ mod test_common {
         storage.delete_media_state(ROOM, BOB).await.unwrap();
 
         assert!(storage.get_media_state(ROOM, BOB).await.unwrap().is_none());
+    }
+
+    pub(super) async fn presenter(storage: &mut dyn MediaStorage) {
+        assert!(!storage.is_presenter(ROOM, BOB).await.unwrap());
+
+        storage.add_presenter(ROOM, BOB).await.unwrap();
+
+        assert!(storage.is_presenter(ROOM, BOB).await.unwrap());
+
+        storage.remove_presenter(ROOM, BOB).await.unwrap();
+
+        assert!(!storage.is_presenter(ROOM, BOB).await.unwrap());
     }
 }
