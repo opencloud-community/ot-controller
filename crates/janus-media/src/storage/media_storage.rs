@@ -44,4 +44,7 @@ pub(crate) trait MediaStorage {
         room: SignalingRoomId,
         participant: ParticipantId,
     ) -> Result<bool, SignalingModuleError>;
+
+    async fn clear_presenters(&mut self, room: SignalingRoomId)
+        -> Result<(), SignalingModuleError>;
 }

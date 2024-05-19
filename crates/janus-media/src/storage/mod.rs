@@ -2,7 +2,6 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-pub mod presenter;
 pub mod speaker;
 
 mod media_storage;
@@ -24,6 +23,7 @@ mod test_common {
 
     pub const ROOM: SignalingRoomId = SignalingRoomId::nil();
     pub const BOB: ParticipantId = ParticipantId::from_u128(0xdeadbeef);
+    pub const ALICE: ParticipantId = ParticipantId::from_u128(0xbadcafe);
 
     pub(super) async fn media_state(storage: &mut dyn MediaStorage) {
         let bob_media_state = ParticipantMediaState {
@@ -60,5 +60,12 @@ mod test_common {
         storage.remove_presenter(ROOM, BOB).await.unwrap();
 
         assert!(!storage.is_presenter(ROOM, BOB).await.unwrap());
+
+        storage.add_presenter(ROOM, BOB).await.unwrap();
+        storage.add_presenter(ROOM, ALICE).await.unwrap();
+
+        storage.clear_presenters(ROOM).await.unwrap();
+        assert!(!storage.is_presenter(ROOM, BOB).await.unwrap());
+        assert!(!storage.is_presenter(ROOM, ALICE).await.unwrap());
     }
 }

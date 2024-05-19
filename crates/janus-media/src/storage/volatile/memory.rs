@@ -59,4 +59,8 @@ impl MemoryMediaState {
             .get_mut(&room)
             .map(|p| p.remove(&participant));
     }
+
+    pub(super) fn clear_presenters(&mut self, room: SignalingRoomId) {
+        self.presenters.remove(&room);
+    }
 }

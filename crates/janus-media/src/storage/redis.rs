@@ -11,7 +11,7 @@ use redis::AsyncCommands as _;
 use redis_args::ToRedisArgs;
 use snafu::ResultExt as _;
 
-use super::{presenter::Presenters, MediaStorage};
+use super::MediaStorage;
 
 #[async_trait(?Send)]
 impl MediaStorage for RedisConnection {
@@ -115,6 +115,18 @@ impl MediaStorage for RedisConnection {
 
         Ok(value)
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn clear_presenters(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<(), SignalingModuleError> {
+        self.del(Presenters { room }).await.context(RedisSnafu {
+            message: "Failed to delete presenter key",
+        })?;
+
+        Ok(())
+    }
 }
 
 /// Data related to a module inside a participant
@@ -125,6 +137,12 @@ impl MediaStorage for RedisConnection {
 struct ParticipantMediaStateKey {
     room: SignalingRoomId,
     participant: ParticipantId,
+}
+
+#[derive(ToRedisArgs)]
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:namespace=media:presenters")]
+pub(crate) struct Presenters {
+    pub(crate) room: SignalingRoomId,
 }
 
 #[cfg(test)]

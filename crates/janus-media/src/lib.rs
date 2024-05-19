@@ -589,7 +589,7 @@ impl SignalingModule for Media {
 
     async fn on_destroy(self, mut ctx: DestroyContext<'_>) {
         if ctx.destroy_room() {
-            if let Err(e) = storage::presenter::delete_key(ctx.redis_conn(), self.room).await {
+            if let Err(e) = ctx.redis_conn().clear_presenters(self.room).await {
                 log::error!(
                     "Media module for failed to remove presenter key on room destoy, {}",
                     e
