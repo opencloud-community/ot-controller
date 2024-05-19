@@ -37,4 +37,8 @@ impl MemoryMediaState {
         self.participant_media_states
             .insert((room, participant), participant_media_state.clone());
     }
+
+    pub(super) fn delete_media_state(&mut self, room: SignalingRoomId, participant: ParticipantId) {
+        self.participant_media_states.remove(&(room, participant));
+    }
 }

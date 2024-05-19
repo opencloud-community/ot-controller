@@ -8,9 +8,10 @@ use opentalk_signaling_core::{
 };
 use opentalk_types::{core::ParticipantId, signaling::media::ParticipantMediaState};
 use redis::AsyncCommands as _;
+use redis_args::ToRedisArgs;
 use snafu::ResultExt as _;
 
-use super::{participant::ParticipantMediaStateKey, MediaStorage};
+use super::MediaStorage;
 
 #[async_trait(?Send)]
 impl MediaStorage for RedisConnection {
@@ -55,6 +56,29 @@ impl MediaStorage for RedisConnection {
 
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_media_state(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<(), SignalingModuleError> {
+        self.del(ParticipantMediaStateKey { room, participant })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to delete media state",
+            })
+    }
+}
+
+/// Data related to a module inside a participant
+#[derive(ToRedisArgs)]
+#[to_redis_args(
+    fmt = "opentalk-signaling:room={room}:participant={participant}:namespace=media:state"
+)]
+struct ParticipantMediaStateKey {
+    room: SignalingRoomId,
+    participant: ParticipantId,
 }
 
 #[cfg(test)]

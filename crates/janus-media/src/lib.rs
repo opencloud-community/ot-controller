@@ -569,9 +569,10 @@ impl SignalingModule for Media {
                 })
             }
             Event::Leaving => {
-                if let Err(e) =
-                    storage::participant::delete_media_state(ctx.redis_conn(), self.room, self.id)
-                        .await
+                if let Err(e) = ctx
+                    .redis_conn()
+                    .delete_media_state(self.room, self.id)
+                    .await
                 {
                     log::error!(
                         "Media module for {} failed to remove its state data from redis, {}",

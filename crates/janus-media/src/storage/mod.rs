@@ -2,7 +2,6 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-pub mod participant;
 pub mod presenter;
 pub mod speaker;
 
@@ -45,5 +44,9 @@ mod test_common {
             storage.get_media_state(ROOM, BOB).await.unwrap(),
             Some(bob_media_state)
         );
+
+        storage.delete_media_state(ROOM, BOB).await.unwrap();
+
+        assert!(storage.get_media_state(ROOM, BOB).await.unwrap().is_none());
     }
 }
