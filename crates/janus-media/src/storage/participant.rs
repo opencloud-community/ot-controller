@@ -2,10 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_signaling_core::{
-    RedisConnection, RedisSnafu, SerdeJsonSnafu, SignalingModuleError, SignalingRoomId,
-};
-use opentalk_types::{core::ParticipantId, signaling::media::ParticipantMediaState};
+use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
+use opentalk_types::core::ParticipantId;
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
 use snafu::ResultExt;
@@ -18,27 +16,6 @@ use snafu::ResultExt;
 pub(crate) struct ParticipantMediaStateKey {
     pub(crate) room: SignalingRoomId,
     pub(crate) participant: ParticipantId,
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn set_media_state(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    participant: ParticipantId,
-    state: &ParticipantMediaState,
-) -> Result<(), SignalingModuleError> {
-    let json = serde_json::to_vec(&state).context(SerdeJsonSnafu {
-        message: "Failed to convert media state to json",
-    })?;
-
-    redis_conn
-        .set(ParticipantMediaStateKey { room, participant }, json)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to get media state",
-        })?;
-
-    Ok(())
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]

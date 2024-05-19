@@ -13,4 +13,11 @@ pub(crate) trait MediaStorage {
         room: SignalingRoomId,
         participant: ParticipantId,
     ) -> Result<Option<ParticipantMediaState>, SignalingModuleError>;
+
+    async fn set_media_state(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        participant_media_state: &ParticipantMediaState,
+    ) -> Result<(), SignalingModuleError>;
 }

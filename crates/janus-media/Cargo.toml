@@ -29,3 +29,7 @@ snafu.workspace = true
 tokio.workspace = true
 tokio-stream.workspace = true
 tracing.workspace = true
+
+[dev-dependencies]
+pretty_assertions.workspace = true
+serial_test.workspace = true

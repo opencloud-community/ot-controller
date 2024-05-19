@@ -35,4 +35,54 @@ impl MediaStorage for RedisConnection {
             Ok(None)
         }
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_media_state(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        participant_media_state: &ParticipantMediaState,
+    ) -> Result<(), SignalingModuleError> {
+        let json = serde_json::to_vec(&participant_media_state).context(SerdeJsonSnafu {
+            message: "Failed to convert media state to json",
+        })?;
+
+        self.set(ParticipantMediaStateKey { room, participant }, json)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to get media state",
+            })?;
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use redis::aio::ConnectionManager;
+    use serial_test::serial;
+
+    use super::{super::test_common, *};
+
+    async fn setup() -> RedisConnection {
+        let redis_url =
+            std::env::var("REDIS_ADDR").unwrap_or_else(|_| "redis://0.0.0.0:6379/".to_owned());
+        let redis = redis::Client::open(redis_url).expect("Invalid redis url");
+
+        let mut mgr = ConnectionManager::new(redis).await.unwrap();
+
+        redis::cmd("FLUSHALL")
+            .query_async::<_, ()>(&mut mgr)
+            .await
+            .unwrap();
+
+        RedisConnection::new(mgr)
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn media_state() {
+        let mut redis_conn = setup().await;
+        test_common::media_state(&mut redis_conn).await;
+    }
 }

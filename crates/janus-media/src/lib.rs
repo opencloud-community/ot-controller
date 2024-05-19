@@ -108,7 +108,7 @@ impl SignalingModule for Media {
         let id = ctx.participant_id();
         let room = ctx.room_id();
 
-        storage::participant::set_media_state(ctx.redis_conn(), room, id, &state).await?;
+        ctx.redis_conn().set_media_state(room, id, &state).await?;
         ctx.add_event_stream(ReceiverStream::new(janus_events));
 
         if !screen_share_requires_permission(&mcu.shared_settings) {
@@ -144,13 +144,9 @@ impl SignalingModule for Media {
                     .state
                     .insert(info.media_session_type, info.media_session_state);
 
-                storage::participant::set_media_state(
-                    ctx.redis_conn(),
-                    self.room,
-                    self.id,
-                    &self.state,
-                )
-                .await?;
+                ctx.redis_conn()
+                    .set_media_state(self.room, self.id, &self.state)
+                    .await?;
 
                 ctx.invalidate_data();
 
@@ -182,13 +178,9 @@ impl SignalingModule for Media {
                     let old_state = *state;
                     *state = info.media_session_state;
 
-                    storage::participant::set_media_state(
-                        ctx.redis_conn(),
-                        self.room,
-                        self.id,
-                        &self.state,
-                    )
-                    .await?;
+                    ctx.redis_conn()
+                        .set_media_state(self.room, self.id, &self.state)
+                        .await?;
 
                     ctx.invalidate_data();
 
@@ -241,13 +233,9 @@ impl SignalingModule for Media {
                     },
                 );
 
-                storage::participant::set_media_state(
-                    ctx.redis_conn(),
-                    self.room,
-                    self.id,
-                    &self.state,
-                )
-                .await?;
+                ctx.redis_conn()
+                    .set_media_state(self.room, self.id, &self.state)
+                    .await?;
 
                 ctx.invalidate_data();
             }
@@ -498,13 +486,9 @@ impl SignalingModule for Media {
                     self.media.remove_publisher(MediaSessionType::Screen).await;
                     self.state.remove(MediaSessionType::Screen);
 
-                    storage::participant::set_media_state(
-                        ctx.redis_conn(),
-                        self.room,
-                        self.id,
-                        &self.state,
-                    )
-                    .await?;
+                    ctx.redis_conn()
+                        .set_media_state(self.room, self.id, &self.state)
+                        .await?;
                 }
 
                 ctx.ws_send(MediaEvent::PresenterRevoked);
@@ -709,13 +693,9 @@ impl Media {
             self.media.remove_publisher(media_session_key.1).await;
             self.state.remove(media_session_key.1);
 
-            storage::participant::set_media_state(
-                ctx.redis_conn(),
-                self.room,
-                self.id,
-                &self.state,
-            )
-            .await?;
+            ctx.redis_conn()
+                .set_media_state(self.room, self.id, &self.state)
+                .await?;
 
             ctx.invalidate_data();
         } else {
@@ -742,13 +722,9 @@ impl Media {
                 .await;
             self.state.remove(media_session_key.1);
 
-            storage::participant::set_media_state(
-                ctx.redis_conn(),
-                self.room,
-                self.id,
-                &self.state,
-            )
-            .await?;
+            ctx.redis_conn()
+                .set_media_state(self.room, self.id, &self.state)
+                .await?;
 
             ctx.invalidate_data();
         } else {

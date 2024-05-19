@@ -27,4 +27,14 @@ impl MemoryMediaState {
             .get(&(room, participant))
             .cloned()
     }
+
+    pub(super) fn set_media_state(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        participant_media_state: &ParticipantMediaState,
+    ) {
+        self.participant_media_states
+            .insert((room, participant), participant_media_state.clone());
+    }
 }
