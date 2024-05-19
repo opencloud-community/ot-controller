@@ -2,11 +2,17 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use async_trait::async_trait;
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError};
 use opentalk_types::core::{ParticipantId, RoomId, UserId};
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
 use snafu::ResultExt;
+
+use super::ModerationStorage;
+
+#[async_trait(?Send)]
+impl ModerationStorage for RedisConnection {}
 
 /// Set of user-ids banned in a room
 #[derive(ToRedisArgs)]

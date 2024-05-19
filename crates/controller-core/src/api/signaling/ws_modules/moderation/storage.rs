@@ -2,8 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+mod moderation_storage;
 mod redis;
+mod volatile;
 
+pub(crate) use moderation_storage::ModerationStorage;
 // TODO: remove once everything is exposed through the ModerationStorage trait.
 pub(crate) use redis::{
     ban_user, delete_bans, delete_raise_hands_enabled, delete_waiting_room,
