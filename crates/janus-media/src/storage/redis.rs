@@ -8,13 +8,13 @@ use opentalk_signaling_core::{
 };
 use opentalk_types::{
     core::{ParticipantId, Timestamp},
-    signaling::media::{ParticipantMediaState, SpeakingState},
+    signaling::media::{ParticipantMediaState, ParticipantSpeakingState, SpeakingState},
 };
 use redis::AsyncCommands as _;
 use redis_args::ToRedisArgs;
 use snafu::ResultExt as _;
 
-use super::{speaker::SpeakerKey, MediaStorage};
+use super::MediaStorage;
 
 #[async_trait(?Send)]
 impl MediaStorage for RedisConnection {
@@ -189,6 +189,26 @@ impl MediaStorage for RedisConnection {
         }
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_speaking_state_multiple_participants(
+        &mut self,
+        room: SignalingRoomId,
+        participants: &[ParticipantId],
+    ) -> Result<Vec<ParticipantSpeakingState>, SignalingModuleError> {
+        let mut participant_speakers = Vec::new();
+
+        for &participant in participants {
+            if let Some(speaker) = self.get_speaking_state(room, participant).await? {
+                participant_speakers.push(ParticipantSpeakingState {
+                    participant,
+                    speaker,
+                });
+            }
+        }
+
+        Ok(participant_speakers)
+    }
 }
 
 /// Data related to a module inside a participant
@@ -205,6 +225,16 @@ struct ParticipantMediaStateKey {
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:namespace=media:presenters")]
 pub(crate) struct Presenters {
     pub(crate) room: SignalingRoomId,
+}
+
+/// Data related to a module inside a participant
+#[derive(ToRedisArgs)]
+#[to_redis_args(
+    fmt = "opentalk-signaling:room={room}:participant={participant}:namespace=media:speaker"
+)]
+pub(crate) struct SpeakerKey {
+    pub(crate) room: SignalingRoomId,
+    pub(crate) participant: ParticipantId,
 }
 
 #[cfg(test)]

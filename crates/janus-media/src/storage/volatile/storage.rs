@@ -8,7 +8,7 @@ use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage};
 use opentalk_types::{
     core::{ParticipantId, Timestamp},
-    signaling::media::{ParticipantMediaState, SpeakingState},
+    signaling::media::{ParticipantMediaState, ParticipantSpeakingState, SpeakingState},
 };
 use parking_lot::RwLock;
 
@@ -136,6 +136,17 @@ impl MediaStorage for VolatileStaticMemoryStorage {
             .write()
             .delete_speaking_state_multiple_participants(room, participants);
         Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_speaking_state_multiple_participants(
+        &mut self,
+        room: SignalingRoomId,
+        participants: &[ParticipantId],
+    ) -> Result<Vec<ParticipantSpeakingState>, SignalingModuleError> {
+        Ok(state()
+            .read()
+            .get_speaking_state_multiple_participants(room, participants))
     }
 }
 

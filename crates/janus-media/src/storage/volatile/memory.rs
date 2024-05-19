@@ -7,7 +7,7 @@ use std::collections::{HashMap, HashSet};
 use opentalk_signaling_core::SignalingRoomId;
 use opentalk_types::{
     core::{ParticipantId, Timestamp},
-    signaling::media::{ParticipantMediaState, SpeakingState},
+    signaling::media::{ParticipantMediaState, ParticipantSpeakingState, SpeakingState},
 };
 
 #[derive(Debug, Clone, Default)]
@@ -107,5 +107,23 @@ impl MemoryMediaState {
         for k in participants.iter().copied().map(|p| (room, p)) {
             self.speakers.remove(&k);
         }
+    }
+
+    pub(super) fn get_speaking_state_multiple_participants(
+        &self,
+        room: SignalingRoomId,
+        participants: &[ParticipantId],
+    ) -> Vec<ParticipantSpeakingState> {
+        participants
+            .iter()
+            .copied()
+            .filter_map(|participant| {
+                self.get_speaking_state(room, participant)
+                    .map(|state| ParticipantSpeakingState {
+                        participant,
+                        speaker: state,
+                    })
+            })
+            .collect()
     }
 }

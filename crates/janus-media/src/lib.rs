@@ -548,12 +548,10 @@ impl SignalingModule for Media {
                 }
 
                 let is_presenter = ctx.redis_conn().is_presenter(self.room, self.id).await?;
-                let speakers = storage::speaker::get_all_for_room(
-                    ctx.redis_conn(),
-                    self.room,
-                    &participant_ids,
-                )
-                .await?;
+                let speakers = ctx
+                    .redis_conn()
+                    .get_speaking_state_multiple_participants(self.room, &participant_ids)
+                    .await?;
 
                 *frontend_data = Some(MediaState {
                     is_presenter,

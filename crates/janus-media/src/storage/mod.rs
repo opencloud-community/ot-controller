@@ -2,8 +2,6 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-pub mod speaker;
-
 mod media_storage;
 mod redis;
 mod volatile;
@@ -15,7 +13,9 @@ mod test_common {
     use opentalk_signaling_core::SignalingRoomId;
     use opentalk_types::{
         core::{ParticipantId, Timestamp},
-        signaling::media::{MediaSessionState, ParticipantMediaState, SpeakingState},
+        signaling::media::{
+            MediaSessionState, ParticipantMediaState, ParticipantSpeakingState, SpeakingState,
+        },
     };
     use pretty_assertions::assert_eq;
 
@@ -104,6 +104,29 @@ mod test_common {
             })
         );
 
+        assert_eq!(
+            storage
+                .get_speaking_state_multiple_participants(ROOM, &[BOB, ALICE])
+                .await
+                .unwrap(),
+            vec![
+                ParticipantSpeakingState {
+                    participant: BOB,
+                    speaker: SpeakingState {
+                        is_speaking: true,
+                        updated_at: bob_started_speaking_at
+                    }
+                },
+                ParticipantSpeakingState {
+                    participant: ALICE,
+                    speaker: SpeakingState {
+                        is_speaking: false,
+                        updated_at: alice_started_speaking_at
+                    }
+                },
+            ]
+        );
+
         storage.delete_speaking_state(ROOM, BOB).await.unwrap();
 
         assert!(storage
@@ -116,6 +139,20 @@ mod test_common {
             .await
             .unwrap()
             .is_some());
+
+        assert_eq!(
+            storage
+                .get_speaking_state_multiple_participants(ROOM, &[BOB, ALICE])
+                .await
+                .unwrap(),
+            vec![ParticipantSpeakingState {
+                participant: ALICE,
+                speaker: SpeakingState {
+                    is_speaking: false,
+                    updated_at: alice_started_speaking_at
+                }
+            }]
+        );
 
         storage
             .set_speaking_state(ROOM, BOB, false, bob_started_speaking_at)
@@ -137,5 +174,13 @@ mod test_common {
             .await
             .unwrap()
             .is_none());
+
+        assert_eq!(
+            storage
+                .get_speaking_state_multiple_participants(ROOM, &[BOB, ALICE])
+                .await
+                .unwrap(),
+            vec![]
+        );
     }
 }
