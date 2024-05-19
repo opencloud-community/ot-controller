@@ -9,4 +9,10 @@ use opentalk_types::core::{RoomId, UserId};
 #[async_trait(?Send)]
 pub(crate) trait ModerationStorage {
     async fn ban_user(&mut self, room: RoomId, user: UserId) -> Result<(), SignalingModuleError>;
+
+    async fn is_user_banned(
+        &mut self,
+        room: RoomId,
+        user: UserId,
+    ) -> Result<bool, SignalingModuleError>;
 }

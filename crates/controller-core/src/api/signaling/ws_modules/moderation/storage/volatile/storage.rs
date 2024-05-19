@@ -25,4 +25,32 @@ impl ModerationStorage for VolatileStaticMemoryStorage {
         state().write().ban_user(room, user);
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn is_user_banned(
+        &mut self,
+        room: RoomId,
+        user: UserId,
+    ) -> Result<bool, SignalingModuleError> {
+        Ok(state().read().is_user_banned(room, user))
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use opentalk_signaling_core::VolatileStaticMemoryStorage;
+    use serial_test::serial;
+
+    use super::{super::super::test_common, state};
+
+    async fn storage() -> VolatileStaticMemoryStorage {
+        state().write().reset();
+        VolatileStaticMemoryStorage
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn user_bans() {
+        test_common::user_bans(&mut storage().await).await;
+    }
 }

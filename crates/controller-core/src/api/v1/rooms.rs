@@ -49,7 +49,7 @@ use super::response::NoContent;
 use crate::{
     api::{
         signaling::{
-            breakout::storage::BreakoutStorage as _, moderation,
+            breakout::storage::BreakoutStorage as _, moderation::storage::ModerationStorage as _,
             ticket::start_or_continue_signaling_session, SignalingModules,
         },
         v1::{util::require_feature, ApiResponse},
@@ -325,7 +325,8 @@ pub async fn start(
     let mut redis_conn = (**redis_conn).clone();
 
     // check if user is banned from room
-    if moderation::storage::is_banned(&mut redis_conn, room.id, current_user.id)
+    if redis_conn
+        .is_user_banned(room.id, current_user.id)
         .await
         .map_err(Into::<ApiError>::into)?
     {

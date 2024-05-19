@@ -20,4 +20,11 @@ impl MemoryModerationState {
     pub(super) fn ban_user(&mut self, room: RoomId, user: UserId) {
         self.banned_users.entry(room).or_default().insert(user);
     }
+
+    pub(super) fn is_user_banned(&self, room: RoomId, user: UserId) -> bool {
+        self.banned_users
+            .get(&room)
+            .map(|b| b.contains(&user))
+            .unwrap_or_default()
+    }
 }

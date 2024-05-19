@@ -19,6 +19,19 @@ impl ModerationStorage for RedisConnection {
             message: "Failed to SADD user_id to bans",
         })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn is_user_banned(
+        &mut self,
+        room: RoomId,
+        user_id: UserId,
+    ) -> Result<bool, SignalingModuleError> {
+        self.sismember(Bans { room }, user_id)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to SISMEMBER user_id on bans",
+            })
+    }
 }
 
 /// Set of user-ids banned in a room
@@ -26,20 +39,6 @@ impl ModerationStorage for RedisConnection {
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:bans")]
 struct Bans {
     room: RoomId,
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn is_banned(
-    redis_conn: &mut RedisConnection,
-    room: RoomId,
-    user_id: UserId,
-) -> Result<bool, SignalingModuleError> {
-    redis_conn
-        .sismember(Bans { room }, user_id)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to SISMEMBER user_id on bans",
-        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -360,4 +359,33 @@ pub async fn delete_waiting_room_accepted(
         .context(RedisSnafu {
             message: "Failed to DEL waiting_room_accepted_list",
         })
+}
+
+#[cfg(test)]
+mod test {
+    use redis::aio::ConnectionManager;
+    use serial_test::serial;
+
+    use super::{super::test_common, *};
+
+    async fn storage() -> RedisConnection {
+        let redis_url =
+            std::env::var("REDIS_ADDR").unwrap_or_else(|_| "redis://0.0.0.0:6379/".to_owned());
+        let redis = redis::Client::open(redis_url).expect("Invalid redis url");
+
+        let mut mgr = ConnectionManager::new(redis).await.unwrap();
+
+        redis::cmd("FLUSHALL")
+            .query_async::<_, ()>(&mut mgr)
+            .await
+            .unwrap();
+
+        RedisConnection::new(mgr)
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn user_bans() {
+        test_common::user_bans(&mut storage().await).await;
+    }
 }
