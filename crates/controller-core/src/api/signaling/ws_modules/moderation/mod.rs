@@ -75,7 +75,9 @@ async fn set_waiting_room_enabled(
     room_id: RoomId,
     enabled: bool,
 ) -> Result<(), SignalingModuleError> {
-    storage::set_waiting_room_enabled(ctx.redis_conn(), room_id, enabled).await?;
+    ctx.redis_conn()
+        .set_waiting_room_enabled(room_id, enabled)
+        .await?;
 
     ctx.exchange_publish(
         control::exchange::global_room_all_participants(room_id),

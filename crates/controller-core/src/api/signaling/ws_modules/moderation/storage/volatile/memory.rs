@@ -36,4 +36,8 @@ impl MemoryModerationState {
     pub(super) fn init_waiting_room_enabled(&mut self, room: RoomId, enabled: bool) -> bool {
         *self.waiting_room_enabled.entry(room).or_insert(enabled)
     }
+
+    pub(super) fn set_waiting_room_enabled(&mut self, room: RoomId, enabled: bool) {
+        self.waiting_room_enabled.insert(room, enabled);
+    }
 }

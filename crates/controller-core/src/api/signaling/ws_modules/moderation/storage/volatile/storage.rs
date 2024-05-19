@@ -49,6 +49,16 @@ impl ModerationStorage for VolatileStaticMemoryStorage {
     ) -> Result<bool, SignalingModuleError> {
         Ok(state().write().init_waiting_room_enabled(room, enabled))
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_waiting_room_enabled(
+        &mut self,
+        room: RoomId,
+        enabled: bool,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().set_waiting_room_enabled(room, enabled);
+        Ok(())
+    }
 }
 
 #[cfg(test)]

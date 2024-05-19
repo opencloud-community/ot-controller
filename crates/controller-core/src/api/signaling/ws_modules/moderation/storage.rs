@@ -11,10 +11,10 @@ pub(crate) use moderation_storage::ModerationStorage;
 pub(crate) use redis::{
     delete_raise_hands_enabled, delete_waiting_room, delete_waiting_room_accepted,
     delete_waiting_room_enabled, is_raise_hands_enabled, is_waiting_room_enabled,
-    set_raise_hands_enabled, set_waiting_room_enabled, waiting_room_accepted_add,
-    waiting_room_accepted_all, waiting_room_accepted_len, waiting_room_accepted_remove,
-    waiting_room_accepted_remove_list, waiting_room_add, waiting_room_all, waiting_room_contains,
-    waiting_room_len, waiting_room_remove,
+    set_raise_hands_enabled, waiting_room_accepted_add, waiting_room_accepted_all,
+    waiting_room_accepted_len, waiting_room_accepted_remove, waiting_room_accepted_remove_list,
+    waiting_room_add, waiting_room_all, waiting_room_contains, waiting_room_len,
+    waiting_room_remove,
 };
 
 #[cfg(test)]
@@ -63,5 +63,7 @@ mod test_common {
                 .unwrap(),
             true
         );
+
+        storage.set_waiting_room_enabled(ROOM, false).await.unwrap();
     }
 }

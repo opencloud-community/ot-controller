@@ -57,6 +57,19 @@ impl ModerationStorage for RedisConnection {
             })?;
         Ok(was_enabled.1)
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_waiting_room_enabled(
+        &mut self,
+        room: RoomId,
+        enabled: bool,
+    ) -> Result<(), SignalingModuleError> {
+        self.set(WaitingRoomEnabled { room }, enabled)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to SET waiting_room_enabled",
+            })
+    }
 }
 
 /// Set of user-ids banned in a room
@@ -71,20 +84,6 @@ struct Bans {
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:waiting_room_enabled")]
 struct WaitingRoomEnabled {
     room: RoomId,
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn set_waiting_room_enabled(
-    redis_conn: &mut RedisConnection,
-    room: RoomId,
-    enabled: bool,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .set(WaitingRoomEnabled { room }, enabled)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to SET waiting_room_enabled",
-        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
