@@ -82,4 +82,12 @@ impl MemoryMediaState {
                 updated_at,
             });
     }
+
+    pub(super) fn get_speaking_state(
+        &self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Option<SpeakingState> {
+        self.speakers.get(&(room, participant)).cloned()
+    }
 }

@@ -3,13 +3,12 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
-use opentalk_types::{
-    core::ParticipantId,
-    signaling::media::{ParticipantSpeakingState, SpeakingState},
-};
+use opentalk_types::{core::ParticipantId, signaling::media::ParticipantSpeakingState};
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
 use snafu::ResultExt;
+
+use super::MediaStorage as _;
 
 /// Data related to a module inside a participant
 #[derive(ToRedisArgs)]
@@ -19,20 +18,6 @@ use snafu::ResultExt;
 pub(crate) struct SpeakerKey {
     pub(crate) room: SignalingRoomId,
     pub(crate) participant: ParticipantId,
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn get(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    participant: ParticipantId,
-) -> Result<Option<SpeakingState>, SignalingModuleError> {
-    redis_conn
-        .get(SpeakerKey { room, participant })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to get speaker state",
-        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -68,7 +53,7 @@ pub async fn get_all_for_room(
     let mut participant_speakers = Vec::new();
 
     for &participant in participants {
-        if let Some(speaker) = get(redis_conn, room, participant).await? {
+        if let Some(speaker) = redis_conn.get_speaking_state(room, participant).await? {
             participant_speakers.push(ParticipantSpeakingState {
                 participant,
                 speaker,

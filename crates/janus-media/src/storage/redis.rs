@@ -151,6 +151,19 @@ impl MediaStorage for RedisConnection {
             message: "Failed to set speaker state",
         })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_speaking_state(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<Option<SpeakingState>, SignalingModuleError> {
+        self.get(SpeakerKey { room, participant })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to get speaker state",
+            })
+    }
 }
 
 /// Data related to a module inside a participant
@@ -176,7 +189,7 @@ mod test {
 
     use super::{super::test_common, *};
 
-    async fn setup() -> RedisConnection {
+    async fn storage() -> RedisConnection {
         let redis_url =
             std::env::var("REDIS_ADDR").unwrap_or_else(|_| "redis://0.0.0.0:6379/".to_owned());
         let redis = redis::Client::open(redis_url).expect("Invalid redis url");
@@ -194,14 +207,18 @@ mod test {
     #[tokio::test]
     #[serial]
     async fn media_state() {
-        let mut redis_conn = setup().await;
-        test_common::media_state(&mut redis_conn).await;
+        test_common::media_state(&mut storage().await).await;
     }
 
     #[tokio::test]
     #[serial]
     async fn presenter() {
-        let mut redis_conn = setup().await;
-        test_common::presenter(&mut redis_conn).await;
+        test_common::presenter(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn speaking_state() {
+        test_common::speaking_state(&mut storage().await).await;
     }
 }

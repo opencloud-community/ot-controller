@@ -14,8 +14,8 @@ pub(crate) use media_storage::MediaStorage;
 mod test_common {
     use opentalk_signaling_core::SignalingRoomId;
     use opentalk_types::{
-        core::ParticipantId,
-        signaling::media::{MediaSessionState, ParticipantMediaState},
+        core::{ParticipantId, Timestamp},
+        signaling::media::{MediaSessionState, ParticipantMediaState, SpeakingState},
     };
     use pretty_assertions::assert_eq;
 
@@ -67,5 +67,27 @@ mod test_common {
         storage.clear_presenters(ROOM).await.unwrap();
         assert!(!storage.is_presenter(ROOM, BOB).await.unwrap());
         assert!(!storage.is_presenter(ROOM, ALICE).await.unwrap());
+    }
+
+    pub(super) async fn speaking_state(storage: &mut dyn MediaStorage) {
+        assert!(storage
+            .get_speaking_state(ROOM, BOB)
+            .await
+            .unwrap()
+            .is_none());
+
+        let bob_started_speaking_at = Timestamp::now();
+        storage
+            .set_speaking_state(ROOM, BOB, true, bob_started_speaking_at)
+            .await
+            .unwrap();
+
+        assert_eq!(
+            storage.get_speaking_state(ROOM, BOB).await.unwrap(),
+            Some(SpeakingState {
+                is_speaking: true,
+                updated_at: bob_started_speaking_at
+            })
+        );
     }
 }

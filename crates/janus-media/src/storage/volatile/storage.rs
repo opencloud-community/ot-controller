@@ -8,7 +8,7 @@ use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage};
 use opentalk_types::{
     core::{ParticipantId, Timestamp},
-    signaling::media::ParticipantMediaState,
+    signaling::media::{ParticipantMediaState, SpeakingState},
 };
 use parking_lot::RwLock;
 
@@ -106,6 +106,15 @@ impl MediaStorage for VolatileStaticMemoryStorage {
             .set_speaking_state(room, participant, is_speaking, updated_at);
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_speaking_state(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<Option<SpeakingState>, SignalingModuleError> {
+        Ok(state().read().get_speaking_state(room, participant))
+    }
 }
 
 #[cfg(test)]
@@ -130,5 +139,11 @@ mod test {
     #[serial]
     async fn presenter() {
         test_common::presenter(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn speaking_state() {
+        test_common::speaking_state(&mut storage().await).await;
     }
 }
