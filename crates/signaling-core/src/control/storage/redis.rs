@@ -502,6 +502,20 @@ impl ControlStorage for RedisConnection {
 
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_skip_waiting_room(
+        &mut self,
+        participant: ParticipantId,
+    ) -> Result<bool, SignalingModuleError> {
+        let value: Option<bool> =
+            self.get(SkipWaitingRoom { participant })
+                .await
+                .context(RedisSnafu {
+                    message: "Failed to get 'skip waiting room'",
+                })?;
+        Ok(value.unwrap_or_default())
+    }
 }
 
 /// Describes a set of participants inside a room.
@@ -670,22 +684,6 @@ pub struct SkipWaitingRoom {
     participant: ParticipantId,
 }
 
-/// Get the `skip_waiting_room` value for participant. If no value is set for the key,
-/// false is returned.
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn get_skip_waiting_room(
-    redis_conn: &mut RedisConnection,
-    participant: ParticipantId,
-) -> Result<bool, SignalingModuleError> {
-    let value: Option<bool> = redis_conn
-        .get(SkipWaitingRoom { participant })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to get 'skip waiting room'",
-        })?;
-    Ok(value.unwrap_or_default())
-}
-
 #[cfg(test)]
 mod test {
     use redis::aio::ConnectionManager;
@@ -766,5 +764,11 @@ mod test {
     #[serial]
     async fn room_closes_at() {
         test_common::room_closes_at(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn skip_waiting_room() {
+        test_common::skip_waiting_room(&mut storage().await).await;
     }
 }

@@ -313,6 +313,14 @@ impl ControlStorage for VolatileStaticMemoryStorage {
         state().write().reset_skip_waiting_room_expiry(participant);
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_skip_waiting_room(
+        &mut self,
+        participant: ParticipantId,
+    ) -> Result<bool, SignalingModuleError> {
+        Ok(state().read().get_skip_waiting_room(participant))
+    }
 }
 
 #[cfg(test)]
@@ -385,5 +393,11 @@ mod tests {
     #[serial]
     async fn room_closes_at() {
         test_common::room_closes_at(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn skip_waiting_room() {
+        test_common::skip_waiting_room(&mut storage().await).await;
     }
 }

@@ -216,4 +216,11 @@ pub trait ControlStorage {
         &mut self,
         participant: ParticipantId,
     ) -> Result<(), SignalingModuleError>;
+
+    /// Get the `skip_waiting_room` value for participant. If no value is set for the key,
+    /// false is returned.
+    async fn get_skip_waiting_room(
+        &mut self,
+        participant: ParticipantId,
+    ) -> Result<bool, SignalingModuleError>;
 }

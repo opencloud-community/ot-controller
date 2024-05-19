@@ -13,9 +13,7 @@ const SKIP_WAITING_ROOM_KEY_EXPIRY: u32 = 120;
 pub const SKIP_WAITING_ROOM_KEY_REFRESH_INTERVAL: u64 = 60;
 
 // TODO: remove all these re-exports once the functionality is migrated into the ControlStorage trait
-pub use redis::{
-    get_skip_waiting_room, participant_id_in_use, room_mutex, ParticipantIdRunnerLock,
-};
+pub use redis::{participant_id_in_use, room_mutex, ParticipantIdRunnerLock};
 
 #[cfg(test)]
 mod test_common {
@@ -464,5 +462,37 @@ mod test_common {
         assert_eq!(s.get_room_closes_at(ROOM).await.unwrap(), Some(closes_at));
         s.remove_room_closes_at(ROOM).await.unwrap();
         assert_eq!(s.get_room_closes_at(ROOM).await.unwrap(), None);
+    }
+
+    pub(super) async fn skip_waiting_room(s: &mut impl ControlStorage) {
+        // We can't easily test expiry here because it's fixed to long durations, and we
+        // don't want tests to take a long time, they should follow the F.I.R.S.T. principle.
+
+        assert!(!s.get_skip_waiting_room(ALICE).await.unwrap());
+
+        s.set_skip_waiting_room_with_expiry_nx(ALICE, true)
+            .await
+            .unwrap();
+
+        assert!(s.get_skip_waiting_room(ALICE).await.unwrap());
+
+        s.set_skip_waiting_room_with_expiry(ALICE, false)
+            .await
+            .unwrap();
+
+        assert!(!s.get_skip_waiting_room(ALICE).await.unwrap());
+
+        s.set_skip_waiting_room_with_expiry(ALICE, true)
+            .await
+            .unwrap();
+
+        assert!(s.get_skip_waiting_room(ALICE).await.unwrap());
+
+        // Ensure that setting with `nx` doesn't overwrite the existing value
+        s.set_skip_waiting_room_with_expiry_nx(ALICE, false)
+            .await
+            .unwrap();
+
+        assert!(s.get_skip_waiting_room(ALICE).await.unwrap());
     }
 }

@@ -902,7 +902,7 @@ impl Runner {
 
                 // Allow moderators, invisible services, and already accepted participants to skip the waiting room
                 let can_skip_waiting_room: bool =
-                    storage::get_skip_waiting_room(&mut self.redis_conn, self.id).await?;
+                    self.redis_conn.get_skip_waiting_room(self.id).await?;
 
                 let skip_waiting_room = matches!(self.role, Role::Moderator)
                     || !control_data.participation_kind.is_visible()

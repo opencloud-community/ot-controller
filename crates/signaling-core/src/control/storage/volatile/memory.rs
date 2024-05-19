@@ -401,6 +401,14 @@ impl MemoryControlState {
             flag.set_expiry(Duration::from_secs(SKIP_WAITING_ROOM_KEY_EXPIRY.into()));
         }
     }
+
+    pub(super) fn get_skip_waiting_room(&self, participant: ParticipantId) -> bool {
+        self.participants_skip_waiting_room
+            .get(&participant)
+            .and_then(ExpiringData::value)
+            .copied()
+            .unwrap_or_default()
+    }
 }
 
 trait FromRedisU8VecVec {
