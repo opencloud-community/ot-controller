@@ -762,8 +762,7 @@ impl Runner {
                     self.handle_module_requested_actions(timestamp, actions).await;
                 }
                 _ = skip_waiting_room_refresh_interval.tick() => {
-                    _ = storage::reset_skip_waiting_room_expiry(
-                        &mut self.redis_conn,
+                    _ = self.redis_conn.reset_skip_waiting_room_expiry(
                         self.id,
                     )
                     .await;

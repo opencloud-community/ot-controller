@@ -375,21 +375,30 @@ impl MemoryControlState {
         );
     }
 
+    fn cleanup_expired_skip_waiting_room_flags(&mut self) {
+        self.participants_skip_waiting_room
+            .retain(|_k, v| !v.is_expired());
+    }
+
     pub(super) fn set_skip_waiting_room_with_expiry_nx(
         &mut self,
         participant: ParticipantId,
         value: bool,
     ) {
-        let expiry = Duration::from_secs(SKIP_WAITING_ROOM_KEY_EXPIRY.into());
-        let entry = self
-            .participants_skip_waiting_room
-            .entry(participant)
-            .or_insert_with(|| ExpiringData::new_ex(value, expiry));
+        self.cleanup_expired_skip_waiting_room_flags();
 
-        if entry.is_expired() {
-            *entry = ExpiringData::new_ex(value, expiry);
-        } else {
-            entry.set_expiry(expiry);
+        let expiry = Duration::from_secs(SKIP_WAITING_ROOM_KEY_EXPIRY.into());
+        self.participants_skip_waiting_room
+            .entry(participant)
+            .or_insert_with(|| ExpiringData::new_ex(value, expiry))
+            .set_expiry(expiry);
+    }
+
+    pub(super) fn reset_skip_waiting_room_expiry(&mut self, participant: ParticipantId) {
+        self.cleanup_expired_skip_waiting_room_flags();
+
+        if let Some(flag) = self.participants_skip_waiting_room.get_mut(&participant) {
+            flag.set_expiry(Duration::from_secs(SKIP_WAITING_ROOM_KEY_EXPIRY.into()));
         }
     }
 }

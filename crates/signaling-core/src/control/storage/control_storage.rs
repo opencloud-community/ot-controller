@@ -204,10 +204,16 @@ pub trait ControlStorage {
         value: bool,
     ) -> Result<(), SignalingModuleError>;
 
-    /// Set the `skip_waiting_room` key for participant with an expiry if the key does not exist.
+    /// Set the `skip_waiting_room` flag for participant with an expiry if the key does not exist.
     async fn set_skip_waiting_room_with_expiry_nx(
         &mut self,
         participant: ParticipantId,
         value: bool,
+    ) -> Result<(), SignalingModuleError>;
+
+    /// Extend the `skip_waiting_room` flag for participant with an expiry.
+    async fn reset_skip_waiting_room_expiry(
+        &mut self,
+        participant: ParticipantId,
     ) -> Result<(), SignalingModuleError>;
 }
