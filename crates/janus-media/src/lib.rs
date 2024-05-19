@@ -112,7 +112,7 @@ impl SignalingModule for Media {
         ctx.add_event_stream(ReceiverStream::new(janus_events));
 
         if !screen_share_requires_permission(&mcu.shared_settings) {
-            storage::presenter::set(ctx.redis_conn(), room, id).await?;
+            ctx.redis_conn().add_presenter(room, id).await?;
         }
 
         Ok(Some(Self {
@@ -461,7 +461,7 @@ impl SignalingModule for Media {
                     return Ok(());
                 }
 
-                storage::presenter::set(ctx.redis_conn(), self.room, self.id).await?;
+                ctx.redis_conn().add_presenter(self.room, self.id).await?;
 
                 ctx.ws_send(MediaEvent::PresenterGranted);
 

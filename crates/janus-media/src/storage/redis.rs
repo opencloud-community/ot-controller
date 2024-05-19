@@ -11,7 +11,7 @@ use redis::AsyncCommands as _;
 use redis_args::ToRedisArgs;
 use snafu::ResultExt as _;
 
-use super::MediaStorage;
+use super::{presenter::Presenters, MediaStorage};
 
 #[async_trait(?Send)]
 impl MediaStorage for RedisConnection {
@@ -68,6 +68,21 @@ impl MediaStorage for RedisConnection {
             .context(RedisSnafu {
                 message: "Failed to delete media state",
             })
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn add_presenter(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<(), SignalingModuleError> {
+        self.sadd(Presenters { room }, participant)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to set presenter",
+            })?;
+
+        Ok(())
     }
 }
 

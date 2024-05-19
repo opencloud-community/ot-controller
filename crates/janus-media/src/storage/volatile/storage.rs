@@ -51,6 +51,16 @@ impl MediaStorage for VolatileStaticMemoryStorage {
         state().write().delete_media_state(room, participant);
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn add_presenter(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().set_is_presenter(room, participant);
+        Ok(())
+    }
 }
 
 #[cfg(test)]

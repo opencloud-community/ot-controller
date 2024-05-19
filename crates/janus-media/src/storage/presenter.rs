@@ -15,22 +15,6 @@ pub(crate) struct Presenters {
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn set(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    participant: ParticipantId,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .sadd(Presenters { room }, participant)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to set presenter",
-        })?;
-
-    Ok(())
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
 pub async fn is_presenter(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,

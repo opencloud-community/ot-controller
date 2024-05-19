@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use opentalk_signaling_core::SignalingRoomId;
 use opentalk_types::{core::ParticipantId, signaling::media::ParticipantMediaState};
@@ -10,6 +10,7 @@ use opentalk_types::{core::ParticipantId, signaling::media::ParticipantMediaStat
 #[derive(Debug, Clone, Default)]
 pub(super) struct MemoryMediaState {
     participant_media_states: HashMap<(SignalingRoomId, ParticipantId), ParticipantMediaState>,
+    presenters: HashMap<SignalingRoomId, HashSet<ParticipantId>>,
 }
 
 impl MemoryMediaState {
@@ -40,5 +41,9 @@ impl MemoryMediaState {
 
     pub(super) fn delete_media_state(&mut self, room: SignalingRoomId, participant: ParticipantId) {
         self.participant_media_states.remove(&(room, participant));
+    }
+
+    pub(super) fn set_is_presenter(&mut self, room: SignalingRoomId, participant: ParticipantId) {
+        self.presenters.entry(room).or_default().insert(participant);
     }
 }

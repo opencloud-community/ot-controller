@@ -26,4 +26,10 @@ pub(crate) trait MediaStorage {
         room: SignalingRoomId,
         participant: ParticipantId,
     ) -> Result<(), SignalingModuleError>;
+
+    async fn add_presenter(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<(), SignalingModuleError>;
 }
