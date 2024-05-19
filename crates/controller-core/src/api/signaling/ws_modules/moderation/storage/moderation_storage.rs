@@ -15,4 +15,6 @@ pub(crate) trait ModerationStorage {
         room: RoomId,
         user: UserId,
     ) -> Result<bool, SignalingModuleError>;
+
+    async fn delete_user_bans(&mut self, room: RoomId) -> Result<(), SignalingModuleError>;
 }

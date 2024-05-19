@@ -32,6 +32,13 @@ impl ModerationStorage for RedisConnection {
                 message: "Failed to SISMEMBER user_id on bans",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_user_bans(&mut self, room: RoomId) -> Result<(), SignalingModuleError> {
+        self.del(Bans { room }).await.context(RedisSnafu {
+            message: "Failed to DEL bans",
+        })
+    }
 }
 
 /// Set of user-ids banned in a room
@@ -39,16 +46,6 @@ impl ModerationStorage for RedisConnection {
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:bans")]
 struct Bans {
     room: RoomId,
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn delete_bans(
-    redis_conn: &mut RedisConnection,
-    room: RoomId,
-) -> Result<(), SignalingModuleError> {
-    redis_conn.del(Bans { room }).await.context(RedisSnafu {
-        message: "Failed to DEL bans",
-    })
 }
 
 /// If set to true the waiting room is enabled

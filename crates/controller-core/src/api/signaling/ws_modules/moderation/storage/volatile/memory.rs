@@ -27,4 +27,8 @@ impl MemoryModerationState {
             .map(|b| b.contains(&user))
             .unwrap_or_default()
     }
+
+    pub(super) fn delete_user_bans(&mut self, room: RoomId) {
+        self.banned_users.remove(&room);
+    }
 }

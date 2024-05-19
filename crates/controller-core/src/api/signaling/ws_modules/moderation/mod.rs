@@ -519,7 +519,7 @@ impl SignalingModule for ModerationModule {
 
     async fn on_destroy(self, mut ctx: DestroyContext<'_>) {
         if ctx.destroy_room() {
-            if let Err(e) = storage::delete_bans(ctx.redis_conn(), self.room.room_id()).await {
+            if let Err(e) = ctx.redis_conn().delete_user_bans(self.room.room_id()).await {
                 log::error!("Failed to clean up bans list {}", Report::from_error(e));
             }
 

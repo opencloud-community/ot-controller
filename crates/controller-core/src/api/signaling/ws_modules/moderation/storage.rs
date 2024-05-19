@@ -9,7 +9,7 @@ mod volatile;
 pub(crate) use moderation_storage::ModerationStorage;
 // TODO: remove once everything is exposed through the ModerationStorage trait.
 pub(crate) use redis::{
-    delete_bans, delete_raise_hands_enabled, delete_waiting_room, delete_waiting_room_accepted,
+    delete_raise_hands_enabled, delete_waiting_room, delete_waiting_room_accepted,
     delete_waiting_room_enabled, init_waiting_room_key, is_raise_hands_enabled,
     is_waiting_room_enabled, set_raise_hands_enabled, set_waiting_room_enabled,
     waiting_room_accepted_add, waiting_room_accepted_all, waiting_room_accepted_len,
@@ -34,6 +34,16 @@ mod test_common {
         storage.ban_user(ROOM, BOB).await.unwrap();
 
         assert!(storage.is_user_banned(ROOM, BOB).await.unwrap());
+        assert!(!storage.is_user_banned(ROOM, ALICE).await.unwrap());
+
+        storage.ban_user(ROOM, ALICE).await.unwrap();
+
+        assert!(storage.is_user_banned(ROOM, BOB).await.unwrap());
+        assert!(storage.is_user_banned(ROOM, ALICE).await.unwrap());
+
+        storage.delete_user_bans(ROOM).await.unwrap();
+
+        assert!(!storage.is_user_banned(ROOM, BOB).await.unwrap());
         assert!(!storage.is_user_banned(ROOM, ALICE).await.unwrap());
     }
 }

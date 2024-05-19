@@ -34,6 +34,12 @@ impl ModerationStorage for VolatileStaticMemoryStorage {
     ) -> Result<bool, SignalingModuleError> {
         Ok(state().read().is_user_banned(room, user))
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_user_bans(&mut self, room: RoomId) -> Result<(), SignalingModuleError> {
+        state().write().delete_user_bans(room);
+        Ok(())
+    }
 }
 
 #[cfg(test)]
