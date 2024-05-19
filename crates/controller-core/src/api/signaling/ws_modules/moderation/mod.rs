@@ -532,8 +532,10 @@ impl SignalingModule for ModerationModule {
                 log::error!("Failed to clean up bans list {}", Report::from_error(e));
             }
 
-            if let Err(e) =
-                storage::delete_waiting_room_enabled(ctx.redis_conn(), self.room.room_id()).await
+            if let Err(e) = ctx
+                .redis_conn()
+                .delete_waiting_room_enabled(self.room.room_id())
+                .await
             {
                 log::error!(
                     "Failed to clean up waiting room enabled flag {}",

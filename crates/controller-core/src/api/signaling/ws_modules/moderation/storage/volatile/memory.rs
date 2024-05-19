@@ -47,4 +47,8 @@ impl MemoryModerationState {
             .copied()
             .unwrap_or_default()
     }
+
+    pub(super) fn delete_waiting_room_enabled(&mut self, room: RoomId) {
+        self.waiting_room_enabled.remove(&room);
+    }
 }
