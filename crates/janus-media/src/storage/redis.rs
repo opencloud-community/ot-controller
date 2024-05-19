@@ -1,0 +1,11 @@
+// SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+//
+// SPDX-License-Identifier: EUPL-1.2
+
+use async_trait::async_trait;
+use opentalk_signaling_core::RedisConnection;
+
+use super::MediaStorage;
+
+#[async_trait(?Send)]
+impl MediaStorage for RedisConnection {}

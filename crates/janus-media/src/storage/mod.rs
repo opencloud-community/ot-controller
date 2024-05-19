@@ -5,3 +5,9 @@
 pub mod participant;
 pub mod presenter;
 pub mod speaker;
+
+mod media_storage;
+mod redis;
+mod volatile;
+
+pub(crate) use media_storage::MediaStorage;

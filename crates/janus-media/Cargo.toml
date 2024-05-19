@@ -19,6 +19,7 @@ opentalk-controller-settings.workspace = true
 opentalk-janus-client.workspace = true
 opentalk-signaling-core.workspace = true
 opentalk-types = { workspace = true, features = ["backend"] }
+parking_lot.workspace = true
 pin-project-lite = "0.2"
 redis.workspace = true
 redis-args.workspace = true
