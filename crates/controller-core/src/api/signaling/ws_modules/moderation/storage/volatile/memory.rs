@@ -166,4 +166,11 @@ impl MemoryModerationState {
                 .copied(),
         )
     }
+
+    pub(super) fn waiting_room_accepted_participant_count(&self, room: RoomId) -> usize {
+        self.waiting_room_accepted_participants
+            .get(&room)
+            .map(|p| p.len())
+            .unwrap_or_default()
+    }
 }

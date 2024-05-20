@@ -516,23 +516,21 @@ impl Runner {
                             false
                         }
                     };
-                    let waiting_room_accepted_is_empty =
-                        match moderation::storage::waiting_room_accepted_len(
-                            &mut self.redis_conn,
-                            self.room_id.room_id(),
-                        )
+                    let waiting_room_accepted_is_empty = match self
+                        .redis_conn
+                        .waiting_room_accepted_participant_count(self.room_id.room_id())
                         .await
-                        {
-                            Ok(waiting_room_len) => waiting_room_len == 0,
-                            Err(e) => {
-                                log::error!(
-                                    "failed to get accepted waiting room len, {}",
-                                    Report::from_error(e)
-                                );
-                                encountered_error = true;
-                                false
-                            }
-                        };
+                    {
+                        Ok(waiting_room_len) => waiting_room_len == 0,
+                        Err(e) => {
+                            log::error!(
+                                "failed to get accepted waiting room len, {}",
+                                Report::from_error(e)
+                            );
+                            encountered_error = true;
+                            false
+                        }
+                    };
                     waiting_room_is_empty && waiting_room_accepted_is_empty
                 }
             } else {
