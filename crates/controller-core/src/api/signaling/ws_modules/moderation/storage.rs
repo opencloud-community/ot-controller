@@ -12,7 +12,6 @@ pub(crate) use redis::{
     delete_waiting_room, delete_waiting_room_accepted, waiting_room_accepted_add,
     waiting_room_accepted_all, waiting_room_accepted_len, waiting_room_accepted_remove,
     waiting_room_accepted_remove_list, waiting_room_all, waiting_room_contains, waiting_room_len,
-    waiting_room_remove,
 };
 
 #[cfg(test)]
@@ -102,6 +101,15 @@ mod test_common {
             .unwrap());
         // Ensure that we receive `false` when attempting to add the same participant twice
         assert!(!storage
+            .waiting_room_add_participant(ROOM, BOB_PARTICIPANT)
+            .await
+            .unwrap());
+        storage
+            .waiting_room_remove_participant(ROOM, BOB_PARTICIPANT)
+            .await
+            .unwrap();
+        // Now the same participant can be added again
+        assert!(storage
             .waiting_room_add_participant(ROOM, BOB_PARTICIPANT)
             .await
             .unwrap());

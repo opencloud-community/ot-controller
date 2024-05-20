@@ -461,12 +461,10 @@ impl Runner {
                     encountered_error = true;
                 }
             } else if let RunnerState::Waiting { .. } = &self.state {
-                if let Err(e) = moderation::storage::waiting_room_remove(
-                    &mut self.redis_conn,
-                    self.room_id.room_id(),
-                    self.id,
-                )
-                .await
+                if let Err(e) = self
+                    .redis_conn
+                    .waiting_room_remove_participant(self.room_id.room_id(), self.id)
+                    .await
                 {
                     log::error!(
                         "failed to remove participant from waiting_room list, {:?}",

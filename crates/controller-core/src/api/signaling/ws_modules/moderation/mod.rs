@@ -390,7 +390,9 @@ impl SignalingModule for ModerationModule {
 
                 storage::waiting_room_accepted_add(ctx.redis_conn(), self.room.room_id(), target)
                     .await?;
-                storage::waiting_room_remove(ctx.redis_conn(), self.room.room_id(), target).await?;
+                ctx.redis_conn()
+                    .waiting_room_remove_participant(self.room.room_id(), target)
+                    .await?;
 
                 ctx.exchange_publish_control(
                     control::exchange::global_room_by_participant_id(self.room.room_id(), target),
