@@ -173,4 +173,8 @@ impl MemoryModerationState {
             .map(|p| p.len())
             .unwrap_or_default()
     }
+
+    pub(super) fn delete_waiting_room_accepted(&mut self, room: RoomId) {
+        self.waiting_room_accepted_participants.remove(&room);
+    }
 }

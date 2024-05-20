@@ -7,8 +7,6 @@ mod redis;
 mod volatile;
 
 pub(crate) use moderation_storage::ModerationStorage;
-// TODO: remove once everything is exposed through the ModerationStorage trait.
-pub(crate) use redis::delete_waiting_room_accepted;
 
 #[cfg(test)]
 mod test_common {

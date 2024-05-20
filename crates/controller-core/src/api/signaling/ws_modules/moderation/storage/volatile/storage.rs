@@ -210,6 +210,15 @@ impl ModerationStorage for VolatileStaticMemoryStorage {
     ) -> Result<usize, SignalingModuleError> {
         Ok(state().read().waiting_room_accepted_participant_count(room))
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_waiting_room_accepted(
+        &mut self,
+        room: RoomId,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().delete_waiting_room_accepted(room);
+        Ok(())
+    }
 }
 
 #[cfg(test)]

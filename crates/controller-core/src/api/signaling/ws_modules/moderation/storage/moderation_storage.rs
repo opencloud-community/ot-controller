@@ -120,4 +120,9 @@ pub(crate) trait ModerationStorage {
         &mut self,
         room: RoomId,
     ) -> Result<usize, SignalingModuleError>;
+
+    async fn delete_waiting_room_accepted(
+        &mut self,
+        room: RoomId,
+    ) -> Result<(), SignalingModuleError>;
 }
