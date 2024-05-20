@@ -6,7 +6,7 @@ use std::sync::{Arc, OnceLock};
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, VolatileStaticMemoryStorage};
-use opentalk_types::core::{RoomId, UserId};
+use opentalk_types::core::{ParticipantId, RoomId, UserId};
 use parking_lot::RwLock;
 
 use super::memory::MemoryModerationState;
@@ -91,6 +91,26 @@ impl ModerationStorage for VolatileStaticMemoryStorage {
     async fn is_raise_hands_enabled(&mut self, room: RoomId) -> Result<bool, SignalingModuleError> {
         Ok(state().read().is_raise_hands_enabled(room))
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_raise_hands_enabled(
+        &mut self,
+        room: RoomId,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().delete_raise_hands_enabled(room);
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn waiting_room_add_participant(
+        &mut self,
+        room: RoomId,
+        participant: ParticipantId,
+    ) -> Result<bool, SignalingModuleError> {
+        Ok(state()
+            .write()
+            .waiting_room_add_participant(room, participant))
+    }
 }
 
 #[cfg(test)]
@@ -121,5 +141,11 @@ mod test {
     #[serial]
     async fn raise_hands_enabled_flag() {
         test_common::raise_hands_enabled_flag(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn waiting_room_participants() {
+        test_common::waiting_room_participants(&mut storage().await).await;
     }
 }

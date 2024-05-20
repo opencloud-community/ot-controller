@@ -118,6 +118,32 @@ impl ModerationStorage for RedisConnection {
             })
             .map(|result: Option<bool>| result.unwrap_or(true))
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_raise_hands_enabled(
+        &mut self,
+        room: RoomId,
+    ) -> Result<(), SignalingModuleError> {
+        self.del(RaiseHandsEnabled { room })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to DEL raise_hands_enabled",
+            })
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn waiting_room_add_participant(
+        &mut self,
+        room: RoomId,
+        participant: ParticipantId,
+    ) -> Result<bool, SignalingModuleError> {
+        self.sadd::<_, _, usize>(WaitingRoomList { room }, participant)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to SADD waiting_room_list",
+            })
+            .map(|count| count > 0)
+    }
 }
 
 /// Set of user-ids banned in a room
@@ -141,38 +167,11 @@ struct RaiseHandsEnabled {
     room: RoomId,
 }
 
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn delete_raise_hands_enabled(
-    redis_conn: &mut RedisConnection,
-    room: RoomId,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .del(RaiseHandsEnabled { room })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to DEL raise_hands_enabled",
-        })
-}
-
 /// Set of participant ids inside the waiting room
 #[derive(ToRedisArgs)]
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:waiting_room_list")]
 struct WaitingRoomList {
     room: RoomId,
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn waiting_room_add(
-    redis_conn: &mut RedisConnection,
-    room: RoomId,
-    participant_id: ParticipantId,
-) -> Result<usize, SignalingModuleError> {
-    redis_conn
-        .sadd(WaitingRoomList { room }, participant_id)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to SADD waiting_room_list",
-        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -386,5 +385,11 @@ mod test {
     #[serial]
     async fn raise_hands_enabled_flag() {
         test_common::raise_hands_enabled_flag(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn waiting_room_participants() {
+        test_common::waiting_room_participants(&mut storage().await).await;
     }
 }

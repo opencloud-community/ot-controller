@@ -547,8 +547,10 @@ impl SignalingModule for ModerationModule {
                 );
             }
 
-            if let Err(e) =
-                storage::delete_raise_hands_enabled(ctx.redis_conn(), self.room.room_id()).await
+            if let Err(e) = ctx
+                .redis_conn()
+                .delete_raise_hands_enabled(self.room.room_id())
+                .await
             {
                 log::error!(
                     "Failed to clean up raise hands enabled flag {}",

@@ -4,13 +4,14 @@
 
 use std::collections::{HashMap, HashSet};
 
-use opentalk_types::core::{RoomId, UserId};
+use opentalk_types::core::{ParticipantId, RoomId, UserId};
 
 #[derive(Debug, Clone, Default)]
 pub(super) struct MemoryModerationState {
     banned_users: HashMap<RoomId, HashSet<UserId>>,
     waiting_room_enabled: HashMap<RoomId, bool>,
     raise_hands_enabled: HashMap<RoomId, bool>,
+    waiting_room_participants: HashMap<RoomId, HashSet<ParticipantId>>,
 }
 
 impl MemoryModerationState {
@@ -59,5 +60,20 @@ impl MemoryModerationState {
 
     pub(super) fn is_raise_hands_enabled(&self, room: RoomId) -> bool {
         self.raise_hands_enabled.get(&room).copied().unwrap_or(true)
+    }
+
+    pub(super) fn delete_raise_hands_enabled(&mut self, room: RoomId) {
+        self.raise_hands_enabled.remove(&room);
+    }
+
+    pub(super) fn waiting_room_add_participant(
+        &mut self,
+        room: RoomId,
+        participant: ParticipantId,
+    ) -> bool {
+        self.waiting_room_participants
+            .entry(room)
+            .or_default()
+            .insert(participant)
     }
 }

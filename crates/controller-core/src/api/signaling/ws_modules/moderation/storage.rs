@@ -9,41 +9,43 @@ mod volatile;
 pub(crate) use moderation_storage::ModerationStorage;
 // TODO: remove once everything is exposed through the ModerationStorage trait.
 pub(crate) use redis::{
-    delete_raise_hands_enabled, delete_waiting_room, delete_waiting_room_accepted,
-    waiting_room_accepted_add, waiting_room_accepted_all, waiting_room_accepted_len,
-    waiting_room_accepted_remove, waiting_room_accepted_remove_list, waiting_room_add,
-    waiting_room_all, waiting_room_contains, waiting_room_len, waiting_room_remove,
+    delete_waiting_room, delete_waiting_room_accepted, waiting_room_accepted_add,
+    waiting_room_accepted_all, waiting_room_accepted_len, waiting_room_accepted_remove,
+    waiting_room_accepted_remove_list, waiting_room_all, waiting_room_contains, waiting_room_len,
+    waiting_room_remove,
 };
 
 #[cfg(test)]
 mod test_common {
-    use opentalk_types::core::{RoomId, UserId};
+    use opentalk_types::core::{ParticipantId, RoomId, UserId};
     use pretty_assertions::assert_eq;
 
     use super::ModerationStorage;
 
     pub const ROOM: RoomId = RoomId::nil();
-    pub const BOB: UserId = UserId::from_u128(0xdeadbeef);
-    pub const ALICE: UserId = UserId::from_u128(0xbadcafe);
+    pub const BOB_USER: UserId = UserId::from_u128(0xdeadbeef);
+    pub const ALICE_USER: UserId = UserId::from_u128(0xbadcafe);
+    pub const BOB_PARTICIPANT: ParticipantId = ParticipantId::from_u128(0xdeadbeef);
+    pub const ALICE_PARTICIPANT: ParticipantId = ParticipantId::from_u128(0xbadcafe);
 
     pub(super) async fn user_bans(storage: &mut dyn ModerationStorage) {
-        assert!(!storage.is_user_banned(ROOM, BOB).await.unwrap());
-        assert!(!storage.is_user_banned(ROOM, ALICE).await.unwrap());
+        assert!(!storage.is_user_banned(ROOM, BOB_USER).await.unwrap());
+        assert!(!storage.is_user_banned(ROOM, ALICE_USER).await.unwrap());
 
-        storage.ban_user(ROOM, BOB).await.unwrap();
+        storage.ban_user(ROOM, BOB_USER).await.unwrap();
 
-        assert!(storage.is_user_banned(ROOM, BOB).await.unwrap());
-        assert!(!storage.is_user_banned(ROOM, ALICE).await.unwrap());
+        assert!(storage.is_user_banned(ROOM, BOB_USER).await.unwrap());
+        assert!(!storage.is_user_banned(ROOM, ALICE_USER).await.unwrap());
 
-        storage.ban_user(ROOM, ALICE).await.unwrap();
+        storage.ban_user(ROOM, ALICE_USER).await.unwrap();
 
-        assert!(storage.is_user_banned(ROOM, BOB).await.unwrap());
-        assert!(storage.is_user_banned(ROOM, ALICE).await.unwrap());
+        assert!(storage.is_user_banned(ROOM, BOB_USER).await.unwrap());
+        assert!(storage.is_user_banned(ROOM, ALICE_USER).await.unwrap());
 
         storage.delete_user_bans(ROOM).await.unwrap();
 
-        assert!(!storage.is_user_banned(ROOM, BOB).await.unwrap());
-        assert!(!storage.is_user_banned(ROOM, ALICE).await.unwrap());
+        assert!(!storage.is_user_banned(ROOM, BOB_USER).await.unwrap());
+        assert!(!storage.is_user_banned(ROOM, ALICE_USER).await.unwrap());
     }
 
     pub(super) async fn waiting_room_enabled_flag(storage: &mut dyn ModerationStorage) {
@@ -87,5 +89,26 @@ mod test_common {
         storage.set_raise_hands_enabled(ROOM, true).await.unwrap();
 
         assert!(storage.is_raise_hands_enabled(ROOM).await.unwrap());
+
+        storage.delete_raise_hands_enabled(ROOM).await.unwrap();
+
+        assert!(storage.is_raise_hands_enabled(ROOM).await.unwrap());
+    }
+
+    pub(super) async fn waiting_room_participants(storage: &mut dyn ModerationStorage) {
+        assert!(storage
+            .waiting_room_add_participant(ROOM, BOB_PARTICIPANT)
+            .await
+            .unwrap());
+        // Ensure that we receive `false` when attempting to add the same participant twice
+        assert!(!storage
+            .waiting_room_add_participant(ROOM, BOB_PARTICIPANT)
+            .await
+            .unwrap());
+
+        assert!(storage
+            .waiting_room_add_participant(ROOM, ALICE_PARTICIPANT)
+            .await
+            .unwrap());
     }
 }

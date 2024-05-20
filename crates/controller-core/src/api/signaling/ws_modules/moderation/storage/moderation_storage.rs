@@ -4,7 +4,7 @@
 
 use async_trait::async_trait;
 use opentalk_signaling_core::SignalingModuleError;
-use opentalk_types::core::{RoomId, UserId};
+use opentalk_types::core::{ParticipantId, RoomId, UserId};
 
 #[async_trait(?Send)]
 pub(crate) trait ModerationStorage {
@@ -47,4 +47,19 @@ pub(crate) trait ModerationStorage {
     ) -> Result<(), SignalingModuleError>;
 
     async fn is_raise_hands_enabled(&mut self, room: RoomId) -> Result<bool, SignalingModuleError>;
+
+    async fn delete_raise_hands_enabled(
+        &mut self,
+        room: RoomId,
+    ) -> Result<(), SignalingModuleError>;
+
+    /// Add a participant to the waiting room.
+    ///
+    /// Returns `Ok(true)` if the participant was added, `Ok(false)` if the
+    /// participant already was in the waiting room before.
+    async fn waiting_room_add_participant(
+        &mut self,
+        room: RoomId,
+        participant: ParticipantId,
+    ) -> Result<bool, SignalingModuleError>;
 }

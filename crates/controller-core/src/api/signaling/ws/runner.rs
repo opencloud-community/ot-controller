@@ -1193,19 +1193,17 @@ impl Runner {
             }
         };
 
-        let res = moderation::storage::waiting_room_add(
-            &mut self.redis_conn,
-            self.room_id.room_id(),
-            self.id,
-        )
-        .await;
+        let res = self
+            .redis_conn
+            .waiting_room_add_participant(self.room_id.room_id(), self.id)
+            .await;
 
         guard.unlock(&mut self.redis_conn).await?;
-        let num_added = res?;
+        let added_to_waiting_room = res?;
 
-        // Check that SADD doesn't return 0. That would mean that the participant id would be a
+        // Check the participant id has not been added to the waiting room before. That woul be a
         // duplicate which cannot be allowed. Since this should never happen just error and exit.
-        if !self.resuming && num_added == 0 {
+        if !self.resuming && !added_to_waiting_room {
             whatever!("participant-id is already taken inside waiting-room set");
         }
 
@@ -1823,12 +1821,9 @@ impl Runner {
 
         // resuming ensures that we can reuse the same participant ID
         self.resuming = true;
-        moderation::storage::waiting_room_add(
-            &mut self.redis_conn,
-            self.room_id.room_id(),
-            self.id,
-        )
-        .await?;
+        self.redis_conn
+            .waiting_room_add_participant(self.room_id.room_id(), self.id)
+            .await?;
 
         let control_data =
             ControlState::from_redis(&mut self.redis_conn, self.room_id, self.id).await?;
