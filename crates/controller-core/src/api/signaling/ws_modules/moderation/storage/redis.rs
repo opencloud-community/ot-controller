@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::collections::BTreeSet;
+
 use async_trait::async_trait;
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError};
 use opentalk_types::core::{ParticipantId, RoomId, UserId};
@@ -170,6 +172,18 @@ impl ModerationStorage for RedisConnection {
                 message: "Failed to SISMEMBER waiting_room_list",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn waiting_room_participants(
+        &mut self,
+        room: RoomId,
+    ) -> Result<BTreeSet<ParticipantId>, SignalingModuleError> {
+        self.smembers(WaitingRoomList { room })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to SMEMBERS waiting_room_list",
+            })
+    }
 }
 
 /// Set of user-ids banned in a room
@@ -198,19 +212,6 @@ struct RaiseHandsEnabled {
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:waiting_room_list")]
 struct WaitingRoomList {
     room: RoomId,
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn waiting_room_all(
-    redis_conn: &mut RedisConnection,
-    room: RoomId,
-) -> Result<Vec<ParticipantId>, SignalingModuleError> {
-    redis_conn
-        .smembers(WaitingRoomList { room })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to SMEMBERS waiting_room_list",
-        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]

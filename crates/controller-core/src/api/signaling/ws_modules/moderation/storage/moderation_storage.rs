@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::collections::BTreeSet;
+
 use async_trait::async_trait;
 use opentalk_signaling_core::SignalingModuleError;
 use opentalk_types::core::{ParticipantId, RoomId, UserId};
@@ -74,4 +76,9 @@ pub(crate) trait ModerationStorage {
         room: RoomId,
         participant: ParticipantId,
     ) -> Result<bool, SignalingModuleError>;
+
+    async fn waiting_room_participants(
+        &mut self,
+        room: RoomId,
+    ) -> Result<BTreeSet<ParticipantId>, SignalingModuleError>;
 }

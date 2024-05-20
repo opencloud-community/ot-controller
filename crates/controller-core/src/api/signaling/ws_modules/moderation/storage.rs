@@ -11,11 +11,13 @@ pub(crate) use moderation_storage::ModerationStorage;
 pub(crate) use redis::{
     delete_waiting_room, delete_waiting_room_accepted, waiting_room_accepted_add,
     waiting_room_accepted_all, waiting_room_accepted_len, waiting_room_accepted_remove,
-    waiting_room_accepted_remove_list, waiting_room_all, waiting_room_len,
+    waiting_room_accepted_remove_list, waiting_room_len,
 };
 
 #[cfg(test)]
 mod test_common {
+    use std::collections::BTreeSet;
+
     use opentalk_types::core::{ParticipantId, RoomId, UserId};
     use pretty_assertions::assert_eq;
 
@@ -114,9 +116,19 @@ mod test_common {
             .await
             .unwrap());
 
+        assert_eq!(
+            storage.waiting_room_participants(ROOM).await.unwrap(),
+            BTreeSet::from_iter([BOB_PARTICIPANT])
+        );
+
         assert!(storage
             .waiting_room_add_participant(ROOM, ALICE_PARTICIPANT)
             .await
             .unwrap());
+
+        assert_eq!(
+            storage.waiting_room_participants(ROOM).await.unwrap(),
+            BTreeSet::from_iter([BOB_PARTICIPANT, ALICE_PARTICIPANT])
+        );
     }
 }

@@ -127,8 +127,11 @@ impl SignalingModule for ModerationModule {
                         .is_waiting_room_enabled(self.room.room_id())
                         .await?;
 
-                    let list =
-                        storage::waiting_room_all(ctx.redis_conn(), self.room.room_id()).await?;
+                    let list = Vec::from_iter(
+                        ctx.redis_conn()
+                            .waiting_room_participants(self.room.room_id())
+                            .await?,
+                    );
                     let mut waiting_room_participants = build_waiting_room_participants(
                         ctx.redis_conn(),
                         self.room.room_id(),

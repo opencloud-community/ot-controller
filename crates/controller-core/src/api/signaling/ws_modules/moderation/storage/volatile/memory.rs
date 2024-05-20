@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap, HashSet};
 
 use opentalk_types::core::{ParticipantId, RoomId, UserId};
 
@@ -96,5 +96,16 @@ impl MemoryModerationState {
             .get(&room)
             .map(|p| p.contains(&participant))
             .unwrap_or_default()
+    }
+
+    pub(super) fn waiting_room_participants(&self, room: RoomId) -> BTreeSet<ParticipantId> {
+        BTreeSet::from_iter(
+            self.waiting_room_participants
+                .get(&room)
+                .map(|p| p.iter())
+                .into_iter()
+                .flatten()
+                .copied(),
+        )
     }
 }

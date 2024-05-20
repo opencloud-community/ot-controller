@@ -2,7 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::sync::{Arc, OnceLock};
+use std::{
+    collections::BTreeSet,
+    sync::{Arc, OnceLock},
+};
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, VolatileStaticMemoryStorage};
@@ -133,6 +136,14 @@ impl ModerationStorage for VolatileStaticMemoryStorage {
         Ok(state()
             .read()
             .waiting_room_contains_participant(room, participant))
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn waiting_room_participants(
+        &mut self,
+        room: RoomId,
+    ) -> Result<BTreeSet<ParticipantId>, SignalingModuleError> {
+        Ok(state().read().waiting_room_participants(room))
     }
 }
 
