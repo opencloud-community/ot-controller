@@ -196,6 +196,15 @@ impl ModerationStorage for RedisConnection {
                 message: "Failed to SCARD waiting_room_list",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_waiting_room(&mut self, room: RoomId) -> Result<(), SignalingModuleError> {
+        self.del(WaitingRoomList { room })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to DEL waiting_room_list",
+            })
+    }
 }
 
 /// Set of user-ids banned in a room
@@ -224,19 +233,6 @@ struct RaiseHandsEnabled {
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:waiting_room_list")]
 struct WaitingRoomList {
     room: RoomId,
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn delete_waiting_room(
-    redis_conn: &mut RedisConnection,
-    room: RoomId,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .del(WaitingRoomList { room })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to DEL waiting_room_list",
-        })
 }
 
 /// Set of participant ids inside the waiting room but accepted

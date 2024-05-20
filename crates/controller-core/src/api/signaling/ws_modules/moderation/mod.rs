@@ -565,8 +565,10 @@ impl SignalingModule for ModerationModule {
                 );
             }
 
-            if let Err(e) =
-                storage::delete_waiting_room(ctx.redis_conn(), self.room.room_id()).await
+            if let Err(e) = ctx
+                .redis_conn()
+                .delete_waiting_room(self.room.room_id())
+                .await
             {
                 log::error!(
                     "Failed to clean up waiting room list {}",

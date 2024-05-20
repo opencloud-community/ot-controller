@@ -9,9 +9,8 @@ mod volatile;
 pub(crate) use moderation_storage::ModerationStorage;
 // TODO: remove once everything is exposed through the ModerationStorage trait.
 pub(crate) use redis::{
-    delete_waiting_room, delete_waiting_room_accepted, waiting_room_accepted_add,
-    waiting_room_accepted_all, waiting_room_accepted_len, waiting_room_accepted_remove,
-    waiting_room_accepted_remove_list,
+    delete_waiting_room_accepted, waiting_room_accepted_add, waiting_room_accepted_all,
+    waiting_room_accepted_len, waiting_room_accepted_remove, waiting_room_accepted_remove_list,
 };
 
 #[cfg(test)]
@@ -141,6 +140,17 @@ mod test_common {
         assert_eq!(
             storage.waiting_room_participant_count(ROOM).await.unwrap(),
             2usize
+        );
+
+        storage.delete_waiting_room(ROOM).await.unwrap();
+
+        assert_eq!(
+            storage.waiting_room_participants(ROOM).await.unwrap(),
+            BTreeSet::new()
+        );
+        assert_eq!(
+            storage.waiting_room_participant_count(ROOM).await.unwrap(),
+            0usize
         );
     }
 }
