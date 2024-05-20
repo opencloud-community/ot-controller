@@ -286,20 +286,6 @@ struct AcceptedWaitingRoomList {
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn waiting_room_accepted_contains(
-    redis_conn: &mut RedisConnection,
-    room: RoomId,
-    participant_id: ParticipantId,
-) -> Result<bool, SignalingModuleError> {
-    redis_conn
-        .sismember(AcceptedWaitingRoomList { room }, participant_id)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to SISMEMBER waiting_room_accepted_list",
-        })
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
 pub async fn waiting_room_accepted_all(
     redis_conn: &mut RedisConnection,
     room: RoomId,
