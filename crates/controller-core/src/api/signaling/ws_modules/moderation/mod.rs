@@ -184,12 +184,9 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
-                storage::waiting_room_accepted_remove(
-                    ctx.redis_conn(),
-                    self.room.room_id(),
-                    target,
-                )
-                .await?;
+                ctx.redis_conn()
+                    .waiting_room_accepted_remove_participant(self.room.room_id(), target)
+                    .await?;
 
                 let user_id: Option<UserId> = ctx
                     .redis_conn()
@@ -221,12 +218,9 @@ impl SignalingModule for ModerationModule {
                     .set_skip_waiting_room_with_expiry(target, false)
                     .await?;
 
-                storage::waiting_room_accepted_remove(
-                    ctx.redis_conn(),
-                    self.room.room_id(),
-                    target,
-                )
-                .await?;
+                ctx.redis_conn()
+                    .waiting_room_accepted_remove_participant(self.room.room_id(), target)
+                    .await?;
 
                 ctx.exchange_publish(
                     control::exchange::current_room_by_participant_id(self.room, target),
@@ -262,12 +256,9 @@ impl SignalingModule for ModerationModule {
                     .set_skip_waiting_room_with_expiry(target, false)
                     .await?;
 
-                storage::waiting_room_accepted_remove(
-                    ctx.redis_conn(),
-                    self.room.room_id(),
-                    target,
-                )
-                .await?;
+                ctx.redis_conn()
+                    .waiting_room_accepted_remove_participant(self.room.room_id(), target)
+                    .await?;
 
                 ctx.exchange_publish(
                     control::exchange::current_room_by_participant_id(self.room, target),

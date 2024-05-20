@@ -472,12 +472,10 @@ impl Runner {
                     );
                     encountered_error = true;
                 }
-                if let Err(e) = moderation::storage::waiting_room_accepted_remove(
-                    &mut self.redis_conn,
-                    self.room_id.room_id(),
-                    self.id,
-                )
-                .await
+                if let Err(e) = self
+                    .redis_conn
+                    .waiting_room_accepted_remove_participant(self.room_id.room_id(), self.id)
+                    .await
                 {
                     log::error!(
                         "failed to remove participant from waiting_room_accepted list, {:?}",
@@ -934,12 +932,12 @@ impl Runner {
                             .expect("Failed to convert namespaced to json"),
                         );
 
-                        moderation::storage::waiting_room_accepted_remove(
-                            &mut self.redis_conn,
-                            self.room_id.room_id(),
-                            self.id,
-                        )
-                        .await?;
+                        self.redis_conn
+                            .waiting_room_accepted_remove_participant(
+                                self.room_id.room_id(),
+                                self.id,
+                            )
+                            .await?;
 
                         self.join_room(timestamp, control_data, true).await?
                     }

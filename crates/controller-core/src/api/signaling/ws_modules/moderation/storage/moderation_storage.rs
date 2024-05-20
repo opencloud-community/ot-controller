@@ -98,4 +98,10 @@ pub(crate) trait ModerationStorage {
         room: RoomId,
         participant: ParticipantId,
     ) -> Result<bool, SignalingModuleError>;
+
+    async fn waiting_room_accepted_remove_participant(
+        &mut self,
+        room: RoomId,
+        participant: ParticipantId,
+    ) -> Result<(), SignalingModuleError>;
 }

@@ -131,4 +131,14 @@ impl MemoryModerationState {
             .or_default()
             .insert(participant)
     }
+
+    pub(super) fn waiting_room_accepted_remove_participant(
+        &mut self,
+        room: RoomId,
+        participant: ParticipantId,
+    ) {
+        self.waiting_room_accepted_participants
+            .get_mut(&room)
+            .map(|p| p.remove(&participant));
+    }
 }

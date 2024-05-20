@@ -218,6 +218,19 @@ impl ModerationStorage for RedisConnection {
                 message: "Failed to SADD waiting_room_accepted_list",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn waiting_room_accepted_remove_participant(
+        &mut self,
+        room: RoomId,
+        participant: ParticipantId,
+    ) -> Result<(), SignalingModuleError> {
+        self.srem(AcceptedWaitingRoomList { room }, participant)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to SREM waiting_room_accepted_list",
+            })
+    }
 }
 
 /// Set of user-ids banned in a room
@@ -253,20 +266,6 @@ struct WaitingRoomList {
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:waiting_room_accepted_list")]
 struct AcceptedWaitingRoomList {
     room: RoomId,
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn waiting_room_accepted_remove(
-    redis_conn: &mut RedisConnection,
-    room: RoomId,
-    participant_id: ParticipantId,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .srem(AcceptedWaitingRoomList { room }, participant_id)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to SREM waiting_room_accepted_list",
-        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
