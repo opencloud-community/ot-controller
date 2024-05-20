@@ -141,4 +141,15 @@ impl MemoryModerationState {
             .get_mut(&room)
             .map(|p| p.remove(&participant));
     }
+
+    pub(super) fn waiting_room_accepted_remove_participants(
+        &mut self,
+        room: RoomId,
+        participants: &[ParticipantId],
+    ) {
+        if let Some(p) = self.waiting_room_accepted_participants.get_mut(&room) {
+            let to_be_removed = HashSet::from_iter(participants.iter().copied());
+            *p = &*p - &to_be_removed;
+        }
+    }
 }

@@ -10,7 +10,6 @@ pub(crate) use moderation_storage::ModerationStorage;
 // TODO: remove once everything is exposed through the ModerationStorage trait.
 pub(crate) use redis::{
     delete_waiting_room_accepted, waiting_room_accepted_all, waiting_room_accepted_len,
-    waiting_room_accepted_remove_list,
 };
 
 #[cfg(test)]

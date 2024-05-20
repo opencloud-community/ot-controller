@@ -228,7 +228,24 @@ impl ModerationStorage for RedisConnection {
         self.srem(AcceptedWaitingRoomList { room }, participant)
             .await
             .context(RedisSnafu {
-                message: "Failed to SREM waiting_room_accepted_list",
+                message: "Failed to SREM individual participant from waiting_room_accepted_list",
+            })
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn waiting_room_accepted_remove_participants(
+        &mut self,
+        room: RoomId,
+        participants: &[ParticipantId],
+    ) -> Result<(), SignalingModuleError> {
+        if participants.is_empty() {
+            return Ok(());
+        }
+
+        self.srem(AcceptedWaitingRoomList { room }, participants)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to SREM multiple participants from waiting_room_accepted_list",
             })
     }
 }
@@ -266,24 +283,6 @@ struct WaitingRoomList {
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:waiting_room_accepted_list")]
 struct AcceptedWaitingRoomList {
     room: RoomId,
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn waiting_room_accepted_remove_list(
-    redis_conn: &mut RedisConnection,
-    room: RoomId,
-    participant_ids: &[ParticipantId],
-) -> Result<(), SignalingModuleError> {
-    if participant_ids.is_empty() {
-        return Ok(());
-    }
-
-    redis_conn
-        .srem(AcceptedWaitingRoomList { room }, participant_ids)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to SREM waiting_room_accepted_list",
-        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]

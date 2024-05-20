@@ -299,12 +299,9 @@ impl SignalingModule for ModerationModule {
                     }
                 }
 
-                storage::waiting_room_accepted_remove_list(
-                    ctx.redis_conn(),
-                    self.room.room_id(),
-                    &to_remove,
-                )
-                .await?;
+                ctx.redis_conn()
+                    .waiting_room_accepted_remove_participants(self.room.room_id(), &to_remove)
+                    .await?;
 
                 set_waiting_room_enabled(&mut ctx, self.room.room_id(), true).await?;
 
