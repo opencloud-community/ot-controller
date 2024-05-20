@@ -194,6 +194,14 @@ impl ModerationStorage for VolatileStaticMemoryStorage {
             .waiting_room_accepted_remove_participants(room, participants);
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn waiting_room_accepted_participants(
+        &mut self,
+        room: RoomId,
+    ) -> Result<BTreeSet<ParticipantId>, SignalingModuleError> {
+        Ok(state().read().waiting_room_accepted_participants(room))
+    }
 }
 
 #[cfg(test)]
@@ -230,5 +238,11 @@ mod test {
     #[serial]
     async fn waiting_room_participants() {
         test_common::waiting_room_participants(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn waiting_room_accepted_participants() {
+        test_common::waiting_room_accepted_participants(&mut storage().await).await;
     }
 }

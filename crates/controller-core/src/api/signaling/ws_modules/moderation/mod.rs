@@ -140,13 +140,14 @@ impl SignalingModule for ModerationModule {
                     )
                     .await?;
 
-                    let list =
-                        storage::waiting_room_accepted_all(ctx.redis_conn(), self.room.room_id())
-                            .await?;
+                    let list = ctx
+                        .redis_conn()
+                        .waiting_room_accepted_participants(self.room.room_id())
+                        .await?;
                     let mut accepted_waiting_room_participants = build_waiting_room_participants(
                         ctx.redis_conn(),
                         self.room.room_id(),
-                        &list,
+                        &Vec::from_iter(list),
                         WaitingRoomState::Accepted,
                     )
                     .await?;

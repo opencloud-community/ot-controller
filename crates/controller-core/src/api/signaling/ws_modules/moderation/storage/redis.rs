@@ -248,6 +248,18 @@ impl ModerationStorage for RedisConnection {
                 message: "Failed to SREM multiple participants from waiting_room_accepted_list",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn waiting_room_accepted_participants(
+        &mut self,
+        room: RoomId,
+    ) -> Result<BTreeSet<ParticipantId>, SignalingModuleError> {
+        self.smembers(AcceptedWaitingRoomList { room })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to SMEMBERS waiting_room_accepted_list",
+            })
+    }
 }
 
 /// Set of user-ids banned in a room
@@ -283,19 +295,6 @@ struct WaitingRoomList {
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:waiting_room_accepted_list")]
 struct AcceptedWaitingRoomList {
     room: RoomId,
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn waiting_room_accepted_all(
-    redis_conn: &mut RedisConnection,
-    room: RoomId,
-) -> Result<Vec<ParticipantId>, SignalingModuleError> {
-    redis_conn
-        .smembers(AcceptedWaitingRoomList { room })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to SMEMBERS waiting_room_accepted_list",
-        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -368,5 +367,11 @@ mod test {
     #[serial]
     async fn waiting_room_participants() {
         test_common::waiting_room_participants(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn waiting_room_accepted_participants() {
+        test_common::waiting_room_accepted_participants(&mut storage().await).await;
     }
 }

@@ -152,4 +152,18 @@ impl MemoryModerationState {
             *p = &*p - &to_be_removed;
         }
     }
+
+    pub(super) fn waiting_room_accepted_participants(
+        &self,
+        room: RoomId,
+    ) -> BTreeSet<ParticipantId> {
+        BTreeSet::from_iter(
+            self.waiting_room_accepted_participants
+                .get(&room)
+                .map(|p| p.iter())
+                .into_iter()
+                .flatten()
+                .copied(),
+        )
+    }
 }

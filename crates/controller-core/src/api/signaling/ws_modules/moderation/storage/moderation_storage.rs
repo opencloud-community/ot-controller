@@ -110,4 +110,9 @@ pub(crate) trait ModerationStorage {
         room: RoomId,
         participants: &[ParticipantId],
     ) -> Result<(), SignalingModuleError>;
+
+    async fn waiting_room_accepted_participants(
+        &mut self,
+        room: RoomId,
+    ) -> Result<BTreeSet<ParticipantId>, SignalingModuleError>;
 }
