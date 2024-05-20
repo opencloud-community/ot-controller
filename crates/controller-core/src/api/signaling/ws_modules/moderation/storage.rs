@@ -11,7 +11,7 @@ pub(crate) use moderation_storage::ModerationStorage;
 pub(crate) use redis::{
     delete_waiting_room, delete_waiting_room_accepted, waiting_room_accepted_add,
     waiting_room_accepted_all, waiting_room_accepted_len, waiting_room_accepted_remove,
-    waiting_room_accepted_remove_list, waiting_room_all, waiting_room_contains, waiting_room_len,
+    waiting_room_accepted_remove_list, waiting_room_all, waiting_room_len,
 };
 
 #[cfg(test)]

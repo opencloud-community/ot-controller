@@ -123,6 +123,17 @@ impl ModerationStorage for VolatileStaticMemoryStorage {
             .waiting_room_remove_participant(room, participant);
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn waiting_room_contains_participant(
+        &mut self,
+        room: RoomId,
+        participant: ParticipantId,
+    ) -> Result<bool, SignalingModuleError> {
+        Ok(state()
+            .read()
+            .waiting_room_contains_participant(room, participant))
+    }
 }
 
 #[cfg(test)]

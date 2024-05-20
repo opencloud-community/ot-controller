@@ -86,4 +86,15 @@ impl MemoryModerationState {
             .get_mut(&room)
             .map(|p| p.remove(&participant));
     }
+
+    pub(super) fn waiting_room_contains_participant(
+        &self,
+        room: RoomId,
+        participant: ParticipantId,
+    ) -> bool {
+        self.waiting_room_participants
+            .get(&room)
+            .map(|p| p.contains(&participant))
+            .unwrap_or_default()
+    }
 }

@@ -68,4 +68,10 @@ pub(crate) trait ModerationStorage {
         room: RoomId,
         participant: ParticipantId,
     ) -> Result<(), SignalingModuleError>;
+
+    async fn waiting_room_contains_participant(
+        &mut self,
+        room: RoomId,
+        participant: ParticipantId,
+    ) -> Result<bool, SignalingModuleError>;
 }

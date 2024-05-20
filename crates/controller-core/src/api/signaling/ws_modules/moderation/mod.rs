@@ -381,7 +381,9 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
-                if !storage::waiting_room_contains(ctx.redis_conn(), self.room.room_id(), target)
+                if !ctx
+                    .redis_conn()
+                    .waiting_room_contains_participant(self.room.room_id(), target)
                     .await?
                 {
                     // TODO return error
