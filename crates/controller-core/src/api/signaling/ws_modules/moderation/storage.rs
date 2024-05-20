@@ -11,7 +11,7 @@ pub(crate) use moderation_storage::ModerationStorage;
 pub(crate) use redis::{
     delete_waiting_room, delete_waiting_room_accepted, waiting_room_accepted_add,
     waiting_room_accepted_all, waiting_room_accepted_len, waiting_room_accepted_remove,
-    waiting_room_accepted_remove_list, waiting_room_len,
+    waiting_room_accepted_remove_list,
 };
 
 #[cfg(test)]
@@ -97,6 +97,10 @@ mod test_common {
     }
 
     pub(super) async fn waiting_room_participants(storage: &mut dyn ModerationStorage) {
+        assert_eq!(
+            storage.waiting_room_participant_count(ROOM).await.unwrap(),
+            0usize
+        );
         assert!(storage
             .waiting_room_add_participant(ROOM, BOB_PARTICIPANT)
             .await
@@ -120,6 +124,10 @@ mod test_common {
             storage.waiting_room_participants(ROOM).await.unwrap(),
             BTreeSet::from_iter([BOB_PARTICIPANT])
         );
+        assert_eq!(
+            storage.waiting_room_participant_count(ROOM).await.unwrap(),
+            1usize
+        );
 
         assert!(storage
             .waiting_room_add_participant(ROOM, ALICE_PARTICIPANT)
@@ -129,6 +137,10 @@ mod test_common {
         assert_eq!(
             storage.waiting_room_participants(ROOM).await.unwrap(),
             BTreeSet::from_iter([BOB_PARTICIPANT, ALICE_PARTICIPANT])
+        );
+        assert_eq!(
+            storage.waiting_room_participant_count(ROOM).await.unwrap(),
+            2usize
         );
     }
 }
