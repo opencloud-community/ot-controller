@@ -88,4 +88,14 @@ pub(crate) trait ModerationStorage {
     ) -> Result<usize, SignalingModuleError>;
 
     async fn delete_waiting_room(&mut self, room: RoomId) -> Result<(), SignalingModuleError>;
+
+    /// Add a participant to the waiting room accepted list.
+    ///
+    /// Returns `Ok(true)` if the participant was added, `Ok(false)` if the
+    /// participant already was in the waiting room accepted list before.
+    async fn waiting_room_accepted_add_participant(
+        &mut self,
+        room: RoomId,
+        participant: ParticipantId,
+    ) -> Result<bool, SignalingModuleError>;
 }

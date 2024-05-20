@@ -205,6 +205,19 @@ impl ModerationStorage for RedisConnection {
                 message: "Failed to DEL waiting_room_list",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn waiting_room_accepted_add_participant(
+        &mut self,
+        room: RoomId,
+        participant: ParticipantId,
+    ) -> Result<bool, SignalingModuleError> {
+        self.sadd(AcceptedWaitingRoomList { room }, participant)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to SADD waiting_room_accepted_list",
+            })
+    }
 }
 
 /// Set of user-ids banned in a room
@@ -240,20 +253,6 @@ struct WaitingRoomList {
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:waiting_room_accepted_list")]
 struct AcceptedWaitingRoomList {
     room: RoomId,
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn waiting_room_accepted_add(
-    redis_conn: &mut RedisConnection,
-    room: RoomId,
-    participant_id: ParticipantId,
-) -> Result<usize, SignalingModuleError> {
-    redis_conn
-        .sadd(AcceptedWaitingRoomList { room }, participant_id)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to SADD waiting_room_accepted_list",
-        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]

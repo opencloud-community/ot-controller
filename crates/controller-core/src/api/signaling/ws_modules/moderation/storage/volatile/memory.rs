@@ -12,6 +12,7 @@ pub(super) struct MemoryModerationState {
     waiting_room_enabled: HashMap<RoomId, bool>,
     raise_hands_enabled: HashMap<RoomId, bool>,
     waiting_room_participants: HashMap<RoomId, HashSet<ParticipantId>>,
+    waiting_room_accepted_participants: HashMap<RoomId, HashSet<ParticipantId>>,
 }
 
 impl MemoryModerationState {
@@ -118,5 +119,16 @@ impl MemoryModerationState {
 
     pub(super) fn delete_waiting_room(&mut self, room: RoomId) {
         self.waiting_room_participants.remove(&room);
+    }
+
+    pub(super) fn waiting_room_accepted_add_participant(
+        &mut self,
+        room: RoomId,
+        participant: ParticipantId,
+    ) -> bool {
+        self.waiting_room_accepted_participants
+            .entry(room)
+            .or_default()
+            .insert(participant)
     }
 }

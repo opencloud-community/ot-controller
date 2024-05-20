@@ -393,7 +393,8 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
-                storage::waiting_room_accepted_add(ctx.redis_conn(), self.room.room_id(), target)
+                ctx.redis_conn()
+                    .waiting_room_accepted_add_participant(self.room.room_id(), target)
                     .await?;
                 ctx.redis_conn()
                     .waiting_room_remove_participant(self.room.room_id(), target)
