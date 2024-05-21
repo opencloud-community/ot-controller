@@ -36,4 +36,9 @@ pub(crate) trait ProtocolStorage {
 
     /// Sets the room state to [`InitState::Initialized`]
     async fn set_initialized(&mut self, room: SignalingRoomId) -> Result<(), SignalingModuleError>;
+
+    async fn init_get(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<Option<InitState>, SignalingModuleError>;
 }

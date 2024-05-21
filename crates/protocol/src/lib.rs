@@ -96,7 +96,7 @@ impl SignalingModule for Protocol {
                 frontend_data: _,
                 participants,
             } => {
-                let state = storage::init::get(ctx.redis_conn(), self.room_id).await?;
+                let state = ctx.redis_conn().init_get(self.room_id).await?;
 
                 if matches!(state, Some(state) if state == InitState::Initialized) {
                     let read_url = self.generate_url(&mut ctx, true).await?;
@@ -267,7 +267,7 @@ impl Protocol {
                     return Ok(());
                 }
 
-                match storage::init::get(ctx.redis_conn(), self.room_id).await? {
+                match ctx.redis_conn().init_get(self.room_id).await? {
                     Some(state) => match state {
                         InitState::Initializing => {
                             ctx.ws_send(Error::CurrentlyInitializing);
@@ -323,7 +323,7 @@ impl Protocol {
                 }
 
                 if !matches!(
-                    storage::init::get(ctx.redis_conn(), self.room_id).await?,
+                    ctx.redis_conn().init_get(self.room_id).await?,
                     Some(InitState::Initialized)
                 ) {
                     ctx.ws_send(Error::NotInitialized);
@@ -578,7 +578,7 @@ impl Protocol {
         &self,
         redis_conn: &mut RedisConnection,
     ) -> Result<(), SignalingModuleError> {
-        let init_state = storage::init::get(redis_conn, self.room_id).await?;
+        let init_state = redis_conn.init_get(self.room_id).await?;
 
         if init_state.is_none() {
             // Nothing to cleanup

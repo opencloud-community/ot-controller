@@ -83,6 +83,16 @@ impl ProtocolStorage for RedisConnection {
                 message: "Failed to set protocol init state to `Initialized`",
             })
     }
+
+    #[tracing::instrument(name = "get_protocol_init_state", skip(self))]
+    async fn init_get(
+        &mut self,
+        room_id: SignalingRoomId,
+    ) -> Result<Option<InitState>, SignalingModuleError> {
+        self.get(InitKey { room_id }).await.context(RedisSnafu {
+            message: "Failed to get protocol init state",
+        })
+    }
 }
 
 /// Remove all redis keys related to this room & module
@@ -119,19 +129,6 @@ struct InitKey {
 pub enum InitState {
     Initializing,
     Initialized,
-}
-
-#[tracing::instrument(name = "get_protocol_init_state", skip(redis_conn))]
-pub(crate) async fn init_get(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-) -> Result<Option<InitState>, SignalingModuleError> {
-    redis_conn
-        .get(InitKey { room_id })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to get protocol init state",
-        })
 }
 
 #[tracing::instrument(name = "delete_protocol_init_state", skip(redis_conn))]

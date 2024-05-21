@@ -9,7 +9,7 @@ mod volatile;
 pub(crate) use protocol_storage::ProtocolStorage;
 
 pub(crate) mod init {
-    pub(crate) use super::redis::{init_del as del, init_get as get, InitState};
+    pub(crate) use super::redis::{init_del as del, InitState};
 }
 pub(crate) mod session {
     pub(crate) use super::redis::{
@@ -58,6 +58,11 @@ mod test_common {
         assert_eq!(
             Some(InitState::Initialized),
             storage.try_start_init(ROOM).await.unwrap()
+        );
+
+        assert_eq!(
+            Some(InitState::Initialized),
+            storage.init_get(ROOM).await.unwrap()
         );
     }
 }
