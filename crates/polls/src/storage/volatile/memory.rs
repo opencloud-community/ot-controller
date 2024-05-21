@@ -54,6 +54,10 @@ impl MemoryPollsState {
         self.poll_ids.get(&room).cloned().unwrap_or_default()
     }
 
+    pub(super) fn delete_poll_ids(&mut self, room: SignalingRoomId) {
+        self.poll_ids.remove(&room);
+    }
+
     pub(super) fn poll_results(
         &self,
         room: SignalingRoomId,

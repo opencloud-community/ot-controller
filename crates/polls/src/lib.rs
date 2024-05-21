@@ -111,7 +111,7 @@ impl SignalingModule for Polls {
         if ctx.destroy_room() {
             if let Err(e) = ctx.redis_conn().delete_polls_state(self.room).await {
                 log::error!(
-                    "failed to remove config from redis: {}",
+                    "failed to remove poll state from redis: {}",
                     Report::from_error(e)
                 );
             }
@@ -135,6 +135,13 @@ impl SignalingModule for Polls {
                         Report::from_error(e)
                     );
                 }
+            }
+
+            if let Err(e) = ctx.redis_conn().delete_poll_ids(self.room).await {
+                log::error!(
+                    "failed to remove closed poll id list: {}",
+                    Report::from_error(e)
+                );
             }
         }
     }

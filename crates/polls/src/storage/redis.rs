@@ -147,12 +147,15 @@ impl PollsStorage for RedisConnection {
         &mut self,
         room: SignalingRoomId,
     ) -> Result<Vec<PollId>, SignalingModuleError> {
-        self
-            .smembers(PollList { room })
-            .await
-            .context(RedisSnafu {
-                message: "Failed to get members from poll list",
-            })
+        self.smembers(PollList { room }).await.context(RedisSnafu {
+            message: "Failed to get members from poll list",
+        })
+    }
+
+    async fn delete_poll_ids(&mut self, room: SignalingRoomId) -> Result<(), SignalingModuleError> {
+        self.del(PollList { room }).await.context(RedisSnafu {
+            message: "Failed to delete closed poll id list",
+        })
     }
 }
 

@@ -58,4 +58,6 @@ pub(crate) trait PollsStorage {
         &mut self,
         room: SignalingRoomId,
     ) -> Result<Vec<PollId>, SignalingModuleError>;
+
+    async fn delete_poll_ids(&mut self, room: SignalingRoomId) -> Result<(), SignalingModuleError>;
 }
