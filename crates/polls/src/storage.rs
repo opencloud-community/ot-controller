@@ -8,7 +8,7 @@ mod volatile;
 
 pub(crate) use polls_storage::PollsStorage;
 // TODO: remove these re-exports once available in the PollsStorage trait
-pub(crate) use redis::{del_results, del_state, list_add, list_members, poll_results, vote};
+pub(crate) use redis::{del_results, list_add, list_members, poll_results, vote};
 
 #[cfg(test)]
 mod test_common {
@@ -62,5 +62,8 @@ mod test_common {
             storage.get_polls_state(ROOM).await.unwrap(),
             Some(polls_state.clone())
         );
+
+        storage.delete_polls_state(ROOM).await.unwrap();
+        assert_eq!(storage.get_polls_state(ROOM).await.unwrap(), None);
     }
 }

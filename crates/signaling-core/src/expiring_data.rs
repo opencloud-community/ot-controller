@@ -37,6 +37,14 @@ impl<T: Clone> ExpiringData<T> {
         }
     }
 
+    pub fn take(self) -> Option<T> {
+        if !self.is_expired() {
+            self.value
+        } else {
+            None
+        }
+    }
+
     pub fn is_expired(&self) -> bool {
         self.expiry.is_some_and(|e| Instant::now() > e)
     }

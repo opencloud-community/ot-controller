@@ -19,4 +19,9 @@ pub(crate) trait PollsStorage {
         room: SignalingRoomId,
         polls_state: &PollsState,
     ) -> Result<bool, SignalingModuleError>;
+
+    async fn delete_polls_state(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<(), SignalingModuleError>;
 }

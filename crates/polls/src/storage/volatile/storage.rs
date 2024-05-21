@@ -36,6 +36,15 @@ impl PollsStorage for VolatileStaticMemoryStorage {
     ) -> Result<bool, SignalingModuleError> {
         Ok(state().write().set_polls_state(room, polls_state))
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_polls_state(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().delete_polls_state(&room);
+        Ok(())
+    }
 }
 
 #[cfg(test)]

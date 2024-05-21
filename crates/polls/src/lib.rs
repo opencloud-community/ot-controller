@@ -109,7 +109,7 @@ impl SignalingModule for Polls {
 
     async fn on_destroy(self, mut ctx: DestroyContext<'_>) {
         if ctx.destroy_room() {
-            if let Err(e) = storage::del_state(ctx.redis_conn(), self.room).await {
+            if let Err(e) = ctx.redis_conn().delete_polls_state(self.room).await {
                 log::error!(
                     "failed to remove config from redis: {}",
                     Report::from_error(e)
@@ -314,7 +314,7 @@ impl Polls {
                     .is_some()
                 {
                     // Delete config from redis to stop vote
-                    storage::del_state(ctx.redis_conn(), self.room).await?;
+                    ctx.redis_conn().delete_polls_state(self.room).await?;
 
                     ctx.exchange_publish(
                         control::exchange::current_room_all_participants(self.room),

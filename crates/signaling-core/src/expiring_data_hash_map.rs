@@ -80,6 +80,10 @@ where
     pub fn cleanup_expired(&mut self) {
         self.data.retain(|_k, v| !v.is_expired());
     }
+
+    pub fn remove(&mut self, key: &K) -> Option<V> {
+        self.data.remove(key).and_then(ExpiringData::take)
+    }
 }
 
 #[cfg(test)]
@@ -131,6 +135,19 @@ mod tests {
         std::thread::sleep(Duration::from_millis(10));
 
         assert!(map.get(&1).is_none());
+    }
+
+    #[test]
+    fn remove() {
+        let mut map = ExpiringDataHashMap::new();
+
+        map.insert_with_expiry(1, "hello", Duration::from_millis(1000));
+        map.insert_with_expiry(2, "world", Duration::from_millis(1000));
+
+        map.remove(&1);
+
+        assert!(map.get(&1).is_none());
+        assert!(map.get(&2).is_some());
     }
 
     #[test]

@@ -49,6 +49,19 @@ impl PollsStorage for RedisConnection {
             _ => whatever!("got invalid value from SET EX NX: {:?}", value),
         }
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_polls_state(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<(), SignalingModuleError> {
+        self
+            .del(PollsStateKey { room })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to del current polls state",
+            })
+    }
 }
 
 /// Key to the current poll config
@@ -56,19 +69,6 @@ impl PollsStorage for RedisConnection {
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:polls:state")]
 struct PollsStateKey {
     room: SignalingRoomId,
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub(crate) async fn del_state(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .del(PollsStateKey { room })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to del current polls state",
-        })
 }
 
 /// Key to the current vote results

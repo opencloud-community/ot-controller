@@ -31,4 +31,8 @@ impl MemoryPollsState {
             polls_state.duration,
         )
     }
+
+    pub(super) fn delete_polls_state(&mut self, room: &SignalingRoomId) -> Option<PollsState> {
+        self.polls_state.remove(room)
+    }
 }
