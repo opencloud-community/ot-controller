@@ -106,6 +106,22 @@ impl ProtocolStorage for RedisConnection {
 
         Ok(())
     }
+
+    #[tracing::instrument(name = "get_protocol_session_info", skip(self))]
+    async fn session_get(
+        &mut self,
+        room_id: SignalingRoomId,
+        participant_id: ParticipantId,
+    ) -> Result<Option<SessionInfo>, SignalingModuleError> {
+        self.get(SessionInfoKey {
+            room_id,
+            participant_id,
+        })
+        .await
+        .context(RedisSnafu {
+            message: "Failed to get protocol session info key",
+        })
+    }
 }
 
 /// Stores the etherpad group_id that is associated with this room.
@@ -150,23 +166,6 @@ pub(crate) async fn session_set(
         .await
         .context(RedisSnafu {
             message: "Failed to set protocol session info key",
-        })
-}
-
-#[tracing::instrument(name = "get_protocol_session_info", skip(redis_conn))]
-pub(crate) async fn session_get(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-    participant_id: ParticipantId,
-) -> Result<Option<SessionInfo>, SignalingModuleError> {
-    redis_conn
-        .get(SessionInfoKey {
-            room_id,
-            participant_id,
-        })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to get protocol session info key",
         })
 }
 

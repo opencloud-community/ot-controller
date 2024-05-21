@@ -4,8 +4,10 @@
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId};
+use opentalk_types::core::ParticipantId;
 
 use super::InitState;
+use crate::SessionInfo;
 
 #[async_trait(?Send)]
 pub(crate) trait ProtocolStorage {
@@ -44,12 +46,15 @@ pub(crate) trait ProtocolStorage {
 
     async fn init_delete(&mut self, room: SignalingRoomId) -> Result<(), SignalingModuleError>;
 
-    /// Remove all redis keys related to this room & module
-    #[tracing::instrument(name = "cleanup_protocol", skip(self))]
-    async fn cleanup(
+    async fn session_get(
         &mut self,
         room: SignalingRoomId,
-    ) -> Result<(), SignalingModuleError> {
+        participant: ParticipantId,
+    ) -> Result<Option<SessionInfo>, SignalingModuleError>;
+
+    /// Remove all redis keys related to this room & module
+    #[tracing::instrument(name = "cleanup_protocol", skip(self))]
+    async fn cleanup(&mut self, room: SignalingRoomId) -> Result<(), SignalingModuleError> {
         self.init_delete(room).await?;
         self.group_delete(room).await?;
 

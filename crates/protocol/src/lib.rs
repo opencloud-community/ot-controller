@@ -38,7 +38,7 @@ pub mod storage;
 
 const PAD_NAME: &str = "protocol";
 
-#[derive(Debug, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
 #[to_redis_args(serde)]
 #[from_redis_value(serde)]
 struct SessionInfo {
@@ -105,9 +105,10 @@ impl SignalingModule for Protocol {
                     ctx.ws_send(ProtocolEvent::ReadUrl(AccessUrl { url: read_url }));
 
                     for (participant_id, access) in participants {
-                        let session_info =
-                            storage::session::get(ctx.redis_conn(), self.room_id, *participant_id)
-                                .await?;
+                        let session_info = ctx
+                            .redis_conn()
+                            .session_get(self.room_id, *participant_id)
+                            .await?;
 
                         *access = session_info.map(|session_info| ProtocolPeerState {
                             readonly: session_info.readonly,
@@ -133,8 +134,10 @@ impl SignalingModule for Protocol {
             }
             Event::ParticipantUpdated(participant_id, peer_frontend_data)
             | Event::ParticipantJoined(participant_id, peer_frontend_data) => {
-                let session_info =
-                    storage::session::get(ctx.redis_conn(), self.room_id, participant_id).await?;
+                let session_info = ctx
+                    .redis_conn()
+                    .session_get(self.room_id, participant_id)
+                    .await?;
 
                 *peer_frontend_data = session_info.map(|session_info| ProtocolPeerState {
                     readonly: session_info.readonly,
@@ -292,9 +295,10 @@ impl Protocol {
 
                 for participant_id in selection.participant_ids {
                     // check if its actually a writer
-                    let session_info =
-                        storage::session::get(ctx.redis_conn(), self.room_id, participant_id)
-                            .await?;
+                    let session_info = ctx
+                        .redis_conn()
+                        .session_get(self.room_id, participant_id)
+                        .await?;
 
                     let session_info = if let Some(session_info) = session_info {
                         session_info
@@ -331,9 +335,10 @@ impl Protocol {
                     return Ok(());
                 }
 
-                let session_info =
-                    storage::session::get(ctx.redis_conn(), self.room_id, self.participant_id)
-                        .await?;
+                let session_info = ctx
+                    .redis_conn()
+                    .session_get(self.room_id, self.participant_id)
+                    .await?;
                 if let Some(session_info) = session_info {
                     let group_id = ctx.redis_conn().group_get(self.room_id).await?.unwrap();
 

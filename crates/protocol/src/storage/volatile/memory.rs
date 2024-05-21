@@ -5,13 +5,15 @@
 use std::collections::{hash_map::Entry, HashMap};
 
 use opentalk_signaling_core::SignalingRoomId;
+use opentalk_types::core::ParticipantId;
 
-use crate::storage::InitState;
+use crate::{storage::InitState, SessionInfo};
 
 #[derive(Debug, Clone, Default)]
 pub(crate) struct MemoryProtocolState {
     group_ids: HashMap<SignalingRoomId, String>,
     init_state: HashMap<SignalingRoomId, InitState>,
+    session: HashMap<(SignalingRoomId, ParticipantId), SessionInfo>,
 }
 
 impl MemoryProtocolState {
@@ -52,5 +54,13 @@ impl MemoryProtocolState {
 
     pub(crate) fn init_delete(&mut self, room: SignalingRoomId) {
         self.init_state.remove(&room);
+    }
+
+    pub(crate) fn session_get(
+        &self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Option<SessionInfo> {
+        self.session.get(&(room, participant)).cloned()
     }
 }

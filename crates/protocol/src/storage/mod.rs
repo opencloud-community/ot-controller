@@ -19,9 +19,7 @@ pub enum InitState {
 }
 
 pub(crate) mod session {
-    pub(crate) use super::redis::{
-        session_get as get, session_get_del as get_del, session_set as set,
-    };
+    pub(crate) use super::redis::{session_get_del as get_del, session_set as set};
 }
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
@@ -29,10 +27,13 @@ use serde::{Deserialize, Serialize};
 #[cfg(test)]
 mod test_common {
     use opentalk_signaling_core::SignalingRoomId;
+    use opentalk_types::core::ParticipantId;
 
     use super::{InitState, ProtocolStorage};
 
     pub const ROOM: SignalingRoomId = SignalingRoomId::nil();
+
+    pub const PARTICIPANT: ParticipantId = ParticipantId::nil();
 
     pub const GROUP_ID_A: &str = "group_id A";
     pub const GROUP_ID_B: &str = "group_id B";
@@ -75,5 +76,9 @@ mod test_common {
         storage.init_delete(ROOM).await.unwrap();
 
         assert_eq!(None, storage.init_get(ROOM).await.unwrap());
+    }
+
+    pub(crate) async fn session(storage: &mut dyn ProtocolStorage) {
+        assert_eq!(None, storage.session_get(ROOM, PARTICIPANT).await.unwrap());
     }
 }

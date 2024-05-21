@@ -6,10 +6,14 @@ use std::sync::{Arc, OnceLock};
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage};
+use opentalk_types::core::ParticipantId;
 use parking_lot::RwLock;
 
 use super::memory::MemoryProtocolState;
-use crate::storage::{protocol_storage::ProtocolStorage, InitState};
+use crate::{
+    storage::{protocol_storage::ProtocolStorage, InitState},
+    SessionInfo,
+};
 
 static STATE: OnceLock<Arc<RwLock<MemoryProtocolState>>> = OnceLock::new();
 
@@ -70,6 +74,15 @@ impl ProtocolStorage for VolatileStaticMemoryStorage {
         state().write().init_delete(room);
         Ok(())
     }
+
+    #[tracing::instrument(name = "get_protocol_session_info", skip(self))]
+    async fn session_get(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<Option<SessionInfo>, SignalingModuleError> {
+        Ok(state().read().session_get(room, participant))
+    }
 }
 
 #[cfg(test)]
@@ -94,5 +107,11 @@ mod test {
     #[serial]
     async fn init() {
         test_common::init(&mut storage()).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn session() {
+        test_common::session(&mut storage()).await;
     }
 }
