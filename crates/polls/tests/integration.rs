@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::{collections::HashSet, time::Duration};
+use std::{collections::BTreeSet, time::Duration};
 
 use opentalk_polls::*;
 use opentalk_signaling_core::module_tester::{ModuleTester, WsMessageOutgoing};
@@ -105,7 +105,7 @@ async fn full_poll_with_2sec_duration() {
             PollsCommand::Vote(Vote {
                 poll_id: started.id,
                 choices: Choices::Multiple {
-                    choice_ids: HashSet::from_iter(vec![ChoiceId::from(0)]),
+                    choice_ids: BTreeSet::from_iter(vec![ChoiceId::from(0)]),
                 },
             }),
         )
@@ -203,7 +203,7 @@ async fn full_poll_with_2sec_duration() {
             PollsCommand::Vote(Vote {
                 poll_id: started.id,
                 choices: Choices::Multiple {
-                    choice_ids: HashSet::from_iter(vec![ChoiceId::from(2)]),
+                    choice_ids: BTreeSet::from_iter(vec![ChoiceId::from(2)]),
                 },
             }),
         )
@@ -252,7 +252,7 @@ async fn full_poll_with_2sec_duration() {
             PollsCommand::Vote(Vote {
                 poll_id: started.id,
                 choices: Choices::Multiple {
-                    choice_ids: HashSet::from_iter(vec![ChoiceId::from(0), ChoiceId::from(1)]),
+                    choice_ids: BTreeSet::from_iter(vec![ChoiceId::from(0), ChoiceId::from(1)]),
                 },
             }),
         )
@@ -301,7 +301,7 @@ async fn full_poll_with_2sec_duration() {
             PollsCommand::Vote(Vote {
                 poll_id: started.id,
                 choices: Choices::Multiple {
-                    choice_ids: HashSet::from_iter(vec![ChoiceId::from(3)]),
+                    choice_ids: BTreeSet::from_iter(vec![ChoiceId::from(3)]),
                 },
             }),
         )
@@ -326,7 +326,7 @@ async fn full_poll_with_2sec_duration() {
             PollsCommand::Vote(Vote {
                 poll_id: started.id,
                 choices: Choices::Multiple {
-                    choice_ids: HashSet::new(),
+                    choice_ids: BTreeSet::new(),
                 },
             }),
         )
@@ -424,7 +424,7 @@ async fn poll_with_invalid_multiple_choice() {
             PollsCommand::Vote(Vote {
                 poll_id: started.id,
                 choices: Choices::Multiple {
-                    choice_ids: HashSet::from_iter(vec![ChoiceId::from(0)]),
+                    choice_ids: BTreeSet::from_iter(vec![ChoiceId::from(0)]),
                 },
             }),
         )
@@ -473,7 +473,7 @@ async fn poll_with_invalid_multiple_choice() {
             PollsCommand::Vote(Vote {
                 poll_id: started.id,
                 choices: Choices::Multiple {
-                    choice_ids: HashSet::from_iter(vec![ChoiceId::from(0), ChoiceId::from(1)]),
+                    choice_ids: BTreeSet::from_iter(vec![ChoiceId::from(0), ChoiceId::from(1)]),
                 },
             }),
         )
@@ -498,7 +498,7 @@ async fn poll_with_invalid_multiple_choice() {
             PollsCommand::Vote(Vote {
                 poll_id: started.id,
                 choices: Choices::Multiple {
-                    choice_ids: HashSet::from_iter(vec![ChoiceId::from(1)]),
+                    choice_ids: BTreeSet::from_iter(vec![ChoiceId::from(1)]),
                 },
             }),
         )

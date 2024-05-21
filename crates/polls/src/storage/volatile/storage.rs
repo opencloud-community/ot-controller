@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, BTreeSet},
     sync::{Arc, OnceLock},
 };
 
@@ -80,6 +80,18 @@ impl PollsStorage for VolatileStaticMemoryStorage {
         state().write().add_poll_to_list(room, poll_id);
         Ok(())
     }
+
+    async fn vote(
+        &mut self,
+        room: SignalingRoomId,
+        poll_id: PollId,
+        previous_choice_ids: &BTreeSet<ChoiceId>,
+        new_choice_ids: &BTreeSet<ChoiceId>,
+    ) -> Result<(), SignalingModuleError> {
+        state()
+            .write()
+            .vote(room, poll_id, previous_choice_ids, new_choice_ids)
+    }
 }
 
 #[cfg(test)]
@@ -98,5 +110,11 @@ mod test {
     #[serial]
     async fn polls_state() {
         test_common::polls_state(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn voting() {
+        test_common::voting(&mut storage().await).await;
     }
 }

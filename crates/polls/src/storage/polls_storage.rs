@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId};
@@ -44,4 +44,12 @@ pub(crate) trait PollsStorage {
         room: SignalingRoomId,
         poll: PollId,
     ) -> Result<BTreeMap<ChoiceId, u32>, SignalingModuleError>;
+
+    async fn vote(
+        &mut self,
+        room: SignalingRoomId,
+        poll_id: PollId,
+        previous_choice_ids: &BTreeSet<ChoiceId>,
+        new_choice_ids: &BTreeSet<ChoiceId>,
+    ) -> Result<(), SignalingModuleError>;
 }

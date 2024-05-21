@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::{collections::HashSet, time::Duration};
+use std::{collections::BTreeSet, time::Duration};
 
 use futures::{stream::once, FutureExt};
 use opentalk_signaling_core::{
@@ -75,7 +75,7 @@ impl SignalingModule for Polls {
 
                         self.config = Some(Config {
                             state: polls_state.clone(),
-                            voted_choice_ids: HashSet::new(),
+                            voted_choice_ids: BTreeSet::new(),
                         });
                         *frontend_data = Some(polls_state);
 
@@ -271,7 +271,7 @@ impl Polls {
                 // TODO(w.rabl) Currently the user's choices are stored in-memory only and thus they are lost after reconnecting.
                 // In this case, if the user sends a new set of choices, the previous choices can't be properly reverted.
                 // This leads to an inconsistent poll result.
-                let valid_choice_ids: HashSet<ChoiceId> = config
+                let valid_choice_ids: BTreeSet<ChoiceId> = config
                     .state
                     .choices
                     .iter()
@@ -279,14 +279,14 @@ impl Polls {
                     .collect();
 
                 if choice_ids.is_subset(&valid_choice_ids) {
-                    storage::vote(
-                        ctx.redis_conn(),
-                        self.room,
-                        config.state.id,
-                        &config.voted_choice_ids,
-                        &choice_ids,
-                    )
-                    .await?;
+                    ctx.redis_conn()
+                        .vote(
+                            self.room,
+                            config.state.id,
+                            &config.voted_choice_ids,
+                            &choice_ids,
+                        )
+                        .await?;
 
                     config.voted_choice_ids = choice_ids;
 
@@ -358,7 +358,7 @@ impl Polls {
 
                 self.config = Some(Config {
                     state: polls_state,
-                    voted_choice_ids: HashSet::new(),
+                    voted_choice_ids: BTreeSet::new(),
                 });
 
                 Ok(())
@@ -390,5 +390,5 @@ impl Polls {
 #[derive(Debug, Clone)]
 pub struct Config {
     state: PollsState,
-    voted_choice_ids: HashSet<ChoiceId>,
+    voted_choice_ids: BTreeSet<ChoiceId>,
 }

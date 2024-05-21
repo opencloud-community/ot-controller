@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet};
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
@@ -99,6 +99,48 @@ impl PollsStorage for RedisConnection {
                 message: "failed to zrange vote results",
             })
     }
+
+    async fn vote(
+        &mut self,
+        room: SignalingRoomId,
+        poll_id: PollId,
+        previous_choice_ids: &BTreeSet<ChoiceId>,
+        new_choice_ids: &BTreeSet<ChoiceId>,
+    ) -> Result<(), SignalingModuleError> {
+        // Revoke any previous vote.
+        for choice_id in previous_choice_ids {
+            self.zincr(
+                PollResults {
+                    room,
+                    poll: poll_id,
+                },
+                u32::from(*choice_id),
+                -1,
+            )
+            .await
+            .context(RedisSnafu {
+                message: "Failed to cast previous vote",
+            })?;
+        }
+
+        // Apply any new vote.
+        for choice_id in new_choice_ids {
+            self.zincr(
+                PollResults {
+                    room,
+                    poll: poll_id,
+                },
+                u32::from(*choice_id),
+                1,
+            )
+            .await
+            .context(RedisSnafu {
+                message: "Failed to cast new vote",
+            })?;
+        }
+
+        Ok(())
+    }
 }
 
 /// Key to the current poll config
@@ -116,56 +158,12 @@ struct PollResults {
     poll: PollId,
 }
 
-pub(crate) async fn vote(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    poll_id: PollId,
-    previous_choice_ids: &HashSet<ChoiceId>,
-    new_choice_ids: &HashSet<ChoiceId>,
-) -> Result<(), SignalingModuleError> {
-    // Revoke any previous vote.
-    for choice_id in previous_choice_ids {
-        redis_conn
-            .zincr(
-                PollResults {
-                    room,
-                    poll: poll_id,
-                },
-                u32::from(*choice_id),
-                -1,
-            )
-            .await
-            .context(RedisSnafu {
-                message: "Failed to cast previous vote",
-            })?;
-    }
-
-    // Apply any new vote.
-    for choice_id in new_choice_ids {
-        redis_conn
-            .zincr(
-                PollResults {
-                    room,
-                    poll: poll_id,
-                },
-                u32::from(*choice_id),
-                1,
-            )
-            .await
-            .context(RedisSnafu {
-                message: "Failed to cast new vote",
-            })?;
-    }
-
-    Ok(())
-}
-
 pub(crate) async fn poll_results(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     config: &PollsState,
 ) -> Result<Vec<Item>, SignalingModuleError> {
-    let votes = redis_conn.results( room, config.id).await?;
+    let votes = redis_conn.results(room, config.id).await?;
 
     let votes = (0..config.choices.len())
         .map(|i| {

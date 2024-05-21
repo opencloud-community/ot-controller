@@ -8,11 +8,14 @@ mod volatile;
 
 pub(crate) use polls_storage::PollsStorage;
 // TODO: remove these re-exports once available in the PollsStorage trait
-pub(crate) use redis::{list_members, poll_results, vote};
+pub(crate) use redis::{list_members, poll_results};
 
 #[cfg(test)]
 mod test_common {
-    use std::time::Duration;
+    use std::{
+        collections::{BTreeMap, BTreeSet},
+        time::Duration,
+    };
 
     use opentalk_signaling_core::SignalingRoomId;
     use opentalk_types::{
@@ -23,6 +26,9 @@ mod test_common {
     use super::PollsStorage;
 
     pub const ROOM: SignalingRoomId = SignalingRoomId::nil();
+
+    pub const CHOICE_1: ChoiceId = ChoiceId::from_u32(1u32);
+    pub const CHOICE_2: ChoiceId = ChoiceId::from_u32(2u32);
 
     pub(super) async fn polls_state(storage: &mut dyn PollsStorage) {
         let polls_state = PollsState {
@@ -65,5 +71,59 @@ mod test_common {
 
         storage.delete_polls_state(ROOM).await.unwrap();
         assert_eq!(storage.get_polls_state(ROOM).await.unwrap(), None);
+    }
+
+    pub(super) async fn voting(storage: &mut dyn PollsStorage) {
+        let polls_state = PollsState {
+            id: PollId::nil(),
+            topic: "Some poll".to_string(),
+            live: true,
+            multiple_choice: false,
+            choices: vec![
+                Choice {
+                    id: CHOICE_1,
+                    content: "Choice A".to_string(),
+                },
+                Choice {
+                    id: CHOICE_2,
+                    content: "Choice B".to_string(),
+                },
+            ],
+            started: Timestamp::now(),
+            duration: Duration::from_secs(10),
+        };
+        assert!(storage.get_polls_state(ROOM).await.unwrap().is_none());
+
+        assert!(storage.set_polls_state(ROOM, &polls_state).await.unwrap());
+
+        for _ in 0..4 {
+            storage
+                .vote(
+                    ROOM,
+                    polls_state.id,
+                    &BTreeSet::from([]),
+                    &BTreeSet::from([CHOICE_1]),
+                )
+                .await
+                .unwrap();
+        }
+
+        let choices = storage.results(ROOM, polls_state.id).await.unwrap();
+        assert_eq!(choices, BTreeMap::from([(CHOICE_1, 4)]));
+
+        for _ in 0..2 {
+            storage
+                .vote(
+                    ROOM,
+                    polls_state.id,
+                    &BTreeSet::from([CHOICE_1]),
+                    &BTreeSet::from([CHOICE_2]),
+                )
+                .await
+                .unwrap();
+        }
+
+        let choices = storage.results(ROOM, polls_state.id).await.unwrap();
+        assert_eq!(choices, BTreeMap::from([(CHOICE_1, 2), (CHOICE_2, 2)]));
     }
 }

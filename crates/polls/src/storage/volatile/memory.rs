@@ -2,10 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
-use opentalk_signaling_core::{ExpiringDataHashMap, SignalingRoomId};
+use opentalk_signaling_core::{ExpiringDataHashMap, SignalingModuleError, SignalingRoomId};
 use opentalk_types::signaling::polls::{state::PollsState, ChoiceId, PollId};
+use snafu::OptionExt;
 
 #[derive(Debug, Clone, Default)]
 pub(super) struct MemoryPollsState {
@@ -58,5 +59,34 @@ impl MemoryPollsState {
             .get(&(room, poll))
             .cloned()
             .map(BTreeMap::from_iter)
+    }
+
+    pub(super) fn vote(
+        &mut self,
+        room: SignalingRoomId,
+        poll: PollId,
+        previous_choices: &BTreeSet<ChoiceId>,
+        new_choices: &BTreeSet<ChoiceId>,
+    ) -> Result<(), SignalingModuleError> {
+        // Clone first to ensure the no changes are applied if we encounter errors
+        let mut choices = self
+            .poll_results
+            .get(&(room, poll))
+            .cloned()
+            .unwrap_or_default();
+        for removed_choice in previous_choices.difference(new_choices) {
+            let counter = choices
+                .get_mut(removed_choice)
+                .whatever_context::<_, SignalingModuleError>("Choice not found")?;
+            *counter -= 1;
+        }
+
+        for added_choice in new_choices.difference(previous_choices) {
+            let counter = choices.entry(*added_choice).or_default();
+            *counter += 1;
+        }
+
+        self.poll_results.insert((room, poll), choices);
+        Ok(())
     }
 }

@@ -19,3 +19,10 @@ use crate::imports::*;
 )]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ChoiceId(u32);
+
+impl ChoiceId {
+    /// Create a new ChoiceId
+    pub const fn from_u32(id: u32) -> Self {
+        Self(id)
+    }
+}
