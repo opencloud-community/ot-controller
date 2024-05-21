@@ -57,13 +57,9 @@ impl ProtocolStorage for RedisConnection {
         if affected_entries == 1 {
             Ok(None)
         } else {
-            let state: InitState =
-                self
-                    .get(InitKey { room_id })
-                    .await
-                    .context(RedisSnafu {
-                        message: "Failed to get protocol init state",
-                    })?;
+            let state: InitState = self.get(InitKey { room_id }).await.context(RedisSnafu {
+                message: "Failed to get protocol init state",
+            })?;
 
             Ok(Some(state))
         }
@@ -77,6 +73,15 @@ impl ProtocolStorage for RedisConnection {
         //     .query_async::<_, Option<InitState>>(self)
         //     .await
         //     .context( RedisSnafu {message: "Failed to set protocol init state"})
+    }
+
+    #[tracing::instrument(name = "protocol_set_initialized", skip(self))]
+    async fn set_initialized(&mut self, room: SignalingRoomId) -> Result<(), SignalingModuleError> {
+        self.set(InitKey { room_id: room }, InitState::Initialized)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to set protocol init state to `Initialized`",
+            })
     }
 }
 
@@ -106,26 +111,14 @@ struct InitKey {
     room_id: SignalingRoomId,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToRedisArgs, FromRedisValue,
+)]
 #[to_redis_args(serde)]
 #[from_redis_value(serde)]
 pub enum InitState {
     Initializing,
     Initialized,
-}
-
-/// Sets the room state to [`InitState::Initialized`]
-#[tracing::instrument(name = "protocol_set_initialized", skip(redis_conn))]
-pub(crate) async fn set_initialized(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .set(InitKey { room_id }, InitState::Initialized)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to set protocol init state to `Initialized`",
-        })
 }
 
 #[tracing::instrument(name = "get_protocol_init_state", skip(redis_conn))]

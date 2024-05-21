@@ -50,6 +50,12 @@ impl ProtocolStorage for VolatileStaticMemoryStorage {
     ) -> Result<Option<InitState>, SignalingModuleError> {
         Ok(state().write().init_get_or_default(room))
     }
+
+    #[tracing::instrument(name = "protocol_set_initialized", skip(self))]
+    async fn set_initialized(&mut self, room: SignalingRoomId) -> Result<(), SignalingModuleError> {
+        state().write().set_initialized(room);
+        Ok(())
+    }
 }
 
 #[cfg(test)]

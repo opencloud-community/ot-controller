@@ -432,7 +432,7 @@ impl Protocol {
         redis_conn.group_set(self.room_id, &group_id).await?;
 
         // flag this room as initialized
-        storage::init::set_initialized(redis_conn, self.room_id).await?;
+        redis_conn.set_initialized(self.room_id).await?;
 
         Ok(())
     }

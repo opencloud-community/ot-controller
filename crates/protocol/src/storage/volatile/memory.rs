@@ -41,4 +41,8 @@ impl MemoryProtocolState {
             }
         }
     }
+
+    pub(crate) fn set_initialized(&mut self, room: SignalingRoomId) {
+        self.init_state.insert(room, InitState::Initialized);
+    }
 }
