@@ -34,6 +34,19 @@ impl ProtocolStorage for RedisConnection {
             message: "Failed to get protocol group key",
         })
     }
+
+    #[tracing::instrument(name = "delete_protocol_group", skip(self))]
+    async fn group_delete(
+        &mut self,
+        room_id: SignalingRoomId,
+    ) -> Result<(), SignalingModuleError> {
+        self
+            .del(GroupKey { room_id })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to delete protocol group key",
+            })
+    }
 }
 
 /// Remove all redis keys related to this room & module
@@ -43,7 +56,7 @@ pub(crate) async fn cleanup(
     room_id: SignalingRoomId,
 ) -> Result<(), SignalingModuleError> {
     init_del(redis_conn, room_id).await?;
-    group_del(redis_conn, room_id).await?;
+    redis_conn.group_delete(room_id).await?;
 
     Ok(())
 }
@@ -53,19 +66,6 @@ pub(crate) async fn cleanup(
 #[to_redis_args(fmt = "opentalk-signaling:room={room_id}:protocol:group")]
 pub(super) struct GroupKey {
     pub(super) room_id: SignalingRoomId,
-}
-
-#[tracing::instrument(name = "delete_protocol_group", skip(redis_conn))]
-pub(crate) async fn group_del(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .del(GroupKey { room_id })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to delete protocol group key",
-        })
 }
 
 /// Stores the [`InitState`] of this room.

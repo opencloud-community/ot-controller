@@ -36,6 +36,12 @@ impl ProtocolStorage for VolatileStaticMemoryStorage {
     ) -> Result<Option<String>, SignalingModuleError> {
         Ok(state().read().group_get(room))
     }
+
+    #[tracing::instrument(name = "delete_protocol_group", skip(self))]
+    async fn group_delete(&mut self, room: SignalingRoomId) -> Result<(), SignalingModuleError> {
+        state().write().group_delete(room);
+        Ok(())
+    }
 }
 
 #[cfg(test)]

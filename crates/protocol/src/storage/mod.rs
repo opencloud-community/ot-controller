@@ -34,9 +34,18 @@ mod test_common {
     pub(crate) async fn group(storage: &mut dyn ProtocolStorage) {
         storage.group_set(ROOM, GROUP_ID_A).await.unwrap();
 
-        assert_eq!(GROUP_ID_A, storage.group_get(ROOM).await.unwrap().unwrap());
+        assert_eq!(
+            Some(GROUP_ID_A),
+            storage.group_get(ROOM).await.unwrap().as_deref()
+        );
 
         storage.group_set(ROOM, GROUP_ID_B).await.unwrap();
-        assert_eq!(GROUP_ID_B, storage.group_get(ROOM).await.unwrap().unwrap());
+        assert_eq!(
+            Some(GROUP_ID_B),
+            storage.group_get(ROOM).await.unwrap().as_deref()
+        );
+
+        storage.group_delete(ROOM).await.unwrap();
+        assert_eq!(None, storage.group_get(ROOM).await.unwrap());
     }
 }

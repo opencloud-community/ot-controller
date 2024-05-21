@@ -17,4 +17,9 @@ pub(crate) trait ProtocolStorage {
         &mut self,
         room_id: SignalingRoomId,
     ) -> Result<Option<String>, SignalingModuleError>;
+
+    async fn group_delete(
+        &mut self,
+        room_id: SignalingRoomId,
+    ) -> Result<(), SignalingModuleError>;
 }

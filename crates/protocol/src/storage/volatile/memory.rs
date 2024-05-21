@@ -24,4 +24,8 @@ impl MemoryProtocolState {
     pub(crate) fn group_get(&self, room: SignalingRoomId) -> Option<String> {
         self.group_ids.get(&room).cloned()
     }
+
+    pub(crate) fn group_delete(&mut self, room: SignalingRoomId) -> Option<String> {
+        self.group_ids.remove(&room)
+    }
 }
