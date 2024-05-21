@@ -23,7 +23,6 @@ pub(crate) mod session {
         session_get as get, session_get_del as get_del, session_set as set,
     };
 }
-pub(crate) use redis::cleanup;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 

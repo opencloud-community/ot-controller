@@ -156,7 +156,7 @@ impl SignalingModule for Protocol {
                 );
             }
 
-            if let Err(e) = storage::cleanup(ctx.redis_conn(), self.room_id).await {
+            if let Err(e) = ctx.redis_conn().cleanup(self.room_id).await {
                 log::error!(
                     "Failed to cleanup protocol keys for room {} in redis: {}",
                     self.room_id,

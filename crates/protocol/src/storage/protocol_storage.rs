@@ -43,4 +43,16 @@ pub(crate) trait ProtocolStorage {
     ) -> Result<Option<InitState>, SignalingModuleError>;
 
     async fn init_delete(&mut self, room: SignalingRoomId) -> Result<(), SignalingModuleError>;
+
+    /// Remove all redis keys related to this room & module
+    #[tracing::instrument(name = "cleanup_protocol", skip(self))]
+    async fn cleanup(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<(), SignalingModuleError> {
+        self.init_delete(room).await?;
+        self.group_delete(room).await?;
+
+        Ok(())
+    }
 }

@@ -108,18 +108,6 @@ impl ProtocolStorage for RedisConnection {
     }
 }
 
-/// Remove all redis keys related to this room & module
-#[tracing::instrument(name = "cleanup_protocol", skip(redis_conn))]
-pub(crate) async fn cleanup(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-) -> Result<(), SignalingModuleError> {
-    redis_conn.init_delete(room_id).await?;
-    redis_conn.group_delete(room_id).await?;
-
-    Ok(())
-}
-
 /// Stores the etherpad group_id that is associated with this room.
 #[derive(ToRedisArgs)]
 #[to_redis_args(fmt = "opentalk-signaling:room={room_id}:protocol:group")]
