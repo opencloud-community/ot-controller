@@ -52,6 +52,13 @@ pub(crate) trait ProtocolStorage {
         participant: ParticipantId,
     ) -> Result<Option<SessionInfo>, SignalingModuleError>;
 
+    async fn session_set(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        session_info: &SessionInfo,
+    ) -> Result<(), SignalingModuleError>;
+
     /// Remove all redis keys related to this room & module
     #[tracing::instrument(name = "cleanup_protocol", skip(self))]
     async fn cleanup(&mut self, room: SignalingRoomId) -> Result<(), SignalingModuleError> {

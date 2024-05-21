@@ -522,7 +522,9 @@ impl Protocol {
             readonly,
         };
 
-        storage::session::set(redis_conn, self.room_id, self.participant_id, &session_info).await?;
+        redis_conn
+            .session_set(self.room_id, self.participant_id, &session_info)
+            .await?;
 
         Ok(session_info)
     }

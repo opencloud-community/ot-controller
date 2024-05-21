@@ -83,6 +83,19 @@ impl ProtocolStorage for VolatileStaticMemoryStorage {
     ) -> Result<Option<SessionInfo>, SignalingModuleError> {
         Ok(state().read().session_get(room, participant))
     }
+
+    #[tracing::instrument(name = "set_protocol_session_info", skip(self))]
+    async fn session_set(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        session_info: &SessionInfo,
+    ) -> Result<(), SignalingModuleError> {
+        state()
+            .write()
+            .session_set(room, participant, session_info.clone());
+        Ok(())
+    }
 }
 
 #[cfg(test)]

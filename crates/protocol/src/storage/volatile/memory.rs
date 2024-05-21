@@ -63,4 +63,13 @@ impl MemoryProtocolState {
     ) -> Option<SessionInfo> {
         self.session.get(&(room, participant)).cloned()
     }
+
+    pub(crate) fn session_set(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        session_info: SessionInfo,
+    ) {
+        self.session.insert((room, participant), session_info);
+    }
 }
