@@ -2710,9 +2710,9 @@ dependencies = [
 
 [[package]]
 name = "itertools"
-version = "0.12.1"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
+checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
 dependencies = [
  "either",
 ]
@@ -2767,7 +2767,7 @@ dependencies = [
  "diesel",
  "diesel-async",
  "futures",
- "itertools 0.12.1",
+ "itertools 0.13.0",
  "kustos-shared",
  "log",
  "opentalk-database",
@@ -2790,7 +2790,7 @@ name = "kustos-shared"
 version = "0.0.0-dev"
 dependencies = [
  "http 0.2.12",
- "itertools 0.12.1",
+ "itertools 0.13.0",
  "pretty_assertions",
  "snafu",
  "uuid",
@@ -3394,7 +3394,7 @@ dependencies = [
  "either",
  "email_address",
  "futures",
- "itertools 0.12.1",
+ "itertools 0.13.0",
  "jsonwebtoken",
  "kustos",
  "lapin-pool",
@@ -3920,7 +3920,7 @@ dependencies = [
  "email_address",
  "http 0.2.12",
  "http-request-derive",
- "itertools 0.12.1",
+ "itertools 0.13.0",
  "kustos-shared",
  "log",
  "opentalk-cache",
@@ -4264,7 +4264,7 @@ dependencies = [
  "bincode",
  "either",
  "fnv",
- "itertools 0.12.1",
+ "itertools 0.10.5",
  "lazy_static",
  "nom",
  "quick-xml",
@@ -4580,7 +4580,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "19de2de2a00075bf566bee3bd4db014b11587e84184d3f7a791bc17f1a8e9e48"
 dependencies = [
  "anyhow",
- "itertools 0.12.1",
+ "itertools 0.10.5",
  "proc-macro2",
  "quote",
  "syn 2.0.64",
