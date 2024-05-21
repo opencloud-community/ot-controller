@@ -24,6 +24,16 @@ impl ProtocolStorage for RedisConnection {
                 message: "Failed to set protocol group key",
             })
     }
+
+    #[tracing::instrument(name = "get_protocol_group", skip(self))]
+    async fn group_get(
+        &mut self,
+        room_id: SignalingRoomId,
+    ) -> Result<Option<String>, SignalingModuleError> {
+        self.get(GroupKey { room_id }).await.context(RedisSnafu {
+            message: "Failed to get protocol group key",
+        })
+    }
 }
 
 /// Remove all redis keys related to this room & module
@@ -43,19 +53,6 @@ pub(crate) async fn cleanup(
 #[to_redis_args(fmt = "opentalk-signaling:room={room_id}:protocol:group")]
 pub(super) struct GroupKey {
     pub(super) room_id: SignalingRoomId,
-}
-
-#[tracing::instrument(name = "get_protocol_group", skip(redis_conn))]
-pub(crate) async fn group_get(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-) -> Result<Option<String>, SignalingModuleError> {
-    redis_conn
-        .get(GroupKey { room_id })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to get protocol group key",
-        })
 }
 
 #[tracing::instrument(name = "delete_protocol_group", skip(redis_conn))]

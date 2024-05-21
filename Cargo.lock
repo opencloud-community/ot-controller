@@ -3800,7 +3800,9 @@ dependencies = [
  "redis",
  "redis-args",
  "serde",
+ "serial_test",
  "snafu",
+ "tokio",
  "tracing",
 ]
 

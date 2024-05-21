@@ -25,3 +25,7 @@ redis-args.workspace = true
 serde.workspace = true
 snafu.workspace = true
 tracing.workspace = true
+
+[dev-dependencies]
+serial_test.workspace = true
+tokio.workspace = true

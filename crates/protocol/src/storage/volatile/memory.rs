@@ -8,11 +8,20 @@ use opentalk_signaling_core::SignalingRoomId;
 
 #[derive(Debug, Clone, Default)]
 pub(crate) struct MemoryProtocolState {
-    group_id: HashMap<SignalingRoomId, String>,
+    group_ids: HashMap<SignalingRoomId, String>,
 }
 
 impl MemoryProtocolState {
-    pub(crate) fn group_set(&mut self, room_id: SignalingRoomId, group_id: &str) {
-        self.group_id.insert(room_id, group_id.to_string());
+    #[cfg(test)]
+    pub(super) fn reset(&mut self) {
+        *self = Self::default();
+    }
+
+    pub(crate) fn group_set(&mut self, room: SignalingRoomId, group: &str) {
+        self.group_ids.insert(room, group.to_string());
+    }
+
+    pub(crate) fn group_get(&self, room: SignalingRoomId) -> Option<String> {
+        self.group_ids.get(&room).cloned()
     }
 }

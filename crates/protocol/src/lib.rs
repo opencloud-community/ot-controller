@@ -334,9 +334,7 @@ impl Protocol {
                     storage::session::get(ctx.redis_conn(), self.room_id, self.participant_id)
                         .await?;
                 if let Some(session_info) = session_info {
-                    let group_id = storage::group::get(ctx.redis_conn(), self.room_id)
-                        .await?
-                        .unwrap();
+                    let group_id = ctx.redis_conn().group_get(self.room_id).await?.unwrap();
 
                     let pad_id = format!("{group_id}${PAD_NAME}");
 
@@ -496,7 +494,8 @@ impl Protocol {
     ) -> Result<SessionInfo, SignalingModuleError> {
         let author_id = self.create_author(redis_conn).await?;
 
-        let group_id = storage::group::get(redis_conn, self.room_id)
+        let group_id = redis_conn
+            .group_get(self.room_id)
             .await?
             .whatever_context::<&str, SignalingModuleError>(
                 "Missing group for room while preparing a new session",
@@ -586,9 +585,7 @@ impl Protocol {
             return Ok(());
         }
 
-        let group_id = storage::group::get(redis_conn, self.room_id)
-            .await?
-            .unwrap();
+        let group_id = redis_conn.group_get(self.room_id).await?.unwrap();
 
         let pad_id = format!("{group_id}${PAD_NAME}");
 

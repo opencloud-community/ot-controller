@@ -12,4 +12,9 @@ pub(crate) trait ProtocolStorage {
         room_id: SignalingRoomId,
         group_id: &str,
     ) -> Result<(), SignalingModuleError>;
+
+    async fn group_get(
+        &mut self,
+        room_id: SignalingRoomId,
+    ) -> Result<Option<String>, SignalingModuleError>;
 }

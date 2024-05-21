@@ -28,4 +28,31 @@ impl ProtocolStorage for VolatileStaticMemoryStorage {
         state().write().group_set(room, group);
         Ok(())
     }
+
+    #[tracing::instrument(name = "get_protocol_group", skip(self))]
+    async fn group_get(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<Option<String>, SignalingModuleError> {
+        Ok(state().read().group_get(room))
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use opentalk_signaling_core::VolatileStaticMemoryStorage;
+    use serial_test::serial;
+
+    use super::{super::super::test_common, state};
+
+    fn storage() -> VolatileStaticMemoryStorage {
+        state().write().reset();
+        VolatileStaticMemoryStorage
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn group() {
+        test_common::group(&mut storage()).await;
+    }
 }
