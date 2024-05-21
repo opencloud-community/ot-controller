@@ -128,7 +128,7 @@ impl SignalingModule for Polls {
             };
 
             for id in list {
-                if let Err(e) = storage::del_results(ctx.redis_conn(), self.room, id).await {
+                if let Err(e) = ctx.redis_conn().delete_poll_results(self.room, id).await {
                     log::error!(
                         "failed to remove poll results for id {}, {}",
                         id,

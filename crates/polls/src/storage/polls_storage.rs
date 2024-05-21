@@ -4,7 +4,7 @@
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId};
-use opentalk_types::signaling::polls::state::PollsState;
+use opentalk_types::signaling::polls::{state::PollsState, PollId};
 
 #[async_trait(?Send)]
 pub(crate) trait PollsStorage {
@@ -23,5 +23,11 @@ pub(crate) trait PollsStorage {
     async fn delete_polls_state(
         &mut self,
         room: SignalingRoomId,
+    ) -> Result<(), SignalingModuleError>;
+
+    async fn delete_poll_results(
+        &mut self,
+        room: SignalingRoomId,
+        poll_id: PollId,
     ) -> Result<(), SignalingModuleError>;
 }

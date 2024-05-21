@@ -6,7 +6,7 @@ use std::sync::{Arc, OnceLock};
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage};
-use opentalk_types::signaling::polls::state::PollsState;
+use opentalk_types::signaling::polls::{state::PollsState, PollId};
 use parking_lot::RwLock;
 
 use super::memory::MemoryPollsState;
@@ -43,6 +43,15 @@ impl PollsStorage for VolatileStaticMemoryStorage {
         room: SignalingRoomId,
     ) -> Result<(), SignalingModuleError> {
         state().write().delete_polls_state(&room);
+        Ok(())
+    }
+
+    async fn delete_poll_results(
+        &mut self,
+        room: SignalingRoomId,
+        poll_id: PollId,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().delete_polls_results(room, poll_id);
         Ok(())
     }
 }

@@ -2,12 +2,15 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::collections::HashMap;
+
 use opentalk_signaling_core::{ExpiringDataHashMap, SignalingRoomId};
-use opentalk_types::signaling::polls::state::PollsState;
+use opentalk_types::signaling::polls::{state::PollsState, ChoiceId, PollId};
 
 #[derive(Debug, Clone, Default)]
 pub(super) struct MemoryPollsState {
     polls_state: ExpiringDataHashMap<SignalingRoomId, PollsState>,
+    poll_results: HashMap<(SignalingRoomId, PollId), HashMap<ChoiceId, u32>>,
 }
 
 impl MemoryPollsState {
@@ -34,5 +37,9 @@ impl MemoryPollsState {
 
     pub(super) fn delete_polls_state(&mut self, room: &SignalingRoomId) -> Option<PollsState> {
         self.polls_state.remove(room)
+    }
+
+    pub(super) fn delete_polls_results(&mut self, room: SignalingRoomId, poll: PollId) {
+        self.poll_results.remove(&(room, poll));
     }
 }

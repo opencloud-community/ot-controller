@@ -55,12 +55,24 @@ impl PollsStorage for RedisConnection {
         &mut self,
         room: SignalingRoomId,
     ) -> Result<(), SignalingModuleError> {
-        self
-            .del(PollsStateKey { room })
-            .await
-            .context(RedisSnafu {
-                message: "Failed to del current polls state",
-            })
+        self.del(PollsStateKey { room }).await.context(RedisSnafu {
+            message: "Failed to del current polls state",
+        })
+    }
+
+    async fn delete_poll_results(
+        &mut self,
+        room: SignalingRoomId,
+        poll_id: PollId,
+    ) -> Result<(), SignalingModuleError> {
+        self.del(PollResults {
+            room,
+            poll: poll_id,
+        })
+        .await
+        .context(RedisSnafu {
+            message: "Failed to delete results",
+        })
     }
 }
 
@@ -77,22 +89,6 @@ struct PollsStateKey {
 struct PollResults {
     room: SignalingRoomId,
     poll: PollId,
-}
-
-pub(crate) async fn del_results(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    poll_id: PollId,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .del(PollResults {
-            room,
-            poll: poll_id,
-        })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to delete results",
-        })
 }
 
 pub(crate) async fn vote(
