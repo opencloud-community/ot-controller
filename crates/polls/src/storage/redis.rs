@@ -4,11 +4,17 @@
 
 use std::collections::{HashMap, HashSet};
 
+use async_trait::async_trait;
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 use opentalk_types::signaling::polls::{state::PollsState, ChoiceId, Item, PollId};
 use redis::AsyncCommands as _;
 use redis_args::ToRedisArgs;
 use snafu::{whatever, ResultExt as _};
+
+use super::polls_storage::PollsStorage;
+
+#[async_trait(?Send)]
+impl PollsStorage for RedisConnection {}
 
 /// Key to the current poll config
 #[derive(ToRedisArgs)]

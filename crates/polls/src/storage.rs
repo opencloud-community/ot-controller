@@ -2,7 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+mod polls_storage;
 mod redis;
+mod volatile;
 
 // TODO: remove these re-exports once available in the PollsStorage trait
 pub(crate) use redis::{
