@@ -7,8 +7,6 @@ mod redis;
 mod volatile;
 
 pub(crate) use polls_storage::PollsStorage;
-// TODO: remove these re-exports once available in the PollsStorage trait
-pub(crate) use redis::poll_results;
 
 #[cfg(test)]
 mod test_common {
@@ -21,7 +19,7 @@ mod test_common {
     use opentalk_signaling_core::SignalingRoomId;
     use opentalk_types::{
         core::Timestamp,
-        signaling::polls::{state::PollsState, Choice, ChoiceId, PollId},
+        signaling::polls::{state::PollsState, Choice, ChoiceId, Item, PollId},
     };
 
     use super::PollsStorage;
@@ -124,8 +122,23 @@ mod test_common {
                 .unwrap();
         }
 
-        let choices = storage.results(ROOM, polls_state.id).await.unwrap();
-        assert_eq!(choices, BTreeMap::from([(CHOICE_1, 2), (CHOICE_2, 2)]));
+        let results = storage.results(ROOM, polls_state.id).await.unwrap();
+        assert_eq!(results, BTreeMap::from([(CHOICE_1, 2), (CHOICE_2, 2)]));
+
+        let results = storage.poll_results(ROOM, &polls_state).await.unwrap();
+        assert_eq!(
+            &results,
+            &[
+                Item {
+                    id: CHOICE_1,
+                    count: 2
+                },
+                Item {
+                    id: CHOICE_2,
+                    count: 2
+                }
+            ]
+        );
     }
 
     pub(super) async fn polls(storage: &mut dyn PollsStorage) {

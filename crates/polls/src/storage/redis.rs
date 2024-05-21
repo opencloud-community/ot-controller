@@ -6,7 +6,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
-use opentalk_types::signaling::polls::{state::PollsState, ChoiceId, Item, PollId};
+use opentalk_types::signaling::polls::{state::PollsState, ChoiceId, PollId};
 use redis::AsyncCommands as _;
 use redis_args::ToRedisArgs;
 use snafu::{whatever, ResultExt as _};
@@ -172,24 +172,6 @@ struct PollsStateKey {
 struct PollResults {
     room: SignalingRoomId,
     poll: PollId,
-}
-
-pub(crate) async fn poll_results(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    config: &PollsState,
-) -> Result<Vec<Item>, SignalingModuleError> {
-    let votes = redis_conn.results(room, config.id).await?;
-
-    let votes = (0..config.choices.len())
-        .map(|i| {
-            let id = ChoiceId::from(i as u32);
-            let count = votes.get(&id).copied().unwrap_or_default();
-            Item { id, count }
-        })
-        .collect();
-
-    Ok(votes)
 }
 
 /// Key to the list of all polls inside the given room

@@ -96,8 +96,10 @@ impl SignalingModule for Polls {
             Event::Exchange(msg) => self.on_exchange_message(ctx, msg).await,
             Event::Ext(ExpiredEvent(id)) => {
                 if let Some(config) = self.config.as_ref().filter(|config| config.state.id == id) {
-                    let results =
-                        storage::poll_results(ctx.redis_conn(), self.room, &config.state).await?;
+                    let results = ctx
+                        .redis_conn()
+                        .poll_results(self.room, &config.state)
+                        .await?;
 
                     ctx.ws_send(PollsEvent::Done(Results { id, results }));
                 }
@@ -372,8 +374,10 @@ impl Polls {
             }
             exchange::Message::Update(id) => {
                 if let Some(config) = &self.config {
-                    let results =
-                        storage::poll_results(ctx.redis_conn(), self.room, &config.state).await?;
+                    let results = ctx
+                        .redis_conn()
+                        .poll_results(self.room, &config.state)
+                        .await?;
 
                     ctx.ws_send(PollsEvent::LiveUpdate(Results { id, results }));
                 }
@@ -382,8 +386,10 @@ impl Polls {
             }
             exchange::Message::Finish(id) => {
                 if let Some(config) = self.config.take() {
-                    let results =
-                        storage::poll_results(ctx.redis_conn(), self.room, &config.state).await?;
+                    let results = ctx
+                        .redis_conn()
+                        .poll_results(self.room, &config.state)
+                        .await?;
 
                     ctx.ws_send(PollsEvent::Done(Results { id, results }));
                 }

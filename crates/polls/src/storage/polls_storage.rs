@@ -6,7 +6,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId};
-use opentalk_types::signaling::polls::{state::PollsState, ChoiceId, PollId};
+use opentalk_types::signaling::polls::{state::PollsState, ChoiceId, Item, PollId};
 
 #[async_trait(?Send)]
 pub(crate) trait PollsStorage {
@@ -44,6 +44,26 @@ pub(crate) trait PollsStorage {
         room: SignalingRoomId,
         poll: PollId,
     ) -> Result<BTreeMap<ChoiceId, u32>, SignalingModuleError>;
+
+    async fn poll_results(
+        &mut self,
+        room: SignalingRoomId,
+        poll_state: &PollsState,
+    ) -> Result<Vec<Item>, SignalingModuleError> {
+        let votes = self.results(room, poll_state.id).await?;
+
+        let votes = poll_state
+            .choices
+            .iter()
+            .map(|choice| {
+                let id = choice.id;
+                let count = votes.get(&id).copied().unwrap_or_default();
+                Item { id, count }
+            })
+            .collect();
+
+        Ok(votes)
+    }
 
     async fn vote(
         &mut self,
