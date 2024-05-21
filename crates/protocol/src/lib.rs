@@ -30,7 +30,7 @@ use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use snafu::{whatever, OptionExt, Report};
 
-use crate::storage::init::InitState;
+use crate::storage::{init::InitState, ProtocolStorage};
 
 pub mod exchange;
 pub mod storage;
@@ -431,7 +431,7 @@ impl Protocol {
             .create_group_pad(&group_id, PAD_NAME, None)
             .await?;
 
-        storage::group::set(redis_conn, self.room_id, &group_id).await?;
+        redis_conn.group_set(self.room_id, &group_id).await?;
 
         // flag this room as initialized
         storage::init::set_initialized(redis_conn, self.room_id).await?;

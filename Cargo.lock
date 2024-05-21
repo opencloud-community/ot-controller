@@ -3796,6 +3796,7 @@ dependencies = [
  "opentalk-etherpad-client",
  "opentalk-signaling-core",
  "opentalk-types",
+ "parking_lot",
  "redis",
  "redis-args",
  "serde",
