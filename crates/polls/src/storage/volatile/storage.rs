@@ -27,4 +27,32 @@ impl PollsStorage for VolatileStaticMemoryStorage {
     ) -> Result<Option<PollsState>, SignalingModuleError> {
         Ok(state().read().get_polls_state(room))
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_polls_state(
+        &mut self,
+        room: SignalingRoomId,
+        polls_state: &PollsState,
+    ) -> Result<bool, SignalingModuleError> {
+        Ok(state().write().set_polls_state(room, polls_state))
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use opentalk_signaling_core::VolatileStaticMemoryStorage;
+    use serial_test::serial;
+
+    use super::{super::super::test_common, state};
+
+    async fn storage() -> VolatileStaticMemoryStorage {
+        state().write().reset();
+        VolatileStaticMemoryStorage
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn polls_state() {
+        test_common::polls_state(&mut storage().await).await;
+    }
 }

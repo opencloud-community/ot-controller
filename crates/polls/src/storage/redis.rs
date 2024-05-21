@@ -24,6 +24,31 @@ impl PollsStorage for RedisConnection {
             message: "Failed to get current polls state",
         })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_polls_state(
+        &mut self,
+        room: SignalingRoomId,
+        polls_state: &PollsState,
+    ) -> Result<bool, SignalingModuleError> {
+        let value: redis::Value = redis::cmd("SET")
+            .arg(PollsStateKey { room })
+            .arg(polls_state)
+            .arg("EX")
+            .arg(polls_state.duration.as_secs())
+            .arg("NX")
+            .query_async(self)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to set current polls state",
+            })?;
+
+        match value {
+            redis::Value::Okay => Ok(true),
+            redis::Value::Nil => Ok(false),
+            _ => whatever!("got invalid value from SET EX NX: {:?}", value),
+        }
+    }
 }
 
 /// Key to the current poll config
@@ -31,32 +56,6 @@ impl PollsStorage for RedisConnection {
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:polls:state")]
 struct PollsStateKey {
     room: SignalingRoomId,
-}
-
-/// Set the current polls state if one doesn't already exist returns true if set was successful
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub(crate) async fn set_state(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    polls_state: &PollsState,
-) -> Result<bool, SignalingModuleError> {
-    let value: redis::Value = redis::cmd("SET")
-        .arg(PollsStateKey { room })
-        .arg(polls_state)
-        .arg("EX")
-        .arg(polls_state.duration.as_secs())
-        .arg("NX")
-        .query_async(redis_conn)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to set current polls state",
-        })?;
-
-    match value {
-        redis::Value::Okay => Ok(true),
-        redis::Value::Nil => Ok(false),
-        _ => whatever!("got invalid value from SET EX NX: {:?}", value),
-    }
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]

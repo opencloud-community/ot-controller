@@ -229,7 +229,10 @@ impl Polls {
                     duration,
                 };
 
-                let set = storage::set_state(ctx.redis_conn(), self.room, &polls_state).await?;
+                let set = ctx
+                    .redis_conn()
+                    .set_polls_state(self.room, &polls_state)
+                    .await?;
 
                 if !set {
                     ctx.ws_send(Error::StillRunning);
