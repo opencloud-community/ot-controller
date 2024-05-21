@@ -116,7 +116,7 @@ impl SignalingModule for Polls {
                 );
             }
 
-            let list = match storage::list_members(ctx.redis_conn(), self.room).await {
+            let list = match ctx.redis_conn().poll_ids(self.room).await {
                 Ok(list) => list,
                 Err(e) => {
                     log::error!(

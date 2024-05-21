@@ -141,6 +141,19 @@ impl PollsStorage for RedisConnection {
 
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn poll_ids(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<Vec<PollId>, SignalingModuleError> {
+        self
+            .smembers(PollList { room })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to get members from poll list",
+            })
+    }
 }
 
 /// Key to the current poll config
@@ -181,17 +194,4 @@ pub(crate) async fn poll_results(
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:polls:list")]
 struct PollList {
     room: SignalingRoomId,
-}
-
-/// Get all polls for the room
-pub(crate) async fn list_members(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-) -> Result<Vec<PollId>, SignalingModuleError> {
-    redis_conn
-        .smembers(PollList { room })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to get members from poll list",
-        })
 }

@@ -50,6 +50,10 @@ impl MemoryPollsState {
         set.push(poll_id);
     }
 
+    pub(super) fn poll_ids(&self, room: SignalingRoomId) -> Vec<PollId> {
+        self.poll_ids.get(&room).cloned().unwrap_or_default()
+    }
+
     pub(super) fn poll_results(
         &self,
         room: SignalingRoomId,

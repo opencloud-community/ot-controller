@@ -8,12 +8,13 @@ mod volatile;
 
 pub(crate) use polls_storage::PollsStorage;
 // TODO: remove these re-exports once available in the PollsStorage trait
-pub(crate) use redis::{list_members, poll_results};
+pub(crate) use redis::poll_results;
 
 #[cfg(test)]
 mod test_common {
     use std::{
         collections::{BTreeMap, BTreeSet},
+        iter::repeat_with,
         time::Duration,
     };
 
@@ -125,5 +126,18 @@ mod test_common {
 
         let choices = storage.results(ROOM, polls_state.id).await.unwrap();
         assert_eq!(choices, BTreeMap::from([(CHOICE_1, 2), (CHOICE_2, 2)]));
+    }
+
+    pub(super) async fn polls(storage: &mut dyn PollsStorage) {
+        let poll_ids = Vec::from_iter(repeat_with(PollId::generate).take(4));
+        for &id in &poll_ids {
+            storage.add_poll_to_list(ROOM, id).await.unwrap();
+        }
+
+        assert_eq!(poll_ids, storage.poll_ids(ROOM).await.unwrap());
+
+        storage.delete_poll_ids(ROOM).await.unwrap();
+
+        assert!(storage.poll_ids(ROOM).await.unwrap().is_empty());
     }
 }

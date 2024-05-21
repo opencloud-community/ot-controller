@@ -72,15 +72,6 @@ impl PollsStorage for VolatileStaticMemoryStorage {
             .context(NotFoundSnafu)
     }
 
-    async fn add_poll_to_list(
-        &mut self,
-        room: SignalingRoomId,
-        poll_id: PollId,
-    ) -> Result<(), SignalingModuleError> {
-        state().write().add_poll_to_list(room, poll_id);
-        Ok(())
-    }
-
     async fn vote(
         &mut self,
         room: SignalingRoomId,
@@ -91,6 +82,23 @@ impl PollsStorage for VolatileStaticMemoryStorage {
         state()
             .write()
             .vote(room, poll_id, previous_choice_ids, new_choice_ids)
+    }
+
+    async fn add_poll_to_list(
+        &mut self,
+        room: SignalingRoomId,
+        poll_id: PollId,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().add_poll_to_list(room, poll_id);
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn poll_ids(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<Vec<PollId>, SignalingModuleError> {
+        Ok(state().read().poll_ids(room))
     }
 }
 
@@ -116,5 +124,11 @@ mod test {
     #[serial]
     async fn voting() {
         test_common::voting(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn polls() {
+        test_common::polls(&mut storage().await).await;
     }
 }

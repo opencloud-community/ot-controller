@@ -52,4 +52,10 @@ pub(crate) trait PollsStorage {
         previous_choice_ids: &BTreeSet<ChoiceId>,
         new_choice_ids: &BTreeSet<ChoiceId>,
     ) -> Result<(), SignalingModuleError>;
+
+    /// Get all polls for the room
+    async fn poll_ids(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<Vec<PollId>, SignalingModuleError>;
 }
