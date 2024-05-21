@@ -3,6 +3,13 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use async_trait::async_trait;
+use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId};
+use opentalk_types::signaling::polls::state::PollsState;
 
 #[async_trait(?Send)]
-pub(crate) trait PollsStorage {}
+pub(crate) trait PollsStorage {
+    async fn get_polls_state(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<Option<PollsState>, SignalingModuleError>;
+}

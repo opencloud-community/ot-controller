@@ -14,26 +14,23 @@ use snafu::{whatever, ResultExt as _};
 use super::polls_storage::PollsStorage;
 
 #[async_trait(?Send)]
-impl PollsStorage for RedisConnection {}
+impl PollsStorage for RedisConnection {
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_polls_state(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<Option<PollsState>, SignalingModuleError> {
+        self.get(PollsStateKey { room }).await.context(RedisSnafu {
+            message: "Failed to get current polls state",
+        })
+    }
+}
 
 /// Key to the current poll config
 #[derive(ToRedisArgs)]
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:polls:state")]
 struct PollsStateKey {
     room: SignalingRoomId,
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub(crate) async fn get_state(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-) -> Result<Option<PollsState>, SignalingModuleError> {
-    redis_conn
-        .get(PollsStateKey { room })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to get current polls state",
-        })
 }
 
 /// Set the current polls state if one doesn't already exist returns true if set was successful

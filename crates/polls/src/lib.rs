@@ -19,6 +19,7 @@ use opentalk_types::signaling::{
     Role,
 };
 use snafu::Report;
+use storage::PollsStorage as _;
 use tokio::time::sleep;
 
 pub mod exchange;
@@ -68,7 +69,7 @@ impl SignalingModule for Polls {
                 frontend_data,
                 participants: _,
             } => {
-                if let Some(polls_state) = storage::get_state(ctx.redis_conn(), self.room).await? {
+                if let Some(polls_state) = ctx.redis_conn().get_polls_state(self.room).await? {
                     if let Some(duration) = polls_state.remaining() {
                         let id = polls_state.id;
 
