@@ -9,9 +9,8 @@ use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId, VolatileSta
 use opentalk_types::signaling::polls::state::PollsState;
 use parking_lot::RwLock;
 
-use crate::storage::polls_storage::PollsStorage;
-
 use super::memory::MemoryPollsState;
+use crate::storage::polls_storage::PollsStorage;
 
 static STATE: OnceLock<Arc<RwLock<MemoryPollsState>>> = OnceLock::new();
 

@@ -18,7 +18,7 @@ use snafu::{OptionExt as _, ResultExt as _};
 
 use crate::{
     control::storage::{AttributeActions, SKIP_WAITING_ROOM_KEY_EXPIRY},
-    ExpiringData, NotFoundSnafu, RedisSnafu, SignalingModuleError, SignalingRoomId,
+    ExpiringDataHashMap, NotFoundSnafu, RedisSnafu, SignalingModuleError, SignalingRoomId,
 };
 
 type AttributeMap = HashMap<(ParticipantId, String), Vec<Vec<u8>>>;
@@ -31,7 +31,7 @@ pub(super) struct MemoryControlState {
     room_events: HashMap<RoomId, Option<Event>>,
     participant_count: HashMap<RoomId, isize>,
     rooms_close_at: HashMap<SignalingRoomId, Timestamp>,
-    participants_skip_waiting_room: HashMap<ParticipantId, ExpiringData<bool>>,
+    participants_skip_waiting_room: ExpiringDataHashMap<ParticipantId, bool>,
 }
 
 pub struct VolatileStaticMemoryAttributeActions {
@@ -366,18 +366,15 @@ impl MemoryControlState {
         participant: ParticipantId,
         value: bool,
     ) {
-        self.participants_skip_waiting_room.insert(
+        self.participants_skip_waiting_room.insert_with_expiry(
             participant,
-            ExpiringData::new_ex(
-                value,
-                Duration::from_secs(SKIP_WAITING_ROOM_KEY_EXPIRY.into()),
-            ),
+            value,
+            Duration::from_secs(SKIP_WAITING_ROOM_KEY_EXPIRY.into()),
         );
     }
 
     fn cleanup_expired_skip_waiting_room_flags(&mut self) {
-        self.participants_skip_waiting_room
-            .retain(|_k, v| !v.is_expired());
+        self.participants_skip_waiting_room.cleanup_expired();
     }
 
     pub(super) fn set_skip_waiting_room_with_expiry_nx(
@@ -387,25 +384,23 @@ impl MemoryControlState {
     ) {
         self.cleanup_expired_skip_waiting_room_flags();
 
-        let expiry = Duration::from_secs(SKIP_WAITING_ROOM_KEY_EXPIRY.into());
+        let expires_after = Duration::from_secs(SKIP_WAITING_ROOM_KEY_EXPIRY.into());
         self.participants_skip_waiting_room
-            .entry(participant)
-            .or_insert_with(|| ExpiringData::new_ex(value, expiry))
-            .set_expiry(expiry);
+            .insert_with_expiry_if_not_exists(participant, value, expires_after);
     }
 
     pub(super) fn reset_skip_waiting_room_expiry(&mut self, participant: ParticipantId) {
         self.cleanup_expired_skip_waiting_room_flags();
 
-        if let Some(flag) = self.participants_skip_waiting_room.get_mut(&participant) {
-            flag.set_expiry(Duration::from_secs(SKIP_WAITING_ROOM_KEY_EXPIRY.into()));
-        }
+        self.participants_skip_waiting_room.update_expiry(
+            &participant,
+            Duration::from_secs(SKIP_WAITING_ROOM_KEY_EXPIRY.into()),
+        );
     }
 
     pub(super) fn get_skip_waiting_room(&self, participant: ParticipantId) -> bool {
         self.participants_skip_waiting_room
             .get(&participant)
-            .and_then(ExpiringData::value)
             .copied()
             .unwrap_or_default()
     }
