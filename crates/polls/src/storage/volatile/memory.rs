@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use opentalk_signaling_core::{ExpiringDataHashMap, SignalingRoomId};
 use opentalk_types::signaling::polls::{state::PollsState, ChoiceId, PollId};
@@ -47,5 +47,16 @@ impl MemoryPollsState {
     pub(super) fn add_poll_to_list(&mut self, room: SignalingRoomId, poll_id: PollId) {
         let set = self.poll_ids.entry(room).or_default();
         set.push(poll_id);
+    }
+
+    pub(super) fn poll_results(
+        &self,
+        room: SignalingRoomId,
+        poll: PollId,
+    ) -> Option<BTreeMap<ChoiceId, u32>> {
+        self.poll_results
+            .get(&(room, poll))
+            .cloned()
+            .map(BTreeMap::from_iter)
     }
 }

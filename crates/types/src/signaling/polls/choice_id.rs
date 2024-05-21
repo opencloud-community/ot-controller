@@ -8,7 +8,9 @@ use derive_more::{AsRef, Display, From, FromStr, Into};
 use crate::imports::*;
 
 /// The id of the Choice
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, FromStr, AsRef, Display, From, Into)]
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, FromStr, AsRef, Display, From, Into,
+)]
 #[cfg_attr(
     feature = "redis",
     derive(redis_args::ToRedisArgs, redis_args::FromRedisValue),

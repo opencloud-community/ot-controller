@@ -2,12 +2,18 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::sync::{Arc, OnceLock};
+use std::{
+    collections::BTreeMap,
+    sync::{Arc, OnceLock},
+};
 
 use async_trait::async_trait;
-use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage};
-use opentalk_types::signaling::polls::{state::PollsState, PollId};
+use opentalk_signaling_core::{
+    NotFoundSnafu, SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage,
+};
+use opentalk_types::signaling::polls::{state::PollsState, ChoiceId, PollId};
 use parking_lot::RwLock;
+use snafu::OptionExt;
 
 use super::memory::MemoryPollsState;
 use crate::storage::polls_storage::PollsStorage;
@@ -53,6 +59,17 @@ impl PollsStorage for VolatileStaticMemoryStorage {
     ) -> Result<(), SignalingModuleError> {
         state().write().delete_polls_results(room, poll_id);
         Ok(())
+    }
+
+    async fn results(
+        &mut self,
+        room: SignalingRoomId,
+        poll: PollId,
+    ) -> Result<BTreeMap<ChoiceId, u32>, SignalingModuleError> {
+        state()
+            .read()
+            .poll_results(room, poll)
+            .context(NotFoundSnafu)
     }
 
     async fn add_poll_to_list(

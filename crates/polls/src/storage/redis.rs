@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashSet};
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
@@ -87,6 +87,18 @@ impl PollsStorage for RedisConnection {
                 message: "Failed to sadd poll list",
             })
     }
+
+    async fn results(
+        &mut self,
+        room: SignalingRoomId,
+        poll: PollId,
+    ) -> Result<BTreeMap<ChoiceId, u32>, SignalingModuleError> {
+        self.zrange_withscores(PollResults { room, poll }, 0, -1)
+            .await
+            .context(RedisSnafu {
+                message: "failed to zrange vote results",
+            })
+    }
 }
 
 /// Key to the current poll config
@@ -148,25 +160,12 @@ pub(crate) async fn vote(
     Ok(())
 }
 
-async fn results(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    poll: PollId,
-) -> Result<HashMap<ChoiceId, u32>, SignalingModuleError> {
-    redis_conn
-        .zrange_withscores(PollResults { room, poll }, 0, -1)
-        .await
-        .context(RedisSnafu {
-            message: "failed to zrange vote results",
-        })
-}
-
 pub(crate) async fn poll_results(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
     config: &PollsState,
 ) -> Result<Vec<Item>, SignalingModuleError> {
-    let votes = results(redis_conn, room, config.id).await?;
+    let votes = redis_conn.results( room, config.id).await?;
 
     let votes = (0..config.choices.len())
         .map(|i| {
