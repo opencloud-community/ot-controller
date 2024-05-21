@@ -1,12 +1,13 @@
 // SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
 //
 // SPDX-License-Identifier: EUPL-1.2
+pub(crate) use protocol_storage::ProtocolStorage;
+use redis_args::{FromRedisValue, ToRedisArgs};
+use serde::{Deserialize, Serialize};
 
 mod protocol_storage;
 mod redis;
 mod volatile;
-
-pub(crate) use protocol_storage::ProtocolStorage;
 
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToRedisArgs, FromRedisValue,
@@ -17,12 +18,6 @@ pub enum InitState {
     Initializing,
     Initialized,
 }
-
-pub(crate) mod session {
-    pub(crate) use super::redis::session_get_del as get_del;
-}
-use redis_args::{FromRedisValue, ToRedisArgs};
-use serde::{Deserialize, Serialize};
 
 #[cfg(test)]
 mod test_common {
@@ -92,8 +87,11 @@ mod test_common {
             .await
             .unwrap();
         assert_eq!(
-            Some(session_info),
+            Some(session_info.clone()),
             storage.session_get(ROOM, PARTICIPANT).await.unwrap()
         );
+        let deleted_session_info = storage.session_delete(ROOM, PARTICIPANT).await.unwrap();
+        assert_eq!(Some(session_info), deleted_session_info);
+        assert_eq!(None, storage.session_get(ROOM, PARTICIPANT).await.unwrap());
     }
 }

@@ -96,6 +96,15 @@ impl ProtocolStorage for VolatileStaticMemoryStorage {
             .session_set(room, participant, session_info.clone());
         Ok(())
     }
+
+    #[tracing::instrument(name = "get_del_protocol_session_info", skip(self))]
+    async fn session_delete(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<Option<SessionInfo>, SignalingModuleError> {
+        Ok(state().write().session_delete(room, participant))
+    }
 }
 
 #[cfg(test)]

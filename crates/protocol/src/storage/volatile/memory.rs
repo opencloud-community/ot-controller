@@ -72,4 +72,12 @@ impl MemoryProtocolState {
     ) {
         self.session.insert((room, participant), session_info);
     }
+
+    pub(crate) fn session_delete(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Option<SessionInfo> {
+        self.session.remove(&(room, participant))
+    }
 }

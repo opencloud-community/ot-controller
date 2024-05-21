@@ -142,6 +142,24 @@ impl ProtocolStorage for RedisConnection {
             message: "Failed to set protocol session info key",
         })
     }
+
+    #[tracing::instrument(name = "delete_protocol_session_info", skip(self))]
+    async fn session_delete(
+        &mut self,
+        room_id: SignalingRoomId,
+        participant_id: ParticipantId,
+    ) -> Result<Option<SessionInfo>, SignalingModuleError> {
+        redis::cmd("GETDEL")
+            .arg(SessionInfoKey {
+                room_id,
+                participant_id,
+            })
+            .query_async(self)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to get_del protocol session info key",
+            })
+    }
 }
 
 /// Stores the etherpad group_id that is associated with this room.
@@ -166,22 +184,4 @@ struct InitKey {
 pub(super) struct SessionInfoKey {
     pub(super) room_id: SignalingRoomId,
     pub(super) participant_id: ParticipantId,
-}
-
-#[tracing::instrument(name = "get_del_protocol_session_info", skip(redis_conn))]
-pub(crate) async fn session_get_del(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-    participant_id: ParticipantId,
-) -> Result<Option<SessionInfo>, SignalingModuleError> {
-    redis::cmd("GETDEL")
-        .arg(SessionInfoKey {
-            room_id,
-            participant_id,
-        })
-        .query_async(redis_conn)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to get_del protocol session info key",
-        })
 }

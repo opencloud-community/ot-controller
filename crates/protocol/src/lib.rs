@@ -117,9 +117,10 @@ impl SignalingModule for Protocol {
                 }
             }
             Event::Leaving => {
-                if let Some(session_info) =
-                    storage::session::get_del(ctx.redis_conn(), self.room_id, self.participant_id)
-                        .await?
+                if let Some(session_info) = ctx
+                    .redis_conn()
+                    .session_delete(self.room_id, self.participant_id)
+                    .await?
                 {
                     self.etherpad
                         .delete_session(&session_info.session_id)
@@ -541,8 +542,9 @@ impl Protocol {
         let redis_conn = ctx.redis_conn();
 
         // remove existing sessions from redis
-        if let Some(session_info) =
-            storage::session::get_del(redis_conn, self.room_id, self.participant_id).await?
+        if let Some(session_info) = redis_conn
+            .session_delete(self.room_id, self.participant_id)
+            .await?
         {
             // If any exists, remove the participants session from the etherpad instance
             self.etherpad
