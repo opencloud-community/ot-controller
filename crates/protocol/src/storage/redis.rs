@@ -6,9 +6,11 @@ use async_trait::async_trait;
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 use opentalk_types::core::ParticipantId;
 use redis::AsyncCommands;
-use redis_args::{FromRedisValue, ToRedisArgs};
-use serde::{Deserialize, Serialize};
+use redis_args::ToRedisArgs;
 use snafu::ResultExt;
+
+use super::{protocol_storage::ProtocolStorage, InitState};
+use crate::SessionInfo;
 
 #[async_trait(?Send)]
 impl ProtocolStorage for RedisConnection {
@@ -93,6 +95,17 @@ impl ProtocolStorage for RedisConnection {
             message: "Failed to get protocol init state",
         })
     }
+
+    #[tracing::instrument(name = "delete_protocol_init_state", skip(self))]
+    async fn init_delete(&mut self, room_id: SignalingRoomId) -> Result<(), SignalingModuleError> {
+        self.del::<_, i64>(InitKey { room_id })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to delete protocol init key",
+            })?;
+
+        Ok(())
+    }
 }
 
 /// Remove all redis keys related to this room & module
@@ -101,7 +114,7 @@ pub(crate) async fn cleanup(
     redis_conn: &mut RedisConnection,
     room_id: SignalingRoomId,
 ) -> Result<(), SignalingModuleError> {
-    init_del(redis_conn, room_id).await?;
+    redis_conn.init_delete(room_id).await?;
     redis_conn.group_delete(room_id).await?;
 
     Ok(())
@@ -120,34 +133,6 @@ pub(super) struct GroupKey {
 struct InitKey {
     room_id: SignalingRoomId,
 }
-
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToRedisArgs, FromRedisValue,
-)]
-#[to_redis_args(serde)]
-#[from_redis_value(serde)]
-pub enum InitState {
-    Initializing,
-    Initialized,
-}
-
-#[tracing::instrument(name = "delete_protocol_init_state", skip(redis_conn))]
-pub(crate) async fn init_del(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .del::<_, i64>(InitKey { room_id })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to delete protocol init key",
-        })?;
-
-    Ok(())
-}
-
-use super::protocol_storage::ProtocolStorage;
-use crate::SessionInfo;
 
 /// Contains the [`SessionInfo`] of the a participant.
 #[derive(ToRedisArgs)]

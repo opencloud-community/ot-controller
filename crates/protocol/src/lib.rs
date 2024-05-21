@@ -29,8 +29,9 @@ use opentalk_types::{
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use snafu::{whatever, OptionExt, Report};
+use storage::InitState;
 
-use crate::storage::{init::InitState, ProtocolStorage};
+use crate::storage::ProtocolStorage;
 
 pub mod exchange;
 pub mod storage;
@@ -211,12 +212,12 @@ impl Protocol {
                 let first_init = match init_state {
                     Some(state) => {
                         match state {
-                            storage::init::InitState::Initializing => {
+                            InitState::Initializing => {
                                 // Some other instance is currently initializing the etherpad
                                 ctx.ws_send(Error::CurrentlyInitializing);
                                 return Ok(());
                             }
-                            storage::init::InitState::Initialized => false,
+                            InitState::Initialized => false,
                         }
                     }
                     None => {
@@ -228,7 +229,7 @@ impl Protocol {
                                 Report::from_error(e)
                             );
 
-                            storage::init::del(redis_conn, self.room_id).await?;
+                            redis_conn.init_delete(self.room_id).await?;
 
                             ctx.ws_send(Error::FailedInitialization);
 

@@ -5,7 +5,7 @@
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId};
 
-use super::redis::InitState;
+use super::InitState;
 
 #[async_trait(?Send)]
 pub(crate) trait ProtocolStorage {
@@ -41,4 +41,6 @@ pub(crate) trait ProtocolStorage {
         &mut self,
         room: SignalingRoomId,
     ) -> Result<Option<InitState>, SignalingModuleError>;
+
+    async fn init_delete(&mut self, room: SignalingRoomId) -> Result<(), SignalingModuleError>;
 }

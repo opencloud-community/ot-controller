@@ -6,7 +6,7 @@ use std::collections::{hash_map::Entry, HashMap};
 
 use opentalk_signaling_core::SignalingRoomId;
 
-use crate::storage::redis::InitState;
+use crate::storage::InitState;
 
 #[derive(Debug, Clone, Default)]
 pub(crate) struct MemoryProtocolState {
@@ -48,5 +48,9 @@ impl MemoryProtocolState {
 
     pub(crate) fn init_get(&self, room: SignalingRoomId) -> Option<InitState> {
         self.init_state.get(&room).copied()
+    }
+
+    pub(crate) fn init_delete(&mut self, room: SignalingRoomId) {
+        self.init_state.remove(&room);
     }
 }

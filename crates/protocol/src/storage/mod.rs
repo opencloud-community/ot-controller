@@ -8,22 +8,30 @@ mod volatile;
 
 pub(crate) use protocol_storage::ProtocolStorage;
 
-pub(crate) mod init {
-    pub(crate) use super::redis::{init_del as del, InitState};
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToRedisArgs, FromRedisValue,
+)]
+#[to_redis_args(serde)]
+#[from_redis_value(serde)]
+pub enum InitState {
+    Initializing,
+    Initialized,
 }
+
 pub(crate) mod session {
     pub(crate) use super::redis::{
         session_get as get, session_get_del as get_del, session_set as set,
     };
 }
 pub(crate) use redis::cleanup;
+use redis_args::{FromRedisValue, ToRedisArgs};
+use serde::{Deserialize, Serialize};
 
 #[cfg(test)]
 mod test_common {
     use opentalk_signaling_core::SignalingRoomId;
 
-    use super::ProtocolStorage;
-    use crate::storage::redis::InitState;
+    use super::{InitState, ProtocolStorage};
 
     pub const ROOM: SignalingRoomId = SignalingRoomId::nil();
 
@@ -64,5 +72,9 @@ mod test_common {
             Some(InitState::Initialized),
             storage.init_get(ROOM).await.unwrap()
         );
+
+        storage.init_delete(ROOM).await.unwrap();
+
+        assert_eq!(None, storage.init_get(ROOM).await.unwrap());
     }
 }
