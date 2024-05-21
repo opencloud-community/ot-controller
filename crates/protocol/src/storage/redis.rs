@@ -36,16 +36,47 @@ impl ProtocolStorage for RedisConnection {
     }
 
     #[tracing::instrument(name = "delete_protocol_group", skip(self))]
-    async fn group_delete(
+    async fn group_delete(&mut self, room_id: SignalingRoomId) -> Result<(), SignalingModuleError> {
+        self.del(GroupKey { room_id }).await.context(RedisSnafu {
+            message: "Failed to delete protocol group key",
+        })
+    }
+
+    #[tracing::instrument(name = "protocol_try_start_init", skip(self))]
+    async fn try_start_init(
         &mut self,
         room_id: SignalingRoomId,
-    ) -> Result<(), SignalingModuleError> {
-        self
-            .del(GroupKey { room_id })
+    ) -> Result<Option<InitState>, SignalingModuleError> {
+        let affected_entries: i64 = self
+            .set_nx(InitKey { room_id }, InitState::Initializing)
             .await
             .context(RedisSnafu {
-                message: "Failed to delete protocol group key",
-            })
+                message: "Failed to set protocol init state",
+            })?;
+
+        if affected_entries == 1 {
+            Ok(None)
+        } else {
+            let state: InitState =
+                self
+                    .get(InitKey { room_id })
+                    .await
+                    .context(RedisSnafu {
+                        message: "Failed to get protocol init state",
+                    })?;
+
+            Ok(Some(state))
+        }
+
+        // FIXME: use this when redis 7.0 is released
+        // redis::cmd("SET")
+        //     .arg(InitKey { room_id })
+        //     .arg(InitState::Initializing)
+        //     .arg("NX")
+        //     .arg("GET")
+        //     .query_async::<_, Option<InitState>>(self)
+        //     .await
+        //     .context( RedisSnafu {message: "Failed to set protocol init state"})
     }
 }
 
@@ -75,55 +106,12 @@ struct InitKey {
     room_id: SignalingRoomId,
 }
 
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
 #[to_redis_args(serde)]
 #[from_redis_value(serde)]
 pub enum InitState {
     Initializing,
     Initialized,
-}
-
-/// Attempts to set the room state to [`InitState::Initializing`] with a SETNX command.
-///
-/// If the key already holds a value, the current key gets returned without changing the state.
-///
-/// Behaves like a SETNX-GET redis command.
-///
-/// When the key was empty and the `Initializing` state was set, Ok(None) will be returned.
-#[tracing::instrument(name = "protocol_try_start_init", skip(redis_conn))]
-pub(crate) async fn try_start_init(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-) -> Result<Option<InitState>, SignalingModuleError> {
-    let affected_entries: i64 = redis_conn
-        .set_nx(InitKey { room_id }, InitState::Initializing)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to set protocol init state",
-        })?;
-
-    if affected_entries == 1 {
-        Ok(None)
-    } else {
-        let state: InitState = redis_conn
-            .get(InitKey { room_id })
-            .await
-            .context(RedisSnafu {
-                message: "Failed to get protocol init state",
-            })?;
-
-        Ok(Some(state))
-    }
-
-    // FIXME: use this when redis 7.0 is released
-    // redis::cmd("SET")
-    //     .arg(InitKey { room_id })
-    //     .arg(InitState::Initializing)
-    //     .arg("NX")
-    //     .arg("GET")
-    //     .query_async::<_, Option<InitState>>(redis_conn)
-    //     .await
-    //     .context( RedisSnafu {message: "Failed to set protocol init state"})
 }
 
 /// Sets the room state to [`InitState::Initialized`]

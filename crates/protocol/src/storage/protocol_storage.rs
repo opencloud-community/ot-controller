@@ -5,6 +5,8 @@
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId};
 
+use super::redis::InitState;
+
 #[async_trait(?Send)]
 pub(crate) trait ProtocolStorage {
     async fn group_set(
@@ -18,8 +20,17 @@ pub(crate) trait ProtocolStorage {
         room_id: SignalingRoomId,
     ) -> Result<Option<String>, SignalingModuleError>;
 
-    async fn group_delete(
+    async fn group_delete(&mut self, room_id: SignalingRoomId) -> Result<(), SignalingModuleError>;
+
+    /// Attempts to set the room state to [`InitState::Initializing`] with a SETNX command.
+    ///
+    /// If the key already holds a value, the current key gets returned without changing the state.
+    ///
+    /// Behaves like a SETNX-GET redis command.
+    ///
+    /// When the key was empty and the `Initializing` state was set, Ok(None) will be returned.
+    async fn try_start_init(
         &mut self,
         room_id: SignalingRoomId,
-    ) -> Result<(), SignalingModuleError>;
+    ) -> Result<Option<InitState>, SignalingModuleError>;
 }

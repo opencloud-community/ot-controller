@@ -206,7 +206,7 @@ impl Protocol {
 
                 let redis_conn = ctx.redis_conn();
 
-                let init_state = storage::init::try_start_init(redis_conn, self.room_id).await?;
+                let init_state = redis_conn.try_start_init(self.room_id).await?;
 
                 let first_init = match init_state {
                     Some(state) => {

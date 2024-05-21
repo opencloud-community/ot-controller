@@ -9,7 +9,7 @@ use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId, VolatileSta
 use parking_lot::RwLock;
 
 use super::memory::MemoryProtocolState;
-use crate::storage::protocol_storage::ProtocolStorage;
+use crate::storage::{protocol_storage::ProtocolStorage, redis::InitState};
 
 static STATE: OnceLock<Arc<RwLock<MemoryProtocolState>>> = OnceLock::new();
 
@@ -42,6 +42,14 @@ impl ProtocolStorage for VolatileStaticMemoryStorage {
         state().write().group_delete(room);
         Ok(())
     }
+
+    #[tracing::instrument(name = "protocol_try_start_init", skip(self))]
+    async fn try_start_init(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<Option<InitState>, SignalingModuleError> {
+        Ok(state().write().init_get_or_default(room))
+    }
 }
 
 #[cfg(test)]
@@ -60,5 +68,11 @@ mod test {
     #[serial]
     async fn group() {
         test_common::group(&mut storage()).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn init() {
+        test_common::init(&mut storage()).await;
     }
 }
