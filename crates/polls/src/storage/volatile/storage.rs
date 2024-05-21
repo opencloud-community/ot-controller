@@ -54,6 +54,15 @@ impl PollsStorage for VolatileStaticMemoryStorage {
         state().write().delete_polls_results(room, poll_id);
         Ok(())
     }
+
+    async fn add_poll_to_list(
+        &mut self,
+        room: SignalingRoomId,
+        poll_id: PollId,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().add_poll_to_list(room, poll_id);
+        Ok(())
+    }
 }
 
 #[cfg(test)]

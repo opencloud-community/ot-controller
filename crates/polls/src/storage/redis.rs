@@ -74,6 +74,19 @@ impl PollsStorage for RedisConnection {
             message: "Failed to delete results",
         })
     }
+
+    /// Add a poll to the list
+    async fn add_poll_to_list(
+        &mut self,
+        room: SignalingRoomId,
+        poll_id: PollId,
+    ) -> Result<(), SignalingModuleError> {
+        self.sadd(PollList { room }, poll_id)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to sadd poll list",
+            })
+    }
 }
 
 /// Key to the current poll config
@@ -171,20 +184,6 @@ pub(crate) async fn poll_results(
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:polls:list")]
 struct PollList {
     room: SignalingRoomId,
-}
-
-/// Add a poll to the list
-pub(crate) async fn list_add(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    poll_id: PollId,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .sadd(PollList { room }, poll_id)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to sadd poll list",
-        })
 }
 
 /// Get all polls for the room

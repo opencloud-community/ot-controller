@@ -240,7 +240,9 @@ impl Polls {
                     return Ok(());
                 }
 
-                storage::list_add(ctx.redis_conn(), self.room, polls_state.id).await?;
+                ctx.redis_conn()
+                    .add_poll_to_list(self.room, polls_state.id)
+                    .await?;
 
                 ctx.exchange_publish(
                     control::exchange::current_room_all_participants(self.room),

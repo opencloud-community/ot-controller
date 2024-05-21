@@ -11,6 +11,7 @@ use opentalk_types::signaling::polls::{state::PollsState, ChoiceId, PollId};
 pub(super) struct MemoryPollsState {
     polls_state: ExpiringDataHashMap<SignalingRoomId, PollsState>,
     poll_results: HashMap<(SignalingRoomId, PollId), HashMap<ChoiceId, u32>>,
+    poll_ids: HashMap<SignalingRoomId, Vec<PollId>>,
 }
 
 impl MemoryPollsState {
@@ -41,5 +42,10 @@ impl MemoryPollsState {
 
     pub(super) fn delete_polls_results(&mut self, room: SignalingRoomId, poll: PollId) {
         self.poll_results.remove(&(room, poll));
+    }
+
+    pub(super) fn add_poll_to_list(&mut self, room: SignalingRoomId, poll_id: PollId) {
+        let set = self.poll_ids.entry(room).or_default();
+        set.push(poll_id);
     }
 }

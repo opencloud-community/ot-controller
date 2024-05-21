@@ -30,4 +30,10 @@ pub(crate) trait PollsStorage {
         room: SignalingRoomId,
         poll_id: PollId,
     ) -> Result<(), SignalingModuleError>;
+
+    async fn add_poll_to_list(
+        &mut self,
+        room: SignalingRoomId,
+        poll_id: PollId,
+    ) -> Result<(), SignalingModuleError>;
 }
