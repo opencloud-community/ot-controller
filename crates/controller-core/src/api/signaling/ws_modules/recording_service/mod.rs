@@ -124,13 +124,9 @@ impl RecordingService {
                 .await?;
 
         stream.status = stream_updated.status.clone();
-        recording::storage::set_stream(
-            ctx.redis_conn(),
-            self.room,
-            stream_updated.target_id,
-            stream,
-        )
-        .await?;
+        ctx.redis_conn()
+            .set_stream(self.room, stream_updated.target_id, stream)
+            .await?;
 
         ctx.exchange_publish_to_namespace(
             control::exchange::current_room_all_participants(self.room),

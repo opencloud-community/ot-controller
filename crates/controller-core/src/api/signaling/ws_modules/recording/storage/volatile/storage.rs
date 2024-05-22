@@ -42,6 +42,17 @@ impl RecordingStorage for VolatileStaticMemoryStorage {
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_stream(
+        &mut self,
+        room: SignalingRoomId,
+        target: StreamingTargetId,
+        stream_target: StreamTargetSecret,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().set_stream(room, target, stream_target);
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
     async fn get_streams(
         &mut self,
         room: SignalingRoomId,

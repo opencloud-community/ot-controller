@@ -30,6 +30,18 @@ impl MemoryRecordingState {
         self.streams.insert(room, streams.clone());
     }
 
+    pub(super) fn set_stream(
+        &mut self,
+        room: SignalingRoomId,
+        target: StreamingTargetId,
+        stream_target: StreamTargetSecret,
+    ) {
+        self.streams
+            .entry(room)
+            .or_default()
+            .insert(target, stream_target);
+    }
+
     pub(super) fn get_streams(
         &self,
         room: SignalingRoomId,

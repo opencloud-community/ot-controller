@@ -7,10 +7,10 @@ mod redis;
 mod volatile;
 
 pub(crate) use recording_storage::RecordingStorage;
+pub(crate) use redis::get_stream;
 pub(super) use redis::{
     delete_all_streams, stream_exists, streams_contains_status, update_streams,
 };
-pub(crate) use redis::{get_stream, set_stream};
 
 #[cfg(test)]
 mod test_common {
@@ -30,6 +30,7 @@ mod test_common {
     pub(super) async fn streams(storage: &mut dyn RecordingStorage) {
         let stream1_id = StreamingTargetId::generate();
         let stream2_id = StreamingTargetId::generate();
+        let stream3_id = StreamingTargetId::generate();
 
         let stream1 = StreamTargetSecret {
             name: "Recording".to_string(),
@@ -37,16 +38,26 @@ mod test_common {
             status: opentalk_types::signaling::recording::StreamStatus::Active,
         };
         let stream2 = StreamTargetSecret {
-            name: "Livestream".to_string(),
+            name: "Livestream 1".to_string(),
             kind: StreamKindSecret::Livestream(StreamingTargetKind::Custom {
                 streaming_endpoint: "rtmp://example.com/stream".parse().unwrap(),
                 streaming_key: "abcdefgh".parse().unwrap(),
-                public_url: "https://example.com/stream".parse().unwrap(),
+                public_url: "https://example.com/stream1".parse().unwrap(),
+            }),
+            status: opentalk_types::signaling::recording::StreamStatus::Paused,
+        };
+        let stream3 = StreamTargetSecret {
+            name: "Livestream 2".to_string(),
+            kind: StreamKindSecret::Livestream(StreamingTargetKind::Custom {
+                streaming_endpoint: "rtmp://example.com/stream".parse().unwrap(),
+                streaming_key: "ijklmnop".parse().unwrap(),
+                public_url: "https://example.com/stream2".parse().unwrap(),
             }),
             status: opentalk_types::signaling::recording::StreamStatus::Paused,
         };
 
-        let streams = BTreeMap::from_iter([(stream1_id, stream1), (stream2_id, stream2)]);
+        let streams =
+            BTreeMap::from_iter([(stream1_id, stream1.clone()), (stream2_id, stream2.clone())]);
 
         assert!(!storage.is_streaming_initialized(ROOM).await.unwrap());
         assert_eq!(storage.get_streams(ROOM).await.unwrap(), BTreeMap::new());
@@ -56,5 +67,18 @@ mod test_common {
         assert!(storage.is_streaming_initialized(ROOM).await.unwrap());
 
         assert_eq!(storage.get_streams(ROOM).await.unwrap(), streams);
+
+        storage
+            .set_stream(ROOM, stream3_id, stream3.clone())
+            .await
+            .unwrap();
+        assert_eq!(
+            storage.get_streams(ROOM).await.unwrap(),
+            BTreeMap::from_iter([
+                (stream1_id, stream1),
+                (stream2_id, stream2),
+                (stream3_id, stream3)
+            ])
+        );
     }
 }

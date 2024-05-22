@@ -46,6 +46,20 @@ impl RecordingStorage for RedisConnection {
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_stream(
+        &mut self,
+        room: SignalingRoomId,
+        target: StreamingTargetId,
+        stream_target: StreamTargetSecret,
+    ) -> Result<(), SignalingModuleError> {
+        self.hset(RecordingStreamsKey { room }, target, stream_target)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to set target stream",
+            })
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
     async fn get_streams(
         &mut self,
         room: SignalingRoomId,
@@ -63,20 +77,6 @@ impl RecordingStorage for RedisConnection {
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:recording:streams")]
 struct RecordingStreamsKey {
     room: SignalingRoomId,
-}
-
-pub(crate) async fn set_stream(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    target: StreamingTargetId,
-    stream_target: StreamTargetSecret,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .hset(RecordingStreamsKey { room }, target, stream_target)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to set target stream",
-        })
 }
 
 pub(crate) async fn get_stream(
