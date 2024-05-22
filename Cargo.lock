@@ -3917,6 +3917,7 @@ dependencies = [
  "opentalk-signaling-core",
  "opentalk-test-util",
  "opentalk-types",
+ "parking_lot",
  "pretty_assertions",
  "redis",
  "redis-args",

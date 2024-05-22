@@ -2,34 +2,25 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use async_trait::async_trait;
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 use opentalk_types::{core::ParticipantId, signaling::timer::ready_status::ReadyStatus};
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
 use snafu::ResultExt;
 
-use super::Timer;
+use super::{Timer, TimerStorage};
 
-/// A key to track the participants ready status
-#[derive(ToRedisArgs)]
-#[to_redis_args(
-    fmt = "opentalk-signaling:room={room_id}:participant::{participant_id}::timer-ready-status"
-)]
-struct ReadyStatusKey {
-    room_id: SignalingRoomId,
-    participant_id: ParticipantId,
-}
-
-/// Set the ready status of a participant
-#[tracing::instrument(name = "meeting_timer_ready_set", skip(redis_conn))]
-pub(crate) async fn ready_status_set(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-    participant_id: ParticipantId,
-    ready_status: bool,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .set(
+#[async_trait(?Send)]
+impl TimerStorage for RedisConnection {
+    #[tracing::instrument(name = "meeting_timer_ready_set", skip(self))]
+    async fn ready_status_set(
+        &mut self,
+        room_id: SignalingRoomId,
+        participant_id: ParticipantId,
+        ready_status: bool,
+    ) -> Result<(), SignalingModuleError> {
+        self.set(
             ReadyStatusKey {
                 room_id,
                 participant_id,
@@ -40,6 +31,16 @@ pub(crate) async fn ready_status_set(
         .context(RedisSnafu {
             message: "Failed to set ready state",
         })
+    }
+}
+/// A key to track the participants ready status
+#[derive(ToRedisArgs)]
+#[to_redis_args(
+    fmt = "opentalk-signaling:room={room_id}:participant::{participant_id}::timer-ready-status"
+)]
+struct ReadyStatusKey {
+    room_id: SignalingRoomId,
+    participant_id: ParticipantId,
 }
 
 /// Get the ready status of a participant
@@ -132,4 +133,33 @@ pub(crate) async fn timer_delete(
         .context(RedisSnafu {
             message: "Failed to delete meeting timer",
         })
+}
+
+#[cfg(test)]
+mod test {
+    use redis::aio::ConnectionManager;
+    use serial_test::serial;
+
+    use super::{super::test_common, *};
+
+    async fn storage() -> RedisConnection {
+        let redis_url =
+            std::env::var("REDIS_ADDR").unwrap_or_else(|_| "redis://0.0.0.0:6379/".to_owned());
+        let redis = redis::Client::open(redis_url).expect("Invalid redis url");
+
+        let mut mgr = ConnectionManager::new(redis).await.unwrap();
+
+        redis::cmd("FLUSHALL")
+            .query_async::<_, ()>(&mut mgr)
+            .await
+            .unwrap();
+
+        RedisConnection::new(mgr)
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn ready_status() {
+        test_common::ready_status(&mut storage().await).await;
+    }
 }

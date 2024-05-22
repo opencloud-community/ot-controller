@@ -21,6 +21,7 @@ use opentalk_types::{
         Role,
     },
 };
+use storage::TimerStorage as _;
 use tokio::time::sleep;
 use uuid::Uuid;
 
@@ -293,13 +294,13 @@ impl Timer {
             Message::UpdateReadyStatus(update_ready_status) => {
                 if let Some(timer) = storage::timer::get(ctx.redis_conn(), self.room_id).await? {
                     if timer.ready_check_enabled && timer.id == update_ready_status.timer_id {
-                        storage::ready_status::set(
-                            ctx.redis_conn(),
-                            self.room_id,
-                            self.participant_id,
-                            update_ready_status.status,
-                        )
-                        .await?;
+                        ctx.redis_conn()
+                            .ready_status_set(
+                                self.room_id,
+                                self.participant_id,
+                                update_ready_status.status,
+                            )
+                            .await?;
 
                         ctx.exchange_publish(
                             control::exchange::current_room_all_participants(self.room_id),

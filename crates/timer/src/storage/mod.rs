@@ -10,11 +10,13 @@ use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 
 mod redis;
+mod timer_storage;
+mod volatile;
+
+pub(crate) use timer_storage::TimerStorage;
 
 pub(crate) mod ready_status {
-    pub(crate) use super::redis::{
-        ready_status_delete as delete, ready_status_get as get, ready_status_set as set,
-    };
+    pub(crate) use super::redis::{ready_status_delete as delete, ready_status_get as get};
 }
 
 pub(crate) mod timer {
@@ -48,4 +50,20 @@ pub(crate) struct Timer {
     pub(crate) title: Option<String>,
     /// Flag to allow/disallow participants to mark themselves as ready
     pub(crate) ready_check_enabled: bool,
+}
+
+#[cfg(test)]
+mod test_common {
+    use opentalk_signaling_core::SignalingRoomId;
+    use opentalk_types::core::ParticipantId;
+
+    use super::TimerStorage;
+
+    const ROOM: SignalingRoomId = SignalingRoomId::nil();
+
+    const ALICE: ParticipantId = ParticipantId::nil();
+
+    pub(super) async fn ready_status(storage: &mut dyn TimerStorage) {
+        storage.ready_status_set(ROOM, ALICE, true).await.unwrap();
+    }
 }
