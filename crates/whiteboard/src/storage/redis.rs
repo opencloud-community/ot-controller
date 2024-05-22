@@ -65,6 +65,20 @@ impl WhiteboardStorage for RedisConnection {
                 message: "Failed to get spacedeck init state",
             })
     }
+
+    #[tracing::instrument(name = "delete_spacedeck_init_state", skip(self))]
+    async fn delete_init_state(
+        &mut self,
+        room_id: SignalingRoomId,
+    ) -> Result<(), SignalingModuleError> {
+        self.del::<_, i64>(InitStateKey { room_id })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to delete spacedeck init key",
+            })?;
+
+        Ok(())
+    }
 }
 
 /// Stores the [`InitState`] of this room.
@@ -72,21 +86,6 @@ impl WhiteboardStorage for RedisConnection {
 #[to_redis_args(fmt = "opentalk-signaling:room={room_id}:spacedeck:init")]
 pub(super) struct InitStateKey {
     pub(super) room_id: SignalingRoomId,
-}
-
-#[tracing::instrument(name = "delete_spacedeck _init_state", skip(redis_conn))]
-pub(crate) async fn del(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .del::<_, i64>(InitStateKey { room_id })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to delete spacedeck init key",
-        })?;
-
-    Ok(())
 }
 
 #[cfg(test)]

@@ -32,4 +32,9 @@ pub(crate) trait WhiteboardStorage {
         &mut self,
         room_id: SignalingRoomId,
     ) -> Result<Option<InitState>, SignalingModuleError>;
+
+    async fn delete_init_state(
+        &mut self,
+        room_id: SignalingRoomId,
+    ) -> Result<(), SignalingModuleError>;
 }

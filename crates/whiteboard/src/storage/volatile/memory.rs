@@ -37,4 +37,8 @@ impl MemoryWhiteboardState {
     pub(super) fn get_init_state(&self, room: SignalingRoomId) -> Option<InitState> {
         self.init_state.get(&room).cloned()
     }
+
+    pub(super) fn delete_init_state(&mut self, room: SignalingRoomId) {
+        self.init_state.remove(&room);
+    }
 }

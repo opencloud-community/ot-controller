@@ -307,7 +307,7 @@ impl Whiteboard {
             None => return Ok(()),
         };
 
-        storage::del(redis_conn, self.room_id).await?;
+        redis_conn.delete_init_state(self.room_id).await?;
 
         if let InitState::Initialized(space_info) = state {
             self.client.delete_space(&space_info.id).await?;
