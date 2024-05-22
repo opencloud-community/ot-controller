@@ -71,6 +71,11 @@ impl Asset {
     }
 
     #[tracing::instrument(err, skip_all)]
+    pub async fn count_all(conn: &mut DbConnection) -> Result<i64> {
+        Ok(assets::table.count().get_result(conn).await?)
+    }
+
+    #[tracing::instrument(err, skip_all)]
     pub async fn get_all_for_room_paginated(
         conn: &mut DbConnection,
         room_id: RoomId,
@@ -107,16 +112,12 @@ impl Asset {
     }
 
     #[tracing::instrument(err, skip_all)]
-    pub async fn get_all_paginated(
-        conn: &mut DbConnection,
-        limit: i64,
-        page: i64,
-    ) -> Result<(Vec<Self>, i64)> {
+    pub async fn get_all_ids_and_size(conn: &mut DbConnection) -> Result<Vec<(AssetId, i64)>> {
         let query = assets::table
-            .select(assets::all_columns)
-            .paginate_by(limit, page);
+            .select((assets::id, assets::size))
+            .order_by(assets::created_at.asc());
 
-        let resources_with_total = query.load_and_count(conn).await?;
+        let resources_with_total = query.load(conn).await?;
 
         Ok(resources_with_total)
     }
@@ -151,6 +152,18 @@ impl Asset {
             .scope_boxed()
         })
         .await
+    }
+
+    /// Used for the internal deletion of assets
+    ///
+    /// When the request originates from a client, the [`Self::delete_by_id`] method should be used.
+    #[tracing::instrument(err, skip_all)]
+    pub async fn internal_delete_by_id(conn: &mut DbConnection, asset_id: &AssetId) -> Result<()> {
+        let query = diesel::delete(assets::table.filter(assets::id.eq(asset_id)));
+
+        query.execute(conn).await?;
+
+        Ok(())
     }
 
     #[tracing::instrument(err, skip_all)]
@@ -262,4 +275,21 @@ pub async fn get_all_for_room_owner_paginated_ordered(
         .collect();
 
     Ok((resources, total))
+}
+
+#[derive(Debug, AsChangeset)]
+#[diesel(table_name = assets)]
+pub struct UpdateAsset {
+    pub size: Option<i64>,
+    pub filename: Option<String>,
+}
+
+impl UpdateAsset {
+    #[tracing::instrument(err, skip_all)]
+    pub async fn apply(self, conn: &mut DbConnection, asset_id: AssetId) -> Result<Asset> {
+        let target = assets::table.filter(assets::id.eq(&asset_id));
+        let asset = diesel::update(target).set(self).get_result(conn).await?;
+
+        Ok(asset)
+    }
 }

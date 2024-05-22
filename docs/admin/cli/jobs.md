@@ -153,6 +153,36 @@ The default parameters for the job look like this:
 
 <!-- end:fromfile:jobs/parameters-invite-cleanup.json.md -->
 
+### Job: `sync-storage-files`
+
+This job synchronizes all database assets with their related S3 storage objects. If the file size of the database asset
+and the S3 storage object differ, the file size of the database asset is updated.
+
+When the storage object is missing for a database asset, the job will either set the file size to zero or delete the
+database asset, depending on the `missing_storage_file_handling` parameter.
+
+#### Parameters
+
+The job takes a JSON object with the following fields as a parameter. All
+fields are optional, if any of them is not included in the parameter object, the
+default value will be used.
+
+| Field                           | Type   | Default value           | Description                                                                                                             |
+| ------------------------------- | ------ | ----------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `missing_storage_file_handling` | `enum` | `set_file_size_to_zero` | What should happen when an asset is missing from the S3 storage. Either `set_file_size_to_zero` or `delete_asset_entry` |
+
+The default parameters for the job look like this:
+
+<!-- begin:fromfile:jobs/parameters-sync-storage-files.json.md -->
+
+```json
+{
+  "missing_storage_file_handling": "set_file_size_to_zero"
+}
+```
+
+<!-- end:fromfile:jobs/parameters-sync-storage-files.json.md -->
+
 ## `opentalk-controller jobs` subcommand
 
 This subcommand is the top-level entrypoint to manage and execute maintenance jobs.
@@ -202,6 +232,7 @@ Arguments:
           - event-cleanup:       A job for cleaning up events that ended at minimum a defined duration ago
           - adhoc-event-cleanup: A job to cleanup adhoc events a certain duration after they were created
           - invite-cleanup:      A job for cleaning up expired invites
+          - sync-storage-files:  A job to synchronize database assets and storage files
 
 Options:
       --parameters <PARAMETERS>
@@ -249,6 +280,7 @@ Arguments:
           - event-cleanup:       A job for cleaning up events that ended at minimum a defined duration ago
           - adhoc-event-cleanup: A job to cleanup adhoc events a certain duration after they were created
           - invite-cleanup:      A job for cleaning up expired invites
+          - sync-storage-files:  A job to synchronize database assets and storage files
 
 Options:
   -h, --help

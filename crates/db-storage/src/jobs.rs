@@ -166,6 +166,7 @@ sql_enum!(
         EventCleanup = b"event_cleanup",
         InviteCleanup = b"invite_cleanup",
         SelfCheck = b"self_check",
+        SyncStorageFiles = b"sync_storage_files",
     }
 );
 
