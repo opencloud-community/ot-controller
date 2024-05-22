@@ -2,8 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+mod recording_storage;
 mod redis;
+mod volatile;
 
+pub(crate) use recording_storage::RecordingStorage;
 pub(super) use redis::{
     delete_all_streams, is_streaming_initialized, stream_exists, streams_contains_status,
     update_streams,

@@ -4,6 +4,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
+use async_trait::async_trait;
 use itertools::Itertools;
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 use opentalk_types::{
@@ -13,6 +14,11 @@ use opentalk_types::{
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
 use snafu::{OptionExt, ResultExt};
+
+use super::RecordingStorage;
+
+#[async_trait(?Send)]
+impl RecordingStorage for RedisConnection {}
 
 /// Stores the [`RecordingStatus`] of this room.
 #[derive(ToRedisArgs)]
