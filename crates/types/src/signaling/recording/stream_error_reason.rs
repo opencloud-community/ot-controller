@@ -6,7 +6,7 @@
 use crate::imports::*;
 
 /// An error signal from the Recorder
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),

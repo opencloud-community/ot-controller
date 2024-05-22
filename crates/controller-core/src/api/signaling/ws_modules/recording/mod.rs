@@ -335,11 +335,11 @@ impl Recording {
         let is_recorder_running = storage::streams_contains_status(
             ctx.redis_conn(),
             self.room,
-            vec![
+            BTreeSet::from_iter([
                 StreamStatus::Active,
                 StreamStatus::Starting,
                 StreamStatus::Paused,
-            ],
+            ]),
         )
         .await?;
 
@@ -428,11 +428,11 @@ impl Recording {
         let is_recorder_running = storage::streams_contains_status(
             ctx.redis_conn(),
             self.room,
-            vec![
+            BTreeSet::from_iter([
                 StreamStatus::Active,
                 StreamStatus::Starting,
                 StreamStatus::Paused,
-            ],
+            ]),
         )
         .await;
 

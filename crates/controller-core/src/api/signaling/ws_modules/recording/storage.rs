@@ -50,7 +50,7 @@ mod test_common {
                 streaming_key: "ijklmnop".parse().unwrap(),
                 public_url: "https://example.com/stream2".parse().unwrap(),
             }),
-            status: opentalk_types::signaling::recording::StreamStatus::Paused,
+            status: opentalk_types::signaling::recording::StreamStatus::Inactive,
         };
 
         let streams =
