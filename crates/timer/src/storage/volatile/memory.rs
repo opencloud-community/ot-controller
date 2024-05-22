@@ -37,4 +37,12 @@ impl MemoryTimerState {
             .get(&(room, participant))
             .map(|&ready_status| ReadyStatus { ready_status })
     }
+
+    pub(super) fn ready_status_delete(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) {
+        self.ready_status.remove(&(room, participant));
+    }
 }

@@ -342,7 +342,8 @@ impl Timer {
             }
             exchange::Event::Stop(stopped) => {
                 // remove the participants ready status when receiving 'stopped'
-                storage::ready_status::delete(ctx.redis_conn(), self.room_id, self.participant_id)
+                ctx.redis_conn()
+                    .ready_status_delete(self.room_id, self.participant_id)
                     .await?;
 
                 ctx.ws_send(stopped);

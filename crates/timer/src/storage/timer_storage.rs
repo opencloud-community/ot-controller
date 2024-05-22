@@ -22,4 +22,11 @@ pub(crate) trait TimerStorage {
         room_id: SignalingRoomId,
         participant_id: ParticipantId,
     ) -> Result<Option<ReadyStatus>, SignalingModuleError>;
+
+    /// Delete the ready status of a participant
+    async fn ready_status_delete(
+        &mut self,
+        room_id: SignalingRoomId,
+        participant_id: ParticipantId,
+    ) -> Result<(), SignalingModuleError>;
 }

@@ -48,6 +48,22 @@ impl TimerStorage for RedisConnection {
             message: "Failed to get ready state",
         })
     }
+
+    #[tracing::instrument(name = "meeting_timer_ready_delete", skip(self))]
+     async fn ready_status_delete(
+        &mut self,
+        room_id: SignalingRoomId,
+        participant_id: ParticipantId,
+    ) -> Result<(), SignalingModuleError> {
+        self.del(ReadyStatusKey {
+            room_id,
+            participant_id,
+        })
+        .await
+        .context(RedisSnafu {
+            message: "Failed to delete ready state",
+        })
+    }
 }
 
 /// A key to track the participants ready status
@@ -58,24 +74,6 @@ impl TimerStorage for RedisConnection {
 struct ReadyStatusKey {
     room_id: SignalingRoomId,
     participant_id: ParticipantId,
-}
-
-/// Delete the ready status of a participant
-#[tracing::instrument(name = "meeting_timer_ready_delete", skip(redis_conn))]
-pub(crate) async fn ready_status_delete(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-    participant_id: ParticipantId,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .del(ReadyStatusKey {
-            room_id,
-            participant_id,
-        })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to delete ready state",
-        })
 }
 
 /// The timer key holds a serialized [`Timer`].

@@ -15,10 +15,6 @@ mod volatile;
 
 pub(crate) use timer_storage::TimerStorage;
 
-pub(crate) mod ready_status {
-    pub(crate) use super::redis::ready_status_delete as delete;
-}
-
 pub(crate) mod timer {
     pub(crate) use super::redis::{
         timer_delete as delete, timer_get as get, timer_set_if_not_exists as set_if_not_exists,
@@ -77,5 +73,13 @@ mod test_common {
             Some(ReadyStatus { ready_status: true }),
             storage.ready_status_get(ROOM, ALICE).await.unwrap()
         );
+
+        storage.ready_status_delete(ROOM, ALICE).await.unwrap();
+
+        assert!(storage
+            .ready_status_get(ROOM, ALICE)
+            .await
+            .unwrap()
+            .is_none());
     }
 }
