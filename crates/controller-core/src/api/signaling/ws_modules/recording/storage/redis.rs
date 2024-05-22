@@ -2,17 +2,14 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
-use opentalk_types::{
-    core::StreamingTargetId,
-    signaling::recording::{StreamStatus, StreamTargetSecret},
-};
+use opentalk_types::{core::StreamingTargetId, signaling::recording::StreamTargetSecret};
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
-use snafu::{OptionExt, ResultExt};
+use snafu::ResultExt;
 
 use super::RecordingStorage;
 
@@ -104,29 +101,6 @@ struct RecordingStreamsKey {
     room: SignalingRoomId,
 }
 
-pub(crate) async fn update_streams(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    targets: &BTreeSet<StreamingTargetId>,
-    status: StreamStatus,
-) -> Result<(), SignalingModuleError> {
-    let mut streams = redis_conn.get_streams(room).await?;
-    let streams = targets
-        .iter()
-        .map(|id| {
-            let mut stream_target = streams
-                .remove(id)
-                .with_whatever_context::<_, _, SignalingModuleError>(|| {
-                    format!("Requested id: '{id}' not found")
-                })?;
-            stream_target.status = status.clone();
-            Ok((*id, stream_target))
-        })
-        .collect::<Result<BTreeMap<_, _>, SignalingModuleError>>()?;
-
-    redis_conn.set_streams(room, &streams).await
-}
-
 pub(crate) async fn delete_all_streams(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
@@ -171,5 +145,11 @@ mod test {
     #[serial]
     async fn streams_contain_status() {
         test_common::streams_contain_status(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn update_streams_status() {
+        test_common::update_streams_status(&mut storage().await).await;
     }
 }

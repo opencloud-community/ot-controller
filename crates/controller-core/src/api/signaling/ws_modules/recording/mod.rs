@@ -32,7 +32,7 @@ use opentalk_types::{
 use snafu::{Report, ResultExt};
 use tokio::time::Duration;
 
-use self::storage::RecordingStorage as _;
+use self::storage::RecordingStorage;
 use super::recording_service::{self, RecordingService};
 
 pub(crate) mod exchange;
@@ -344,13 +344,9 @@ impl Recording {
             )
             .await?;
 
-        storage::update_streams(
-            ctx.redis_conn(),
-            self.room,
-            &target_ids,
-            StreamStatus::Starting,
-        )
-        .await?;
+        ctx.redis_conn()
+            .update_streams_status(self.room, &target_ids, StreamStatus::Starting)
+            .await?;
 
         if !is_recorder_running {
             self.rabbitmq_channel

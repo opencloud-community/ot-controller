@@ -108,4 +108,10 @@ mod test {
     async fn streams_contain_status() {
         test_common::streams_contain_status(&mut storage().await).await;
     }
+
+    #[tokio::test]
+    #[serial]
+    async fn update_streams_status() {
+        test_common::update_streams_status(&mut storage().await).await;
+    }
 }

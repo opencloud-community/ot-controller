@@ -62,4 +62,21 @@ pub(crate) trait RecordingStorage {
             .collect();
         Ok(stati.intersection(&found_states).next().is_some())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn update_streams_status(
+        &mut self,
+        room: SignalingRoomId,
+        targets: &BTreeSet<StreamingTargetId>,
+        status: StreamStatus,
+    ) -> Result<(), SignalingModuleError> {
+        let mut streams = self.get_streams(room).await?;
+        for (id, stream) in streams.iter_mut() {
+            if targets.contains(id) {
+                stream.status = status.clone();
+            }
+        }
+
+        self.set_streams(room, &streams).await
+    }
 }
