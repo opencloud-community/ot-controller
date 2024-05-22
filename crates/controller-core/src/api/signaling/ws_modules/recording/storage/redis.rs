@@ -92,6 +92,18 @@ impl RecordingStorage for RedisConnection {
                 message: "Failed to check for presence of stream",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_all_streams(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<(), SignalingModuleError> {
+        self.del(RecordingStreamsKey { room })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to delete recording state",
+            })
+    }
 }
 
 /// Stores the [`RecordingStatus`] of this room.
@@ -99,18 +111,6 @@ impl RecordingStorage for RedisConnection {
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:recording:streams")]
 struct RecordingStreamsKey {
     room: SignalingRoomId,
-}
-
-pub(crate) async fn delete_all_streams(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .del(RecordingStreamsKey { room })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to delete recording state",
-        })
 }
 
 #[cfg(test)]

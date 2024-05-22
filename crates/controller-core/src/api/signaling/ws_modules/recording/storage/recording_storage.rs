@@ -48,6 +48,11 @@ pub(crate) trait RecordingStorage {
         target: StreamingTargetId,
     ) -> Result<bool, SignalingModuleError>;
 
+    async fn delete_all_streams(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<(), SignalingModuleError>;
+
     #[tracing::instrument(level = "debug", skip(self))]
     async fn streams_contain_status(
         &mut self,

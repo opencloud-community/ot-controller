@@ -228,7 +228,7 @@ impl SignalingModule for Recording {
 
     async fn on_destroy(self, mut ctx: DestroyContext<'_>) {
         if ctx.destroy_room() {
-            if let Err(e) = storage::delete_all_streams(ctx.redis_conn(), self.room).await {
+            if let Err(e) = ctx.redis_conn().delete_all_streams(self.room).await {
                 log::error!("failed to delete streams, {}", Report::from_error(e));
             }
         }

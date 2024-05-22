@@ -66,4 +66,8 @@ impl MemoryRecordingState {
             .map(|targets| targets.contains_key(&target))
             .unwrap_or_default()
     }
+
+    pub(super) fn delete_all_streams(&mut self, room: SignalingRoomId) {
+        self.streams.remove(&room);
+    }
 }

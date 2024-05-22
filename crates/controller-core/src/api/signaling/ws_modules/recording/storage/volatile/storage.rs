@@ -83,6 +83,15 @@ impl RecordingStorage for VolatileStaticMemoryStorage {
     ) -> Result<bool, SignalingModuleError> {
         Ok(state().read().stream_exists(room, target))
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_all_streams(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().delete_all_streams(room);
+        Ok(())
+    }
 }
 
 #[cfg(test)]

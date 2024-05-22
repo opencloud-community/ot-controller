@@ -7,7 +7,6 @@ mod redis;
 mod volatile;
 
 pub(crate) use recording_storage::RecordingStorage;
-pub(super) use redis::delete_all_streams;
 
 #[cfg(test)]
 mod test_common {
