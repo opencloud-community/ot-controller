@@ -5,7 +5,7 @@
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId};
 
-use super::InitState;
+use super::{InitState, SpaceInfo};
 
 #[async_trait(?Send)]
 pub(crate) trait WhiteboardStorage {
@@ -20,4 +20,11 @@ pub(crate) trait WhiteboardStorage {
         &mut self,
         room_id: SignalingRoomId,
     ) -> Result<Option<InitState>, SignalingModuleError>;
+
+    /// Sets the room state to [`InitState::Initialized(..)`]
+    async fn set_initialized(
+        &mut self,
+        room_id: SignalingRoomId,
+        space_info: SpaceInfo,
+    ) -> Result<(), SignalingModuleError>;
 }

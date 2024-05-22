@@ -288,7 +288,9 @@ impl Whiteboard {
                     url,
                 };
 
-                storage::set_initialized(ctx.redis_conn(), self.room_id, space_info).await?;
+                ctx.redis_conn()
+                    .set_initialized(self.room_id, space_info)
+                    .await?;
 
                 ctx.exchange_publish(
                     control::exchange::current_room_all_participants(self.room_id),

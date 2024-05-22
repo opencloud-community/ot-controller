@@ -37,6 +37,22 @@ impl WhiteboardStorage for RedisConnection {
             Ok(Some(state))
         }
     }
+
+    /// Sets the room state to [`InitState::Initialized(..)`]
+    #[tracing::instrument(name = "spacedeck_set_initialized", skip(self, space_info))]
+    async fn set_initialized(
+        &mut self,
+        room_id: SignalingRoomId,
+        space_info: SpaceInfo,
+    ) -> Result<(), SignalingModuleError> {
+        let initialized = InitState::Initialized(space_info);
+
+        self.set(InitStateKey { room_id }, &initialized)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to set spacedeck init state to `Initialized",
+            })
+    }
 }
 
 /// Stores the [`InitState`] of this room.
@@ -44,23 +60,6 @@ impl WhiteboardStorage for RedisConnection {
 #[to_redis_args(fmt = "opentalk-signaling:room={room_id}:spacedeck:init")]
 pub(super) struct InitStateKey {
     pub(super) room_id: SignalingRoomId,
-}
-
-/// Sets the room state to [`InitState::Initialized(..)`]
-#[tracing::instrument(name = "spacedeck_set_initialized", skip(redis_conn, space_info))]
-pub(crate) async fn set_initialized(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-    space_info: SpaceInfo,
-) -> Result<(), SignalingModuleError> {
-    let initialized = InitState::Initialized(space_info);
-
-    redis_conn
-        .set(InitStateKey { room_id }, &initialized)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to set spacedeck init state to `Initialized",
-        })
 }
 
 #[tracing::instrument(name = "get_spacedeck_init_state", skip(redis_conn))]

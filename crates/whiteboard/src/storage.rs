@@ -6,7 +6,7 @@ mod redis;
 mod volatile;
 mod whiteboard_storage;
 
-pub(crate) use redis::{del, get, set_initialized};
+pub(crate) use redis::{del, get};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -33,7 +33,7 @@ mod test_common {
     use opentalk_signaling_core::SignalingRoomId;
     use pretty_assertions::assert_eq;
 
-    use crate::storage::InitState;
+    use crate::storage::{InitState, SpaceInfo};
 
     use super::WhiteboardStorage;
 
@@ -45,5 +45,11 @@ mod test_common {
             Some(InitState::Initializing),
             storage.try_start_init(ROOM).await.unwrap()
         );
+
+        let space_info = SpaceInfo {
+            id: "space id".to_owned(),
+            url: "https://example.com".parse().unwrap(),
+        };
+        storage.set_initialized(ROOM, space_info).await.unwrap();
     }
 }

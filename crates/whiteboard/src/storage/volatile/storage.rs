@@ -8,7 +8,7 @@ use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId, VolatileSta
 use parking_lot::RwLock;
 
 use super::memory::MemoryWhiteboardState;
-use crate::storage::{InitState, WhiteboardStorage};
+use crate::storage::{InitState, SpaceInfo, WhiteboardStorage};
 
 static STATE: OnceLock<Arc<RwLock<MemoryWhiteboardState>>> = OnceLock::new();
 
@@ -24,6 +24,16 @@ impl WhiteboardStorage for VolatileStaticMemoryStorage {
         room: SignalingRoomId,
     ) -> Result<Option<InitState>, SignalingModuleError> {
         Ok(state().write().init_get_or_default(room))
+    }
+
+    #[tracing::instrument(name = "spacedeck_set_initialized", skip(self, space_info))]
+    async fn set_initialized(
+        &mut self,
+        room: SignalingRoomId,
+        space_info: SpaceInfo,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().set_initialized(room, space_info);
+        Ok(())
     }
 }
 
