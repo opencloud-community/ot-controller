@@ -41,4 +41,10 @@ pub(crate) trait TimerStorage {
         room_id: SignalingRoomId,
         timer: &Timer,
     ) -> Result<bool, SignalingModuleError>;
+
+    /// Get the current meeting timer
+    async fn timer_get(
+        &mut self,
+        room_id: SignalingRoomId,
+    ) -> Result<Option<Timer>, SignalingModuleError>;
 }

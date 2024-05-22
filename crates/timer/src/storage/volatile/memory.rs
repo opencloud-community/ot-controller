@@ -54,4 +54,8 @@ impl MemoryTimerState {
         self.timers.entry(room).or_insert(timer);
         !already_set
     }
+
+    pub(super) fn timer_get(&self, room: SignalingRoomId) -> Option<Timer> {
+        self.timers.get(&room).cloned()
+    }
 }

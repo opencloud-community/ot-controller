@@ -77,6 +77,16 @@ impl TimerStorage for RedisConnection {
                 message: "Failed to set meeting timer",
             })
     }
+
+    #[tracing::instrument(name = "meeting_timer_get", skip(self))]
+    async fn timer_get(
+        &mut self,
+        room_id: SignalingRoomId,
+    ) -> Result<Option<Timer>, SignalingModuleError> {
+        self.get(TimerKey { room_id }).await.context(RedisSnafu {
+            message: "Failed to get meeting timer",
+        })
+    }
 }
 
 /// A key to track the participants ready status
@@ -94,20 +104,6 @@ struct ReadyStatusKey {
 #[to_redis_args(fmt = "opentalk-signaling:room={room_id}:timer")]
 struct TimerKey {
     room_id: SignalingRoomId,
-}
-
-/// Get the current meeting timer
-#[tracing::instrument(name = "meeting_timer_get", skip(redis_conn))]
-pub(crate) async fn timer_get(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-) -> Result<Option<Timer>, SignalingModuleError> {
-    redis_conn
-        .get(TimerKey { room_id })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to get meeting timer",
-        })
 }
 
 /// Delete the current timer

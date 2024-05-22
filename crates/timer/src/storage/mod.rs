@@ -16,13 +16,13 @@ mod volatile;
 pub(crate) use timer_storage::TimerStorage;
 
 pub(crate) mod timer {
-    pub(crate) use super::redis::{timer_delete as delete, timer_get as get};
+    pub(crate) use super::redis::timer_delete as delete;
 }
 
 /// A timer
 ///
 /// Stores information about a running timer
-#[derive(Debug, Clone, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
 #[to_redis_args(serde)]
 #[from_redis_value(serde)]
 pub(crate) struct Timer {
@@ -96,6 +96,16 @@ mod test_common {
         };
 
         assert!(storage.timer_set_if_not_exists(ROOM, &timer).await.unwrap());
-        assert!(!storage.timer_set_if_not_exists(ROOM, &timer).await.unwrap());
+        assert_eq!(Some(timer.clone()), storage.timer_get(ROOM).await.unwrap());
+
+        let new_timer = Timer {
+            id: TimerId::generate(),
+            ..timer.clone()
+        };
+        assert!(!storage
+            .timer_set_if_not_exists(ROOM, &new_timer)
+            .await
+            .unwrap());
+        assert_eq!(Some(timer), storage.timer_get(ROOM).await.unwrap());
     }
 }

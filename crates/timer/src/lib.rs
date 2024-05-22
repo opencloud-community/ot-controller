@@ -78,7 +78,7 @@ impl SignalingModule for Timer {
                 frontend_data,
                 participants,
             } => {
-                let timer = storage::timer::get(ctx.redis_conn(), self.room_id).await?;
+                let timer = ctx.redis_conn().timer_get(self.room_id).await?;
 
                 let timer = match timer {
                     Some(timer) => timer,
@@ -139,7 +139,7 @@ impl SignalingModule for Timer {
                 self.handle_rmq_message(&mut ctx, event).await?;
             }
             Event::Ext(expired) => {
-                if let Some(timer) = storage::timer::get(ctx.redis_conn(), self.room_id).await? {
+                if let Some(timer) = ctx.redis_conn().timer_get(self.room_id).await? {
                     if timer.id == expired.timer_id {
                         self.stop_current_timer(&mut ctx, StopKind::Expired, None)
                             .await?;
@@ -148,7 +148,7 @@ impl SignalingModule for Timer {
             }
             Event::ParticipantJoined(id, data) => {
                 // As in Event::Joined, don't attach any timer-related information if no timer is active.
-                let timer = storage::timer::get(ctx.redis_conn(), self.room_id).await?;
+                let timer = ctx.redis_conn().timer_get(self.room_id).await?;
 
                 let timer = match timer {
                     Some(timer) => timer,
@@ -273,7 +273,7 @@ impl Timer {
                     return Ok(());
                 }
 
-                match storage::timer::get(ctx.redis_conn(), self.room_id).await? {
+                match ctx.redis_conn().timer_get(self.room_id).await? {
                     Some(timer) => {
                         if timer.id != stop.timer_id {
                             // Invalid timer id
@@ -294,7 +294,7 @@ impl Timer {
                 .await?;
             }
             Message::UpdateReadyStatus(update_ready_status) => {
-                if let Some(timer) = storage::timer::get(ctx.redis_conn(), self.room_id).await? {
+                if let Some(timer) = ctx.redis_conn().timer_get(self.room_id).await? {
                     if timer.ready_check_enabled && timer.id == update_ready_status.timer_id {
                         ctx.redis_conn()
                             .ready_status_set(

@@ -60,6 +60,14 @@ impl TimerStorage for VolatileStaticMemoryStorage {
     ) -> Result<bool, SignalingModuleError> {
         Ok(state().write().timer_set_if_not_exists(room, timer.clone()))
     }
+
+    #[tracing::instrument(name = "meeting_timer_get", skip(self))]
+    async fn timer_get(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<Option<Timer>, SignalingModuleError> {
+        Ok(state().read().timer_get(room))
+    }
 }
 
 #[cfg(test)]
