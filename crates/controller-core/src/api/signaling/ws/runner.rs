@@ -1772,19 +1772,19 @@ impl Runner {
                 .await?;
                 if matches!(raised, Some(true)) {
                     self.handle_raise_hand_change(timestamp, false).await?;
-                }
 
-                self.ws
-                    .send(Message::Text(
-                        serde_json::to_string(&NamespacedEvent {
-                            namespace: moderation::NAMESPACE,
-                            timestamp,
-                            payload: ModerationEvent::RaisedHandResetByModerator { issued_by },
-                        })
-                        .whatever_context::<_, RunnerError>("Failed to send ws message")?
-                        .into(),
-                    ))
-                    .await;
+                    self.ws
+                        .send(Message::Text(
+                            serde_json::to_string(&NamespacedEvent {
+                                namespace: moderation::NAMESPACE,
+                                timestamp,
+                                payload: ModerationEvent::RaisedHandResetByModerator { issued_by },
+                            })
+                            .whatever_context::<_, RunnerError>("Failed to send ws message")?
+                            .into(),
+                        ))
+                        .await;
+                }
             }
             exchange::Message::EnableRaiseHands { issued_by } => {
                 self.ws
