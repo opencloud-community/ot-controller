@@ -17,6 +17,7 @@ opentalk-database.workspace = true
 opentalk-db-storage.workspace = true
 opentalk-signaling-core.workspace = true
 opentalk-types = { workspace = true, features = ["backend"] }
+parking_lot.workspace = true
 redis.workspace = true
 redis-args.workspace = true
 snafu.workspace = true
@@ -27,3 +28,4 @@ actix-rt.workspace = true
 opentalk-test-util = { workspace = true, features = ["controller"] }
 pretty_assertions.workspace = true
 serial_test.workspace = true
+tokio.workspace = true

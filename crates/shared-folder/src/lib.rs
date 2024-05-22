@@ -21,6 +21,7 @@ use opentalk_types::{
     signaling::shared_folder::{event::SharedFolderEvent, NAMESPACE},
 };
 use snafu::Report;
+use storage::SharedFolderStorage as _;
 
 mod storage;
 
@@ -80,7 +81,9 @@ impl SignalingModule for SharedFolder {
                             .await?;
                         }
                     };
-                    storage::set_shared_folder_initialized(ctx.redis_conn(), self.room).await?;
+                    ctx.redis_conn()
+                        .set_shared_folder_initialized(self.room)
+                        .await?;
                 }
 
                 *frontend_data = storage::get_shared_folder(ctx.redis_conn(), self.room)
