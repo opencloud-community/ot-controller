@@ -215,7 +215,7 @@ impl SignalingModule for Recording {
                         })
                         .collect();
 
-                    storage::set_streams(ctx.redis_conn(), self.room, &streams).await?;
+                    ctx.redis_conn().set_streams(self.room, &streams).await?;
 
                     log::warn!("Recorder ran into a timeout!");
                     ctx.ws_send(RecorderError::Timeout);
@@ -285,7 +285,7 @@ impl Recording {
                 .collect::<Result<_, SignalingModuleError>>()?
         };
 
-        storage::set_streams(redis_conn, self.room, &streams).await?;
+        redis_conn.set_streams(self.room, &streams).await?;
 
         Ok(())
     }

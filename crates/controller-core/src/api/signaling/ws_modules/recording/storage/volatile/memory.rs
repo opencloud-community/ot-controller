@@ -21,4 +21,12 @@ impl MemoryRecordingState {
     pub(super) fn is_streaming_initialized(&self, room: SignalingRoomId) -> bool {
         self.streams.contains_key(&room)
     }
+
+    pub(super) fn set_streams(
+        &mut self,
+        room: SignalingRoomId,
+        streams: &BTreeMap<StreamingTargetId, StreamTargetSecret>,
+    ) {
+        self.streams.insert(room, streams.clone());
+    }
 }

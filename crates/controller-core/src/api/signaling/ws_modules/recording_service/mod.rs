@@ -19,7 +19,7 @@ use opentalk_types::{
     },
 };
 
-use super::recording::{self, Recording};
+use super::recording::{self, storage::RecordingStorage as _, Recording};
 
 pub(crate) mod exchange;
 
@@ -165,7 +165,7 @@ impl RecordingService {
             return Ok(());
         }
 
-        recording::storage::set_streams(ctx.redis_conn(), self.room, &targets).await?;
+        ctx.redis_conn().set_streams(self.room, &targets).await?;
 
         for stream_updated in targets.iter().map(|(target_id, target)| StreamUpdated {
             target_id: *target_id,

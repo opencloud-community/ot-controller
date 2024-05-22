@@ -2,10 +2,14 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::sync::{Arc, OnceLock};
+use std::{
+    collections::BTreeMap,
+    sync::{Arc, OnceLock},
+};
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage};
+use opentalk_types::{core::StreamingTargetId, signaling::recording::StreamTargetSecret};
 use parking_lot::RwLock;
 
 use super::memory::MemoryRecordingState;
@@ -25,6 +29,16 @@ impl RecordingStorage for VolatileStaticMemoryStorage {
         room: SignalingRoomId,
     ) -> Result<bool, SignalingModuleError> {
         Ok(state().read().is_streaming_initialized(room))
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_streams(
+        &mut self,
+        room: SignalingRoomId,
+        target_streams: &BTreeMap<StreamingTargetId, StreamTargetSecret>,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().set_streams(room, target_streams);
+        Ok(())
     }
 }
 
