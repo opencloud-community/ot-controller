@@ -2,53 +2,48 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use async_trait::async_trait;
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
 use snafu::ResultExt;
 
-use super::{InitState, SpaceInfo};
+use super::{InitState, SpaceInfo, WhiteboardStorage};
+
+#[async_trait(?Send)]
+impl WhiteboardStorage for RedisConnection {
+    #[tracing::instrument(name = "spacedeck_try_start_init", skip(self))]
+    async fn try_start_init(
+        &mut self,
+        room_id: SignalingRoomId,
+    ) -> Result<Option<InitState>, SignalingModuleError> {
+        let affected_entries: i64 = self
+            .set_nx(InitStateKey { room_id }, InitState::Initializing)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to set spacedeck init state",
+            })?;
+
+        if affected_entries == 1 {
+            Ok(None)
+        } else {
+            let state: InitState =
+                self.get(InitStateKey { room_id })
+                    .await
+                    .context(RedisSnafu {
+                        message: "Failed to get spacedeck init state",
+                    })?;
+
+            Ok(Some(state))
+        }
+    }
+}
 
 /// Stores the [`InitState`] of this room.
 #[derive(ToRedisArgs)]
 #[to_redis_args(fmt = "opentalk-signaling:room={room_id}:spacedeck:init")]
 pub(super) struct InitStateKey {
     pub(super) room_id: SignalingRoomId,
-}
-
-/// Attempts to set the spacedeck state to [`InitState::Initializing`] with a SETNX command.
-///
-/// If the key already holds a value, the current key gets returned without changing the state.
-///
-/// Behaves like a SETNX-GET redis command.
-///
-/// When the key was empty and the `Initializing` state was set, Ok(None) will be returned.
-#[tracing::instrument(err, skip_all)]
-#[tracing::instrument(name = "spacedeck_try_start_init", skip(redis_conn))]
-pub(crate) async fn try_start_init(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-) -> Result<Option<InitState>, SignalingModuleError> {
-    let affected_entries: i64 = redis_conn
-        .set_nx(InitStateKey { room_id }, InitState::Initializing)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to set spacedeck init state",
-        })?;
-
-    if affected_entries == 1 {
-        Ok(None)
-    } else {
-        let state: InitState =
-            redis_conn
-                .get(InitStateKey { room_id })
-                .await
-                .context(RedisSnafu {
-                    message: "Failed to get spacedeck init state",
-                })?;
-
-        Ok(Some(state))
-    }
 }
 
 /// Sets the room state to [`InitState::Initialized(..)`]
@@ -94,4 +89,33 @@ pub(crate) async fn del(
         })?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod test {
+    use redis::aio::ConnectionManager;
+    use serial_test::serial;
+
+    use super::{super::test_common, *};
+
+    async fn storage() -> RedisConnection {
+        let redis_url =
+            std::env::var("REDIS_ADDR").unwrap_or_else(|_| "redis://0.0.0.0:6379/".to_owned());
+        let redis = redis::Client::open(redis_url).expect("Invalid redis url");
+
+        let mut mgr = ConnectionManager::new(redis).await.unwrap();
+
+        redis::cmd("FLUSHALL")
+            .query_async::<_, ()>(&mut mgr)
+            .await
+            .unwrap();
+
+        RedisConnection::new(mgr)
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn initialization() {
+        test_common::initialization(&mut storage().await).await;
+    }
 }

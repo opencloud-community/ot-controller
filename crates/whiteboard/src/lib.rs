@@ -25,7 +25,7 @@ use opentalk_types::{
     },
 };
 use snafu::{whatever, Report};
-use storage::{InitState, SpaceInfo};
+use storage::{InitState, SpaceInfo, WhiteboardStorage as _};
 use url::Url;
 
 mod client;
@@ -266,7 +266,7 @@ impl Whiteboard {
         &self,
         ctx: &mut ModuleContext<'_, Self>,
     ) -> Result<(), SignalingModuleError> {
-        match storage::try_start_init(ctx.redis_conn(), self.room_id).await? {
+        match ctx.redis_conn().try_start_init(self.room_id).await? {
             Some(state) => match state {
                 InitState::Initializing => ctx.ws_send(Error::CurrentlyInitializing),
                 InitState::Initialized(_) => ctx.ws_send(Error::AlreadyInitialized),
