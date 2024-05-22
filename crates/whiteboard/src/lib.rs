@@ -97,7 +97,7 @@ impl SignalingModule for Whiteboard {
                 frontend_data,
                 participants: _,
             } => {
-                let data = match storage::get(ctx.redis_conn(), self.room_id).await? {
+                let data = match ctx.redis_conn().get_init_state(self.room_id).await? {
                     Some(state) => state.into(),
                     None => WhiteboardState::NotInitialized,
                 };
@@ -110,7 +110,7 @@ impl SignalingModule for Whiteboard {
                 match event {
                     exchange::Event::Initialized => {
                         if let Some(InitState::Initialized(space_info)) =
-                            storage::get(ctx.redis_conn(), self.room_id).await?
+                            ctx.redis_conn().get_init_state(self.room_id).await?
                         {
                             ctx.ws_send(AccessUrl {
                                 url: space_info.url,
@@ -154,7 +154,7 @@ impl SignalingModule for Whiteboard {
                         }
 
                         if let Some(storage::InitState::Initialized(info)) =
-                            storage::get(ctx.redis_conn(), self.room_id).await?
+                            ctx.redis_conn().get_init_state(self.room_id).await?
                         {
                             let client = self.client.clone();
                             let timestamp = ctx.timestamp();
@@ -302,7 +302,7 @@ impl Whiteboard {
     }
 
     async fn cleanup(&self, redis_conn: &mut RedisConnection) -> Result<(), SignalingModuleError> {
-        let state = match storage::get(redis_conn, self.room_id).await? {
+        let state = match redis_conn.get_init_state(self.room_id).await? {
             Some(state) => state,
             None => return Ok(()),
         };

@@ -35,6 +35,14 @@ impl WhiteboardStorage for VolatileStaticMemoryStorage {
         state().write().set_initialized(room, space_info);
         Ok(())
     }
+
+    #[tracing::instrument(name = "get_spacedeck_init_state", skip(self))]
+    async fn get_init_state(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<Option<InitState>, SignalingModuleError> {
+        Ok(state().read().get_init_state(room))
+    }
 }
 
 #[cfg(test)]

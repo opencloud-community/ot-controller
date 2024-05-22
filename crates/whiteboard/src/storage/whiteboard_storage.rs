@@ -27,4 +27,9 @@ pub(crate) trait WhiteboardStorage {
         room_id: SignalingRoomId,
         space_info: SpaceInfo,
     ) -> Result<(), SignalingModuleError>;
+
+    async fn get_init_state(
+        &mut self,
+        room_id: SignalingRoomId,
+    ) -> Result<Option<InitState>, SignalingModuleError>;
 }

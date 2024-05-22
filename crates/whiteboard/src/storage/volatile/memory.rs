@@ -33,4 +33,8 @@ impl MemoryWhiteboardState {
         self.init_state
             .insert(room, InitState::Initialized(space_info));
     }
+
+    pub(super) fn get_init_state(&self, room: SignalingRoomId) -> Option<InitState> {
+        self.init_state.get(&room).cloned()
+    }
 }
