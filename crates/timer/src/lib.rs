@@ -87,14 +87,11 @@ impl SignalingModule for Timer {
 
                 let ready_status = if timer.ready_check_enabled {
                     Some(
-                        storage::ready_status::get(
-                            ctx.redis_conn(),
-                            self.room_id,
-                            self.participant_id,
-                        )
-                        .await?
-                        .unwrap_or_default()
-                        .ready_status,
+                        ctx.redis_conn()
+                            .ready_status_get(self.room_id, self.participant_id)
+                            .await?
+                            .unwrap_or_default()
+                            .ready_status,
                     )
                 } else {
                     None
@@ -128,10 +125,11 @@ impl SignalingModule for Timer {
                     return Ok(());
                 }
                 for (participant_id, status) in participants {
-                    let ready_status =
-                        storage::ready_status::get(ctx.redis_conn(), self.room_id, *participant_id)
-                            .await?
-                            .unwrap_or_default();
+                    let ready_status = ctx
+                        .redis_conn()
+                        .ready_status_get(self.room_id, *participant_id)
+                        .await?
+                        .unwrap_or_default();
 
                     *status = Some(ready_status);
                 }
@@ -160,7 +158,9 @@ impl SignalingModule for Timer {
                 if !timer.ready_check_enabled {
                     return Ok(());
                 }
-                let ready_status = storage::ready_status::get(ctx.redis_conn(), self.room_id, id)
+                let ready_status = ctx
+                    .redis_conn()
+                    .ready_status_get(self.room_id, id)
                     .await?
                     .unwrap_or_default();
 
@@ -348,12 +348,10 @@ impl Timer {
                 ctx.ws_send(stopped);
             }
             exchange::Event::UpdateReadyStatus(update_ready_status) => {
-                if let Some(ready_status) = storage::ready_status::get(
-                    ctx.redis_conn(),
-                    self.room_id,
-                    update_ready_status.participant_id,
-                )
-                .await?
+                if let Some(ready_status) = ctx
+                    .redis_conn()
+                    .ready_status_get(self.room_id, update_ready_status.participant_id)
+                    .await?
                 {
                     ctx.ws_send(UpdatedReadyStatus {
                         timer_id: update_ready_status.timer_id,

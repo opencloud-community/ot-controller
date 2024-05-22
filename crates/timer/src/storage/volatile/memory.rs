@@ -2,14 +2,14 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::collections::BTreeSet;
+use std::collections::BTreeMap;
 
 use opentalk_signaling_core::SignalingRoomId;
-use opentalk_types::core::ParticipantId;
+use opentalk_types::{core::ParticipantId, signaling::timer::ready_status::ReadyStatus};
 
 #[derive(Debug, Clone, Default)]
 pub(crate) struct MemoryTimerState {
-    ready_status: BTreeSet<(SignalingRoomId, ParticipantId)>,
+    ready_status: BTreeMap<(SignalingRoomId, ParticipantId), bool>,
 }
 
 impl MemoryTimerState {
@@ -24,10 +24,17 @@ impl MemoryTimerState {
         participant_id: ParticipantId,
         ready_status: bool,
     ) {
-        if ready_status {
-            self.ready_status.insert((room_id, participant_id));
-        } else {
-            self.ready_status.remove(&(room_id, participant_id));
-        }
+        self.ready_status
+            .insert((room_id, participant_id), ready_status);
+    }
+
+    pub(super) fn ready_status_get(
+        &self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Option<ReadyStatus> {
+        self.ready_status
+            .get(&(room, participant))
+            .map(|&ready_status| ReadyStatus { ready_status })
     }
 }

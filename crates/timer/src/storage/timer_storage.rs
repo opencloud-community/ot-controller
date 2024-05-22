@@ -4,7 +4,7 @@
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId};
-use opentalk_types::core::ParticipantId;
+use opentalk_types::{core::ParticipantId, signaling::timer::ready_status::ReadyStatus};
 
 #[async_trait(?Send)]
 pub(crate) trait TimerStorage {
@@ -15,4 +15,11 @@ pub(crate) trait TimerStorage {
         participant_id: ParticipantId,
         ready_status: bool,
     ) -> Result<(), SignalingModuleError>;
+
+    /// Get the ready status of a participant
+    async fn ready_status_get(
+        &mut self,
+        room_id: SignalingRoomId,
+        participant_id: ParticipantId,
+    ) -> Result<Option<ReadyStatus>, SignalingModuleError>;
 }

@@ -32,7 +32,24 @@ impl TimerStorage for RedisConnection {
             message: "Failed to set ready state",
         })
     }
+
+    #[tracing::instrument(name = "meeting_timer_ready_get", skip(self))]
+    async fn ready_status_get(
+        &mut self,
+        room_id: SignalingRoomId,
+        participant_id: ParticipantId,
+    ) -> Result<Option<ReadyStatus>, SignalingModuleError> {
+        self.get(ReadyStatusKey {
+            room_id,
+            participant_id,
+        })
+        .await
+        .context(RedisSnafu {
+            message: "Failed to get ready state",
+        })
+    }
 }
+
 /// A key to track the participants ready status
 #[derive(ToRedisArgs)]
 #[to_redis_args(
@@ -41,24 +58,6 @@ impl TimerStorage for RedisConnection {
 struct ReadyStatusKey {
     room_id: SignalingRoomId,
     participant_id: ParticipantId,
-}
-
-/// Get the ready status of a participant
-#[tracing::instrument(name = "meeting_timer_ready_get", skip(redis_conn))]
-pub(crate) async fn ready_status_get(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-    participant_id: ParticipantId,
-) -> Result<Option<ReadyStatus>, SignalingModuleError> {
-    redis_conn
-        .get(ReadyStatusKey {
-            room_id,
-            participant_id,
-        })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to get ready state",
-        })
 }
 
 /// Delete the ready status of a participant

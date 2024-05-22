@@ -6,7 +6,7 @@ use std::sync::{Arc, OnceLock};
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage};
-use opentalk_types::core::ParticipantId;
+use opentalk_types::{core::ParticipantId, signaling::timer::ready_status::ReadyStatus};
 use parking_lot::RwLock;
 
 use super::memory::MemoryTimerState;
@@ -31,6 +31,15 @@ impl TimerStorage for VolatileStaticMemoryStorage {
             .write()
             .ready_status_set(room_id, participant_id, ready_status);
         Ok(())
+    }
+
+    #[tracing::instrument(name = "meeting_timer_ready_get", skip(self))]
+    async fn ready_status_get(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<Option<ReadyStatus>, SignalingModuleError> {
+        Ok(state().read().ready_status_get(room, participant))
     }
 }
 
