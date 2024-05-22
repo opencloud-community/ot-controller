@@ -50,7 +50,7 @@ impl TimerStorage for RedisConnection {
     }
 
     #[tracing::instrument(name = "meeting_timer_ready_delete", skip(self))]
-     async fn ready_status_delete(
+    async fn ready_status_delete(
         &mut self,
         room_id: SignalingRoomId,
         participant_id: ParticipantId,
@@ -63,6 +63,19 @@ impl TimerStorage for RedisConnection {
         .context(RedisSnafu {
             message: "Failed to delete ready state",
         })
+    }
+
+    #[tracing::instrument(name = "meeting_timer_set", skip(self, timer))]
+    async fn timer_set_if_not_exists(
+        &mut self,
+        room_id: SignalingRoomId,
+        timer: &Timer,
+    ) -> Result<bool, SignalingModuleError> {
+        self.set_nx(TimerKey { room_id }, timer)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to set meeting timer",
+            })
     }
 }
 
@@ -81,24 +94,6 @@ struct ReadyStatusKey {
 #[to_redis_args(fmt = "opentalk-signaling:room={room_id}:timer")]
 struct TimerKey {
     room_id: SignalingRoomId,
-}
-
-/// Attempt to set a new timer
-///
-/// Returns `true` when the new timer was created
-/// Returns `false` when a timer is already active
-#[tracing::instrument(name = "meeting_timer_set", skip(redis_conn, timer))]
-pub(crate) async fn timer_set_if_not_exists(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-    timer: &Timer,
-) -> Result<bool, SignalingModuleError> {
-    redis_conn
-        .set_nx(TimerKey { room_id }, timer)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to set meeting timer",
-        })
 }
 
 /// Get the current meeting timer

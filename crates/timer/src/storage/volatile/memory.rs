@@ -7,9 +7,12 @@ use std::collections::BTreeMap;
 use opentalk_signaling_core::SignalingRoomId;
 use opentalk_types::{core::ParticipantId, signaling::timer::ready_status::ReadyStatus};
 
+use crate::storage::Timer;
+
 #[derive(Debug, Clone, Default)]
 pub(crate) struct MemoryTimerState {
     ready_status: BTreeMap<(SignalingRoomId, ParticipantId), bool>,
+    timers: BTreeMap<SignalingRoomId, Timer>,
 }
 
 impl MemoryTimerState {
@@ -44,5 +47,11 @@ impl MemoryTimerState {
         participant: ParticipantId,
     ) {
         self.ready_status.remove(&(room, participant));
+    }
+
+    pub(super) fn timer_set_if_not_exists(&mut self, room: SignalingRoomId, timer: Timer) -> bool {
+        let already_set = self.timers.contains_key(&room);
+        self.timers.entry(room).or_insert(timer);
+        !already_set
     }
 }

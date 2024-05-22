@@ -16,15 +16,13 @@ mod volatile;
 pub(crate) use timer_storage::TimerStorage;
 
 pub(crate) mod timer {
-    pub(crate) use super::redis::{
-        timer_delete as delete, timer_get as get, timer_set_if_not_exists as set_if_not_exists,
-    };
+    pub(crate) use super::redis::{timer_delete as delete, timer_get as get};
 }
 
 /// A timer
 ///
 /// Stores information about a running timer
-#[derive(Debug, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
 #[to_redis_args(serde)]
 #[from_redis_value(serde)]
 pub(crate) struct Timer {
@@ -51,10 +49,13 @@ pub(crate) struct Timer {
 #[cfg(test)]
 mod test_common {
     use opentalk_signaling_core::SignalingRoomId;
-    use opentalk_types::{core::ParticipantId, signaling::timer::ready_status::ReadyStatus};
+    use opentalk_types::{
+        core::{ParticipantId, Timestamp},
+        signaling::timer::{ready_status::ReadyStatus, Kind, TimerId},
+    };
     use pretty_assertions::assert_eq;
 
-    use super::TimerStorage;
+    use super::{Timer, TimerStorage};
 
     const ROOM: SignalingRoomId = SignalingRoomId::nil();
 
@@ -81,5 +82,20 @@ mod test_common {
             .await
             .unwrap()
             .is_none());
+    }
+
+    pub(super) async fn timer(storage: &mut dyn TimerStorage) {
+        let timer = Timer {
+            id: TimerId::generate(),
+            created_by: ALICE,
+            started_at: Timestamp::now(),
+            kind: Kind::Stopwatch,
+            style: None,
+            title: None,
+            ready_check_enabled: false,
+        };
+
+        assert!(storage.timer_set_if_not_exists(ROOM, &timer).await.unwrap());
+        assert!(!storage.timer_set_if_not_exists(ROOM, &timer).await.unwrap());
     }
 }

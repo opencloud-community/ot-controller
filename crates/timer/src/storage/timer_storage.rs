@@ -6,6 +6,8 @@ use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId};
 use opentalk_types::{core::ParticipantId, signaling::timer::ready_status::ReadyStatus};
 
+use super::Timer;
+
 #[async_trait(?Send)]
 pub(crate) trait TimerStorage {
     /// Set the ready status of a participant
@@ -29,4 +31,14 @@ pub(crate) trait TimerStorage {
         room_id: SignalingRoomId,
         participant_id: ParticipantId,
     ) -> Result<(), SignalingModuleError>;
+
+    /// Attempt to set a new timer
+    ///
+    /// Returns `true` when the new timer was created
+    /// Returns `false` when a timer is already active
+    async fn timer_set_if_not_exists(
+        &mut self,
+        room_id: SignalingRoomId,
+        timer: &Timer,
+    ) -> Result<bool, SignalingModuleError>;
 }

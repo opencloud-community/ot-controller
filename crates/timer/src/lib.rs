@@ -242,7 +242,9 @@ impl Timer {
                     ready_check_enabled: start.enable_ready_check,
                 };
 
-                if !storage::timer::set_if_not_exists(ctx.redis_conn(), self.room_id, &timer)
+                if !ctx
+                    .redis_conn()
+                    .timer_set_if_not_exists(self.room_id, &timer)
                     .await?
                 {
                     ctx.ws_send(Error::TimerAlreadyRunning);

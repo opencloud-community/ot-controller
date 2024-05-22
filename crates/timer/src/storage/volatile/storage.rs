@@ -10,7 +10,7 @@ use opentalk_types::{core::ParticipantId, signaling::timer::ready_status::ReadyS
 use parking_lot::RwLock;
 
 use super::memory::MemoryTimerState;
-use crate::storage::timer_storage::TimerStorage;
+use crate::storage::{timer_storage::TimerStorage, Timer};
 
 static STATE: OnceLock<Arc<RwLock<MemoryTimerState>>> = OnceLock::new();
 
@@ -51,6 +51,15 @@ impl TimerStorage for VolatileStaticMemoryStorage {
         state().write().ready_status_delete(room, participant);
         Ok(())
     }
+
+    #[tracing::instrument(name = "meeting_timer_set", skip(self, timer))]
+    async fn timer_set_if_not_exists(
+        &mut self,
+        room: SignalingRoomId,
+        timer: &Timer,
+    ) -> Result<bool, SignalingModuleError> {
+        Ok(state().write().timer_set_if_not_exists(room, timer.clone()))
+    }
 }
 
 #[cfg(test)]
@@ -69,5 +78,11 @@ mod test {
     #[serial]
     async fn ready_status() {
         test_common::ready_status(&mut storage()).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn timer() {
+        test_common::timer(&mut storage()).await;
     }
 }
