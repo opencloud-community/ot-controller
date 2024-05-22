@@ -32,4 +32,10 @@ pub(crate) trait RecordingStorage {
         &mut self,
         room: SignalingRoomId,
     ) -> Result<BTreeMap<StreamingTargetId, StreamTargetSecret>, SignalingModuleError>;
+
+    async fn get_stream(
+        &mut self,
+        room: SignalingRoomId,
+        target: StreamingTargetId,
+    ) -> Result<StreamTargetSecret, SignalingModuleError>;
 }

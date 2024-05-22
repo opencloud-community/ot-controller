@@ -7,7 +7,6 @@ mod redis;
 mod volatile;
 
 pub(crate) use recording_storage::RecordingStorage;
-pub(crate) use redis::get_stream;
 pub(super) use redis::{
     delete_all_streams, stream_exists, streams_contains_status, update_streams,
 };
@@ -61,8 +60,14 @@ mod test_common {
 
         assert!(!storage.is_streaming_initialized(ROOM).await.unwrap());
         assert_eq!(storage.get_streams(ROOM).await.unwrap(), BTreeMap::new());
+        assert!(storage.get_stream(ROOM, stream1_id).await.is_err());
+        assert!(storage.get_stream(ROOM, stream2_id).await.is_err());
+        assert!(storage.get_stream(ROOM, stream3_id).await.is_err());
 
         storage.set_streams(ROOM, &streams).await.unwrap();
+        assert_eq!(storage.get_stream(ROOM, stream1_id).await.unwrap(), stream1);
+        assert_eq!(storage.get_stream(ROOM, stream2_id).await.unwrap(), stream2);
+        assert!(storage.get_stream(ROOM, stream3_id).await.is_err());
 
         assert!(storage.is_streaming_initialized(ROOM).await.unwrap());
 

@@ -48,4 +48,15 @@ impl MemoryRecordingState {
     ) -> BTreeMap<StreamingTargetId, StreamTargetSecret> {
         self.streams.get(&room).cloned().unwrap_or_default()
     }
+
+    pub(super) fn get_stream(
+        &self,
+        room: SignalingRoomId,
+        target: StreamingTargetId,
+    ) -> Option<StreamTargetSecret> {
+        self.streams
+            .get(&room)
+            .and_then(|targets| targets.get(&target))
+            .cloned()
+    }
 }

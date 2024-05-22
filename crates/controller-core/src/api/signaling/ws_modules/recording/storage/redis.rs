@@ -70,6 +70,19 @@ impl RecordingStorage for RedisConnection {
                 message: "Failed to get all streams",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_stream(
+        &mut self,
+        room: SignalingRoomId,
+        target: StreamingTargetId,
+    ) -> Result<StreamTargetSecret, SignalingModuleError> {
+        self.hget(RecordingStreamsKey { room }, target)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to get target stream",
+            })
+    }
 }
 
 /// Stores the [`RecordingStatus`] of this room.
@@ -77,19 +90,6 @@ impl RecordingStorage for RedisConnection {
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:recording:streams")]
 struct RecordingStreamsKey {
     room: SignalingRoomId,
-}
-
-pub(crate) async fn get_stream(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    target: StreamingTargetId,
-) -> Result<StreamTargetSecret, SignalingModuleError> {
-    redis_conn
-        .hget(RecordingStreamsKey { room }, target)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to get target stream",
-        })
 }
 
 pub(crate) async fn stream_exists(

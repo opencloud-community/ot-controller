@@ -8,9 +8,12 @@ use std::{
 };
 
 use async_trait::async_trait;
-use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage};
+use opentalk_signaling_core::{
+    NotFoundSnafu, SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage,
+};
 use opentalk_types::{core::StreamingTargetId, signaling::recording::StreamTargetSecret};
 use parking_lot::RwLock;
+use snafu::OptionExt as _;
 
 use super::memory::MemoryRecordingState;
 use crate::api::signaling::recording::storage::RecordingStorage;
@@ -58,6 +61,18 @@ impl RecordingStorage for VolatileStaticMemoryStorage {
         room: SignalingRoomId,
     ) -> Result<BTreeMap<StreamingTargetId, StreamTargetSecret>, SignalingModuleError> {
         Ok(state().read().get_streams(room))
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_stream(
+        &mut self,
+        room: SignalingRoomId,
+        target: StreamingTargetId,
+    ) -> Result<StreamTargetSecret, SignalingModuleError> {
+        state()
+            .read()
+            .get_stream(room, target)
+            .context(NotFoundSnafu)
     }
 }
 

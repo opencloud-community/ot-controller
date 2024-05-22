@@ -119,9 +119,10 @@ impl RecordingService {
         ctx: &mut ModuleContext<'_, Self>,
         stream_updated: StreamUpdated,
     ) -> Result<(), SignalingModuleError> {
-        let mut stream =
-            recording::storage::get_stream(ctx.redis_conn(), self.room, stream_updated.target_id)
-                .await?;
+        let mut stream = ctx
+            .redis_conn()
+            .get_stream(self.room, stream_updated.target_id)
+            .await?;
 
         stream.status = stream_updated.status.clone();
         ctx.redis_conn()
