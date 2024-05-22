@@ -58,4 +58,8 @@ impl MemoryTimerState {
     pub(super) fn timer_get(&self, room: SignalingRoomId) -> Option<Timer> {
         self.timers.get(&room).cloned()
     }
+
+    pub(super) fn timer_delete(&mut self, room: SignalingRoomId) -> Option<Timer> {
+        self.timers.remove(&room)
+    }
 }

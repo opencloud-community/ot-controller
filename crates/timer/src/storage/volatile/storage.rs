@@ -68,6 +68,14 @@ impl TimerStorage for VolatileStaticMemoryStorage {
     ) -> Result<Option<Timer>, SignalingModuleError> {
         Ok(state().read().timer_get(room))
     }
+
+    #[tracing::instrument(name = "meeting_timer_delete", skip(self))]
+    async fn timer_delete(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<Option<Timer>, SignalingModuleError> {
+        Ok(state().write().timer_delete(room))
+    }
 }
 
 #[cfg(test)]

@@ -15,10 +15,6 @@ mod volatile;
 
 pub(crate) use timer_storage::TimerStorage;
 
-pub(crate) mod timer {
-    pub(crate) use super::redis::timer_delete as delete;
-}
-
 /// A timer
 ///
 /// Stores information about a running timer

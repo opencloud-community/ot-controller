@@ -87,6 +87,23 @@ impl TimerStorage for RedisConnection {
             message: "Failed to get meeting timer",
         })
     }
+
+    /// Delete the current timer
+    ///
+    /// Returns the timer if there was any
+    #[tracing::instrument(name = "meeting_timer_delete", skip(self))]
+    async fn timer_delete(
+        &mut self,
+        room_id: SignalingRoomId,
+    ) -> Result<Option<Timer>, SignalingModuleError> {
+        redis::cmd("GETDEL")
+            .arg(TimerKey { room_id })
+            .query_async(self)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to delete meeting timer",
+            })
+    }
 }
 
 /// A key to track the participants ready status
@@ -104,23 +121,6 @@ struct ReadyStatusKey {
 #[to_redis_args(fmt = "opentalk-signaling:room={room_id}:timer")]
 struct TimerKey {
     room_id: SignalingRoomId,
-}
-
-/// Delete the current timer
-///
-/// Returns the timer if there was any
-#[tracing::instrument(name = "meeting_timer_delete", skip(redis_conn))]
-pub(crate) async fn timer_delete(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-) -> Result<Option<Timer>, SignalingModuleError> {
-    redis::cmd("GETDEL")
-        .arg(TimerKey { room_id })
-        .query_async(redis_conn)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to delete meeting timer",
-        })
 }
 
 #[cfg(test)]

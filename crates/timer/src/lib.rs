@@ -377,7 +377,7 @@ impl Timer {
         reason: StopKind,
         message: Option<String>,
     ) -> Result<(), SignalingModuleError> {
-        let timer = match storage::timer::delete(ctx.redis_conn(), self.room_id).await? {
+        let timer = match ctx.redis_conn().timer_delete(self.room_id).await? {
             Some(timer) => timer,
             // there was no key to delete because the timer was not running
             None => return Ok(()),

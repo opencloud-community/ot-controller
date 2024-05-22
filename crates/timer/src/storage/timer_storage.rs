@@ -47,4 +47,12 @@ pub(crate) trait TimerStorage {
         &mut self,
         room_id: SignalingRoomId,
     ) -> Result<Option<Timer>, SignalingModuleError>;
+
+    /// Delete the current timer
+    ///
+    /// Returns the timer if there was any
+    async fn timer_delete(
+        &mut self,
+        room_id: SignalingRoomId,
+    ) -> Result<Option<Timer>, SignalingModuleError>;
 }
