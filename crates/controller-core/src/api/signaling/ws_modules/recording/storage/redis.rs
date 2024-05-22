@@ -18,25 +18,25 @@ use snafu::{OptionExt, ResultExt};
 use super::RecordingStorage;
 
 #[async_trait(?Send)]
-impl RecordingStorage for RedisConnection {}
+impl RecordingStorage for RedisConnection {
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn is_streaming_initialized(
+        &mut self,
+        room_id: SignalingRoomId,
+    ) -> Result<bool, SignalingModuleError> {
+        self.exists(RecordingStreamsKey { room_id })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to initialize streaming",
+            })
+    }
+}
 
 /// Stores the [`RecordingStatus`] of this room.
 #[derive(ToRedisArgs)]
 #[to_redis_args(fmt = "opentalk-signaling:room={room_id}:recording:streams")]
 struct RecordingStreamsKey {
     room_id: SignalingRoomId,
-}
-
-pub(crate) async fn is_streaming_initialized(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-) -> Result<bool, SignalingModuleError> {
-    redis_conn
-        .exists(RecordingStreamsKey { room_id })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to initialize streaming",
-        })
 }
 
 pub(crate) async fn set_streams(
@@ -155,4 +155,33 @@ pub(crate) async fn delete_all_streams(
         .context(RedisSnafu {
             message: "Failed to delete recording state",
         })
+}
+
+#[cfg(test)]
+mod test {
+    use redis::aio::ConnectionManager;
+    use serial_test::serial;
+
+    use super::{super::test_common, *};
+
+    async fn storage() -> RedisConnection {
+        let redis_url =
+            std::env::var("REDIS_ADDR").unwrap_or_else(|_| "redis://0.0.0.0:6379/".to_owned());
+        let redis = redis::Client::open(redis_url).expect("Invalid redis url");
+
+        let mut mgr = ConnectionManager::new(redis).await.unwrap();
+
+        redis::cmd("FLUSHALL")
+            .query_async::<_, ()>(&mut mgr)
+            .await
+            .unwrap();
+
+        RedisConnection::new(mgr)
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn streams() {
+        test_common::streams(&mut storage().await).await;
+    }
 }

@@ -2,10 +2,47 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use async_trait::async_trait;
-use opentalk_signaling_core::VolatileStaticMemoryStorage;
+use std::sync::{Arc, OnceLock};
 
+use async_trait::async_trait;
+use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage};
+use parking_lot::RwLock;
+
+use super::memory::MemoryRecordingState;
 use crate::api::signaling::recording::storage::RecordingStorage;
 
+static STATE: OnceLock<Arc<RwLock<MemoryRecordingState>>> = OnceLock::new();
+
+fn state() -> &'static Arc<RwLock<MemoryRecordingState>> {
+    STATE.get_or_init(Default::default)
+}
+
 #[async_trait(?Send)]
-impl RecordingStorage for VolatileStaticMemoryStorage {}
+impl RecordingStorage for VolatileStaticMemoryStorage {
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn is_streaming_initialized(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<bool, SignalingModuleError> {
+        Ok(state().read().is_streaming_initialized(room))
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use opentalk_signaling_core::VolatileStaticMemoryStorage;
+    use serial_test::serial;
+
+    use super::{super::super::test_common, state};
+
+    async fn storage() -> VolatileStaticMemoryStorage {
+        state().write().reset();
+        VolatileStaticMemoryStorage
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn streams() {
+        test_common::streams(&mut storage().await).await;
+    }
+}

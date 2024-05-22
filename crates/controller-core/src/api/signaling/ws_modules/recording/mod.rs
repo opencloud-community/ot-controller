@@ -32,6 +32,7 @@ use opentalk_types::{
 use snafu::{Report, ResultExt};
 use tokio::time::Duration;
 
+use self::storage::RecordingStorage as _;
 use super::recording_service::{self, RecordingService};
 
 pub(crate) mod exchange;
@@ -295,7 +296,7 @@ impl Recording {
         frontend_data: &mut Option<RecordingState>,
         participants: &mut HashMap<ParticipantId, Option<RecordingPeerState>>,
     ) -> Result<(), SignalingModuleError> {
-        if !storage::is_streaming_initialized(ctx.redis_conn(), self.room).await? {
+        if !ctx.redis_conn().is_streaming_initialized(self.room).await? {
             self.initialize_streaming(ctx.redis_conn()).await?;
         }
 
