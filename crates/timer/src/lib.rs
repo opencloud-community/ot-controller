@@ -231,7 +231,7 @@ impl Timer {
                     command::Kind::Stopwatch => Kind::Stopwatch,
                 };
 
-                let timer = storage::timer::Timer {
+                let timer = storage::Timer {
                     id: timer_id,
                     created_by: self.participant_id,
                     started_at,
