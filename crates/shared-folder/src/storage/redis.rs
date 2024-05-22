@@ -48,6 +48,18 @@ impl SharedFolderStorage for RedisConnection {
                 message: "Failed to DEL shared folder initialized flag",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_shared_folder(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<Option<SharedFolder>, SignalingModuleError> {
+        self.get(RoomSharedFolder { room })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to GET shared folder",
+            })
+    }
 }
 
 #[derive(ToRedisArgs)]
@@ -61,19 +73,6 @@ struct RoomSharedFolderInitialized {
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:shared-folder")]
 struct RoomSharedFolder {
     room: SignalingRoomId,
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn get_shared_folder(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-) -> Result<Option<SharedFolder>, SignalingModuleError> {
-    redis_conn
-        .get(RoomSharedFolder { room })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to GET shared folder",
-        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]
@@ -129,5 +128,11 @@ mod test {
     #[serial]
     async fn initialized() {
         test_common::initialized(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn shared_folder() {
+        test_common::shared_folder(&mut storage().await).await;
     }
 }

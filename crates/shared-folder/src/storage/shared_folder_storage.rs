@@ -4,6 +4,7 @@
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId};
+use opentalk_types::common::shared_folder::SharedFolder;
 
 #[async_trait(?Send)]
 pub(crate) trait SharedFolderStorage {
@@ -21,4 +22,9 @@ pub(crate) trait SharedFolderStorage {
         &mut self,
         room: SignalingRoomId,
     ) -> Result<(), SignalingModuleError>;
+
+    async fn get_shared_folder(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<Option<SharedFolder>, SignalingModuleError>;
 }

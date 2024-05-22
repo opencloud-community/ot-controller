@@ -90,7 +90,9 @@ impl SignalingModule for SharedFolder {
                         .await?;
                 }
 
-                *frontend_data = storage::get_shared_folder(ctx.redis_conn(), self.room)
+                *frontend_data = ctx
+                    .redis_conn()
+                    .get_shared_folder(self.room)
                     .await?
                     .map(|f| f.for_signaling_role(control_data.role));
             }
@@ -101,9 +103,7 @@ impl SignalingModule for SharedFolder {
             Event::ParticipantLeft(_) => {}
             Event::ParticipantUpdated(_, _) => {}
             Event::RoleUpdated(role) => {
-                if let Some(shared_folder) =
-                    storage::get_shared_folder(ctx.redis_conn(), self.room).await?
-                {
+                if let Some(shared_folder) = ctx.redis_conn().get_shared_folder(self.room).await? {
                     let update = SharedFolderEvent::Updated(shared_folder.for_signaling_role(role));
                     ctx.ws_send(update);
                 }

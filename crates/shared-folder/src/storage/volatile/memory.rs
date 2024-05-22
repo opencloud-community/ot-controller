@@ -2,13 +2,15 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use opentalk_signaling_core::SignalingRoomId;
+use opentalk_types::common::shared_folder::SharedFolder;
 
 #[derive(Debug, Clone, Default)]
 pub(crate) struct MemorySharedFolderState {
     initialized: BTreeSet<SignalingRoomId>,
+    shared_folders: BTreeMap<SignalingRoomId, SharedFolder>,
 }
 
 impl MemorySharedFolderState {
@@ -27,5 +29,9 @@ impl MemorySharedFolderState {
 
     pub(super) fn delete_shared_folder_initialized(&mut self, room: SignalingRoomId) {
         self.initialized.remove(&room);
+    }
+
+    pub(super) fn get_shared_folder(&self, room: SignalingRoomId) -> Option<SharedFolder> {
+        self.shared_folders.get(&room).cloned()
     }
 }

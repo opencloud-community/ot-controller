@@ -5,6 +5,7 @@ use std::sync::{Arc, OnceLock};
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage};
+use opentalk_types::common::shared_folder::SharedFolder;
 use parking_lot::RwLock;
 
 use super::memory::MemorySharedFolderState;
@@ -43,6 +44,14 @@ impl SharedFolderStorage for VolatileStaticMemoryStorage {
         state().write().delete_shared_folder_initialized(room);
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_shared_folder(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<Option<SharedFolder>, SignalingModuleError> {
+        Ok(state().read().get_shared_folder(room))
+    }
 }
 
 #[cfg(test)]
@@ -61,5 +70,11 @@ mod test {
     #[serial]
     async fn initialized() {
         test_common::initialized(&mut storage()).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn shared_folder() {
+        test_common::shared_folder(&mut storage()).await;
     }
 }
