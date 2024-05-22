@@ -5,7 +5,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use async_trait::async_trait;
-use itertools::Itertools;
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 use opentalk_types::{
     core::StreamingTargetId,
@@ -108,18 +107,15 @@ struct RecordingStreamsKey {
 pub(crate) async fn streams_contains_status(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
-    status: BTreeSet<StreamStatus>,
+    stati: BTreeSet<StreamStatus>,
 ) -> Result<bool, SignalingModuleError> {
-    let res: BTreeMap<StreamingTargetId, StreamTargetSecret> = redis_conn
-        .hgetall(RecordingStreamsKey { room })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to check for status in streams",
-        })?;
-
-    let res = res.iter().any(|(_, s)| status.iter().contains(&s.status));
-
-    Ok(res)
+    let found_states = redis_conn
+        .get_streams(room)
+        .await?
+        .values()
+        .map(|target| target.status.clone())
+        .collect();
+    Ok(stati.intersection(&found_states).next().is_some())
 }
 
 pub(crate) async fn update_streams(
