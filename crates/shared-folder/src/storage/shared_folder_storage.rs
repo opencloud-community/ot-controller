@@ -33,4 +33,9 @@ pub(crate) trait SharedFolderStorage {
         room: SignalingRoomId,
         value: SharedFolder,
     ) -> Result<(), SignalingModuleError>;
+
+    async fn delete_shared_folder(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<(), SignalingModuleError>;
 }

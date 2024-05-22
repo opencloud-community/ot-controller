@@ -73,6 +73,18 @@ impl SharedFolderStorage for RedisConnection {
                 message: "Failed to SET shared folder",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_shared_folder(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<(), SignalingModuleError> {
+        self.del(RoomSharedFolder { room })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to DEL shared folder",
+            })
+    }
 }
 
 #[derive(ToRedisArgs)]
@@ -86,19 +98,6 @@ struct RoomSharedFolderInitialized {
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:shared-folder")]
 struct RoomSharedFolder {
     room: SignalingRoomId,
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn delete_shared_folder(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .del(RoomSharedFolder { room })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to DEL shared folder",
-        })
 }
 
 #[cfg(test)]

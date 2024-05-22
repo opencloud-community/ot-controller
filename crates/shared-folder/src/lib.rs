@@ -126,7 +126,7 @@ impl SignalingModule for SharedFolder {
                     e
                 );
             }
-            if let Err(e) = storage::delete_shared_folder(ctx.redis_conn(), self.room).await {
+            if let Err(e) = ctx.redis_conn().delete_shared_folder(self.room).await {
                 log::error!(
                     "Failed to remove shared folder on room destroy, {}",
                     Report::from_error(e)

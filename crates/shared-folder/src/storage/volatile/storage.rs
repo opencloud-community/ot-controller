@@ -62,6 +62,15 @@ impl SharedFolderStorage for VolatileStaticMemoryStorage {
         state().write().set_shared_folder(room, value);
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_shared_folder(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().delete_shared_folder(room);
+        Ok(())
+    }
 }
 
 #[cfg(test)]

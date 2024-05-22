@@ -38,4 +38,8 @@ impl MemorySharedFolderState {
     pub(super) fn set_shared_folder(&mut self, room: SignalingRoomId, value: SharedFolder) {
         self.shared_folders.insert(room, value);
     }
+
+    pub(super) fn delete_shared_folder(&mut self, room: SignalingRoomId) {
+        self.shared_folders.remove(&room);
+    }
 }

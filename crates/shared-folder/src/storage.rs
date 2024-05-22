@@ -6,7 +6,6 @@ mod redis;
 mod shared_folder_storage;
 mod volatile;
 
-pub(crate) use redis::delete_shared_folder;
 pub(crate) use shared_folder_storage::SharedFolderStorage;
 
 #[cfg(test)]
@@ -54,5 +53,9 @@ mod test_common {
             Some(shared_folder),
             storage.get_shared_folder(ROOM).await.unwrap()
         );
+
+        storage.delete_shared_folder(ROOM).await.unwrap();
+
+        assert!(storage.get_shared_folder(ROOM).await.unwrap().is_none());
     }
 }
