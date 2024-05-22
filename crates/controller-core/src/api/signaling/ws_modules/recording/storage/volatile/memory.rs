@@ -29,4 +29,11 @@ impl MemoryRecordingState {
     ) {
         self.streams.insert(room, streams.clone());
     }
+
+    pub(super) fn get_streams(
+        &self,
+        room: SignalingRoomId,
+    ) -> BTreeMap<StreamingTargetId, StreamTargetSecret> {
+        self.streams.get(&room).cloned().unwrap_or_default()
+    }
 }

@@ -10,7 +10,7 @@ pub(crate) use recording_storage::RecordingStorage;
 pub(super) use redis::{
     delete_all_streams, stream_exists, streams_contains_status, update_streams,
 };
-pub(crate) use redis::{get_stream, get_streams, set_stream};
+pub(crate) use redis::{get_stream, set_stream};
 
 #[cfg(test)]
 mod test_common {
@@ -49,9 +49,12 @@ mod test_common {
         let streams = BTreeMap::from_iter([(stream1_id, stream1), (stream2_id, stream2)]);
 
         assert!(!storage.is_streaming_initialized(ROOM).await.unwrap());
+        assert_eq!(storage.get_streams(ROOM).await.unwrap(), BTreeMap::new());
 
         storage.set_streams(ROOM, &streams).await.unwrap();
 
         assert!(storage.is_streaming_initialized(ROOM).await.unwrap());
+
+        assert_eq!(storage.get_streams(ROOM).await.unwrap(), streams);
     }
 }

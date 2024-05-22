@@ -40,6 +40,14 @@ impl RecordingStorage for VolatileStaticMemoryStorage {
         state().write().set_streams(room, target_streams);
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_streams(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<BTreeMap<StreamingTargetId, StreamTargetSecret>, SignalingModuleError> {
+        Ok(state().read().get_streams(room))
+    }
 }
 
 #[cfg(test)]

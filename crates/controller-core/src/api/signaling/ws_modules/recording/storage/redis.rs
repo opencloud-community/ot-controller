@@ -44,6 +44,18 @@ impl RecordingStorage for RedisConnection {
                 message: "Failed to set target stream ids",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_streams(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<BTreeMap<StreamingTargetId, StreamTargetSecret>, SignalingModuleError> {
+        self.hgetall(RecordingStreamsKey { room })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to get all streams",
+            })
+    }
 }
 
 /// Stores the [`RecordingStatus`] of this room.
@@ -64,18 +76,6 @@ pub(crate) async fn set_stream(
         .await
         .context(RedisSnafu {
             message: "Failed to set target stream",
-        })
-}
-
-pub(crate) async fn get_streams(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-) -> Result<BTreeMap<StreamingTargetId, StreamTargetSecret>, SignalingModuleError> {
-    redis_conn
-        .hgetall(RecordingStreamsKey { room })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to get all streams",
         })
 }
 
@@ -128,7 +128,7 @@ pub(crate) async fn update_streams(
     targets: &BTreeSet<StreamingTargetId>,
     status: StreamStatus,
 ) -> Result<(), SignalingModuleError> {
-    let mut streams = get_streams(redis_conn, room).await?;
+    let mut streams = redis_conn.get_streams(room).await?;
     let streams = targets
         .iter()
         .map(|id| {

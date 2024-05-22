@@ -197,7 +197,7 @@ impl SignalingModule for Recording {
                         return Ok(());
                     }
 
-                    let streams = storage::get_streams(ctx.redis_conn(), self.room).await?;
+                    let streams = ctx.redis_conn().get_streams(self.room).await?;
 
                     if streams
                         .iter()
@@ -300,7 +300,7 @@ impl Recording {
             self.initialize_streaming(ctx.redis_conn()).await?;
         }
 
-        let streams_res = storage::get_streams(ctx.redis_conn(), self.room).await?;
+        let streams_res = ctx.redis_conn().get_streams(self.room).await?;
         *frontend_data = Some({
             RecordingState {
                 targets: BTreeMap::from_iter(

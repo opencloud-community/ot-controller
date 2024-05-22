@@ -151,7 +151,7 @@ impl RecordingService {
             recording::exchange::Message::RecorderStopping,
         );
 
-        let targets = recording::storage::get_streams(ctx.redis_conn(), self.room).await?;
+        let targets = ctx.redis_conn().get_streams(self.room).await?;
         let targets: BTreeMap<StreamingTargetId, StreamTargetSecret> = targets
             .into_iter()
             .filter(|(_, target)| target.status != StreamStatus::Inactive)
@@ -193,7 +193,9 @@ impl RecordingService {
             recording::exchange::Message::RecorderStarting,
         );
 
-        let streams = recording::storage::get_streams(ctx.redis_conn(), self.room)
+        let streams = ctx
+            .redis_conn()
+            .get_streams(self.room)
             .await?
             .into_iter()
             .map(|(id, target)| {
