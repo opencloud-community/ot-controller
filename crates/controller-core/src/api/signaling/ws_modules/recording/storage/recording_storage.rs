@@ -2,11 +2,14 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId};
-use opentalk_types::{core::StreamingTargetId, signaling::recording::StreamTargetSecret};
+use opentalk_types::{
+    core::StreamingTargetId,
+    signaling::recording::{StreamStatus, StreamTargetSecret},
+};
 
 #[async_trait(?Send)]
 pub(crate) trait RecordingStorage {
@@ -44,4 +47,19 @@ pub(crate) trait RecordingStorage {
         room: SignalingRoomId,
         target: StreamingTargetId,
     ) -> Result<bool, SignalingModuleError>;
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn streams_contain_status(
+        &mut self,
+        room: SignalingRoomId,
+        stati: BTreeSet<StreamStatus>,
+    ) -> Result<bool, SignalingModuleError> {
+        let found_states = self
+            .get_streams(room)
+            .await?
+            .values()
+            .map(|target| target.status.clone())
+            .collect();
+        Ok(stati.intersection(&found_states).next().is_some())
+    }
 }

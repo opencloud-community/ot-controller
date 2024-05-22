@@ -104,20 +104,6 @@ struct RecordingStreamsKey {
     room: SignalingRoomId,
 }
 
-pub(crate) async fn streams_contains_status(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    stati: BTreeSet<StreamStatus>,
-) -> Result<bool, SignalingModuleError> {
-    let found_states = redis_conn
-        .get_streams(room)
-        .await?
-        .values()
-        .map(|target| target.status.clone())
-        .collect();
-    Ok(stati.intersection(&found_states).next().is_some())
-}
-
 pub(crate) async fn update_streams(
     redis_conn: &mut RedisConnection,
     room: SignalingRoomId,
@@ -155,9 +141,6 @@ pub(crate) async fn delete_all_streams(
 
 #[cfg(test)]
 mod test {
-    use opentalk_types::{
-        common::streaming::StreamingTargetKind, signaling::recording::StreamKindSecret,
-    };
     use redis::aio::ConnectionManager;
     use serial_test::serial;
 
@@ -186,76 +169,7 @@ mod test {
 
     #[tokio::test]
     #[serial]
-    async fn stream_contains_status() {
-        let mut storage = storage().await;
-
-        let stream1_id = StreamingTargetId::generate();
-        let stream2_id = StreamingTargetId::generate();
-        const ROOM: SignalingRoomId = SignalingRoomId::nil();
-
-        let stream1 = StreamTargetSecret {
-            name: "Recording".to_string(),
-            kind: StreamKindSecret::Recording,
-            status: opentalk_types::signaling::recording::StreamStatus::Active,
-        };
-        let stream2 = StreamTargetSecret {
-            name: "Livestream 1".to_string(),
-            kind: StreamKindSecret::Livestream(StreamingTargetKind::Custom {
-                streaming_endpoint: "rtmp://example.com/stream".parse().unwrap(),
-                streaming_key: "abcdefgh".parse().unwrap(),
-                public_url: "https://example.com/stream1".parse().unwrap(),
-            }),
-            status: opentalk_types::signaling::recording::StreamStatus::Paused,
-        };
-
-        let streams =
-            BTreeMap::from_iter([(stream1_id, stream1.clone()), (stream2_id, stream2.clone())]);
-
-        storage.set_streams(ROOM, &streams).await.unwrap();
-
-        assert!(
-            !streams_contains_status(&mut storage, ROOM, BTreeSet::from_iter([]))
-                .await
-                .unwrap()
-        );
-        assert!(streams_contains_status(
-            &mut storage,
-            ROOM,
-            BTreeSet::from_iter([StreamStatus::Active])
-        )
-        .await
-        .unwrap());
-        assert!(streams_contains_status(
-            &mut storage,
-            ROOM,
-            BTreeSet::from_iter([StreamStatus::Paused])
-        )
-        .await
-        .unwrap());
-        assert!(!streams_contains_status(
-            &mut storage,
-            ROOM,
-            BTreeSet::from_iter([StreamStatus::Inactive])
-        )
-        .await
-        .unwrap());
-        assert!(streams_contains_status(
-            &mut storage,
-            ROOM,
-            BTreeSet::from_iter([
-                StreamStatus::Inactive,
-                StreamStatus::Starting,
-                StreamStatus::Paused
-            ])
-        )
-        .await
-        .unwrap());
-        assert!(!streams_contains_status(
-            &mut storage,
-            ROOM,
-            BTreeSet::from_iter([StreamStatus::Inactive, StreamStatus::Starting])
-        )
-        .await
-        .unwrap());
+    async fn streams_contain_status() {
+        test_common::streams_contain_status(&mut storage().await).await;
     }
 }

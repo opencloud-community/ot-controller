@@ -332,16 +332,17 @@ impl Recording {
             return Ok(());
         }
 
-        let is_recorder_running = storage::streams_contains_status(
-            ctx.redis_conn(),
-            self.room,
-            BTreeSet::from_iter([
-                StreamStatus::Active,
-                StreamStatus::Starting,
-                StreamStatus::Paused,
-            ]),
-        )
-        .await?;
+        let is_recorder_running = ctx
+            .redis_conn()
+            .streams_contain_status(
+                self.room,
+                BTreeSet::from_iter([
+                    StreamStatus::Active,
+                    StreamStatus::Starting,
+                    StreamStatus::Paused,
+                ]),
+            )
+            .await?;
 
         storage::update_streams(
             ctx.redis_conn(),
@@ -425,16 +426,17 @@ impl Recording {
             return Ok(());
         }
 
-        let is_recorder_running = storage::streams_contains_status(
-            ctx.redis_conn(),
-            self.room,
-            BTreeSet::from_iter([
-                StreamStatus::Active,
-                StreamStatus::Starting,
-                StreamStatus::Paused,
-            ]),
-        )
-        .await;
+        let is_recorder_running = ctx
+            .redis_conn()
+            .streams_contain_status(
+                self.room,
+                BTreeSet::from_iter([
+                    StreamStatus::Active,
+                    StreamStatus::Starting,
+                    StreamStatus::Paused,
+                ]),
+            )
+            .await;
 
         if let Ok(false) = is_recorder_running {
             ctx.ws_send(Error::RecorderNotStarted);

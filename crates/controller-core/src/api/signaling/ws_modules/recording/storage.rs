@@ -7,17 +7,17 @@ mod redis;
 mod volatile;
 
 pub(crate) use recording_storage::RecordingStorage;
-pub(super) use redis::{delete_all_streams, streams_contains_status, update_streams};
+pub(super) use redis::{delete_all_streams, update_streams};
 
 #[cfg(test)]
 mod test_common {
-    use std::collections::BTreeMap;
+    use std::collections::{BTreeMap, BTreeSet};
 
     use opentalk_signaling_core::SignalingRoomId;
     use opentalk_types::{
         common::streaming::StreamingTargetKind,
         core::StreamingTargetId,
-        signaling::recording::{StreamKindSecret, StreamTargetSecret},
+        signaling::recording::{StreamKindSecret, StreamStatus, StreamTargetSecret},
     };
 
     use super::RecordingStorage;
@@ -89,5 +89,66 @@ mod test_common {
                 (stream3_id, stream3)
             ])
         );
+    }
+
+    pub(super) async fn streams_contain_status(storage: &mut dyn RecordingStorage) {
+        let stream1_id = StreamingTargetId::generate();
+        let stream2_id = StreamingTargetId::generate();
+        const ROOM: SignalingRoomId = SignalingRoomId::nil();
+
+        let stream1 = StreamTargetSecret {
+            name: "Recording".to_string(),
+            kind: StreamKindSecret::Recording,
+            status: opentalk_types::signaling::recording::StreamStatus::Active,
+        };
+        let stream2 = StreamTargetSecret {
+            name: "Livestream 1".to_string(),
+            kind: StreamKindSecret::Livestream(StreamingTargetKind::Custom {
+                streaming_endpoint: "rtmp://example.com/stream".parse().unwrap(),
+                streaming_key: "abcdefgh".parse().unwrap(),
+                public_url: "https://example.com/stream1".parse().unwrap(),
+            }),
+            status: opentalk_types::signaling::recording::StreamStatus::Paused,
+        };
+
+        let streams =
+            BTreeMap::from_iter([(stream1_id, stream1.clone()), (stream2_id, stream2.clone())]);
+
+        storage.set_streams(ROOM, &streams).await.unwrap();
+
+        assert!(!storage
+            .streams_contain_status(ROOM, BTreeSet::from_iter([]))
+            .await
+            .unwrap());
+        assert!(storage
+            .streams_contain_status(ROOM, BTreeSet::from_iter([StreamStatus::Active]))
+            .await
+            .unwrap());
+        assert!(storage
+            .streams_contain_status(ROOM, BTreeSet::from_iter([StreamStatus::Paused]))
+            .await
+            .unwrap());
+        assert!(!storage
+            .streams_contain_status(ROOM, BTreeSet::from_iter([StreamStatus::Inactive]))
+            .await
+            .unwrap());
+        assert!(storage
+            .streams_contain_status(
+                ROOM,
+                BTreeSet::from_iter([
+                    StreamStatus::Inactive,
+                    StreamStatus::Starting,
+                    StreamStatus::Paused
+                ])
+            )
+            .await
+            .unwrap());
+        assert!(!storage
+            .streams_contain_status(
+                ROOM,
+                BTreeSet::from_iter([StreamStatus::Inactive, StreamStatus::Starting])
+            )
+            .await
+            .unwrap());
     }
 }
