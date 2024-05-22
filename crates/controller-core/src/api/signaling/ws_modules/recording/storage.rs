@@ -7,9 +7,7 @@ mod redis;
 mod volatile;
 
 pub(crate) use recording_storage::RecordingStorage;
-pub(super) use redis::{
-    delete_all_streams, stream_exists, streams_contains_status, update_streams,
-};
+pub(super) use redis::{delete_all_streams, streams_contains_status, update_streams};
 
 #[cfg(test)]
 mod test_common {
@@ -63,11 +61,17 @@ mod test_common {
         assert!(storage.get_stream(ROOM, stream1_id).await.is_err());
         assert!(storage.get_stream(ROOM, stream2_id).await.is_err());
         assert!(storage.get_stream(ROOM, stream3_id).await.is_err());
+        assert!(!storage.stream_exists(ROOM, stream1_id).await.unwrap());
+        assert!(!storage.stream_exists(ROOM, stream2_id).await.unwrap());
+        assert!(!storage.stream_exists(ROOM, stream3_id).await.unwrap());
 
         storage.set_streams(ROOM, &streams).await.unwrap();
         assert_eq!(storage.get_stream(ROOM, stream1_id).await.unwrap(), stream1);
         assert_eq!(storage.get_stream(ROOM, stream2_id).await.unwrap(), stream2);
         assert!(storage.get_stream(ROOM, stream3_id).await.is_err());
+        assert!(storage.stream_exists(ROOM, stream1_id).await.unwrap());
+        assert!(storage.stream_exists(ROOM, stream2_id).await.unwrap());
+        assert!(!storage.stream_exists(ROOM, stream3_id).await.unwrap());
 
         assert!(storage.is_streaming_initialized(ROOM).await.unwrap());
 

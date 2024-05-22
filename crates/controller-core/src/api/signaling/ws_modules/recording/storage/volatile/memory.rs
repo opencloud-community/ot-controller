@@ -59,4 +59,11 @@ impl MemoryRecordingState {
             .and_then(|targets| targets.get(&target))
             .cloned()
     }
+
+    pub(super) fn stream_exists(&self, room: SignalingRoomId, target: StreamingTargetId) -> bool {
+        self.streams
+            .get(&room)
+            .map(|targets| targets.contains_key(&target))
+            .unwrap_or_default()
+    }
 }

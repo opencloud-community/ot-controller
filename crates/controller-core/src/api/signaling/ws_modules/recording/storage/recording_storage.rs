@@ -38,4 +38,10 @@ pub(crate) trait RecordingStorage {
         room: SignalingRoomId,
         target: StreamingTargetId,
     ) -> Result<StreamTargetSecret, SignalingModuleError>;
+
+    async fn stream_exists(
+        &mut self,
+        room: SignalingRoomId,
+        target: StreamingTargetId,
+    ) -> Result<bool, SignalingModuleError>;
 }

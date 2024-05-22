@@ -480,7 +480,7 @@ impl Recording {
         target_ids: &BTreeSet<StreamingTargetId>,
     ) -> Result<bool, SignalingModuleError> {
         for target_id in target_ids {
-            if !storage::stream_exists(redis_conn, self.room, *target_id).await? {
+            if !redis_conn.stream_exists(self.room, *target_id).await? {
                 return Ok(false);
             }
         }

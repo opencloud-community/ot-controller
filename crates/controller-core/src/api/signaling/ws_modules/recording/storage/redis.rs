@@ -83,6 +83,19 @@ impl RecordingStorage for RedisConnection {
                 message: "Failed to get target stream",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn stream_exists(
+        &mut self,
+        room: SignalingRoomId,
+        target: StreamingTargetId,
+    ) -> Result<bool, SignalingModuleError> {
+        self.hexists(RecordingStreamsKey { room }, target)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to check for presence of stream",
+            })
+    }
 }
 
 /// Stores the [`RecordingStatus`] of this room.
@@ -90,19 +103,6 @@ impl RecordingStorage for RedisConnection {
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:recording:streams")]
 struct RecordingStreamsKey {
     room: SignalingRoomId,
-}
-
-pub(crate) async fn stream_exists(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    target: StreamingTargetId,
-) -> Result<bool, SignalingModuleError> {
-    redis_conn
-        .hexists(RecordingStreamsKey { room }, target)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to check for presence of stream",
-        })
 }
 
 pub(crate) async fn streams_contains_status(

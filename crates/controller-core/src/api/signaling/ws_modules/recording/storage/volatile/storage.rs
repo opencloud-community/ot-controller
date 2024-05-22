@@ -74,6 +74,15 @@ impl RecordingStorage for VolatileStaticMemoryStorage {
             .get_stream(room, target)
             .context(NotFoundSnafu)
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn stream_exists(
+        &mut self,
+        room: SignalingRoomId,
+        target: StreamingTargetId,
+    ) -> Result<bool, SignalingModuleError> {
+        Ok(state().read().stream_exists(room, target))
+    }
 }
 
 #[cfg(test)]
