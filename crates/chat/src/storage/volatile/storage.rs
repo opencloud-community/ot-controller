@@ -16,7 +16,7 @@ use opentalk_types::{
 use parking_lot::RwLock;
 
 use super::memory::MemoryChatState;
-use crate::storage::chat_storage::ChatStorage;
+use crate::{storage::chat_storage::ChatStorage, ParticipantPair};
 
 static STATE: OnceLock<Arc<RwLock<MemoryChatState>>> = OnceLock::new();
 
@@ -208,7 +208,7 @@ impl ChatStorage for VolatileStaticMemoryStorage {
     async fn get_private_chat_correspondents(
         &mut self,
         room: SignalingRoomId,
-    ) -> Result<HashSet<(ParticipantId, ParticipantId)>, SignalingModuleError> {
+    ) -> Result<HashSet<ParticipantPair>, SignalingModuleError> {
         Ok(state().read().get_private_chat_correspondents(room))
     }
 

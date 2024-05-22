@@ -35,8 +35,10 @@ use opentalk_types::{
 };
 use snafu::Report;
 
+mod participant_pair;
 mod storage;
 
+use participant_pair::ParticipantPair;
 use storage::ChatStorage;
 
 fn current_room_by_group_id(room_id: SignalingRoomId, group_id: GroupId) -> String {
@@ -536,7 +538,7 @@ impl SignalingModule for Chat {
                     );
                     Default::default()
                 });
-            for (a, b) in correspondents {
+            for (a, b) in correspondents.iter().map(ParticipantPair::as_tuple) {
                 if let Err(e) = ctx
                     .redis_conn()
                     .delete_private_chat_history(self.room, a, b)

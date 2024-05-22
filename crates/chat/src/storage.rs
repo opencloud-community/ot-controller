@@ -8,20 +8,6 @@ mod volatile;
 
 pub(crate) use chat_storage::ChatStorage;
 
-trait OrderTuple {
-    fn ordered(self) -> Self;
-}
-
-impl<T: PartialOrd> OrderTuple for (T, T) {
-    fn ordered(self) -> Self {
-        if self.0 > self.1 {
-            (self.1, self.0)
-        } else {
-            self
-        }
-    }
-}
-
 #[cfg(test)]
 mod test_common {
     use std::{

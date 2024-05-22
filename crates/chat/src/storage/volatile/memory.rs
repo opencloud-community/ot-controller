@@ -10,20 +10,20 @@ use opentalk_types::{
     signaling::chat::state::StoredMessage,
 };
 
-use crate::storage::OrderTuple;
+use crate::ParticipantPair;
 
 #[derive(Debug, Clone, Default)]
 pub(super) struct MemoryChatState {
     room_history: HashMap<SignalingRoomId, Vec<StoredMessage>>,
     group_history: HashMap<(SignalingRoomId, GroupId), Vec<StoredMessage>>,
-    private_history: HashMap<(SignalingRoomId, (ParticipantId, ParticipantId)), Vec<StoredMessage>>,
+    private_history: HashMap<(SignalingRoomId, ParticipantPair), Vec<StoredMessage>>,
     chats_enabled: HashMap<RoomId, bool>,
     last_seen_timestamps_private:
         HashMap<SignalingRoomId, HashMap<ParticipantId, HashMap<ParticipantId, Timestamp>>>,
     last_seen_timestamps_group:
         HashMap<SignalingRoomId, HashMap<ParticipantId, HashMap<GroupName, Timestamp>>>,
     last_seen_timestamps_global: HashMap<SignalingRoomId, HashMap<ParticipantId, Timestamp>>,
-    private_correspondents: HashMap<SignalingRoomId, HashSet<(ParticipantId, ParticipantId)>>,
+    private_correspondents: HashMap<SignalingRoomId, HashSet<ParticipantPair>>,
     group_participants: HashMap<(SignalingRoomId, GroupId), HashSet<ParticipantId>>,
 }
 
@@ -185,7 +185,7 @@ impl MemoryChatState {
         self.private_correspondents
             .entry(room)
             .or_default()
-            .insert((participant_one, participant_two).ordered());
+            .insert(ParticipantPair::new(participant_one, participant_two));
     }
 
     pub(super) fn delete_private_chat_correspondents(&mut self, room: SignalingRoomId) {
@@ -195,7 +195,7 @@ impl MemoryChatState {
     pub(super) fn get_private_chat_correspondents(
         &self,
         room: SignalingRoomId,
-    ) -> HashSet<(ParticipantId, ParticipantId)> {
+    ) -> HashSet<ParticipantPair> {
         self.private_correspondents
             .get(&room)
             .cloned()
@@ -236,7 +236,7 @@ impl MemoryChatState {
         participant_two: ParticipantId,
     ) -> Vec<StoredMessage> {
         self.private_history
-            .get(&(room, (participant_one, participant_two).ordered()))
+            .get(&(room, ParticipantPair::new(participant_one, participant_two)))
             .cloned()
             .unwrap_or_default()
     }
@@ -249,7 +249,7 @@ impl MemoryChatState {
         message: &StoredMessage,
     ) {
         self.private_history
-            .entry((room, (participant_one, participant_two).ordered()))
+            .entry((room, ParticipantPair::new(participant_one, participant_two)))
             .or_default()
             .push(message.clone());
     }
@@ -261,7 +261,7 @@ impl MemoryChatState {
         participant_two: ParticipantId,
     ) {
         self.private_history
-            .remove(&(room, (participant_one, participant_two).ordered()));
+            .remove(&(room, ParticipantPair::new(participant_one, participant_two)));
     }
 
     pub(super) fn add_participant_to_group(

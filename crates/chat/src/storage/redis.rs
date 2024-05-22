@@ -19,7 +19,8 @@ use redis_args::{FromRedisValue, ToRedisArgs};
 use snafu::{OptionExt as _, Report, ResultExt as _};
 use uuid::Uuid;
 
-use super::{ChatStorage, OrderTuple};
+use super::ChatStorage;
+use crate::ParticipantPair;
 
 #[async_trait(?Send)]
 impl ChatStorage for RedisConnection {
@@ -225,13 +226,10 @@ impl ChatStorage for RedisConnection {
         participant_one: ParticipantId,
         participant_two: ParticipantId,
     ) -> Result<(), SignalingModuleError> {
-        let participants = (participant_one, participant_two).ordered();
+        let participants = ParticipantPair::new(participant_one, participant_two);
         self.sadd(
             RoomPrivateChatCorrespondentsKey { room },
-            RoomPrivateChatCorrespondents {
-                participant_one: participants.0,
-                participant_two: participants.1,
-            },
+            RoomPrivateChatCorrespondents::from(participants),
         )
         .await
         .context(RedisSnafu {
@@ -255,7 +253,7 @@ impl ChatStorage for RedisConnection {
     async fn get_private_chat_correspondents(
         &mut self,
         room: SignalingRoomId,
-    ) -> Result<HashSet<(ParticipantId, ParticipantId)>, SignalingModuleError> {
+    ) -> Result<HashSet<ParticipantPair>, SignalingModuleError> {
         let correspondents: HashSet<RoomPrivateChatCorrespondents> = self
             .smembers(RoomPrivateChatCorrespondentsKey { room })
             .await
@@ -508,6 +506,21 @@ struct RoomPrivateChatCorrespondents {
     participant_two: ParticipantId,
 }
 
+impl From<ParticipantPair> for RoomPrivateChatCorrespondents {
+    fn from(value: ParticipantPair) -> Self {
+        Self {
+            participant_one: value.participant_one(),
+            participant_two: value.participant_two(),
+        }
+    }
+}
+
+impl From<RoomPrivateChatCorrespondents> for ParticipantPair {
+    fn from(value: RoomPrivateChatCorrespondents) -> Self {
+        Self::new(value.participant_one, value.participant_two)
+    }
+}
+
 impl FromStr for RoomPrivateChatCorrespondents {
     type Err = SignalingModuleError;
 
@@ -522,17 +535,6 @@ impl FromStr for RoomPrivateChatCorrespondents {
             participant_one: ParticipantId::from(Uuid::from_str(participants.0)?),
             participant_two: ParticipantId::from(Uuid::from_str(participants.1)?),
         })
-    }
-}
-
-impl From<RoomPrivateChatCorrespondents> for (ParticipantId, ParticipantId) {
-    fn from(
-        RoomPrivateChatCorrespondents {
-            participant_one,
-            participant_two,
-        }: RoomPrivateChatCorrespondents,
-    ) -> Self {
-        (participant_one, participant_two).ordered()
     }
 }
 
@@ -561,11 +563,11 @@ impl RoomPrivateChatHistory {
         participant_a: ParticipantId,
         participant_b: ParticipantId,
     ) -> Self {
-        let (participant_one, participant_two) = (participant_a, participant_b).ordered();
+        let pair = ParticipantPair::new(participant_a, participant_b);
         Self {
             room,
-            participant_one,
-            participant_two,
+            participant_one: pair.participant_one(),
+            participant_two: pair.participant_two(),
         }
     }
 }

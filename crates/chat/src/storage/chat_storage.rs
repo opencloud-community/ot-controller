@@ -11,6 +11,8 @@ use opentalk_types::{
     signaling::chat::state::StoredMessage,
 };
 
+use crate::ParticipantPair;
+
 #[async_trait(?Send)]
 pub(crate) trait ChatStorage {
     async fn get_room_history(
@@ -111,7 +113,7 @@ pub(crate) trait ChatStorage {
     async fn get_private_chat_correspondents(
         &mut self,
         room: SignalingRoomId,
-    ) -> Result<HashSet<(ParticipantId, ParticipantId)>, SignalingModuleError>;
+    ) -> Result<HashSet<ParticipantPair>, SignalingModuleError>;
 
     #[tracing::instrument(level = "debug", skip(self))]
     async fn get_private_chat_correspondents_for_participant(
@@ -123,11 +125,11 @@ pub(crate) trait ChatStorage {
             .get_private_chat_correspondents(room)
             .await?
             .into_iter()
-            .filter_map(|(a, b)| {
-                if a == participant {
-                    Some(b)
-                } else if b == participant {
-                    Some(a)
+            .filter_map(|pair| {
+                if pair.participant_one() == participant {
+                    Some(pair.participant_two())
+                } else if pair.participant_two() == participant {
+                    Some(pair.participant_one())
                 } else {
                     None
                 }
