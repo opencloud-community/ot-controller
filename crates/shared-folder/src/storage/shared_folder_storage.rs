@@ -11,4 +11,9 @@ pub(crate) trait SharedFolderStorage {
         &mut self,
         room: SignalingRoomId,
     ) -> Result<(), SignalingModuleError>;
+
+    async fn is_shared_folder_initialized(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<bool, SignalingModuleError>;
 }

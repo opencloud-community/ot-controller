@@ -67,7 +67,11 @@ impl SignalingModule for SharedFolder {
                 frontend_data,
                 participants: _,
             } => {
-                if !storage::is_shared_folder_initialized(ctx.redis_conn(), self.room).await? {
+                if !ctx
+                    .redis_conn()
+                    .is_shared_folder_initialized(self.room)
+                    .await?
+                {
                     if let Some(event) = ctx.redis_conn().get_event(self.room.room_id()).await? {
                         let mut conn = self.db.get_conn().await?;
                         if let Some(shared_folder) =

@@ -26,6 +26,14 @@ impl SharedFolderStorage for VolatileStaticMemoryStorage {
         state().write().set_shared_folder_initialized(room);
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn is_shared_folder_initialized(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<bool, SignalingModuleError> {
+        Ok(state().read().is_shared_folder_initialized(room))
+    }
 }
 
 #[cfg(test)]

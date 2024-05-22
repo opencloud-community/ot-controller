@@ -20,4 +20,8 @@ impl MemorySharedFolderState {
     pub(super) fn set_shared_folder_initialized(&mut self, room: SignalingRoomId) {
         self.initialized.insert(room);
     }
+
+    pub(super) fn is_shared_folder_initialized(&self, room: SignalingRoomId) -> bool {
+        self.initialized.contains(&room)
+    }
 }

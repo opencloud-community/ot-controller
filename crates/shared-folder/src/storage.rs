@@ -7,8 +7,7 @@ mod shared_folder_storage;
 mod volatile;
 
 pub(crate) use redis::{
-    delete_shared_folder, delete_shared_folder_initialized, get_shared_folder,
-    is_shared_folder_initialized, set_shared_folder,
+    delete_shared_folder, delete_shared_folder_initialized, get_shared_folder, set_shared_folder,
 };
 pub(crate) use shared_folder_storage::SharedFolderStorage;
 
@@ -22,6 +21,10 @@ mod test_common {
     const ROOM: SignalingRoomId = SignalingRoomId::nil();
 
     pub(super) async fn initialized(storage: &mut dyn SharedFolderStorage) {
+        assert!(!storage.is_shared_folder_initialized(ROOM).await.unwrap());
+
         storage.set_shared_folder_initialized(ROOM).await.unwrap();
+
+        assert!(storage.is_shared_folder_initialized(ROOM).await.unwrap());
     }
 }
