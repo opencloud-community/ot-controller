@@ -6,13 +6,14 @@ mod redis;
 mod shared_folder_storage;
 mod volatile;
 
-pub(crate) use redis::{delete_shared_folder, set_shared_folder};
+pub(crate) use redis::delete_shared_folder;
 pub(crate) use shared_folder_storage::SharedFolderStorage;
 
 #[cfg(test)]
 mod test_common {
 
     use opentalk_signaling_core::SignalingRoomId;
+    use opentalk_types::common::shared_folder::{SharedFolder, SharedFolderAccess};
 
     use super::SharedFolderStorage;
 
@@ -34,6 +35,24 @@ mod test_common {
     }
 
     pub(super) async fn shared_folder(storage: &mut dyn SharedFolderStorage) {
+        let shared_folder = SharedFolder {
+            read: SharedFolderAccess {
+                url: "http://example.com".to_owned(),
+                password: "password123".to_owned(),
+            },
+            read_write: None,
+        };
+
         assert!(storage.get_shared_folder(ROOM).await.unwrap().is_none());
+
+        storage
+            .set_shared_folder(ROOM, shared_folder.clone())
+            .await
+            .unwrap();
+
+        assert_eq!(
+            Some(shared_folder),
+            storage.get_shared_folder(ROOM).await.unwrap()
+        );
     }
 }

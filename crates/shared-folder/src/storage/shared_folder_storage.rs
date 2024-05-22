@@ -27,4 +27,10 @@ pub(crate) trait SharedFolderStorage {
         &mut self,
         room: SignalingRoomId,
     ) -> Result<Option<SharedFolder>, SignalingModuleError>;
+
+    async fn set_shared_folder(
+        &mut self,
+        room: SignalingRoomId,
+        value: SharedFolder,
+    ) -> Result<(), SignalingModuleError>;
 }

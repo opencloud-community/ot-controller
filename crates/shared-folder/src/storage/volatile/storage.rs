@@ -52,6 +52,16 @@ impl SharedFolderStorage for VolatileStaticMemoryStorage {
     ) -> Result<Option<SharedFolder>, SignalingModuleError> {
         Ok(state().read().get_shared_folder(room))
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_shared_folder(
+        &mut self,
+        room: SignalingRoomId,
+        value: SharedFolder,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().set_shared_folder(room, value);
+        Ok(())
+    }
 }
 
 #[cfg(test)]

@@ -34,4 +34,8 @@ impl MemorySharedFolderState {
     pub(super) fn get_shared_folder(&self, room: SignalingRoomId) -> Option<SharedFolder> {
         self.shared_folders.get(&room).cloned()
     }
+
+    pub(super) fn set_shared_folder(&mut self, room: SignalingRoomId, value: SharedFolder) {
+        self.shared_folders.insert(room, value);
+    }
 }

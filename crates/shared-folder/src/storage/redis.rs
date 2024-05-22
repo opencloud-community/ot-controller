@@ -60,6 +60,19 @@ impl SharedFolderStorage for RedisConnection {
                 message: "Failed to GET shared folder",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_shared_folder(
+        &mut self,
+        room: SignalingRoomId,
+        value: SharedFolder,
+    ) -> Result<(), SignalingModuleError> {
+        self.set(RoomSharedFolder { room }, value)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to SET shared folder",
+            })
+    }
 }
 
 #[derive(ToRedisArgs)]
@@ -73,20 +86,6 @@ struct RoomSharedFolderInitialized {
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:shared-folder")]
 struct RoomSharedFolder {
     room: SignalingRoomId,
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn set_shared_folder(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    value: SharedFolder,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .set(RoomSharedFolder { room }, value)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to SET shared folder",
-        })
 }
 
 #[tracing::instrument(level = "debug", skip(redis_conn))]

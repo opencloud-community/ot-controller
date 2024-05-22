@@ -77,12 +77,9 @@ impl SignalingModule for SharedFolder {
                         if let Some(shared_folder) =
                             EventSharedFolder::get_for_event(&mut conn, event.id).await?
                         {
-                            storage::set_shared_folder(
-                                ctx.redis_conn(),
-                                self.room,
-                                shared_folder.into(),
-                            )
-                            .await?;
+                            ctx.redis_conn()
+                                .set_shared_folder(self.room, shared_folder.into())
+                                .await?;
                         }
                     };
                     ctx.redis_conn()
