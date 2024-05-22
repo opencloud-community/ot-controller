@@ -25,12 +25,12 @@ use opentalk_types::{
     },
 };
 use snafu::{whatever, Report};
-use state::{InitState, SpaceInfo};
+use storage::{InitState, SpaceInfo};
 use url::Url;
 
 mod client;
 mod exchange;
-mod state;
+mod storage;
 
 pub struct Whiteboard {
     room_id: SignalingRoomId,
@@ -97,7 +97,7 @@ impl SignalingModule for Whiteboard {
                 frontend_data,
                 participants: _,
             } => {
-                let data = match state::get(ctx.redis_conn(), self.room_id).await? {
+                let data = match storage::get(ctx.redis_conn(), self.room_id).await? {
                     Some(state) => state.into(),
                     None => WhiteboardState::NotInitialized,
                 };
@@ -110,7 +110,7 @@ impl SignalingModule for Whiteboard {
                 match event {
                     exchange::Event::Initialized => {
                         if let Some(InitState::Initialized(space_info)) =
-                            state::get(ctx.redis_conn(), self.room_id).await?
+                            storage::get(ctx.redis_conn(), self.room_id).await?
                         {
                             ctx.ws_send(AccessUrl {
                                 url: space_info.url,
@@ -153,8 +153,8 @@ impl SignalingModule for Whiteboard {
                             return Ok(());
                         }
 
-                        if let Some(state::InitState::Initialized(info)) =
-                            state::get(ctx.redis_conn(), self.room_id).await?
+                        if let Some(storage::InitState::Initialized(info)) =
+                            storage::get(ctx.redis_conn(), self.room_id).await?
                         {
                             let client = self.client.clone();
                             let timestamp = ctx.timestamp();
@@ -266,7 +266,7 @@ impl Whiteboard {
         &self,
         ctx: &mut ModuleContext<'_, Self>,
     ) -> Result<(), SignalingModuleError> {
-        match state::try_start_init(ctx.redis_conn(), self.room_id).await? {
+        match storage::try_start_init(ctx.redis_conn(), self.room_id).await? {
             Some(state) => match state {
                 InitState::Initializing => ctx.ws_send(Error::CurrentlyInitializing),
                 InitState::Initialized(_) => ctx.ws_send(Error::AlreadyInitialized),
@@ -288,7 +288,7 @@ impl Whiteboard {
                     url,
                 };
 
-                state::set_initialized(ctx.redis_conn(), self.room_id, space_info).await?;
+                storage::set_initialized(ctx.redis_conn(), self.room_id, space_info).await?;
 
                 ctx.exchange_publish(
                     control::exchange::current_room_all_participants(self.room_id),
@@ -300,12 +300,12 @@ impl Whiteboard {
     }
 
     async fn cleanup(&self, redis_conn: &mut RedisConnection) -> Result<(), SignalingModuleError> {
-        let state = match state::get(redis_conn, self.room_id).await? {
+        let state = match storage::get(redis_conn, self.room_id).await? {
             Some(state) => state,
             None => return Ok(()),
         };
 
-        state::del(redis_conn, self.room_id).await?;
+        storage::del(redis_conn, self.room_id).await?;
 
         if let InitState::Initialized(space_info) = state {
             self.client.delete_space(&space_info.id).await?;

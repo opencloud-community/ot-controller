@@ -4,32 +4,16 @@
 
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 use redis::AsyncCommands;
-use redis_args::{FromRedisValue, ToRedisArgs};
-use serde::{Deserialize, Serialize};
+use redis_args::ToRedisArgs;
 use snafu::ResultExt;
-use url::Url;
+
+use super::{InitState, SpaceInfo};
 
 /// Stores the [`InitState`] of this room.
 #[derive(ToRedisArgs)]
 #[to_redis_args(fmt = "opentalk-signaling:room={room_id}:spacedeck:init")]
 pub(super) struct InitStateKey {
     pub(super) room_id: SignalingRoomId,
-}
-
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
-#[to_redis_args(serde)]
-#[from_redis_value(serde)]
-pub enum InitState {
-    /// Spacedeck is initializing
-    Initializing,
-    /// Spacedeck has been initialized
-    Initialized(SpaceInfo),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct SpaceInfo {
-    pub id: String,
-    pub url: Url,
 }
 
 /// Attempts to set the spacedeck state to [`InitState::Initializing`] with a SETNX command.
