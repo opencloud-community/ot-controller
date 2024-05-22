@@ -24,4 +24,8 @@ impl MemorySharedFolderState {
     pub(super) fn is_shared_folder_initialized(&self, room: SignalingRoomId) -> bool {
         self.initialized.contains(&room)
     }
+
+    pub(super) fn delete_shared_folder_initialized(&mut self, room: SignalingRoomId) {
+        self.initialized.remove(&room);
+    }
 }

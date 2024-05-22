@@ -36,25 +36,24 @@ impl SharedFolderStorage for RedisConnection {
                 message: "Failed to GET shared folder initialized flag",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_shared_folder_initialized(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<(), SignalingModuleError> {
+        self.del(RoomSharedFolderInitialized { room })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to DEL shared folder initialized flag",
+            })
+    }
 }
 
 #[derive(ToRedisArgs)]
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:shared-folder:initialized")]
 struct RoomSharedFolderInitialized {
     room: SignalingRoomId,
-}
-
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn delete_shared_folder_initialized(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-) -> Result<bool, SignalingModuleError> {
-    redis_conn
-        .del(RoomSharedFolderInitialized { room })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to DEL shared folder initialized flag",
-        })
 }
 
 /// Key to the shared folder information

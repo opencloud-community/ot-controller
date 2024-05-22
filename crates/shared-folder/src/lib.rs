@@ -119,8 +119,10 @@ impl SignalingModule for SharedFolder {
     async fn on_destroy(self, mut ctx: DestroyContext<'_>) {
         // ==== Cleanup room ====
         if ctx.destroy_room() {
-            if let Err(e) =
-                storage::delete_shared_folder_initialized(ctx.redis_conn(), self.room).await
+            if let Err(e) = ctx
+                .redis_conn()
+                .delete_shared_folder_initialized(self.room)
+                .await
             {
                 log::error!(
                     "Failed to remove shared folder initialized flag on room destroy, {}",
