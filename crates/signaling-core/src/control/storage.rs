@@ -13,7 +13,9 @@ const SKIP_WAITING_ROOM_KEY_EXPIRY: u32 = 120;
 pub const SKIP_WAITING_ROOM_KEY_REFRESH_INTERVAL: u64 = 60;
 
 // TODO: remove all these re-exports once the functionality is migrated into the ControlStorage trait
-pub use redis::{participant_id_in_use, room_mutex, ParticipantIdRunnerLock};
+pub use redis::{
+    acquire_participant_id, participant_id_in_use, room_mutex, ParticipantIdRunnerLock,
+};
 
 #[cfg(test)]
 mod test_common {

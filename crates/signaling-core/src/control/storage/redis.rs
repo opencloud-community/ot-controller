@@ -18,10 +18,11 @@ use opentalk_types::{
 };
 use redis::{AsyncCommands, FromRedisValue, ToRedisArgs};
 use redis_args::ToRedisArgs;
-use snafu::ResultExt;
+use snafu::{whatever, ResultExt};
+use tokio::time::sleep;
 
 use super::{AttributeActions, ControlStorage, SKIP_WAITING_ROOM_KEY_EXPIRY};
-use crate::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
+use crate::{RedisConnection, RedisSnafu, RunnerId, SignalingModuleError, SignalingRoomId};
 
 #[async_trait(?Send)]
 impl ControlStorage for RedisConnection {
@@ -663,6 +664,38 @@ impl RedisBulkAttributeActions {
 #[to_redis_args(fmt = "opentalk-signaling:runner:{id}")]
 pub struct ParticipantIdRunnerLock {
     pub id: ParticipantId,
+}
+
+pub async fn acquire_participant_id(
+    redis_conn: &mut RedisConnection,
+    participant_id: ParticipantId,
+    runner_id: RunnerId,
+) -> Result<(), SignalingModuleError> {
+    let key = ParticipantIdRunnerLock { id: participant_id };
+
+    // Try for up to 10 secs to acquire the key
+    for _ in 0..10 {
+        let value: redis::Value = redis::cmd("SET")
+            .arg(&key)
+            .arg(runner_id)
+            .arg("NX")
+            .query_async(redis_conn)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to acquire participant id",
+            })?;
+
+        match value {
+            redis::Value::Nil => sleep(Duration::from_secs(1)).await,
+            redis::Value::Okay => return Ok(()),
+            _ => whatever!(
+                "Got unexpected value while acquiring runner id, value={:?}",
+                value
+            ),
+        }
+    }
+
+    whatever!("Failed to acquire runner id");
 }
 
 pub async fn participant_id_in_use(

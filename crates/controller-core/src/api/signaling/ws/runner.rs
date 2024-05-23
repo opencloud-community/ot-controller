@@ -25,7 +25,10 @@ use opentalk_db_storage::{
 use opentalk_signaling_core::{
     control::{
         self, exchange,
-        storage::{self, AttributeActions as _, ControlStorage, ParticipantIdRunnerLock},
+        storage::{
+            self, acquire_participant_id, AttributeActions as _, ControlStorage,
+            ParticipantIdRunnerLock,
+        },
         ControlStateExt as _, NAMESPACE,
     },
     AnyStream, ExchangeHandle, ObjectStorage, Participant, RedisConnection, RunnerId,
@@ -158,32 +161,6 @@ impl Builder {
         self.modules.destroy(ctx).await
     }
 
-    async fn acquire_participant_id(&mut self) -> Result<()> {
-        let key = ParticipantIdRunnerLock { id: self.id };
-        let runner_id = self.runner_id.to_string();
-
-        // Try for up to 10 secs to acquire the key
-        for _ in 0..10 {
-            let value: redis::Value = redis::cmd("SET")
-                .arg(&key)
-                .arg(&runner_id)
-                .arg("NX")
-                .query_async(&mut self.redis_conn)
-                .await?;
-
-            match value {
-                redis::Value::Nil => sleep(Duration::from_secs(1)).await,
-                redis::Value::Okay => return Ok(()),
-                _ => whatever!(
-                    "Got unexpected value while acquiring runner id, value={:?}",
-                    value
-                ),
-            }
-        }
-
-        whatever!("Failed to acquire runner id");
-    }
-
     /// Build to runner from the data inside the builder and provided websocket
     #[tracing::instrument(err, skip_all)]
     pub async fn build(
@@ -193,7 +170,7 @@ impl Builder {
         shutdown_sig: broadcast::Receiver<()>,
         settings: SharedSettings,
     ) -> Result<Runner> {
-        self.acquire_participant_id().await?;
+        acquire_participant_id(&mut self.redis_conn, self.id, self.runner_id).await?;
 
         let room_id = SignalingRoomId::new(self.room.id, self.breakout_room);
 
@@ -1444,7 +1421,7 @@ impl Runner {
 
         if let Some(closes_at) = closes_at {
             let remaining_seconds = (*closes_at - *Timestamp::now()).num_seconds();
-            let future = tokio::time::sleep(Duration::from_secs(remaining_seconds.max(0) as u64));
+            let future = sleep(Duration::from_secs(remaining_seconds.max(0) as u64));
             self.time_limit_future = Box::pin(future);
         }
 
