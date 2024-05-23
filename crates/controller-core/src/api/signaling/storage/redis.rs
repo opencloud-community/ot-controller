@@ -11,8 +11,7 @@ use snafu::{ensure, ResultExt as _};
 
 use super::{
     error::{RedisSnafu, ResumptionTokenAlreadyUsedSnafu},
-    SignalingStorage, SignalingStorageError, RESUMPTION_TOKEN_EXPIRY_SECONDS,
-    TICKET_EXPIRY_SECONDS,
+    SignalingStorage, SignalingStorageError, RESUMPTION_TOKEN_EXPIRY, TICKET_EXPIRY,
 };
 use crate::api::signaling::{resumption::ResumptionData, ticket::TicketData};
 
@@ -24,11 +23,15 @@ impl SignalingStorage for RedisConnection {
         ticket_token: &TicketToken,
         ticket_data: &TicketData,
     ) -> Result<(), SignalingStorageError> {
-        self.set_ex(TicketKey(ticket_token), ticket_data, TICKET_EXPIRY_SECONDS)
-            .await
-            .with_context(|_| RedisSnafu {
-                message: "Failed to SET EX ticket data",
-            })
+        self.set_ex(
+            TicketKey(ticket_token),
+            ticket_data,
+            TICKET_EXPIRY.as_secs(),
+        )
+        .await
+        .with_context(|_| RedisSnafu {
+            message: "Failed to SET EX ticket data",
+        })
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
@@ -68,7 +71,7 @@ impl SignalingStorage for RedisConnection {
             .arg(ResumptionKey(resumption_token))
             .arg(data)
             .arg("EX")
-            .arg(RESUMPTION_TOKEN_EXPIRY_SECONDS)
+            .arg(RESUMPTION_TOKEN_EXPIRY.as_secs())
             .arg("NX")
             .query_async(self)
             .await
@@ -85,7 +88,7 @@ impl SignalingStorage for RedisConnection {
         let response: i32 = self
             .expire(
                 ResumptionKey(resumption_token),
-                RESUMPTION_TOKEN_EXPIRY_SECONDS.into(),
+                i64::try_from(RESUMPTION_TOKEN_EXPIRY.as_secs()).unwrap_or(i64::MAX),
             )
             .await
             .with_context(|_| RedisSnafu {

@@ -7,11 +7,13 @@ mod redis;
 mod signaling_storage;
 mod volatile;
 
+use std::time::Duration;
+
 pub(crate) use error::SignalingStorageError;
 pub(crate) use signaling_storage::SignalingStorage;
 
-const TICKET_EXPIRY_SECONDS: u64 = 30;
-const RESUMPTION_TOKEN_EXPIRY_SECONDS: u32 = 120;
+const TICKET_EXPIRY: Duration = Duration::from_secs(30);
+const RESUMPTION_TOKEN_EXPIRY: Duration = Duration::from_secs(120);
 
 #[cfg(test)]
 mod test_common {

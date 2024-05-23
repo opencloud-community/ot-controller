@@ -2,14 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::time::Duration;
-
 use opentalk_signaling_core::ExpiringDataHashMap;
 use opentalk_types::core::{ResumptionToken, TicketToken};
 
 use crate::api::signaling::{
     resumption::ResumptionData,
-    storage::{RESUMPTION_TOKEN_EXPIRY_SECONDS, TICKET_EXPIRY_SECONDS},
+    storage::{RESUMPTION_TOKEN_EXPIRY, TICKET_EXPIRY},
     ticket::TicketData,
 };
 
@@ -26,11 +24,8 @@ impl MemorySignalingState {
     }
 
     pub(super) fn set_ticket_ex(&mut self, ticket_token: TicketToken, ticket_data: TicketData) {
-        self.tickets.insert_with_expiry(
-            ticket_token,
-            ticket_data,
-            Duration::from_secs(TICKET_EXPIRY_SECONDS),
-        );
+        self.tickets
+            .insert_with_expiry(ticket_token, ticket_data, TICKET_EXPIRY);
     }
 
     pub(super) fn take_ticket(&mut self, ticket_token: &TicketToken) -> Option<TicketData> {
@@ -52,15 +47,13 @@ impl MemorySignalingState {
         self.resumption_data.insert_with_expiry_if_not_exists(
             resumption_token,
             data,
-            Duration::from_secs(RESUMPTION_TOKEN_EXPIRY_SECONDS.into()),
+            RESUMPTION_TOKEN_EXPIRY,
         );
     }
 
     pub(super) fn refresh_resumption_token(&mut self, resumption_token: &ResumptionToken) -> bool {
-        self.resumption_data.update_expiry(
-            resumption_token,
-            Duration::from_secs(RESUMPTION_TOKEN_EXPIRY_SECONDS.into()),
-        )
+        self.resumption_data
+            .update_expiry(resumption_token, RESUMPTION_TOKEN_EXPIRY)
     }
 
     pub(super) fn delete_resumption_token(&mut self, resumption_token: &ResumptionToken) -> bool {
