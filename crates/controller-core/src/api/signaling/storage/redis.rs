@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use async_trait::async_trait;
 use opentalk_signaling_core::RedisConnection;
 use opentalk_types::core::{ResumptionToken, TicketToken};
 use redis::AsyncCommands as _;
@@ -10,44 +11,40 @@ use snafu::{whatever, ResultExt as _};
 
 use super::{
     error::{RedisSnafu, ResumptionTokenAlreadyUsedSnafu},
-    SignalingStorageError,
+    SignalingStorage, SignalingStorageError, TICKET_EXPIRY_SECONDS,
 };
 use crate::api::signaling::{resumption::ResumptionData, ticket::TicketData};
 
-const TICKET_EXPIRY_SECONDS: u64 = 30;
 const RESUMPTION_TOKEN_EXPIRY_SECONDS: u64 = 120;
+
+#[async_trait(?Send)]
+impl SignalingStorage for RedisConnection {
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_ticket_ex(
+        &mut self,
+        ticket_token: &TicketToken,
+        ticket_data: &TicketData,
+    ) -> Result<(), SignalingStorageError> {
+        self.set_ex(TicketKey(ticket_token), ticket_data, TICKET_EXPIRY_SECONDS)
+            .await
+            .with_context(|_| RedisSnafu {
+                message: "Failed to SET EX ticket data",
+            })
+    }
+}
 
 /// Typed redis key for a signaling ticket containing [`TicketData`]
 #[derive(Debug, Copy, Clone, ToRedisArgs)]
-#[to_redis_args(fmt = "opentalk-signaling:ticket={ticket}")]
-struct TicketRedisKey<'s> {
-    ticket: &'s TicketToken,
-}
-
-pub(crate) async fn set_ticket_ex(
-    redis_conn: &mut RedisConnection,
-    ticket: &TicketToken,
-    ticket_data: &TicketData,
-) -> Result<(), SignalingStorageError> {
-    redis_conn
-        .set_ex(
-            TicketRedisKey { ticket },
-            ticket_data,
-            TICKET_EXPIRY_SECONDS,
-        )
-        .await
-        .with_context(|_| RedisSnafu {
-            message: "Failed to SET EX ticket data",
-        })
-}
+#[to_redis_args(fmt = "opentalk-signaling:ticket={}")]
+struct TicketKey<'s>(&'s TicketToken);
 
 pub(crate) async fn get_ticket(
     redis_conn: &mut RedisConnection,
-    ticket: &TicketToken,
+    ticket_token: &TicketToken,
 ) -> Result<Option<TicketData>, SignalingStorageError> {
     // GETDEL available since redis 6.2.0, missing direct support by redis crate
     redis::cmd("GETDEL")
-        .arg(TicketRedisKey { ticket })
+        .arg(TicketKey(ticket_token))
         .query_async(redis_conn)
         .await
         .with_context(|_| RedisSnafu {
@@ -126,4 +123,34 @@ pub(crate) async fn delete_resumption_token(
         .with_context(|_| RedisSnafu {
             message: "Failed to delete resumption token from redis",
         })
+}
+
+#[cfg(test)]
+mod test {
+    use redis::aio::ConnectionManager;
+    use serial_test::serial;
+
+    use super::{super::test_common, *};
+
+    async fn setup() -> RedisConnection {
+        let redis_url =
+            std::env::var("REDIS_ADDR").unwrap_or_else(|_| "redis://0.0.0.0:6379/".to_owned());
+        let redis = redis::Client::open(redis_url).expect("Invalid redis url");
+
+        let mut mgr = ConnectionManager::new(redis).await.unwrap();
+
+        redis::cmd("FLUSHALL")
+            .query_async::<_, ()>(&mut mgr)
+            .await
+            .unwrap();
+
+        RedisConnection::new(mgr)
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn ticket_token() {
+        let mut redis_conn = setup().await;
+        test_common::ticket_token(&mut redis_conn).await;
+    }
 }

@@ -11,7 +11,7 @@ use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use snafu::Report;
 
-use super::storage::{delete_resumption_token, get_resumption_token_data, set_ticket_ex};
+use super::storage::{delete_resumption_token, get_resumption_token_data, SignalingStorage as _};
 
 /// Data stored behind the [`Ticket`] key.
 #[derive(Debug, Clone, Deserialize, Serialize, ToRedisArgs, FromRedisValue)]
@@ -61,7 +61,8 @@ pub async fn start_or_continue_signaling_session(
         resumption: resumption.clone(),
     };
 
-    set_ticket_ex(redis_conn, &ticket, &ticket_data)
+    redis_conn
+        .set_ticket_ex(&ticket, &ticket_data)
         .await
         .map_err(|e| {
             log::error!("Unable to store ticket in redis, {}", Report::from_error(e));
