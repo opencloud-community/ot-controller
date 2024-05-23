@@ -28,8 +28,8 @@ use opentalk_signaling_core::{
         storage::{self, AttributeActions as _, ControlStorage, ParticipantIdRunnerLock},
         ControlStateExt as _, NAMESPACE,
     },
-    AnyStream, ExchangeHandle, ObjectStorage, Participant, RedisConnection, SignalingMetrics,
-    SignalingModule, SignalingModuleError, SignalingRoomId, SubscriberHandle,
+    AnyStream, ExchangeHandle, ObjectStorage, Participant, RedisConnection, RunnerId,
+    SignalingMetrics, SignalingModule, SignalingModuleError, SignalingRoomId, SubscriberHandle,
 };
 use opentalk_types::{
     common::tariff::TariffResource,
@@ -53,7 +53,6 @@ use tokio::{
     time::{interval, sleep},
 };
 use tokio_stream::StreamExt;
-use uuid::Uuid;
 
 use super::{
     actor::WebSocketActor,
@@ -125,7 +124,7 @@ type Result<T, E = RunnerError> = std::result::Result<T, E>;
 ///
 /// Passed into [`ModuleBuilder::build`](super::modules::ModuleBuilder::build) function to create an [`InitContext`](super::InitContext).
 pub struct Builder {
-    runner_id: Uuid,
+    runner_id: RunnerId,
     pub(super) id: ParticipantId,
     resuming: bool,
     pub(super) room: Room,
@@ -269,7 +268,7 @@ impl Builder {
 /// Also acts as `control` module which handles participant and room states.
 pub struct Runner {
     /// Runner ID which is used to assume ownership of a participant id
-    runner_id: Uuid,
+    runner_id: RunnerId,
 
     /// participant id that the runner is connected to
     id: ParticipantId,
@@ -373,7 +372,7 @@ async fn get_participant_role(
 impl Runner {
     #[allow(clippy::too_many_arguments)]
     pub async fn builder(
-        runner_id: Uuid,
+        runner_id: RunnerId,
         id: ParticipantId,
         resuming: bool,
         room: Room,

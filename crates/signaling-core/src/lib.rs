@@ -25,6 +25,7 @@ pub mod module_tester;
 
 pub mod assets;
 pub mod control;
+mod runner_id;
 
 pub use any_stream::{any_stream, AnyStream};
 pub use destroy_context::DestroyContext;
@@ -38,6 +39,7 @@ pub use module_context::{ExchangePublish, ModuleContext};
 pub use object_storage::{ObjectStorage, ObjectStorageError};
 pub use participant::Participant;
 pub use redis_wrapper::{RedisConnection, RedisMetrics};
+pub use runner_id::RunnerId;
 pub use signaling_module::*;
 pub use signaling_room_id::SignalingRoomId;
 pub use volatile_storage::{VolatileStaticMemoryStorage, VolatileStorage};

@@ -83,7 +83,7 @@ pub(crate) async fn ws_service(
     let mut redis_conn = (**redis_conn).clone();
 
     let request_id = if let Some(request_id) = request.extensions().get::<RequestId>() {
-        **request_id
+        *request_id
     } else {
         log::error!("missing request id in signaling request");
         return Ok(HttpResponse::InternalServerError().finish());
@@ -131,7 +131,7 @@ pub(crate) async fn ws_service(
             .start_with_addr()?;
 
     let mut builder = match Runner::builder(
-        request_id,
+        request_id.into(),
         ticket_data.participant_id,
         ticket_data.resuming,
         room,
