@@ -25,10 +25,7 @@ use opentalk_db_storage::{
 use opentalk_signaling_core::{
     control::{
         self, exchange,
-        storage::{
-            self, acquire_participant_id, AttributeActions as _, ControlStorage,
-            ParticipantIdRunnerLock,
-        },
+        storage::{self, AttributeActions as _, ControlStorage},
         ControlStateExt as _, NAMESPACE,
     },
     AnyStream, ExchangeHandle, ObjectStorage, Participant, RedisConnection, RunnerId,
@@ -67,7 +64,7 @@ use crate::api::signaling::{
     echo::Echo,
     moderation::{self, storage::ModerationStorage},
     resumption::ResumptionTokenKeepAlive,
-    storage::SignalingStorageError,
+    storage::{acquire_participant_id, ParticipantIdRunnerLock, SignalingStorageError},
     trim_display_name,
     ws::actor::WsCommand,
 };

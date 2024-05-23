@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_signaling_core::{control, Participant, RedisConnection};
+use opentalk_signaling_core::{Participant, RedisConnection};
 use opentalk_types::{
     api::error::ApiError,
     core::{BreakoutRoomId, ParticipantId, ResumptionToken, RoomId, TicketToken, UserId},
@@ -11,7 +11,7 @@ use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use snafu::Report;
 
-use super::storage::SignalingStorage as _;
+use super::storage::{participant_id_in_use, SignalingStorage as _};
 
 /// Data stored behind the [`Ticket`] key.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, ToRedisArgs, FromRedisValue)]
@@ -102,7 +102,7 @@ async fn use_resumption_token(
         return Ok(None);
     }
 
-    if control::storage::participant_id_in_use(redis_conn, data.participant_id).await? {
+    if participant_id_in_use(redis_conn, data.participant_id).await? {
         return Err(ApiError::bad_request()
             .with_code("session_running")
             .with_message("the session of the given resumption token is still running"));

@@ -2,12 +2,15 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::time::Duration;
+
 use async_trait::async_trait;
-use opentalk_signaling_core::RedisConnection;
-use opentalk_types::core::{ResumptionToken, TicketToken};
+use opentalk_signaling_core::{RedisConnection, RunnerId};
+use opentalk_types::core::{ParticipantId, ResumptionToken, TicketToken};
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
-use snafu::{ensure, ResultExt as _};
+use snafu::{ensure, whatever, ResultExt as _};
+use tokio::time::sleep;
 
 use super::{
     error::{RedisSnafu, ResumptionTokenAlreadyUsedSnafu},
@@ -124,6 +127,56 @@ struct TicketKey<'s>(&'s TicketToken);
 #[derive(Debug, ToRedisArgs)]
 #[to_redis_args(fmt = "opentalk-signaling:resumption={}")]
 struct ResumptionKey<'s>(&'s ResumptionToken);
+
+#[derive(Debug, ToRedisArgs)]
+#[to_redis_args(fmt = "opentalk-signaling:runner:{id}")]
+pub struct ParticipantIdRunnerLock {
+    pub id: ParticipantId,
+}
+
+pub async fn acquire_participant_id(
+    redis_conn: &mut RedisConnection,
+    participant_id: ParticipantId,
+    runner_id: RunnerId,
+) -> Result<(), SignalingStorageError> {
+    let key = ParticipantIdRunnerLock { id: participant_id };
+
+    // Try for up to 10 secs to acquire the key
+    for _ in 0..10 {
+        let value: redis::Value = redis::cmd("SET")
+            .arg(&key)
+            .arg(runner_id)
+            .arg("NX")
+            .query_async(redis_conn)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to acquire participant id",
+            })?;
+
+        match value {
+            redis::Value::Nil => sleep(Duration::from_secs(1)).await,
+            redis::Value::Okay => return Ok(()),
+            _ => whatever!(
+                "Got unexpected value while acquiring runner id, value={:?}",
+                value
+            ),
+        }
+    }
+
+    whatever!("Failed to acquire runner id");
+}
+
+pub async fn participant_id_in_use(
+    redis_conn: &mut RedisConnection,
+    participant_id: ParticipantId,
+) -> Result<bool, SignalingStorageError> {
+    redis_conn
+        .exists(ParticipantIdRunnerLock { id: participant_id })
+        .await
+        .context(RedisSnafu {
+            message: "failed to check if participant id is in use",
+        })
+}
 
 #[cfg(test)]
 mod test {

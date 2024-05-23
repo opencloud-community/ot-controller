@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_types::api::error::ApiError;
 use snafu::Snafu;
 
 #[derive(Debug, Snafu)]
@@ -23,4 +24,11 @@ pub enum SignalingStorageError {
         #[snafu(source(from(Box<dyn std::error::Error + Send + Sync>, Some)))]
         source: Option<Box<dyn std::error::Error + Send + Sync>>,
     },
+}
+
+impl From<SignalingStorageError> for ApiError {
+    fn from(value: SignalingStorageError) -> Self {
+        log::error!("SignalingStorage error: {value}");
+        ApiError::internal()
+    }
 }
