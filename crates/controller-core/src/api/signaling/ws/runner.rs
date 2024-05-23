@@ -64,7 +64,7 @@ use crate::api::signaling::{
     echo::Echo,
     moderation::{self, storage::ModerationStorage},
     resumption::ResumptionTokenKeepAlive,
-    storage::{acquire_participant_id, release_participant_id, SignalingStorageError},
+    storage::{release_participant_id, SignalingStorage, SignalingStorageError},
     trim_display_name,
     ws::actor::WsCommand,
 };
@@ -167,7 +167,9 @@ impl Builder {
         shutdown_sig: broadcast::Receiver<()>,
         settings: SharedSettings,
     ) -> Result<Runner> {
-        acquire_participant_id(&mut self.redis_conn, self.id, self.runner_id).await?;
+        self.redis_conn
+            .acquire_participant_id(self.id, self.runner_id)
+            .await?;
 
         let room_id = SignalingRoomId::new(self.room.id, self.breakout_room);
 

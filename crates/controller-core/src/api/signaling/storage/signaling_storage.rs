@@ -2,9 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::time::Duration;
+
 use async_trait::async_trait;
 use opentalk_signaling_core::RunnerId;
 use opentalk_types::core::{ParticipantId, ResumptionToken, TicketToken};
+use snafu::whatever;
+use tokio::time::sleep;
 
 use super::SignalingStorageError;
 use crate::api::signaling::{resumption::ResumptionData, ticket::TicketData};
@@ -55,4 +59,23 @@ pub(crate) trait SignalingStorage {
         participant_id: ParticipantId,
         runner_id: RunnerId,
     ) -> Result<bool, SignalingStorageError>;
+
+    async fn acquire_participant_id(
+        &mut self,
+        participant_id: ParticipantId,
+        runner_id: RunnerId,
+    ) -> Result<(), SignalingStorageError> {
+        // Try for up to 10 secs to acquire the key
+        for _ in 0..10 {
+            if self
+                .try_acquire_participant_id(participant_id, runner_id)
+                .await?
+            {
+                return Ok(());
+            }
+            sleep(Duration::from_secs(1)).await;
+        }
+
+        whatever!("Failed to acquire runner id");
+    }
 }

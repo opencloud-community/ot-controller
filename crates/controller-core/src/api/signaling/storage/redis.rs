@@ -2,15 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::time::Duration;
-
 use async_trait::async_trait;
 use opentalk_signaling_core::{RedisConnection, RunnerId};
 use opentalk_types::core::{ParticipantId, ResumptionToken, TicketToken};
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
 use snafu::{ensure, whatever, Report, ResultExt as _};
-use tokio::time::sleep;
 
 use super::{
     error::{RedisSnafu, ResumptionTokenAlreadyUsedSnafu},
@@ -158,25 +155,6 @@ struct ResumptionKey<'s>(&'s ResumptionToken);
 #[to_redis_args(fmt = "opentalk-signaling:runner:{id}")]
 struct ParticipantIdRunnerLock {
     id: ParticipantId,
-}
-
-pub async fn acquire_participant_id(
-    redis_conn: &mut RedisConnection,
-    participant_id: ParticipantId,
-    runner_id: RunnerId,
-) -> Result<(), SignalingStorageError> {
-    // Try for up to 10 secs to acquire the key
-    for _ in 0..10 {
-        if redis_conn
-            .try_acquire_participant_id(participant_id, runner_id)
-            .await?
-        {
-            return Ok(());
-        }
-        sleep(Duration::from_secs(1)).await;
-    }
-
-    whatever!("Failed to acquire runner id");
 }
 
 pub async fn participant_id_in_use(
