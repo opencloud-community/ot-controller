@@ -3,7 +3,8 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use async_trait::async_trait;
-use opentalk_types::core::{ResumptionToken, TicketToken};
+use opentalk_signaling_core::RunnerId;
+use opentalk_types::core::{ParticipantId, ResumptionToken, TicketToken};
 
 use super::SignalingStorageError;
 use crate::api::signaling::{resumption::ResumptionData, ticket::TicketData};
@@ -40,5 +41,18 @@ pub(crate) trait SignalingStorage {
     async fn delete_resumption_token(
         &mut self,
         resumption_token: &ResumptionToken,
+    ) -> Result<bool, SignalingStorageError>;
+
+    /// Attempt to acquire a participant id.
+    ///
+    /// This function will not wait for the lock to become available, therefore
+    /// return immediately.
+    ///
+    /// Returns `Ok(true)` if the lock has been acquired, `Ok(false)` if the lock
+    /// is currently held by other code.
+    async fn try_acquire_participant_id(
+        &mut self,
+        participant_id: ParticipantId,
+        runner_id: RunnerId,
     ) -> Result<bool, SignalingStorageError>;
 }

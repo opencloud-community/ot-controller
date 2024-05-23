@@ -19,7 +19,7 @@ const RESUMPTION_TOKEN_EXPIRY: Duration = Duration::from_secs(120);
 
 #[cfg(test)]
 mod test_common {
-    use opentalk_signaling_core::Participant;
+    use opentalk_signaling_core::{Participant, RunnerId};
     use opentalk_types::core::{ParticipantId, ResumptionToken, RoomId, TicketToken};
     use pretty_assertions::assert_eq;
 
@@ -117,6 +117,18 @@ mod test_common {
             .unwrap());
         assert!(!storage
             .delete_resumption_token(&resumption_token)
+            .await
+            .unwrap());
+    }
+
+    pub(super) async fn participant_runner_lock(storage: &mut dyn SignalingStorage) {
+        let runner_id = RunnerId::from_u128(0xdeadbeef);
+        assert!(storage
+            .try_acquire_participant_id(ALICE, runner_id)
+            .await
+            .unwrap());
+        assert!(!storage
+            .try_acquire_participant_id(ALICE, runner_id)
             .await
             .unwrap());
     }

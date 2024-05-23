@@ -2,8 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_signaling_core::ExpiringDataHashMap;
-use opentalk_types::core::{ResumptionToken, TicketToken};
+use std::collections::{btree_map::Entry, BTreeMap};
+
+use opentalk_signaling_core::{ExpiringDataHashMap, RunnerId};
+use opentalk_types::core::{ParticipantId, ResumptionToken, TicketToken};
 
 use crate::api::signaling::{
     resumption::ResumptionData,
@@ -15,6 +17,7 @@ use crate::api::signaling::{
 pub(super) struct MemorySignalingState {
     tickets: ExpiringDataHashMap<TicketToken, TicketData>,
     resumption_data: ExpiringDataHashMap<ResumptionToken, ResumptionData>,
+    participant_runner_locks: BTreeMap<ParticipantId, RunnerId>,
 }
 
 impl MemorySignalingState {
@@ -58,5 +61,19 @@ impl MemorySignalingState {
 
     pub(super) fn delete_resumption_token(&mut self, resumption_token: &ResumptionToken) -> bool {
         self.resumption_data.remove(resumption_token).is_some()
+    }
+
+    pub(super) fn try_acquire_participant_id(
+        &mut self,
+        participant_id: ParticipantId,
+        runner_id: RunnerId,
+    ) -> bool {
+        match self.participant_runner_locks.entry(participant_id) {
+            Entry::Vacant(v) => {
+                v.insert(runner_id);
+                true
+            }
+            Entry::Occupied(_) => false,
+        }
     }
 }

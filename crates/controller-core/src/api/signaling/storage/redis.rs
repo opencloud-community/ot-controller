@@ -116,6 +116,32 @@ impl SignalingStorage for RedisConnection {
                 message: "Failed to delete resumption token from redis",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn try_acquire_participant_id(
+        &mut self,
+        participant_id: ParticipantId,
+        runner_id: RunnerId,
+    ) -> Result<bool, SignalingStorageError> {
+        let value: redis::Value = redis::cmd("SET")
+            .arg(ParticipantIdRunnerLock { id: participant_id })
+            .arg(runner_id)
+            .arg("NX")
+            .query_async(self)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to acquire participant id",
+            })?;
+
+        match value {
+            redis::Value::Nil => Ok(false),
+            redis::Value::Okay => Ok(true),
+            _ => whatever!(
+                "Got unexpected value while acquiring runner id, value={:?}",
+                value
+            ),
+        }
+    }
 }
 
 /// Typed redis key for a signaling ticket containing [`TicketData`]
@@ -134,38 +160,6 @@ struct ParticipantIdRunnerLock {
     id: ParticipantId,
 }
 
-/// Attempt to acquire a participant id.
-///
-/// This function will not wait for the lock to become available, therefore
-/// return immediately.
-///
-/// Returns `Ok(true)` if the lock has been acquired, `Ok(false)` if the lock
-/// is currently held by other code.
-async fn try_acquire_participant_id(
-    redis_conn: &mut RedisConnection,
-    participant_id: ParticipantId,
-    runner_id: RunnerId,
-) -> Result<bool, SignalingStorageError> {
-    let value: redis::Value = redis::cmd("SET")
-        .arg(ParticipantIdRunnerLock { id: participant_id })
-        .arg(runner_id)
-        .arg("NX")
-        .query_async(redis_conn)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to acquire participant id",
-        })?;
-
-    match value {
-        redis::Value::Nil => Ok(false),
-        redis::Value::Okay => Ok(true),
-        _ => whatever!(
-            "Got unexpected value while acquiring runner id, value={:?}",
-            value
-        ),
-    }
-}
-
 pub async fn acquire_participant_id(
     redis_conn: &mut RedisConnection,
     participant_id: ParticipantId,
@@ -173,7 +167,10 @@ pub async fn acquire_participant_id(
 ) -> Result<(), SignalingStorageError> {
     // Try for up to 10 secs to acquire the key
     for _ in 0..10 {
-        if try_acquire_participant_id(redis_conn, participant_id, runner_id).await? {
+        if redis_conn
+            .try_acquire_participant_id(participant_id, runner_id)
+            .await?
+        {
             return Ok(());
         }
         sleep(Duration::from_secs(1)).await;
@@ -254,5 +251,11 @@ mod test {
     #[serial]
     async fn resumption_token() {
         test_common::resumption_token(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn participant_runner_lock() {
+        test_common::participant_runner_lock(&mut storage().await).await;
     }
 }

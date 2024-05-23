@@ -5,8 +5,8 @@
 use std::sync::{Arc, OnceLock};
 
 use async_trait::async_trait;
-use opentalk_signaling_core::VolatileStaticMemoryStorage;
-use opentalk_types::core::{ResumptionToken, TicketToken};
+use opentalk_signaling_core::{RunnerId, VolatileStaticMemoryStorage};
+use opentalk_types::core::{ParticipantId, ResumptionToken, TicketToken};
 use parking_lot::RwLock;
 use snafu::ensure;
 
@@ -84,6 +84,17 @@ impl SignalingStorage for VolatileStaticMemoryStorage {
     ) -> Result<bool, SignalingStorageError> {
         Ok(state().write().delete_resumption_token(resumption_token))
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn try_acquire_participant_id(
+        &mut self,
+        participant_id: ParticipantId,
+        runner_id: RunnerId,
+    ) -> Result<bool, SignalingStorageError> {
+        Ok(state()
+            .write()
+            .try_acquire_participant_id(participant_id, runner_id))
+    }
 }
 
 #[cfg(test)]
@@ -108,5 +119,11 @@ mod test {
     #[serial]
     async fn resumption_token() {
         test_common::resumption_token(&mut storage()).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn participant_runner_lock() {
+        test_common::participant_runner_lock(&mut storage()).await;
     }
 }
