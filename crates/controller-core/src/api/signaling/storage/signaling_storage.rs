@@ -78,4 +78,9 @@ pub(crate) trait SignalingStorage {
 
         whatever!("Failed to acquire runner id");
     }
+
+    async fn participant_id_in_use(
+        &mut self,
+        participant_id: ParticipantId,
+    ) -> Result<bool, SignalingStorageError>;
 }

@@ -76,4 +76,8 @@ impl MemorySignalingState {
             Entry::Occupied(_) => false,
         }
     }
+
+    pub(super) fn participant_id_in_use(&self, participant: ParticipantId) -> bool {
+        self.participant_runner_locks.contains_key(&participant)
+    }
 }

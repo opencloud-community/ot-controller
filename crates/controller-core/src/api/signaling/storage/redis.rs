@@ -139,6 +139,18 @@ impl SignalingStorage for RedisConnection {
             ),
         }
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn participant_id_in_use(
+        &mut self,
+        participant_id: ParticipantId,
+    ) -> Result<bool, SignalingStorageError> {
+        self.exists(ParticipantIdRunnerLock { id: participant_id })
+            .await
+            .context(RedisSnafu {
+                message: "failed to check if participant id is in use",
+            })
+    }
 }
 
 /// Typed redis key for a signaling ticket containing [`TicketData`]
@@ -155,18 +167,6 @@ struct ResumptionKey<'s>(&'s ResumptionToken);
 #[to_redis_args(fmt = "opentalk-signaling:runner:{id}")]
 struct ParticipantIdRunnerLock {
     id: ParticipantId,
-}
-
-pub async fn participant_id_in_use(
-    redis_conn: &mut RedisConnection,
-    participant_id: ParticipantId,
-) -> Result<bool, SignalingStorageError> {
-    redis_conn
-        .exists(ParticipantIdRunnerLock { id: participant_id })
-        .await
-        .context(RedisSnafu {
-            message: "failed to check if participant id is in use",
-        })
 }
 
 pub async fn release_participant_id(

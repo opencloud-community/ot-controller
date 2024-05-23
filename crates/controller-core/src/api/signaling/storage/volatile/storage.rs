@@ -95,6 +95,14 @@ impl SignalingStorage for VolatileStaticMemoryStorage {
             .write()
             .try_acquire_participant_id(participant_id, runner_id))
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn participant_id_in_use(
+        &mut self,
+        participant: ParticipantId,
+    ) -> Result<bool, SignalingStorageError> {
+        Ok(state().read().participant_id_in_use(participant))
+    }
 }
 
 #[cfg(test)]
