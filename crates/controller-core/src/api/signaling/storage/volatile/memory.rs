@@ -27,4 +27,8 @@ impl MemorySignalingState {
             Duration::from_secs(TICKET_EXPIRY_SECONDS),
         );
     }
+
+    pub(super) fn take_ticket(&mut self, ticket_token: &TicketToken) -> Option<TicketData> {
+        self.tickets.remove(ticket_token)
+    }
 }

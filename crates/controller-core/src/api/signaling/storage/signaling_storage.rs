@@ -15,4 +15,9 @@ pub(crate) trait SignalingStorage {
         ticket_token: &TicketToken,
         ticket_data: &TicketData,
     ) -> Result<(), SignalingStorageError>;
+
+    async fn take_ticket(
+        &mut self,
+        ticket_token: &TicketToken,
+    ) -> Result<Option<TicketData>, SignalingStorageError>;
 }

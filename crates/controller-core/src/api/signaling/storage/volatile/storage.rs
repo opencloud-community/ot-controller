@@ -34,6 +34,14 @@ impl SignalingStorage for VolatileStaticMemoryStorage {
             .set_ticket_ex(ticket_token.clone(), ticket_data.clone());
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn take_ticket(
+        &mut self,
+        ticket_token: &TicketToken,
+    ) -> Result<Option<TicketData>, SignalingStorageError> {
+        Ok(state().write().take_ticket(ticket_token))
+    }
 }
 
 #[cfg(test)]

@@ -9,7 +9,7 @@ mod volatile;
 
 pub(crate) use error::SignalingStorageError;
 pub(crate) use redis::{
-    delete_resumption_token, get_resumption_token_data, get_ticket, refresh_resumption_token,
+    delete_resumption_token, get_resumption_token_data, refresh_resumption_token,
     set_resumption_token_data_if_not_exists,
 };
 pub(crate) use signaling_storage::SignalingStorage;
@@ -20,6 +20,7 @@ const TICKET_EXPIRY_SECONDS: u64 = 30;
 mod test_common {
     use opentalk_signaling_core::Participant;
     use opentalk_types::core::{ParticipantId, ResumptionToken, RoomId, TicketToken};
+    use pretty_assertions::assert_eq;
 
     use super::SignalingStorage;
     use crate::api::signaling::ticket::TicketData;
@@ -41,5 +42,12 @@ mod test_common {
             .set_ticket_ex(&ticket_token, &ticket_data)
             .await
             .unwrap();
+
+        assert_eq!(
+            storage.take_ticket(&ticket_token).await.unwrap(),
+            Some(ticket_data)
+        );
+        // Ensure that the previous `take_ticket(…)` call removed the ticket
+        assert!(storage.take_ticket(&ticket_token).await.unwrap().is_none(),);
     }
 }

@@ -31,26 +31,27 @@ impl SignalingStorage for RedisConnection {
                 message: "Failed to SET EX ticket data",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn take_ticket(
+        &mut self,
+        ticket_token: &TicketToken,
+    ) -> Result<Option<TicketData>, SignalingStorageError> {
+        // GETDEL available since redis 6.2.0, missing direct support by redis crate
+        redis::cmd("GETDEL")
+            .arg(TicketKey(ticket_token))
+            .query_async(self)
+            .await
+            .with_context(|_| RedisSnafu {
+                message: "Failed to GETDEL ticket data",
+            })
+    }
 }
 
 /// Typed redis key for a signaling ticket containing [`TicketData`]
 #[derive(Debug, Copy, Clone, ToRedisArgs)]
 #[to_redis_args(fmt = "opentalk-signaling:ticket={}")]
 struct TicketKey<'s>(&'s TicketToken);
-
-pub(crate) async fn get_ticket(
-    redis_conn: &mut RedisConnection,
-    ticket_token: &TicketToken,
-) -> Result<Option<TicketData>, SignalingStorageError> {
-    // GETDEL available since redis 6.2.0, missing direct support by redis crate
-    redis::cmd("GETDEL")
-        .arg(TicketKey(ticket_token))
-        .query_async(redis_conn)
-        .await
-        .with_context(|_| RedisSnafu {
-            message: "Failed to GETDEL ticket data",
-        })
-}
 
 /// Redis key for a resumption token containing [`ResumptionData`].
 #[derive(Debug, ToRedisArgs)]
@@ -132,7 +133,7 @@ mod test {
 
     use super::{super::test_common, *};
 
-    async fn setup() -> RedisConnection {
+    async fn storage() -> RedisConnection {
         let redis_url =
             std::env::var("REDIS_ADDR").unwrap_or_else(|_| "redis://0.0.0.0:6379/".to_owned());
         let redis = redis::Client::open(redis_url).expect("Invalid redis url");
@@ -150,7 +151,6 @@ mod test {
     #[tokio::test]
     #[serial]
     async fn ticket_token() {
-        let mut redis_conn = setup().await;
-        test_common::ticket_token(&mut redis_conn).await;
+        test_common::ticket_token(&mut storage().await).await;
     }
 }

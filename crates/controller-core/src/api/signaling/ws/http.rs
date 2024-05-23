@@ -27,7 +27,7 @@ use super::{
 use crate::{
     api::signaling::{
         resumption::{ResumptionData, ResumptionTokenKeepAlive},
-        storage::get_ticket,
+        storage::SignalingStorage as _,
         ticket::TicketData,
         ws::actor::WebSocketActor,
     },
@@ -93,7 +93,7 @@ pub(crate) async fn ws_service(
     let (ticket, protocol) = read_request_header(&request, protocols.0)?;
 
     // Read ticket data from storage
-    let ticket_data = get_ticket_data_from_storage(&mut redis_conn, &ticket).await?;
+    let ticket_data = take_ticket_data_from_storage(&mut redis_conn, &ticket).await?;
 
     // Get user & room from database using the ticket data
     let (participant, room) = get_user_and_room_from_ticket_data(db.clone(), &ticket_data).await?;
@@ -260,11 +260,11 @@ fn read_request_header(
     Ok((TicketToken::from(ticket.to_string()), protocol))
 }
 
-async fn get_ticket_data_from_storage(
+async fn take_ticket_data_from_storage(
     redis_conn: &mut RedisConnection,
     ticket: &TicketToken,
 ) -> Result<TicketData, ApiError> {
-    let ticket_data = get_ticket(redis_conn, ticket).await.map_err(|e| {
+    let ticket_data = redis_conn.take_ticket(ticket).await.map_err(|e| {
         log::warn!(
             "Unable to get ticket data in storage: {}",
             Report::from_error(e)

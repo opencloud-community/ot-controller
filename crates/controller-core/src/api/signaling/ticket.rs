@@ -14,7 +14,7 @@ use snafu::Report;
 use super::storage::{delete_resumption_token, get_resumption_token_data, SignalingStorage as _};
 
 /// Data stored behind the [`Ticket`] key.
-#[derive(Debug, Clone, Deserialize, Serialize, ToRedisArgs, FromRedisValue)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, ToRedisArgs, FromRedisValue)]
 #[to_redis_args(serde)]
 #[from_redis_value(serde)]
 pub struct TicketData {
