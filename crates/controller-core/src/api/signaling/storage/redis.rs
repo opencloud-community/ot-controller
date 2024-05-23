@@ -11,11 +11,10 @@ use snafu::{whatever, ResultExt as _};
 
 use super::{
     error::{RedisSnafu, ResumptionTokenAlreadyUsedSnafu},
-    SignalingStorage, SignalingStorageError, TICKET_EXPIRY_SECONDS,
+    SignalingStorage, SignalingStorageError, RESUMPTION_TOKEN_EXPIRY_SECONDS,
+    TICKET_EXPIRY_SECONDS,
 };
 use crate::api::signaling::{resumption::ResumptionData, ticket::TicketData};
-
-const RESUMPTION_TOKEN_EXPIRY_SECONDS: u64 = 120;
 
 #[async_trait(?Send)]
 impl SignalingStorage for RedisConnection {
@@ -58,6 +57,25 @@ impl SignalingStorage for RedisConnection {
                 message: "Failed to GET resumption token data",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_resumption_token_data_if_not_exists(
+        &mut self,
+        resumption_token: &ResumptionToken,
+        data: &ResumptionData,
+    ) -> Result<(), SignalingStorageError> {
+        redis::cmd("SET")
+            .arg(ResumptionKey(resumption_token))
+            .arg(data)
+            .arg("EX")
+            .arg(RESUMPTION_TOKEN_EXPIRY_SECONDS)
+            .arg("NX")
+            .query_async(self)
+            .await
+            .with_context(|_| RedisSnafu {
+                message: "Failed to SET EX NX resumption data",
+            })
+    }
 }
 
 /// Typed redis key for a signaling ticket containing [`TicketData`]
@@ -69,24 +87,6 @@ struct TicketKey<'s>(&'s TicketToken);
 #[derive(Debug, ToRedisArgs)]
 #[to_redis_args(fmt = "opentalk-signaling:resumption={}")]
 struct ResumptionKey<'s>(&'s ResumptionToken);
-
-pub(crate) async fn set_resumption_token_data_if_not_exists(
-    redis_conn: &mut RedisConnection,
-    resumption_token: &ResumptionToken,
-    data: &ResumptionData,
-) -> Result<(), SignalingStorageError> {
-    redis::cmd("SET")
-        .arg(ResumptionKey(resumption_token))
-        .arg(data)
-        .arg("EX")
-        .arg(RESUMPTION_TOKEN_EXPIRY_SECONDS)
-        .arg("NX")
-        .query_async(redis_conn)
-        .await
-        .with_context(|_| RedisSnafu {
-            message: "Failed to SET EX NX resumption data",
-        })
-}
 
 pub(crate) async fn refresh_resumption_token(
     redis_conn: &mut RedisConnection,

@@ -51,6 +51,18 @@ impl SignalingStorage for VolatileStaticMemoryStorage {
     ) -> Result<Option<ResumptionData>, SignalingStorageError> {
         Ok(state().read().get_resumption_token_data(resumption_token))
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_resumption_token_data_if_not_exists(
+        &mut self,
+        resumption_token: &ResumptionToken,
+        data: &ResumptionData,
+    ) -> Result<(), SignalingStorageError> {
+        state()
+            .write()
+            .set_resumption_token_data_if_not_exists(resumption_token.clone(), data.clone());
+        Ok(())
+    }
 }
 
 #[cfg(test)]

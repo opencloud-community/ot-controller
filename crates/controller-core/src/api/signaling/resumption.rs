@@ -18,9 +18,7 @@ use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use tokio::time::sleep_until;
 
-use super::storage::{
-    refresh_resumption_token, set_resumption_token_data_if_not_exists, SignalingStorageError,
-};
+use super::storage::{refresh_resumption_token, SignalingStorage as _, SignalingStorageError};
 use crate::Result;
 
 const RESUMPTION_REFRESH_INTERVAL: u64 = 60;
@@ -56,7 +54,8 @@ impl ResumptionTokenKeepAlive {
         &mut self,
         redis_conn: &mut RedisConnection,
     ) -> Result<(), SignalingStorageError> {
-        set_resumption_token_data_if_not_exists(redis_conn, &self.resumption_token, &self.data)
+        redis_conn
+            .set_resumption_token_data_if_not_exists(&self.resumption_token, &self.data)
             .await
     }
 

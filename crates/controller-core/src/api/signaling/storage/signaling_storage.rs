@@ -25,4 +25,10 @@ pub(crate) trait SignalingStorage {
         &mut self,
         resumption_token: &ResumptionToken,
     ) -> Result<Option<ResumptionData>, SignalingStorageError>;
+
+    async fn set_resumption_token_data_if_not_exists(
+        &mut self,
+        resumption_token: &ResumptionToken,
+        data: &ResumptionData,
+    ) -> Result<(), SignalingStorageError>;
 }
