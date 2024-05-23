@@ -31,4 +31,9 @@ pub(crate) trait SignalingStorage {
         resumption_token: &ResumptionToken,
         data: &ResumptionData,
     ) -> Result<(), SignalingStorageError>;
+
+    async fn refresh_resumption_token(
+        &mut self,
+        resumption_token: &ResumptionToken,
+    ) -> Result<(), SignalingStorageError>;
 }

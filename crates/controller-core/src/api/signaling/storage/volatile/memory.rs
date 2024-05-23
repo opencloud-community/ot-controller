@@ -52,7 +52,14 @@ impl MemorySignalingState {
         self.resumption_data.insert_with_expiry_if_not_exists(
             resumption_token,
             data,
-            Duration::from_secs(RESUMPTION_TOKEN_EXPIRY_SECONDS),
+            Duration::from_secs(RESUMPTION_TOKEN_EXPIRY_SECONDS.into()),
         );
+    }
+
+    pub(super) fn refresh_resumption_token(&mut self, resumption_token: &ResumptionToken) -> bool {
+        self.resumption_data.update_expiry(
+            resumption_token,
+            Duration::from_secs(RESUMPTION_TOKEN_EXPIRY_SECONDS.into()),
+        )
     }
 }

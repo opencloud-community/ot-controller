@@ -5,9 +5,9 @@
 use async_trait::async_trait;
 use opentalk_signaling_core::RedisConnection;
 use opentalk_types::core::{ResumptionToken, TicketToken};
-use redis::AsyncCommands as _;
+use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
-use snafu::{whatever, ResultExt as _};
+use snafu::{ensure, ResultExt as _};
 
 use super::{
     error::{RedisSnafu, ResumptionTokenAlreadyUsedSnafu},
@@ -76,6 +76,28 @@ impl SignalingStorage for RedisConnection {
                 message: "Failed to SET EX NX resumption data",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn refresh_resumption_token(
+        &mut self,
+        resumption_token: &ResumptionToken,
+    ) -> Result<(), SignalingStorageError> {
+        let response: i32 = self
+            .expire(
+                ResumptionKey(resumption_token),
+                RESUMPTION_TOKEN_EXPIRY_SECONDS.into(),
+            )
+            .await
+            .with_context(|_| RedisSnafu {
+                message: "Failed to update expiry of resumption data",
+            })?;
+        const REDIS_EXPIRE_TIMER_WAS_SET_RESPONSE: i32 = 1;
+        ensure!(
+            response == REDIS_EXPIRE_TIMER_WAS_SET_RESPONSE,
+            ResumptionTokenAlreadyUsedSnafu
+        );
+        Ok(())
+    }
 }
 
 /// Typed redis key for a signaling ticket containing [`TicketData`]
@@ -87,32 +109,6 @@ struct TicketKey<'s>(&'s TicketToken);
 #[derive(Debug, ToRedisArgs)]
 #[to_redis_args(fmt = "opentalk-signaling:resumption={}")]
 struct ResumptionKey<'s>(&'s ResumptionToken);
-
-pub(crate) async fn refresh_resumption_token(
-    redis_conn: &mut RedisConnection,
-    resumption_token: &ResumptionToken,
-    data: &ResumptionData,
-) -> Result<(), SignalingStorageError> {
-    // Set the value with an timeout of 120 seconds (EX 120)
-    // and only if it already exists
-    let value: redis::Value = redis::cmd("SET")
-        .arg(ResumptionKey(resumption_token))
-        .arg(data)
-        .arg("EX")
-        .arg(RESUMPTION_TOKEN_EXPIRY_SECONDS)
-        .arg("XX")
-        .query_async(redis_conn)
-        .await
-        .with_context(|_| RedisSnafu {
-            message: "Failed to SET EX XX resumption data",
-        })?;
-
-    match value {
-        redis::Value::Nil => ResumptionTokenAlreadyUsedSnafu.fail(),
-        redis::Value::Okay => Ok(()),
-        _ => whatever!("Unexpected redis response expected OK/nil got {:?}", value),
-    }
-}
 
 pub(crate) async fn delete_resumption_token(
     redis_conn: &mut RedisConnection,

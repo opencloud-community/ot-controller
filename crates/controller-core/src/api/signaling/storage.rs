@@ -8,11 +8,11 @@ mod signaling_storage;
 mod volatile;
 
 pub(crate) use error::SignalingStorageError;
-pub(crate) use redis::{delete_resumption_token, refresh_resumption_token};
+pub(crate) use redis::delete_resumption_token;
 pub(crate) use signaling_storage::SignalingStorage;
 
 const TICKET_EXPIRY_SECONDS: u64 = 30;
-const RESUMPTION_TOKEN_EXPIRY_SECONDS: u64 = 120;
+const RESUMPTION_TOKEN_EXPIRY_SECONDS: u32 = 120;
 
 #[cfg(test)]
 mod test_common {
@@ -21,7 +21,9 @@ mod test_common {
     use pretty_assertions::assert_eq;
 
     use super::SignalingStorage;
-    use crate::api::signaling::{resumption::ResumptionData, ticket::TicketData};
+    use crate::api::signaling::{
+        resumption::ResumptionData, storage::SignalingStorageError, ticket::TicketData,
+    };
 
     const ALICE: ParticipantId = ParticipantId::from_u128(0xa11c3);
     const BOB: ParticipantId = ParticipantId::from_u128(0x808);
@@ -71,6 +73,11 @@ mod test_common {
             .unwrap()
             .is_none());
 
+        assert!(matches!(
+            storage.refresh_resumption_token(&resumption_token).await,
+            Err(SignalingStorageError::ResumptionTokenAlreadyUsed)
+        ));
+
         storage
             .set_resumption_token_data_if_not_exists(&resumption_token, &resumption_data_1)
             .await
@@ -83,6 +90,10 @@ mod test_common {
                 .as_ref(),
             Some(&resumption_data_1)
         );
+        assert!(storage
+            .refresh_resumption_token(&resumption_token)
+            .await
+            .is_ok(),);
 
         storage
             .set_resumption_token_data_if_not_exists(&resumption_token, &resumption_data_2)

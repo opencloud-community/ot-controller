@@ -8,11 +8,12 @@ use async_trait::async_trait;
 use opentalk_signaling_core::VolatileStaticMemoryStorage;
 use opentalk_types::core::{ResumptionToken, TicketToken};
 use parking_lot::RwLock;
+use snafu::ensure;
 
 use super::memory::MemorySignalingState;
 use crate::api::signaling::{
     resumption::ResumptionData,
-    storage::{SignalingStorage, SignalingStorageError},
+    storage::{error::ResumptionTokenAlreadyUsedSnafu, SignalingStorage, SignalingStorageError},
     ticket::TicketData,
 };
 
@@ -61,6 +62,18 @@ impl SignalingStorage for VolatileStaticMemoryStorage {
         state()
             .write()
             .set_resumption_token_data_if_not_exists(resumption_token.clone(), data.clone());
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn refresh_resumption_token(
+        &mut self,
+        resumption_token: &ResumptionToken,
+    ) -> Result<(), SignalingStorageError> {
+        ensure!(
+            state().write().refresh_resumption_token(resumption_token),
+            ResumptionTokenAlreadyUsedSnafu
+        );
         Ok(())
     }
 }
