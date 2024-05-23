@@ -11,7 +11,7 @@ use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use snafu::Report;
 
-use super::storage::{delete_resumption_token, SignalingStorage as _};
+use super::storage::SignalingStorage as _;
 
 /// Data stored behind the [`Ticket`] key.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, ToRedisArgs, FromRedisValue)]
@@ -108,7 +108,8 @@ async fn use_resumption_token(
             .with_message("the session of the given resumption token is still running"));
     }
 
-    let delete_success = delete_resumption_token(redis_conn, &resumption_token)
+    let delete_success = redis_conn
+        .delete_resumption_token(&resumption_token)
         .await
         .map_err(|e| {
             log::warn!("Internal error: {}", Report::from_error(e));

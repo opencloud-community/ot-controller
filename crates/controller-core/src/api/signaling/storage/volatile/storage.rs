@@ -76,6 +76,14 @@ impl SignalingStorage for VolatileStaticMemoryStorage {
         );
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_resumption_token(
+        &mut self,
+        resumption_token: &ResumptionToken,
+    ) -> Result<bool, SignalingStorageError> {
+        Ok(state().write().delete_resumption_token(resumption_token))
+    }
 }
 
 #[cfg(test)]

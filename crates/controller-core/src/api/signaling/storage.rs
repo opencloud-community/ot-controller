@@ -8,7 +8,6 @@ mod signaling_storage;
 mod volatile;
 
 pub(crate) use error::SignalingStorageError;
-pub(crate) use redis::delete_resumption_token;
 pub(crate) use signaling_storage::SignalingStorage;
 
 const TICKET_EXPIRY_SECONDS: u64 = 30;
@@ -107,5 +106,14 @@ mod test_common {
                 .as_ref(),
             Some(&resumption_data_1)
         );
+
+        assert!(storage
+            .delete_resumption_token(&resumption_token)
+            .await
+            .unwrap());
+        assert!(!storage
+            .delete_resumption_token(&resumption_token)
+            .await
+            .unwrap());
     }
 }

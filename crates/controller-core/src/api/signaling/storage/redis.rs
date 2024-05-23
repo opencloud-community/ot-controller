@@ -98,6 +98,18 @@ impl SignalingStorage for RedisConnection {
         );
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_resumption_token(
+        &mut self,
+        resumption_token: &ResumptionToken,
+    ) -> Result<bool, SignalingStorageError> {
+        self.del(ResumptionKey(resumption_token))
+            .await
+            .with_context(|_| RedisSnafu {
+                message: "Failed to delete resumption token from redis",
+            })
+    }
 }
 
 /// Typed redis key for a signaling ticket containing [`TicketData`]
@@ -109,18 +121,6 @@ struct TicketKey<'s>(&'s TicketToken);
 #[derive(Debug, ToRedisArgs)]
 #[to_redis_args(fmt = "opentalk-signaling:resumption={}")]
 struct ResumptionKey<'s>(&'s ResumptionToken);
-
-pub(crate) async fn delete_resumption_token(
-    redis_conn: &mut RedisConnection,
-    resumption_token: &ResumptionToken,
-) -> Result<bool, SignalingStorageError> {
-    redis_conn
-        .del(ResumptionKey(resumption_token))
-        .await
-        .with_context(|_| RedisSnafu {
-            message: "Failed to delete resumption token from redis",
-        })
-}
 
 #[cfg(test)]
 mod test {

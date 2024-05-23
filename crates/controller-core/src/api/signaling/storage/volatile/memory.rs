@@ -62,4 +62,8 @@ impl MemorySignalingState {
             Duration::from_secs(RESUMPTION_TOKEN_EXPIRY_SECONDS.into()),
         )
     }
+
+    pub(super) fn delete_resumption_token(&mut self, resumption_token: &ResumptionToken) -> bool {
+        self.resumption_data.remove(resumption_token).is_some()
+    }
 }
