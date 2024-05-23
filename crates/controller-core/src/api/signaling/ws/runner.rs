@@ -65,7 +65,7 @@ use crate::api::signaling::{
     echo::Echo,
     moderation::{self, storage::ModerationStorage},
     resumption::ResumptionTokenKeepAlive,
-    storage::ResumptionError,
+    storage::SignalingStorageError,
     trim_display_name,
     ws::actor::WsCommand,
 };
@@ -87,6 +87,11 @@ pub enum RunnerError {
     #[snafu(context(false))]
     Redis {
         source: redis::RedisError,
+    },
+
+    #[snafu(context(false))]
+    Storage {
+        source: SignalingStorageError,
     },
 
     #[snafu(context(false))]
@@ -773,7 +778,7 @@ impl Runner {
                 _ = self.resumption_keep_alive.wait() => {
                     match self.resumption_keep_alive.refresh(&mut self.redis_conn).await {
                         Ok(_) => {},
-                        Err(ResumptionError::Used) => {
+                        Err(SignalingStorageError::ResumptionTokenAlreadyUsed) => {
                             log::warn!("Closing connection of this runner as its resumption token was used");
 
                             self.ws.close(CloseCode::Normal).await;
