@@ -14,7 +14,9 @@ use serde::{Deserialize, Serialize};
 use snafu::Snafu;
 use tokio::sync::broadcast;
 
-use crate::{DestroyContext, Event, InitContext, ModuleContext, RedisConnection};
+use crate::{
+    room_lock::LockError, DestroyContext, Event, InitContext, ModuleContext, RedisConnection,
+};
 
 type Result<T> = std::result::Result<T, SignalingModuleError>;
 
@@ -48,6 +50,11 @@ pub enum SignalingModuleError {
     #[snafu(context(false))]
     R3dlockError {
         source: opentalk_r3dlock::Error,
+    },
+
+    #[snafu(context(false))]
+    RoomLockError {
+        source: LockError,
     },
 
     #[cfg(feature = "module_tester")]

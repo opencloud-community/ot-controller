@@ -16,6 +16,8 @@ mod module_context;
 mod object_storage;
 mod participant;
 mod redis_wrapper;
+mod room_lock;
+mod runner_id;
 mod signaling_module;
 mod signaling_room_id;
 mod volatile_storage;
@@ -25,7 +27,6 @@ pub mod module_tester;
 
 pub mod assets;
 pub mod control;
-mod runner_id;
 
 pub use any_stream::{any_stream, AnyStream};
 pub use destroy_context::DestroyContext;
@@ -39,6 +40,7 @@ pub use module_context::{ExchangePublish, ModuleContext};
 pub use object_storage::{ObjectStorage, ObjectStorageError};
 pub use participant::Participant;
 pub use redis_wrapper::{RedisConnection, RedisMetrics};
+pub use room_lock::{LockError, Locking};
 pub use runner_id::RunnerId;
 pub use signaling_module::*;
 pub use signaling_room_id::SignalingRoomId;

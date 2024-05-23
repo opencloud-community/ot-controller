@@ -25,11 +25,12 @@ use opentalk_db_storage::{
 use opentalk_signaling_core::{
     control::{
         self, exchange,
-        storage::{self, AttributeActions as _, ControlStorage},
+        storage::{AttributeActions as _, ControlStorage},
         ControlStateExt as _, NAMESPACE,
     },
-    AnyStream, ExchangeHandle, ObjectStorage, Participant, RedisConnection, RunnerId,
-    SignalingMetrics, SignalingModule, SignalingModuleError, SignalingRoomId, SubscriberHandle,
+    AnyStream, ExchangeHandle, LockError, Locking as _, ObjectStorage, Participant,
+    RedisConnection, RunnerId, SignalingMetrics, SignalingModule, SignalingModuleError,
+    SignalingRoomId, SubscriberHandle,
 };
 use opentalk_types::{
     common::tariff::TariffResource,
@@ -81,6 +82,11 @@ pub enum RunnerError {
     #[snafu(context(false))]
     R3dLock {
         source: opentalk_r3dlock::Error,
+    },
+
+    #[snafu(context(false))]
+    RoomLock {
+        source: LockError,
     },
 
     #[snafu(context(false))]
@@ -398,11 +404,21 @@ impl Runner {
         if let RunnerState::Joined | RunnerState::Waiting { .. } = &self.state {
             // The retry/wait_time values are set extra high
             // since a lot of operations are being done while holding the lock
-            let mut room_mutex = storage::room_mutex(self.room_id);
 
-            let room_guard = match room_mutex.lock(&mut self.redis_conn).await {
+            let room_guard = match self.redis_conn.lock(self.room_id.into()).await {
                 Ok(guard) => guard,
-                Err(opentalk_r3dlock::Error::Redis { source: e }) => {
+                Err(e @ LockError::Locked) => {
+                    log::error!(
+                        "Failed to acquire r3dlock, contention too high, {}",
+                        Report::from_error(e)
+                    );
+
+                    self.metrics
+                        .record_destroy_time(destroy_start_time.elapsed().as_secs_f64(), false);
+
+                    return;
+                }
+                Err(e) => {
                     log::error!("Failed to acquire r3dlock, {}", Report::from_error(e));
                     // There is a problem when accessing redis which could
                     // mean either the network or redis is broken.
@@ -412,20 +428,6 @@ impl Runner {
                         .record_destroy_time(destroy_start_time.elapsed().as_secs_f64(), false);
 
                     return;
-                }
-                Err(opentalk_r3dlock::Error::CouldNotAcquireLock) => {
-                    log::error!("Failed to acquire r3dlock, contention too high");
-
-                    self.metrics
-                        .record_destroy_time(destroy_start_time.elapsed().as_secs_f64(), false);
-
-                    return;
-                }
-                Err(
-                    opentalk_r3dlock::Error::FailedToUnlock
-                    | opentalk_r3dlock::Error::AlreadyExpired,
-                ) => {
-                    unreachable!()
                 }
             };
 
@@ -564,7 +566,7 @@ impl Runner {
 
             self.metrics.decrement_participants_count(&self.participant);
 
-            if let Err(e) = room_guard.unlock(&mut self.redis_conn).await {
+            if let Err(e) = self.redis_conn.unlock(room_guard).await {
                 log::error!(
                     "Failed to unlock set_guard r3dlock, {}",
                     Report::from_error(e)
@@ -1146,13 +1148,12 @@ impl Runner {
             .await
             .whatever_context::<_, RunnerError>("Failed to get user")?;
 
-        let mut lock = storage::room_mutex(self.room_id);
-        let guard = lock.lock(&mut self.redis_conn).await?;
+        let guard = self.redis_conn.lock(self.room_id.into()).await?;
 
         match self.enforce_tariff(tariff).await {
             Ok(ControlFlow::Continue(_)) => { /* continue */ }
             Ok(ControlFlow::Break(reason)) => {
-                guard.unlock(&mut self.redis_conn).await?;
+                self.redis_conn.unlock(guard).await?;
 
                 self.ws_send_control(Timestamp::now(), ControlEvent::JoinBlocked(reason))
                     .await;
@@ -1160,7 +1161,7 @@ impl Runner {
                 return Ok(());
             }
             Err(e) => {
-                guard.unlock(&mut self.redis_conn).await?;
+                self.redis_conn.unlock(guard).await?;
 
                 return Err(e);
             }
@@ -1171,7 +1172,7 @@ impl Runner {
             .waiting_room_add_participant(self.room_id.room_id(), self.id)
             .await;
 
-        guard.unlock(&mut self.redis_conn).await?;
+        self.redis_conn.unlock(guard).await?;
         let added_to_waiting_room = res?;
 
         // Check the participant id has not been added to the waiting room before. That woul be a
@@ -1216,8 +1217,6 @@ impl Runner {
         control_data: ControlState,
         joining_from_waiting_room: bool,
     ) -> Result<()> {
-        let mut lock = storage::room_mutex(self.room_id);
-
         // Clear the left_at timestamp to indicate that the participant is in the real room (not just the waiting room).
         let control_data = ControlState {
             left_at: None,
@@ -1236,14 +1235,14 @@ impl Runner {
                 .await
                 .whatever_context::<_, RunnerError>("Failed to get user")?;
 
-            let guard = lock.lock(&mut self.redis_conn).await?;
+            let guard = self.redis_conn.lock(self.room_id.into()).await?;
 
             match self.enforce_tariff(tariff.clone()).await {
                 Ok(ControlFlow::Continue(enforced_tariff)) => {
                     tariff = enforced_tariff;
                 }
                 Ok(ControlFlow::Break(reason)) => {
-                    guard.unlock(&mut self.redis_conn).await?;
+                    self.redis_conn.unlock(guard).await?;
 
                     self.ws_send_control(Timestamp::now(), ControlEvent::JoinBlocked(reason))
                         .await;
@@ -1251,7 +1250,7 @@ impl Runner {
                     return Ok(());
                 }
                 Err(e) => {
-                    guard.unlock(&mut self.redis_conn).await?;
+                    self.redis_conn.unlock(guard).await?;
 
                     return Err(e);
                 }
@@ -1260,12 +1259,12 @@ impl Runner {
             (guard, tariff)
         } else {
             let tariff = self.redis_conn.get_tariff(self.room.id).await?;
-            (lock.lock(&mut self.redis_conn).await?, tariff)
+            (self.redis_conn.lock(self.room_id.into()).await?, tariff)
         };
 
         let res = self.join_room_locked().await;
 
-        let unlock_res = guard.unlock(&mut self.redis_conn).await;
+        let unlock_res = self.redis_conn.unlock(guard).await;
 
         let participant_ids = match res {
             Ok(participants) => participants,

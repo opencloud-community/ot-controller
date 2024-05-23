@@ -377,7 +377,7 @@ impl ChatStorage for RedisConnection {
         group: GroupId,
         participant: ParticipantId,
     ) -> Result<(), SignalingModuleError> {
-        let mut mutex = Mutex::new(RoomGroupParticipantsLock { room, group });
+        let mutex = Mutex::new(RoomGroupParticipantsLock { room, group });
 
         let guard = mutex.lock(self).await?;
 
@@ -399,7 +399,7 @@ impl ChatStorage for RedisConnection {
         group: GroupId,
         participant: ParticipantId,
     ) {
-        let mut mutex = Mutex::new(RoomGroupParticipantsLock { room, group });
+        let mutex = Mutex::new(RoomGroupParticipantsLock { room, group });
 
         let guard = match mutex.lock(self).await {
             Ok(guard) => guard,

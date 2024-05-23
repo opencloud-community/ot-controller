@@ -51,9 +51,10 @@ use tokio::{
 use crate::{
     control::{
         self,
-        storage::{self, AttributeActions as _, ControlStorage},
+        storage::{AttributeActions as _, ControlStorage},
         ControlStateExt as _,
     },
+    room_lock::Locking as _,
     AnyStream, DestroyContext, Event, ExchangePublish, InitContext, ModuleContext, ObjectStorage,
     Participant, RedisConnection, SerdeJsonSnafu, SignalingModule, SignalingModuleError,
     SignalingRoomId,
@@ -543,9 +544,9 @@ where
     ) -> Result<(), SignalingModuleError> {
         match control_message {
             ControlCommand::Join(join) => {
-                let mut lock = storage::room_mutex(self.room_id);
-                let guard = lock
-                    .lock(&mut self.redis_conn)
+                let guard = self
+                    .redis_conn
+                    .lock(self.room_id.into())
                     .await
                     .expect("lock poisoned");
 
@@ -590,7 +591,7 @@ where
                     .add_participant_to_set(self.room_id, self.participant_id)
                     .await?;
 
-                guard.unlock(&mut self.redis_conn).await?;
+                self.redis_conn.unlock(guard).await?;
 
                 let mut participants = vec![];
 
@@ -1005,10 +1006,9 @@ where
     }
 
     async fn destroy(mut self) -> Result<(), SignalingModuleError> {
-        let mut set_lock = storage::room_mutex(self.room_id);
-
-        let set_guard = set_lock
-            .lock(&mut self.redis_conn)
+        let set_guard = self
+            .redis_conn
+            .lock(self.room_id.into())
             .await
             .expect("lock poisoned");
 
@@ -1052,8 +1052,8 @@ where
             }
         }
 
-        set_guard
-            .unlock(&mut self.redis_conn)
+        self.redis_conn
+            .unlock(set_guard)
             .await
             .whatever_context("Failed to unlock set_guard r3dlock while destroying mockrunner")
     }

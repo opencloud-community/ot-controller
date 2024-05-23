@@ -11,8 +11,6 @@ pub use control_storage::{AttributeActions, ControlStorage};
 // The expiry in seconds for the `skip_waiting_room` key in Redis
 const SKIP_WAITING_ROOM_KEY_EXPIRY: u32 = 120;
 pub const SKIP_WAITING_ROOM_KEY_REFRESH_INTERVAL: u64 = 60;
-// TODO: remove all these re-exports once the functionality is migrated into the ControlStorage trait
-pub use redis::room_mutex;
 
 #[cfg(test)]
 mod test_common {

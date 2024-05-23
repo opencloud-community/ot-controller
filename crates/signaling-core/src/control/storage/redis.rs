@@ -6,12 +6,10 @@ use std::{
     collections::{BTreeMap, BTreeSet, HashMap, HashSet},
     convert::identity,
     fmt::Debug,
-    time::Duration,
 };
 
 use async_trait::async_trait;
 use opentalk_db_storage::{events::Event, tariffs::Tariff};
-use opentalk_r3dlock::Mutex;
 use opentalk_types::{
     core::{ParticipantId, RoomId, Timestamp},
     signaling::Role,
@@ -528,13 +526,6 @@ struct RoomParticipants {
 
 /// Key used for the lock over the room participants set
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "opentalk-signaling:room={room}:participants.lock")]
-pub struct RoomLock {
-    pub room: SignalingRoomId,
-}
-
-/// Key used for the lock over the room participants set
-#[derive(ToRedisArgs)]
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:participants:attributes:{attribute_name}")]
 struct RoomParticipantAttributes<'s> {
     room: SignalingRoomId,
@@ -573,19 +564,6 @@ pub struct RoomEvent {
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:closes_at")]
 struct RoomClosesAt {
     room: SignalingRoomId,
-}
-
-/// The room's mutex
-///
-/// Must be taken when joining and leaving the room.
-/// This allows for cleanups when the last user leaves without anyone joining.
-///
-/// The redlock parameters are set a bit higher than usual to combat contention when a room gets
-/// destroyed while a large number of participants are inside it. (e.g. when a breakout room ends)
-pub fn room_mutex(room: SignalingRoomId) -> Mutex<RoomLock> {
-    Mutex::new(RoomLock { room })
-        .with_wait_time(Duration::from_millis(20)..Duration::from_millis(60))
-        .with_retries(20)
 }
 
 pub struct RedisBulkAttributeActions {
