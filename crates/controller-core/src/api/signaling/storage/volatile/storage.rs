@@ -103,6 +103,14 @@ impl SignalingStorage for VolatileStaticMemoryStorage {
     ) -> Result<bool, SignalingStorageError> {
         Ok(state().read().participant_id_in_use(participant))
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn release_participant_id(
+        &mut self,
+        participant: ParticipantId,
+    ) -> Result<Option<RunnerId>, SignalingStorageError> {
+        Ok(state().write().release_participant_id(participant))
+    }
 }
 
 #[cfg(test)]
@@ -133,5 +141,11 @@ mod test {
     #[serial]
     async fn participant_runner_lock() {
         test_common::participant_runner_lock(&mut storage()).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn try_acquire_participant_id() {
+        test_common::try_acquire_participant_id(&mut storage()).await;
     }
 }

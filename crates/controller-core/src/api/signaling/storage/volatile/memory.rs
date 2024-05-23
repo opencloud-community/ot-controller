@@ -80,4 +80,11 @@ impl MemorySignalingState {
     pub(super) fn participant_id_in_use(&self, participant: ParticipantId) -> bool {
         self.participant_runner_locks.contains_key(&participant)
     }
+
+    pub(super) fn release_participant_id(
+        &mut self,
+        participant_id: ParticipantId,
+    ) -> Option<RunnerId> {
+        self.participant_runner_locks.remove(&participant_id)
+    }
 }

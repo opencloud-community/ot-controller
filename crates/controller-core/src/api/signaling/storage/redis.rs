@@ -7,7 +7,7 @@ use opentalk_signaling_core::{RedisConnection, RunnerId};
 use opentalk_types::core::{ParticipantId, ResumptionToken, TicketToken};
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
-use snafu::{ensure, whatever, Report, ResultExt as _};
+use snafu::{ensure, whatever, ResultExt as _};
 
 use super::{
     error::{RedisSnafu, ResumptionTokenAlreadyUsedSnafu},
@@ -151,6 +151,20 @@ impl SignalingStorage for RedisConnection {
                 message: "failed to check if participant id is in use",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn release_participant_id(
+        &mut self,
+        participant_id: ParticipantId,
+    ) -> Result<Option<RunnerId>, SignalingStorageError> {
+        redis::cmd("GETDEL")
+            .arg(ParticipantIdRunnerLock { id: participant_id })
+            .query_async(self)
+            .await
+            .context(RedisSnafu {
+                message: "failed to remove participant id",
+            })
+    }
 }
 
 /// Typed redis key for a signaling ticket containing [`TicketData`]
@@ -167,34 +181,6 @@ struct ResumptionKey<'s>(&'s ResumptionToken);
 #[to_redis_args(fmt = "opentalk-signaling:runner:{id}")]
 struct ParticipantIdRunnerLock {
     id: ParticipantId,
-}
-
-pub async fn release_participant_id(
-    redis_conn: &mut RedisConnection,
-    participant_id: ParticipantId,
-    runner_id: RunnerId,
-) -> Result<(), SignalingStorageError> {
-    match redis::cmd("GETDEL")
-        .arg(ParticipantIdRunnerLock { id: participant_id })
-        .query_async::<_, RunnerId>(redis_conn)
-        .await
-    {
-        Ok(released_runner_id) => {
-            if released_runner_id != runner_id {
-                log::warn!("removed runner id does not match the id of the runner");
-            }
-            Ok(())
-        }
-        Err(e) => {
-            log::error!(
-                "failed to remove participant id, {}",
-                Report::from_error(&e)
-            );
-            Err(e).context(RedisSnafu {
-                message: "failed to remove participant id",
-            })
-        }
-    }
 }
 
 #[cfg(test)]
@@ -235,5 +221,11 @@ mod test {
     #[serial]
     async fn participant_runner_lock() {
         test_common::participant_runner_lock(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn try_acquire_participant_id() {
+        test_common::try_acquire_participant_id(&mut storage().await).await;
     }
 }

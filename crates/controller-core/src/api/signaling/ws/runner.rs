@@ -64,7 +64,7 @@ use crate::api::signaling::{
     echo::Echo,
     moderation::{self, storage::ModerationStorage},
     resumption::ResumptionTokenKeepAlive,
-    storage::{release_participant_id, SignalingStorage, SignalingStorageError},
+    storage::{SignalingStorage, SignalingStorageError},
     trim_display_name,
     ws::actor::WsCommand,
 };
@@ -616,9 +616,20 @@ impl Runner {
         }
 
         // release participant id
-        encountered_error |= release_participant_id(&mut self.redis_conn, self.id, self.runner_id)
-            .await
-            .is_err();
+        match self.redis_conn.release_participant_id(self.id).await {
+            Ok(Some(runner)) if runner == self.runner_id => {}
+            Ok(Some(_)) => {
+                log::warn!("removed runner id does not match the id of the runner");
+            }
+            Ok(None) => log::warn!("attempted to release nonexisting participant lock"),
+            Err(err) => {
+                log::error!(
+                    "failed to remove participant id, {}",
+                    Report::from_error(&err)
+                );
+                encountered_error = true;
+            }
+        }
 
         self.metrics.record_destroy_time(
             destroy_start_time.elapsed().as_secs_f64(),

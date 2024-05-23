@@ -83,4 +83,12 @@ pub(crate) trait SignalingStorage {
         &mut self,
         participant_id: ParticipantId,
     ) -> Result<bool, SignalingStorageError>;
+
+    /// Releases the participant_id and returns the id of the runner which held the lock.
+    ///
+    /// Returns None if the participant id was not locked.
+    async fn release_participant_id(
+        &mut self,
+        participant_id: ParticipantId,
+    ) -> Result<Option<RunnerId>, SignalingStorageError>;
 }

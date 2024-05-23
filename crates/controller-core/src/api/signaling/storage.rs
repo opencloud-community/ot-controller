@@ -10,8 +10,6 @@ mod volatile;
 use std::time::Duration;
 
 pub(crate) use error::SignalingStorageError;
-// TODO: remove all these re-exports once the functionality is migrated into the ControlStorage trait
-pub use redis::release_participant_id;
 pub(crate) use signaling_storage::SignalingStorage;
 
 const TICKET_EXPIRY: Duration = Duration::from_secs(30);
@@ -123,6 +121,27 @@ mod test_common {
 
     pub(super) async fn participant_runner_lock(storage: &mut dyn SignalingStorage) {
         let runner_id = RunnerId::from_u128(0xdeadbeef);
+
+        assert!(!storage.participant_id_in_use(ALICE).await.unwrap());
+        assert!(storage
+            .acquire_participant_id(ALICE, runner_id)
+            .await
+            .is_ok());
+        assert!(storage.participant_id_in_use(ALICE).await.unwrap());
+        assert!(storage
+            .acquire_participant_id(ALICE, runner_id)
+            .await
+            .is_err());
+
+        assert_eq!(
+            Some(runner_id),
+            storage.release_participant_id(ALICE).await.unwrap()
+        );
+        assert!(!storage.participant_id_in_use(ALICE).await.unwrap());
+    }
+
+    pub(super) async fn try_acquire_participant_id(storage: &mut dyn SignalingStorage) {
+        let runner_id = RunnerId::from_u128(0xdeadbeef);
         assert!(!storage.participant_id_in_use(ALICE).await.unwrap());
         assert!(storage
             .try_acquire_participant_id(ALICE, runner_id)
@@ -133,13 +152,5 @@ mod test_common {
             .try_acquire_participant_id(ALICE, runner_id)
             .await
             .unwrap());
-
-        assert!(!storage.participant_id_in_use(BOB).await.unwrap());
-        assert!(storage.acquire_participant_id(BOB, runner_id).await.is_ok());
-        assert!(storage.participant_id_in_use(BOB).await.unwrap());
-        assert!(storage
-            .acquire_participant_id(BOB, runner_id)
-            .await
-            .is_err());
     }
 }
