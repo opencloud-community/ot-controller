@@ -11,7 +11,7 @@ use std::time::Duration;
 
 pub(crate) use error::SignalingStorageError;
 // TODO: remove all these re-exports once the functionality is migrated into the ControlStorage trait
-pub use redis::{acquire_participant_id, participant_id_in_use, ParticipantIdRunnerLock};
+pub use redis::{acquire_participant_id, participant_id_in_use, release_participant_id};
 pub(crate) use signaling_storage::SignalingStorage;
 
 const TICKET_EXPIRY: Duration = Duration::from_secs(30);

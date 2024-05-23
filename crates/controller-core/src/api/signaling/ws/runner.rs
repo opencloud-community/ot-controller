@@ -64,7 +64,7 @@ use crate::api::signaling::{
     echo::Echo,
     moderation::{self, storage::ModerationStorage},
     resumption::ResumptionTokenKeepAlive,
-    storage::{acquire_participant_id, ParticipantIdRunnerLock, SignalingStorageError},
+    storage::{acquire_participant_id, release_participant_id, SignalingStorageError},
     trim_display_name,
     ws::actor::WsCommand,
 };
@@ -614,21 +614,9 @@ impl Runner {
         }
 
         // release participant id
-        match redis::cmd("GETDEL")
-            .arg(ParticipantIdRunnerLock { id: self.id })
-            .query_async::<_, String>(&mut self.redis_conn)
+        encountered_error |= release_participant_id(&mut self.redis_conn, self.id, self.runner_id)
             .await
-        {
-            Ok(runner_id) => {
-                if runner_id != self.runner_id.to_string() {
-                    log::warn!("removed runner id does not match the id of the runner");
-                }
-            }
-            Err(e) => {
-                log::error!("failed to remove participant id, {}", Report::from_error(e));
-                encountered_error = true;
-            }
-        }
+            .is_err();
 
         self.metrics.record_destroy_time(
             destroy_start_time.elapsed().as_secs_f64(),
