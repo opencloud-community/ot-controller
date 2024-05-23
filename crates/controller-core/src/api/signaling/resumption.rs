@@ -26,7 +26,7 @@ use crate::Result;
 const RESUMPTION_REFRESH_INTERVAL: u64 = 60;
 
 /// Data saved in redis behind the [`ResumptionRedisKey`]
-#[derive(Debug, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
 #[to_redis_args(serde)]
 #[from_redis_value(serde)]
 pub struct ResumptionData {

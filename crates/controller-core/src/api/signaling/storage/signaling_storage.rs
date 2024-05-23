@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use async_trait::async_trait;
-use opentalk_types::core::TicketToken;
+use opentalk_types::core::{ResumptionToken, TicketToken};
 
 use super::SignalingStorageError;
-use crate::api::signaling::ticket::TicketData;
+use crate::api::signaling::{resumption::ResumptionData, ticket::TicketData};
 
 #[async_trait(?Send)]
 pub(crate) trait SignalingStorage {
@@ -20,4 +20,9 @@ pub(crate) trait SignalingStorage {
         &mut self,
         ticket_token: &TicketToken,
     ) -> Result<Option<TicketData>, SignalingStorageError>;
+
+    async fn get_resumption_token_data(
+        &mut self,
+        resumption_token: &ResumptionToken,
+    ) -> Result<Option<ResumptionData>, SignalingStorageError>;
 }

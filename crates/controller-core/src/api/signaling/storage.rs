@@ -9,8 +9,7 @@ mod volatile;
 
 pub(crate) use error::SignalingStorageError;
 pub(crate) use redis::{
-    delete_resumption_token, get_resumption_token_data, refresh_resumption_token,
-    set_resumption_token_data_if_not_exists,
+    delete_resumption_token, refresh_resumption_token, set_resumption_token_data_if_not_exists,
 };
 pub(crate) use signaling_storage::SignalingStorage;
 
@@ -49,5 +48,15 @@ mod test_common {
         );
         // Ensure that the previous `take_ticket(…)` call removed the ticket
         assert!(storage.take_ticket(&ticket_token).await.unwrap().is_none(),);
+    }
+
+    pub(super) async fn resumption_token(storage: &mut dyn SignalingStorage) {
+        let resumption_token = ResumptionToken::generate();
+
+        assert!(storage
+            .get_resumption_token_data(&resumption_token)
+            .await
+            .unwrap()
+            .is_none());
     }
 }

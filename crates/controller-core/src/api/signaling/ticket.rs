@@ -11,7 +11,7 @@ use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use snafu::Report;
 
-use super::storage::{delete_resumption_token, get_resumption_token_data, SignalingStorage as _};
+use super::storage::{delete_resumption_token, SignalingStorage as _};
 
 /// Data stored behind the [`Ticket`] key.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, ToRedisArgs, FromRedisValue)]
@@ -78,7 +78,8 @@ async fn use_resumption_token(
     room: RoomId,
     resumption_token: ResumptionToken,
 ) -> Result<Option<ParticipantId>, ApiError> {
-    let resumption_data = get_resumption_token_data(redis_conn, &resumption_token)
+    let resumption_data = redis_conn
+        .get_resumption_token_data(&resumption_token)
         .await
         .map_err(|e| {
             log::error!(

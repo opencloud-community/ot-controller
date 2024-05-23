@@ -46,6 +46,18 @@ impl SignalingStorage for RedisConnection {
                 message: "Failed to GETDEL ticket data",
             })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_resumption_token_data(
+        &mut self,
+        resumption_token: &ResumptionToken,
+    ) -> Result<Option<ResumptionData>, SignalingStorageError> {
+        self.get(ResumptionKey(resumption_token))
+            .await
+            .with_context(|_| RedisSnafu {
+                message: "Failed to GET resumption token data",
+            })
+    }
 }
 
 /// Typed redis key for a signaling ticket containing [`TicketData`]
@@ -56,19 +68,7 @@ struct TicketKey<'s>(&'s TicketToken);
 /// Redis key for a resumption token containing [`ResumptionData`].
 #[derive(Debug, ToRedisArgs)]
 #[to_redis_args(fmt = "opentalk-signaling:resumption={}")]
-struct ResumptionRedisKey<'s>(&'s ResumptionToken);
-
-pub(crate) async fn get_resumption_token_data(
-    redis_conn: &mut RedisConnection,
-    resumption_token: &ResumptionToken,
-) -> Result<Option<ResumptionData>, SignalingStorageError> {
-    redis_conn
-        .get(ResumptionRedisKey(resumption_token))
-        .await
-        .with_context(|_| RedisSnafu {
-            message: "Failed to GET resumption token data",
-        })
-}
+struct ResumptionKey<'s>(&'s ResumptionToken);
 
 pub(crate) async fn set_resumption_token_data_if_not_exists(
     redis_conn: &mut RedisConnection,
@@ -76,7 +76,7 @@ pub(crate) async fn set_resumption_token_data_if_not_exists(
     data: &ResumptionData,
 ) -> Result<(), SignalingStorageError> {
     redis::cmd("SET")
-        .arg(ResumptionRedisKey(resumption_token))
+        .arg(ResumptionKey(resumption_token))
         .arg(data)
         .arg("EX")
         .arg(RESUMPTION_TOKEN_EXPIRY_SECONDS)
@@ -96,7 +96,7 @@ pub(crate) async fn refresh_resumption_token(
     // Set the value with an timeout of 120 seconds (EX 120)
     // and only if it already exists
     let value: redis::Value = redis::cmd("SET")
-        .arg(ResumptionRedisKey(resumption_token))
+        .arg(ResumptionKey(resumption_token))
         .arg(data)
         .arg("EX")
         .arg(RESUMPTION_TOKEN_EXPIRY_SECONDS)
@@ -119,7 +119,7 @@ pub(crate) async fn delete_resumption_token(
     resumption_token: &ResumptionToken,
 ) -> Result<bool, SignalingStorageError> {
     redis_conn
-        .del(ResumptionRedisKey(resumption_token))
+        .del(ResumptionKey(resumption_token))
         .await
         .with_context(|_| RedisSnafu {
             message: "Failed to delete resumption token from redis",
@@ -152,5 +152,11 @@ mod test {
     #[serial]
     async fn ticket_token() {
         test_common::ticket_token(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn resumption_token() {
+        test_common::resumption_token(&mut storage().await).await;
     }
 }

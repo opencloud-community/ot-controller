@@ -5,13 +5,16 @@
 use std::time::Duration;
 
 use opentalk_signaling_core::ExpiringDataHashMap;
-use opentalk_types::core::TicketToken;
+use opentalk_types::core::{ResumptionToken, TicketToken};
 
-use crate::api::signaling::{storage::TICKET_EXPIRY_SECONDS, ticket::TicketData};
+use crate::api::signaling::{
+    resumption::ResumptionData, storage::TICKET_EXPIRY_SECONDS, ticket::TicketData,
+};
 
 #[derive(Debug, Clone, Default)]
 pub(super) struct MemorySignalingState {
     tickets: ExpiringDataHashMap<TicketToken, TicketData>,
+    resumption_data: ExpiringDataHashMap<ResumptionToken, ResumptionData>,
 }
 
 impl MemorySignalingState {
@@ -30,5 +33,12 @@ impl MemorySignalingState {
 
     pub(super) fn take_ticket(&mut self, ticket_token: &TicketToken) -> Option<TicketData> {
         self.tickets.remove(ticket_token)
+    }
+
+    pub(super) fn get_resumption_token_data(
+        &self,
+        resumption_token: &ResumptionToken,
+    ) -> Option<ResumptionData> {
+        self.resumption_data.get(resumption_token).cloned()
     }
 }

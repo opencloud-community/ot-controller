@@ -6,11 +6,12 @@ use std::sync::{Arc, OnceLock};
 
 use async_trait::async_trait;
 use opentalk_signaling_core::VolatileStaticMemoryStorage;
-use opentalk_types::core::TicketToken;
+use opentalk_types::core::{ResumptionToken, TicketToken};
 use parking_lot::RwLock;
 
 use super::memory::MemorySignalingState;
 use crate::api::signaling::{
+    resumption::ResumptionData,
     storage::{SignalingStorage, SignalingStorageError},
     ticket::TicketData,
 };
@@ -42,6 +43,14 @@ impl SignalingStorage for VolatileStaticMemoryStorage {
     ) -> Result<Option<TicketData>, SignalingStorageError> {
         Ok(state().write().take_ticket(ticket_token))
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_resumption_token_data(
+        &mut self,
+        resumption_token: &ResumptionToken,
+    ) -> Result<Option<ResumptionData>, SignalingStorageError> {
+        Ok(state().read().get_resumption_token_data(resumption_token))
+    }
 }
 
 #[cfg(test)]
@@ -60,5 +69,11 @@ mod test {
     #[serial]
     async fn ticket_token() {
         test_common::ticket_token(&mut storage()).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn resumption_token() {
+        test_common::resumption_token(&mut storage()).await;
     }
 }
