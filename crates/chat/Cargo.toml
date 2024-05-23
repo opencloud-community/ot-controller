@@ -10,6 +10,9 @@ name = "opentalk-chat"
 publish = false
 version.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 async-trait.workspace = true
 chrono.workspace = true
