@@ -64,7 +64,8 @@ use super::{
 use crate::api::signaling::{
     echo::Echo,
     moderation::{self, storage::ModerationStorage},
-    resumption::{ResumptionError, ResumptionTokenKeepAlive},
+    resumption::ResumptionTokenKeepAlive,
+    storage::ResumptionError,
     trim_display_name,
     ws::actor::WsCommand,
 };

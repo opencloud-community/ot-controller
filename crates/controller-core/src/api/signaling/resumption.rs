@@ -17,15 +17,12 @@ use opentalk_types::core::{BreakoutRoomId, ParticipantId, ResumptionToken, RoomI
 use redis::RedisError;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
-use snafu::{whatever, ResultExt, Snafu};
 use tokio::time::sleep_until;
 
+use super::storage::{
+    refresh_resumption_token, set_resumption_token_data_if_not_exists, ResumptionError,
+};
 use crate::Result;
-
-/// Redis key for a resumption token containing [`ResumptionData`].
-#[derive(Debug, ToRedisArgs)]
-#[to_redis_args(fmt = "opentalk-signaling:resumption={}")]
-pub struct ResumptionRedisKey(pub ResumptionToken);
 
 /// Data saved in redis behind the [`ResumptionRedisKey`]
 #[derive(Debug, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
@@ -40,27 +37,15 @@ pub struct ResumptionData {
 
 /// Token refresh loop used in websocket runner to keep the resumption token alive and valid
 pub struct ResumptionTokenKeepAlive {
-    redis_key: ResumptionRedisKey,
+    resumption_token: ResumptionToken,
     data: ResumptionData,
     next_refresh: Instant,
 }
 
-#[derive(Debug, Snafu)]
-pub enum ResumptionError {
-    #[snafu(display("Resumption token could not be refreshed as it was used"))]
-    Used,
-    #[snafu(whatever)]
-    Other {
-        message: String,
-        #[snafu(source(from(Box<dyn std::error::Error + Send + Sync>, Some)))]
-        source: Option<Box<dyn std::error::Error + Send + Sync>>,
-    },
-}
-
 impl ResumptionTokenKeepAlive {
-    pub fn new(token: ResumptionToken, data: ResumptionData) -> Self {
+    pub fn new(resumption_token: ResumptionToken, data: ResumptionData) -> Self {
         Self {
-            redis_key: ResumptionRedisKey(token),
+            resumption_token,
             data,
             next_refresh: Instant::now() + Duration::from_secs(60),
         }
@@ -70,13 +55,7 @@ impl ResumptionTokenKeepAlive {
         &mut self,
         redis_conn: &mut RedisConnection,
     ) -> Result<(), RedisError> {
-        redis::cmd("SET")
-            .arg(&self.redis_key)
-            .arg(&self.data)
-            .arg("EX")
-            .arg(120)
-            .arg("NX")
-            .query_async(redis_conn)
+        set_resumption_token_data_if_not_exists(redis_conn, &self.resumption_token, &self.data)
             .await
     }
 
@@ -90,22 +69,6 @@ impl ResumptionTokenKeepAlive {
     ) -> Result<(), ResumptionError> {
         self.next_refresh = Instant::now() + Duration::from_secs(60);
 
-        // Set the value with an timeout of 120 seconds (EX 120)
-        // and only if it already exists
-        let value: redis::Value = redis::cmd("SET")
-            .arg(&self.redis_key)
-            .arg(&self.data)
-            .arg("EX")
-            .arg(120)
-            .arg("XX")
-            .query_async(redis_conn)
-            .await
-            .whatever_context("Failed to SET EX XX resumption data")?;
-
-        match value {
-            redis::Value::Nil => UsedSnafu.fail(),
-            redis::Value::Okay => Ok(()),
-            _ => whatever!("Unexpected redis response expected OK/nil got {:?}", value),
-        }
+        refresh_resumption_token(redis_conn, &self.resumption_token, &self.data).await
     }
 }

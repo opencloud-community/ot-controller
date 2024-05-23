@@ -7,15 +7,11 @@ use opentalk_types::{
     api::error::ApiError,
     core::{BreakoutRoomId, ParticipantId, ResumptionToken, RoomId, TicketToken, UserId},
 };
-use redis::AsyncCommands;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use snafu::Report;
 
-use super::{
-    resumption::{ResumptionData, ResumptionRedisKey},
-    storage::set_ticket_ex,
-};
+use super::storage::{delete_resumption_token, get_resumption_token_data, set_ticket_ex};
 
 /// Data stored behind the [`Ticket`] key.
 #[derive(Debug, Clone, Deserialize, Serialize, ToRedisArgs, FromRedisValue)]
@@ -79,15 +75,13 @@ async fn use_resumption_token(
     redis_conn: &mut RedisConnection,
     participant: Participant<UserId>,
     room: RoomId,
-    token: ResumptionToken,
+    resumption_token: ResumptionToken,
 ) -> Result<Option<ParticipantId>, ApiError> {
-    let resumption_redis_key = ResumptionRedisKey(token);
-
-    // Check for resumption data behind resumption token
-    let resumption_data: Option<ResumptionData> =
-        redis_conn.get(&resumption_redis_key).await.map_err(|e| {
+    let resumption_data = get_resumption_token_data(redis_conn, &resumption_token)
+        .await
+        .map_err(|e| {
             log::error!(
-                "Failed to fetch resumption token from redis, {}",
+                "Failed to fetch resumption token from storage, {}",
                 Report::from_error(e)
             );
             ApiError::internal()
@@ -112,10 +106,12 @@ async fn use_resumption_token(
             .with_message("the session of the given resumption token is still running"));
     }
 
-    let delete_success = redis_conn.del(&resumption_redis_key).await.map_err(|e| {
-        log::warn!("Internal error: {}", Report::from_error(e));
-        ApiError::internal()
-    })?;
+    let delete_success = delete_resumption_token(redis_conn, &resumption_token)
+        .await
+        .map_err(|e| {
+            log::warn!("Internal error: {}", Report::from_error(e));
+            ApiError::internal()
+        })?;
     if delete_success {
         Ok(Some(data.participant_id))
     } else {

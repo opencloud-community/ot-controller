@@ -4,4 +4,7 @@
 
 mod redis;
 
-pub(crate) use redis::{get_ticket, set_ticket_ex};
+pub(crate) use redis::{
+    delete_resumption_token, get_resumption_token_data, get_ticket, refresh_resumption_token,
+    set_resumption_token_data_if_not_exists, set_ticket_ex, ResumptionError,
+};
