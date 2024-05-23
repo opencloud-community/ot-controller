@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 pub(crate) mod resumption;
+pub(crate) mod storage;
 pub(crate) mod ticket;
 
 mod ws;

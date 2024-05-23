@@ -12,14 +12,10 @@ use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use snafu::Report;
 
-use super::resumption::{ResumptionData, ResumptionRedisKey};
-
-/// Typed redis key for a signaling ticket containing [`TicketData`]
-#[derive(Debug, Copy, Clone, ToRedisArgs)]
-#[to_redis_args(fmt = "opentalk-signaling:ticket={ticket}")]
-pub struct TicketRedisKey<'s> {
-    pub ticket: &'s str,
-}
+use super::{
+    resumption::{ResumptionData, ResumptionRedisKey},
+    storage::set_ticket_ex,
+};
 
 /// Data stored behind the [`Ticket`] key.
 #[derive(Debug, Clone, Deserialize, Serialize, ToRedisArgs, FromRedisValue)]
@@ -69,15 +65,7 @@ pub async fn start_or_continue_signaling_session(
         resumption: resumption.clone(),
     };
 
-    // let the ticket expire in 30 seconds
-    redis_conn
-        .set_ex(
-            TicketRedisKey {
-                ticket: ticket.as_str(),
-            },
-            &ticket_data,
-            30,
-        )
+    set_ticket_ex(redis_conn, &ticket, &ticket_data)
         .await
         .map_err(|e| {
             log::error!("Unable to store ticket in redis, {}", Report::from_error(e));
