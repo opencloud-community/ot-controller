@@ -52,20 +52,6 @@ pub use self::types::*;
 /// This information is used when creating a subscriber
 const PUBLISHER_INFO: &str = "opentalk-signaling:mcu:publishers";
 
-/// Redis key for a sorted set of mcu-clients.
-///
-/// The score represents the amounts of subscribers on that mcu and is used to choose the least
-/// busy mcu for a new publisher.
-pub(crate) const MCU_LOAD: &str = "opentalk-signaling:mcu:load";
-
-pub(crate) fn mcu_load_key(mcu_id: &McuId, loop_index: Option<usize>) -> String {
-    if let Some(loop_index) = loop_index {
-        format!("{}@{}", mcu_id.0, loop_index)
-    } else {
-        format!("{}", mcu_id.0)
-    }
-}
-
 #[derive(Debug, Serialize, Deserialize)]
 struct PublisherInfo<'i> {
     room_id: JanusRoomId,
@@ -95,6 +81,12 @@ impl McuId {
 impl From<String> for McuId {
     fn from(s: String) -> Self {
         Self(s.into_boxed_str().into())
+    }
+}
+
+impl std::fmt::Display for McuId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
     }
 }
 

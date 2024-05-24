@@ -14,7 +14,7 @@ use redis::AsyncCommands as _;
 use redis_args::ToRedisArgs;
 use snafu::{whatever, ResultExt as _};
 
-use crate::mcu::{mcu_load_key, McuId, MCU_LOAD};
+use crate::mcu::McuId;
 
 use super::MediaStorage;
 
@@ -269,21 +269,6 @@ impl MediaStorage for RedisConnection {
     }
 }
 
-fn parse_mcu_load(s: &str) -> Result<(McuId, Option<usize>), SignalingModuleError> {
-    let (id, index) = if let Some((id, loop_index)) = s.rsplit_once('@') {
-        (
-            id,
-            Some(whatever!(
-                loop_index.parse::<usize>(),
-                "Failed to parse loop_index"
-            )),
-        )
-    } else {
-        (s, None)
-    };
-    Ok((McuId::from(id.to_string()), index))
-}
-
 /// Data related to a module inside a participant
 #[derive(ToRedisArgs)]
 #[to_redis_args(
@@ -308,6 +293,35 @@ pub(crate) struct Presenters {
 pub(crate) struct SpeakerKey {
     pub(crate) room: SignalingRoomId,
     pub(crate) participant: ParticipantId,
+}
+
+/// Redis key for a sorted set of mcu-clients.
+///
+/// The score represents the amounts of subscribers on that mcu and is used to choose the least
+/// busy mcu for a new publisher.
+pub(crate) const MCU_LOAD: &str = "opentalk-signaling:mcu:load";
+
+pub(crate) fn mcu_load_key(mcu_id: &McuId, loop_index: Option<usize>) -> String {
+    if let Some(loop_index) = loop_index {
+        format!("{}@{}", mcu_id, loop_index)
+    } else {
+        format!("{}", mcu_id)
+    }
+}
+
+fn parse_mcu_load(s: &str) -> Result<(McuId, Option<usize>), SignalingModuleError> {
+    let (id, index) = if let Some((id, loop_index)) = s.rsplit_once('@') {
+        (
+            id,
+            Some(whatever!(
+                loop_index.parse::<usize>(),
+                "Failed to parse loop_index"
+            )),
+        )
+    } else {
+        (s, None)
+    };
+    Ok((McuId::from(id.to_string()), index))
 }
 
 #[cfg(test)]
