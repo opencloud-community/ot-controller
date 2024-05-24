@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use opentalk_signaling_core::SignalingRoomId;
 use opentalk_types::{
@@ -132,5 +132,15 @@ impl MemoryMediaState {
 
     pub(super) fn initialize_mcu_load(&mut self, mcu_id: McuId, index: Option<usize>) {
         self.mcu_load.insert((mcu_id, index), 0);
+    }
+
+    pub(super) fn get_mcus_sorted_by_load(&self) -> Vec<(McuId, Option<usize>)> {
+        let mut categories: BTreeMap<usize, BTreeSet<&(McuId, Option<usize>)>> = BTreeMap::new();
+
+        for (id, load) in self.mcu_load.iter() {
+            categories.entry(*load).or_default().insert(id);
+        }
+
+        Vec::from_iter(categories.into_values().flatten().cloned())
     }
 }

@@ -12,7 +12,7 @@ use opentalk_types::{
 };
 use redis::AsyncCommands as _;
 use redis_args::ToRedisArgs;
-use snafu::ResultExt as _;
+use snafu::{whatever, ResultExt as _};
 
 use crate::mcu::{mcu_load_key, McuId, MCU_LOAD};
 
@@ -225,6 +225,35 @@ impl MediaStorage for RedisConnection {
             })?;
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_mcus_sorted_by_load(
+        &mut self,
+    ) -> Result<Vec<(McuId, Option<usize>)>, SignalingModuleError> {
+        let ids: Vec<String> =
+            self.zrangebyscore(MCU_LOAD, "-inf", "+inf")
+                .await
+                .context(RedisSnafu {
+                    message: "Failed to get mcu ids",
+                })?;
+
+        ids.iter().map(String::as_str).map(parse_mcu_load).collect()
+    }
+}
+
+fn parse_mcu_load(s: &str) -> Result<(McuId, Option<usize>), SignalingModuleError> {
+    let (id, index) = if let Some((id, loop_index)) = s.rsplit_once('@') {
+        (
+            id,
+            Some(whatever!(
+                loop_index.parse::<usize>(),
+                "Failed to parse loop_index"
+            )),
+        )
+    } else {
+        (s, None)
+    };
+    Ok((McuId::from(id.to_string()), index))
 }
 
 /// Data related to a module inside a participant

@@ -188,6 +188,14 @@ mod test_common {
 
     pub(super) async fn mcu_load(storage: &mut dyn MediaStorage) {
         let mcu_id = McuId::new("to_janus", "janus_exchange", "from_janus");
-        storage.initialize_mcu_load(mcu_id, Some(3)).await.unwrap();
+        storage
+            .initialize_mcu_load(mcu_id.clone(), Some(3))
+            .await
+            .unwrap();
+
+        assert_eq!(
+            storage.get_mcus_sorted_by_load().await.unwrap(),
+            vec![(mcu_id, Some(3))]
+        );
     }
 }

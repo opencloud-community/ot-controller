@@ -40,7 +40,7 @@ use tokio_stream::{
 
 use crate::{
     settings::{self, Connection},
-    storage::MediaStorage as _,
+    storage::MediaStorage,
 };
 
 mod types;
@@ -73,7 +73,7 @@ struct PublisherInfo<'i> {
     loop_index: Option<usize>,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub(crate) struct McuId(Arc<str>);
 
 impl McuId {
@@ -89,6 +89,12 @@ impl McuId {
         from_janus_key: &str,
     ) -> String {
         format!("{to_janus_key}-{janus_exchange_key}-{from_janus_key}")
+    }
+}
+
+impl From<String> for McuId {
+    fn from(s: String) -> Self {
+        Self(s.into_boxed_str().into())
     }
 }
 
@@ -276,29 +282,9 @@ impl McuPool {
         redis: &mut RedisConnection,
         clients: &'guard RwLockReadGuard<'guard, HashSet<McuClient>>,
     ) -> Result<(&'guard McuClient, Option<usize>), SignalingModuleError> {
-        // Get all mcu's in order lowest to highest
-        let ids: Vec<String> = redis
-            .zrangebyscore(MCU_LOAD, "-inf", "+inf")
-            .await
-            .context(RedisSnafu {
-                message: "Failed to get mcu ids",
-            })?;
-
         // choose the first available mcu
-        for id in ids {
-            let (id, loop_index) = if let Some((id, loop_index)) = id.rsplit_once('@') {
-                (
-                    id,
-                    Some(whatever!(
-                        loop_index.parse::<usize>(),
-                        "Failed to parse loop_index"
-                    )),
-                )
-            } else {
-                (id.as_str(), None)
-            };
-
-            if let Some(client) = clients.get(id) {
+        for (id, loop_index) in redis.get_mcus_sorted_by_load().await? {
+            if let Some(client) = clients.get(&id) {
                 return Ok((client, loop_index));
             }
         }
