@@ -11,6 +11,7 @@ use opentalk_signaling_core::{
     assets::{save_asset, AssetError, NewAssetFileName},
     control, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage, RedisConnection,
     SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
+    VolatileStorageBackend,
 };
 use opentalk_types::{
     core::{FileExtension, Timestamp},
@@ -53,6 +54,35 @@ pub struct GetPdfEvent {
     timestamp: Timestamp,
 }
 
+#[derive(Clone)]
+pub struct VolatileWrapper {
+    storage: VolatileStorageBackend,
+}
+
+impl From<VolatileStorageBackend> for VolatileWrapper {
+    fn from(storage: VolatileStorageBackend) -> Self {
+        Self { storage }
+    }
+}
+
+impl VolatileWrapper {
+    fn storage_ref(&self) -> &dyn storage::WhiteboardStorage {
+        if self.storage.is_left() {
+            self.storage.as_ref().left().unwrap()
+        } else {
+            self.storage.as_ref().right().unwrap()
+        }
+    }
+
+    fn storage_mut(&mut self) -> &mut dyn storage::WhiteboardStorage {
+        if self.storage.is_left() {
+            self.storage.as_mut().left().unwrap()
+        } else {
+            self.storage.as_mut().right().unwrap()
+        }
+    }
+}
+
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for Whiteboard {
     const NAMESPACE: &'static str = NAMESPACE;
@@ -70,6 +100,8 @@ impl SignalingModule for Whiteboard {
     type FrontendData = WhiteboardState;
 
     type PeerFrontendData = ();
+
+    type Volatile = VolatileWrapper;
 
     async fn init(
         ctx: InitContext<'_, Self>,

@@ -11,6 +11,7 @@ use opentalk_database::Db;
 use opentalk_db_storage::{rooms::Room, users::User};
 use opentalk_signaling_core::{
     ExchangeHandle, ObjectStorage, Participant, RedisConnection, SignalingMetrics, SignalingModule,
+    VolatileStorageBackend,
 };
 use opentalk_types::{api::error::ApiError, common::tariff::TariffResource, core::TicketToken};
 use snafu::Report;
@@ -72,6 +73,7 @@ pub(crate) async fn ws_service(
     storage: Data<ObjectStorage>,
     authz: Data<Authz>,
     redis_conn: Data<RedisConnection>,
+    volatile: Data<VolatileStorageBackend>,
     exchange_handle: Data<ExchangeHandle>,
     metrics: Data<SignalingMetrics>,
     protocols: Data<SignalingProtocols>,
@@ -144,6 +146,7 @@ pub(crate) async fn ws_service(
         storage.into_inner(),
         authz.into_inner(),
         redis_conn,
+        (**volatile).clone(),
         (**exchange_handle).clone(),
         resumption_keep_alive,
     )

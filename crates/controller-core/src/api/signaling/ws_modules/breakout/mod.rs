@@ -20,7 +20,7 @@ use opentalk_signaling_core::{
         },
     },
     DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
-    SignalingModuleInitData, SignalingRoomId,
+    SignalingModuleInitData, SignalingRoomId, VolatileStorageBackend,
 };
 use opentalk_types::{
     core::{BreakoutRoomId, ParticipantId, RoomId},
@@ -54,6 +54,35 @@ pub enum TimerEvent {
     LeavePeriodExpired,
 }
 
+#[derive(Clone)]
+pub struct VolatileWrapper {
+    storage: VolatileStorageBackend,
+}
+
+impl From<VolatileStorageBackend> for VolatileWrapper {
+    fn from(storage: VolatileStorageBackend) -> Self {
+        Self { storage }
+    }
+}
+
+impl VolatileWrapper {
+    fn storage_ref(&self) -> &dyn storage::BreakoutStorage {
+        if self.storage.is_left() {
+            self.storage.as_ref().left().unwrap()
+        } else {
+            self.storage.as_ref().right().unwrap()
+        }
+    }
+
+    fn storage_mut(&mut self) -> &mut dyn storage::BreakoutStorage {
+        if self.storage.is_left() {
+            self.storage.as_mut().left().unwrap()
+        } else {
+            self.storage.as_mut().right().unwrap()
+        }
+    }
+}
+
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for BreakoutRooms {
     const NAMESPACE: &'static str = NAMESPACE;
@@ -65,6 +94,8 @@ impl SignalingModule for BreakoutRooms {
     type ExtEvent = TimerEvent;
     type FrontendData = BreakoutState;
     type PeerFrontendData = ();
+
+    type Volatile = VolatileWrapper;
 
     async fn init(
         ctx: InitContext<'_, Self>,

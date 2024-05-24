@@ -20,6 +20,7 @@ bytes.workspace = true
 bytestring.workspace = true
 config.workspace = true
 derive_more.workspace = true
+either.workspace = true
 futures.workspace = true
 kustos.workspace = true
 lapin.workspace = true

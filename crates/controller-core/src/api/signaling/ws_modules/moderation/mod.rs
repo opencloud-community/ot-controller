@@ -16,6 +16,7 @@ use opentalk_signaling_core::{
     },
     DestroyContext, Event, InitContext, ModuleContext, RedisConnection, SerdeJsonSnafu,
     SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
+    VolatileStorageBackend,
 };
 pub use opentalk_types::signaling::moderation::NAMESPACE;
 use opentalk_types::{
@@ -94,6 +95,35 @@ async fn set_waiting_room_enabled(
     Ok(())
 }
 
+#[derive(Clone)]
+pub struct VolatileWrapper {
+    storage: VolatileStorageBackend,
+}
+
+impl From<VolatileStorageBackend> for VolatileWrapper {
+    fn from(storage: VolatileStorageBackend) -> Self {
+        Self { storage }
+    }
+}
+
+impl VolatileWrapper {
+    fn storage_ref(&self) -> &dyn storage::ModerationStorage {
+        if self.storage.is_left() {
+            self.storage.as_ref().left().unwrap()
+        } else {
+            self.storage.as_ref().right().unwrap()
+        }
+    }
+
+    fn storage_mut(&mut self) -> &mut dyn storage::ModerationStorage {
+        if self.storage.is_left() {
+            self.storage.as_mut().left().unwrap()
+        } else {
+            self.storage.as_mut().right().unwrap()
+        }
+    }
+}
+
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for ModerationModule {
     const NAMESPACE: &'static str = NAMESPACE;
@@ -105,6 +135,8 @@ impl SignalingModule for ModerationModule {
     type ExtEvent = ();
     type FrontendData = ModerationState;
     type PeerFrontendData = ();
+
+    type Volatile = VolatileWrapper;
 
     async fn init(
         ctx: InitContext<'_, Self>,

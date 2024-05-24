@@ -2,11 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::RedisConnection;
+use crate::{RedisConnection, VolatileStorageBackend};
 
 /// Context passed to the `destroy` function
 pub struct DestroyContext<'ctx> {
     pub redis_conn: &'ctx mut RedisConnection,
+    pub volatile: VolatileStorageBackend,
     pub destroy_room: bool,
 }
 

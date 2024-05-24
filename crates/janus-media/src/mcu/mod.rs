@@ -22,7 +22,10 @@ use opentalk_janus_client::{
     types::{SdpAnswer, SdpOffer},
     ClientId, JanusMessage, JsepType, RoomId as JanusRoomId, TrickleCandidate,
 };
-use opentalk_signaling_core::{JanusClientSnafu, RedisConnection, SignalingModuleError};
+use opentalk_signaling_core::{
+    JanusClientSnafu, RedisConnection, RedisSnafu, SerdeJsonSnafu, SignalingModuleError,
+    VolatileStorageBackend,
+};
 use opentalk_types::signaling::media::{command::SubscriberConfiguration, MediaSessionType};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
@@ -39,6 +42,7 @@ use tokio_stream::{
 use crate::{
     settings::{self, Connection},
     storage::MediaStorage,
+    VolatileWrapper,
 };
 
 mod types;
@@ -108,7 +112,7 @@ pub struct McuPool {
     events_sender: mpsc::Sender<(ClientId, Arc<JanusMessage>)>,
 
     rabbitmq_pool: Arc<RabbitMqPool>,
-    redis: RedisConnection,
+    volatile: VolatileWrapper,
 
     // Mcu shutdown signal to all janus-client tasks.
     // This is separate from the global application shutdown signal since
@@ -121,7 +125,7 @@ impl McuPool {
         settings: &opentalk_controller_settings::Settings,
         shared_settings: SharedSettings,
         rabbitmq_pool: Arc<RabbitMqPool>,
-        mut redis: RedisConnection,
+        mut volatile: VolatileWrapper,
         controller_shutdown_sig: broadcast::Receiver<()>,
         controller_reload_sig: broadcast::Receiver<()>,
     ) -> Result<Arc<Self>, SignalingModuleError> {
@@ -138,8 +142,13 @@ impl McuPool {
 
             log::info!("Connecting to janus-gateway via rabbitmq {config:?}");
 
-            match McuClient::connect(channel, &mut redis, config.clone(), events_sender.clone())
-                .await
+            match McuClient::connect(
+                channel,
+                volatile.storage_mut(),
+                config.clone(),
+                events_sender.clone(),
+            )
+            .await
             {
                 Ok(client) => {
                     clients.insert(client);
@@ -164,7 +173,7 @@ impl McuPool {
             mcu_config,
             events_sender,
             rabbitmq_pool,
-            redis,
+            volatile,
             shutdown,
         });
 
@@ -240,7 +249,7 @@ impl McuPool {
 
             match McuClient::connect(
                 channel,
-                &mut self.redis.clone(),
+                self.volatile.clone().storage_mut(),
                 connection_config.clone(),
                 self.events_sender.clone(),
             )
@@ -266,11 +275,11 @@ impl McuPool {
 
     async fn choose_client<'guard>(
         &self,
-        redis: &mut RedisConnection,
+        volatile: &mut dyn MediaStorage,
         clients: &'guard RwLockReadGuard<'guard, HashSet<McuClient>>,
     ) -> Result<(&'guard McuClient, Option<usize>), SignalingModuleError> {
         // choose the first available mcu
-        for (id, loop_index) in redis.get_mcus_sorted_by_load().await? {
+        for (id, loop_index) in volatile.get_mcus_sorted_by_load().await? {
             if let Some(client) = clients.get(&id) {
                 return Ok((client, loop_index));
             }
@@ -284,10 +293,10 @@ impl McuPool {
         event_sink: mpsc::Sender<(MediaSessionKey, WebRtcEvent)>,
         media_session_key: MediaSessionKey,
     ) -> Result<JanusPublisher, SignalingModuleError> {
-        let mut redis = self.redis.clone();
-
         let clients = self.clients.read().await;
-        let (client, loop_index) = self.choose_client(&mut redis, &clients).await?;
+        let (client, loop_index) = self
+            .choose_client(self.volatile.clone().storage_mut(), &clients)
+            .await?;
 
         let (handle, room_id) = self
             .create_publisher_handle(client, media_session_key, loop_index)
@@ -301,11 +310,15 @@ impl McuPool {
             loop_index,
         };
 
-        redis.set_publisher_info(media_session_key, info).await?;
+        {
+            let mut storage = self.volatile.clone();
+            let storage = storage.storage_mut();
+            storage.set_publisher_info(media_session_key, info).await?;
 
-        redis
-            .increase_mcu_load(client.id.clone(), loop_index)
-            .await?;
+            storage
+                .increase_mcu_load(client.id.clone(), loop_index)
+                .await?;
+        }
 
         tokio::spawn(JanusPublisher::run(
             media_session_key,
@@ -321,7 +334,7 @@ impl McuPool {
             mcu_id: client.id.clone(),
             loop_index,
             media_session_key,
-            redis,
+            storage: self.volatile.clone(),
             destroy,
         };
 
@@ -413,13 +426,14 @@ impl McuPool {
         event_sink: mpsc::Sender<(MediaSessionKey, WebRtcEvent)>,
         media_session_key: MediaSessionKey,
     ) -> Result<JanusSubscriber, SignalingModuleError> {
-        let mut redis = self.redis.clone();
+        let mut storage = self.volatile.clone();
+        let storage = storage.storage_mut();
 
         let PublisherInfo {
             room_id,
             mcu_id,
             loop_index,
-        } = redis.get_publisher_info(media_session_key).await?;
+        } = storage.get_publisher_info(media_session_key).await?;
 
         let clients = self.clients.read().await;
         let client = clients
@@ -435,7 +449,7 @@ impl McuPool {
                 message: "Failed to attach to videoroom plugin",
             })?;
 
-        redis
+        storage
             .increase_mcu_load(client.id.clone(), loop_index)
             .await?;
 
@@ -455,7 +469,7 @@ impl McuPool {
             mcu_id: client.id.clone(),
             loop_index,
             media_session_key,
-            redis,
+            storage: self.volatile.clone(),
             destroy,
         };
 
@@ -597,7 +611,7 @@ async fn attempt_reconnect(
 
     match McuClient::connect(
         channel,
-        &mut mcu_pool.redis.clone(),
+        mcu_pool.volatile.clone().storage_mut(),
         config_to_reconnect.clone(),
         mcu_pool.events_sender.clone(),
     )
@@ -709,10 +723,10 @@ impl McuClient {
         self.id.0.as_ref()
     }
 
-    #[tracing::instrument(level = "debug", skip(rabbitmq_channel, redis, events_sender))]
+    #[tracing::instrument(level = "debug", skip(rabbitmq_channel, storage, events_sender))]
     pub async fn connect(
         rabbitmq_channel: RabbitMqChannel,
-        redis: &mut RedisConnection,
+        storage: &mut dyn MediaStorage,
         config: settings::Connection,
         events_sender: mpsc::Sender<(ClientId, Arc<JanusMessage>)>,
     ) -> Result<Self, SignalingModuleError> {
@@ -724,12 +738,12 @@ impl McuClient {
 
         if let Some(event_loops) = config.event_loops {
             for loop_index in 0..event_loops {
-                redis
+                storage
                     .initialize_mcu_load(id.clone(), Some(loop_index))
                     .await?;
             }
         } else {
-            redis.initialize_mcu_load(id.clone(), None).await?;
+            storage.initialize_mcu_load(id.clone(), None).await?;
         }
 
         // We sent at most two signals
@@ -830,7 +844,7 @@ pub struct JanusPublisher {
     mcu_id: McuId,
     loop_index: Option<usize>,
     media_session_key: MediaSessionKey,
-    redis: RedisConnection,
+    storage: VolatileWrapper,
     destroy: oneshot::Sender<()>,
 }
 
@@ -894,14 +908,16 @@ impl JanusPublisher {
 
     pub async fn destroy(mut self) -> Result<(), SignalingModuleError> {
         if let Err(e) = self
-            .redis
+            .storage
+            .storage_mut()
             .delete_publisher_info(self.media_session_key)
             .await
         {
             log::error!("Failed to remove publisher info, {}", Report::from_error(e));
         }
 
-        self.redis
+        self.storage
+            .storage_mut()
             .decrease_mcu_load(self.mcu_id.clone(), self.loop_index)
             .await?;
 
@@ -940,7 +956,8 @@ impl JanusPublisher {
         })?;
 
         if let Err(e) = self
-            .redis
+            .storage
+            .storage_mut()
             .delete_publisher_info(self.media_session_key)
             .await
         {
@@ -1014,7 +1031,7 @@ pub struct JanusSubscriber {
     mcu_id: McuId,
     loop_index: Option<usize>,
     media_session_key: MediaSessionKey,
-    redis: RedisConnection,
+    storage: VolatileWrapper,
     destroy: oneshot::Sender<()>,
 }
 
@@ -1055,7 +1072,8 @@ impl JanusSubscriber {
 
         let _ = self.destroy.send(());
 
-        self.redis
+        self.storage
+            .storage_mut()
             .decrease_mcu_load(self.mcu_id.clone(), self.loop_index)
             .await?;
 

@@ -6,7 +6,7 @@ use chrono::{self, Utc};
 use futures::{stream::once, FutureExt};
 use opentalk_signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
-    SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
+    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorageBackend,
 };
 use opentalk_types::{
     core::{ParticipantId, Timestamp},
@@ -38,6 +38,35 @@ pub struct Timer {
     pub participant_id: ParticipantId,
 }
 
+#[derive(Clone)]
+pub struct VolatileWrapper {
+    storage: VolatileStorageBackend,
+}
+
+impl From<VolatileStorageBackend> for VolatileWrapper {
+    fn from(storage: VolatileStorageBackend) -> Self {
+        Self { storage }
+    }
+}
+
+impl VolatileWrapper {
+    fn storage_ref(&self) -> &dyn storage::TimerStorage {
+        if self.storage.is_left() {
+            self.storage.as_ref().left().unwrap()
+        } else {
+            self.storage.as_ref().right().unwrap()
+        }
+    }
+
+    fn storage_mut(&mut self) -> &mut dyn storage::TimerStorage {
+        if self.storage.is_left() {
+            self.storage.as_mut().left().unwrap()
+        } else {
+            self.storage.as_mut().right().unwrap()
+        }
+    }
+}
+
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for Timer {
     const NAMESPACE: &'static str = NAMESPACE;
@@ -55,6 +84,8 @@ impl SignalingModule for Timer {
     type FrontendData = TimerStatus;
 
     type PeerFrontendData = ReadyStatus;
+
+    type Volatile = VolatileWrapper;
 
     async fn init(
         ctx: InitContext<'_, Self>,

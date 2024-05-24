@@ -32,6 +32,7 @@ where
     pub timestamp: Timestamp,
     pub exchange_publish: &'ctx mut Vec<ExchangePublish>,
     pub redis_conn: &'ctx mut RedisConnection,
+    pub volatile: M::Volatile,
     pub events: &'ctx mut SelectAll<AnyStream>,
     pub invalidate_data: &'ctx mut bool,
     pub exit: &'ctx mut Option<CloseCode>,

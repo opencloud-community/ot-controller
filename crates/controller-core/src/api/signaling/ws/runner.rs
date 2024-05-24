@@ -34,7 +34,7 @@ use opentalk_signaling_core::{
     },
     AnyStream, ExchangeHandle, LockError, Locking as _, ObjectStorage, Participant,
     RedisConnection, RunnerId, SignalingMetrics, SignalingModule, SignalingModuleError,
-    SignalingRoomId, SubscriberHandle,
+    SignalingRoomId, SubscriberHandle, VolatileStorage, VolatileStorageBackend,
 };
 use opentalk_types::{
     common::tariff::TariffResource,
@@ -151,6 +151,7 @@ pub struct Builder {
     pub(super) storage: Arc<ObjectStorage>,
     pub(super) authz: Arc<Authz>,
     pub(super) redis_conn: RedisConnection,
+    pub(super) volatile: VolatileStorageBackend,
     pub(super) exchange_handle: ExchangeHandle,
     resumption_keep_alive: ResumptionTokenKeepAlive,
 }
@@ -161,6 +162,7 @@ impl Builder {
     pub async fn abort(mut self) {
         let ctx = DestroyContext {
             redis_conn: &mut self.redis_conn,
+            volatile: self.volatile.clone(),
             // We haven't joined yet
             destroy_room: false,
         };
@@ -235,6 +237,7 @@ impl Builder {
             metrics: self.metrics,
             db: self.db,
             redis_conn: self.redis_conn,
+            volatile: self.volatile,
             exchange_handle: self.exchange_handle,
             subscriber_handle,
             resumption_keep_alive: self.resumption_keep_alive,
@@ -292,6 +295,8 @@ pub struct Runner {
 
     /// Redis connection manager
     redis_conn: RedisConnection,
+
+    volatile: VolatileStorageBackend,
 
     /// Exchange handle - used to send messages
     exchange_handle: ExchangeHandle,
@@ -371,6 +376,7 @@ impl Runner {
         storage: Arc<ObjectStorage>,
         authz: Arc<Authz>,
         redis_conn: RedisConnection,
+        volatile: VolatileStorageBackend,
         exchange_handle: ExchangeHandle,
         resumption_keep_alive: ResumptionTokenKeepAlive,
     ) -> Result<Builder> {
@@ -394,6 +400,7 @@ impl Runner {
             storage,
             authz,
             redis_conn,
+            volatile,
             exchange_handle,
             resumption_keep_alive,
         })
@@ -551,6 +558,7 @@ impl Runner {
 
             let ctx = DestroyContext {
                 redis_conn: &mut self.redis_conn,
+                volatile: self.volatile.clone(),
                 destroy_room,
             };
 
@@ -615,6 +623,7 @@ impl Runner {
             // Not joined, just destroy modules normal
             let ctx = DestroyContext {
                 redis_conn: &mut self.redis_conn,
+                volatile: self.volatile,
                 destroy_room: false,
             };
 
@@ -1890,6 +1899,7 @@ impl Runner {
             ws_messages: &mut ws_messages,
             exchange_publish: &mut exchange_publish,
             redis_conn: &mut self.redis_conn,
+            volatile: self.volatile.clone(),
             events: &mut self.events,
             invalidate_data: &mut invalidate_data,
             exit: &mut exit,
@@ -1926,6 +1936,7 @@ impl Runner {
             ws_messages: &mut ws_messages,
             exchange_publish: &mut exchange_publish,
             redis_conn: &mut self.redis_conn,
+            volatile: self.volatile.clone(),
             events: &mut self.events,
             invalidate_data: &mut invalidate_data,
             exit: &mut exit,

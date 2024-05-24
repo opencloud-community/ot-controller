@@ -40,6 +40,7 @@ where
     pub exchange_bindings: &'ctx mut Vec<ExchangeBinding>,
     pub events: &'ctx mut SelectAll<AnyStream>,
     pub redis_conn: &'ctx mut RedisConnection,
+    pub volatile: M::Volatile,
     pub m: PhantomData<fn() -> M>,
 }
 

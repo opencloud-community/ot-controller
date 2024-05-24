@@ -3853,6 +3853,7 @@ dependencies = [
  "chrono",
  "config",
  "derive_more",
+ "either",
  "futures",
  "kustos",
  "lapin",

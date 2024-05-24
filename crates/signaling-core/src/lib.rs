@@ -44,7 +44,7 @@ pub use room_lock::{LockError, Locking};
 pub use runner_id::RunnerId;
 pub use signaling_module::*;
 pub use signaling_room_id::SignalingRoomId;
-pub use volatile_storage::{VolatileStaticMemoryStorage, VolatileStorage};
+pub use volatile_storage::{VolatileStaticMemoryStorage, VolatileStorage, VolatileStorageBackend};
 
 #[async_trait(?Send)]
 pub trait RegisterModules {

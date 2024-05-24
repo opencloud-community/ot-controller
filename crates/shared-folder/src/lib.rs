@@ -15,6 +15,7 @@ use opentalk_db_storage::events::shared_folders::EventSharedFolder;
 use opentalk_signaling_core::{
     control::storage::ControlStorage as _, DestroyContext, Event, InitContext, ModuleContext,
     SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
+    VolatileStorageBackend,
 };
 use opentalk_types::{
     common::shared_folder::SharedFolder as SharedFolderType,
@@ -28,6 +29,34 @@ mod storage;
 pub struct SharedFolder {
     room: SignalingRoomId,
     db: Arc<Db>,
+}
+
+pub struct VolatileWrapper {
+    storage: VolatileStorageBackend,
+}
+
+impl From<VolatileStorageBackend> for VolatileWrapper {
+    fn from(storage: VolatileStorageBackend) -> Self {
+        Self { storage }
+    }
+}
+
+impl VolatileWrapper {
+    fn storage_ref(&self) -> &dyn storage::SharedFolderStorage {
+        if self.storage.is_left() {
+            self.storage.as_ref().left().unwrap()
+        } else {
+            self.storage.as_ref().right().unwrap()
+        }
+    }
+
+    fn storage_mut(&mut self) -> &mut dyn storage::SharedFolderStorage {
+        if self.storage.is_left() {
+            self.storage.as_mut().left().unwrap()
+        } else {
+            self.storage.as_mut().right().unwrap()
+        }
+    }
 }
 
 #[async_trait::async_trait(? Send)]
@@ -44,6 +73,8 @@ impl SignalingModule for SharedFolder {
 
     type FrontendData = SharedFolderType;
     type PeerFrontendData = ();
+
+    type Volatile = VolatileWrapper;
 
     async fn init(
         ctx: InitContext<'_, Self>,

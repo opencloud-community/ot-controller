@@ -61,7 +61,7 @@ use crate::{
     room_lock::Locking as _,
     AnyStream, DestroyContext, Event, ExchangePublish, InitContext, ModuleContext, ObjectStorage,
     Participant, RedisConnection, SerdeJsonSnafu, SignalingModule, SignalingModuleError,
-    SignalingRoomId,
+    SignalingRoomId, VolatileStaticMemoryStorage, VolatileStorageBackend,
 };
 
 /// A module tester that simulates a runner environment for provided module.
@@ -77,6 +77,8 @@ where
 {
     /// The redis interface
     pub redis_conn: RedisConnection,
+    /// The volatile data storage
+    pub volatile: VolatileStorageBackend,
     /// The database interface
     pub db: Arc<Db>,
     /// Authz
@@ -100,8 +102,11 @@ where
     pub fn new(db: Arc<Db>, authz: Arc<Authz>, redis_conn: RedisConnection, room: Room) -> Self {
         let (exchange_sender, _) = broadcast::channel(10);
 
+        let volatile = VolatileStorageBackend::Left(VolatileStaticMemoryStorage);
+
         Self {
             redis_conn,
+            volatile,
             db,
             authz,
             room,
@@ -132,6 +137,7 @@ where
             Arc::new(ObjectStorage::broken()),
             self.authz.clone(),
             self.redis_conn.clone(),
+            self.volatile.clone(),
             params,
             client_interface,
             self.exchange_sender.clone(),
@@ -377,6 +383,7 @@ where
     M: SignalingModule,
 {
     redis_conn: RedisConnection,
+    volatile: VolatileStorageBackend,
     room_id: SignalingRoomId,
     room_owner: UserId,
     participant_id: ParticipantId,
@@ -406,6 +413,7 @@ where
         storage: Arc<ObjectStorage>,
         authz: Arc<Authz>,
         mut redis_conn: RedisConnection,
+        volatile: VolatileStorageBackend,
         params: M::Params,
         interface: ClientInterface<M>,
         exchange_sender: broadcast::Sender<ExchangePublish>,
@@ -443,6 +451,7 @@ where
             exchange_bindings: &mut vec![],
             events: &mut events,
             redis_conn: &mut redis_conn,
+            volatile: M::Volatile::from(volatile.clone()),
             m: PhantomData::<fn() -> M>,
         };
 
@@ -459,6 +468,7 @@ where
 
         Ok(Self {
             redis_conn,
+            volatile,
             room_id: SignalingRoomId::new(room.id, breakout_room),
             room_owner: room.created_by,
             participant_id,
@@ -490,6 +500,7 @@ where
                 ws_messages: &mut ws_messages,
                 exchange_publish: &mut exchange_publish,
                 redis_conn: &mut self.redis_conn.clone(),
+                volatile: self.volatile.clone().into(),
                 invalidate_data: &mut invalidate_data,
                 events: &mut events,
                 exit: &mut exit,
@@ -967,6 +978,7 @@ where
             ws_messages: &mut ws_messages,
             exchange_publish: &mut exchange_publish,
             redis_conn: &mut self.redis_conn,
+            volatile: self.volatile.clone().into(),
             invalidate_data: &mut invalidate_data,
             events: &mut events,
             exit: &mut exit,
@@ -1029,6 +1041,7 @@ where
 
         let ctx = DestroyContext {
             redis_conn: &mut self.redis_conn.clone(),
+            volatile: self.volatile.clone(),
             destroy_room,
         };
         let module = self.module;

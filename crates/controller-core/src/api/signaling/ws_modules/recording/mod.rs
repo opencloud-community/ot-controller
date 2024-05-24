@@ -17,7 +17,7 @@ use opentalk_signaling_core::{
         storage::{ControlStorageParticipantAttributes as _, RECORDING_CONSENT},
     },
     DestroyContext, Event, InitContext, ModuleContext, RedisConnection, SignalingModule,
-    SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
+    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorageBackend,
 };
 use opentalk_types::{
     core::{ParticipantId, StreamingTargetId},
@@ -73,6 +73,35 @@ pub enum RecorderExtEvent {
     Timeout(BTreeSet<StreamingTargetId>),
 }
 
+#[derive(Clone)]
+pub struct VolatileWrapper {
+    storage: VolatileStorageBackend,
+}
+
+impl From<VolatileStorageBackend> for VolatileWrapper {
+    fn from(storage: VolatileStorageBackend) -> Self {
+        Self { storage }
+    }
+}
+
+impl VolatileWrapper {
+    fn storage_ref(&self) -> &dyn storage::RecordingStorage {
+        if self.storage.is_left() {
+            self.storage.as_ref().left().unwrap()
+        } else {
+            self.storage.as_ref().right().unwrap()
+        }
+    }
+
+    fn storage_mut(&mut self) -> &mut dyn storage::RecordingStorage {
+        if self.storage.is_left() {
+            self.storage.as_mut().left().unwrap()
+        } else {
+            self.storage.as_mut().right().unwrap()
+        }
+    }
+}
+
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for Recording {
     const NAMESPACE: &'static str = NAMESPACE;
@@ -87,6 +116,8 @@ impl SignalingModule for Recording {
 
     type FrontendData = RecordingState;
     type PeerFrontendData = RecordingPeerState;
+
+    type Volatile = VolatileWrapper;
 
     async fn init(
         ctx: InitContext<'_, Self>,

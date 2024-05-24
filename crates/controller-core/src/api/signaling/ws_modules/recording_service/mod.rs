@@ -19,7 +19,7 @@ use opentalk_types::{
     },
 };
 
-use super::recording::{self, storage::RecordingStorage as _, Recording};
+use super::recording::{self, storage::RecordingStorage as _, Recording, VolatileWrapper};
 
 pub(crate) mod exchange;
 
@@ -45,6 +45,8 @@ impl SignalingModule for RecordingService {
 
     type FrontendData = RecordingServiceState;
     type PeerFrontendData = ();
+
+    type Volatile = VolatileWrapper;
 
     async fn init(
         ctx: InitContext<'_, Self>,

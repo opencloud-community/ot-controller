@@ -12,7 +12,7 @@ use opentalk_types::{
 use crate::mcu::{McuId, MediaSessionKey, PublisherInfo};
 
 #[async_trait]
-pub(crate) trait MediaStorage {
+pub(crate) trait MediaStorage: Send {
     async fn get_media_state(
         &mut self,
         room: SignalingRoomId,

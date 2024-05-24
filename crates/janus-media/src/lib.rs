@@ -17,7 +17,7 @@ use opentalk_controller_settings::SharedSettings;
 use opentalk_signaling_core::{
     control::{self, storage::ControlStorage as _},
     DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
-    SignalingModuleInitData, SignalingRoomId,
+    SignalingModuleInitData, SignalingRoomId, VolatileStorageBackend,
 };
 use opentalk_types::{
     core::ParticipantId,
@@ -81,6 +81,35 @@ fn process_metrics_for_media_session_state(
     }
 }
 
+#[derive(Clone)]
+pub struct VolatileWrapper {
+    storage: VolatileStorageBackend,
+}
+
+impl From<VolatileStorageBackend> for VolatileWrapper {
+    fn from(storage: VolatileStorageBackend) -> Self {
+        Self { storage }
+    }
+}
+
+impl VolatileWrapper {
+    fn storage_ref(&self) -> &dyn storage::MediaStorage {
+        if self.storage.is_left() {
+            self.storage.as_ref().left().unwrap()
+        } else {
+            self.storage.as_ref().right().unwrap()
+        }
+    }
+
+    fn storage_mut(&mut self) -> &mut dyn storage::MediaStorage {
+        if self.storage.is_left() {
+            self.storage.as_mut().left().unwrap()
+        } else {
+            self.storage.as_mut().right().unwrap()
+        }
+    }
+}
+
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for Media {
     const NAMESPACE: &'static str = NAMESPACE;
@@ -95,6 +124,8 @@ impl SignalingModule for Media {
 
     type FrontendData = MediaState;
     type PeerFrontendData = MediaPeerState;
+
+    type Volatile = VolatileWrapper;
 
     async fn init(
         mut ctx: InitContext<'_, Self>,
@@ -625,7 +656,7 @@ impl SignalingModule for Media {
             data.startup_settings.as_ref(),
             data.shared_settings.clone(),
             data.rabbitmq_pool.clone(),
-            data.redis.clone(),
+            data.volatile.clone().into(),
             data.shutdown.subscribe(),
             data.reload.subscribe(),
         )

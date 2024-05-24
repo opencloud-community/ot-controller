@@ -15,7 +15,7 @@ use snafu::Snafu;
 use tokio::sync::broadcast;
 
 use crate::{
-    room_lock::LockError, DestroyContext, Event, InitContext, ModuleContext, RedisConnection,
+    room_lock::LockError, DestroyContext, Event, InitContext, ModuleContext, VolatileStorageBackend,
 };
 
 type Result<T> = std::result::Result<T, SignalingModuleError>;
@@ -116,7 +116,7 @@ pub struct SignalingModuleInitData {
     pub startup_settings: Arc<Settings>,
     pub shared_settings: SharedSettings,
     pub rabbitmq_pool: Arc<RabbitMqPool>,
-    pub redis: RedisConnection,
+    pub volatile: VolatileStorageBackend,
     pub shutdown: broadcast::Sender<()>,
     pub reload: broadcast::Sender<()>,
 }
@@ -153,6 +153,8 @@ pub trait SignalingModule: Send + Sized + 'static {
 
     /// Data about a peer which is sent to the frontend
     type PeerFrontendData: SignalingModulePeerFrontendData;
+
+    type Volatile: From<VolatileStorageBackend>;
 
     /// Constructor of the module
     ///

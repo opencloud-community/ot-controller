@@ -6,7 +6,9 @@ use std::{any::Any, collections::HashMap, marker::PhantomData, sync::Arc};
 
 use actix_http::ws::{CloseCode, Message};
 use futures::stream::SelectAll;
-use opentalk_signaling_core::{AnyStream, Event, InitContext, RedisConnection, SignalingMetrics};
+use opentalk_signaling_core::{
+    AnyStream, Event, InitContext, RedisConnection, SignalingMetrics, VolatileStorageBackend,
+};
 use opentalk_types::{
     core::ParticipantId,
     signaling::{
@@ -83,6 +85,7 @@ impl Modules {
                 timestamp: ctx.timestamp,
                 exit: ctx.exit,
                 metrics: ctx.metrics.clone(),
+                volatile: ctx.volatile.clone(),
             };
 
             if let Err(e) = module.on_event_broadcast(ctx, &mut dyn_event).await {
@@ -98,6 +101,7 @@ impl Modules {
             module
                 .destroy(DestroyContext {
                     redis_conn: ctx.redis_conn,
+                    volatile: ctx.volatile.clone(),
                     destroy_room: ctx.destroy_room,
                 })
                 .await;
@@ -138,6 +142,7 @@ pub(super) struct DynEventCtx<'ctx> {
     pub ws_messages: &'ctx mut Vec<Message>,
     pub exchange_publish: &'ctx mut Vec<ExchangePublish>,
     pub redis_conn: &'ctx mut RedisConnection,
+    pub volatile: VolatileStorageBackend,
     pub events: &'ctx mut SelectAll<AnyStream>,
     pub invalidate_data: &'ctx mut bool,
     pub exit: &'ctx mut Option<CloseCode>,
@@ -172,19 +177,6 @@ where
         ctx: ModuleContext<'_, M>,
         dyn_event: DynTargetedEvent,
     ) -> Result<()> {
-        let ctx = ModuleContext {
-            role: ctx.role,
-            ws_messages: ctx.ws_messages,
-            exchange_publish: ctx.exchange_publish,
-            redis_conn: ctx.redis_conn,
-            events: ctx.events,
-            invalidate_data: ctx.invalidate_data,
-            exit: ctx.exit,
-            timestamp: ctx.timestamp,
-            metrics: ctx.metrics,
-            m: PhantomData::<fn() -> M>,
-        };
-
         match dyn_event {
             DynTargetedEvent::WsMessage(msg) => {
                 let msg =
@@ -218,19 +210,6 @@ where
         ctx: ModuleContext<'_, M>,
         dyn_event: &mut DynBroadcastEvent<'_>,
     ) -> Result<()> {
-        let ctx = ModuleContext {
-            role: ctx.role,
-            ws_messages: ctx.ws_messages,
-            exchange_publish: ctx.exchange_publish,
-            redis_conn: ctx.redis_conn,
-            events: ctx.events,
-            invalidate_data: ctx.invalidate_data,
-            exit: ctx.exit,
-            timestamp: ctx.timestamp,
-            metrics: ctx.metrics,
-            m: PhantomData::<fn() -> M>,
-        };
-
         match dyn_event {
             DynBroadcastEvent::Joined(control_data, module_data, participants) => {
                 let mut frontend_data = None;
@@ -350,6 +329,7 @@ where
             invalidate_data: dyn_ctx.invalidate_data,
             exit: dyn_ctx.exit,
             metrics: Some(dyn_ctx.metrics.clone()),
+            volatile: dyn_ctx.volatile.into(),
             m: PhantomData::<fn() -> M>,
         };
 
@@ -385,6 +365,7 @@ where
             ws_messages: &mut ws_messages,
             exchange_publish: dyn_ctx.exchange_publish,
             redis_conn: dyn_ctx.redis_conn,
+            volatile: dyn_ctx.volatile.into(),
             events: dyn_ctx.events,
             invalidate_data: dyn_ctx.invalidate_data,
             exit: dyn_ctx.exit,
@@ -454,6 +435,7 @@ where
             exchange_bindings: &mut builder.exchange_bindings,
             events: &mut builder.events,
             redis_conn: &mut builder.redis_conn,
+            volatile: builder.volatile.clone().into(),
             m: PhantomData::<fn() -> M>,
         };
 

@@ -74,7 +74,7 @@ pub struct Settings {
     #[serde(default)]
     pub stun: Option<Stun>,
     #[serde(default)]
-    pub redis: RedisConfig,
+    pub redis: Option<RedisConfig>,
     #[serde(default)]
     pub rabbit_mq: RabbitMqConfig,
     #[serde(default)]
