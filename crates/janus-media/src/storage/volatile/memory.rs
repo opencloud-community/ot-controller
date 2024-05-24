@@ -148,4 +148,9 @@ impl MemoryMediaState {
         let load = self.mcu_load.entry((mcu_id, index)).or_default();
         *load = load.saturating_add(1);
     }
+
+    pub(super) fn decrease_mcu_load(&mut self, mcu_id: McuId, index: Option<usize>) {
+        let load = self.mcu_load.entry((mcu_id, index)).or_default();
+        *load = load.saturating_sub(1);
+    }
 }

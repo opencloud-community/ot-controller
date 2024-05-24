@@ -253,6 +253,20 @@ impl MediaStorage for RedisConnection {
             })?;
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn decrease_mcu_load(
+        &mut self,
+        mcu_id: McuId,
+        index: Option<usize>,
+    ) -> Result<(), SignalingModuleError> {
+        self.zincr(MCU_LOAD, mcu_load_key(&mcu_id, index), -1)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to increment handle count",
+            })?;
+        Ok(())
+    }
 }
 
 fn parse_mcu_load(s: &str) -> Result<(McuId, Option<usize>), SignalingModuleError> {

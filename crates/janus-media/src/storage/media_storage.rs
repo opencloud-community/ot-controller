@@ -100,4 +100,10 @@ pub(crate) trait MediaStorage {
         mcu_id: McuId,
         index: Option<usize>,
     ) -> Result<(), SignalingModuleError>;
+
+    async fn decrease_mcu_load(
+        &mut self,
+        mcu_id: McuId,
+        index: Option<usize>,
+    ) -> Result<(), SignalingModuleError>;
 }

@@ -220,5 +220,13 @@ mod test_common {
             storage.get_mcus_sorted_by_load().await.unwrap(),
             vec![b.clone(), a.clone(), c.clone()]
         );
+
+        // decrease load on `a` back to `0`, so it gets sorted first again
+        storage.decrease_mcu_load(a.0.clone(), a.1).await.unwrap();
+        storage.decrease_mcu_load(a.0.clone(), a.1).await.unwrap();
+        assert_eq!(
+            storage.get_mcus_sorted_by_load().await.unwrap(),
+            vec![a.clone(), b.clone(), c.clone()]
+        );
     }
 }

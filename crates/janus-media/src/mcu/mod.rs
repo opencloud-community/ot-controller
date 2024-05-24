@@ -931,11 +931,8 @@ impl JanusPublisher {
         }
 
         self.redis
-            .zincr(MCU_LOAD, mcu_load_key(&self.mcu_id, self.loop_index), -1)
-            .await
-            .context(RedisSnafu {
-                message: "Failed to decrease handle count",
-            })?;
+            .decrease_mcu_load(self.mcu_id.clone(), self.loop_index)
+            .await?;
 
         if let Err(e) = self
             .handle
@@ -1088,11 +1085,8 @@ impl JanusSubscriber {
         let _ = self.destroy.send(());
 
         self.redis
-            .zincr(MCU_LOAD, mcu_load_key(&self.mcu_id, self.loop_index), -1)
-            .await
-            .context(RedisSnafu {
-                message: "Failed to decrease handle count",
-            })?;
+            .decrease_mcu_load(self.mcu_id.clone(), self.loop_index)
+            .await?;
 
         detach_result.context(JanusClientSnafu {
             message: "Failed to detach from plugin",
