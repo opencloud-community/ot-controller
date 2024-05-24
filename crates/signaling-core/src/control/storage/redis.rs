@@ -20,9 +20,9 @@ use serde::{de::DeserializeOwned, Serialize};
 use snafu::ResultExt;
 
 use super::{
-    control_storage::ControlStorageParticipantAttributesBulk, AttributeActions, AttributeId,
-    ControlStorage, ControlStorageParticipantAttributesRaw, LEFT_AT, ROLE,
-    SKIP_WAITING_ROOM_KEY_EXPIRY,
+    control_storage::{ControlEventStorage, ControlStorageParticipantAttributesBulk},
+    AttributeActions, AttributeId, ControlStorage, ControlStorageParticipantAttributesRaw, LEFT_AT,
+    ROLE, SKIP_WAITING_ROOM_KEY_EXPIRY,
 };
 use crate::{RedisConnection, RedisSnafu, SerdeJsonSnafu, SignalingModuleError, SignalingRoomId};
 
@@ -195,45 +195,6 @@ impl ControlStorage for RedisConnection {
     async fn delete_tariff(&mut self, room_id: RoomId) -> Result<(), SignalingModuleError> {
         self.del(RoomTariff { room_id }).await.context(RedisSnafu {
             message: "Failed to delete room tariff",
-        })
-    }
-
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn try_init_event(
-        &mut self,
-        room_id: RoomId,
-        event: Option<Event>,
-    ) -> Result<Option<Event>, SignalingModuleError> {
-        let event = if let Some(event) = event {
-            let (_, event): (bool, Event) = redis::pipe()
-                .atomic()
-                .set_nx(RoomEvent { room_id }, event)
-                .get(RoomEvent { room_id })
-                .query_async(self)
-                .await
-                .context(RedisSnafu {
-                    message: "Failed to SET NX & GET room event",
-                })?;
-
-            Some(event)
-        } else {
-            event
-        };
-
-        Ok(event)
-    }
-
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn get_event(&mut self, room_id: RoomId) -> Result<Option<Event>, SignalingModuleError> {
-        self.get(RoomEvent { room_id }).await.context(RedisSnafu {
-            message: "Failed to get room event",
-        })
-    }
-
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn delete_event(&mut self, room_id: RoomId) -> Result<(), SignalingModuleError> {
-        self.del(RoomEvent { room_id }).await.context(RedisSnafu {
-            message: "Failed to delete room event",
         })
     }
 
@@ -432,15 +393,6 @@ pub struct RoomParticipantCount {
 #[derive(ToRedisArgs)]
 #[to_redis_args(fmt = "opentalk-signaling:room={room_id}:tariff")]
 pub struct RoomTariff {
-    room_id: RoomId,
-}
-
-/// The associated [`Event`] for the room
-///
-/// Notice that this key only contains the [`RoomId`] as it applies to all breakout rooms as well
-#[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "opentalk-signaling:room={room_id}:event")]
-pub struct RoomEvent {
     room_id: RoomId,
 }
 
@@ -718,6 +670,57 @@ impl ControlStorageParticipantAttributesRaw for RedisConnection {
             Ok(value)
         }
     }
+}
+
+#[async_trait(?Send)]
+impl ControlEventStorage for RedisConnection {
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn try_init_event(
+        &mut self,
+        room_id: RoomId,
+        event: Option<Event>,
+    ) -> Result<Option<Event>, SignalingModuleError> {
+        let event = if let Some(event) = event {
+            let (_, event): (bool, Event) = redis::pipe()
+                .atomic()
+                .set_nx(RoomEvent { room_id }, event)
+                .get(RoomEvent { room_id })
+                .query_async(self)
+                .await
+                .context(RedisSnafu {
+                    message: "Failed to SET NX & GET room event",
+                })?;
+
+            Some(event)
+        } else {
+            event
+        };
+
+        Ok(event)
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_event(&mut self, room_id: RoomId) -> Result<Option<Event>, SignalingModuleError> {
+        self.get(RoomEvent { room_id }).await.context(RedisSnafu {
+            message: "Failed to get room event",
+        })
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_event(&mut self, room_id: RoomId) -> Result<(), SignalingModuleError> {
+        self.del(RoomEvent { room_id }).await.context(RedisSnafu {
+            message: "Failed to delete room event",
+        })
+    }
+}
+
+/// The associated [`Event`] for the room
+///
+/// Notice that this key only contains the [`RoomId`] as it applies to all breakout rooms as well
+#[derive(ToRedisArgs)]
+#[to_redis_args(fmt = "opentalk-signaling:room={room_id}:event")]
+pub struct RoomEvent {
+    room_id: RoomId,
 }
 
 #[cfg(test)]

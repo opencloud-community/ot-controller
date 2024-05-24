@@ -53,7 +53,7 @@ pub trait AttributeActions {
 
 #[async_trait(?Send)]
 pub trait ControlStorage:
-    ControlStorageParticipantAttributes + ControlStorageParticipantAttributesBulk
+    ControlStorageParticipantAttributes + ControlStorageParticipantAttributesBulk + ControlEventStorage
 {
     async fn participant_set_exists(
         &mut self,
@@ -123,17 +123,6 @@ pub trait ControlStorage:
     async fn get_tariff(&mut self, room_id: RoomId) -> Result<Tariff, SignalingModuleError>;
 
     async fn delete_tariff(&mut self, room_id: RoomId) -> Result<(), SignalingModuleError>;
-
-    /// Try to set the active event for the room. If the event is already set return the current one.
-    async fn try_init_event(
-        &mut self,
-        room_id: RoomId,
-        event: Option<Event>,
-    ) -> Result<Option<Event>, SignalingModuleError>;
-
-    async fn get_event(&mut self, room_id: RoomId) -> Result<Option<Event>, SignalingModuleError>;
-
-    async fn delete_event(&mut self, room_id: RoomId) -> Result<(), SignalingModuleError>;
 
     async fn increment_participant_count(
         &mut self,
@@ -313,4 +302,18 @@ pub trait ControlStorageParticipantAttributesRaw {
         participant: ParticipantId,
         attribute: AttributeId,
     ) -> Result<(), SignalingModuleError>;
+}
+
+#[async_trait(?Send)]
+pub trait ControlEventStorage {
+    /// Try to set the active event for the room. If the event is already set return the current one.
+    async fn try_init_event(
+        &mut self,
+        room_id: RoomId,
+        event: Option<Event>,
+    ) -> Result<Option<Event>, SignalingModuleError>;
+
+    async fn get_event(&mut self, room_id: RoomId) -> Result<Option<Event>, SignalingModuleError>;
+
+    async fn delete_event(&mut self, room_id: RoomId) -> Result<(), SignalingModuleError>;
 }

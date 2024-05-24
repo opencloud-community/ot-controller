@@ -7,8 +7,9 @@ mod redis;
 mod volatile;
 
 pub use control_storage::{
-    AttributeActions, AttributeId, ControlStorage, ControlStorageParticipantAttributes,
-    ControlStorageParticipantAttributesBulk, ControlStorageParticipantAttributesRaw,
+    AttributeActions, AttributeId, ControlEventStorage, ControlStorage,
+    ControlStorageParticipantAttributes, ControlStorageParticipantAttributesBulk,
+    ControlStorageParticipantAttributesRaw,
 };
 
 // The expiry in seconds for the `skip_waiting_room` key in Redis

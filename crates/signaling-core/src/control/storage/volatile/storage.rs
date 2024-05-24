@@ -19,7 +19,7 @@ use serde::de::DeserializeOwned;
 use super::memory::{MemoryControlState, VolatileStaticMemoryAttributeActions};
 use crate::{
     control::storage::{
-        AttributeId, ControlStorage, ControlStorageParticipantAttributes,
+        AttributeId, ControlEventStorage, ControlStorage, ControlStorageParticipantAttributes,
         ControlStorageParticipantAttributesBulk, ControlStorageParticipantAttributesRaw, LEFT_AT,
         ROLE,
     },
@@ -134,26 +134,6 @@ impl ControlStorage for VolatileStaticMemoryStorage {
     #[tracing::instrument(level = "debug", skip(self))]
     async fn delete_tariff(&mut self, room_id: RoomId) -> Result<(), SignalingModuleError> {
         state().write().delete_tariff(room_id);
-        Ok(())
-    }
-
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn try_init_event(
-        &mut self,
-        room_id: RoomId,
-        event: Option<Event>,
-    ) -> Result<Option<Event>, SignalingModuleError> {
-        Ok(state().write().try_init_event(room_id, event))
-    }
-
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn get_event(&mut self, room_id: RoomId) -> Result<Option<Event>, SignalingModuleError> {
-        state().read().get_event(room_id)
-    }
-
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn delete_event(&mut self, room_id: RoomId) -> Result<(), SignalingModuleError> {
-        state().write().delete_event(room_id);
         Ok(())
     }
 
@@ -330,6 +310,29 @@ impl ControlStorageParticipantAttributesRaw for VolatileStaticMemoryStorage {
         state()
             .write()
             .remove_attribute_raw(room, participant, attribute);
+        Ok(())
+    }
+}
+
+#[async_trait(?Send)]
+impl ControlEventStorage for VolatileStaticMemoryStorage {
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn try_init_event(
+        &mut self,
+        room_id: RoomId,
+        event: Option<Event>,
+    ) -> Result<Option<Event>, SignalingModuleError> {
+        Ok(state().write().try_init_event(room_id, event))
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_event(&mut self, room_id: RoomId) -> Result<Option<Event>, SignalingModuleError> {
+        state().read().get_event(room_id)
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_event(&mut self, room_id: RoomId) -> Result<(), SignalingModuleError> {
+        state().write().delete_event(room_id);
         Ok(())
     }
 }

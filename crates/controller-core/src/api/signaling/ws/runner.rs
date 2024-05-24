@@ -26,15 +26,16 @@ use opentalk_signaling_core::{
     control::{
         self, exchange,
         storage::{
-            AttributeActions as _, ControlStorage, ControlStorageParticipantAttributes as _,
-            ControlStorageParticipantAttributesBulk as _, AVATAR_URL, DISPLAY_NAME, HAND_IS_UP,
-            HAND_UPDATED_AT, IS_ROOM_OWNER, JOINED_AT, KIND, LEFT_AT, ROLE, USER_ID,
+            AttributeActions as _, ControlEventStorage as _, ControlStorage,
+            ControlStorageParticipantAttributes as _, ControlStorageParticipantAttributesBulk as _,
+            AVATAR_URL, DISPLAY_NAME, HAND_IS_UP, HAND_UPDATED_AT, IS_ROOM_OWNER, JOINED_AT, KIND,
+            LEFT_AT, ROLE, USER_ID,
         },
         ControlStateExt as _, NAMESPACE,
     },
     AnyStream, ExchangeHandle, LockError, Locking as _, ObjectStorage, Participant,
     RedisConnection, RunnerId, SignalingMetrics, SignalingModule, SignalingModuleError,
-    SignalingRoomId, SubscriberHandle, VolatileStorage, VolatileStorageBackend,
+    SignalingRoomId, SubscriberHandle, VolatileStorageBackend,
 };
 use opentalk_types::{
     common::tariff::TariffResource,

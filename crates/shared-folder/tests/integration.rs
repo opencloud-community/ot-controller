@@ -11,7 +11,7 @@ use opentalk_db_storage::{
     tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId},
 };
 use opentalk_signaling_core::{
-    control::storage::ControlStorage as _,
+    control::storage::{ControlEventStorage, ControlStorage as _},
     module_tester::{ModuleTester, WsMessageOutgoing},
     RedisConnection,
 };
