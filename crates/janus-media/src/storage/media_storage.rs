@@ -112,4 +112,9 @@ pub(crate) trait MediaStorage {
         media_session_key: MediaSessionKey,
         info: PublisherInfo,
     ) -> Result<(), SignalingModuleError>;
+
+    async fn get_publisher_info(
+        &mut self,
+        media_session_key: MediaSessionKey,
+    ) -> Result<PublisherInfo, SignalingModuleError>;
 }

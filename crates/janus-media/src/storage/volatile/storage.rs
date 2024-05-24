@@ -5,12 +5,15 @@
 use std::sync::{Arc, OnceLock};
 
 use async_trait::async_trait;
-use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage};
+use opentalk_signaling_core::{
+    NotFoundSnafu, SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage,
+};
 use opentalk_types::{
     core::{ParticipantId, Timestamp},
     signaling::media::{ParticipantMediaState, ParticipantSpeakingState, SpeakingState},
 };
 use parking_lot::RwLock;
+use snafu::OptionExt as _;
 
 use super::memory::MemoryMediaState;
 use crate::{
@@ -197,6 +200,17 @@ impl MediaStorage for VolatileStaticMemoryStorage {
     ) -> Result<(), SignalingModuleError> {
         state().write().set_publisher_info(media_session_key, info);
         Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_publisher_info(
+        &mut self,
+        media_session_key: MediaSessionKey,
+    ) -> Result<PublisherInfo, SignalingModuleError> {
+        state()
+            .read()
+            .get_publisher_info(media_session_key)
+            .with_context(|| NotFoundSnafu)
     }
 }
 

@@ -280,19 +280,20 @@ impl MediaStorage for RedisConnection {
             })?;
         Ok(())
     }
-}
 
-pub(crate) async fn get_publisher_info(
-    redis: &mut RedisConnection,
-    media_session_key: MediaSessionKey,
-) -> Result<PublisherInfo, SignalingModuleError> {
-    let info: PublisherInfo = redis
-        .hget(PUBLISHER_INFO, media_session_key.to_string())
-        .await
-        .with_context(|_| RedisSnafu {
-            message: format!("Failed to get mcu id for media session key {media_session_key}",),
-        })?;
-    Ok(info)
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_publisher_info(
+        &mut self,
+        media_session_key: MediaSessionKey,
+    ) -> Result<PublisherInfo, SignalingModuleError> {
+        let info: PublisherInfo = self
+            .hget(PUBLISHER_INFO, media_session_key.to_string())
+            .await
+            .with_context(|_| RedisSnafu {
+                message: format!("Failed to get mcu id for media session key {media_session_key}",),
+            })?;
+        Ok(info)
+    }
 }
 
 pub(crate) async fn delete_publisher_info(
@@ -408,5 +409,11 @@ mod test {
     #[serial]
     async fn mcu_load() {
         test_common::mcu_load(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn publisher_info() {
+        test_common::publisher_info(&mut storage().await).await;
     }
 }

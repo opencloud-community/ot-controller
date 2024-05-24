@@ -38,14 +38,14 @@ use tokio_stream::{
 
 use crate::{
     settings::{self, Connection},
-    storage::{delete_publisher_info, get_publisher_info, MediaStorage},
+    storage::{delete_publisher_info, MediaStorage},
 };
 
 mod types;
 
 pub use self::types::*;
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, ToRedisArgs, FromRedisValue)]
 #[to_redis_args(serde)]
 #[from_redis_value(serde)]
 pub(crate) struct PublisherInfo {
@@ -419,7 +419,7 @@ impl McuPool {
             room_id,
             mcu_id,
             loop_index,
-        } = get_publisher_info(&mut redis, media_session_key).await?;
+        } = redis.get_publisher_info(media_session_key).await?;
 
         let clients = self.clients.read().await;
         let client = clients

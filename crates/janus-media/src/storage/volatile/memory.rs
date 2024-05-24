@@ -162,4 +162,11 @@ impl MemoryMediaState {
     ) {
         self.publisher_info.insert(media_session_key, info);
     }
+
+    pub(super) fn get_publisher_info(
+        &self,
+        media_session_key: MediaSessionKey,
+    ) -> Option<PublisherInfo> {
+        self.publisher_info.get(&media_session_key).cloned()
+    }
 }
