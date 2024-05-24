@@ -19,9 +19,8 @@ mod test_common {
     };
     use pretty_assertions::assert_eq;
 
-    use crate::mcu::McuId;
-
     use super::MediaStorage;
+    use crate::mcu::McuId;
 
     pub const ROOM: SignalingRoomId = SignalingRoomId::nil();
     pub const BOB: ParticipantId = ParticipantId::from_u128(0xdeadbeef);

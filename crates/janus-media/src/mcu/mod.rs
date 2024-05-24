@@ -23,10 +23,11 @@ use opentalk_janus_client::{
     ClientId, JanusMessage, JsepType, RoomId as JanusRoomId, TrickleCandidate,
 };
 use opentalk_signaling_core::{
-    JanusClientSnafu, RedisConnection, RedisSnafu, SerdeJsonSnafu, SignalingModuleError,
+    JanusClientSnafu, RedisConnection, RedisSnafu, SignalingModuleError,
 };
 use opentalk_types::signaling::media::{command::SubscriberConfiguration, MediaSessionType};
 use redis::AsyncCommands;
+use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use snafu::{whatever, OptionExt, Report, ResultExt};
 use tokio::{
@@ -52,7 +53,9 @@ pub use self::types::*;
 /// This information is used when creating a subscriber
 const PUBLISHER_INFO: &str = "opentalk-signaling:mcu:publishers";
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
+#[to_redis_args(serde)]
+#[from_redis_value(serde)]
 struct PublisherInfo<'i> {
     room_id: JanusRoomId,
     mcu_id: Cow<'i, str>,
@@ -300,14 +303,11 @@ impl McuPool {
 
         let (destroy, destroy_sig) = oneshot::channel();
 
-        let info = serde_json::to_string(&PublisherInfo {
+        let info = PublisherInfo {
             room_id,
             mcu_id: Cow::Borrowed(client.id.0.as_ref()),
             loop_index,
-        })
-        .context(SerdeJsonSnafu {
-            message: "Failed to serialize publisher info",
-        })?;
+        };
 
         redis
             .hset(PUBLISHER_INFO, media_session_key.to_string(), info)
@@ -428,16 +428,11 @@ impl McuPool {
     ) -> Result<JanusSubscriber, SignalingModuleError> {
         let mut redis = self.redis.clone();
 
-        let publisher_info_json: String = redis
+        let info: PublisherInfo = redis
             .hget(PUBLISHER_INFO, media_session_key.to_string())
             .await
             .with_context(|_| RedisSnafu {
                 message: format!("Failed to get mcu id for media session key {media_session_key}",),
-            })?;
-
-        let info: PublisherInfo =
-            serde_json::from_str(&publisher_info_json).context(SerdeJsonSnafu {
-                message: "Failed to deserialize publisher info",
             })?;
 
         let clients = self.clients.read().await;

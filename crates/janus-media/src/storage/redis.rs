@@ -14,9 +14,8 @@ use redis::AsyncCommands as _;
 use redis_args::ToRedisArgs;
 use snafu::{whatever, ResultExt as _};
 
-use crate::mcu::McuId;
-
 use super::MediaStorage;
+use crate::mcu::McuId;
 
 #[async_trait]
 impl MediaStorage for RedisConnection {
