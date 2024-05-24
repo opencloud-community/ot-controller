@@ -41,22 +41,17 @@ use tokio_stream::{
 
 use crate::{
     settings::{self, Connection},
-    storage::MediaStorage,
+    storage::{set_publisher_info, MediaStorage, PUBLISHER_INFO},
 };
 
 mod types;
 
 pub use self::types::*;
 
-/// Redis key of the publisher => McuId/JanusRoomId mapping
-///
-/// This information is used when creating a subscriber
-const PUBLISHER_INFO: &str = "opentalk-signaling:mcu:publishers";
-
 #[derive(Debug, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
 #[to_redis_args(serde)]
 #[from_redis_value(serde)]
-struct PublisherInfo<'i> {
+pub(crate) struct PublisherInfo<'i> {
     room_id: JanusRoomId,
     mcu_id: Cow<'i, str>,
     loop_index: Option<usize>,
@@ -309,12 +304,7 @@ impl McuPool {
             loop_index,
         };
 
-        redis
-            .hset(PUBLISHER_INFO, media_session_key.to_string(), info)
-            .await
-            .context(RedisSnafu {
-                message: "Failed to set publisher info",
-            })?;
+        set_publisher_info(&mut redis, media_session_key, info).await?;
 
         redis
             .increase_mcu_load(client.id.clone(), loop_index)

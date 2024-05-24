@@ -15,7 +15,7 @@ use redis_args::ToRedisArgs;
 use snafu::{whatever, ResultExt as _};
 
 use super::MediaStorage;
-use crate::mcu::McuId;
+use crate::mcu::{McuId, MediaSessionKey, PublisherInfo};
 
 #[async_trait]
 impl MediaStorage for RedisConnection {
@@ -268,6 +268,20 @@ impl MediaStorage for RedisConnection {
     }
 }
 
+pub(crate) async fn set_publisher_info<'i>(
+    redis: &mut RedisConnection,
+    media_session_key: MediaSessionKey,
+    info: PublisherInfo<'i>,
+) -> Result<(), SignalingModuleError> {
+    redis
+        .hset(PUBLISHER_INFO, media_session_key.to_string(), info)
+        .await
+        .context(RedisSnafu {
+            message: "Failed to set publisher info",
+        })?;
+    Ok(())
+}
+
 /// Data related to a module inside a participant
 #[derive(ToRedisArgs)]
 #[to_redis_args(
@@ -293,6 +307,11 @@ pub(crate) struct SpeakerKey {
     pub(crate) room: SignalingRoomId,
     pub(crate) participant: ParticipantId,
 }
+
+/// Redis key of the publisher => McuId/JanusRoomId mapping
+///
+/// This information is used when creating a subscriber
+pub(crate) const PUBLISHER_INFO: &str = "opentalk-signaling:mcu:publishers";
 
 /// Redis key for a sorted set of mcu-clients.
 ///
