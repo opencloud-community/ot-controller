@@ -13,16 +13,16 @@ use std::{
     sync::Arc,
 };
 
+use either::Either;
 use opentalk_database::Db;
 use opentalk_db_storage::groups::Group;
 use opentalk_signaling_core::{
     control::{
         exchange,
-        storage::{ControlStorage as _, ControlStorageParticipantAttributes as _, USER_ID},
+        storage::{ControlStorageParticipantAttributes as _, USER_ID},
     },
-    DestroyContext, Event, InitContext, ModuleContext, Participant, RedisConnection,
-    SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
-    VolatileStorageBackend,
+    DestroyContext, Event, InitContext, ModuleContext, Participant, SignalingModule,
+    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types::{
     core::{GroupId, GroupName, ParticipantId, Timestamp, UserId},
@@ -68,7 +68,7 @@ impl Chat {
 #[async_trait::async_trait(?Send)]
 trait ChatStateExt: Sized {
     async fn for_current_room_and_participant(
-        redis_conn: &mut RedisConnection,
+        storage: &mut dyn ChatStorage,
         room: SignalingRoomId,
         participant: ParticipantId,
         groups: &[Group],
@@ -78,21 +78,21 @@ trait ChatStateExt: Sized {
 #[async_trait::async_trait(?Send)]
 impl ChatStateExt for ChatState {
     async fn for_current_room_and_participant(
-        redis_conn: &mut RedisConnection,
+        storage: &mut dyn ChatStorage,
         room: SignalingRoomId,
         participant: ParticipantId,
         groups: &[Group],
     ) -> Result<Self, SignalingModuleError> {
-        let enabled = redis_conn.is_chat_enabled(room.room_id()).await?;
+        let enabled = storage.is_chat_enabled(room.room_id()).await?;
 
-        let room_history = redis_conn.get_room_history(room).await?;
+        let room_history = storage.get_room_history(room).await?;
         let mut groups_history = Vec::new();
         for group in groups {
-            redis_conn
+            storage
                 .add_participant_to_group(room, group.id, participant)
                 .await?;
 
-            let history = redis_conn.get_group_chat_history(room, group.id).await?;
+            let history = storage.get_group_chat_history(room, group.id).await?;
 
             groups_history.push(GroupHistory {
                 name: group.name.clone(),
@@ -101,11 +101,11 @@ impl ChatStateExt for ChatState {
         }
 
         let mut private_history = Vec::new();
-        let correspondents = redis_conn
+        let correspondents = storage
             .get_private_chat_correspondents_for_participant(room, participant)
             .await?;
         for correspondent in correspondents {
-            let history = redis_conn
+            let history = storage
                 .get_private_chat_history(room, participant, correspondent)
                 .await?;
             private_history.push(PrivateHistory {
@@ -114,13 +114,13 @@ impl ChatStateExt for ChatState {
             });
         }
 
-        let last_seen_timestamp_global = redis_conn
+        let last_seen_timestamp_global = storage
             .get_last_seen_timestamp_global(room, participant)
             .await?;
-        let last_seen_timestamps_private = redis_conn
+        let last_seen_timestamps_private = storage
             .get_last_seen_timestamps_private(room, participant)
             .await?;
-        let last_seen_timestamps_group = redis_conn
+        let last_seen_timestamps_group = storage
             .get_last_seen_timestamps_group(room, participant)
             .await?;
 
@@ -136,30 +136,15 @@ impl ChatStateExt for ChatState {
     }
 }
 
-pub struct VolatileWrapper {
-    storage: VolatileStorageBackend,
+trait ChatStorageProvider {
+    fn storage(&mut self) -> &mut dyn ChatStorage;
 }
 
-impl From<VolatileStorageBackend> for VolatileWrapper {
-    fn from(storage: VolatileStorageBackend) -> Self {
-        Self { storage }
-    }
-}
-
-impl VolatileWrapper {
-    fn storage_ref(&self) -> &dyn storage::ChatStorage {
-        if self.storage.is_left() {
-            self.storage.as_ref().left().unwrap()
-        } else {
-            self.storage.as_ref().right().unwrap()
-        }
-    }
-
-    fn storage_mut(&mut self) -> &mut dyn storage::ChatStorage {
-        if self.storage.is_left() {
-            self.storage.as_mut().left().unwrap()
-        } else {
-            self.storage.as_mut().right().unwrap()
+impl ChatStorageProvider for VolatileStorage {
+    fn storage(&mut self) -> &mut dyn ChatStorage {
+        match self.as_mut() {
+            Either::Left(v) => v,
+            Either::Right(v) => v,
         }
     }
 }
@@ -178,8 +163,6 @@ impl SignalingModule for Chat {
 
     type FrontendData = ChatState;
     type PeerFrontendData = ChatPeerState;
-
-    type Volatile = VolatileWrapper;
 
     async fn init(
         mut ctx: InitContext<'_, Self>,
@@ -227,7 +210,7 @@ impl SignalingModule for Chat {
                 participants,
             } => {
                 let module_frontend_data = ChatState::for_current_room_and_participant(
-                    ctx.redis_conn(),
+                    ctx.volatile.storage(),
                     self.room,
                     self.id,
                     &self.groups,
@@ -247,7 +230,8 @@ impl SignalingModule for Chat {
 
                 // Get all user_ids for each participant in the room
                 let user_ids: Vec<Option<UserId>> = ctx
-                    .redis_conn()
+                    .volatile
+                    .storage()
                     .get_attribute_for_participants(self.room, &participant_ids, USER_ID)
                     .await?;
 
@@ -301,7 +285,8 @@ impl SignalingModule for Chat {
             Event::ParticipantJoined(participant_id, peer_frontend_data) => {
                 // Get user id of the joined participant
                 let user_id: Option<UserId> = ctx
-                    .redis_conn()
+                    .volatile
+                    .storage()
                     .get_attribute(self.room, participant_id, USER_ID)
                     .await?;
 
@@ -336,7 +321,8 @@ impl SignalingModule for Chat {
                     return Ok(());
                 }
 
-                ctx.redis_conn()
+                ctx.volatile
+                    .storage()
                     .set_chat_enabled(self.room.room_id(), true)
                     .await?;
 
@@ -351,7 +337,8 @@ impl SignalingModule for Chat {
                     return Ok(());
                 }
 
-                ctx.redis_conn()
+                ctx.volatile
+                    .storage()
                     .set_chat_enabled(self.room.room_id(), false)
                     .await?;
 
@@ -367,7 +354,8 @@ impl SignalingModule for Chat {
                 }
 
                 let chat_enabled = ctx
-                    .redis_conn()
+                    .volatile
+                    .storage()
                     .is_chat_enabled(self.room.room_id())
                     .await?;
 
@@ -410,11 +398,13 @@ impl SignalingModule for Chat {
                             timestamp: ctx.timestamp(),
                         };
 
-                        ctx.redis_conn()
+                        ctx.volatile
+                            .storage()
                             .add_private_chat_correspondents(self.room, self.id, target)
                             .await?;
 
-                        ctx.redis_conn()
+                        ctx.volatile
+                            .storage()
                             .add_message_to_private_chat_history(
                                 self.room,
                                 self.id,
@@ -447,7 +437,8 @@ impl SignalingModule for Chat {
                                 timestamp: ctx.timestamp(),
                             };
 
-                            ctx.redis_conn()
+                            ctx.volatile
+                                .storage()
                                 .add_message_to_group_chat_history(self.room, group.id, &stored_msg)
                                 .await?;
 
@@ -475,7 +466,8 @@ impl SignalingModule for Chat {
                             timestamp: ctx.timestamp(),
                         };
 
-                        ctx.redis_conn()
+                        ctx.volatile
+                            .storage()
                             .add_message_to_room_history(self.room, &stored_msg)
                             .await?;
 
@@ -494,7 +486,7 @@ impl SignalingModule for Chat {
                     return Ok(());
                 }
 
-                if let Err(e) = ctx.redis_conn().delete_room_history(self.room).await {
+                if let Err(e) = ctx.volatile.storage().delete_room_history(self.room).await {
                     log::error!(
                         "Failed to clear room chat history, {}",
                         Report::from_error(e)
@@ -531,17 +523,18 @@ impl SignalingModule for Chat {
         Ok(())
     }
 
-    async fn on_destroy(self, mut ctx: DestroyContext<'_>) {
+    async fn on_destroy(self, ctx: DestroyContext<'_>) {
         // ==== Cleanup room ====
         if ctx.destroy_room() {
-            if let Err(e) = ctx.redis_conn().delete_room_history(self.room).await {
+            if let Err(e) = ctx.volatile.storage().delete_room_history(self.room).await {
                 log::error!(
                     "Failed to remove room chat history on room destroy, {}",
                     Report::from_error(e)
                 );
             }
             if let Err(e) = ctx
-                .redis_conn()
+                .volatile
+                .storage()
                 .delete_chat_enabled(self.room.room_id())
                 .await
             {
@@ -551,7 +544,8 @@ impl SignalingModule for Chat {
                 );
             }
             if let Err(e) = ctx
-                .redis_conn()
+                .volatile
+                .storage()
                 .delete_private_chat_correspondents(self.room)
                 .await
             {
@@ -562,7 +556,8 @@ impl SignalingModule for Chat {
             }
 
             let correspondents = ctx
-                .redis_conn()
+                .volatile
+                .storage()
                 .get_private_chat_correspondents(self.room)
                 .await
                 .unwrap_or_else(|e| {
@@ -574,7 +569,8 @@ impl SignalingModule for Chat {
                 });
             for (a, b) in correspondents.iter().map(ParticipantPair::as_tuple) {
                 if let Err(e) = ctx
-                    .redis_conn()
+                    .volatile
+                    .storage()
                     .delete_private_chat_history(self.room, a, b)
                     .await
                 {
@@ -586,7 +582,8 @@ impl SignalingModule for Chat {
             }
 
             let participants = ctx
-                .redis_conn()
+                .volatile
+                .storage()
                 .get_all_participants(self.room)
                 .await
                 .unwrap_or_else(|e| {
@@ -598,7 +595,8 @@ impl SignalingModule for Chat {
                 });
             for participant in participants {
                 if let Err(e) = ctx
-                    .redis_conn()
+                    .volatile
+                    .storage()
                     .delete_last_seen_timestamp_global(self.room, participant)
                     .await
                 {
@@ -608,7 +606,8 @@ impl SignalingModule for Chat {
                     );
                 }
                 if let Err(e) = ctx
-                    .redis_conn()
+                    .volatile
+                    .storage()
                     .delete_last_seen_timestamps_group(self.room, participant)
                     .await
                 {
@@ -618,7 +617,8 @@ impl SignalingModule for Chat {
                     );
                 }
                 if let Err(e) = ctx
-                    .redis_conn()
+                    .volatile
+                    .storage()
                     .delete_last_seen_timestamps_private(self.room, participant)
                     .await
                 {
@@ -631,7 +631,8 @@ impl SignalingModule for Chat {
         } else {
             if let Some(timestamp) = self.last_seen_timestamp_global {
                 if let Err(e) = ctx
-                    .redis_conn()
+                    .volatile
+                    .storage()
                     .set_last_seen_timestamp_global(self.room, self.id, timestamp)
                     .await
                 {
@@ -648,7 +649,8 @@ impl SignalingModule for Chat {
                     .map(|(k, v)| (k.to_owned(), *v))
                     .collect();
                 if let Err(e) = ctx
-                    .redis_conn()
+                    .volatile
+                    .storage()
                     .set_last_seen_timestamps_group(self.room, self.id, &timestamps)
                     .await
                 {
@@ -669,7 +671,8 @@ impl SignalingModule for Chat {
                     .map(|(k, v)| (*k, *v))
                     .collect();
                 if let Err(e) = ctx
-                    .redis_conn()
+                    .volatile
+                    .storage()
                     .set_last_seen_timestamps_private(self.room, self.id, &timestamps)
                     .await
                 {
@@ -683,7 +686,8 @@ impl SignalingModule for Chat {
 
         // ==== Cleanup groups ====
         for group in self.groups {
-            ctx.redis_conn()
+            ctx.volatile
+                .storage()
                 .remove_participant_from_group(self.room, group.id, self.id)
                 .await;
         }

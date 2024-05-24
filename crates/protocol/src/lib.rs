@@ -5,6 +5,7 @@
 use std::sync::Arc;
 
 use chrono::{Duration, Utc};
+use either::Either;
 use exchange::GenerateUrl;
 use opentalk_database::Db;
 use opentalk_etherpad_client::EtherpadClient;
@@ -12,11 +13,10 @@ use opentalk_signaling_core::{
     assets::{save_asset, AssetError, NewAssetFileName},
     control::{
         self,
-        storage::{ControlStorage as _, ControlStorageParticipantAttributes as _, DISPLAY_NAME},
+        storage::{ControlStorageParticipantAttributes as _, DISPLAY_NAME},
     },
-    DestroyContext, Event, InitContext, ModuleContext, ObjectStorage, RedisConnection,
-    SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
-    VolatileStorageBackend,
+    DestroyContext, Event, InitContext, ModuleContext, ObjectStorage, SignalingModule,
+    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types::{
     core::{FileExtension, ParticipantId},
@@ -60,31 +60,15 @@ pub struct Protocol {
     storage: Arc<ObjectStorage>,
 }
 
-#[derive(Clone)]
-pub struct VolatileWrapper {
-    storage: VolatileStorageBackend,
+trait ProtocolStorageProvider {
+    fn storage(&mut self) -> &mut dyn ProtocolStorage;
 }
 
-impl From<VolatileStorageBackend> for VolatileWrapper {
-    fn from(storage: VolatileStorageBackend) -> Self {
-        Self { storage }
-    }
-}
-
-impl VolatileWrapper {
-    fn storage_ref(&self) -> &dyn storage::ProtocolStorage {
-        if self.storage.is_left() {
-            self.storage.as_ref().left().unwrap()
-        } else {
-            self.storage.as_ref().right().unwrap()
-        }
-    }
-
-    fn storage_mut(&mut self) -> &mut dyn storage::ProtocolStorage {
-        if self.storage.is_left() {
-            self.storage.as_mut().left().unwrap()
-        } else {
-            self.storage.as_mut().right().unwrap()
+impl ProtocolStorageProvider for VolatileStorage {
+    fn storage(&mut self) -> &mut dyn ProtocolStorage {
+        match self.as_mut() {
+            Either::Left(v) => v,
+            Either::Right(v) => v,
         }
     }
 }
@@ -99,8 +83,6 @@ impl SignalingModule for Protocol {
     type ExtEvent = ();
     type FrontendData = ();
     type PeerFrontendData = ProtocolPeerState;
-
-    type Volatile = VolatileWrapper;
 
     async fn init(
         ctx: InitContext<'_, Self>,
@@ -132,7 +114,7 @@ impl SignalingModule for Protocol {
                 frontend_data: _,
                 participants,
             } => {
-                let state = ctx.redis_conn().init_get(self.room_id).await?;
+                let state = ctx.volatile.storage().init_get(self.room_id).await?;
 
                 if matches!(state, Some(state) if state == InitState::Initialized) {
                     let read_url = self.generate_url(&mut ctx, true).await?;
@@ -141,7 +123,8 @@ impl SignalingModule for Protocol {
 
                     for (participant_id, access) in participants {
                         let session_info = ctx
-                            .redis_conn()
+                            .volatile
+                            .storage()
                             .session_get(self.room_id, *participant_id)
                             .await?;
 
@@ -153,7 +136,8 @@ impl SignalingModule for Protocol {
             }
             Event::Leaving => {
                 if let Some(session_info) = ctx
-                    .redis_conn()
+                    .volatile
+                    .storage()
                     .session_delete(self.room_id, self.participant_id)
                     .await?
                 {
@@ -171,7 +155,8 @@ impl SignalingModule for Protocol {
             Event::ParticipantUpdated(participant_id, peer_frontend_data)
             | Event::ParticipantJoined(participant_id, peer_frontend_data) => {
                 let session_info = ctx
-                    .redis_conn()
+                    .volatile
+                    .storage()
                     .session_get(self.room_id, participant_id)
                     .await?;
 
@@ -185,19 +170,19 @@ impl SignalingModule for Protocol {
         Ok(())
     }
 
-    async fn on_destroy(self, mut ctx: DestroyContext<'_>) {
+    async fn on_destroy(self, ctx: DestroyContext<'_>) {
         if ctx.destroy_room() {
-            if let Err(e) = self.cleanup_etherpad(ctx.redis_conn()).await {
+            if let Err(e) = self.cleanup_etherpad(ctx.volatile.storage()).await {
                 log::error!(
-                    "Failed to cleanup etherpad for room {} in redis: {}",
+                    "Failed to cleanup etherpad for room {} in volatile storage: {}",
                     self.room_id,
                     e
                 );
             }
 
-            if let Err(e) = ctx.redis_conn().cleanup(self.room_id).await {
+            if let Err(e) = ctx.volatile.storage().cleanup(self.room_id).await {
                 log::error!(
-                    "Failed to cleanup protocol keys for room {} in redis: {}",
+                    "Failed to cleanup protocol keys for room {} in volatile storage: {}",
                     self.room_id,
                     e
                 );
@@ -236,7 +221,10 @@ impl Protocol {
                     return Ok(());
                 }
 
-                if !self.verify_selection(ctx.redis_conn(), &selection).await? {
+                if !self
+                    .verify_selection(ctx.volatile.storage(), &selection)
+                    .await?
+                {
                     ctx.ws_send(Error::InvalidParticipantSelection);
                 }
 
@@ -244,9 +232,9 @@ impl Protocol {
 
                 // TODO: disallow selecting the same participant twice
 
-                let redis_conn = ctx.redis_conn();
+                let storage = ctx.volatile.storage();
 
-                let init_state = redis_conn.try_start_init(self.room_id).await?;
+                let init_state = storage.try_start_init(self.room_id).await?;
 
                 let first_init = match init_state {
                     Some(state) => {
@@ -261,14 +249,14 @@ impl Protocol {
                     }
                     None => {
                         // No init state was set before -> Initialize the etherpad in this module instance
-                        if let Err(e) = self.init_etherpad(redis_conn).await {
+                        if let Err(e) = self.init_etherpad(storage).await {
                             log::error!(
                                 "Failed to init etherpad for room {}, {}",
                                 self.room_id,
                                 Report::from_error(e)
                             );
 
-                            redis_conn.init_delete(self.room_id).await?;
+                            storage.init_delete(self.room_id).await?;
 
                             ctx.ws_send(Error::FailedInitialization);
 
@@ -307,7 +295,7 @@ impl Protocol {
                     return Ok(());
                 }
 
-                match ctx.redis_conn().init_get(self.room_id).await? {
+                match ctx.volatile.storage().init_get(self.room_id).await? {
                     Some(state) => match state {
                         InitState::Initializing => {
                             ctx.ws_send(Error::CurrentlyInitializing);
@@ -323,7 +311,10 @@ impl Protocol {
                     }
                 }
 
-                if !self.verify_selection(ctx.redis_conn(), &selection).await? {
+                if !self
+                    .verify_selection(ctx.volatile.storage(), &selection)
+                    .await?
+                {
                     ctx.ws_send(Error::InvalidParticipantSelection);
 
                     return Ok(());
@@ -332,7 +323,8 @@ impl Protocol {
                 for participant_id in selection.participant_ids {
                     // check if its actually a writer
                     let session_info = ctx
-                        .redis_conn()
+                        .volatile
+                        .storage()
                         .session_get(self.room_id, participant_id)
                         .await?;
 
@@ -364,7 +356,7 @@ impl Protocol {
                 }
 
                 if !matches!(
-                    ctx.redis_conn().init_get(self.room_id).await?,
+                    ctx.volatile.storage().init_get(self.room_id).await?,
                     Some(InitState::Initialized)
                 ) {
                     ctx.ws_send(Error::NotInitialized);
@@ -372,11 +364,17 @@ impl Protocol {
                 }
 
                 let session_info = ctx
-                    .redis_conn()
+                    .volatile
+                    .storage()
                     .session_get(self.room_id, self.participant_id)
                     .await?;
                 if let Some(session_info) = session_info {
-                    let group_id = ctx.redis_conn().group_get(self.room_id).await?.unwrap();
+                    let group_id = ctx
+                        .volatile
+                        .storage()
+                        .group_get(self.room_id)
+                        .await?
+                        .unwrap();
 
                     let pad_id = format!("{group_id}${PAD_NAME}");
 
@@ -460,7 +458,7 @@ impl Protocol {
     /// Initializes the etherpad-group and -pad for this room
     async fn init_etherpad(
         &self,
-        redis_conn: &mut RedisConnection,
+        storage: &mut dyn ProtocolStorage,
     ) -> Result<(), SignalingModuleError> {
         let group_id = self
             .etherpad
@@ -471,10 +469,10 @@ impl Protocol {
             .create_group_pad(&group_id, PAD_NAME, None)
             .await?;
 
-        redis_conn.group_set(self.room_id, &group_id).await?;
+        storage.group_set(self.room_id, &group_id).await?;
 
         // flag this room as initialized
-        redis_conn.set_initialized(self.room_id).await?;
+        storage.set_initialized(self.room_id).await?;
 
         Ok(())
     }
@@ -484,9 +482,9 @@ impl Protocol {
     /// Returns the generated author id
     async fn create_author(
         &self,
-        redis_conn: &mut RedisConnection,
+        storage: &mut dyn ProtocolStorage,
     ) -> Result<String, SignalingModuleError> {
-        let display_name: String = redis_conn
+        let display_name: String = storage
             .get_attribute(self.room_id, self.participant_id, DISPLAY_NAME)
             .await?;
 
@@ -531,12 +529,12 @@ impl Protocol {
     /// Returns the `[SessionInfo]`
     async fn prepare_and_create_user_session(
         &mut self,
-        redis_conn: &mut RedisConnection,
+        storage: &mut dyn ProtocolStorage,
         readonly: bool,
     ) -> Result<SessionInfo, SignalingModuleError> {
-        let author_id = self.create_author(redis_conn).await?;
+        let author_id = self.create_author(storage).await?;
 
-        let group_id = redis_conn
+        let group_id = storage
             .group_get(self.room_id)
             .await?
             .whatever_context::<&str, SignalingModuleError>(
@@ -558,7 +556,7 @@ impl Protocol {
             readonly,
         };
 
-        redis_conn
+        storage
             .session_set(self.room_id, self.participant_id, &session_info)
             .await?;
 
@@ -574,10 +572,10 @@ impl Protocol {
         ctx: &mut ModuleContext<'_, Self>,
         readonly: bool,
     ) -> Result<String, SignalingModuleError> {
-        let redis_conn = ctx.redis_conn();
+        let storage = ctx.volatile.storage();
 
-        // remove existing sessions from redis
-        if let Some(session_info) = redis_conn
+        // remove existing sessions from volatile storage
+        if let Some(session_info) = storage
             .session_delete(self.room_id, self.participant_id)
             .await?
         {
@@ -588,7 +586,7 @@ impl Protocol {
         }
 
         let session_info = self
-            .prepare_and_create_user_session(redis_conn, readonly)
+            .prepare_and_create_user_session(storage, readonly)
             .await?;
 
         let url = self.etherpad.auth_session_url(
@@ -607,10 +605,10 @@ impl Protocol {
     /// Returns true when all targets are recognized
     async fn verify_selection(
         &self,
-        redis_conn: &mut RedisConnection,
+        storage: &mut dyn ProtocolStorage,
         selection: &ParticipantSelection,
     ) -> Result<bool, SignalingModuleError> {
-        let room_participants = redis_conn.get_all_participants(self.room_id).await?;
+        let room_participants = storage.get_all_participants(self.room_id).await?;
 
         Ok(selection
             .participant_ids
@@ -621,16 +619,16 @@ impl Protocol {
     /// Removes the room related pad and group from etherpad
     async fn cleanup_etherpad(
         &self,
-        redis_conn: &mut RedisConnection,
+        storage: &mut dyn ProtocolStorage,
     ) -> Result<(), SignalingModuleError> {
-        let init_state = redis_conn.init_get(self.room_id).await?;
+        let init_state = storage.init_get(self.room_id).await?;
 
         if init_state.is_none() {
             // Nothing to cleanup
             return Ok(());
         }
 
-        let group_id = redis_conn.group_get(self.room_id).await?.unwrap();
+        let group_id = storage.group_get(self.room_id).await?.unwrap();
 
         let pad_id = format!("{group_id}${PAD_NAME}");
 

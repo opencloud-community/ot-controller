@@ -72,7 +72,9 @@ impl RecordingStorage for VolatileStaticMemoryStorage {
         state()
             .read()
             .get_stream(room, target)
-            .context(NotFoundSnafu)
+            .with_context(|| NotFoundSnafu {
+                message: format!("could not find stream {target} in room {room}"),
+            })
     }
 
     #[tracing::instrument(level = "debug", skip(self))]

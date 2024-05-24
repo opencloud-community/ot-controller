@@ -12,13 +12,13 @@
 
 use std::time::{Duration, Instant};
 
-use opentalk_signaling_core::{Participant, RedisConnection};
+use opentalk_signaling_core::Participant;
 use opentalk_types::core::{BreakoutRoomId, ParticipantId, ResumptionToken, RoomId, UserId};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use tokio::time::sleep_until;
 
-use super::storage::{SignalingStorage as _, SignalingStorageError};
+use super::storage::{SignalingStorage, SignalingStorageError};
 use crate::Result;
 
 const RESUMPTION_REFRESH_INTERVAL: u64 = 60;
@@ -50,11 +50,11 @@ impl ResumptionTokenKeepAlive {
         }
     }
 
-    pub async fn set_initial(
+    pub(crate) async fn set_initial(
         &mut self,
-        redis_conn: &mut RedisConnection,
+        storage: &mut dyn SignalingStorage,
     ) -> Result<(), SignalingStorageError> {
-        redis_conn
+        storage
             .set_resumption_token_data_if_not_exists(&self.resumption_token, &self.data)
             .await
     }
@@ -63,13 +63,13 @@ impl ResumptionTokenKeepAlive {
         sleep_until(self.next_refresh.into()).await;
     }
 
-    pub async fn refresh(
+    pub(crate) async fn refresh(
         &mut self,
-        redis_conn: &mut RedisConnection,
+        storage: &mut dyn SignalingStorage,
     ) -> Result<(), SignalingStorageError> {
         self.next_refresh = Instant::now() + Duration::from_secs(RESUMPTION_REFRESH_INTERVAL);
 
-        redis_conn
+        storage
             .refresh_resumption_token(&self.resumption_token)
             .await
     }

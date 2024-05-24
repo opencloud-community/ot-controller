@@ -5,7 +5,10 @@
 use std::collections::{HashMap, HashSet};
 
 use async_trait::async_trait;
-use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId};
+use opentalk_signaling_core::{
+    control::storage::{ControlStorageParticipantAttributesRaw, ControlStorageParticipantSet},
+    SignalingModuleError, SignalingRoomId,
+};
 use opentalk_types::{
     core::{GroupId, GroupName, ParticipantId, RoomId, Timestamp},
     signaling::chat::state::StoredMessage,
@@ -14,7 +17,9 @@ use opentalk_types::{
 use crate::ParticipantPair;
 
 #[async_trait(?Send)]
-pub(crate) trait ChatStorage {
+pub(crate) trait ChatStorage:
+    ControlStorageParticipantAttributesRaw + ControlStorageParticipantSet
+{
     async fn get_room_history(
         &mut self,
         room: SignalingRoomId,

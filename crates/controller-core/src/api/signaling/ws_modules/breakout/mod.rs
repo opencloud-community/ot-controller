@@ -10,17 +10,18 @@ use std::{
 };
 
 use actix_http::ws::CloseCode;
+use either::Either;
 use futures::FutureExt;
 use opentalk_signaling_core::{
     control::{
         self,
         storage::{
-            AttributeActions as _, ControlStorage, ControlStorageParticipantAttributesBulk as _,
-            AVATAR_URL, DISPLAY_NAME, JOINED_AT, KIND, LEFT_AT, ROLE,
+            AttributeActions, ControlStorageParticipantAttributes as _, AVATAR_URL, DISPLAY_NAME,
+            JOINED_AT, KIND, LEFT_AT, ROLE,
         },
     },
     DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
-    SignalingModuleInitData, SignalingRoomId, VolatileStorageBackend,
+    SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types::{
     core::{BreakoutRoomId, ParticipantId, RoomId},
@@ -37,7 +38,7 @@ use opentalk_types::{
 use snafu::whatever;
 use tokio::time::sleep;
 
-use self::storage::{BreakoutConfig, BreakoutStorage as _};
+use self::storage::{BreakoutConfig, BreakoutStorage};
 
 pub mod exchange;
 pub mod storage;
@@ -54,31 +55,15 @@ pub enum TimerEvent {
     LeavePeriodExpired,
 }
 
-#[derive(Clone)]
-pub struct VolatileWrapper {
-    storage: VolatileStorageBackend,
+pub(crate) trait BreakoutStorageProvider {
+    fn breakout_storage(&mut self) -> &mut dyn BreakoutStorage;
 }
 
-impl From<VolatileStorageBackend> for VolatileWrapper {
-    fn from(storage: VolatileStorageBackend) -> Self {
-        Self { storage }
-    }
-}
-
-impl VolatileWrapper {
-    fn storage_ref(&self) -> &dyn storage::BreakoutStorage {
-        if self.storage.is_left() {
-            self.storage.as_ref().left().unwrap()
-        } else {
-            self.storage.as_ref().right().unwrap()
-        }
-    }
-
-    fn storage_mut(&mut self) -> &mut dyn storage::BreakoutStorage {
-        if self.storage.is_left() {
-            self.storage.as_mut().left().unwrap()
-        } else {
-            self.storage.as_mut().right().unwrap()
+impl BreakoutStorageProvider for VolatileStorage {
+    fn breakout_storage(&mut self) -> &mut dyn BreakoutStorage {
+        match self.as_mut() {
+            Either::Left(v) => v,
+            Either::Right(v) => v,
         }
     }
 }
@@ -94,8 +79,6 @@ impl SignalingModule for BreakoutRooms {
     type ExtEvent = TimerEvent;
     type FrontendData = BreakoutState;
     type PeerFrontendData = ();
-
-    type Volatile = VolatileWrapper;
 
     async fn init(
         ctx: InitContext<'_, Self>,
@@ -121,7 +104,12 @@ impl SignalingModule for BreakoutRooms {
                 frontend_data,
                 participants: _,
             } => {
-                if let Some(config) = ctx.redis_conn().get_breakout_config(self.parent).await? {
+                if let Some(config) = ctx
+                    .volatile
+                    .breakout_storage()
+                    .get_breakout_config(self.parent)
+                    .await?
+                {
                     let mut expires = None;
 
                     // If the breakout rooms have an expiry, calculate a rough `Duration` to sleep.
@@ -212,7 +200,11 @@ impl SignalingModule for BreakoutRooms {
                 Ok(())
             }
             Event::Leaving => {
-                let config = ctx.redis_conn().get_breakout_config(self.parent).await?;
+                let config = ctx
+                    .volatile
+                    .breakout_storage()
+                    .get_breakout_config(self.parent)
+                    .await?;
 
                 if config.is_some() || self.breakout_room.is_some() {
                     ctx.exchange_publish(
@@ -273,19 +265,25 @@ impl BreakoutRooms {
         room: SignalingRoomId,
         list: &mut Vec<ParticipantInOtherRoom>,
     ) -> Result<(), SignalingModuleError> {
-        let breakout_room_participants = ctx.redis_conn().get_all_participants(room).await?;
+        let breakout_room_participants = ctx
+            .volatile
+            .breakout_storage()
+            .get_all_participants(room)
+            .await?;
 
         for participant in breakout_room_participants {
             let res = ctx
-                .redis_conn()
-                .bulk_attribute_actions(room, participant)
-                .get(DISPLAY_NAME)
-                .get(ROLE)
-                .get(AVATAR_URL)
-                .get(KIND)
-                .get(JOINED_AT)
-                .get(LEFT_AT)
-                .apply(ctx.redis_conn())
+                .volatile
+                .breakout_storage()
+                .bulk_attribute_actions(
+                    AttributeActions::new(room, participant)
+                        .get(DISPLAY_NAME)
+                        .get(ROLE)
+                        .get(AVATAR_URL)
+                        .get(KIND)
+                        .get(JOINED_AT)
+                        .get(LEFT_AT),
+                )
                 .await;
 
             match res {
@@ -354,7 +352,8 @@ impl BreakoutRooms {
                     duration: start.duration,
                 };
 
-                ctx.redis_conn()
+                ctx.volatile
+                    .breakout_storage()
                     .set_breakout_config(self.parent, &config)
                     .await?;
 
@@ -368,7 +367,12 @@ impl BreakoutRooms {
                 );
             }
             BreakoutCommand::Stop => {
-                if ctx.redis_conn().del_breakout_config(self.parent).await? {
+                if ctx
+                    .volatile
+                    .breakout_storage()
+                    .del_breakout_config(self.parent)
+                    .await?
+                {
                     ctx.exchange_publish(
                         control::exchange::global_room_all_participants(self.parent),
                         exchange::Message::Stop,

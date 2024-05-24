@@ -69,7 +69,9 @@ impl PollsStorage for VolatileStaticMemoryStorage {
         state()
             .read()
             .poll_results(room, poll)
-            .context(NotFoundSnafu)
+            .with_context(|| NotFoundSnafu {
+                message: format!("Could not find results for poll {poll} in room {room}"),
+            })
     }
 
     async fn vote(

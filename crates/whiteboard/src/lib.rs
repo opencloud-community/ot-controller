@@ -5,13 +5,13 @@
 use std::sync::Arc;
 
 use client::SpacedeckClient;
+use either::Either;
 use futures::stream::once;
 use opentalk_database::Db;
 use opentalk_signaling_core::{
     assets::{save_asset, AssetError, NewAssetFileName},
-    control, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage, RedisConnection,
-    SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
-    VolatileStorageBackend,
+    control, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage, SignalingModule,
+    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types::{
     core::{FileExtension, Timestamp},
@@ -26,7 +26,7 @@ use opentalk_types::{
     },
 };
 use snafu::{whatever, Report};
-use storage::{InitState, SpaceInfo, WhiteboardStorage as _};
+use storage::{InitState, SpaceInfo, WhiteboardStorage};
 use url::Url;
 
 mod client;
@@ -54,31 +54,15 @@ pub struct GetPdfEvent {
     timestamp: Timestamp,
 }
 
-#[derive(Clone)]
-pub struct VolatileWrapper {
-    storage: VolatileStorageBackend,
+trait WhiteboardStorageProvider {
+    fn storage(&mut self) -> &mut dyn WhiteboardStorage;
 }
 
-impl From<VolatileStorageBackend> for VolatileWrapper {
-    fn from(storage: VolatileStorageBackend) -> Self {
-        Self { storage }
-    }
-}
-
-impl VolatileWrapper {
-    fn storage_ref(&self) -> &dyn storage::WhiteboardStorage {
-        if self.storage.is_left() {
-            self.storage.as_ref().left().unwrap()
-        } else {
-            self.storage.as_ref().right().unwrap()
-        }
-    }
-
-    fn storage_mut(&mut self) -> &mut dyn storage::WhiteboardStorage {
-        if self.storage.is_left() {
-            self.storage.as_mut().left().unwrap()
-        } else {
-            self.storage.as_mut().right().unwrap()
+impl WhiteboardStorageProvider for VolatileStorage {
+    fn storage(&mut self) -> &mut dyn WhiteboardStorage {
+        match self.as_mut() {
+            Either::Left(v) => v,
+            Either::Right(v) => v,
         }
     }
 }
@@ -100,8 +84,6 @@ impl SignalingModule for Whiteboard {
     type FrontendData = WhiteboardState;
 
     type PeerFrontendData = ();
-
-    type Volatile = VolatileWrapper;
 
     async fn init(
         ctx: InitContext<'_, Self>,
@@ -129,7 +111,7 @@ impl SignalingModule for Whiteboard {
                 frontend_data,
                 participants: _,
             } => {
-                let data = match ctx.redis_conn().get_init_state(self.room_id).await? {
+                let data = match ctx.volatile.storage().get_init_state(self.room_id).await? {
                     Some(state) => state.into(),
                     None => WhiteboardState::NotInitialized,
                 };
@@ -142,7 +124,7 @@ impl SignalingModule for Whiteboard {
                 match event {
                     exchange::Event::Initialized => {
                         if let Some(InitState::Initialized(space_info)) =
-                            ctx.redis_conn().get_init_state(self.room_id).await?
+                            ctx.volatile.storage().get_init_state(self.room_id).await?
                         {
                             ctx.ws_send(AccessUrl {
                                 url: space_info.url,
@@ -173,7 +155,7 @@ impl SignalingModule for Whiteboard {
                                 err
                             );
 
-                            self.cleanup(ctx.redis_conn()).await?;
+                            self.cleanup(ctx.volatile.storage()).await?;
 
                             ctx.ws_send(Error::InitializationFailed);
                         }
@@ -186,7 +168,7 @@ impl SignalingModule for Whiteboard {
                         }
 
                         if let Some(storage::InitState::Initialized(info)) =
-                            ctx.redis_conn().get_init_state(self.room_id).await?
+                            ctx.volatile.storage().get_init_state(self.room_id).await?
                         {
                             let client = self.client.clone();
                             let timestamp = ctx.timestamp();
@@ -257,12 +239,12 @@ impl SignalingModule for Whiteboard {
         }
     }
 
-    async fn on_destroy(self, mut ctx: DestroyContext<'_>) {
+    async fn on_destroy(self, ctx: DestroyContext<'_>) {
         // FIXME: We can not save the PDF here as it potentially takes more than a few seconds to generate the PDF
         // and we hold the r3dlock in the destroy context.
 
         if ctx.destroy_room() {
-            if let Err(err) = self.cleanup(ctx.redis_conn()).await {
+            if let Err(err) = self.cleanup(ctx.volatile.storage()).await {
                 log::error!(
                     "Failed to cleanup spacedeck for room `{}`: {}",
                     self.room_id,
@@ -298,7 +280,7 @@ impl Whiteboard {
         &self,
         ctx: &mut ModuleContext<'_, Self>,
     ) -> Result<(), SignalingModuleError> {
-        match ctx.redis_conn().try_start_init(self.room_id).await? {
+        match ctx.volatile.storage().try_start_init(self.room_id).await? {
             Some(state) => match state {
                 InitState::Initializing => ctx.ws_send(Error::CurrentlyInitializing),
                 InitState::Initialized(_) => ctx.ws_send(Error::AlreadyInitialized),
@@ -320,7 +302,8 @@ impl Whiteboard {
                     url,
                 };
 
-                ctx.redis_conn()
+                ctx.volatile
+                    .storage()
                     .set_initialized(self.room_id, space_info)
                     .await?;
 
@@ -333,13 +316,16 @@ impl Whiteboard {
         Ok(())
     }
 
-    async fn cleanup(&self, redis_conn: &mut RedisConnection) -> Result<(), SignalingModuleError> {
-        let state = match redis_conn.get_init_state(self.room_id).await? {
+    async fn cleanup(
+        &self,
+        storage: &mut dyn WhiteboardStorage,
+    ) -> Result<(), SignalingModuleError> {
+        let state = match storage.get_init_state(self.room_id).await? {
             Some(state) => state,
             None => return Ok(()),
         };
 
-        redis_conn.delete_init_state(self.room_id).await?;
+        storage.delete_init_state(self.room_id).await?;
 
         if let InitState::Initialized(space_info) = state {
             self.client.delete_space(&space_info.id).await?;

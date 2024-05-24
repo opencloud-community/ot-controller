@@ -14,7 +14,7 @@ use opentalk_database::Db;
 use opentalk_db_storage::rooms::Room;
 use opentalk_signaling_core::{
     assets::{save_asset, verify_storage_usage, NewAssetFileName},
-    ObjectStorage, Participant, RedisConnection,
+    ObjectStorage, Participant, VolatileStorage,
 };
 use opentalk_types::api::{
     error::ApiError,
@@ -39,7 +39,7 @@ const REQUIRED_RECORDING_ROLE: &str = "opentalk-recorder";
 pub async fn start(
     settings: SharedSettingsActix,
     db: Data<Db>,
-    redis_ctx: Data<RedisConnection>,
+    volatile: Data<VolatileStorage>,
     body: Json<StartBody>,
 ) -> Result<Json<ServiceStartResponse>, ApiError> {
     let mut conn = db.get_conn().await?;
@@ -48,7 +48,7 @@ pub async fn start(
         return Err(ApiError::not_found());
     }
 
-    let mut redis_conn = (**redis_ctx).clone();
+    let mut volatile = (**volatile).clone();
     let body = body.into_inner();
 
     let room = Room::get(&mut conn, body.room_id).await?;
@@ -56,7 +56,7 @@ pub async fn start(
     verify_storage_usage(&mut conn, room.created_by).await?;
 
     let (ticket, resumption) = start_or_continue_signaling_session(
-        &mut redis_conn,
+        &mut volatile,
         Participant::Recorder,
         room.id,
         None,

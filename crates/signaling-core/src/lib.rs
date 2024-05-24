@@ -40,11 +40,11 @@ pub use module_context::{ExchangePublish, ModuleContext};
 pub use object_storage::{ObjectStorage, ObjectStorageError};
 pub use participant::Participant;
 pub use redis_wrapper::{RedisConnection, RedisMetrics};
-pub use room_lock::{LockError, Locking};
+pub use room_lock::{LockError, RoomLocking, RoomLockingProvider};
 pub use runner_id::RunnerId;
 pub use signaling_module::*;
 pub use signaling_room_id::SignalingRoomId;
-pub use volatile_storage::{VolatileStaticMemoryStorage, VolatileStorage, VolatileStorageBackend};
+pub use volatile_storage::{VolatileStaticMemoryStorage, VolatileStorage};
 
 #[async_trait(?Send)]
 pub trait RegisterModules {

@@ -31,7 +31,7 @@ use serial_test::serial;
 #[actix_rt::test]
 #[serial]
 async fn last_seen_timestamps() {
-    let test_ctx = TestContext::new().await;
+    let test_ctx = TestContext::default().await;
 
     let user1 = test_ctx
         .db_ctx
@@ -60,7 +60,7 @@ async fn last_seen_timestamps() {
     let mut module_tester = ModuleTester::<Chat>::new(
         test_ctx.db_ctx.db.clone(),
         test_ctx.authz,
-        test_ctx.redis_conn,
+        test_ctx.volatile,
         room,
     );
 
@@ -229,7 +229,7 @@ async fn last_seen_timestamps() {
 #[actix_rt::test]
 #[serial]
 async fn common_groups_on_join() {
-    let test_ctx = TestContext::new().await;
+    let test_ctx = TestContext::default().await;
 
     let user1 = test_ctx
         .db_ctx
@@ -259,7 +259,7 @@ async fn common_groups_on_join() {
     let mut module_tester = ModuleTester::<Chat>::new(
         test_ctx.db_ctx.db.clone(),
         test_ctx.authz,
-        test_ctx.redis_conn,
+        test_ctx.volatile,
         room,
     );
 
@@ -366,7 +366,7 @@ async fn common_groups_on_join() {
 #[actix_rt::test]
 #[serial]
 async fn private_chat_history_on_join() {
-    let test_ctx = TestContext::new().await;
+    let test_ctx = TestContext::default().await;
 
     let user1 = test_ctx
         .db_ctx
@@ -390,7 +390,7 @@ async fn private_chat_history_on_join() {
     let mut module_tester = ModuleTester::<Chat>::new(
         test_ctx.db_ctx.db.clone(),
         test_ctx.authz,
-        test_ctx.redis_conn,
+        test_ctx.volatile,
         room,
     );
 

@@ -3,14 +3,19 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use async_trait::async_trait;
-use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId};
+use opentalk_signaling_core::{
+    control::storage::{ControlStorageParticipantAttributesRaw, ControlStorageParticipantSet},
+    SignalingModuleError, SignalingRoomId,
+};
 use opentalk_types::core::ParticipantId;
 
 use super::InitState;
 use crate::SessionInfo;
 
 #[async_trait(?Send)]
-pub(crate) trait ProtocolStorage {
+pub(crate) trait ProtocolStorage:
+    ControlStorageParticipantSet + ControlStorageParticipantAttributesRaw
+{
     async fn group_set(
         &mut self,
         room_id: SignalingRoomId,

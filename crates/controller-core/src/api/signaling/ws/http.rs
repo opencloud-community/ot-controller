@@ -10,8 +10,7 @@ use kustos::Authz;
 use opentalk_database::Db;
 use opentalk_db_storage::{rooms::Room, users::User};
 use opentalk_signaling_core::{
-    ExchangeHandle, ObjectStorage, Participant, RedisConnection, SignalingMetrics, SignalingModule,
-    VolatileStorageBackend,
+    ExchangeHandle, ObjectStorage, Participant, SignalingMetrics, SignalingModule, VolatileStorage,
 };
 use opentalk_types::{api::error::ApiError, common::tariff::TariffResource, core::TicketToken};
 use snafu::Report;
@@ -28,7 +27,7 @@ use super::{
 use crate::{
     api::signaling::{
         resumption::{ResumptionData, ResumptionTokenKeepAlive},
-        storage::SignalingStorage as _,
+        storage::{SignalingStorage, SignalingStorageProvider as _},
         ticket::TicketData,
         ws::actor::WebSocketActor,
     },
@@ -72,8 +71,7 @@ pub(crate) async fn ws_service(
     db: Data<Db>,
     storage: Data<ObjectStorage>,
     authz: Data<Authz>,
-    redis_conn: Data<RedisConnection>,
-    volatile: Data<VolatileStorageBackend>,
+    volatile: Data<VolatileStorage>,
     exchange_handle: Data<ExchangeHandle>,
     metrics: Data<SignalingMetrics>,
     protocols: Data<SignalingProtocols>,
@@ -82,7 +80,7 @@ pub(crate) async fn ws_service(
     stream: web::Payload,
     settings: SharedSettingsActix,
 ) -> actix_web::Result<HttpResponse> {
-    let mut redis_conn = (**redis_conn).clone();
+    let mut volatile = (**volatile).clone();
 
     let request_id = if let Some(request_id) = request.extensions().get::<RequestId>() {
         *request_id
@@ -95,12 +93,12 @@ pub(crate) async fn ws_service(
     let (ticket, protocol) = read_request_header(&request, protocols.0)?;
 
     // Read ticket data from storage
-    let ticket_data = take_ticket_data_from_storage(&mut redis_conn, &ticket).await?;
+    let ticket_data = take_ticket_data_from_storage(volatile.signaling_storage(), &ticket).await?;
 
     // Get user & room from database using the ticket data
     let (participant, room) = get_user_and_room_from_ticket_data(db.clone(), &ticket_data).await?;
 
-    // Create resumption data to be refreshed by the runner in redis
+    // Create resumption data to be refreshed by the runner in volatile storage
     let resumption_data = ResumptionData {
         participant_id: ticket_data.participant_id,
         participant: match &participant {
@@ -145,8 +143,7 @@ pub(crate) async fn ws_service(
         db.into_inner(),
         storage.into_inner(),
         authz.into_inner(),
-        redis_conn,
-        (**volatile).clone(),
+        volatile.clone(),
         (**exchange_handle).clone(),
         resumption_keep_alive,
     )
@@ -264,10 +261,10 @@ fn read_request_header(
 }
 
 async fn take_ticket_data_from_storage(
-    redis_conn: &mut RedisConnection,
+    storage: &mut dyn SignalingStorage,
     ticket: &TicketToken,
 ) -> Result<TicketData, ApiError> {
-    let ticket_data = redis_conn.take_ticket(ticket).await.map_err(|e| {
+    let ticket_data = storage.take_ticket(ticket).await.map_err(|e| {
         log::warn!(
             "Unable to get ticket data in storage: {}",
             Report::from_error(e)

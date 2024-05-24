@@ -91,7 +91,7 @@ async fn start_poll(
 #[actix_rt::test]
 #[serial]
 async fn full_poll_with_2sec_duration() {
-    let test_ctx = TestContext::new().await;
+    let test_ctx = TestContext::default().await;
 
     let (mut module_tester, _user1, _user2) = common::setup_users::<Polls>(&test_ctx, ()).await;
 
@@ -410,7 +410,7 @@ async fn full_poll_with_2sec_duration() {
 #[actix_rt::test]
 #[serial]
 async fn poll_with_invalid_multiple_choice() {
-    let test_ctx = TestContext::new().await;
+    let test_ctx = TestContext::default().await;
 
     let (mut module_tester, _user1, _user2) = common::setup_users::<Polls>(&test_ctx, ()).await;
 

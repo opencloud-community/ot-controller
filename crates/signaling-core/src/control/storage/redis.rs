@@ -20,95 +20,17 @@ use serde::{de::DeserializeOwned, Serialize};
 use snafu::ResultExt;
 
 use super::{
-    control_storage::{ControlEventStorage, ControlStorageParticipantAttributesBulk},
+    control_storage::{
+        AttributeAction, ControlStorageEvent, ControlStorageParticipantSet,
+        ControlStorageSkipWaitingRoom,
+    },
     AttributeActions, AttributeId, ControlStorage, ControlStorageParticipantAttributesRaw, LEFT_AT,
     ROLE, SKIP_WAITING_ROOM_KEY_EXPIRY,
 };
-use crate::{RedisConnection, RedisSnafu, SerdeJsonSnafu, SignalingModuleError, SignalingRoomId};
+use crate::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 
 #[async_trait(?Send)]
 impl ControlStorage for RedisConnection {
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn participant_set_exists(
-        &mut self,
-        room: SignalingRoomId,
-    ) -> Result<bool, SignalingModuleError> {
-        self.exists(RoomParticipants { room })
-            .await
-            .context(RedisSnafu {
-                message: "Failed to check if participants exist",
-            })
-    }
-
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn get_all_participants(
-        &mut self,
-        room: SignalingRoomId,
-    ) -> Result<BTreeSet<ParticipantId>, SignalingModuleError> {
-        self.smembers(RoomParticipants { room })
-            .await
-            .context(RedisSnafu {
-                message: "Failed to get participants",
-            })
-    }
-
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn remove_participant_set(
-        &mut self,
-        room: SignalingRoomId,
-    ) -> Result<(), SignalingModuleError> {
-        self.del(RoomParticipants { room })
-            .await
-            .context(RedisSnafu {
-                message: "Failed to del participants",
-            })
-    }
-
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn participants_contains(
-        &mut self,
-        room: SignalingRoomId,
-        participant: ParticipantId,
-    ) -> Result<bool, SignalingModuleError> {
-        self.sismember(RoomParticipants { room }, participant)
-            .await
-            .context(RedisSnafu {
-                message: "Failed to check if participants contains participant",
-            })
-    }
-
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn check_participants_exist(
-        &mut self,
-        room: SignalingRoomId,
-        participants: &[ParticipantId],
-    ) -> Result<bool, SignalingModuleError> {
-        let bools: Vec<bool> = redis::cmd("SMISMEMBER")
-            .arg(RoomParticipants { room })
-            .arg(participants)
-            .query_async(self)
-            .await
-            .context(RedisSnafu {
-                message: "Failed to check if participants contains participant",
-            })?;
-
-        Ok(bools.into_iter().all(identity))
-    }
-
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn add_participant_to_set(
-        &mut self,
-        room: SignalingRoomId,
-        participant: ParticipantId,
-    ) -> Result<bool, SignalingModuleError> {
-        self.sadd(RoomParticipants { room }, participant)
-            .await
-            .map(|num_added: usize| num_added > 0)
-            .context(RedisSnafu {
-                message: "Failed to add own participant id to set",
-            })
-    }
-
     #[tracing::instrument(level = "debug", skip(self))]
     async fn remove_attribute_key(
         &mut self,
@@ -279,7 +201,10 @@ impl ControlStorage for RedisConnection {
             message: "Failed to DEL the point in time the room closes",
         })
     }
+}
 
+#[async_trait(?Send)]
+impl ControlStorageSkipWaitingRoom for RedisConnection {
     #[tracing::instrument(level = "debug", skip(self))]
     async fn set_skip_waiting_room_with_expiry(
         &mut self,
@@ -362,6 +287,90 @@ impl ControlStorage for RedisConnection {
     }
 }
 
+#[async_trait(?Send)]
+impl ControlStorageParticipantSet for RedisConnection {
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn participant_set_exists(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<bool, SignalingModuleError> {
+        self.exists(RoomParticipants { room })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to check if participants exist",
+            })
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_all_participants(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<BTreeSet<ParticipantId>, SignalingModuleError> {
+        self.smembers(RoomParticipants { room })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to get participants",
+            })
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn remove_participant_set(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<(), SignalingModuleError> {
+        self.del(RoomParticipants { room })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to del participants",
+            })
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn participants_contains(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<bool, SignalingModuleError> {
+        self.sismember(RoomParticipants { room }, participant)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to check if participants contains participant",
+            })
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn check_participants_exist(
+        &mut self,
+        room: SignalingRoomId,
+        participants: &[ParticipantId],
+    ) -> Result<bool, SignalingModuleError> {
+        let bools: Vec<bool> = redis::cmd("SMISMEMBER")
+            .arg(RoomParticipants { room })
+            .arg(participants)
+            .query_async(self)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to check if participants contains participant",
+            })?;
+
+        Ok(bools.into_iter().all(identity))
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn add_participant_to_set(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<bool, SignalingModuleError> {
+        self.sadd(RoomParticipants { room }, participant)
+            .await
+            .map(|num_added: usize| num_added > 0)
+            .context(RedisSnafu {
+                message: "Failed to add own participant id to set",
+            })
+    }
+}
+
 /// Describes a set of participants inside a room.
 /// This MUST always be locked before accessing it
 #[derive(ToRedisArgs)]
@@ -401,114 +410,6 @@ pub struct RoomTariff {
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:closes_at")]
 struct RoomClosesAt {
     room: SignalingRoomId,
-}
-
-pub struct RedisBulkAttributeActions {
-    room: SignalingRoomId,
-    participant: ParticipantId,
-    pipe: redis::Pipeline,
-}
-
-#[async_trait(?Send)]
-impl AttributeActions for RedisBulkAttributeActions {
-    fn set<V: Serialize>(&mut self, attribute: AttributeId, value: V) -> &mut Self {
-        let serialized = serde_json::to_value(value).expect("attribute value must be serializable");
-        self.pipe
-            .hset(
-                RoomParticipantAttributes {
-                    room: self.room,
-                    attribute,
-                },
-                self.participant,
-                WrappedAttributeValueJson(serialized),
-            )
-            .ignore();
-
-        self
-    }
-
-    fn get(&mut self, attribute: AttributeId) -> &mut Self {
-        self.pipe.hget(
-            RoomParticipantAttributes {
-                room: self.room,
-                attribute,
-            },
-            self.participant,
-        );
-
-        self
-    }
-
-    fn del(&mut self, attribute: AttributeId) -> &mut Self {
-        self.pipe
-            .hdel(
-                RoomParticipantAttributes {
-                    room: self.room,
-                    attribute,
-                },
-                self.participant,
-            )
-            .ignore();
-
-        self
-    }
-}
-
-// FIXME: Make the type inference better. e.g. by passing the type to get and letting get extend the final type.
-impl RedisBulkAttributeActions {
-    fn new(room: SignalingRoomId, participant: ParticipantId) -> Self {
-        let mut pipe = redis::pipe();
-        pipe.atomic();
-
-        Self {
-            room,
-            participant,
-            pipe: redis::pipe(),
-        }
-    }
-
-    pub async fn query_async<T: FromRedisValue>(
-        &self,
-        redis_conn: &mut RedisConnection,
-    ) -> redis::RedisResult<T> {
-        self.pipe.query_async(redis_conn).await
-    }
-}
-
-#[async_trait(?Send)]
-impl ControlStorageParticipantAttributesBulk for RedisConnection {
-    type BulkAttributeActions = RedisBulkAttributeActions;
-
-    fn bulk_attribute_actions(
-        &self,
-        room: SignalingRoomId,
-        participant: ParticipantId,
-    ) -> Self::BulkAttributeActions {
-        RedisBulkAttributeActions::new(room, participant)
-    }
-
-    #[tracing::instrument(level = "debug", skip(self, actions))]
-    async fn perform_bulk_attribute_actions<T: DeserializeOwned>(
-        &mut self,
-        actions: &Self::BulkAttributeActions,
-    ) -> Result<T, SignalingModuleError> {
-        let WrappedAttributeValueJson(mut value) =
-            actions
-                .query_async(self)
-                .await
-                .with_context(|_| RedisSnafu {
-                    message: "Failed to perform bulk attribute actions".to_string(),
-                })?;
-        if value == serde_json::Value::Array(Vec::new()) {
-            value = serde_json::Value::Null;
-        }
-        let deserialized = serde_json::from_value(value).with_context(|e| SerdeJsonSnafu {
-            message: format!(
-                "Failed to deserialize JSON result from redis bulk attribute actions, {e}"
-            ),
-        })?;
-        Ok(deserialized)
-    }
 }
 
 /// Key used for setting the `skip_waiting_room` attribute for a participant
@@ -613,6 +514,30 @@ impl ControlStorageParticipantAttributesRaw for RedisConnection {
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_attribute_for_participants_raw(
+        &mut self,
+        room: SignalingRoomId,
+        participants: &[ParticipantId],
+        attribute: AttributeId,
+    ) -> Result<Vec<serde_json::Value>, SignalingModuleError> {
+        // Special case: HMGET cannot handle empty arrays (missing arguments)
+        if participants.is_empty() {
+            Ok(vec![])
+        } else {
+            // need manual HMGET command as the HGET command wont work with single value vector input
+            let WrappedAttributeValue::<Vec<serde_json::Value>>(value) = redis::cmd("HMGET")
+                .arg(RoomParticipantAttributes { room, attribute })
+                .arg(participants)
+                .query_async(self)
+                .await
+                .with_context(|_| RedisSnafu {
+                    message: format!("Failed to get attribute '{attribute}' for all participants"),
+                })?;
+            Ok(value)
+        }
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
     async fn set_attribute_raw(
         &mut self,
         room: SignalingRoomId,
@@ -647,33 +572,64 @@ impl ControlStorageParticipantAttributesRaw for RedisConnection {
             })
     }
 
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn get_attribute_for_participants_raw(
+    #[tracing::instrument(level = "debug", skip(self, actions))]
+    async fn bulk_attribute_actions_raw(
         &mut self,
-        room: SignalingRoomId,
-        participants: &[ParticipantId],
-        attribute: AttributeId,
-    ) -> Result<Vec<serde_json::Value>, SignalingModuleError> {
-        // Special case: HMGET cannot handle empty arrays (missing arguments)
-        if participants.is_empty() {
-            Ok(vec![])
-        } else {
-            // need manual HMGET command as the HGET command wont work with single value vector input
-            let WrappedAttributeValue::<Vec<serde_json::Value>>(value) = redis::cmd("HMGET")
-                .arg(RoomParticipantAttributes { room, attribute })
-                .arg(participants)
-                .query_async(self)
-                .await
-                .with_context(|_| RedisSnafu {
-                    message: format!("Failed to get attribute '{attribute}' for all participants"),
-                })?;
-            Ok(value)
+        actions: &AttributeActions,
+    ) -> Result<serde_json::Value, SignalingModuleError> {
+        let room = actions.room();
+        let participant = actions.participant();
+
+        let mut pipe = redis::pipe();
+        pipe.atomic();
+        for action in actions.actions() {
+            match action {
+                AttributeAction::Set { attribute, value } => {
+                    pipe.hset(
+                        RoomParticipantAttributes {
+                            room,
+                            attribute: *attribute,
+                        },
+                        participant,
+                        WrappedAttributeValueJson(value.clone()),
+                    )
+                    .ignore();
+                }
+                AttributeAction::Get { attribute } => {
+                    pipe.hget(
+                        RoomParticipantAttributes {
+                            room,
+                            attribute: *attribute,
+                        },
+                        participant,
+                    );
+                }
+                AttributeAction::Delete { attribute } => {
+                    pipe.hdel(
+                        RoomParticipantAttributes {
+                            room,
+                            attribute: *attribute,
+                        },
+                        participant,
+                    )
+                    .ignore();
+                }
+            }
         }
+
+        let WrappedAttributeValueJson(mut value) =
+            pipe.query_async(self).await.with_context(|_| RedisSnafu {
+                message: "Failed to perform bulk attribute actions".to_string(),
+            })?;
+        if value == serde_json::Value::Array(Vec::new()) {
+            value = serde_json::Value::Null;
+        }
+        Ok(value)
     }
 }
 
 #[async_trait(?Send)]
-impl ControlEventStorage for RedisConnection {
+impl ControlStorageEvent for RedisConnection {
     #[tracing::instrument(level = "debug", skip(self))]
     async fn try_init_event(
         &mut self,

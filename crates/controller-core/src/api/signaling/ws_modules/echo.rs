@@ -4,18 +4,10 @@
 
 use opentalk_signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
-    SignalingModuleInitData, VolatileStorageBackend,
+    SignalingModuleInitData,
 };
 use opentalk_types::signaling::echo::NAMESPACE;
 use serde_json::Value;
-
-#[derive(Clone)]
-pub struct VolatileWrapper;
-impl From<VolatileStorageBackend> for VolatileWrapper {
-    fn from(_: VolatileStorageBackend) -> Self {
-        Self
-    }
-}
 
 /// A sample echo websocket module
 pub struct Echo;
@@ -30,8 +22,6 @@ impl SignalingModule for Echo {
     type ExtEvent = ();
     type FrontendData = ();
     type PeerFrontendData = ();
-
-    type Volatile = VolatileWrapper;
 
     async fn init(
         _: InitContext<'_, Self>,

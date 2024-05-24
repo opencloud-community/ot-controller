@@ -9,11 +9,26 @@ mod volatile;
 
 use std::time::Duration;
 
+use either::Either;
 pub(crate) use error::SignalingStorageError;
+use opentalk_signaling_core::VolatileStorage;
 pub(crate) use signaling_storage::SignalingStorage;
 
 const TICKET_EXPIRY: Duration = Duration::from_secs(30);
 const RESUMPTION_TOKEN_EXPIRY: Duration = Duration::from_secs(120);
+
+pub(crate) trait SignalingStorageProvider {
+    fn signaling_storage(&mut self) -> &mut dyn SignalingStorage;
+}
+
+impl SignalingStorageProvider for VolatileStorage {
+    fn signaling_storage(&mut self) -> &mut dyn SignalingStorage {
+        match self.as_mut() {
+            Either::Left(v) => v,
+            Either::Right(v) => v,
+        }
+    }
+}
 
 #[cfg(test)]
 mod test_common {

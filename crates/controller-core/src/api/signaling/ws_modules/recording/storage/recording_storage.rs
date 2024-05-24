@@ -5,14 +5,16 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use async_trait::async_trait;
-use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId};
+use opentalk_signaling_core::{
+    control::storage::ControlStorageParticipantAttributesRaw, SignalingModuleError, SignalingRoomId,
+};
 use opentalk_types::{
     core::StreamingTargetId,
     signaling::recording::{StreamStatus, StreamTargetSecret},
 };
 
 #[async_trait(?Send)]
-pub(crate) trait RecordingStorage {
+pub(crate) trait RecordingStorage: ControlStorageParticipantAttributesRaw {
     async fn is_streaming_initialized(
         &mut self,
         room: SignalingRoomId,

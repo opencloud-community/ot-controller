@@ -37,58 +37,84 @@ impl AttributeId {
     }
 }
 
-#[async_trait::async_trait(?Send)]
-pub trait AttributeActions {
-    fn set<V: Serialize>(&mut self, attribute: AttributeId, value: V) -> &mut Self;
-    fn get(&mut self, attribute: AttributeId) -> &mut Self;
-    fn del(&mut self, attribute: AttributeId) -> &mut Self;
+#[derive(Debug)]
+pub(crate) enum AttributeAction {
+    Set {
+        attribute: AttributeId,
+        value: serde_json::Value,
+    },
+    Get {
+        attribute: AttributeId,
+    },
+    Delete {
+        attribute: AttributeId,
+    },
+}
 
-    async fn apply<T: DeserializeOwned>(
-        &self,
-        target: &mut impl ControlStorage<BulkAttributeActions = Self>,
-    ) -> Result<T, SignalingModuleError> {
-        target.perform_bulk_attribute_actions(self).await
+pub struct AttributeActions {
+    room: SignalingRoomId,
+    participant: ParticipantId,
+    actions: Vec<AttributeAction>,
+}
+
+impl AttributeActions {
+    pub fn new(room: SignalingRoomId, participant: ParticipantId) -> Self {
+        Self {
+            room,
+            participant,
+            actions: Vec::new(),
+        }
+    }
+
+    pub fn set<V: Serialize>(&mut self, attribute: AttributeId, value: V) -> &mut Self {
+        let serialized =
+            serde_json::to_value(value).expect("attribute value should be serializable");
+        self.set_raw(attribute, serialized)
+    }
+
+    pub fn get(&mut self, attribute: AttributeId) -> &mut Self {
+        self.get_raw(attribute)
+    }
+
+    pub fn del(&mut self, attribute: AttributeId) -> &mut Self {
+        self.del_raw(attribute)
+    }
+
+    fn set_raw(&mut self, attribute: AttributeId, value: serde_json::Value) -> &mut Self {
+        self.actions.push(AttributeAction::Set { attribute, value });
+        self
+    }
+
+    fn get_raw(&mut self, attribute: AttributeId) -> &mut Self {
+        self.actions.push(AttributeAction::Get { attribute });
+        self
+    }
+
+    fn del_raw(&mut self, attribute: AttributeId) -> &mut Self {
+        self.actions.push(AttributeAction::Delete { attribute });
+        self
+    }
+
+    pub fn room(&self) -> SignalingRoomId {
+        self.room
+    }
+
+    pub fn participant(&self) -> ParticipantId {
+        self.participant
+    }
+
+    pub(crate) fn actions(&self) -> &[AttributeAction] {
+        &self.actions
     }
 }
 
 #[async_trait(?Send)]
 pub trait ControlStorage:
-    ControlStorageParticipantAttributes + ControlStorageParticipantAttributesBulk + ControlEventStorage
+    ControlStorageParticipantAttributesRaw
+    + ControlStorageEvent
+    + ControlStorageParticipantSet
+    + ControlStorageSkipWaitingRoom
 {
-    async fn participant_set_exists(
-        &mut self,
-        room: SignalingRoomId,
-    ) -> Result<bool, SignalingModuleError>;
-
-    async fn get_all_participants(
-        &mut self,
-        room: SignalingRoomId,
-    ) -> Result<BTreeSet<ParticipantId>, SignalingModuleError>;
-
-    async fn remove_participant_set(
-        &mut self,
-        room: SignalingRoomId,
-    ) -> Result<(), SignalingModuleError>;
-
-    async fn participants_contains(
-        &mut self,
-        room: SignalingRoomId,
-        participant: ParticipantId,
-    ) -> Result<bool, SignalingModuleError>;
-
-    async fn check_participants_exist(
-        &mut self,
-        room: SignalingRoomId,
-        participants: &[ParticipantId],
-    ) -> Result<bool, SignalingModuleError>;
-
-    /// Returns `true` if the participant id was added, `false` if it already were present
-    async fn add_participant_to_set(
-        &mut self,
-        room: SignalingRoomId,
-        participant: ParticipantId,
-    ) -> Result<bool, SignalingModuleError>;
-
     async fn participants_all_left(
         &mut self,
         room: SignalingRoomId,
@@ -159,7 +185,10 @@ pub trait ControlStorage:
         &mut self,
         room: SignalingRoomId,
     ) -> Result<(), SignalingModuleError>;
+}
 
+#[async_trait(?Send)]
+pub trait ControlStorageSkipWaitingRoom {
     /// Set the `skip_waiting_room` flag for participant with an expiry.
     async fn set_skip_waiting_room_with_expiry(
         &mut self,
@@ -189,19 +218,40 @@ pub trait ControlStorage:
 }
 
 #[async_trait(?Send)]
-pub trait ControlStorageParticipantAttributesBulk {
-    type BulkAttributeActions: AttributeActions;
+pub trait ControlStorageParticipantSet {
+    async fn participant_set_exists(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<bool, SignalingModuleError>;
 
-    fn bulk_attribute_actions(
-        &self,
+    async fn get_all_participants(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<BTreeSet<ParticipantId>, SignalingModuleError>;
+
+    async fn remove_participant_set(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<(), SignalingModuleError>;
+
+    async fn participants_contains(
+        &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
-    ) -> Self::BulkAttributeActions;
+    ) -> Result<bool, SignalingModuleError>;
 
-    async fn perform_bulk_attribute_actions<T: DeserializeOwned>(
+    async fn check_participants_exist(
         &mut self,
-        actions: &Self::BulkAttributeActions,
-    ) -> Result<T, SignalingModuleError>;
+        room: SignalingRoomId,
+        participants: &[ParticipantId],
+    ) -> Result<bool, SignalingModuleError>;
+
+    /// Returns `true` if the participant id was added, `false` if it already were present
+    async fn add_participant_to_set(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<bool, SignalingModuleError>;
 }
 
 #[async_trait(?Send)]
@@ -268,9 +318,22 @@ pub trait ControlStorageParticipantAttributes: ControlStorageParticipantAttribut
         self.remove_attribute_raw(room, participant, attribute)
             .await
     }
+
+    async fn bulk_attribute_actions<T: DeserializeOwned>(
+        &mut self,
+        actions: &AttributeActions,
+    ) -> Result<T, SignalingModuleError> {
+        let value = self.bulk_attribute_actions_raw(actions).await?;
+
+        serde_json::from_value(value).with_context(|e| SerdeJsonSnafu {
+            message: format!(
+                "Failed to deserialize JSON result from redis bulk attribute actions, {e}"
+            ),
+        })
+    }
 }
 
-impl<T: ControlStorageParticipantAttributesRaw> ControlStorageParticipantAttributes for T {}
+impl<T: ControlStorageParticipantAttributesRaw + ?Sized> ControlStorageParticipantAttributes for T {}
 
 #[async_trait(?Send)]
 pub trait ControlStorageParticipantAttributesRaw {
@@ -302,10 +365,15 @@ pub trait ControlStorageParticipantAttributesRaw {
         participant: ParticipantId,
         attribute: AttributeId,
     ) -> Result<(), SignalingModuleError>;
+
+    async fn bulk_attribute_actions_raw(
+        &mut self,
+        actions: &AttributeActions,
+    ) -> Result<serde_json::Value, SignalingModuleError>;
 }
 
 #[async_trait(?Send)]
-pub trait ControlEventStorage {
+pub trait ControlStorageEvent {
     /// Try to set the active event for the room. If the event is already set return the current one.
     async fn try_init_event(
         &mut self,

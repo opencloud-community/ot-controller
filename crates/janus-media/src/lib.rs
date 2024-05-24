@@ -9,15 +9,15 @@
 //! Handles media related messages and manages their respective forwarding to janus-gateway via rabbitmq.
 use std::{collections::BTreeSet, sync::Arc};
 
+use either::Either;
 use mcu::{
     LinkDirection, McuPool, MediaSessionKey, PublishConfiguration, Request, Response,
     TrickleMessage, WebRtcEvent,
 };
 use opentalk_controller_settings::SharedSettings;
 use opentalk_signaling_core::{
-    control::{self, storage::ControlStorage as _},
-    DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
-    SignalingModuleInitData, SignalingRoomId, VolatileStorageBackend,
+    control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
+    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types::{
     core::ParticipantId,
@@ -35,7 +35,7 @@ use opentalk_types::{
 };
 use sessions::MediaSessions;
 use snafu::{whatever, OptionExt, Report};
-use storage::MediaStorage as _;
+use storage::MediaStorage;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 
@@ -81,31 +81,15 @@ fn process_metrics_for_media_session_state(
     }
 }
 
-#[derive(Clone)]
-pub struct VolatileWrapper {
-    storage: VolatileStorageBackend,
+trait MediaStorageProvider {
+    fn storage(&mut self) -> &mut dyn MediaStorage;
 }
 
-impl From<VolatileStorageBackend> for VolatileWrapper {
-    fn from(storage: VolatileStorageBackend) -> Self {
-        Self { storage }
-    }
-}
-
-impl VolatileWrapper {
-    fn storage_ref(&self) -> &dyn storage::MediaStorage {
-        if self.storage.is_left() {
-            self.storage.as_ref().left().unwrap()
-        } else {
-            self.storage.as_ref().right().unwrap()
-        }
-    }
-
-    fn storage_mut(&mut self) -> &mut dyn storage::MediaStorage {
-        if self.storage.is_left() {
-            self.storage.as_mut().left().unwrap()
-        } else {
-            self.storage.as_mut().right().unwrap()
+impl MediaStorageProvider for VolatileStorage {
+    fn storage(&mut self) -> &mut dyn MediaStorage {
+        match self.as_mut() {
+            Either::Left(v) => v,
+            Either::Right(v) => v,
         }
     }
 }
@@ -125,8 +109,6 @@ impl SignalingModule for Media {
     type FrontendData = MediaState;
     type PeerFrontendData = MediaPeerState;
 
-    type Volatile = VolatileWrapper;
-
     async fn init(
         mut ctx: InitContext<'_, Self>,
         mcu: &Self::Params,
@@ -139,11 +121,14 @@ impl SignalingModule for Media {
         let id = ctx.participant_id();
         let room = ctx.room_id();
 
-        ctx.redis_conn().set_media_state(room, id, &state).await?;
+        ctx.volatile
+            .storage()
+            .set_media_state(room, id, &state)
+            .await?;
         ctx.add_event_stream(ReceiverStream::new(janus_events));
 
         if !screen_share_requires_permission(&mcu.shared_settings) {
-            ctx.redis_conn().add_presenter(room, id).await?;
+            ctx.volatile.storage().add_presenter(room, id).await?;
         }
 
         Ok(Some(Self {
@@ -175,7 +160,8 @@ impl SignalingModule for Media {
                     .state
                     .insert(info.media_session_type, info.media_session_state);
 
-                ctx.redis_conn()
+                ctx.volatile
+                    .storage()
                     .set_media_state(self.room, self.id, &self.state)
                     .await?;
 
@@ -189,7 +175,11 @@ impl SignalingModule for Media {
             Event::WsMessage(MediaCommand::UpdateMediaSession(info)) => {
                 if info.media_session_type == MediaSessionType::Screen
                     && ctx.role() != Role::Moderator
-                    && !ctx.redis_conn().is_presenter(self.room, self.id).await?
+                    && !ctx
+                        .volatile
+                        .storage()
+                        .is_presenter(self.room, self.id)
+                        .await?
                 {
                     ctx.ws_send(Error::PermissionDenied);
                     return Ok(());
@@ -208,7 +198,8 @@ impl SignalingModule for Media {
                     let old_state = *state;
                     *state = info.media_session_state;
 
-                    ctx.redis_conn()
+                    ctx.volatile
+                        .storage()
                         .set_media_state(self.room, self.id, &self.state)
                         .await?;
 
@@ -224,7 +215,8 @@ impl SignalingModule for Media {
                         if old_state.audio && !info.media_session_state.audio {
                             let timestamp = ctx.timestamp();
                             let is_speaking = false;
-                            ctx.redis_conn()
+                            ctx.volatile
+                                .storage()
                                 .set_speaking_state(self.room, self.id, is_speaking, timestamp)
                                 .await?;
                             ctx.exchange_publish(
@@ -258,7 +250,8 @@ impl SignalingModule for Media {
                     },
                 );
 
-                ctx.redis_conn()
+                ctx.volatile
+                    .storage()
                     .set_media_state(self.room, self.id, &self.state)
                     .await?;
 
@@ -267,7 +260,11 @@ impl SignalingModule for Media {
             Event::WsMessage(MediaCommand::Publish(targeted)) => {
                 if targeted.target.media_session_type == MediaSessionType::Screen
                     && ctx.role() != Role::Moderator
-                    && !ctx.redis_conn().is_presenter(self.room, self.id).await?
+                    && !ctx
+                        .volatile
+                        .storage()
+                        .is_presenter(self.room, self.id)
+                        .await?
                 {
                     ctx.ws_send(Error::PermissionDenied);
 
@@ -341,7 +338,8 @@ impl SignalingModule for Media {
             Event::WsMessage(MediaCommand::Subscribe(subscribe)) => {
                 // Check that the subscription target is inside the room
                 if !ctx
-                    .redis_conn()
+                    .volatile
+                    .storage()
                     .participants_contains(self.room, subscribe.target.target)
                     .await?
                 {
@@ -408,7 +406,8 @@ impl SignalingModule for Media {
                 is_speaking,
             })) => {
                 let timestamp = ctx.timestamp();
-                ctx.redis_conn()
+                ctx.volatile
+                    .storage()
                     .set_speaking_state(self.room, self.id, is_speaking, timestamp)
                     .await?;
                 ctx.exchange_publish(
@@ -481,12 +480,20 @@ impl SignalingModule for Media {
                     return Ok(());
                 }
 
-                if ctx.redis_conn().is_presenter(self.room, self.id).await? {
+                if ctx
+                    .volatile
+                    .storage()
+                    .is_presenter(self.room, self.id)
+                    .await?
+                {
                     // already presenter
                     return Ok(());
                 }
 
-                ctx.redis_conn().add_presenter(self.room, self.id).await?;
+                ctx.volatile
+                    .storage()
+                    .add_presenter(self.room, self.id)
+                    .await?;
 
                 ctx.ws_send(MediaEvent::PresenterGranted);
 
@@ -497,12 +504,18 @@ impl SignalingModule for Media {
                     return Ok(());
                 }
 
-                if !ctx.redis_conn().is_presenter(self.room, self.id).await? {
+                if !ctx
+                    .volatile
+                    .storage()
+                    .is_presenter(self.room, self.id)
+                    .await?
+                {
                     // already not a presenter
                     return Ok(());
                 }
 
-                ctx.redis_conn()
+                ctx.volatile
+                    .storage()
                     .remove_presenter(self.room, self.id)
                     .await?;
 
@@ -513,7 +526,8 @@ impl SignalingModule for Media {
                     self.media.remove_publisher(MediaSessionType::Screen).await;
                     self.state.remove(MediaSessionType::Screen);
 
-                    ctx.redis_conn()
+                    ctx.volatile
+                        .storage()
                         .set_media_state(self.room, self.id, &self.state)
                         .await?;
                 }
@@ -528,12 +542,13 @@ impl SignalingModule for Media {
 
             Event::ParticipantJoined(id, evt_state) => {
                 let state = ctx
-                    .redis_conn()
+                    .volatile
+                    .storage()
                     .get_media_state(self.room, id)
                     .await?
                     .unwrap_or_default();
 
-                let is_presenter = ctx.redis_conn().is_presenter(self.room, id).await?;
+                let is_presenter = ctx.volatile.storage().is_presenter(self.room, id).await?;
 
                 *evt_state = Some(MediaPeerState {
                     state,
@@ -541,13 +556,17 @@ impl SignalingModule for Media {
                 })
             }
             Event::ParticipantUpdated(id, evt_state) => {
-                let state = ctx.redis_conn().get_media_state(self.room, id).await?;
+                let state = ctx
+                    .volatile
+                    .storage()
+                    .get_media_state(self.room, id)
+                    .await?;
 
                 if let Some(state) = &state {
                     self.media.remove_dangling_subscriber(id, state).await;
                 }
 
-                let is_presenter = ctx.redis_conn().is_presenter(self.room, id).await?;
+                let is_presenter = ctx.volatile.storage().is_presenter(self.room, id).await?;
 
                 *evt_state = Some(MediaPeerState {
                     state: state.unwrap_or_default(),
@@ -565,12 +584,13 @@ impl SignalingModule for Media {
                 let participant_ids = Vec::from_iter(participants.keys().cloned());
                 for (&id, evt_state) in participants {
                     let state = ctx
-                        .redis_conn()
+                        .volatile
+                        .storage()
                         .get_media_state(self.room, id)
                         .await?
                         .unwrap_or_default();
 
-                    let is_presenter = ctx.redis_conn().is_presenter(self.room, id).await?;
+                    let is_presenter = ctx.volatile.storage().is_presenter(self.room, id).await?;
 
                     *evt_state = Some(MediaPeerState {
                         state,
@@ -578,9 +598,14 @@ impl SignalingModule for Media {
                     })
                 }
 
-                let is_presenter = ctx.redis_conn().is_presenter(self.room, self.id).await?;
+                let is_presenter = ctx
+                    .volatile
+                    .storage()
+                    .is_presenter(self.room, self.id)
+                    .await?;
                 let speakers = ctx
-                    .redis_conn()
+                    .volatile
+                    .storage()
                     .get_speaking_state_multiple_participants(self.room, &participant_ids)
                     .await?;
 
@@ -591,7 +616,8 @@ impl SignalingModule for Media {
             }
             Event::Leaving => {
                 if let Err(e) = ctx
-                    .redis_conn()
+                    .volatile
+                    .storage()
                     .delete_media_state(self.room, self.id)
                     .await
                 {
@@ -612,9 +638,9 @@ impl SignalingModule for Media {
         Ok(())
     }
 
-    async fn on_destroy(self, mut ctx: DestroyContext<'_>) {
+    async fn on_destroy(self, ctx: DestroyContext<'_>) {
         if ctx.destroy_room() {
-            if let Err(e) = ctx.redis_conn().clear_presenters(self.room).await {
+            if let Err(e) = ctx.volatile.storage().clear_presenters(self.room).await {
                 log::error!(
                     "Media module for failed to remove presenter key on room destoy, {}",
                     e
@@ -622,7 +648,8 @@ impl SignalingModule for Media {
             }
 
             let participants = ctx
-                .redis_conn()
+                .volatile
+                .storage()
                 .get_all_participants(self.room)
                 .await
                 .unwrap_or_else(|e| {
@@ -634,7 +661,8 @@ impl SignalingModule for Media {
                 });
 
             if let Err(e) = ctx
-                .redis_conn()
+                .volatile
+                .storage()
                 .delete_speaking_state_multiple_participants(
                     self.room,
                     &Vec::from_iter(participants),
@@ -656,7 +684,7 @@ impl SignalingModule for Media {
             data.startup_settings.as_ref(),
             data.shared_settings.clone(),
             data.rabbitmq_pool.clone(),
-            data.volatile.clone().into(),
+            data.volatile.clone(),
             data.shutdown.subscribe(),
             data.reload.subscribe(),
         )
@@ -681,7 +709,11 @@ impl Media {
             return Ok(());
         }
 
-        let room_participants = ctx.redis_conn().get_all_participants(self.room).await?;
+        let room_participants = ctx
+            .volatile
+            .storage()
+            .get_all_participants(self.room)
+            .await?;
 
         let request_mute = event::RequestMute {
             issuer: self.id,
@@ -716,7 +748,8 @@ impl Media {
             self.media.remove_publisher(media_session_key.1).await;
             self.state.remove(media_session_key.1);
 
-            ctx.redis_conn()
+            ctx.volatile
+                .storage()
                 .set_media_state(self.room, self.id, &self.state)
                 .await?;
 
@@ -745,7 +778,8 @@ impl Media {
                 .await;
             self.state.remove(media_session_key.1);
 
-            ctx.redis_conn()
+            ctx.volatile
+                .storage()
                 .set_media_state(self.room, self.id, &self.state)
                 .await?;
 

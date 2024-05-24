@@ -15,7 +15,7 @@ use snafu::Snafu;
 use tokio::sync::broadcast;
 
 use crate::{
-    room_lock::LockError, DestroyContext, Event, InitContext, ModuleContext, VolatileStorageBackend,
+    room_lock::LockError, DestroyContext, Event, InitContext, ModuleContext, VolatileStorage,
 };
 
 type Result<T> = std::result::Result<T, SignalingModuleError>;
@@ -31,31 +31,22 @@ pub enum SignalingModuleError {
     },
 
     #[snafu(context(false))]
-    UrlParseError {
-        source: url::ParseError,
-    },
+    UrlParseError { source: url::ParseError },
 
     #[snafu(context(false))]
-    UuidError {
-        source: uuid::Error,
-    },
+    UuidError { source: uuid::Error },
 
     #[snafu(context(false))]
-    ReqwestError {
-        source: reqwest::Error,
-    },
+    ReqwestError { source: reqwest::Error },
 
-    NotFoundError,
-
-    #[snafu(context(false))]
-    R3dlockError {
-        source: opentalk_r3dlock::Error,
-    },
+    #[snafu(display("NotFound: {message}",))]
+    NotFoundError { message: String },
 
     #[snafu(context(false))]
-    RoomLockError {
-        source: LockError,
-    },
+    R3dlockError { source: opentalk_r3dlock::Error },
+
+    #[snafu(context(false))]
+    RoomLockError { source: LockError },
 
     #[cfg(feature = "module_tester")]
     #[snafu(transparent)]
@@ -69,9 +60,7 @@ pub enum SignalingModuleError {
     },
 
     #[snafu(context(false))]
-    LapinError {
-        source: lapin_pool::Error,
-    },
+    LapinError { source: lapin_pool::Error },
 
     #[snafu(context(false))]
     EtherpadError {
@@ -79,9 +68,7 @@ pub enum SignalingModuleError {
     },
 
     #[snafu(display("Failed to deserialize config",))]
-    ConfigError {
-        source: config::ConfigError,
-    },
+    ConfigError { source: config::ConfigError },
 
     #[snafu(display("SerdeJson error: {message}",))]
     SerdeJsonError {
@@ -116,7 +103,7 @@ pub struct SignalingModuleInitData {
     pub startup_settings: Arc<Settings>,
     pub shared_settings: SharedSettings,
     pub rabbitmq_pool: Arc<RabbitMqPool>,
-    pub volatile: VolatileStorageBackend,
+    pub volatile: VolatileStorage,
     pub shutdown: broadcast::Sender<()>,
     pub reload: broadcast::Sender<()>,
 }
@@ -153,8 +140,6 @@ pub trait SignalingModule: Send + Sized + 'static {
 
     /// Data about a peer which is sent to the frontend
     type PeerFrontendData: SignalingModulePeerFrontendData;
-
-    type Volatile: From<VolatileStorageBackend>;
 
     /// Constructor of the module
     ///

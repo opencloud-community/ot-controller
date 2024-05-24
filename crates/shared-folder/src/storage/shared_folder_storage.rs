@@ -4,12 +4,12 @@
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{
-    control::storage::ControlEventStorage, SignalingModuleError, SignalingRoomId,
+    control::storage::ControlStorageEvent, SignalingModuleError, SignalingRoomId,
 };
 use opentalk_types::common::shared_folder::SharedFolder;
 
 #[async_trait(?Send)]
-pub(crate) trait SharedFolderStorage: ControlEventStorage {
+pub(crate) trait SharedFolderStorage: ControlStorageEvent {
     async fn set_shared_folder_initialized(
         &mut self,
         room: SignalingRoomId,

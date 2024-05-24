@@ -5,11 +5,21 @@
 use std::collections::BTreeSet;
 
 use async_trait::async_trait;
-use opentalk_signaling_core::SignalingModuleError;
+use opentalk_signaling_core::{
+    control::storage::{
+        ControlStorageParticipantAttributesRaw, ControlStorageParticipantSet,
+        ControlStorageSkipWaitingRoom,
+    },
+    SignalingModuleError,
+};
 use opentalk_types::core::{ParticipantId, RoomId, UserId};
 
 #[async_trait(?Send)]
-pub(crate) trait ModerationStorage {
+pub(crate) trait ModerationStorage:
+    ControlStorageParticipantAttributesRaw
+    + ControlStorageSkipWaitingRoom
+    + ControlStorageParticipantSet
+{
     async fn ban_user(&mut self, room: RoomId, user: UserId) -> Result<(), SignalingModuleError>;
 
     async fn is_user_banned(

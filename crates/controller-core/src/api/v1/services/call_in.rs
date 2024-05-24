@@ -10,7 +10,7 @@ use actix_web::{
 };
 use opentalk_database::Db;
 use opentalk_db_storage::sip_configs::SipConfig;
-use opentalk_signaling_core::{Participant, RedisConnection};
+use opentalk_signaling_core::{Participant, VolatileStorage};
 use opentalk_types::{
     api::{
         error::ApiError,
@@ -35,11 +35,11 @@ pub const REQUIRED_CALL_IN_ROLE: &str = "opentalk-call-in";
 pub async fn start(
     settings: SharedSettingsActix,
     db: Data<Db>,
-    redis_ctx: Data<RedisConnection>,
+    volatile: Data<VolatileStorage>,
     request: Json<StartRequestBody>,
 ) -> Result<Json<ServiceStartResponse>, ApiError> {
     let settings = settings.load();
-    let mut redis_conn = (**redis_ctx).clone();
+    let mut volatile = (**volatile).clone();
     let request = request.into_inner();
 
     let mut conn = db.get_conn().await?;
@@ -60,7 +60,7 @@ pub async fn start(
     drop(conn);
 
     let (ticket, resumption) =
-        start_or_continue_signaling_session(&mut redis_conn, Participant::Sip, room.id, None, None)
+        start_or_continue_signaling_session(&mut volatile, Participant::Sip, room.id, None, None)
             .await?;
 
     Ok(Json(ServiceStartResponse { ticket, resumption }))

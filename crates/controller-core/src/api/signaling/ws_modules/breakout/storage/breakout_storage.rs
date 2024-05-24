@@ -5,13 +5,18 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
-use opentalk_signaling_core::SignalingModuleError;
+use opentalk_signaling_core::{
+    control::storage::{ControlStorageParticipantAttributesRaw, ControlStorageParticipantSet},
+    SignalingModuleError,
+};
 use opentalk_types::core::RoomId;
 
 use super::BreakoutConfig;
 
 #[async_trait(?Send)]
-pub trait BreakoutStorage {
+pub trait BreakoutStorage:
+    ControlStorageParticipantSet + ControlStorageParticipantAttributesRaw
+{
     /// Set the breakout configuration.
     /// If this is an expiring breakout session, the "real" breakout expiry will be returned.
     /// Some implementations (such as redis) cannot cope with expiry below seconds resolution,

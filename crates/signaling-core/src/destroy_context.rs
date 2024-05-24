@@ -2,21 +2,15 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::{RedisConnection, VolatileStorageBackend};
+use crate::VolatileStorage;
 
 /// Context passed to the `destroy` function
 pub struct DestroyContext<'ctx> {
-    pub redis_conn: &'ctx mut RedisConnection,
-    pub volatile: VolatileStorageBackend,
+    pub volatile: &'ctx mut VolatileStorage,
     pub destroy_room: bool,
 }
 
 impl DestroyContext<'_> {
-    /// Access to a redis connection
-    pub fn redis_conn(&mut self) -> &mut RedisConnection {
-        self.redis_conn
-    }
-
     /// Returns true if the module belongs to the last participant inside a room
     pub fn destroy_room(&self) -> bool {
         self.destroy_room

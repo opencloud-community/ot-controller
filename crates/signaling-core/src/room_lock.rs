@@ -3,10 +3,12 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use async_trait::async_trait;
+use either::Either;
+use futures::lock::OwnedMutexGuard;
 use redis_args::ToRedisArgs;
 use snafu::Snafu;
 
-use crate::SignalingRoomId;
+use crate::{SignalingRoomId, VolatileStorage};
 
 mod redis;
 mod volatile;
@@ -18,22 +20,19 @@ pub struct RoomLock {
     pub room: SignalingRoomId,
 }
 
-impl From<SignalingRoomId> for RoomLock {
-    fn from(room: SignalingRoomId) -> Self {
-        RoomLock { room }
-    }
+pub struct RoomGuard {
+    room: SignalingRoomId,
+    guard: Either<OwnedMutexGuard<()>, opentalk_r3dlock::MutexGuard<RoomLock>>,
 }
 
 #[async_trait(?Send)]
-pub trait Locking<Key> {
-    type Guard;
-
+pub trait RoomLocking {
     /// Lock the room for exclusive access.
     ///
     /// Must be locked when joining and leaving the room.
     /// This allows for cleanups when the last user leaves without anyone joining.
-    async fn lock(&mut self, key: Key) -> Result<Self::Guard, LockError>;
-    async fn unlock(&mut self, guard: Self::Guard) -> Result<(), LockError>;
+    async fn lock_room(&mut self, room: SignalingRoomId) -> Result<RoomGuard, LockError>;
+    async fn unlock_room(&mut self, guard: RoomGuard) -> Result<(), LockError>;
 }
 
 #[derive(Debug, Snafu)]
@@ -50,4 +49,17 @@ pub enum LockError {
         #[snafu(source(from(Box<dyn std::error::Error + Send + Sync>, Some)))]
         source: Option<Box<dyn std::error::Error + Send + Sync>>,
     },
+}
+
+pub trait RoomLockingProvider {
+    fn room_locking(&mut self) -> &mut dyn RoomLocking;
+}
+
+impl RoomLockingProvider for VolatileStorage {
+    fn room_locking(&mut self) -> &mut dyn RoomLocking {
+        match self.as_mut() {
+            Either::Left(v) => v,
+            Either::Right(v) => v,
+        }
+    }
 }

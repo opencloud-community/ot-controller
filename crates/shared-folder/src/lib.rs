@@ -10,11 +10,12 @@
 
 use std::sync::Arc;
 
+use either::Either;
 use opentalk_database::Db;
 use opentalk_db_storage::events::shared_folders::EventSharedFolder;
 use opentalk_signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
-    SignalingModuleInitData, SignalingRoomId, VolatileStorageBackend,
+    SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types::{
     common::shared_folder::SharedFolder as SharedFolderType,
@@ -30,22 +31,15 @@ pub struct SharedFolder {
     db: Arc<Db>,
 }
 
-pub struct VolatileWrapper {
-    storage: VolatileStorageBackend,
+trait SharedFolderStorageProvider {
+    fn storage(&mut self) -> &mut dyn SharedFolderStorage;
 }
 
-impl From<VolatileStorageBackend> for VolatileWrapper {
-    fn from(storage: VolatileStorageBackend) -> Self {
-        Self { storage }
-    }
-}
-
-impl VolatileWrapper {
+impl SharedFolderStorageProvider for VolatileStorage {
     fn storage(&mut self) -> &mut dyn SharedFolderStorage {
-        if self.storage.is_left() {
-            self.storage.as_mut().left().unwrap()
-        } else {
-            self.storage.as_mut().right().unwrap()
+        match self.as_mut() {
+            Either::Left(v) => v,
+            Either::Right(v) => v,
         }
     }
 }
@@ -64,8 +58,6 @@ impl SignalingModule for SharedFolder {
 
     type FrontendData = SharedFolderType;
     type PeerFrontendData = ();
-
-    type Volatile = VolatileWrapper;
 
     async fn init(
         ctx: InitContext<'_, Self>,
@@ -149,19 +141,15 @@ impl SignalingModule for SharedFolder {
     async fn on_destroy(self, ctx: DestroyContext<'_>) {
         // ==== Cleanup room ====
         if ctx.destroy_room() {
-            let mut volatile = VolatileWrapper::from(ctx.volatile);
+            let volatile = ctx.volatile.storage();
 
-            if let Err(e) = volatile
-                .storage()
-                .delete_shared_folder_initialized(self.room)
-                .await
-            {
+            if let Err(e) = volatile.delete_shared_folder_initialized(self.room).await {
                 log::error!(
                     "Failed to remove shared folder initialized flag on room destroy, {}",
                     e
                 );
             }
-            if let Err(e) = volatile.storage().delete_shared_folder(self.room).await {
+            if let Err(e) = volatile.delete_shared_folder(self.room).await {
                 log::error!(
                     "Failed to remove shared folder on room destroy, {}",
                     Report::from_error(e)

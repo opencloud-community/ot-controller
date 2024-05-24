@@ -210,7 +210,9 @@ impl MediaStorage for VolatileStaticMemoryStorage {
         state()
             .read()
             .get_publisher_info(media_session_key)
-            .with_context(|| NotFoundSnafu)
+            .with_context(|| NotFoundSnafu {
+                message: format!("Could not find publisher info {media_session_key:?}"),
+            })
     }
 
     #[tracing::instrument(level = "debug", skip(self))]

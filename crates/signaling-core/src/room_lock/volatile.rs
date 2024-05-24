@@ -8,63 +8,54 @@ use std::{
 };
 
 use async_trait::async_trait;
-use futures::lock::{Mutex, OwnedMutexGuard};
+use either::Either;
+use futures::lock::Mutex;
 use parking_lot::RwLock;
+use snafu::whatever;
 
-use super::RoomLock;
-use crate::{LockError, Locking, VolatileStaticMemoryStorage};
+use super::{RoomGuard, RoomLocking};
+use crate::{LockError, SignalingRoomId, VolatileStaticMemoryStorage};
 
-static ROOM_LOCK_STATE: OnceLock<Arc<RwLock<MemoryLock<RoomLock>>>> = OnceLock::new();
+static ROOM_LOCK_STATE: OnceLock<Arc<RwLock<RoomLocks>>> = OnceLock::new();
 
-#[derive(Debug)]
-pub struct VolatileLockGuard<K>(OwnedMutexGuard<()>, K);
-
-pub(super) trait MemoryLocking<Key: Clone + Ord> {
-    fn get_state() -> &'static Arc<RwLock<MemoryLock<Key>>>;
-}
-
-impl MemoryLocking<RoomLock> for VolatileStaticMemoryStorage {
-    fn get_state() -> &'static Arc<RwLock<MemoryLock<RoomLock>>> {
-        ROOM_LOCK_STATE.get_or_init(Default::default)
-    }
+fn state() -> &'static Arc<RwLock<RoomLocks>> {
+    ROOM_LOCK_STATE.get_or_init(Default::default)
 }
 
 #[async_trait(?Send)]
-impl<T: MemoryLocking<Key>, Key: Clone + Ord + 'static> Locking<Key> for T {
-    type Guard = VolatileLockGuard<Key>;
-
-    async fn lock(&mut self, key: Key) -> Result<Self::Guard, LockError> {
-        let lock = Self::get_state().write().get_lock(key.clone());
+impl RoomLocking for VolatileStaticMemoryStorage {
+    async fn lock_room(&mut self, room: SignalingRoomId) -> Result<RoomGuard, LockError> {
+        let lock = state().write().get_room_lock(room);
         let guard = lock.lock_owned().await;
 
-        Ok(VolatileLockGuard(guard, key))
+        Ok(RoomGuard {
+            room,
+            guard: Either::Left(guard),
+        })
     }
 
-    async fn unlock(&mut self, guard: Self::Guard) -> Result<(), LockError> {
-        let VolatileLockGuard(guard, key) = guard;
-        let mut memory_locks = Self::get_state().write();
-        drop(guard);
-        memory_locks.remove_if_unused(key);
+    async fn unlock_room(&mut self, RoomGuard { room, guard }: RoomGuard) -> Result<(), LockError> {
+        match guard {
+            Either::Right(_) => {
+                whatever!("Attempted to unlock a redis storage room guard in an in-memory backend")
+            }
+            Either::Left(guard) => {
+                drop(guard);
+                state().write().remove_if_unused(room);
+            }
+        }
         Ok(())
     }
 }
 
-#[derive(Debug)]
-pub(super) struct MemoryLock<LockKey> {
-    locks: BTreeMap<LockKey, Weak<Mutex<()>>>,
+#[derive(Debug, Default)]
+pub(super) struct RoomLocks {
+    locks: BTreeMap<SignalingRoomId, Weak<Mutex<()>>>,
 }
 
-impl<T> Default for MemoryLock<T> {
-    fn default() -> Self {
-        Self {
-            locks: Default::default(),
-        }
-    }
-}
-
-impl<K: Clone + Ord> MemoryLock<K> {
-    fn get_lock(&mut self, key: K) -> Arc<Mutex<()>> {
-        match self.locks.entry(key) {
+impl RoomLocks {
+    fn get_room_lock(&mut self, room: SignalingRoomId) -> Arc<Mutex<()>> {
+        match self.locks.entry(room) {
             Entry::Vacant(entry) => {
                 let mutex = Arc::<Mutex<()>>::default();
                 entry.insert(Arc::downgrade(&mutex));
@@ -82,10 +73,10 @@ impl<K: Clone + Ord> MemoryLock<K> {
         }
     }
 
-    fn remove_if_unused(&mut self, key: K) {
-        if let Some(lock) = self.locks.get(&key) {
+    fn remove_if_unused(&mut self, room: SignalingRoomId) {
+        if let Some(lock) = self.locks.get(&room) {
             if lock.strong_count() == 0 {
-                self.locks.remove(&key);
+                self.locks.remove(&room);
             }
         }
     }

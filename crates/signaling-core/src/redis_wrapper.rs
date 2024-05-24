@@ -7,8 +7,6 @@ use std::{sync::Arc, time::Instant};
 use opentelemetry::{metrics::Histogram, Key};
 use redis::{aio::ConnectionLike, Arg, RedisFuture};
 
-use crate::VolatileStorage;
-
 const COMMAND_KEY: Key = Key::from_static_str("command");
 
 pub struct RedisMetrics {
@@ -38,8 +36,6 @@ impl RedisConnection {
         self.connection_manager
     }
 }
-
-impl VolatileStorage for RedisConnection {}
 
 impl ConnectionLike for RedisConnection {
     fn req_packed_command<'a>(&'a mut self, cmd: &'a redis::Cmd) -> RedisFuture<'a, redis::Value> {

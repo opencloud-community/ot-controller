@@ -15,16 +15,20 @@ pub struct Caches {
 }
 
 impl Caches {
-    pub fn create(redis: RedisConnection) -> Self {
-        let redis = redis.into_manager();
+    pub fn create(redis: Option<RedisConnection>) -> Self {
+        let mut user_access_tokens = UserAccessTokenCache::new(Duration::from_secs(300));
 
-        Self {
-            user_access_tokens: UserAccessTokenCache::new(Duration::from_secs(300)).with_redis(
+        if let Some(redis) = redis {
+            let redis = redis.into_manager();
+
+            user_access_tokens = user_access_tokens.with_redis(
                 redis,
                 "user-access-tokens",
                 Duration::from_secs(300),
                 true,
-            ),
-        }
+            )
+        };
+
+        Self { user_access_tokens }
     }
 }

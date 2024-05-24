@@ -7,15 +7,16 @@ use std::{
     time::Duration,
 };
 
-use async_trait::async_trait;
 use opentalk_db_storage::{events::Event, tariffs::Tariff};
 use opentalk_types::core::{ParticipantId, RoomId, Timestamp};
-use serde::{de::DeserializeOwned, Serialize};
-use snafu::{OptionExt as _, ResultExt as _};
+use snafu::OptionExt as _;
 
 use crate::{
-    control::storage::{AttributeActions, AttributeId, SKIP_WAITING_ROOM_KEY_EXPIRY},
-    ExpiringDataHashMap, NotFoundSnafu, SerdeJsonSnafu, SignalingModuleError, SignalingRoomId,
+    control::storage::{
+        control_storage::AttributeAction, AttributeActions, AttributeId,
+        SKIP_WAITING_ROOM_KEY_EXPIRY,
+    },
+    ExpiringDataHashMap, NotFoundSnafu, SignalingModuleError, SignalingRoomId,
 };
 
 type AttributeMap = HashMap<(ParticipantId, AttributeId), serde_json::Value>;
@@ -29,56 +30,6 @@ pub(super) struct MemoryControlState {
     participant_count: HashMap<RoomId, isize>,
     rooms_close_at: HashMap<SignalingRoomId, Timestamp>,
     participants_skip_waiting_room: ExpiringDataHashMap<ParticipantId, bool>,
-}
-
-pub struct VolatileStaticMemoryAttributeActions {
-    room: SignalingRoomId,
-    participant: ParticipantId,
-    actions: Vec<AttributeAction>,
-}
-
-impl VolatileStaticMemoryAttributeActions {
-    pub(super) fn new(room: SignalingRoomId, participant: ParticipantId) -> Self {
-        Self {
-            room,
-            participant,
-            actions: Vec::new(),
-        }
-    }
-}
-
-#[derive(Debug)]
-enum AttributeAction {
-    Set {
-        attribute: AttributeId,
-        value: serde_json::Value,
-    },
-    Get {
-        attribute: AttributeId,
-    },
-    Delete {
-        attribute: AttributeId,
-    },
-}
-
-#[async_trait(?Send)]
-impl AttributeActions for VolatileStaticMemoryAttributeActions {
-    fn set<V: Serialize>(&mut self, attribute: AttributeId, value: V) -> &mut Self {
-        let value = serde_json::to_value(value).expect("attribute value must be serializable");
-
-        self.actions.push(AttributeAction::Set { attribute, value });
-        self
-    }
-
-    fn get(&mut self, attribute: AttributeId) -> &mut Self {
-        self.actions.push(AttributeAction::Get { attribute });
-        self
-    }
-
-    fn del(&mut self, attribute: AttributeId) -> &mut Self {
-        self.actions.push(AttributeAction::Delete { attribute });
-        self
-    }
 }
 
 impl MemoryControlState {
@@ -195,25 +146,22 @@ impl MemoryControlState {
         }
     }
 
-    pub(super) fn perform_bulk_attribute_actions<T: DeserializeOwned>(
+    pub(super) fn perform_bulk_attribute_actions_raw(
         &mut self,
-        actions: &VolatileStaticMemoryAttributeActions,
-    ) -> Result<T, SignalingModuleError> {
+        actions: &AttributeActions,
+    ) -> Result<serde_json::Value, SignalingModuleError> {
+        let room = actions.room();
+        let participant = actions.participant();
+
         let mut response = None;
 
-        for action in &actions.actions {
+        for action in actions.actions() {
             match action {
                 AttributeAction::Set { attribute, value } => {
-                    self.set_attribute_raw(
-                        actions.room,
-                        actions.participant,
-                        *attribute,
-                        value.clone(),
-                    );
+                    self.set_attribute_raw(room, participant, *attribute, value.clone());
                 }
                 AttributeAction::Get { attribute } => {
-                    let value =
-                        self.get_attribute_raw(actions.room, actions.participant, *attribute);
+                    let value = self.get_attribute_raw(room, participant, *attribute);
 
                     response = match response {
                         None => Some(value),
@@ -225,14 +173,11 @@ impl MemoryControlState {
                     }
                 }
                 AttributeAction::Delete { attribute } => {
-                    self.remove_attribute_raw(actions.room, actions.participant, *attribute);
+                    self.remove_attribute_raw(room, participant, *attribute);
                 }
             }
         }
-
-        serde_json::from_value(response.unwrap_or_default()).with_context(|e| SerdeJsonSnafu {
-            message: format!("Failed to read result from bulk attribute actions, {e}"),
-        })
+        Ok(response.unwrap_or_default())
     }
 
     pub(super) fn remove_attribute_key(&mut self, room: SignalingRoomId, attribute: AttributeId) {
@@ -248,7 +193,9 @@ impl MemoryControlState {
     pub(super) fn get_tariff(&self, room_id: RoomId) -> Result<Tariff, SignalingModuleError> {
         self.room_tariffs
             .get(&room_id)
-            .with_context(|| NotFoundSnafu)
+            .with_context(|| NotFoundSnafu {
+                message: format!("No tariff found for room {room_id}"),
+            })
             .cloned()
     }
 

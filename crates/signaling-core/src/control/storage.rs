@@ -7,9 +7,9 @@ mod redis;
 mod volatile;
 
 pub use control_storage::{
-    AttributeActions, AttributeId, ControlEventStorage, ControlStorage,
-    ControlStorageParticipantAttributes, ControlStorageParticipantAttributesBulk,
-    ControlStorageParticipantAttributesRaw,
+    AttributeActions, AttributeId, ControlStorage, ControlStorageEvent,
+    ControlStorageParticipantAttributes, ControlStorageParticipantAttributesRaw,
+    ControlStorageParticipantSet, ControlStorageSkipWaitingRoom,
 };
 
 // The expiry in seconds for the `skip_waiting_room` key in Redis
@@ -278,15 +278,16 @@ mod test_common {
         let point = Point { x: 44, y: 55 };
 
         let results: (Option<String>, Option<String>, Option<String>) = storage
-            .bulk_attribute_actions(ROOM, ALICE)
-            .get(POINT)
-            .set(POINT, "alice_point")
-            .get(POINT)
-            .del(POINT)
-            .get(POINT)
-            .set(POINT, point.clone())
-            .set(LINE, "alice_line")
-            .apply(storage)
+            .bulk_attribute_actions(
+                AttributeActions::new(ROOM, ALICE)
+                    .get(POINT)
+                    .set(POINT, "alice_point")
+                    .get(POINT)
+                    .del(POINT)
+                    .get(POINT)
+                    .set(POINT, point.clone())
+                    .set(LINE, "alice_line"),
+            )
             .await
             .unwrap();
 

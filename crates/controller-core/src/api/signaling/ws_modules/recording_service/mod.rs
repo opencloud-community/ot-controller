@@ -19,7 +19,7 @@ use opentalk_types::{
     },
 };
 
-use super::recording::{self, storage::RecordingStorage as _, Recording, VolatileWrapper};
+use super::recording::{self, Recording, RecordingStorageProvider as _};
 
 pub(crate) mod exchange;
 
@@ -45,8 +45,6 @@ impl SignalingModule for RecordingService {
 
     type FrontendData = RecordingServiceState;
     type PeerFrontendData = ();
-
-    type Volatile = VolatileWrapper;
 
     async fn init(
         ctx: InitContext<'_, Self>,
@@ -122,12 +120,14 @@ impl RecordingService {
         stream_updated: StreamUpdated,
     ) -> Result<(), SignalingModuleError> {
         let mut stream = ctx
-            .redis_conn()
+            .volatile
+            .storage()
             .get_stream(self.room, stream_updated.target_id)
             .await?;
 
         stream.status = stream_updated.status.clone();
-        ctx.redis_conn()
+        ctx.volatile
+            .storage()
             .set_stream(self.room, stream_updated.target_id, stream)
             .await?;
 
@@ -150,7 +150,7 @@ impl RecordingService {
             recording::exchange::Message::RecorderStopping,
         );
 
-        let targets = ctx.redis_conn().get_streams(self.room).await?;
+        let targets = ctx.volatile.storage().get_streams(self.room).await?;
         let targets: BTreeMap<StreamingTargetId, StreamTargetSecret> = targets
             .into_iter()
             .filter(|(_, target)| target.status != StreamStatus::Inactive)
@@ -164,7 +164,10 @@ impl RecordingService {
             return Ok(());
         }
 
-        ctx.redis_conn().set_streams(self.room, &targets).await?;
+        ctx.volatile
+            .storage()
+            .set_streams(self.room, &targets)
+            .await?;
 
         for stream_updated in targets.iter().map(|(target_id, target)| StreamUpdated {
             target_id: *target_id,
@@ -193,7 +196,8 @@ impl RecordingService {
         );
 
         let streams = ctx
-            .redis_conn()
+            .volatile
+            .storage()
             .get_streams(self.room)
             .await?
             .into_iter()

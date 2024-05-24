@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_signaling_core::{Participant, RedisConnection};
+use opentalk_signaling_core::{Participant, VolatileStorage};
 use opentalk_types::{
     api::error::ApiError,
     core::{BreakoutRoomId, ParticipantId, ResumptionToken, RoomId, TicketToken, UserId},
@@ -11,7 +11,7 @@ use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use snafu::Report;
 
-use super::storage::SignalingStorage as _;
+use super::storage::SignalingStorageProvider as _;
 
 /// Data stored behind the [`Ticket`] key.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, ToRedisArgs, FromRedisValue)]
@@ -27,7 +27,7 @@ pub struct TicketData {
 }
 
 pub async fn start_or_continue_signaling_session(
-    redis_conn: &mut RedisConnection,
+    volatile: &mut VolatileStorage,
     participant: Participant<UserId>,
     room: RoomId,
     breakout_room: Option<BreakoutRoomId>,
@@ -37,7 +37,7 @@ pub async fn start_or_continue_signaling_session(
 
     // Get participant id, check resumption token if it exists, if not generate random one
     let participant_id = if let Some(resumption) = resumption {
-        if let Some(id) = use_resumption_token(redis_conn, participant, room, resumption).await? {
+        if let Some(id) = use_resumption_token(volatile, participant, room, resumption).await? {
             resuming = true;
             id
         } else {
@@ -61,7 +61,8 @@ pub async fn start_or_continue_signaling_session(
         resumption: resumption.clone(),
     };
 
-    redis_conn
+    volatile
+        .signaling_storage()
         .set_ticket_ex(&ticket, &ticket_data)
         .await
         .map_err(|e| {
@@ -73,12 +74,13 @@ pub async fn start_or_continue_signaling_session(
 }
 
 async fn use_resumption_token(
-    redis_conn: &mut RedisConnection,
+    volatile: &mut VolatileStorage,
     participant: Participant<UserId>,
     room: RoomId,
     resumption_token: ResumptionToken,
 ) -> Result<Option<ParticipantId>, ApiError> {
-    let resumption_data = redis_conn
+    let resumption_data = volatile
+        .signaling_storage()
         .get_resumption_token_data(&resumption_token)
         .await
         .map_err(|e| {
@@ -102,7 +104,8 @@ async fn use_resumption_token(
         return Ok(None);
     }
 
-    if redis_conn
+    if volatile
+        .signaling_storage()
         .participant_id_in_use(data.participant_id)
         .await?
     {
@@ -111,7 +114,8 @@ async fn use_resumption_token(
             .with_message("the session of the given resumption token is still running"));
     }
 
-    let delete_success = redis_conn
+    let delete_success = volatile
+        .signaling_storage()
         .delete_resumption_token(&resumption_token)
         .await
         .map_err(|e| {

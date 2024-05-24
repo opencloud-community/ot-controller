@@ -597,7 +597,7 @@ mod test {
 
     use super::{super::test_common, *};
 
-    async fn setup() -> RedisConnection {
+    async fn storage() -> RedisConnection {
         let redis_url =
             std::env::var("REDIS_ADDR").unwrap_or_else(|_| "redis://0.0.0.0:6379/".to_owned());
         let redis = redis::Client::open(redis_url).expect("Invalid redis url");
@@ -615,29 +615,25 @@ mod test {
     #[tokio::test]
     #[serial]
     async fn last_seen_global() {
-        let mut redis_conn = setup().await;
-        test_common::last_seen_global(&mut redis_conn).await;
+        test_common::last_seen_global(&mut storage().await).await;
     }
 
     #[tokio::test]
     #[serial]
     async fn last_seen_global_is_personal() {
-        let mut redis_conn = setup().await;
-        test_common::last_seen_global_is_personal(&mut redis_conn).await;
+        test_common::last_seen_global_is_personal(&mut storage().await).await;
     }
 
     #[tokio::test]
     #[serial]
     async fn last_seen_private() {
-        let mut redis_conn = setup().await;
-        test_common::last_seen_private(&mut redis_conn).await;
+        test_common::last_seen_private(&mut storage().await).await;
     }
 
     #[tokio::test]
     #[serial]
     async fn last_seen_private_is_personal() {
-        let mut redis_conn = setup().await;
-        test_common::last_seen_private_is_personal(&mut redis_conn).await;
+        test_common::last_seen_private_is_personal(&mut storage().await).await;
     }
 
     #[test]

@@ -14,14 +14,13 @@ use opentalk_types::{
     signaling::Role,
 };
 use parking_lot::RwLock;
-use serde::de::DeserializeOwned;
 
-use super::memory::{MemoryControlState, VolatileStaticMemoryAttributeActions};
+use super::memory::MemoryControlState;
 use crate::{
     control::storage::{
-        AttributeId, ControlEventStorage, ControlStorage, ControlStorageParticipantAttributes,
-        ControlStorageParticipantAttributesBulk, ControlStorageParticipantAttributesRaw, LEFT_AT,
-        ROLE,
+        control_storage::{ControlStorageParticipantSet, ControlStorageSkipWaitingRoom},
+        AttributeActions, AttributeId, ControlStorage, ControlStorageEvent,
+        ControlStorageParticipantAttributes, ControlStorageParticipantAttributesRaw, LEFT_AT, ROLE,
     },
     SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage,
 };
@@ -34,58 +33,6 @@ fn state() -> &'static Arc<RwLock<MemoryControlState>> {
 
 #[async_trait(?Send)]
 impl ControlStorage for VolatileStaticMemoryStorage {
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn participant_set_exists(
-        &mut self,
-        room: SignalingRoomId,
-    ) -> Result<bool, SignalingModuleError> {
-        Ok(state().read().participant_set_exists(room))
-    }
-
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn get_all_participants(
-        &mut self,
-        room: SignalingRoomId,
-    ) -> Result<BTreeSet<ParticipantId>, SignalingModuleError> {
-        Ok(state().read().get_all_participants(room))
-    }
-
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn remove_participant_set(
-        &mut self,
-        room: SignalingRoomId,
-    ) -> Result<(), SignalingModuleError> {
-        state().write().remove_participant_set(room);
-        Ok(())
-    }
-
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn participants_contains(
-        &mut self,
-        room: SignalingRoomId,
-        participant: ParticipantId,
-    ) -> Result<bool, SignalingModuleError> {
-        Ok(state().read().participants_contains(room, participant))
-    }
-
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn check_participants_exist(
-        &mut self,
-        room: SignalingRoomId,
-        participants: &[ParticipantId],
-    ) -> Result<bool, SignalingModuleError> {
-        Ok(state().read().check_participants_exist(room, participants))
-    }
-
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn add_participant_to_set(
-        &mut self,
-        room: SignalingRoomId,
-        participant: ParticipantId,
-    ) -> Result<bool, SignalingModuleError> {
-        Ok(state().write().add_participant_to_set(room, participant))
-    }
-
     #[tracing::instrument(level = "debug", skip(self))]
     async fn remove_attribute_key(
         &mut self,
@@ -196,7 +143,10 @@ impl ControlStorage for VolatileStaticMemoryStorage {
         state().write().remove_room_closes_at(room);
         Ok(())
     }
+}
 
+#[async_trait(?Send)]
+impl ControlStorageSkipWaitingRoom for VolatileStaticMemoryStorage {
     #[tracing::instrument(level = "debug", skip(self))]
     async fn set_skip_waiting_room_with_expiry(
         &mut self,
@@ -240,23 +190,57 @@ impl ControlStorage for VolatileStaticMemoryStorage {
 }
 
 #[async_trait(?Send)]
-impl ControlStorageParticipantAttributesBulk for VolatileStaticMemoryStorage {
-    type BulkAttributeActions = VolatileStaticMemoryAttributeActions;
-
-    fn bulk_attribute_actions(
-        &self,
+impl ControlStorageParticipantSet for VolatileStaticMemoryStorage {
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn participant_set_exists(
+        &mut self,
         room: SignalingRoomId,
-        participant: ParticipantId,
-    ) -> Self::BulkAttributeActions {
-        VolatileStaticMemoryAttributeActions::new(room, participant)
+    ) -> Result<bool, SignalingModuleError> {
+        Ok(state().read().participant_set_exists(room))
     }
 
-    #[tracing::instrument(level = "debug", skip(self, actions))]
-    async fn perform_bulk_attribute_actions<T: DeserializeOwned>(
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_all_participants(
         &mut self,
-        actions: &Self::BulkAttributeActions,
-    ) -> Result<T, SignalingModuleError> {
-        state().write().perform_bulk_attribute_actions(actions)
+        room: SignalingRoomId,
+    ) -> Result<BTreeSet<ParticipantId>, SignalingModuleError> {
+        Ok(state().read().get_all_participants(room))
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn remove_participant_set(
+        &mut self,
+        room: SignalingRoomId,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().remove_participant_set(room);
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn participants_contains(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<bool, SignalingModuleError> {
+        Ok(state().read().participants_contains(room, participant))
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn check_participants_exist(
+        &mut self,
+        room: SignalingRoomId,
+        participants: &[ParticipantId],
+    ) -> Result<bool, SignalingModuleError> {
+        Ok(state().read().check_participants_exist(room, participants))
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn add_participant_to_set(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Result<bool, SignalingModuleError> {
+        Ok(state().write().add_participant_to_set(room, participant))
     }
 }
 
@@ -312,10 +296,18 @@ impl ControlStorageParticipantAttributesRaw for VolatileStaticMemoryStorage {
             .remove_attribute_raw(room, participant, attribute);
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self, actions))]
+    async fn bulk_attribute_actions_raw(
+        &mut self,
+        actions: &AttributeActions,
+    ) -> Result<serde_json::Value, SignalingModuleError> {
+        state().write().perform_bulk_attribute_actions_raw(actions)
+    }
 }
 
 #[async_trait(?Send)]
-impl ControlEventStorage for VolatileStaticMemoryStorage {
+impl ControlStorageEvent for VolatileStaticMemoryStorage {
     #[tracing::instrument(level = "debug", skip(self))]
     async fn try_init_event(
         &mut self,

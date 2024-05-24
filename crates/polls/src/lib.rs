@@ -4,10 +4,11 @@
 
 use std::{collections::BTreeSet, time::Duration};
 
+use either::Either;
 use futures::{stream::once, FutureExt};
 use opentalk_signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
-    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorageBackend,
+    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types::signaling::{
     polls::{
@@ -19,7 +20,7 @@ use opentalk_types::signaling::{
     Role,
 };
 use snafu::Report;
-use storage::PollsStorage as _;
+use storage::PollsStorage;
 use tokio::time::sleep;
 
 pub mod exchange;
@@ -32,23 +33,15 @@ pub struct Polls {
     config: Option<Config>,
 }
 
-#[derive(Clone)]
-pub struct VolatileWrapper {
-    storage: VolatileStorageBackend,
+trait PollsStorageProvider {
+    fn storage(&mut self) -> &mut dyn PollsStorage;
 }
 
-impl From<VolatileStorageBackend> for VolatileWrapper {
-    fn from(storage: VolatileStorageBackend) -> Self {
-        Self { storage }
-    }
-}
-
-impl VolatileWrapper {
-    fn storage(&mut self) -> &mut dyn storage::PollsStorage {
-        if self.storage.is_left() {
-            self.storage.as_mut().left().unwrap()
-        } else {
-            self.storage.as_mut().right().unwrap()
+impl PollsStorageProvider for VolatileStorage {
+    fn storage(&mut self) -> &mut dyn PollsStorage {
+        match self.as_mut() {
+            Either::Left(v) => v,
+            Either::Right(v) => v,
         }
     }
 }
@@ -67,8 +60,6 @@ impl SignalingModule for Polls {
 
     type FrontendData = PollsState;
     type PeerFrontendData = ();
-
-    type Volatile = VolatileWrapper;
 
     async fn init(
         ctx: InitContext<'_, Self>,
@@ -136,13 +127,9 @@ impl SignalingModule for Polls {
 
     async fn on_destroy(self, ctx: DestroyContext<'_>) {
         if ctx.destroy_room() {
-            let mut volatile = VolatileWrapper::from(ctx.volatile);
-            let volatile = volatile.storage();
+            let volatile = ctx.volatile.storage();
             if let Err(e) = volatile.delete_polls_state(self.room).await {
-                log::error!(
-                    "failed to remove poll state from redis: {}",
-                    Report::from_error(e)
-                );
+                log::error!("failed to remove poll state: {}", Report::from_error(e));
             }
 
             let list = match volatile.poll_ids(self.room).await {
@@ -266,7 +253,8 @@ impl Polls {
                 };
 
                 let set = ctx
-                    .redis_conn()
+                    .volatile
+                    .storage()
                     .set_polls_state(self.room, &polls_state)
                     .await?;
 
@@ -276,7 +264,8 @@ impl Polls {
                     return Ok(());
                 }
 
-                ctx.redis_conn()
+                ctx.volatile
+                    .storage()
                     .add_poll_to_list(self.room, polls_state.id)
                     .await?;
 
@@ -315,7 +304,8 @@ impl Polls {
                     .collect();
 
                 if choice_ids.is_subset(&valid_choice_ids) {
-                    ctx.redis_conn()
+                    ctx.volatile
+                        .storage()
                         .vote(
                             self.room,
                             config.state.id,
@@ -351,8 +341,8 @@ impl Polls {
                     .filter(|config| config.state.id == finish.id && !config.state.is_expired())
                     .is_some()
                 {
-                    // Delete config from redis to stop vote
-                    ctx.redis_conn().delete_polls_state(self.room).await?;
+                    // Delete config to stop vote
+                    ctx.volatile.storage().delete_polls_state(self.room).await?;
 
                     ctx.exchange_publish(
                         control::exchange::current_room_all_participants(self.room),
@@ -402,7 +392,8 @@ impl Polls {
             exchange::Message::Update(id) => {
                 if let Some(config) = &self.config {
                     let results = ctx
-                        .redis_conn()
+                        .volatile
+                        .storage()
                         .poll_results(self.room, &config.state)
                         .await?;
 
@@ -414,7 +405,8 @@ impl Polls {
             exchange::Message::Finish(id) => {
                 if let Some(config) = self.config.take() {
                     let results = ctx
-                        .redis_conn()
+                        .volatile
+                        .storage()
                         .poll_results(self.room, &config.state)
                         .await?;
 

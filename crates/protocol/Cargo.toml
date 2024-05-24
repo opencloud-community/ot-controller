@@ -13,6 +13,7 @@ version.workspace = true
 [dependencies]
 async-trait.workspace = true
 chrono.workspace = true
+either.workspace = true
 log.workspace = true
 opentalk-controller-settings.workspace = true
 opentalk-database.workspace = true

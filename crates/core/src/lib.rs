@@ -4,19 +4,11 @@
 
 use opentalk_signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
-    SignalingModuleInitData, VolatileStorageBackend,
+    SignalingModuleInitData,
 };
 use opentalk_types::signaling::core::{CALL_IN_FEATURE, NAMESPACE};
 
 pub struct Core {}
-
-pub struct VolatileWrapper {}
-
-impl From<VolatileStorageBackend> for VolatileWrapper {
-    fn from(_storage: VolatileStorageBackend) -> Self {
-        Self {}
-    }
-}
 
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for Core {
@@ -29,8 +21,6 @@ impl SignalingModule for Core {
     type ExtEvent = ();
     type FrontendData = ();
     type PeerFrontendData = ();
-
-    type Volatile = VolatileWrapper;
 
     async fn init(
         _ctx: InitContext<'_, Self>,

@@ -8,7 +8,7 @@ use kustos::Authz;
 use opentalk_db_storage::users::User;
 use opentalk_signaling_core::{
     module_tester::{ModuleTester, WsMessageOutgoing},
-    RedisConnection, SignalingModule,
+    SignalingModule, VolatileStaticMemoryStorage, VolatileStorage,
 };
 use opentalk_types::{
     core::{ParticipantId, RoomId},
@@ -43,17 +43,23 @@ pub const USER_2: TestUser = TestUser {
 
 pub const USERS: [TestUser; 2] = [USER_1, USER_2];
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum TestContextVolatileStorage {
+    Redis,
+    Memory,
+}
+
 /// The [`TestContext`] provides access to redis & postgres for tests
 pub struct TestContext {
     pub db_ctx: DatabaseContext,
-    pub redis_conn: RedisConnection,
+    pub volatile: VolatileStorage,
     pub authz: Arc<Authz>,
     pub shutdown: Sender<()>,
 }
 
 impl TestContext {
     /// Creates a new [`TestContext`]
-    pub async fn new() -> Self {
+    pub async fn new(storage: TestContextVolatileStorage) -> Self {
         let _ = setup_logging();
 
         let db_ctx = DatabaseContext::new(true).await;
@@ -68,12 +74,23 @@ impl TestContext {
         .await
         .unwrap();
 
+        let volatile = match storage {
+            TestContextVolatileStorage::Redis => VolatileStorage::Right(redis::setup().await),
+            TestContextVolatileStorage::Memory => {
+                VolatileStorage::Left(VolatileStaticMemoryStorage)
+            }
+        };
+
         TestContext {
             db_ctx,
-            redis_conn: redis::setup().await,
+            volatile,
             authz: Arc::new(enforcer),
             shutdown,
         }
+    }
+
+    pub async fn default() -> Self {
+        Self::new(TestContextVolatileStorage::Memory).await
     }
 }
 
@@ -120,7 +137,7 @@ pub async fn setup_users<M: SignalingModule>(
     let mut module_tester = ModuleTester::new(
         test_ctx.db_ctx.db.clone(),
         test_ctx.authz.clone(),
-        test_ctx.redis_conn.clone(),
+        test_ctx.volatile.clone(),
         room,
     );
 

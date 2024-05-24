@@ -15,8 +15,8 @@ use opentalk_types::{
 };
 
 use crate::{
-    any_stream, AnyStream, ObjectStorage, Participant, RedisConnection, SignalingModule,
-    SignalingRoomId,
+    any_stream, AnyStream, ObjectStorage, Participant, SignalingModule, SignalingRoomId,
+    VolatileStorage,
 };
 
 pub struct ExchangeBinding {
@@ -39,8 +39,7 @@ where
     pub authz: &'ctx Arc<Authz>,
     pub exchange_bindings: &'ctx mut Vec<ExchangeBinding>,
     pub events: &'ctx mut SelectAll<AnyStream>,
-    pub redis_conn: &'ctx mut RedisConnection,
-    pub volatile: M::Volatile,
+    pub volatile: &'ctx mut VolatileStorage,
     pub m: PhantomData<fn() -> M>,
 }
 
@@ -94,11 +93,6 @@ where
 
     pub fn authz(&self) -> &Arc<Authz> {
         self.authz
-    }
-
-    /// Access to a redis connection
-    pub fn redis_conn(&mut self) -> &mut RedisConnection {
-        self.redis_conn
     }
 
     /// Add a routing-key for the exchange-subscriber to bind to

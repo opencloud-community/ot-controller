@@ -15,6 +15,7 @@ version.workspace = true
 [dependencies]
 async-trait.workspace = true
 bytes.workspace = true
+either.workspace = true
 futures.workspace = true
 log.workspace = true
 opentalk-controller-settings.workspace = true

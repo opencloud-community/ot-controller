@@ -22,10 +22,7 @@ use opentalk_janus_client::{
     types::{SdpAnswer, SdpOffer},
     ClientId, JanusMessage, JsepType, RoomId as JanusRoomId, TrickleCandidate,
 };
-use opentalk_signaling_core::{
-    JanusClientSnafu, RedisConnection, RedisSnafu, SerdeJsonSnafu, SignalingModuleError,
-    VolatileStorageBackend,
-};
+use opentalk_signaling_core::{JanusClientSnafu, SignalingModuleError, VolatileStorage};
 use opentalk_types::signaling::media::{command::SubscriberConfiguration, MediaSessionType};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
@@ -42,7 +39,7 @@ use tokio_stream::{
 use crate::{
     settings::{self, Connection},
     storage::MediaStorage,
-    VolatileWrapper,
+    MediaStorageProvider as _,
 };
 
 mod types;
@@ -112,7 +109,7 @@ pub struct McuPool {
     events_sender: mpsc::Sender<(ClientId, Arc<JanusMessage>)>,
 
     rabbitmq_pool: Arc<RabbitMqPool>,
-    volatile: VolatileWrapper,
+    volatile: VolatileStorage,
 
     // Mcu shutdown signal to all janus-client tasks.
     // This is separate from the global application shutdown signal since
@@ -125,7 +122,7 @@ impl McuPool {
         settings: &opentalk_controller_settings::Settings,
         shared_settings: SharedSettings,
         rabbitmq_pool: Arc<RabbitMqPool>,
-        mut volatile: VolatileWrapper,
+        volatile: VolatileStorage,
         controller_shutdown_sig: broadcast::Receiver<()>,
         controller_reload_sig: broadcast::Receiver<()>,
     ) -> Result<Arc<Self>, SignalingModuleError> {
@@ -144,7 +141,7 @@ impl McuPool {
 
             match McuClient::connect(
                 channel,
-                volatile.storage_mut(),
+                volatile.clone(),
                 config.clone(),
                 events_sender.clone(),
             )
@@ -249,7 +246,7 @@ impl McuPool {
 
             match McuClient::connect(
                 channel,
-                self.volatile.clone().storage_mut(),
+                self.volatile.clone(),
                 connection_config.clone(),
                 self.events_sender.clone(),
             )
@@ -295,7 +292,7 @@ impl McuPool {
     ) -> Result<JanusPublisher, SignalingModuleError> {
         let clients = self.clients.read().await;
         let (client, loop_index) = self
-            .choose_client(self.volatile.clone().storage_mut(), &clients)
+            .choose_client(self.volatile.clone().storage(), &clients)
             .await?;
 
         let (handle, room_id) = self
@@ -312,7 +309,7 @@ impl McuPool {
 
         {
             let mut storage = self.volatile.clone();
-            let storage = storage.storage_mut();
+            let storage = storage.storage();
             storage.set_publisher_info(media_session_key, info).await?;
 
             storage
@@ -427,7 +424,7 @@ impl McuPool {
         media_session_key: MediaSessionKey,
     ) -> Result<JanusSubscriber, SignalingModuleError> {
         let mut storage = self.volatile.clone();
-        let storage = storage.storage_mut();
+        let storage = storage.storage();
 
         let PublisherInfo {
             room_id,
@@ -611,7 +608,7 @@ async fn attempt_reconnect(
 
     match McuClient::connect(
         channel,
-        mcu_pool.volatile.clone().storage_mut(),
+        mcu_pool.volatile.clone(),
         config_to_reconnect.clone(),
         mcu_pool.events_sender.clone(),
     )
@@ -726,7 +723,7 @@ impl McuClient {
     #[tracing::instrument(level = "debug", skip(rabbitmq_channel, storage, events_sender))]
     pub async fn connect(
         rabbitmq_channel: RabbitMqChannel,
-        storage: &mut dyn MediaStorage,
+        mut storage: VolatileStorage,
         config: settings::Connection,
         events_sender: mpsc::Sender<(ClientId, Arc<JanusMessage>)>,
     ) -> Result<Self, SignalingModuleError> {
@@ -739,11 +736,15 @@ impl McuClient {
         if let Some(event_loops) = config.event_loops {
             for loop_index in 0..event_loops {
                 storage
+                    .storage()
                     .initialize_mcu_load(id.clone(), Some(loop_index))
                     .await?;
             }
         } else {
-            storage.initialize_mcu_load(id.clone(), None).await?;
+            storage
+                .storage()
+                .initialize_mcu_load(id.clone(), None)
+                .await?;
         }
 
         // We sent at most two signals
@@ -844,7 +845,7 @@ pub struct JanusPublisher {
     mcu_id: McuId,
     loop_index: Option<usize>,
     media_session_key: MediaSessionKey,
-    storage: VolatileWrapper,
+    storage: VolatileStorage,
     destroy: oneshot::Sender<()>,
 }
 
@@ -909,7 +910,7 @@ impl JanusPublisher {
     pub async fn destroy(mut self) -> Result<(), SignalingModuleError> {
         if let Err(e) = self
             .storage
-            .storage_mut()
+            .storage()
             .delete_publisher_info(self.media_session_key)
             .await
         {
@@ -917,7 +918,7 @@ impl JanusPublisher {
         }
 
         self.storage
-            .storage_mut()
+            .storage()
             .decrease_mcu_load(self.mcu_id.clone(), self.loop_index)
             .await?;
 
@@ -957,7 +958,7 @@ impl JanusPublisher {
 
         if let Err(e) = self
             .storage
-            .storage_mut()
+            .storage()
             .delete_publisher_info(self.media_session_key)
             .await
         {
@@ -1031,7 +1032,7 @@ pub struct JanusSubscriber {
     mcu_id: McuId,
     loop_index: Option<usize>,
     media_session_key: MediaSessionKey,
-    storage: VolatileWrapper,
+    storage: VolatileStorage,
     destroy: oneshot::Sender<()>,
 }
 
@@ -1073,7 +1074,7 @@ impl JanusSubscriber {
         let _ = self.destroy.send(());
 
         self.storage
-            .storage_mut()
+            .storage()
             .decrease_mcu_load(self.mcu_id.clone(), self.loop_index)
             .await?;
 
