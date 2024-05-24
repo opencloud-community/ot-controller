@@ -325,11 +325,8 @@ impl McuPool {
             })?;
 
         redis
-            .zincr(MCU_LOAD, mcu_load_key(&client.id, loop_index), 1)
-            .await
-            .context(RedisSnafu {
-                message: "Failed to increment handle count",
-            })?;
+            .increase_mcu_load(client.id.clone(), loop_index)
+            .await?;
 
         tokio::spawn(JanusPublisher::run(
             media_session_key,
@@ -468,11 +465,8 @@ impl McuPool {
             })?;
 
         redis
-            .zincr(MCU_LOAD, mcu_load_key(&client.id, info.loop_index), 1)
-            .await
-            .context(RedisSnafu {
-                message: "Failed to increment handle count",
-            })?;
+            .increase_mcu_load(client.id.clone(), info.loop_index)
+            .await?;
 
         let (destroy, destroy_sig) = oneshot::channel();
 

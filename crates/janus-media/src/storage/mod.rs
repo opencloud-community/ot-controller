@@ -187,15 +187,38 @@ mod test_common {
     }
 
     pub(super) async fn mcu_load(storage: &mut dyn MediaStorage) {
-        let mcu_id = McuId::new("to_janus", "janus_exchange", "from_janus");
-        storage
-            .initialize_mcu_load(mcu_id.clone(), Some(3))
-            .await
-            .unwrap();
+        let id = McuId::new("to_janus", "janus_exchange", "from_janus");
+        let a = (id.clone(), Some(1));
+        let b = (id.clone(), Some(2));
+        let c = (id.clone(), Some(3));
+
+        storage.initialize_mcu_load(a.0.clone(), a.1).await.unwrap();
+        storage.initialize_mcu_load(b.0.clone(), b.1).await.unwrap();
+        storage.initialize_mcu_load(c.0.clone(), c.1).await.unwrap();
 
         assert_eq!(
             storage.get_mcus_sorted_by_load().await.unwrap(),
-            vec![(mcu_id, Some(3))]
+            vec![a.clone(), b.clone(), c.clone()]
+        );
+
+        // increase load on `a`, so it gets sorted last
+        storage.increase_mcu_load(a.0.clone(), a.1).await.unwrap();
+        storage.increase_mcu_load(a.0.clone(), a.1).await.unwrap();
+        assert_eq!(
+            storage.get_mcus_sorted_by_load().await.unwrap(),
+            vec![b.clone(), c.clone(), a.clone()]
+        );
+
+        // increase load on `c` even higher, so that it gets sorted after `a` now
+        storage.increase_mcu_load(c.0.clone(), c.1).await.unwrap();
+        assert_eq!(
+            storage.get_mcus_sorted_by_load().await.unwrap(),
+            vec![b.clone(), c.clone(), a.clone()]
+        );
+        storage.increase_mcu_load(c.0.clone(), c.1).await.unwrap();
+        assert_eq!(
+            storage.get_mcus_sorted_by_load().await.unwrap(),
+            vec![b.clone(), a.clone(), c.clone()]
         );
     }
 }

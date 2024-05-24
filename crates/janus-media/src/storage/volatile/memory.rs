@@ -143,4 +143,9 @@ impl MemoryMediaState {
 
         Vec::from_iter(categories.into_values().flatten().cloned())
     }
+
+    pub(super) fn increase_mcu_load(&mut self, mcu_id: McuId, index: Option<usize>) {
+        let load = self.mcu_load.entry((mcu_id, index)).or_default();
+        *load = load.saturating_add(1);
+    }
 }

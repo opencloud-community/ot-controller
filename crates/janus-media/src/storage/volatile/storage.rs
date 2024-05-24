@@ -165,6 +165,16 @@ impl MediaStorage for VolatileStaticMemoryStorage {
     ) -> Result<Vec<(McuId, Option<usize>)>, SignalingModuleError> {
         Ok(state().read().get_mcus_sorted_by_load())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn increase_mcu_load(
+        &mut self,
+        mcu_id: McuId,
+        index: Option<usize>,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().increase_mcu_load(mcu_id, index);
+        Ok(())
+    }
 }
 
 #[cfg(test)]

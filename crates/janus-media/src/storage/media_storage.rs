@@ -94,4 +94,10 @@ pub(crate) trait MediaStorage {
     async fn get_mcus_sorted_by_load(
         &mut self,
     ) -> Result<Vec<(McuId, Option<usize>)>, SignalingModuleError>;
+
+    async fn increase_mcu_load(
+        &mut self,
+        mcu_id: McuId,
+        index: Option<usize>,
+    ) -> Result<(), SignalingModuleError>;
 }
