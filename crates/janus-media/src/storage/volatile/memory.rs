@@ -10,7 +10,7 @@ use opentalk_types::{
     signaling::media::{ParticipantMediaState, ParticipantSpeakingState, SpeakingState},
 };
 
-use crate::mcu::McuId;
+use crate::mcu::{McuId, MediaSessionKey, PublisherInfo};
 
 #[derive(Debug, Clone, Default)]
 pub(super) struct MemoryMediaState {
@@ -18,6 +18,7 @@ pub(super) struct MemoryMediaState {
     presenters: HashMap<SignalingRoomId, HashSet<ParticipantId>>,
     speakers: HashMap<(SignalingRoomId, ParticipantId), SpeakingState>,
     mcu_load: HashMap<(McuId, Option<usize>), usize>,
+    publisher_info: HashMap<MediaSessionKey, PublisherInfo>,
 }
 
 impl MemoryMediaState {
@@ -152,5 +153,13 @@ impl MemoryMediaState {
     pub(super) fn decrease_mcu_load(&mut self, mcu_id: McuId, index: Option<usize>) {
         let load = self.mcu_load.entry((mcu_id, index)).or_default();
         *load = load.saturating_sub(1);
+    }
+
+    pub(super) fn set_publisher_info(
+        &mut self,
+        media_session_key: MediaSessionKey,
+        info: PublisherInfo,
+    ) {
+        self.publisher_info.insert(media_session_key, info);
     }
 }

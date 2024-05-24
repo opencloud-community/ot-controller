@@ -38,20 +38,20 @@ use tokio_stream::{
 
 use crate::{
     settings::{self, Connection},
-    storage::{delete_publisher_info, get_publisher_info, set_publisher_info, MediaStorage},
+    storage::{delete_publisher_info, get_publisher_info, MediaStorage},
 };
 
 mod types;
 
 pub use self::types::*;
 
-#[derive(Debug, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
 #[to_redis_args(serde)]
 #[from_redis_value(serde)]
-pub(crate) struct PublisherInfo<'i> {
-    room_id: JanusRoomId,
-    mcu_id: Cow<'i, str>,
-    loop_index: Option<usize>,
+pub(crate) struct PublisherInfo {
+    pub(crate) room_id: JanusRoomId,
+    pub(crate) mcu_id: String,
+    pub(crate) loop_index: Option<usize>,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -297,11 +297,11 @@ impl McuPool {
 
         let info = PublisherInfo {
             room_id,
-            mcu_id: Cow::Borrowed(client.id.0.as_ref()),
+            mcu_id: client.id.0.to_string(),
             loop_index,
         };
 
-        set_publisher_info(&mut redis, media_session_key, info).await?;
+        redis.set_publisher_info(media_session_key, info).await?;
 
         redis
             .increase_mcu_load(client.id.clone(), loop_index)
@@ -423,7 +423,8 @@ impl McuPool {
 
         let clients = self.clients.read().await;
         let client = clients
-            .get(mcu_id.as_ref())
+            //TODO: Figure out the right types here and simplify McuId handling
+            .get(Cow::from(mcu_id).as_ref())
             .whatever_context::<&str, SignalingModuleError>("Publisher stored unknown mcu id")?;
 
         let handle = client

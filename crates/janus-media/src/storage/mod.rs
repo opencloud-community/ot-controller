@@ -8,10 +8,12 @@ mod volatile;
 
 pub(crate) use media_storage::MediaStorage;
 //TODO:(a.weiche) remove this once refactor is done
-pub(crate) use redis::{delete_publisher_info, get_publisher_info, set_publisher_info};
+pub(crate) use redis::{delete_publisher_info, get_publisher_info};
 
 #[cfg(test)]
 mod test_common {
+
+    use opentalk_janus_client::RoomId;
     use opentalk_signaling_core::SignalingRoomId;
     use opentalk_types::{
         core::{ParticipantId, Timestamp},
@@ -22,7 +24,7 @@ mod test_common {
     use pretty_assertions::assert_eq;
 
     use super::MediaStorage;
-    use crate::mcu::McuId;
+    use crate::mcu::{McuId, MediaSessionKey, PublisherInfo};
 
     pub const ROOM: SignalingRoomId = SignalingRoomId::nil();
     pub const BOB: ParticipantId = ParticipantId::from_u128(0xdeadbeef);
@@ -229,5 +231,22 @@ mod test_common {
             storage.get_mcus_sorted_by_load().await.unwrap(),
             vec![a.clone(), b.clone(), c.clone()]
         );
+    }
+
+    pub(super) async fn publisher_info(storage: &mut dyn MediaStorage) {
+        let janus_room = RoomId::new(123);
+        let media_session_key = MediaSessionKey(
+            ALICE,
+            opentalk_types::signaling::media::MediaSessionType::Screen,
+        );
+        let info = PublisherInfo {
+            room_id: janus_room,
+            mcu_id: "from-exchange-to".into(),
+            loop_index: None,
+        };
+        storage
+            .set_publisher_info(media_session_key, info)
+            .await
+            .unwrap();
     }
 }

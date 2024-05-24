@@ -13,7 +13,10 @@ use opentalk_types::{
 use parking_lot::RwLock;
 
 use super::memory::MemoryMediaState;
-use crate::{mcu::McuId, storage::media_storage::MediaStorage};
+use crate::{
+    mcu::{McuId, MediaSessionKey, PublisherInfo},
+    storage::media_storage::MediaStorage,
+};
 
 static STATE: OnceLock<Arc<RwLock<MemoryMediaState>>> = OnceLock::new();
 
@@ -185,6 +188,16 @@ impl MediaStorage for VolatileStaticMemoryStorage {
         state().write().decrease_mcu_load(mcu_id, index);
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_publisher_info(
+        &mut self,
+        media_session_key: MediaSessionKey,
+        info: PublisherInfo,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().set_publisher_info(media_session_key, info);
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -221,5 +234,11 @@ mod test {
     #[serial]
     async fn mcu_load() {
         test_common::mcu_load(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn publisher_info() {
+        test_common::publisher_info(&mut storage().await).await;
     }
 }

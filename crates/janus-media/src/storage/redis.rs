@@ -266,20 +266,20 @@ impl MediaStorage for RedisConnection {
             })?;
         Ok(())
     }
-}
 
-pub(crate) async fn set_publisher_info<'i>(
-    redis: &mut RedisConnection,
-    media_session_key: MediaSessionKey,
-    info: PublisherInfo<'i>,
-) -> Result<(), SignalingModuleError> {
-    redis
-        .hset(PUBLISHER_INFO, media_session_key.to_string(), info)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to set publisher info",
-        })?;
-    Ok(())
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_publisher_info(
+        &mut self,
+        media_session_key: MediaSessionKey,
+        info: PublisherInfo,
+    ) -> Result<(), SignalingModuleError> {
+        self.hset(PUBLISHER_INFO, media_session_key.to_string(), info)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to set publisher info",
+            })?;
+        Ok(())
+    }
 }
 
 pub(crate) async fn get_publisher_info(

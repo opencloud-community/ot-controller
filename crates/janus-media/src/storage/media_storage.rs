@@ -9,7 +9,7 @@ use opentalk_types::{
     signaling::media::{ParticipantMediaState, ParticipantSpeakingState, SpeakingState},
 };
 
-use crate::mcu::McuId;
+use crate::mcu::{McuId, MediaSessionKey, PublisherInfo};
 
 #[async_trait]
 pub(crate) trait MediaStorage {
@@ -105,5 +105,11 @@ pub(crate) trait MediaStorage {
         &mut self,
         mcu_id: McuId,
         index: Option<usize>,
+    ) -> Result<(), SignalingModuleError>;
+
+    async fn set_publisher_info(
+        &mut self,
+        media_session_key: MediaSessionKey,
+        info: PublisherInfo,
     ) -> Result<(), SignalingModuleError>;
 }
