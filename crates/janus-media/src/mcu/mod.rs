@@ -22,11 +22,8 @@ use opentalk_janus_client::{
     types::{SdpAnswer, SdpOffer},
     ClientId, JanusMessage, JsepType, RoomId as JanusRoomId, TrickleCandidate,
 };
-use opentalk_signaling_core::{
-    JanusClientSnafu, RedisConnection, RedisSnafu, SignalingModuleError,
-};
+use opentalk_signaling_core::{JanusClientSnafu, RedisConnection, SignalingModuleError};
 use opentalk_types::signaling::media::{command::SubscriberConfiguration, MediaSessionType};
-use redis::AsyncCommands;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use snafu::{whatever, OptionExt, Report, ResultExt};
@@ -41,7 +38,7 @@ use tokio_stream::{
 
 use crate::{
     settings::{self, Connection},
-    storage::{set_publisher_info, MediaStorage, PUBLISHER_INFO},
+    storage::{delete_publisher_info, get_publisher_info, set_publisher_info, MediaStorage},
 };
 
 mod types;
@@ -418,31 +415,27 @@ impl McuPool {
     ) -> Result<JanusSubscriber, SignalingModuleError> {
         let mut redis = self.redis.clone();
 
-        let info: PublisherInfo = redis
-            .hget(PUBLISHER_INFO, media_session_key.to_string())
-            .await
-            .with_context(|_| RedisSnafu {
-                message: format!("Failed to get mcu id for media session key {media_session_key}",),
-            })?;
+        let PublisherInfo {
+            room_id,
+            mcu_id,
+            loop_index,
+        } = get_publisher_info(&mut redis, media_session_key).await?;
 
         let clients = self.clients.read().await;
         let client = clients
-            .get(info.mcu_id.as_ref())
+            .get(mcu_id.as_ref())
             .whatever_context::<&str, SignalingModuleError>("Publisher stored unknown mcu id")?;
 
         let handle = client
             .session
-            .attach_to_plugin(
-                opentalk_janus_client::JanusPlugin::VideoRoom,
-                info.loop_index,
-            )
+            .attach_to_plugin(opentalk_janus_client::JanusPlugin::VideoRoom, loop_index)
             .await
             .context(JanusClientSnafu {
                 message: "Failed to attach to videoroom plugin",
             })?;
 
         redis
-            .increase_mcu_load(client.id.clone(), info.loop_index)
+            .increase_mcu_load(client.id.clone(), loop_index)
             .await?;
 
         let (destroy, destroy_sig) = oneshot::channel();
@@ -457,9 +450,9 @@ impl McuPool {
 
         let subscriber = JanusSubscriber {
             handle: handle.clone(),
-            room_id: info.room_id,
+            room_id,
             mcu_id: client.id.clone(),
-            loop_index: info.loop_index,
+            loop_index,
             media_session_key,
             redis,
             destroy,
@@ -899,11 +892,7 @@ impl JanusPublisher {
     }
 
     pub async fn destroy(mut self) -> Result<(), SignalingModuleError> {
-        if let Err(e) = self
-            .redis
-            .hdel::<_, _, ()>(PUBLISHER_INFO, self.media_session_key.to_string())
-            .await
-        {
+        if let Err(e) = delete_publisher_info(&mut self.redis, self.media_session_key).await {
             log::error!("Failed to remove publisher info, {}", Report::from_error(e));
         }
 
@@ -945,11 +934,7 @@ impl JanusPublisher {
             message: "Failed to detach from plugin",
         })?;
 
-        if let Err(e) = self
-            .redis
-            .hdel::<_, _, ()>(PUBLISHER_INFO, self.media_session_key.to_string())
-            .await
-        {
+        if let Err(e) = delete_publisher_info(&mut self.redis, self.media_session_key).await {
             log::error!("Failed to remove publisher info, {}", Report::from_error(e));
         }
 

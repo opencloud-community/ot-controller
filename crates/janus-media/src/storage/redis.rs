@@ -282,6 +282,28 @@ pub(crate) async fn set_publisher_info<'i>(
     Ok(())
 }
 
+pub(crate) async fn get_publisher_info(
+    redis: &mut RedisConnection,
+    media_session_key: MediaSessionKey,
+) -> Result<PublisherInfo, SignalingModuleError> {
+    let info: PublisherInfo = redis
+        .hget(PUBLISHER_INFO, media_session_key.to_string())
+        .await
+        .with_context(|_| RedisSnafu {
+            message: format!("Failed to get mcu id for media session key {media_session_key}",),
+        })?;
+    Ok(info)
+}
+
+pub(crate) async fn delete_publisher_info(
+    redis: &mut RedisConnection,
+    key: MediaSessionKey,
+) -> Result<(), redis::RedisError> {
+    redis
+        .hdel::<_, _, ()>(PUBLISHER_INFO, key.to_string())
+        .await
+}
+
 /// Data related to a module inside a participant
 #[derive(ToRedisArgs)]
 #[to_redis_args(
