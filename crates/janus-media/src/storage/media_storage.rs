@@ -117,4 +117,9 @@ pub(crate) trait MediaStorage {
         &mut self,
         media_session_key: MediaSessionKey,
     ) -> Result<PublisherInfo, SignalingModuleError>;
+
+    async fn delete_publisher_info(
+        &mut self,
+        key: MediaSessionKey,
+    ) -> Result<(), redis::RedisError>;
 }

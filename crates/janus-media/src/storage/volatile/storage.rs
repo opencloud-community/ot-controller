@@ -212,6 +212,15 @@ impl MediaStorage for VolatileStaticMemoryStorage {
             .get_publisher_info(media_session_key)
             .with_context(|| NotFoundSnafu)
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_publisher_info(
+        &mut self,
+        media_session_key: MediaSessionKey,
+    ) -> Result<(), redis::RedisError> {
+        state().write().delete_publisher_info(media_session_key);
+        Ok(())
+    }
 }
 
 #[cfg(test)]

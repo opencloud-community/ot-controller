@@ -38,7 +38,7 @@ use tokio_stream::{
 
 use crate::{
     settings::{self, Connection},
-    storage::{delete_publisher_info, MediaStorage},
+    storage::MediaStorage,
 };
 
 mod types;
@@ -893,7 +893,11 @@ impl JanusPublisher {
     }
 
     pub async fn destroy(mut self) -> Result<(), SignalingModuleError> {
-        if let Err(e) = delete_publisher_info(&mut self.redis, self.media_session_key).await {
+        if let Err(e) = self
+            .redis
+            .delete_publisher_info(self.media_session_key)
+            .await
+        {
             log::error!("Failed to remove publisher info, {}", Report::from_error(e));
         }
 
@@ -935,7 +939,11 @@ impl JanusPublisher {
             message: "Failed to detach from plugin",
         })?;
 
-        if let Err(e) = delete_publisher_info(&mut self.redis, self.media_session_key).await {
+        if let Err(e) = self
+            .redis
+            .delete_publisher_info(self.media_session_key)
+            .await
+        {
             log::error!("Failed to remove publisher info, {}", Report::from_error(e));
         }
 

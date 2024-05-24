@@ -294,15 +294,14 @@ impl MediaStorage for RedisConnection {
             })?;
         Ok(info)
     }
-}
 
-pub(crate) async fn delete_publisher_info(
-    redis: &mut RedisConnection,
-    key: MediaSessionKey,
-) -> Result<(), redis::RedisError> {
-    redis
-        .hdel::<_, _, ()>(PUBLISHER_INFO, key.to_string())
-        .await
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_publisher_info(
+        &mut self,
+        key: MediaSessionKey,
+    ) -> Result<(), redis::RedisError> {
+        self.hdel::<_, _, ()>(PUBLISHER_INFO, key.to_string()).await
+    }
 }
 
 /// Data related to a module inside a participant

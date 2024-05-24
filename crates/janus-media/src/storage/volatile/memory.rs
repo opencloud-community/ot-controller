@@ -169,4 +169,8 @@ impl MemoryMediaState {
     ) -> Option<PublisherInfo> {
         self.publisher_info.get(&media_session_key).cloned()
     }
+
+    pub(super) fn delete_publisher_info(&mut self, media_session_key: MediaSessionKey) {
+        self.publisher_info.remove(&media_session_key);
+    }
 }

@@ -7,8 +7,6 @@ mod redis;
 mod volatile;
 
 pub(crate) use media_storage::MediaStorage;
-//TODO:(a.weiche) remove this once refactor is done
-pub(crate) use redis::delete_publisher_info;
 
 #[cfg(test)]
 mod test_common {
@@ -255,5 +253,11 @@ mod test_common {
             storage.get_publisher_info(media_session_key).await.unwrap(),
             info
         );
+
+        storage
+            .delete_publisher_info(media_session_key)
+            .await
+            .unwrap();
+        assert!(storage.get_publisher_info(media_session_key).await.is_err());
     }
 }
