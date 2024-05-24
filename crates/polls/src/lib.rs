@@ -44,15 +44,7 @@ impl From<VolatileStorageBackend> for VolatileWrapper {
 }
 
 impl VolatileWrapper {
-    fn storage_ref(&self) -> &dyn storage::PollsStorage {
-        if self.storage.is_left() {
-            self.storage.as_ref().left().unwrap()
-        } else {
-            self.storage.as_ref().right().unwrap()
-        }
-    }
-
-    fn storage_mut(&mut self) -> &mut dyn storage::PollsStorage {
+    fn storage(&mut self) -> &mut dyn storage::PollsStorage {
         if self.storage.is_left() {
             self.storage.as_mut().left().unwrap()
         } else {
@@ -100,7 +92,8 @@ impl SignalingModule for Polls {
                 frontend_data,
                 participants: _,
             } => {
-                if let Some(polls_state) = ctx.redis_conn().get_polls_state(self.room).await? {
+                if let Some(polls_state) = ctx.volatile.storage().get_polls_state(self.room).await?
+                {
                     if let Some(duration) = polls_state.remaining() {
                         let id = polls_state.id;
 
@@ -128,7 +121,8 @@ impl SignalingModule for Polls {
             Event::Ext(ExpiredEvent(id)) => {
                 if let Some(config) = self.config.as_ref().filter(|config| config.state.id == id) {
                     let results = ctx
-                        .redis_conn()
+                        .volatile
+                        .storage()
                         .poll_results(self.room, &config.state)
                         .await?;
 
@@ -140,16 +134,18 @@ impl SignalingModule for Polls {
         }
     }
 
-    async fn on_destroy(self, mut ctx: DestroyContext<'_>) {
+    async fn on_destroy(self, ctx: DestroyContext<'_>) {
         if ctx.destroy_room() {
-            if let Err(e) = ctx.redis_conn().delete_polls_state(self.room).await {
+            let mut volatile = VolatileWrapper::from(ctx.volatile);
+            let volatile = volatile.storage();
+            if let Err(e) = volatile.delete_polls_state(self.room).await {
                 log::error!(
                     "failed to remove poll state from redis: {}",
                     Report::from_error(e)
                 );
             }
 
-            let list = match ctx.redis_conn().poll_ids(self.room).await {
+            let list = match volatile.poll_ids(self.room).await {
                 Ok(list) => list,
                 Err(e) => {
                     log::error!(
@@ -161,7 +157,7 @@ impl SignalingModule for Polls {
             };
 
             for id in list {
-                if let Err(e) = ctx.redis_conn().delete_poll_results(self.room, id).await {
+                if let Err(e) = volatile.delete_poll_results(self.room, id).await {
                     log::error!(
                         "failed to remove poll results for id {}, {}",
                         id,
@@ -170,7 +166,7 @@ impl SignalingModule for Polls {
                 }
             }
 
-            if let Err(e) = ctx.redis_conn().delete_poll_ids(self.room).await {
+            if let Err(e) = volatile.delete_poll_ids(self.room).await {
                 log::error!(
                     "failed to remove closed poll id list: {}",
                     Report::from_error(e)
