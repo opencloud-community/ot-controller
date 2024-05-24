@@ -9,7 +9,9 @@ use opentalk_types::{
     signaling::media::{ParticipantMediaState, ParticipantSpeakingState, SpeakingState},
 };
 
-#[async_trait(?Send)]
+use crate::mcu::McuId;
+
+#[async_trait]
 pub(crate) trait MediaStorage {
     async fn get_media_state(
         &mut self,
@@ -82,4 +84,10 @@ pub(crate) trait MediaStorage {
         room: SignalingRoomId,
         participants: &[ParticipantId],
     ) -> Result<Vec<ParticipantSpeakingState>, SignalingModuleError>;
+
+    async fn initialize_mcu_load(
+        &mut self,
+        mcu_id: McuId,
+        index: Option<usize>,
+    ) -> Result<(), SignalingModuleError>;
 }

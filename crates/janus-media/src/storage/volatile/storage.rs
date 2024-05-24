@@ -13,7 +13,7 @@ use opentalk_types::{
 use parking_lot::RwLock;
 
 use super::memory::MemoryMediaState;
-use crate::storage::media_storage::MediaStorage;
+use crate::{mcu::McuId, storage::media_storage::MediaStorage};
 
 static STATE: OnceLock<Arc<RwLock<MemoryMediaState>>> = OnceLock::new();
 
@@ -21,7 +21,7 @@ fn state() -> &'static Arc<RwLock<MemoryMediaState>> {
     STATE.get_or_init(Default::default)
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 impl MediaStorage for VolatileStaticMemoryStorage {
     #[tracing::instrument(level = "debug", skip(self))]
     async fn get_media_state(
@@ -148,6 +148,16 @@ impl MediaStorage for VolatileStaticMemoryStorage {
             .read()
             .get_speaking_state_multiple_participants(room, participants))
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn initialize_mcu_load(
+        &mut self,
+        mcu_id: McuId,
+        index: Option<usize>,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().initialize_mcu_load(mcu_id, index);
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -178,5 +188,11 @@ mod test {
     #[serial]
     async fn speaking_state() {
         test_common::speaking_state(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn mcu_load() {
+        test_common::mcu_load(&mut storage().await).await;
     }
 }

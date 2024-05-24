@@ -10,11 +10,14 @@ use opentalk_types::{
     signaling::media::{ParticipantMediaState, ParticipantSpeakingState, SpeakingState},
 };
 
+use crate::mcu::McuId;
+
 #[derive(Debug, Clone, Default)]
 pub(super) struct MemoryMediaState {
     participant_media_states: HashMap<(SignalingRoomId, ParticipantId), ParticipantMediaState>,
     presenters: HashMap<SignalingRoomId, HashSet<ParticipantId>>,
     speakers: HashMap<(SignalingRoomId, ParticipantId), SpeakingState>,
+    mcu_load: HashMap<(McuId, Option<usize>), usize>,
 }
 
 impl MemoryMediaState {
@@ -125,5 +128,9 @@ impl MemoryMediaState {
                     })
             })
             .collect()
+    }
+
+    pub(super) fn initialize_mcu_load(&mut self, mcu_id: McuId, index: Option<usize>) {
+        self.mcu_load.insert((mcu_id, index), 0);
     }
 }

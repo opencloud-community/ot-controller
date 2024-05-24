@@ -19,6 +19,8 @@ mod test_common {
     };
     use pretty_assertions::assert_eq;
 
+    use crate::mcu::McuId;
+
     use super::MediaStorage;
 
     pub const ROOM: SignalingRoomId = SignalingRoomId::nil();
@@ -182,5 +184,10 @@ mod test_common {
                 .unwrap(),
             vec![]
         );
+    }
+
+    pub(super) async fn mcu_load(storage: &mut dyn MediaStorage) {
+        let mcu_id = McuId::new("to_janus", "janus_exchange", "from_janus");
+        storage.initialize_mcu_load(mcu_id, Some(3)).await.unwrap();
     }
 }

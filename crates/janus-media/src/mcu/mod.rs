@@ -38,7 +38,10 @@ use tokio_stream::{
     StreamExt,
 };
 
-use crate::settings::{self, Connection};
+use crate::{
+    settings::{self, Connection},
+    storage::MediaStorage as _,
+};
 
 mod types;
 
@@ -53,9 +56,9 @@ const PUBLISHER_INFO: &str = "opentalk-signaling:mcu:publishers";
 ///
 /// The score represents the amounts of subscribers on that mcu and is used to choose the least
 /// busy mcu for a new publisher.
-const MCU_LOAD: &str = "opentalk-signaling:mcu:load";
+pub(crate) const MCU_LOAD: &str = "opentalk-signaling:mcu:load";
 
-fn mcu_load_key(mcu_id: &McuId, loop_index: Option<usize>) -> String {
+pub(crate) fn mcu_load_key(mcu_id: &McuId, loop_index: Option<usize>) -> String {
     if let Some(loop_index) = loop_index {
         format!("{}@{}", mcu_id.0, loop_index)
     } else {
@@ -71,7 +74,7 @@ struct PublisherInfo<'i> {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
-struct McuId(Arc<str>);
+pub(crate) struct McuId(Arc<str>);
 
 impl McuId {
     pub fn new(to_janus_key: &str, janus_exchange_key: &str, from_janus_key: &str) -> Self {
@@ -762,14 +765,24 @@ impl McuClient {
         config: settings::Connection,
         events_sender: mpsc::Sender<(ClientId, Arc<JanusMessage>)>,
     ) -> Result<Self, SignalingModuleError> {
-        // We sent at most two signals
-        let (pubsub_shutdown, _) = broadcast::channel::<ShutdownSignal>(1);
-
         let id = McuId::new(
             &config.to_routing_key,
             &config.exchange,
             &config.from_routing_key,
         );
+
+        if let Some(event_loops) = config.event_loops {
+            for loop_index in 0..event_loops {
+                redis
+                    .initialize_mcu_load(id.clone(), Some(loop_index))
+                    .await?;
+            }
+        } else {
+            redis.initialize_mcu_load(id.clone(), None).await?;
+        }
+
+        // We sent at most two signals
+        let (pubsub_shutdown, _) = broadcast::channel::<ShutdownSignal>(1);
 
         let rabbit_mq_config = opentalk_janus_client::RabbitMqConfig::new_from_channel(
             rabbitmq_channel.clone(),
@@ -778,24 +791,6 @@ impl McuClient {
             config.from_routing_key.clone(),
             format!("opentalk-sig-janus-{}", id.0),
         );
-
-        if let Some(event_loops) = config.event_loops {
-            for loop_index in 0..event_loops {
-                redis
-                    .zincr(MCU_LOAD, mcu_load_key(&id, Some(loop_index)), 0)
-                    .await
-                    .context(RedisSnafu {
-                        message: "Failed to initialize handle count",
-                    })?;
-            }
-        } else {
-            redis
-                .zincr(MCU_LOAD, mcu_load_key(&id, None), 0)
-                .await
-                .context(RedisSnafu {
-                    message: "Failed to initialize handle count",
-                })?;
-        }
 
         let mut client = opentalk_janus_client::Client::new(
             rabbit_mq_config,

@@ -14,9 +14,11 @@ use redis::AsyncCommands as _;
 use redis_args::ToRedisArgs;
 use snafu::ResultExt as _;
 
+use crate::mcu::{mcu_load_key, McuId, MCU_LOAD};
+
 use super::MediaStorage;
 
-#[async_trait(?Send)]
+#[async_trait]
 impl MediaStorage for RedisConnection {
     #[tracing::instrument(level = "debug", skip(self))]
     async fn get_media_state(
@@ -209,6 +211,20 @@ impl MediaStorage for RedisConnection {
 
         Ok(participant_speakers)
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn initialize_mcu_load(
+        &mut self,
+        mcu_id: McuId,
+        index: Option<usize>,
+    ) -> Result<(), SignalingModuleError> {
+        self.zincr(MCU_LOAD, mcu_load_key(&mcu_id, index), 0)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to initialize handle count",
+            })?;
+        Ok(())
+    }
 }
 
 /// Data related to a module inside a participant
@@ -275,5 +291,11 @@ mod test {
     #[serial]
     async fn speaking_state() {
         test_common::speaking_state(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn mcu_load() {
+        test_common::mcu_load(&mut storage().await).await;
     }
 }
