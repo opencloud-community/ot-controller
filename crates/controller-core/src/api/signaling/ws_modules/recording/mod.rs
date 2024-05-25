@@ -14,9 +14,7 @@ use opentalk_db_storage::streaming_targets::RoomStreamingTargetRecord;
 use opentalk_signaling_core::{
     control::{
         self,
-        storage::{
-            ControlStorage as _, ControlStorageParticipantAttributes as _, RECORDING_CONSENT,
-        },
+        storage::{ControlStorageParticipantAttributes as _, RECORDING_CONSENT},
     },
     DestroyContext, Event, InitContext, ModuleContext, RedisConnection, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
@@ -460,7 +458,7 @@ impl Recording {
     ) -> Result<(), SignalingModuleError> {
         let participant_ids: Vec<ParticipantId> = participants.keys().copied().collect();
         let participant_consents: Vec<Option<bool>> = redis_conn
-            .get_attribute_for_participants(self.room, RECORDING_CONSENT, &participant_ids)
+            .get_attribute_for_participants(self.room, &participant_ids, RECORDING_CONSENT)
             .await?;
 
         for (id, consent) in participant_ids.into_iter().zip(participant_consents) {

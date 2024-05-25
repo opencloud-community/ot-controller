@@ -285,7 +285,7 @@ impl SignalingModule for ModerationModule {
                     Vec::from_iter(ctx.redis_conn().get_all_participants(self.room).await?);
                 let all_participants_role: Vec<Option<Role>> = ctx
                     .redis_conn()
-                    .get_attribute_for_participants(self.room, ROLE, &all_participants)
+                    .get_attribute_for_participants(self.room, &all_participants, ROLE)
                     .await?;
 
                 let mut to_remove = vec![];

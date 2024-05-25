@@ -14,13 +14,16 @@ use opentalk_types::{
     signaling::Role,
 };
 use parking_lot::RwLock;
-use redis::FromRedisValue;
-use snafu::OptionExt as _;
+use serde::de::DeserializeOwned;
 
 use super::memory::{MemoryControlState, VolatileStaticMemoryAttributeActions};
 use crate::{
-    control::storage::{AttributeId, ControlStorage, ControlStorageParticipantAttributes},
-    NotFoundSnafu, SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage,
+    control::storage::{
+        AttributeId, ControlStorage, ControlStorageParticipantAttributes,
+        ControlStorageParticipantAttributesBulk, ControlStorageParticipantAttributesRaw, LEFT_AT,
+        ROLE,
+    },
+    SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage,
 };
 
 static STATE: OnceLock<Arc<RwLock<MemoryControlState>>> = OnceLock::new();
@@ -31,8 +34,6 @@ fn state() -> &'static Arc<RwLock<MemoryControlState>> {
 
 #[async_trait(?Send)]
 impl ControlStorage for VolatileStaticMemoryStorage {
-    type BulkAttributeActions = VolatileStaticMemoryAttributeActions;
-
     #[tracing::instrument(level = "debug", skip(self))]
     async fn participant_set_exists(
         &mut self,
@@ -85,37 +86,6 @@ impl ControlStorage for VolatileStaticMemoryStorage {
         Ok(state().write().add_participant_to_set(room, participant))
     }
 
-    fn bulk_attribute_actions(
-        &self,
-        room: SignalingRoomId,
-        participant: ParticipantId,
-    ) -> Self::BulkAttributeActions {
-        VolatileStaticMemoryAttributeActions::new(room, participant)
-    }
-
-    #[tracing::instrument(level = "debug", skip(self, actions))]
-    async fn perform_bulk_attribute_actions<T: FromRedisValue>(
-        &mut self,
-        actions: &Self::BulkAttributeActions,
-    ) -> Result<T, SignalingModuleError> {
-        state().write().perform_bulk_attribute_actions(actions)
-    }
-
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn get_attribute_for_participants<V>(
-        &mut self,
-        room: SignalingRoomId,
-        attribute: AttributeId,
-        participants: &[ParticipantId],
-    ) -> Result<Vec<Option<V>>, SignalingModuleError>
-    where
-        V: FromRedisValue,
-    {
-        state()
-            .read()
-            .get_attribute_for_participants(room, attribute, participants)
-    }
-
     #[tracing::instrument(level = "debug", skip(self))]
     async fn remove_attribute_key(
         &mut self,
@@ -132,9 +102,19 @@ impl ControlStorage for VolatileStaticMemoryStorage {
         room: SignalingRoomId,
     ) -> Result<BTreeMap<ParticipantId, (Option<Role>, Option<Timestamp>)>, SignalingModuleError>
     {
-        state()
-            .read()
-            .get_role_and_left_at_for_room_participants(room)
+        let participants = Vec::from_iter(self.get_all_participants(room).await?);
+
+        let roles = self
+            .get_attribute_for_participants(room, &participants, ROLE)
+            .await?;
+        let left_at = self
+            .get_attribute_for_participants(room, &participants, LEFT_AT)
+            .await?;
+
+        Ok(participants
+            .into_iter()
+            .zip(std::iter::zip(roles, left_at))
+            .collect())
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
@@ -280,42 +260,68 @@ impl ControlStorage for VolatileStaticMemoryStorage {
 }
 
 #[async_trait(?Send)]
-impl ControlStorageParticipantAttributes for VolatileStaticMemoryStorage {
+impl ControlStorageParticipantAttributesBulk for VolatileStaticMemoryStorage {
+    type BulkAttributeActions = VolatileStaticMemoryAttributeActions;
+
+    fn bulk_attribute_actions(
+        &self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Self::BulkAttributeActions {
+        VolatileStaticMemoryAttributeActions::new(room, participant)
+    }
+
+    #[tracing::instrument(level = "debug", skip(self, actions))]
+    async fn perform_bulk_attribute_actions<T: DeserializeOwned>(
+        &mut self,
+        actions: &Self::BulkAttributeActions,
+    ) -> Result<T, SignalingModuleError> {
+        state().write().perform_bulk_attribute_actions(actions)
+    }
+}
+
+#[async_trait(?Send)]
+impl ControlStorageParticipantAttributesRaw for VolatileStaticMemoryStorage {
     #[tracing::instrument(level = "debug", skip(self))]
-    async fn get_attribute<V>(
+    async fn get_attribute_raw(
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
         attribute: AttributeId,
-    ) -> Result<V, SignalingModuleError>
-    where
-        V: FromRedisValue,
-    {
-        state()
+    ) -> Result<serde_json::Value, SignalingModuleError> {
+        Ok(state()
             .read()
-            .get_attribute(room, participant, attribute)?
-            .with_context(|| NotFoundSnafu)
+            .get_attribute_raw(room, participant, attribute))
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
-    async fn set_attribute<V>(
+    async fn get_attribute_for_participants_raw(
+        &mut self,
+        room: SignalingRoomId,
+        participants: &[ParticipantId],
+        attribute: AttributeId,
+    ) -> Result<Vec<serde_json::Value>, SignalingModuleError> {
+        Ok(state()
+            .read()
+            .get_attribute_for_participants_raw(room, participants, attribute))
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_attribute_raw(
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
         attribute: AttributeId,
-        value: V,
-    ) -> Result<(), SignalingModuleError>
-    where
-        V: core::fmt::Debug + redis::ToRedisArgs + Send + Sync,
-    {
+        value: serde_json::Value,
+    ) -> Result<(), SignalingModuleError> {
         state()
             .write()
-            .set_attribute(room, participant, attribute, value);
+            .set_attribute_raw(room, participant, attribute, value);
         Ok(())
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
-    async fn remove_attribute(
+    async fn remove_attribute_raw(
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
@@ -323,7 +329,7 @@ impl ControlStorageParticipantAttributes for VolatileStaticMemoryStorage {
     ) -> Result<(), SignalingModuleError> {
         state()
             .write()
-            .remove_attribute(room, participant, attribute);
+            .remove_attribute_raw(room, participant, attribute);
         Ok(())
     }
 }

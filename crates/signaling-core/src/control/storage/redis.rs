@@ -16,18 +16,18 @@ use opentalk_types::{
 };
 use redis::{AsyncCommands, FromRedisValue, ToRedisArgs};
 use redis_args::ToRedisArgs;
+use serde::{de::DeserializeOwned, Serialize};
 use snafu::ResultExt;
 
 use super::{
-    AttributeActions, AttributeId, ControlStorage, ControlStorageParticipantAttributes, LEFT_AT,
-    ROLE, SKIP_WAITING_ROOM_KEY_EXPIRY,
+    control_storage::ControlStorageParticipantAttributesBulk, AttributeActions, AttributeId,
+    ControlStorage, ControlStorageParticipantAttributesRaw, LEFT_AT, ROLE,
+    SKIP_WAITING_ROOM_KEY_EXPIRY,
 };
-use crate::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
+use crate::{RedisConnection, RedisSnafu, SerdeJsonSnafu, SignalingModuleError, SignalingRoomId};
 
 #[async_trait(?Send)]
 impl ControlStorage for RedisConnection {
-    type BulkAttributeActions = RedisBulkAttributeActions;
-
     #[tracing::instrument(level = "debug", skip(self))]
     async fn participant_set_exists(
         &mut self,
@@ -109,53 +109,6 @@ impl ControlStorage for RedisConnection {
             })
     }
 
-    fn bulk_attribute_actions(
-        &self,
-        room: SignalingRoomId,
-        participant: ParticipantId,
-    ) -> Self::BulkAttributeActions {
-        RedisBulkAttributeActions::new(room, participant)
-    }
-
-    #[tracing::instrument(level = "debug", skip(self, actions))]
-    async fn perform_bulk_attribute_actions<T: FromRedisValue>(
-        &mut self,
-        actions: &Self::BulkAttributeActions,
-    ) -> Result<T, SignalingModuleError> {
-        actions
-            .query_async(self)
-            .await
-            .with_context(|_| RedisSnafu {
-                message: "Failed to perform bulk attribute actions".to_string(),
-            })
-    }
-
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn get_attribute_for_participants<V>(
-        &mut self,
-        room: SignalingRoomId,
-        attribute: AttributeId,
-        participants: &[ParticipantId],
-    ) -> Result<Vec<Option<V>>, SignalingModuleError>
-    where
-        V: FromRedisValue,
-    {
-        // Special case: HMGET cannot handle empty arrays (missing arguments)
-        if participants.is_empty() {
-            Ok(vec![])
-        } else {
-            // need manual HMGET command as the HGET command wont work with single value vector input
-            redis::cmd("HMGET")
-                .arg(RoomParticipantAttributes { room, attribute })
-                .arg(participants)
-                .query_async(self)
-                .await
-                .with_context(|_| RedisSnafu {
-                    message: format!("Failed to get attribute '{attribute}' for all participants"),
-                })
-        }
-    }
-
     #[tracing::instrument(level = "debug", skip(self))]
     async fn remove_attribute_key(
         &mut self,
@@ -187,8 +140,8 @@ impl ControlStorage for RedisConnection {
         });
 
         let (mut roles, mut left_at_timestamps): (
-            HashMap<ParticipantId, Role>,
-            HashMap<ParticipantId, Timestamp>,
+            HashMap<ParticipantId, WrappedAttributeValue<Role>>,
+            HashMap<ParticipantId, WrappedAttributeValue<Timestamp>>,
         ) = pipe.query_async(self).await.context(RedisSnafu {
             message: "Failed to get attributes",
         })?;
@@ -200,7 +153,15 @@ impl ControlStorage for RedisConnection {
 
         Ok(participants
             .into_iter()
-            .map(|p| (p, (roles.remove(&p), left_at_timestamps.remove(&p))))
+            .map(|p| {
+                (
+                    p,
+                    (
+                        roles.remove(&p).map(|v| v.0),
+                        left_at_timestamps.remove(&p).map(|v| v.0),
+                    ),
+                )
+            })
             .collect())
     }
 
@@ -498,7 +459,8 @@ pub struct RedisBulkAttributeActions {
 
 #[async_trait(?Send)]
 impl AttributeActions for RedisBulkAttributeActions {
-    fn set<V: ToRedisArgs>(&mut self, attribute: AttributeId, value: V) -> &mut Self {
+    fn set<V: Serialize>(&mut self, attribute: AttributeId, value: V) -> &mut Self {
+        let serialized = serde_json::to_value(value).expect("attribute value must be serializable");
         self.pipe
             .hset(
                 RoomParticipantAttributes {
@@ -506,7 +468,7 @@ impl AttributeActions for RedisBulkAttributeActions {
                     attribute,
                 },
                 self.participant,
-                value,
+                WrappedAttributeValueJson(serialized),
             )
             .ignore();
 
@@ -561,6 +523,42 @@ impl RedisBulkAttributeActions {
     }
 }
 
+#[async_trait(?Send)]
+impl ControlStorageParticipantAttributesBulk for RedisConnection {
+    type BulkAttributeActions = RedisBulkAttributeActions;
+
+    fn bulk_attribute_actions(
+        &self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Self::BulkAttributeActions {
+        RedisBulkAttributeActions::new(room, participant)
+    }
+
+    #[tracing::instrument(level = "debug", skip(self, actions))]
+    async fn perform_bulk_attribute_actions<T: DeserializeOwned>(
+        &mut self,
+        actions: &Self::BulkAttributeActions,
+    ) -> Result<T, SignalingModuleError> {
+        let WrappedAttributeValueJson(mut value) =
+            actions
+                .query_async(self)
+                .await
+                .with_context(|_| RedisSnafu {
+                    message: "Failed to perform bulk attribute actions".to_string(),
+                })?;
+        if value == serde_json::Value::Array(Vec::new()) {
+            value = serde_json::Value::Null;
+        }
+        let deserialized = serde_json::from_value(value).with_context(|e| SerdeJsonSnafu {
+            message: format!(
+                "Failed to deserialize JSON result from redis bulk attribute actions, {e}"
+            ),
+        })?;
+        Ok(deserialized)
+    }
+}
+
 /// Key used for setting the `skip_waiting_room` attribute for a participant
 #[derive(Debug, ToRedisArgs)]
 #[to_redis_args(fmt = "opentalk-signaling:participant={participant}:skip_waiting_room")]
@@ -568,19 +566,91 @@ pub struct SkipWaitingRoom {
     participant: ParticipantId,
 }
 
+struct WrappedAttributeValueJson(serde_json::Value);
+
+impl ToRedisArgs for WrappedAttributeValueJson {
+    fn write_redis_args<W>(&self, out: &mut W)
+    where
+        W: ?Sized + redis::RedisWrite,
+    {
+        let value =
+            serde_json::to_vec(&self.0).expect("serde_json::Value should always be serializable");
+        out.write_arg(&value)
+    }
+}
+
+impl FromRedisValue for WrappedAttributeValueJson {
+    fn from_redis_value(v: &redis::Value) -> redis::RedisResult<Self> {
+        match v {
+            redis::Value::Nil => Ok(Self(serde_json::Value::Null)),
+            redis::Value::Int(v) => Ok(Self(serde_json::Value::Number(serde_json::Number::from(
+                *v,
+            )))),
+            redis::Value::Data(v) => {
+                let value = serde_json::from_slice(v).map_err(|e| {
+                    redis::RedisError::from((
+                        redis::ErrorKind::ParseError,
+                        "Could not deserialize JSON value",
+                        format!("{:?}", e),
+                    ))
+                })?;
+                Ok(Self(value))
+            }
+            redis::Value::Bulk(v) => {
+                let values = v
+                    .iter()
+                    .map(WrappedAttributeValueJson::from_redis_value)
+                    .collect::<redis::RedisResult<Vec<WrappedAttributeValueJson>>>()?;
+                let values = values.into_iter().map(|v| v.0).collect();
+                Ok(Self(serde_json::Value::Array(values)))
+            }
+            v @ redis::Value::Status(_) => Err(redis::RedisError::from((
+                redis::ErrorKind::TypeError,
+                "Response was of incompatible type",
+                format!("response was {:?}", v),
+            ))),
+            redis::Value::Okay => todo!(),
+        }
+    }
+}
+
+struct WrappedAttributeValue<T>(T);
+
+impl<T: Serialize> ToRedisArgs for WrappedAttributeValue<T> {
+    fn write_redis_args<W>(&self, out: &mut W)
+    where
+        W: ?Sized + redis::RedisWrite,
+    {
+        let value = serde_json::to_vec(&self.0).expect("value must be serializable");
+        out.write_arg(&value)
+    }
+}
+
+impl<T: DeserializeOwned> FromRedisValue for WrappedAttributeValue<T> {
+    fn from_redis_value(v: &redis::Value) -> redis::RedisResult<Self> {
+        let WrappedAttributeValueJson(value) = WrappedAttributeValueJson::from_redis_value(v)?;
+
+        let value = serde_json::from_value(value).map_err(|e| {
+            redis::RedisError::from((
+                redis::ErrorKind::ParseError,
+                "Could not deserialize JSON value",
+                format!("{:?}", e),
+            ))
+        })?;
+        Ok(Self(value))
+    }
+}
+
 #[async_trait(?Send)]
-impl ControlStorageParticipantAttributes for RedisConnection {
+impl ControlStorageParticipantAttributesRaw for RedisConnection {
     #[tracing::instrument(level = "debug", skip(self))]
-    async fn get_attribute<V>(
+    async fn get_attribute_raw(
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
         attribute: AttributeId,
-    ) -> Result<V, SignalingModuleError>
-    where
-        V: FromRedisValue,
-    {
-        let value = self
+    ) -> Result<serde_json::Value, SignalingModuleError> {
+        let WrappedAttributeValueJson(value) = self
             .hget(RoomParticipantAttributes { room, attribute }, participant)
             .await
             .with_context(|_| RedisSnafu {
@@ -591,20 +661,17 @@ impl ControlStorageParticipantAttributes for RedisConnection {
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
-    async fn set_attribute<V>(
+    async fn set_attribute_raw(
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
         attribute: AttributeId,
-        value: V,
-    ) -> Result<(), SignalingModuleError>
-    where
-        V: Debug + ToRedisArgs + Send + Sync,
-    {
+        value: serde_json::Value,
+    ) -> Result<(), SignalingModuleError> {
         self.hset(
             RoomParticipantAttributes { room, attribute },
             participant,
-            value,
+            WrappedAttributeValueJson(value),
         )
         .await
         .with_context(|_| RedisSnafu {
@@ -615,7 +682,7 @@ impl ControlStorageParticipantAttributes for RedisConnection {
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
-    async fn remove_attribute(
+    async fn remove_attribute_raw(
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
@@ -626,6 +693,30 @@ impl ControlStorageParticipantAttributes for RedisConnection {
             .with_context(|_| RedisSnafu {
                 message: format!("Failed to remove participant attribute key, {attribute}"),
             })
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_attribute_for_participants_raw(
+        &mut self,
+        room: SignalingRoomId,
+        participants: &[ParticipantId],
+        attribute: AttributeId,
+    ) -> Result<Vec<serde_json::Value>, SignalingModuleError> {
+        // Special case: HMGET cannot handle empty arrays (missing arguments)
+        if participants.is_empty() {
+            Ok(vec![])
+        } else {
+            // need manual HMGET command as the HGET command wont work with single value vector input
+            let WrappedAttributeValue::<Vec<serde_json::Value>>(value) = redis::cmd("HMGET")
+                .arg(RoomParticipantAttributes { room, attribute })
+                .arg(participants)
+                .query_async(self)
+                .await
+                .with_context(|_| RedisSnafu {
+                    message: format!("Failed to get attribute '{attribute}' for all participants"),
+                })?;
+            Ok(value)
+        }
     }
 }
 

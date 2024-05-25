@@ -10,10 +10,11 @@ use opentalk_types::{
     core::{ParticipantId, RoomId, Timestamp},
     signaling::Role,
 };
-use redis::{FromRedisValue, ToRedisArgs};
+use serde::{de::DeserializeOwned, Serialize};
+use snafu::ResultExt as _;
 
 use super::LEFT_AT;
-use crate::{SignalingModuleError, SignalingRoomId};
+use crate::{SerdeJsonSnafu, SignalingModuleError, SignalingRoomId};
 
 #[derive(
     Debug,
@@ -38,11 +39,11 @@ impl AttributeId {
 
 #[async_trait::async_trait(?Send)]
 pub trait AttributeActions {
-    fn set<V: ToRedisArgs>(&mut self, attribute: AttributeId, value: V) -> &mut Self;
+    fn set<V: Serialize>(&mut self, attribute: AttributeId, value: V) -> &mut Self;
     fn get(&mut self, attribute: AttributeId) -> &mut Self;
     fn del(&mut self, attribute: AttributeId) -> &mut Self;
 
-    async fn apply<T: FromRedisValue>(
+    async fn apply<T: DeserializeOwned>(
         &self,
         target: &mut impl ControlStorage<BulkAttributeActions = Self>,
     ) -> Result<T, SignalingModuleError> {
@@ -51,9 +52,9 @@ pub trait AttributeActions {
 }
 
 #[async_trait(?Send)]
-pub trait ControlStorage: ControlStorageParticipantAttributes {
-    type BulkAttributeActions: AttributeActions;
-
+pub trait ControlStorage:
+    ControlStorageParticipantAttributes + ControlStorageParticipantAttributesBulk
+{
     async fn participant_set_exists(
         &mut self,
         room: SignalingRoomId,
@@ -88,29 +89,6 @@ pub trait ControlStorage: ControlStorageParticipantAttributes {
         participant: ParticipantId,
     ) -> Result<bool, SignalingModuleError>;
 
-    fn bulk_attribute_actions(
-        &self,
-        room: SignalingRoomId,
-        participant: ParticipantId,
-    ) -> Self::BulkAttributeActions;
-
-    async fn perform_bulk_attribute_actions<T: FromRedisValue>(
-        &mut self,
-        actions: &Self::BulkAttributeActions,
-    ) -> Result<T, SignalingModuleError>;
-
-    /// Get attribute values for multiple participants
-    ///
-    /// The index of the attributes in the returned vector is a direct mapping to the provided list of participants.
-    async fn get_attribute_for_participants<V>(
-        &mut self,
-        room: SignalingRoomId,
-        attribute: AttributeId,
-        participants: &[ParticipantId],
-    ) -> Result<Vec<Option<V>>, SignalingModuleError>
-    where
-        V: redis::FromRedisValue;
-
     async fn participants_all_left(
         &mut self,
         room: SignalingRoomId,
@@ -118,7 +96,7 @@ pub trait ControlStorage: ControlStorageParticipantAttributes {
         let participants = self.get_all_participants(room).await?;
 
         let left_at_attrs: Vec<Option<Timestamp>> = self
-            .get_attribute_for_participants(room, LEFT_AT, &Vec::from_iter(participants))
+            .get_attribute_for_participants(room, &Vec::from_iter(participants), LEFT_AT)
             .await?;
 
         Ok(left_at_attrs.iter().all(Option::is_some))
@@ -222,7 +200,23 @@ pub trait ControlStorage: ControlStorageParticipantAttributes {
 }
 
 #[async_trait(?Send)]
-pub trait ControlStorageParticipantAttributes {
+pub trait ControlStorageParticipantAttributesBulk {
+    type BulkAttributeActions: AttributeActions;
+
+    fn bulk_attribute_actions(
+        &self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+    ) -> Self::BulkAttributeActions;
+
+    async fn perform_bulk_attribute_actions<T: DeserializeOwned>(
+        &mut self,
+        actions: &Self::BulkAttributeActions,
+    ) -> Result<T, SignalingModuleError>;
+}
+
+#[async_trait(?Send)]
+pub trait ControlStorageParticipantAttributes: ControlStorageParticipantAttributesRaw {
     async fn get_attribute<V>(
         &mut self,
         room: SignalingRoomId,
@@ -230,7 +224,34 @@ pub trait ControlStorageParticipantAttributes {
         attribute: AttributeId,
     ) -> Result<V, SignalingModuleError>
     where
-        V: redis::FromRedisValue;
+        V: DeserializeOwned,
+    {
+        let loaded = self.get_attribute_raw(room, participant, attribute).await?;
+        let deserialized = serde_json::from_value(loaded).with_context(|e| SerdeJsonSnafu{
+                message: format!("failed to deserialize attribute {attribute} for participant {participant} in room {room}, {e}")
+        })?;
+        Ok(deserialized)
+    }
+
+    async fn get_attribute_for_participants<V>(
+        &mut self,
+        room: SignalingRoomId,
+        participants: &[ParticipantId],
+        attribute: AttributeId,
+    ) -> Result<Vec<Option<V>>, SignalingModuleError>
+    where
+        V: DeserializeOwned,
+    {
+        let loaded = self
+            .get_attribute_for_participants_raw(room, participants, attribute)
+            .await?;
+
+        loaded.into_iter().map(|v|
+
+        serde_json::from_value(v).with_context(|e| SerdeJsonSnafu{
+                message: format!("failed to deserialize attribute {attribute} multiple for participants {participants:?} in room {room}, {e}")
+        })).collect()
+    }
 
     async fn set_attribute<V>(
         &mut self,
@@ -240,9 +261,53 @@ pub trait ControlStorageParticipantAttributes {
         value: V,
     ) -> Result<(), SignalingModuleError>
     where
-        V: core::fmt::Debug + redis::ToRedisArgs + Send + Sync;
+        V: core::fmt::Debug + Serialize + Send + Sync,
+    {
+        let serialized = serde_json::to_value(value).with_context(|e| SerdeJsonSnafu {
+            message: format!("failed to serialize attribute {attribute} for participant {participant} in room {room}, {e}")
+        })?;
+        self.set_attribute_raw(room, participant, attribute, serialized)
+            .await
+    }
 
     async fn remove_attribute(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        attribute: AttributeId,
+    ) -> Result<(), SignalingModuleError> {
+        self.remove_attribute_raw(room, participant, attribute)
+            .await
+    }
+}
+
+impl<T: ControlStorageParticipantAttributesRaw> ControlStorageParticipantAttributes for T {}
+
+#[async_trait(?Send)]
+pub trait ControlStorageParticipantAttributesRaw {
+    async fn get_attribute_raw(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        attribute: AttributeId,
+    ) -> Result<serde_json::Value, SignalingModuleError>;
+
+    async fn get_attribute_for_participants_raw(
+        &mut self,
+        room: SignalingRoomId,
+        participants: &[ParticipantId],
+        attribute: AttributeId,
+    ) -> Result<Vec<serde_json::Value>, SignalingModuleError>;
+
+    async fn set_attribute_raw(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        attribute: AttributeId,
+        value: serde_json::Value,
+    ) -> Result<(), SignalingModuleError>;
+
+    async fn remove_attribute_raw(
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,

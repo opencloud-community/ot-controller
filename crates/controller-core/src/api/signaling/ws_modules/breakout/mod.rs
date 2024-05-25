@@ -15,8 +15,8 @@ use opentalk_signaling_core::{
     control::{
         self,
         storage::{
-            AttributeActions as _, ControlStorage, AVATAR_URL, DISPLAY_NAME, JOINED_AT, KIND,
-            LEFT_AT, ROLE,
+            AttributeActions as _, ControlStorage, ControlStorageParticipantAttributesBulk as _,
+            AVATAR_URL, DISPLAY_NAME, JOINED_AT, KIND, LEFT_AT, ROLE,
         },
     },
     DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,

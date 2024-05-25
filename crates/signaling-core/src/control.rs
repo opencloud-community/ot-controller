@@ -15,8 +15,8 @@ pub mod storage;
 pub use opentalk_types::signaling::control::NAMESPACE;
 
 use self::storage::{
-    AttributeActions as _, ControlStorage, AVATAR_URL, DISPLAY_NAME, HAND_IS_UP, HAND_UPDATED_AT,
-    IS_ROOM_OWNER, JOINED_AT, KIND, LEFT_AT, ROLE,
+    AttributeActions as _, ControlStorageParticipantAttributesBulk as _, AVATAR_URL, DISPLAY_NAME,
+    HAND_IS_UP, HAND_UPDATED_AT, IS_ROOM_OWNER, JOINED_AT, KIND, LEFT_AT, ROLE,
 };
 
 #[async_trait::async_trait(?Send)]

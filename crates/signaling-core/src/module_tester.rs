@@ -53,8 +53,8 @@ use crate::{
         self,
         storage::{
             AttributeActions as _, ControlStorage, ControlStorageParticipantAttributes as _,
-            AVATAR_URL, DISPLAY_NAME, HAND_IS_UP, HAND_UPDATED_AT, IS_ROOM_OWNER, JOINED_AT, KIND,
-            LEFT_AT, ROLE, USER_ID,
+            ControlStorageParticipantAttributesBulk as _, AVATAR_URL, DISPLAY_NAME, HAND_IS_UP,
+            HAND_UPDATED_AT, IS_ROOM_OWNER, JOINED_AT, KIND, LEFT_AT, ROLE, USER_ID,
         },
         ControlStateExt as _,
     },

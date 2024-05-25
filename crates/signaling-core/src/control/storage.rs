@@ -8,6 +8,7 @@ mod volatile;
 
 pub use control_storage::{
     AttributeActions, AttributeId, ControlStorage, ControlStorageParticipantAttributes,
+    ControlStorageParticipantAttributesBulk, ControlStorageParticipantAttributesRaw,
 };
 
 // The expiry in seconds for the `skip_waiting_room` key in Redis
@@ -40,7 +41,6 @@ mod test_common {
         signaling::Role,
     };
     use pretty_assertions::assert_eq;
-    use redis_args::{FromRedisValue, ToRedisArgs};
     use serde::{Deserialize, Serialize};
 
     use super::*;
@@ -119,9 +119,7 @@ mod test_common {
         );
     }
 
-    #[derive(Debug, Clone, Serialize, Deserialize, ToRedisArgs, FromRedisValue, PartialEq, Eq)]
-    #[to_redis_args(serde)]
-    #[from_redis_value(serde)]
+    #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
     struct Point {
         x: u32,
         y: u32,
@@ -165,14 +163,14 @@ mod test_common {
 
         assert_eq!(
             storage
-                .get_attribute_for_participants::<Point>(ROOM, POINT, &[ALICE, BOB])
+                .get_attribute_for_participants::<Point>(ROOM, &[ALICE, BOB], POINT)
                 .await
                 .unwrap(),
             vec![Some(alice_point.clone()), None]
         );
         assert_eq!(
             storage
-                .get_attribute_for_participants::<Point>(ROOM, POINT, &[BOB, ALICE])
+                .get_attribute_for_participants::<Point>(ROOM, &[BOB, ALICE], POINT)
                 .await
                 .unwrap(),
             vec![None, Some(alice_point.clone())]
@@ -185,7 +183,7 @@ mod test_common {
 
         assert_eq!(
             storage
-                .get_attribute_for_participants::<Point>(ROOM, POINT, &[BOB, ALICE])
+                .get_attribute_for_participants::<Point>(ROOM, &[BOB, ALICE], POINT)
                 .await
                 .unwrap(),
             vec![Some(bob_point.clone()), Some(alice_point.clone())]
@@ -194,7 +192,7 @@ mod test_common {
         storage.remove_attribute(ROOM, ALICE, POINT).await.unwrap();
         assert_eq!(
             storage
-                .get_attribute_for_participants::<Point>(ROOM, POINT, &[BOB, ALICE])
+                .get_attribute_for_participants::<Point>(ROOM, &[BOB, ALICE], POINT)
                 .await
                 .unwrap(),
             vec![Some(bob_point.clone()), None]
@@ -217,7 +215,7 @@ mod test_common {
 
         assert_eq!(
             storage
-                .get_attribute_for_participants::<String>(ROOM, POINT, &[ALICE, BOB])
+                .get_attribute_for_participants::<String>(ROOM, &[ALICE, BOB], POINT)
                 .await
                 .unwrap(),
             vec![
@@ -227,7 +225,7 @@ mod test_common {
         );
         assert_eq!(
             storage
-                .get_attribute_for_participants::<String>(ROOM, LINE, &[ALICE, BOB])
+                .get_attribute_for_participants::<String>(ROOM, &[ALICE, BOB], LINE)
                 .await
                 .unwrap(),
             vec![Some("alice_line".to_string()), None]
@@ -237,14 +235,14 @@ mod test_common {
 
         assert_eq!(
             storage
-                .get_attribute_for_participants::<String>(ROOM, POINT, &[ALICE, BOB])
+                .get_attribute_for_participants::<String>(ROOM, &[ALICE, BOB], POINT)
                 .await
                 .unwrap(),
             vec![None, None]
         );
         assert_eq!(
             storage
-                .get_attribute_for_participants::<String>(ROOM, LINE, &[ALICE, BOB])
+                .get_attribute_for_participants::<String>(ROOM, &[ALICE, BOB], LINE)
                 .await
                 .unwrap(),
             vec![Some("alice_line".to_string()), None]

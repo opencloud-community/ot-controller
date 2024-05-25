@@ -217,7 +217,7 @@ impl SignalingModule for Chat {
                 // Get all user_ids for each participant in the room
                 let user_ids: Vec<Option<UserId>> = ctx
                     .redis_conn()
-                    .get_attribute_for_participants(self.room, USER_ID, &participant_ids)
+                    .get_attribute_for_participants(self.room, &participant_ids, USER_ID)
                     .await?;
 
                 // Filter out guest/bots and map each user-id to a participant id

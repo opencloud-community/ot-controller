@@ -3,27 +3,22 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use std::{
-    collections::{BTreeMap, BTreeSet, HashMap},
+    collections::{BTreeSet, HashMap},
     time::Duration,
 };
 
 use async_trait::async_trait;
 use opentalk_db_storage::{events::Event, tariffs::Tariff};
-use opentalk_types::{
-    core::{ParticipantId, RoomId, Timestamp},
-    signaling::Role,
-};
-use redis::{FromRedisValue, ToRedisArgs};
+use opentalk_types::core::{ParticipantId, RoomId, Timestamp};
+use serde::{de::DeserializeOwned, Serialize};
 use snafu::{OptionExt as _, ResultExt as _};
 
 use crate::{
-    control::storage::{
-        AttributeActions, AttributeId, LEFT_AT, ROLE, SKIP_WAITING_ROOM_KEY_EXPIRY,
-    },
-    ExpiringDataHashMap, NotFoundSnafu, RedisSnafu, SignalingModuleError, SignalingRoomId,
+    control::storage::{AttributeActions, AttributeId, SKIP_WAITING_ROOM_KEY_EXPIRY},
+    ExpiringDataHashMap, NotFoundSnafu, SerdeJsonSnafu, SignalingModuleError, SignalingRoomId,
 };
 
-type AttributeMap = HashMap<(ParticipantId, AttributeId), Vec<Vec<u8>>>;
+type AttributeMap = HashMap<(ParticipantId, AttributeId), serde_json::Value>;
 
 #[derive(Debug, Clone, Default)]
 pub(super) struct MemoryControlState {
@@ -56,7 +51,7 @@ impl VolatileStaticMemoryAttributeActions {
 enum AttributeAction {
     Set {
         attribute: AttributeId,
-        value: Vec<Vec<u8>>,
+        value: serde_json::Value,
     },
     Get {
         attribute: AttributeId,
@@ -68,12 +63,10 @@ enum AttributeAction {
 
 #[async_trait(?Send)]
 impl AttributeActions for VolatileStaticMemoryAttributeActions {
-    fn set<V: ToRedisArgs>(&mut self, attribute: AttributeId, value: V) -> &mut Self {
-        self.actions.push(AttributeAction::Set {
-            attribute,
-            // to_redis_args will always contain at least one element
-            value: value.to_redis_args(),
-        });
+    fn set<V: Serialize>(&mut self, attribute: AttributeId, value: V) -> &mut Self {
+        let value = serde_json::to_value(value).expect("attribute value must be serializable");
+
+        self.actions.push(AttributeAction::Set { attribute, value });
         self
     }
 
@@ -145,63 +138,37 @@ impl MemoryControlState {
             .insert(participant)
     }
 
-    pub(super) fn get_attribute<V>(
+    pub(super) fn get_attribute_raw(
         &self,
         room: SignalingRoomId,
         participant: ParticipantId,
         attribute: AttributeId,
-    ) -> Result<Option<V>, SignalingModuleError>
-    where
-        V: FromRedisValue,
-    {
-        self.get_attribute_raw(room, participant, attribute)
-            .map(|b| V::from_redis_value(&redis::Value::load_from_redis_u8_vec_vec(b)))
-            .transpose()
-            .with_context(|_| RedisSnafu {
-                message: format!("Failed to get attribute {attribute}"),
-            })
-    }
-
-    fn get_attribute_raw(
-        &self,
-        room: SignalingRoomId,
-        participant: ParticipantId,
-        attribute: AttributeId,
-    ) -> Option<&Vec<Vec<u8>>> {
+    ) -> serde_json::Value {
         self.participant_attributes
             .get(&room)
             .and_then(|p| p.get(&(participant, attribute)))
+            .cloned()
+            .unwrap_or_default()
     }
 
-    fn get_attribute_raw_redis_value(
+    pub(super) fn get_attribute_for_participants_raw(
         &self,
         room: SignalingRoomId,
-        participant: ParticipantId,
+        participants: &[ParticipantId],
         attribute: AttributeId,
-    ) -> redis::Value {
-        self.get_attribute_raw(room, participant, attribute)
-            .map(|v| redis::Value::load_from_redis_u8_vec_vec(v))
-            .unwrap_or(redis::Value::Nil)
+    ) -> Vec<serde_json::Value> {
+        participants
+            .iter()
+            .map(|participant| self.get_attribute_raw(room, *participant, attribute))
+            .collect()
     }
 
-    pub(super) fn set_attribute<V>(
+    pub(super) fn set_attribute_raw(
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
         attribute: AttributeId,
-        value: V,
-    ) where
-        V: core::fmt::Debug + ToRedisArgs + Send + Sync,
-    {
-        self.set_attribute_raw(room, participant, attribute, value.to_redis_args());
-    }
-
-    fn set_attribute_raw(
-        &mut self,
-        room: SignalingRoomId,
-        participant: ParticipantId,
-        attribute: AttributeId,
-        value: Vec<Vec<u8>>,
+        value: serde_json::Value,
     ) {
         self.participant_attributes
             .entry(room)
@@ -209,7 +176,7 @@ impl MemoryControlState {
             .insert((participant, attribute), value);
     }
 
-    pub(super) fn remove_attribute(
+    pub(super) fn remove_attribute_raw(
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
@@ -228,7 +195,7 @@ impl MemoryControlState {
         }
     }
 
-    pub(super) fn perform_bulk_attribute_actions<T: FromRedisValue>(
+    pub(super) fn perform_bulk_attribute_actions<T: DeserializeOwned>(
         &mut self,
         actions: &VolatileStaticMemoryAttributeActions,
     ) -> Result<T, SignalingModuleError> {
@@ -245,68 +212,33 @@ impl MemoryControlState {
                     );
                 }
                 AttributeAction::Get { attribute } => {
-                    let value = self.get_attribute_raw_redis_value(
-                        actions.room,
-                        actions.participant,
-                        *attribute,
-                    );
+                    let value =
+                        self.get_attribute_raw(actions.room, actions.participant, *attribute);
 
                     response = match response {
                         None => Some(value),
-                        Some(redis::Value::Bulk(mut b)) => {
-                            b.push(value);
-                            Some(redis::Value::Bulk(b))
+                        Some(serde_json::Value::Array(mut values)) => {
+                            values.push(value);
+                            Some(serde_json::Value::Array(values))
                         }
-                        Some(v) => Some(redis::Value::Bulk(vec![v, value])),
+                        Some(v) => Some(serde_json::Value::Array(vec![v, value])),
                     }
                 }
                 AttributeAction::Delete { attribute } => {
-                    self.remove_attribute(actions.room, actions.participant, *attribute);
+                    self.remove_attribute_raw(actions.room, actions.participant, *attribute);
                 }
             }
         }
 
-        T::from_redis_value(&response.unwrap_or(redis::Value::Nil)).with_context(|e| RedisSnafu {
+        serde_json::from_value(response.unwrap_or_default()).with_context(|e| SerdeJsonSnafu {
             message: format!("Failed to read result from bulk attribute actions, {e}"),
         })
-    }
-
-    pub(super) fn get_attribute_for_participants<V>(
-        &self,
-        room: SignalingRoomId,
-        attribute: AttributeId,
-        participants: &[ParticipantId],
-    ) -> Result<Vec<Option<V>>, SignalingModuleError>
-    where
-        V: FromRedisValue,
-    {
-        participants
-            .iter()
-            .map(|p| self.get_attribute::<V>(room, *p, attribute))
-            .collect()
     }
 
     pub(super) fn remove_attribute_key(&mut self, room: SignalingRoomId, attribute: AttributeId) {
         if let Some(attributes) = self.participant_attributes.get_mut(&room) {
             attributes.retain(|k, _v| k.1 != attribute)
         };
-    }
-
-    #[allow(clippy::type_complexity)]
-    pub(super) fn get_role_and_left_at_for_room_participants(
-        &self,
-        room: SignalingRoomId,
-    ) -> Result<BTreeMap<ParticipantId, (Option<Role>, Option<Timestamp>)>, SignalingModuleError>
-    {
-        let participants = Vec::from_iter(self.get_all_participants(room));
-
-        let roles = self.get_attribute_for_participants(room, ROLE, &participants)?;
-        let left_at = self.get_attribute_for_participants(room, LEFT_AT, &participants)?;
-
-        Ok(participants
-            .into_iter()
-            .zip(std::iter::zip(roles, left_at))
-            .collect())
     }
 
     pub(super) fn try_init_tariff(&mut self, room_id: RoomId, tariff: Tariff) -> Tariff {
@@ -419,24 +351,6 @@ impl MemoryControlState {
     }
 }
 
-trait FromRedisU8VecVec {
-    fn load_from_redis_u8_vec_vec(value: &[Vec<u8>]) -> redis::Value;
-}
-
-impl FromRedisU8VecVec for redis::Value {
-    fn load_from_redis_u8_vec_vec(value: &[Vec<u8>]) -> redis::Value {
-        let loaded = value
-            .iter()
-            .map(|v| redis::Value::Data(v.clone()))
-            .collect::<Vec<_>>();
-        if loaded.len() == 1 {
-            loaded.into_iter().next().unwrap()
-        } else {
-            redis::Value::Bulk(loaded)
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use opentalk_types::core::RoomId;
@@ -449,7 +363,7 @@ mod tests {
     const POINT: AttributeId = AttributeId::new("point");
 
     #[test]
-    fn roundtrip_attribute() {
+    fn roundtrip_attribute_raw() {
         let mut state = MemoryControlState::default();
 
         #[derive(
@@ -465,12 +379,12 @@ mod tests {
         let room = SignalingRoomId::new_for_room(RoomId::generate());
         let participant = ParticipantId::generate();
 
-        let point = Point { x: 32, y: 42 };
+        let point = serde_json::to_value(Point { x: 32, y: 42 }).unwrap();
 
-        state.set_attribute(room, participant, POINT, point.clone());
+        state.set_attribute_raw(room, participant, POINT, point.clone());
 
-        let loaded: Option<Point> = state.get_attribute(room, participant, POINT).unwrap();
+        let loaded = state.get_attribute_raw(room, participant, POINT);
 
-        assert_eq!(loaded, Some(point));
+        assert_eq!(loaded, point);
     }
 }
