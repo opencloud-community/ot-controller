@@ -16,7 +16,10 @@ use std::{
 use opentalk_database::Db;
 use opentalk_db_storage::groups::Group;
 use opentalk_signaling_core::{
-    control::{exchange, storage::ControlStorage as _},
+    control::{
+        exchange,
+        storage::{ControlStorage as _, ControlStorageParticipantAttributes as _},
+    },
     DestroyContext, Event, InitContext, ModuleContext, Participant, RedisConnection,
     SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };

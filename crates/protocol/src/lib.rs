@@ -10,7 +10,10 @@ use opentalk_database::Db;
 use opentalk_etherpad_client::EtherpadClient;
 use opentalk_signaling_core::{
     assets::{save_asset, AssetError, NewAssetFileName},
-    control::{self, storage::ControlStorage as _},
+    control::{
+        self,
+        storage::{ControlStorage as _, ControlStorageParticipantAttributes as _},
+    },
     DestroyContext, Event, InitContext, ModuleContext, ObjectStorage, RedisConnection,
     SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };

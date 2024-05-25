@@ -18,7 +18,10 @@ use redis::{AsyncCommands, FromRedisValue, ToRedisArgs};
 use redis_args::ToRedisArgs;
 use snafu::ResultExt;
 
-use super::{AttributeActions, ControlStorage, SKIP_WAITING_ROOM_KEY_EXPIRY};
+use super::{
+    AttributeActions, ControlStorage, ControlStorageParticipantAttributes,
+    SKIP_WAITING_ROOM_KEY_EXPIRY,
+};
 use crate::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 
 #[async_trait(?Send)]
@@ -104,79 +107,6 @@ impl ControlStorage for RedisConnection {
             .context(RedisSnafu {
                 message: "Failed to add own participant id to set",
             })
-    }
-
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn get_attribute<V>(
-        &mut self,
-        room: SignalingRoomId,
-        participant: ParticipantId,
-        name: &str,
-    ) -> Result<V, SignalingModuleError>
-    where
-        V: FromRedisValue,
-    {
-        let value = self
-            .hget(
-                RoomParticipantAttributes {
-                    room,
-                    attribute_name: name,
-                },
-                participant,
-            )
-            .await
-            .with_context(|_| RedisSnafu {
-                message: format!("Failed to get attribute {name}"),
-            })?;
-
-        Ok(value)
-    }
-
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn set_attribute<V>(
-        &mut self,
-        room: SignalingRoomId,
-        participant: ParticipantId,
-        name: &str,
-        value: V,
-    ) -> Result<(), SignalingModuleError>
-    where
-        V: Debug + ToRedisArgs + Send + Sync,
-    {
-        self.hset(
-            RoomParticipantAttributes {
-                room,
-                attribute_name: name,
-            },
-            participant,
-            value,
-        )
-        .await
-        .with_context(|_| RedisSnafu {
-            message: format!("Failed to set attribute {name}"),
-        })?;
-
-        Ok(())
-    }
-
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn remove_attribute(
-        &mut self,
-        room: SignalingRoomId,
-        participant: ParticipantId,
-        name: &str,
-    ) -> Result<(), SignalingModuleError> {
-        self.hdel(
-            RoomParticipantAttributes {
-                room,
-                attribute_name: name,
-            },
-            participant,
-        )
-        .await
-        .with_context(|_| RedisSnafu {
-            message: format!("Failed to remove participant attribute key, {name}"),
-        })
     }
 
     fn bulk_attribute_actions(
@@ -642,6 +572,82 @@ impl RedisBulkAttributeActions {
 #[to_redis_args(fmt = "opentalk-signaling:participant={participant}:skip_waiting_room")]
 pub struct SkipWaitingRoom {
     participant: ParticipantId,
+}
+
+#[async_trait(?Send)]
+impl ControlStorageParticipantAttributes for RedisConnection {
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_attribute<V>(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        name: &str,
+    ) -> Result<V, SignalingModuleError>
+    where
+        V: FromRedisValue,
+    {
+        let value = self
+            .hget(
+                RoomParticipantAttributes {
+                    room,
+                    attribute_name: name,
+                },
+                participant,
+            )
+            .await
+            .with_context(|_| RedisSnafu {
+                message: format!("Failed to get attribute {name}"),
+            })?;
+
+        Ok(value)
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_attribute<V>(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        name: &str,
+        value: V,
+    ) -> Result<(), SignalingModuleError>
+    where
+        V: Debug + ToRedisArgs + Send + Sync,
+    {
+        self.hset(
+            RoomParticipantAttributes {
+                room,
+                attribute_name: name,
+            },
+            participant,
+            value,
+        )
+        .await
+        .with_context(|_| RedisSnafu {
+            message: format!("Failed to set attribute {name}"),
+        })?;
+
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn remove_attribute(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        name: &str,
+    ) -> Result<(), SignalingModuleError> {
+        self.hdel(
+            RoomParticipantAttributes {
+                room,
+                attribute_name: name,
+            },
+            participant,
+        )
+        .await
+        .with_context(|_| RedisSnafu {
+            message: format!("Failed to remove participant attribute key, {name}"),
+        })
+    }
 }
 
 #[cfg(test)]

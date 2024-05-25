@@ -6,7 +6,11 @@ use std::iter::zip;
 
 use actix_http::ws::CloseCode;
 use opentalk_signaling_core::{
-    control::{self, storage::ControlStorage as _, ControlStateExt as _},
+    control::{
+        self,
+        storage::{ControlStorage as _, ControlStorageParticipantAttributes as _},
+        ControlStateExt as _,
+    },
     DestroyContext, Event, InitContext, ModuleContext, RedisConnection, SerdeJsonSnafu,
     SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };

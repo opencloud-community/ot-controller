@@ -19,8 +19,8 @@ use snafu::OptionExt as _;
 
 use super::memory::{MemoryControlState, VolatileStaticMemoryAttributeActions};
 use crate::{
-    control::storage::ControlStorage, NotFoundSnafu, SignalingModuleError, SignalingRoomId,
-    VolatileStaticMemoryStorage,
+    control::storage::{ControlStorage, ControlStorageParticipantAttributes},
+    NotFoundSnafu, SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage,
 };
 
 static STATE: OnceLock<Arc<RwLock<MemoryControlState>>> = OnceLock::new();
@@ -83,50 +83,6 @@ impl ControlStorage for VolatileStaticMemoryStorage {
         participant: ParticipantId,
     ) -> Result<bool, SignalingModuleError> {
         Ok(state().write().add_participant_to_set(room, participant))
-    }
-
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn get_attribute<V>(
-        &mut self,
-        room: SignalingRoomId,
-        participant: ParticipantId,
-        name: &str,
-    ) -> Result<V, SignalingModuleError>
-    where
-        V: FromRedisValue,
-    {
-        state()
-            .read()
-            .get_attribute(room, participant, name)?
-            .with_context(|| NotFoundSnafu)
-    }
-
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn set_attribute<V>(
-        &mut self,
-        room: SignalingRoomId,
-        participant: ParticipantId,
-        name: &str,
-        value: V,
-    ) -> Result<(), SignalingModuleError>
-    where
-        V: core::fmt::Debug + redis::ToRedisArgs + Send + Sync,
-    {
-        state()
-            .write()
-            .set_attribute(room, participant, name, value);
-        Ok(())
-    }
-
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn remove_attribute(
-        &mut self,
-        room: SignalingRoomId,
-        participant: ParticipantId,
-        name: &str,
-    ) -> Result<(), SignalingModuleError> {
-        state().write().remove_attribute(room, participant, name);
-        Ok(())
     }
 
     fn bulk_attribute_actions(
@@ -320,6 +276,53 @@ impl ControlStorage for VolatileStaticMemoryStorage {
         participant: ParticipantId,
     ) -> Result<bool, SignalingModuleError> {
         Ok(state().read().get_skip_waiting_room(participant))
+    }
+}
+
+#[async_trait(?Send)]
+impl ControlStorageParticipantAttributes for VolatileStaticMemoryStorage {
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_attribute<V>(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        name: &str,
+    ) -> Result<V, SignalingModuleError>
+    where
+        V: FromRedisValue,
+    {
+        state()
+            .read()
+            .get_attribute(room, participant, name)?
+            .with_context(|| NotFoundSnafu)
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_attribute<V>(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        name: &str,
+        value: V,
+    ) -> Result<(), SignalingModuleError>
+    where
+        V: core::fmt::Debug + redis::ToRedisArgs + Send + Sync,
+    {
+        state()
+            .write()
+            .set_attribute(room, participant, name, value);
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn remove_attribute(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        name: &str,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().remove_attribute(room, participant, name);
+        Ok(())
     }
 }
 

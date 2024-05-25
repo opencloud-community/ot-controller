@@ -12,7 +12,10 @@ use lapin_pool::{RabbitMqChannel, RabbitMqPool};
 use opentalk_database::Db;
 use opentalk_db_storage::streaming_targets::RoomStreamingTargetRecord;
 use opentalk_signaling_core::{
-    control::{self, storage::ControlStorage as _},
+    control::{
+        self,
+        storage::{ControlStorage as _, ControlStorageParticipantAttributes as _},
+    },
     DestroyContext, Event, InitContext, ModuleContext, RedisConnection, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };

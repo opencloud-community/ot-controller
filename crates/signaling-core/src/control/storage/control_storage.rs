@@ -29,7 +29,7 @@ pub trait AttributeActions {
 }
 
 #[async_trait(?Send)]
-pub trait ControlStorage {
+pub trait ControlStorage: ControlStorageParticipantAttributes {
     type BulkAttributeActions: AttributeActions;
 
     async fn participant_set_exists(
@@ -65,32 +65,6 @@ pub trait ControlStorage {
         room: SignalingRoomId,
         participant: ParticipantId,
     ) -> Result<bool, SignalingModuleError>;
-
-    async fn get_attribute<V>(
-        &mut self,
-        room: SignalingRoomId,
-        participant: ParticipantId,
-        name: &str,
-    ) -> Result<V, SignalingModuleError>
-    where
-        V: redis::FromRedisValue;
-
-    async fn set_attribute<V>(
-        &mut self,
-        room: SignalingRoomId,
-        participant: ParticipantId,
-        name: &str,
-        value: V,
-    ) -> Result<(), SignalingModuleError>
-    where
-        V: core::fmt::Debug + redis::ToRedisArgs + Send + Sync;
-
-    async fn remove_attribute(
-        &mut self,
-        room: SignalingRoomId,
-        participant: ParticipantId,
-        name: &str,
-    ) -> Result<(), SignalingModuleError>;
 
     fn bulk_attribute_actions(
         &self,
@@ -223,4 +197,33 @@ pub trait ControlStorage {
         &mut self,
         participant: ParticipantId,
     ) -> Result<bool, SignalingModuleError>;
+}
+
+#[async_trait(?Send)]
+pub trait ControlStorageParticipantAttributes {
+    async fn get_attribute<V>(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        name: &str,
+    ) -> Result<V, SignalingModuleError>
+    where
+        V: redis::FromRedisValue;
+
+    async fn set_attribute<V>(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        name: &str,
+        value: V,
+    ) -> Result<(), SignalingModuleError>
+    where
+        V: core::fmt::Debug + redis::ToRedisArgs + Send + Sync;
+
+    async fn remove_attribute(
+        &mut self,
+        room: SignalingRoomId,
+        participant: ParticipantId,
+        name: &str,
+    ) -> Result<(), SignalingModuleError>;
 }

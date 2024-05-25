@@ -51,7 +51,9 @@ use tokio::{
 use crate::{
     control::{
         self,
-        storage::{AttributeActions as _, ControlStorage},
+        storage::{
+            AttributeActions as _, ControlStorage, ControlStorageParticipantAttributes as _,
+        },
         ControlStateExt as _,
     },
     room_lock::Locking as _,

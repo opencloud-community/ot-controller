@@ -25,7 +25,9 @@ use opentalk_db_storage::{
 use opentalk_signaling_core::{
     control::{
         self, exchange,
-        storage::{AttributeActions as _, ControlStorage},
+        storage::{
+            AttributeActions as _, ControlStorage, ControlStorageParticipantAttributes as _,
+        },
         ControlStateExt as _, NAMESPACE,
     },
     AnyStream, ExchangeHandle, LockError, Locking as _, ObjectStorage, Participant,
