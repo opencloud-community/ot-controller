@@ -12,13 +12,35 @@ use opentalk_types::{
 };
 use redis::{FromRedisValue, ToRedisArgs};
 
+use super::LEFT_AT;
 use crate::{SignalingModuleError, SignalingRoomId};
+
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    derive_more::Display,
+    derive_more::From,
+    derive_more::Into,
+)]
+pub struct AttributeId(&'static str);
+
+impl AttributeId {
+    pub const fn new(identifier: &'static str) -> Self {
+        Self(identifier)
+    }
+}
 
 #[async_trait::async_trait(?Send)]
 pub trait AttributeActions {
-    fn set<V: ToRedisArgs>(&mut self, name: &str, value: V) -> &mut Self;
-    fn get(&mut self, name: &str) -> &mut Self;
-    fn del(&mut self, name: &str) -> &mut Self;
+    fn set<V: ToRedisArgs>(&mut self, attribute: AttributeId, value: V) -> &mut Self;
+    fn get(&mut self, attribute: AttributeId) -> &mut Self;
+    fn del(&mut self, attribute: AttributeId) -> &mut Self;
 
     async fn apply<T: FromRedisValue>(
         &self,
@@ -83,7 +105,7 @@ pub trait ControlStorage: ControlStorageParticipantAttributes {
     async fn get_attribute_for_participants<V>(
         &mut self,
         room: SignalingRoomId,
-        name: &str,
+        attribute: AttributeId,
         participants: &[ParticipantId],
     ) -> Result<Vec<Option<V>>, SignalingModuleError>
     where
@@ -96,7 +118,7 @@ pub trait ControlStorage: ControlStorageParticipantAttributes {
         let participants = self.get_all_participants(room).await?;
 
         let left_at_attrs: Vec<Option<Timestamp>> = self
-            .get_attribute_for_participants(room, "left_at", &Vec::from_iter(participants))
+            .get_attribute_for_participants(room, LEFT_AT, &Vec::from_iter(participants))
             .await?;
 
         Ok(left_at_attrs.iter().all(Option::is_some))
@@ -105,7 +127,7 @@ pub trait ControlStorage: ControlStorageParticipantAttributes {
     async fn remove_attribute_key(
         &mut self,
         room: SignalingRoomId,
-        name: &str,
+        attribute: AttributeId,
     ) -> Result<(), SignalingModuleError>;
 
     async fn get_role_and_left_at_for_room_participants(
@@ -205,7 +227,7 @@ pub trait ControlStorageParticipantAttributes {
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
-        name: &str,
+        attribute: AttributeId,
     ) -> Result<V, SignalingModuleError>
     where
         V: redis::FromRedisValue;
@@ -214,7 +236,7 @@ pub trait ControlStorageParticipantAttributes {
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
-        name: &str,
+        attribute: AttributeId,
         value: V,
     ) -> Result<(), SignalingModuleError>
     where
@@ -224,6 +246,6 @@ pub trait ControlStorageParticipantAttributes {
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
-        name: &str,
+        attribute: AttributeId,
     ) -> Result<(), SignalingModuleError>;
 }

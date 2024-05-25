@@ -14,7 +14,10 @@ pub mod storage;
 
 pub use opentalk_types::signaling::control::NAMESPACE;
 
-use self::storage::{AttributeActions as _, ControlStorage};
+use self::storage::{
+    AttributeActions as _, ControlStorage, AVATAR_URL, DISPLAY_NAME, HAND_IS_UP, HAND_UPDATED_AT,
+    IS_ROOM_OWNER, JOINED_AT, KIND, LEFT_AT, ROLE,
+};
 
 #[async_trait::async_trait(?Send)]
 pub trait ControlStateExt: Sized {
@@ -60,15 +63,15 @@ impl ControlStateExt for ControlState {
         ) = {
             redis_conn
                 .bulk_attribute_actions(room_id, participant_id)
-                .get("display_name")
-                .get("role")
-                .get("avatar_url")
-                .get("joined_at")
-                .get("left_at")
-                .get("hand_is_up")
-                .get("hand_updated_at")
-                .get("kind")
-                .get("is_room_owner")
+                .get(DISPLAY_NAME)
+                .get(ROLE)
+                .get(AVATAR_URL)
+                .get(JOINED_AT)
+                .get(LEFT_AT)
+                .get(HAND_IS_UP)
+                .get(HAND_UPDATED_AT)
+                .get(KIND)
+                .get(IS_ROOM_OWNER)
                 .apply(redis_conn)
                 .await
         }?;

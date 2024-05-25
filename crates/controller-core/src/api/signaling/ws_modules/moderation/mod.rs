@@ -8,7 +8,10 @@ use actix_http::ws::CloseCode;
 use opentalk_signaling_core::{
     control::{
         self,
-        storage::{ControlStorage as _, ControlStorageParticipantAttributes as _},
+        storage::{
+            ControlStorage as _, ControlStorageParticipantAttributes as _, DISPLAY_NAME,
+            IS_ROOM_OWNER, KIND, ROLE, USER_ID,
+        },
         ControlStateExt as _,
     },
     DestroyContext, Event, InitContext, ModuleContext, RedisConnection, SerdeJsonSnafu,
@@ -195,7 +198,7 @@ impl SignalingModule for ModerationModule {
 
                 let user_id: Option<UserId> = ctx
                     .redis_conn()
-                    .get_attribute(self.room, target, "user_id")
+                    .get_attribute(self.room, target, USER_ID)
                     .await?;
 
                 if let Some(user_id) = user_id {
@@ -241,7 +244,7 @@ impl SignalingModule for ModerationModule {
                 // The room owner cannot be sent to the waiting room
                 if ctx
                     .redis_conn()
-                    .get_attribute(self.room, target, "is_room_owner")
+                    .get_attribute(self.room, target, IS_ROOM_OWNER)
                     .await?
                 {
                     ctx.ws_send(Error::CannotSendRoomOwnerToWaitingRoom);
@@ -282,7 +285,7 @@ impl SignalingModule for ModerationModule {
                     Vec::from_iter(ctx.redis_conn().get_all_participants(self.room).await?);
                 let all_participants_role: Vec<Option<Role>> = ctx
                     .redis_conn()
-                    .get_attribute_for_participants(self.room, "role", &all_participants)
+                    .get_attribute_for_participants(self.room, ROLE, &all_participants)
                     .await?;
 
                 let mut to_remove = vec![];
@@ -327,7 +330,7 @@ impl SignalingModule for ModerationModule {
 
                 let kind: Option<ParticipationKind> = ctx
                     .redis_conn()
-                    .get_attribute(self.room, target, "kind")
+                    .get_attribute(self.room, target, KIND)
                     .await?;
 
                 if !matches!(
@@ -346,7 +349,7 @@ impl SignalingModule for ModerationModule {
                 }
 
                 ctx.redis_conn()
-                    .set_attribute(self.room, target, "display_name", new_name)
+                    .set_attribute(self.room, target, DISPLAY_NAME, new_name)
                     .await?;
 
                 ctx.exchange_publish(

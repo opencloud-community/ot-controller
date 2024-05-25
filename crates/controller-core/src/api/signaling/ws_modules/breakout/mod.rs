@@ -14,7 +14,10 @@ use futures::FutureExt;
 use opentalk_signaling_core::{
     control::{
         self,
-        storage::{AttributeActions as _, ControlStorage},
+        storage::{
+            AttributeActions as _, ControlStorage, AVATAR_URL, DISPLAY_NAME, JOINED_AT, KIND,
+            LEFT_AT, ROLE,
+        },
     },
     DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
     SignalingModuleInitData, SignalingRoomId,
@@ -245,12 +248,12 @@ impl BreakoutRooms {
             let res = ctx
                 .redis_conn()
                 .bulk_attribute_actions(room, participant)
-                .get("display_name")
-                .get("role")
-                .get("avatar_url")
-                .get("kind")
-                .get("joined_at")
-                .get("left_at")
+                .get(DISPLAY_NAME)
+                .get(ROLE)
+                .get(AVATAR_URL)
+                .get(KIND)
+                .get(JOINED_AT)
+                .get(LEFT_AT)
                 .apply(ctx.redis_conn())
                 .await;
 

@@ -53,6 +53,8 @@ use crate::{
         self,
         storage::{
             AttributeActions as _, ControlStorage, ControlStorageParticipantAttributes as _,
+            AVATAR_URL, DISPLAY_NAME, HAND_IS_UP, HAND_UPDATED_AT, IS_ROOM_OWNER, JOINED_AT, KIND,
+            LEFT_AT, ROLE, USER_ID,
         },
         ControlStateExt as _,
     },
@@ -562,28 +564,28 @@ where
                 match &self.participant {
                     Participant::User(user) => {
                         actions
-                            .set("kind", ParticipationKind::User)
-                            .set("user_id", user);
+                            .set(KIND, ParticipationKind::User)
+                            .set(USER_ID, user);
                     }
                     Participant::Guest => {
-                        actions.set("kind", ParticipationKind::Guest);
+                        actions.set(KIND, ParticipationKind::Guest);
                     }
                     Participant::Sip => {
-                        actions.set("kind", ParticipationKind::Sip);
+                        actions.set(KIND, ParticipationKind::Sip);
                     }
                     Participant::Recorder => {
-                        actions.set("kind", ParticipationKind::Recorder);
+                        actions.set(KIND, ParticipationKind::Recorder);
                     }
                 }
 
                 actions
-                    .set("display_name", &join.display_name)
-                    .set("role", self.role)
-                    .set("avatar_url", &join.display_name)
-                    .set("joined_at", ctx.timestamp)
-                    .set("hand_is_up", false)
-                    .set("hand_updated_at", ctx.timestamp)
-                    .set("is_room_owner", is_room_owner);
+                    .set(DISPLAY_NAME, &join.display_name)
+                    .set(ROLE, self.role)
+                    .set(AVATAR_URL, &join.display_name)
+                    .set(JOINED_AT, ctx.timestamp)
+                    .set(HAND_IS_UP, false)
+                    .set(HAND_UPDATED_AT, ctx.timestamp)
+                    .set(IS_ROOM_OWNER, is_room_owner);
 
                 actions.apply(&mut self.redis_conn).await?;
 
@@ -698,8 +700,8 @@ where
             ControlCommand::RaiseHand => {
                 self.redis_conn
                     .bulk_attribute_actions(self.room_id, self.participant_id)
-                    .set("hand_is_up", true)
-                    .set("hand_updated_at", ctx.timestamp)
+                    .set(HAND_IS_UP, true)
+                    .set(HAND_UPDATED_AT, ctx.timestamp)
                     .apply(&mut self.redis_conn)
                     .await?;
 
@@ -712,8 +714,8 @@ where
             ControlCommand::LowerHand => {
                 self.redis_conn
                     .bulk_attribute_actions(self.room_id, self.participant_id)
-                    .set("hand_is_up", false)
-                    .set("hand_updated_at", ctx.timestamp)
+                    .set(HAND_IS_UP, false)
+                    .set(HAND_UPDATED_AT, ctx.timestamp)
                     .apply(&mut self.redis_conn)
                     .await?;
 
@@ -1015,12 +1017,7 @@ where
             .expect("lock poisoned");
 
         self.redis_conn
-            .set_attribute(
-                self.room_id,
-                self.participant_id,
-                "left_at",
-                Timestamp::now(),
-            )
+            .set_attribute(self.room_id, self.participant_id, LEFT_AT, Timestamp::now())
             .await?;
 
         let destroy_room = self.redis_conn.participants_all_left(self.room_id).await?;
@@ -1040,13 +1037,13 @@ where
 
         if destroy_room {
             for key in [
-                "display_name",
-                "kind",
-                "joined_at",
-                "hand_is_up",
-                "hand_updated_at",
-                "user_id",
-                "is_room_owner",
+                DISPLAY_NAME,
+                KIND,
+                JOINED_AT,
+                HAND_IS_UP,
+                HAND_UPDATED_AT,
+                USER_ID,
+                IS_ROOM_OWNER,
             ] {
                 self.redis_conn
                     .remove_attribute_key(self.room_id, key)

@@ -6,11 +6,25 @@ mod control_storage;
 mod redis;
 mod volatile;
 
-pub use control_storage::{AttributeActions, ControlStorage, ControlStorageParticipantAttributes};
+pub use control_storage::{
+    AttributeActions, AttributeId, ControlStorage, ControlStorageParticipantAttributes,
+};
 
 // The expiry in seconds for the `skip_waiting_room` key in Redis
 const SKIP_WAITING_ROOM_KEY_EXPIRY: u32 = 120;
 pub const SKIP_WAITING_ROOM_KEY_REFRESH_INTERVAL: u64 = 60;
+
+pub const AVATAR_URL: AttributeId = AttributeId::new("avatar_url");
+pub const DISPLAY_NAME: AttributeId = AttributeId::new("display_name");
+pub const HAND_IS_UP: AttributeId = AttributeId::new("hand_is_up");
+pub const HAND_UPDATED_AT: AttributeId = AttributeId::new("hand_updated_at");
+pub const IS_ROOM_OWNER: AttributeId = AttributeId::new("is_room_owner");
+pub const JOINED_AT: AttributeId = AttributeId::new("joined_at");
+pub const KIND: AttributeId = AttributeId::new("kind");
+pub const LEFT_AT: AttributeId = AttributeId::new("left_at");
+pub const RECORDING_CONSENT: AttributeId = AttributeId::new("recording_consent");
+pub const ROLE: AttributeId = AttributeId::new("role");
+pub const USER_ID: AttributeId = AttributeId::new("user_id");
 
 #[cfg(test)]
 mod test_common {
@@ -35,6 +49,8 @@ mod test_common {
     pub const ROOM: SignalingRoomId = SignalingRoomId::nil();
     pub const BOB: ParticipantId = ParticipantId::from_u128(0xdeadbeef);
     pub const ALICE: ParticipantId = ParticipantId::from_u128(0xbadcafe);
+    pub const POINT: AttributeId = AttributeId::new("point");
+    pub const LINE: AttributeId = AttributeId::new("line");
 
     pub(super) async fn participant_set(storage: &mut impl ControlStorage) {
         assert!(!storage.participant_set_exists(ROOM).await.unwrap());
@@ -115,28 +131,25 @@ mod test_common {
         let point = Point { x: 32, y: 42 };
 
         storage
-            .set_attribute(ROOM, ALICE, "point", point.clone())
+            .set_attribute(ROOM, ALICE, POINT, point.clone())
             .await
             .unwrap();
 
-        let loaded: Point = storage.get_attribute(ROOM, ALICE, "point").await.unwrap();
+        let loaded: Point = storage.get_attribute(ROOM, ALICE, POINT).await.unwrap();
         assert_eq!(loaded, point);
 
         assert!(storage
-            .get_attribute::<Point>(ROOM, BOB, "point")
+            .get_attribute::<Point>(ROOM, BOB, POINT)
             .await
             .is_err());
         assert!(storage
-            .get_attribute::<Point>(ROOM, ALICE, "line")
+            .get_attribute::<Point>(ROOM, ALICE, LINE)
             .await
             .is_err());
 
-        storage
-            .remove_attribute(ROOM, ALICE, "point")
-            .await
-            .unwrap();
+        storage.remove_attribute(ROOM, ALICE, POINT).await.unwrap();
         assert!(storage
-            .get_attribute::<Point>(ROOM, ALICE, "point")
+            .get_attribute::<Point>(ROOM, ALICE, POINT)
             .await
             .is_err());
     }
@@ -146,45 +159,42 @@ mod test_common {
         let bob_point = Point { x: 2, y: 3 };
 
         storage
-            .set_attribute(ROOM, ALICE, "point", alice_point.clone())
+            .set_attribute(ROOM, ALICE, POINT, alice_point.clone())
             .await
             .unwrap();
 
         assert_eq!(
             storage
-                .get_attribute_for_participants::<Point>(ROOM, "point", &[ALICE, BOB])
+                .get_attribute_for_participants::<Point>(ROOM, POINT, &[ALICE, BOB])
                 .await
                 .unwrap(),
             vec![Some(alice_point.clone()), None]
         );
         assert_eq!(
             storage
-                .get_attribute_for_participants::<Point>(ROOM, "point", &[BOB, ALICE])
+                .get_attribute_for_participants::<Point>(ROOM, POINT, &[BOB, ALICE])
                 .await
                 .unwrap(),
             vec![None, Some(alice_point.clone())]
         );
 
         storage
-            .set_attribute(ROOM, BOB, "point", bob_point.clone())
+            .set_attribute(ROOM, BOB, POINT, bob_point.clone())
             .await
             .unwrap();
 
         assert_eq!(
             storage
-                .get_attribute_for_participants::<Point>(ROOM, "point", &[BOB, ALICE])
+                .get_attribute_for_participants::<Point>(ROOM, POINT, &[BOB, ALICE])
                 .await
                 .unwrap(),
             vec![Some(bob_point.clone()), Some(alice_point.clone())]
         );
 
-        storage
-            .remove_attribute(ROOM, ALICE, "point")
-            .await
-            .unwrap();
+        storage.remove_attribute(ROOM, ALICE, POINT).await.unwrap();
         assert_eq!(
             storage
-                .get_attribute_for_participants::<Point>(ROOM, "point", &[BOB, ALICE])
+                .get_attribute_for_participants::<Point>(ROOM, POINT, &[BOB, ALICE])
                 .await
                 .unwrap(),
             vec![Some(bob_point.clone()), None]
@@ -193,21 +203,21 @@ mod test_common {
 
     pub(super) async fn participant_remove_attributes(storage: &mut impl ControlStorage) {
         storage
-            .set_attribute(ROOM, ALICE, "point", "alice_point")
+            .set_attribute(ROOM, ALICE, POINT, "alice_point")
             .await
             .unwrap();
         storage
-            .set_attribute(ROOM, BOB, "point", "bob_point")
+            .set_attribute(ROOM, BOB, POINT, "bob_point")
             .await
             .unwrap();
         storage
-            .set_attribute(ROOM, ALICE, "line", "alice_line")
+            .set_attribute(ROOM, ALICE, LINE, "alice_line")
             .await
             .unwrap();
 
         assert_eq!(
             storage
-                .get_attribute_for_participants::<String>(ROOM, "point", &[ALICE, BOB])
+                .get_attribute_for_participants::<String>(ROOM, POINT, &[ALICE, BOB])
                 .await
                 .unwrap(),
             vec![
@@ -217,24 +227,24 @@ mod test_common {
         );
         assert_eq!(
             storage
-                .get_attribute_for_participants::<String>(ROOM, "line", &[ALICE, BOB])
+                .get_attribute_for_participants::<String>(ROOM, LINE, &[ALICE, BOB])
                 .await
                 .unwrap(),
             vec![Some("alice_line".to_string()), None]
         );
 
-        storage.remove_attribute_key(ROOM, "point").await.unwrap();
+        storage.remove_attribute_key(ROOM, POINT).await.unwrap();
 
         assert_eq!(
             storage
-                .get_attribute_for_participants::<String>(ROOM, "point", &[ALICE, BOB])
+                .get_attribute_for_participants::<String>(ROOM, POINT, &[ALICE, BOB])
                 .await
                 .unwrap(),
             vec![None, None]
         );
         assert_eq!(
             storage
-                .get_attribute_for_participants::<String>(ROOM, "line", &[ALICE, BOB])
+                .get_attribute_for_participants::<String>(ROOM, LINE, &[ALICE, BOB])
                 .await
                 .unwrap(),
             vec![Some("alice_line".to_string()), None]
@@ -245,11 +255,11 @@ mod test_common {
         storage.add_participant_to_set(ROOM, ALICE).await.unwrap();
         storage.add_participant_to_set(ROOM, BOB).await.unwrap();
         storage
-            .set_attribute(ROOM, ALICE, "role", Role::Guest)
+            .set_attribute(ROOM, ALICE, ROLE, Role::Guest)
             .await
             .unwrap();
         storage
-            .set_attribute(ROOM, BOB, "role", Role::User)
+            .set_attribute(ROOM, BOB, ROLE, Role::User)
             .await
             .unwrap();
 
@@ -270,13 +280,13 @@ mod test_common {
 
         let results: (Option<String>, Option<String>, Option<String>) = storage
             .bulk_attribute_actions(ROOM, ALICE)
-            .get("point")
-            .set("point", "alice_point")
-            .get("point")
-            .del("point")
-            .get("point")
-            .set("point", point.clone())
-            .set("line", "alice_line")
+            .get(POINT)
+            .set(POINT, "alice_point")
+            .get(POINT)
+            .del(POINT)
+            .get(POINT)
+            .set(POINT, point.clone())
+            .set(LINE, "alice_line")
             .apply(storage)
             .await
             .unwrap();
@@ -285,14 +295,14 @@ mod test_common {
 
         assert_eq!(
             storage
-                .get_attribute::<Point>(ROOM, ALICE, "point")
+                .get_attribute::<Point>(ROOM, ALICE, POINT)
                 .await
                 .unwrap(),
             point
         );
         assert_eq!(
             storage
-                .get_attribute::<String>(ROOM, ALICE, "line")
+                .get_attribute::<String>(ROOM, ALICE, LINE)
                 .await
                 .unwrap(),
             "alice_line".to_string()

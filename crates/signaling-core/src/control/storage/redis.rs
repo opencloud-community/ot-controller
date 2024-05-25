@@ -19,8 +19,8 @@ use redis_args::ToRedisArgs;
 use snafu::ResultExt;
 
 use super::{
-    AttributeActions, ControlStorage, ControlStorageParticipantAttributes,
-    SKIP_WAITING_ROOM_KEY_EXPIRY,
+    AttributeActions, AttributeId, ControlStorage, ControlStorageParticipantAttributes, LEFT_AT,
+    ROLE, SKIP_WAITING_ROOM_KEY_EXPIRY,
 };
 use crate::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 
@@ -134,7 +134,7 @@ impl ControlStorage for RedisConnection {
     async fn get_attribute_for_participants<V>(
         &mut self,
         room: SignalingRoomId,
-        name: &str,
+        attribute: AttributeId,
         participants: &[ParticipantId],
     ) -> Result<Vec<Option<V>>, SignalingModuleError>
     where
@@ -146,15 +146,12 @@ impl ControlStorage for RedisConnection {
         } else {
             // need manual HMGET command as the HGET command wont work with single value vector input
             redis::cmd("HMGET")
-                .arg(RoomParticipantAttributes {
-                    room,
-                    attribute_name: name,
-                })
+                .arg(RoomParticipantAttributes { room, attribute })
                 .arg(participants)
                 .query_async(self)
                 .await
                 .with_context(|_| RedisSnafu {
-                    message: format!("Failed to get attribute '{name}' for all participants"),
+                    message: format!("Failed to get attribute '{attribute}' for all participants"),
                 })
         }
     }
@@ -163,16 +160,13 @@ impl ControlStorage for RedisConnection {
     async fn remove_attribute_key(
         &mut self,
         room: SignalingRoomId,
-        name: &str,
+        attribute: AttributeId,
     ) -> Result<(), SignalingModuleError> {
-        self.del(RoomParticipantAttributes {
-            room,
-            attribute_name: name,
-        })
-        .await
-        .with_context(|_| RedisSnafu {
-            message: format!("Failed to remove participant attribute key, {name}"),
-        })
+        self.del(RoomParticipantAttributes { room, attribute })
+            .await
+            .with_context(|_| RedisSnafu {
+                message: format!("Failed to remove participant attribute key, {attribute}"),
+            })
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
@@ -185,11 +179,11 @@ impl ControlStorage for RedisConnection {
         pipe.atomic();
         pipe.hgetall(RoomParticipantAttributes {
             room,
-            attribute_name: "role",
+            attribute: ROLE,
         });
         pipe.hgetall(RoomParticipantAttributes {
             room,
-            attribute_name: "left_at",
+            attribute: LEFT_AT,
         });
 
         let (mut roles, mut left_at_timestamps): (
@@ -456,10 +450,10 @@ struct RoomParticipants {
 
 /// Key used for the lock over the room participants set
 #[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "opentalk-signaling:room={room}:participants:attributes:{attribute_name}")]
-struct RoomParticipantAttributes<'s> {
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:participants:attributes:{attribute}")]
+struct RoomParticipantAttributes {
     room: SignalingRoomId,
-    attribute_name: &'s str,
+    attribute: AttributeId,
 }
 
 /// The total count of all participants in the room, also considers participants in breakout rooms and the waiting room
@@ -504,12 +498,12 @@ pub struct RedisBulkAttributeActions {
 
 #[async_trait(?Send)]
 impl AttributeActions for RedisBulkAttributeActions {
-    fn set<V: ToRedisArgs>(&mut self, name: &str, value: V) -> &mut Self {
+    fn set<V: ToRedisArgs>(&mut self, attribute: AttributeId, value: V) -> &mut Self {
         self.pipe
             .hset(
                 RoomParticipantAttributes {
                     room: self.room,
-                    attribute_name: name,
+                    attribute,
                 },
                 self.participant,
                 value,
@@ -519,11 +513,11 @@ impl AttributeActions for RedisBulkAttributeActions {
         self
     }
 
-    fn get(&mut self, name: &str) -> &mut Self {
+    fn get(&mut self, attribute: AttributeId) -> &mut Self {
         self.pipe.hget(
             RoomParticipantAttributes {
                 room: self.room,
-                attribute_name: name,
+                attribute,
             },
             self.participant,
         );
@@ -531,12 +525,12 @@ impl AttributeActions for RedisBulkAttributeActions {
         self
     }
 
-    fn del(&mut self, name: &str) -> &mut Self {
+    fn del(&mut self, attribute: AttributeId) -> &mut Self {
         self.pipe
             .hdel(
                 RoomParticipantAttributes {
                     room: self.room,
-                    attribute_name: name,
+                    attribute,
                 },
                 self.participant,
             )
@@ -581,22 +575,16 @@ impl ControlStorageParticipantAttributes for RedisConnection {
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
-        name: &str,
+        attribute: AttributeId,
     ) -> Result<V, SignalingModuleError>
     where
         V: FromRedisValue,
     {
         let value = self
-            .hget(
-                RoomParticipantAttributes {
-                    room,
-                    attribute_name: name,
-                },
-                participant,
-            )
+            .hget(RoomParticipantAttributes { room, attribute }, participant)
             .await
             .with_context(|_| RedisSnafu {
-                message: format!("Failed to get attribute {name}"),
+                message: format!("Failed to get attribute {attribute}"),
             })?;
 
         Ok(value)
@@ -607,23 +595,20 @@ impl ControlStorageParticipantAttributes for RedisConnection {
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
-        name: &str,
+        attribute: AttributeId,
         value: V,
     ) -> Result<(), SignalingModuleError>
     where
         V: Debug + ToRedisArgs + Send + Sync,
     {
         self.hset(
-            RoomParticipantAttributes {
-                room,
-                attribute_name: name,
-            },
+            RoomParticipantAttributes { room, attribute },
             participant,
             value,
         )
         .await
         .with_context(|_| RedisSnafu {
-            message: format!("Failed to set attribute {name}"),
+            message: format!("Failed to set attribute {attribute}"),
         })?;
 
         Ok(())
@@ -634,19 +619,13 @@ impl ControlStorageParticipantAttributes for RedisConnection {
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
-        name: &str,
+        attribute: AttributeId,
     ) -> Result<(), SignalingModuleError> {
-        self.hdel(
-            RoomParticipantAttributes {
-                room,
-                attribute_name: name,
-            },
-            participant,
-        )
-        .await
-        .with_context(|_| RedisSnafu {
-            message: format!("Failed to remove participant attribute key, {name}"),
-        })
+        self.hdel(RoomParticipantAttributes { room, attribute }, participant)
+            .await
+            .with_context(|_| RedisSnafu {
+                message: format!("Failed to remove participant attribute key, {attribute}"),
+            })
     }
 }
 

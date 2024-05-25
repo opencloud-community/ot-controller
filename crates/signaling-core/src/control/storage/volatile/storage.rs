@@ -19,7 +19,7 @@ use snafu::OptionExt as _;
 
 use super::memory::{MemoryControlState, VolatileStaticMemoryAttributeActions};
 use crate::{
-    control::storage::{ControlStorage, ControlStorageParticipantAttributes},
+    control::storage::{AttributeId, ControlStorage, ControlStorageParticipantAttributes},
     NotFoundSnafu, SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage,
 };
 
@@ -105,7 +105,7 @@ impl ControlStorage for VolatileStaticMemoryStorage {
     async fn get_attribute_for_participants<V>(
         &mut self,
         room: SignalingRoomId,
-        name: &str,
+        attribute: AttributeId,
         participants: &[ParticipantId],
     ) -> Result<Vec<Option<V>>, SignalingModuleError>
     where
@@ -113,16 +113,16 @@ impl ControlStorage for VolatileStaticMemoryStorage {
     {
         state()
             .read()
-            .get_attribute_for_participants(room, name, participants)
+            .get_attribute_for_participants(room, attribute, participants)
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
     async fn remove_attribute_key(
         &mut self,
         room: SignalingRoomId,
-        name: &str,
+        attribute: AttributeId,
     ) -> Result<(), SignalingModuleError> {
-        state().write().remove_attribute_key(room, name);
+        state().write().remove_attribute_key(room, attribute);
         Ok(())
     }
 
@@ -286,14 +286,14 @@ impl ControlStorageParticipantAttributes for VolatileStaticMemoryStorage {
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
-        name: &str,
+        attribute: AttributeId,
     ) -> Result<V, SignalingModuleError>
     where
         V: FromRedisValue,
     {
         state()
             .read()
-            .get_attribute(room, participant, name)?
+            .get_attribute(room, participant, attribute)?
             .with_context(|| NotFoundSnafu)
     }
 
@@ -302,7 +302,7 @@ impl ControlStorageParticipantAttributes for VolatileStaticMemoryStorage {
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
-        name: &str,
+        attribute: AttributeId,
         value: V,
     ) -> Result<(), SignalingModuleError>
     where
@@ -310,7 +310,7 @@ impl ControlStorageParticipantAttributes for VolatileStaticMemoryStorage {
     {
         state()
             .write()
-            .set_attribute(room, participant, name, value);
+            .set_attribute(room, participant, attribute, value);
         Ok(())
     }
 
@@ -319,9 +319,11 @@ impl ControlStorageParticipantAttributes for VolatileStaticMemoryStorage {
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
-        name: &str,
+        attribute: AttributeId,
     ) -> Result<(), SignalingModuleError> {
-        state().write().remove_attribute(room, participant, name);
+        state()
+            .write()
+            .remove_attribute(room, participant, attribute);
         Ok(())
     }
 }

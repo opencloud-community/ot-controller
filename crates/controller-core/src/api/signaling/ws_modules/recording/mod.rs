@@ -14,7 +14,9 @@ use opentalk_db_storage::streaming_targets::RoomStreamingTargetRecord;
 use opentalk_signaling_core::{
     control::{
         self,
-        storage::{ControlStorage as _, ControlStorageParticipantAttributes as _},
+        storage::{
+            ControlStorage as _, ControlStorageParticipantAttributes as _, RECORDING_CONSENT,
+        },
     },
     DestroyContext, Event, InitContext, ModuleContext, RedisConnection, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
@@ -140,7 +142,7 @@ impl SignalingModule for Recording {
             }
             Event::Leaving => {
                 ctx.redis_conn()
-                    .remove_attribute(self.room, self.id, "recording_consent")
+                    .remove_attribute(self.room, self.id, RECORDING_CONSENT)
                     .await?;
             }
             Event::RaiseHand => {}
@@ -149,7 +151,7 @@ impl SignalingModule for Recording {
             Event::ParticipantJoined(id, data) | Event::ParticipantUpdated(id, data) => {
                 let consent: Option<bool> = ctx
                     .redis_conn()
-                    .get_attribute(self.room, id, "recording_consent")
+                    .get_attribute(self.room, id, RECORDING_CONSENT)
                     .await?;
 
                 if let Some(consent) = consent {
@@ -163,7 +165,7 @@ impl SignalingModule for Recording {
             Event::WsMessage(msg) => match msg {
                 RecordingCommand::SetConsent(command::SetConsent { consent }) => {
                     ctx.redis_conn()
-                        .set_attribute(self.room, self.id, "recording_consent", consent)
+                        .set_attribute(self.room, self.id, RECORDING_CONSENT, consent)
                         .await?;
 
                     ctx.invalidate_data();
@@ -458,7 +460,7 @@ impl Recording {
     ) -> Result<(), SignalingModuleError> {
         let participant_ids: Vec<ParticipantId> = participants.keys().copied().collect();
         let participant_consents: Vec<Option<bool>> = redis_conn
-            .get_attribute_for_participants(self.room, "recording_consent", &participant_ids)
+            .get_attribute_for_participants(self.room, RECORDING_CONSENT, &participant_ids)
             .await?;
 
         for (id, consent) in participant_ids.into_iter().zip(participant_consents) {

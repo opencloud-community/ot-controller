@@ -17,11 +17,13 @@ use redis::{FromRedisValue, ToRedisArgs};
 use snafu::{OptionExt as _, ResultExt as _};
 
 use crate::{
-    control::storage::{AttributeActions, SKIP_WAITING_ROOM_KEY_EXPIRY},
+    control::storage::{
+        AttributeActions, AttributeId, LEFT_AT, ROLE, SKIP_WAITING_ROOM_KEY_EXPIRY,
+    },
     ExpiringDataHashMap, NotFoundSnafu, RedisSnafu, SignalingModuleError, SignalingRoomId,
 };
 
-type AttributeMap = HashMap<(ParticipantId, String), Vec<Vec<u8>>>;
+type AttributeMap = HashMap<(ParticipantId, AttributeId), Vec<Vec<u8>>>;
 
 #[derive(Debug, Clone, Default)]
 pub(super) struct MemoryControlState {
@@ -52,33 +54,36 @@ impl VolatileStaticMemoryAttributeActions {
 
 #[derive(Debug)]
 enum AttributeAction {
-    Set { name: String, value: Vec<Vec<u8>> },
-    Get { name: String },
-    Delete { name: String },
+    Set {
+        attribute: AttributeId,
+        value: Vec<Vec<u8>>,
+    },
+    Get {
+        attribute: AttributeId,
+    },
+    Delete {
+        attribute: AttributeId,
+    },
 }
 
 #[async_trait(?Send)]
 impl AttributeActions for VolatileStaticMemoryAttributeActions {
-    fn set<V: ToRedisArgs>(&mut self, name: &str, value: V) -> &mut Self {
+    fn set<V: ToRedisArgs>(&mut self, attribute: AttributeId, value: V) -> &mut Self {
         self.actions.push(AttributeAction::Set {
-            name: name.to_string(),
+            attribute,
             // to_redis_args will always contain at least one element
             value: value.to_redis_args(),
         });
         self
     }
 
-    fn get(&mut self, name: &str) -> &mut Self {
-        self.actions.push(AttributeAction::Get {
-            name: name.to_string(),
-        });
+    fn get(&mut self, attribute: AttributeId) -> &mut Self {
+        self.actions.push(AttributeAction::Get { attribute });
         self
     }
 
-    fn del(&mut self, name: &str) -> &mut Self {
-        self.actions.push(AttributeAction::Delete {
-            name: name.to_string(),
-        });
+    fn del(&mut self, attribute: AttributeId) -> &mut Self {
+        self.actions.push(AttributeAction::Delete { attribute });
         self
     }
 }
@@ -144,16 +149,16 @@ impl MemoryControlState {
         &self,
         room: SignalingRoomId,
         participant: ParticipantId,
-        name: &str,
+        attribute: AttributeId,
     ) -> Result<Option<V>, SignalingModuleError>
     where
         V: FromRedisValue,
     {
-        self.get_attribute_raw(room, participant, name)
+        self.get_attribute_raw(room, participant, attribute)
             .map(|b| V::from_redis_value(&redis::Value::load_from_redis_u8_vec_vec(b)))
             .transpose()
             .with_context(|_| RedisSnafu {
-                message: format!("Failed to get attribute {name}"),
+                message: format!("Failed to get attribute {attribute}"),
             })
     }
 
@@ -161,20 +166,20 @@ impl MemoryControlState {
         &self,
         room: SignalingRoomId,
         participant: ParticipantId,
-        name: &str,
+        attribute: AttributeId,
     ) -> Option<&Vec<Vec<u8>>> {
         self.participant_attributes
             .get(&room)
-            .and_then(|p| p.get(&(participant, name.to_string())))
+            .and_then(|p| p.get(&(participant, attribute)))
     }
 
     fn get_attribute_raw_redis_value(
         &self,
         room: SignalingRoomId,
         participant: ParticipantId,
-        name: &str,
+        attribute: AttributeId,
     ) -> redis::Value {
-        self.get_attribute_raw(room, participant, name)
+        self.get_attribute_raw(room, participant, attribute)
             .map(|v| redis::Value::load_from_redis_u8_vec_vec(v))
             .unwrap_or(redis::Value::Nil)
     }
@@ -183,38 +188,38 @@ impl MemoryControlState {
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
-        name: &str,
+        attribute: AttributeId,
         value: V,
     ) where
         V: core::fmt::Debug + ToRedisArgs + Send + Sync,
     {
-        self.set_attribute_raw(room, participant, name, value.to_redis_args());
+        self.set_attribute_raw(room, participant, attribute, value.to_redis_args());
     }
 
     fn set_attribute_raw(
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
-        name: &str,
+        attribute: AttributeId,
         value: Vec<Vec<u8>>,
     ) {
         self.participant_attributes
             .entry(room)
             .or_default()
-            .insert((participant, name.to_string()), value);
+            .insert((participant, attribute), value);
     }
 
     pub(super) fn remove_attribute(
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
-        name: &str,
+        attribute: AttributeId,
     ) {
         let is_empty = self
             .participant_attributes
             .get_mut(&room)
             .map(|a| {
-                a.remove(&(participant, name.to_string()));
+                a.remove(&(participant, attribute));
                 a.is_empty()
             })
             .unwrap_or_default();
@@ -231,12 +236,20 @@ impl MemoryControlState {
 
         for action in &actions.actions {
             match action {
-                AttributeAction::Set { name, value } => {
-                    self.set_attribute_raw(actions.room, actions.participant, name, value.clone());
+                AttributeAction::Set { attribute, value } => {
+                    self.set_attribute_raw(
+                        actions.room,
+                        actions.participant,
+                        *attribute,
+                        value.clone(),
+                    );
                 }
-                AttributeAction::Get { name } => {
-                    let value =
-                        self.get_attribute_raw_redis_value(actions.room, actions.participant, name);
+                AttributeAction::Get { attribute } => {
+                    let value = self.get_attribute_raw_redis_value(
+                        actions.room,
+                        actions.participant,
+                        *attribute,
+                    );
 
                     response = match response {
                         None => Some(value),
@@ -247,8 +260,8 @@ impl MemoryControlState {
                         Some(v) => Some(redis::Value::Bulk(vec![v, value])),
                     }
                 }
-                AttributeAction::Delete { name } => {
-                    self.remove_attribute(actions.room, actions.participant, name);
+                AttributeAction::Delete { attribute } => {
+                    self.remove_attribute(actions.room, actions.participant, *attribute);
                 }
             }
         }
@@ -261,7 +274,7 @@ impl MemoryControlState {
     pub(super) fn get_attribute_for_participants<V>(
         &self,
         room: SignalingRoomId,
-        name: &str,
+        attribute: AttributeId,
         participants: &[ParticipantId],
     ) -> Result<Vec<Option<V>>, SignalingModuleError>
     where
@@ -269,13 +282,13 @@ impl MemoryControlState {
     {
         participants
             .iter()
-            .map(|p| self.get_attribute::<V>(room, *p, name))
+            .map(|p| self.get_attribute::<V>(room, *p, attribute))
             .collect()
     }
 
-    pub(super) fn remove_attribute_key(&mut self, room: SignalingRoomId, name: &str) {
+    pub(super) fn remove_attribute_key(&mut self, room: SignalingRoomId, attribute: AttributeId) {
         if let Some(attributes) = self.participant_attributes.get_mut(&room) {
-            attributes.retain(|k, _v| k.1 != name)
+            attributes.retain(|k, _v| k.1 != attribute)
         };
     }
 
@@ -287,8 +300,8 @@ impl MemoryControlState {
     {
         let participants = Vec::from_iter(self.get_all_participants(room));
 
-        let roles = self.get_attribute_for_participants(room, "role", &participants)?;
-        let left_at = self.get_attribute_for_participants(room, "left_at", &participants)?;
+        let roles = self.get_attribute_for_participants(room, ROLE, &participants)?;
+        let left_at = self.get_attribute_for_participants(room, LEFT_AT, &participants)?;
 
         Ok(participants
             .into_iter()
@@ -433,6 +446,8 @@ mod tests {
 
     use super::*;
 
+    const POINT: AttributeId = AttributeId::new("point");
+
     #[test]
     fn roundtrip_attribute() {
         let mut state = MemoryControlState::default();
@@ -452,9 +467,9 @@ mod tests {
 
         let point = Point { x: 32, y: 42 };
 
-        state.set_attribute(room, participant, "point", point.clone());
+        state.set_attribute(room, participant, POINT, point.clone());
 
-        let loaded: Option<Point> = state.get_attribute(room, participant, "point").unwrap();
+        let loaded: Option<Point> = state.get_attribute(room, participant, POINT).unwrap();
 
         assert_eq!(loaded, Some(point));
     }

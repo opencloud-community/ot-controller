@@ -27,6 +27,8 @@ use opentalk_signaling_core::{
         self, exchange,
         storage::{
             AttributeActions as _, ControlStorage, ControlStorageParticipantAttributes as _,
+            AVATAR_URL, DISPLAY_NAME, HAND_IS_UP, HAND_UPDATED_AT, IS_ROOM_OWNER, JOINED_AT, KIND,
+            LEFT_AT, ROLE, USER_ID,
         },
         ControlStateExt as _, NAMESPACE,
     },
@@ -436,7 +438,7 @@ impl Runner {
             if let RunnerState::Joined = &self.state {
                 let res = self
                     .redis_conn
-                    .set_attribute(self.room_id, self.id, "left_at", Timestamp::now())
+                    .set_attribute(self.room_id, self.id, LEFT_AT, Timestamp::now())
                     .await;
                 if let Err(e) = res {
                     log::error!(
@@ -652,15 +654,15 @@ impl Runner {
         self.redis_conn.remove_room_closes_at(self.room_id).await?;
         self.redis_conn.remove_participant_set(self.room_id).await?;
         for key in [
-            "display_name",
-            "role",
-            "joined_at",
-            "left_at",
-            "hand_is_up",
-            "hand_updated_at",
-            "kind",
-            "user_id",
-            "avatar_url",
+            DISPLAY_NAME,
+            ROLE,
+            JOINED_AT,
+            LEFT_AT,
+            HAND_IS_UP,
+            HAND_UPDATED_AT,
+            KIND,
+            USER_ID,
+            AVATAR_URL,
         ] {
             self.redis_conn
                 .remove_attribute_key(self.room_id, key)
@@ -993,7 +995,7 @@ impl Runner {
 
         let left_at: Option<Timestamp> = self
             .redis_conn
-            .get_attribute(self.room_id, self.id, "left_at")
+            .get_attribute(self.room_id, self.id, LEFT_AT)
             .await?;
         self.set_control_attributes(timestamp, &display_name, avatar_url.as_deref())
             .await?;
@@ -1026,7 +1028,7 @@ impl Runner {
 
         let role: Option<Role> = self
             .redis_conn
-            .get_attribute(self.room_id, target, "role")
+            .get_attribute(self.room_id, target, ROLE)
             .await?;
 
         let is_moderator = matches!(role, Some(Role::Moderator));
@@ -1040,7 +1042,7 @@ impl Runner {
 
         let user_id: Option<UserId> = self
             .redis_conn
-            .get_attribute(self.room_id, target, "user_id")
+            .get_attribute(self.room_id, target, USER_ID)
             .await?;
 
         if let Some(user_id) = user_id {
@@ -1068,8 +1070,8 @@ impl Runner {
     ) -> Result<()> {
         self.redis_conn
             .bulk_attribute_actions(self.room_id, self.id)
-            .set("hand_is_up", hand_raised)
-            .set("hand_updated_at", timestamp)
+            .set(HAND_IS_UP, hand_raised)
+            .set(HAND_UPDATED_AT, timestamp)
             .apply(&mut self.redis_conn)
             .await?;
 
@@ -1225,7 +1227,7 @@ impl Runner {
             ..control_data
         };
         self.redis_conn
-            .remove_attribute(self.room_id, self.id, "left_at")
+            .remove_attribute(self.room_id, self.id, LEFT_AT)
             .await?;
 
         // If we haven't joined the waiting room yet, fetch, set and enforce the tariff for the room.
@@ -1440,31 +1442,31 @@ impl Runner {
         match &self.participant {
             Participant::User(ref user) => {
                 actions
-                    .set("kind", ParticipationKind::User)
+                    .set(KIND, ParticipationKind::User)
                     .set(
-                        "avatar_url",
+                        AVATAR_URL,
                         avatar_url.expect("user must have avatar_url set"),
                     )
-                    .set("user_id", user.id)
-                    .set("is_room_owner", user.id == self.room.created_by);
+                    .set(USER_ID, user.id)
+                    .set(IS_ROOM_OWNER, user.id == self.room.created_by);
             }
             Participant::Guest => {
-                actions.set("kind", ParticipationKind::Guest);
+                actions.set(KIND, ParticipationKind::Guest);
             }
             Participant::Sip => {
-                actions.set("kind", ParticipationKind::Sip);
+                actions.set(KIND, ParticipationKind::Sip);
             }
             Participant::Recorder => {
-                actions.set("kind", ParticipationKind::Recorder);
+                actions.set(KIND, ParticipationKind::Recorder);
             }
         }
 
         actions
-            .set("role", self.role)
-            .set("hand_is_up", false)
-            .set("hand_updated_at", timestamp)
-            .set("display_name", display_name)
-            .set("joined_at", timestamp)
+            .set(ROLE, self.role)
+            .set(HAND_IS_UP, false)
+            .set(HAND_UPDATED_AT, timestamp)
+            .set(DISPLAY_NAME, display_name)
+            .set(JOINED_AT, timestamp)
             .apply(&mut self.redis_conn)
             .await?;
 
@@ -1690,7 +1692,7 @@ impl Runner {
                 self.role = new_role;
 
                 self.redis_conn
-                    .set_attribute(self.room_id, self.id, "role", new_role)
+                    .set_attribute(self.room_id, self.id, ROLE, new_role)
                     .await?;
 
                 let actions = self
@@ -1712,7 +1714,7 @@ impl Runner {
             exchange::Message::ResetRaisedHands { issued_by } => {
                 let raised: Option<bool> = self
                     .redis_conn
-                    .get_attribute(self.room_id, self.id, "hand_is_up")
+                    .get_attribute(self.room_id, self.id, HAND_IS_UP)
                     .await?;
                 if matches!(raised, Some(true)) {
                     self.handle_raise_hand_change(timestamp, false).await?;
@@ -1746,7 +1748,7 @@ impl Runner {
             exchange::Message::DisableRaiseHands { issued_by } => {
                 let raised: Option<bool> = self
                     .redis_conn
-                    .get_attribute(self.room_id, self.id, "hand_is_up")
+                    .get_attribute(self.room_id, self.id, HAND_IS_UP)
                     .await?;
                 if matches!(raised, Some(true)) {
                     self.handle_raise_hand_change(timestamp, false).await?;
@@ -1783,7 +1785,7 @@ impl Runner {
         );
 
         self.redis_conn
-            .set_attribute(self.room_id, self.id, "left_at", Timestamp::now())
+            .set_attribute(self.room_id, self.id, LEFT_AT, Timestamp::now())
             .await?;
 
         let actions = self
