@@ -183,6 +183,33 @@ The default parameters for the job look like this:
 
 <!-- end:fromfile:jobs/parameters-sync-storage-files.json.md -->
 
+### Job: `room-cleanup`
+
+This job removes all rooms that have no event associated with them. These orphaned rooms can be left over when an event
+is not properly deleted. The resources related to an orphaned room will also be deleted.
+
+#### Parameters
+
+The job takes a JSON object with the following fields as a parameter. All
+fields are optional, if any of them is not included in the parameter object, the
+default value will be used.
+
+| Field                                  | Type   | Default value | Description                                                                                                                                                    |
+| -------------------------------------- | ------ | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fail_on_shared_folder_deletion_error` | `bool` | `false`       | When `true`, the job will consider failure during deletion of the shared folder an error and abort, otherwise it is considered a warning and the job continues |
+
+The default parameters for the job look like this:
+
+<!-- begin:fromfile:jobs/parameters-room-cleanup.json.md -->
+
+```json
+{
+  "fail_on_shared_folder_deletion_error": false
+}
+```
+
+<!-- end:fromfile:jobs/parameters-room-cleanup.json.md -->
+
 ## `opentalk-controller jobs` subcommand
 
 This subcommand is the top-level entrypoint to manage and execute maintenance jobs.
@@ -233,6 +260,7 @@ Arguments:
           - adhoc-event-cleanup: A job to cleanup adhoc events a certain duration after they were created
           - invite-cleanup:      A job for cleaning up expired invites
           - sync-storage-files:  A job to synchronize database assets and storage files
+          - room-cleanup:        A job to remove all rooms that have not event associated with them
 
 Options:
       --parameters <PARAMETERS>
@@ -281,6 +309,7 @@ Arguments:
           - adhoc-event-cleanup: A job to cleanup adhoc events a certain duration after they were created
           - invite-cleanup:      A job for cleaning up expired invites
           - sync-storage-files:  A job to synchronize database assets and storage files
+          - room-cleanup:        A job to remove all rooms that have not event associated with them
 
 Options:
   -h, --help

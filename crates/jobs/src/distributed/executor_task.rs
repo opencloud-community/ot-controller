@@ -27,7 +27,9 @@ use crate::{
         ConnectSnafu, CreateKeepAliveSnafu, CreateWatchSnafu, GetSnafu, KeepAliveSnafu, LeaseSnafu,
         ParseSnafu, RemoveSnafu, WatchProgressSnafu,
     },
-    jobs::{AdhocEventCleanup, EventCleanup, InviteCleanup, SelfCheck, SyncStorageFiles},
+    jobs::{
+        AdhocEventCleanup, EventCleanup, InviteCleanup, RoomCleanup, SelfCheck, SyncStorageFiles,
+    },
     Job as JobImpl,
 };
 
@@ -358,6 +360,7 @@ impl JobExecutor {
             db::jobs::JobType::SyncStorageFiles => {
                 execution_data.execute::<SyncStorageFiles>().await
             }
+            db::jobs::JobType::RoomCleanup => execution_data.execute::<RoomCleanup>().await,
         };
 
         let job_execution_update = match result {

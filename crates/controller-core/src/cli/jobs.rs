@@ -124,6 +124,7 @@ async fn execute_job(
             data.execute::<opentalk_jobs::jobs::SyncStorageFiles>()
                 .await
         }
+        JobType::RoomCleanup => data.execute::<opentalk_jobs::jobs::RoomCleanup>().await,
     }
     .whatever_context("Failed to execute job")?;
 
@@ -144,6 +145,9 @@ fn show_default_parameters(job_type: JobType) -> Result<()> {
         }
         JobType::SyncStorageFiles => {
             show_job_type_default_parameters::<opentalk_jobs::jobs::SyncStorageFiles>()
+        }
+        JobType::RoomCleanup => {
+            show_job_type_default_parameters::<opentalk_jobs::jobs::RoomCleanup>()
         }
     }
 }

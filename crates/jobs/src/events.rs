@@ -131,7 +131,7 @@ async fn delete_events(
 }
 
 #[allow(clippy::too_many_arguments)]
-async fn delete_orphaned_rooms(
+pub(crate) async fn delete_orphaned_rooms(
     logger: &dyn Log,
     conn: &mut DbConnection,
     authz: &Authz,
