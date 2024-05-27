@@ -61,7 +61,7 @@ impl From<Error> for RecordingEvent {
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
-    serde(tag = "reason", rename_all = "snake_case")
+    serde(tag = "error", rename_all = "snake_case")
 )]
 pub enum RecorderError {
     /// Indicates, that the recorder timed out when attempting to start
