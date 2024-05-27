@@ -799,7 +799,7 @@ impl McuClient {
 
         let mut client = opentalk_janus_client::Client::new(
             rabbit_mq_config,
-            ClientId(id.0.clone()),
+            ClientId(id.0.to_string()),
             events_sender.clone(),
         )
         .await

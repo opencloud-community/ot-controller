@@ -3607,9 +3607,9 @@ dependencies = [
 
 [[package]]
 name = "opentalk-janus-client"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22053de41a9a2d1da85cd2e1a3aac234980b13fcec0388a9fdf6ce85a905e3ec"
+checksum = "4f23ba7d9dd64ee9040c49500b22ef09baba89490cac4151c0a4df2edf0fa763"
 dependencies = [
  "futures",
  "lapin",
