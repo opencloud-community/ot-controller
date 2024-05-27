@@ -99,7 +99,15 @@ to_routing_key = "to-janus"
 # Maximum number of amqp channels per connection
 #max_channels_per_connection = 100
 
-[redis]
+#[redis]
+# Configuration of a redis server which can be used for synchronizing multiple
+# controllers running in a cluster to provide an OpenTalk web api and meeting
+# signaling service.
+#
+# If this section is present, then the redis service will be used for
+# synchronizing meeting state throughout all controllers in the cluster. If it
+# is left out entirely, then the service will run in "standalone" mode.
+#
 # Redis URL used to connect the redis server
 #url = "redis://localhost:6379/"
 

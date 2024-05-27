@@ -13,6 +13,16 @@ must be run in order to update ACLs to match the newest version whenever
 new endpoints were added for already present resources. However, even if no
 endpoints were added, simply running the command does no harm.
 
+## Updating to OpenTalk Controller v0.15.0
+
+### Redis is only required for *clustered* operation
+
+Since `v0.15.0` of the OpenTalk controller, the usage of a [Redis](core/
+redis.md) service is only required for synchronizing between nodes when the
+controller should run in *clustered* mode. If the service should only be
+provided by a single node, then the controller can run in *standalone* mode now
+by removing the `[redis]` section from the configuration entirely.
+
 ## Updating to OpenTalk Controller v0.9.0
 
 ### Removal of server-side speaker detection
