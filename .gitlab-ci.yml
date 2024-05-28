@@ -334,6 +334,8 @@ check:docs-generated-parts:
       alias: rabbitmq
   before_script:
     - apt-get update && apt-get install -y git
+    # lowkey replacement for a rabbitmq health check
+    - sleep 10
   script:
     - ci/docs-update-generated-parts.sh
     - |
