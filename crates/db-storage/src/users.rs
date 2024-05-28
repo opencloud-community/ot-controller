@@ -6,10 +6,11 @@
 use std::fmt;
 
 use bigdecimal::{BigDecimal, ToPrimitive};
+use chrono::{DateTime, Utc};
 use derive_more::{AsRef, Display, From, FromStr, Into};
 use diesel::{
-    dsl::sum, BelongingToDsl, BoolExpressionMethods, ExpressionMethods, GroupedBy, Identifiable,
-    Insertable, OptionalExtension, QueryDsl, Queryable, TextExpressionMethods,
+    dsl::sum, pg::Pg, BelongingToDsl, BoolExpressionMethods, ExpressionMethods, GroupedBy,
+    Identifiable, Insertable, OptionalExtension, QueryDsl, Queryable, TextExpressionMethods,
 };
 use diesel_async::RunQueryDsl;
 use opentalk_controller_settings::Settings;
@@ -73,6 +74,7 @@ pub struct User {
     pub tenant_id: TenantId,
     pub tariff_id: TariffId,
     pub tariff_status: TariffStatus,
+    pub disabled_since: Option<DateTime<Utc>>,
 }
 
 impl fmt::Debug for User {
@@ -86,12 +88,19 @@ impl fmt::Debug for User {
 }
 
 impl User {
+    /// Helper function to get all active users
+    fn active_users_query() -> users::BoxedQuery<'static, Pg> {
+        users::table
+            .filter(users::disabled_since.is_null())
+            .into_boxed()
+    }
+
     /// Get a user with the given `id`
     ///
     /// If no user exists with `user_id` this returns an Error
     #[tracing::instrument(err, skip_all)]
-    pub async fn get(conn: &mut DbConnection, user_id: UserId) -> Result<User> {
-        let user = users::table
+    pub async fn get(conn: &mut DbConnection, user_id: UserId) -> Result<Self> {
+        let user = Self::active_users_query()
             .filter(users::id.eq(user_id))
             .get_result(conn)
             .await?;
@@ -107,9 +116,10 @@ impl User {
         conn: &mut DbConnection,
         tenant_id: TenantId,
         user_id: UserId,
-    ) -> Result<User> {
-        let user = users::table
-            .filter(users::id.eq(user_id).and(users::tenant_id.eq(tenant_id)))
+    ) -> Result<Self> {
+        let user = Self::active_users_query()
+            .filter(users::id.eq(user_id))
+            .filter(users::tenant_id.eq(tenant_id))
             .get_result(conn)
             .await?;
 
@@ -124,9 +134,10 @@ impl User {
         conn: &mut DbConnection,
         tenant_id: TenantId,
         email: &str,
-    ) -> Result<Option<User>> {
-        let user = users::table
-            .filter(users::tenant_id.eq(tenant_id).and(users::email.eq(email)))
+    ) -> Result<Option<Self>> {
+        let user = Self::active_users_query()
+            .filter(users::tenant_id.eq(tenant_id))
+            .filter(users::email.eq(email))
             .get_result(conn)
             .await
             .optional()?;
@@ -140,9 +151,10 @@ impl User {
         conn: &mut DbConnection,
         tenant_id: TenantId,
         phone: &str,
-    ) -> Result<Vec<User>> {
-        let users = users::table
-            .filter(users::tenant_id.eq(tenant_id).and(users::phone.eq(phone)))
+    ) -> Result<Vec<Self>> {
+        let users = Self::active_users_query()
+            .filter(users::tenant_id.eq(tenant_id))
+            .filter(users::phone.eq(phone))
             .get_results(conn)
             .await?;
 
@@ -151,8 +163,8 @@ impl User {
 
     /// Get all users alongside their current groups
     #[tracing::instrument(err, skip_all)]
-    pub async fn get_all_with_groups(conn: &mut DbConnection) -> Result<Vec<(User, Vec<Group>)>> {
-        let users_query = users::table.order_by(users::id.desc());
+    pub async fn get_all_with_groups(conn: &mut DbConnection) -> Result<Vec<(Self, Vec<Group>)>> {
+        let users_query = Self::active_users_query().order_by(users::id.desc());
         let users = users_query.load(conn).await?;
 
         let groups_query = UserGroupRelation::belonging_to(&users).inner_join(groups::table);
@@ -176,8 +188,8 @@ impl User {
         conn: &mut DbConnection,
         limit: i64,
         page: i64,
-    ) -> Result<(Vec<User>, i64)> {
-        let query = users::table
+    ) -> Result<(Vec<Self>, i64)> {
+        let query = Self::active_users_query()
             .order_by(users::id.desc())
             .paginate_by(limit, page);
 
@@ -193,21 +205,21 @@ impl User {
         ids: &[UserId],
         limit: i64,
         page: i64,
-    ) -> Result<(Vec<User>, i64)> {
-        let query = users::table
+    ) -> Result<(Vec<Self>, i64)> {
+        let query = Self::active_users_query()
             .filter(users::id.eq_any(ids))
             .order_by(users::id.desc())
             .paginate_by(limit, page);
 
-        let users_with_total = query.load_and_count::<User, _>(conn).await?;
+        let users_with_total = query.load_and_count::<Self, _>(conn).await?;
 
         Ok(users_with_total)
     }
 
     /// Returns all `User`s filtered by id
     #[tracing::instrument(err, skip_all)]
-    pub async fn get_all_by_ids(conn: &mut DbConnection, ids: &[UserId]) -> Result<Vec<User>> {
-        let query = users::table.filter(users::id.eq_any(ids));
+    pub async fn get_all_by_ids(conn: &mut DbConnection, ids: &[UserId]) -> Result<Vec<Self>> {
+        let query = Self::active_users_query().filter(users::id.eq_any(ids));
         let users = query.load(conn).await?;
 
         Ok(users)
@@ -221,9 +233,10 @@ impl User {
         conn: &mut DbConnection,
         tenant_id: TenantId,
         sub: &str,
-    ) -> Result<Option<User>> {
-        let user = users::table
-            .filter(users::oidc_sub.eq(sub).and(users::tenant_id.eq(tenant_id)))
+    ) -> Result<Option<Self>> {
+        let user = Self::active_users_query()
+            .filter(users::oidc_sub.eq(sub))
+            .filter(users::tenant_id.eq(tenant_id))
             .get_result(conn)
             .await
             .optional()?;
@@ -237,13 +250,10 @@ impl User {
         conn: &mut DbConnection,
         tenant_id: TenantId,
         subs: &[&str],
-    ) -> Result<Vec<User>> {
-        let users = users::table
-            .filter(
-                users::tenant_id
-                    .eq(tenant_id)
-                    .and(users::oidc_sub.eq_any(subs)),
-            )
+    ) -> Result<Vec<Self>> {
+        let users = Self::active_users_query()
+            .filter(users::tenant_id.eq(tenant_id))
+            .filter(users::oidc_sub.eq_any(subs))
             .load(conn)
             .await?;
 
@@ -259,7 +269,7 @@ impl User {
         tenant_id: TenantId,
         search_str: &str,
         max_users: usize,
-    ) -> Result<Vec<User>> {
+    ) -> Result<Vec<Self>> {
         // IMPORTANT: lowercase it to match the index of the db and
         // remove all existing % in name and to avoid manipulation of the LIKE query.
         let search_str = search_str.replace('%', "").trim().to_lowercase();
@@ -274,7 +284,7 @@ impl User {
 
         let lower_first_lastname = lower(users::firstname.concat(" ").concat(users::lastname));
 
-        let matches = users::table
+        let matches = Self::active_users_query()
             .filter(users::tenant_id.eq(tenant_id))
             .filter(
                 // First try LIKE query on display_name
