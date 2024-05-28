@@ -501,6 +501,7 @@ async fn create_time_independent_event(
             is_adhoc,
             shared_folder: None,
             streaming_targets,
+            show_meeting_details,
         },
         mail_resource,
     ))
@@ -605,6 +606,7 @@ async fn create_time_dependent_event(
             is_adhoc,
             shared_folder: None,
             streaming_targets,
+            show_meeting_details,
         },
         mail_resource,
     ))
@@ -777,6 +779,7 @@ pub async fn get_events(
             is_adhoc: event.is_adhoc,
             shared_folder,
             streaming_targets: None,
+            show_meeting_details: event.show_meeting_details,
         }));
 
         for exception in exceptions {
@@ -887,6 +890,7 @@ pub async fn get_event(
         is_adhoc: event.is_adhoc,
         shared_folder,
         streaming_targets: Some(room_streaming_targets),
+        show_meeting_details: event.show_meeting_details,
     };
 
     let event_resource = EventResource {
@@ -1070,6 +1074,7 @@ pub async fn patch_event(
         is_adhoc: event.is_adhoc,
         shared_folder: shared_folder.clone(),
         streaming_targets: None,
+        show_meeting_details: event.show_meeting_details,
     };
 
     if send_email_notification {
@@ -1248,6 +1253,7 @@ fn patch_event_change_to_time_dependent(
             is_recurring: Some(Some(recurrence_pattern.is_some())),
             recurrence_pattern: Some(recurrence_pattern),
             is_adhoc: patch.is_adhoc,
+            show_meeting_details: patch.show_meeting_details,
         })
     } else {
         const MSG: Option<&str> = Some("Must be provided when changing to time dependent events");
@@ -1343,6 +1349,7 @@ async fn patch_time_independent_event(
         is_recurring: Some(None),
         recurrence_pattern: Some(None),
         is_adhoc: patch.is_adhoc,
+        show_meeting_details: patch.show_meeting_details,
     })
 }
 
@@ -1392,6 +1399,7 @@ async fn patch_time_dependent_event(
         is_recurring: Some(Some(recurrence_pattern.is_some())),
         is_adhoc: patch.is_adhoc,
         recurrence_pattern: Some(recurrence_pattern),
+        show_meeting_details: patch.show_meeting_details,
     })
 }
 
@@ -2052,6 +2060,7 @@ mod tests {
             is_adhoc: false,
             shared_folder: None,
             streaming_targets: None,
+            show_meeting_details: true,
         };
 
         assert_eq_json!(
@@ -2116,6 +2125,7 @@ mod tests {
                 "is_favorite": false,
                 "can_edit": true,
                 "is_adhoc": false,
+                "show_meeting_details": true,
             }
         );
     }
@@ -2173,6 +2183,7 @@ mod tests {
             is_adhoc: false,
             shared_folder: None,
             streaming_targets: None,
+            show_meeting_details: false,
         };
 
         assert_eq_json!(
@@ -2233,6 +2244,7 @@ mod tests {
                 "is_favorite": true,
                 "can_edit": false,
                 "is_adhoc": false,
+                "show_meeting_details": false,
             }
         );
     }

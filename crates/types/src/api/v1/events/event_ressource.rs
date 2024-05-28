@@ -117,4 +117,7 @@ pub struct EventResource {
         serde(default, skip_serializing_if = "Option::is_none")
     )]
     pub streaming_targets: Option<Vec<RoomStreamingTarget>>,
+
+    /// Indicates whether meeting details should be provided. If absent, no meeting details are made available.
+    pub show_meeting_details: bool,
 }

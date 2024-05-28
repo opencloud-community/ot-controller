@@ -3008,6 +3008,10 @@ components:
           description: Is the event in the current user's favorites list.
         shared_folder:
           $ref: '#/components/schemas/SharedFolder'
+        show_meeting_details:
+          type: boolean
+          description: >
+            Indicates whether meeting details should be provided. If absent, no meeting details are made available.
       if:
         properties:
           is_time_independent:
@@ -3287,6 +3291,9 @@ components:
             If the duration is unknown, this equals starts_at.
         recurrence_pattern:
           $ref: '#/components/schemas/RecurrencePattern'
+        show_meeting_details:
+          type: boolean
+          description: Patch wether the meeting details are displayed or not
 
     PatchEventInstance:
       description: Event instance patch request body
