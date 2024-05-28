@@ -90,7 +90,7 @@ impl SyncedEnforcer {
             loop {
                 tokio::select! {
                     _ = ticker.tick() => {
-                        if let Err(e)= cloned_enforcer.write().await.load_policy().await {
+                        if let Err(e) = cloned_enforcer.write().await.load_policy().await {
                             log::error!("Failed to load policy: {}", Report::from_error(e))
                         }
                     },
@@ -229,17 +229,67 @@ impl CoreApi for SyncedEnforcer {
     #[inline]
     #[tracing::instrument(level = "trace", skip(self, rvals))]
     fn enforce<ARGS: EnforceArgs>(&self, rvals: ARGS) -> Result<bool> {
-        let start = Instant::now();
+        let rm = self.get_role_manager();
+        let rm = rm.read();
 
-        let res = self.enforcer.enforce(rvals)?;
+        let mut rvals = rvals.try_into_vec()?;
 
-        if let Some(metrics) = &self.metrics {
-            metrics
-                .enforce_execution_time
-                .record(start.elapsed().as_secs_f64(), &[]);
+        // Fetch all policies in casbin
+        let model = self.get_model().get_model();
+
+        let request_model = &model["r"]["r"];
+        let policy_model = &model["p"]["p"];
+
+        // Assert the enforcer's model matches what this function does
+        assert_eq!(&request_model.tokens, &["r_sub", "r_obj", "r_act"]);
+        assert_eq!(&policy_model.tokens, &["p_sub", "p_obj", "p_act"]);
+
+        let policies = policy_model.get_policy();
+
+        // kustos's permission model expects 3 fields per policy: sub, obj, act
+        // So make sure that the input is 3 values.
+        if rvals.len() != 3 {
+            return Err(casbin::Error::PolicyError(
+                casbin::error::PolicyError::UnmatchPolicyDefinition(3, rvals.len()),
+            ));
         }
 
-        Ok(res)
+        // Only way to make the `rvals` generic into strings is to cast them to rhai strings.
+        let act = rvals.pop().unwrap().into_immutable_string().unwrap();
+        let obj = rvals.pop().unwrap().into_immutable_string().unwrap();
+        let sub = rvals.pop().unwrap().into_immutable_string().unwrap();
+
+        // This is the matcher function from the kustos model in more efficient order
+        // and without checking for OPTIONS act
+        //
+        // m = g(r.sub, p.sub) && objMatch(r.obj, p.obj) && actMatch(r.act, p.act)
+        for policy in policies {
+            use super::custom_matcher::*;
+
+            if !obj_match(&obj, &policy[1]) || !act_match(&act, &policy[2]) {
+                continue;
+            }
+
+            // g function (user role/group relation check)
+            //
+            // Role manager checks if the checking subject is related to the subject in this policy
+            //
+            // e.g. imagine following policies
+            //
+            // "g, user::bob, role::admin"       # defines `user::bob` as having the role 'admin'
+            // "p, role::admin, myresource, GET" # Everyone with the role admin can GET `myresource`
+            //
+            // When checking if `user::bob` can access `myresource`;
+            // `rm.has_link("user::bob", "role::admin")` will return true,
+            // so `user::bob` will be granted access to to `myresource`.
+            if !rm.has_link(&sub, &policy[0], None) {
+                continue;
+            }
+
+            return Ok(true);
+        }
+
+        Ok(false)
     }
 
     #[inline]
