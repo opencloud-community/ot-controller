@@ -387,3 +387,68 @@ impl CoreApi for SyncedEnforcer {
         self.enforcer.has_auto_build_role_links_enabled()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use casbin::{CoreApi, MgmtApi};
+
+    use super::SyncedEnforcer;
+    use crate::internal::default_acl_model;
+
+    fn to_owned(v: Vec<&str>) -> Vec<String> {
+        v.into_iter().map(|x| x.to_owned()).collect()
+    }
+
+    fn to_owned2(v: Vec<Vec<&str>>) -> Vec<Vec<String>> {
+        v.into_iter().map(to_owned).collect()
+    }
+
+    #[tokio::test]
+    async fn enforce() {
+        let m = default_acl_model().await;
+        let a = casbin::MemoryAdapter::default();
+        let mut enforcer = SyncedEnforcer::new(m, a).await.unwrap();
+
+        let policies = vec![
+            vec!["role::user", "/rooms", "POST|GET"],
+            vec!["user::bob", "/rooms", "UPDATE"],
+            vec!["user::bob", "/events/*", "GET|POST"],
+        ];
+
+        enforcer.add_policies(to_owned2(policies)).await.unwrap();
+
+        enforcer
+            .add_grouping_policy(to_owned(vec!["user::bob", "role::user"]))
+            .await
+            .unwrap();
+
+        assert!(enforcer
+            .enforce(to_owned(vec!["user::bob", "/rooms", "GET"]))
+            .unwrap());
+        assert!(enforcer
+            .enforce(to_owned(vec!["user::bob", "/rooms", "POST"]))
+            .unwrap());
+        assert!(!enforcer
+            .enforce(to_owned(vec!["user::bob", "/rooms", "DELETE"]))
+            .unwrap());
+
+        assert!(enforcer
+            .enforce(to_owned(vec!["user::bob", "/rooms", "UPDATE"]))
+            .unwrap());
+
+        assert!(!enforcer
+            .enforce(to_owned(vec!["user::bob", "/rooms/abc", "UPDATE"]))
+            .unwrap());
+
+        assert!(enforcer
+            .enforce(to_owned(vec!["user::bob", "/events/1", "GET"]))
+            .unwrap());
+        assert!(enforcer
+            .enforce(to_owned(vec!["user::bob", "/events/1", "POST"]))
+            .unwrap());
+
+        assert!(!enforcer
+            .enforce(to_owned(vec!["user::bob", "/events/1", "UPDATE"]))
+            .unwrap());
+    }
+}
