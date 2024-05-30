@@ -3652,9 +3652,12 @@ dependencies = [
 name = "opentalk-jobs"
 version = "0.0.0-dev"
 dependencies = [
+ "actix-rt",
  "async-trait",
+ "bytes",
  "chrono",
  "etcd-client",
+ "futures",
  "kustos",
  "log",
  "opentalk-controller-settings",
@@ -3664,6 +3667,7 @@ dependencies = [
  "opentalk-log",
  "opentalk-nextcloud-client",
  "opentalk-signaling-core",
+ "opentalk-test-util",
  "opentalk-types",
  "serde",
  "serde_json",

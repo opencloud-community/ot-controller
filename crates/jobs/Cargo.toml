@@ -31,3 +31,9 @@ snafu.workspace = true
 tokio = { workspace = true, features = ["time"] }
 tokio-cron-scheduler = "0.10"
 uuid.workspace = true
+
+[dev-dependencies]
+actix-rt.workspace = true
+bytes.workspace = true
+futures.workspace = true
+opentalk-test-util = { workspace = true, features = ["controller", "database"] }

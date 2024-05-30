@@ -131,7 +131,7 @@ impl<T> Paginated<T> {
             use diesel_async::RunQueryDsl;
             self.load::<(U, i64)>(conn).await?
         };
-        let total = results.first().map(|x| x.1).unwrap_or(0);
+        let total = results.first().map(|x: &(U, i64)| x.1).unwrap_or(0);
         let records = results.into_iter().map(|x| x.0).collect();
         Ok((records, total))
     }

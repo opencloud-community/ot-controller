@@ -120,6 +120,10 @@ async fn execute_job(
                 .await
         }
         JobType::InviteCleanup => data.execute::<opentalk_jobs::jobs::InviteCleanup>().await,
+        JobType::SyncStorageFiles => {
+            data.execute::<opentalk_jobs::jobs::SyncStorageFiles>()
+                .await
+        }
     }
     .whatever_context("Failed to execute job")?;
 
@@ -137,6 +141,9 @@ fn show_default_parameters(job_type: JobType) -> Result<()> {
         }
         JobType::InviteCleanup => {
             show_job_type_default_parameters::<opentalk_jobs::jobs::InviteCleanup>()
+        }
+        JobType::SyncStorageFiles => {
+            show_job_type_default_parameters::<opentalk_jobs::jobs::SyncStorageFiles>()
         }
     }
 }

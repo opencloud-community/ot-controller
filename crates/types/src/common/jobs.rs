@@ -40,4 +40,7 @@ pub enum JobType {
 
     /// A job for cleaning up expired invites
     InviteCleanup,
+
+    /// A job to synchronize database assets and storage files
+    SyncStorageFiles,
 }

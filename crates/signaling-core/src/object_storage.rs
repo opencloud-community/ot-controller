@@ -423,6 +423,28 @@ impl ObjectStorage {
         Ok(data.body)
     }
 
+    pub async fn get_object_size_if_exists(&self, key: String) -> Result<Option<i64>> {
+        let response = self
+            .client
+            .head_object()
+            .bucket(&self.bucket)
+            .key(key)
+            .send()
+            .await
+            .map_err(|e| e.into_service_error());
+
+        match response {
+            Ok(head_object) => Ok(Some(head_object.content_length.unwrap_or(0))),
+            Err(e) => {
+                if e.is_not_found() {
+                    return Ok(None);
+                }
+
+                Err(ObjectStorageError::Get { source: e.into() })
+            }
+        }
+    }
+
     pub async fn delete(&self, key: String) -> Result<()> {
         self.client
             .delete_object()
