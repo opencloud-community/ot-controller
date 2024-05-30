@@ -64,7 +64,10 @@ pub enum ModerationCommand {
     },
 
     /// Reset raised hands for the meeting
-    ResetRaisedHands,
+    ResetRaisedHands {
+        /// An optional single participant to reset the raised hand for
+        target: Option<ParticipantId>,
+    },
 }
 
 #[cfg(test)]
@@ -132,6 +135,37 @@ mod test {
 
         if let ModerationCommand::Accept { target } = msg {
             assert_eq!(target, ParticipantId::nil());
+        } else {
+            panic!()
+        }
+    }
+
+    #[test]
+    fn reset_raised_hand_for_single_participant() {
+        let json = json!({
+            "action": "reset_raised_hands",
+            "target": "00000000-0000-0000-0000-000000000000"
+        });
+
+        let msg: ModerationCommand = serde_json::from_value(json).unwrap();
+
+        if let ModerationCommand::ResetRaisedHands { target } = msg {
+            assert_eq!(target, Some(ParticipantId::nil()));
+        } else {
+            panic!()
+        }
+    }
+
+    #[test]
+    fn reset_raised_hands_for_all_participants() {
+        let json = json!({
+            "action": "reset_raised_hands"
+        });
+
+        let msg: ModerationCommand = serde_json::from_value(json).unwrap();
+
+        if let ModerationCommand::ResetRaisedHands { target } = msg {
+            assert_eq!(target, None);
         } else {
             panic!()
         }

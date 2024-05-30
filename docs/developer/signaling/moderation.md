@@ -337,15 +337,17 @@ Reset all raised hands in the room.
 
 #### Fields
 
-| Field    | Type   | Required | Description                    |
-| -------- | ------ | -------- | ------------------------------ |
-| `action` | `enum` | yes      | Must be `"reset_raised_hands"` |
+| Field    | Type     | Required | Description                                                                        |
+| -------- | -------- | -------- | ---------------------------------------------------------------------------------- |
+| `action` | `enum`   | yes      | Must be `"reset_raised_hands"`                                                     |
+| `target` | `string` | no       | Id of the participant to reset the hand for, omit to reset all participants' hands |
 
 ##### Example
 
 ```json
 {
     "action": "reset_raised_hands",
+    "target": "00000000-0000-0000-0000-000000000000"
 }
 
 ```
