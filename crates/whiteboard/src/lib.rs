@@ -8,12 +8,12 @@ use client::SpacedeckClient;
 use futures::stream::once;
 use opentalk_database::Db;
 use opentalk_signaling_core::{
-    assets::{save_asset, AssetError},
+    assets::{save_asset, AssetError, NewAssetFileName},
     control, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage, RedisConnection,
     SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
 use opentalk_types::{
-    core::Timestamp,
+    core::{FileExtension, Timestamp},
     signaling::{
         whiteboard::{
             command::WhiteboardCommand,
@@ -50,7 +50,7 @@ impl From<InitState> for WhiteboardState {
 
 pub struct GetPdfEvent {
     url_result: Result<Url, SignalingModuleError>,
-    ts: Timestamp,
+    timestamp: Timestamp,
 }
 
 #[async_trait::async_trait(?Send)]
@@ -157,12 +157,12 @@ impl SignalingModule for Whiteboard {
                             state::get(ctx.redis_conn(), self.room_id).await?
                         {
                             let client = self.client.clone();
-                            let ts = ctx.timestamp();
+                            let timestamp = ctx.timestamp();
 
                             ctx.add_event_stream(once(async move {
                                 GetPdfEvent {
                                     url_result: client.get_pdf(&info.id).await,
-                                    ts,
+                                    timestamp,
                                 }
                             }));
                         }
@@ -170,20 +170,25 @@ impl SignalingModule for Whiteboard {
                 }
                 Ok(())
             }
-            Event::Ext(GetPdfEvent { url_result, ts }) => {
+            Event::Ext(GetPdfEvent {
+                url_result,
+                timestamp,
+            }) => {
                 let url = url_result?;
 
                 let data = self.client.download_pdf(url.clone()).await?;
 
-                let filename = format!("whiteboard_{}.pdf", ts.to_rfc3339());
+                let kind = "whiteboard_pdf"
+                    .parse()
+                    .expect("Must be parseable as AssetFileKind");
+                let filename = NewAssetFileName::new(kind, timestamp, FileExtension::pdf());
 
-                let asset_id = match save_asset(
+                let (asset_id, filename) = match save_asset(
                     &self.storage,
                     self.db.clone(),
                     self.room_id.room_id(),
                     Some(Self::NAMESPACE),
-                    &filename,
-                    "whiteboard_pdf",
+                    filename,
                     data,
                 )
                 .await
@@ -195,7 +200,7 @@ impl SignalingModule for Whiteboard {
                     }
                     Err(e) => {
                         let message =
-                            format!("Failed to save asset {filename}: {}", Report::from_error(e));
+                            format!("Failed to save whiteboard asset: {}", Report::from_error(e));
 
                         log::error!("{message}");
                         whatever!("{message}");

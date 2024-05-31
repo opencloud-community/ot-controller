@@ -3,7 +3,9 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use std::{
+    fmt::Display,
     pin::Pin,
+    str::FromStr,
     sync::Arc,
     task::{self, Poll},
 };
@@ -21,7 +23,7 @@ use opentalk_db_storage::{
 };
 use opentalk_types::{
     api::error::ApiError,
-    core::{AssetId, RoomId, UserId},
+    core::{AssetId, FileExtension, RoomId, Timestamp, UserId},
 };
 use snafu::{IntoError, ResultExt, Snafu};
 
@@ -70,25 +72,136 @@ impl From<AssetError> for ApiError {
 
 type Result<T, E = AssetError> = std::result::Result<T, E>;
 
+pub const MIN_ASSET_FILE_KIND_LENGTH: usize = 1;
+pub const MAX_ASSET_FILE_KIND_LENGTH: usize = 20;
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, derive_more::Display)]
+pub struct AssetFileKind(String);
+
+#[derive(Debug, Snafu)]
+pub enum ParseAssetFileKindError {
+    #[snafu(display("AssetFileKind must be at least {min_length} characters long"))]
+    TooShort { min_length: usize },
+
+    #[snafu(display("AssetFileKind must not be longer than {max_length} characters"))]
+    TooLong { max_length: usize },
+
+    #[snafu(display("AssetFileKind only allows alphanumeric ascii characters or '_'"))]
+    InvalidCharacters,
+}
+
+impl FromStr for AssetFileKind {
+    type Err = ParseAssetFileKindError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.len() < MIN_ASSET_FILE_KIND_LENGTH {
+            return Err(ParseAssetFileKindError::TooShort {
+                min_length: MIN_ASSET_FILE_KIND_LENGTH,
+            });
+        }
+        if s.len() > MAX_ASSET_FILE_KIND_LENGTH {
+            return Err(ParseAssetFileKindError::TooLong {
+                max_length: MAX_ASSET_FILE_KIND_LENGTH,
+            });
+        }
+        if s.chars().any(|c| !(c.is_ascii_alphanumeric() || c == '_')) {
+            return Err(ParseAssetFileKindError::InvalidCharacters);
+        }
+        Ok(AssetFileKind(s.into()))
+    }
+}
+
+const MAX_ASSET_FILE_NAME_LENGTH: usize = 100;
+
+pub struct NewAssetFileName {
+    event_title: Option<String>,
+    kind: AssetFileKind,
+    timestamp: Timestamp,
+    extension: FileExtension,
+}
+
+impl NewAssetFileName {
+    pub fn new(kind: AssetFileKind, timestamp: Timestamp, extension: FileExtension) -> Self {
+        Self {
+            event_title: None,
+            kind,
+            timestamp,
+            extension,
+        }
+    }
+
+    pub fn new_with_event_title(
+        event_title: Option<String>,
+        kind: AssetFileKind,
+        timestamp: Timestamp,
+        extension: FileExtension,
+    ) -> Self {
+        Self {
+            event_title,
+            kind,
+            timestamp,
+            extension,
+        }
+    }
+
+    fn sanitize_event_title_for_filename(s: &str, max_length: usize) -> String {
+        let end = std::cmp::min(max_length, s.len());
+        s[..end].replace(
+            |c: char| !(c.is_alphanumeric() || ['.', '_', '-', ' '].contains(&c)),
+            "_",
+        )
+    }
+}
+
+impl Display for NewAssetFileName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let file_name_fixed_part = format!(
+            "{}_{}{}",
+            self.kind,
+            self.timestamp.to_string_for_filename(),
+            self.extension.to_string_with_leading_dot()
+        );
+        match &self.event_title {
+            Some(event_title) if !event_title.is_empty() => {
+                let max_length =
+                    MAX_ASSET_FILE_NAME_LENGTH.saturating_sub(file_name_fixed_part.len() + 1);
+                write!(
+                    f,
+                    "{}_{}",
+                    Self::sanitize_event_title_for_filename(event_title, max_length),
+                    file_name_fixed_part
+                )
+            }
+            _ => {
+                write!(f, "{file_name_fixed_part}")
+            }
+        }
+    }
+}
+
 /// Save an asset in the long term storage
 ///
 /// Creates a new database entry before after the asset in the configured S3 bucket.
+///
+/// If the filename passed in does not have an event title set, this function
+/// will attempt to load the title from the event associated with the room if
+/// there is any. If no event is associated with the room, the event title will
+/// stay empty.
+///
+/// Returns a tuple containing the asset id and the filename on success.
 pub async fn save_asset<E>(
     storage: &ObjectStorage,
     db: Arc<Db>,
     room_id: RoomId,
     namespace: Option<&str>,
-    filename: impl Into<String>,
-    kind: impl Into<String>,
+    mut filename: NewAssetFileName,
     data: impl Stream<Item = Result<Bytes, E>> + Unpin,
-) -> Result<AssetId>
+) -> Result<(AssetId, String)>
 where
     ObjectStorageError: From<E>,
 {
     let mut conn = db.get_conn().await.context(DbConnectionSnafu)?;
     let namespace = namespace.map(Into::into);
-    let filename = filename.into();
-    let kind = kind.into();
 
     let room = prepare_storage(room_id, &mut conn).await?;
 
@@ -111,11 +224,28 @@ where
         }
     };
 
-    // Create a database entry for the uploaded asset
-    let result =
-        insert_asset_into_database(&mut conn, namespace, filename, kind, asset_id, room, size)
+    if filename.event_title.is_none() {
+        filename.event_title = opentalk_db_storage::events::Event::get_for_room(&mut conn, room.id)
             .await
-            .context(DbQuerySnafu);
+            .context(DbQuerySnafu)?
+            .map(|e| e.title);
+    }
+
+    let kind = filename.kind.clone();
+    let filename = filename.to_string();
+
+    // Create a database entry for the uploaded asset
+    let result = insert_asset_into_database(
+        &mut conn,
+        namespace,
+        filename.clone(),
+        kind,
+        asset_id,
+        room,
+        size,
+    )
+    .await
+    .context(DbQuerySnafu);
 
     if let Err(e) = result {
         drop(conn);
@@ -129,7 +259,7 @@ where
         };
     }
 
-    Ok(asset_id)
+    Ok((asset_id, filename))
 }
 
 async fn rollback_object_storage(storage: &ObjectStorage, asset_id: &AssetId) -> Result<()> {
@@ -149,7 +279,7 @@ async fn insert_asset_into_database(
     db_conn: &mut DbConnection,
     namespace: Option<String>,
     filename: String,
-    kind: String,
+    kind: AssetFileKind,
     asset_id: AssetId,
     room: Room,
     size: i64,
@@ -158,7 +288,7 @@ async fn insert_asset_into_database(
         id: asset_id,
         namespace,
         filename,
-        kind,
+        kind: kind.to_string(),
         tenant_id: room.tenant_id,
         size,
     }
@@ -230,4 +360,78 @@ pub async fn verify_storage_usage(db_conn: &mut DbConnection, user_id: UserId) -
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr as _;
+
+    use chrono::{TimeZone as _, Utc};
+    use opentalk_types::core::{FileExtension, Timestamp};
+    use pretty_assertions::assert_eq;
+
+    use super::{AssetFileKind, NewAssetFileName};
+
+    #[test]
+    fn new_asset_filename() {
+        let timestamp = Timestamp::from(Utc.with_ymd_and_hms(2020, 5, 3, 14, 16, 19).unwrap());
+
+        let filename = NewAssetFileName::new(
+            AssetFileKind::from_str("recording").unwrap(),
+            timestamp,
+            FileExtension::from_str("mkv").unwrap(),
+        );
+        assert_eq!(
+            "recording_2020-05-03_14-16-19-UTC.mkv",
+            &filename.to_string()
+        );
+
+        let filename = NewAssetFileName::new_with_event_title(
+            Some("A very (!!1~) Special Event!".to_string()),
+            AssetFileKind::from_str("meetingnotes_pdf").unwrap(),
+            timestamp,
+            FileExtension::pdf(),
+        );
+        assert_eq!(
+            "A very ___1__ Special Event__meetingnotes_pdf_2020-05-03_14-16-19-UTC.pdf",
+            &filename.to_string()
+        );
+
+        let filename = NewAssetFileName::new_with_event_title(
+            Some("世界您好".to_string()),
+            AssetFileKind::from_str("meetingnotes_pdf").unwrap(),
+            timestamp,
+            FileExtension::pdf(),
+        );
+        assert_eq!(
+            "世界您好_meetingnotes_pdf_2020-05-03_14-16-19-UTC.pdf",
+            &filename.to_string()
+        );
+    }
+
+    #[test]
+    fn new_asset_file_kind() {
+        // Too short
+        assert!(AssetFileKind::from_str("").is_err());
+
+        // Minimum length
+        assert!(AssetFileKind::from_str("a").is_ok());
+
+        // Maximum length
+        assert!(AssetFileKind::from_str("abcdefghijabcdefghij").is_ok());
+
+        // Too long
+        assert!(AssetFileKind::from_str("abcdefghijabcdefghijk").is_err());
+
+        // Valid characters
+        assert!(AssetFileKind::from_str("bcdef1235489").is_ok());
+        assert!(AssetFileKind::from_str("1337hello").is_ok());
+
+        // Invalid characters
+        assert!(AssetFileKind::from_str("a.").is_err());
+        assert!(AssetFileKind::from_str("a!").is_err());
+        assert!(AssetFileKind::from_str("a-").is_err());
+        assert!(AssetFileKind::from_str("a?").is_err());
+        assert!(AssetFileKind::from_str("a/").is_err());
+    }
 }

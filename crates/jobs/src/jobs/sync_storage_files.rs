@@ -179,9 +179,12 @@ mod tests {
     use futures::stream;
     use opentalk_controller_settings::MinIO;
     use opentalk_db_storage::assets::{Asset, NewAsset, UpdateAsset};
-    use opentalk_signaling_core::{assets::save_asset, ObjectStorage, ObjectStorageError};
+    use opentalk_signaling_core::{
+        assets::{save_asset, NewAssetFileName},
+        ObjectStorage, ObjectStorageError,
+    };
     use opentalk_test_util::common::TestContext;
-    use opentalk_types::core::{AssetId, RoomId};
+    use opentalk_types::core::{AssetId, FileExtension, RoomId, Timestamp};
 
     use crate::jobs::sync_storage_files::{sync_files, MissingStorageFileHandling};
 
@@ -223,7 +226,7 @@ mod tests {
 
         let assets = Asset::get_all_ids_and_size(&mut conn).await.unwrap();
 
-        assert_eq!(assets.len() as i64, valid_assets);
+        assert_eq!(assets.len(), valid_assets);
 
         // ensure that the asset without the storage file was deleted
         assert!(!assets.iter().any(|asset| asset.0 == LOST_ASSET_ID))
@@ -265,7 +268,7 @@ mod tests {
 
         let assets = Asset::get_all_ids_and_size(&mut conn).await.unwrap();
 
-        assert_eq!(assets.len() as i64, valid_assets + 1);
+        assert_eq!(assets.len(), valid_assets + 1);
 
         // ensure that the asset without storage file was set to file size zero
         let lost_asset = assets
@@ -280,7 +283,7 @@ mod tests {
     async fn prepare_db_and_storage(
         test_ctx: &TestContext,
         object_storage: &ObjectStorage,
-        asset_count: i64,
+        asset_count: usize,
     ) {
         let db_ctx = &test_ctx.db_ctx;
 
@@ -298,13 +301,15 @@ mod tests {
                 b"data",
             ))]);
 
-            let asset_id = save_asset(
+            let kind = "test".parse().unwrap();
+            let filename = NewAssetFileName::new(kind, Timestamp::now(), FileExtension::pdf());
+
+            let (asset_id, _filename) = save_asset(
                 object_storage,
                 db_ctx.db.clone(),
                 room.id,
                 None,
-                i.to_string(),
-                "test",
+                filename,
                 data,
             )
             .await

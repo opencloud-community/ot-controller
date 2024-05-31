@@ -43,6 +43,14 @@ impl Timestamp {
     pub fn now() -> Timestamp {
         Timestamp(Utc::now())
     }
+
+    /// Format as a string that can be used in a filename easily
+    pub fn to_string_for_filename(&self) -> String {
+        // UTC is the only supported timezone for now so we can hardcode
+        // it because inserting timezone names is extra work due to
+        // https://github.com/chronotope/chrono/issues/960
+        self.0.format("%F_%H-%M-%S-UTC").to_string()
+    }
 }
 
 impl From<SystemTime> for Timestamp {
@@ -88,5 +96,27 @@ impl FromRedisValue for Timestamp {
             .latest()
             .unwrap();
         Ok(Timestamp(timestamp))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use chrono::{TimeZone as _, Utc};
+
+    use super::Timestamp;
+
+    #[test]
+    fn to_string_for_filename() {
+        let timestamp = Timestamp::unix_epoch();
+        assert_eq!(
+            "1970-01-01_00-00-00-UTC",
+            timestamp.to_string_for_filename().as_str()
+        );
+
+        let timestamp = Timestamp(Utc.with_ymd_and_hms(2020, 5, 3, 14, 16, 19).unwrap());
+        assert_eq!(
+            "2020-05-03_14-16-19-UTC",
+            timestamp.to_string_for_filename().as_str()
+        );
     }
 }

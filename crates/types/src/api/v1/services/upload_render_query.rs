@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::core::RoomId;
+use crate::core::{FileExtension, RoomId, Timestamp};
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -12,6 +12,10 @@ use crate::imports::*;
 pub struct UploadRenderQuery {
     /// The room id
     pub room_id: RoomId,
-    /// The filename
-    pub filename: String,
+
+    /// The file extension
+    pub file_extension: FileExtension,
+
+    /// The recording creation timestamp
+    pub timestamp: Timestamp,
 }
