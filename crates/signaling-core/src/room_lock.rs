@@ -11,7 +11,7 @@ use snafu::Snafu;
 
 use crate::{SignalingRoomId, VolatileStorage};
 
-mod redis;
+pub(crate) mod redis;
 mod volatile;
 
 /// Key used for the lock over the room participants set
@@ -21,19 +21,25 @@ pub struct RoomLock {
     pub room: SignalingRoomId,
 }
 
-pub struct RoomGuard {
-    room: SignalingRoomId,
-    guard: Either<OwnedMutexGuard<()>, opentalk_r3dlock::MutexGuard<RoomLock>>,
+impl From<SignalingRoomId> for RoomLock {
+    fn from(room: SignalingRoomId) -> Self {
+        Self { room }
+    }
+}
+
+pub struct RoomGuard<Scope> {
+    pub room: SignalingRoomId,
+    pub guard: Either<OwnedMutexGuard<Scope>, opentalk_r3dlock::MutexGuard<Scope>>,
 }
 
 #[async_trait(?Send)]
-pub trait RoomLocking {
+pub trait RoomLocking<Scope> {
     /// Lock the room for exclusive access.
     ///
     /// Must be locked when joining and leaving the room.
     /// This allows for cleanups when the last user leaves without anyone joining.
-    async fn lock_room(&mut self, room: SignalingRoomId) -> Result<RoomGuard, LockError>;
-    async fn unlock_room(&mut self, guard: RoomGuard) -> Result<(), LockError>;
+    async fn lock_room(&mut self, room: SignalingRoomId) -> Result<RoomGuard<Scope>, LockError>;
+    async fn unlock_room(&mut self, guard: RoomGuard<Scope>) -> Result<(), LockError>;
 }
 
 #[derive(Debug, Snafu)]
@@ -66,12 +72,12 @@ impl From<Error> for LockError {
     }
 }
 
-pub trait RoomLockingProvider {
-    fn room_locking(&mut self) -> &mut dyn RoomLocking;
+pub trait RoomLockingProvider<GeneralRoomLock> {
+    fn room_locking(&mut self) -> &mut dyn RoomLocking<GeneralRoomLock>;
 }
 
-impl RoomLockingProvider for VolatileStorage {
-    fn room_locking(&mut self) -> &mut dyn RoomLocking {
+impl RoomLockingProvider<RoomLock> for VolatileStorage {
+    fn room_locking(&mut self) -> &mut dyn RoomLocking<RoomLock> {
         match self.as_mut() {
             Either::Left(v) => v,
             Either::Right(v) => v,

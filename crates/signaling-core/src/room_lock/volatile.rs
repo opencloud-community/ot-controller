@@ -13,7 +13,7 @@ use futures::lock::Mutex;
 use parking_lot::RwLock;
 use snafu::whatever;
 
-use super::{RoomGuard, RoomLocking};
+use super::{RoomGuard, RoomLock, RoomLocking};
 use crate::{LockError, SignalingRoomId, VolatileStaticMemoryStorage};
 
 static ROOM_LOCK_STATE: OnceLock<Arc<RwLock<RoomLocks>>> = OnceLock::new();
@@ -23,8 +23,8 @@ fn state() -> &'static Arc<RwLock<RoomLocks>> {
 }
 
 #[async_trait(?Send)]
-impl RoomLocking for VolatileStaticMemoryStorage {
-    async fn lock_room(&mut self, room: SignalingRoomId) -> Result<RoomGuard, LockError> {
+impl RoomLocking<RoomLock> for VolatileStaticMemoryStorage {
+    async fn lock_room(&mut self, room: SignalingRoomId) -> Result<RoomGuard<RoomLock>, LockError> {
         let lock = state().write().get_room_lock(room);
         let guard = lock.lock_owned().await;
 
@@ -34,7 +34,10 @@ impl RoomLocking for VolatileStaticMemoryStorage {
         })
     }
 
-    async fn unlock_room(&mut self, RoomGuard { room, guard }: RoomGuard) -> Result<(), LockError> {
+    async fn unlock_room(
+        &mut self,
+        RoomGuard { room, guard }: RoomGuard<RoomLock>,
+    ) -> Result<(), LockError> {
         match guard {
             Either::Right(_) => {
                 whatever!("Attempted to unlock a redis storage room guard in an in-memory backend")
@@ -50,14 +53,14 @@ impl RoomLocking for VolatileStaticMemoryStorage {
 
 #[derive(Debug, Default)]
 pub(super) struct RoomLocks {
-    locks: BTreeMap<SignalingRoomId, Weak<Mutex<()>>>,
+    locks: BTreeMap<SignalingRoomId, Weak<Mutex<RoomLock>>>,
 }
 
 impl RoomLocks {
-    fn get_room_lock(&mut self, room: SignalingRoomId) -> Arc<Mutex<()>> {
+    fn get_room_lock(&mut self, room: SignalingRoomId) -> Arc<Mutex<RoomLock>> {
         match self.locks.entry(room) {
             Entry::Vacant(entry) => {
-                let mutex = Arc::<Mutex<()>>::default();
+                let mutex = Arc::<_>::new(Mutex::new(RoomLock::from(room)));
                 entry.insert(Arc::downgrade(&mutex));
                 mutex
             }
@@ -65,7 +68,7 @@ impl RoomLocks {
                 if let Some(mutex) = entry.get().upgrade() {
                     mutex
                 } else {
-                    let mutex = Arc::<Mutex<()>>::default();
+                    let mutex = Arc::<_>::new(Mutex::new(RoomLock::from(room)));
                     entry.insert(Arc::downgrade(&mutex));
                     mutex
                 }
