@@ -1403,13 +1403,14 @@ async fn patch_time_dependent_event(
     })
 }
 
-struct CancellationNotificationValues {
+pub(crate) struct CancellationNotificationValues {
     pub tenant: Tenant,
     pub created_by: User,
     pub event: Event,
     pub room: Room,
     pub sip_config: Option<SipConfig>,
     pub users_to_notify: Vec<MailRecipient>,
+    pub shared_folder: Option<SharedFolder>,
 }
 
 /// API Endpoint `DELETE /events/{event_id}`
@@ -1464,6 +1465,7 @@ pub async fn delete_event(
             room,
             sip_config,
             users_to_notify,
+            shared_folder: shared_folder.map(SharedFolder::from),
         };
 
         notify_invitees_about_delete(
@@ -1471,7 +1473,6 @@ pub async fn delete_event(
             notification_values,
             mail_service,
             &kc_admin_client,
-            shared_folder.map(SharedFolder::from),
         )
         .await;
     }
@@ -1486,12 +1487,11 @@ pub async fn delete_event(
 /// Part of `DELETE /events/{event_id}` (see [`delete_event`])
 ///
 /// Notify invited users about the event deletion
-async fn notify_invitees_about_delete(
+pub(crate) async fn notify_invitees_about_delete(
     settings: Arc<Settings>,
     notification_values: CancellationNotificationValues,
     mail_service: Arc<MailService>,
     kc_admin_client: &Data<KeycloakAdminClient>,
-    shared_folder: Option<SharedFolder>,
 ) {
     // Don't send mails for past events
     match notification_values.event.ends_at {
@@ -1516,7 +1516,7 @@ async fn notify_invitees_about_delete(
                 notification_values.room.clone(),
                 notification_values.sip_config.clone(),
                 invited_user,
-                shared_folder.clone(),
+                notification_values.shared_folder.clone(),
             )
             .await
         {
@@ -1611,7 +1611,7 @@ async fn get_invitees_for_event(
     }
 }
 
-async fn get_invited_mail_recipients_for_event(
+pub(crate) async fn get_invited_mail_recipients_for_event(
     conn: &mut DbConnection,
     event_id: EventId,
 ) -> opentalk_database::Result<Vec<MailRecipient>> {
