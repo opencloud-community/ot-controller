@@ -5,5 +5,15 @@
   ],
   "labels": [
     "Maintenance"
+  ],
+  "packageRules": [
+    {
+      "matchPackagePatterns": [
+        "opentelemetry",
+        "opentelemetry*"
+      ],
+      "groupName": "opentelemetry-rs",
+      "groupSlug": "opentelemetry-rs"
+    }
   ]
 }
