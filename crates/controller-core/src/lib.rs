@@ -482,7 +482,6 @@ impl Controller {
                         oidc_ctx.clone(),
                         acl,
                     ))
-                    .service(internal_scope(settings.clone(), db, oidc_ctx))
             })
         };
 
@@ -680,19 +679,6 @@ fn v1_scope(
                 .service(api::v1::streaming_targets::patch_streaming_target)
                 .service(api::v1::streaming_targets::delete_streaming_target),
         )
-}
-
-fn internal_scope(settings: SharedSettings, db: Data<Db>, oidc_ctx: Data<OidcContext>) -> Scope {
-    // internal apis
-    web::scope("/internal").service(
-        web::scope("")
-            .wrap(api::v1::middleware::user_auth::OidcAuth {
-                settings,
-                db,
-                oidc_ctx,
-            })
-            .service(api::internal::rooms::delete),
-    )
 }
 
 fn setup_cors() -> Cors {

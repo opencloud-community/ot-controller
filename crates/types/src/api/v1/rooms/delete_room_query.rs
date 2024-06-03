@@ -5,10 +5,14 @@
 #[allow(unused_imports)]
 use crate::imports::*;
 
-/// Query parameters for the DELETE `/internal/rooms/{room_id}` endpoint
+/// Query parameters for the `DELETE /rooms/{room_id}` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct DeleteRoomQuery {
+    /// Flag to force delete the reference if the deletion at the external services fails
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub force_delete_reference_if_external_services_fail: bool,
+
     /// Flag to disable email notification
     #[cfg_attr(feature = "serde", serde(default))]
     pub suppress_email_notification: bool,

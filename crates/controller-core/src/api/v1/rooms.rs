@@ -16,44 +16,52 @@ use actix_web::{
 use kustos::{
     policies_builder::{GrantingAccess, PoliciesBuilder},
     subject::IsSubject,
-    AccessMethod, Authz, Resource, ResourceId,
+    AccessMethod, Authz, Resource,
 };
-use opentalk_database::Db;
+use opentalk_controller_utils::deletion::{Deleter, RoomDeleter};
+use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
     events::Event,
     invites::Invite,
     rooms::{self as db_rooms, Room},
     sip_configs::NewSipConfig,
+    streaming_targets::get_room_streaming_targets,
+    tenants::Tenant,
     users::User,
     utils::build_event_info,
 };
-use opentalk_signaling_core::{Participant, VolatileStorage};
+use opentalk_keycloak_admin::KeycloakAdminClient;
+use opentalk_signaling_core::{ExchangeHandle, ObjectStorage, Participant, VolatileStorage};
 use opentalk_types::{
     api::{
         error::{ApiError, ValidationErrorEntry, ERROR_CODE_INVALID_VALUE},
         v1::{
             pagination::PagePaginationQuery,
             rooms::{
-                GetRoomEventResponse, PatchRoomsRequestBody, PostRoomsRequestBody,
+                DeleteRoomQuery, GetRoomEventResponse, PatchRoomsRequestBody, PostRoomsRequestBody,
                 PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody, RoomResource,
                 RoomsStartResponse, StartRoomError,
             },
         },
     },
-    common::{features, tariff::TariffResource},
+    common::{features, shared_folder::SharedFolder, tariff::TariffResource},
     core::{InviteCodeId, RoomId},
 };
 use validator::Validate;
 
-use super::response::NoContent;
+use super::{
+    events::{get_invited_mail_recipients_for_event, CancellationNotificationValues},
+    response::NoContent,
+};
 use crate::{
     api::{
         signaling::{
             breakout::BreakoutStorageProvider as _, moderation::ModerationStorageProvider as _,
             ticket::start_or_continue_signaling_session, SignalingModules,
         },
-        v1::{util::require_feature, ApiResponse},
+        v1::{events::notify_invitees_about_delete, util::require_feature, ApiResponse},
     },
+    services::{MailRecipient, MailService},
     settings::SharedSettingsActix,
 };
 
@@ -201,21 +209,101 @@ pub async fn patch(
 /// API Endpoint *DELETE /rooms/{room_id}*
 ///
 /// Deletes the room and owned resources.
+#[allow(clippy::too_many_arguments)]
 #[delete("/rooms/{room_id}")]
 pub async fn delete(
+    settings: SharedSettingsActix,
     db: Data<Db>,
+    storage: Data<ObjectStorage>,
+    exchange_handle: Data<ExchangeHandle>,
     room_id: Path<RoomId>,
+    current_user: ReqData<User>,
+    current_tenant: ReqData<Tenant>,
     authz: Data<Authz>,
+    query: web::Query<DeleteRoomQuery>,
+    mail_service: Data<MailService>,
+    kc_admin_client: Data<KeycloakAdminClient>,
 ) -> Result<NoContent, ApiError> {
     let room_id = room_id.into_inner();
+    let current_user = current_user.into_inner();
+    let current_tenant = current_tenant.into_inner();
+    let settings = settings.load_full();
+    let mail_service = mail_service.into_inner();
 
-    Room::delete_by_id(&mut db.get_conn().await?, room_id).await?;
+    let mut conn = db.get_conn().await?;
 
-    let resources = associated_resource_ids(room_id);
+    let notification_values = if !query.suppress_email_notification {
+        gather_mail_notification_values(&mut conn, &current_user, &current_tenant, room_id).await?
+    } else {
+        None
+    };
 
-    authz.remove_explicit_resources(resources).await?;
+    let deleter = RoomDeleter::new(
+        room_id,
+        query.force_delete_reference_if_external_services_fail,
+    );
+
+    deleter
+        .perform(
+            log::logger(),
+            &mut conn,
+            &authz,
+            Some(current_user.id),
+            exchange_handle.as_ref().clone(),
+            &settings,
+            &storage,
+        )
+        .await?;
+
+    if let Some(notification_values) = notification_values {
+        notify_invitees_about_delete(
+            settings,
+            notification_values,
+            mail_service,
+            &kc_admin_client,
+        )
+        .await;
+    }
 
     Ok(NoContent)
+}
+
+async fn gather_mail_notification_values(
+    conn: &mut DbConnection,
+    current_user: &User,
+    current_tenant: &Tenant,
+    room_id: RoomId,
+) -> Result<Option<CancellationNotificationValues>, ApiError> {
+    let linked_event_id = match Event::get_id_for_room(conn, room_id).await? {
+        Some(event) => event,
+        None => return Ok(None),
+    };
+
+    let (event, _invite, room, sip_config, _is_favorite, shared_folder, _tariff) =
+        Event::get_with_related_items(conn, current_user.id, linked_event_id).await?;
+
+    let streaming_targets = get_room_streaming_targets(conn, room.id).await?;
+
+    let invitees = get_invited_mail_recipients_for_event(conn, event.id).await?;
+    let created_by_mail_recipient = MailRecipient::Registered(current_user.clone().into());
+
+    let users_to_notify = invitees
+        .into_iter()
+        .chain(std::iter::once(created_by_mail_recipient))
+        .collect::<Vec<_>>();
+
+    let notification_values = CancellationNotificationValues {
+        tenant: current_tenant.clone(),
+        created_by: current_user.clone(),
+        event,
+        room,
+        sip_config,
+        users_to_notify,
+        shared_folder: shared_folder.map(SharedFolder::from),
+        streaming_targets,
+    };
+
+    Ok(Some(notification_values))
 }
 
 /// API Endpoint *GET /rooms/{room_id}*
@@ -522,19 +610,4 @@ where
             [AccessMethod::Delete],
         )
     }
-}
-
-pub(crate) fn associated_resource_ids(room_id: RoomId) -> impl IntoIterator<Item = ResourceId> {
-    [
-        room_id.resource_id(),
-        room_id.resource_id().with_suffix("/invites"),
-        room_id.resource_id().with_suffix("/invites/*"),
-        room_id.resource_id().with_suffix("/streaming_targets"),
-        room_id.resource_id().with_suffix("/streaming_targets/*"),
-        room_id.resource_id().with_suffix("/start"),
-        room_id.resource_id().with_suffix("/tariff"),
-        room_id.resource_id().with_suffix("/event"),
-        room_id.resource_id().with_suffix("/assets"),
-        room_id.resource_id().with_suffix("/assets/*"),
-    ]
 }
