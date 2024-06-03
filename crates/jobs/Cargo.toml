@@ -14,7 +14,7 @@ version.workspace = true
 [dependencies]
 async-trait.workspace = true
 chrono.workspace = true
-etcd-client = "0.12"
+etcd-client = "0.13"
 kustos.workspace = true
 log.workspace = true
 opentalk-controller-settings.workspace = true
