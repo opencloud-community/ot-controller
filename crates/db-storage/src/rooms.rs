@@ -6,7 +6,7 @@
 
 use chrono::{DateTime, Utc};
 use derive_more::{AsRef, Display, From, FromStr, Into};
-use diesel::{prelude::*, ExpressionMethods, Identifiable, QueryDsl, Queryable};
+use diesel::{dsl::not, prelude::*, ExpressionMethods, Identifiable, QueryDsl, Queryable};
 use diesel_async::RunQueryDsl;
 use opentalk_database::{DbConnection, Paginate, Result};
 use opentalk_diesel_newtype::DieselNewtype;
@@ -14,7 +14,7 @@ use opentalk_types::core::{RoomId, TenantId, UserId};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    schema::{rooms, users},
+    schema::{events, rooms, users},
     tariffs::Tariff,
     users::User,
 };
@@ -127,6 +127,19 @@ impl Room {
         let rooms_with_total = query.load_and_count(conn).await?;
 
         Ok(rooms_with_total)
+    }
+
+    /// Select all rooms that have no event associated with them
+    #[tracing::instrument(err, skip_all)]
+    pub async fn get_all_orphaned_ids(conn: &mut DbConnection) -> Result<Vec<RoomId>> {
+        let query = rooms::table
+            .select(rooms::id)
+            .filter(not(rooms::id.eq_any(events::table.select(events::room))))
+            .order_by(rooms::created_at.asc());
+
+        let room_ids = query.load(conn).await?;
+
+        Ok(room_ids)
     }
 
     /// Get the room's tariff

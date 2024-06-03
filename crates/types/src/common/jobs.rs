@@ -43,4 +43,7 @@ pub enum JobType {
 
     /// A job to synchronize database assets and storage files
     SyncStorageFiles,
+
+    /// A job to remove all rooms that have not event associated with them
+    RoomCleanup,
 }

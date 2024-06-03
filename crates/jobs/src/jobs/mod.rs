@@ -7,11 +7,13 @@
 mod adhoc_event_cleanup;
 mod event_cleanup;
 mod invite_cleanup;
+mod room_cleanup;
 mod self_check;
 mod sync_storage_files;
 
 pub use adhoc_event_cleanup::AdhocEventCleanup;
 pub use event_cleanup::EventCleanup;
 pub use invite_cleanup::InviteCleanup;
+pub use room_cleanup::RoomCleanup;
 pub use self_check::SelfCheck;
 pub use sync_storage_files::SyncStorageFiles;
