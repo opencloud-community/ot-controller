@@ -13,7 +13,7 @@ use futures::TryStreamExt;
 use opentalk_database::Db;
 use opentalk_db_storage::rooms::Room;
 use opentalk_signaling_core::{
-    assets::{save_asset, verify_storage_usage},
+    assets::{save_asset, verify_storage_usage, NewAssetFileName},
     ObjectStorage, Participant, RedisConnection,
 };
 use opentalk_types::api::{
@@ -71,19 +71,27 @@ pub async fn start(
 pub async fn upload_render(
     storage: Data<ObjectStorage>,
     db: Data<Db>,
-    query: Query<UploadRenderQuery>,
+    Query(UploadRenderQuery {
+        room_id,
+        file_extension,
+        timestamp,
+    }): Query<UploadRenderQuery>,
     data: Payload,
 ) -> Result<NoContent, ApiError> {
     // Assert that the room exists
-    Room::get(&mut db.get_conn().await?, query.room_id).await?;
+    Room::get(&mut db.get_conn().await?, room_id).await?;
+
+    let kind = "recording"
+        .parse()
+        .expect("Must be parseable as AssetFileKind");
+    let filename = NewAssetFileName::new(kind, timestamp, file_extension);
 
     save_asset(
         &storage,
         db.into_inner(),
-        query.room_id,
+        room_id,
         Some("recording"),
-        &query.filename,
-        "recording-render",
+        filename,
         data.into_stream(),
     )
     .await?;
@@ -96,11 +104,13 @@ pub(crate) async fn ws_upload(
     db: Data<Db>,
     storage: Data<ObjectStorage>,
     request: HttpRequest,
-    query: Query<UploadRenderQuery>,
+    Query(UploadRenderQuery {
+        room_id,
+        file_extension,
+        timestamp,
+    }): Query<UploadRenderQuery>,
     stream: web::Payload,
 ) -> actix_web::Result<HttpResponse> {
-    let query = query.into_inner();
-
     // Finish websocket handshake
     let (sender, receiver) = mpsc::unbounded_channel();
     let receiver_stream = tokio_stream::wrappers::UnboundedReceiverStream::new(receiver);
@@ -111,13 +121,17 @@ pub(crate) async fn ws_upload(
     // Spawn the runner task
     task::spawn_local({
         async move {
+            let kind = "recording"
+                .parse()
+                .expect("Must be parseable as AssetFileKind");
+            let filename = NewAssetFileName::new(kind, timestamp, file_extension);
+
             let result = save_asset(
                 &storage,
                 db.into_inner(),
-                query.room_id,
-                Some("recording"),
-                query.filename,
-                "recording-render",
+                room_id,
+                Some(opentalk_types::signaling::recording::NAMESPACE),
+                filename,
                 receiver_stream,
             )
             .await;

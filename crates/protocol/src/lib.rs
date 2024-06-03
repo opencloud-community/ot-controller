@@ -9,7 +9,7 @@ use exchange::GenerateUrl;
 use opentalk_database::Db;
 use opentalk_etherpad_client::EtherpadClient;
 use opentalk_signaling_core::{
-    assets::{save_asset, AssetError},
+    assets::{save_asset, AssetError, NewAssetFileName},
     control::{
         self,
         storage::{get_all_participants, get_attribute},
@@ -18,7 +18,7 @@ use opentalk_signaling_core::{
     SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
 use opentalk_types::{
-    core::ParticipantId,
+    core::{FileExtension, ParticipantId},
     signaling::{
         protocol::{
             command::{ParticipantSelection, ProtocolCommand},
@@ -348,15 +348,19 @@ impl Protocol {
                         .download_pdf(&session_info.session_id, &pad_id)
                         .await?;
 
-                    let filename = format!("protocol_{}.pdf", ctx.timestamp().to_rfc3339());
+                    let kind = "meetingnotes_pdf"
+                        .parse()
+                        .expect("Must be parseable as AssetFileKind");
 
-                    let asset_id = match save_asset(
+                    let filename =
+                        NewAssetFileName::new(kind, ctx.timestamp(), FileExtension::pdf());
+
+                    let (asset_id, filename) = match save_asset(
                         &self.storage,
                         self.db.clone(),
                         self.room_id.room_id(),
                         Some(Self::NAMESPACE),
-                        &filename,
-                        "protocol_pdf",
+                        filename,
                         data,
                     )
                     .await
@@ -369,7 +373,7 @@ impl Protocol {
 
                         Err(e) => {
                             let message = format!(
-                                "Failed to save asset {filename}: {}",
+                                "Failed to save meetingnotes asset: {}",
                                 Report::from_error(e)
                             );
                             log::error!("{message}");
