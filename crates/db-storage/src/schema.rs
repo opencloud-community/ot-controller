@@ -368,6 +368,7 @@ diesel::table! {
         tenant_id -> Uuid,
         tariff_id -> Uuid,
         tariff_status -> TariffStatus,
+        disabled_since -> Nullable<Timestamptz>,
     }
 }
 

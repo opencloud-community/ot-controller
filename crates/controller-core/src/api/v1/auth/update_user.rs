@@ -103,6 +103,7 @@ fn create_changeset<'a>(
         tenant_id: _,
         tariff_id,
         tariff_status: tariff_status_db,
+        disabled_since: _,
     } = user;
 
     let mut changeset = UpdateUser {
