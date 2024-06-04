@@ -3768,7 +3768,9 @@ dependencies = [
 
 [[package]]
 name = "opentalk-proc-macro-fields-helper"
-version = "0.0.0-dev"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8682b5a27fedb3fe04edc5e6984088c5addcb99376dabfc645ae314548043ba9"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4729,25 +4731,24 @@ dependencies = [
 
 [[package]]
 name = "redis-args"
-version = "0.0.0-dev"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4cb5f060023c40bd6f30c541500dc62b7d19cdeb8ad2cd48037e69972b7f82b2"
 dependencies = [
  "redis",
  "redis-args-impl",
- "serde",
  "serde_json",
 ]
 
 [[package]]
 name = "redis-args-impl"
-version = "0.0.0-dev"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4f9887a23533235810207fee80e670588e209ce7eb2ae1611693f1baefc27661"
 dependencies = [
  "opentalk-proc-macro-fields-helper",
  "proc-macro2",
  "quote",
- "redis",
- "redis-args",
- "serde",
- "serde_json",
  "syn 2.0.66",
 ]
 

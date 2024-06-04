@@ -124,12 +124,6 @@ exceptions = [
   { allow = [
     "EUPL-1.2",
   ], name = "opentalk-types" },
-  { allow = [
-    "EUPL-1.2",
-  ], name = "redis-args" },
-  { allow = [
-    "EUPL-1.2",
-  ], name = "redis-args-impl" },
 ]
 
 # Some crates don't have (easily) machine readable licensing information,
@@ -213,7 +207,6 @@ skip = [
   { name = "http", version = "=0.2" },
   { name = "http-body", version = "=0.4" },
   { name = "idna", version = "=0.3" },
-  { name = "idna", version = "=0.4" },
   { name = "indexmap", version = "=1" },
   { name = "itertools", version = "=0.10" },
   { name = "num-bigint", version = "=0.4" },
@@ -235,12 +228,9 @@ skip = [
   { name = "spin", version = "=0.5" },
   { name = "spki", version = "=0.6" },
   { name = "strsim", version = "=0.10" },
-  { name = "strum", version = "=0.25" },
-  { name = "strum_macros", version = "=0.25" },
   { name = "syn", version = "=1" },
   { name = "tokio-rustls", version = "=0.24" },
   { name = "toml_edit", version = "=0.21" },
-  { name = "tonic", version = "=0.10" },
   { name = "winnow", version = "=0.5" },
 ]
 # Similarly to `skip` allows you to skip certain crates during duplicate
