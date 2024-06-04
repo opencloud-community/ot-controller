@@ -88,7 +88,7 @@ opentalk-janus-client = "0.3"
 opentalk-nextcloud-client = { version = "0.1.1", default-features = false, features = [
   "rustls-tls-native-roots",
 ] }
-opentelemetry = { version = "0.22", default-features = false, features = [
+opentelemetry = { version = "0.23", default-features = false, features = [
   "metrics",
 ] }
 owo-colors = "4"
@@ -115,7 +115,7 @@ syn = "2"
 tokio = "1"
 tokio-stream = { version = "0.1", features = ["sync"] }
 tracing = "0.1"
-tracing-opentelemetry = "0.23"
+tracing-opentelemetry = "0.24"
 url = "2"
 uuid = "1"
 validator = { version = "0.18", features = ["derive"] }
