@@ -376,6 +376,7 @@ pub async fn new_event(
                 mail_resource.sip_config,
                 mail_resource.current_user,
                 event_resource.shared_folder.clone(),
+                event_resource.streaming_targets.clone(),
             )
             .await
             .map_err(|e| {
@@ -390,22 +391,17 @@ pub async fn new_event(
 async fn store_event_streaming_targets(
     conn: &mut DbConnection,
     event_id: EventId,
-    streaming_targets: Option<Vec<StreamingTarget>>,
-) -> Result<Option<Vec<RoomStreamingTarget>>, ApiError> {
+    streaming_targets: Vec<StreamingTarget>,
+) -> Result<Vec<RoomStreamingTarget>, ApiError> {
     let room_id = Event::get(conn, event_id).await?.room;
 
-    let streaming_targets = if let Some(streaming_targets) = streaming_targets {
-        let mut room_streaming_targets: Vec<RoomStreamingTarget> = Vec::new();
-        for streaming_target in streaming_targets {
-            room_streaming_targets
-                .push(insert_room_streaming_target(conn, room_id, streaming_target).await?);
-        }
-        Some(room_streaming_targets)
-    } else {
-        None
-    };
+    let mut room_streaming_targets: Vec<RoomStreamingTarget> = Vec::new();
+    for streaming_target in streaming_targets {
+        room_streaming_targets
+            .push(insert_room_streaming_target(conn, room_id, streaming_target).await?);
+    }
 
-    Ok(streaming_targets)
+    Ok(room_streaming_targets)
 }
 
 struct MailResource {
@@ -426,7 +422,7 @@ async fn create_time_independent_event(
     password: Option<String>,
     waiting_room: bool,
     is_adhoc: bool,
-    streaming_targets: Option<Vec<StreamingTarget>>,
+    streaming_targets: Vec<StreamingTarget>,
     show_meeting_details: bool,
     query: Query<EventOptionsQuery>,
 ) -> Result<(EventResource, Option<MailResource>), ApiError> {
@@ -522,7 +518,7 @@ async fn create_time_dependent_event(
     ends_at: DateTimeTz,
     recurrence_pattern: Vec<String>,
     is_adhoc: bool,
-    streaming_targets: Option<Vec<StreamingTarget>>,
+    streaming_targets: Vec<StreamingTarget>,
     show_meeting_details: bool,
     query: Query<EventOptionsQuery>,
 ) -> Result<(EventResource, Option<MailResource>), ApiError> {
@@ -778,7 +774,7 @@ pub async fn get_events(
             can_edit,
             is_adhoc: event.is_adhoc,
             shared_folder,
-            streaming_targets: None,
+            streaming_targets: Vec::new(),
             show_meeting_details: event.show_meeting_details,
         }));
 
@@ -889,7 +885,7 @@ pub async fn get_event(
         can_edit,
         is_adhoc: event.is_adhoc,
         shared_folder,
-        streaming_targets: Some(room_streaming_targets),
+        streaming_targets: room_streaming_targets,
         show_meeting_details: event.show_meeting_details,
     };
 
@@ -1036,6 +1032,8 @@ pub async fn patch_event(
     let (invitees, invitees_truncated) =
         get_invitees_for_event(&settings, &mut conn, event_id, query.invitees_max).await?;
 
+    let streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
+
     drop(conn);
 
     let starts_at = DateTimeTz::starts_at_of(&event);
@@ -1073,7 +1071,7 @@ pub async fn patch_event(
         can_edit,
         is_adhoc: event.is_adhoc,
         shared_folder: shared_folder.clone(),
-        streaming_targets: None,
+        streaming_targets: Vec::new(),
         show_meeting_details: event.show_meeting_details,
     };
 
@@ -1084,6 +1082,7 @@ pub async fn patch_event(
             mail_service,
             &kc_admin_client,
             shared_folder,
+            streaming_targets,
         )
         .await;
     }
@@ -1120,6 +1119,8 @@ pub async fn notify_event_invitees_by_room_about_update(
         let shared_folder_for_user =
             shared_folder_for_user(shared_folder, event.created_by, current_user.id);
 
+        let streaming_targets = get_room_streaming_targets(conn, room.id).await?;
+
         notify_event_invitees_about_update(
             kc_admin_client,
             settings,
@@ -1131,6 +1132,7 @@ pub async fn notify_event_invitees_by_room_about_update(
             room,
             sip_config,
             shared_folder_for_user,
+            streaming_targets,
         )
         .await?;
     }
@@ -1149,6 +1151,7 @@ async fn notify_event_invitees_about_update(
     room: Room,
     sip_config: Option<SipConfig>,
     shared_folder_for_user: Option<SharedFolder>,
+    streaming_targets: Vec<RoomStreamingTarget>,
 ) -> Result<(), ApiError> {
     let invited_users = get_invited_mail_recipients_for_event(conn, event.id).await?;
     let current_user_mail_recipient = MailRecipient::Registered(current_user.clone().into());
@@ -1181,6 +1184,7 @@ async fn notify_event_invitees_about_update(
         mail_service,
         kc_admin_client,
         shared_folder_for_user,
+        streaming_targets,
     )
     .await;
     Ok(())
@@ -1192,6 +1196,7 @@ async fn notify_invitees_about_update(
     mail_service: Arc<MailService>,
     kc_admin_client: &Data<KeycloakAdminClient>,
     shared_folder: Option<SharedFolder>,
+    streaming_targets: Vec<RoomStreamingTarget>,
 ) {
     for user in notification_values.users_to_notify {
         let invited_user = enrich_from_keycloak(
@@ -1212,6 +1217,7 @@ async fn notify_invitees_about_update(
                 invited_user,
                 notification_values.invite_for_room.id.to_string(),
                 shared_folder.clone(),
+                streaming_targets.clone(),
             )
             .await
         {
@@ -1411,6 +1417,7 @@ pub(crate) struct CancellationNotificationValues {
     pub sip_config: Option<SipConfig>,
     pub users_to_notify: Vec<MailRecipient>,
     pub shared_folder: Option<SharedFolder>,
+    pub streaming_targets: Vec<RoomStreamingTarget>,
 }
 
 /// API Endpoint `DELETE /events/{event_id}`
@@ -1440,6 +1447,8 @@ pub async fn delete_event(
     let (event, _invite, room, sip_config, _is_favorite, shared_folder, _tariff) =
         Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
 
+    let streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
+
     let created_by = if event.created_by == current_user.id {
         current_user
     } else {
@@ -1466,6 +1475,7 @@ pub async fn delete_event(
             sip_config,
             users_to_notify,
             shared_folder: shared_folder.map(SharedFolder::from),
+            streaming_targets,
         };
 
         notify_invitees_about_delete(
@@ -1517,6 +1527,7 @@ pub(crate) async fn notify_invitees_about_delete(
                 notification_values.sip_config.clone(),
                 invited_user,
                 notification_values.shared_folder.clone(),
+                notification_values.streaming_targets.clone(),
             )
             .await
         {
@@ -2059,7 +2070,7 @@ mod tests {
             can_edit: true,
             is_adhoc: false,
             shared_folder: None,
-            streaming_targets: None,
+            streaming_targets: Vec::new(),
             show_meeting_details: true,
         };
 
@@ -2182,7 +2193,7 @@ mod tests {
             can_edit: false,
             is_adhoc: false,
             shared_folder: None,
-            streaming_targets: None,
+            streaming_targets: Vec::new(),
             show_meeting_details: false,
         };
 

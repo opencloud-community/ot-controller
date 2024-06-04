@@ -20,7 +20,7 @@ use opentalk_db_storage::{
 };
 use opentalk_mail_worker_protocol::*;
 use opentalk_types::{
-    common::{features, shared_folder::SharedFolder},
+    common::{features, shared_folder::SharedFolder, streaming::RoomStreamingTarget},
     core::UserId,
 };
 use snafu::ResultExt;
@@ -73,6 +73,7 @@ fn to_event(
     sip_config: Option<SipConfig>,
     settings: &Settings,
     shared_folder: Option<SharedFolder>,
+    streaming_targets: Vec<RoomStreamingTarget>,
 ) -> opentalk_mail_worker_protocol::v1::Event {
     const ONE_DAY_IN_SECONDS: u64 = 86400;
 
@@ -124,6 +125,7 @@ fn to_event(
         revision: event.revision,
         shared_folder,
         adhoc_retention_seconds,
+        streaming_targets,
     }
 }
 
@@ -221,6 +223,7 @@ impl MailService {
     }
 
     /// Sends a Registered Invite mail task to the rabbit mq queue, if configured.
+    #[allow(clippy::too_many_arguments)]
     pub async fn send_registered_invite(
         &self,
         inviter: User,
@@ -229,6 +232,7 @@ impl MailService {
         sip_config: Option<SipConfig>,
         invitee: User,
         shared_folder: Option<SharedFolder>,
+        streaming_targets: Vec<RoomStreamingTarget>,
     ) -> Result<()> {
         let settings = &*self.settings.load();
         let shared_folder = shared_folder.map(|sf| {
@@ -242,7 +246,14 @@ impl MailService {
         // Create MailTask
         let mail_task = MailTask::registered_event_invite(
             inviter,
-            to_event(event, room, sip_config, settings, shared_folder),
+            to_event(
+                event,
+                room,
+                sip_config,
+                settings,
+                shared_folder,
+                streaming_targets,
+            ),
             invitee,
         );
 
@@ -251,6 +262,7 @@ impl MailService {
     }
 
     /// Sends a Unregistered Invite mail task to the rabbit mq queue, if configured.
+    #[allow(clippy::too_many_arguments)]
     pub async fn send_unregistered_invite(
         &self,
         inviter: User,
@@ -259,6 +271,7 @@ impl MailService {
         sip_config: Option<SipConfig>,
         invitee: opentalk_keycloak_admin::users::User,
         shared_folder: Option<SharedFolder>,
+        streaming_targets: Vec<RoomStreamingTarget>,
     ) -> Result<()> {
         let settings = &*self.settings.load();
 
@@ -277,6 +290,7 @@ impl MailService {
                 sip_config,
                 settings,
                 shared_folder.map(SharedFolder::without_write_access),
+                streaming_targets,
             ),
             invitee,
         );
@@ -296,6 +310,7 @@ impl MailService {
         invitee: &str,
         invite_code: String,
         shared_folder: Option<SharedFolder>,
+        streaming_targets: Vec<RoomStreamingTarget>,
     ) -> Result<()> {
         let settings = &*self.settings.load();
 
@@ -308,6 +323,7 @@ impl MailService {
                 sip_config,
                 settings,
                 shared_folder.map(SharedFolder::without_write_access),
+                streaming_targets,
             ),
             invitee.to_string(),
             invite_code,
@@ -329,6 +345,7 @@ impl MailService {
         invitee: MailRecipient,
         invite_code: String,
         shared_folder: Option<SharedFolder>,
+        streaming_targets: Vec<RoomStreamingTarget>,
     ) -> Result<()> {
         let settings = &*self.settings.load();
 
@@ -343,7 +360,14 @@ impl MailService {
                 });
                 MailTask::registered_event_update(
                     inviter,
-                    to_event(event, room, sip_config, settings, shared_folder),
+                    to_event(
+                        event,
+                        room,
+                        sip_config,
+                        settings,
+                        shared_folder,
+                        streaming_targets,
+                    ),
                     event_exception.map(to_event_exception),
                     v1::RegisteredUser {
                         email: v1::Email::new(invitee.email),
@@ -362,6 +386,7 @@ impl MailService {
                     sip_config,
                     settings,
                     shared_folder.map(SharedFolder::without_write_access),
+                    streaming_targets,
                 ),
                 event_exception.map(to_event_exception),
                 v1::UnregisteredUser {
@@ -378,6 +403,7 @@ impl MailService {
                     sip_config,
                     settings,
                     shared_folder.map(SharedFolder::without_write_access),
+                    streaming_targets,
                 ),
                 event_exception.map(to_event_exception),
                 v1::ExternalUser {
@@ -393,6 +419,7 @@ impl MailService {
     }
 
     /// Sends an Event Cancellation mail task to the rabbit mq queue, if configured.
+    #[allow(clippy::too_many_arguments)]
     pub async fn send_event_cancellation(
         &self,
         inviter: User,
@@ -401,6 +428,7 @@ impl MailService {
         sip_config: Option<SipConfig>,
         invitee: MailRecipient,
         shared_folder: Option<SharedFolder>,
+        streaming_targets: Vec<RoomStreamingTarget>,
     ) -> Result<()> {
         let settings = &*self.settings.load();
 
@@ -418,7 +446,14 @@ impl MailService {
                 });
                 MailTask::registered_event_cancellation(
                     inviter,
-                    to_event(event, room, sip_config, settings, shared_folder),
+                    to_event(
+                        event,
+                        room,
+                        sip_config,
+                        settings,
+                        shared_folder,
+                        streaming_targets,
+                    ),
                     v1::RegisteredUser {
                         email: v1::Email::new(invitee.email),
                         title: invitee.title,
@@ -436,6 +471,7 @@ impl MailService {
                     sip_config,
                     settings,
                     shared_folder.map(SharedFolder::without_write_access),
+                    streaming_targets,
                 ),
                 v1::UnregisteredUser {
                     email: v1::Email::new(invitee.email),
@@ -451,6 +487,7 @@ impl MailService {
                     sip_config,
                     settings,
                     shared_folder.map(SharedFolder::without_write_access),
+                    streaming_targets,
                 ),
                 v1::ExternalUser {
                     email: v1::Email::new(invitee.email),
@@ -464,6 +501,7 @@ impl MailService {
     }
 
     /// Sends an Event Uninvite mail task to the rabbit mq queue, if configured.
+    #[allow(clippy::too_many_arguments)]
     pub async fn send_event_uninvite(
         &self,
         inviter: User,
@@ -472,6 +510,7 @@ impl MailService {
         sip_config: Option<SipConfig>,
         invitee: MailRecipient,
         shared_folder: Option<SharedFolder>,
+        streaming_targets: Vec<RoomStreamingTarget>,
     ) -> Result<()> {
         let settings = &*self.settings.load();
 
@@ -489,7 +528,14 @@ impl MailService {
                 });
                 MailTask::registered_event_uninvite(
                     inviter,
-                    to_event(event, room, sip_config, settings, shared_folder),
+                    to_event(
+                        event,
+                        room,
+                        sip_config,
+                        settings,
+                        shared_folder,
+                        streaming_targets,
+                    ),
                     v1::RegisteredUser {
                         email: v1::Email::new(invitee.email),
                         title: invitee.title,
@@ -507,6 +553,7 @@ impl MailService {
                     sip_config,
                     settings,
                     shared_folder.map(SharedFolder::without_write_access),
+                    streaming_targets,
                 ),
                 v1::UnregisteredUser {
                     email: v1::Email::new(invitee.email),
@@ -522,6 +569,7 @@ impl MailService {
                     sip_config,
                     settings,
                     shared_folder.map(SharedFolder::without_write_access),
+                    streaming_targets,
                 ),
                 v1::ExternalUser {
                     email: v1::Email::new(invitee.email),

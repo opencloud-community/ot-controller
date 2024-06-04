@@ -70,9 +70,9 @@ pub struct PostEventsBody {
     /// The streaming targets of the room associated with the event
     #[cfg_attr(
         feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
+        serde(default, skip_serializing_if = "Vec::is_empty")
     )]
-    pub streaming_targets: Option<Vec<StreamingTarget>>,
+    pub streaming_targets: Vec<StreamingTarget>,
 
     /// Should the created event have a shared folder?
     #[cfg_attr(feature = "serde", serde(default))]

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::Utc;
-use opentalk_types::common::shared_folder::SharedFolder;
+use opentalk_types::common::{shared_folder::SharedFolder, streaming::RoomStreamingTarget};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -91,6 +91,7 @@ pub struct Event {
     pub revision: i32,
     pub shared_folder: Option<SharedFolder>,
     pub adhoc_retention_seconds: Option<u64>,
+    pub streaming_targets: Vec<RoomStreamingTarget>,
 }
 
 #[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Debug)]
@@ -213,6 +214,7 @@ mod test {
                     read_write: None,
                 }),
                 adhoc_retention_seconds: Some(86400),
+                streaming_targets: Vec::new(),
             },
             invitee: RegisteredUser {
                 email: "lastname@example.org".into(),
@@ -252,6 +254,7 @@ mod test {
                         },
                     },
                     "adhoc_retention_seconds" : 86400,
+                    "streaming_targets": Vec::<RoomStreamingTarget>::new(),
                 },
                 "invitee": {
                     "email": "lastname@example.org",
@@ -315,6 +318,7 @@ mod test {
                     read_write: None,
                 }),
                 adhoc_retention_seconds: None,
+                streaming_targets: Vec::new(),
             },
             invitee: RegisteredUser {
                 email: "lastname@example.org".into(),
@@ -350,6 +354,7 @@ mod test {
                             "password": "DLgoYrFEoy"
                         },
                     },
+                    "streaming_targets": Vec::<RoomStreamingTarget>::new(),
                 },
                 "invitee": {
                     "email": "lastname@example.org",

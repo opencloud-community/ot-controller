@@ -9,7 +9,9 @@ use actix_web::{
 use kustos::prelude::*;
 use opentalk_controller_utils::deletion::{Deleter as _, RoomDeleter};
 use opentalk_database::{Db, DbConnection};
-use opentalk_db_storage::{events::Event, tenants::Tenant, users::User};
+use opentalk_db_storage::{
+    events::Event, streaming_targets::get_room_streaming_targets, tenants::Tenant, users::User,
+};
 use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage};
 use opentalk_types::{
@@ -111,6 +113,8 @@ async fn gather_mail_notification_values(
     let (event, _invite, room, sip_config, _is_favorite, shared_folder, _tariff) =
         Event::get_with_related_items(conn, current_user.id, linked_event_id).await?;
 
+    let streaming_targets = get_room_streaming_targets(conn, room.id).await?;
+
     let invitees = get_invited_mail_recipients_for_event(conn, event.id).await?;
     let created_by_mail_recipient = MailRecipient::Registered(current_user.clone().into());
 
@@ -127,6 +131,7 @@ async fn gather_mail_notification_values(
         sip_config,
         users_to_notify,
         shared_folder: shared_folder.map(SharedFolder::from),
+        streaming_targets,
     };
 
     Ok(Some(notification_values))

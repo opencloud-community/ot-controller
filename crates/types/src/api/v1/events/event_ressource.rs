@@ -114,9 +114,9 @@ pub struct EventResource {
     /// The streaming targets of the room associated with the event
     #[cfg_attr(
         feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
+        serde(default, skip_serializing_if = "Vec::is_empty")
     )]
-    pub streaming_targets: Option<Vec<RoomStreamingTarget>>,
+    pub streaming_targets: Vec<RoomStreamingTarget>,
 
     /// Indicates whether meeting details should be provided. If absent, no meeting details are made available.
     pub show_meeting_details: bool,
