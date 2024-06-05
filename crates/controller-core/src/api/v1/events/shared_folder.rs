@@ -19,6 +19,7 @@ use opentalk_db_storage::{
         shared_folders::{EventSharedFolder, NewEventSharedFolder},
         Event,
     },
+    streaming_targets::get_room_streaming_targets,
     tenants::Tenant,
     users::User,
 };
@@ -109,6 +110,8 @@ pub async fn put_shared_folder_for_event(
             current_user.id,
         );
 
+        let streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
+
         notify_event_invitees_about_update(
             &kc_admin_client,
             settings,
@@ -120,6 +123,7 @@ pub async fn put_shared_folder_for_event(
             room,
             sip_config,
             shared_folder_for_user,
+            streaming_targets,
         )
         .await?;
     }
@@ -404,6 +408,8 @@ pub async fn delete_shared_folder_for_event(
         let shared_folders = std::slice::from_ref(&shared_folder);
         let deletion = delete_shared_folders(settings.clone(), shared_folders).await;
 
+        let streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
+
         match deletion {
             Ok(()) => {
                 shared_folder.delete(&mut conn).await?;
@@ -420,6 +426,7 @@ pub async fn delete_shared_folder_for_event(
                         room,
                         sip_config,
                         None,
+                        streaming_targets,
                     )
                     .await?;
                 }
@@ -446,6 +453,7 @@ pub async fn delete_shared_folder_for_event(
                             room,
                             sip_config,
                             None,
+                            streaming_targets,
                         )
                         .await?;
                     }

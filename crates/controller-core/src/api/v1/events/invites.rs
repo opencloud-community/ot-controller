@@ -24,6 +24,7 @@ use opentalk_db_storage::{
     invites::NewInvite,
     rooms::Room,
     sip_configs::SipConfig,
+    streaming_targets::get_room_streaming_targets,
     tenants::Tenant,
     users::User,
 };
@@ -41,7 +42,7 @@ use opentalk_types::{
             users::GetEventInvitesPendingResponse,
         },
     },
-    common::shared_folder::SharedFolder,
+    common::{shared_folder::SharedFolder, streaming::RoomStreamingTarget},
     core::{EmailInviteRole, EventId, EventInviteStatus, RoomId, UserId},
     strings::ToLowerCase,
 };
@@ -203,6 +204,7 @@ async fn create_user_event_invite(
     let shared_folder = EventSharedFolder::get_for_event(&mut conn, event_id)
         .await?
         .map(SharedFolder::from);
+    let streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
 
     if event.created_by == user_invite.invitee {
         return Ok(Either::Right(NoContent));
@@ -241,6 +243,7 @@ async fn create_user_event_invite(
                         sip_config,
                         invitee,
                         shared_folder,
+                        streaming_targets,
                     )
                     .await
                     .map_err(|e| {
@@ -285,12 +288,14 @@ async fn create_email_event_invite(
             sip_config: Option<SipConfig>,
             invite: EventInvite,
             shared_folder: Option<SharedFolder>,
+            streaming_targets: Vec<RoomStreamingTarget>,
         },
         DoesNotExist {
             event: Event,
             room: Room,
             sip_config: Option<SipConfig>,
             shared_folder: Option<SharedFolder>,
+            streaming_targets: Vec<RoomStreamingTarget>,
         },
     }
 
@@ -304,6 +309,7 @@ async fn create_email_event_invite(
         let shared_folder = EventSharedFolder::get_for_event(&mut conn, event_id)
             .await?
             .map(SharedFolder::from);
+        let streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
 
         let invitee_user =
             User::get_by_email(&mut conn, current_user.tenant_id, email.as_ref()).await?;
@@ -330,6 +336,7 @@ async fn create_email_event_invite(
                         sip_config,
                         invite,
                         shared_folder,
+                        streaming_targets,
                     },
                     None => UserState::ExistsAndIsAlreadyInvited,
                 }
@@ -340,6 +347,7 @@ async fn create_email_event_invite(
                 room,
                 sip_config,
                 shared_folder,
+                streaming_targets,
             }
         }
     };
@@ -353,6 +361,7 @@ async fn create_email_event_invite(
             sip_config,
             invitee,
             shared_folder,
+            streaming_targets,
         } => {
             let policies = PoliciesBuilder::new()
                 // Grant invitee access
@@ -373,6 +382,7 @@ async fn create_email_event_invite(
                         sip_config,
                         invitee,
                         shared_folder,
+                        streaming_targets,
                     )
                     .await
                     .map_err(|e| {
@@ -388,6 +398,7 @@ async fn create_email_event_invite(
             room,
             sip_config,
             shared_folder,
+            streaming_targets,
         } => {
             create_invite_to_non_matching_email(
                 settings,
@@ -404,6 +415,7 @@ async fn create_email_event_invite(
                 email,
                 email_invite.role,
                 shared_folder,
+                streaming_targets,
             )
             .await
         }
@@ -429,6 +441,7 @@ async fn create_invite_to_non_matching_email(
     email: EmailAddress,
     role: EmailInviteRole,
     shared_folder: Option<SharedFolder>,
+    streaming_targets: Vec<RoomStreamingTarget>,
 ) -> Result<Either<Created, NoContent>, ApiError> {
     let settings = settings.load();
 
@@ -473,6 +486,7 @@ async fn create_invite_to_non_matching_email(
                             sip_config,
                             invitee_user,
                             shared_folder,
+                            streaming_targets,
                         )
                         .await
                         .map_err(|e| {
@@ -511,6 +525,7 @@ async fn create_invite_to_non_matching_email(
                                 invitee_email.as_ref(),
                                 invite.id.to_string(),
                                 shared_folder,
+                                streaming_targets,
                             )
                             .await
                             .map_err(|e| {
@@ -642,6 +657,7 @@ pub async fn delete_invite_to_event(
     // TODO(w.rabl) Further DB access optimization (replacing call to get_with_invite_and_room)?
     let (event, _invite, room, sip_config, _is_favorite, shared_folder, _tariff) =
         Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
+    let streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
 
     let created_by = if event.created_by == current_user.id {
         current_user.clone()
@@ -700,6 +716,7 @@ pub async fn delete_invite_to_event(
             mail_service.into_inner(),
             &kc_admin_client,
             shared_folder.map(SharedFolder::from),
+            streaming_targets,
         )
         .await;
     }
@@ -741,6 +758,7 @@ pub async fn delete_email_invite_to_event(
 
     let (event, _invite, room, sip_config, _is_favorite, shared_folder, _tariff) =
         Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
+    let streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
 
     let created_by = if event.created_by == current_user.id {
         current_user.clone()
@@ -808,6 +826,7 @@ pub async fn delete_email_invite_to_event(
             mail_service.into_inner(),
             &kc_admin_client,
             shared_folder.map(SharedFolder::from),
+            streaming_targets,
         )
         .await;
     }
@@ -854,6 +873,7 @@ async fn notify_invitees_about_uninvite(
     mail_service: Arc<MailService>,
     kc_admin_client: &Data<KeycloakAdminClient>,
     shared_folder: Option<SharedFolder>,
+    streaming_targets: Vec<RoomStreamingTarget>,
 ) {
     // Don't send mails for past events
     match notification_values.event.ends_at {
@@ -879,6 +899,7 @@ async fn notify_invitees_about_uninvite(
                 notification_values.sip_config.clone(),
                 invited_user,
                 shared_folder.clone(),
+                streaming_targets.clone(),
             )
             .await
         {

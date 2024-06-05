@@ -13,6 +13,7 @@ use opentalk_database::Db;
 use opentalk_db_storage::{
     events::{Event, EventException, EventExceptionKind, NewEventException, UpdateEventException},
     invites::Invite,
+    streaming_targets::get_room_streaming_targets,
     tenants::Tenant,
     users::User,
 };
@@ -411,6 +412,8 @@ pub async fn patch_event_instance(
 
     let shared_folder = shared_folder_for_user(shared_folder, event.created_by, current_user.id);
 
+    let streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
+
     if !query.suppress_email_notification {
         let invited_users = get_invited_mail_recipients_for_event(&mut conn, event_id).await?;
         let invite_for_room =
@@ -449,6 +452,7 @@ pub async fn patch_event_instance(
             mail_service.into_inner(),
             &kc_admin_client,
             None,
+            streaming_targets,
         )
         .await;
     }
