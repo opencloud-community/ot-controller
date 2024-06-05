@@ -44,8 +44,6 @@ opentalk-test-util = { path = "crates/test-util", version = "0.0.0-dev" }
 opentalk-timer = { path = "crates/timer", version = "0.0.0-dev" }
 opentalk-types = { path = "crates/types", version = "0.0.0-dev" }
 opentalk-whiteboard = { path = "crates/whiteboard", version = "0.0.0-dev" }
-redis-args = { path = "crates/redis-args", version = "0.0.0-dev" }
-redis-args-impl = { path = "crates/redis-args-impl", version = "0.0.0-dev" }
 
 actix-http = "3"
 actix-rt = "2"
@@ -101,6 +99,7 @@ proc-macro2 = "1"
 quote = "1"
 rand = "0.8"
 redis = "0.25"
+redis-args = "0.13"
 reqwest = { version = "0.11", default-features = false }
 rustc-hash = "1.1"
 serde = { version = "1", features = ["derive"] }
