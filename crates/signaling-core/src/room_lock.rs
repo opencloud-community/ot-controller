@@ -5,6 +5,7 @@
 use async_trait::async_trait;
 use either::Either;
 use futures::lock::OwnedMutexGuard;
+use opentalk_r3dlock::Error;
 use redis_args::ToRedisArgs;
 use snafu::Snafu;
 
@@ -41,7 +42,7 @@ pub enum LockError {
     Locked,
 
     /// There was an internal error while trying to acquire the lock
-    Internal,
+    Internal { message: String },
 
     #[snafu(whatever)]
     Other {
@@ -49,6 +50,20 @@ pub enum LockError {
         #[snafu(source(from(Box<dyn std::error::Error + Send + Sync>, Some)))]
         source: Option<Box<dyn std::error::Error + Send + Sync>>,
     },
+}
+
+impl From<Error> for LockError {
+    fn from(value: Error) -> Self {
+        match value {
+            Error::FailedToUnlock | Error::AlreadyExpired => Self::Internal {
+                message: value.to_string(),
+            },
+            Error::CouldNotAcquireLock => Self::Locked,
+            Error::Redis { ref source } => Self::Internal {
+                message: format!("{}: {}", value, source),
+            },
+        }
+    }
 }
 
 pub trait RoomLockingProvider {

@@ -7,7 +7,7 @@ use std::time::Duration;
 use async_trait::async_trait;
 use either::Either;
 use opentalk_r3dlock::Mutex;
-use snafu::{whatever, ResultExt};
+use snafu::whatever;
 
 use super::{LockError, RoomGuard, RoomLock, RoomLocking};
 use crate::{RedisConnection, SignalingRoomId};
@@ -21,10 +21,7 @@ impl RoomLocking for RedisConnection {
         let mutex = Mutex::new(RoomLock { room })
             .with_wait_time(Duration::from_millis(20)..Duration::from_millis(60))
             .with_retries(20);
-        let guard = mutex
-            .lock(self)
-            .await
-            .whatever_context("TODO: add error variant or associate error type")?;
+        let guard = mutex.lock(self).await?;
         Ok(RoomGuard {
             room,
             guard: Either::Right(guard),
@@ -34,10 +31,7 @@ impl RoomLocking for RedisConnection {
     async fn unlock_room(&mut self, lock: RoomGuard) -> Result<(), LockError> {
         match lock.guard {
             Either::Right(guard) => {
-                guard
-                    .unlock(self)
-                    .await
-                    .whatever_context("TODO: add error variant or associate error type")?;
+                guard.unlock(self).await?;
             }
             Either::Left(_) => {
                 whatever!("Attempted to unlock a in-memory storage room guard in a redis backend")
