@@ -6,7 +6,7 @@
 use crate::imports::*;
 
 /// The reason for the Control::Left event
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -17,4 +17,6 @@ pub enum Reason {
     Quit,
     /// The websocket connection timed out
     Timeout,
+    /// Sent to waiting room
+    SentToWaitingRoom,
 }
