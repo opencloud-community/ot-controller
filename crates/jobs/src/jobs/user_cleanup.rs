@@ -16,20 +16,20 @@ use snafu::{Report, ResultExt};
 
 use crate::{
     error::{ParameterLoadingSnafu, ParameterSerializingSnafu},
-    events::{perform_deletion, DeleteSelector},
+    users::{perform_deletion, DeleteSelector},
     Error, Job, JobParameters,
 };
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct EventCleanupParameters {
-    #[serde(default = "default_days_since_last_occurrence")]
-    days_since_last_occurrence: u64,
+pub struct UserCleanupParameters {
+    #[serde(default = "default_days_since_user_has_been_disabled")]
+    days_since_user_has_been_disabled: u64,
 
     #[serde(default)]
     fail_on_shared_folder_deletion_error: bool,
 }
 
-impl JobParameters for EventCleanupParameters {
+impl JobParameters for UserCleanupParameters {
     fn try_from_json(json: serde_json::Value) -> Result<Self, Error> {
         serde_json::from_value(json).context(ParameterLoadingSnafu)
     }
@@ -39,13 +39,13 @@ impl JobParameters for EventCleanupParameters {
     }
 }
 
-/// A job for cleaning up events that ended at minimum a defined duration ago
+/// A job for cleaning up users that were disabled at minimum a defined duration ago
 #[derive(Debug)]
-pub struct EventCleanup;
+pub struct UserCleanup;
 
 #[async_trait]
-impl Job for EventCleanup {
-    type Parameters = EventCleanupParameters;
+impl Job for UserCleanup {
+    type Parameters = UserCleanupParameters;
 
     async fn execute(
         logger: &dyn Log,
@@ -54,19 +54,14 @@ impl Job for EventCleanup {
         settings: &Settings,
         parameters: Self::Parameters,
     ) -> Result<(), Error> {
-        info!(log: logger, "Starting data protection cleanup job");
+        info!(log: logger, "Starting disabled user cleanup job");
         debug!(log: logger, "Job parameters: {parameters:?}");
 
         info!(log: logger, "");
 
-        if parameters.days_since_last_occurrence < 1 {
-            error!(log: logger, "Number of retention days must be 1 or greater");
-            return Err(Error::JobExecutionFailed);
-        }
-
         let now = Utc::now();
         let delete_before = now
-            .checked_sub_days(Days::new(parameters.days_since_last_occurrence))
+            .checked_sub_days(Days::new(parameters.days_since_user_has_been_disabled))
             .ok_or_else(|| {
                 error!(log: logger, "Couldn't subtract number of retention days");
                 Error::JobExecutionFailed
@@ -78,7 +73,7 @@ impl Job for EventCleanup {
             exchange_handle,
             settings,
             parameters.fail_on_shared_folder_deletion_error,
-            DeleteSelector::ScheduledThatEndedBefore(delete_before),
+            DeleteSelector::DisabledBefore(delete_before),
         )
         .await
         .map_err(|err| {
@@ -90,6 +85,6 @@ impl Job for EventCleanup {
     }
 }
 
-fn default_days_since_last_occurrence() -> u64 {
+fn default_days_since_user_has_been_disabled() -> u64 {
     30
 }

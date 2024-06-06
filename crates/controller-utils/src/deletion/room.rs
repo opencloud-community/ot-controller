@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Functionality to delete events including all associated resources
+//! Functionality to delete rooms including all associated resources
 
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
 use kustos::{Authz, Resource as _, ResourceId};

@@ -19,7 +19,7 @@ use opentalk_db_storage::{
 };
 use opentalk_log::{debug, info, warn};
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage};
-use opentalk_types::core::{EventId, RoomId};
+use opentalk_types::core::{EventId, RoomId, UserId};
 use snafu::Report;
 
 use crate::Error;
@@ -28,6 +28,7 @@ use crate::Error;
 pub(crate) enum DeleteSelector {
     AdHocCreatedBefore(DateTime<Utc>),
     ScheduledThatEndedBefore(DateTime<Utc>),
+    BelongingToUser(UserId),
 }
 
 pub(crate) async fn perform_deletion(
@@ -69,8 +70,7 @@ pub(crate) async fn perform_deletion(
     Ok(())
 }
 
-/// Identify and delete events according to the duration threshold since the
-/// last occurrence
+/// Identify and delete events according to the specified delete selector
 ///
 /// Returns the rooms which are orphaned as a result of the event deletion, so
 /// they can be cleaned up afterwards
@@ -89,6 +89,33 @@ async fn delete_events(
     debug!(log: logger, "Retrieving list of events that should be deleted");
 
     let candidates = retrieve_deletion_candidate_events(conn, delete_selector).await?;
+
+    let orphaned_rooms = delete_event_candidates(
+        logger,
+        conn,
+        authz,
+        exchange_handle,
+        settings,
+        object_storage,
+        fail_on_shared_folder_deletion_error,
+        candidates,
+    )
+    .await;
+
+    Ok(orphaned_rooms)
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(crate) async fn delete_event_candidates(
+    logger: &dyn Log,
+    conn: &mut DbConnection,
+    authz: &Authz,
+    exchange_handle: ExchangeHandle,
+    settings: &Settings,
+    object_storage: &ObjectStorage,
+    fail_on_shared_folder_deletion_error: bool,
+    candidates: Vec<(EventId, RoomId)>,
+) -> HashSet<RoomId> {
     let candidate_count = candidates.len();
 
     info!(log: logger, "Identified {candidate_count} events for deletion");
@@ -132,8 +159,7 @@ async fn delete_events(
     if deleter_failures > 0 {
         warn!(log: logger, "{deleter_failures} events could not be deleted due to errors");
     }
-
-    Ok(orphaned_rooms)
+    orphaned_rooms
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -181,7 +207,7 @@ pub(crate) async fn delete_orphaned_rooms(
     Ok(())
 }
 
-async fn retrieve_deletion_candidate_events(
+pub(crate) async fn retrieve_deletion_candidate_events(
     conn: &mut DbConnection,
     delete_selector: DeleteSelector,
 ) -> Result<Vec<(EventId, RoomId)>, Error> {
@@ -191,6 +217,9 @@ async fn retrieve_deletion_candidate_events(
         }
         DeleteSelector::ScheduledThatEndedBefore(delete_before) => {
             Event::get_all_that_ended_before_including_rooms(conn, delete_before).await
+        }
+        DeleteSelector::BelongingToUser(user_id) => {
+            Event::get_all_for_creator_including_rooms(conn, user_id).await
         }
     }?;
 

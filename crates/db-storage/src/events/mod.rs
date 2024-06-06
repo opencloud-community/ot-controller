@@ -277,6 +277,31 @@ impl Event {
             .map_err(Into::into)
     }
 
+    #[tracing::instrument(err, skip_all)]
+    pub async fn get_all_for_creator_including_rooms(
+        conn: &mut DbConnection,
+        created_by: UserId,
+    ) -> Result<Vec<(EventId, RoomId)>> {
+        events::table
+            .select((events::id, events::room))
+            .filter(events::created_by.eq(created_by))
+            .load(conn)
+            .await
+            .map_err(Into::into)
+    }
+
+    #[tracing::instrument(err, skip_all)]
+    pub async fn get_all_updated_by_user(
+        conn: &mut DbConnection,
+        updated_by: UserId,
+    ) -> Result<Vec<Event>> {
+        events::table
+            .filter(events::updated_by.eq(updated_by))
+            .load(conn)
+            .await
+            .map_err(Into::into)
+    }
+
     pub async fn get_all_with_invitee(
         conn: &mut DbConnection,
     ) -> Result<Vec<(EventId, RoomId, UserId)>> {

@@ -35,6 +35,9 @@ pub enum JobType {
     /// A job for cleaning up events that ended at minimum a defined duration ago
     EventCleanup,
 
+    /// A job for cleaning up users that were disabled at minimum a defined duration ago
+    UserCleanup,
+
     /// A job to cleanup adhoc events a certain duration after they were created
     AdhocEventCleanup,
 
@@ -44,7 +47,7 @@ pub enum JobType {
     /// A job to synchronize database assets and storage files
     SyncStorageFiles,
 
-    /// A job to remove all rooms that have not event associated with them
+    /// A job to remove all rooms that have no event associated with them
     RoomCleanup,
 
     /// A job to synchronize the user account states with Keycloak

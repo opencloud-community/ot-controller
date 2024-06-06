@@ -582,6 +582,22 @@ impl Authz {
             .map_err(Into::into)
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub async fn remove_all_user_groups_and_roles<S>(&self, user: S) -> Result<bool>
+    where
+        S: Into<PolicyUser>,
+    {
+        let user = user.into();
+        let user = user.to_casbin_string();
+
+        self.inner
+            .write()
+            .await
+            .remove_filtered_named_policy("g", 0, vec![user])
+            .await
+            .map_err(Into::into)
+    }
+
     /// Removes all rules that explicitly name the given resource
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn remove_explicit_resources<I, R>(&self, resources: I) -> Result<usize>

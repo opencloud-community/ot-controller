@@ -204,3 +204,13 @@ pub async fn remove_user_from_groups(
 
     Ok(())
 }
+
+#[tracing::instrument(err, skip_all)]
+pub async fn remove_user_from_all_groups(conn: &mut DbConnection, user_id: UserId) -> Result<()> {
+    diesel::delete(user_groups::table)
+        .filter(user_groups::user_id.eq(user_id))
+        .execute(conn)
+        .await?;
+
+    Ok(())
+}

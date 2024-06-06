@@ -115,6 +115,7 @@ async fn execute_job(
     match job_type {
         JobType::SelfCheck => data.execute::<opentalk_jobs::jobs::SelfCheck>().await,
         JobType::EventCleanup => data.execute::<opentalk_jobs::jobs::EventCleanup>().await,
+        JobType::UserCleanup => data.execute::<opentalk_jobs::jobs::UserCleanup>().await,
         JobType::AdhocEventCleanup => {
             data.execute::<opentalk_jobs::jobs::AdhocEventCleanup>()
                 .await
@@ -140,6 +141,9 @@ fn show_default_parameters(job_type: JobType) -> Result<()> {
         JobType::SelfCheck => show_job_type_default_parameters::<opentalk_jobs::jobs::SelfCheck>(),
         JobType::EventCleanup => {
             show_job_type_default_parameters::<opentalk_jobs::jobs::EventCleanup>()
+        }
+        JobType::UserCleanup => {
+            show_job_type_default_parameters::<opentalk_jobs::jobs::UserCleanup>()
         }
         JobType::AdhocEventCleanup => {
             show_job_type_default_parameters::<opentalk_jobs::jobs::AdhocEventCleanup>()

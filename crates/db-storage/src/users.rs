@@ -349,6 +349,19 @@ impl User {
         ))
     }
 
+    #[tracing::instrument(err, skip_all)]
+    pub async fn get_disabled_before(
+        conn: &mut DbConnection,
+        date: DateTime<Utc>,
+    ) -> Result<Vec<UserId>> {
+        users::table
+            .select(users::id)
+            .filter(users::disabled_since.le(date))
+            .load(conn)
+            .await
+            .map_err(Into::into)
+    }
+
     pub fn to_public_user_profile(&self, settings: &Settings) -> PublicUserProfile {
         let avatar_url = email_to_libravatar_url(&settings.avatar.libravatar_url, &self.email);
 
@@ -384,6 +397,16 @@ impl User {
             tariff_status: self.tariff_status,
             used_storage,
         }
+    }
+
+    /// Delete a user using the given id
+    #[tracing::instrument(err, skip_all)]
+    pub async fn delete_by_id(conn: &mut DbConnection, user_id: UserId) -> Result<()> {
+        let query = diesel::delete(users::table.filter(users::id.eq(user_id)));
+
+        query.execute(conn).await?;
+
+        Ok(())
     }
 }
 

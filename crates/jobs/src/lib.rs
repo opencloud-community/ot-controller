@@ -26,6 +26,7 @@ pub mod jobs;
 mod distributed;
 mod error;
 mod events;
+mod users;
 
 use std::{
     sync::Arc,
