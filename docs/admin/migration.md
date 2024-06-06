@@ -13,6 +13,15 @@ must be run in order to update ACLs to match the newest version whenever
 new endpoints were added for already present resources. However, even if no
 endpoints were added, simply running the command does no harm.
 
+## Updating to OpenTalk Controller v0.16.0
+
+### Janus can now be connected to via websocket
+
+The OpenTalk controller now can be configured to connect to Janus directly
+via a websocket connection instead of using rabbitmq in-between.
+
+See [the configuration documentation](core/room_server.md).
+
 ## Updating to OpenTalk Controller v0.15.0
 
 ### Redis is only required for *clustered* operation

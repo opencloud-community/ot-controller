@@ -188,7 +188,7 @@ mod test_common {
     }
 
     pub(super) async fn mcu_load(storage: &mut dyn MediaStorage) {
-        let id = McuId::new("to_janus", "janus_exchange", "from_janus");
+        let id = McuId::from_rabbit_mq("to_janus", "janus_exchange", "from_janus");
         let a = (id.clone(), Some(1));
         let b = (id.clone(), Some(2));
         let c = (id.clone(), Some(3));

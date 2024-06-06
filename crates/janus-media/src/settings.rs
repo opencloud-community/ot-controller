@@ -8,7 +8,7 @@ use snafu::{OptionExt, ResultExt};
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct JanusMcuConfig {
-    pub connections: Vec<Connection>,
+    pub connections: Vec<ConnectionConfig>,
 
     /// Max bitrate allowed for `video` media sessions
     #[serde(default = "default_max_video_bitrate")]
@@ -46,9 +46,32 @@ impl JanusMcuConfig {
     }
 }
 
+#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[serde(untagged)]
+pub enum ConnectionConfig {
+    WebSocket(WebsocketConnectionConfig),
+    RabbitMq(RabbitMqConnectionConfig),
+}
+
+impl ConnectionConfig {
+    pub(crate) fn event_loops(&self) -> Option<usize> {
+        match self {
+            ConnectionConfig::WebSocket(c) => c.event_loops,
+            ConnectionConfig::RabbitMq(c) => c.event_loops,
+        }
+    }
+}
+
 /// Take the settings from your janus rabbit mq transport configuration.
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
-pub struct Connection {
+pub struct WebsocketConnectionConfig {
+    pub websocket_url: String,
+    pub event_loops: Option<usize>,
+}
+
+/// Take the settings from your janus rabbit mq transport configuration.
+#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+pub struct RabbitMqConnectionConfig {
     #[serde(default = "default_to_janus_routing_key")]
     pub to_routing_key: String,
     #[serde(default = "default_janus_exchange")]
