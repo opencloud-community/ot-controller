@@ -3,15 +3,17 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use serde::Deserialize;
-#[cfg(any(test, feature = "client"))]
-use serde::Serialize;
 pub mod v1;
 
 /// Versioned Mail Task Protocol
 #[derive(Deserialize, PartialEq, Eq, Debug)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "version"))]
+#[cfg_attr(
+    any(test, feature = "client"),
+    derive(serde::Serialize),
+    serde(tag = "version")
+)]
 pub enum MailTask {
-    #[cfg_attr(feature = "serde", serde(rename = "1"))]
+    #[cfg_attr(any(test, feature = "client"), serde(rename = "1"))]
     V1(v1::Message),
 }
 
