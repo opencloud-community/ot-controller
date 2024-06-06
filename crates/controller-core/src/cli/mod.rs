@@ -155,7 +155,7 @@ pub async fn parse_args<M: RegisterModules>() -> Result<Args> {
 
 const BUILD_INFO: [(&str, Option<&str>); 10] = [
     ("Build Timestamp", option_env!("VERGEN_BUILD_TIMESTAMP")),
-    ("Build Version", option_env!("VERGEN_BUILD_SEMVER")),
+    ("Build Version", option_env!("CARGO_PKG_VERSION")),
     ("Commit SHA", option_env!("VERGEN_GIT_SHA")),
     ("Commit Date", option_env!("VERGEN_GIT_COMMIT_TIMESTAMP")),
     ("Commit Branch", option_env!("VERGEN_GIT_BRANCH")),
@@ -166,7 +166,7 @@ const BUILD_INFO: [(&str, Option<&str>); 10] = [
         "cargo Target Triple",
         option_env!("VERGEN_CARGO_TARGET_TRIPLE"),
     ),
-    ("cargo Profile", option_env!("VERGEN_CARGO_PROFILE")),
+    ("cargo Profile", option_env!("VERGEN_CARGO_OPT_LEVEL")),
 ];
 
 fn print_version() {
