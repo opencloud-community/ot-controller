@@ -14,7 +14,9 @@ use serde::{Deserialize, Serialize};
 use snafu::Snafu;
 use tokio::sync::broadcast;
 
-use crate::{DestroyContext, Event, InitContext, ModuleContext, RedisConnection};
+use crate::{
+    room_lock::LockError, DestroyContext, Event, InitContext, ModuleContext, VolatileStorage,
+};
 
 type Result<T> = std::result::Result<T, SignalingModuleError>;
 
@@ -37,8 +39,14 @@ pub enum SignalingModuleError {
     #[snafu(context(false))]
     ReqwestError { source: reqwest::Error },
 
+    #[snafu(display("NotFound: {message}",))]
+    NotFoundError { message: String },
+
     #[snafu(context(false))]
     R3dlockError { source: opentalk_r3dlock::Error },
+
+    #[snafu(context(false))]
+    RoomLockError { source: LockError },
 
     #[cfg(feature = "module_tester")]
     #[snafu(transparent)]
@@ -95,7 +103,7 @@ pub struct SignalingModuleInitData {
     pub startup_settings: Arc<Settings>,
     pub shared_settings: SharedSettings,
     pub rabbitmq_pool: Arc<RabbitMqPool>,
-    pub redis: RedisConnection,
+    pub volatile: VolatileStorage,
     pub shutdown: broadcast::Sender<()>,
     pub reload: broadcast::Sender<()>,
 }

@@ -48,7 +48,16 @@ use crate::{
 pub struct ExternalTariffId(String);
 
 #[derive(
-    Debug, Clone, Queryable, Identifiable, Serialize, Deserialize, ToRedisArgs, FromRedisValue,
+    Debug,
+    Clone,
+    Queryable,
+    Identifiable,
+    Serialize,
+    Deserialize,
+    ToRedisArgs,
+    FromRedisValue,
+    PartialEq,
+    Eq,
 )]
 #[to_redis_args(serde)]
 #[from_redis_value(serde)]
@@ -58,8 +67,8 @@ pub struct Tariff {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub quotas: Jsonb<HashMap<String, u64>>,
-    disabled_modules: Vec<Option<String>>,
-    disabled_features: Vec<Option<String>>,
+    pub disabled_modules: Vec<Option<String>>,
+    pub disabled_features: Vec<Option<String>>,
 }
 
 impl Tariff {

@@ -13,12 +13,14 @@ version.workspace = true
 [dependencies]
 async-trait.workspace = true
 chrono.workspace = true
+either.workspace = true
 log.workspace = true
 opentalk-database.workspace = true
 opentalk-db-storage.workspace = true
 opentalk-r3dlock.workspace = true
 opentalk-signaling-core.workspace = true
 opentalk-types = { workspace = true, features = ["backend"] }
+parking_lot.workspace = true
 redis.workspace = true
 redis-args.workspace = true
 serde_json.workspace = true

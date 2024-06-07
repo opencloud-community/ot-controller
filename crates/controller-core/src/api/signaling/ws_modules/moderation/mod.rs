@@ -5,10 +5,18 @@
 use std::iter::zip;
 
 use actix_http::ws::CloseCode;
+use either::Either;
 use opentalk_signaling_core::{
-    control::{self, ControlStateExt as _},
-    DestroyContext, Event, InitContext, ModuleContext, RedisConnection, SerdeJsonSnafu,
-    SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
+    control::{
+        self,
+        storage::{
+            ControlStorage, ControlStorageParticipantAttributes as _, DISPLAY_NAME, IS_ROOM_OWNER,
+            KIND, ROLE, USER_ID,
+        },
+        ControlStateExt as _, ControlStorageProvider,
+    },
+    DestroyContext, Event, InitContext, ModuleContext, SerdeJsonSnafu, SignalingModule,
+    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 pub use opentalk_types::signaling::moderation::NAMESPACE;
 use opentalk_types::{
@@ -27,6 +35,7 @@ use opentalk_types::{
 };
 use snafu::{Report, ResultExt};
 
+use self::storage::ModerationStorage;
 use crate::api::signaling::{trim_display_name, ws::ModuleContextExt};
 
 pub mod exchange;
@@ -38,7 +47,7 @@ pub struct ModerationModule {
 }
 
 async fn build_waiting_room_participants(
-    redis_conn: &mut RedisConnection,
+    storage: &mut dyn ControlStorage,
     room_id: RoomId,
     list: &Vec<ParticipantId>,
     waiting_room_state: WaitingRoomState,
@@ -47,7 +56,7 @@ async fn build_waiting_room_participants(
 
     for id in list {
         let control_data =
-            ControlState::from_redis(redis_conn, SignalingRoomId::new(room_id, None), *id).await?;
+            ControlState::from_storage(storage, SignalingRoomId::new(room_id, None), *id).await?;
         // .whatever_context::<&str, SignalingModuleError>("Failed to get control state")?;
 
         let mut module_data = ModulePeerData::new();
@@ -74,7 +83,10 @@ async fn set_waiting_room_enabled(
     room_id: RoomId,
     enabled: bool,
 ) -> Result<(), SignalingModuleError> {
-    storage::set_waiting_room_enabled(ctx.redis_conn(), room_id, enabled).await?;
+    ctx.volatile
+        .moderation_storage()
+        .set_waiting_room_enabled(room_id, enabled)
+        .await?;
 
     ctx.exchange_publish(
         control::exchange::global_room_all_participants(room_id),
@@ -82,6 +94,19 @@ async fn set_waiting_room_enabled(
     );
 
     Ok(())
+}
+
+pub(crate) trait ModerationStorageProvider {
+    fn moderation_storage(&mut self) -> &mut dyn ModerationStorage;
+}
+
+impl ModerationStorageProvider for VolatileStorage {
+    fn moderation_storage(&mut self) -> &mut dyn ModerationStorage {
+        match self.as_mut() {
+            Either::Left(v) => v,
+            Either::Right(v) => v,
+        }
+    }
 }
 
 #[async_trait::async_trait(?Send)]
@@ -119,27 +144,35 @@ impl SignalingModule for ModerationModule {
                 participants: _,
             } => {
                 let moderator_data = if ctx.role() == Role::Moderator {
-                    let waiting_room_enabled =
-                        storage::is_waiting_room_enabled(ctx.redis_conn(), self.room.room_id())
-                            .await?;
+                    let waiting_room_enabled = ctx
+                        .volatile
+                        .moderation_storage()
+                        .is_waiting_room_enabled(self.room.room_id())
+                        .await?;
 
-                    let list =
-                        storage::waiting_room_all(ctx.redis_conn(), self.room.room_id()).await?;
+                    let list = Vec::from_iter(
+                        ctx.volatile
+                            .moderation_storage()
+                            .waiting_room_participants(self.room.room_id())
+                            .await?,
+                    );
                     let mut waiting_room_participants = build_waiting_room_participants(
-                        ctx.redis_conn(),
+                        ctx.volatile.control_storage(),
                         self.room.room_id(),
                         &list,
                         WaitingRoomState::Waiting,
                     )
                     .await?;
 
-                    let list =
-                        storage::waiting_room_accepted_all(ctx.redis_conn(), self.room.room_id())
-                            .await?;
+                    let list = ctx
+                        .volatile
+                        .moderation_storage()
+                        .waiting_room_accepted_participants(self.room.room_id())
+                        .await?;
                     let mut accepted_waiting_room_participants = build_waiting_room_participants(
-                        ctx.redis_conn(),
+                        ctx.volatile.control_storage(),
                         self.room.room_id(),
-                        &list,
+                        &Vec::from_iter(list),
                         WaitingRoomState::Accepted,
                     )
                     .await?;
@@ -154,8 +187,11 @@ impl SignalingModule for ModerationModule {
                     None
                 };
 
-                let raise_hands_enabled =
-                    storage::is_raise_hands_enabled(ctx.redis_conn(), self.room.room_id()).await?;
+                let raise_hands_enabled = ctx
+                    .volatile
+                    .moderation_storage()
+                    .is_raise_hands_enabled(self.room.room_id())
+                    .await?;
 
                 *frontend_data = Some(ModerationState {
                     moderator_data,
@@ -175,19 +211,22 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
-                storage::waiting_room_accepted_remove(
-                    ctx.redis_conn(),
-                    self.room.room_id(),
-                    target,
-                )
-                .await?;
+                ctx.volatile
+                    .moderation_storage()
+                    .waiting_room_accepted_remove_participant(self.room.room_id(), target)
+                    .await?;
 
-                let user_id: Option<UserId> =
-                    control::storage::get_attribute(ctx.redis_conn(), self.room, target, "user_id")
-                        .await?;
+                let user_id: Option<UserId> = ctx
+                    .volatile
+                    .moderation_storage()
+                    .get_attribute(self.room, target, USER_ID)
+                    .await?;
 
                 if let Some(user_id) = user_id {
-                    storage::ban_user(ctx.redis_conn(), self.room.room_id(), user_id).await?;
+                    ctx.volatile
+                        .moderation_storage()
+                        .ban_user(self.room.room_id(), user_id)
+                        .await?;
                 } else {
                     ctx.ws_send(Error::CannotBanGuest);
                     return Ok(());
@@ -205,19 +244,15 @@ impl SignalingModule for ModerationModule {
                 }
 
                 // Enforce the participant to enter the waiting room (if enabled) on next rejoin
-                control::storage::set_skip_waiting_room_with_expiry(
-                    ctx.redis_conn(),
-                    target,
-                    false,
-                )
-                .await?;
+                ctx.volatile
+                    .moderation_storage()
+                    .set_skip_waiting_room_with_expiry(target, false)
+                    .await?;
 
-                storage::waiting_room_accepted_remove(
-                    ctx.redis_conn(),
-                    self.room.room_id(),
-                    target,
-                )
-                .await?;
+                ctx.volatile
+                    .moderation_storage()
+                    .waiting_room_accepted_remove_participant(self.room.room_id(), target)
+                    .await?;
 
                 ctx.exchange_publish(
                     control::exchange::current_room_by_participant_id(self.room, target),
@@ -231,36 +266,35 @@ impl SignalingModule for ModerationModule {
                 }
 
                 // The room owner cannot be sent to the waiting room
-                if control::storage::get_attribute(
-                    ctx.redis_conn(),
-                    self.room,
-                    target,
-                    "is_room_owner",
-                )
-                .await?
+                if ctx
+                    .volatile
+                    .moderation_storage()
+                    .get_attribute(self.room, target, IS_ROOM_OWNER)
+                    .await?
                 {
                     ctx.ws_send(Error::CannotSendRoomOwnerToWaitingRoom);
                     return Ok(());
                 }
 
-                if !storage::is_waiting_room_enabled(ctx.redis_conn, self.room.room_id()).await? {
+                if !ctx
+                    .volatile
+                    .moderation_storage()
+                    .is_waiting_room_enabled(self.room.room_id())
+                    .await?
+                {
                     set_waiting_room_enabled(&mut ctx, self.room.room_id(), true).await?;
                 }
 
                 // Enforce the participant to enter the waiting room (if enabled) on next rejoin
-                control::storage::set_skip_waiting_room_with_expiry(
-                    ctx.redis_conn(),
-                    target,
-                    false,
-                )
-                .await?;
+                ctx.volatile
+                    .moderation_storage()
+                    .set_skip_waiting_room_with_expiry(target, false)
+                    .await?;
 
-                storage::waiting_room_accepted_remove(
-                    ctx.redis_conn(),
-                    self.room.room_id(),
-                    target,
-                )
-                .await?;
+                ctx.volatile
+                    .moderation_storage()
+                    .waiting_room_accepted_remove_participant(self.room.room_id(), target)
+                    .await?;
 
                 ctx.exchange_publish(
                     control::exchange::current_room_by_participant_id(self.room, target),
@@ -275,15 +309,16 @@ impl SignalingModule for ModerationModule {
                 }
 
                 // Remove all debriefed participants from the waiting-room-accepted set
-                let all_participants =
-                    control::storage::get_all_participants(ctx.redis_conn(), self.room).await?;
-                let all_participants_role: Vec<Option<Role>> =
-                    control::storage::get_attribute_for_participants(
-                        ctx.redis_conn(),
-                        self.room,
-                        "role",
-                        &all_participants,
-                    )
+                let all_participants = Vec::from_iter(
+                    ctx.volatile
+                        .moderation_storage()
+                        .get_all_participants(self.room)
+                        .await?,
+                );
+                let all_participants_role: Vec<Option<Role>> = ctx
+                    .volatile
+                    .moderation_storage()
+                    .get_attribute_for_participants(self.room, &all_participants, ROLE)
                     .await?;
 
                 let mut to_remove = vec![];
@@ -297,23 +332,19 @@ impl SignalingModule for ModerationModule {
 
                     if remove {
                         // Enforce the participant to enter the waiting room on next rejoin
-                        control::storage::set_skip_waiting_room_with_expiry(
-                            ctx.redis_conn(),
-                            id,
-                            false,
-                        )
-                        .await?;
+                        ctx.volatile
+                            .moderation_storage()
+                            .set_skip_waiting_room_with_expiry(id, false)
+                            .await?;
 
                         to_remove.push(id);
                     }
                 }
 
-                storage::waiting_room_accepted_remove_list(
-                    ctx.redis_conn(),
-                    self.room.room_id(),
-                    &to_remove,
-                )
-                .await?;
+                ctx.volatile
+                    .moderation_storage()
+                    .waiting_room_accepted_remove_participants(self.room.room_id(), &to_remove)
+                    .await?;
 
                 set_waiting_room_enabled(&mut ctx, self.room.room_id(), true).await?;
 
@@ -332,9 +363,11 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
-                let kind: Option<ParticipationKind> =
-                    control::storage::get_attribute(ctx.redis_conn(), self.room, target, "kind")
-                        .await?;
+                let kind: Option<ParticipationKind> = ctx
+                    .volatile
+                    .moderation_storage()
+                    .get_attribute(self.room, target, KIND)
+                    .await?;
 
                 if !matches!(
                     kind,
@@ -351,14 +384,10 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
-                control::storage::set_attribute(
-                    ctx.redis_conn(),
-                    self.room,
-                    target,
-                    "display_name",
-                    new_name,
-                )
-                .await?;
+                ctx.volatile
+                    .moderation_storage()
+                    .set_attribute(self.room, target, DISPLAY_NAME, new_name)
+                    .await?;
 
                 ctx.exchange_publish(
                     control::exchange::current_room_by_participant_id(self.room, target),
@@ -388,16 +417,24 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
-                if !storage::waiting_room_contains(ctx.redis_conn(), self.room.room_id(), target)
+                if !ctx
+                    .volatile
+                    .moderation_storage()
+                    .waiting_room_contains_participant(self.room.room_id(), target)
                     .await?
                 {
                     // TODO return error
                     return Ok(());
                 }
 
-                storage::waiting_room_accepted_add(ctx.redis_conn(), self.room.room_id(), target)
+                ctx.volatile
+                    .moderation_storage()
+                    .waiting_room_accepted_add_participant(self.room.room_id(), target)
                     .await?;
-                storage::waiting_room_remove(ctx.redis_conn(), self.room.room_id(), target).await?;
+                ctx.volatile
+                    .moderation_storage()
+                    .waiting_room_remove_participant(self.room.room_id(), target)
+                    .await?;
 
                 ctx.exchange_publish_control(
                     control::exchange::global_room_by_participant_id(self.room.room_id(), target),
@@ -429,7 +466,9 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
-                storage::set_raise_hands_enabled(ctx.redis_conn(), self.room.room_id(), true)
+                ctx.volatile
+                    .moderation_storage()
+                    .set_raise_hands_enabled(self.room.room_id(), true)
                     .await?;
 
                 ctx.exchange_publish_control(
@@ -444,7 +483,9 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
-                storage::set_raise_hands_enabled(ctx.redis_conn(), self.room.room_id(), false)
+                ctx.volatile
+                    .moderation_storage()
+                    .set_raise_hands_enabled(self.room.room_id(), false)
                     .await?;
 
                 ctx.exchange_publish_control(
@@ -496,7 +537,8 @@ impl SignalingModule for ModerationModule {
                 }
 
                 let control_data =
-                    ControlState::from_redis(ctx.redis_conn(), self.room, id).await?;
+                    ControlState::from_storage(ctx.volatile.control_storage(), self.room, id)
+                        .await?;
 
                 let mut module_data = ModulePeerData::new();
                 module_data.insert(&control_data).context(SerdeJsonSnafu {
@@ -518,8 +560,11 @@ impl SignalingModule for ModerationModule {
                 }));
             }
             Event::Exchange(exchange::Message::WaitingRoomEnableUpdated) => {
-                let enabled =
-                    storage::is_waiting_room_enabled(ctx.redis_conn(), self.room.room_id()).await?;
+                let enabled = ctx
+                    .volatile
+                    .moderation_storage()
+                    .is_waiting_room_enabled(self.room.room_id())
+                    .await?;
 
                 if enabled {
                     ctx.ws_send(ModerationEvent::WaitingRoomEnabled);
@@ -533,14 +578,22 @@ impl SignalingModule for ModerationModule {
         Ok(())
     }
 
-    async fn on_destroy(self, mut ctx: DestroyContext<'_>) {
+    async fn on_destroy(self, ctx: DestroyContext<'_>) {
         if ctx.destroy_room() {
-            if let Err(e) = storage::delete_bans(ctx.redis_conn(), self.room.room_id()).await {
+            if let Err(e) = ctx
+                .volatile
+                .moderation_storage()
+                .delete_user_bans(self.room.room_id())
+                .await
+            {
                 log::error!("Failed to clean up bans list {}", Report::from_error(e));
             }
 
-            if let Err(e) =
-                storage::delete_waiting_room_enabled(ctx.redis_conn(), self.room.room_id()).await
+            if let Err(e) = ctx
+                .volatile
+                .moderation_storage()
+                .delete_waiting_room_enabled(self.room.room_id())
+                .await
             {
                 log::error!(
                     "Failed to clean up waiting room enabled flag {}",
@@ -548,8 +601,11 @@ impl SignalingModule for ModerationModule {
                 );
             }
 
-            if let Err(e) =
-                storage::delete_raise_hands_enabled(ctx.redis_conn(), self.room.room_id()).await
+            if let Err(e) = ctx
+                .volatile
+                .moderation_storage()
+                .delete_raise_hands_enabled(self.room.room_id())
+                .await
             {
                 log::error!(
                     "Failed to clean up raise hands enabled flag {}",
@@ -557,8 +613,11 @@ impl SignalingModule for ModerationModule {
                 );
             }
 
-            if let Err(e) =
-                storage::delete_waiting_room(ctx.redis_conn(), self.room.room_id()).await
+            if let Err(e) = ctx
+                .volatile
+                .moderation_storage()
+                .delete_waiting_room(self.room.room_id())
+                .await
             {
                 log::error!(
                     "Failed to clean up waiting room list {}",
@@ -566,8 +625,11 @@ impl SignalingModule for ModerationModule {
                 );
             }
 
-            if let Err(e) =
-                storage::delete_waiting_room_accepted(ctx.redis_conn(), self.room.room_id()).await
+            if let Err(e) = ctx
+                .volatile
+                .moderation_storage()
+                .delete_waiting_room_accepted(self.room.room_id())
+                .await
             {
                 log::error!(
                     "Failed to clean up accepted waiting room list {}",

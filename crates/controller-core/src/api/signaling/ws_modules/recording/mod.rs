@@ -7,13 +7,18 @@ use std::{
     sync::Arc,
 };
 
+use either::Either;
 use futures::{stream::once, FutureExt};
 use lapin_pool::{RabbitMqChannel, RabbitMqPool};
 use opentalk_database::Db;
 use opentalk_db_storage::streaming_targets::RoomStreamingTargetRecord;
 use opentalk_signaling_core::{
-    control, DestroyContext, Event, InitContext, ModuleContext, RedisConnection, SignalingModule,
-    SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
+    control::{
+        self,
+        storage::{ControlStorageParticipantAttributes as _, RECORDING_CONSENT},
+    },
+    DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
+    SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types::{
     core::{ParticipantId, StreamingTargetId},
@@ -31,6 +36,7 @@ use opentalk_types::{
 use snafu::{Report, ResultExt};
 use tokio::time::Duration;
 
+use self::storage::RecordingStorage;
 use super::recording_service::{self, RecordingService};
 
 pub(crate) mod exchange;
@@ -66,6 +72,19 @@ pub struct RecordingParams {
 pub enum RecorderExtEvent {
     /// The timeout message
     Timeout(BTreeSet<StreamingTargetId>),
+}
+
+pub(super) trait RecordingStorageProvider {
+    fn storage(&mut self) -> &mut dyn RecordingStorage;
+}
+
+impl RecordingStorageProvider for VolatileStorage {
+    fn storage(&mut self) -> &mut dyn RecordingStorage {
+        match self.as_mut() {
+            Either::Left(v) => v,
+            Either::Right(v) => v,
+        }
+    }
 }
 
 #[async_trait::async_trait(?Send)]
@@ -134,25 +153,20 @@ impl SignalingModule for Recording {
                     .await?
             }
             Event::Leaving => {
-                control::storage::remove_attribute(
-                    ctx.redis_conn(),
-                    self.room,
-                    self.id,
-                    "recording_consent",
-                )
-                .await?;
+                ctx.volatile
+                    .storage()
+                    .remove_attribute(self.room, self.id, RECORDING_CONSENT)
+                    .await?;
             }
             Event::RaiseHand => {}
             Event::LowerHand => {}
             Event::ParticipantLeft(_) => {}
             Event::ParticipantJoined(id, data) | Event::ParticipantUpdated(id, data) => {
-                let consent: Option<bool> = control::storage::get_attribute(
-                    ctx.redis_conn(),
-                    self.room,
-                    id,
-                    "recording_consent",
-                )
-                .await?;
+                let consent: Option<bool> = ctx
+                    .volatile
+                    .storage()
+                    .get_attribute(self.room, id, RECORDING_CONSENT)
+                    .await?;
 
                 if let Some(consent) = consent {
                     *data = Some(RecordingPeerState {
@@ -164,14 +178,10 @@ impl SignalingModule for Recording {
             // Messages from frontend (Command)
             Event::WsMessage(msg) => match msg {
                 RecordingCommand::SetConsent(command::SetConsent { consent }) => {
-                    control::storage::set_attribute(
-                        ctx.redis_conn(),
-                        self.room,
-                        self.id,
-                        "recording_consent",
-                        consent,
-                    )
-                    .await?;
+                    ctx.volatile
+                        .storage()
+                        .set_attribute(self.room, self.id, RECORDING_CONSENT, consent)
+                        .await?;
 
                     ctx.invalidate_data();
                 }
@@ -207,7 +217,7 @@ impl SignalingModule for Recording {
                         return Ok(());
                     }
 
-                    let streams = storage::get_streams(ctx.redis_conn(), self.room).await?;
+                    let streams = ctx.volatile.storage().get_streams(self.room).await?;
 
                     if streams
                         .iter()
@@ -225,7 +235,10 @@ impl SignalingModule for Recording {
                         })
                         .collect();
 
-                    storage::set_streams(ctx.redis_conn(), self.room, &streams).await?;
+                    ctx.volatile
+                        .storage()
+                        .set_streams(self.room, &streams)
+                        .await?;
 
                     log::warn!("Recorder ran into a timeout!");
                     ctx.ws_send(RecorderError::Timeout);
@@ -236,9 +249,9 @@ impl SignalingModule for Recording {
         Ok(())
     }
 
-    async fn on_destroy(self, mut ctx: DestroyContext<'_>) {
+    async fn on_destroy(self, ctx: DestroyContext<'_>) {
         if ctx.destroy_room() {
-            if let Err(e) = storage::delete_all_streams(ctx.redis_conn(), self.room).await {
+            if let Err(e) = ctx.volatile.storage().delete_all_streams(self.room).await {
                 log::error!("failed to delete streams, {}", Report::from_error(e));
             }
         }
@@ -267,7 +280,7 @@ impl SignalingModule for Recording {
 impl Recording {
     async fn initialize_streaming(
         &self,
-        redis_conn: &mut RedisConnection,
+        storage: &mut dyn RecordingStorage,
     ) -> Result<(), SignalingModuleError> {
         let mut conn = self.db.get_conn().await?;
 
@@ -295,22 +308,27 @@ impl Recording {
                 .collect::<Result<_, SignalingModuleError>>()?
         };
 
-        storage::set_streams(redis_conn, self.room, &streams).await?;
+        storage.set_streams(self.room, &streams).await?;
 
         Ok(())
     }
 
     async fn handle_joined_event(
         &mut self,
-        mut ctx: ModuleContext<'_, Self>,
+        ctx: ModuleContext<'_, Self>,
         frontend_data: &mut Option<RecordingState>,
         participants: &mut HashMap<ParticipantId, Option<RecordingPeerState>>,
     ) -> Result<(), SignalingModuleError> {
-        if !storage::is_streaming_initialized(ctx.redis_conn(), self.room).await? {
-            self.initialize_streaming(ctx.redis_conn()).await?;
+        if !ctx
+            .volatile
+            .storage()
+            .is_streaming_initialized(self.room)
+            .await?
+        {
+            self.initialize_streaming(ctx.volatile.storage()).await?;
         }
 
-        let streams_res = storage::get_streams(ctx.redis_conn(), self.room).await?;
+        let streams_res = ctx.volatile.storage().get_streams(self.room).await?;
         *frontend_data = Some({
             RecordingState {
                 targets: BTreeMap::from_iter(
@@ -321,7 +339,7 @@ impl Recording {
             }
         });
 
-        self.collect_participants_consents(ctx.redis_conn(), participants)
+        self.collect_participants_consents(ctx.volatile.storage(), participants)
             .await?;
 
         Ok(())
@@ -337,29 +355,31 @@ impl Recording {
             return Ok(());
         }
 
-        if !self.target_ids_exist(ctx.redis_conn(), &target_ids).await? {
+        if !self
+            .target_ids_exist(ctx.volatile.storage(), &target_ids)
+            .await?
+        {
             ctx.ws_send(Error::InvalidStreamingId);
             return Ok(());
         }
 
-        let is_recorder_running = storage::streams_contains_status(
-            ctx.redis_conn(),
-            self.room,
-            vec![
-                StreamStatus::Active,
-                StreamStatus::Starting,
-                StreamStatus::Paused,
-            ],
-        )
-        .await?;
+        let is_recorder_running = ctx
+            .volatile
+            .storage()
+            .streams_contain_status(
+                self.room,
+                BTreeSet::from_iter([
+                    StreamStatus::Active,
+                    StreamStatus::Starting,
+                    StreamStatus::Paused,
+                ]),
+            )
+            .await?;
 
-        storage::update_streams(
-            ctx.redis_conn(),
-            self.room,
-            &target_ids,
-            StreamStatus::Starting,
-        )
-        .await?;
+        ctx.volatile
+            .storage()
+            .update_streams_status(self.room, &target_ids, StreamStatus::Starting)
+            .await?;
 
         if !is_recorder_running {
             self.rabbitmq_channel
@@ -406,7 +426,10 @@ impl Recording {
             return Ok(());
         }
 
-        if !self.target_ids_exist(ctx.redis_conn(), &target_ids).await? {
+        if !self
+            .target_ids_exist(ctx.volatile.storage(), &target_ids)
+            .await?
+        {
             ctx.ws_send(Error::InvalidStreamingId);
             return Ok(());
         }
@@ -430,21 +453,26 @@ impl Recording {
             return Ok(());
         }
 
-        if !self.target_ids_exist(ctx.redis_conn(), &target_ids).await? {
+        if !self
+            .target_ids_exist(ctx.volatile.storage(), &target_ids)
+            .await?
+        {
             ctx.ws_send(Error::InvalidStreamingId);
             return Ok(());
         }
 
-        let is_recorder_running = storage::streams_contains_status(
-            ctx.redis_conn(),
-            self.room,
-            vec![
-                StreamStatus::Active,
-                StreamStatus::Starting,
-                StreamStatus::Paused,
-            ],
-        )
-        .await;
+        let is_recorder_running = ctx
+            .volatile
+            .storage()
+            .streams_contain_status(
+                self.room,
+                BTreeSet::from_iter([
+                    StreamStatus::Active,
+                    StreamStatus::Starting,
+                    StreamStatus::Paused,
+                ]),
+            )
+            .await;
 
         if let Ok(false) = is_recorder_running {
             ctx.ws_send(Error::RecorderNotStarted);
@@ -462,17 +490,12 @@ impl Recording {
 
     async fn collect_participants_consents(
         &self,
-        redis_conn: &mut RedisConnection,
+        storage: &mut dyn RecordingStorage,
         participants: &mut HashMap<ParticipantId, Option<RecordingPeerState>>,
     ) -> Result<(), SignalingModuleError> {
         let participant_ids: Vec<ParticipantId> = participants.keys().copied().collect();
-        let participant_consents: Vec<Option<bool>> =
-            control::storage::get_attribute_for_participants(
-                redis_conn,
-                self.room,
-                "recording_consent",
-                &participant_ids,
-            )
+        let participant_consents: Vec<Option<bool>> = storage
+            .get_attribute_for_participants(self.room, &participant_ids, RECORDING_CONSENT)
             .await?;
 
         for (id, consent) in participant_ids.into_iter().zip(participant_consents) {
@@ -491,11 +514,11 @@ impl Recording {
 
     async fn target_ids_exist(
         &self,
-        redis_conn: &mut RedisConnection,
+        storage: &mut dyn RecordingStorage,
         target_ids: &BTreeSet<StreamingTargetId>,
     ) -> Result<bool, SignalingModuleError> {
         for target_id in target_ids {
-            if !storage::stream_exists(redis_conn, self.room, *target_id).await? {
+            if !storage.stream_exists(self.room, *target_id).await? {
                 return Ok(false);
             }
         }

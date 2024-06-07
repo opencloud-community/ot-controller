@@ -2,205 +2,155 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::collections::{HashMap, HashSet};
+mod polls_storage;
+mod redis;
+mod volatile;
 
-use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
-use opentalk_types::signaling::polls::Item;
-use redis::AsyncCommands;
-use redis_args::ToRedisArgs;
-use snafu::{whatever, ResultExt};
+pub(crate) use polls_storage::PollsStorage;
 
-use super::PollsState;
-use crate::{ChoiceId, PollId};
+#[cfg(test)]
+mod test_common {
+    use std::{
+        collections::{BTreeMap, BTreeSet},
+        iter::repeat_with,
+        time::Duration,
+    };
 
-/// Key to the current poll config
-#[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "opentalk-signaling:room={room}:polls:state")]
-struct PollsStateKey {
-    room: SignalingRoomId,
-}
+    use opentalk_signaling_core::SignalingRoomId;
+    use opentalk_types::{
+        core::Timestamp,
+        signaling::polls::{state::PollsState, Choice, ChoiceId, Item, PollId},
+    };
 
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub(super) async fn get_state(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-) -> Result<Option<PollsState>, SignalingModuleError> {
-    redis_conn
-        .get(PollsStateKey { room })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to get current polls state",
-        })
-}
+    use super::PollsStorage;
 
-/// Set the current polls state if one doesn't already exist returns true if set was successful
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub(super) async fn set_state(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    polls_state: &PollsState,
-) -> Result<bool, SignalingModuleError> {
-    let value: redis::Value = redis::cmd("SET")
-        .arg(PollsStateKey { room })
-        .arg(polls_state)
-        .arg("EX")
-        .arg(polls_state.duration.as_secs())
-        .arg("NX")
-        .query_async(redis_conn)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to set current polls state",
-        })?;
+    pub const ROOM: SignalingRoomId = SignalingRoomId::nil();
 
-    match value {
-        redis::Value::Okay => Ok(true),
-        redis::Value::Nil => Ok(false),
-        _ => whatever!("got invalid value from SET EX NX: {:?}", value),
-    }
-}
+    pub const CHOICE_1: ChoiceId = ChoiceId::from_u32(1u32);
+    pub const CHOICE_2: ChoiceId = ChoiceId::from_u32(2u32);
 
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub(super) async fn del_state(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .del(PollsStateKey { room })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to del current polls state",
-        })
-}
-
-/// Key to the current vote results
-#[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "opentalk-signaling:room={room}:poll={poll}:results")]
-struct PollResults {
-    room: SignalingRoomId,
-    poll: PollId,
-}
-
-pub(super) async fn del_results(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    poll_id: PollId,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .del(PollResults {
-            room,
-            poll: poll_id,
-        })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to delete results",
-        })
-}
-
-pub(super) async fn vote(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    poll_id: PollId,
-    previous_choice_ids: &HashSet<ChoiceId>,
-    new_choice_ids: &HashSet<ChoiceId>,
-) -> Result<(), SignalingModuleError> {
-    // Revoke any previous vote.
-    for choice_id in previous_choice_ids {
-        redis_conn
-            .zincr(
-                PollResults {
-                    room,
-                    poll: poll_id,
+    pub(super) async fn polls_state(storage: &mut dyn PollsStorage) {
+        let polls_state = PollsState {
+            id: PollId::nil(),
+            topic: "Some poll".to_string(),
+            live: true,
+            multiple_choice: false,
+            choices: vec![
+                Choice {
+                    id: ChoiceId::from(0u32),
+                    content: "Choice A".to_string(),
                 },
-                u32::from(*choice_id),
-                -1,
-            )
-            .await
-            .context(RedisSnafu {
-                message: "Failed to cast previous vote",
-            })?;
-    }
-
-    // Apply any new vote.
-    for choice_id in new_choice_ids {
-        redis_conn
-            .zincr(
-                PollResults {
-                    room,
-                    poll: poll_id,
+                Choice {
+                    id: ChoiceId::from(1u32),
+                    content: "Choice B".to_string(),
                 },
-                u32::from(*choice_id),
-                1,
-            )
-            .await
-            .context(RedisSnafu {
-                message: "Failed to cast new vote",
-            })?;
+            ],
+            started: Timestamp::now(),
+            duration: Duration::from_secs(10),
+        };
+
+        let mut polls_state_2 = polls_state.clone();
+        polls_state_2.live = false;
+        polls_state_2.topic = "Another poll".to_string();
+
+        assert!(storage.get_polls_state(ROOM).await.unwrap().is_none());
+
+        assert!(storage.set_polls_state(ROOM, &polls_state).await.unwrap());
+        assert_eq!(
+            storage.get_polls_state(ROOM).await.unwrap(),
+            Some(polls_state.clone())
+        );
+
+        // Ensure that we don't set the polls state again if there is already one set
+        assert!(!storage.set_polls_state(ROOM, &polls_state_2).await.unwrap());
+        assert_eq!(
+            storage.get_polls_state(ROOM).await.unwrap(),
+            Some(polls_state.clone())
+        );
+
+        storage.delete_polls_state(ROOM).await.unwrap();
+        assert_eq!(storage.get_polls_state(ROOM).await.unwrap(), None);
     }
 
-    Ok(())
-}
+    pub(super) async fn voting(storage: &mut dyn PollsStorage) {
+        let polls_state = PollsState {
+            id: PollId::nil(),
+            topic: "Some poll".to_string(),
+            live: true,
+            multiple_choice: false,
+            choices: vec![
+                Choice {
+                    id: CHOICE_1,
+                    content: "Choice A".to_string(),
+                },
+                Choice {
+                    id: CHOICE_2,
+                    content: "Choice B".to_string(),
+                },
+            ],
+            started: Timestamp::now(),
+            duration: Duration::from_secs(10),
+        };
+        assert!(storage.get_polls_state(ROOM).await.unwrap().is_none());
 
-async fn results(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    poll: PollId,
-) -> Result<HashMap<ChoiceId, u32>, SignalingModuleError> {
-    redis_conn
-        .zrange_withscores(PollResults { room, poll }, 0, -1)
-        .await
-        .context(RedisSnafu {
-            message: "failed to zrange vote results",
-        })
-}
+        assert!(storage.set_polls_state(ROOM, &polls_state).await.unwrap());
 
-pub(super) async fn poll_results(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    config: &PollsState,
-) -> Result<Vec<Item>, SignalingModuleError> {
-    let votes = results(redis_conn, room, config.id).await?;
+        for _ in 0..4 {
+            storage
+                .vote(
+                    ROOM,
+                    polls_state.id,
+                    &BTreeSet::from([]),
+                    &BTreeSet::from([CHOICE_1]),
+                )
+                .await
+                .unwrap();
+        }
 
-    let votes = (0..config.choices.len())
-        .map(|i| {
-            let id = ChoiceId::from(i as u32);
-            let count = votes.get(&id).copied().unwrap_or_default();
-            Item { id, count }
-        })
-        .collect();
+        let choices = storage.results(ROOM, polls_state.id).await.unwrap();
+        assert_eq!(choices, BTreeMap::from([(CHOICE_1, 4)]));
 
-    Ok(votes)
-}
+        for _ in 0..2 {
+            storage
+                .vote(
+                    ROOM,
+                    polls_state.id,
+                    &BTreeSet::from([CHOICE_1]),
+                    &BTreeSet::from([CHOICE_2]),
+                )
+                .await
+                .unwrap();
+        }
 
-/// Key to the list of all polls inside the given room
-#[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "opentalk-signaling:room={room}:polls:list")]
-struct PollList {
-    room: SignalingRoomId,
-}
+        let results = storage.results(ROOM, polls_state.id).await.unwrap();
+        assert_eq!(results, BTreeMap::from([(CHOICE_1, 2), (CHOICE_2, 2)]));
 
-/// Add a poll to the list
-pub(super) async fn list_add(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    poll_id: PollId,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .sadd(PollList { room }, poll_id)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to sadd poll list",
-        })
-}
+        let results = storage.poll_results(ROOM, &polls_state).await.unwrap();
+        assert_eq!(
+            &results,
+            &[
+                Item {
+                    id: CHOICE_1,
+                    count: 2
+                },
+                Item {
+                    id: CHOICE_2,
+                    count: 2
+                }
+            ]
+        );
+    }
 
-/// Get all polls for the room
-pub(super) async fn list_members(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-) -> Result<Vec<PollId>, SignalingModuleError> {
-    redis_conn
-        .smembers(PollList { room })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to get members from poll list",
-        })
+    pub(super) async fn polls(storage: &mut dyn PollsStorage) {
+        let poll_ids = Vec::from_iter(repeat_with(PollId::generate).take(4));
+        for &id in &poll_ids {
+            storage.add_poll_to_list(ROOM, id).await.unwrap();
+        }
+
+        assert_eq!(poll_ids, storage.poll_ids(ROOM).await.unwrap());
+
+        storage.delete_poll_ids(ROOM).await.unwrap();
+
+        assert!(storage.poll_ids(ROOM).await.unwrap().is_empty());
+    }
 }

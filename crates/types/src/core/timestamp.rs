@@ -4,7 +4,7 @@
 
 use std::{ops::Add, time::SystemTime};
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Timelike as _, Utc};
 use derive_more::{AsRef, Deref, Display, From, FromStr};
 
 #[allow(unused_imports)]
@@ -50,6 +50,13 @@ impl Timestamp {
         // it because inserting timezone names is extra work due to
         // https://github.com/chronotope/chrono/issues/960
         self.0.format("%F_%H-%M-%S-UTC").to_string()
+    }
+
+    /// Round the timestamp to full seconds
+    pub fn rounded_to_seconds(self) -> Timestamp {
+        // This can only fail if the nanoseconds have an invalid value, 0 is
+        // valid here
+        Timestamp(self.0.with_nanosecond(0).expect("nanoseconds should be 0"))
     }
 }
 

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use std::{
+    collections::BTreeSet,
     future,
     mem::replace,
     ops::ControlFlow,
@@ -24,11 +25,15 @@ use opentalk_db_storage::{
 use opentalk_signaling_core::{
     control::{
         self, exchange,
-        storage::{self, ParticipantIdRunnerLock},
-        ControlStateExt as _, NAMESPACE,
+        storage::{
+            AttributeActions, ControlStorageParticipantAttributes, AVATAR_URL, DISPLAY_NAME,
+            HAND_IS_UP, HAND_UPDATED_AT, IS_ROOM_OWNER, JOINED_AT, KIND, LEFT_AT, ROLE, USER_ID,
+        },
+        ControlStateExt as _, ControlStorageProvider, NAMESPACE,
     },
-    AnyStream, ExchangeHandle, ObjectStorage, Participant, RedisConnection, SignalingMetrics,
-    SignalingModule, SignalingModuleError, SignalingRoomId, SubscriberHandle,
+    AnyStream, ExchangeHandle, LockError, ObjectStorage, Participant, RoomLockingProvider as _,
+    RunnerId, SignalingMetrics, SignalingModule, SignalingModuleError, SignalingRoomId,
+    SubscriberHandle, VolatileStorage,
 };
 use opentalk_types::{
     common::tariff::TariffResource,
@@ -52,7 +57,6 @@ use tokio::{
     time::{interval, sleep},
 };
 use tokio_stream::StreamExt;
-use uuid::Uuid;
 
 use super::{
     actor::WebSocketActor,
@@ -62,8 +66,9 @@ use super::{
 };
 use crate::api::signaling::{
     echo::Echo,
-    moderation,
-    resumption::{ResumptionError, ResumptionTokenKeepAlive},
+    moderation::{self, ModerationStorageProvider},
+    resumption::ResumptionTokenKeepAlive,
+    storage::{SignalingStorageError, SignalingStorageProvider},
     trim_display_name,
     ws::actor::WsCommand,
 };
@@ -83,8 +88,18 @@ pub enum RunnerError {
     },
 
     #[snafu(context(false))]
+    RoomLock {
+        source: LockError,
+    },
+
+    #[snafu(context(false))]
     Redis {
         source: redis::RedisError,
+    },
+
+    #[snafu(context(false))]
+    Storage {
+        source: SignalingStorageError,
     },
 
     #[snafu(context(false))]
@@ -118,7 +133,7 @@ type Result<T, E = RunnerError> = std::result::Result<T, E>;
 ///
 /// Passed into [`ModuleBuilder::build`](super::modules::ModuleBuilder::build) function to create an [`InitContext`](super::InitContext).
 pub struct Builder {
-    runner_id: Uuid,
+    runner_id: RunnerId,
     pub(super) id: ParticipantId,
     resuming: bool,
     pub(super) room: Room,
@@ -134,7 +149,7 @@ pub struct Builder {
     pub(super) db: Arc<Db>,
     pub(super) storage: Arc<ObjectStorage>,
     pub(super) authz: Arc<Authz>,
-    pub(super) redis_conn: RedisConnection,
+    pub(super) volatile: VolatileStorage,
     pub(super) exchange_handle: ExchangeHandle,
     resumption_keep_alive: ResumptionTokenKeepAlive,
 }
@@ -144,38 +159,12 @@ impl Builder {
     #[tracing::instrument(skip(self))]
     pub async fn abort(mut self) {
         let ctx = DestroyContext {
-            redis_conn: &mut self.redis_conn,
+            volatile: &mut self.volatile,
             // We haven't joined yet
             destroy_room: false,
         };
 
         self.modules.destroy(ctx).await
-    }
-
-    async fn acquire_participant_id(&mut self) -> Result<()> {
-        let key = ParticipantIdRunnerLock { id: self.id };
-        let runner_id = self.runner_id.to_string();
-
-        // Try for up to 10 secs to acquire the key
-        for _ in 0..10 {
-            let value: redis::Value = redis::cmd("SET")
-                .arg(&key)
-                .arg(&runner_id)
-                .arg("NX")
-                .query_async(&mut self.redis_conn)
-                .await?;
-
-            match value {
-                redis::Value::Nil => sleep(Duration::from_secs(1)).await,
-                redis::Value::Okay => return Ok(()),
-                _ => whatever!(
-                    "Got unexpected value while acquiring runner id, value={:?}",
-                    value
-                ),
-            }
-        }
-
-        whatever!("Failed to acquire runner id");
     }
 
     /// Build to runner from the data inside the builder and provided websocket
@@ -187,7 +176,10 @@ impl Builder {
         shutdown_sig: broadcast::Receiver<()>,
         settings: SharedSettings,
     ) -> Result<Runner> {
-        self.acquire_participant_id().await?;
+        self.volatile
+            .signaling_storage()
+            .acquire_participant_id(self.id, self.runner_id)
+            .await?;
 
         let room_id = SignalingRoomId::new(self.room.id, self.breakout_room);
 
@@ -221,7 +213,7 @@ impl Builder {
                 .whatever_context::<_, RunnerError>("Failed to create subscriber")?;
 
         self.resumption_keep_alive
-            .set_initial(&mut self.redis_conn)
+            .set_initial(self.volatile.signaling_storage())
             .await?;
 
         Ok(Runner {
@@ -242,7 +234,7 @@ impl Builder {
             events: self.events,
             metrics: self.metrics,
             db: self.db,
-            redis_conn: self.redis_conn,
+            volatile: self.volatile,
             exchange_handle: self.exchange_handle,
             subscriber_handle,
             resumption_keep_alive: self.resumption_keep_alive,
@@ -262,7 +254,7 @@ impl Builder {
 /// Also acts as `control` module which handles participant and room states.
 pub struct Runner {
     /// Runner ID which is used to assume ownership of a participant id
-    runner_id: Uuid,
+    runner_id: RunnerId,
 
     /// participant id that the runner is connected to
     id: ParticipantId,
@@ -298,8 +290,7 @@ pub struct Runner {
     /// Database connection pool
     db: Arc<Db>,
 
-    /// Redis connection manager
-    redis_conn: RedisConnection,
+    volatile: VolatileStorage,
 
     /// Exchange handle - used to send messages
     exchange_handle: ExchangeHandle,
@@ -366,7 +357,7 @@ async fn get_participant_role(
 impl Runner {
     #[allow(clippy::too_many_arguments)]
     pub async fn builder(
-        runner_id: Uuid,
+        runner_id: RunnerId,
         id: ParticipantId,
         resuming: bool,
         room: Room,
@@ -378,7 +369,7 @@ impl Runner {
         db: Arc<Db>,
         storage: Arc<ObjectStorage>,
         authz: Arc<Authz>,
-        redis_conn: RedisConnection,
+        volatile: VolatileStorage,
         exchange_handle: ExchangeHandle,
         resumption_keep_alive: ResumptionTokenKeepAlive,
     ) -> Result<Builder> {
@@ -401,7 +392,7 @@ impl Runner {
             db,
             storage,
             authz,
-            redis_conn,
+            volatile,
             exchange_handle,
             resumption_keep_alive,
         })
@@ -416,11 +407,21 @@ impl Runner {
         if let RunnerState::Joined | RunnerState::Waiting { .. } = &self.state {
             // The retry/wait_time values are set extra high
             // since a lot of operations are being done while holding the lock
-            let mut room_mutex = storage::room_mutex(self.room_id);
 
-            let room_guard = match room_mutex.lock(&mut self.redis_conn).await {
+            let room_guard = match self.volatile.room_locking().lock_room(self.room_id).await {
                 Ok(guard) => guard,
-                Err(opentalk_r3dlock::Error::Redis { source: e }) => {
+                Err(e @ LockError::Locked) => {
+                    log::error!(
+                        "Failed to acquire r3dlock, contention too high, {}",
+                        Report::from_error(e)
+                    );
+
+                    self.metrics
+                        .record_destroy_time(destroy_start_time.elapsed().as_secs_f64(), false);
+
+                    return;
+                }
+                Err(e) => {
                     log::error!("Failed to acquire r3dlock, {}", Report::from_error(e));
                     // There is a problem when accessing redis which could
                     // mean either the network or redis is broken.
@@ -431,31 +432,15 @@ impl Runner {
 
                     return;
                 }
-                Err(opentalk_r3dlock::Error::CouldNotAcquireLock) => {
-                    log::error!("Failed to acquire r3dlock, contention too high");
-
-                    self.metrics
-                        .record_destroy_time(destroy_start_time.elapsed().as_secs_f64(), false);
-
-                    return;
-                }
-                Err(
-                    opentalk_r3dlock::Error::FailedToUnlock
-                    | opentalk_r3dlock::Error::AlreadyExpired,
-                ) => {
-                    unreachable!()
-                }
             };
 
             if let RunnerState::Joined = &self.state {
-                let res = storage::set_attribute(
-                    &mut self.redis_conn,
-                    self.room_id,
-                    self.id,
-                    "left_at",
-                    Timestamp::now(),
-                )
-                .await;
+                // first check if the list of joined participant is empty
+                let res = self
+                    .volatile
+                    .control_storage()
+                    .set_attribute(self.room_id, self.id, LEFT_AT, Timestamp::now())
+                    .await;
                 if let Err(e) = res {
                     log::error!(
                         "failed to mark participant as left, {}",
@@ -464,12 +449,11 @@ impl Runner {
                     encountered_error = true;
                 }
             } else if let RunnerState::Waiting { .. } = &self.state {
-                if let Err(e) = moderation::storage::waiting_room_remove(
-                    &mut self.redis_conn,
-                    self.room_id.room_id(),
-                    self.id,
-                )
-                .await
+                if let Err(e) = self
+                    .volatile
+                    .moderation_storage()
+                    .waiting_room_remove_participant(self.room_id.room_id(), self.id)
+                    .await
                 {
                     log::error!(
                         "failed to remove participant from waiting_room list, {:?}",
@@ -477,12 +461,11 @@ impl Runner {
                     );
                     encountered_error = true;
                 }
-                if let Err(e) = moderation::storage::waiting_room_accepted_remove(
-                    &mut self.redis_conn,
-                    self.room_id.room_id(),
-                    self.id,
-                )
-                .await
+                if let Err(e) = self
+                    .volatile
+                    .moderation_storage()
+                    .waiting_room_accepted_remove_participant(self.room_id.room_id(), self.id)
+                    .await
                 {
                     log::error!(
                         "failed to remove participant from waiting_room_accepted list, {:?}",
@@ -492,15 +475,19 @@ impl Runner {
                 }
             };
 
-            let room_is_empty =
-                match storage::participants_all_left(&mut self.redis_conn, self.room_id).await {
-                    Ok(room_is_empty) => room_is_empty,
-                    Err(e) => {
-                        log::error!("Failed to check if room is empty {}", Report::from_error(e));
-                        encountered_error = true;
-                        false
-                    }
-                };
+            let room_is_empty = match self
+                .volatile
+                .control_storage()
+                .participants_all_left(self.room_id)
+                .await
+            {
+                Ok(room_is_empty) => room_is_empty,
+                Err(e) => {
+                    log::error!("Failed to check if room is empty {}", Report::from_error(e));
+                    encountered_error = true;
+                    false
+                }
+            };
 
             // if the room is empty check that the waiting room is empty
             let destroy_room = if room_is_empty {
@@ -509,11 +496,11 @@ impl Runner {
                     true
                 } else {
                     // destroy room only if waiting room is empty
-                    let waiting_room_is_empty = match moderation::storage::waiting_room_len(
-                        &mut self.redis_conn,
-                        self.room_id.room_id(),
-                    )
-                    .await
+                    let waiting_room_is_empty = match self
+                        .volatile
+                        .moderation_storage()
+                        .waiting_room_participant_count(self.room_id.room_id())
+                        .await
                     {
                         Ok(waiting_room_len) => waiting_room_len == 0,
                         Err(e) => {
@@ -525,30 +512,34 @@ impl Runner {
                             false
                         }
                     };
-                    let waiting_room_accepted_is_empty =
-                        match moderation::storage::waiting_room_accepted_len(
-                            &mut self.redis_conn,
-                            self.room_id.room_id(),
-                        )
+                    let waiting_room_accepted_is_empty = match self
+                        .volatile
+                        .moderation_storage()
+                        .waiting_room_accepted_participant_count(self.room_id.room_id())
                         .await
-                        {
-                            Ok(waiting_room_len) => waiting_room_len == 0,
-                            Err(e) => {
-                                log::error!(
-                                    "failed to get accepted waiting room len, {}",
-                                    Report::from_error(e)
-                                );
-                                encountered_error = true;
-                                false
-                            }
-                        };
+                    {
+                        Ok(waiting_room_len) => waiting_room_len == 0,
+                        Err(e) => {
+                            log::error!(
+                                "failed to get accepted waiting room len, {}",
+                                Report::from_error(e)
+                            );
+                            encountered_error = true;
+                            false
+                        }
+                    };
                     waiting_room_is_empty && waiting_room_accepted_is_empty
                 }
             } else {
                 false
             };
 
-            match storage::decrement_participant_count(&mut self.redis_conn, self.room.id).await {
+            match self
+                .volatile
+                .control_storage()
+                .decrement_participant_count(self.room.id)
+                .await
+            {
                 Ok(remaining_participant_count) => {
                     if remaining_participant_count == 0 {
                         if let Err(e) = self.cleanup_redis_for_global_room().await {
@@ -570,7 +561,7 @@ impl Runner {
             }
 
             let ctx = DestroyContext {
-                redis_conn: &mut self.redis_conn,
+                volatile: &mut self.volatile,
                 destroy_room,
             };
 
@@ -590,11 +581,8 @@ impl Runner {
 
             self.metrics.decrement_participants_count(&self.participant);
 
-            if let Err(e) = room_guard.unlock(&mut self.redis_conn).await {
-                log::error!(
-                    "Failed to unlock set_guard r3dlock, {}",
-                    Report::from_error(e)
-                );
+            if let Err(e) = self.volatile.room_locking().unlock_room(room_guard).await {
+                log::error!("Failed to unlock room , {}", Report::from_error(e));
                 encountered_error = true;
             }
 
@@ -634,7 +622,7 @@ impl Runner {
         } else {
             // Not joined, just destroy modules normal
             let ctx = DestroyContext {
-                redis_conn: &mut self.redis_conn,
+                volatile: &mut self.volatile,
                 destroy_room: false,
             };
 
@@ -642,18 +630,22 @@ impl Runner {
         }
 
         // release participant id
-        match redis::cmd("GETDEL")
-            .arg(ParticipantIdRunnerLock { id: self.id })
-            .query_async::<_, String>(&mut self.redis_conn)
+        match self
+            .volatile
+            .signaling_storage()
+            .release_participant_id(self.id)
             .await
         {
-            Ok(runner_id) => {
-                if runner_id != self.runner_id.to_string() {
-                    log::warn!("removed runner id does not match the id of the runner");
-                }
+            Ok(Some(runner)) if runner == self.runner_id => {}
+            Ok(Some(_)) => {
+                log::warn!("removed runner id does not match the id of the runner");
             }
-            Err(e) => {
-                log::error!("failed to remove participant id, {}", Report::from_error(e));
+            Ok(None) => log::warn!("attempted to release nonexisting participant lock"),
+            Err(err) => {
+                log::error!(
+                    "failed to remove participant id, {}",
+                    Report::from_error(&err)
+                );
                 encountered_error = true;
             }
         }
@@ -672,20 +664,29 @@ impl Runner {
     /// Remove all room and control module related data from redis for the current 'local' room/breakout-room. Does not
     /// touch any keys that contain 'global' data that is used across all 'sub'-rooms (main & breakout rooms).
     async fn cleanup_redis_keys_for_current_room(&mut self) -> Result<()> {
-        storage::remove_room_closes_at(&mut self.redis_conn, self.room_id).await?;
-        storage::remove_participant_set(&mut self.redis_conn, self.room_id).await?;
+        self.volatile
+            .control_storage()
+            .remove_room_closes_at(self.room_id)
+            .await?;
+        self.volatile
+            .control_storage()
+            .remove_participant_set(self.room_id)
+            .await?;
         for key in [
-            "display_name",
-            "role",
-            "joined_at",
-            "left_at",
-            "hand_is_up",
-            "hand_updated_at",
-            "kind",
-            "user_id",
-            "avatar_url",
+            DISPLAY_NAME,
+            ROLE,
+            JOINED_AT,
+            LEFT_AT,
+            HAND_IS_UP,
+            HAND_UPDATED_AT,
+            KIND,
+            USER_ID,
+            AVATAR_URL,
         ] {
-            storage::remove_attribute_key(&mut self.redis_conn, self.room_id, key).await?;
+            self.volatile
+                .control_storage()
+                .remove_attribute_key(self.room_id, key)
+                .await?;
         }
 
         Ok(())
@@ -694,9 +695,18 @@ impl Runner {
     /// Remove all room and control module related redis keys that are used across all 'sub'-rooms. This must only be
     /// called once the main and all breakout rooms are empty.
     async fn cleanup_redis_for_global_room(&mut self) -> Result<()> {
-        storage::delete_participant_count(&mut self.redis_conn, self.room.id).await?;
-        storage::delete_tariff(&mut self.redis_conn, self.room.id).await?;
-        storage::delete_event(&mut self.redis_conn, self.room.id).await?;
+        self.volatile
+            .control_storage()
+            .delete_participant_count(self.room.id)
+            .await?;
+        self.volatile
+            .control_storage()
+            .delete_tariff(self.room.id)
+            .await?;
+        self.volatile
+            .control_storage()
+            .delete_event(self.room.id)
+            .await?;
 
         Ok(())
     }
@@ -706,7 +716,10 @@ impl Runner {
         let mut manual_close_ws = false;
 
         // Set default `skip_waiting_room` key value with the default expiration time
-        _ = storage::set_skip_waiting_room_with_expiry_nx(&mut self.redis_conn, self.id, false)
+        _ = self
+            .volatile
+            .control_storage()
+            .set_skip_waiting_room_with_expiry_nx(self.id, false)
             .await;
         let mut skip_waiting_room_refresh_interval = interval(Duration::from_secs(
             opentalk_signaling_core::control::storage::SKIP_WAITING_ROOM_KEY_REFRESH_INTERVAL,
@@ -756,8 +769,7 @@ impl Runner {
                     self.handle_module_requested_actions(timestamp, actions).await;
                 }
                 _ = skip_waiting_room_refresh_interval.tick() => {
-                    _ = storage::reset_skip_waiting_room_expiry(
-                        &mut self.redis_conn,
+                    _ = self.volatile.control_storage().reset_skip_waiting_room_expiry(
                         self.id,
                     )
                     .await;
@@ -772,9 +784,9 @@ impl Runner {
                     break;
                 }
                 _ = self.resumption_keep_alive.wait() => {
-                    match self.resumption_keep_alive.refresh(&mut self.redis_conn).await {
+                    match self.resumption_keep_alive.refresh(self.volatile.signaling_storage()).await {
                         Ok(_) => {},
-                        Err(ResumptionError::Used) => {
+                        Err(SignalingStorageError::ResumptionTokenAlreadyUsed) => {
                             log::warn!("Closing connection of this runner as its resumption token was used");
 
                             self.ws.close(CloseCode::Normal).await;
@@ -896,19 +908,21 @@ impl Runner {
                 self.metrics.increment_participants_count(&self.participant);
 
                 // Allow moderators, invisible services, and already accepted participants to skip the waiting room
-                let can_skip_waiting_room: bool =
-                    storage::get_skip_waiting_room(&mut self.redis_conn, self.id).await?;
+                let can_skip_waiting_room: bool = self
+                    .volatile
+                    .control_storage()
+                    .get_skip_waiting_room(self.id)
+                    .await?;
 
                 let skip_waiting_room = matches!(self.role, Role::Moderator)
                     || !control_data.participation_kind.is_visible()
                     || can_skip_waiting_room;
 
-                let waiting_room_enabled = moderation::storage::init_waiting_room_key(
-                    &mut self.redis_conn,
-                    self.room_id.room_id(),
-                    self.room.waiting_room,
-                )
-                .await?;
+                let waiting_room_enabled = self
+                    .volatile
+                    .moderation_storage()
+                    .init_waiting_room_enabled(self.room_id.room_id(), self.room.waiting_room)
+                    .await?;
 
                 if !skip_waiting_room && waiting_room_enabled {
                     // Waiting room is enabled; join the waiting room
@@ -934,12 +948,13 @@ impl Runner {
                             .expect("Failed to convert namespaced to json"),
                         );
 
-                        moderation::storage::waiting_room_accepted_remove(
-                            &mut self.redis_conn,
-                            self.room_id.room_id(),
-                            self.id,
-                        )
-                        .await?;
+                        self.volatile
+                            .moderation_storage()
+                            .waiting_room_accepted_remove_participant(
+                                self.room_id.room_id(),
+                                self.id,
+                            )
+                            .await?;
 
                         self.join_room(timestamp, control_data, true).await?
                     }
@@ -956,7 +971,10 @@ impl Runner {
                 }
             }
             ControlCommand::RaiseHand => {
-                if !moderation::storage::is_raise_hands_enabled(&mut self.redis_conn, self.room.id)
+                if !self
+                    .volatile
+                    .moderation_storage()
+                    .is_raise_hands_enabled(self.room.id)
                     .await?
                 {
                     self.ws_send_control_error(timestamp, control_event::Error::RaiseHandsDisabled)
@@ -1013,8 +1031,11 @@ impl Runner {
             return InvalidDisplayNameSnafu.fail();
         }
 
-        let left_at: Option<Timestamp> =
-            storage::get_attribute(&mut self.redis_conn, self.room_id, self.id, "left_at").await?;
+        let left_at: Option<Timestamp> = self
+            .volatile
+            .control_storage()
+            .get_attribute(self.room_id, self.id, LEFT_AT)
+            .await?;
         self.set_control_attributes(timestamp, &display_name, avatar_url.as_deref())
             .await?;
 
@@ -1044,8 +1065,11 @@ impl Runner {
             return Ok(());
         }
 
-        let role: Option<Role> =
-            storage::get_attribute(&mut self.redis_conn, self.room_id, target, "role").await?;
+        let role: Option<Role> = self
+            .volatile
+            .control_storage()
+            .get_attribute(self.room_id, target, ROLE)
+            .await?;
 
         let is_moderator = matches!(role, Some(Role::Moderator));
 
@@ -1056,8 +1080,11 @@ impl Runner {
             return Ok(());
         }
 
-        let user_id: Option<UserId> =
-            storage::get_attribute(&mut self.redis_conn, self.room_id, target, "user_id").await?;
+        let user_id: Option<UserId> = self
+            .volatile
+            .control_storage()
+            .get_attribute(self.room_id, target, USER_ID)
+            .await?;
 
         if let Some(user_id) = user_id {
             if user_id == self.room.created_by {
@@ -1082,10 +1109,13 @@ impl Runner {
         timestamp: Timestamp,
         hand_raised: bool,
     ) -> Result<()> {
-        storage::AttrPipeline::new(self.room_id, self.id)
-            .set("hand_is_up", hand_raised)
-            .set("hand_updated_at", timestamp)
-            .query_async(&mut self.redis_conn)
+        self.volatile
+            .control_storage()
+            .bulk_attribute_actions(
+                AttributeActions::new(self.room_id, self.id)
+                    .set(HAND_IS_UP, hand_raised)
+                    .set(HAND_UPDATED_AT, timestamp),
+            )
             .await?;
 
         let broadcast_event = if hand_raised {
@@ -1104,11 +1134,10 @@ impl Runner {
     }
 
     async fn room_has_moderator_besides_me(&mut self) -> Result<bool> {
-        let roles_and_left_at_timestamps =
-            control::storage::get_role_and_left_at_for_room_participants(
-                &mut self.redis_conn,
-                SignalingRoomId::new_for_room(self.room.id),
-            )
+        let roles_and_left_at_timestamps = self
+            .volatile
+            .control_storage()
+            .get_role_and_left_at_for_room_participants(SignalingRoomId::new_for_room(self.room.id))
             .await?;
 
         Ok(roles_and_left_at_timestamps
@@ -1126,18 +1155,26 @@ impl Runner {
         &mut self,
         tariff: Tariff,
     ) -> Result<ControlFlow<JoinBlockedReason, Tariff>> {
-        let tariff =
-            control::storage::try_init_tariff(&mut self.redis_conn, self.room.id, tariff).await?;
+        let tariff = self
+            .volatile
+            .control_storage()
+            .try_init_tariff(self.room.id, tariff)
+            .await?;
 
         if self.role == Role::Moderator && !self.room_has_moderator_besides_me().await? {
-            control::storage::increment_participant_count(&mut self.redis_conn, self.room.id)
+            self.volatile
+                .control_storage()
+                .increment_participant_count(self.room.id)
                 .await?;
             return Ok(ControlFlow::Continue(tariff));
         }
 
         if let Some(participant_limit) = tariff.quotas.0.get("room_participant_limit") {
-            if let Some(count) =
-                control::storage::get_participant_count(&mut self.redis_conn, self.room.id).await?
+            if let Some(count) = self
+                .volatile
+                .control_storage()
+                .get_participant_count(self.room.id)
+                .await?
             {
                 if count >= *participant_limit as isize {
                     return Ok(ControlFlow::Break(
@@ -1147,7 +1184,10 @@ impl Runner {
             }
         }
 
-        control::storage::increment_participant_count(&mut self.redis_conn, self.room.id).await?;
+        self.volatile
+            .control_storage()
+            .increment_participant_count(self.room.id)
+            .await?;
 
         Ok(ControlFlow::Continue(tariff))
     }
@@ -1164,13 +1204,12 @@ impl Runner {
             .await
             .whatever_context::<_, RunnerError>("Failed to get user")?;
 
-        let mut lock = storage::room_mutex(self.room_id);
-        let guard = lock.lock(&mut self.redis_conn).await?;
+        let guard = self.volatile.room_locking().lock_room(self.room_id).await?;
 
         match self.enforce_tariff(tariff).await {
             Ok(ControlFlow::Continue(_)) => { /* continue */ }
             Ok(ControlFlow::Break(reason)) => {
-                guard.unlock(&mut self.redis_conn).await?;
+                self.volatile.room_locking().unlock_room(guard).await?;
 
                 self.ws_send_control(Timestamp::now(), ControlEvent::JoinBlocked(reason))
                     .await;
@@ -1178,25 +1217,24 @@ impl Runner {
                 return Ok(());
             }
             Err(e) => {
-                guard.unlock(&mut self.redis_conn).await?;
+                self.volatile.room_locking().unlock_room(guard).await?;
 
                 return Err(e);
             }
         };
 
-        let res = moderation::storage::waiting_room_add(
-            &mut self.redis_conn,
-            self.room_id.room_id(),
-            self.id,
-        )
-        .await;
+        let res = self
+            .volatile
+            .moderation_storage()
+            .waiting_room_add_participant(self.room_id.room_id(), self.id)
+            .await;
 
-        guard.unlock(&mut self.redis_conn).await?;
-        let num_added = res?;
+        self.volatile.room_locking().unlock_room(guard).await?;
+        let added_to_waiting_room = res?;
 
-        // Check that SADD doesn't return 0. That would mean that the participant id would be a
+        // Check the participant id has not been added to the waiting room before. That woul be a
         // duplicate which cannot be allowed. Since this should never happen just error and exit.
-        if !self.resuming && num_added == 0 {
+        if !self.resuming && !added_to_waiting_room {
             whatever!("participant-id is already taken inside waiting-room set");
         }
 
@@ -1236,14 +1274,15 @@ impl Runner {
         control_data: ControlState,
         joining_from_waiting_room: bool,
     ) -> Result<()> {
-        let mut lock = storage::room_mutex(self.room_id);
-
         // Clear the left_at timestamp to indicate that the participant is in the real room (not just the waiting room).
         let control_data = ControlState {
             left_at: None,
             ..control_data
         };
-        storage::remove_attribute(&mut self.redis_conn, self.room_id, self.id, "left_at").await?;
+        self.volatile
+            .control_storage()
+            .remove_attribute(self.room_id, self.id, LEFT_AT)
+            .await?;
 
         // If we haven't joined the waiting room yet, fetch, set and enforce the tariff for the room.
         // When in waiting-room this logic was already executed in `join_waiting_room`.
@@ -1254,14 +1293,14 @@ impl Runner {
                 .await
                 .whatever_context::<_, RunnerError>("Failed to get user")?;
 
-            let guard = lock.lock(&mut self.redis_conn).await?;
+            let guard = self.volatile.room_locking().lock_room(self.room_id).await?;
 
             match self.enforce_tariff(tariff.clone()).await {
                 Ok(ControlFlow::Continue(enforced_tariff)) => {
                     tariff = enforced_tariff;
                 }
                 Ok(ControlFlow::Break(reason)) => {
-                    guard.unlock(&mut self.redis_conn).await?;
+                    self.volatile.room_locking().unlock_room(guard).await?;
 
                     self.ws_send_control(Timestamp::now(), ControlEvent::JoinBlocked(reason))
                         .await;
@@ -1269,7 +1308,7 @@ impl Runner {
                     return Ok(());
                 }
                 Err(e) => {
-                    guard.unlock(&mut self.redis_conn).await?;
+                    self.volatile.room_locking().unlock_room(guard).await?;
 
                     return Err(e);
                 }
@@ -1277,13 +1316,20 @@ impl Runner {
 
             (guard, tariff)
         } else {
-            let tariff = storage::get_tariff(&mut self.redis_conn, self.room.id).await?;
-            (lock.lock(&mut self.redis_conn).await?, tariff)
+            let tariff = self
+                .volatile
+                .control_storage()
+                .get_tariff(self.room.id)
+                .await?;
+            (
+                self.volatile.room_locking().lock_room(self.room_id).await?,
+                tariff,
+            )
         };
 
         let res = self.join_room_locked().await;
 
-        let unlock_res = guard.unlock(&mut self.redis_conn).await;
+        let unlock_res = self.volatile.room_locking().unlock_room(guard).await;
 
         let participant_ids = match res {
             Ok(participants) => participants,
@@ -1300,7 +1346,11 @@ impl Runner {
         )
         .await
         .whatever_context::<_, RunnerError>("Failed to get first event for room")?;
-        let event = storage::try_init_event(&mut self.redis_conn, self.room.id, event).await?;
+        let event = self
+            .volatile
+            .control_storage()
+            .try_init_event(self.room.id, event)
+            .await?;
 
         let mut participants = vec![];
 
@@ -1330,8 +1380,11 @@ impl Runner {
             )
             .await;
 
-        let closes_at =
-            control::storage::get_room_closes_at(&mut self.redis_conn, self.room_id).await?;
+        let closes_at = self
+            .volatile
+            .control_storage()
+            .get_room_closes_at(self.room_id)
+            .await?;
 
         let settings = self.settings.load_full();
 
@@ -1384,9 +1437,12 @@ impl Runner {
         Ok(())
     }
 
-    async fn join_room_locked(&mut self) -> Result<Vec<ParticipantId>> {
-        let participant_set_exists =
-            control::storage::participant_set_exists(&mut self.redis_conn, self.room_id).await?;
+    async fn join_room_locked(&mut self) -> Result<BTreeSet<ParticipantId>> {
+        let participant_set_exists = self
+            .volatile
+            .control_storage()
+            .participant_set_exists(self.room_id)
+            .await?;
 
         if !participant_set_exists {
             self.set_room_time_limit().await?;
@@ -1394,15 +1450,21 @@ impl Runner {
         }
         self.activate_room_time_limit().await?;
 
-        let participants =
-            storage::get_all_participants(&mut self.redis_conn, self.room_id).await?;
+        let participants = self
+            .volatile
+            .control_storage()
+            .get_all_participants(self.room_id)
+            .await?;
 
-        let num_added =
-            storage::add_participant_to_set(&mut self.redis_conn, self.room_id, self.id).await?;
+        let added = self
+            .volatile
+            .control_storage()
+            .add_participant_to_set(self.room_id, self.id)
+            .await?;
 
         // Check that SADD doesn't return 0. That would mean that the participant id would be a
         // duplicate which cannot be allowed. Since this should never happen just error and exit.
-        if !self.resuming && num_added == 0 {
+        if !self.resuming && !added {
             whatever!("participant-id is already taken inside participant set");
         }
 
@@ -1410,7 +1472,11 @@ impl Runner {
     }
 
     async fn set_room_time_limit(&mut self) -> Result<()> {
-        let tariff = storage::get_tariff(&mut self.redis_conn, self.room.id).await?;
+        let tariff = self
+            .volatile
+            .control_storage()
+            .get_tariff(self.room.id)
+            .await?;
 
         let quotas = tariff.quotas.0;
         let remaining_seconds = quotas
@@ -1422,12 +1488,10 @@ impl Runner {
                 Timestamp::now().checked_add_signed(chrono::Duration::seconds(remaining_seconds));
 
             if let Some(closes_at) = closes_at {
-                control::storage::set_room_closes_at(
-                    &mut self.redis_conn,
-                    self.room_id,
-                    closes_at.into(),
-                )
-                .await?;
+                self.volatile
+                    .control_storage()
+                    .set_room_closes_at(self.room_id, closes_at.into())
+                    .await?;
             } else {
                 log::error!("DateTime overflow for closes_at");
             }
@@ -1437,12 +1501,15 @@ impl Runner {
     }
 
     async fn activate_room_time_limit(&mut self) -> Result<()> {
-        let closes_at =
-            control::storage::get_room_closes_at(&mut self.redis_conn, self.room_id).await?;
+        let closes_at = self
+            .volatile
+            .control_storage()
+            .get_room_closes_at(self.room_id)
+            .await?;
 
         if let Some(closes_at) = closes_at {
             let remaining_seconds = (*closes_at - *Timestamp::now()).num_seconds();
-            let future = tokio::time::sleep(Duration::from_secs(remaining_seconds.max(0) as u64));
+            let future = sleep(Duration::from_secs(remaining_seconds.max(0) as u64));
             self.time_limit_future = Box::pin(future);
         }
 
@@ -1455,37 +1522,40 @@ impl Runner {
         display_name: &str,
         avatar_url: Option<&str>,
     ) -> Result<()> {
-        let mut pipe_attrs = storage::AttrPipeline::new(self.room_id, self.id);
+        let mut actions = AttributeActions::new(self.room_id, self.id);
 
         match &self.participant {
             Participant::User(ref user) => {
-                pipe_attrs
-                    .set("kind", ParticipationKind::User)
+                actions
+                    .set(KIND, ParticipationKind::User)
                     .set(
-                        "avatar_url",
+                        AVATAR_URL,
                         avatar_url.expect("user must have avatar_url set"),
                     )
-                    .set("user_id", user.id)
-                    .set("is_room_owner", user.id == self.room.created_by);
+                    .set(USER_ID, user.id)
+                    .set(IS_ROOM_OWNER, user.id == self.room.created_by);
             }
             Participant::Guest => {
-                pipe_attrs.set("kind", ParticipationKind::Guest);
+                actions.set(KIND, ParticipationKind::Guest);
             }
             Participant::Sip => {
-                pipe_attrs.set("kind", ParticipationKind::Sip);
+                actions.set(KIND, ParticipationKind::Sip);
             }
             Participant::Recorder => {
-                pipe_attrs.set("kind", ParticipationKind::Recorder);
+                actions.set(KIND, ParticipationKind::Recorder);
             }
         }
 
-        pipe_attrs
-            .set("role", self.role)
-            .set("hand_is_up", false)
-            .set("hand_updated_at", timestamp)
-            .set("display_name", display_name)
-            .set("joined_at", timestamp)
-            .query_async(&mut self.redis_conn)
+        self.volatile
+            .control_storage()
+            .bulk_attribute_actions(
+                actions
+                    .set(ROLE, self.role)
+                    .set(HAND_IS_UP, false)
+                    .set(HAND_UPDATED_AT, timestamp)
+                    .set(DISPLAY_NAME, display_name)
+                    .set(JOINED_AT, timestamp),
+            )
             .await?;
 
         Ok(())
@@ -1504,7 +1574,8 @@ impl Runner {
             module_data: Default::default(),
         };
 
-        let control_data = ControlState::from_redis(&mut self.redis_conn, self.room_id, id).await?;
+        let control_data =
+            ControlState::from_storage(self.volatile.control_storage(), self.room_id, id).await?;
 
         // Do not build participants for invisible services
         if !control_data.participation_kind.is_visible() {
@@ -1663,12 +1734,10 @@ impl Runner {
                         *accepted = true;
 
                         // Allow the participant to skip the waiting room on next rejoin
-                        storage::set_skip_waiting_room_with_expiry(
-                            &mut self.redis_conn,
-                            self.id,
-                            true,
-                        )
-                        .await?;
+                        self.volatile
+                            .moderation_storage()
+                            .set_skip_waiting_room_with_expiry(self.id, true)
+                            .await?;
 
                         self.ws
                             .send(Message::Text(
@@ -1712,14 +1781,10 @@ impl Runner {
 
                 self.role = new_role;
 
-                storage::set_attribute(
-                    &mut self.redis_conn,
-                    self.room_id,
-                    self.id,
-                    "role",
-                    new_role,
-                )
-                .await?;
+                self.volatile
+                    .control_storage()
+                    .set_attribute(self.room_id, self.id, ROLE, new_role)
+                    .await?;
 
                 let actions = self
                     .handle_module_broadcast_event(
@@ -1738,13 +1803,11 @@ impl Runner {
                 self.exchange_publish_control(timestamp, None, exchange::Message::Update(self.id));
             }
             exchange::Message::ResetRaisedHands { issued_by } => {
-                let raised: Option<bool> = storage::get_attribute(
-                    &mut self.redis_conn,
-                    self.room_id,
-                    self.id,
-                    "hand_is_up",
-                )
-                .await?;
+                let raised: Option<bool> = self
+                    .volatile
+                    .control_storage()
+                    .get_attribute(self.room_id, self.id, HAND_IS_UP)
+                    .await?;
                 if matches!(raised, Some(true)) {
                     self.handle_raise_hand_change(timestamp, false).await?;
 
@@ -1775,13 +1838,11 @@ impl Runner {
                     .await;
             }
             exchange::Message::DisableRaiseHands { issued_by } => {
-                let raised: Option<bool> = storage::get_attribute(
-                    &mut self.redis_conn,
-                    self.room_id,
-                    self.id,
-                    "hand_is_up",
-                )
-                .await?;
+                let raised: Option<bool> = self
+                    .volatile
+                    .control_storage()
+                    .get_attribute(self.room_id, self.id, HAND_IS_UP)
+                    .await?;
                 if matches!(raised, Some(true)) {
                     self.handle_raise_hand_change(timestamp, false).await?;
                 }
@@ -1816,14 +1877,10 @@ impl Runner {
             }
         );
 
-        storage::set_attribute(
-            &mut self.redis_conn,
-            self.room_id,
-            self.id,
-            "left_at",
-            Timestamp::now(),
-        )
-        .await?;
+        self.volatile
+            .control_storage()
+            .set_attribute(self.room_id, self.id, LEFT_AT, Timestamp::now())
+            .await?;
 
         let actions = self
             .handle_module_broadcast_event(timestamp, DynBroadcastEvent::Leaving, false)
@@ -1834,15 +1891,14 @@ impl Runner {
 
         // resuming ensures that we can reuse the same participant ID
         self.resuming = true;
-        moderation::storage::waiting_room_add(
-            &mut self.redis_conn,
-            self.room_id.room_id(),
-            self.id,
-        )
-        .await?;
+        self.volatile
+            .moderation_storage()
+            .waiting_room_add_participant(self.room_id.room_id(), self.id)
+            .await?;
 
         let control_data =
-            ControlState::from_redis(&mut self.redis_conn, self.room_id, self.id).await?;
+            ControlState::from_storage(self.volatile.control_storage(), self.room_id, self.id)
+                .await?;
 
         self.state = RunnerState::Waiting {
             accepted: false,
@@ -1929,7 +1985,7 @@ impl Runner {
             timestamp,
             ws_messages: &mut ws_messages,
             exchange_publish: &mut exchange_publish,
-            redis_conn: &mut self.redis_conn,
+            volatile: &mut self.volatile,
             events: &mut self.events,
             invalidate_data: &mut invalidate_data,
             exit: &mut exit,
@@ -1965,7 +2021,7 @@ impl Runner {
             timestamp,
             ws_messages: &mut ws_messages,
             exchange_publish: &mut exchange_publish,
-            redis_conn: &mut self.redis_conn,
+            volatile: &mut self.volatile,
             events: &mut self.events,
             invalidate_data: &mut invalidate_data,
             exit: &mut exit,

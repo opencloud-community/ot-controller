@@ -7,28 +7,24 @@ use std::{
     time::{Duration, SystemTime},
 };
 
-use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError};
-use opentalk_types::core::{BreakoutRoomId, RoomId};
-use redis::AsyncCommands;
+use opentalk_types::core::BreakoutRoomId;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
-use snafu::ResultExt;
 
 use super::BreakoutRoom;
 
-/// Typed key to the breakout-room config for the specified room
-#[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "opentalk-signaling:room={room}:breakout:config")]
-struct BreakoutRoomConfig {
-    room: RoomId,
-}
+mod breakout_storage;
+mod redis;
+mod volatile;
+
+pub use breakout_storage::BreakoutStorage;
 
 /// Configuration of the current breakout rooms which lives inside redis
 ///
 /// When the configuration is set the breakoutrooms are considered active.
 /// Breakout rooms with a duration will have the redis entry expire
 /// whenever the breakoutrooms expire.
-#[derive(Debug, Serialize, Deserialize, Clone, ToRedisArgs, FromRedisValue)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, ToRedisArgs, FromRedisValue)]
 #[to_redis_args(serde)]
 #[from_redis_value(serde)]
 pub struct BreakoutConfig {
@@ -43,48 +39,65 @@ impl BreakoutConfig {
     }
 }
 
-pub async fn set_config(
-    redis_conn: &mut RedisConnection,
-    room: RoomId,
-    config: &BreakoutConfig,
-) -> Result<(), SignalingModuleError> {
-    if let Some(duration) = config.duration {
-        redis_conn
-            .set_ex(BreakoutRoomConfig { room }, config, duration.as_secs())
+#[cfg(test)]
+mod test_common {
+    use std::time::{Duration, SystemTime};
+
+    use opentalk_types::core::RoomId;
+    use pretty_assertions::assert_eq;
+
+    use super::BreakoutStorage;
+    use crate::api::signaling::breakout::storage::BreakoutConfig;
+
+    pub const ROOM: RoomId = RoomId::nil();
+
+    pub(super) async fn config_unlimited(storage: &mut impl BreakoutStorage) {
+        assert!(storage.get_breakout_config(ROOM).await.unwrap().is_none());
+
+        let config = BreakoutConfig {
+            rooms: Vec::new(),
+            started: SystemTime::now(),
+            duration: None,
+        };
+
+        assert!(storage
+            .set_breakout_config(ROOM, &config)
             .await
-            .context(RedisSnafu {
-                message: "Failed to set breakout-room config",
-            })
-    } else {
-        redis_conn
-            .set(BreakoutRoomConfig { room }, config)
-            .await
-            .context(RedisSnafu {
-                message: "Failed to set breakout-room config",
-            })
+            .unwrap()
+            .is_none());
+
+        assert_eq!(
+            storage.get_breakout_config(ROOM).await.unwrap(),
+            Some(config)
+        );
+
+        storage.del_breakout_config(ROOM).await.unwrap();
+
+        assert!(storage.get_breakout_config(ROOM).await.unwrap().is_none());
     }
-}
 
-pub async fn get_config(
-    redis_conn: &mut RedisConnection,
-    room: RoomId,
-) -> Result<Option<BreakoutConfig>, SignalingModuleError> {
-    redis_conn
-        .get(BreakoutRoomConfig { room })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to get breakout-room config",
-        })
-}
+    pub(super) async fn config_expiring(storage: &mut impl BreakoutStorage) {
+        assert!(storage.get_breakout_config(ROOM).await.unwrap().is_none());
 
-pub async fn del_config(
-    redis_conn: &mut RedisConnection,
-    room: RoomId,
-) -> Result<bool, SignalingModuleError> {
-    redis_conn
-        .del(BreakoutRoomConfig { room })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to del breakout-room config",
-        })
+        let config = BreakoutConfig {
+            rooms: Vec::new(),
+            started: SystemTime::now(),
+            duration: Some(Duration::from_millis(3)),
+        };
+
+        let real_duration = storage
+            .set_breakout_config(ROOM, &config)
+            .await
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            storage.get_breakout_config(ROOM).await.unwrap(),
+            Some(config)
+        );
+
+        std::thread::sleep(real_duration.saturating_add(Duration::from_millis(100)));
+
+        assert!(storage.get_breakout_config(ROOM).await.unwrap().is_none());
+    }
 }

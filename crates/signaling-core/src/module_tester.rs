@@ -49,10 +49,18 @@ use tokio::{
 };
 
 use crate::{
-    control::{self, storage, ControlStateExt as _},
+    control::{
+        self,
+        storage::{
+            AttributeActions, ControlStorageParticipantAttributes, AVATAR_URL, DISPLAY_NAME,
+            HAND_IS_UP, HAND_UPDATED_AT, IS_ROOM_OWNER, JOINED_AT, KIND, LEFT_AT, ROLE, USER_ID,
+        },
+        ControlStateExt as _, ControlStorageProvider,
+    },
+    room_lock::RoomLockingProvider,
     AnyStream, DestroyContext, Event, ExchangePublish, InitContext, ModuleContext, ObjectStorage,
-    Participant, RedisConnection, RedisSnafu, SerdeJsonSnafu, SignalingModule,
-    SignalingModuleError, SignalingRoomId,
+    Participant, SerdeJsonSnafu, SignalingModule, SignalingModuleError, SignalingRoomId,
+    VolatileStorage,
 };
 
 /// A module tester that simulates a runner environment for provided module.
@@ -66,8 +74,8 @@ pub struct ModuleTester<M>
 where
     M: SignalingModule,
 {
-    /// The redis interface
-    pub redis_conn: RedisConnection,
+    /// The volatile data storage
+    pub volatile: VolatileStorage,
     /// The database interface
     pub db: Arc<Db>,
     /// Authz
@@ -88,11 +96,11 @@ where
     M: SignalingModule,
 {
     /// Create a new ModuleTester instance
-    pub fn new(db: Arc<Db>, authz: Arc<Authz>, redis_conn: RedisConnection, room: Room) -> Self {
+    pub fn new(db: Arc<Db>, authz: Arc<Authz>, volatile: VolatileStorage, room: Room) -> Self {
         let (exchange_sender, _) = broadcast::channel(10);
 
         Self {
-            redis_conn,
+            volatile,
             db,
             authz,
             room,
@@ -122,7 +130,7 @@ where
             self.db.clone(),
             Arc::new(ObjectStorage::broken()),
             self.authz.clone(),
-            self.redis_conn.clone(),
+            self.volatile.clone(),
             params,
             client_interface,
             self.exchange_sender.clone(),
@@ -367,7 +375,7 @@ struct MockRunner<M>
 where
     M: SignalingModule,
 {
-    redis_conn: RedisConnection,
+    volatile: VolatileStorage,
     room_id: SignalingRoomId,
     room_owner: UserId,
     participant_id: ParticipantId,
@@ -396,7 +404,7 @@ where
         db: Arc<Db>,
         storage: Arc<ObjectStorage>,
         authz: Arc<Authz>,
-        mut redis_conn: RedisConnection,
+        mut volatile: VolatileStorage,
         params: M::Params,
         interface: ClientInterface<M>,
         exchange_sender: broadcast::Sender<ExchangePublish>,
@@ -433,7 +441,7 @@ where
             authz: &authz,
             exchange_bindings: &mut vec![],
             events: &mut events,
-            redis_conn: &mut redis_conn,
+            volatile: &mut volatile,
             m: PhantomData::<fn() -> M>,
         };
 
@@ -449,7 +457,7 @@ where
         };
 
         Ok(Self {
-            redis_conn,
+            volatile,
             room_id: SignalingRoomId::new(room.id, breakout_room),
             room_owner: room.created_by,
             participant_id,
@@ -480,7 +488,7 @@ where
                 timestamp: Timestamp::now(),
                 ws_messages: &mut ws_messages,
                 exchange_publish: &mut exchange_publish,
-                redis_conn: &mut self.redis_conn.clone(),
+                volatile: &mut self.volatile.clone(),
                 invalidate_data: &mut invalidate_data,
                 events: &mut events,
                 exit: &mut exit,
@@ -515,7 +523,9 @@ where
                 Some((namespace, message)) = self.events.next() => {
                     assert_eq!(namespace, M::NAMESPACE, "Invalid namespace on external event");
 
-                    self.module.on_event(ctx, Event::Ext(*message.downcast().expect("invalid ext type"))).await.expect("Error when handling external event");
+                    if let Err(e) = self.module.on_event(ctx, Event::Ext(*message.downcast().expect("invalid ext type"))).await {
+                        panic!("Error when handling external event: {}", snafu::Report::from_error(e))
+                    }
 
                     self.handle_module_requested_actions(ws_messages, exchange_publish, invalidate_data, events, exit).await;
                 }
@@ -539,59 +549,61 @@ where
     ) -> Result<(), SignalingModuleError> {
         match control_message {
             ControlCommand::Join(join) => {
-                let mut lock = storage::room_mutex(self.room_id);
-                let guard = lock
-                    .lock(&mut self.redis_conn)
+                let guard = self
+                    .volatile
+                    .room_locking()
+                    .lock_room(self.room_id)
                     .await
                     .expect("lock poisoned");
 
                 let is_room_owner =
                     matches!(self.participant, Participant::User(user) if user == self.room_owner);
 
-                let mut attr_pipe = storage::AttrPipeline::new(self.room_id, self.participant_id);
+                let mut actions = AttributeActions::new(self.room_id, self.participant_id);
 
                 match &self.participant {
                     Participant::User(user) => {
-                        attr_pipe
-                            .set("kind", ParticipationKind::User)
-                            .set("user_id", user);
+                        actions
+                            .set(KIND, ParticipationKind::User)
+                            .set(USER_ID, user);
                     }
                     Participant::Guest => {
-                        attr_pipe.set("kind", ParticipationKind::Guest);
+                        actions.set(KIND, ParticipationKind::Guest);
                     }
                     Participant::Sip => {
-                        attr_pipe.set("kind", ParticipationKind::Sip);
+                        actions.set(KIND, ParticipationKind::Sip);
                     }
                     Participant::Recorder => {
-                        attr_pipe.set("kind", ParticipationKind::Recorder);
+                        actions.set(KIND, ParticipationKind::Recorder);
                     }
                 }
 
-                attr_pipe
-                    .set("display_name", &join.display_name)
-                    .set("role", self.role)
-                    .set("avatar_url", &join.display_name)
-                    .set("joined_at", ctx.timestamp)
-                    .set("hand_is_up", false)
-                    .set("hand_updated_at", ctx.timestamp)
-                    .set("is_room_owner", is_room_owner)
-                    .query_async(&mut self.redis_conn)
-                    .await
-                    .context(RedisSnafu {
-                        message: "redis query failed",
-                    })?;
+                actions
+                    .set(DISPLAY_NAME, &join.display_name)
+                    .set(ROLE, self.role)
+                    .set(AVATAR_URL, &join.display_name)
+                    .set(JOINED_AT, ctx.timestamp)
+                    .set(HAND_IS_UP, false)
+                    .set(HAND_UPDATED_AT, ctx.timestamp)
+                    .set(IS_ROOM_OWNER, is_room_owner);
 
-                let participant_set =
-                    storage::get_all_participants(&mut self.redis_conn, self.room_id).await?;
+                self.volatile
+                    .control_storage()
+                    .bulk_attribute_actions(&actions)
+                    .await?;
 
-                storage::add_participant_to_set(
-                    &mut self.redis_conn,
-                    self.room_id,
-                    self.participant_id,
-                )
-                .await?;
+                let participant_set = self
+                    .volatile
+                    .control_storage()
+                    .get_all_participants(self.room_id)
+                    .await?;
 
-                guard.unlock(&mut self.redis_conn).await?;
+                self.volatile
+                    .control_storage()
+                    .add_participant_to_set(self.room_id, self.participant_id)
+                    .await?;
+
+                self.volatile.room_locking().unlock_room(guard).await?;
 
                 let mut participants = vec![];
 
@@ -694,14 +706,14 @@ where
             }
             ControlCommand::EnterRoom => unreachable!(),
             ControlCommand::RaiseHand => {
-                storage::AttrPipeline::new(self.room_id, self.participant_id)
-                    .set("hand_is_up", true)
-                    .set("hand_updated_at", ctx.timestamp)
-                    .query_async(&mut self.redis_conn)
-                    .await
-                    .context(RedisSnafu {
-                        message: "RaiseHand query failed",
-                    })?;
+                self.volatile
+                    .control_storage()
+                    .bulk_attribute_actions(
+                        AttributeActions::new(self.room_id, self.participant_id)
+                            .set(HAND_IS_UP, true)
+                            .set(HAND_UPDATED_AT, ctx.timestamp),
+                    )
+                    .await?;
 
                 ctx.invalidate_data();
 
@@ -710,14 +722,14 @@ where
                 Ok(())
             }
             ControlCommand::LowerHand => {
-                storage::AttrPipeline::new(self.room_id, self.participant_id)
-                    .set("hand_is_up", false)
-                    .set("hand_updated_at", ctx.timestamp)
-                    .query_async(&mut self.redis_conn)
-                    .await
-                    .context(RedisSnafu {
-                        message: "LowerHand query failed",
-                    })?;
+                self.volatile
+                    .control_storage()
+                    .bulk_attribute_actions(
+                        AttributeActions::new(self.room_id, self.participant_id)
+                            .set(HAND_IS_UP, false)
+                            .set(HAND_UPDATED_AT, ctx.timestamp),
+                    )
+                    .await?;
 
                 ctx.invalidate_data();
 
@@ -966,7 +978,7 @@ where
             timestamp: Timestamp::now(),
             ws_messages: &mut ws_messages,
             exchange_publish: &mut exchange_publish,
-            redis_conn: &mut self.redis_conn,
+            volatile: &mut self.volatile,
             invalidate_data: &mut invalidate_data,
             events: &mut events,
             exit: &mut exit,
@@ -997,7 +1009,8 @@ where
             module_data: Default::default(),
         };
 
-        let control_data = ControlState::from_redis(&mut self.redis_conn, self.room_id, id).await?;
+        let control_data =
+            ControlState::from_storage(self.volatile.control_storage(), self.room_id, id).await?;
 
         participant
             .module_data
@@ -1010,24 +1023,23 @@ where
     }
 
     async fn destroy(mut self) -> Result<(), SignalingModuleError> {
-        let mut set_lock = storage::room_mutex(self.room_id);
-
-        let set_guard = set_lock
-            .lock(&mut self.redis_conn)
+        let set_guard = self
+            .volatile
+            .room_locking()
+            .lock_room(self.room_id)
             .await
             .expect("lock poisoned");
 
-        storage::set_attribute(
-            &mut self.redis_conn,
-            self.room_id,
-            self.participant_id,
-            "left_at",
-            Timestamp::now(),
-        )
-        .await?;
+        self.volatile
+            .control_storage()
+            .set_attribute(self.room_id, self.participant_id, LEFT_AT, Timestamp::now())
+            .await?;
 
-        let destroy_room =
-            storage::participants_all_left(&mut self.redis_conn, self.room_id).await?;
+        let destroy_room = self
+            .volatile
+            .control_storage()
+            .participants_all_left(self.room_id)
+            .await?;
 
         self.publish_exchange_control(control::exchange::Message::Left {
             id: self.participant_id,
@@ -1035,7 +1047,7 @@ where
         })?;
 
         let ctx = DestroyContext {
-            redis_conn: &mut self.redis_conn.clone(),
+            volatile: &mut self.volatile.clone(),
             destroy_room,
         };
         let module = self.module;
@@ -1044,20 +1056,24 @@ where
 
         if destroy_room {
             for key in [
-                "display_name",
-                "kind",
-                "joined_at",
-                "hand_is_up",
-                "hand_updated_at",
-                "user_id",
-                "is_room_owner",
+                DISPLAY_NAME,
+                KIND,
+                JOINED_AT,
+                HAND_IS_UP,
+                HAND_UPDATED_AT,
+                USER_ID,
+                IS_ROOM_OWNER,
             ] {
-                storage::remove_attribute_key(&mut self.redis_conn, self.room_id, key).await?
+                self.volatile
+                    .control_storage()
+                    .remove_attribute_key(self.room_id, key)
+                    .await?
             }
         }
 
-        set_guard
-            .unlock(&mut self.redis_conn)
+        self.volatile
+            .room_locking()
+            .unlock_room(set_guard)
             .await
             .whatever_context("Failed to unlock set_guard r3dlock while destroying mockrunner")
     }

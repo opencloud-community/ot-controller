@@ -7,7 +7,7 @@ use super::StreamErrorReason;
 use crate::imports::*;
 
 /// The current status of a stream
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),

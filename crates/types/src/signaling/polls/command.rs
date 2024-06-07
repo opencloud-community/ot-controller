@@ -4,7 +4,7 @@
 
 //! Signaling messages for the `polls` namespace
 
-use std::{collections::HashSet, time::Duration};
+use std::{collections::BTreeSet, time::Duration};
 
 use super::{ChoiceId, PollId};
 #[allow(unused_imports)]
@@ -76,15 +76,15 @@ pub enum Choices {
     Multiple {
         /// The set of choice ids
         #[cfg_attr(feature = "serde", serde(default))]
-        choice_ids: HashSet<ChoiceId>,
+        choice_ids: BTreeSet<ChoiceId>,
     },
 }
 
 impl Choices {
-    /// Returns the choices as a hashset
-    pub fn to_hash_set(self) -> HashSet<ChoiceId> {
+    /// Returns the choices as a BTreeSet
+    pub fn to_hash_set(self) -> BTreeSet<ChoiceId> {
         match self {
-            Self::Single { choice_id } => HashSet::from_iter(vec![choice_id]),
+            Self::Single { choice_id } => BTreeSet::from_iter(vec![choice_id]),
             Self::Multiple { choice_ids } => choice_ids,
         }
     }
@@ -173,7 +173,7 @@ mod test {
             assert_eq!(
                 choices,
                 Choices::Multiple {
-                    choice_ids: HashSet::from_iter(vec![ChoiceId::from(322), ChoiceId::from(323)]),
+                    choice_ids: BTreeSet::from_iter(vec![ChoiceId::from(322), ChoiceId::from(323)]),
                 }
             );
         } else {
@@ -219,7 +219,7 @@ mod test {
             assert_eq!(
                 choices,
                 Choices::Multiple {
-                    choice_ids: HashSet::new(),
+                    choice_ids: BTreeSet::new(),
                 }
             );
         } else {

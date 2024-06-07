@@ -10,23 +10,38 @@
 
 use std::sync::Arc;
 
+use either::Either;
 use opentalk_database::Db;
 use opentalk_db_storage::events::shared_folders::EventSharedFolder;
 use opentalk_signaling_core::{
-    control::storage::get_event, DestroyContext, Event, InitContext, ModuleContext,
-    SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
+    DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
+    SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types::{
     common::shared_folder::SharedFolder as SharedFolderType,
     signaling::shared_folder::{event::SharedFolderEvent, NAMESPACE},
 };
 use snafu::Report;
+use storage::SharedFolderStorage;
 
 mod storage;
 
 pub struct SharedFolder {
     room: SignalingRoomId,
     db: Arc<Db>,
+}
+
+trait SharedFolderStorageProvider {
+    fn storage(&mut self) -> &mut dyn SharedFolderStorage;
+}
+
+impl SharedFolderStorageProvider for VolatileStorage {
+    fn storage(&mut self) -> &mut dyn SharedFolderStorage {
+        match self.as_mut() {
+            Either::Left(v) => v,
+            Either::Right(v) => v,
+        }
+    }
 }
 
 #[async_trait::async_trait(? Send)]
@@ -66,24 +81,38 @@ impl SignalingModule for SharedFolder {
                 frontend_data,
                 participants: _,
             } => {
-                if !storage::is_shared_folder_initialized(ctx.redis_conn(), self.room).await? {
-                    if let Some(event) = get_event(ctx.redis_conn(), self.room.room_id()).await? {
+                if !ctx
+                    .volatile
+                    .storage()
+                    .is_shared_folder_initialized(self.room)
+                    .await?
+                {
+                    if let Some(event) = ctx
+                        .volatile
+                        .storage()
+                        .get_event(self.room.room_id())
+                        .await?
+                    {
                         let mut conn = self.db.get_conn().await?;
                         if let Some(shared_folder) =
                             EventSharedFolder::get_for_event(&mut conn, event.id).await?
                         {
-                            storage::set_shared_folder(
-                                ctx.redis_conn(),
-                                self.room,
-                                shared_folder.into(),
-                            )
-                            .await?;
+                            ctx.volatile
+                                .storage()
+                                .set_shared_folder(self.room, shared_folder.into())
+                                .await?;
                         }
                     };
-                    storage::set_shared_folder_initialized(ctx.redis_conn(), self.room).await?;
+                    ctx.volatile
+                        .storage()
+                        .set_shared_folder_initialized(self.room)
+                        .await?;
                 }
 
-                *frontend_data = storage::get_shared_folder(ctx.redis_conn(), self.room)
+                *frontend_data = ctx
+                    .volatile
+                    .storage()
+                    .get_shared_folder(self.room)
                     .await?
                     .map(|f| f.for_signaling_role(control_data.role));
             }
@@ -95,7 +124,7 @@ impl SignalingModule for SharedFolder {
             Event::ParticipantUpdated(_, _) => {}
             Event::RoleUpdated(role) => {
                 if let Some(shared_folder) =
-                    storage::get_shared_folder(ctx.redis_conn(), self.room).await?
+                    ctx.volatile.storage().get_shared_folder(self.room).await?
                 {
                     let update = SharedFolderEvent::Updated(shared_folder.for_signaling_role(role));
                     ctx.ws_send(update);
@@ -109,18 +138,18 @@ impl SignalingModule for SharedFolder {
         Ok(())
     }
 
-    async fn on_destroy(self, mut ctx: DestroyContext<'_>) {
+    async fn on_destroy(self, ctx: DestroyContext<'_>) {
         // ==== Cleanup room ====
         if ctx.destroy_room() {
-            if let Err(e) =
-                storage::delete_shared_folder_initialized(ctx.redis_conn(), self.room).await
-            {
+            let volatile = ctx.volatile.storage();
+
+            if let Err(e) = volatile.delete_shared_folder_initialized(self.room).await {
                 log::error!(
                     "Failed to remove shared folder initialized flag on room destroy, {}",
                     e
                 );
             }
-            if let Err(e) = storage::delete_shared_folder(ctx.redis_conn(), self.room).await {
+            if let Err(e) = volatile.delete_shared_folder(self.room).await {
                 log::error!(
                     "Failed to remove shared folder on room destroy, {}",
                     Report::from_error(e)

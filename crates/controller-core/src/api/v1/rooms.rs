@@ -27,7 +27,7 @@ use opentalk_db_storage::{
     users::User,
     utils::build_event_info,
 };
-use opentalk_signaling_core::{Participant, RedisConnection};
+use opentalk_signaling_core::{Participant, VolatileStorage};
 use opentalk_types::{
     api::{
         error::{ApiError, ValidationErrorEntry, ERROR_CODE_INVALID_VALUE},
@@ -49,7 +49,8 @@ use super::response::NoContent;
 use crate::{
     api::{
         signaling::{
-            breakout, moderation, ticket::start_or_continue_signaling_session, SignalingModules,
+            breakout::BreakoutStorageProvider as _, moderation::ModerationStorageProvider as _,
+            ticket::start_or_continue_signaling_session, SignalingModules,
         },
         v1::{util::require_feature, ApiResponse},
     },
@@ -311,7 +312,7 @@ pub async fn get_room_event(
 #[post("/rooms/{room_id}/start")]
 pub async fn start(
     db: Data<Db>,
-    redis_conn: Data<RedisConnection>,
+    volatile: Data<VolatileStorage>,
     current_user: ReqData<User>,
     room_id: Path<RoomId>,
     request: Json<PostRoomsStartRequestBody>,
@@ -321,10 +322,12 @@ pub async fn start(
 
     let room = Room::get(&mut db.get_conn().await?, room_id).await?;
 
-    let mut redis_conn = (**redis_conn).clone();
+    let mut volatile = (**volatile).clone();
 
     // check if user is banned from room
-    if moderation::storage::is_banned(&mut redis_conn, room.id, current_user.id)
+    if volatile
+        .moderation_storage()
+        .is_user_banned(room.id, current_user.id)
         .await
         .map_err(Into::<ApiError>::into)?
     {
@@ -332,7 +335,9 @@ pub async fn start(
     }
 
     if let Some(breakout_room) = request.breakout_room {
-        let config = breakout::storage::get_config(&mut redis_conn, room.id)
+        let config = volatile
+            .breakout_storage()
+            .get_breakout_config(room.id)
             .await
             .map_err(Into::<ApiError>::into)?;
 
@@ -346,7 +351,7 @@ pub async fn start(
     }
 
     let (ticket, resumption) = start_or_continue_signaling_session(
-        &mut redis_conn,
+        &mut volatile,
         current_user.id.into(),
         room_id,
         request.breakout_room,
@@ -363,7 +368,7 @@ pub async fn start(
 #[post("/rooms/{room_id}/start_invited")]
 pub async fn start_invited(
     db: Data<Db>,
-    redis_ctx: Data<RedisConnection>,
+    volatile: Data<VolatileStorage>,
     room_id: Path<RoomId>,
     request: Json<PostRoomsStartInvitedRequestBody>,
 ) -> Result<ApiResponse<RoomsStartResponse>, ApiError> {
@@ -404,10 +409,12 @@ pub async fn start_invited(
         }
     }
 
-    let mut redis_conn = (**redis_ctx).clone();
+    let mut volatile = (**volatile).clone();
 
     if let Some(breakout_room) = request.breakout_room {
-        let config = breakout::storage::get_config(&mut redis_conn, room.id)
+        let config = volatile
+            .breakout_storage()
+            .get_breakout_config(room.id)
             .await
             .map_err(Into::<ApiError>::into)?;
 
@@ -421,7 +428,7 @@ pub async fn start_invited(
     }
 
     let (ticket, resumption) = start_or_continue_signaling_session(
-        &mut redis_conn,
+        &mut volatile,
         Participant::Guest,
         room_id,
         request.breakout_room,

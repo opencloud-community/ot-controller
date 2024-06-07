@@ -51,14 +51,14 @@ pub struct Mutex<K> {
 ///
 /// As these locks can expire in redis, this carries an Instant. Call [`is_locked()`](MutexGuard::is_locked())
 /// During unlock, it is checked whether the canary is still present as the locks key value.
-pub struct MutexGuard<'a, K> {
-    key: &'a K,
+pub struct MutexGuard<K> {
+    key: K,
     canary: Vec<u8>,
     created: Instant,
     locked: bool,
 }
 
-impl<K> MutexGuard<'_, K> {
+impl<K> MutexGuard<K> {
     /// Returns true when the [`MutexGuard`] / locked redlock mutex is still valid
     ///
     /// If the [`MutexGuard`]/lock expired in Redis, this returns false.
@@ -75,7 +75,7 @@ impl<K> MutexGuard<'_, K> {
     }
 }
 
-impl<K> MutexGuard<'_, K>
+impl<K> MutexGuard<K>
 where
     K: ToRedisArgs,
 {
@@ -93,7 +93,7 @@ where
 
         let script = Script::new(UNLOCK_SCRIPT);
         let result: i32 = script
-            .key(ToRedisArgsRef(self.key))
+            .key(ToRedisArgsRef(&self.key))
             .arg(&self.canary[..])
             .invoke_async(redis)
             .await?;
@@ -106,7 +106,7 @@ where
     }
 }
 
-impl<K> Drop for MutexGuard<'_, K> {
+impl<K> Drop for MutexGuard<K> {
     fn drop(&mut self) {
         if !std::thread::panicking() {
             debug_assert!(!self.is_locked(), "MutexGuard must be unlocked before drop");
@@ -145,7 +145,7 @@ where
     }
 
     /// Locks the [`Mutex`] and returns a [`MutexGuard`] / redlock mutex
-    pub async fn lock<C>(&mut self, redis: &mut C) -> Result<MutexGuard<'_, K>>
+    pub async fn lock<C>(self, redis: &mut C) -> Result<MutexGuard<K>>
     where
         C: ConnectionLike,
     {
@@ -173,7 +173,7 @@ where
 
             if let Value::Okay = res {
                 let guard = MutexGuard {
-                    key: &self.key,
+                    key: self.key,
                     canary,
                     created,
                     locked: true,
@@ -220,10 +220,12 @@ mod tests {
             .await
             .expect("Failed to get redis connection");
 
-        let mut mutex = Mutex::new("test-1MY-REDIS-LOCK");
+        let mutex = Mutex::new("test-1MY-REDIS-LOCK");
 
         let guard = mutex.lock(&mut redis_conn).await.unwrap();
         guard.unlock(&mut redis_conn).await.unwrap();
+
+        let mutex = Mutex::new("test-1MY-REDIS-LOCK");
         let guard2 = mutex.lock(&mut redis_conn).await.unwrap();
         guard2.unlock(&mut redis_conn).await.unwrap();
     }
@@ -239,8 +241,8 @@ mod tests {
             .await
             .expect("Failed to get redis connection");
 
-        let mut mutex1 = Mutex::new("test2-MY-REDIS-LOCK");
-        let mut mutex2 = Mutex::new("test2-MY-REDIS-LOCK");
+        let mutex1 = Mutex::new("test2-MY-REDIS-LOCK");
+        let mutex2 = Mutex::new("test2-MY-REDIS-LOCK");
 
         let guard1 = mutex1.lock(&mut redis_conn).await.unwrap();
         let guard2 = mutex2.lock(&mut redis_conn).await.err().unwrap();

@@ -11,9 +11,9 @@ use opentalk_db_storage::{
     tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId},
 };
 use opentalk_signaling_core::{
-    control::storage::try_init_event,
+    control::ControlStorageProvider as _,
     module_tester::{ModuleTester, WsMessageOutgoing},
-    RedisConnection,
+    VolatileStorage,
 };
 use opentalk_test_util::{TestContext, ROOM_ID, USER_1, USER_2};
 use opentalk_types::{
@@ -29,7 +29,7 @@ use serial_test::serial;
 
 async fn make_event(
     conn: &mut DbConnection,
-    redis_conn: &mut RedisConnection,
+    volatile: &mut VolatileStorage,
     user_id: UserId,
     room_id: RoomId,
 ) -> Event {
@@ -59,7 +59,9 @@ async fn make_event(
     .await
     .unwrap();
 
-    try_init_event(redis_conn, room_id, Some(event))
+    volatile
+        .control_storage()
+        .try_init_event(room_id, Some(event))
         .await
         .unwrap()
         .unwrap()
@@ -85,7 +87,7 @@ async fn make_shared_folder(conn: &mut DbConnection, event_id: EventId) -> Event
 #[actix_rt::test]
 #[serial]
 async fn room_without_event() {
-    let test_ctx = TestContext::new().await;
+    let test_ctx = TestContext::default().await;
 
     let user1 = test_ctx
         .db_ctx
@@ -109,7 +111,7 @@ async fn room_without_event() {
     let mut module_tester = ModuleTester::<opentalk_shared_folder::SharedFolder>::new(
         test_ctx.db_ctx.db.clone(),
         test_ctx.authz,
-        test_ctx.redis_conn,
+        test_ctx.volatile,
         room,
     );
 
@@ -173,7 +175,7 @@ async fn room_without_event() {
 #[actix_rt::test]
 #[serial]
 async fn room_with_event_but_no_shared_folder() {
-    let test_ctx = TestContext::new().await;
+    let test_ctx = TestContext::default().await;
 
     let user1 = test_ctx
         .db_ctx
@@ -194,13 +196,13 @@ async fn room_with_event_but_no_shared_folder() {
         .unwrap();
 
     let mut conn = test_ctx.db_ctx.db.get_conn().await.unwrap();
-    let mut redis_conn = test_ctx.redis_conn.clone();
-    make_event(&mut conn, &mut redis_conn, user1.id, room.id).await;
+    let mut volatile = test_ctx.volatile.clone();
+    make_event(&mut conn, &mut volatile, user1.id, room.id).await;
 
     let mut module_tester = ModuleTester::<opentalk_shared_folder::SharedFolder>::new(
         test_ctx.db_ctx.db.clone(),
         test_ctx.authz,
-        test_ctx.redis_conn,
+        test_ctx.volatile,
         room,
     );
 
@@ -274,7 +276,7 @@ async fn room_with_event_but_no_shared_folder() {
 #[actix_rt::test]
 #[serial]
 async fn room_with_event_and_shared_folder() {
-    let test_ctx = TestContext::new().await;
+    let test_ctx = TestContext::default().await;
 
     let user1 = test_ctx
         .db_ctx
@@ -295,8 +297,8 @@ async fn room_with_event_and_shared_folder() {
         .unwrap();
 
     let mut conn = test_ctx.db_ctx.db.get_conn().await.unwrap();
-    let mut redis_conn = test_ctx.redis_conn.clone();
-    let event = make_event(&mut conn, &mut redis_conn, user1.id, room.id).await;
+    let mut volatile = test_ctx.volatile.clone();
+    let event = make_event(&mut conn, &mut volatile, user1.id, room.id).await;
 
     let shared_folder = make_shared_folder(&mut conn, event.id).await;
     let moderator_shared_folder = SharedFolder::from(shared_folder);
@@ -305,7 +307,7 @@ async fn room_with_event_and_shared_folder() {
     let mut module_tester = ModuleTester::<opentalk_shared_folder::SharedFolder>::new(
         test_ctx.db_ctx.db.clone(),
         test_ctx.authz,
-        test_ctx.redis_conn,
+        test_ctx.volatile,
         room,
     );
 

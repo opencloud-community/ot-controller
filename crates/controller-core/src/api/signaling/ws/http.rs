@@ -10,9 +10,9 @@ use kustos::Authz;
 use opentalk_database::Db;
 use opentalk_db_storage::{rooms::Room, users::User};
 use opentalk_signaling_core::{
-    ExchangeHandle, ObjectStorage, Participant, RedisConnection, SignalingMetrics, SignalingModule,
+    ExchangeHandle, ObjectStorage, Participant, SignalingMetrics, SignalingModule, VolatileStorage,
 };
-use opentalk_types::{api::error::ApiError, common::tariff::TariffResource};
+use opentalk_types::{api::error::ApiError, common::tariff::TariffResource, core::TicketToken};
 use snafu::Report;
 use tokio::{
     sync::{broadcast, mpsc},
@@ -27,7 +27,8 @@ use super::{
 use crate::{
     api::signaling::{
         resumption::{ResumptionData, ResumptionTokenKeepAlive},
-        ticket::{TicketData, TicketRedisKey},
+        storage::{SignalingStorage, SignalingStorageProvider as _},
+        ticket::TicketData,
         ws::actor::WebSocketActor,
     },
     settings::SharedSettingsActix,
@@ -70,7 +71,7 @@ pub(crate) async fn ws_service(
     db: Data<Db>,
     storage: Data<ObjectStorage>,
     authz: Data<Authz>,
-    redis_conn: Data<RedisConnection>,
+    volatile: Data<VolatileStorage>,
     exchange_handle: Data<ExchangeHandle>,
     metrics: Data<SignalingMetrics>,
     protocols: Data<SignalingProtocols>,
@@ -79,10 +80,10 @@ pub(crate) async fn ws_service(
     stream: web::Payload,
     settings: SharedSettingsActix,
 ) -> actix_web::Result<HttpResponse> {
-    let mut redis_conn = (**redis_conn).clone();
+    let mut volatile = (**volatile).clone();
 
     let request_id = if let Some(request_id) = request.extensions().get::<RequestId>() {
-        **request_id
+        *request_id
     } else {
         log::error!("missing request id in signaling request");
         return Ok(HttpResponse::InternalServerError().finish());
@@ -91,13 +92,13 @@ pub(crate) async fn ws_service(
     // Read ticket and protocol from protocol header
     let (ticket, protocol) = read_request_header(&request, protocols.0)?;
 
-    // Read ticket data from redis
-    let ticket_data = get_ticket_data_from_redis(&mut redis_conn, ticket).await?;
+    // Read ticket data from storage
+    let ticket_data = take_ticket_data_from_storage(volatile.signaling_storage(), &ticket).await?;
 
     // Get user & room from database using the ticket data
     let (participant, room) = get_user_and_room_from_ticket_data(db.clone(), &ticket_data).await?;
 
-    // Create resumption data to be refreshed by the runner in redis
+    // Create resumption data to be refreshed by the runner in volatile storage
     let resumption_data = ResumptionData {
         participant_id: ticket_data.participant_id,
         participant: match &participant {
@@ -130,7 +131,7 @@ pub(crate) async fn ws_service(
             .start_with_addr()?;
 
     let mut builder = match Runner::builder(
-        request_id,
+        request_id.into(),
         ticket_data.participant_id,
         ticket_data.resuming,
         room,
@@ -142,7 +143,7 @@ pub(crate) async fn ws_service(
         db.into_inner(),
         storage.into_inner(),
         authz.into_inner(),
-        redis_conn,
+        volatile.clone(),
         (**exchange_handle).clone(),
         resumption_keep_alive,
     )
@@ -198,10 +199,10 @@ pub(crate) async fn ws_service(
     Ok(response)
 }
 
-fn read_request_header<'t>(
-    request: &'t HttpRequest,
+fn read_request_header(
+    request: &HttpRequest,
     allowed_protocols: &'static [&'static str],
-) -> Result<(TicketRedisKey<'t>, &'static str), ApiError> {
+) -> Result<(TicketToken, &'static str), ApiError> {
     let Some(protocol_header) = request
         .headers()
         .get(header::SEC_WEBSOCKET_PROTOCOL)
@@ -256,25 +257,20 @@ fn read_request_header<'t>(
             ));
     }
 
-    Ok((TicketRedisKey { ticket }, protocol))
+    Ok((TicketToken::from(ticket.to_string()), protocol))
 }
 
-async fn get_ticket_data_from_redis(
-    redis_conn: &mut RedisConnection,
-    ticket: TicketRedisKey<'_>,
+async fn take_ticket_data_from_storage(
+    storage: &mut dyn SignalingStorage,
+    ticket: &TicketToken,
 ) -> Result<TicketData, ApiError> {
-    // GETDEL available since redis 6.2.0, missing direct support by redis crate
-    let ticket_data: Option<TicketData> = redis::cmd("GETDEL")
-        .arg(ticket)
-        .query_async(redis_conn)
-        .await
-        .map_err(|e| {
-            log::warn!(
-                "Unable to get ticket data in redis: {}",
-                Report::from_error(e)
-            );
-            ApiError::internal()
-        })?;
+    let ticket_data = storage.take_ticket(ticket).await.map_err(|e| {
+        log::warn!(
+            "Unable to get ticket data in storage: {}",
+            Report::from_error(e)
+        );
+        ApiError::internal()
+    })?;
 
     let ticket_data = ticket_data.ok_or_else(|| {
         ApiError::unauthorized()

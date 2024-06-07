@@ -3,10 +3,11 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::{self, Utc};
+use either::Either;
 use futures::{stream::once, FutureExt};
 use opentalk_signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
-    SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
+    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types::{
     core::{ParticipantId, Timestamp},
@@ -21,6 +22,7 @@ use opentalk_types::{
         Role,
     },
 };
+use storage::TimerStorage;
 use tokio::time::sleep;
 use uuid::Uuid;
 
@@ -35,6 +37,19 @@ pub struct ExpiredEvent {
 pub struct Timer {
     pub room_id: SignalingRoomId,
     pub participant_id: ParticipantId,
+}
+
+trait TimerStorageProvider {
+    fn storage(&mut self) -> &mut dyn TimerStorage;
+}
+
+impl TimerStorageProvider for VolatileStorage {
+    fn storage(&mut self) -> &mut dyn TimerStorage {
+        match self.as_mut() {
+            Either::Left(v) => v,
+            Either::Right(v) => v,
+        }
+    }
 }
 
 #[async_trait::async_trait(?Send)]
@@ -77,7 +92,7 @@ impl SignalingModule for Timer {
                 frontend_data,
                 participants,
             } => {
-                let timer = storage::timer::get(ctx.redis_conn(), self.room_id).await?;
+                let timer = ctx.volatile.storage().timer_get(self.room_id).await?;
 
                 let timer = match timer {
                     Some(timer) => timer,
@@ -86,14 +101,12 @@ impl SignalingModule for Timer {
 
                 let ready_status = if timer.ready_check_enabled {
                     Some(
-                        storage::ready_status::get(
-                            ctx.redis_conn(),
-                            self.room_id,
-                            self.participant_id,
-                        )
-                        .await?
-                        .unwrap_or_default()
-                        .ready_status,
+                        ctx.volatile
+                            .storage()
+                            .ready_status_get(self.room_id, self.participant_id)
+                            .await?
+                            .unwrap_or_default()
+                            .ready_status,
                     )
                 } else {
                     None
@@ -127,10 +140,12 @@ impl SignalingModule for Timer {
                     return Ok(());
                 }
                 for (participant_id, status) in participants {
-                    let ready_status =
-                        storage::ready_status::get(ctx.redis_conn(), self.room_id, *participant_id)
-                            .await?
-                            .unwrap_or_default();
+                    let ready_status = ctx
+                        .volatile
+                        .storage()
+                        .ready_status_get(self.room_id, *participant_id)
+                        .await?
+                        .unwrap_or_default();
 
                     *status = Some(ready_status);
                 }
@@ -140,7 +155,7 @@ impl SignalingModule for Timer {
                 self.handle_rmq_message(&mut ctx, event).await?;
             }
             Event::Ext(expired) => {
-                if let Some(timer) = storage::timer::get(ctx.redis_conn(), self.room_id).await? {
+                if let Some(timer) = ctx.volatile.storage().timer_get(self.room_id).await? {
                     if timer.id == expired.timer_id {
                         self.stop_current_timer(&mut ctx, StopKind::Expired, None)
                             .await?;
@@ -149,7 +164,7 @@ impl SignalingModule for Timer {
             }
             Event::ParticipantJoined(id, data) => {
                 // As in Event::Joined, don't attach any timer-related information if no timer is active.
-                let timer = storage::timer::get(ctx.redis_conn(), self.room_id).await?;
+                let timer = ctx.volatile.storage().timer_get(self.room_id).await?;
 
                 let timer = match timer {
                     Some(timer) => timer,
@@ -159,7 +174,10 @@ impl SignalingModule for Timer {
                 if !timer.ready_check_enabled {
                     return Ok(());
                 }
-                let ready_status = storage::ready_status::get(ctx.redis_conn(), self.room_id, id)
+                let ready_status = ctx
+                    .volatile
+                    .storage()
+                    .ready_status_get(self.room_id, id)
                     .await?
                     .unwrap_or_default();
 
@@ -231,7 +249,7 @@ impl Timer {
                     command::Kind::Stopwatch => Kind::Stopwatch,
                 };
 
-                let timer = storage::timer::Timer {
+                let timer = storage::Timer {
                     id: timer_id,
                     created_by: self.participant_id,
                     started_at,
@@ -241,7 +259,10 @@ impl Timer {
                     ready_check_enabled: start.enable_ready_check,
                 };
 
-                if !storage::timer::set_if_not_exists(ctx.redis_conn(), self.room_id, &timer)
+                if !ctx
+                    .volatile
+                    .storage()
+                    .timer_set_if_not_exists(self.room_id, &timer)
                     .await?
                 {
                     ctx.ws_send(Error::TimerAlreadyRunning);
@@ -270,7 +291,7 @@ impl Timer {
                     return Ok(());
                 }
 
-                match storage::timer::get(ctx.redis_conn(), self.room_id).await? {
+                match ctx.volatile.storage().timer_get(self.room_id).await? {
                     Some(timer) => {
                         if timer.id != stop.timer_id {
                             // Invalid timer id
@@ -291,15 +312,16 @@ impl Timer {
                 .await?;
             }
             Message::UpdateReadyStatus(update_ready_status) => {
-                if let Some(timer) = storage::timer::get(ctx.redis_conn(), self.room_id).await? {
+                if let Some(timer) = ctx.volatile.storage().timer_get(self.room_id).await? {
                     if timer.ready_check_enabled && timer.id == update_ready_status.timer_id {
-                        storage::ready_status::set(
-                            ctx.redis_conn(),
-                            self.room_id,
-                            self.participant_id,
-                            update_ready_status.status,
-                        )
-                        .await?;
+                        ctx.volatile
+                            .storage()
+                            .ready_status_set(
+                                self.room_id,
+                                self.participant_id,
+                                update_ready_status.status,
+                            )
+                            .await?;
 
                         ctx.exchange_publish(
                             control::exchange::current_room_all_participants(self.room_id),
@@ -341,18 +363,19 @@ impl Timer {
             }
             exchange::Event::Stop(stopped) => {
                 // remove the participants ready status when receiving 'stopped'
-                storage::ready_status::delete(ctx.redis_conn(), self.room_id, self.participant_id)
+                ctx.volatile
+                    .storage()
+                    .ready_status_delete(self.room_id, self.participant_id)
                     .await?;
 
                 ctx.ws_send(stopped);
             }
             exchange::Event::UpdateReadyStatus(update_ready_status) => {
-                if let Some(ready_status) = storage::ready_status::get(
-                    ctx.redis_conn(),
-                    self.room_id,
-                    update_ready_status.participant_id,
-                )
-                .await?
+                if let Some(ready_status) = ctx
+                    .volatile
+                    .storage()
+                    .ready_status_get(self.room_id, update_ready_status.participant_id)
+                    .await?
                 {
                     ctx.ws_send(UpdatedReadyStatus {
                         timer_id: update_ready_status.timer_id,
@@ -375,7 +398,7 @@ impl Timer {
         reason: StopKind,
         message: Option<String>,
     ) -> Result<(), SignalingModuleError> {
-        let timer = match storage::timer::delete(ctx.redis_conn(), self.room_id).await? {
+        let timer = match ctx.volatile.storage().timer_delete(self.room_id).await? {
             Some(timer) => timer,
             // there was no key to delete because the timer was not running
             None => return Ok(()),

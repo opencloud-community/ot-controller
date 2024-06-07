@@ -12,23 +12,19 @@
 
 use std::time::{Duration, Instant};
 
-use opentalk_signaling_core::{Participant, RedisConnection};
+use opentalk_signaling_core::Participant;
 use opentalk_types::core::{BreakoutRoomId, ParticipantId, ResumptionToken, RoomId, UserId};
-use redis::RedisError;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
-use snafu::{whatever, ResultExt, Snafu};
 use tokio::time::sleep_until;
 
+use super::storage::{SignalingStorage, SignalingStorageError};
 use crate::Result;
 
-/// Redis key for a resumption token containing [`ResumptionData`].
-#[derive(Debug, ToRedisArgs)]
-#[to_redis_args(fmt = "opentalk-signaling:resumption={}")]
-pub struct ResumptionRedisKey(pub ResumptionToken);
+const RESUMPTION_REFRESH_INTERVAL: u64 = 60;
 
 /// Data saved in redis behind the [`ResumptionRedisKey`]
-#[derive(Debug, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
 #[to_redis_args(serde)]
 #[from_redis_value(serde)]
 pub struct ResumptionData {
@@ -40,43 +36,26 @@ pub struct ResumptionData {
 
 /// Token refresh loop used in websocket runner to keep the resumption token alive and valid
 pub struct ResumptionTokenKeepAlive {
-    redis_key: ResumptionRedisKey,
+    resumption_token: ResumptionToken,
     data: ResumptionData,
     next_refresh: Instant,
 }
 
-#[derive(Debug, Snafu)]
-pub enum ResumptionError {
-    #[snafu(display("Resumption token could not be refreshed as it was used"))]
-    Used,
-    #[snafu(whatever)]
-    Other {
-        message: String,
-        #[snafu(source(from(Box<dyn std::error::Error + Send + Sync>, Some)))]
-        source: Option<Box<dyn std::error::Error + Send + Sync>>,
-    },
-}
-
 impl ResumptionTokenKeepAlive {
-    pub fn new(token: ResumptionToken, data: ResumptionData) -> Self {
+    pub fn new(resumption_token: ResumptionToken, data: ResumptionData) -> Self {
         Self {
-            redis_key: ResumptionRedisKey(token),
+            resumption_token,
             data,
-            next_refresh: Instant::now() + Duration::from_secs(60),
+            next_refresh: Instant::now() + Duration::from_secs(RESUMPTION_REFRESH_INTERVAL),
         }
     }
 
-    pub async fn set_initial(
+    pub(crate) async fn set_initial(
         &mut self,
-        redis_conn: &mut RedisConnection,
-    ) -> Result<(), RedisError> {
-        redis::cmd("SET")
-            .arg(&self.redis_key)
-            .arg(&self.data)
-            .arg("EX")
-            .arg(120)
-            .arg("NX")
-            .query_async(redis_conn)
+        storage: &mut dyn SignalingStorage,
+    ) -> Result<(), SignalingStorageError> {
+        storage
+            .set_resumption_token_data_if_not_exists(&self.resumption_token, &self.data)
             .await
     }
 
@@ -84,28 +63,14 @@ impl ResumptionTokenKeepAlive {
         sleep_until(self.next_refresh.into()).await;
     }
 
-    pub async fn refresh(
+    pub(crate) async fn refresh(
         &mut self,
-        redis_conn: &mut RedisConnection,
-    ) -> Result<(), ResumptionError> {
-        self.next_refresh = Instant::now() + Duration::from_secs(60);
+        storage: &mut dyn SignalingStorage,
+    ) -> Result<(), SignalingStorageError> {
+        self.next_refresh = Instant::now() + Duration::from_secs(RESUMPTION_REFRESH_INTERVAL);
 
-        // Set the value with an timeout of 120 seconds (EX 120)
-        // and only if it already exists
-        let value: redis::Value = redis::cmd("SET")
-            .arg(&self.redis_key)
-            .arg(&self.data)
-            .arg("EX")
-            .arg(120)
-            .arg("XX")
-            .query_async(redis_conn)
+        storage
+            .refresh_resumption_token(&self.resumption_token)
             .await
-            .whatever_context("Failed to SET EX XX resumption data")?;
-
-        match value {
-            redis::Value::Nil => UsedSnafu.fail(),
-            redis::Value::Okay => Ok(()),
-            _ => whatever!("Unexpected redis response expected OK/nil got {:?}", value),
-        }
     }
 }

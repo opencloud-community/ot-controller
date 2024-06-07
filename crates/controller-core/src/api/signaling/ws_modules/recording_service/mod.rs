@@ -19,7 +19,7 @@ use opentalk_types::{
     },
 };
 
-use super::recording::{self, Recording};
+use super::recording::{self, Recording, RecordingStorageProvider as _};
 
 pub(crate) mod exchange;
 
@@ -119,18 +119,17 @@ impl RecordingService {
         ctx: &mut ModuleContext<'_, Self>,
         stream_updated: StreamUpdated,
     ) -> Result<(), SignalingModuleError> {
-        let mut stream =
-            recording::storage::get_stream(ctx.redis_conn(), self.room, stream_updated.target_id)
-                .await?;
+        let mut stream = ctx
+            .volatile
+            .storage()
+            .get_stream(self.room, stream_updated.target_id)
+            .await?;
 
         stream.status = stream_updated.status.clone();
-        recording::storage::set_stream(
-            ctx.redis_conn(),
-            self.room,
-            stream_updated.target_id,
-            stream,
-        )
-        .await?;
+        ctx.volatile
+            .storage()
+            .set_stream(self.room, stream_updated.target_id, stream)
+            .await?;
 
         ctx.exchange_publish_to_namespace(
             control::exchange::current_room_all_participants(self.room),
@@ -151,7 +150,7 @@ impl RecordingService {
             recording::exchange::Message::RecorderStopping,
         );
 
-        let targets = recording::storage::get_streams(ctx.redis_conn(), self.room).await?;
+        let targets = ctx.volatile.storage().get_streams(self.room).await?;
         let targets: BTreeMap<StreamingTargetId, StreamTargetSecret> = targets
             .into_iter()
             .filter(|(_, target)| target.status != StreamStatus::Inactive)
@@ -165,7 +164,10 @@ impl RecordingService {
             return Ok(());
         }
 
-        recording::storage::set_streams(ctx.redis_conn(), self.room, &targets).await?;
+        ctx.volatile
+            .storage()
+            .set_streams(self.room, &targets)
+            .await?;
 
         for stream_updated in targets.iter().map(|(target_id, target)| StreamUpdated {
             target_id: *target_id,
@@ -193,7 +195,10 @@ impl RecordingService {
             recording::exchange::Message::RecorderStarting,
         );
 
-        let streams = recording::storage::get_streams(ctx.redis_conn(), self.room)
+        let streams = ctx
+            .volatile
+            .storage()
+            .get_streams(self.room)
             .await?
             .into_iter()
             .map(|(id, target)| {

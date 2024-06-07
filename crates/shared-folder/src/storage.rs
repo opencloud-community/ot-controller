@@ -2,100 +2,60 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
-use opentalk_types::common::shared_folder::SharedFolder;
-use redis::AsyncCommands;
-use redis_args::ToRedisArgs;
-use snafu::ResultExt;
+mod redis;
+mod shared_folder_storage;
+mod volatile;
 
-#[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "opentalk-signaling:room={room}:shared-folder:initialized")]
-struct RoomSharedFolderInitialized {
-    room: SignalingRoomId,
-}
+pub(crate) use shared_folder_storage::SharedFolderStorage;
 
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn set_shared_folder_initialized(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-) -> Result<bool, SignalingModuleError> {
-    redis_conn
-        .set(RoomSharedFolderInitialized { room }, true)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to SET shared folder initialized flag",
-        })
-}
+#[cfg(test)]
+mod test_common {
 
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn is_shared_folder_initialized(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-) -> Result<bool, SignalingModuleError> {
-    redis_conn
-        .get(RoomSharedFolderInitialized { room })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to GET shared folder initialized flag",
-        })
-}
+    use opentalk_signaling_core::SignalingRoomId;
+    use opentalk_types::common::shared_folder::{SharedFolder, SharedFolderAccess};
 
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn delete_shared_folder_initialized(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-) -> Result<bool, SignalingModuleError> {
-    redis_conn
-        .del(RoomSharedFolderInitialized { room })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to DEL shared folder initialized flag",
-        })
-}
+    use super::SharedFolderStorage;
 
-/// Key to the shared folder information
-#[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "opentalk-signaling:room={room}:shared-folder")]
-struct RoomSharedFolder {
-    room: SignalingRoomId,
-}
+    const ROOM: SignalingRoomId = SignalingRoomId::nil();
 
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn get_shared_folder(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-) -> Result<Option<SharedFolder>, SignalingModuleError> {
-    redis_conn
-        .get(RoomSharedFolder { room })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to GET shared folder",
-        })
-}
+    pub(super) async fn initialized(storage: &mut dyn SharedFolderStorage) {
+        assert!(!storage.is_shared_folder_initialized(ROOM).await.unwrap());
 
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn set_shared_folder(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-    value: SharedFolder,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .set(RoomSharedFolder { room }, value)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to SET shared folder",
-        })
-}
+        storage.set_shared_folder_initialized(ROOM).await.unwrap();
 
-#[tracing::instrument(level = "debug", skip(redis_conn))]
-pub async fn delete_shared_folder(
-    redis_conn: &mut RedisConnection,
-    room: SignalingRoomId,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .del(RoomSharedFolder { room })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to DEL shared folder",
-        })
+        assert!(storage.is_shared_folder_initialized(ROOM).await.unwrap());
+
+        storage
+            .delete_shared_folder_initialized(ROOM)
+            .await
+            .unwrap();
+
+        assert!(!storage.is_shared_folder_initialized(ROOM).await.unwrap());
+    }
+
+    pub(super) async fn shared_folder(storage: &mut dyn SharedFolderStorage) {
+        let shared_folder = SharedFolder {
+            read: SharedFolderAccess {
+                url: "http://example.com".to_owned(),
+                password: "password123".to_owned(),
+            },
+            read_write: None,
+        };
+
+        assert!(storage.get_shared_folder(ROOM).await.unwrap().is_none());
+
+        storage
+            .set_shared_folder(ROOM, shared_folder.clone())
+            .await
+            .unwrap();
+
+        assert_eq!(
+            Some(shared_folder),
+            storage.get_shared_folder(ROOM).await.unwrap()
+        );
+
+        storage.delete_shared_folder(ROOM).await.unwrap();
+
+        assert!(storage.get_shared_folder(ROOM).await.unwrap().is_none());
+    }
 }

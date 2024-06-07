@@ -49,7 +49,9 @@ where
 }
 
 /// JSONB Wrapper for any type implementing the serde `Serialize` or `Deserialize` trait
-#[derive(Debug, Clone, Default, Serialize, Deserialize, FromSqlRow, AsExpression)]
+#[derive(
+    Debug, Clone, Default, Serialize, Deserialize, FromSqlRow, AsExpression, PartialEq, Eq,
+)]
 #[diesel(sql_type = sql_types::Jsonb)]
 pub struct Jsonb<T>(pub T);
 

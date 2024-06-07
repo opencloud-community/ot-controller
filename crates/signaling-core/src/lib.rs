@@ -8,14 +8,19 @@ mod any_stream;
 mod destroy_context;
 mod event;
 mod exchange_task;
+mod expiring_data;
+mod expiring_data_hash_map;
 mod init_context;
 mod metrics;
 mod module_context;
 mod object_storage;
 mod participant;
 mod redis_wrapper;
+mod room_lock;
+mod runner_id;
 mod signaling_module;
 mod signaling_room_id;
+mod volatile_storage;
 
 #[cfg(feature = "module_tester")]
 pub mod module_tester;
@@ -27,14 +32,19 @@ pub use any_stream::{any_stream, AnyStream};
 pub use destroy_context::DestroyContext;
 pub use event::Event;
 pub use exchange_task::{Error as ExchangeError, ExchangeHandle, ExchangeTask, SubscriberHandle};
+pub use expiring_data::ExpiringData;
+pub use expiring_data_hash_map::ExpiringDataHashMap;
 pub use init_context::{ExchangeBinding, InitContext};
 pub use metrics::SignalingMetrics;
 pub use module_context::{ExchangePublish, ModuleContext};
 pub use object_storage::{ObjectStorage, ObjectStorageError};
 pub use participant::Participant;
 pub use redis_wrapper::{RedisConnection, RedisMetrics};
+pub use room_lock::{LockError, RoomGuard, RoomLocking, RoomLockingProvider};
+pub use runner_id::RunnerId;
 pub use signaling_module::*;
 pub use signaling_room_id::SignalingRoomId;
+pub use volatile_storage::{VolatileStaticMemoryStorage, VolatileStorage};
 
 #[async_trait(?Send)]
 pub trait RegisterModules {

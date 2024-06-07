@@ -12,7 +12,7 @@ use opentalk_types::{
 };
 use serde::Serialize;
 
-use crate::{any_stream, AnyStream, RedisConnection, SignalingMetrics, SignalingModule};
+use crate::{any_stream, AnyStream, SignalingMetrics, SignalingModule, VolatileStorage};
 
 #[derive(Debug, Clone)]
 pub struct ExchangePublish {
@@ -31,7 +31,7 @@ where
     pub ws_messages: &'ctx mut Vec<NamespacedEvent<'static, M::Outgoing>>,
     pub timestamp: Timestamp,
     pub exchange_publish: &'ctx mut Vec<ExchangePublish>,
-    pub redis_conn: &'ctx mut RedisConnection,
+    pub volatile: &'ctx mut VolatileStorage,
     pub events: &'ctx mut SelectAll<AnyStream>,
     pub invalidate_data: &'ctx mut bool,
     pub exit: &'ctx mut Option<CloseCode>,
@@ -98,11 +98,6 @@ where
             routing_key,
             message: serde_json::to_string(&message).expect("value must be serializable to json"),
         });
-    }
-
-    /// Access to the storage of the room
-    pub fn redis_conn(&mut self) -> &mut RedisConnection {
-        self.redis_conn
     }
 
     /// Add a custom event stream which return `M::ExtEvent`

@@ -8,7 +8,7 @@ use opentalk_types::core::{BreakoutRoomId, RoomId};
 ///
 /// It consist of the room-id inside the database and an optional
 /// breakout-room-id which is generated when the breakout rooms are created
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SignalingRoomId(RoomId, Option<BreakoutRoomId>);
 
 impl SignalingRoomId {

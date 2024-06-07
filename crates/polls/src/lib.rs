@@ -2,12 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::{collections::HashSet, time::Duration};
+use std::{collections::BTreeSet, time::Duration};
 
+use either::Either;
 use futures::{stream::once, FutureExt};
 use opentalk_signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
-    SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
+    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types::signaling::{
     polls::{
@@ -19,6 +20,7 @@ use opentalk_types::signaling::{
     Role,
 };
 use snafu::Report;
+use storage::PollsStorage;
 use tokio::time::sleep;
 
 pub mod exchange;
@@ -29,6 +31,19 @@ pub struct ExpiredEvent(PollId);
 pub struct Polls {
     room: SignalingRoomId,
     config: Option<Config>,
+}
+
+trait PollsStorageProvider {
+    fn storage(&mut self) -> &mut dyn PollsStorage;
+}
+
+impl PollsStorageProvider for VolatileStorage {
+    fn storage(&mut self) -> &mut dyn PollsStorage {
+        match self.as_mut() {
+            Either::Left(v) => v,
+            Either::Right(v) => v,
+        }
+    }
 }
 
 #[async_trait::async_trait(?Send)]
@@ -68,13 +83,14 @@ impl SignalingModule for Polls {
                 frontend_data,
                 participants: _,
             } => {
-                if let Some(polls_state) = storage::get_state(ctx.redis_conn(), self.room).await? {
+                if let Some(polls_state) = ctx.volatile.storage().get_polls_state(self.room).await?
+                {
                     if let Some(duration) = polls_state.remaining() {
                         let id = polls_state.id;
 
                         self.config = Some(Config {
                             state: polls_state.clone(),
-                            voted_choice_ids: HashSet::new(),
+                            voted_choice_ids: BTreeSet::new(),
                         });
                         *frontend_data = Some(polls_state);
 
@@ -95,8 +111,11 @@ impl SignalingModule for Polls {
             Event::Exchange(msg) => self.on_exchange_message(ctx, msg).await,
             Event::Ext(ExpiredEvent(id)) => {
                 if let Some(config) = self.config.as_ref().filter(|config| config.state.id == id) {
-                    let results =
-                        storage::poll_results(ctx.redis_conn(), self.room, &config.state).await?;
+                    let results = ctx
+                        .volatile
+                        .storage()
+                        .poll_results(self.room, &config.state)
+                        .await?;
 
                     ctx.ws_send(PollsEvent::Done(Results { id, results }));
                 }
@@ -106,16 +125,14 @@ impl SignalingModule for Polls {
         }
     }
 
-    async fn on_destroy(self, mut ctx: DestroyContext<'_>) {
+    async fn on_destroy(self, ctx: DestroyContext<'_>) {
         if ctx.destroy_room() {
-            if let Err(e) = storage::del_state(ctx.redis_conn(), self.room).await {
-                log::error!(
-                    "failed to remove config from redis: {}",
-                    Report::from_error(e)
-                );
+            let volatile = ctx.volatile.storage();
+            if let Err(e) = volatile.delete_polls_state(self.room).await {
+                log::error!("failed to remove poll state: {}", Report::from_error(e));
             }
 
-            let list = match storage::list_members(ctx.redis_conn(), self.room).await {
+            let list = match volatile.poll_ids(self.room).await {
                 Ok(list) => list,
                 Err(e) => {
                     log::error!(
@@ -127,13 +144,20 @@ impl SignalingModule for Polls {
             };
 
             for id in list {
-                if let Err(e) = storage::del_results(ctx.redis_conn(), self.room, id).await {
+                if let Err(e) = volatile.delete_poll_results(self.room, id).await {
                     log::error!(
                         "failed to remove poll results for id {}, {}",
                         id,
                         Report::from_error(e)
                     );
                 }
+            }
+
+            if let Err(e) = volatile.delete_poll_ids(self.room).await {
+                log::error!(
+                    "failed to remove closed poll id list: {}",
+                    Report::from_error(e)
+                );
             }
         }
     }
@@ -228,7 +252,11 @@ impl Polls {
                     duration,
                 };
 
-                let set = storage::set_state(ctx.redis_conn(), self.room, &polls_state).await?;
+                let set = ctx
+                    .volatile
+                    .storage()
+                    .set_polls_state(self.room, &polls_state)
+                    .await?;
 
                 if !set {
                     ctx.ws_send(Error::StillRunning);
@@ -236,7 +264,10 @@ impl Polls {
                     return Ok(());
                 }
 
-                storage::list_add(ctx.redis_conn(), self.room, polls_state.id).await?;
+                ctx.volatile
+                    .storage()
+                    .add_poll_to_list(self.room, polls_state.id)
+                    .await?;
 
                 ctx.exchange_publish(
                     control::exchange::current_room_all_participants(self.room),
@@ -265,7 +296,7 @@ impl Polls {
                 // TODO(w.rabl) Currently the user's choices are stored in-memory only and thus they are lost after reconnecting.
                 // In this case, if the user sends a new set of choices, the previous choices can't be properly reverted.
                 // This leads to an inconsistent poll result.
-                let valid_choice_ids: HashSet<ChoiceId> = config
+                let valid_choice_ids: BTreeSet<ChoiceId> = config
                     .state
                     .choices
                     .iter()
@@ -273,14 +304,15 @@ impl Polls {
                     .collect();
 
                 if choice_ids.is_subset(&valid_choice_ids) {
-                    storage::vote(
-                        ctx.redis_conn(),
-                        self.room,
-                        config.state.id,
-                        &config.voted_choice_ids,
-                        &choice_ids,
-                    )
-                    .await?;
+                    ctx.volatile
+                        .storage()
+                        .vote(
+                            self.room,
+                            config.state.id,
+                            &config.voted_choice_ids,
+                            &choice_ids,
+                        )
+                        .await?;
 
                     config.voted_choice_ids = choice_ids;
 
@@ -309,8 +341,8 @@ impl Polls {
                     .filter(|config| config.state.id == finish.id && !config.state.is_expired())
                     .is_some()
                 {
-                    // Delete config from redis to stop vote
-                    storage::del_state(ctx.redis_conn(), self.room).await?;
+                    // Delete config to stop vote
+                    ctx.volatile.storage().delete_polls_state(self.room).await?;
 
                     ctx.exchange_publish(
                         control::exchange::current_room_all_participants(self.room),
@@ -352,15 +384,18 @@ impl Polls {
 
                 self.config = Some(Config {
                     state: polls_state,
-                    voted_choice_ids: HashSet::new(),
+                    voted_choice_ids: BTreeSet::new(),
                 });
 
                 Ok(())
             }
             exchange::Message::Update(id) => {
                 if let Some(config) = &self.config {
-                    let results =
-                        storage::poll_results(ctx.redis_conn(), self.room, &config.state).await?;
+                    let results = ctx
+                        .volatile
+                        .storage()
+                        .poll_results(self.room, &config.state)
+                        .await?;
 
                     ctx.ws_send(PollsEvent::LiveUpdate(Results { id, results }));
                 }
@@ -369,8 +404,11 @@ impl Polls {
             }
             exchange::Message::Finish(id) => {
                 if let Some(config) = self.config.take() {
-                    let results =
-                        storage::poll_results(ctx.redis_conn(), self.room, &config.state).await?;
+                    let results = ctx
+                        .volatile
+                        .storage()
+                        .poll_results(self.room, &config.state)
+                        .await?;
 
                     ctx.ws_send(PollsEvent::Done(Results { id, results }));
                 }
@@ -384,5 +422,5 @@ impl Polls {
 #[derive(Debug, Clone)]
 pub struct Config {
     state: PollsState,
-    voted_choice_ids: HashSet<ChoiceId>,
+    voted_choice_ids: BTreeSet<ChoiceId>,
 }

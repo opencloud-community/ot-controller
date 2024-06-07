@@ -13,14 +13,20 @@ version.workspace = true
 [dependencies]
 async-trait.workspace = true
 chrono.workspace = true
+either.workspace = true
 log.workspace = true
 opentalk-controller-settings.workspace = true
 opentalk-database.workspace = true
 opentalk-etherpad-client.workspace = true
 opentalk-signaling-core.workspace = true
 opentalk-types = { workspace = true, features = ["backend"] }
+parking_lot.workspace = true
 redis.workspace = true
 redis-args.workspace = true
 serde.workspace = true
 snafu.workspace = true
 tracing.workspace = true
+
+[dev-dependencies]
+serial_test.workspace = true
+tokio.workspace = true

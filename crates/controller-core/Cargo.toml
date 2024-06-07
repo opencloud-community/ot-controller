@@ -62,6 +62,7 @@ opentelemetry_sdk = { version = "0.23", features = [
   "rt-tokio-current-thread",
 ] }
 owo-colors.workspace = true
+parking_lot.workspace = true
 phonenumber.workspace = true
 prometheus = "0.13"
 rand.workspace = true
@@ -95,6 +96,7 @@ validator.workspace = true
 [dev-dependencies]
 opentalk-test-util = { workspace = true, features = ["database"] }
 pretty_assertions.workspace = true
+serial_test.workspace = true
 
 [build-dependencies]
 snafu.workspace = true

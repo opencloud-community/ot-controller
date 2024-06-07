@@ -48,7 +48,8 @@ use opentalk_jobs::job_runner::JobRunner;
 use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_signaling_core::{
     ExchangeHandle, ExchangeTask, ModulesRegistrar, ObjectStorage, RedisConnection,
-    RegisterModules, SignalingModule, SignalingModuleInitData,
+    RegisterModules, SignalingModule, SignalingModuleInitData, VolatileStaticMemoryStorage,
+    VolatileStorage,
 };
 use opentalk_types::api::error::ApiError;
 use rustls_pki_types::{CertificateDer, PrivatePkcs8KeyDer};
@@ -211,8 +212,8 @@ pub struct Controller {
     /// Handle to the internal message exchange
     pub exchange_handle: ExchangeHandle,
 
-    /// Cloneable redis connection manager, can be used to write/read to the controller's redis.
-    pub redis: RedisConnection,
+    /// Cloneable volatile storage
+    pub volatile: VolatileStorage,
 
     /// Reload signal which can be triggered by a user.
     /// When received a module should try to re-read it's config and act accordingly.
@@ -322,12 +323,26 @@ impl Controller {
         );
 
         // Build redis client. Does not check if redis is reachable.
-        let redis = redis::Client::open(settings.redis.url.clone())
+        let redis = settings
+            .redis
+            .as_ref()
+            .map(|r| redis::Client::open(r.url.clone()))
+            .transpose()
             .whatever_context("Invalid redis url")?;
-        let redis_conn = redis::aio::ConnectionManager::new(redis)
-            .await
-            .whatever_context("Failed to create redis connection manager")?;
-        let redis_conn = RedisConnection::new(redis_conn).with_metrics(metrics.redis.clone());
+        let redis_conn = match redis {
+            Some(c) => Some(
+                redis::aio::ConnectionManager::new(c)
+                    .await
+                    .whatever_context("Failed to create redis connection manager")?,
+            ),
+            None => None,
+        };
+        let redis_conn =
+            redis_conn.map(|c| RedisConnection::new(c).with_metrics(metrics.redis.clone()));
+        let volatile = match redis_conn {
+            Some(redis) => VolatileStorage::Right(redis),
+            None => VolatileStorage::Left(VolatileStaticMemoryStorage),
+        };
 
         let (shutdown, _) = broadcast::channel::<()>(1);
         let (reload, _) = broadcast::channel::<()>(4);
@@ -344,7 +359,7 @@ impl Controller {
             kc_admin_client,
             rabbitmq_pool,
             exchange_handle,
-            redis: redis_conn,
+            volatile,
             shutdown,
             reload,
             signaling,
@@ -375,6 +390,7 @@ impl Controller {
         // Start HTTP Server
         let http_server = {
             let settings = self.shared_settings.clone();
+            let volatile = self.volatile.clone();
             let rabbitmq_pool = Data::from(self.rabbitmq_pool.clone());
             let exchange_handle = Data::new(self.exchange_handle);
             let signaling_modules = Arc::downgrade(&signaling_modules);
@@ -385,7 +401,6 @@ impl Controller {
             let oidc_ctx = Arc::downgrade(&self.oidc);
             let shutdown = self.shutdown.clone();
             let shared_settings = self.shared_settings.clone();
-            let redis = self.redis;
 
             let kc_admin_client = Data::from(self.kc_admin_client);
 
@@ -418,7 +433,7 @@ impl Controller {
 
             let metrics = Data::new(self.metrics);
 
-            let caches = Data::new(caches::Caches::create(redis.clone()));
+            let caches = Data::new(caches::Caches::create(self.volatile.right().clone()));
 
             HttpServer::new(move || {
                 let cors = setup_cors();
@@ -428,8 +443,8 @@ impl Controller {
                 let storage = Data::from(storage.upgrade().unwrap());
 
                 let oidc_ctx = Data::from(oidc_ctx.upgrade().unwrap());
-                let redis = Data::new(redis.clone());
                 let authz = Data::new(authz.clone());
+                let volatile = Data::new(volatile.clone());
 
                 let mail_service = mail_service.clone();
 
@@ -442,6 +457,7 @@ impl Controller {
                     .wrap(cors)
                     .wrap(TracingLogger::<ReducedSpanBuilder>::new())
                     .wrap(api::v1::middleware::headers::Headers {})
+                    .app_data(caches.clone())
                     .app_data(web::JsonConfig::default().error_handler(json_error_handler))
                     .app_data(Data::from(shared_settings.clone()))
                     .app_data(db.clone())
@@ -449,7 +465,7 @@ impl Controller {
                     .app_data(oidc_ctx.clone())
                     .app_data(kc_admin_client.clone())
                     .app_data(authz)
-                    .app_data(redis)
+                    .app_data(volatile)
                     .app_data(Data::new(shutdown.clone()))
                     .app_data(rabbitmq_pool.clone())
                     .app_data(exchange_handle.clone())
@@ -458,7 +474,6 @@ impl Controller {
                     .app_data(signaling_metrics.clone())
                     .app_data(metrics.clone())
                     .app_data(mail_service)
-                    .app_data(caches.clone())
                     .service(api::signaling::ws_service)
                     .service(metrics::metrics)
                     .service(v1_scope(
@@ -566,9 +581,9 @@ impl ModulesRegistrar for Controller {
             startup_settings: self.startup_settings.clone(),
             shared_settings: self.shared_settings.clone(),
             rabbitmq_pool: self.rabbitmq_pool.clone(),
-            redis: self.redis.clone(),
             shutdown: self.shutdown.clone(),
             reload: self.reload.clone(),
+            volatile: self.volatile.clone(),
         };
 
         let params = M::build_params(init)

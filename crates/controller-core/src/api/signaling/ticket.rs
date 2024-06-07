@@ -2,27 +2,19 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_signaling_core::{control, Participant, RedisConnection};
+use opentalk_signaling_core::{Participant, VolatileStorage};
 use opentalk_types::{
     api::error::ApiError,
     core::{BreakoutRoomId, ParticipantId, ResumptionToken, RoomId, TicketToken, UserId},
 };
-use redis::AsyncCommands;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use snafu::Report;
 
-use super::resumption::{ResumptionData, ResumptionRedisKey};
-
-/// Typed redis key for a signaling ticket containing [`TicketData`]
-#[derive(Debug, Copy, Clone, ToRedisArgs)]
-#[to_redis_args(fmt = "opentalk-signaling:ticket={ticket}")]
-pub struct TicketRedisKey<'s> {
-    pub ticket: &'s str,
-}
+use super::storage::SignalingStorageProvider as _;
 
 /// Data stored behind the [`Ticket`] key.
-#[derive(Debug, Clone, Deserialize, Serialize, ToRedisArgs, FromRedisValue)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, ToRedisArgs, FromRedisValue)]
 #[to_redis_args(serde)]
 #[from_redis_value(serde)]
 pub struct TicketData {
@@ -35,7 +27,7 @@ pub struct TicketData {
 }
 
 pub async fn start_or_continue_signaling_session(
-    redis_conn: &mut RedisConnection,
+    volatile: &mut VolatileStorage,
     participant: Participant<UserId>,
     room: RoomId,
     breakout_room: Option<BreakoutRoomId>,
@@ -45,7 +37,7 @@ pub async fn start_or_continue_signaling_session(
 
     // Get participant id, check resumption token if it exists, if not generate random one
     let participant_id = if let Some(resumption) = resumption {
-        if let Some(id) = use_resumption_token(redis_conn, participant, room, resumption).await? {
+        if let Some(id) = use_resumption_token(volatile, participant, room, resumption).await? {
             resuming = true;
             id
         } else {
@@ -69,15 +61,9 @@ pub async fn start_or_continue_signaling_session(
         resumption: resumption.clone(),
     };
 
-    // let the ticket expire in 30 seconds
-    redis_conn
-        .set_ex(
-            TicketRedisKey {
-                ticket: ticket.as_str(),
-            },
-            &ticket_data,
-            30,
-        )
+    volatile
+        .signaling_storage()
+        .set_ticket_ex(&ticket, &ticket_data)
         .await
         .map_err(|e| {
             log::error!("Unable to store ticket in redis, {}", Report::from_error(e));
@@ -88,18 +74,18 @@ pub async fn start_or_continue_signaling_session(
 }
 
 async fn use_resumption_token(
-    redis_conn: &mut RedisConnection,
+    volatile: &mut VolatileStorage,
     participant: Participant<UserId>,
     room: RoomId,
-    token: ResumptionToken,
+    resumption_token: ResumptionToken,
 ) -> Result<Option<ParticipantId>, ApiError> {
-    let resumption_redis_key = ResumptionRedisKey(token);
-
-    // Check for resumption data behind resumption token
-    let resumption_data: Option<ResumptionData> =
-        redis_conn.get(&resumption_redis_key).await.map_err(|e| {
+    let resumption_data = volatile
+        .signaling_storage()
+        .get_resumption_token_data(&resumption_token)
+        .await
+        .map_err(|e| {
             log::error!(
-                "Failed to fetch resumption token from redis, {}",
+                "Failed to fetch resumption token from storage, {}",
                 Report::from_error(e)
             );
             ApiError::internal()
@@ -118,16 +104,24 @@ async fn use_resumption_token(
         return Ok(None);
     }
 
-    if control::storage::participant_id_in_use(redis_conn, data.participant_id).await? {
+    if volatile
+        .signaling_storage()
+        .participant_id_in_use(data.participant_id)
+        .await?
+    {
         return Err(ApiError::bad_request()
             .with_code("session_running")
             .with_message("the session of the given resumption token is still running"));
     }
 
-    let delete_success = redis_conn.del(&resumption_redis_key).await.map_err(|e| {
-        log::warn!("Internal error: {}", Report::from_error(e));
-        ApiError::internal()
-    })?;
+    let delete_success = volatile
+        .signaling_storage()
+        .delete_resumption_token(&resumption_token)
+        .await
+        .map_err(|e| {
+            log::warn!("Internal error: {}", Report::from_error(e));
+            ApiError::internal()
+        })?;
     if delete_success {
         Ok(Some(data.participant_id))
     } else {

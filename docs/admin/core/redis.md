@@ -1,6 +1,14 @@
 # Session Data (Redis)
 
-The OpenTalk controller uses the in-memory data store [Redis](https://redis.com/) for caching data related to a video conference session.
+The OpenTalk controller can be run in *standalone* mode, where a single
+`opentalk-controller` provides the web api and signaling service, or it can run
+in a *clustered* mode, where multiple `opentalk-controller` nodes provide
+the service in parallel and synchronize through [Redis](https://redis.com/)
+for caching data related to a video conference session.
+
+Up until version `v0.14` of the `opentalk-controller`, the redis service was
+mandatory, starting with `v0.15` it is possible to leave the whole configuration
+section out to operate the controller in *standalone* mode.
 
 ## Configuration
 
@@ -14,7 +22,19 @@ The section in the [configuration file](configuration.md) is called `redis`.
 
 #### Default Setup
 
-The default setup requires no manual input:
+The default setup since `0.15` is to leave the `[redis]` section out entirely,
+therefore operating the `opentalk-controller` in *standalone* mode.
+
+```toml
+# [redis]
+#url = "redis://localhost:6379/"
+```
+
+#### Default Redis URL
+
+Using the default redis url requires the `[redis]` section to be present. If the
+`url` field is absent, then the default redis URL will be used. This was the
+default configuration up until `v0.14` of the OpenTalk controller.
 
 ```toml
 [redis]

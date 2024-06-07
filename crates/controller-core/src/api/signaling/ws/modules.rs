@@ -6,7 +6,7 @@ use std::{any::Any, collections::HashMap, marker::PhantomData, sync::Arc};
 
 use actix_http::ws::{CloseCode, Message};
 use futures::stream::SelectAll;
-use opentalk_signaling_core::{AnyStream, Event, InitContext, RedisConnection, SignalingMetrics};
+use opentalk_signaling_core::{AnyStream, Event, InitContext, SignalingMetrics, VolatileStorage};
 use opentalk_types::{
     core::ParticipantId,
     signaling::{
@@ -77,7 +77,7 @@ impl Modules {
                 role: ctx.role,
                 ws_messages: ctx.ws_messages,
                 exchange_publish: ctx.exchange_publish,
-                redis_conn: ctx.redis_conn,
+                volatile: ctx.volatile,
                 events: ctx.events,
                 invalidate_data: ctx.invalidate_data,
                 timestamp: ctx.timestamp,
@@ -97,7 +97,7 @@ impl Modules {
 
             module
                 .destroy(DestroyContext {
-                    redis_conn: ctx.redis_conn,
+                    volatile: ctx.volatile,
                     destroy_room: ctx.destroy_room,
                 })
                 .await;
@@ -137,7 +137,7 @@ pub(super) struct DynEventCtx<'ctx> {
     pub timestamp: Timestamp,
     pub ws_messages: &'ctx mut Vec<Message>,
     pub exchange_publish: &'ctx mut Vec<ExchangePublish>,
-    pub redis_conn: &'ctx mut RedisConnection,
+    pub volatile: &'ctx mut VolatileStorage,
     pub events: &'ctx mut SelectAll<AnyStream>,
     pub invalidate_data: &'ctx mut bool,
     pub exit: &'ctx mut Option<CloseCode>,
@@ -172,19 +172,6 @@ where
         ctx: ModuleContext<'_, M>,
         dyn_event: DynTargetedEvent,
     ) -> Result<()> {
-        let ctx = ModuleContext {
-            role: ctx.role,
-            ws_messages: ctx.ws_messages,
-            exchange_publish: ctx.exchange_publish,
-            redis_conn: ctx.redis_conn,
-            events: ctx.events,
-            invalidate_data: ctx.invalidate_data,
-            exit: ctx.exit,
-            timestamp: ctx.timestamp,
-            metrics: ctx.metrics,
-            m: PhantomData::<fn() -> M>,
-        };
-
         match dyn_event {
             DynTargetedEvent::WsMessage(msg) => {
                 let msg =
@@ -218,19 +205,6 @@ where
         ctx: ModuleContext<'_, M>,
         dyn_event: &mut DynBroadcastEvent<'_>,
     ) -> Result<()> {
-        let ctx = ModuleContext {
-            role: ctx.role,
-            ws_messages: ctx.ws_messages,
-            exchange_publish: ctx.exchange_publish,
-            redis_conn: ctx.redis_conn,
-            events: ctx.events,
-            invalidate_data: ctx.invalidate_data,
-            exit: ctx.exit,
-            timestamp: ctx.timestamp,
-            metrics: ctx.metrics,
-            m: PhantomData::<fn() -> M>,
-        };
-
         match dyn_event {
             DynBroadcastEvent::Joined(control_data, module_data, participants) => {
                 let mut frontend_data = None;
@@ -345,11 +319,11 @@ where
             timestamp: dyn_ctx.timestamp,
             ws_messages: &mut ws_messages,
             exchange_publish: dyn_ctx.exchange_publish,
-            redis_conn: dyn_ctx.redis_conn,
             events: dyn_ctx.events,
             invalidate_data: dyn_ctx.invalidate_data,
             exit: dyn_ctx.exit,
             metrics: Some(dyn_ctx.metrics.clone()),
+            volatile: dyn_ctx.volatile,
             m: PhantomData::<fn() -> M>,
         };
 
@@ -384,7 +358,7 @@ where
             timestamp: dyn_ctx.timestamp,
             ws_messages: &mut ws_messages,
             exchange_publish: dyn_ctx.exchange_publish,
-            redis_conn: dyn_ctx.redis_conn,
+            volatile: dyn_ctx.volatile,
             events: dyn_ctx.events,
             invalidate_data: dyn_ctx.invalidate_data,
             exit: dyn_ctx.exit,
@@ -453,7 +427,7 @@ where
             authz: &builder.authz,
             exchange_bindings: &mut builder.exchange_bindings,
             events: &mut builder.events,
-            redis_conn: &mut builder.redis_conn,
+            volatile: &mut builder.volatile,
             m: PhantomData::<fn() -> M>,
         };
 

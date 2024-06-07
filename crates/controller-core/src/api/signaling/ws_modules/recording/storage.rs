@@ -2,151 +2,222 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::collections::{BTreeMap, BTreeSet};
+mod recording_storage;
+mod redis;
+mod volatile;
 
-use itertools::Itertools;
-use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
-use opentalk_types::{
-    core::StreamingTargetId,
-    signaling::recording::{StreamStatus, StreamTargetSecret},
-};
-use redis::AsyncCommands;
-use redis_args::ToRedisArgs;
-use snafu::{OptionExt, ResultExt};
+pub(crate) use recording_storage::RecordingStorage;
 
-/// Stores the [`RecordingStatus`] of this room.
-#[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "opentalk-signaling:room={room_id}:recording:streams")]
-struct RecordingStreamsKey {
-    room_id: SignalingRoomId,
-}
+#[cfg(test)]
+mod test_common {
+    use std::collections::{BTreeMap, BTreeSet};
 
-pub(super) async fn is_streaming_initialized(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-) -> Result<bool, SignalingModuleError> {
-    redis_conn
-        .exists(RecordingStreamsKey { room_id })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to initialize streaming",
-        })
-}
+    use opentalk_signaling_core::SignalingRoomId;
+    use opentalk_types::{
+        common::streaming::StreamingTargetKind,
+        core::StreamingTargetId,
+        signaling::recording::{StreamKindSecret, StreamStatus, StreamTargetSecret},
+    };
 
-pub(crate) async fn set_streams(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-    target_stream_ids: &BTreeMap<StreamingTargetId, StreamTargetSecret>,
-) -> Result<(), SignalingModuleError> {
-    let target_streams: Vec<_> = target_stream_ids.iter().collect();
-    redis_conn
-        .hset_multiple(RecordingStreamsKey { room_id }, target_streams.as_slice())
-        .await
-        .context(RedisSnafu {
-            message: "Failed to set target stream ids",
-        })
-}
+    use super::RecordingStorage;
 
-pub(crate) async fn set_stream(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-    target_id: StreamingTargetId,
-    stream_target: StreamTargetSecret,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .hset(RecordingStreamsKey { room_id }, target_id, stream_target)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to set target stream",
-        })
-}
+    pub const ROOM: SignalingRoomId = SignalingRoomId::nil();
 
-pub(crate) async fn get_streams(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-) -> Result<BTreeMap<StreamingTargetId, StreamTargetSecret>, SignalingModuleError> {
-    redis_conn
-        .hgetall(RecordingStreamsKey { room_id })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to get all streams",
-        })
-}
+    pub(super) async fn streams(storage: &mut dyn RecordingStorage) {
+        let stream1_id = StreamingTargetId::generate();
+        let stream2_id = StreamingTargetId::generate();
+        let stream3_id = StreamingTargetId::generate();
 
-pub(crate) async fn get_stream(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-    target_id: StreamingTargetId,
-) -> Result<StreamTargetSecret, SignalingModuleError> {
-    redis_conn
-        .hget(RecordingStreamsKey { room_id }, target_id)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to get target stream",
-        })
-}
+        let stream1 = StreamTargetSecret {
+            name: "Recording".to_string(),
+            kind: StreamKindSecret::Recording,
+            status: opentalk_types::signaling::recording::StreamStatus::Active,
+        };
+        let stream2 = StreamTargetSecret {
+            name: "Livestream 1".to_string(),
+            kind: StreamKindSecret::Livestream(StreamingTargetKind::Custom {
+                streaming_endpoint: "rtmp://example.com/stream".parse().unwrap(),
+                streaming_key: "abcdefgh".parse().unwrap(),
+                public_url: "https://example.com/stream1".parse().unwrap(),
+            }),
+            status: opentalk_types::signaling::recording::StreamStatus::Paused,
+        };
+        let stream3 = StreamTargetSecret {
+            name: "Livestream 2".to_string(),
+            kind: StreamKindSecret::Livestream(StreamingTargetKind::Custom {
+                streaming_endpoint: "rtmp://example.com/stream".parse().unwrap(),
+                streaming_key: "ijklmnop".parse().unwrap(),
+                public_url: "https://example.com/stream2".parse().unwrap(),
+            }),
+            status: opentalk_types::signaling::recording::StreamStatus::Inactive,
+        };
 
-pub(super) async fn stream_exists(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-    target_id: StreamingTargetId,
-) -> Result<bool, SignalingModuleError> {
-    redis_conn
-        .hexists(RecordingStreamsKey { room_id }, target_id)
-        .await
-        .context(RedisSnafu {
-            message: "Failed to check for presence of stream",
-        })
-}
+        let streams =
+            BTreeMap::from_iter([(stream1_id, stream1.clone()), (stream2_id, stream2.clone())]);
 
-pub(super) async fn streams_contains_status(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-    status: Vec<StreamStatus>,
-) -> Result<bool, SignalingModuleError> {
-    let res: BTreeMap<StreamingTargetId, StreamTargetSecret> = redis_conn
-        .hgetall(RecordingStreamsKey { room_id })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to check for status in streams",
-        })?;
+        assert!(!storage.is_streaming_initialized(ROOM).await.unwrap());
+        assert_eq!(storage.get_streams(ROOM).await.unwrap(), BTreeMap::new());
+        assert!(storage.get_stream(ROOM, stream1_id).await.is_err());
+        assert!(storage.get_stream(ROOM, stream2_id).await.is_err());
+        assert!(storage.get_stream(ROOM, stream3_id).await.is_err());
+        assert!(!storage.stream_exists(ROOM, stream1_id).await.unwrap());
+        assert!(!storage.stream_exists(ROOM, stream2_id).await.unwrap());
+        assert!(!storage.stream_exists(ROOM, stream3_id).await.unwrap());
 
-    let res = res.iter().any(|(_, s)| status.iter().contains(&s.status));
+        storage.set_streams(ROOM, &streams).await.unwrap();
+        assert_eq!(storage.get_stream(ROOM, stream1_id).await.unwrap(), stream1);
+        assert_eq!(storage.get_stream(ROOM, stream2_id).await.unwrap(), stream2);
+        assert!(storage.get_stream(ROOM, stream3_id).await.is_err());
+        assert!(storage.stream_exists(ROOM, stream1_id).await.unwrap());
+        assert!(storage.stream_exists(ROOM, stream2_id).await.unwrap());
+        assert!(!storage.stream_exists(ROOM, stream3_id).await.unwrap());
 
-    Ok(res)
-}
+        assert!(storage.is_streaming_initialized(ROOM).await.unwrap());
 
-pub(super) async fn update_streams(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-    target_ids: &BTreeSet<StreamingTargetId>,
-    status: StreamStatus,
-) -> Result<(), SignalingModuleError> {
-    let mut streams = get_streams(redis_conn, room_id).await?;
-    let streams = target_ids
-        .iter()
-        .map(|id| {
-            let mut stream_target = streams
-                .remove(id)
-                .with_whatever_context::<_, _, SignalingModuleError>(|| {
-                    format!("Requested id: '{id}' not found")
-                })?;
-            stream_target.status = status.clone();
-            Ok((*id, stream_target))
-        })
-        .collect::<Result<BTreeMap<_, _>, SignalingModuleError>>()?;
+        assert_eq!(storage.get_streams(ROOM).await.unwrap(), streams);
 
-    set_streams(redis_conn, room_id, &streams).await
-}
+        storage
+            .set_stream(ROOM, stream3_id, stream3.clone())
+            .await
+            .unwrap();
+        assert_eq!(
+            storage.get_streams(ROOM).await.unwrap(),
+            BTreeMap::from_iter([
+                (stream1_id, stream1),
+                (stream2_id, stream2),
+                (stream3_id, stream3)
+            ])
+        );
+    }
 
-pub(crate) async fn delete_all_streams(
-    redis_conn: &mut RedisConnection,
-    room_id: SignalingRoomId,
-) -> Result<(), SignalingModuleError> {
-    redis_conn
-        .del(RecordingStreamsKey { room_id })
-        .await
-        .context(RedisSnafu {
-            message: "Failed to delete recording state",
-        })
+    pub(super) async fn streams_contain_status(storage: &mut dyn RecordingStorage) {
+        let stream1_id = StreamingTargetId::generate();
+        let stream2_id = StreamingTargetId::generate();
+        const ROOM: SignalingRoomId = SignalingRoomId::nil();
+
+        let stream1 = StreamTargetSecret {
+            name: "Recording".to_string(),
+            kind: StreamKindSecret::Recording,
+            status: opentalk_types::signaling::recording::StreamStatus::Active,
+        };
+        let stream2 = StreamTargetSecret {
+            name: "Livestream 1".to_string(),
+            kind: StreamKindSecret::Livestream(StreamingTargetKind::Custom {
+                streaming_endpoint: "rtmp://example.com/stream".parse().unwrap(),
+                streaming_key: "abcdefgh".parse().unwrap(),
+                public_url: "https://example.com/stream1".parse().unwrap(),
+            }),
+            status: opentalk_types::signaling::recording::StreamStatus::Paused,
+        };
+
+        let streams =
+            BTreeMap::from_iter([(stream1_id, stream1.clone()), (stream2_id, stream2.clone())]);
+
+        storage.set_streams(ROOM, &streams).await.unwrap();
+
+        assert!(!storage
+            .streams_contain_status(ROOM, BTreeSet::from_iter([]))
+            .await
+            .unwrap());
+        assert!(storage
+            .streams_contain_status(ROOM, BTreeSet::from_iter([StreamStatus::Active]))
+            .await
+            .unwrap());
+        assert!(storage
+            .streams_contain_status(ROOM, BTreeSet::from_iter([StreamStatus::Paused]))
+            .await
+            .unwrap());
+        assert!(!storage
+            .streams_contain_status(ROOM, BTreeSet::from_iter([StreamStatus::Inactive]))
+            .await
+            .unwrap());
+        assert!(storage
+            .streams_contain_status(
+                ROOM,
+                BTreeSet::from_iter([
+                    StreamStatus::Inactive,
+                    StreamStatus::Starting,
+                    StreamStatus::Paused
+                ])
+            )
+            .await
+            .unwrap());
+        assert!(!storage
+            .streams_contain_status(
+                ROOM,
+                BTreeSet::from_iter([StreamStatus::Inactive, StreamStatus::Starting])
+            )
+            .await
+            .unwrap());
+    }
+
+    pub(super) async fn update_streams_status(storage: &mut dyn RecordingStorage) {
+        let stream1_id = StreamingTargetId::generate();
+        let stream2_id = StreamingTargetId::generate();
+        const ROOM: SignalingRoomId = SignalingRoomId::nil();
+
+        let stream1 = StreamTargetSecret {
+            name: "Recording".to_string(),
+            kind: StreamKindSecret::Recording,
+            status: opentalk_types::signaling::recording::StreamStatus::Active,
+        };
+        let stream2 = StreamTargetSecret {
+            name: "Livestream 1".to_string(),
+            kind: StreamKindSecret::Livestream(StreamingTargetKind::Custom {
+                streaming_endpoint: "rtmp://example.com/stream".parse().unwrap(),
+                streaming_key: "abcdefgh".parse().unwrap(),
+                public_url: "https://example.com/stream1".parse().unwrap(),
+            }),
+            status: opentalk_types::signaling::recording::StreamStatus::Paused,
+        };
+
+        let streams =
+            BTreeMap::from_iter([(stream1_id, stream1.clone()), (stream2_id, stream2.clone())]);
+        storage.set_streams(ROOM, &streams).await.unwrap();
+
+        assert_eq!(
+            storage.get_stream(ROOM, stream1_id).await.unwrap().status,
+            StreamStatus::Active
+        );
+        assert_eq!(
+            storage.get_stream(ROOM, stream2_id).await.unwrap().status,
+            StreamStatus::Paused
+        );
+
+        storage
+            .update_streams_status(
+                ROOM,
+                &BTreeSet::from_iter([stream1_id]),
+                StreamStatus::Inactive,
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(
+            storage.get_stream(ROOM, stream1_id).await.unwrap().status,
+            StreamStatus::Inactive
+        );
+        assert_eq!(
+            storage.get_stream(ROOM, stream2_id).await.unwrap().status,
+            StreamStatus::Paused
+        );
+
+        storage
+            .update_streams_status(
+                ROOM,
+                &BTreeSet::from_iter([stream1_id, stream2_id]),
+                StreamStatus::Active,
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(
+            storage.get_stream(ROOM, stream1_id).await.unwrap().status,
+            StreamStatus::Active
+        );
+        assert_eq!(
+            storage.get_stream(ROOM, stream2_id).await.unwrap().status,
+            StreamStatus::Active
+        );
+    }
 }

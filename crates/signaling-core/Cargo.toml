@@ -20,6 +20,7 @@ bytes.workspace = true
 bytestring.workspace = true
 config.workspace = true
 derive_more.workspace = true
+either.workspace = true
 futures.workspace = true
 kustos.workspace = true
 lapin.workspace = true
@@ -33,6 +34,7 @@ opentalk-janus-client.workspace = true
 opentalk-r3dlock.workspace = true
 opentalk-types = { workspace = true, features = ["backend"] }
 opentelemetry = { workspace = true, features = ["metrics", "trace"] }
+parking_lot.workspace = true
 redis = { workspace = true, features = ["connection-manager", "tokio-comp"] }
 redis-args.workspace = true
 reqwest.workspace = true
@@ -44,12 +46,14 @@ snafu.workspace = true
 tokio.workspace = true
 tokio-stream.workspace = true
 tracing.workspace = true
+tracing-actix-web = "0.7.10"
 url.workspace = true
 uuid = { workspace = true, features = ["v4"] }
 
 [dev-dependencies]
 chrono.workspace = true
 pretty_assertions.workspace = true
+serial_test.workspace = true
 
 [features]
 default = []

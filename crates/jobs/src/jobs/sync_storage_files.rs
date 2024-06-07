@@ -199,7 +199,7 @@ mod tests {
     #[actix_rt::test]
     #[ignore]
     async fn sync_files_and_delete_missing() {
-        let test_ctx = TestContext::new().await;
+        let test_ctx = TestContext::default().await;
 
         let minio = MinIO {
             uri: "http://localhost:9555".into(),
@@ -240,7 +240,7 @@ mod tests {
     #[actix_rt::test]
     #[ignore]
     async fn sync_files_and_set_missing_to_zero() {
-        let test_ctx = TestContext::new().await;
+        let test_ctx = TestContext::default().await;
 
         let valid_assets = 99;
 
