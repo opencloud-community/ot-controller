@@ -9,20 +9,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- recording: make `record` and `stream` functionality configurable by module features ([#760](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/760))
-- controller: Allow polls with multiple choices ([#746](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/746))
 - controller: Allow resetting individual participant's raised hands ([#764](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/764))
 - mail-worker-protocol: add streaming targets ([#650](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/650))
 
 ### Changed
 
-- database: Make events.room unique to create one to one relation ([#724](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/724))
 - assets: Save assets in a predefined name format ([#763](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/763))
 - controller: keep signaling open when sending user from room to waiting room ([#740](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/740))
 
-### Fixed
+## [0.14.0]
 
+### :rocket: New features
+
+- recording: make `record` and `stream` functionality configurable by module features ([#760](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/760))
+- controller: Allow polls with multiple choices ([#746](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/746))
+- Add a distributed JobExecutor system ([#422](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/422), [#424](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/424), [#425](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/425))
+
+### :bug: Bug fixes
+
+- database: Make events.room unique to create one to one relation ([#724](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/724))
+- Add missing and underspecified asset information
 - controller: only notify once about enabled/disabled waiting room ([#757](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/757))
+
+### :gear: Miscellaneous
+
+- Update mail-worker-protocol metadata for publishing to crates.io ([#728](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/728))
+- Use lapin-pool from crates.io
+
+### Refactor
+
+- Remove dependency from mail-worker-protocol to db-storage and keycloak-admin ([#754](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/754))
+
+### Ci
+
+- Enforce conventional commits
 
 ## [0.13.0]
 
@@ -484,8 +504,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - initial release candidate
 
 ---
+[Unreleased]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.14.0...main
 
-[Unreleased]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.13.0...main
+[0.14.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.13.0...0.14.0
 
 [0.13.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.12.1...v0.13.0
 
