@@ -60,7 +60,10 @@ pub enum SignalingModuleError {
     },
 
     #[snafu(context(false))]
-    LapinError { source: lapin_pool::Error },
+    LapinError { source: lapin::Error },
+
+    #[snafu(context(false))]
+    LapinPoolError { source: lapin_pool::Error },
 
     #[snafu(context(false))]
     EtherpadError {

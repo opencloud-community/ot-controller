@@ -15,7 +15,7 @@ use std::{
 };
 
 use futures::{ready, stream::FuturesUnordered};
-use lapin_pool::{RabbitMqChannel, RabbitMqPool};
+use lapin_pool::RabbitMqPool;
 use opentalk_controller_settings::SharedSettings;
 use opentalk_janus_client::{
     outgoing::{VideoRoomPluginConfigurePublisher, VideoRoomPluginConfigureSubscriber},
@@ -37,7 +37,7 @@ use tokio_stream::{
 };
 
 use crate::{
-    settings::{self, Connection},
+    settings::{self, ConnectionConfig},
     storage::MediaStorage,
     MediaStorageProvider as _,
 };
@@ -59,10 +59,18 @@ pub(crate) struct PublisherInfo {
 pub(crate) struct McuId(Arc<str>);
 
 impl McuId {
-    pub fn new(to_janus_key: &str, janus_exchange_key: &str, from_janus_key: &str) -> Self {
+    pub fn from_rabbit_mq(
+        to_janus_key: &str,
+        janus_exchange_key: &str,
+        from_janus_key: &str,
+    ) -> Self {
         let key = Self::generate_id_string(to_janus_key, janus_exchange_key, from_janus_key);
 
         Self(key.into_boxed_str().into())
+    }
+
+    pub fn from_websocket(url: &str) -> Self {
+        Self(url.to_owned().into_boxed_str().into())
     }
 
     pub fn generate_id_string(
@@ -86,9 +94,24 @@ impl std::fmt::Display for McuId {
     }
 }
 
-impl From<&settings::Connection> for McuId {
-    fn from(conn: &settings::Connection) -> Self {
-        Self::new(&conn.to_routing_key, &conn.exchange, &conn.from_routing_key)
+impl From<&settings::ConnectionConfig> for McuId {
+    fn from(conn: &settings::ConnectionConfig) -> Self {
+        match conn {
+            ConnectionConfig::WebSocket(c) => Self::from(c),
+            ConnectionConfig::RabbitMq(c) => Self::from(c),
+        }
+    }
+}
+
+impl From<&settings::RabbitMqConnectionConfig> for McuId {
+    fn from(conn: &settings::RabbitMqConnectionConfig) -> Self {
+        Self::from_rabbit_mq(&conn.to_routing_key, &conn.exchange, &conn.from_routing_key)
+    }
+}
+
+impl From<&settings::WebsocketConnectionConfig> for McuId {
+    fn from(conn: &settings::WebsocketConnectionConfig) -> Self {
+        Self::from_websocket(&conn.websocket_url)
     }
 }
 
@@ -135,12 +158,10 @@ impl McuPool {
         let (events_sender, events) = mpsc::channel(12);
 
         for config in &mcu_config.connections {
-            let channel = rabbitmq_pool.create_channel().await?;
-
-            log::info!("Connecting to janus-gateway via rabbitmq {config:?}");
+            log::info!("Connecting to janus-gateway using {config:?}");
 
             match McuClient::connect(
-                channel,
+                &rabbitmq_pool,
                 volatile.clone(),
                 config.clone(),
                 events_sender.clone(),
@@ -242,10 +263,8 @@ impl McuPool {
                 continue;
             }
 
-            let channel = self.rabbitmq_pool.create_channel().await?;
-
             match McuClient::connect(
-                channel,
+                &self.rabbitmq_pool,
                 self.volatile.clone(),
                 connection_config.clone(),
                 self.events_sender.clone(),
@@ -253,16 +272,12 @@ impl McuPool {
             .await
             {
                 Ok(client) => {
-                    log::info!("Connected mcu {:?}", connection_config.to_routing_key);
+                    log::info!("Connected mcu {:?}", connection_config);
 
                     clients.insert(client);
                 }
                 Err(e) => {
-                    log::error!(
-                        "Failed to connect to {:?}, {}",
-                        connection_config.to_routing_key,
-                        e
-                    )
+                    log::error!("Failed to connect to {:?}, {}", connection_config, e)
                 }
             }
         }
@@ -474,7 +489,10 @@ impl McuPool {
     }
 }
 
-async fn global_reconnect_task(mcu_pool: Arc<McuPool>, mut receiver: mpsc::Receiver<Connection>) {
+async fn global_reconnect_task(
+    mcu_pool: Arc<McuPool>,
+    mut receiver: mpsc::Receiver<ConnectionConfig>,
+) {
     let mut disconnected_clients = FuturesUnordered::<ReconnectBackoff>::new();
 
     loop {
@@ -498,7 +516,7 @@ async fn global_receive_task(
     mut controller_shutdown_sig: broadcast::Receiver<()>,
     mut controller_reload_sig: broadcast::Receiver<()>,
     mut events: mpsc::Receiver<(ClientId, Arc<JanusMessage>)>,
-    reconnect_sender: mpsc::Sender<Connection>,
+    reconnect_sender: mpsc::Sender<ConnectionConfig>,
 ) {
     let mut keep_alive_interval = interval_at(
         Instant::now() + Duration::from_secs(10),
@@ -535,7 +553,7 @@ async fn global_receive_task(
 
 async fn keep_alive(
     mcu_clients: &RwLock<HashSet<McuClient>>,
-    reconnect_sender: &mpsc::Sender<Connection>,
+    reconnect_sender: &mpsc::Sender<ConnectionConfig>,
 ) {
     let clients = mcu_clients.read().await;
 
@@ -581,7 +599,7 @@ async fn attempt_reconnect(
     mcu_pool: &McuPool,
     disco_clients: &mut FuturesUnordered<ReconnectBackoff>,
     duration: Duration,
-    config_to_reconnect: Connection,
+    config_to_reconnect: ConnectionConfig,
 ) {
     // check if the mcu got removed from the settings
     if !mcu_pool
@@ -594,20 +612,8 @@ async fn attempt_reconnect(
         return;
     }
 
-    let channel = match mcu_pool.rabbitmq_pool.create_channel().await {
-        Ok(channel) => channel,
-        Err(e) => {
-            log::error!(
-                "Failed to create channel for McuClient when trying to reconnect, backing off. {}",
-                Report::from_error(e)
-            );
-            disco_clients.push(ReconnectBackoff::new(duration, config_to_reconnect));
-            return;
-        }
-    };
-
     match McuClient::connect(
-        channel,
+        &mcu_pool.rabbitmq_pool,
         mcu_pool.volatile.clone(),
         config_to_reconnect.clone(),
         mcu_pool.events_sender.clone(),
@@ -637,12 +643,12 @@ pin_project_lite::pin_project! {
         #[pin]
         sleep: tokio::time::Sleep,
         next_duration: Duration,
-        config: Option<Connection>,
+        config: Option<ConnectionConfig>,
     }
 }
 
 impl ReconnectBackoff {
-    pub fn new(duration: Duration, config: Connection) -> Self {
+    pub fn new(duration: Duration, config: ConnectionConfig) -> Self {
         Self {
             sleep: sleep(duration),
             next_duration: min(duration * 2, Duration::from_secs(8)),
@@ -650,13 +656,13 @@ impl ReconnectBackoff {
         }
     }
 
-    pub fn initial(config: Connection) -> Self {
+    pub fn initial(config: ConnectionConfig) -> Self {
         Self::new(Duration::from_secs(1), config)
     }
 }
 
 impl Future for ReconnectBackoff {
-    type Output = (Duration, Connection);
+    type Output = (Duration, ConnectionConfig);
 
     fn poll(self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<Self::Output> {
         let this = self.project();
@@ -680,7 +686,7 @@ pub enum ShutdownSignal {
 struct McuClient {
     pub id: McuId,
 
-    pub config: Connection,
+    pub config: ConnectionConfig,
 
     session: opentalk_janus_client::Session,
     client: opentalk_janus_client::Client,
@@ -720,20 +726,16 @@ impl McuClient {
         self.id.0.as_ref()
     }
 
-    #[tracing::instrument(level = "debug", skip(rabbitmq_channel, storage, events_sender))]
+    #[tracing::instrument(level = "debug", skip(rabbitmq_pool, storage, events_sender))]
     pub async fn connect(
-        rabbitmq_channel: RabbitMqChannel,
+        rabbitmq_pool: &RabbitMqPool,
         mut storage: VolatileStorage,
-        config: settings::Connection,
+        config: settings::ConnectionConfig,
         events_sender: mpsc::Sender<(ClientId, Arc<JanusMessage>)>,
     ) -> Result<Self, SignalingModuleError> {
-        let id = McuId::new(
-            &config.to_routing_key,
-            &config.exchange,
-            &config.from_routing_key,
-        );
+        let id = McuId::from(&config);
 
-        if let Some(event_loops) = config.event_loops {
+        if let Some(event_loops) = config.event_loops() {
             for loop_index in 0..event_loops {
                 storage
                     .storage()
@@ -750,16 +752,33 @@ impl McuClient {
         // We sent at most two signals
         let (pubsub_shutdown, _) = broadcast::channel::<ShutdownSignal>(1);
 
-        let rabbit_mq_config = opentalk_janus_client::RabbitMqConfig::new_from_channel(
-            rabbitmq_channel.clone(),
-            config.to_routing_key.clone(),
-            config.exchange.clone(),
-            config.from_routing_key.clone(),
-            format!("opentalk-sig-janus-{}", id.0),
-        );
+        let transport_config = match &config {
+            ConnectionConfig::WebSocket(config) => {
+                opentalk_janus_client::transport::TransportConfig::from(
+                    opentalk_janus_client::transport::WebSocketConfig::new(
+                        config.websocket_url.as_str(),
+                    ),
+                )
+            }
+            ConnectionConfig::RabbitMq(config) => {
+                opentalk_janus_client::transport::TransportConfig::from(
+                    opentalk_janus_client::RabbitMqConfig::new_from_channel(
+                        rabbitmq_pool
+                            .make_connection()
+                            .await?
+                            .create_channel()
+                            .await?,
+                        config.to_routing_key.clone(),
+                        config.exchange.clone(),
+                        config.from_routing_key.clone(),
+                        format!("opentalk-sig-janus-{}", id.0),
+                    ),
+                )
+            }
+        };
 
         let mut client = opentalk_janus_client::Client::new(
-            rabbit_mq_config,
+            transport_config,
             ClientId(id.0.to_string()),
             events_sender.clone(),
         )
