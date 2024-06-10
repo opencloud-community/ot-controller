@@ -12,7 +12,7 @@ use async_trait::async_trait;
 use opentalk_db_storage::{events::Event, tariffs::Tariff};
 use opentalk_types::{
     core::{ParticipantId, RoomId, Timestamp},
-    signaling::Role,
+    signaling::{control::room::CreatorInfo, Role},
 };
 use redis::{AsyncCommands, FromRedisValue, ToRedisArgs};
 use redis_args::ToRedisArgs;
@@ -166,6 +166,42 @@ impl ControlStorage for RedisConnection {
             .context(RedisSnafu {
                 message: "Failed to delete room participant count key",
             })
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn try_init_creator(
+        &mut self,
+        room_id: RoomId,
+        creator: CreatorInfo,
+    ) -> Result<CreatorInfo, SignalingModuleError> {
+        let (_, creator): (bool, CreatorInfo) = redis::pipe()
+            .atomic()
+            .set_nx(RoomCreator { room_id }, creator)
+            .get(RoomCreator { room_id })
+            .query_async(self)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to SET NX & GET room creator",
+            })?;
+
+        Ok(creator)
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn get_creator(
+        &mut self,
+        room_id: RoomId,
+    ) -> Result<Option<CreatorInfo>, SignalingModuleError> {
+        self.get(RoomCreator { room_id }).await.context(RedisSnafu {
+            message: "Failed to get room creator",
+        })
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_creator(&mut self, room_id: RoomId) -> Result<(), SignalingModuleError> {
+        self.del(RoomCreator { room_id }).await.context(RedisSnafu {
+            message: "Failed to delete room creator",
+        })
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
@@ -679,6 +715,15 @@ pub struct RoomEvent {
     room_id: RoomId,
 }
 
+/// The [`CreatorInfo`]  for the user that created the room
+///
+/// Notice that this key only contains the [`RoomId`] as it applies to all breakout rooms as well
+#[derive(ToRedisArgs)]
+#[to_redis_args(fmt = "opentalk-signaling:room={room_id}:creator")]
+pub struct RoomCreator {
+    room_id: RoomId,
+}
+
 #[cfg(test)]
 mod test {
     use redis::aio::ConnectionManager;
@@ -753,6 +798,12 @@ mod test {
     #[serial]
     async fn participant_count() {
         test_common::participant_count(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn creator_info() {
+        test_common::creator_info(&mut storage().await).await;
     }
 
     #[tokio::test]

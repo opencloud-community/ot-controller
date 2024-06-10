@@ -177,13 +177,13 @@ Information about another participant provided by the `control` module
 
 Information about the event associated with a room.
 
-| Field             | Type             | Always | Description                                                                         |
-| ----------------- | ---------------- | ------ | ----------------------------------------------------------------------------------- |
-| `id`              | `string`         | yes    | Id of the event                                                                     |
-| `room_id`         | `string`         | yes    | Id of the room belonging to the event                                               |
-| `title`           | `string`         | yes    | Title of the event                                                                  |
-| `is_adhoc`        | `bool`           | yes    | True if the event was created ad-hoc                                                |
-| `meeting_details` | `MeetingDetails` | no     | Meeting for an event associated with a room. See: [MeetingDetails](#meetingdetails) |
+| Field             | Type             | Always | Description                                                                                                             |
+| ----------------- | ---------------- | ------ | ----------------------------------------------------------------------------------------------------------------------- |
+| `id`              | `string`         | yes    | Id of the event                                                                                                         |
+| `room_id`         | `string`         | yes    | Id of the room belonging to the event. (`deprecated`! use the `room_info` field from the `JoinSuccess` message instead) |
+| `title`           | `string`         | yes    | Title of the event                                                                                                      |
+| `is_adhoc`        | `bool`           | yes    | True if the event was created ad-hoc                                                                                    |
+| `meeting_details` | `MeetingDetails` | no     | Meeting for an event associated with a room. See: [MeetingDetails](#meetingdetails)                                     |
 
 #### MeetingDetails
 
@@ -220,6 +220,32 @@ Meeting details for an event associated with a room.
 | `name` | `string` | yes    | Name of the streaming link |
 | `url`  | `string` | yes    | Url of the streaming link  |
 
+#### RoomInfo
+
+##### Fields
+
+Information about the current room.
+
+| Field        | Type          | Always | Description                                                                      |
+| ------------ | ------------- | ------ | -------------------------------------------------------------------------------- |
+| `id`         | `string`      | yes    | Id of the room                                                                   |
+| `password`   | `string`      | no     | The room password, if one is configured                                          |
+| `created_by` | `CreatorInfo` | yes    | Information about the user that created the room. See[CreatorInfo](#creatorinfo) |
+
+#### CreatorInfo
+
+##### Fields
+
+Information about the creator of the current room.
+
+| Field          | Type     | Always | Description                       |
+| -------------- | -------- | ------ | --------------------------------- |
+| `title`        | `string` | yes    | The users title                   |
+| `firstname`    | `string` | yes    | The users first name              |
+| `lastname`     | `string` | yes    | The users last name               |
+| `display_name` | `string` | yes    | The users configured display name |
+| `avatar_url`   | `string` | yes    | The url to the users avatar       |
+
 ### JoinSuccess
 
 Received after joining the room. Can be triggered by either calling [Join](#join) or [EnterRoom](#enterroom).
@@ -237,6 +263,7 @@ Received after joining the room. Can be triggered by either calling [Join](#join
 | `tariff`       | `Tariff`        | yes    | Tariff information, including `quotas` and `modules`                                       |
 | `participants` | `Participant[]` | yes    | List of participants in the room                                                           |
 | `event_info`   | `EventInfo`     | no     | Information about the event associated with the meeting room. See: [EventInfo](#eventinfo) |
+| `room_info`    | `RoomInfo`      | yes    | Information about the current room. See: [RoomInfo](#roominfo)                             |
 
 ##### Example
 
@@ -277,6 +304,17 @@ Received after joining the room. Can be triggered by either calling [Join](#join
   "event_info": {
     "id": "fa31b241-612d-4524-930e-b5b0af12acb1",
     "title": "Daily"
+  },
+  "room_info": {
+    "id": "00000000-0000-0000-0000-000000000000",
+    "password": "secret123",
+    "created_by": {
+      "title": "Dr.",
+      "firstname": "Firstname",
+      "lastname": "Lastname",
+      "display_name": "The Creator",
+      "avatar_url": "https://example.org/",
+    }
   }
 }
 ```
@@ -361,10 +399,10 @@ Received when a participant left the room.
 
 #### Fields
 
-| Field     | Type     | Always | Description                                                              |
-| --------- | -------- | ------ | ------------------------------------------------------------------------ |
-| `message` | `enum`   | yes    | Is `"left"`                                                              |
-| `id`      | `string` | yes    | Id of the participant that has left                                      |
+| Field     | Type     | Always | Description                                                                                        |
+| --------- | -------- | ------ | -------------------------------------------------------------------------------------------------- |
+| `message` | `enum`   | yes    | Is `"left"`                                                                                        |
+| `id`      | `string` | yes    | Id of the participant that has left                                                                |
 | `reason`  | `enum`   | yes    | The reason as to why the participant left either `"quit"`, `"timeout"` or `"sent_to_waiting_room"` |
 
 ##### Example

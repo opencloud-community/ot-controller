@@ -8,7 +8,7 @@ use async_trait::async_trait;
 use opentalk_db_storage::{events::Event, tariffs::Tariff};
 use opentalk_types::{
     core::{ParticipantId, RoomId, Timestamp},
-    signaling::Role,
+    signaling::{control::room::CreatorInfo, Role},
 };
 use serde::{de::DeserializeOwned, Serialize};
 use snafu::ResultExt as _;
@@ -169,6 +169,19 @@ pub trait ControlStorage:
         &mut self,
         room_id: RoomId,
     ) -> Result<(), SignalingModuleError>;
+
+    async fn try_init_creator(
+        &mut self,
+        room_id: RoomId,
+        creator: CreatorInfo,
+    ) -> Result<CreatorInfo, SignalingModuleError>;
+
+    async fn get_creator(
+        &mut self,
+        room_id: RoomId,
+    ) -> Result<Option<CreatorInfo>, SignalingModuleError>;
+
+    async fn delete_creator(&mut self, room_id: RoomId) -> Result<(), SignalingModuleError>;
 
     async fn set_room_closes_at(
         &mut self,

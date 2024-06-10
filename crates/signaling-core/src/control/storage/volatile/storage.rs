@@ -11,7 +11,7 @@ use async_trait::async_trait;
 use opentalk_db_storage::{events::Event, tariffs::Tariff};
 use opentalk_types::{
     core::{ParticipantId, RoomId, Timestamp},
-    signaling::Role,
+    signaling::{control::room::CreatorInfo, Role},
 };
 use parking_lot::RwLock;
 
@@ -114,6 +114,26 @@ impl ControlStorage for VolatileStaticMemoryStorage {
         room_id: RoomId,
     ) -> Result<(), SignalingModuleError> {
         state().write().delete_participant_count(room_id);
+        Ok(())
+    }
+
+    async fn try_init_creator(
+        &mut self,
+        room_id: RoomId,
+        creator: CreatorInfo,
+    ) -> Result<CreatorInfo, SignalingModuleError> {
+        Ok(state().write().try_init_creator(room_id, creator))
+    }
+
+    async fn get_creator(
+        &mut self,
+        room_id: RoomId,
+    ) -> Result<Option<CreatorInfo>, SignalingModuleError> {
+        Ok(state().read().get_creator(room_id))
+    }
+
+    async fn delete_creator(&mut self, room_id: RoomId) -> Result<(), SignalingModuleError> {
+        state().write().delete_creator(room_id);
         Ok(())
     }
 
@@ -393,6 +413,12 @@ mod tests {
     #[serial]
     async fn participant_count() {
         test_common::participant_count(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn creator_info() {
+        test_common::creator_info(&mut storage().await).await;
     }
 
     #[tokio::test]

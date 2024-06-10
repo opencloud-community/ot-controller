@@ -30,6 +30,7 @@ use opentalk_types::{
         control::{
             command::{ControlCommand, Join},
             event::{ControlEvent, JoinSuccess},
+            room::{CreatorInfo, RoomInfo},
             state::ControlState,
             AssociatedParticipant, Reason, NAMESPACE,
         },
@@ -376,6 +377,7 @@ where
     M: SignalingModule,
 {
     volatile: VolatileStorage,
+    db: Arc<Db>,
     room_id: SignalingRoomId,
     room_owner: UserId,
     participant_id: ParticipantId,
@@ -458,6 +460,7 @@ where
 
         Ok(Self {
             volatile,
+            db,
             room_id: SignalingRoomId::new(room.id, breakout_room),
             room_owner: room.created_by,
             participant_id,
@@ -671,6 +674,22 @@ where
                     }
                 }
 
+                let mut conn = self.db.get_conn().await?;
+
+                let user = User::get(&mut conn, self.room_owner).await?;
+
+                let room_info = RoomInfo {
+                    id: self.room_id.room_id(),
+                    password: None,
+                    created_by: CreatorInfo {
+                        title: user.title,
+                        firstname: user.firstname,
+                        lastname: user.lastname,
+                        display_name: user.display_name,
+                        avatar_url: "https://example.org/avatar".into(),
+                    },
+                };
+
                 let join_success = JoinSuccess {
                     id: self.participant_id,
                     display_name: join.display_name.unwrap(),
@@ -689,6 +708,7 @@ where
                     module_data,
                     participants,
                     event_info: None,
+                    room_info,
                     is_room_owner,
                 };
 

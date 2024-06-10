@@ -8,7 +8,10 @@ use std::{
 };
 
 use opentalk_db_storage::{events::Event, tariffs::Tariff};
-use opentalk_types::core::{ParticipantId, RoomId, Timestamp};
+use opentalk_types::{
+    core::{ParticipantId, RoomId, Timestamp},
+    signaling::control::room::CreatorInfo,
+};
 use snafu::OptionExt as _;
 
 use crate::{
@@ -27,6 +30,7 @@ pub(super) struct MemoryControlState {
     participant_attributes: HashMap<SignalingRoomId, AttributeMap>,
     room_tariffs: HashMap<RoomId, Tariff>,
     room_events: HashMap<RoomId, Option<Event>>,
+    room_creators: HashMap<RoomId, CreatorInfo>,
     participant_count: HashMap<RoomId, isize>,
     rooms_close_at: HashMap<SignalingRoomId, Timestamp>,
     participants_skip_waiting_room: ExpiringDataHashMap<ParticipantId, bool>,
@@ -239,6 +243,22 @@ impl MemoryControlState {
 
     pub(super) fn delete_participant_count(&mut self, room_id: RoomId) {
         self.participant_count.remove(&room_id);
+    }
+
+    pub(super) fn try_init_creator(
+        &mut self,
+        room_id: RoomId,
+        creator: CreatorInfo,
+    ) -> CreatorInfo {
+        self.room_creators.entry(room_id).or_insert(creator).clone()
+    }
+
+    pub(super) fn get_creator(&self, room_id: RoomId) -> Option<CreatorInfo> {
+        self.room_creators.get(&room_id).cloned()
+    }
+
+    pub(super) fn delete_creator(&mut self, room_id: RoomId) {
+        self.room_creators.remove(&room_id);
     }
 
     pub(super) fn set_room_closes_at(&mut self, room: SignalingRoomId, timestamp: Timestamp) {
