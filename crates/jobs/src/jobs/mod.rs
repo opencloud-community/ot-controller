@@ -7,6 +7,7 @@
 mod adhoc_event_cleanup;
 mod event_cleanup;
 mod invite_cleanup;
+mod keycloak_account_sync;
 mod room_cleanup;
 mod self_check;
 mod sync_storage_files;
@@ -14,6 +15,7 @@ mod sync_storage_files;
 pub use adhoc_event_cleanup::AdhocEventCleanup;
 pub use event_cleanup::EventCleanup;
 pub use invite_cleanup::InviteCleanup;
+pub use keycloak_account_sync::KeycloakAccountSync;
 pub use room_cleanup::RoomCleanup;
 pub use self_check::SelfCheck;
 pub use sync_storage_files::SyncStorageFiles;

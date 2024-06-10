@@ -120,4 +120,10 @@ pub enum Error {
     /// File error
     #[snafu(context(false))]
     FileError { source: std::io::Error },
+
+    /// Error communicating with Keycloak instance
+    #[snafu(context(false))]
+    KeycloakClient {
+        source: opentalk_keycloak_admin::Error,
+    },
 }

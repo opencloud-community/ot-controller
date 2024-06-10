@@ -3672,6 +3672,7 @@ dependencies = [
  "opentalk-controller-utils",
  "opentalk-database",
  "opentalk-db-storage",
+ "opentalk-keycloak-admin",
  "opentalk-log",
  "opentalk-nextcloud-client",
  "opentalk-signaling-core",
