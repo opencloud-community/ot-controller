@@ -486,7 +486,8 @@ impl Protocol {
     ) -> Result<String, SignalingModuleError> {
         let display_name: String = storage
             .get_attribute(self.room_id, self.participant_id, DISPLAY_NAME)
-            .await?;
+            .await?
+            .unwrap_or_default();
 
         let author_id = self
             .etherpad

@@ -120,10 +120,26 @@ mod test_common {
         );
     }
 
-    #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+    #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
     struct Point {
         x: u32,
         y: u32,
+    }
+
+    pub(super) async fn participant_attribute_empty(storage: &mut impl ControlStorage) {
+        // Empty should be None
+        let empty_bool: Option<bool> = storage.get_attribute(ROOM, ALICE, POINT).await.unwrap();
+        assert!(empty_bool.is_none());
+
+        // Storing None should return Some(None). The Some tells us that the storage was initialized. The None is the
+        // value that was inserted.
+        storage
+            .set_attribute(ROOM, ALICE, POINT, Option::<bool>::None)
+            .await
+            .unwrap();
+        let empty_option: Option<Option<bool>> =
+            storage.get_attribute(ROOM, ALICE, POINT).await.unwrap();
+        assert_eq!(empty_option, Some(None));
     }
 
     pub(super) async fn participant_attribute(storage: &mut impl ControlStorage) {
@@ -134,23 +150,26 @@ mod test_common {
             .await
             .unwrap();
 
-        let loaded: Point = storage.get_attribute(ROOM, ALICE, POINT).await.unwrap();
-        assert_eq!(loaded, point);
+        let loaded: Option<Point> = storage.get_attribute(ROOM, ALICE, POINT).await.unwrap();
+        assert_eq!(loaded, Some(point));
 
         assert!(storage
             .get_attribute::<Point>(ROOM, BOB, POINT)
             .await
-            .is_err());
+            .unwrap()
+            .is_none());
         assert!(storage
             .get_attribute::<Point>(ROOM, ALICE, LINE)
             .await
-            .is_err());
+            .unwrap()
+            .is_none());
 
         storage.remove_attribute(ROOM, ALICE, POINT).await.unwrap();
         assert!(storage
             .get_attribute::<Point>(ROOM, ALICE, POINT)
             .await
-            .is_err());
+            .unwrap()
+            .is_none());
     }
 
     pub(super) async fn participant_attributes(storage: &mut impl ControlStorage) {
@@ -298,14 +317,14 @@ mod test_common {
                 .get_attribute::<Point>(ROOM, ALICE, POINT)
                 .await
                 .unwrap(),
-            point
+            Some(point)
         );
         assert_eq!(
             storage
                 .get_attribute::<String>(ROOM, ALICE, LINE)
                 .await
                 .unwrap(),
-            "alice_line".to_string()
+            Some("alice_line".to_string())
         );
     }
 

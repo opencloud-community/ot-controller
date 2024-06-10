@@ -271,6 +271,7 @@ impl SignalingModule for ModerationModule {
                     .moderation_storage()
                     .get_attribute(self.room, target, IS_ROOM_OWNER)
                     .await?
+                    .unwrap_or(false)
                 {
                     ctx.ws_send(Error::CannotSendRoomOwnerToWaitingRoom);
                     return Ok(());

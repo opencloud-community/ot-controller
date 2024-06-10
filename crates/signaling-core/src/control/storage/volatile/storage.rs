@@ -272,7 +272,7 @@ impl ControlStorageParticipantAttributesRaw for VolatileStaticMemoryStorage {
         room: SignalingRoomId,
         participant: ParticipantId,
         attribute: AttributeId,
-    ) -> Result<serde_json::Value, SignalingModuleError> {
+    ) -> Result<Option<serde_json::Value>, SignalingModuleError> {
         Ok(state()
             .read()
             .get_attribute_raw(room, participant, attribute))
@@ -284,7 +284,7 @@ impl ControlStorageParticipantAttributesRaw for VolatileStaticMemoryStorage {
         room: SignalingRoomId,
         participants: &[ParticipantId],
         attribute: AttributeId,
-    ) -> Result<Vec<serde_json::Value>, SignalingModuleError> {
+    ) -> Result<Vec<Option<serde_json::Value>>, SignalingModuleError> {
         Ok(state()
             .read()
             .get_attribute_for_participants_raw(room, participants, attribute))
@@ -365,6 +365,12 @@ mod tests {
     #[serial]
     async fn participant_set() {
         test_common::participant_set(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn participant_attribute_empty() {
+        test_common::participant_attribute_empty(&mut storage().await).await;
     }
 
     #[tokio::test]
