@@ -47,26 +47,25 @@ impl JanusMcuConfig {
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
-#[serde(untagged)]
-pub enum ConnectionConfig {
-    WebSocket(WebsocketConnectionConfig),
-    RabbitMq(RabbitMqConnectionConfig),
+pub struct ConnectionConfig {
+    #[serde(flatten)]
+    pub backend: ConnectionBackendConfig,
+
+    #[serde(default)]
+    pub event_loops: Option<usize>,
 }
 
-impl ConnectionConfig {
-    pub(crate) fn event_loops(&self) -> Option<usize> {
-        match self {
-            ConnectionConfig::WebSocket(c) => c.event_loops,
-            ConnectionConfig::RabbitMq(c) => c.event_loops,
-        }
-    }
+#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[serde(untagged)]
+pub enum ConnectionBackendConfig {
+    WebSocket(WebsocketConnectionConfig),
+    RabbitMq(RabbitMqConnectionConfig),
 }
 
 /// Take the settings from your janus rabbit mq transport configuration.
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 pub struct WebsocketConnectionConfig {
     pub websocket_url: String,
-    pub event_loops: Option<usize>,
 }
 
 /// Take the settings from your janus rabbit mq transport configuration.
@@ -78,8 +77,6 @@ pub struct RabbitMqConnectionConfig {
     pub exchange: String,
     #[serde(default = "default_from_janus_routing_key")]
     pub from_routing_key: String,
-    #[serde(default)]
-    pub event_loops: Option<usize>,
 }
 
 const fn default_max_video_bitrate() -> u64 {

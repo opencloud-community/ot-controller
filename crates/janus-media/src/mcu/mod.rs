@@ -37,7 +37,7 @@ use tokio_stream::{
 };
 
 use crate::{
-    settings::{self, ConnectionConfig},
+    settings::{self, ConnectionBackendConfig, ConnectionConfig},
     storage::MediaStorage,
     MediaStorageProvider as _,
 };
@@ -96,9 +96,9 @@ impl std::fmt::Display for McuId {
 
 impl From<&settings::ConnectionConfig> for McuId {
     fn from(conn: &settings::ConnectionConfig) -> Self {
-        match conn {
-            ConnectionConfig::WebSocket(c) => Self::from(c),
-            ConnectionConfig::RabbitMq(c) => Self::from(c),
+        match &conn.backend {
+            ConnectionBackendConfig::WebSocket(c) => Self::from(c),
+            ConnectionBackendConfig::RabbitMq(c) => Self::from(c),
         }
     }
 }
@@ -735,7 +735,7 @@ impl McuClient {
     ) -> Result<Self, SignalingModuleError> {
         let id = McuId::from(&config);
 
-        if let Some(event_loops) = config.event_loops() {
+        if let Some(event_loops) = config.event_loops {
             for loop_index in 0..event_loops {
                 storage
                     .storage()
@@ -752,15 +752,15 @@ impl McuClient {
         // We sent at most two signals
         let (pubsub_shutdown, _) = broadcast::channel::<ShutdownSignal>(1);
 
-        let transport_config = match &config {
-            ConnectionConfig::WebSocket(config) => {
+        let transport_config = match &config.backend {
+            ConnectionBackendConfig::WebSocket(config) => {
                 opentalk_janus_client::transport::TransportConfig::from(
                     opentalk_janus_client::transport::WebSocketConfig::new(
                         config.websocket_url.as_str(),
                     ),
                 )
             }
-            ConnectionConfig::RabbitMq(config) => {
+            ConnectionBackendConfig::RabbitMq(config) => {
                 opentalk_janus_client::transport::TransportConfig::from(
                     opentalk_janus_client::RabbitMqConfig::new_from_channel(
                         rabbitmq_pool
