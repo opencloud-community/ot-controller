@@ -20,7 +20,11 @@ use kustos::Authz;
 use opentalk_controller_settings::SharedSettings;
 use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
-    events::EventInvite, rooms::Room, tariffs::Tariff, users::User, utils::build_event_info,
+    events::EventInvite,
+    rooms::Room,
+    tariffs::Tariff,
+    users::{email_to_libravatar_url, User},
+    utils::build_event_info,
 };
 use opentalk_signaling_core::{
     control::{
@@ -43,6 +47,7 @@ use opentalk_types::{
         control::{
             command::ControlCommand,
             event::{self as control_event, ControlEvent, JoinBlockedReason, JoinSuccess},
+            room::{CreatorInfo, RoomInfo},
             state::ControlState,
             AssociatedParticipant, Reason,
         },
@@ -706,6 +711,10 @@ impl Runner {
         self.volatile
             .control_storage()
             .delete_event(self.room.id)
+            .await?;
+        self.volatile
+            .control_storage()
+            .delete_creator(self.room.id)
             .await?;
 
         Ok(())
@@ -1410,6 +1419,10 @@ impl Runner {
             _ => None,
         };
 
+        let room_info = self
+            .build_room_info(&mut conn, &settings.avatar.libravatar_url)
+            .await?;
+
         self.ws_send_control(
             timestamp,
             ControlEvent::JoinSuccess(JoinSuccess {
@@ -1422,6 +1435,7 @@ impl Runner {
                 module_data,
                 participants,
                 event_info,
+                room_info,
                 is_room_owner: self.participant.user_id() == Some(self.room.created_by),
             }),
         )
@@ -2132,6 +2146,47 @@ impl Runner {
                 }
             }
         }
+    }
+
+    async fn build_room_info(
+        &mut self,
+        conn: &mut DbConnection,
+        libravatar_url: &str,
+    ) -> Result<RoomInfo> {
+        if let Some(creator_info) = self
+            .volatile
+            .control_storage()
+            .get_creator(self.room.id)
+            .await?
+        {
+            return Ok(RoomInfo {
+                id: self.room.id,
+                password: self.room.password.clone(),
+                created_by: creator_info,
+            });
+        }
+
+        let creator = User::get(conn, self.room.created_by).await?;
+
+        let creator_info = CreatorInfo {
+            title: creator.title,
+            firstname: creator.firstname,
+            lastname: creator.lastname,
+            display_name: creator.display_name,
+            avatar_url: email_to_libravatar_url(libravatar_url, &creator.email),
+        };
+
+        let creator_info = self
+            .volatile
+            .control_storage()
+            .try_init_creator(self.room.id, creator_info)
+            .await?;
+
+        Ok(RoomInfo {
+            id: self.room.id,
+            password: self.room.password.clone(),
+            created_by: creator_info,
+        })
     }
 
     async fn avatar_url(&self) -> Option<String> {

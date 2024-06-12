@@ -6,6 +6,7 @@
 
 pub mod command;
 pub mod event;
+pub mod room;
 pub mod state;
 
 mod associated_participant;

@@ -4,7 +4,7 @@
 
 //! Types related to signaling events in the `control` namespace
 
-use super::{reason, AssociatedParticipant, Participant};
+use super::{reason, room::RoomInfo, AssociatedParticipant, Participant};
 #[allow(unused_imports)]
 use crate::imports::*;
 use crate::{
@@ -94,6 +94,9 @@ pub struct JoinSuccess {
     #[cfg_attr(feature = "serde", serde(default))]
     pub event_info: Option<EventInfo>,
 
+    /// Information about the current room
+    pub room_info: RoomInfo,
+
     /// Flag indicating if the participant is the room owner
     #[cfg_attr(feature = "serde", serde(default))]
     pub is_room_owner: bool,
@@ -176,7 +179,7 @@ mod test {
     use super::*;
     use crate::{
         core::{EventId, RoomId, TariffId},
-        signaling::control,
+        signaling::control::{self, room::CreatorInfo},
     };
 
     fn participant_tariff() -> TariffResource {
@@ -207,6 +210,18 @@ mod test {
                 "title": "Daily",
                 "is_adhoc": false,
             },
+            "room_info": {
+                "id": "00000000-0000-0000-0000-000000000000",
+                "password": "secret123",
+                "created_by": {
+                    "title": "Dr.",
+                    "firstname": "Bob",
+                    "lastname": "Bobsen",
+                    "display_name": "Bob",
+                    "avatar_url": "example.org/avatar.png"
+                },
+
+            },
             "is_room_owner": false,
         });
 
@@ -230,6 +245,17 @@ mod test {
                 is_adhoc: false,
                 meeting_details: None,
             }),
+            room_info: RoomInfo {
+                id: RoomId::nil(),
+                password: Some("secret123".into()),
+                created_by: CreatorInfo {
+                    title: "Dr.".into(),
+                    firstname: "Bob".into(),
+                    lastname: "Bobsen".into(),
+                    display_name: "Bob".into(),
+                    avatar_url: "example.org/avatar.png".into(),
+                },
+            },
             is_room_owner: false,
         }))
         .unwrap();
@@ -252,6 +278,18 @@ mod test {
                 "title": "Daily",
                 "is_adhoc": false,
             },
+            "room_info": {
+                "id": "00000000-0000-0000-0000-000000000000",
+                "password": "secret123",
+                "created_by": {
+                    "title": "",
+                    "firstname": "Bob",
+                    "lastname": "Bobsen",
+                    "display_name": "Bob",
+                    "avatar_url": "example.org/avatar.png"
+                },
+
+            },
             "is_room_owner": false,
         });
 
@@ -271,6 +309,17 @@ mod test {
                 is_adhoc: false,
                 meeting_details: None,
             }),
+            room_info: RoomInfo {
+                id: RoomId::nil(),
+                password: Some("secret123".into()),
+                created_by: CreatorInfo {
+                    title: "".into(),
+                    firstname: "Bob".into(),
+                    lastname: "Bobsen".into(),
+                    display_name: "Bob".into(),
+                    avatar_url: "example.org/avatar.png".into(),
+                },
+            },
             is_room_owner: false,
         }))
         .unwrap();

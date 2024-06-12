@@ -39,7 +39,7 @@ mod test_common {
     };
     use opentalk_types::{
         core::{EventId, ParticipantId, RoomId, TariffId, TenantId, Timestamp, UserId},
-        signaling::Role,
+        signaling::{control::room::CreatorInfo, Role},
     };
     use pretty_assertions::assert_eq;
     use serde::{Deserialize, Serialize};
@@ -457,6 +457,42 @@ mod test_common {
 
         s.delete_participant_count(room_id).await.unwrap();
         assert_eq!(s.get_participant_count(room_id).await.unwrap(), None);
+    }
+
+    pub(super) async fn creator_info(s: &mut impl ControlStorage) {
+        let room_id = RoomId::nil();
+
+        assert_eq!(s.get_creator(room_id).await.unwrap(), None);
+
+        let creator = CreatorInfo {
+            title: "".into(),
+            firstname: "First".into(),
+            lastname: "Last".into(),
+            display_name: "Display".into(),
+            avatar_url: "https://example.org/avatar".into(),
+        };
+
+        assert_eq!(
+            s.try_init_creator(room_id, creator.clone()).await.unwrap(),
+            creator
+        );
+
+        let creator2 = CreatorInfo {
+            title: "Dr.".into(),
+            firstname: "First2".into(),
+            lastname: "Last2".into(),
+            display_name: "Display2".into(),
+            avatar_url: "https://example.org/avatar".into(),
+        };
+
+        assert_eq!(
+            s.try_init_creator(room_id, creator2).await.unwrap(),
+            creator
+        );
+
+        assert_eq!(s.get_creator(room_id).await.unwrap(), Some(creator));
+        s.delete_creator(room_id).await.unwrap();
+        assert_eq!(s.get_creator(room_id).await.unwrap(), None);
     }
 
     pub(super) async fn room_closes_at(s: &mut impl ControlStorage) {
