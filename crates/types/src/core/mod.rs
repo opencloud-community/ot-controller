@@ -21,6 +21,8 @@ mod group_name;
 mod invite_code_id;
 mod invite_role;
 mod module_resource_id;
+pub mod one_or_many_btree_set;
+pub mod one_or_many_vec;
 mod participant_id;
 mod participation_kind;
 mod resumption_token;
@@ -50,6 +52,12 @@ pub use group_name::GroupName;
 pub use invite_code_id::InviteCodeId;
 pub use invite_role::{InviteRole, InviteRoleType};
 pub use module_resource_id::ModuleResourceId;
+#[cfg(feature = "serde")]
+pub use one_or_many_btree_set::one_or_many_btree_set_option;
+pub use one_or_many_btree_set::OneOrManyBTreeSet;
+#[cfg(feature = "serde")]
+pub use one_or_many_vec::one_or_many_vec_option;
+pub use one_or_many_vec::OneOrManyVec;
 pub use participant_id::ParticipantId;
 pub use participation_kind::ParticipationKind;
 pub use resumption_token::ResumptionToken;
