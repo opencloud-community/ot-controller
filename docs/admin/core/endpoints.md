@@ -13,6 +13,8 @@ The section in the [configuration file](configuration.md) is called `endpoints`.
 | `event_invite_external_email_address` | `bool` | no       | false         | Affects the `POST /events/{event_id}/invites` endpoint and allows users to invite email addresses that are unknown to the Controller or Keycloak.                                        |
 | `disallow_custom_display_name`        | `bool` | no       | false         | Enforces the display name that was provided by Keycloak and disallows users to change their display names via the `PATCH /users/me` endpoint.                                            |
 
+For configuring user search, see the [User search section](user_search.md).
+
 ### Examples
 
 #### Default Setup
