@@ -447,11 +447,13 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
-                if let Some(target) = target {
-                    ctx.exchange_publish_control(
-                        control::exchange::current_room_by_participant_id(self.room, target),
-                        control::exchange::Message::ResetRaisedHands { issued_by: self.id },
-                    );
+                if let Some(targets) = target {
+                    for target in targets {
+                        ctx.exchange_publish_control(
+                            control::exchange::current_room_by_participant_id(self.room, target),
+                            control::exchange::Message::ResetRaisedHands { issued_by: self.id },
+                        );
+                    }
                 } else {
                     ctx.exchange_publish_control(
                         control::exchange::current_room_all_participants(self.room),
