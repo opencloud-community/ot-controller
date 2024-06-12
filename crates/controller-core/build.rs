@@ -42,7 +42,7 @@ fn main() -> Result<(), Whatever> {
         EmitBuilder::build_timestamp,
     );
 
-    if git_at_cd_or_above()? {
+    if is_contained_in_git()? {
         add_custom_environment_variable("VERGEN_GIT_SHA", builder, |builder| {
             const USE_SHORT: bool = false;
             builder.git_sha(USE_SHORT)
@@ -65,12 +65,13 @@ fn main() -> Result<(), Whatever> {
     Ok(())
 }
 
-fn git_at_cd_or_above() -> Result<bool, Whatever> {
+fn is_contained_in_git() -> Result<bool, Whatever> {
     let current_dir = std::env::current_dir().whatever_context("Failed to get current dir")?;
     let mut parents = vec![];
     let mut path = &*current_dir
         .canonicalize()
         .whatever_context("Failed to canonicalize path")?;
+    parents.push(path);
     while let Some(parent) = path.parent() {
         parents.push(parent);
         path = parent;
