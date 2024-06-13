@@ -29,7 +29,6 @@ opentalk-db-storage = { path = "crates/db-storage", version = "0.0.0-dev" }
 opentalk-integration = { path = "crates/integration", version = "0.0.0-dev" }
 opentalk-janus-media = { path = "crates/janus-media", version = "0.0.0-dev" }
 opentalk-jobs = { path = "crates/jobs", version = "0.0.0-dev" }
-opentalk-keycloak-admin = { path = "crates/keycloak-admin", version = "0.0.0-dev" }
 opentalk-kustos-prefix = { path = "crates/kustos-prefix", version = "0.0.0-dev" }
 opentalk-kustos-prefix-impl = { path = "crates/kustos-prefix-impl", version = "0.0.0-dev" }
 opentalk-log = { path = "crates/log", version = "0.0.0-dev" }
@@ -83,6 +82,9 @@ opentalk-etherpad-client = { version = "0.1.0", default-features = false, featur
   "rustls-tls-native-roots",
 ] }
 opentalk-janus-client = "0.3"
+opentalk-keycloak-admin = { version = "0.2.1", default-features = false, features = [
+  "rustls-tls-native-roots",
+] }
 opentalk-nextcloud-client = { version = "0.1.1", default-features = false, features = [
   "rustls-tls-native-roots",
 ] }

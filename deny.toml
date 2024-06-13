@@ -108,6 +108,9 @@ exceptions = [
   ], name = "opentalk-janus-client" },
   { allow = [
     "EUPL-1.2",
+  ], name = "opentalk-keycloak-admin" },
+  { allow = [
+    "EUPL-1.2",
   ], name = "opentalk-kustos-prefix" },
   { allow = [
     "EUPL-1.2",
@@ -201,11 +204,14 @@ skip = [
   { name = "ff", version = "=0.12" },
   { name = "futures-lite", version = "=1" },
   { name = "group", version = "=0.12" },
+  { name = "h2", version = "0.3" },
   { name = "hashbrown", version = "=0.11" },
   { name = "hashbrown", version = "=0.12" },
   { name = "heck", version = "=0.4" },
   { name = "http", version = "=0.2" },
   { name = "http-body", version = "=0.4" },
+  { name = "hyper", version = "0.14" },
+  { name = "hyper-rustls", version = "0.24" },
   { name = "idna", version = "=0.3" },
   { name = "indexmap", version = "=1" },
   { name = "itertools", version = "=0.10" },
@@ -216,6 +222,7 @@ skip = [
   { name = "polling", version = "=2" },
   { name = "regex-automata", version = "=0.1" },
   { name = "regex-syntax", version = "=0.6" },
+  { name = "reqwest", version = "=0.11" },
   { name = "rfc6979", version = "=0.3" },
   { name = "rustls", version = "=0.21" },
   { name = "rustls-native-certs", version = "=0.6" },
