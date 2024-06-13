@@ -978,6 +978,10 @@ pub async fn patch_event(
         User::get(&mut conn, event.created_by).await?
     };
 
+    if let Some(streaming_targets) = patch.streaming_targets.clone() {
+        store_event_streaming_targets(&mut conn, event_id, streaming_targets).await?;
+    }
+
     match patch.has_shared_folder {
         Some(true) => {
             put_shared_folder(settings.clone(), event_id, &mut conn).await?;
@@ -987,7 +991,7 @@ pub async fn patch_event(
                 delete_shared_folders(settings.clone(), &[folder]).await?;
             }
         }
-        _ => {}
+        None => {}
     }
 
     // Special case: if the patch only modifies the password do not update the event
@@ -1086,7 +1090,7 @@ pub async fn patch_event(
         can_edit,
         is_adhoc: event.is_adhoc,
         shared_folder: shared_folder.clone(),
-        streaming_targets: Vec::new(),
+        streaming_targets: streaming_targets.clone(),
         show_meeting_details: event.show_meeting_details,
     };
 

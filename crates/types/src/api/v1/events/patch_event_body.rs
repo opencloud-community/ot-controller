@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: EUPL-1.2
 #[cfg(feature = "serde")]
 use crate::api::v1::utils::{deserialize_some, validate_recurrence_pattern};
-use crate::core::DateTimeTz;
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::{common::streaming::StreamingTarget, core::DateTimeTz};
 
 /// Body for the `PATCH /events/{event_id}` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -68,6 +68,9 @@ pub struct PatchEventBody {
     )]
     pub recurrence_pattern: Vec<String>,
 
+    /// The streaming targets of the room associated with the event
+    pub streaming_targets: Option<Vec<StreamingTarget>>,
+
     /// Patch wether the meeting details are displayed or not
     pub show_meeting_details: Option<bool>,
 
@@ -91,6 +94,7 @@ impl PatchEventBody {
             recurrence_pattern,
             show_meeting_details,
             has_shared_folder,
+            streaming_targets,
         } = self;
 
         title.is_none()
@@ -105,6 +109,7 @@ impl PatchEventBody {
             && recurrence_pattern.is_empty()
             && show_meeting_details.is_none()
             && has_shared_folder.is_none()
+            && streaming_targets.is_none()
     }
 
     // special case to only patch the events room
@@ -123,6 +128,7 @@ impl PatchEventBody {
             is_adhoc,
             show_meeting_details,
             has_shared_folder,
+            streaming_targets,
         } = self;
 
         title.is_none()
@@ -135,6 +141,7 @@ impl PatchEventBody {
             && is_adhoc.is_none()
             && show_meeting_details.is_none()
             && has_shared_folder.is_none()
+            && streaming_targets.is_none()
             && (password.is_some() || waiting_room.is_some())
     }
 }
