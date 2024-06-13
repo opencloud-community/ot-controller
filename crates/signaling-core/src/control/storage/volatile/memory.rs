@@ -98,12 +98,11 @@ impl MemoryControlState {
         room: SignalingRoomId,
         participant: ParticipantId,
         attribute: AttributeId,
-    ) -> serde_json::Value {
+    ) -> Option<serde_json::Value> {
         self.participant_attributes
             .get(&room)
             .and_then(|p| p.get(&(participant, attribute)))
             .cloned()
-            .unwrap_or_default()
     }
 
     pub(super) fn get_attribute_for_participants_raw(
@@ -111,7 +110,7 @@ impl MemoryControlState {
         room: SignalingRoomId,
         participants: &[ParticipantId],
         attribute: AttributeId,
-    ) -> Vec<serde_json::Value> {
+    ) -> Vec<Option<serde_json::Value>> {
         participants
             .iter()
             .map(|participant| self.get_attribute_raw(room, *participant, attribute))
@@ -165,7 +164,9 @@ impl MemoryControlState {
                     self.set_attribute_raw(room, participant, *attribute, value.clone());
                 }
                 AttributeAction::Get { attribute } => {
-                    let value = self.get_attribute_raw(room, participant, *attribute);
+                    let value =
+                        serde_json::to_value(self.get_attribute_raw(room, participant, *attribute))
+                            .expect("Option<Value> is serializable");
 
                     response = match response {
                         None => Some(value),
@@ -352,6 +353,6 @@ mod tests {
 
         let loaded = state.get_attribute_raw(room, participant, POINT);
 
-        assert_eq!(loaded, point);
+        assert_eq!(loaded, Some(point));
     }
 }

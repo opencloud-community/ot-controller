@@ -613,7 +613,10 @@ where
                 for id in participant_set {
                     match self.build_participant(id).await {
                         Ok(participant) => participants.push(participant),
-                        Err(e) => whatever!("Failed to build participant {}, {}", id, e),
+                        Err(e) => {
+                            return Err(e)
+                                .whatever_context(format!("Failed to build participant {}", id));
+                        }
                     };
                 }
 

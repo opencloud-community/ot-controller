@@ -14,7 +14,7 @@ use opentalk_types::{
     core::{ParticipantId, RoomId, Timestamp},
     signaling::{control::room::CreatorInfo, Role},
 };
-use redis::{AsyncCommands, FromRedisValue, ToRedisArgs};
+use redis::{AsyncCommands, ErrorKind, FromRedisValue, RedisError, ToRedisArgs};
 use redis_args::ToRedisArgs;
 use serde::{de::DeserializeOwned, Serialize};
 use snafu::ResultExt;
@@ -79,8 +79,8 @@ impl ControlStorage for RedisConnection {
                 (
                     p,
                     (
-                        roles.remove(&p).map(|v| v.0),
-                        left_at_timestamps.remove(&p).map(|v| v.0),
+                        roles.remove(&p).and_then(|v| v.0),
+                        left_at_timestamps.remove(&p).and_then(|v| v.0),
                     ),
                 )
             })
@@ -455,7 +455,7 @@ pub struct SkipWaitingRoom {
     participant: ParticipantId,
 }
 
-struct WrappedAttributeValueJson(serde_json::Value);
+struct WrappedAttributeValueJson(Option<serde_json::Value>);
 
 impl ToRedisArgs for WrappedAttributeValueJson {
     fn write_redis_args<W>(&self, out: &mut W)
@@ -471,9 +471,9 @@ impl ToRedisArgs for WrappedAttributeValueJson {
 impl FromRedisValue for WrappedAttributeValueJson {
     fn from_redis_value(v: &redis::Value) -> redis::RedisResult<Self> {
         match v {
-            redis::Value::Nil => Ok(Self(serde_json::Value::Null)),
-            redis::Value::Int(v) => Ok(Self(serde_json::Value::Number(serde_json::Number::from(
-                *v,
+            redis::Value::Nil => Ok(Self(None)),
+            redis::Value::Int(v) => Ok(Self(Some(serde_json::Value::Number(
+                serde_json::Number::from(*v),
             )))),
             redis::Value::Data(v) => {
                 let value = serde_json::from_slice(v).map_err(|e| {
@@ -483,27 +483,29 @@ impl FromRedisValue for WrappedAttributeValueJson {
                         format!("{:?}", e),
                     ))
                 })?;
-                Ok(Self(value))
+                Ok(Self(Some(value)))
             }
             redis::Value::Bulk(v) => {
                 let values = v
                     .iter()
                     .map(WrappedAttributeValueJson::from_redis_value)
                     .collect::<redis::RedisResult<Vec<WrappedAttributeValueJson>>>()?;
-                let values = values.into_iter().map(|v| v.0).collect();
-                Ok(Self(serde_json::Value::Array(values)))
+                let values: Vec<serde_json::Value> = values
+                    .into_iter()
+                    .map(|v| serde_json::to_value(v.0).expect("Option<Value> must be serializable"))
+                    .collect();
+                Ok(Self(Some(serde_json::Value::Array(values))))
             }
-            v @ redis::Value::Status(_) => Err(redis::RedisError::from((
+            v @ (redis::Value::Status(_) | redis::Value::Okay) => Err(redis::RedisError::from((
                 redis::ErrorKind::TypeError,
                 "Response was of incompatible type",
                 format!("response was {:?}", v),
             ))),
-            redis::Value::Okay => todo!(),
         }
     }
 }
 
-struct WrappedAttributeValue<T>(T);
+struct WrappedAttributeValue<T>(Option<T>);
 
 impl<T: Serialize> ToRedisArgs for WrappedAttributeValue<T> {
     fn write_redis_args<W>(&self, out: &mut W)
@@ -518,6 +520,9 @@ impl<T: Serialize> ToRedisArgs for WrappedAttributeValue<T> {
 impl<T: DeserializeOwned> FromRedisValue for WrappedAttributeValue<T> {
     fn from_redis_value(v: &redis::Value) -> redis::RedisResult<Self> {
         let WrappedAttributeValueJson(value) = WrappedAttributeValueJson::from_redis_value(v)?;
+        let Some(value) = value else {
+            return Ok(Self(None));
+        };
 
         let value = serde_json::from_value(value).map_err(|e| {
             redis::RedisError::from((
@@ -526,7 +531,7 @@ impl<T: DeserializeOwned> FromRedisValue for WrappedAttributeValue<T> {
                 format!("{:?}", e),
             ))
         })?;
-        Ok(Self(value))
+        Ok(Self(Some(value)))
     }
 }
 
@@ -538,7 +543,7 @@ impl ControlStorageParticipantAttributesRaw for RedisConnection {
         room: SignalingRoomId,
         participant: ParticipantId,
         attribute: AttributeId,
-    ) -> Result<serde_json::Value, SignalingModuleError> {
+    ) -> Result<Option<serde_json::Value>, SignalingModuleError> {
         let WrappedAttributeValueJson(value) = self
             .hget(RoomParticipantAttributes { room, attribute }, participant)
             .await
@@ -555,21 +560,24 @@ impl ControlStorageParticipantAttributesRaw for RedisConnection {
         room: SignalingRoomId,
         participants: &[ParticipantId],
         attribute: AttributeId,
-    ) -> Result<Vec<serde_json::Value>, SignalingModuleError> {
+    ) -> Result<Vec<Option<serde_json::Value>>, SignalingModuleError> {
         // Special case: HMGET cannot handle empty arrays (missing arguments)
         if participants.is_empty() {
             Ok(vec![])
         } else {
             // need manual HMGET command as the HGET command wont work with single value vector input
-            let WrappedAttributeValue::<Vec<serde_json::Value>>(value) = redis::cmd("HMGET")
-                .arg(RoomParticipantAttributes { room, attribute })
-                .arg(participants)
-                .query_async(self)
-                .await
-                .with_context(|_| RedisSnafu {
-                    message: format!("Failed to get attribute '{attribute}' for all participants"),
-                })?;
-            Ok(value)
+            let WrappedAttributeValue::<Vec<Option<serde_json::Value>>>(value) =
+                redis::cmd("HMGET")
+                    .arg(RoomParticipantAttributes { room, attribute })
+                    .arg(participants)
+                    .query_async(self)
+                    .await
+                    .with_context(|_| RedisSnafu {
+                        message: format!(
+                            "Failed to get attribute '{attribute}' for all participants"
+                        ),
+                    })?;
+            Ok(value.unwrap_or_default())
         }
     }
 
@@ -584,7 +592,7 @@ impl ControlStorageParticipantAttributesRaw for RedisConnection {
         self.hset(
             RoomParticipantAttributes { room, attribute },
             participant,
-            WrappedAttributeValueJson(value),
+            WrappedAttributeValueJson(Some(value)),
         )
         .await
         .with_context(|_| RedisSnafu {
@@ -627,7 +635,7 @@ impl ControlStorageParticipantAttributesRaw for RedisConnection {
                             attribute: *attribute,
                         },
                         participant,
-                        WrappedAttributeValueJson(value.clone()),
+                        WrappedAttributeValueJson(Some(value.clone())),
                     )
                     .ignore();
                 }
@@ -653,10 +661,17 @@ impl ControlStorageParticipantAttributesRaw for RedisConnection {
             }
         }
 
-        let WrappedAttributeValueJson(mut value) =
+        let WrappedAttributeValueJson(Some(mut value)) =
             pipe.query_async(self).await.with_context(|_| RedisSnafu {
                 message: "Failed to perform bulk attribute actions".to_string(),
-            })?;
+            })?
+        else {
+            return Err(RedisError::from((ErrorKind::TypeError, "Empty value"))).context(
+                RedisSnafu {
+                    message: "Redis bulk action error",
+                },
+            );
+        };
         if value == serde_json::Value::Array(Vec::new()) {
             value = serde_json::Value::Null;
         }
@@ -756,6 +771,12 @@ mod test {
     #[serial]
     async fn participant_attribute() {
         test_common::participant_attribute(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn participant_attribute_empty() {
+        test_common::participant_attribute_empty(&mut storage().await).await;
     }
 
     #[tokio::test]

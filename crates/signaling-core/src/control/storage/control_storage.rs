@@ -274,15 +274,18 @@ pub trait ControlStorageParticipantAttributes: ControlStorageParticipantAttribut
         room: SignalingRoomId,
         participant: ParticipantId,
         attribute: AttributeId,
-    ) -> Result<V, SignalingModuleError>
+    ) -> Result<Option<V>, SignalingModuleError>
     where
         V: DeserializeOwned,
     {
-        let loaded = self.get_attribute_raw(room, participant, attribute).await?;
+        let Some(loaded) = self.get_attribute_raw(room, participant, attribute).await? else {
+            return Ok(None);
+        };
+
         let deserialized = serde_json::from_value(loaded).with_context(|e| SerdeJsonSnafu{
                 message: format!("failed to deserialize attribute {attribute} for participant {participant} in room {room}, {e}")
         })?;
-        Ok(deserialized)
+        Ok(Some(deserialized))
     }
 
     async fn get_attribute_for_participants<V>(
@@ -298,11 +301,13 @@ pub trait ControlStorageParticipantAttributes: ControlStorageParticipantAttribut
             .get_attribute_for_participants_raw(room, participants, attribute)
             .await?;
 
-        loaded.into_iter().map(|v|
-
-        serde_json::from_value(v).with_context(|e| SerdeJsonSnafu{
+        loaded
+            .into_iter()
+            .map(|v| v.map(serde_json::from_value).transpose())
+            .collect::<Result<Vec<Option<V>>, serde_json::Error>>()
+            .with_context(|e| SerdeJsonSnafu{
                 message: format!("failed to deserialize attribute {attribute} multiple for participants {participants:?} in room {room}, {e}")
-        })).collect()
+        })
     }
 
     async fn set_attribute<V>(
@@ -355,14 +360,14 @@ pub trait ControlStorageParticipantAttributesRaw {
         room: SignalingRoomId,
         participant: ParticipantId,
         attribute: AttributeId,
-    ) -> Result<serde_json::Value, SignalingModuleError>;
+    ) -> Result<Option<serde_json::Value>, SignalingModuleError>;
 
     async fn get_attribute_for_participants_raw(
         &mut self,
         room: SignalingRoomId,
         participants: &[ParticipantId],
         attribute: AttributeId,
-    ) -> Result<Vec<serde_json::Value>, SignalingModuleError>;
+    ) -> Result<Vec<Option<serde_json::Value>>, SignalingModuleError>;
 
     async fn set_attribute_raw(
         &mut self,
