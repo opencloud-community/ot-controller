@@ -198,6 +198,14 @@ impl User {
         Ok(users_with_total)
     }
 
+    /// Get all users
+    #[tracing::instrument(err, skip_all)]
+    pub async fn get_all(conn: &mut DbConnection) -> Result<Vec<Self>> {
+        let users = users::table.get_results(conn).await?;
+
+        Ok(users)
+    }
+
     /// Get Users paginated and filtered by ids
     #[tracing::instrument(err, skip_all, fields(%limit, %page))]
     pub async fn get_by_ids_paginated(
@@ -432,6 +440,7 @@ pub struct UpdateUser<'a> {
     //pub tenant_id: Option<TenantId>,
     pub tariff_id: Option<TariffId>,
     pub tariff_status: Option<TariffStatus>,
+    pub disabled_since: Option<Option<DateTime<Utc>>>,
 }
 
 impl UpdateUser<'_> {

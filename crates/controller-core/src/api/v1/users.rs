@@ -98,6 +98,7 @@ pub async fn patch_me(
         id_token_exp: None,
         tariff_id: None,
         tariff_status: None,
+        disabled_since: None,
     };
 
     let user = changeset.apply(&mut conn, current_user.id).await?;

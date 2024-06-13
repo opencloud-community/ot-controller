@@ -125,6 +125,10 @@ async fn execute_job(
                 .await
         }
         JobType::RoomCleanup => data.execute::<opentalk_jobs::jobs::RoomCleanup>().await,
+        JobType::KeycloakAccountSync => {
+            data.execute::<opentalk_jobs::jobs::KeycloakAccountSync>()
+                .await
+        }
     }
     .whatever_context("Failed to execute job")?;
 
@@ -148,6 +152,9 @@ fn show_default_parameters(job_type: JobType) -> Result<()> {
         }
         JobType::RoomCleanup => {
             show_job_type_default_parameters::<opentalk_jobs::jobs::RoomCleanup>()
+        }
+        JobType::KeycloakAccountSync => {
+            show_job_type_default_parameters::<opentalk_jobs::jobs::KeycloakAccountSync>()
         }
     }
 }

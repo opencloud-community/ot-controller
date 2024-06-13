@@ -46,4 +46,7 @@ pub enum JobType {
 
     /// A job to remove all rooms that have not event associated with them
     RoomCleanup,
+
+    /// A job to synchronize the user account states with Keycloak
+    KeycloakAccountSync,
 }

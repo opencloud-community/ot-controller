@@ -167,7 +167,8 @@ sql_enum!(
         InviteCleanup = b"invite_cleanup",
         SelfCheck = b"self_check",
         SyncStorageFiles = b"sync_storage_files",
-        RoomCleanup = b"room_cleanup"
+        RoomCleanup = b"room_cleanup",
+        KeycloakAccountSync = b"keycloak_account_sync"
     }
 );
 

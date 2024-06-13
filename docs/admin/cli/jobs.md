@@ -210,6 +210,13 @@ The default parameters for the job look like this:
 
 <!-- end:fromfile:jobs/parameters-room-cleanup.json.md -->
 
+### Job: `keycloak-account-sync`
+
+This job synchronizes user account states between the OIDC provider and the OpenTalk database to ensure consistency.
+
+- if an account is removed from the OIDC provider, it will be marked as disabled in the OpenTalk database
+- if an account exists in the OIDC provider but not in the OpenTalk database, any existing disabled entry will be reset
+
 ## `opentalk-controller jobs` subcommand
 
 This subcommand is the top-level entrypoint to manage and execute maintenance jobs.
@@ -255,12 +262,13 @@ Arguments:
           The type of the job to be executed
 
           Possible values:
-          - self-check:          A simple self-check of the job execution system
-          - event-cleanup:       A job for cleaning up events that ended at minimum a defined duration ago
-          - adhoc-event-cleanup: A job to cleanup adhoc events a certain duration after they were created
-          - invite-cleanup:      A job for cleaning up expired invites
-          - sync-storage-files:  A job to synchronize database assets and storage files
-          - room-cleanup:        A job to remove all rooms that have not event associated with them
+          - self-check:            A simple self-check of the job execution system
+          - event-cleanup:         A job for cleaning up events that ended at minimum a defined duration ago
+          - adhoc-event-cleanup:   A job to cleanup adhoc events a certain duration after they were created
+          - invite-cleanup:        A job for cleaning up expired invites
+          - sync-storage-files:    A job to synchronize database assets and storage files
+          - room-cleanup:          A job to remove all rooms that have not event associated with them
+          - keycloak-account-sync: A job to synchronize the user account states with Keycloak
 
 Options:
       --parameters <PARAMETERS>
@@ -304,12 +312,13 @@ Arguments:
           The parameters are shown in plain pretty-printed JSON
 
           Possible values:
-          - self-check:          A simple self-check of the job execution system
-          - event-cleanup:       A job for cleaning up events that ended at minimum a defined duration ago
-          - adhoc-event-cleanup: A job to cleanup adhoc events a certain duration after they were created
-          - invite-cleanup:      A job for cleaning up expired invites
-          - sync-storage-files:  A job to synchronize database assets and storage files
-          - room-cleanup:        A job to remove all rooms that have not event associated with them
+          - self-check:            A simple self-check of the job execution system
+          - event-cleanup:         A job for cleaning up events that ended at minimum a defined duration ago
+          - adhoc-event-cleanup:   A job to cleanup adhoc events a certain duration after they were created
+          - invite-cleanup:        A job for cleaning up expired invites
+          - sync-storage-files:    A job to synchronize database assets and storage files
+          - room-cleanup:          A job to remove all rooms that have not event associated with them
+          - keycloak-account-sync: A job to synchronize the user account states with Keycloak
 
 Options:
   -h, --help

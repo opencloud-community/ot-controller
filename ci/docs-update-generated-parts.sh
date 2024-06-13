@@ -103,6 +103,7 @@ $OPENTALK_CONTROLLER_CMD --config extra/example.toml jobs default-parameters adh
 $OPENTALK_CONTROLLER_CMD --config extra/example.toml jobs default-parameters invite-cleanup | codify json > "$JOBS_DIR"/parameters-invite-cleanup.json.md
 $OPENTALK_CONTROLLER_CMD --config extra/example.toml jobs default-parameters sync-storage-files | codify json > "$JOBS_DIR"/parameters-sync-storage-files.json.md
 $OPENTALK_CONTROLLER_CMD --config extra/example.toml jobs default-parameters room-cleanup | codify json > "$JOBS_DIR"/parameters-room-cleanup.json.md
+$OPENTALK_CONTROLLER_CMD --config extra/example.toml jobs default-parameters keycloak-account-sync | codify json > "$JOBS_DIR"/parameters-keycloak-account-sync.json.md
 
 $OPENTALK_CONTROLLER_CMD --config extra/example.toml modules list | codify text > "$CLI_DIR"/"$CMDNAME"-modules-list.md
 

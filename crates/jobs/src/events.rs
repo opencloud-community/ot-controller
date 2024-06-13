@@ -2,7 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::{collections::HashSet, sync::Arc};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
 
 use chrono::{DateTime, Utc};
 use kustos::Authz;
@@ -10,7 +13,10 @@ use log::Log;
 use opentalk_controller_settings::Settings;
 use opentalk_controller_utils::deletion::{Deleter, EventDeleter, RoomDeleter};
 use opentalk_database::{Db, DbConnection};
-use opentalk_db_storage::events::Event;
+use opentalk_db_storage::{
+    events::Event,
+    users::{UpdateUser, User},
+};
 use opentalk_log::{debug, info, warn};
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage};
 use opentalk_types::core::{EventId, RoomId};
@@ -189,4 +195,58 @@ async fn retrieve_deletion_candidate_events(
     }?;
 
     Ok(events)
+}
+
+pub(crate) async fn update_user_accounts(
+    logger: &dyn Log,
+    conn: &mut DbConnection,
+    users: Vec<User>,
+    kc_users: Vec<opentalk_keycloak_admin::users::User>,
+    user_attribute_name: Option<&str>,
+) -> Result<(), Error> {
+    info!(log: logger, "Updating user accounts");
+
+    let mut kc_user_data: HashMap<String, bool> = kc_users
+        .iter()
+        .map(|kc_user| {
+            let kc_user_id = kc_user
+                .get_keycloak_user_id(user_attribute_name)
+                .unwrap_or(kc_user.id.as_str())
+                .to_owned();
+
+            (kc_user_id, kc_user.enabled)
+        })
+        .collect();
+
+    let mut updated_users = 0;
+    for user in users {
+        let kc_user_enabled = kc_user_data.entry(user.oidc_sub).or_default();
+        match (user.disabled_since.is_some(), kc_user_enabled) {
+            (true, true) => {
+                // Enable users if they are disabled in our system but also exist in keycloak
+                info!(log: logger, "Enable user: {:?}", user.id);
+                let changeset = UpdateUser {
+                    disabled_since: Some(None),
+                    ..Default::default()
+                };
+                changeset.apply(conn, user.id).await?;
+                updated_users += 1;
+            }
+            (false, false) => {
+                // Disable user if they exist in our system but not in Keycloak
+                // Or if they exist in our system but are not enabled in Keycloak
+                info!(log: logger, "Disable user: {:?}", user.id);
+                let changeset = UpdateUser {
+                    disabled_since: Some(Some(Utc::now())),
+                    ..Default::default()
+                };
+                changeset.apply(conn, user.id).await?;
+                updated_users += 1;
+            }
+            _ => {}
+        }
+    }
+
+    info!(log: logger, "Updated {} user accounts", updated_users);
+    Ok(())
 }
