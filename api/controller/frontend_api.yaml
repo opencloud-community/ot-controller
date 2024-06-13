@@ -3304,6 +3304,13 @@ components:
         show_meeting_details:
           type: boolean
           description: Patch wether the meeting details are displayed or not
+        has_shared_folder:
+          type: boolean
+          description: |
+            Indicates whether the meeting room should have a shared folder.
+            If absent, no shared folder will be created or removed.
+            If set to false, the shared folder will be deleted.
+            If set to true, a new shared folder will be created.
 
     PatchEventInstance:
       description: Event instance patch request body
