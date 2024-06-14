@@ -8,7 +8,6 @@
 //! APIs for use with our own frontend lie in internal
 //! These directory map to the path prefix `/internal` or `/v1`
 
-pub(crate) mod internal;
 mod util;
 #[macro_use]
 pub mod signaling;

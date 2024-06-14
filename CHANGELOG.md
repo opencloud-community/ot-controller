@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - assets: Save assets in a predefined name format ([#763](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/763))
 - controller: keep signaling open when sending user from room to waiting room ([#740](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/740))
+- controller: removed `DELETE /internal/rooms/{room_id}` endpoint, updated `DELETE /rooms/{room_id}` & `DELETE /events/{event_id}` endpoints ([#762](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/762))
 
 ## [0.14.0]
 

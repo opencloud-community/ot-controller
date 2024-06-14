@@ -226,17 +226,13 @@ paths:
           $ref: '#/components/responses/InternalServerError'
     delete:
       summary: Delete a room
-      description: Delete a room by id
+      description: |
+        Delete a room and the associated assets
       tags: [rooms]
       operationId: delete_room
       parameters:
-        - in: path
-          description: Id of the requested room
-          name: room_id
-          schema:
-            type: string
-            format: uuid
-          required: true
+        - $ref: '#/components/parameters/roomId'
+        - $ref: '#/components/parameters/forceDeleteReferenceIfExternalServicesFail'
       responses:
         204:
           description: Successfully deleted the room
@@ -244,6 +240,8 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         404:
           $ref: '#/components/responses/NotFound'
+        409:
+          description: The room could not be deleted due to a referencing event
         500:
           $ref: '#/components/responses/InternalServerError'
 
@@ -1121,12 +1119,13 @@ paths:
     delete:
       summary: Delete an event
       description: |
-        Delete an event
+        Delete an event and the associated assets
       tags: [events]
       operationId: delete_event
       parameters:
         - $ref: '#/components/parameters/eventId'
         - $ref: '#/components/parameters/suppressEmailNotification'
+        - $ref: '#/components/parameters/forceDeleteReferenceIfExternalServicesFail'
       responses:
         204:
           description: Successfully deleted the event.
@@ -1868,6 +1867,7 @@ components:
         - 87f81f6f-35c5-4481-81ff-ec10c7e9d8b1
       schema:
         type: string
+        format: uuid
       required: true
     streamingTargetId:
       in: path
@@ -1911,6 +1911,16 @@ components:
           getting out of sync with the actual event.
       schema:
         type: boolean
+    forceDeleteReferenceIfExternalServicesFail:
+      name: force_delete_reference_if_external_services_fail
+      in: query
+      description: >
+            Delete event information from the database, even if the reference
+            could not be deleted on the remote system that provides it (e.g. the
+            NextCloud instance)
+      schema:
+        type: boolean
+        default: false
 
   headers:
     pageLink:

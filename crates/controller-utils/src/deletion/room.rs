@@ -22,7 +22,7 @@ use opentalk_signaling_core::{assets::asset_key, control, ExchangeHandle, Object
 use opentalk_types::core::{AssetId, EventId, ModuleResourceId, RoomId, UserId};
 use snafu::ResultExt;
 
-use super::{Deleter, Error};
+use super::{Deleter, Error, RACE_CONDITION_ERROR_MESSAGE};
 use crate::deletion::{error::ObjectDeletionSnafu, shared_folders::delete_shared_folders};
 
 /// Delete a room by id including the resources it references.
@@ -52,7 +52,6 @@ impl RoomDeleter {
 #[derive(Debug)]
 pub struct RoomDeleterPreparedCommit {
     resources: Vec<ResourceId>,
-    linked_event: Option<EventId>,
     linked_module_resources: Vec<ModuleResourceId>,
     linked_shared_folders: Vec<EventSharedFolder>,
 }
@@ -63,22 +62,13 @@ impl RoomDeleterPreparedCommit {
         conn: &mut DbConnection,
         room_id: RoomId,
     ) -> Result<(), DatabaseError> {
-        const ERROR_MESSAGE: &str = "Race-condition during database commit preparation";
-        let current_event = Event::get_id_for_room(conn, room_id).await?;
-
-        if current_event != self.linked_event {
-            return Err(DatabaseError::Custom {
-                message: ERROR_MESSAGE.to_owned(),
-            });
-        }
-
         let mut current_module_resources =
             ModuleResource::get_all_ids_for_room(conn, room_id).await?;
         current_module_resources.sort();
 
         if current_module_resources != self.linked_module_resources {
             return Err(DatabaseError::Custom {
-                message: ERROR_MESSAGE.to_owned(),
+                message: RACE_CONDITION_ERROR_MESSAGE.to_owned(),
             });
         }
 
@@ -86,7 +76,7 @@ impl RoomDeleterPreparedCommit {
         current_shared_folders.sort_by(|a, b| a.event_id.cmp(&b.event_id));
         if current_shared_folders != self.linked_shared_folders {
             return Err(DatabaseError::Custom {
-                message: ERROR_MESSAGE.to_owned(),
+                message: RACE_CONDITION_ERROR_MESSAGE.to_owned(),
             });
         }
 
@@ -111,7 +101,15 @@ impl Deleter for RoomDeleter {
         _logger: &dyn Log,
         conn: &mut DbConnection,
     ) -> Result<Self::PreparedCommit, Error> {
-        let linked_event = Event::get_id_for_room(conn, self.room_id).await?;
+        if Event::get_id_for_room(conn, self.room_id).await?.is_some() {
+            return Err(Error::Conflict {
+                message: format!(
+                    "Unable to delete room with id {} due to conflicting event",
+                    self.room_id
+                ),
+            });
+        }
+
         let mut linked_module_resources =
             ModuleResource::get_all_ids_for_room(conn, self.room_id).await?;
         let mut linked_shared_folders =
@@ -121,10 +119,9 @@ impl Deleter for RoomDeleter {
         linked_module_resources.sort();
         linked_shared_folders.sort_by(|a, b| a.event_id.cmp(&b.event_id));
 
-        let resources = linked_event
-            .into_iter()
-            .flat_map(super::event::associated_resource_ids)
-            .chain(linked_module_resources.iter().map(|e| e.resource_id()))
+        let resources = linked_module_resources
+            .iter()
+            .map(|e| e.resource_id())
             .chain(
                 linked_shared_folders
                     .iter()
@@ -135,7 +132,6 @@ impl Deleter for RoomDeleter {
 
         Ok(RoomDeleterPreparedCommit {
             resources,
-            linked_event,
             linked_module_resources,
             linked_shared_folders,
         })
@@ -148,14 +144,12 @@ impl Deleter for RoomDeleter {
         authz: &Authz,
         user_id: Option<UserId>,
     ) -> Result<(), Error> {
-        let user_id = match user_id {
-            Some(user_id) => user_id,
-            None => return Ok(()),
+        let Some(user_id) = user_id else {
+            return Ok(());
         };
 
-        let room_id = self.room_id;
         let checked = authz
-            .check_user(user_id, room_id.resource_id(), AccessMethod::DELETE)
+            .check_user(user_id, self.room_id.resource_id(), AccessMethod::DELETE)
             .await?;
 
         if !checked {

@@ -29,6 +29,15 @@ pub enum Error {
     #[snafu(display("Tried to perform an action that is forbidden for the user"))]
     Forbidden,
 
+    /// Conflict error
+    #[snafu(display(
+        "Conflict error: The requested operation could not be completed due to a conflict: {message}"
+    ))]
+    Conflict {
+        /// Error message
+        message: String,
+    },
+
     /// Object deletion error
     #[snafu(display("Object deletion error: {source}"))]
     ObjectDeletion {
@@ -64,6 +73,7 @@ impl From<Error> for ApiError {
             Error::Database { source } => Self::from(source),
             Error::Kustos { source } => Self::from(source),
             Error::Forbidden => Self::forbidden(),
+            Error::Conflict { message } => Self::conflict().with_message(message),
             Error::ObjectDeletion { source } => {
                 log::error!("REST API threw internal error from object storage: {source}");
                 ApiError::internal()

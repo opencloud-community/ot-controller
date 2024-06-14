@@ -126,6 +126,7 @@ pub mod shared_folders;
 )]
 #[diesel(table_name = events)]
 #[diesel(belongs_to(User, foreign_key = created_by))]
+#[diesel(belongs_to(Room, foreign_key = room))]
 #[to_redis_args(serde)]
 #[from_redis_value(serde)]
 pub struct Event {

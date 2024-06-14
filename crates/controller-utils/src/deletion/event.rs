@@ -10,12 +10,15 @@ use kustos_shared::access::AccessMethod;
 use log::Log;
 use opentalk_controller_settings::Settings;
 use opentalk_database::{DatabaseError, DbConnection};
-use opentalk_db_storage::events::{shared_folders::EventSharedFolder, Event};
+use opentalk_db_storage::{
+    events::{shared_folders::EventSharedFolder, Event},
+    rooms::Room,
+};
 use opentalk_log::{debug, warn};
 use opentalk_signaling_core::{control, ExchangeHandle, ObjectStorage};
 use opentalk_types::core::{EventId, UserId};
 
-use super::{shared_folders::delete_shared_folders, Deleter, Error};
+use super::{shared_folders::delete_shared_folders, Deleter, Error, RACE_CONDITION_ERROR_MESSAGE};
 
 /// Delete an event by id including the corresponding room and resources it
 /// references.
@@ -54,12 +57,10 @@ impl EventDeleterPreparedCommit {
         conn: &mut DbConnection,
         event_id: EventId,
     ) -> Result<(), DatabaseError> {
-        const ERROR_MESSAGE: &str = "Race-condition during database commit preparation";
-
         let current_shared_folder = EventSharedFolder::get_for_event(conn, event_id).await?;
         if current_shared_folder != self.linked_shared_folder {
             return Err(DatabaseError::Custom {
-                message: ERROR_MESSAGE.to_owned(),
+                message: RACE_CONDITION_ERROR_MESSAGE.to_owned(),
             });
         }
 
@@ -171,6 +172,8 @@ impl Deleter for EventDeleter {
         debug!(log: logger, "Deleting all database resources");
 
         let event_id = self.event_id;
+        let event = Event::get(conn, event_id).await?;
+        let room_id = event.room;
 
         let transaction_result: Result<Vec<ResourceId>, DatabaseError> = conn
             .transaction(|conn| {
@@ -183,6 +186,7 @@ impl Deleter for EventDeleter {
                     EventSharedFolder::delete_by_event_ids(conn, &[event_id]).await?;
                     debug!(log: logger, "Deleting event from database");
                     Event::delete_by_id(conn, event_id).await?;
+                    Room::delete_by_id(conn, room_id).await?;
 
                     Ok(prepared_commit.resources)
                 }

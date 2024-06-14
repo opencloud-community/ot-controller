@@ -15,9 +15,10 @@ use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
 use kustos::{
     policies_builder::{GrantingAccess, PoliciesBuilder},
     prelude::{AccessMethod, IsSubject},
-    Authz, Resource, ResourceId,
+    Authz, Resource,
 };
 use opentalk_controller_settings::{Settings, TenantAssignment};
+use opentalk_controller_utils::deletion::{Deleter, EventDeleter};
 use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
     events::{
@@ -33,6 +34,7 @@ use opentalk_db_storage::{
     users::{email_to_libravatar_url, User},
 };
 use opentalk_keycloak_admin::{users::TenantFilter, KeycloakAdminClient};
+use opentalk_signaling_core::{ExchangeHandle, ObjectStorage};
 use opentalk_types::{
     api::{
         error::{
@@ -40,11 +42,11 @@ use opentalk_types::{
         },
         v1::{
             events::{
-                CallInInfo, EmailOnlyUser, EventAndInstanceId, EventExceptionResource,
-                EventInvitee, EventInviteeProfile, EventOptionsQuery, EventOrException,
-                EventResource, EventRoomInfo, EventStatus, EventType, GetEventQuery,
-                GetEventsCursorData, GetEventsQuery, PatchEventBody, PatchEventQuery,
-                PostEventsBody, PublicInviteUserProfile,
+                CallInInfo, DeleteEventsQuery, EmailOnlyUser, EventAndInstanceId,
+                EventExceptionResource, EventInvitee, EventInviteeProfile, EventOptionsQuery,
+                EventOrException, EventResource, EventRoomInfo, EventStatus, EventType,
+                GetEventQuery, GetEventsCursorData, GetEventsQuery, PatchEventBody,
+                PatchEventQuery, PostEventsBody, PublicInviteUserProfile,
             },
             pagination::default_pagination_per_page,
             users::{PublicUserProfile, UnregisteredUser},
@@ -1426,11 +1428,13 @@ pub(crate) struct CancellationNotificationValues {
 pub async fn delete_event(
     settings: SharedSettingsActix,
     db: Data<Db>,
+    storage: Data<ObjectStorage>,
+    exchange_handle: Data<ExchangeHandle>,
     kc_admin_client: Data<KeycloakAdminClient>,
     current_tenant: ReqData<Tenant>,
     current_user: ReqData<User>,
     authz: Data<Authz>,
-    query: Query<EventOptionsQuery>,
+    query: Query<DeleteEventsQuery>,
     event_id: Path<EventId>,
     mail_service: Data<MailService>,
 ) -> Result<NoContent, ApiError> {
@@ -1439,7 +1443,10 @@ pub async fn delete_event(
     let event_id = event_id.into_inner();
     let mail_service = mail_service.into_inner();
 
-    let send_email_notification = !query.suppress_email_notification;
+    let DeleteEventsQuery {
+        suppress_email_notification,
+        force_delete_reference_if_external_services_fail,
+    } = query.into_inner();
 
     let mut conn = db.get_conn().await?;
 
@@ -1449,7 +1456,8 @@ pub async fn delete_event(
 
     let streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
 
-    let created_by = if event.created_by == current_user.id {
+    let current_user_id = current_user.id;
+    let created_by = if event.created_by == current_user_id {
         current_user
     } else {
         User::get(&mut conn, event.created_by).await?
@@ -1462,11 +1470,22 @@ pub async fn delete_event(
         .chain(std::iter::once(created_by_mail_recipient))
         .collect::<Vec<_>>();
 
-    Event::delete_by_id(&mut conn, event_id).await?;
+    let deleter = EventDeleter::new(event_id, force_delete_reference_if_external_services_fail);
+    deleter
+        .perform(
+            log::logger(),
+            &mut conn,
+            &authz,
+            Some(current_user_id),
+            exchange_handle.as_ref().clone(),
+            &settings,
+            &storage,
+        )
+        .await?;
 
     drop(conn);
 
-    if send_email_notification {
+    if !suppress_email_notification {
         let notification_values = CancellationNotificationValues {
             tenant: current_tenant.into_inner(),
             created_by,
@@ -1486,10 +1505,6 @@ pub async fn delete_event(
         )
         .await;
     }
-
-    let resources = associated_resource_ids(event_id);
-
-    authz.remove_explicit_resources(resources).await?;
 
     Ok(NoContent)
 }
@@ -1537,20 +1552,6 @@ pub(crate) async fn notify_invitees_about_delete(
             );
         }
     }
-}
-
-pub(crate) fn associated_resource_ids(event_id: EventId) -> impl IntoIterator<Item = ResourceId> {
-    [
-        event_id.resource_id(),
-        event_id.resource_id().with_suffix("/instances"),
-        event_id.resource_id().with_suffix("/instances/*"),
-        event_id.resource_id().with_suffix("/invites"),
-        event_id.resource_id().with_suffix("/invites/*"),
-        event_id.resource_id().with_suffix("/invite"),
-        event_id.resource_id().with_suffix("/reschedule"),
-        event_id.resource_id().with_suffix("/shared_folder"),
-        ResourceId::from(format!("/users/me/event_favorites/{event_id}")),
-    ]
 }
 
 #[derive(Deserialize, Validate)]
