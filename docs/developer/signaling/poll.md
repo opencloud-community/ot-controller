@@ -8,15 +8,15 @@ When joining a room with a poll running, the `join_success` control event contai
 
 #### Fields
 
-| Field             | Type       | Always | Description                                              |
-| ----------------- | ---------- | ------ | -------------------------------------------------------- |
-| `id`              | `string`   | yes    | Id of the poll                                           |
-| `topic`           | `string`   | yes    | Topic of the poll                                        |
-| `live`            | `bool`     | yes    | The state of the poll is reported immediately            |
-| `multiple_choice` | `bool`     | yes    | Multiple choices can be selected                         |
-| `choices`         | `Choice[]` | yes    | The available choices to vote on, see [Choice](#choice)  |
-| `started`         | `string`   | yes    | Timestamp for when the poll was started                  |
-| `duration`        | `int`      | yes    | Duration of the poll in seconds                          |
+| Field             | Type       | Always | Description                                             |
+| ----------------- | ---------- | ------ | ------------------------------------------------------- |
+| `id`              | `string`   | yes    | Id of the poll                                          |
+| `topic`           | `string`   | yes    | Topic of the poll                                       |
+| `live`            | `bool`     | yes    | The state of the poll is reported immediately           |
+| `multiple_choice` | `bool`     | yes    | Multiple choices can be selected                        |
+| `choices`         | `Choice[]` | yes    | The available choices to vote on, see [Choice](#choice) |
+| `started`         | `string`   | yes    | Timestamp for when the poll was started                 |
+| `duration`        | `int`      | yes    | Duration of the poll in seconds                         |
 
 ##### Example
 
@@ -78,7 +78,7 @@ The `Start` message can be send by a user to start a new poll. New polls can onl
 
 A [Started](#started) message is sent to all participants that are currently in the room.
 
-Can return [Error](#error) of kind `insufficient_permissions`, `invalid_choice_count`, `invalid_choice_description`, `invalid_topic`, `invalid_duration`, and `still_running`.
+Can return [Error](#error) of kind `insufficient_permissions`, `invalid_choice_count`, `invalid_choice_description`, `invalid_topic_length`, `invalid_duration`, and `still_running`.
 
 ---
 
@@ -114,7 +114,7 @@ To abstain, both `choice_id` and `choice_ids` can be omitted.
 
 #### Response
 
-Can return [Error](#error) of kind `invalid_poll_id` and `invalid_choice_id`.
+Can return [Error](#error) of kind `invalid_poll_id`, `invalid_choice_id` and `multiple_choice_not_allowed`.
 
 ---
 
@@ -156,15 +156,15 @@ A poll has been started.
 
 #### Fields
 
-| Field             | Type       | Always | Description                                              |
-| ----------------- | ---------- | ------ | -------------------------------------------------------- |
-| `message`         | `enum`     | yes    | Is `"started"`                                           |
-| `id`              | `string`   | yes    | Id of the poll                                           |
-| `topic`           | `string`   | yes    | Topic of the poll                                        |
-| `live`            | `bool`     | yes    | The state of the poll is reported immediately            |
-| `multiple_choice` | `bool`     | yes    | Multiple choices can be selected                         |
-| `choices`         | `Choice[]` | yes    | The available choices to vote on, see [Choice](#choice)  |
-| `duration`        | `int`      | yes    | Duration of the poll in seconds                          |
+| Field             | Type       | Always | Description                                             |
+| ----------------- | ---------- | ------ | ------------------------------------------------------- |
+| `message`         | `enum`     | yes    | Is `"started"`                                          |
+| `id`              | `string`   | yes    | Id of the poll                                          |
+| `topic`           | `string`   | yes    | Topic of the poll                                       |
+| `live`            | `bool`     | yes    | The state of the poll is reported immediately           |
+| `multiple_choice` | `bool`     | yes    | Multiple choices can be selected                        |
+| `choices`         | `Choice[]` | yes    | The available choices to vote on, see [Choice](#choice) |
+| `duration`        | `int`      | yes    | Duration of the poll in seconds                         |
 
 ##### Example
 
@@ -265,16 +265,17 @@ An error has occurred when issuing a command
 | `message` | `enum` | yes    | Is `"error"`                          |
 | `error`   | `enum` | yes    | Variant of the error, see table below |
 
-| Error                        | Description                                                                                                   |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `insufficient_permissions`   | The issued command requires greater permissions                                                               |
-| `invalid_choice_count`       | The [Start](#start) command specified an invalid amount of choices (must be greater than 2 and fewer than 64) |
-| `invalid_poll_id`            | Unknown poll id                                                                                               |
-| `invalid_choice_id`          | Unknown choice id                                                                                             |
-| `invalid_choice_description` | Given choice description was invalid (length must be between 2 and 100 bytes)                                 |
-| `invalid_topic_length`       | Given topic length was invalid (must be between 2 and 100 bytes)                                              |
-| `invalid_duration`           | Invalid poll duration (must be greater than 2 seconds and shorter than 1 hour)                                |
-| `still_running`              | Tried to start a poll while a poll is still running                                                           |
+| Error                          | Description                                                                                                    |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| `insufficient_permissions`     | The issued command requires greater permissions                                                                |
+| `invalid_choice_count`         | The [Start](#start) command specified an invalid amount of choices (must be greater than 2 and fewer than 64)  |
+| `invalid_poll_id`              | Unknown poll id                                                                                                |
+| `invalid_choice_id`            | Unknown choice id                                                                                              |
+| `multiple_choices_not_allowed` | Issued when a [Vote](#vote) command contains more than one choice but multiple choice is disabled for the poll |
+| `invalid_choice_description`   | Given choice description was invalid (length must be between 2 and 100 bytes)                                  |
+| `invalid_topic_length`         | Given topic length was invalid (must be between 2 and 100 bytes)                                               |
+| `invalid_duration`             | Invalid poll duration (must be greater than 2 seconds and shorter than 1 hour)                                 |
+| `still_running`                | Tried to start a poll while a poll is still running                                                            |
 
 ## Shared Types
 
