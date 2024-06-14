@@ -479,6 +479,42 @@ pub async fn get(
     Ok(Json(room_resource))
 }
 
+/// Get a room's tariff
+///
+/// This returns the tariff that applies to the room, typically the tariff of
+/// the room creator.
+#[utoipa::path(
+    params(
+        ("room_id" = RoomId, description = "The id of the room"),
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "The room's tariff was successfully retrieved",
+            body = TariffResource
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+        ("InviteCode" = []),
+    ),
+)]
 #[get("/rooms/{room_id}/tariff")]
 pub async fn get_room_tariff(
     shared_settings: SharedSettingsActix,

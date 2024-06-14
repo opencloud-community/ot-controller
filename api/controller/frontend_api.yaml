@@ -354,6 +354,40 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
       security: []
+  "/rooms/{room_id}/tariff":
+    get:
+      tags:
+        - "api::v1::rooms"
+      summary: "Get a room's tariff"
+      description: |
+        This returns the tariff that applies to the room, typically the tariff of
+        the room creator.
+      operationId: get_room_tariff
+      parameters:
+        - name: room_id
+          in: path
+          description: The id of the room
+          required: true
+          schema:
+            $ref: "#/components/schemas/RoomId"
+      responses:
+        "200":
+          description: "The room's tariff was successfully retrieved"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TariffResource"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+        - InviteCode: []
   /services/call_in/start:
     post:
       tags:
@@ -911,6 +945,89 @@ components:
           items:
             type: string
           description: STUN URIs for this TURN server following rfc7065
+    TariffId:
+      type: string
+      format: uuid
+      description: The id of a tariff
+    TariffModuleResource:
+      type: object
+      description: Tariff information related to a specific module
+      required:
+        - features
+      properties:
+        features:
+          type: array
+          items:
+            type: string
+          description: Enabled features for the tariff
+          uniqueItems: true
+    TariffResource:
+      type: object
+      description: Information related to a specific tariff
+      required:
+        - id
+        - name
+        - quotas
+        - enabled_modules
+        - disabled_features
+        - modules
+      properties:
+        disabled_features:
+          type: array
+          items:
+            type: string
+          description: "Disabled features for the tariff  (deprecated, use 'modules' instead)"
+          deprecated: true
+          uniqueItems: true
+        enabled_modules:
+          type: array
+          items:
+            type: string
+          description: "Enabled modules for the tariff (deprecated, use 'modules' instead)"
+          deprecated: true
+          uniqueItems: true
+        id:
+          $ref: "#/components/schemas/TariffId"
+        modules:
+          type: object
+          description: "Enabled modules for the tariff, including their enabled features"
+          additionalProperties:
+            $ref: "#/components/schemas/TariffModuleResource"
+        name:
+          type: string
+          description: The name of the tariff
+        quotas:
+          type: object
+          description: The quotas of the tariff
+          additionalProperties:
+            type: integer
+            format: int64
+            minimum: 0
+      example:
+        disabled_features:
+          - "recording::stream"
+        enabled_modules:
+          - chat
+          - core
+          - media
+          - moderation
+          - recording
+        id: 00000000-0000-0000-0000-000000000000
+        modules:
+          chat:
+            features: []
+          core:
+            features: []
+          media:
+            features: []
+          moderation:
+            features: []
+          recording:
+            features:
+              - record
+        name: Starter tariff
+        quotas:
+          max_storage: 50000
     TariffStatus:
       type: string
       enum:

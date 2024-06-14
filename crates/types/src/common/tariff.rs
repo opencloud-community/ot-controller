@@ -6,13 +6,18 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::core::TariffId;
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::{core::TariffId, utils::ExampleData};
 
 /// Information related to a specific tariff
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(TariffResource::example_data())),
+)]
 pub struct TariffResource {
     /// The ID of the tariff
     pub id: TariffId,
@@ -24,9 +29,11 @@ pub struct TariffResource {
     pub quotas: BTreeMap<QuotaType, u64>,
 
     /// Enabled modules for the tariff (deprecated, use 'modules' instead)
+    #[cfg_attr(feature = "utoipa", schema(deprecated))]
     pub enabled_modules: BTreeSet<String>,
 
     /// Disabled features for the tariff  (deprecated, use 'modules' instead)
+    #[cfg_attr(feature = "utoipa", schema(deprecated))]
     pub disabled_features: BTreeSet<String>,
 
     /// Enabled modules for the tariff, including their enabled features
@@ -48,9 +55,40 @@ impl TariffResource {
     }
 }
 
+impl ExampleData for TariffResource {
+    fn example_data() -> Self {
+        Self {
+            id: TariffId::nil(),
+            name: "Starter tariff".to_string(),
+            quotas: BTreeMap::from_iter([(QuotaType::MaxStorage, 50000)]),
+            enabled_modules: BTreeSet::from_iter([
+                "core".to_string(),
+                "media".to_string(),
+                "recording".to_string(),
+                "chat".to_string(),
+                "moderation".to_string(),
+            ]),
+            disabled_features: BTreeSet::from_iter(["recording::stream".to_string()]),
+            modules: BTreeMap::from_iter([
+                ("core".to_string(), TariffModuleResource::default()),
+                ("media".to_string(), TariffModuleResource::default()),
+                (
+                    "recording".to_string(),
+                    TariffModuleResource {
+                        features: BTreeSet::from_iter(["record".to_string()]),
+                    },
+                ),
+                ("chat".to_string(), TariffModuleResource::default()),
+                ("moderation".to_string(), TariffModuleResource::default()),
+            ]),
+        }
+    }
+}
+
 /// Tariff information related to a specific module
 #[derive(Default, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TariffModuleResource {
     /// Enabled features for the tariff
     pub features: BTreeSet<String>,
