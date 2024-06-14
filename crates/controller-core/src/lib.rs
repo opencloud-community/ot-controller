@@ -663,6 +663,7 @@ impl ModulesRegistrar for Controller {
         api::v1::auth::post_login,
         api::v1::invites::verify_invite_code,
         api::v1::rooms::accessible,
+        api::v1::rooms::get,
         api::v1::rooms::new,
         api::v1::rooms::patch,
         api::v1::rooms::start_invited,
@@ -720,6 +721,7 @@ impl ModulesRegistrar for Controller {
         responses(
             crate::api::responses::InternalServerError,
             crate::api::responses::Unauthorized,
+            crate::api::responses::Forbidden,
             crate::api::responses::NotFound,
         ),
     ),

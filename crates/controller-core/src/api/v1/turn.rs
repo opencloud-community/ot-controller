@@ -49,6 +49,7 @@ use crate::{
 /// The returned TURN server can be used with the credentials to circumvent
 /// NAT restrictions.
 #[utoipa::path(
+    operation_id = "get_turn",
     responses(
         (
             status = StatusCode::OK,

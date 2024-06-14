@@ -54,7 +54,7 @@ use super::{
 };
 use crate::{
     api::{
-        responses::{InternalServerError, NotFound, Unauthorized},
+        responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
         signaling::{
             breakout::BreakoutStorageProvider as _, moderation::ModerationStorageProvider as _,
             ticket::start_or_continue_signaling_session, SignalingModules,
@@ -251,6 +251,9 @@ pub async fn new(
             response = InternalServerError,
         ),
     ),
+    security(
+        ("BearerAuth" = []),
+    ),
 )]
 #[patch("/rooms/{room_id}")]
 pub async fn patch(
@@ -385,9 +388,40 @@ async fn gather_mail_notification_values(
     Ok(Some(notification_values))
 }
 
-/// API Endpoint *GET /rooms/{room_id}*
+/// Get a room
 ///
-/// Returns the specified Room as [`RoomResource`].
+/// Returns the room resource including additional information such as the creator profile.
+#[utoipa::path(
+    params(
+        ("room_id" = RoomId, description = "The id of the room"),
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Room was successfully retrieved",
+            body = RoomResource
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/rooms/{room_id}")]
 pub async fn get(
     settings: SharedSettingsActix,
