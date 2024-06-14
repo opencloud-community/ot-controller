@@ -4,7 +4,10 @@
 
 //! Types related to signaling events in the `media` namespace
 
-use super::{command::Target, MediaSessionType, ParticipantSpeakingState, TrickleCandidate};
+use super::{
+    command::{EnableForceMute, Target},
+    MediaSessionType, ParticipantSpeakingState, TrickleCandidate,
+};
 use crate::core::ParticipantId;
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -60,6 +63,14 @@ pub enum MediaEvent {
 
     /// The participant is requested to mute themselves
     RequestMute(RequestMute),
+
+    /// The moderator enabled the force-mute-state. Only participants listed in
+    /// [`EnableForceMute::allow_list`] are able to unmute themselves.
+    ForceMuteEnabled(EnableForceMute),
+
+    /// The moderator disabled the force-mute-state. Participants are allowed to unmute themselves
+    /// again.
+    ForceMuteDisabled,
 
     /// Presenter role has been granted to the participant
     PresenterGranted,

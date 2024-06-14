@@ -23,7 +23,9 @@ use opentalk_types::{
     core::ParticipantId,
     signaling::{
         media::{
-            command::{self, MediaCommand, Target, TargetConfigure, TargetSubscribe},
+            command::{
+                self, EnableForceMute, MediaCommand, Target, TargetConfigure, TargetSubscribe,
+            },
             event::{self, Error, Link, MediaEvent, MediaStatus, Sdp, SdpCandidate, Source},
             peer_state::MediaPeerState,
             state::MediaState,
@@ -146,7 +148,7 @@ impl SignalingModule for Media {
         event: Event<'_, Self>,
     ) -> Result<(), SignalingModuleError> {
         match event {
-            Event::WsMessage(MediaCommand::PublishComplete(info)) => {
+            Event::WsMessage(MediaCommand::PublishComplete(mut info)) => {
                 let previous_session_state = self.state.get(info.media_session_type);
 
                 process_metrics_for_media_session_state(
@@ -155,6 +157,15 @@ impl SignalingModule for Media {
                     &previous_session_state,
                     &info.media_session_state,
                 );
+                if info.media_session_type == MediaSessionType::Video {
+                    // Don't use &= since this wouldn't be lazily evaluated
+                    info.media_session_state.audio = info.media_session_state.audio
+                        && ctx
+                            .volatile
+                            .storage()
+                            .is_unmute_allowed(self.room.room_id(), self.id)
+                            .await?;
+                }
 
                 let old_state = self
                     .state
@@ -179,6 +190,17 @@ impl SignalingModule for Media {
                         .volatile
                         .storage()
                         .is_presenter(self.room, self.id)
+                        .await?
+                {
+                    ctx.ws_send(Error::PermissionDenied);
+                    return Ok(());
+                }
+                if info.media_session_type == MediaSessionType::Video
+                    && info.media_session_state.audio
+                    && !ctx
+                        .volatile
+                        .storage()
+                        .is_unmute_allowed(self.room.room_id(), self.id)
                         .await?
                 {
                     ctx.ws_send(Error::PermissionDenied);
@@ -236,6 +258,49 @@ impl SignalingModule for Media {
             Event::WsMessage(MediaCommand::ModeratorMute(moderator_mute)) => {
                 self.handle_moderator_mute(&mut ctx, moderator_mute).await?;
             }
+
+            Event::WsMessage(MediaCommand::ModeratorEnableForceMute(EnableForceMute {
+                allow_list,
+            })) => {
+                if ctx.role() != Role::Moderator {
+                    ctx.ws_send(Error::PermissionDenied);
+                    return Ok(());
+                }
+                if allow_list.is_empty() {
+                    log::warn!(
+                        "cannot be enable force-mute-state since an empty allow_list was received"
+                    )
+                }
+                ctx.volatile
+                    .storage()
+                    .set_force_mute_allow_list(self.room.room_id(), &allow_list[..])
+                    .await?;
+
+                ctx.exchange_publish(
+                    control::exchange::current_room_all_participants(self.room),
+                    exchange::Message::ForceMuteEnabled {
+                        issued_by: self.id,
+                        allow_list: allow_list.clone(),
+                    },
+                )
+            }
+            Event::WsMessage(MediaCommand::ModeratorDisableForceMute) => {
+                if ctx.role() != Role::Moderator {
+                    ctx.ws_send(Error::PermissionDenied);
+                    return Ok(());
+                }
+
+                ctx.volatile
+                    .storage()
+                    .disable_force_mute(self.room.room_id())
+                    .await?;
+
+                ctx.exchange_publish(
+                    control::exchange::current_room_all_participants(self.room),
+                    exchange::Message::ForceMuteDisabled { issued_by: self.id },
+                )
+            }
+
             Event::WsMessage(MediaCommand::Unpublish(assoc)) => {
                 self.media.remove_publisher(assoc.media_session_type).await;
                 let previous_session_state = self.state.remove(assoc.media_session_type);
@@ -475,6 +540,35 @@ impl SignalingModule for Media {
             Event::Exchange(exchange::Message::RequestMute(request_mute)) => {
                 ctx.ws_send(request_mute);
             }
+            Event::Exchange(exchange::Message::ForceMuteEnabled { allow_list, .. }) => {
+                if let Some(state) = self.state.get_mut(MediaSessionType::Video) {
+                    let old_audio_state = state.audio;
+
+                    state.audio = state.audio
+                        && allow_list
+                            .iter()
+                            .any(|participant_id| participant_id == &self.id);
+
+                    if old_audio_state != state.audio {
+                        let state = *state;
+
+                        ctx.volatile
+                            .storage()
+                            .set_media_state(self.room, self.id, &self.state)
+                            .await?;
+
+                        ctx.invalidate_data();
+
+                        self.handle_publish_state(MediaSessionType::Video, state)
+                            .await?;
+                    }
+                }
+
+                ctx.ws_send(MediaEvent::ForceMuteEnabled(EnableForceMute { allow_list }));
+            }
+            Event::Exchange(exchange::Message::ForceMuteDisabled { .. }) => {
+                ctx.ws_send(MediaEvent::ForceMuteDisabled);
+            }
             Event::Exchange(exchange::Message::PresenterGranted(selection)) => {
                 if !selection.participant_ids.contains(&self.id) {
                     return Ok(());
@@ -608,10 +702,16 @@ impl SignalingModule for Media {
                     .storage()
                     .get_speaking_state_multiple_participants(self.room, &participant_ids)
                     .await?;
+                let force_mute = ctx
+                    .volatile
+                    .storage()
+                    .get_force_mute_state(self.room.room_id())
+                    .await?;
 
                 *frontend_data = Some(MediaState {
                     is_presenter,
                     speakers,
+                    force_mute,
                 })
             }
             Event::Leaving => {
@@ -642,7 +742,7 @@ impl SignalingModule for Media {
         if ctx.destroy_room() {
             if let Err(e) = ctx.volatile.storage().clear_presenters(self.room).await {
                 log::error!(
-                    "Media module for failed to remove presenter key on room destoy, {}",
+                    "Media module for failed to remove presenter key on room destroy, {}",
                     e
                 );
             }
@@ -670,7 +770,7 @@ impl SignalingModule for Media {
                 .await
             {
                 log::error!(
-                    "Media module for failed to remove speakers on room destoy, {}",
+                    "Media module for failed to remove speakers on room destroy, {}",
                     e
                 );
             }

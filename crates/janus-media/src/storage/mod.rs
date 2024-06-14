@@ -11,12 +11,15 @@ pub(crate) use media_storage::MediaStorage;
 #[cfg(test)]
 mod test_common {
 
+    use std::collections::BTreeSet;
+
     use opentalk_janus_client::RoomId;
     use opentalk_signaling_core::SignalingRoomId;
     use opentalk_types::{
-        core::{ParticipantId, Timestamp},
+        core::{self, ParticipantId, Timestamp},
         signaling::media::{
-            MediaSessionState, ParticipantMediaState, ParticipantSpeakingState, SpeakingState,
+            state::ForceMuteState, MediaSessionState, ParticipantMediaState,
+            ParticipantSpeakingState, SpeakingState,
         },
     };
     use pretty_assertions::assert_eq;
@@ -259,5 +262,34 @@ mod test_common {
             .await
             .unwrap();
         assert!(storage.get_publisher_info(media_session_key).await.is_err());
+    }
+
+    pub(super) async fn force_mute(storage: &mut dyn MediaStorage) {
+        let room = core::RoomId::from_u128(123);
+        assert_eq!(
+            storage.get_force_mute_state(room).await.unwrap(),
+            ForceMuteState::Disabled
+        );
+
+        storage
+            .set_force_mute_allow_list(room, &[ALICE])
+            .await
+            .unwrap();
+
+        assert_eq!(
+            storage.get_force_mute_state(room).await.unwrap(),
+            ForceMuteState::Enabled {
+                allow_list: BTreeSet::from_iter([ALICE])
+            }
+        );
+
+        assert!(storage.is_unmute_allowed(room, ALICE).await.unwrap());
+        assert!(!storage.is_unmute_allowed(room, BOB).await.unwrap());
+        storage.set_force_mute_allow_list(room, &[]).await.unwrap();
+
+        assert_eq!(
+            storage.get_force_mute_state(room).await.unwrap(),
+            ForceMuteState::Disabled
+        );
     }
 }
