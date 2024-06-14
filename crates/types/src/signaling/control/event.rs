@@ -247,7 +247,7 @@ mod test {
             }),
             room_info: RoomInfo {
                 id: RoomId::nil(),
-                password: Some("secret123".into()),
+                password: Some("secret123".parse().unwrap()),
                 created_by: CreatorInfo {
                     title: "Dr.".into(),
                     firstname: "Bob".into(),
@@ -311,7 +311,7 @@ mod test {
             }),
             room_info: RoomInfo {
                 id: RoomId::nil(),
-                password: Some("secret123".into()),
+                password: Some("secret123".parse().unwrap()),
                 created_by: CreatorInfo {
                     title: "".into(),
                     firstname: "Bob".into(),

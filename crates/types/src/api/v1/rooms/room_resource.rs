@@ -6,7 +6,8 @@
 use crate::imports::*;
 use crate::{
     api::v1::users::PublicUserProfile,
-    core::{RoomId, Timestamp},
+    core::{RoomId, RoomPassword, Timestamp},
+    utils::ExampleData,
 };
 
 /// A Room
@@ -15,7 +16,13 @@ use crate::{
 /// appropriate permissions.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(
+        RoomResource::example_data()
+    ))
+)]
 pub struct RoomResource {
     /// The ID of the room
     pub id: RoomId,
@@ -27,8 +34,23 @@ pub struct RoomResource {
     pub created_at: Timestamp,
 
     /// The password of the room, if any
-    pub password: Option<String>,
+    // Field is non-required already, utoipa adds a `nullable: true` entry
+    // by default which creates a false positive in the spectral linter.
+    #[cfg_attr(feature = "utoipa", schema(nullable = false))]
+    pub password: Option<RoomPassword>,
 
     /// If waiting room is enabled
     pub waiting_room: bool,
+}
+
+impl ExampleData for RoomResource {
+    fn example_data() -> Self {
+        Self {
+            id: RoomId::nil(),
+            created_by: PublicUserProfile::example_data(),
+            created_at: Timestamp::unix_epoch(),
+            password: Some(RoomPassword::example_data()),
+            waiting_room: false,
+        }
+    }
 }

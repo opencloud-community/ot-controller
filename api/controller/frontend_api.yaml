@@ -177,6 +177,43 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+  "/rooms/{room_id}":
+    patch:
+      tags:
+        - "api::v1::rooms"
+      summary: Patch a room with the provided fields
+      description: Fields that are not provided in the request body will remain unchanged.
+      operationId: patch_room
+      parameters:
+        - name: room_id
+          in: path
+          description: The id of the room to be modified
+          required: true
+          schema:
+            $ref: "#/components/schemas/RoomId"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchRoomsRequestBody"
+        required: true
+      responses:
+        "200":
+          description: Room was successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoomResource"
+        "400":
+          description: |
+            Could not modify the specified room due to wrong
+                            syntax or bad values, for example an invalid owner id
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   "/rooms/{room_id}/start_invited":
     post:
       tags:
@@ -501,6 +538,18 @@ components:
     PageLink:
       type: string
       example: "<https://api.example.org/resource?page=2>; rel='next', <https://api.example.org/resource?page=5>; rel='last'"
+    PatchRoomsRequestBody:
+      type: object
+      description: API request parameters to patch a room
+      properties:
+        password:
+          allOf:
+            - $ref: "#/components/schemas/RoomPassword"
+          nullable: true
+        waiting_room:
+          type: boolean
+          description: If waiting room is enabled
+          nullable: true
     PostInviteVerifyRequestBody:
       type: object
       description: Verify body for *POST /invite/verify*
@@ -539,11 +588,9 @@ components:
           type: boolean
           description: Enable/Disable sip for this room; defaults to false when not set
         password:
-          type: string
-          description: "The password to the room, if any"
+          allOf:
+            - $ref: "#/components/schemas/RoomPassword"
           nullable: true
-          maxLength: 255
-          minLength: 1
         waiting_room:
           type: boolean
           description: |
@@ -563,8 +610,8 @@ components:
           type: string
           description: The invite code
         password:
-          type: string
-          description: "The invited user's password to the room"
+          allOf:
+            - $ref: "#/components/schemas/RoomPassword"
           nullable: true
         resumption:
           allOf:
@@ -663,6 +710,14 @@ components:
         title:
           type: string
           description: The title of the user
+      example:
+        avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
+        display_name: Alice Adams
+        email: alice@example.com
+        firstname: Alice
+        id: 00000000-0000-0000-0000-0000000a11c3
+        lastname: Adams
+        title: ""
     ResumptionToken:
       type: string
       description: A resumption token
@@ -670,6 +725,12 @@ components:
       type: string
       format: uuid
       description: The id of a room
+    RoomPassword:
+      type: string
+      description: A room password
+      example: v3rys3cr3t
+      maxLength: 255
+      minLength: 1
     RoomResource:
       type: object
       description: |
@@ -690,12 +751,24 @@ components:
         id:
           $ref: "#/components/schemas/RoomId"
         password:
-          type: string
-          description: "The password of the room, if any"
-          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/RoomPassword"
         waiting_room:
           type: boolean
           description: If waiting room is enabled
+      example:
+        created_at: "1970-01-01T00:00:00Z"
+        created_by:
+          avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
+          display_name: Alice Adams
+          email: alice@example.com
+          firstname: Alice
+          id: 00000000-0000-0000-0000-0000000a11c3
+          lastname: Adams
+          title: ""
+        id: 00000000-0000-0000-0000-000000000000
+        password: v3rys3cr3t
+        waiting_room: false
     RoomsStartResponse:
       type: object
       description: The JSON body returned from the start endpoints supporting session resumption

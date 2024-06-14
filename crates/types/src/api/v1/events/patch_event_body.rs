@@ -5,7 +5,10 @@
 use crate::api::v1::utils::{deserialize_some, validate_recurrence_pattern};
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{common::streaming::StreamingTarget, core::DateTimeTz};
+use crate::{
+    common::streaming::StreamingTarget,
+    core::{DateTimeTz, RoomPassword},
+};
 
 /// Body for the `PATCH /events/{event_id}` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -22,10 +25,9 @@ pub struct PatchEventBody {
     /// Patch the password of the event's room
     #[cfg_attr(
         feature = "serde",
-        serde(default, deserialize_with = "deserialize_some"),
-        validate(length(min = 1, max = 255))
+        serde(default, deserialize_with = "deserialize_some")
     )]
-    pub password: Option<Option<String>>,
+    pub password: Option<Option<RoomPassword>>,
 
     /// Patch the presence of a waiting room
     pub waiting_room: Option<bool>,

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use super::CallInInfo;
-use crate::core::RoomId;
+use crate::core::{RoomId, RoomPassword};
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -16,7 +16,7 @@ pub struct EventRoomInfo {
 
     /// Password of the room
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
-    pub password: Option<String>,
+    pub password: Option<RoomPassword>,
 
     /// Flag to check if the room has a waiting room enabled
     pub waiting_room: bool,

@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::core::{BreakoutRoomId, ResumptionToken};
+use crate::core::{BreakoutRoomId, ResumptionToken, RoomPassword};
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -12,7 +12,7 @@ use crate::imports::*;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct PostRoomsStartInvitedRequestBody {
     /// The invited user's password to the room
-    pub password: Option<String>,
+    pub password: Option<RoomPassword>,
 
     /// The invite code
     pub invite_code: String,

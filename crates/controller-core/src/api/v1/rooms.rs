@@ -47,7 +47,6 @@ use opentalk_types::{
     common::{features, shared_folder::SharedFolder, tariff::TariffResource},
     core::{InviteCodeId, RoomId},
 };
-use validator::Validate;
 
 use super::{
     events::{get_invited_mail_recipients_for_event, CancellationNotificationValues},
@@ -179,8 +178,6 @@ pub async fn new(
     let current_user = current_user.into_inner();
     let room_parameters = body.into_inner();
 
-    room_parameters.validate()?;
-
     let mut conn = db.get_conn().await?;
 
     if room_parameters.enable_sip {
@@ -221,10 +218,40 @@ pub async fn new(
     Ok(Json(room_resource))
 }
 
-/// API Endpoint *PATCH /rooms/{room_id}*
+/// Patch a room with the provided fields
 ///
-/// Uses the provided [`PatchRoomsRequestBody`] to modify a specified room.
-/// Returns the modified [`RoomResource`]
+/// Fields that are not provided in the request body will remain unchanged.
+#[utoipa::path(
+    request_body = PatchRoomsRequestBody,
+    operation_id = "patch_room",
+    params(
+        ("room_id" = RoomId, description = "The id of the room to be modified"),
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Room was successfully updated",
+            body = RoomResource
+        ),
+        (
+            status = StatusCode::BAD_REQUEST,
+            description = r"Could not modify the specified room due to wrong
+                syntax or bad values, for example an invalid owner id",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+)]
 #[patch("/rooms/{room_id}")]
 pub async fn patch(
     settings: SharedSettingsActix,
@@ -237,8 +264,6 @@ pub async fn patch(
     let current_user = current_user.into_inner();
     let room_id = room_id.into_inner();
     let modify_room = body.into_inner();
-
-    modify_room.validate()?;
 
     let mut conn = db.get_conn().await?;
 

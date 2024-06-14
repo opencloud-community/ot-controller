@@ -10,7 +10,7 @@ use diesel::{dsl::not, prelude::*, ExpressionMethods, Identifiable, QueryDsl, Qu
 use diesel_async::RunQueryDsl;
 use opentalk_database::{DbConnection, Paginate, Result};
 use opentalk_diesel_newtype::DieselNewtype;
-use opentalk_types::core::{RoomId, TenantId, UserId};
+use opentalk_types::core::{RoomId, RoomPassword, TenantId, UserId};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -51,7 +51,7 @@ pub struct Room {
     pub id_serial: SerialRoomId,
     pub created_by: UserId,
     pub created_at: DateTime<Utc>,
-    pub password: Option<String>,
+    pub password: Option<RoomPassword>,
     pub waiting_room: bool,
     pub tenant_id: TenantId,
 }
@@ -172,7 +172,7 @@ impl Room {
 #[diesel(table_name = rooms)]
 pub struct NewRoom {
     pub created_by: UserId,
-    pub password: Option<String>,
+    pub password: Option<RoomPassword>,
     pub waiting_room: bool,
     pub tenant_id: TenantId,
 }
@@ -192,7 +192,7 @@ impl NewRoom {
 #[derive(Debug, AsChangeset)]
 #[diesel(table_name = rooms)]
 pub struct UpdateRoom {
-    pub password: Option<Option<String>>,
+    pub password: Option<Option<RoomPassword>>,
     pub waiting_room: Option<bool>,
 }
 

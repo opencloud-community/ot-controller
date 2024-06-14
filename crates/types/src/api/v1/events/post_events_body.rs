@@ -6,7 +6,10 @@
 use crate::api::v1::utils::validate_recurrence_pattern;
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{common::streaming::StreamingTarget, core::DateTimeTz};
+use crate::{
+    common::streaming::StreamingTarget,
+    core::{DateTimeTz, RoomPassword},
+};
 
 /// Body of the `POST /events` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -21,8 +24,7 @@ pub struct PostEventsBody {
     pub description: String,
 
     /// Optional password for the room related to the event
-    #[cfg_attr(feature = "serde", validate(length(min = 1, max = 255)))]
-    pub password: Option<String>,
+    pub password: Option<RoomPassword>,
 
     /// Should the created event have a waiting room?
     #[cfg_attr(feature = "serde", serde(default))]

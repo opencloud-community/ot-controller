@@ -4,7 +4,7 @@
 
 //! Types related to the `JoinSuccess` message in the `control` namespace
 
-use crate::core::RoomId;
+use crate::core::{RoomId, RoomPassword};
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -17,7 +17,7 @@ pub struct RoomInfo {
 
     /// The room password
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
-    pub password: Option<String>,
+    pub password: Option<RoomPassword>,
 
     /// The room creator
     pub created_by: CreatorInfo,

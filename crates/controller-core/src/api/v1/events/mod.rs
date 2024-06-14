@@ -61,7 +61,9 @@ use opentalk_types::{
         shared_folder::{SharedFolder, SharedFolderAccess},
         streaming::{RoomStreamingTarget, StreamingTarget},
     },
-    core::{DateTimeTz, EventId, EventInviteStatus, RoomId, TimeZone, Timestamp, UserId},
+    core::{
+        DateTimeTz, EventId, EventInviteStatus, RoomId, RoomPassword, TimeZone, Timestamp, UserId,
+    },
 };
 use rrule::{Frequency, RRuleSet};
 use serde::Deserialize;
@@ -424,7 +426,7 @@ async fn create_time_independent_event(
     current_user: User,
     title: String,
     description: String,
-    password: Option<String>,
+    password: Option<RoomPassword>,
     waiting_room: bool,
     is_adhoc: bool,
     streaming_targets: Vec<StreamingTarget>,
@@ -516,7 +518,7 @@ async fn create_time_dependent_event(
     current_user: User,
     title: String,
     description: String,
-    password: Option<String>,
+    password: Option<RoomPassword>,
     waiting_room: bool,
     is_all_day: bool,
     starts_at: DateTimeTz,
