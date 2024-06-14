@@ -92,14 +92,9 @@ pub async fn get_invites_for_event(
     // As in #[get("/events")], we simply get all invitees and truncate them afterwards.
     // Note that get_for_event_paginated returns a total record count of 0 when paging beyond the end.
 
-    let (event_invites_with_user, event_invites_total) = EventInvite::get_for_event_paginated(
-        &mut conn,
-        event_id,
-        i64::max_value(),
-        1,
-        status_filter,
-    )
-    .await?;
+    let (event_invites_with_user, event_invites_total) =
+        EventInvite::get_for_event_paginated(&mut conn, event_id, i64::MAX, 1, status_filter)
+            .await?;
 
     let event_invitees_iter = event_invites_with_user
         .into_iter()
@@ -108,7 +103,7 @@ pub async fn get_invites_for_event(
         });
 
     let (event_email_invites, event_email_invites_total) =
-        EventEmailInvite::get_for_event_paginated(&mut conn, event_id, i64::max_value(), 1).await?;
+        EventEmailInvite::get_for_event_paginated(&mut conn, event_id, i64::MAX, 1).await?;
 
     drop(conn);
 

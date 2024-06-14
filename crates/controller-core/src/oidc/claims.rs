@@ -14,9 +14,11 @@ pub struct ServiceClaims {
     #[serde(with = "time")]
     pub exp: DateTime<Utc>,
     /// Issued at
+    #[allow(unused)]
     #[serde(with = "time")]
     pub iat: DateTime<Utc>,
     /// Issuer (URL to the OIDC Provider)
+    #[allow(unused)]
     pub iss: String,
     /// Keycloak realm management
     pub realm_access: RealmAccess,
@@ -45,6 +47,7 @@ pub struct UserClaims {
     #[serde(with = "time")]
     pub exp: DateTime<Utc>,
     /// Issued at
+    #[allow(unused)]
     #[serde(with = "time")]
     pub iat: DateTime<Utc>,
     /// Issuer (URL to the OIDC Provider)

@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use openidconnect::{core::CoreClient, url::Url, ClientId, IntrospectionUrl, IssuerUrl};
+use openidconnect::{core::CoreClient, url::Url, IntrospectionUrl, IssuerUrl};
 use opentalk_controller_settings as settings;
 use serde::{Deserialize, Serialize};
 use snafu::{Backtrace, ResultExt};
@@ -39,7 +39,6 @@ type ProviderMetadata = openidconnect::ProviderMetadata<
 #[derive(Debug)]
 pub struct ProviderClient {
     pub metadata: ProviderMetadata,
-    pub client_id: ClientId,
     pub client: CoreClient,
 }
 
@@ -82,10 +81,6 @@ impl ProviderClient {
                 .clone(),
         ));
 
-        Ok(ProviderClient {
-            metadata,
-            client_id: ClientId::new(config.client_id.into()),
-            client,
-        })
+        Ok(ProviderClient { metadata, client })
     }
 }
