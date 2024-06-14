@@ -288,9 +288,42 @@ pub async fn patch(
     Ok(Json(room_resource))
 }
 
-/// API Endpoint *DELETE /rooms/{room_id}*
+/// Delete a room and its owned resources.
 ///
-/// Deletes the room and owned resources.
+/// Deletes the room by the id if found. See the query parameters for affecting
+/// the behavior of this endpoint, such as mail notification suppression, or
+/// succeding even if external resources cannot be successfully deleted.
+#[utoipa::path(
+    params(
+        ("room_id" = RoomId, description = "The id of the room"),
+        DeleteRoomQuery,
+    ),
+    responses(
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "Room was successfully deleted",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[allow(clippy::too_many_arguments)]
 #[delete("/rooms/{room_id}")]
 pub async fn delete(

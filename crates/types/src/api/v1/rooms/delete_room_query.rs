@@ -8,6 +8,7 @@ use crate::imports::*;
 /// Query parameters for the `DELETE /rooms/{room_id}` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::IntoParams))]
 pub struct DeleteRoomQuery {
     /// Flag to force delete the reference if the deletion at the external services fails
     #[cfg_attr(feature = "serde", serde(default))]
