@@ -7,6 +7,7 @@ use uuid::Uuid;
 
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::utils::ExampleData;
 
 /// The id of a room
 #[derive(
@@ -42,5 +43,11 @@ impl RoomId {
     #[cfg(feature = "rand")]
     pub fn generate() -> Self {
         Self(Uuid::new_v4())
+    }
+}
+
+impl ExampleData for RoomId {
+    fn example_data() -> Self {
+        Self::from_u128(0xabadcafe)
     }
 }

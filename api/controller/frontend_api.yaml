@@ -322,6 +322,53 @@ paths:
       security:
         - BearerAuth: []
         - InviteCode: []
+  "/rooms/{room_id}/invites":
+    get:
+      tags:
+        - "api::v1::invites"
+      summary: Get all invites for a room
+      description: |
+        This returns all invites that are available for a room. If no
+        pagination query is added, the default page size is used.
+      operationId: get_invites
+      parameters:
+        - name: room_id
+          in: path
+          description: The id of the room
+          required: true
+          schema:
+            $ref: "#/components/schemas/RoomId"
+        - name: per_page
+          in: query
+          description: The number of entries per page
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: page
+          in: query
+          description: The number of the page
+          required: false
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: The invites could be loaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetRoomsInvitesResponseBody"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   "/rooms/{room_id}/start":
     post:
       tags:
@@ -775,6 +822,34 @@ components:
       properties:
         oidc:
           $ref: "#/components/schemas/OidcProvider"
+    GetRoomsInvitesResponseBody:
+      type: array
+      items:
+        $ref: "#/components/schemas/InviteResource"
+      description: "Response for *GET /rooms/{room_id}/invites*"
+      example:
+        - active: true
+          created: "2024-06-18T11:22:33Z"
+          created_by:
+            avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
+            display_name: Alice Adams
+            email: alice@example.com
+            firstname: Alice
+            id: 00000000-0000-0000-0000-0000000a11c3
+            lastname: Adams
+            title: ""
+          expiration: ~
+          invite_code: 00000000-0000-0000-0000-0000deadbeef
+          room_id: 00000000-0000-0000-0000-0000abadcafe
+          updated: "2024-06-20T14:16:19Z"
+          updated_by:
+            avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
+            display_name: Alice Adams
+            email: alice@example.com
+            firstname: Alice
+            id: 00000000-0000-0000-0000-0000000a11c3
+            lastname: Adams
+            title: ""
     GetRoomsResponse:
       type: array
       items:
@@ -795,6 +870,68 @@ components:
       format: uuid
       description: An invite code
       example: 00000000-0000-0000-0000-0000deadbeef
+    InviteResource:
+      type: object
+      description: |
+        Public invite details
+        
+        Contains general public information about a room.
+      required:
+        - invite_code
+        - created
+        - created_by
+        - updated
+        - updated_by
+        - room_id
+        - active
+      properties:
+        active:
+          type: boolean
+          description: If the invite is active
+        created:
+          type: string
+          format: date-time
+          description: The timestamp this invite was created at
+        created_by:
+          $ref: "#/components/schemas/PublicUserProfile"
+        expiration:
+          type: string
+          format: date-time
+          description: Optional expiration date of the invite
+          nullable: true
+        invite_code:
+          $ref: "#/components/schemas/InviteCodeId"
+        room_id:
+          $ref: "#/components/schemas/RoomId"
+        updated:
+          type: string
+          format: date-time
+          description: The timestamp this invite was updated at
+        updated_by:
+          $ref: "#/components/schemas/PublicUserProfile"
+      example:
+        active: true
+        created: "2024-06-18T11:22:33Z"
+        created_by:
+          avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
+          display_name: Alice Adams
+          email: alice@example.com
+          firstname: Alice
+          id: 00000000-0000-0000-0000-0000000a11c3
+          lastname: Adams
+          title: ""
+        expiration: ~
+        invite_code: 00000000-0000-0000-0000-0000deadbeef
+        room_id: 00000000-0000-0000-0000-0000abadcafe
+        updated: "2024-06-20T14:16:19Z"
+        updated_by:
+          avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
+          display_name: Alice Adams
+          email: alice@example.com
+          firstname: Alice
+          id: 00000000-0000-0000-0000-0000000a11c3
+          lastname: Adams
+          title: ""
     NumericId:
       type: string
       description: Base type for numeric identifieirs

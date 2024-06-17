@@ -34,7 +34,7 @@ use validator::Validate;
 use super::{response::NoContent, DefaultApiResult};
 use crate::{
     api::{
-        responses::{InternalServerError, NotFound, Unauthorized},
+        responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
         v1::{rooms::RoomsPoliciesBuilderExt, ApiResponse},
     },
     settings::SharedSettingsActix,
@@ -86,6 +86,41 @@ pub async fn add_invite(
 }
 
 /// Get all invites for a room
+///
+/// This returns all invites that are available for a room. If no
+/// pagination query is added, the default page size is used.
+#[utoipa::path(
+    params(
+        ("room_id" = RoomId, description = "The id of the room"),
+        PagePaginationQuery,
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "The invites could be loaded successfully",
+            body = GetRoomsInvitesResponseBody,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/rooms/{room_id}/invites")]
 pub async fn get_invites(
     settings: SharedSettingsActix,
