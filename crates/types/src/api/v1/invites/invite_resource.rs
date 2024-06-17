@@ -14,7 +14,7 @@ use crate::{
 /// Public invite details
 ///
 /// Contains general public information about a room.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct InviteResource {
     /// The invite code id

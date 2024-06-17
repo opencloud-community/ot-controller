@@ -21,8 +21,8 @@ use opentalk_types::{
         error::ApiError,
         v1::{
             invites::{
-                CodeVerified, InviteResource, PostInviteRequestBody, PostInviteVerifyRequestBody,
-                PutInviteRequestBody, RoomIdAndInviteCode,
+                CodeVerified, GetRoomsInvitesResponseBody, InviteResource, PostInviteRequestBody,
+                PostInviteVerifyRequestBody, PutInviteRequestBody, RoomIdAndInviteCode,
             },
             pagination::PagePaginationQuery,
         },
@@ -85,16 +85,14 @@ pub async fn add_invite(
     Ok(ApiResponse::new(invite))
 }
 
-/// API Endpoint *GET /rooms/{room_id}/invites*
-///
-/// Returns a JSON array of all accessible invites for the given room
+/// Get all invites for a room
 #[get("/rooms/{room_id}/invites")]
 pub async fn get_invites(
     settings: SharedSettingsActix,
     db: Data<Db>,
     room_id: Path<RoomId>,
     pagination: Query<PagePaginationQuery>,
-) -> DefaultApiResult<Vec<InviteResource>> {
+) -> DefaultApiResult<GetRoomsInvitesResponseBody> {
     let settings = settings.load_full();
     let room_id = room_id.into_inner();
     let PagePaginationQuery { per_page, page } = pagination.into_inner();
@@ -116,7 +114,13 @@ pub async fn get_invites(
         })
         .collect::<Vec<InviteResource>>();
 
-    Ok(ApiResponse::new(invites).with_page_pagination(per_page, page, total_invites))
+    Ok(
+        ApiResponse::new(GetRoomsInvitesResponseBody(invites)).with_page_pagination(
+            per_page,
+            page,
+            total_invites,
+        ),
+    )
 }
 
 /// API Endpoint *GET /rooms/{room_id}/invites/{invite_code}*
