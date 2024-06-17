@@ -7,6 +7,7 @@ use uuid::Uuid;
 
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::utils::ExampleData;
 
 /// The id of a breakout room
 #[derive(
@@ -14,7 +15,7 @@ use crate::imports::*;
 )]
 #[cfg_attr(feature = "redis", derive(ToRedisArgs), to_redis_args(fmt))]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(example = json!(BreakoutRoomId::example_data())))]
 pub struct BreakoutRoomId(Uuid);
 
 impl BreakoutRoomId {
@@ -32,5 +33,11 @@ impl BreakoutRoomId {
     #[cfg(feature = "rand")]
     pub fn generate() -> Self {
         Self(Uuid::new_v4())
+    }
+}
+
+impl ExampleData for BreakoutRoomId {
+    fn example_data() -> Self {
+        BreakoutRoomId::from_u128(0xBADCAB1E)
     }
 }

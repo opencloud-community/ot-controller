@@ -44,6 +44,7 @@ pub const REQUIRED_CALL_IN_ROLE: &str = "opentalk-call-in";
 /// credentials (id and pin) via DTMF (the number pad).
 #[utoipa::path(
     context_path = "/services/call_in",
+    operation_id = "post_call_in_start",
     request_body = StartCallInRequestBody,
     responses(
         (

@@ -599,23 +599,68 @@ pub async fn get_room_event(
     }
 }
 
-/// API Endpoint *POST /rooms/{room_id}/start*
+/// Start a signaling session as a registered user
 ///
 /// This endpoint has to be called in order to get a room ticket. When joining a room, the ticket
 /// must be provided as a `Sec-WebSocket-Protocol` header field when starting the WebSocket
 /// connection.
-///
-/// When the requested room has a password set, the requester has to provide the correct password
-/// through the [`PostRoomsStartRequestBody`] JSON in the requests body. When the room has no password set,
-/// the provided password will be ignored.
-///
-/// Returns a [`RoomsStartResponse`] containing the ticket for the specified room.
-///
-/// # Errors
-///
-/// Returns [`StartRoomError::WrongRoomPassword`] when the provided password is wrong
-/// Returns [`StartRoomError::NoBreakoutRooms`]  when no breakout rooms are configured but were provided
-/// Returns [`StartRoomError::InvalidBreakoutRoomId`]  when the provided breakout room id is invalid     
+#[utoipa::path(
+    params(
+        ("room_id" = RoomId, description = "The id of the room"),
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Returns the information for joining the room",
+            body = RoomsStartResponse,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            description = r"The provided AccessToken is expired or the
+                provided ID- or Access-Token is invalid. The WWW-Authenticate
+                header will contain a error description 'session expired' to
+                distinguish between an invalid and an expired token.",
+            body = StandardErrorBody,
+            headers(
+                (
+                    "www-authenticate",
+                    description = "will contain 'session expired' to distinguish between an invalid and an expired token"
+                ),
+            ),
+        ),
+        (
+            status = StatusCode::BAD_REQUEST,
+            description = "Either no breakout rooms were found for this room, or the breakout room id is invalid",
+            body = StandardErrorBody,
+            examples(
+                ("NoBreakoutRooms" = (summary = "No breakout rooms", value = json!(ApiError::from(StartRoomError::NoBreakoutRooms).body))),
+                ("InvalidBreakoutRoomId" = (summary = "Invalid breakout room id", value = json!(ApiError::from(StartRoomError::InvalidBreakoutRoomId).body))),
+            ),
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            description = "The user has not been invited to join the room or has been banned from entering this room",
+            body = StandardErrorBody,
+            examples(
+                ("UserBanned" = (summary = "User has been banned from the room", value = json!(ApiError::from(StartRoomError::BannedFromRoom).body))),
+                ("UserNotInvited" = (summary = "User has not been invited to join the room", value = json!(ApiError::forbidden().body))),
+            ),
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            description = "The specified room could not be found or it has no event associated with it",
+            body = StandardErrorBody,
+            example = json!(ApiError::not_found().body),
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[post("/rooms/{room_id}/start")]
 pub async fn start(
     db: Data<Db>,
@@ -675,8 +720,8 @@ pub async fn start(
 /// room, the ticket must be provided as `Sec-WebSocket-Protocol` header field
 /// when starting the WebSocket connection. When the requested room has a
 /// password set, the requester must provide the correct password through the
-/// requests body. When the request has no password set, the provided password
-/// will be ignored.
+/// requests body. When the request has no password set, the password will be
+/// ignored if provided.
 #[utoipa::path(
     params(
         ("room_id" = RoomId, description = "The id of the room"),
@@ -690,11 +735,35 @@ pub async fn start(
         ),
         (
             status = StatusCode::BAD_REQUEST,
-            description = "The provided ID token is malformed or contains invalid claims",
+            description = r"The provided ID token is malformed or contains
+                invalid claims,  no breakout rooms were found for this room, the
+                breakout room id is invalid, the room doesn't exist or the guest
+                does not have a valid invite for this room. Guests shall not be
+                able to distinguish between existing rooms and rooms they don't
+                have permission to enter, therefore the response is the same in
+                these cases",
             body = StandardErrorBody,
-            example = json!(
-                StandardErrorBody { code: "bad_request".into(), message: "Room id mismatch".into() }
+            examples(
+                (
+                    "NoBreakoutRooms" = (
+                        summary = "No breakout rooms", value = json!(ApiError::from(StartRoomError::NoBreakoutRooms).body)
+                    )
+                ),
+                (
+                    "InvalidBreakoutRoomId" = (
+                        summary = "Invalid breakout room id", value = json!(ApiError::from(StartRoomError::InvalidBreakoutRoomId).body)
+                    )
+                ),
+                (
+                    "RoomIdMismatch" = (
+                        summary = "Room id mismatch", value = json!(StandardErrorBody { code: "bad_request".into(), message: "Room id mismatch".into() })
+                    )
+                ),
             ),
+        ),
+        (
+            status = StatusCode::UNPROCESSABLE_ENTITY,
+            description = "Invalid invite code",
         ),
         (
             status = StatusCode::UNPROCESSABLE_ENTITY,
@@ -702,18 +771,40 @@ pub async fn start(
         ),
         (
             status = StatusCode::UNAUTHORIZED,
+            body = StandardErrorBody,
             description = r"Either: the provided access token is expired or the
                 provided id or access token is invalid. The WWW-Authenticate
                 header will contain an error description 'session expired' to
                 distinguish between an invalid and an expired token.
                 Or: the provided password was incorrect, in which case the body
                 contains more information.",
-            body = StandardErrorBody,
+            headers(
+                (
+                    "www-authenticate",
+                    description = "will contain 'session expired' to distinguish between an invalid and an expired token"
+                ),
+            ),
+            examples(
+                ("WrongRoomPassword" = (
+                    summary = "Wrong room password",
+                    value = json!(ApiError::from(StartRoomError::WrongRoomPassword).body)
+                )),
+                ("ExpiredOrInvalidAccessToken" = (
+                    summary = "Expired or invalid access token",
+                    value = json!(
+                        ApiError::unauthorized()
+                        .with_message("The session for this user has expired")
+                        .with_www_authenticate(opentalk_types::api::error::AuthenticationError::SessionExpired)
+                        .body
+                    )
+                )),
+            ),
         ),
         (
             status = StatusCode::FORBIDDEN,
-            description = "The specified room could not be found.",
             body = StandardErrorBody,
+            description = "The participant has been banned from entering this room",
+            example = json!(ApiError::from(StartRoomError::BannedFromRoom).body),
         ),
         (
             status = StatusCode::NOT_FOUND,

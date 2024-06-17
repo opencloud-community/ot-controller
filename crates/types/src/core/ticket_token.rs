@@ -6,6 +6,7 @@ use derive_more::{Display, From, FromStr, Into};
 
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::utils::ExampleData;
 
 /// A ticket token
 #[derive(Display, From, FromStr, Into, Debug, Clone, PartialEq, Eq, Hash)]
@@ -38,5 +39,11 @@ impl TicketToken {
     /// Get a str reference to the data in the ticket token
     pub fn as_str(&self) -> &str {
         &self.0
+    }
+}
+
+impl ExampleData for TicketToken {
+    fn example_data() -> Self {
+        Self("abcdefghijklmnopqrstuvwxyz123456abcdefghijklmnopqrstuvwxyz123456".to_string())
     }
 }

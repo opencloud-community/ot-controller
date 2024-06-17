@@ -34,8 +34,13 @@ pub struct RoomResource {
     pub created_at: Timestamp,
 
     /// The password of the room, if any
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
     // Field is non-required already, utoipa adds a `nullable: true` entry
-    // by default which creates a false positive in the spectral linter.
+    // by default which creates a false positive in the spectral linter when
+    // combined with example data.
     #[cfg_attr(feature = "utoipa", schema(nullable = false))]
     pub password: Option<RoomPassword>,
 

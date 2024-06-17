@@ -322,6 +322,99 @@ paths:
       security:
         - BearerAuth: []
         - InviteCode: []
+  "/rooms/{room_id}/start":
+    post:
+      tags:
+        - "api::v1::rooms"
+      summary: Start a signaling session as a registered user
+      description: |
+        This endpoint has to be called in order to get a room ticket. When joining a room, the ticket
+        must be provided as a `Sec-WebSocket-Protocol` header field when starting the WebSocket
+        connection.
+      operationId: start
+      parameters:
+        - name: room_id
+          in: path
+          description: The id of the room
+          required: true
+          schema:
+            $ref: "#/components/schemas/RoomId"
+      requestBody:
+        description: ""
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostRoomsStartRequestBody"
+        required: true
+      responses:
+        "200":
+          description: Returns the information for joining the room
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoomsStartResponse"
+        "400":
+          description: "Either no breakout rooms were found for this room, or the breakout room id is invalid"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardErrorBody"
+              examples:
+                InvalidBreakoutRoomId:
+                  summary: Invalid breakout room id
+                  value:
+                    code: invalid_breakout_room_id
+                    message: The provided breakout room ID is invalid
+                NoBreakoutRooms:
+                  summary: No breakout rooms
+                  value:
+                    code: no_breakout_rooms
+                    message: The requested room has no breakout rooms
+        "401":
+          description: |
+            The provided AccessToken is expired or the
+                            provided ID- or Access-Token is invalid. The WWW-Authenticate
+                            header will contain a error description 'session expired' to
+                            distinguish between an invalid and an expired token.
+          headers:
+            www-authenticate:
+              schema:
+                type: string
+              description: "will contain 'session expired' to distinguish between an invalid and an expired token"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardErrorBody"
+        "403":
+          description: The user has not been invited to join the room or has been banned from entering this room
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardErrorBody"
+              examples:
+                UserBanned:
+                  summary: User has been banned from the room
+                  value:
+                    code: banned_from_room
+                    message: This user has been banned from entering this room
+                UserNotInvited:
+                  summary: User has not been invited to join the room
+                  value:
+                    code: forbidden
+                    message: Access to the requested resource is forbidden
+        "404":
+          description: The specified room could not be found or it has no event associated with it
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardErrorBody"
+              example:
+                code: not_found
+                message: A requested resource could not be found
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   "/rooms/{room_id}/start_invited":
     post:
       tags:
@@ -332,8 +425,8 @@ paths:
         room, the ticket must be provided as `Sec-WebSocket-Protocol` header field
         when starting the WebSocket connection. When the requested room has a
         password set, the requester must provide the correct password through the
-        requests body. When the request has no password set, the provided password
-        will be ignored.
+        requests body. When the request has no password set, the password will be
+        ignored if provided.
       operationId: start_invited
       parameters:
         - name: room_id
@@ -356,14 +449,34 @@ paths:
               schema:
                 $ref: "#/components/schemas/RoomsStartResponse"
         "400":
-          description: The provided ID token is malformed or contains invalid claims
+          description: |
+            The provided ID token is malformed or contains
+                            invalid claims,  no breakout rooms were found for this room, the
+                            breakout room id is invalid, the room doesn't exist or the guest
+                            does not have a valid invite for this room. Guests shall not be
+                            able to distinguish between existing rooms and rooms they don't
+                            have permission to enter, therefore the response is the same in
+                            these cases
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/StandardErrorBody"
-              example:
-                code: bad_request
-                message: Room id mismatch
+              examples:
+                InvalidBreakoutRoomId:
+                  summary: Invalid breakout room id
+                  value:
+                    code: invalid_breakout_room_id
+                    message: The provided breakout room ID is invalid
+                NoBreakoutRooms:
+                  summary: No breakout rooms
+                  value:
+                    code: no_breakout_rooms
+                    message: The requested room has no breakout rooms
+                RoomIdMismatch:
+                  summary: Room id mismatch
+                  value:
+                    code: bad_request
+                    message: Room id mismatch
         "401":
           description: |
             Either: the provided access token is expired or the
@@ -372,16 +485,35 @@ paths:
                             distinguish between an invalid and an expired token.
                             Or: the provided password was incorrect, in which case the body
                             contains more information.
+          headers:
+            www-authenticate:
+              schema:
+                type: string
+              description: "will contain 'session expired' to distinguish between an invalid and an expired token"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/StandardErrorBody"
+              examples:
+                ExpiredOrInvalidAccessToken:
+                  summary: Expired or invalid access token
+                  value:
+                    code: unauthorized
+                    message: The session for this user has expired
+                WrongRoomPassword:
+                  summary: Wrong room password
+                  value:
+                    code: wrong_room_password
+                    message: The provided password does not match the room password
         "403":
-          description: The specified room could not be found.
+          description: The participant has been banned from entering this room
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/StandardErrorBody"
+              example:
+                code: banned_from_room
+                message: This user has been banned from entering this room
         "404":
           $ref: "#/components/responses/NotFound"
         "422":
@@ -435,7 +567,7 @@ paths:
         This endpoint is provided for call-in gateways to start a room connection
         for call-in participants. The participant typically has to provide the
         credentials (id and pin) via DTMF (the number pad).
-      operationId: start
+      operationId: post_call_in_start
       requestBody:
         content:
           application/json:
@@ -583,6 +715,7 @@ components:
       type: string
       format: uuid
       description: The id of a breakout room
+      example: 00000000-0000-0000-0000-0000badcab1e
     CallInId:
       $ref: "#/components/schemas/NumericId"
     CallInPassword:
@@ -661,6 +794,7 @@ components:
       type: string
       format: uuid
       description: An invite code
+      example: 00000000-0000-0000-0000-0000deadbeef
     NumericId:
       type: string
       description: Base type for numeric identifieirs
@@ -747,18 +881,33 @@ components:
         breakout_room:
           allOf:
             - $ref: "#/components/schemas/BreakoutRoomId"
-          nullable: true
         invite_code:
           type: string
           description: The invite code
         password:
           allOf:
             - $ref: "#/components/schemas/RoomPassword"
-          nullable: true
         resumption:
           allOf:
             - $ref: "#/components/schemas/ResumptionToken"
-          nullable: true
+      example:
+        breakout_room: 00000000-0000-0000-0000-0000badcab1e
+        invite_code: 00000000-0000-0000-0000-0000deadbeef
+        password: v3rys3cr3t
+        resumption: 654321zyxwvutsrqponmlkjihgfedcba654321zyxwvutsrqponmlkjihgfedcba
+    PostRoomsStartRequestBody:
+      type: object
+      description: "The JSON body expected when making a *POST /rooms/{room_id}/start*"
+      properties:
+        breakout_room:
+          allOf:
+            - $ref: "#/components/schemas/BreakoutRoomId"
+        resumption:
+          allOf:
+            - $ref: "#/components/schemas/ResumptionToken"
+      example:
+        breakout_room: 00000000-0000-0000-0000-00000badcafe
+        resumption: 654321zyxwvutsrqponmlkjihgfedcba654321zyxwvutsrqponmlkjihgfedcba
     PrivateUserProfile:
       type: object
       description: |
@@ -922,6 +1071,9 @@ components:
           $ref: "#/components/schemas/ResumptionToken"
         ticket:
           $ref: "#/components/schemas/TicketToken"
+      example:
+        resumption: 654321zyxwvutsrqponmlkjihgfedcba654321zyxwvutsrqponmlkjihgfedcba
+        ticket: abcdefghijklmnopqrstuvwxyz123456abcdefghijklmnopqrstuvwxyz123456
     ServiceStartResponse:
       type: object
       description: "Response for `POST /**/**/start` endpoints"
