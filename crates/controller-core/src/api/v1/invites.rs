@@ -256,10 +256,39 @@ pub async fn get_invite(
     )))
 }
 
-/// API Endpoint *PUT /rooms/{room_id}/invites/{invite_code}*
+/// Update an invite code
 ///
-/// Uses the provided [`PutInviteRequestBody`] to modify a specified invite.
-/// Returns the modified [`InviteResource`]
+/// Updates the field values as set in the request body.
+#[utoipa::path(
+    params(RoomIdAndInviteCode),
+    request_body = PutInviteRequestBody,
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Successfully updated the room invite",
+            body = InviteResource,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[put("/rooms/{room_id}/invites/{invite_code}")]
 pub async fn update_invite(
     settings: SharedSettingsActix,
