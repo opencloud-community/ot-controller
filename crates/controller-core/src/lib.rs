@@ -661,6 +661,7 @@ impl ModulesRegistrar for Controller {
     paths(
         api::v1::auth::get_login,
         api::v1::auth::post_login,
+        api::v1::invites::add_invite,
         api::v1::invites::get_invites,
         api::v1::invites::verify_invite_code,
         api::v1::rooms::accessible,
@@ -692,6 +693,7 @@ impl ModulesRegistrar for Controller {
             opentalk_types::api::v1::invites::CodeVerified,
             opentalk_types::api::v1::invites::GetRoomsInvitesResponseBody,
             opentalk_types::api::v1::invites::InviteResource,
+            opentalk_types::api::v1::invites::PostInviteRequestBody,
             opentalk_types::api::v1::invites::PostInviteVerifyRequestBody,
             opentalk_types::api::v1::rooms::GetRoomsResponse,
             opentalk_types::api::v1::rooms::PatchRoomsRequestBody,

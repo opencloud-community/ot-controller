@@ -40,9 +40,46 @@ use crate::{
     settings::SharedSettingsActix,
 };
 
-/// API Endpoint *POST /rooms/{room_id}/invites*
+/// Create a new invite
 ///
-/// Uses the provided [`NewInvite`] to create a new invite.
+/// A new invite to the room is created with the information in the body.
+#[utoipa::path(
+    params(
+        ("room_id" = RoomId, description = "The id of the room"),
+    ),
+    request_body = PostInviteRequestBody,
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Successfully create a new invite",
+            body = InviteResource,
+        ),
+        (
+            status = StatusCode::BAD_REQUEST,
+            description = "Could not create a new invite due to wrong syntax or
+                bad values, for example an invalid owner id.",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[post("/rooms/{room_id}/invites")]
 pub async fn add_invite(
     settings: SharedSettingsActix,
