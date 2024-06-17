@@ -662,6 +662,7 @@ impl ModulesRegistrar for Controller {
         api::v1::auth::get_login,
         api::v1::auth::post_login,
         api::v1::invites::add_invite,
+        api::v1::invites::delete_invite,
         api::v1::invites::get_invite,
         api::v1::invites::get_invites,
         api::v1::invites::update_invite,

@@ -488,6 +488,38 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+    delete:
+      tags:
+        - "api::v1::invites"
+      summary: Delete an invite code
+      description: The invite code will no longer be usable once it is deleted.
+      operationId: delete_invite
+      parameters:
+        - name: room_id
+          in: path
+          description: The room id for the invite
+          required: true
+          schema:
+            $ref: "#/components/schemas/RoomId"
+        - name: invite_code
+          in: path
+          description: The invite code id
+          required: true
+          schema:
+            $ref: "#/components/schemas/InviteCodeId"
+      responses:
+        "204":
+          description: Successfully deleted the room invite
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   "/rooms/{room_id}/start":
     post:
       tags:

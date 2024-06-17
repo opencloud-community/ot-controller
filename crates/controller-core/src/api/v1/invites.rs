@@ -334,10 +334,37 @@ pub async fn update_invite(
     )))
 }
 
-/// API Endpoint *PUT /rooms/{room_id}*
+/// Delete an invite code
 ///
-/// Deletes the [`Invite`] identified by this resource.
-/// Returns 204 No Content
+/// The invite code will no longer be usable once it is deleted.
+#[utoipa::path(
+    params(RoomIdAndInviteCode),
+    responses(
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "Successfully deleted the room invite",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[delete("/rooms/{room_id}/invites/{invite_code}")]
 pub async fn delete_invite(
     db: Data<Db>,
