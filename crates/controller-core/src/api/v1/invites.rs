@@ -195,10 +195,38 @@ pub async fn get_invites(
     )
 }
 
-/// API Endpoint *GET /rooms/{room_id}/invites/{invite_code}*
+/// Get a room invite
 ///
-/// Returns a single invite.
-/// Returns 401 Not Found when the user has no access.
+/// Returns the room invite resource
+#[utoipa::path(
+    params(RoomIdAndInviteCode),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Successfully retrieved the room invite",
+            body = InviteResource,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/rooms/{room_id}/invites/{invite_code}")]
 pub async fn get_invite(
     settings: SharedSettingsActix,

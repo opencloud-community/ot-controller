@@ -409,6 +409,43 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+  "/rooms/{room_id}/invites/{invite_code}":
+    get:
+      tags:
+        - "api::v1::invites"
+      summary: Get a room invite
+      description: Returns the room invite resource
+      operationId: get_invite
+      parameters:
+        - name: room_id
+          in: path
+          description: The room id for the invite
+          required: true
+          schema:
+            $ref: "#/components/schemas/RoomId"
+        - name: invite_code
+          in: path
+          description: The invite code id
+          required: true
+          schema:
+            $ref: "#/components/schemas/InviteCodeId"
+      responses:
+        "200":
+          description: Successfully retrieved the room invite
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InviteResource"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   "/rooms/{room_id}/start":
     post:
       tags:
@@ -1204,6 +1241,7 @@ components:
       type: string
       format: uuid
       description: The id of a room
+      example: 00000000-0000-0000-0000-0000abadcafe
     RoomPassword:
       type: string
       description: A room password

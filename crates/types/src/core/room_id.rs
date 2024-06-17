@@ -25,7 +25,7 @@ use crate::utils::ExampleData;
     from_redis_value(FromStr)
 )]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(example = json!(RoomId::example_data())))]
 pub struct RoomId(Uuid);
 
 impl RoomId {
