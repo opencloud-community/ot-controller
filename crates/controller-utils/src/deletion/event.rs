@@ -11,14 +11,16 @@ use log::Log;
 use opentalk_controller_settings::Settings;
 use opentalk_database::{DatabaseError, DbConnection};
 use opentalk_db_storage::{
+    assets::Asset,
     events::{shared_folders::EventSharedFolder, Event},
-    rooms::Room,
 };
 use opentalk_log::{debug, warn};
-use opentalk_signaling_core::{control, ExchangeHandle, ObjectStorage};
-use opentalk_types::core::{EventId, UserId};
+use opentalk_signaling_core::{assets::asset_key, control, ExchangeHandle, ObjectStorage};
+use opentalk_types::core::{AssetId, EventId, UserId};
+use snafu::ResultExt;
 
 use super::{shared_folders::delete_shared_folders, Deleter, Error, RACE_CONDITION_ERROR_MESSAGE};
+use crate::deletion::{error::ObjectDeletionSnafu, room::delete_rows_associated_with_room};
 
 /// Delete an event by id including the corresponding room and resources it
 /// references.
@@ -71,6 +73,7 @@ impl EventDeleterPreparedCommit {
 /// A struct holding the information that was collected during database commit.
 #[derive(Debug)]
 pub struct EventDeleterCommitOutput {
+    assets: Vec<AssetId>,
     resources: Vec<ResourceId>,
 }
 
@@ -175,28 +178,34 @@ impl Deleter for EventDeleter {
         let event = Event::get(conn, event_id).await?;
         let room_id = event.room;
 
-        let transaction_result: Result<Vec<ResourceId>, DatabaseError> = conn
+        let transaction_result: Result<(Vec<AssetId>, Vec<ResourceId>), DatabaseError> = conn
             .transaction(|conn| {
                 async move {
                     prepared_commit
                         .detect_race_condition(conn, event_id)
                         .await?;
 
-                    debug!(log: logger, "Deleting shared folders from database");
-                    EventSharedFolder::delete_by_event_ids(conn, &[event_id]).await?;
-                    debug!(log: logger, "Deleting event from database");
-                    Event::delete_by_id(conn, event_id).await?;
-                    Room::delete_by_id(conn, room_id).await?;
+                    let mut current_assets = Asset::get_all_ids_for_room(conn, room_id).await?;
+                    current_assets.sort();
 
-                    Ok(prepared_commit.resources)
+                    delete_rows_associated_with_room(
+                        &logger,
+                        conn,
+                        room_id,
+                        &current_assets,
+                        &[event_id],
+                    )
+                    .await?;
+
+                    Ok((current_assets, prepared_commit.resources))
                 }
                 .scope_boxed()
             })
             .await;
 
-        let resources = transaction_result?;
+        let (assets, resources) = transaction_result?;
 
-        Ok(EventDeleterCommitOutput { resources })
+        Ok(EventDeleterCommitOutput { assets, resources })
     }
 
     async fn post_commit(
@@ -205,8 +214,21 @@ impl Deleter for EventDeleter {
         logger: &dyn Log,
         _settings: &Settings,
         authz: &Authz,
-        _storage: &ObjectStorage,
+        storage: &ObjectStorage,
     ) -> Result<(), Error> {
+        debug!(
+            log: logger,
+            "Deleting {} asset(s) from the storage",
+            commit_output.assets.len()
+        );
+        for asset_id in commit_output.assets {
+            debug!(log: logger, "Deleting asset {asset_id} from the storage");
+            storage
+                .delete(asset_key(&asset_id))
+                .await
+                .context(ObjectDeletionSnafu)?;
+        }
+
         debug!(log: logger, "Deleting auth information");
         let _removed_count = authz
             .remove_explicit_resources(commit_output.resources)

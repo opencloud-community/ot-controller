@@ -214,7 +214,7 @@ impl Deleter for RoomDeleter {
                     let mut current_assets = Asset::get_all_ids_for_room(conn, room_id).await?;
                     current_assets.sort();
 
-                    delete_associated_database_rows(
+                    delete_rows_associated_with_room(
                         logger,
                         conn,
                         room_id,
@@ -264,7 +264,7 @@ impl Deleter for RoomDeleter {
     }
 }
 
-async fn delete_associated_database_rows(
+pub(crate) async fn delete_rows_associated_with_room(
     logger: &dyn Log,
     conn: &mut DbConnection,
     room_id: RoomId,
