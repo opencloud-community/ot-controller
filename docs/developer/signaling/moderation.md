@@ -333,23 +333,63 @@ Accept a participant inside the waiting into the room.
 
 Requires moderator role.
 
-Reset all raised hands in the room.
+Reset the raised hands of participants in the room.
 
 #### Fields
 
-| Field    | Type     | Required | Description                                                                        |
-| -------- | -------- | -------- | ---------------------------------------------------------------------------------- |
-| `action` | `enum`   | yes      | Must be `"reset_raised_hands"`                                                     |
-| `target` | `string` | no       | Id of the participant to reset the hand for, omit to reset all participants' hands |
+| Field    | Type                   | Required | Description                                                                                                                        |
+| -------- | ---------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `action` | `enum`                 | yes      | Must be `"reset_raised_hands"`                                                                                                     |
+| `target` | `string` or `string[]` | no       | Id of one or more participants to reset the hand for. If missing, all participants in the room will have their raised hands reset. |
 
 ##### Example
+
+Reset the hands of all participants in the room:
+
+```json
+{
+    "action": "reset_raised_hands"
+}
+```
+
+Reset the hand of one specific participant:
 
 ```json
 {
     "action": "reset_raised_hands",
     "target": "00000000-0000-0000-0000-000000000000"
 }
+```
 
+This message will not reset any hands, yet is still valid:
+
+```json
+{
+    "action": "reset_raised_hands",
+    "target": []
+}
+```
+
+The hand of one specific participant can also be reset in a list:
+
+```json
+{
+    "action": "reset_raised_hands",
+    "target": ["00000000-0000-0000-0000-000000000000"]
+}
+```
+
+Reset the hand of multiple participants:
+
+```json
+{
+    "action": "reset_raised_hands",
+    "target": [
+        "00000000-0000-0000-0000-000000000000",
+        "00000000-0000-0000-0000-0000000a11c3",
+        "00000000-0000-0000-0000-000000000808",
+    ]
+}
 ```
 
 ---

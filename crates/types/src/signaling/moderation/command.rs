@@ -4,6 +4,8 @@
 
 //! Signaling commands for the `moderation` namespace
 
+use std::collections::BTreeSet;
+
 use super::KickScope;
 use crate::core::ParticipantId;
 #[allow(unused_imports)]
@@ -66,7 +68,11 @@ pub enum ModerationCommand {
     /// Reset raised hands for the meeting
     ResetRaisedHands {
         /// An optional single participant to reset the raised hand for
-        target: Option<ParticipantId>,
+        #[cfg_attr(
+            feature = "serde",
+            serde(default, with = "crate::core::one_or_many_btree_set_option")
+        )]
+        target: Option<BTreeSet<ParticipantId>>,
     },
 }
 
@@ -150,7 +156,29 @@ mod test {
         let msg: ModerationCommand = serde_json::from_value(json).unwrap();
 
         if let ModerationCommand::ResetRaisedHands { target } = msg {
-            assert_eq!(target, Some(ParticipantId::nil()));
+            assert_eq!(target, Some(BTreeSet::from_iter([ParticipantId::nil()])));
+        } else {
+            panic!()
+        }
+    }
+
+    #[test]
+    fn reset_raised_hand_for_multiple_participants() {
+        let json = json!({
+            "action": "reset_raised_hands",
+            "target": ["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-00000000cafe"]
+        });
+
+        let msg: ModerationCommand = serde_json::from_value(json).unwrap();
+
+        if let ModerationCommand::ResetRaisedHands { target } = msg {
+            assert_eq!(
+                target,
+                Some(BTreeSet::from_iter([
+                    ParticipantId::from_u128(0),
+                    ParticipantId::from_u128(0xcafe)
+                ]))
+            );
         } else {
             panic!()
         }
