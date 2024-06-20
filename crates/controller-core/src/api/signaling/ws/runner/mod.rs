@@ -1292,6 +1292,10 @@ impl Runner {
             .control_storage()
             .remove_attribute(self.room_id, self.id, LEFT_AT)
             .await?;
+        self.volatile
+            .control_storage()
+            .set_attribute(self.room_id, self.id, JOINED_AT, timestamp)
+            .await?;
 
         // If we haven't joined the waiting room yet, fetch, set and enforce the tariff for the room.
         // When in waiting-room this logic was already executed in `join_waiting_room`.
