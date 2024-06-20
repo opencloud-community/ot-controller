@@ -820,11 +820,14 @@ impl Media {
             force: moderator_mute.force,
         };
 
-        for target in moderator_mute.targets {
-            if !room_participants.contains(&target) {
-                continue;
-            }
+        let targets = moderator_mute
+            .targets
+            .as_ref()
+            .unwrap_or(&room_participants)
+            .intersection(&room_participants)
+            .filter(|&&t| t != self.id);
 
+        for &target in targets {
             ctx.exchange_publish(
                 control::exchange::current_room_by_participant_id(self.room, target),
                 exchange::Message::RequestMute(request_mute.clone()),
