@@ -33,24 +33,27 @@ impl SignalingStorageProvider for VolatileStorage {
 #[cfg(test)]
 mod test_common {
     use opentalk_signaling_core::{Participant, RunnerId};
-    use opentalk_types::core::{ParticipantId, ResumptionToken, RoomId, TicketToken};
+    use opentalk_types::core::{ParticipantId, ResumptionToken, RoomId};
     use pretty_assertions::assert_eq;
 
     use super::SignalingStorage;
     use crate::api::signaling::{
-        resumption::ResumptionData, storage::SignalingStorageError, ticket::TicketData,
+        resumption::ResumptionData,
+        storage::SignalingStorageError,
+        ticket::{generate_ticket, TicketData},
     };
 
     const ALICE: ParticipantId = ParticipantId::from_u128(0xa11c3);
     const BOB: ParticipantId = ParticipantId::from_u128(0x808);
 
     pub(super) async fn ticket_token(storage: &mut dyn SignalingStorage) {
-        let ticket_token = TicketToken::generate();
+        let room_id = RoomId::generate();
+        let ticket_token = generate_ticket(room_id);
         let ticket_data = TicketData {
             participant_id: ALICE,
             resuming: false,
             participant: Participant::Guest,
-            room: RoomId::generate(),
+            room: room_id,
             breakout_room: None,
             resumption: ResumptionToken::generate(),
         };
