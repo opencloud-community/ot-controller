@@ -63,6 +63,7 @@ use opentalk_types::{
 };
 use rrule::{Frequency, RRuleSet};
 use serde::Deserialize;
+use shared_folder::delete_shared_folders;
 use snafu::Report;
 use validator::Validate;
 
@@ -977,6 +978,22 @@ pub async fn patch_event(
         User::get(&mut conn, event.created_by).await?
     };
 
+    if let Some(streaming_targets) = patch.streaming_targets.clone() {
+        store_event_streaming_targets(&mut conn, event_id, streaming_targets).await?;
+    }
+
+    match patch.has_shared_folder {
+        Some(true) => {
+            put_shared_folder(settings.clone(), event_id, &mut conn).await?;
+        }
+        Some(false) => {
+            if let Some(folder) = EventSharedFolder::get_for_event(&mut conn, event_id).await? {
+                delete_shared_folders(settings.clone(), &[folder]).await?;
+            }
+        }
+        None => {}
+    }
+
     // Special case: if the patch only modifies the password do not update the event
     let event = if patch.only_modifies_room() {
         event
@@ -1073,7 +1090,7 @@ pub async fn patch_event(
         can_edit,
         is_adhoc: event.is_adhoc,
         shared_folder: shared_folder.clone(),
-        streaming_targets: Vec::new(),
+        streaming_targets: streaming_targets.clone(),
         show_meeting_details: event.show_meeting_details,
     };
 

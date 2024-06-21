@@ -3304,6 +3304,21 @@ components:
         show_meeting_details:
           type: boolean
           description: Patch wether the meeting details are displayed or not
+        has_shared_folder:
+          type: boolean
+          description: |
+            Indicates whether the meeting room should have a shared folder.
+            If absent, no shared folder will be created or removed.
+            If set to false, the shared folder will be deleted.
+            If set to true, a new shared folder will be created.
+        streaming_targets:
+          description: |
+            Indicates whether the streaming targets should be updated.
+            If absent, the streaming targets won't be changed.
+            If an array of streaming targets is provided, the event will be updated.
+          type: array
+          items:
+            $ref: '#/components/schemas/StreamingTarget'
 
     PatchEventInstance:
       description: Event instance patch request body
