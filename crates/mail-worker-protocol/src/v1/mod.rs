@@ -126,9 +126,12 @@ pub struct CallIn {
 }
 
 /// The different kinds of MailTasks that are currently supported
-#[derive(Deserialize, PartialEq, Eq, Debug)]
-#[cfg_attr(any(test, feature = "client"), derive(Serialize))]
-#[serde(tag = "message", rename_all = "snake_case")]
+#[derive(PartialEq, Eq, Debug)]
+#[cfg_attr(
+    any(test, feature = "serde"),
+    derive(Deserialize, Serialize),
+    serde(tag = "message", rename_all = "snake_case")
+)]
 pub enum Message {
     // Invites
     RegisteredEventInvite(RegisteredEventInvite),
