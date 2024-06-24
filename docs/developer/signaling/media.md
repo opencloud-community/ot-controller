@@ -456,13 +456,15 @@ Request another participant to mute their microphone.
 
 #### Fields
 
-| Field     | Type     | Required | Description                                    |
-| --------- | -------- | -------- | ---------------------------------------------- |
-| `action`  | `enum`   | yes      | Must be `"moderator_mute"`                     |
-| `targets` | `string` | yes      | List of participant ids to request to be muted |
-| `force`   | `bool`   | yes      | We're not asking you to mute, we're telling!   |
+| Field     | Type                   | Required | Description                                                                                                                          |
+| --------- | ---------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `action`  | `enum`                 | yes      | Must be `"moderator_mute"`                                                                                                           |
+| `targets` | `string` or `string[]` | no       | Id of one or more participants to request to be muted. If missing, all participants except the sender of this message will be muted. |
+| `force`   | `bool`                 | yes      | We're not asking you to mute, we're telling!                                                                                         |
 
 ##### Example
+
+Mute specific participants:
 
 ```json
 {
@@ -471,6 +473,15 @@ Request another participant to mute their microphone.
         "84a2c872-94fb-4b41-aca7-13d784c92a72",
         "2375602f-c74c-4935-9933-bfd67d4e8ae5"
     ],
+    "force": true
+}
+```
+
+Mute all participants in the room except themselves:
+
+```json
+{
+    "action": "moderator_mute",
     "force": true
 }
 ```

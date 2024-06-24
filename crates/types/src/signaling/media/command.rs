@@ -4,6 +4,8 @@
 
 //! Signaling messages for the `media` namespace
 
+use std::collections::BTreeSet;
+
 use super::{MediaSessionState, MediaSessionType, TrickleCandidate, UpdateSpeakingState};
 use crate::core::ParticipantId;
 #[allow(unused_imports)]
@@ -110,7 +112,11 @@ pub struct Target {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct RequestMute {
     /// Participants that shall be muted
-    pub targets: Vec<ParticipantId>,
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, with = "crate::core::one_or_many_btree_set_option")
+    )]
+    pub targets: Option<BTreeSet<ParticipantId>>,
 
     /// Force mute the participant(s)
     pub force: bool,
@@ -279,7 +285,60 @@ mod test {
     }
 
     #[test]
+    fn moderator_mute_absent() {
+        let json = json!({
+            "action": "moderator_mute",
+            "force": true,
+        });
+
+        let msg: MediaCommand = serde_json::from_value(json).unwrap();
+
+        if let MediaCommand::ModeratorMute(RequestMute { targets, force }) = msg {
+            assert_eq!(targets, None);
+            assert!(force);
+        } else {
+            panic!("Expected MediaCommand::ModeratorMute, found {msg:?}");
+        }
+    }
+
+    #[test]
+    fn moderator_mute_empty_list() {
+        let json = json!({
+            "action": "moderator_mute",
+            "targets": [],
+            "force": true,
+        });
+
+        let msg: MediaCommand = serde_json::from_value(json).unwrap();
+
+        if let MediaCommand::ModeratorMute(RequestMute { targets, force }) = msg {
+            assert_eq!(targets, Some(BTreeSet::new()));
+            assert!(force);
+        } else {
+            panic!("Expected MediaCommand::ModeratorMute, found {msg:?}");
+        }
+    }
+
+    #[test]
     fn moderator_mute_single() {
+        let json = json!({
+            "action": "moderator_mute",
+            "targets": "00000000-0000-0000-0000-000000000000",
+            "force": true,
+        });
+
+        let msg: MediaCommand = serde_json::from_value(json).unwrap();
+
+        if let MediaCommand::ModeratorMute(RequestMute { targets, force }) = msg {
+            assert_eq!(targets, Some(BTreeSet::from_iter([ParticipantId::nil()])));
+            assert!(force);
+        } else {
+            panic!("Expected MediaCommand::ModeratorMute, found {msg:?}");
+        }
+    }
+
+    #[test]
+    fn moderator_mute_single_in_list() {
         let json = json!({
             "action": "moderator_mute",
             "targets": ["00000000-0000-0000-0000-000000000000"],
@@ -289,10 +348,10 @@ mod test {
         let msg: MediaCommand = serde_json::from_value(json).unwrap();
 
         if let MediaCommand::ModeratorMute(RequestMute { targets, force }) = msg {
-            assert_eq!(targets, vec![ParticipantId::nil()]);
+            assert_eq!(targets, Some(BTreeSet::from_iter([ParticipantId::nil()])));
             assert!(force);
         } else {
-            panic!()
+            panic!("Expected MediaCommand::ModeratorMute, found {msg:?}");
         }
     }
 
@@ -309,15 +368,15 @@ mod test {
         if let MediaCommand::ModeratorMute(RequestMute { targets, force }) = msg {
             assert_eq!(
                 targets,
-                [
+                Some(BTreeSet::from_iter([
                     ParticipantId::from_u128(0),
                     ParticipantId::from_u128(1),
                     ParticipantId::from_u128(2)
-                ]
+                ]))
             );
             assert!(!force);
         } else {
-            panic!()
+            panic!("Expected MediaCommand::ModeratorMute, found {msg:?}");
         }
     }
 
