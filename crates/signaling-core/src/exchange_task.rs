@@ -369,6 +369,12 @@ impl ExchangeHandle {
             })
             .map_err(|_| PublishError)
     }
+
+    #[cfg(feature = "mocking")]
+    pub fn dummy() -> Self {
+        let (command_sender, _) = mpsc::unbounded_channel();
+        Self { command_sender }
+    }
 }
 
 /// Handle to a subscriber on the exchange task
