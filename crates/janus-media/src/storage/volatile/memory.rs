@@ -205,7 +205,7 @@ impl MemoryMediaState {
 
     pub(super) fn is_unmute_allowed(&self, room: RoomId, participant: ParticipantId) -> bool {
         match self.force_mute.get(&room) {
-            None => false,
+            None => true,
             Some(allow_list) => allow_list.contains(&participant),
         }
     }
