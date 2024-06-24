@@ -124,4 +124,4 @@ validator = { version = "0.18", features = ["derive"] }
 [workspace.dependencies.casbin]
 default-features = false
 git = "https://github.com/kbalt/casbin-rs.git"
-rev = "a5cd79704726b423030942769779ea7d4e8129ee"
+rev = "fddb52d61385913727e24a5c7337eed489cb0d56"

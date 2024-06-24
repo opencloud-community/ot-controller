@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
 
 use kustos::Authz;
 use opentalk_db_storage::users::User;
@@ -66,13 +66,7 @@ impl TestContext {
 
         let (shutdown, _) = tokio::sync::broadcast::channel(10);
 
-        let (enforcer, _) = kustos::Authz::new_with_autoload(
-            db_ctx.db.clone(),
-            shutdown.subscribe(),
-            Duration::from_secs(5),
-        )
-        .await
-        .unwrap();
+        let enforcer = kustos::Authz::new(db_ctx.db.clone()).await.unwrap();
 
         let volatile = match storage {
             TestContextVolatileStorage::Redis => VolatileStorage::Right(redis::setup().await),

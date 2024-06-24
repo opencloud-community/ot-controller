@@ -1,15 +1,15 @@
 # ACL management
 
 OpenTalk uses an in-memory Access Control List to efficiently track permissions. The controller maintains that list in
-its database and periodically reads it back to synchronize permissions written out by other controllers.
+its database. Controllers will synchronize changes to the ACL by sending changesets to each other using RabbitMQ.
 
 ## Configuration
 
 The section in the [configuration file](../core/configuration.md) is called `authz`.
 
-| Field             | Type  | Required | Default value | Description                                             |
-| ----------------- | ----- | -------- | ------------- | ------------------------------------------------------- |
-| `reload_interval` | `int` | yes      | 10            | Reload interval of the ACL from the database in seconds |
+| Field                    | Type   | Required | Default value | Description                                                                                                                              |
+| ------------------------ | ------ | -------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `synchronize_controllers` | `bool` | no       | `true`        | Must `true` when usin multiple controllers. This should be set to `false` to avoid unnessecary work, when only using a single controller |
 
 ## `opentalk-controller acl` subcommand
 
