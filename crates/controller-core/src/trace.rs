@@ -68,7 +68,7 @@ pub fn init(settings: &Logging) -> Result<()> {
                     KeyValue::new(
                         "service.version",
                         option_env!("VERGEN_GIT_SEMVER")
-                            .or(option_env!("VERGEN_BUILD_SEMVER"))
+                            .or(option_env!("CARGO_PKG_VERSION"))
                             .unwrap_or("unknown"),
                     ),
                 ])))
