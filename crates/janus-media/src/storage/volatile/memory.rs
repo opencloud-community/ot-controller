@@ -82,13 +82,12 @@ impl MemoryMediaState {
         is_speaking: bool,
         updated_at: Timestamp,
     ) {
-        self.speakers.insert(
-            (room, participant),
-            SpeakingState {
+        self.speakers
+            .entry((room, participant))
+            .or_insert_with(|| SpeakingState {
                 is_speaking,
                 updated_at,
-            },
-        );
+            });
     }
 
     pub(super) fn get_speaking_state(
