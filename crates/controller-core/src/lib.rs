@@ -288,9 +288,19 @@ impl Controller {
             settings.rabbit_mq.max_channels_per_connection,
         );
 
-        let exchange_handle = ExchangeTask::spawn(rabbitmq_pool.clone())
-            .await
-            .whatever_context("Failed to spawn exchange task")?;
+        // Only use rabbitmq in the exchange when a redis instance is configured
+        // This assumes that the existence of redis means multiple controllers are used
+        // and share their signaling state via redis. Only in this case rabbitmq is required
+        // in the exchange.
+        let exchange_handle = if settings.redis.is_some() {
+            ExchangeTask::spawn_with_rabbitmq(rabbitmq_pool.clone())
+                .await
+                .whatever_context("Failed to spawn exchange task")?
+        } else {
+            ExchangeTask::spawn()
+                .await
+                .whatever_context("Failed to spawn exchange task")?
+        };
 
         // Connect to postgres
         let mut db =

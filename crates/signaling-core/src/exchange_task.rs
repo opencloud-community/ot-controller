@@ -59,10 +59,8 @@ pub struct ExchangeTask {
     /// Some unique ID to identify messages sent by ourselves
     id: Uuid,
 
-    pool: Arc<RabbitMqPool>,
-    channel: RabbitMqChannel,
+    rmq: Option<RabbitMQParts>,
 
-    consumer: Consumer,
     command_receiver: mpsc::UnboundedReceiver<Command>,
 
     /// List of subscribers
@@ -72,6 +70,12 @@ pub struct ExchangeTask {
     ///
     /// This map is used to match the routing key of incoming messages to subscribers.
     routing_keys: HashMap<ByteString, Vec<SubscriberKey>, BuildHasherDefault<FxHasher>>,
+}
+
+struct RabbitMQParts {
+    pool: Arc<RabbitMqPool>,
+    channel: RabbitMqChannel,
+    consumer: Consumer,
 }
 
 enum Command {
@@ -93,7 +97,25 @@ struct SubscriberEntry {
 
 impl ExchangeTask {
     /// Spawn the exchange task and return a [`ExchangeHandle`] to it
-    pub async fn spawn(pool: Arc<RabbitMqPool>) -> Result<ExchangeHandle, Error> {
+    pub async fn spawn() -> Result<ExchangeHandle, Error> {
+        let (command_sender, command_receiver) = mpsc::unbounded_channel();
+
+        tokio::spawn(
+            ExchangeTask {
+                id: Uuid::new_v4(),
+                rmq: None,
+                command_receiver,
+                subscriber: SlotMap::with_key(),
+                routing_keys: HashMap::default(),
+            }
+            .run(),
+        );
+
+        Ok(ExchangeHandle { command_sender })
+    }
+
+    /// Spawn the exchange task with rabbitmq support and return a [`ExchangeHandle`] to it
+    pub async fn spawn_with_rabbitmq(pool: Arc<RabbitMqPool>) -> Result<ExchangeHandle, Error> {
         let channel = pool.create_channel().await?;
         let consumer = make_consumer(&channel).await?;
 
@@ -102,9 +124,11 @@ impl ExchangeTask {
         tokio::spawn(
             ExchangeTask {
                 id: Uuid::new_v4(),
-                pool,
-                channel,
-                consumer,
+                rmq: Some(RabbitMQParts {
+                    pool,
+                    channel,
+                    consumer,
+                }),
                 command_receiver,
                 subscriber: SlotMap::with_key(),
                 routing_keys: HashMap::default(),
@@ -118,13 +142,23 @@ impl ExchangeTask {
     /// Loop forever and handle event
     async fn run(mut self) {
         loop {
-            select! {
-                Some(command) = self.command_receiver.recv() => {
-                    self.handle_command(command).await;
+            if let Some(rmq) = &mut self.rmq {
+                select! {
+                    command = self.command_receiver.recv() => {
+                        // Return if command is None, all handles are dropped
+                        let Some(command) = command else { return; };
+
+                        self.handle_command(command).await;
+                    }
+                    delivery = rmq.consumer.next() => {
+                        self.handle_delivery(delivery).await;
+                    }
                 }
-                delivery = self.consumer.next() => {
-                    self.handle_delivery(delivery).await;
-                }
+            } else if let Some(command) = self.command_receiver.recv().await {
+                self.handle_command(command).await;
+            } else {
+                // All handles dropped, exit
+                return;
             }
         }
     }
@@ -163,6 +197,10 @@ impl ExchangeTask {
             Command::Publish { routing_key, data } => {
                 self.handle_msg(&routing_key, &data).await;
 
+                let Some(mut rmq) = self.rmq.as_mut() else {
+                    return;
+                };
+
                 let payload = serde_json::to_string(&RabbitMqMessage {
                     sender: self.id,
                     routing_key: &routing_key,
@@ -171,7 +209,7 @@ impl ExchangeTask {
                 .unwrap();
 
                 // Reconnect while this fails with an error
-                while self
+                while rmq
                     .channel
                     .basic_publish(
                         EXCHANGE,
@@ -182,15 +220,18 @@ impl ExchangeTask {
                     )
                     .await
                     .is_err()
-                    && self.channel.status().state() == ChannelState::Error
+                    && rmq.channel.status().state() == ChannelState::Error
                 {
                     self.reconnect_rabbitmq().await;
+                    rmq = self.rmq.as_mut().unwrap();
                 }
             }
         }
     }
 
     async fn handle_delivery(&mut self, delivery: Option<lapin::Result<Delivery>>) {
+        let Some(rmq) = &mut self.rmq else { return };
+
         match delivery {
             Some(Ok(delivery)) => {
                 if let Err(e) = self.handle_rmq_message(&delivery.data).await {
@@ -201,7 +242,7 @@ impl ExchangeTask {
                 }
             }
             Some(Err(_)) | None => {
-                if self.channel.status().state() == ChannelState::Error {
+                if rmq.channel.status().state() == ChannelState::Error {
                     self.reconnect_rabbitmq().await;
                 }
             }
@@ -217,14 +258,16 @@ impl ExchangeTask {
 
         let mut wait_duration = Duration::from_millis(100);
 
+        let Some(rmq) = &mut self.rmq else { return };
+
         loop {
             sleep(wait_duration).await;
 
-            match self.pool.create_channel().await {
+            match rmq.pool.create_channel().await {
                 Ok(channel) => match make_consumer(&channel).await {
                     Ok(consumer) => {
-                        self.channel = channel;
-                        self.consumer = consumer;
+                        rmq.channel = channel;
+                        rmq.consumer = consumer;
                         log::info!("Reconnected to RabbitMQ");
                         return;
                     }

@@ -98,7 +98,7 @@ async fn execute_job(
         settings.rabbit_mq.max_channels_per_connection,
     );
 
-    let exchange_handle = ExchangeTask::spawn(rabbitmq_pool.clone())
+    let exchange_handle = ExchangeTask::spawn_with_rabbitmq(rabbitmq_pool.clone())
         .await
         .whatever_context("Failed to spawn exchange task")?;
 
