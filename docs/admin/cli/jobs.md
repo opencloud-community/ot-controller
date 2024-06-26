@@ -57,7 +57,7 @@ The default parameters for the job look like this:
 
 ### Job: `event-cleanup`
 
-This job is intended to delete non-recurring events that have ended a certain
+This job is intended to delete non-recurring events that have ended a defined
 duration ago. Its use case is to ensure GDPR compliance.
 
 In addition, all data associated with the event will be deleted, such as:
@@ -91,9 +91,45 @@ The default parameters for the job look like this:
 
 <!-- end:fromfile:jobs/parameters-event-cleanup.json.md -->
 
+### Job: `user-cleanup`
+
+This job is intended to delete users that have been disabled a defined
+duration ago. Its use case is to ensure GDPR compliance.
+
+In addition, all data associated with the user will be deleted, such as:
+
+- assets stored in the [storage system](../core/minio.md)
+- folders including the share links from a [shared folder system](../advanced/additional_services/shared_folder.md)
+- all database content belonging to the user (e.g. events)
+- the rooms which were associated to these events
+
+#### Parameters
+
+The job takes a JSON object with the following fields as a parameter. All
+fields are optional, if any of them is not included in the parameter object, the
+default value will be used.
+
+| Field                                  | Type   | Default value | Description                                                                                                                                                    |
+| -------------------------------------- | ------ | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `days_since_user_has_been_disabled`    | `uint` | `30`          | The minimum number of days that must have passed since the user has been disabled for them to be deleted                                                       |
+| `fail_on_shared_folder_deletion_error` | `bool` | `false`       | When `true`, the job will consider failure during deletion of the shared folder an error and abort, otherwise it is considered a warning and the job continues |
+
+The default parameters for the job look like this:
+
+<!-- begin:fromfile:jobs/parameters-user-cleanup.json.md -->
+
+```json
+{
+  "days_since_user_has_been_disabled": 30,
+  "fail_on_shared_folder_deletion_error": false
+}
+```
+
+<!-- end:fromfile:jobs/parameters-user-cleanup.json.md -->
+
 ### Job: `adhoc-event-cleanup`
 
-This job is intended to delete adhoc events that were created a certain
+This job is intended to delete adhoc events that were created a defined
 duration ago. Its use case is to ensure GDPR compliance.
 
 In addition, all data associated with the event will be deleted, such as:
@@ -264,10 +300,11 @@ Arguments:
           Possible values:
           - self-check:            A simple self-check of the job execution system
           - event-cleanup:         A job for cleaning up events that ended at minimum a defined duration ago
+          - user-cleanup:          A job for cleaning up users that were disabled at minimum a defined duration ago
           - adhoc-event-cleanup:   A job to cleanup adhoc events a certain duration after they were created
           - invite-cleanup:        A job for cleaning up expired invites
           - sync-storage-files:    A job to synchronize database assets and storage files
-          - room-cleanup:          A job to remove all rooms that have not event associated with them
+          - room-cleanup:          A job to remove all rooms that have no event associated with them
           - keycloak-account-sync: A job to synchronize the user account states with Keycloak
 
 Options:
@@ -314,10 +351,11 @@ Arguments:
           Possible values:
           - self-check:            A simple self-check of the job execution system
           - event-cleanup:         A job for cleaning up events that ended at minimum a defined duration ago
+          - user-cleanup:          A job for cleaning up users that were disabled at minimum a defined duration ago
           - adhoc-event-cleanup:   A job to cleanup adhoc events a certain duration after they were created
           - invite-cleanup:        A job for cleaning up expired invites
           - sync-storage-files:    A job to synchronize database assets and storage files
-          - room-cleanup:          A job to remove all rooms that have not event associated with them
+          - room-cleanup:          A job to remove all rooms that have no event associated with them
           - keycloak-account-sync: A job to synchronize the user account states with Keycloak
 
 Options:

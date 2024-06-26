@@ -56,7 +56,7 @@ const MAX_USER_SEARCH_RESULTS: usize = 50;
 /// Diesel user struct
 ///
 /// Is used as a result in various queries. Represents a user column
-#[derive(Clone, Queryable, Identifiable, Serialize, Deserialize)]
+#[derive(Clone, Queryable, Identifiable, Serialize, Deserialize, PartialEq, Eq)]
 pub struct User {
     pub id: UserId,
     pub id_serial: SerialUserId,
@@ -95,7 +95,7 @@ impl User {
             .into_boxed()
     }
 
-    /// Get a user with the given `id`
+    /// Get an active user with the given `id`. If the user has a `disabled_since` entry, a NotFound error is returned.
     ///
     /// If no user exists with `user_id` this returns an Error
     #[tracing::instrument(err, skip_all)]
@@ -349,6 +349,19 @@ impl User {
         ))
     }
 
+    #[tracing::instrument(err, skip_all)]
+    pub async fn get_disabled_before(
+        conn: &mut DbConnection,
+        date: DateTime<Utc>,
+    ) -> Result<Vec<UserId>> {
+        users::table
+            .select(users::id)
+            .filter(users::disabled_since.le(date))
+            .load(conn)
+            .await
+            .map_err(Into::into)
+    }
+
     pub fn to_public_user_profile(&self, settings: &Settings) -> PublicUserProfile {
         let avatar_url = email_to_libravatar_url(&settings.avatar.libravatar_url, &self.email);
 
@@ -384,6 +397,16 @@ impl User {
             tariff_status: self.tariff_status,
             used_storage,
         }
+    }
+
+    /// Delete a user using the given id
+    #[tracing::instrument(err, skip_all)]
+    pub async fn delete_by_id(conn: &mut DbConnection, user_id: UserId) -> Result<()> {
+        let query = diesel::delete(users::table.filter(users::id.eq(user_id)));
+
+        query.execute(conn).await?;
+
+        Ok(())
     }
 }
 

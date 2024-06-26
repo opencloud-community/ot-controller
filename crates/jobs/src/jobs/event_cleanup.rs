@@ -39,7 +39,7 @@ impl JobParameters for EventCleanupParameters {
     }
 }
 
-/// A job to cleanup events a certain duration after the last occurence
+/// A job for cleaning up events that ended at minimum a defined duration ago
 #[derive(Debug)]
 pub struct EventCleanup;
 
@@ -65,16 +65,14 @@ impl Job for EventCleanup {
         }
 
         let now = Utc::now();
-        let delete_before =
-            match now.checked_sub_days(Days::new(parameters.days_since_last_occurrence)) {
-                Some(d) => d,
-                None => {
-                    error!(log: logger, "Couldn't subtract number of retention days");
-                    return Err(Error::JobExecutionFailed);
-                }
-            };
+        let delete_before = now
+            .checked_sub_days(Days::new(parameters.days_since_last_occurrence))
+            .ok_or_else(|| {
+                error!(log: logger, "Couldn't subtract number of retention days");
+                Error::JobExecutionFailed
+            })?;
 
-        if let Err(e) = perform_deletion(
+        perform_deletion(
             logger,
             db.clone(),
             exchange_handle,
@@ -83,10 +81,11 @@ impl Job for EventCleanup {
             DeleteSelector::ScheduledThatEndedBefore(delete_before),
         )
         .await
-        {
-            error!(log: logger, "{}", Report::from_error(e));
-            return Err(Error::JobExecutionFailed);
-        }
+        .map_err(|err| {
+            error!(log: logger, "{}", Report::from_error(err));
+            Error::JobExecutionFailed
+        })?;
+
         Ok(())
     }
 }

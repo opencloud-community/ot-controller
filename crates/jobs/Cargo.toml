@@ -36,5 +36,8 @@ uuid.workspace = true
 [dev-dependencies]
 actix-rt.workspace = true
 bytes.workspace = true
+env_logger.workspace = true
 futures.workspace = true
+opentalk-signaling-core = { workspace = true, features = ["mocking"] }
 opentalk-test-util = { workspace = true, features = ["controller", "database"] }
+serial_test.workspace = true

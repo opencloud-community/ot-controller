@@ -313,6 +313,16 @@ impl Invite {
 
         Ok(query.get_results(conn).await?)
     }
+
+    /// Query all invites that where updated by the specified user.
+    #[tracing::instrument(err, skip_all)]
+    pub async fn get_updated_by(conn: &mut DbConnection, user_id: UserId) -> Result<Vec<Self>> {
+        invites::table
+            .filter(invites::updated_by.eq(user_id))
+            .load(conn)
+            .await
+            .map_err(Into::into)
+    }
 }
 
 /// Diesel invites struct

@@ -92,13 +92,9 @@ async fn find_orphaned_rooms(conn: &mut DbConnection) -> Result<HashSet<RoomId>,
 
 #[cfg(test)]
 mod test {
-    use opentalk_database::DbConnection;
-    use opentalk_db_storage::{
-        events::{Event, NewEvent},
-        rooms::{NewRoom, Room},
-        users::User,
-    };
     use opentalk_test_util::database::DatabaseContext;
+
+    use crate::jobs::test_utils::create_events_and_independent_rooms;
 
     /// Test to fill the database with events and independent rooms. Is ignored by the CI
     ///
@@ -107,67 +103,12 @@ mod test {
     /// [`opentalk_test_util::database::DatabaseContext`].
     ///
     /// Run with:
-    /// `cargo test --package opentalk-jobs  -- --show-output --exact jobs::room_cleanup::test::fill_db_with_test_data --nocapture --ignored`
+    /// `cargo test --package opentalk-jobs -- --show-output --exact jobs::room_cleanup::test::fill_db_with_test_data --nocapture --ignored`
     #[ignore]
     #[actix_rt::test]
     async fn fill_db_with_test_data() {
         let db_ctx = DatabaseContext::new(false).await;
 
         create_events_and_independent_rooms(&db_ctx, 50, 100).await;
-    }
-
-    async fn create_events_and_independent_rooms(
-        db_ctx: &DatabaseContext,
-        event_count: u64,
-        independent_room_count: u64,
-    ) {
-        let user = db_ctx.create_test_user(1, vec![]).await.unwrap();
-
-        let mut conn = db_ctx.db.get_conn().await.unwrap();
-
-        for _ in 0..event_count {
-            create_generic_test_event(&mut conn, &user).await;
-        }
-
-        for _ in 0..independent_room_count {
-            create_generic_test_room(&mut conn, &user).await;
-        }
-    }
-
-    async fn create_generic_test_room(conn: &mut DbConnection, user: &User) -> Room {
-        let new_room = NewRoom {
-            created_by: user.id,
-            password: None,
-            waiting_room: false,
-            tenant_id: user.tenant_id,
-        };
-
-        new_room.insert(conn).await.unwrap()
-    }
-
-    async fn create_generic_test_event(conn: &mut DbConnection, user: &User) -> Event {
-        let room = create_generic_test_room(conn, user).await;
-
-        let new_event = NewEvent {
-            title: "TestEvent".into(),
-            description: "A normal event, created by a test".into(),
-            room: room.id,
-            created_by: user.id,
-            updated_by: user.id,
-            is_time_independent: true,
-            is_all_day: None,
-            starts_at: None,
-            starts_at_tz: None,
-            ends_at: None,
-            ends_at_tz: None,
-            duration_secs: None,
-            is_recurring: None,
-            recurrence_pattern: None,
-            is_adhoc: true,
-            tenant_id: user.tenant_id,
-            show_meeting_details: true,
-        };
-
-        new_event.insert(conn).await.unwrap()
     }
 }

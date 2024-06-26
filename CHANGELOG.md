@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - controller: Allow resetting individual participant's raised hands ([#764](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/764))
 - mail-worker-protocol: add streaming targets ([#650](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/650))
+- controller: add job for deleting disabled users ([#777](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/777)
 
 ### Changed
 

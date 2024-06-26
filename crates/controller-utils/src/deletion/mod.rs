@@ -9,6 +9,7 @@ mod error;
 mod event;
 pub mod room;
 mod shared_folders;
+pub mod user;
 
 pub use deleter::Deleter;
 pub use error::Error;

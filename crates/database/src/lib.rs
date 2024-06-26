@@ -49,6 +49,16 @@ pub enum DatabaseError {
     DeadpoolError { source: PoolError },
 }
 
+impl DatabaseError {
+    /// Returns `true` if the database error is [`NotFound`].
+    ///
+    /// [`NotFound`]: DatabaseError::NotFound
+    #[must_use]
+    pub fn is_not_found(&self) -> bool {
+        matches!(self, Self::NotFound)
+    }
+}
+
 impl From<diesel::result::Error> for DatabaseError {
     fn from(err: diesel::result::Error) -> Self {
         match err {

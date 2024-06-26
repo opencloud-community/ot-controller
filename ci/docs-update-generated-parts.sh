@@ -99,6 +99,7 @@ $OPENTALK_CONTROLLER_CMD modules list --help | codify text > "$CLI_DIR"/"$CMDNAM
 
 $OPENTALK_CONTROLLER_CMD --config extra/example.toml jobs default-parameters self-check | codify json > "$JOBS_DIR"/parameters-self-check.json.md
 $OPENTALK_CONTROLLER_CMD --config extra/example.toml jobs default-parameters event-cleanup | codify json > "$JOBS_DIR"/parameters-event-cleanup.json.md
+$OPENTALK_CONTROLLER_CMD --config extra/example.toml jobs default-parameters user-cleanup | codify json > "$JOBS_DIR"/parameters-user-cleanup.json.md
 $OPENTALK_CONTROLLER_CMD --config extra/example.toml jobs default-parameters adhoc-event-cleanup | codify json > "$JOBS_DIR"/parameters-adhoc-event-cleanup.json.md
 $OPENTALK_CONTROLLER_CMD --config extra/example.toml jobs default-parameters invite-cleanup | codify json > "$JOBS_DIR"/parameters-invite-cleanup.json.md
 $OPENTALK_CONTROLLER_CMD --config extra/example.toml jobs default-parameters sync-storage-files | codify json > "$JOBS_DIR"/parameters-sync-storage-files.json.md
