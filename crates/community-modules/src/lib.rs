@@ -7,8 +7,8 @@ use opentalk_chat::Chat;
 use opentalk_core::Core;
 use opentalk_integration::Integration;
 use opentalk_janus_media::Media;
+use opentalk_meeting_notes::MeetingNotes;
 use opentalk_polls::Polls;
-use opentalk_protocol::Protocol;
 use opentalk_shared_folder::SharedFolder;
 use opentalk_signaling_core::{ModulesRegistrar, RegisterModules};
 use opentalk_timer::Timer;
@@ -24,7 +24,7 @@ impl RegisterModules for CommunityModules {
         registrar.register::<Integration>().await?;
         registrar.register::<Media>().await?;
         registrar.register::<Polls>().await?;
-        registrar.register::<Protocol>().await?;
+        registrar.register::<MeetingNotes>().await?;
         registrar.register::<SharedFolder>().await?;
         registrar.register::<Timer>().await?;
         registrar.register::<Whiteboard>().await

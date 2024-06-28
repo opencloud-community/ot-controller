@@ -4203,8 +4203,8 @@ dependencies = [
  "opentalk-core",
  "opentalk-integration",
  "opentalk-janus-media",
+ "opentalk-meeting-notes",
  "opentalk-polls",
- "opentalk-protocol",
  "opentalk-shared-folder",
  "opentalk-signaling-core",
  "opentalk-timer",
@@ -4593,6 +4593,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "opentalk-meeting-notes"
+version = "0.0.0-dev"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "either",
+ "log",
+ "opentalk-controller-settings",
+ "opentalk-database",
+ "opentalk-etherpad-client",
+ "opentalk-signaling-core",
+ "opentalk-types",
+ "parking_lot",
+ "redis",
+ "redis-args",
+ "serde",
+ "serial_test",
+ "snafu",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "opentalk-nextcloud-client"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4623,29 +4646,6 @@ dependencies = [
  "opentalk-types",
  "parking_lot",
  "pretty_assertions",
- "redis",
- "redis-args",
- "serde",
- "serial_test",
- "snafu",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "opentalk-protocol"
-version = "0.0.0-dev"
-dependencies = [
- "async-trait",
- "chrono",
- "either",
- "log",
- "opentalk-controller-settings",
- "opentalk-database",
- "opentalk-etherpad-client",
- "opentalk-signaling-core",
- "opentalk-types",
- "parking_lot",
  "redis",
  "redis-args",
  "serde",

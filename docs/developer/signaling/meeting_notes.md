@@ -1,6 +1,6 @@
-# Protocol
+# Meeting Notes
 
-The Protocol module allows participants to to collaboratively edit a document in real-time by utilizing `Etherpad`.
+The Meeting Notes module allows participants to to collaboratively edit a document in real-time by utilizing `Etherpad`.
 [Etherpad](https://etherpad.org/) is an open source online editor that allows users to collaboratively edit a document in real-time.
 The Etherpad is a separate process that runs along the controller. When in a room, participants can click an access link that
 opens another browser tab where the Etherpad document (`pad`) can be accessed.
@@ -23,7 +23,7 @@ The `join_success` control event contains the module-specific fields described b
 
 #### Fields
 
-The `protocol` module does not provide data in the `join_success` message.
+The `meeting_notes` module does not provide data in the `join_success` message.
 
 ### Joined
 
@@ -90,7 +90,7 @@ Can return [Error](#error) of kind `insufficient_permissions`, `currently_initia
 
 ### GeneratePdf
 
-Allows a moderator to generate a PDF from the current contents of the protocol.
+Allows a moderator to generate a PDF from the current contents of the meeting notes.
 
 Access to the PDF is given to all participants in the room via the `PdfAsset` event.
 
@@ -116,7 +116,7 @@ A [`PdfAsset`](#pdfasset) message with the asset id of the PDF document is sent 
 
 ### WriteUrl
 
-Received by participants that got selected as a writer by a moderator. (See [SelectWriter](#selectwriter))
+Received by participants who got selected as a writer by a moderator. (See [SelectWriter](#selectwriter))
 
 #### Fields
 
@@ -129,7 +129,7 @@ Received by participants that got selected as a writer by a moderator. (See [Sel
 ```json
 {
     "message":"write_url",
-    "url":"http://localhost/auth_session?sessionID=s.session&padName=protocol&groupID=g.group"
+    "url":"http://localhost/auth_session?sessionID=s.session&padName=meeting_notes&groupID=g.group"
 }
 ```
 
@@ -148,7 +148,7 @@ Received by all participants that did not get selected as a writer by a moderato
 ```json
 {
     "message":"read_url",
-    "url":"http://localhost/auth_session?sessionID=s.session&padName=protocol&groupID=g.group"
+    "url":"http://localhost/auth_session?sessionID=s.session&padName=meeting_notes&groupID=g.group"
 }
 ```
 
@@ -176,7 +176,7 @@ An update message is issued when a participants etherpad access level changes.
         "message": "update",
         "id": "24500907-334b-47d4-b54a-00db40b9a613",
         ...
-        "protocol": {
+        "meeting_notes": {
             "readonly": false
         }
     }
@@ -185,24 +185,24 @@ An update message is issued when a participants etherpad access level changes.
 
 ### PdfAsset
 
-Contains the filename and asset id of the PDF document of the protocol.
+Contains the filename and asset id of the PDF document of the meeting notes.
 
-This event is received by every participant when a moderator generates a PDF document for the protocol.
+This event is received by every participant when a moderator generates a PDF document for the meeting notes.
 
 #### Fields
 
-| Field      | Type     | Required | Description                                       |
-| ---------- | -------- | -------- | ------------------------------------------------- |
-| `message`  | `enum`   | yes      | Is `"pdf_asset"`.                                 |
-| `filename` | `string` | yes      | The file name of the PDF document of the protocol |
-| `asset_id` | `string` | yes      | The id of the PDF document asset                  |
+| Field      | Type     | Required | Description                                            |
+| ---------- | -------- | -------- | ------------------------------------------------------ |
+| `message`  | `enum`   | yes      | Is `"pdf_asset"`.                                      |
+| `filename` | `string` | yes      | The file name of the PDF document of the meeting notes |
+| `asset_id` | `string` | yes      | The id of the PDF document asset                       |
 
 #### Example
 
 ```json
 {
     "message": "pdf_asset",
-    "filename": "vote_protocol_2023-01-16_12:34:56-UTC.pdf",
+    "filename": "meeting_notes_2023-01-16_12:34:56-UTC.pdf",
     "asset_id": "5be191a8-3eb1-4c79-afe1-d4857dcf0e73"
 }
 ```

@@ -21,10 +21,10 @@ use opentalk_signaling_core::{
 use opentalk_types::{
     core::{FileExtension, ParticipantId},
     signaling::{
-        protocol::{
-            command::{ParticipantSelection, ProtocolCommand},
-            event::{AccessUrl, Error, PdfAsset, ProtocolEvent},
-            peer_state::ProtocolPeerState,
+        meeting_notes::{
+            command::{MeetingNotesCommand, ParticipantSelection},
+            event::{AccessUrl, Error, MeetingNotesEvent, PdfAsset},
+            peer_state::MeetingNotesPeerState,
             NAMESPACE,
         },
         Role,
@@ -35,12 +35,12 @@ use serde::{Deserialize, Serialize};
 use snafu::{whatever, OptionExt, Report};
 use storage::InitState;
 
-use crate::storage::ProtocolStorage;
+use crate::storage::MeetingNotesStorage;
 
 pub mod exchange;
 pub mod storage;
 
-const PAD_NAME: &str = "protocol";
+const PAD_NAME: &str = "meeting_notes";
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
 #[to_redis_args(serde)]
@@ -52,7 +52,7 @@ struct SessionInfo {
     readonly: bool,
 }
 
-pub struct Protocol {
+pub struct MeetingNotes {
     etherpad: EtherpadClient,
     participant_id: ParticipantId,
     room_id: SignalingRoomId,
@@ -60,12 +60,12 @@ pub struct Protocol {
     storage: Arc<ObjectStorage>,
 }
 
-trait ProtocolStorageProvider {
-    fn storage(&mut self) -> &mut dyn ProtocolStorage;
+trait MeetingNotesStorageProvide {
+    fn storage(&mut self) -> &mut dyn MeetingNotesStorage;
 }
 
-impl ProtocolStorageProvider for VolatileStorage {
-    fn storage(&mut self) -> &mut dyn ProtocolStorage {
+impl MeetingNotesStorageProvide for VolatileStorage {
+    fn storage(&mut self) -> &mut dyn MeetingNotesStorage {
         match self.as_mut() {
             Either::Left(v) => v,
             Either::Right(v) => v,
@@ -74,15 +74,15 @@ impl ProtocolStorageProvider for VolatileStorage {
 }
 
 #[async_trait::async_trait(?Send)]
-impl SignalingModule for Protocol {
+impl SignalingModule for MeetingNotes {
     const NAMESPACE: &'static str = NAMESPACE;
     type Params = opentalk_controller_settings::Etherpad;
-    type Incoming = ProtocolCommand;
-    type Outgoing = ProtocolEvent;
+    type Incoming = MeetingNotesCommand;
+    type Outgoing = MeetingNotesEvent;
     type ExchangeMessage = exchange::Event;
     type ExtEvent = ();
     type FrontendData = ();
-    type PeerFrontendData = ProtocolPeerState;
+    type PeerFrontendData = MeetingNotesPeerState;
 
     async fn init(
         ctx: InitContext<'_, Self>,
@@ -106,7 +106,7 @@ impl SignalingModule for Protocol {
         event: Event<'_, Self>,
     ) -> Result<(), SignalingModuleError> {
         match event {
-            // Create a readonly session for every joining participant when the protocol module is already initialized
+            // Create a readonly session for every joining participant when the meeting-notes module is already initialized
             //
             // Send the current access state of every participant when the joining participant is a moderator
             Event::Joined {
@@ -119,7 +119,7 @@ impl SignalingModule for Protocol {
                 if matches!(state, Some(state) if state == InitState::Initialized) {
                     let read_url = self.generate_url(&mut ctx, true).await?;
 
-                    ctx.ws_send(ProtocolEvent::ReadUrl(AccessUrl { url: read_url }));
+                    ctx.ws_send(MeetingNotesEvent::ReadUrl(AccessUrl { url: read_url }));
 
                     for (participant_id, access) in participants {
                         let session_info = ctx
@@ -128,7 +128,7 @@ impl SignalingModule for Protocol {
                             .session_get(self.room_id, *participant_id)
                             .await?;
 
-                        *access = session_info.map(|session_info| ProtocolPeerState {
+                        *access = session_info.map(|session_info| MeetingNotesPeerState {
                             readonly: session_info.readonly,
                         });
                     }
@@ -160,7 +160,7 @@ impl SignalingModule for Protocol {
                     .session_get(self.room_id, participant_id)
                     .await?;
 
-                *peer_frontend_data = session_info.map(|session_info| ProtocolPeerState {
+                *peer_frontend_data = session_info.map(|session_info| MeetingNotesPeerState {
                     readonly: session_info.readonly,
                 });
             }
@@ -182,7 +182,7 @@ impl SignalingModule for Protocol {
 
             if let Err(e) = ctx.volatile.storage().cleanup(self.room_id).await {
                 log::error!(
-                    "Failed to cleanup protocol keys for room {} in volatile storage: {}",
+                    "Failed to cleanup meeting-notes keys for room {} in volatile storage: {}",
                     self.room_id,
                     e
                 );
@@ -199,7 +199,7 @@ impl SignalingModule for Protocol {
             Some(etherpad) => Ok(Some(etherpad)),
             None => {
                 log::warn!(
-                    "Skipping the Protocol module as no etherpad is specified in the config"
+                    "Skipping the meeting-notes module as no etherpad is specified in the config"
                 );
                 Ok(None)
             }
@@ -207,14 +207,14 @@ impl SignalingModule for Protocol {
     }
 }
 
-impl Protocol {
+impl MeetingNotes {
     async fn on_ws_message(
         &mut self,
         ctx: &mut ModuleContext<'_, Self>,
-        msg: ProtocolCommand,
+        msg: MeetingNotesCommand,
     ) -> Result<(), SignalingModuleError> {
         match msg {
-            ProtocolCommand::SelectWriter(selection) => {
+            MeetingNotesCommand::SelectWriter(selection) => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(Error::InsufficientPermissions);
 
@@ -288,7 +288,7 @@ impl Protocol {
                     }
                 }
             }
-            ProtocolCommand::DeselectWriter(selection) => {
+            MeetingNotesCommand::DeselectWriter(selection) => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(Error::InsufficientPermissions);
 
@@ -349,7 +349,7 @@ impl Protocol {
                     );
                 }
             }
-            ProtocolCommand::GeneratePdf => {
+            MeetingNotesCommand::GeneratePdf => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
@@ -441,11 +441,11 @@ impl Protocol {
                 if writers.contains(&self.participant_id) {
                     let write_url = self.generate_url(ctx, false).await?;
 
-                    ctx.ws_send(ProtocolEvent::WriteUrl(AccessUrl { url: write_url }));
+                    ctx.ws_send(MeetingNotesEvent::WriteUrl(AccessUrl { url: write_url }));
                 } else {
                     let read_url = self.generate_url(ctx, true).await?;
 
-                    ctx.ws_send(ProtocolEvent::ReadUrl(AccessUrl { url: read_url }));
+                    ctx.ws_send(MeetingNotesEvent::ReadUrl(AccessUrl { url: read_url }));
                 }
 
                 ctx.invalidate_data();
@@ -459,7 +459,7 @@ impl Protocol {
     /// Initializes the etherpad-group and -pad for this room
     async fn init_etherpad(
         &self,
-        storage: &mut dyn ProtocolStorage,
+        storage: &mut dyn MeetingNotesStorage,
     ) -> Result<(), SignalingModuleError> {
         let group_id = self
             .etherpad
@@ -483,7 +483,7 @@ impl Protocol {
     /// Returns the generated author id
     async fn create_author(
         &self,
-        storage: &mut dyn ProtocolStorage,
+        storage: &mut dyn MeetingNotesStorage,
     ) -> Result<String, SignalingModuleError> {
         let display_name: String = storage
             .get_attribute(self.room_id, self.participant_id, DISPLAY_NAME)
@@ -531,7 +531,7 @@ impl Protocol {
     /// Returns the `[SessionInfo]`
     async fn prepare_and_create_user_session(
         &mut self,
-        storage: &mut dyn ProtocolStorage,
+        storage: &mut dyn MeetingNotesStorage,
         readonly: bool,
     ) -> Result<SessionInfo, SignalingModuleError> {
         let author_id = self.create_author(storage).await?;
@@ -607,7 +607,7 @@ impl Protocol {
     /// Returns true when all targets are recognized
     async fn verify_selection(
         &self,
-        storage: &mut dyn ProtocolStorage,
+        storage: &mut dyn MeetingNotesStorage,
         selection: &ParticipantSelection,
     ) -> Result<bool, SignalingModuleError> {
         let room_participants = storage.get_all_participants(self.room_id).await?;
@@ -621,7 +621,7 @@ impl Protocol {
     /// Removes the room related pad and group from etherpad
     async fn cleanup_etherpad(
         &self,
-        storage: &mut dyn ProtocolStorage,
+        storage: &mut dyn MeetingNotesStorage,
     ) -> Result<(), SignalingModuleError> {
         let init_state = storage.init_get(self.room_id).await?;
 

@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
 //
 // SPDX-License-Identifier: EUPL-1.2
-pub(crate) use protocol_storage::ProtocolStorage;
+pub(crate) use meeting_notes_storage::MeetingNotesStorage;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 
-mod protocol_storage;
+mod meeting_notes_storage;
 mod redis;
 mod volatile;
 
@@ -24,7 +24,7 @@ mod test_common {
     use opentalk_signaling_core::SignalingRoomId;
     use opentalk_types::core::ParticipantId;
 
-    use super::{InitState, ProtocolStorage};
+    use super::{InitState, MeetingNotesStorage};
     use crate::SessionInfo;
 
     pub const ROOM: SignalingRoomId = SignalingRoomId::nil();
@@ -34,7 +34,7 @@ mod test_common {
     pub const GROUP_ID_A: &str = "group_id A";
     pub const GROUP_ID_B: &str = "group_id B";
 
-    pub(crate) async fn group(storage: &mut dyn ProtocolStorage) {
+    pub(crate) async fn group(storage: &mut dyn MeetingNotesStorage) {
         storage.group_set(ROOM, GROUP_ID_A).await.unwrap();
 
         assert_eq!(
@@ -52,7 +52,7 @@ mod test_common {
         assert_eq!(None, storage.group_get(ROOM).await.unwrap());
     }
 
-    pub(crate) async fn init(storage: &mut dyn ProtocolStorage) {
+    pub(crate) async fn init(storage: &mut dyn MeetingNotesStorage) {
         assert_eq!(None, storage.try_start_init(ROOM).await.unwrap());
         assert_eq!(
             Some(InitState::Initializing),
@@ -74,7 +74,7 @@ mod test_common {
         assert_eq!(None, storage.init_get(ROOM).await.unwrap());
     }
 
-    pub(crate) async fn session(storage: &mut dyn ProtocolStorage) {
+    pub(crate) async fn session(storage: &mut dyn MeetingNotesStorage) {
         assert_eq!(None, storage.session_get(ROOM, PARTICIPANT).await.unwrap());
         let session_info = SessionInfo {
             author_id: "Author".to_string(),

@@ -2,12 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Peer frontend data for `protocol` namespace
+//! Peer frontend data for `meeting_notes` namespace
 
 #[allow(unused_imports)]
 use crate::imports::*;
 
-/// The state of other participants in the `recording` module.
+/// The state of other participants in the `meeting-notes` module.
 ///
 /// This struct is sent to the participant in the `join_success` message
 /// which will contain this information for each participant in the meeting.
@@ -17,12 +17,12 @@ use crate::imports::*;
     derive(Serialize, Deserialize),
     serde(rename_all = "snake_case")
 )]
-pub struct ProtocolPeerState {
+pub struct MeetingNotesPeerState {
     /// Read-only access
     pub readonly: bool,
 }
 
 #[cfg(feature = "serde")]
-impl SignalingModulePeerFrontendData for ProtocolPeerState {
+impl SignalingModulePeerFrontendData for MeetingNotesPeerState {
     const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
 }
