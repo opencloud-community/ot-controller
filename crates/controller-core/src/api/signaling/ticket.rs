@@ -7,6 +7,7 @@ use opentalk_types::{
     api::error::ApiError,
     core::{BreakoutRoomId, ParticipantId, ResumptionToken, RoomId, TicketToken, UserId},
 };
+use rand::Rng;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use snafu::Report;
@@ -49,7 +50,7 @@ pub async fn start_or_continue_signaling_session(
         ParticipantId::generate()
     };
 
-    let ticket = TicketToken::generate();
+    let ticket = generate_ticket(room);
     let resumption = ResumptionToken::generate();
 
     let ticket_data = TicketData {
@@ -127,4 +128,22 @@ async fn use_resumption_token(
     } else {
         Err(ApiError::internal())
     }
+}
+
+pub(crate) fn generate_ticket(room: RoomId) -> TicketToken {
+    // Make 64 byte long string
+    // {uuid}#{random_chars}
+    let token = room
+        .to_string()
+        .chars()
+        .chain(Some('#'))
+        .chain(
+            rand::thread_rng()
+                .sample_iter(rand::distributions::Alphanumeric)
+                .take(27) // uuid has a length of 36, add 27 random chars
+                .map(char::from),
+        )
+        .collect();
+
+    TicketToken(token)
 }
