@@ -5,22 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.15.0-rc.3]
+## [0.15.0]
 
-### <!-- 0 -->:bug: Bug fixes
-
-- media: fix speaker detection by updating the speaker state when already initialized ([#801](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/801))
-
-## [0.15.0-rc.2]
-
-### <!-- 0 -->:bug: Bug fixes
-
-- mail-worker-protocol: Enable serde derives for `serde` feature instead of `client` ([#799](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/799))
-- dep: Update curve25519-dalek to fix RUSTSEC-2024-0344
-
-## [0.15.0-rc.1]
-
-### <!-- 0 -->:rocket: New features
+### :rocket: New features
 
 - controller: Allow resetting individual participant's raised hands ([#764](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/764))
 - mail-worker-protocol: add streaming targets ([#650](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/650))
@@ -33,8 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add 'disabled_since' flag to users & filter disabled users ([#775](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/775))
 - Add in memory alternative to redis ([!895](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/895))
 
-### <!-- 1 -->:bug: Bug fixes
+### :bug: Bug fixes
 
+- media: fix speaker detection by updating the speaker state when already initialized ([#801](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/801))
+- mail-worker-protocol: Enable serde derives for `serde` feature instead of `client` ([#799](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/799))
+- dep: Update curve25519-dalek to fix RUSTSEC-2024-0344
 - Update rust crate proc-macro2 to v1.0.83
 - Update rust crate nix to 0.29
 - Update rust crate actix-http to v3.7.0
@@ -539,9 +529,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - initial release candidate
 
 ---
-[0.15.0-rc.3]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.15.0-rc.2...0.15.0-rc.3
-[0.15.0-rc.2]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.15.0-rc.1...0.15.0-rc.2
-[0.15.0-rc.1]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.14.0...0.15.0-rc.1
+
+[0.15.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.14.0...0.15.0
 
 [0.14.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.13.0...0.14.0
 
