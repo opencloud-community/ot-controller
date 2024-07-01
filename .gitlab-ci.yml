@@ -200,7 +200,7 @@ test:cargo_test:
   services:
     - name: postgres:16-alpine
       alias: postgres
-    - name: redis:6-alpine
+    - name: redis:7-alpine
       alias: redis
   before_script:
     - rustup component add rustfmt llvm-tools-preview
