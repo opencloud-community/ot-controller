@@ -20,6 +20,8 @@
     unused_results
 )]
 
+use std::panic::Location;
+
 use log::Log;
 
 // WARNING: this is not part of the crate's public API and is subject to change at any time
@@ -29,7 +31,7 @@ pub fn __private_api_log(
     logger: &dyn Log,
     args: std::fmt::Arguments,
     level: log::Level,
-    &(target, module_path, file, line): &(&str, &'static str, &'static str, u32),
+    &(target, module_path, location): &(&str, &'static str, &'static Location),
 ) {
     logger.log(
         &log::Record::builder()
@@ -37,8 +39,8 @@ pub fn __private_api_log(
             .level(level)
             .target(target)
             .module_path_static(Some(module_path))
-            .file_static(Some(file))
-            .line(Some(line))
+            .file_static(Some(location.file()))
+            .line(Some(location.line()))
             .build(),
     );
 }
@@ -97,7 +99,7 @@ macro_rules! log {
                 logger,
                 ::log::__private_api::format_args!($($arg)+),
                 lvl,
-                &($target, ::log::__private_api::module_path!(), ::log::__private_api::file!(), ::log::__private_api::line!()),
+                &($target, ::log::__private_api::module_path!(), ::log::__private_api::loc()),
             );
         }
     });
