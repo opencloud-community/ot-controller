@@ -344,7 +344,7 @@ check:docs-generated-parts:
     RABBITMQ_PORT: '5672'
     OPENTALK_CTRL_RABBIT_MQ__URL: amqp://guest:guest@rabbitmq:5672
   services:
-    - name: rabbitmq:3.8
+    - name: rabbitmq:3.13
       alias: rabbitmq
   before_script:
     - apt-get update && apt-get install -y git
