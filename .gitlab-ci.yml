@@ -198,7 +198,7 @@ test:cargo_test:
     # Used for coverage
     COVERAGE_XML_PATH: 'concat("Coverage: ", 100 * string(//coverage/@line-rate), "%")'
   services:
-    - name: postgres:15-alpine
+    - name: postgres:16-alpine
       alias: postgres
     - name: redis:6-alpine
       alias: redis
@@ -236,7 +236,7 @@ test:cargo_xtask:
     POSTGRES_BASE_URL: postgres://postgres:password123@postgres:5432
     DATABASE_NAME: opentalk
   services:
-    - name: postgres:15-alpine
+    - name: postgres:16-alpine
       alias: postgres
   script:
     - cargo install diesel_cli --version ~2 --no-default-features --features="postgres"
@@ -319,7 +319,7 @@ check:er-diagram:
     POSTGRES_BASE_URL: postgres://postgres:password123@postgres:5432
     OPENTALK_CTRL_DATABASE__URL: postgres://postgres:password123@postgres:5432/opentalk
   services:
-    - name: postgres:15-alpine
+    - name: postgres:16-alpine
       alias: postgres
   script:
     - ci/docs-generate-mermaid.sh
