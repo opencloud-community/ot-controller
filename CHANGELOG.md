@@ -9,15 +9,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- controller: Allow resetting individual participant's raised hands ([#764](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/764))
-- mail-worker-protocol: add streaming targets ([#650](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/650))
 - controller: add job for deleting disabled users ([#777](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/777)
 
 ### Changed
 
+- controller: removed `DELETE /internal/rooms/{room_id}` endpoint, updated `DELETE /rooms/{room_id}` & `DELETE /events/{event_id}` endpoints ([#762](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/762))
+
+## [0.15.0]
+
+### :rocket: New features
+
+- controller: Allow resetting individual participant's raised hands ([#764](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/764))
+- mail-worker-protocol: add streaming targets ([#650](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/650))
 - assets: Save assets in a predefined name format ([#763](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/763))
 - controller: keep signaling open when sending user from room to waiting room ([#740](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/740))
-- controller: removed `DELETE /internal/rooms/{room_id}` endpoint, updated `DELETE /rooms/{room_id}` & `DELETE /events/{event_id}` endpoints ([#762](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/762))
+- Include `show_meeting_details` in POST, PATCH and GET Event ([#769](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/769))
+- Send error in case of insufficient permissions ([!890](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/890))
+- Add job to synchronize database assets and storage files ([#665](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/665))
+- Add job to cleanup orphaned rooms ([#727](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/727))
+- Add 'disabled_since' flag to users & filter disabled users ([#775](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/775))
+- Add in memory alternative to redis ([!895](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/895))
+
+### :bug: Bug fixes
+
+- media: fix speaker detection by updating the speaker state when already initialized ([#801](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/801))
+- mail-worker-protocol: Enable serde derives for `serde` feature instead of `client` ([#799](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/799))
+- dep: Update curve25519-dalek to fix RUSTSEC-2024-0344
+- Update rust crate proc-macro2 to v1.0.83
+- Update rust crate nix to 0.29
+- Update rust crate actix-http to v3.7.0
+- Update rust crate proc-macro2 to v1.0.84
+- Update rust crate proc-macro2 to v1.0.85
+- Update rust crate etcd-client to 0.13
+- Update rust crate tracing-actix-web to v0.7.11
+- Add notification mail to internal room deletion ([#720](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/720))
+- Inconsistent features
+- Update rust crate tokio-cron-scheduler to v0.10.2
+- Cleanup closed poll list ([!895](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/895))
+
+### Docs
+
+- Add manual for deleting a user from the database ([#774](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/774))
+- Document configuration changes regarding redis
 
 ## [0.14.0]
 
@@ -506,9 +539,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - initial release candidate
 
 ---
-[Unreleased]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.14.0...main
+[Unreleased]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.15.0...main
 
-[0.14.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.13.0...0.14.0
+[0.15.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.14.0...v0.15.0
+
+[0.14.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.13.0...v0.14.0
 
 [0.13.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.12.1...v0.13.0
 
