@@ -2816,7 +2816,7 @@ dependencies = [
 
 [[package]]
 name = "kustos"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "actix-web",
  "async-trait",
@@ -2845,7 +2845,7 @@ dependencies = [
 
 [[package]]
 name = "kustos-shared"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "http 0.2.12",
  "itertools 0.13.0",
@@ -3335,7 +3335,7 @@ checksum = "ff011a302c396a5197692431fc1948019154afc178baf7d8e37367442a4601cf"
 
 [[package]]
 name = "opentalk-cache"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "bincode",
  "moka",
@@ -3347,7 +3347,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-chat"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "actix-rt",
  "async-trait",
@@ -3374,7 +3374,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-client"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "async-trait",
  "http 0.2.12",
@@ -3389,7 +3389,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-client-shared"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "async-trait",
  "bytes",
@@ -3404,7 +3404,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-community-modules"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "async-trait",
  "opentalk-chat",
@@ -3421,7 +3421,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-controller"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "actix-web",
  "anstream",
@@ -3432,7 +3432,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-controller-core"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "actix",
  "actix-cors",
@@ -3516,7 +3516,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-controller-settings"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "anstream",
  "arc-swap",
@@ -3536,7 +3536,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-controller-utils"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "async-trait",
  "diesel-async",
@@ -3556,7 +3556,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-core"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "async-trait",
  "opentalk-signaling-core",
@@ -3565,7 +3565,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-database"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "async-trait",
  "deadpool-runtime",
@@ -3582,7 +3582,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-db-storage"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "actix-rt",
  "barrel",
@@ -3657,7 +3657,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-integration"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "async-trait",
  "opentalk-signaling-core",
@@ -3686,7 +3686,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-janus-media"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "async-trait",
  "either",
@@ -3713,7 +3713,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-jobs"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "actix-rt",
  "async-trait",
@@ -3760,7 +3760,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-kustos-prefix"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "kustos-shared",
  "opentalk-kustos-prefix-impl",
@@ -3768,7 +3768,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-kustos-prefix-impl"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -3778,7 +3778,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-log"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "log",
  "serial_test",
@@ -3786,7 +3786,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-mail-worker-protocol"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "chrono",
  "opentalk-types",
@@ -3815,7 +3815,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-polls"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "actix-rt",
  "async-trait",
@@ -3849,7 +3849,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-protocol"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "async-trait",
  "chrono",
@@ -3872,7 +3872,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-r3dlock"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "pretty_assertions",
  "rand",
@@ -3883,7 +3883,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-shared-folder"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "actix-rt",
  "async-trait",
@@ -3906,7 +3906,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-signaling-core"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "actix-http",
  "actix-rt",
@@ -3953,7 +3953,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-test-util"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "diesel",
  "diesel-async",
@@ -3974,7 +3974,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-timer"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "actix-rt",
  "async-trait",
@@ -3999,7 +3999,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "actix-http",
  "actix-web",
@@ -4040,7 +4040,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-whiteboard"
-version = "0.0.0-dev"
+version = "0.16.0-rc.1"
 dependencies = [
  "async-trait",
  "bytes",
