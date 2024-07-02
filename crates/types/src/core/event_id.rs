@@ -7,6 +7,7 @@ use uuid::Uuid;
 
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::utils::ExampleData;
 
 /// The identifier of an event
 #[derive(
@@ -19,6 +20,11 @@ use crate::imports::*;
 )]
 #[cfg_attr(feature = "kustos", derive(KustosPrefix), kustos_prefix("/events/"))]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(EventId::example_data()))
+)]
 pub struct EventId(Uuid);
 
 impl EventId {
@@ -36,5 +42,11 @@ impl EventId {
     #[cfg(feature = "rand")]
     pub fn generate() -> Self {
         Self(Uuid::new_v4())
+    }
+}
+
+impl ExampleData for EventId {
+    fn example_data() -> Self {
+        Self::from_u128(0x4433221100)
     }
 }

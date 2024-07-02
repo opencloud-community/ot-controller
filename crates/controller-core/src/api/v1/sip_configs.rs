@@ -89,12 +89,49 @@ pub async fn get(
     }))
 }
 
-/// API Endpoint *PUT /rooms/{room_id}/sip*
+/// Modify the sip configuration of a room. A new sip configuration is created
+/// if none was set before.
 ///
-/// Modifies a sip config with the provided [`PutSipConfig`]. A new sip config is created
-/// when no config was set.
-///
-/// Returns the new modified sip config.
+/// Returns the new modified sip configuration.
+
+/// Get the sip config for the specified room.
+#[utoipa::path(
+    params(
+        ("room_id" = RoomId, description = "The id of the room"),
+    ),
+    request_body = PutSipConfig,
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "The SIP configuration was updated",
+            body = SipConfigResource,
+        ),
+        (
+            status = StatusCode::CREATED,
+            description = "A new SIP configuration was created",
+            body = SipConfigResource,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[put("/rooms/{room_id}/sip")]
 pub async fn put(
     settings: SharedSettingsActix,
