@@ -599,6 +599,32 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+    delete:
+      tags:
+        - "api::v1::sip_configs"
+      summary: Delete the SIP configuration of a room.
+      description: This removes the dial-in functionality from the room.
+      operationId: delete_room_sip
+      parameters:
+        - name: room_id
+          in: path
+          description: The id of the room
+          required: true
+          schema:
+            $ref: "#/components/schemas/RoomId"
+      responses:
+        "204":
+          description: The SIP configuration was successfully deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   "/rooms/{room_id}/start":
     post:
       tags:

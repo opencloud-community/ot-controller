@@ -198,9 +198,40 @@ pub async fn put(
     Ok(response.json(sip_config))
 }
 
-/// API Endpoint *DELETE /rooms/{room_id}/sip*
+/// Delete the SIP configuration of a room.
 ///
-/// Deletes the sip config of the provided room.
+/// This removes the dial-in functionality from the room.
+#[utoipa::path(
+    operation_id = "delete_room_sip",
+    params(
+        ("room_id" = RoomId, description = "The id of the room"),
+    ),
+    responses(
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "The SIP configuration was successfully deleted",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[delete("/rooms/{room_id}/sip")]
 pub async fn delete(
     settings: SharedSettingsActix,
