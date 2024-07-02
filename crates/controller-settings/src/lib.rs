@@ -340,24 +340,20 @@ fn rabbitmq_default_max_channels() -> u32 {
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Authz {
-    /// Authz reload interval in seconds
-    #[serde(
-        deserialize_with = "duration_from_secs",
-        default = "default_authz_reload_interval"
-    )]
-    pub reload_interval: Duration,
+    #[serde(default = "authz_default_synchronize_controller")]
+    pub synchronize_controllers: bool,
 }
 
 impl Default for Authz {
     fn default() -> Self {
         Self {
-            reload_interval: default_authz_reload_interval(),
+            synchronize_controllers: authz_default_synchronize_controller(),
         }
     }
 }
 
-fn default_authz_reload_interval() -> Duration {
-    Duration::from_secs(10)
+fn authz_default_synchronize_controller() -> bool {
+    true
 }
 
 #[derive(Clone, Debug, Deserialize)]

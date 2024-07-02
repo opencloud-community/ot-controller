@@ -1197,7 +1197,7 @@ dependencies = [
 [[package]]
 name = "casbin"
 version = "2.0.9"
-source = "git+https://github.com/kbalt/casbin-rs.git?rev=a5cd79704726b423030942769779ea7d4e8129ee#a5cd79704726b423030942769779ea7d4e8129ee"
+source = "git+https://github.com/kbalt/casbin-rs.git?rev=fddb52d61385913727e24a5c7337eed489cb0d56#fddb52d61385913727e24a5c7337eed489cb0d56"
 dependencies = [
  "async-trait",
  "fixedbitset",
@@ -2827,6 +2827,8 @@ dependencies = [
  "futures",
  "itertools 0.13.0",
  "kustos-shared",
+ "lapin",
+ "lapin-pool",
  "log",
  "opentalk-database",
  "opentalk-db-storage",
@@ -2834,6 +2836,8 @@ dependencies = [
  "opentelemetry",
  "parking_lot",
  "pretty_assertions",
+ "serde",
+ "serde_json",
  "serial_test",
  "snafu",
  "tokio",

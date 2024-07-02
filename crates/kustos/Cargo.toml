@@ -28,6 +28,12 @@ diesel = { workspace = true, features = ["chrono", "serde_json", "uuid"] }
 diesel-async.workspace = true
 uuid = { workspace = true, features = ["serde", "v4"] }
 
+### ACL synchronization
+lapin.workspace = true
+lapin-pool.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
 ### Logging utilities
 log = { workspace = true, features = ["serde"] }
 tracing.workspace = true
@@ -48,7 +54,7 @@ actix-web.workspace = true
 opentelemetry.workspace = true
 
 [dependencies.casbin]
-features = ["incremental", "runtime-tokio"]
+features = ["incremental", "runtime-tokio", "watcher"]
 workspace = true
 
 [dev-dependencies]

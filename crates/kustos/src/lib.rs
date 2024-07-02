@@ -49,11 +49,10 @@
 //! let db = Arc::new(
 //! Db::connect_url("postgres://postgres:postgres@localhost/kustos", 10).unwrap(),
 //! );
-//! let (mut shutdown, _) = tokio::sync::broadcast::channel(1);
-//! let authz = Authz::new_with_autoload(db, shutdown.subscribe(), Duration::from_secs(10))
+//!
+//! let authz = Authz::new(db)
 //!     .await
-//!     .unwrap()
-//!     .0;
+//!     .unwrap();
 //! authz
 //!     .grant_role_access(
 //!         "admin",
@@ -72,7 +71,7 @@
 //!     .await;
 //! # });
 //! ```
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
 
 use casbin::{CoreApi, MgmtApi, RbacApi};
 use internal::synced_enforcer::SyncedEnforcer;
@@ -84,15 +83,13 @@ use kustos_shared::{
         UserToRole,
     },
 };
+use lapin_pool::RabbitMqPool;
 use metrics::KustosMetrics;
 use opentalk_database::Db;
 use policy::{
     GroupPolicies, InvitePolicies, InvitePolicy, Policy, RolePolicies, UserPolicies, UserPolicy,
 };
-use tokio::{
-    sync::{broadcast::Receiver, RwLock},
-    task::JoinHandle,
-};
+use tokio::sync::RwLock;
 
 use crate::actix_web::KustosService;
 
@@ -132,30 +129,23 @@ impl Authz {
         Ok(Self { inner: enforcer })
     }
 
-    pub async fn new_with_autoload(
-        db: Arc<Db>,
-        shutdown_channel: Receiver<()>,
-        interval: Duration,
-    ) -> Result<(Self, JoinHandle<Result<()>>)> {
+    pub async fn new_with_autoload(db: Arc<Db>, rabbitmq_pool: Arc<RabbitMqPool>) -> Result<Self> {
         let acl_model = internal::default_acl_model().await;
         let adapter = internal::diesel_adapter::CasbinAdapter::new(db.clone());
         let enforcer = Arc::new(tokio::sync::RwLock::new(
             SyncedEnforcer::new(acl_model, adapter).await?,
         ));
 
-        let handle =
-            SyncedEnforcer::start_autoload_policy(enforcer.clone(), interval, shutdown_channel)
-                .await?;
+        SyncedEnforcer::start_autoload_policy(enforcer.clone(), rabbitmq_pool).await?;
 
-        Ok((Self { inner: enforcer }, handle))
+        Ok(Self { inner: enforcer })
     }
 
     pub async fn new_with_autoload_and_metrics(
         db: Arc<Db>,
-        shutdown_channel: Receiver<()>,
-        interval: Duration,
+        rabbitmq_pool: Arc<RabbitMqPool>,
         metrics: Arc<KustosMetrics>,
-    ) -> Result<(Self, JoinHandle<Result<()>>)> {
+    ) -> Result<Self> {
         let acl_model = internal::default_acl_model().await;
         let adapter = internal::diesel_adapter::CasbinAdapter::new(db.clone());
         let mut enforcer = SyncedEnforcer::new(acl_model, adapter).await?;
@@ -163,11 +153,9 @@ impl Authz {
 
         let enforcer = Arc::new(tokio::sync::RwLock::new(enforcer));
 
-        let handle =
-            SyncedEnforcer::start_autoload_policy(enforcer.clone(), interval, shutdown_channel)
-                .await?;
+        SyncedEnforcer::start_autoload_policy(enforcer.clone(), rabbitmq_pool).await?;
 
-        Ok((Self { inner: enforcer }, handle))
+        Ok(Self { inner: enforcer })
     }
 
     // TODO(r.floren) would be place for a feature gate to use this with other frameworks as well.

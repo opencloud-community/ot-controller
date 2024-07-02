@@ -424,15 +424,19 @@ impl Controller {
                     .whatever_context("Failed to create rabbitmq channel")?,
             ));
 
-            // TODO(r.floren) what to do with the handle
-            let (authz, _) = kustos::Authz::new_with_autoload_and_metrics(
-                self.db.clone(),
-                self.shutdown.subscribe(),
-                self.startup_settings.authz.reload_interval,
-                self.metrics.kustos.clone(),
-            )
-            .await
-            .whatever_context("Failed to initialize kustos/authz")?;
+            let authz = if self.startup_settings.authz.synchronize_controllers {
+                kustos::Authz::new_with_autoload_and_metrics(
+                    self.db.clone(),
+                    self.rabbitmq_pool.clone(),
+                    self.metrics.kustos.clone(),
+                )
+                .await
+                .whatever_context("Failed to initialize kustos/authz")?
+            } else {
+                kustos::Authz::new(self.db.clone())
+                    .await
+                    .whatever_context("Failed to initialize kustos/authz")?
+            };
 
             log::info!("Making sure the default permissions are set");
             check_or_create_kustos_default_permissions(&authz)

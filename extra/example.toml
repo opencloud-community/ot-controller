@@ -129,9 +129,8 @@ to_routing_key = "to-janus"
 #uris = ["stun:127.0.0.1:3478"]
 
 #[authz]
-# The reload interval of the permissions in seconds.
-# Used to propagate updates from one controller to the other.
-# reload_interval = 10
+# Should the controller publish/receive ACL changes via RabbitMQ to/from other controllers
+#synchronize_controllers = true
 
 #[call_in]
 # Set a phone number which will be displayed to the user
