@@ -23,7 +23,44 @@ use opentalk_types::{
 };
 
 use super::{response::NoContent, ApiResponse};
+use crate::api::responses::{Forbidden, InternalServerError, NotFound, Unauthorized};
 
+/// Get the assets associated with a room.
+///
+/// This returns assets that are available for a room. If no
+/// pagination query is added, the default page size is used.
+#[utoipa::path(
+    params(
+        ("room_id" = RoomId, description = "The id of the room"),
+        PagePaginationQuery,
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "The assets have been returned successfully",
+            body = GetRoomsAssetsResponseBody,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/rooms/{room_id}/assets")]
 pub async fn room_assets(
     db: Data<Db>,
