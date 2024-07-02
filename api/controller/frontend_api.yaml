@@ -520,6 +520,39 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+  "/rooms/{room_id}/sip":
+    get:
+      tags:
+        - "api::v1::sip_configs"
+      summary: Get the sip config for the specified room.
+      description: |
+        Returns the sip config if available for the room, otherwise `404 NOT_FOUND`
+        is returned.
+      operationId: get_room_sip
+      parameters:
+        - name: room_id
+          in: path
+          description: The id of the room
+          required: true
+          schema:
+            $ref: "#/components/schemas/RoomId"
+      responses:
+        "200":
+          description: The SIP config is successfully returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SipConfigResource"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   "/rooms/{room_id}/start":
     post:
       tags:
@@ -1085,7 +1118,11 @@ components:
           title: ""
     NumericId:
       type: string
-      description: Base type for numeric identifieirs
+      description: A string containing number characters
+      example: "0000000000"
+      maxLength: 10
+      minLength: 10
+      pattern: "[0-9]+"
     OidcProvider:
       type: object
       description: Represents an OIDC provider
@@ -1396,6 +1433,29 @@ components:
           $ref: "#/components/schemas/ResumptionToken"
         ticket:
           $ref: "#/components/schemas/TicketToken"
+    SipConfigResource:
+      type: object
+      description: "Response for the `GET /rooms/{room_id}/sip` endpoint"
+      required:
+        - room
+        - sip_id
+        - password
+        - lobby
+      properties:
+        lobby:
+          type: boolean
+          description: Flag if the room is a lobby
+        password:
+          $ref: "#/components/schemas/CallInPassword"
+        room:
+          $ref: "#/components/schemas/RoomId"
+        sip_id:
+          $ref: "#/components/schemas/CallInId"
+      example:
+        lobby: false
+        password: "9876543210"
+        room: 00000000-0000-0000-0000-0000abadcafe
+        sip_id: "0123456789"
     StandardErrorBody:
       type: object
       description: Standard API error body

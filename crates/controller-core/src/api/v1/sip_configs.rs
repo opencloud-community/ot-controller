@@ -23,11 +23,47 @@ use opentalk_types::{
 use validator::Validate;
 
 use super::util::require_feature;
-use crate::settings::SharedSettingsActix;
+use crate::{
+    api::responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
+    settings::SharedSettingsActix,
+};
 
-/// API Endpoint *GET /rooms/{room_id}/sip*
-///
 /// Get the sip config for the specified room.
+///
+/// Returns the sip config if available for the room, otherwise `404 NOT_FOUND`
+/// is returned.
+#[utoipa::path(
+    operation_id = "get_room_sip",
+    params(
+        ("room_id" = RoomId, description = "The id of the room"),
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "The SIP config is successfully returned",
+            body = SipConfigResource,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/rooms/{room_id}/sip")]
 pub async fn get(
     settings: SharedSettingsActix,
