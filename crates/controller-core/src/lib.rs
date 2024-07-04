@@ -659,6 +659,7 @@ impl ModulesRegistrar for Controller {
         ),
     ),
     paths(
+        api::v1::assets::room_asset,
         api::v1::assets::room_assets,
         api::v1::auth::get_login,
         api::v1::auth::post_login,
@@ -745,6 +746,7 @@ impl ModulesRegistrar for Controller {
             opentalk_types::core::UserId,
         ),
         responses(
+            crate::api::responses::BinaryData,
             crate::api::responses::InternalServerError,
             crate::api::responses::Unauthorized,
             crate::api::responses::Forbidden,

@@ -334,6 +334,41 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+  "/rooms/{room_id}/assets/{asset_id}":
+    get:
+      tags:
+        - "api::v1::assets"
+      summary: Get a specific asset inside a room.
+      description: |
+        This will return the plain asset contents, e.g. the binary file contents or
+        whatever else is stored inside the asset storage.
+      operationId: room_asset
+      parameters:
+        - name: room_id
+          in: path
+          description: The id of the room
+          required: true
+          schema:
+            $ref: "#/components/schemas/RoomId"
+        - name: asset_id
+          in: path
+          description: The id of the asset
+          required: true
+          schema:
+            $ref: "#/components/schemas/AssetId"
+      responses:
+        "200":
+          $ref: "#/components/responses/BinaryData"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   "/rooms/{room_id}/event":
     get:
       tags:
@@ -1878,6 +1913,8 @@ components:
           description: Human readable error message
           nullable: true
   responses:
+    BinaryData:
+      description: Binary data
     Forbidden:
       description: The authorized user has no permission to access the requested resource
     InternalServerError:

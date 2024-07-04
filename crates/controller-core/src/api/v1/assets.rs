@@ -23,7 +23,7 @@ use opentalk_types::{
 };
 
 use super::{response::NoContent, ApiResponse};
-use crate::api::responses::{Forbidden, InternalServerError, NotFound, Unauthorized};
+use crate::api::responses::{BinaryData, Forbidden, InternalServerError, NotFound, Unauthorized};
 
 /// Get the assets associated with a room.
 ///
@@ -80,6 +80,41 @@ pub async fn room_assets(
     Ok(ApiResponse::new(asset_data).with_page_pagination(per_page, page, asset_count))
 }
 
+/// Get a specific asset inside a room.
+///
+/// This will return the plain asset contents, e.g. the binary file contents or
+/// whatever else is stored inside the asset storage.
+#[utoipa::path(
+    params(
+        ("room_id" = RoomId, description = "The id of the room"),
+        ("asset_id" = AssetId, description = "The id of the asset"),
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            response = BinaryData,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/rooms/{room_id}/assets/{asset_id}")]
 pub async fn room_asset(
     db: Data<Db>,
