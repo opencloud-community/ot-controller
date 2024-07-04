@@ -177,10 +177,8 @@ lint:mod-rs-files:
   variables:
     # For getting color output from `tput`
     TERM: xterm-256color
-  before_script:
-    apt-get update && apt-get install -y fd-find
-  script:
-    ./ci/lint-mod-rs-files.sh
+  before_script: apt-get update && apt-get install -y fd-find
+  script: ./ci/lint-mod-rs-files.sh
 
 test:cargo_test:
   stage: test
@@ -304,7 +302,18 @@ check:opentalk-types:
   parallel:
     matrix:
       - FEATURES:
-          ['', frontend, backend, actix, diesel, kustos, redis, rand, serde]
+          [
+          '',
+            frontend,
+            backend,
+            actix,
+            axum,
+            diesel,
+            kustos,
+            redis,
+            rand,
+            serde,
+          ]
         EXTRA_ARGS: ['', --no-default-features]
   script:
     - cargo check --package opentalk-types $EXTRA_ARGS --features=$FEATURES

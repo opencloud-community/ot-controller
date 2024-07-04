@@ -18,6 +18,7 @@ version.workspace = true
 actix-http = { workspace = true, optional = true }
 actix-web = { workspace = true, optional = true }
 actix-web-httpauth = { workspace = true, optional = true }
+axum = { workspace = true, optional = true }
 base64 = { workspace = true, optional = true }
 bincode = { workspace = true, optional = true }
 bytes = { workspace = true, optional = true }
@@ -33,7 +34,7 @@ http-request-derive = { workspace = true, features = [
 ], optional = true }
 itertools.workspace = true
 kustos-shared = { workspace = true, optional = true }
-log = { workspace = true, optional = true }
+log.workspace = true
 opentalk-cache = { workspace = true, optional = true }
 opentalk-client-shared = { workspace = true, optional = true }
 opentalk-database = { workspace = true, optional = true }
@@ -63,9 +64,9 @@ actix = [
   "dep:actix-web-httpauth",
   "dep:bytes",
   "dep:http",
-  "dep:log",
-  "dep:validator",
+  "serde",
 ]
+axum = ["dep:axum", "dep:http", "serde"]
 backend = [
   "actix",
   "dep:opentalk-cache",
@@ -77,7 +78,6 @@ backend = [
   "serde",
 ]
 clap = ["dep:clap"]
-default = []
 diesel = ["dep:diesel", "dep:opentalk-diesel-newtype", "serde"]
 frontend = [
   "dep:http",
@@ -91,13 +91,12 @@ redis = ["dep:redis", "dep:redis-args", "serde"]
 serde = [
   "chrono-tz/serde",
   "chrono/serde",
-  "url/serde",
-  "uuid/serde",
-
   "dep:base64",
   "dep:bincode",
   "dep:serde",
   "dep:validator",
+  "url/serde",
+  "uuid/serde",
 ]
 utoipa = ["dep:utoipa", "serde"]
 
