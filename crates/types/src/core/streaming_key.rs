@@ -6,6 +6,7 @@ use derive_more::{AsRef, Display, From, FromStr, Into};
 
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::utils::ExampleData;
 
 /// The secret key of a streaming target
 #[derive(
@@ -23,11 +24,22 @@ use crate::imports::*;
     from_redis_value(FromStr)
 )]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(StreamingKey::example_data()))
+)]
 pub struct StreamingKey(String);
 
 impl StreamingKey {
     /// Get a &str to the key
     pub fn as_str(&self) -> &str {
         self.as_ref()
+    }
+}
+
+impl ExampleData for StreamingKey {
+    fn example_data() -> Self {
+        Self("aabbccddeeff".to_string())
     }
 }

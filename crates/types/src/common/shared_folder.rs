@@ -6,17 +6,31 @@
 
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::signaling::Role;
+use crate::{signaling::Role, utils::ExampleData};
 
 /// Information required to access a shared folder
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(SharedFolderAccess::example_data())),
+)]
 pub struct SharedFolderAccess {
     /// Shared folder URL
     pub url: String,
 
     /// Password required to access the shared folder
     pub password: String,
+}
+
+impl ExampleData for SharedFolderAccess {
+    fn example_data() -> Self {
+        Self {
+            url: "https://cloud.example.com/shares/abc123".to_string(),
+            password: "v3rys3cr3t".to_string(),
+        }
+    }
 }
 
 /// Information about a shared folder containing
@@ -29,6 +43,11 @@ pub struct SharedFolderAccess {
     to_redis_args(serde),
     from_redis_value(serde)
 )]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(SharedFolder::example_data())),
+)]
 pub struct SharedFolder {
     /// Read access information for the shared folder
     pub read: SharedFolderAccess,
@@ -39,6 +58,15 @@ pub struct SharedFolder {
         serde(default, skip_serializing_if = "Option::is_none")
     )]
     pub read_write: Option<SharedFolderAccess>,
+}
+
+impl ExampleData for SharedFolder {
+    fn example_data() -> Self {
+        Self {
+            read: SharedFolderAccess::example_data(),
+            read_write: None,
+        }
+    }
 }
 
 #[cfg(feature = "serde")]

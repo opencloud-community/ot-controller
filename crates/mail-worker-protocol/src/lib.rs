@@ -11,6 +11,7 @@ pub mod v1;
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "version")
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum MailTask {
     #[cfg_attr(any(test, feature = "serde"), serde(rename = "1"))]
     V1(v1::Message),

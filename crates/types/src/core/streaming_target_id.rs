@@ -7,6 +7,7 @@ use uuid::Uuid;
 
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::utils::ExampleData;
 
 /// ID of a streaming target
 #[derive(
@@ -23,6 +24,11 @@ use crate::imports::*;
     diesel(sql_type = diesel::sql_types::Uuid),
 )]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(StreamingTargetId::example_data()))
+)]
 pub struct StreamingTargetId(Uuid);
 
 impl StreamingTargetId {
@@ -40,5 +46,11 @@ impl StreamingTargetId {
     #[cfg(feature = "rand")]
     pub fn generate() -> Self {
         Self::from(Uuid::new_v4())
+    }
+}
+
+impl ExampleData for StreamingTargetId {
+    fn example_data() -> Self {
+        Self::from_u128(0x43434343)
     }
 }

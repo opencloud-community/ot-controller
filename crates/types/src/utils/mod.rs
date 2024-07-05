@@ -2,11 +2,17 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+//! Some helpful utilities used in this crate, but also useful outside of it.
+
 #[allow(unused_imports)]
 use crate::imports::*;
 
+mod example_data;
+
+pub use example_data::ExampleData;
+
 #[cfg(feature = "serde")]
-pub mod duration_seconds_option {
+pub(crate) mod duration_seconds_option {
     use std::time::Duration;
 
     use super::*;
@@ -31,7 +37,7 @@ pub mod duration_seconds_option {
 }
 
 #[cfg(feature = "serde")]
-pub mod duration_seconds {
+pub(crate) mod duration_seconds {
     use std::time::Duration;
 
     use super::*;

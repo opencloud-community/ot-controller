@@ -11,6 +11,7 @@ use crate::imports::*;
 use crate::{
     common::event::StreamingLink,
     core::{StreamingKey, StreamingTargetId},
+    utils::ExampleData,
 };
 
 /// A streaming target kind
@@ -19,6 +20,11 @@ use crate::{
     feature = "serde",
     derive(Serialize, Deserialize),
     serde(tag = "kind", rename_all = "snake_case")
+)]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(StreamingTargetKind::example_data()))
 )]
 pub enum StreamingTargetKind {
     /// The "custom" kind
@@ -30,6 +36,20 @@ pub enum StreamingTargetKind {
         /// The url from which the stream can be accessed
         public_url: Url,
     },
+}
+
+impl ExampleData for StreamingTargetKind {
+    fn example_data() -> Self {
+        Self::Custom {
+            streaming_endpoint: "https://ingress.streaming.example.com/"
+                .parse()
+                .expect("url should be valid"),
+            streaming_key: StreamingKey::example_data(),
+            public_url: "https://streaming.example.com/livestream123"
+                .parse()
+                .expect("url should be valid"),
+        }
+    }
 }
 
 impl StreamingTargetKind {
@@ -55,6 +75,11 @@ impl StreamingTargetKind {
 /// A streaming target
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(StreamingTarget::example_data()))
+)]
 pub struct StreamingTarget {
     /// The name of the streaming target
     pub name: String,
@@ -64,9 +89,23 @@ pub struct StreamingTarget {
     pub kind: StreamingTargetKind,
 }
 
+impl ExampleData for StreamingTarget {
+    fn example_data() -> Self {
+        Self {
+            name: "Example Stream".to_string(),
+            kind: StreamingTargetKind::example_data(),
+        }
+    }
+}
+
 /// A streaming target which is specific for a Room
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(RoomStreamingTarget::example_data()))
+)]
 pub struct RoomStreamingTarget {
     /// The streaming target id
     pub id: StreamingTargetId,
@@ -74,6 +113,15 @@ pub struct RoomStreamingTarget {
     /// The streaming target
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub streaming_target: StreamingTarget,
+}
+
+impl ExampleData for RoomStreamingTarget {
+    fn example_data() -> Self {
+        Self {
+            id: StreamingTargetId::example_data(),
+            streaming_target: StreamingTarget::example_data(),
+        }
+    }
 }
 
 /// Extracts the public URLs from streaming targets
