@@ -18,13 +18,23 @@ version.workspace = true
 chrono = { workspace = true }
 opentalk-types.workspace = true
 serde = { workspace = true, features = ["derive"], optional = true }
+serde_json.workspace = true
+utoipa = { workspace = true, features = [
+  "chrono",
+  "url",
+  "uuid",
+], optional = true }
 uuid = { workspace = true }
 
 [dev-dependencies]
 pretty_assertions.workspace = true
-serde_json.workspace = true
 
 [features]
 client = ["serde"]
 default = ["serde"]
 serde = ["chrono/serde", "dep:serde", "uuid/serde"]
+utoipa = ["dep:utoipa", "opentalk-types/utoipa", "serde"]
+
+[[bin]]
+name = "export_schema_and_examples"
+required-features = ["utoipa"]

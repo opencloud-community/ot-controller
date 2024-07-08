@@ -2,8 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use chrono::Utc;
-use opentalk_types::common::{shared_folder::SharedFolder, streaming::RoomStreamingTarget};
+use chrono::{TimeZone, Utc};
+use opentalk_types::{
+    common::{shared_folder::SharedFolder, streaming::RoomStreamingTarget},
+    utils::ExampleData,
+};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -17,7 +20,18 @@ pub use invites::{
 };
 
 #[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Debug)]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(Email::example_data()))
+)]
 pub struct Email(String);
+
+impl ExampleData for Email {
+    fn example_data() -> Self {
+        Email::from("alice.adams@example.com")
+    }
+}
 
 impl Email {
     pub fn new(s: String) -> Self {
@@ -44,6 +58,11 @@ impl AsRef<str> for Email {
 }
 
 #[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Debug)]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(RegisteredUser::example_data()))
+)]
 pub struct RegisteredUser {
     pub email: Email,
     pub title: String,
@@ -52,19 +71,60 @@ pub struct RegisteredUser {
     pub language: String,
 }
 
+impl ExampleData for RegisteredUser {
+    fn example_data() -> Self {
+        Self {
+            email: Email::from("alice.adams@example.com"),
+            title: "Dr.".to_string(),
+            first_name: "Alice".to_string(),
+            last_name: "Adams".to_string(),
+            language: "en".to_string(),
+        }
+    }
+}
+
 #[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Debug)]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(UnregisteredUser::example_data()))
+)]
 pub struct UnregisteredUser {
     pub email: Email,
     pub first_name: String,
     pub last_name: String,
 }
 
+impl ExampleData for UnregisteredUser {
+    fn example_data() -> Self {
+        Self {
+            email: Email::from("bob.burton@example.com"),
+            first_name: "Bob".to_string(),
+            last_name: "Burton".to_string(),
+        }
+    }
+}
+
 #[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Debug)]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(ExternalUser::example_data()))
+)]
 pub struct ExternalUser {
     pub email: Email,
 }
 
+impl ExampleData for ExternalUser {
+    fn example_data() -> Self {
+        Self {
+            email: Email::from("charlie.cooper@example.com"),
+        }
+    }
+}
+
 #[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Debug)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum User {
     Registered(RegisteredUser),
     Unregistered(UnregisteredUser),
@@ -77,7 +137,21 @@ pub struct Time {
     pub timezone: String,
 }
 
+impl ExampleData for Time {
+    fn example_data() -> Self {
+        Self {
+            time: Utc.with_ymd_and_hms(2024, 7, 5, 17, 2, 42).unwrap(),
+            timezone: "Europe/Berlin".to_string(),
+        }
+    }
+}
+
 #[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Debug)]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(Event::example_data()))
+)]
 pub struct Event {
     pub id: Uuid,
     pub name: String,
@@ -94,7 +168,32 @@ pub struct Event {
     pub streaming_targets: Vec<RoomStreamingTarget>,
 }
 
+impl ExampleData for Event {
+    fn example_data() -> Self {
+        Self {
+            id: Uuid::from_u128(0xabadcafe),
+            name: "Weekly teammeeting".to_string(),
+            created_at: Time::example_data(),
+            start_time: None,
+            end_time: None,
+            rrule: None,
+            description: "The team's regular weekly meeting".to_string(),
+            room: Room::example_data(),
+            call_in: Some(CallIn::example_data()),
+            revision: 3,
+            shared_folder: Some(SharedFolder::example_data()),
+            adhoc_retention_seconds: None,
+            streaming_targets: vec![],
+        }
+    }
+}
+
 #[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Debug)]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(EventException::example_data()))
+)]
 pub struct EventException {
     pub exception_date: Time,
     pub kind: EventExceptionKind,
@@ -105,8 +204,27 @@ pub struct EventException {
     pub ends_at: Option<Time>,
 }
 
+impl ExampleData for EventException {
+    fn example_data() -> Self {
+        Self {
+            exception_date: Time::example_data(),
+            kind: EventExceptionKind::Modified,
+            title: Some("Another weekly meeting".to_string()),
+            description: None,
+            is_all_day: None,
+            starts_at: None,
+            ends_at: None,
+        }
+    }
+}
+
 #[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Debug)]
 #[serde(rename_all = "snake_case")]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(EventExceptionKind::Modified))
+)]
 pub enum EventExceptionKind {
     Modified,
     Canceled,
@@ -118,11 +236,35 @@ pub struct Room {
     pub password: Option<String>,
 }
 
+impl ExampleData for Room {
+    fn example_data() -> Self {
+        Self {
+            id: Uuid::from_u128(0xabcdef99),
+            password: Some("v3rys3cr3t".to_string()),
+        }
+    }
+}
+
 #[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Debug)]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(CallIn::example_data())),
+)]
 pub struct CallIn {
     pub sip_tel: String,
     pub sip_id: String,
     pub sip_password: String,
+}
+
+impl ExampleData for CallIn {
+    fn example_data() -> Self {
+        Self {
+            sip_tel: "+99-1234567890".to_string(),
+            sip_id: "1234567890".to_string(),
+            sip_password: "9876543210".to_string(),
+        }
+    }
 }
 
 /// The different kinds of MailTasks that are currently supported
@@ -132,6 +274,7 @@ pub struct CallIn {
     derive(Deserialize, Serialize),
     serde(tag = "message", rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(as = v1::Message))]
 pub enum Message {
     // Invites
     RegisteredEventInvite(RegisteredEventInvite),
@@ -149,6 +292,78 @@ pub enum Message {
     RegisteredEventUninvite(RegisteredEventUninvite),
     UnregisteredEventUninvite(UnregisteredEventUninvite),
     ExternalEventUninvite(ExternalEventUninvite),
+}
+
+impl From<RegisteredEventInvite> for Message {
+    fn from(value: RegisteredEventInvite) -> Self {
+        Message::RegisteredEventInvite(value)
+    }
+}
+
+impl From<UnregisteredEventInvite> for Message {
+    fn from(value: UnregisteredEventInvite) -> Self {
+        Message::UnregisteredEventInvite(value)
+    }
+}
+
+impl From<ExternalEventInvite> for Message {
+    fn from(value: ExternalEventInvite) -> Self {
+        Message::ExternalEventInvite(value)
+    }
+}
+
+impl From<RegisteredEventUpdate> for Message {
+    fn from(value: RegisteredEventUpdate) -> Self {
+        Message::RegisteredEventUpdate(value)
+    }
+}
+
+impl From<UnregisteredEventUpdate> for Message {
+    fn from(value: UnregisteredEventUpdate) -> Self {
+        Message::UnregisteredEventUpdate(value)
+    }
+}
+
+impl From<ExternalEventUpdate> for Message {
+    fn from(value: ExternalEventUpdate) -> Self {
+        Message::ExternalEventUpdate(value)
+    }
+}
+
+impl From<RegisteredEventCancellation> for Message {
+    fn from(value: RegisteredEventCancellation) -> Self {
+        Message::RegisteredEventCancellation(value)
+    }
+}
+
+impl From<UnregisteredEventCancellation> for Message {
+    fn from(value: UnregisteredEventCancellation) -> Self {
+        Message::UnregisteredEventCancellation(value)
+    }
+}
+
+impl From<ExternalEventCancellation> for Message {
+    fn from(value: ExternalEventCancellation) -> Self {
+        Message::ExternalEventCancellation(value)
+    }
+}
+
+impl From<RegisteredEventUninvite> for Message {
+    fn from(value: RegisteredEventUninvite) -> Self {
+        Message::RegisteredEventUninvite(value)
+    }
+}
+
+impl From<UnregisteredEventUninvite> for Message {
+    fn from(value: UnregisteredEventUninvite) -> Self {
+        Message::UnregisteredEventUninvite(value)
+    }
+}
+
+impl From<ExternalEventUninvite> for Message {
+    fn from(value: ExternalEventUninvite) -> Self {
+        Message::ExternalEventUninvite(value)
+    }
 }
 
 #[cfg(test)]

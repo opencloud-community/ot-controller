@@ -118,6 +118,7 @@ tokio-stream = { version = "0.1", features = ["sync"] }
 tracing = "0.1"
 tracing-opentelemetry = "0.24"
 url = "2"
+utoipa = { version = "4.2.3" }
 uuid = "1"
 validator = { version = "0.18", features = ["derive"] }
 

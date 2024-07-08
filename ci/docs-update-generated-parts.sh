@@ -31,6 +31,8 @@ DB_DIR="$DOCS_TEMP_DIR"/database
 CMDNAME=opentalk-controller
 ER_DIAGRAM_MERMAID="$DB_DIR/er-diagram.mermaid"
 
+source "$SCRIPT_DIR"/include/codify.sh
+
 if ! command -v opentalk-ci-doc-updater; then
   echo "please install 'opentalk-ci-doc-updater' https://git.opentalk.dev/opentalk/tools/opentalk-ci-doc-updater"
   exit 1
@@ -42,19 +44,6 @@ to a valid controller binary or the controller needs to be build using \
 'cargo build --release' prior to executing this script"
   exit 1
 fi
-
-codify() {
-  if [ -z "$1" ]; then
-    echo "Error: no language specified"
-    return 1
-  fi
-
-  echo "\`\`\`$1"
-  while IFS= read -r data; do
-    echo "$data"
-  done
-  echo '```'
-}
 
 mkdir -p "$CLI_DIR" "$JOBS_DIR" "$CONFIG_DIR" "$DB_DIR"
 

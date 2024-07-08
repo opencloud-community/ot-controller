@@ -85,13 +85,13 @@
 )]
 
 mod macros;
-mod utils;
 
 pub mod api;
 pub mod common;
 pub mod core;
 pub mod signaling;
 pub mod strings;
+pub mod utils;
 
 mod imports {
     #![allow(unused)]
