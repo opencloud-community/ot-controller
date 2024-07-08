@@ -142,7 +142,8 @@ pub(crate) trait MediaStorage: ControlStorageParticipantSet + Send {
         participant: ParticipantId,
     ) -> Result<bool, SignalingModuleError>;
 
-    async fn disable_force_mute(&mut self, room: RoomId) -> Result<(), SignalingModuleError>;
+    /// Disable the force mute state by removing all related storage.
+    async fn clear_force_mute(&mut self, room: RoomId) -> Result<(), SignalingModuleError>;
 
     async fn get_force_mute_state(
         &mut self,

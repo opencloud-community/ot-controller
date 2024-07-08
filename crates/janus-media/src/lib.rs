@@ -292,7 +292,7 @@ impl SignalingModule for Media {
 
                 ctx.volatile
                     .storage()
-                    .disable_force_mute(self.room.room_id())
+                    .clear_force_mute(self.room.room_id())
                     .await?;
 
                 ctx.exchange_publish(
@@ -740,6 +740,18 @@ impl SignalingModule for Media {
 
     async fn on_destroy(self, ctx: DestroyContext<'_>) {
         if ctx.destroy_room() {
+            if let Err(e) = ctx
+                .volatile
+                .storage()
+                .clear_force_mute(self.room.room_id())
+                .await
+            {
+                log::error!(
+                    "Media module for failed to remove force-mute state on room destroy, {}",
+                    e
+                );
+            }
+
             if let Err(e) = ctx.volatile.storage().clear_presenters(self.room).await {
                 log::error!(
                     "Media module for failed to remove presenter key on room destroy, {}",
