@@ -13,7 +13,7 @@ use opentalk_controller_settings::{DEFAULT_NAMESPACE, NAMESPACE_SEPARATOR};
 use opentalk_database::{DbConnection, Result};
 use opentalk_diesel_newtype::DieselNewtype;
 use opentalk_types::{
-    common::tariff::{TariffModuleResource, TariffResource},
+    common::tariff::{QuotaType, TariffModuleResource, TariffResource},
     core::{TariffId, UserId},
 };
 use redis_args::{FromRedisValue, ToRedisArgs};
@@ -66,12 +66,16 @@ pub struct Tariff {
     pub name: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-    pub quotas: Jsonb<HashMap<String, u64>>,
+    pub quotas: Jsonb<HashMap<QuotaType, u64>>,
     pub disabled_modules: Vec<Option<String>>,
     pub disabled_features: Vec<Option<String>>,
 }
 
 impl Tariff {
+    pub fn quota(&self, quota: &QuotaType) -> Option<u64> {
+        self.quotas.0.get(quota).copied()
+    }
+
     pub fn disabled_modules(&self) -> HashSet<String> {
         self.disabled_modules.iter().flatten().cloned().collect()
     }
@@ -215,7 +219,7 @@ impl Tariff {
 #[diesel(table_name = tariffs)]
 pub struct NewTariff {
     pub name: String,
-    pub quotas: Jsonb<HashMap<String, u64>>,
+    pub quotas: Jsonb<HashMap<QuotaType, u64>>,
     pub disabled_modules: Vec<String>,
     pub disabled_features: Vec<String>,
 }
@@ -234,7 +238,7 @@ impl NewTariff {
 pub struct UpdateTariff {
     pub name: Option<String>,
     pub updated_at: DateTime<Utc>,
-    pub quotas: Option<Jsonb<HashMap<String, u64>>>,
+    pub quotas: Option<Jsonb<HashMap<QuotaType, u64>>>,
     pub disabled_modules: Option<Vec<String>>,
     pub disabled_features: Option<Vec<String>>,
 }

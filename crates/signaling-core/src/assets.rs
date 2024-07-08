@@ -23,6 +23,7 @@ use opentalk_db_storage::{
 };
 use opentalk_types::{
     api::error::ApiError,
+    common::tariff::QuotaType,
     core::{AssetId, FileExtension, RoomId, Timestamp, UserId},
 };
 use snafu::{IntoError, ResultExt, Snafu};
@@ -353,8 +354,8 @@ pub async fn verify_storage_usage(db_conn: &mut DbConnection, user_id: UserId) -
         .await
         .context(DbQuerySnafu)?;
 
-    if let Some(max_storage) = user_tariff.quotas.0.get("max_storage") {
-        if used_storage > BigDecimal::from(*max_storage) {
+    if let Some(max_storage) = user_tariff.quota(&QuotaType::MaxStorage) {
+        if used_storage > BigDecimal::from(max_storage) {
             return AssetStorageExceededSnafu.fail();
         }
     }
