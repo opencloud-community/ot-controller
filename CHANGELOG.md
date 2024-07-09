@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - controller: add job for deleting disabled users ([#777](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/777)
+- controller: add configuration for terdoc report generation service ([#815](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/815)
 
 ### Changed
 

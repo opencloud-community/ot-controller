@@ -171,6 +171,10 @@ urls = ["localhost:2379"]
 #url = "http://localhost:9666"
 #api_key = "secret"
 
+# Reports configuration
+#[reports]
+#url = "http://localhost:8085"
+
 # Shared folder configuration
 #[shared_folder]
 #provider = "nextcloud"
