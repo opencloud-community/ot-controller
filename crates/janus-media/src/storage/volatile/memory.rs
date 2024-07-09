@@ -184,14 +184,14 @@ impl MemoryMediaState {
         participants: &[ParticipantId],
     ) {
         if participants.is_empty() {
-            self.disable_force_mute(room);
+            self.clear_force_mute(room);
             return;
         }
         self.force_mute
             .insert(room, BTreeSet::from_iter(participants.iter().copied()));
     }
 
-    pub(super) fn disable_force_mute(&mut self, room: RoomId) {
+    pub(super) fn clear_force_mute(&mut self, room: RoomId) {
         self.force_mute.remove(&room);
     }
 

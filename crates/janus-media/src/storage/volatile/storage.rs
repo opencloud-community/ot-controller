@@ -248,8 +248,8 @@ impl MediaStorage for VolatileStaticMemoryStorage {
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
-    async fn disable_force_mute(&mut self, room: RoomId) -> Result<(), SignalingModuleError> {
-        state().write().disable_force_mute(room);
+    async fn clear_force_mute(&mut self, room: RoomId) -> Result<(), SignalingModuleError> {
+        state().write().clear_force_mute(room);
         Ok(())
     }
 

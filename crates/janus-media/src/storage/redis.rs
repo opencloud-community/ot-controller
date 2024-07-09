@@ -314,7 +314,7 @@ impl MediaStorage for RedisConnection {
         participant_id: &[ParticipantId],
     ) -> Result<(), SignalingModuleError> {
         if participant_id.is_empty() {
-            return self.disable_force_mute(room).await;
+            return self.clear_force_mute(room).await;
         }
 
         redis::pipe()
@@ -351,7 +351,7 @@ impl MediaStorage for RedisConnection {
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
-    async fn disable_force_mute(&mut self, room: RoomId) -> Result<(), SignalingModuleError> {
+    async fn clear_force_mute(&mut self, room: RoomId) -> Result<(), SignalingModuleError> {
         self.del(AllowedUnmuteList { room })
             .await
             .context(RedisSnafu {
