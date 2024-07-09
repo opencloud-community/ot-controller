@@ -131,6 +131,15 @@ lint:openapi:
   script:
     - /usr/local/bin/openapi lint api/controller/frontend_api.yaml
 
+lint:openapi-spectral:
+  stage: lint
+  <<: *default_job_condition
+  image:
+    name: stoplight/spectral
+    entrypoint: ['']
+  script:
+    - spectral lint --ruleset ci/spectral/openapi.yml lint api/controller/frontend_api.yaml
+
 lint:markdown:
   stage: lint
   <<: *default_job_condition

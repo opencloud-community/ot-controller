@@ -5,7 +5,12 @@ info:
   description: Specifies the endpoints and structure of the OpenTalk Controller Frontend API
   version: '1'
   license:
-    name: EUPL-1.2
+    name: European Union Public License 1.2
+    identifier: EUPL-1.2
+  contact:
+    name: OpenTalk Team
+    url: https://opentalk.eu/
+    email: mail@opentalk.eu
 security:
   # Globally apply bearer authentication
   - BearerAuth: []
@@ -44,6 +49,8 @@ tags:
     description: Endpoints related to shared folder functionality
   - name: streaming_targets
     description: Endpoints related to streaming target functionality
+  - name: upload
+    description: Endpoints related to uploading assets
 
 paths:
   /auth/login:
@@ -65,13 +72,13 @@ paths:
             schema:
               $ref: '#/components/schemas/Login'
       responses:
-        200:
+        '200':
           description: Login successful
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/LoginResponse'
-        400:
+        '400':
           description: The provided ID-Token is malformed or contains invalid claims
           content:
             application/json:
@@ -90,23 +97,25 @@ paths:
                   message:
                     type: string
                     description: A more detailed description of the error cause.
-        401:
+        '401':
           description: The provided ID-Token is invalid.
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
     get:
       summary: Get the configured OIDC provider.
+      description: |
+        The OIDC provider returned here can be used to authenticate for usage of the API.
       tags: [auth]
       operationId: get_auth_providers
       security: []
       responses:
-        200:
+        '200':
           description: Successful
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/OidcProvider'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /rooms:
@@ -116,7 +125,7 @@ paths:
       tags: [rooms]
       operationId: get_rooms
       responses:
-        200:
+        '200':
           description: Successful
           headers:
             Link:
@@ -128,9 +137,9 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Room'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
     post:
       summary: Create a new room
@@ -145,17 +154,17 @@ paths:
             schema:
               $ref: '#/components/schemas/PostRoomsBody'
       responses:
-        201:
+        '201':
           description: Successfully created a new room
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Room'
-        400:
+        '400':
           description: Could not create a new room due to wrong syntax or bad values, for example, an invalid owner id.
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /rooms/{room_id}:
@@ -180,23 +189,23 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchRoomsBody'
       responses:
-        200:
+        '200':
           description: Successfully modified room
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Room'
-        400:
+        '400':
           description: >
             Could not modify the specified room due to wrong syntax or bad values,
             for example, an invalid owner id.
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        403:
+        '403':
           description: The requesting user does not have permissions to modify the specified room.
-        404:
+        '404':
           description: The specified room could not be found
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
     get:
       summary: Get a room
@@ -212,17 +221,17 @@ paths:
             format: uuid
           required: true
       responses:
-        200:
+        '200':
           description: Successful
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Room'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           description: The specified room could not be found
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
     delete:
       summary: Delete a room
@@ -234,15 +243,15 @@ paths:
         - $ref: '#/components/parameters/roomId'
         - $ref: '#/components/parameters/forceDeleteReferenceIfExternalServicesFail'
       responses:
-        204:
+        '204':
           description: Successfully deleted the room
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-        409:
+        '409':
           description: The room could not be deleted due to a referencing event
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /rooms/{room_id}/tariff:
@@ -255,17 +264,17 @@ paths:
       parameters:
         - $ref: '#/components/parameters/roomId'
       responses:
-        200:
+        '200':
           description: Includes the tariff information in the response body.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Tariff'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           description: The specified room could not be found
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /rooms/{room_id}/event:
@@ -281,17 +290,17 @@ paths:
       parameters:
         - $ref: '#/components/parameters/roomId'
       responses:
-        200:
+        '200':
           description: Includes the event information in the response body.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/EventInfo'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           description: The specified room could not be found or it has no event associated with it
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /rooms/{room_id}/start:
@@ -316,13 +325,13 @@ paths:
             schema:
               $ref: '#/components/schemas/RoomStart'
       responses:
-        200:
+        '200':
           description: Includes the information needed to connect to the signaling endpoint in the response body.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoomStartSuccess'
-        401:
+        '401':
           description: >
             Either: The provided AccessToken is expired or the provided ID- or Access-Token is invalid.
             The WWW-Authenticate header will contain a error-description 'session expired' to distinguish
@@ -333,9 +342,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoomStartError'
-        404:
+        '404':
           description: The specified room could not be found
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /rooms/{room_id}/start_invited:
@@ -361,7 +370,7 @@ paths:
             schema:
               $ref: '#/components/schemas/InvitedRoomStart'
       responses:
-        400:
+        '400':
           description: >
             The requested room doesn't exist or the guest doesn't have a valid invite for this room.
             Guests shall not be able to distinguish between non existing rooms and rooms they don't
@@ -378,13 +387,13 @@ paths:
                     const: bad_request
                   message:
                     const: Room id mismatch
-        200:
+        '200':
           description: Includes the information needed to connect to the signaling endpoint in the response body.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoomStartSuccess'
-        401:
+        '401':
           description: >
             Either: The provided AccessToken is expired or the provided ID- or Access-Token is invalid.
             The WWW-Authenticate header will contain a error-description 'session expired' to distinguish
@@ -395,9 +404,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoomStartError'
-        404:
+        '404':
           description: The specified room could not be found
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /rooms/{room_id}/invites:
@@ -411,7 +420,7 @@ paths:
         - $ref: '#/components/parameters/PerPage'
         - $ref: '#/components/parameters/Page'
       responses:
-        200:
+        '200':
           description: A list of all invites for a given room
           content:
             application/json:
@@ -420,11 +429,11 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/InviteCode'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
     post:
       summary: Create a new invite
@@ -443,21 +452,21 @@ paths:
             schema:
               $ref: '#/components/schemas/NewInviteCode'
       responses:
-        200:
+        '200':
           description: Successfully created a new invite
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/InviteCode'
-        400:
+        '400':
           description: >
             Could not create a new invite due to wrong syntax or bad values,
             for example, an invalid owner id.
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /rooms/{room_id}/invites/{invite_code}:
@@ -475,7 +484,7 @@ paths:
             type: string
           required: true
       responses:
-        200:
+        '200':
           description: Includes the information needed to connect to the signaling endpoint in the response body.
           content:
             application/json:
@@ -484,11 +493,11 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/InviteCode'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
     put:
       summary: Update an invite code
@@ -511,21 +520,21 @@ paths:
             schema:
               $ref: '#/components/schemas/UpdateInviteCode'
       responses:
-        200:
+        '200':
           description: Successfully updated the invite
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/InviteCode'
-        400:
+        '400':
           description: >
             Could not create a new invite due to wrong syntax or bad values,
             for example, an invalid owner id.
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
     delete:
       summary: Delete an invite code
@@ -542,13 +551,13 @@ paths:
             type: string
           required: true
       responses:
-        204:
+        '204':
           description: Successfully updated the invite
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /invite/verify:
@@ -564,17 +573,17 @@ paths:
             schema:
               $ref: '#/components/schemas/InviteVerifyBody'
       responses:
-        201:
+        '201':
           description: The invite is valid and the associated room is the following.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/InviteCodeVerified'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /rooms/{room_id}/sip:
@@ -586,17 +595,17 @@ paths:
       parameters:
         - $ref: '#/components/parameters/roomId'
       responses:
-        200:
+        '200':
           description: Contains the rooms SIP config
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SipConfig'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           description: The specified room could not be found or this room has no SIP config configured
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
     put:
       summary: Create or modify the rooms SIP config
@@ -615,23 +624,23 @@ paths:
             schema:
               $ref: '#/components/schemas/PutSipConfig'
       responses:
-        200:
+        '200':
           description: The specified SIP config was modified based on the request body.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SipConfig'
-        201:
+        '201':
           description: A new SIP config has been created based on the request body.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SipConfig'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           description: The specified room could not be found
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
     delete:
       summary: Delete a rooms sip config
@@ -642,13 +651,13 @@ paths:
       parameters:
         - $ref: '#/components/parameters/roomId'
       responses:
-        204:
+        '204':
           description: Successfully deleted the specified sip config
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           description: The specified room could not be found
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /rooms/{room_id}/assets:
@@ -662,7 +671,7 @@ paths:
         - $ref: '#/components/parameters/PerPage'
         - $ref: '#/components/parameters/Page'
       responses:
-        200:
+        '200':
           description: A list of all assets for a given room
           content:
             application/json:
@@ -671,11 +680,11 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/AssetResource'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /rooms/{room_id}/assets/{asset_id}:
@@ -694,18 +703,18 @@ paths:
             format: uuid
           required: true
       responses:
-        200:
+        '200':
           description: The raw binary data representing the asset
           content:
             application/octet-stream:
               schema:
                 type: string
                 format: binary
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
     delete:
       summary: Delete an asset
@@ -723,13 +732,13 @@ paths:
             format: uuid
           required: true
       responses:
-        204:
+        '204':
           description: Successfully deleted the asset
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /users:
@@ -739,7 +748,7 @@ paths:
       tags: [users]
       operationId: get_users
       responses:
-        200:
+        '200':
           description: Successful
           headers:
             Link:
@@ -748,9 +757,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PublicUserProfileCollection'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /users/me:
@@ -765,32 +774,33 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchUserBody'
       responses:
-        200:
+        '200':
           description: Successfully updated user
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PrivateUserProfile'
-        400:
+        '400':
           description: Could not patch user due to wrong syntax or bad values
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
     get:
       summary: Get the current users profile
+      description: Returns the profile of the currently logged-in user.
       tags: [users]
       operationId: get_users_me
       responses:
-        200:
+        '200':
           description: Successfully fetched user
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PrivateUserProfile'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /users/me/assets:
@@ -806,15 +816,15 @@ paths:
         - $ref: '#/components/parameters/Order'
         - $ref: '#/components/parameters/AssetSort'
       responses:
-        200:
+        '200':
           description: Includes the list of assets in the response body.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserAssets'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /users/me/tariff:
@@ -825,15 +835,15 @@ paths:
       tags: [users, tariff]
       operationId: get_me_tariff
       responses:
-        200:
+        '200':
           description: Includes the tariff information in the response body.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Tariff'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /users/{id}:
@@ -851,17 +861,17 @@ paths:
             format: int64
           required: true
       responses:
-        200:
+        '200':
           description: Successful
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PublicUserProfile'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /users/find:
@@ -877,15 +887,15 @@ paths:
           schema:
             type: string
       responses:
-        200:
+        '200':
           description: List of PublicUserProfile matching the query string
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserFindResponseItemCollection'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /users/me/event_favorites/{event_id}:
@@ -897,15 +907,15 @@ paths:
       parameters:
         - $ref: '#/components/parameters/eventId'
       responses:
-        201:
+        '201':
           description: The event was added to the favorite list
-        204:
+        '204':
           description: The event was already in the favorite list
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
     delete:
       summary: Unfavorite an event
@@ -915,13 +925,13 @@ paths:
       parameters:
         - $ref: '#/components/parameters/eventId'
       responses:
-        204:
+        '204':
           description: The event was removed from the favorite list
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
   /turn:
     get:
@@ -933,15 +943,15 @@ paths:
         - BearerAuth: []
         - InviteCode: []
       responses:
-        200:
+        '200':
           description: Successful
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/StunTurnCredentials'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /signaling:
@@ -974,11 +984,11 @@ paths:
               - websocket
           example: websocket
       responses:
-        200:
+        '200':
           description: Successful
-        400:
+        '400':
           $ref: '#/components/responses/BadRequest'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /events:
@@ -997,17 +1007,17 @@ paths:
       parameters:
         - $ref: '#/components/parameters/suppressEmailNotification'
       responses:
-        201:
+        '201':
           description: Successfully created a new event
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Event'
-        400:
+        '400':
           $ref: '#/components/responses/BadRequest'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
     get:
       summary: Get events
@@ -1047,7 +1057,7 @@ paths:
           schema:
             type: boolean
       responses:
-        200:
+        '200':
           description: Successfully fetched all event for the authorized user
           headers:
             Link:
@@ -1056,11 +1066,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EventOrExceptionCollection'
-        400:
+        '400':
           $ref: '#/components/responses/BadRequest'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /events/{event_id}:
@@ -1073,17 +1083,17 @@ paths:
         - $ref: '#/components/parameters/eventId'
         - $ref: '#/components/parameters/inviteesMax'
       responses:
-        200:
+        '200':
           description: Successfully fetched the event
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Event'
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
     patch:
       summary: Update an event or a single event occurrence
@@ -1104,17 +1114,17 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchEvent'
       responses:
-        200:
+        '200':
           description: Successfully updated the event. Returns the updated event.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Event'
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
     delete:
       summary: Delete an event
@@ -1127,13 +1137,13 @@ paths:
         - $ref: '#/components/parameters/suppressEmailNotification'
         - $ref: '#/components/parameters/forceDeleteReferenceIfExternalServicesFail'
       responses:
-        204:
+        '204':
           description: Successfully deleted the event.
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /events/{event_id}/instances:
@@ -1152,7 +1162,7 @@ paths:
         - $ref: '#/components/parameters/pageCursor'
         - $ref: '#/components/parameters/inviteesMax'
       responses:
-        200:
+        '200':
           description: Successfully fetched all instances for the given event id
           headers:
             Link:
@@ -1161,11 +1171,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EventInstanceCollection'
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /events/{event_id}/instances/{instance_id}:
@@ -1180,15 +1190,15 @@ paths:
         - $ref: '#/components/parameters/eventInstanceId'
         - $ref: '#/components/parameters/inviteesMax'
       responses:
-        200:
+        '200':
           description: Returns the patched instance.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/EventInstance'
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
     patch:
       summary: Update a single event instance
@@ -1208,17 +1218,17 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchEventInstance'
       responses:
-        200:
+        '200':
           description: Successfully patched the instance. Returns the patched instance.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/EventInstance'
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /events/{event_id}/invites:
@@ -1239,15 +1249,15 @@ paths:
                 - $ref: '#/components/schemas/EmailInvite'
                 - $ref: '#/components/schemas/UserInvite'
       responses:
-        201:
+        '201':
           description: Successfully invited user
-        204:
+        '204':
           description: User was already invited
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
     get:
       summary: Get invitees of the specified event
@@ -1261,7 +1271,7 @@ paths:
         - $ref: '#/components/parameters/PerPage'
         - $ref: '#/components/parameters/Page'
       responses:
-        200:
+        '200':
           description: Successfully fetched invitees for the given event id
           headers:
             Link:
@@ -1270,11 +1280,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EventInviteeCollection'
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /events/{event_id}/invites/{user_id}:
@@ -1298,17 +1308,17 @@ paths:
                   enum: [user, moderator]
                   description: The role for the invited user
       responses:
-        204:
+        '204':
           description: The invite was successfully updated
-        403:
+        '403':
           description: |
             The requesting user does not have the required permissions to update the invite.
             Only the creator of an event can update the invites.
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
     delete:
@@ -1321,13 +1331,13 @@ paths:
         - $ref: '#/components/parameters/eventId'
         - $ref: '#/components/parameters/userId'
       responses:
-        204:
+        '204':
           description: The invite was successfully deleted
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /events/{event_id}/invites/email:
@@ -1336,6 +1346,7 @@ paths:
       description: |
         Update the invite to an event for a specified email address
       tags: [events, event_invites]
+      operationId: patch_event_invite_email
       parameters:
         - $ref: '#/components/parameters/eventId'
       requestBody:
@@ -1356,17 +1367,17 @@ paths:
                   enum: [guest, moderator]
                   description: The role for the invited user
       responses:
-        204:
+        '204':
           description: The invite was successfully updated
-        403:
+        '403':
           description: |
             The requesting user does not have the required permissions to update the invite.
             Only the creator of an event can update the invites.
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
     delete:
@@ -1376,6 +1387,7 @@ paths:
 
         This will also withdraw invites from registered users if the provided email address matches theirs.
       tags: [events, event_invites]
+      operationId: delete_event_invite_email
       parameters:
         - $ref: '#/components/parameters/eventId'
       requestBody:
@@ -1392,13 +1404,13 @@ paths:
                   format: email
                   description: The email address of the invited participant
       responses:
-        204:
+        '204':
           description: The invite was successfully deleted
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /events/{event_id}/invite:
@@ -1411,13 +1423,13 @@ paths:
       parameters:
         - $ref: '#/components/parameters/eventId'
       responses:
-        204:
+        '204':
           description: Successfully accepted the invite
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
     delete:
       summary: Decline an event invite
@@ -1428,62 +1440,72 @@ paths:
       parameters:
         - $ref: '#/components/parameters/eventId'
       responses:
-        204:
+        '204':
           description: Successfully declined the invite
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /events/{event_id}/shared_folder:
     get:
       summary: Get the shared folder for an event
+      description: Returns the shared folder for an event if one is configured
       tags: [events, shared_folder]
+      operationId: get_event_shared_folder
       parameters:
         - $ref: '#/components/parameters/eventId'
       responses:
-        200:
+        '200':
           description: Successfully fetched shared folder for the event
           content:
             application_json:
               schema:
                 $ref: '#/components/schemas/SharedFolder'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           description: The specified event could not be found or has no shared folder
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
     put:
       summary: Create a shared folder for an event
+      description: |
+        If not already exists, a shared folder will be created on the external
+        shared folder system when this endpoint is called.
       tags: [events, shared_folder]
+      operationId: put_event_shared_folder
       parameters:
         - $ref: '#/components/parameters/eventId'
         - $ref: '#/components/parameters/suppressEmailNotification'
       responses:
-        200:
+        '200':
           description: A shared folder was already present and is returned
           content:
             application_json:
               schema:
                 $ref: '#/components/schemas/SharedFolder'
-        201:
+        '201':
           description: A new shared folder has been created
           content:
             application_json:
               schema:
                 $ref: '#/components/schemas/SharedFolder'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           description: The specified event could not be found
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
     delete:
       summary: Delete the shared folder for an event
+      description: |
+        If it already exists, the shared folder will be deleted from the external
+        shared folder system when this endpoint is called.
       tags: [events, shared_folder]
+      operationId: delete_event_shared_folder
       parameters:
         - $ref: '#/components/parameters/eventId'
         - in: query
@@ -1497,13 +1519,13 @@ paths:
             default: false
         - $ref: '#/components/parameters/suppressEmailNotification'
       responses:
-        204:
+        '204':
           description: The shared folder has been deleted
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           description: The specified event could not be found or has no shared folder
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /users/me/pending_invites:
@@ -1514,7 +1536,7 @@ paths:
       tags: [events, event_invites]
       operationId: event_invites_pending
       responses:
-        200:
+        '200':
           description: Success
           content:
             application/json:
@@ -1527,9 +1549,9 @@ paths:
                   total_pending_invites:
                     type: number
                     description: The total number of pending invites for the current user
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /services/call_in/start:
@@ -1550,29 +1572,29 @@ paths:
             schema:
               $ref: '#/components/schemas/CallInStart'
       responses:
-        200:
+        '200':
           description: Includes the information needed to connect to the signaling endpoint in the response body.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoomStartSuccess'
-        400:
+        '400':
           description: The provided request body contains wrong syntax or bad values.
-        401:
+        '401':
           description: >
             `id` and `pin` are not valid for any room. The error code is set to `invalid_credentials`.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoomStartError'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /services/recording/upload:
     get:
       summary: Upload Websocket
       description: The upload websocket. transfers binary upload contents.
-      tags: [upload]
+      tags: [upload, assets]
       operationId: upload_websocket
       parameters:
         - in: header
@@ -1580,7 +1602,7 @@ paths:
           required: true
           schema:
             $ref: '#/components/schemas/SignalingProtocolHeader'
-          example: opentalk-signaling-json-v1.0
+          example: opentalk-signaling-json-v1.0, ticket#eyJpc3MiOiJodHRwczovL2V4YW1wbGUuYXV0aDAuY29tLy
         - in: header
           name: Connection
           required: true
@@ -1609,21 +1631,23 @@ paths:
           schema:
             type: string
       responses:
-        200:
+        '200':
           description: Successful
-        400:
+        '400':
           $ref: '#/components/responses/BadRequest'
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /rooms/{room_id}/streaming_targets:
     get:
       summary: List the streaming targets for a room
+      description: Get a list of all the streaming targets configured for a room
       tags: [rooms, streaming_targets]
+      operationId: get_room_streaming_targets
       parameters:
         - $ref: '#/components/parameters/roomId'
       responses:
-        200:
+        '200':
           description: Successfully fetched streaming targets for the room
           content:
             application/json:
@@ -1632,15 +1656,17 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/RoomStreamingTarget'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           description: The specified room could not be found
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
     post:
       summary: Create a streaming target for a room
+      description: Add a new streaming target to a room
       tags: [rooms, streaming_targets]
+      operationId: post_room_streaming_targets
       parameters:
         - $ref: '#/components/parameters/roomId'
         - $ref: '#/components/parameters/suppressEmailNotification'
@@ -1651,42 +1677,49 @@ paths:
             schema:
               $ref: '#/components/schemas/StreamingTarget'
       responses:
-        201:
+        '201':
           description: Successfully created a new streaming target for a room
           content:
             application_json:
               schema:
                 $ref: '#/components/schemas/RoomStreamingTarget'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           description: The specified room's could not be found
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
   /rooms/{room_id}/streaming_targets/{streaming_target_id}:
     get:
       summary: Get the streaming target for a room
+      description: |
+        Returns a streaming target for a room specified by the streaming target
+        id
       tags: [rooms, streaming_targets]
+      operationId: get_room_streaming_target
       parameters:
         - $ref: '#/components/parameters/roomId'
         - $ref: '#/components/parameters/streamingTargetId'
       responses:
-        200:
+        '200':
           description: Successfully fetched streaming target for the room
           content:
             application_json:
               schema:
                 $ref: '#/components/schemas/RoomStreamingTarget'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           description: The specified streaming target could not be found
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
     patch:
       summary: Update a streaming target for a room
+      description: |
+        Changes the configuration of a streaming target
       tags: [rooms, streaming_targets]
+      operationId: patch_room_streaming_target
       parameters:
         - $ref: '#/components/parameters/roomId'
         - $ref: '#/components/parameters/streamingTargetId'
@@ -1698,33 +1731,36 @@ paths:
             schema:
               $ref: '#/components/schemas/UpdateStreamingTarget'
       responses:
-        200:
+        '200':
           description: Successfully updated a new streaming target for a room
           content:
             application_json:
               schema:
                 $ref: '#/components/schemas/RoomStreamingTarget'
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           description: The specified room's could not be found
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
     delete:
       summary: Delete the streaming target for a room
+      description: |
+        Deletes a streaming target from a room
       tags: [rooms, streaming_targets]
+      operationId: delete_room_streaming_target
       parameters:
         - $ref: '#/components/parameters/roomId'
         - $ref: '#/components/parameters/streamingTargetId'
         - $ref: '#/components/parameters/suppressEmailNotification'
       responses:
-        204:
+        '204':
           description: The streaming target has been deleted
-        401:
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           description: The specified streaming target could not be found
-        500:
+        '500':
           $ref: '#/components/responses/InternalServerError'
 
 components:
@@ -1751,12 +1787,8 @@ components:
         The provided AccessToken is expired or the provided ID- or Access-Token is invalid. The WWW-Authenticate
         header will contain a error-description 'session expired' to distinguish between an invalid and an
         expired token
-    InsufficientPermission:
-      description: The requesting user has insufficient permissions
     BadRequest:
       description: Bad Request
-    ValidationFailed:
-      description: The provided JSON object does not follow the specified field constraints
     InternalServerError:
       description: An internal server error occurred.
 
@@ -1779,9 +1811,13 @@ components:
       name: order
       description: The direction of the sorting that is applied to the return collection.
       in: query
-      example:
-        - ascending
-        - descending
+      examples:
+        ascending:
+          summary: request ascending order
+          value: ascending
+        descending:
+          summary: request descending order
+          value: descending
       schema:
         type: string
         enum: [ascending, descending]
@@ -1789,12 +1825,22 @@ components:
       name: sort
       description: The property by which a collection of assets is sorted.
       in: query
-      example:
-        - filename
-        - size
-        - namespace
-        - kind
-        - created_at
+      examples:
+        filename:
+          summary: sort by filename
+          value: filename
+        size:
+          summary: sort by size
+          value: size
+        namespace:
+          summary: sort by namespace
+          value: namespace
+        kind:
+          summary: sort by kind
+          value: kind
+        created_at:
+          summary: sort by created_at
+          value: created_at
       schema:
         type: string
         enum: [filename, size, namespace, kind, created_at]
@@ -1830,11 +1876,19 @@ components:
       name: status
       description: |
         Filter by an event invite status
-      example:
-        - pending
-        - accepted
-        - tentative
-        - declined
+      examples:
+        pending:
+          summary: filter by pending invites
+          value: pending
+        accepted:
+          summary: filter by accepted invites
+          value: accepted
+        tentative:
+          summary: filter by tentative invites
+          value: tentative
+        declined:
+          summary: filter by declined invites
+          value: declined
       schema:
         type: string
         enum: [pending, accepted, tentative, declined]
@@ -1843,8 +1897,7 @@ components:
       name: user_id
       description: |
         Id of an user
-      example:
-        - 87f81f6f-35c5-4481-81ff-ec10c7e9d8b1
+      example: 87f81f6f-35c5-4481-81ff-ec10c7e9d8b1
       schema:
         type: string
       required: true
@@ -1853,8 +1906,7 @@ components:
       name: event_id
       description: |
         The id of the event.
-      example:
-        - 87f81f6f-35c5-4481-81ff-ec10c7e9d8b1
+      example: 87f81f6f-35c5-4481-81ff-ec10c7e9d8b1
       schema:
         type: string
       required: true
@@ -1863,8 +1915,7 @@ components:
       name: room_id
       description: |
         The id of the room
-      example:
-        - 87f81f6f-35c5-4481-81ff-ec10c7e9d8b1
+      example: 87f81f6f-35c5-4481-81ff-ec10c7e9d8b1
       schema:
         type: string
         format: uuid
@@ -1874,34 +1925,24 @@ components:
       name: streaming_target_id
       description: |
         The id of the room
-      example:
-        - 87f81f6f-35c5-4481-81ff-ec10c7e9d8b1
+      example: 87f81f6f-35c5-4481-81ff-ec10c7e9d8b1
       schema:
         type: string
       required: true
     eventInstanceId:
       in: path
       name: instance_id
-      description: |
-        Opaque id of an event instance
-      example:
-        - 20220215T180000Z
-        - 20220215T180000+0100
-      schema:
-        type: string
-      required: true
-    eventInviteId:
-      in: path
-      name: invite_id
-      description: |
-        The id of the invite to an event event.
-      schema:
-        type: string
-      required: true
+      description: Opaque id of an event instance
       examples:
-        InviteId:
-          value: 87f81f6f-35c5-4481-81ff-ec10c7e9d8b1
-          summary: Invite Id
+        without_timezone:
+          summary: without timezone
+          value: 20220215T180000Z
+        with_timezone:
+          summary: with timezone
+          value: 20220215T180000+0100
+      schema:
+        type: string
+      required: true
     suppressEmailNotification:
       name: suppress_email_notification
       in: query
@@ -1947,27 +1988,10 @@ components:
         status:
           type: string
 
-    ValidationErrorSimple:
-      title: Validation Error Simple
-      description: Validation Error Simple
-      type: object
-      required:
-        - message
-        - documentation_url
-      properties:
-        message:
-          type: string
-        documentation_url:
-          type: string
-        errors:
-          type: array
-          items:
-            type: string
-
     SignalingProtocolHeader:
       anyOf:
         - type: string
-          enum: [opentalk-signaling-json-v$MAJOR.$MINOR]
+          pattern: ^opentalk-signaling-json-v1.0, ticket#.+$
           description: >
             This informs the API that you want to talk using Protocol specified in this document.
             The version part MUST be a valid MAJOR.MINOR release of this specification.
@@ -2695,31 +2719,29 @@ components:
       type: object
       additionalProperties: false
       required:
-        owned_assets
+        - owned_assets
       properties:
         owned_assets:
           description: Collection of assets associated with the user
           schema:
-            ref: '#/components/schema/UserAssetCollection'
+            $ref: '#/components/schemas/UserAssetCollection'
 
     UserAssetCollection:
       description: A collection of user assets
       type: array
       items:
-        ref: '#/components/schema/UserAssetItems'
-
-      additionalProperties: false
+        $ref: '#/components/schemas/UserAssetItems'
 
     UserAssetItems:
       description: Asset that belongs to a user
       type: object
       additionalProperties: false
       required:
-        id
-        filename
-        created_at
-        kind
-        room_id
+        - id
+        - filename
+        - created_at
+        - kind
+        - room_id
       properties:
         id:
           description: The asset ID
