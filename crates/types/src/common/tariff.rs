@@ -6,8 +6,6 @@
 
 use std::collections::{HashMap, HashSet};
 
-use strum::{Display, EnumString};
-
 use crate::core::TariffId;
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -66,40 +64,49 @@ impl TariffModuleResource {
 }
 
 /// The quota types that can be enforced on tenants.
-#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, EnumString, Display)]
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, strum::Display, strum::EnumString)]
 #[strum(serialize_all = "snake_case")]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(
+    feature = "clap",
+    derive(clap::ValueEnum),
+    clap(rename_all = "snake_case")
+)]
 pub enum QuotaType {
-    /// This quota limits the total amount of data, measured bytes, that can be stored by the tenant. This is a soft limit which allows the user to store files as long as their usage is below the limit. Once the limit is reached or exceeded, no new data can be stored.
+    /// This quota limits the total amount of data, measured bytes, that can be
+    /// stored by the tenant. This is a soft limit which allows the user to store
+    /// files as long as their usage is below the limit. Once the limit is reached
+    /// or exceeded, no new data can be stored.
     MaxStorage,
 
-    /// This quota restricts the total duration for which a tenant can utilize a meeting room, measured in seconds.
+    /// This quota restricts the total duration for which a tenant can utilize a
+    /// meeting room, measured in seconds.
     RoomTimeLimitSecs,
 
     /// This quota sets a limit on the number of participants that can join a room.
     RoomParticipantLimit,
 
     /// Generic quota type.
-    #[strum(default, to_string = "{0}")]
     #[cfg_attr(feature = "serde", serde(untagged))]
+    #[cfg_attr(feature = "clap", clap(skip))]
+    #[strum(default)]
     Other(String),
 }
 
 #[cfg(test)]
 mod test {
-    use std::str::FromStr;
-
     use pretty_assertions::assert_eq;
-    use serde_json::json;
 
     use super::*;
 
+    #[cfg(feature = "serde")]
     #[test]
     fn quota_type_json() {
+        use serde_json::json;
         let quota = HashMap::from([
             (QuotaType::MaxStorage, 11u64),
             (QuotaType::RoomTimeLimitSecs, 12u64),
@@ -124,8 +131,11 @@ mod test {
         );
     }
 
+    #[cfg(feature = "clap")]
     #[test]
     fn quota_type_string() {
+        use std::str::FromStr;
+
         assert_eq!(
             QuotaType::from_str("max_storage").unwrap(),
             QuotaType::MaxStorage
@@ -144,8 +154,10 @@ mod test {
         );
     }
 
+    #[cfg(feature = "serde")]
     #[test]
     fn tariff_resource() {
+        use serde_json::json;
         let expected = json!({
             "id": "00000000-0000-0000-0000-000000000000",
             "name": "tariff name",

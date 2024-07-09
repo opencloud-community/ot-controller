@@ -1498,7 +1498,7 @@ impl Runner {
 
         let remaining_seconds = tariff
             .quota(&QuotaType::RoomTimeLimitSecs)
-            .map(|time_limit| time_limit as i64);
+            .map(|time_limit| i64::try_from(time_limit).unwrap_or(i64::MAX));
 
         if let Some(remaining_seconds) = remaining_seconds {
             let closes_at =

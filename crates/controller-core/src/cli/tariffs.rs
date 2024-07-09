@@ -94,14 +94,12 @@ enum CliParameterError {
     KeyValuePair,
     /// invalid quota value, expected 64-bit unsigned integer
     QuotaValue { source: ParseIntError },
-    /// invalid quota name
-    QuotaName { source: <QuotaType as FromStr>::Err },
 }
 
 fn parse_quota(s: &str) -> Result<(QuotaType, u64), CliParameterError> {
     let (name, value) = s.split_once('=').context(KeyValuePairSnafu)?;
     let value = value.trim().parse().context(QuotaValueSnafu)?;
-    Ok((QuotaType::from_str(name).context(QuotaNameSnafu)?, value))
+    Ok((QuotaType::from_str(name).expect("Infallible"), value))
 }
 
 pub async fn handle_command(settings: Settings, command: Command) -> Result<(), DatabaseError> {
