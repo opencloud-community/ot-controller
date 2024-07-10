@@ -29,6 +29,7 @@ Functionality that can be configured through the configuration file:
 - [MinIO](minio.md)
 - [EtherPad](../advanced/additional_services/etherpad.md)
 - [SpaceDeck](../advanced/additional_services/spacedeck.md)
+- [Reports](../advanced/additional_services/reports.md)
 - [Default and fallback values](../advanced/defaults.md)
 - [Endpoints](endpoints.md)
 - [Metrics](logging/metrics.md)
@@ -250,6 +251,10 @@ urls = ["localhost:2379"]
 #[spacedeck]
 #url = "http://localhost:9666"
 #api_key = "secret"
+
+# Reports configuration
+#[reports]
+#url = "http://localhost:8085"
 
 # Shared folder configuration
 #[shared_folder]

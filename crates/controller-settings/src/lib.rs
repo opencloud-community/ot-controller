@@ -96,6 +96,9 @@ pub struct Settings {
     pub spacedeck: Option<Spacedeck>,
 
     #[serde(default)]
+    pub reports: Option<Reports>,
+
+    #[serde(default)]
     pub shared_folder: Option<SharedFolder>,
 
     #[serde(default)]
@@ -371,6 +374,11 @@ pub struct Etherpad {
 pub struct Spacedeck {
     pub url: url::Url,
     pub api_key: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct Reports {
+    pub url: url::Url,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
