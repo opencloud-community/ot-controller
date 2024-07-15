@@ -5,10 +5,12 @@
 use core::fmt;
 use std::borrow::Cow;
 
-use http::{HeaderValue, StatusCode};
+use http::StatusCode;
 use itertools::Itertools;
 
-use super::{ErrorBody, StandardErrorBody, ValidationErrorBody, ValidationErrorEntry};
+use super::{
+    AuthenticationError, ErrorBody, StandardErrorBody, ValidationErrorBody, ValidationErrorEntry,
+};
 use crate::api::v1::rooms::StartRoomError;
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -24,7 +26,7 @@ pub struct ApiError {
     pub status: StatusCode,
 
     /// An optional authentication header value
-    pub www_authenticate: Option<HeaderValue>,
+    pub www_authenticate: Option<AuthenticationError>,
 
     /// The body of the error
     pub body: ErrorBody,
@@ -71,23 +73,9 @@ impl ApiError {
         self
     }
 
-    /// Add an WWW Authenticate header to a response
-    #[cfg(feature = "actix")]
-    pub fn with_www_authenticate(
-        mut self,
-        authentication_error: super::AuthenticationError,
-    ) -> Self {
-        use actix_http::header::TryIntoHeaderValue;
-        use actix_web_httpauth::headers::www_authenticate::bearer::Bearer;
-
-        let header_value = Bearer::build()
-            .error_description(authentication_error.message())
-            .error(authentication_error.into())
-            .finish()
-            .try_into_value()
-            .expect("All error descriptions must be convertible to header value");
-
-        self.www_authenticate = Some(header_value);
+    /// Add the www_authenticate header to this error
+    pub fn with_www_authenticate(mut self, authentication_error: AuthenticationError) -> Self {
+        self.www_authenticate = Some(authentication_error);
 
         self
     }
@@ -207,7 +195,34 @@ impl std::fmt::Display for ApiError {
     }
 }
 
-#[cfg(feature = "backend")]
+#[cfg(feature = "axum")]
+impl axum::response::IntoResponse for ApiError {
+    fn into_response(self) -> axum::response::Response {
+        let response_builder = axum::response::Response::builder();
+
+        let builder = response_builder.header(
+            axum::http::header::CONTENT_TYPE,
+            axum::http::HeaderValue::from_static("text/json; charset=utf-8"),
+        );
+
+        let builder = if let Some(www_authenticate) = self.www_authenticate {
+            builder.header(
+                axum::http::header::WWW_AUTHENTICATE,
+                www_authenticate.header_value(),
+            )
+        } else {
+            builder
+        };
+
+        let body = serde_json::to_string(&self.body).expect("Unable to serialize API error body");
+
+        builder
+            .body(axum::body::Body::new(body))
+            .expect("Failed to build axum Response ")
+    }
+}
+
+#[cfg(feature = "actix")]
 impl actix_web::ResponseError for ApiError {
     fn status_code(&self) -> StatusCode {
         self.status
@@ -216,14 +231,19 @@ impl actix_web::ResponseError for ApiError {
     fn error_response(&self) -> actix_web::HttpResponse<actix_http::body::BoxBody> {
         let mut response = actix_web::HttpResponse::new(self.status_code());
 
-        let _ = response
-            .headers_mut()
-            .insert(http::header::CONTENT_TYPE, self.body.content_type());
+        let _ = response.headers_mut().insert(
+            http::header::CONTENT_TYPE,
+            actix_http::header::HeaderValue::from_static("text/json; charset=utf-8"),
+        );
 
-        if let Some(www_authenticate) = self.www_authenticate.clone() {
-            let _ = response
-                .headers_mut()
-                .insert(http::header::WWW_AUTHENTICATE, www_authenticate);
+        if let Some(www_authenticate) = self.www_authenticate {
+            let _ = response.headers_mut().insert(
+                http::header::WWW_AUTHENTICATE,
+                www_authenticate
+                    .header_value()
+                    .try_into()
+                    .expect("Unable to create www-authenticate bearer header-value"),
+            );
         }
 
         let body = serde_json::to_string(&self.body).expect("Unable to serialize API error body");
@@ -273,7 +293,6 @@ impl From<StartRoomError> for ApiError {
     }
 }
 
-#[cfg(feature = "backend")]
 impl From<snafu::Whatever> for ApiError {
     fn from(value: snafu::Whatever) -> Self {
         log::error!("REST API threw generic internal error: {value:?}");

@@ -4,7 +4,12 @@
 
 //! Error response types for REST APIv1
 
-#[cfg(any(feature = "backend", feature = "frontend"))]
+#[cfg(any(
+    feature = "backend",
+    feature = "frontend",
+    feature = "actix",
+    feature = "axum",
+))]
 mod api_error;
 mod authentication_error;
 mod error_body;
@@ -12,7 +17,12 @@ mod standard_error_body;
 mod validation_error_body;
 mod validation_error_entry;
 
-#[cfg(any(feature = "backend", feature = "frontend"))]
+#[cfg(any(
+    feature = "backend",
+    feature = "frontend",
+    feature = "actix",
+    feature = "axum",
+))]
 pub use api_error::ApiError;
 pub use authentication_error::AuthenticationError;
 pub use error_body::ErrorBody;

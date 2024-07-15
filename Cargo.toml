@@ -52,6 +52,7 @@ anstream = "0.6"
 arc-swap = "1"
 async-trait = "0.1"
 aws-sdk-s3 = { version = "1.24.0", features = ["behavior-version-latest"] }
+axum = "0.7"
 base64 = "0.22"
 bigdecimal = "0.4"
 bincode = "1"

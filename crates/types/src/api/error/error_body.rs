@@ -15,11 +15,3 @@ pub enum ErrorBody {
     /// Special error body for validation errors
     Validation(ValidationErrorBody),
 }
-
-impl ErrorBody {
-    /// Get the content type for the corresponding body
-    #[cfg(feature = "backend")]
-    pub const fn content_type(&self) -> http::HeaderValue {
-        http::HeaderValue::from_static("text/json; charset=utf-8")
-    }
-}

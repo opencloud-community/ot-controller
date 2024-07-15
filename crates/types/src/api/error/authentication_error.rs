@@ -4,6 +4,7 @@
 
 /// Error variants for the WWW Authenticate header
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum AuthenticationError {
     /// The provided id token is invalid
     InvalidIdToken,
@@ -28,18 +29,23 @@ impl AuthenticationError {
             Self::SessionExpired => "The user session expired",
         }
     }
-}
 
-#[cfg(feature = "actix")]
-impl From<AuthenticationError> for actix_web_httpauth::extractors::bearer::Error {
-    fn from(value: AuthenticationError) -> Self {
-        use actix_web_httpauth::extractors::bearer::Error;
-
-        match value {
+    /// Get the error code for the variant
+    pub const fn error_code(&self) -> &'static str {
+        match self {
             AuthenticationError::InvalidIdToken
             | AuthenticationError::InvalidAccessToken
-            | AuthenticationError::AccessTokenInactive => Error::InvalidToken,
-            AuthenticationError::SessionExpired => Error::InvalidRequest,
+            | AuthenticationError::AccessTokenInactive => "invalid_token",
+            AuthenticationError::SessionExpired => "invalid_request",
         }
+    }
+
+    /// Build the header value string
+    pub fn header_value(&self) -> String {
+        format!(
+            "Bearer error=\"{}\", error_description=\"{}\"",
+            self.error_code(),
+            self.message()
+        )
     }
 }

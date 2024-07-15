@@ -3,9 +3,8 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Error response types for REST APIv1
-use actix_http::header::HeaderValue;
 use actix_web::{error::JsonPayloadError, http::StatusCode, HttpRequest};
-use opentalk_types::api::error::{ApiError, ErrorBody};
+use opentalk_types::api::error::{ApiError, AuthenticationError, ErrorBody};
 use serde::{Deserialize, Serialize};
 use snafu::ResultExt;
 
@@ -32,7 +31,7 @@ pub fn json_error_handler(err: JsonPayloadError, _: &HttpRequest) -> actix_web::
 #[derive(Clone, Serialize, Deserialize)]
 pub struct CacheableApiError {
     status: u16,
-    www_authenticate: Option<Vec<u8>>,
+    www_authenticate: Option<AuthenticationError>,
     body: ErrorBody,
 }
 
@@ -42,11 +41,7 @@ impl TryFrom<CacheableApiError> for ApiError {
     fn try_from(value: CacheableApiError) -> Result<Self, Self::Error> {
         Ok(ApiError {
             status: StatusCode::from_u16(value.status).whatever_context("Invalid status code")?,
-            www_authenticate: value
-                .www_authenticate
-                .map(|b| HeaderValue::from_bytes(&b))
-                .transpose()
-                .whatever_context("Failed to parse header from bytes")?,
+            www_authenticate: value.www_authenticate,
             body: value.body,
         })
     }
@@ -56,10 +51,7 @@ impl From<&ApiError> for CacheableApiError {
     fn from(value: &ApiError) -> Self {
         Self {
             status: value.status.as_u16(),
-            www_authenticate: value
-                .www_authenticate
-                .as_ref()
-                .map(|h| h.as_bytes().to_owned()),
+            www_authenticate: value.www_authenticate,
             body: value.body.clone(),
         }
     }
