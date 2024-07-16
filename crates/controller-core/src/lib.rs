@@ -661,6 +661,7 @@ impl ModulesRegistrar for Controller {
     paths(
         api::v1::assets::room_asset,
         api::v1::assets::room_assets,
+        api::v1::assets::delete,
         api::v1::auth::get_login,
         api::v1::auth::post_login,
         api::v1::invites::add_invite,

@@ -130,6 +130,41 @@ pub async fn room_asset(
     Ok(HttpResponse::build(StatusCode::OK).streaming(data))
 }
 
+/// Delete an asset from a room.
+///
+/// The asset is removed from the room and deleted from the storage.
+#[utoipa::path(
+    operation_id = "delete_room_asset",
+    params(
+        ("room_id" = RoomId, description = "The id of the room"),
+        ("asset_id" = AssetId, description = "The id of the asset"),
+    ),
+    responses(
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "The asset has been deleted",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[delete("/rooms/{room_id}/assets/{asset_id}")]
 pub async fn delete(
     db: Data<Db>,

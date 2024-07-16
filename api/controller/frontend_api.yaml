@@ -369,6 +369,38 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+    delete:
+      tags:
+        - "api::v1::assets"
+      summary: Delete an asset from a room.
+      description: The asset is removed from the room and deleted from the storage.
+      operationId: delete_room_asset
+      parameters:
+        - name: room_id
+          in: path
+          description: The id of the room
+          required: true
+          schema:
+            $ref: "#/components/schemas/RoomId"
+        - name: asset_id
+          in: path
+          description: The id of the asset
+          required: true
+          schema:
+            $ref: "#/components/schemas/AssetId"
+      responses:
+        "204":
+          description: The asset has been deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   "/rooms/{room_id}/event":
     get:
       tags:
