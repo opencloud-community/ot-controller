@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::{collections::HashMap, num::ParseIntError};
+use std::{collections::HashMap, num::ParseIntError, str::FromStr};
 
 use chrono::Utc;
 use clap::Subcommand;
@@ -14,6 +14,7 @@ use opentalk_db_storage::{
     tariffs::{ExternalTariff, ExternalTariffId, NewTariff, Tariff, UpdateTariff},
     utils::Jsonb,
 };
+use opentalk_types::common::tariff::QuotaType;
 use snafu::{OptionExt, ResultExt, Snafu};
 use tabled::{settings::Style, Table, Tabled};
 
@@ -36,7 +37,7 @@ pub enum Command {
         disabled_features: Vec<String>,
         /// Comma-separated list of key=value pairs
         #[clap(long, value_delimiter = ',', value_parser = parse_quota)]
-        quotas: Vec<(String, u64)>,
+        quotas: Vec<(QuotaType, u64)>,
     },
     /// Delete a tariff by name
     Delete {
@@ -79,26 +80,26 @@ pub enum Command {
 
         /// Comma-separated list of key=value pairs to add, overwrites quotas with the same name
         #[clap(long, value_delimiter = ',', value_parser = parse_quota)]
-        add_quotas: Vec<(String, u64)>,
+        add_quotas: Vec<(QuotaType, u64)>,
 
         /// Comma-separated list of quota keys to remove
         #[clap(long, value_delimiter = ',')]
-        remove_quotas: Vec<String>,
+        remove_quotas: Vec<QuotaType>,
     },
 }
 
 #[derive(Debug, Snafu)]
 enum CliParameterError {
     /// Invalid key-value-pair, must be of form `key=value`
-    InvalidKeyValuePair,
+    KeyValuePair,
     /// invalid quota value, expected 64-bit unsigned integer
-    InvalidQuota { source: ParseIntError },
+    QuotaValue { source: ParseIntError },
 }
 
-fn parse_quota(s: &str) -> Result<(String, u64), CliParameterError> {
-    let (name, value) = s.split_once('=').context(InvalidKeyValuePairSnafu)?;
-    let value = value.trim().parse().context(InvalidQuotaSnafu)?;
-    Ok((name.trim().into(), value))
+fn parse_quota(s: &str) -> Result<(QuotaType, u64), CliParameterError> {
+    let (name, value) = s.split_once('=').context(KeyValuePairSnafu)?;
+    let value = value.trim().parse().context(QuotaValueSnafu)?;
+    Ok((QuotaType::from_str(name).expect("Infallible"), value))
 }
 
 pub async fn handle_command(settings: Settings, command: Command) -> Result<(), DatabaseError> {
@@ -167,7 +168,7 @@ async fn create_tariff(
     external_tariff_id: String,
     disabled_modules: Vec<String>,
     disabled_features: Vec<String>,
-    quotas: HashMap<String, u64>,
+    quotas: HashMap<QuotaType, u64>,
 ) -> Result<(), DatabaseError> {
     let db = Db::connect(&settings.database)?;
     let mut conn = db.get_conn().await?;
@@ -227,8 +228,8 @@ async fn edit_tariff(
     remove_disabled_modules: Vec<String>,
     add_disabled_features: Vec<String>,
     remove_disabled_features: Vec<String>,
-    add_quotas: HashMap<String, u64>,
-    remove_quotas: Vec<String>,
+    add_quotas: HashMap<QuotaType, u64>,
+    remove_quotas: Vec<QuotaType>,
 ) -> Result<(), DatabaseError> {
     let db = Db::connect(&settings.database)?;
     let mut conn = db.get_conn().await?;

@@ -40,7 +40,7 @@ use opentalk_signaling_core::{
     SubscriberHandle, VolatileStorage,
 };
 use opentalk_types::{
-    common::tariff::TariffResource,
+    common::tariff::{QuotaType, TariffResource},
     core::{BreakoutRoomId, ParticipantId, ParticipationKind, UserId},
     signaling::{
         common::TargetParticipant,
@@ -1178,14 +1178,14 @@ impl Runner {
             return Ok(ControlFlow::Continue(tariff));
         }
 
-        if let Some(participant_limit) = tariff.quotas.0.get("room_participant_limit") {
+        if let Some(participant_limit) = tariff.quota(&QuotaType::RoomParticipantLimit) {
             if let Some(count) = self
                 .volatile
                 .control_storage()
                 .get_participant_count(self.room.id)
                 .await?
             {
-                if count >= *participant_limit as isize {
+                if count >= participant_limit as isize {
                     return Ok(ControlFlow::Break(
                         JoinBlockedReason::ParticipantLimitReached,
                     ));
@@ -1496,10 +1496,9 @@ impl Runner {
             .get_tariff(self.room.id)
             .await?;
 
-        let quotas = tariff.quotas.0;
-        let remaining_seconds = quotas
-            .get("room_time_limit_secs")
-            .map(|time_limit| *time_limit as i64);
+        let remaining_seconds = tariff
+            .quota(&QuotaType::RoomTimeLimitSecs)
+            .map(|time_limit| i64::try_from(time_limit).unwrap_or(i64::MAX));
 
         if let Some(remaining_seconds) = remaining_seconds {
             let closes_at =
