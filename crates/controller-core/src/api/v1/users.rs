@@ -142,6 +142,10 @@ pub async fn patch_me(
 }
 
 /// Get the current user's profile
+///
+/// Returns the private user profile of the currently logged-in user. This
+/// private profile contains information that is not visible in the public
+/// profile, such as tariff status or the used storage.
 #[utoipa::path(
     responses(
         (

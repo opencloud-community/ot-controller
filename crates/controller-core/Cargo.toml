@@ -98,6 +98,7 @@ utoipa-swagger-ui = { workspace = true, features = [
 ], optional = true }
 uuid = { workspace = true, features = ["serde", "v4"] }
 validator.workspace = true
+yaml-rust2.workspace = true
 
 [dev-dependencies]
 opentalk-test-util = { workspace = true, features = ["database"] }

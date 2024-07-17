@@ -122,6 +122,7 @@ utoipa = "4"
 utoipa-swagger-ui = "7"
 uuid = "1"
 validator = { version = "0.18", features = ["derive"] }
+yaml-rust2 = "0.8.1"
 
 [workspace.dependencies.casbin]
 default-features = false

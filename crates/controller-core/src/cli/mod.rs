@@ -13,6 +13,7 @@ mod acl;
 mod fix_acl;
 mod jobs;
 mod modules;
+mod openapi;
 mod reload;
 mod tariffs;
 mod tenants;
@@ -50,6 +51,7 @@ enum SubCommand {
     /// Modify the ACLs.
     #[clap(subcommand)]
     Acl(AclSubCommand),
+
     /// Migrate the db. This is done automatically during start of the controller,
     /// but can be done without starting the controller using this command.
     MigrateDb,
@@ -69,6 +71,10 @@ enum SubCommand {
     /// Manage modules
     #[clap(subcommand)]
     Modules(modules::Command),
+
+    /// Get information on the OpenAPI specification
+    #[clap(subcommand)]
+    Openapi(openapi::Command),
 }
 
 #[derive(Subcommand, Debug, Clone)]
@@ -146,6 +152,11 @@ pub async fn parse_args<M: RegisterModules>() -> Result<Args> {
                 modules::handle_command::<M>(command)
                     .await
                     .whatever_context("Modules command failed")?;
+            }
+            SubCommand::Openapi(command) => {
+                openapi::handle_command(command)
+                    .await
+                    .whatever_context("OpenAPI command failed")?;
             }
         }
     }
