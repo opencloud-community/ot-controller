@@ -14,7 +14,7 @@ use crate::imports::*;
     serde(rename_all = "snake_case", tag = "status")
 )]
 pub enum StreamStatus {
-    /// The stream is startin (meaning, that the Recorder is currently starting but is not yet confirmed to be started.)
+    /// The stream is starting (meaning, that the Recorder is currently starting but is not yet confirmed to be started).
     Starting,
 
     /// The stream is inactive
