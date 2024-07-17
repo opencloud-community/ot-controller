@@ -4,7 +4,7 @@
 
 //! Common types related to tariff information
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::core::TariffId;
 #[allow(unused_imports)]
@@ -21,16 +21,16 @@ pub struct TariffResource {
     pub name: String,
 
     /// The quotas of the tariff
-    pub quotas: HashMap<QuotaType, u64>,
+    pub quotas: BTreeMap<QuotaType, u64>,
 
     /// Enabled modules for the tariff (deprecated, use 'modules' instead)
-    pub enabled_modules: HashSet<String>,
+    pub enabled_modules: BTreeSet<String>,
 
     /// Disabled features for the tariff  (deprecated, use 'modules' instead)
-    pub disabled_features: HashSet<String>,
+    pub disabled_features: BTreeSet<String>,
 
     /// Enabled modules for the tariff, including their enabled features
-    pub modules: HashMap<String, TariffModuleResource>,
+    pub modules: BTreeMap<String, TariffModuleResource>,
 }
 
 impl TariffResource {
@@ -43,7 +43,7 @@ impl TariffResource {
     }
 
     /// Get the features for a module
-    pub fn module_features(&self, module: &str) -> Option<&HashSet<String>> {
+    pub fn module_features(&self, module: &str) -> Option<&BTreeSet<String>> {
         self.modules.get(module).map(|m| &m.features)
     }
 }
@@ -53,7 +53,7 @@ impl TariffResource {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TariffModuleResource {
     /// Enabled features for the tariff
-    pub features: HashSet<String>,
+    pub features: BTreeSet<String>,
 }
 
 impl TariffModuleResource {
@@ -107,7 +107,7 @@ mod test {
     #[test]
     fn quota_type_json() {
         use serde_json::json;
-        let quota = HashMap::from([
+        let quota = BTreeMap::from([
             (QuotaType::MaxStorage, 11u64),
             (QuotaType::RoomTimeLimitSecs, 12u64),
             (QuotaType::RoomParticipantLimit, 13u64),
@@ -179,18 +179,18 @@ mod test {
         let produced = serde_json::to_value(TariffResource {
             id: TariffId::nil(),
             name: "tariff name".to_string(),
-            quotas: HashMap::from([
+            quotas: BTreeMap::from([
                 (QuotaType::MaxStorage, 11u64),
                 (QuotaType::RoomTimeLimitSecs, 12u64),
                 (QuotaType::RoomParticipantLimit, 13u64),
                 (QuotaType::Other("this_is_somethingElse".to_string()), 14u64),
             ]),
-            enabled_modules: HashSet::from(["mod_a".to_owned()]),
-            disabled_features: HashSet::from(["feat_a".to_owned()]),
-            modules: HashMap::from([(
+            enabled_modules: BTreeSet::from(["mod_a".to_owned()]),
+            disabled_features: BTreeSet::from(["feat_a".to_owned()]),
+            modules: BTreeMap::from([(
                 "mod_a".to_owned(),
                 TariffModuleResource {
-                    features: HashSet::from(["feat_a".to_owned()]),
+                    features: BTreeSet::from(["feat_a".to_owned()]),
                 },
             )]),
         })

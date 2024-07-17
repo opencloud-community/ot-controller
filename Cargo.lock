@@ -4342,7 +4342,6 @@ dependencies = [
  "redis-args",
  "refinery",
  "refinery-core",
- "rustc-hash 2.0.0",
  "serde",
  "serde_json",
  "serial_test",

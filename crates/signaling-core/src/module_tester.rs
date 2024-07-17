@@ -10,7 +10,7 @@
 //!
 //! The idea is to simulate a frontend websocket connection.
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeMap, BTreeSet, HashMap},
     marker::PhantomData,
     panic,
     sync::Arc,
@@ -417,10 +417,10 @@ where
         let room_tariff = TariffResource {
             id: TariffId::nil(),
             name: "OpenTalkDefaultTariff".to_string(),
-            quotas: HashMap::new(),
-            enabled_modules: HashSet::from([M::NAMESPACE.to_string()]),
-            disabled_features: HashSet::new(),
-            modules: HashMap::from([(
+            quotas: BTreeMap::new(),
+            enabled_modules: BTreeSet::from([M::NAMESPACE.to_string()]),
+            disabled_features: BTreeSet::new(),
+            modules: BTreeMap::from([(
                 M::NAMESPACE.to_string(),
                 TariffModuleResource {
                     features: M::get_provided_features()
@@ -703,7 +703,7 @@ where
                         id: TariffId::nil(),
                         name: "test".into(),
                         quotas: Default::default(),
-                        enabled_modules: HashSet::from([M::NAMESPACE.into()]),
+                        enabled_modules: BTreeSet::from([M::NAMESPACE.into()]),
                         disabled_features: Default::default(),
                         modules: Default::default(),
                     }

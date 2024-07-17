@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use core::fmt::Debug;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet};
 
 use chrono::{DateTime, Utc};
 use derive_more::{AsRef, Display, From, FromStr, Into};
@@ -17,7 +17,6 @@ use opentalk_types::{
     core::{TariffId, UserId},
 };
 use redis_args::{FromRedisValue, ToRedisArgs};
-use rustc_hash::FxHashSet;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -66,7 +65,7 @@ pub struct Tariff {
     pub name: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-    pub quotas: Jsonb<HashMap<QuotaType, u64>>,
+    pub quotas: Jsonb<BTreeMap<QuotaType, u64>>,
     pub disabled_modules: Vec<Option<String>>,
     pub disabled_features: Vec<Option<String>>,
 }
@@ -76,11 +75,11 @@ impl Tariff {
         self.quotas.0.get(quota).copied()
     }
 
-    pub fn disabled_modules(&self) -> HashSet<String> {
+    pub fn disabled_modules(&self) -> BTreeSet<String> {
         self.disabled_modules.iter().flatten().cloned().collect()
     }
 
-    pub fn disabled_features(&self) -> HashSet<String> {
+    pub fn disabled_features(&self) -> BTreeSet<String> {
         self.disabled_features.iter().flatten().cloned().collect()
     }
 
@@ -152,23 +151,23 @@ impl Tariff {
         T2: Into<String>,
         T3: Into<String>,
     {
-        let disabled_modules: FxHashSet<String> = HashSet::from_iter(self.disabled_modules());
+        let disabled_modules = self.disabled_modules();
 
-        let disabled_features: HashSet<_> = HashSet::from_iter(
+        let disabled_features: BTreeSet<_> = BTreeSet::from_iter(
             self.disabled_features()
                 .into_iter()
                 .chain(disabled_features.into_iter().map(Into::into)),
         );
 
-        let mut enabled_module_names = HashSet::<String>::new();
-        let mut modules = HashMap::<String, TariffModuleResource>::new();
+        let mut enabled_module_names = BTreeSet::<String>::new();
+        let mut modules = BTreeMap::<String, TariffModuleResource>::new();
 
         module_features
             .into_iter()
             .for_each(|(module_name, feature_name)| {
                 let module_name = module_name.into();
                 if !disabled_modules.contains(module_name.as_str()) {
-                    let features = HashSet::from_iter(
+                    let features = BTreeSet::from_iter(
                         feature_name.into_iter().map(Into::into).filter(|feature| {
                             !disabled_features.contains(
                                 format!("{module_name}{NAMESPACE_SEPARATOR}{feature}").as_str(),
@@ -219,7 +218,7 @@ impl Tariff {
 #[diesel(table_name = tariffs)]
 pub struct NewTariff {
     pub name: String,
-    pub quotas: Jsonb<HashMap<QuotaType, u64>>,
+    pub quotas: Jsonb<BTreeMap<QuotaType, u64>>,
     pub disabled_modules: Vec<String>,
     pub disabled_features: Vec<String>,
 }
@@ -238,7 +237,7 @@ impl NewTariff {
 pub struct UpdateTariff {
     pub name: Option<String>,
     pub updated_at: DateTime<Utc>,
-    pub quotas: Option<Jsonb<HashMap<QuotaType, u64>>>,
+    pub quotas: Option<Jsonb<BTreeMap<QuotaType, u64>>>,
     pub disabled_modules: Option<Vec<String>>,
     pub disabled_features: Option<Vec<String>>,
 }
@@ -327,12 +326,12 @@ mod test {
         let module_features = Vec::from([
             (
                 "chat".to_owned(),
-                HashSet::from(["chat_feature_1".to_owned(), "chat_feature_2".to_owned()]),
+                BTreeSet::from(["chat_feature_1".to_owned(), "chat_feature_2".to_owned()]),
             ),
-            ("media".to_owned(), HashSet::new()),
-            ("polls".to_owned(), HashSet::new()),
-            ("whiteboard".to_owned(), HashSet::new()),
-            ("timer".to_owned(), HashSet::new()),
+            ("media".to_owned(), BTreeSet::new()),
+            ("polls".to_owned(), BTreeSet::new()),
+            ("whiteboard".to_owned(), BTreeSet::new()),
+            ("timer".to_owned(), BTreeSet::new()),
         ]);
 
         let expected = json!({

@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::{collections::HashMap, num::ParseIntError, str::FromStr};
+use std::{collections::BTreeMap, num::ParseIntError, str::FromStr};
 
 use chrono::Utc;
 use clap::Subcommand;
@@ -168,7 +168,7 @@ async fn create_tariff(
     external_tariff_id: String,
     disabled_modules: Vec<String>,
     disabled_features: Vec<String>,
-    quotas: HashMap<QuotaType, u64>,
+    quotas: BTreeMap<QuotaType, u64>,
 ) -> Result<(), DatabaseError> {
     let db = Db::connect(&settings.database)?;
     let mut conn = db.get_conn().await?;
@@ -228,7 +228,7 @@ async fn edit_tariff(
     remove_disabled_modules: Vec<String>,
     add_disabled_features: Vec<String>,
     remove_disabled_features: Vec<String>,
-    add_quotas: HashMap<QuotaType, u64>,
+    add_quotas: BTreeMap<QuotaType, u64>,
     remove_quotas: Vec<QuotaType>,
 ) -> Result<(), DatabaseError> {
     let db = Db::connect(&settings.database)?;
