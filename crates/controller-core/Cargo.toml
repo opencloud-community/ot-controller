@@ -100,16 +100,12 @@ serial_test.workspace = true
 
 [build-dependencies]
 snafu.workspace = true
-vergen = { version = "8", features = [
-  "build",
-  "cargo",
-  "git",
-  "git2",
-  "rustc",
-] }
+vergen = { version = "9", features = ["build", "cargo", "rustc"] }
+vergen-gix = { version = "1" }
 
 [package.metadata.cargo-machete]
 ignored = [
   # is used during build
   "vergen",
+  "vergen_gix",
 ]
