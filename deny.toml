@@ -37,6 +37,7 @@ ignore = [
   # - openidconnect switches to a different dependency
   # - rsa releases a fixed version
   "RUSTSEC-2023-0071",
+  { crate = "bytes@1.6.0", reason = "no complications are expected, will be fixed in the next release" },
 ]
 # Threshold for security vulnerabilities, any vulnerability with a CVSS score
 # lower than the range specified will be ignored. Note that ignored advisories
