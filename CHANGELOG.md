@@ -9,12 +9,81 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- controller: add job for deleting disabled users ([#777](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/777)
 - controller: add configuration for terdoc report generation service ([#815](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/815)
 
-### Changed
+## [0.16.0]
 
-- controller: removed `DELETE /internal/rooms/{room_id}` endpoint, updated `DELETE /rooms/{room_id}` & `DELETE /events/{event_id}` endpoints ([#762](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/762))
+### <!-- 0 -->:rocket: New features
+
+- Allow connecting to janus via websocket_url [#786](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/786)
+- Add room and room-creator info to the join success message ([#779](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/779))
+- Add job to sync account states ([#776](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/776))
+- Extend DELETE rooms & events endpoints, remove `DELETE /internal/rooms/{room_id}` endpoint ([#762](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/762))
+- Force disable microphones of participants ([#711](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/711))
+- Allow lowering of multiple raised hands with a single command ([#790](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/790))
+- Add shared folder option to PATCH /v1/events/{event_id} ([#784](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/784))
+- Add streaming target option to PATCH /v1/events/{event_id} ([#784](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/784))
+- Extend moderator mute so that backend can mute all participants ([#798](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/798))
+- Add job for deleting disabled users ([#777](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/777))
+- Include room-id in ticket token ([!1000](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1000))
+- Do not use rabbitmq for exchange when no redis is configured ([!1001](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1001))
+
+### <!-- 1 -->:bug: Bug fixes
+
+- Also check the current directory for .git files or folders ([!948](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/948))
+- Move event_loops field out of janus connection configuration enum ([#791](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/791))
+- Handle undefined values in volatile storage ([#789](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/789))
+- Set joined time when joining ([#797](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/797))
+- Enable serde derives for `serde` feature instead of `client` ([#799](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/799))
+- Show correct package version and optimization level ([!946](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/946))
+- Fix speaker detection by assuming the unmute is allowed if no unmute allowlist is present and by updating the speaker state when already initialized ([#801](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/801))
+- Update poll error documentation ([#781](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/781))
+
+### Ci
+
+- Add lint script for detecting modules that should use mod.rs files
+- Call `cargo-deny` with `--deny unmatched-skip` ([#803](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/803))
+
+### Docs
+
+- Describe required Keycloak settings for enabling user search ([#729](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/729))
+
+### Refactor
+
+- Add OneOrManyVec and OneOrManyBTreeSet types
+
+### :gear: Miscellaneous
+
+- Use opentalk-keycloak-admin from crates.io
+- Fix clippy lints for rustc 1.79.0
+
+### Dependencies
+
+- Update alpine docker tag to v3.20
+- Update curve25519-dalek to fix RUSTSEC-2024-0344
+- Update git.opentalk.dev:5050/opentalk/backend/containers/rust docker tag to v1.79.0
+- Update postgres docker tag to v16
+- Update rabbitmq docker tag to v3.13
+- Update redis docker tag to v7
+- Update rust crate actix to v0.13.5
+- Update rust crate actix-http to v3.8.0
+- Update rust crate actix-rt to v2.10.0
+- Update rust crate actix-web to v4.8.0
+- Update rust crate actix-web-httpauth to v0.8.2
+- Update rust crate aws-sdk-s3 to v1.38.0
+- Update rust crate bigdecimal to v0.4.5
+- Update rust crate cidr to v0.2.3
+- Update rust crate clap to v4.5.8
+- Update rust crate derive_more to v0.99.18
+- Update rust crate either to v1.13.0
+- Update rust crate proc-macro2 to v1.0.86
+- Update rust crate rustc-hash to v2
+- Update rust crate serde_json to v1.0.119
+- Update rust crate serde_with to v3.8.2
+- Update rust crate strum to v0.26.3
+- Update rust crate syn to v2.0.68
+- Update rust crate url to v2.5.2
+- Update rust crate uuid to v1.9.1
 
 ## [0.15.0]
 
@@ -541,6 +610,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 [Unreleased]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.15.0...main
+
+[0.16.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.15.0...v0.16.0
 
 [0.15.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.14.0...v0.15.0
 
