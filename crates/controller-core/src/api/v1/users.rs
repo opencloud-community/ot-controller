@@ -55,7 +55,36 @@ use crate::{
 
 const MAX_USER_SEARCH_RESULTS: usize = 20;
 
-/// API Endpoint *PATCH /users/me*
+/// Patch the current user's profile
+///
+/// Fields that are not provided in the request body will remain unchanged.
+#[utoipa::path(
+    request_body = PatchMeBody,
+    operation_id = "patch_users_me",
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "User profile was successfully updated",
+            body = RoomResource
+        ),
+        (
+            status = StatusCode::BAD_REQUEST,
+            description = r"Could not modify the user's profile due to wrong
+                syntax or bad values",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[patch("/users/me")]
 pub async fn patch_me(
     settings: SharedSettingsActix,

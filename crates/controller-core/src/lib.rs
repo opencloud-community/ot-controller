@@ -687,6 +687,7 @@ impl ModulesRegistrar for Controller {
         api::v1::turn::get,
         api::v1::users::find,
         api::v1::users::get_me,
+        api::v1::users::patch_me,
     ),
     components(
         schemas(
@@ -726,6 +727,7 @@ impl ModulesRegistrar for Controller {
             opentalk_types::api::v1::turn::Turn,
             opentalk_types::api::v1::users::GetFindResponse,
             opentalk_types::api::v1::users::GetFindResponseItem,
+            opentalk_types::api::v1::users::PatchMeBody,
             opentalk_types::api::v1::users::PrivateUserProfile,
             opentalk_types::api::v1::users::PublicUserProfile,
             opentalk_types::api::v1::users::UnregisteredUser,

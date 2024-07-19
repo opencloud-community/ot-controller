@@ -106,8 +106,13 @@ pub struct PrivateUserProfile {
 }
 
 /// Used to modify user settings.
-#[derive(Clone, Debug)]
+#[derive(Default, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize, Validate))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(
+    example = json!(
+        PublicUserProfile::example_data()
+    )
+))]
 pub struct PatchMeBody {
     /// The user's title
     #[cfg_attr(feature = "serde", validate(length(max = 255)))]
@@ -146,6 +151,16 @@ impl PatchMeBody {
             && language.is_none()
             && dashboard_theme.is_none()
             && conference_theme.is_none()
+    }
+}
+
+impl ExampleData for PatchMeBody {
+    fn example_data() -> Self {
+        Self {
+            display_name: Some("Alice Adams".to_string()),
+            language: Some("en".to_string()),
+            ..Default::default()
+        }
     }
 }
 

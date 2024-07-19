@@ -1126,6 +1126,35 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+    patch:
+      tags:
+        - "api::v1::users"
+      summary: "Patch the current user's profile"
+      description: Fields that are not provided in the request body will remain unchanged.
+      operationId: patch_users_me
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchMeBody"
+        required: true
+      responses:
+        "200":
+          description: User profile was successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoomResource"
+        "400":
+          description: |
+            Could not modify the user's profile due to wrong
+                            syntax or bad values
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
 components:
   schemas:
     AssetId:
@@ -1379,6 +1408,38 @@ components:
     PageLink:
       type: string
       example: "<https://api.example.org/resource?page=2>; rel='next', <https://api.example.org/resource?page=5>; rel='last'"
+    PatchMeBody:
+      type: object
+      description: Used to modify user settings.
+      properties:
+        conference_theme:
+          type: string
+          description: The conference theme
+          nullable: true
+        dashboard_theme:
+          type: string
+          description: The dashboard theme
+          nullable: true
+        display_name:
+          type: string
+          description: "The user's display name"
+          nullable: true
+        language:
+          type: string
+          description: "The user's language"
+          nullable: true
+        title:
+          type: string
+          description: "The user's title"
+          nullable: true
+      example:
+        avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
+        display_name: Alice Adams
+        email: alice@example.com
+        firstname: Alice
+        id: 00000000-0000-0000-0000-0000000a11c3
+        lastname: Adams
+        title: ""
     PatchRoomsRequestBody:
       type: object
       description: API request parameters to patch a room
