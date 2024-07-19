@@ -59,7 +59,7 @@ pub async fn start(
         &mut volatile,
         Participant::Recorder,
         room.id,
-        None,
+        body.breakout_room,
         None,
     )
     .await?;

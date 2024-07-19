@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::core::RoomId;
+use crate::core::{BreakoutRoomId, RoomId};
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -12,4 +12,7 @@ use crate::imports::*;
 pub struct StartBody {
     /// The room id
     pub room_id: RoomId,
+
+    /// The optional breakout room id
+    pub breakout_room: Option<BreakoutRoomId>,
 }
