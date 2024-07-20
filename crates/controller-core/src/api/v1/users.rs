@@ -44,7 +44,7 @@ use validator::Validate;
 use super::response::NoContent;
 use crate::{
     api::{
-        responses::{InternalServerError, Unauthorized},
+        responses::{Forbidden, InternalServerError, Unauthorized},
         signaling::SignalingModules,
         v1::ApiResponse,
     },
@@ -314,9 +314,36 @@ pub async fn get_me_assets(
     )
 }
 
-/// API Endpoint *GET /users/{user_id}*
+/// Get a user's public profile
 ///
-/// Returns [`PublicUserProfile`] of the specified user
+/// Returns the public profile of a user.
+#[utoipa::path(
+    params(
+        ("user_id" = UserId, description = "The id of the user"),
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Information about the user",
+            body = PublicUserProfile,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/users/{user_id}")]
 pub async fn get_user(
     settings: SharedSettingsActix,

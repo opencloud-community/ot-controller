@@ -689,6 +689,7 @@ impl ModulesRegistrar for Controller {
         api::v1::users::get_me,
         api::v1::users::get_me_assets,
         api::v1::users::get_me_tariff,
+        api::v1::users::get_user,
         api::v1::users::patch_me,
     ),
     components(
