@@ -14,11 +14,44 @@ use opentalk_db_storage::{
 };
 use opentalk_types::{api::error::ApiError, core::EventId};
 
-use crate::api::v1::response::{Created, NoContent};
+use crate::api::{
+    responses::{InternalServerError, NotFound, Unauthorized},
+    v1::response::{Created, NoContent},
+};
 
-/// API Endpoint *PUT /users/me/event_favorites/{event_id}*
+/// Add an event to the current user's favorites
 ///
-/// Add an event to the current users favorites
+/// The event will be marked as favorited by the calling user.
+#[utoipa::path(
+    params(
+        ("event_id" = EventId, description = "The id of the event that gets marked as favorite"),
+    ),
+    responses(
+        (
+            status = StatusCode::CREATED,
+            description = "The event has been addded to the user's favorites",
+        ),
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "The event had already been added to the user's favorites, no changes made",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[put("/users/me/event_favorites/{event_id}")]
 pub async fn add_event_to_favorites(
     db: Data<Db>,

@@ -1204,6 +1204,33 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+  "/users/me/event_favorites/{event_id}":
+    put:
+      tags:
+        - "api::v1::events::favorites"
+      summary: "Add an event to the current user's favorites"
+      description: The event will be marked as favorited by the calling user.
+      operationId: add_event_to_favorites
+      parameters:
+        - name: event_id
+          in: path
+          description: The id of the event that gets marked as favorite
+          required: true
+          schema:
+            $ref: "#/components/schemas/EventId"
+      responses:
+        "201":
+          description: "The event has been addded to the user's favorites"
+        "204":
+          description: "The event had already been added to the user's favorites, no changes made"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   /users/me/tariff:
     get:
       tags:
@@ -2221,6 +2248,10 @@ tags:
     description: Endpoints related to meeting invites
   - name: "api::v1::rooms"
     description: Endpoints related to meeting rooms
+  - name: "api::v1::events"
+    description: Endpoints related to events
+  - name: "api::v1::events::favorites"
+    description: "Endpoints related to user's favorite events"
   - name: "api::v1::assets"
     description: Endpoints related to file assets
   - name: "api::v1::sip_configs"

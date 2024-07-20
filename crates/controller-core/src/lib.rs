@@ -634,6 +634,14 @@ impl ModulesRegistrar for Controller {
             description = "Endpoints related to meeting rooms"
         ),
         (
+            name = "api::v1::events",
+            description = "Endpoints related to events"
+        ),
+        (
+            name = "api::v1::events::favorites",
+            description = "Endpoints related to user's favorite events"
+        ),
+        (
             name = "api::v1::assets",
             description = "Endpoints related to file assets"
         ),
@@ -664,6 +672,7 @@ impl ModulesRegistrar for Controller {
         api::v1::assets::delete,
         api::v1::auth::get_login,
         api::v1::auth::post_login,
+        api::v1::events::favorites::add_event_to_favorites,
         api::v1::invites::add_invite,
         api::v1::invites::delete_invite,
         api::v1::invites::get_invite,
