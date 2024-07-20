@@ -1051,6 +1051,50 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+  /signaling:
+    get:
+      tags:
+        - "api::signaling"
+      summary: Room signaling websocket
+      description: |
+        The room signaling websocket.
+        Documentation: <https://docs.opentalk.eu/developer/controller/signaling/>.
+      operationId: ws_service
+      parameters:
+        - name: Sec-WebSocket-Protocol
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: "^opentalk-signaling-json-v1.0, ticket#.*$"
+          example: "opentalk-signaling-json-v1.0, ticket#eyJpc3MiOiJodHRwczovL2V4YW1wbGUuYXV0aDAuY29tLy"
+        - name: connection
+          in: header
+          required: true
+          schema:
+            type: string
+            enum:
+              - Upgrade
+        - name: upgrade
+          in: header
+          required: true
+          schema:
+            type: string
+            enum:
+              - websocket
+      responses:
+        "200":
+          description: WebSocket connection succcessfully established
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   /turn:
     get:
       tags:
@@ -2218,6 +2262,8 @@ components:
           description: Human readable error message
           nullable: true
   responses:
+    BadRequest:
+      description: Bad request
     BinaryData:
       description: Binary data
     Forbidden:
@@ -2288,3 +2334,5 @@ tags:
     description: Endpoints related TURN server usage
   - name: "api::v1::users"
     description: Endpoints related to user information and management
+  - name: "api::signaling"
+    description: Endpoints for signaling connections in a meeting

@@ -25,11 +25,14 @@ use super::{
     runner::Runner,
 };
 use crate::{
-    api::signaling::{
-        resumption::{ResumptionData, ResumptionTokenKeepAlive},
-        storage::{SignalingStorage, SignalingStorageProvider as _},
-        ticket::TicketData,
-        ws::actor::WebSocketActor,
+    api::{
+        responses::{BadRequest, Forbidden, InternalServerError, Unauthorized},
+        signaling::{
+            resumption::{ResumptionData, ResumptionTokenKeepAlive},
+            storage::{SignalingStorage, SignalingStorageProvider as _},
+            ticket::TicketData,
+            ws::actor::WebSocketActor,
+        },
     },
     settings::SharedSettingsActix,
 };
@@ -64,6 +67,40 @@ impl SignalingProtocols {
     }
 }
 
+/// Room signaling websocket
+///
+/// The room signaling websocket.
+/// Documentation: <https://docs.opentalk.eu/developer/controller/signaling/>.
+#[utoipa::path(
+    params(
+        crate::api::headers::SignalingProtocolHeaders,
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "WebSocket connection succcessfully established",
+        ),
+        (
+            status = StatusCode::BAD_REQUEST,
+            response = BadRequest,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[allow(clippy::too_many_arguments)]
 #[get("/signaling")]
 pub(crate) async fn ws_service(

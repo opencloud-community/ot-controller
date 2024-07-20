@@ -665,8 +665,13 @@ impl ModulesRegistrar for Controller {
             name = "api::v1::users",
             description = "Endpoints related to user information and management"
         ),
+        (
+            name = "api::signaling",
+            description = "Endpoints for signaling connections in a meeting"
+        ),
     ),
     paths(
+        api::signaling::ws_service,
         api::v1::assets::room_asset,
         api::v1::assets::room_assets,
         api::v1::assets::delete,
@@ -767,6 +772,7 @@ impl ModulesRegistrar for Controller {
             opentalk_types::core::UserId,
         ),
         responses(
+            crate::api::responses::BadRequest,
             crate::api::responses::BinaryData,
             crate::api::responses::InternalServerError,
             crate::api::responses::Unauthorized,
