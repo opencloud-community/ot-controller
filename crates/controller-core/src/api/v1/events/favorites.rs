@@ -77,9 +77,35 @@ pub async fn add_event_to_favorites(
     }
 }
 
-/// API Endpoint *DELETE /users/me/event_favorites/{event_id}*
+/// Remove an event from the current user's favorites
 ///
-/// Remove an event from the current users favorites
+/// The event will be marked as non-favorited by the calling user.
+#[utoipa::path(
+    params(
+        ("event_id" = EventId, description = "The id of the event that gets marked as non-favorited"),
+    ),
+    responses(
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "The event has been removed from the user's favorites",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[delete("/users/me/event_favorites/{event_id}")]
 pub async fn remove_event_from_favorites(
     db: Data<Db>,

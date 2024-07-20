@@ -1231,6 +1231,30 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+    delete:
+      tags:
+        - "api::v1::events::favorites"
+      summary: "Remove an event from the current user's favorites"
+      description: The event will be marked as non-favorited by the calling user.
+      operationId: remove_event_from_favorites
+      parameters:
+        - name: event_id
+          in: path
+          description: The id of the event that gets marked as non-favorited
+          required: true
+          schema:
+            $ref: "#/components/schemas/EventId"
+      responses:
+        "204":
+          description: "The event has been removed from the user's favorites"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   /users/me/tariff:
     get:
       tags:
