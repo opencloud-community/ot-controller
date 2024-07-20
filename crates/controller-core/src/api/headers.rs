@@ -8,6 +8,10 @@
 )]
 pub struct PageLink(pub String);
 
+#[derive(utoipa::ToSchema)]
+#[schema(example = "<https://api.example.org/resource?after=urlencodednextpagetoken>; rel='next'")]
+pub struct CursorLink(pub String);
+
 #[derive(serde::Deserialize, utoipa::ToSchema)]
 pub(crate) enum ConnectionUpgrade {
     Upgrade,

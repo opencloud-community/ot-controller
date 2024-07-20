@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use super::InstanceId;
-use crate::core::EventId;
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::{core::EventId, utils::ExampleData};
 
 /// Opaque id of an EventInstance or EventException resource. Should only be used to sort/index the related resource.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -53,6 +53,40 @@ mod serde_impls {
                 EventId::from(uuid::Uuid::parse_str(event_id).map_err(D::Error::custom)?);
 
             Ok(EventAndInstanceId(event_id, instance_id.into()))
+        }
+    }
+}
+
+impl ExampleData for EventAndInstanceId {
+    fn example_data() -> Self {
+        Self(EventId::example_data(), InstanceId::example_data())
+    }
+}
+
+#[cfg(feature = "utoipa")]
+mod impl_to_schema {
+    use serde_json::json;
+    use utoipa::{
+        openapi::{ObjectBuilder, SchemaType},
+        ToSchema,
+    };
+
+    use super::EventAndInstanceId;
+    use crate::utils::ExampleData as _;
+
+    impl<'__s> ToSchema<'__s> for EventAndInstanceId {
+        fn schema() -> (
+            &'__s str,
+            utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>,
+        ) {
+            (
+                "EventAndInstanceId",
+                ObjectBuilder::new()
+                    .schema_type(SchemaType::String)
+                    .description(Some("An event id and an instance id"))
+                    .example(Some(json!(EventAndInstanceId::example_data())))
+                    .into(),
+            )
         }
     }
 }

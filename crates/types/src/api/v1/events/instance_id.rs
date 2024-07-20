@@ -4,11 +4,11 @@
 
 use std::{fmt::Display, ops::Add};
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, TimeZone as _, Utc};
 
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{api::v1::events::UTC_DT_FORMAT, core::Timestamp};
+use crate::{api::v1::events::UTC_DT_FORMAT, core::Timestamp, utils::ExampleData};
 
 /// ID of an EventInstance
 ///
@@ -42,6 +42,38 @@ impl Add<chrono::Duration> for InstanceId {
 
     fn add(self, rhs: chrono::Duration) -> Self::Output {
         InstanceId(self.0 + rhs)
+    }
+}
+
+impl ExampleData for InstanceId {
+    fn example_data() -> Self {
+        Self(Utc.with_ymd_and_hms(2024, 7, 5, 17, 2, 42).unwrap().into())
+    }
+}
+
+#[cfg(feature = "utoipa")]
+mod impl_to_schema {
+    use utoipa::{
+        openapi::{ObjectBuilder, SchemaType},
+        ToSchema,
+    };
+
+    use super::InstanceId;
+
+    impl<'__s> ToSchema<'__s> for InstanceId {
+        fn schema() -> (
+            &'__s str,
+            utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>,
+        ) {
+            (
+                "InstanceId",
+                ObjectBuilder::new()
+                    .schema_type(SchemaType::String)
+                    .description(Some("An event instance id"))
+                    .example(Some("2024-07-20T15:23:42+00:00".into()))
+                    .into(),
+            )
+        }
     }
 }
 

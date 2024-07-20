@@ -17,6 +17,7 @@ use crate::{
 /// Allows for customization in the search for events
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::IntoParams))]
 pub struct GetEventsQuery {
     /// Optional minimum time in which the event happens
     pub time_min: Option<Timestamp>,
@@ -26,7 +27,7 @@ pub struct GetEventsQuery {
 
     /// Maximum number of invitees to return inside the event resource
     ///
-    /// Default: 0
+    /// Default value is 0
     #[cfg_attr(feature = "serde", serde(default))]
     pub invitees_max: u32,
 
@@ -47,6 +48,7 @@ pub struct GetEventsQuery {
     /// Cursor token to get the next page of events
     ///
     /// Returned by the endpoint if the maximum number of events per page has been hit
+    #[cfg_attr(feature = "utoipa", param(inline))]
     pub after: Option<Cursor<GetEventsCursorData>>,
 
     /// Only get events that are either marked as adhoc or non-adhoc

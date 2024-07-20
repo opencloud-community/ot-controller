@@ -4,13 +4,18 @@
 
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{core::EmailInviteRole, signaling::Role, sql_enum};
+use crate::{core::EmailInviteRole, signaling::Role, sql_enum, utils::ExampleData};
 
 sql_enum!(
     feature_gated:
 
     #[derive(PartialEq, Eq)]
     #[cfg_attr(feature="serde", derive(Serialize, Deserialize), serde(rename_all = "snake_case"))]
+    #[cfg_attr(
+        feature = "utoipa",
+        derive(utoipa::ToSchema),
+        schema(example = json!(InviteRole::example_data()))
+    )]
     InviteRole,
     "invite_role",
     InviteRoleType,
@@ -41,5 +46,11 @@ impl From<EmailInviteRole> for InviteRole {
             EmailInviteRole::Guest => Self::User,
             EmailInviteRole::Moderator => Self::Moderator,
         }
+    }
+}
+
+impl ExampleData for InviteRole {
+    fn example_data() -> Self {
+        Self::User
     }
 }

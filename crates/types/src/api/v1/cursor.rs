@@ -13,6 +13,24 @@ use crate::imports::*;
 #[derive(Deref, DerefMut, AsRef, Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Cursor<T>(pub T);
 
+#[cfg(feature = "utoipa")]
+impl<'__s, T> utoipa::ToSchema<'__s> for Cursor<T> {
+    fn schema() -> (
+        &'__s str,
+        utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>,
+    ) {
+        (
+            "Cursor",
+            utoipa::openapi::ObjectBuilder::new()
+                .schema_type(utoipa::openapi::SchemaType::String)
+                .description(Some(
+                    "An encoded cursor pointing to a position in a series of elements",
+                ))
+                .into(),
+        )
+    }
+}
+
 #[cfg(feature = "serde")]
 mod serde_impls {
     use std::marker::PhantomData;

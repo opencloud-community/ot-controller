@@ -73,9 +73,12 @@ use validator::Validate;
 
 use super::{response::NoContent, ApiResponse, DefaultApiResult};
 use crate::{
-    api::v1::{
-        events::shared_folder::put_shared_folder, rooms::RoomsPoliciesBuilderExt,
-        util::GetUserProfilesBatched,
+    api::{
+        responses::{BadRequest, InternalServerError, Unauthorized},
+        v1::{
+            events::shared_folder::put_shared_folder, rooms::RoomsPoliciesBuilderExt,
+            util::GetUserProfilesBatched,
+        },
     },
     services::{ExternalMailRecipient, MailRecipient, MailService, UnregisteredMailRecipient},
     settings::SharedSettingsActix,
@@ -621,11 +624,40 @@ struct GetPaginatedEventsData {
     after: Option<String>,
 }
 
-/// API Endpoint `GET /events`
+/// Get a list of events accessible by the requesting user
 ///
 /// Returns a paginated list of events and their exceptions inside the given time range
-///
-/// See documentation of [`GetEventsQuery`] for all query options
+#[utoipa::path(
+    params(GetEventsQuery),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "List of the events and exceptions",
+            body = Vec<EventOrException>,
+            headers(
+                (
+                    "link" = CursorLink,
+                    description = "Links for paging through the results"
+                ),
+            ),
+        ),
+        (
+            status = StatusCode::BAD_REQUEST,
+            response = BadRequest,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/events")]
 pub async fn get_events(
     settings: SharedSettingsActix,

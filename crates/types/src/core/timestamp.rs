@@ -4,11 +4,12 @@
 
 use std::{ops::Add, time::SystemTime};
 
-use chrono::{DateTime, Timelike as _, Utc};
+use chrono::{DateTime, TimeZone as _, Timelike as _, Utc};
 use derive_more::{AsRef, Deref, Display, From, FromStr};
 
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::utils::ExampleData;
 
 /// A UTC DateTime wrapper that implements ToRedisArgs and FromRedisValue.
 ///
@@ -58,6 +59,12 @@ impl Timestamp {
         // This can only fail if the nanoseconds have an invalid value, 0 is
         // valid here
         Timestamp(self.0.with_nanosecond(0).expect("nanoseconds should be 0"))
+    }
+}
+
+impl ExampleData for Timestamp {
+    fn example_data() -> Self {
+        Timestamp(Utc.with_ymd_and_hms(2024, 7, 20, 14, 16, 19).unwrap())
     }
 }
 

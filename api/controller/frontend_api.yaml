@@ -77,6 +77,121 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
       security: []
+  /events:
+    get:
+      tags:
+        - "api::v1::events"
+      summary: Get a list of events accessible by the requesting user
+      description: Returns a paginated list of events and their exceptions inside the given time range
+      operationId: get_events
+      parameters:
+        - name: time_min
+          in: query
+          description: Optional minimum time in which the event happens
+          required: false
+          schema:
+            allOf:
+              - $ref: "#/components/schemas/Timestamp"
+            nullable: true
+        - name: time_max
+          in: query
+          description: Optional maximum time in which the event happens
+          required: false
+          schema:
+            allOf:
+              - $ref: "#/components/schemas/Timestamp"
+            nullable: true
+        - name: invitees_max
+          in: query
+          description: |
+            Maximum number of invitees to return inside the event resource
+            
+            Default value is 0
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+        - name: favorites
+          in: query
+          description: Return only favorite events
+          required: false
+          schema:
+            type: boolean
+        - name: invite_status
+          in: query
+          description: Filter the events by invite status
+          required: false
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/EventInviteStatus"
+        - name: per_page
+          in: query
+          description: How many events to return per page
+          required: false
+          schema:
+            type: integer
+            format: int64
+            nullable: true
+        - name: after
+          in: query
+          description: |
+            Cursor token to get the next page of events
+            
+            Returned by the endpoint if the maximum number of events per page has been hit
+          required: false
+          schema:
+            allOf:
+              - type: string
+                description: An encoded cursor pointing to a position in a series of elements
+            nullable: true
+        - name: adhoc
+          in: query
+          description: |
+            Only get events that are either marked as adhoc or non-adhoc
+            
+            If present, all adhoc events will be returned when `true`, all non-adhoc
+            events will be returned when `false`. If not present, all events will
+            be returned regardless of their `adhoc` flag value.
+          required: false
+          schema:
+            type: boolean
+            nullable: true
+        - name: time_independent
+          in: query
+          description: |
+            Only get events that are either time-independent or time-dependent
+            
+            If present, all time-independent events will be returned when `true`,
+            all time-dependent events will be returned when `false`. If absent,
+            all events will be returned regardless of their time dependency.
+          required: false
+          schema:
+            type: boolean
+            nullable: true
+      responses:
+        "200":
+          description: List of the events and exceptions
+          headers:
+            link:
+              schema:
+                $ref: "#/components/schemas/CursorLink"
+              description: Links for paging through the results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EventOrException"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   /invite/verify:
     post:
       tags:
@@ -1408,6 +1523,33 @@ components:
       example: 00000000-0000-0000-0000-0000badcab1e
     CallInId:
       $ref: "#/components/schemas/NumericId"
+    CallInInfo:
+      type: object
+      description: "Data stored inside the `GET /events` query cursor"
+      required:
+        - tel
+        - id
+        - password
+      properties:
+        id:
+          type: string
+          description: SIP ID which must transmitted via DTMF (number field on the phone) to identify this room
+        password:
+          type: string
+          description: |
+            SIP password which must be transmitted via DTMF (number field on the phone) after entering the `sip_id`
+            to enter the room
+        tel:
+          type: string
+          description: SIP Call-In phone number which must be used to reach the room
+        uri:
+          type: string
+          description: SIP Call-In sip uri
+          nullable: true
+      example:
+        id: "1234567890"
+        password: "9876543210"
+        tel: +555-12345-67890
     CallInPassword:
       $ref: "#/components/schemas/NumericId"
     CodeVerified:
@@ -1422,16 +1564,517 @@ components:
           description: If password is required
         room_id:
           $ref: "#/components/schemas/RoomId"
+    CursorLink:
+      type: string
+      example: "<https://api.example.org/resource?after=urlencodednextpagetoken>; rel='next'"
+    DateTimeTz:
+      type: object
+      description: Representation of a datetime timezone
+      required:
+        - datetime
+        - timezone
+      properties:
+        datetime:
+          type: string
+          format: date-time
+          description: UTC datetime
+        timezone:
+          $ref: "#/components/schemas/TimeZone"
+      example:
+        datetime: "2024-07-05T17:23:42Z"
+        timezone: Europe/Berlin
+    EmailOnlyUser:
+      type: object
+      description: User profile with only email and avatar url
+      required:
+        - email
+        - avatar_url
+      properties:
+        avatar_url:
+          type: string
+          description: Avatar url of the user
+        email:
+          type: string
+          description: Email of the user
+      example:
+        avatar_url: "https://secure.gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
+        email: alice@example.com
     ErrorBody:
       oneOf:
         - $ref: "#/components/schemas/StandardErrorBody"
         - $ref: "#/components/schemas/ValidationErrorBody"
       description: The body of an error response
+    EventAndInstanceId:
+      type: string
+      description: An event id and an instance id
+      example: 00000000-0000-0000-0000-004433221100_20240705T170242Z
+    EventExceptionResource:
+      type: object
+      description: |
+        Event exception resource
+        
+        Overrides event properties for a event recurrence. May only exist for events of type `recurring`.
+      required:
+        - id
+        - recurring_event_id
+        - instance_id
+        - created_by
+        - created_at
+        - updated_by
+        - updated_at
+        - original_starts_at
+        - type
+        - status
+        - can_edit
+      properties:
+        can_edit:
+          type: boolean
+          description: Can the current user edit this resource
+        created_at:
+          $ref: "#/components/schemas/Timestamp"
+        created_by:
+          $ref: "#/components/schemas/PublicUserProfile"
+        description:
+          type: string
+          description: Override the description of the instance
+        ends_at:
+          allOf:
+            - $ref: "#/components/schemas/DateTimeTz"
+        id:
+          $ref: "#/components/schemas/EventAndInstanceId"
+        instance_id:
+          $ref: "#/components/schemas/InstanceId"
+        is_all_day:
+          type: boolean
+          description: "Override the `is_all_day` property of the instance"
+        original_starts_at:
+          $ref: "#/components/schemas/DateTimeTz"
+        recurring_event_id:
+          $ref: "#/components/schemas/EventId"
+        starts_at:
+          allOf:
+            - $ref: "#/components/schemas/DateTimeTz"
+        status:
+          $ref: "#/components/schemas/EventStatus"
+        title:
+          type: string
+          description: Override the title of the instance
+        type:
+          $ref: "#/components/schemas/EventType"
+        updated_at:
+          $ref: "#/components/schemas/Timestamp"
+        updated_by:
+          $ref: "#/components/schemas/PublicUserProfile"
+      example:
+        can_edit: false
+        created_at: "2024-07-20T14:16:19Z"
+        created_by:
+          avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
+          display_name: Alice Adams
+          email: alice@example.com
+          firstname: Alice
+          id: 00000000-0000-0000-0000-0000000a11c3
+          lastname: Adams
+          title: ""
+        description: The weekly teammeeting
+        ends_at:
+          datetime: "2024-07-05T17:00:00Z"
+          timezone: Europe/Berlin
+        id: 00000000-0000-0000-0000-004433221100_20240705T170242Z
+        instance_id: 20240705T170242Z
+        is_all_day: false
+        original_starts_at:
+          datetime: "2024-07-05T16:00:00Z"
+          timezone: Europe/Berlin
+        recurring_event_id: 00000000-0000-0000-0000-004433221100
+        starts_at:
+          datetime: "2024-07-05T15:00:00Z"
+          timezone: Europe/Berlin
+        status: ok
+        title: Teammeeting
+        type: instance
+        updated_at: "2024-07-20T14:16:19Z"
+        updated_by:
+          avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
+          display_name: Alice Adams
+          email: alice@example.com
+          firstname: Alice
+          id: 00000000-0000-0000-0000-0000000a11c3
+          lastname: Adams
+          title: ""
     EventId:
       type: string
       format: uuid
       description: The identifier of an event
       example: 00000000-0000-0000-0000-004433221100
+    EventInviteStatus:
+      type: string
+      enum:
+        - pending
+        - accepted
+        - tentative
+        - declined
+      example: accepted
+    EventInvitee:
+      type: object
+      description: |
+        Invitee to an event
+        
+        Contains user profile and invitee status
+      required:
+        - profile
+        - status
+      properties:
+        profile:
+          $ref: "#/components/schemas/EventInviteeProfile"
+        status:
+          $ref: "#/components/schemas/EventInviteStatus"
+      example:
+        profile:
+          avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
+          display_name: Alice Adams
+          email: alice@example.com
+          firstname: Alice
+          id: 00000000-0000-0000-0000-0000000a11c3
+          kind: registered
+          lastname: Adams
+          role: user
+          title: ""
+        status: accepted
+    EventInviteeProfile:
+      oneOf:
+        - allOf:
+            - $ref: "#/components/schemas/PublicInviteUserProfile"
+            - type: object
+              required:
+                - kind
+              properties:
+                kind:
+                  type: string
+                  enum:
+                    - registered
+        - allOf:
+            - $ref: "#/components/schemas/UnregisteredUser"
+            - type: object
+              required:
+                - kind
+              properties:
+                kind:
+                  type: string
+                  enum:
+                    - unregistered
+        - allOf:
+            - $ref: "#/components/schemas/EmailOnlyUser"
+            - type: object
+              required:
+                - kind
+              properties:
+                kind:
+                  type: string
+                  enum:
+                    - email
+      description: Profile of an event invitee
+      example:
+        avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
+        display_name: Alice Adams
+        email: alice@example.com
+        firstname: Alice
+        id: 00000000-0000-0000-0000-0000000a11c3
+        kind: registered
+        lastname: Adams
+        role: user
+        title: ""
+      discriminator:
+        propertyName: kind
+    EventOrException:
+      oneOf:
+        - $ref: "#/components/schemas/EventResource"
+        - $ref: "#/components/schemas/EventExceptionResource"
+      description: "Return type of the `GET /events` endpoint"
+      example:
+        can_edit: false
+        created_at: "2024-07-20T14:16:19Z"
+        created_by:
+          avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
+          display_name: Alice Adams
+          email: alice@example.com
+          firstname: Alice
+          id: 00000000-0000-0000-0000-0000000a11c3
+          lastname: Adams
+          title: ""
+        description: The weekly teammeting
+        id: 00000000-0000-0000-0000-004433221100
+        invite_status: accepted
+        invitees:
+          - profile:
+              avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
+              display_name: Alice Adams
+              email: alice@example.com
+              firstname: Alice
+              id: 00000000-0000-0000-0000-0000000a11c3
+              kind: registered
+              lastname: Adams
+              role: user
+              title: ""
+            status: accepted
+        invitees_truncated: false
+        is_adhoc: false
+        is_favorite: false
+        is_time_independent: false
+        room:
+          call_in:
+            id: "1234567890"
+            password: "9876543210"
+            tel: +555-12345-67890
+          id: 00000000-0000-0000-0000-0000abadcafe
+          password: v3rys3cr3t
+          waiting_room: false
+        shared_folder:
+          read:
+            password: v3rys3cr3t
+            url: "https://cloud.example.com/shares/abc123"
+        show_meeting_details: true
+        starts_at:
+          datetime: "2024-07-05T17:02:42Z"
+          timezone: Europe/Berlin
+        streaming_targets:
+          - id: 00000000-0000-0000-0000-000043434343
+            kind: custom
+            name: Example Stream
+            public_url: "https://streaming.example.com/livestream123"
+            streaming_endpoint: "https://ingress.streaming.example.com/"
+            streaming_key: aabbccddeeff
+        title: Teammeeting
+        type: single
+        updated_at: "2024-07-20T14:16:19Z"
+        updated_by:
+          avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
+          display_name: Alice Adams
+          email: alice@example.com
+          firstname: Alice
+          id: 00000000-0000-0000-0000-0000000a11c3
+          lastname: Adams
+          title: ""
+    EventResource:
+      type: object
+      description: |
+        Event Resource representation
+        
+        Returned from `GET /events/` and `GET /events/{event_id}`
+      required:
+        - id
+        - created_by
+        - created_at
+        - updated_by
+        - updated_at
+        - title
+        - description
+        - room
+        - invitees_truncated
+        - invitees
+        - is_time_independent
+        - is_adhoc
+        - type
+        - invite_status
+        - is_favorite
+        - can_edit
+        - show_meeting_details
+      properties:
+        can_edit:
+          type: boolean
+          description: Can the current user edit this resource
+        created_at:
+          $ref: "#/components/schemas/Timestamp"
+        created_by:
+          $ref: "#/components/schemas/PublicUserProfile"
+        description:
+          type: string
+          description: |
+            Description of the event
+            
+            For display purposes
+        ends_at:
+          allOf:
+            - $ref: "#/components/schemas/DateTimeTz"
+        id:
+          $ref: "#/components/schemas/EventId"
+        invite_status:
+          $ref: "#/components/schemas/EventInviteStatus"
+        invitees:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventInvitee"
+          description: "List of event invitees and their invite status. Might not be complete, see `invite_truncated`"
+        invitees_truncated:
+          type: boolean
+          description: |
+            Flag which indicates if `invitees` contains all invites as far as known to the application
+            May also be true if there are no invitees but no invitees were requested
+        is_adhoc:
+          type: boolean
+          description: Flag indicating whether the event is ad-hoc created.
+        is_all_day:
+          type: boolean
+          description: |
+            Is the event an all day event
+            
+            All-day events have no start/end time, they last the entire day(s)
+        is_favorite:
+          type: boolean
+          description: "Is this event in the current user's favorite list?"
+        is_time_independent:
+          type: boolean
+          description: |
+            Is the event time independent?
+            
+            Time independent events are not bound to any time but instead are constantly available to join
+        recurrence_pattern:
+          type: array
+          items:
+            type: string
+          description: |
+            Recurrence pattern(s) for recurring events
+            
+            May contain RRULE, EXRULE, RDATE and EXDATE strings
+            
+            Requires `type` to be `recurring`
+        room:
+          $ref: "#/components/schemas/EventRoomInfo"
+        shared_folder:
+          allOf:
+            - $ref: "#/components/schemas/SharedFolder"
+        show_meeting_details:
+          type: boolean
+          description: "Indicates whether meeting details should be provided. If absent, no meeting details are made available."
+        starts_at:
+          allOf:
+            - $ref: "#/components/schemas/DateTimeTz"
+        streaming_targets:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoomStreamingTarget"
+          description: The streaming targets of the room associated with the event
+        title:
+          type: string
+          description: |
+            Title of the event
+            
+            For display purposes
+        type:
+          $ref: "#/components/schemas/EventType"
+        updated_at:
+          $ref: "#/components/schemas/Timestamp"
+        updated_by:
+          $ref: "#/components/schemas/PublicUserProfile"
+      example:
+        can_edit: false
+        created_at: "2024-07-20T14:16:19Z"
+        created_by:
+          avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
+          display_name: Alice Adams
+          email: alice@example.com
+          firstname: Alice
+          id: 00000000-0000-0000-0000-0000000a11c3
+          lastname: Adams
+          title: ""
+        description: The weekly teammeting
+        id: 00000000-0000-0000-0000-004433221100
+        invite_status: accepted
+        invitees:
+          - profile:
+              avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
+              display_name: Alice Adams
+              email: alice@example.com
+              firstname: Alice
+              id: 00000000-0000-0000-0000-0000000a11c3
+              kind: registered
+              lastname: Adams
+              role: user
+              title: ""
+            status: accepted
+        invitees_truncated: false
+        is_adhoc: false
+        is_favorite: false
+        is_time_independent: false
+        room:
+          call_in:
+            id: "1234567890"
+            password: "9876543210"
+            tel: +555-12345-67890
+          id: 00000000-0000-0000-0000-0000abadcafe
+          password: v3rys3cr3t
+          waiting_room: false
+        shared_folder:
+          read:
+            password: v3rys3cr3t
+            url: "https://cloud.example.com/shares/abc123"
+        show_meeting_details: true
+        starts_at:
+          datetime: "2024-07-05T17:02:42Z"
+          timezone: Europe/Berlin
+        streaming_targets:
+          - id: 00000000-0000-0000-0000-000043434343
+            kind: custom
+            name: Example Stream
+            public_url: "https://streaming.example.com/livestream123"
+            streaming_endpoint: "https://ingress.streaming.example.com/"
+            streaming_key: aabbccddeeff
+        title: Teammeeting
+        type: single
+        updated_at: "2024-07-20T14:16:19Z"
+        updated_by:
+          avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
+          display_name: Alice Adams
+          email: alice@example.com
+          firstname: Alice
+          id: 00000000-0000-0000-0000-0000000a11c3
+          lastname: Adams
+          title: ""
+    EventRoomInfo:
+      type: object
+      description: All information about a room in which an event takes place
+      required:
+        - id
+        - waiting_room
+      properties:
+        call_in:
+          allOf:
+            - $ref: "#/components/schemas/CallInInfo"
+        id:
+          $ref: "#/components/schemas/RoomId"
+        password:
+          allOf:
+            - $ref: "#/components/schemas/RoomPassword"
+        waiting_room:
+          type: boolean
+          description: Flag to check if the room has a waiting room enabled
+      example:
+        call_in:
+          id: "1234567890"
+          password: "9876543210"
+          tel: +555-12345-67890
+        id: 00000000-0000-0000-0000-0000abadcafe
+        password: v3rys3cr3t
+        waiting_room: false
+    EventStatus:
+      type: string
+      description: Status of an event
+      enum:
+        - ok
+        - cancelled
+      example: ok
+    EventType:
+      type: string
+      description: |
+        Type of event resource.
+        
+        Is used as type discriminator in field `type`.
+      enum:
+        - single
+        - recurring
+        - instance
+        - exception
+      example: single
     GetFindResponse:
       type: array
       items:
@@ -1546,6 +2189,10 @@ components:
         - $ref: "#/components/schemas/Turn"
         - $ref: "#/components/schemas/Stun"
       description: Description of an ICE server
+    InstanceId:
+      type: string
+      description: An event instance id
+      example: "2024-07-20T15:23:42+00:00"
     InviteCodeId:
       type: string
       format: uuid
@@ -1613,6 +2260,12 @@ components:
           id: 00000000-0000-0000-0000-0000000a11c3
           lastname: Adams
           title: ""
+    InviteRole:
+      type: string
+      enum:
+        - user
+        - moderator
+      example: user
     NumericId:
       type: string
       description: A string containing number characters
@@ -1837,6 +2490,25 @@ components:
           format: int64
           description: "The user's used storage"
           minimum: 0
+    PublicInviteUserProfile:
+      allOf:
+        - $ref: "#/components/schemas/PublicUserProfile"
+        - type: object
+          required:
+            - role
+          properties:
+            role:
+              $ref: "#/components/schemas/InviteRole"
+      description: Profile of a public event invitee
+      example:
+        avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
+        display_name: Alice Adams
+        email: alice@example.com
+        firstname: Alice
+        id: 00000000-0000-0000-0000-0000000a11c3
+        lastname: Adams
+        role: user
+        title: ""
     PublicUserProfile:
       type: object
       description: |
@@ -1958,6 +2630,23 @@ components:
         id: 00000000-0000-0000-0000-000000000000
         password: v3rys3cr3t
         waiting_room: false
+    RoomStreamingTarget:
+      allOf:
+        - $ref: "#/components/schemas/StreamingTarget"
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              $ref: "#/components/schemas/StreamingTargetId"
+      description: A streaming target which is specific for a Room
+      example:
+        id: 00000000-0000-0000-0000-000043434343
+        kind: custom
+        name: Example Stream
+        public_url: "https://streaming.example.com/livestream123"
+        streaming_endpoint: "https://ingress.streaming.example.com/"
+        streaming_key: aabbccddeeff
     RoomsStartResponse:
       type: object
       description: The JSON body returned from the start endpoints supporting session resumption
@@ -1983,6 +2672,39 @@ components:
           $ref: "#/components/schemas/ResumptionToken"
         ticket:
           $ref: "#/components/schemas/TicketToken"
+    SharedFolder:
+      type: object
+      description: |
+        Information about a shared folder containing
+        read and optional write access
+      required:
+        - read
+      properties:
+        read:
+          $ref: "#/components/schemas/SharedFolderAccess"
+        read_write:
+          allOf:
+            - $ref: "#/components/schemas/SharedFolderAccess"
+      example:
+        read:
+          password: v3rys3cr3t
+          url: "https://cloud.example.com/shares/abc123"
+    SharedFolderAccess:
+      type: object
+      description: Information required to access a shared folder
+      required:
+        - url
+        - password
+      properties:
+        password:
+          type: string
+          description: Password required to access the shared folder
+        url:
+          type: string
+          description: Shared folder URL
+      example:
+        password: v3rys3cr3t
+        url: "https://cloud.example.com/shares/abc123"
     SipConfigResource:
       type: object
       description: "Response for the `GET /rooms/{room_id}/sip` endpoint"
@@ -2042,6 +2764,64 @@ components:
           nullable: true
         room_id:
           $ref: "#/components/schemas/RoomId"
+    StreamingKey:
+      type: string
+      description: The secret key of a streaming target
+      example: aabbccddeeff
+    StreamingTarget:
+      allOf:
+        - $ref: "#/components/schemas/StreamingTargetKind"
+        - type: object
+          required:
+            - name
+          properties:
+            name:
+              type: string
+              description: The name of the streaming target
+      description: A streaming target
+      example:
+        kind: custom
+        name: Example Stream
+        public_url: "https://streaming.example.com/livestream123"
+        streaming_endpoint: "https://ingress.streaming.example.com/"
+        streaming_key: aabbccddeeff
+    StreamingTargetId:
+      type: string
+      format: uuid
+      description: ID of a streaming target
+      example: 00000000-0000-0000-0000-000043434343
+    StreamingTargetKind:
+      oneOf:
+        - type: object
+          description: "The \"custom\" kind"
+          required:
+            - streaming_endpoint
+            - streaming_key
+            - public_url
+            - kind
+          properties:
+            kind:
+              type: string
+              enum:
+                - custom
+            public_url:
+              type: string
+              format: uri
+              description: The url from which the stream can be accessed
+            streaming_endpoint:
+              type: string
+              format: uri
+              description: The endpoint url of the streaming target
+            streaming_key:
+              $ref: "#/components/schemas/StreamingKey"
+      description: A streaming target kind
+      example:
+        kind: custom
+        public_url: "https://streaming.example.com/livestream123"
+        streaming_endpoint: "https://ingress.streaming.example.com/"
+        streaming_key: aabbccddeeff
+      discriminator:
+        propertyName: kind
     Stun:
       type: object
       description: STUN Server for users.
@@ -2145,6 +2925,10 @@ components:
     TicketToken:
       type: string
       description: A ticket token
+    TimeZone:
+      type: string
+      description: A time zone
+      example: Europe/Berlin
     Timestamp:
       type: string
       format: date-time
