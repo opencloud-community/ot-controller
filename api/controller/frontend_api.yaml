@@ -1204,6 +1204,26 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+  /users/me/tariff:
+    get:
+      tags:
+        - "api::v1::users"
+      summary: Get the current user tariff information.
+      description: Returns the tariff information for the currently logged in user.
+      operationId: get_me_tariff
+      responses:
+        "200":
+          description: Information about the tariff of the current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TariffResource"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
 components:
   schemas:
     AssetId:

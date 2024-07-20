@@ -212,9 +212,29 @@ pub async fn get_me(
     Ok(Json(user_profile))
 }
 
-/// API Endpoint *GET /users/me/tariff*
+/// Get the current user tariff information.
 ///
-/// Returns the [`TariffResource`] of the requesting user.
+/// Returns the tariff information for the currently logged in user.
+#[utoipa::path(
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Information about the tariff of the current user",
+            body = TariffResource,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/users/me/tariff")]
 pub async fn get_me_tariff(
     settings: SharedSettingsActix,
