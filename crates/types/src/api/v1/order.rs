@@ -23,6 +23,88 @@ pub struct SortingQuery<T> {
     pub order: Ordering,
 }
 
+// `#[derive(utoipa::IntoParams)]` attempts to reference `#/components/schemas/T`,
+// which is typically not the correct target for the `sort` parameter. This
+// custom implementation resolves the sort target type correctly.
+#[cfg(feature = "utoipa")]
+impl<'__s, T: utoipa::ToSchema<'__s>> utoipa::IntoParams for SortingQuery<T> {
+    fn into_params(
+        parameter_in_provider: impl Fn() -> Option<utoipa::openapi::path::ParameterIn>,
+    ) -> Vec<utoipa::openapi::path::Parameter> {
+        use utoipa::ToSchema as _;
+        vec![
+            utoipa::openapi::path::ParameterBuilder::new()
+                .name("sort")
+                .required(utoipa::openapi::Required::False)
+                .parameter_in(parameter_in_provider().unwrap_or_default())
+                .description(Some("sort by this field"))
+                .schema(Some(utoipa::openapi::Ref::from_schema_name(T::schema().0)))
+                .build(),
+            utoipa::openapi::path::ParameterBuilder::new()
+                .name("order")
+                .required(utoipa::openapi::Required::False)
+                .parameter_in(parameter_in_provider().unwrap_or_default())
+                .description(Some("ordering direction"))
+                .schema(Some(utoipa::openapi::Ref::from_schema_name(
+                    Ordering::schema().0,
+                )))
+                .build(),
+        ]
+    }
+}
+
+#[cfg(feature = "utoipa")]
+fn print_parameter(p: utoipa::openapi::path::Parameter) {
+    let parameter_in = match p.parameter_in {
+        utoipa::openapi::path::ParameterIn::Query => "query",
+        utoipa::openapi::path::ParameterIn::Path => "path",
+        utoipa::openapi::path::ParameterIn::Header => "header",
+        utoipa::openapi::path::ParameterIn::Cookie => "cookie",
+    };
+    let required = match p.required {
+        utoipa::openapi::Required::True => "true",
+        utoipa::openapi::Required::False => "false",
+    };
+    let deprecated = p.deprecated.as_ref().map(|d| match d {
+        utoipa::openapi::Deprecated::True => "true",
+        utoipa::openapi::Deprecated::False => "false",
+    });
+    let schema = p.schema.as_ref().map(|s| serde_json::to_value(s).unwrap());
+    let style = p.style.as_ref().map(|s| match s {
+        utoipa::openapi::path::ParameterStyle::Matrix => "matrix",
+        utoipa::openapi::path::ParameterStyle::Label => "label",
+        utoipa::openapi::path::ParameterStyle::Form => "form",
+        utoipa::openapi::path::ParameterStyle::Simple => "simple",
+        utoipa::openapi::path::ParameterStyle::SpaceDelimited => "space_delimited",
+        utoipa::openapi::path::ParameterStyle::PipeDelimited => "pipe_delimited",
+        utoipa::openapi::path::ParameterStyle::DeepObject => "deep_object",
+    });
+
+    println!("Parameter {{");
+    println!("  name: {:?}", p.name);
+    println!("  parameter_in: {parameter_in}");
+    println!("  description: {:?}", p.name);
+    println!("  required: {}", required);
+    println!("  deprecated: {:?}", deprecated);
+    println!("  schema: {:?}", schema);
+    println!("  style: {:?}", style);
+    println!("  explode: {:?}", p.explode);
+    println!("  allow_reserved: {:?}", p.allow_reserved);
+    println!("  extensions: {:?}", p.extensions);
+    println!("}}");
+}
+
+#[cfg(feature = "utoipa")]
+impl<'__s, T: utoipa::ToSchema<'__s>> SortingQuery<T> {
+    /// Will be removed again
+    pub fn print_into_params() {
+        use utoipa::IntoParams as _;
+        for param in SortingQuery::<T>::into_params(|| None) {
+            print_parameter(param);
+        }
+    }
+}
+
 /// The sorting order that should be applied
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 #[cfg_attr(
@@ -30,6 +112,7 @@ pub struct SortingQuery<T> {
     derive(Serialize, Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum Ordering {
     /// Sorting the lowest value first
     Ascending,
@@ -46,6 +129,7 @@ pub enum Ordering {
     derive(Serialize, Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum AssetSorting {
     /// Sort by filename
     Filename,

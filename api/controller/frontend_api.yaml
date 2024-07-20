@@ -1155,6 +1155,55 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+  /users/me/assets:
+    get:
+      tags:
+        - "api::v1::users"
+      summary: Get the assets associated with the user.
+      description: |
+        All assets associated to the requesting user are returned in a list. If no
+        pagination query is added, the default page size is used.
+      operationId: get_me_assets
+      parameters:
+        - name: per_page
+          in: query
+          description: The number of entries per page
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: page
+          in: query
+          description: The number of the page
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: sort
+          in: query
+          description: sort by this field
+          required: true
+          schema:
+            $ref: "#/components/schemas/AssetSorting"
+        - name: order
+          in: query
+          description: ordering direction
+          required: true
+          schema:
+            $ref: "#/components/schemas/Ordering"
+      responses:
+        "200":
+          description: List of accessible assets successfully returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetUserAssetsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
 components:
   schemas:
     AssetId:
@@ -1199,6 +1248,15 @@ components:
         kind: record
         namespace: recording
         size: 98765432
+    AssetSorting:
+      type: string
+      description: Properties by which a list of assets can get sorted.
+      enum:
+        - filename
+        - size
+        - namespace
+        - kind
+        - created_at
     BreakoutRoomId:
       type: string
       format: uuid
@@ -1225,6 +1283,11 @@ components:
         - $ref: "#/components/schemas/StandardErrorBody"
         - $ref: "#/components/schemas/ValidationErrorBody"
       description: The body of an error response
+    EventId:
+      type: string
+      format: uuid
+      description: The identifier of an event
+      example: 00000000-0000-0000-0000-004433221100
     GetFindResponse:
       type: array
       items:
@@ -1313,6 +1376,27 @@ components:
       items:
         $ref: "#/components/schemas/IceServer"
       description: Response to the *GET /turn* endpoint request
+    GetUserAssetsResponse:
+      type: object
+      description: "Response body for the `GET /v1/users/me/assets` endpoint"
+      required:
+        - owned_assets
+      properties:
+        owned_assets:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserAssetResource"
+          description: Assets owned by the user
+      example:
+        owned_assets:
+          - created_at: "2024-06-18T11:22:33Z"
+            event_id: 00000000-0000-0000-0000-004433221100
+            filename: recording.webm
+            id: 00000000-0000-0000-0000-0000aabbcc00
+            kind: record
+            namespace: recording
+            room_id: 00000000-0000-0000-0000-0000abadcafe
+            size: 98765432
     IceServer:
       oneOf:
         - $ref: "#/components/schemas/Turn"
@@ -1405,6 +1489,12 @@ components:
         url:
           type: string
           description: The url of the provider
+    Ordering:
+      type: string
+      description: The sorting order that should be applied
+      enum:
+        - ascending
+        - descending
     PageLink:
       type: string
       example: "<https://api.example.org/resource?page=2>; rel='next', <https://api.example.org/resource?page=5>; rel='last'"
@@ -1962,6 +2052,28 @@ components:
         lastname:
           type: string
           description: Last name of the unregistered user
+    UserAssetResource:
+      allOf:
+        - $ref: "#/components/schemas/AssetResource"
+        - type: object
+          required:
+            - room_id
+          properties:
+            event_id:
+              allOf:
+                - $ref: "#/components/schemas/EventId"
+            room_id:
+              $ref: "#/components/schemas/RoomId"
+      description: Information related to a specific asset
+      example:
+        created_at: "2024-06-18T11:22:33Z"
+        event_id: 00000000-0000-0000-0000-004433221100
+        filename: recording.webm
+        id: 00000000-0000-0000-0000-0000aabbcc00
+        kind: record
+        namespace: recording
+        room_id: 00000000-0000-0000-0000-0000abadcafe
+        size: 98765432
     UserId:
       type: string
       format: uuid

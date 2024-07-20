@@ -238,6 +238,31 @@ pub async fn get_me_tariff(
     Ok(Json(response))
 }
 
+/// Get the assets associated with the user.
+///
+/// All assets associated to the requesting user are returned in a list. If no
+/// pagination query is added, the default page size is used.
+#[utoipa::path(
+    params(PagePaginationQuery, SortingQuery<AssetSorting>),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "List of accessible assets successfully returned",
+            body = GetUserAssetsResponse,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/users/me/assets")]
 pub async fn get_me_assets(
     db: Data<Db>,

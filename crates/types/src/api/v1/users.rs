@@ -224,14 +224,32 @@ pub struct GetEventInvitesPendingResponse {
 /// Response body for the `GET /v1/users/me/assets` endpoint
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(GetUserAssetsResponse::example_data()))
+)]
 pub struct GetUserAssetsResponse {
     /// Assets owned by the user
     pub owned_assets: Vec<UserAssetResource>,
 }
 
+impl ExampleData for GetUserAssetsResponse {
+    fn example_data() -> Self {
+        Self {
+            owned_assets: vec![UserAssetResource::example_data()],
+        }
+    }
+}
+
 /// Information related to a specific asset
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(UserAssetResource::example_data()))
+)]
 pub struct UserAssetResource {
     /// The asset resource
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -241,6 +259,14 @@ pub struct UserAssetResource {
     pub room_id: RoomId,
 
     /// The id of the event that is associated with the room
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    // Field is non-required already, utoipa adds a `nullable: true` entry
+    // by default which creates a false positive in the spectral linter when
+    // combined with example data.
+    #[cfg_attr(feature = "utoipa", schema(nullable = false))]
     pub event_id: Option<EventId>,
 }
 
@@ -251,6 +277,16 @@ impl UserAssetResource {
             asset,
             room_id,
             event_id,
+        }
+    }
+}
+
+impl ExampleData for UserAssetResource {
+    fn example_data() -> Self {
+        Self {
+            asset: AssetResource::example_data(),
+            room_id: RoomId::example_data(),
+            event_id: Some(EventId::example_data()),
         }
     }
 }
