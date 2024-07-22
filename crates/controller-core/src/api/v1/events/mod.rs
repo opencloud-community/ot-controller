@@ -1021,14 +1021,48 @@ struct UpdateNotificationValues {
     pub invite_for_room: Invite,
 }
 
-/// API Endpoint `PATCH /events/{event_id}`
+/// Patch an event
 ///
-/// See documentation of [`PatchEventBody`] for more infos
-///
-/// Patches which modify the event in a way that would invalidate existing
-/// exceptions (e.g. by changing the recurrence rule or time dependence)
-/// will have all exceptions deleted
+/// Fields that are not provided in the request body will remain unchanged.
 #[allow(clippy::too_many_arguments)]
+#[utoipa::path(
+    request_body = PatchEventBody,
+    params(
+        PatchEventQuery,
+        ("event_id" = EventId, description = "The id of the event"),
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "The event was successfully updated",
+            body = EventResource
+        ),
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "The patch was empty",
+        ),
+        (
+            status = StatusCode::BAD_REQUEST,
+            description = r"Could not modify the specified event due to wrong
+                syntax or bad values, for example an invalid timestamp string",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[patch("/events/{event_id}")]
 pub async fn patch_event(
     settings: SharedSettingsActix,

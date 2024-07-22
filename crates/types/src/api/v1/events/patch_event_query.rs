@@ -8,6 +8,7 @@ use crate::imports::*;
 /// Path query parameters for the `PATCH /events/{event_id}` endpoint
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::IntoParams))]
 pub struct PatchEventQuery {
     /// Maximum number of invitees to include inside the event
     #[cfg_attr(feature = "serde", serde(default))]

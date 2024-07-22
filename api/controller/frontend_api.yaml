@@ -268,6 +268,59 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+    patch:
+      tags:
+        - "api::v1::events"
+      summary: Patch an event
+      description: Fields that are not provided in the request body will remain unchanged.
+      operationId: patch_event
+      parameters:
+        - name: invitees_max
+          in: query
+          description: Maximum number of invitees to include inside the event
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: suppress_email_notification
+          in: query
+          description: Flag to disable email notification
+          required: false
+          schema:
+            type: boolean
+        - name: event_id
+          in: path
+          description: The id of the event
+          required: true
+          schema:
+            $ref: "#/components/schemas/EventId"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchEventBody"
+        required: true
+      responses:
+        "200":
+          description: The event was successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventResource"
+        "204":
+          description: The patch was empty
+        "400":
+          description: |
+            Could not modify the specified event due to wrong
+                            syntax or bad values, for example an invalid timestamp string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   /invite/verify:
     post:
       tags:
@@ -2363,6 +2416,65 @@ components:
     PageLink:
       type: string
       example: "<https://api.example.org/resource?page=2>; rel='next', <https://api.example.org/resource?page=5>; rel='last'"
+    PatchEventBody:
+      type: object
+      description: "Body for the `PATCH /events/{event_id}` endpoint"
+      properties:
+        description:
+          type: string
+          description: Patch the description of the event
+        ends_at:
+          allOf:
+            - $ref: "#/components/schemas/DateTimeTz"
+        has_shared_folder:
+          type: boolean
+          description: "Either add a shared folder to the event, if none existed before or delete the shared folder"
+        is_adhoc:
+          type: boolean
+          description: Patch the adhoc flag.
+        is_all_day:
+          type: boolean
+          description: |
+            Patch if the event is an all-day event
+            
+            If it changes the value from false to true this request must ensure
+            that the `starts_at.datetime` and `ends_at.datetime` have a 00:00 time part.
+        is_time_independent:
+          type: boolean
+          description: |
+            Patch the time independence of the event
+            
+            If it changes the independence from true false this body has to have
+            `is_all_day`, `starts_at` and `ends_at` set
+        password:
+          allOf:
+            - $ref: "#/components/schemas/RoomPassword"
+        recurrence_pattern:
+          allOf:
+            - $ref: "#/components/schemas/RecurrencePattern"
+        show_meeting_details:
+          type: boolean
+          description: Patch wether the meeting details are displayed or not
+        starts_at:
+          allOf:
+            - $ref: "#/components/schemas/DateTimeTz"
+        streaming_targets:
+          type: array
+          items:
+            $ref: "#/components/schemas/StreamingTarget"
+          description: The streaming targets of the room associated with the event
+        title:
+          type: string
+          description: Patch the title of th event
+          nullable: true
+        waiting_room:
+          type: boolean
+          description: Patch the presence of a waiting room
+      example:
+        description: The new description
+        has_shared_folder: true
+        show_meeting_details: false
+        title: The new title
     PatchMeBody:
       type: object
       description: Used to modify user settings.
@@ -2388,13 +2500,11 @@ components:
           description: "The user's title"
           nullable: true
       example:
-        avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
+        conference_theme: ~
+        dashboard_theme: ~
         display_name: Alice Adams
-        email: alice@example.com
-        firstname: Alice
-        id: 00000000-0000-0000-0000-0000000a11c3
-        lastname: Adams
-        title: ""
+        language: en
+        title: ~
     PatchRoomsRequestBody:
       type: object
       description: API request parameters to patch a room

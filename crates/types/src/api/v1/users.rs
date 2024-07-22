@@ -110,7 +110,7 @@ pub struct PrivateUserProfile {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize, Validate))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(
     example = json!(
-        PublicUserProfile::example_data()
+        PatchMeBody::example_data()
     )
 ))]
 pub struct PatchMeBody {
