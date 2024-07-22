@@ -227,6 +227,47 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+  "/events/{event_id}":
+    get:
+      tags:
+        - "api::v1::events"
+      summary: Get an event
+      description: Returns the event resource for the given id
+      operationId: get_event
+      parameters:
+        - name: invitees_max
+          in: query
+          description: |
+            Maximum number of invitees to return inside the event resource
+            
+            Default value is 0
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: event_id
+          in: path
+          description: The id of the event
+          required: true
+          schema:
+            $ref: "#/components/schemas/EventId"
+      responses:
+        "200":
+          description: Event was successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventResource"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   /invite/verify:
     post:
       tags:

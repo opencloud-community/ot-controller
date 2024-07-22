@@ -74,7 +74,7 @@ use validator::Validate;
 use super::{response::NoContent, ApiResponse, DefaultApiResult};
 use crate::{
     api::{
-        responses::{BadRequest, InternalServerError, Unauthorized},
+        responses::{BadRequest, Forbidden, InternalServerError, NotFound, Unauthorized},
         v1::{
             events::shared_folder::put_shared_folder, rooms::RoomsPoliciesBuilderExt,
             util::GetUserProfilesBatched,
@@ -890,9 +890,41 @@ pub async fn get_events(
         .with_cursor_pagination(events_data.before, events_data.after))
 }
 
-/// API Endpoint `GET /events/{event_id}` endpoint
+/// Get an event
 ///
 /// Returns the event resource for the given id
+#[utoipa::path(
+    params(
+        GetEventQuery,
+        ("event_id" = EventId, description = "The id of the event"),
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Event was successfully retrieved",
+            body = EventResource
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/events/{event_id}")]
 pub async fn get_event(
     settings: SharedSettingsActix,

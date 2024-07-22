@@ -679,6 +679,7 @@ impl ModulesRegistrar for Controller {
         api::v1::auth::post_login,
         api::v1::events::favorites::add_event_to_favorites,
         api::v1::events::favorites::remove_event_from_favorites,
+        api::v1::events::get_event,
         api::v1::events::get_events,
         api::v1::events::new_event,
         api::v1::invites::add_invite,
