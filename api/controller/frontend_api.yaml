@@ -192,6 +192,41 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+    post:
+      tags:
+        - "api::v1::events"
+      summary: Create a new event
+      description: Create a new event with the fields sent in the body.
+      operationId: new_event
+      parameters:
+        - name: suppress_email_notification
+          in: query
+          description: Flag to disable email notification
+          required: false
+          schema:
+            type: boolean
+      requestBody:
+        description: ""
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostEventsBody"
+        required: true
+      responses:
+        "201":
+          description: The event has been created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventResource"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   /invite/verify:
     post:
       tags:
@@ -2339,6 +2374,94 @@ components:
           type: boolean
           description: If waiting room is enabled
           nullable: true
+    PostEventsBody:
+      type: object
+      description: "Body of the `POST /events` endpoint"
+      required:
+        - title
+        - description
+        - is_time_independent
+      properties:
+        description:
+          type: string
+          description: Description of the event
+        ends_at:
+          allOf:
+            - $ref: "#/components/schemas/DateTimeTz"
+        has_shared_folder:
+          type: boolean
+          description: Should the created event have a shared folder?
+        is_adhoc:
+          type: boolean
+          description: Is this an ad-hoc chatroom?
+        is_all_day:
+          type: boolean
+          description: |
+            Should the event be all-day?
+            
+            If true, requires `starts_at.datetime` and `ends_at.datetime` to have a 00:00 time part
+        is_time_independent:
+          type: boolean
+          description: |
+            Should the created event be time independent?
+            
+            If true, all following fields must be null
+            If false, requires `is_all_day`, `starts_at`, `ends_at`
+        password:
+          allOf:
+            - $ref: "#/components/schemas/RoomPassword"
+        recurrence_pattern:
+          type: array
+          items:
+            type: string
+          description: |
+            List of recurrence patterns
+            
+            If the list if non-empty the created event will be of type `recurring`
+            
+            For more infos see the documentation of [`EventResource`]
+            
+            [`EventResource`]: ../event_ressource/struct.EventResource.html
+        show_meeting_details:
+          type: boolean
+          description: Should it be able to show the meeting details?
+        starts_at:
+          allOf:
+            - $ref: "#/components/schemas/DateTimeTz"
+        streaming_targets:
+          type: array
+          items:
+            $ref: "#/components/schemas/StreamingTarget"
+          description: The streaming targets of the room associated with the event
+        title:
+          type: string
+          description: Title of the event
+        waiting_room:
+          type: boolean
+          description: Should the created event have a waiting room?
+      example:
+        description: The weekly teammeeting
+        ends_at:
+          datetime: "2024-07-22T11:00:00Z"
+          timezone: Europe/Berlin
+        has_shared_folder: false
+        is_adhoc: false
+        is_time_independent: false
+        password: v3rys3cr3t
+        recurrence_pattern:
+          - FREQ=WEEKLY;INTERVAL=1;BYDAY=MO
+        show_meeting_details: true
+        starts_at:
+          datetime: "2024-07-22T10:00:00Z"
+          timezone: Europe/Berlin
+        streaming_targets:
+          - kind: custom
+            name: Example Stream
+            public_url: "https://streaming.example.com/livestream123"
+            streaming_endpoint: "https://ingress.streaming.example.com/"
+            streaming_key: aabbccddeeff
+        title: Teammeeting
+        waiting_room: false
     PostInviteRequestBody:
       type: object
       description: "Body for *POST /rooms/{room_id}/invites*"

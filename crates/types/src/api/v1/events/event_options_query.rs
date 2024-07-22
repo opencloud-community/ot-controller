@@ -8,6 +8,7 @@ use crate::imports::*;
 /// Query parameters for miscellaneous /events and /events/{event_id}/...` endpoints
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::IntoParams))]
 pub struct EventOptionsQuery {
     /// Flag to disable email notification
     #[cfg_attr(feature = "serde", serde(default))]

@@ -254,7 +254,34 @@ impl EventRoomInfoExt for EventRoomInfo {
     }
 }
 
-/// API Endpoint `POST /events`
+/// Create a new event
+///
+/// Create a new event with the fields sent in the body.
+#[utoipa::path(
+    params(EventOptionsQuery),
+    responses(
+        (
+            status = StatusCode::CREATED,
+            description = "The event has been created",
+            body = EventResource,
+        ),
+        (
+            status = StatusCode::BAD_REQUEST,
+            response = BadRequest,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[post("/events")]
 pub async fn new_event(
     settings: SharedSettingsActix,
