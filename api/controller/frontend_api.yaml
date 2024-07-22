@@ -1964,15 +1964,7 @@ components:
             
             Time independent events are not bound to any time but instead are constantly available to join
         recurrence_pattern:
-          type: array
-          items:
-            type: string
-          description: |
-            Recurrence pattern(s) for recurring events
-            
-            May contain RRULE, EXRULE, RDATE and EXDATE strings
-            
-            Requires `type` to be `recurring`
+          $ref: "#/components/schemas/RecurrencePattern"
         room:
           $ref: "#/components/schemas/EventRoomInfo"
         shared_folder:
@@ -2411,17 +2403,7 @@ components:
           allOf:
             - $ref: "#/components/schemas/RoomPassword"
         recurrence_pattern:
-          type: array
-          items:
-            type: string
-          description: |
-            List of recurrence patterns
-            
-            If the list if non-empty the created event will be of type `recurring`
-            
-            For more infos see the documentation of [`EventResource`]
-            
-            [`EventResource`]: ../event_ressource/struct.EventResource.html
+          $ref: "#/components/schemas/RecurrencePattern"
         show_meeting_details:
           type: boolean
           description: Should it be able to show the meeting details?
@@ -2701,6 +2683,20 @@ components:
       example:
         lobby: true
         password: "9876543210"
+    RecurrencePattern:
+      type: array
+      items:
+        $ref: "#/components/schemas/RecurrenceRule"
+      description: A recurrence pattern containing recurrence rules
+      example:
+        - FREQ=WEEKLY;INTERVAL=1;BYDAY=MO
+      maxItems: 4
+      minItems: 1
+    RecurrenceRule:
+      type: string
+      description: A recurrence rule according to RFC5545
+      example: FREQ=WEEKLY;INTERVAL=1;BYDAY=MO
+      maxLength: 1024
     ResumptionToken:
       type: string
       description: A resumption token

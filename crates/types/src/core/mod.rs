@@ -25,6 +25,8 @@ pub mod one_or_many_btree_set;
 pub mod one_or_many_vec;
 mod participant_id;
 mod participation_kind;
+mod recurrence_pattern;
+mod recurrence_rule;
 mod resumption_token;
 mod room_id;
 mod room_password;
@@ -61,6 +63,10 @@ pub use one_or_many_vec::one_or_many_vec_option;
 pub use one_or_many_vec::OneOrManyVec;
 pub use participant_id::ParticipantId;
 pub use participation_kind::ParticipationKind;
+pub use recurrence_pattern::{
+    RecurrencePattern, TryFromRecurrenceRulesError, RECURRENCE_PATTERN_MAX_LEN,
+};
+pub use recurrence_rule::{ParseRecurrenceRuleError, RecurrenceRule, RECURRENCE_RULE_MAX_LEN};
 pub use resumption_token::ResumptionToken;
 pub use room_id::RoomId;
 pub use room_password::{RoomPassword, MAX_ROOM_PASSWORD_LENGTH, MIN_ROOM_PASSWORD_LENGTH};

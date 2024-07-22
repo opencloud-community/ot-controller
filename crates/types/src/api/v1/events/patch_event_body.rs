@@ -2,12 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 #[cfg(feature = "serde")]
-use crate::api::v1::utils::{deserialize_some, validate_recurrence_pattern};
+use crate::api::v1::utils::deserialize_some;
 #[allow(unused_imports)]
 use crate::imports::*;
 use crate::{
     common::streaming::StreamingTarget,
-    core::{DateTimeTz, RoomPassword},
+    core::{DateTimeTz, RecurrencePattern, RoomPassword},
 };
 
 /// Body for the `PATCH /events/{event_id}` endpoint
@@ -63,12 +63,7 @@ pub struct PatchEventBody {
     /// Patch the events recurrence patterns
     ///
     /// If this list is non empty it override the events current one
-    #[cfg_attr(
-        feature = "serde",
-        serde(default),
-        validate(custom(function = "validate_recurrence_pattern"))
-    )]
-    pub recurrence_pattern: Vec<String>,
+    pub recurrence_pattern: RecurrencePattern,
 
     /// The streaming targets of the room associated with the event
     pub streaming_targets: Option<Vec<StreamingTarget>>,

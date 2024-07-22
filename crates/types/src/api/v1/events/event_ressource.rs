@@ -10,7 +10,7 @@ use crate::imports::*;
 use crate::{
     api::v1::users::PublicUserProfile,
     common::{shared_folder::SharedFolder, streaming::RoomStreamingTarget},
-    core::{DateTimeTz, EventId, EventInviteStatus, Timestamp},
+    core::{DateTimeTz, EventId, EventInviteStatus, RecurrencePattern, Timestamp},
     utils::ExampleData,
 };
 
@@ -115,8 +115,20 @@ pub struct EventResource {
     /// May contain RRULE, EXRULE, RDATE and EXDATE strings
     ///
     /// Requires `type` to be `recurring`
-    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Vec::is_empty"))]
-    pub recurrence_pattern: Vec<String>,
+    ///
+    /// Contains a list of recurrence rules which describe the occurrences of the event.
+    /// To get all event instances resolved use the the `GET /events/{event_id}/instances` endpoint.
+    /// Changing this field will always remove all exceptions for the event.
+    ///
+    /// Allowed are `RRULE`, `RDATE`, `EXRULE` and `EXDATE`.
+    ////
+    /// The `DTSTART` and `DTEND` attributes are not allowed as their information is stored
+    /// in the `starts_at` and `ends_at` fields.
+    #[cfg_attr(
+        feature = "serde",
+        serde(skip_serializing_if = "RecurrencePattern::is_empty")
+    )]
+    pub recurrence_pattern: RecurrencePattern,
 
     /// Flag indicating whether the event is ad-hoc created.
     pub is_adhoc: bool,
@@ -178,7 +190,7 @@ impl ExampleData for EventResource {
                 timezone: chrono_tz::Europe::Berlin.into(),
             }),
             ends_at: None,
-            recurrence_pattern: vec![],
+            recurrence_pattern: RecurrencePattern::default(),
             is_adhoc: false,
             type_: EventType::Single,
             invite_status: EventInviteStatus::Accepted,

@@ -4,13 +4,11 @@
 
 use chrono::{TimeZone as _, Utc};
 
-#[cfg(feature = "serde")]
-use crate::api::v1::utils::validate_recurrence_pattern;
 #[allow(unused_imports)]
 use crate::imports::*;
 use crate::{
     common::streaming::StreamingTarget,
-    core::{DateTimeTz, RoomPassword},
+    core::{DateTimeTz, RecurrencePattern, RoomPassword},
     utils::ExampleData,
 };
 
@@ -91,19 +89,23 @@ pub struct PostEventsBody {
     #[cfg_attr(feature = "utoipa", schema(nullable = false))]
     pub ends_at: Option<DateTimeTz>,
 
-    /// List of recurrence patterns
+    /// Recurrence pattern(s) for recurring events
     ///
-    /// If the list if non-empty the created event will be of type `recurring`
+    /// May contain RRULE, EXRULE, RDATE and EXDATE strings
     ///
-    /// For more infos see the documentation of [`EventResource`]
+    /// Requires `type` to be `recurring`
     ///
-    /// [`EventResource`]: ../event_ressource/struct.EventResource.html
+    /// Contains a list of recurrence rules which describe the occurrences of the event.
+    ///
+    /// Allowed are `RRULE`, `RDATE`, `EXRULE` and `EXDATE`.
+    ////
+    /// The `DTSTART` and `DTEND` attributes are not allowed as their information is stored
+    /// in the `starts_at` and `ends_at` fields.
     #[cfg_attr(
         feature = "serde",
-        serde(default),
-        validate(custom(function = "validate_recurrence_pattern"))
+        serde(default, skip_serializing_if = "RecurrencePattern::is_empty")
     )]
-    pub recurrence_pattern: Vec<String>,
+    pub recurrence_pattern: RecurrencePattern,
 
     /// Is this an ad-hoc chatroom?
     #[cfg_attr(feature = "serde", serde(default))]
@@ -142,7 +144,7 @@ impl ExampleData for PostEventsBody {
                 datetime: Utc.with_ymd_and_hms(2024, 7, 22, 11, 0, 0).unwrap(),
                 timezone: chrono_tz::Europe::Berlin.into(),
             }),
-            recurrence_pattern: vec!["FREQ=WEEKLY;INTERVAL=1;BYDAY=MO".to_string()],
+            recurrence_pattern: RecurrencePattern::example_data(),
             is_adhoc: false,
             streaming_targets: vec![StreamingTarget::example_data()],
             has_shared_folder: false,

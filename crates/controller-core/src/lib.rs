@@ -787,6 +787,8 @@ impl ModulesRegistrar for Controller {
             opentalk_types::core::InviteCodeId,
             opentalk_types::core::InviteRole,
             opentalk_types::core::NumericId,
+            opentalk_types::core::RecurrencePattern,
+            opentalk_types::core::RecurrenceRule,
             opentalk_types::core::ResumptionToken,
             opentalk_types::core::RoomId,
             opentalk_types::core::RoomPassword,

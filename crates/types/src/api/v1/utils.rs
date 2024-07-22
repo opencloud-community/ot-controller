@@ -22,19 +22,6 @@ where
     Deserialize::deserialize(deserializer).map(Some)
 }
 
-/// Validates a recurrence pattern for an event
-pub fn validate_recurrence_pattern(pattern: &[String]) -> Result<(), ValidationError> {
-    if pattern.len() > 4 {
-        return Err(ValidationError::new("too_many_recurrence_patterns"));
-    }
-
-    if pattern.iter().any(|p| p.len() > 1024) {
-        return Err(ValidationError::new("recurrence_pattern_too_large"));
-    }
-
-    Ok(())
-}
-
 /// Helper function to deserialize comma-separated values
 pub fn comma_separated<'de, V, T, D>(deserializer: D) -> Result<V, D::Error>
 where

@@ -52,7 +52,6 @@ use opentalk_types::{
             },
             pagination::default_pagination_per_page,
             users::{PublicUserProfile, UnregisteredUser},
-            utils::validate_recurrence_pattern,
             Cursor,
         },
     },
@@ -62,7 +61,8 @@ use opentalk_types::{
         streaming::{RoomStreamingTarget, StreamingTarget},
     },
     core::{
-        DateTimeTz, EventId, EventInviteStatus, RoomId, RoomPassword, TimeZone, Timestamp, UserId,
+        DateTimeTz, EventId, EventInviteStatus, RecurrencePattern, RoomId, RoomPassword, TimeZone,
+        Timestamp, UserId,
     },
 };
 use rrule::{Frequency, RRuleSet};
@@ -526,7 +526,7 @@ async fn create_time_independent_event(
             is_all_day: None,
             starts_at: None,
             ends_at: None,
-            recurrence_pattern: vec![],
+            recurrence_pattern: RecurrencePattern::default(),
             type_: EventType::Single,
             invite_status: EventInviteStatus::Accepted,
             is_favorite: false,
@@ -553,13 +553,13 @@ async fn create_time_dependent_event(
     is_all_day: bool,
     starts_at: DateTimeTz,
     ends_at: DateTimeTz,
-    recurrence_pattern: Vec<String>,
+    recurrence_pattern: RecurrencePattern,
     is_adhoc: bool,
     streaming_targets: Vec<StreamingTarget>,
     show_meeting_details: bool,
     query: Query<EventOptionsQuery>,
 ) -> Result<(EventResource, Option<MailResource>), ApiError> {
-    let recurrence_pattern = recurrence_array_to_string(recurrence_pattern);
+    let recurrence_pattern = recurrence_pattern.to_multiline_string();
 
     let (duration_secs, ends_at_dt, ends_at_tz) =
         parse_event_dt_params(is_all_day, starts_at, ends_at, &recurrence_pattern)?;
@@ -627,7 +627,10 @@ async fn create_time_dependent_event(
             is_all_day: event.is_all_day,
             starts_at: Some(starts_at),
             ends_at: Some(ends_at),
-            recurrence_pattern: recurrence_string_to_array(event.recurrence_pattern),
+            recurrence_pattern: event
+                .recurrence_pattern
+                .map(|s| s.parse::<RecurrencePattern>().unwrap())
+                .unwrap_or_default(),
             type_: if event.is_recurring.unwrap_or_default() {
                 EventType::Recurring
             } else {
@@ -829,7 +832,10 @@ pub async fn get_events(
             is_all_day: event.is_all_day,
             starts_at,
             ends_at,
-            recurrence_pattern: recurrence_string_to_array(event.recurrence_pattern),
+            recurrence_pattern: event
+                .recurrence_pattern
+                .map(|s| s.parse::<RecurrencePattern>().unwrap())
+                .unwrap_or_default(),
             type_: if event.is_recurring.unwrap_or_default() {
                 EventType::Recurring
             } else {
@@ -938,7 +944,10 @@ pub async fn get_event(
         is_all_day: event.is_all_day,
         starts_at,
         ends_at,
-        recurrence_pattern: recurrence_string_to_array(event.recurrence_pattern),
+        recurrence_pattern: event
+            .recurrence_pattern
+            .map(|s| s.parse::<RecurrencePattern>().unwrap())
+            .unwrap_or_default(),
         type_: if event.is_recurring.unwrap_or_default() {
             EventType::Recurring
         } else {
@@ -1140,7 +1149,10 @@ pub async fn patch_event(
         is_all_day: event.is_all_day,
         starts_at,
         ends_at,
-        recurrence_pattern: recurrence_string_to_array(event.recurrence_pattern),
+        recurrence_pattern: event
+            .recurrence_pattern
+            .map(|s| s.parse::<RecurrencePattern>().unwrap())
+            .unwrap_or_default(),
         type_: if event.is_recurring.unwrap_or_default() {
             EventType::Recurring
         } else {
@@ -1321,7 +1333,7 @@ fn patch_event_change_to_time_dependent(
     if let (Some(is_all_day), Some(starts_at), Some(ends_at)) =
         (patch.is_all_day, patch.starts_at, patch.ends_at)
     {
-        let recurrence_pattern = recurrence_array_to_string(patch.recurrence_pattern);
+        let recurrence_pattern = patch.recurrence_pattern.to_multiline_string();
 
         let (duration_secs, ends_at_dt, ends_at_tz) =
             parse_event_dt_params(is_all_day, starts_at, ends_at, &recurrence_pattern)?;
@@ -1450,7 +1462,7 @@ async fn patch_time_dependent_event(
     event: &Event,
     patch: PatchEventBody,
 ) -> Result<UpdateEvent, ApiError> {
-    let recurrence_pattern = recurrence_array_to_string(patch.recurrence_pattern);
+    let recurrence_pattern = patch.recurrence_pattern.to_multiline_string();
 
     let is_all_day = patch.is_all_day.or(event.is_all_day).unwrap();
     let starts_at = patch
@@ -1634,14 +1646,13 @@ pub(crate) async fn notify_invitees_about_delete(
     }
 }
 
-#[derive(Deserialize, Validate)]
+#[derive(Deserialize)]
 pub struct EventRescheduleBody {
     _from: DateTime<Utc>,
     _is_all_day: Option<bool>,
     _starts_at: Option<bool>,
     _ends_at: Option<bool>,
-    #[validate(custom(function = "validate_recurrence_pattern"))]
-    _recurrence_pattern: Vec<String>,
+    _recurrence_pattern: RecurrencePattern,
 }
 
 #[post("/events/{event_id}/reschedule")]
@@ -1650,11 +1661,6 @@ pub async fn event_reschedule(
     _event_id: Path<EventId>,
     _body: Json<EventRescheduleBody>,
 ) -> actix_web::HttpResponse {
-    if let Err(_e) = _body.validate() {
-        // return Err(DefaultApiError::ValidationFailed);
-        return actix_web::HttpResponse::NotImplemented().finish();
-    }
-
     actix_web::HttpResponse::NotImplemented().finish()
 }
 
@@ -1780,20 +1786,6 @@ fn get_tenant_filter<'a>(
             id: current_tenant.oidc_tenant_id.as_ref(),
         }),
     }
-}
-
-fn recurrence_array_to_string(recurrence_pattern: Vec<String>) -> Option<String> {
-    if recurrence_pattern.is_empty() {
-        None
-    } else {
-        Some(recurrence_pattern.join("\n"))
-    }
-}
-
-fn recurrence_string_to_array(recurrence_pattern: Option<String>) -> Vec<String> {
-    recurrence_pattern
-        .map(|s| s.split('\n').map(String::from).collect())
-        .unwrap_or_default()
 }
 
 fn verify_exception_dt_params(
@@ -2144,7 +2136,7 @@ mod tests {
                 datetime: *unix_epoch,
                 timezone: TimeZone::from(Tz::Europe__Berlin),
             }),
-            recurrence_pattern: vec![],
+            recurrence_pattern: RecurrencePattern::default(),
             type_: EventType::Single,
             invite_status: EventInviteStatus::Accepted,
             is_favorite: false,
@@ -2267,7 +2259,7 @@ mod tests {
             is_all_day: None,
             starts_at: None,
             ends_at: None,
-            recurrence_pattern: vec![],
+            recurrence_pattern: RecurrencePattern::default(),
             type_: EventType::Single,
             invite_status: EventInviteStatus::Accepted,
             is_favorite: true,
