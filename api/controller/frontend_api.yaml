@@ -438,6 +438,59 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+  "/events/{event_id}/instances/{instance_id}":
+    get:
+      tags:
+        - "api::v1::events::instances"
+      summary: Get an event instance
+      description: Returns the event instance resource
+      operationId: get_event_instance
+      parameters:
+        - name: event_id
+          in: path
+          description: ID of the event
+          required: true
+          schema:
+            $ref: "#/components/schemas/EventId"
+        - name: instance_id
+          in: path
+          description: ID of the event instance
+          required: true
+          schema:
+            $ref: "#/components/schemas/InstanceId"
+        - name: invitees_max
+          in: query
+          description: |
+            Maximum number of invitees to return inside the event instance resource
+            
+            Default: 0
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: suppress_email_notification
+          in: query
+          description: Flag to suppress email notification
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Event instance successfully returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetEventInstanceResponseBody"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   /invite/verify:
     post:
       tags:
@@ -2460,6 +2513,8 @@ components:
         - instance
         - exception
       example: single
+    GetEventInstanceResponseBody:
+      $ref: "#/components/schemas/EventInstance"
     GetEventInstancesCursor:
       type: string
       description: An encoded cursor pointing to a position in a series of elements

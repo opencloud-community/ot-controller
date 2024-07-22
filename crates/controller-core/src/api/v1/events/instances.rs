@@ -24,9 +24,9 @@ use opentalk_types::{
         v1::{
             events::{
                 EventAndInstanceId, EventInstance, EventInstancePath, EventInstanceQuery,
-                EventRoomInfo, EventStatus, EventType, GetEventInstancesCursorData,
-                GetEventInstancesQuery, GetEventInstancesResponseBody, InstanceId,
-                PatchEventInstanceBody,
+                EventRoomInfo, EventStatus, EventType, GetEventInstanceResponseBody,
+                GetEventInstancesCursorData, GetEventInstancesQuery, GetEventInstancesResponseBody,
+                InstanceId, PatchEventInstanceBody,
             },
             Cursor,
         },
@@ -254,9 +254,41 @@ pub async fn get_event_instances(
     )
 }
 
-/// API Endpoint *GET /events/{id}*
+/// Get an event instance
 ///
-/// Returns the event resource for the given id
+/// Returns the event instance resource
+#[utoipa::path(
+    params(
+        EventInstancePath,
+        EventInstanceQuery,
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Event instance successfully returned",
+            body = GetEventInstanceResponseBody,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/events/{event_id}/instances/{instance_id}")]
 pub async fn get_event_instance(
     settings: SharedSettingsActix,
@@ -266,7 +298,7 @@ pub async fn get_event_instance(
     current_user: ReqData<User>,
     path: Path<EventInstancePath>,
     query: Query<EventInstanceQuery>,
-) -> DefaultApiResult<EventInstance> {
+) -> DefaultApiResult<GetEventInstanceResponseBody> {
     let settings = settings.load_full();
     let EventInstancePath {
         event_id,
@@ -324,7 +356,9 @@ pub async fn get_event_instance(
         ..event_instance
     };
 
-    Ok(ApiResponse::new(event_instance))
+    Ok(ApiResponse::new(GetEventInstanceResponseBody(
+        event_instance,
+    )))
 }
 
 /// API Endpoint `PATCH /events/{event_id}/{instance_id}`
