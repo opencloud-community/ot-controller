@@ -51,7 +51,7 @@ use opentalk_signaling_core::{
     RegisterModules, SignalingModule, SignalingModuleInitData, VolatileStaticMemoryStorage,
     VolatileStorage,
 };
-use opentalk_types::api::error::ApiError;
+use opentalk_types::api::{error::ApiError, v1::events::GetEventInstancesCursorData};
 use rustls_pki_types::{CertificateDer, PrivatePkcs8KeyDer};
 use snafu::{Backtrace, ErrorCompat, Report, ResultExt, Snafu};
 use swagger::WithSwagger as _;
@@ -642,6 +642,10 @@ impl ModulesRegistrar for Controller {
             description = "Endpoints related to user's favorite events"
         ),
         (
+            name = "api::v1::events::instances",
+            description = "Endpoints related to event instances"
+        ),
+        (
             name = "api::v1::assets",
             description = "Endpoints related to file assets"
         ),
@@ -682,6 +686,7 @@ impl ModulesRegistrar for Controller {
         api::v1::events::favorites::remove_event_from_favorites,
         api::v1::events::get_event,
         api::v1::events::get_events,
+        api::v1::events::instances::get_event_instances,
         api::v1::events::new_event,
         api::v1::events::patch_event,
         api::v1::invites::add_invite,
@@ -720,6 +725,7 @@ impl ModulesRegistrar for Controller {
             opentalk_types::api::error::StandardErrorBody,
             opentalk_types::api::error::ValidationErrorBody,
             opentalk_types::api::error::ValidationErrorEntry,
+            opentalk_types::api::v1::Cursor::<GetEventInstancesCursorData>,
             opentalk_types::api::v1::assets::AssetResource,
             opentalk_types::api::v1::assets::GetRoomsAssetsResponseBody,
             opentalk_types::api::v1::auth::GetLoginResponse,
@@ -730,6 +736,7 @@ impl ModulesRegistrar for Controller {
             opentalk_types::api::v1::events::EmailOnlyUser,
             opentalk_types::api::v1::events::EventAndInstanceId,
             opentalk_types::api::v1::events::EventExceptionResource,
+            opentalk_types::api::v1::events::EventInstance,
             opentalk_types::api::v1::events::EventInvitee,
             opentalk_types::api::v1::events::EventInviteeProfile,
             opentalk_types::api::v1::events::EventOrException,
@@ -737,6 +744,7 @@ impl ModulesRegistrar for Controller {
             opentalk_types::api::v1::events::EventRoomInfo,
             opentalk_types::api::v1::events::EventStatus,
             opentalk_types::api::v1::events::EventType,
+            opentalk_types::api::v1::events::GetEventInstancesResponseBody,
             opentalk_types::api::v1::events::InstanceId,
             opentalk_types::api::v1::events::PatchEventBody,
             opentalk_types::api::v1::events::PostEventsBody,

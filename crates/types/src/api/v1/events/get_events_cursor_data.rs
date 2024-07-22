@@ -5,6 +5,7 @@
 #[allow(unused_imports)]
 use crate::imports::*;
 use crate::{
+    api::v1::cursor::CursorData,
     core::{EventId, Timestamp},
     utils::ExampleData,
 };
@@ -36,4 +37,8 @@ impl ExampleData for GetEventsCursorData {
             event_starts_at: None,
         }
     }
+}
+
+impl CursorData for GetEventsCursorData {
+    const SCHEMA_CURSOR_TYPE_NAME: &'static str = "GetEventsCursor";
 }

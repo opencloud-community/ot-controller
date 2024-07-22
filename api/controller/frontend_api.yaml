@@ -362,6 +362,82 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+  "/events/{event_id}/instances":
+    get:
+      tags:
+        - "api::v1::events::instances"
+      summary: Get a list of the instances of an event
+      description: |
+        The instances are calculated based on the RRULE of the event. If no RRULE is
+        set for the event, the single event instance is returned.
+        
+        If no pagination query is added, the default page size is used.
+      operationId: get_event_instances
+      parameters:
+        - name: invitees_max
+          in: query
+          description: Maximum number of invitees to include inside the event
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: time_min
+          in: query
+          description: Minimum time of the event instances
+          required: false
+          schema:
+            allOf:
+              - $ref: "#/components/schemas/Timestamp"
+            nullable: true
+        - name: time_max
+          in: query
+          description: Maximum time of the event instances
+          required: false
+          schema:
+            allOf:
+              - $ref: "#/components/schemas/Timestamp"
+            nullable: true
+        - name: per_page
+          in: query
+          description: How many events to return per page
+          required: false
+          schema:
+            type: integer
+            format: int64
+            nullable: true
+        - name: after
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/GetEventInstancesCursor"
+        - name: event_id
+          in: path
+          description: The id of the event
+          required: true
+          schema:
+            $ref: "#/components/schemas/EventId"
+      responses:
+        "200":
+          description: List of event instances successfully returned
+          headers:
+            link:
+              schema:
+                $ref: "#/components/schemas/PageLink"
+              description: Links for paging through the results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetEventInstancesResponseBody"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   /invite/verify:
     post:
       tags:
@@ -1877,6 +1953,153 @@ components:
       format: uuid
       description: The identifier of an event
       example: 00000000-0000-0000-0000-004433221100
+    EventInstance:
+      type: object
+      description: |
+        Event instance resource
+        
+        An event instance is an occurrence of an recurring event
+        
+        Exceptions for the instance are always already applied
+        
+        For infos on undocumented fields see [`EventResource`]
+        
+        [`EventResource`]: ../event_ressource/struct.EventResource.html
+      required:
+        - id
+        - recurring_event_id
+        - instance_id
+        - created_by
+        - created_at
+        - updated_by
+        - updated_at
+        - title
+        - description
+        - room
+        - invitees_truncated
+        - invitees
+        - is_all_day
+        - starts_at
+        - ends_at
+        - type
+        - status
+        - invite_status
+        - is_favorite
+        - can_edit
+      properties:
+        can_edit:
+          type: boolean
+          description: Fkag to indicate if the current user can edit the event
+        created_at:
+          $ref: "#/components/schemas/Timestamp"
+        created_by:
+          $ref: "#/components/schemas/PublicUserProfile"
+        description:
+          type: string
+          description: Description of the event
+        ends_at:
+          $ref: "#/components/schemas/DateTimeTz"
+        id:
+          $ref: "#/components/schemas/EventAndInstanceId"
+        instance_id:
+          $ref: "#/components/schemas/InstanceId"
+        invite_status:
+          $ref: "#/components/schemas/EventInviteStatus"
+        invitees:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventInvitee"
+          description: "List of event invitees and their invite status. Might not be complete, see `invite_truncated`"
+        invitees_truncated:
+          type: boolean
+          description: "Flag which indicates if `invitees` contains all invites as far as known to the application"
+        is_all_day:
+          type: boolean
+          description: Flag indicating whether the event is all-day
+        is_favorite:
+          type: boolean
+          description: Flag to indicate if the event is a favorite of the current user
+        recurring_event_id:
+          $ref: "#/components/schemas/EventId"
+        room:
+          $ref: "#/components/schemas/EventRoomInfo"
+        shared_folder:
+          allOf:
+            - $ref: "#/components/schemas/SharedFolder"
+        starts_at:
+          $ref: "#/components/schemas/DateTimeTz"
+        status:
+          $ref: "#/components/schemas/EventStatus"
+        title:
+          type: string
+          description: Title of the event
+        type:
+          $ref: "#/components/schemas/EventType"
+        updated_at:
+          $ref: "#/components/schemas/Timestamp"
+        updated_by:
+          $ref: "#/components/schemas/PublicUserProfile"
+      example:
+        can_edit: false
+        created_at: "2024-07-20T14:16:19Z"
+        created_by:
+          avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
+          display_name: Alice Adams
+          email: alice@example.com
+          firstname: Alice
+          id: 00000000-0000-0000-0000-0000000a11c3
+          lastname: Adams
+          title: ""
+        description: Our weekly teammeeting
+        ends_at:
+          datetime: "2024-07-22T11:00:00Z"
+          timezone: Europe/Berlin
+        id: 00000000-0000-0000-0000-004433221100_20240705T170242Z
+        instance_id: 20240705T170242Z
+        invite_status: pending
+        invitees:
+          - profile:
+              avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
+              display_name: Alice Adams
+              email: alice@example.com
+              firstname: Alice
+              id: 00000000-0000-0000-0000-0000000a11c3
+              kind: registered
+              lastname: Adams
+              role: user
+              title: ""
+            status: accepted
+        invitees_truncated: true
+        is_all_day: false
+        is_favorite: false
+        recurring_event_id: 00000000-0000-0000-0000-004433221100
+        room:
+          call_in:
+            id: "1234567890"
+            password: "9876543210"
+            tel: +555-12345-67890
+          id: 00000000-0000-0000-0000-0000abadcafe
+          password: v3rys3cr3t
+          waiting_room: false
+        shared_folder:
+          read:
+            password: v3rys3cr3t
+            url: "https://cloud.example.com/shares/abc123"
+        starts_at:
+          datetime: "2024-07-22T10:00:00Z"
+          timezone: Europe/Berlin
+        status: ok
+        title: Weekly meeting
+        type: recurring
+        updated_at: "2024-07-20T14:16:19Z"
+        updated_by:
+          avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
+          display_name: Alice Adams
+          email: alice@example.com
+          firstname: Alice
+          id: 00000000-0000-0000-0000-0000000a11c3
+          lastname: Adams
+          title: ""
     EventInviteStatus:
       type: string
       enum:
@@ -2237,6 +2460,75 @@ components:
         - instance
         - exception
       example: single
+    GetEventInstancesCursor:
+      type: string
+      description: An encoded cursor pointing to a position in a series of elements
+    GetEventInstancesResponseBody:
+      type: array
+      items:
+        $ref: "#/components/schemas/EventInstance"
+      description: "Response for *GET /events/{event_id}/instances*"
+      example:
+        - can_edit: false
+          created_at: "2024-07-20T14:16:19Z"
+          created_by:
+            avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
+            display_name: Alice Adams
+            email: alice@example.com
+            firstname: Alice
+            id: 00000000-0000-0000-0000-0000000a11c3
+            lastname: Adams
+            title: ""
+          description: Our weekly teammeeting
+          ends_at:
+            datetime: "2024-07-22T11:00:00Z"
+            timezone: Europe/Berlin
+          id: 00000000-0000-0000-0000-004433221100_20240705T170242Z
+          instance_id: 20240705T170242Z
+          invite_status: pending
+          invitees:
+            - profile:
+                avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
+                display_name: Alice Adams
+                email: alice@example.com
+                firstname: Alice
+                id: 00000000-0000-0000-0000-0000000a11c3
+                kind: registered
+                lastname: Adams
+                role: user
+                title: ""
+              status: accepted
+          invitees_truncated: true
+          is_all_day: false
+          is_favorite: false
+          recurring_event_id: 00000000-0000-0000-0000-004433221100
+          room:
+            call_in:
+              id: "1234567890"
+              password: "9876543210"
+              tel: +555-12345-67890
+            id: 00000000-0000-0000-0000-0000abadcafe
+            password: v3rys3cr3t
+            waiting_room: false
+          shared_folder:
+            read:
+              password: v3rys3cr3t
+              url: "https://cloud.example.com/shares/abc123"
+          starts_at:
+            datetime: "2024-07-22T10:00:00Z"
+            timezone: Europe/Berlin
+          status: ok
+          title: Weekly meeting
+          type: recurring
+          updated_at: "2024-07-20T14:16:19Z"
+          updated_by:
+            avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
+            display_name: Alice Adams
+            email: alice@example.com
+            firstname: Alice
+            id: 00000000-0000-0000-0000-0000000a11c3
+            lastname: Adams
+            title: ""
     GetFindResponse:
       type: array
       items:
@@ -3417,6 +3709,8 @@ tags:
     description: Endpoints related to events
   - name: "api::v1::events::favorites"
     description: "Endpoints related to user's favorite events"
+  - name: "api::v1::events::instances"
+    description: Endpoints related to event instances
   - name: "api::v1::assets"
     description: Endpoints related to file assets
   - name: "api::v1::sip_configs"

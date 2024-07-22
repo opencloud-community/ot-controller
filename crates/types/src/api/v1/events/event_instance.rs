@@ -9,6 +9,7 @@ use crate::{
     api::v1::users::PublicUserProfile,
     common::shared_folder::SharedFolder,
     core::{DateTimeTz, EventId, EventInviteStatus, Timestamp},
+    utils::ExampleData,
 };
 
 /// Event instance resource
@@ -22,6 +23,11 @@ use crate::{
 /// [`EventResource`]: ../event_ressource/struct.EventResource.html
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(EventInstance::example_data())),
+)]
 pub struct EventInstance {
     /// Opaque id of the event instance resource
     pub id: EventAndInstanceId,
@@ -76,5 +82,45 @@ pub struct EventInstance {
 
     /// Information about the shared folder for the event
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    // Field is non-required already, utoipa adds a `nullable: true` entry
+    // by default which creates a false positive in the spectral linter when
+    // combined with example data.
+    #[cfg_attr(feature = "utoipa", schema(nullable = false))]
     pub shared_folder: Option<SharedFolder>,
+}
+
+impl ExampleData for EventInstance {
+    fn example_data() -> Self {
+        use chrono::{TimeZone as _, Utc};
+
+        Self {
+            id: EventAndInstanceId::example_data(),
+            recurring_event_id: EventId::example_data(),
+            instance_id: InstanceId::example_data(),
+            created_by: PublicUserProfile::example_data(),
+            created_at: Timestamp::example_data(),
+            updated_by: PublicUserProfile::example_data(),
+            updated_at: Timestamp::example_data(),
+            title: "Weekly meeting".to_string(),
+            description: "Our weekly teammeeting".to_string(),
+            room: EventRoomInfo::example_data(),
+            invitees_truncated: true,
+            invitees: vec![EventInvitee::example_data()],
+            is_all_day: false,
+            starts_at: DateTimeTz {
+                datetime: Utc.with_ymd_and_hms(2024, 7, 22, 10, 0, 0).unwrap(),
+                timezone: chrono_tz::Europe::Berlin.into(),
+            },
+            ends_at: DateTimeTz {
+                datetime: Utc.with_ymd_and_hms(2024, 7, 22, 11, 0, 0).unwrap(),
+                timezone: chrono_tz::Europe::Berlin.into(),
+            },
+            type_: EventType::Recurring,
+            status: EventStatus::Ok,
+            invite_status: EventInviteStatus::Pending,
+            is_favorite: false,
+            can_edit: false,
+            shared_folder: Some(SharedFolder::example_data()),
+        }
+    }
 }

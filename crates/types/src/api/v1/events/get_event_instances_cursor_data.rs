@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use crate::api::v1::cursor::CursorData;
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -11,4 +12,8 @@ use crate::imports::*;
 pub struct GetEventInstancesCursorData {
     /// Page number
     pub page: i64,
+}
+
+impl CursorData for GetEventInstancesCursorData {
+    const SCHEMA_CURSOR_TYPE_NAME: &'static str = "GetEventInstancesCursor";
 }
