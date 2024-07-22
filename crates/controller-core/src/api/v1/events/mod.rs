@@ -1580,7 +1580,42 @@ pub(crate) struct CancellationNotificationValues {
     pub streaming_targets: Vec<RoomStreamingTarget>,
 }
 
-/// API Endpoint `DELETE /events/{event_id}`
+/// Delete an event and its owned resources, including the associated room.
+///
+/// Deletes the event by the id if found. See the query parameters for affecting
+/// the behavior of this endpoint, such as mail notification suppression, or
+/// succeding even if external resources cannot be successfully deleted.
+#[utoipa::path(
+    params(
+        DeleteEventsQuery,
+        ("event_id" = EventId, description = "The id of the event"),
+    ),
+    responses(
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "The event was successfully deleted",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[delete("/events/{event_id}")]
 #[allow(clippy::too_many_arguments)]
 pub async fn delete_event(

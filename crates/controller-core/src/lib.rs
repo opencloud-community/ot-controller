@@ -677,6 +677,7 @@ impl ModulesRegistrar for Controller {
         api::v1::assets::delete,
         api::v1::auth::get_login,
         api::v1::auth::post_login,
+        api::v1::events::delete_event,
         api::v1::events::favorites::add_event_to_favorites,
         api::v1::events::favorites::remove_event_from_favorites,
         api::v1::events::get_event,

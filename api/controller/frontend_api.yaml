@@ -268,6 +268,47 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+    delete:
+      tags:
+        - "api::v1::events"
+      summary: "Delete an event and its owned resources, including the associated room."
+      description: |
+        Deletes the event by the id if found. See the query parameters for affecting
+        the behavior of this endpoint, such as mail notification suppression, or
+        succeding even if external resources cannot be successfully deleted.
+      operationId: delete_event
+      parameters:
+        - name: force_delete_reference_if_external_services_fail
+          in: query
+          description: Flag to force delete the reference if the deletion at the external services fails
+          required: false
+          schema:
+            type: boolean
+        - name: suppress_email_notification
+          in: query
+          description: Flag to disable email notification
+          required: false
+          schema:
+            type: boolean
+        - name: event_id
+          in: path
+          description: The id of the event
+          required: true
+          schema:
+            $ref: "#/components/schemas/EventId"
+      responses:
+        "204":
+          description: The event was successfully deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
     patch:
       tags:
         - "api::v1::events"
