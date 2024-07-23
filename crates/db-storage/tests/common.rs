@@ -32,6 +32,7 @@ pub async fn make_user(
         title: "".into(),
         firstname: firstname.into(),
         lastname: lastname.into(),
+        avatar_url: None,
         id_token_exp: 0,
         display_name: display_name.into(),
         language: "".into(),

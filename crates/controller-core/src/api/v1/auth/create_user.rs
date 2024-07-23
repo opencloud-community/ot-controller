@@ -52,6 +52,7 @@ pub(super) async fn create_user(
                 display_name: info_display_name,
                 firstname: info.firstname,
                 lastname: info.lastname,
+                avatar_url: info.avatar_url,
                 id_token_exp: info.expiration.timestamp(),
                 // TODO: try to get user language from accept-language header
                 language: settings.defaults.user_language.clone(),

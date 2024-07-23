@@ -96,6 +96,7 @@ impl DatabaseContext {
             title: "".into(),
             firstname: "test".into(),
             lastname: "tester".into(),
+            avatar_url: Some("https://example.com/avatar/abcdef".into()),
             id_token_exp: 0,
             display_name: "test tester".into(),
             language: "en".into(),

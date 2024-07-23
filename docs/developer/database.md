@@ -211,6 +211,7 @@ users {
     uuid id PK
     uuid tariff_id FK
     uuid tenant_id FK
+    character_varying avatar_url
     character_varying conference_theme
     character_varying dashboard_theme
     timestamp_with_time_zone disabled_since

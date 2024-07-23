@@ -94,6 +94,7 @@ fn create_changeset<'a>(
         title: _,
         firstname,
         lastname,
+        avatar_url,
         id_token_exp: _,
         language: _,
         display_name,
@@ -117,6 +118,10 @@ fn create_changeset<'a>(
 
     if lastname != &token_info.lastname {
         changeset.lastname = Some(&token_info.lastname)
+    }
+
+    if avatar_url != &token_info.avatar_url {
+        changeset.avatar_url = token_info.avatar_url.as_deref()
     }
 
     if let Some(enforced_display_name) = enforced_display_name {
