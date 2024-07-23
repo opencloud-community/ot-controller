@@ -369,7 +369,7 @@ diesel::table! {
         tariff_id -> Uuid,
         tariff_status -> TariffStatus,
         disabled_since -> Nullable<Timestamptz>,
-        #[max_length = 255]
+        #[max_length = 2048]
         avatar_url -> Nullable<Varchar>,
     }
 }

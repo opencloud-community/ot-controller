@@ -81,6 +81,14 @@ KeyCloak can provide some fields in the JWT to the OpenTalk Controller. These fi
 | `x_grp`         | `string[]` | no                                                                | A list of groups which the user is part of                                                |
 | `phone_number`  | `string`   | no                                                                | The phone number of the user                                                              |
 | `nickname`      | `string`   | no                                                                | Nickname of the user, typically used to prefill the display name of a meeting participant |
+| `picture`       | `string`   | no                                                                | URL to a user picture, will replace the gravatar url generation for that user if provided |
+
+#### Security considerations
+
+For the `picture` field, the frontend will download the images found under the
+provided URL. Therefore it is important to only provide URLs that are guaranteed
+to not inject unwanted content, but rather have a policy which ensures that only
+valid images are served.
 
 ### JWT fields for service login
 
