@@ -3,68 +3,38 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use snafu::{ResultExt, Whatever};
-use vergen::EmitBuilder;
-
-/// Use an environment variable instead of letting `vergen` determine the value.
-/// This allows reproducible builds by removing differences between subsequent builds.
-/// If the environment variable `name` is set, it will be used to print the cargo instructions,
-/// otherwise `enable_fn` will be called and `vergen` will determine what to print.
-fn add_custom_environment_variable<F: FnMut(&mut EmitBuilder) -> &mut EmitBuilder>(
-    name: &str,
-    builder: &mut EmitBuilder,
-    mut enable_fn: F,
-) {
-    if let Ok(s) = std::env::var(name) {
-        println!("cargo:rustc-env={name}={s}");
-    } else {
-        enable_fn(builder);
-    }
-    println!("cargo:rerun-if-env-changed={name}");
-}
+use vergen::{BuildBuilder, CargoBuilder, RustcBuilder};
+use vergen_gix::{Emitter, GixBuilder};
 
 fn main() -> Result<(), Whatever> {
-    let builder = &mut EmitBuilder::builder();
-    builder
-        .all_cargo()
-        .all_rustc()
-        // The following enables all git features except the ones we want to control manually
-        // Taken from `EmitBuilder::all_git`'s implementation
-        .git_commit_author_email()
-        .git_commit_author_name()
-        .git_commit_count()
-        .git_commit_date()
-        .git_commit_message()
-        .git_describe(false, false, None);
-
-    add_custom_environment_variable(
-        "VERGEN_BUILD_TIMESTAMP",
-        builder,
-        EmitBuilder::build_timestamp,
-    );
+    let mut emitter = Emitter::default();
+    let builder = &mut emitter
+        .add_instructions(
+            &CargoBuilder::all_cargo().whatever_context("Failed to build cargo variables")?,
+        )
+        .whatever_context("Failed to add cargo instructions")?
+        .add_instructions(
+            &BuildBuilder::all_build().whatever_context("Failed to build builder variables")?,
+        )
+        .whatever_context("Failed to add builder variables")?
+        .add_instructions(
+            &RustcBuilder::all_rustc().whatever_context("Failed to build rustc variables")?,
+        )
+        .whatever_context("Failed to add rustc variables")?;
 
     if is_contained_in_git()? {
-        add_custom_environment_variable("VERGEN_GIT_SHA", builder, |builder| {
-            const USE_SHORT: bool = false;
-            builder.git_sha(USE_SHORT)
-        });
-
-        add_custom_environment_variable(
-            "VERGEN_GIT_COMMIT_TIMESTAMP",
-            builder,
-            EmitBuilder::git_commit_timestamp,
-        );
-
-        add_custom_environment_variable("VERGEN_GIT_BRANCH", builder, EmitBuilder::git_branch);
-    } else {
-        // Disable git for vergen builder
-        builder.disable_git();
+        builder
+            .add_instructions(
+                &GixBuilder::all_git().whatever_context("Failed to build git variables")?,
+            )
+            .whatever_context("Failed to add git variables")?;
     }
-
     builder.emit().whatever_context("Failed to emit")?;
 
     Ok(())
 }
 
+/// Checks wether the current or one of the parent directories contains a `.git` entry.
 fn is_contained_in_git() -> Result<bool, Whatever> {
     let current_dir = std::env::current_dir().whatever_context("Failed to get current dir")?;
     let mut parents = vec![];
@@ -81,5 +51,7 @@ fn is_contained_in_git() -> Result<bool, Whatever> {
             return Ok(true);
         }
     }
+
+    println!("cargo::warning=No .git directory found");
     Ok(false)
 }
