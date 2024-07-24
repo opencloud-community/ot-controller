@@ -89,7 +89,7 @@ opentalk-keycloak-admin = { version = "0.2.1", default-features = false, feature
 opentalk-nextcloud-client = { version = "0.1.1", default-features = false, features = [
   "rustls-tls-native-roots",
 ] }
-opentelemetry = { version = "0.23", default-features = false, features = [
+opentelemetry = { version = "0.24", default-features = false, features = [
   "metrics",
 ] }
 owo-colors = "4"
@@ -117,7 +117,7 @@ syn = "2"
 tokio = "1"
 tokio-stream = { version = "0.1", features = ["sync"] }
 tracing = "0.1"
-tracing-opentelemetry = "0.24"
+tracing-opentelemetry = "0.25"
 url = "2"
 utoipa = { version = "4.2.3" }
 uuid = "1"

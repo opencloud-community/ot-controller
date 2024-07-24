@@ -55,9 +55,9 @@ opentalk-r3dlock.workspace = true
 opentalk-signaling-core.workspace = true
 opentalk-types = { workspace = true, features = ["backend", "clap"] }
 opentelemetry = { workspace = true, features = ["metrics", "trace"] }
-opentelemetry-otlp = "0.16"
-opentelemetry-prometheus = "0.16"
-opentelemetry_sdk = { version = "0.23", features = [
+opentelemetry-otlp = "0.17"
+opentelemetry-prometheus = "0.17"
+opentelemetry_sdk = { version = "0.24", features = [
   "metrics",
   "rt-tokio-current-thread",
 ] }
