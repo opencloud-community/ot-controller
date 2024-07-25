@@ -58,6 +58,9 @@ pub enum SettingsError {
         #[snafu(source(from(serde_path_to_error::Error<config::ConfigError>, Box::new)))]
         source: Box<serde_path_to_error::Error<config::ConfigError>>,
     },
+
+    #[snafu(display("Config must provide either a janus or livekit configuration"))]
+    MissingMediaBackend,
 }
 
 type Result<T, E = SettingsError> = std::result::Result<T, E>;
@@ -177,9 +180,17 @@ impl Settings {
             )
             .build()?;
 
-        serde_path_to_error::deserialize(config).context(DeserializeConfigSnafu {
-            file_name: file_name.to_owned(),
-        })
+        let this: Self =
+            serde_path_to_error::deserialize(config).context(DeserializeConfigSnafu {
+                file_name: file_name.to_owned(),
+            })?;
+
+        if !this.extensions.contains_key("room_server") && !this.extensions.contains_key("livekit")
+        {
+            return Err(SettingsError::MissingMediaBackend);
+        }
+
+        Ok(this)
     }
 }
 

@@ -81,6 +81,13 @@ to_routing_key = "to-janus"
 # This value is used to balance new webrtc sessions on specific event-loops.
 #event_loops = 92
 
+# WebRTC SFU Alternative to janus (room_server section)
+[livekit]
+url = "https://url.to.your.livekit.server"
+
+api_key = "your-livekit-api-key"
+api_secret = "your-livekit-api-secret"
+
 [rabbit_mq]
 # The URL to use to connect to the rabbit mq broker
 #url = "amqp://username:password@host/%2F"
