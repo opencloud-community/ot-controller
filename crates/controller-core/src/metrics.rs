@@ -12,7 +12,7 @@ use opentalk_mail_worker_protocol::MailTask;
 use opentalk_signaling_core::{RedisMetrics, SignalingMetrics};
 use opentelemetry::{
     global,
-    metrics::{Counter, Histogram, MetricsError, Unit},
+    metrics::{Counter, Histogram, MetricsError},
     Key,
 };
 use opentelemetry_sdk::metrics::{new_view, Aggregation, Instrument, SdkMeterProvider, Stream};
@@ -134,14 +134,14 @@ impl CombinedMetrics {
             request_durations: meter
                 .f64_histogram("web.request_duration_seconds")
                 .with_description("HTTP response time measured in actix-web middleware")
-                .with_unit(Unit::new("seconds"))
+                .with_unit("seconds")
                 .init(),
             response_sizes: meter
                 .u64_histogram("web.response_sizes_bytes")
                 .with_description(
                     "HTTP response size for sized responses measured in actix-web middleware",
                 )
-                .with_unit(Unit::new("bytes"))
+                .with_unit("bytes")
                 .init(),
             issued_email_tasks_count: meter
                 .u64_counter("web.issued_email_tasks_count")
@@ -153,12 +153,12 @@ impl CombinedMetrics {
             runner_startup_time: meter
                 .f64_histogram("signaling.runner_startup_time_seconds")
                 .with_description("Time the runner takes to initialize")
-                .with_unit(Unit::new("seconds"))
+                .with_unit("seconds")
                 .init(),
             runner_destroy_time: meter
                 .f64_histogram("signaling.runner_destroy_time_seconds")
                 .with_description("Time the runner takes to stop")
-                .with_unit(Unit::new("seconds"))
+                .with_unit("seconds")
                 .init(),
             created_rooms_count: meter
                 .u64_counter("signaling.created_rooms_count")
@@ -186,7 +186,7 @@ impl CombinedMetrics {
             sql_execution_time: meter
                 .f64_histogram("sql.execution_time_seconds")
                 .with_description("SQL execution time for a single diesel query")
-                .with_unit(Unit::new("seconds"))
+                .with_unit("seconds")
                 .init(),
             sql_error: meter
                 .u64_counter("sql.errors_total")
@@ -206,12 +206,12 @@ impl CombinedMetrics {
             enforce_execution_time: meter
                 .f64_histogram("kustos.enforce_execution_time_seconds")
                 .with_description("Execution time of kustos enforce")
-                .with_unit(Unit::new("seconds"))
+                .with_unit("seconds")
                 .init(),
             load_policy_execution_time: meter
                 .f64_histogram("kustos.load_policy_execution_time_seconds")
                 .with_description("Execution time of kustos load_policy")
-                .with_unit(Unit::new("seconds"))
+                .with_unit("seconds")
                 .init(),
         });
 
@@ -219,7 +219,7 @@ impl CombinedMetrics {
             command_execution_time: meter
                 .f64_histogram("redis.command_execution_time_seconds")
                 .with_description("Execution time of redis commands in seconds")
-                .with_unit(Unit::new("seconds"))
+                .with_unit("seconds")
                 .init(),
         });
 

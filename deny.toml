@@ -234,6 +234,7 @@ skip = [
   { name = "spin", version = "=0.5" },
   { name = "spki", version = "=0.6" },
   { name = "syn", version = "=1" },
+  { name = "sync_wrapper", version = "=0.1" },
   { name = "tokio-rustls", version = "=0.24" },
   { name = "tokio-rustls", version = "=0.25" },
   { name = "toml_edit", version = "=0.21" },

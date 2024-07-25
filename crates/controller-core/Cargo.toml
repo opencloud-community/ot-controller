@@ -84,7 +84,6 @@ tokio-stream.workspace = true
 tracing.workspace = true
 tracing-actix-web = { version = "0.7" }
 tracing-futures = "0.2"
-tracing-opentelemetry.workspace = true
 tracing-subscriber = { version = "0.3", features = [
   "env-filter",
   "parking_lot",
