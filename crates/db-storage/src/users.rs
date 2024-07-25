@@ -75,6 +75,7 @@ pub struct User {
     pub tariff_id: TariffId,
     pub tariff_status: TariffStatus,
     pub disabled_since: Option<DateTime<Utc>>,
+    pub avatar_url: Option<String>,
 }
 
 impl fmt::Debug for User {
@@ -363,7 +364,7 @@ impl User {
     }
 
     pub fn to_public_user_profile(&self, settings: &Settings) -> PublicUserProfile {
-        let avatar_url = email_to_libravatar_url(&settings.avatar.libravatar_url, &self.email);
+        let default_avatar = email_to_libravatar_url(&settings.avatar.libravatar_url, &self.email);
 
         PublicUserProfile {
             id: self.id,
@@ -372,7 +373,7 @@ impl User {
             firstname: self.firstname.clone(),
             lastname: self.lastname.clone(),
             display_name: self.display_name.clone(),
-            avatar_url,
+            avatar_url: self.avatar_url.clone().unwrap_or(default_avatar),
         }
     }
 
@@ -381,7 +382,7 @@ impl User {
         settings: &Settings,
         used_storage: u64,
     ) -> PrivateUserProfile {
-        let avatar_url = email_to_libravatar_url(&settings.avatar.libravatar_url, &self.email);
+        let default_avatar = email_to_libravatar_url(&settings.avatar.libravatar_url, &self.email);
 
         PrivateUserProfile {
             id: self.id,
@@ -392,7 +393,7 @@ impl User {
             display_name: self.display_name.clone(),
             dashboard_theme: self.dashboard_theme.clone(),
             conference_theme: self.conference_theme.clone(),
-            avatar_url,
+            avatar_url: self.avatar_url.clone().unwrap_or(default_avatar),
             language: self.language.clone(),
             tariff_status: self.tariff_status,
             used_storage,
@@ -433,6 +434,7 @@ pub struct NewUser {
     pub tenant_id: TenantId,
     pub tariff_id: TariffId,
     pub tariff_status: TariffStatus,
+    pub avatar_url: Option<String>,
 }
 
 impl NewUser {
@@ -464,6 +466,7 @@ pub struct UpdateUser<'a> {
     pub tariff_id: Option<TariffId>,
     pub tariff_status: Option<TariffStatus>,
     pub disabled_since: Option<Option<DateTime<Utc>>>,
+    pub avatar_url: Option<&'a str>,
 }
 
 impl UpdateUser<'_> {

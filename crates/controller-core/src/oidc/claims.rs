@@ -60,6 +60,8 @@ pub struct UserClaims {
     pub given_name: String,
     /// The users lastname
     pub family_name: String,
+    /// The profile picture of the user
+    pub picture: Option<String>,
     /// Tenant ID of the user
     pub tenant_id: Option<String>,
     /// Tariff ID of the user

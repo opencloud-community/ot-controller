@@ -2176,7 +2176,9 @@ impl Runner {
             firstname: creator.firstname,
             lastname: creator.lastname,
             display_name: creator.display_name,
-            avatar_url: email_to_libravatar_url(libravatar_url, &creator.email),
+            avatar_url: creator
+                .avatar_url
+                .unwrap_or_else(|| email_to_libravatar_url(libravatar_url, &creator.email)),
         };
 
         let creator_info = self
@@ -2194,14 +2196,14 @@ impl Runner {
 
     async fn avatar_url(&self) -> Option<String> {
         match &self.participant {
-            Participant::User(user) => {
+            Participant::User(user) => Some(user.avatar_url.clone().unwrap_or_else(|| {
                 let settings = self.settings.load();
-                Some(format!(
+                format!(
                     "{}{:x}",
                     settings.avatar.libravatar_url,
                     md5::compute(&user.email)
-                ))
-            }
+                )
+            })),
             Participant::Guest | Participant::Recorder | Participant::Sip => None,
         }
     }

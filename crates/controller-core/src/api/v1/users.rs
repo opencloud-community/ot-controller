@@ -89,6 +89,7 @@ pub async fn patch_me(
         title: patch.title.as_deref(),
         firstname: None,
         lastname: None,
+        avatar_url: None,
         phone: None,
         email: None,
         display_name: patch.display_name.as_deref(),

@@ -130,6 +130,7 @@ mod test {
             email: None,
             firstname: None,
             lastname: None,
+            avatar_url: None,
             phone: None,
             display_name: None,
             language: None,
