@@ -48,4 +48,5 @@ title: Controller
 
 ## Under the hood
 
+- [OIDC Authentication Flow](under_the_hood/oidc_auth.md)
 - [Handling of WebAPI requests](under_the_hood/http_requests.md)
