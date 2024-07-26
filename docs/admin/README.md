@@ -45,3 +45,8 @@ title: Controller
 - [OpenTalk Obelisk](advanced/additional_services/obelisk.md) for handling dial-in from telephone line
 - [OpenTalk Recorder](advanced/additional_services/recorder.md) for recording meetings
 - [OpenTalk SMTP-Mailer](advanced/additional_services/smtp_mailer.md) for sending E-Mail notifications to users
+
+## Under the hood
+
+- [OIDC Authentication Flow](under_the_hood/oidc_auth.md)
+- [Handling of WebAPI requests](under_the_hood/http_requests.md)
