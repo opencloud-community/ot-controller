@@ -212,6 +212,7 @@ skip = [
   { name = "idna", version = "=0.3" },
   { name = "indexmap", version = "=1" },
   { name = "itertools", version = "=0.10" },
+  { name = "mio", version = "=0.8" },
   { name = "num-bigint", version = "=0.4" },
   { name = "ordered-float", version = "=2.10" },
   { name = "p256", version = "=0.11" },
