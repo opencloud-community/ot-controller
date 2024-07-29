@@ -36,17 +36,51 @@ use opentalk_types::{
 use snafu::Report;
 
 use crate::{
-    api::v1::{
-        events::{notify_event_invitees_about_update, shared_folder_for_user},
-        response::NoContent,
+    api::{
+        responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
+        v1::{
+            events::{notify_event_invitees_about_update, shared_folder_for_user},
+            response::NoContent,
+        },
     },
     services::MailService,
     settings::SharedSettingsActix,
 };
 
-/// API Endpoint `GET /events/{event_id}/shared_folder`
-///
 /// Get the shared folder for an event
+///
+/// Returns the shared folder for an event if available
+#[utoipa::path(
+    params(
+        ("event_id" = EventId, description = "The id of the event"),
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Shared folder returned",
+            body = SharedFolder,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/events/{event_id}/shared_folder")]
 pub async fn get_shared_folder_for_event(
     db: Data<Db>,

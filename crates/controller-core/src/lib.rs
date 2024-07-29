@@ -650,6 +650,10 @@ impl ModulesRegistrar for Controller {
             description = "Endpoints related to event invites"
         ),
         (
+            name = "api::v1::events::shared_folder",
+            description = "Endpoints related to event shared folders"
+        ),
+        (
             name = "api::v1::assets",
             description = "Endpoints related to file assets"
         ),
@@ -694,8 +698,8 @@ impl ModulesRegistrar for Controller {
         api::v1::events::instances::get_event_instances,
         api::v1::events::instances::patch_event_instance,
         api::v1::events::invites::accept_event_invite,
-        api::v1::events::invites::decline_event_invite,
         api::v1::events::invites::create_invite_to_event,
+        api::v1::events::invites::decline_event_invite,
         api::v1::events::invites::delete_email_invite_to_event,
         api::v1::events::invites::delete_invite_to_event,
         api::v1::events::invites::get_invites_for_event,
@@ -703,6 +707,7 @@ impl ModulesRegistrar for Controller {
         api::v1::events::invites::update_invite_to_event,
         api::v1::events::new_event,
         api::v1::events::patch_event,
+        api::v1::events::shared_folder::get_shared_folder_for_event,
         api::v1::invites::add_invite,
         api::v1::invites::delete_invite,
         api::v1::invites::get_invite,

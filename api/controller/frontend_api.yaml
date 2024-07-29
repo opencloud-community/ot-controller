@@ -868,6 +868,37 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+  "/events/{event_id}/shared_folder":
+    get:
+      tags:
+        - "api::v1::events::shared_folder"
+      summary: Get the shared folder for an event
+      description: Returns the shared folder for an event if available
+      operationId: get_shared_folder_for_event
+      parameters:
+        - name: event_id
+          in: path
+          description: The id of the event
+          required: true
+          schema:
+            $ref: "#/components/schemas/EventId"
+      responses:
+        "200":
+          description: Shared folder returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SharedFolder"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   /invite/verify:
     post:
       tags:
@@ -4246,6 +4277,8 @@ tags:
     description: Endpoints related to event instances
   - name: "api::v1::events::invites"
     description: Endpoints related to event invites
+  - name: "api::v1::events::shared_folder"
+    description: Endpoints related to event shared folders
   - name: "api::v1::assets"
     description: Endpoints related to file assets
   - name: "api::v1::sip_configs"
