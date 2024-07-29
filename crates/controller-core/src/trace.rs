@@ -153,11 +153,8 @@ impl RootSpanBuilder for ReducedSpanBuilder {
 
 fn handle_error(span: Span, error: &Error) {
     let response_error = error.as_response_error();
-    span.record(
-        "exception.message",
-        &tracing::field::display(response_error),
-    );
-    span.record("exception.details", &tracing::field::debug(response_error));
+    span.record("exception.message", tracing::field::display(response_error));
+    span.record("exception.details", tracing::field::debug(response_error));
     let status_code = response_error.status_code();
     span.record("http.status_code", status_code.as_u16());
 

@@ -225,7 +225,7 @@ mod test {
             "is_room_owner": false,
         });
 
-        let produced = serde_json::to_value(&ControlEvent::JoinSuccess(JoinSuccess {
+        let produced = serde_json::to_value(ControlEvent::JoinSuccess(JoinSuccess {
             id: ParticipantId::nil(),
             display_name: "name".into(),
             avatar_url: Some("http://url".into()),
@@ -293,7 +293,7 @@ mod test {
             "is_room_owner": false,
         });
 
-        let produced = serde_json::to_value(&ControlEvent::JoinSuccess(JoinSuccess {
+        let produced = serde_json::to_value(ControlEvent::JoinSuccess(JoinSuccess {
             id: ParticipantId::nil(),
             display_name: "name".into(),
             avatar_url: None,
@@ -331,7 +331,7 @@ mod test {
     fn update() {
         let expected = json!({"message": "update", "id": "00000000-0000-0000-0000-000000000000"});
 
-        let produced = serde_json::to_value(&ControlEvent::Update(Participant {
+        let produced = serde_json::to_value(ControlEvent::Update(Participant {
             id: ParticipantId::nil(),
             module_data: Default::default(),
         }))
@@ -344,7 +344,7 @@ mod test {
     fn joined() {
         let expected = json!({"message": "joined", "id": "00000000-0000-0000-0000-000000000000"});
 
-        let produced = serde_json::to_value(&ControlEvent::Joined(Participant {
+        let produced = serde_json::to_value(ControlEvent::Joined(Participant {
             id: ParticipantId::nil(),
             module_data: Default::default(),
         }))
@@ -357,7 +357,7 @@ mod test {
     fn left_quit_reason() {
         let expected = json!({"message": "left","id": "00000000-0000-0000-0000-000000000000", "reason": "quit"});
 
-        let produced = serde_json::to_value(&ControlEvent::Left {
+        let produced = serde_json::to_value(ControlEvent::Left {
             id: AssociatedParticipant {
                 id: ParticipantId::nil(),
             },
@@ -372,7 +372,7 @@ mod test {
     fn left_timeout_reason() {
         let expected = json!({"message": "left","id": "00000000-0000-0000-0000-000000000000", "reason": "timeout"});
 
-        let produced = serde_json::to_value(&ControlEvent::Left {
+        let produced = serde_json::to_value(ControlEvent::Left {
             id: AssociatedParticipant {
                 id: ParticipantId::nil(),
             },
@@ -388,7 +388,7 @@ mod test {
         let expected = json!({"message": "error", "error": "raise_hands_disabled"});
 
         let produced =
-            serde_json::to_value(&ControlEvent::Error(Error::RaiseHandsDisabled)).unwrap();
+            serde_json::to_value(ControlEvent::Error(Error::RaiseHandsDisabled)).unwrap();
 
         assert_eq!(expected, produced);
     }
