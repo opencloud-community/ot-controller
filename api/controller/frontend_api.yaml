@@ -554,6 +554,66 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+  "/events/{event_id}/invites":
+    get:
+      tags:
+        - "api::v1::events::invites"
+      summary: Get the invites for an event
+      description: Returns the list of event invites
+      operationId: get_invites_for_event
+      parameters:
+        - name: pagination
+          in: query
+          description: Results will be paginated by this pagination specification
+          required: true
+          schema:
+            type: object
+            description: Page-based pagination query
+            properties:
+              page:
+                type: integer
+                format: int64
+                description: The number of the page
+              per_page:
+                type: integer
+                format: int64
+                description: The number of entries per page
+        - name: status
+          in: query
+          description: "If present, the results will be filtered by that state"
+          required: false
+          schema:
+            allOf:
+              - $ref: "#/components/schemas/EventInviteStatus"
+            nullable: true
+        - name: event_id
+          in: path
+          description: The id of the event
+          required: true
+          schema:
+            $ref: "#/components/schemas/EventId"
+      responses:
+        "200":
+          description: Event instance successfully returned
+          headers:
+            link:
+              schema:
+                $ref: "#/components/schemas/CursorLink"
+              description: Links for paging through the results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetEventInstanceResponseBody"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   /invite/verify:
     post:
       tags:
@@ -3855,6 +3915,8 @@ tags:
     description: "Endpoints related to user's favorite events"
   - name: "api::v1::events::instances"
     description: Endpoints related to event instances
+  - name: "api::v1::events::invites"
+    description: Endpoints related to event invites
   - name: "api::v1::assets"
     description: Endpoints related to file assets
   - name: "api::v1::sip_configs"

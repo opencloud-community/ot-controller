@@ -51,14 +51,17 @@ use snafu::Report;
 
 use super::{ApiResponse, DefaultApiResult};
 use crate::{
-    api::v1::{
-        events::{
-            enrich_from_keycloak, enrich_invitees_from_keycloak,
-            get_invited_mail_recipients_for_event, get_tenant_filter, EventInvitee,
-            EventInviteeExt, EventPoliciesBuilderExt,
+    api::{
+        responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
+        v1::{
+            events::{
+                enrich_from_keycloak, enrich_invitees_from_keycloak,
+                get_invited_mail_recipients_for_event, get_tenant_filter, EventInvitee,
+                EventInviteeExt, EventPoliciesBuilderExt,
+            },
+            response::{Created, NoContent},
+            rooms::RoomsPoliciesBuilderExt,
         },
-        response::{Created, NoContent},
-        rooms::RoomsPoliciesBuilderExt,
     },
     services::{
         ExternalMailRecipient, MailRecipient, MailService, RegisteredMailRecipient,
@@ -67,9 +70,47 @@ use crate::{
     settings::SharedSettingsActix,
 };
 
-/// API Endpoint `GET /events/{event_id}/invites`
+/// Get the invites for an event
 ///
-/// Get all invites for an event
+/// Returns the list of event invites
+#[utoipa::path(
+    params(
+        GetEventsInvitesQuery,
+        ("event_id" = EventId, description = "The id of the event"),
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Event instance successfully returned",
+            body = GetEventInstanceResponseBody,
+            headers(
+                (
+                    "link" = CursorLink,
+                    description = "Links for paging through the results"
+                ),
+            ),
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/events/{event_id}/invites")]
 pub async fn get_invites_for_event(
     settings: SharedSettingsActix,

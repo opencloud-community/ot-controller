@@ -646,6 +646,10 @@ impl ModulesRegistrar for Controller {
             description = "Endpoints related to event instances"
         ),
         (
+            name = "api::v1::events::invites",
+            description = "Endpoints related to event invites"
+        ),
+        (
             name = "api::v1::assets",
             description = "Endpoints related to file assets"
         ),
@@ -689,6 +693,7 @@ impl ModulesRegistrar for Controller {
         api::v1::events::instances::get_event_instance,
         api::v1::events::instances::get_event_instances,
         api::v1::events::instances::patch_event_instance,
+        api::v1::events::invites::get_invites_for_event,
         api::v1::events::new_event,
         api::v1::events::patch_event,
         api::v1::invites::add_invite,
