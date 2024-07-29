@@ -4266,7 +4266,6 @@ dependencies = [
  "clap",
  "diesel-async",
  "either",
- "email_address",
  "futures",
  "itertools 0.13.0",
  "jsonwebtoken",

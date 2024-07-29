@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::{DateTime, Utc};
-use email_address::EmailAddress;
+use opentalk_types::common::email::EmailAddress;
 use serde::Deserialize;
 
 use super::jwt;

@@ -6,7 +6,6 @@ use chrono::{DateTime, Utc};
 use http::async_http_client;
 use openidconnect::{AccessToken, TokenIntrospectionResponse};
 use opentalk_controller_settings as settings;
-use opentalk_types::strings::ToLowerCase;
 use provider::ProviderClient;
 use snafu::ResultExt;
 

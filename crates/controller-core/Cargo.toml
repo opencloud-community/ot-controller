@@ -33,7 +33,6 @@ chrono-tz = { workspace = true, features = ["serde"] }
 clap.workspace = true
 diesel-async.workspace = true
 either.workspace = true
-email_address = "0.2.4"
 futures.workspace = true
 itertools.workspace = true
 jsonwebtoken = "9.3"

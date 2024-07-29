@@ -614,6 +614,52 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+    post:
+      tags:
+        - "api::v1::events::invites"
+      summary: Create a new invite to an event
+      description: Create a new invite to an event with the fields sent in the body.
+      operationId: create_invite_to_event
+      parameters:
+        - name: suppress_email_notification
+          in: query
+          description: Flag to suppress email notification
+          required: false
+          schema:
+            type: boolean
+        - name: event_id
+          in: path
+          description: The id of the event
+          required: true
+          schema:
+            $ref: "#/components/schemas/EventId"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostEventInviteBody"
+        required: true
+      responses:
+        "201":
+          description: The user or email has been invited to the event
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EventResource"
+        "204":
+          description: "The user or email was already invited before, or the user is the creator of the event, in which case they have been invited implicitly"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   /invite/verify:
     post:
       tags:
@@ -2005,6 +2051,30 @@ components:
       example:
         datetime: "2024-07-05T17:23:42Z"
         timezone: Europe/Berlin
+    EmailAddress:
+      type: string
+      format: email
+      description: An e-mail address
+      example: alice@example.com
+    EmailInvite:
+      type: object
+      description: "Request body variant for the `POST /events/{event_id}/invites` endpoint"
+      required:
+        - email
+      properties:
+        email:
+          $ref: "#/components/schemas/EmailAddress"
+        role:
+          $ref: "#/components/schemas/EmailInviteRole"
+      example:
+        email: alice@example.com
+        role: guest
+    EmailInviteRole:
+      type: string
+      enum:
+        - guest
+        - moderator
+      example: guest
     EmailOnlyUser:
       type: object
       description: User profile with only email and avatar url
@@ -3054,6 +3124,14 @@ components:
           type: boolean
           description: If waiting room is enabled
           nullable: true
+    PostEventInviteBody:
+      oneOf:
+        - $ref: "#/components/schemas/UserInvite"
+        - $ref: "#/components/schemas/EmailInvite"
+      description: "Request body for the `POST /events/{event_id}/invites` endpoint"
+      example:
+        invitee: 00000009-9889-9889-9889-988000000000
+        role: user
     PostEventsBody:
       type: object
       description: "Body of the `POST /events` endpoint"
@@ -3813,6 +3891,20 @@ components:
       type: string
       format: uuid
       description: The id of a user
+      example: 00000009-9889-9889-9889-988000000000
+    UserInvite:
+      type: object
+      description: "Request body variant for the `POST /events/{event_id}/invites` endpoint"
+      required:
+        - invitee
+      properties:
+        invitee:
+          $ref: "#/components/schemas/UserId"
+        role:
+          $ref: "#/components/schemas/InviteRole"
+      example:
+        invitee: 00000009-9889-9889-9889-988000000000
+        role: user
     ValidationErrorBody:
       type: object
       description: The body of a validation error response

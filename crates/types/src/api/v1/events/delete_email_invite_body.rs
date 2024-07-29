@@ -2,8 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use email_address::EmailAddress;
-
+use crate::common::email::EmailAddress;
 #[allow(unused_imports)]
 use crate::imports::*;
 

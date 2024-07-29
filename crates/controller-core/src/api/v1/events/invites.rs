@@ -11,7 +11,6 @@ use actix_web::{
 };
 use chrono::Utc;
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
-use email_address::EmailAddress;
 use kustos::{policies_builder::PoliciesBuilder, Authz};
 use opentalk_controller_settings::Settings;
 use opentalk_database::Db;
@@ -42,9 +41,8 @@ use opentalk_types::{
             users::GetEventInvitesPendingResponse,
         },
     },
-    common::{shared_folder::SharedFolder, streaming::RoomStreamingTarget},
+    common::{email::EmailAddress, shared_folder::SharedFolder, streaming::RoomStreamingTarget},
     core::{EmailInviteRole, EventId, EventInviteStatus, RoomId, UserId},
-    strings::ToLowerCase,
 };
 use serde::Deserialize;
 use snafu::Report;
@@ -52,7 +50,7 @@ use snafu::Report;
 use super::{ApiResponse, DefaultApiResult};
 use crate::{
     api::{
-        responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
+        responses::{BadRequest, Forbidden, InternalServerError, NotFound, Unauthorized},
         v1::{
             events::{
                 enrich_from_keycloak, enrich_invitees_from_keycloak,
@@ -169,9 +167,46 @@ pub async fn get_invites_for_event(
     ))
 }
 
-/// API Endpoint `POST /events/{event_id}/invites`
+/// Create a new invite to an event
 ///
-/// Invite a user to an event
+/// Create a new invite to an event with the fields sent in the body.
+#[utoipa::path(
+    params(
+        PostEventInviteQuery,
+        ("event_id" = EventId, description = "The id of the event"),
+    ),
+    request_body = PostEventInviteBody,
+    responses(
+        (
+            status = StatusCode::CREATED,
+            description = "The user or email has been invited to the event",
+            body = Vec<EventResource>,
+        ),
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "The user or email was already invited before, or the user is the creator of the event, in which case they have been invited implicitly",
+        ),
+        (
+            status = StatusCode::BAD_REQUEST,
+            response = BadRequest,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[post("/events/{event_id}/invites")]
 #[allow(clippy::too_many_arguments)]
 pub async fn create_invite_to_event(
