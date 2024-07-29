@@ -109,6 +109,46 @@ pub async fn get_shared_folder_for_event(
     Ok(Json(shared_folder))
 }
 
+/// Create a shared folder for an event
+///
+/// Returns the shared folder for an event if created
+#[utoipa::path(
+    params(
+        PutSharedFolderQuery,
+        ("event_id" = EventId, description = "The id of the event"),
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Shared folder created",
+            body = SharedFolder,
+        ),
+        (
+            status = StatusCode::NOT_MODIFIED,
+            description = "Shared folder was already present",
+            body = SharedFolder,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[put("/events/{event_id}/shared_folder")]
 #[allow(clippy::too_many_arguments)]
 pub async fn put_shared_folder_for_event(

@@ -899,6 +899,48 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+    put:
+      tags:
+        - "api::v1::events::shared_folder"
+      summary: Create a shared folder for an event
+      description: Returns the shared folder for an event if created
+      operationId: put_shared_folder_for_event
+      parameters:
+        - name: suppress_email_notification
+          in: query
+          description: Flag to disable email notification
+          required: false
+          schema:
+            type: boolean
+        - name: event_id
+          in: path
+          description: The id of the event
+          required: true
+          schema:
+            $ref: "#/components/schemas/EventId"
+      responses:
+        "200":
+          description: Shared folder created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SharedFolder"
+        "304":
+          description: Shared folder was already present
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SharedFolder"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   /invite/verify:
     post:
       tags:
