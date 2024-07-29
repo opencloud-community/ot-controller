@@ -661,6 +661,47 @@ paths:
       security:
         - BearerAuth: []
   "/events/{event_id}/invites/email":
+    delete:
+      tags:
+        - "api::v1::events::invites"
+      summary: Delete an invite from an event
+      description: |
+        Delete/Withdraw an event invitation using the email address as the identifier.
+        
+        This will also withdraw invites from registered users if the provided email address matches theirs.
+      operationId: delete_email_invite_to_event
+      parameters:
+        - name: event_id
+          in: path
+          description: The id of the event
+          required: true
+          schema:
+            $ref: "#/components/schemas/EventId"
+        - name: suppress_email_notification
+          in: query
+          description: Flag to disable email notification
+          required: false
+          schema:
+            type: boolean
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteEmailInviteBody"
+        required: true
+      responses:
+        "204":
+          description: The email event invitation has been deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
     patch:
       tags:
         - "api::v1::events::invites"
@@ -2165,6 +2206,14 @@ components:
       example:
         datetime: "2024-07-05T17:23:42Z"
         timezone: Europe/Berlin
+    DeleteEmailInviteBody:
+      type: object
+      description: "Query parameters for the `DELETE /events/{event_id}/invites/email` endpoint"
+      required:
+        - email
+      properties:
+        email:
+          $ref: "#/components/schemas/EmailAddress"
     EmailAddress:
       type: string
       format: email

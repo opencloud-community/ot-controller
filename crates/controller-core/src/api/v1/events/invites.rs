@@ -893,11 +893,43 @@ pub async fn delete_invite_to_event(
     Ok(NoContent)
 }
 
-/// API Endpoint `DELETE /events/{event_id}/invites/email`
+/// Delete an invite from an event
 ///
 /// Delete/Withdraw an event invitation using the email address as the identifier.
 ///
 /// This will also withdraw invites from registered users if the provided email address matches theirs.
+#[utoipa::path(
+    request_body = DeleteEmailInviteBody,
+    params(
+        ("event_id" = EventId, description = "The id of the event"),
+        EventOptionsQuery,
+    ),
+    responses(
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "The email event invitation has been deleted",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[delete("/events/{event_id}/invites/email")]
 #[allow(clippy::too_many_arguments)]
 pub async fn delete_email_invite_to_event(
@@ -908,7 +940,7 @@ pub async fn delete_email_invite_to_event(
     current_user: ReqData<User>,
     authz: Data<Authz>,
     path: Path<EventId>,
-    query: Query<crate::api::v1::events::EventOptionsQuery>,
+    query: Query<EventOptionsQuery>,
     mail_service: Data<MailService>,
     body: Json<DeleteEmailInviteBody>,
 ) -> Result<NoContent, ApiError> {
