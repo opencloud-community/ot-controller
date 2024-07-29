@@ -693,6 +693,7 @@ impl ModulesRegistrar for Controller {
         api::v1::events::instances::get_event_instance,
         api::v1::events::instances::get_event_instances,
         api::v1::events::instances::patch_event_instance,
+        api::v1::events::invites::accept_event_invite,
         api::v1::events::invites::create_invite_to_event,
         api::v1::events::invites::delete_email_invite_to_event,
         api::v1::events::invites::delete_invite_to_event,

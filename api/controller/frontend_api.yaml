@@ -554,6 +554,33 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+  "/events/{event_id}/invite":
+    patch:
+      tags:
+        - "api::v1::events::invites"
+      summary: Accept an invite to an event
+      description: "No content required, the request will accept the invitation."
+      operationId: accept_event_invite
+      parameters:
+        - name: event_id
+          in: path
+          description: The id of the event
+          required: true
+          schema:
+            $ref: "#/components/schemas/EventId"
+      responses:
+        "204":
+          description: Invitation was accepted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   "/events/{event_id}/invites":
     get:
       tags:

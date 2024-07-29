@@ -1125,9 +1125,39 @@ pub async fn get_event_invites_pending(
     }))
 }
 
-/// API Endpoint `PATCH /events/{event_id}/invite`
-///
 /// Accept an invite to an event
+///
+/// No content required, the request will accept the invitation.
+#[utoipa::path(
+    params(
+        ("event_id" = EventId, description = "The id of the event"),
+    ),
+    responses(
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "Invitation was accepted",
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[patch("/events/{event_id}/invite")]
 pub async fn accept_event_invite(
     db: Data<Db>,
