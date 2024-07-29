@@ -622,9 +622,42 @@ async fn create_invite_to_non_matching_email(
     }
 }
 
-/// API Endpoint `PATCH /events/{event_id}/invites/{user_id}`
+/// Patch an event invite with the provided fields
 ///
-/// Update the role for an invited user
+/// Fields that are not provided in the request body will remain unchanged.
+#[utoipa::path(
+    request_body = PatchInviteBody,
+    params(
+        ("event_id" = EventId, description = "The id of the event to be modified"),
+        ("user_id" = UserId, description = "The id of the invited user to be modified"),
+    ),
+    responses(
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "Invite was successfully updated",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            description = r"The requesting user does not have thhe required permissions to update the invite.
+              Only the creator of an event can update the invites.",
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[patch("/events/{event_id}/invites/{user_id}")]
 pub async fn update_invite_to_event(
     db: Data<Db>,
