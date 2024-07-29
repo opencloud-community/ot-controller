@@ -491,6 +491,69 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+    patch:
+      tags:
+        - "api::v1::events::instances"
+      summary: "API Endpoint `PATCH /events/{event_id}/{instance_id}`"
+      description: |
+        Patch an instance of a recurring event. This creates or modifies an exception for the event
+        at the point of time of the given instance_id.
+        Returns the patched event instance
+      operationId: patch_event_instance
+      parameters:
+        - name: event_id
+          in: path
+          description: ID of the event
+          required: true
+          schema:
+            $ref: "#/components/schemas/EventId"
+        - name: instance_id
+          in: path
+          description: ID of the event instance
+          required: true
+          schema:
+            $ref: "#/components/schemas/InstanceId"
+        - name: invitees_max
+          in: query
+          description: |
+            Maximum number of invitees to return inside the event instance resource
+            
+            Default: 0
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: suppress_email_notification
+          in: query
+          description: Flag to suppress email notification
+          required: false
+          schema:
+            type: boolean
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchEventInstanceBody"
+        required: true
+      responses:
+        "200":
+          description: Event instance successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventInstance"
+        "204":
+          description: "The request body was empty, no changes required"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   /invite/verify:
     post:
       tags:
@@ -2863,6 +2926,32 @@ components:
         has_shared_folder: true
         show_meeting_details: false
         title: The new title
+    PatchEventInstanceBody:
+      type: object
+      description: "Request body for the `PATCH /events/{event_id}/{instance_id}` endpoint"
+      properties:
+        description:
+          type: string
+          description: The description of the event
+        ends_at:
+          allOf:
+            - $ref: "#/components/schemas/DateTimeTz"
+        is_all_day:
+          type: boolean
+          description: Flag to indicate if the event is all-day
+        starts_at:
+          allOf:
+            - $ref: "#/components/schemas/DateTimeTz"
+        status:
+          allOf:
+            - $ref: "#/components/schemas/EventStatus"
+        title:
+          type: string
+          description: The title of th event
+      example:
+        is_all_day: false
+        status: cancelled
+        title: Early morning meeting
     PatchMeBody:
       type: object
       description: Used to modify user settings.

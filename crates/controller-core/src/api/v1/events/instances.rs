@@ -366,6 +366,43 @@ pub async fn get_event_instance(
 /// Patch an instance of a recurring event. This creates or modifies an exception for the event
 /// at the point of time of the given instance_id.
 /// Returns the patched event instance
+#[utoipa::path(
+    params(
+        EventInstancePath,
+        EventInstanceQuery,
+    ),
+    request_body = PatchEventInstanceBody,
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Event instance successfully updated",
+            body = EventInstance,
+        ),
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "The request body was empty, no changes required",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[patch("/events/{event_id}/instances/{instance_id}")]
 #[allow(clippy::too_many_arguments)]
 pub async fn patch_event_instance(
