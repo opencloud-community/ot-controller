@@ -660,6 +660,41 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+  "/events/{event_id}/invites/email":
+    patch:
+      tags:
+        - "api::v1::events::invites"
+      summary: Patch an event email invite with the provided fields
+      description: Fields that are not provided in the request body will remain unchanged.
+      operationId: update_email_invite_to_event
+      parameters:
+        - name: event_id
+          in: path
+          description: The id of the event to be modified
+          required: true
+          schema:
+            $ref: "#/components/schemas/EventId"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchEmailInviteBody"
+        required: true
+      responses:
+        "204":
+          description: Invite was successfully updated
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: |
+            The requesting user does not have the required permissions to update the invite.
+                          Only the creator of an event can update the invites.
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   "/events/{event_id}/invites/{user_id}":
     delete:
       tags:
@@ -731,7 +766,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           description: |
-            The requesting user does not have thhe required permissions to update the invite.
+            The requesting user does not have the required permissions to update the invite.
                           Only the creator of an event can update the invites.
         "404":
           $ref: "#/components/responses/NotFound"
@@ -3076,6 +3111,18 @@ components:
     PageLink:
       type: string
       example: "<https://api.example.org/resource?page=2>; rel='next', <https://api.example.org/resource?page=5>; rel='last'"
+    PatchEmailInviteBody:
+      type: object
+      description: "Request body for the `PATCH /events/{event_id}/invites/email` endpoint"
+      required:
+        - email
+      properties:
+        email:
+          $ref: "#/components/schemas/EmailAddress"
+        role:
+          allOf:
+            - $ref: "#/components/schemas/EmailInviteRole"
+          nullable: true
     PatchEventBody:
       type: object
       description: "Body for the `PATCH /events/{event_id}` endpoint"
