@@ -707,6 +707,7 @@ impl ModulesRegistrar for Controller {
         api::v1::events::invites::update_invite_to_event,
         api::v1::events::new_event,
         api::v1::events::patch_event,
+        api::v1::events::shared_folder::delete_shared_folder_for_event,
         api::v1::events::shared_folder::get_shared_folder_for_event,
         api::v1::events::shared_folder::put_shared_folder_for_event,
         api::v1::invites::add_invite,

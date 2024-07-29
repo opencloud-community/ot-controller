@@ -452,6 +452,40 @@ pub async fn delete_shared_folders(
     }
 }
 
+/// Delete the shared folder of an event
+///
+/// Will delete the shared folder from the external system and remove the reference to it
+#[utoipa::path(
+    params(
+        ("event_id" = EventId, description = "The id of the event"),
+        DeleteSharedFolderQuery,
+    ),
+    responses(
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "Shared folder was successfully deleted, or no shared folder had been present",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[delete("/events/{event_id}/shared_folder")]
 #[allow(clippy::too_many_arguments)]
 pub async fn delete_shared_folder_for_event(

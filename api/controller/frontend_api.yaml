@@ -941,6 +941,44 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+    delete:
+      tags:
+        - "api::v1::events::shared_folder"
+      summary: Delete the shared folder of an event
+      description: Will delete the shared folder from the external system and remove the reference to it
+      operationId: delete_shared_folder_for_event
+      parameters:
+        - name: event_id
+          in: path
+          description: The id of the event
+          required: true
+          schema:
+            $ref: "#/components/schemas/EventId"
+        - name: force_delete_reference_if_shared_folder_deletion_fails
+          in: query
+          description: Flag to force delete the reference to the shared folder if the deletion of the shared folder fails
+          required: false
+          schema:
+            type: boolean
+        - name: suppress_email_notification
+          in: query
+          description: Flag to disable email notification
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "204":
+          description: "Shared folder was successfully deleted, or no shared folder had been present"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   /invite/verify:
     post:
       tags:
