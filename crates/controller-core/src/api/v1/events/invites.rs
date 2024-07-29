@@ -34,8 +34,8 @@ use opentalk_types::{
         v1::{
             events::{
                 invites::GetEventsInvitesQuery, DeleteEmailInviteBody, DeleteEventInvitePath,
-                EmailInvite, PatchEmailInviteBody, PatchInviteBody, PostEventInviteBody,
-                PostEventInviteQuery, UserInvite,
+                EmailInvite, EventOptionsQuery, PatchEmailInviteBody, PatchInviteBody,
+                PostEventInviteBody, PostEventInviteQuery, UserInvite,
             },
             pagination::PagePaginationQuery,
             users::GetEventInvitesPendingResponse,
@@ -733,9 +733,40 @@ pub struct DeleteEventInviteQuery {
     suppress_email_notification: bool,
 }
 
-/// API Endpoint `DELETE /events/{event_id}/invites/{user_id}`
+/// Delete an invite from an event
 ///
-/// Delete/Withdraw an event invitation made to a user
+/// This will uninvite the user from the event
+#[utoipa::path(
+    params(
+        DeleteEventInvitePath,
+        EventOptionsQuery,
+    ),
+    responses(
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "The user event invitation has been deleted",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[delete("/events/{event_id}/invites/{user_id}")]
 #[allow(clippy::too_many_arguments)]
 pub async fn delete_invite_to_event(
@@ -746,7 +777,7 @@ pub async fn delete_invite_to_event(
     current_user: ReqData<User>,
     authz: Data<Authz>,
     path_params: Path<DeleteEventInvitePath>,
-    query: Query<crate::api::v1::events::EventOptionsQuery>,
+    query: Query<EventOptionsQuery>,
     mail_service: Data<MailService>,
 ) -> Result<NoContent, ApiError> {
     let settings = settings.load_full();
