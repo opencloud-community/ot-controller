@@ -47,6 +47,9 @@ pub enum DatabaseError {
 
     #[snafu(display("Deadpool error: `{source}`",))]
     DeadpoolError { source: PoolError },
+
+    #[snafu(context(false))]
+    UrlParseError { source: url::ParseError },
 }
 
 impl DatabaseError {

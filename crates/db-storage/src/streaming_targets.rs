@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use diesel::{ExpressionMethods, Identifiable, QueryDsl, Queryable};
-use diesel_async::RunQueryDsl;
+use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection, RunQueryDsl};
 use opentalk_database::{DatabaseError, DbConnection, Result};
 use opentalk_types::{
     common::streaming::{RoomStreamingTarget, StreamingTarget, StreamingTargetKind},
@@ -11,6 +11,7 @@ use opentalk_types::{
     signaling::recording::{StreamKindSecret, StreamStatus, StreamTargetSecret},
 };
 use snafu::{Report, Snafu};
+use url::Url;
 
 use crate::{rooms::Room, schema::room_streaming_targets};
 
@@ -81,6 +82,40 @@ impl RoomStreamingTargetRecord {
 
         Ok(())
     }
+
+    /// Delete all streaming targets that are associated with a specific room
+    #[tracing::instrument(err, skip_all)]
+    pub async fn delete_by_room_id(conn: &mut DbConnection, room_id: RoomId) -> Result<()> {
+        let _ = diesel::delete(
+            room_streaming_targets::table.filter(room_streaming_targets::room_id.eq(room_id)),
+        )
+        .execute(conn)
+        .await?;
+
+        Ok(())
+    }
+}
+
+impl TryFrom<RoomStreamingTargetRecord> for RoomStreamingTarget {
+    type Error = DatabaseError;
+
+    fn try_from(record: RoomStreamingTargetRecord) -> Result<Self, Self::Error> {
+        let kind = match record.kind {
+            StreamingKind::Custom => StreamingTargetKind::Custom {
+                streaming_endpoint: Url::parse(&record.streaming_endpoint)?,
+                streaming_key: record.streaming_key,
+                public_url: Url::parse(&record.public_url)?,
+            },
+        };
+
+        Ok(Self {
+            id: record.id,
+            streaming_target: StreamingTarget {
+                name: record.name,
+                kind,
+            },
+        })
+    }
 }
 
 impl TryFrom<RoomStreamingTargetRecord> for StreamTargetSecret {
@@ -129,6 +164,27 @@ impl RoomStreamingTargetNew {
         let room_streaming_target: RoomStreamingTargetRecord = query.get_result(conn).await?;
 
         Ok(room_streaming_target)
+    }
+
+    fn from_streaming_target_kind(
+        streaming_target_kind: StreamingTargetKind,
+        room_id: RoomId,
+        name: String,
+    ) -> Self {
+        match streaming_target_kind {
+            StreamingTargetKind::Custom {
+                streaming_endpoint,
+                streaming_key,
+                public_url,
+            } => Self {
+                room_id,
+                name,
+                kind: StreamingKind::Custom,
+                streaming_endpoint: streaming_endpoint.into(),
+                streaming_key: streaming_key.into(),
+                public_url: public_url.into(),
+            },
+        }
     }
 }
 
@@ -217,20 +273,11 @@ pub async fn insert_room_streaming_target(
     room_id: RoomId,
     streaming_target: StreamingTarget,
 ) -> Result<RoomStreamingTarget> {
-    let streaming_target_record = match &streaming_target.kind {
-        StreamingTargetKind::Custom {
-            streaming_endpoint,
-            streaming_key,
-            public_url,
-        } => RoomStreamingTargetNew {
-            room_id,
-            name: streaming_target.name.clone(),
-            kind: StreamingKind::Custom,
-            streaming_endpoint: streaming_endpoint.clone().into(),
-            streaming_key: streaming_key.clone().into(),
-            public_url: public_url.clone().into(),
-        },
-    }
+    let streaming_target_record = RoomStreamingTargetNew::from_streaming_target_kind(
+        streaming_target.kind.clone(),
+        room_id,
+        streaming_target.name.clone(),
+    )
     .insert(conn)
     .await?;
 
@@ -239,4 +286,46 @@ pub async fn insert_room_streaming_target(
         streaming_target,
     };
     Ok(room_streaming_target)
+}
+
+pub async fn override_room_streaming_targets(
+    conn: &mut DbConnection,
+    room_id: RoomId,
+    streaming_targets: Vec<StreamingTarget>,
+) -> Result<Vec<RoomStreamingTarget>> {
+    conn.transaction(|conn| {
+        async move {
+            // Delete existing records by room_id
+            RoomStreamingTargetRecord::delete_by_room_id(conn, room_id).await?;
+
+            let new_records: Vec<RoomStreamingTargetNew> = streaming_targets
+                .into_iter()
+                .map(|streaming_target| {
+                    RoomStreamingTargetNew::from_streaming_target_kind(
+                        streaming_target.kind,
+                        room_id,
+                        streaming_target.name,
+                    )
+                })
+                .collect();
+
+            // Insert new records and fetch the resulting records
+            let inserted_records: Vec<RoomStreamingTargetRecord> =
+                diesel::insert_into(room_streaming_targets::table)
+                    .values(&new_records)
+                    .get_results(conn)
+                    .await?;
+
+            Ok(inserted_records)
+        }
+        .scope_boxed()
+    })
+    .await
+    .and_then(|inserted_records| {
+        // Transform inserted_records into RoomStreamingTarget
+        inserted_records
+            .into_iter()
+            .map(|record| record.try_into())
+            .collect::<Result<Vec<_>, DatabaseError>>()
+    })
 }
