@@ -885,6 +885,10 @@ impl Runner {
                         .await
                 }
                 Err(NoSuchModuleError) => {
+                    log::warn!(
+                        "received message with invalid namespace: {}",
+                        namespaced.module
+                    );
                     self.ws_send_control_error(timestamp, control_event::Error::InvalidNamespace)
                         .await;
                 }

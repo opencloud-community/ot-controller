@@ -1,0 +1,26 @@
+# Attendance Report
+
+|  |  |
+|--|--|
+| Meeting | {{title}} |
+| Description | {{description}} |
+{%- if starts_at %}
+    | Start | {{starts_at | date(timezone=starts_at_tz, format="%Y-%m-%d %H:%M")}} {{starts_at_tz}} |
+{%- endif %}
+{%- if ends_at %}
+    | End | {{ends_at | date(timezone=ends_at_tz, format="%Y-%m-%d %H:%M")}} {{ends_at_tz}} |
+{%- endif %}
+
+## Participants
+
+| id | Name | Role | Kind | eMail | joined at | left at |
+| -- | -- | -- | -- | -- | -- | -- |
+{%- for participant in participants | sort(attribute = "name") | sort(attribute = "role") | reverse %}
+| {{participant.id}} |\
+ {{participant.name}} |\
+ {{participant.role}} |\
+ {{participant.kind}} |\
+ {{participant.email}} |\
+ {{participant.joined_at | date(format="%Y-%m-%d %H:%M")}} |\
+ {% if participant.left_at %} {{participant.left_at | date(format="%Y-%m-%d %H:%M")}} {% endif %} |
+{%- endfor %}

@@ -4268,6 +4268,7 @@ dependencies = [
  "opentalk-janus-media",
  "opentalk-livekit",
  "opentalk-meeting-notes",
+ "opentalk-meeting-report",
  "opentalk-polls",
  "opentalk-shared-folder",
  "opentalk-signaling-core",
@@ -4705,6 +4706,29 @@ dependencies = [
  "snafu",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "opentalk-meeting-report"
+version = "0.0.0-dev"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "chrono",
+ "either",
+ "futures",
+ "log",
+ "opentalk-controller-settings",
+ "opentalk-database",
+ "opentalk-db-storage",
+ "opentalk-signaling-core",
+ "opentalk-types",
+ "opentalk-types-common",
+ "opentalk-types-signaling",
+ "serde",
+ "serde_json",
+ "snafu",
+ "terdoc-client",
 ]
 
 [[package]]
@@ -6100,10 +6124,12 @@ dependencies = [
  "sync_wrapper 1.0.1",
  "tokio",
  "tokio-rustls 0.26.0",
+ "tokio-util",
  "tower-service",
  "url",
  "wasm-bindgen",
  "wasm-bindgen-futures",
+ "wasm-streams",
  "web-sys",
  "webpki-roots 0.26.6",
  "windows-registry",
@@ -7140,6 +7166,34 @@ dependencies = [
  "once_cell",
  "rustix 0.38.37",
  "windows-sys 0.59.0",
+]
+
+[[package]]
+name = "terdoc-client"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "019a828995e950e722b1847d078937424b5f2a69ee069a74d239e2d8e40d0dbd"
+dependencies = [
+ "bytes",
+ "futures",
+ "log",
+ "reqwest 0.12.7",
+ "snafu",
+ "terdoc-types",
+ "url",
+]
+
+[[package]]
+name = "terdoc-types"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f5c9ccd50160ec10a26584b276905f255566bf1215ceb83a6e823b826d5dd5de"
+dependencies = [
+ "bytes",
+ "futures",
+ "serde",
+ "serde_json",
+ "strum",
 ]
 
 [[package]]
