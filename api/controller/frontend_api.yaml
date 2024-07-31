@@ -1840,6 +1840,51 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
       security: []
+  "/rooms/{room_id}/streaming_targets":
+    get:
+      tags:
+        - "api::v1::streaming_targets"
+      summary: List the streaming targets of a room
+      description: Returns the streaming targets available for a room
+      operationId: get_streaming_targets
+      parameters:
+        - name: per_page
+          in: query
+          description: The number of entries per page
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: page
+          in: query
+          description: The number of the page
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: room_id
+          in: path
+          description: The id of the room
+          required: true
+          schema:
+            $ref: "#/components/schemas/RoomId"
+      responses:
+        "200":
+          description: List of streaming targets successfully returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetRoomStreamingTargetsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   "/rooms/{room_id}/tariff":
     get:
       tags:
@@ -3281,6 +3326,18 @@ components:
       properties:
         oidc:
           $ref: "#/components/schemas/OidcProvider"
+    GetRoomStreamingTargetsResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/RoomStreamingTarget"
+      description: "The body of a *GET /rooms/{room_id}/streaming_targets* response"
+      example:
+        - id: 00000000-0000-0000-0000-000043434343
+          kind: custom
+          name: Example Stream
+          public_url: "https://streaming.example.com/livestream123"
+          streaming_endpoint: "https://ingress.streaming.example.com/"
+          streaming_key: aabbccddeeff
     GetRoomsAssetsResponseBody:
       type: array
       items:
@@ -4506,6 +4563,8 @@ tags:
     description: Endpoints related to the meeting call-in service
   - name: "api::v1::services::recording"
     description: Endpoints related to the meeting recording service
+  - name: "api::v1::streaming_targets"
+    description: Endpoints related to streaming targets
   - name: "api::v1::turn"
     description: Endpoints related TURN server usage
   - name: "api::v1::users"

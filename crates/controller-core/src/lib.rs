@@ -670,6 +670,10 @@ impl ModulesRegistrar for Controller {
             description = "Endpoints related to the meeting recording service"
         ),
         (
+            name = "api::v1::streaming_targets",
+            description = "Endpoints related to streaming targets"
+        ),
+        (
             name = "api::v1::turn",
             description = "Endpoints related TURN server usage"
         ),
@@ -733,6 +737,7 @@ impl ModulesRegistrar for Controller {
         api::v1::sip_configs::delete,
         api::v1::sip_configs::get,
         api::v1::sip_configs::put,
+        api::v1::streaming_targets::get_streaming_targets,
         api::v1::turn::get,
         api::v1::users::find,
         api::v1::users::get_me,
@@ -799,6 +804,7 @@ impl ModulesRegistrar for Controller {
             opentalk_types::api::v1::rooms::RoomsStartResponse,
             opentalk_types::api::v1::rooms::sip_config_resource::PutSipConfig,
             opentalk_types::api::v1::rooms::sip_config_resource::SipConfigResource,
+            opentalk_types::api::v1::rooms::streaming_targets::GetRoomStreamingTargetsResponse,
             opentalk_types::api::v1::services::ServiceStartResponse,
             opentalk_types::api::v1::services::StartCallInRequestBody,
             opentalk_types::api::v1::services::StartRecordingRequestBody,

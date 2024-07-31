@@ -9,12 +9,24 @@ use crate::imports::*;
 use crate::{
     api::v1::streaming_targets::UpdateStreamingTarget,
     common::streaming::{RoomStreamingTarget, StreamingTarget},
+    utils::ExampleData,
 };
 
 /// The body of a *GET /rooms/{room_id}/streaming_targets* response
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(GetRoomStreamingTargetsResponse::example_data()))
+)]
 pub struct GetRoomStreamingTargetsResponse(pub Vec<RoomStreamingTarget>);
+
+impl ExampleData for GetRoomStreamingTargetsResponse {
+    fn example_data() -> Self {
+        Self(vec![RoomStreamingTarget::example_data()])
+    }
+}
 
 /// The body of a *POST /rooms/{room_id}/streaming_targets* request
 #[derive(Clone, Debug, PartialEq, Eq)]

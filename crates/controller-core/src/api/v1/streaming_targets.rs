@@ -38,14 +38,49 @@ use snafu::Report;
 
 use super::{response::NoContent, DefaultApiResult};
 use crate::{
-    api::v1::{events::notify_event_invitees_by_room_about_update, ApiResponse},
+    api::{
+        responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
+        v1::{events::notify_event_invitees_by_room_about_update, ApiResponse},
+    },
     services::MailService,
     settings::SharedSettingsActix,
 };
 
-/// API Endpoint *GET /rooms/{room_id}/streaming_targets*
+/// List the streaming targets of a room
 ///
-/// Returns a JSON array of all streaming targets for the given room
+/// Returns the streaming targets available for a room
+#[utoipa::path(
+    params(
+        PagePaginationQuery,
+        ("room_id" = RoomId, description = "The id of the room"),
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "List of streaming targets successfully returned",
+            body = GetRoomStreamingTargetsResponse,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/rooms/{room_id}/streaming_targets")]
 pub async fn get_streaming_targets(
     db: Data<Db>,
