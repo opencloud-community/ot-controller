@@ -27,6 +27,7 @@ use tokio::{sync::mpsc, task};
 pub(crate) use self::deprecated::{__path_upload_render, upload_render};
 use crate::{
     api::{
+        headers::{ConnectionUpgrade, WebsocketUpgrade},
         responses::{InternalServerError, Unauthorized},
         signaling::ticket::start_or_continue_signaling_session,
         upload::{UploadWebSocketActor, MAXIMUM_WEBSOCKET_BUFFER_SIZE},
@@ -185,6 +186,49 @@ mod deprecated {
     }
 }
 
+/// This is a dummy type to define the structure of the headers required for
+/// upgrading a request to a recording upload websocket connection.
+#[derive(utoipa::IntoParams)]
+#[into_params(
+    parameter_in = Header,
+)]
+#[allow(dead_code)]
+pub(crate) struct RecordingUploadWebSocketHeaders {
+    #[param(inline, required = true)]
+    pub connection: ConnectionUpgrade,
+
+    #[param(inline, required = true)]
+    pub upgrade: WebsocketUpgrade,
+}
+
+/// Streaming upload of a rendered recording
+///
+/// This is a WebSocket endpoint, all the data that is sent in binary messages
+/// is stored in the destination file.
+#[utoipa::path(
+    context_path = "/services/recording",
+    params(
+        UploadRenderQuery,
+        RecordingUploadWebSocketHeaders,
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "WebSocket connection succcessfully established",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/upload")]
 pub(crate) async fn ws_upload(
     db: Data<Db>,

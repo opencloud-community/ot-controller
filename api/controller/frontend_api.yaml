@@ -1953,6 +1953,57 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+  /services/recording/upload:
+    get:
+      tags:
+        - "api::v1::services::recording"
+      summary: Streaming upload of a rendered recording
+      description: |
+        This is a WebSocket endpoint, all the data that is sent in binary messages
+        is stored in the destination file.
+      operationId: ws_upload
+      parameters:
+        - name: room_id
+          in: query
+          description: The room id
+          required: true
+          schema:
+            $ref: "#/components/schemas/RoomId"
+        - name: file_extension
+          in: query
+          description: The file extension
+          required: true
+          schema:
+            $ref: "#/components/schemas/FileExtension"
+        - name: timestamp
+          in: query
+          description: The recording creation timestamp
+          required: true
+          schema:
+            $ref: "#/components/schemas/Timestamp"
+        - name: connection
+          in: header
+          required: true
+          schema:
+            type: string
+            enum:
+              - Upgrade
+        - name: upgrade
+          in: header
+          required: true
+          schema:
+            type: string
+            enum:
+              - websocket
+      responses:
+        "200":
+          description: WebSocket connection succcessfully established
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   /services/recording/upload_render:
     post:
       tags:

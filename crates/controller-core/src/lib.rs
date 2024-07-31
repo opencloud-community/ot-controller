@@ -729,6 +729,7 @@ impl ModulesRegistrar for Controller {
         api::v1::services::call_in::start,
         api::v1::services::recording::start,
         api::v1::services::recording::upload_render,
+        api::v1::services::recording::ws_upload,
         api::v1::sip_configs::delete,
         api::v1::sip_configs::get,
         api::v1::sip_configs::put,
