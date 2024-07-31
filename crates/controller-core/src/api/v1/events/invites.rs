@@ -1110,7 +1110,33 @@ async fn notify_invitees_about_uninvite(
     }
 }
 
-/// API Endpoint `GET /users/me/pending_invites`
+/// Get information about pending invites
+///
+/// Returns information about pending invites for the current user
+#[utoipa::path(
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Information about pending invites is returned",
+            body = GetEventInvitesPendingResponse,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/users/me/pending_invites")]
 pub async fn get_event_invites_pending(
     db: Data<Db>,
