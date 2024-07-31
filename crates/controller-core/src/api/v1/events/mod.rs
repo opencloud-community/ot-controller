@@ -28,7 +28,9 @@ use opentalk_db_storage::{
     invites::Invite,
     rooms::{NewRoom, Room, UpdateRoom},
     sip_configs::{NewSipConfig, SipConfig},
-    streaming_targets::{get_room_streaming_targets, insert_room_streaming_target},
+    streaming_targets::{
+        get_room_streaming_targets, insert_room_streaming_target, override_room_streaming_targets,
+    },
     tariffs::Tariff,
     tenants::Tenant,
     users::{email_to_libravatar_url, User},
@@ -978,9 +980,11 @@ pub async fn patch_event(
         User::get(&mut conn, event.created_by).await?
     };
 
-    if let Some(streaming_targets) = patch.streaming_targets.clone() {
-        store_event_streaming_targets(&mut conn, event_id, streaming_targets).await?;
-    }
+    let streaming_targets = if let Some(streaming_targets) = patch.streaming_targets.clone() {
+        override_room_streaming_targets(&mut conn, room.id, streaming_targets).await?
+    } else {
+        get_room_streaming_targets(&mut conn, room.id).await?
+    };
 
     match patch.has_shared_folder {
         Some(true) => {
@@ -1050,8 +1054,6 @@ pub async fn patch_event(
 
     let (invitees, invitees_truncated) =
         get_invitees_for_event(&settings, &mut conn, event_id, query.invitees_max).await?;
-
-    let streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
 
     drop(conn);
 

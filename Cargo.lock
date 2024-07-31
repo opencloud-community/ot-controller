@@ -4321,6 +4321,7 @@ dependencies = [
  "pin-project-lite",
  "snafu",
  "tracing",
+ "url",
 ]
 
 [[package]]
@@ -4356,6 +4357,7 @@ dependencies = [
  "strum",
  "tokio",
  "tracing",
+ "url",
  "uuid",
 ]
 

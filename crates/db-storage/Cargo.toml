@@ -13,20 +13,11 @@ version.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-kustos.workspace = true
-opentalk-controller-settings.workspace = true
-opentalk-database.workspace = true
-opentalk-mail-worker-protocol = { workspace = true, features = ["client"] }
-opentalk-types = { workspace = true, features = ["backend"] }
-
-serde.workspace = true
-serde_json = { workspace = true, features = ["raw_value"] }
-
-### Error handling
-snafu.workspace = true
-
-### Database ORM
+barrel = { version = "0.7", features = ["pg"] }
 bigdecimal.workspace = true
+chrono.workspace = true
+chrono-tz = { workspace = true, features = ["serde"] }
+derive_more.workspace = true
 diesel = { workspace = true, features = [
   "chrono",
   "numeric",
@@ -34,29 +25,26 @@ diesel = { workspace = true, features = [
   "uuid",
 ] }
 diesel-async.workspace = true
-uuid = { workspace = true, features = ["serde", "v4"] }
-
-### Database migrations
-barrel = { version = "0.7", features = ["pg"] }
+kustos.workspace = true
+log = { workspace = true, features = ["serde"] }
+md5.workspace = true
+opentalk-controller-settings.workspace = true
+opentalk-database.workspace = true
+opentalk-diesel-newtype.workspace = true
+opentalk-mail-worker-protocol = { workspace = true, features = ["client"] }
+opentalk-types = { workspace = true, features = ["backend"] }
+redis-args.workspace = true
 refinery = { version = "0.8", features = ["tokio-postgres"] }
 refinery-core = "0.8"
-
-### Logging utilities
-log = { workspace = true, features = ["serde"] }
-tracing.workspace = true
-
-### For migration
-chrono.workspace = true
-chrono-tz = { workspace = true, features = ["serde"] }
-tokio = { workspace = true, features = ["signal"] }
-
-derive_more.workspace = true
-opentalk-diesel-newtype.workspace = true
-redis-args.workspace = true
-strum.workspace = true
-
-md5.workspace = true
 rustc-hash.workspace = true
+serde.workspace = true
+serde_json = { workspace = true, features = ["raw_value"] }
+snafu.workspace = true
+strum.workspace = true
+tokio = { workspace = true, features = ["signal"] }
+tracing.workspace = true
+url.workspace = true
+uuid = { workspace = true, features = ["serde", "v4"] }
 
 [dev-dependencies]
 actix-rt.workspace = true

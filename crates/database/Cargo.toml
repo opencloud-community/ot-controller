@@ -15,9 +15,7 @@ repository.workspace = true
 version.workspace = true
 
 [dependencies]
-opentalk-controller-settings.workspace = true
-
-### ORM and Database connector
+async-trait = "0.1"
 deadpool-runtime = { version = "0.1", features = ["tokio_1"] }
 diesel = { workspace = true, features = [
   "chrono",
@@ -26,18 +24,11 @@ diesel = { workspace = true, features = [
   "uuid",
 ] }
 diesel-async = { workspace = true, features = ["deadpool", "postgres"] }
-
-async-trait = "0.1"
 futures-core = "0.3"
-
-
-### Error handling
-snafu.workspace = true
-
-### Logging utilities
 log = { workspace = true, features = ["serde"] }
-pin-project-lite = "0.2"
-tracing.workspace = true
-
-### Opentelementry metrics
+opentalk-controller-settings.workspace = true
 opentelemetry.workspace = true
+pin-project-lite = "0.2"
+snafu.workspace = true
+tracing.workspace = true
+url.workspace = true
