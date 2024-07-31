@@ -258,9 +258,40 @@ pub async fn get_streaming_target(
     )))
 }
 
-/// API Endpoint *PUT /rooms/{room_id}/streaming_targets/{streaming_target_id}*
+/// Update a room streaming target
 ///
 /// Modifies and returns a single streaming target.
+#[utoipa::path(
+    params(RoomAndStreamingTargetId),
+    request_body = ChangeRoomStreamingTargetRequest,
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Streaming target was successfully updated",
+            body = ChangeRoomStreamingTargetResponse
+        ),
+        (
+            status = StatusCode::BAD_REQUEST,
+            description = r"Could not modify the specified streaming target due to wrong
+                syntax or bad values",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = HttpStatus::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[patch("/rooms/{room_id}/streaming_targets/{streaming_target_id}")]
 #[allow(clippy::too_many_arguments)]
 pub async fn patch_streaming_target(

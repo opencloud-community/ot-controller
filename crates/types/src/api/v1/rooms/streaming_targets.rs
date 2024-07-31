@@ -79,12 +79,34 @@ impl ExampleData for GetRoomStreamingTargetResponse {
 /// The body of a *PUT /rooms/{room_id}/streaming_targets/{streaming_target_id}* request
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(ChangeRoomStreamingTargetRequest::example_data()))
+)]
 pub struct ChangeRoomStreamingTargetRequest(pub UpdateStreamingTarget);
+
+impl ExampleData for ChangeRoomStreamingTargetRequest {
+    fn example_data() -> Self {
+        Self(UpdateStreamingTarget::example_data())
+    }
+}
 
 /// The body of a *PUT /rooms/{room_id}/streaming_targets/{streaming_target_id}* response
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(ChangeRoomStreamingTargetResponse::example_data()))
+)]
 pub struct ChangeRoomStreamingTargetResponse(pub RoomStreamingTarget);
+
+impl ExampleData for ChangeRoomStreamingTargetResponse {
+    fn example_data() -> Self {
+        Self(RoomStreamingTarget::example_data())
+    }
+}
 
 #[cfg(test)]
 mod test {
