@@ -13,6 +13,7 @@ use crate::imports::*;
 /// The parameter set for /rooms/{room_id}/streaming_targets/{streaming_target_id}* endpoints
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::IntoParams))]
 pub struct RoomAndStreamingTargetId {
     /// The room id for the invite
     pub room_id: RoomId,

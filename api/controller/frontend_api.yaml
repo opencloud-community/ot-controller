@@ -1927,6 +1927,43 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+  "/rooms/{room_id}/streaming_targets/{streaming_target_id}":
+    get:
+      tags:
+        - "api::v1::streaming_targets"
+      summary: Get a streaming target
+      description: Returns a single streaming target for a specific room.
+      operationId: get_streaming_target
+      parameters:
+        - name: room_id
+          in: path
+          description: The room id for the invite
+          required: true
+          schema:
+            $ref: "#/components/schemas/RoomId"
+        - name: streaming_target_id
+          in: path
+          description: The streaming target id
+          required: true
+          schema:
+            $ref: "#/components/schemas/StreamingTargetId"
+      responses:
+        "200":
+          description: The streaming target has been successfully returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetRoomStreamingTargetResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   "/rooms/{room_id}/tariff":
     get:
       tags:
@@ -3368,6 +3405,8 @@ components:
       properties:
         oidc:
           $ref: "#/components/schemas/OidcProvider"
+    GetRoomStreamingTargetResponse:
+      $ref: "#/components/schemas/RoomStreamingTarget"
     GetRoomStreamingTargetsResponse:
       type: array
       items:

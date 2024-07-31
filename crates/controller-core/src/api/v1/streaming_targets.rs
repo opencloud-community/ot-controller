@@ -183,10 +183,38 @@ pub async fn post_streaming_target(
     )))
 }
 
-/// API Endpoint *GET /rooms/{room_id}/streaming_targets/{streaming_target_id}*
+/// Get a streaming target
 ///
-/// Returns a single streaming target.
-/// Returns 401 Not Found when the user has no access.
+/// Returns a single streaming target for a specific room.
+#[utoipa::path(
+    params(RoomAndStreamingTargetId),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "The streaming target has been successfully returned",
+            body = GetRoomStreamingTargetResponse,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/rooms/{room_id}/streaming_targets/{streaming_target_id}")]
 pub async fn get_streaming_target(
     db: Data<Db>,
