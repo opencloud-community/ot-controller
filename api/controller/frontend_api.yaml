@@ -1885,6 +1885,48 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+    post:
+      tags:
+        - "api::v1::streaming_targets"
+      summary: Create a new streaming target
+      description: Creates a new streaming target for the given room
+      operationId: post_streaming_target
+      parameters:
+        - name: suppress_email_notification
+          in: query
+          description: Flag to disable email notification
+          required: false
+          schema:
+            type: boolean
+        - name: room_id
+          in: path
+          description: The id of the room
+          required: true
+          schema:
+            $ref: "#/components/schemas/RoomId"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostRoomStreamingTargetRequest"
+        required: true
+      responses:
+        "200":
+          description: Successfully create a new streaming target
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostRoomStreamingTargetResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   "/rooms/{room_id}/tariff":
     get:
       tags:
@@ -3795,6 +3837,10 @@ components:
             type: string
           description: Permissions is a set of strings that each define a permission a user has.
           uniqueItems: true
+    PostRoomStreamingTargetRequest:
+      $ref: "#/components/schemas/StreamingTarget"
+    PostRoomStreamingTargetResponse:
+      $ref: "#/components/schemas/RoomStreamingTarget"
     PostRoomsRequestBody:
       type: object
       description: API request parameters to create a new room

@@ -31,12 +31,34 @@ impl ExampleData for GetRoomStreamingTargetsResponse {
 /// The body of a *POST /rooms/{room_id}/streaming_targets* request
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(PostRoomStreamingTargetRequest::example_data()))
+)]
 pub struct PostRoomStreamingTargetRequest(pub StreamingTarget);
+
+impl ExampleData for PostRoomStreamingTargetRequest {
+    fn example_data() -> Self {
+        Self(StreamingTarget::example_data())
+    }
+}
 
 /// The body of a *POST /rooms/{room_id}/streaming_targets* response
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(PostRoomStreamingTargetResponse::example_data()))
+)]
 pub struct PostRoomStreamingTargetResponse(pub RoomStreamingTarget);
+
+impl ExampleData for PostRoomStreamingTargetResponse {
+    fn example_data() -> Self {
+        Self(RoomStreamingTarget::example_data())
+    }
+}
 
 /// The body of a *GET /rooms/{room_id}/streaming_targets/{streaming_target_id}* response
 #[derive(Clone, Debug, PartialEq, Eq)]

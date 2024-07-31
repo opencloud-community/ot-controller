@@ -101,9 +101,42 @@ pub async fn get_streaming_targets(
     )
 }
 
-/// API Endpoint *POST /rooms/{room_id}/streaming_targets*
+/// Create a new streaming target
 ///
 /// Creates a new streaming target for the given room
+#[utoipa::path(
+    params(
+        StreamingTargetOptionsQuery,
+        ("room_id" = RoomId, description = "The id of the room"),
+    ),
+    request_body = PostRoomStreamingTargetRequest,
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Successfully create a new streaming target",
+            body = PostRoomStreamingTargetResponse,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[post("/rooms/{room_id}/streaming_targets")]
 #[allow(clippy::too_many_arguments)]
 pub async fn post_streaming_target(
