@@ -8,6 +8,7 @@ use snafu::Snafu;
 
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::utils::ExampleData;
 
 /// The maximum allowed length for valid file extensions
 pub const MAX_FILE_EXTENSION_LENGTH: usize = 10;
@@ -83,6 +84,32 @@ impl FromStr for FileExtension {
             return Err(ParseFileExtensionError::InvalidCharacters);
         }
         Ok(FileExtension(s.into()))
+    }
+}
+
+#[cfg(feature = "utoipa")]
+impl<'__s> utoipa::ToSchema<'__s> for FileExtension {
+    fn schema() -> (
+        &'__s str,
+        utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>,
+    ) {
+        use serde_json::json;
+        (
+            "FileExtension",
+            utoipa::openapi::ObjectBuilder::new()
+                .schema_type(utoipa::openapi::SchemaType::String)
+                .max_length(Some(MAX_FILE_EXTENSION_LENGTH))
+                .pattern(Some("^[0-9a-zA-Z]*$".to_string()))
+                .description(Some("An extension for a file path"))
+                .example(Some(json!(FileExtension::example_data())))
+                .into(),
+        )
+    }
+}
+
+impl ExampleData for FileExtension {
+    fn example_data() -> Self {
+        Self::pdf()
     }
 }
 
