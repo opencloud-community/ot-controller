@@ -737,6 +737,7 @@ impl ModulesRegistrar for Controller {
         api::v1::sip_configs::delete,
         api::v1::sip_configs::get,
         api::v1::sip_configs::put,
+        api::v1::streaming_targets::delete_streaming_target,
         api::v1::streaming_targets::get_streaming_target,
         api::v1::streaming_targets::get_streaming_targets,
         api::v1::streaming_targets::patch_streaming_target,

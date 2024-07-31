@@ -1964,6 +1964,44 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+    delete:
+      tags:
+        - "api::v1::streaming_targets"
+      summary: Deletes a single streaming target.
+      description: The streaming target is deleted from the room.
+      operationId: delete_streaming_target
+      parameters:
+        - name: room_id
+          in: path
+          description: The room id for the invite
+          required: true
+          schema:
+            $ref: "#/components/schemas/RoomId"
+        - name: streaming_target_id
+          in: path
+          description: The streaming target id
+          required: true
+          schema:
+            $ref: "#/components/schemas/StreamingTargetId"
+        - name: suppress_email_notification
+          in: query
+          description: Flag to disable email notification
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "204":
+          description: The streaming target has been deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
     patch:
       tags:
         - "api::v1::streaming_targets"

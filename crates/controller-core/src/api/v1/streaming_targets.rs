@@ -402,10 +402,40 @@ pub async fn patch_streaming_target(
     )))
 }
 
-/// API Endpoint *DELETE /rooms/{room_id}/streaming_targets/{streaming_target_id}*
-///
 /// Deletes a single streaming target.
-/// Returns 204 No Content
+///
+/// The streaming target is deleted from the room.
+#[utoipa::path(
+    params(
+        RoomAndStreamingTargetId,
+        StreamingTargetOptionsQuery,
+    ),
+    responses(
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "The streaming target has been deleted",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[delete("/rooms/{room_id}/streaming_targets/{streaming_target_id}")]
 #[allow(clippy::too_many_arguments)]
 pub async fn delete_streaming_target(
