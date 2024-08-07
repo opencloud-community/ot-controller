@@ -38,9 +38,6 @@ pub fn init(settings: &Logging) -> Result<()> {
     // FMT layer prints the trace events into stdout
     let fmt = tracing_subscriber::fmt::Layer::default();
 
-    // Create registry which contains all layers
-    let registry = Registry::default().with(filter).with(fmt);
-
     // If opentelemetry is enabled install that layer
     if let Some(endpoint) = &settings.otlp_tracing_endpoint {
         let otlp_exporter = opentelemetry_otlp::new_exporter()
@@ -58,10 +55,10 @@ pub fn init(settings: &Logging) -> Result<()> {
             .service_instance_id
             .clone()
             .unwrap_or_else(|| Uuid::new_v4().to_string());
-        let tracer = opentelemetry_otlp::new_pipeline()
+        let tracer_provider = opentelemetry_otlp::new_pipeline()
             .tracing()
             .with_exporter(otlp_exporter)
-            .with_trace_config(trace::config().with_resource(Resource::new(vec![
+            .with_trace_config(trace::Config::default().with_resource(Resource::new(vec![
                     KeyValue::new("service.name", service_name),
                     KeyValue::new("service.namespace", service_namespace),
                     KeyValue::new("service.instance.id", service_instance_id),
@@ -74,14 +71,13 @@ pub fn init(settings: &Logging) -> Result<()> {
                 ])))
             .install_batch(opentelemetry_sdk::runtime::TokioCurrentThread)
             .whatever_context("Failed to install batch")?;
-        let telemetry = tracing_opentelemetry::layer().with_tracer(tracer);
 
-        // Initialize the global logging with telemetry
-        registry.with(telemetry).init();
-    } else {
         // Install the global logger
-        registry.init();
+        global::set_tracer_provider(tracer_provider);
     }
+
+    // Create registry which contains all layers
+    Registry::default().with(filter).with(fmt).init();
 
     Ok(())
 }
