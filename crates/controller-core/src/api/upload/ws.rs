@@ -11,6 +11,8 @@ use bytes::BytesMut;
 use opentalk_signaling_core::ObjectStorageError;
 use tokio::sync::mpsc::UnboundedSender;
 
+pub const MAXIMUM_WEBSOCKET_BUFFER_SIZE: usize = 100_000_000;
+
 /// Define HTTP Websocket actor
 ///
 /// This actor will relay all text and binary received websocket messages to the given unbounded sender
@@ -70,8 +72,10 @@ impl UploadWebSocketActor {
                 if let Some(continuation) = &mut self.continuation {
                     continuation.buffer.extend_from_slice(&bytes);
 
-                    if continuation.buffer.len() >= 1_000_000 {
-                        log::error!("Fragmented message over 1 MB, stopping actor");
+                    if continuation.buffer.len() >= MAXIMUM_WEBSOCKET_BUFFER_SIZE {
+                        log::error!(
+                            "Fragmented above the maxium websocket buffer size, stopping actor"
+                        );
                         ctx.stop();
                     }
                 } else {

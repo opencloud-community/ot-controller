@@ -15,7 +15,7 @@ use opentalk_signaling_core::{
         self,
         storage::{ControlStorageParticipantAttributes as _, DISPLAY_NAME},
     },
-    DestroyContext, Event, InitContext, ModuleContext, ObjectStorage, SignalingModule,
+    ChunkFormat, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types::{
@@ -397,6 +397,7 @@ impl Protocol {
                         Some(Self::NAMESPACE),
                         filename,
                         data,
+                        ChunkFormat::Data,
                     )
                     .await
                     {

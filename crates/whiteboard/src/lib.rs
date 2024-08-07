@@ -10,8 +10,9 @@ use futures::stream::once;
 use opentalk_database::Db;
 use opentalk_signaling_core::{
     assets::{save_asset, AssetError, NewAssetFileName},
-    control, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage, SignalingModule,
-    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
+    control, ChunkFormat, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage,
+    SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
+    VolatileStorage,
 };
 use opentalk_types::{
     core::{FileExtension, Timestamp},
@@ -204,6 +205,7 @@ impl SignalingModule for Whiteboard {
                     Some(Self::NAMESPACE),
                     filename,
                     data,
+                    ChunkFormat::Data,
                 )
                 .await
                 {

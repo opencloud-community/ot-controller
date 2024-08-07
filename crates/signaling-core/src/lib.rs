@@ -37,7 +37,7 @@ pub use expiring_data_hash_map::ExpiringDataHashMap;
 pub use init_context::{ExchangeBinding, InitContext};
 pub use metrics::SignalingMetrics;
 pub use module_context::{ExchangePublish, ModuleContext};
-pub use object_storage::{ObjectStorage, ObjectStorageError};
+pub use object_storage::{ChunkFormat, ObjectStorage, ObjectStorageError};
 pub use participant::Participant;
 pub use redis_wrapper::{RedisConnection, RedisMetrics};
 pub use room_lock::{LockError, RoomGuard, RoomLocking, RoomLockingProvider};

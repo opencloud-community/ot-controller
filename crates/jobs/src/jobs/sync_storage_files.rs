@@ -181,7 +181,7 @@ mod tests {
     use opentalk_db_storage::assets::{Asset, NewAsset, UpdateAsset};
     use opentalk_signaling_core::{
         assets::{save_asset, NewAssetFileName},
-        ObjectStorage, ObjectStorageError,
+        ChunkFormat, ObjectStorage, ObjectStorageError,
     };
     use opentalk_test_util::common::TestContext;
     use opentalk_types::core::{AssetId, FileExtension, RoomId, Timestamp};
@@ -311,6 +311,7 @@ mod tests {
                 None,
                 filename,
                 data,
+                ChunkFormat::Data,
             )
             .await
             .unwrap();

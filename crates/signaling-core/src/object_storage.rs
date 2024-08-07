@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::collections::BTreeMap;
+
 use actix_http::error::PayloadError;
 use aws_sdk_s3::{
     config::{
@@ -97,6 +99,18 @@ pub struct ObjectStorage {
     client: Client,
     /// The configured bucket
     bucket: String,
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum ChunkFormat {
+    Data,
+    SequenceNumberAndData,
+}
+
+impl ChunkFormat {
+    pub fn contains_sequence_number(&self) -> bool {
+        matches!(self, ChunkFormat::SequenceNumberAndData)
+    }
 }
 
 impl ObjectStorage {
@@ -201,13 +215,16 @@ impl ObjectStorage {
         &self,
         key: &str,
         data: impl Stream<Item = Result<Bytes, E>> + Unpin,
+        chunk_format: ChunkFormat,
     ) -> Result<usize>
     where
         ObjectStorageError: From<E>,
     {
         let mut multipart_context = None;
 
-        let res = self.put_inner(key, data, &mut multipart_context).await;
+        let res = self
+            .put_inner(key, data, &mut multipart_context, chunk_format)
+            .await;
 
         // complete or abort the multipart upload if the context exists
         if let Some(ctx) = multipart_context {
@@ -229,6 +246,8 @@ impl ObjectStorage {
         key: &str,
         ctx: MultipartUploadContext,
     ) -> Result<()> {
+        let parts = Vec::from_iter(ctx.parts.into_values());
+
         self.client
             .complete_multipart_upload()
             .bucket(&self.bucket)
@@ -236,7 +255,7 @@ impl ObjectStorage {
             .upload_id(ctx.upload_id)
             .multipart_upload(
                 CompletedMultipartUpload::builder()
-                    .set_parts(Some(ctx.parts))
+                    .set_parts(Some(parts))
                     .build(),
             )
             .send()
@@ -268,27 +287,43 @@ impl ObjectStorage {
         key: &str,
         mut data: impl Stream<Item = Result<Bytes, E>> + Unpin,
         multipart_context: &mut Option<MultipartUploadContext>,
+        chunk_format: ChunkFormat,
     ) -> Result<usize>
     where
         ObjectStorageError: From<E>,
     {
-        let mut count = 0;
         let mut file_size = 0;
 
-        loop {
-            let (buf, last_part) = Self::read_bytes_into_buffer(&mut data).await?;
+        let mut part = 0;
 
-            count += 1;
+        loop {
+            let (buf, last_part) = Self::read_bytes_into_buffer(&mut data, chunk_format).await?;
+            let (buf, part) = if chunk_format.contains_sequence_number() {
+                let Some(Ok(part)) = buf.get(..4).map(TryInto::try_into) else {
+                    break;
+                };
+                let part = i32::from_be_bytes(part) + 1;
+                let Some(buf) = buf.get(4..) else {
+                    break;
+                };
+
+                (buf.to_vec(), part)
+            } else {
+                part += 1;
+
+                (buf, part)
+            };
+
             file_size += buf.len();
 
             // Check if there is only one chunk to send
             // Skip multipart API and put object directly
-            let put_object = last_part && count == 1;
+            let put_object = last_part && part == 1;
 
             if put_object {
                 self.put_object(key, buf).await?;
             } else {
-                self.put_part(key, multipart_context, count, buf).await?;
+                self.put_part(key, multipart_context, part, buf).await?;
             }
 
             if last_part {
@@ -301,6 +336,7 @@ impl ObjectStorage {
 
     async fn read_bytes_into_buffer<E>(
         data: &mut (impl Stream<Item = Result<Bytes, E>> + Unpin + Sized),
+        chunk_format: ChunkFormat,
     ) -> Result<(Vec<u8>, bool), ObjectStorageError>
     where
         ObjectStorageError: From<E>,
@@ -314,7 +350,7 @@ impl ObjectStorage {
                 Some(bytes) => {
                     buf.extend_from_slice(&bytes?);
 
-                    if buf.len() >= CHUNK_SIZE {
+                    if chunk_format.contains_sequence_number() || buf.len() >= CHUNK_SIZE {
                         break;
                     }
                 }
@@ -377,7 +413,7 @@ impl ObjectStorage {
                 upload_id: output.upload_id.context(InvalidResponseSnafu {
                     message: "no upload_id in create_multipart_upload response",
                 })?,
-                parts: Vec::new(),
+                parts: BTreeMap::new(),
             })
         };
 
@@ -398,7 +434,8 @@ impl ObjectStorage {
                 message: "failed to upload part",
             })?;
 
-        ctx.parts.push(
+        ctx.parts.insert(
+            count,
             CompletedPart::builder()
                 .e_tag(part.e_tag().context(InvalidResponseSnafu {
                     message: "missing etag in upload_part response",
@@ -461,5 +498,5 @@ impl ObjectStorage {
 
 struct MultipartUploadContext {
     upload_id: String,
-    parts: Vec<CompletedPart>,
+    parts: BTreeMap<i32, CompletedPart>,
 }

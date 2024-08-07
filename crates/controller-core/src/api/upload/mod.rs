@@ -4,4 +4,4 @@
 
 mod ws;
 
-pub use ws::UploadWebSocketActor;
+pub use ws::{UploadWebSocketActor, MAXIMUM_WEBSOCKET_BUFFER_SIZE};
