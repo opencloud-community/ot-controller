@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.0]
+
+### 🚀 New features
+
+- Use avatar url if the JWT `picture` claim is set ([#824](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/824))
+
+### 🐛 Bug fixes
+
+- Override streaming_targets on PATCH '/events/{event_id}' ([#829](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/829))
+
+### 📚 Docs
+
+- Add documentation for HTTP request handling ([#826](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/826))
+- Add documentation for OIDC auth ([#826](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/826))
+- Document the JWT `picture` field ([#824](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/824))
+
+### 🔨 Dependencies
+
+- Update opentelemetry implementation
+- Update opentelemetry-rs
+- Update rust crate anstream to v0.6.15
+- Update rust crate aws-sdk-s3 to v1.42.0
+- Update rust crate bytes to v1.7.1
+- Update rust crate clap to v4.5.13
+- Update rust crate email_address to v0.2.9
+- Update rust crate env_logger to v0.11.5
+- Update rust crate lapin to v2.5.0
+- Update rust crate rustls to v0.23.12
+- Update rust crate rustls-pemfile to v2.1.3
+- Update rust crate rustls-pki-types to v1.8.0
+- Update rust crate serde_json to v1.0.122
+- Update rust crate syn to v2.0.72
+- Update rust crate sysinfo to v0.31.2
+- Update rust crate tabled to 0.16
+- Update rust crate tokio to v1.39.2
+- Update rust crate vergen to v9
+
 ## [0.17.0]
 
 ### 🚀 New features
@@ -14,12 +51,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Syncronize ACL changes via rabbitmq between controllers ([!997](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/997))
 - Add configuration for terdoc report generation service ([#1035](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/815))
 - Check openapi specification with stoplight spectral ([!1032](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1032))
-- Add axum compatibility for the ApiError ([#808](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/#808))
+- Add axum compatibility for the ApiError ([#808](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/808))
 - Allow recorder to join breakout rooms ([#804](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/804))
 
 ### 🐛 Bug fixes
 
-- Delete room assets on event deletion
+- Delete room assets on event deletion ([!977](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/977))
 - Clean up force mute state when meeting is closed ([#812](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/812))
 - Specify usage of the serde feature for the opentalk-types dependency ([#1049](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1049))
 
@@ -652,7 +689,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - initial release candidate
 
 ---
-[Unreleased]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.17.0...main
+[Unreleased]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.18.0...main
+
+[0.18.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.17.0...v0.18.0
 
 [0.17.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.16.0...v0.17.0
 
