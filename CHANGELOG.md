@@ -7,9 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+## [0.17.0]
 
-- controller: add configuration for terdoc report generation service ([#815](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/815)
+### 🚀 New features
+
+- Syncronize ACL changes via rabbitmq between controllers ([!997](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/997))
+- Add configuration for terdoc report generation service ([#1035](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/815))
+- Check openapi specification with stoplight spectral ([!1032](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1032))
+- Add axum compatibility for the ApiError ([#808](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/#808))
+- Allow recorder to join breakout rooms ([#804](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/804))
+
+### 🐛 Bug fixes
+
+- Delete room assets on event deletion
+- Clean up force mute state when meeting is closed ([#812](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/812))
+- Specify usage of the serde feature for the opentalk-types dependency ([#1049](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1049))
+
+### ⚙ Miscellaneous
+
+- Update rust crate async-trait to v0.1.81
+- Update rust crate aws-sdk-s3 to v1.41.0
+- Update rust crate bytes to v1.6.1
+- Update rust crate clap to v4.5.9
+- Update rust crate email_address to v0.2.5
+- Update rust crate lapin to v2.4.0
+- Update rust crate log to v0.4.22
+- Update rust crate moka to v0.12.8
+- Update rust crate phonenumber to v0.3.6
+- Update rust crate redis-args to 0.15
+- Update rust crate serde to v1.0.204
+- Update rust crate serde_json to v1.0.120
+- Update rust crate serde_with to v3.9.0
+- Update rust crate snafu to v0.8.4
+- Update rust crate syn to v2.0.71
+- Update rust crate sysinfo to v0.30.13
+- Update rust crate tokio to v1.38.1
+- Update rust crate uuid to v1.10.0
+- Update rust crate vergen to v8.3.2
+
+### 📚 Docs
+
+- Add mail worker protocol schema and examples ([#811](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/811))
+- Document quota types ([#768](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/768))
+
+### 🔨 Refactor
+
+- Introduce enum for quota types ([!1026](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1026))
 
 ## [0.16.0]
 
@@ -609,7 +652,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - initial release candidate
 
 ---
-[Unreleased]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.15.0...main
+[Unreleased]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.17.0...main
+
+[0.17.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.16.0...v0.17.0
 
 [0.16.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.15.0...v0.16.0
 
