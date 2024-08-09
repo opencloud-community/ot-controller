@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use std::{
-    borrow::{Borrow, Cow},
+    borrow::Borrow,
     cmp::min,
-    collections::HashSet,
+    collections::HashMap,
     convert::{TryFrom, TryInto},
     future::Future,
     hash::{Hash, Hasher},
@@ -51,12 +51,12 @@ pub use self::types::*;
 #[from_redis_value(serde)]
 pub(crate) struct PublisherInfo {
     pub(crate) room_id: JanusRoomId,
-    pub(crate) mcu_id: String,
+    pub(crate) mcu_id: McuId,
     pub(crate) loop_index: Option<usize>,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub(crate) struct McuId(Arc<str>);
+#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
+pub(crate) struct McuId(String);
 
 impl McuId {
     pub fn from_rabbit_mq(
@@ -84,7 +84,13 @@ impl McuId {
 
 impl From<String> for McuId {
     fn from(s: String) -> Self {
-        Self(s.into_boxed_str().into())
+        Self(s.clone())
+    }
+}
+
+impl From<&str> for McuId {
+    fn from(s: &str) -> Self {
+        Self(s.to_string())
     }
 }
 
@@ -121,7 +127,7 @@ impl From<&settings::WebsocketConnectionConfig> for McuId {
 pub struct McuPool {
     // Clients shared with the global receive task which sends keep-alive messages
     // and removes clients of vanished  janus instances
-    clients: RwLock<HashSet<McuClient>>,
+    clients: RwLock<HashMap<McuId, McuClient>>,
 
     pub shared_settings: SharedSettings,
 
@@ -154,7 +160,7 @@ impl McuPool {
         let (shutdown, _) = broadcast::channel(1);
         let (reconnect_send, reconnect_recv) = mpsc::channel(1024);
 
-        let mut clients = HashSet::with_capacity(mcu_config.connections.len());
+        let mut clients = HashMap::with_capacity(mcu_config.connections.len());
         let (events_sender, events) = mpsc::channel(12);
 
         for config in &mcu_config.connections {
@@ -169,7 +175,7 @@ impl McuPool {
             .await
             {
                 Ok(client) => {
-                    clients.insert(client);
+                    clients.insert(client.id.clone(), client);
                 }
                 Err(e) => {
                     log::error!(
@@ -213,7 +219,7 @@ impl McuPool {
 
         let mut clients = self.clients.write().await;
 
-        for client in clients.drain() {
+        for (_id, client) in clients.drain() {
             client.destroy(false).await;
         }
     }
@@ -246,20 +252,20 @@ impl McuPool {
         // figure out which old clients to remove
         let removed_clients = clients
             .iter()
-            .filter(|client| !updated_clients.contains(&client.id))
-            .map(|client| client.id.clone())
+            .filter(|(id, _client)| !updated_clients.contains(id))
+            .map(|(id, _client)| id.clone())
             .collect::<Vec<McuId>>();
 
         // gracefully shutdown all removed clients
         for removed_client in removed_clients {
-            if let Some(client) = clients.take(&removed_client) {
+            if let Some(client) = clients.remove(&removed_client) {
                 client.destroy(false).await;
             }
         }
 
         // connect to new clients
         for connection_config in &mcu_settings.connections {
-            if clients.contains(&McuId::from(connection_config)) {
+            if clients.contains_key(&McuId::from(connection_config)) {
                 continue;
             }
 
@@ -274,7 +280,7 @@ impl McuPool {
                 Ok(client) => {
                     log::info!("Connected mcu {:?}", connection_config);
 
-                    clients.insert(client);
+                    clients.insert(client.id.clone(), client);
                 }
                 Err(e) => {
                     log::error!("Failed to connect to {:?}, {}", connection_config, e)
@@ -288,7 +294,7 @@ impl McuPool {
     async fn choose_client<'guard>(
         &self,
         volatile: &mut dyn MediaStorage,
-        clients: &'guard RwLockReadGuard<'guard, HashSet<McuClient>>,
+        clients: &'guard RwLockReadGuard<'guard, HashMap<McuId, McuClient>>,
     ) -> Result<(&'guard McuClient, Option<usize>), SignalingModuleError> {
         // choose the first available mcu
         for (id, loop_index) in volatile.get_mcus_sorted_by_load().await? {
@@ -318,7 +324,7 @@ impl McuPool {
 
         let info = PublisherInfo {
             room_id,
-            mcu_id: client.id.0.to_string(),
+            mcu_id: client.id.clone(),
             loop_index,
         };
 
@@ -450,7 +456,7 @@ impl McuPool {
         let clients = self.clients.read().await;
         let client = clients
             //TODO: Figure out the right types here and simplify McuId handling
-            .get(Cow::from(mcu_id).as_ref())
+            .get(&mcu_id)
             .whatever_context::<&str, SignalingModuleError>("Publisher stored unknown mcu id")?;
 
         let handle = client
@@ -552,22 +558,18 @@ async fn global_receive_task(
 }
 
 async fn keep_alive(
-    mcu_clients: &RwLock<HashSet<McuClient>>,
+    mcu_clients: &RwLock<HashMap<McuId, McuClient>>,
     reconnect_sender: &mpsc::Sender<ConnectionConfig>,
 ) {
     let clients = mcu_clients.read().await;
 
     let mut timed_out_clients = vec![];
 
-    for client in clients.iter() {
+    for (id, client) in clients.iter() {
         if let Err(e) = client.session.keep_alive().await {
-            log::error!(
-                "Failed to keep alive session for mcu {:?}, {}",
-                client.id,
-                e
-            );
+            log::error!("Failed to keep alive session for mcu {:?}, {}", id, e);
 
-            timed_out_clients.push(client.id.clone());
+            timed_out_clients.push(id.clone());
         }
     }
 
@@ -581,7 +583,7 @@ async fn keep_alive(
 
     // Destroy all dead McuClients and send their configs to the reconnect task
     for dead_client_id in timed_out_clients {
-        if let Some(client) = clients.take(&dead_client_id) {
+        if let Some(client) = clients.remove(&dead_client_id) {
             // send the config to the reconnect task
             if let Err(e) = reconnect_sender.send(client.config.clone()).await {
                 log::error!(
@@ -625,7 +627,7 @@ async fn attempt_reconnect(
 
             let mut clients = mcu_pool.clients.write().await;
 
-            clients.insert(client);
+            clients.insert(client.id.clone(), client);
         }
         Err(_) => {
             log::warn!(

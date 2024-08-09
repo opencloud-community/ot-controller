@@ -3,7 +3,3 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 doc-valid-idents = ["..", "OpenTalk"]
-ignore-interior-mutability = [
-  "bytes::Bytes",
-  "opentalk_janus_media::mcu::McuClient",
-]
