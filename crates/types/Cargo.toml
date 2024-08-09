@@ -25,7 +25,15 @@ bytes = { workspace = true, optional = true }
 chrono.workspace = true
 chrono-tz.workspace = true
 clap = { workspace = true, optional = true }
-derive_more = "0.99"
+derive_more = { workspace = true, features = [
+  "as_ref",
+  "deref",
+  "deref_mut",
+  "display",
+  "from",
+  "from_str",
+  "into",
+] }
 diesel = { workspace = true, features = ["uuid"], optional = true }
 email_address.workspace = true
 http = { workspace = true, optional = true }
