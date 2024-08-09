@@ -284,7 +284,8 @@ impl Recording {
     ) -> Result<(), SignalingModuleError> {
         let mut conn = self.db.get_conn().await?;
 
-        let can_record = self.enabled_features.contains(&RecordingFeature::Record);
+        let can_record = self.enabled_features.contains(&RecordingFeature::Record)
+            && self.room.breakout_room_id().is_none();
         let can_stream = self.enabled_features.contains(&RecordingFeature::Stream);
 
         let stock_streams = can_record.then_some((
