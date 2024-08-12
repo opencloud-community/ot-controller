@@ -8,9 +8,9 @@ use super::{
     command::{EnableForceMute, Target},
     MediaSessionType, ParticipantSpeakingState, TrickleCandidate,
 };
-use crate::core::ParticipantId;
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::{core::ParticipantId, signaling::media::command::ParticipantSelection};
 
 /// The direction of a media link
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -77,6 +77,12 @@ pub enum MediaEvent {
 
     /// Presenter role has been revoked from the participant
     PresenterRevoked,
+
+    /// The moderator role has been granted to another participants
+    PresenterRoleGranted(ParticipantSelection),
+
+    /// The moderator role has been revoked from another participants
+    PresenterRoleRevoked(ParticipantSelection),
 
     /// Update of a speaker status
     SpeakerUpdated(ParticipantSpeakingState),

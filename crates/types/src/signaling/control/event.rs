@@ -10,7 +10,7 @@ use crate::imports::*;
 use crate::{
     common::{event::EventInfo, tariff::TariffResource},
     core::{ParticipantId, Timestamp},
-    signaling::Role,
+    signaling::{common::TargetParticipant, Role},
 };
 
 /// Events sent out by the `control` module
@@ -56,6 +56,11 @@ pub enum ControlEvent {
 
     /// An error happened when executing a `control` command
     Error(Error),
+
+    /// The moderator role has been granted to another participant
+    ModeratorRoleGranted(TargetParticipant),
+    /// The moderator role has been revoked from another participant
+    ModeratorRoleRevoked(TargetParticipant),
 }
 
 /// The data received by a participant upon successfully joining a meeting

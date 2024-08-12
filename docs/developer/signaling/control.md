@@ -447,7 +447,7 @@ Received by a participant after they have lowered their hand.
 
 ### RoleUpdated
 
-Received when a moderator assigned a new role to a participant.
+Received when a moderator assigned a new role to a participant. This message is sent to the affected participants
 
 #### Fields
 
@@ -462,6 +462,48 @@ Received when a moderator assigned a new role to a participant.
 {
     "message": "role_updated",
     "new_role": "moderator"
+}
+```
+
+### ModeratorRoleGranted
+
+Moderator rights have been granted to the specified participant. This message is sent to the
+participant who has executed the `grant_moderator_role`command
+
+#### Fields
+
+| Field     | Type     | Always | Description                                   |
+| --------- | -------- | ------ | --------------------------------------------- |
+| `message` | `enum`   | yes    | Is `"moderator_role_granted"`                 |
+| `target`  | `string` | yes    | Participant id to grant the presenter role to |
+
+##### Example
+
+```json
+{
+    "message": "moderator_role_granted",
+    "target": "84a2c872-94fb-4b41-aca7-13d784c92a72"
+}
+```
+
+### ModeratorRoleRevoked
+
+Moderator rights have been revoked from the specified participant. This message is sent to the
+participant who has executed the `revoke_moderator_role`command
+
+#### Fields
+
+| Field     | Type     | Always | Description                                      |
+| --------- | -------- | ------ | ------------------------------------------------ |
+| `message` | `enum`   | yes    | Is `"moderator_role_revoked"`                    |
+| `target`  | `string` | yes    | Participant id to revoke the presenter role from |
+
+##### Example
+
+```json
+{
+    "message": "moderator_role_revoked",
+    "target": "84a2c872-94fb-4b41-aca7-13d784c92a72"
 }
 ```
 
