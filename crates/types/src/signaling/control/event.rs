@@ -179,7 +179,10 @@ mod test {
     use super::*;
     use crate::{
         core::{EventId, RoomId, TariffId},
-        signaling::control::{self, room::CreatorInfo},
+        signaling::{
+            control::{self, room::CreatorInfo},
+            ModulePeerData,
+        },
     };
 
     fn participant_tariff() -> TariffResource {
@@ -329,15 +332,60 @@ mod test {
 
     #[test]
     fn update() {
-        let expected = json!({"message": "update", "id": "00000000-0000-0000-0000-000000000000"});
+        let expected = json!({
+            "message": "update",
+            "id": "00000000-0000-0000-0000-000000000000",
+            "dummy_namespace_1": {
+                "field_1": false,
+                "field_2": true,
+            },
+            "dummy_namespace_2": {
+                "field_a": true,
+                "field_b": false,
+            }
+        });
+
+        let mut module_data = ModulePeerData::default();
+        let _ = module_data.insert(&DummyFrontendData1 {
+            field_1: false,
+            field_2: true,
+        });
+        let _ = module_data.insert(&DummyFrontendData2 {
+            field_a: true,
+            field_b: false,
+        });
 
         let produced = serde_json::to_value(ControlEvent::Update(Participant {
             id: ParticipantId::nil(),
-            module_data: Default::default(),
+            module_data,
         }))
         .unwrap();
 
         assert_eq!(expected, produced);
+    }
+
+    #[derive(Default, Debug, PartialEq, Eq, Clone)]
+    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    pub struct DummyFrontendData1 {
+        pub field_1: bool,
+        pub field_2: bool,
+    }
+
+    #[cfg(feature = "serde")]
+    impl SignalingModulePeerFrontendData for DummyFrontendData1 {
+        const NAMESPACE: Option<&'static str> = Some("dummy_namespace_1");
+    }
+
+    #[derive(Default, Debug, PartialEq, Eq, Clone)]
+    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    pub struct DummyFrontendData2 {
+        pub field_a: bool,
+        pub field_b: bool,
+    }
+
+    #[cfg(feature = "serde")]
+    impl SignalingModulePeerFrontendData for DummyFrontendData2 {
+        const NAMESPACE: Option<&'static str> = Some("dummy_namespace_2");
     }
 
     #[test]
