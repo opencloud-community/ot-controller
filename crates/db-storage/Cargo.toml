@@ -17,7 +17,13 @@ barrel = { version = "0.7", features = ["pg"] }
 bigdecimal.workspace = true
 chrono.workspace = true
 chrono-tz = { workspace = true, features = ["serde"] }
-derive_more.workspace = true
+derive_more = { workspace = true, features = [
+  "as_ref",
+  "display",
+  "from",
+  "from_str",
+  "into",
+] }
 diesel = { workspace = true, features = [
   "chrono",
   "numeric",

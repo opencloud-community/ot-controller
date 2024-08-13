@@ -17,7 +17,7 @@ version.workspace = true
 [dependencies]
 async-trait.workspace = true
 bytes.workspace = true
-derive_more.workspace = true
+derive_more = { workspace = true, features = ["from", "into"] }
 http.workspace = true
 http-request-derive.workspace = true
 serde.workspace = true
