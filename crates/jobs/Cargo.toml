@@ -30,7 +30,7 @@ serde.workspace = true
 serde_json.workspace = true
 snafu.workspace = true
 tokio = { workspace = true, features = ["time"] }
-tokio-cron-scheduler = "0.10"
+tokio-cron-scheduler = "0.11"
 uuid.workspace = true
 
 [dev-dependencies]
