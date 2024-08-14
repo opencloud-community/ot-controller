@@ -22,6 +22,7 @@ Functionality that can be configured through the configuration file:
 - [HTTP server](http_server.md)
 - [Room server](room_server.md)
 - [RabbitMQ](rabbitmq.md)
+    - The recording service is enabled/disabled by configuring the queue name
 - [Redis](redis.md)
 - [STUN and TURN](stun_turn.md)
 - [Authz](../advanced/acl.md)
