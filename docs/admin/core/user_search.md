@@ -42,11 +42,10 @@ least once.
 
 :::note
 
-The Keycloak user interface changed in the past, and might change in the future,
-therefore we don't include any screenshots here. Instead we describe what needs
-to be done, and link to the Keycloak documentation where needed. These links
-reference a specific version of Keycloak, if you are on a different version,
-look it up in the
+The Keycloak user interface changed in the past and because of that it's safe to assume
+that it will continue to change moving forward. Instead of screenshots we describe what needs to be
+done, and link to the Keycloak documentation where needed. These links
+reference a specific version of Keycloak. If those settings are outdated, please refer to the
 [Keycloak documentation archive](https://www.keycloak.org/documentation-archive.html)
 and find the corresponding section there.
 

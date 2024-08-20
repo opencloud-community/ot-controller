@@ -5,13 +5,16 @@ identity and access management software for single sign-on.
 
 ## Configuring keycloak for OpenTalk Controller
 
-The Keycloak user interface changed in the past, and might change in the future,
-therefore we don't include any screenshots here. Instead we describe what needs
-to be done, and link to the Keycloak documentation where needed. These links
-reference a specific version of Keycloak, if you are on a different version,
-look it up in the
+:::note
+
+The Keycloak user interface changed in the past and because of that it's safe to assume
+that it will continue to change moving forward. Instead of screenshots we describe what needs to be
+done, and link to the Keycloak documentation where needed. These links
+reference a specific version of Keycloak. If those settings are outdated, please refer to the
 [Keycloak documentation archive](https://www.keycloak.org/documentation-archive.html)
 and find the corresponding section there.
+
+:::
 
 This manual describes the configuration for the OpenTalk Controller only, other
 OpenTalk components might need separate configuration.
