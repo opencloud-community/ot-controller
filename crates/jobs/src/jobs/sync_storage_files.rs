@@ -92,7 +92,7 @@ async fn sync_files(
         let asset_id = asset.0;
         let asset_size = asset.1;
 
-        if index % (total / 5) == 0 && index != 0 {
+        if index % (total / 5).max(1) == 0 && index != 0 {
             info!(log: logger,
                 "Synchronized assets: {index}/{total} ...",
             );
@@ -142,7 +142,11 @@ async fn sync_files(
         updated_asset_count += 1;
     }
 
-    info!(log: logger,"All {total} assets synchronized!");
+    if total != 0 {
+        info!(log: logger,"All {total} assets synchronized!");
+    } else {
+        info!(log: logger,"Nothing to synchronize, no assets found in database.");
+    }
 
     if missing_asset_count == 0 {
         // finish without any further summary logs
@@ -199,6 +203,35 @@ mod tests {
     #[actix_rt::test]
     #[ignore]
     async fn sync_files_and_delete_missing() {
+        sync_asset_test(499, &MissingStorageFileHandling::DeleteAssetEntry).await
+    }
+
+    /// Test the database/storage file synchronization and set the file size of assets that have no related storage object to zero
+    ///
+    /// Requires a local MinIO instance
+    ///
+    ///  `cargo test --package opentalk-jobs  -- --exact jobs::sync_storage_files::tests::sync_files_and_set_missing_to_zero --ignored`
+    #[actix_rt::test]
+    #[ignore]
+    async fn sync_files_and_set_missing_to_zero() {
+        sync_asset_test(99, &MissingStorageFileHandling::SetFileSizeToZero).await
+    }
+
+    /// Test the database/storage file synchronization and with a low amount of assets
+    ///
+    /// `cargo test --package opentalk-jobs  -- --exact jobs::sync_storage_files::tests::sync_low_asset_count --ignored`
+    #[actix_rt::test]
+    #[ignore]
+    async fn sync_low_asset_count() {
+        sync_asset_test(2, &MissingStorageFileHandling::DeleteAssetEntry).await
+    }
+
+    /// Test the database/storage file synchronization with no assets in the database
+    ///
+    /// `cargo test --package opentalk-jobs  -- --exact jobs::sync_storage_files::tests::sync_zero_assets --ignored`
+    #[actix_rt::test]
+    #[ignore]
+    async fn sync_zero_assets() {
         let test_ctx = TestContext::default().await;
 
         let minio = MinIO {
@@ -209,9 +242,6 @@ mod tests {
         };
 
         let object_storage = ObjectStorage::new(&minio).await.unwrap();
-
-        let valid_assets = 499;
-        prepare_db_and_storage(&test_ctx, &object_storage, valid_assets).await;
 
         let mut conn = test_ctx.db_ctx.db.get_conn().await.unwrap();
 
@@ -223,26 +253,13 @@ mod tests {
         )
         .await
         .unwrap();
-
-        let assets = Asset::get_all_ids_and_size(&mut conn).await.unwrap();
-
-        assert_eq!(assets.len(), valid_assets);
-
-        // ensure that the asset without the storage file was deleted
-        assert!(!assets.iter().any(|asset| asset.0 == LOST_ASSET_ID))
     }
 
-    /// Test the database/storage file synchronization and set the file size of assets that have no related storage object to zero
-    ///
-    /// Requires a local MinIO instance
-    ///
-    ///  `cargo test --package opentalk-jobs  -- --exact jobs::sync_storage_files::tests::sync_files_and_set_missing_to_zero --ignored`
-    #[actix_rt::test]
-    #[ignore]
-    async fn sync_files_and_set_missing_to_zero() {
+    async fn sync_asset_test(
+        valid_asset_count: usize,
+        missing_file_handling: &MissingStorageFileHandling,
+    ) {
         let test_ctx = TestContext::default().await;
-
-        let valid_assets = 99;
 
         let minio = MinIO {
             uri: "http://localhost:9555".into(),
@@ -253,7 +270,7 @@ mod tests {
 
         let object_storage = ObjectStorage::new(&minio).await.unwrap();
 
-        prepare_db_and_storage(&test_ctx, &object_storage, valid_assets).await;
+        prepare_db_and_storage(&test_ctx, &object_storage, valid_asset_count).await;
 
         let mut conn = test_ctx.db_ctx.db.get_conn().await.unwrap();
 
@@ -261,22 +278,17 @@ mod tests {
             log::logger(),
             &mut conn,
             &object_storage,
-            &MissingStorageFileHandling::SetFileSizeToZero,
+            missing_file_handling,
         )
         .await
         .unwrap();
 
         let assets = Asset::get_all_ids_and_size(&mut conn).await.unwrap();
 
-        assert_eq!(assets.len(), valid_assets + 1);
+        assert_eq!(assets.len(), valid_asset_count);
 
-        // ensure that the asset without storage file was set to file size zero
-        let lost_asset = assets
-            .iter()
-            .find(|asset| asset.0 == LOST_ASSET_ID)
-            .unwrap();
-
-        assert_eq!(lost_asset.1, 0);
+        // ensure that the asset without the storage file was deleted
+        assert!(!assets.iter().any(|asset| asset.0 == LOST_ASSET_ID))
     }
 
     /// Creates multiple valid database assets with their associated storage object as well as one invalid database asset.
