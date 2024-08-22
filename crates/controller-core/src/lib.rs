@@ -665,6 +665,7 @@ impl ModulesRegistrar for Controller {
         api::v1::rooms::accessible,
         api::v1::rooms::delete,
         api::v1::rooms::get,
+        api::v1::rooms::get_room_event,
         api::v1::rooms::get_room_tariff,
         api::v1::rooms::new,
         api::v1::rooms::patch,

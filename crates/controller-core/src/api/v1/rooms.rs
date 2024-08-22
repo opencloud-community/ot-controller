@@ -539,6 +539,43 @@ pub async fn get_room_tariff(
     Ok(Json(response))
 }
 
+/// Get a room's event
+///
+/// This returns the event with which the room is associated. Please note
+/// that rooms can exist without events, in which case a `404` status will be
+/// returned.
+#[utoipa::path(
+    params(
+        ("room_id" = RoomId, description = "The id of the room"),
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "The room's event was successfully retrieved",
+            body = TariffResource
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+        ("InviteCode" = []),
+    ),
+)]
 #[get("/rooms/{room_id}/event")]
 pub async fn get_room_event(
     settings: SharedSettingsActix,
