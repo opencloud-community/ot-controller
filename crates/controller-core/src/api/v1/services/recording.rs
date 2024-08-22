@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use actix_http::ws::Codec;
 use actix_web::{
     dev::HttpServiceFactory,
     get, post, web,
@@ -9,12 +10,13 @@ use actix_web::{
     HttpRequest, HttpResponse,
 };
 use actix_web_actors::ws;
+use bytes::Bytes;
 use futures::TryStreamExt;
 use opentalk_database::Db;
 use opentalk_db_storage::rooms::Room;
 use opentalk_signaling_core::{
     assets::{save_asset, verify_storage_usage, NewAssetFileName},
-    ObjectStorage, Participant, VolatileStorage,
+    ChunkFormat, ObjectStorage, ObjectStorageError, Participant, VolatileStorage,
 };
 use opentalk_types::api::{
     error::ApiError,
@@ -24,7 +26,8 @@ use tokio::{sync::mpsc, task};
 
 use crate::{
     api::{
-        signaling::ticket::start_or_continue_signaling_session, upload::UploadWebSocketActor,
+        signaling::ticket::start_or_continue_signaling_session,
+        upload::{UploadWebSocketActor, MAXIMUM_WEBSOCKET_BUFFER_SIZE},
         v1::response::NoContent,
     },
     settings::SharedSettingsActix,
@@ -93,6 +96,7 @@ pub async fn upload_render(
         Some("recording"),
         filename,
         data.into_stream(),
+        ChunkFormat::Data,
     )
     .await?;
 
@@ -112,10 +116,12 @@ pub(crate) async fn ws_upload(
     stream: web::Payload,
 ) -> actix_web::Result<HttpResponse> {
     // Finish websocket handshake
-    let (sender, receiver) = mpsc::unbounded_channel();
+    let (sender, receiver) = mpsc::unbounded_channel::<Result<Bytes, ObjectStorageError>>();
     let receiver_stream = tokio_stream::wrappers::UnboundedReceiverStream::new(receiver);
     let (_addr, response) =
         ws::WsResponseBuilder::new(UploadWebSocketActor::new(sender), &request, stream)
+            .codec(Codec::new().max_size(100_000_000))
+            .frame_size(MAXIMUM_WEBSOCKET_BUFFER_SIZE)
             .start_with_addr()?;
 
     // Spawn the runner task
@@ -133,6 +139,7 @@ pub(crate) async fn ws_upload(
                 Some(opentalk_types::signaling::recording::NAMESPACE),
                 filename,
                 receiver_stream,
+                ChunkFormat::SequenceNumberAndData,
             )
             .await;
 

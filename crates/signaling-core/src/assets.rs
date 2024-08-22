@@ -28,7 +28,7 @@ use opentalk_types::{
 };
 use snafu::{IntoError, ResultExt, Snafu};
 
-use crate::{ObjectStorage, ObjectStorageError};
+use crate::{object_storage::ChunkFormat, ObjectStorage, ObjectStorageError};
 
 #[derive(Debug, Snafu)]
 pub enum AssetError {
@@ -197,6 +197,7 @@ pub async fn save_asset<E>(
     namespace: Option<&str>,
     mut filename: NewAssetFileName,
     data: impl Stream<Item = Result<Bytes, E>> + Unpin,
+    chunk_format: ChunkFormat,
 ) -> Result<(AssetId, String)>
 where
     ObjectStorageError: From<E>,
@@ -210,7 +211,7 @@ where
 
     // Upload to s3 storage
     let size: Result<i64, _> = storage
-        .put(&asset_key(&asset_id), data)
+        .put(&asset_key(&asset_id), data, chunk_format)
         .await
         .context(ObjectStorageSnafu)?
         .try_into()
