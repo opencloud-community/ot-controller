@@ -17,9 +17,59 @@ recording sessions.
 
 The section in the [configuration file](../../core/configuration.md) is called `rabbit_mq`.
 
-### Usage Examples
+In addition to the configuration file, keycloak needs to be configured to allow the recorder to access meetings.
 
-#### Disabling Recording Capability in RabbitMQ
+### Keycloak Configuration
+
+:::note
+
+The Keycloak user interface changed in the past and because of that it's safe to assume
+that it will continue to change moving forward. Instead of screenshots we describe what needs to be
+done, and link to the Keycloak documentation where needed. These links
+reference a specific version of Keycloak. If those settings are outdated, please refer to the
+[Keycloak documentation archive](https://www.keycloak.org/documentation-archive.html)
+and find the corresponding section there.
+
+:::
+
+The recorder requires access to the controller API. For that we need to create a
+client inside keycloak and configure the recorder with the client secret. The client
+has to be assigned to the `opentalk-recorder` role to gain access to the controller API.
+
+:::warning
+
+The following configuration needs to be changed in the configuration file of the __recording service__.
+
+:::
+
+```toml
+[auth]
+issuer = "http://localhost:8080/auth/realms/OPENTALK"
+client_id = "Recorder"
+client_secret = "the-client-secret"
+```
+
+1. Create an [OpenID Connect client](https://www.keycloak.org/docs/25.0.0/server_admin/index.html#proc-creating-oidc-client_server_administration_guide).
+   - The **Client ID** will be used in the field `auth.client_id` of the configuration field (e.g. `Recorder`).
+   - Enable **Service account roles** in the [Capability Config](https://www.keycloak.org/docs/25.0.0/server_admin/index.html#capability-config).
+2. Create [client credentials](https://www.keycloak.org/docs/25.0.0/server_admin/index.html#_client-credentials).
+   - Use the Client Authenticator **Client Id and Secret** .
+   - The **Client secret** will be used in the field `auth.client_secret` of the configuration field.
+3. Set the correct issuer URL in `auth.issuer`
+   - Replace the domain and realm placeholders with your specific values: `http://<KeyCloak domain>/auth/realms/<OpenTalk realm>`
+4. Grant the Recorder-Client access to the Controller API
+   - [Create a realm role](https://www.keycloak.org/docs/25.0.0/server_admin/index.html#proc-creating-realm-roles_server_administration_guide) with the id `opentalk-recorder`
+   - Assign the role to the service account of the recorder client
+
+### Controller Configuration
+
+:::warning
+
+The following configurations needs to be changed in the configuration file of the __controller__.
+
+:::
+
+#### Disabling Recording Capability
 
 If you wish to disable the recording capability for the controller, simply
 refrain from setting the `recording_task_queue` parameter in the configuration
@@ -33,7 +83,7 @@ file. Here's an example configuration without this setting:
 #recording_task_queue = "opentalk_recorder"
 ```
 
-#### Enabling Recording Capability in RabbitMQ
+#### Enabling Recording Capability
 
 To enable the recording capability for the controller, configure the
 `recording_task_queue` parameter. This parameter should be set to the same value
