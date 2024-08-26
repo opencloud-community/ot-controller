@@ -2,10 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_types_common::utils::ExampleData;
+
 use super::InstanceId;
+use crate::core::EventId;
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{core::EventId, utils::ExampleData};
 
 /// Opaque id of an EventInstance or EventException resource. Should only be used to sort/index the related resource.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -71,8 +73,7 @@ mod impl_to_schema {
         ToSchema,
     };
 
-    use super::EventAndInstanceId;
-    use crate::utils::ExampleData as _;
+    use super::{EventAndInstanceId, ExampleData as _};
 
     impl<'__s> ToSchema<'__s> for EventAndInstanceId {
         fn schema() -> (

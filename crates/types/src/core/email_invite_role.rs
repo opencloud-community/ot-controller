@@ -2,9 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_types_common::utils::ExampleData;
+
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{signaling::Role, sql_enum, utils::ExampleData};
+use crate::{signaling::Role, sql_enum};
 
 sql_enum!(
     feature_gated:

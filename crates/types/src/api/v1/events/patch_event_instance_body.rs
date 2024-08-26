@@ -2,9 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_types_common::utils::ExampleData;
+
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{api::v1::events::EventStatus, core::DateTimeTz, utils::ExampleData};
+use crate::{api::v1::events::EventStatus, core::DateTimeTz};
 
 /// Request body for the `PATCH /events/{event_id}/{instance_id}` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]

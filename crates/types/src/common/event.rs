@@ -4,14 +4,12 @@
 
 //! Common types related to event
 
+use opentalk_types_common::utils::ExampleData;
 use url::Url;
 
+use crate::core::{EventId, InviteCodeId, RoomId};
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{
-    core::{EventId, InviteCodeId, RoomId},
-    utils::ExampleData,
-};
 
 /// Information about an event
 #[derive(Clone, Debug, PartialEq, Eq)]

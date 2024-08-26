@@ -4,6 +4,7 @@
 
 //! This module contains commonly used types for streaming target endpoints.
 
+use opentalk_types_common::utils::ExampleData;
 use url::Url;
 
 #[allow(unused_imports)]
@@ -11,7 +12,6 @@ use crate::imports::*;
 use crate::{
     common::event::StreamingLink,
     core::{StreamingKey, StreamingTargetId},
-    utils::ExampleData,
 };
 
 /// A streaming target kind

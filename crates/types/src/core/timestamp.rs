@@ -6,10 +6,10 @@ use std::{ops::Add, time::SystemTime};
 
 use chrono::{DateTime, TimeZone as _, Timelike as _, Utc};
 use derive_more::{AsRef, Deref, Display, From, FromStr};
+use opentalk_types_common::utils::ExampleData;
 
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::utils::ExampleData;
 
 /// A UTC DateTime wrapper that implements ToRedisArgs and FromRedisValue.
 ///

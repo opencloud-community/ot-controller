@@ -2,9 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_types_common::utils::ExampleData;
+
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::utils::ExampleData;
 
 /// User profile with only email and avatar url
 #[derive(Debug, Clone, PartialEq, Eq)]

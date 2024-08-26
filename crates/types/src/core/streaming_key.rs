@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use derive_more::{AsRef, Display, From, FromStr, Into};
+use opentalk_types_common::utils::ExampleData;
 
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::utils::ExampleData;
 
 /// The secret key of a streaming target
 #[derive(

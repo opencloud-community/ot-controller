@@ -4,11 +4,11 @@
 
 use std::str::FromStr;
 
+use opentalk_types_common::utils::ExampleData;
 use snafu::{ensure, Snafu};
 
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::utils::ExampleData;
 
 /// The minimum allowed length for a valid room password
 pub const MIN_ROOM_PASSWORD_LENGTH: usize = 1;

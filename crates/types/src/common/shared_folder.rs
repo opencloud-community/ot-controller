@@ -4,9 +4,11 @@
 
 //! Common types related to the shared_folder module
 
+use opentalk_types_common::utils::ExampleData;
+
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{signaling::Role, utils::ExampleData};
+use crate::signaling::Role;
 
 /// Information required to access a shared folder
 #[derive(Debug, Clone, PartialEq, Eq)]

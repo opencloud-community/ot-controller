@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types::utils::ExampleData;
+use opentalk_types_common::utils::ExampleData;
 use serde::{Deserialize, Serialize};
 
 use super::{Event, EventException, ExternalUser, RegisteredUser, UnregisteredUser};

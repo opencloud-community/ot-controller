@@ -1,3 +1,5 @@
+use opentalk_types_common::utils::ExampleData;
+
 // SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
 //
 // SPDX-License-Identifier: EUPL-1.2
@@ -8,7 +10,6 @@ use crate::imports::*;
 use crate::{
     common::streaming::StreamingTarget,
     core::{DateTimeTz, RecurrencePattern, RoomPassword},
-    utils::ExampleData,
 };
 
 /// Body for the `PATCH /events/{event_id}` endpoint

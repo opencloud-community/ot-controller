@@ -51,6 +51,7 @@ opentalk-client-shared = { workspace = true, optional = true }
 opentalk-database = { workspace = true, optional = true }
 opentalk-diesel-newtype = { workspace = true, optional = true }
 opentalk-kustos-prefix = { workspace = true, optional = true }
+opentalk-types-common.workspace = true
 rand = { workspace = true, optional = true }
 redis = { workspace = true, optional = true }
 redis-args = { workspace = true, optional = true }

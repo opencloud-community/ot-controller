@@ -3,10 +3,11 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::{DateTime, TimeZone as _, Utc};
+use opentalk_types_common::utils::ExampleData;
 
+use crate::core::AssetId;
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{core::AssetId, utils::ExampleData};
 
 /// Representation of an asset resource
 #[derive(Clone, Debug, PartialEq, Eq)]

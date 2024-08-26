@@ -2,9 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_types_common::utils::ExampleData;
+
+use crate::core::InviteRole;
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{core::InviteRole, utils::ExampleData};
 
 /// Request body for the `PATCH /events/{event_id}/invites/{user_id}` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]

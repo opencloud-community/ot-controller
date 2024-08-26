@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use derive_more::{AsRef, Display, From, FromStr, Into};
+use opentalk_types_common::utils::ExampleData;
 
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::utils::ExampleData;
 
 /// Representation of a timezone
 #[derive(AsRef, Display, From, FromStr, Into, Debug, Clone, Copy, PartialEq, Eq, Hash)]

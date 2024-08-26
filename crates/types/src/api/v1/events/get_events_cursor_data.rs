@@ -2,12 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_types_common::utils::ExampleData;
+
 #[allow(unused_imports)]
 use crate::imports::*;
 use crate::{
     api::v1::cursor::CursorData,
     core::{EventId, Timestamp},
-    utils::ExampleData,
 };
 
 /// Data stored inside the `GET /events` query cursor

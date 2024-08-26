@@ -6,8 +6,8 @@ use chrono::{TimeZone, Utc};
 use opentalk_types::{
     common::{shared_folder::SharedFolder, streaming::RoomStreamingTarget},
     core::RoomPassword,
-    utils::ExampleData,
 };
+use opentalk_types_common::utils::ExampleData;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

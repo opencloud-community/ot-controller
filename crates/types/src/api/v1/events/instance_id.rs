@@ -5,10 +5,11 @@
 use std::{fmt::Display, ops::Add};
 
 use chrono::{DateTime, TimeZone as _, Utc};
+use opentalk_types_common::utils::ExampleData;
 
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{api::v1::events::UTC_DT_FORMAT, core::Timestamp, utils::ExampleData};
+use crate::{api::v1::events::UTC_DT_FORMAT, core::Timestamp};
 
 /// ID of an EventInstance
 ///

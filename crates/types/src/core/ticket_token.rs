@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use derive_more::{Display, From, FromStr, Into};
+use opentalk_types_common::utils::ExampleData;
 
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::utils::ExampleData;
 
 /// A ticket token
 #[derive(Display, From, FromStr, Into, Debug, Clone, PartialEq, Eq, Hash)]
