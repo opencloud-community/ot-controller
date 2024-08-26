@@ -844,7 +844,6 @@ impl ModulesRegistrar for Controller {
             opentalk_types::common::streaming::StreamingTargetKind,
             opentalk_types::common::tariff::TariffModuleResource,
             opentalk_types::common::tariff::TariffResource,
-            opentalk_types::core::BreakoutRoomId,
             opentalk_types::core::CallInId,
             opentalk_types::core::CallInPassword,
             opentalk_types::core::DateTimeTz,
@@ -869,6 +868,7 @@ impl ModulesRegistrar for Controller {
             opentalk_types::core::Timestamp,
             opentalk_types::core::UserId,
             opentalk_types_common::assets::AssetId,
+            opentalk_types_common::rooms::BreakoutRoomId,
         ),
         responses(
             crate::api::responses::BadRequest,

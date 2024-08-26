@@ -4,8 +4,10 @@
 
 //! Signaling events for the `breakout` namespace
 
+use opentalk_types_common::rooms::BreakoutRoomId;
+
 use super::{AssociatedParticipantInOtherRoom, BreakoutRoom, ParticipantInOtherRoom};
-use crate::core::{BreakoutRoomId, Timestamp};
+use crate::core::Timestamp;
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -81,7 +83,7 @@ mod test {
 
     use super::*;
     use crate::{
-        core::{BreakoutRoomId, ParticipantId, ParticipationKind, Timestamp},
+        core::{ParticipantId, ParticipationKind, Timestamp},
         signaling::{breakout::BreakoutRoom, Role},
     };
 

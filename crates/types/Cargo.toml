@@ -85,6 +85,7 @@ backend = [
   "dep:opentalk-database",
   "diesel",
   "kustos",
+  "opentalk-types-common/backend",
   "rand",
   "redis",
   "serde",
@@ -105,8 +106,8 @@ frontend = [
   "serde",
 ]
 kustos = ["dep:kustos-shared", "dep:opentalk-kustos-prefix"]
-rand = ["dep:rand", "uuid/v4"]
-redis = ["dep:redis", "dep:redis-args", "serde"]
+rand = ["dep:rand", "opentalk-types-common/rand", "uuid/v4"]
+redis = ["dep:redis", "dep:redis-args", "opentalk-types-common/redis", "serde"]
 serde = [
   "chrono-tz/serde",
   "chrono/serde",

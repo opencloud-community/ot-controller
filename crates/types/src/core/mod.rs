@@ -7,7 +7,6 @@
 //! All core types are simple types (e.g. newtypes of primitive or other simple types),
 //! and typically used by other types in this crate.
 
-mod breakout_room_id;
 mod call_in;
 mod date_time_tz;
 mod email_invite_role;
@@ -39,7 +38,6 @@ mod time_zone;
 mod timestamp;
 mod user_id;
 
-pub use breakout_room_id::BreakoutRoomId;
 pub use call_in::{CallInId, CallInPassword, NumericId, DIAL_IN_NUMERIC_ID_LENGTH};
 pub use date_time_tz::DateTimeTz;
 pub use email_invite_role::{EmailInviteRole, EmailInviteRoleType};

@@ -2,7 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::core::{BreakoutRoomId, RoomId};
+use opentalk_types_common::rooms::BreakoutRoomId;
+
+use crate::core::RoomId;
 #[allow(unused_imports)]
 use crate::imports::*;
 

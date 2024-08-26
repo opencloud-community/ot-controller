@@ -357,6 +357,7 @@ check:opentalk-types-common:
             diesel,
             frontend,
             rand,
+            redis,
             serde,
             utoipa,
           ]

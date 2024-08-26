@@ -41,7 +41,7 @@ use opentalk_signaling_core::{
 };
 use opentalk_types::{
     common::tariff::{QuotaType, TariffResource},
-    core::{BreakoutRoomId, ParticipantId, ParticipationKind, UserId},
+    core::{ParticipantId, ParticipationKind, UserId},
     signaling::{
         common::TargetParticipant,
         control::{
@@ -55,6 +55,7 @@ use opentalk_types::{
         ModuleData, Role,
     },
 };
+use opentalk_types_common::rooms::BreakoutRoomId;
 use serde_json::Value;
 use snafu::{ensure, whatever, Report, ResultExt, Snafu};
 use tokio::{

@@ -5,8 +5,9 @@
 use opentalk_signaling_core::{Participant, VolatileStorage};
 use opentalk_types::{
     api::error::ApiError,
-    core::{BreakoutRoomId, ParticipantId, ResumptionToken, RoomId, TicketToken, UserId},
+    core::{ParticipantId, ResumptionToken, RoomId, TicketToken, UserId},
 };
+use opentalk_types_common::rooms::BreakoutRoomId;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use snafu::Report;

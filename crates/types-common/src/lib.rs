@@ -25,6 +25,7 @@
 
 pub mod assets;
 pub mod auth;
+pub mod rooms;
 pub mod utils;
 
 mod imports {
@@ -41,5 +42,10 @@ mod imports {
             serialize::ToSql,
         },
         opentalk_diesel_newtype::DieselNewtype,
+    };
+    #[cfg(feature = "redis")]
+    pub use {
+        redis::{FromRedisValue, RedisResult, ToRedisArgs},
+        redis_args::{FromRedisValue, ToRedisArgs},
     };
 }

@@ -7,7 +7,7 @@ use std::{
     time::{Duration, SystemTime},
 };
 
-use opentalk_types::core::BreakoutRoomId;
+use opentalk_types_common::rooms::BreakoutRoomId;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 
