@@ -101,6 +101,7 @@ frontend = [
   "dep:http",
   "dep:http-request-derive",
   "dep:opentalk-client-shared",
+  "opentalk-types-common/frontend",
   "serde",
 ]
 kustos = ["dep:kustos-shared", "dep:opentalk-kustos-prefix"]

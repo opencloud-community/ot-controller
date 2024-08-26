@@ -355,6 +355,7 @@ check:opentalk-types-common:
           '',
             backend,
             diesel,
+            frontend,
             rand,
             serde,
             utoipa,

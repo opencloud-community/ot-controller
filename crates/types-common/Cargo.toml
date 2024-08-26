@@ -17,6 +17,7 @@ version.workspace = true
 [features]
 backend = ["diesel", "rand", "serde", "utoipa"]
 diesel = ["dep:diesel", "dep:opentalk-diesel-newtype", "serde"]
+frontend = ["dep:opentalk-client-shared", "http"]
 rand = ["uuid/v4"]
 serde = ["dep:serde", "uuid/serde"]
 utoipa = ["dep:serde_json", "dep:utoipa", "serde"]
@@ -30,6 +31,8 @@ derive_more = { workspace = true, features = [
   "into",
 ] }
 diesel = { workspace = true, features = ["uuid"], optional = true }
+http = { workspace = true, optional = true }
+opentalk-client-shared = { workspace = true, optional = true }
 opentalk-diesel-newtype = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }

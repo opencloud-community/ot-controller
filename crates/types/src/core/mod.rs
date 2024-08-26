@@ -7,7 +7,6 @@
 //! All core types are simple types (e.g. newtypes of primitive or other simple types),
 //! and typically used by other types in this crate.
 
-mod bearer_token;
 mod breakout_room_id;
 mod call_in;
 mod date_time_tz;
@@ -40,7 +39,6 @@ mod time_zone;
 mod timestamp;
 mod user_id;
 
-pub use bearer_token::BearerToken;
 pub use breakout_room_id::BreakoutRoomId;
 pub use call_in::{CallInId, CallInPassword, NumericId, DIAL_IN_NUMERIC_ID_LENGTH};
 pub use date_time_tz::DateTimeTz;

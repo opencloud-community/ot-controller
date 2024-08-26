@@ -4914,6 +4914,8 @@ version = "0.0.0-dev"
 dependencies = [
  "derive_more 1.0.0",
  "diesel",
+ "http 0.2.12",
+ "opentalk-client-shared",
  "opentalk-diesel-newtype",
  "serde",
  "serde_json",
