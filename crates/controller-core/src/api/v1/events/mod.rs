@@ -61,10 +61,11 @@ use opentalk_types::{
         streaming::{RoomStreamingTarget, StreamingTarget},
     },
     core::{
-        DateTimeTz, EventId, EventInviteStatus, RecurrencePattern, RoomId, RoomPassword, TimeZone,
-        Timestamp, UserId,
+        DateTimeTz, EventId, EventInviteStatus, RecurrencePattern, RoomId, RoomPassword, Timestamp,
+        UserId,
     },
 };
+use opentalk_types_common::time::TimeZone;
 use rrule::{Frequency, RRuleSet};
 use serde::Deserialize;
 use shared_folder::delete_shared_folders;
@@ -2182,7 +2183,7 @@ mod tests {
     use std::time::SystemTime;
 
     use opentalk_test_util::assert_eq_json;
-    use opentalk_types::core::{InviteRole, RoomId, TimeZone, UserId};
+    use opentalk_types::core::{InviteRole, RoomId, UserId};
 
     use super::*;
 

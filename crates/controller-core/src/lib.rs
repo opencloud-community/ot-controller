@@ -864,11 +864,11 @@ impl ModulesRegistrar for Controller {
             opentalk_types::core::TariffId,
             opentalk_types::core::TariffStatus,
             opentalk_types::core::TicketToken,
-            opentalk_types::core::TimeZone,
             opentalk_types::core::Timestamp,
             opentalk_types::core::UserId,
             opentalk_types_common::assets::AssetId,
             opentalk_types_common::rooms::BreakoutRoomId,
+            opentalk_types_common::time::TimeZone,
         ),
         responses(
             crate::api::responses::BadRequest,

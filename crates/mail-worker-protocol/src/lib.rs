@@ -273,13 +273,13 @@ impl From<String> for v1::ExternalUser {
 impl
     From<(
         chrono::DateTime<chrono::Utc>,
-        opentalk_types::core::TimeZone,
+        opentalk_types_common::time::TimeZone,
     )> for v1::Time
 {
     fn from(
         (time, timezone): (
             chrono::DateTime<chrono::Utc>,
-            opentalk_types::core::TimeZone,
+            opentalk_types_common::time::TimeZone,
         ),
     ) -> Self {
         v1::Time {

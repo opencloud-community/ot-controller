@@ -34,7 +34,6 @@ mod tariff_id;
 mod tariff_status;
 mod tenant_id;
 mod ticket_token;
-mod time_zone;
 mod timestamp;
 mod user_id;
 
@@ -71,6 +70,5 @@ pub use tariff_id::TariffId;
 pub use tariff_status::{TariffStatus, TariffStatusType};
 pub use tenant_id::TenantId;
 pub use ticket_token::TicketToken;
-pub use time_zone::TimeZone;
 pub use timestamp::Timestamp;
 pub use user_id::UserId;

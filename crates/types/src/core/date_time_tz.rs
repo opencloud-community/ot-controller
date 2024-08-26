@@ -3,9 +3,8 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::{DateTime, TimeZone as _, Utc};
-use opentalk_types_common::utils::ExampleData;
+use opentalk_types_common::{time::TimeZone, utils::ExampleData};
 
-use crate::core::TimeZone;
 #[allow(unused_imports)]
 use crate::imports::*;
 
