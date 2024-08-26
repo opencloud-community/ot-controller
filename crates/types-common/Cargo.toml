@@ -20,10 +20,11 @@ diesel = ["dep:diesel", "dep:opentalk-diesel-newtype", "serde"]
 frontend = ["dep:opentalk-client-shared", "http"]
 rand = ["uuid/v4"]
 redis = ["dep:redis", "dep:redis-args", "serde"]
-serde = ["chrono-tz/serde", "dep:serde", "uuid/serde"]
+serde = ["chrono-tz/serde", "chrono/serde", "dep:serde", "uuid/serde"]
 utoipa = ["dep:serde_json", "dep:utoipa", "serde"]
 
 [dependencies]
+chrono.workspace = true
 chrono-tz.workspace = true
 derive_more = { workspace = true, features = [
   "as_ref",

@@ -8,7 +8,6 @@
 //! and typically used by other types in this crate.
 
 mod call_in;
-mod date_time_tz;
 mod email_invite_role;
 mod event_id;
 mod event_invite_status;
@@ -38,7 +37,6 @@ mod timestamp;
 mod user_id;
 
 pub use call_in::{CallInId, CallInPassword, NumericId, DIAL_IN_NUMERIC_ID_LENGTH};
-pub use date_time_tz::DateTimeTz;
 pub use email_invite_role::{EmailInviteRole, EmailInviteRoleType};
 pub use event_id::EventId;
 pub use event_invite_status::{EventInviteStatus, EventInviteStatusType};

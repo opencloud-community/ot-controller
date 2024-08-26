@@ -61,11 +61,10 @@ use opentalk_types::{
         streaming::{RoomStreamingTarget, StreamingTarget},
     },
     core::{
-        DateTimeTz, EventId, EventInviteStatus, RecurrencePattern, RoomId, RoomPassword, Timestamp,
-        UserId,
+        EventId, EventInviteStatus, RecurrencePattern, RoomId, RoomPassword, Timestamp, UserId,
     },
 };
-use opentalk_types_common::time::TimeZone;
+use opentalk_types_common::time::{DateTimeTz, TimeZone};
 use rrule::{Frequency, RRuleSet};
 use serde::Deserialize;
 use shared_folder::delete_shared_folders;

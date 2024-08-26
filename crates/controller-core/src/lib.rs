@@ -846,7 +846,6 @@ impl ModulesRegistrar for Controller {
             opentalk_types::common::tariff::TariffResource,
             opentalk_types::core::CallInId,
             opentalk_types::core::CallInPassword,
-            opentalk_types::core::DateTimeTz,
             opentalk_types::core::EmailInviteRole,
             opentalk_types::core::EventId,
             opentalk_types::core::EventInviteStatus,
@@ -868,6 +867,7 @@ impl ModulesRegistrar for Controller {
             opentalk_types::core::UserId,
             opentalk_types_common::assets::AssetId,
             opentalk_types_common::rooms::BreakoutRoomId,
+            opentalk_types_common::time::DateTimeTz,
             opentalk_types_common::time::TimeZone,
         ),
         responses(

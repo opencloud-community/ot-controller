@@ -1,4 +1,4 @@
-use opentalk_types_common::utils::ExampleData;
+use opentalk_types_common::{time::DateTimeTz, utils::ExampleData};
 
 // SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
 //
@@ -9,7 +9,7 @@ use crate::api::v1::utils::deserialize_some;
 use crate::imports::*;
 use crate::{
     common::streaming::StreamingTarget,
-    core::{DateTimeTz, RecurrencePattern, RoomPassword},
+    core::{RecurrencePattern, RoomPassword},
 };
 
 /// Body for the `PATCH /events/{event_id}` endpoint

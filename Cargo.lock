@@ -4912,6 +4912,7 @@ dependencies = [
 name = "opentalk-types-common"
 version = "0.0.0-dev"
 dependencies = [
+ "chrono",
  "chrono-tz",
  "derive_more 1.0.0",
  "diesel",
