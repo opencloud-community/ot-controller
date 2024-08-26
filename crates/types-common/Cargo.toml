@@ -1,0 +1,30 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+authors.workspace = true
+description = "Common types and traits for OpenTalk crates"
+documentation = "https://docs.rs/opentalk-types-common"
+edition = "2021"
+homepage.workspace = true
+license = "EUPL-1.2"
+name = "opentalk-types-common"
+publish = true
+repository.workspace = true
+version.workspace = true
+
+[dependencies]
+derive_more = { workspace = true, features = [
+  "as_ref",
+  "display",
+  "from",
+  "from_str",
+  "into",
+] }
+diesel = { workspace = true, features = ["uuid"], optional = true }
+opentalk-diesel-newtype = { workspace = true, optional = true }
+serde = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }
+utoipa = { workspace = true, features = ["uuid"], optional = true }
+uuid.workspace = true

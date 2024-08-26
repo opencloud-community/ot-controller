@@ -28,6 +28,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - (deps) Update redocly/cli docker tag to v1.24.0 ([!1133](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1133), [!1140](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1140))
 - (deps) Update git.opentalk.dev:5050/opentalk/backend/containers/rust docker tag to v1.81.0 ([!1136](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1136))
 
+### 🔨 Refactor
+
+- (types) Introduce opentalk-types-common crate ([#861](https://git.opentalk.dev/opentalk/backend/services/controller/-/work_items/861), [!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
+
 ### ⚙ Miscellaneous
 
 - (dependencies) Update crate gix-path to fix RUSTSEC-2024-0367 ([!1122](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1122))
