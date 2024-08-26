@@ -16,7 +16,8 @@ use opentalk_db_storage::{
 };
 use opentalk_log::{debug, warn};
 use opentalk_signaling_core::{assets::asset_key, control, ExchangeHandle, ObjectStorage};
-use opentalk_types::core::{AssetId, EventId, UserId};
+use opentalk_types::core::{EventId, UserId};
+use opentalk_types_common::assets::AssetId;
 use snafu::ResultExt;
 
 use super::{shared_folders::delete_shared_folders, Deleter, Error, RACE_CONDITION_ERROR_MESSAGE};

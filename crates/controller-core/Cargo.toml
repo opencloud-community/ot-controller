@@ -56,6 +56,7 @@ opentalk-nextcloud-client.workspace = true
 opentalk-r3dlock.workspace = true
 opentalk-signaling-core.workspace = true
 opentalk-types = { workspace = true, features = ["backend", "clap"] }
+opentalk-types-common = { workspace = true, features = ["backend"] }
 opentelemetry = { workspace = true, features = ["metrics", "trace"] }
 opentelemetry-otlp = "0.17"
 opentelemetry-prometheus = "0.17"

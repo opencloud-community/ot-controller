@@ -42,6 +42,7 @@ opentalk-etherpad-client.workspace = true
 opentalk-janus-client.workspace = true
 opentalk-r3dlock.workspace = true
 opentalk-types = { workspace = true, features = ["backend"] }
+opentalk-types-common = { workspace = true, features = ["backend"] }
 opentelemetry = { workspace = true, features = ["metrics", "trace"] }
 parking_lot.workspace = true
 redis = { workspace = true, features = ["connection-manager", "tokio-comp"] }

@@ -91,7 +91,12 @@ backend = [
   "utoipa",
 ]
 clap = ["dep:clap"]
-diesel = ["dep:diesel", "dep:opentalk-diesel-newtype", "serde"]
+diesel = [
+  "dep:diesel",
+  "dep:opentalk-diesel-newtype",
+  "opentalk-types-common/diesel",
+  "serde",
+]
 frontend = [
   "dep:http",
   "dep:http-request-derive",
@@ -108,10 +113,11 @@ serde = [
   "dep:bincode",
   "dep:serde",
   "dep:validator",
+  "opentalk-types-common/serde",
   "url/serde",
   "uuid/serde",
 ]
-utoipa = ["dep:utoipa", "serde"]
+utoipa = ["dep:utoipa", "opentalk-types-common/utoipa", "serde"]
 
 [dev-dependencies]
 pretty_assertions.workspace = true

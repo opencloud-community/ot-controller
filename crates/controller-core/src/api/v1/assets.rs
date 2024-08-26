@@ -19,8 +19,9 @@ use opentalk_types::{
         error::ApiError,
         v1::{assets::AssetResource, pagination::PagePaginationQuery},
     },
-    core::{AssetId, RoomId},
+    core::RoomId,
 };
+use opentalk_types_common::assets::AssetId;
 
 use super::{response::NoContent, ApiResponse};
 use crate::api::responses::{BinaryData, Forbidden, InternalServerError, NotFound, Unauthorized};

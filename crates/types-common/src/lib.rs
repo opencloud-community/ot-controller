@@ -23,4 +23,22 @@
     unused_results
 )]
 
+pub mod assets;
 pub mod utils;
+
+mod imports {
+    #![allow(unused)]
+
+    #[cfg(feature = "serde")]
+    pub use serde::{de, de::DeserializeOwned, Deserialize, Deserializer, Serialize, Serializer};
+    #[cfg(feature = "diesel")]
+    pub use {
+        diesel::{
+            deserialize::{FromSql, FromSqlRow},
+            expression::AsExpression,
+            pg::Pg,
+            serialize::ToSql,
+        },
+        opentalk_diesel_newtype::DieselNewtype,
+    };
+}

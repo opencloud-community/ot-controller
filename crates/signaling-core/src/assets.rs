@@ -24,8 +24,9 @@ use opentalk_db_storage::{
 use opentalk_types::{
     api::error::ApiError,
     common::tariff::QuotaType,
-    core::{AssetId, FileExtension, RoomId, Timestamp, UserId},
+    core::{FileExtension, RoomId, Timestamp, UserId},
 };
+use opentalk_types_common::assets::AssetId;
 use snafu::{IntoError, ResultExt, Snafu};
 
 use crate::{object_storage::ChunkFormat, ObjectStorage, ObjectStorageError};

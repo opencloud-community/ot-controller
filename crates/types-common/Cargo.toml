@@ -14,6 +14,13 @@ publish = true
 repository.workspace = true
 version.workspace = true
 
+[features]
+backend = ["diesel", "rand", "serde", "utoipa"]
+diesel = ["dep:diesel", "dep:opentalk-diesel-newtype", "serde"]
+rand = ["uuid/v4"]
+serde = ["dep:serde", "uuid/serde"]
+utoipa = ["dep:serde_json", "dep:utoipa", "serde"]
+
 [dependencies]
 derive_more = { workspace = true, features = [
   "as_ref",
@@ -28,3 +35,9 @@ serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
 utoipa = { workspace = true, features = ["uuid"], optional = true }
 uuid.workspace = true
+
+[package.metadata.cargo-machete]
+ignored = [
+  # Required by `utoipa::ToSchema`, not detected by compiler
+  "serde_json",
+]
