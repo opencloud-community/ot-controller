@@ -126,3 +126,6 @@ validator = { version = "0.18", features = ["derive"] }
 default-features = false
 git = "https://github.com/kbalt/casbin-rs.git"
 rev = "fddb52d61385913727e24a5c7337eed489cb0d56"
+
+[workspace.lints.clippy]
+self_named_module_files = "deny"

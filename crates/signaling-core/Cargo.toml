@@ -10,6 +10,9 @@ name = "opentalk-signaling-core"
 publish = false
 version.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 actix-http.workspace = true
 actix-rt = { workspace = true, optional = true }

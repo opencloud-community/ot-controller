@@ -11,6 +11,9 @@ name = "opentalk-controller-core"
 publish = false
 version.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 actix = "0.13"
 actix-cors = "0.7"

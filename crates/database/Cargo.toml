@@ -14,6 +14,9 @@ publish = true
 repository.workspace = true
 version.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 async-trait = "0.1"
 deadpool-runtime = { version = "0.1", features = ["tokio_1"] }

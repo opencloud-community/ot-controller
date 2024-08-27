@@ -10,6 +10,9 @@ name = "opentalk-r3dlock"
 publish = false
 version.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 redis = { workspace = true, features = ["tokio-comp"] }
 tokio = { workspace = true, features = ["time"] }

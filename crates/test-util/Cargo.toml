@@ -10,6 +10,9 @@ name = "opentalk-test-util"
 publish = false
 version.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 diesel = { workspace = true, features = ["serde_json"] }
 diesel-async = { workspace = true, features = ["deadpool", "postgres"] }
