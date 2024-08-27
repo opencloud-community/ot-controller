@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_types_common::events::invites::EmailInviteRole;
 use strum::{AsRefStr, Display, EnumCount, EnumIter, EnumString, IntoStaticStr, VariantNames};
 
 #[allow(unused_imports)]
@@ -59,5 +60,14 @@ impl Role {
     /// Returns `true` if the role is a [`Role::Guest`] value.
     pub const fn is_guest(&self) -> bool {
         matches!(self, Role::Guest)
+    }
+}
+
+impl From<EmailInviteRole> for Role {
+    fn from(value: EmailInviteRole) -> Self {
+        match value {
+            EmailInviteRole::Guest => Self::Guest,
+            EmailInviteRole::Moderator => Self::Moderator,
+        }
     }
 }

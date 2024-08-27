@@ -2,11 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_common::{sql_enum, utils::ExampleData};
+use opentalk_types_common::{events::invites::EmailInviteRole, sql_enum, utils::ExampleData};
 
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{core::EmailInviteRole, signaling::Role};
+use crate::signaling::Role;
 
 sql_enum!(
     feature_gated:

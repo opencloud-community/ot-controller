@@ -42,8 +42,9 @@ use opentalk_types::{
         },
     },
     common::{email::EmailAddress, shared_folder::SharedFolder, streaming::RoomStreamingTarget},
-    core::{EmailInviteRole, EventId, EventInviteStatus, RoomId, UserId},
+    core::{EventId, EventInviteStatus, RoomId, UserId},
 };
+use opentalk_types_common::events::invites::EmailInviteRole;
 use serde::Deserialize;
 use snafu::Report;
 

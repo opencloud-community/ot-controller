@@ -2,11 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_common::utils::ExampleData;
+use opentalk_types_common::{events::invites::EmailInviteRole, utils::ExampleData};
 
+use crate::common::email::EmailAddress;
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{common::email::EmailAddress, core::EmailInviteRole};
 
 /// Request body variant for the `POST /events/{event_id}/invites` endpoint
 #[derive(Debug, Eq, PartialEq, Clone)]

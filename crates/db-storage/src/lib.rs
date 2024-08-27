@@ -41,10 +41,10 @@ pub mod sql_types {
 
     pub use diesel::sql_types::*;
     pub use opentalk_types::core::{
-        EmailInviteRoleType as EmailInviteRole, EventInviteStatusType as EventInviteStatus,
-        InviteRoleType as InviteRole, StreamingKindType as StreamingKind,
-        TariffStatusType as TariffStatus,
+        EventInviteStatusType as EventInviteStatus, InviteRoleType as InviteRole,
+        StreamingKindType as StreamingKind, TariffStatusType as TariffStatus,
     };
+    pub use opentalk_types_common::events::invites::EmailInviteRoleType as EmailInviteRole;
 
     pub use super::{
         events::EventExceptionKindType as EventExceptionKind,
