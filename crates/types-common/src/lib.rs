@@ -25,6 +25,7 @@
 
 pub mod assets;
 pub mod auth;
+pub mod call_in;
 pub mod rooms;
 pub mod time;
 pub mod utils;

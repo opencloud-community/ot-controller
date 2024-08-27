@@ -4919,10 +4919,13 @@ dependencies = [
  "http 0.2.12",
  "opentalk-client-shared",
  "opentalk-diesel-newtype",
+ "rand",
  "redis",
  "redis-args",
  "serde",
  "serde_json",
+ "serde_with",
+ "snafu",
  "utoipa",
  "uuid",
 ]

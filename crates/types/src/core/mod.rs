@@ -36,7 +36,7 @@ mod ticket_token;
 mod timestamp;
 mod user_id;
 
-pub use call_in::{CallInId, CallInPassword, NumericId, DIAL_IN_NUMERIC_ID_LENGTH};
+pub use call_in::{CallInId, CallInPassword};
 pub use email_invite_role::{EmailInviteRole, EmailInviteRoleType};
 pub use event_id::EventId;
 pub use event_invite_status::{EventInviteStatus, EventInviteStatusType};

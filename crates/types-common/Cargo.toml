@@ -18,9 +18,15 @@ version.workspace = true
 backend = ["diesel", "rand", "redis", "serde", "utoipa"]
 diesel = ["dep:diesel", "dep:opentalk-diesel-newtype", "serde"]
 frontend = ["dep:opentalk-client-shared", "http"]
-rand = ["uuid/v4"]
+rand = ["dep:rand", "uuid/v4"]
 redis = ["dep:redis", "dep:redis-args", "serde"]
-serde = ["chrono-tz/serde", "chrono/serde", "dep:serde", "uuid/serde"]
+serde = [
+  "chrono-tz/serde",
+  "chrono/serde",
+  "dep:serde",
+  "dep:serde_with",
+  "uuid/serde",
+]
 utoipa = ["dep:serde_json", "dep:utoipa", "serde"]
 
 [dependencies]
@@ -37,10 +43,13 @@ diesel = { workspace = true, features = ["uuid"], optional = true }
 http = { workspace = true, optional = true }
 opentalk-client-shared = { workspace = true, optional = true }
 opentalk-diesel-newtype = { workspace = true, optional = true }
+rand = { workspace = true, optional = true }
 redis = { workspace = true, optional = true }
 redis-args = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
+serde_with = { workspace = true, optional = true }
+snafu.workspace = true
 utoipa = { workspace = true, features = ["uuid"], optional = true }
 uuid.workspace = true
 
