@@ -2,7 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::core::{FileExtension, RoomId, Timestamp};
+use opentalk_types_common::assets::FileExtension;
+
+use crate::core::{RoomId, Timestamp};
 #[allow(unused_imports)]
 use crate::imports::*;
 

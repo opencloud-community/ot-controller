@@ -60,3 +60,6 @@ ignored = [
   # Required by `utoipa::ToSchema`, not detected by compiler
   "serde_json",
 ]
+
+[dev-dependencies]
+pretty_assertions.workspace = true

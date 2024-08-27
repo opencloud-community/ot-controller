@@ -4,11 +4,11 @@
 
 use std::str::FromStr;
 
-use opentalk_types_common::utils::ExampleData;
 use snafu::Snafu;
 
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::utils::ExampleData;
 
 /// The maximum allowed length for valid file extensions
 pub const MAX_FILE_EXTENSION_LENGTH: usize = 10;
@@ -37,7 +37,7 @@ impl FileExtension {
     /// is empty.
     ///
     /// ```
-    /// # use opentalk_types::core::FileExtension;
+    /// # use opentalk_types_common::assets::FileExtension;
     /// let file_stem = "hello-world";
     /// let file_extension: FileExtension = "abc".parse().unwrap();
     /// let file_name = format!("{}{}", file_stem, file_extension.to_string_with_leading_dot());

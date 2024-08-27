@@ -19,7 +19,7 @@ use opentalk_signaling_core::{
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types::{
-    core::{FileExtension, ParticipantId},
+    core::ParticipantId,
     signaling::{
         meeting_notes::{
             command::{MeetingNotesCommand, ParticipantSelection},
@@ -30,6 +30,7 @@ use opentalk_types::{
         Role,
     },
 };
+use opentalk_types_common::assets::FileExtension;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use snafu::{whatever, OptionExt, Report};

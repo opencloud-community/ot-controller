@@ -15,7 +15,7 @@ use opentalk_signaling_core::{
     VolatileStorage,
 };
 use opentalk_types::{
-    core::{FileExtension, Timestamp},
+    core::Timestamp,
     signaling::{
         whiteboard::{
             command::WhiteboardCommand,
@@ -26,6 +26,7 @@ use opentalk_types::{
         Role,
     },
 };
+use opentalk_types_common::assets::FileExtension;
 use snafu::{whatever, Report};
 use storage::{InitState, SpaceInfo, WhiteboardStorage};
 use url::Url;
