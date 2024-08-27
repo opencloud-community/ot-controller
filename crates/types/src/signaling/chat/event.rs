@@ -122,11 +122,11 @@ impl From<Error> for ChatEvent {
 
 #[cfg(test)]
 mod test {
+    use opentalk_types_common::users::GroupName;
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
     use super::*;
-    use crate::core::GroupName;
 
     #[test]
     fn global_serialize() {

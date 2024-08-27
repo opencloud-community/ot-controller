@@ -4834,6 +4834,7 @@ dependencies = [
  "opentalk-db-storage",
  "opentalk-signaling-core",
  "opentalk-types",
+ "opentalk-types-common",
  "pretty_assertions",
  "redis",
  "serde",
