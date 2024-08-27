@@ -5,8 +5,8 @@
 use diesel::{prelude::*, ExpressionMethods, Identifiable, QueryDsl, Queryable};
 use diesel_async::RunQueryDsl;
 use opentalk_database::{DatabaseError, DbConnection, Result};
-use opentalk_types::core::{CallInPassword, RoomId};
-use opentalk_types_common::call_in::CallInId;
+use opentalk_types::core::RoomId;
+use opentalk_types_common::call_in::{CallInId, CallInPassword};
 
 use super::schema::sip_configs;
 use crate::{rooms::Room, schema::rooms};

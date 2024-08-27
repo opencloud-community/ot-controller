@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use derive_more::{AsRef, Display, From, FromStr, Into};
-use opentalk_types_common::{call_in::NumericId, utils::ExampleData};
 
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::{call_in::NumericId, utils::ExampleData};
 
 /// The password for authenticating call-in participation
 #[derive(

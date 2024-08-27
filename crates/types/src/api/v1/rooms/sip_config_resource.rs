@@ -4,9 +4,12 @@
 
 //! This module contains types that are used for OpenTalk API V1 sip config endpoints.
 
-use opentalk_types_common::{call_in::CallInId, utils::ExampleData};
+use opentalk_types_common::{
+    call_in::{CallInId, CallInPassword},
+    utils::ExampleData,
+};
 
-use crate::core::{CallInPassword, RoomId};
+use crate::core::RoomId;
 #[allow(unused_imports)]
 use crate::imports::*;
 

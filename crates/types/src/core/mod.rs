@@ -7,7 +7,6 @@
 //! All core types are simple types (e.g. newtypes of primitive or other simple types),
 //! and typically used by other types in this crate.
 
-mod call_in;
 mod email_invite_role;
 mod event_id;
 mod event_invite_status;
@@ -36,7 +35,6 @@ mod ticket_token;
 mod timestamp;
 mod user_id;
 
-pub use call_in::CallInPassword;
 pub use email_invite_role::{EmailInviteRole, EmailInviteRoleType};
 pub use event_id::EventId;
 pub use event_invite_status::{EventInviteStatus, EventInviteStatusType};

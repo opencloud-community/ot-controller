@@ -8,7 +8,9 @@
 pub const DIAL_IN_NUMERIC_ID_LENGTH: usize = 10;
 
 mod call_in_id;
+mod call_in_password;
 mod numeric_id;
 
 pub use call_in_id::CallInId;
+pub use call_in_password::CallInPassword;
 pub use numeric_id::NumericId;
