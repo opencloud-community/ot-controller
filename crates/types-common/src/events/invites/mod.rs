@@ -5,5 +5,7 @@
 //! Data types for handling event invites.
 
 mod email_invite_role;
+mod event_invite_status;
 
 pub use email_invite_role::{EmailInviteRole, EmailInviteRoleType};
+pub use event_invite_status::{EventInviteStatus, EventInviteStatusType};

@@ -4,10 +4,9 @@
 
 use std::{collections::BTreeSet, str::FromStr};
 
-use opentalk_types_common::{sql_enum, utils::ExampleData};
-
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::{sql_enum, utils::ExampleData};
 
 sql_enum!(
     feature_gated:
