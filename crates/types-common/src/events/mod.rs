@@ -5,3 +5,7 @@
 //! Data types for handling events.
 
 pub mod invites;
+
+mod event_id;
+
+pub use event_id::EventId;

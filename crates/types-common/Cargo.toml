@@ -18,6 +18,7 @@ version.workspace = true
 backend = ["diesel", "rand", "redis", "serde", "utoipa"]
 diesel = ["dep:diesel", "dep:opentalk-diesel-newtype", "serde"]
 frontend = ["dep:opentalk-client-shared", "http"]
+kustos = ["dep:opentalk-kustos-prefix"]
 rand = ["dep:rand", "uuid/v4"]
 redis = ["dep:redis", "dep:redis-args", "serde"]
 serde = [
@@ -43,6 +44,7 @@ diesel = { workspace = true, features = ["uuid"], optional = true }
 http = { workspace = true, optional = true }
 opentalk-client-shared = { workspace = true, optional = true }
 opentalk-diesel-newtype = { workspace = true, optional = true }
+opentalk-kustos-prefix = { workspace = true, optional = true }
 rand = { workspace = true, optional = true }
 redis = { workspace = true, optional = true }
 redis-args = { workspace = true, optional = true }

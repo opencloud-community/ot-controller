@@ -178,16 +178,14 @@ mod test {
     use std::str::FromStr;
 
     use chrono::DateTime;
+    use opentalk_types_common::events::EventId;
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
     use super::*;
     use crate::{
-        core::{EventId, RoomId, TariffId},
-        signaling::{
-            control::{self, room::CreatorInfo},
-            ModulePeerData,
-        },
+        core::{RoomId, TariffId},
+        signaling::control::{self, room::CreatorInfo},
     };
 
     fn participant_tariff() -> TariffResource {

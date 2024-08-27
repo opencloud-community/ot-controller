@@ -105,7 +105,11 @@ frontend = [
   "opentalk-types-common/frontend",
   "serde",
 ]
-kustos = ["dep:kustos-shared", "dep:opentalk-kustos-prefix"]
+kustos = [
+  "dep:kustos-shared",
+  "dep:opentalk-kustos-prefix",
+  "opentalk-types-common/kustos",
+]
 rand = ["dep:rand", "opentalk-types-common/rand", "uuid/v4"]
 redis = ["dep:redis", "dep:redis-args", "opentalk-types-common/redis", "serde"]
 serde = [

@@ -15,9 +15,9 @@ use opentalk_types::{
         order::{AssetSorting, Ordering, SortingQuery},
         users::UserAssetResource,
     },
-    core::{EventId, RoomId, TenantId, UserId},
+    core::{RoomId, TenantId, UserId},
 };
-use opentalk_types_common::assets::AssetId;
+use opentalk_types_common::{assets::AssetId, events::EventId};
 
 use crate::{
     diesel::NullableExpressionMethods,

@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_common::{time::DateTimeTz, utils::ExampleData};
+use opentalk_types_common::{events::EventId, time::DateTimeTz, utils::ExampleData};
 
 use super::{EventAndInstanceId, EventInvitee, EventRoomInfo, EventStatus, EventType, InstanceId};
 #[allow(unused_imports)]
@@ -10,7 +10,7 @@ use crate::imports::*;
 use crate::{
     api::v1::users::PublicUserProfile,
     common::shared_folder::SharedFolder,
-    core::{EventId, EventInviteStatus, Timestamp},
+    core::{EventInviteStatus, Timestamp},
 };
 
 /// Event instance resource

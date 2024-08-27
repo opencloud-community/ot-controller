@@ -20,9 +20,9 @@ use opentalk_database::{DatabaseError, DbConnection, Paginate, Result};
 use opentalk_diesel_newtype::DieselNewtype;
 use opentalk_types::{
     common::event::EventInfo,
-    core::{EventId, EventInviteStatus, InviteRole, RoomId, TenantId, UserId},
+    core::{EventInviteStatus, InviteRole, RoomId, TenantId, UserId},
 };
-use opentalk_types_common::{sql_enum, time::TimeZone};
+use opentalk_types_common::{events::EventId, sql_enum, time::TimeZone};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 

@@ -17,7 +17,8 @@ use opentalk_db_storage::{
 };
 use opentalk_log::{debug, info, warn};
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage};
-use opentalk_types::core::{EventId, RoomId, UserId};
+use opentalk_types::core::{RoomId, UserId};
+use opentalk_types_common::events::EventId;
 use snafu::Report;
 
 use crate::Error;

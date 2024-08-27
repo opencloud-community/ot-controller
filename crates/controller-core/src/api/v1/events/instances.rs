@@ -32,8 +32,9 @@ use opentalk_types::{
         },
     },
     common::shared_folder::SharedFolder,
-    core::{EventId, EventInviteStatus},
+    core::EventInviteStatus,
 };
+use opentalk_types_common::events::EventId;
 use rrule::RRuleSet;
 use snafu::Report;
 use validator::Validate;

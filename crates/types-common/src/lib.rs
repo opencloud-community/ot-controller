@@ -36,6 +36,8 @@ mod macros;
 mod imports {
     #![allow(unused)]
 
+    #[cfg(feature = "kustos")]
+    pub use opentalk_kustos_prefix::KustosPrefix;
     #[cfg(feature = "serde")]
     pub use serde::{de, de::DeserializeOwned, Deserialize, Deserializer, Serialize, Serializer};
     #[cfg(feature = "diesel")]

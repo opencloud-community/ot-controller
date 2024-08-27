@@ -31,8 +31,8 @@ use opentalk_types::{
         v1::events::{DeleteSharedFolderQuery, PutSharedFolderQuery},
     },
     common::shared_folder::{SharedFolder, SharedFolderAccess},
-    core::EventId,
 };
+use opentalk_types_common::events::EventId;
 use snafu::Report;
 
 use crate::{
