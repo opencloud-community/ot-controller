@@ -4,6 +4,7 @@
 
 use derive_more::{AsRef, Display, From, FromStr, Into};
 use opentalk_types_common::utils::ExampleData;
+use snafu::{ensure, Snafu};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -12,9 +13,13 @@ use crate::imports::*;
 pub const DIAL_IN_NUMERIC_ID_LENGTH: usize = 10;
 
 /// Base type for numeric dial-in identifieirs
-#[derive(
-    AsRef, Display, From, FromStr, Into, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash,
-)]
+///
+/// For now, this type checks via its `FromStr` implementation that the value is valid,
+/// e.g. when deserializing through [`serde`](https://docs.rs/serde).
+///
+/// When loading from the database through [`diesel`](https://docs.rs/diesel), no validation
+/// is performed in the current implementation.
+#[derive(AsRef, Display, Into, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(
     feature = "diesel",
     derive(DieselNewtype, AsExpression, FromSqlRow),
@@ -22,11 +27,11 @@ pub const DIAL_IN_NUMERIC_ID_LENGTH: usize = 10;
 )]
 #[cfg_attr(
     feature = "redis",
-    derive(ToRedisArgs, FromRedisValue,),
+    derive(ToRedisArgs, FromRedisValue),
     to_redis_args(fmt),
     from_redis_value(FromStr)
 )]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, serde_with::DeserializeFromStr))]
 pub struct NumericId(String);
 
 impl NumericId {
@@ -48,24 +53,30 @@ impl NumericId {
     }
 }
 
-#[cfg(feature = "serde")]
-impl Validate for NumericId {
-    fn validate(&self) -> Result<(), ValidationErrors> {
-        let mut errors = ValidationErrors::new();
+#[derive(Debug, Snafu)]
+pub enum ParseNumericIdError {
+    #[snafu(display("Invalid numeric id length. Found: {found}, required: exactly {required}"))]
+    InvalidLength { found: usize, required: usize },
 
-        if self.as_ref().len() != DIAL_IN_NUMERIC_ID_LENGTH {
-            errors.add("0", ValidationError::new("Invalid id length"));
-            return Err(errors);
-        }
+    #[snafu(display("Invalid character found. Only numeric values are allowed"))]
+    InvalidCharacter,
+}
 
-        for c in self.as_ref().chars() {
-            if !c.is_ascii_digit() {
-                errors.add("0", ValidationError::new("Non numeric character"));
-                return Err(errors);
+impl FromStr for NumericId {
+    type Err = ParseNumericIdError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        ensure!(
+            s.len() == DIAL_IN_NUMERIC_ID_LENGTH,
+            InvalidLengthSnafu {
+                found: s.len(),
+                required: DIAL_IN_NUMERIC_ID_LENGTH
             }
-        }
+        );
 
-        Ok(())
+        ensure!(s.chars().all(|c| c.is_ascii_digit()), InvalidCharacterSnafu);
+
+        Ok(Self(s.to_string()))
     }
 }
 
@@ -103,6 +114,71 @@ mod impl_to_schema {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::{NumericId, ParseNumericIdError, DIAL_IN_NUMERIC_ID_LENGTH};
+
+    #[test]
+    fn from_str() {
+        assert!(matches!(
+            "".parse::<NumericId>(),
+            Err(ParseNumericIdError::InvalidLength {
+                found: 0,
+                required: DIAL_IN_NUMERIC_ID_LENGTH
+            })
+        ));
+
+        assert!(matches!(
+            "a".parse::<NumericId>(),
+            Err(ParseNumericIdError::InvalidLength {
+                found: 1,
+                required: DIAL_IN_NUMERIC_ID_LENGTH
+            })
+        ));
+
+        assert!(matches!(
+            "123456789".parse::<NumericId>(),
+            Err(ParseNumericIdError::InvalidLength {
+                found: 9,
+                required: DIAL_IN_NUMERIC_ID_LENGTH
+            })
+        ));
+
+        assert!(matches!(
+            "12345678900".parse::<NumericId>(),
+            Err(ParseNumericIdError::InvalidLength {
+                found: 11,
+                required: DIAL_IN_NUMERIC_ID_LENGTH
+            })
+        ));
+
+        assert!(matches!(
+            "123456789a".parse::<NumericId>(),
+            Err(ParseNumericIdError::InvalidCharacter)
+        ));
+
+        assert!(matches!(
+            "abcdefghij".parse::<NumericId>(),
+            Err(ParseNumericIdError::InvalidCharacter)
+        ));
+
+        assert!(matches!(
+            "1234567890".parse::<NumericId>(),
+            Ok(NumericId(s)) if s == "1234567890"
+        ));
+
+        assert!(matches!(
+            "0000000000".parse::<NumericId>(),
+            Ok(NumericId(s)) if s == "0000000000"
+        ));
+
+        assert!(matches!(
+            "9999999999".parse::<NumericId>(),
+            Ok(NumericId(s)) if s == "9999999999"
+        ));
+    }
+}
+
 /// The id of a call-in participation
 #[derive(
     AsRef, Display, From, FromStr, Into, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash,
@@ -114,7 +190,7 @@ mod impl_to_schema {
 )]
 #[cfg_attr(
     feature = "redis",
-    derive(ToRedisArgs, FromRedisValue,),
+    derive(ToRedisArgs, FromRedisValue),
     to_redis_args(fmt),
     from_redis_value(FromStr)
 )]
@@ -136,13 +212,6 @@ impl ExampleData for CallInId {
     }
 }
 
-#[cfg(feature = "serde")]
-impl Validate for CallInId {
-    fn validate(&self) -> Result<(), ValidationErrors> {
-        self.as_ref().validate()
-    }
-}
-
 /// The password for authenticating call-in participation
 #[derive(
     AsRef, Display, From, FromStr, Into, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash,
@@ -154,7 +223,7 @@ impl Validate for CallInId {
 )]
 #[cfg_attr(
     feature = "redis",
-    derive(ToRedisArgs, FromRedisValue,),
+    derive(ToRedisArgs, FromRedisValue),
     to_redis_args(fmt),
     from_redis_value(FromStr)
 )]
@@ -173,12 +242,5 @@ impl CallInPassword {
 impl ExampleData for CallInPassword {
     fn example_data() -> Self {
         Self(NumericId("9876543210".to_string()))
-    }
-}
-
-#[cfg(feature = "serde")]
-impl Validate for CallInPassword {
-    fn validate(&self) -> Result<(), ValidationErrors> {
-        self.as_ref().validate()
     }
 }

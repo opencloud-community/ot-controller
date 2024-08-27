@@ -53,7 +53,6 @@ pub struct PutSipConfig {
     /// creation, this will be set to a randomly generated number.
     #[cfg_attr(
         feature = "serde",
-        validate(nested),
         serde(default, skip_serializing_if = "Option::is_none")
     )]
     // Field is non-required already, utoipa adds a `nullable: true` entry

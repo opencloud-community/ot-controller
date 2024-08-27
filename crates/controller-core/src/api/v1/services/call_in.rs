@@ -18,7 +18,6 @@ use opentalk_types::{
     },
     common::features,
 };
-use validator::Validate;
 
 use crate::{
     api::{
@@ -97,9 +96,6 @@ pub async fn start(
     }
 
     require_feature(&mut conn, &settings, room.created_by, features::CALL_IN).await?;
-
-    request.id.validate()?;
-    request.pin.validate()?;
 
     if sip_config.password != request.pin {
         return Err(invalid_credentials_error());
