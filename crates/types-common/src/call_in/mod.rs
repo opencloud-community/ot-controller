@@ -7,6 +7,8 @@
 /// The length of a numeric dial-in identifier
 pub const DIAL_IN_NUMERIC_ID_LENGTH: usize = 10;
 
+mod call_in_id;
 mod numeric_id;
 
+pub use call_in_id::CallInId;
 pub use numeric_id::NumericId;
