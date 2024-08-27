@@ -47,7 +47,6 @@ impl RunnerId {
     }
 
     /// Generate a new random participant id
-    #[cfg(feature = "rand")]
     pub fn generate() -> Self {
         Self(Uuid::new_v4())
     }
