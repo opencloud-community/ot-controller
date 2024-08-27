@@ -21,9 +21,8 @@ use opentalk_diesel_newtype::DieselNewtype;
 use opentalk_types::{
     common::event::EventInfo,
     core::{EventId, EventInviteStatus, InviteRole, RoomId, TenantId, UserId},
-    sql_enum,
 };
-use opentalk_types_common::time::TimeZone;
+use opentalk_types_common::{sql_enum, time::TimeZone};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 

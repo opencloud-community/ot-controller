@@ -7,7 +7,7 @@
 /// # Example:
 ///
 /// ```rust
-/// opentalk_types::maybe_put_behind_feature!{
+/// opentalk_types_common::maybe_put_behind_feature!{
 ///     feature_gate_it = true; // <- decides if the feature gate is applied or not
 ///     feature = "my-feature";
 ///
@@ -63,7 +63,7 @@ macro_rules! maybe_put_behind_feature {
 /// ```rust
 /// use serde::{Serialize, Deserialize};
 ///
-/// opentalk_types::maybe_put_meta_behind_feature!{
+/// opentalk_types_common::maybe_put_meta_behind_feature!{
 ///     feature_gate_it = true; // <- decides if the feature gate is applied or not
 ///     feature = "serde";
 ///     meta = #[derive(Serialize, Deserialize)]; // <- This is the meta to maybe put behind a cfg_attr

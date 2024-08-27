@@ -30,6 +30,8 @@ pub mod rooms;
 pub mod time;
 pub mod utils;
 
+mod macros;
+
 mod imports {
     #![allow(unused)]
 
