@@ -4,6 +4,8 @@
 
 //! Data types for handling rooms.
 
+pub mod invite_codes;
+
 mod breakout_room_id;
 
 pub use breakout_room_id::BreakoutRoomId;

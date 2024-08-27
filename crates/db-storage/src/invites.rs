@@ -14,8 +14,9 @@ use opentalk_database::{DbConnection, Paginate, Result};
 use opentalk_diesel_newtype::DieselNewtype;
 use opentalk_types::{
     api::v1::{invites::InviteResource, users::PublicUserProfile},
-    core::{InviteCodeId, RoomId, UserId},
+    core::{RoomId, UserId},
 };
+use opentalk_types_common::rooms::invite_codes::InviteCode;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -52,7 +53,7 @@ pub struct InviteCodeSerialId(i64);
 #[derive(Debug, Queryable, Identifiable, Associations)]
 #[diesel(belongs_to(User, foreign_key = created_by))]
 pub struct Invite {
-    pub id: InviteCodeId,
+    pub id: InviteCode,
     pub id_serial: InviteCodeSerialId,
     pub created_by: UserId,
     pub created_at: DateTime<Utc>,
@@ -68,7 +69,7 @@ pub type InviteWithUsers = (Invite, User, User);
 impl Invite {
     /// Query for an invite with the given id
     #[tracing::instrument(err, skip_all)]
-    pub async fn get(conn: &mut DbConnection, invite_code_id: InviteCodeId) -> Result<Invite> {
+    pub async fn get(conn: &mut DbConnection, invite_code_id: InviteCode) -> Result<Invite> {
         let query = invites::table
             .filter(invites::id.eq(invite_code_id))
             .order(invites::updated_at.desc());
@@ -90,7 +91,7 @@ impl Invite {
     #[tracing::instrument(err, skip_all)]
     pub async fn get_with_users(
         conn: &mut DbConnection,
-        invite_code_id: InviteCodeId,
+        invite_code_id: InviteCode,
     ) -> Result<InviteWithUsers> {
         // Diesel currently does not support joining a table twice, so we need to join once and do a second select.
         // Or we need to write our handwritten SQL here.
@@ -233,7 +234,7 @@ impl Invite {
     pub async fn get_all_for_room_with_users_by_ids_paginated(
         conn: &mut DbConnection,
         room_id: RoomId,
-        ids: &[InviteCodeId],
+        ids: &[InviteCode],
         limit: i64,
         page: i64,
     ) -> Result<(Vec<InviteWithUsers>, i64)> {
@@ -302,7 +303,7 @@ impl Invite {
     pub async fn get_inactive_or_expired_before(
         conn: &mut DbConnection,
         expiration_date: DateTime<Utc>,
-    ) -> Result<Vec<(InviteCodeId, RoomId)>> {
+    ) -> Result<Vec<(InviteCode, RoomId)>> {
         let query = invites::table
             .filter(
                 invites::active.eq(false).or(invites::expiration
@@ -368,7 +369,7 @@ impl UpdateInvite {
         self,
         conn: &mut DbConnection,
         room_id: RoomId,
-        invite_code_id: InviteCodeId,
+        invite_code_id: InviteCode,
     ) -> Result<Invite> {
         let query = diesel::update(invites::table)
             .filter(

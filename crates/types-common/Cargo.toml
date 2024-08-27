@@ -15,6 +15,7 @@ repository.workspace = true
 version.workspace = true
 
 [features]
+actix = ["dep:actix-http", "dep:actix-web-httpauth", "dep:bytes", "serde"]
 backend = ["diesel", "rand", "redis", "serde", "utoipa"]
 diesel = ["dep:diesel", "dep:opentalk-diesel-newtype", "serde"]
 frontend = ["dep:opentalk-client-shared", "http"]
@@ -31,6 +32,9 @@ serde = [
 utoipa = ["dep:serde_json", "dep:utoipa", "serde"]
 
 [dependencies]
+actix-http = { workspace = true, optional = true }
+actix-web-httpauth = { workspace = true, optional = true }
+bytes = { workspace = true, optional = true }
 chrono.workspace = true
 chrono-tz.workspace = true
 derive_more = { workspace = true, features = [

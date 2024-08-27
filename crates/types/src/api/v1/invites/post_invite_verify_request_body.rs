@@ -2,7 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::core::InviteCodeId;
+use opentalk_types_common::rooms::invite_codes::InviteCode;
+
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -12,5 +13,5 @@ use crate::imports::*;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct PostInviteVerifyRequestBody {
     /// The invite code id
-    pub invite_code: InviteCodeId,
+    pub invite_code: InviteCode,
 }

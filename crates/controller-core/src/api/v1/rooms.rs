@@ -45,8 +45,9 @@ use opentalk_types::{
         },
     },
     common::{features, shared_folder::SharedFolder, tariff::TariffResource},
-    core::{InviteCodeId, RoomId},
+    core::RoomId,
 };
+use opentalk_types_common::rooms::invite_codes::InviteCode;
 
 use super::{
     events::{get_invited_mail_recipients_for_event, CancellationNotificationValues},
@@ -843,7 +844,7 @@ pub async fn start_invited(
 
     let mut conn = db.get_conn().await?;
 
-    let invite = Invite::get(&mut conn, InviteCodeId::from(invite_code_as_uuid)).await?;
+    let invite = Invite::get(&mut conn, InviteCode::from(invite_code_as_uuid)).await?;
 
     if !invite.active {
         return Err(ApiError::not_found());

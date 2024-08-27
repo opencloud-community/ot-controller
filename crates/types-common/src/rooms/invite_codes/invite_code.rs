@@ -5,11 +5,11 @@
 use derive_more::{AsRef, Display, From, FromStr, Into};
 #[cfg(feature = "kustos")]
 use kustos_shared::subject::PolicyInvite;
-use opentalk_types_common::utils::ExampleData;
 use uuid::Uuid;
 
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::utils::ExampleData;
 
 /// An invite code
 #[derive(
@@ -22,10 +22,10 @@ use crate::imports::*;
 )]
 #[cfg_attr(feature = "kustos", derive(KustosPrefix), kustos_prefix("/invites/"))]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(example = json!(InviteCodeId::example_data().to_string())))]
-pub struct InviteCodeId(Uuid);
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(example = json!(InviteCode::example_data().to_string())))]
+pub struct InviteCode(Uuid);
 
-impl InviteCodeId {
+impl InviteCode {
     /// Create a ZERO invite code id, e.g. for testing purposes
     pub const fn nil() -> Self {
         Self(Uuid::nil())
@@ -43,21 +43,21 @@ impl InviteCodeId {
     }
 }
 
-impl ExampleData for InviteCodeId {
+impl ExampleData for InviteCode {
     fn example_data() -> Self {
-        InviteCodeId::from_u128(0xdeadbeef)
+        InviteCode::from_u128(0xdeadbeef)
     }
 }
 
 #[cfg(feature = "kustos")]
-impl From<InviteCodeId> for PolicyInvite {
-    fn from(id: InviteCodeId) -> Self {
+impl From<InviteCode> for PolicyInvite {
+    fn from(id: InviteCode) -> Self {
         Self::from(Uuid::from(id))
     }
 }
 
 #[cfg(feature = "frontend")]
-impl opentalk_client_shared::Authorization for InviteCodeId {
+impl opentalk_client_shared::Authorization for InviteCode {
     fn apply_authorization_headers(&self, headers: &mut http::HeaderMap) {
         let _ = headers.insert(
             http::header::AUTHORIZATION,
@@ -82,7 +82,7 @@ mod actix_impls {
     const UUID_LENGTH: usize = 36;
     const BUFFER_LENGTH: usize = IDENTIFIER_LENGTH + SPACE_LENGTH + UUID_LENGTH;
 
-    impl TryIntoHeaderValue for InviteCodeId {
+    impl TryIntoHeaderValue for InviteCode {
         type Error = InvalidHeaderValue;
 
         fn try_into_value(self) -> Result<HeaderValue, Self::Error> {
@@ -95,7 +95,7 @@ mod actix_impls {
         }
     }
 
-    impl Scheme for InviteCodeId {
+    impl Scheme for InviteCode {
         fn parse(header: &HeaderValue) -> Result<Self, ParseError> {
             if header.len() < BUFFER_LENGTH {
                 return Err(ParseError::Invalid);
@@ -109,7 +109,7 @@ mod actix_impls {
             }
 
             let invite_code_str = parts.next().ok_or(ParseError::Invalid)?;
-            InviteCodeId::from_str(invite_code_str).map_err(|_| ParseError::Invalid)
+            InviteCode::from_str(invite_code_str).map_err(|_| ParseError::Invalid)
         }
     }
 }
@@ -124,9 +124,9 @@ mod actix_tests {
     #[test]
     fn test_parse_header() {
         let uuid = uuid::uuid!("4bf587d9-1c92-427f-9bf1-522455f93382");
-        let code = InviteCodeId::from(uuid);
+        let code = InviteCode::from(uuid);
         let value = HeaderValue::from_str(&format!("InviteCode {}", code)).unwrap();
-        let scheme = InviteCodeId::parse(&value);
+        let scheme = InviteCode::parse(&value);
 
         assert!(scheme.is_ok());
         let scheme = scheme.unwrap();
@@ -136,7 +136,7 @@ mod actix_tests {
     #[test]
     fn test_empty_header() {
         let value = HeaderValue::from_static("");
-        let scheme = InviteCodeId::parse(&value);
+        let scheme = InviteCode::parse(&value);
 
         assert!(scheme.is_err());
     }
@@ -144,7 +144,7 @@ mod actix_tests {
     #[test]
     fn test_wrong_scheme() {
         let value = HeaderValue::from_static("Bearer foo");
-        let scheme = InviteCodeId::parse(&value);
+        let scheme = InviteCode::parse(&value);
 
         assert!(scheme.is_err());
     }
@@ -152,7 +152,7 @@ mod actix_tests {
     #[test]
     fn test_missing_token() {
         let value = HeaderValue::from_static("Bearer ");
-        let scheme = InviteCodeId::parse(&value);
+        let scheme = InviteCode::parse(&value);
 
         assert!(scheme.is_err());
     }
@@ -160,7 +160,7 @@ mod actix_tests {
     #[test]
     fn test_into_header_value() {
         let uuid = uuid::uuid!("4bf587d9-1c92-427f-9bf1-522455f93382");
-        let code = InviteCodeId::from(uuid);
+        let code = InviteCode::from(uuid);
 
         let result = code.try_into_value();
         assert!(result.is_ok());

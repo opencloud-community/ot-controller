@@ -4,7 +4,7 @@
 
 use opentalk_client::{Client, OpenTalkApiClient};
 use opentalk_client_shared::ApiError;
-use opentalk_types::core::InviteCodeId;
+use opentalk_types_common::rooms::invite_codes::InviteCode;
 use snafu::whatever;
 use url::Url;
 
@@ -25,7 +25,7 @@ async fn main() -> Result<(), ApiError<reqwest::Error>> {
         "Please set the {INVITE_CODE_ENV_VAR} environment variable to the invite code of a room"
     );
     let invite_code = whatever!(
-        invite_code_str.parse::<InviteCodeId>(),
+        invite_code_str.parse::<InviteCode>(),
         "Failed to parse invite code {invite_code_str}"
     );
 

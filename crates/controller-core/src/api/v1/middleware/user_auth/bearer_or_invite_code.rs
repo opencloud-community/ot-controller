@@ -4,12 +4,12 @@
 
 use actix_http::header::{HeaderValue, InvalidHeaderValue, TryIntoHeaderValue};
 use actix_web_httpauth::headers::authorization::{Bearer, ParseError, Scheme};
-use opentalk_types::core::InviteCodeId;
+use opentalk_types_common::rooms::invite_codes::InviteCode;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) enum BearerOrInviteCode {
     Bearer(Bearer),
-    InviteCode(InviteCodeId),
+    InviteCode(InviteCode),
 }
 
 impl std::fmt::Display for BearerOrInviteCode {
@@ -27,7 +27,7 @@ impl Scheme for BearerOrInviteCode {
 
         match header_first_char {
             Some('B') => Ok(Self::Bearer(Bearer::parse(header)?)),
-            Some('I') => Ok(Self::InviteCode(InviteCodeId::parse(header)?)),
+            Some('I') => Ok(Self::InviteCode(InviteCode::parse(header)?)),
             _ => Err(ParseError::Invalid),
         }
     }
@@ -63,7 +63,7 @@ mod tests {
     #[test]
     fn test_parse_invite_code() {
         let uuid = uuid::uuid!("c7fe02dd-ba7b-4fc5-a8ba-a9c778f348dc");
-        let code = InviteCodeId::from(uuid);
+        let code = InviteCode::from(uuid);
         let value = HeaderValue::from_str(&format!("InviteCode {}", code)).unwrap();
         let scheme = BearerOrInviteCode::parse(&value);
 

@@ -4,10 +4,10 @@
 
 //! Common types related to event
 
-use opentalk_types_common::{events::EventId, utils::ExampleData};
+use opentalk_types_common::{events::EventId, rooms::invite_codes::InviteCode, utils::ExampleData};
 use url::Url;
 
-use crate::core::{InviteCodeId, RoomId};
+use crate::core::RoomId;
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -140,7 +140,7 @@ pub struct MeetingDetails {
     // by default which creates a false positive in the spectral linter when
     // combined with example data.
     #[cfg_attr(feature = "utoipa", schema(nullable = false))]
-    pub invite_code_id: Option<InviteCodeId>,
+    pub invite_code_id: Option<InviteCode>,
 
     /// The call-in information for the event
     #[cfg_attr(
@@ -161,7 +161,7 @@ pub struct MeetingDetails {
 impl ExampleData for MeetingDetails {
     fn example_data() -> Self {
         Self {
-            invite_code_id: Some(InviteCodeId::example_data()),
+            invite_code_id: Some(InviteCode::example_data()),
             call_in: Some(CallIn::example_data()),
             streaming_links: vec![StreamingLink::example_data()],
         }
