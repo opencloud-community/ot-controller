@@ -10,9 +10,10 @@ use opentalk_signaling_core::{
     SignalingModuleError, SignalingRoomId,
 };
 use opentalk_types::{
-    core::{GroupId, GroupName, ParticipantId, RoomId, Timestamp},
+    core::{GroupName, ParticipantId, RoomId, Timestamp},
     signaling::chat::state::StoredMessage,
 };
+use opentalk_types_common::users::GroupId;
 
 use crate::ParticipantPair;
 

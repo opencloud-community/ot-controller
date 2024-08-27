@@ -7,7 +7,6 @@
 //! All core types are simple types (e.g. newtypes of primitive or other simple types),
 //! and typically used by other types in this crate.
 
-mod group_id;
 mod group_name;
 mod invite_code_id;
 mod invite_role;
@@ -31,7 +30,6 @@ mod ticket_token;
 mod timestamp;
 mod user_id;
 
-pub use group_id::GroupId;
 pub use group_name::GroupName;
 pub use invite_code_id::InviteCodeId;
 pub use invite_role::{InviteRole, InviteRoleType};

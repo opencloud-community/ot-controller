@@ -29,6 +29,7 @@ pub mod call_in;
 pub mod events;
 pub mod rooms;
 pub mod time;
+pub mod users;
 pub mod utils;
 
 mod macros;

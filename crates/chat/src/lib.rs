@@ -25,7 +25,7 @@ use opentalk_signaling_core::{
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types::{
-    core::{GroupId, GroupName, ParticipantId, Timestamp, UserId},
+    core::{GroupName, ParticipantId, Timestamp, UserId},
     signaling::{
         chat::{
             command::{ChatCommand, SendMessage},
@@ -37,6 +37,7 @@ use opentalk_types::{
         Role,
     },
 };
+use opentalk_types_common::users::GroupId;
 use snafu::Report;
 
 mod participant_pair;
