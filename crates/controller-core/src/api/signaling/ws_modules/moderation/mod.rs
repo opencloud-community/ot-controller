@@ -27,7 +27,7 @@ use opentalk_types::{
         },
         moderation::{
             command::ModerationCommand,
-            event::{Error, ModerationEvent},
+            event::{DisplayNameChanged, Error, ModerationEvent},
             state::{ModerationState, ModeratorFrontendData},
         },
         ModulePeerData, Role,
@@ -384,14 +384,28 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
+                let old_name = ctx
+                    .volatile
+                    .moderation_storage()
+                    .get_attribute(self.room, target, DISPLAY_NAME)
+                    .await?
+                    .unwrap_or_default();
+
                 ctx.volatile
                     .moderation_storage()
-                    .set_attribute(self.room, target, DISPLAY_NAME, new_name)
+                    .set_attribute(self.room, target, DISPLAY_NAME, new_name.clone())
                     .await?;
 
+                let display_name_changed = DisplayNameChanged {
+                    target,
+                    issued_by: self.id,
+                    old_name,
+                    new_name,
+                };
+
                 ctx.exchange_publish(
-                    control::exchange::current_room_by_participant_id(self.room, target),
-                    exchange::Message::DisplayNameChanged,
+                    control::exchange::current_room_all_participants(self.room),
+                    exchange::Message::DisplayNameChanged(display_name_changed),
                 );
             }
 
@@ -532,7 +546,13 @@ impl SignalingModule for ModerationModule {
                     ctx.ws_send(ModerationEvent::DebriefingStarted { issued_by });
                 }
             }
-            Event::Exchange(exchange::Message::DisplayNameChanged) => ctx.invalidate_data(),
+            Event::Exchange(exchange::Message::DisplayNameChanged(display_name_changed)) => {
+                if display_name_changed.target == self.id {
+                    ctx.invalidate_data();
+                }
+
+                ctx.ws_send(ModerationEvent::DisplayNameChanged(display_name_changed))
+            }
             Event::Exchange(exchange::Message::JoinedWaitingRoom(id)) => {
                 if self.id == id {
                     return Ok(());

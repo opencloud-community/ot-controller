@@ -2,7 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types::{core::ParticipantId, signaling::moderation::KickScope};
+use opentalk_types::{
+    core::ParticipantId,
+    signaling::moderation::{event::DisplayNameChanged, KickScope},
+};
 use serde::{Deserialize, Serialize};
 
 /// Control messages sent between controller modules to communicate changes inside a room
@@ -16,7 +19,7 @@ pub enum Message {
         kick_scope: KickScope,
         issued_by: ParticipantId,
     },
-    DisplayNameChanged,
+    DisplayNameChanged(DisplayNameChanged),
     JoinedWaitingRoom(ParticipantId),
     LeftWaitingRoom(ParticipantId),
     WaitingRoomEnableUpdated,
