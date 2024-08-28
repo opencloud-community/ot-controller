@@ -32,9 +32,9 @@ pub mod tenants;
 pub mod users;
 pub mod utils;
 
-sql_function!(fn lower(x: Text) -> Text);
-sql_function!(fn levenshtein(x: Text, y: Text) -> Integer);
-sql_function!(fn soundex(x: Text) -> Text);
+define_sql_function!(fn lower(x: Text) -> Text);
+define_sql_function!(fn levenshtein(x: Text, y: Text) -> Integer);
+define_sql_function!(fn soundex(x: Text) -> Text);
 
 // SQL types reexport for schema.rs
 pub mod sql_types {
