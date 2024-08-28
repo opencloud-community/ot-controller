@@ -13,7 +13,7 @@ yaml-files:
 
 ignore: |
   .cargo
-  api/controller/frontend_api.yaml
+  frontend_api.yaml
 
 rules:
   braces: enable
