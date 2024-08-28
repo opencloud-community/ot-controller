@@ -276,7 +276,7 @@ impl From<StartRoomError> for ApiError {
         match start_room_error {
             StartRoomError::WrongRoomPassword => Self::unauthorized()
                 .with_code(StartRoomError::WrongRoomPassword.as_ref())
-                .with_message("The provided password does not match the rooms password"),
+                .with_message("The provided password does not match the room password"),
 
             StartRoomError::NoBreakoutRooms => Self::bad_request()
                 .with_code(StartRoomError::NoBreakoutRooms.as_ref())

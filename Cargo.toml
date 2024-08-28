@@ -118,9 +118,11 @@ tokio = "1"
 tokio-stream = { version = "0.1", features = ["sync"] }
 tracing = "0.1"
 url = "2"
-utoipa = { version = "4.2.3" }
+utoipa = "4"
+utoipa-swagger-ui = "7"
 uuid = "1"
 validator = { version = "0.18", features = ["derive"] }
+yaml-rust2 = "0.8.1"
 
 [workspace.dependencies.casbin]
 default-features = false

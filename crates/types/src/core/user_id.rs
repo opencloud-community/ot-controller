@@ -9,6 +9,7 @@ use uuid::Uuid;
 
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::utils::ExampleData;
 
 /// The id of a user
 #[derive(
@@ -26,6 +27,11 @@ use crate::imports::*;
     from_redis_value(FromStr)
 )]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(
+    example = json!(
+        UserId::example_data()
+    )
+))]
 pub struct UserId(Uuid);
 
 impl UserId {
@@ -50,5 +56,11 @@ impl UserId {
 impl From<UserId> for PolicyUser {
     fn from(id: UserId) -> Self {
         Self::from(Uuid::from(id))
+    }
+}
+
+impl ExampleData for UserId {
+    fn example_data() -> Self {
+        Self::from_u128(0x9988998899889988000000000)
     }
 }

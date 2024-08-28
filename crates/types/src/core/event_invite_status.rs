@@ -6,13 +6,18 @@ use std::{collections::BTreeSet, str::FromStr};
 
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::sql_enum;
+use crate::{sql_enum, utils::ExampleData};
 
 sql_enum!(
     feature_gated:
 
     #[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
     #[cfg_attr(feature="serde", derive(Serialize, Deserialize), serde(rename_all = "snake_case"))]
+    #[cfg_attr(
+        feature = "utoipa",
+        derive(utoipa::ToSchema),
+        schema(example = json!(EventInviteStatus::example_data()))
+    )]
     EventInviteStatus,
     "event_invite_status",
     EventInviteStatusType,
@@ -47,5 +52,11 @@ impl EventInviteStatus {
             Self::Tentative,
             Self::Declined,
         ])
+    }
+}
+
+impl ExampleData for EventInviteStatus {
+    fn example_data() -> Self {
+        Self::Accepted
     }
 }

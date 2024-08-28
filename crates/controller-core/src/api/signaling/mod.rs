@@ -10,8 +10,8 @@ mod ws;
 mod ws_modules;
 
 use itertools::Itertools;
-pub(crate) use ws::ws_service;
-pub use ws::{SignalingModules, SignalingProtocols};
+pub use ws::SignalingModules;
+pub(crate) use ws::{SignalingProtocols, __path_ws_service, ws_service};
 pub use ws_modules::{breakout, echo, moderation, recording, recording_service};
 
 /// Trim leading, trailing, and extra whitespaces between a given display name.

@@ -10,6 +10,7 @@ use crate::imports::*;
 /// Page-based pagination query
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::IntoParams, utoipa::ToSchema))]
 pub struct PagePaginationQuery {
     /// The number of entries per page
     #[cfg_attr(

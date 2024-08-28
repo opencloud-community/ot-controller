@@ -24,8 +24,9 @@ use opentalk_types::{
         v1::{
             events::{
                 EventAndInstanceId, EventInstance, EventInstancePath, EventInstanceQuery,
-                EventRoomInfo, EventStatus, EventType, GetEventInstancesCursorData,
-                GetEventInstancesQuery, InstanceId, PatchEventInstanceBody,
+                EventRoomInfo, EventStatus, EventType, GetEventInstanceResponseBody,
+                GetEventInstancesCursorData, GetEventInstancesQuery, GetEventInstancesResponseBody,
+                InstanceId, PatchEventInstanceBody,
             },
             Cursor,
         },
@@ -43,14 +44,17 @@ use super::{
     ONE_HUNDRED_YEARS_IN_DAYS,
 };
 use crate::{
-    api::v1::{
-        events::{
-            enrich_invitees_from_keycloak, shared_folder_for_user, DateTimeTzFromDb,
-            EventRoomInfoExt,
+    api::{
+        responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
+        v1::{
+            events::{
+                enrich_invitees_from_keycloak, shared_folder_for_user, DateTimeTzFromDb,
+                EventRoomInfoExt,
+            },
+            response::NoContent,
+            rooms::RoomsPoliciesBuilderExt,
+            util::{GetUserProfilesBatched, UserProfilesBatch},
         },
-        response::NoContent,
-        rooms::RoomsPoliciesBuilderExt,
-        util::{GetUserProfilesBatched, UserProfilesBatch},
     },
     services::MailService,
     settings::SharedSettingsActix,
@@ -62,6 +66,47 @@ struct GetPaginatedEventInstancesData {
     after: Option<String>,
 }
 
+/// Get a list of the instances of an event
+///
+/// The instances are calculated based on the RRULE of the event. If no RRULE is
+/// set for the event, the single event instance is returned.
+///
+/// If no pagination query is added, the default page size is used.
+#[utoipa::path(
+    params(
+        GetEventInstancesQuery,
+        ("event_id" = EventId, description = "The id of the event")
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "List of event instances successfully returned",
+            body = GetEventInstancesResponseBody,
+            headers(
+                ("link" = PageLink, description = "Links for paging through the results"),
+            ),
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/events/{event_id}/instances")]
 pub async fn get_event_instances(
     settings: SharedSettingsActix,
@@ -71,7 +116,7 @@ pub async fn get_event_instances(
     current_user: ReqData<User>,
     event_id: Path<EventId>,
     query: Query<GetEventInstancesQuery>,
-) -> DefaultApiResult<Vec<EventInstance>> {
+) -> DefaultApiResult<GetEventInstancesResponseBody> {
     let settings = settings.load_full();
     let event_id = event_id.into_inner();
     let GetEventInstancesQuery {
@@ -203,13 +248,47 @@ pub async fn get_event_instances(
         instances_data.instances
     };
 
-    Ok(ApiResponse::new(event_instances)
-        .with_cursor_pagination(instances_data.before, instances_data.after))
+    Ok(
+        ApiResponse::new(GetEventInstancesResponseBody(event_instances))
+            .with_cursor_pagination(instances_data.before, instances_data.after),
+    )
 }
 
-/// API Endpoint *GET /events/{id}*
+/// Get an event instance
 ///
-/// Returns the event resource for the given id
+/// Returns the event instance resource
+#[utoipa::path(
+    params(
+        EventInstancePath,
+        EventInstanceQuery,
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Event instance successfully returned",
+            body = GetEventInstanceResponseBody,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/events/{event_id}/instances/{instance_id}")]
 pub async fn get_event_instance(
     settings: SharedSettingsActix,
@@ -219,7 +298,7 @@ pub async fn get_event_instance(
     current_user: ReqData<User>,
     path: Path<EventInstancePath>,
     query: Query<EventInstanceQuery>,
-) -> DefaultApiResult<EventInstance> {
+) -> DefaultApiResult<GetEventInstanceResponseBody> {
     let settings = settings.load_full();
     let EventInstancePath {
         event_id,
@@ -277,7 +356,9 @@ pub async fn get_event_instance(
         ..event_instance
     };
 
-    Ok(ApiResponse::new(event_instance))
+    Ok(ApiResponse::new(GetEventInstanceResponseBody(
+        event_instance,
+    )))
 }
 
 /// API Endpoint `PATCH /events/{event_id}/{instance_id}`
@@ -285,6 +366,43 @@ pub async fn get_event_instance(
 /// Patch an instance of a recurring event. This creates or modifies an exception for the event
 /// at the point of time of the given instance_id.
 /// Returns the patched event instance
+#[utoipa::path(
+    params(
+        EventInstancePath,
+        EventInstanceQuery,
+    ),
+    request_body = PatchEventInstanceBody,
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Event instance successfully updated",
+            body = EventInstance,
+        ),
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "The request body was empty, no changes required",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[patch("/events/{event_id}/instances/{instance_id}")]
 #[allow(clippy::too_many_arguments)]
 pub async fn patch_event_instance(

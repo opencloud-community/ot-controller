@@ -6,10 +6,12 @@ use derive_more::{Display, From, FromStr, Into};
 
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::utils::ExampleData;
 
 /// A resumption token
 #[derive(Display, From, FromStr, Into, Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ResumptionToken(String);
 
 impl ResumptionToken {
@@ -25,5 +27,11 @@ impl ResumptionToken {
             .collect();
 
         Self(token)
+    }
+}
+
+impl ExampleData for ResumptionToken {
+    fn example_data() -> Self {
+        Self("654321zyxwvutsrqponmlkjihgfedcba654321zyxwvutsrqponmlkjihgfedcba".to_string())
     }
 }

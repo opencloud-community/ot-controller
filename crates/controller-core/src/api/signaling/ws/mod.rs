@@ -15,7 +15,8 @@ mod http;
 mod modules;
 mod runner;
 
-pub use http::{ws_service, SignalingModules, SignalingProtocols};
+pub use http::SignalingModules;
+pub(crate) use http::{__path_ws_service, ws_service, SignalingProtocols};
 
 pub enum RunnerMessage {
     Message(actix_web_actors::ws::Message),

@@ -6,6 +6,7 @@ use derive_more::{AsRef, Display, From, FromStr, Into};
 
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::utils::ExampleData;
 
 /// Representation of a timezone
 #[derive(AsRef, Display, From, FromStr, Into, Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -43,6 +44,38 @@ mod diesel_traits {
             let tz = Tz::from_str(s)?;
 
             Ok(Self(tz))
+        }
+    }
+}
+
+impl ExampleData for TimeZone {
+    fn example_data() -> Self {
+        chrono_tz::Europe::Berlin.into()
+    }
+}
+
+#[cfg(feature = "utoipa")]
+mod impl_to_schema {
+    use utoipa::{
+        openapi::{ObjectBuilder, SchemaType},
+        ToSchema,
+    };
+
+    use super::TimeZone;
+
+    impl<'__s> ToSchema<'__s> for TimeZone {
+        fn schema() -> (
+            &'__s str,
+            utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>,
+        ) {
+            (
+                "TimeZone",
+                ObjectBuilder::new()
+                    .schema_type(SchemaType::String)
+                    .description(Some("A time zone"))
+                    .example(Some("Europe/Berlin".into()))
+                    .into(),
+            )
         }
     }
 }

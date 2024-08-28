@@ -5,6 +5,7 @@
 use chrono::{TimeZone, Utc};
 use opentalk_types::{
     common::{shared_folder::SharedFolder, streaming::RoomStreamingTarget},
+    core::RoomPassword,
     utils::ExampleData,
 };
 use serde::{Deserialize, Serialize};
@@ -233,14 +234,14 @@ pub enum EventExceptionKind {
 #[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Debug)]
 pub struct Room {
     pub id: Uuid,
-    pub password: Option<String>,
+    pub password: Option<RoomPassword>,
 }
 
 impl ExampleData for Room {
     fn example_data() -> Self {
         Self {
             id: Uuid::from_u128(0xabcdef99),
-            password: Some("v3rys3cr3t".to_string()),
+            password: Some("v3rys3cr3t".parse().unwrap()),
         }
     }
 }
@@ -416,7 +417,7 @@ mod test {
                 rrule: None,
                 room: Room {
                     id: Uuid::from_u128(0),
-                    password: Some("password123".into()),
+                    password: Some("password123".parse().unwrap()),
                 },
                 call_in: Some(CallIn {
                     sip_tel: "+497652917".into(),

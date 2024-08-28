@@ -7,7 +7,7 @@ FROM rust:slim AS Builder
 WORKDIR /builds/opentalk/backend/services/controller
 ENV CARGO_HOME=/builds/opentalk/backend/services/controller/cargo
 
-RUN apt-get update && apt-get install -y libpq-dev protobuf-compiler
+RUN apt-get update && apt-get install -y libpq-dev protobuf-compiler curl
 
 RUN cargo build --release --locked
 

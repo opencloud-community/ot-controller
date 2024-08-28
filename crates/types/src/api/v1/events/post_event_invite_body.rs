@@ -5,13 +5,25 @@
 use super::{EmailInvite, UserInvite};
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::utils::ExampleData;
 
 /// Request body for the `POST /events/{event_id}/invites` endpoint
 #[derive(Debug, Eq, PartialEq, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(untagged))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(
+    example = json!(
+        PostEventInviteBody::example_data()
+    )
+))]
 pub enum PostEventInviteBody {
     /// Invite a registered user
     User(UserInvite),
     /// Invite a user by email
     Email(EmailInvite),
+}
+
+impl ExampleData for PostEventInviteBody {
+    fn example_data() -> Self {
+        Self::User(UserInvite::example_data())
+    }
 }

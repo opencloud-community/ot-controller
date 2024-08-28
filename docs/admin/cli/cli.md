@@ -22,6 +22,7 @@ These subcommands are available:
 - [`tariffs`](../advanced/tariffs.md#opentalk-controller-tariffs-subcommand) for managing tariffs.
 - [`jobs`](jobs.md#opentalk-controller-jobs-subcommand) for configuring and running maintenance jobs.
 - [`modules`](../advanced/modules.md#opentalk-controller-modules-subcommand) for managing modules.
+- [`openapi`](openapi.md#opentalk-controller-openapi-subcommand) for exporting the OpenAPI specification.
 - `help` for showing the help output.
 
 ## Raw help output
@@ -41,6 +42,7 @@ Commands:
   tariffs     Manage tariffs
   jobs        Manage and execute maintenance jobs
   modules     Manage modules
+  openapi     Get information on the OpenAPI specification
   help        Print this message or the help of the given subcommand(s)
 
 Options:

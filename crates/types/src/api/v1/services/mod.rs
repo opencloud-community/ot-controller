@@ -9,7 +9,7 @@ mod recording;
 mod service_start_response;
 mod upload_render_query;
 
-pub use call_in::StartRequestBody;
-pub use recording::StartBody;
+pub use call_in::StartCallInRequestBody;
+pub use recording::StartRecordingRequestBody;
 pub use service_start_response::ServiceStartResponse;
 pub use upload_render_query::UploadRenderQuery;

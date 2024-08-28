@@ -11,9 +11,13 @@ use crate::{api::v1::pagination::PagePaginationQuery, core::EventInviteStatus};
 /// The query passed to the `GET /events/{event_id}/invites` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::IntoParams))]
 pub struct GetEventsInvitesQuery {
     /// Results will be paginated by this pagination specification
     #[cfg_attr(feature = "serde", serde(flatten))]
+    // TODO: This might not be working correctly for now, upstream fix is needed.
+    // Upstream issue: https://github.com/juhaku/utoipa/issues/841
+    #[cfg_attr(feature = "utoipa", param(inline))]
     pub pagination: PagePaginationQuery,
 
     /// If present, the results will be filtered by that state

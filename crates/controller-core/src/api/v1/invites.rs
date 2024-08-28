@@ -21,8 +21,8 @@ use opentalk_types::{
         error::ApiError,
         v1::{
             invites::{
-                CodeVerified, InviteResource, PostInviteRequestBody, PostInviteVerifyRequestBody,
-                PutInviteRequestBody, RoomIdAndInviteCode,
+                CodeVerified, GetRoomsInvitesResponseBody, InviteResource, PostInviteRequestBody,
+                PostInviteVerifyRequestBody, PutInviteRequestBody, RoomIdAndInviteCode,
             },
             pagination::PagePaginationQuery,
         },
@@ -33,13 +33,53 @@ use validator::Validate;
 
 use super::{response::NoContent, DefaultApiResult};
 use crate::{
-    api::v1::{rooms::RoomsPoliciesBuilderExt, ApiResponse},
+    api::{
+        responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
+        v1::{rooms::RoomsPoliciesBuilderExt, ApiResponse},
+    },
     settings::SharedSettingsActix,
 };
 
-/// API Endpoint *POST /rooms/{room_id}/invites*
+/// Create a new invite
 ///
-/// Uses the provided [`NewInvite`] to create a new invite.
+/// A new invite to the room is created with the information in the body.
+#[utoipa::path(
+    params(
+        ("room_id" = RoomId, description = "The id of the room"),
+    ),
+    request_body = PostInviteRequestBody,
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Successfully create a new invite",
+            body = InviteResource,
+        ),
+        (
+            status = StatusCode::BAD_REQUEST,
+            description = "Could not create a new invite due to wrong syntax or
+                bad values, for example an invalid owner id.",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[post("/rooms/{room_id}/invites")]
 pub async fn add_invite(
     settings: SharedSettingsActix,
@@ -82,16 +122,49 @@ pub async fn add_invite(
     Ok(ApiResponse::new(invite))
 }
 
-/// API Endpoint *GET /rooms/{room_id}/invites*
+/// Get all invites for a room
 ///
-/// Returns a JSON array of all accessible invites for the given room
+/// This returns all invites that are available for a room. If no
+/// pagination query is added, the default page size is used.
+#[utoipa::path(
+    params(
+        ("room_id" = RoomId, description = "The id of the room"),
+        PagePaginationQuery,
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "The invites could be loaded successfully",
+            body = GetRoomsInvitesResponseBody,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/rooms/{room_id}/invites")]
 pub async fn get_invites(
     settings: SharedSettingsActix,
     db: Data<Db>,
     room_id: Path<RoomId>,
     pagination: Query<PagePaginationQuery>,
-) -> DefaultApiResult<Vec<InviteResource>> {
+) -> DefaultApiResult<GetRoomsInvitesResponseBody> {
     let settings = settings.load_full();
     let room_id = room_id.into_inner();
     let PagePaginationQuery { per_page, page } = pagination.into_inner();
@@ -113,13 +186,47 @@ pub async fn get_invites(
         })
         .collect::<Vec<InviteResource>>();
 
-    Ok(ApiResponse::new(invites).with_page_pagination(per_page, page, total_invites))
+    Ok(
+        ApiResponse::new(GetRoomsInvitesResponseBody(invites)).with_page_pagination(
+            per_page,
+            page,
+            total_invites,
+        ),
+    )
 }
 
-/// API Endpoint *GET /rooms/{room_id}/invites/{invite_code}*
+/// Get a room invite
 ///
-/// Returns a single invite.
-/// Returns 401 Not Found when the user has no access.
+/// Returns the room invite resource
+#[utoipa::path(
+    params(RoomIdAndInviteCode),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Successfully retrieved the room invite",
+            body = InviteResource,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/rooms/{room_id}/invites/{invite_code}")]
 pub async fn get_invite(
     settings: SharedSettingsActix,
@@ -149,10 +256,39 @@ pub async fn get_invite(
     )))
 }
 
-/// API Endpoint *PUT /rooms/{room_id}/invites/{invite_code}*
+/// Update an invite code
 ///
-/// Uses the provided [`PutInviteRequestBody`] to modify a specified invite.
-/// Returns the modified [`InviteResource`]
+/// Updates the field values as set in the request body.
+#[utoipa::path(
+    params(RoomIdAndInviteCode),
+    request_body = PutInviteRequestBody,
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Successfully updated the room invite",
+            body = InviteResource,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[put("/rooms/{room_id}/invites/{invite_code}")]
 pub async fn update_invite(
     settings: SharedSettingsActix,
@@ -198,10 +334,37 @@ pub async fn update_invite(
     )))
 }
 
-/// API Endpoint *PUT /rooms/{room_id}*
+/// Delete an invite code
 ///
-/// Deletes the [`Invite`] identified by this resource.
-/// Returns 204 No Content
+/// The invite code will no longer be usable once it is deleted.
+#[utoipa::path(
+    params(RoomIdAndInviteCode),
+    responses(
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "Successfully deleted the room invite",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[delete("/rooms/{room_id}/invites/{invite_code}")]
 pub async fn delete_invite(
     db: Data<Db>,
@@ -236,10 +399,36 @@ pub async fn delete_invite(
     Ok(NoContent)
 }
 
-/// API Endpoint *POST /invite/verify*
+/// Verify an invite code
 ///
-/// Used to verify a invite_code via POST.
-/// As the GET request might not be Idempotent this should be the prioritized endpoint to verify invite_codes.
+/// Verifies the invite and returns the room url for the invite code
+#[utoipa::path(
+    request_body = PostInviteVerifyRequestBody,
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Invite is valid, the response body tells the room id",
+            body = CodeVerified,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::UNPROCESSABLE_ENTITY,
+            description = "Invalid body contents received",
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(),
+)]
 #[post("/invite/verify")]
 pub async fn verify_invite_code(
     db: Data<Db>,

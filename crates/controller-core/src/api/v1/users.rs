@@ -30,8 +30,8 @@ use opentalk_types::{
             order::{AssetSorting, SortingQuery},
             pagination::PagePaginationQuery,
             users::{
-                GetFindQuery, GetFindResponseItem, GetUserAssetsResponse, PatchMeBody,
-                PrivateUserProfile, PublicUserProfile, UnregisteredUser,
+                GetFindQuery, GetFindResponse, GetFindResponseItem, GetUserAssetsResponse,
+                PatchMeBody, PrivateUserProfile, PublicUserProfile, UnregisteredUser,
             },
         },
     },
@@ -43,7 +43,11 @@ use validator::Validate;
 
 use super::response::NoContent;
 use crate::{
-    api::{signaling::SignalingModules, v1::ApiResponse},
+    api::{
+        responses::{Forbidden, InternalServerError, Unauthorized},
+        signaling::SignalingModules,
+        v1::ApiResponse,
+    },
     caches::Caches,
     oidc::{decode_token, UserClaims},
     settings::SharedSettingsActix,
@@ -51,7 +55,36 @@ use crate::{
 
 const MAX_USER_SEARCH_RESULTS: usize = 20;
 
-/// API Endpoint *PATCH /users/me*
+/// Patch the current user's profile
+///
+/// Fields that are not provided in the request body will remain unchanged.
+#[utoipa::path(
+    request_body = PatchMeBody,
+    operation_id = "patch_users_me",
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "User profile was successfully updated",
+            body = RoomResource
+        ),
+        (
+            status = StatusCode::BAD_REQUEST,
+            description = r"Could not modify the user's profile due to wrong
+                syntax or bad values",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[patch("/users/me")]
 pub async fn patch_me(
     settings: SharedSettingsActix,
@@ -137,9 +170,31 @@ pub async fn patch_me(
     Ok(Either::Left(Json(user_profile)))
 }
 
-/// API Endpoint *GET /users/me*
+/// Get the current user's profile
 ///
-/// Returns the [`PrivateUserProfile`] of the requesting user.
+/// Returns the private user profile of the currently logged-in user. This
+/// private profile contains information that is not visible in the public
+/// profile, such as tariff status or the used storage.
+#[utoipa::path(
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Information about the logged in user",
+            body = PrivateUserProfile,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/users/me")]
 pub async fn get_me(
     settings: SharedSettingsActix,
@@ -157,9 +212,29 @@ pub async fn get_me(
     Ok(Json(user_profile))
 }
 
-/// API Endpoint *GET /users/me/tariff*
+/// Get the current user tariff information.
 ///
-/// Returns the [`TariffResource`] of the requesting user.
+/// Returns the tariff information for the currently logged in user.
+#[utoipa::path(
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Information about the tariff of the current user",
+            body = TariffResource,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/users/me/tariff")]
 pub async fn get_me_tariff(
     settings: SharedSettingsActix,
@@ -183,6 +258,31 @@ pub async fn get_me_tariff(
     Ok(Json(response))
 }
 
+/// Get the assets associated with the user.
+///
+/// All assets associated to the requesting user are returned in a list. If no
+/// pagination query is added, the default page size is used.
+#[utoipa::path(
+    params(PagePaginationQuery, SortingQuery<AssetSorting>),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "List of accessible assets successfully returned",
+            body = GetUserAssetsResponse,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/users/me/assets")]
 pub async fn get_me_assets(
     db: Data<Db>,
@@ -214,9 +314,36 @@ pub async fn get_me_assets(
     )
 }
 
-/// API Endpoint *GET /users/{user_id}*
+/// Get a user's public profile
 ///
-/// Returns [`PublicUserProfile`] of the specified user
+/// Returns the public profile of a user.
+#[utoipa::path(
+    params(
+        ("user_id" = UserId, description = "The id of the user"),
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Information about the user",
+            body = PublicUserProfile,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/users/{user_id}")]
 pub async fn get_user(
     settings: SharedSettingsActix,
@@ -237,9 +364,30 @@ pub async fn get_user(
     Ok(Json(user_profile))
 }
 
-/// API Endpoint *GET /users/find?name=$input*
+/// Find users
 ///
-/// Returns a list with a limited size of users matching the query
+/// Query users for autocomplete fields
+#[utoipa::path(
+    params(GetFindQuery),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Search results",
+            body = GetFindResponse,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/users/find")]
 pub async fn find(
     settings: SharedSettingsActix,
@@ -247,7 +395,7 @@ pub async fn find(
     db: Data<Db>,
     current_tenant: ReqData<Tenant>,
     query: Query<GetFindQuery>,
-) -> Result<Json<Vec<GetFindResponseItem>>, ApiError> {
+) -> Result<Json<GetFindResponse>, ApiError> {
     let settings = settings.load_full();
 
     if settings.endpoints.disable_users_find {
@@ -349,5 +497,5 @@ pub async fn find(
             .collect()
     };
 
-    Ok(Json(found_users))
+    Ok(Json(GetFindResponse(found_users)))
 }

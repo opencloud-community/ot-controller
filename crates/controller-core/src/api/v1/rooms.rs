@@ -34,20 +34,19 @@ use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage, Participant, VolatileStorage};
 use opentalk_types::{
     api::{
-        error::{ApiError, ValidationErrorEntry, ERROR_CODE_INVALID_VALUE},
+        error::{ApiError, StandardErrorBody, ValidationErrorEntry, ERROR_CODE_INVALID_VALUE},
         v1::{
             pagination::PagePaginationQuery,
             rooms::{
-                DeleteRoomQuery, GetRoomEventResponse, PatchRoomsRequestBody, PostRoomsRequestBody,
-                PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody, RoomResource,
-                RoomsStartResponse, StartRoomError,
+                DeleteRoomQuery, GetRoomEventResponse, GetRoomsResponse, PatchRoomsRequestBody,
+                PostRoomsRequestBody, PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody,
+                RoomResource, RoomsStartResponse, StartRoomError,
             },
         },
     },
     common::{features, shared_folder::SharedFolder, tariff::TariffResource},
     core::{InviteCodeId, RoomId},
 };
-use validator::Validate;
 
 use super::{
     events::{get_invited_mail_recipients_for_event, CancellationNotificationValues},
@@ -55,6 +54,7 @@ use super::{
 };
 use crate::{
     api::{
+        responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
         signaling::{
             breakout::BreakoutStorageProvider as _, moderation::ModerationStorageProvider as _,
             ticket::start_or_continue_signaling_session, SignalingModules,
@@ -65,9 +65,34 @@ use crate::{
     settings::SharedSettingsActix,
 };
 
-/// API Endpoint *GET /rooms*
+/// Get a list of rooms accessible by the requesting user
 ///
-/// Returns a JSON array of all accessible rooms as [`Room`]
+/// All rooms accessible to the requesting user are returned in a list. If no
+/// pagination query is added, the default page size is used.
+#[utoipa::path(
+    params(PagePaginationQuery),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "List of accessible rooms successfully returned",
+            body = GetRoomsResponse,
+            headers(
+                ("link" = PageLink, description = "Links for paging through the results"),
+            ),
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/rooms")]
 pub async fn accessible(
     settings: SharedSettingsActix,
@@ -75,7 +100,7 @@ pub async fn accessible(
     current_user: ReqData<User>,
     pagination: web::Query<PagePaginationQuery>,
     authz: Data<Authz>,
-) -> Result<ApiResponse<Vec<RoomResource>>, ApiError> {
+) -> Result<ApiResponse<GetRoomsResponse>, ApiError> {
     let settings = settings.load();
     let current_user = current_user.into_inner();
     let PagePaginationQuery { per_page, page } = pagination.into_inner();
@@ -100,19 +125,47 @@ pub async fn accessible(
         .map(|(room, user)| RoomResource {
             id: room.id,
             created_by: user.to_public_user_profile(&settings),
-            created_at: room.created_at,
+            created_at: room.created_at.into(),
             password: room.password,
             waiting_room: room.waiting_room,
         })
         .collect::<Vec<RoomResource>>();
 
-    Ok(ApiResponse::new(rooms).with_page_pagination(per_page, page, room_count))
+    Ok(ApiResponse::new(GetRoomsResponse(rooms)).with_page_pagination(per_page, page, room_count))
 }
 
-/// API Endpoint *POST /rooms*
+/// Create a new room
 ///
-/// Uses the provided [`PostRoomsRequestBody`] to create a new room.
-/// Returns the created [`RoomResource`].
+/// Creates a new room withh the settings given in the request body.
+#[utoipa::path(
+    request_body = PostRoomsRequestBody,
+    responses(
+        (
+            status = StatusCode::CREATED,
+            description = "Room successfully created",
+            body = RoomResource,
+        ),
+        (
+            status = StatusCode::BAD_REQUEST,
+            description = "Wrong syntax or bad values such as invalid owner id received in the body",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::UNPROCESSABLE_ENTITY,
+            description = "Invalid body contents received",
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[post("/rooms")]
 pub async fn new(
     settings: SharedSettingsActix,
@@ -124,8 +177,6 @@ pub async fn new(
     let settings = settings.load();
     let current_user = current_user.into_inner();
     let room_parameters = body.into_inner();
-
-    room_parameters.validate()?;
 
     let mut conn = db.get_conn().await?;
 
@@ -151,7 +202,7 @@ pub async fn new(
     let room_resource = RoomResource {
         id: room.id,
         created_by: current_user.to_public_user_profile(&settings),
-        created_at: room.created_at,
+        created_at: room.created_at.into(),
         password: room.password,
         waiting_room: room.waiting_room,
     };
@@ -167,10 +218,43 @@ pub async fn new(
     Ok(Json(room_resource))
 }
 
-/// API Endpoint *PATCH /rooms/{room_id}*
+/// Patch a room with the provided fields
 ///
-/// Uses the provided [`PatchRoomsRequestBody`] to modify a specified room.
-/// Returns the modified [`RoomResource`]
+/// Fields that are not provided in the request body will remain unchanged.
+#[utoipa::path(
+    request_body = PatchRoomsRequestBody,
+    operation_id = "patch_room",
+    params(
+        ("room_id" = RoomId, description = "The id of the room to be modified"),
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Room was successfully updated",
+            body = RoomResource
+        ),
+        (
+            status = StatusCode::BAD_REQUEST,
+            description = r"Could not modify the specified room due to wrong
+                syntax or bad values, for example an invalid owner id",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[patch("/rooms/{room_id}")]
 pub async fn patch(
     settings: SharedSettingsActix,
@@ -184,8 +268,6 @@ pub async fn patch(
     let room_id = room_id.into_inner();
     let modify_room = body.into_inner();
 
-    modify_room.validate()?;
-
     let mut conn = db.get_conn().await?;
 
     let changeset = db_rooms::UpdateRoom {
@@ -198,7 +280,7 @@ pub async fn patch(
     let room_resource = RoomResource {
         id: room.id,
         created_by: current_user.to_public_user_profile(&settings),
-        created_at: room.created_at,
+        created_at: room.created_at.into(),
         password: room.password,
         waiting_room: room.waiting_room,
     };
@@ -206,9 +288,42 @@ pub async fn patch(
     Ok(Json(room_resource))
 }
 
-/// API Endpoint *DELETE /rooms/{room_id}*
+/// Delete a room and its owned resources.
 ///
-/// Deletes the room and owned resources.
+/// Deletes the room by the id if found. See the query parameters for affecting
+/// the behavior of this endpoint, such as mail notification suppression, or
+/// succeding even if external resources cannot be successfully deleted.
+#[utoipa::path(
+    params(
+        ("room_id" = RoomId, description = "The id of the room"),
+        DeleteRoomQuery,
+    ),
+    responses(
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "Room was successfully deleted",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[allow(clippy::too_many_arguments)]
 #[delete("/rooms/{room_id}")]
 pub async fn delete(
@@ -306,9 +421,40 @@ async fn gather_mail_notification_values(
     Ok(Some(notification_values))
 }
 
-/// API Endpoint *GET /rooms/{room_id}*
+/// Get a room
 ///
-/// Returns the specified Room as [`RoomResource`].
+/// Returns the room resource including additional information such as the creator profile.
+#[utoipa::path(
+    params(
+        ("room_id" = RoomId, description = "The id of the room"),
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Room was successfully retrieved",
+            body = RoomResource
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/rooms/{room_id}")]
 pub async fn get(
     settings: SharedSettingsActix,
@@ -325,7 +471,7 @@ pub async fn get(
     let room_resource = RoomResource {
         id: room.id,
         created_by: created_by.to_public_user_profile(&settings),
-        created_at: room.created_at,
+        created_at: room.created_at.into(),
         password: room.password,
         waiting_room: room.waiting_room,
     };
@@ -333,6 +479,42 @@ pub async fn get(
     Ok(Json(room_resource))
 }
 
+/// Get a room's tariff
+///
+/// This returns the tariff that applies to the room, typically the tariff of
+/// the room creator.
+#[utoipa::path(
+    params(
+        ("room_id" = RoomId, description = "The id of the room"),
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "The room's tariff was successfully retrieved",
+            body = TariffResource
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+        ("InviteCode" = []),
+    ),
+)]
 #[get("/rooms/{room_id}/tariff")]
 pub async fn get_room_tariff(
     shared_settings: SharedSettingsActix,
@@ -357,6 +539,43 @@ pub async fn get_room_tariff(
     Ok(Json(response))
 }
 
+/// Get a room's event
+///
+/// This returns the event with which the room is associated. Please note
+/// that rooms can exist without events, in which case a `404` status will be
+/// returned.
+#[utoipa::path(
+    params(
+        ("room_id" = RoomId, description = "The id of the room"),
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "The room's event was successfully retrieved",
+            body = TariffResource
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+        ("InviteCode" = []),
+    ),
+)]
 #[get("/rooms/{room_id}/event")]
 pub async fn get_room_event(
     settings: SharedSettingsActix,
@@ -380,23 +599,68 @@ pub async fn get_room_event(
     }
 }
 
-/// API Endpoint *POST /rooms/{room_id}/start*
+/// Start a signaling session as a registered user
 ///
 /// This endpoint has to be called in order to get a room ticket. When joining a room, the ticket
 /// must be provided as a `Sec-WebSocket-Protocol` header field when starting the WebSocket
 /// connection.
-///
-/// When the requested room has a password set, the requester has to provide the correct password
-/// through the [`PostRoomsStartRequestBody`] JSON in the requests body. When the room has no password set,
-/// the provided password will be ignored.
-///
-/// Returns a [`RoomsStartResponse`] containing the ticket for the specified room.
-///
-/// # Errors
-///
-/// Returns [`StartRoomError::WrongRoomPassword`] when the provided password is wrong
-/// Returns [`StartRoomError::NoBreakoutRooms`]  when no breakout rooms are configured but were provided
-/// Returns [`StartRoomError::InvalidBreakoutRoomId`]  when the provided breakout room id is invalid     
+#[utoipa::path(
+    params(
+        ("room_id" = RoomId, description = "The id of the room"),
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Returns the information for joining the room",
+            body = RoomsStartResponse,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            description = r"The provided AccessToken is expired or the
+                provided ID- or Access-Token is invalid. The WWW-Authenticate
+                header will contain a error description 'session expired' to
+                distinguish between an invalid and an expired token.",
+            body = StandardErrorBody,
+            headers(
+                (
+                    "www-authenticate",
+                    description = "will contain 'session expired' to distinguish between an invalid and an expired token"
+                ),
+            ),
+        ),
+        (
+            status = StatusCode::BAD_REQUEST,
+            description = "Either no breakout rooms were found for this room, or the breakout room id is invalid",
+            body = StandardErrorBody,
+            examples(
+                ("NoBreakoutRooms" = (summary = "No breakout rooms", value = json!(ApiError::from(StartRoomError::NoBreakoutRooms).body))),
+                ("InvalidBreakoutRoomId" = (summary = "Invalid breakout room id", value = json!(ApiError::from(StartRoomError::InvalidBreakoutRoomId).body))),
+            ),
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            description = "The user has not been invited to join the room or has been banned from entering this room",
+            body = StandardErrorBody,
+            examples(
+                ("UserBanned" = (summary = "User has been banned from the room", value = json!(ApiError::from(StartRoomError::BannedFromRoom).body))),
+                ("UserNotInvited" = (summary = "User has not been invited to join the room", value = json!(ApiError::forbidden().body))),
+            ),
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            description = "The specified room could not be found or it has no event associated with it",
+            body = StandardErrorBody,
+            example = json!(ApiError::not_found().body),
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[post("/rooms/{room_id}/start")]
 pub async fn start(
     db: Data<Db>,
@@ -450,9 +714,109 @@ pub async fn start(
     Ok(Json(RoomsStartResponse { ticket, resumption }))
 }
 
-/// API Endpoint *POST /rooms/{room_id}/start_invited*
+/// Start a signaling session for an invitation code
 ///
-/// See [`start`]
+/// Returns a ticket to be used with the `/signaling` endpoint. When joining a
+/// room, the ticket must be provided as `Sec-WebSocket-Protocol` header field
+/// when starting the WebSocket connection. When the requested room has a
+/// password set, the requester must provide the correct password through the
+/// requests body. When the request has no password set, the password will be
+/// ignored if provided.
+#[utoipa::path(
+    params(
+        ("room_id" = RoomId, description = "The id of the room"),
+    ),
+    request_body = PostRoomsStartInvitedRequestBody,
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Response body includes the information needed to connect to the signaling endpoint",
+            body = RoomsStartResponse,
+        ),
+        (
+            status = StatusCode::BAD_REQUEST,
+            description = r"The provided ID token is malformed or contains
+                invalid claims,  no breakout rooms were found for this room, the
+                breakout room id is invalid, the room doesn't exist or the guest
+                does not have a valid invite for this room. Guests shall not be
+                able to distinguish between existing rooms and rooms they don't
+                have permission to enter, therefore the response is the same in
+                these cases",
+            body = StandardErrorBody,
+            examples(
+                (
+                    "NoBreakoutRooms" = (
+                        summary = "No breakout rooms", value = json!(ApiError::from(StartRoomError::NoBreakoutRooms).body)
+                    )
+                ),
+                (
+                    "InvalidBreakoutRoomId" = (
+                        summary = "Invalid breakout room id", value = json!(ApiError::from(StartRoomError::InvalidBreakoutRoomId).body)
+                    )
+                ),
+                (
+                    "RoomIdMismatch" = (
+                        summary = "Room id mismatch", value = json!(StandardErrorBody { code: "bad_request".into(), message: "Room id mismatch".into() })
+                    )
+                ),
+            ),
+        ),
+        (
+            status = StatusCode::UNPROCESSABLE_ENTITY,
+            description = "Invalid invite code",
+        ),
+        (
+            status = StatusCode::UNPROCESSABLE_ENTITY,
+            description = "Invalid body contents received",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            body = StandardErrorBody,
+            description = r"Either: the provided access token is expired or the
+                provided id or access token is invalid. The WWW-Authenticate
+                header will contain an error description 'session expired' to
+                distinguish between an invalid and an expired token.
+                Or: the provided password was incorrect, in which case the body
+                contains more information.",
+            headers(
+                (
+                    "www-authenticate",
+                    description = "will contain 'session expired' to distinguish between an invalid and an expired token"
+                ),
+            ),
+            examples(
+                ("WrongRoomPassword" = (
+                    summary = "Wrong room password",
+                    value = json!(ApiError::from(StartRoomError::WrongRoomPassword).body)
+                )),
+                ("ExpiredOrInvalidAccessToken" = (
+                    summary = "Expired or invalid access token",
+                    value = json!(
+                        ApiError::unauthorized()
+                        .with_message("The session for this user has expired")
+                        .with_www_authenticate(opentalk_types::api::error::AuthenticationError::SessionExpired)
+                        .body
+                    )
+                )),
+            ),
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            body = StandardErrorBody,
+            description = "The participant has been banned from entering this room",
+            example = json!(ApiError::from(StartRoomError::BannedFromRoom).body),
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(),
+)]
 #[post("/rooms/{room_id}/start_invited")]
 pub async fn start_invited(
     db: Data<Db>,

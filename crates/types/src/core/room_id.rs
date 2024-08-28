@@ -7,6 +7,7 @@ use uuid::Uuid;
 
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::utils::ExampleData;
 
 /// The id of a room
 #[derive(
@@ -24,6 +25,7 @@ use crate::imports::*;
     from_redis_value(FromStr)
 )]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(example = json!(RoomId::example_data())))]
 pub struct RoomId(Uuid);
 
 impl RoomId {
@@ -41,5 +43,11 @@ impl RoomId {
     #[cfg(feature = "rand")]
     pub fn generate() -> Self {
         Self(Uuid::new_v4())
+    }
+}
+
+impl ExampleData for RoomId {
+    fn example_data() -> Self {
+        Self::from_u128(0xabadcafe)
     }
 }

@@ -38,14 +38,49 @@ use snafu::Report;
 
 use super::{response::NoContent, DefaultApiResult};
 use crate::{
-    api::v1::{events::notify_event_invitees_by_room_about_update, ApiResponse},
+    api::{
+        responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
+        v1::{events::notify_event_invitees_by_room_about_update, ApiResponse},
+    },
     services::MailService,
     settings::SharedSettingsActix,
 };
 
-/// API Endpoint *GET /rooms/{room_id}/streaming_targets*
+/// List the streaming targets of a room
 ///
-/// Returns a JSON array of all streaming targets for the given room
+/// Returns the streaming targets available for a room
+#[utoipa::path(
+    params(
+        PagePaginationQuery,
+        ("room_id" = RoomId, description = "The id of the room"),
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "List of streaming targets successfully returned",
+            body = GetRoomStreamingTargetsResponse,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/rooms/{room_id}/streaming_targets")]
 pub async fn get_streaming_targets(
     db: Data<Db>,
@@ -66,9 +101,42 @@ pub async fn get_streaming_targets(
     )
 }
 
-/// API Endpoint *POST /rooms/{room_id}/streaming_targets*
+/// Create a new streaming target
 ///
 /// Creates a new streaming target for the given room
+#[utoipa::path(
+    params(
+        StreamingTargetOptionsQuery,
+        ("room_id" = RoomId, description = "The id of the room"),
+    ),
+    request_body = PostRoomStreamingTargetRequest,
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Successfully create a new streaming target",
+            body = PostRoomStreamingTargetResponse,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[post("/rooms/{room_id}/streaming_targets")]
 #[allow(clippy::too_many_arguments)]
 pub async fn post_streaming_target(
@@ -115,10 +183,38 @@ pub async fn post_streaming_target(
     )))
 }
 
-/// API Endpoint *GET /rooms/{room_id}/streaming_targets/{streaming_target_id}*
+/// Get a streaming target
 ///
-/// Returns a single streaming target.
-/// Returns 401 Not Found when the user has no access.
+/// Returns a single streaming target for a specific room.
+#[utoipa::path(
+    params(RoomAndStreamingTargetId),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "The streaming target has been successfully returned",
+            body = GetRoomStreamingTargetResponse,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/rooms/{room_id}/streaming_targets/{streaming_target_id}")]
 pub async fn get_streaming_target(
     db: Data<Db>,
@@ -162,9 +258,40 @@ pub async fn get_streaming_target(
     )))
 }
 
-/// API Endpoint *PUT /rooms/{room_id}/streaming_targets/{streaming_target_id}*
+/// Update a room streaming target
 ///
 /// Modifies and returns a single streaming target.
+#[utoipa::path(
+    params(RoomAndStreamingTargetId),
+    request_body = ChangeRoomStreamingTargetRequest,
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Streaming target was successfully updated",
+            body = ChangeRoomStreamingTargetResponse
+        ),
+        (
+            status = StatusCode::BAD_REQUEST,
+            description = r"Could not modify the specified streaming target due to wrong
+                syntax or bad values",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = HttpStatus::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[patch("/rooms/{room_id}/streaming_targets/{streaming_target_id}")]
 #[allow(clippy::too_many_arguments)]
 pub async fn patch_streaming_target(
@@ -275,10 +402,40 @@ pub async fn patch_streaming_target(
     )))
 }
 
-/// API Endpoint *DELETE /rooms/{room_id}/streaming_targets/{streaming_target_id}*
-///
 /// Deletes a single streaming target.
-/// Returns 204 No Content
+///
+/// The streaming target is deleted from the room.
+#[utoipa::path(
+    params(
+        RoomAndStreamingTargetId,
+        StreamingTargetOptionsQuery,
+    ),
+    responses(
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "The streaming target has been deleted",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[delete("/rooms/{room_id}/streaming_targets/{streaming_target_id}")]
 #[allow(clippy::too_many_arguments)]
 pub async fn delete_streaming_target(

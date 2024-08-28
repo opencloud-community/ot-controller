@@ -5,15 +5,23 @@
 //! This module contains types that are used in OpenTalk API V1 users endpoints.
 
 use super::assets::AssetResource;
-use crate::core::{EventId, RoomId, TariffStatus, UserId};
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::{
+    core::{EventId, RoomId, TariffStatus, UserId},
+    utils::ExampleData,
+};
 
 /// Public user details.
 ///
 /// Contains general "public" information about a user. Is accessible to all other users.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(
+    example = json!(
+        PublicUserProfile::example_data()
+    )
+))]
 pub struct PublicUserProfile {
     /// The user id
     pub id: UserId,
@@ -37,6 +45,20 @@ pub struct PublicUserProfile {
     pub avatar_url: String,
 }
 
+impl ExampleData for PublicUserProfile {
+    fn example_data() -> Self {
+        Self {
+            id: UserId::from_u128(0xa11c3),
+            email: "alice@example.com".to_string(),
+            title: "".to_string(),
+            firstname: "Alice".to_string(),
+            lastname: "Adams".to_string(),
+            display_name: "Alice Adams".to_string(),
+            avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060".to_string(),
+        }
+    }
+}
+
 /// Private user profile.
 ///
 /// Similar to [`PublicUserProfile`], but contains additional "private" information about a user.
@@ -44,6 +66,7 @@ pub struct PublicUserProfile {
 /// Is used on */users/me* endpoints.
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct PrivateUserProfile {
     /// The user id
     pub id: UserId,
@@ -83,8 +106,13 @@ pub struct PrivateUserProfile {
 }
 
 /// Used to modify user settings.
-#[derive(Clone, Debug)]
+#[derive(Default, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize, Validate))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(
+    example = json!(
+        PatchMeBody::example_data()
+    )
+))]
 pub struct PatchMeBody {
     /// The user's title
     #[cfg_attr(feature = "serde", validate(length(max = 255)))]
@@ -126,21 +154,39 @@ impl PatchMeBody {
     }
 }
 
+impl ExampleData for PatchMeBody {
+    fn example_data() -> Self {
+        Self {
+            display_name: Some("Alice Adams".to_string()),
+            language: Some("en".to_string()),
+            ..Default::default()
+        }
+    }
+}
+
 /// The query string for finding a user
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::IntoParams))]
 pub struct GetFindQuery {
     /// The query string
     pub q: String,
 }
 
+/// The response for the find endpoint
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct GetFindResponse(pub Vec<GetFindResponseItem>);
+
 /// The response for users found
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
     serde(tag = "kind", rename_all = "lowercase")
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum GetFindResponseItem {
     /// Registered user
     Registered(PublicUserProfile),
@@ -152,6 +198,7 @@ pub enum GetFindResponseItem {
 /// Representation of a unregistered user
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct UnregisteredUser {
     /// Email of the unregistered user
     pub email: String,
@@ -169,22 +216,53 @@ pub struct UnregisteredUser {
 /// Response body for the `GET /users/me/pending_invites` endpoint
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(GetEventInvitesPendingResponse::example_data()))
+)]
 pub struct GetEventInvitesPendingResponse {
-    /// Number of pending invites
+    /// The total number of pending invites for the current user
     pub total_pending_invites: u32,
+}
+
+impl ExampleData for GetEventInvitesPendingResponse {
+    fn example_data() -> Self {
+        Self {
+            total_pending_invites: 3,
+        }
+    }
 }
 
 /// Response body for the `GET /v1/users/me/assets` endpoint
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(GetUserAssetsResponse::example_data()))
+)]
 pub struct GetUserAssetsResponse {
     /// Assets owned by the user
     pub owned_assets: Vec<UserAssetResource>,
 }
 
+impl ExampleData for GetUserAssetsResponse {
+    fn example_data() -> Self {
+        Self {
+            owned_assets: vec![UserAssetResource::example_data()],
+        }
+    }
+}
+
 /// Information related to a specific asset
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(UserAssetResource::example_data()))
+)]
 pub struct UserAssetResource {
     /// The asset resource
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -194,6 +272,14 @@ pub struct UserAssetResource {
     pub room_id: RoomId,
 
     /// The id of the event that is associated with the room
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    // Field is non-required already, utoipa adds a `nullable: true` entry
+    // by default which creates a false positive in the spectral linter when
+    // combined with example data.
+    #[cfg_attr(feature = "utoipa", schema(nullable = false))]
     pub event_id: Option<EventId>,
 }
 
@@ -204,6 +290,16 @@ impl UserAssetResource {
             asset,
             room_id,
             event_id,
+        }
+    }
+}
+
+impl ExampleData for UserAssetResource {
+    fn example_data() -> Self {
+        Self {
+            asset: AssetResource::example_data(),
+            room_id: RoomId::example_data(),
+            event_id: Some(EventId::example_data()),
         }
     }
 }

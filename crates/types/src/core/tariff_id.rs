@@ -18,6 +18,7 @@ use crate::imports::*;
     diesel(sql_type = diesel::sql_types::Uuid),
 )]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TariffId(Uuid);
 
 impl TariffId {

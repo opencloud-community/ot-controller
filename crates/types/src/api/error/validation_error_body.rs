@@ -11,6 +11,7 @@ use crate::imports::*;
 /// The body of a validation error response
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ValidationErrorBody {
     /// Machine readable error message
     pub code: Cow<'static, str>,

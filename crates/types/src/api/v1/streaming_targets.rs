@@ -6,13 +6,17 @@
 
 use url::Url;
 
-use crate::core::{RoomId, StreamingKey, StreamingTargetId};
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::{
+    core::{RoomId, StreamingKey, StreamingTargetId},
+    utils::ExampleData,
+};
 
 /// The parameter set for /rooms/{room_id}/streaming_targets/{streaming_target_id}* endpoints
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::IntoParams))]
 pub struct RoomAndStreamingTargetId {
     /// The room id for the invite
     pub room_id: RoomId,
@@ -24,6 +28,11 @@ pub struct RoomAndStreamingTargetId {
 /// Data to update a streaming target (only fields with [`Some`] are updated)
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(UpdateStreamingTarget::example_data()))
+)]
 pub struct UpdateStreamingTarget {
     /// The name of the streaming target
     pub name: Option<String>,
@@ -33,12 +42,26 @@ pub struct UpdateStreamingTarget {
     pub kind: Option<UpdateStreamingTargetKind>,
 }
 
+impl ExampleData for UpdateStreamingTarget {
+    fn example_data() -> Self {
+        Self {
+            name: Some("My OwnCast Stream".to_string()),
+            kind: Some(UpdateStreamingTargetKind::example_data()),
+        }
+    }
+}
+
 /// Data to update a streaming target kind (only fields with [`Some`] are updated)
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
     serde(tag = "kind", rename_all = "snake_case")
+)]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(UpdateStreamingTargetKind::example_data()))
 )]
 pub enum UpdateStreamingTargetKind {
     /// The "custom" kind
@@ -53,4 +76,22 @@ pub enum UpdateStreamingTargetKind {
         #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
         public_url: Option<Url>,
     },
+}
+
+impl ExampleData for UpdateStreamingTargetKind {
+    fn example_data() -> Self {
+        Self::Custom {
+            streaming_endpoint: Some(
+                "https://ingress.example.com"
+                    .parse()
+                    .expect("parseable url"),
+            ),
+            streaming_key: Some("aabbccddeeff".parse().expect("parseable streaming key")),
+            public_url: Some(
+                "https://owncast.example.com"
+                    .parse()
+                    .expect("parseable url"),
+            ),
+        }
+    }
 }

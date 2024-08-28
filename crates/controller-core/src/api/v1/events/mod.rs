@@ -52,7 +52,6 @@ use opentalk_types::{
             },
             pagination::default_pagination_per_page,
             users::{PublicUserProfile, UnregisteredUser},
-            utils::validate_recurrence_pattern,
             Cursor,
         },
     },
@@ -61,7 +60,10 @@ use opentalk_types::{
         shared_folder::{SharedFolder, SharedFolderAccess},
         streaming::{RoomStreamingTarget, StreamingTarget},
     },
-    core::{DateTimeTz, EventId, EventInviteStatus, RoomId, TimeZone, Timestamp, UserId},
+    core::{
+        DateTimeTz, EventId, EventInviteStatus, RecurrencePattern, RoomId, RoomPassword, TimeZone,
+        Timestamp, UserId,
+    },
 };
 use rrule::{Frequency, RRuleSet};
 use serde::Deserialize;
@@ -71,9 +73,12 @@ use validator::Validate;
 
 use super::{response::NoContent, ApiResponse, DefaultApiResult};
 use crate::{
-    api::v1::{
-        events::shared_folder::put_shared_folder, rooms::RoomsPoliciesBuilderExt,
-        util::GetUserProfilesBatched,
+    api::{
+        responses::{BadRequest, Forbidden, InternalServerError, NotFound, Unauthorized},
+        v1::{
+            events::shared_folder::put_shared_folder, rooms::RoomsPoliciesBuilderExt,
+            util::GetUserProfilesBatched,
+        },
     },
     services::{ExternalMailRecipient, MailRecipient, MailService, UnregisteredMailRecipient},
     settings::SharedSettingsActix,
@@ -249,7 +254,34 @@ impl EventRoomInfoExt for EventRoomInfo {
     }
 }
 
-/// API Endpoint `POST /events`
+/// Create a new event
+///
+/// Create a new event with the fields sent in the body.
+#[utoipa::path(
+    params(EventOptionsQuery),
+    responses(
+        (
+            status = StatusCode::CREATED,
+            description = "The event has been created",
+            body = EventResource,
+        ),
+        (
+            status = StatusCode::BAD_REQUEST,
+            response = BadRequest,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[post("/events")]
 pub async fn new_event(
     settings: SharedSettingsActix,
@@ -424,7 +456,7 @@ async fn create_time_independent_event(
     current_user: User,
     title: String,
     description: String,
-    password: Option<String>,
+    password: Option<RoomPassword>,
     waiting_room: bool,
     is_adhoc: bool,
     streaming_targets: Vec<StreamingTarget>,
@@ -494,7 +526,7 @@ async fn create_time_independent_event(
             is_all_day: None,
             starts_at: None,
             ends_at: None,
-            recurrence_pattern: vec![],
+            recurrence_pattern: RecurrencePattern::default(),
             type_: EventType::Single,
             invite_status: EventInviteStatus::Accepted,
             is_favorite: false,
@@ -516,18 +548,18 @@ async fn create_time_dependent_event(
     current_user: User,
     title: String,
     description: String,
-    password: Option<String>,
+    password: Option<RoomPassword>,
     waiting_room: bool,
     is_all_day: bool,
     starts_at: DateTimeTz,
     ends_at: DateTimeTz,
-    recurrence_pattern: Vec<String>,
+    recurrence_pattern: RecurrencePattern,
     is_adhoc: bool,
     streaming_targets: Vec<StreamingTarget>,
     show_meeting_details: bool,
     query: Query<EventOptionsQuery>,
 ) -> Result<(EventResource, Option<MailResource>), ApiError> {
-    let recurrence_pattern = recurrence_array_to_string(recurrence_pattern);
+    let recurrence_pattern = recurrence_pattern.to_multiline_string();
 
     let (duration_secs, ends_at_dt, ends_at_tz) =
         parse_event_dt_params(is_all_day, starts_at, ends_at, &recurrence_pattern)?;
@@ -595,7 +627,10 @@ async fn create_time_dependent_event(
             is_all_day: event.is_all_day,
             starts_at: Some(starts_at),
             ends_at: Some(ends_at),
-            recurrence_pattern: recurrence_string_to_array(event.recurrence_pattern),
+            recurrence_pattern: event
+                .recurrence_pattern
+                .map(|s| s.parse::<RecurrencePattern>().unwrap())
+                .unwrap_or_default(),
             type_: if event.is_recurring.unwrap_or_default() {
                 EventType::Recurring
             } else {
@@ -619,11 +654,40 @@ struct GetPaginatedEventsData {
     after: Option<String>,
 }
 
-/// API Endpoint `GET /events`
+/// Get a list of events accessible by the requesting user
 ///
 /// Returns a paginated list of events and their exceptions inside the given time range
-///
-/// See documentation of [`GetEventsQuery`] for all query options
+#[utoipa::path(
+    params(GetEventsQuery),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "List of the events and exceptions",
+            body = Vec<EventOrException>,
+            headers(
+                (
+                    "link" = CursorLink,
+                    description = "Links for paging through the results"
+                ),
+            ),
+        ),
+        (
+            status = StatusCode::BAD_REQUEST,
+            response = BadRequest,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/events")]
 pub async fn get_events(
     settings: SharedSettingsActix,
@@ -768,7 +832,10 @@ pub async fn get_events(
             is_all_day: event.is_all_day,
             starts_at,
             ends_at,
-            recurrence_pattern: recurrence_string_to_array(event.recurrence_pattern),
+            recurrence_pattern: event
+                .recurrence_pattern
+                .map(|s| s.parse::<RecurrencePattern>().unwrap())
+                .unwrap_or_default(),
             type_: if event.is_recurring.unwrap_or_default() {
                 EventType::Recurring
             } else {
@@ -823,9 +890,41 @@ pub async fn get_events(
         .with_cursor_pagination(events_data.before, events_data.after))
 }
 
-/// API Endpoint `GET /events/{event_id}` endpoint
+/// Get an event
 ///
 /// Returns the event resource for the given id
+#[utoipa::path(
+    params(
+        GetEventQuery,
+        ("event_id" = EventId, description = "The id of the event"),
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Event was successfully retrieved",
+            body = EventResource
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/events/{event_id}")]
 pub async fn get_event(
     settings: SharedSettingsActix,
@@ -877,7 +976,10 @@ pub async fn get_event(
         is_all_day: event.is_all_day,
         starts_at,
         ends_at,
-        recurrence_pattern: recurrence_string_to_array(event.recurrence_pattern),
+        recurrence_pattern: event
+            .recurrence_pattern
+            .map(|s| s.parse::<RecurrencePattern>().unwrap())
+            .unwrap_or_default(),
         type_: if event.is_recurring.unwrap_or_default() {
             EventType::Recurring
         } else {
@@ -919,14 +1021,48 @@ struct UpdateNotificationValues {
     pub invite_for_room: Invite,
 }
 
-/// API Endpoint `PATCH /events/{event_id}`
+/// Patch an event
 ///
-/// See documentation of [`PatchEventBody`] for more infos
-///
-/// Patches which modify the event in a way that would invalidate existing
-/// exceptions (e.g. by changing the recurrence rule or time dependence)
-/// will have all exceptions deleted
+/// Fields that are not provided in the request body will remain unchanged.
 #[allow(clippy::too_many_arguments)]
+#[utoipa::path(
+    request_body = PatchEventBody,
+    params(
+        PatchEventQuery,
+        ("event_id" = EventId, description = "The id of the event"),
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "The event was successfully updated",
+            body = EventResource
+        ),
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "The patch was empty",
+        ),
+        (
+            status = StatusCode::BAD_REQUEST,
+            description = r"Could not modify the specified event due to wrong
+                syntax or bad values, for example an invalid timestamp string",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[patch("/events/{event_id}")]
 pub async fn patch_event(
     settings: SharedSettingsActix,
@@ -1079,7 +1215,10 @@ pub async fn patch_event(
         is_all_day: event.is_all_day,
         starts_at,
         ends_at,
-        recurrence_pattern: recurrence_string_to_array(event.recurrence_pattern),
+        recurrence_pattern: event
+            .recurrence_pattern
+            .map(|s| s.parse::<RecurrencePattern>().unwrap())
+            .unwrap_or_default(),
         type_: if event.is_recurring.unwrap_or_default() {
             EventType::Recurring
         } else {
@@ -1260,7 +1399,7 @@ fn patch_event_change_to_time_dependent(
     if let (Some(is_all_day), Some(starts_at), Some(ends_at)) =
         (patch.is_all_day, patch.starts_at, patch.ends_at)
     {
-        let recurrence_pattern = recurrence_array_to_string(patch.recurrence_pattern);
+        let recurrence_pattern = patch.recurrence_pattern.to_multiline_string();
 
         let (duration_secs, ends_at_dt, ends_at_tz) =
             parse_event_dt_params(is_all_day, starts_at, ends_at, &recurrence_pattern)?;
@@ -1389,7 +1528,7 @@ async fn patch_time_dependent_event(
     event: &Event,
     patch: PatchEventBody,
 ) -> Result<UpdateEvent, ApiError> {
-    let recurrence_pattern = recurrence_array_to_string(patch.recurrence_pattern);
+    let recurrence_pattern = patch.recurrence_pattern.to_multiline_string();
 
     let is_all_day = patch.is_all_day.or(event.is_all_day).unwrap();
     let starts_at = patch
@@ -1441,7 +1580,42 @@ pub(crate) struct CancellationNotificationValues {
     pub streaming_targets: Vec<RoomStreamingTarget>,
 }
 
-/// API Endpoint `DELETE /events/{event_id}`
+/// Delete an event and its owned resources, including the associated room.
+///
+/// Deletes the event by the id if found. See the query parameters for affecting
+/// the behavior of this endpoint, such as mail notification suppression, or
+/// succeding even if external resources cannot be successfully deleted.
+#[utoipa::path(
+    params(
+        DeleteEventsQuery,
+        ("event_id" = EventId, description = "The id of the event"),
+    ),
+    responses(
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "The event was successfully deleted",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[delete("/events/{event_id}")]
 #[allow(clippy::too_many_arguments)]
 pub async fn delete_event(
@@ -1573,14 +1747,13 @@ pub(crate) async fn notify_invitees_about_delete(
     }
 }
 
-#[derive(Deserialize, Validate)]
+#[derive(Deserialize)]
 pub struct EventRescheduleBody {
     _from: DateTime<Utc>,
     _is_all_day: Option<bool>,
     _starts_at: Option<bool>,
     _ends_at: Option<bool>,
-    #[validate(custom(function = "validate_recurrence_pattern"))]
-    _recurrence_pattern: Vec<String>,
+    _recurrence_pattern: RecurrencePattern,
 }
 
 #[post("/events/{event_id}/reschedule")]
@@ -1589,11 +1762,6 @@ pub async fn event_reschedule(
     _event_id: Path<EventId>,
     _body: Json<EventRescheduleBody>,
 ) -> actix_web::HttpResponse {
-    if let Err(_e) = _body.validate() {
-        // return Err(DefaultApiError::ValidationFailed);
-        return actix_web::HttpResponse::NotImplemented().finish();
-    }
-
     actix_web::HttpResponse::NotImplemented().finish()
 }
 
@@ -1719,20 +1887,6 @@ fn get_tenant_filter<'a>(
             id: current_tenant.oidc_tenant_id.as_ref(),
         }),
     }
-}
-
-fn recurrence_array_to_string(recurrence_pattern: Vec<String>) -> Option<String> {
-    if recurrence_pattern.is_empty() {
-        None
-    } else {
-        Some(recurrence_pattern.join("\n"))
-    }
-}
-
-fn recurrence_string_to_array(recurrence_pattern: Option<String>) -> Vec<String> {
-    recurrence_pattern
-        .map(|s| s.split('\n').map(String::from).collect())
-        .unwrap_or_default()
 }
 
 fn verify_exception_dt_params(
@@ -2083,7 +2237,7 @@ mod tests {
                 datetime: *unix_epoch,
                 timezone: TimeZone::from(Tz::Europe__Berlin),
             }),
-            recurrence_pattern: vec![],
+            recurrence_pattern: RecurrencePattern::default(),
             type_: EventType::Single,
             invite_status: EventInviteStatus::Accepted,
             is_favorite: false,
@@ -2206,7 +2360,7 @@ mod tests {
             is_all_day: None,
             starts_at: None,
             ends_at: None,
-            recurrence_pattern: vec![],
+            recurrence_pattern: RecurrencePattern::default(),
             type_: EventType::Single,
             invite_status: EventInviteStatus::Accepted,
             is_favorite: true,

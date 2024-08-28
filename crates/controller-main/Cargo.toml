@@ -20,3 +20,7 @@ anstream.workspace = true
 opentalk-community-modules.workspace = true
 opentalk-controller-core.workspace = true
 owo-colors.workspace = true
+
+[features]
+default = ["swagger"]
+swagger = ["opentalk-controller-core/swagger"]

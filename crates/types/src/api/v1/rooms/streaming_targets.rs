@@ -9,37 +9,104 @@ use crate::imports::*;
 use crate::{
     api::v1::streaming_targets::UpdateStreamingTarget,
     common::streaming::{RoomStreamingTarget, StreamingTarget},
+    utils::ExampleData,
 };
 
 /// The body of a *GET /rooms/{room_id}/streaming_targets* response
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(GetRoomStreamingTargetsResponse::example_data()))
+)]
 pub struct GetRoomStreamingTargetsResponse(pub Vec<RoomStreamingTarget>);
+
+impl ExampleData for GetRoomStreamingTargetsResponse {
+    fn example_data() -> Self {
+        Self(vec![RoomStreamingTarget::example_data()])
+    }
+}
 
 /// The body of a *POST /rooms/{room_id}/streaming_targets* request
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(PostRoomStreamingTargetRequest::example_data()))
+)]
 pub struct PostRoomStreamingTargetRequest(pub StreamingTarget);
+
+impl ExampleData for PostRoomStreamingTargetRequest {
+    fn example_data() -> Self {
+        Self(StreamingTarget::example_data())
+    }
+}
 
 /// The body of a *POST /rooms/{room_id}/streaming_targets* response
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(PostRoomStreamingTargetResponse::example_data()))
+)]
 pub struct PostRoomStreamingTargetResponse(pub RoomStreamingTarget);
+
+impl ExampleData for PostRoomStreamingTargetResponse {
+    fn example_data() -> Self {
+        Self(RoomStreamingTarget::example_data())
+    }
+}
 
 /// The body of a *GET /rooms/{room_id}/streaming_targets/{streaming_target_id}* response
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(GetRoomStreamingTargetResponse::example_data()))
+)]
 pub struct GetRoomStreamingTargetResponse(pub RoomStreamingTarget);
+
+impl ExampleData for GetRoomStreamingTargetResponse {
+    fn example_data() -> Self {
+        Self(RoomStreamingTarget::example_data())
+    }
+}
 
 /// The body of a *PUT /rooms/{room_id}/streaming_targets/{streaming_target_id}* request
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(ChangeRoomStreamingTargetRequest::example_data()))
+)]
 pub struct ChangeRoomStreamingTargetRequest(pub UpdateStreamingTarget);
+
+impl ExampleData for ChangeRoomStreamingTargetRequest {
+    fn example_data() -> Self {
+        Self(UpdateStreamingTarget::example_data())
+    }
+}
 
 /// The body of a *PUT /rooms/{room_id}/streaming_targets/{streaming_target_id}* response
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(ChangeRoomStreamingTargetResponse::example_data()))
+)]
 pub struct ChangeRoomStreamingTargetResponse(pub RoomStreamingTarget);
+
+impl ExampleData for ChangeRoomStreamingTargetResponse {
+    fn example_data() -> Self {
+        Self(RoomStreamingTarget::example_data())
+    }
+}
 
 #[cfg(test)]
 mod test {

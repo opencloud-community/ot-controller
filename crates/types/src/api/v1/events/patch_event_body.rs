@@ -2,60 +2,129 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 #[cfg(feature = "serde")]
-use crate::api::v1::utils::{deserialize_some, validate_recurrence_pattern};
+use crate::api::v1::utils::deserialize_some;
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{common::streaming::StreamingTarget, core::DateTimeTz};
+use crate::{
+    common::streaming::StreamingTarget,
+    core::{DateTimeTz, RecurrencePattern, RoomPassword},
+    utils::ExampleData,
+};
 
 /// Body for the `PATCH /events/{event_id}` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize, Validate))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(
+    example = json!(
+        PatchEventBody::example_data()
+    )
+))]
 pub struct PatchEventBody {
     /// Patch the title of th event
-    #[cfg_attr(feature = "serde", validate(length(max = 255)))]
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none"),
+        validate(length(max = 255))
+    )]
     pub title: Option<String>,
 
     /// Patch the description of the event
-    #[cfg_attr(feature = "serde", validate(length(max = 4096)))]
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none"),
+        validate(length(max = 4096))
+    )]
+    // Field is non-required already, utoipa adds a `nullable: true` entry
+    // by default which creates a false positive in the spectral linter when
+    // combined with example data.
+    #[cfg_attr(feature = "utoipa", schema(nullable = false))]
     pub description: Option<String>,
 
     /// Patch the password of the event's room
     #[cfg_attr(
         feature = "serde",
-        serde(default, deserialize_with = "deserialize_some"),
-        validate(length(min = 1, max = 255))
+        serde(
+            default,
+            deserialize_with = "deserialize_some",
+            skip_serializing_if = "Option::is_none"
+        )
     )]
-    pub password: Option<Option<String>>,
+    // Field is non-required already, utoipa adds a `nullable: true` entry
+    // by default which creates a false positive in the spectral linter when
+    // combined with example data.
+    #[cfg_attr(feature = "utoipa", schema(nullable = false))]
+    pub password: Option<Option<RoomPassword>>,
 
     /// Patch the presence of a waiting room
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    // Field is non-required already, utoipa adds a `nullable: true` entry
+    // by default which creates a false positive in the spectral linter when
+    // combined with example data.
+    #[cfg_attr(feature = "utoipa", schema(nullable = false))]
     pub waiting_room: Option<bool>,
 
     /// Patch the adhoc flag.
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    // Field is non-required already, utoipa adds a `nullable: true` entry
+    // by default which creates a false positive in the spectral linter when
+    // combined with example data.
+    #[cfg_attr(feature = "utoipa", schema(nullable = false))]
     pub is_adhoc: Option<bool>,
 
     /// Patch the time independence of the event
     ///
     /// If it changes the independence from true false this body has to have
     /// `is_all_day`, `starts_at` and `ends_at` set
-    ///
-    /// See documentation of [`PostEventsBody`] for more info
-    ///
-    /// [`PostEventsBody`]: ../post_events_body/struct.PostEventsBody.html
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    // Field is non-required already, utoipa adds a `nullable: true` entry
+    // by default which creates a false positive in the spectral linter when
+    // combined with example data.
+    #[cfg_attr(feature = "utoipa", schema(nullable = false))]
     pub is_time_independent: Option<bool>,
 
     /// Patch if the event is an all-day event
     ///
     /// If it changes the value from false to true this request must ensure
     /// that the `starts_at.datetime` and `ends_at.datetime` have a 00:00 time part.
-    ///
-    /// See documentation of [`PostEventsBody`] for more info
-    ///
-    /// [`PostEventsBody`]: ../post_events_body/struct.PostEventsBody.html
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    // Field is non-required already, utoipa adds a `nullable: true` entry
+    // by default which creates a false positive in the spectral linter when
+    // combined with example data.
+    #[cfg_attr(feature = "utoipa", schema(nullable = false))]
     pub is_all_day: Option<bool>,
 
     /// Patch the start time of the event
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    // Field is non-required already, utoipa adds a `nullable: true` entry
+    // by default which creates a false positive in the spectral linter when
+    // combined with example data.
+    #[cfg_attr(feature = "utoipa", schema(nullable = false))]
     pub starts_at: Option<DateTimeTz>,
+
     /// Patch the end time of the event
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    // Field is non-required already, utoipa adds a `nullable: true` entry
+    // by default which creates a false positive in the spectral linter when
+    // combined with example data.
+    #[cfg_attr(feature = "utoipa", schema(nullable = false))]
     pub ends_at: Option<DateTimeTz>,
 
     /// Patch the events recurrence patterns
@@ -63,18 +132,45 @@ pub struct PatchEventBody {
     /// If this list is non empty it override the events current one
     #[cfg_attr(
         feature = "serde",
-        serde(default),
-        validate(custom(function = "validate_recurrence_pattern"))
+        serde(default, skip_serializing_if = "RecurrencePattern::is_empty")
     )]
-    pub recurrence_pattern: Vec<String>,
+    // Field is non-required already, utoipa adds a `nullable: true` entry
+    // by default which creates a false positive in the spectral linter when
+    // combined with example data.
+    #[cfg_attr(feature = "utoipa", schema(nullable = false))]
+    pub recurrence_pattern: RecurrencePattern,
 
     /// The streaming targets of the room associated with the event
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    // Field is non-required already, utoipa adds a `nullable: true` entry
+    // by default which creates a false positive in the spectral linter when
+    // combined with example data.
+    #[cfg_attr(feature = "utoipa", schema(nullable = false))]
     pub streaming_targets: Option<Vec<StreamingTarget>>,
 
     /// Patch wether the meeting details are displayed or not
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    // Field is non-required already, utoipa adds a `nullable: true` entry
+    // by default which creates a false positive in the spectral linter when
+    // combined with example data.
+    #[cfg_attr(feature = "utoipa", schema(nullable = false))]
     pub show_meeting_details: Option<bool>,
 
     /// Either add a shared folder to the event, if none existed before or delete the shared folder
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    // Field is non-required already, utoipa adds a `nullable: true` entry
+    // by default which creates a false positive in the spectral linter when
+    // combined with example data.
+    #[cfg_attr(feature = "utoipa", schema(nullable = false))]
     pub has_shared_folder: Option<bool>,
 }
 
@@ -143,5 +239,25 @@ impl PatchEventBody {
             && has_shared_folder.is_none()
             && streaming_targets.is_none()
             && (password.is_some() || waiting_room.is_some())
+    }
+}
+
+impl ExampleData for PatchEventBody {
+    fn example_data() -> Self {
+        Self {
+            title: Some("The new title".to_string()),
+            description: Some("The new description".to_string()),
+            password: None,
+            waiting_room: None,
+            is_adhoc: None,
+            is_time_independent: None,
+            is_all_day: None,
+            starts_at: None,
+            ends_at: None,
+            recurrence_pattern: RecurrencePattern::default(),
+            streaming_targets: None,
+            show_meeting_details: Some(false),
+            has_shared_folder: Some(true),
+        }
     }
 }

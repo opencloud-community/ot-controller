@@ -9,6 +9,7 @@ use crate::imports::*;
 /// Verify body for *POST /invite/verify*
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize, Validate))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct PostInviteVerifyRequestBody {
     /// The invite code id
     pub invite_code: InviteCodeId,

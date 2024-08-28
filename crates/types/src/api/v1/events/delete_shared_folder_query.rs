@@ -8,6 +8,7 @@ use crate::imports::*;
 /// Body for the `DELETE /events/{event_id}/shared_folder` endpoint
 #[derive(Default, Debug, Eq, PartialEq, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::IntoParams))]
 pub struct DeleteSharedFolderQuery {
     /// Flag to force delete the reference to the shared folder if the deletion of the shared folder fails
     #[cfg_attr(feature = "serde", serde(default))]

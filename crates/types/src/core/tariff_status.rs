@@ -11,6 +11,7 @@ sql_enum!(
 
     #[derive(PartialEq, Eq)]
     #[cfg_attr(feature="serde", derive(Serialize, Deserialize), serde(rename_all = "snake_case"))]
+    #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
     TariffStatus,
     "tariff_status",
     TariffStatusType,

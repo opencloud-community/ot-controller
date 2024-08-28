@@ -2,15 +2,14 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use email_address::EmailAddress;
-
-use crate::core::EmailInviteRole;
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::{common::email::EmailAddress, core::EmailInviteRole};
 
 /// Request body for the `PATCH /events/{event_id}/invites/email` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct PatchEmailInviteBody {
     /// Email address of the user to modify the invite for
     pub email: EmailAddress,

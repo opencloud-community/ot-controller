@@ -51,9 +51,10 @@ use opentalk_signaling_core::{
     RegisterModules, SignalingModule, SignalingModuleInitData, VolatileStaticMemoryStorage,
     VolatileStorage,
 };
-use opentalk_types::api::error::ApiError;
+use opentalk_types::api::{error::ApiError, v1::events::GetEventInstancesCursorData};
 use rustls_pki_types::{CertificateDer, PrivatePkcs8KeyDer};
 use snafu::{Backtrace, ErrorCompat, Report, ResultExt, Snafu};
+use swagger::WithSwagger as _;
 use tokio::{
     signal::{
         ctrl_c,
@@ -82,6 +83,7 @@ mod cli;
 mod metrics;
 mod oidc;
 mod services;
+mod swagger;
 mod trace;
 
 pub mod api;
@@ -490,6 +492,7 @@ impl Controller {
                     .app_data(mail_service)
                     .service(api::signaling::ws_service)
                     .service(metrics::metrics)
+                    .with_swagger_service_if(!settings.load_full().endpoints.disable_openapi)
                     .service(v1_scope(
                         settings.clone(),
                         db.clone(),
@@ -611,6 +614,294 @@ impl ModulesRegistrar for Controller {
     }
 }
 
+#[derive(utoipa::OpenApi)]
+#[openapi(
+    info(
+        title = "OpenTalk Controller Frontend API",
+        description = "Specifies the endpoints and structure of the OpenTalk Controller Frontend API",
+    ),
+    tags(
+        (
+            name = "api::v1::auth",
+            description = "Endpoints related to authentication"
+        ),
+        (
+            name = "api::v1::invites",
+            description = "Endpoints related to meeting invites"
+        ),
+        (
+            name = "api::v1::rooms",
+            description = "Endpoints related to meeting rooms"
+        ),
+        (
+            name = "api::v1::events",
+            description = "Endpoints related to events"
+        ),
+        (
+            name = "api::v1::events::favorites",
+            description = "Endpoints related to user's favorite events"
+        ),
+        (
+            name = "api::v1::events::instances",
+            description = "Endpoints related to event instances"
+        ),
+        (
+            name = "api::v1::events::invites",
+            description = "Endpoints related to event invites"
+        ),
+        (
+            name = "api::v1::events::shared_folder",
+            description = "Endpoints related to event shared folders"
+        ),
+        (
+            name = "api::v1::assets",
+            description = "Endpoints related to file assets"
+        ),
+        (
+            name = "api::v1::sip_configs",
+            description = "Endpoints related to SIP configuration"
+        ),
+        (
+            name = "api::v1::services::call_in",
+            description = "Endpoints related to the meeting call-in service"
+        ),
+        (
+            name = "api::v1::services::recording",
+            description = "Endpoints related to the meeting recording service"
+        ),
+        (
+            name = "api::v1::streaming_targets",
+            description = "Endpoints related to streaming targets"
+        ),
+        (
+            name = "api::v1::turn",
+            description = "Endpoints related TURN server usage"
+        ),
+        (
+            name = "api::v1::users",
+            description = "Endpoints related to user information and management"
+        ),
+        (
+            name = "api::signaling",
+            description = "Endpoints for signaling connections in a meeting"
+        ),
+    ),
+    paths(
+        api::signaling::ws_service,
+        api::v1::assets::room_asset,
+        api::v1::assets::room_assets,
+        api::v1::assets::delete,
+        api::v1::auth::get_login,
+        api::v1::auth::post_login,
+        api::v1::events::delete_event,
+        api::v1::events::favorites::add_event_to_favorites,
+        api::v1::events::favorites::remove_event_from_favorites,
+        api::v1::events::get_event,
+        api::v1::events::get_events,
+        api::v1::events::instances::get_event_instance,
+        api::v1::events::instances::get_event_instances,
+        api::v1::events::instances::patch_event_instance,
+        api::v1::events::invites::accept_event_invite,
+        api::v1::events::invites::create_invite_to_event,
+        api::v1::events::invites::decline_event_invite,
+        api::v1::events::invites::delete_email_invite_to_event,
+        api::v1::events::invites::delete_invite_to_event,
+        api::v1::events::invites::get_event_invites_pending,
+        api::v1::events::invites::get_invites_for_event,
+        api::v1::events::invites::update_email_invite_to_event,
+        api::v1::events::invites::update_invite_to_event,
+        api::v1::events::new_event,
+        api::v1::events::patch_event,
+        api::v1::events::shared_folder::delete_shared_folder_for_event,
+        api::v1::events::shared_folder::get_shared_folder_for_event,
+        api::v1::events::shared_folder::put_shared_folder_for_event,
+        api::v1::invites::add_invite,
+        api::v1::invites::delete_invite,
+        api::v1::invites::get_invite,
+        api::v1::invites::get_invites,
+        api::v1::invites::update_invite,
+        api::v1::invites::verify_invite_code,
+        api::v1::rooms::accessible,
+        api::v1::rooms::delete,
+        api::v1::rooms::get,
+        api::v1::rooms::get_room_event,
+        api::v1::rooms::get_room_tariff,
+        api::v1::rooms::new,
+        api::v1::rooms::patch,
+        api::v1::rooms::start,
+        api::v1::rooms::start_invited,
+        api::v1::services::call_in::start,
+        api::v1::services::recording::start,
+        api::v1::services::recording::upload_render,
+        api::v1::services::recording::ws_upload,
+        api::v1::sip_configs::delete,
+        api::v1::sip_configs::get,
+        api::v1::sip_configs::put,
+        api::v1::streaming_targets::delete_streaming_target,
+        api::v1::streaming_targets::get_streaming_target,
+        api::v1::streaming_targets::get_streaming_targets,
+        api::v1::streaming_targets::patch_streaming_target,
+        api::v1::streaming_targets::post_streaming_target,
+        api::v1::turn::get,
+        api::v1::users::find,
+        api::v1::users::get_me,
+        api::v1::users::get_me_assets,
+        api::v1::users::get_me_tariff,
+        api::v1::users::get_user,
+        api::v1::users::patch_me,
+    ),
+    components(
+        schemas(
+            api::headers::CursorLink,
+            api::headers::PageLink,
+            opentalk_types::api::error::ErrorBody,
+            opentalk_types::api::error::StandardErrorBody,
+            opentalk_types::api::error::ValidationErrorBody,
+            opentalk_types::api::error::ValidationErrorEntry,
+            opentalk_types::api::v1::Cursor::<GetEventInstancesCursorData>,
+            opentalk_types::api::v1::assets::AssetResource,
+            opentalk_types::api::v1::assets::GetRoomsAssetsResponseBody,
+            opentalk_types::api::v1::auth::GetLoginResponse,
+            opentalk_types::api::v1::auth::OidcProvider,
+            opentalk_types::api::v1::auth::PostLoginRequestBody,
+            opentalk_types::api::v1::auth::PostLoginResponse,
+            opentalk_types::api::v1::events::CallInInfo,
+            opentalk_types::api::v1::events::DeleteEmailInviteBody,
+            opentalk_types::api::v1::events::EmailInvite,
+            opentalk_types::api::v1::events::EmailOnlyUser,
+            opentalk_types::api::v1::events::EventAndInstanceId,
+            opentalk_types::api::v1::events::EventExceptionResource,
+            opentalk_types::api::v1::events::EventInstance,
+            opentalk_types::api::v1::events::EventInvitee,
+            opentalk_types::api::v1::events::EventInviteeProfile,
+            opentalk_types::api::v1::events::EventOrException,
+            opentalk_types::api::v1::events::EventResource,
+            opentalk_types::api::v1::events::EventRoomInfo,
+            opentalk_types::api::v1::events::EventStatus,
+            opentalk_types::api::v1::events::EventType,
+            opentalk_types::api::v1::events::GetEventInstanceResponseBody,
+            opentalk_types::api::v1::events::GetEventInstancesResponseBody,
+            opentalk_types::api::v1::events::InstanceId,
+            opentalk_types::api::v1::events::PatchEmailInviteBody,
+            opentalk_types::api::v1::events::PatchEventBody,
+            opentalk_types::api::v1::events::PatchEventInstanceBody,
+            opentalk_types::api::v1::events::PatchInviteBody,
+            opentalk_types::api::v1::events::PostEventInviteBody,
+            opentalk_types::api::v1::events::PostEventsBody,
+            opentalk_types::api::v1::events::PublicInviteUserProfile,
+            opentalk_types::api::v1::events::UserInvite,
+            opentalk_types::api::v1::invites::CodeVerified,
+            opentalk_types::api::v1::invites::GetRoomsInvitesResponseBody,
+            opentalk_types::api::v1::invites::InviteResource,
+            opentalk_types::api::v1::invites::PostInviteRequestBody,
+            opentalk_types::api::v1::invites::PostInviteVerifyRequestBody,
+            opentalk_types::api::v1::invites::PostInviteVerifyRequestBody,
+            opentalk_types::api::v1::invites::PutInviteRequestBody,
+            opentalk_types::api::v1::order::AssetSorting,
+            opentalk_types::api::v1::order::Ordering,
+            opentalk_types::api::v1::rooms::GetRoomsResponse,
+            opentalk_types::api::v1::rooms::PatchRoomsRequestBody,
+            opentalk_types::api::v1::rooms::PostRoomsRequestBody,
+            opentalk_types::api::v1::rooms::PostRoomsStartInvitedRequestBody,
+            opentalk_types::api::v1::rooms::PostRoomsStartRequestBody,
+            opentalk_types::api::v1::rooms::RoomResource,
+            opentalk_types::api::v1::rooms::RoomsStartResponse,
+            opentalk_types::api::v1::rooms::sip_config_resource::PutSipConfig,
+            opentalk_types::api::v1::rooms::sip_config_resource::SipConfigResource,
+            opentalk_types::api::v1::rooms::streaming_targets::ChangeRoomStreamingTargetRequest,
+            opentalk_types::api::v1::rooms::streaming_targets::ChangeRoomStreamingTargetResponse,
+            opentalk_types::api::v1::rooms::streaming_targets::GetRoomStreamingTargetResponse,
+            opentalk_types::api::v1::rooms::streaming_targets::GetRoomStreamingTargetsResponse,
+            opentalk_types::api::v1::rooms::streaming_targets::PostRoomStreamingTargetRequest,
+            opentalk_types::api::v1::rooms::streaming_targets::PostRoomStreamingTargetResponse,
+            opentalk_types::api::v1::services::ServiceStartResponse,
+            opentalk_types::api::v1::streaming_targets::UpdateStreamingTargetKind,
+            opentalk_types::api::v1::streaming_targets::UpdateStreamingTarget,
+            opentalk_types::api::v1::services::StartCallInRequestBody,
+            opentalk_types::api::v1::services::StartRecordingRequestBody,
+            opentalk_types::api::v1::turn::GetTurnServersResponse,
+            opentalk_types::api::v1::turn::IceServer,
+            opentalk_types::api::v1::turn::Stun,
+            opentalk_types::api::v1::turn::Turn,
+            opentalk_types::api::v1::users::GetEventInvitesPendingResponse,
+            opentalk_types::api::v1::users::GetFindResponse,
+            opentalk_types::api::v1::users::GetFindResponseItem,
+            opentalk_types::api::v1::users::GetUserAssetsResponse,
+            opentalk_types::api::v1::users::PatchMeBody,
+            opentalk_types::api::v1::users::PrivateUserProfile,
+            opentalk_types::api::v1::users::PublicUserProfile,
+            opentalk_types::api::v1::users::UnregisteredUser,
+            opentalk_types::api::v1::users::UserAssetResource,
+            opentalk_types::common::email::EmailAddress,
+            opentalk_types::common::shared_folder::SharedFolder,
+            opentalk_types::common::shared_folder::SharedFolderAccess,
+            opentalk_types::common::streaming::RoomStreamingTarget,
+            opentalk_types::common::streaming::StreamingTarget,
+            opentalk_types::common::streaming::StreamingTargetKind,
+            opentalk_types::common::tariff::TariffModuleResource,
+            opentalk_types::common::tariff::TariffResource,
+            opentalk_types::core::AssetId,
+            opentalk_types::core::BreakoutRoomId,
+            opentalk_types::core::CallInId,
+            opentalk_types::core::CallInPassword,
+            opentalk_types::core::DateTimeTz,
+            opentalk_types::core::EmailInviteRole,
+            opentalk_types::core::EventId,
+            opentalk_types::core::EventInviteStatus,
+            opentalk_types::core::FileExtension,
+            opentalk_types::core::InviteCodeId,
+            opentalk_types::core::InviteRole,
+            opentalk_types::core::NumericId,
+            opentalk_types::core::RecurrencePattern,
+            opentalk_types::core::RecurrenceRule,
+            opentalk_types::core::ResumptionToken,
+            opentalk_types::core::RoomId,
+            opentalk_types::core::RoomPassword,
+            opentalk_types::core::StreamingKey,
+            opentalk_types::core::StreamingTargetId,
+            opentalk_types::core::TariffId,
+            opentalk_types::core::TariffStatus,
+            opentalk_types::core::TicketToken,
+            opentalk_types::core::TimeZone,
+            opentalk_types::core::Timestamp,
+            opentalk_types::core::UserId,
+        ),
+        responses(
+            crate::api::responses::BadRequest,
+            crate::api::responses::BinaryData,
+            crate::api::responses::InternalServerError,
+            crate::api::responses::Unauthorized,
+            crate::api::responses::Forbidden,
+            crate::api::responses::NotFound,
+        ),
+    ),
+    modifiers(&SecurityAddon),
+)]
+struct ApiDoc;
+
+struct SecurityAddon;
+
+impl utoipa::Modify for SecurityAddon {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        use utoipa::openapi::security::{Http, HttpAuthScheme, SecurityScheme};
+
+        let components = openapi.components.as_mut().unwrap();
+        components.add_security_scheme(
+            "BearerAuth",
+            SecurityScheme::Http(Http::new(HttpAuthScheme::Bearer)),
+        );
+        // TODO: this is strictly speaking no bearer authentication, so we
+        // need to find out whether we can properly describe what we implemented with
+        // the `Authorization: InviteCode …` header.
+        // Supported authentication schemes:
+        // https://www.iana.org/assignments/http-authschemes/http-authschemes.xhtml
+        components.add_security_scheme(
+            "InviteCode",
+            SecurityScheme::Http(Http::new(HttpAuthScheme::Bearer)),
+        );
+    }
+}
+
 fn v1_scope(
     settings: SharedSettings,
     db: Data<Db>,
@@ -618,7 +909,10 @@ fn v1_scope(
     acl: kustos::actix_web::KustosService,
 ) -> Scope {
     // the latest version contains the root services
-    web::scope("/v1")
+
+    let scope = web::scope("/v1");
+
+    scope
         .service(api::v1::auth::post_login)
         .service(api::v1::auth::get_login)
         .service(api::v1::rooms::start_invited)

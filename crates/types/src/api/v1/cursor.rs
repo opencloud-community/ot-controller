@@ -7,11 +7,33 @@ use derive_more::{AsRef, Deref, DerefMut};
 #[allow(unused_imports)]
 use crate::imports::*;
 
+pub trait CursorData: std::fmt::Debug {
+    const SCHEMA_CURSOR_TYPE_NAME: &'static str;
+}
+
 /// Opaque token which represents T as a base64 string (where T is encoded using bincode)
 ///
 /// Used for cursor based pagination
 #[derive(Deref, DerefMut, AsRef, Debug, Copy, Clone, Eq, PartialEq)]
-pub struct Cursor<T>(pub T);
+pub struct Cursor<T: CursorData>(pub T);
+
+#[cfg(feature = "utoipa")]
+impl<'__s, T: CursorData> utoipa::ToSchema<'__s> for Cursor<T> {
+    fn schema() -> (
+        &'__s str,
+        utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>,
+    ) {
+        (
+            T::SCHEMA_CURSOR_TYPE_NAME,
+            utoipa::openapi::ObjectBuilder::new()
+                .schema_type(utoipa::openapi::SchemaType::String)
+                .description(Some(
+                    "An encoded cursor pointing to a position in a series of elements",
+                ))
+                .into(),
+        )
+    }
+}
 
 #[cfg(feature = "serde")]
 mod serde_impls {
@@ -21,7 +43,7 @@ mod serde_impls {
 
     use super::*;
 
-    impl<T> Cursor<T>
+    impl<T: CursorData> Cursor<T>
     where
         T: Serialize,
     {
@@ -31,7 +53,7 @@ mod serde_impls {
         }
     }
 
-    impl<T> Serialize for Cursor<T>
+    impl<T: CursorData> Serialize for Cursor<T>
     where
         T: Serialize,
     {
@@ -43,7 +65,7 @@ mod serde_impls {
         }
     }
 
-    impl<'de, T> Deserialize<'de> for Cursor<T>
+    impl<'de, T: CursorData> Deserialize<'de> for Cursor<T>
     where
         T: DeserializeOwned,
     {
@@ -55,9 +77,9 @@ mod serde_impls {
         }
     }
 
-    struct CursorVisitor<T>(PhantomData<T>);
+    struct CursorVisitor<T: CursorData>(PhantomData<T>);
 
-    impl<'de, T> de::Visitor<'de> for CursorVisitor<T>
+    impl<'de, T: CursorData> de::Visitor<'de> for CursorVisitor<T>
     where
         T: DeserializeOwned,
     {

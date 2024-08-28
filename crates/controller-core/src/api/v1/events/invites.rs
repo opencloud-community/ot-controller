@@ -11,7 +11,6 @@ use actix_web::{
 };
 use chrono::Utc;
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
-use email_address::EmailAddress;
 use kustos::{policies_builder::PoliciesBuilder, Authz};
 use opentalk_controller_settings::Settings;
 use opentalk_database::Db;
@@ -35,30 +34,32 @@ use opentalk_types::{
         v1::{
             events::{
                 invites::GetEventsInvitesQuery, DeleteEmailInviteBody, DeleteEventInvitePath,
-                EmailInvite, PatchEmailInviteBody, PatchInviteBody, PostEventInviteBody,
-                PostEventInviteQuery, UserInvite,
+                EmailInvite, EventOptionsQuery, PatchEmailInviteBody, PatchInviteBody,
+                PostEventInviteBody, PostEventInviteQuery, UserInvite,
             },
             pagination::PagePaginationQuery,
             users::GetEventInvitesPendingResponse,
         },
     },
-    common::{shared_folder::SharedFolder, streaming::RoomStreamingTarget},
+    common::{email::EmailAddress, shared_folder::SharedFolder, streaming::RoomStreamingTarget},
     core::{EmailInviteRole, EventId, EventInviteStatus, RoomId, UserId},
-    strings::ToLowerCase,
 };
 use serde::Deserialize;
 use snafu::Report;
 
 use super::{ApiResponse, DefaultApiResult};
 use crate::{
-    api::v1::{
-        events::{
-            enrich_from_keycloak, enrich_invitees_from_keycloak,
-            get_invited_mail_recipients_for_event, get_tenant_filter, EventInvitee,
-            EventInviteeExt, EventPoliciesBuilderExt,
+    api::{
+        responses::{BadRequest, Forbidden, InternalServerError, NotFound, Unauthorized},
+        v1::{
+            events::{
+                enrich_from_keycloak, enrich_invitees_from_keycloak,
+                get_invited_mail_recipients_for_event, get_tenant_filter, EventInvitee,
+                EventInviteeExt, EventPoliciesBuilderExt,
+            },
+            response::{Created, NoContent},
+            rooms::RoomsPoliciesBuilderExt,
         },
-        response::{Created, NoContent},
-        rooms::RoomsPoliciesBuilderExt,
     },
     services::{
         ExternalMailRecipient, MailRecipient, MailService, RegisteredMailRecipient,
@@ -67,9 +68,47 @@ use crate::{
     settings::SharedSettingsActix,
 };
 
-/// API Endpoint `GET /events/{event_id}/invites`
+/// Get the invites for an event
 ///
-/// Get all invites for an event
+/// Returns the list of event invites
+#[utoipa::path(
+    params(
+        GetEventsInvitesQuery,
+        ("event_id" = EventId, description = "The id of the event"),
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Event instance successfully returned",
+            body = GetEventInstanceResponseBody,
+            headers(
+                (
+                    "link" = CursorLink,
+                    description = "Links for paging through the results"
+                ),
+            ),
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/events/{event_id}/invites")]
 pub async fn get_invites_for_event(
     settings: SharedSettingsActix,
@@ -128,9 +167,46 @@ pub async fn get_invites_for_event(
     ))
 }
 
-/// API Endpoint `POST /events/{event_id}/invites`
+/// Create a new invite to an event
 ///
-/// Invite a user to an event
+/// Create a new invite to an event with the fields sent in the body.
+#[utoipa::path(
+    params(
+        PostEventInviteQuery,
+        ("event_id" = EventId, description = "The id of the event"),
+    ),
+    request_body = PostEventInviteBody,
+    responses(
+        (
+            status = StatusCode::CREATED,
+            description = "The user or email has been invited to the event",
+            body = Vec<EventResource>,
+        ),
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "The user or email was already invited before, or the user is the creator of the event, in which case they have been invited implicitly",
+        ),
+        (
+            status = StatusCode::BAD_REQUEST,
+            response = BadRequest,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[post("/events/{event_id}/invites")]
 #[allow(clippy::too_many_arguments)]
 pub async fn create_invite_to_event(
@@ -546,9 +622,42 @@ async fn create_invite_to_non_matching_email(
     }
 }
 
-/// API Endpoint `PATCH /events/{event_id}/invites/{user_id}`
+/// Patch an event invite with the provided fields
 ///
-/// Update the role for an invited user
+/// Fields that are not provided in the request body will remain unchanged.
+#[utoipa::path(
+    request_body = PatchInviteBody,
+    params(
+        ("event_id" = EventId, description = "The id of the event to be modified"),
+        ("user_id" = UserId, description = "The id of the invited user to be modified"),
+    ),
+    responses(
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "Invite was successfully updated",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            description = r"The requesting user does not have the required permissions to update the invite.
+              Only the creator of an event can update the invites.",
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[patch("/events/{event_id}/invites/{user_id}")]
 pub async fn update_invite_to_event(
     db: Data<Db>,
@@ -576,9 +685,41 @@ pub async fn update_invite_to_event(
     Ok(NoContent)
 }
 
-/// API Endpoint `PATCH /events/{event_id}/invites/email`
+/// Patch an event email invite with the provided fields
 ///
-/// Update the role for an invited email user
+/// Fields that are not provided in the request body will remain unchanged.
+#[utoipa::path(
+    request_body = PatchEmailInviteBody,
+    params(
+        ("event_id" = EventId, description = "The id of the event to be modified"),
+    ),
+    responses(
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "Invite was successfully updated",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            description = r"The requesting user does not have the required permissions to update the invite.
+              Only the creator of an event can update the invites.",
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[patch("/events/{event_id}/invites/email")]
 pub async fn update_email_invite_to_event(
     db: Data<Db>,
@@ -624,9 +765,40 @@ pub struct DeleteEventInviteQuery {
     suppress_email_notification: bool,
 }
 
-/// API Endpoint `DELETE /events/{event_id}/invites/{user_id}`
+/// Delete an invite from an event
 ///
-/// Delete/Withdraw an event invitation made to a user
+/// This will uninvite the user from the event
+#[utoipa::path(
+    params(
+        DeleteEventInvitePath,
+        EventOptionsQuery,
+    ),
+    responses(
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "The user event invitation has been deleted",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[delete("/events/{event_id}/invites/{user_id}")]
 #[allow(clippy::too_many_arguments)]
 pub async fn delete_invite_to_event(
@@ -637,7 +809,7 @@ pub async fn delete_invite_to_event(
     current_user: ReqData<User>,
     authz: Data<Authz>,
     path_params: Path<DeleteEventInvitePath>,
-    query: Query<crate::api::v1::events::EventOptionsQuery>,
+    query: Query<EventOptionsQuery>,
     mail_service: Data<MailService>,
 ) -> Result<NoContent, ApiError> {
     let settings = settings.load_full();
@@ -721,11 +893,43 @@ pub async fn delete_invite_to_event(
     Ok(NoContent)
 }
 
-/// API Endpoint `DELETE /events/{event_id}/invites/email`
+/// Delete an invite from an event
 ///
 /// Delete/Withdraw an event invitation using the email address as the identifier.
 ///
 /// This will also withdraw invites from registered users if the provided email address matches theirs.
+#[utoipa::path(
+    request_body = DeleteEmailInviteBody,
+    params(
+        ("event_id" = EventId, description = "The id of the event"),
+        EventOptionsQuery,
+    ),
+    responses(
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "The email event invitation has been deleted",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[delete("/events/{event_id}/invites/email")]
 #[allow(clippy::too_many_arguments)]
 pub async fn delete_email_invite_to_event(
@@ -736,7 +940,7 @@ pub async fn delete_email_invite_to_event(
     current_user: ReqData<User>,
     authz: Data<Authz>,
     path: Path<EventId>,
-    query: Query<crate::api::v1::events::EventOptionsQuery>,
+    query: Query<EventOptionsQuery>,
     mail_service: Data<MailService>,
     body: Json<DeleteEmailInviteBody>,
 ) -> Result<NoContent, ApiError> {
@@ -906,7 +1110,33 @@ async fn notify_invitees_about_uninvite(
     }
 }
 
-/// API Endpoint `GET /users/me/pending_invites`
+/// Get information about pending invites
+///
+/// Returns information about pending invites for the current user
+#[utoipa::path(
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Information about pending invites is returned",
+            body = GetEventInvitesPendingResponse,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/users/me/pending_invites")]
 pub async fn get_event_invites_pending(
     db: Data<Db>,
@@ -921,9 +1151,39 @@ pub async fn get_event_invites_pending(
     }))
 }
 
-/// API Endpoint `PATCH /events/{event_id}/invite`
-///
 /// Accept an invite to an event
+///
+/// No content required, the request will accept the invitation.
+#[utoipa::path(
+    params(
+        ("event_id" = EventId, description = "The id of the event"),
+    ),
+    responses(
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "Invitation was accepted",
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[patch("/events/{event_id}/invite")]
 pub async fn accept_event_invite(
     db: Data<Db>,
@@ -946,9 +1206,39 @@ pub async fn accept_event_invite(
     Ok(NoContent)
 }
 
-/// API Endpoint `DELETE /events/{event_id}/invite`
-///
 /// Decline an invite to an event
+///
+/// No content required, the request will accept the invitation.
+#[utoipa::path(
+    params(
+        ("event_id" = EventId, description = "The id of the event"),
+    ),
+    responses(
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "Invitation was declined",
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[delete("/events/{event_id}/invite")]
 pub async fn decline_event_invite(
     db: Data<Db>,

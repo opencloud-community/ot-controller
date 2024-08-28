@@ -6,13 +6,17 @@
 
 use url::Url;
 
-use crate::core::{EventId, InviteCodeId, RoomId};
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::{
+    core::{EventId, InviteCodeId, RoomId},
+    utils::ExampleData,
+};
 
 /// Information about an event
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct EventInfo {
     /// The id of the event
     pub id: EventId,
@@ -37,9 +41,26 @@ impl EventInfo {
     }
 }
 
+impl ExampleData for EventInfo {
+    fn example_data() -> Self {
+        Self {
+            id: EventId::example_data(),
+            room_id: RoomId::example_data(),
+            title: "Weekly Team Event".to_string(),
+            is_adhoc: false,
+            meeting_details: Some(MeetingDetails::example_data()),
+        }
+    }
+}
+
 /// Call-in info for an event
 #[derive(Debug, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(CallIn::example_data()))
+)]
 pub struct CallIn {
     /// SIP Call-In phone number which must be used to reach the room
     pub tel: String,
@@ -52,9 +73,24 @@ pub struct CallIn {
     pub password: String,
 }
 
+impl ExampleData for CallIn {
+    fn example_data() -> Self {
+        Self {
+            tel: "+555-123-456-789".to_string(),
+            id: "1234567890".to_string(),
+            password: "0987654321".to_string(),
+        }
+    }
+}
+
 /// Streaming link for an event
 #[derive(Debug, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(StreamingLink::example_data()))
+)]
 pub struct StreamingLink {
     /// The name of the streaming link
     pub name: String,
@@ -63,18 +99,60 @@ pub struct StreamingLink {
     pub url: Url,
 }
 
+impl ExampleData for StreamingLink {
+    fn example_data() -> Self {
+        Self {
+            name: "My OwnCast Stream".to_string(),
+            url: "https://owncast.example.com/mystream".parse().unwrap(),
+        }
+    }
+}
+
 /// Details about an event
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(MeetingDetails::example_data()))
+)]
 pub struct MeetingDetails {
     /// The invite code id of the event
-    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    // Field is non-required already, utoipa adds a `nullable: true` entry
+    // by default which creates a false positive in the spectral linter when
+    // combined with example data.
+    #[cfg_attr(feature = "utoipa", schema(nullable = false))]
     pub invite_code_id: Option<InviteCodeId>,
 
     /// The call-in information for the event
-    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    // Field is non-required already, utoipa adds a `nullable: true` entry
+    // by default which creates a false positive in the spectral linter when
+    // combined with example data.
+    #[cfg_attr(feature = "utoipa", schema(nullable = false))]
     pub call_in: Option<CallIn>,
 
     /// The links for accessing the stream
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Vec::is_empty")
+    )]
     pub streaming_links: Vec<StreamingLink>,
+}
+
+impl ExampleData for MeetingDetails {
+    fn example_data() -> Self {
+        Self {
+            invite_code_id: Some(InviteCodeId::example_data()),
+            call_in: Some(CallIn::example_data()),
+            streaming_links: vec![StreamingLink::example_data()],
+        }
+    }
 }

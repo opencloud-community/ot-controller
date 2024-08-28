@@ -29,6 +29,7 @@ use opentalk_types::{
 
 use super::{events::EventPoliciesBuilderExt, rooms::RoomsPoliciesBuilderExt};
 use crate::{
+    api::responses::InternalServerError,
     oidc::{IdTokenInfo, OidcContext, VerifyError},
     settings::SharedSettingsActix,
 };
@@ -36,12 +37,47 @@ use crate::{
 mod create_user;
 mod update_user;
 
-/// API Endpoint *POST /auth/login*
+/// The login endpoint
 ///
-/// Verifies the `id_token` inside the provided [`Json<Login>`] body. When the token is valid, a
-/// database lookup for the requesting user is issued, if no user is found, a new user will be created.
-///
-/// Returns a [`PostLoginResponse`] containing the users permissions.
+/// Attempt to authenticate with a provided ID token. The ID token can be
+/// received from an OIDC provider and contains information about the requesting
+/// user as well as an expiration timestamp. When a valid token with an unknown user
+/// is provided, a new user will be created in the database.
+#[utoipa::path(
+    request_body = PostLoginRequestBody,
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Login successful, answer contains a list of permissions",
+            body = PostLoginResponse,
+            example = json!({"permissions": []})
+        ),
+        (
+            status = StatusCode::BAD_REQUEST,
+            description = "The provided ID token is malformed or contains invalid claims",
+            body = ErrorBody,
+            example = json!(
+                ApiError::bad_request()
+                    .with_code("invalid_claims")
+                    .with_message("some required attributes are missing or malformed")
+                    .body
+            ),
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            description = "The provided ID token is invalid",
+            body = ErrorBody,
+            example = json!(
+                ApiError::unauthorized().with_www_authenticate(AuthenticationError::InvalidIdToken).body
+            ),
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(),
+)]
 #[post("/auth/login")]
 pub async fn post_login(
     settings: SharedSettingsActix,
@@ -198,9 +234,24 @@ fn map_tariff_status_name(mapping: &TariffStatusMapping, name: &String) -> Tarif
     }
 }
 
-/// API Endpoint *GET /auth/login*
+/// Get the configured OIDC provider
 ///
-/// Returns information about the OIDC provider
+/// Returns the relevant information for a frontend to authenticate against the
+/// configured OIDC provider for the OpenTalk service.
+#[utoipa::path(
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "Get information about the OIDC provider",
+            body = GetLoginResponse,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(),
+)]
 #[get("/auth/login")]
 pub async fn get_login(oidc_ctx: Data<OidcContext>) -> Json<GetLoginResponse> {
     let provider = OidcProvider {

@@ -11,5 +11,7 @@
 mod util;
 #[macro_use]
 pub mod signaling;
+pub mod headers;
+pub mod responses;
 pub mod upload;
 pub mod v1;

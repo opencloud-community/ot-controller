@@ -22,7 +22,7 @@ use opentalk_db_storage::{invites::Invite, users::User};
 use opentalk_types::{
     api::{
         error::{ApiError, AuthenticationError},
-        v1::turn::{GetResponse, IceServer, Stun, Turn},
+        v1::turn::{GetTurnServersResponse, IceServer, Stun, Turn},
     },
     core::InviteCodeId,
 };
@@ -35,15 +35,45 @@ use ring::hmac;
 use snafu::Report;
 
 use crate::{
-    api::v1::{middleware::user_auth::check_access_token, response::NoContent},
+    api::{
+        responses::{InternalServerError, Unauthorized},
+        v1::{middleware::user_auth::check_access_token, response::NoContent},
+    },
     caches::Caches,
     oidc::OidcContext,
     settings::{Settings, SharedSettingsActix, TurnServer},
 };
 
-/// API Endpoint *GET /turn*
+/// Get a TURN server and corresponding credentials
 ///
-/// Returns a list of ['Turn'] with HMAC-SHA1 credentials following <https://datatracker.ietf.org/doc/html/draft-uberti-behave-turn-rest-00>
+/// The returned TURN server can be used with the credentials to circumvent
+/// NAT restrictions.
+#[utoipa::path(
+    operation_id = "get_turn",
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "TURN server and corresponding credentials",
+            body = GetTurnServersResponse,
+        ),
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "No TURN servers have been configured",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+        ("InviteCode" = []),
+    ),
+)]
 #[get("/turn")]
 pub async fn get(
     settings: SharedSettingsActix,
@@ -51,7 +81,7 @@ pub async fn get(
     caches: Data<Caches>,
     oidc_ctx: Data<OidcContext>,
     req: HttpRequest,
-) -> Result<AWEither<Json<GetResponse>, NoContent>, ApiError> {
+) -> Result<AWEither<Json<GetTurnServersResponse>, NoContent>, ApiError> {
     let settings: &ArcSwap<Settings> = &settings;
     let settings = settings.load();
 
@@ -97,7 +127,7 @@ pub async fn get(
         return Ok(AWEither::Right(NoContent {}));
     }
 
-    Ok(AWEither::Left(Json(GetResponse(ice_servers))))
+    Ok(AWEither::Left(Json(GetTurnServersResponse(ice_servers))))
 }
 
 fn create_credentials<T: Rng + CryptoRng>(

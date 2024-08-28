@@ -9,6 +9,7 @@ use uuid::Uuid;
 
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::utils::ExampleData;
 
 /// An invite code
 #[derive(
@@ -21,6 +22,7 @@ use crate::imports::*;
 )]
 #[cfg_attr(feature = "kustos", derive(KustosPrefix), kustos_prefix("/invites/"))]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(example = json!(InviteCodeId::example_data().to_string())))]
 pub struct InviteCodeId(Uuid);
 
 impl InviteCodeId {
@@ -38,6 +40,12 @@ impl InviteCodeId {
     #[cfg(feature = "rand")]
     pub fn generate() -> Self {
         Self(Uuid::new_v4())
+    }
+}
+
+impl ExampleData for InviteCodeId {
+    fn example_data() -> Self {
+        InviteCodeId::from_u128(0xdeadbeef)
     }
 }
 

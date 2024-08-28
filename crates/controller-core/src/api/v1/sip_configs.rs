@@ -23,11 +23,47 @@ use opentalk_types::{
 use validator::Validate;
 
 use super::util::require_feature;
-use crate::settings::SharedSettingsActix;
+use crate::{
+    api::responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
+    settings::SharedSettingsActix,
+};
 
-/// API Endpoint *GET /rooms/{room_id}/sip*
-///
 /// Get the sip config for the specified room.
+///
+/// Returns the sip config if available for the room, otherwise `404 NOT_FOUND`
+/// is returned.
+#[utoipa::path(
+    operation_id = "get_room_sip",
+    params(
+        ("room_id" = RoomId, description = "The id of the room"),
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "The SIP config is successfully returned",
+            body = SipConfigResource,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[get("/rooms/{room_id}/sip")]
 pub async fn get(
     settings: SharedSettingsActix,
@@ -53,12 +89,49 @@ pub async fn get(
     }))
 }
 
-/// API Endpoint *PUT /rooms/{room_id}/sip*
+/// Modify the sip configuration of a room. A new sip configuration is created
+/// if none was set before.
 ///
-/// Modifies a sip config with the provided [`PutSipConfig`]. A new sip config is created
-/// when no config was set.
-///
-/// Returns the new modified sip config.
+/// Returns the new modified sip configuration.
+
+/// Get the sip config for the specified room.
+#[utoipa::path(
+    params(
+        ("room_id" = RoomId, description = "The id of the room"),
+    ),
+    request_body = PutSipConfig,
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "The SIP configuration was updated",
+            body = SipConfigResource,
+        ),
+        (
+            status = StatusCode::CREATED,
+            description = "A new SIP configuration was created",
+            body = SipConfigResource,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[put("/rooms/{room_id}/sip")]
 pub async fn put(
     settings: SharedSettingsActix,
@@ -125,9 +198,40 @@ pub async fn put(
     Ok(response.json(sip_config))
 }
 
-/// API Endpoint *DELETE /rooms/{room_id}/sip*
+/// Delete the SIP configuration of a room.
 ///
-/// Deletes the sip config of the provided room.
+/// This removes the dial-in functionality from the room.
+#[utoipa::path(
+    operation_id = "delete_room_sip",
+    params(
+        ("room_id" = RoomId, description = "The id of the room"),
+    ),
+    responses(
+        (
+            status = StatusCode::NO_CONTENT,
+            description = "The SIP configuration was successfully deleted",
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
 #[delete("/rooms/{room_id}/sip")]
 pub async fn delete(
     settings: SharedSettingsActix,

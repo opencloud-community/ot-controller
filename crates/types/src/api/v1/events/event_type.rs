@@ -4,6 +4,7 @@
 
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::utils::ExampleData;
 
 /// Type of event resource.
 ///
@@ -14,6 +15,11 @@ use crate::imports::*;
     derive(Serialize, Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(EventType::example_data()))
+)]
 pub enum EventType {
     /// Single event
     Single,
@@ -23,4 +29,10 @@ pub enum EventType {
     Instance,
     /// Event exception
     Exception,
+}
+
+impl ExampleData for EventType {
+    fn example_data() -> Self {
+        Self::Single
+    }
 }

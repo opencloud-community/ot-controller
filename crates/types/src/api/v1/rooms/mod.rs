@@ -7,6 +7,7 @@
 mod delete_room_query;
 mod get_room_event_request;
 mod get_room_event_response;
+mod get_rooms_response;
 mod patch_rooms_request_body;
 mod post_rooms_request_body;
 mod post_rooms_start_invited_request;
@@ -23,6 +24,7 @@ pub mod streaming_targets;
 pub use delete_room_query::DeleteRoomQuery;
 pub use get_room_event_request::GetRoomEventRequest;
 pub use get_room_event_response::GetRoomEventResponse;
+pub use get_rooms_response::GetRoomsResponse;
 pub use patch_rooms_request_body::PatchRoomsRequestBody;
 pub use post_rooms_request_body::PostRoomsRequestBody;
 pub use post_rooms_start_invited_request::PostRoomsStartInvitedRequest;

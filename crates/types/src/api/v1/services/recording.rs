@@ -9,7 +9,8 @@ use crate::imports::*;
 /// Response for the `POST /services/recording/start` endpoint
 #[derive(Debug, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct StartBody {
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct StartRecordingRequestBody {
     /// The room id
     pub room_id: RoomId,
 

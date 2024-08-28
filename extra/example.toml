@@ -216,6 +216,10 @@ urls = ["localhost:2379"]
 # Prohibit users from changing the display name (guests are always allowed to change it)
 #disallow_custom_display_name = false
 
+# Disable the OpenAPI endpoint under `/v1/openapi.json` and the corresponding
+# swagger endpoint under `/swagger`.
+#disable_openapi = false
+
 # Configuration for the /metrics HTTP endpoint
 #[metrics]
 # Allowlist for the /metrics endpoint
