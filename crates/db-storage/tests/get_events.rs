@@ -11,9 +11,12 @@ use opentalk_db_storage::{
     tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId},
     users::User,
 };
-use opentalk_types::core::{InviteRole, UserId};
+use opentalk_types::core::UserId;
 use opentalk_types_common::{
-    events::{invites::EventInviteStatus, EventId},
+    events::{
+        invites::{EventInviteStatus, InviteRole},
+        EventId,
+    },
     time::TimeZone,
 };
 use pretty_assertions::assert_eq;

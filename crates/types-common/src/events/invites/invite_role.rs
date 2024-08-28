@@ -2,11 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_common::{events::invites::EmailInviteRole, sql_enum, utils::ExampleData};
-
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::signaling::Role;
+use crate::{events::invites::EmailInviteRole, sql_enum, utils::ExampleData};
 
 sql_enum!(
     feature_gated:
@@ -30,15 +28,6 @@ sql_enum!(
 impl Default for InviteRole {
     fn default() -> Self {
         Self::User
-    }
-}
-
-impl From<InviteRole> for Role {
-    fn from(value: InviteRole) -> Self {
-        match value {
-            InviteRole::User => Self::User,
-            InviteRole::Moderator => Self::Moderator,
-        }
     }
 }
 

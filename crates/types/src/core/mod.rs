@@ -7,7 +7,6 @@
 //! All core types are simple types (e.g. newtypes of primitive or other simple types),
 //! and typically used by other types in this crate.
 
-mod invite_role;
 mod module_resource_id;
 pub mod one_or_many_btree_set;
 pub mod one_or_many_vec;
@@ -28,7 +27,6 @@ mod ticket_token;
 mod timestamp;
 mod user_id;
 
-pub use invite_role::{InviteRole, InviteRoleType};
 pub use module_resource_id::ModuleResourceId;
 #[cfg(feature = "serde")]
 pub use one_or_many_btree_set::one_or_many_btree_set_option;

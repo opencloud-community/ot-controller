@@ -752,9 +752,9 @@ mod tests {
     use opentalk_test_util::assert_eq_json;
     use opentalk_types::{
         api::v1::users::PublicUserProfile,
-        core::{InviteRole, RoomId, Timestamp, UserId},
+        core::{RoomId, Timestamp, UserId},
     };
-    use opentalk_types_common::time::TimeZone;
+    use opentalk_types_common::{events::invites::InviteRole, time::TimeZone};
 
     use super::*;
     use crate::api::v1::events::{EventInviteeProfile, PublicInviteUserProfile};

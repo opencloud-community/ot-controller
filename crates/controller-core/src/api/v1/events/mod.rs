@@ -2183,7 +2183,8 @@ mod tests {
     use std::time::SystemTime;
 
     use opentalk_test_util::assert_eq_json;
-    use opentalk_types::core::{InviteRole, RoomId, UserId};
+    use opentalk_types::core::{RoomId, UserId};
+    use opentalk_types_common::events::invites::InviteRole;
 
     use super::*;
 
