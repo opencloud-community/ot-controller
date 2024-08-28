@@ -32,7 +32,7 @@ fi
 
 
 if FD_CMD=$(command -v fdfind || command -v fd); then
-  "$FD_CMD" '.rs$' --exec "$SELF_CMD" "{.}"
+  "$FD_CMD" '\.rs$' --exec "$SELF_CMD" "{.}"
 else
   echo "No \`fd\` or \`fdfind\` command found" >&2
   exit 255
