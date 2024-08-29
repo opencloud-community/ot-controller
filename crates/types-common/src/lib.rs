@@ -26,6 +26,7 @@
 pub mod assets;
 pub mod auth;
 pub mod call_in;
+pub mod collections;
 pub mod events;
 pub mod module_resources;
 pub mod rooms;

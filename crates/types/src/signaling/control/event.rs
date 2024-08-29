@@ -185,7 +185,10 @@ mod test {
     use super::*;
     use crate::{
         core::{RoomId, TariffId},
-        signaling::control::{self, room::CreatorInfo},
+        signaling::{
+            control::{self, room::CreatorInfo},
+            ModulePeerData,
+        },
     };
 
     fn participant_tariff() -> TariffResource {

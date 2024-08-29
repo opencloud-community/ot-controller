@@ -7,7 +7,6 @@
 //! All core types are simple types (e.g. newtypes of primitive or other simple types),
 //! and typically used by other types in this crate.
 
-pub mod one_or_many_btree_set;
 pub mod one_or_many_vec;
 mod participant_id;
 mod participation_kind;
@@ -26,9 +25,6 @@ mod ticket_token;
 mod timestamp;
 mod user_id;
 
-#[cfg(feature = "serde")]
-pub use one_or_many_btree_set::one_or_many_btree_set_option;
-pub use one_or_many_btree_set::OneOrManyBTreeSet;
 #[cfg(feature = "serde")]
 pub use one_or_many_vec::one_or_many_vec_option;
 pub use one_or_many_vec::OneOrManyVec;

@@ -70,7 +70,10 @@ pub enum ModerationCommand {
         /// An optional single participant to reset the raised hand for
         #[cfg_attr(
             feature = "serde",
-            serde(default, with = "crate::core::one_or_many_btree_set_option")
+            serde(
+                default,
+                with = "opentalk_types_common::collections::one_or_many_btree_set_option"
+            )
         )]
         target: Option<BTreeSet<ParticipantId>>,
     },

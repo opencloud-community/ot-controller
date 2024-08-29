@@ -114,7 +114,10 @@ pub struct RequestMute {
     /// Participants that shall be muted
     #[cfg_attr(
         feature = "serde",
-        serde(default, with = "crate::core::one_or_many_btree_set_option")
+        serde(
+            default,
+            with = "opentalk_types_common::collections::one_or_many_btree_set_option"
+        )
     )]
     pub targets: Option<BTreeSet<ParticipantId>>,
 
