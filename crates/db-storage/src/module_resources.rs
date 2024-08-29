@@ -10,7 +10,8 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use opentalk_database::{DatabaseError, DbConnection, Result};
-use opentalk_types::core::{ModuleResourceId, RoomId, TenantId, UserId};
+use opentalk_types::core::{RoomId, TenantId, UserId};
+use opentalk_types_common::module_resources::ModuleResourceId;
 use serde::Serialize;
 use serde_json::Value;
 use snafu::Snafu;
