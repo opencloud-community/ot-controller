@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🚀 New features
+
+- Send responses for moderator and presenter role commands ([#788](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/788))
+
 ## [0.18.0]
 
 ### 🚀 New features

@@ -406,10 +406,10 @@ Grant one or more participants the right to show their screen
 
 #### Fields
 
-| Field             | Type     | Required | Description                                         |
-| ----------------- | -------- | -------- | --------------------------------------------------- |
-| `action`          | `enum`   | yes      | Must be `"grant_presenter_role"`                    |
-| `participant_ids` | `string` | yes      | List of participant ids to grant the presenter role |
+| Field             | Type       | Required | Description                                         |
+| ----------------- | ---------- | -------- | --------------------------------------------------- |
+| `action`          | `enum`     | yes      | Must be `"grant_presenter_role"`                    |
+| `participant_ids` | `string[]` | yes      | List of participant ids to grant the presenter role |
 
 ##### Example
 
@@ -431,10 +431,10 @@ Revoke one or more participants the right to show their screen
 
 #### Fields
 
-| Field             | Type     | Required | Description                                            |
-| ----------------- | -------- | -------- | ------------------------------------------------------ |
-| `action`          | `enum`   | yes      | Must be `"revoke_presenter_role"`                      |
-| `participant_ids` | `string` | yes      | List of participant ids to revoke their presenter role |
+| Field             | Type       | Required | Description                                            |
+| ----------------- | ---------- | -------- | ------------------------------------------------------ |
+| `action`          | `enum`     | yes      | Must be `"revoke_presenter_role"`                      |
+| `participant_ids` | `string[]` | yes      | List of participant ids to revoke their presenter role |
 
 ##### Example
 
@@ -771,7 +771,7 @@ The SFU reports an update in the current status of the specified WebRTC session
 
 ### PresenterGranted
 
-Presenter rights have been granted
+Presenter rights have been granted to the current participant. This message is sent to the affected participants
 
 #### Fields
 
@@ -787,11 +787,37 @@ Presenter rights have been granted
 }
 ```
 
+<!-- EVENT PRESENTER ROLE GRANTED -->
+
+### PresenterRoleGranted
+
+Presenter rights have been granted to the specified participants. This message is sent to the
+participant who has executed the `grant_presenter_role`command
+
+#### Fields
+
+| Field              | Type       | Always | Description                                            |
+| ------------------ | ---------- | ------ | ------------------------------------------------------ |
+| `message`          | `enum`     | yes    | Is `"presenter_role_granted"`                          |
+| `participant_ids`  | `string[]` | yes    | List of participant ids to grant the presenter role to |
+
+##### Example
+
+```json
+{
+    "message": "presenter_role_granted",
+    "participant_ids": [
+        "84a2c872-94fb-4b41-aca7-13d784c92a72",
+        "2375602f-c74c-4935-9933-bfd67d4e8ae5"
+    ]
+}
+```
+
 <!-- EVENT PRESENTER REVOKED -->
 
 ### PresenterRevoked
 
-Presenter rights have been revoked
+Presenter rights have been revoked from the current participant. This message is sent to the affected participants
 
 #### Fields
 
@@ -804,6 +830,32 @@ Presenter rights have been revoked
 ```json
 {
     "message": "presenter_revoked",
+}
+```
+
+<!-- EVENT PRESENTER ROLE REVOKED -->
+
+### PresenterRoleRevoked
+
+Presenter rights have been revoked from the specified participants. This message is sent to the
+participant who has executed the `revoke_presenter_role`command
+
+#### Fields
+
+| Field              | Type       | Always | Description                                               |
+| ------------------ | ---------- | ------ | --------------------------------------------------------- |
+| `message`          | `enum`     | yes    | Is `"presenter_role_revoked"`                             |
+| `participant_ids`  | `string[]` | yes    | List of participant ids to revoke the presenter role from |
+
+##### Example
+
+```json
+{
+    "message": "presenter_role_revoked",
+    "participant_ids": [
+        "84a2c872-94fb-4b41-aca7-13d784c92a72",
+        "2375602f-c74c-4935-9933-bfd67d4e8ae5"
+    ]
 }
 ```
 

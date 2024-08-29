@@ -451,8 +451,10 @@ impl SignalingModule for Media {
 
                 ctx.exchange_publish(
                     control::exchange::current_room_all_participants(self.room),
-                    exchange::Message::PresenterGranted(selection),
-                )
+                    exchange::Message::PresenterGranted(selection.clone()),
+                );
+
+                ctx.ws_send(MediaEvent::PresenterRoleGranted(selection))
             }
             Event::WsMessage(MediaCommand::RevokePresenterRole(selection)) => {
                 if ctx.role() != Role::Moderator {
@@ -463,8 +465,10 @@ impl SignalingModule for Media {
 
                 ctx.exchange_publish(
                     control::exchange::current_room_all_participants(self.room),
-                    exchange::Message::PresenterRevoked(selection),
-                )
+                    exchange::Message::PresenterRevoked(selection.clone()),
+                );
+
+                ctx.ws_send(MediaEvent::PresenterRoleRevoked(selection))
             }
 
             Event::WsMessage(MediaCommand::UpdateSpeakingState(UpdateSpeakingState {

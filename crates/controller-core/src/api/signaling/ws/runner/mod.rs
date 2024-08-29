@@ -1110,6 +1110,14 @@ impl Runner {
             exchange::Message::SetModeratorStatus(grant),
         );
 
+        let message_to_initiator = if grant {
+            ControlEvent::ModeratorRoleGranted(TargetParticipant { target })
+        } else {
+            ControlEvent::ModeratorRoleRevoked(TargetParticipant { target })
+        };
+
+        self.ws_send_control(timestamp, message_to_initiator).await;
+
         Ok(())
     }
 
