@@ -15,14 +15,11 @@ mod test_common {
 
     use opentalk_janus_client::RoomId;
     use opentalk_signaling_core::SignalingRoomId;
-    use opentalk_types::{
-        core::Timestamp,
-        signaling::media::{
-            state::ForceMuteState, MediaSessionState, ParticipantMediaState,
-            ParticipantSpeakingState, SpeakingState,
-        },
+    use opentalk_types::signaling::media::{
+        state::ForceMuteState, MediaSessionState, ParticipantMediaState, ParticipantSpeakingState,
+        SpeakingState,
     };
-    use opentalk_types_common::rooms;
+    use opentalk_types_common::{rooms, time::Timestamp};
     use opentalk_types_signaling::ParticipantId;
     use pretty_assertions::assert_eq;
 

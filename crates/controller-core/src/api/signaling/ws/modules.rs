@@ -11,13 +11,14 @@ use opentalk_types::signaling::{
     control::{state::ControlState, Participant},
     ModuleData, Role,
 };
+use opentalk_types_common::time::Timestamp;
 use opentalk_types_signaling::ParticipantId;
 use serde_json::Value;
 use snafu::{Report, ResultExt, Snafu};
 
 use crate::{
     api::signaling::ws::{
-        runner::Builder, DestroyContext, ExchangePublish, ModuleContext, SignalingModule, Timestamp,
+        runner::Builder, DestroyContext, ExchangePublish, ModuleContext, SignalingModule,
     },
     Result,
 };

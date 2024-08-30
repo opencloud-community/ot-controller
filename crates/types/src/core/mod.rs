@@ -7,8 +7,6 @@
 //! All core types are simple types (e.g. newtypes of primitive or other simple types),
 //! and typically used by other types in this crate.
 
-mod timestamp;
 mod user_id;
 
-pub use timestamp::Timestamp;
 pub use user_id::UserId;

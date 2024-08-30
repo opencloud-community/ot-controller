@@ -6,10 +6,8 @@ use std::{marker::PhantomData, sync::Arc};
 
 use actix_http::ws::CloseCode;
 use futures::{stream::SelectAll, Stream};
-use opentalk_types::{
-    core::Timestamp,
-    signaling::{NamespacedEvent, Role},
-};
+use opentalk_types::signaling::{NamespacedEvent, Role};
+use opentalk_types_common::time::Timestamp;
 use serde::Serialize;
 
 use crate::{any_stream, AnyStream, SignalingMetrics, SignalingModule, VolatileStorage};

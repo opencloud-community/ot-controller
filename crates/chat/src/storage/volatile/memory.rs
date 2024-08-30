@@ -5,9 +5,10 @@
 use std::collections::{HashMap, HashSet};
 
 use opentalk_signaling_core::SignalingRoomId;
-use opentalk_types::{core::Timestamp, signaling::chat::state::StoredMessage};
+use opentalk_types::signaling::chat::state::StoredMessage;
 use opentalk_types_common::{
     rooms::RoomId,
+    time::Timestamp,
     users::{GroupId, GroupName},
 };
 use opentalk_types_signaling::ParticipantId;

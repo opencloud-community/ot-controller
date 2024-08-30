@@ -9,9 +9,10 @@ use opentalk_signaling_core::{
     control::storage::{ControlStorageParticipantAttributesRaw, ControlStorageParticipantSet},
     SignalingModuleError, SignalingRoomId,
 };
-use opentalk_types::{core::Timestamp, signaling::chat::state::StoredMessage};
+use opentalk_types::signaling::chat::state::StoredMessage;
 use opentalk_types_common::{
     rooms::RoomId,
+    time::Timestamp,
     users::{GroupId, GroupName},
 };
 use opentalk_types_signaling::ParticipantId;

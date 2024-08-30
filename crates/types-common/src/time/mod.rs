@@ -8,6 +8,7 @@ mod date_time_tz;
 mod recurrence_pattern;
 mod recurrence_rule;
 mod time_zone;
+mod timestamp;
 
 pub use date_time_tz::DateTimeTz;
 pub use recurrence_pattern::{
@@ -15,3 +16,4 @@ pub use recurrence_pattern::{
 };
 pub use recurrence_rule::{ParseRecurrenceRuleError, RecurrenceRule, RECURRENCE_RULE_MAX_LEN};
 pub use time_zone::TimeZone;
+pub use timestamp::Timestamp;

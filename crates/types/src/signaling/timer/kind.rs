@@ -2,7 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::core::Timestamp;
+use opentalk_types_common::time::Timestamp;
+
 #[allow(unused_imports)]
 use crate::imports::*;
 

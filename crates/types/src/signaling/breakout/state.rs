@@ -4,10 +4,9 @@
 
 //! Frontend data for `breakout` namespace
 
-use opentalk_types_common::rooms::BreakoutRoomId;
+use opentalk_types_common::{rooms::BreakoutRoomId, time::Timestamp};
 
 use super::{BreakoutRoom, ParticipantInOtherRoom};
-use crate::core::Timestamp;
 #[allow(unused_imports)]
 use crate::imports::*;
 

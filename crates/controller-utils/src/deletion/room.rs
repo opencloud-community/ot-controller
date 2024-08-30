@@ -172,7 +172,7 @@ impl Deleter for RoomDeleter {
     ) -> Result<(), Error> {
         let message = opentalk_types::signaling::NamespacedEvent {
             namespace: control::NAMESPACE,
-            timestamp: opentalk_types::core::Timestamp::now(),
+            timestamp: opentalk_types_common::time::Timestamp::now(),
             payload: control::exchange::Message::RoomDeleted,
         };
 

@@ -17,10 +17,8 @@ mod test_common {
     };
 
     use opentalk_signaling_core::SignalingRoomId;
-    use opentalk_types::{
-        core::Timestamp,
-        signaling::polls::{state::PollsState, Choice, ChoiceId, Item, PollId},
-    };
+    use opentalk_types::signaling::polls::{state::PollsState, Choice, ChoiceId, Item, PollId};
+    use opentalk_types_common::time::Timestamp;
 
     use super::PollsStorage;
 

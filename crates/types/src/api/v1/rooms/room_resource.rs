@@ -4,12 +4,13 @@
 
 use opentalk_types_common::{
     rooms::{RoomId, RoomPassword},
+    time::Timestamp,
     utils::ExampleData,
 };
 
+use crate::api::v1::users::PublicUserProfile;
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{api::v1::users::PublicUserProfile, core::Timestamp};
 
 /// A Room
 ///

@@ -122,10 +122,11 @@ mod test {
     use std::time::SystemTime;
 
     use chrono::{DateTime, Duration};
+    use opentalk_types_common::time::Timestamp;
     use serde_json::json;
 
     use super::*;
-    use crate::{core::Timestamp, signaling::timer::Kind};
+    use crate::signaling::timer::Kind;
 
     #[test]
     fn countdown_started() {

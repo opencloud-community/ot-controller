@@ -60,12 +60,12 @@ use opentalk_types::{
         shared_folder::{SharedFolder, SharedFolderAccess},
         streaming::{RoomStreamingTarget, StreamingTarget},
     },
-    core::{Timestamp, UserId},
+    core::UserId,
 };
 use opentalk_types_common::{
     events::{invites::EventInviteStatus, EventId},
     rooms::{RoomId, RoomPassword},
-    time::{DateTimeTz, RecurrencePattern, TimeZone},
+    time::{DateTimeTz, RecurrencePattern, TimeZone, Timestamp},
 };
 use rrule::{Frequency, RRuleSet};
 use serde::Deserialize;

@@ -3,10 +3,8 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use either::Either;
-use opentalk_types::{
-    core::Timestamp,
-    signaling::{control::state::ControlState, Role},
-};
+use opentalk_types::signaling::{control::state::ControlState, Role};
+use opentalk_types_common::time::Timestamp;
 use opentalk_types_signaling::{ParticipantId, ParticipationKind};
 
 use crate::{SignalingModuleError, SignalingRoomId, VolatileStorage};

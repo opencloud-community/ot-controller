@@ -4,8 +4,9 @@
 
 //! Signaling commands for the `chat` namespace
 
+use opentalk_types_common::time::Timestamp;
+
 use super::Scope;
-use crate::core::Timestamp;
 #[allow(unused_imports)]
 use crate::imports::*;
 

@@ -55,7 +55,7 @@ use opentalk_types::{
         ModuleData, Role,
     },
 };
-use opentalk_types_common::rooms::BreakoutRoomId;
+use opentalk_types_common::{rooms::BreakoutRoomId, time::Timestamp};
 use opentalk_types_signaling::{ParticipantId, ParticipationKind};
 use serde_json::Value;
 use snafu::{ensure, whatever, Report, ResultExt, Snafu};
@@ -69,7 +69,7 @@ use super::{
     actor::WebSocketActor,
     modules::{DynBroadcastEvent, DynEventCtx, DynTargetedEvent, Modules, NoSuchModuleError},
     DestroyContext, ExchangeBinding, ExchangePublish, NamespacedCommand, NamespacedEvent,
-    RunnerMessage, Timestamp,
+    RunnerMessage,
 };
 use crate::api::signaling::{
     echo::Echo,
