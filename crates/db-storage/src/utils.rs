@@ -13,11 +13,10 @@ use diesel::{
     sql_types,
 };
 use opentalk_database::{DatabaseError, DbConnection};
-use opentalk_types::common::{
-    event::{EventInfo, MeetingDetails},
-    streaming::get_public_urls_from_streaming_targets,
+use opentalk_types::common::{event::EventInfo, streaming::get_public_urls_from_streaming_targets};
+use opentalk_types_common::{
+    call_in::CallInInfo, events::MeetingDetails, rooms::RoomId, users::UserId,
 };
-use opentalk_types_common::{call_in::CallInInfo, rooms::RoomId, users::UserId};
 use serde::{Deserialize, Serialize};
 
 use crate::{
