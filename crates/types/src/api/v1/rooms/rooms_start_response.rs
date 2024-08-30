@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_common::utils::ExampleData;
+use opentalk_types_common::{auth::ResumptionToken, utils::ExampleData};
 
-use crate::core::{ResumptionToken, TicketToken};
+use crate::core::TicketToken;
 #[allow(unused_imports)]
 use crate::imports::*;
 

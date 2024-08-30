@@ -7,7 +7,6 @@
 //! All core types are simple types (e.g. newtypes of primitive or other simple types),
 //! and typically used by other types in this crate.
 
-mod resumption_token;
 mod room_id;
 mod room_password;
 mod streaming_key;
@@ -20,7 +19,6 @@ mod ticket_token;
 mod timestamp;
 mod user_id;
 
-pub use resumption_token::ResumptionToken;
 pub use room_id::RoomId;
 pub use room_password::{RoomPassword, MAX_ROOM_PASSWORD_LENGTH, MIN_ROOM_PASSWORD_LENGTH};
 pub use streaming_key::StreamingKey;

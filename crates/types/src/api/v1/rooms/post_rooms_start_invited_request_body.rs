@@ -3,11 +3,12 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_types_common::{
+    auth::ResumptionToken,
     rooms::{invite_codes::InviteCode, BreakoutRoomId},
     utils::ExampleData,
 };
 
-use crate::core::{ResumptionToken, RoomPassword};
+use crate::core::RoomPassword;
 #[allow(unused_imports)]
 use crate::imports::*;
 
