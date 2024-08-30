@@ -4,9 +4,9 @@
 
 //! A module providing the [`OneOrManyVec`] type. As a bonus, this module can
 //! be used for (de-)serializing a [`Vec`] through the
-//! [`OneOrManyVec`] type in a `#[serde(with = "opentalk_types::core::one_or_many_vec")]`
+//! [`OneOrManyVec`] type in a `#[serde(with = "opentalk_types_common::collections::one_or_many_vec")]`
 //! attribute. The same is possible for an [`Option<Vec>`] using
-//! `#[serde(with = "opentalk_types::core::one_or_many_vec_option")]`
+//! `#[serde(with = "opentalk_types_common::collections::one_or_many_vec_option")]`
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -17,7 +17,7 @@ use crate::imports::*;
 /// instance or a list of values.
 ///
 /// ```
-/// # use opentalk_types::core::OneOrManyVec;
+/// # use opentalk_types_common::collections::OneOrManyVec;
 /// # use serde::{Deserialize, Serialize};
 /// # use serde_json::json;
 ///
@@ -76,7 +76,7 @@ impl<T> From<T> for OneOrManyVec<T> {
 }
 
 /// serde deserialize function, needed in order to use this module in the
-/// `#[serde(with = "opentalk_types::core::one_or_many_vec")]` attribute.
+/// `#[serde(with = "opentalk_types_common::collections::one_or_many_vec")]` attribute.
 #[cfg(feature = "serde")]
 pub fn deserialize<'de, D, T>(deserializer: D) -> Result<Vec<T>, D::Error>
 where
@@ -88,7 +88,7 @@ where
 }
 
 /// serde serialize function, needed in order to use this module in the
-/// `#[serde(with = "opentalk_types::core::one_or_many_vec")]` attribute.
+/// `#[serde(with = "opentalk_types_common::collections::one_or_many_vec")]` attribute.
 #[cfg(feature = "serde")]
 pub fn serialize<S, T>(value: &Vec<T>, serializer: S) -> Result<S::Ok, S::Error>
 where
@@ -99,7 +99,7 @@ where
 }
 
 /// module for usage in a
-/// `#[serde(with = "opentalk_types::core::one_or_many_vec_option")]` attribute.
+/// `#[serde(with = "opentalk_types_common::collections::one_or_many_vec_option")]` attribute.
 #[cfg(feature = "serde")]
 pub mod one_or_many_vec_option {
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -107,7 +107,7 @@ pub mod one_or_many_vec_option {
     use super::OneOrManyVec;
 
     /// serde deserialize function, needed in order to use this module in the
-    /// `#[serde(with = "opentalk_types::core::one_or_many_vec_option")]` attribute.
+    /// `#[serde(with = "opentalk_types_common::collections::one_or_many_vec_option")]` attribute.
     pub fn deserialize<'de, D, T>(deserializer: D) -> Result<Option<Vec<T>>, D::Error>
     where
         D: Deserializer<'de>,
@@ -118,7 +118,7 @@ pub mod one_or_many_vec_option {
     }
 
     /// serde serialize function, needed in order to use this module in the
-    /// `#[serde(with = "opentalk_types::core::one_or_many_vec_option")]` attribute.
+    /// `#[serde(with = "opentalk_types_common::collections::one_or_many_vec_option")]` attribute.
     pub fn serialize<S, T>(value: &Option<Vec<T>>, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,

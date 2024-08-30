@@ -7,7 +7,6 @@
 //! All core types are simple types (e.g. newtypes of primitive or other simple types),
 //! and typically used by other types in this crate.
 
-pub mod one_or_many_vec;
 mod participant_id;
 mod participation_kind;
 mod recurrence_pattern;
@@ -25,9 +24,6 @@ mod ticket_token;
 mod timestamp;
 mod user_id;
 
-#[cfg(feature = "serde")]
-pub use one_or_many_vec::one_or_many_vec_option;
-pub use one_or_many_vec::OneOrManyVec;
 pub use participant_id::ParticipantId;
 pub use participation_kind::ParticipationKind;
 pub use recurrence_pattern::{
