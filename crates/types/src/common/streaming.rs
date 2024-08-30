@@ -4,15 +4,12 @@
 
 //! This module contains commonly used types for streaming target endpoints.
 
-use opentalk_types_common::utils::ExampleData;
+use opentalk_types_common::{streaming::StreamingKey, utils::ExampleData};
 use url::Url;
 
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{
-    common::event::StreamingLink,
-    core::{StreamingKey, StreamingTargetId},
-};
+use crate::{common::event::StreamingLink, core::StreamingTargetId};
 
 /// A streaming target kind
 #[derive(Clone, Debug, PartialEq, Eq)]
