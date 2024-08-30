@@ -19,10 +19,10 @@ use opentalk_db_storage::{
     users::User,
 };
 use opentalk_mail_worker_protocol::*;
-use opentalk_types::{
-    common::{features, shared_folder::SharedFolder, streaming::RoomStreamingTarget},
-    core::UserId,
+use opentalk_types::common::{
+    features, shared_folder::SharedFolder, streaming::RoomStreamingTarget,
 };
+use opentalk_types_common::users::UserId;
 use snafu::ResultExt;
 use tokio::sync::Mutex;
 use uuid::Uuid;

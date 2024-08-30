@@ -10,10 +10,10 @@ use diesel::{dsl::not, prelude::*, ExpressionMethods, Identifiable, QueryDsl, Qu
 use diesel_async::RunQueryDsl;
 use opentalk_database::{DbConnection, Paginate, Result};
 use opentalk_diesel_newtype::DieselNewtype;
-use opentalk_types::core::UserId;
 use opentalk_types_common::{
     rooms::{RoomId, RoomPassword},
     tenants::TenantId,
+    users::UserId,
 };
 use serde::{Deserialize, Serialize};
 

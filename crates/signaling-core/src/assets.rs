@@ -21,11 +21,12 @@ use opentalk_db_storage::{
     tariffs::Tariff,
     users::User,
 };
-use opentalk_types::{api::error::ApiError, common::tariff::QuotaType, core::UserId};
+use opentalk_types::{api::error::ApiError, common::tariff::QuotaType};
 use opentalk_types_common::{
     assets::{AssetId, FileExtension},
     rooms::RoomId,
     time::Timestamp,
+    users::UserId,
 };
 use snafu::{IntoError, ResultExt, Snafu};
 

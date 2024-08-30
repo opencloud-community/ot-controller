@@ -42,7 +42,6 @@ http-request-derive = { workspace = true, features = [
   "serde",
 ], optional = true }
 itertools.workspace = true
-kustos-shared = { workspace = true, optional = true }
 log.workspace = true
 opentalk-cache = { workspace = true, optional = true }
 opentalk-database = { workspace = true, optional = true }
@@ -102,11 +101,7 @@ frontend = [
   "opentalk-types-signaling/frontend",
   "serde",
 ]
-kustos = [
-  "dep:kustos-shared",
-  "dep:opentalk-kustos-prefix",
-  "opentalk-types-common/kustos",
-]
+kustos = ["dep:opentalk-kustos-prefix", "opentalk-types-common/kustos"]
 rand = ["opentalk-types-common/rand", "uuid/v4"]
 redis = [
   "dep:redis",

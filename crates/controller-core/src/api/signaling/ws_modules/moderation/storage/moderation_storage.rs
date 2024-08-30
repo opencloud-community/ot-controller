@@ -12,8 +12,7 @@ use opentalk_signaling_core::{
     },
     SignalingModuleError,
 };
-use opentalk_types::core::UserId;
-use opentalk_types_common::rooms::RoomId;
+use opentalk_types_common::{rooms::RoomId, users::UserId};
 use opentalk_types_signaling::ParticipantId;
 
 #[async_trait(?Send)]

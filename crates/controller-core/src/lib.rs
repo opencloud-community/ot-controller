@@ -844,7 +844,6 @@ impl ModulesRegistrar for Controller {
             opentalk_types::common::streaming::StreamingTargetKind,
             opentalk_types::common::tariff::TariffModuleResource,
             opentalk_types::common::tariff::TariffResource,
-            opentalk_types::core::UserId,
             opentalk_types_common::auth::ResumptionToken,
             opentalk_types_common::auth::TicketToken,
             opentalk_types_common::assets::AssetId,
@@ -870,6 +869,7 @@ impl ModulesRegistrar for Controller {
             opentalk_types_common::time::RecurrenceRule,
             opentalk_types_common::time::TimeZone,
             opentalk_types_common::time::Timestamp,
+            opentalk_types_common::users::UserId,
         ),
         responses(
             crate::api::responses::BadRequest,

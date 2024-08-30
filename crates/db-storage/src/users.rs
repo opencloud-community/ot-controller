@@ -16,13 +16,11 @@ use diesel_async::RunQueryDsl;
 use opentalk_controller_settings::Settings;
 use opentalk_database::{DbConnection, Paginate, Result};
 use opentalk_diesel_newtype::DieselNewtype;
-use opentalk_types::{
-    api::v1::users::{PrivateUserProfile, PublicUserProfile},
-    core::UserId,
-};
+use opentalk_types::api::v1::users::{PrivateUserProfile, PublicUserProfile};
 use opentalk_types_common::{
     tariffs::{TariffId, TariffStatus},
     tenants::TenantId,
+    users::UserId,
 };
 use serde::{Deserialize, Serialize};
 

@@ -13,10 +13,10 @@
 use std::time::{Duration, Instant};
 
 use opentalk_signaling_core::Participant;
-use opentalk_types::core::UserId;
 use opentalk_types_common::{
     auth::ResumptionToken,
     rooms::{BreakoutRoomId, RoomId},
+    users::UserId,
 };
 use opentalk_types_signaling::ParticipantId;
 use redis_args::{FromRedisValue, ToRedisArgs};

@@ -10,10 +10,9 @@ use diesel::{
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection, RunQueryDsl};
 use opentalk_database::{DbConnection, Result};
 use opentalk_diesel_newtype::DieselNewtype;
-use opentalk_types::core::UserId;
 use opentalk_types_common::{
     tenants::TenantId,
-    users::{GroupId, GroupName},
+    users::{GroupId, GroupName, UserId},
 };
 use serde::{Deserialize, Serialize};
 

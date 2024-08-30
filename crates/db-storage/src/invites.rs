@@ -12,11 +12,11 @@ use diesel::{
 use diesel_async::RunQueryDsl;
 use opentalk_database::{DbConnection, Paginate, Result};
 use opentalk_diesel_newtype::DieselNewtype;
-use opentalk_types::{
-    api::v1::{invites::InviteResource, users::PublicUserProfile},
-    core::UserId,
+use opentalk_types::api::v1::{invites::InviteResource, users::PublicUserProfile};
+use opentalk_types_common::{
+    rooms::{invite_codes::InviteCode, RoomId},
+    users::UserId,
 };
-use opentalk_types_common::rooms::{invite_codes::InviteCode, RoomId};
 use serde::{Deserialize, Serialize};
 
 use crate::{

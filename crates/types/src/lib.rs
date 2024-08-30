@@ -86,7 +86,6 @@
 
 pub mod api;
 pub mod common;
-pub mod core;
 pub mod signaling;
 pub mod utils;
 

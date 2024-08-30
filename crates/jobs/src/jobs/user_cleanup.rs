@@ -101,8 +101,7 @@ mod test {
     };
     use opentalk_signaling_core::ExchangeHandle;
     use opentalk_test_util::database::DatabaseContext;
-    use opentalk_types::core::UserId;
-    use opentalk_types_common::events::EventId;
+    use opentalk_types_common::{events::EventId, users::UserId};
 
     use super::{default_days_since_user_has_been_disabled, UserCleanup};
     use crate::{

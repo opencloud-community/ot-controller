@@ -6,6 +6,8 @@
 
 mod group_id;
 mod group_name;
+mod user_id;
 
 pub use group_id::GroupId;
 pub use group_name::GroupName;
+pub use user_id::UserId;

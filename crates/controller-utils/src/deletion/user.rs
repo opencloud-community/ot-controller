@@ -12,7 +12,7 @@ use opentalk_database::{DatabaseError, DbConnection};
 use opentalk_db_storage::{groups::remove_user_from_all_groups, users::User};
 use opentalk_log::debug;
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage};
-use opentalk_types::core::UserId;
+use opentalk_types_common::users::UserId;
 
 use super::{Deleter, Error};
 /// Delete a user by id including the corresponding room and resources it

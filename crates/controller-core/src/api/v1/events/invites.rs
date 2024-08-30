@@ -42,7 +42,6 @@ use opentalk_types::{
         },
     },
     common::{email::EmailAddress, shared_folder::SharedFolder, streaming::RoomStreamingTarget},
-    core::UserId,
 };
 use opentalk_types_common::{
     events::{
@@ -50,6 +49,7 @@ use opentalk_types_common::{
         EventId,
     },
     rooms::RoomId,
+    users::UserId,
 };
 use serde::Deserialize;
 use snafu::Report;

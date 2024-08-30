@@ -12,8 +12,7 @@ pub(crate) use moderation_storage::ModerationStorage;
 mod test_common {
     use std::collections::BTreeSet;
 
-    use opentalk_types::core::UserId;
-    use opentalk_types_common::rooms::RoomId;
+    use opentalk_types_common::{rooms::RoomId, users::UserId};
     use opentalk_types_signaling::ParticipantId;
     use pretty_assertions::assert_eq;
 

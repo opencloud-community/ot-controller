@@ -4,8 +4,7 @@
 
 use std::collections::{BTreeSet, HashMap, HashSet};
 
-use opentalk_types::core::UserId;
-use opentalk_types_common::rooms::RoomId;
+use opentalk_types_common::{rooms::RoomId, users::UserId};
 use opentalk_types_signaling::ParticipantId;
 
 #[derive(Debug, Clone, Default)]

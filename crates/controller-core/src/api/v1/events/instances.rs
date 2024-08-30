@@ -750,11 +750,12 @@ mod tests {
 
     use chrono_tz::Tz;
     use opentalk_test_util::assert_eq_json;
-    use opentalk_types::{api::v1::users::PublicUserProfile, core::UserId};
+    use opentalk_types::api::v1::users::PublicUserProfile;
     use opentalk_types_common::{
         events::invites::InviteRole,
         rooms::RoomId,
         time::{TimeZone, Timestamp},
+        users::UserId,
     };
 
     use super::*;

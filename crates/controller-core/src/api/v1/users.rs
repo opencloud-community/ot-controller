@@ -36,8 +36,8 @@ use opentalk_types::{
         },
     },
     common::tariff::TariffResource,
-    core::UserId,
 };
+use opentalk_types_common::users::UserId;
 use snafu::{Report, ResultExt, Whatever};
 use validator::Validate;
 

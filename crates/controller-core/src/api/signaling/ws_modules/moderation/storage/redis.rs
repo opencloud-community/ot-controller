@@ -6,8 +6,7 @@ use std::collections::BTreeSet;
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError};
-use opentalk_types::core::UserId;
-use opentalk_types_common::rooms::RoomId;
+use opentalk_types_common::{rooms::RoomId, users::UserId};
 use opentalk_types_signaling::ParticipantId;
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;

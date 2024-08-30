@@ -37,12 +37,10 @@ mod test_common {
         events::{Event, EventSerialId},
         tariffs::Tariff,
     };
-    use opentalk_types::{
-        core::UserId,
-        signaling::{control::room::CreatorInfo, Role},
-    };
+    use opentalk_types::signaling::{control::room::CreatorInfo, Role};
     use opentalk_types_common::{
         events::EventId, rooms::RoomId, tariffs::TariffId, tenants::TenantId, time::Timestamp,
+        users::UserId,
     };
     use opentalk_types_signaling::ParticipantId;
     use pretty_assertions::assert_eq;

@@ -19,21 +19,16 @@ use opentalk_signaling_core::{
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 pub use opentalk_types::signaling::moderation::NAMESPACE;
-use opentalk_types::{
-    core::UserId,
-    signaling::{
-        control::{
-            state::ControlState, AssociatedParticipant, Participant, Reason, WaitingRoomState,
-        },
-        moderation::{
-            command::ModerationCommand,
-            event::{DisplayNameChanged, Error, ModerationEvent},
-            state::{ModerationState, ModeratorFrontendData},
-        },
-        ModulePeerData, Role,
+use opentalk_types::signaling::{
+    control::{state::ControlState, AssociatedParticipant, Participant, Reason, WaitingRoomState},
+    moderation::{
+        command::ModerationCommand,
+        event::{DisplayNameChanged, Error, ModerationEvent},
+        state::{ModerationState, ModeratorFrontendData},
     },
+    ModulePeerData, Role,
 };
-use opentalk_types_common::rooms::RoomId;
+use opentalk_types_common::{rooms::RoomId, users::UserId};
 use opentalk_types_signaling::{ParticipantId, ParticipationKind};
 use snafu::{Report, ResultExt};
 

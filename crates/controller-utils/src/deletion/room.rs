@@ -19,9 +19,9 @@ use opentalk_db_storage::{
 };
 use opentalk_log::{debug, warn};
 use opentalk_signaling_core::{assets::asset_key, control, ExchangeHandle, ObjectStorage};
-use opentalk_types::core::UserId;
 use opentalk_types_common::{
     assets::AssetId, events::EventId, module_resources::ModuleResourceId, rooms::RoomId,
+    users::UserId,
 };
 use snafu::ResultExt;
 
