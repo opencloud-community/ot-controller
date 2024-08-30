@@ -10,7 +10,7 @@ use opentalk_db_storage::{
     tariffs::Tariff,
     users::{UpdateUser, User},
 };
-use opentalk_types::core::TariffStatus;
+use opentalk_types_common::tariffs::TariffStatus;
 
 use super::{build_info_display_name, LoginResult};
 use crate::{api::util::parse_phone_number, oidc::IdTokenInfo};

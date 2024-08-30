@@ -4,10 +4,12 @@
 
 //! This module contains types that are used in OpenTalk API V1 users endpoints.
 
-use opentalk_types_common::{events::EventId, rooms::RoomId, utils::ExampleData};
+use opentalk_types_common::{
+    events::EventId, rooms::RoomId, tariffs::TariffStatus, utils::ExampleData,
+};
 
 use super::assets::AssetResource;
-use crate::core::{TariffStatus, UserId};
+use crate::core::UserId;
 #[allow(unused_imports)]
 use crate::imports::*;
 

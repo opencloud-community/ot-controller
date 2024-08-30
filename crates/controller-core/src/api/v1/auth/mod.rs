@@ -24,9 +24,11 @@ use opentalk_types::{
         error::{ApiError, AuthenticationError},
         v1::auth::{GetLoginResponse, OidcProvider, PostLoginRequestBody, PostLoginResponse},
     },
-    core::{TariffStatus, TenantId},
+    core::TenantId,
 };
-use opentalk_types_common::{events::EventId, rooms::RoomId, users::GroupName};
+use opentalk_types_common::{
+    events::EventId, rooms::RoomId, tariffs::TariffStatus, users::GroupName,
+};
 
 use super::{events::EventPoliciesBuilderExt, rooms::RoomsPoliciesBuilderExt};
 use crate::{
