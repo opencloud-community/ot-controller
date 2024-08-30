@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🔨 Refactor
 
 - (types) Introduce opentalk-types-common crate ([#861](https://git.opentalk.dev/opentalk/backend/services/controller/-/work_items/861), [!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
+- (types) Introduce opentalk-types-signaling crate ([#862](https://git.opentalk.dev/opentalk/backend/services/controller/-/work_items/862), [!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
 
 ### ⚙ Miscellaneous
 
