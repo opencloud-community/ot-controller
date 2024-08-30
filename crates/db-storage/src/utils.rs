@@ -93,8 +93,8 @@ pub async fn build_event_info(
             match SipConfig::get_by_room(conn, room_id).await {
                 Ok(sip_config) => Some(CallIn {
                     tel: call_in_tel,
-                    id: sip_config.sip_id.to_string(),
-                    password: sip_config.password.to_string(),
+                    id: sip_config.sip_id,
+                    password: sip_config.password,
                 }),
                 Err(DatabaseError::NotFound) => None,
                 Err(e) => return Err(e),

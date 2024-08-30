@@ -5,6 +5,7 @@
 //! Common types related to event
 
 use opentalk_types_common::{
+    call_in::{CallInId, CallInPassword},
     events::EventId,
     rooms::{invite_codes::InviteCode, RoomId},
     utils::ExampleData,
@@ -83,19 +84,19 @@ pub struct CallIn {
     pub tel: String,
 
     /// SIP ID which must transmitted via DTMF (number field on the phone) to identify this room
-    pub id: String,
+    pub id: CallInId,
 
     /// SIP password which must be transmitted via DTMF (number field on the phone) after entering the `sip_id`
     /// to enter the room
-    pub password: String,
+    pub password: CallInPassword,
 }
 
 impl ExampleData for CallIn {
     fn example_data() -> Self {
         Self {
             tel: "+555-123-456-789".to_string(),
-            id: "1234567890".to_string(),
-            password: "0987654321".to_string(),
+            id: "1234567890".parse().expect("valid call-in id"),
+            password: "0987654321".parse().expect("valid call-in password"),
         }
     }
 }
