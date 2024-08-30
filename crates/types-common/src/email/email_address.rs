@@ -5,10 +5,9 @@
 //! Custom email address type wrapper. This is necessary because the `utoipa`
 //! crate does not support the `email_address` crate.
 
-use opentalk_types_common::utils::ExampleData;
-
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::utils::ExampleData;
 
 /// Representation of an email address
 #[derive(

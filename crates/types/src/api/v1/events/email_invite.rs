@@ -2,9 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_common::{events::invites::EmailInviteRole, utils::ExampleData};
+use opentalk_types_common::{
+    email::EmailAddress, events::invites::EmailInviteRole, utils::ExampleData,
+};
 
-use crate::common::email::EmailAddress;
 #[allow(unused_imports)]
 use crate::imports::*;
 

@@ -41,9 +41,10 @@ use opentalk_types::{
             users::GetEventInvitesPendingResponse,
         },
     },
-    common::{email::EmailAddress, shared_folder::SharedFolder, streaming::RoomStreamingTarget},
+    common::{shared_folder::SharedFolder, streaming::RoomStreamingTarget},
 };
 use opentalk_types_common::{
+    email::EmailAddress,
     events::{
         invites::{EmailInviteRole, EventInviteStatus},
         EventId,

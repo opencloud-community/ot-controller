@@ -36,7 +36,6 @@ derive_more = { workspace = true, features = [
   "into",
 ] }
 diesel = { workspace = true, features = ["uuid"], optional = true }
-email_address.workspace = true
 http = { workspace = true, optional = true }
 http-request-derive = { workspace = true, features = [
   "serde",
@@ -53,7 +52,6 @@ redis = { workspace = true, optional = true }
 redis-args = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 serde_json.workspace = true
-serde_with.workspace = true
 snafu.workspace = true
 strum.workspace = true
 url.workspace = true

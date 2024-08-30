@@ -46,6 +46,7 @@ derive_more = { workspace = true, features = [
   "into",
 ] }
 diesel = { workspace = true, features = ["uuid"], optional = true }
+email_address.workspace = true
 http = { workspace = true, optional = true }
 itertools.workspace = true
 kustos-shared = { workspace = true, optional = true }
