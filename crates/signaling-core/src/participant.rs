@@ -3,7 +3,8 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_db_storage::users::User;
-use opentalk_types::core::{ParticipationKind, UserId};
+use opentalk_types::core::UserId;
+use opentalk_types_signaling::ParticipationKind;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]

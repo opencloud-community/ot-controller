@@ -21,8 +21,10 @@
 )]
 
 mod participant_id;
+mod participation_kind;
 
 pub use participant_id::ParticipantId;
+pub use participation_kind::ParticipationKind;
 
 mod imports {
     #![allow(unused)]

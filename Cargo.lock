@@ -4952,9 +4952,11 @@ name = "opentalk-types-signaling"
 version = "0.0.0-dev"
 dependencies = [
  "derive_more 1.0.0",
+ "pretty_assertions",
  "redis",
  "redis-args",
  "serde",
+ "strum",
  "uuid",
 ]
 

@@ -3,14 +3,11 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_types_common::rooms::BreakoutRoomId;
-use opentalk_types_signaling::ParticipantId;
+use opentalk_types_signaling::{ParticipantId, ParticipationKind};
 
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{
-    core::{ParticipationKind, Timestamp},
-    signaling::Role,
-};
+use crate::{core::Timestamp, signaling::Role};
 
 /// Information about a participant in another breakout room
 #[derive(Clone, Debug, PartialEq, Eq)]

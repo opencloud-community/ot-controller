@@ -20,7 +20,7 @@ use opentalk_signaling_core::{
 };
 pub use opentalk_types::signaling::moderation::NAMESPACE;
 use opentalk_types::{
-    core::{ParticipationKind, RoomId, UserId},
+    core::{RoomId, UserId},
     signaling::{
         control::{
             state::ControlState, AssociatedParticipant, Participant, Reason, WaitingRoomState,
@@ -33,7 +33,7 @@ use opentalk_types::{
         ModulePeerData, Role,
     },
 };
-use opentalk_types_signaling::ParticipantId;
+use opentalk_types_signaling::{ParticipantId, ParticipationKind};
 use snafu::{Report, ResultExt};
 
 use self::storage::ModerationStorage;

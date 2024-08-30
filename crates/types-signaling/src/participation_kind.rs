@@ -62,7 +62,7 @@ impl ParticipationKind {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
+    use std::str::FromStr as _;
 
     use pretty_assertions::assert_eq;
 

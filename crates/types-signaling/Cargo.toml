@@ -32,4 +32,8 @@ derive_more = { workspace = true, features = [
 redis = { workspace = true, optional = true }
 redis-args = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
+strum.workspace = true
 uuid.workspace = true
+
+[dev-dependencies]
+pretty_assertions.workspace = true
