@@ -43,7 +43,7 @@ impl BreakoutConfig {
 mod test_common {
     use std::time::{Duration, SystemTime};
 
-    use opentalk_types::core::RoomId;
+    use opentalk_types_common::rooms::RoomId;
     use pretty_assertions::assert_eq;
 
     use super::BreakoutStorage;

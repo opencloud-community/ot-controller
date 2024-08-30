@@ -4,7 +4,9 @@
 
 //! Types related to the `JoinSuccess` message in the `control` namespace
 
-use crate::core::{RoomId, RoomPassword};
+use opentalk_types_common::rooms::RoomId;
+
+use crate::core::RoomPassword;
 #[allow(unused_imports)]
 use crate::imports::*;
 

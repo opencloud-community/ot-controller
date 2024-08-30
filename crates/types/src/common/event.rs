@@ -4,10 +4,13 @@
 
 //! Common types related to event
 
-use opentalk_types_common::{events::EventId, rooms::invite_codes::InviteCode, utils::ExampleData};
+use opentalk_types_common::{
+    events::EventId,
+    rooms::{invite_codes::InviteCode, RoomId},
+    utils::ExampleData,
+};
 use url::Url;
 
-use crate::core::RoomId;
 #[allow(unused_imports)]
 use crate::imports::*;
 

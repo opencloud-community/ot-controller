@@ -10,9 +10,10 @@ use std::{
 use async_trait::async_trait;
 use opentalk_db_storage::{events::Event, tariffs::Tariff};
 use opentalk_types::{
-    core::{RoomId, Timestamp},
+    core::Timestamp,
     signaling::{control::room::CreatorInfo, Role},
 };
+use opentalk_types_common::rooms::RoomId;
 use opentalk_types_signaling::ParticipantId;
 use parking_lot::RwLock;
 

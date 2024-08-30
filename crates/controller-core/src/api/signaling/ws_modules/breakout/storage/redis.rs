@@ -6,7 +6,7 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError};
-use opentalk_types::core::RoomId;
+use opentalk_types_common::rooms::RoomId;
 use redis::AsyncCommands as _;
 use redis_args::ToRedisArgs;
 use snafu::ResultExt as _;

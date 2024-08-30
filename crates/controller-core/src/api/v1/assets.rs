@@ -14,14 +14,11 @@ use opentalk_signaling_core::{
     assets::{delete_asset, get_asset},
     ObjectStorage,
 };
-use opentalk_types::{
-    api::{
-        error::ApiError,
-        v1::{assets::AssetResource, pagination::PagePaginationQuery},
-    },
-    core::RoomId,
+use opentalk_types::api::{
+    error::ApiError,
+    v1::{assets::AssetResource, pagination::PagePaginationQuery},
 };
-use opentalk_types_common::assets::AssetId;
+use opentalk_types_common::{assets::AssetId, rooms::RoomId};
 
 use super::{response::NoContent, ApiResponse};
 use crate::api::responses::{BinaryData, Forbidden, InternalServerError, NotFound, Unauthorized};

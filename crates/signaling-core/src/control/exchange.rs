@@ -2,10 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types::{
-    core::{RoomId, UserId},
-    signaling::control,
-};
+use opentalk_types::{core::UserId, signaling::control};
+use opentalk_types_common::rooms::RoomId;
 use opentalk_types_signaling::ParticipantId;
 use serde::{Deserialize, Serialize};
 

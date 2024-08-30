@@ -12,9 +12,8 @@ use opentalk_types::{
         rooms::GetRoomEventRequest,
     },
     common::event::EventInfo,
-    core::RoomId,
 };
-use opentalk_types_common::rooms::invite_codes::InviteCode;
+use opentalk_types_common::rooms::{invite_codes::InviteCode, RoomId};
 
 #[async_trait::async_trait]
 pub trait OpenTalkApiClient<E>

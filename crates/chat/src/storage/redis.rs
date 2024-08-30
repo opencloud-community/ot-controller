@@ -10,11 +10,11 @@ use std::{
 use async_trait::async_trait;
 use opentalk_r3dlock::Mutex;
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
-use opentalk_types::{
-    core::{RoomId, Timestamp},
-    signaling::chat::state::StoredMessage,
+use opentalk_types::{core::Timestamp, signaling::chat::state::StoredMessage};
+use opentalk_types_common::{
+    rooms::RoomId,
+    users::{GroupId, GroupName},
 };
-use opentalk_types_common::users::{GroupId, GroupName};
 use opentalk_types_signaling::ParticipantId;
 use redis::AsyncCommands as _;
 use redis_args::{FromRedisValue, ToRedisArgs};
@@ -592,7 +592,6 @@ pub struct RoomGroupParticipantsLock {
 
 #[cfg(test)]
 mod test {
-    use opentalk_types::core::RoomId;
     use redis::{aio::ConnectionManager, ToRedisArgs};
     use serial_test::serial;
     use uuid::uuid;

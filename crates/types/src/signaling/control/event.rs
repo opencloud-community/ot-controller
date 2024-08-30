@@ -180,13 +180,13 @@ mod test {
     use std::str::FromStr;
 
     use chrono::DateTime;
-    use opentalk_types_common::events::EventId;
+    use opentalk_types_common::{events::EventId, rooms::RoomId};
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
     use super::*;
     use crate::{
-        core::{RoomId, TariffId},
+        core::TariffId,
         signaling::{
             control::{self, room::CreatorInfo},
             ModulePeerData,

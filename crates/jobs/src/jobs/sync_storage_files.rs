@@ -188,8 +188,11 @@ mod tests {
         ChunkFormat, ObjectStorage, ObjectStorageError,
     };
     use opentalk_test_util::common::TestContext;
-    use opentalk_types::core::{RoomId, Timestamp};
-    use opentalk_types_common::assets::{AssetId, FileExtension};
+    use opentalk_types::core::Timestamp;
+    use opentalk_types_common::{
+        assets::{AssetId, FileExtension},
+        rooms::RoomId,
+    };
 
     use crate::jobs::sync_storage_files::{sync_files, MissingStorageFileHandling};
 

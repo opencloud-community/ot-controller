@@ -5,9 +5,12 @@
 use opentalk_signaling_core::{Participant, VolatileStorage};
 use opentalk_types::{
     api::error::ApiError,
-    core::{RoomId, TicketToken, UserId},
+    core::{TicketToken, UserId},
 };
-use opentalk_types_common::{auth::ResumptionToken, rooms::BreakoutRoomId};
+use opentalk_types_common::{
+    auth::ResumptionToken,
+    rooms::{BreakoutRoomId, RoomId},
+};
 use opentalk_types_signaling::ParticipantId;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};

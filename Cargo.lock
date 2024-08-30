@@ -4559,6 +4559,7 @@ dependencies = [
  "opentalk-janus-client",
  "opentalk-signaling-core",
  "opentalk-types",
+ "opentalk-types-common",
  "opentalk-types-signaling",
  "parking_lot",
  "pin-project-lite",

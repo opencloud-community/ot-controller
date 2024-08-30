@@ -8,10 +8,8 @@ use std::{
 };
 
 use opentalk_db_storage::{events::Event, tariffs::Tariff};
-use opentalk_types::{
-    core::{RoomId, Timestamp},
-    signaling::control::room::CreatorInfo,
-};
+use opentalk_types::{core::Timestamp, signaling::control::room::CreatorInfo};
+use opentalk_types_common::rooms::RoomId;
 use opentalk_types_signaling::ParticipantId;
 use snafu::OptionExt as _;
 
@@ -322,7 +320,6 @@ impl MemoryControlState {
 
 #[cfg(test)]
 mod tests {
-    use opentalk_types::core::RoomId;
     use pretty_assertions::assert_eq;
     use redis_args::{FromRedisValue, ToRedisArgs};
     use serde::{Deserialize, Serialize};

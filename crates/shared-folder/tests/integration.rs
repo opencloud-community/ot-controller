@@ -18,13 +18,13 @@ use opentalk_signaling_core::{
 use opentalk_test_util::{TestContext, ROOM_ID, USER_1, USER_2};
 use opentalk_types::{
     common::shared_folder::SharedFolder,
-    core::{RoomId, UserId},
+    core::UserId,
     signaling::{
         control::event::{ControlEvent, JoinSuccess},
         Role,
     },
 };
-use opentalk_types_common::events::EventId;
+use opentalk_types_common::{events::EventId, rooms::RoomId};
 use pretty_assertions::assert_eq;
 use serial_test::serial;
 

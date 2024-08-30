@@ -7,11 +7,12 @@ use opentalk_signaling_core::{
     control::storage::ControlStorageParticipantSet, SignalingModuleError, SignalingRoomId,
 };
 use opentalk_types::{
-    core::{RoomId, Timestamp},
+    core::Timestamp,
     signaling::media::{
         state::ForceMuteState, ParticipantMediaState, ParticipantSpeakingState, SpeakingState,
     },
 };
+use opentalk_types_common::rooms::RoomId;
 use opentalk_types_signaling::ParticipantId;
 
 use crate::mcu::{McuId, MediaSessionKey, PublisherInfo};

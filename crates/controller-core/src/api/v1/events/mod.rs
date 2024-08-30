@@ -60,10 +60,11 @@ use opentalk_types::{
         shared_folder::{SharedFolder, SharedFolderAccess},
         streaming::{RoomStreamingTarget, StreamingTarget},
     },
-    core::{RoomId, RoomPassword, Timestamp, UserId},
+    core::{RoomPassword, Timestamp, UserId},
 };
 use opentalk_types_common::{
     events::{invites::EventInviteStatus, EventId},
+    rooms::RoomId,
     time::{DateTimeTz, RecurrencePattern, TimeZone},
 };
 use rrule::{Frequency, RRuleSet};
@@ -2183,7 +2184,7 @@ mod tests {
     use std::time::SystemTime;
 
     use opentalk_test_util::assert_eq_json;
-    use opentalk_types::core::{RoomId, UserId};
+    use opentalk_types::core::UserId;
     use opentalk_types_common::events::invites::InviteRole;
 
     use super::*;

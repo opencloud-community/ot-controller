@@ -6,10 +6,10 @@
 
 use opentalk_types_common::{
     call_in::{CallInId, CallInPassword},
+    rooms::RoomId,
     utils::ExampleData,
 };
 
-use crate::core::RoomId;
 #[allow(unused_imports)]
 use crate::imports::*;
 

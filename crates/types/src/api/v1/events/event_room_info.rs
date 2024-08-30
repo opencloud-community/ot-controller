@@ -2,10 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_common::utils::ExampleData;
+use opentalk_types_common::{rooms::RoomId, utils::ExampleData};
 
 use super::CallInInfo;
-use crate::core::{RoomId, RoomPassword};
+use crate::core::RoomPassword;
 #[allow(unused_imports)]
 use crate::imports::*;
 

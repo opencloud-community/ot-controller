@@ -18,8 +18,9 @@ use opentalk_types::{
         event::{CallIn, EventInfo, MeetingDetails},
         streaming::get_public_urls_from_streaming_targets,
     },
-    core::{RoomId, UserId},
+    core::UserId,
 };
+use opentalk_types_common::rooms::RoomId;
 use serde::{Deserialize, Serialize};
 
 use crate::{

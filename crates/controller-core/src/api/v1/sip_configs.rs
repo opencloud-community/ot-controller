@@ -18,8 +18,8 @@ use opentalk_types::{
         v1::rooms::sip_config_resource::{PutSipConfig, SipConfigResource},
     },
     common::features,
-    core::RoomId,
 };
+use opentalk_types_common::rooms::RoomId;
 use validator::Validate;
 
 use super::util::require_feature;

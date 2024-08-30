@@ -32,8 +32,9 @@ use opentalk_types::{
         },
     },
     common::streaming::{RoomStreamingTarget, StreamingTarget, StreamingTargetKind},
-    core::{RoomId, StreamingKind},
+    core::StreamingKind,
 };
+use opentalk_types_common::rooms::RoomId;
 use snafu::Report;
 
 use super::{response::NoContent, DefaultApiResult};

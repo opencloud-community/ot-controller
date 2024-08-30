@@ -20,13 +20,14 @@ use opentalk_database::{DatabaseError, DbConnection, Paginate, Result};
 use opentalk_diesel_newtype::DieselNewtype;
 use opentalk_types::{
     common::event::EventInfo,
-    core::{RoomId, TenantId, UserId},
+    core::{TenantId, UserId},
 };
 use opentalk_types_common::{
     events::{
         invites::{EventInviteStatus, InviteRole},
         EventId,
     },
+    rooms::RoomId,
     sql_enum,
     time::TimeZone,
 };

@@ -16,12 +16,13 @@ mod test_common {
     use opentalk_janus_client::RoomId;
     use opentalk_signaling_core::SignalingRoomId;
     use opentalk_types::{
-        core::{self, Timestamp},
+        core::Timestamp,
         signaling::media::{
             state::ForceMuteState, MediaSessionState, ParticipantMediaState,
             ParticipantSpeakingState, SpeakingState,
         },
     };
+    use opentalk_types_common::rooms;
     use opentalk_types_signaling::ParticipantId;
     use pretty_assertions::assert_eq;
 
@@ -266,7 +267,7 @@ mod test_common {
     }
 
     pub(super) async fn force_mute(storage: &mut dyn MediaStorage) {
-        let room = core::RoomId::from_u128(123);
+        let room = rooms::RoomId::from_u128(123);
         assert_eq!(
             storage.get_force_mute_state(room).await.unwrap(),
             ForceMuteState::Disabled
