@@ -8,9 +8,9 @@ use opentalk_types_common::{
     call_in::CallInInfo,
     events::EventId,
     rooms::{invite_codes::InviteCode, RoomId},
+    streaming::StreamingLink,
     utils::ExampleData,
 };
-use url::Url;
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -67,31 +67,6 @@ impl ExampleData for EventInfo {
             is_adhoc: false,
             meeting_details: Some(MeetingDetails::example_data()),
             e2e_encrytion: false,
-        }
-    }
-}
-
-/// Streaming link for an event
-#[derive(Debug, Clone, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(
-    feature = "utoipa",
-    derive(utoipa::ToSchema),
-    schema(example = json!(StreamingLink::example_data()))
-)]
-pub struct StreamingLink {
-    /// The name of the streaming link
-    pub name: String,
-
-    /// The url of the streaming link
-    pub url: Url,
-}
-
-impl ExampleData for StreamingLink {
-    fn example_data() -> Self {
-        Self {
-            name: "My OwnCast Stream".to_string(),
-            url: "https://owncast.example.com/mystream".parse().unwrap(),
         }
     }
 }

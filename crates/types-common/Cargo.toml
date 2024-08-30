@@ -27,6 +27,7 @@ serde = [
   "chrono/serde",
   "dep:serde",
   "dep:serde_with",
+  "url/serde",
   "uuid/serde",
 ]
 utoipa = ["dep:serde_json", "dep:utoipa", "serde"]
@@ -60,6 +61,7 @@ serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
 serde_with = { workspace = true, optional = true }
 snafu.workspace = true
+url.workspace = true
 utoipa = { workspace = true, features = ["uuid"], optional = true }
 uuid.workspace = true
 
