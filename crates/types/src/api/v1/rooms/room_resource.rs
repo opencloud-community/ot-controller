@@ -2,14 +2,14 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_common::{rooms::RoomId, utils::ExampleData};
+use opentalk_types_common::{
+    rooms::{RoomId, RoomPassword},
+    utils::ExampleData,
+};
 
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{
-    api::v1::users::PublicUserProfile,
-    core::{RoomPassword, Timestamp},
-};
+use crate::{api::v1::users::PublicUserProfile, core::Timestamp};
 
 /// A Room
 ///

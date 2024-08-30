@@ -3,15 +3,16 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_types_common::{
+    rooms::RoomPassword,
     time::{DateTimeTz, RecurrencePattern},
     utils::ExampleData,
 };
 
 #[cfg(feature = "serde")]
 use crate::api::v1::utils::deserialize_some;
+use crate::common::streaming::StreamingTarget;
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{common::streaming::StreamingTarget, core::RoomPassword};
 
 /// Body for the `PATCH /events/{event_id}` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]

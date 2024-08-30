@@ -4,11 +4,10 @@
 
 use opentalk_types_common::{
     auth::ResumptionToken,
-    rooms::{invite_codes::InviteCode, BreakoutRoomId},
+    rooms::{invite_codes::InviteCode, BreakoutRoomId, RoomPassword},
     utils::ExampleData,
 };
 
-use crate::core::RoomPassword;
 #[allow(unused_imports)]
 use crate::imports::*;
 

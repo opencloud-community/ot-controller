@@ -60,11 +60,11 @@ use opentalk_types::{
         shared_folder::{SharedFolder, SharedFolderAccess},
         streaming::{RoomStreamingTarget, StreamingTarget},
     },
-    core::{RoomPassword, Timestamp, UserId},
+    core::{Timestamp, UserId},
 };
 use opentalk_types_common::{
     events::{invites::EventInviteStatus, EventId},
-    rooms::RoomId,
+    rooms::{RoomId, RoomPassword},
     time::{DateTimeTz, RecurrencePattern, TimeZone},
 };
 use rrule::{Frequency, RRuleSet};

@@ -4,13 +4,14 @@
 
 use chrono::{TimeZone as _, Utc};
 use opentalk_types_common::{
+    rooms::RoomPassword,
     time::{DateTimeTz, RecurrencePattern},
     utils::ExampleData,
 };
 
+use crate::common::streaming::StreamingTarget;
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{common::streaming::StreamingTarget, core::RoomPassword};
 
 /// Body of the `POST /events` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]
