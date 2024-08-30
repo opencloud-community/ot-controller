@@ -4,14 +4,13 @@
 
 //! Common types related to event
 
-use opentalk_types_common::{
+#[allow(unused_imports)]
+use crate::imports::*;
+use crate::{
     events::{EventId, MeetingDetails},
     rooms::RoomId,
     utils::ExampleData,
 };
-
-#[allow(unused_imports)]
-use crate::imports::*;
 
 /// Information about an event
 #[derive(Clone, Debug, PartialEq, Eq)]

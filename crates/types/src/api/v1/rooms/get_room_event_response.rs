@@ -2,9 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_common::utils::ExampleData;
+use opentalk_types_common::{events::EventInfo, utils::ExampleData};
 
-use crate::common::event::EventInfo;
 #[allow(unused_imports)]
 use crate::imports::*;
 

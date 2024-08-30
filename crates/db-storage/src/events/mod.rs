@@ -18,11 +18,10 @@ use diesel::{
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection, RunQueryDsl};
 use opentalk_database::{DatabaseError, DbConnection, Paginate, Result};
 use opentalk_diesel_newtype::DieselNewtype;
-use opentalk_types::common::event::EventInfo;
 use opentalk_types_common::{
     events::{
         invites::{EventInviteStatus, InviteRole},
-        EventId,
+        EventId, EventInfo,
     },
     rooms::RoomId,
     sql_enum,
