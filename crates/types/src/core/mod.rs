@@ -7,12 +7,10 @@
 //! All core types are simple types (e.g. newtypes of primitive or other simple types),
 //! and typically used by other types in this crate.
 
-mod tenant_id;
 mod ticket_token;
 mod timestamp;
 mod user_id;
 
-pub use tenant_id::TenantId;
 pub use ticket_token::TicketToken;
 pub use timestamp::Timestamp;
 pub use user_id::UserId;

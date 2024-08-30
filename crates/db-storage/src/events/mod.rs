@@ -18,10 +18,7 @@ use diesel::{
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection, RunQueryDsl};
 use opentalk_database::{DatabaseError, DbConnection, Paginate, Result};
 use opentalk_diesel_newtype::DieselNewtype;
-use opentalk_types::{
-    common::event::EventInfo,
-    core::{TenantId, UserId},
-};
+use opentalk_types::{common::event::EventInfo, core::UserId};
 use opentalk_types_common::{
     events::{
         invites::{EventInviteStatus, InviteRole},
@@ -29,6 +26,7 @@ use opentalk_types_common::{
     },
     rooms::RoomId,
     sql_enum,
+    tenants::TenantId,
     time::TimeZone,
 };
 use redis_args::{FromRedisValue, ToRedisArgs};
