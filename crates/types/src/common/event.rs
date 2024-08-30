@@ -5,7 +5,7 @@
 //! Common types related to event
 
 use opentalk_types_common::{
-    call_in::{CallInId, CallInPassword},
+    call_in::CallInInfo,
     events::EventId,
     rooms::{invite_codes::InviteCode, RoomId},
     utils::ExampleData,
@@ -71,36 +71,6 @@ impl ExampleData for EventInfo {
     }
 }
 
-/// Call-in info for an event
-#[derive(Debug, Clone, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(
-    feature = "utoipa",
-    derive(utoipa::ToSchema),
-    schema(example = json!(CallIn::example_data()))
-)]
-pub struct CallIn {
-    /// SIP Call-In phone number which must be used to reach the room
-    pub tel: String,
-
-    /// SIP ID which must transmitted via DTMF (number field on the phone) to identify this room
-    pub id: CallInId,
-
-    /// SIP password which must be transmitted via DTMF (number field on the phone) after entering the `sip_id`
-    /// to enter the room
-    pub password: CallInPassword,
-}
-
-impl ExampleData for CallIn {
-    fn example_data() -> Self {
-        Self {
-            tel: "+555-123-456-789".to_string(),
-            id: "1234567890".parse().expect("valid call-in id"),
-            password: "0987654321".parse().expect("valid call-in password"),
-        }
-    }
-}
-
 /// Streaming link for an event
 #[derive(Debug, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -155,7 +125,7 @@ pub struct MeetingDetails {
     // by default which creates a false positive in the spectral linter when
     // combined with example data.
     #[cfg_attr(feature = "utoipa", schema(nullable = false))]
-    pub call_in: Option<CallIn>,
+    pub call_in: Option<CallInInfo>,
 
     /// The links for accessing the stream
     #[cfg_attr(feature = "serde", serde(default))]
@@ -166,7 +136,7 @@ impl ExampleData for MeetingDetails {
     fn example_data() -> Self {
         Self {
             invite_code_id: Some(InviteCode::example_data()),
-            call_in: Some(CallIn::example_data()),
+            call_in: Some(CallInInfo::example_data()),
             streaming_links: vec![StreamingLink::example_data()],
         }
     }
