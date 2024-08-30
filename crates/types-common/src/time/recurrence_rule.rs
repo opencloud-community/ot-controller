@@ -4,11 +4,11 @@
 
 use std::str::FromStr;
 
-use opentalk_types_common::utils::ExampleData;
 use snafu::{ensure, Snafu};
 
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::utils::ExampleData;
 
 /// The maximum allowed number of characters for a recurrence rule
 pub const RECURRENCE_RULE_MAX_LEN: usize = 1024;

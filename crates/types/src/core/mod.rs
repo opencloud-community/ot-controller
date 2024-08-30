@@ -8,7 +8,6 @@
 //! and typically used by other types in this crate.
 
 mod recurrence_pattern;
-mod recurrence_rule;
 mod resumption_token;
 mod room_id;
 mod room_password;
@@ -25,7 +24,6 @@ mod user_id;
 pub use recurrence_pattern::{
     RecurrencePattern, TryFromRecurrenceRulesError, RECURRENCE_PATTERN_MAX_LEN,
 };
-pub use recurrence_rule::{ParseRecurrenceRuleError, RecurrenceRule, RECURRENCE_RULE_MAX_LEN};
 pub use resumption_token::ResumptionToken;
 pub use room_id::RoomId;
 pub use room_password::{RoomPassword, MAX_ROOM_PASSWORD_LENGTH, MIN_ROOM_PASSWORD_LENGTH};

@@ -5,7 +5,9 @@
 //! Data types for date and time.
 
 mod date_time_tz;
+mod recurrence_rule;
 mod time_zone;
 
 pub use date_time_tz::DateTimeTz;
+pub use recurrence_rule::{ParseRecurrenceRuleError, RecurrenceRule, RECURRENCE_RULE_MAX_LEN};
 pub use time_zone::TimeZone;
