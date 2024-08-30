@@ -4,7 +4,8 @@
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
-use opentalk_types::{core::ParticipantId, signaling::timer::ready_status::ReadyStatus};
+use opentalk_types::signaling::timer::ready_status::ReadyStatus;
+use opentalk_types_signaling::ParticipantId;
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
 use snafu::ResultExt;

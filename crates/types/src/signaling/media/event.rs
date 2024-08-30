@@ -4,13 +4,15 @@
 
 //! Types related to signaling events in the `media` namespace
 
+use opentalk_types_signaling::ParticipantId;
+
 use super::{
     command::{EnableForceMute, Target},
     MediaSessionType, ParticipantSpeakingState, TrickleCandidate,
 };
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{core::ParticipantId, signaling::media::command::ParticipantSelection};
+use crate::signaling::media::command::ParticipantSelection;
 
 /// The direction of a media link
 #[derive(Clone, Debug, PartialEq, Eq)]

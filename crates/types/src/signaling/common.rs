@@ -5,7 +5,8 @@
 //! This module contains shared types that are used by the signaling communication
 //! (typically through websockets)
 
-use crate::core::ParticipantId;
+use opentalk_types_signaling::ParticipantId;
+
 #[allow(unused_imports)]
 use crate::imports::*;
 

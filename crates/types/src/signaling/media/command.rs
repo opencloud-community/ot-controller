@@ -6,8 +6,9 @@
 
 use std::collections::BTreeSet;
 
+use opentalk_types_signaling::ParticipantId;
+
 use super::{MediaSessionState, MediaSessionType, TrickleCandidate, UpdateSpeakingState};
-use crate::core::ParticipantId;
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -217,7 +218,7 @@ mod test {
     use serde_json::json;
 
     use super::*;
-    use crate::{core::ParticipantId, signaling::media::MediaSessionType};
+    use crate::signaling::media::MediaSessionType;
 
     #[test]
     fn publish() {

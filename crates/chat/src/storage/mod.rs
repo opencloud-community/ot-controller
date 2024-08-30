@@ -17,7 +17,7 @@ mod test_common {
 
     use chrono::{DateTime, Utc};
     use opentalk_signaling_core::SignalingRoomId;
-    use opentalk_types::core::ParticipantId;
+    use opentalk_types_signaling::ParticipantId;
     use pretty_assertions::assert_eq;
 
     use super::*;

@@ -12,7 +12,8 @@ use opentalk_signaling_core::{
     },
     SignalingModuleError,
 };
-use opentalk_types::core::{ParticipantId, RoomId, UserId};
+use opentalk_types::core::{RoomId, UserId};
+use opentalk_types_signaling::ParticipantId;
 
 #[async_trait(?Send)]
 pub(crate) trait ModerationStorage:

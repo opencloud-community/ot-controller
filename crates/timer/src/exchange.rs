@@ -2,10 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types::{
-    core::ParticipantId,
-    signaling::timer::event::{Started, Stopped},
-};
+use opentalk_types::signaling::timer::event::{Started, Stopped};
+use opentalk_types_signaling::ParticipantId;
 use serde::{Deserialize, Serialize};
 
 use crate::TimerId;

@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_janus_client::{Jsep, TrickleCandidate};
-use opentalk_types::{
-    core::ParticipantId,
-    signaling::media::{command::SubscriberConfiguration, event::Source, MediaSessionType},
+use opentalk_types::signaling::media::{
+    command::SubscriberConfiguration, event::Source, MediaSessionType,
 };
+use opentalk_types_signaling::ParticipantId;
 
 #[derive(Debug)]
 #[allow(clippy::enum_variant_names)]

@@ -4,7 +4,8 @@
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{RedisConnection, RunnerId};
-use opentalk_types::core::{ParticipantId, ResumptionToken, TicketToken};
+use opentalk_types::core::{ResumptionToken, TicketToken};
+use opentalk_types_signaling::ParticipantId;
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
 use snafu::{ensure, whatever, ResultExt as _};

@@ -5,7 +5,7 @@
 use std::collections::{hash_map::Entry, HashMap};
 
 use opentalk_signaling_core::SignalingRoomId;
-use opentalk_types::core::ParticipantId;
+use opentalk_types_signaling::ParticipantId;
 
 use crate::{storage::InitState, SessionInfo};
 

@@ -9,11 +9,12 @@ use opentalk_signaling_core::{
     RedisConnection, RedisSnafu, SerdeJsonSnafu, SignalingModuleError, SignalingRoomId,
 };
 use opentalk_types::{
-    core::{ParticipantId, RoomId, Timestamp},
+    core::{RoomId, Timestamp},
     signaling::media::{
         state::ForceMuteState, ParticipantMediaState, ParticipantSpeakingState, SpeakingState,
     },
 };
+use opentalk_types_signaling::ParticipantId;
 use redis::AsyncCommands as _;
 use redis_args::ToRedisArgs;
 use snafu::{whatever, ResultExt as _};

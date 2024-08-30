@@ -378,6 +378,11 @@ check:opentalk-types-signaling:
       - FEATURES:
           [
           '',
+            backend,
+            frontend,
+            rand,
+            redis,
+            serde,
           ]
         EXTRA_ARGS: ['', --no-default-features]
   script:

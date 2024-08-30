@@ -49,6 +49,7 @@ opentalk-database = { workspace = true, optional = true }
 opentalk-diesel-newtype = { workspace = true, optional = true }
 opentalk-kustos-prefix = { workspace = true, optional = true }
 opentalk-types-common.workspace = true
+opentalk-types-signaling.workspace = true
 rand = { workspace = true, optional = true }
 redis = { workspace = true, optional = true }
 redis-args = { workspace = true, optional = true }
@@ -82,6 +83,7 @@ backend = [
   "diesel",
   "kustos",
   "opentalk-types-common/backend",
+  "opentalk-types-signaling/backend",
   "rand",
   "redis",
   "serde",
@@ -98,6 +100,7 @@ frontend = [
   "dep:http",
   "dep:http-request-derive",
   "opentalk-types-common/frontend",
+  "opentalk-types-signaling/frontend",
   "serde",
 ]
 kustos = [
@@ -106,7 +109,13 @@ kustos = [
   "opentalk-types-common/kustos",
 ]
 rand = ["dep:rand", "opentalk-types-common/rand", "uuid/v4"]
-redis = ["dep:redis", "dep:redis-args", "opentalk-types-common/redis", "serde"]
+redis = [
+  "dep:redis",
+  "dep:redis-args",
+  "opentalk-types-common/redis",
+  "opentalk-types-signaling/redis",
+  "serde",
+]
 serde = [
   "chrono-tz/serde",
   "chrono/serde",
@@ -115,6 +124,7 @@ serde = [
   "dep:serde",
   "dep:validator",
   "opentalk-types-common/serde",
+  "opentalk-types-signaling/serde",
   "url/serde",
   "uuid/serde",
 ]

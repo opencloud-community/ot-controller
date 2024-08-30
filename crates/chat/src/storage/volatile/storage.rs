@@ -10,10 +10,11 @@ use std::{
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage};
 use opentalk_types::{
-    core::{ParticipantId, RoomId, Timestamp},
+    core::{RoomId, Timestamp},
     signaling::chat::state::StoredMessage,
 };
 use opentalk_types_common::users::{GroupId, GroupName};
+use opentalk_types_signaling::ParticipantId;
 use parking_lot::RwLock;
 
 use super::memory::MemoryChatState;

@@ -6,10 +6,11 @@ use std::collections::{HashMap, HashSet};
 
 use opentalk_signaling_core::SignalingRoomId;
 use opentalk_types::{
-    core::{ParticipantId, RoomId, Timestamp},
+    core::{RoomId, Timestamp},
     signaling::chat::state::StoredMessage,
 };
 use opentalk_types_common::users::{GroupId, GroupName};
+use opentalk_types_signaling::ParticipantId;
 
 use crate::ParticipantPair;
 

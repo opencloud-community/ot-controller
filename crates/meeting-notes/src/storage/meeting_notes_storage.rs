@@ -7,7 +7,7 @@ use opentalk_signaling_core::{
     control::storage::{ControlStorageParticipantAttributesRaw, ControlStorageParticipantSet},
     SignalingModuleError, SignalingRoomId,
 };
-use opentalk_types::core::ParticipantId;
+use opentalk_types_signaling::ParticipantId;
 
 use super::InitState;
 use crate::SessionInfo;

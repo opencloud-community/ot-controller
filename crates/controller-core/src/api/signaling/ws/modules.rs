@@ -7,13 +7,11 @@ use std::{any::Any, collections::HashMap, marker::PhantomData, sync::Arc};
 use actix_http::ws::{CloseCode, Message};
 use futures::stream::SelectAll;
 use opentalk_signaling_core::{AnyStream, Event, InitContext, SignalingMetrics, VolatileStorage};
-use opentalk_types::{
-    core::ParticipantId,
-    signaling::{
-        control::{state::ControlState, Participant},
-        ModuleData, Role,
-    },
+use opentalk_types::signaling::{
+    control::{state::ControlState, Participant},
+    ModuleData, Role,
 };
+use opentalk_types_signaling::ParticipantId;
 use serde_json::Value;
 use snafu::{Report, ResultExt, Snafu};
 

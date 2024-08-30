@@ -6,8 +6,9 @@
 
 use std::collections::BTreeSet;
 
+use opentalk_types_signaling::ParticipantId;
+
 use super::KickScope;
-use crate::core::ParticipantId;
 #[allow(unused_imports)]
 use crate::imports::*;
 

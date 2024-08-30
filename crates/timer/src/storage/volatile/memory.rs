@@ -5,7 +5,8 @@
 use std::collections::BTreeMap;
 
 use opentalk_signaling_core::SignalingRoomId;
-use opentalk_types::{core::ParticipantId, signaling::timer::ready_status::ReadyStatus};
+use opentalk_types::signaling::timer::ready_status::ReadyStatus;
+use opentalk_types_signaling::ParticipantId;
 
 use crate::storage::Timer;
 

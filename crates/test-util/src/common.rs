@@ -11,9 +11,10 @@ use opentalk_signaling_core::{
     SignalingModule, VolatileStaticMemoryStorage, VolatileStorage,
 };
 use opentalk_types::{
-    core::{ParticipantId, RoomId},
+    core::RoomId,
     signaling::{control::event::ControlEvent, Role},
 };
+use opentalk_types_signaling::ParticipantId;
 use pretty_assertions::assert_eq;
 use snafu::{ResultExt, Whatever};
 use tokio::sync::broadcast::Sender;

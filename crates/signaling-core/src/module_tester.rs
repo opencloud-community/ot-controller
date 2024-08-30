@@ -25,7 +25,7 @@ use opentalk_database::Db;
 use opentalk_db_storage::{rooms::Room, users::User};
 use opentalk_types::{
     common::tariff::{TariffModuleResource, TariffResource},
-    core::{ParticipantId, ParticipationKind, TariffId, Timestamp, UserId},
+    core::{ParticipationKind, TariffId, Timestamp, UserId},
     signaling::{
         control::{
             command::{ControlCommand, Join},
@@ -38,6 +38,7 @@ use opentalk_types::{
     },
 };
 use opentalk_types_common::rooms::BreakoutRoomId;
+use opentalk_types_signaling::ParticipantId;
 use serde_json::Value;
 use snafu::{whatever, OptionExt, Report, ResultExt, Snafu};
 use tokio::{

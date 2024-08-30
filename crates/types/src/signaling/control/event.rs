@@ -4,12 +4,14 @@
 
 //! Types related to signaling events in the `control` namespace
 
+use opentalk_types_signaling::ParticipantId;
+
 use super::{reason, room::RoomInfo, AssociatedParticipant, Participant};
 #[allow(unused_imports)]
 use crate::imports::*;
 use crate::{
     common::{event::EventInfo, tariff::TariffResource},
-    core::{ParticipantId, Timestamp},
+    core::Timestamp,
     signaling::{common::TargetParticipant, Role},
 };
 

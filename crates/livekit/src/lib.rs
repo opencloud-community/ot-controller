@@ -12,7 +12,8 @@ use opentalk_signaling_core::{
     ConfigSnafu, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
-use opentalk_types::{core::ParticipantId, signaling::SignalingModuleFrontendData};
+use opentalk_types::signaling::SignalingModuleFrontendData;
+use opentalk_types_signaling::ParticipantId;
 use settings::LivekitSettings;
 use snafu::ResultExt;
 

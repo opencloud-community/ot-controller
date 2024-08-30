@@ -38,10 +38,11 @@ mod test_common {
         tariffs::Tariff,
     };
     use opentalk_types::{
-        core::{ParticipantId, RoomId, TariffId, TenantId, Timestamp, UserId},
+        core::{RoomId, TariffId, TenantId, Timestamp, UserId},
         signaling::{control::room::CreatorInfo, Role},
     };
     use opentalk_types_common::events::EventId;
+    use opentalk_types_signaling::ParticipantId;
     use pretty_assertions::assert_eq;
     use serde::{Deserialize, Serialize};
 

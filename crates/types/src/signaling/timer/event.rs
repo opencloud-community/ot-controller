@@ -4,8 +4,9 @@
 
 //! Signaling events for the `timer` namespace
 
+use opentalk_types_signaling::ParticipantId;
+
 use super::{TimerConfig, TimerId};
-use crate::core::ParticipantId;
 #[allow(unused_imports)]
 use crate::imports::*;
 

@@ -19,3 +19,19 @@
     unused_qualifications,
     unused_results
 )]
+
+mod participant_id;
+
+pub use participant_id::ParticipantId;
+
+mod imports {
+    #![allow(unused)]
+
+    #[cfg(feature = "serde")]
+    pub use serde::{de, de::DeserializeOwned, Deserialize, Deserializer, Serialize, Serializer};
+    #[cfg(feature = "redis")]
+    pub use {
+        redis::{FromRedisValue, RedisResult, ToRedisArgs},
+        redis_args::{FromRedisValue, ToRedisArgs},
+    };
+}

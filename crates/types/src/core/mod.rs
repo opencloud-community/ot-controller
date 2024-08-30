@@ -7,7 +7,6 @@
 //! All core types are simple types (e.g. newtypes of primitive or other simple types),
 //! and typically used by other types in this crate.
 
-mod participant_id;
 mod participation_kind;
 mod recurrence_pattern;
 mod recurrence_rule;
@@ -24,7 +23,6 @@ mod ticket_token;
 mod timestamp;
 mod user_id;
 
-pub use participant_id::ParticipantId;
 pub use participation_kind::ParticipationKind;
 pub use recurrence_pattern::{
     RecurrencePattern, TryFromRecurrenceRulesError, RECURRENCE_PATTERN_MAX_LEN,

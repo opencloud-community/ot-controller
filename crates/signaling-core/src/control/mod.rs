@@ -4,9 +4,10 @@
 
 use either::Either;
 use opentalk_types::{
-    core::{ParticipantId, ParticipationKind, Timestamp},
+    core::{ParticipationKind, Timestamp},
     signaling::{control::state::ControlState, Role},
 };
+use opentalk_types_signaling::ParticipantId;
 
 use crate::{SignalingModuleError, SignalingRoomId, VolatileStorage};
 

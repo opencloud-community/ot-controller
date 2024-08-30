@@ -4212,6 +4212,7 @@ dependencies = [
  "opentalk-test-util",
  "opentalk-types",
  "opentalk-types-common",
+ "opentalk-types-signaling",
  "parking_lot",
  "pretty_assertions",
  "redis",
@@ -4331,6 +4332,7 @@ dependencies = [
  "opentalk-test-util",
  "opentalk-types",
  "opentalk-types-common",
+ "opentalk-types-signaling",
  "opentelemetry",
  "opentelemetry-otlp",
  "opentelemetry-prometheus",
@@ -4557,6 +4559,7 @@ dependencies = [
  "opentalk-janus-client",
  "opentalk-signaling-core",
  "opentalk-types",
+ "opentalk-types-signaling",
  "parking_lot",
  "pin-project-lite",
  "pretty_assertions",
@@ -4649,6 +4652,7 @@ dependencies = [
  "opentalk-controller-settings",
  "opentalk-signaling-core",
  "opentalk-types",
+ "opentalk-types-signaling",
  "serde",
  "snafu",
 ]
@@ -4689,6 +4693,7 @@ dependencies = [
  "opentalk-signaling-core",
  "opentalk-types",
  "opentalk-types-common",
+ "opentalk-types-signaling",
  "parking_lot",
  "redis",
  "redis-args",
@@ -4802,6 +4807,7 @@ dependencies = [
  "opentalk-r3dlock",
  "opentalk-types",
  "opentalk-types-common",
+ "opentalk-types-signaling",
  "opentelemetry",
  "parking_lot",
  "pretty_assertions",
@@ -4836,6 +4842,7 @@ dependencies = [
  "opentalk-signaling-core",
  "opentalk-types",
  "opentalk-types-common",
+ "opentalk-types-signaling",
  "pretty_assertions",
  "redis",
  "serde",
@@ -4857,6 +4864,7 @@ dependencies = [
  "opentalk-signaling-core",
  "opentalk-test-util",
  "opentalk-types",
+ "opentalk-types-signaling",
  "parking_lot",
  "pretty_assertions",
  "redis",
@@ -4894,6 +4902,7 @@ dependencies = [
  "opentalk-diesel-newtype",
  "opentalk-kustos-prefix",
  "opentalk-types-common",
+ "opentalk-types-signaling",
  "pretty_assertions",
  "rand",
  "redis",
@@ -4941,6 +4950,13 @@ dependencies = [
 [[package]]
 name = "opentalk-types-signaling"
 version = "0.0.0-dev"
+dependencies = [
+ "derive_more 1.0.0",
+ "redis",
+ "redis-args",
+ "serde",
+ "uuid",
+]
 
 [[package]]
 name = "opentalk-whiteboard"

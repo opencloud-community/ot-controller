@@ -9,11 +9,12 @@ use opentalk_signaling_core::{
     NotFoundSnafu, SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage,
 };
 use opentalk_types::{
-    core::{ParticipantId, RoomId, Timestamp},
+    core::{RoomId, Timestamp},
     signaling::media::{
         state::ForceMuteState, ParticipantMediaState, ParticipantSpeakingState, SpeakingState,
     },
 };
+use opentalk_types_signaling::ParticipantId;
 use parking_lot::RwLock;
 use snafu::OptionExt as _;
 

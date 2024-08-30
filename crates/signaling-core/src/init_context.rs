@@ -8,8 +8,9 @@ use futures::{stream::SelectAll, Stream};
 use kustos::Authz;
 use opentalk_database::Db;
 use opentalk_db_storage::{rooms::Room, users::User};
-use opentalk_types::{common::tariff::TariffResource, core::ParticipantId, signaling::Role};
+use opentalk_types::{common::tariff::TariffResource, signaling::Role};
 use opentalk_types_common::rooms::BreakoutRoomId;
+use opentalk_types_signaling::ParticipantId;
 
 use crate::{
     any_stream, AnyStream, ObjectStorage, Participant, SignalingModule, SignalingRoomId,

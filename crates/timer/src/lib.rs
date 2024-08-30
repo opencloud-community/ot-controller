@@ -10,7 +10,7 @@ use opentalk_signaling_core::{
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types::{
-    core::{ParticipantId, Timestamp},
+    core::Timestamp,
     signaling::{
         timer::{
             command::{self, Message},
@@ -22,6 +22,7 @@ use opentalk_types::{
         Role,
     },
 };
+use opentalk_types_signaling::ParticipantId;
 use storage::TimerStorage;
 use tokio::time::sleep;
 use uuid::Uuid;

@@ -24,7 +24,7 @@ use opentalk_signaling_core::{
     SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types::{
-    core::{ParticipantId, RoomId},
+    core::RoomId,
     signaling::{
         breakout::{
             command::BreakoutCommand,
@@ -36,6 +36,7 @@ use opentalk_types::{
     },
 };
 use opentalk_types_common::rooms::BreakoutRoomId;
+use opentalk_types_signaling::ParticipantId;
 use snafu::whatever;
 use tokio::time::sleep;
 

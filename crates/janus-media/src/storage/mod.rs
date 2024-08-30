@@ -16,12 +16,13 @@ mod test_common {
     use opentalk_janus_client::RoomId;
     use opentalk_signaling_core::SignalingRoomId;
     use opentalk_types::{
-        core::{self, ParticipantId, Timestamp},
+        core::{self, Timestamp},
         signaling::media::{
             state::ForceMuteState, MediaSessionState, ParticipantMediaState,
             ParticipantSpeakingState, SpeakingState,
         },
     };
+    use opentalk_types_signaling::ParticipantId;
     use pretty_assertions::assert_eq;
 
     use super::MediaStorage;

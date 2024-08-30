@@ -4,7 +4,8 @@
 
 //! Signaling commands for the `recording` namespace
 
-use crate::core::ParticipantId;
+use opentalk_types_signaling::ParticipantId;
+
 #[allow(unused_imports)]
 use crate::imports::*;
 

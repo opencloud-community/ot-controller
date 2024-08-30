@@ -5,10 +5,8 @@
 use std::{collections::HashMap, future::Future};
 
 use opentalk_signaling_core::SignalingModuleError;
-use opentalk_types::{
-    core::ParticipantId,
-    signaling::media::{MediaSessionType, ParticipantMediaState},
-};
+use opentalk_types::signaling::media::{MediaSessionType, ParticipantMediaState};
+use opentalk_types_signaling::ParticipantId;
 use snafu::{ensure_whatever, Report};
 use tokio::sync::mpsc;
 

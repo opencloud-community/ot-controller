@@ -4,8 +4,9 @@
 
 //! Signaling events for the `chat` namespace
 
+use opentalk_types_signaling::ParticipantId;
+
 use super::{MessageId, Scope};
-use crate::core::ParticipantId;
 #[allow(unused_imports)]
 use crate::imports::*;
 

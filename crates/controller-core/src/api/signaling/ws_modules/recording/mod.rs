@@ -21,7 +21,7 @@ use opentalk_signaling_core::{
     SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types::{
-    core::{ParticipantId, StreamingTargetId},
+    core::StreamingTargetId,
     signaling::{
         recording::{
             command::{self, RecordingCommand},
@@ -33,6 +33,7 @@ use opentalk_types::{
         Role,
     },
 };
+use opentalk_types_signaling::ParticipantId;
 use snafu::{Report, ResultExt};
 use tokio::time::Duration;
 
