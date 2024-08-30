@@ -6,8 +6,7 @@ use std::sync::{Arc, OnceLock};
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{RunnerId, VolatileStaticMemoryStorage};
-use opentalk_types::core::TicketToken;
-use opentalk_types_common::auth::ResumptionToken;
+use opentalk_types_common::auth::{ResumptionToken, TicketToken};
 use opentalk_types_signaling::ParticipantId;
 use parking_lot::RwLock;
 use snafu::ensure;

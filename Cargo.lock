@@ -4905,7 +4905,6 @@ dependencies = [
  "opentalk-types-common",
  "opentalk-types-signaling",
  "pretty_assertions",
- "rand",
  "redis",
  "redis-args",
  "serde",

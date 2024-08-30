@@ -5,8 +5,7 @@
 use std::collections::{btree_map::Entry, BTreeMap};
 
 use opentalk_signaling_core::{ExpiringDataHashMap, RunnerId};
-use opentalk_types::core::TicketToken;
-use opentalk_types_common::auth::ResumptionToken;
+use opentalk_types_common::auth::{ResumptionToken, TicketToken};
 use opentalk_types_signaling::ParticipantId;
 
 use crate::api::signaling::{

@@ -50,7 +50,6 @@ opentalk-diesel-newtype = { workspace = true, optional = true }
 opentalk-kustos-prefix = { workspace = true, optional = true }
 opentalk-types-common.workspace = true
 opentalk-types-signaling.workspace = true
-rand = { workspace = true, optional = true }
 redis = { workspace = true, optional = true }
 redis-args = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
@@ -108,7 +107,7 @@ kustos = [
   "dep:opentalk-kustos-prefix",
   "opentalk-types-common/kustos",
 ]
-rand = ["dep:rand", "opentalk-types-common/rand", "uuid/v4"]
+rand = ["opentalk-types-common/rand", "uuid/v4"]
 redis = [
   "dep:redis",
   "dep:redis-args",

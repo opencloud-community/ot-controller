@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use derive_more::{Display, From, FromStr, Into};
-use opentalk_types_common::utils::ExampleData;
 
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::utils::ExampleData;
 
 /// A ticket token
 #[derive(Display, From, FromStr, Into, Debug, Clone, PartialEq, Eq, Hash)]
@@ -17,7 +17,7 @@ pub struct TicketToken(String);
 impl TicketToken {
     /// Generate a ticket for a room, based on random data.
     #[cfg(feature = "rand")]
-    pub fn generate_for_room(room: opentalk_types_common::rooms::RoomId) -> Self {
+    pub fn generate_for_room(room: crate::rooms::RoomId) -> Self {
         // Make 64 byte long string
         // {uuid}#{random_chars}
 

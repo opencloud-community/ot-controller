@@ -33,8 +33,10 @@ impl SignalingStorageProvider for VolatileStorage {
 #[cfg(test)]
 mod test_common {
     use opentalk_signaling_core::{Participant, RunnerId};
-    use opentalk_types::core::TicketToken;
-    use opentalk_types_common::{auth::ResumptionToken, rooms::RoomId};
+    use opentalk_types_common::{
+        auth::{ResumptionToken, TicketToken},
+        rooms::RoomId,
+    };
     use opentalk_types_signaling::ParticipantId;
     use pretty_assertions::assert_eq;
 
