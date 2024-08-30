@@ -7,7 +7,6 @@
 //! All core types are simple types (e.g. newtypes of primitive or other simple types),
 //! and typically used by other types in this crate.
 
-mod streaming_kind;
 mod streaming_target_id;
 mod tariff_id;
 mod tariff_status;
@@ -16,7 +15,6 @@ mod ticket_token;
 mod timestamp;
 mod user_id;
 
-pub use streaming_kind::{StreamingKind, StreamingKindType};
 pub use streaming_target_id::StreamingTargetId;
 pub use tariff_id::TariffId;
 pub use tariff_status::{TariffStatus, TariffStatusType};

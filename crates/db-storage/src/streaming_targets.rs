@@ -7,10 +7,13 @@ use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection, RunQueryDsl
 use opentalk_database::{DatabaseError, DbConnection, Result};
 use opentalk_types::{
     common::streaming::{RoomStreamingTarget, StreamingTarget, StreamingTargetKind},
-    core::{StreamingKind, StreamingTargetId},
+    core::StreamingTargetId,
     signaling::recording::{StreamKindSecret, StreamStatus, StreamTargetSecret},
 };
-use opentalk_types_common::{rooms::RoomId, streaming::StreamingKey};
+use opentalk_types_common::{
+    rooms::RoomId,
+    streaming::{StreamingKey, StreamingKind},
+};
 use snafu::{Report, Snafu};
 use url::Url;
 
