@@ -15,9 +15,9 @@ mod test_common {
     use opentalk_signaling_core::SignalingRoomId;
     use opentalk_types::{
         common::streaming::StreamingTargetKind,
-        core::StreamingTargetId,
         signaling::recording::{StreamKindSecret, StreamStatus, StreamTargetSecret},
     };
+    use opentalk_types_common::streaming::StreamingTargetId;
 
     use super::RecordingStorage;
 

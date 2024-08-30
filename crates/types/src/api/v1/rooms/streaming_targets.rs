@@ -111,12 +111,12 @@ impl ExampleData for ChangeRoomStreamingTargetResponse {
 
 #[cfg(test)]
 mod test {
-    use opentalk_types_common::streaming::StreamingKey;
+    use opentalk_types_common::streaming::{StreamingKey, StreamingTargetId};
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
     use super::*;
-    use crate::{common::streaming::StreamingTargetKind, core::StreamingTargetId};
+    use crate::common::streaming::StreamingTargetKind;
 
     #[test]
     fn streaming_target_basic() {

@@ -8,10 +8,8 @@ use async_trait::async_trait;
 use opentalk_signaling_core::{
     control::storage::ControlStorageParticipantAttributesRaw, SignalingModuleError, SignalingRoomId,
 };
-use opentalk_types::{
-    core::StreamingTargetId,
-    signaling::recording::{StreamStatus, StreamTargetSecret},
-};
+use opentalk_types::signaling::recording::{StreamStatus, StreamTargetSecret};
+use opentalk_types_common::streaming::StreamingTargetId;
 
 #[async_trait(?Send)]
 pub(crate) trait RecordingStorage: ControlStorageParticipantAttributesRaw {

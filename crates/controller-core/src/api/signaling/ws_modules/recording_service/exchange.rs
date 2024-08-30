@@ -4,7 +4,7 @@
 
 use std::collections::BTreeSet;
 
-use opentalk_types::core::StreamingTargetId;
+use opentalk_types_common::streaming::StreamingTargetId;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]

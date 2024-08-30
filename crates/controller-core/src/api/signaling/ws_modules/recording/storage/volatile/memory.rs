@@ -5,7 +5,8 @@
 use std::collections::BTreeMap;
 
 use opentalk_signaling_core::SignalingRoomId;
-use opentalk_types::{core::StreamingTargetId, signaling::recording::StreamTargetSecret};
+use opentalk_types::signaling::recording::StreamTargetSecret;
+use opentalk_types_common::streaming::StreamingTargetId;
 
 #[derive(Debug, Clone, Default)]
 pub(super) struct MemoryRecordingState {

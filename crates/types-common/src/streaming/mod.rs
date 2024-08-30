@@ -6,6 +6,8 @@
 
 mod streaming_key;
 mod streaming_kind;
+mod streaming_target_id;
 
 pub use streaming_key::StreamingKey;
 pub use streaming_kind::{StreamingKind, StreamingKindType};
+pub use streaming_target_id::StreamingTargetId;
