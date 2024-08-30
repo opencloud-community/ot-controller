@@ -31,6 +31,7 @@ pub mod events;
 pub mod module_resources;
 pub mod rooms;
 pub mod streaming;
+pub mod tariffs;
 pub mod time;
 pub mod users;
 pub mod utils;

@@ -6,9 +6,8 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use opentalk_types_common::utils::ExampleData;
+use opentalk_types_common::{tariffs::TariffId, utils::ExampleData};
 
-use crate::core::TariffId;
 #[allow(unused_imports)]
 use crate::imports::*;
 

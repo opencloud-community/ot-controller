@@ -18,8 +18,9 @@ use opentalk_database::{DbConnection, Paginate, Result};
 use opentalk_diesel_newtype::DieselNewtype;
 use opentalk_types::{
     api::v1::users::{PrivateUserProfile, PublicUserProfile},
-    core::{TariffId, TariffStatus, TenantId, UserId},
+    core::{TariffStatus, TenantId, UserId},
 };
+use opentalk_types_common::tariffs::TariffId;
 use serde::{Deserialize, Serialize};
 
 use super::{

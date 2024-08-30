@@ -14,8 +14,9 @@ use opentalk_database::{DbConnection, Result};
 use opentalk_diesel_newtype::DieselNewtype;
 use opentalk_types::{
     common::tariff::{QuotaType, TariffModuleResource, TariffResource},
-    core::{TariffId, UserId},
+    core::UserId,
 };
+use opentalk_types_common::tariffs::TariffId;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 
