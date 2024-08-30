@@ -5,7 +5,7 @@
 use chrono::{TimeZone as _, Utc};
 use opentalk_types_common::{
     events::{invites::EventInviteStatus, EventId},
-    time::DateTimeTz,
+    time::{DateTimeTz, RecurrencePattern},
     utils::ExampleData,
 };
 
@@ -15,7 +15,7 @@ use crate::imports::*;
 use crate::{
     api::v1::users::PublicUserProfile,
     common::{shared_folder::SharedFolder, streaming::RoomStreamingTarget},
-    core::{RecurrencePattern, Timestamp},
+    core::Timestamp,
 };
 
 /// Event Resource representation

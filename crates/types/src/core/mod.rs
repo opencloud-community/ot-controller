@@ -7,7 +7,6 @@
 //! All core types are simple types (e.g. newtypes of primitive or other simple types),
 //! and typically used by other types in this crate.
 
-mod recurrence_pattern;
 mod resumption_token;
 mod room_id;
 mod room_password;
@@ -21,9 +20,6 @@ mod ticket_token;
 mod timestamp;
 mod user_id;
 
-pub use recurrence_pattern::{
-    RecurrencePattern, TryFromRecurrenceRulesError, RECURRENCE_PATTERN_MAX_LEN,
-};
 pub use resumption_token::ResumptionToken;
 pub use room_id::RoomId;
 pub use room_password::{RoomPassword, MAX_ROOM_PASSWORD_LENGTH, MIN_ROOM_PASSWORD_LENGTH};

@@ -5,17 +5,17 @@
 use std::str::FromStr;
 
 use itertools::Itertools as _;
-use opentalk_types_common::{
-    time::{ParseRecurrenceRuleError, RecurrenceRule},
-    utils::ExampleData,
-};
 use snafu::{ensure, ResultExt as _, Snafu};
-
-/// The maximum number of recurrence rules inside a recurrence pattern
-pub const RECURRENCE_PATTERN_MAX_LEN: usize = 4;
 
 #[allow(unused_imports)]
 use crate::imports::*;
+use crate::{
+    time::{ParseRecurrenceRuleError, RecurrenceRule},
+    utils::ExampleData,
+};
+
+/// The maximum number of recurrence rules inside a recurrence pattern
+pub const RECURRENCE_PATTERN_MAX_LEN: usize = 4;
 
 /// A recurrence pattern containing zero or more recurrence rules
 #[derive(Default, Debug, Clone, PartialEq, Eq, derive_more::AsRef, derive_more::Into)]
@@ -166,7 +166,7 @@ mod tests {
     #[cfg(feature = "serde")]
     #[test]
     fn deserialize() {
-        use opentalk_types_common::time::RecurrenceRule;
+        use crate::time::RecurrenceRule;
 
         let expected_pattern: RecurrenceRule = "FREQ=WEEKLY;INTERVAL=1;BYDAY=MO".parse().unwrap();
 
@@ -190,7 +190,7 @@ mod tests {
     #[cfg(feature = "serde")]
     #[test]
     fn deserialize_with_invalid_number_of_rules() {
-        use opentalk_types_common::{time::RecurrenceRule, utils::ExampleData as _};
+        use crate::{time::RecurrenceRule, utils::ExampleData as _};
 
         let valid_recurrence_rule = RecurrenceRule::example_data();
 

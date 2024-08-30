@@ -4931,6 +4931,7 @@ dependencies = [
  "derive_more 1.0.0",
  "diesel",
  "http 0.2.12",
+ "itertools 0.13.0",
  "kustos-shared",
  "opentalk-client-shared",
  "opentalk-diesel-newtype",

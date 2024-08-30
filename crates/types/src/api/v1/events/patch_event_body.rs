@@ -1,16 +1,17 @@
-use opentalk_types_common::{time::DateTimeTz, utils::ExampleData};
-
 // SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
 //
 // SPDX-License-Identifier: EUPL-1.2
+
+use opentalk_types_common::{
+    time::{DateTimeTz, RecurrencePattern},
+    utils::ExampleData,
+};
+
 #[cfg(feature = "serde")]
 use crate::api::v1::utils::deserialize_some;
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{
-    common::streaming::StreamingTarget,
-    core::{RecurrencePattern, RoomPassword},
-};
+use crate::{common::streaming::StreamingTarget, core::RoomPassword};
 
 /// Body for the `PATCH /events/{event_id}` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]

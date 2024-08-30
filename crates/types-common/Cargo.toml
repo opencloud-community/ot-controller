@@ -46,6 +46,7 @@ derive_more = { workspace = true, features = [
 ] }
 diesel = { workspace = true, features = ["uuid"], optional = true }
 http = { workspace = true, optional = true }
+itertools.workspace = true
 kustos-shared = { workspace = true, optional = true }
 opentalk-client-shared = { workspace = true, optional = true }
 opentalk-diesel-newtype = { workspace = true, optional = true }
