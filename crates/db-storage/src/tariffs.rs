@@ -12,8 +12,11 @@ use diesel_async::RunQueryDsl;
 use opentalk_controller_settings::{DEFAULT_NAMESPACE, NAMESPACE_SEPARATOR};
 use opentalk_database::{DbConnection, Result};
 use opentalk_diesel_newtype::DieselNewtype;
-use opentalk_types::common::tariff::{QuotaType, TariffModuleResource, TariffResource};
-use opentalk_types_common::{tariffs::TariffId, users::UserId};
+use opentalk_types::common::tariff::{TariffModuleResource, TariffResource};
+use opentalk_types_common::{
+    tariffs::{QuotaType, TariffId},
+    users::UserId,
+};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 

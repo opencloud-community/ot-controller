@@ -14,7 +14,7 @@ use opentalk_db_storage::{
     tariffs::{ExternalTariff, ExternalTariffId, NewTariff, Tariff, UpdateTariff},
     utils::Jsonb,
 };
-use opentalk_types::common::tariff::QuotaType;
+use opentalk_types_common::tariffs::QuotaType;
 use snafu::{OptionExt, ResultExt, Snafu};
 use tabled::{settings::Style, Table, Tabled};
 

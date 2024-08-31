@@ -17,6 +17,7 @@ version.workspace = true
 [features]
 actix = ["dep:actix-http", "dep:actix-web-httpauth", "dep:bytes", "serde"]
 backend = ["diesel", "rand", "redis", "serde", "utoipa"]
+clap = ["dep:clap"]
 diesel = ["dep:diesel", "dep:opentalk-diesel-newtype", "serde"]
 frontend = ["dep:opentalk-client-shared", "http"]
 kustos = ["dep:kustos-shared", "dep:opentalk-kustos-prefix"]
@@ -38,6 +39,7 @@ actix-web-httpauth = { workspace = true, optional = true }
 bytes = { workspace = true, optional = true }
 chrono.workspace = true
 chrono-tz.workspace = true
+clap = { workspace = true, optional = true }
 derive_more = { workspace = true, features = [
   "as_ref",
   "deref",
@@ -61,6 +63,7 @@ serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
 serde_with = { workspace = true, optional = true }
 snafu.workspace = true
+strum.workspace = true
 url.workspace = true
 utoipa = { workspace = true, features = ["uuid"], optional = true }
 uuid.workspace = true

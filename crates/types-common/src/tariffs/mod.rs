@@ -4,8 +4,10 @@
 
 //! Data types for handling tariffs.
 
+mod quota_type;
 mod tariff_id;
 mod tariff_status;
 
+pub use quota_type::QuotaType;
 pub use tariff_id::TariffId;
 pub use tariff_status::{TariffStatus, TariffStatusType};

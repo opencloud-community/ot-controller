@@ -354,6 +354,7 @@ check:opentalk-types-common:
           [
           '',
             backend,
+            clap,
             diesel,
             frontend,
             rand,
