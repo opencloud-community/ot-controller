@@ -5,71 +5,12 @@
 //! This module contains commonly used types for streaming target endpoints.
 
 use opentalk_types_common::{
-    streaming::{StreamingKey, StreamingLink, StreamingTargetId},
+    streaming::{StreamingLink, StreamingTargetId, StreamingTargetKind},
     utils::ExampleData,
 };
-use url::Url;
 
 #[allow(unused_imports)]
 use crate::imports::*;
-
-/// A streaming target kind
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(tag = "kind", rename_all = "snake_case")
-)]
-#[cfg_attr(
-    feature = "utoipa",
-    derive(utoipa::ToSchema),
-    schema(example = json!(StreamingTargetKind::example_data()))
-)]
-pub enum StreamingTargetKind {
-    /// The "custom" kind
-    Custom {
-        /// The endpoint url of the streaming target
-        streaming_endpoint: Url,
-        /// The streaming key
-        streaming_key: StreamingKey,
-        /// The url from which the stream can be accessed
-        public_url: Url,
-    },
-}
-
-impl ExampleData for StreamingTargetKind {
-    fn example_data() -> Self {
-        Self::Custom {
-            streaming_endpoint: "https://ingress.streaming.example.com/"
-                .parse()
-                .expect("url should be valid"),
-            streaming_key: StreamingKey::example_data(),
-            public_url: "https://streaming.example.com/livestream123"
-                .parse()
-                .expect("url should be valid"),
-        }
-    }
-}
-
-impl StreamingTargetKind {
-    /// Return streaming_endpoint + streaming_key
-    pub fn get_stream_target_location(&self) -> Option<Url> {
-        match self {
-            StreamingTargetKind::Custom {
-                streaming_endpoint,
-                streaming_key,
-                public_url: _,
-            } => {
-                let mut endpoint = streaming_endpoint.clone();
-                if !endpoint.as_str().ends_with('/') {
-                    endpoint.set_path(&format!("{}/", endpoint.path()));
-                }
-
-                endpoint.join(streaming_key.as_str()).ok()
-            }
-        }
-    }
-}
 
 /// A streaming target
 #[derive(Clone, Debug, PartialEq, Eq)]
