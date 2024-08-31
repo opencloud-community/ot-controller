@@ -7,5 +7,4 @@
 
 pub mod features;
 pub mod shared_folder;
-pub mod streaming;
 pub mod tariff;

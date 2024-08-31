@@ -13,11 +13,11 @@ use diesel::{
     sql_types,
 };
 use opentalk_database::{DatabaseError, DbConnection};
-use opentalk_types::common::streaming::get_public_urls_from_streaming_targets;
 use opentalk_types_common::{
     call_in::CallInInfo,
     events::{EventInfo, MeetingDetails},
     rooms::RoomId,
+    streaming::get_public_urls_from_room_streaming_targets,
     users::UserId,
 };
 use serde::{Deserialize, Serialize};
@@ -106,7 +106,7 @@ pub async fn build_event_info(
         };
 
         let streaming_targets = get_room_streaming_targets(conn, room_id).await?;
-        let streaming_links = get_public_urls_from_streaming_targets(streaming_targets).await;
+        let streaming_links = get_public_urls_from_room_streaming_targets(streaming_targets).await;
 
         EventInfo::from(EventAndEncryption(event, e2e_encrytion)).with_meeting_details(
             MeetingDetails {

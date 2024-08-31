@@ -4,6 +4,7 @@
 
 //! Data types for handling streaming.
 
+mod room_streaming_target;
 mod streaming_key;
 mod streaming_kind;
 mod streaming_link;
@@ -11,6 +12,7 @@ mod streaming_target;
 mod streaming_target_id;
 mod streaming_target_kind;
 
+pub use room_streaming_target::{get_public_urls_from_room_streaming_targets, RoomStreamingTarget};
 pub use streaming_key::StreamingKey;
 pub use streaming_kind::{StreamingKind, StreamingKindType};
 pub use streaming_link::StreamingLink;

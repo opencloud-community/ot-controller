@@ -41,7 +41,7 @@ use opentalk_types::{
             users::GetEventInvitesPendingResponse,
         },
     },
-    common::{shared_folder::SharedFolder, streaming::RoomStreamingTarget},
+    common::shared_folder::SharedFolder,
 };
 use opentalk_types_common::{
     email::EmailAddress,
@@ -50,6 +50,7 @@ use opentalk_types_common::{
         EventId,
     },
     rooms::RoomId,
+    streaming::RoomStreamingTarget,
     users::UserId,
 };
 use serde::Deserialize;

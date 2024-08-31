@@ -4,13 +4,12 @@
 
 //! This module contains commonly used types for streaming target endpoints.
 
-use opentalk_types_common::{
+#[allow(unused_imports)]
+use crate::imports::*;
+use crate::{
     streaming::{StreamingLink, StreamingTarget, StreamingTargetId, StreamingTargetKind},
     utils::ExampleData,
 };
-
-#[allow(unused_imports)]
-use crate::imports::*;
 
 /// A streaming target which is specific for a Room
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -39,7 +38,7 @@ impl ExampleData for RoomStreamingTarget {
 }
 
 /// Extracts the public URLs from streaming targets
-pub async fn get_public_urls_from_streaming_targets(
+pub async fn get_public_urls_from_room_streaming_targets(
     streaming_targets: Vec<RoomStreamingTarget>,
 ) -> Vec<StreamingLink> {
     streaming_targets

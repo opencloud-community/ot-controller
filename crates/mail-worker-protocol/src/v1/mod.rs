@@ -3,8 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::{TimeZone, Utc};
-use opentalk_types::common::{shared_folder::SharedFolder, streaming::RoomStreamingTarget};
-use opentalk_types_common::{rooms::RoomPassword, utils::ExampleData};
+use opentalk_types::common::shared_folder::SharedFolder;
+use opentalk_types_common::{
+    rooms::RoomPassword, streaming::RoomStreamingTarget, utils::ExampleData,
+};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

@@ -5,14 +5,12 @@
 use diesel::{ExpressionMethods, Identifiable, QueryDsl, Queryable};
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection, RunQueryDsl};
 use opentalk_database::{DatabaseError, DbConnection, Result};
-use opentalk_types::{
-    common::streaming::RoomStreamingTarget,
-    signaling::recording::{StreamKindSecret, StreamStatus, StreamTargetSecret},
-};
+use opentalk_types::signaling::recording::{StreamKindSecret, StreamStatus, StreamTargetSecret};
 use opentalk_types_common::{
     rooms::RoomId,
     streaming::{
-        StreamingKey, StreamingKind, StreamingTarget, StreamingTargetId, StreamingTargetKind,
+        RoomStreamingTarget, StreamingKey, StreamingKind, StreamingTarget, StreamingTargetId,
+        StreamingTargetKind,
     },
 };
 use snafu::{Report, Snafu};
