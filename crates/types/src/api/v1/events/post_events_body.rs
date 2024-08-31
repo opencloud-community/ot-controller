@@ -5,11 +5,11 @@
 use chrono::{TimeZone as _, Utc};
 use opentalk_types_common::{
     rooms::RoomPassword,
+    streaming::StreamingTarget,
     time::{DateTimeTz, RecurrencePattern},
     utils::ExampleData,
 };
 
-use crate::common::streaming::StreamingTarget;
 #[allow(unused_imports)]
 use crate::imports::*;
 

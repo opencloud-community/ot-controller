@@ -4,13 +4,13 @@
 
 use opentalk_types_common::{
     rooms::RoomPassword,
+    streaming::StreamingTarget,
     time::{DateTimeTz, RecurrencePattern},
     utils::ExampleData,
 };
 
 #[cfg(feature = "serde")]
 use crate::api::v1::utils::deserialize_some;
-use crate::common::streaming::StreamingTarget;
 #[allow(unused_imports)]
 use crate::imports::*;
 

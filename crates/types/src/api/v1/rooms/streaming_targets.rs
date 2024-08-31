@@ -4,13 +4,12 @@
 
 //! This module contains types that are used for OpenTalk API V1 streaming target endpoints for specific rooms.
 
-use opentalk_types_common::utils::ExampleData;
+use opentalk_types_common::{streaming::StreamingTarget, utils::ExampleData};
 
 #[allow(unused_imports)]
 use crate::imports::*;
 use crate::{
-    api::v1::streaming_targets::UpdateStreamingTarget,
-    common::streaming::{RoomStreamingTarget, StreamingTarget},
+    api::v1::streaming_targets::UpdateStreamingTarget, common::streaming::RoomStreamingTarget,
 };
 
 /// The body of a *GET /rooms/{room_id}/streaming_targets* response
