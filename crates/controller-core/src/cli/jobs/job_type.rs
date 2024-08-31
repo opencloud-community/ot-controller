@@ -4,8 +4,7 @@
 
 //! A list of known types used by the job executor.
 
-#[allow(unused_imports)]
-use crate::imports::*;
+use serde::{Deserialize, Serialize};
 
 /// Maintenance job types that can be executed by OpenTalk
 #[derive(
@@ -21,13 +20,11 @@ use crate::imports::*;
     strum::EnumString,
     strum::VariantNames,
     strum::IntoStaticStr,
+    clap::ValueEnum,
+    Serialize,
+    Deserialize,
 )]
-#[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(rename_all = "snake_case")
-)]
+#[serde(rename_all = "snake_case")]
 pub enum JobType {
     /// A simple self-check of the job execution system
     SelfCheck,

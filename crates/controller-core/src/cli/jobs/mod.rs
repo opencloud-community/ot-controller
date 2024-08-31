@@ -11,12 +11,14 @@ use opentalk_controller_settings::Settings;
 use opentalk_database::Db;
 use opentalk_jobs::Job;
 use opentalk_signaling_core::{ExchangeHandle, ExchangeTask};
-use opentalk_types::common::jobs::JobType;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use snafu::{ensure_whatever, ResultExt};
 
+use self::job_type::JobType;
 use crate::Result;
+
+mod job_type;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct RawParameters {
