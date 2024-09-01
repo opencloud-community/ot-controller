@@ -12,7 +12,7 @@ use crate::{SignalingModuleError, SignalingRoomId, VolatileStorage};
 pub mod exchange;
 pub mod storage;
 
-pub use opentalk_types::signaling::control::NAMESPACE;
+pub use opentalk_types::signaling::control::{module_id, NAMESPACE};
 
 use self::storage::{
     AttributeActions, ControlStorage, ControlStorageParticipantAttributes as _, AVATAR_URL,

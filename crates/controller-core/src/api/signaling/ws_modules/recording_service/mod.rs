@@ -131,7 +131,7 @@ impl RecordingService {
 
         ctx.exchange_publish_to_namespace(
             control::exchange::current_room_all_participants(self.room),
-            Recording::NAMESPACE,
+            Recording::module_id(),
             recording::exchange::Message::StreamUpdated(stream_updated),
         );
         Ok(())
@@ -144,7 +144,7 @@ impl RecordingService {
         // notify recording module that the recorder is leaving
         ctx.exchange_publish_to_namespace(
             control::exchange::current_room_all_recorders(self.room),
-            Recording::NAMESPACE,
+            Recording::module_id(),
             recording::exchange::Message::RecorderStopping,
         );
 
@@ -173,7 +173,7 @@ impl RecordingService {
         }) {
             ctx.exchange_publish_to_namespace(
                 control::exchange::current_room_all_participants(self.room),
-                Recording::NAMESPACE,
+                Recording::module_id(),
                 recording::exchange::Message::StreamUpdated(stream_updated),
             );
         }
@@ -189,7 +189,7 @@ impl RecordingService {
         // Signal recording module that the recorder is started
         ctx.exchange_publish_to_namespace(
             control::exchange::current_room_all_recorders(self.room),
-            Recording::NAMESPACE,
+            Recording::module_id(),
             recording::exchange::Message::RecorderStarting,
         );
 

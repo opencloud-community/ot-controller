@@ -24,6 +24,7 @@ arc-swap.workspace = true
 cidr = { version = "0.2", features = ["serde"] }
 config.workspace = true
 openidconnect.workspace = true
+opentalk-types-common = { workspace = true, features = ["serde"] }
 owo-colors.workspace = true
 phonenumber.workspace = true
 rustc-hash.workspace = true

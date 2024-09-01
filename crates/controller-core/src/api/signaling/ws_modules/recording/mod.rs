@@ -24,15 +24,18 @@ use opentalk_types::signaling::{
     recording::{
         command::{self, RecordingCommand},
         event::{Error, RecorderError, RecordingEvent},
+        module_id,
         peer_state::RecordingPeerState,
+        record_feature,
         state::RecordingState,
-        StreamStatus, StreamTargetSecret, NAMESPACE, RECORD_FEATURE, STREAM_FEATURE,
+        stream_feature, StreamStatus, StreamTargetSecret, NAMESPACE, RECORD_FEATURE,
+        STREAM_FEATURE,
     },
     Role,
 };
-use opentalk_types_common::streaming::StreamingTargetId;
+use opentalk_types_common::{features::FeatureId, streaming::StreamingTargetId};
 use opentalk_types_signaling::ParticipantId;
-use snafu::{Report, ResultExt};
+use snafu::{Report, ResultExt, Snafu};
 use tokio::time::Duration;
 
 use self::storage::RecordingStorage;
@@ -46,6 +49,32 @@ pub(crate) mod storage;
 enum RecordingFeature {
     Record,
     Stream,
+}
+
+#[derive(Debug, Snafu)]
+pub enum TryFromRecordingFeatureError {
+    #[snafu(display("Unknown recording feature \"{found}\""))]
+    UnknownRecordingFeature { found: FeatureId },
+}
+
+impl TryFrom<FeatureId> for RecordingFeature {
+    type Error = TryFromRecordingFeatureError;
+
+    fn try_from(value: FeatureId) -> Result<Self, Self::Error> {
+        Self::try_from(&value)
+    }
+}
+
+impl TryFrom<&FeatureId> for RecordingFeature {
+    type Error = TryFromRecordingFeatureError;
+
+    fn try_from(value: &FeatureId) -> Result<Self, Self::Error> {
+        match value {
+            v if v == &record_feature() => Ok(Self::Record),
+            v if v == &stream_feature() => Ok(Self::Stream),
+            v => UnknownRecordingFeatureSnafu { found: v.clone() }.fail(),
+        }
+    }
 }
 
 pub struct Recording {
@@ -113,14 +142,10 @@ impl SignalingModule for Recording {
 
         let enabled_features = ctx
             .room_tariff
-            .module_features(NAMESPACE)
+            .module_features(&module_id())
             .into_iter()
             .flatten()
-            .filter_map(|feature| match feature.as_str() {
-                RECORD_FEATURE => Some(RecordingFeature::Record),
-                STREAM_FEATURE => Some(RecordingFeature::Stream),
-                _ => None,
-            })
+            .filter_map(|feature| RecordingFeature::try_from(feature.clone()).ok())
             .collect();
 
         Ok(Some(Self {
@@ -135,8 +160,11 @@ impl SignalingModule for Recording {
         }))
     }
 
-    fn get_provided_features() -> Vec<&'static str> {
-        vec![RECORD_FEATURE, STREAM_FEATURE]
+    fn get_provided_features() -> BTreeSet<FeatureId> {
+        BTreeSet::from_iter([
+            RECORD_FEATURE.parse().expect("valid feature id"),
+            STREAM_FEATURE.parse().expect("valid feature id"),
+        ])
     }
 
     async fn on_event(
@@ -413,7 +441,7 @@ impl Recording {
 
         ctx.exchange_publish_to_namespace(
             control::exchange::current_room_all_recorders(self.room),
-            RecordingService::NAMESPACE,
+            RecordingService::module_id(),
             recording_service::exchange::Message::StartStreams { target_ids },
         );
 
@@ -440,7 +468,7 @@ impl Recording {
 
         ctx.exchange_publish_to_namespace(
             control::exchange::current_room_all_recorders(self.room),
-            RecordingService::NAMESPACE,
+            RecordingService::module_id(),
             recording_service::exchange::Message::PauseStreams { target_ids },
         );
 
@@ -485,7 +513,7 @@ impl Recording {
 
         ctx.exchange_publish_to_namespace(
             control::exchange::current_room_all_recorders(self.room),
-            RecordingService::NAMESPACE,
+            RecordingService::module_id(),
             recording_service::exchange::Message::StopStreams { target_ids },
         );
 

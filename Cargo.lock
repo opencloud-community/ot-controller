@@ -4383,6 +4383,7 @@ dependencies = [
  "cidr",
  "config",
  "openidconnect",
+ "opentalk-types-common",
  "owo-colors",
  "phonenumber",
  "pretty_assertions",
@@ -4422,6 +4423,7 @@ dependencies = [
  "async-trait",
  "opentalk-signaling-core",
  "opentalk-types",
+ "opentalk-types-common",
 ]
 
 [[package]]
@@ -4525,6 +4527,7 @@ dependencies = [
  "async-trait",
  "opentalk-signaling-core",
  "opentalk-types",
+ "opentalk-types-common",
 ]
 
 [[package]]

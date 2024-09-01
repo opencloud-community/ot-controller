@@ -43,7 +43,7 @@ where
         self.exchange_publish_any(
             routing_key,
             NamespacedEvent {
-                namespace: control::NAMESPACE,
+                module: control::module_id(),
                 timestamp: self.timestamp(),
                 payload: message,
             },

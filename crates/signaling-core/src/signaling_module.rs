@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::{fmt::Debug, sync::Arc};
+use std::{collections::BTreeSet, fmt::Debug, sync::Arc};
 
 use lapin_pool::RabbitMqPool;
 use opentalk_controller_settings::{Settings, SharedSettings};
@@ -10,6 +10,7 @@ use opentalk_types::{
     api::error::ApiError,
     signaling::{SignalingModuleFrontendData, SignalingModulePeerFrontendData},
 };
+use opentalk_types_common::{features::FeatureId, modules::ModuleId};
 use serde::{Deserialize, Serialize};
 use snafu::Snafu;
 use tokio::sync::broadcast;
@@ -156,8 +157,8 @@ pub trait SignalingModule: Send + Sized + 'static {
     ) -> Result<Option<Self>>;
 
     /// Returns the features provided by a particular module.
-    fn get_provided_features() -> Vec<&'static str> {
-        vec![]
+    fn get_provided_features() -> BTreeSet<FeatureId> {
+        BTreeSet::default()
     }
 
     /// Events related to this module will be passed into this function together with [`ModuleContext`]
@@ -173,4 +174,10 @@ pub trait SignalingModule: Send + Sized + 'static {
 
     /// Build the parameters for instantiating the signaling module
     async fn build_params(init: SignalingModuleInitData) -> Result<Option<Self::Params>>;
+
+    fn module_id() -> ModuleId {
+        Self::NAMESPACE
+            .parse()
+            .expect("namespace must be a valid module id")
+    }
 }

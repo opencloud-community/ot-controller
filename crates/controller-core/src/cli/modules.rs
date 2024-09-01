@@ -6,6 +6,7 @@ use std::convert::Infallible;
 
 use async_trait::async_trait;
 use clap::Subcommand;
+use itertools::Itertools as _;
 use opentalk_signaling_core::{ModulesRegistrar, RegisterModules, SignalingModule};
 
 #[derive(Subcommand, Debug, Clone)]
@@ -22,7 +23,14 @@ impl ModulesRegistrar for ModuleConsolePrinter {
     type Error = Infallible;
 
     async fn register<M: SignalingModule>(&mut self) -> Result<(), Infallible> {
-        println!("{}: {:?}", M::NAMESPACE, M::get_provided_features());
+        println!(
+            "{}: [{}]",
+            M::module_id(),
+            M::get_provided_features()
+                .into_iter()
+                .map(|f| format!("\"{f}\""))
+                .join(", ")
+        );
         Ok(())
     }
 }

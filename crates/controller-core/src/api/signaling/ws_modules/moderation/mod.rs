@@ -18,7 +18,7 @@ use opentalk_signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, SerdeJsonSnafu, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
-pub use opentalk_types::signaling::moderation::NAMESPACE;
+pub use opentalk_types::signaling::moderation::{module_id, NAMESPACE};
 use opentalk_types::signaling::{
     control::{state::ControlState, AssociatedParticipant, Participant, Reason, WaitingRoomState},
     moderation::{

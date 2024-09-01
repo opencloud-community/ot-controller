@@ -86,8 +86,8 @@ fn to_event(
 
     let call_in_feature_is_enabled = !settings
         .defaults
-        .disabled_features()
-        .contains(features::CALL_IN);
+        .disabled_features
+        .contains(&features::call_in());
 
     let mut call_in = None;
 

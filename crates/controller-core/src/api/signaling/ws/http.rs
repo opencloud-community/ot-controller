@@ -2,7 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::{collections::HashSet, marker::PhantomData, time::Instant};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    marker::PhantomData,
+    time::Instant,
+};
 
 use actix_web::{get, http::header, web, web::Data, HttpMessage, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
@@ -13,7 +17,11 @@ use opentalk_signaling_core::{
     ExchangeHandle, ObjectStorage, Participant, SignalingMetrics, SignalingModule, VolatileStorage,
 };
 use opentalk_types::{api::error::ApiError, common::tariff::TariffResource};
-use opentalk_types_common::auth::TicketToken;
+use opentalk_types_common::{
+    auth::TicketToken,
+    features::{FeatureId, ModuleFeatureId},
+    modules::ModuleId,
+};
 use snafu::Report;
 use tokio::{
     sync::{broadcast, mpsc},
@@ -52,10 +60,10 @@ impl SignalingModules {
         }));
     }
 
-    pub fn get_module_features(&self) -> Vec<(&'static str, Vec<&'static str>)> {
+    pub fn get_module_features(&self) -> BTreeMap<ModuleId, BTreeSet<FeatureId>> {
         self.0
             .iter()
-            .map(|m| (m.namespace(), m.provided_features()))
+            .map(|m| (m.module_id(), m.provided_features()))
             .collect()
     }
 }
@@ -152,7 +160,7 @@ pub(crate) async fn ws_service(
     let room_tariff = get_tariff_for_room(
         db.clone(),
         &room,
-        settings.load_full().defaults.disabled_features(),
+        settings.load_full().defaults.disabled_features.clone(),
         modules.get_module_features(),
     )
     .await?;
@@ -349,8 +357,8 @@ async fn get_user_and_room_from_ticket_data(
 async fn get_tariff_for_room(
     db: Data<Db>,
     room: &Room,
-    disabled_features: HashSet<String>,
-    module_features: Vec<(&str, Vec<&str>)>,
+    disabled_features: BTreeSet<ModuleFeatureId>,
+    module_features: BTreeMap<ModuleId, BTreeSet<FeatureId>>,
 ) -> Result<TariffResource, ApiError> {
     let mut conn = db.get_conn().await?;
 

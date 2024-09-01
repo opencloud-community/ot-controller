@@ -77,7 +77,7 @@ pub async fn get(
 
     let room = Room::get(&mut conn, room_id).await?;
 
-    require_feature(&mut conn, &settings, room.created_by, features::CALL_IN).await?;
+    require_feature(&mut conn, &settings, room.created_by, &features::call_in()).await?;
 
     let config = SipConfig::get_by_room(&mut conn, room_id).await?;
 
@@ -149,7 +149,7 @@ pub async fn put(
 
     let room = Room::get(&mut conn, room_id).await?;
 
-    require_feature(&mut conn, &settings, room.created_by, features::CALL_IN).await?;
+    require_feature(&mut conn, &settings, room.created_by, &features::call_in()).await?;
 
     let changeset = UpdateSipConfig {
         password: modify_sip_config.password.clone(),
@@ -245,7 +245,7 @@ pub async fn delete(
 
     let room = Room::get(&mut conn, room_id).await?;
 
-    require_feature(&mut conn, &settings, room.created_by, features::CALL_IN).await?;
+    require_feature(&mut conn, &settings, room.created_by, &features::call_in()).await?;
 
     SipConfig::delete_by_room(&mut conn, room_id).await?;
 

@@ -2,11 +2,14 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::collections::BTreeSet;
+
 use opentalk_signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
     SignalingModuleInitData,
 };
 use opentalk_types::signaling::integration::{NAMESPACE, OUTLOOK_FEATURE};
+use opentalk_types_common::features::FeatureId;
 
 pub struct Integration;
 
@@ -30,8 +33,8 @@ impl SignalingModule for Integration {
         Ok(Some(Self {}))
     }
 
-    fn get_provided_features() -> Vec<&'static str> {
-        vec![OUTLOOK_FEATURE]
+    fn get_provided_features() -> BTreeSet<FeatureId> {
+        BTreeSet::from_iter([OUTLOOK_FEATURE.parse().expect("valid feature id")])
     }
 
     async fn on_event(

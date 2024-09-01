@@ -95,7 +95,7 @@ pub async fn start(
             .with_message("call-in is not available for encrypted rooms"));
     }
 
-    require_feature(&mut conn, &settings, room.created_by, features::CALL_IN).await?;
+    require_feature(&mut conn, &settings, room.created_by, &features::call_in()).await?;
 
     if sip_config.password != request.pin {
         return Err(invalid_credentials_error());

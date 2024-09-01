@@ -140,7 +140,7 @@ impl Deleter for EventDeleter {
         let room_id = event.room;
 
         let message = opentalk_types::signaling::NamespacedEvent {
-            namespace: control::NAMESPACE,
+            module: control::module_id(),
             timestamp: opentalk_types_common::time::Timestamp::now(),
             payload: control::exchange::Message::RoomDeleted,
         };

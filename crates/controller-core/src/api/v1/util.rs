@@ -8,7 +8,7 @@ use opentalk_controller_settings::Settings;
 use opentalk_database::{DbConnection, Result};
 use opentalk_db_storage::{tariffs::Tariff, users::User, utils::HasUsers};
 use opentalk_types::api::{error::ApiError, v1::users::PublicUserProfile};
-use opentalk_types_common::users::UserId;
+use opentalk_types_common::{features::ModuleFeatureId, users::UserId};
 
 /// Utility to fetch user profiles batched
 ///
@@ -74,9 +74,9 @@ pub(crate) async fn require_feature(
     db_conn: &mut DbConnection,
     settings: &Settings,
     user_id: UserId,
-    feature: &str,
+    feature: &ModuleFeatureId,
 ) -> Result<(), ApiError> {
-    if settings.defaults.disabled_features().contains(feature) {
+    if settings.defaults.disabled_features.contains(feature) {
         return Err(ApiError::forbidden()
             .with_code("feature_disabled")
             .with_message(format!("The feature \"{feature}\" is disabled")));

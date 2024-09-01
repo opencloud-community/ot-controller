@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use std::{
-    collections::BTreeSet,
+    collections::{BTreeMap, BTreeSet},
     future,
     mem::replace,
     ops::ControlFlow,
@@ -28,12 +28,12 @@ use opentalk_db_storage::{
 };
 use opentalk_signaling_core::{
     control::{
-        self, exchange,
+        self, exchange, module_id,
         storage::{
             AttributeActions, ControlStorageParticipantAttributes, AVATAR_URL, DISPLAY_NAME,
             HAND_IS_UP, HAND_UPDATED_AT, IS_ROOM_OWNER, JOINED_AT, KIND, LEFT_AT, ROLE, USER_ID,
         },
-        ControlStateExt as _, ControlStorageProvider, NAMESPACE,
+        ControlStateExt as _, ControlStorageProvider,
     },
     AnyStream, ExchangeHandle, LockError, ObjectStorage, Participant, RoomLockingProvider as _,
     RunnerId, SignalingMetrics, SignalingModule, SignalingModuleError, SignalingRoomId,
@@ -55,7 +55,8 @@ use opentalk_types::{
     },
 };
 use opentalk_types_common::{
-    rooms::BreakoutRoomId, tariffs::QuotaType, time::Timestamp, users::UserId,
+    features::FeatureId, modules::ModuleId, rooms::BreakoutRoomId, tariffs::QuotaType,
+    time::Timestamp, users::UserId,
 };
 use opentalk_types_signaling::{ParticipantId, ParticipationKind};
 use serde_json::Value;
@@ -601,7 +602,7 @@ impl Runner {
                         self.exchange_publish(
                             exchange::global_room_all_participants(self.room_id.room_id()),
                             serde_json::to_string(&NamespacedEvent {
-                                namespace: moderation::NAMESPACE,
+                                module: moderation::module_id(),
                                 timestamp: Timestamp::now(),
                                 payload: moderation::exchange::Message::LeftWaitingRoom(self.id),
                             })
@@ -773,9 +774,9 @@ impl Runner {
                         },
                     }
                 }
-                Some((namespace, any)) = self.events.next() => {
+                Some((module_id, any)) = self.events.next() => {
                     let timestamp = Timestamp::now();
-                    let actions = self.handle_module_targeted_event(namespace, timestamp, DynTargetedEvent::Ext(any))
+                    let actions = self.handle_module_targeted_event(&module_id, timestamp, DynTargetedEvent::Ext(any))
                         .await
                         .expect("Should not get events from unknown modules");
 
@@ -828,7 +829,7 @@ impl Runner {
     async fn handle_ws_message(&mut self, message: Message) {
         log::trace!("Received websocket message {:?}", message);
 
-        let value: Result<NamespacedCommand<'_, Value>, _> = match message {
+        let value: Result<NamespacedCommand<Value>, _> = match message {
             Message::Text(ref text) => serde_json::from_str(text),
             Message::Binary(ref binary) => serde_json::from_slice(binary),
             _ => unreachable!(),
@@ -851,7 +852,7 @@ impl Runner {
             }
         };
 
-        if namespaced.namespace == NAMESPACE {
+        if namespaced.module == module_id() {
             match serde_json::from_value(namespaced.payload) {
                 Ok(msg) => {
                     if let Err(e) = self.handle_control_msg(timestamp, msg).await {
@@ -868,11 +869,11 @@ impl Runner {
             }
             // Do not handle any other messages than control-join or echo before joined
         } else if matches!(&self.state, RunnerState::Joined)
-            || matches!(namespaced.namespace, Echo::NAMESPACE)
+            || namespaced.module == Echo::module_id()
         {
             match self
                 .handle_module_targeted_event(
-                    namespaced.namespace,
+                    &namespaced.module,
                     timestamp,
                     DynTargetedEvent::WsMessage(namespaced.payload),
                 )
@@ -954,7 +955,7 @@ impl Runner {
                         self.exchange_publish(
                             control::exchange::global_room_all_participants(self.room_id.room_id()),
                             serde_json::to_string(&NamespacedEvent {
-                                namespace: moderation::NAMESPACE,
+                                module: moderation::module_id(),
                                 timestamp,
                                 payload: moderation::exchange::Message::LeftWaitingRoom(self.id),
                             })
@@ -1267,7 +1268,7 @@ impl Runner {
         self.ws
             .send(Message::Text(
                 serde_json::to_string(&NamespacedEvent {
-                    namespace: moderation::NAMESPACE,
+                    module: moderation::module_id(),
                     timestamp,
                     payload: ModerationEvent::InWaitingRoom,
                 })
@@ -1279,7 +1280,7 @@ impl Runner {
         self.exchange_publish(
             control::exchange::global_room_all_participants(self.room_id.room_id()),
             serde_json::to_string(&NamespacedEvent {
-                namespace: moderation::NAMESPACE,
+                module: moderation::module_id(),
                 timestamp,
                 payload: moderation::exchange::Message::JoinedWaitingRoom(self.id),
             })
@@ -1413,16 +1414,16 @@ impl Runner {
 
         let settings = self.settings.load_full();
 
-        let mut module_features = Vec::<(&str, Vec<&str>)>::new();
+        let mut module_features = BTreeMap::<ModuleId, BTreeSet<FeatureId>>::new();
         self.modules
             .get_module_features()
             .iter()
             .for_each(|(k, v)| {
-                module_features.push((k, v.clone()));
+                module_features.insert(k.clone(), v.clone());
             });
 
         let tariff_resource = tariff
-            .to_tariff_resource(settings.defaults.disabled_features(), module_features)
+            .to_tariff_resource(settings.defaults.disabled_features.clone(), module_features)
             .into();
 
         let mut conn = self.db.get_conn().await?;
@@ -1645,7 +1646,7 @@ impl Runner {
             }
         };
 
-        if namespaced.namespace == NAMESPACE {
+        if namespaced.module == module_id() {
             let msg = match serde_json::from_value::<exchange::Message>(namespaced.payload) {
                 Ok(msg) => msg,
                 Err(e) => {
@@ -1670,7 +1671,7 @@ impl Runner {
             // Only allow rmq messages outside the control namespace if the participant is fully joined
             match self
                 .handle_module_targeted_event(
-                    namespaced.namespace,
+                    &namespaced.module,
                     namespaced.timestamp,
                     DynTargetedEvent::ExchangeMessage(namespaced.payload),
                 )
@@ -1779,7 +1780,7 @@ impl Runner {
                         self.ws
                             .send(Message::Text(
                                 serde_json::to_string(&NamespacedEvent {
-                                    namespace: moderation::NAMESPACE,
+                                    module: moderation::module_id(),
                                     timestamp,
                                     payload: ModerationEvent::Accepted,
                                 })
@@ -1851,7 +1852,7 @@ impl Runner {
                     self.ws
                         .send(Message::Text(
                             serde_json::to_string(&NamespacedEvent {
-                                namespace: moderation::NAMESPACE,
+                                module: moderation::module_id(),
                                 timestamp,
                                 payload: ModerationEvent::RaisedHandResetByModerator { issued_by },
                             })
@@ -1865,7 +1866,7 @@ impl Runner {
                 self.ws
                     .send(Message::Text(
                         serde_json::to_string(&NamespacedEvent {
-                            namespace: moderation::NAMESPACE,
+                            module: moderation::module_id(),
                             timestamp,
                             payload: ModerationEvent::RaiseHandsEnabled { issued_by },
                         })
@@ -1887,7 +1888,7 @@ impl Runner {
                 self.ws
                     .send(Message::Text(
                         serde_json::to_string(&NamespacedEvent {
-                            namespace: moderation::NAMESPACE,
+                            module: moderation::module_id(),
                             timestamp,
                             payload: ModerationEvent::RaiseHandsDisabled { issued_by },
                         })
@@ -1945,7 +1946,7 @@ impl Runner {
         self.ws
             .send(Message::Text(
                 serde_json::to_string(&NamespacedEvent {
-                    namespace: moderation::NAMESPACE,
+                    module: moderation::module_id(),
                     timestamp,
                     payload: ModerationEvent::InWaitingRoom,
                 })
@@ -1957,7 +1958,7 @@ impl Runner {
         self.exchange_publish(
             control::exchange::global_room_all_participants(self.room_id.room_id()),
             serde_json::to_string(&NamespacedEvent {
-                namespace: moderation::NAMESPACE,
+                module: moderation::module_id(),
                 timestamp,
                 payload: moderation::exchange::Message::JoinedWaitingRoom(self.id),
             })
@@ -1977,7 +1978,7 @@ impl Runner {
         message: exchange::Message,
     ) {
         let message = NamespacedEvent {
-            namespace: NAMESPACE,
+            module: module_id(),
             timestamp,
             payload: message,
         };
@@ -2007,7 +2008,7 @@ impl Runner {
     /// Dispatch owned event to a single module
     async fn handle_module_targeted_event(
         &mut self,
-        module: &str,
+        module: &ModuleId,
         timestamp: Timestamp,
         dyn_event: DynTargetedEvent,
     ) -> Result<ModuleRequestedActions, NoSuchModuleError> {
@@ -2113,7 +2114,7 @@ impl Runner {
         self.ws
             .send(Message::Text(
                 serde_json::to_string(&NamespacedEvent {
-                    namespace: NAMESPACE,
+                    module: module_id(),
                     timestamp,
                     payload,
                 })

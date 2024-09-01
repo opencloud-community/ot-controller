@@ -32,7 +32,7 @@
 //! Setting categories, in which all properties implement a default value, should also implement the [`Default`] trait.
 
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeSet, HashMap},
     convert::TryFrom,
     path::PathBuf,
     sync::Arc,
@@ -42,6 +42,7 @@ use std::{
 use arc_swap::ArcSwap;
 use config::{Config, Environment, File, FileFormat};
 use openidconnect::{ClientId, ClientSecret};
+use opentalk_types_common::features::ModuleFeatureId;
 use rustc_hash::FxHashSet;
 use serde::{Deserialize, Deserializer};
 use snafu::{ResultExt, Snafu};
@@ -455,12 +456,6 @@ pub struct CallIn {
     pub default_country_code: phonenumber::country::Id,
 }
 
-/// The namespace that is used by default
-pub const DEFAULT_NAMESPACE: &str = "core";
-
-/// The namespace separator
-pub const NAMESPACE_SEPARATOR: &str = "::";
-
 #[derive(Clone, Default, Debug, Deserialize)]
 pub struct Defaults {
     #[serde(default = "default_user_language")]
@@ -468,22 +463,7 @@ pub struct Defaults {
     #[serde(default)]
     pub screen_share_requires_permission: bool,
     #[serde(default)]
-    disabled_features: HashSet<String>,
-}
-
-impl Defaults {
-    pub fn disabled_features(&self) -> HashSet<String> {
-        self.disabled_features
-            .iter()
-            .map(|feature| {
-                if feature.contains(NAMESPACE_SEPARATOR) {
-                    feature.to_owned()
-                } else {
-                    format!("{DEFAULT_NAMESPACE}{NAMESPACE_SEPARATOR}{feature}")
-                }
-            })
-            .collect()
-    }
+    pub disabled_features: BTreeSet<ModuleFeatureId>,
 }
 
 fn default_user_language() -> String {

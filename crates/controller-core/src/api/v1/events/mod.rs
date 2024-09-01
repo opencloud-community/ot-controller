@@ -230,9 +230,9 @@ impl EventRoomInfoExt for EventRoomInfo {
     ) -> Self {
         let call_in_feature_is_enabled = !settings
             .defaults
-            .disabled_features()
-            .contains(features::CALL_IN)
-            && !tariff.is_feature_disabled(features::CALL_IN);
+            .disabled_features
+            .contains(&features::call_in())
+            && !tariff.is_feature_disabled(&features::call_in());
 
         let mut call_in = None;
 
