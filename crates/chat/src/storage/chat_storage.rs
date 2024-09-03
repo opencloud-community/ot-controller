@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashSet};
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{
@@ -60,7 +60,7 @@ pub(crate) trait ChatStorage:
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
-    ) -> Result<HashMap<ParticipantId, Timestamp>, SignalingModuleError>;
+    ) -> Result<BTreeMap<ParticipantId, Timestamp>, SignalingModuleError>;
 
     async fn delete_last_seen_timestamps_private(
         &mut self,
@@ -79,7 +79,7 @@ pub(crate) trait ChatStorage:
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
-    ) -> Result<HashMap<GroupName, Timestamp>, SignalingModuleError>;
+    ) -> Result<BTreeMap<GroupName, Timestamp>, SignalingModuleError>;
 
     async fn delete_last_seen_timestamps_group(
         &mut self,

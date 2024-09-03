@@ -9,7 +9,7 @@
 //! Issues timestamp and messageIds to incoming chat messages and forwards them to other participants in the room or group.
 
 use std::{
-    collections::{BTreeSet, HashMap},
+    collections::{BTreeMap, BTreeSet},
     sync::Arc,
 };
 
@@ -24,7 +24,6 @@ use opentalk_signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, Participant, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
-use opentalk_types::signaling::chat::state::ChatState;
 use opentalk_types_common::{
     time::Timestamp,
     users::{GroupId, GroupName, UserId},
@@ -34,7 +33,7 @@ use opentalk_types_signaling_chat::{
     command::{ChatCommand, SendMessage, SetLastSeenTimestamp},
     event::{ChatDisabled, ChatEnabled, ChatEvent, Error, HistoryCleared, MessageSent},
     peer_state::ChatPeerState,
-    state::{GroupHistory, PrivateHistory, StoredMessage},
+    state::{ChatState, GroupHistory, PrivateHistory, StoredMessage},
     MessageId, Scope, NAMESPACE,
 };
 use snafu::Report;
@@ -53,8 +52,8 @@ pub struct Chat {
     id: ParticipantId,
     room: SignalingRoomId,
     last_seen_timestamp_global: Option<Timestamp>,
-    last_seen_timestamps_private: HashMap<ParticipantId, Timestamp>,
-    last_seen_timestamps_group: HashMap<GroupName, Timestamp>,
+    last_seen_timestamps_private: BTreeMap<ParticipantId, Timestamp>,
+    last_seen_timestamps_group: BTreeMap<GroupName, Timestamp>,
     db: Arc<Db>,
     groups: Vec<Group>,
 }
@@ -193,8 +192,8 @@ impl SignalingModule for Chat {
             db: ctx.db().clone(),
             groups,
             last_seen_timestamp_global: None,
-            last_seen_timestamps_private: HashMap::new(),
-            last_seen_timestamps_group: HashMap::new(),
+            last_seen_timestamps_private: BTreeMap::new(),
+            last_seen_timestamps_group: BTreeMap::new(),
         }))
     }
 

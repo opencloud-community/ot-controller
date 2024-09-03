@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeMap, HashSet},
     str::FromStr,
 };
 
@@ -116,7 +116,7 @@ impl ChatStorage for RedisConnection {
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
-    ) -> Result<HashMap<ParticipantId, Timestamp>, SignalingModuleError> {
+    ) -> Result<BTreeMap<ParticipantId, Timestamp>, SignalingModuleError> {
         self.hgetall(RoomParticipantLastSeenTimestampPrivate { room, participant })
             .await
             .context(RedisSnafu {
@@ -159,7 +159,7 @@ impl ChatStorage for RedisConnection {
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
-    ) -> Result<HashMap<GroupName, Timestamp>, SignalingModuleError> {
+    ) -> Result<BTreeMap<GroupName, Timestamp>, SignalingModuleError> {
         self.hgetall(RoomParticipantLastSeenTimestampsGroup { room, participant })
             .await
             .context(RedisSnafu {

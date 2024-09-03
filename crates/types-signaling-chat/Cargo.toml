@@ -19,6 +19,7 @@ backend = [
   "opentalk-types-common/backend",
   "opentalk-types-signaling/backend",
   "rand",
+  "redis",
   "serde",
 ]
 frontend = [
@@ -38,6 +39,7 @@ redis = [
   "serde",
 ]
 serde = [
+  "chrono/serde",
   "dep:serde",
   "opentalk-types-common/serde",
   "opentalk-types-signaling/serde",
@@ -59,5 +61,6 @@ serde = { workspace = true, optional = true }
 uuid.workspace = true
 
 [dev-dependencies]
+chrono.workspace = true
 pretty_assertions.workspace = true
 serde_json.workspace = true

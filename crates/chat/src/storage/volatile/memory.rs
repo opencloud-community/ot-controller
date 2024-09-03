@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 use opentalk_signaling_core::SignalingRoomId;
 use opentalk_types_common::{
@@ -22,9 +22,9 @@ pub(super) struct MemoryChatState {
     private_history: HashMap<(SignalingRoomId, ParticipantPair), Vec<StoredMessage>>,
     chats_enabled: HashMap<RoomId, bool>,
     last_seen_timestamps_private:
-        HashMap<SignalingRoomId, HashMap<ParticipantId, HashMap<ParticipantId, Timestamp>>>,
+        HashMap<SignalingRoomId, HashMap<ParticipantId, BTreeMap<ParticipantId, Timestamp>>>,
     last_seen_timestamps_group:
-        HashMap<SignalingRoomId, HashMap<ParticipantId, HashMap<GroupName, Timestamp>>>,
+        HashMap<SignalingRoomId, HashMap<ParticipantId, BTreeMap<GroupName, Timestamp>>>,
     last_seen_timestamps_global: HashMap<SignalingRoomId, HashMap<ParticipantId, Timestamp>>,
     private_correspondents: HashMap<SignalingRoomId, HashSet<ParticipantPair>>,
     group_participants: HashMap<(SignalingRoomId, GroupId), HashSet<ParticipantId>>,
@@ -85,7 +85,7 @@ impl MemoryChatState {
         &self,
         room: SignalingRoomId,
         participant: ParticipantId,
-    ) -> HashMap<ParticipantId, Timestamp> {
+    ) -> BTreeMap<ParticipantId, Timestamp> {
         self.last_seen_timestamps_private
             .get(&room)
             .and_then(|participants| participants.get(&participant).cloned())
@@ -123,7 +123,7 @@ impl MemoryChatState {
         &self,
         room: SignalingRoomId,
         participant: ParticipantId,
-    ) -> HashMap<GroupName, Timestamp> {
+    ) -> BTreeMap<GroupName, Timestamp> {
         self.last_seen_timestamps_group
             .get(&room)
             .and_then(|participants| participants.get(&participant).cloned())

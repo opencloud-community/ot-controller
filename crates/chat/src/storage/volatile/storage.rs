@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeMap, HashSet},
     sync::{Arc, OnceLock},
 };
 
@@ -95,7 +95,7 @@ impl ChatStorage for VolatileStaticMemoryStorage {
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
-    ) -> Result<HashMap<ParticipantId, Timestamp>, SignalingModuleError> {
+    ) -> Result<BTreeMap<ParticipantId, Timestamp>, SignalingModuleError> {
         Ok(state()
             .read()
             .get_last_seen_timestamps_private(room, participant))
@@ -131,7 +131,7 @@ impl ChatStorage for VolatileStaticMemoryStorage {
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
-    ) -> Result<HashMap<GroupName, Timestamp>, SignalingModuleError> {
+    ) -> Result<BTreeMap<GroupName, Timestamp>, SignalingModuleError> {
         Ok(state()
             .read()
             .get_last_seen_timestamps_group(room, participant))

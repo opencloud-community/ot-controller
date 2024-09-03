@@ -11,7 +11,7 @@ pub(crate) use chat_storage::ChatStorage;
 #[cfg(test)]
 mod test_common {
     use std::{
-        collections::HashMap,
+        collections::BTreeMap,
         time::{Duration, SystemTime},
     };
 
@@ -105,7 +105,7 @@ mod test_common {
                 .get_last_seen_timestamps_private(ROOM, SELF)
                 .await
                 .unwrap(),
-            HashMap::from_iter([(BOB, unix_epoch(1000).into())])
+            BTreeMap::from_iter([(BOB, unix_epoch(1000).into())])
         );
 
         storage
@@ -118,7 +118,7 @@ mod test_common {
                 .get_last_seen_timestamps_private(ROOM, SELF)
                 .await
                 .unwrap(),
-            HashMap::from_iter([
+            BTreeMap::from_iter([
                 (BOB, unix_epoch(1000).into()),
                 (ALICE, unix_epoch(2000).into()),
             ])

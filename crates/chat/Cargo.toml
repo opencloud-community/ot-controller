@@ -22,7 +22,6 @@ opentalk-database.workspace = true
 opentalk-db-storage.workspace = true
 opentalk-r3dlock.workspace = true
 opentalk-signaling-core.workspace = true
-opentalk-types = { workspace = true, features = ["backend"] }
 opentalk-types-common = { workspace = true, features = ["backend"] }
 opentalk-types-signaling = { workspace = true, features = ["backend"] }
 opentalk-types-signaling-chat = { workspace = true, features = ["backend"] }

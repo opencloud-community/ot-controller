@@ -4255,7 +4255,6 @@ dependencies = [
  "opentalk-r3dlock",
  "opentalk-signaling-core",
  "opentalk-test-util",
- "opentalk-types",
  "opentalk-types-common",
  "opentalk-types-signaling",
  "opentalk-types-signaling-chat",
@@ -4987,7 +4986,6 @@ dependencies = [
  "opentalk-kustos-prefix",
  "opentalk-types-common",
  "opentalk-types-signaling",
- "opentalk-types-signaling-chat",
  "pretty_assertions",
  "redis",
  "redis-args",
@@ -5065,6 +5063,7 @@ dependencies = [
 name = "opentalk-types-signaling-chat"
 version = "0.0.0-dev"
 dependencies = [
+ "chrono",
  "derive_more 1.0.0",
  "opentalk-types-common",
  "opentalk-types-signaling",
