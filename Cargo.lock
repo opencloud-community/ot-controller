@@ -5066,6 +5066,8 @@ name = "opentalk-types-signaling-chat"
 version = "0.0.0-dev"
 dependencies = [
  "derive_more 1.0.0",
+ "opentalk-types-common",
+ "opentalk-types-signaling",
  "redis-args",
  "serde",
  "uuid",

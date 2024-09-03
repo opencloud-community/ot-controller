@@ -11,10 +11,10 @@ use opentalk_types::signaling::chat::{
     event::{ChatEvent, MessageSent},
     peer_state::ChatPeerState,
     state::ChatState,
-    Scope,
 };
 use opentalk_types_common::{time::Timestamp, users::GroupName};
 use opentalk_types_signaling::{AssociatedParticipant, LeaveReason, Participant, Role};
+use opentalk_types_signaling_chat::Scope;
 use opentalk_types_signaling_control::event::{ControlEvent, JoinSuccess, Left};
 use pretty_assertions::assert_eq;
 use serde_json::json;

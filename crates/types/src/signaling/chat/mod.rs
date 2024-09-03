@@ -9,9 +9,5 @@ pub mod event;
 pub mod peer_state;
 pub mod state;
 
-mod scope;
-
-pub use scope::Scope;
-
 /// The namespace string for the signaling module
 pub const NAMESPACE: &str = "chat";
