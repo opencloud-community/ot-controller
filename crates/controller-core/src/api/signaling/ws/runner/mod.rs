@@ -1614,8 +1614,8 @@ impl Runner {
     async fn build_participant(
         &mut self,
         id: ParticipantId,
-    ) -> Result<Option<opentalk_types::signaling::control::Participant>> {
-        let mut participant = opentalk_types::signaling::control::Participant {
+    ) -> Result<Option<opentalk_types_signaling::Participant>> {
+        let mut participant = opentalk_types_signaling::Participant {
             id,
             module_data: Default::default(),
         };

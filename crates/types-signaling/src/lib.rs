@@ -23,6 +23,7 @@
 mod associated_participant;
 #[cfg(feature = "serde")]
 mod module_peer_data;
+mod participant;
 mod participant_id;
 mod participation_kind;
 mod role;
@@ -35,6 +36,7 @@ mod target_participant;
 pub use associated_participant::AssociatedParticipant;
 #[cfg(feature = "serde")]
 pub use module_peer_data::ModulePeerData;
+pub use participant::Participant;
 pub use participant_id::ParticipantId;
 pub use participation_kind::ParticipationKind;
 pub use role::{ForRole, Role};

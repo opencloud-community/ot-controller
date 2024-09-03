@@ -4,11 +4,10 @@
 
 //! Signaling events for the `moderation` namespace
 
-use opentalk_types_signaling::{AssociatedParticipant, ParticipantId};
+use opentalk_types_signaling::{AssociatedParticipant, Participant, ParticipantId};
 
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::signaling::control::Participant;
 
 /// Events sent out by the `moderation` module
 #[derive(Clone, Debug, PartialEq, Eq)]

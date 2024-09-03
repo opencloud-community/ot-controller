@@ -5,9 +5,11 @@
 //! Types related to signaling events in the `control` namespace
 
 use opentalk_types_common::{events::EventInfo, tariffs::TariffResource, time::Timestamp};
-use opentalk_types_signaling::{AssociatedParticipant, ParticipantId, Role, TargetParticipant};
+use opentalk_types_signaling::{
+    AssociatedParticipant, Participant, ParticipantId, Role, TargetParticipant,
+};
 
-use super::{reason, room::RoomInfo, Participant};
+use super::{reason, room::RoomInfo};
 #[allow(unused_imports)]
 use crate::imports::*;
 

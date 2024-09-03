@@ -1027,8 +1027,8 @@ where
     async fn build_participant(
         &mut self,
         id: ParticipantId,
-    ) -> Result<opentalk_types::signaling::control::Participant, SignalingModuleError> {
-        let mut participant = opentalk_types::signaling::control::Participant {
+    ) -> Result<opentalk_types_signaling::Participant, SignalingModuleError> {
+        let mut participant = opentalk_types_signaling::Participant {
             id,
             module_data: Default::default(),
         };
