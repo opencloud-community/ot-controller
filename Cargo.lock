@@ -5060,6 +5060,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "opentalk-types-signaling-chat"
+version = "0.0.0-dev"
+
+[[package]]
 name = "opentalk-types-signaling-control"
 version = "0.0.0-dev"
 dependencies = [
