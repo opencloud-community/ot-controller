@@ -26,7 +26,7 @@ mod role;
 
 pub use participant_id::ParticipantId;
 pub use participation_kind::ParticipationKind;
-pub use role::Role;
+pub use role::{ForRole, Role};
 
 mod imports {
     #![allow(unused)]

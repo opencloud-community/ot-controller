@@ -5,7 +5,7 @@
 //! Common types related to the shared_folder module
 
 use opentalk_types_common::utils::ExampleData;
-use opentalk_types_signaling::Role;
+use opentalk_types_signaling::{ForRole, Role};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -81,15 +81,6 @@ impl SignalingModuleFrontendData for SharedFolder {
 }
 
 impl SharedFolder {
-    /// Get an equivalent shared folder, cut down to match the signaling role
-    pub fn for_signaling_role(self, role: Role) -> Self {
-        if role.is_moderator() {
-            self
-        } else {
-            self.without_write_access()
-        }
-    }
-
     /// Get an equivalent shared folder, with write access removed
     pub fn without_write_access(self) -> Self {
         Self {
@@ -103,6 +94,17 @@ impl SharedFolder {
         Self {
             read_write: Some(write_access),
             ..self
+        }
+    }
+}
+
+impl ForRole for SharedFolder {
+    /// Get an equivalent shared folder, cut down to match the signaling role
+    fn for_role(self, role: Role) -> Self {
+        if role.is_moderator() {
+            self
+        } else {
+            self.without_write_access()
         }
     }
 }

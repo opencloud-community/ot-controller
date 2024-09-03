@@ -4,7 +4,7 @@
 
 //! Signaling events for the `shared_folder` namespace
 
-use opentalk_types_signaling::Role;
+use opentalk_types_signaling::{ForRole, Role};
 
 use crate::common::shared_folder::SharedFolder;
 #[allow(unused_imports)]
@@ -23,13 +23,11 @@ pub enum SharedFolderEvent {
     Updated(SharedFolder),
 }
 
-impl SharedFolderEvent {
+impl ForRole for SharedFolderEvent {
     /// Get an equivalent shared folder event, cut down to match the signaling role
-    pub fn for_signaling_role(self, role: Role) -> Self {
+    fn for_role(self, role: Role) -> Self {
         match self {
-            SharedFolderEvent::Updated(state) => {
-                SharedFolderEvent::Updated(state.for_signaling_role(role))
-            }
+            SharedFolderEvent::Updated(state) => SharedFolderEvent::Updated(state.for_role(role)),
         }
     }
 }

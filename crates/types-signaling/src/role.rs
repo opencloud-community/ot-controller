@@ -80,3 +80,12 @@ impl From<InviteRole> for Role {
         }
     }
 }
+
+/// Trait for modifying data types for a specific [`Role`].
+///
+/// This can be used to e.g. remove certain contents that not should be
+/// available for certain roles.
+pub trait ForRole {
+    /// Modify the data type for the specified role.
+    fn for_role(self, role: Role) -> Self;
+}

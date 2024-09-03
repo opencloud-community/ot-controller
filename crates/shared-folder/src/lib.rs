@@ -21,6 +21,7 @@ use opentalk_types::{
     common::shared_folder::SharedFolder as SharedFolderType,
     signaling::shared_folder::{event::SharedFolderEvent, NAMESPACE},
 };
+use opentalk_types_signaling::ForRole as _;
 use snafu::Report;
 use storage::SharedFolderStorage;
 
@@ -114,7 +115,7 @@ impl SignalingModule for SharedFolder {
                     .storage()
                     .get_shared_folder(self.room)
                     .await?
-                    .map(|f| f.for_signaling_role(control_data.role));
+                    .map(|f| f.for_role(control_data.role));
             }
             Event::Leaving => {}
             Event::RaiseHand => {}
@@ -126,7 +127,7 @@ impl SignalingModule for SharedFolder {
                 if let Some(shared_folder) =
                     ctx.volatile.storage().get_shared_folder(self.room).await?
                 {
-                    let update = SharedFolderEvent::Updated(shared_folder.for_signaling_role(role));
+                    let update = SharedFolderEvent::Updated(shared_folder.for_role(role));
                     ctx.ws_send(update);
                 }
             }
