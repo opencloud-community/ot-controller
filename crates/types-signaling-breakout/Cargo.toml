@@ -1,0 +1,20 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+authors.workspace = true
+description = "Signaling types for the OpenTalk breakout module"
+documentation = "https://docs.rs/opentalk-types-signaling-breakout"
+edition = "2021"
+homepage.workspace = true
+license = "EUPL-1.2"
+name = "opentalk-types-signaling-breakout"
+publish = true
+repository.workspace = true
+version.workspace = true
+
+
+[features]
+backend = []
+frontend = []

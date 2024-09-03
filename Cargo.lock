@@ -4995,6 +4995,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "opentalk-types-signaling-breakout"
+version = "0.0.0-dev"
+
+[[package]]
 name = "opentalk-whiteboard"
 version = "0.0.0-dev"
 dependencies = [
