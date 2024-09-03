@@ -5,10 +5,7 @@
 //! Signaling events for the `chat` namespace
 
 use opentalk_types_signaling::ParticipantId;
-use opentalk_types_signaling_chat::{
-    event::{ChatDisabled, ChatEnabled},
-    MessageId, Scope,
-};
+use opentalk_types_signaling_chat::event::{ChatDisabled, ChatEnabled, MessageSent};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -47,24 +44,6 @@ impl From<ChatDisabled> for ChatEvent {
     fn from(value: ChatDisabled) -> Self {
         Self::ChatDisabled(value)
     }
-}
-
-/// A message was sent
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct MessageSent {
-    /// Id of the message
-    pub id: MessageId,
-
-    /// Sender of the message
-    pub source: ParticipantId,
-
-    /// Content of the message
-    pub content: String,
-
-    /// Scope of the message
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub scope: Scope,
 }
 
 impl From<MessageSent> for ChatEvent {
@@ -111,6 +90,7 @@ impl From<Error> for ChatEvent {
 #[cfg(test)]
 mod tests {
     use opentalk_types_common::users::GroupName;
+    use opentalk_types_signaling_chat::{MessageId, Scope};
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
