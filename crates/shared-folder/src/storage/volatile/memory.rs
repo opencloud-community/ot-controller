@@ -5,7 +5,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use opentalk_signaling_core::SignalingRoomId;
-use opentalk_types::common::shared_folder::SharedFolder;
+use opentalk_types_common::shared_folders::SharedFolder;
 
 #[derive(Debug, Clone, Default)]
 pub(crate) struct MemorySharedFolderState {

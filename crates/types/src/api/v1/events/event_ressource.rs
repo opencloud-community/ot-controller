@@ -5,15 +5,16 @@
 use chrono::{TimeZone as _, Utc};
 use opentalk_types_common::{
     events::{invites::EventInviteStatus, EventId},
+    shared_folders::SharedFolder,
     streaming::RoomStreamingTarget,
     time::{DateTimeTz, RecurrencePattern, Timestamp},
     utils::ExampleData,
 };
 
 use super::{EventInvitee, EventRoomInfo, EventType};
+use crate::api::v1::users::PublicUserProfile;
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{api::v1::users::PublicUserProfile, common::shared_folder::SharedFolder};
 
 /// Event Resource representation
 ///

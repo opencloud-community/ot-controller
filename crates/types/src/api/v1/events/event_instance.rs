@@ -4,14 +4,15 @@
 
 use opentalk_types_common::{
     events::{invites::EventInviteStatus, EventId},
+    shared_folders::SharedFolder,
     time::{DateTimeTz, Timestamp},
     utils::ExampleData,
 };
 
 use super::{EventAndInstanceId, EventInvitee, EventRoomInfo, EventStatus, EventType, InstanceId};
+use crate::api::v1::users::PublicUserProfile;
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{api::v1::users::PublicUserProfile, common::shared_folder::SharedFolder};
 
 /// Event instance resource
 ///

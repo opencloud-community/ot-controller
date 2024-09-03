@@ -37,31 +37,26 @@ use opentalk_db_storage::{
 };
 use opentalk_keycloak_admin::{users::TenantFilter, KeycloakAdminClient};
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage};
-use opentalk_types::{
-    api::{
-        error::{
-            ApiError, ValidationErrorEntry, ERROR_CODE_IGNORED_VALUE, ERROR_CODE_VALUE_REQUIRED,
+use opentalk_types::api::{
+    error::{ApiError, ValidationErrorEntry, ERROR_CODE_IGNORED_VALUE, ERROR_CODE_VALUE_REQUIRED},
+    v1::{
+        events::{
+            CallInInfo, DeleteEventsQuery, EmailOnlyUser, EventAndInstanceId,
+            EventExceptionResource, EventInvitee, EventInviteeProfile, EventOptionsQuery,
+            EventOrException, EventResource, EventRoomInfo, EventStatus, EventType, GetEventQuery,
+            GetEventsCursorData, GetEventsQuery, PatchEventBody, PatchEventQuery, PostEventsBody,
+            PublicInviteUserProfile,
         },
-        v1::{
-            events::{
-                CallInInfo, DeleteEventsQuery, EmailOnlyUser, EventAndInstanceId,
-                EventExceptionResource, EventInvitee, EventInviteeProfile, EventOptionsQuery,
-                EventOrException, EventResource, EventRoomInfo, EventStatus, EventType,
-                GetEventQuery, GetEventsCursorData, GetEventsQuery, PatchEventBody,
-                PatchEventQuery, PostEventsBody, PublicInviteUserProfile,
-            },
-            pagination::default_pagination_per_page,
-            users::{PublicUserProfile, UnregisteredUser},
-            Cursor,
-        },
+        pagination::default_pagination_per_page,
+        users::{PublicUserProfile, UnregisteredUser},
+        Cursor,
     },
-    common::shared_folder::SharedFolder,
 };
 use opentalk_types_common::{
     events::{invites::EventInviteStatus, EventId},
     features,
     rooms::{RoomId, RoomPassword},
-    shared_folders::SharedFolderAccess,
+    shared_folders::{SharedFolder, SharedFolderAccess},
     streaming::{RoomStreamingTarget, StreamingTarget},
     time::{DateTimeTz, RecurrencePattern, TimeZone, Timestamp},
     users::UserId,

@@ -32,23 +32,21 @@ use opentalk_db_storage::{
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage, Participant, VolatileStorage};
-use opentalk_types::{
-    api::{
-        error::{ApiError, StandardErrorBody, ValidationErrorEntry, ERROR_CODE_INVALID_VALUE},
-        v1::{
-            pagination::PagePaginationQuery,
-            rooms::{
-                DeleteRoomQuery, GetRoomEventResponse, GetRoomsResponse, PatchRoomsRequestBody,
-                PostRoomsRequestBody, PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody,
-                RoomResource, RoomsStartResponse, StartRoomError,
-            },
+use opentalk_types::api::{
+    error::{ApiError, StandardErrorBody, ValidationErrorEntry, ERROR_CODE_INVALID_VALUE},
+    v1::{
+        pagination::PagePaginationQuery,
+        rooms::{
+            DeleteRoomQuery, GetRoomEventResponse, GetRoomsResponse, PatchRoomsRequestBody,
+            PostRoomsRequestBody, PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody,
+            RoomResource, RoomsStartResponse, StartRoomError,
         },
     },
-    common::shared_folder::SharedFolder,
 };
 use opentalk_types_common::{
     features,
     rooms::{invite_codes::InviteCode, RoomId},
+    shared_folders::SharedFolder,
     tariffs::TariffResource,
 };
 

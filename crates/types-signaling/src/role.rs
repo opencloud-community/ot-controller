@@ -89,3 +89,14 @@ pub trait ForRole {
     /// Modify the data type for the specified role.
     fn for_role(self, role: Role) -> Self;
 }
+
+impl ForRole for opentalk_types_common::shared_folders::SharedFolder {
+    /// Get an equivalent shared folder, cut down to match the signaling role
+    fn for_role(self, role: Role) -> Self {
+        if role.is_moderator() {
+            self
+        } else {
+            self.without_write_access()
+        }
+    }
+}

@@ -18,22 +18,22 @@ use opentalk_db_storage::{
     users::User,
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
-use opentalk_types::{
-    api::{
-        error::ApiError,
-        v1::{
-            events::{
-                EventAndInstanceId, EventInstance, EventInstancePath, EventInstanceQuery,
-                EventRoomInfo, EventStatus, EventType, GetEventInstanceResponseBody,
-                GetEventInstancesCursorData, GetEventInstancesQuery, GetEventInstancesResponseBody,
-                InstanceId, PatchEventInstanceBody,
-            },
-            Cursor,
+use opentalk_types::api::{
+    error::ApiError,
+    v1::{
+        events::{
+            EventAndInstanceId, EventInstance, EventInstancePath, EventInstanceQuery,
+            EventRoomInfo, EventStatus, EventType, GetEventInstanceResponseBody,
+            GetEventInstancesCursorData, GetEventInstancesQuery, GetEventInstancesResponseBody,
+            InstanceId, PatchEventInstanceBody,
         },
+        Cursor,
     },
-    common::shared_folder::SharedFolder,
 };
-use opentalk_types_common::events::{invites::EventInviteStatus, EventId};
+use opentalk_types_common::{
+    events::{invites::EventInviteStatus, EventId},
+    shared_folders::SharedFolder,
+};
 use rrule::RRuleSet;
 use snafu::Report;
 use validator::Validate;

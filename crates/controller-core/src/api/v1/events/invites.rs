@@ -28,20 +28,17 @@ use opentalk_db_storage::{
     users::User,
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
-use opentalk_types::{
-    api::{
-        error::ApiError,
-        v1::{
-            events::{
-                invites::GetEventsInvitesQuery, DeleteEmailInviteBody, DeleteEventInvitePath,
-                EmailInvite, EventOptionsQuery, PatchEmailInviteBody, PatchInviteBody,
-                PostEventInviteBody, PostEventInviteQuery, UserInvite,
-            },
-            pagination::PagePaginationQuery,
-            users::GetEventInvitesPendingResponse,
+use opentalk_types::api::{
+    error::ApiError,
+    v1::{
+        events::{
+            invites::GetEventsInvitesQuery, DeleteEmailInviteBody, DeleteEventInvitePath,
+            EmailInvite, EventOptionsQuery, PatchEmailInviteBody, PatchInviteBody,
+            PostEventInviteBody, PostEventInviteQuery, UserInvite,
         },
+        pagination::PagePaginationQuery,
+        users::GetEventInvitesPendingResponse,
     },
-    common::shared_folder::SharedFolder,
 };
 use opentalk_types_common::{
     email::EmailAddress,
@@ -50,6 +47,7 @@ use opentalk_types_common::{
         EventId,
     },
     rooms::RoomId,
+    shared_folders::SharedFolder,
     streaming::RoomStreamingTarget,
     users::UserId,
 };

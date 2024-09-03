@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use opentalk_signaling_core::{
     control::storage::ControlStorageEvent, SignalingModuleError, SignalingRoomId,
 };
-use opentalk_types::common::shared_folder::SharedFolder;
+use opentalk_types_common::shared_folders::SharedFolder;
 
 #[async_trait(?Send)]
 pub(crate) trait SharedFolderStorage: ControlStorageEvent {
