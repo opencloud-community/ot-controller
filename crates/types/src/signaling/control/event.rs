@@ -5,12 +5,12 @@
 //! Types related to signaling events in the `control` namespace
 
 use opentalk_types_common::{events::EventInfo, tariffs::TariffResource, time::Timestamp};
-use opentalk_types_signaling::ParticipantId;
+use opentalk_types_signaling::{ParticipantId, Role};
 
 use super::{reason, room::RoomInfo, AssociatedParticipant, Participant};
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::signaling::{common::TargetParticipant, Role};
+use crate::signaling::common::TargetParticipant;
 
 /// Events sent out by the `control` module
 #[derive(Clone, Debug, PartialEq, Eq)]

@@ -49,7 +49,7 @@ use opentalk_types::signaling::{
         AssociatedParticipant, Reason,
     },
     moderation::event::ModerationEvent,
-    ModuleData, Role,
+    ModuleData,
 };
 use opentalk_types_common::{
     features::FeatureId,
@@ -59,7 +59,7 @@ use opentalk_types_common::{
     time::Timestamp,
     users::UserId,
 };
-use opentalk_types_signaling::{ParticipantId, ParticipationKind};
+use opentalk_types_signaling::{ParticipantId, ParticipationKind, Role};
 use serde_json::Value;
 use snafu::{ensure, whatever, Report, ResultExt, Snafu};
 use tokio::{

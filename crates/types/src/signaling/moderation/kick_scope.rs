@@ -2,9 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_types_signaling::Role;
+
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::signaling::Role;
 
 /// The scope of users to be kicked from the room
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

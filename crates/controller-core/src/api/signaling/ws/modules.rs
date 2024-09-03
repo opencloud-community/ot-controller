@@ -14,10 +14,10 @@ use futures::stream::SelectAll;
 use opentalk_signaling_core::{AnyStream, Event, InitContext, SignalingMetrics, VolatileStorage};
 use opentalk_types::signaling::{
     control::{state::ControlState, Participant},
-    ModuleData, Role,
+    ModuleData,
 };
 use opentalk_types_common::{features::FeatureId, modules::ModuleId, time::Timestamp};
-use opentalk_types_signaling::ParticipantId;
+use opentalk_types_signaling::{ParticipantId, Role};
 use serde_json::Value;
 use snafu::{Report, ResultExt, Snafu};
 

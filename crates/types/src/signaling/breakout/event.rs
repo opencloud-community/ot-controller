@@ -77,12 +77,12 @@ impl From<Error> for BreakoutEvent {
 
 #[cfg(test)]
 mod test {
-    use opentalk_types_signaling::{ParticipantId, ParticipationKind};
+    use opentalk_types_signaling::{ParticipantId, ParticipationKind, Role};
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
     use super::*;
-    use crate::signaling::{breakout::BreakoutRoom, Role};
+    use crate::signaling::breakout::BreakoutRoom;
 
     #[test]
     fn started() {

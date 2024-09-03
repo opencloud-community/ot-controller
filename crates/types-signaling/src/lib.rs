@@ -22,9 +22,11 @@
 
 mod participant_id;
 mod participation_kind;
+mod role;
 
 pub use participant_id::ParticipantId;
 pub use participation_kind::ParticipationKind;
+pub use role::Role;
 
 mod imports {
     #![allow(unused)]

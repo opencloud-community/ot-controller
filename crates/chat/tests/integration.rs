@@ -19,9 +19,9 @@ use opentalk_types::signaling::{
         event::{ControlEvent, JoinSuccess},
         AssociatedParticipant, Participant,
     },
-    Role,
 };
 use opentalk_types_common::{time::Timestamp, users::GroupName};
+use opentalk_types_signaling::Role;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use serial_test::serial;

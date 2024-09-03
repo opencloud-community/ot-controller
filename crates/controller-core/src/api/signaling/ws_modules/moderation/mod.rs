@@ -26,10 +26,10 @@ use opentalk_types::signaling::{
         event::{DisplayNameChanged, Error, ModerationEvent},
         state::{ModerationState, ModeratorFrontendData},
     },
-    ModulePeerData, Role,
+    ModulePeerData,
 };
 use opentalk_types_common::{rooms::RoomId, users::UserId};
-use opentalk_types_signaling::{ParticipantId, ParticipationKind};
+use opentalk_types_signaling::{ParticipantId, ParticipationKind, Role};
 use snafu::{Report, ResultExt};
 
 use self::storage::ModerationStorage;

@@ -23,7 +23,6 @@ pub mod timer;
 pub mod whiteboard;
 
 mod namespaced;
-mod role;
 
 #[cfg(feature = "serde")]
 mod module_data;
@@ -38,7 +37,6 @@ mod signaling_module_frontend_data;
 mod signaling_module_peer_frontend_data;
 
 pub use namespaced::{NamespacedCommand, NamespacedEvent};
-pub use role::Role;
 
 #[cfg(feature = "serde")]
 mod serde_imports {

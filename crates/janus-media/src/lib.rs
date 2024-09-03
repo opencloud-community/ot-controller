@@ -19,18 +19,15 @@ use opentalk_signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
-use opentalk_types::signaling::{
-    media::{
-        command::{self, EnableForceMute, MediaCommand, Target, TargetConfigure, TargetSubscribe},
-        event::{self, Error, Link, MediaEvent, MediaStatus, Sdp, SdpCandidate, Source},
-        peer_state::MediaPeerState,
-        state::MediaState,
-        MediaSessionState, MediaSessionType, ParticipantMediaState, ParticipantSpeakingState,
-        SpeakingState, TrickleCandidate, UpdateSpeakingState, NAMESPACE,
-    },
-    Role,
+use opentalk_types::signaling::media::{
+    command::{self, EnableForceMute, MediaCommand, Target, TargetConfigure, TargetSubscribe},
+    event::{self, Error, Link, MediaEvent, MediaStatus, Sdp, SdpCandidate, Source},
+    peer_state::MediaPeerState,
+    state::MediaState,
+    MediaSessionState, MediaSessionType, ParticipantMediaState, ParticipantSpeakingState,
+    SpeakingState, TrickleCandidate, UpdateSpeakingState, NAMESPACE,
 };
-use opentalk_types_signaling::ParticipantId;
+use opentalk_types_signaling::{ParticipantId, Role};
 use sessions::MediaSessions;
 use settings::JanusMcuConfig;
 use snafu::{whatever, OptionExt, Report};

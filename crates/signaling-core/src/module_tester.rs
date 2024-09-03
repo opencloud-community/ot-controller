@@ -32,7 +32,7 @@ use opentalk_types::signaling::{
         state::ControlState,
         AssociatedParticipant, Reason,
     },
-    ModuleData, NamespacedCommand, NamespacedEvent, Role,
+    ModuleData, NamespacedCommand, NamespacedEvent,
 };
 use opentalk_types_common::{
     rooms::BreakoutRoomId,
@@ -40,7 +40,7 @@ use opentalk_types_common::{
     time::Timestamp,
     users::UserId,
 };
-use opentalk_types_signaling::{ParticipantId, ParticipationKind};
+use opentalk_types_signaling::{ParticipantId, ParticipationKind, Role};
 use serde_json::Value;
 use snafu::{whatever, OptionExt, Report, ResultExt, Snafu};
 use tokio::{

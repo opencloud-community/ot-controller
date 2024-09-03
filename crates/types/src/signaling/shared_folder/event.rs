@@ -4,9 +4,11 @@
 
 //! Signaling events for the `shared_folder` namespace
 
+use opentalk_types_signaling::Role;
+
+use crate::common::shared_folder::SharedFolder;
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{common::shared_folder::SharedFolder, signaling::Role};
 
 /// Events sent out by the `shared_folder` module
 #[derive(Clone, Debug, PartialEq, Eq)]
