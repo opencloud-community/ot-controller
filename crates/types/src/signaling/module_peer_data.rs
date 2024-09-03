@@ -4,7 +4,8 @@
 
 use std::collections::BTreeMap;
 
-use super::SignalingModulePeerFrontendData;
+use opentalk_types_signaling::SignalingModulePeerFrontendData;
+
 #[allow(unused_imports)]
 use crate::imports::*;
 
