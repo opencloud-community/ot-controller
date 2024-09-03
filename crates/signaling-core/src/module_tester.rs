@@ -27,7 +27,6 @@ use opentalk_types::signaling::{
     control::{
         command::{ControlCommand, Join},
         event::{ControlEvent, JoinSuccess, Left},
-        module_id,
         room::{CreatorInfo, RoomInfo},
         state::ControlState,
     },
@@ -42,6 +41,7 @@ use opentalk_types_common::{
 use opentalk_types_signaling::{
     AssociatedParticipant, LeaveReason, ParticipantId, ParticipationKind, Role,
 };
+use opentalk_types_signaling_control::module_id;
 use serde_json::Value;
 use snafu::{whatever, OptionExt, Report, ResultExt, Snafu};
 use tokio::{
