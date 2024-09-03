@@ -4,18 +4,13 @@
 
 //! Signaling events for the `chat` namespace
 
-use opentalk_types_signaling_chat::event::{
-    ChatDisabled, ChatEnabled, Error, HistoryCleared, MessageSent,
-};
-
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::event::{ChatDisabled, ChatEnabled, Error, HistoryCleared, MessageSent};
 
 /// A chat event which occured
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(tag = "message", rename_all = "snake_case")
 )]
 pub enum ChatEvent {
@@ -65,15 +60,15 @@ impl From<Error> for ChatEvent {
     }
 }
 
-#[cfg(test)]
-mod tests {
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
     use opentalk_types_common::users::GroupName;
     use opentalk_types_signaling::ParticipantId;
-    use opentalk_types_signaling_chat::{MessageId, Scope};
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
     use super::*;
+    use crate::{MessageId, Scope};
 
     #[test]
     fn global_serialize() {

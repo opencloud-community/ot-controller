@@ -6,14 +6,12 @@ use chrono::{DateTime, Utc};
 use opentalk_chat::Chat;
 use opentalk_signaling_core::module_tester::{ModuleTester, WsMessageOutgoing};
 use opentalk_test_util::{TestContext, ROOM_ID, USER_1, USER_2};
-use opentalk_types::signaling::chat::{
-    event::ChatEvent, peer_state::ChatPeerState, state::ChatState,
-};
+use opentalk_types::signaling::chat::{peer_state::ChatPeerState, state::ChatState};
 use opentalk_types_common::{time::Timestamp, users::GroupName};
 use opentalk_types_signaling::{AssociatedParticipant, LeaveReason, Participant, Role};
 use opentalk_types_signaling_chat::{
     command::{ChatCommand, SendMessage, SetLastSeenTimestamp},
-    event::MessageSent,
+    event::{ChatEvent, MessageSent},
     Scope,
 };
 use opentalk_types_signaling_control::event::{ControlEvent, JoinSuccess, Left};

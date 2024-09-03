@@ -4,7 +4,6 @@
 
 //! Signaling messages for the `chat` namespace
 
-pub mod event;
 pub mod peer_state;
 pub mod state;
 
