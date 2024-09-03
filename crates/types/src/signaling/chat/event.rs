@@ -4,8 +4,9 @@
 
 //! Signaling events for the `chat` namespace
 
-use opentalk_types_signaling::ParticipantId;
-use opentalk_types_signaling_chat::event::{ChatDisabled, ChatEnabled, MessageSent};
+use opentalk_types_signaling_chat::event::{
+    ChatDisabled, ChatEnabled, HistoryCleared, MessageSent,
+};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -52,14 +53,6 @@ impl From<MessageSent> for ChatEvent {
     }
 }
 
-/// The chat history was cleared
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct HistoryCleared {
-    /// ID of the participant that cleared chat history
-    pub issued_by: ParticipantId,
-}
-
 impl From<HistoryCleared> for ChatEvent {
     fn from(value: HistoryCleared) -> Self {
         Self::HistoryCleared(value)
@@ -90,6 +83,7 @@ impl From<Error> for ChatEvent {
 #[cfg(test)]
 mod tests {
     use opentalk_types_common::users::GroupName;
+    use opentalk_types_signaling::ParticipantId;
     use opentalk_types_signaling_chat::{MessageId, Scope};
     use pretty_assertions::assert_eq;
     use serde_json::json;
