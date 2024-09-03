@@ -5,7 +5,6 @@
 //! This module contains types that are used by the signaling communication
 //! (typically through websockets)
 
-pub mod breakout;
 pub mod chat;
 pub mod common;
 pub mod control;

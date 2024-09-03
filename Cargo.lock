@@ -4934,7 +4934,6 @@ dependencies = [
  "opentalk-kustos-prefix",
  "opentalk-types-common",
  "opentalk-types-signaling",
- "opentalk-types-signaling-breakout",
  "pretty_assertions",
  "redis",
  "redis-args",

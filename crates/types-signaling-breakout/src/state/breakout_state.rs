@@ -5,17 +5,15 @@
 //! Frontend data for `breakout` namespace
 
 use opentalk_types_common::{rooms::BreakoutRoomId, time::Timestamp};
-use opentalk_types_signaling_breakout::{BreakoutRoom, ParticipantInOtherRoom};
 
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::{BreakoutRoom, ParticipantInOtherRoom};
 
 /// The state the `breakout` module.
 ///
 /// This struct is sent to the participant in the `join_success` message
 /// when they join successfully to the meeting.
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BreakoutState {
     /// The id of the current breakout room
     pub current: Option<BreakoutRoomId>,
@@ -31,6 +29,6 @@ pub struct BreakoutState {
 }
 
 #[cfg(feature = "serde")]
-impl SignalingModuleFrontendData for BreakoutState {
-    const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
+impl opentalk_types_signaling::SignalingModuleFrontendData for BreakoutState {
+    const NAMESPACE: Option<&'static str> = Some(crate::NAMESPACE);
 }

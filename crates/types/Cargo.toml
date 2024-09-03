@@ -47,7 +47,6 @@ opentalk-diesel-newtype = { workspace = true, optional = true }
 opentalk-kustos-prefix = { workspace = true, optional = true }
 opentalk-types-common.workspace = true
 opentalk-types-signaling.workspace = true
-opentalk-types-signaling-breakout.workspace = true
 redis = { workspace = true, optional = true }
 redis-args = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
@@ -115,7 +114,6 @@ serde = [
   "dep:serde",
   "dep:validator",
   "opentalk-types-common/serde",
-  "opentalk-types-signaling-breakout/serde",
   "opentalk-types-signaling/serde",
   "url/serde",
   "uuid/serde",
