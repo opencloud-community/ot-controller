@@ -23,12 +23,11 @@ use opentalk_signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
     SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
-use opentalk_types::signaling::breakout::{
-    command::BreakoutCommand, state::BreakoutState, NAMESPACE,
-};
+use opentalk_types::signaling::breakout::{state::BreakoutState, NAMESPACE};
 use opentalk_types_common::rooms::{BreakoutRoomId, RoomId};
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_breakout::{
+    command::BreakoutCommand,
     event::{BreakoutEvent, Error, Started},
     AssociatedParticipantInOtherRoom, BreakoutRoom, ParticipantInOtherRoom,
 };

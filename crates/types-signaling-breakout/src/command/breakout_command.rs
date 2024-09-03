@@ -4,21 +4,19 @@
 
 //! Signaling commands for the `breakout` namespace
 
-use opentalk_types_signaling_breakout::command::Start;
-
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::command::Start;
 
 /// Commands for breakout sessions
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(tag = "action", rename_all = "snake_case")
 )]
 pub enum BreakoutCommand {
     /// Command for starting a breakout session
     Start(Start),
+
     /// Command for stopping a breakout session
     Stop,
 }
@@ -28,11 +26,11 @@ mod test {
     use std::time::Duration;
 
     use opentalk_types_signaling::ParticipantId;
-    use opentalk_types_signaling_breakout::command::RoomParameter;
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
     use super::*;
+    use crate::command::RoomParameter;
 
     #[test]
     fn breakout_start() {
