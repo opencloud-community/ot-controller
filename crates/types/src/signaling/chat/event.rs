@@ -5,7 +5,7 @@
 //! Signaling events for the `chat` namespace
 
 use opentalk_types_signaling_chat::event::{
-    ChatDisabled, ChatEnabled, HistoryCleared, MessageSent,
+    ChatDisabled, ChatEnabled, Error, HistoryCleared, MessageSent,
 };
 
 #[allow(unused_imports)]
@@ -57,21 +57,6 @@ impl From<HistoryCleared> for ChatEvent {
     fn from(value: HistoryCleared) -> Self {
         Self::HistoryCleared(value)
     }
-}
-
-/// Errors from the `chat` module namespace
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(tag = "error", rename_all = "snake_case")
-)]
-pub enum Error {
-    /// Request while chat is disabled
-    ChatDisabled,
-
-    /// Request user has insufficient permissions
-    InsufficientPermissions,
 }
 
 impl From<Error> for ChatEvent {

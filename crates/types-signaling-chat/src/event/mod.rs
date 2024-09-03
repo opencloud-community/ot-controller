@@ -6,10 +6,12 @@
 
 mod chat_disabled;
 mod chat_enabled;
+mod error;
 mod history_cleared;
 mod message_sent;
 
 pub use chat_disabled::ChatDisabled;
 pub use chat_enabled::ChatEnabled;
+pub use error::Error;
 pub use history_cleared::HistoryCleared;
 pub use message_sent::MessageSent;
