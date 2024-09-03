@@ -24,10 +24,8 @@ use opentalk_signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, Participant, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
-use opentalk_types::signaling::chat::{
-    peer_state::ChatPeerState,
-    state::{ChatState, GroupHistory, PrivateHistory, StoredMessage},
-    NAMESPACE,
+use opentalk_types::signaling::chat::state::{
+    ChatState, GroupHistory, PrivateHistory, StoredMessage,
 };
 use opentalk_types_common::{
     time::Timestamp,
@@ -37,7 +35,8 @@ use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_chat::{
     command::{ChatCommand, SendMessage, SetLastSeenTimestamp},
     event::{ChatDisabled, ChatEnabled, ChatEvent, Error, HistoryCleared, MessageSent},
-    MessageId, Scope,
+    peer_state::ChatPeerState,
+    MessageId, Scope, NAMESPACE,
 };
 use snafu::Report;
 

@@ -22,9 +22,18 @@
 
 pub mod command;
 pub mod event;
+pub mod peer_state;
 
 mod message_id;
 mod scope;
 
 pub use message_id::MessageId;
 pub use scope::Scope;
+
+/// The namespace string for the signaling module
+pub const NAMESPACE: &str = "chat";
+
+/// Get the id of the signaling module
+pub fn module_id() -> opentalk_types_common::modules::ModuleId {
+    NAMESPACE.parse().expect("valid module id")
+}

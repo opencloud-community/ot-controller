@@ -41,7 +41,7 @@ pub struct ChatState {
 
 #[cfg(feature = "serde")]
 impl SignalingModuleFrontendData for ChatState {
-    const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
+    const NAMESPACE: Option<&'static str> = Some(opentalk_types_signaling_chat::NAMESPACE);
 }
 
 /// Group chat history
