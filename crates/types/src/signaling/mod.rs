@@ -31,9 +31,6 @@ mod module_data;
 mod module_peer_data;
 
 #[cfg(feature = "serde")]
-mod signaling_module_frontend_data;
-
-#[cfg(feature = "serde")]
 mod signaling_module_peer_frontend_data;
 
 pub use namespaced::{NamespacedCommand, NamespacedEvent};
@@ -42,7 +39,6 @@ pub use namespaced::{NamespacedCommand, NamespacedEvent};
 mod serde_imports {
     pub use super::{
         module_data::ModuleData, module_peer_data::ModulePeerData,
-        signaling_module_frontend_data::SignalingModuleFrontendData,
         signaling_module_peer_frontend_data::SignalingModulePeerFrontendData,
     };
 }

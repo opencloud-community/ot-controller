@@ -6,11 +6,9 @@ use std::{collections::BTreeSet, fmt::Debug, sync::Arc};
 
 use lapin_pool::RabbitMqPool;
 use opentalk_controller_settings::{Settings, SharedSettings};
-use opentalk_types::{
-    api::error::ApiError,
-    signaling::{SignalingModuleFrontendData, SignalingModulePeerFrontendData},
-};
+use opentalk_types::{api::error::ApiError, signaling::SignalingModulePeerFrontendData};
 use opentalk_types_common::{features::FeatureId, modules::ModuleId};
+use opentalk_types_signaling::SignalingModuleFrontendData;
 use serde::{Deserialize, Serialize};
 use snafu::Snafu;
 use tokio::sync::broadcast;

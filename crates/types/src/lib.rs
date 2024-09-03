@@ -96,7 +96,8 @@ mod imports {
     pub use opentalk_kustos_prefix::KustosPrefix;
     #[cfg(feature = "serde")]
     pub use {
-        crate::signaling::{SignalingModuleFrontendData, SignalingModulePeerFrontendData},
+        crate::signaling::SignalingModulePeerFrontendData,
+        opentalk_types_signaling::SignalingModuleFrontendData,
         serde::{de, de::DeserializeOwned, Deserialize, Deserializer, Serialize, Serializer},
         validator::{Validate, ValidationError, ValidationErrors},
     };

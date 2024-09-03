@@ -4655,7 +4655,6 @@ dependencies = [
  "log",
  "opentalk-controller-settings",
  "opentalk-signaling-core",
- "opentalk-types",
  "opentalk-types-signaling",
  "serde",
  "snafu",
