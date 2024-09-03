@@ -24,6 +24,7 @@ mod associated_participant_in_other_room;
 mod breakout_room;
 mod participant_in_other_room;
 
+pub mod command;
 pub mod event;
 
 pub use associated_participant_in_other_room::AssociatedParticipantInOtherRoom;

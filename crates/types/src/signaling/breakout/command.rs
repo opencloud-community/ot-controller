@@ -6,7 +6,7 @@
 
 use std::time::Duration;
 
-use opentalk_types_signaling::ParticipantId;
+use opentalk_types_signaling_breakout::command::RoomParameter;
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -44,20 +44,11 @@ pub struct Start {
     pub duration: Option<Duration>,
 }
 
-/// Parameters used for starting a breakout room
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct RoomParameter {
-    /// Name of the breakout room
-    pub name: String,
-    /// Ids of participants to be assigned to the breakout room
-    pub assignments: Vec<ParticipantId>,
-}
-
 #[cfg(test)]
 mod test {
     use std::time::Duration;
 
+    use opentalk_types_signaling::ParticipantId;
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
