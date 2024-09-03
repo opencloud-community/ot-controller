@@ -23,21 +23,18 @@ use opentalk_db_storage::{
     users::{email_to_libravatar_url, UpdateUser, User},
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
-use opentalk_types::{
-    api::{
-        error::ApiError,
-        v1::{
-            order::{AssetSorting, SortingQuery},
-            pagination::PagePaginationQuery,
-            users::{
-                GetFindQuery, GetFindResponse, GetFindResponseItem, GetUserAssetsResponse,
-                PatchMeBody, PrivateUserProfile, PublicUserProfile, UnregisteredUser,
-            },
+use opentalk_types::api::{
+    error::ApiError,
+    v1::{
+        order::{AssetSorting, SortingQuery},
+        pagination::PagePaginationQuery,
+        users::{
+            GetFindQuery, GetFindResponse, GetFindResponseItem, GetUserAssetsResponse, PatchMeBody,
+            PrivateUserProfile, PublicUserProfile, UnregisteredUser,
         },
     },
-    common::tariff::TariffResource,
 };
-use opentalk_types_common::users::UserId;
+use opentalk_types_common::{tariffs::TariffResource, users::UserId};
 use snafu::{Report, ResultExt, Whatever};
 use validator::Validate;
 

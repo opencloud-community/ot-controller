@@ -6,15 +6,14 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use opentalk_types_common::{
+#[allow(unused_imports)]
+use crate::imports::*;
+use crate::{
     features::{FeatureId, ModuleFeatureId},
     modules::ModuleId,
     tariffs::{QuotaType, TariffId, TariffModuleResource},
     utils::ExampleData,
 };
-
-#[allow(unused_imports)]
-use crate::imports::*;
 
 /// Information related to a specific tariff
 #[derive(Clone, Debug, PartialEq, Eq)]

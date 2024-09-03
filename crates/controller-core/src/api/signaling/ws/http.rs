@@ -16,11 +16,12 @@ use opentalk_db_storage::{rooms::Room, users::User};
 use opentalk_signaling_core::{
     ExchangeHandle, ObjectStorage, Participant, SignalingMetrics, SignalingModule, VolatileStorage,
 };
-use opentalk_types::{api::error::ApiError, common::tariff::TariffResource};
+use opentalk_types::api::error::ApiError;
 use opentalk_types_common::{
     auth::TicketToken,
     features::{FeatureId, ModuleFeatureId},
     modules::ModuleId,
+    tariffs::TariffResource,
 };
 use snafu::Report;
 use tokio::{

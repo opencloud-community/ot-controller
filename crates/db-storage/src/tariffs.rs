@@ -11,11 +11,10 @@ use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use opentalk_database::{DbConnection, Result};
 use opentalk_diesel_newtype::DieselNewtype;
-use opentalk_types::common::tariff::TariffResource;
 use opentalk_types_common::{
     features::{FeatureId, ModuleFeatureId},
     modules::ModuleId,
-    tariffs::{QuotaType, TariffId, TariffModuleResource},
+    tariffs::{QuotaType, TariffId, TariffModuleResource, TariffResource},
     users::UserId,
 };
 use redis_args::{FromRedisValue, ToRedisArgs};

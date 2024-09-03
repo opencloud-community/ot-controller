@@ -23,23 +23,20 @@ use futures::{stream::SelectAll, StreamExt};
 use kustos::Authz;
 use opentalk_database::Db;
 use opentalk_db_storage::{rooms::Room, users::User};
-use opentalk_types::{
-    common::tariff::TariffResource,
-    signaling::{
-        control::{
-            command::{ControlCommand, Join},
-            event::{ControlEvent, JoinSuccess},
-            module_id,
-            room::{CreatorInfo, RoomInfo},
-            state::ControlState,
-            AssociatedParticipant, Reason,
-        },
-        ModuleData, NamespacedCommand, NamespacedEvent, Role,
+use opentalk_types::signaling::{
+    control::{
+        command::{ControlCommand, Join},
+        event::{ControlEvent, JoinSuccess},
+        module_id,
+        room::{CreatorInfo, RoomInfo},
+        state::ControlState,
+        AssociatedParticipant, Reason,
     },
+    ModuleData, NamespacedCommand, NamespacedEvent, Role,
 };
 use opentalk_types_common::{
     rooms::BreakoutRoomId,
-    tariffs::{TariffId, TariffModuleResource},
+    tariffs::{TariffId, TariffModuleResource, TariffResource},
     time::Timestamp,
     users::UserId,
 };

@@ -44,11 +44,12 @@ use opentalk_types::{
             },
         },
     },
-    common::{shared_folder::SharedFolder, tariff::TariffResource},
+    common::shared_folder::SharedFolder,
 };
 use opentalk_types_common::{
     features,
     rooms::{invite_codes::InviteCode, RoomId},
+    tariffs::TariffResource,
 };
 
 use super::{

@@ -39,24 +39,25 @@ use opentalk_signaling_core::{
     RunnerId, SignalingMetrics, SignalingModule, SignalingModuleError, SignalingRoomId,
     SubscriberHandle, VolatileStorage,
 };
-use opentalk_types::{
-    common::tariff::TariffResource,
-    signaling::{
-        common::TargetParticipant,
-        control::{
-            command::ControlCommand,
-            event::{self as control_event, ControlEvent, JoinBlockedReason, JoinSuccess},
-            room::{CreatorInfo, RoomInfo},
-            state::ControlState,
-            AssociatedParticipant, Reason,
-        },
-        moderation::event::ModerationEvent,
-        ModuleData, Role,
+use opentalk_types::signaling::{
+    common::TargetParticipant,
+    control::{
+        command::ControlCommand,
+        event::{self as control_event, ControlEvent, JoinBlockedReason, JoinSuccess},
+        room::{CreatorInfo, RoomInfo},
+        state::ControlState,
+        AssociatedParticipant, Reason,
     },
+    moderation::event::ModerationEvent,
+    ModuleData, Role,
 };
 use opentalk_types_common::{
-    features::FeatureId, modules::ModuleId, rooms::BreakoutRoomId, tariffs::QuotaType,
-    time::Timestamp, users::UserId,
+    features::FeatureId,
+    modules::ModuleId,
+    rooms::BreakoutRoomId,
+    tariffs::{QuotaType, TariffResource},
+    time::Timestamp,
+    users::UserId,
 };
 use opentalk_types_signaling::{ParticipantId, ParticipationKind};
 use serde_json::Value;
