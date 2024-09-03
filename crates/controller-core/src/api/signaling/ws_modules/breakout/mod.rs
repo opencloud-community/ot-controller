@@ -25,14 +25,14 @@ use opentalk_signaling_core::{
 };
 use opentalk_types::signaling::breakout::{
     command::BreakoutCommand,
-    event::{BreakoutEvent, Error, Started},
+    event::{BreakoutEvent, Error},
     state::BreakoutState,
     NAMESPACE,
 };
 use opentalk_types_common::rooms::{BreakoutRoomId, RoomId};
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_breakout::{
-    AssociatedParticipantInOtherRoom, BreakoutRoom, ParticipantInOtherRoom,
+    event::Started, AssociatedParticipantInOtherRoom, BreakoutRoom, ParticipantInOtherRoom,
 };
 use snafu::whatever;
 use tokio::time::sleep;
