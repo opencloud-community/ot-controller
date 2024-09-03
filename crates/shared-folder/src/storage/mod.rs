@@ -12,7 +12,8 @@ pub(crate) use shared_folder_storage::SharedFolderStorage;
 mod test_common {
 
     use opentalk_signaling_core::SignalingRoomId;
-    use opentalk_types::common::shared_folder::{SharedFolder, SharedFolderAccess};
+    use opentalk_types::common::shared_folder::SharedFolder;
+    use opentalk_types_common::shared_folders::SharedFolderAccess;
 
     use super::SharedFolderStorage;
 

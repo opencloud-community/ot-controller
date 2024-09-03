@@ -33,6 +33,7 @@ pub mod features;
 pub mod module_resources;
 pub mod modules;
 pub mod rooms;
+pub mod shared_folders;
 pub mod streaming;
 pub mod tariffs;
 pub mod tenants;

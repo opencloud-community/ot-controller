@@ -30,9 +30,9 @@ use opentalk_types::{
         error::ApiError,
         v1::events::{DeleteSharedFolderQuery, PutSharedFolderQuery},
     },
-    common::shared_folder::{SharedFolder, SharedFolderAccess},
+    common::shared_folder::SharedFolder,
 };
-use opentalk_types_common::events::EventId;
+use opentalk_types_common::{events::EventId, shared_folders::SharedFolderAccess};
 use snafu::Report;
 
 use crate::{

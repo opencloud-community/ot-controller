@@ -369,7 +369,7 @@ impl From<ExternalEventUninvite> for Message {
 #[cfg(test)]
 mod test {
     use chrono::FixedOffset;
-    use opentalk_types::common::shared_folder::SharedFolderAccess;
+    use opentalk_types_common::shared_folders::SharedFolderAccess;
     use pretty_assertions::assert_eq;
 
     use super::*;

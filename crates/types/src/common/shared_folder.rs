@@ -4,36 +4,11 @@
 
 //! Common types related to the shared_folder module
 
-use opentalk_types_common::utils::ExampleData;
+use opentalk_types_common::{shared_folders::SharedFolderAccess, utils::ExampleData};
 use opentalk_types_signaling::{ForRole, Role};
 
 #[allow(unused_imports)]
 use crate::imports::*;
-
-/// Information required to access a shared folder
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(
-    feature = "utoipa",
-    derive(utoipa::ToSchema),
-    schema(example = json!(SharedFolderAccess::example_data())),
-)]
-pub struct SharedFolderAccess {
-    /// Shared folder URL
-    pub url: String,
-
-    /// Password required to access the shared folder
-    pub password: String,
-}
-
-impl ExampleData for SharedFolderAccess {
-    fn example_data() -> Self {
-        Self {
-            url: "https://cloud.example.com/shares/abc123".to_string(),
-            password: "v3rys3cr3t".to_string(),
-        }
-    }
-}
 
 /// Information about a shared folder containing
 /// read and optional write access

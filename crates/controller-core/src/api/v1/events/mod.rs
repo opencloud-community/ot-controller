@@ -55,12 +55,13 @@ use opentalk_types::{
             Cursor,
         },
     },
-    common::shared_folder::{SharedFolder, SharedFolderAccess},
+    common::shared_folder::SharedFolder,
 };
 use opentalk_types_common::{
     events::{invites::EventInviteStatus, EventId},
     features,
     rooms::{RoomId, RoomPassword},
+    shared_folders::SharedFolderAccess,
     streaming::{RoomStreamingTarget, StreamingTarget},
     time::{DateTimeTz, RecurrencePattern, TimeZone, Timestamp},
     users::UserId,
