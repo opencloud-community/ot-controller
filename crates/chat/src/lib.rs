@@ -25,7 +25,7 @@ use opentalk_signaling_core::{
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types::signaling::chat::{
-    command::{ChatCommand, SendMessage},
+    command::{ChatCommand, SendMessage, SetLastSeenTimestamp},
     event::{ChatDisabled, ChatEnabled, ChatEvent, Error, HistoryCleared, MessageSent},
     peer_state::ChatPeerState,
     state::{ChatState, GroupHistory, PrivateHistory, StoredMessage},
@@ -498,7 +498,10 @@ impl SignalingModule for Chat {
                     ChatEvent::HistoryCleared(HistoryCleared { issued_by: self.id }),
                 );
             }
-            Event::WsMessage(ChatCommand::SetLastSeenTimestamp { scope, timestamp }) => {
+            Event::WsMessage(ChatCommand::SetLastSeenTimestamp(SetLastSeenTimestamp {
+                scope,
+                timestamp,
+            })) => {
                 match scope {
                     Scope::Private(other_participant) => {
                         self.last_seen_timestamps_private

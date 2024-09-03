@@ -31,14 +31,7 @@ pub enum ChatCommand {
     ClearHistory,
 
     /// Set last seen timestamp
-    SetLastSeenTimestamp {
-        /// Scope of the timestamp
-        #[cfg_attr(feature = "serde", serde(flatten))]
-        scope: Scope,
-
-        /// Last seen timestamp
-        timestamp: Timestamp,
-    },
+    SetLastSeenTimestamp(SetLastSeenTimestamp),
 }
 
 /// Send a chat message content with a specific scope
@@ -51,6 +44,18 @@ pub struct SendMessage {
     /// The scope of the message
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub scope: Scope,
+}
+
+/// Set the last seen timestamp for a specific scope
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct SetLastSeenTimestamp {
+    /// Scope of the timestamp
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub scope: Scope,
+
+    /// Last seen timestamp
+    pub timestamp: Timestamp,
 }
 
 #[cfg(test)]
