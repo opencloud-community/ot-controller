@@ -9,10 +9,8 @@ pub mod event;
 pub mod peer_state;
 pub mod state;
 
-mod message_id;
 mod scope;
 
-pub use message_id::MessageId;
 pub use scope::Scope;
 
 /// The namespace string for the signaling module

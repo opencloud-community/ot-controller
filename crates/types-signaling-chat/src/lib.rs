@@ -19,3 +19,7 @@
     unused_qualifications,
     unused_results
 )]
+
+mod message_id;
+
+pub use message_id::MessageId;

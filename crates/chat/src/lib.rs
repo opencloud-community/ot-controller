@@ -29,13 +29,14 @@ use opentalk_types::signaling::chat::{
     event::{ChatDisabled, ChatEnabled, ChatEvent, Error, HistoryCleared, MessageSent},
     peer_state::ChatPeerState,
     state::{ChatState, GroupHistory, PrivateHistory, StoredMessage},
-    MessageId, Scope, NAMESPACE,
+    Scope, NAMESPACE,
 };
 use opentalk_types_common::{
     time::Timestamp,
     users::{GroupId, GroupName, UserId},
 };
 use opentalk_types_signaling::{ParticipantId, Role};
+use opentalk_types_signaling_chat::MessageId;
 use snafu::Report;
 
 mod participant_pair;

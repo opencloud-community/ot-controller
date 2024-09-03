@@ -13,5 +13,10 @@ test:opentalk-types-signaling-chat:
       - FEATURES:
           [
           '',
+            backend,
+            frontend,
+            rand,
+            redis,
+            serde,
           ]
         EXTRA_ARGS: ['', --no-default-features]
