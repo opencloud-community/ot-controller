@@ -4,10 +4,9 @@
 
 use std::{collections::HashMap, time::SystemTime};
 
-use opentalk_types::signaling::breakout::ParticipantInOtherRoom;
 use opentalk_types_common::rooms::BreakoutRoomId;
 use opentalk_types_signaling::ParticipantId;
-use opentalk_types_signaling_breakout::AssociatedParticipantInOtherRoom;
+use opentalk_types_signaling_breakout::{AssociatedParticipantInOtherRoom, ParticipantInOtherRoom};
 use serde::{Deserialize, Serialize};
 
 use super::storage::BreakoutConfig;

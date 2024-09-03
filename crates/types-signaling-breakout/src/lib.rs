@@ -22,6 +22,8 @@
 
 mod associated_participant_in_other_room;
 mod breakout_room;
+mod participant_in_other_room;
 
 pub use associated_participant_in_other_room::AssociatedParticipantInOtherRoom;
 pub use breakout_room::BreakoutRoom;
+pub use participant_in_other_room::ParticipantInOtherRoom;
