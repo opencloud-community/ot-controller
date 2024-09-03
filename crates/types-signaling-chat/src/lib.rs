@@ -20,6 +20,8 @@
     unused_results
 )]
 
+pub mod command;
+
 mod message_id;
 mod scope;
 

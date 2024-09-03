@@ -5,7 +5,7 @@
 //! Signaling commands for the `chat` namespace
 
 use opentalk_types_common::time::Timestamp;
-use opentalk_types_signaling_chat::Scope;
+use opentalk_types_signaling_chat::{command::SendMessage, Scope};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -32,18 +32,6 @@ pub enum ChatCommand {
 
     /// Set last seen timestamp
     SetLastSeenTimestamp(SetLastSeenTimestamp),
-}
-
-/// Send a chat message content with a specific scope
-#[derive(Debug, Clone)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct SendMessage {
-    /// The content of the message
-    pub content: String,
-
-    /// The scope of the message
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub scope: Scope,
 }
 
 /// Set the last seen timestamp for a specific scope
