@@ -42,7 +42,9 @@ use opentalk_signaling_core::{
 use opentalk_types::signaling::{
     control::{
         command::ControlCommand,
-        event::{self as control_event, ControlEvent, JoinBlockedReason, JoinSuccess, Left},
+        event::{
+            self as control_event, ControlEvent, JoinBlockedReason, JoinSuccess, Left, RoleUpdated,
+        },
         room::{CreatorInfo, RoomInfo},
         state::ControlState,
         Reason,
@@ -1841,8 +1843,11 @@ impl Runner {
                 self.handle_module_requested_actions(timestamp, actions)
                     .await;
 
-                self.ws_send_control(timestamp, ControlEvent::RoleUpdated { new_role })
-                    .await;
+                self.ws_send_control(
+                    timestamp,
+                    ControlEvent::RoleUpdated(RoleUpdated { new_role }),
+                )
+                .await;
 
                 self.exchange_publish_control(timestamp, None, exchange::Message::Update(self.id));
             }

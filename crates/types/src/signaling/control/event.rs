@@ -38,10 +38,7 @@ pub enum ControlEvent {
     HandLowered,
 
     /// This participant's role in the meeting has been updated
-    RoleUpdated {
-        /// The new role of the participant
-        new_role: Role,
-    },
+    RoleUpdated(RoleUpdated),
 
     /// The room has been deleted
     RoomDeleted,
@@ -142,6 +139,20 @@ pub struct Left {
 impl From<Left> for ControlEvent {
     fn from(value: Left) -> Self {
         Self::Left(value)
+    }
+}
+
+/// The participant role was updated.
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct RoleUpdated {
+    /// The new role of the participant
+    pub new_role: Role,
+}
+
+impl From<RoleUpdated> for ControlEvent {
+    fn from(value: RoleUpdated) -> Self {
+        Self::RoleUpdated(value)
     }
 }
 
