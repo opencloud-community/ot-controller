@@ -28,5 +28,5 @@ The section in the [configuration file](../../core/configuration.md) is called `
 
 ```toml
 [reports]
-url = "http://localhost:8085"
+url = "http://localhost:6560"
 ```
