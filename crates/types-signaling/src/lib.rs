@@ -27,6 +27,7 @@ mod role;
 mod signaling_module_frontend_data;
 #[cfg(feature = "serde")]
 mod signaling_module_peer_frontend_data;
+mod target_participant;
 
 pub use participant_id::ParticipantId;
 pub use participation_kind::ParticipationKind;
@@ -35,3 +36,4 @@ pub use role::{ForRole, Role};
 pub use signaling_module_frontend_data::SignalingModuleFrontendData;
 #[cfg(feature = "serde")]
 pub use signaling_module_peer_frontend_data::SignalingModulePeerFrontendData;
+pub use target_participant::TargetParticipant;

@@ -5,14 +5,11 @@
 //! This module contains shared types that are used by the signaling communication
 //! (typically through websockets)
 
-use opentalk_types_signaling::ParticipantId;
-
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::ParticipantId;
 
 /// The target participant for specific commands or events
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TargetParticipant {
     /// The id of the target participant
     pub target: ParticipantId,

@@ -40,7 +40,6 @@ use opentalk_signaling_core::{
     SubscriberHandle, VolatileStorage,
 };
 use opentalk_types::signaling::{
-    common::TargetParticipant,
     control::{
         command::ControlCommand,
         event::{self as control_event, ControlEvent, JoinBlockedReason, JoinSuccess},
@@ -59,7 +58,7 @@ use opentalk_types_common::{
     time::Timestamp,
     users::UserId,
 };
-use opentalk_types_signaling::{ParticipantId, ParticipationKind, Role};
+use opentalk_types_signaling::{ParticipantId, ParticipationKind, Role, TargetParticipant};
 use serde_json::Value;
 use snafu::{ensure, whatever, Report, ResultExt, Snafu};
 use tokio::{

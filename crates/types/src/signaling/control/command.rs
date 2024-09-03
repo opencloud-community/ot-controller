@@ -4,9 +4,10 @@
 
 //! Signaling messages for the `control` namespace
 
+use opentalk_types_signaling::TargetParticipant;
+
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::signaling::common::TargetParticipant;
 
 /// Commands received by the `control` module
 #[derive(Clone, Debug, PartialEq, Eq)]
