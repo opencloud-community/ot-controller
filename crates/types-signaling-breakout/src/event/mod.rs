@@ -4,6 +4,8 @@
 
 //! Signaling events for the `breakout` namespace
 
+mod error;
 mod started;
 
+pub use error::Error;
 pub use started::Started;

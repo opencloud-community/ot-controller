@@ -5,7 +5,8 @@
 //! Signaling events for the `breakout` namespace
 
 use opentalk_types_signaling_breakout::{
-    event::Started, AssociatedParticipantInOtherRoom, ParticipantInOtherRoom,
+    event::{Error, Started},
+    AssociatedParticipantInOtherRoom, ParticipantInOtherRoom,
 };
 
 #[allow(unused_imports)]
@@ -42,20 +43,6 @@ impl From<Started> for BreakoutEvent {
     fn from(value: Started) -> Self {
         Self::Started(value)
     }
-}
-
-/// Error from the `breakout` module namespace
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(tag = "error", rename_all = "snake_case")
-)]
-pub enum Error {
-    ///  No active breakout session is running
-    Inactive,
-    /// Insufficient permissions to perform a command
-    InsufficientPermissions,
 }
 
 impl From<Error> for BreakoutEvent {
