@@ -5,8 +5,9 @@
 //! Frontend data for `breakout` namespace
 
 use opentalk_types_common::{rooms::BreakoutRoomId, time::Timestamp};
+use opentalk_types_signaling_breakout::BreakoutRoom;
 
-use super::{BreakoutRoom, ParticipantInOtherRoom};
+use super::ParticipantInOtherRoom;
 #[allow(unused_imports)]
 use crate::imports::*;
 

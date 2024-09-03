@@ -5,9 +5,9 @@
 //! Signaling events for the `breakout` namespace
 
 use opentalk_types_common::{rooms::BreakoutRoomId, time::Timestamp};
-use opentalk_types_signaling_breakout::AssociatedParticipantInOtherRoom;
+use opentalk_types_signaling_breakout::{AssociatedParticipantInOtherRoom, BreakoutRoom};
 
-use super::{BreakoutRoom, ParticipantInOtherRoom};
+use super::ParticipantInOtherRoom;
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -83,7 +83,6 @@ mod test {
     use serde_json::json;
 
     use super::*;
-    use crate::signaling::breakout::BreakoutRoom;
 
     #[test]
     fn started() {

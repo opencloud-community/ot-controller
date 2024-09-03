@@ -4,14 +4,12 @@
 
 //! Signaling messages for the `breakout` namespace
 
-mod breakout_room;
 mod participant_in_other_room;
 
 pub mod command;
 pub mod event;
 pub mod state;
 
-pub use breakout_room::BreakoutRoom;
 pub use participant_in_other_room::ParticipantInOtherRoom;
 
 /// The namespace string for the signaling module
