@@ -24,7 +24,7 @@ use kustos::Authz;
 use opentalk_database::Db;
 use opentalk_db_storage::{rooms::Room, users::User};
 use opentalk_types::{
-    common::tariff::{TariffModuleResource, TariffResource},
+    common::tariff::TariffResource,
     signaling::{
         control::{
             command::{ControlCommand, Join},
@@ -38,7 +38,10 @@ use opentalk_types::{
     },
 };
 use opentalk_types_common::{
-    rooms::BreakoutRoomId, tariffs::TariffId, time::Timestamp, users::UserId,
+    rooms::BreakoutRoomId,
+    tariffs::{TariffId, TariffModuleResource},
+    time::Timestamp,
+    users::UserId,
 };
 use opentalk_types_signaling::{ParticipantId, ParticipationKind};
 use serde_json::Value;

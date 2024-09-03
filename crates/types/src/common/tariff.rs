@@ -9,7 +9,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use opentalk_types_common::{
     features::{FeatureId, ModuleFeatureId},
     modules::ModuleId,
-    tariffs::{QuotaType, TariffId},
+    tariffs::{QuotaType, TariffId, TariffModuleResource},
     utils::ExampleData,
 };
 
@@ -122,22 +122,6 @@ impl ExampleData for TariffResource {
             })
             .collect(),
         }
-    }
-}
-
-/// Tariff information related to a specific module
-#[derive(Default, Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct TariffModuleResource {
-    /// Enabled features for the tariff
-    pub features: BTreeSet<FeatureId>,
-}
-
-impl TariffModuleResource {
-    /// Query whether a specific feature for a module tariff is enabled
-    pub fn has_feature_enabled(&self, feature: &FeatureId) -> bool {
-        self.features.contains(feature)
     }
 }
 
