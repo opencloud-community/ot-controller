@@ -5025,6 +5025,7 @@ dependencies = [
  "pretty_assertions",
  "redis-args",
  "serde",
+ "serde_json",
  "strum",
  "uuid",
 ]

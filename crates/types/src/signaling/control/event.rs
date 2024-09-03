@@ -177,14 +177,12 @@ mod tests {
 
     use chrono::DateTime;
     use opentalk_types_common::{events::EventId, rooms::RoomId, tariffs::TariffId};
+    use opentalk_types_signaling::ModulePeerData;
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
     use super::*;
-    use crate::signaling::{
-        control::{self, room::CreatorInfo},
-        ModulePeerData,
-    };
+    use crate::signaling::control::{self, room::CreatorInfo};
 
     fn participant_tariff() -> TariffResource {
         TariffResource {

@@ -17,7 +17,7 @@ pub struct Participant {
     /// Module data for the participant
     #[cfg(feature = "serde")]
     #[serde(flatten)]
-    pub module_data: crate::signaling::ModulePeerData,
+    pub module_data: opentalk_types_signaling::ModulePeerData,
 }
 
 impl Participant {

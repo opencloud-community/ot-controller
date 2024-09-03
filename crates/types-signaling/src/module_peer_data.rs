@@ -4,10 +4,9 @@
 
 use std::collections::BTreeMap;
 
-use opentalk_types_signaling::SignalingModulePeerFrontendData;
+use serde::{Deserialize, Serialize};
 
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::SignalingModulePeerFrontendData;
 
 /// A struct containing data of a peer for multiple signaling modules, each
 /// associated with the module's namespace.
@@ -112,10 +111,10 @@ where
 mod tests {
     use serde::{Deserialize, Serialize};
 
-    use crate::imports::SignalingModulePeerFrontendData;
     // NOTE: Clippy is not understanding that the import is necessary
     #[allow(unused_imports)]
-    use crate::signaling::ModulePeerData;
+    use crate::ModulePeerData;
+    use crate::SignalingModulePeerFrontendData;
 
     #[derive(Debug, Eq, PartialEq, Deserialize, Serialize)]
     struct TestState {
