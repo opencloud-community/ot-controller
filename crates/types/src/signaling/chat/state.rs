@@ -8,7 +8,7 @@ use std::collections::HashMap;
 
 use opentalk_types_common::{time::Timestamp, users::GroupName};
 use opentalk_types_signaling::ParticipantId;
-use opentalk_types_signaling_chat::state::{GroupHistory, StoredMessage};
+use opentalk_types_signaling_chat::state::{GroupHistory, PrivateHistory, StoredMessage};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -42,17 +42,6 @@ pub struct ChatState {
 #[cfg(feature = "serde")]
 impl SignalingModuleFrontendData for ChatState {
     const NAMESPACE: Option<&'static str> = Some(opentalk_types_signaling_chat::NAMESPACE);
-}
-
-/// Private chat history
-#[derive(Clone, Debug)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct PrivateHistory {
-    /// Private chat correspondent
-    pub correspondent: ParticipantId,
-
-    /// Private chat history
-    pub history: Vec<StoredMessage>,
 }
 
 #[cfg(test)]

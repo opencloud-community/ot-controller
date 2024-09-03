@@ -5,7 +5,9 @@
 //! Signaling state for the `chat` namespace
 
 mod group_history;
+mod private_history;
 mod stored_message;
 
 pub use group_history::GroupHistory;
+pub use private_history::PrivateHistory;
 pub use stored_message::StoredMessage;
