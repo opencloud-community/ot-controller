@@ -1,0 +1,15 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+authors.workspace = true
+description = "Signaling types for the OpenTalk control module"
+documentation = "https://docs.rs/opentalk-types-signaling-control"
+edition = "2021"
+homepage.workspace = true
+license = "EUPL-1.2"
+name = "opentalk-types-signaling-control"
+publish = true
+repository.workspace = true
+version.workspace = true
