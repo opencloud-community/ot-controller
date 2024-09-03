@@ -27,10 +27,11 @@ use opentalk_types::signaling::breakout::{
     command::BreakoutCommand,
     event::{BreakoutEvent, Error, Started},
     state::BreakoutState,
-    AssociatedParticipantInOtherRoom, BreakoutRoom, ParticipantInOtherRoom, NAMESPACE,
+    BreakoutRoom, ParticipantInOtherRoom, NAMESPACE,
 };
 use opentalk_types_common::rooms::{BreakoutRoomId, RoomId};
 use opentalk_types_signaling::{ParticipantId, Role};
+use opentalk_types_signaling_breakout::AssociatedParticipantInOtherRoom;
 use snafu::whatever;
 use tokio::time::sleep;
 

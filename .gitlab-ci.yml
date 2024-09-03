@@ -383,6 +383,7 @@ check:opentalk-types-signaling-breakout:
           '',
             backend,
             frontend,
+            serde,
           ]
         EXTRA_ARGS: ['', --no-default-features]
   script:

@@ -19,3 +19,7 @@
     unused_qualifications,
     unused_results
 )]
+
+mod associated_participant_in_other_room;
+
+pub use associated_participant_in_other_room::AssociatedParticipantInOtherRoom;

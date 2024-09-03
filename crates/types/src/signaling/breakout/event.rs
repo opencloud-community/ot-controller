@@ -5,8 +5,9 @@
 //! Signaling events for the `breakout` namespace
 
 use opentalk_types_common::{rooms::BreakoutRoomId, time::Timestamp};
+use opentalk_types_signaling_breakout::AssociatedParticipantInOtherRoom;
 
-use super::{AssociatedParticipantInOtherRoom, BreakoutRoom, ParticipantInOtherRoom};
+use super::{BreakoutRoom, ParticipantInOtherRoom};
 #[allow(unused_imports)]
 use crate::imports::*;
 

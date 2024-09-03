@@ -5,12 +5,9 @@
 use opentalk_types_common::rooms::BreakoutRoomId;
 use opentalk_types_signaling::ParticipantId;
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// Information about an associated participant in another breakout room
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AssociatedParticipantInOtherRoom {
     /// The id of the breakout room
     pub breakout_room: Option<BreakoutRoomId>,

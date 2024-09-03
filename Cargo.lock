@@ -4337,6 +4337,7 @@ dependencies = [
  "opentalk-types",
  "opentalk-types-common",
  "opentalk-types-signaling",
+ "opentalk-types-signaling-breakout",
  "opentelemetry",
  "opentelemetry-otlp",
  "opentelemetry-prometheus",
@@ -4933,6 +4934,7 @@ dependencies = [
  "opentalk-kustos-prefix",
  "opentalk-types-common",
  "opentalk-types-signaling",
+ "opentalk-types-signaling-breakout",
  "pretty_assertions",
  "redis",
  "redis-args",
@@ -4997,6 +4999,11 @@ dependencies = [
 [[package]]
 name = "opentalk-types-signaling-breakout"
 version = "0.0.0-dev"
+dependencies = [
+ "opentalk-types-common",
+ "opentalk-types-signaling",
+ "serde",
+]
 
 [[package]]
 name = "opentalk-whiteboard"
