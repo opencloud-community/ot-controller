@@ -5,7 +5,7 @@
 //! Signaling events for the `chat` namespace
 
 use opentalk_types_signaling::ParticipantId;
-use opentalk_types_signaling_chat::{MessageId, Scope};
+use opentalk_types_signaling_chat::{event::ChatEnabled, MessageId, Scope};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -32,14 +32,6 @@ pub enum ChatEvent {
 
     /// Chat event which errored see [Error]
     Error(Error),
-}
-
-/// The chat was enabled
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct ChatEnabled {
-    /// Participant who enabled the chat
-    pub issued_by: ParticipantId,
 }
 
 impl From<ChatEnabled> for ChatEvent {
