@@ -35,6 +35,7 @@ redis = [
   "dep:redis-args",
   "opentalk-types-common/redis",
   "opentalk-types-signaling/redis",
+  "serde",
 ]
 serde = [
   "dep:serde",

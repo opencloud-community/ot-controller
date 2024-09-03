@@ -9,13 +9,13 @@ use std::{
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage};
-use opentalk_types::signaling::chat::state::StoredMessage;
 use opentalk_types_common::{
     rooms::RoomId,
     time::Timestamp,
     users::{GroupId, GroupName},
 };
 use opentalk_types_signaling::ParticipantId;
+use opentalk_types_signaling_chat::state::StoredMessage;
 use parking_lot::RwLock;
 
 use super::memory::MemoryChatState;

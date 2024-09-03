@@ -10,13 +10,13 @@ use std::{
 use async_trait::async_trait;
 use opentalk_r3dlock::Mutex;
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
-use opentalk_types::signaling::chat::state::StoredMessage;
 use opentalk_types_common::{
     rooms::RoomId,
     time::Timestamp,
     users::{GroupId, GroupName},
 };
 use opentalk_types_signaling::ParticipantId;
+use opentalk_types_signaling_chat::state::StoredMessage;
 use redis::AsyncCommands as _;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use snafu::{OptionExt as _, Report, ResultExt as _};

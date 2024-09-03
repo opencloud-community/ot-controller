@@ -23,6 +23,7 @@
 pub mod command;
 pub mod event;
 pub mod peer_state;
+pub mod state;
 
 mod message_id;
 mod scope;

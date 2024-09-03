@@ -8,7 +8,7 @@ use std::collections::HashMap;
 
 use opentalk_types_common::{time::Timestamp, users::GroupName};
 use opentalk_types_signaling::ParticipantId;
-use opentalk_types_signaling_chat::{MessageId, Scope};
+use opentalk_types_signaling_chat::state::StoredMessage;
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -66,40 +66,12 @@ pub struct PrivateHistory {
     pub history: Vec<StoredMessage>,
 }
 
-/// Message type stores in redis
-///
-/// This needs to have a inner timestamp.
-#[derive(Clone, Debug)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(
-    feature = "redis",
-    derive(ToRedisArgs, FromRedisValue),
-    to_redis_args(serde),
-    from_redis_value(serde)
-)]
-pub struct StoredMessage {
-    /// ID of message
-    pub id: MessageId,
-
-    /// ID of the participant who sent the message
-    pub source: ParticipantId,
-
-    /// Timestamp of when the message was sent
-    pub timestamp: Timestamp,
-
-    /// Content of the message
-    pub content: String,
-
-    /// Scope of the message
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub scope: Scope,
-}
-
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
 
     use chrono::DateTime;
+    use opentalk_types_signaling_chat::{MessageId, Scope};
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
