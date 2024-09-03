@@ -26,7 +26,7 @@ use opentalk_db_storage::{rooms::Room, users::User};
 use opentalk_types::signaling::{
     control::{
         command::{ControlCommand, Join},
-        event::{ControlEvent, JoinSuccess},
+        event::{ControlEvent, JoinSuccess, Left},
         module_id,
         room::{CreatorInfo, RoomInfo},
         state::ControlState,
@@ -814,10 +814,10 @@ where
 
                 self.interface
                     .ws
-                    .send(WsMessageOutgoing::Control(ControlEvent::Left {
+                    .send(WsMessageOutgoing::Control(ControlEvent::Left(Left {
                         id: AssociatedParticipant { id },
                         reason,
-                    }))?;
+                    })))?;
 
                 Ok(())
             }

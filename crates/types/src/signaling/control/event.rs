@@ -28,13 +28,7 @@ pub enum ControlEvent {
     /// A participant that joined the room
     Joined(Participant),
     /// This participant left the room
-    Left {
-        /// The participant that left
-        #[cfg_attr(feature = "serde", serde(flatten))]
-        id: AssociatedParticipant,
-        /// The reason as to why the participant left
-        reason: reason::Reason,
-    },
+    Left(Left),
     /// The quota's time limit has elapsed
     TimeLimitQuotaElapsed,
 
@@ -131,6 +125,24 @@ impl JoinSuccess {
 pub enum JoinBlockedReason {
     /// The participant limit for the meeting's tariff has been reached
     ParticipantLimitReached,
+}
+
+/// A participant left.
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct Left {
+    /// The participant that left
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub id: AssociatedParticipant,
+
+    /// The reason as to why the participant left
+    pub reason: reason::Reason,
+}
+
+impl From<Left> for ControlEvent {
+    fn from(value: Left) -> Self {
+        Self::Left(value)
+    }
 }
 
 /// Errors from the `control` module namespace
@@ -408,12 +420,12 @@ mod tests {
     fn left_quit_reason() {
         let expected = json!({"message": "left","id": "00000000-0000-0000-0000-000000000000", "reason": "quit"});
 
-        let produced = serde_json::to_value(ControlEvent::Left {
+        let produced = serde_json::to_value(ControlEvent::Left(Left {
             id: AssociatedParticipant {
                 id: ParticipantId::nil(),
             },
             reason: control::Reason::Quit,
-        })
+        }))
         .unwrap();
 
         assert_eq!(expected, produced);
@@ -423,12 +435,12 @@ mod tests {
     fn left_timeout_reason() {
         let expected = json!({"message": "left","id": "00000000-0000-0000-0000-000000000000", "reason": "timeout"});
 
-        let produced = serde_json::to_value(ControlEvent::Left {
+        let produced = serde_json::to_value(ControlEvent::Left(Left {
             id: AssociatedParticipant {
                 id: ParticipantId::nil(),
             },
             reason: control::Reason::Timeout,
-        })
+        }))
         .unwrap();
 
         assert_eq!(expected, produced);

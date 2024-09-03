@@ -42,7 +42,7 @@ use opentalk_signaling_core::{
 use opentalk_types::signaling::{
     control::{
         command::ControlCommand,
-        event::{self as control_event, ControlEvent, JoinBlockedReason, JoinSuccess},
+        event::{self as control_event, ControlEvent, JoinBlockedReason, JoinSuccess, Left},
         room::{CreatorInfo, RoomInfo},
         state::ControlState,
         Reason,
@@ -2138,10 +2138,10 @@ impl Runner {
         if self.id != id {
             self.ws_send_control(
                 timestamp,
-                ControlEvent::Left {
+                ControlEvent::Left(Left {
                     id: AssociatedParticipant { id },
                     reason,
-                },
+                }),
             )
             .await;
         }
