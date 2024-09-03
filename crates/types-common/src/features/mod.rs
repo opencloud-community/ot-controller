@@ -12,5 +12,18 @@ pub use feature_id::{
 };
 pub use module_feature_id::{ModuleFeatureId, ParseModuleFeatureIdError};
 
+use crate::modules::ModuleId;
+
 /// The namespace separator
 pub const NAMESPACE_SEPARATOR: &str = "::";
+
+/// The call-in feature identifier string
+pub const CALL_IN_FEATURE_ID: &str = "call_in";
+
+/// The call-in module feature id
+pub fn call_in() -> ModuleFeatureId {
+    ModuleFeatureId {
+        module: ModuleId::default(),
+        feature: CALL_IN_FEATURE_ID.parse().expect("valid feature id"),
+    }
+}

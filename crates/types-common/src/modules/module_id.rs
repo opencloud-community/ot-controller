@@ -10,8 +10,11 @@ use snafu::{ensure, Snafu};
 use crate::imports::*;
 use crate::utils::ExampleData;
 
+/// The `core` module id.
+pub const CORE_MODULE_ID: &str = "core";
+
 /// The module that is used by default if none is specified
-pub const DEFAULT_MODULE_ID: &str = "core";
+pub const DEFAULT_MODULE_ID: &str = CORE_MODULE_ID;
 
 /// The minimum allowed length for a valid module id
 pub const MIN_MODULE_ID_LENGTH: usize = 1;

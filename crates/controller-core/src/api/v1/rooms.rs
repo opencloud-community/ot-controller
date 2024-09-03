@@ -44,9 +44,12 @@ use opentalk_types::{
             },
         },
     },
-    common::{features, shared_folder::SharedFolder, tariff::TariffResource},
+    common::{shared_folder::SharedFolder, tariff::TariffResource},
 };
-use opentalk_types_common::rooms::{invite_codes::InviteCode, RoomId};
+use opentalk_types_common::{
+    features,
+    rooms::{invite_codes::InviteCode, RoomId},
+};
 
 use super::{
     events::{get_invited_mail_recipients_for_event, CancellationNotificationValues},

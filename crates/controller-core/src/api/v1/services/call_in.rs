@@ -11,13 +11,11 @@ use actix_web::{
 use opentalk_database::Db;
 use opentalk_db_storage::sip_configs::SipConfig;
 use opentalk_signaling_core::{Participant, VolatileStorage};
-use opentalk_types::{
-    api::{
-        error::ApiError,
-        v1::services::{ServiceStartResponse, StartCallInRequestBody},
-    },
-    common::features,
+use opentalk_types::api::{
+    error::ApiError,
+    v1::services::{ServiceStartResponse, StartCallInRequestBody},
 };
+use opentalk_types_common::features;
 
 use crate::{
     api::{

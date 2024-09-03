@@ -12,14 +12,11 @@ use opentalk_db_storage::{
     rooms::Room,
     sip_configs::{NewSipConfig, SipConfig, UpdateSipConfig},
 };
-use opentalk_types::{
-    api::{
-        error::ApiError,
-        v1::rooms::sip_config_resource::{PutSipConfig, SipConfigResource},
-    },
-    common::features,
+use opentalk_types::api::{
+    error::ApiError,
+    v1::rooms::sip_config_resource::{PutSipConfig, SipConfigResource},
 };
-use opentalk_types_common::rooms::RoomId;
+use opentalk_types_common::{features, rooms::RoomId};
 use validator::Validate;
 
 use super::util::require_feature;
