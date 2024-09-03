@@ -4,6 +4,8 @@
 
 //! Signaling events for the `chat` namespace
 
+mod chat_disabled;
 mod chat_enabled;
 
+pub use chat_disabled::ChatDisabled;
 pub use chat_enabled::ChatEnabled;

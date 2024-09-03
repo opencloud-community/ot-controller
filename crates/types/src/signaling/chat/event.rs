@@ -5,7 +5,10 @@
 //! Signaling events for the `chat` namespace
 
 use opentalk_types_signaling::ParticipantId;
-use opentalk_types_signaling_chat::{event::ChatEnabled, MessageId, Scope};
+use opentalk_types_signaling_chat::{
+    event::{ChatDisabled, ChatEnabled},
+    MessageId, Scope,
+};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -38,14 +41,6 @@ impl From<ChatEnabled> for ChatEvent {
     fn from(value: ChatEnabled) -> Self {
         Self::ChatEnabled(value)
     }
-}
-
-/// The chat was disabled
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct ChatDisabled {
-    /// Participant who disabled the chat
-    pub issued_by: ParticipantId,
 }
 
 impl From<ChatDisabled> for ChatEvent {
