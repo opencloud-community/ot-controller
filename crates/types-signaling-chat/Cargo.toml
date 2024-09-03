@@ -56,3 +56,7 @@ opentalk-types-signaling.workspace = true
 redis-args = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 uuid.workspace = true
+
+[dev-dependencies]
+pretty_assertions.workspace = true
+serde_json.workspace = true

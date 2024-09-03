@@ -5068,8 +5068,10 @@ dependencies = [
  "derive_more 1.0.0",
  "opentalk-types-common",
  "opentalk-types-signaling",
+ "pretty_assertions",
  "redis-args",
  "serde",
+ "serde_json",
  "uuid",
 ]
 
