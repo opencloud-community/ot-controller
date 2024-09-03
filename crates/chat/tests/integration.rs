@@ -14,13 +14,10 @@ use opentalk_types::signaling::{
         state::ChatState,
         Scope,
     },
-    control::{
-        self,
-        event::{ControlEvent, JoinSuccess, Left},
-    },
+    control::event::{ControlEvent, JoinSuccess, Left},
 };
 use opentalk_types_common::{time::Timestamp, users::GroupName};
-use opentalk_types_signaling::{AssociatedParticipant, Participant, Role};
+use opentalk_types_signaling::{AssociatedParticipant, LeaveReason, Participant, Role};
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use serial_test::serial;
@@ -528,7 +525,7 @@ async fn private_chat_history_on_join() {
         user1_leave_message,
         WsMessageOutgoing::Control(ControlEvent::Left(Left{
             id: AssociatedParticipant { id },
-            reason: control::Reason::Quit,
+            reason: LeaveReason::Quit,
         })) if id == USER_1.participant_id
     ));
 

@@ -20,7 +20,7 @@ use opentalk_signaling_core::{
 };
 pub use opentalk_types::signaling::moderation::{module_id, NAMESPACE};
 use opentalk_types::signaling::{
-    control::{state::ControlState, Reason, WaitingRoomState},
+    control::{state::ControlState, WaitingRoomState},
     moderation::{
         command::ModerationCommand,
         event::{DisplayNameChanged, Error, ModerationEvent},
@@ -29,7 +29,8 @@ use opentalk_types::signaling::{
 };
 use opentalk_types_common::{rooms::RoomId, users::UserId};
 use opentalk_types_signaling::{
-    AssociatedParticipant, ModulePeerData, Participant, ParticipantId, ParticipationKind, Role,
+    AssociatedParticipant, LeaveReason, ModulePeerData, Participant, ParticipantId,
+    ParticipationKind, Role,
 };
 use snafu::{Report, ResultExt};
 
@@ -528,7 +529,7 @@ impl SignalingModule for ModerationModule {
                         control::exchange::current_room_all_participants(self.room),
                         control::exchange::Message::Left {
                             id: self.id,
-                            reason: Reason::SentToWaitingRoom,
+                            reason: LeaveReason::SentToWaitingRoom,
                         },
                     );
                 }

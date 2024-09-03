@@ -2,9 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types::signaling::control;
 use opentalk_types_common::{rooms::RoomId, users::UserId};
-use opentalk_types_signaling::ParticipantId;
+use opentalk_types_signaling::{LeaveReason, ParticipantId};
 use serde::{Deserialize, Serialize};
 
 use crate::SignalingRoomId;
@@ -19,7 +18,7 @@ pub enum Message {
     /// Participant with the given id left the current room
     Left {
         id: ParticipantId,
-        reason: control::Reason,
+        reason: LeaveReason,
     },
 
     /// Participant with the given id updated its status

@@ -21,6 +21,7 @@
 )]
 
 mod associated_participant;
+mod leave_reason;
 #[cfg(feature = "serde")]
 mod module_peer_data;
 mod participant;
@@ -34,6 +35,7 @@ mod signaling_module_peer_frontend_data;
 mod target_participant;
 
 pub use associated_participant::AssociatedParticipant;
+pub use leave_reason::LeaveReason;
 #[cfg(feature = "serde")]
 pub use module_peer_data::ModulePeerData;
 pub use participant::Participant;

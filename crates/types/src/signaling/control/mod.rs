@@ -9,11 +9,9 @@ pub mod event;
 pub mod room;
 pub mod state;
 
-mod reason;
 mod waiting_room_state;
 
 use opentalk_types_common::modules::ModuleId;
-pub use reason::Reason;
 pub use waiting_room_state::{WaitingRoomState, NAMESPACE as WAITING_ROOM_STATE_NAMESPACE};
 
 /// The namespace string for the signaling module

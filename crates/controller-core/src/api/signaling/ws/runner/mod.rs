@@ -47,7 +47,6 @@ use opentalk_types::signaling::{
         },
         room::{CreatorInfo, RoomInfo},
         state::ControlState,
-        Reason,
     },
     moderation::event::ModerationEvent,
     ModuleData,
@@ -61,7 +60,7 @@ use opentalk_types_common::{
     users::UserId,
 };
 use opentalk_types_signaling::{
-    AssociatedParticipant, ParticipantId, ParticipationKind, Role, TargetParticipant,
+    AssociatedParticipant, LeaveReason, ParticipantId, ParticipationKind, Role, TargetParticipant,
 };
 use serde_json::Value;
 use snafu::{ensure, whatever, Report, ResultExt, Snafu};
@@ -413,7 +412,7 @@ impl Runner {
 
     /// Destroys the runner and all associated resources
     #[tracing::instrument(skip(self), fields(id = %self.id))]
-    pub async fn destroy(mut self, close_ws: bool, reason: Reason) {
+    pub async fn destroy(mut self, close_ws: bool, reason: LeaveReason) {
         let destroy_start_time = Instant::now();
         let mut encountered_error = false;
 
@@ -743,7 +742,7 @@ impl Runner {
             opentalk_signaling_core::control::storage::SKIP_WAITING_ROOM_KEY_REFRESH_INTERVAL,
         ));
 
-        let mut reason = Reason::Quit;
+        let mut reason = LeaveReason::Quit;
 
         while matches!(self.ws.state, State::Open) {
             if self.exit && matches!(self.ws.state, State::Open) {
@@ -754,7 +753,7 @@ impl Runner {
             tokio::select! {
                 res = self.ws.receive() => {
                     match res {
-                        Some(RunnerMessage::Timeout) => reason = Reason::Timeout,
+                        Some(RunnerMessage::Timeout) => reason = LeaveReason::Timeout,
                         Some(RunnerMessage::Message(Message::Close(_))) => {
                             // Received Close frame from ws actor, break to destroy the runner
                             manual_close_ws = true;
@@ -1729,7 +1728,7 @@ impl Runner {
                     .await;
             }
             exchange::Message::Left { id, reason } => {
-                if self.id == id && reason == Reason::SentToWaitingRoom {
+                if self.id == id && reason == LeaveReason::SentToWaitingRoom {
                     // we are sent to the waiting room
                     self.notify_left(id, reason, timestamp).await;
                     self.reenter_waiting_room(timestamp).await?;
@@ -2135,7 +2134,7 @@ impl Runner {
             .await;
     }
 
-    async fn notify_left(&mut self, id: ParticipantId, reason: Reason, timestamp: Timestamp) {
+    async fn notify_left(&mut self, id: ParticipantId, reason: LeaveReason, timestamp: Timestamp) {
         let actions: ModuleRequestedActions = self
             .handle_module_broadcast_event(timestamp, DynBroadcastEvent::ParticipantLeft(id), false)
             .await;

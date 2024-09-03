@@ -6,10 +6,10 @@
 
 use opentalk_types_common::{events::EventInfo, tariffs::TariffResource, time::Timestamp};
 use opentalk_types_signaling::{
-    AssociatedParticipant, Participant, ParticipantId, Role, TargetParticipant,
+    AssociatedParticipant, LeaveReason, Participant, ParticipantId, Role, TargetParticipant,
 };
 
-use super::{reason, room::RoomInfo};
+use super::room::RoomInfo;
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -135,7 +135,7 @@ pub struct Left {
     pub id: AssociatedParticipant,
 
     /// The reason as to why the participant left
-    pub reason: reason::Reason,
+    pub reason: LeaveReason,
 }
 
 impl From<Left> for ControlEvent {
@@ -207,7 +207,7 @@ mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::signaling::control::{self, room::CreatorInfo};
+    use crate::signaling::control::room::CreatorInfo;
 
     fn participant_tariff() -> TariffResource {
         TariffResource {
@@ -437,7 +437,7 @@ mod tests {
             id: AssociatedParticipant {
                 id: ParticipantId::nil(),
             },
-            reason: control::Reason::Quit,
+            reason: LeaveReason::Quit,
         }))
         .unwrap();
 
@@ -452,7 +452,7 @@ mod tests {
             id: AssociatedParticipant {
                 id: ParticipantId::nil(),
             },
-            reason: control::Reason::Timeout,
+            reason: LeaveReason::Timeout,
         }))
         .unwrap();
 
