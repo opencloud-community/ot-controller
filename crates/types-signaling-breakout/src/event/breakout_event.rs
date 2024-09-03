@@ -2,21 +2,16 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Signaling events for the `breakout` namespace
-
-use opentalk_types_signaling_breakout::{
+use crate::{
     event::{Error, Started},
     AssociatedParticipantInOtherRoom, ParticipantInOtherRoom,
 };
-
-#[allow(unused_imports)]
-use crate::imports::*;
 
 /// Events sent out by the `breakout` module
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(tag = "message", rename_all = "snake_case")
 )]
 pub enum BreakoutEvent {
@@ -55,11 +50,11 @@ impl From<Error> for BreakoutEvent {
 mod test {
     use opentalk_types_common::{rooms::BreakoutRoomId, time::Timestamp};
     use opentalk_types_signaling::{ParticipantId, ParticipationKind, Role};
-    use opentalk_types_signaling_breakout::BreakoutRoom;
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
     use super::*;
+    use crate::BreakoutRoom;
 
     #[test]
     fn started() {

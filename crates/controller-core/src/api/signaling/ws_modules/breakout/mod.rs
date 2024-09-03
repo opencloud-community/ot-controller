@@ -24,12 +24,12 @@ use opentalk_signaling_core::{
     SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types::signaling::breakout::{
-    command::BreakoutCommand, event::BreakoutEvent, state::BreakoutState, NAMESPACE,
+    command::BreakoutCommand, state::BreakoutState, NAMESPACE,
 };
 use opentalk_types_common::rooms::{BreakoutRoomId, RoomId};
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_breakout::{
-    event::{Error, Started},
+    event::{BreakoutEvent, Error, Started},
     AssociatedParticipantInOtherRoom, BreakoutRoom, ParticipantInOtherRoom,
 };
 use snafu::whatever;

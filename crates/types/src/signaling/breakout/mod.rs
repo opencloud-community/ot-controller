@@ -5,7 +5,6 @@
 //! Signaling messages for the `breakout` namespace
 
 pub mod command;
-pub mod event;
 pub mod state;
 
 /// The namespace string for the signaling module
