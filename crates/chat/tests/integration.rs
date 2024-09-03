@@ -17,11 +17,11 @@ use opentalk_types::signaling::{
     control::{
         self,
         event::{ControlEvent, JoinSuccess},
-        AssociatedParticipant, Participant,
+        Participant,
     },
 };
 use opentalk_types_common::{time::Timestamp, users::GroupName};
-use opentalk_types_signaling::Role;
+use opentalk_types_signaling::{AssociatedParticipant, Role};
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use serial_test::serial;

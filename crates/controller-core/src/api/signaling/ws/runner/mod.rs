@@ -45,7 +45,7 @@ use opentalk_types::signaling::{
         event::{self as control_event, ControlEvent, JoinBlockedReason, JoinSuccess},
         room::{CreatorInfo, RoomInfo},
         state::ControlState,
-        AssociatedParticipant, Reason,
+        Reason,
     },
     moderation::event::ModerationEvent,
     ModuleData,
@@ -58,7 +58,9 @@ use opentalk_types_common::{
     time::Timestamp,
     users::UserId,
 };
-use opentalk_types_signaling::{ParticipantId, ParticipationKind, Role, TargetParticipant};
+use opentalk_types_signaling::{
+    AssociatedParticipant, ParticipantId, ParticipationKind, Role, TargetParticipant,
+};
 use serde_json::Value;
 use snafu::{ensure, whatever, Report, ResultExt, Snafu};
 use tokio::{

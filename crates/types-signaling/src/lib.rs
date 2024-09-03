@@ -20,6 +20,7 @@
     unused_results
 )]
 
+mod associated_participant;
 mod participant_id;
 mod participation_kind;
 mod role;
@@ -29,6 +30,7 @@ mod signaling_module_frontend_data;
 mod signaling_module_peer_frontend_data;
 mod target_participant;
 
+pub use associated_participant::AssociatedParticipant;
 pub use participant_id::ParticipantId;
 pub use participation_kind::ParticipationKind;
 pub use role::{ForRole, Role};

@@ -9,12 +9,10 @@ pub mod event;
 pub mod room;
 pub mod state;
 
-mod associated_participant;
 mod participant;
 mod reason;
 mod waiting_room_state;
 
-pub use associated_participant::AssociatedParticipant;
 use opentalk_types_common::modules::ModuleId;
 pub use participant::Participant;
 pub use reason::Reason;
