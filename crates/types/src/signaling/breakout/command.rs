@@ -4,9 +4,7 @@
 
 //! Signaling commands for the `breakout` namespace
 
-use std::time::Duration;
-
-use opentalk_types_signaling_breakout::command::RoomParameter;
+use opentalk_types_signaling_breakout::command::Start;
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -25,35 +23,16 @@ pub enum BreakoutCommand {
     Stop,
 }
 
-/// Command to start a breakout session
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Start {
-    /// A list of breakout rooms to create
-    pub rooms: Vec<RoomParameter>,
-
-    /// Duration of the breakout session
-    #[cfg_attr(
-        feature = "serde",
-        serde(
-            default,
-            skip_serializing_if = "Option::is_none",
-            with = "crate::utils::duration_seconds_option"
-        )
-    )]
-    pub duration: Option<Duration>,
-}
-
 #[cfg(test)]
 mod test {
     use std::time::Duration;
 
     use opentalk_types_signaling::ParticipantId;
+    use opentalk_types_signaling_breakout::command::RoomParameter;
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
     use super::*;
-    use crate::signaling::breakout::command::RoomParameter;
 
     #[test]
     fn breakout_start() {

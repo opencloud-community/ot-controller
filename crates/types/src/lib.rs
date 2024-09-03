@@ -86,7 +86,6 @@
 
 pub mod api;
 pub mod signaling;
-pub mod utils;
 
 mod imports {
     #![allow(unused)]
