@@ -33,6 +33,7 @@ async fn make_event(
         created_by: user.id,
         password: None,
         waiting_room: false,
+        e2e_encrytion: false,
         tenant_id: user.tenant_id,
     }
     .insert(conn)
@@ -736,6 +737,7 @@ async fn get_event_min_max_time() {
         created_by: user.id,
         password: None,
         waiting_room: false,
+        e2e_encrytion: false,
         tenant_id: user.tenant_id,
     }
     .insert(&mut conn)
@@ -769,6 +771,7 @@ async fn get_event_min_max_time() {
         created_by: user.id,
         password: None,
         waiting_room: false,
+        e2e_encrytion: false,
         tenant_id: user.tenant_id,
     }
     .insert(&mut conn)

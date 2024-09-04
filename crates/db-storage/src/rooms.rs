@@ -54,6 +54,7 @@ pub struct Room {
     pub password: Option<RoomPassword>,
     pub waiting_room: bool,
     pub tenant_id: TenantId,
+    pub e2e_encrytion: bool,
 }
 
 impl Room {
@@ -175,6 +176,7 @@ pub struct NewRoom {
     pub password: Option<RoomPassword>,
     pub waiting_room: bool,
     pub tenant_id: TenantId,
+    pub e2e_encrytion: bool,
 }
 
 impl NewRoom {
@@ -194,6 +196,7 @@ impl NewRoom {
 pub struct UpdateRoom {
     pub password: Option<Option<RoomPassword>>,
     pub waiting_room: Option<bool>,
+    pub e2e_encrytion: Option<bool>,
 }
 
 impl UpdateRoom {

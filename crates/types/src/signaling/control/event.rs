@@ -217,6 +217,7 @@ mod test {
                 "room_id": "00000000-0000-0000-0000-000000000000",
                 "title": "Daily",
                 "is_adhoc": false,
+                "e2e_encrytion": false,
             },
             "room_info": {
                 "id": "00000000-0000-0000-0000-000000000000",
@@ -252,6 +253,7 @@ mod test {
                 title: "Daily".to_string(),
                 is_adhoc: false,
                 meeting_details: None,
+                e2e_encrytion: false,
             }),
             room_info: RoomInfo {
                 id: RoomId::nil(),
@@ -285,6 +287,7 @@ mod test {
                 "room_id": "00000000-0000-0000-0000-000000000000",
                 "title": "Daily",
                 "is_adhoc": false,
+                "e2e_encrytion": false,
             },
             "room_info": {
                 "id": "00000000-0000-0000-0000-000000000000",
@@ -316,6 +319,7 @@ mod test {
                 title: "Daily".to_string(),
                 is_adhoc: false,
                 meeting_details: None,
+                e2e_encrytion: false,
             }),
             room_info: RoomInfo {
                 id: RoomId::nil(),

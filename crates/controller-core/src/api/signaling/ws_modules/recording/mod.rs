@@ -52,6 +52,7 @@ enum RecordingFeature {
 pub struct Recording {
     id: ParticipantId,
     room: SignalingRoomId,
+    room_encryption_enabled: bool,
     params: RecordingParams,
     recorder_started: bool,
 
@@ -126,6 +127,7 @@ impl SignalingModule for Recording {
         Ok(Some(Self {
             id: ctx.participant_id(),
             room: ctx.room_id(),
+            room_encryption_enabled: ctx.room().e2e_encrytion,
             params: params.clone(),
             enabled_features,
             db: ctx.db().clone(),
@@ -285,8 +287,10 @@ impl Recording {
         let mut conn = self.db.get_conn().await?;
 
         let can_record = self.enabled_features.contains(&RecordingFeature::Record)
-            && self.room.breakout_room_id().is_none();
-        let can_stream = self.enabled_features.contains(&RecordingFeature::Stream);
+            && self.room.breakout_room_id().is_none()
+            && !self.room_encryption_enabled;
+        let can_stream = self.enabled_features.contains(&RecordingFeature::Stream)
+            && !self.room_encryption_enabled;
 
         let stock_streams = can_record.then_some((
             StreamingTargetId::generate(),

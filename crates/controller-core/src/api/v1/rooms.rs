@@ -188,6 +188,7 @@ pub async fn new(
         created_by: current_user.id,
         password: room_parameters.password,
         waiting_room: room_parameters.waiting_room,
+        e2e_encrytion: room_parameters.e2e_encrytion,
         tenant_id: current_user.tenant_id,
     };
 
@@ -273,6 +274,7 @@ pub async fn patch(
     let changeset = db_rooms::UpdateRoom {
         password: modify_room.password,
         waiting_room: modify_room.waiting_room,
+        e2e_encrytion: modify_room.e2e_encrytion,
     };
 
     let room = changeset.apply(&mut conn, room_id).await?;
@@ -589,10 +591,14 @@ pub async fn get_room_event(
 
     let event = Event::get_for_room(&mut conn, room_id).await?;
 
+    let room = Room::get(&mut conn, room_id).await?;
+
     match event.as_ref() {
         Some(event) => {
             let call_in_tel = settings.call_in.as_ref().map(|call_in| call_in.tel.clone());
-            let event_info = build_event_info(&mut conn, call_in_tel, room_id, event).await?;
+            let event_info =
+                build_event_info(&mut conn, call_in_tel, room_id, room.e2e_encrytion, event)
+                    .await?;
             Ok(Json(GetRoomEventResponse(event_info)))
         }
         None => Err(ApiError::not_found()),

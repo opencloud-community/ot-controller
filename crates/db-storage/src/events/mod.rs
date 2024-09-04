@@ -195,14 +195,18 @@ impl Event {
     }
 }
 
-impl From<&Event> for EventInfo {
-    fn from(value: &Event) -> Self {
+pub struct EventAndEncryption<'a>(pub &'a Event, pub bool);
+
+impl<'a> From<EventAndEncryption<'a>> for EventInfo {
+    fn from(value: EventAndEncryption<'a>) -> Self {
+        let EventAndEncryption(event, e2e_encrytion) = value;
         EventInfo {
-            id: value.id,
-            room_id: value.room,
-            title: value.title.clone(),
-            is_adhoc: value.is_adhoc,
+            id: event.id,
+            room_id: event.room,
+            title: event.title.clone(),
+            is_adhoc: event.is_adhoc,
             meeting_details: None,
+            e2e_encrytion,
         }
     }
 }

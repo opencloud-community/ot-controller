@@ -20,4 +20,7 @@ pub struct PatchRoomsRequestBody {
 
     /// If waiting room is enabled
     pub waiting_room: Option<bool>,
+
+    /// If e2e encryption is enabled
+    pub e2e_encrytion: Option<bool>,
 }

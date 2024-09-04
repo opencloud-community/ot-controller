@@ -44,6 +44,10 @@ pub struct PostEventsBody {
     #[cfg_attr(feature = "serde", serde(default))]
     pub waiting_room: bool,
 
+    /// Should the created event be encrypted?
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub e2e_encrytion: bool,
+
     /// Should the created event be time independent?
     ///
     /// If true, all following fields must be null
@@ -149,6 +153,7 @@ impl ExampleData for PostEventsBody {
             streaming_targets: vec![StreamingTarget::example_data()],
             has_shared_folder: false,
             show_meeting_details: true,
+            e2e_encrytion: false,
         }
     }
 }

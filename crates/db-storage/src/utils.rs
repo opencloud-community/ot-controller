@@ -23,7 +23,9 @@ use opentalk_types::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    events::Event, invites::Invite, sip_configs::SipConfig,
+    events::{Event, EventAndEncryption},
+    invites::Invite,
+    sip_configs::SipConfig,
     streaming_targets::get_room_streaming_targets,
 };
 
@@ -83,6 +85,7 @@ pub async fn build_event_info(
     conn: &mut DbConnection,
     call_in_tel: Option<String>,
     room_id: RoomId,
+    e2e_encrytion: bool,
     event: &Event,
 ) -> Result<EventInfo, DatabaseError> {
     let event_info = if event.show_meeting_details {
@@ -105,13 +108,15 @@ pub async fn build_event_info(
         let streaming_targets = get_room_streaming_targets(conn, room_id).await?;
         let streaming_links = get_public_urls_from_streaming_targets(streaming_targets).await;
 
-        EventInfo::from(event).with_meeting_details(MeetingDetails {
-            invite_code_id: invite.map(|invite| invite.id),
-            call_in,
-            streaming_links,
-        })
+        EventInfo::from(EventAndEncryption(event, e2e_encrytion)).with_meeting_details(
+            MeetingDetails {
+                invite_code_id: invite.map(|invite| invite.id),
+                call_in,
+                streaming_links,
+            },
+        )
     } else {
-        EventInfo::from(event)
+        EventInfo::from(EventAndEncryption(event, e2e_encrytion))
     };
 
     Ok(event_info)
