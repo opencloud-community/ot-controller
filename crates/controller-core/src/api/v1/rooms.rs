@@ -552,7 +552,7 @@ pub async fn get_room_tariff(
         (
             status = StatusCode::OK,
             description = "The room's event was successfully retrieved",
-            body = TariffResource
+            body = EventInfo
         ),
         (
             status = StatusCode::UNAUTHORIZED,

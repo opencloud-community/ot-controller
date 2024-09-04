@@ -1326,7 +1326,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TariffResource"
+                $ref: "#/components/schemas/EventInfo"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -2634,6 +2634,29 @@ components:
       format: uuid
       description: The id of a breakout room
       example: 00000000-0000-0000-0000-0000badcab1e
+    CallIn:
+      type: object
+      description: Call-in info for an event
+      required:
+        - tel
+        - id
+        - password
+      properties:
+        id:
+          type: string
+          description: SIP ID which must transmitted via DTMF (number field on the phone) to identify this room
+        password:
+          type: string
+          description: |
+            SIP password which must be transmitted via DTMF (number field on the phone) after entering the `sip_id`
+            to enter the room
+        tel:
+          type: string
+          description: SIP Call-In phone number which must be used to reach the room
+      example:
+        id: "1234567890"
+        password: "0987654321"
+        tel: +555-123-456-789
     CallInId:
       $ref: "#/components/schemas/NumericId"
     CallInInfo:
@@ -2856,6 +2879,42 @@ components:
       format: uuid
       description: The identifier of an event
       example: 00000000-0000-0000-0000-004433221100
+    EventInfo:
+      type: object
+      description: Information about an event
+      required:
+        - id
+        - room_id
+        - title
+        - is_adhoc
+      properties:
+        id:
+          $ref: "#/components/schemas/EventId"
+        is_adhoc:
+          type: boolean
+          description: True if the event was created ad-hoc
+        meeting_details:
+          allOf:
+            - $ref: "#/components/schemas/MeetingDetails"
+        room_id:
+          $ref: "#/components/schemas/RoomId"
+        title:
+          type: string
+          description: The title of the event
+      example:
+        id: 00000000-0000-0000-0000-004433221100
+        is_adhoc: false
+        meeting_details:
+          call_in:
+            id: "1234567890"
+            password: "0987654321"
+            tel: +555-123-456-789
+          invite_code_id: 00000000-0000-0000-0000-0000deadbeef
+          streaming_links:
+            - name: My OwnCast Stream
+              url: "https://owncast.example.com/mystream"
+        room_id: 00000000-0000-0000-0000-0000abadcafe
+        title: Weekly Team Event
     EventInstance:
       type: object
       description: |
@@ -3658,6 +3717,30 @@ components:
         - user
         - moderator
       example: user
+    MeetingDetails:
+      type: object
+      description: Details about an event
+      properties:
+        call_in:
+          allOf:
+            - $ref: "#/components/schemas/CallIn"
+        invite_code_id:
+          allOf:
+            - $ref: "#/components/schemas/InviteCodeId"
+        streaming_links:
+          type: array
+          items:
+            $ref: "#/components/schemas/StreamingLink"
+          description: The links for accessing the stream
+      example:
+        call_in:
+          id: "1234567890"
+          password: "0987654321"
+          tel: +555-123-456-789
+        invite_code_id: 00000000-0000-0000-0000-0000deadbeef
+        streaming_links:
+          - name: My OwnCast Stream
+            url: "https://owncast.example.com/mystream"
     NumericId:
       type: string
       description: A string containing number characters
@@ -4368,6 +4451,23 @@ components:
       type: string
       description: The secret key of a streaming target
       example: aabbccddeeff
+    StreamingLink:
+      type: object
+      description: Streaming link for an event
+      required:
+        - name
+        - url
+      properties:
+        name:
+          type: string
+          description: The name of the streaming link
+        url:
+          type: string
+          format: uri
+          description: The url of the streaming link
+      example:
+        name: My OwnCast Stream
+        url: "https://owncast.example.com/mystream"
     StreamingTarget:
       allOf:
         - $ref: "#/components/schemas/StreamingTargetKind"
