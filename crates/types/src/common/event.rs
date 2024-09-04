@@ -41,6 +41,7 @@ pub struct EventInfo {
     #[cfg_attr(feature = "utoipa", schema(nullable = false))]
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub meeting_details: Option<MeetingDetails>,
+
     /// Indicates whether the meeting room should have e2e encryption enabled.
     pub e2e_encrytion: bool,
 }
