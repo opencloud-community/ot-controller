@@ -37,7 +37,7 @@ use tokio_stream::{
 };
 
 use crate::{
-    settings::{self, ConnectionBackendConfig, ConnectionConfig},
+    settings::{self, ConnectionBackendConfig, ConnectionConfig, JanusMcuConfig},
     storage::MediaStorage,
     MediaStorageProvider as _,
 };
@@ -148,15 +148,13 @@ pub struct McuPool {
 
 impl McuPool {
     pub async fn build(
-        settings: &opentalk_controller_settings::Settings,
+        mcu_config: JanusMcuConfig,
         shared_settings: SharedSettings,
         rabbitmq_pool: Arc<RabbitMqPool>,
         volatile: VolatileStorage,
         controller_shutdown_sig: broadcast::Receiver<()>,
         controller_reload_sig: broadcast::Receiver<()>,
     ) -> Result<Arc<Self>, SignalingModuleError> {
-        let mcu_config = settings::JanusMcuConfig::extract(settings)?;
-
         let (shutdown, _) = broadcast::channel(1);
         let (reconnect_send, reconnect_recv) = mpsc::channel(1024);
 
@@ -236,7 +234,9 @@ impl McuPool {
         let mut mcu_settings = self.mcu_config.write().await;
 
         let settings = self.shared_settings.load_full();
-        *mcu_settings = settings::JanusMcuConfig::extract(&settings)?;
+        if let Some(new_mcu_config) = settings::JanusMcuConfig::extract(&settings)? {
+            *mcu_settings = new_mcu_config;
+        }
 
         let mcu_settings = mcu_settings.downgrade();
 
@@ -375,11 +375,12 @@ impl McuPool {
 
         // TODO in the original code there was a check if a room for this publisher exists, check if necessary
 
-        let settings = settings::JanusMcuConfig::extract(&self.shared_settings.load())?;
+        let settings = self.mcu_config.read().await;
         let bitrate = match media_session_key.1 {
             MediaSessionType::Video => settings.max_video_bitrate,
             MediaSessionType::Screen => settings.max_screen_bitrate,
         };
+        drop(settings);
 
         let request = opentalk_janus_client::outgoing::VideoRoomPluginCreate {
             description: media_session_key.to_string(),
