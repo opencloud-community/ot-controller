@@ -41,7 +41,7 @@ use opentalk_signaling_core::{
 };
 use opentalk_types::signaling::{
     control::{
-        event::{self as control_event, ControlEvent, RoleUpdated},
+        event::{self as control_event, ControlEvent},
         state::ControlState,
     },
     moderation::event::ModerationEvent,
@@ -60,7 +60,7 @@ use opentalk_types_signaling::{
 };
 use opentalk_types_signaling_control::{
     command::ControlCommand,
-    event::{JoinBlockedReason, JoinSuccess, Left},
+    event::{JoinBlockedReason, JoinSuccess, Left, RoleUpdated},
     room::{CreatorInfo, RoomInfo},
 };
 use serde_json::Value;

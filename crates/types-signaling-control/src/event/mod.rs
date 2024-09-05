@@ -7,7 +7,9 @@
 mod join_blocked_reason;
 mod join_success;
 mod left;
+mod role_updated;
 
 pub use join_blocked_reason::JoinBlockedReason;
 pub use join_success::JoinSuccess;
 pub use left::Left;
+pub use role_updated::RoleUpdated;

@@ -4,8 +4,8 @@
 
 //! Types related to signaling events in the `control` namespace
 
-use opentalk_types_signaling::{Participant, Role, TargetParticipant};
-use opentalk_types_signaling_control::event::{JoinBlockedReason, JoinSuccess, Left};
+use opentalk_types_signaling::{Participant, TargetParticipant};
+use opentalk_types_signaling_control::event::{JoinBlockedReason, JoinSuccess, Left, RoleUpdated};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -63,14 +63,6 @@ impl From<Left> for ControlEvent {
     }
 }
 
-/// The participant role was updated.
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct RoleUpdated {
-    /// The new role of the participant
-    pub new_role: Role,
-}
-
 impl From<RoleUpdated> for ControlEvent {
     fn from(value: RoleUpdated) -> Self {
         Self::RoleUpdated(value)
@@ -126,7 +118,7 @@ mod tests {
         tariffs::{TariffId, TariffResource},
     };
     use opentalk_types_signaling::{
-        AssociatedParticipant, LeaveReason, ModulePeerData, ParticipantId,
+        AssociatedParticipant, LeaveReason, ModulePeerData, ParticipantId, Role,
     };
     use opentalk_types_signaling_control::room::{CreatorInfo, RoomInfo};
     use pretty_assertions::assert_eq;
