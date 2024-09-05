@@ -4910,9 +4910,9 @@ dependencies = [
  "opentalk-database",
  "opentalk-db-storage",
  "opentalk-signaling-core",
- "opentalk-types",
  "opentalk-types-common",
  "opentalk-types-signaling",
+ "opentalk-types-signaling-control",
  "pretty_assertions",
  "redis",
  "serde",
@@ -5050,6 +5050,7 @@ dependencies = [
 name = "opentalk-types-signaling-control"
 version = "0.0.0-dev"
 dependencies = [
+ "chrono",
  "opentalk-types-common",
  "opentalk-types-signaling",
  "pretty_assertions",

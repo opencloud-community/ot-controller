@@ -4,5 +4,4 @@
 
 //! Signaling messages for the `control` namespace
 
-pub mod event;
 pub mod state;

@@ -2,21 +2,15 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Types related to signaling events in the `control` namespace
-
 use opentalk_types_signaling::{Participant, TargetParticipant};
-use opentalk_types_signaling_control::event::{
-    Error, JoinBlockedReason, JoinSuccess, Left, RoleUpdated,
-};
 
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::event::{Error, JoinBlockedReason, JoinSuccess, Left, RoleUpdated};
 
 /// Events sent out by the `control` module
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(tag = "message", rename_all = "snake_case")
 )]
 pub enum ControlEvent {
@@ -71,8 +65,8 @@ impl From<RoleUpdated> for ControlEvent {
     }
 }
 
-#[cfg(test)]
-mod tests {
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
     use std::str::FromStr;
 
     use chrono::DateTime;
@@ -84,11 +78,12 @@ mod tests {
     use opentalk_types_signaling::{
         AssociatedParticipant, LeaveReason, ModulePeerData, ParticipantId, Role,
     };
-    use opentalk_types_signaling_control::room::{CreatorInfo, RoomInfo};
     use pretty_assertions::assert_eq;
+    use serde::{Deserialize, Serialize};
     use serde_json::json;
 
     use super::*;
+    use crate::room::{CreatorInfo, RoomInfo};
 
     fn participant_tariff() -> TariffResource {
         TariffResource {
@@ -273,27 +268,23 @@ mod tests {
         assert_eq!(expected, produced);
     }
 
-    #[derive(Default, Debug, PartialEq, Eq, Clone)]
-    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[derive(Default, Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
     pub struct DummyFrontendData1 {
         pub field_1: bool,
         pub field_2: bool,
     }
 
-    #[cfg(feature = "serde")]
-    impl SignalingModulePeerFrontendData for DummyFrontendData1 {
+    impl opentalk_types_signaling::SignalingModulePeerFrontendData for DummyFrontendData1 {
         const NAMESPACE: Option<&'static str> = Some("dummy_namespace_1");
     }
 
-    #[derive(Default, Debug, PartialEq, Eq, Clone)]
-    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[derive(Default, Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
     pub struct DummyFrontendData2 {
         pub field_a: bool,
         pub field_b: bool,
     }
 
-    #[cfg(feature = "serde")]
-    impl SignalingModulePeerFrontendData for DummyFrontendData2 {
+    impl opentalk_types_signaling::SignalingModulePeerFrontendData for DummyFrontendData2 {
         const NAMESPACE: Option<&'static str> = Some("dummy_namespace_2");
     }
 

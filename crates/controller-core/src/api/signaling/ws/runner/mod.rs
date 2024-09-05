@@ -39,10 +39,7 @@ use opentalk_signaling_core::{
     RunnerId, SignalingMetrics, SignalingModule, SignalingModuleError, SignalingRoomId,
     SubscriberHandle, VolatileStorage,
 };
-use opentalk_types::signaling::{
-    control::{event::ControlEvent, state::ControlState},
-    moderation::event::ModerationEvent,
-};
+use opentalk_types::signaling::{control::state::ControlState, moderation::event::ModerationEvent};
 use opentalk_types_common::{
     features::FeatureId,
     modules::ModuleId,
@@ -57,7 +54,9 @@ use opentalk_types_signaling::{
 };
 use opentalk_types_signaling_control::{
     command::ControlCommand,
-    event::{self as control_event, JoinBlockedReason, JoinSuccess, Left, RoleUpdated},
+    event::{
+        self as control_event, ControlEvent, JoinBlockedReason, JoinSuccess, Left, RoleUpdated,
+    },
     room::{CreatorInfo, RoomInfo},
 };
 use serde_json::Value;

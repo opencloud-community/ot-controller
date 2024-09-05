@@ -6,19 +6,16 @@ use chrono::{DateTime, Utc};
 use opentalk_chat::Chat;
 use opentalk_signaling_core::module_tester::{ModuleTester, WsMessageOutgoing};
 use opentalk_test_util::{TestContext, ROOM_ID, USER_1, USER_2};
-use opentalk_types::signaling::{
-    chat::{
-        command::{ChatCommand, SendMessage},
-        event::{ChatEvent, MessageSent},
-        peer_state::ChatPeerState,
-        state::ChatState,
-        Scope,
-    },
-    control::event::ControlEvent,
+use opentalk_types::signaling::chat::{
+    command::{ChatCommand, SendMessage},
+    event::{ChatEvent, MessageSent},
+    peer_state::ChatPeerState,
+    state::ChatState,
+    Scope,
 };
 use opentalk_types_common::{time::Timestamp, users::GroupName};
 use opentalk_types_signaling::{AssociatedParticipant, LeaveReason, Participant, Role};
-use opentalk_types_signaling_control::event::{JoinSuccess, Left};
+use opentalk_types_signaling_control::event::{ControlEvent, JoinSuccess, Left};
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use serial_test::serial;
