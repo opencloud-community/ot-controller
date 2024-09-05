@@ -4,10 +4,8 @@
 
 //! Types related to signaling events in the `control` namespace
 
-use opentalk_types_signaling::{
-    AssociatedParticipant, LeaveReason, Participant, Role, TargetParticipant,
-};
-use opentalk_types_signaling_control::event::{JoinBlockedReason, JoinSuccess};
+use opentalk_types_signaling::{Participant, Role, TargetParticipant};
+use opentalk_types_signaling_control::event::{JoinBlockedReason, JoinSuccess, Left};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -57,18 +55,6 @@ impl From<JoinSuccess> for ControlEvent {
     fn from(value: JoinSuccess) -> Self {
         Self::JoinSuccess(value)
     }
-}
-
-/// A participant left.
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Left {
-    /// The participant that left
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub id: AssociatedParticipant,
-
-    /// The reason as to why the participant left
-    pub reason: LeaveReason,
 }
 
 impl From<Left> for ControlEvent {
@@ -139,7 +125,9 @@ mod tests {
         rooms::RoomId,
         tariffs::{TariffId, TariffResource},
     };
-    use opentalk_types_signaling::{ModulePeerData, ParticipantId};
+    use opentalk_types_signaling::{
+        AssociatedParticipant, LeaveReason, ModulePeerData, ParticipantId,
+    };
     use opentalk_types_signaling_control::room::{CreatorInfo, RoomInfo};
     use pretty_assertions::assert_eq;
     use serde_json::json;

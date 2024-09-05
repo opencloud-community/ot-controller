@@ -6,6 +6,8 @@
 
 mod join_blocked_reason;
 mod join_success;
+mod left;
 
 pub use join_blocked_reason::JoinBlockedReason;
 pub use join_success::JoinSuccess;
+pub use left::Left;

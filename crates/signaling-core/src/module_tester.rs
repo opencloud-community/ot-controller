@@ -24,10 +24,7 @@ use kustos::Authz;
 use opentalk_database::Db;
 use opentalk_db_storage::{rooms::Room, users::User};
 use opentalk_types::signaling::{
-    control::{
-        event::{ControlEvent, Left},
-        state::ControlState,
-    },
+    control::{event::ControlEvent, state::ControlState},
     NamespacedCommand, NamespacedEvent,
 };
 use opentalk_types_common::{
@@ -41,7 +38,7 @@ use opentalk_types_signaling::{
 };
 use opentalk_types_signaling_control::{
     command::{ControlCommand, Join},
-    event::JoinSuccess,
+    event::{JoinSuccess, Left},
     module_id,
     room::{CreatorInfo, RoomInfo},
 };
