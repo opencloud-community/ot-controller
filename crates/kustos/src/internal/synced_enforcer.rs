@@ -3,7 +3,13 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Includes an enforcer that supports a background task which reloads the adapter every n seconds
-use std::{collections::HashMap, convert::TryInto, mem::take, sync::Arc, time::Instant};
+use std::{
+    collections::HashMap,
+    convert::TryInto,
+    mem::take,
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 use async_trait::async_trait;
 use casbin::{
@@ -28,6 +34,7 @@ use serde::{Deserialize, Serialize};
 use tokio::{
     sync::{mpsc, RwLock},
     task::JoinHandle,
+    time::sleep,
 };
 use uuid::Uuid;
 
@@ -35,6 +42,7 @@ use super::rbac_api_ex::RbacApiEx;
 use crate::{metrics::KustosMetrics, PolicyUser, UserPolicy};
 
 const EXCHANGE_NAME: &str = "opentalk-acl-updates";
+const RETRY_INTERVAL: Duration = Duration::from_secs(10);
 
 type EventCallback = Box<dyn FnMut(&mut SyncedEnforcer, EventData) + Send + Sync>;
 
@@ -153,8 +161,14 @@ async fn sync_task(
     let id = ShortString::from(Uuid::new_v4().to_string());
 
     loop {
-        if let Err(e) = synchronize_until_error(&rabbitmq_pool, &id, &enforcer).await {
+        if let Err(e) = synchronize_until_error(&rabbitmq_pool, &id, &enforcer)
+            .await
+            // we map the error to a string, so that the error `e` is not held across await calls.
+            // Keeping the error in scope while calling await would make this future not send.
+            .map_err(|e| e.to_string())
+        {
             log::error!("synchronization failed with error: {e}");
+            sleep(RETRY_INTERVAL).await;
         }
 
         // Unregister event handler
