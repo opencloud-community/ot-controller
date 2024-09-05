@@ -14,10 +14,11 @@ use opentalk_types::signaling::{
         state::ChatState,
         Scope,
     },
-    control::event::{ControlEvent, JoinSuccess, Left},
+    control::event::{ControlEvent, Left},
 };
 use opentalk_types_common::{time::Timestamp, users::GroupName};
 use opentalk_types_signaling::{AssociatedParticipant, LeaveReason, Participant, Role};
+use opentalk_types_signaling_control::event::JoinSuccess;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use serial_test::serial;

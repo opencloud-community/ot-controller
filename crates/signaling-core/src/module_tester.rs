@@ -25,7 +25,7 @@ use opentalk_database::Db;
 use opentalk_db_storage::{rooms::Room, users::User};
 use opentalk_types::signaling::{
     control::{
-        event::{ControlEvent, JoinSuccess, Left},
+        event::{ControlEvent, Left},
         state::ControlState,
     },
     NamespacedCommand, NamespacedEvent,
@@ -41,6 +41,7 @@ use opentalk_types_signaling::{
 };
 use opentalk_types_signaling_control::{
     command::{ControlCommand, Join},
+    event::JoinSuccess,
     module_id,
     room::{CreatorInfo, RoomInfo},
 };

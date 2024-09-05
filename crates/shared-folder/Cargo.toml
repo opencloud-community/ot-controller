@@ -32,6 +32,7 @@ tracing.workspace = true
 [dev-dependencies]
 actix-rt.workspace = true
 opentalk-test-util = { workspace = true, features = ["controller"] }
+opentalk-types-signaling-control = { workspace = true, features = ["backend"] }
 pretty_assertions.workspace = true
 serial_test.workspace = true
 tokio.workspace = true
