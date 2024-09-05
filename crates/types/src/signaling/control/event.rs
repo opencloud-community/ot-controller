@@ -7,7 +7,7 @@
 use opentalk_types_signaling::{
     AssociatedParticipant, LeaveReason, Participant, Role, TargetParticipant,
 };
-use opentalk_types_signaling_control::event::JoinSuccess;
+use opentalk_types_signaling_control::event::{JoinBlockedReason, JoinSuccess};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -57,18 +57,6 @@ impl From<JoinSuccess> for ControlEvent {
     fn from(value: JoinSuccess) -> Self {
         Self::JoinSuccess(value)
     }
-}
-
-/// The reason for blocking a participant from joining a meeting
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(tag = "reason", rename_all = "snake_case")
-)]
-pub enum JoinBlockedReason {
-    /// The participant limit for the meeting's tariff has been reached
-    ParticipantLimitReached,
 }
 
 /// A participant left.

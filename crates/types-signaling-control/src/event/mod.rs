@@ -4,6 +4,8 @@
 
 //! Types related to signaling events in the `control` namespace
 
+mod join_blocked_reason;
 mod join_success;
 
+pub use join_blocked_reason::JoinBlockedReason;
 pub use join_success::JoinSuccess;
