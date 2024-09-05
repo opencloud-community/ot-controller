@@ -5,6 +5,7 @@
 //! Signaling messages for the `control` namespace
 
 use opentalk_types_signaling::TargetParticipant;
+use opentalk_types_signaling_control::command::Join;
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -32,16 +33,10 @@ pub enum ControlCommand {
     RevokeModeratorRole(TargetParticipant),
 }
 
-/// Body of the join command
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Join {
-    /// The users display name
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none",)
-    )]
-    pub display_name: Option<String>,
+impl From<Join> for ControlCommand {
+    fn from(value: Join) -> Self {
+        Self::Join(value)
+    }
 }
 
 #[cfg(test)]

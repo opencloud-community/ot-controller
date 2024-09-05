@@ -20,6 +20,8 @@
     unused_results
 )]
 
+pub mod command;
+
 mod waiting_room_state;
 
 use opentalk_types_common::modules::ModuleId;
