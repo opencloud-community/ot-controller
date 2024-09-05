@@ -23,15 +23,4 @@ pub mod whiteboard;
 
 mod namespaced;
 
-#[cfg(feature = "serde")]
-mod module_data;
-
 pub use namespaced::{NamespacedCommand, NamespacedEvent};
-
-#[cfg(feature = "serde")]
-mod serde_imports {
-    pub use super::module_data::ModuleData;
-}
-
-#[cfg(feature = "serde")]
-pub use serde_imports::*;

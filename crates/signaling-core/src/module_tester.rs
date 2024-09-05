@@ -28,7 +28,7 @@ use opentalk_types::signaling::{
         event::{ControlEvent, JoinSuccess, Left},
         state::ControlState,
     },
-    ModuleData, NamespacedCommand, NamespacedEvent,
+    NamespacedCommand, NamespacedEvent,
 };
 use opentalk_types_common::{
     rooms::BreakoutRoomId,
@@ -37,7 +37,7 @@ use opentalk_types_common::{
     users::UserId,
 };
 use opentalk_types_signaling::{
-    AssociatedParticipant, LeaveReason, ParticipantId, ParticipationKind, Role,
+    AssociatedParticipant, LeaveReason, ModuleData, ParticipantId, ParticipationKind, Role,
 };
 use opentalk_types_signaling_control::{
     command::{ControlCommand, Join},

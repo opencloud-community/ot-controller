@@ -12,9 +12,9 @@ use std::{
 use actix_http::ws::{CloseCode, Message};
 use futures::stream::SelectAll;
 use opentalk_signaling_core::{AnyStream, Event, InitContext, SignalingMetrics, VolatileStorage};
-use opentalk_types::signaling::{control::state::ControlState, ModuleData};
+use opentalk_types::signaling::control::state::ControlState;
 use opentalk_types_common::{features::FeatureId, modules::ModuleId, time::Timestamp};
-use opentalk_types_signaling::{Participant, ParticipantId, Role};
+use opentalk_types_signaling::{ModuleData, Participant, ParticipantId, Role};
 use serde_json::Value;
 use snafu::{Report, ResultExt, Snafu};
 

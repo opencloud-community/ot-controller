@@ -47,7 +47,6 @@ use opentalk_types::signaling::{
         state::ControlState,
     },
     moderation::event::ModerationEvent,
-    ModuleData,
 };
 use opentalk_types_common::{
     features::FeatureId,
@@ -58,7 +57,8 @@ use opentalk_types_common::{
     users::UserId,
 };
 use opentalk_types_signaling::{
-    AssociatedParticipant, LeaveReason, ParticipantId, ParticipationKind, Role, TargetParticipant,
+    AssociatedParticipant, LeaveReason, ModuleData, ParticipantId, ParticipationKind, Role,
+    TargetParticipant,
 };
 use opentalk_types_signaling_control::{
     command::ControlCommand,

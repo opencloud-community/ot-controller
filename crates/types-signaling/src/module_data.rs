@@ -4,10 +4,9 @@
 
 use std::collections::BTreeMap;
 
-use opentalk_types_signaling::SignalingModuleFrontendData;
+use serde::{Deserialize, Serialize};
 
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::SignalingModuleFrontendData;
 
 /// A struct containing data for multiple signaling modules, each associated
 /// with the module's namespace.

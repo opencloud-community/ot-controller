@@ -81,7 +81,7 @@ pub struct JoinSuccess {
     /// The module data for the participant
     #[cfg(feature = "serde")]
     #[serde(flatten)]
-    pub module_data: crate::signaling::ModuleData,
+    pub module_data: opentalk_types_signaling::ModuleData,
 
     /// List of participants in the meeting
     pub participants: Vec<Participant>,
