@@ -8,9 +8,9 @@ use std::{
 };
 
 use opentalk_db_storage::{events::Event, tariffs::Tariff};
-use opentalk_types::signaling::control::room::CreatorInfo;
 use opentalk_types_common::{rooms::RoomId, time::Timestamp};
 use opentalk_types_signaling::ParticipantId;
+use opentalk_types_signaling_control::room::CreatorInfo;
 use snafu::OptionExt as _;
 
 use crate::{

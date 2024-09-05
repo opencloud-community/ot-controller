@@ -5,6 +5,7 @@
 //! Types related to the `JoinSuccess` message in the `control` namespace
 
 use opentalk_types_common::rooms::{RoomId, RoomPassword};
+use opentalk_types_signaling_control::room::CreatorInfo;
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -22,30 +23,4 @@ pub struct RoomInfo {
 
     /// The room creator
     pub created_by: CreatorInfo,
-}
-
-/// Information about the room creator
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(
-    feature = "redis",
-    derive(ToRedisArgs, FromRedisValue),
-    to_redis_args(serde),
-    from_redis_value(serde)
-)]
-pub struct CreatorInfo {
-    /// Optional title of the creator
-    pub title: String,
-
-    /// The creators first name
-    pub firstname: String,
-
-    /// The creators last name
-    pub lastname: String,
-
-    /// The creators display name
-    pub display_name: String,
-
-    /// The creators avatar url
-    pub avatar_url: String,
 }

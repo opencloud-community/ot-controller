@@ -21,6 +21,7 @@
 )]
 
 pub mod command;
+pub mod room;
 
 mod waiting_room_state;
 

@@ -108,6 +108,7 @@ redis = [
   "dep:redis",
   "dep:redis-args",
   "opentalk-types-common/redis",
+  "opentalk-types-signaling-control/redis",
   "opentalk-types-signaling/redis",
   "serde",
 ]

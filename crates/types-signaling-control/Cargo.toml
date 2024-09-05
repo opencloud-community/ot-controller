@@ -16,8 +16,14 @@ version.workspace = true
 
 
 [features]
-backend = ["serde"]
+backend = ["redis", "serde"]
 frontend = ["serde"]
+redis = [
+  "dep:redis-args",
+  "opentalk-types-common/redis",
+  "opentalk-types-signaling/redis",
+  "serde",
+]
 serde = [
   "dep:serde",
   "opentalk-types-common/serde",
@@ -27,6 +33,7 @@ serde = [
 [dependencies]
 opentalk-types-common.workspace = true
 opentalk-types-signaling.workspace = true
+redis-args = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 
 [dev-dependencies]
