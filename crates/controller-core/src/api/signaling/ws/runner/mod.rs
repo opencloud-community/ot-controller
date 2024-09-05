@@ -44,7 +44,6 @@ use opentalk_types::signaling::{
         event::{
             self as control_event, ControlEvent, JoinBlockedReason, JoinSuccess, Left, RoleUpdated,
         },
-        room::RoomInfo,
         state::ControlState,
     },
     moderation::event::ModerationEvent,
@@ -61,7 +60,10 @@ use opentalk_types_common::{
 use opentalk_types_signaling::{
     AssociatedParticipant, LeaveReason, ParticipantId, ParticipationKind, Role, TargetParticipant,
 };
-use opentalk_types_signaling_control::{command::ControlCommand, room::CreatorInfo};
+use opentalk_types_signaling_control::{
+    command::ControlCommand,
+    room::{CreatorInfo, RoomInfo},
+};
 use serde_json::Value;
 use snafu::{ensure, whatever, Report, ResultExt, Snafu};
 use tokio::{

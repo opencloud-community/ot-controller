@@ -5,14 +5,12 @@
 //! Types related to the `JoinSuccess` message in the `control` namespace
 
 use opentalk_types_common::rooms::{RoomId, RoomPassword};
-use opentalk_types_signaling_control::room::CreatorInfo;
 
-#[allow(unused_imports)]
-use crate::imports::*;
+use super::CreatorInfo;
 
 /// Information about an room
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct RoomInfo {
     /// The id of the room
     pub id: RoomId,

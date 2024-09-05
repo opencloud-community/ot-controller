@@ -8,8 +8,8 @@ use opentalk_types_common::{events::EventInfo, tariffs::TariffResource, time::Ti
 use opentalk_types_signaling::{
     AssociatedParticipant, LeaveReason, Participant, ParticipantId, Role, TargetParticipant,
 };
+use opentalk_types_signaling_control::room::RoomInfo;
 
-use super::room::RoomInfo;
 #[allow(unused_imports)]
 use crate::imports::*;
 

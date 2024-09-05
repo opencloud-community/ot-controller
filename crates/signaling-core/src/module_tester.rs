@@ -26,7 +26,6 @@ use opentalk_db_storage::{rooms::Room, users::User};
 use opentalk_types::signaling::{
     control::{
         event::{ControlEvent, JoinSuccess, Left},
-        room::RoomInfo,
         state::ControlState,
     },
     ModuleData, NamespacedCommand, NamespacedEvent,
@@ -43,7 +42,7 @@ use opentalk_types_signaling::{
 use opentalk_types_signaling_control::{
     command::{ControlCommand, Join},
     module_id,
-    room::CreatorInfo,
+    room::{CreatorInfo, RoomInfo},
 };
 use serde_json::Value;
 use snafu::{whatever, OptionExt, Report, ResultExt, Snafu};
