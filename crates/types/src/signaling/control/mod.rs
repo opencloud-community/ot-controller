@@ -4,7 +4,6 @@
 
 //! Signaling messages for the `control` namespace
 
-pub mod command;
 pub mod event;
 pub mod room;
 pub mod state;

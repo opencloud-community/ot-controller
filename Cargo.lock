@@ -5050,7 +5050,9 @@ version = "0.0.0-dev"
 dependencies = [
  "opentalk-types-common",
  "opentalk-types-signaling",
+ "pretty_assertions",
  "serde",
+ "serde_json",
 ]
 
 [[package]]

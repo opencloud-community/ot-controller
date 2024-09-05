@@ -41,7 +41,6 @@ use opentalk_signaling_core::{
 };
 use opentalk_types::signaling::{
     control::{
-        command::ControlCommand,
         event::{
             self as control_event, ControlEvent, JoinBlockedReason, JoinSuccess, Left, RoleUpdated,
         },
@@ -62,6 +61,7 @@ use opentalk_types_common::{
 use opentalk_types_signaling::{
     AssociatedParticipant, LeaveReason, ParticipantId, ParticipationKind, Role, TargetParticipant,
 };
+use opentalk_types_signaling_control::command::ControlCommand;
 use serde_json::Value;
 use snafu::{ensure, whatever, Report, ResultExt, Snafu};
 use tokio::{

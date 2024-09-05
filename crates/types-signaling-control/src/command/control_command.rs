@@ -2,19 +2,15 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Signaling messages for the `control` namespace
-
 use opentalk_types_signaling::TargetParticipant;
-use opentalk_types_signaling_control::command::Join;
 
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::command::Join;
 
 /// Commands received by the `control` module
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(tag = "action", rename_all = "snake_case")
 )]
 pub enum ControlCommand {
@@ -39,8 +35,8 @@ impl From<Join> for ControlCommand {
     }
 }
 
-#[cfg(test)]
-mod tests {
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
