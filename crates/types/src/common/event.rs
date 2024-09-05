@@ -16,17 +16,29 @@ use crate::{
 /// Information about an event
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(EventInfo::example_data())),
+)]
 pub struct EventInfo {
     /// The id of the event
     pub id: EventId,
+
     /// The id of the room belonging to the event
     pub room_id: RoomId,
+
     /// The title of the event
     pub title: String,
+
     /// True if the event was created ad-hoc
     pub is_adhoc: bool,
+
     /// The meeting details of the event
+    // Field is non-required already, utoipa adds a `nullable: true` entry
+    // by default which creates a false positive in the spectral linter when
+    // combined with example data.
+    #[cfg_attr(feature = "utoipa", schema(nullable = false))]
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub meeting_details: Option<MeetingDetails>,
 }
