@@ -255,7 +255,7 @@ urls = ["localhost:2379"]
 
 # Reports configuration
 #[reports]
-#url = "http://localhost:8085"
+#url = "http://localhost:6560"
 
 # Shared folder configuration
 #[shared_folder]
