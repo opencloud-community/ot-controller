@@ -216,9 +216,8 @@ where
     let size: Result<i64, _> = storage
         .put(&asset_key(&asset_id), data, chunk_format)
         .await
-        .context(ObjectStorageSnafu)?
-        .try_into()
-        .context(FileSizeSnafu);
+        .context(ObjectStorageSnafu)
+        .and_then(|size| size.try_into().context(FileSizeSnafu));
 
     let size = match size {
         Ok(size) => size,
