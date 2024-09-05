@@ -23,6 +23,7 @@
 pub mod command;
 pub mod event;
 pub mod room;
+pub mod state;
 
 mod waiting_room_state;
 

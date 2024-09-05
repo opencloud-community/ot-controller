@@ -18,21 +18,18 @@ use opentalk_signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, SerdeJsonSnafu, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
-pub use opentalk_types::signaling::moderation::{module_id, NAMESPACE};
-use opentalk_types::signaling::{
-    control::state::ControlState,
-    moderation::{
-        command::ModerationCommand,
-        event::{DisplayNameChanged, Error, ModerationEvent},
-        state::{ModerationState, ModeratorFrontendData},
-    },
+use opentalk_types::signaling::moderation::{
+    command::ModerationCommand,
+    event::{DisplayNameChanged, Error, ModerationEvent},
+    state::{ModerationState, ModeratorFrontendData},
 };
+pub use opentalk_types::signaling::moderation::{module_id, NAMESPACE};
 use opentalk_types_common::{rooms::RoomId, users::UserId};
 use opentalk_types_signaling::{
     AssociatedParticipant, LeaveReason, ModulePeerData, Participant, ParticipantId,
     ParticipationKind, Role,
 };
-use opentalk_types_signaling_control::WaitingRoomState;
+use opentalk_types_signaling_control::{state::ControlState, WaitingRoomState};
 use snafu::{Report, ResultExt};
 
 use self::storage::ModerationStorage;

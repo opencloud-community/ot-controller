@@ -23,7 +23,7 @@ use futures::{stream::SelectAll, StreamExt};
 use kustos::Authz;
 use opentalk_database::Db;
 use opentalk_db_storage::{rooms::Room, users::User};
-use opentalk_types::signaling::{control::state::ControlState, NamespacedCommand, NamespacedEvent};
+use opentalk_types::signaling::{NamespacedCommand, NamespacedEvent};
 use opentalk_types_common::{
     rooms::BreakoutRoomId,
     tariffs::{TariffId, TariffModuleResource, TariffResource},
@@ -38,6 +38,7 @@ use opentalk_types_signaling_control::{
     event::{ControlEvent, JoinSuccess, Left},
     module_id,
     room::{CreatorInfo, RoomInfo},
+    state::ControlState,
 };
 use serde_json::Value;
 use snafu::{whatever, OptionExt, Report, ResultExt, Snafu};

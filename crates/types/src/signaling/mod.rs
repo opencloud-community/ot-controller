@@ -6,7 +6,6 @@
 //! (typically through websockets)
 
 pub mod chat;
-pub mod control;
 pub mod core;
 pub mod echo;
 pub mod integration;

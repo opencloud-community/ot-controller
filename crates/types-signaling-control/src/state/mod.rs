@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Signaling messages for the `control` namespace
+//! Frontend data for `control` namespace
 
-pub mod state;
+mod control_state;
+
+pub use control_state::ControlState;
