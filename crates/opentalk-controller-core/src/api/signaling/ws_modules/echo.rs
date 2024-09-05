@@ -6,8 +6,10 @@ use opentalk_signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
     SignalingModuleInitData,
 };
-use opentalk_types::signaling::echo::NAMESPACE;
 use serde_json::Value;
+
+/// The namespace string for the signaling module
+pub const NAMESPACE: &str = "echo";
 
 /// A sample echo websocket module
 pub struct Echo;
