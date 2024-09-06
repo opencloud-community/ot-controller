@@ -5,6 +5,7 @@
 
 //! Signaling commands for the `moderation` namespace
 
+mod accept;
 mod ban;
 mod change_display_name;
 mod kick;
@@ -12,6 +13,7 @@ mod send_to_waiting_room;
 
 use std::collections::BTreeSet;
 
+pub use accept::Accept;
 pub use ban::Ban;
 pub use change_display_name::ChangeDisplayName;
 pub use kick::Kick;
@@ -58,10 +60,7 @@ pub enum ModerationCommand {
     DisableRaiseHands,
 
     /// Accept a participant into the meeting
-    Accept {
-        /// The participant to accept into the meeting
-        target: ParticipantId,
-    },
+    Accept(Accept),
 
     /// Reset raised hands for the meeting
     ResetRaisedHands {
@@ -98,6 +97,12 @@ impl From<SendToWaitingRoom> for ModerationCommand {
 impl From<ChangeDisplayName> for ModerationCommand {
     fn from(value: ChangeDisplayName) -> Self {
         Self::ChangeDisplayName(value)
+    }
+}
+
+impl From<Accept> for ModerationCommand {
+    fn from(value: Accept) -> Self {
+        Self::Accept(value)
     }
 }
 
@@ -164,7 +169,7 @@ mod tests {
 
         let msg: ModerationCommand = serde_json::from_value(json).unwrap();
 
-        if let ModerationCommand::Accept { target } = msg {
+        if let ModerationCommand::Accept(Accept { target }) = msg {
             assert_eq!(target, ParticipantId::nil());
         } else {
             panic!()
