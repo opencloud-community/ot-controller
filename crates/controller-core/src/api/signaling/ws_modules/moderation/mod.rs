@@ -19,7 +19,10 @@ use opentalk_signaling_core::{
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types::signaling::moderation::{
-    command::{Accept, Ban, ChangeDisplayName, Kick, ModerationCommand, SendToWaitingRoom},
+    command::{
+        Accept, Ban, ChangeDisplayName, Kick, ModerationCommand, ResetRaisedHands,
+        SendToWaitingRoom,
+    },
     event::{DisplayNameChanged, Error, ModerationEvent},
     state::{ModerationState, ModeratorFrontendData},
 };
@@ -457,7 +460,7 @@ impl SignalingModule for ModerationModule {
                     control::exchange::Message::Accepted(target),
                 );
             }
-            Event::WsMessage(ModerationCommand::ResetRaisedHands { target }) => {
+            Event::WsMessage(ModerationCommand::ResetRaisedHands(ResetRaisedHands { target })) => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());

@@ -1,6 +1,5 @@
 // SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
 //
-
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Signaling commands for the `moderation` namespace
@@ -9,15 +8,14 @@ mod accept;
 mod ban;
 mod change_display_name;
 mod kick;
+mod reset_raised_hands;
 mod send_to_waiting_room;
-
-use std::collections::BTreeSet;
 
 pub use accept::Accept;
 pub use ban::Ban;
 pub use change_display_name::ChangeDisplayName;
 pub use kick::Kick;
-use opentalk_types_signaling::ParticipantId;
+pub use reset_raised_hands::ResetRaisedHands;
 pub use send_to_waiting_room::SendToWaitingRoom;
 
 use super::KickScope;
@@ -63,17 +61,7 @@ pub enum ModerationCommand {
     Accept(Accept),
 
     /// Reset raised hands for the meeting
-    ResetRaisedHands {
-        /// An optional single participant to reset the raised hand for
-        #[cfg_attr(
-            feature = "serde",
-            serde(
-                default,
-                with = "opentalk_types_common::collections::one_or_many_btree_set_option"
-            )
-        )]
-        target: Option<BTreeSet<ParticipantId>>,
-    },
+    ResetRaisedHands(ResetRaisedHands),
 }
 
 impl From<Kick> for ModerationCommand {
@@ -106,8 +94,17 @@ impl From<Accept> for ModerationCommand {
     }
 }
 
+impl From<ResetRaisedHands> for ModerationCommand {
+    fn from(value: ResetRaisedHands) -> Self {
+        Self::ResetRaisedHands(value)
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use std::collections::BTreeSet;
+
+    use opentalk_types_signaling::ParticipantId;
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
@@ -185,7 +182,7 @@ mod tests {
 
         let msg: ModerationCommand = serde_json::from_value(json).unwrap();
 
-        if let ModerationCommand::ResetRaisedHands { target } = msg {
+        if let ModerationCommand::ResetRaisedHands(ResetRaisedHands { target }) = msg {
             assert_eq!(target, Some(BTreeSet::from_iter([ParticipantId::nil()])));
         } else {
             panic!()
@@ -201,7 +198,7 @@ mod tests {
 
         let msg: ModerationCommand = serde_json::from_value(json).unwrap();
 
-        if let ModerationCommand::ResetRaisedHands { target } = msg {
+        if let ModerationCommand::ResetRaisedHands(ResetRaisedHands { target }) = msg {
             assert_eq!(
                 target,
                 Some(BTreeSet::from_iter([
@@ -222,7 +219,7 @@ mod tests {
 
         let msg: ModerationCommand = serde_json::from_value(json).unwrap();
 
-        if let ModerationCommand::ResetRaisedHands { target } = msg {
+        if let ModerationCommand::ResetRaisedHands(ResetRaisedHands { target }) = msg {
             assert_eq!(target, None);
         } else {
             panic!()
