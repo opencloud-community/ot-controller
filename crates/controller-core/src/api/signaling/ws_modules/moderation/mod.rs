@@ -19,7 +19,7 @@ use opentalk_signaling_core::{
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types::signaling::moderation::{
-    command::{Ban, Kick, ModerationCommand},
+    command::{Ban, Kick, ModerationCommand, SendToWaitingRoom},
     event::{DisplayNameChanged, Error, ModerationEvent},
     state::{ModerationState, ModeratorFrontendData},
 };
@@ -255,7 +255,9 @@ impl SignalingModule for ModerationModule {
                     exchange::Message::Kicked(target),
                 );
             }
-            Event::WsMessage(ModerationCommand::SendToWaitingRoom { target }) => {
+            Event::WsMessage(ModerationCommand::SendToWaitingRoom(SendToWaitingRoom {
+                target,
+            })) => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());

@@ -6,12 +6,14 @@
 
 mod ban;
 mod kick;
+mod send_to_waiting_room;
 
 use std::collections::BTreeSet;
 
 pub use ban::Ban;
 pub use kick::Kick;
 use opentalk_types_signaling::ParticipantId;
+pub use send_to_waiting_room::SendToWaitingRoom;
 
 use super::KickScope;
 #[allow(unused_imports)]
@@ -31,11 +33,8 @@ pub enum ModerationCommand {
     /// Ban a participant from the room
     Ban(Ban),
 
-    /// Same behavior as the Kick command, but implies different handling from the client
-    SendToWaitingRoom {
-        /// The participant to move to the waiting room
-        target: ParticipantId,
-    },
+    /// Send a participant to the waiting room
+    SendToWaitingRoom(SendToWaitingRoom),
 
     /// Start the debriefing
     Debrief(KickScope),
@@ -89,6 +88,12 @@ impl From<Kick> for ModerationCommand {
 impl From<Ban> for ModerationCommand {
     fn from(value: Ban) -> Self {
         Self::Ban(value)
+    }
+}
+
+impl From<SendToWaitingRoom> for ModerationCommand {
+    fn from(value: SendToWaitingRoom) -> Self {
+        Self::SendToWaitingRoom(value)
     }
 }
 
