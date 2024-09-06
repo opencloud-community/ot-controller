@@ -381,7 +381,7 @@ impl ChatStorage for RedisConnection {
 
         let guard = mutex.lock(self).await?;
 
-        self.sadd(RoomGroupParticipants { room, group }, participant)
+        self.sadd::<_, _, ()>(RoomGroupParticipants { room, group }, participant)
             .await
             .context(RedisSnafu {
                 message: "Failed to add own participant id to set",

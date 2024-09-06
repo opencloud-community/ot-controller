@@ -56,11 +56,14 @@ impl MediaStorage for RedisConnection {
             message: "Failed to convert media state to json",
         })?;
 
-        self.set(ParticipantMediaStateKey { room, participant }, json)
-            .await
-            .context(RedisSnafu {
-                message: "Failed to get media state",
-            })?;
+        self.set::<ParticipantMediaStateKey, Vec<u8>, ()>(
+            ParticipantMediaStateKey { room, participant },
+            json,
+        )
+        .await
+        .context(RedisSnafu {
+            message: "Failed to get media state",
+        })?;
 
         Ok(())
     }
@@ -84,7 +87,7 @@ impl MediaStorage for RedisConnection {
         room: SignalingRoomId,
         participant: ParticipantId,
     ) -> Result<(), SignalingModuleError> {
-        self.sadd(Presenters { room }, participant)
+        self.sadd::<_, _, ()>(Presenters { room }, participant)
             .await
             .context(RedisSnafu {
                 message: "Failed to set presenter",
@@ -99,7 +102,7 @@ impl MediaStorage for RedisConnection {
         room: SignalingRoomId,
         participant: ParticipantId,
     ) -> Result<(), SignalingModuleError> {
-        self.srem(Presenters { room }, participant)
+        self.srem::<_, _, ()>(Presenters { room }, participant)
             .await
             .context(RedisSnafu {
                 message: "Failed to delete presenter",
@@ -129,9 +132,11 @@ impl MediaStorage for RedisConnection {
         &mut self,
         room: SignalingRoomId,
     ) -> Result<(), SignalingModuleError> {
-        self.del(Presenters { room }).await.context(RedisSnafu {
-            message: "Failed to delete presenter key",
-        })?;
+        self.del::<_, ()>(Presenters { room })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to delete presenter key",
+            })?;
 
         Ok(())
     }
@@ -221,7 +226,7 @@ impl MediaStorage for RedisConnection {
         mcu_id: McuId,
         index: Option<usize>,
     ) -> Result<(), SignalingModuleError> {
-        self.zincr(MCU_LOAD, mcu_load_key(&mcu_id, index), 0)
+        self.zincr::<_, _, _, ()>(MCU_LOAD, mcu_load_key(&mcu_id, index), 0)
             .await
             .context(RedisSnafu {
                 message: "Failed to initialize handle count",
@@ -249,7 +254,7 @@ impl MediaStorage for RedisConnection {
         mcu_id: McuId,
         index: Option<usize>,
     ) -> Result<(), SignalingModuleError> {
-        self.zincr(MCU_LOAD, mcu_load_key(&mcu_id, index), 1)
+        self.zincr::<_, _, _, ()>(MCU_LOAD, mcu_load_key(&mcu_id, index), 1)
             .await
             .context(RedisSnafu {
                 message: "Failed to increment handle count",
@@ -263,7 +268,7 @@ impl MediaStorage for RedisConnection {
         mcu_id: McuId,
         index: Option<usize>,
     ) -> Result<(), SignalingModuleError> {
-        self.zincr(MCU_LOAD, mcu_load_key(&mcu_id, index), -1)
+        self.zincr::<_, _, _, ()>(MCU_LOAD, mcu_load_key(&mcu_id, index), -1)
             .await
             .context(RedisSnafu {
                 message: "Failed to increment handle count",
@@ -277,7 +282,7 @@ impl MediaStorage for RedisConnection {
         media_session_key: MediaSessionKey,
         info: PublisherInfo,
     ) -> Result<(), SignalingModuleError> {
-        self.hset(PUBLISHER_INFO, media_session_key.to_string(), info)
+        self.hset::<_, _, _, ()>(PUBLISHER_INFO, media_session_key.to_string(), info)
             .await
             .context(RedisSnafu {
                 message: "Failed to set publisher info",

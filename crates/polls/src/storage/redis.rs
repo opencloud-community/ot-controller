@@ -109,7 +109,7 @@ impl PollsStorage for RedisConnection {
     ) -> Result<(), SignalingModuleError> {
         // Revoke any previous vote.
         for choice_id in previous_choice_ids {
-            self.zincr(
+            self.zincr::<_, _, _, ()>(
                 PollResults {
                     room,
                     poll: poll_id,
@@ -125,7 +125,7 @@ impl PollsStorage for RedisConnection {
 
         // Apply any new vote.
         for choice_id in new_choice_ids {
-            self.zincr(
+            self.zincr::<_, _, _, ()>(
                 PollResults {
                     room,
                     poll: poll_id,

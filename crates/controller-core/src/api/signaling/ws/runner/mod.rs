@@ -1128,7 +1128,7 @@ impl Runner {
     ) -> Result<()> {
         self.volatile
             .control_storage()
-            .bulk_attribute_actions(
+            .bulk_attribute_actions::<()>(
                 AttributeActions::new(self.room_id, self.id)
                     .set(HAND_IS_UP, hand_raised)
                     .set(HAND_UPDATED_AT, timestamp),
@@ -1573,7 +1573,7 @@ impl Runner {
 
         self.volatile
             .control_storage()
-            .bulk_attribute_actions(
+            .bulk_attribute_actions::<()>(
                 actions
                     .set(ROLE, self.role)
                     .set(HAND_IS_UP, false)

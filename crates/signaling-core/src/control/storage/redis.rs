@@ -247,7 +247,7 @@ impl ControlStorageSkipWaitingRoom for RedisConnection {
         participant: ParticipantId,
         value: bool,
     ) -> Result<(), SignalingModuleError> {
-        self.set_ex(
+        self.set_ex::<_, _, ()>(
             SkipWaitingRoom { participant },
             value,
             SKIP_WAITING_ROOM_KEY_EXPIRY.into(),
@@ -293,7 +293,7 @@ impl ControlStorageSkipWaitingRoom for RedisConnection {
         &mut self,
         participant: ParticipantId,
     ) -> Result<(), SignalingModuleError> {
-        self.expire::<SkipWaitingRoom, u64>(
+        self.expire::<_, ()>(
             SkipWaitingRoom { participant },
             SKIP_WAITING_ROOM_KEY_EXPIRY.into(),
         )
@@ -598,7 +598,7 @@ impl ControlStorageParticipantAttributesRaw for RedisConnection {
         attribute: AttributeId,
         value: serde_json::Value,
     ) -> Result<(), SignalingModuleError> {
-        self.hset(
+        self.hset::<_, _, _, ()>(
             RoomParticipantAttributes { room, attribute },
             participant,
             WrappedAttributeValueJson(Some(value)),

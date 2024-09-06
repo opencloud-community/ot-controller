@@ -24,18 +24,21 @@ impl BreakoutStorage for RedisConnection {
         if let Some(duration) = config.duration {
             let expiry_seconds = std::cmp::max(duration.as_secs(), 1);
             let expiry_duration = Duration::from_secs(expiry_seconds);
-            self.set_ex(BreakoutRoomConfig { room }, config, expiry_seconds)
+            self.set_ex::<_, _, ()>(BreakoutRoomConfig { room }, config, expiry_seconds)
                 .await
                 .context(RedisSnafu {
                     message: "Failed to SET EX breakout-room config",
                 })?;
             Ok(Some(expiry_duration))
         } else {
-            self.set(BreakoutRoomConfig { room }, config)
-                .await
-                .context(RedisSnafu {
-                    message: "Failed to SET breakout-room config",
-                })?;
+            self.set::<BreakoutRoomConfig, &BreakoutConfig, ()>(
+                BreakoutRoomConfig { room },
+                config,
+            )
+            .await
+            .context(RedisSnafu {
+                message: "Failed to SET breakout-room config",
+            })?;
             Ok(None)
         }
     }
