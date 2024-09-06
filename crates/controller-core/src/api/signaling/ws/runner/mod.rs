@@ -40,7 +40,7 @@ use opentalk_signaling_core::{
     SubscriberHandle, VolatileStorage,
 };
 use opentalk_types::signaling::moderation::event::{
-    ModerationEvent, RaiseHandsDisabled, RaiseHandsEnabled,
+    ModerationEvent, RaiseHandsDisabled, RaiseHandsEnabled, RaisedHandResetByModerator,
 };
 use opentalk_types_common::{
     features::FeatureId,
@@ -1864,7 +1864,9 @@ impl Runner {
                             serde_json::to_string(&NamespacedEvent {
                                 module: moderation::module_id(),
                                 timestamp,
-                                payload: ModerationEvent::RaisedHandResetByModerator { issued_by },
+                                payload: ModerationEvent::RaisedHandResetByModerator(
+                                    RaisedHandResetByModerator { issued_by },
+                                ),
                             })
                             .whatever_context::<_, RunnerError>("Failed to send ws message")?
                             .into(),

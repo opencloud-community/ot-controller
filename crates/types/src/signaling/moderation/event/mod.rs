@@ -7,12 +7,14 @@
 mod debriefing_started;
 mod raise_hands_disabled;
 mod raise_hands_enabled;
+mod raised_hand_reset_by_moderator;
 mod session_ended;
 
 pub use debriefing_started::DebriefingStarted;
 use opentalk_types_signaling::{AssociatedParticipant, Participant, ParticipantId};
 pub use raise_hands_disabled::RaiseHandsDisabled;
 pub use raise_hands_enabled::RaiseHandsEnabled;
+pub use raised_hand_reset_by_moderator::RaisedHandResetByModerator;
 pub use session_ended::SessionEnded;
 
 #[allow(unused_imports)]
@@ -72,10 +74,7 @@ pub enum ModerationEvent {
     Error(Error),
 
     /// Sent out when raised hand is reset by a moderator
-    RaisedHandResetByModerator {
-        /// The moderator who reset raised hand
-        issued_by: ParticipantId,
-    },
+    RaisedHandResetByModerator(RaisedHandResetByModerator),
 }
 
 impl From<SessionEnded> for ModerationEvent {
@@ -99,6 +98,24 @@ impl From<RaiseHandsEnabled> for ModerationEvent {
 impl From<RaiseHandsDisabled> for ModerationEvent {
     fn from(value: RaiseHandsDisabled) -> Self {
         Self::RaiseHandsDisabled(value)
+    }
+}
+
+impl From<RaisedHandResetByModerator> for ModerationEvent {
+    fn from(value: RaisedHandResetByModerator) -> Self {
+        Self::RaisedHandResetByModerator(value)
+    }
+}
+
+impl From<DisplayNameChanged> for ModerationEvent {
+    fn from(value: DisplayNameChanged) -> Self {
+        Self::DisplayNameChanged(value)
+    }
+}
+
+impl From<Error> for ModerationEvent {
+    fn from(value: Error) -> Self {
+        Self::Error(value)
     }
 }
 
@@ -140,14 +157,9 @@ pub enum Error {
     InsufficientPermissions,
 }
 
-impl From<Error> for ModerationEvent {
-    fn from(value: Error) -> Self {
-        Self::Error(value)
-    }
-}
-
 #[cfg(test)]
 mod tests {
+    use opentalk_types_signaling::ParticipantId;
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
