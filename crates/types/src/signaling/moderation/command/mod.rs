@@ -4,8 +4,11 @@
 
 //! Signaling commands for the `moderation` namespace
 
+mod kick;
+
 use std::collections::BTreeSet;
 
+pub use kick::Kick;
 use opentalk_types_signaling::ParticipantId;
 
 use super::KickScope;
@@ -21,10 +24,7 @@ use crate::imports::*;
 )]
 pub enum ModerationCommand {
     /// Kick a participant from the room
-    Kick {
-        /// The participant to kick from the room
-        target: ParticipantId,
-    },
+    Kick(Kick),
     /// Ban a participant from the room
     Ban {
         /// The participant to ban from the room
@@ -80,6 +80,12 @@ pub enum ModerationCommand {
     },
 }
 
+impl From<Kick> for ModerationCommand {
+    fn from(value: Kick) -> Self {
+        Self::Kick(value)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use pretty_assertions::assert_eq;
@@ -96,7 +102,7 @@ mod tests {
 
         let msg: ModerationCommand = serde_json::from_value(json).unwrap();
 
-        if let ModerationCommand::Kick { target } = msg {
+        if let ModerationCommand::Kick(Kick { target }) = msg {
             assert_eq!(target, ParticipantId::nil());
         } else {
             panic!()
