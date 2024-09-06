@@ -5,10 +5,12 @@
 //! Signaling events for the `moderation` namespace
 
 mod debriefing_started;
+mod raise_hands_enabled;
 mod session_ended;
 
 pub use debriefing_started::DebriefingStarted;
 use opentalk_types_signaling::{AssociatedParticipant, Participant, ParticipantId};
+pub use raise_hands_enabled::RaiseHandsEnabled;
 pub use session_ended::SessionEnded;
 
 #[allow(unused_imports)]
@@ -53,10 +55,7 @@ pub enum ModerationEvent {
     WaitingRoomDisabled,
 
     /// Sent out when raise hands is enabled
-    RaiseHandsEnabled {
-        /// The moderator who enabled raise hands
-        issued_by: ParticipantId,
-    },
+    RaiseHandsEnabled(RaiseHandsEnabled),
 
     /// Sent out when raise hands is disabled
     RaiseHandsDisabled {
@@ -89,6 +88,12 @@ impl From<SessionEnded> for ModerationEvent {
 impl From<DebriefingStarted> for ModerationEvent {
     fn from(value: DebriefingStarted) -> Self {
         Self::DebriefingStarted(value)
+    }
+}
+
+impl From<RaiseHandsEnabled> for ModerationEvent {
+    fn from(value: RaiseHandsEnabled) -> Self {
+        Self::RaiseHandsEnabled(value)
     }
 }
 
