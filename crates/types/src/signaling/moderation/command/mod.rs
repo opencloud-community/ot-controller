@@ -4,10 +4,12 @@
 
 //! Signaling commands for the `moderation` namespace
 
+mod ban;
 mod kick;
 
 use std::collections::BTreeSet;
 
+pub use ban::Ban;
 pub use kick::Kick;
 use opentalk_types_signaling::ParticipantId;
 
@@ -25,11 +27,9 @@ use crate::imports::*;
 pub enum ModerationCommand {
     /// Kick a participant from the room
     Kick(Kick),
+
     /// Ban a participant from the room
-    Ban {
-        /// The participant to ban from the room
-        target: ParticipantId,
-    },
+    Ban(Ban),
 
     /// Same behavior as the Kick command, but implies different handling from the client
     SendToWaitingRoom {
@@ -86,6 +86,12 @@ impl From<Kick> for ModerationCommand {
     }
 }
 
+impl From<Ban> for ModerationCommand {
+    fn from(value: Ban) -> Self {
+        Self::Ban(value)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use pretty_assertions::assert_eq;
@@ -118,7 +124,7 @@ mod tests {
 
         let msg: ModerationCommand = serde_json::from_value(json).unwrap();
 
-        if let ModerationCommand::Ban { target } = msg {
+        if let ModerationCommand::Ban(Ban { target }) = msg {
             assert_eq!(target, ParticipantId::nil());
         } else {
             panic!()
