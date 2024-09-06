@@ -101,8 +101,8 @@ proc-macro-crate = "3"
 proc-macro2 = "1"
 quote = "1"
 rand = "0.8"
-redis = "0.25"
-redis-args = "0.15"
+redis = "0.26"
+redis-args = "0.16"
 reqwest = { version = "0.11", default-features = false }
 rustc-hash = "2.0"
 serde = { version = "1", features = ["derive"] }

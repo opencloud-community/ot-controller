@@ -13,7 +13,7 @@ pub async fn setup() -> RedisConnection {
     let mut redis_conn = ConnectionManager::new(redis).await.unwrap();
 
     redis::cmd("FLUSHALL")
-        .query_async::<_, ()>(&mut redis_conn)
+        .exec_async(&mut redis_conn)
         .await
         .unwrap();
 

@@ -3667,7 +3667,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4979f22fdb869068da03c9f7528f8297c6fd2606bc3a4affe42e6a823fdb8da4"
 dependencies = [
  "cfg-if",
- "windows-targets 0.48.5",
+ "windows-targets 0.52.6",
 ]
 
 [[package]]
@@ -5622,9 +5622,9 @@ dependencies = [
 
 [[package]]
 name = "redis"
-version = "0.25.4"
+version = "0.26.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e0d7a6955c7511f60f3ba9e86c6d02b3c3f144f8c24b288d1f4e18074ab8bbec"
+checksum = "e902a69d09078829137b4a5d9d082e0490393537badd7c91a3d69d14639e115f"
 dependencies = [
  "arc-swap",
  "async-trait",
@@ -5633,6 +5633,7 @@ dependencies = [
  "futures",
  "futures-util",
  "itoa",
+ "num-bigint",
  "percent-encoding",
  "pin-project-lite",
  "ryu",
@@ -5646,9 +5647,9 @@ dependencies = [
 
 [[package]]
 name = "redis-args"
-version = "0.15.0"
+version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "794a776a66538dbb0992dd677665fc55a89da86dbab53028b63fc79d5bf0921d"
+checksum = "99c0d59ad9c2433cfca2334f040e3b4d1ae9459fee35f4f4b86f31ba1245e3a5"
 dependencies = [
  "redis",
  "redis-args-impl",
@@ -5657,9 +5658,9 @@ dependencies = [
 
 [[package]]
 name = "redis-args-impl"
-version = "0.15.0"
+version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "82f85d50922e42cedfc49444a34fdecf4849bf3fb16b8f632193a090a6735f14"
+checksum = "d4c05db3fce517770fce052cd1ec687336dc53b8b6951aa6415d7d53ba37a309"
 dependencies = [
  "darling",
  "proc-macro2",

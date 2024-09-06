@@ -276,7 +276,7 @@ impl ControlStorageSkipWaitingRoom for RedisConnection {
                 SkipWaitingRoom { participant },
                 SKIP_WAITING_ROOM_KEY_EXPIRY.into(),
             )
-            .query_async(self)
+            .exec_async(self)
             .await
             .with_context(|_| RedisSnafu {
                 message: format!(
@@ -293,7 +293,7 @@ impl ControlStorageSkipWaitingRoom for RedisConnection {
         &mut self,
         participant: ParticipantId,
     ) -> Result<(), SignalingModuleError> {
-        self.expire(
+        self.expire::<SkipWaitingRoom, u64>(
             SkipWaitingRoom { participant },
             SKIP_WAITING_ROOM_KEY_EXPIRY.into(),
         )
@@ -475,7 +475,7 @@ impl FromRedisValue for WrappedAttributeValueJson {
             redis::Value::Int(v) => Ok(Self(Some(serde_json::Value::Number(
                 serde_json::Number::from(*v),
             )))),
-            redis::Value::Data(v) => {
+            redis::Value::BulkString(v) => {
                 let value = serde_json::from_slice(v).map_err(|e| {
                     redis::RedisError::from((
                         redis::ErrorKind::ParseError,
@@ -485,7 +485,7 @@ impl FromRedisValue for WrappedAttributeValueJson {
                 })?;
                 Ok(Self(Some(value)))
             }
-            redis::Value::Bulk(v) => {
+            redis::Value::Array(v) | redis::Value::Set(v) => {
                 let values = v
                     .iter()
                     .map(WrappedAttributeValueJson::from_redis_value)
@@ -496,7 +496,16 @@ impl FromRedisValue for WrappedAttributeValueJson {
                     .collect();
                 Ok(Self(Some(serde_json::Value::Array(values))))
             }
-            v @ (redis::Value::Status(_) | redis::Value::Okay) => Err(redis::RedisError::from((
+            v @ (redis::Value::SimpleString(_)
+            | redis::Value::Okay
+            | redis::Value::ServerError(_)
+            | redis::Value::Map(_)
+            | redis::Value::Double(_)
+            | redis::Value::Boolean(_)
+            | redis::Value::BigNumber(_)
+            | redis::Value::VerbatimString { .. }
+            | redis::Value::Attribute { .. }
+            | redis::Value::Push { .. }) => Err(redis::RedisError::from((
                 redis::ErrorKind::TypeError,
                 "Response was of incompatible type",
                 format!("response was {:?}", v),
@@ -753,10 +762,7 @@ mod test {
 
         let mut mgr = ConnectionManager::new(redis).await.unwrap();
 
-        redis::cmd("FLUSHALL")
-            .query_async::<_, ()>(&mut mgr)
-            .await
-            .unwrap();
+        redis::cmd("FLUSHALL").exec_async(&mut mgr).await.unwrap();
 
         RedisConnection::new(mgr)
     }

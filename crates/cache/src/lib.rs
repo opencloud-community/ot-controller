@@ -126,7 +126,7 @@ where
         {
             redis
                 .clone()
-                .set_ex(
+                .set_ex::<RedisCacheKey<_>, Vec<u8>, u64>(
                     RedisCacheKey {
                         prefix,
                         key: &key,
@@ -168,7 +168,7 @@ where
         {
             redis
                 .clone()
-                .set_ex(
+                .set_ex::<RedisCacheKey<_>, Vec<u8>, u64>(
                     RedisCacheKey {
                         prefix,
                         key: &key,
