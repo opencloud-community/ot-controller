@@ -1,16 +1,19 @@
 // SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
 //
+
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Signaling commands for the `moderation` namespace
 
 mod ban;
+mod change_display_name;
 mod kick;
 mod send_to_waiting_room;
 
 use std::collections::BTreeSet;
 
 pub use ban::Ban;
+pub use change_display_name::ChangeDisplayName;
 pub use kick::Kick;
 use opentalk_types_signaling::ParticipantId;
 pub use send_to_waiting_room::SendToWaitingRoom;
@@ -40,12 +43,7 @@ pub enum ModerationCommand {
     Debrief(KickScope),
 
     /// Change the display name of the targeted guest
-    ChangeDisplayName {
-        /// The new display name
-        new_name: String,
-        /// The participant that will have their name changed
-        target: ParticipantId,
-    },
+    ChangeDisplayName(ChangeDisplayName),
 
     /// Enable waiting room for the meeting
     EnableWaitingRoom,
@@ -94,6 +92,12 @@ impl From<Ban> for ModerationCommand {
 impl From<SendToWaitingRoom> for ModerationCommand {
     fn from(value: SendToWaitingRoom) -> Self {
         Self::SendToWaitingRoom(value)
+    }
+}
+
+impl From<ChangeDisplayName> for ModerationCommand {
+    fn from(value: ChangeDisplayName) -> Self {
+        Self::ChangeDisplayName(value)
     }
 }
 
