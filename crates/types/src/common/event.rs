@@ -140,10 +140,7 @@ pub struct MeetingDetails {
     pub call_in: Option<CallIn>,
 
     /// The links for accessing the stream
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Vec::is_empty")
-    )]
+    #[cfg_attr(feature = "serde", serde(default))]
     pub streaming_links: Vec<StreamingLink>,
 }
 
