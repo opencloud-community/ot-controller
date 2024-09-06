@@ -684,6 +684,7 @@ impl Runner {
             LEFT_AT,
             HAND_IS_UP,
             HAND_UPDATED_AT,
+            IS_ROOM_OWNER,
             KIND,
             USER_ID,
             AVATAR_URL,
