@@ -4,7 +4,10 @@
 
 //! Signaling events for the `moderation` namespace
 
+mod session_ended;
+
 use opentalk_types_signaling::{AssociatedParticipant, Participant, ParticipantId};
+pub use session_ended::SessionEnded;
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -27,10 +30,7 @@ pub enum ModerationEvent {
     SentToWaitingRoom,
 
     /// Sent out when a session is ended by a moderator
-    SessionEnded {
-        /// The moderator who ended the session
-        issued_by: ParticipantId,
-    },
+    SessionEnded(SessionEnded),
 
     /// Sent out when debriefing of a session started
     DebriefingStarted {
@@ -79,6 +79,12 @@ pub enum ModerationEvent {
         /// The moderator who reset raised hand
         issued_by: ParticipantId,
     },
+}
+
+impl From<SessionEnded> for ModerationEvent {
+    fn from(value: SessionEnded) -> Self {
+        Self::SessionEnded(value)
+    }
 }
 
 /// Received by all participants when a participant gets their display name changed
@@ -157,9 +163,9 @@ mod tests {
             "issued_by": "00000000-0000-0000-0000-000000000000"
         });
 
-        let produced = serde_json::to_value(ModerationEvent::SessionEnded {
+        let produced = serde_json::to_value(ModerationEvent::SessionEnded(SessionEnded {
             issued_by: ParticipantId::nil(),
-        })
+        }))
         .unwrap();
 
         assert_eq!(expected, produced);
