@@ -4,8 +4,10 @@
 
 //! Signaling events for the `moderation` namespace
 
+mod debriefing_started;
 mod session_ended;
 
+pub use debriefing_started::DebriefingStarted;
 use opentalk_types_signaling::{AssociatedParticipant, Participant, ParticipantId};
 pub use session_ended::SessionEnded;
 
@@ -33,10 +35,7 @@ pub enum ModerationEvent {
     SessionEnded(SessionEnded),
 
     /// Sent out when debriefing of a session started
-    DebriefingStarted {
-        /// The moderator who started the debriefing
-        issued_by: ParticipantId,
-    },
+    DebriefingStarted(DebriefingStarted),
 
     /// Sent to participants who are placed into a waiting room
     InWaitingRoom,
@@ -84,6 +83,12 @@ pub enum ModerationEvent {
 impl From<SessionEnded> for ModerationEvent {
     fn from(value: SessionEnded) -> Self {
         Self::SessionEnded(value)
+    }
+}
+
+impl From<DebriefingStarted> for ModerationEvent {
+    fn from(value: DebriefingStarted) -> Self {
+        Self::DebriefingStarted(value)
     }
 }
 
@@ -178,10 +183,11 @@ mod tests {
             "issued_by": "00000000-0000-0000-0000-000000000000"
         });
 
-        let produced = serde_json::to_value(ModerationEvent::DebriefingStarted {
-            issued_by: ParticipantId::nil(),
-        })
-        .unwrap();
+        let produced =
+            serde_json::to_value(ModerationEvent::DebriefingStarted(DebriefingStarted {
+                issued_by: ParticipantId::nil(),
+            }))
+            .unwrap();
 
         assert_eq!(expected, produced);
     }

@@ -23,7 +23,7 @@ use opentalk_types::signaling::moderation::{
         Accept, Ban, ChangeDisplayName, Kick, ModerationCommand, ResetRaisedHands,
         SendToWaitingRoom,
     },
-    event::{DisplayNameChanged, Error, ModerationEvent, SessionEnded},
+    event::{DebriefingStarted, DisplayNameChanged, Error, ModerationEvent, SessionEnded},
     state::{ModerationState, ModeratorFrontendData},
 };
 pub use opentalk_types::signaling::moderation::{module_id, NAMESPACE};
@@ -548,7 +548,9 @@ impl SignalingModule for ModerationModule {
                     ctx.ws_send(SessionEnded { issued_by });
                     ctx.exit(Some(CloseCode::Normal));
                 } else {
-                    ctx.ws_send(ModerationEvent::DebriefingStarted { issued_by });
+                    ctx.ws_send(ModerationEvent::DebriefingStarted(DebriefingStarted {
+                        issued_by,
+                    }));
                 }
             }
             Event::Exchange(exchange::Message::DisplayNameChanged(display_name_changed)) => {
