@@ -4,16 +4,17 @@
 
 //! Signaling commands for the `moderation` namespace
 
-mod ban;
 mod change_display_name;
 mod kick;
 mod reset_raised_hands;
 mod send_to_waiting_room;
 
-pub use ban::Ban;
 pub use change_display_name::ChangeDisplayName;
 pub use kick::Kick;
-use opentalk_types_signaling_moderation::{command::Accept, KickScope};
+use opentalk_types_signaling_moderation::{
+    command::{Accept, Ban},
+    KickScope,
+};
 pub use reset_raised_hands::ResetRaisedHands;
 pub use send_to_waiting_room::SendToWaitingRoom;
 
