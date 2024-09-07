@@ -6,12 +6,9 @@ use std::collections::BTreeSet;
 
 use opentalk_types_signaling::ParticipantId;
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// Reset raised hands for the meeting
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ResetRaisedHands {
     /// An optional single participant to reset the raised hand for
     #[cfg_attr(

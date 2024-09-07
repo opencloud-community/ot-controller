@@ -8,8 +8,10 @@ mod accept;
 mod ban;
 mod change_display_name;
 mod kick;
+mod reset_raised_hands;
 
 pub use accept::Accept;
 pub use ban::Ban;
 pub use change_display_name::ChangeDisplayName;
 pub use kick::Kick;
+pub use reset_raised_hands::ResetRaisedHands;
