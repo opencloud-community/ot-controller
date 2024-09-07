@@ -19,7 +19,7 @@ use opentalk_signaling_core::{
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types::signaling::moderation::{
-    command::{Kick, ModerationCommand, ResetRaisedHands, SendToWaitingRoom},
+    command::{ModerationCommand, ResetRaisedHands, SendToWaitingRoom},
     event::{DebriefingStarted, DisplayNameChanged, Error, ModerationEvent, SessionEnded},
     state::{ModerationState, ModeratorFrontendData},
 };
@@ -30,7 +30,7 @@ use opentalk_types_signaling::{
 };
 use opentalk_types_signaling_control::{state::ControlState, WaitingRoomState};
 use opentalk_types_signaling_moderation::{
-    command::{Accept, Ban, ChangeDisplayName},
+    command::{Accept, Ban, ChangeDisplayName, Kick},
     NAMESPACE,
 };
 use snafu::{Report, ResultExt};
