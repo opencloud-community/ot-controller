@@ -4,14 +4,13 @@
 
 //! Signaling events for the `moderation` namespace
 
-mod debriefing_started;
 mod raise_hands_disabled;
 mod raise_hands_enabled;
 mod raised_hand_reset_by_moderator;
 mod session_ended;
 
-pub use debriefing_started::DebriefingStarted;
 use opentalk_types_signaling::{AssociatedParticipant, Participant, ParticipantId};
+use opentalk_types_signaling_moderation::event::DebriefingStarted;
 pub use raise_hands_disabled::RaiseHandsDisabled;
 pub use raise_hands_enabled::RaiseHandsEnabled;
 pub use raised_hand_reset_by_moderator::RaisedHandResetByModerator;
