@@ -6,6 +6,8 @@
 
 mod debriefing_started;
 mod raise_hands_disabled;
+mod raise_hands_enabled;
 
 pub use debriefing_started::DebriefingStarted;
 pub use raise_hands_disabled::RaiseHandsDisabled;
+pub use raise_hands_enabled::RaiseHandsEnabled;
