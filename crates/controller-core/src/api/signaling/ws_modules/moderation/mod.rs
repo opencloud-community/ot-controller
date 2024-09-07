@@ -26,13 +26,13 @@ use opentalk_types::signaling::moderation::{
     event::{DebriefingStarted, DisplayNameChanged, Error, ModerationEvent, SessionEnded},
     state::{ModerationState, ModeratorFrontendData},
 };
-pub use opentalk_types::signaling::moderation::{module_id, NAMESPACE};
 use opentalk_types_common::{rooms::RoomId, users::UserId};
 use opentalk_types_signaling::{
     AssociatedParticipant, LeaveReason, ModulePeerData, Participant, ParticipantId,
     ParticipationKind, Role,
 };
 use opentalk_types_signaling_control::{state::ControlState, WaitingRoomState};
+use opentalk_types_signaling_moderation::NAMESPACE;
 use snafu::{Report, ResultExt};
 
 use self::storage::ModerationStorage;

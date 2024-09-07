@@ -60,6 +60,9 @@ opentalk-types-common = { workspace = true, features = ["backend", "clap"] }
 opentalk-types-signaling = { workspace = true, features = ["backend"] }
 opentalk-types-signaling-breakout = { workspace = true, features = ["backend"] }
 opentalk-types-signaling-control = { workspace = true, features = ["backend"] }
+opentalk-types-signaling-moderation = { workspace = true, features = [
+  "backend",
+] }
 opentalk-types-signaling-recording = { workspace = true, features = [
   "backend",
 ] }

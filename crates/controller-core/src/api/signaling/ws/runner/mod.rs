@@ -605,7 +605,7 @@ impl Runner {
                         self.exchange_publish(
                             exchange::global_room_all_participants(self.room_id.room_id()),
                             serde_json::to_string(&NamespacedEvent {
-                                module: moderation::module_id(),
+                                module: opentalk_types_signaling_moderation::module_id(),
                                 timestamp: Timestamp::now(),
                                 payload: moderation::exchange::Message::LeftWaitingRoom(self.id),
                             })
@@ -962,7 +962,7 @@ impl Runner {
                         self.exchange_publish(
                             control::exchange::global_room_all_participants(self.room_id.room_id()),
                             serde_json::to_string(&NamespacedEvent {
-                                module: moderation::module_id(),
+                                module: opentalk_types_signaling_moderation::module_id(),
                                 timestamp,
                                 payload: moderation::exchange::Message::LeftWaitingRoom(self.id),
                             })
@@ -1275,7 +1275,7 @@ impl Runner {
         self.ws
             .send(Message::Text(
                 serde_json::to_string(&NamespacedEvent {
-                    module: moderation::module_id(),
+                    module: opentalk_types_signaling_moderation::module_id(),
                     timestamp,
                     payload: ModerationEvent::InWaitingRoom,
                 })
@@ -1287,7 +1287,7 @@ impl Runner {
         self.exchange_publish(
             control::exchange::global_room_all_participants(self.room_id.room_id()),
             serde_json::to_string(&NamespacedEvent {
-                module: moderation::module_id(),
+                module: opentalk_types_signaling_moderation::module_id(),
                 timestamp,
                 payload: moderation::exchange::Message::JoinedWaitingRoom(self.id),
             })
@@ -1787,7 +1787,7 @@ impl Runner {
                         self.ws
                             .send(Message::Text(
                                 serde_json::to_string(&NamespacedEvent {
-                                    module: moderation::module_id(),
+                                    module: opentalk_types_signaling_moderation::module_id(),
                                     timestamp,
                                     payload: ModerationEvent::Accepted,
                                 })
@@ -1862,7 +1862,7 @@ impl Runner {
                     self.ws
                         .send(Message::Text(
                             serde_json::to_string(&NamespacedEvent {
-                                module: moderation::module_id(),
+                                module: opentalk_types_signaling_moderation::module_id(),
                                 timestamp,
                                 payload: ModerationEvent::RaisedHandResetByModerator(
                                     RaisedHandResetByModerator { issued_by },
@@ -1878,7 +1878,7 @@ impl Runner {
                 self.ws
                     .send(Message::Text(
                         serde_json::to_string(&NamespacedEvent {
-                            module: moderation::module_id(),
+                            module: opentalk_types_signaling_moderation::module_id(),
                             timestamp,
                             payload: ModerationEvent::RaiseHandsEnabled(RaiseHandsEnabled {
                                 issued_by,
@@ -1902,7 +1902,7 @@ impl Runner {
                 self.ws
                     .send(Message::Text(
                         serde_json::to_string(&NamespacedEvent {
-                            module: moderation::module_id(),
+                            module: opentalk_types_signaling_moderation::module_id(),
                             timestamp,
                             payload: ModerationEvent::RaiseHandsDisabled(RaiseHandsDisabled {
                                 issued_by,
@@ -1962,7 +1962,7 @@ impl Runner {
         self.ws
             .send(Message::Text(
                 serde_json::to_string(&NamespacedEvent {
-                    module: moderation::module_id(),
+                    module: opentalk_types_signaling_moderation::module_id(),
                     timestamp,
                     payload: ModerationEvent::InWaitingRoom,
                 })
@@ -1974,7 +1974,7 @@ impl Runner {
         self.exchange_publish(
             control::exchange::global_room_all_participants(self.room_id.room_id()),
             serde_json::to_string(&NamespacedEvent {
-                module: moderation::module_id(),
+                module: opentalk_types_signaling_moderation::module_id(),
                 timestamp,
                 payload: moderation::exchange::Message::JoinedWaitingRoom(self.id),
             })

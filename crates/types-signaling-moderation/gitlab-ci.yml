@@ -15,5 +15,6 @@ test:opentalk-types-signaling-moderation:
           '',
             backend,
             frontend,
+            serde,
           ]
         EXTRA_ARGS: ['', --no-default-features]

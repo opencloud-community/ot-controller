@@ -26,7 +26,7 @@ pub struct ModerationState {
 
 #[cfg(feature = "serde")]
 impl SignalingModuleFrontendData for ModerationState {
-    const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
+    const NAMESPACE: Option<&'static str> = Some(opentalk_types_signaling_moderation::NAMESPACE);
 }
 
 /// Moderation module state that is visible only to moderators

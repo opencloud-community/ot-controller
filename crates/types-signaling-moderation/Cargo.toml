@@ -15,5 +15,23 @@ repository.workspace = true
 version.workspace = true
 
 [features]
-backend = []
-frontend = []
+backend = [
+  "opentalk-types-common/backend",
+  "opentalk-types-signaling/backend",
+  "serde",
+]
+frontend = [
+  "opentalk-types-common/frontend",
+  "opentalk-types-signaling/frontend",
+  "serde",
+]
+serde = [
+  "dep:serde",
+  "opentalk-types-common/serde",
+  "opentalk-types-signaling/serde",
+]
+
+[dependencies]
+opentalk-types-common.workspace = true
+opentalk-types-signaling.workspace = true
+serde = { workspace = true, optional = true }

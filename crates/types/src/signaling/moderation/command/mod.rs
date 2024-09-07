@@ -15,10 +15,10 @@ pub use accept::Accept;
 pub use ban::Ban;
 pub use change_display_name::ChangeDisplayName;
 pub use kick::Kick;
+use opentalk_types_signaling_moderation::KickScope;
 pub use reset_raised_hands::ResetRaisedHands;
 pub use send_to_waiting_room::SendToWaitingRoom;
 
-use super::KickScope;
 #[allow(unused_imports)]
 use crate::imports::*;
 
