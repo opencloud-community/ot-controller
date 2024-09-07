@@ -20,6 +20,8 @@
     unused_results
 )]
 
+pub mod command;
+
 mod kick_scope;
 
 pub use kick_scope::KickScope;
