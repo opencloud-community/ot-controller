@@ -4,13 +4,10 @@
 
 //! Signaling commands for the `moderation` namespace
 
-mod send_to_waiting_room;
-
 use opentalk_types_signaling_moderation::{
-    command::{Accept, Ban, ChangeDisplayName, Kick, ResetRaisedHands},
+    command::{Accept, Ban, ChangeDisplayName, Kick, ResetRaisedHands, SendToWaitingRoom},
     KickScope,
 };
-pub use send_to_waiting_room::SendToWaitingRoom;
 
 #[allow(unused_imports)]
 use crate::imports::*;
