@@ -5087,6 +5087,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "opentalk-types-signaling-moderation"
+version = "0.0.0-dev"
+
+[[package]]
 name = "opentalk-types-signaling-recording"
 version = "0.0.0-dev"
 dependencies = [
