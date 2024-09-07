@@ -35,3 +35,7 @@ serde = [
 opentalk-types-common.workspace = true
 opentalk-types-signaling.workspace = true
 serde = { workspace = true, optional = true }
+
+[dev-dependencies]
+pretty_assertions.workspace = true
+serde_json.workspace = true

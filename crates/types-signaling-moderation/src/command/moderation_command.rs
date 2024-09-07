@@ -4,19 +4,16 @@
 
 //! Signaling commands for the `moderation` namespace
 
-use opentalk_types_signaling_moderation::{
+use crate::{
     command::{Accept, Ban, ChangeDisplayName, Kick, ResetRaisedHands, SendToWaitingRoom},
     KickScope,
 };
-
-#[allow(unused_imports)]
-use crate::imports::*;
 
 /// Commands for the `moderation` namespace
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(tag = "action", rename_all = "snake_case")
 )]
 pub enum ModerationCommand {
@@ -90,8 +87,8 @@ impl From<ResetRaisedHands> for ModerationCommand {
     }
 }
 
-#[cfg(test)]
-mod tests {
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
     use std::collections::BTreeSet;
 
     use opentalk_types_signaling::ParticipantId;

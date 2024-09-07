@@ -8,6 +8,7 @@ mod accept;
 mod ban;
 mod change_display_name;
 mod kick;
+mod moderation_command;
 mod reset_raised_hands;
 mod send_to_waiting_room;
 
@@ -15,5 +16,6 @@ pub use accept::Accept;
 pub use ban::Ban;
 pub use change_display_name::ChangeDisplayName;
 pub use kick::Kick;
+pub use moderation_command::ModerationCommand;
 pub use reset_raised_hands::ResetRaisedHands;
 pub use send_to_waiting_room::SendToWaitingRoom;

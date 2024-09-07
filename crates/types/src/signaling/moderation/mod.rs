@@ -4,6 +4,5 @@
 
 //! Signaling messages for the `moderation` namespace
 
-pub mod command;
 pub mod event;
 pub mod state;
