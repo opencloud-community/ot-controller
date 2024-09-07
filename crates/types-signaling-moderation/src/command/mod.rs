@@ -6,6 +6,8 @@
 
 mod accept;
 mod ban;
+mod change_display_name;
 
 pub use accept::Accept;
 pub use ban::Ban;
+pub use change_display_name::ChangeDisplayName;

@@ -4,12 +4,9 @@
 
 use opentalk_types_signaling::ParticipantId;
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// Change the display name of the targeted guest
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ChangeDisplayName {
     /// The new display name
     pub new_name: String,
