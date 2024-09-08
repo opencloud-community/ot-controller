@@ -5079,6 +5079,7 @@ dependencies = [
  "derive_more 1.0.0",
  "opentalk-types-common",
  "opentalk-types-signaling",
+ "redis-args",
  "serde",
  "url",
 ]

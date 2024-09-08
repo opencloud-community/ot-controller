@@ -12,5 +12,5 @@ pub mod event;
 pub mod peer_state;
 pub mod state;
 
-pub use stream_target::{StreamTarget, StreamTargetSecret};
+pub use stream_target::StreamTarget;
 pub use stream_updated::StreamUpdated;

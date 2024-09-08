@@ -15,6 +15,7 @@ test:opentalk-types-signaling-recording:
           '',
             backend,
             frontend,
+            redis,
             serde,
           ]
         EXTRA_ARGS: ['', --no-default-features]

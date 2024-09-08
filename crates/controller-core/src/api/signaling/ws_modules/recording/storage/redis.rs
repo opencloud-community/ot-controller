@@ -6,8 +6,8 @@ use std::collections::BTreeMap;
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
-use opentalk_types::signaling::recording::StreamTargetSecret;
 use opentalk_types_common::streaming::StreamingTargetId;
+use opentalk_types_signaling_recording::StreamTargetSecret;
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
 use snafu::ResultExt;

@@ -7,10 +7,10 @@
 use std::collections::BTreeMap;
 
 use opentalk_types_common::streaming::StreamingTargetId;
-use opentalk_types_signaling_recording::{StreamKindSecret, StreamStatus};
+use opentalk_types_signaling_recording::{StreamKindSecret, StreamStatus, StreamTargetSecret};
 use url::Url;
 
-use super::{StreamTarget, StreamTargetSecret};
+use super::StreamTarget;
 #[allow(unused_imports)]
 use crate::imports::*;
 

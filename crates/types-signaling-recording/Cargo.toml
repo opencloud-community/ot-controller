@@ -18,11 +18,18 @@ version.workspace = true
 backend = [
   "opentalk-types-common/backend",
   "opentalk-types-signaling/backend",
+  "redis",
   "serde",
 ]
 frontend = [
   "opentalk-types-common/frontend",
   "opentalk-types-signaling/frontend",
+  "serde",
+]
+redis = [
+  "dep:redis-args",
+  "opentalk-types-common/redis",
+  "opentalk-types-signaling/redis",
   "serde",
 ]
 serde = [
@@ -41,5 +48,6 @@ derive_more = { workspace = true, features = [
 ] }
 opentalk-types-common.workspace = true
 opentalk-types-signaling.workspace = true
+redis-args = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 url.workspace = true
