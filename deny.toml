@@ -153,6 +153,9 @@ exceptions = [
   ], name = "opentalk-types-signaling-moderation" },
   { allow = [
     "EUPL-1.2",
+  ], name = "opentalk-types-signaling-polls" },
+  { allow = [
+    "EUPL-1.2",
   ], name = "opentalk-types-signaling-recording" },
   { allow = [
     "EUPL-1.2",
