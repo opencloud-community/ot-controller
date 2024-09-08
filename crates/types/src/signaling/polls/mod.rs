@@ -4,7 +4,6 @@
 
 //! Signaling messages for the `polls` namespace
 
-mod item;
 mod poll_id;
 mod results;
 
@@ -12,7 +11,6 @@ pub mod command;
 pub mod event;
 pub mod state;
 
-pub use item::Item;
 pub use poll_id::PollId;
 pub use results::Results;
 

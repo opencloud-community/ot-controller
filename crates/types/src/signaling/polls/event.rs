@@ -110,12 +110,11 @@ impl From<Error> for PollsEvent {
 
 #[cfg(test)]
 mod tests {
-    use opentalk_types_signaling_polls::ChoiceId;
+    use opentalk_types_signaling_polls::{ChoiceId, Item};
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
     use super::*;
-    use crate::signaling::polls::Item;
 
     #[test]
     fn started() {

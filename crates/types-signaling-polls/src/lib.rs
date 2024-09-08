@@ -22,6 +22,8 @@
 
 mod choice;
 mod choice_id;
+mod item;
 
 pub use choice::Choice;
 pub use choice_id::ChoiceId;
+pub use item::Item;
