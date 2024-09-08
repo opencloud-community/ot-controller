@@ -18,7 +18,6 @@ use opentalk_signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, SerdeJsonSnafu, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
-use opentalk_types::signaling::moderation::state::{ModerationState, ModeratorFrontendData};
 use opentalk_types_common::{rooms::RoomId, users::UserId};
 use opentalk_types_signaling::{
     AssociatedParticipant, LeaveReason, ModulePeerData, Participant, ParticipantId,
@@ -31,6 +30,7 @@ use opentalk_types_signaling_moderation::{
         SendToWaitingRoom,
     },
     event::{DebriefingStarted, DisplayNameChanged, Error, ModerationEvent, SessionEnded},
+    state::{ModerationState, ModeratorFrontendData},
     NAMESPACE,
 };
 use snafu::{Report, ResultExt};

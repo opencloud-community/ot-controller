@@ -22,6 +22,7 @@
 
 pub mod command;
 pub mod event;
+pub mod state;
 
 mod kick_scope;
 
