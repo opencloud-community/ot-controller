@@ -4,7 +4,6 @@
 
 //! Signaling messages for the `recording` namespace
 
-mod stream_kind;
 mod stream_target;
 mod stream_updated;
 
@@ -13,6 +12,5 @@ pub mod event;
 pub mod peer_state;
 pub mod state;
 
-pub use stream_kind::StreamKind;
 pub use stream_target::{StreamTarget, StreamTargetSecret};
 pub use stream_updated::StreamUpdated;

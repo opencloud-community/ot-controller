@@ -29,6 +29,7 @@ serde = [
   "dep:serde",
   "opentalk-types-common/serde",
   "opentalk-types-signaling/serde",
+  "url/serde",
 ]
 
 [dependencies]
@@ -41,3 +42,4 @@ derive_more = { workspace = true, features = [
 opentalk-types-common.workspace = true
 opentalk-types-signaling.workspace = true
 serde = { workspace = true, optional = true }
+url.workspace = true

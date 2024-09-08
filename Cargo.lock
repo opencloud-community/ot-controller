@@ -5080,6 +5080,7 @@ dependencies = [
  "opentalk-types-common",
  "opentalk-types-signaling",
  "serde",
+ "url",
 ]
 
 [[package]]
