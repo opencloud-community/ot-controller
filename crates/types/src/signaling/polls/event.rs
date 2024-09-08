@@ -4,9 +4,7 @@
 
 //! Types related to signaling events in the `polls` namespace
 
-use std::time::Duration;
-
-use opentalk_types_signaling_polls::{Choice, PollId, Results};
+use opentalk_types_signaling_polls::{event::Started, Results};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -30,33 +28,6 @@ pub enum PollsEvent {
 
     /// An error happened when executing a `polls` command
     Error(Error),
-}
-
-/// Event signaling to the participant that the poll has started
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Started {
-    /// The id of the poll
-    pub id: PollId,
-
-    /// The description of the poll topic
-    pub topic: String,
-
-    /// True if the poll is live
-    pub live: bool,
-
-    /// True if the poll accepts multiple choices
-    pub multiple_choice: bool,
-
-    /// Choices of the poll
-    pub choices: Vec<Choice>,
-
-    /// Duration of the poll
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "opentalk_types_common::utils::duration_seconds")
-    )]
-    pub duration: Duration,
 }
 
 impl From<Started> for PollsEvent {
@@ -109,7 +80,9 @@ impl From<Error> for PollsEvent {
 
 #[cfg(test)]
 mod tests {
-    use opentalk_types_signaling_polls::{ChoiceId, Item};
+    use std::time::Duration;
+
+    use opentalk_types_signaling_polls::{Choice, ChoiceId, Item, PollId};
     use pretty_assertions::assert_eq;
     use serde_json::json;
 

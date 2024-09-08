@@ -21,6 +21,7 @@
 )]
 
 pub mod command;
+pub mod event;
 
 mod choice;
 mod choice_id;
