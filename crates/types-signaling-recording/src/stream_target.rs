@@ -2,24 +2,20 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_signaling_recording::{StreamKind, StreamStatus, StreamTargetSecret};
-
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::{StreamKind, StreamStatus, StreamTargetSecret};
 
 /// The state information about a stream target
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(
     feature = "redis",
-    derive(ToRedisArgs, FromRedisValue),
-    to_redis_args(serde),
-    from_redis_value(serde)
+    derive(redis_args::ToRedisArgs, redis_args::FromRedisValue)
 )]
+#[cfg_attr(feature = "redis", to_redis_args(serde), from_redis_value(serde))]
 pub struct StreamTarget {
     /// The name of the stream
     pub name: String,

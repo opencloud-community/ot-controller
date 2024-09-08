@@ -25,6 +25,7 @@ mod stream_error_reason;
 mod stream_kind;
 mod stream_kind_secret;
 mod stream_status;
+mod stream_target;
 mod stream_target_secret;
 
 use opentalk_types_common::{features::FeatureId, modules::ModuleId};
@@ -33,6 +34,7 @@ pub use stream_error_reason::StreamErrorReason;
 pub use stream_kind::StreamKind;
 pub use stream_kind_secret::StreamKindSecret;
 pub use stream_status::StreamStatus;
+pub use stream_target::StreamTarget;
 pub use stream_target_secret::StreamTargetSecret;
 
 /// The namespace string for the signaling module
