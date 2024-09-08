@@ -5,8 +5,8 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use opentalk_signaling_core::{ExpiringDataHashMap, SignalingModuleError, SignalingRoomId};
-use opentalk_types::signaling::polls::{state::PollsState, PollId};
-use opentalk_types_signaling_polls::ChoiceId;
+use opentalk_types::signaling::polls::state::PollsState;
+use opentalk_types_signaling_polls::{ChoiceId, PollId};
 use snafu::OptionExt;
 
 #[derive(Debug, Clone, Default)]

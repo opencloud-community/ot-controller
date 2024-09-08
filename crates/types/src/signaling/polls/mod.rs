@@ -4,14 +4,12 @@
 
 //! Signaling messages for the `polls` namespace
 
-mod poll_id;
 mod results;
 
 pub mod command;
 pub mod event;
 pub mod state;
 
-pub use poll_id::PollId;
 pub use results::Results;
 
 /// The namespace string for the signaling module

@@ -15,6 +15,7 @@ test:opentalk-types-signaling-polls:
           '',
             backend,
             frontend,
+            rand,
             redis,
             serde,
           ]

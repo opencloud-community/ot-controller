@@ -23,7 +23,9 @@
 mod choice;
 mod choice_id;
 mod item;
+mod poll_id;
 
 pub use choice::Choice;
 pub use choice_id::ChoiceId;
 pub use item::Item;
+pub use poll_id::PollId;

@@ -5126,6 +5126,7 @@ dependencies = [
  "derive_more 1.0.0",
  "redis-args",
  "serde",
+ "uuid",
 ]
 
 [[package]]
