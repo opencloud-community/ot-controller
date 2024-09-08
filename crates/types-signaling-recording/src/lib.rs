@@ -22,11 +22,13 @@
 
 mod recording_id;
 mod stream_error_reason;
+mod stream_kind_secret;
 mod stream_status;
 
 use opentalk_types_common::{features::FeatureId, modules::ModuleId};
 pub use recording_id::RecordingId;
 pub use stream_error_reason::StreamErrorReason;
+pub use stream_kind_secret::StreamKindSecret;
 pub use stream_status::StreamStatus;
 
 /// The namespace string for the signaling module

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_types_common::streaming::StreamingTargetKind;
+use opentalk_types_signaling_recording::StreamKindSecret;
 use url::Url;
 
 #[allow(unused_imports)]
@@ -23,20 +24,6 @@ pub enum StreamKind {
         /// The public url to the stream
         public_url: Url,
     },
-}
-
-/// The kind of the stream
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(tag = "streaming_kind", rename_all = "snake_case")
-)]
-pub enum StreamKindSecret {
-    /// Recording kind
-    Recording,
-    /// Livestream kind
-    Livestream(StreamingTargetKind),
 }
 
 impl From<StreamKindSecret> for StreamKind {

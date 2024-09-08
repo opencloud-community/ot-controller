@@ -13,9 +13,9 @@ mod test_common {
     use std::collections::{BTreeMap, BTreeSet};
 
     use opentalk_signaling_core::SignalingRoomId;
-    use opentalk_types::signaling::recording::{StreamKindSecret, StreamTargetSecret};
+    use opentalk_types::signaling::recording::StreamTargetSecret;
     use opentalk_types_common::streaming::{StreamingTargetId, StreamingTargetKind};
-    use opentalk_types_signaling_recording::StreamStatus;
+    use opentalk_types_signaling_recording::{StreamKindSecret, StreamStatus};
 
     use super::RecordingStorage;
 

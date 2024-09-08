@@ -13,6 +13,6 @@ pub mod event;
 pub mod peer_state;
 pub mod state;
 
-pub use stream_kind::{StreamKind, StreamKindSecret};
+pub use stream_kind::StreamKind;
 pub use stream_target::{StreamTarget, StreamTargetSecret};
 pub use stream_updated::StreamUpdated;
