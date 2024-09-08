@@ -4,9 +4,10 @@
 
 //! Signaling messages for the `polls` namespace
 
-use std::collections::BTreeSet;
-
-use opentalk_types_signaling_polls::{command::Start, ChoiceId, PollId};
+use opentalk_types_signaling_polls::{
+    command::{Choices, Start},
+    PollId,
+};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -47,33 +48,6 @@ pub struct Vote {
     pub choices: Choices,
 }
 
-/// The choices of a vote
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(untagged))]
-pub enum Choices {
-    /// A single choice. Takes precedence over `Multiple` during deserialization
-    Single {
-        /// The choice id
-        choice_id: ChoiceId,
-    },
-    /// A multiple choice, `choice_ids` might be empty to abstain
-    Multiple {
-        /// The set of choice ids
-        #[cfg_attr(feature = "serde", serde(default))]
-        choice_ids: BTreeSet<ChoiceId>,
-    },
-}
-
-impl Choices {
-    /// Returns the choices as a BTreeSet
-    pub fn to_hash_set(self) -> BTreeSet<ChoiceId> {
-        match self {
-            Self::Single { choice_id } => BTreeSet::from_iter(vec![choice_id]),
-            Self::Multiple { choice_ids } => choice_ids,
-        }
-    }
-}
-
 /// Command to finish the poll
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -84,8 +58,9 @@ pub struct Finish {
 
 #[cfg(test)]
 mod tests {
-    use std::time::Duration;
+    use std::{collections::BTreeSet, time::Duration};
 
+    use opentalk_types_signaling_polls::ChoiceId;
     use pretty_assertions::assert_eq;
     use serde_json::json;
 

@@ -4,6 +4,8 @@
 
 //! Signaling command messages for the `polls` namespace
 
+mod choices;
 mod start;
 
+pub use choices::Choices;
 pub use start::Start;
