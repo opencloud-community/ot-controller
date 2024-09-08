@@ -8,8 +8,9 @@ use std::time::Duration;
 
 use chrono::Utc;
 use opentalk_types_common::time::Timestamp;
+use opentalk_types_signaling_polls::Choice;
 
-use super::{Choice, PollId};
+use super::PollId;
 #[allow(unused_imports)]
 use crate::imports::*;
 

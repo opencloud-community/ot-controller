@@ -20,6 +20,8 @@
     unused_results
 )]
 
+mod choice;
 mod choice_id;
 
+pub use choice::Choice;
 pub use choice_id::ChoiceId;

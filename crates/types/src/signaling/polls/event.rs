@@ -6,7 +6,9 @@
 
 use std::time::Duration;
 
-use super::{Choice, PollId, Results};
+use opentalk_types_signaling_polls::Choice;
+
+use super::{PollId, Results};
 #[allow(unused_imports)]
 use crate::imports::*;
 
