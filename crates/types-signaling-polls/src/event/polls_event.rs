@@ -2,21 +2,16 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Types related to signaling events in the `polls` namespace
-
-use opentalk_types_signaling_polls::{
+use crate::{
     event::{Error, Started},
     Results,
 };
-
-#[allow(unused_imports)]
-use crate::imports::*;
 
 /// Events sent out by the `polls` module
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case", tag = "message")
 )]
 pub enum PollsEvent {
@@ -45,15 +40,15 @@ impl From<Error> for PollsEvent {
     }
 }
 
-#[cfg(test)]
-mod tests {
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
     use std::time::Duration;
 
-    use opentalk_types_signaling_polls::{Choice, ChoiceId, Item, PollId};
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
     use super::*;
+    use crate::{Choice, ChoiceId, Item, PollId};
 
     #[test]
     fn started() {

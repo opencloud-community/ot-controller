@@ -4,7 +4,6 @@
 
 //! Signaling messages for the `polls` namespace
 
-pub mod event;
 pub mod state;
 
 /// The namespace string for the signaling module

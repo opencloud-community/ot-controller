@@ -10,11 +10,11 @@ use opentalk_signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
-use opentalk_types::signaling::polls::{event::PollsEvent, state::PollsState, NAMESPACE};
+use opentalk_types::signaling::polls::{state::PollsState, NAMESPACE};
 use opentalk_types_signaling::Role;
 use opentalk_types_signaling_polls::{
     command::{PollsCommand, Start, Vote},
-    event::{Error, Started},
+    event::{Error, PollsEvent, Started},
     Choice, ChoiceId, PollId, Results,
 };
 use snafu::Report;
