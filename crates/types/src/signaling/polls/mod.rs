@@ -4,7 +4,6 @@
 
 //! Signaling messages for the `polls` namespace
 
-pub mod command;
 pub mod event;
 pub mod state;
 

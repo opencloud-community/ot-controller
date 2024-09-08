@@ -2,18 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Signaling messages for the `polls` namespace
-
-use opentalk_types_signaling_polls::command::{Finish, Start, Vote};
-
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::command::{Finish, Start, Vote};
 
 /// Commands received by the `polls` module
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(tag = "action", rename_all = "snake_case")
 )]
 pub enum PollsCommand {
@@ -45,15 +40,15 @@ impl From<Finish> for PollsCommand {
     }
 }
 
-#[cfg(test)]
-mod tests {
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
     use std::{collections::BTreeSet, time::Duration};
 
-    use opentalk_types_signaling_polls::{command::Choices, ChoiceId, PollId};
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
     use super::*;
+    use crate::{command::Choices, ChoiceId, PollId};
 
     #[test]
     fn start() {
