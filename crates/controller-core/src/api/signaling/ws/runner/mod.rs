@@ -39,7 +39,6 @@ use opentalk_signaling_core::{
     RunnerId, SignalingMetrics, SignalingModule, SignalingModuleError, SignalingRoomId,
     SubscriberHandle, VolatileStorage,
 };
-use opentalk_types::signaling::moderation::event::ModerationEvent;
 use opentalk_types_common::{
     features::FeatureId,
     modules::ModuleId,
@@ -61,7 +60,7 @@ use opentalk_types_signaling_control::{
     state::ControlState,
 };
 use opentalk_types_signaling_moderation::event::{
-    RaiseHandsDisabled, RaiseHandsEnabled, RaisedHandResetByModerator,
+    ModerationEvent, RaiseHandsDisabled, RaiseHandsEnabled, RaisedHandResetByModerator,
 };
 use serde_json::Value;
 use snafu::{ensure, whatever, Report, ResultExt, Snafu};

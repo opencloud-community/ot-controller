@@ -18,10 +18,7 @@ use opentalk_signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, SerdeJsonSnafu, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
-use opentalk_types::signaling::moderation::{
-    event::ModerationEvent,
-    state::{ModerationState, ModeratorFrontendData},
-};
+use opentalk_types::signaling::moderation::state::{ModerationState, ModeratorFrontendData};
 use opentalk_types_common::{rooms::RoomId, users::UserId};
 use opentalk_types_signaling::{
     AssociatedParticipant, LeaveReason, ModulePeerData, Participant, ParticipantId,
@@ -33,7 +30,7 @@ use opentalk_types_signaling_moderation::{
         Accept, Ban, ChangeDisplayName, Kick, ModerationCommand, ResetRaisedHands,
         SendToWaitingRoom,
     },
-    event::{DebriefingStarted, DisplayNameChanged, Error, SessionEnded},
+    event::{DebriefingStarted, DisplayNameChanged, Error, ModerationEvent, SessionEnded},
     NAMESPACE,
 };
 use snafu::{Report, ResultExt};

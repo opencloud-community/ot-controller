@@ -2,22 +2,18 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Signaling events for the `moderation` namespace
-
 use opentalk_types_signaling::{AssociatedParticipant, Participant};
-use opentalk_types_signaling_moderation::event::{
+
+use crate::event::{
     DebriefingStarted, DisplayNameChanged, Error, RaiseHandsDisabled, RaiseHandsEnabled,
     RaisedHandResetByModerator, SessionEnded,
 };
-
-#[allow(unused_imports)]
-use crate::imports::*;
 
 /// Events sent out by the `moderation` module
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(tag = "message", rename_all = "snake_case")
 )]
 pub enum ModerationEvent {
@@ -112,8 +108,8 @@ impl From<Error> for ModerationEvent {
     }
 }
 
-#[cfg(test)]
-mod tests {
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
     use opentalk_types_signaling::ParticipantId;
     use pretty_assertions::assert_eq;
     use serde_json::json;
