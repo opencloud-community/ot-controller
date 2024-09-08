@@ -13,10 +13,9 @@ mod test_common {
     use std::collections::{BTreeMap, BTreeSet};
 
     use opentalk_signaling_core::SignalingRoomId;
-    use opentalk_types::signaling::recording::{
-        StreamKindSecret, StreamStatus, StreamTargetSecret,
-    };
+    use opentalk_types::signaling::recording::{StreamKindSecret, StreamTargetSecret};
     use opentalk_types_common::streaming::{StreamingTargetId, StreamingTargetKind};
+    use opentalk_types_signaling_recording::StreamStatus;
 
     use super::RecordingStorage;
 
@@ -30,7 +29,7 @@ mod test_common {
         let stream1 = StreamTargetSecret {
             name: "Recording".to_string(),
             kind: StreamKindSecret::Recording,
-            status: opentalk_types::signaling::recording::StreamStatus::Active,
+            status: opentalk_types_signaling_recording::StreamStatus::Active,
         };
         let stream2 = StreamTargetSecret {
             name: "Livestream 1".to_string(),
@@ -39,7 +38,7 @@ mod test_common {
                 streaming_key: "abcdefgh".parse().unwrap(),
                 public_url: "https://example.com/stream1".parse().unwrap(),
             }),
-            status: opentalk_types::signaling::recording::StreamStatus::Paused,
+            status: opentalk_types_signaling_recording::StreamStatus::Paused,
         };
         let stream3 = StreamTargetSecret {
             name: "Livestream 2".to_string(),
@@ -48,7 +47,7 @@ mod test_common {
                 streaming_key: "ijklmnop".parse().unwrap(),
                 public_url: "https://example.com/stream2".parse().unwrap(),
             }),
-            status: opentalk_types::signaling::recording::StreamStatus::Inactive,
+            status: opentalk_types_signaling_recording::StreamStatus::Inactive,
         };
 
         let streams =
@@ -97,7 +96,7 @@ mod test_common {
         let stream1 = StreamTargetSecret {
             name: "Recording".to_string(),
             kind: StreamKindSecret::Recording,
-            status: opentalk_types::signaling::recording::StreamStatus::Active,
+            status: opentalk_types_signaling_recording::StreamStatus::Active,
         };
         let stream2 = StreamTargetSecret {
             name: "Livestream 1".to_string(),
@@ -106,7 +105,7 @@ mod test_common {
                 streaming_key: "abcdefgh".parse().unwrap(),
                 public_url: "https://example.com/stream1".parse().unwrap(),
             }),
-            status: opentalk_types::signaling::recording::StreamStatus::Paused,
+            status: opentalk_types_signaling_recording::StreamStatus::Paused,
         };
 
         let streams =
@@ -158,7 +157,7 @@ mod test_common {
         let stream1 = StreamTargetSecret {
             name: "Recording".to_string(),
             kind: StreamKindSecret::Recording,
-            status: opentalk_types::signaling::recording::StreamStatus::Active,
+            status: opentalk_types_signaling_recording::StreamStatus::Active,
         };
         let stream2 = StreamTargetSecret {
             name: "Livestream 1".to_string(),
@@ -167,7 +166,7 @@ mod test_common {
                 streaming_key: "abcdefgh".parse().unwrap(),
                 public_url: "https://example.com/stream1".parse().unwrap(),
             }),
-            status: opentalk_types::signaling::recording::StreamStatus::Paused,
+            status: opentalk_types_signaling_recording::StreamStatus::Paused,
         };
 
         let streams =

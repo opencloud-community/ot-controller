@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_types_common::streaming::StreamingTargetId;
+use opentalk_types_signaling_recording::StreamStatus;
 
-use super::StreamStatus;
 #[allow(unused_imports)]
 use crate::imports::*;
 

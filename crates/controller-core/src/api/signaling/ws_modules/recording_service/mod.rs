@@ -9,13 +9,14 @@ use opentalk_signaling_core::{
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
 use opentalk_types::signaling::{
-    recording::{state::RecorderStreamInfo, StreamStatus, StreamTargetSecret, StreamUpdated},
+    recording::{state::RecorderStreamInfo, StreamTargetSecret, StreamUpdated},
     recording_service::{
         command::RecordingServiceCommand, event::RecordingServiceEvent,
         state::RecordingServiceState, NAMESPACE,
     },
 };
 use opentalk_types_common::streaming::StreamingTargetId;
+use opentalk_types_signaling_recording::StreamStatus;
 
 use super::recording::{self, Recording, RecordingStorageProvider as _};
 

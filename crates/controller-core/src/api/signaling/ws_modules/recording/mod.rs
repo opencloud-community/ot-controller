@@ -25,11 +25,13 @@ use opentalk_types::signaling::recording::{
     event::{Error, RecorderError, RecordingEvent},
     peer_state::RecordingPeerState,
     state::RecordingState,
-    StreamStatus, StreamTargetSecret,
+    StreamTargetSecret,
 };
 use opentalk_types_common::{features::FeatureId, streaming::StreamingTargetId};
 use opentalk_types_signaling::{ParticipantId, Role};
-use opentalk_types_signaling_recording::{module_id, record_feature, stream_feature, NAMESPACE};
+use opentalk_types_signaling_recording::{
+    module_id, record_feature, stream_feature, StreamStatus, NAMESPACE,
+};
 use snafu::{Report, ResultExt, Snafu};
 use tokio::time::Duration;
 

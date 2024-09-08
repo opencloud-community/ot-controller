@@ -5,7 +5,7 @@
 use diesel::{ExpressionMethods, Identifiable, QueryDsl, Queryable};
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection, RunQueryDsl};
 use opentalk_database::{DatabaseError, DbConnection, Result};
-use opentalk_types::signaling::recording::{StreamKindSecret, StreamStatus, StreamTargetSecret};
+use opentalk_types::signaling::recording::{StreamKindSecret, StreamTargetSecret};
 use opentalk_types_common::{
     rooms::RoomId,
     streaming::{
@@ -13,6 +13,7 @@ use opentalk_types_common::{
         StreamingTargetKind,
     },
 };
+use opentalk_types_signaling_recording::StreamStatus;
 use snafu::{Report, Snafu};
 use url::Url;
 

@@ -4516,6 +4516,7 @@ dependencies = [
  "opentalk-test-util",
  "opentalk-types",
  "opentalk-types-common",
+ "opentalk-types-signaling-recording",
  "pretty_assertions",
  "redis-args",
  "refinery",

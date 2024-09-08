@@ -43,6 +43,9 @@ opentalk-diesel-newtype.workspace = true
 opentalk-mail-worker-protocol = { workspace = true, features = ["client"] }
 opentalk-types = { workspace = true, features = ["backend"] }
 opentalk-types-common = { workspace = true, features = ["backend"] }
+opentalk-types-signaling-recording = { workspace = true, features = [
+  "backend",
+] }
 redis-args.workspace = true
 refinery = { version = "0.8", features = ["tokio-postgres"] }
 refinery-core = "0.8"

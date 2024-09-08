@@ -2,7 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::{stream_kind::StreamKindSecret, StreamKind, StreamStatus};
+use opentalk_types_signaling_recording::StreamStatus;
+
+use super::{stream_kind::StreamKindSecret, StreamKind};
 #[allow(unused_imports)]
 use crate::imports::*;
 
