@@ -4,9 +4,9 @@
 
 //! Signaling messages for the `polls` namespace
 
-use std::{collections::BTreeSet, time::Duration};
+use std::collections::BTreeSet;
 
-use opentalk_types_signaling_polls::{ChoiceId, PollId};
+use opentalk_types_signaling_polls::{command::Start, ChoiceId, PollId};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -29,30 +29,10 @@ pub enum PollsCommand {
     Finish(Finish),
 }
 
-/// Command to start a poll
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Start {
-    /// The description of the poll topic
-    pub topic: String,
-
-    /// True if the poll is live
-    #[cfg_attr(feature = "serde", serde(default))]
-    pub live: bool,
-
-    /// True if the poll accepts multiple choices
-    #[cfg_attr(feature = "serde", serde(default))]
-    pub multiple_choice: bool,
-
-    /// The choices of the poll
-    pub choices: Vec<String>,
-
-    /// The duration of the poll
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "opentalk_types_common::utils::duration_seconds")
-    )]
-    pub duration: Duration,
+impl From<Start> for PollsCommand {
+    fn from(value: Start) -> Self {
+        Self::Start(value)
+    }
 }
 
 /// Command to vote in the poll
@@ -104,6 +84,8 @@ pub struct Finish {
 
 #[cfg(test)]
 mod tests {
+    use std::time::Duration;
+
     use pretty_assertions::assert_eq;
     use serde_json::json;
 

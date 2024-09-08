@@ -5124,6 +5124,7 @@ name = "opentalk-types-signaling-polls"
 version = "0.0.0-dev"
 dependencies = [
  "derive_more 1.0.0",
+ "opentalk-types-common",
  "redis-args",
  "serde",
  "uuid",

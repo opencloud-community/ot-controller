@@ -20,6 +20,8 @@
     unused_results
 )]
 
+pub mod command;
+
 mod choice;
 mod choice_id;
 mod item;
