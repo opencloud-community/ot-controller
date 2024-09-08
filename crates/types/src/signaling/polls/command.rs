@@ -4,10 +4,7 @@
 
 //! Signaling messages for the `polls` namespace
 
-use opentalk_types_signaling_polls::{
-    command::{Start, Vote},
-    PollId,
-};
+use opentalk_types_signaling_polls::command::{Finish, Start, Vote};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -42,19 +39,17 @@ impl From<Vote> for PollsCommand {
     }
 }
 
-/// Command to finish the poll
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Finish {
-    /// The id of the poll
-    pub id: PollId,
+impl From<Finish> for PollsCommand {
+    fn from(value: Finish) -> Self {
+        Self::Finish(value)
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use std::{collections::BTreeSet, time::Duration};
 
-    use opentalk_types_signaling_polls::{command::Choices, ChoiceId};
+    use opentalk_types_signaling_polls::{command::Choices, ChoiceId, PollId};
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
