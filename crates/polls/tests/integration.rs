@@ -8,11 +8,11 @@ use opentalk_polls::*;
 use opentalk_signaling_core::module_tester::{ModuleTester, WsMessageOutgoing};
 use opentalk_test_util::*;
 use opentalk_types::signaling::polls::{
-    command::{PollsCommand, Vote},
+    command::PollsCommand,
     event::{Error, PollsEvent, Started},
 };
 use opentalk_types_signaling_polls::{
-    command::{Choices, Start},
+    command::{Choices, Start, Vote},
     Choice, ChoiceId, Item, Results,
 };
 use pretty_assertions::assert_eq;
