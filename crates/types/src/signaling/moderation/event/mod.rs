@@ -4,13 +4,11 @@
 
 //! Signaling events for the `moderation` namespace
 
-mod session_ended;
-
 use opentalk_types_signaling::{AssociatedParticipant, Participant, ParticipantId};
 use opentalk_types_signaling_moderation::event::{
     DebriefingStarted, RaiseHandsDisabled, RaiseHandsEnabled, RaisedHandResetByModerator,
+    SessionEnded,
 };
-pub use session_ended::SessionEnded;
 
 #[allow(unused_imports)]
 use crate::imports::*;
