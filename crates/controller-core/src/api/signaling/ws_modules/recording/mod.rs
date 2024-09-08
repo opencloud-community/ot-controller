@@ -23,14 +23,13 @@ use opentalk_signaling_core::{
 use opentalk_types::signaling::recording::{
     command::{self, RecordingCommand},
     event::{Error, RecorderError, RecordingEvent},
-    module_id,
     peer_state::RecordingPeerState,
-    record_feature,
     state::RecordingState,
-    stream_feature, StreamStatus, StreamTargetSecret, NAMESPACE, RECORD_FEATURE, STREAM_FEATURE,
+    StreamStatus, StreamTargetSecret,
 };
 use opentalk_types_common::{features::FeatureId, streaming::StreamingTargetId};
 use opentalk_types_signaling::{ParticipantId, Role};
+use opentalk_types_signaling_recording::{module_id, record_feature, stream_feature, NAMESPACE};
 use snafu::{Report, ResultExt, Snafu};
 use tokio::time::Duration;
 
@@ -157,10 +156,7 @@ impl SignalingModule for Recording {
     }
 
     fn get_provided_features() -> BTreeSet<FeatureId> {
-        BTreeSet::from_iter([
-            RECORD_FEATURE.parse().expect("valid feature id"),
-            STREAM_FEATURE.parse().expect("valid feature id"),
-        ])
+        BTreeSet::from_iter([record_feature(), stream_feature()])
     }
 
     async fn on_event(

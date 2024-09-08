@@ -4382,6 +4382,7 @@ dependencies = [
  "opentalk-types-signaling",
  "opentalk-types-signaling-breakout",
  "opentalk-types-signaling-control",
+ "opentalk-types-signaling-recording",
  "opentelemetry",
  "opentelemetry-otlp",
  "opentelemetry-prometheus",
@@ -4983,6 +4984,7 @@ dependencies = [
  "opentalk-kustos-prefix",
  "opentalk-types-common",
  "opentalk-types-signaling",
+ "opentalk-types-signaling-recording",
  "pretty_assertions",
  "redis",
  "redis-args",
@@ -5072,6 +5074,12 @@ dependencies = [
 [[package]]
 name = "opentalk-types-signaling-recording"
 version = "0.0.0-dev"
+dependencies = [
+ "derive_more 1.0.0",
+ "opentalk-types-common",
+ "opentalk-types-signaling",
+ "serde",
+]
 
 [[package]]
 name = "opentalk-whiteboard"

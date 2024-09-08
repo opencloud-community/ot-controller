@@ -127,7 +127,7 @@ pub struct StreamingTarget {
 
 #[cfg(feature = "serde")]
 impl SignalingModuleFrontendData for RecordingState {
-    const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
+    const NAMESPACE: Option<&'static str> = Some(opentalk_types_signaling_recording::NAMESPACE);
 }
 
 #[cfg(test)]

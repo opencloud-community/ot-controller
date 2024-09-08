@@ -20,5 +20,5 @@ pub struct RecordingPeerState {
 
 #[cfg(feature = "serde")]
 impl SignalingModulePeerFrontendData for RecordingPeerState {
-    const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
+    const NAMESPACE: Option<&'static str> = Some(opentalk_types_signaling_recording::NAMESPACE);
 }

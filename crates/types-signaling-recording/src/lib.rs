@@ -19,3 +19,32 @@
     unused_qualifications,
     unused_results
 )]
+
+mod recording_id;
+
+use opentalk_types_common::{features::FeatureId, modules::ModuleId};
+pub use recording_id::RecordingId;
+
+/// The namespace string for the signaling module
+pub const NAMESPACE: &str = "recording";
+
+/// The feature for allowing recording of meetings
+pub const RECORD_FEATURE: &str = "record";
+
+/// The feature for allowing streaming of meetings
+pub const STREAM_FEATURE: &str = "stream";
+
+/// Get the id of the signaling module
+pub fn module_id() -> ModuleId {
+    NAMESPACE.parse().expect("valid module id")
+}
+
+/// Get the id of the record feature
+pub fn record_feature() -> FeatureId {
+    RECORD_FEATURE.parse().expect("valid feature id")
+}
+
+/// Get the id of the stream feature
+pub fn stream_feature() -> FeatureId {
+    STREAM_FEATURE.parse().expect("valid feature id")
+}
