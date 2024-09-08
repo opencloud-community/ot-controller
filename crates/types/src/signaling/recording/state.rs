@@ -135,10 +135,11 @@ mod tests {
     use std::collections::BTreeMap;
 
     use opentalk_types_common::streaming::StreamingTargetId;
+    use opentalk_types_signaling_recording::StreamErrorReason;
     use pretty_assertions::assert_eq;
 
     use super::RecordingState;
-    use crate::signaling::recording::{StreamErrorReason, StreamKind, StreamStatus, StreamTarget};
+    use crate::signaling::recording::{StreamKind, StreamStatus, StreamTarget};
 
     #[test]
     fn recording_state_de_serialize() {

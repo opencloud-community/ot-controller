@@ -21,9 +21,11 @@
 )]
 
 mod recording_id;
+mod stream_error_reason;
 
 use opentalk_types_common::{features::FeatureId, modules::ModuleId};
 pub use recording_id::RecordingId;
+pub use stream_error_reason::StreamErrorReason;
 
 /// The namespace string for the signaling module
 pub const NAMESPACE: &str = "recording";

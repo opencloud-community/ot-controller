@@ -2,7 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::StreamErrorReason;
+use opentalk_types_signaling_recording::StreamErrorReason;
+
 #[allow(unused_imports)]
 use crate::imports::*;
 
