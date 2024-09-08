@@ -6,7 +6,8 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId};
-use opentalk_types::signaling::polls::{state::PollsState, ChoiceId, Item, PollId};
+use opentalk_types::signaling::polls::{state::PollsState, Item, PollId};
+use opentalk_types_signaling_polls::ChoiceId;
 
 #[async_trait(?Send)]
 pub(crate) trait PollsStorage {

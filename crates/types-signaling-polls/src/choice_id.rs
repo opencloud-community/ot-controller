@@ -4,20 +4,16 @@
 
 use derive_more::{AsRef, Display, From, FromStr, Into};
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// The id of the Choice
 #[derive(
     Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, FromStr, AsRef, Display, From, Into,
 )]
 #[cfg_attr(
     feature = "redis",
-    derive(redis_args::ToRedisArgs, redis_args::FromRedisValue),
-    to_redis_args(fmt),
-    from_redis_value(FromStr)
+    derive(redis_args::ToRedisArgs, redis_args::FromRedisValue)
 )]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "redis", to_redis_args(fmt), from_redis_value(FromStr))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ChoiceId(u32);
 
 impl ChoiceId {

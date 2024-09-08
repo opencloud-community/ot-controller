@@ -11,7 +11,8 @@ use async_trait::async_trait;
 use opentalk_signaling_core::{
     NotFoundSnafu, SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage,
 };
-use opentalk_types::signaling::polls::{state::PollsState, ChoiceId, PollId};
+use opentalk_types::signaling::polls::{state::PollsState, PollId};
+use opentalk_types_signaling_polls::ChoiceId;
 use parking_lot::RwLock;
 use snafu::OptionExt;
 

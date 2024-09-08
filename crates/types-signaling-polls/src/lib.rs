@@ -19,3 +19,7 @@
     unused_qualifications,
     unused_results
 )]
+
+mod choice_id;
+
+pub use choice_id::ChoiceId;

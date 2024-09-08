@@ -10,8 +10,9 @@ use opentalk_test_util::*;
 use opentalk_types::signaling::polls::{
     command::{Choices, PollsCommand, Start, Vote},
     event::{Error, PollsEvent, Started},
-    Choice, ChoiceId, Item, Results,
+    Choice, Item, Results,
 };
+use opentalk_types_signaling_polls::ChoiceId;
 use pretty_assertions::assert_eq;
 use serial_test::serial;
 

@@ -15,5 +15,7 @@ test:opentalk-types-signaling-polls:
           '',
             backend,
             frontend,
+            redis,
+            serde,
           ]
         EXTRA_ARGS: ['', --no-default-features]

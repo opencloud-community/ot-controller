@@ -48,6 +48,7 @@ opentalk-diesel-newtype = { workspace = true, optional = true }
 opentalk-kustos-prefix = { workspace = true, optional = true }
 opentalk-types-common.workspace = true
 opentalk-types-signaling.workspace = true
+opentalk-types-signaling-polls.workspace = true
 redis = { workspace = true, optional = true }
 redis-args = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
@@ -79,6 +80,7 @@ backend = [
   "diesel",
   "kustos",
   "opentalk-types-common/backend",
+  "opentalk-types-signaling-polls/backend",
   "opentalk-types-signaling/backend",
   "rand",
   "redis",
@@ -96,6 +98,7 @@ frontend = [
   "dep:http-request-derive",
   "dep:http0",
   "opentalk-types-common/frontend",
+  "opentalk-types-signaling-polls/frontend",
   "opentalk-types-signaling/frontend",
   "serde",
 ]
@@ -105,6 +108,7 @@ redis = [
   "dep:redis",
   "dep:redis-args",
   "opentalk-types-common/redis",
+  "opentalk-types-signaling-polls/redis",
   "opentalk-types-signaling/redis",
   "serde",
 ]
@@ -116,6 +120,7 @@ serde = [
   "dep:serde",
   "dep:validator",
   "opentalk-types-common/serde",
+  "opentalk-types-signaling-polls/serde",
   "opentalk-types-signaling/serde",
   "url/serde",
   "uuid/serde",

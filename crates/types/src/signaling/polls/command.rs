@@ -6,7 +6,9 @@
 
 use std::{collections::BTreeSet, time::Duration};
 
-use super::{ChoiceId, PollId};
+use opentalk_types_signaling_polls::ChoiceId;
+
+use super::PollId;
 #[allow(unused_imports)]
 use crate::imports::*;
 

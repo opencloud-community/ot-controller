@@ -15,5 +15,19 @@ repository.workspace = true
 version.workspace = true
 
 [features]
-backend = []
-frontend = []
+backend = ["redis", "serde"]
+frontend = ["serde"]
+redis = ["dep:redis-args", "serde"]
+serde = ["dep:serde"]
+
+
+[dependencies]
+derive_more = { workspace = true, features = [
+  "as_ref",
+  "display",
+  "from",
+  "from_str",
+  "into",
+] }
+redis-args = { workspace = true, optional = true }
+serde = { workspace = true, optional = true }

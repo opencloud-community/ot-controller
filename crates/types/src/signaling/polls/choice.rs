@@ -2,7 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::ChoiceId;
+use opentalk_types_signaling_polls::ChoiceId;
+
 #[allow(unused_imports)]
 use crate::imports::*;
 
