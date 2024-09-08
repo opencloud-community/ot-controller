@@ -14,10 +14,10 @@ use opentalk_types::signaling::polls::{
     command::{PollsCommand, Start, Vote},
     event::{Error, PollsEvent, Started},
     state::PollsState,
-    Results, NAMESPACE,
+    NAMESPACE,
 };
 use opentalk_types_signaling::Role;
-use opentalk_types_signaling_polls::{Choice, ChoiceId, PollId};
+use opentalk_types_signaling_polls::{Choice, ChoiceId, PollId, Results};
 use snafu::Report;
 use storage::PollsStorage;
 use tokio::time::sleep;

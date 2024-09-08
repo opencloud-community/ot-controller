@@ -4,13 +4,9 @@
 
 //! Signaling messages for the `polls` namespace
 
-mod results;
-
 pub mod command;
 pub mod event;
 pub mod state;
-
-pub use results::Results;
 
 /// The namespace string for the signaling module
 pub const NAMESPACE: &str = "polls";
