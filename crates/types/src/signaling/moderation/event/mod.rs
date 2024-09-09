@@ -6,7 +6,7 @@
 
 use opentalk_types_signaling::{AssociatedParticipant, Participant, ParticipantId};
 use opentalk_types_signaling_moderation::event::{
-    DebriefingStarted, RaiseHandsDisabled, RaiseHandsEnabled, RaisedHandResetByModerator,
+    DebriefingStarted, Error, RaiseHandsDisabled, RaiseHandsEnabled, RaisedHandResetByModerator,
     SessionEnded,
 };
 
@@ -128,26 +128,6 @@ pub struct DisplayNameChanged {
     pub old_name: String,
     /// The new display name
     pub new_name: String,
-}
-
-/// Error from the `moderation` module namespace
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(tag = "error", rename_all = "snake_case")
-)]
-pub enum Error {
-    /// Cannot ban a guest participant
-    CannotBanGuest,
-    /// Cannot send the room owner to the waiting room
-    CannotSendRoomOwnerToWaitingRoom,
-    /// Cannot change the display name of registered users
-    CannotChangeNameOfRegisteredUsers,
-    /// Invalid display name
-    InvalidDisplayName,
-    /// Insufficient permissions to perform a command
-    InsufficientPermissions,
 }
 
 #[cfg(test)]
