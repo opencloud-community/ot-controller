@@ -7,7 +7,7 @@
 use std::collections::BTreeSet;
 
 use opentalk_types_common::streaming::StreamingTargetId;
-use opentalk_types_signaling_recording::command::SetConsent;
+use opentalk_types_signaling_recording::command::{SetConsent, StartStreaming};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -33,28 +33,22 @@ pub enum RecordingCommand {
     StopStream(StopStreaming),
 }
 
-impl From<StopStreaming> for RecordingCommand {
-    fn from(value: StopStreaming) -> Self {
-        Self::StopStream(value)
-    }
-}
-
 impl From<SetConsent> for RecordingCommand {
     fn from(value: SetConsent) -> Self {
         Self::SetConsent(value)
     }
 }
 
-/// Data for the `start` streaming command
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct StartStreaming {
-    /// Id of the to be started stream
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "BTreeSet::is_empty")
-    )]
-    pub target_ids: BTreeSet<StreamingTargetId>,
+impl From<StartStreaming> for RecordingCommand {
+    fn from(value: StartStreaming) -> Self {
+        Self::StartStream(value)
+    }
+}
+
+impl From<StopStreaming> for RecordingCommand {
+    fn from(value: StopStreaming) -> Self {
+        Self::StopStream(value)
+    }
 }
 
 /// Data for the `pause` streaming command

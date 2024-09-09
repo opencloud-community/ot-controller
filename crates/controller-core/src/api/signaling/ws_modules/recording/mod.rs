@@ -29,8 +29,8 @@ use opentalk_types::signaling::recording::{
 use opentalk_types_common::{features::FeatureId, streaming::StreamingTargetId};
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_recording::{
-    command::SetConsent, module_id, record_feature, stream_feature, StreamStatus,
-    StreamTargetSecret, NAMESPACE,
+    command::{SetConsent, StartStreaming},
+    module_id, record_feature, stream_feature, StreamStatus, StreamTargetSecret, NAMESPACE,
 };
 use snafu::{Report, ResultExt, Snafu};
 use tokio::time::Duration;
@@ -208,7 +208,7 @@ impl SignalingModule for Recording {
 
                     ctx.invalidate_data();
                 }
-                RecordingCommand::StartStream(command::StartStreaming { target_ids }) => {
+                RecordingCommand::StartStream(StartStreaming { target_ids }) => {
                     self.handle_start_streams(&mut ctx, target_ids).await?
                 }
                 RecordingCommand::PauseStream(command::PauseStreaming { target_ids }) => {

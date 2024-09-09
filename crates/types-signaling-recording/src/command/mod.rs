@@ -5,5 +5,7 @@
 //! Signaling commands for the `recording` namespace
 
 mod set_consent;
+mod start_streaming;
 
 pub use set_consent::SetConsent;
+pub use start_streaming::StartStreaming;
