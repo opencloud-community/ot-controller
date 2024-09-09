@@ -126,7 +126,7 @@ lint:openapi:
   stage: lint
   <<: *default_job_condition
   image:
-    name: redocly/cli:1.22.1
+    name: redocly/cli:1.23.1
     entrypoint: ['']
   script:
     - /usr/local/bin/openapi lint api/controller/frontend_api.yaml
