@@ -29,7 +29,7 @@ use opentalk_types::signaling::recording::{
 use opentalk_types_common::{features::FeatureId, streaming::StreamingTargetId};
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_recording::{
-    command::{SetConsent, StartStreaming},
+    command::{PauseStreaming, SetConsent, StartStreaming},
     module_id, record_feature, stream_feature, StreamStatus, StreamTargetSecret, NAMESPACE,
 };
 use snafu::{Report, ResultExt, Snafu};
@@ -211,7 +211,7 @@ impl SignalingModule for Recording {
                 RecordingCommand::StartStream(StartStreaming { target_ids }) => {
                     self.handle_start_streams(&mut ctx, target_ids).await?
                 }
-                RecordingCommand::PauseStream(command::PauseStreaming { target_ids }) => {
+                RecordingCommand::PauseStream(PauseStreaming { target_ids }) => {
                     self.handle_pause_streams(&mut ctx, target_ids).await?
                 }
                 RecordingCommand::StopStream(command::StopStreaming { target_ids }) => {
