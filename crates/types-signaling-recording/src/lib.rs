@@ -21,6 +21,7 @@
 )]
 
 pub mod command;
+pub mod event;
 
 mod recording_id;
 mod stream_error_reason;

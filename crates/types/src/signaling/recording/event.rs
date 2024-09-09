@@ -4,7 +4,7 @@
 
 //! Signaling events for the `recording` namespace
 
-use opentalk_types_signaling_recording::StreamUpdated;
+use opentalk_types_signaling_recording::{event::Error, StreamUpdated};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -31,24 +31,6 @@ impl From<StreamUpdated> for RecordingEvent {
     fn from(value: StreamUpdated) -> Self {
         Self::StreamUpdated(value)
     }
-}
-
-/// Error from the `recording` module namespace
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(tag = "error", rename_all = "snake_case")
-)]
-pub enum Error {
-    /// The participant has insufficient permissions to perform a command
-    InsufficientPermissions,
-
-    /// Invalid streaming id used
-    InvalidStreamingId,
-
-    /// Recorder is not started
-    RecorderNotStarted,
 }
 
 impl From<Error> for RecordingEvent {
