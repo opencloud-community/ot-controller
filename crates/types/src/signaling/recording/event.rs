@@ -4,7 +4,8 @@
 
 //! Signaling events for the `recording` namespace
 
-use super::StreamUpdated;
+use opentalk_types_signaling_recording::StreamUpdated;
+
 #[allow(unused_imports)]
 use crate::imports::*;
 

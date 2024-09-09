@@ -4,9 +4,10 @@
 
 //! Signaling commands for the `recording` namespace
 
+use opentalk_types_signaling_recording::StreamUpdated;
+
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::signaling::recording::StreamUpdated;
 
 /// Commands for the `recording_service` namespace
 #[derive(Clone, Debug, PartialEq, Eq)]

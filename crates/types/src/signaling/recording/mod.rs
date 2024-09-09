@@ -4,11 +4,7 @@
 
 //! Signaling messages for the `recording` namespace
 
-mod stream_updated;
-
 pub mod command;
 pub mod event;
 pub mod peer_state;
 pub mod state;
-
-pub use stream_updated::StreamUpdated;

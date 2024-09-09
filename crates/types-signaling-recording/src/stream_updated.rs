@@ -3,14 +3,12 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_types_common::streaming::StreamingTargetId;
-use opentalk_types_signaling_recording::StreamStatus;
 
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::StreamStatus;
 
 /// A streaming target has been updated
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct StreamUpdated {
     /// The target id
     pub target_id: StreamingTargetId,
