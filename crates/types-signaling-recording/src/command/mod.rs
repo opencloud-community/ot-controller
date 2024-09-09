@@ -5,11 +5,13 @@
 //! Signaling commands for the `recording` namespace
 
 mod pause_streaming;
+mod recording_command;
 mod set_consent;
 mod start_streaming;
 mod stop_streaming;
 
 pub use pause_streaming::PauseStreaming;
+pub use recording_command::RecordingCommand;
 pub use set_consent::SetConsent;
 pub use start_streaming::StartStreaming;
 pub use stop_streaming::StopStreaming;

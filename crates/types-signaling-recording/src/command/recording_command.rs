@@ -2,20 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Signaling commands for the `recording` namespace
-
-use opentalk_types_signaling_recording::command::{
-    PauseStreaming, SetConsent, StartStreaming, StopStreaming,
-};
-
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::command::{PauseStreaming, SetConsent, StartStreaming, StopStreaming};
 
 /// Commands for the `recording` namespace
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(tag = "action", rename_all = "snake_case")
 )]
 pub enum RecordingCommand {
@@ -50,8 +43,8 @@ impl From<StopStreaming> for RecordingCommand {
     }
 }
 
-#[cfg(test)]
-mod tests {
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
     use std::collections::BTreeSet;
 
     use opentalk_types_common::streaming::StreamingTargetId;
