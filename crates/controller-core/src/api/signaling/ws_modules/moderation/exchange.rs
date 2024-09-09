@@ -2,9 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types::signaling::moderation::event::DisplayNameChanged;
 use opentalk_types_signaling::ParticipantId;
-use opentalk_types_signaling_moderation::KickScope;
+use opentalk_types_signaling_moderation::{event::DisplayNameChanged, KickScope};
 use serde::{Deserialize, Serialize};
 
 /// Control messages sent between controller modules to communicate changes inside a room

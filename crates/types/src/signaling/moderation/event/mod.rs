@@ -4,10 +4,10 @@
 
 //! Signaling events for the `moderation` namespace
 
-use opentalk_types_signaling::{AssociatedParticipant, Participant, ParticipantId};
+use opentalk_types_signaling::{AssociatedParticipant, Participant};
 use opentalk_types_signaling_moderation::event::{
-    DebriefingStarted, Error, RaiseHandsDisabled, RaiseHandsEnabled, RaisedHandResetByModerator,
-    SessionEnded,
+    DebriefingStarted, DisplayNameChanged, Error, RaiseHandsDisabled, RaiseHandsEnabled,
+    RaisedHandResetByModerator, SessionEnded,
 };
 
 #[allow(unused_imports)]
@@ -110,24 +110,6 @@ impl From<Error> for ModerationEvent {
     fn from(value: Error) -> Self {
         Self::Error(value)
     }
-}
-
-/// Received by all participants when a participant gets their display name changed
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct DisplayNameChanged {
-    /// The participant that got their display name changed
-    pub target: ParticipantId,
-    /// The issuer of the display name change
-    pub issued_by: ParticipantId,
-    /// The old display name
-    pub old_name: String,
-    /// The new display name
-    pub new_name: String,
 }
 
 #[cfg(test)]
