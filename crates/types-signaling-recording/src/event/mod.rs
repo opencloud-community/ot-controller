@@ -6,6 +6,8 @@
 
 mod error;
 mod recorder_error;
+mod recording_event;
 
 pub use error::Error;
 pub use recorder_error::RecorderError;
+pub use recording_event::RecordingEvent;

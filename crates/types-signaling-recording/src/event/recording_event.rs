@@ -2,21 +2,16 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Signaling events for the `recording` namespace
-
-use opentalk_types_signaling_recording::{
+use crate::{
     event::{Error, RecorderError},
     StreamUpdated,
 };
-
-#[allow(unused_imports)]
-use crate::imports::*;
 
 /// Events sent out by the `recording` module
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(tag = "message", rename_all = "snake_case")
 )]
 pub enum RecordingEvent {
