@@ -182,7 +182,8 @@ Requires moderator role.
 
 Change the display name of a guest or phone user for the duration of the meeting.
 
-This will trigger a [Control/Update](control.md#update) message for the targeted participant.
+This will trigger a [Control/Update](control.md#update) message for the targeted participant and a
+[DisplayNameChanged](#displaynamechanged) is sent to all participants.
 
 Can return [Error](#error) of kind `cannot_change_name_of_registered_users` when the targeted participant is not a guest
 or dial-in user or kind `invalid_display_name` when the `new_name` is empty or longer than 100 characters.
@@ -547,6 +548,36 @@ waiting-room to "conference-"room.
 {
     "message": "joined_waiting_room",
     "id": "00000000-0000-0000-0000-000000000000"
+}
+```
+
+---
+
+### DisplayNameChanged
+
+The display name of a guest participant was changed by a moderator (See [ChangeDisplayName](#changedisplayname)).
+
+This message is received by all participants in the room.
+
+#### Fields
+
+| Field       | Type     | Always | Description                              |
+| ----------- | -------- | ------ | ---------------------------------------- |
+| `message`   | `enum`   | yes    | Is `"display_name_changed"`              |
+| `target`    | `string` | yes    | Id of the targeted participant           |
+| `issued_by` | `string` | yes    | The issuer of the command                |
+| `old_name`  | `string` | yes    | The old name of the targeted participant |
+| `new_name`  | `string` | yes    | The new name of the targeted participant |
+
+##### Example
+
+```json
+{
+    "message": "display_name_changed",
+    "target": "00000000-0000-0000-0000-000000000000",
+    "issued_by": "00000000-0000-0000-0000-000000000000",
+    "old_name": "Alice",
+    "new_name": "Bob"
 }
 ```
 

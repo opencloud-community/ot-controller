@@ -70,6 +70,9 @@ pub enum ModerationEvent {
     /// Sent to a participant when they are accepted by the moderator from the waiting room
     Accepted,
 
+    /// Sent to all participants when a participants display name gets changed
+    DisplayNameChanged(DisplayNameChanged),
+
     /// An error happened when executing a `moderation` command
     Error(Error),
 
@@ -78,6 +81,24 @@ pub enum ModerationEvent {
         /// The moderator who reset raised hand
         issued_by: ParticipantId,
     },
+}
+
+/// Received by all participants when a participant gets their display name changed
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct DisplayNameChanged {
+    /// The participant that got their display name changed
+    pub target: ParticipantId,
+    /// The issuer of the display name change
+    pub issued_by: ParticipantId,
+    /// The old display name
+    pub old_name: String,
+    /// The new display name
+    pub new_name: String,
 }
 
 /// Error from the `moderation` module namespace
@@ -166,6 +187,28 @@ mod test {
         let expected = json!({"message": "in_waiting_room"});
 
         let produced = serde_json::to_value(ModerationEvent::InWaitingRoom).unwrap();
+
+        assert_eq!(expected, produced);
+    }
+
+    #[test]
+    fn display_name_changed() {
+        let expected = json!({
+            "message": "display_name_changed",
+            "target": "00000000-0000-0000-0000-000000000000",
+            "issued_by": "00000000-0000-0000-0000-000000000000",
+            "old_name": "Alice",
+            "new_name": "Bob"
+        });
+
+        let produced =
+            serde_json::to_value(ModerationEvent::DisplayNameChanged(DisplayNameChanged {
+                target: ParticipantId::nil(),
+                issued_by: ParticipantId::nil(),
+                old_name: "Alice".into(),
+                new_name: "Bob".into(),
+            }))
+            .unwrap();
 
         assert_eq!(expected, produced);
     }
