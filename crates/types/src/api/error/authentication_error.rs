@@ -35,8 +35,8 @@ impl AuthenticationError {
         match self {
             AuthenticationError::InvalidIdToken
             | AuthenticationError::InvalidAccessToken
-            | AuthenticationError::AccessTokenInactive => "invalid_token",
-            AuthenticationError::SessionExpired => "invalid_request",
+            | AuthenticationError::AccessTokenInactive
+            | AuthenticationError::SessionExpired => "invalid_token",
         }
     }
 
