@@ -7,7 +7,9 @@
 mod pause_streaming;
 mod set_consent;
 mod start_streaming;
+mod stop_streaming;
 
 pub use pause_streaming::PauseStreaming;
 pub use set_consent::SetConsent;
 pub use start_streaming::StartStreaming;
+pub use stop_streaming::StopStreaming;

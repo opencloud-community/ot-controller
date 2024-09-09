@@ -21,7 +21,7 @@ use opentalk_signaling_core::{
     SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types::signaling::recording::{
-    command::{self, RecordingCommand},
+    command::RecordingCommand,
     event::{Error, RecorderError, RecordingEvent},
     peer_state::RecordingPeerState,
     state::RecordingState,
@@ -29,7 +29,7 @@ use opentalk_types::signaling::recording::{
 use opentalk_types_common::{features::FeatureId, streaming::StreamingTargetId};
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_recording::{
-    command::{PauseStreaming, SetConsent, StartStreaming},
+    command::{PauseStreaming, SetConsent, StartStreaming, StopStreaming},
     module_id, record_feature, stream_feature, StreamStatus, StreamTargetSecret, NAMESPACE,
 };
 use snafu::{Report, ResultExt, Snafu};
@@ -214,7 +214,7 @@ impl SignalingModule for Recording {
                 RecordingCommand::PauseStream(PauseStreaming { target_ids }) => {
                     self.handle_pause_streams(&mut ctx, target_ids).await?
                 }
-                RecordingCommand::StopStream(command::StopStreaming { target_ids }) => {
+                RecordingCommand::StopStream(StopStreaming { target_ids }) => {
                     self.handle_stop_streams(&mut ctx, target_ids).await?
                 }
             },
