@@ -31,7 +31,7 @@ Will contain 'session expired' to distinguish between an invalid and an expired 
 Examples:
 
     Bearer error="invalid_token", error_description="The provided access token is invalid"
-    Bearer error="invalid_request", error_description="The user session expired"
+    Bearer error="invalid_token", error_description="The user session expired"
 "#
         ),
     ),
