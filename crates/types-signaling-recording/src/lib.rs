@@ -20,6 +20,8 @@
     unused_results
 )]
 
+pub mod command;
+
 mod recording_id;
 mod stream_error_reason;
 mod stream_kind;

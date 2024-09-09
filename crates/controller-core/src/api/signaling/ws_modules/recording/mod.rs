@@ -29,7 +29,8 @@ use opentalk_types::signaling::recording::{
 use opentalk_types_common::{features::FeatureId, streaming::StreamingTargetId};
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_recording::{
-    module_id, record_feature, stream_feature, StreamStatus, StreamTargetSecret, NAMESPACE,
+    command::SetConsent, module_id, record_feature, stream_feature, StreamStatus,
+    StreamTargetSecret, NAMESPACE,
 };
 use snafu::{Report, ResultExt, Snafu};
 use tokio::time::Duration;
@@ -199,7 +200,7 @@ impl SignalingModule for Recording {
             Event::RoleUpdated(_) => {}
             // Messages from frontend (Command)
             Event::WsMessage(msg) => match msg {
-                RecordingCommand::SetConsent(command::SetConsent { consent }) => {
+                RecordingCommand::SetConsent(SetConsent { consent }) => {
                     ctx.volatile
                         .storage()
                         .set_attribute(self.room, self.id, RECORDING_CONSENT, consent)

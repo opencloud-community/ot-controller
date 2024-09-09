@@ -7,6 +7,7 @@
 use std::collections::BTreeSet;
 
 use opentalk_types_common::streaming::StreamingTargetId;
+use opentalk_types_signaling_recording::command::SetConsent;
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -36,14 +37,6 @@ impl From<StopStreaming> for RecordingCommand {
     fn from(value: StopStreaming) -> Self {
         Self::StopStream(value)
     }
-}
-
-/// Data for the `set_consent` recording command
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct SetConsent {
-    /// Flag indicating whether the participant consents to being recorded
-    pub consent: bool,
 }
 
 impl From<SetConsent> for RecordingCommand {
