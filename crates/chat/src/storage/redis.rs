@@ -381,7 +381,7 @@ impl ChatStorage for RedisConnection {
 
         let guard = mutex.lock(self).await?;
 
-        self.sadd(RoomGroupParticipants { room, group }, participant)
+        self.sadd::<_, _, ()>(RoomGroupParticipants { room, group }, participant)
             .await
             .context(RedisSnafu {
                 message: "Failed to add own participant id to set",
@@ -604,10 +604,7 @@ mod test {
 
         let mut mgr = ConnectionManager::new(redis).await.unwrap();
 
-        redis::cmd("FLUSHALL")
-            .query_async::<_, ()>(&mut mgr)
-            .await
-            .unwrap();
+        redis::cmd("FLUSHALL").exec_async(&mut mgr).await.unwrap();
 
         RedisConnection::new(mgr)
     }

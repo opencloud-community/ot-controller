@@ -197,10 +197,7 @@ mod test {
 
         let mut mgr = ConnectionManager::new(redis).await.unwrap();
 
-        redis::cmd("FLUSHALL")
-            .query_async::<_, ()>(&mut mgr)
-            .await
-            .unwrap();
+        redis::cmd("FLUSHALL").exec_async(&mut mgr).await.unwrap();
 
         RedisConnection::new(mgr)
     }

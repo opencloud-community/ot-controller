@@ -592,7 +592,7 @@ where
 
                 self.volatile
                     .control_storage()
-                    .bulk_attribute_actions(&actions)
+                    .bulk_attribute_actions::<()>(&actions)
                     .await?;
 
                 let participant_set = self
@@ -731,7 +731,7 @@ where
             ControlCommand::RaiseHand => {
                 self.volatile
                     .control_storage()
-                    .bulk_attribute_actions(
+                    .bulk_attribute_actions::<()>(
                         AttributeActions::new(self.room_id, self.participant_id)
                             .set(HAND_IS_UP, true)
                             .set(HAND_UPDATED_AT, ctx.timestamp),
@@ -747,7 +747,7 @@ where
             ControlCommand::LowerHand => {
                 self.volatile
                     .control_storage()
-                    .bulk_attribute_actions(
+                    .bulk_attribute_actions::<()>(
                         AttributeActions::new(self.room_id, self.participant_id)
                             .set(HAND_IS_UP, false)
                             .set(HAND_UPDATED_AT, ctx.timestamp),
