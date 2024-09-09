@@ -5,5 +5,7 @@
 //! Signaling events for the `recording` namespace
 
 mod error;
+mod recorder_error;
 
 pub use error::Error;
+pub use recorder_error::RecorderError;

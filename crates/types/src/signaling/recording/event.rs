@@ -4,7 +4,10 @@
 
 //! Signaling events for the `recording` namespace
 
-use opentalk_types_signaling_recording::{event::Error, StreamUpdated};
+use opentalk_types_signaling_recording::{
+    event::{Error, RecorderError},
+    StreamUpdated,
+};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -37,18 +40,6 @@ impl From<Error> for RecordingEvent {
     fn from(value: Error) -> Self {
         Self::Error(value)
     }
-}
-
-/// Recorder not started
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(tag = "error", rename_all = "snake_case")
-)]
-pub enum RecorderError {
-    /// Indicates, that the recorder timed out when attempting to start
-    Timeout,
 }
 
 impl From<RecorderError> for RecordingEvent {
