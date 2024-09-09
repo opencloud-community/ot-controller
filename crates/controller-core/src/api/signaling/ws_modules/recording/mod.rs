@@ -20,13 +20,15 @@ use opentalk_signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
     SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
-use opentalk_types::signaling::recording::{peer_state::RecordingPeerState, state::RecordingState};
+use opentalk_types::signaling::recording::state::RecordingState;
 use opentalk_types_common::{features::FeatureId, streaming::StreamingTargetId};
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_recording::{
     command::{PauseStreaming, RecordingCommand, SetConsent, StartStreaming, StopStreaming},
     event::{Error, RecorderError, RecordingEvent},
-    module_id, record_feature, stream_feature, StreamStatus, StreamTargetSecret, NAMESPACE,
+    module_id,
+    peer_state::RecordingPeerState,
+    record_feature, stream_feature, StreamStatus, StreamTargetSecret, NAMESPACE,
 };
 use snafu::{Report, ResultExt, Snafu};
 use tokio::time::Duration;

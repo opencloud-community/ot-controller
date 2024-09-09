@@ -4,5 +4,4 @@
 
 //! Signaling messages for the `recording` namespace
 
-pub mod peer_state;
 pub mod state;
