@@ -10,13 +10,13 @@ use opentalk_types::core::ParticipantId;
 use crate::{storage::InitState, SessionInfo};
 
 #[derive(Debug, Clone, Default)]
-pub(crate) struct MemoryProtocolState {
+pub(crate) struct MemoryMeetingNotesState {
     group_ids: HashMap<SignalingRoomId, String>,
     init_state: HashMap<SignalingRoomId, InitState>,
     session: HashMap<(SignalingRoomId, ParticipantId), SessionInfo>,
 }
 
-impl MemoryProtocolState {
+impl MemoryMeetingNotesState {
     #[cfg(test)]
     pub(super) fn reset(&mut self) {
         *self = Self::default();

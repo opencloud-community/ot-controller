@@ -8,25 +8,25 @@ use crate::core::ParticipantId;
 #[allow(unused_imports)]
 use crate::imports::*;
 
-/// Commands for the `protocol` namespace
+/// Commands for the `meeting_notes` namespace
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
     serde(tag = "action", rename_all = "snake_case")
 )]
-pub enum ProtocolCommand {
+pub enum MeetingNotesCommand {
     /// Select a participant as writer
     SelectWriter(ParticipantSelection),
 
     /// Deselect a participant as writer
     DeselectWriter(ParticipantSelection),
 
-    /// Generates a pdf of the current protocol contents
+    /// Generates a pdf of the current meeting-notes
     GeneratePdf,
 }
 
-/// Give a list of participants write access to the protocol
+/// Give a list of participants write access to the meeting-notes
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
@@ -53,7 +53,7 @@ mod test {
             "participant_ids": ["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000001"]
         });
 
-        if let ProtocolCommand::SelectWriter(ParticipantSelection { participant_ids }) =
+        if let MeetingNotesCommand::SelectWriter(ParticipantSelection { participant_ids }) =
             serde_json::from_value(json_str).unwrap()
         {
             assert_eq!(participant_ids[0], ParticipantId::from_u128(0));
@@ -71,7 +71,7 @@ mod test {
             "participant_ids": ["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000001"]
         });
 
-        if let ProtocolCommand::DeselectWriter(ParticipantSelection { participant_ids }) =
+        if let MeetingNotesCommand::DeselectWriter(ParticipantSelection { participant_ids }) =
             serde_json::from_value(json_str).unwrap()
         {
             assert_eq!(participant_ids[0], ParticipantId::from_u128(0));
@@ -87,7 +87,7 @@ mod test {
             "action": "generate_pdf"
         });
 
-        if let ProtocolCommand::GeneratePdf = serde_json::from_value(json).unwrap() {
+        if let MeetingNotesCommand::GeneratePdf = serde_json::from_value(json).unwrap() {
         } else {
             panic!("expected GeneratePdf variant");
         }

@@ -13,7 +13,7 @@ use super::InitState;
 use crate::SessionInfo;
 
 #[async_trait(?Send)]
-pub(crate) trait ProtocolStorage:
+pub(crate) trait MeetingNotesStorage:
     ControlStorageParticipantSet + ControlStorageParticipantAttributesRaw
 {
     async fn group_set(
@@ -71,7 +71,7 @@ pub(crate) trait ProtocolStorage:
     ) -> Result<Option<SessionInfo>, SignalingModuleError>;
 
     /// Remove all redis keys related to this room & module
-    #[tracing::instrument(name = "cleanup_protocol", skip(self))]
+    #[tracing::instrument(name = "cleanup_meeting_notes", skip(self))]
     async fn cleanup(&mut self, room: SignalingRoomId) -> Result<(), SignalingModuleError> {
         self.init_delete(room).await?;
         self.group_delete(room).await?;

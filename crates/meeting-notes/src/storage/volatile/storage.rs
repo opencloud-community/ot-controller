@@ -9,21 +9,21 @@ use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId, VolatileSta
 use opentalk_types::core::ParticipantId;
 use parking_lot::RwLock;
 
-use super::memory::MemoryProtocolState;
+use super::memory::MemoryMeetingNotesState;
 use crate::{
-    storage::{protocol_storage::ProtocolStorage, InitState},
+    storage::{meeting_notes_storage::MeetingNotesStorage, InitState},
     SessionInfo,
 };
 
-static STATE: OnceLock<Arc<RwLock<MemoryProtocolState>>> = OnceLock::new();
+static STATE: OnceLock<Arc<RwLock<MemoryMeetingNotesState>>> = OnceLock::new();
 
-fn state() -> &'static Arc<RwLock<MemoryProtocolState>> {
+fn state() -> &'static Arc<RwLock<MemoryMeetingNotesState>> {
     STATE.get_or_init(Default::default)
 }
 
 #[async_trait(?Send)]
-impl ProtocolStorage for VolatileStaticMemoryStorage {
-    #[tracing::instrument(name = "set_protocol_group", skip(self))]
+impl MeetingNotesStorage for VolatileStaticMemoryStorage {
+    #[tracing::instrument(name = "set_meeting_notes_group", skip(self))]
     async fn group_set(
         &mut self,
         room: SignalingRoomId,
@@ -33,7 +33,7 @@ impl ProtocolStorage for VolatileStaticMemoryStorage {
         Ok(())
     }
 
-    #[tracing::instrument(name = "get_protocol_group", skip(self))]
+    #[tracing::instrument(name = "get_meeting_notes_group", skip(self))]
     async fn group_get(
         &mut self,
         room: SignalingRoomId,
@@ -41,13 +41,13 @@ impl ProtocolStorage for VolatileStaticMemoryStorage {
         Ok(state().read().group_get(room))
     }
 
-    #[tracing::instrument(name = "delete_protocol_group", skip(self))]
+    #[tracing::instrument(name = "delete_meeting_notes_group", skip(self))]
     async fn group_delete(&mut self, room: SignalingRoomId) -> Result<(), SignalingModuleError> {
         state().write().group_delete(room);
         Ok(())
     }
 
-    #[tracing::instrument(name = "protocol_try_start_init", skip(self))]
+    #[tracing::instrument(name = "meeting_notes_try_start_init", skip(self))]
     async fn try_start_init(
         &mut self,
         room: SignalingRoomId,
@@ -55,13 +55,13 @@ impl ProtocolStorage for VolatileStaticMemoryStorage {
         Ok(state().write().init_get_or_default(room))
     }
 
-    #[tracing::instrument(name = "protocol_set_initialized", skip(self))]
+    #[tracing::instrument(name = "meeting_notes_set_initialized", skip(self))]
     async fn set_initialized(&mut self, room: SignalingRoomId) -> Result<(), SignalingModuleError> {
         state().write().set_initialized(room);
         Ok(())
     }
 
-    #[tracing::instrument(name = "get_protocol_init_state", skip(self))]
+    #[tracing::instrument(name = "get_meeting_notes_init_state", skip(self))]
     async fn init_get(
         &mut self,
         room: SignalingRoomId,
@@ -69,13 +69,13 @@ impl ProtocolStorage for VolatileStaticMemoryStorage {
         Ok(state().read().init_get(room))
     }
 
-    #[tracing::instrument(name = "delete_protocol_init_state", skip(self))]
+    #[tracing::instrument(name = "delete_meeting_notes_init_state", skip(self))]
     async fn init_delete(&mut self, room: SignalingRoomId) -> Result<(), SignalingModuleError> {
         state().write().init_delete(room);
         Ok(())
     }
 
-    #[tracing::instrument(name = "get_protocol_session_info", skip(self))]
+    #[tracing::instrument(name = "get_meeting_notes_session_info", skip(self))]
     async fn session_get(
         &mut self,
         room: SignalingRoomId,
@@ -84,7 +84,7 @@ impl ProtocolStorage for VolatileStaticMemoryStorage {
         Ok(state().read().session_get(room, participant))
     }
 
-    #[tracing::instrument(name = "set_protocol_session_info", skip(self))]
+    #[tracing::instrument(name = "set_meeting_notes_session_info", skip(self))]
     async fn session_set(
         &mut self,
         room: SignalingRoomId,
@@ -97,7 +97,7 @@ impl ProtocolStorage for VolatileStaticMemoryStorage {
         Ok(())
     }
 
-    #[tracing::instrument(name = "get_del_protocol_session_info", skip(self))]
+    #[tracing::instrument(name = "get_del_meeting_notes_session_info", skip(self))]
     async fn session_delete(
         &mut self,
         room: SignalingRoomId,

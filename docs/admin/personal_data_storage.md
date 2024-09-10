@@ -14,7 +14,7 @@ The OpenTalk service collects the following types of data:
 - Streaming keys
 - Recordings
 - Whiteboard data
-- Votings and protocol responses
+- Votings and meeting-notes responses
 - Logs, depending on the mode used
 
 ## How is your data collected
@@ -24,7 +24,7 @@ Users directly provide the service with their personal data. Data is collected w
 - Registers on the service
 - Adds streaming information to their account
 - Agrees to be part of a recording
-- Participates in a voting/protocol/whiteboard session
+- Participates in a voting/meeting-notes/whiteboard session
 
 ## Why is it stored
 
@@ -38,7 +38,7 @@ Personal identification data is stored in a postgres [database](core/database.md
 
 Object Storage (recordings, whiteboard) is stored on a [MinIO](core/minio.md) object storage instance.
 
-Voting and protocol responses are temporarily stored in a Redis database. Entries are automatically deleted after a meeting concludes, which occurs when the last participant leaves the meeting or upon service restarts
+Voting and meeting-notes responses are temporarily stored in a Redis database. Entries are automatically deleted after a meeting concludes, which occurs when the last participant leaves the meeting or upon service restarts
 
 ## How long is it stored
 

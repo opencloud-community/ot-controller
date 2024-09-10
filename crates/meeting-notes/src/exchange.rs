@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types::{core::ParticipantId, signaling::protocol::event::PdfAsset};
+use opentalk_types::{core::ParticipantId, signaling::meeting_notes::event::PdfAsset};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 pub enum Event {
     /// Generate an access url for the current etherpad
     GenerateUrl(GenerateUrl),
-    /// A pdf asset has been generated from the protocol
+    /// A pdf asset has been generated from the meeting notes
     PdfAsset(PdfAsset),
 }
 
