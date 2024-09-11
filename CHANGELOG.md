@@ -5,17 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.25.0-alpha.1]
+
+⚠️ This is the first release with experimental livekit support. Bugs and missing features are expected.
 
 ### 🚀 New features
 
 - Return ack messages for moderator and presenter changes ([!1103](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1103))
 - (moderation) Improve signaling responses for the `ChangeDisplayName` command ([!1119](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1119))
+- Add livekit module ([!1063](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1063))
+- Make janus-media module optional ([!1063](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1063))
+- Add e2e encryption flag to rooms table ([!1151](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1151))
 
 ### 🐛 Bug fixes
 
 - Prevent high cpu usage when RabbitMQ is unavailable ([!1125](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1125))
 - Wrong documented response body of /rooms/{room_id}/event ([!1126](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1126))
+- Always include streaming_links property in MeetingDetails ([!1128](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1128))
 - Change the WWW-Authenticate error value to `invalid_token` for expired sessions ([!1134](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1134))
 - (protocol) Rename protocol module to meeting-notes ([!1004](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1004))
 - Remove the `is_room_owner` key on room cleanup ([!1131](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1131))
@@ -25,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - (deps) Update rust crate rrule to 0.13 ([!1081](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1081))
 - (deps) Update rust crate gix-path to 0.10.11 ([!1138](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1138))
 - (deps) Update rust crate redis to 0.26 & redis-args to 0.16 ([!1067](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1067))
-- (deps) Update redocly/cli docker tag to v1.24.0 ([!1133](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1133), [!1140](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1140))
+- (deps) Update redocly/cli docker tag to v1.24.0 ([!1140](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1140))
 - (deps) Update git.opentalk.dev:5050/opentalk/backend/containers/rust docker tag to v1.81.0 ([!1136](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1136))
 
 ### ⚙ Miscellaneous
@@ -35,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ignore RUSTSEC-2024-0370 ([!1130](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1130))
 - Upgrade redocly/cli image ([!1127](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1127))
 - Fix redis related clippy lints ([!1067](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1067))
+- Add snafu::report to xtask ([!1151](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1151))
 
 ### Ci
 
@@ -779,7 +786,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - initial release candidate
 
 ---
-[Unreleased]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.19.0...main
+[0.25.0-alpha.1]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.19.0...0.25.0-alpha.1
 
 [0.19.1]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.19.0...v0.19.1
 [0.19.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.18.0...v0.19.0
