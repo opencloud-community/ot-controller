@@ -1423,11 +1423,19 @@ impl Runner {
             .into();
 
         let mut conn = self.db.get_conn().await?;
-        let room_id = self.room.id;
         let event_info = match event.as_ref() {
             Some(event) => {
                 let call_in_tel = settings.call_in.as_ref().map(|call_in| call_in.tel.clone());
-                Some(build_event_info(&mut conn, call_in_tel, room_id, event).await?)
+                Some(
+                    build_event_info(
+                        &mut conn,
+                        call_in_tel,
+                        self.room.id,
+                        self.room.e2e_encrytion,
+                        event,
+                    )
+                    .await?,
+                )
             }
             _ => None,
         };

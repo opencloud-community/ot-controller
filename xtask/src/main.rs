@@ -59,6 +59,7 @@ enum XTasks {
 }
 
 #[tokio::main]
+#[snafu::report]
 async fn main() -> Result<()> {
     let mut builder = env_logger::Builder::new();
     builder

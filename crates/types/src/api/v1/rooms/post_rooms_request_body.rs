@@ -22,4 +22,8 @@ pub struct PostRoomsRequestBody {
     /// When not present, the waiting room will be disabled.
     #[cfg_attr(feature = "serde", serde(default))]
     pub waiting_room: bool,
+
+    /// Enable/Disable e2e encryption for this room; defaults to false when not set
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub e2e_encrytion: bool,
 }

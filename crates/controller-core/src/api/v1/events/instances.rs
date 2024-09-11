@@ -787,6 +787,7 @@ mod tests {
                 id: RoomId::nil(),
                 password: None,
                 waiting_room: false,
+                e2e_encrytion: false,
                 call_in: None,
             },
             invitees_truncated: false,
@@ -844,7 +845,8 @@ mod tests {
                 "description": "Instance description",
                 "room": {
                     "id": "00000000-0000-0000-0000-000000000000",
-                    "waiting_room": false
+                    "waiting_room": false,
+                    "e2e_encrytion": false
                 },
                 "invitees_truncated": false,
                 "invitees": [

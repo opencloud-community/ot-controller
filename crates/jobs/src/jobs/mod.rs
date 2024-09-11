@@ -56,6 +56,7 @@ mod test_utils {
             created_by: user.id,
             password: None,
             waiting_room: false,
+            e2e_encrytion: false,
             tenant_id: user.tenant_id,
         };
 

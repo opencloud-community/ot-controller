@@ -287,6 +287,7 @@ diesel::table! {
         password -> Nullable<Varchar>,
         waiting_room -> Bool,
         tenant_id -> Uuid,
+        e2e_encrytion -> Bool,
     }
 }
 
