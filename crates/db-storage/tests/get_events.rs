@@ -11,7 +11,14 @@ use opentalk_db_storage::{
     tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId},
     users::User,
 };
-use opentalk_types::core::{EventId, EventInviteStatus, InviteRole, TimeZone, UserId};
+use opentalk_types_common::{
+    events::{
+        invites::{EventInviteStatus, InviteRole},
+        EventId,
+    },
+    time::TimeZone,
+    users::UserId,
+};
 use pretty_assertions::assert_eq;
 use serial_test::serial;
 

@@ -2,7 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::common::email::EmailAddress;
+use opentalk_types_common::email::EmailAddress;
+
 #[allow(unused_imports)]
 use crate::imports::*;
 

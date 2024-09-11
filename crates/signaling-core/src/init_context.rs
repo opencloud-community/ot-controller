@@ -8,11 +8,8 @@ use futures::{stream::SelectAll, Stream};
 use kustos::Authz;
 use opentalk_database::Db;
 use opentalk_db_storage::{rooms::Room, users::User};
-use opentalk_types::{
-    common::tariff::TariffResource,
-    core::{BreakoutRoomId, ParticipantId},
-    signaling::Role,
-};
+use opentalk_types_common::{rooms::BreakoutRoomId, tariffs::TariffResource};
+use opentalk_types_signaling::{ParticipantId, Role};
 
 use crate::{
     any_stream, AnyStream, ObjectStorage, Participant, SignalingModule, SignalingRoomId,
@@ -105,6 +102,6 @@ where
     where
         S: Stream<Item = M::ExtEvent> + 'static,
     {
-        self.events.push(any_stream(M::NAMESPACE, stream));
+        self.events.push(any_stream(M::module_id(), stream));
     }
 }

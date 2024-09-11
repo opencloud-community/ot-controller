@@ -12,7 +12,8 @@ use opentalk_db_storage::{
     events::{Event, EventFavorite, NewEventFavorite},
     users::User,
 };
-use opentalk_types::{api::error::ApiError, core::EventId};
+use opentalk_types::api::error::ApiError;
+use opentalk_types_common::events::EventId;
 
 use crate::api::{
     responses::{InternalServerError, NotFound, Unauthorized},

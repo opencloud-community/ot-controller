@@ -23,18 +23,14 @@ use opentalk_signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
     SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
-use opentalk_types::{
-    core::{BreakoutRoomId, ParticipantId, RoomId},
-    signaling::{
-        breakout::{
-            command::BreakoutCommand,
-            event::{BreakoutEvent, Error, Started},
-            state::BreakoutState,
-            AssociatedParticipantInOtherRoom, BreakoutRoom, ParticipantInOtherRoom, NAMESPACE,
-        },
-        Role,
-    },
+use opentalk_types::signaling::breakout::{
+    command::BreakoutCommand,
+    event::{BreakoutEvent, Error, Started},
+    state::BreakoutState,
+    AssociatedParticipantInOtherRoom, BreakoutRoom, ParticipantInOtherRoom, NAMESPACE,
 };
+use opentalk_types_common::rooms::{BreakoutRoomId, RoomId};
+use opentalk_types_signaling::{ParticipantId, Role};
 use snafu::whatever;
 use tokio::time::sleep;
 

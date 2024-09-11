@@ -6,9 +6,10 @@ use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use opentalk_database::{DbConnection, Result};
-use opentalk_types::{
-    common::shared_folder::{SharedFolder, SharedFolderAccess},
-    core::{EventId, RoomId},
+use opentalk_types_common::{
+    events::EventId,
+    rooms::RoomId,
+    shared_folders::{SharedFolder, SharedFolderAccess},
 };
 
 use super::Event;

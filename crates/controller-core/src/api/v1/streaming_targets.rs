@@ -17,22 +17,22 @@ use opentalk_db_storage::{
     users::User,
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
-use opentalk_types::{
-    api::{
-        error::ApiError,
-        v1::{
-            events::StreamingTargetOptionsQuery,
-            pagination::PagePaginationQuery,
-            rooms::streaming_targets::{
-                ChangeRoomStreamingTargetRequest, ChangeRoomStreamingTargetResponse,
-                GetRoomStreamingTargetResponse, GetRoomStreamingTargetsResponse,
-                PostRoomStreamingTargetRequest, PostRoomStreamingTargetResponse,
-            },
-            streaming_targets::{RoomAndStreamingTargetId, UpdateStreamingTargetKind},
+use opentalk_types::api::{
+    error::ApiError,
+    v1::{
+        events::StreamingTargetOptionsQuery,
+        pagination::PagePaginationQuery,
+        rooms::streaming_targets::{
+            ChangeRoomStreamingTargetRequest, ChangeRoomStreamingTargetResponse,
+            GetRoomStreamingTargetResponse, GetRoomStreamingTargetsResponse,
+            PostRoomStreamingTargetRequest, PostRoomStreamingTargetResponse,
         },
+        streaming_targets::{RoomAndStreamingTargetId, UpdateStreamingTargetKind},
     },
-    common::streaming::{RoomStreamingTarget, StreamingTarget, StreamingTargetKind},
-    core::{RoomId, StreamingKind},
+};
+use opentalk_types_common::{
+    rooms::RoomId,
+    streaming::{RoomStreamingTarget, StreamingKind, StreamingTarget, StreamingTargetKind},
 };
 use snafu::Report;
 

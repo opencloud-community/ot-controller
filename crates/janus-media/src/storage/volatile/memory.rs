@@ -5,12 +5,11 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use opentalk_signaling_core::SignalingRoomId;
-use opentalk_types::{
-    core::{ParticipantId, RoomId, Timestamp},
-    signaling::media::{
-        state::ForceMuteState, ParticipantMediaState, ParticipantSpeakingState, SpeakingState,
-    },
+use opentalk_types::signaling::media::{
+    state::ForceMuteState, ParticipantMediaState, ParticipantSpeakingState, SpeakingState,
 };
+use opentalk_types_common::{rooms::RoomId, time::Timestamp};
+use opentalk_types_signaling::ParticipantId;
 
 use crate::mcu::{McuId, MediaSessionKey, PublisherInfo};
 

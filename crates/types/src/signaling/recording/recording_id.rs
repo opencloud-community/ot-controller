@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use derive_more::{AsRef, Display, From, Into};
+use opentalk_types_signaling::ParticipantId;
 
-use crate::core::ParticipantId;
 #[allow(unused_imports)]
 use crate::imports::*;
 

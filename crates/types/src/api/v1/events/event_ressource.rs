@@ -3,16 +3,18 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::{TimeZone as _, Utc};
-
-use super::{EventInvitee, EventRoomInfo, EventType};
-#[allow(unused_imports)]
-use crate::imports::*;
-use crate::{
-    api::v1::users::PublicUserProfile,
-    common::{shared_folder::SharedFolder, streaming::RoomStreamingTarget},
-    core::{DateTimeTz, EventId, EventInviteStatus, RecurrencePattern, Timestamp},
+use opentalk_types_common::{
+    events::{invites::EventInviteStatus, EventId},
+    shared_folders::SharedFolder,
+    streaming::RoomStreamingTarget,
+    time::{DateTimeTz, RecurrencePattern, Timestamp},
     utils::ExampleData,
 };
+
+use super::{EventInvitee, EventRoomInfo, EventType};
+use crate::api::v1::users::PublicUserProfile;
+#[allow(unused_imports)]
+use crate::imports::*;
 
 /// Event Resource representation
 ///

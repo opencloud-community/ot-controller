@@ -19,12 +19,12 @@ use opentalk_db_storage::{
     tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId},
     users::User,
 };
-use opentalk_types::{
-    api::{
-        error::{ApiError, AuthenticationError},
-        v1::auth::{GetLoginResponse, OidcProvider, PostLoginRequestBody, PostLoginResponse},
-    },
-    core::{EventId, GroupName, RoomId, TariffStatus, TenantId},
+use opentalk_types::api::{
+    error::{ApiError, AuthenticationError},
+    v1::auth::{GetLoginResponse, OidcProvider, PostLoginRequestBody, PostLoginResponse},
+};
+use opentalk_types_common::{
+    events::EventId, rooms::RoomId, tariffs::TariffStatus, tenants::TenantId, users::GroupName,
 };
 
 use super::{events::EventPoliciesBuilderExt, rooms::RoomsPoliciesBuilderExt};

@@ -16,6 +16,7 @@ pub mod event;
 pub mod peer_state;
 pub mod state;
 
+use opentalk_types_common::{features::FeatureId, modules::ModuleId};
 pub use recording_id::RecordingId;
 pub use stream_error_reason::StreamErrorReason;
 pub use stream_kind::{StreamKind, StreamKindSecret};
@@ -31,3 +32,18 @@ pub const RECORD_FEATURE: &str = "record";
 
 /// The feature for allowing streaming of meetings
 pub const STREAM_FEATURE: &str = "stream";
+
+/// Get the id of the signaling module
+pub fn module_id() -> ModuleId {
+    NAMESPACE.parse().expect("valid module id")
+}
+
+/// Get the id of the record feature
+pub fn record_feature() -> FeatureId {
+    RECORD_FEATURE.parse().expect("valid feature id")
+}
+
+/// Get the id of the stream feature
+pub fn stream_feature() -> FeatureId {
+    STREAM_FEATURE.parse().expect("valid feature id")
+}

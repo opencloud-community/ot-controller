@@ -4,12 +4,11 @@
 
 //! Frontend data for `control` namespace
 
+use opentalk_types_common::time::Timestamp;
+use opentalk_types_signaling::{ParticipationKind, Role};
+
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{
-    core::{ParticipationKind, Timestamp},
-    signaling::Role,
-};
 
 /// The state of a participant in the `control` module.
 ///

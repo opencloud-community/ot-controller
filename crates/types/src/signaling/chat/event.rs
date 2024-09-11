@@ -4,8 +4,9 @@
 
 //! Signaling events for the `chat` namespace
 
+use opentalk_types_signaling::ParticipantId;
+
 use super::{MessageId, Scope};
-use crate::core::ParticipantId;
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -122,11 +123,11 @@ impl From<Error> for ChatEvent {
 
 #[cfg(test)]
 mod test {
+    use opentalk_types_common::users::GroupName;
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
     use super::*;
-    use crate::core::GroupName;
 
     #[test]
     fn global_serialize() {

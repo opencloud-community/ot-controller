@@ -6,8 +6,10 @@
 
 use std::collections::HashMap;
 
+use opentalk_types_common::{time::Timestamp, users::GroupName};
+use opentalk_types_signaling::ParticipantId;
+
 use super::{MessageId, Scope};
-use crate::core::{GroupName, ParticipantId, Timestamp};
 #[allow(unused_imports)]
 use crate::imports::*;
 

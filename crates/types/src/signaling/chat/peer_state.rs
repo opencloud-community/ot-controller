@@ -4,7 +4,8 @@
 
 //! Peer frontend data for `chat` namespace
 
-use crate::core::GroupName;
+use opentalk_types_common::users::GroupName;
+
 #[allow(unused_imports)]
 use crate::imports::*;
 

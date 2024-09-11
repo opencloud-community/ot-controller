@@ -2,9 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_types_common::{events::EventInfo, utils::ExampleData};
+
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{common::event::EventInfo, utils::ExampleData};
 
 /// The JSON body returned by the `/rooms/<room_id>/event` endpoint
 #[derive(Clone, Debug, PartialEq, Eq)]

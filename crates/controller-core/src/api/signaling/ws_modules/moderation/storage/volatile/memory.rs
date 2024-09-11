@@ -4,7 +4,8 @@
 
 use std::collections::{BTreeSet, HashMap, HashSet};
 
-use opentalk_types::core::{ParticipantId, RoomId, UserId};
+use opentalk_types_common::{rooms::RoomId, users::UserId};
+use opentalk_types_signaling::ParticipantId;
 
 #[derive(Debug, Clone, Default)]
 pub(super) struct MemoryModerationState {

@@ -28,10 +28,8 @@ use opentalk_db_storage::{
     tenants::{OidcTenantId, Tenant},
     users::User,
 };
-use opentalk_types::{
-    api::error::{ApiError, AuthenticationError},
-    core::InviteCodeId,
-};
+use opentalk_types::api::error::{ApiError, AuthenticationError};
+use opentalk_types_common::rooms::invite_codes::InviteCode;
 use snafu::Report;
 use tracing_futures::Instrument;
 use uuid::Uuid;
@@ -139,7 +137,7 @@ where
 
         enum AccessTokenOrInviteCode {
             AccessToken(AccessToken),
-            InviteCode(InviteCodeId),
+            InviteCode(InviteCode),
         }
 
         let access_token_or_invite_code = match auth.into_scheme() {

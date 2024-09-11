@@ -8,7 +8,7 @@ use opentalk_db_storage::{
     tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId},
     users::{NewUser, User},
 };
-use opentalk_types::core::TariffStatus;
+use opentalk_types_common::tariffs::TariffStatus;
 
 pub async fn make_user(
     conn: &mut DbConnection,

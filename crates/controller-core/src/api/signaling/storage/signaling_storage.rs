@@ -6,7 +6,8 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use opentalk_signaling_core::RunnerId;
-use opentalk_types::core::{ParticipantId, ResumptionToken, TicketToken};
+use opentalk_types_common::auth::{ResumptionToken, TicketToken};
+use opentalk_types_signaling::ParticipantId;
 use snafu::whatever;
 use tokio::time::sleep;
 

@@ -23,20 +23,24 @@ use futures::{stream::SelectAll, StreamExt};
 use kustos::Authz;
 use opentalk_database::Db;
 use opentalk_db_storage::{rooms::Room, users::User};
-use opentalk_types::{
-    common::tariff::{TariffModuleResource, TariffResource},
-    core::{BreakoutRoomId, ParticipantId, ParticipationKind, TariffId, Timestamp, UserId},
-    signaling::{
-        control::{
-            command::{ControlCommand, Join},
-            event::{ControlEvent, JoinSuccess},
-            room::{CreatorInfo, RoomInfo},
-            state::ControlState,
-            AssociatedParticipant, Reason, NAMESPACE,
-        },
-        ModuleData, NamespacedCommand, NamespacedEvent, Role,
+use opentalk_types::signaling::{
+    control::{
+        command::{ControlCommand, Join},
+        event::{ControlEvent, JoinSuccess},
+        module_id,
+        room::{CreatorInfo, RoomInfo},
+        state::ControlState,
+        AssociatedParticipant, Reason,
     },
+    ModuleData, NamespacedCommand, NamespacedEvent,
 };
+use opentalk_types_common::{
+    rooms::BreakoutRoomId,
+    tariffs::{TariffId, TariffModuleResource, TariffResource},
+    time::Timestamp,
+    users::UserId,
+};
+use opentalk_types_signaling::{ParticipantId, ParticipationKind, Role};
 use serde_json::Value;
 use snafu::{whatever, OptionExt, Report, ResultExt, Snafu};
 use tokio::{
@@ -418,15 +422,12 @@ where
             id: TariffId::nil(),
             name: "OpenTalkDefaultTariff".to_string(),
             quotas: BTreeMap::new(),
-            enabled_modules: BTreeSet::from([M::NAMESPACE.to_string()]),
+            enabled_modules: BTreeSet::from([M::module_id()]),
             disabled_features: BTreeSet::new(),
             modules: BTreeMap::from([(
-                M::NAMESPACE.to_string(),
+                M::module_id(),
                 TariffModuleResource {
-                    features: M::get_provided_features()
-                        .into_iter()
-                        .map(ToString::to_string)
-                        .collect(),
+                    features: M::get_provided_features(),
                 },
             )]),
         };
@@ -523,8 +524,8 @@ where
 
                     self.handle_module_requested_actions(ws_messages, exchange_publish, invalidate_data, events, exit).await;
                 }
-                Some((namespace, message)) = self.events.next() => {
-                    assert_eq!(namespace, M::NAMESPACE, "Invalid namespace on external event");
+                Some((module_id, message)) = self.events.next() => {
+                    assert_eq!(module_id, M::module_id(), "Invalid module id on external event");
 
                     if let Err(e) = self.module.on_event(ctx, Event::Ext(*message.downcast().expect("invalid ext type"))).await {
                         panic!("Error when handling external event: {}", snafu::Report::from_error(e))
@@ -703,7 +704,7 @@ where
                         id: TariffId::nil(),
                         name: "test".into(),
                         quotas: Default::default(),
-                        enabled_modules: BTreeSet::from([M::NAMESPACE.into()]),
+                        enabled_modules: BTreeSet::from([M::module_id()]),
                         disabled_features: Default::default(),
                         modules: Default::default(),
                     }
@@ -867,7 +868,7 @@ where
         message: control::exchange::Message,
     ) -> Result<(), SignalingModuleError> {
         let message = serde_json::to_string(&NamespacedCommand {
-            namespace: NAMESPACE,
+            module: module_id(),
             payload: message,
         })
         .context(SerdeJsonSnafu {
@@ -923,7 +924,7 @@ where
             message: "Failed to read incoming exchange message",
         })?;
 
-        if namespaced.namespace == NAMESPACE {
+        if namespaced.module == module_id() {
             let control_message =
                 serde_json::from_value(namespaced.payload).context(SerdeJsonSnafu {
                     message: "Failed to serialize",
@@ -933,7 +934,7 @@ where
                 .await?;
 
             Ok(())
-        } else if namespaced.namespace == M::NAMESPACE {
+        } else if namespaced.module == M::module_id() {
             let module_message =
                 serde_json::from_value(namespaced.payload).context(SerdeJsonSnafu {
                     message: "Failed to serialize",
@@ -946,15 +947,15 @@ where
             Ok(())
         } else {
             whatever!(
-                "Got exchange message with unknown namespace '{}'",
-                namespaced.namespace
+                "Got exchange message with unknown module id '{}'",
+                namespaced.module
             );
         }
     }
 
     async fn handle_module_requested_actions(
         &mut self,
-        ws_messages: Vec<NamespacedEvent<'_, M::Outgoing>>,
+        ws_messages: Vec<NamespacedEvent<M::Outgoing>>,
         exchange_publish: Vec<ExchangePublish>,
         invalidate_data: bool,
         events: SelectAll<AnyStream>,

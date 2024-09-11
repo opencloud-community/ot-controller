@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types::core::{BreakoutRoomId, RoomId};
+use opentalk_types_common::rooms::{BreakoutRoomId, RoomId};
 use serde::Serialize;
 
 /// Message sent to the recording service instructing it to record the given room

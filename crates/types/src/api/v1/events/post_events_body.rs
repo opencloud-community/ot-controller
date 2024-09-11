@@ -3,14 +3,15 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::{TimeZone as _, Utc};
+use opentalk_types_common::{
+    rooms::RoomPassword,
+    streaming::StreamingTarget,
+    time::{DateTimeTz, RecurrencePattern},
+    utils::ExampleData,
+};
 
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{
-    common::streaming::StreamingTarget,
-    core::{DateTimeTz, RecurrencePattern, RoomPassword},
-    utils::ExampleData,
-};
 
 /// Body of the `POST /events` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]

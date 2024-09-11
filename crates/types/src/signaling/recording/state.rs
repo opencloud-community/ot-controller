@@ -6,11 +6,12 @@
 
 use std::collections::BTreeMap;
 
+use opentalk_types_common::streaming::StreamingTargetId;
 use url::Url;
 
 use super::{StreamKindSecret, StreamStatus, StreamTarget, StreamTargetSecret};
 #[allow(unused_imports)]
-use crate::{core::StreamingTargetId, imports::*};
+use crate::imports::*;
 
 /// The state of the `recording` module.
 ///
@@ -133,13 +134,11 @@ impl SignalingModuleFrontendData for RecordingState {
 mod tests {
     use std::collections::BTreeMap;
 
+    use opentalk_types_common::streaming::StreamingTargetId;
     use pretty_assertions::assert_eq;
 
     use super::RecordingState;
-    use crate::{
-        core::StreamingTargetId,
-        signaling::recording::{StreamErrorReason, StreamKind, StreamStatus, StreamTarget},
-    };
+    use crate::signaling::recording::{StreamErrorReason, StreamKind, StreamStatus, StreamTarget};
 
     #[test]
     fn recording_state_de_serialize() {

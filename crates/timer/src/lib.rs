@@ -9,19 +9,15 @@ use opentalk_signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
-use opentalk_types::{
-    core::{ParticipantId, Timestamp},
-    signaling::{
-        timer::{
-            command::{self, Message},
-            event::{self, Error, StopKind, UpdatedReadyStatus},
-            ready_status::ReadyStatus,
-            status::TimerStatus,
-            Kind, TimerConfig, TimerId, NAMESPACE,
-        },
-        Role,
-    },
+use opentalk_types::signaling::timer::{
+    command::{self, Message},
+    event::{self, Error, StopKind, UpdatedReadyStatus},
+    ready_status::ReadyStatus,
+    status::TimerStatus,
+    Kind, TimerConfig, TimerId, NAMESPACE,
 };
+use opentalk_types_common::time::Timestamp;
+use opentalk_types_signaling::{ParticipantId, Role};
 use storage::TimerStorage;
 use tokio::time::sleep;
 use uuid::Uuid;
@@ -423,7 +419,7 @@ mod test {
 
     use chrono::{DateTime, Duration};
     use opentalk_test_util::assert_eq_json;
-    use opentalk_types::{core::Timestamp, signaling::timer::status::TimerStatus};
+    use opentalk_types::signaling::timer::status::TimerStatus;
 
     use super::*;
     use crate::Kind;

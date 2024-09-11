@@ -4,8 +4,9 @@
 
 //! Signaling events for the `breakout` namespace
 
+use opentalk_types_common::{rooms::BreakoutRoomId, time::Timestamp};
+
 use super::{AssociatedParticipantInOtherRoom, BreakoutRoom, ParticipantInOtherRoom};
-use crate::core::{BreakoutRoomId, Timestamp};
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -76,14 +77,12 @@ impl From<Error> for BreakoutEvent {
 
 #[cfg(test)]
 mod test {
+    use opentalk_types_signaling::{ParticipantId, ParticipationKind, Role};
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
     use super::*;
-    use crate::{
-        core::{BreakoutRoomId, ParticipantId, ParticipationKind, Timestamp},
-        signaling::{breakout::BreakoutRoom, Role},
-    };
+    use crate::signaling::breakout::BreakoutRoom;
 
     #[test]
     fn started() {
@@ -91,7 +90,7 @@ mod test {
             "message": "started",
             "rooms": [
                 {"id":"00000000-0000-0000-0000-000000000000", "name":"Room 1"},
-                {"id":"00000000-0000-0000-0000-000000000001","name":"Room 2"},
+                {"id":"00000000-0000-0000-0000-000000000001", "name":"Room 2"},
             ],
             "expires": null,
             "assignment": "00000000-0000-0000-0000-000000000000",

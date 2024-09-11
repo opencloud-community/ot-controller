@@ -4,13 +4,13 @@
 
 //! This module contains types that are used in OpenTalk API V1 users endpoints.
 
+use opentalk_types_common::{
+    events::EventId, rooms::RoomId, tariffs::TariffStatus, users::UserId, utils::ExampleData,
+};
+
 use super::assets::AssetResource;
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{
-    core::{EventId, RoomId, TariffStatus, UserId},
-    utils::ExampleData,
-};
 
 /// Public user details.
 ///
@@ -315,7 +315,7 @@ mod test {
     #[test]
     #[cfg(feature = "serde")]
     fn user_asset_resource() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        use crate::core::AssetId;
+        use opentalk_types_common::assets::AssetId;
 
         let asset_resource = UserAssetResource {
             asset: AssetResource {

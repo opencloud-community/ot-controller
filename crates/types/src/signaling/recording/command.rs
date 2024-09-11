@@ -6,8 +6,10 @@
 
 use std::collections::BTreeSet;
 
+use opentalk_types_common::streaming::StreamingTargetId;
+
 #[allow(unused_imports)]
-use crate::{core::StreamingTargetId, imports::*};
+use crate::imports::*;
 
 /// Commands for the `recording` namespace
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -82,11 +84,11 @@ pub struct StopStreaming {
 mod tests {
     use std::collections::BTreeSet;
 
+    use opentalk_types_common::streaming::StreamingTargetId;
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
     use super::RecordingCommand;
-    use crate::core::StreamingTargetId;
 
     #[test]
     fn simple_de_serialization_consent() {

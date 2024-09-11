@@ -13,7 +13,7 @@ use opentalk_database::Db;
 use opentalk_db_storage::invites::Invite;
 use opentalk_log::{debug, info};
 use opentalk_signaling_core::ExchangeHandle;
-use opentalk_types::core::Timestamp;
+use opentalk_types_common::time::Timestamp;
 use serde::{Deserialize, Serialize};
 use snafu::ResultExt;
 

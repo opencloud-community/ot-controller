@@ -4,9 +4,11 @@
 
 //! This module contains types that are used for OpenTalk API V1 event invite endpoints.
 
+use opentalk_types_common::events::invites::EventInviteStatus;
+
+use crate::api::v1::pagination::PagePaginationQuery;
 #[allow(unused)]
 use crate::imports::*;
-use crate::{api::v1::pagination::PagePaginationQuery, core::EventInviteStatus};
 
 /// The query passed to the `GET /events/{event_id}/invites` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]

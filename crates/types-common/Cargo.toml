@@ -1,0 +1,78 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+authors.workspace = true
+description = "Common types and traits for OpenTalk crates"
+documentation = "https://docs.rs/opentalk-types-common"
+edition = "2021"
+homepage.workspace = true
+license = "EUPL-1.2"
+name = "opentalk-types-common"
+publish = true
+repository.workspace = true
+version.workspace = true
+
+[features]
+actix = ["dep:actix-http", "dep:actix-web-httpauth", "dep:bytes", "serde"]
+backend = ["diesel", "rand", "redis", "serde", "utoipa"]
+clap = ["dep:clap"]
+diesel = ["dep:diesel", "dep:opentalk-diesel-newtype", "serde"]
+frontend = ["dep:opentalk-client-shared", "http"]
+kustos = ["dep:kustos-shared", "dep:opentalk-kustos-prefix"]
+rand = ["dep:rand", "uuid/v4"]
+redis = ["dep:redis", "dep:redis-args", "serde"]
+serde = [
+  "chrono-tz/serde",
+  "chrono/serde",
+  "dep:serde",
+  "dep:serde_with",
+  "url/serde",
+  "uuid/serde",
+]
+utoipa = ["dep:serde_json", "dep:utoipa", "serde"]
+
+[dependencies]
+actix-http = { workspace = true, optional = true }
+actix-web-httpauth = { workspace = true, optional = true }
+bytes = { workspace = true, optional = true }
+chrono.workspace = true
+chrono-tz.workspace = true
+clap = { workspace = true, optional = true }
+derive_more = { workspace = true, features = [
+  "as_ref",
+  "deref",
+  "display",
+  "from",
+  "from_str",
+  "into",
+] }
+diesel = { workspace = true, features = ["uuid"], optional = true }
+email_address.workspace = true
+http = { workspace = true, optional = true }
+itertools.workspace = true
+kustos-shared = { workspace = true, optional = true }
+opentalk-client-shared = { workspace = true, optional = true }
+opentalk-diesel-newtype = { workspace = true, optional = true }
+opentalk-kustos-prefix = { workspace = true, optional = true }
+rand = { workspace = true, optional = true }
+redis = { workspace = true, optional = true }
+redis-args = { workspace = true, optional = true }
+serde = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }
+serde_with = { workspace = true, optional = true }
+snafu.workspace = true
+strum.workspace = true
+url.workspace = true
+utoipa = { workspace = true, features = ["uuid"], optional = true }
+uuid.workspace = true
+
+[package.metadata.cargo-machete]
+ignored = [
+  # Required by `utoipa::ToSchema`, not detected by compiler
+  "serde_json",
+]
+
+[dev-dependencies]
+pretty_assertions.workspace = true

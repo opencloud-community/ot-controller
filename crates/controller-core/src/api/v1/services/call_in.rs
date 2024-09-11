@@ -11,14 +11,11 @@ use actix_web::{
 use opentalk_database::Db;
 use opentalk_db_storage::sip_configs::SipConfig;
 use opentalk_signaling_core::{Participant, VolatileStorage};
-use opentalk_types::{
-    api::{
-        error::ApiError,
-        v1::services::{ServiceStartResponse, StartCallInRequestBody},
-    },
-    common::features,
+use opentalk_types::api::{
+    error::ApiError,
+    v1::services::{ServiceStartResponse, StartCallInRequestBody},
 };
-use validator::Validate;
+use opentalk_types_common::features;
 
 use crate::{
     api::{
@@ -96,10 +93,7 @@ pub async fn start(
             .with_message("call-in is not available for encrypted rooms"));
     }
 
-    require_feature(&mut conn, &settings, room.created_by, features::CALL_IN).await?;
-
-    request.id.validate()?;
-    request.pin.validate()?;
+    require_feature(&mut conn, &settings, room.created_by, &features::call_in()).await?;
 
     if sip_config.password != request.pin {
         return Err(invalid_credentials_error());

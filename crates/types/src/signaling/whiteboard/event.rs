@@ -4,9 +4,9 @@
 
 //! Signaling events for the `whiteboard` namespace
 
+use opentalk_types_common::assets::AssetId;
 use url::Url;
 
-use crate::core::AssetId;
 #[allow(unused_imports)]
 use crate::imports::*;
 

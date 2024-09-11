@@ -13,12 +13,12 @@ use diesel::{
     sql_types,
 };
 use opentalk_database::{DatabaseError, DbConnection};
-use opentalk_types::{
-    common::{
-        event::{CallIn, EventInfo, MeetingDetails},
-        streaming::get_public_urls_from_streaming_targets,
-    },
-    core::{RoomId, UserId},
+use opentalk_types_common::{
+    call_in::CallInInfo,
+    events::{EventInfo, MeetingDetails},
+    rooms::RoomId,
+    streaming::get_public_urls_from_room_streaming_targets,
+    users::UserId,
 };
 use serde::{Deserialize, Serialize};
 
@@ -93,10 +93,10 @@ pub async fn build_event_info(
 
         let call_in = if let Some(call_in_tel) = call_in_tel {
             match SipConfig::get_by_room(conn, room_id).await {
-                Ok(sip_config) => Some(CallIn {
+                Ok(sip_config) => Some(CallInInfo {
                     tel: call_in_tel,
-                    id: sip_config.sip_id.to_string(),
-                    password: sip_config.password.to_string(),
+                    id: sip_config.sip_id,
+                    password: sip_config.password,
                 }),
                 Err(DatabaseError::NotFound) => None,
                 Err(e) => return Err(e),
@@ -106,7 +106,7 @@ pub async fn build_event_info(
         };
 
         let streaming_targets = get_room_streaming_targets(conn, room_id).await?;
-        let streaming_links = get_public_urls_from_streaming_targets(streaming_targets).await;
+        let streaming_links = get_public_urls_from_room_streaming_targets(streaming_targets).await;
 
         EventInfo::from(EventAndEncryption(event, e2e_encrytion)).with_meeting_details(
             MeetingDetails {

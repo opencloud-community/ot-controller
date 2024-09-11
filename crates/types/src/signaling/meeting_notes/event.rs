@@ -4,7 +4,8 @@
 
 //! Types related to signaling events in the `meeting-notes` namespace
 
-use crate::core::AssetId;
+use opentalk_types_common::assets::AssetId;
+
 #[allow(unused_imports)]
 use crate::imports::*;
 

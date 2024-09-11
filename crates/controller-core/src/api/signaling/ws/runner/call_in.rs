@@ -9,7 +9,7 @@ use std::{convert::TryFrom, sync::Arc};
 use opentalk_controller_settings as settings;
 use opentalk_database::Db;
 use opentalk_db_storage::users::User;
-use opentalk_types::core::TenantId;
+use opentalk_types_common::tenants::TenantId;
 use phonenumber::PhoneNumber;
 
 use crate::api::util::parse_phone_number;

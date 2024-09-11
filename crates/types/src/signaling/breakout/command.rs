@@ -6,7 +6,8 @@
 
 use std::time::Duration;
 
-use crate::core::ParticipantId;
+use opentalk_types_signaling::ParticipantId;
+
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -61,7 +62,7 @@ mod test {
     use serde_json::json;
 
     use super::*;
-    use crate::{core::ParticipantId, signaling::breakout::command::RoomParameter};
+    use crate::signaling::breakout::command::RoomParameter;
 
     #[test]
     fn breakout_start() {

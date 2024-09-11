@@ -2,8 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_types_signaling::ParticipantId;
+
 use super::SpeakingState;
-use crate::core::ParticipantId;
 #[allow(unused_imports)]
 use crate::imports::*;
 

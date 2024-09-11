@@ -9,13 +9,13 @@ use diesel::{
 };
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection, RunQueryDsl};
 use opentalk_database::{DbConnection, Paginate, Result};
-use opentalk_types::{
-    api::v1::{
-        assets::AssetResource,
-        order::{AssetSorting, Ordering, SortingQuery},
-        users::UserAssetResource,
-    },
-    core::{AssetId, EventId, RoomId, TenantId, UserId},
+use opentalk_types::api::v1::{
+    assets::AssetResource,
+    order::{AssetSorting, Ordering, SortingQuery},
+    users::UserAssetResource,
+};
+use opentalk_types_common::{
+    assets::AssetId, events::EventId, rooms::RoomId, tenants::TenantId, users::UserId,
 };
 
 use crate::{

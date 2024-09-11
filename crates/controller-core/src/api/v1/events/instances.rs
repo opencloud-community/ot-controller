@@ -18,21 +18,21 @@ use opentalk_db_storage::{
     users::User,
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
-use opentalk_types::{
-    api::{
-        error::ApiError,
-        v1::{
-            events::{
-                EventAndInstanceId, EventInstance, EventInstancePath, EventInstanceQuery,
-                EventRoomInfo, EventStatus, EventType, GetEventInstanceResponseBody,
-                GetEventInstancesCursorData, GetEventInstancesQuery, GetEventInstancesResponseBody,
-                InstanceId, PatchEventInstanceBody,
-            },
-            Cursor,
+use opentalk_types::api::{
+    error::ApiError,
+    v1::{
+        events::{
+            EventAndInstanceId, EventInstance, EventInstancePath, EventInstanceQuery,
+            EventRoomInfo, EventStatus, EventType, GetEventInstanceResponseBody,
+            GetEventInstancesCursorData, GetEventInstancesQuery, GetEventInstancesResponseBody,
+            InstanceId, PatchEventInstanceBody,
         },
+        Cursor,
     },
-    common::shared_folder::SharedFolder,
-    core::{EventId, EventInviteStatus},
+};
+use opentalk_types_common::{
+    events::{invites::EventInviteStatus, EventId},
+    shared_folders::SharedFolder,
 };
 use rrule::RRuleSet;
 use snafu::Report;
@@ -750,9 +750,12 @@ mod tests {
 
     use chrono_tz::Tz;
     use opentalk_test_util::assert_eq_json;
-    use opentalk_types::{
-        api::v1::users::PublicUserProfile,
-        core::{InviteRole, RoomId, TimeZone, Timestamp, UserId},
+    use opentalk_types::api::v1::users::PublicUserProfile;
+    use opentalk_types_common::{
+        events::invites::InviteRole,
+        rooms::RoomId,
+        time::{TimeZone, Timestamp},
+        users::UserId,
     };
 
     use super::*;

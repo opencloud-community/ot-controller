@@ -2,7 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::core::{InviteCodeId, RoomId};
+use opentalk_types_common::rooms::{invite_codes::InviteCode, RoomId};
+
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -15,5 +16,5 @@ pub struct RoomIdAndInviteCode {
     pub room_id: RoomId,
 
     /// The invite code id
-    pub invite_code: InviteCodeId,
+    pub invite_code: InviteCode,
 }

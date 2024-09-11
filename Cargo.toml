@@ -43,6 +43,8 @@ opentalk-signaling-core = { path = "crates/signaling-core", version = "0.0.0-dev
 opentalk-test-util = { path = "crates/test-util", version = "0.0.0-dev" }
 opentalk-timer = { path = "crates/timer", version = "0.0.0-dev" }
 opentalk-types = { path = "crates/types", version = "0.0.0-dev" }
+opentalk-types-common = { path = "crates/types-common", version = "0.0.0-dev" }
+opentalk-types-signaling = { path = "crates/types-signaling", version = "0.0.0-dev" }
 opentalk-whiteboard = { path = "crates/whiteboard", version = "0.0.0-dev" }
 
 actix-http = "3"

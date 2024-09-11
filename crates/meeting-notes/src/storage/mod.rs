@@ -22,7 +22,7 @@ pub enum InitState {
 #[cfg(test)]
 mod test_common {
     use opentalk_signaling_core::SignalingRoomId;
-    use opentalk_types::core::ParticipantId;
+    use opentalk_types_signaling::ParticipantId;
 
     use super::{InitState, MeetingNotesStorage};
     use crate::SessionInfo;

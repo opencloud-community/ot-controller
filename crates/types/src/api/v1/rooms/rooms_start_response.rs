@@ -2,12 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-#[allow(unused_imports)]
-use crate::imports::*;
-use crate::{
-    core::{ResumptionToken, TicketToken},
+use opentalk_types_common::{
+    auth::{ResumptionToken, TicketToken},
     utils::ExampleData,
 };
+
+#[allow(unused_imports)]
+use crate::imports::*;
 
 /// The JSON body returned from the start endpoints supporting session resumption
 #[derive(Clone, Debug)]

@@ -5,7 +5,7 @@ use std::sync::{Arc, OnceLock};
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage};
-use opentalk_types::common::shared_folder::SharedFolder;
+use opentalk_types_common::shared_folders::SharedFolder;
 use parking_lot::RwLock;
 
 use super::memory::MemorySharedFolderState;

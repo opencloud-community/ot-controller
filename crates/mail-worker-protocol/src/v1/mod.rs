@@ -3,9 +3,8 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::{TimeZone, Utc};
-use opentalk_types::{
-    common::{shared_folder::SharedFolder, streaming::RoomStreamingTarget},
-    core::RoomPassword,
+use opentalk_types_common::{
+    rooms::RoomPassword, shared_folders::SharedFolder, streaming::RoomStreamingTarget,
     utils::ExampleData,
 };
 use serde::{Deserialize, Serialize};
@@ -370,7 +369,7 @@ impl From<ExternalEventUninvite> for Message {
 #[cfg(test)]
 mod test {
     use chrono::FixedOffset;
-    use opentalk_types::common::shared_folder::SharedFolderAccess;
+    use opentalk_types_common::shared_folders::SharedFolderAccess;
     use pretty_assertions::assert_eq;
 
     use super::*;

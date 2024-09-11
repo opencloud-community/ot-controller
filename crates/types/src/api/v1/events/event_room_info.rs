@@ -2,13 +2,14 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_types_common::{
+    rooms::{RoomId, RoomPassword},
+    utils::ExampleData,
+};
+
 use super::CallInInfo;
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{
-    core::{RoomId, RoomPassword},
-    utils::ExampleData,
-};
 
 /// All information about a room in which an event takes place
 #[derive(Debug, Clone, PartialEq, Eq)]

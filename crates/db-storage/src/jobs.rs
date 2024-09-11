@@ -8,7 +8,7 @@ use diesel::{ExpressionMethods, Identifiable, Insertable, QueryDsl, Queryable};
 use diesel_async::RunQueryDsl;
 use opentalk_database::{DbConnection, Result};
 use opentalk_diesel_newtype::DieselNewtype;
-use opentalk_types::sql_enum;
+use opentalk_types_common::sql_enum;
 use serde::{Deserialize, Serialize};
 
 use crate::schema::{job_execution_logs, job_executions, jobs};

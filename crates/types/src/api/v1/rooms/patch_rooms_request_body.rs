@@ -2,7 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::core::RoomPassword;
+use opentalk_types_common::rooms::RoomPassword;
+
 #[allow(unused_imports)]
 use crate::imports::*;
 

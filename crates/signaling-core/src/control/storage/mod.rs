@@ -37,10 +37,12 @@ mod test_common {
         events::{Event, EventSerialId},
         tariffs::Tariff,
     };
-    use opentalk_types::{
-        core::{EventId, ParticipantId, RoomId, TariffId, TenantId, Timestamp, UserId},
-        signaling::{control::room::CreatorInfo, Role},
+    use opentalk_types::signaling::control::room::CreatorInfo;
+    use opentalk_types_common::{
+        events::EventId, rooms::RoomId, tariffs::TariffId, tenants::TenantId, time::Timestamp,
+        users::UserId,
     };
+    use opentalk_types_signaling::{ParticipantId, Role};
     use pretty_assertions::assert_eq;
     use serde::{Deserialize, Serialize};
 

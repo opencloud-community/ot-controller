@@ -5,10 +5,7 @@
 use opentalk_signaling_core::{
     control, DestroyContext, ExchangeBinding, ExchangePublish, ModuleContext, SignalingModule,
 };
-use opentalk_types::{
-    core::Timestamp,
-    signaling::{NamespacedCommand, NamespacedEvent},
-};
+use opentalk_types::signaling::{NamespacedCommand, NamespacedEvent};
 
 mod actor;
 mod http;
@@ -46,7 +43,7 @@ where
         self.exchange_publish_any(
             routing_key,
             NamespacedEvent {
-                namespace: control::NAMESPACE,
+                module: control::module_id(),
                 timestamp: self.timestamp(),
                 payload: message,
             },

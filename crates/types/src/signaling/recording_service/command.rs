@@ -6,7 +6,8 @@
 
 use std::collections::BTreeSet;
 
-use crate::core::StreamingTargetId;
+use opentalk_types_common::streaming::StreamingTargetId;
+
 #[allow(unused_imports)]
 use crate::imports::*;
 

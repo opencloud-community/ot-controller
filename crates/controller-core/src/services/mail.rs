@@ -19,9 +19,8 @@ use opentalk_db_storage::{
     users::User,
 };
 use opentalk_mail_worker_protocol::*;
-use opentalk_types::{
-    common::{features, shared_folder::SharedFolder, streaming::RoomStreamingTarget},
-    core::UserId,
+use opentalk_types_common::{
+    features, shared_folders::SharedFolder, streaming::RoomStreamingTarget, users::UserId,
 };
 use snafu::ResultExt;
 use tokio::sync::Mutex;
@@ -88,8 +87,8 @@ fn to_event(
 
     let call_in_feature_is_enabled = !settings
         .defaults
-        .disabled_features()
-        .contains(features::CALL_IN);
+        .disabled_features
+        .contains(&features::call_in());
 
     let mut call_in = None;
 

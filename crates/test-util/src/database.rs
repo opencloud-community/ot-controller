@@ -14,7 +14,12 @@ use opentalk_db_storage::{
     tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId},
     users::{NewUser, User},
 };
-use opentalk_types::core::{GroupName, RoomId, TariffStatus, TenantId, UserId};
+use opentalk_types_common::{
+    rooms::RoomId,
+    tariffs::TariffStatus,
+    tenants::TenantId,
+    users::{GroupName, UserId},
+};
 use snafu::{ResultExt, Whatever};
 
 /// Contains the [`Db`] as well as information about the test database

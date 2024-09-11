@@ -19,13 +19,11 @@ use either::Either;
 use openidconnect::AccessToken;
 use opentalk_database::{Db, OptionalExt};
 use opentalk_db_storage::{invites::Invite, users::User};
-use opentalk_types::{
-    api::{
-        error::{ApiError, AuthenticationError},
-        v1::turn::{GetTurnServersResponse, IceServer, Stun, Turn},
-    },
-    core::InviteCodeId,
+use opentalk_types::api::{
+    error::{ApiError, AuthenticationError},
+    v1::turn::{GetTurnServersResponse, IceServer, Stun, Turn},
 };
+use opentalk_types_common::rooms::invite_codes::InviteCode;
 use rand::{
     distributions::{Distribution, Uniform},
     prelude::SliceRandom,
@@ -228,7 +226,7 @@ async fn check_access_token_or_invite(
 
             let mut conn = db.get_conn().await?;
 
-            match Invite::get(&mut conn, InviteCodeId::from(invite_uuid))
+            match Invite::get(&mut conn, InviteCode::from(invite_uuid))
                 .await
                 .optional()?
             {

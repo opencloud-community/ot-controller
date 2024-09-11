@@ -9,7 +9,7 @@ use opentalk_signaling_core::{
     control::storage::{ControlStorageParticipantAttributesRaw, ControlStorageParticipantSet},
     SignalingModuleError,
 };
-use opentalk_types::core::RoomId;
+use opentalk_types_common::rooms::RoomId;
 
 use super::BreakoutConfig;
 

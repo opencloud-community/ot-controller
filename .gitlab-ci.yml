@@ -340,6 +340,55 @@ check:opentalk-types:
   script:
     - cargo check --package opentalk-types $EXTRA_ARGS --features=$FEATURES
 
+check:opentalk-types-common:
+  stage: check
+  needs: []
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  # Ensures that the `types-common` crate can be built with each relevant feature individually
+  variables:
+    RUSTFLAGS: -D warnings
+  parallel:
+    matrix:
+      - FEATURES:
+          [
+          '',
+            backend,
+            clap,
+            diesel,
+            frontend,
+            rand,
+            redis,
+            serde,
+            utoipa,
+          ]
+        EXTRA_ARGS: ['', --no-default-features]
+  script:
+    - cargo check --package opentalk-types-common $EXTRA_ARGS --features=$FEATURES
+
+check:opentalk-types-signaling:
+  stage: check
+  needs: []
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  # Ensures that the `types-signaling` crate can be built with each relevant feature individually
+  variables:
+    RUSTFLAGS: -D warnings
+  parallel:
+    matrix:
+      - FEATURES:
+          [
+          '',
+            backend,
+            frontend,
+            rand,
+            redis,
+            serde,
+          ]
+        EXTRA_ARGS: ['', --no-default-features]
+  script:
+    - cargo check --package opentalk-types-signaling $EXTRA_ARGS --features=$FEATURES
+
 check:er-diagram:
   stage: check
   needs:

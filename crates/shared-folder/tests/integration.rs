@@ -16,14 +16,11 @@ use opentalk_signaling_core::{
     VolatileStorage,
 };
 use opentalk_test_util::{TestContext, ROOM_ID, USER_1, USER_2};
-use opentalk_types::{
-    common::shared_folder::SharedFolder,
-    core::{EventId, RoomId, UserId},
-    signaling::{
-        control::event::{ControlEvent, JoinSuccess},
-        Role,
-    },
+use opentalk_types::signaling::control::event::{ControlEvent, JoinSuccess};
+use opentalk_types_common::{
+    events::EventId, rooms::RoomId, shared_folders::SharedFolder, users::UserId,
 };
+use opentalk_types_signaling::Role;
 use pretty_assertions::assert_eq;
 use serial_test::serial;
 

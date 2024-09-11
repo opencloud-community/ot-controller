@@ -1,0 +1,40 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+authors.workspace = true
+description = "Signaling types and traits for OpenTalk"
+documentation = "https://docs.rs/opentalk-types-signaling"
+edition = "2021"
+homepage.workspace = true
+license = "EUPL-1.2"
+name = "opentalk-types-signaling"
+publish = true
+repository.workspace = true
+version.workspace = true
+
+[features]
+backend = ["opentalk-types-common/backend", "rand", "redis", "serde"]
+frontend = ["opentalk-types-common/frontend", "serde"]
+rand = ["opentalk-types-common/rand", "uuid/v4"]
+redis = ["dep:redis", "dep:redis-args", "opentalk-types-common/redis", "serde"]
+serde = ["dep:serde", "opentalk-types-common/serde", "uuid/serde"]
+
+[dependencies]
+derive_more = { workspace = true, features = [
+  "as_ref",
+  "display",
+  "from",
+  "from_str",
+  "into",
+] }
+opentalk-types-common.workspace = true
+redis = { workspace = true, optional = true }
+redis-args = { workspace = true, optional = true }
+serde = { workspace = true, optional = true }
+strum.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+pretty_assertions.workspace = true

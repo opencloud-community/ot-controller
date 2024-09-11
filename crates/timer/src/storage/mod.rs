@@ -2,10 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types::{
-    core::{ParticipantId, Timestamp},
-    signaling::timer::{Kind, TimerId},
-};
+use opentalk_types::signaling::timer::{Kind, TimerId};
+use opentalk_types_common::time::Timestamp;
+use opentalk_types_signaling::ParticipantId;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 
@@ -45,10 +44,9 @@ pub(crate) struct Timer {
 #[cfg(test)]
 mod test_common {
     use opentalk_signaling_core::SignalingRoomId;
-    use opentalk_types::{
-        core::{ParticipantId, Timestamp},
-        signaling::timer::{ready_status::ReadyStatus, Kind, TimerId},
-    };
+    use opentalk_types::signaling::timer::{ready_status::ReadyStatus, Kind, TimerId};
+    use opentalk_types_common::time::Timestamp;
+    use opentalk_types_signaling::ParticipantId;
     use pretty_assertions::assert_eq;
 
     use super::{Timer, TimerStorage};

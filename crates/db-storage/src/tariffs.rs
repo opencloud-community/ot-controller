@@ -9,12 +9,13 @@ use chrono::{DateTime, Utc};
 use derive_more::{AsRef, Display, From, FromStr, Into};
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
-use opentalk_controller_settings::{DEFAULT_NAMESPACE, NAMESPACE_SEPARATOR};
 use opentalk_database::{DbConnection, Result};
 use opentalk_diesel_newtype::DieselNewtype;
-use opentalk_types::{
-    common::tariff::{QuotaType, TariffModuleResource, TariffResource},
-    core::{TariffId, UserId},
+use opentalk_types_common::{
+    features::{FeatureId, ModuleFeatureId},
+    modules::ModuleId,
+    tariffs::{QuotaType, TariffId, TariffModuleResource, TariffResource},
+    users::UserId,
 };
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
@@ -66,8 +67,8 @@ pub struct Tariff {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub quotas: Jsonb<BTreeMap<QuotaType, u64>>,
-    pub disabled_modules: Vec<Option<String>>,
-    pub disabled_features: Vec<Option<String>>,
+    pub disabled_modules: Vec<Option<ModuleId>>,
+    pub disabled_features: Vec<Option<ModuleFeatureId>>,
 }
 
 impl Tariff {
@@ -75,16 +76,17 @@ impl Tariff {
         self.quotas.0.get(quota).copied()
     }
 
-    pub fn disabled_modules(&self) -> BTreeSet<String> {
+    pub fn disabled_modules(&self) -> BTreeSet<ModuleId> {
         self.disabled_modules.iter().flatten().cloned().collect()
     }
 
-    pub fn disabled_features(&self) -> BTreeSet<String> {
+    pub fn disabled_features(&self) -> BTreeSet<ModuleFeatureId> {
         self.disabled_features.iter().flatten().cloned().collect()
     }
 
-    pub fn is_feature_disabled(&self, feature: &str) -> bool {
-        self.disabled_features.contains(&Some(feature.to_string()))
+    pub fn is_feature_disabled(&self, module_feature: &ModuleFeatureId) -> bool {
+        self.disabled_features
+            .contains(&Some(module_feature.clone()))
     }
 
     pub async fn get(conn: &mut DbConnection, id: TariffId) -> Result<Self> {
@@ -141,16 +143,11 @@ impl Tariff {
         Ok(tariff)
     }
 
-    pub fn to_tariff_resource<T1, T2, T3>(
+    pub fn to_tariff_resource(
         &self,
-        disabled_features: impl IntoIterator<Item = T1>,
-        module_features: Vec<(T2, impl IntoIterator<Item = T3>)>,
-    ) -> TariffResource
-    where
-        T1: Into<String>,
-        T2: Into<String>,
-        T3: Into<String>,
-    {
+        disabled_features: impl IntoIterator<Item = ModuleFeatureId>,
+        module_features: BTreeMap<ModuleId, impl IntoIterator<Item = FeatureId>>,
+    ) -> TariffResource {
         let disabled_modules = self.disabled_modules();
 
         let disabled_features: BTreeSet<_> = BTreeSet::from_iter(
@@ -159,56 +156,35 @@ impl Tariff {
                 .chain(disabled_features.into_iter().map(Into::into)),
         );
 
-        let mut enabled_module_names = BTreeSet::<String>::new();
-        let mut modules = BTreeMap::<String, TariffModuleResource>::new();
+        let mut enabled_modules = BTreeSet::<ModuleId>::new();
+        let mut modules = BTreeMap::<ModuleId, TariffModuleResource>::new();
 
         module_features
             .into_iter()
-            .for_each(|(module_name, feature_name)| {
-                let module_name = module_name.into();
-                if !disabled_modules.contains(module_name.as_str()) {
-                    let features = BTreeSet::from_iter(
-                        feature_name.into_iter().map(Into::into).filter(|feature| {
-                            !disabled_features.contains(
-                                format!("{module_name}{NAMESPACE_SEPARATOR}{feature}").as_str(),
-                            )
-                        }),
-                    );
+            .for_each(|(module_id, feature_id)| {
+                if !disabled_modules.contains(&module_id) {
+                    let features: BTreeSet<FeatureId> =
+                        BTreeSet::from_iter(feature_id.into_iter().filter(|feature| {
+                            !disabled_features.contains(&ModuleFeatureId {
+                                module: module_id.clone(),
+                                feature: feature.clone(),
+                            })
+                        }));
                     let module_resource = TariffModuleResource { features };
                     // The list of enabled module names is deprecated and provided only for backwards compatibility.
                     // It is replaced by a list of modules including their features.
-                    enabled_module_names.insert(module_name.clone());
-                    modules.insert(module_name, module_resource);
+                    enabled_modules.insert(module_id.clone());
+                    modules.insert(module_id, module_resource);
                 }
             });
-
-        // The list of disabled feature names is deprecated and provided only for backwards compatibility. Also for backwards
-        // compatibility, all features from the default namespace are listed twice in this deprecated field (with and without
-        // the namespace prefix).
-        let disabled_feature_names = disabled_features
-            .iter()
-            .flat_map(|item| {
-                match item
-                    .strip_prefix(format!("{DEFAULT_NAMESPACE}{NAMESPACE_SEPARATOR}").as_str())
-                {
-                    Some(stripped_item) => {
-                        vec![item.to_owned(), stripped_item.to_owned()]
-                    }
-                    None => {
-                        vec![item.to_owned()]
-                    }
-                }
-                .into_iter()
-            })
-            .collect();
 
         // The 'enabled_modules' and 'disabled_features' fields are deprecated.
         TariffResource {
             id: self.id,
             name: self.name.clone(),
             quotas: self.quotas.0.clone(),
-            enabled_modules: enabled_module_names,
-            disabled_features: disabled_feature_names,
+            enabled_modules,
+            disabled_features,
             modules,
         }
     }
@@ -219,8 +195,8 @@ impl Tariff {
 pub struct NewTariff {
     pub name: String,
     pub quotas: Jsonb<BTreeMap<QuotaType, u64>>,
-    pub disabled_modules: Vec<String>,
-    pub disabled_features: Vec<String>,
+    pub disabled_modules: Vec<ModuleId>,
+    pub disabled_features: Vec<ModuleFeatureId>,
 }
 
 impl NewTariff {
@@ -238,8 +214,8 @@ pub struct UpdateTariff {
     pub name: Option<String>,
     pub updated_at: DateTime<Utc>,
     pub quotas: Option<Jsonb<BTreeMap<QuotaType, u64>>>,
-    pub disabled_modules: Option<Vec<String>>,
-    pub disabled_features: Option<Vec<String>>,
+    pub disabled_modules: Option<Vec<ModuleId>>,
+    pub disabled_features: Option<Vec<ModuleFeatureId>>,
 }
 
 impl UpdateTariff {
@@ -315,23 +291,33 @@ mod test {
             updated_at: Default::default(),
             quotas: Default::default(),
             disabled_modules: vec![
-                Some("whiteboard".to_string()),
-                Some("timer".to_string()),
-                Some("media".to_string()),
-                Some("polls".to_string()),
+                Some("whiteboard".parse().expect("valid module id")),
+                Some("timer".parse().expect("valid module id")),
+                Some("media".parse().expect("valid module id")),
+                Some("polls".parse().expect("valid module id")),
             ],
-            disabled_features: vec![Some("chat::chat_feature_1".to_string())],
+            disabled_features: vec![Some(
+                "chat::chat_feature_1"
+                    .parse()
+                    .expect("valid module feature id"),
+            )],
         };
 
-        let module_features = Vec::from([
+        let module_features = BTreeMap::from([
             (
-                "chat".to_owned(),
-                BTreeSet::from(["chat_feature_1".to_owned(), "chat_feature_2".to_owned()]),
+                "chat".parse().expect("valid module id"),
+                BTreeSet::from([
+                    "chat_feature_1".parse().expect("valid feature id"),
+                    "chat_feature_2".parse().expect("valid feature id"),
+                ]),
             ),
-            ("media".to_owned(), BTreeSet::new()),
-            ("polls".to_owned(), BTreeSet::new()),
-            ("whiteboard".to_owned(), BTreeSet::new()),
-            ("timer".to_owned(), BTreeSet::new()),
+            ("media".parse().expect("valid moudle id"), BTreeSet::new()),
+            ("polls".parse().expect("valid module id"), BTreeSet::new()),
+            (
+                "whiteboard".parse().expect("valid module id"),
+                BTreeSet::new(),
+            ),
+            ("timer".parse().expect("valid module id"), BTreeSet::new()),
         ]);
 
         let expected = json!({
@@ -347,9 +333,10 @@ mod test {
             },
         });
 
-        let actual =
-            serde_json::to_value(tariff.to_tariff_resource(Vec::<String>::new(), module_features))
-                .unwrap();
+        let actual = serde_json::to_value(
+            tariff.to_tariff_resource(BTreeSet::<ModuleFeatureId>::new(), module_features),
+        )
+        .unwrap();
 
         assert_eq!(actual, expected);
     }

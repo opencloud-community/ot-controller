@@ -8,7 +8,7 @@ use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use opentalk_database::{DbConnection, Result};
 use opentalk_diesel_newtype::DieselNewtype;
-use opentalk_types::core::{TenantId, UserId};
+use opentalk_types_common::{tenants::TenantId, users::UserId};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 

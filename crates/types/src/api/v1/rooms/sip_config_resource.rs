@@ -4,12 +4,14 @@
 
 //! This module contains types that are used for OpenTalk API V1 sip config endpoints.
 
-#[allow(unused_imports)]
-use crate::imports::*;
-use crate::{
-    core::{CallInId, CallInPassword, RoomId},
+use opentalk_types_common::{
+    call_in::{CallInId, CallInPassword},
+    rooms::RoomId,
     utils::ExampleData,
 };
+
+#[allow(unused_imports)]
+use crate::imports::*;
 
 /// Response for the `GET /rooms/{room_id}/sip` endpoint
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -54,7 +56,6 @@ pub struct PutSipConfig {
     /// creation, this will be set to a randomly generated number.
     #[cfg_attr(
         feature = "serde",
-        validate(nested),
         serde(default, skip_serializing_if = "Option::is_none")
     )]
     // Field is non-required already, utoipa adds a `nullable: true` entry

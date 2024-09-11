@@ -4,7 +4,8 @@
 
 //! This module contains types that are used for OpenTalk API V1 invites endpoints.
 
-use crate::core::RoomId;
+use opentalk_types_common::rooms::RoomId;
+
 #[allow(unused_imports)]
 use crate::imports::*;
 

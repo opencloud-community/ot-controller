@@ -9,7 +9,7 @@ use std::{
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, VolatileStaticMemoryStorage};
-use opentalk_types::core::RoomId;
+use opentalk_types_common::rooms::RoomId;
 use parking_lot::RwLock;
 
 use super::memory::MemoryBreakoutState;

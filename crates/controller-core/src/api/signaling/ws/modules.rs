@@ -2,24 +2,28 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::{any::Any, collections::HashMap, marker::PhantomData, sync::Arc};
+use std::{
+    any::Any,
+    collections::{BTreeMap, BTreeSet},
+    marker::PhantomData,
+    sync::Arc,
+};
 
 use actix_http::ws::{CloseCode, Message};
 use futures::stream::SelectAll;
 use opentalk_signaling_core::{AnyStream, Event, InitContext, SignalingMetrics, VolatileStorage};
-use opentalk_types::{
-    core::ParticipantId,
-    signaling::{
-        control::{state::ControlState, Participant},
-        ModuleData, Role,
-    },
+use opentalk_types::signaling::{
+    control::{state::ControlState, Participant},
+    ModuleData,
 };
+use opentalk_types_common::{features::FeatureId, modules::ModuleId, time::Timestamp};
+use opentalk_types_signaling::{ParticipantId, Role};
 use serde_json::Value;
 use snafu::{Report, ResultExt, Snafu};
 
 use crate::{
     api::signaling::ws::{
-        runner::Builder, DestroyContext, ExchangePublish, ModuleContext, SignalingModule, Timestamp,
+        runner::Builder, DestroyContext, ExchangePublish, ModuleContext, SignalingModule,
     },
     Result,
 };
@@ -30,12 +34,12 @@ pub struct NoSuchModuleError;
 
 #[derive(Default)]
 pub(super) struct Modules {
-    modules: HashMap<&'static str, Box<dyn ModuleCaller>>,
-    module_features: HashMap<&'static str, Vec<&'static str>>,
+    modules: BTreeMap<ModuleId, Box<dyn ModuleCaller>>,
+    module_features: BTreeMap<ModuleId, BTreeSet<FeatureId>>,
 }
 
 impl Modules {
-    pub fn get_module_features(&self) -> HashMap<&'static str, Vec<&'static str>> {
+    pub fn get_module_features(&self) -> BTreeMap<ModuleId, BTreeSet<FeatureId>> {
         self.module_features.clone()
     }
 
@@ -46,15 +50,15 @@ impl Modules {
         log::debug!("Registering module {}", M::NAMESPACE);
 
         self.modules
-            .insert(M::NAMESPACE, Box::new(ModuleCallerImpl { module }));
+            .insert(M::module_id(), Box::new(ModuleCallerImpl { module }));
         self.module_features
-            .insert(M::NAMESPACE, M::get_provided_features());
+            .insert(M::module_id(), M::get_provided_features());
     }
 
     pub async fn on_event_targeted(
         &mut self,
         ctx: DynEventCtx<'_>,
-        module: &str,
+        module: &ModuleId,
         dyn_event: DynTargetedEvent,
     ) -> Result<(), NoSuchModuleError> {
         let module = self.modules.get_mut(module).ok_or(NoSuchModuleError)?;
@@ -92,7 +96,7 @@ impl Modules {
     }
 
     pub async fn destroy(&mut self, ctx: DestroyContext<'_>) {
-        for (namespace, module) in self.modules.drain() {
+        while let Some((namespace, module)) = self.modules.pop_first() {
             log::debug!("Destroying module {}", namespace);
 
             module
@@ -396,9 +400,9 @@ pub trait ModuleBuilder: Send + Sync {
 
     fn clone_boxed(&self) -> Box<dyn ModuleBuilder>;
 
-    fn namespace(&self) -> &'static str;
+    fn module_id(&self) -> ModuleId;
 
-    fn provided_features(&self) -> Vec<&'static str>;
+    fn provided_features(&self) -> BTreeSet<FeatureId>;
 }
 
 pub struct ModuleBuilderImpl<M>
@@ -448,11 +452,11 @@ where
         })
     }
 
-    fn namespace(&self) -> &'static str {
-        M::NAMESPACE
+    fn module_id(&self) -> ModuleId {
+        M::module_id()
     }
 
-    fn provided_features(&self) -> Vec<&'static str> {
+    fn provided_features(&self) -> BTreeSet<FeatureId> {
         M::get_provided_features()
     }
 }

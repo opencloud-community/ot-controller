@@ -28,21 +28,28 @@ use opentalk_db_storage::{
     users::User,
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
-use opentalk_types::{
-    api::{
-        error::ApiError,
-        v1::{
-            events::{
-                invites::GetEventsInvitesQuery, DeleteEmailInviteBody, DeleteEventInvitePath,
-                EmailInvite, EventOptionsQuery, PatchEmailInviteBody, PatchInviteBody,
-                PostEventInviteBody, PostEventInviteQuery, UserInvite,
-            },
-            pagination::PagePaginationQuery,
-            users::GetEventInvitesPendingResponse,
+use opentalk_types::api::{
+    error::ApiError,
+    v1::{
+        events::{
+            invites::GetEventsInvitesQuery, DeleteEmailInviteBody, DeleteEventInvitePath,
+            EmailInvite, EventOptionsQuery, PatchEmailInviteBody, PatchInviteBody,
+            PostEventInviteBody, PostEventInviteQuery, UserInvite,
         },
+        pagination::PagePaginationQuery,
+        users::GetEventInvitesPendingResponse,
     },
-    common::{email::EmailAddress, shared_folder::SharedFolder, streaming::RoomStreamingTarget},
-    core::{EmailInviteRole, EventId, EventInviteStatus, RoomId, UserId},
+};
+use opentalk_types_common::{
+    email::EmailAddress,
+    events::{
+        invites::{EmailInviteRole, EventInviteStatus},
+        EventId,
+    },
+    rooms::RoomId,
+    shared_folders::SharedFolder,
+    streaming::RoomStreamingTarget,
+    users::UserId,
 };
 use serde::Deserialize;
 use snafu::Report;

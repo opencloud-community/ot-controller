@@ -2,12 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types::{
-    core::ParticipantId,
-    signaling::media::{
-        command::ParticipantSelection, event::RequestMute, ParticipantSpeakingState,
-    },
+use opentalk_types::signaling::media::{
+    command::ParticipantSelection, event::RequestMute, ParticipantSpeakingState,
 };
+use opentalk_types_signaling::ParticipantId;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]

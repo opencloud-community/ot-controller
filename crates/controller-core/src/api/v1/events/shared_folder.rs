@@ -25,13 +25,13 @@ use opentalk_db_storage::{
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_nextcloud_client::{Client, ShareId, SharePermission, ShareType};
-use opentalk_types::{
-    api::{
-        error::ApiError,
-        v1::events::{DeleteSharedFolderQuery, PutSharedFolderQuery},
-    },
-    common::shared_folder::{SharedFolder, SharedFolderAccess},
-    core::EventId,
+use opentalk_types::api::{
+    error::ApiError,
+    v1::events::{DeleteSharedFolderQuery, PutSharedFolderQuery},
+};
+use opentalk_types_common::{
+    events::EventId,
+    shared_folders::{SharedFolder, SharedFolderAccess},
 };
 use snafu::Report;
 

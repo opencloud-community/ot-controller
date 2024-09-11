@@ -16,7 +16,7 @@ use opentalk_mail_worker_protocol::{
     },
     MailTask,
 };
-use opentalk_types::utils::ExampleData;
+use opentalk_types_common::utils::ExampleData;
 use serde::Serialize;
 use utoipa::{openapi::Components, OpenApi as _};
 

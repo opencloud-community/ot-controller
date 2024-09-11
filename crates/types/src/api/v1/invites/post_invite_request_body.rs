@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::{DateTime, TimeZone as _, Utc};
+use opentalk_types_common::utils::ExampleData;
 
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::utils::ExampleData;
 
 /// Body for *POST /rooms/{room_id}/invites*
 #[derive(Clone, Debug, PartialEq, Eq)]

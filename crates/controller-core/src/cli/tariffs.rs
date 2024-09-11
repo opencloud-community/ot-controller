@@ -2,7 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::{collections::BTreeMap, num::ParseIntError, str::FromStr};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    num::ParseIntError,
+    str::FromStr,
+};
 
 use chrono::Utc;
 use clap::Subcommand;
@@ -14,7 +18,7 @@ use opentalk_db_storage::{
     tariffs::{ExternalTariff, ExternalTariffId, NewTariff, Tariff, UpdateTariff},
     utils::Jsonb,
 };
-use opentalk_types::common::tariff::QuotaType;
+use opentalk_types_common::{features::ModuleFeatureId, modules::ModuleId, tariffs::QuotaType};
 use snafu::{OptionExt, ResultExt, Snafu};
 use tabled::{settings::Style, Table, Tabled};
 
@@ -31,10 +35,10 @@ pub enum Command {
         external_tariff_id: String,
         /// Comma-separated list of modules to disable
         #[clap(long, value_delimiter = ',')]
-        disabled_modules: Vec<String>,
+        disabled_modules: Vec<ModuleId>,
         /// Comma-separated list of features to disable
         #[clap(long, value_delimiter = ',')]
-        disabled_features: Vec<String>,
+        disabled_features: Vec<ModuleFeatureId>,
         /// Comma-separated list of key=value pairs
         #[clap(long, value_delimiter = ',', value_parser = parse_quota)]
         quotas: Vec<(QuotaType, u64)>,
@@ -64,19 +68,19 @@ pub enum Command {
 
         /// Comma-separated list of module names to add
         #[clap(long, value_delimiter = ',')]
-        add_disabled_modules: Vec<String>,
+        add_disabled_modules: Vec<ModuleId>,
 
         /// Comma-separated list of module names to remove
         #[clap(long, value_delimiter = ',')]
-        remove_disabled_modules: Vec<String>,
+        remove_disabled_modules: Vec<ModuleId>,
 
         /// Comma-separated list of feature names to add
         #[clap(long, value_delimiter = ',')]
-        add_disabled_features: Vec<String>,
+        add_disabled_features: Vec<ModuleFeatureId>,
 
         /// Comma-separated list of feature names to remove
         #[clap(long, value_delimiter = ',')]
-        remove_disabled_features: Vec<String>,
+        remove_disabled_features: Vec<ModuleFeatureId>,
 
         /// Comma-separated list of key=value pairs to add, overwrites quotas with the same name
         #[clap(long, value_delimiter = ',', value_parser = parse_quota)]
@@ -116,8 +120,8 @@ pub async fn handle_command(settings: Settings, command: Command) -> Result<(), 
                 settings,
                 tariff_name,
                 external_tariff_id,
-                disabled_modules,
-                disabled_features,
+                BTreeSet::from_iter(disabled_modules),
+                BTreeSet::from_iter(disabled_features),
                 quotas.into_iter().collect(),
             )
             .await
@@ -141,10 +145,10 @@ pub async fn handle_command(settings: Settings, command: Command) -> Result<(), 
                 set_name,
                 add_external_tariff_ids,
                 remove_external_tariff_ids,
-                add_disabled_modules,
-                remove_disabled_modules,
-                add_disabled_features,
-                remove_disabled_features,
+                BTreeSet::from_iter(add_disabled_modules),
+                BTreeSet::from_iter(remove_disabled_modules),
+                BTreeSet::from_iter(add_disabled_features),
+                BTreeSet::from_iter(remove_disabled_features),
                 add_quotas.into_iter().collect(),
                 remove_quotas,
             )
@@ -166,8 +170,8 @@ async fn create_tariff(
     settings: Settings,
     name: String,
     external_tariff_id: String,
-    disabled_modules: Vec<String>,
-    disabled_features: Vec<String>,
+    disabled_modules: BTreeSet<ModuleId>,
+    disabled_features: BTreeSet<ModuleFeatureId>,
     quotas: BTreeMap<QuotaType, u64>,
 ) -> Result<(), DatabaseError> {
     let db = Db::connect(&settings.database)?;
@@ -177,8 +181,8 @@ async fn create_tariff(
         let tariff = NewTariff {
             name: name.clone(),
             quotas: Jsonb(quotas),
-            disabled_modules,
-            disabled_features,
+            disabled_modules: Vec::from_iter(disabled_modules),
+            disabled_features: Vec::from_iter(disabled_features),
         }
         .insert(conn).await?;
 
@@ -224,10 +228,10 @@ async fn edit_tariff(
     set_name: Option<String>,
     add_external_tariff_ids: Vec<String>,
     remove_external_tariff_ids: Vec<String>,
-    add_disabled_modules: Vec<String>,
-    remove_disabled_modules: Vec<String>,
-    add_disabled_features: Vec<String>,
-    remove_disabled_features: Vec<String>,
+    add_disabled_modules: BTreeSet<ModuleId>,
+    remove_disabled_modules: BTreeSet<ModuleId>,
+    add_disabled_features: BTreeSet<ModuleFeatureId>,
+    remove_disabled_features: BTreeSet<ModuleFeatureId>,
     add_quotas: BTreeMap<QuotaType, u64>,
     remove_quotas: Vec<QuotaType>,
 ) -> Result<(), DatabaseError> {

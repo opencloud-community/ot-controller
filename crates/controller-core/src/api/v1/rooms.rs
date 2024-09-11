@@ -32,20 +32,22 @@ use opentalk_db_storage::{
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage, Participant, VolatileStorage};
-use opentalk_types::{
-    api::{
-        error::{ApiError, StandardErrorBody, ValidationErrorEntry, ERROR_CODE_INVALID_VALUE},
-        v1::{
-            pagination::PagePaginationQuery,
-            rooms::{
-                DeleteRoomQuery, GetRoomEventResponse, GetRoomsResponse, PatchRoomsRequestBody,
-                PostRoomsRequestBody, PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody,
-                RoomResource, RoomsStartResponse, StartRoomError,
-            },
+use opentalk_types::api::{
+    error::{ApiError, StandardErrorBody, ValidationErrorEntry, ERROR_CODE_INVALID_VALUE},
+    v1::{
+        pagination::PagePaginationQuery,
+        rooms::{
+            DeleteRoomQuery, GetRoomEventResponse, GetRoomsResponse, PatchRoomsRequestBody,
+            PostRoomsRequestBody, PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody,
+            RoomResource, RoomsStartResponse, StartRoomError,
         },
     },
-    common::{features, shared_folder::SharedFolder, tariff::TariffResource},
-    core::{InviteCodeId, RoomId},
+};
+use opentalk_types_common::{
+    features,
+    rooms::{invite_codes::InviteCode, RoomId},
+    shared_folders::SharedFolder,
+    tariffs::TariffResource,
 };
 
 use super::{
@@ -181,7 +183,7 @@ pub async fn new(
     let mut conn = db.get_conn().await?;
 
     if room_parameters.enable_sip {
-        require_feature(&mut conn, &settings, current_user.id, features::CALL_IN).await?;
+        require_feature(&mut conn, &settings, current_user.id, &features::call_in()).await?;
     }
 
     let new_room = db_rooms::NewRoom {
@@ -534,7 +536,7 @@ pub async fn get_room_tariff(
     let tariff = room.get_tariff(&mut conn).await?;
 
     let response = tariff.to_tariff_resource(
-        settings.defaults.disabled_features(),
+        settings.defaults.disabled_features.clone(),
         modules.get_module_features(),
     );
 
@@ -843,7 +845,7 @@ pub async fn start_invited(
 
     let mut conn = db.get_conn().await?;
 
-    let invite = Invite::get(&mut conn, InviteCodeId::from(invite_code_as_uuid)).await?;
+    let invite = Invite::get(&mut conn, InviteCode::from(invite_code_as_uuid)).await?;
 
     if !invite.active {
         return Err(ApiError::not_found());

@@ -2,12 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_types_common::{auth::ResumptionToken, rooms::BreakoutRoomId, utils::ExampleData};
+
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{
-    core::{BreakoutRoomId, ResumptionToken},
-    utils::ExampleData,
-};
 
 /// The JSON body expected when making a *POST /rooms/{room_id}/start*
 #[derive(Clone, Debug, PartialEq, Eq)]

@@ -8,16 +8,14 @@ use opentalk_signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, Participant, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
-use opentalk_types::{
-    core::StreamingTargetId,
-    signaling::{
-        recording::{state::RecorderStreamInfo, StreamStatus, StreamTargetSecret, StreamUpdated},
-        recording_service::{
-            command::RecordingServiceCommand, event::RecordingServiceEvent,
-            state::RecordingServiceState, NAMESPACE,
-        },
+use opentalk_types::signaling::{
+    recording::{state::RecorderStreamInfo, StreamStatus, StreamTargetSecret, StreamUpdated},
+    recording_service::{
+        command::RecordingServiceCommand, event::RecordingServiceEvent,
+        state::RecordingServiceState, NAMESPACE,
     },
 };
+use opentalk_types_common::streaming::StreamingTargetId;
 
 use super::recording::{self, Recording, RecordingStorageProvider as _};
 
@@ -133,7 +131,7 @@ impl RecordingService {
 
         ctx.exchange_publish_to_namespace(
             control::exchange::current_room_all_participants(self.room),
-            Recording::NAMESPACE,
+            Recording::module_id(),
             recording::exchange::Message::StreamUpdated(stream_updated),
         );
         Ok(())
@@ -146,7 +144,7 @@ impl RecordingService {
         // notify recording module that the recorder is leaving
         ctx.exchange_publish_to_namespace(
             control::exchange::current_room_all_recorders(self.room),
-            Recording::NAMESPACE,
+            Recording::module_id(),
             recording::exchange::Message::RecorderStopping,
         );
 
@@ -175,7 +173,7 @@ impl RecordingService {
         }) {
             ctx.exchange_publish_to_namespace(
                 control::exchange::current_room_all_participants(self.room),
-                Recording::NAMESPACE,
+                Recording::module_id(),
                 recording::exchange::Message::StreamUpdated(stream_updated),
             );
         }
@@ -191,7 +189,7 @@ impl RecordingService {
         // Signal recording module that the recorder is started
         ctx.exchange_publish_to_namespace(
             control::exchange::current_room_all_recorders(self.room),
-            Recording::NAMESPACE,
+            Recording::module_id(),
             recording::exchange::Message::RecorderStarting,
         );
 

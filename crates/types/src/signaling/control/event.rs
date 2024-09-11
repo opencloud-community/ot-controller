@@ -4,14 +4,13 @@
 
 //! Types related to signaling events in the `control` namespace
 
+use opentalk_types_common::{events::EventInfo, tariffs::TariffResource, time::Timestamp};
+use opentalk_types_signaling::{ParticipantId, Role};
+
 use super::{reason, room::RoomInfo, AssociatedParticipant, Participant};
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{
-    common::{event::EventInfo, tariff::TariffResource},
-    core::{ParticipantId, Timestamp},
-    signaling::{common::TargetParticipant, Role},
-};
+use crate::signaling::common::TargetParticipant;
 
 /// Events sent out by the `control` module
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -178,16 +177,14 @@ mod test {
     use std::str::FromStr;
 
     use chrono::DateTime;
+    use opentalk_types_common::{events::EventId, rooms::RoomId, tariffs::TariffId};
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
     use super::*;
-    use crate::{
-        core::{EventId, RoomId, TariffId},
-        signaling::{
-            control::{self, room::CreatorInfo},
-            ModulePeerData,
-        },
+    use crate::signaling::{
+        control::{self, room::CreatorInfo},
+        ModulePeerData,
     };
 
     fn participant_tariff() -> TariffResource {

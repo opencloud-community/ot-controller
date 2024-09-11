@@ -2,10 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_types_common::{events::invites::EventInviteStatus, utils::ExampleData};
+
 use super::EventInviteeProfile;
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::{core::EventInviteStatus, utils::ExampleData};
 
 /// Invitee to an event
 ///

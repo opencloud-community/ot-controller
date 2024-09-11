@@ -6,10 +6,9 @@ use std::{marker::PhantomData, sync::Arc};
 
 use actix_http::ws::CloseCode;
 use futures::{stream::SelectAll, Stream};
-use opentalk_types::{
-    core::Timestamp,
-    signaling::{NamespacedEvent, Role},
-};
+use opentalk_types::signaling::NamespacedEvent;
+use opentalk_types_common::{modules::ModuleId, time::Timestamp};
+use opentalk_types_signaling::Role;
 use serde::Serialize;
 
 use crate::{any_stream, AnyStream, SignalingMetrics, SignalingModule, VolatileStorage};
@@ -28,7 +27,7 @@ where
     M: SignalingModule,
 {
     pub role: Role,
-    pub ws_messages: &'ctx mut Vec<NamespacedEvent<'static, M::Outgoing>>,
+    pub ws_messages: &'ctx mut Vec<NamespacedEvent<M::Outgoing>>,
     pub timestamp: Timestamp,
     pub exchange_publish: &'ctx mut Vec<ExchangePublish>,
     pub volatile: &'ctx mut VolatileStorage,
@@ -60,7 +59,7 @@ where
         timestamp: Timestamp,
     ) {
         self.ws_messages.push(NamespacedEvent {
-            namespace: M::NAMESPACE,
+            module: M::module_id(),
             timestamp,
             payload: message.into(),
         });
@@ -72,20 +71,20 @@ where
         routing_key: String,
         message: impl Into<M::ExchangeMessage>,
     ) {
-        self.exchange_publish_to_namespace(routing_key, M::NAMESPACE, message.into())
+        self.exchange_publish_to_namespace(routing_key, M::module_id(), message.into())
     }
 
     /// Queue a outgoing message to be sent via the message exchange
     pub fn exchange_publish_to_namespace(
         &mut self,
         routing_key: String,
-        namespace: &str,
+        module: ModuleId,
         payload: impl Serialize,
     ) {
         self.exchange_publish_any(
             routing_key,
             NamespacedEvent {
-                namespace,
+                module,
                 timestamp: self.timestamp,
                 payload,
             },
@@ -105,7 +104,7 @@ where
     where
         S: Stream<Item = M::ExtEvent> + 'static,
     {
-        self.events.push(any_stream(M::NAMESPACE, stream));
+        self.events.push(any_stream(M::module_id(), stream));
     }
 
     /// Signals that the data related to the participant has changed

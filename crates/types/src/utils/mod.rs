@@ -7,10 +7,6 @@
 #[allow(unused_imports)]
 use crate::imports::*;
 
-mod example_data;
-
-pub use example_data::ExampleData;
-
 #[cfg(feature = "serde")]
 pub(crate) mod duration_seconds_option {
     use std::time::Duration;

@@ -40,10 +40,13 @@ define_sql_function!(fn soundex(x: Text) -> Text);
 pub mod sql_types {
 
     pub use diesel::sql_types::*;
-    pub use opentalk_types::core::{
-        EmailInviteRoleType as EmailInviteRole, EventInviteStatusType as EventInviteStatus,
-        InviteRoleType as InviteRole, StreamingKindType as StreamingKind,
-        TariffStatusType as TariffStatus,
+    pub use opentalk_types_common::{
+        events::invites::{
+            EmailInviteRoleType as EmailInviteRole, EventInviteStatusType as EventInviteStatus,
+            InviteRoleType as InviteRole,
+        },
+        streaming::StreamingKindType as StreamingKind,
+        tariffs::TariffStatusType as TariffStatus,
     };
 
     pub use super::{

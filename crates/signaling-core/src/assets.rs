@@ -21,10 +21,13 @@ use opentalk_db_storage::{
     tariffs::Tariff,
     users::User,
 };
-use opentalk_types::{
-    api::error::ApiError,
-    common::tariff::QuotaType,
-    core::{AssetId, FileExtension, RoomId, Timestamp, UserId},
+use opentalk_types::api::error::ApiError;
+use opentalk_types_common::{
+    assets::{AssetId, FileExtension},
+    rooms::RoomId,
+    tariffs::QuotaType,
+    time::Timestamp,
+    users::UserId,
 };
 use snafu::{IntoError, ResultExt, Snafu};
 
@@ -369,7 +372,7 @@ mod tests {
     use std::str::FromStr as _;
 
     use chrono::{TimeZone as _, Utc};
-    use opentalk_types::core::{FileExtension, Timestamp};
+    use opentalk_types_common::{assets::FileExtension, time::Timestamp};
     use pretty_assertions::assert_eq;
 
     use super::{AssetFileKind, NewAssetFileName};

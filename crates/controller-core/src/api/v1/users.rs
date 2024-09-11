@@ -23,21 +23,18 @@ use opentalk_db_storage::{
     users::{email_to_libravatar_url, UpdateUser, User},
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
-use opentalk_types::{
-    api::{
-        error::ApiError,
-        v1::{
-            order::{AssetSorting, SortingQuery},
-            pagination::PagePaginationQuery,
-            users::{
-                GetFindQuery, GetFindResponse, GetFindResponseItem, GetUserAssetsResponse,
-                PatchMeBody, PrivateUserProfile, PublicUserProfile, UnregisteredUser,
-            },
+use opentalk_types::api::{
+    error::ApiError,
+    v1::{
+        order::{AssetSorting, SortingQuery},
+        pagination::PagePaginationQuery,
+        users::{
+            GetFindQuery, GetFindResponse, GetFindResponseItem, GetUserAssetsResponse, PatchMeBody,
+            PrivateUserProfile, PublicUserProfile, UnregisteredUser,
         },
     },
-    common::tariff::TariffResource,
-    core::UserId,
 };
+use opentalk_types_common::{tariffs::TariffResource, users::UserId};
 use snafu::{Report, ResultExt, Whatever};
 use validator::Validate;
 
@@ -251,7 +248,7 @@ pub async fn get_me_tariff(
     let tariff = Tariff::get(&mut conn, current_user.tariff_id).await?;
 
     let response = tariff.to_tariff_resource(
-        settings.defaults.disabled_features(),
+        settings.defaults.disabled_features.clone(),
         modules.get_module_features(),
     );
 

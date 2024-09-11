@@ -6,7 +6,7 @@ use std::sync::{Arc, OnceLock};
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage};
-use opentalk_types::core::ParticipantId;
+use opentalk_types_signaling::ParticipantId;
 use parking_lot::RwLock;
 
 use super::memory::MemoryMeetingNotesState;

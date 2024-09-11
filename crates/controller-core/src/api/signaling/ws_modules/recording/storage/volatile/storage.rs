@@ -11,7 +11,8 @@ use async_trait::async_trait;
 use opentalk_signaling_core::{
     NotFoundSnafu, SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage,
 };
-use opentalk_types::{core::StreamingTargetId, signaling::recording::StreamTargetSecret};
+use opentalk_types::signaling::recording::StreamTargetSecret;
+use opentalk_types_common::streaming::StreamingTargetId;
 use parking_lot::RwLock;
 use snafu::OptionExt as _;
 

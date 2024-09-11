@@ -2,12 +2,14 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-#[allow(unused_imports)]
-use crate::imports::*;
-use crate::{
-    core::{BreakoutRoomId, InviteCodeId, ResumptionToken, RoomPassword},
+use opentalk_types_common::{
+    auth::ResumptionToken,
+    rooms::{invite_codes::InviteCode, BreakoutRoomId, RoomPassword},
     utils::ExampleData,
 };
+
+#[allow(unused_imports)]
+use crate::imports::*;
 
 /// The JSON body expected when making a *POST /rooms/{room_id}/start_invited*
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -59,7 +61,7 @@ impl ExampleData for PostRoomsStartInvitedRequestBody {
     fn example_data() -> Self {
         Self {
             password: Some(RoomPassword::example_data()),
-            invite_code: InviteCodeId::example_data().to_string(),
+            invite_code: InviteCode::example_data().to_string(),
             breakout_room: Some(BreakoutRoomId::example_data()),
             resumption: Some(ResumptionToken::example_data()),
         }

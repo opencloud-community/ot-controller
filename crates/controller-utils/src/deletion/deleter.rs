@@ -7,7 +7,7 @@ use log::Log;
 use opentalk_controller_settings::Settings;
 use opentalk_database::DbConnection;
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage};
-use opentalk_types::core::UserId;
+use opentalk_types_common::users::UserId;
 
 use super::Error;
 

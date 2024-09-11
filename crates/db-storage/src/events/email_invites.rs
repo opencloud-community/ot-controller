@@ -6,7 +6,11 @@ use chrono::{DateTime, Utc};
 use diesel::{prelude::*, ExpressionMethods, QueryDsl, Queryable};
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection, RunQueryDsl};
 use opentalk_database::{DbConnection, Paginate, Result};
-use opentalk_types::core::{EmailInviteRole, EventId, RoomId, UserId};
+use opentalk_types_common::{
+    events::{invites::EmailInviteRole, EventId},
+    rooms::RoomId,
+    users::UserId,
+};
 
 use super::{Event, NewEventInvite};
 use crate::{

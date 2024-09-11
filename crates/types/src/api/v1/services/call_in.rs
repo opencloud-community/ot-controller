@@ -2,7 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use crate::core::{CallInId, CallInPassword};
+use opentalk_types_common::call_in::{CallInId, CallInPassword};
+
 #[allow(unused_imports)]
 use crate::imports::*;
 

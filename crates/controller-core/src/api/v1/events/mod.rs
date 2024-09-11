@@ -37,33 +37,29 @@ use opentalk_db_storage::{
 };
 use opentalk_keycloak_admin::{users::TenantFilter, KeycloakAdminClient};
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage};
-use opentalk_types::{
-    api::{
-        error::{
-            ApiError, ValidationErrorEntry, ERROR_CODE_IGNORED_VALUE, ERROR_CODE_VALUE_REQUIRED,
+use opentalk_types::api::{
+    error::{ApiError, ValidationErrorEntry, ERROR_CODE_IGNORED_VALUE, ERROR_CODE_VALUE_REQUIRED},
+    v1::{
+        events::{
+            CallInInfo, DeleteEventsQuery, EmailOnlyUser, EventAndInstanceId,
+            EventExceptionResource, EventInvitee, EventInviteeProfile, EventOptionsQuery,
+            EventOrException, EventResource, EventRoomInfo, EventStatus, EventType, GetEventQuery,
+            GetEventsCursorData, GetEventsQuery, PatchEventBody, PatchEventQuery, PostEventsBody,
+            PublicInviteUserProfile,
         },
-        v1::{
-            events::{
-                CallInInfo, DeleteEventsQuery, EmailOnlyUser, EventAndInstanceId,
-                EventExceptionResource, EventInvitee, EventInviteeProfile, EventOptionsQuery,
-                EventOrException, EventResource, EventRoomInfo, EventStatus, EventType,
-                GetEventQuery, GetEventsCursorData, GetEventsQuery, PatchEventBody,
-                PatchEventQuery, PostEventsBody, PublicInviteUserProfile,
-            },
-            pagination::default_pagination_per_page,
-            users::{PublicUserProfile, UnregisteredUser},
-            Cursor,
-        },
+        pagination::default_pagination_per_page,
+        users::{PublicUserProfile, UnregisteredUser},
+        Cursor,
     },
-    common::{
-        features,
-        shared_folder::{SharedFolder, SharedFolderAccess},
-        streaming::{RoomStreamingTarget, StreamingTarget},
-    },
-    core::{
-        DateTimeTz, EventId, EventInviteStatus, RecurrencePattern, RoomId, RoomPassword, TimeZone,
-        Timestamp, UserId,
-    },
+};
+use opentalk_types_common::{
+    events::{invites::EventInviteStatus, EventId},
+    features,
+    rooms::{RoomId, RoomPassword},
+    shared_folders::{SharedFolder, SharedFolderAccess},
+    streaming::{RoomStreamingTarget, StreamingTarget},
+    time::{DateTimeTz, RecurrencePattern, TimeZone, Timestamp},
+    users::UserId,
 };
 use rrule::{Frequency, RRuleSet};
 use serde::Deserialize;
@@ -228,9 +224,9 @@ impl EventRoomInfoExt for EventRoomInfo {
     ) -> Self {
         let call_in_feature_is_enabled = !settings
             .defaults
-            .disabled_features()
-            .contains(features::CALL_IN)
-            && !tariff.is_feature_disabled(features::CALL_IN);
+            .disabled_features
+            .contains(&features::call_in())
+            && !tariff.is_feature_disabled(&features::call_in());
 
         let mut call_in = None;
 
@@ -2182,7 +2178,7 @@ mod tests {
     use std::time::SystemTime;
 
     use opentalk_test_util::assert_eq_json;
-    use opentalk_types::core::{InviteRole, RoomId, TimeZone, UserId};
+    use opentalk_types_common::events::invites::InviteRole;
 
     use super::*;
 

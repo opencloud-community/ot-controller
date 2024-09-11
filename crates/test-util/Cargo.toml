@@ -30,6 +30,8 @@ opentalk-database = { workspace = true, optional = true }
 opentalk-db-storage = { workspace = true, optional = true }
 opentalk-signaling-core = { workspace = true, features = ["module_tester"] }
 opentalk-types = { workspace = true, features = ["backend"] }
+opentalk-types-common = { workspace = true, features = ["backend"] }
+opentalk-types-signaling = { workspace = true, features = ["backend"] }
 
 [dev-dependencies]
 serde.workspace = true

@@ -5,14 +5,14 @@
 use std::error::Error;
 
 use opentalk_client_shared::{ApiError, Authorization, WithAuthorization};
-use opentalk_types::{
-    api::v1::{
-        auth::{GetLoginRequest, OidcProvider},
-        invites::{CodeVerified, PostInviteVerifyRequest, PostInviteVerifyRequestBody},
-        rooms::GetRoomEventRequest,
-    },
-    common::event::EventInfo,
-    core::{InviteCodeId, RoomId},
+use opentalk_types::api::v1::{
+    auth::{GetLoginRequest, OidcProvider},
+    invites::{CodeVerified, PostInviteVerifyRequest, PostInviteVerifyRequestBody},
+    rooms::GetRoomEventRequest,
+};
+use opentalk_types_common::{
+    events::EventInfo,
+    rooms::{invite_codes::InviteCode, RoomId},
 };
 
 #[async_trait::async_trait]
@@ -23,7 +23,7 @@ where
     async fn get_login(&self) -> Result<OidcProvider, ApiError<E>>;
     async fn post_invite_verify(
         &self,
-        invite_code: InviteCodeId,
+        invite_code: InviteCode,
     ) -> Result<CodeVerified, ApiError<E>>;
     async fn get_room_event<A: Authorization + Send>(
         &self,
@@ -42,7 +42,7 @@ impl<C: opentalk_client_shared::Client + Sync> OpenTalkApiClient<C::Error> for C
 
     async fn post_invite_verify(
         &self,
-        invite_code: InviteCodeId,
+        invite_code: InviteCode,
     ) -> Result<CodeVerified, ApiError<C::Error>> {
         self.rest(PostInviteVerifyRequest(PostInviteVerifyRequestBody {
             invite_code,
