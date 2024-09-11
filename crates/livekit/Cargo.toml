@@ -1,0 +1,29 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+authors.workspace = true
+edition = "2021"
+license = "EUPL-1.2"
+name = "opentalk-livekit"
+publish = false
+version.workspace = true
+
+[package.metadata.cargo-machete]
+# We need to explicitly add the runtime as dependency to enable the tokio feature
+ignored = ["livekit_runtime"]
+
+[dependencies]
+async-trait.workspace = true
+config.workspace = true
+livekit-api = "0.4"
+livekit-runtime = { version = "0.3", default-features = false, features = [
+  "tokio",
+] }
+log.workspace = true
+opentalk-controller-settings.workspace = true
+opentalk-signaling-core.workspace = true
+opentalk-types = { workspace = true, features = ["backend"] }
+serde.workspace = true
+snafu.workspace = true

@@ -7,6 +7,7 @@ use opentalk_chat::Chat;
 use opentalk_core::Core;
 use opentalk_integration::Integration;
 use opentalk_janus_media::Media;
+use opentalk_livekit::Livekit;
 use opentalk_meeting_notes::MeetingNotes;
 use opentalk_polls::Polls;
 use opentalk_shared_folder::SharedFolder;
@@ -23,6 +24,7 @@ impl RegisterModules for CommunityModules {
         registrar.register::<Chat>().await?;
         registrar.register::<Integration>().await?;
         registrar.register::<Media>().await?;
+        registrar.register::<Livekit>().await?;
         registrar.register::<Polls>().await?;
         registrar.register::<MeetingNotes>().await?;
         registrar.register::<SharedFolder>().await?;

@@ -36,6 +36,7 @@ use opentalk_types::{
     },
 };
 use sessions::MediaSessions;
+use settings::JanusMcuConfig;
 use snafu::{whatever, OptionExt, Report};
 use storage::MediaStorage;
 use tokio::sync::mpsc;
@@ -796,17 +797,23 @@ impl SignalingModule for Media {
     async fn build_params(
         data: SignalingModuleInitData,
     ) -> Result<Option<Self::Params>, SignalingModuleError> {
-        let mcu_pool = McuPool::build(
-            data.startup_settings.as_ref(),
-            data.shared_settings.clone(),
-            data.rabbitmq_pool.clone(),
-            data.volatile.clone(),
-            data.shutdown.subscribe(),
-            data.reload.subscribe(),
-        )
-        .await?;
+        let mcu_config = JanusMcuConfig::extract(&data.startup_settings)?;
 
-        Ok(Some(mcu_pool))
+        if let Some(mcu_config) = mcu_config {
+            let mcu_pool = McuPool::build(
+                mcu_config,
+                data.shared_settings.clone(),
+                data.rabbitmq_pool.clone(),
+                data.volatile.clone(),
+                data.shutdown.subscribe(),
+                data.reload.subscribe(),
+            )
+            .await?;
+
+            Ok(Some(mcu_pool))
+        } else {
+            Ok(None)
+        }
     }
 }
 
@@ -1184,7 +1191,9 @@ pub fn screen_share_requires_permission(shared_settings: &SharedSettings) -> boo
 pub fn check_for_deprecated_settings(
     settings: &opentalk_controller_settings::Settings,
 ) -> Result<Vec<&'static str>, SignalingModuleError> {
-    let mcu_config = settings::JanusMcuConfig::extract(settings)?;
+    let Some(mcu_config) = settings::JanusMcuConfig::extract(settings)? else {
+        return Ok(vec![]);
+    };
 
     let mut found = Vec::new();
     if mcu_config.speaker_focus_packets.is_some() {

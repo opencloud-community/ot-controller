@@ -4,7 +4,7 @@
 
 use opentalk_signaling_core::{ConfigSnafu, SignalingModuleError};
 use serde::Deserialize;
-use snafu::{OptionExt, ResultExt};
+use snafu::ResultExt;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct JanusMcuConfig {
@@ -35,14 +35,12 @@ pub struct JanusMcuConfig {
 impl JanusMcuConfig {
     pub fn extract(
         settings: &opentalk_controller_settings::Settings,
-    ) -> Result<Self, SignalingModuleError> {
-        let value = settings
+    ) -> Result<Option<Self>, SignalingModuleError> {
+        settings
             .extensions
             .get("room_server")
-            .cloned()
-            .whatever_context::<&str, SignalingModuleError>("missing room server")?;
-
-        value.try_deserialize().context(ConfigSnafu)
+            .map(|value| value.clone().try_deserialize().context(ConfigSnafu))
+            .transpose()
     }
 }
 

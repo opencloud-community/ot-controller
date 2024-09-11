@@ -21,6 +21,7 @@ opentalk-chat.workspace = true
 opentalk-core.workspace = true
 opentalk-integration.workspace = true
 opentalk-janus-media.workspace = true
+opentalk-livekit.workspace = true
 opentalk-meeting-notes.workspace = true
 opentalk-polls.workspace = true
 opentalk-shared-folder.workspace = true
