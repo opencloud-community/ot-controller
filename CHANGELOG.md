@@ -16,7 +16,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Prevent high cpu usage when RabbitMQ is unavailable ([!1125](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1125))
 - Wrong documented response body of /rooms/{room_id}/event ([!1126](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1126))
-- Always include streaming_links property in MeetingDetails ([!1128](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1128))
 - Change the WWW-Authenticate error value to `invalid_token` for expired sessions ([!1134](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1134))
 - (protocol) Rename protocol module to meeting-notes ([!1004](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1004))
 - Remove the `is_room_owner` key on room cleanup ([!1131](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1131))
@@ -26,8 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - (deps) Update rust crate rrule to 0.13 ([!1081](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1081))
 - (deps) Update rust crate gix-path to 0.10.11 ([!1138](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1138))
 - (deps) Update rust crate redis to 0.26 & redis-args to 0.16 ([!1067](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1067))
-- (deps) Update redocly/cli docker tag to v1.23.1 ([!1133](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1133))
-- (deps) Update redocly/cli docker tag to v1.24.0 ([!1140](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1140))
+- (deps) Update redocly/cli docker tag to v1.24.0 ([!1133](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1133), [!1140](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1140))
 - (deps) Update git.opentalk.dev:5050/opentalk/backend/containers/rust docker tag to v1.81.0 ([!1136](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1136))
 
 ### ⚙ Miscellaneous
@@ -47,6 +45,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced unit test for update message ([!1103](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1103))
 
 <!-- End section Unreleased -->
+
+## [0.19.1]
+
+### 🐛 Bug fixes
+
+- Always include `streaming_links` property in `MeetingDetails` ([#856](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/856), [!1128](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1128))
+
+### 📦 Dependencies
+
+- Update rust crate gix-path to 0.10.10 (fixing [RUSTSEC-2024-0367](https://rustsec.org/advisories/RUSTSEC-2024-0367.html)) ([!1122](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1122))
+
+## [0.19.0]
+
+### 🚀 New features
+
+- Add part-number for chunk upload ([!1086](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1086))
+- Serve a OpenAPI Swagger page under `/swagger` ([#759](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/759), [!828](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/828))
+- Add subcommand for exporting the OpenAPI specification to stdout or a file ([#759](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/759), [!828](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/828))
+
+### 🐛 Bug fixes
+
+- Prevent recorder start in breakout rooms ([#838](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/838), [!1094](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1094))
+- Clippy v1.80.0 lints ([!1073](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1073))
+- Interior mutability issue as reported by clippy ([!1073](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1073))
+- (jobs) Fix storage sync bug where a low amount of assets resulted in a job failure ([#842](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/842), [!1114](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1114))
+- (ci) Ignore frontend api yaml file based on name ([!1120](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1120))
+- (ci) Update markdown linter to allow code blocks ([!1113](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1113))
+- (ci) Detect only .rs files instead of anything ending on rs ([!1118](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1118))
+
+### 📚 Documentation
+
+- How to setup the recorder client in keycloak ([#817](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/817), [!1105](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1105))
+
+### 📦 Dependencies
+
+- Update rust crate clap to v4.5.14 ([!1092](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1092))
+- Update rust crate derive_more to v1 ([!1087](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1087))
+- Update rust crate diesel-async to 0.5 ([!631](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/631))
+- Update rust crate serde to v1.0.207 ([!1101](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1101))
+- Update rust crate serde_json to v1.0.124 ([!1102](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1102))
+- Update rust crate tokio-cron-scheduler to 0.11 ([!1095](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1095))
+
+### 🔨 Refactor
+
+- Use `BTree{Map,Set}` in module features for more stable (de-)serialization ([!828](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/828))
+- Move GET `/rooms/{room_id}/invites` response to separate struct ([!828](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/828))
+- Create RecurrencePattern and RecurrenceRule newtypes ([!828](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/828))
+
+### ✨ Style
+
+- Use consistent module file layout ([!911](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/911))
 
 ## [0.18.0]
 
@@ -730,7 +779,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - initial release candidate
 
 ---
-[Unreleased]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.18.0...main
+[Unreleased]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.19.0...main
+
+[0.19.1]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.19.0...v0.19.1
+[0.19.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.18.0...v0.19.0
 
 [0.18.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.17.0...v0.18.0
 
