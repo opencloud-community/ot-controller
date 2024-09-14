@@ -4,7 +4,7 @@
 
 //! Types related to signaling events in the `meeting-notes` namespace
 
-use opentalk_types_signaling_meeting_notes::event::{AccessUrl, PdfAsset};
+use opentalk_types_signaling_meeting_notes::event::{AccessUrl, Error, PdfAsset};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -34,28 +34,6 @@ impl From<PdfAsset> for MeetingNotesEvent {
     fn from(value: PdfAsset) -> Self {
         Self::PdfAsset(value)
     }
-}
-
-/// Errors from the `meeting-notes` module namespace
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(rename_all = "snake_case", tag = "error")
-)]
-pub enum Error {
-    /// The requesting user has insufficient permissions for the operation
-    InsufficientPermissions,
-    /// The request contains invalid participant ids
-    InvalidParticipantSelection,
-    /// Is send when another instance just started initializing and etherpad is not available yet
-    CurrentlyInitializing,
-    /// The etherpad initialization failed
-    FailedInitialization,
-    /// The etherpad is not yet initailized
-    NotInitialized,
-    /// The requesting user has exceeded their storage
-    StorageExceeded,
 }
 
 impl From<Error> for MeetingNotesEvent {

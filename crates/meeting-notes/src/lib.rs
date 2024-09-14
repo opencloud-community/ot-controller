@@ -19,14 +19,13 @@ use opentalk_signaling_core::{
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types::signaling::meeting_notes::{
-    event::{Error, MeetingNotesEvent},
-    peer_state::MeetingNotesPeerState,
+    event::MeetingNotesEvent, peer_state::MeetingNotesPeerState,
 };
 use opentalk_types_common::assets::FileExtension;
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_meeting_notes::{
     command::{MeetingNotesCommand, ParticipantSelection},
-    event::{AccessUrl, PdfAsset},
+    event::{AccessUrl, Error, PdfAsset},
     NAMESPACE,
 };
 use redis_args::{FromRedisValue, ToRedisArgs};
