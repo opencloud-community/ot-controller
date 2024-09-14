@@ -4,6 +4,8 @@
 
 //! Signaling commands for the `meeting_notes` namespace
 
+mod meeting_notes_command;
 mod participant_selection;
 
+pub use meeting_notes_command::MeetingNotesCommand;
 pub use participant_selection::ParticipantSelection;

@@ -4,6 +4,5 @@
 
 //! Signaling messages for the `protocl` namespace
 
-pub mod command;
 pub mod event;
 pub mod peer_state;

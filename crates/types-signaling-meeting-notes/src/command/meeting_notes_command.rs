@@ -2,18 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Signaling commands for the `recording` namespace
-
-use opentalk_types_signaling_meeting_notes::command::ParticipantSelection;
-
-#[allow(unused_imports)]
-use crate::imports::*;
+use super::ParticipantSelection;
 
 /// Commands for the `meeting_notes` namespace
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(tag = "action", rename_all = "snake_case")
 )]
 pub enum MeetingNotesCommand {
@@ -27,8 +22,8 @@ pub enum MeetingNotesCommand {
     GeneratePdf,
 }
 
-#[cfg(test)]
-mod tests {
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
     use opentalk_types_signaling::ParticipantId;
     use pretty_assertions::assert_eq;
     use serde_json::json;
