@@ -23,6 +23,7 @@
 use opentalk_types_common::modules::ModuleId;
 
 pub mod command;
+pub mod event;
 
 /// The namespace string for the signaling module
 pub const NAMESPACE: &str = "meeting_notes";

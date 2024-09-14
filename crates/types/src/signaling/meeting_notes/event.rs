@@ -5,6 +5,7 @@
 //! Types related to signaling events in the `meeting-notes` namespace
 
 use opentalk_types_common::assets::AssetId;
+use opentalk_types_signaling_meeting_notes::event::AccessUrl;
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -28,18 +29,6 @@ pub enum MeetingNotesEvent {
 
     /// An error happened when executing a `meeting-notes` command
     Error(Error),
-}
-
-/// The access URL to a specific data
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct AccessUrl {
-    /// URL for the data
-    pub url: String,
 }
 
 /// Handle to a PDF asset
