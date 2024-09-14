@@ -4,7 +4,7 @@
 
 //! Signaling commands for the `recording` namespace
 
-use opentalk_types_signaling::ParticipantId;
+use opentalk_types_signaling_meeting_notes::command::ParticipantSelection;
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -27,20 +27,9 @@ pub enum MeetingNotesCommand {
     GeneratePdf,
 }
 
-/// Give a list of participants write access to the meeting-notes
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct ParticipantSelection {
-    /// The targeted participants
-    pub participant_ids: Vec<ParticipantId>,
-}
-
 #[cfg(test)]
 mod tests {
+    use opentalk_types_signaling::ParticipantId;
     use pretty_assertions::assert_eq;
     use serde_json::json;
 

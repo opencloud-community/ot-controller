@@ -24,5 +24,5 @@ pub struct MeetingNotesPeerState {
 
 #[cfg(feature = "serde")]
 impl SignalingModulePeerFrontendData for MeetingNotesPeerState {
-    const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
+    const NAMESPACE: Option<&'static str> = Some(opentalk_types_signaling_meeting_notes::NAMESPACE);
 }

@@ -19,3 +19,15 @@
     unused_qualifications,
     unused_results
 )]
+
+use opentalk_types_common::modules::ModuleId;
+
+pub mod command;
+
+/// The namespace string for the signaling module
+pub const NAMESPACE: &str = "meeting_notes";
+
+/// Get the id of the signaling module
+pub fn module_id() -> ModuleId {
+    NAMESPACE.parse().expect("valid module id")
+}
