@@ -18,12 +18,12 @@ use opentalk_signaling_core::{
     ChunkFormat, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
-use opentalk_types::signaling::meeting_notes::peer_state::MeetingNotesPeerState;
 use opentalk_types_common::assets::FileExtension;
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_meeting_notes::{
     command::{MeetingNotesCommand, ParticipantSelection},
     event::{AccessUrl, Error, MeetingNotesEvent, PdfAsset},
+    peer_state::MeetingNotesPeerState,
     NAMESPACE,
 };
 use redis_args::{FromRedisValue, ToRedisArgs};

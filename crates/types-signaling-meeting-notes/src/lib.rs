@@ -24,6 +24,7 @@ use opentalk_types_common::modules::ModuleId;
 
 pub mod command;
 pub mod event;
+pub mod peer_state;
 
 /// The namespace string for the signaling module
 pub const NAMESPACE: &str = "meeting_notes";

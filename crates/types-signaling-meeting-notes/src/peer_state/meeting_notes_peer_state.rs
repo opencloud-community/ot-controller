@@ -4,9 +4,6 @@
 
 //! Peer frontend data for `meeting_notes` namespace
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// The state of other participants in the `meeting-notes` module.
 ///
 /// This struct is sent to the participant in the `join_success` message
@@ -14,7 +11,7 @@ use crate::imports::*;
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 pub struct MeetingNotesPeerState {
@@ -23,6 +20,6 @@ pub struct MeetingNotesPeerState {
 }
 
 #[cfg(feature = "serde")]
-impl SignalingModulePeerFrontendData for MeetingNotesPeerState {
-    const NAMESPACE: Option<&'static str> = Some(opentalk_types_signaling_meeting_notes::NAMESPACE);
+impl opentalk_types_signaling::SignalingModulePeerFrontendData for MeetingNotesPeerState {
+    const NAMESPACE: Option<&'static str> = Some(crate::NAMESPACE);
 }
