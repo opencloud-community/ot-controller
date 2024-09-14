@@ -6,8 +6,10 @@
 
 mod access_url;
 mod error;
+mod meeting_notes_event;
 mod pdf_asset;
 
 pub use access_url::AccessUrl;
 pub use error::Error;
+pub use meeting_notes_event::MeetingNotesEvent;
 pub use pdf_asset::PdfAsset;

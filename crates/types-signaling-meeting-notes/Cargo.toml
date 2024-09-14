@@ -15,8 +15,8 @@ repository.workspace = true
 version.workspace = true
 
 [features]
-backend = []
-frontend = []
+backend = ["serde"]
+frontend = ["serde"]
 serde = [
   "dep:serde",
   "opentalk-types-common/serde",

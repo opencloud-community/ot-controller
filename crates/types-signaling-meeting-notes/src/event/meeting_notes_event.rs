@@ -4,16 +4,13 @@
 
 //! Types related to signaling events in the `meeting-notes` namespace
 
-use opentalk_types_signaling_meeting_notes::event::{AccessUrl, Error, PdfAsset};
-
-#[allow(unused_imports)]
-use crate::imports::*;
+use super::{AccessUrl, Error, PdfAsset};
 
 /// Events sent out by the `meeting-notes` module
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case", tag = "message")
 )]
 pub enum MeetingNotesEvent {
@@ -42,8 +39,8 @@ impl From<Error> for MeetingNotesEvent {
     }
 }
 
-#[cfg(test)]
-mod tests {
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
     use pretty_assertions::assert_eq;
     use serde_json::{self, json};
 
