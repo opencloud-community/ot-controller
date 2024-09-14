@@ -5,5 +5,7 @@
 //! Types related to signaling events in the `meeting-notes` namespace
 
 mod access_url;
+mod pdf_asset;
 
 pub use access_url::AccessUrl;
+pub use pdf_asset::PdfAsset;
