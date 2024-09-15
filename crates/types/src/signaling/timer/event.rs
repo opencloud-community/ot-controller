@@ -6,7 +6,7 @@
 
 use opentalk_types_signaling::ParticipantId;
 use opentalk_types_signaling_timer::{
-    event::{Started, StopKind},
+    event::{Started, Stopped},
     TimerId,
 };
 
@@ -35,20 +35,6 @@ impl From<Started> for Message {
     fn from(value: Started) -> Self {
         Self::Started(value)
     }
-}
-
-/// The current timer has been stopped
-#[derive(Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Stopped {
-    /// The timer id
-    pub timer_id: TimerId,
-    /// The stop kind
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub kind: StopKind,
-    /// An optional reason to all participants. Set by moderator
-    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
-    pub reason: Option<String>,
 }
 
 impl From<Stopped> for Message {
@@ -103,7 +89,7 @@ mod tests {
 
     use chrono::{DateTime, Duration};
     use opentalk_types_common::time::Timestamp;
-    use opentalk_types_signaling_timer::{Kind, TimerConfig};
+    use opentalk_types_signaling_timer::{event::StopKind, Kind, TimerConfig};
     use serde_json::json;
 
     use super::*;

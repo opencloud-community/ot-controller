@@ -6,11 +6,11 @@ use chrono::{Duration, Utc};
 use opentalk_signaling_core::module_tester::{ModuleTester, WsMessageOutgoing};
 use opentalk_test_util::{common, TestContext, USER_1, USER_2};
 use opentalk_timer::Timer;
-use opentalk_types::signaling::timer::event::{self, Stopped};
+use opentalk_types::signaling::timer::event;
 use opentalk_types_common::time::Timestamp;
 use opentalk_types_signaling_timer::{
     command::{self, Start, Stop, TimerCommand, UpdateReadyStatus},
-    event::{Started, StopKind},
+    event::{Started, StopKind, Stopped},
     Kind, TimerConfig, TimerId,
 };
 use pretty_assertions::assert_eq;
@@ -271,7 +271,7 @@ async fn manual_stop() {
         .await
         .unwrap();
 
-    if let WsMessageOutgoing::Module(event::Message::Stopped(event::Stopped {
+    if let WsMessageOutgoing::Module(event::Message::Stopped(Stopped {
         timer_id,
         kind,
         reason,

@@ -18,7 +18,7 @@ use opentalk_types_common::time::Timestamp;
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_timer::{
     command::{self, TimerCommand},
-    event::{Started, StopKind},
+    event::{Started, StopKind, Stopped},
     Kind, TimerConfig, TimerId, NAMESPACE,
 };
 use storage::TimerStorage;
@@ -405,7 +405,7 @@ impl Timer {
 
         ctx.exchange_publish(
             control::exchange::current_room_all_participants(self.room_id),
-            exchange::Event::Stop(event::Stopped {
+            exchange::Event::Stop(Stopped {
                 timer_id: timer.id,
                 kind: reason,
                 reason: message,
