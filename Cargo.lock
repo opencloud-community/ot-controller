@@ -5185,8 +5185,10 @@ version = "0.0.0-dev"
 dependencies = [
  "derive_more 1.0.0",
  "opentalk-types-common",
+ "pretty_assertions",
  "redis-args",
  "serde",
+ "serde_json",
  "uuid",
 ]
 

@@ -10,14 +10,16 @@ use opentalk_signaling_core::{
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types::signaling::timer::{
-    command::Message,
     event::{self, Error, StopKind, UpdatedReadyStatus},
     ready_status::ReadyStatus,
     status::TimerStatus,
 };
 use opentalk_types_common::time::Timestamp;
 use opentalk_types_signaling::{ParticipantId, Role};
-use opentalk_types_signaling_timer::{command, Kind, TimerConfig, TimerId, NAMESPACE};
+use opentalk_types_signaling_timer::{
+    command::{self, TimerCommand},
+    Kind, TimerConfig, TimerId, NAMESPACE,
+};
 use storage::TimerStorage;
 use tokio::time::sleep;
 use uuid::Uuid;
@@ -54,7 +56,7 @@ impl SignalingModule for Timer {
 
     type Params = ();
 
-    type Incoming = Message;
+    type Incoming = TimerCommand;
 
     type Outgoing = event::Message;
 
@@ -205,10 +207,10 @@ impl Timer {
     async fn handle_ws_message(
         &self,
         ctx: &mut ModuleContext<'_, Self>,
-        msg: Message,
+        msg: TimerCommand,
     ) -> Result<(), SignalingModuleError> {
         match msg {
-            Message::Start(start) => {
+            TimerCommand::Start(start) => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
@@ -281,7 +283,7 @@ impl Timer {
                     exchange::Event::Start(started),
                 );
             }
-            Message::Stop(stop) => {
+            TimerCommand::Stop(stop) => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
@@ -307,7 +309,7 @@ impl Timer {
                 )
                 .await?;
             }
-            Message::UpdateReadyStatus(update_ready_status) => {
+            TimerCommand::UpdateReadyStatus(update_ready_status) => {
                 if let Some(timer) = ctx.volatile.storage().timer_get(self.room_id).await? {
                     if timer.ready_check_enabled && timer.id == update_ready_status.timer_id {
                         ctx.volatile

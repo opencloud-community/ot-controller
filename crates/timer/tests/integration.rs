@@ -6,13 +6,10 @@ use chrono::{Duration, Utc};
 use opentalk_signaling_core::module_tester::{ModuleTester, WsMessageOutgoing};
 use opentalk_test_util::{common, TestContext, USER_1, USER_2};
 use opentalk_timer::Timer;
-use opentalk_types::signaling::timer::{
-    command::Message,
-    event::{self, StopKind, Stopped},
-};
+use opentalk_types::signaling::timer::event::{self, StopKind, Stopped};
 use opentalk_types_common::time::Timestamp;
 use opentalk_types_signaling_timer::{
-    command::{self, Start, Stop, UpdateReadyStatus},
+    command::{self, Start, Stop, TimerCommand, UpdateReadyStatus},
     Kind, TimerConfig, TimerId,
 };
 use pretty_assertions::assert_eq;
@@ -93,7 +90,7 @@ async fn start_timer(
     // from cpu limitation.
     let time_frame = TimeFrame::now(50);
 
-    let start = Message::Start(Start {
+    let start = TimerCommand::Start(Start {
         kind,
         style: style.clone(),
         title: title.clone(),
@@ -259,7 +256,7 @@ async fn manual_stop() {
     )
     .await;
 
-    let stop = Message::Stop(Stop {
+    let stop = TimerCommand::Stop(Stop {
         timer_id: start_id,
         reason: Some("It is over".into()),
     });
@@ -312,7 +309,7 @@ async fn ready_status() {
     )
     .await;
 
-    let update_ready_status = Message::UpdateReadyStatus(UpdateReadyStatus {
+    let update_ready_status = TimerCommand::UpdateReadyStatus(UpdateReadyStatus {
         timer_id: start_id,
         status: true,
     });
@@ -358,7 +355,7 @@ async fn ready_status_toggle() {
     )
     .await;
 
-    let update_ready_status = Message::UpdateReadyStatus(UpdateReadyStatus {
+    let update_ready_status = TimerCommand::UpdateReadyStatus(UpdateReadyStatus {
         timer_id: start_id,
         status: true,
     });
@@ -389,7 +386,7 @@ async fn ready_status_toggle() {
 
     // update ready status to false
 
-    let update_ready_status = Message::UpdateReadyStatus(UpdateReadyStatus {
+    let update_ready_status = TimerCommand::UpdateReadyStatus(UpdateReadyStatus {
         timer_id: start_id,
         status: false,
     });
@@ -435,7 +432,7 @@ async fn timer_already_active() {
     )
     .await;
 
-    let start = Message::Start(Start {
+    let start = TimerCommand::Start(Start {
         kind: command::Kind::Stopwatch,
         style: None,
         title: None,

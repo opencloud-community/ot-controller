@@ -2,21 +2,16 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Signaling commands for the `timer` namespace
-
-use opentalk_types_signaling_timer::command::{Start, Stop, UpdateReadyStatus};
-
-#[allow(unused_imports)]
-use crate::imports::*;
+use super::{Start, Stop, UpdateReadyStatus};
 
 /// Incoming websocket messages
 #[derive(Debug)]
 #[cfg_attr(
     feature = "serde",
-    derive(Deserialize),
+    derive(serde::Deserialize, serde::Serialize),
     serde(rename_all = "snake_case", tag = "action")
 )]
-pub enum Message {
+pub enum TimerCommand {
     /// Start a new timer
     Start(Start),
     /// Stop a running timer
@@ -25,13 +20,31 @@ pub enum Message {
     UpdateReadyStatus(UpdateReadyStatus),
 }
 
-#[cfg(test)]
-mod tests {
-    use opentalk_types_signaling_timer::{command::Kind, TimerId};
+impl From<Start> for TimerCommand {
+    fn from(value: Start) -> Self {
+        Self::Start(value)
+    }
+}
+
+impl From<Stop> for TimerCommand {
+    fn from(value: Stop) -> Self {
+        Self::Stop(value)
+    }
+}
+
+impl From<UpdateReadyStatus> for TimerCommand {
+    fn from(value: UpdateReadyStatus) -> Self {
+        Self::UpdateReadyStatus(value)
+    }
+}
+
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
     use super::*;
+    use crate::{command::Kind, TimerId};
 
     #[test]
     fn countdown_start() {
@@ -44,7 +57,7 @@ mod tests {
         });
 
         match serde_json::from_value(json).unwrap() {
-            Message::Start(Start {
+            TimerCommand::Start(Start {
                 kind,
                 style,
                 title,
@@ -69,7 +82,7 @@ mod tests {
         });
 
         match serde_json::from_value(json).unwrap() {
-            Message::Start(Start {
+            TimerCommand::Start(Start {
                 kind,
                 style,
                 title,
@@ -93,7 +106,7 @@ mod tests {
         });
 
         match serde_json::from_value(json).unwrap() {
-            Message::Stop(Stop { timer_id, reason }) => {
+            TimerCommand::Stop(Stop { timer_id, reason }) => {
                 assert_eq!(reason, Some("test".into()));
                 assert_eq!(timer_id, TimerId::nil())
             }
@@ -110,7 +123,7 @@ mod tests {
         });
 
         match serde_json::from_value(json).unwrap() {
-            Message::UpdateReadyStatus(UpdateReadyStatus { timer_id, status }) => {
+            TimerCommand::UpdateReadyStatus(UpdateReadyStatus { timer_id, status }) => {
                 assert!(status);
                 assert_eq!(timer_id, TimerId::nil())
             }
