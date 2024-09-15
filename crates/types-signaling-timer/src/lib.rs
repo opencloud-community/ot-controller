@@ -21,6 +21,7 @@
 )]
 
 pub mod command;
+pub mod event;
 
 mod kind;
 mod timer_config;

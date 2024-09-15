@@ -10,6 +10,7 @@ use opentalk_types::signaling::timer::event::{self, StopKind, Stopped};
 use opentalk_types_common::time::Timestamp;
 use opentalk_types_signaling_timer::{
     command::{self, Start, Stop, TimerCommand, UpdateReadyStatus},
+    event::Started,
     Kind, TimerConfig, TimerId,
 };
 use pretty_assertions::assert_eq;
@@ -106,7 +107,7 @@ async fn start_timer(
         .await
         .unwrap();
 
-    let timer_id = if let WsMessageOutgoing::Module(event::Message::Started(event::Started {
+    let timer_id = if let WsMessageOutgoing::Module(event::Message::Started(Started {
         config:
             TimerConfig {
                 timer_id,

@@ -18,6 +18,7 @@ use opentalk_types_common::time::Timestamp;
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_timer::{
     command::{self, TimerCommand},
+    event::Started,
     Kind, TimerConfig, TimerId, NAMESPACE,
 };
 use storage::TimerStorage;
@@ -267,7 +268,7 @@ impl Timer {
                     return Ok(());
                 }
 
-                let started = event::Started {
+                let started = Started {
                     config: TimerConfig {
                         timer_id,
                         started_at,

@@ -5,7 +5,7 @@
 //! Signaling events for the `timer` namespace
 
 use opentalk_types_signaling::ParticipantId;
-use opentalk_types_signaling_timer::{TimerConfig, TimerId};
+use opentalk_types_signaling_timer::{event::Started, TimerId};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -26,15 +26,6 @@ pub enum Message {
     UpdatedReadyStatus(UpdatedReadyStatus),
     /// An error occurred
     Error(Error),
-}
-
-/// A timer has been started
-#[derive(Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Started {
-    /// Config of the started timer
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub config: TimerConfig,
 }
 
 impl From<Started> for Message {
@@ -123,7 +114,7 @@ mod tests {
 
     use chrono::{DateTime, Duration};
     use opentalk_types_common::time::Timestamp;
-    use opentalk_types_signaling_timer::Kind;
+    use opentalk_types_signaling_timer::{Kind, TimerConfig};
     use serde_json::json;
 
     use super::*;
