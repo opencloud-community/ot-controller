@@ -5,8 +5,9 @@
 //! Signaling events for the `timer` namespace
 
 use opentalk_types_signaling::ParticipantId;
+use opentalk_types_signaling_timer::TimerId;
 
-use super::{TimerConfig, TimerId};
+use super::TimerConfig;
 #[allow(unused_imports)]
 use crate::imports::*;
 

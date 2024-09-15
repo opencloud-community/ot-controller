@@ -3,9 +3,8 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_types_common::time::Timestamp;
-use opentalk_types_signaling_timer::Kind;
+use opentalk_types_signaling_timer::{Kind, TimerId};
 
-use super::TimerId;
 #[allow(unused_imports)]
 use crate::imports::*;
 

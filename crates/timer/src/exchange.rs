@@ -4,9 +4,8 @@
 
 use opentalk_types::signaling::timer::event::{Started, Stopped};
 use opentalk_types_signaling::ParticipantId;
+use opentalk_types_signaling_timer::TimerId;
 use serde::{Deserialize, Serialize};
-
-use crate::TimerId;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Event {

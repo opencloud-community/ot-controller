@@ -15,10 +15,21 @@ repository.workspace = true
 version.workspace = true
 
 [features]
-backend = ["serde"]
+backend = ["rand", "serde"]
 frontend = ["serde"]
-serde = ["dep:serde", "opentalk-types-common/serde"]
+rand = ["opentalk-types-common/rand", "uuid/v4"]
+redis = ["dep:redis-args", "opentalk-types-common/redis", "serde"]
+serde = ["dep:serde", "opentalk-types-common/serde", "uuid/serde"]
 
 [dependencies]
+derive_more = { workspace = true, features = [
+  "as_ref",
+  "display",
+  "from",
+  "from_str",
+  "into",
+] }
 opentalk-types-common.workspace = true
+redis-args = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
+uuid.workspace = true

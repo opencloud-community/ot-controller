@@ -10,7 +10,5 @@ pub mod ready_status;
 pub mod status;
 
 mod config;
-mod timer_id;
 
 pub use config::TimerConfig;
-pub use timer_id::TimerId;

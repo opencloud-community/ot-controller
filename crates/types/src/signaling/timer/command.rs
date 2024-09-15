@@ -4,7 +4,8 @@
 
 //! Signaling commands for the `timer` namespace
 
-use super::TimerId;
+use opentalk_types_signaling_timer::TimerId;
+
 #[allow(unused_imports)]
 use crate::imports::*;
 

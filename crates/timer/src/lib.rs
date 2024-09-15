@@ -14,11 +14,11 @@ use opentalk_types::signaling::timer::{
     event::{self, Error, StopKind, UpdatedReadyStatus},
     ready_status::ReadyStatus,
     status::TimerStatus,
-    TimerConfig, TimerId,
+    TimerConfig,
 };
 use opentalk_types_common::time::Timestamp;
 use opentalk_types_signaling::{ParticipantId, Role};
-use opentalk_types_signaling_timer::{Kind, NAMESPACE};
+use opentalk_types_signaling_timer::{Kind, TimerId, NAMESPACE};
 use storage::TimerStorage;
 use tokio::time::sleep;
 use uuid::Uuid;
