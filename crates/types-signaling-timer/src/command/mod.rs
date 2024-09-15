@@ -6,6 +6,8 @@
 
 mod kind;
 mod start;
+mod stop;
 
 pub use kind::Kind;
 pub use start::Start;
+pub use stop::Stop;

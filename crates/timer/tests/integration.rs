@@ -7,12 +7,12 @@ use opentalk_signaling_core::module_tester::{ModuleTester, WsMessageOutgoing};
 use opentalk_test_util::{common, TestContext, USER_1, USER_2};
 use opentalk_timer::Timer;
 use opentalk_types::signaling::timer::{
-    command::{Message, Stop, UpdateReadyStatus},
+    command::{Message, UpdateReadyStatus},
     event::{self, StopKind, Stopped},
 };
 use opentalk_types_common::time::Timestamp;
 use opentalk_types_signaling_timer::{
-    command::{self, Start},
+    command::{self, Start, Stop},
     Kind, TimerConfig, TimerId,
 };
 use pretty_assertions::assert_eq;

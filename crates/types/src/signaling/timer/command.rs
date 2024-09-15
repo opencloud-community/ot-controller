@@ -4,7 +4,10 @@
 
 //! Signaling commands for the `timer` namespace
 
-use opentalk_types_signaling_timer::{command::Start, TimerId};
+use opentalk_types_signaling_timer::{
+    command::{Start, Stop},
+    TimerId,
+};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -23,16 +26,6 @@ pub enum Message {
     Stop(Stop),
     /// Update the ready status
     UpdateReadyStatus(UpdateReadyStatus),
-}
-
-/// Stop a running timer
-#[derive(Debug)]
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-pub struct Stop {
-    /// The timer id
-    pub timer_id: TimerId,
-    /// An optional reason for the stop
-    pub reason: Option<String>,
 }
 
 /// Update the ready status
