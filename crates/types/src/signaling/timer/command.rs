@@ -4,7 +4,7 @@
 
 //! Signaling commands for the `timer` namespace
 
-use opentalk_types_signaling_timer::{command::Kind, TimerId};
+use opentalk_types_signaling_timer::{command::Start, TimerId};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -23,22 +23,6 @@ pub enum Message {
     Stop(Stop),
     /// Update the ready status
     UpdateReadyStatus(UpdateReadyStatus),
-}
-
-/// Start a new timer
-#[derive(Debug)]
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-pub struct Start {
-    /// The timer kind
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub kind: Kind,
-    /// An optional string tag to flag this timer with a custom style
-    pub style: Option<String>,
-    /// An optional title for the timer
-    pub title: Option<String>,
-    /// Flag to allow/disallow participants to mark themselves as ready
-    #[cfg_attr(feature = "serde", serde(default))]
-    pub enable_ready_check: bool,
 }
 
 /// Stop a running timer
@@ -63,6 +47,7 @@ pub struct UpdateReadyStatus {
 
 #[cfg(test)]
 mod tests {
+    use opentalk_types_signaling_timer::command::Kind;
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
