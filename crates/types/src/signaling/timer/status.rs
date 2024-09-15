@@ -4,7 +4,8 @@
 
 //! Status data for `timer` namespace
 
-use super::TimerConfig;
+use opentalk_types_signaling_timer::TimerConfig;
+
 #[allow(unused_imports)]
 use crate::imports::*;
 

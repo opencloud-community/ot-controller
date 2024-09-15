@@ -21,9 +21,11 @@
 )]
 
 mod kind;
+mod timer_config;
 mod timer_id;
 
 pub use kind::Kind;
+pub use timer_config::TimerConfig;
 pub use timer_id::TimerId;
 
 /// The namespace string for the signaling module

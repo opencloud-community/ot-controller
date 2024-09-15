@@ -3,14 +3,12 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_types_common::time::Timestamp;
-use opentalk_types_signaling_timer::{Kind, TimerId};
 
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::{Kind, TimerId};
 
 /// Status of a currently active timer
 #[derive(Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TimerConfig {
     /// The timer id
     pub timer_id: TimerId,
