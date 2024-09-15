@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Signaling data types for the OpenTalk chat module.
+//! Signaling data types for the OpenTalk timer module.
 
 #![deny(
     bad_style,
@@ -19,3 +19,10 @@
     unused_qualifications,
     unused_results
 )]
+
+mod kind;
+
+pub use kind::Kind;
+
+/// The namespace string for the signaling module
+pub const NAMESPACE: &str = "timer";

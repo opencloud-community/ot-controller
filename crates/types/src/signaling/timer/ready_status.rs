@@ -27,5 +27,5 @@ pub struct ReadyStatus {
 
 #[cfg(feature = "serde")]
 impl SignalingModulePeerFrontendData for ReadyStatus {
-    const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
+    const NAMESPACE: Option<&'static str> = Some(opentalk_types_signaling_timer::NAMESPACE);
 }

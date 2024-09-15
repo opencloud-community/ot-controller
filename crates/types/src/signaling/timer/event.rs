@@ -123,10 +123,10 @@ mod tests {
 
     use chrono::{DateTime, Duration};
     use opentalk_types_common::time::Timestamp;
+    use opentalk_types_signaling_timer::Kind;
     use serde_json::json;
 
     use super::*;
-    use crate::signaling::timer::Kind;
 
     #[test]
     fn countdown_started() {

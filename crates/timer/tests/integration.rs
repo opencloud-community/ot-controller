@@ -9,9 +9,10 @@ use opentalk_timer::Timer;
 use opentalk_types::signaling::timer::{
     command::{self, Message, Start, Stop, UpdateReadyStatus},
     event::{self, StopKind, Stopped},
-    Kind, TimerConfig, TimerId,
+    TimerConfig, TimerId,
 };
 use opentalk_types_common::time::Timestamp;
+use opentalk_types_signaling_timer::Kind;
 use pretty_assertions::assert_eq;
 use serial_test::serial;
 use tokio::time::Instant;

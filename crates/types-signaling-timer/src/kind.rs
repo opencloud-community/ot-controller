@@ -4,14 +4,11 @@
 
 use opentalk_types_common::time::Timestamp;
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// The different timer variations
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case", tag = "kind")
 )]
 pub enum Kind {

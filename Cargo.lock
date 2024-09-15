@@ -4959,6 +4959,7 @@ dependencies = [
  "opentalk-types",
  "opentalk-types-common",
  "opentalk-types-signaling",
+ "opentalk-types-signaling-timer",
  "parking_lot",
  "pretty_assertions",
  "redis",
@@ -4995,6 +4996,7 @@ dependencies = [
  "opentalk-kustos-prefix",
  "opentalk-types-common",
  "opentalk-types-signaling",
+ "opentalk-types-signaling-timer",
  "pretty_assertions",
  "redis",
  "redis-args",
@@ -5180,6 +5182,10 @@ dependencies = [
 [[package]]
 name = "opentalk-types-signaling-timer"
 version = "0.0.0-dev"
+dependencies = [
+ "opentalk-types-common",
+ "serde",
+]
 
 [[package]]
 name = "opentalk-whiteboard"

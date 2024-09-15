@@ -23,5 +23,5 @@ pub struct TimerStatus {
 
 #[cfg(feature = "serde")]
 impl SignalingModuleFrontendData for TimerStatus {
-    const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
+    const NAMESPACE: Option<&'static str> = Some(opentalk_types_signaling_timer::NAMESPACE);
 }
