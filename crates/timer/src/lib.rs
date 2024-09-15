@@ -9,16 +9,12 @@ use opentalk_signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
-use opentalk_types::signaling::timer::{
-    event::{self, Error},
-    ready_status::ReadyStatus,
-    status::TimerStatus,
-};
+use opentalk_types::signaling::timer::{event, ready_status::ReadyStatus, status::TimerStatus};
 use opentalk_types_common::time::Timestamp;
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_timer::{
     command::{self, TimerCommand},
-    event::{Started, StopKind, Stopped, UpdatedReadyStatus},
+    event::{Error, Started, StopKind, Stopped, UpdatedReadyStatus},
     Kind, TimerConfig, TimerId, NAMESPACE,
 };
 use storage::TimerStorage;

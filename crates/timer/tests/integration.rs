@@ -10,7 +10,7 @@ use opentalk_types::signaling::timer::event;
 use opentalk_types_common::time::Timestamp;
 use opentalk_types_signaling_timer::{
     command::{self, Start, Stop, TimerCommand, UpdateReadyStatus},
-    event::{Started, StopKind, Stopped, UpdatedReadyStatus},
+    event::{Error, Started, StopKind, Stopped, UpdatedReadyStatus},
     Kind, TimerConfig, TimerId,
 };
 use pretty_assertions::assert_eq;
@@ -438,7 +438,7 @@ async fn timer_already_active() {
         .send_ws_message(&USER_1.participant_id, start)
         .unwrap();
 
-    if let WsMessageOutgoing::Module(event::Message::Error(event::Error::TimerAlreadyRunning)) =
+    if let WsMessageOutgoing::Module(event::Message::Error(Error::TimerAlreadyRunning)) =
         module_tester
             .receive_ws_message(&USER_1.participant_id)
             .await

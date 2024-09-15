@@ -4,11 +4,13 @@
 
 //! Signaling events for the `timer` namespace
 
+mod error;
 mod started;
 mod stop_kind;
 mod stopped;
 mod updated_ready_status;
 
+pub use error::Error;
 pub use started::Started;
 pub use stop_kind::StopKind;
 pub use stopped::Stopped;

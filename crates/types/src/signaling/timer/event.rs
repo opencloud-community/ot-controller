@@ -4,7 +4,7 @@
 
 //! Signaling events for the `timer` namespace
 
-use opentalk_types_signaling_timer::event::{Started, Stopped, UpdatedReadyStatus};
+use opentalk_types_signaling_timer::event::{Error, Started, Stopped, UpdatedReadyStatus};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -43,22 +43,6 @@ impl From<UpdatedReadyStatus> for Message {
     fn from(value: UpdatedReadyStatus) -> Self {
         Self::UpdatedReadyStatus(value)
     }
-}
-
-/// Errors from the `timer` module namespace
-#[derive(Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize),
-    serde(rename_all = "snake_case", tag = "error")
-)]
-pub enum Error {
-    /// An invalid timer duration has been configured
-    InvalidDuration,
-    /// The requesting user has insufficient permissions
-    InsufficientPermissions,
-    /// A timer is already running
-    TimerAlreadyRunning,
 }
 
 impl From<Error> for Message {
