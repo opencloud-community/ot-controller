@@ -20,6 +20,8 @@
     unused_results
 )]
 
+pub mod command;
+
 mod kind;
 mod timer_config;
 mod timer_id;
