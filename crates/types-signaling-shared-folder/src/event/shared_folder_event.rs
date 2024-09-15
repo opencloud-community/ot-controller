@@ -2,19 +2,14 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Signaling events for the `shared_folder` namespace
-
 use opentalk_types_common::shared_folders::SharedFolder;
 use opentalk_types_signaling::{ForRole, Role};
-
-#[allow(unused_imports)]
-use crate::imports::*;
 
 /// Events sent out by the `shared_folder` module
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(tag = "message", rename_all = "snake_case")
 )]
 pub enum SharedFolderEvent {
