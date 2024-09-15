@@ -6,11 +6,10 @@ use chrono::{Duration, Utc};
 use opentalk_signaling_core::module_tester::{ModuleTester, WsMessageOutgoing};
 use opentalk_test_util::{common, TestContext, USER_1, USER_2};
 use opentalk_timer::Timer;
-use opentalk_types::signaling::timer::event;
 use opentalk_types_common::time::Timestamp;
 use opentalk_types_signaling_timer::{
     command::{self, Start, Stop, TimerCommand, UpdateReadyStatus},
-    event::{Error, Started, StopKind, Stopped, UpdatedReadyStatus},
+    event::{Error, Started, StopKind, Stopped, TimerEvent, UpdatedReadyStatus},
     Kind, TimerConfig, TimerId,
 };
 use pretty_assertions::assert_eq;
@@ -107,7 +106,7 @@ async fn start_timer(
         .await
         .unwrap();
 
-    let timer_id = if let WsMessageOutgoing::Module(event::Message::Started(Started {
+    let timer_id = if let WsMessageOutgoing::Module(TimerEvent::Started(Started {
         config:
             TimerConfig {
                 timer_id,
@@ -222,7 +221,7 @@ async fn simple_countdown(duration: u64) {
         panic!("Did not expect Ws message, but received: {anything:?}");
     }
 
-    if let WsMessageOutgoing::Module(event::Message::Stopped(Stopped {
+    if let WsMessageOutgoing::Module(TimerEvent::Stopped(Stopped {
         timer_id: _,
         kind,
         reason,
@@ -271,7 +270,7 @@ async fn manual_stop() {
         .await
         .unwrap();
 
-    if let WsMessageOutgoing::Module(event::Message::Stopped(Stopped {
+    if let WsMessageOutgoing::Module(TimerEvent::Stopped(Stopped {
         timer_id,
         kind,
         reason,
@@ -324,7 +323,7 @@ async fn ready_status() {
         .await
         .unwrap();
 
-    if let WsMessageOutgoing::Module(event::Message::UpdatedReadyStatus(UpdatedReadyStatus {
+    if let WsMessageOutgoing::Module(TimerEvent::UpdatedReadyStatus(UpdatedReadyStatus {
         timer_id,
         participant_id,
         status,
@@ -368,7 +367,7 @@ async fn ready_status_toggle() {
         .await
         .unwrap();
 
-    if let WsMessageOutgoing::Module(event::Message::UpdatedReadyStatus(UpdatedReadyStatus {
+    if let WsMessageOutgoing::Module(TimerEvent::UpdatedReadyStatus(UpdatedReadyStatus {
         timer_id,
         participant_id,
         status,
@@ -397,7 +396,7 @@ async fn ready_status_toggle() {
         .await
         .unwrap();
 
-    if let WsMessageOutgoing::Module(event::Message::UpdatedReadyStatus(UpdatedReadyStatus {
+    if let WsMessageOutgoing::Module(TimerEvent::UpdatedReadyStatus(UpdatedReadyStatus {
         timer_id,
         participant_id,
         status,
@@ -438,11 +437,10 @@ async fn timer_already_active() {
         .send_ws_message(&USER_1.participant_id, start)
         .unwrap();
 
-    if let WsMessageOutgoing::Module(event::Message::Error(Error::TimerAlreadyRunning)) =
-        module_tester
-            .receive_ws_message(&USER_1.participant_id)
-            .await
-            .unwrap()
+    if let WsMessageOutgoing::Module(TimerEvent::Error(Error::TimerAlreadyRunning)) = module_tester
+        .receive_ws_message(&USER_1.participant_id)
+        .await
+        .unwrap()
     {
     } else {
         panic!("Expected 'TimerAlreadyRunning' error ");
