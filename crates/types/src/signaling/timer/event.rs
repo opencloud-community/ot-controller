@@ -5,7 +5,10 @@
 //! Signaling events for the `timer` namespace
 
 use opentalk_types_signaling::ParticipantId;
-use opentalk_types_signaling_timer::{event::Started, TimerId};
+use opentalk_types_signaling_timer::{
+    event::{Started, StopKind},
+    TimerId,
+};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -52,20 +55,6 @@ impl From<Stopped> for Message {
     fn from(value: Stopped) -> Self {
         Self::Stopped(value)
     }
-}
-
-/// The stop reason
-#[derive(Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(rename_all = "snake_case", tag = "kind", content = "participant_id")
-)]
-pub enum StopKind {
-    /// The timer has been stopped by a moderator
-    ByModerator(ParticipantId),
-    /// The timers duration has expired
-    Expired,
 }
 
 /// Update the ready status

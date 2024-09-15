@@ -10,7 +10,7 @@ use opentalk_signaling_core::{
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types::signaling::timer::{
-    event::{self, Error, StopKind, UpdatedReadyStatus},
+    event::{self, Error, UpdatedReadyStatus},
     ready_status::ReadyStatus,
     status::TimerStatus,
 };
@@ -18,7 +18,7 @@ use opentalk_types_common::time::Timestamp;
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_timer::{
     command::{self, TimerCommand},
-    event::Started,
+    event::{Started, StopKind},
     Kind, TimerConfig, TimerId, NAMESPACE,
 };
 use storage::TimerStorage;
