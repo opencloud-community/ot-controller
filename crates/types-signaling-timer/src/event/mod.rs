@@ -7,7 +7,9 @@
 mod started;
 mod stop_kind;
 mod stopped;
+mod updated_ready_status;
 
 pub use started::Started;
 pub use stop_kind::StopKind;
 pub use stopped::Stopped;
+pub use updated_ready_status::UpdatedReadyStatus;

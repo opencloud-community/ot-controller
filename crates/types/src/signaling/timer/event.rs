@@ -4,11 +4,7 @@
 
 //! Signaling events for the `timer` namespace
 
-use opentalk_types_signaling::ParticipantId;
-use opentalk_types_signaling_timer::{
-    event::{Started, Stopped},
-    TimerId,
-};
+use opentalk_types_signaling_timer::event::{Started, Stopped, UpdatedReadyStatus};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -41,18 +37,6 @@ impl From<Stopped> for Message {
     fn from(value: Stopped) -> Self {
         Self::Stopped(value)
     }
-}
-
-/// Update the ready status
-#[derive(Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct UpdatedReadyStatus {
-    /// The timer id that the update is for
-    pub timer_id: TimerId,
-    /// The participant that updated its status
-    pub participant_id: ParticipantId,
-    /// The new status
-    pub status: bool,
 }
 
 impl From<UpdatedReadyStatus> for Message {
@@ -89,7 +73,8 @@ mod tests {
 
     use chrono::{DateTime, Duration};
     use opentalk_types_common::time::Timestamp;
-    use opentalk_types_signaling_timer::{event::StopKind, Kind, TimerConfig};
+    use opentalk_types_signaling::ParticipantId;
+    use opentalk_types_signaling_timer::{event::StopKind, Kind, TimerConfig, TimerId};
     use serde_json::json;
 
     use super::*;

@@ -10,7 +10,7 @@ use opentalk_types::signaling::timer::event;
 use opentalk_types_common::time::Timestamp;
 use opentalk_types_signaling_timer::{
     command::{self, Start, Stop, TimerCommand, UpdateReadyStatus},
-    event::{Started, StopKind, Stopped},
+    event::{Started, StopKind, Stopped, UpdatedReadyStatus},
     Kind, TimerConfig, TimerId,
 };
 use pretty_assertions::assert_eq;
@@ -324,13 +324,11 @@ async fn ready_status() {
         .await
         .unwrap();
 
-    if let WsMessageOutgoing::Module(event::Message::UpdatedReadyStatus(
-        event::UpdatedReadyStatus {
-            timer_id,
-            participant_id,
-            status,
-        },
-    )) = update_ready_status
+    if let WsMessageOutgoing::Module(event::Message::UpdatedReadyStatus(UpdatedReadyStatus {
+        timer_id,
+        participant_id,
+        status,
+    })) = update_ready_status
     {
         assert_eq!(timer_id, start_id);
         assert_eq!(participant_id, USER_1.participant_id);
@@ -370,13 +368,11 @@ async fn ready_status_toggle() {
         .await
         .unwrap();
 
-    if let WsMessageOutgoing::Module(event::Message::UpdatedReadyStatus(
-        event::UpdatedReadyStatus {
-            timer_id,
-            participant_id,
-            status,
-        },
-    )) = updated_ready_status
+    if let WsMessageOutgoing::Module(event::Message::UpdatedReadyStatus(UpdatedReadyStatus {
+        timer_id,
+        participant_id,
+        status,
+    })) = updated_ready_status
     {
         assert_eq!(timer_id, start_id);
         assert_eq!(participant_id, USER_1.participant_id);
@@ -401,13 +397,11 @@ async fn ready_status_toggle() {
         .await
         .unwrap();
 
-    if let WsMessageOutgoing::Module(event::Message::UpdatedReadyStatus(
-        event::UpdatedReadyStatus {
-            timer_id,
-            participant_id,
-            status,
-        },
-    )) = update_ready_status
+    if let WsMessageOutgoing::Module(event::Message::UpdatedReadyStatus(UpdatedReadyStatus {
+        timer_id,
+        participant_id,
+        status,
+    })) = update_ready_status
     {
         assert_eq!(timer_id, start_id);
         assert_eq!(participant_id, USER_1.participant_id);
