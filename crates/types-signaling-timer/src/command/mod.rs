@@ -7,7 +7,9 @@
 mod kind;
 mod start;
 mod stop;
+mod update_ready_status;
 
 pub use kind::Kind;
 pub use start::Start;
 pub use stop::Stop;
+pub use update_ready_status::UpdateReadyStatus;

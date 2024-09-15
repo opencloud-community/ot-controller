@@ -4,10 +4,7 @@
 
 //! Signaling commands for the `timer` namespace
 
-use opentalk_types_signaling_timer::{
-    command::{Start, Stop},
-    TimerId,
-};
+use opentalk_types_signaling_timer::command::{Start, Stop, UpdateReadyStatus};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -28,19 +25,9 @@ pub enum Message {
     UpdateReadyStatus(UpdateReadyStatus),
 }
 
-/// Update the ready status
-#[derive(Debug)]
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-pub struct UpdateReadyStatus {
-    /// The timer id
-    pub timer_id: TimerId,
-    /// The new status
-    pub status: bool,
-}
-
 #[cfg(test)]
 mod tests {
-    use opentalk_types_signaling_timer::command::Kind;
+    use opentalk_types_signaling_timer::{command::Kind, TimerId};
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
