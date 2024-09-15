@@ -166,6 +166,9 @@ exceptions = [
   { allow = [
     "EUPL-1.2",
   ], name = "opentalk-types-signaling-shared-folder" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "opentalk-types-signaling-timer" },
 ]
 
 # Some crates don't have (easily) machine readable licensing information,
