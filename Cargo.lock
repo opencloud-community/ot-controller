@@ -3677,7 +3677,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4979f22fdb869068da03c9f7528f8297c6fd2606bc3a4affe42e6a823fdb8da4"
 dependencies = [
  "cfg-if",
- "windows-targets 0.48.5",
+ "windows-targets 0.52.6",
 ]
 
 [[package]]
@@ -4137,9 +4137,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.20.0"
+version = "1.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33ea5043e58958ee56f3e15a90aee535795cd7dfd319846288d93c5b57d85cbe"
+checksum = "3fdb12b2476b595f9358c5161aa467c2438859caa136dec86c26fdd2efe17b92"
 
 [[package]]
 name = "oncemutex"
@@ -5879,9 +5879,9 @@ dependencies = [
 
 [[package]]
 name = "redis"
-version = "0.26.1"
+version = "0.27.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e902a69d09078829137b4a5d9d082e0490393537badd7c91a3d69d14639e115f"
+checksum = "a7e86f5670bd8b028edfb240f0616cad620705b31ec389d55e4f3da2c38dcd48"
 dependencies = [
  "arc-swap",
  "async-trait",
@@ -5904,9 +5904,9 @@ dependencies = [
 
 [[package]]
 name = "redis-args"
-version = "0.16.0"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "99c0d59ad9c2433cfca2334f040e3b4d1ae9459fee35f4f4b86f31ba1245e3a5"
+checksum = "b28803bf6b969a54434c0541c2f31ceeb0d2d2b7d1e7f8ddad4d63e7420cd97b"
 dependencies = [
  "redis",
  "redis-args-impl",
@@ -5915,9 +5915,9 @@ dependencies = [
 
 [[package]]
 name = "redis-args-impl"
-version = "0.16.0"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4c05db3fce517770fce052cd1ec687336dc53b8b6951aa6415d7d53ba37a309"
+checksum = "827c1131cc2b31763ee6c7bbb11abc03766eb01bfe4a677b1ce2b9ea182c1e4c"
 dependencies = [
  "darling",
  "proc-macro2",
@@ -8106,7 +8106,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
