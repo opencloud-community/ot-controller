@@ -23,7 +23,7 @@ pub use jwt::{decode_token, VerifyError};
 #[derive(Debug)]
 pub struct OidcContext {
     pub(crate) provider: ProviderClient,
-    http_client: reqwest::Client,
+    http_client: reqwest11::Client,
 }
 
 impl OidcContext {

@@ -31,7 +31,7 @@ async fn main() -> Result<(), ApiError<reqwest::Error>> {
 
     let verification = client.post_invite_verify(invite_code).await?;
 
-    println!("Verfification: {verification:?}");
+    println!("Verification: {verification:?}");
 
     let room_event = client
         .get_room_event(invite_code, verification.room_id)

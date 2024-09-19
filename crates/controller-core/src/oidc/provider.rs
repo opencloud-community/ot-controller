@@ -45,7 +45,7 @@ pub struct ProviderClient {
 impl ProviderClient {
     /// Discover Provider information from given settings
     pub async fn discover(
-        http_client: reqwest::Client,
+        http_client: reqwest11::Client,
         config: settings::Keycloak,
     ) -> Result<ProviderClient> {
         let mut issuer_url = config.base_url.clone();

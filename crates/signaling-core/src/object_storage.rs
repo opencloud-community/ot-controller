@@ -75,6 +75,15 @@ impl From<reqwest::Error> for ObjectStorageError {
     }
 }
 
+impl From<reqwest11::Error> for ObjectStorageError {
+    fn from(value: reqwest11::Error) -> Self {
+        Self::Other {
+            message: "Reqwest error".into(),
+            source: Some(value.into()),
+        }
+    }
+}
+
 impl From<PayloadError> for ObjectStorageError {
     fn from(value: PayloadError) -> Self {
         Self::Other {
