@@ -4,5 +4,4 @@
 
 //! Signaling messages for the `timer` namespace
 
-pub mod ready_status;
 pub mod status;

@@ -15,7 +15,7 @@ repository.workspace = true
 version.workspace = true
 
 [features]
-backend = ["rand", "serde"]
+backend = ["rand", "redis", "serde"]
 frontend = ["serde"]
 rand = [
   "opentalk-types-common/rand",

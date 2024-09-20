@@ -9,12 +9,13 @@ use opentalk_signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
-use opentalk_types::signaling::timer::{ready_status::ReadyStatus, status::TimerStatus};
+use opentalk_types::signaling::timer::status::TimerStatus;
 use opentalk_types_common::time::Timestamp;
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_timer::{
     command::{self, TimerCommand},
     event::{Error, Started, StopKind, Stopped, TimerEvent, UpdatedReadyStatus},
+    peer_state::TimerPeerState,
     Kind, TimerConfig, TimerId, NAMESPACE,
 };
 use storage::TimerStorage;
@@ -63,7 +64,7 @@ impl SignalingModule for Timer {
 
     type FrontendData = TimerStatus;
 
-    type PeerFrontendData = ReadyStatus;
+    type PeerFrontendData = TimerPeerState;
 
     async fn init(
         ctx: InitContext<'_, Self>,

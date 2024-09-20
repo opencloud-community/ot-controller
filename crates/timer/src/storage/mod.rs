@@ -44,10 +44,9 @@ pub(crate) struct Timer {
 #[cfg(test)]
 mod test_common {
     use opentalk_signaling_core::SignalingRoomId;
-    use opentalk_types::signaling::timer::ready_status::ReadyStatus;
     use opentalk_types_common::time::Timestamp;
     use opentalk_types_signaling::ParticipantId;
-    use opentalk_types_signaling_timer::{Kind, TimerId};
+    use opentalk_types_signaling_timer::{peer_state::TimerPeerState, Kind, TimerId};
     use pretty_assertions::assert_eq;
 
     use super::{Timer, TimerStorage};
@@ -66,7 +65,7 @@ mod test_common {
         storage.ready_status_set(ROOM, ALICE, true).await.unwrap();
 
         assert_eq!(
-            Some(ReadyStatus { ready_status: true }),
+            Some(TimerPeerState { ready_status: true }),
             storage.ready_status_get(ROOM, ALICE).await.unwrap()
         );
 

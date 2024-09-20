@@ -5,8 +5,8 @@
 use std::collections::BTreeMap;
 
 use opentalk_signaling_core::SignalingRoomId;
-use opentalk_types::signaling::timer::ready_status::ReadyStatus;
 use opentalk_types_signaling::ParticipantId;
+use opentalk_types_signaling_timer::peer_state::TimerPeerState;
 
 use crate::storage::Timer;
 
@@ -36,10 +36,10 @@ impl MemoryTimerState {
         &self,
         room: SignalingRoomId,
         participant: ParticipantId,
-    ) -> Option<ReadyStatus> {
+    ) -> Option<TimerPeerState> {
         self.ready_status
             .get(&(room, participant))
-            .map(|&ready_status| ReadyStatus { ready_status })
+            .map(|&ready_status| TimerPeerState { ready_status })
     }
 
     pub(super) fn ready_status_delete(

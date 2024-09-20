@@ -4,8 +4,8 @@
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId};
-use opentalk_types::signaling::timer::ready_status::ReadyStatus;
 use opentalk_types_signaling::ParticipantId;
+use opentalk_types_signaling_timer::peer_state::TimerPeerState;
 
 use super::Timer;
 
@@ -24,7 +24,7 @@ pub(crate) trait TimerStorage {
         &mut self,
         room_id: SignalingRoomId,
         participant_id: ParticipantId,
-    ) -> Result<Option<ReadyStatus>, SignalingModuleError>;
+    ) -> Result<Option<TimerPeerState>, SignalingModuleError>;
 
     /// Delete the ready status of a participant
     async fn ready_status_delete(

@@ -22,6 +22,7 @@
 
 pub mod command;
 pub mod event;
+pub mod peer_state;
 
 mod kind;
 mod timer_config;
