@@ -17,8 +17,9 @@ version.workspace = true
 [features]
 backend = ["serde"]
 frontend = ["serde"]
-serde = ["dep:serde", "url/serde"]
+serde = ["dep:serde", "opentalk-types-common/serde", "url/serde"]
 
 [dependencies]
+opentalk-types-common.workspace = true
 serde = { workspace = true, optional = true }
 url.workspace = true

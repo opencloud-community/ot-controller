@@ -4,8 +4,7 @@
 
 //! Signaling events for the `whiteboard` namespace
 
-use opentalk_types_common::assets::AssetId;
-use opentalk_types_signaling_whiteboard::event::AccessUrl;
+use opentalk_types_signaling_whiteboard::event::{AccessUrl, PdfAsset};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -32,17 +31,6 @@ impl From<AccessUrl> for WhiteboardEvent {
     fn from(value: AccessUrl) -> Self {
         Self::SpaceUrl(value)
     }
-}
-
-/// Handle to a PDF asset
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct PdfAsset {
-    /// The file name of the PDF asset
-    pub filename: String,
-
-    /// The asset id for the PDF asset
-    pub asset_id: AssetId,
 }
 
 impl From<PdfAsset> for WhiteboardEvent {
