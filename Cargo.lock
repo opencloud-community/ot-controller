@@ -4995,7 +4995,6 @@ dependencies = [
  "opentalk-kustos-prefix",
  "opentalk-types-common",
  "opentalk-types-signaling",
- "opentalk-types-signaling-whiteboard",
  "pretty_assertions",
  "redis",
  "redis-args",
@@ -5198,6 +5197,7 @@ name = "opentalk-types-signaling-whiteboard"
 version = "0.0.0-dev"
 dependencies = [
  "opentalk-types-common",
+ "opentalk-types-signaling",
  "serde",
  "url",
 ]
@@ -5214,7 +5214,6 @@ dependencies = [
  "opentalk-controller-settings",
  "opentalk-database",
  "opentalk-signaling-core",
- "opentalk-types",
  "opentalk-types-common",
  "opentalk-types-signaling",
  "opentalk-types-signaling-whiteboard",
