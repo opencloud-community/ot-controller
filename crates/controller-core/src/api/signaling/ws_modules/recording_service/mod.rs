@@ -12,11 +12,12 @@ use opentalk_types::signaling::{
     recording::state::RecorderStreamInfo,
     recording_service::{
         command::RecordingServiceCommand, event::RecordingServiceEvent,
-        state::RecordingServiceState, NAMESPACE,
+        state::RecordingServiceState,
     },
 };
 use opentalk_types_common::streaming::StreamingTargetId;
 use opentalk_types_signaling_recording::{StreamStatus, StreamTargetSecret, StreamUpdated};
+use opentalk_types_signaling_recording_service::NAMESPACE;
 
 use super::recording::{self, Recording, RecordingStorageProvider as _};
 

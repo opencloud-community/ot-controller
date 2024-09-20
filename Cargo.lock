@@ -4383,6 +4383,7 @@ dependencies = [
  "opentalk-types-signaling-breakout",
  "opentalk-types-signaling-control",
  "opentalk-types-signaling-recording",
+ "opentalk-types-signaling-recording-service",
  "opentelemetry",
  "opentelemetry-otlp",
  "opentelemetry-prometheus",
@@ -4986,6 +4987,7 @@ dependencies = [
  "opentalk-types-common",
  "opentalk-types-signaling",
  "opentalk-types-signaling-recording",
+ "opentalk-types-signaling-recording-service",
  "pretty_assertions",
  "redis",
  "redis-args",
@@ -5085,6 +5087,10 @@ dependencies = [
  "serde_json",
  "url",
 ]
+
+[[package]]
+name = "opentalk-types-signaling-recording-service"
+version = "0.0.0-dev"
 
 [[package]]
 name = "opentalk-whiteboard"
