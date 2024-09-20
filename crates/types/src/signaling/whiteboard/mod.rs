@@ -4,5 +4,4 @@
 
 //! Signaling messages for the `whiteboard` namespace
 
-pub mod event;
 pub mod state;

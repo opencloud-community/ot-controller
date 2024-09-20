@@ -4,16 +4,13 @@
 
 //! Signaling events for the `whiteboard` namespace
 
-use opentalk_types_signaling_whiteboard::event::{AccessUrl, Error, PdfAsset};
-
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::event::{AccessUrl, Error, PdfAsset};
 
 /// Events sent out by the `whiteboard` module
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case", tag = "message")
 )]
 pub enum WhiteboardEvent {
