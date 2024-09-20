@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Signaling messages for the `timer` namespace
+//! Signaling state for the `timer` namespace
 
-pub mod status;
+mod timer_state;
+
+pub use timer_state::TimerState;

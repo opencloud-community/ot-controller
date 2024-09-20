@@ -9,13 +9,13 @@ use opentalk_signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
-use opentalk_types::signaling::timer::status::TimerStatus;
 use opentalk_types_common::time::Timestamp;
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_timer::{
     command::{self, TimerCommand},
     event::{Error, Started, StopKind, Stopped, TimerEvent, UpdatedReadyStatus},
     peer_state::TimerPeerState,
+    state::TimerState,
     Kind, TimerConfig, TimerId, NAMESPACE,
 };
 use storage::TimerStorage;
@@ -62,7 +62,7 @@ impl SignalingModule for Timer {
 
     type ExtEvent = ExpiredEvent;
 
-    type FrontendData = TimerStatus;
+    type FrontendData = TimerState;
 
     type PeerFrontendData = TimerPeerState;
 
@@ -108,7 +108,7 @@ impl SignalingModule for Timer {
                     None
                 };
 
-                *frontend_data = Some(TimerStatus {
+                *frontend_data = Some(TimerState {
                     config: TimerConfig {
                         timer_id: timer.id,
                         started_at: timer.started_at,
@@ -419,7 +419,6 @@ mod tests {
 
     use chrono::{DateTime, Duration};
     use opentalk_test_util::assert_eq_json;
-    use opentalk_types::signaling::timer::status::TimerStatus;
 
     use super::*;
     use crate::Kind;
@@ -432,7 +431,7 @@ mod tests {
             .map(Timestamp::from)
             .unwrap();
 
-        let timer_status = TimerStatus {
+        let timer_status = TimerState {
             config: TimerConfig {
                 timer_id: TimerId::nil(),
                 started_at,
@@ -463,7 +462,7 @@ mod tests {
             .map(Timestamp::from)
             .unwrap();
 
-        let timer_status = TimerStatus {
+        let timer_status = TimerState {
             config: TimerConfig {
                 timer_id: TimerId::nil(),
                 started_at,
@@ -495,7 +494,7 @@ mod tests {
             .map(Timestamp::from)
             .unwrap();
 
-        let timer_status = TimerStatus {
+        let timer_status = TimerState {
             config: TimerConfig {
                 timer_id: TimerId::nil(),
                 started_at,

@@ -2,17 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Status data for `timer` namespace
-
-use opentalk_types_signaling_timer::TimerConfig;
-
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::TimerConfig;
 
 /// Status of and belonging to a currently active timer
 #[derive(Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct TimerStatus {
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct TimerState {
     /// config of the timer
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub config: TimerConfig,
@@ -23,6 +18,6 @@ pub struct TimerStatus {
 }
 
 #[cfg(feature = "serde")]
-impl SignalingModuleFrontendData for TimerStatus {
-    const NAMESPACE: Option<&'static str> = Some(opentalk_types_signaling_timer::NAMESPACE);
+impl opentalk_types_signaling::SignalingModuleFrontendData for TimerState {
+    const NAMESPACE: Option<&'static str> = Some(crate::NAMESPACE);
 }
