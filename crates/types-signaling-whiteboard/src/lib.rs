@@ -20,5 +20,7 @@
     unused_results
 )]
 
+pub mod command;
+
 /// The namespace string for the signaling module
 pub const NAMESPACE: &str = "whiteboard";

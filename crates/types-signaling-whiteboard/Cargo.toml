@@ -15,5 +15,9 @@ repository.workspace = true
 version.workspace = true
 
 [features]
-backend = []
-frontend = []
+backend = ["serde"]
+frontend = ["serde"]
+serde = ["dep:serde"]
+
+[dependencies]
+serde = { workspace = true, optional = true }
