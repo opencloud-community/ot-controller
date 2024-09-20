@@ -32,5 +32,5 @@ pub enum WhiteboardState {
 
 #[cfg(feature = "serde")]
 impl SignalingModuleFrontendData for WhiteboardState {
-    const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
+    const NAMESPACE: Option<&'static str> = Some(opentalk_types_signaling_whiteboard::NAMESPACE);
 }

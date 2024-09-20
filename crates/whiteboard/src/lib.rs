@@ -18,10 +18,10 @@ use opentalk_types::signaling::whiteboard::{
     command::WhiteboardCommand,
     event::{AccessUrl, Error, PdfAsset, WhiteboardEvent},
     state::WhiteboardState,
-    NAMESPACE,
 };
 use opentalk_types_common::{assets::FileExtension, time::Timestamp};
 use opentalk_types_signaling::Role;
+use opentalk_types_signaling_whiteboard::NAMESPACE;
 use snafu::{whatever, Report};
 use storage::{InitState, SpaceInfo, WhiteboardStorage};
 use url::Url;
