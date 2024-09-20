@@ -5,10 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.20.0]
+
+### 🚀 New features
+
+- Return ack messages for moderator and presenter changes ([!1103](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1103))
+- (moderation) Improve signaling responses for the `ChangeDisplayName` command ([!1119](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1119))
+- Add livekit module ([!1063](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1063))
+- Make janus-media module optional ([!1063](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1063))
+- Add e2e encryption flag to rooms table ([!1124](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1124))
 
 ### 🐛 Bug fixes
 
+- Prevent high cpu usage when RabbitMQ is unavailable ([!1125](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1125))
+- Wrong documented response body of /rooms/{room_id}/event ([!1126](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1126))
+- Always include streaming_links property in MeetingDetails ([!1128](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1128))
+- Change the WWW-Authenticate error value to `invalid_token` for expired sessions ([!1134](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1134))
+- (protocol) Rename protocol module to meeting-notes ([!1004](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1004))
+- Remove the `is_room_owner` key on room cleanup ([!1131](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1131))
 - (signaling) Correctly serialize/deserialize namespaced messages ([!1166](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1166))
 
 ### 📚 Documentation
@@ -18,88 +32,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🔨 Refactor
 
 - (types) Introduce opentalk-types-common crate ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move ExampleData trait into opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move AssetId to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move BearerToken to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move BreakoutRoomId to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move TimeZone to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move DateTimeTz to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Validate call-in numeric id in FromStr implementation ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move call-in NumericId to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move CallInId to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move CallInPassword to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move sql_enum macro to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move EmailInviteRole to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move EventId to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move EventInviteStatus to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move FileExtension to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move GroupId to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move GroupName to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move InviteCodeId to opentalk-types-common as InviteCode ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move InviteRole to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move ModuleResourceId to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move OneOrManyBTreeSet to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move OneOrManyVec to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
 - (types) Introduce opentalk-types-signaling crate ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move ParticipantId to opentalk-types-signaling ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move ParticipationKind to opentalk-types-signaling ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move RecurrenceRule to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move RecurrencePattern to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move ResumptionToken to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move RoomId to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move RoomPassword to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move StreamingKey to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move StreamingKind to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move StreamingTargetId to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move TariffId to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move TariffStatus to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move TenantId to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move TicketToken to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move Timestamp to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move UserId to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move EmailAddress to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Use CallInId and CallInPassword in event call-in struct ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move CallIn to opentalk-types-common as CallInInfo ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move StreamingLink to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move MeetingDetails to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move EventInfo to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move JobType to opentalk-controller-core ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move StreamingTargetKind to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move StreamingTarget to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move RoomStreamingTarget to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move QuotaType to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Introduce ModuleId, FeatureId and ModuleFeatureId types ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move well-known features to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move TariffModuleResource to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move TariffResource to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move Role to opentalk-types-signaling ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Create ForRole trait in opentalk-types-signaling ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move SharedFolderAccess to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move SignalingModuleFrontendData to opentalk-types-signaling ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move SignalingModulePeerFrontendData to opentalk-types-signaling ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
-- (types) Move SharedFolder to opentalk-types-common ([!1137](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1137))
 
 ### 📦 Dependencies
 
-- (deps) Update rust crate owo-colors to v4.1.0 ([!1161](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1161))
-- (deps) Update rust crate aws-sdk-s3 to v1.49.0 ([!1160](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1160))
-- (deps) Update redocly/cli docker tag to v1.25.1 ([!1145](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1145))
-- (deps) Update rust crate sysinfo to v0.31.4 ([!1158](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1158))
+- (deps) Lock file maintenance ([!1116](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1116))
+- (deps) Update git.opentalk.dev:5050/opentalk/backend/containers/rust docker tag to v1.81.0 ([!1136](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1136))
+- (deps) Update git.opentalk.dev:5050/opentalk/tools/check-changelog docker tag to v0.2.0 ([!1143](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1143))
+- (deps) Update rabbitmq docker tag to v4 ([!1175](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1175))
+- (deps) Update redocly/cli docker tag to v1.25.3 ([!1174](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1174))
 - (deps) Update rust crate async-trait to v0.1.82 ([!1156](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1156))
-- (deps) Update rust crate vergen-gix to v1.0.1 ([!1155](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1155))
+- (deps) Update rust crate aws-sdk-s3 to v1.51.0 ([!1172](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1172))
+- (deps) Update rust crate bytes to v1.7.2 ([!1173](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1173))
+- (deps) Update rust crate clap to v4.5.17 ([!1146](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1146))
+- (deps) Update rust crate diesel to v2.2.4 ([!1147](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1147))
+- (deps) Update rust crate gix-path to 0.10.11 ([!1138](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1138))
+- (deps) Update rust crate owo-colors to v4.1.0 ([!1161](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1161))
+- (deps) Update rust crate pretty_assertions to v1.4.1 ([!1168](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1168))
+- (deps) Update rust crate redis to 0.26 & redis-args to 0.16 ([!1067](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1067))
+- (deps) Update rust crate redis-args to 0.17 ([!1169](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1169))
+- (deps) Update rust crate rrule to 0.13 ([!1081](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1081))
+- (deps) Update rust crate serde_json to v1.0.128 ([!1152](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1152))
+- (deps) Update rust crate syn to v2.0.77 ([!1153](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1153))
+- (deps) Update rust crate sysinfo to v0.31.4 ([!1158](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1158))
 - (deps) Update rust crate tokio to v1.40.0 ([!1164](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1164))
 - (deps) Update rust crate tokio-stream to v0.1.16 ([!1154](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1154))
-- (deps) Update rust crate syn to v2.0.77 ([!1153](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1153))
-- (deps) Update rust crate serde_json to v1.0.128 ([!1152](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1152))
-- (deps) Update rust crate diesel to v2.2.4 ([!1147](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1147))
-- (deps) Update rust crate clap to v4.5.17 ([!1146](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1146))
-- (deps) Update git.opentalk.dev:5050/opentalk/tools/check-changelog docker tag to v0.2.0 ([!1143](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1143))
-- (deps) Update redocly/cli docker tag to v1.25.2 ([!1167](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1167))
-- (deps) Update rust crate pretty_assertions to v1.4.1 ([!1168](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1168))
-- (deps) Lock file maintenance ([!1116](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1116))
-- (deps) Update rust crate redis-args to 0.17 ([!1169](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1169))
+- (deps) Update rust crate vergen to v9.0.1 ([!1170](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1170))
+- (deps) Update rust crate vergen-gix to v1.0.2 ([!1171](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1171))
 
-<!-- End section Unreleased -->
+### ⚙ Miscellaneous
+
+- (dependencies) Update crate gix-path to fix RUSTSEC-2024-0367 ([!1122](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1122))
+- Update default terdoc port ([!1123](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1123))
+- Ignore RUSTSEC-2024-0370 ([!1130](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1130))
+- Upgrade redocly/cli image ([!1127](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1127))
+- Fix redis related clippy lints ([!1067](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1067))
+- Add snafu::report to xtask ([!1124](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1124))
+
+### Ci
+
+- Check changelog ([!1115](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1115))
+
+### Test
+
+- Enhanced unit test for update message ([!1103](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1103))
 
 ## [0.19.1]
 
@@ -834,7 +810,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - initial release candidate
 
 ---
-[Unreleased]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.19.0...main
+[0.20.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.19.0...v0.20.0
 
 [0.19.1]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.19.0...v0.19.1
 [0.19.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.18.0...v0.19.0
