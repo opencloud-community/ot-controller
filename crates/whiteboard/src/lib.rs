@@ -15,12 +15,14 @@ use opentalk_signaling_core::{
     VolatileStorage,
 };
 use opentalk_types::signaling::whiteboard::{
-    event::{AccessUrl, Error, PdfAsset, WhiteboardEvent},
+    event::{Error, PdfAsset, WhiteboardEvent},
     state::WhiteboardState,
 };
 use opentalk_types_common::{assets::FileExtension, time::Timestamp};
 use opentalk_types_signaling::Role;
-use opentalk_types_signaling_whiteboard::{command::WhiteboardCommand, NAMESPACE};
+use opentalk_types_signaling_whiteboard::{
+    command::WhiteboardCommand, event::AccessUrl, NAMESPACE,
+};
 use snafu::{whatever, Report};
 use storage::{InitState, SpaceInfo, WhiteboardStorage};
 use url::Url;

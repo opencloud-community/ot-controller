@@ -21,6 +21,7 @@
 )]
 
 pub mod command;
+pub mod event;
 
 /// The namespace string for the signaling module
 pub const NAMESPACE: &str = "whiteboard";

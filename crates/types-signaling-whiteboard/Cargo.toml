@@ -17,7 +17,8 @@ version.workspace = true
 [features]
 backend = ["serde"]
 frontend = ["serde"]
-serde = ["dep:serde"]
+serde = ["dep:serde", "url/serde"]
 
 [dependencies]
 serde = { workspace = true, optional = true }
+url.workspace = true

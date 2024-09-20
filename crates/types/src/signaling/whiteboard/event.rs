@@ -5,7 +5,7 @@
 //! Signaling events for the `whiteboard` namespace
 
 use opentalk_types_common::assets::AssetId;
-use url::Url;
+use opentalk_types_signaling_whiteboard::event::AccessUrl;
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -26,14 +26,6 @@ pub enum WhiteboardEvent {
 
     /// An error happened when executing a `whiteboard` command
     Error(Error),
-}
-
-/// The access URL to a specific data
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct AccessUrl {
-    /// URL for the data
-    pub url: Url,
 }
 
 impl From<AccessUrl> for WhiteboardEvent {
