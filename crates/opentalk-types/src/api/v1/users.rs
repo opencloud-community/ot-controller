@@ -4,10 +4,7 @@
 
 //! This module contains types that are used in OpenTalk API V1 users endpoints.
 
-use opentalk_types_api_v1::{
-    assets::AssetResource,
-    users::{PublicUserProfile, UnregisteredUser},
-};
+use opentalk_types_api_v1::{assets::AssetResource, users::GetFindResponseEntry};
 use opentalk_types_common::{events::EventId, rooms::RoomId, utils::ExampleData};
 
 #[allow(unused_imports)]
@@ -76,23 +73,7 @@ impl ExampleData for PatchMeBody {
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct GetFindResponse(pub Vec<GetFindResponseItem>);
-
-/// The response for users found
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(tag = "kind", rename_all = "lowercase")
-)]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub enum GetFindResponseItem {
-    /// Registered user
-    Registered(PublicUserProfile),
-
-    /// Unregistered user
-    Unregistered(UnregisteredUser),
-}
+pub struct GetFindResponse(pub Vec<GetFindResponseEntry>);
 
 /// Response body for the `GET /users/me/pending_invites` endpoint
 #[derive(Clone, Debug, Eq, PartialEq)]

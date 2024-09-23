@@ -28,11 +28,11 @@ use opentalk_types::api::{
     v1::{
         order::{AssetSorting, SortingQuery},
         pagination::PagePaginationQuery,
-        users::{GetFindResponse, GetFindResponseItem, GetUserAssetsResponse, PatchMeBody},
+        users::{GetFindResponse, GetUserAssetsResponse, PatchMeBody},
     },
 };
 use opentalk_types_api_v1::users::{
-    GetFindQuery, PrivateUserProfile, PublicUserProfile, UnregisteredUser,
+    GetFindQuery, GetFindResponseEntry, PrivateUserProfile, PublicUserProfile, UnregisteredUser,
 };
 use opentalk_types_common::{tariffs::TariffResource, users::UserId};
 use snafu::{Report, ResultExt, Whatever};
@@ -480,12 +480,12 @@ pub async fn find(
         // Build a list of registered and unregistered users resulting from the search
         registered_users
             .into_iter()
-            .map(|user| GetFindResponseItem::Registered(user.to_public_user_profile(&settings)))
+            .map(|user| GetFindResponseEntry::Registered(user.to_public_user_profile(&settings)))
             .chain(found_kc_users.into_iter().map(|kc_user| {
                 let avatar_url =
                     email_to_libravatar_url(&settings.avatar.libravatar_url, &kc_user.email);
 
-                GetFindResponseItem::Unregistered(UnregisteredUser {
+                GetFindResponseEntry::Unregistered(UnregisteredUser {
                     email: kc_user.email,
                     firstname: kc_user.first_name,
                     lastname: kc_user.last_name,
@@ -506,7 +506,7 @@ pub async fn find(
 
         found_users
             .into_iter()
-            .map(|user| GetFindResponseItem::Registered(user.to_public_user_profile(&settings)))
+            .map(|user| GetFindResponseEntry::Registered(user.to_public_user_profile(&settings)))
             .collect()
     };
 

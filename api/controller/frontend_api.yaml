@@ -3512,9 +3512,9 @@ components:
     GetFindResponse:
       type: array
       items:
-        $ref: "#/components/schemas/GetFindResponseItem"
+        $ref: "#/components/schemas/GetFindResponseEntry"
       description: The response for the find endpoint
-    GetFindResponseItem:
+    GetFindResponseEntry:
       oneOf:
         - allOf:
             - $ref: "#/components/schemas/PublicUserProfile"
