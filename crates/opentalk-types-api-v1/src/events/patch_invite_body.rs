@@ -4,12 +4,9 @@
 
 use opentalk_types_common::{events::invites::InviteRole, utils::ExampleData};
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// Request body for the `PATCH /events/{event_id}/invites/{user_id}` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(
     feature = "utoipa",
     derive(utoipa::ToSchema),
