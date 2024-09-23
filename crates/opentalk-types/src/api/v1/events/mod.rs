@@ -4,7 +4,6 @@
 
 //! This module contains types that are used for OpenTalk API V1 events endpoints.
 
-mod delete_event_invite_path;
 mod delete_events_query;
 mod delete_shared_folder_query;
 mod email_invite;
@@ -45,7 +44,6 @@ mod user_invite;
 
 pub mod invites;
 
-pub use delete_event_invite_path::DeleteEventInvitePath;
 pub use delete_events_query::DeleteEventsQuery;
 pub use delete_shared_folder_query::DeleteSharedFolderQuery;
 pub use email_invite::EmailInvite;

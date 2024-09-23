@@ -4,12 +4,9 @@
 
 use opentalk_types_common::{events::EventId, users::UserId};
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// Path parameters for the `DELETE /events/{event_id}/invites/{user_id}` endpoint
 #[derive(Debug, Eq, PartialEq, Clone)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::IntoParams))]
 pub struct DeleteEventInvitePath {
     /// ID of the event to delete the invite for
