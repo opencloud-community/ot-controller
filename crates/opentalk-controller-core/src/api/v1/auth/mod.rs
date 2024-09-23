@@ -19,12 +19,9 @@ use opentalk_db_storage::{
     tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId},
     users::User,
 };
-use opentalk_types::api::{
-    error::{ApiError, AuthenticationError},
-    v1::auth::PostLoginResponse,
-};
+use opentalk_types::api::error::{ApiError, AuthenticationError};
 use opentalk_types_api_v1::auth::{
-    login::AuthLoginPostRequestBody, GetLoginResponseBody, OidcProvider,
+    login::AuthLoginPostRequestBody, GetLoginResponseBody, OidcProvider, PostLoginResponseBody,
 };
 use opentalk_types_common::{
     events::EventId, rooms::RoomId, tariffs::TariffStatus, tenants::TenantId, users::GroupName,
@@ -52,7 +49,7 @@ mod update_user;
         (
             status = StatusCode::OK,
             description = "Login successful, answer contains a list of permissions",
-            body = PostLoginResponse,
+            body = PostLoginResponseBody,
             example = json!({"permissions": []})
         ),
         (
@@ -88,7 +85,7 @@ pub async fn post_login(
     oidc_ctx: Data<OidcContext>,
     body: Json<AuthLoginPostRequestBody>,
     authz: Data<kustos::Authz>,
-) -> Result<Json<PostLoginResponse>, ApiError> {
+) -> Result<Json<PostLoginResponseBody>, ApiError> {
     let id_token = body.into_inner().id_token;
 
     let mut info = match oidc_ctx.verify_id_token(&id_token) {
@@ -218,7 +215,7 @@ pub async fn post_login(
 
     update_core_user_permissions(authz.as_ref(), login_result).await?;
 
-    Ok(Json(PostLoginResponse {
+    Ok(Json(PostLoginResponseBody {
         // TODO calculate permissions
         permissions: Default::default(),
     }))
