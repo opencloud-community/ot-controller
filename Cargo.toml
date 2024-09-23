@@ -44,6 +44,7 @@ opentalk-signaling-module-timer = { path = "crates/opentalk-signaling-module-tim
 opentalk-signaling-module-whiteboard = { path = "crates/opentalk-signaling-module-whiteboard", version = "0.28.0-alpha" }
 opentalk-test-util = { path = "crates/opentalk-test-util", version = "0.28.0-alpha" }
 opentalk-types = { path = "crates/opentalk-types", version = "0.28.0-alpha" }
+opentalk-types-api-v1 = { path = "crates/opentalk-types-api-v1", version = "0.28.0-alpha" }
 opentalk-types-common = { path = "crates/opentalk-types-common", version = "0.28.0-alpha" }
 opentalk-types-signaling = { path = "crates/opentalk-types-signaling", version = "0.28.0-alpha" }
 opentalk-types-signaling-breakout = { path = "crates/opentalk-types-signaling-breakout", version = "0.28.0-alpha" }
