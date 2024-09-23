@@ -69,15 +69,6 @@ impl ExampleData for PatchMeBody {
     }
 }
 
-/// The query string for finding a user
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "utoipa", derive(utoipa::IntoParams))]
-pub struct GetFindQuery {
-    /// The query string
-    pub q: String,
-}
-
 /// The response for the find endpoint
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
