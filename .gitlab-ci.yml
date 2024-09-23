@@ -184,7 +184,7 @@ lint:changelog:
   allow_failure: true
   cache: {}
   image:
-    name: git.opentalk.dev:5050/opentalk/tools/check-changelog:v0.2.0
+    name: git.opentalk.dev:5050/opentalk/tools/check-changelog:v0.3.0
     entrypoint: ['']
   stage: lint
   <<: *default_job_condition
