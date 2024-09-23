@@ -21,3 +21,4 @@
 )]
 
 pub mod assets;
+pub mod rooms;

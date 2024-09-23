@@ -15,7 +15,7 @@ use opentalk_signaling_core::{
     ObjectStorage,
 };
 use opentalk_types::api::{error::ApiError, v1::pagination::PagePaginationQuery};
-use opentalk_types_api_v1::assets::AssetResource;
+use opentalk_types_api_v1::rooms::by_room_id::assets::RoomsByRoomIdAssetsGetResponseBody;
 use opentalk_types_common::{assets::AssetId, rooms::RoomId};
 
 use super::{response::NoContent, ApiResponse};
@@ -34,7 +34,7 @@ use crate::api::responses::{BinaryData, Forbidden, InternalServerError, NotFound
         (
             status = StatusCode::OK,
             description = "The assets have been returned successfully",
-            body = GetRoomsAssetsResponseBody,
+            body = RoomsByRoomIdAssetsGetResponseBody,
         ),
         (
             status = StatusCode::UNAUTHORIZED,
@@ -62,7 +62,7 @@ pub async fn room_assets(
     db: Data<Db>,
     room_id: Path<RoomId>,
     pagination: Query<PagePaginationQuery>,
-) -> Result<ApiResponse<Vec<AssetResource>>, ApiError> {
+) -> Result<ApiResponse<RoomsByRoomIdAssetsGetResponseBody>, ApiError> {
     let room_id = room_id.into_inner();
     let PagePaginationQuery { per_page, page } = pagination.into_inner();
 
@@ -73,7 +73,13 @@ pub async fn room_assets(
 
     let asset_data = assets.into_iter().map(Into::into).collect();
 
-    Ok(ApiResponse::new(asset_data).with_page_pagination(per_page, page, asset_count))
+    Ok(
+        ApiResponse::new(RoomsByRoomIdAssetsGetResponseBody(asset_data)).with_page_pagination(
+            per_page,
+            page,
+            asset_count,
+        ),
+    )
 }
 
 /// Get a specific asset inside a room.
