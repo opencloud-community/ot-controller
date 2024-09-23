@@ -30,10 +30,11 @@ use opentalk_types::api::{
         pagination::PagePaginationQuery,
         users::{
             GetFindQuery, GetFindResponse, GetFindResponseItem, GetUserAssetsResponse, PatchMeBody,
-            PrivateUserProfile, PublicUserProfile, UnregisteredUser,
+            PrivateUserProfile, UnregisteredUser,
         },
     },
 };
+use opentalk_types_api_v1::users::PublicUserProfile;
 use opentalk_types_common::{tariffs::TariffResource, users::UserId};
 use snafu::{Report, ResultExt, Whatever};
 use validator::Validate;

@@ -3,7 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::{TimeZone as _, Utc};
-use opentalk_types_api_v1::events::{EventRoomInfo, EventType};
+use opentalk_types_api_v1::{
+    events::{EventRoomInfo, EventType},
+    users::PublicUserProfile,
+};
 use opentalk_types_common::{
     events::{invites::EventInviteStatus, EventDescription, EventId, EventTitle},
     shared_folders::SharedFolder,
@@ -13,7 +16,6 @@ use opentalk_types_common::{
 };
 
 use super::EventInvitee;
-use crate::api::v1::users::PublicUserProfile;
 #[allow(unused_imports)]
 use crate::imports::*;
 

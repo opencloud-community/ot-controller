@@ -4,60 +4,13 @@
 
 //! This module contains types that are used in OpenTalk API V1 users endpoints.
 
-use opentalk_types_api_v1::assets::AssetResource;
+use opentalk_types_api_v1::{assets::AssetResource, users::PublicUserProfile};
 use opentalk_types_common::{
     events::EventId, rooms::RoomId, tariffs::TariffStatus, users::UserId, utils::ExampleData,
 };
 
 #[allow(unused_imports)]
 use crate::imports::*;
-
-/// Public user details.
-///
-/// Contains general "public" information about a user. Is accessible to all other users.
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(
-    example = json!(
-        PublicUserProfile::example_data()
-    )
-))]
-pub struct PublicUserProfile {
-    /// The user id
-    pub id: UserId,
-
-    /// The email of the user
-    pub email: String,
-
-    /// The title of the user
-    pub title: String,
-
-    /// The user's first name
-    pub firstname: String,
-
-    /// The user's last name
-    pub lastname: String,
-
-    /// The user's display name
-    pub display_name: String,
-
-    /// The user's avatar URL
-    pub avatar_url: String,
-}
-
-impl ExampleData for PublicUserProfile {
-    fn example_data() -> Self {
-        Self {
-            id: UserId::from_u128(0xa11c3),
-            email: "alice@example.com".to_string(),
-            title: "".to_string(),
-            firstname: "Alice".to_string(),
-            lastname: "Adams".to_string(),
-            display_name: "Alice Adams".to_string(),
-            avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060".to_string(),
-        }
-    }
-}
 
 /// Private user profile.
 ///

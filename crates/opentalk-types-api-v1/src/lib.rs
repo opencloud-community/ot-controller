@@ -24,3 +24,4 @@ pub mod assets;
 pub mod auth;
 pub mod events;
 pub mod rooms;
+pub mod users;

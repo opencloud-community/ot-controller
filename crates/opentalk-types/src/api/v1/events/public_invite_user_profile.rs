@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_types_api_v1::users::PublicUserProfile;
 use opentalk_types_common::{events::invites::InviteRole, utils::ExampleData};
 
-use crate::api::v1::users::PublicUserProfile;
 #[allow(unused_imports)]
 use crate::imports::*;
 

@@ -3,12 +3,12 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::{DateTime, TimeZone, Utc};
+use opentalk_types_api_v1::users::PublicUserProfile;
 use opentalk_types_common::{
     rooms::{invite_codes::InviteCode, RoomId},
     utils::ExampleData,
 };
 
-use crate::api::v1::users::PublicUserProfile;
 #[allow(unused_imports)]
 use crate::imports::*;
 

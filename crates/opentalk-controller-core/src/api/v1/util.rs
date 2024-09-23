@@ -7,7 +7,8 @@ use std::collections::HashMap;
 use opentalk_controller_settings::Settings;
 use opentalk_database::{DbConnection, Result};
 use opentalk_db_storage::{tariffs::Tariff, users::User, utils::HasUsers};
-use opentalk_types::api::{error::ApiError, v1::users::PublicUserProfile};
+use opentalk_types::api::error::ApiError;
+use opentalk_types_api_v1::users::PublicUserProfile;
 use opentalk_types_common::{features::ModuleFeatureId, users::UserId};
 
 /// Utility to fetch user profiles batched
