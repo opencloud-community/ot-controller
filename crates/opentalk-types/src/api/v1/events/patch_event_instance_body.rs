@@ -2,13 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_types_api_v1::events::EventStatus;
 use opentalk_types_common::{
     events::{EventDescription, EventTitle},
     time::DateTimeTz,
     utils::ExampleData,
 };
 
-use crate::api::v1::events::EventStatus;
 #[allow(unused_imports)]
 use crate::imports::*;
 

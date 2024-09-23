@@ -3,14 +3,14 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::{TimeZone as _, Utc};
-use opentalk_types_api_v1::events::{EventAndInstanceId, InstanceId};
+use opentalk_types_api_v1::events::{EventAndInstanceId, EventStatus, InstanceId};
 use opentalk_types_common::{
     events::{EventDescription, EventId, EventTitle},
     time::{DateTimeTz, Timestamp},
     utils::ExampleData,
 };
 
-use super::{EventStatus, EventType};
+use super::EventType;
 use crate::api::v1::users::PublicUserProfile;
 #[allow(unused_imports)]
 use crate::imports::*;

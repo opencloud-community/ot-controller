@@ -5148,6 +5148,7 @@ dependencies = [
  "chrono",
  "derive_more 1.0.0",
  "opentalk-types-common",
+ "pretty_assertions",
  "serde",
  "serde_json",
  "utoipa",
