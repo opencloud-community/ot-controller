@@ -28,12 +28,12 @@ use opentalk_types::api::{
     v1::{
         order::{AssetSorting, SortingQuery},
         pagination::PagePaginationQuery,
-        users::{GetUserAssetsResponse, PatchMeBody},
+        users::PatchMeBody,
     },
 };
 use opentalk_types_api_v1::users::{
-    GetFindQuery, GetFindResponseBody, GetFindResponseEntry, PrivateUserProfile, PublicUserProfile,
-    UnregisteredUser,
+    GetFindQuery, GetFindResponseBody, GetFindResponseEntry, GetUserAssetsResponseBody,
+    PrivateUserProfile, PublicUserProfile, UnregisteredUser,
 };
 use opentalk_types_common::{tariffs::TariffResource, users::UserId};
 use snafu::{Report, ResultExt, Whatever};
@@ -266,7 +266,7 @@ pub async fn get_me_tariff(
         (
             status = StatusCode::OK,
             description = "List of accessible assets successfully returned",
-            body = GetUserAssetsResponse,
+            body = GetUserAssetsResponseBody,
         ),
         (
             status = StatusCode::UNAUTHORIZED,
@@ -287,7 +287,7 @@ pub async fn get_me_assets(
     current_user: ReqData<User>,
     sorting: Query<SortingQuery<AssetSorting>>,
     pagination: Query<PagePaginationQuery>,
-) -> Result<ApiResponse<GetUserAssetsResponse>, ApiError> {
+) -> Result<ApiResponse<GetUserAssetsResponseBody>, ApiError> {
     let current_user = current_user.into_inner();
     let pagination = pagination.into_inner();
     let sorting = sorting.into_inner();
@@ -304,7 +304,7 @@ pub async fn get_me_assets(
     .await?;
 
     Ok(
-        ApiResponse::new(GetUserAssetsResponse { owned_assets }).with_page_pagination(
+        ApiResponse::new(GetUserAssetsResponseBody { owned_assets }).with_page_pagination(
             pagination.per_page,
             pagination.page,
             asset_count,

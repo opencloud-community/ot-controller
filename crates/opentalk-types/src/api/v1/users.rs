@@ -4,7 +4,6 @@
 
 //! This module contains types that are used in OpenTalk API V1 users endpoints.
 
-use opentalk_types_api_v1::users::UserAssetResource;
 use opentalk_types_common::utils::ExampleData;
 
 #[allow(unused_imports)]
@@ -65,27 +64,6 @@ impl ExampleData for PatchMeBody {
             display_name: Some("Alice Adams".to_string()),
             language: Some("en".to_string()),
             ..Default::default()
-        }
-    }
-}
-
-/// Response body for the `GET /v1/users/me/assets` endpoint
-#[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(
-    feature = "utoipa",
-    derive(utoipa::ToSchema),
-    schema(example = json!(GetUserAssetsResponse::example_data()))
-)]
-pub struct GetUserAssetsResponse {
-    /// Assets owned by the user
-    pub owned_assets: Vec<UserAssetResource>,
-}
-
-impl ExampleData for GetUserAssetsResponse {
-    fn example_data() -> Self {
-        Self {
-            owned_assets: vec![UserAssetResource::example_data()],
         }
     }
 }

@@ -2447,7 +2447,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetUserAssetsResponse"
+                $ref: "#/components/schemas/GetUserAssetsResponseBody"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "500":
@@ -3599,7 +3599,7 @@ components:
       items:
         $ref: "#/components/schemas/IceServer"
       description: Response to the *GET /turn* endpoint request
-    GetUserAssetsResponse:
+    GetUserAssetsResponseBody:
       type: object
       description: "Response body for the `GET /v1/users/me/assets` endpoint"
       required:
