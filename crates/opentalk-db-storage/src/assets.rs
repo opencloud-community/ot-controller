@@ -10,12 +10,13 @@ use diesel::{
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection, RunQueryDsl};
 use opentalk_database::{DbConnection, Paginate, Result};
 use opentalk_types::api::v1::{
-    assets::AssetResource,
     order::{AssetSorting, Ordering, SortingQuery},
     users::UserAssetResource,
 };
+use opentalk_types_api_v1::assets::AssetResource;
 use opentalk_types_common::{
-    assets::AssetId, events::EventId, rooms::RoomId, tenants::TenantId, users::UserId,
+    assets::AssetId, events::EventId, modules::ModuleId, rooms::RoomId, tenants::TenantId,
+    users::UserId,
 };
 
 use crate::{
@@ -29,7 +30,7 @@ pub struct Asset {
     pub id: AssetId,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-    pub namespace: Option<String>,
+    pub namespace: Option<ModuleId>,
     pub kind: String,
     pub filename: String,
     pub tenant_id: TenantId,

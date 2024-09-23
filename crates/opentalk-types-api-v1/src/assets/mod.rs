@@ -4,6 +4,6 @@
 
 //! This module contains types that are used for OpenTalk API V1 assets endpoints.
 
-mod get_rooms_assets_response_body;
+mod asset_resource;
 
-pub use get_rooms_assets_response_body::GetRoomsAssetsResponseBody;
+pub use asset_resource::AssetResource;

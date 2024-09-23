@@ -15,5 +15,30 @@ repository.workspace = true
 version.workspace = true
 
 [features]
-backend = []
-frontend = []
+backend = ["diesel", "opentalk-types-common/backend", "serde", "utoipa"]
+diesel = ["opentalk-types-common/diesel"]
+frontend = ["opentalk-types-common/frontend", "serde"]
+serde = ["chrono/serde", "dep:serde", "opentalk-types-common/serde"]
+utoipa = [
+  "dep:serde_json",
+  "dep:utoipa",
+  "opentalk-types-common/utoipa",
+  "serde",
+]
+
+[dependencies]
+chrono.workspace = true
+opentalk-types-common.workspace = true
+serde = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }
+utoipa = { workspace = true, features = [
+  "chrono",
+  "url",
+  "uuid",
+], optional = true }
+
+[package.metadata.cargo-machete]
+ignored = [
+  # Required by `utoipa::ToSchema`, not detected by compiler
+  "serde_json",
+]

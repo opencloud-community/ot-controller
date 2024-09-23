@@ -4472,6 +4472,7 @@ dependencies = [
  "opentalk-signaling-core",
  "opentalk-test-util",
  "opentalk-types",
+ "opentalk-types-api-v1",
  "opentalk-types-common",
  "opentalk-types-signaling",
  "opentalk-types-signaling-breakout",
@@ -4603,6 +4604,7 @@ dependencies = [
  "opentalk-mail-worker-protocol",
  "opentalk-test-util",
  "opentalk-types",
+ "opentalk-types-api-v1",
  "opentalk-types-common",
  "opentalk-types-signaling-recording",
  "pretty_assertions",
@@ -5122,6 +5124,7 @@ dependencies = [
  "opentalk-database",
  "opentalk-diesel-newtype",
  "opentalk-kustos-prefix",
+ "opentalk-types-api-v1",
  "opentalk-types-common",
  "opentalk-types-signaling",
  "pretty_assertions",
@@ -5141,6 +5144,13 @@ dependencies = [
 [[package]]
 name = "opentalk-types-api-v1"
 version = "0.28.0-alpha"
+dependencies = [
+ "chrono",
+ "opentalk-types-common",
+ "serde",
+ "serde_json",
+ "utoipa",
+]
 
 [[package]]
 name = "opentalk-types-common"

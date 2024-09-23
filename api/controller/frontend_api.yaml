@@ -2606,9 +2606,8 @@ components:
           type: string
           description: The asset kind
         namespace:
-          type: string
-          description: The namespace of the asset
-          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/ModuleId"
         size:
           type: integer
           format: int64

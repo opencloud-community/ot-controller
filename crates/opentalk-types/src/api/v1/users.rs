@@ -4,11 +4,11 @@
 
 //! This module contains types that are used in OpenTalk API V1 users endpoints.
 
+use opentalk_types_api_v1::assets::AssetResource;
 use opentalk_types_common::{
     events::EventId, rooms::RoomId, tariffs::TariffStatus, users::UserId, utils::ExampleData,
 };
 
-use super::assets::AssetResource;
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -321,7 +321,7 @@ mod tests {
             asset: AssetResource {
                 id: AssetId::from_u128(0xd339dde5_1161_4ad1_a3d8_3e27b5d84377),
                 created_at: "2023-09-05T08:57:42Z".parse()?,
-                namespace: Some("legal_vote".to_string()),
+                namespace: Some("legal_vote".parse()?),
                 kind: "protocol_pdf".to_string(),
                 filename: "vote_protocol_2023-09something.pdf".to_string(),
                 size: 230423,

@@ -46,6 +46,7 @@ opentalk-cache = { workspace = true, optional = true }
 opentalk-database = { workspace = true, optional = true }
 opentalk-diesel-newtype = { workspace = true, optional = true }
 opentalk-kustos-prefix = { workspace = true, optional = true }
+opentalk-types-api-v1.workspace = true
 opentalk-types-common.workspace = true
 opentalk-types-signaling.workspace = true
 redis = { workspace = true, optional = true }
@@ -78,6 +79,7 @@ backend = [
   "dep:opentalk-database",
   "diesel",
   "kustos",
+  "opentalk-types-api-v1/backend",
   "opentalk-types-common/backend",
   "opentalk-types-signaling/backend",
   "rand",
@@ -95,6 +97,7 @@ frontend = [
   "dep:http",
   "dep:http-request-derive",
   "dep:http0",
+  "opentalk-types-api-v1/frontend",
   "opentalk-types-common/frontend",
   "opentalk-types-signaling/frontend",
   "serde",
@@ -115,6 +118,7 @@ serde = [
   "dep:bincode",
   "dep:serde",
   "dep:validator",
+  "opentalk-types-api-v1/serde",
   "opentalk-types-common/serde",
   "opentalk-types-signaling/serde",
   "url/serde",

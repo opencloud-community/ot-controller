@@ -19,3 +19,5 @@
     unused_qualifications,
     unused_results
 )]
+
+pub mod assets;

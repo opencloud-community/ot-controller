@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_types_api_v1::assets::AssetResource;
 use opentalk_types_common::utils::ExampleData;
 
-use super::AssetResource;
 #[allow(unused_imports)]
 use crate::imports::*;
 
