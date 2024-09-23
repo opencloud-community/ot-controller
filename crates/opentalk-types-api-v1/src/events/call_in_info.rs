@@ -4,12 +4,9 @@
 
 use opentalk_types_common::utils::ExampleData;
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// Data stored inside the `GET /events` query cursor
 #[derive(Debug, Clone, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(
     feature = "utoipa",
     derive(utoipa::ToSchema),
