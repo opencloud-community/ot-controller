@@ -42,8 +42,8 @@ use opentalk_types::api::{
     v1::{
         events::{
             EventExceptionResource, EventInvitee, EventInviteeProfile, EventOrException,
-            EventResource, GetEventQuery, GetEventsCursorData, GetEventsQuery, PatchEventBody,
-            PatchEventQuery, PostEventsBody, PublicInviteUserProfile,
+            EventResource, GetEventsCursorData, GetEventsQuery, PatchEventBody, PatchEventQuery,
+            PostEventsBody, PublicInviteUserProfile,
         },
         pagination::default_pagination_per_page,
         users::{PublicUserProfile, UnregisteredUser},
@@ -52,7 +52,7 @@ use opentalk_types::api::{
 };
 use opentalk_types_api_v1::events::{
     CallInInfo, DeleteEventsQuery, EmailOnlyUser, EventAndInstanceId, EventOptionsQuery,
-    EventRoomInfo, EventStatus, EventType,
+    EventRoomInfo, EventStatus, EventType, GetEventQuery,
 };
 use opentalk_types_common::{
     events::{invites::EventInviteStatus, EventDescription, EventId, EventTitle},
