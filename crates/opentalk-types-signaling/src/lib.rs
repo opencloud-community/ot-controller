@@ -27,6 +27,7 @@ mod module_data;
 #[cfg(feature = "serde")]
 mod module_peer_data;
 mod namespaced_command;
+mod namespaced_event;
 mod participant;
 mod participant_id;
 mod participation_kind;
@@ -45,6 +46,7 @@ pub use module_data::ModuleData;
 #[cfg(feature = "serde")]
 pub use module_peer_data::ModulePeerData;
 pub use namespaced_command::NamespacedCommand;
+pub use namespaced_event::NamespacedEvent;
 pub use participant::Participant;
 pub use participant_id::ParticipantId;
 pub use participation_kind::ParticipationKind;

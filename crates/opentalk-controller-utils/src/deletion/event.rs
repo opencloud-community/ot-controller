@@ -17,6 +17,7 @@ use opentalk_db_storage::{
 use opentalk_log::{debug, warn};
 use opentalk_signaling_core::{assets::asset_key, control, ExchangeHandle, ObjectStorage};
 use opentalk_types_common::{assets::AssetId, events::EventId, users::UserId};
+use opentalk_types_signaling::NamespacedEvent;
 use snafu::ResultExt;
 
 use super::{shared_folders::delete_shared_folders, Deleter, Error, RACE_CONDITION_ERROR_MESSAGE};
@@ -139,7 +140,7 @@ impl Deleter for EventDeleter {
         let event = Event::get(conn, self.event_id).await?;
         let room_id = event.room;
 
-        let message = opentalk_types::signaling::NamespacedEvent {
+        let message = NamespacedEvent {
             module: control::module_id(),
             timestamp: opentalk_types_common::time::Timestamp::now(),
             payload: control::exchange::Message::RoomDeleted,

@@ -4,16 +4,13 @@
 
 use opentalk_types_common::{modules::ModuleId, time::Timestamp};
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// An envelope of an event annotated with their respective module id.
 ///
 /// This is used for WebSocket messages sent to the frontend.
-/// Similar to [`opentalk_types_signaling::NamespacedCommand`], but includes a
+/// Similar to [`crate::NamespacedCommand`], but includes a
 /// timestamp field.
 #[derive(Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct NamespacedEvent<O> {
     /// The namespace to which the message is targeted
     #[cfg_attr(feature = "serde", serde(rename = "namespace"))]

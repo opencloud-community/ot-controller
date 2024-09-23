@@ -6,7 +6,6 @@ use opentalk_signaling_core::{
     control, CleanupScope, DestroyContext, ExchangeBinding, ExchangePublish, ModuleContext,
     SignalingModule,
 };
-use opentalk_types::signaling::NamespacedEvent;
 
 mod actor;
 mod http;
@@ -15,6 +14,7 @@ mod runner;
 
 pub use http::SignalingModules;
 pub(crate) use http::{__path_ws_service, ws_service, SignalingProtocols};
+use opentalk_types_signaling::NamespacedEvent;
 
 pub enum RunnerMessage {
     Message(actix_web_actors::ws::Message),

@@ -4545,6 +4545,7 @@ dependencies = [
  "opentalk-signaling-core",
  "opentalk-types",
  "opentalk-types-common",
+ "opentalk-types-signaling",
  "serde_json",
  "snafu",
 ]

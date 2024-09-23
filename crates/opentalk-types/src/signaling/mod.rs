@@ -8,7 +8,3 @@
 pub mod core;
 pub mod echo;
 pub mod integration;
-
-mod namespaced;
-
-pub use namespaced::NamespacedEvent;
