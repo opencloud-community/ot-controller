@@ -31,14 +31,13 @@ use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_types::api::{
     error::ApiError,
     v1::{
-        events::{invites::GetEventsInvitesQuery, PostEventInviteBody},
-        pagination::PagePaginationQuery,
+        events::invites::GetEventsInvitesQuery, pagination::PagePaginationQuery,
         users::GetEventInvitesPendingResponse,
     },
 };
 use opentalk_types_api_v1::events::{
     DeleteEmailInviteBody, DeleteEventInvitePath, EmailInvite, EventOptionsQuery,
-    PatchEmailInviteBody, PatchInviteBody, PostEventInviteQuery, UserInvite,
+    PatchEmailInviteBody, PatchInviteBody, PostEventInviteBody, PostEventInviteQuery, UserInvite,
 };
 use opentalk_types_common::{
     email::EmailAddress,

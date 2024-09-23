@@ -18,7 +18,6 @@ mod get_events_cursor_data;
 mod get_events_query;
 mod patch_event_body;
 mod patch_event_instance_body;
-mod post_event_invite_body;
 mod post_events_body;
 mod public_invite_user_profile;
 
@@ -38,6 +37,5 @@ pub use get_events_cursor_data::GetEventsCursorData;
 pub use get_events_query::GetEventsQuery;
 pub use patch_event_body::PatchEventBody;
 pub use patch_event_instance_body::PatchEventInstanceBody;
-pub use post_event_invite_body::PostEventInviteBody;
 pub use post_events_body::PostEventsBody;
 pub use public_invite_user_profile::PublicInviteUserProfile;
