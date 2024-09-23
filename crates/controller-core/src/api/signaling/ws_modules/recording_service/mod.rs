@@ -8,13 +8,12 @@ use opentalk_signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, Participant, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
-use opentalk_types::signaling::{
-    recording::state::RecorderStreamInfo, recording_service::state::RecordingServiceState,
-};
+use opentalk_types::signaling::recording_service::state::RecordingServiceState;
 use opentalk_types_common::streaming::StreamingTargetId;
 use opentalk_types_signaling_recording::{StreamStatus, StreamTargetSecret, StreamUpdated};
 use opentalk_types_signaling_recording_service::{
-    command::RecordingServiceCommand, event::RecordingServiceEvent, NAMESPACE,
+    command::RecordingServiceCommand, event::RecordingServiceEvent, state::RecorderStreamInfo,
+    NAMESPACE,
 };
 
 use super::recording::{self, Recording, RecordingStorageProvider as _};

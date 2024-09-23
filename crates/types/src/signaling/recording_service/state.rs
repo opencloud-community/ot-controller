@@ -7,10 +7,10 @@
 use std::collections::BTreeMap;
 
 use opentalk_types_common::streaming::StreamingTargetId;
+use opentalk_types_signaling_recording_service::state::RecorderStreamInfo;
 
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::signaling::recording::state::RecorderStreamInfo;
 
 /// The state of the `recording_service` module.
 ///
