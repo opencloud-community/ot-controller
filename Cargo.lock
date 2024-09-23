@@ -5136,7 +5136,6 @@ dependencies = [
  "serde_urlencoded",
  "snafu",
  "strum",
- "url",
  "utoipa",
  "validator",
 ]
@@ -5151,6 +5150,7 @@ dependencies = [
  "pretty_assertions",
  "serde",
  "serde_json",
+ "url",
  "utoipa",
 ]
 

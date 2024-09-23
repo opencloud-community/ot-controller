@@ -27,6 +27,7 @@ derive_more = { workspace = true, features = ["as_ref", "from", "into"] }
 opentalk-types-common.workspace = true
 serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
+url.workspace = true
 utoipa = { workspace = true, features = [
   "chrono",
   "url",

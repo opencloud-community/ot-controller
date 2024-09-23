@@ -4,12 +4,8 @@
 
 //! This module contains types that are used for OpenTalk API V1 streaming target endpoints.
 
-use opentalk_types_common::{
-    rooms::RoomId,
-    streaming::{StreamingKey, StreamingTargetId},
-    utils::ExampleData,
-};
-use url::Url;
+use opentalk_types_api_v1::rooms::streaming_targets::UpdateStreamingTargetKind;
+use opentalk_types_common::{rooms::RoomId, streaming::StreamingTargetId, utils::ExampleData};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -48,51 +44,6 @@ impl ExampleData for UpdateStreamingTarget {
         Self {
             name: Some("My OwnCast Stream".to_string()),
             kind: Some(UpdateStreamingTargetKind::example_data()),
-        }
-    }
-}
-
-/// Data to update a streaming target kind (only fields with [`Some`] are updated)
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(tag = "kind", rename_all = "snake_case")
-)]
-#[cfg_attr(
-    feature = "utoipa",
-    derive(utoipa::ToSchema),
-    schema(example = json!(UpdateStreamingTargetKind::example_data()))
-)]
-pub enum UpdateStreamingTargetKind {
-    /// The "custom" kind
-    Custom {
-        /// The endpoint url of the streaming target
-        #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
-        streaming_endpoint: Option<Url>,
-        /// The streaming key
-        #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
-        streaming_key: Option<StreamingKey>,
-        /// The url from which the stream can be accessed
-        #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
-        public_url: Option<Url>,
-    },
-}
-
-impl ExampleData for UpdateStreamingTargetKind {
-    fn example_data() -> Self {
-        Self::Custom {
-            streaming_endpoint: Some(
-                "https://ingress.example.com"
-                    .parse()
-                    .expect("parseable url"),
-            ),
-            streaming_key: Some("aabbccddeeff".parse().expect("parseable streaming key")),
-            public_url: Some(
-                "https://owncast.example.com"
-                    .parse()
-                    .expect("parseable url"),
-            ),
         }
     }
 }

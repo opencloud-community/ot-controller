@@ -27,10 +27,12 @@ use opentalk_types::api::{
             GetRoomStreamingTargetResponse, GetRoomStreamingTargetsResponse,
             PostRoomStreamingTargetRequest, PostRoomStreamingTargetResponse,
         },
-        streaming_targets::{RoomAndStreamingTargetId, UpdateStreamingTargetKind},
+        streaming_targets::RoomAndStreamingTargetId,
     },
 };
-use opentalk_types_api_v1::events::StreamingTargetOptionsQuery;
+use opentalk_types_api_v1::{
+    events::StreamingTargetOptionsQuery, rooms::streaming_targets::UpdateStreamingTargetKind,
+};
 use opentalk_types_common::{
     rooms::RoomId,
     streaming::{
