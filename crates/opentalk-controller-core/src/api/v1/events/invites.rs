@@ -30,14 +30,15 @@ use opentalk_db_storage::{
 use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_types::api::{
     error::ApiError,
-    v1::{
-        events::invites::GetEventsInvitesQuery, pagination::PagePaginationQuery,
-        users::GetEventInvitesPendingResponse,
-    },
+    v1::{events::invites::GetEventsInvitesQuery, pagination::PagePaginationQuery},
 };
-use opentalk_types_api_v1::events::{
-    DeleteEmailInviteBody, DeleteEventInvitePath, EmailInvite, EventOptionsQuery,
-    PatchEmailInviteBody, PatchInviteBody, PostEventInviteBody, PostEventInviteQuery, UserInvite,
+use opentalk_types_api_v1::{
+    events::{
+        DeleteEmailInviteBody, DeleteEventInvitePath, EmailInvite, EventOptionsQuery,
+        PatchEmailInviteBody, PatchInviteBody, PostEventInviteBody, PostEventInviteQuery,
+        UserInvite,
+    },
+    users::GetEventInvitesPendingResponseBody,
 };
 use opentalk_types_common::{
     email::EmailAddress,
@@ -1125,7 +1126,7 @@ async fn notify_invitees_about_uninvite(
         (
             status = StatusCode::OK,
             description = "Information about pending invites is returned",
-            body = GetEventInvitesPendingResponse,
+            body = GetEventInvitesPendingResponseBody,
         ),
         (
             status = StatusCode::UNAUTHORIZED,
@@ -1148,12 +1149,12 @@ async fn notify_invitees_about_uninvite(
 pub async fn get_event_invites_pending(
     db: Data<Db>,
     current_user: ReqData<User>,
-) -> DefaultApiResult<GetEventInvitesPendingResponse> {
+) -> DefaultApiResult<GetEventInvitesPendingResponseBody> {
     let mut conn = db.get_conn().await?;
 
     let event_invites = EventInvite::get_pending_for_user(&mut conn, current_user.id).await?;
 
-    Ok(ApiResponse::new(GetEventInvitesPendingResponse {
+    Ok(ApiResponse::new(GetEventInvitesPendingResponseBody {
         total_pending_invites: event_invites.len() as u32,
     }))
 }

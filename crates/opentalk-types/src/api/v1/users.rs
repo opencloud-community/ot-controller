@@ -69,27 +69,6 @@ impl ExampleData for PatchMeBody {
     }
 }
 
-/// Response body for the `GET /users/me/pending_invites` endpoint
-#[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(
-    feature = "utoipa",
-    derive(utoipa::ToSchema),
-    schema(example = json!(GetEventInvitesPendingResponse::example_data()))
-)]
-pub struct GetEventInvitesPendingResponse {
-    /// The total number of pending invites for the current user
-    pub total_pending_invites: u32,
-}
-
-impl ExampleData for GetEventInvitesPendingResponse {
-    fn example_data() -> Self {
-        Self {
-            total_pending_invites: 3,
-        }
-    }
-}
-
 /// Response body for the `GET /v1/users/me/assets` endpoint
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]

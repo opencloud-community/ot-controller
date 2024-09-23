@@ -2518,7 +2518,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetEventInvitesPendingResponse"
+                $ref: "#/components/schemas/GetEventInvitesPendingResponseBody"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -3496,7 +3496,7 @@ components:
             id: 00000000-0000-0000-0000-0000000a11c3
             lastname: Adams
             title: ""
-    GetEventInvitesPendingResponse:
+    GetEventInvitesPendingResponseBody:
       type: object
       description: "Response body for the `GET /users/me/pending_invites` endpoint"
       required:
