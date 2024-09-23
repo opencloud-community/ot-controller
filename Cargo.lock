@@ -5147,6 +5147,7 @@ name = "opentalk-types-api-v1"
 version = "0.28.0-alpha"
 dependencies = [
  "chrono",
+ "derive_more 1.0.0",
  "opentalk-types-common",
  "serde",
  "serde_json",

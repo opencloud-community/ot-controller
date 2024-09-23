@@ -7,9 +7,7 @@ use std::{fmt::Display, ops::Add};
 use chrono::{DateTime, TimeZone as _, Utc};
 use opentalk_types_common::{time::Timestamp, utils::ExampleData};
 
-use crate::api::v1::events::UTC_DT_FORMAT;
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::events::UTC_DT_FORMAT;
 
 /// ID of an EventInstance
 ///
@@ -81,8 +79,9 @@ mod impl_to_schema {
 #[cfg(feature = "serde")]
 mod serde_impls {
     use chrono::{DateTime, NaiveDateTime, Utc};
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-    use super::{Deserialize, Deserializer, InstanceId, Serialize, Serializer, UTC_DT_FORMAT};
+    use super::{InstanceId, UTC_DT_FORMAT};
 
     const DT_FORMAT: &str = "%Y%m%dT%H%M%S%z";
     struct InstanceIdVisitor;
@@ -136,9 +135,8 @@ mod serde_impls {
     }
 }
 
-#[cfg(test)]
-#[cfg(feature = "serde")]
-mod tests {
+#[cfg(all(test, feature = "serde_json"))]
+mod serde_json_tests {
     use std::time::UNIX_EPOCH;
 
     use serde_json::Value;
@@ -146,7 +144,6 @@ mod tests {
     use super::InstanceId;
 
     #[test]
-    #[cfg(feature = "serde")]
     fn serialize_utc() {
         let input = "19700101T000000Z";
 
@@ -156,7 +153,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "serde")]
     fn serialize_utc_plus_one() {
         let input = "19700101T010000+0100";
 

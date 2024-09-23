@@ -11,6 +11,7 @@ mod delete_events_query;
 mod delete_shared_folder_query;
 mod email_invite;
 mod email_only_user;
+mod instance_id;
 
 pub use call_in_info::CallInInfo;
 pub use delete_email_invite_body::DeleteEmailInviteBody;
@@ -19,3 +20,7 @@ pub use delete_events_query::DeleteEventsQuery;
 pub use delete_shared_folder_query::DeleteSharedFolderQuery;
 pub use email_invite::EmailInvite;
 pub use email_only_user::EmailOnlyUser;
+pub use instance_id::InstanceId;
+
+/// The format string used for formatting UTC datetimes
+const UTC_DT_FORMAT: &str = "%Y%m%dT%H%M%SZ";

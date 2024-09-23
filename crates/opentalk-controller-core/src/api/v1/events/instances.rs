@@ -25,11 +25,12 @@ use opentalk_types::api::{
             EventAndInstanceId, EventInstance, EventInstancePath, EventInstanceQuery,
             EventRoomInfo, EventStatus, EventType, GetEventInstanceResponseBody,
             GetEventInstancesCursorData, GetEventInstancesQuery, GetEventInstancesResponseBody,
-            InstanceId, PatchEventInstanceBody,
+            PatchEventInstanceBody,
         },
         Cursor,
     },
 };
+use opentalk_types_api_v1::events::InstanceId;
 use opentalk_types_common::{
     events::{invites::EventInviteStatus, EventId},
     shared_folders::SharedFolder,
