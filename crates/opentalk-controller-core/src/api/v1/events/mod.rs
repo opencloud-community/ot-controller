@@ -41,8 +41,8 @@ use opentalk_types::api::{
     error::{ApiError, ValidationErrorEntry, ERROR_CODE_IGNORED_VALUE, ERROR_CODE_VALUE_REQUIRED},
     v1::{
         events::{
-            EventExceptionResource, EventInvitee, EventInviteeProfile, EventOptionsQuery,
-            EventOrException, EventResource, EventRoomInfo, EventStatus, EventType, GetEventQuery,
+            EventExceptionResource, EventInvitee, EventInviteeProfile, EventOrException,
+            EventResource, EventRoomInfo, EventStatus, EventType, GetEventQuery,
             GetEventsCursorData, GetEventsQuery, PatchEventBody, PatchEventQuery, PostEventsBody,
             PublicInviteUserProfile,
         },
@@ -52,7 +52,7 @@ use opentalk_types::api::{
     },
 };
 use opentalk_types_api_v1::events::{
-    CallInInfo, DeleteEventsQuery, EmailOnlyUser, EventAndInstanceId,
+    CallInInfo, DeleteEventsQuery, EmailOnlyUser, EventAndInstanceId, EventOptionsQuery,
 };
 use opentalk_types_common::{
     events::{invites::EventInviteStatus, EventDescription, EventId, EventTitle},
