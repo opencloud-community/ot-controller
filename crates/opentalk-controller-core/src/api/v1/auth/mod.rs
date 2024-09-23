@@ -21,8 +21,9 @@ use opentalk_db_storage::{
 };
 use opentalk_types::api::{
     error::{ApiError, AuthenticationError},
-    v1::auth::{GetLoginResponse, OidcProvider, PostLoginRequestBody, PostLoginResponse},
+    v1::auth::{GetLoginResponse, OidcProvider, PostLoginResponse},
 };
+use opentalk_types_api_v1::auth::login::AuthLoginPostRequestBody;
 use opentalk_types_common::{
     events::EventId, rooms::RoomId, tariffs::TariffStatus, tenants::TenantId, users::GroupName,
 };
@@ -44,7 +45,7 @@ mod update_user;
 /// user as well as an expiration timestamp. When a valid token with an unknown user
 /// is provided, a new user will be created in the database.
 #[utoipa::path(
-    request_body = PostLoginRequestBody,
+    request_body = AuthLoginPostRequestBody,
     responses(
         (
             status = StatusCode::OK,
@@ -83,7 +84,7 @@ pub async fn post_login(
     settings: SharedSettingsActix,
     db: Data<Db>,
     oidc_ctx: Data<OidcContext>,
-    body: Json<PostLoginRequestBody>,
+    body: Json<AuthLoginPostRequestBody>,
     authz: Data<kustos::Authz>,
 ) -> Result<Json<PostLoginResponse>, ApiError> {
     let id_token = body.into_inner().id_token;

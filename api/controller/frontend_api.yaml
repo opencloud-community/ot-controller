@@ -45,7 +45,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PostLoginRequestBody"
+              $ref: "#/components/schemas/AuthLoginPostRequestBody"
         required: true
       responses:
         "200":
@@ -2628,6 +2628,16 @@ components:
         - namespace
         - kind
         - created_at
+    AuthLoginPostRequestBody:
+      type: object
+      description: "Body of a *POST* request on `/auth/login`"
+      required:
+        - id_token
+      properties:
+        id_token:
+          type: string
+          description: The id token to use for the login
+          example: bG9yZW0gaXBzdW0sIHF1aWEgZG9sb3Igc2
     BreakoutRoomId:
       type: string
       format: uuid
@@ -4026,16 +4036,6 @@ components:
       properties:
         invite_code:
           $ref: "#/components/schemas/InviteCode"
-    PostLoginRequestBody:
-      type: object
-      description: "Body of a *POST* request on `/auth/login`"
-      required:
-        - id_token
-      properties:
-        id_token:
-          type: string
-          description: The id token to use for the login
-          example: bG9yZW0gaXBzdW0sIHF1aWEgZG9sb3Igc2
     PostLoginResponse:
       type: object
       description: "Body of the response to a *POST* request on `/auth/login`"
