@@ -2,18 +2,16 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_api_v1::events::CallInInfo;
 use opentalk_types_common::{
     rooms::{RoomId, RoomPassword},
     utils::ExampleData,
 };
 
-#[allow(unused_imports)]
-use crate::imports::*;
+use super::CallInInfo;
 
 /// All information about a room in which an event takes place
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(
     feature = "utoipa",
     derive(utoipa::ToSchema),
