@@ -21,6 +21,7 @@
 )]
 
 pub mod command;
+pub mod event;
 
 /// The namespace string for this signaling module
 pub const NAMESPACE: &str = "recording_service";

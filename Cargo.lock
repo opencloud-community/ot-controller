@@ -5093,6 +5093,7 @@ name = "opentalk-types-signaling-recording-service"
 version = "0.0.0-dev"
 dependencies = [
  "opentalk-types-common",
+ "opentalk-types-signaling-recording",
  "serde",
 ]
 

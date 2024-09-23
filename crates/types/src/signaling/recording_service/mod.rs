@@ -4,5 +4,4 @@
 
 //! Signaling messages for the `recording_service` namespace
 
-pub mod event;
 pub mod state;
