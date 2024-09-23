@@ -21,7 +21,6 @@ use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_types::api::{
     error::ApiError,
     v1::{
-        events::StreamingTargetOptionsQuery,
         pagination::PagePaginationQuery,
         rooms::streaming_targets::{
             ChangeRoomStreamingTargetRequest, ChangeRoomStreamingTargetResponse,
@@ -31,6 +30,7 @@ use opentalk_types::api::{
         streaming_targets::{RoomAndStreamingTargetId, UpdateStreamingTargetKind},
     },
 };
+use opentalk_types_api_v1::events::StreamingTargetOptionsQuery;
 use opentalk_types_common::{
     rooms::RoomId,
     streaming::{
