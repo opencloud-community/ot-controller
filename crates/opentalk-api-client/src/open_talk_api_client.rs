@@ -6,7 +6,6 @@ use std::error::Error;
 
 use opentalk_client_shared::{ApiError, Authorization, WithAuthorization};
 use opentalk_types::api::v1::{
-    auth::GetLoginRequest,
     invites::{CodeVerified, PostInviteVerifyRequest, PostInviteVerifyRequestBody},
     rooms::GetRoomEventRequest,
 };
@@ -15,6 +14,8 @@ use opentalk_types_common::{
     events::EventInfo,
     rooms::{invite_codes::InviteCode, RoomId},
 };
+
+use crate::requests::auth::GetLoginRequest;
 
 #[async_trait::async_trait]
 pub trait OpenTalkApiClient<E>
