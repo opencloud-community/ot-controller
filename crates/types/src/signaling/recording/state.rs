@@ -5,8 +5,9 @@
 //! Frontend data for `recording` namespace
 
 use opentalk_types_signaling_recording::{StreamKindSecret, StreamStatus, StreamTargetSecret};
-use opentalk_types_signaling_recording_service::state::{RecordingTarget, StreamStartOption};
-use url::Url;
+use opentalk_types_signaling_recording_service::state::{
+    RecordingTarget, StreamStartOption, StreamingTarget,
+};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -61,20 +62,4 @@ impl From<StreamTargetSecret> for RecorderStreamInfo {
             }
         }
     }
-}
-
-/// The streaming target
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
-pub struct StreamingTarget {
-    /// The start options for the target stream
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub stream_start_options: StreamStartOption,
-
-    /// The target Url to which the stream shall be streamed to
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
-    pub location: Option<Url>,
 }

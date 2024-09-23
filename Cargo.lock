@@ -5095,6 +5095,7 @@ dependencies = [
  "opentalk-types-common",
  "opentalk-types-signaling-recording",
  "serde",
+ "url",
 ]
 
 [[package]]

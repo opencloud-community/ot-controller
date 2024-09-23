@@ -29,9 +29,11 @@ serde = [
   "dep:serde",
   "opentalk-types-common/serde",
   "opentalk-types-signaling-recording/serde",
+  "url/serde",
 ]
 
 [dependencies]
 opentalk-types-common.workspace = true
 opentalk-types-signaling-recording.workspace = true
 serde = { workspace = true, optional = true }
+url.workspace = true
