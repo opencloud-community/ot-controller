@@ -22,15 +22,14 @@ use opentalk_types::api::{
     error::ApiError,
     v1::{
         events::{
-            EventAndInstanceId, EventInstance, EventInstancePath, EventInstanceQuery,
-            EventRoomInfo, EventStatus, EventType, GetEventInstanceResponseBody,
-            GetEventInstancesCursorData, GetEventInstancesQuery, GetEventInstancesResponseBody,
-            PatchEventInstanceBody,
+            EventInstance, EventInstancePath, EventInstanceQuery, EventRoomInfo, EventStatus,
+            EventType, GetEventInstanceResponseBody, GetEventInstancesCursorData,
+            GetEventInstancesQuery, GetEventInstancesResponseBody, PatchEventInstanceBody,
         },
         Cursor,
     },
 };
-use opentalk_types_api_v1::events::InstanceId;
+use opentalk_types_api_v1::events::{EventAndInstanceId, InstanceId};
 use opentalk_types_common::{
     events::{invites::EventInviteStatus, EventId},
     shared_folders::SharedFolder,

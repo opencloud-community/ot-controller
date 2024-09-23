@@ -2,11 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_api_v1::events::InstanceId;
 use opentalk_types_common::{events::EventId, utils::ExampleData};
 
-#[allow(unused_imports)]
-use crate::imports::*;
+use super::InstanceId;
 
 /// Opaque id of an EventInstance or EventException resource. Should only be used to sort/index the related resource.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -15,7 +13,7 @@ pub struct EventAndInstanceId(pub EventId, pub InstanceId);
 #[cfg(feature = "serde")]
 mod serde_impls {
     use chrono::{DateTime, Utc};
-    use serde::de::Error;
+    use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
     use super::*;
 
@@ -28,7 +26,6 @@ mod serde_impls {
         }
     }
 
-    #[cfg(feature = "serde")]
     impl<'de> Deserialize<'de> for EventAndInstanceId {
         fn deserialize<D>(deserializer: D) -> Result<EventAndInstanceId, D::Error>
         where
@@ -50,8 +47,7 @@ mod serde_impls {
                 .map_err(D::Error::custom)?
                 .into();
 
-            let event_id =
-                EventId::from(uuid::Uuid::parse_str(event_id).map_err(D::Error::custom)?);
+            let event_id = event_id.parse().map_err(D::Error::custom)?;
 
             Ok(EventAndInstanceId(event_id, instance_id.into()))
         }

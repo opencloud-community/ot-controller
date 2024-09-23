@@ -11,6 +11,7 @@ mod delete_events_query;
 mod delete_shared_folder_query;
 mod email_invite;
 mod email_only_user;
+mod event_and_instance_id;
 mod instance_id;
 
 pub use call_in_info::CallInInfo;
@@ -20,6 +21,7 @@ pub use delete_events_query::DeleteEventsQuery;
 pub use delete_shared_folder_query::DeleteSharedFolderQuery;
 pub use email_invite::EmailInvite;
 pub use email_only_user::EmailOnlyUser;
+pub use event_and_instance_id::EventAndInstanceId;
 pub use instance_id::InstanceId;
 
 /// The format string used for formatting UTC datetimes

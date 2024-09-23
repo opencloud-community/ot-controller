@@ -61,7 +61,6 @@ utoipa = { workspace = true, features = [
   "url",
   "uuid",
 ], optional = true }
-uuid.workspace = true
 validator = { workspace = true, optional = true }
 
 [features]
@@ -103,7 +102,7 @@ frontend = [
   "serde",
 ]
 kustos = ["dep:opentalk-kustos-prefix", "opentalk-types-common/kustos"]
-rand = ["opentalk-types-common/rand", "uuid/v4"]
+rand = ["opentalk-types-common/rand"]
 redis = [
   "dep:redis",
   "dep:redis-args",
@@ -122,7 +121,6 @@ serde = [
   "opentalk-types-common/serde",
   "opentalk-types-signaling/serde",
   "url/serde",
-  "uuid/serde",
 ]
 utoipa = ["dep:utoipa", "opentalk-types-common/utoipa", "serde"]
 

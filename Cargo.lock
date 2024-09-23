@@ -5138,7 +5138,6 @@ dependencies = [
  "strum",
  "url",
  "utoipa",
- "uuid",
  "validator",
 ]
 
