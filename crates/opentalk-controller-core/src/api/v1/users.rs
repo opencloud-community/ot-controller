@@ -28,13 +28,12 @@ use opentalk_types::api::{
     v1::{
         order::{AssetSorting, SortingQuery},
         pagination::PagePaginationQuery,
-        users::{
-            GetFindResponse, GetFindResponseItem, GetUserAssetsResponse, PatchMeBody,
-            UnregisteredUser,
-        },
+        users::{GetFindResponse, GetFindResponseItem, GetUserAssetsResponse, PatchMeBody},
     },
 };
-use opentalk_types_api_v1::users::{GetFindQuery, PrivateUserProfile, PublicUserProfile};
+use opentalk_types_api_v1::users::{
+    GetFindQuery, PrivateUserProfile, PublicUserProfile, UnregisteredUser,
+};
 use opentalk_types_common::{tariffs::TariffResource, users::UserId};
 use snafu::{Report, ResultExt, Whatever};
 use validator::Validate;

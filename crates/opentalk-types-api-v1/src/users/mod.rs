@@ -7,7 +7,9 @@
 mod get_find_query;
 mod private_user_profile;
 mod public_user_profile;
+mod unregistered_user;
 
 pub use get_find_query::GetFindQuery;
 pub use private_user_profile::PrivateUserProfile;
 pub use public_user_profile::PublicUserProfile;
+pub use unregistered_user::UnregisteredUser;

@@ -4,7 +4,10 @@
 
 //! This module contains types that are used in OpenTalk API V1 users endpoints.
 
-use opentalk_types_api_v1::{assets::AssetResource, users::PublicUserProfile};
+use opentalk_types_api_v1::{
+    assets::AssetResource,
+    users::{PublicUserProfile, UnregisteredUser},
+};
 use opentalk_types_common::{events::EventId, rooms::RoomId, utils::ExampleData};
 
 #[allow(unused_imports)]
@@ -89,24 +92,6 @@ pub enum GetFindResponseItem {
 
     /// Unregistered user
     Unregistered(UnregisteredUser),
-}
-
-/// Representation of a unregistered user
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct UnregisteredUser {
-    /// Email of the unregistered user
-    pub email: String,
-
-    /// First name of the unregistered user
-    pub firstname: String,
-
-    /// Last name of the unregistered user
-    pub lastname: String,
-
-    /// Avatar URL for the unregistered user
-    pub avatar_url: String,
 }
 
 /// Response body for the `GET /users/me/pending_invites` endpoint

@@ -46,7 +46,6 @@ use opentalk_types::api::{
             PublicInviteUserProfile,
         },
         pagination::default_pagination_per_page,
-        users::UnregisteredUser,
         Cursor,
     },
 };
@@ -55,7 +54,7 @@ use opentalk_types_api_v1::{
         CallInInfo, DeleteEventsQuery, EmailOnlyUser, EventAndInstanceId, EventOptionsQuery,
         EventRoomInfo, EventStatus, EventType, GetEventQuery, PatchEventQuery,
     },
-    users::PublicUserProfile,
+    users::{PublicUserProfile, UnregisteredUser},
 };
 use opentalk_types_common::{
     events::{invites::EventInviteStatus, EventDescription, EventId, EventTitle},
