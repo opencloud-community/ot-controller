@@ -21,7 +21,6 @@ mod patch_event_instance_body;
 mod post_event_invite_body;
 mod post_events_body;
 mod public_invite_user_profile;
-mod user_invite;
 
 pub mod invites;
 
@@ -42,4 +41,3 @@ pub use patch_event_instance_body::PatchEventInstanceBody;
 pub use post_event_invite_body::PostEventInviteBody;
 pub use post_events_body::PostEventsBody;
 pub use public_invite_user_profile::PublicInviteUserProfile;
-pub use user_invite::UserInvite;
