@@ -16,8 +16,7 @@ use diesel_async::RunQueryDsl;
 use opentalk_controller_settings::Settings;
 use opentalk_database::{DbConnection, Paginate, Result};
 use opentalk_diesel_newtype::DieselNewtype;
-use opentalk_types::api::v1::users::PrivateUserProfile;
-use opentalk_types_api_v1::users::PublicUserProfile;
+use opentalk_types_api_v1::users::{PrivateUserProfile, PublicUserProfile};
 use opentalk_types_common::{
     tariffs::{TariffId, TariffStatus},
     tenants::TenantId,

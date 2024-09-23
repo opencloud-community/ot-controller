@@ -4,6 +4,8 @@
 
 //! This module contains types that are used in OpenTalk API V1 users endpoints.
 
+mod private_user_profile;
 mod public_user_profile;
 
+pub use private_user_profile::PrivateUserProfile;
 pub use public_user_profile::PublicUserProfile;

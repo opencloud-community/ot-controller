@@ -5,58 +5,10 @@
 //! This module contains types that are used in OpenTalk API V1 users endpoints.
 
 use opentalk_types_api_v1::{assets::AssetResource, users::PublicUserProfile};
-use opentalk_types_common::{
-    events::EventId, rooms::RoomId, tariffs::TariffStatus, users::UserId, utils::ExampleData,
-};
+use opentalk_types_common::{events::EventId, rooms::RoomId, utils::ExampleData};
 
 #[allow(unused_imports)]
 use crate::imports::*;
-
-/// Private user profile.
-///
-/// Similar to [`PublicUserProfile`], but contains additional "private" information about a user.
-/// Is only accessible to the user himself.
-/// Is used on */users/me* endpoints.
-#[derive(Clone, Debug)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct PrivateUserProfile {
-    /// The user id
-    pub id: UserId,
-
-    /// The email of the user
-    pub email: String,
-
-    /// The title of the user
-    pub title: String,
-
-    /// The user's first name
-    pub firstname: String,
-
-    /// The user's last name
-    pub lastname: String,
-
-    /// The user's display name
-    pub display_name: String,
-
-    /// The user's avatar URL
-    pub avatar_url: String,
-
-    /// The dashboard theme
-    pub dashboard_theme: String,
-
-    /// The conference theme
-    pub conference_theme: String,
-
-    /// The language for the user
-    pub language: String,
-
-    /// The tariff status of the user
-    pub tariff_status: TariffStatus,
-
-    /// The user's used storage
-    pub used_storage: u64,
-}
 
 /// Used to modify user settings.
 #[derive(Default, Clone, Debug, PartialEq, Eq)]
