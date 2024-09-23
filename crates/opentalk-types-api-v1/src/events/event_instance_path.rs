@@ -2,15 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_api_v1::events::InstanceId;
 use opentalk_types_common::events::EventId;
 
-#[allow(unused_imports)]
-use crate::imports::*;
+use super::InstanceId;
 
 /// Path parameters for the `GET /events/{event_id}/instances/{instance_id}` endpoint
 #[derive(Debug, Eq, PartialEq, Clone)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(
     feature="utoipa",
     derive(utoipa::IntoParams),

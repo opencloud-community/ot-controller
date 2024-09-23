@@ -6,7 +6,6 @@
 
 mod event_exception_resource;
 mod event_instance;
-mod event_instance_path;
 mod event_instance_query;
 mod event_invitee;
 mod event_invitee_profile;
@@ -40,7 +39,6 @@ pub mod invites;
 
 pub use event_exception_resource::EventExceptionResource;
 pub use event_instance::EventInstance;
-pub use event_instance_path::EventInstancePath;
 pub use event_instance_query::EventInstanceQuery;
 pub use event_invitee::EventInvitee;
 pub use event_invitee_profile::EventInviteeProfile;
