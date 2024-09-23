@@ -6,6 +6,8 @@
 
 use std::collections::HashSet;
 
+use opentalk_types_api_v1::auth::OidcProvider;
+
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -34,16 +36,4 @@ pub struct GetLoginRequest;
 pub struct GetLoginResponse {
     /// Description of the OIDC provider to use for the login
     pub oidc: OidcProvider,
-}
-
-/// Represents an OIDC provider
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct OidcProvider {
-    /// The name of the provider
-    pub name: String,
-
-    /// The url of the provider
-    pub url: String,
 }

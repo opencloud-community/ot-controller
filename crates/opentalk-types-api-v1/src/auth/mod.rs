@@ -5,3 +5,7 @@
 //! Types related to the API endpoints under `/auth`.
 
 pub mod login;
+
+mod oidc_provider;
+
+pub use oidc_provider::OidcProvider;

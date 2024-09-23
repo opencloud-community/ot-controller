@@ -6,10 +6,11 @@ use std::error::Error;
 
 use opentalk_client_shared::{ApiError, Authorization, WithAuthorization};
 use opentalk_types::api::v1::{
-    auth::{GetLoginRequest, OidcProvider},
+    auth::GetLoginRequest,
     invites::{CodeVerified, PostInviteVerifyRequest, PostInviteVerifyRequestBody},
     rooms::GetRoomEventRequest,
 };
+use opentalk_types_api_v1::auth::OidcProvider;
 use opentalk_types_common::{
     events::EventInfo,
     rooms::{invite_codes::InviteCode, RoomId},

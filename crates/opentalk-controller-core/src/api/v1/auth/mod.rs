@@ -21,9 +21,9 @@ use opentalk_db_storage::{
 };
 use opentalk_types::api::{
     error::{ApiError, AuthenticationError},
-    v1::auth::{GetLoginResponse, OidcProvider, PostLoginResponse},
+    v1::auth::{GetLoginResponse, PostLoginResponse},
 };
-use opentalk_types_api_v1::auth::login::AuthLoginPostRequestBody;
+use opentalk_types_api_v1::auth::{login::AuthLoginPostRequestBody, OidcProvider};
 use opentalk_types_common::{
     events::EventId, rooms::RoomId, tariffs::TariffStatus, tenants::TenantId, users::GroupName,
 };
