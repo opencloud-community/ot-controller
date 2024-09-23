@@ -4,6 +4,8 @@
 
 //! Frontend data for `recording_service` namespace
 
+mod recording_target;
 mod stream_start_option;
 
+pub use recording_target::RecordingTarget;
 pub use stream_start_option::StreamStartOption;
