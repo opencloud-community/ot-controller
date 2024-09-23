@@ -17,6 +17,7 @@ mod event_instance_query;
 mod event_options_query;
 mod event_room_info;
 mod event_status;
+mod event_type;
 mod instance_id;
 
 pub use call_in_info::CallInInfo;
@@ -32,6 +33,7 @@ pub use event_instance_query::EventInstanceQuery;
 pub use event_options_query::EventOptionsQuery;
 pub use event_room_info::EventRoomInfo;
 pub use event_status::EventStatus;
+pub use event_type::EventType;
 pub use instance_id::InstanceId;
 
 /// The format string used for formatting UTC datetimes

@@ -22,7 +22,7 @@ use opentalk_types::api::{
     error::ApiError,
     v1::{
         events::{
-            EventInstance, EventType, GetEventInstanceResponseBody, GetEventInstancesCursorData,
+            EventInstance, GetEventInstanceResponseBody, GetEventInstancesCursorData,
             GetEventInstancesQuery, GetEventInstancesResponseBody, PatchEventInstanceBody,
         },
         Cursor,
@@ -30,7 +30,7 @@ use opentalk_types::api::{
 };
 use opentalk_types_api_v1::events::{
     EventAndInstanceId, EventInstancePath, EventInstanceQuery, EventRoomInfo, EventStatus,
-    InstanceId,
+    EventType, InstanceId,
 };
 use opentalk_types_common::{
     events::{invites::EventInviteStatus, EventId},
