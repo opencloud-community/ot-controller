@@ -14,7 +14,6 @@ pub mod meeting_notes;
 pub mod meeting_report;
 pub mod moderation;
 pub mod polls;
-pub mod recording_service;
 pub mod shared_folder;
 pub mod timer;
 pub mod whiteboard;

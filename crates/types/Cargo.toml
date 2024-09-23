@@ -48,7 +48,6 @@ opentalk-diesel-newtype = { workspace = true, optional = true }
 opentalk-kustos-prefix = { workspace = true, optional = true }
 opentalk-types-common.workspace = true
 opentalk-types-signaling.workspace = true
-opentalk-types-signaling-recording-service.workspace = true
 redis = { workspace = true, optional = true }
 redis-args = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
@@ -80,7 +79,6 @@ backend = [
   "diesel",
   "kustos",
   "opentalk-types-common/backend",
-  "opentalk-types-signaling-recording-service/backend",
   "opentalk-types-signaling/backend",
   "rand",
   "redis",
@@ -98,7 +96,6 @@ frontend = [
   "dep:http-request-derive",
   "dep:http0",
   "opentalk-types-common/frontend",
-  "opentalk-types-signaling-recording-service/frontend",
   "opentalk-types-signaling/frontend",
   "serde",
 ]

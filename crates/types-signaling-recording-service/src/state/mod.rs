@@ -5,11 +5,13 @@
 //! Frontend data for `recording_service` namespace
 
 mod recorder_stream_info;
+mod recording_service_state;
 mod recording_target;
 mod stream_start_option;
 mod streaming_target;
 
 pub use recorder_stream_info::RecorderStreamInfo;
+pub use recording_service_state::RecordingServiceState;
 pub use recording_target::RecordingTarget;
 pub use stream_start_option::StreamStartOption;
 pub use streaming_target::StreamingTarget;
