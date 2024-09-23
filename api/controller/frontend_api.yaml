@@ -27,7 +27,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetLoginResponse"
+                $ref: "#/components/schemas/GetLoginResponseBody"
         "500":
           $ref: "#/components/responses/InternalServerError"
       security: []
@@ -3539,7 +3539,7 @@ components:
       description: The response for users found
       discriminator:
         propertyName: kind
-    GetLoginResponse:
+    GetLoginResponseBody:
       type: object
       description: "Body of the response to a *GET* request on `/auth/login`"
       required:

@@ -21,9 +21,11 @@ use opentalk_db_storage::{
 };
 use opentalk_types::api::{
     error::{ApiError, AuthenticationError},
-    v1::auth::{GetLoginResponse, PostLoginResponse},
+    v1::auth::PostLoginResponse,
 };
-use opentalk_types_api_v1::auth::{login::AuthLoginPostRequestBody, OidcProvider};
+use opentalk_types_api_v1::auth::{
+    login::AuthLoginPostRequestBody, GetLoginResponseBody, OidcProvider,
+};
 use opentalk_types_common::{
     events::EventId, rooms::RoomId, tariffs::TariffStatus, tenants::TenantId, users::GroupName,
 };
@@ -244,7 +246,7 @@ fn map_tariff_status_name(mapping: &TariffStatusMapping, name: &String) -> Tarif
         (
             status = StatusCode::OK,
             description = "Get information about the OIDC provider",
-            body = GetLoginResponse,
+            body = GetLoginResponseBody,
         ),
         (
             status = StatusCode::INTERNAL_SERVER_ERROR,
@@ -254,13 +256,13 @@ fn map_tariff_status_name(mapping: &TariffStatusMapping, name: &String) -> Tarif
     security(),
 )]
 #[get("/auth/login")]
-pub async fn get_login(oidc_ctx: Data<OidcContext>) -> Json<GetLoginResponse> {
+pub async fn get_login(oidc_ctx: Data<OidcContext>) -> Json<GetLoginResponseBody> {
     let provider = OidcProvider {
         name: "default".to_string(),
         url: oidc_ctx.provider_url(),
     };
 
-    Json(GetLoginResponse { oidc: provider })
+    Json(GetLoginResponseBody { oidc: provider })
 }
 
 enum LoginResult {

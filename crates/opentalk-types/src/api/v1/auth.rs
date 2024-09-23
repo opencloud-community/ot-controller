@@ -6,8 +6,6 @@
 
 use std::collections::HashSet;
 
-use opentalk_types_api_v1::auth::OidcProvider;
-
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -25,15 +23,10 @@ pub struct PostLoginResponse {
 #[cfg_attr(
     feature = "frontend",
     derive(HttpRequest),
-    http_request(method = "GET", response = GetLoginResponse, path = "/v1/auth/login")
+    http_request(
+        method = "GET",
+        response = opentalk_types_api_v1::auth::GetLoginResponseBody,
+        path = "/v1/auth/login",
+    ),
 )]
 pub struct GetLoginRequest;
-
-/// Body of the response to a *GET* request on `/auth/login`
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct GetLoginResponse {
-    /// Description of the OIDC provider to use for the login
-    pub oidc: OidcProvider,
-}
