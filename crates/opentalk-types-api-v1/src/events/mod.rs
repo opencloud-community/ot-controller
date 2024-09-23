@@ -7,7 +7,9 @@
 mod call_in_info;
 mod delete_email_invite_body;
 mod delete_event_invite_path;
+mod delete_events_query;
 
 pub use call_in_info::CallInInfo;
 pub use delete_email_invite_body::DeleteEmailInviteBody;
 pub use delete_event_invite_path::DeleteEventInvitePath;
+pub use delete_events_query::DeleteEventsQuery;
