@@ -2,13 +2,14 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use openidconnect::{core::CoreClient, url::Url, IntrospectionUrl, IssuerUrl};
-use opentalk_controller_settings as settings;
+use openidconnect::{
+    core::CoreClient, url::Url, ClientId, ClientSecret, IntrospectionUrl, IssuerUrl,
+};
 use serde::{Deserialize, Serialize};
-use snafu::{Backtrace, ResultExt};
+use snafu::ResultExt;
 
 use super::http::async_http_client;
-use crate::{Result, Whatever};
+use crate::Result;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AdditionalProviderMetadata {
@@ -46,28 +47,20 @@ impl ProviderClient {
     /// Discover Provider information from given settings
     pub async fn discover(
         http_client: reqwest11::Client,
-        config: settings::Keycloak,
+        auth_base_url: Url,
+        client_id: ClientId,
+        client_secret: ClientSecret,
     ) -> Result<ProviderClient> {
-        let mut issuer_url = config.base_url.clone();
-        issuer_url
-            .path_segments_mut()
-            .map_err(|_| Whatever {
-                source: None,
-                message: "Keycloak base url cannot be a base".to_owned(),
-                backtrace: Backtrace::capture(),
-            })?
-            .extend(["realms", &config.realm]);
-
         let metadata = ProviderMetadata::discover_async(
-            IssuerUrl::from_url(issuer_url),
+            IssuerUrl::from_url(auth_base_url),
             async_http_client(http_client),
         )
         .await
         .whatever_context("Failed to discover provider metadata")?;
 
         let client = CoreClient::new(
-            config.client_id.clone(),
-            Some(config.client_secret),
+            client_id.clone(),
+            Some(client_secret),
             metadata.issuer().clone(),
             metadata.authorization_endpoint().clone(),
             metadata.token_endpoint().cloned(),

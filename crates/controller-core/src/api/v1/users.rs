@@ -14,7 +14,7 @@ use actix_web::{
 };
 use chrono::Utc;
 use openidconnect::AccessToken;
-use opentalk_controller_settings::TenantAssignment;
+use opentalk_controller_settings::{TenantAssignment, UsersFindBehavior};
 use opentalk_database::Db;
 use opentalk_db_storage::{
     assets,
@@ -395,7 +395,16 @@ pub async fn find(
 ) -> Result<Json<GetFindResponse>, ApiError> {
     let settings = settings.load_full();
 
-    if settings.endpoints.disable_users_find {
+    let oidc_and_user_search_configuration =
+        settings
+            .build_oidc_and_user_search_configuration()
+            .whatever_context::<&str, Whatever>("Failed to build user search settings")?;
+
+    if oidc_and_user_search_configuration
+        .user_search
+        .users_find_behavior
+        == UsersFindBehavior::Disabled
+    {
         return Err(ApiError::not_found());
     }
 
@@ -406,7 +415,11 @@ pub async fn find(
     }
 
     // Get all users from Keycloak matching the search criteria
-    let found_users = if settings.endpoints.users_find_use_kc {
+    let found_users = if oidc_and_user_search_configuration
+        .user_search
+        .users_find_behavior
+        == UsersFindBehavior::FromUserSearchBackend
+    {
         let mut found_kc_users = match &settings.tenants.assignment {
             TenantAssignment::Static { .. } => {
                 // Do not filter by tenant_id if the assignment is static, since that's used
@@ -437,7 +450,10 @@ pub async fn find(
 
         // Get the name of the user attribute providing the Keycloak user ids. If set to None,
         // Keycloak's id field is used for user assignment instead.
-        let user_attribute_name = settings.keycloak.external_id_user_attribute_name.as_deref();
+        let user_attribute_name = oidc_and_user_search_configuration
+            .user_search
+            .external_id_user_attribute_name
+            .as_deref();
 
         // Get the Keycloak user ids for Keycloak users found above, omitting users for whom no Keycloak
         // user id is provided

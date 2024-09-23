@@ -45,7 +45,7 @@ use lapin_pool::RabbitMqPool;
 use oidc::OidcContext;
 use opentalk_database::Db;
 use opentalk_jobs::job_runner::JobRunner;
-use opentalk_keycloak_admin::KeycloakAdminClient;
+use opentalk_keycloak_admin::{AuthorizedClient, KeycloakAdminClient};
 use opentalk_signaling_core::{
     ExchangeHandle, ExchangeTask, ModulesRegistrar, ObjectStorage, RedisConnection,
     RegisterModules, SignalingModule, SignalingModuleInitData, VolatileStaticMemoryStorage,
@@ -317,19 +317,63 @@ impl Controller {
                 .whatever_context("Failed to initialize object storage")?,
         );
 
+        let oidc_and_user_search_configuration = settings
+            .build_oidc_and_user_search_configuration()
+            .whatever_context("Failed to build oidc and user search settings")?;
+        log::debug!(
+            "OIDC and user search configuration: {:?}",
+            oidc_and_user_search_configuration
+        );
+
         // Discover OIDC Provider
         let oidc = Arc::new(
-            OidcContext::from_config(settings.keycloak.clone())
-                .await
-                .whatever_context("Failed to initialize OIDC Context")?,
+            OidcContext::new(
+                oidc_and_user_search_configuration
+                    .oidc
+                    .frontend
+                    .auth_base_url,
+                oidc_and_user_search_configuration
+                    .oidc
+                    .controller
+                    .auth_base_url
+                    .clone(),
+                oidc_and_user_search_configuration
+                    .oidc
+                    .controller
+                    .client_id
+                    .clone(),
+                oidc_and_user_search_configuration
+                    .oidc
+                    .controller
+                    .client_secret
+                    .clone(),
+            )
+            .await
+            .whatever_context("Failed to initialize OIDC Context")?,
         );
+
+        let authorized_client = AuthorizedClient::new(
+            oidc_and_user_search_configuration
+                .oidc
+                .controller
+                .auth_base_url,
+            oidc_and_user_search_configuration
+                .user_search
+                .client_id
+                .clone()
+                .into(),
+            oidc_and_user_search_configuration
+                .user_search
+                .client_secret
+                .secret()
+                .clone(),
+        )
+        .whatever_context("Failed to initialize authorized client")?;
 
         let kc_admin_client = Arc::new(
             KeycloakAdminClient::new(
-                settings.keycloak.base_url.clone(),
-                settings.keycloak.realm.clone(),
-                settings.keycloak.client_id.clone().into(),
-                settings.keycloak.client_secret.secret().clone(),
+                oidc_and_user_search_configuration.user_search.api_base_url,
+                authorized_client,
             )
             .whatever_context("Failed to initialize keycloak")?,
         );

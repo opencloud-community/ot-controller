@@ -122,17 +122,17 @@ url = "postgres://postgres:password123@localhost:5432/opentalk"
 # The port to bind the HTTP Server to (defaults to 11311).
 port = 11311
 
-# Settings for the keycloak which is the user provider
-# and allows authentication via OIDC
-[keycloak]
+# Settings for the keycloak which is the user provider and allows authentication via OIDC.
+# This is deprecated, replace with [oidc] and [user_search] sections.
+#[keycloak]
 # URL to the keycloak
-base_url = "http://localhost:8080/auth"
+#base_url = "http://example.com/auth"
 # Name of the keycloak realm
-realm = "MyRealm"
+#realm = "MyRealm"
 # Client ID
-client_id = "Controller"
+#client_id = "Controller"
 # Client secret (application requires confidential client).
-client_secret = "c64c5854-3f02-4728-a617-bbe98ec42b8f"
+#client_secret = "v3rys3cr3t"
 
 # Configure how Keycloak users resulting from a search and registered Opentalk users are assigned to each other
 # The following assignment strategies are available:
@@ -140,6 +140,61 @@ client_secret = "c64c5854-3f02-4728-a617-bbe98ec42b8f"
 #   - by user attribute: Keycloak must provide a user attribute holding the user IDs. The name of this user
 #                        attribute must be set here in external_id_user_attribute_name.
 #external_id_user_attribute_name = "my_user_attribute_name"
+
+# OIDC configuration.
+# Currently only Keycloak is supported. Full compliance with other OIDC providers is not guaranteed.
+[oidc]
+# Base url for the OIDC authority. Will be used for frontend and controller unless overwritten by
+# `oidc.frontend.authority` or `oidc.controller.authority`.
+authority = "https://example.com/auth/realms/OPENTALK"
+
+[oidc.frontend]
+# OIDC authority base url for the frontend.
+# Optional, if not set, the value from `oidc.authority` is used.
+# Will be made available to the frontend via the `GET /v1/auth/login` endpoint.
+#authority = "https://example.com/auth/realms/OPENTALK"
+
+# Client id that will be used by the frontend when connecting to the oidc provider.
+client_id = "Frontend"
+
+[oidc.controller]
+# OIDC authority base url for the controller.
+# Optional, if not set, the value from `oidc.authority` is used.
+#authority = "https://example.com/auth/realms/OPENTALK"
+
+# Client id that will be used by the controller when connecting to the oidc provider.
+client_id = "Controller"
+
+# Client secret that will be used by the controller when connecting to the oidc provider.
+client_secret = "v3rys3cr3t"
+
+[user_search]
+# Defines which backend to use for user search. Only `keycloak_webapi` is currently available.
+backend = "keycloak_webapi"
+
+# Base URL of the Keycloak web api.
+api_base_url = "https://example.com/auth/admin/realms/OPENTALK"
+
+# Client id that is used to authenticate against the user search API.
+# Optional, if not set, the value from `oidc.controller.client_id` is used.
+client_id = "Controller"
+
+# Client secret that is used to authenticate against the user search API.
+# Optional, if not set, the value from `oidc.controller.client_secret` is used.
+client_secret = "v3rys3cr3t"
+
+# Configure how Keycloak users resulting from a search and registered Opentalk users are assigned to each other
+# The following assignment strategies are available:
+#   - by Keycloak id (default): Keycloak users are assigned to Opentalk users using Keycloak's id field.
+#   - by user attribute: Keycloak must provide a user attribute holding the user IDs. The name of this user
+#                        attribute must be set here in external_id_user_attribute_name.
+#external_id_user_attribute_name = "my_user_attribute_name"
+
+# Set the behaviour of the `/users/find` endpoint.
+# This allows searching for users who have not yet logged into the controller.
+# You can choose where to search for users or disable the endpoint completely for performance or privacy reasons.
+# Possible values are "disabled", "from_database" and "from_user_search_backend".
+users_find_behavior = "from_user_search_backend"
 
 [room_server]
 # Maximum bitrate allowed for media sessions that will be used to transmit webcam video/audio
@@ -309,12 +364,13 @@ urls = ["localhost:2379"]
 
 # Settings for endpoints
 #[endpoints]
-# Disable the /users/find endpoint for performance or privacy reasons
+# Disable the /users/find endpoint for performance or privacy reasons.
+# This is deprecated, replace with `user_search.users_find_behavior`.
 #disable_users_find = false
 
-# Enable user-searching using keycloak's admin API
-# This allows for finding users which have not yet
-# logged into the controller
+# Enable user-searching using keycloak's admin API.
+# This allows for finding users which have not yet logged into the controller
+# This is deprecated, replace with `user_search.users_find_behavior`.
 #users_find_use_kc = false
 
 # Allow inviting any unchecked email address.

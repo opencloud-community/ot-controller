@@ -4432,6 +4432,7 @@ dependencies = [
  "arc-swap",
  "cidr",
  "config",
+ "log",
  "openidconnect",
  "opentalk-types-common",
  "owo-colors",
@@ -4664,11 +4665,12 @@ dependencies = [
 
 [[package]]
 name = "opentalk-keycloak-admin"
-version = "0.2.1"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eddab659a02ebf328dffe43b826bea71e2310bf3b92598b366fe0ec5cf791be5"
+checksum = "132cbe24eb42d739903667a1d2c44392e235b290045a118b7f87aeb7bc9a00f5"
 dependencies = [
  "log",
+ "openidconnect",
  "reqwest 0.12.8",
  "serde",
  "serde_json",

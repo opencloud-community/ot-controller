@@ -62,6 +62,12 @@ pub enum SettingsError {
 
     #[snafu(display("Config must provide either a janus or livekit configuration"))]
     MissingMediaBackend,
+
+    #[snafu(display("Given base URL is not a base: {}", url))]
+    NotBaseUrl { url: Url },
+
+    #[snafu(display("Inconsistent configuration for OIDC and user search, check [keycloak], [endpoints], [oidc] and [user_search] sections"))]
+    InconsistentOidcAndUserSearchConfig,
 }
 
 type Result<T, E = SettingsError> = std::result::Result<T, E>;
@@ -71,7 +77,12 @@ pub type SharedSettings = Arc<ArcSwap<Settings>>;
 #[derive(Debug, Clone, Deserialize)]
 pub struct Settings {
     pub database: Database,
-    pub keycloak: Keycloak,
+    #[serde(default)]
+    pub keycloak: Option<Keycloak>,
+    #[serde(default)]
+    pub oidc: Option<Oidc>,
+    #[serde(default)]
+    pub user_search: Option<UserSearch>,
     pub http: Http,
     #[serde(default)]
     pub turn: Option<Turn>,
@@ -166,7 +177,209 @@ where
     }
 }
 
+/// OIDC and user search configuration
+#[derive(Debug, Clone, Deserialize)]
+pub struct OidcAndUserSearchConfiguration {
+    pub oidc: OidcConfiguration,
+    pub user_search: UserSearchConfiguration,
+}
+
+/// OIDC configuration
+#[derive(Debug, Clone, Deserialize)]
+pub struct OidcConfiguration {
+    pub frontend: FrontendOidcConfiguration,
+    pub controller: ControllerOidcConfiguration,
+}
+
+/// OIDC configuration for frontend
+#[derive(Debug, Clone, Deserialize)]
+pub struct FrontendOidcConfiguration {
+    pub auth_base_url: Url,
+    pub client_id: ClientId,
+}
+
+/// OIDC configuration for controller
+#[derive(Debug, Clone, Deserialize)]
+pub struct ControllerOidcConfiguration {
+    pub auth_base_url: Url,
+    pub client_id: ClientId,
+    pub client_secret: ClientSecret,
+}
+
+/// User search configuration
+#[derive(Debug, Clone, Deserialize)]
+pub struct UserSearchConfiguration {
+    pub backend: UserSearchBackend,
+    pub api_base_url: Url,
+    pub client_id: ClientId,
+    pub client_secret: ClientSecret,
+    pub external_id_user_attribute_name: Option<String>,
+    pub users_find_behavior: UsersFindBehavior,
+}
+
 impl Settings {
+    /// internal url builder
+    fn build_url<I>(base_url: Url, path_segments: I) -> Result<Url>
+    where
+        I: IntoIterator,
+        I::Item: AsRef<str>,
+    {
+        let err_url = base_url.clone();
+        let mut url = base_url;
+        url.path_segments_mut()
+            .map_err(|_| SettingsError::NotBaseUrl { url: err_url })?
+            .extend(path_segments);
+        Ok(url)
+    }
+
+    /// Builds the effective OIDC and user search configuration, either from the deprecated `[keycloak]` section
+    /// and some deprecated `[endpoints]` settings or from the new `[oidc]` and `[user_search]` sections.
+    pub fn build_oidc_and_user_search_configuration(
+        &self,
+    ) -> Result<OidcAndUserSearchConfiguration> {
+        let keycloak = self.keycloak.clone();
+        let disable_users_find = self.endpoints.disable_users_find;
+        let users_find_use_kc = self.endpoints.users_find_use_kc;
+        let oidc = self.oidc.clone();
+        let user_search = self.user_search.clone();
+
+        match (
+            keycloak,
+            disable_users_find,
+            users_find_use_kc,
+            oidc,
+            user_search,
+        ) {
+            // Only the new OIDC and user search configuration is present
+            (None, None, None, Some(oidc), Some(user_search)) => {
+                Self::build_new_oidc_and_user_search_configuration(oidc, user_search)
+            }
+            // Only the legacy OIDC and user search configuration is present
+            (Some(keycloak), _, _, None, None) => {
+                Self::build_legacy_oidc_and_user_search_configuration(
+                    &keycloak,
+                    disable_users_find,
+                    users_find_use_kc,
+                )?
+            }
+            // The OIDC and user search configuration is inconsistent
+            _ => Err(SettingsError::InconsistentOidcAndUserSearchConfig),
+        }
+    }
+
+    /// Builds the effective OIDC and user search configuration from the new `[oidc]` and `[user_search]` sections.
+    fn build_new_oidc_and_user_search_configuration(
+        oidc: Oidc,
+        user_search: UserSearch,
+    ) -> Result<OidcAndUserSearchConfiguration, SettingsError> {
+        // Frontend-specific OIDC configuration
+        let frontend_auth_base_url = oidc.frontend.authority.unwrap_or(oidc.authority.clone());
+        let frontend_client_id = oidc.frontend.client_id.clone();
+
+        // Controller-specific OIDC configuration
+        let controller_auth_base_url = oidc.controller.authority.unwrap_or(oidc.authority);
+        let controller_client_id = oidc.controller.client_id.clone();
+        let controller_client_secret = oidc.controller.client_secret.clone();
+
+        // User search configuration
+        let backend = user_search.backend;
+        let api_base_url = user_search.api_base_url;
+        let user_search_client_id = user_search
+            .client_id
+            .unwrap_or(controller_client_id.clone());
+        let user_search_client_secret = user_search
+            .client_secret
+            .unwrap_or(controller_client_secret.clone());
+        let external_id_user_attribute_name = user_search.external_id_user_attribute_name.clone();
+        let users_find_behavior = user_search.users_find_behavior;
+
+        // Assemble the entire effective OIDC and user search configuration
+        let frontend = FrontendOidcConfiguration {
+            auth_base_url: frontend_auth_base_url,
+            client_id: frontend_client_id,
+        };
+        let controller = ControllerOidcConfiguration {
+            auth_base_url: controller_auth_base_url,
+            client_id: controller_client_id,
+            client_secret: controller_client_secret.clone(),
+        };
+        let oidc = OidcConfiguration {
+            frontend,
+            controller,
+        };
+        let api = UserSearchConfiguration {
+            backend,
+            api_base_url,
+            client_id: user_search_client_id,
+            client_secret: user_search_client_secret,
+            external_id_user_attribute_name,
+            users_find_behavior,
+        };
+        Ok(OidcAndUserSearchConfiguration {
+            oidc,
+            user_search: api,
+        })
+    }
+
+    /// Builds the effective OIDC and user search configuration from the deprecated `[keycloak]` section
+    /// and some deprecated `[endpoints]` settings.
+    fn build_legacy_oidc_and_user_search_configuration(
+        keycloak: &Keycloak,
+        disable_users_find: Option<bool>,
+        users_find_use_kc: Option<bool>,
+    ) -> Result<Result<OidcAndUserSearchConfiguration, SettingsError>, SettingsError> {
+        log::warn!(
+                    "You are using deprecated OIDC and user search settings. See docs for [oidc] and [user_search] configuration sections."
+                );
+
+        // Collect legacy OIDC and user search settings
+        let backend = UserSearchBackend::KeycloakWebapi;
+        let api_base_url = Self::build_url(
+            keycloak.base_url.clone(),
+            ["admin", "realms", &keycloak.realm],
+        )?;
+        let auth_base_url =
+            Self::build_url(keycloak.base_url.clone(), ["realms", &keycloak.realm])?;
+        let client_id = keycloak.client_id.clone();
+        let client_secret = keycloak.client_secret.clone();
+        let external_id_user_attribute_name = keycloak.external_id_user_attribute_name.clone();
+        let users_find_behavior = match (
+            disable_users_find.unwrap_or_default(),
+            users_find_use_kc.unwrap_or_default(),
+        ) {
+            (true, _) => UsersFindBehavior::Disabled,
+            (false, false) => UsersFindBehavior::FromDatabase,
+            (false, true) => UsersFindBehavior::FromUserSearchBackend,
+        };
+
+        // Assemble the entire effective OIDC and user search configuration
+        let frontend = FrontendOidcConfiguration {
+            auth_base_url: auth_base_url.clone(),
+            client_id: client_id.clone(),
+        };
+        let controller = ControllerOidcConfiguration {
+            auth_base_url,
+            client_id: client_id.clone(),
+            client_secret: client_secret.clone().clone(),
+        };
+        let oidc = OidcConfiguration {
+            frontend,
+            controller,
+        };
+        let api = UserSearchConfiguration {
+            backend,
+            api_base_url,
+            client_id,
+            client_secret,
+            external_id_user_attribute_name,
+            users_find_behavior,
+        };
+        Ok(Ok(OidcAndUserSearchConfiguration {
+            oidc,
+            user_search: api,
+        }))
+    }
+
     /// Creates a new Settings instance from the provided TOML file.
     /// Specific fields can be set or overwritten with environment variables (See struct level docs for more details).
     pub fn load(file_name: &str) -> Result<Self> {
@@ -232,6 +445,52 @@ pub struct Keycloak {
     pub client_id: ClientId,
     pub client_secret: ClientSecret,
     pub external_id_user_attribute_name: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct Oidc {
+    pub authority: Url,
+    pub frontend: OidcFrontend,
+    pub controller: OidcController,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct OidcFrontend {
+    pub authority: Option<Url>,
+    pub client_id: ClientId,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct OidcController {
+    pub authority: Option<Url>,
+    pub client_id: ClientId,
+    pub client_secret: ClientSecret,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct UserSearch {
+    #[serde(flatten)]
+    pub backend: UserSearchBackend,
+    pub api_base_url: Url,
+    pub client_id: Option<ClientId>,
+    pub client_secret: Option<ClientSecret>,
+    pub external_id_user_attribute_name: Option<String>,
+    #[serde(flatten)]
+    pub users_find_behavior: UsersFindBehavior,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case", tag = "backend")]
+pub enum UserSearchBackend {
+    KeycloakWebapi,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case", tag = "users_find_behavior")]
+pub enum UsersFindBehavior {
+    Disabled,
+    FromDatabase,
+    FromUserSearchBackend,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -487,10 +746,8 @@ fn default_user_language() -> String {
 
 #[derive(Clone, Default, Debug, Deserialize)]
 pub struct Endpoints {
-    #[serde(default)]
-    pub disable_users_find: bool,
-    #[serde(default)]
-    pub users_find_use_kc: bool,
+    pub disable_users_find: Option<bool>,
+    pub users_find_use_kc: Option<bool>,
     #[serde(default)]
     pub event_invite_external_email_address: bool,
     #[serde(default)]
