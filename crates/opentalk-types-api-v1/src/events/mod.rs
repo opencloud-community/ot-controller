@@ -13,6 +13,7 @@ mod email_invite;
 mod email_only_user;
 mod event_and_instance_id;
 mod event_instance_path;
+mod event_instance_query;
 mod instance_id;
 
 pub use call_in_info::CallInInfo;
@@ -24,6 +25,7 @@ pub use email_invite::EmailInvite;
 pub use email_only_user::EmailOnlyUser;
 pub use event_and_instance_id::EventAndInstanceId;
 pub use event_instance_path::EventInstancePath;
+pub use event_instance_query::EventInstanceQuery;
 pub use instance_id::InstanceId;
 
 /// The format string used for formatting UTC datetimes
