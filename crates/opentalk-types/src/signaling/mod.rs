@@ -11,4 +11,4 @@ pub mod integration;
 
 mod namespaced;
 
-pub use namespaced::{NamespacedCommand, NamespacedEvent};
+pub use namespaced::NamespacedEvent;

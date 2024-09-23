@@ -49,8 +49,8 @@ use opentalk_types_common::{
     users::UserId,
 };
 use opentalk_types_signaling::{
-    AssociatedParticipant, LeaveReason, ModuleData, ParticipantId, ParticipationKind, Role,
-    TargetParticipant,
+    AssociatedParticipant, LeaveReason, ModuleData, NamespacedCommand, ParticipantId,
+    ParticipationKind, Role, TargetParticipant,
 };
 use opentalk_types_signaling_control::{
     command::ControlCommand,
@@ -74,8 +74,7 @@ use tokio_stream::StreamExt;
 use super::{
     actor::WebSocketActor,
     modules::{DynBroadcastEvent, DynEventCtx, DynTargetedEvent, Modules, NoSuchModuleError},
-    CleanupScope, DestroyContext, ExchangeBinding, ExchangePublish, NamespacedCommand,
-    NamespacedEvent, RunnerMessage,
+    CleanupScope, DestroyContext, ExchangeBinding, ExchangePublish, NamespacedEvent, RunnerMessage,
 };
 use crate::api::signaling::{
     breakout::{self},

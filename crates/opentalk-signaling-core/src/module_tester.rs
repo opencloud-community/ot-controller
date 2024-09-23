@@ -23,7 +23,7 @@ use futures::{stream::SelectAll, StreamExt};
 use kustos::Authz;
 use opentalk_database::Db;
 use opentalk_db_storage::{rooms::Room, users::User};
-use opentalk_types::signaling::{NamespacedCommand, NamespacedEvent};
+use opentalk_types::signaling::NamespacedEvent;
 use opentalk_types_common::{
     rooms::BreakoutRoomId,
     tariffs::{TariffId, TariffModuleResource, TariffResource},
@@ -31,7 +31,8 @@ use opentalk_types_common::{
     users::UserId,
 };
 use opentalk_types_signaling::{
-    AssociatedParticipant, LeaveReason, ModuleData, ParticipantId, ParticipationKind, Role,
+    AssociatedParticipant, LeaveReason, ModuleData, NamespacedCommand, ParticipantId,
+    ParticipationKind, Role,
 };
 use opentalk_types_signaling_control::{
     command::{ControlCommand, Join},

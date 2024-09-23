@@ -6,7 +6,7 @@ use opentalk_signaling_core::{
     control, CleanupScope, DestroyContext, ExchangeBinding, ExchangePublish, ModuleContext,
     SignalingModule,
 };
-use opentalk_types::signaling::{NamespacedCommand, NamespacedEvent};
+use opentalk_types::signaling::NamespacedEvent;
 
 mod actor;
 mod http;
