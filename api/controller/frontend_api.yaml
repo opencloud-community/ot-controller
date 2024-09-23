@@ -2346,7 +2346,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetFindResponse"
+                $ref: "#/components/schemas/GetFindResponseBody"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "500":
@@ -3509,7 +3509,7 @@ components:
           minimum: 0
       example:
         total_pending_invites: 3
-    GetFindResponse:
+    GetFindResponseBody:
       type: array
       items:
         $ref: "#/components/schemas/GetFindResponseEntry"

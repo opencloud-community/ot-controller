@@ -28,11 +28,12 @@ use opentalk_types::api::{
     v1::{
         order::{AssetSorting, SortingQuery},
         pagination::PagePaginationQuery,
-        users::{GetFindResponse, GetUserAssetsResponse, PatchMeBody},
+        users::{GetUserAssetsResponse, PatchMeBody},
     },
 };
 use opentalk_types_api_v1::users::{
-    GetFindQuery, GetFindResponseEntry, PrivateUserProfile, PublicUserProfile, UnregisteredUser,
+    GetFindQuery, GetFindResponseBody, GetFindResponseEntry, PrivateUserProfile, PublicUserProfile,
+    UnregisteredUser,
 };
 use opentalk_types_common::{tariffs::TariffResource, users::UserId};
 use snafu::{Report, ResultExt, Whatever};
@@ -370,7 +371,7 @@ pub async fn get_user(
         (
             status = StatusCode::OK,
             description = "Search results",
-            body = GetFindResponse,
+            body = GetFindResponseBody,
         ),
         (
             status = StatusCode::UNAUTHORIZED,
@@ -392,7 +393,7 @@ pub async fn find(
     db: Data<Db>,
     current_tenant: ReqData<Tenant>,
     query: Query<GetFindQuery>,
-) -> Result<Json<GetFindResponse>, ApiError> {
+) -> Result<Json<GetFindResponseBody>, ApiError> {
     let settings = settings.load_full();
 
     let oidc_and_user_search_configuration =
@@ -510,5 +511,5 @@ pub async fn find(
             .collect()
     };
 
-    Ok(Json(GetFindResponse(found_users)))
+    Ok(Json(GetFindResponseBody(found_users)))
 }
