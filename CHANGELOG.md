@@ -152,6 +152,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Use consistent module file layout ([!911](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/911))
 
+### 🐛 Bug fixes
+
+- Rollback object storage after certain save asset errors ([#860](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/860))
+
 ## [0.18.0]
 
 ### 🚀 New features
