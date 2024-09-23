@@ -32,14 +32,14 @@ use opentalk_types::api::{
     error::ApiError,
     v1::{
         events::{
-            invites::GetEventsInvitesQuery, EmailInvite, EventOptionsQuery, PatchEmailInviteBody,
+            invites::GetEventsInvitesQuery, EventOptionsQuery, PatchEmailInviteBody,
             PatchInviteBody, PostEventInviteBody, PostEventInviteQuery, UserInvite,
         },
         pagination::PagePaginationQuery,
         users::GetEventInvitesPendingResponse,
     },
 };
-use opentalk_types_api_v1::events::{DeleteEmailInviteBody, DeleteEventInvitePath};
+use opentalk_types_api_v1::events::{DeleteEmailInviteBody, DeleteEventInvitePath, EmailInvite};
 use opentalk_types_common::{
     email::EmailAddress,
     events::{

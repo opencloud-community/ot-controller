@@ -4,7 +4,6 @@
 
 //! This module contains types that are used for OpenTalk API V1 events endpoints.
 
-mod email_invite;
 mod email_only_user;
 mod event_and_instance_id;
 mod event_exception_resource;
@@ -42,7 +41,6 @@ mod user_invite;
 
 pub mod invites;
 
-pub use email_invite::EmailInvite;
 pub use email_only_user::EmailOnlyUser;
 pub use event_and_instance_id::EventAndInstanceId;
 pub use event_exception_resource::EventExceptionResource;
