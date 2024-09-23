@@ -19,7 +19,6 @@ backend = ["diesel", "opentalk-types-common/backend", "serde", "utoipa"]
 diesel = ["opentalk-types-common/diesel"]
 frontend = ["opentalk-types-common/frontend", "serde"]
 serde = ["chrono/serde", "dep:serde", "opentalk-types-common/serde"]
-serde_json = ["dep:serde_json", "serde"]
 utoipa = ["dep:utoipa", "opentalk-types-common/utoipa", "serde", "serde_json"]
 
 [dependencies]

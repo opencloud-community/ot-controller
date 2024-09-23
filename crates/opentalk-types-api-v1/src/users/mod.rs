@@ -11,6 +11,7 @@ mod get_find_response_entry;
 mod private_user_profile;
 mod public_user_profile;
 mod unregistered_user;
+mod user_asset_resource;
 
 pub use get_event_invites_pending_response_body::GetEventInvitesPendingResponseBody;
 pub use get_find_query::GetFindQuery;
@@ -19,3 +20,4 @@ pub use get_find_response_entry::GetFindResponseEntry;
 pub use private_user_profile::PrivateUserProfile;
 pub use public_user_profile::PublicUserProfile;
 pub use unregistered_user::UnregisteredUser;
+pub use user_asset_resource::UserAssetResource;
