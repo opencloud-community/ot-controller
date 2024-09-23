@@ -25,8 +25,8 @@ use opentalk_db_storage::{
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_nextcloud_client::{Client, ShareId, SharePermission, ShareType};
-use opentalk_types::api::{error::ApiError, v1::events::PutSharedFolderQuery};
-use opentalk_types_api_v1::events::DeleteSharedFolderQuery;
+use opentalk_types::api::error::ApiError;
+use opentalk_types_api_v1::events::{DeleteSharedFolderQuery, PutSharedFolderQuery};
 use opentalk_types_common::{
     events::EventId,
     shared_folders::{SharedFolder, SharedFolderAccess},

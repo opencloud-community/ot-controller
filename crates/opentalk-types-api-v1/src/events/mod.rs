@@ -24,6 +24,7 @@ mod patch_email_invite_body;
 mod patch_event_query;
 mod patch_invite_body;
 mod post_event_invite_query;
+mod put_shared_folder_query;
 
 pub use call_in_info::CallInInfo;
 pub use delete_email_invite_body::DeleteEmailInviteBody;
@@ -45,6 +46,7 @@ pub use patch_email_invite_body::PatchEmailInviteBody;
 pub use patch_event_query::PatchEventQuery;
 pub use patch_invite_body::PatchInviteBody;
 pub use post_event_invite_query::PostEventInviteQuery;
+pub use put_shared_folder_query::PutSharedFolderQuery;
 
 /// The format string used for formatting UTC datetimes
 const UTC_DT_FORMAT: &str = "%Y%m%dT%H%M%SZ";
