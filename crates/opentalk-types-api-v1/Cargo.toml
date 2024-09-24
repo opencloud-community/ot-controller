@@ -18,11 +18,22 @@ version.workspace = true
 backend = ["diesel", "opentalk-types-common/backend", "serde", "utoipa"]
 diesel = ["opentalk-types-common/diesel"]
 frontend = ["opentalk-types-common/frontend", "serde"]
-serde = ["chrono/serde", "dep:serde", "opentalk-types-common/serde"]
-utoipa = ["dep:utoipa", "opentalk-types-common/utoipa", "serde", "serde_json"]
+serde = [
+  "chrono-tz/serde",
+  "chrono/serde",
+  "dep:serde",
+  "opentalk-types-common/serde",
+]
+utoipa = [
+  "dep:serde_json",
+  "dep:utoipa",
+  "opentalk-types-common/utoipa",
+  "serde",
+]
 
 [dependencies]
 chrono.workspace = true
+chrono-tz.workspace = true
 derive_more = { workspace = true, features = ["as_ref", "from", "into"] }
 opentalk-types-common.workspace = true
 serde = { workspace = true, optional = true }

@@ -3,24 +3,20 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::{TimeZone as _, Utc};
-use opentalk_types_api_v1::{
-    events::{EventAndInstanceId, EventStatus, EventType, InstanceId},
-    users::PublicUserProfile,
-};
 use opentalk_types_common::{
     events::{EventDescription, EventId, EventTitle},
     time::{DateTimeTz, Timestamp},
     utils::ExampleData,
 };
 
-#[allow(unused_imports)]
-use crate::imports::*;
+use super::{EventAndInstanceId, EventStatus, EventType, InstanceId};
+use crate::users::PublicUserProfile;
 
 /// Event exception resource
 ///
 /// Overrides event properties for a event recurrence. May only exist for events of type `recurring`.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(
     feature = "utoipa",
     derive(utoipa::ToSchema),

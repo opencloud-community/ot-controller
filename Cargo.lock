@@ -5145,6 +5145,7 @@ name = "opentalk-types-api-v1"
 version = "0.28.0-alpha"
 dependencies = [
  "chrono",
+ "chrono-tz",
  "derive_more 1.0.0",
  "opentalk-types-common",
  "pretty_assertions",
