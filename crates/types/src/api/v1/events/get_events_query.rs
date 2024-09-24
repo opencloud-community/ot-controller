@@ -19,9 +19,11 @@ use crate::imports::*;
 #[cfg_attr(feature = "utoipa", derive(utoipa::IntoParams))]
 pub struct GetEventsQuery {
     /// Optional minimum time in which the event happens
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub time_min: Option<Timestamp>,
 
     /// Optional maximum time in which the event happens
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub time_max: Option<Timestamp>,
 
     /// Maximum number of invitees to return inside the event resource
@@ -37,7 +39,11 @@ pub struct GetEventsQuery {
     /// Filter the events by invite status
     #[cfg_attr(
         feature = "serde",
-        serde(default, deserialize_with = "comma_separated")
+        serde(
+            default,
+            skip_serializing_if = "Vec::is_empty",
+            with = "comma_separated",
+        )
     )]
     pub invite_status: Vec<EventInviteStatus>,
 

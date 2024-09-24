@@ -6,9 +6,6 @@
 
 #![cfg(feature = "serde")]
 
-use core::fmt;
-use std::{marker::PhantomData, str::FromStr};
-
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -22,39 +19,58 @@ where
     Deserialize::deserialize(deserializer).map(Some)
 }
 
-/// Helper function to deserialize comma-separated values
-pub fn comma_separated<'de, V, T, D>(deserializer: D) -> Result<V, D::Error>
-where
-    V: FromIterator<T>,
-    T: FromStr,
-    T::Err: fmt::Display,
-    D: Deserializer<'de>,
-{
-    struct CommaSeparated<V, T>(PhantomData<(T, V)>);
+/// (De)Serialize comma separated values with `#[serde(with = "comma_separated")]`
+pub mod comma_separated {
+    use std::{fmt, marker::PhantomData, str::FromStr};
 
-    impl<'de, V, T> de::Visitor<'de> for CommaSeparated<V, T>
+    use itertools::Itertools;
+
+    #[allow(unused_imports)]
+    use crate::imports::*;
+
+    /// Helper function to deserialize comma-separated values
+    pub fn deserialize<'de, V, T, D>(deserializer: D) -> Result<V, D::Error>
     where
         V: FromIterator<T>,
         T: FromStr,
         T::Err: fmt::Display,
+        D: Deserializer<'de>,
     {
-        type Value = V;
+        struct CommaSeparated<V, T>(PhantomData<(T, V)>);
 
-        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-            formatter.write_str("string containing comma-separated elements")
-        }
-
-        fn visit_str<E>(self, s: &str) -> Result<Self::Value, E>
+        impl<'de, V, T> de::Visitor<'de> for CommaSeparated<V, T>
         where
-            E: de::Error,
+            V: FromIterator<T>,
+            T: FromStr,
+            T::Err: fmt::Display,
         {
-            let iter = s.split(',').map(FromStr::from_str);
-            iter.collect::<Result<_, _>>().map_err(de::Error::custom)
+            type Value = V;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("string containing comma-separated elements")
+            }
+
+            fn visit_str<E>(self, s: &str) -> Result<Self::Value, E>
+            where
+                E: de::Error,
+            {
+                let iter = s.split(',').map(FromStr::from_str);
+                iter.collect::<Result<_, _>>().map_err(de::Error::custom)
+            }
         }
+
+        let visitor = CommaSeparated(PhantomData);
+        deserializer.deserialize_str(visitor)
     }
 
-    let visitor = CommaSeparated(PhantomData);
-    deserializer.deserialize_str(visitor)
+    /// Helper function to serialize comma-separated values
+    pub fn serialize<S, T>(v: &[T], serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+        T: fmt::Display,
+    {
+        serializer.serialize_str(&v.iter().map(|v| v.to_string()).join(","))
+    }
 }
 
 #[cfg(test)]
