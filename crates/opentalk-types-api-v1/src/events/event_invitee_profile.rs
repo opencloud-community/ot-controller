@@ -2,20 +2,16 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_api_v1::{
-    events::{EmailOnlyUser, PublicInviteUserProfile},
-    users::UnregisteredUser,
-};
 use opentalk_types_common::utils::ExampleData;
 
-#[allow(unused_imports)]
-use crate::imports::*;
+use super::{EmailOnlyUser, PublicInviteUserProfile};
+use crate::users::UnregisteredUser;
 
 /// Profile of an event invitee
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(tag = "kind", rename_all = "lowercase")
 )]
 #[cfg_attr(

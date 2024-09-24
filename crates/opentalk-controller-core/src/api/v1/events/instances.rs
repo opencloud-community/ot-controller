@@ -752,7 +752,7 @@ mod tests {
 
     use chrono_tz::Tz;
     use opentalk_test_util::assert_eq_json;
-    use opentalk_types_api_v1::users::PublicUserProfile;
+    use opentalk_types_api_v1::{events::EventInviteeProfile, users::PublicUserProfile};
     use opentalk_types_common::{
         events::invites::InviteRole,
         rooms::RoomId,
@@ -761,7 +761,7 @@ mod tests {
     };
 
     use super::*;
-    use crate::api::v1::events::{EventInviteeProfile, PublicInviteUserProfile};
+    use crate::api::v1::events::PublicInviteUserProfile;
 
     #[test]
     fn event_instance_serialize() {
