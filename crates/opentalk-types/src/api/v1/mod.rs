@@ -15,7 +15,4 @@ pub mod turn;
 pub mod users;
 pub mod utils;
 
-mod cursor;
 pub mod order;
-
-pub use cursor::Cursor;

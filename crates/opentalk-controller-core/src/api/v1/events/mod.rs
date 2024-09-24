@@ -42,7 +42,6 @@ use opentalk_types::api::{
     v1::{
         events::{GetEventsCursorData, GetEventsQuery, PatchEventBody, PostEventsBody},
         pagination::default_pagination_per_page,
-        Cursor,
     },
 };
 use opentalk_types_api_v1::{
@@ -53,6 +52,7 @@ use opentalk_types_api_v1::{
         PublicInviteUserProfile,
     },
     users::{PublicUserProfile, UnregisteredUser},
+    Cursor,
 };
 use opentalk_types_common::{
     events::{invites::EventInviteStatus, EventDescription, EventId, EventTitle},

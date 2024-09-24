@@ -4,10 +4,9 @@
 
 use derive_more::{AsRef, Deref, DerefMut};
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
+/// Arbitrary data that can be wrapped inside a [`Cursor`].
 pub trait CursorData: std::fmt::Debug {
+    /// The name of the cursor type which will be referenced in the OpenAPI specification.
     const SCHEMA_CURSOR_TYPE_NAME: &'static str;
 }
 
@@ -40,23 +39,18 @@ mod serde_impls {
     use std::marker::PhantomData;
 
     use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
+    use serde::{de::DeserializeOwned, Deserialize, Deserializer, Serialize, Serializer};
 
     use super::*;
 
-    impl<T: CursorData> Cursor<T>
-    where
-        T: Serialize,
-    {
+    impl<T: CursorData + Serialize> Cursor<T> {
         /// Encode T using bincode and return it as base64 string
         pub fn to_base64(&self) -> String {
             URL_SAFE_NO_PAD.encode(bincode::serialize(&self.0).unwrap())
         }
     }
 
-    impl<T: CursorData> Serialize for Cursor<T>
-    where
-        T: Serialize,
-    {
+    impl<T: CursorData + Serialize> Serialize for Cursor<T> {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where
             S: Serializer,
@@ -65,10 +59,7 @@ mod serde_impls {
         }
     }
 
-    impl<'de, T: CursorData> Deserialize<'de> for Cursor<T>
-    where
-        T: DeserializeOwned,
-    {
+    impl<'de, T: CursorData + DeserializeOwned> Deserialize<'de> for Cursor<T> {
         fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
         where
             D: Deserializer<'de>,
@@ -79,10 +70,7 @@ mod serde_impls {
 
     struct CursorVisitor<T: CursorData>(PhantomData<T>);
 
-    impl<'de, T: CursorData> de::Visitor<'de> for CursorVisitor<T>
-    where
-        T: DeserializeOwned,
-    {
+    impl<'de, T: CursorData + DeserializeOwned> serde::de::Visitor<'de> for CursorVisitor<T> {
         type Value = Cursor<T>;
 
         fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -91,13 +79,14 @@ mod serde_impls {
 
         fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
         where
-            E: de::Error,
+            E: serde::de::Error,
         {
-            let bytes = URL_SAFE_NO_PAD
-                .decode(v)
-                .map_err(|_| de::Error::invalid_value(de::Unexpected::Str(v), &self))?;
-            let data = bincode::deserialize(&bytes)
-                .map_err(|_| de::Error::invalid_value(de::Unexpected::Bytes(&bytes), &self))?;
+            let bytes = URL_SAFE_NO_PAD.decode(v).map_err(|_| {
+                serde::de::Error::invalid_value(serde::de::Unexpected::Str(v), &self)
+            })?;
+            let data = bincode::deserialize(&bytes).map_err(|_| {
+                serde::de::Error::invalid_value(serde::de::Unexpected::Bytes(&bytes), &self)
+            })?;
 
             Ok(Cursor(data))
         }

@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_types_api_v1::CursorData;
 use opentalk_types_common::{events::EventId, time::Timestamp, utils::ExampleData};
 
-use crate::api::v1::cursor::CursorData;
 #[allow(unused_imports)]
 use crate::imports::*;
 

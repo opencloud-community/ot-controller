@@ -21,6 +21,8 @@ frontend = ["opentalk-types-common/frontend", "serde"]
 serde = [
   "chrono-tz/serde",
   "chrono/serde",
+  "dep:base64",
+  "dep:bincode",
   "dep:serde",
   "opentalk-types-common/serde",
 ]
@@ -32,9 +34,17 @@ utoipa = [
 ]
 
 [dependencies]
+base64 = { workspace = true, optional = true }
+bincode = { workspace = true, optional = true }
 chrono.workspace = true
 chrono-tz.workspace = true
-derive_more = { workspace = true, features = ["as_ref", "from", "into"] }
+derive_more = { workspace = true, features = [
+  "as_ref",
+  "deref",
+  "deref_mut",
+  "from",
+  "into",
+] }
 opentalk-types-common.workspace = true
 serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }

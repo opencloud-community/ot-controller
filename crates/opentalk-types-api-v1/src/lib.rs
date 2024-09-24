@@ -25,3 +25,7 @@ pub mod auth;
 pub mod events;
 pub mod rooms;
 pub mod users;
+
+mod cursor;
+
+pub use cursor::{Cursor, CursorData};

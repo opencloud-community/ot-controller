@@ -20,15 +20,15 @@ use opentalk_db_storage::{
 use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_types::api::{
     error::ApiError,
-    v1::{
-        events::{GetEventInstancesCursorData, GetEventInstancesQuery, PatchEventInstanceBody},
-        Cursor,
-    },
+    v1::events::{GetEventInstancesCursorData, GetEventInstancesQuery, PatchEventInstanceBody},
 };
-use opentalk_types_api_v1::events::{
-    EventAndInstanceId, EventInstance, EventInstancePath, EventInstanceQuery, EventInvitee,
-    EventRoomInfo, EventStatus, EventType, GetEventInstanceResponseBody,
-    GetEventInstancesResponseBody, InstanceId,
+use opentalk_types_api_v1::{
+    events::{
+        EventAndInstanceId, EventInstance, EventInstancePath, EventInstanceQuery, EventInvitee,
+        EventRoomInfo, EventStatus, EventType, GetEventInstanceResponseBody,
+        GetEventInstancesResponseBody, InstanceId,
+    },
+    Cursor,
 };
 use opentalk_types_common::{
     events::{invites::EventInviteStatus, EventId},

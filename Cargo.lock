@@ -5110,11 +5110,8 @@ dependencies = [
  "actix-http",
  "actix-web",
  "axum",
- "base64 0.22.1",
- "bincode",
  "chrono",
  "chrono-tz",
- "derive_more 1.0.0",
  "diesel",
  "http 0.2.12",
  "http 1.1.0",
@@ -5144,6 +5141,8 @@ dependencies = [
 name = "opentalk-types-api-v1"
 version = "0.28.0-alpha"
 dependencies = [
+ "base64 0.22.1",
+ "bincode",
  "chrono",
  "chrono-tz",
  "derive_more 1.0.0",
