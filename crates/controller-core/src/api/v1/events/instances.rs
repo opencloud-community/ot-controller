@@ -785,7 +785,9 @@ mod tests {
             updated_by: user_profile.clone(),
             updated_at: unix_epoch,
             title: "Instance title".parse().expect("valid event title"),
-            description: "Instance description".into(),
+            description: "Instance description"
+                .parse()
+                .expect("valid event description"),
             room: EventRoomInfo {
                 id: RoomId::nil(),
                 password: None,

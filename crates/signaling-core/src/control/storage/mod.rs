@@ -390,7 +390,9 @@ mod test_common {
             updated_at: Utc.with_ymd_and_hms(2024, 5, 16, 1, 2, 3).unwrap(),
             id_serial: EventSerialId::from(55i64),
             title: "Event 1".parse().expect("valid event title"),
-            description: "Event 1 description".to_string(),
+            description: "Event 1 description"
+                .parse()
+                .expect("valid event description"),
             room: room_id,
             created_by: UserId::generate(),
             updated_by: UserId::generate(),
@@ -415,7 +417,9 @@ mod test_common {
             updated_at: Utc.with_ymd_and_hms(2021, 2, 2, 1, 2, 3).unwrap(),
             id_serial: EventSerialId::from(4234i64),
             title: "Event 2".parse().expect("valid event title"),
-            description: "Event 2 description".to_string(),
+            description: "Event 2 description"
+                .parse()
+                .expect("valid event description"),
             room: room_id,
             created_by: UserId::generate(),
             updated_by: UserId::generate(),

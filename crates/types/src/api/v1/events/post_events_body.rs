@@ -4,7 +4,7 @@
 
 use chrono::{TimeZone as _, Utc};
 use opentalk_types_common::{
-    events::EventTitle,
+    events::{EventDescription, EventTitle},
     rooms::RoomPassword,
     streaming::StreamingTarget,
     time::{DateTimeTz, RecurrencePattern},
@@ -27,8 +27,7 @@ pub struct PostEventsBody {
     pub title: EventTitle,
 
     /// Description of the event
-    #[cfg_attr(feature = "serde", validate(length(max = 4096)))]
-    pub description: String,
+    pub description: EventDescription,
 
     /// Optional password for the room related to the event
     #[cfg_attr(
@@ -136,7 +135,9 @@ impl ExampleData for PostEventsBody {
     fn example_data() -> Self {
         Self {
             title: "Teammeeting".parse().expect("valid event title"),
-            description: "The weekly teammeeting".to_string(),
+            description: "The weekly teammeeting"
+                .parse()
+                .expect("valid event description"),
             password: Some(RoomPassword::example_data()),
             waiting_room: false,
             is_time_independent: false,

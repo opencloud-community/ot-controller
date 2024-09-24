@@ -21,7 +21,7 @@ use opentalk_diesel_newtype::DieselNewtype;
 use opentalk_types_common::{
     events::{
         invites::{EventInviteStatus, InviteRole},
-        EventId, EventInfo, EventTitle,
+        EventDescription, EventId, EventInfo, EventTitle,
     },
     rooms::RoomId,
     sql_enum,
@@ -139,7 +139,7 @@ pub struct Event {
     pub id: EventId,
     pub id_serial: EventSerialId,
     pub title: EventTitle,
-    pub description: String,
+    pub description: EventDescription,
     pub room: RoomId,
     pub created_by: UserId,
     pub created_at: DateTime<Utc>,
@@ -631,7 +631,7 @@ impl Event {
 #[diesel(table_name = events)]
 pub struct NewEvent {
     pub title: EventTitle,
-    pub description: String,
+    pub description: EventDescription,
     pub room: RoomId,
     pub created_by: UserId,
     pub updated_by: UserId,
@@ -664,7 +664,7 @@ impl NewEvent {
 #[diesel(table_name = events)]
 pub struct UpdateEvent {
     pub title: Option<EventTitle>,
-    pub description: Option<String>,
+    pub description: Option<EventDescription>,
     pub updated_by: UserId,
     pub updated_at: DateTime<Utc>,
     pub is_time_independent: Option<bool>,
@@ -717,7 +717,7 @@ pub struct EventException {
     pub created_at: DateTime<Utc>,
     pub kind: EventExceptionKind,
     pub title: Option<EventTitle>,
-    pub description: Option<String>,
+    pub description: Option<EventDescription>,
     pub is_all_day: Option<bool>,
     pub starts_at: Option<DateTime<Utc>>,
     pub starts_at_tz: Option<TimeZone>,
@@ -786,7 +786,7 @@ pub struct NewEventException {
     pub created_by: UserId,
     pub kind: EventExceptionKind,
     pub title: Option<EventTitle>,
-    pub description: Option<String>,
+    pub description: Option<EventDescription>,
     pub is_all_day: Option<bool>,
     pub starts_at: Option<DateTime<Tz>>,
     pub starts_at_tz: Option<TimeZone>,
@@ -810,7 +810,7 @@ impl NewEventException {
 pub struct UpdateEventException {
     pub kind: Option<EventExceptionKind>,
     pub title: Option<Option<EventTitle>>,
-    pub description: Option<Option<String>>,
+    pub description: Option<Option<EventDescription>>,
     pub is_all_day: Option<Option<bool>>,
     pub starts_at: Option<Option<DateTime<Tz>>>,
     pub starts_at_tz: Option<Option<TimeZone>>,

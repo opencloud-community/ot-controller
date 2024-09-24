@@ -53,7 +53,7 @@ use opentalk_types::api::{
     },
 };
 use opentalk_types_common::{
-    events::{invites::EventInviteStatus, EventId, EventTitle},
+    events::{invites::EventInviteStatus, EventDescription, EventId, EventTitle},
     features,
     rooms::{RoomId, RoomPassword},
     shared_folders::{SharedFolder, SharedFolderAccess},
@@ -456,7 +456,7 @@ async fn create_time_independent_event(
     conn: &mut DbConnection,
     current_user: User,
     title: EventTitle,
-    description: String,
+    description: EventDescription,
     password: Option<RoomPassword>,
     waiting_room: bool,
     e2e_encryption: bool,
@@ -550,7 +550,7 @@ async fn create_time_dependent_event(
     conn: &mut DbConnection,
     current_user: User,
     title: EventTitle,
-    description: String,
+    description: EventDescription,
     password: Option<RoomPassword>,
     waiting_room: bool,
     e2e_encryption: bool,
@@ -1086,8 +1086,6 @@ pub async fn patch_event(
     if patch.is_empty() {
         return Ok(Either::Right(NoContent));
     }
-
-    patch.validate()?;
 
     let settings = settings.load_full();
     let current_tenant = current_tenant.into_inner();
@@ -2218,7 +2216,9 @@ mod tests {
             updated_by: user_profile.clone(),
             updated_at: unix_epoch,
             title: "Event title".parse().expect("valid event title"),
-            description: "Event description".into(),
+            description: "Event description"
+                .parse()
+                .expect("valid event description"),
             room: EventRoomInfo {
                 id: RoomId::nil(),
                 password: None,
@@ -2344,7 +2344,9 @@ mod tests {
             updated_by: user_profile.clone(),
             updated_at: unix_epoch,
             title: "Event title".parse().expect("valid event title"),
-            description: "Event description".into(),
+            description: "Event description"
+                .parse()
+                .expect("valid event description"),
             room: EventRoomInfo {
                 id: RoomId::nil(),
                 password: None,
@@ -2468,7 +2470,11 @@ mod tests {
             updated_by: user_profile,
             updated_at: unix_epoch,
             title: Some("Instance title".parse().expect("valid event title")),
-            description: Some("Instance description".into()),
+            description: Some(
+                "Instance description"
+                    .parse()
+                    .expect("valid event description"),
+            ),
             is_all_day: Some(false),
             starts_at: Some(DateTimeTz {
                 datetime: *unix_epoch,

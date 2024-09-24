@@ -8,13 +8,16 @@
 // * docs/admin/core/meeting_reports.md
 
 use chrono::{DateTime, Utc};
-use opentalk_types_common::{events::EventTitle, time::TimeZone};
+use opentalk_types_common::{
+    events::{EventDescription, EventTitle},
+    time::TimeZone,
+};
 use opentalk_types_signaling::{ParticipantId, ParticipationKind, Role};
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct ReportTemplateParameter {
     pub title: EventTitle,
-    pub description: String,
+    pub description: EventDescription,
     pub starts_at: Option<DateTime<Utc>>,
     pub starts_at_tz: Option<TimeZone>,
     pub ends_at: Option<DateTime<Utc>>,

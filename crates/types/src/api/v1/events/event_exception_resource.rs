@@ -4,7 +4,7 @@
 
 use chrono::{TimeZone as _, Utc};
 use opentalk_types_common::{
-    events::{EventId, EventTitle},
+    events::{EventDescription, EventId, EventTitle},
     time::{DateTimeTz, Timestamp},
     utils::ExampleData,
 };
@@ -66,7 +66,7 @@ pub struct EventExceptionResource {
     // by default which creates a false positive in the spectral linter when
     // combined with example data.
     #[cfg_attr(feature = "utoipa", schema(nullable = false))]
-    pub description: Option<String>,
+    pub description: Option<EventDescription>,
 
     /// Override the `is_all_day` property of the instance
     #[cfg_attr(
@@ -128,7 +128,7 @@ impl ExampleData for EventExceptionResource {
             updated_by: PublicUserProfile::example_data(),
             updated_at: Timestamp::example_data(),
             title: Some(EventTitle::example_data()),
-            description: Some("The weekly teammeeting".to_string()),
+            description: Some(EventDescription::example_data()),
             is_all_day: Some(false),
             starts_at: Some(DateTimeTz {
                 datetime: Utc.with_ymd_and_hms(2024, 7, 5, 15, 0, 0).unwrap(),

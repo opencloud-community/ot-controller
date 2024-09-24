@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_types_common::{
-    events::EventTitle,
+    events::{EventDescription, EventTitle},
     rooms::RoomPassword,
     streaming::StreamingTarget,
     time::{DateTimeTz, RecurrencePattern},
@@ -17,7 +17,7 @@ use crate::imports::*;
 
 /// Body for the `PATCH /events/{event_id}` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize, Validate))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(
     example = json!(
         PatchEventBody::example_data()
@@ -34,14 +34,13 @@ pub struct PatchEventBody {
     /// Patch the description of the event
     #[cfg_attr(
         feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none"),
-        validate(length(max = 4096))
+        serde(default, skip_serializing_if = "Option::is_none")
     )]
     // Field is non-required already, utoipa adds a `nullable: true` entry
     // by default which creates a false positive in the spectral linter when
     // combined with example data.
     #[cfg_attr(feature = "utoipa", schema(nullable = false))]
-    pub description: Option<String>,
+    pub description: Option<EventDescription>,
 
     /// Patch the password of the event's room
     #[cfg_attr(
@@ -263,7 +262,11 @@ impl ExampleData for PatchEventBody {
     fn example_data() -> Self {
         Self {
             title: Some("The new title".parse().expect("valid event title")),
-            description: Some("The new description".to_string()),
+            description: Some(
+                "The new description"
+                    .parse()
+                    .expect("valid event description"),
+            ),
             password: None,
             waiting_room: None,
             e2e_encryption: None,

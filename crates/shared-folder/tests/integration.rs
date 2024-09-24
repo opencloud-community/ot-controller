@@ -35,7 +35,7 @@ async fn make_event(
         .unwrap();
     let event = NewEvent {
         title: "Test Event".parse().expect("valid event title"),
-        description: "Test Event".into(),
+        description: "Test Event".parse().expect("valid event description"),
         room: room_id,
         created_by: user_id,
         updated_by: user_id,

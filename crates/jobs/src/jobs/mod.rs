@@ -68,7 +68,9 @@ mod test_utils {
 
         let new_event = NewEvent {
             title: "TestEvent".parse().expect("valid event title"),
-            description: "A normal event, created by a test".into(),
+            description: "A normal event, created by a test"
+                .parse()
+                .expect("valid event description"),
             room: room.id,
             created_by: user.id,
             updated_by: user.id,
