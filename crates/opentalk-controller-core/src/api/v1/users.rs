@@ -27,13 +27,15 @@ use opentalk_types::api::{
     error::ApiError,
     v1::{
         order::{AssetSorting, SortingQuery},
-        pagination::PagePaginationQuery,
         users::PatchMeBody,
     },
 };
-use opentalk_types_api_v1::users::{
-    GetFindQuery, GetFindResponseBody, GetFindResponseEntry, GetUserAssetsResponseBody,
-    PrivateUserProfile, PublicUserProfile, UnregisteredUser,
+use opentalk_types_api_v1::{
+    pagination::PagePaginationQuery,
+    users::{
+        GetFindQuery, GetFindResponseBody, GetFindResponseEntry, GetUserAssetsResponseBody,
+        PrivateUserProfile, PublicUserProfile, UnregisteredUser,
+    },
 };
 use opentalk_types_common::{tariffs::TariffResource, users::UserId};
 use snafu::{Report, ResultExt, Whatever};

@@ -18,14 +18,12 @@ use opentalk_db_storage::{
 };
 use opentalk_types::api::{
     error::ApiError,
-    v1::{
-        invites::{
-            CodeVerified, GetRoomsInvitesResponseBody, InviteResource, PostInviteRequestBody,
-            PostInviteVerifyRequestBody, PutInviteRequestBody, RoomIdAndInviteCode,
-        },
-        pagination::PagePaginationQuery,
+    v1::invites::{
+        CodeVerified, GetRoomsInvitesResponseBody, InviteResource, PostInviteRequestBody,
+        PostInviteVerifyRequestBody, PutInviteRequestBody, RoomIdAndInviteCode,
     },
 };
+use opentalk_types_api_v1::pagination::PagePaginationQuery;
 use opentalk_types_common::rooms::RoomId;
 use validator::Validate;
 

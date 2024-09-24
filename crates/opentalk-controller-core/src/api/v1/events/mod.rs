@@ -39,10 +39,7 @@ use opentalk_keycloak_admin::{users::TenantFilter, KeycloakAdminClient};
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage};
 use opentalk_types::api::{
     error::{ApiError, ValidationErrorEntry, ERROR_CODE_IGNORED_VALUE, ERROR_CODE_VALUE_REQUIRED},
-    v1::{
-        events::{GetEventsCursorData, GetEventsQuery, PatchEventBody, PostEventsBody},
-        pagination::default_pagination_per_page,
-    },
+    v1::events::{GetEventsCursorData, GetEventsQuery, PatchEventBody, PostEventsBody},
 };
 use opentalk_types_api_v1::{
     events::{
@@ -51,6 +48,7 @@ use opentalk_types_api_v1::{
         EventRoomInfo, EventStatus, EventType, GetEventQuery, PatchEventQuery,
         PublicInviteUserProfile,
     },
+    pagination::default_pagination_per_page,
     users::{PublicUserProfile, UnregisteredUser},
     Cursor,
 };

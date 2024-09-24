@@ -14,8 +14,10 @@ use opentalk_signaling_core::{
     assets::{delete_asset, get_asset},
     ObjectStorage,
 };
-use opentalk_types::api::{error::ApiError, v1::pagination::PagePaginationQuery};
-use opentalk_types_api_v1::rooms::by_room_id::assets::RoomsByRoomIdAssetsGetResponseBody;
+use opentalk_types::api::error::ApiError;
+use opentalk_types_api_v1::{
+    pagination::PagePaginationQuery, rooms::by_room_id::assets::RoomsByRoomIdAssetsGetResponseBody,
+};
 use opentalk_types_common::{assets::AssetId, rooms::RoomId};
 
 use super::{response::NoContent, ApiResponse};

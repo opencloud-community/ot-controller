@@ -4,12 +4,9 @@
 
 //! Pagination Query types
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// Page-based pagination query
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::IntoParams, utoipa::ToSchema))]
 pub struct PagePaginationQuery {
     /// The number of entries per page
@@ -37,15 +34,17 @@ pub struct PagePaginationQuery {
 #[cfg(feature = "serde")]
 fn deserialize_pagination_per_page<'de, D>(deserializer: D) -> Result<i64, D::Error>
 where
-    D: Deserializer<'de>,
+    D: serde::Deserializer<'de>,
 {
+    use serde::Deserialize as _;
+
     let per_page = i64::deserialize(deserializer)?;
     if per_page <= 100 && per_page > 0 {
         Ok(per_page)
     } else if per_page <= 0 {
-        Err(de::Error::custom("per_page <= 0"))
+        Err(serde::de::Error::custom("per_page <= 0"))
     } else {
-        Err(de::Error::custom("per_page too large"))
+        Err(serde::de::Error::custom("per_page too large"))
     }
 }
 
@@ -58,24 +57,25 @@ const fn default_pagination_page() -> i64 {
 #[cfg(feature = "serde")]
 fn deserialize_pagination_page<'de, D>(deserializer: D) -> Result<i64, D::Error>
 where
-    D: Deserializer<'de>,
+    D: serde::Deserializer<'de>,
 {
+    use serde::Deserialize as _;
+
     let page = i64::deserialize(deserializer)?;
     if page > 0 {
         Ok(page)
     } else {
-        Err(de::Error::custom("page must be greater than 0"))
+        Err(serde::de::Error::custom("page must be greater than 0"))
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "serde"))]
 mod tests {
     use pretty_assertions::assert_eq;
 
     use super::*;
 
     #[test]
-    #[cfg(feature = "serde")]
     fn pagination_query() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let paging = PagePaginationQuery {
             per_page: 12,
@@ -94,9 +94,8 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "serde")]
     fn pagination_query_out_of_bounds() {
-        use de::Error;
+        use serde::de::Error;
 
         assert_eq!(
             serde_urlencoded::from_str::<PagePaginationQuery>("per_page=12&page=-2"),
@@ -115,9 +114,8 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "serde")]
     fn default_values() {
-        use crate::api::v1::pagination::default_pagination_per_page;
+        use crate::pagination::default_pagination_per_page;
 
         let default_page = PagePaginationQuery {
             per_page: 12,

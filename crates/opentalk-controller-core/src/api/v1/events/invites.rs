@@ -28,16 +28,14 @@ use opentalk_db_storage::{
     users::User,
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
-use opentalk_types::api::{
-    error::ApiError,
-    v1::{events::invites::GetEventsInvitesQuery, pagination::PagePaginationQuery},
-};
+use opentalk_types::api::{error::ApiError, v1::events::invites::GetEventsInvitesQuery};
 use opentalk_types_api_v1::{
     events::{
         DeleteEmailInviteBody, DeleteEventInvitePath, EmailInvite, EventInvitee, EventOptionsQuery,
         PatchEmailInviteBody, PatchInviteBody, PostEventInviteBody, PostEventInviteQuery,
         UserInvite,
     },
+    pagination::PagePaginationQuery,
     users::GetEventInvitesPendingResponseBody,
 };
 use opentalk_types_common::{
