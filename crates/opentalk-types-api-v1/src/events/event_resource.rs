@@ -3,10 +3,6 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::{TimeZone as _, Utc};
-use opentalk_types_api_v1::{
-    events::{EventInvitee, EventRoomInfo, EventType},
-    users::PublicUserProfile,
-};
 use opentalk_types_common::{
     events::{invites::EventInviteStatus, EventDescription, EventId, EventTitle},
     shared_folders::SharedFolder,
@@ -15,14 +11,14 @@ use opentalk_types_common::{
     utils::ExampleData,
 };
 
-#[allow(unused_imports)]
-use crate::imports::*;
+use super::{EventInvitee, EventRoomInfo, EventType};
+use crate::users::PublicUserProfile;
 
 /// Event Resource representation
 ///
 /// Returned from `GET /events/` and `GET /events/{event_id}`
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(
     feature = "utoipa",
     derive(utoipa::ToSchema),

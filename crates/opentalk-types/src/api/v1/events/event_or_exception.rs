@@ -2,10 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_api_v1::events::EventExceptionResource;
+use opentalk_types_api_v1::events::{EventExceptionResource, EventResource};
 use opentalk_types_common::utils::ExampleData;
 
-use super::EventResource;
 #[allow(unused_imports)]
 use crate::imports::*;
 
