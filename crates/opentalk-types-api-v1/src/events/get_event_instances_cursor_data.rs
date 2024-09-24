@@ -2,14 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_api_v1::CursorData;
-
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::CursorData;
 
 /// Data stored inside the `GET /events/{event_id}/instances` query cursor
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct GetEventInstancesCursorData {
     /// Page number
     pub page: i64,

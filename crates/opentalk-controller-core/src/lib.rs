@@ -51,7 +51,7 @@ use opentalk_signaling_core::{
     RegisterModules, SignalingModule, SignalingModuleInitData, VolatileStaticMemoryStorage,
     VolatileStorage,
 };
-use opentalk_types::api::{error::ApiError, v1::events::GetEventInstancesCursorData};
+use opentalk_types::api::error::ApiError;
 use rustls_pki_types::{CertificateDer, PrivatePkcs8KeyDer};
 use snafu::{Backtrace, ErrorCompat, Report, ResultExt, Snafu};
 use swagger::WithSwagger as _;
@@ -843,7 +843,7 @@ impl ModulesRegistrar for Controller {
             opentalk_types::api::v1::turn::Stun,
             opentalk_types::api::v1::turn::Turn,
             opentalk_types::api::v1::users::PatchMeBody,
-            opentalk_types_api_v1::Cursor::<GetEventInstancesCursorData>,
+            opentalk_types_api_v1::Cursor::<opentalk_types_api_v1::events::GetEventInstancesCursorData>,
             opentalk_types_api_v1::assets::AssetResource,
             opentalk_types_api_v1::auth::GetLoginResponseBody,
             opentalk_types_api_v1::auth::OidcProvider,
