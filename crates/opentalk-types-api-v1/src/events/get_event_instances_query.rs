@@ -2,15 +2,14 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_api_v1::{events::GetEventInstancesCursorData, Cursor};
 use opentalk_types_common::time::Timestamp;
 
-#[allow(unused_imports)]
-use crate::imports::*;
+use super::GetEventInstancesCursorData;
+use crate::Cursor;
 
 /// Query parameters for the `GET /events/{event_id}/instances` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::IntoParams))]
 pub struct GetEventInstancesQuery {
     /// Maximum number of invitees to include inside the event
