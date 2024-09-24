@@ -43,7 +43,6 @@ use opentalk_types::api::{
         events::{
             EventInvitee, EventInviteeProfile, EventOrException, EventResource,
             GetEventsCursorData, GetEventsQuery, PatchEventBody, PostEventsBody,
-            PublicInviteUserProfile,
         },
         pagination::default_pagination_per_page,
         Cursor,
@@ -53,6 +52,7 @@ use opentalk_types_api_v1::{
     events::{
         CallInInfo, DeleteEventsQuery, EmailOnlyUser, EventAndInstanceId, EventExceptionResource,
         EventOptionsQuery, EventRoomInfo, EventStatus, EventType, GetEventQuery, PatchEventQuery,
+        PublicInviteUserProfile,
     },
     users::{PublicUserProfile, UnregisteredUser},
 };

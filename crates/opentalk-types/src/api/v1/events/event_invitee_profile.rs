@@ -2,10 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_api_v1::{events::EmailOnlyUser, users::UnregisteredUser};
+use opentalk_types_api_v1::{
+    events::{EmailOnlyUser, PublicInviteUserProfile},
+    users::UnregisteredUser,
+};
 use opentalk_types_common::utils::ExampleData;
 
-use super::PublicInviteUserProfile;
 #[allow(unused_imports)]
 use crate::imports::*;
 

@@ -18,7 +18,6 @@ mod get_events_query;
 mod patch_event_body;
 mod patch_event_instance_body;
 mod post_events_body;
-mod public_invite_user_profile;
 
 pub mod invites;
 
@@ -36,4 +35,3 @@ pub use get_events_query::GetEventsQuery;
 pub use patch_event_body::PatchEventBody;
 pub use patch_event_instance_body::PatchEventInstanceBody;
 pub use post_events_body::PostEventsBody;
-pub use public_invite_user_profile::PublicInviteUserProfile;
