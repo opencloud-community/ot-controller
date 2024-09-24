@@ -29,8 +29,8 @@ use opentalk_types::api::{
     },
 };
 use opentalk_types_api_v1::events::{
-    EventAndInstanceId, EventInstancePath, EventInstanceQuery, EventRoomInfo, EventStatus,
-    EventType, InstanceId,
+    EventAndInstanceId, EventInstancePath, EventInstanceQuery, EventInvitee, EventRoomInfo,
+    EventStatus, EventType, InstanceId,
 };
 use opentalk_types_common::{
     events::{invites::EventInviteStatus, EventId},
@@ -42,7 +42,7 @@ use validator::Validate;
 
 use super::{
     can_edit, get_invited_mail_recipients_for_event, notify_invitees_about_update, ApiResponse,
-    DateTimeTz, DefaultApiResult, EventInvitee, UpdateNotificationValues, LOCAL_DT_FORMAT,
+    DateTimeTz, DefaultApiResult, UpdateNotificationValues, LOCAL_DT_FORMAT,
     ONE_HUNDRED_YEARS_IN_DAYS,
 };
 use crate::{

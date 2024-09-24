@@ -34,7 +34,7 @@ use opentalk_types::api::{
 };
 use opentalk_types_api_v1::{
     events::{
-        DeleteEmailInviteBody, DeleteEventInvitePath, EmailInvite, EventOptionsQuery,
+        DeleteEmailInviteBody, DeleteEventInvitePath, EmailInvite, EventInvitee, EventOptionsQuery,
         PatchEmailInviteBody, PatchInviteBody, PostEventInviteBody, PostEventInviteQuery,
         UserInvite,
     },
@@ -61,8 +61,8 @@ use crate::{
         v1::{
             events::{
                 enrich_from_keycloak, enrich_invitees_from_keycloak,
-                get_invited_mail_recipients_for_event, get_tenant_filter, EventInvitee,
-                EventInviteeExt, EventPoliciesBuilderExt,
+                get_invited_mail_recipients_for_event, get_tenant_filter, EventInviteeExt,
+                EventPoliciesBuilderExt,
             },
             response::{Created, NoContent},
             rooms::RoomsPoliciesBuilderExt,

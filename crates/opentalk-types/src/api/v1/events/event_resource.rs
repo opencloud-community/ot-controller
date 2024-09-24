@@ -4,7 +4,7 @@
 
 use chrono::{TimeZone as _, Utc};
 use opentalk_types_api_v1::{
-    events::{EventRoomInfo, EventType},
+    events::{EventInvitee, EventRoomInfo, EventType},
     users::PublicUserProfile,
 };
 use opentalk_types_common::{
@@ -15,7 +15,6 @@ use opentalk_types_common::{
     utils::ExampleData,
 };
 
-use super::EventInvitee;
 #[allow(unused_imports)]
 use crate::imports::*;
 
