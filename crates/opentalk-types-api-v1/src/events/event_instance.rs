@@ -2,10 +2,6 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_api_v1::{
-    events::{EventAndInstanceId, EventInvitee, EventRoomInfo, EventStatus, EventType, InstanceId},
-    users::PublicUserProfile,
-};
 use opentalk_types_common::{
     events::{invites::EventInviteStatus, EventDescription, EventId, EventTitle},
     shared_folders::SharedFolder,
@@ -13,8 +9,8 @@ use opentalk_types_common::{
     utils::ExampleData,
 };
 
-#[allow(unused_imports)]
-use crate::imports::*;
+use super::{EventAndInstanceId, EventInvitee, EventRoomInfo, EventStatus, EventType, InstanceId};
+use crate::users::PublicUserProfile;
 
 /// Event instance resource
 ///
@@ -26,7 +22,7 @@ use crate::imports::*;
 ///
 /// [`EventResource`]: ../event_ressource/struct.EventResource.html
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(
     feature = "utoipa",
     derive(utoipa::ToSchema),
