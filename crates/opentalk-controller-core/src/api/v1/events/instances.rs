@@ -22,15 +22,15 @@ use opentalk_types::api::{
     error::ApiError,
     v1::{
         events::{
-            GetEventInstanceResponseBody, GetEventInstancesCursorData, GetEventInstancesQuery,
-            GetEventInstancesResponseBody, PatchEventInstanceBody,
+            GetEventInstancesCursorData, GetEventInstancesQuery, GetEventInstancesResponseBody,
+            PatchEventInstanceBody,
         },
         Cursor,
     },
 };
 use opentalk_types_api_v1::events::{
     EventAndInstanceId, EventInstance, EventInstancePath, EventInstanceQuery, EventInvitee,
-    EventRoomInfo, EventStatus, EventType, InstanceId,
+    EventRoomInfo, EventStatus, EventType, GetEventInstanceResponseBody, InstanceId,
 };
 use opentalk_types_common::{
     events::{invites::EventInviteStatus, EventId},
