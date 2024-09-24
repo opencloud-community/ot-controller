@@ -40,9 +40,7 @@ use opentalk_signaling_core::{ExchangeHandle, ObjectStorage};
 use opentalk_types::api::{
     error::{ApiError, ValidationErrorEntry, ERROR_CODE_IGNORED_VALUE, ERROR_CODE_VALUE_REQUIRED},
     v1::{
-        events::{
-            EventOrException, GetEventsCursorData, GetEventsQuery, PatchEventBody, PostEventsBody,
-        },
+        events::{GetEventsCursorData, GetEventsQuery, PatchEventBody, PostEventsBody},
         pagination::default_pagination_per_page,
         Cursor,
     },
@@ -50,8 +48,9 @@ use opentalk_types::api::{
 use opentalk_types_api_v1::{
     events::{
         CallInInfo, DeleteEventsQuery, EmailOnlyUser, EventAndInstanceId, EventExceptionResource,
-        EventInvitee, EventInviteeProfile, EventOptionsQuery, EventResource, EventRoomInfo,
-        EventStatus, EventType, GetEventQuery, PatchEventQuery, PublicInviteUserProfile,
+        EventInvitee, EventInviteeProfile, EventOptionsQuery, EventOrException, EventResource,
+        EventRoomInfo, EventStatus, EventType, GetEventQuery, PatchEventQuery,
+        PublicInviteUserProfile,
     },
     users::{PublicUserProfile, UnregisteredUser},
 };

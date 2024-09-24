@@ -4,7 +4,6 @@
 
 //! This module contains types that are used for OpenTalk API V1 events endpoints.
 
-mod event_or_exception;
 mod get_event_instance_response_body;
 mod get_event_instances_cursor_data;
 mod get_event_instances_query;
@@ -17,7 +16,6 @@ mod post_events_body;
 
 pub mod invites;
 
-pub use event_or_exception::EventOrException;
 pub use get_event_instance_response_body::GetEventInstanceResponseBody;
 pub use get_event_instances_cursor_data::GetEventInstancesCursorData;
 pub use get_event_instances_query::GetEventInstancesQuery;

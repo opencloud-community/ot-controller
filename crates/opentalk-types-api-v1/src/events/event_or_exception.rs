@@ -2,15 +2,17 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_api_v1::events::{EventExceptionResource, EventResource};
 use opentalk_types_common::utils::ExampleData;
 
-#[allow(unused_imports)]
-use crate::imports::*;
+use super::{EventExceptionResource, EventResource};
 
 /// Return type of the `GET /events` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(untagged))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(untagged)
+)]
 #[allow(clippy::large_enum_variant)]
 #[cfg_attr(
     feature = "utoipa",
