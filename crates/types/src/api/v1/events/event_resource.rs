@@ -128,7 +128,7 @@ pub struct EventResource {
     /// in the `starts_at` and `ends_at` fields.
     #[cfg_attr(
         feature = "serde",
-        serde(skip_serializing_if = "RecurrencePattern::is_empty")
+        serde(default, skip_serializing_if = "RecurrencePattern::is_empty")
     )]
     pub recurrence_pattern: RecurrencePattern,
 

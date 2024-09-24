@@ -38,6 +38,7 @@ pub struct EventRoomInfo {
     pub waiting_room: bool,
 
     /// Flag to check if the room has e2e encryption enabled
+    #[cfg_attr(feature = "serde", serde(default))]
     pub e2e_encrytion: bool,
 
     /// Call-In information
