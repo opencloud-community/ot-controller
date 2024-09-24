@@ -67,7 +67,7 @@ mod test_utils {
         let room = create_generic_test_room(conn, user).await;
 
         let new_event = NewEvent {
-            title: "TestEvent".into(),
+            title: "TestEvent".parse().expect("valid event title"),
             description: "A normal event, created by a test".into(),
             room: room.id,
             created_by: user.id,

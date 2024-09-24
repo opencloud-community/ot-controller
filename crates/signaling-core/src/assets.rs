@@ -24,6 +24,7 @@ use opentalk_db_storage::{
 use opentalk_types::api::error::ApiError;
 use opentalk_types_common::{
     assets::{AssetId, FileExtension},
+    events::EventTitle,
     rooms::RoomId,
     tariffs::QuotaType,
     time::Timestamp,
@@ -118,7 +119,7 @@ impl FromStr for AssetFileKind {
 const MAX_ASSET_FILE_NAME_LENGTH: usize = 100;
 
 pub struct NewAssetFileName {
-    event_title: Option<String>,
+    event_title: Option<EventTitle>,
     kind: AssetFileKind,
     timestamp: Timestamp,
     extension: FileExtension,
@@ -135,7 +136,7 @@ impl NewAssetFileName {
     }
 
     pub fn new_with_event_title(
-        event_title: Option<String>,
+        event_title: Option<EventTitle>,
         kind: AssetFileKind,
         timestamp: Timestamp,
         extension: FileExtension,
@@ -146,14 +147,6 @@ impl NewAssetFileName {
             timestamp,
             extension,
         }
-    }
-
-    fn sanitize_event_title_for_filename(s: &str, max_length: usize) -> String {
-        let end = std::cmp::min(max_length, s.len());
-        s[..end].replace(
-            |c: char| !(c.is_alphanumeric() || ['.', '_', '-', ' '].contains(&c)),
-            "_",
-        )
     }
 }
 
@@ -172,7 +165,7 @@ impl Display for NewAssetFileName {
                 write!(
                     f,
                     "{}_{}",
-                    Self::sanitize_event_title_for_filename(event_title, max_length),
+                    event_title.sanitized_for_filename(max_length),
                     file_name_fixed_part
                 )
             }
@@ -391,7 +384,11 @@ mod tests {
         );
 
         let filename = NewAssetFileName::new_with_event_title(
-            Some("A very (!!1~) Special Event!".to_string()),
+            Some(
+                "A very (!!1~) Special Event!"
+                    .parse()
+                    .expect("valid event title"),
+            ),
             AssetFileKind::from_str("meetingnotes_pdf").unwrap(),
             timestamp,
             FileExtension::pdf(),
@@ -402,7 +399,7 @@ mod tests {
         );
 
         let filename = NewAssetFileName::new_with_event_title(
-            Some("世界您好".to_string()),
+            Some("世界您好".parse().expect("valid event title")),
             AssetFileKind::from_str("meetingnotes_pdf").unwrap(),
             timestamp,
             FileExtension::pdf(),

@@ -246,7 +246,7 @@ mod tests {
             event_info: Some(EventInfo {
                 id: EventId::nil(),
                 room_id: RoomId::nil(),
-                title: "Daily".to_string(),
+                title: "Daily".parse().expect("valid event title"),
                 is_adhoc: false,
                 meeting_details: None,
                 e2e_encryption: false,
@@ -312,7 +312,7 @@ mod tests {
             event_info: Some(EventInfo {
                 id: EventId::nil(),
                 room_id: RoomId::nil(),
-                title: "Daily".to_string(),
+                title: "Daily".parse().expect("valid event title"),
                 is_adhoc: false,
                 meeting_details: None,
                 e2e_encryption: false,

@@ -4,7 +4,7 @@
 
 use chrono::{TimeZone as _, Utc};
 use opentalk_types_common::{
-    events::{invites::EventInviteStatus, EventId},
+    events::{invites::EventInviteStatus, EventId, EventTitle},
     shared_folders::SharedFolder,
     streaming::RoomStreamingTarget,
     time::{DateTimeTz, RecurrencePattern, Timestamp},
@@ -45,7 +45,7 @@ pub struct EventResource {
     /// Title of the event
     ///
     /// For display purposes
-    pub title: String,
+    pub title: EventTitle,
 
     /// Description of the event
     ///
@@ -180,7 +180,7 @@ impl ExampleData for EventResource {
             created_at: Timestamp::example_data(),
             updated_by: PublicUserProfile::example_data(),
             updated_at: Timestamp::example_data(),
-            title: "Teammeeting".to_string(),
+            title: EventTitle::example_data(),
             description: "The weekly teammeting".to_string(),
             room: EventRoomInfo::example_data(),
             invitees_truncated: false,

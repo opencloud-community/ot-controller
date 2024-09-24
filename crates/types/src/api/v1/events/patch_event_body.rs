@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_types_common::{
+    events::EventTitle,
     rooms::RoomPassword,
     streaming::StreamingTarget,
     time::{DateTimeTz, RecurrencePattern},
@@ -26,10 +27,9 @@ pub struct PatchEventBody {
     /// Patch the title of th event
     #[cfg_attr(
         feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none"),
-        validate(length(max = 255))
+        serde(default, skip_serializing_if = "Option::is_none")
     )]
-    pub title: Option<String>,
+    pub title: Option<EventTitle>,
 
     /// Patch the description of the event
     #[cfg_attr(
@@ -262,7 +262,7 @@ impl PatchEventBody {
 impl ExampleData for PatchEventBody {
     fn example_data() -> Self {
         Self {
-            title: Some("The new title".to_string()),
+            title: Some("The new title".parse().expect("valid event title")),
             description: Some("The new description".to_string()),
             password: None,
             waiting_room: None,

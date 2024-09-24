@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_common::{time::DateTimeTz, utils::ExampleData};
+use opentalk_types_common::{events::EventTitle, time::DateTimeTz, utils::ExampleData};
 
 use crate::api::v1::events::EventStatus;
 #[allow(unused_imports)]
@@ -20,14 +20,13 @@ pub struct PatchEventInstanceBody {
     /// The title of th event
     #[cfg_attr(
         feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none"),
-        validate(length(max = 255))
+        serde(default, skip_serializing_if = "Option::is_none")
     )]
     // Field is non-required already, utoipa adds a `nullable: true` entry
     // by default which creates a false positive in the spectral linter when
     // combined with example data.
     #[cfg_attr(feature = "utoipa", schema(nullable = false))]
-    pub title: Option<String>,
+    pub title: Option<EventTitle>,
 
     /// The description of the event
     #[cfg_attr(
@@ -110,7 +109,7 @@ impl PatchEventInstanceBody {
 impl ExampleData for PatchEventInstanceBody {
     fn example_data() -> Self {
         Self {
-            title: Some("Early morning meeting".to_string()),
+            title: Some("Early morning meeting".parse().expect("valid event title")),
             description: None,
             is_all_day: Some(false),
             starts_at: None,

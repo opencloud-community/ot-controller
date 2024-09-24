@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_types_common::{
-    events::{invites::EventInviteStatus, EventId},
+    events::{invites::EventInviteStatus, EventId, EventTitle},
     shared_folders::SharedFolder,
     time::{DateTimeTz, Timestamp},
     utils::ExampleData,
@@ -54,7 +54,7 @@ pub struct EventInstance {
     pub updated_at: Timestamp,
 
     /// Title of the event
-    pub title: String,
+    pub title: EventTitle,
     /// Description of the event
     pub description: String,
     /// All information about the room the event takes place in
@@ -103,7 +103,7 @@ impl ExampleData for EventInstance {
             created_at: Timestamp::example_data(),
             updated_by: PublicUserProfile::example_data(),
             updated_at: Timestamp::example_data(),
-            title: "Weekly meeting".to_string(),
+            title: EventTitle::example_data(),
             description: "Our weekly teammeeting".to_string(),
             room: EventRoomInfo::example_data(),
             invitees_truncated: true,

@@ -53,7 +53,7 @@ use opentalk_types::api::{
     },
 };
 use opentalk_types_common::{
-    events::{invites::EventInviteStatus, EventId},
+    events::{invites::EventInviteStatus, EventId, EventTitle},
     features,
     rooms::{RoomId, RoomPassword},
     shared_folders::{SharedFolder, SharedFolderAccess},
@@ -455,7 +455,7 @@ async fn create_time_independent_event(
     settings: &Settings,
     conn: &mut DbConnection,
     current_user: User,
-    title: String,
+    title: EventTitle,
     description: String,
     password: Option<RoomPassword>,
     waiting_room: bool,
@@ -549,7 +549,7 @@ async fn create_time_dependent_event(
     settings: &Settings,
     conn: &mut DbConnection,
     current_user: User,
-    title: String,
+    title: EventTitle,
     description: String,
     password: Option<RoomPassword>,
     waiting_room: bool,
@@ -2217,7 +2217,7 @@ mod tests {
             created_at: unix_epoch,
             updated_by: user_profile.clone(),
             updated_at: unix_epoch,
-            title: "Event title".into(),
+            title: "Event title".parse().expect("valid event title"),
             description: "Event description".into(),
             room: EventRoomInfo {
                 id: RoomId::nil(),
@@ -2343,7 +2343,7 @@ mod tests {
             created_at: unix_epoch,
             updated_by: user_profile.clone(),
             updated_at: unix_epoch,
-            title: "Event title".into(),
+            title: "Event title".parse().expect("valid event title"),
             description: "Event description".into(),
             room: EventRoomInfo {
                 id: RoomId::nil(),
@@ -2467,7 +2467,7 @@ mod tests {
             created_at: unix_epoch,
             updated_by: user_profile,
             updated_at: unix_epoch,
-            title: Some("Instance title".into()),
+            title: Some("Instance title".parse().expect("valid event title")),
             description: Some("Instance description".into()),
             is_all_day: Some(false),
             starts_at: Some(DateTimeTz {

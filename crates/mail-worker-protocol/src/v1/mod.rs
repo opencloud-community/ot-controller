@@ -4,8 +4,8 @@
 
 use chrono::{TimeZone, Utc};
 use opentalk_types_common::{
-    rooms::RoomPassword, shared_folders::SharedFolder, streaming::RoomStreamingTarget,
-    utils::ExampleData,
+    events::EventTitle, rooms::RoomPassword, shared_folders::SharedFolder,
+    streaming::RoomStreamingTarget, utils::ExampleData,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -154,7 +154,7 @@ impl ExampleData for Time {
 )]
 pub struct Event {
     pub id: Uuid,
-    pub name: String,
+    pub name: EventTitle,
     pub created_at: Time,
     pub start_time: Option<Time>,
     pub end_time: Option<Time>,
@@ -172,7 +172,7 @@ impl ExampleData for Event {
     fn example_data() -> Self {
         Self {
             id: Uuid::from_u128(0xabadcafe),
-            name: "Weekly teammeeting".to_string(),
+            name: "Weekly teammeeting".parse().expect("valid event title"),
             created_at: Time::example_data(),
             start_time: None,
             end_time: None,
@@ -197,7 +197,7 @@ impl ExampleData for Event {
 pub struct EventException {
     pub exception_date: Time,
     pub kind: EventExceptionKind,
-    pub title: Option<String>,
+    pub title: Option<EventTitle>,
     pub description: Option<String>,
     pub is_all_day: Option<bool>,
     pub starts_at: Option<Time>,
@@ -209,7 +209,7 @@ impl ExampleData for EventException {
         Self {
             exception_date: Time::example_data(),
             kind: EventExceptionKind::Modified,
-            title: Some("Another weekly meeting".to_string()),
+            title: Some("Another weekly meeting".parse().expect("valid event title")),
             description: None,
             is_all_day: None,
             starts_at: None,
@@ -387,7 +387,7 @@ mod tests {
             },
             event: Event {
                 id: Uuid::from_u128(1),
-                name: "Guten Morgen Meeting".into(),
+                name: "Guten Morgen Meeting".parse().expect("valid event title"),
                 description: "".into(),
                 created_at: Time {
                     time: chrono::DateTime::<FixedOffset>::parse_from_rfc3339(
@@ -505,7 +505,7 @@ mod tests {
             },
             event: Event {
                 id: Uuid::from_u128(1),
-                name: "Guten Morgen Meeting".into(),
+                name: "Guten Morgen Meeting".parse().expect("valid event title"),
                 description: "".into(),
                 created_at: Time {
                     time: chrono::DateTime::<FixedOffset>::parse_from_rfc3339(
