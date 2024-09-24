@@ -17,6 +17,7 @@ pub struct Credentials {
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
 pub enum Error {
     LivekitUnavailable,
 }
