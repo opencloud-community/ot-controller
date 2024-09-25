@@ -608,6 +608,11 @@ impl ModulesRegistrar for Controller {
 
         if let Some(params) = params {
             self.signaling.add_module::<M>(params);
+        } else {
+            log::info!(
+                "Skipping module '{}' due to missing configuration",
+                M::NAMESPACE
+            );
         }
 
         Ok(())

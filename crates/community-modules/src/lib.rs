@@ -9,6 +9,7 @@ use opentalk_integration::Integration;
 use opentalk_janus_media::Media;
 use opentalk_livekit::Livekit;
 use opentalk_meeting_notes::MeetingNotes;
+use opentalk_meeting_report::MeetingReport;
 use opentalk_polls::Polls;
 use opentalk_shared_folder::SharedFolder;
 use opentalk_signaling_core::{ModulesRegistrar, RegisterModules};
@@ -29,6 +30,7 @@ impl RegisterModules for CommunityModules {
         registrar.register::<MeetingNotes>().await?;
         registrar.register::<SharedFolder>().await?;
         registrar.register::<Timer>().await?;
-        registrar.register::<Whiteboard>().await
+        registrar.register::<Whiteboard>().await?;
+        registrar.register::<MeetingReport>().await
     }
 }

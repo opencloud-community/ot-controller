@@ -170,7 +170,9 @@ pub trait SignalingModule: Send + Sized + 'static {
     /// Before dropping the module this function will be called
     async fn on_destroy(self, ctx: DestroyContext<'_>);
 
-    /// Build the parameters for instantiating the signaling module
+    /// Build the parameters for instantiating the signaling module.
+    ///
+    /// If `None` is returned, the module is not initialized.
     async fn build_params(init: SignalingModuleInitData) -> Result<Option<Self::Params>>;
 
     fn module_id() -> ModuleId {

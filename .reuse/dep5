@@ -6,14 +6,15 @@ Upstream-Contact: OpenTalk GmbH <mail@opentalk.eu>
 Files:
  .commitlintrc.json
  .gitlab/issue_templates/*.md
- CHANGELOG.md
- Cargo.lock
  api/**.md
  api/**.yaml
+ Cargo.lock
+ CHANGELOG.md
  ci/spectral/*.yml
  crates/*/README.md
  crates/db-storage/src/migrations/*.sql
  crates/db-storage/src/schema.rs
+ crates/meeting-report/src/report.md.tera
  docs/**.md
  docs/**.yml
  renovate.json

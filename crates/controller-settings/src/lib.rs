@@ -406,6 +406,18 @@ pub struct Spacedeck {
 #[derive(Clone, Debug, Deserialize)]
 pub struct Reports {
     pub url: url::Url,
+    #[serde(default)]
+    pub template: ReportsTemplate,
+}
+
+#[derive(Clone, Debug, Deserialize, Default)]
+pub enum ReportsTemplate {
+    /// Use the Template included with the application.
+    #[default]
+    BuiltIn,
+
+    /// Use the Template provided by the user configuration.
+    Inline(String),
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]

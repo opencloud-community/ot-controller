@@ -23,6 +23,7 @@ opentalk-integration.workspace = true
 opentalk-janus-media.workspace = true
 opentalk-livekit.workspace = true
 opentalk-meeting-notes.workspace = true
+opentalk-meeting-report.workspace = true
 opentalk-polls.workspace = true
 opentalk-shared-folder.workspace = true
 opentalk-timer.workspace = true
