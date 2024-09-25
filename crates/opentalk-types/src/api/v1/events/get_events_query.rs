@@ -2,10 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_api_v1::Cursor;
+use opentalk_types_api_v1::{events::GetEventsCursorData, Cursor};
 use opentalk_types_common::{events::invites::EventInviteStatus, time::Timestamp};
 
-use super::GetEventsCursorData;
 #[cfg(feature = "serde")]
 use crate::api::v1::utils::comma_separated;
 #[allow(unused_imports)]

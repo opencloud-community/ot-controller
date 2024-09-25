@@ -2,15 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_api_v1::CursorData;
 use opentalk_types_common::{events::EventId, time::Timestamp, utils::ExampleData};
 
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::CursorData;
 
 /// Data stored inside the `GET /events` query cursor
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(
     feature = "utoipa",
     derive(utoipa::ToSchema),
