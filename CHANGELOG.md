@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - (signaling) Correctly serialize/deserialize namespaced messages ([!1166](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1166))
 
+### ⚙ Miscellaneous
+
+- Return livekit errors in snake_case ([!1188](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1188))
+
 ### 📚 Documentation
 
 - Add diagram and descriptions for the participant lifecycle ([!1144](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1144))
