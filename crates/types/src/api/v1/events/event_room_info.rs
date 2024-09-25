@@ -39,7 +39,7 @@ pub struct EventRoomInfo {
 
     /// Flag to check if the room has e2e encryption enabled
     #[cfg_attr(feature = "serde", serde(default))]
-    pub e2e_encrytion: bool,
+    pub e2e_encryption: bool,
 
     /// Call-In information
     #[cfg_attr(
@@ -59,7 +59,7 @@ impl ExampleData for EventRoomInfo {
             id: RoomId::example_data(),
             password: Some(RoomPassword::example_data()),
             waiting_room: false,
-            e2e_encrytion: false,
+            e2e_encryption: false,
             call_in: Some(CallInInfo::example_data()),
         }
     }

@@ -790,7 +790,7 @@ mod tests {
                 id: RoomId::nil(),
                 password: None,
                 waiting_room: false,
-                e2e_encrytion: false,
+                e2e_encryption: false,
                 call_in: None,
             },
             invitees_truncated: false,
@@ -849,7 +849,7 @@ mod tests {
                 "room": {
                     "id": "00000000-0000-0000-0000-000000000000",
                     "waiting_room": false,
-                    "e2e_encrytion": false
+                    "e2e_encryption": false
                 },
                 "invitees_truncated": false,
                 "invitees": [

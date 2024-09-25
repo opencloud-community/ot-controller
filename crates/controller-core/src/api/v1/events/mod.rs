@@ -245,7 +245,7 @@ impl EventRoomInfoExt for EventRoomInfo {
             id: room.id,
             password: room.password,
             waiting_room: room.waiting_room,
-            e2e_encrytion: room.e2e_encrytion,
+            e2e_encryption: room.e2e_encryption,
             call_in,
         }
     }
@@ -308,7 +308,7 @@ pub async fn new_event(
                         description,
                         password,
                         waiting_room,
-                        e2e_encrytion,
+                        e2e_encryption,
                         is_time_independent: true,
                         is_all_day: None,
                         starts_at: None,
@@ -327,7 +327,7 @@ pub async fn new_event(
                             description,
                             password,
                             waiting_room,
-                            e2e_encrytion,
+                            e2e_encryption,
                             is_adhoc,
                             streaming_targets,
                             show_meeting_details,
@@ -340,7 +340,7 @@ pub async fn new_event(
                         description,
                         password,
                         waiting_room,
-                        e2e_encrytion,
+                        e2e_encryption,
                         is_time_independent: false,
                         is_all_day: Some(is_all_day),
                         starts_at: Some(starts_at),
@@ -359,7 +359,7 @@ pub async fn new_event(
                             description,
                             password,
                             waiting_room,
-                            e2e_encrytion,
+                            e2e_encryption,
                             is_all_day,
                             starts_at,
                             ends_at,
@@ -459,7 +459,7 @@ async fn create_time_independent_event(
     description: String,
     password: Option<RoomPassword>,
     waiting_room: bool,
-    e2e_encrytion: bool,
+    e2e_encryption: bool,
     is_adhoc: bool,
     streaming_targets: Vec<StreamingTarget>,
     show_meeting_details: bool,
@@ -470,7 +470,7 @@ async fn create_time_independent_event(
         password,
         waiting_room,
         tenant_id: current_user.tenant_id,
-        e2e_encrytion,
+        e2e_encryption,
     }
     .insert(conn)
     .await?;
@@ -553,7 +553,7 @@ async fn create_time_dependent_event(
     description: String,
     password: Option<RoomPassword>,
     waiting_room: bool,
-    e2e_encrytion: bool,
+    e2e_encryption: bool,
     is_all_day: bool,
     starts_at: DateTimeTz,
     ends_at: DateTimeTz,
@@ -573,7 +573,7 @@ async fn create_time_dependent_event(
         password,
         waiting_room,
         tenant_id: current_user.tenant_id,
-        e2e_encrytion,
+        e2e_encryption,
     }
     .insert(conn)
     .await?;
@@ -1108,7 +1108,7 @@ pub async fn patch_event(
         UpdateRoom {
             password: patch.password.clone(),
             waiting_room: patch.waiting_room,
-            e2e_encrytion: patch.e2e_encrytion,
+            e2e_encryption: patch.e2e_encryption,
         }
         .apply(&mut conn, event.room)
         .await?
@@ -2223,7 +2223,7 @@ mod tests {
                 id: RoomId::nil(),
                 password: None,
                 waiting_room: false,
-                e2e_encrytion: false,
+                e2e_encryption: false,
                 call_in: None,
             },
             invitees_truncated: false,
@@ -2284,7 +2284,7 @@ mod tests {
                 "room": {
                     "id": "00000000-0000-0000-0000-000000000000",
                     "waiting_room": false,
-                    "e2e_encrytion": false
+                    "e2e_encryption": false
                 },
                 "invitees_truncated": false,
                 "invitees": [
@@ -2349,7 +2349,7 @@ mod tests {
                 id: RoomId::nil(),
                 password: None,
                 waiting_room: false,
-                e2e_encrytion: false,
+                e2e_encryption: false,
                 call_in: Some(CallInInfo {
                     tel: "030123456".into(),
                     uri: None,
@@ -2409,7 +2409,7 @@ mod tests {
                 "room": {
                     "id": "00000000-0000-0000-0000-000000000000",
                     "waiting_room": false,
-                    "e2e_encrytion": false,
+                    "e2e_encryption": false,
                     "call_in": {
                         "tel": "030123456",
                         "id": "1234567890",

@@ -147,7 +147,7 @@ impl SignalingModule for Recording {
         Ok(Some(Self {
             id: ctx.participant_id(),
             room: ctx.room_id(),
-            room_encryption_enabled: ctx.room().e2e_encrytion,
+            room_encryption_enabled: ctx.room().e2e_encryption,
             params: params.clone(),
             enabled_features,
             db: ctx.db().clone(),
