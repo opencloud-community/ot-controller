@@ -30,13 +30,4 @@ docker run -it -v $PROJECT_DIR:/app \
     -e GITLAB_API_URL=https://git.opentalk.dev/api/v4 \
     -e GITLAB_TOKEN=$(cat $GITLAB_TOKEN_FILE) \
     -u $(id -u):$(id -g) \
-    git.opentalk.dev:5050/opentalk/tools/check-changelog:v0.1.0
-
-awk '/<!-- End section Unreleased -->/ {p=1;next}p' CHANGELOG.md > CHANGELOG.md.tmp
-mv CHANGELOG.md.tmp CHANGELOG.md
-
-# We need to add one new line between the Unreleased section and the rest
-echo >> CHANGELOG.should.md
-
-cat CHANGELOG.md >> CHANGELOG.should.md
-mv CHANGELOG.should.md CHANGELOG.md
+    git.opentalk.dev:5050/opentalk/tools/check-changelog:v0.3.0

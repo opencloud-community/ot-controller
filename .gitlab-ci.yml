@@ -180,27 +180,6 @@ lint:mod-rs-files:
   before_script: apt-get update && apt-get install -y fd-find
   script: ./ci/lint-mod-rs-files.sh
 
-lint:changelog:
-  allow_failure: true
-  cache: {}
-  image:
-    name: git.opentalk.dev:5050/opentalk/tools/check-changelog:v0.3.0
-    entrypoint: ['']
-  stage: lint
-  <<: *default_job_condition
-  variables:
-    GIT_STRATEGY: clone
-    GIT_DEPTH: 0
-    GITLAB_TOKEN: $GITLAB_API_TOKEN
-    RUST_LOG: debug
-  script:
-    - entrypoint.sh
-  artifacts:
-    when: on_failure
-    paths:
-      - CHANGELOG.should.md
-    expire_in: 1 week
-
 test:cargo_test:
   stage: test
   <<: *default_job_condition
