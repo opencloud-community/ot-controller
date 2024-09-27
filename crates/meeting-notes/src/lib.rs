@@ -191,15 +191,7 @@ impl SignalingModule for MeetingNotes {
     ) -> Result<Option<Self::Params>, SignalingModuleError> {
         let etherpad = init.shared_settings.load_full().etherpad.clone();
 
-        match etherpad {
-            Some(etherpad) => Ok(Some(etherpad)),
-            None => {
-                log::warn!(
-                    "Skipping the meeting-notes module as no etherpad is specified in the config"
-                );
-                Ok(None)
-            }
-        }
+        Ok(etherpad)
     }
 }
 
