@@ -120,5 +120,5 @@ swagger = ["dep:utoipa-swagger-ui"]
 ignored = [
   # is used during build
   "vergen",
-  "vergen_gix",
+  "vergen-gix",
 ]
