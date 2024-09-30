@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use core::fmt;
 use std::{collections::BTreeSet, str::FromStr};
 
 #[allow(unused_imports)]
@@ -12,7 +13,7 @@ sql_enum!(
     feature_gated:
 
     #[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
-    #[cfg_attr(feature="serde", derive(Serialize, Deserialize), serde(rename_all = "snake_case"))]
+    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(rename_all = "snake_case"))]
     #[cfg_attr(
         feature = "utoipa",
         derive(utoipa::ToSchema),
@@ -40,6 +41,17 @@ impl FromStr for EventInviteStatus {
             "declined" => Ok(Self::Declined),
             _ => Err(format!("unknown invite_status {s:?}")),
         }
+    }
+}
+
+impl fmt::Display for EventInviteStatus {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(match self {
+            EventInviteStatus::Pending => "pending",
+            EventInviteStatus::Accepted => "accepted",
+            EventInviteStatus::Tentative => "tentative",
+            EventInviteStatus::Declined => "declined",
+        })
     }
 }
 

@@ -17,13 +17,17 @@ pub struct GetEventInstancesQuery {
     #[cfg_attr(feature = "serde", serde(default))]
     pub invitees_max: i64,
     /// Minimum time of the event instances
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub time_min: Option<Timestamp>,
     /// Maximum time of the event instances
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub time_max: Option<Timestamp>,
     /// How many events to return per page
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub per_page: Option<i64>,
     /// Cursor token to get the next page of events
-    #[cfg_attr(feature="utoipa", param(schema_with = build_cursor_schema))]
+    #[cfg_attr(feature = "utoipa", param(schema_with = build_cursor_schema))]
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub after: Option<Cursor<GetEventInstancesCursorData>>,
 }
 
