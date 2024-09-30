@@ -8,11 +8,12 @@ use livekit_api::{
     access_token::{AccessToken, VideoGrants},
     services::room::{CreateRoomOptions, RoomClient},
 };
+use livekit_protocol::TrackSource;
 use opentalk_signaling_core::{
     ConfigSnafu, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
 };
-use opentalk_types_signaling::{ParticipantId, SignalingModuleFrontendData};
+use opentalk_types_signaling::{ParticipantId, Role, SignalingModuleFrontendData};
 use settings::LivekitSettings;
 use snafu::ResultExt;
 
@@ -25,6 +26,7 @@ const ACCESS_TOKEN_TTL: Duration = Duration::from_secs(32);
 pub struct Livekit {
     room_id: SignalingRoomId,
     participant_id: ParticipantId,
+    role: Role,
     params: Arc<LivekitParams>,
 }
 
@@ -57,6 +59,7 @@ impl SignalingModule for Livekit {
         Ok(Some(Self {
             room_id: ctx.room_id(),
             participant_id: ctx.participant_id(),
+            role: ctx.role(),
             params: params.clone(),
         }))
     }
@@ -89,6 +92,53 @@ impl SignalingModule for Livekit {
                     token: access_token,
                 }));
 
+                Ok(())
+            }
+            Event::WsMessage(commands::Command::ForceMute { participants }) => {
+                if !self.role.is_moderator() {
+                    ctx.ws_send(events::Event::Error(events::Error::InsufficientPermissions));
+                    return Ok(());
+                }
+
+                let room = self.room_id.to_string();
+
+                for participant_id in participants {
+                    let participant_id = participant_id.to_string();
+
+                    let participant = match self
+                        .params
+                        .room_client
+                        .get_participant(&room, &participant_id)
+                        .await
+                    {
+                        Ok(p) => p,
+                        Err(e) => {
+                            log::error!("Failed fetch participant room={room} participant={participant_id}, {e}");
+                            continue;
+                        }
+                    };
+
+                    for track in participant.tracks {
+                        if track.source != TrackSource::Microphone as i32 {
+                            // Don't mute non-microphone tracks
+                            continue;
+                        }
+
+                        if let Err(e) = self
+                            .params
+                            .room_client
+                            .mute_published_track(&room, &participant_id, &track.sid, true)
+                            .await
+                        {
+                            log::error!("Failed to mute track room={room} participant={participant_id} track-id={}, {e}", track.sid);
+                        }
+                    }
+                }
+
+                Ok(())
+            }
+            Event::RoleUpdated(role) => {
+                self.role = role;
                 Ok(())
             }
             _ => Ok(()),

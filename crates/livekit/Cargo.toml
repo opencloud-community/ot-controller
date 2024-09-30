@@ -18,12 +18,14 @@ ignored = ["livekit-runtime"]
 async-trait.workspace = true
 config.workspace = true
 livekit-api = "0.4"
+livekit-protocol = "0.3"
 livekit-runtime = { version = "0.3", default-features = false, features = [
   "tokio",
 ] }
 log.workspace = true
 opentalk-controller-settings.workspace = true
 opentalk-signaling-core.workspace = true
+opentalk-types-common = { workspace = true, features = ["backend"] }
 opentalk-types-signaling = { workspace = true, features = ["backend"] }
 serde.workspace = true
 snafu.workspace = true
