@@ -21,7 +21,7 @@ workspace = true
 # Settings related
 anstream.workspace = true
 arc-swap.workspace = true
-cidr = { version = "0.2", features = ["serde"] }
+cidr = { version = "0.3", features = ["serde"] }
 config.workspace = true
 openidconnect.workspace = true
 opentalk-types-common = { workspace = true, features = ["serde"] }
