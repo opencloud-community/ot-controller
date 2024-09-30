@@ -45,7 +45,10 @@ pub struct PollsState {
     pub started: Timestamp,
 
     /// The duration of the poll
-    #[cfg_attr(feature = "serde", serde(with = "crate::utils::duration_seconds"))]
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "opentalk_types_common::utils::duration_seconds")
+    )]
     pub duration: Duration,
 }
 

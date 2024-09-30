@@ -5,12 +5,9 @@
 use opentalk_types_common::{rooms::BreakoutRoomId, time::Timestamp};
 use opentalk_types_signaling::{ParticipantId, ParticipationKind, Role};
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// Information about a participant in another breakout room
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ParticipantInOtherRoom {
     /// The id of the breakout room
     #[cfg_attr(feature = "serde", serde(default))]

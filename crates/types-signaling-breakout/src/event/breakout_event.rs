@@ -2,19 +2,16 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Signaling events for the `breakout` namespace
-
-use opentalk_types_common::{rooms::BreakoutRoomId, time::Timestamp};
-
-use super::{AssociatedParticipantInOtherRoom, BreakoutRoom, ParticipantInOtherRoom};
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::{
+    event::{Error, Started},
+    AssociatedParticipantInOtherRoom, ParticipantInOtherRoom,
+};
 
 /// Events sent out by the `breakout` module
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(tag = "message", rename_all = "snake_case")
 )]
 pub enum BreakoutEvent {
@@ -37,36 +34,10 @@ pub enum BreakoutEvent {
     Error(Error),
 }
 
-/// Event signaling to the participant that the breakout session has started
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Started {
-    /// List of the breakout rooms
-    pub rooms: Vec<BreakoutRoom>,
-    /// The expiration time of the breakout session
-    pub expires: Option<Timestamp>,
-    /// The id of the assigned breakout room
-    pub assignment: Option<BreakoutRoomId>,
-}
-
 impl From<Started> for BreakoutEvent {
     fn from(value: Started) -> Self {
         Self::Started(value)
     }
-}
-
-/// Error from the `breakout` module namespace
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(tag = "error", rename_all = "snake_case")
-)]
-pub enum Error {
-    ///  No active breakout session is running
-    Inactive,
-    /// Insufficient permissions to perform a command
-    InsufficientPermissions,
 }
 
 impl From<Error> for BreakoutEvent {
@@ -77,12 +48,13 @@ impl From<Error> for BreakoutEvent {
 
 #[cfg(test)]
 mod test {
+    use opentalk_types_common::{rooms::BreakoutRoomId, time::Timestamp};
     use opentalk_types_signaling::{ParticipantId, ParticipationKind, Role};
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
     use super::*;
-    use crate::signaling::breakout::BreakoutRoom;
+    use crate::BreakoutRoom;
 
     #[test]
     fn started() {
