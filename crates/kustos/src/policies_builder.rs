@@ -34,7 +34,7 @@ pub trait BuilderState: Debug {
 ///     .add_resource("/rooms/x", [AccessMethod::Get])
 ///     .finish();
 /// ```
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PoliciesBuilder<B> {
     pub(crate) user_policies: Vec<UserPolicy>,
     pub(crate) invite_policies: Vec<InvitePolicy>,
@@ -44,7 +44,7 @@ pub struct PoliciesBuilder<B> {
 }
 
 /// New Values can be added to the builder
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Ready;
 
 impl BuilderState for Ready {
