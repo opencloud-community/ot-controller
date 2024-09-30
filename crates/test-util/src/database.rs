@@ -149,7 +149,7 @@ impl DatabaseContext {
             created_by,
             password: None,
             waiting_room,
-            e2e_encrytion: false,
+            e2e_encryption: false,
             tenant_id: tenant.id,
         };
 

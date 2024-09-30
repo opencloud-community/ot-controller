@@ -190,7 +190,7 @@ pub async fn new(
         created_by: current_user.id,
         password: room_parameters.password,
         waiting_room: room_parameters.waiting_room,
-        e2e_encrytion: room_parameters.e2e_encrytion,
+        e2e_encryption: room_parameters.e2e_encryption,
         tenant_id: current_user.tenant_id,
     };
 
@@ -276,7 +276,7 @@ pub async fn patch(
     let changeset = db_rooms::UpdateRoom {
         password: modify_room.password,
         waiting_room: modify_room.waiting_room,
-        e2e_encrytion: modify_room.e2e_encrytion,
+        e2e_encryption: modify_room.e2e_encryption,
     };
 
     let room = changeset.apply(&mut conn, room_id).await?;
@@ -599,7 +599,7 @@ pub async fn get_room_event(
         Some(event) => {
             let call_in_tel = settings.call_in.as_ref().map(|call_in| call_in.tel.clone());
             let event_info =
-                build_event_info(&mut conn, call_in_tel, room_id, room.e2e_encrytion, event)
+                build_event_info(&mut conn, call_in_tel, room_id, room.e2e_encryption, event)
                     .await?;
             Ok(Json(GetRoomEventResponse(event_info)))
         }

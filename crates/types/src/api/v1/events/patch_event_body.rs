@@ -78,7 +78,7 @@ pub struct PatchEventBody {
     // by default which creates a false positive in the spectral linter when
     // combined with example data.
     #[cfg_attr(feature = "utoipa", schema(nullable = false))]
-    pub e2e_encrytion: Option<bool>,
+    pub e2e_encryption: Option<bool>,
 
     /// Patch the adhoc flag.
     #[cfg_attr(
@@ -196,7 +196,7 @@ impl PatchEventBody {
             description,
             password,
             waiting_room,
-            e2e_encrytion,
+            e2e_encryption,
             is_adhoc,
             is_time_independent,
             is_all_day,
@@ -212,7 +212,7 @@ impl PatchEventBody {
             && description.is_none()
             && password.is_none()
             && waiting_room.is_none()
-            && e2e_encrytion.is_none()
+            && e2e_encryption.is_none()
             && is_adhoc.is_none()
             && is_time_independent.is_none()
             && is_all_day.is_none()
@@ -232,7 +232,7 @@ impl PatchEventBody {
             description,
             password,
             waiting_room,
-            e2e_encrytion,
+            e2e_encryption,
             is_time_independent,
             is_all_day,
             starts_at,
@@ -255,7 +255,7 @@ impl PatchEventBody {
             && show_meeting_details.is_none()
             && has_shared_folder.is_none()
             && streaming_targets.is_none()
-            && (password.is_some() || waiting_room.is_some() || e2e_encrytion.is_some())
+            && (password.is_some() || waiting_room.is_some() || e2e_encryption.is_some())
     }
 }
 
@@ -266,7 +266,7 @@ impl ExampleData for PatchEventBody {
             description: Some("The new description".to_string()),
             password: None,
             waiting_room: None,
-            e2e_encrytion: None,
+            e2e_encryption: None,
             is_adhoc: None,
             is_time_independent: None,
             is_all_day: None,

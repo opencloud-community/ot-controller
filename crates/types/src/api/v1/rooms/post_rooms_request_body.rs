@@ -26,5 +26,5 @@ pub struct PostRoomsRequestBody {
 
     /// Enable/Disable e2e encryption for this room; defaults to false when not set
     #[cfg_attr(feature = "serde", serde(default))]
-    pub e2e_encrytion: bool,
+    pub e2e_encryption: bool,
 }

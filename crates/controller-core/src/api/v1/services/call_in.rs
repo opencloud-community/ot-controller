@@ -87,7 +87,7 @@ pub async fn start(
         .await?
         .ok_or_else(invalid_credentials_error)?;
 
-    if room.e2e_encrytion {
+    if room.e2e_encryption {
         return Err(ApiError::forbidden()
             .with_code("service_unavailable")
             .with_message("call-in is not available for encrypted rooms"));

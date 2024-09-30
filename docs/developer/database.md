@@ -177,7 +177,7 @@ rooms {
     uuid created_by FK
     uuid tenant_id FK
     timestamp_with_time_zone created_at
-    boolean e2e_encrytion
+    boolean e2e_encryption
     bigint id_serial
     character_varying password
     boolean waiting_room

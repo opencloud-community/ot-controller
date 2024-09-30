@@ -1440,7 +1440,7 @@ impl Runner {
                         &mut conn,
                         call_in_tel,
                         self.room.id,
-                        self.room.e2e_encrytion,
+                        self.room.e2e_encryption,
                         event,
                     )
                     .await?,
