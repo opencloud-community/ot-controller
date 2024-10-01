@@ -111,7 +111,7 @@ impl PollsStorage for VolatileStaticMemoryStorage {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use opentalk_signaling_core::VolatileStaticMemoryStorage;
     use serial_test::serial;
 

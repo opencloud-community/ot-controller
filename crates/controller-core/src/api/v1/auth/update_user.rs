@@ -169,7 +169,7 @@ fn difference_by<T: Clone, C: PartialEq>(a: &[T], b: &[T], f: impl Fn(&T) -> &C)
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::difference_by;
 
     #[test]

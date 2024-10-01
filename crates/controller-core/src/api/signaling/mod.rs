@@ -20,7 +20,7 @@ fn trim_display_name(display_name: String) -> String {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use pretty_assertions::assert_eq;
 
     use super::trim_display_name;

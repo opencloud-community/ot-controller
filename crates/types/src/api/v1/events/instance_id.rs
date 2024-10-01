@@ -138,7 +138,7 @@ mod serde_impls {
 
 #[cfg(test)]
 #[cfg(feature = "serde")]
-mod test {
+mod tests {
     use std::time::UNIX_EPOCH;
 
     use serde_json::Value;

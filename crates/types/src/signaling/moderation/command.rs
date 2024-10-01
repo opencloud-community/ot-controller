@@ -81,7 +81,7 @@ pub enum ModerationCommand {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use pretty_assertions::assert_eq;
     use serde_json::json;
 

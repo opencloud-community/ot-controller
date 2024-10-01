@@ -90,7 +90,7 @@ fn default_days_since_user_has_been_disabled() -> u64 {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use chrono::{DateTime, Days, Utc};
     use log::logger;
     use opentalk_controller_settings::Settings;

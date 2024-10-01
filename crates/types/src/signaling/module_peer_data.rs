@@ -108,7 +108,8 @@ where
     }
 }
 
-mod test {
+#[cfg(test)]
+mod tests {
     use serde::{Deserialize, Serialize};
 
     use crate::imports::SignalingModulePeerFrontendData;

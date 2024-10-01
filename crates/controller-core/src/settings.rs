@@ -51,7 +51,7 @@ pub fn load_settings(args: &Args) -> Result<Settings, SettingsError> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use opentalk_controller_settings::{Settings, SettingsError};
 
     #[test]

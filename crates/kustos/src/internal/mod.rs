@@ -56,7 +56,7 @@ where
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use std::{convert::TryInto, iter::FromIterator, str::FromStr, vec};
 
     use casbin::{CoreApi, MgmtApi};

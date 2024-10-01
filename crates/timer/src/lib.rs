@@ -414,7 +414,7 @@ impl Timer {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use std::time::SystemTime;
 
     use chrono::{DateTime, Duration};

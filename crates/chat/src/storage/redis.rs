@@ -592,7 +592,7 @@ pub struct RoomGroupParticipantsLock {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use redis::{aio::ConnectionManager, ToRedisArgs};
     use serial_test::serial;
     use uuid::uuid;

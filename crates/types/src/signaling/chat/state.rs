@@ -96,7 +96,7 @@ pub struct StoredMessage {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use std::str::FromStr;
 
     use chrono::DateTime;

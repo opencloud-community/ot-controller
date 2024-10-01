@@ -173,7 +173,7 @@ pub enum Error {
     NothingToDo,
 }
 #[cfg(test)]
-mod test {
+mod tests {
     use std::str::FromStr;
 
     use chrono::DateTime;

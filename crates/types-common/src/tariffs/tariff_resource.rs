@@ -125,7 +125,7 @@ impl ExampleData for TariffResource {
 }
 
 #[cfg(all(test, feature = "serde"))]
-mod serde_test {
+mod serde_tests {
     use pretty_assertions::assert_eq;
 
     use super::*;

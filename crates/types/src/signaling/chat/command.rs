@@ -54,7 +54,7 @@ pub struct SendMessage {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use opentalk_types_common::users::GroupName;
     use opentalk_types_signaling::ParticipantId;
     use pretty_assertions::assert_eq;

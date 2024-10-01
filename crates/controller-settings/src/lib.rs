@@ -572,7 +572,7 @@ pub struct Tariffs {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use std::env;
 
     use pretty_assertions::assert_eq;

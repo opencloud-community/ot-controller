@@ -122,7 +122,7 @@ impl From<Error> for ChatEvent {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use opentalk_types_common::users::GroupName;
     use pretty_assertions::assert_eq;
     use serde_json::json;
