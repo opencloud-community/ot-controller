@@ -4987,7 +4987,6 @@ dependencies = [
  "derive_more 1.0.0",
  "opentalk-types-common",
  "pretty_assertions",
- "redis",
  "redis-args",
  "serde",
  "strum",

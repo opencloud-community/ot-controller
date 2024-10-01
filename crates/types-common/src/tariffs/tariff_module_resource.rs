@@ -5,12 +5,10 @@
 use std::collections::BTreeSet;
 
 use crate::features::FeatureId;
-#[allow(unused_imports)]
-use crate::imports::*;
 
 /// Tariff information related to a specific module
 #[derive(Default, Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TariffModuleResource {
     /// Enabled features for the tariff

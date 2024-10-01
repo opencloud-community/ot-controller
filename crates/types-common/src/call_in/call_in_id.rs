@@ -4,8 +4,6 @@
 
 use derive_more::{AsRef, Display, From, FromStr, Into};
 
-#[allow(unused_imports)]
-use crate::imports::*;
 use crate::{call_in::NumericId, utils::ExampleData};
 
 /// The id of a call-in participation
@@ -14,16 +12,19 @@ use crate::{call_in::NumericId, utils::ExampleData};
 )]
 #[cfg_attr(
     feature = "diesel",
-    derive(DieselNewtype, AsExpression, FromSqlRow),
-    diesel(sql_type = diesel::sql_types::Text)
+    derive(
+        opentalk_diesel_newtype::DieselNewtype,
+        diesel::expression::AsExpression,
+        diesel::deserialize::FromSqlRow
+    )
 )]
+#[cfg_attr(feature = "diesel", diesel(sql_type = diesel::sql_types::Text))]
 #[cfg_attr(
     feature = "redis",
-    derive(ToRedisArgs, FromRedisValue),
-    to_redis_args(fmt),
-    from_redis_value(FromStr)
+    derive(redis_args::ToRedisArgs, redis_args::FromRedisValue)
 )]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "redis", to_redis_args(fmt), from_redis_value(FromStr))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(example = json!(CallInId::example_data())))]
 pub struct CallInId(NumericId);
 

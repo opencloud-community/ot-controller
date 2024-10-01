@@ -6,8 +6,6 @@ use std::str::FromStr;
 
 use snafu::{ensure, Snafu};
 
-#[allow(unused_imports)]
-use crate::imports::*;
 use crate::utils::ExampleData;
 
 /// The maximum allowed number of characters for a recurrence rule
@@ -19,7 +17,10 @@ pub const RECURRENCE_RULE_MAX_LEN: usize = 1024;
 /// Note: currently the rrule patterns are not enforced, the only enforced
 /// requirement is a maximum length of [`RECURRENCE_RULE_MAX_LEN`] characters.
 #[derive(Debug, Clone, PartialEq, Eq, derive_more::Display)]
-#[cfg_attr(feature = "serde", derive(Serialize, serde_with::DeserializeFromStr))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde_with::DeserializeFromStr)
+)]
 pub struct RecurrenceRule(String);
 
 /// An error which can be returned when parsing an a recurrence rule

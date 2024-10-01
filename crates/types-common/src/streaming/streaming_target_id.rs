@@ -5,8 +5,6 @@
 use derive_more::{AsRef, Display, From, FromStr, Into};
 use uuid::Uuid;
 
-#[allow(unused_imports)]
-use crate::imports::*;
 use crate::utils::ExampleData;
 
 /// ID of a streaming target
@@ -15,15 +13,21 @@ use crate::utils::ExampleData;
 )]
 #[cfg_attr(
     feature = "redis",
-    derive(redis_args::ToRedisArgs, redis_args::FromRedisValue),
-    to_redis_args(fmt),
-    from_redis_value(FromStr)
+    derive(redis_args::ToRedisArgs, redis_args::FromRedisValue)
+)]
+#[cfg_attr(feature = "redis", to_redis_args(fmt), from_redis_value(FromStr))]
+#[cfg_attr(
+    feature = "diesel",
+    derive(
+        opentalk_diesel_newtype::DieselNewtype,
+        diesel::expression::AsExpression,
+        diesel::deserialize::FromSqlRow
+    )
 )]
 #[cfg_attr(feature="diesel",
-    derive(DieselNewtype, AsExpression, FromSqlRow),
     diesel(sql_type = diesel::sql_types::Uuid),
 )]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(
     feature = "utoipa",
     derive(utoipa::ToSchema),

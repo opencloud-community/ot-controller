@@ -5,9 +5,6 @@
 use derive_more::{AsRef, Display, From, FromStr, Into};
 use uuid::Uuid;
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// Unique id of a participant inside a single room
 ///
 /// Generated as soon as the user connects to the websocket and authenticated himself,
@@ -17,11 +14,10 @@ use crate::imports::*;
 )]
 #[cfg_attr(
     feature = "redis",
-    derive(FromRedisValue, ToRedisArgs),
-    from_redis_value(FromStr),
-    to_redis_args(fmt)
+    derive(redis_args::FromRedisValue, redis_args::ToRedisArgs)
 )]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "redis", from_redis_value(FromStr), to_redis_args(fmt))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ParticipantId(Uuid);
 
 impl ParticipantId {

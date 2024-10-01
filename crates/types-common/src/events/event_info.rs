@@ -4,8 +4,6 @@
 
 //! Common types related to event
 
-#[allow(unused_imports)]
-use crate::imports::*;
 use crate::{
     events::{EventId, MeetingDetails},
     rooms::RoomId,
@@ -14,7 +12,7 @@ use crate::{
 
 /// Information about an event
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(
     feature = "utoipa",
     derive(utoipa::ToSchema),

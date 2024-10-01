@@ -6,8 +6,6 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-#[allow(unused_imports)]
-use crate::imports::*;
 use crate::{
     features::{FeatureId, ModuleFeatureId},
     modules::ModuleId,
@@ -17,7 +15,7 @@ use crate::{
 
 /// Information related to a specific tariff
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(
     feature = "utoipa",
     derive(utoipa::ToSchema),
@@ -65,10 +63,12 @@ impl TariffResource {
 }
 
 #[cfg(feature = "serde")]
-fn serialize_module_disabled_features<S: Serializer>(
+fn serialize_module_disabled_features<S: serde::Serializer>(
     value: &BTreeSet<ModuleFeatureId>,
     serializer: S,
 ) -> Result<S::Ok, S::Error> {
+    use serde::Serialize as _;
+
     let v = value
         .iter()
         .flat_map(|v| {

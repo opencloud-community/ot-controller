@@ -6,22 +6,23 @@ use derive_more::{AsRef, Display, From, FromStr, Into};
 #[cfg(feature = "kustos")]
 use kustos_shared::subject::PolicyInvite;
 use uuid::Uuid;
+#[cfg(feature = "diesel")]
+use {
+    diesel::{deserialize::FromSqlRow, expression::AsExpression},
+    opentalk_diesel_newtype::DieselNewtype,
+};
 
-#[allow(unused_imports)]
-use crate::imports::*;
 use crate::utils::ExampleData;
 
 /// An invite code
 #[derive(
     AsRef, Display, From, FromStr, Into, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash,
 )]
-#[cfg_attr(
-    feature = "diesel",
-    derive(DieselNewtype, AsExpression, FromSqlRow),
-    diesel(sql_type = diesel::sql_types::Uuid),
-)]
-#[cfg_attr(feature = "kustos", derive(KustosPrefix), kustos_prefix("/invites/"))]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "diesel", derive(DieselNewtype, AsExpression, FromSqlRow))]
+#[cfg_attr(feature = "diesel", diesel(sql_type = diesel::sql_types::Uuid))]
+#[cfg_attr(feature = "kustos", derive(opentalk_kustos_prefix::KustosPrefix))]
+#[cfg_attr(feature = "kustos", kustos_prefix("/invites/"))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(example = json!(InviteCode::example_data().to_string())))]
 pub struct InviteCode(Uuid);
 

@@ -5,8 +5,6 @@
 use derive_more::{AsRef, Display, From, FromStr, Into};
 use uuid::Uuid;
 
-#[allow(unused_imports)]
-use crate::imports::*;
 use crate::utils::ExampleData;
 
 /// The identifier of an event
@@ -15,11 +13,19 @@ use crate::utils::ExampleData;
 )]
 #[cfg_attr(
     feature = "diesel",
-    derive(DieselNewtype, AsExpression, FromSqlRow),
+    derive(
+        opentalk_diesel_newtype::DieselNewtype,
+        diesel::expression::AsExpression,
+        diesel::deserialize::FromSqlRow
+    )
+)]
+#[cfg_attr(
+    feature = "diesel",
     diesel(sql_type = diesel::sql_types::Uuid),
 )]
-#[cfg_attr(feature = "kustos", derive(KustosPrefix), kustos_prefix("/events/"))]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "kustos", derive(opentalk_kustos_prefix::KustosPrefix))]
+#[cfg_attr(feature = "kustos", kustos_prefix("/events/"))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(
     feature = "utoipa",
     derive(utoipa::ToSchema),

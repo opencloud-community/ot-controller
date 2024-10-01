@@ -7,8 +7,6 @@ use std::{ops::Add, time::SystemTime};
 use chrono::{DateTime, TimeZone as _, Timelike as _, Utc};
 use derive_more::{AsRef, Deref, Display, From, FromStr};
 
-#[allow(unused_imports)]
-use crate::imports::*;
 use crate::utils::ExampleData;
 
 /// A UTC DateTime wrapper that implements ToRedisArgs and FromRedisValue.
@@ -30,7 +28,7 @@ use crate::utils::ExampleData;
     PartialEq,
     Hash,
 )]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Timestamp(DateTime<Utc>);
 
@@ -89,7 +87,7 @@ impl Add<chrono::Duration> for Timestamp {
 }
 
 #[cfg(feature = "redis")]
-impl ToRedisArgs for Timestamp {
+impl redis::ToRedisArgs for Timestamp {
     fn write_redis_args<W>(&self, out: &mut W)
     where
         W: ?Sized + redis::RedisWrite,
@@ -103,8 +101,8 @@ impl ToRedisArgs for Timestamp {
 }
 
 #[cfg(feature = "redis")]
-impl FromRedisValue for Timestamp {
-    fn from_redis_value(v: &redis::Value) -> RedisResult<Timestamp> {
+impl redis::FromRedisValue for Timestamp {
+    fn from_redis_value(v: &redis::Value) -> redis::RedisResult<Timestamp> {
         use chrono::TimeZone as _;
         let timestamp = Utc
             .timestamp_opt(i64::from_redis_value(v)?, 0)

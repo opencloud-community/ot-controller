@@ -4,23 +4,26 @@
 
 use derive_more::{AsRef, Display, From, FromStr, Into};
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// The name of a group
 #[derive(
     AsRef, Display, From, FromStr, Into, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash,
 )]
 #[cfg_attr(
     feature = "diesel",
-    derive(DieselNewtype, AsExpression, FromSqlRow),
+    derive(
+        opentalk_diesel_newtype::DieselNewtype,
+        diesel::expression::AsExpression,
+        diesel::deserialize::FromSqlRow
+    )
+)]
+#[cfg_attr(
+    feature = "diesel",
     diesel(sql_type = diesel::sql_types::Text)
 )]
 #[cfg_attr(
     feature = "redis",
-    derive(ToRedisArgs, FromRedisValue,),
-    to_redis_args(fmt),
-    from_redis_value(FromStr)
+    derive(redis_args::ToRedisArgs, redis_args::FromRedisValue)
 )]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "redis", to_redis_args(fmt), from_redis_value(FromStr))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct GroupName(String);

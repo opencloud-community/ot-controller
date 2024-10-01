@@ -4,13 +4,11 @@
 
 use chrono::{DateTime, TimeZone as _, Utc};
 
-#[allow(unused_imports)]
-use crate::imports::*;
 use crate::{time::TimeZone, utils::ExampleData};
 
 /// Representation of a datetime timezone
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 #[cfg_attr(
     feature = "utoipa",
     derive(utoipa::ToSchema),

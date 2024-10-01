@@ -8,9 +8,6 @@
 //! attribute. The same is possible for an [`Option<Vec>`] using
 //! `#[serde(with = "opentalk_types_common::collections::one_or_many_vec_option")]`
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// A container that either contains a single value or a set of zero or more values.
 ///
 /// This can be used to deserialize JSON data that contains either a single
@@ -45,7 +42,11 @@ use crate::imports::*;
 /// );
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(untagged))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(untagged)
+)]
 pub enum OneOrManyVec<T> {
     /// A single entry of T (typically deserialized from single JSON item)
     One(T),
@@ -80,10 +81,10 @@ impl<T> From<T> for OneOrManyVec<T> {
 #[cfg(feature = "serde")]
 pub fn deserialize<'de, D, T>(deserializer: D) -> Result<Vec<T>, D::Error>
 where
-    D: Deserializer<'de>,
-    T: Deserialize<'de>,
+    D: serde::Deserializer<'de>,
+    T: serde::Deserialize<'de>,
 {
-    let one_or_many: OneOrManyVec<T> = Deserialize::deserialize(deserializer)?;
+    let one_or_many: OneOrManyVec<T> = serde::Deserialize::deserialize(deserializer)?;
     Ok(one_or_many.into())
 }
 
@@ -92,9 +93,11 @@ where
 #[cfg(feature = "serde")]
 pub fn serialize<S, T>(value: &Vec<T>, serializer: S) -> Result<S::Ok, S::Error>
 where
-    S: Serializer,
-    T: Serialize,
+    S: serde::Serializer,
+    T: serde::Serialize,
 {
+    use serde::Serialize as _;
+
     value.serialize(serializer)
 }
 

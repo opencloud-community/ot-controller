@@ -2,15 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// The quota types that can be enforced on tenants.
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, strum::Display, strum::EnumString)]
 #[strum(serialize_all = "snake_case")]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(

@@ -6,8 +6,6 @@ use std::{fmt::Display, str::FromStr};
 
 use snafu::{ensure, ResultExt, Snafu};
 
-#[allow(unused_imports)]
-use crate::imports::*;
 use crate::{
     features::{FeatureId, ParseFeatureIdError, NAMESPACE_SEPARATOR},
     modules::{ModuleId, ParseModuleIdError},
@@ -17,7 +15,10 @@ use crate::{
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(
     feature = "diesel",
-    derive(AsExpression, FromSqlRow),
+    derive(diesel::expression::AsExpression, diesel::deserialize::FromSqlRow)
+)]
+#[cfg_attr(
+    feature = "diesel",
     diesel(sql_type = diesel::sql_types::Text),
 )]
 pub struct ModuleFeatureId {

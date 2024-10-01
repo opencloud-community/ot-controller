@@ -5,23 +5,22 @@
 use derive_more::{AsRef, Display, From, FromStr, Into};
 use uuid::Uuid;
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// The id of a module resource
 #[derive(
     AsRef, Display, From, FromStr, Into, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash,
 )]
-#[cfg_attr(feature="diesel",
-    derive(DieselNewtype, AsExpression, FromSqlRow),
-    diesel(sql_type = diesel::sql_types::Uuid),
-)]
 #[cfg_attr(
-    feature = "kustos",
-    derive(KustosPrefix),
-    kustos_prefix("/module_resources/")
+    feature = "diesel",
+    derive(
+        opentalk_diesel_newtype::DieselNewtype,
+        diesel::expression::AsExpression,
+        diesel::deserialize::FromSqlRow
+    )
 )]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature="diesel", diesel(sql_type = diesel::sql_types::Uuid))]
+#[cfg_attr(feature = "kustos", derive(opentalk_kustos_prefix::KustosPrefix))]
+#[cfg_attr(feature = "kustos", kustos_prefix("/module_resources/"))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ModuleResourceId(Uuid);
 
 impl ModuleResourceId {

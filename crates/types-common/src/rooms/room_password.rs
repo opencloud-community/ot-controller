@@ -6,8 +6,6 @@ use std::str::FromStr;
 
 use snafu::{ensure, Snafu};
 
-#[allow(unused_imports)]
-use crate::imports::*;
 use crate::utils::ExampleData;
 
 /// The minimum allowed length for a valid room password
@@ -24,10 +22,20 @@ pub const MAX_ROOM_PASSWORD_LENGTH: usize = 255;
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, derive_more::Display)]
 #[cfg_attr(
     feature = "diesel",
-    derive(DieselNewtype, AsExpression, FromSqlRow),
+    derive(
+        opentalk_diesel_newtype::DieselNewtype,
+        diesel::expression::AsExpression,
+        diesel::deserialize::FromSqlRow
+    )
+)]
+#[cfg_attr(
+    feature = "diesel",
     diesel(sql_type = diesel::sql_types::Text)
 )]
-#[cfg_attr(feature = "serde", derive(Serialize, serde_with::DeserializeFromStr))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde_with::DeserializeFromStr)
+)]
 pub struct RoomPassword(String);
 
 #[cfg(feature = "utoipa")]

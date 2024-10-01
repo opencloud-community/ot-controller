@@ -42,27 +42,3 @@ pub mod users;
 pub mod utils;
 
 mod macros;
-
-mod imports {
-    #![allow(unused)]
-
-    #[cfg(feature = "kustos")]
-    pub use opentalk_kustos_prefix::KustosPrefix;
-    #[cfg(feature = "serde")]
-    pub use serde::{de, de::DeserializeOwned, Deserialize, Deserializer, Serialize, Serializer};
-    #[cfg(feature = "diesel")]
-    pub use {
-        diesel::{
-            deserialize::{FromSql, FromSqlRow},
-            expression::AsExpression,
-            pg::Pg,
-            serialize::ToSql,
-        },
-        opentalk_diesel_newtype::DieselNewtype,
-    };
-    #[cfg(feature = "redis")]
-    pub use {
-        redis::{FromRedisValue, RedisResult, ToRedisArgs},
-        redis_args::{FromRedisValue, ToRedisArgs},
-    };
-}

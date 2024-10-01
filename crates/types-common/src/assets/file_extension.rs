@@ -6,8 +6,6 @@ use std::str::FromStr;
 
 use snafu::Snafu;
 
-#[allow(unused_imports)]
-use crate::imports::*;
 use crate::utils::ExampleData;
 
 /// The maximum allowed length for valid file extensions
@@ -21,7 +19,10 @@ pub const MAX_FILE_EXTENSION_LENGTH: usize = 10;
 /// decision based on regular usage of filename extensions as seen commonly
 /// used. This serves as sanitization measure for user input.
 #[derive(Debug, Clone, Default, PartialEq, Eq, derive_more::Display)]
-#[cfg_attr(feature = "serde", derive(Serialize, serde_with::DeserializeFromStr))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde_with::DeserializeFromStr)
+)]
 pub struct FileExtension(String);
 
 impl FileExtension {

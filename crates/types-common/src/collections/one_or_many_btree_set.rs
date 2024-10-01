@@ -10,9 +10,6 @@
 
 use std::collections::BTreeSet;
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// A container that either contains a single value or a set of zero or more values.
 ///
 /// This can be used to deserialize JSON data that contains either a single
@@ -49,7 +46,11 @@ use crate::imports::*;
 /// );
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(untagged))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(untagged)
+)]
 pub enum OneOrManyBTreeSet<T>
 where
     T: Ord,
@@ -96,10 +97,10 @@ where
 #[cfg(feature = "serde")]
 pub fn deserialize<'de, D, T>(deserializer: D) -> Result<BTreeSet<T>, D::Error>
 where
-    D: Deserializer<'de>,
-    T: Ord + Deserialize<'de>,
+    D: serde::Deserializer<'de>,
+    T: Ord + serde::Deserialize<'de>,
 {
-    let one_or_many: OneOrManyBTreeSet<T> = Deserialize::deserialize(deserializer)?;
+    let one_or_many: OneOrManyBTreeSet<T> = serde::Deserialize::deserialize(deserializer)?;
     Ok(one_or_many.into())
 }
 
@@ -108,9 +109,11 @@ where
 #[cfg(feature = "serde")]
 pub fn serialize<S, T>(value: &BTreeSet<T>, serializer: S) -> Result<S::Ok, S::Error>
 where
-    S: Serializer,
-    T: Ord + Serialize,
+    S: serde::Serializer,
+    T: Ord + serde::Serialize,
 {
+    use serde::Serialize as _;
+
     value.serialize(serializer)
 }
 

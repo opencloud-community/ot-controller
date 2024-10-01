@@ -35,15 +35,3 @@ pub use role::{ForRole, Role};
 pub use signaling_module_frontend_data::SignalingModuleFrontendData;
 #[cfg(feature = "serde")]
 pub use signaling_module_peer_frontend_data::SignalingModulePeerFrontendData;
-
-mod imports {
-    #![allow(unused)]
-
-    #[cfg(feature = "serde")]
-    pub use serde::{de, de::DeserializeOwned, Deserialize, Deserializer, Serialize, Serializer};
-    #[cfg(feature = "redis")]
-    pub use {
-        redis::{FromRedisValue, RedisResult, ToRedisArgs},
-        redis_args::{FromRedisValue, ToRedisArgs},
-    };
-}

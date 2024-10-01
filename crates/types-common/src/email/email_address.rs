@@ -5,8 +5,6 @@
 //! Custom email address type wrapper. This is necessary because the `utoipa`
 //! crate does not support the `email_address` crate.
 
-#[allow(unused_imports)]
-use crate::imports::*;
 use crate::utils::ExampleData;
 
 /// Representation of an email address
@@ -20,7 +18,10 @@ use crate::utils::ExampleData;
     derive_more::Into,
     derive_more::Display,
 )]
-#[cfg_attr(feature = "serde", derive(Serialize, serde_with::DeserializeFromStr))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde_with::DeserializeFromStr)
+)]
 pub struct EmailAddress(::email_address::EmailAddress);
 
 impl EmailAddress {
