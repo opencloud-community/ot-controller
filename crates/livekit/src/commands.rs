@@ -6,8 +6,10 @@ use opentalk_types_signaling::ParticipantId;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "snake_case", tag = "action")]
 pub enum Command {
     CreateNewAccessToken,
     ForceMute { participants: Vec<ParticipantId> },
+    GrantScreenSharePermission { participants: Vec<ParticipantId> },
+    RevokeScreenSharePermission { participants: Vec<ParticipantId> },
 }
