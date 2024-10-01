@@ -157,13 +157,12 @@ impl ExampleData for RecurrencePattern {
     }
 }
 
-#[cfg(test)]
-mod tests {
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
     use serde_json::json;
 
     use super::RecurrencePattern;
 
-    #[cfg(feature = "serde")]
     #[test]
     fn deserialize() {
         use crate::time::RecurrenceRule;

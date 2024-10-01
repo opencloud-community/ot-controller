@@ -21,8 +21,8 @@ pub enum BreakoutCommand {
     Stop,
 }
 
-#[cfg(test)]
-mod test {
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
     use std::time::Duration;
 
     use opentalk_types_signaling::ParticipantId;

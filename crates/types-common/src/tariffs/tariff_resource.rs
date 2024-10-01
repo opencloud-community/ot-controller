@@ -124,13 +124,12 @@ impl ExampleData for TariffResource {
     }
 }
 
-#[cfg(test)]
-mod test {
+#[cfg(all(test, feature = "serde"))]
+mod serde_test {
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    #[cfg(feature = "serde")]
     #[test]
     fn tariff_resource() {
         use serde_json::json;

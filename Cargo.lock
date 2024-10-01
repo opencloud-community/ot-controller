@@ -4965,6 +4965,7 @@ dependencies = [
  "opentalk-client-shared",
  "opentalk-diesel-newtype",
  "opentalk-kustos-prefix",
+ "opentalk-types-common",
  "pretty_assertions",
  "rand",
  "redis",

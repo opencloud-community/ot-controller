@@ -39,18 +39,18 @@ pub enum QuotaType {
     Other(String),
 }
 
-#[cfg(test)]
-mod test {
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    #[cfg(feature = "serde")]
     #[test]
     fn quota_type_json() {
         use std::collections::BTreeMap;
 
         use serde_json::json;
+
         let quota = BTreeMap::from([
             (QuotaType::MaxStorage, 11u64),
             (QuotaType::RoomTimeLimitSecs, 12u64),
@@ -74,8 +74,14 @@ mod test {
             serde_json::from_value(quota_json_repr).expect("Must be deserialize")
         );
     }
+}
 
-    #[cfg(feature = "clap")]
+#[cfg(all(test, feature = "clap"))]
+mod clap_tests {
+    use pretty_assertions::assert_eq;
+
+    use super::*;
+
     #[test]
     fn quota_type_string() {
         use std::str::FromStr;

@@ -116,11 +116,35 @@ impl ExampleData for FileExtension {
 #[cfg(test)]
 mod tests {
     use pretty_assertions::assert_eq;
+
+    use super::FileExtension;
+
+    #[test]
+    fn file_extension_to_string_with_leading_dot() {
+        assert_eq!(
+            "".to_string(),
+            FileExtension("".to_string()).to_string_with_leading_dot()
+        );
+
+        assert_eq!(
+            ".7z".to_string(),
+            FileExtension("7z".to_string()).to_string_with_leading_dot()
+        );
+        assert_eq!(
+            ".txt".to_string(),
+            FileExtension("txt".to_string()).to_string_with_leading_dot()
+        );
+    }
+}
+
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
+    use pretty_assertions::assert_eq;
     use serde_json::json;
 
     use super::FileExtension;
 
-    #[cfg_attr(feature = "serde", test)]
+    #[test]
     fn file_extension_deserialization() {
         assert_eq!(
             FileExtension("".to_string()),
@@ -147,22 +171,5 @@ mod tests {
         assert!(serde_json::from_value::<FileExtension>(json!("Hello!")).is_err());
         assert!(serde_json::from_value::<FileExtension>(json!("nice.try")).is_err());
         assert!(serde_json::from_value::<FileExtension>(json!("世界您好")).is_err());
-    }
-
-    #[test]
-    fn file_extension_to_string_with_leading_dot() {
-        assert_eq!(
-            "".to_string(),
-            FileExtension("".to_string()).to_string_with_leading_dot()
-        );
-
-        assert_eq!(
-            ".7z".to_string(),
-            FileExtension("7z".to_string()).to_string_with_leading_dot()
-        );
-        assert_eq!(
-            ".txt".to_string(),
-            FileExtension("txt".to_string()).to_string_with_leading_dot()
-        );
     }
 }
