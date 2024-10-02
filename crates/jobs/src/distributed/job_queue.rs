@@ -138,7 +138,7 @@ impl JobQueue {
         let client = self.client.clone();
 
         let cron_job =
-            tokio_cron_scheduler::Job::new_async(job.recurrence.as_ref(), move |_uuid, _l| {
+            tokio_cron_scheduler::Job::new_async(job.recurrence.as_str(), move |_uuid, _l| {
                 let client = client.clone();
 
                 Box::pin(async move {
