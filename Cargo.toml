@@ -83,7 +83,7 @@ lapin-pool = "0.1"
 log = "0.4"
 md5 = "0.7"
 openidconnect = "3"
-opentalk-diesel-newtype = "0.12"
+opentalk-diesel-newtype = "0.13"
 opentalk-etherpad-client = { version = "0.1.0", default-features = false, features = [
   "rustls-tls-native-roots",
 ] }
