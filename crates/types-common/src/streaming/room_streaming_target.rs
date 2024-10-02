@@ -4,8 +4,6 @@
 
 //! This module contains commonly used types for streaming target endpoints.
 
-#[allow(unused_imports)]
-use crate::imports::*;
 use crate::{
     streaming::{StreamingLink, StreamingTarget, StreamingTargetId, StreamingTargetKind},
     utils::ExampleData,
@@ -13,7 +11,7 @@ use crate::{
 
 /// A streaming target which is specific for a Room
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(
     feature = "utoipa",
     derive(utoipa::ToSchema),

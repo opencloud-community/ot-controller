@@ -70,9 +70,13 @@ uuid.workspace = true
 
 [package.metadata.cargo-machete]
 ignored = [
-  # Required by `utoipa::ToSchema`, not detected by compiler
-  "serde_json",
+  # Required for doctests only, detected as unused by `cargo machete`
+  "opentalk-types-common",
 ]
 
 [dev-dependencies]
+# Enable the `serde` feature for the doctests
+opentalk-types-common = { workspace = true, features = ["serde"] }
 pretty_assertions.workspace = true
+serde.workspace = true
+serde_json.workspace = true

@@ -125,7 +125,7 @@ struct TimerKey {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use redis::aio::ConnectionManager;
     use serial_test::serial;
 

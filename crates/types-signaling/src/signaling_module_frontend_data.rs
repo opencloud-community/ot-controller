@@ -2,11 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// A trait for defining data sent to the frontend of a signaling module.
-pub trait SignalingModuleFrontendData: Serialize + DeserializeOwned + std::fmt::Debug {
+pub trait SignalingModuleFrontendData:
+    serde::Serialize + serde::de::DeserializeOwned + std::fmt::Debug
+{
     /// The namespace which is used to tag the signaling module data
     const NAMESPACE: Option<&'static str>;
 }

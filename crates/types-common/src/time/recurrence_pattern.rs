@@ -7,8 +7,6 @@ use std::str::FromStr;
 use itertools::Itertools as _;
 use snafu::{ensure, ResultExt as _, Snafu};
 
-#[allow(unused_imports)]
-use crate::imports::*;
 use crate::{
     time::{ParseRecurrenceRuleError, RecurrenceRule},
     utils::ExampleData,
@@ -21,7 +19,7 @@ pub const RECURRENCE_PATTERN_MAX_LEN: usize = 4;
 #[derive(Default, Debug, Clone, PartialEq, Eq, derive_more::AsRef, derive_more::Into)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(try_from = "Vec<RecurrenceRule>")
 )]
 pub struct RecurrencePattern(Vec<RecurrenceRule>);
@@ -157,13 +155,12 @@ impl ExampleData for RecurrencePattern {
     }
 }
 
-#[cfg(test)]
-mod tests {
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
     use serde_json::json;
 
     use super::RecurrencePattern;
 
-    #[cfg(feature = "serde")]
     #[test]
     fn deserialize() {
         use crate::time::RecurrenceRule;

@@ -5,19 +5,23 @@
 use derive_more::{AsRef, Display, From, FromStr, Into};
 use uuid::Uuid;
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// The id of a tariff
 #[derive(
     AsRef, Display, From, FromStr, Into, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash,
 )]
 #[cfg_attr(
     feature = "diesel",
-    derive(DieselNewtype, AsExpression, FromSqlRow),
+    derive(
+        opentalk_diesel_newtype::DieselNewtype,
+        diesel::expression::AsExpression,
+        diesel::deserialize::FromSqlRow
+    )
+)]
+#[cfg_attr(
+    feature = "diesel",
     diesel(sql_type = diesel::sql_types::Uuid),
 )]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TariffId(Uuid);
 

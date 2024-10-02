@@ -4,14 +4,16 @@
 
 use derive_more::{AsRef, Display, From, FromStr, Into};
 
-#[allow(unused_imports)]
-use crate::imports::*;
 use crate::utils::ExampleData;
 
 /// Representation of a timezone
 #[derive(AsRef, Display, From, FromStr, Into, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "diesel", derive(FromSqlRow, AsExpression), diesel(sql_type = diesel::sql_types::Text))]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "diesel",
+    derive(diesel::deserialize::FromSqlRow, diesel::expression::AsExpression)
+)]
+#[cfg_attr(feature = "diesel",  diesel(sql_type = diesel::sql_types::Text))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TimeZone(chrono_tz::Tz);
 
 #[cfg(feature = "diesel")]

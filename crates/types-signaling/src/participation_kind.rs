@@ -4,9 +4,6 @@
 
 use strum::{AsRefStr, Display, EnumCount, EnumIter, EnumString, IntoStaticStr, VariantNames};
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// The kinds of participants in a meeting room.
 #[derive(
     Debug,
@@ -24,15 +21,14 @@ use crate::imports::*;
 )]
 #[cfg_attr(
     feature = "serde",
-    derive(Deserialize, Serialize),
+    derive(serde::Deserialize, serde::Serialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(
     feature = "redis",
-    derive(ToRedisArgs, FromRedisValue),
-    to_redis_args(Display),
-    from_redis_value(FromStr)
+    derive(redis_args::ToRedisArgs, redis_args::FromRedisValue)
 )]
+#[cfg_attr(feature = "redis", to_redis_args(Display), from_redis_value(FromStr))]
 #[strum(serialize_all = "snake_case")]
 pub enum ParticipationKind {
     /// User participation kind is used for regular participants who have an account

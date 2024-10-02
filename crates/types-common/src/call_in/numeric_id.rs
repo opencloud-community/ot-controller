@@ -8,8 +8,6 @@ use derive_more::{AsRef, Display, Into};
 use snafu::{ensure, Snafu};
 
 use crate::call_in::DIAL_IN_NUMERIC_ID_LENGTH;
-#[allow(unused_imports)]
-use crate::imports::*;
 
 /// Base type for numeric dial-in identifieirs
 ///
@@ -21,16 +19,22 @@ use crate::imports::*;
 #[derive(AsRef, Display, Into, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(
     feature = "diesel",
-    derive(DieselNewtype, AsExpression, FromSqlRow),
-    diesel(sql_type = diesel::sql_types::Text)
+    derive(
+        opentalk_diesel_newtype::DieselNewtype,
+        diesel::expression::AsExpression,
+        diesel::deserialize::FromSqlRow
+    )
 )]
+#[cfg_attr(feature = "diesel", diesel(sql_type = diesel::sql_types::Text))]
 #[cfg_attr(
     feature = "redis",
-    derive(ToRedisArgs, FromRedisValue),
-    to_redis_args(fmt),
-    from_redis_value(FromStr)
+    derive(redis_args::ToRedisArgs, redis_args::FromRedisValue)
 )]
-#[cfg_attr(feature = "serde", derive(Serialize, serde_with::DeserializeFromStr))]
+#[cfg_attr(feature = "redis", to_redis_args(fmt), from_redis_value(FromStr))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde_with::DeserializeFromStr)
+)]
 pub struct NumericId(String);
 
 impl NumericId {

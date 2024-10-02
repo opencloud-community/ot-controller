@@ -46,8 +46,8 @@ impl From<Error> for BreakoutEvent {
     }
 }
 
-#[cfg(test)]
-mod test {
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
     use opentalk_types_common::{rooms::BreakoutRoomId, time::Timestamp};
     use opentalk_types_signaling::{ParticipantId, ParticipationKind, Role};
     use pretty_assertions::assert_eq;

@@ -86,7 +86,7 @@ macro_rules! sql_enum {
             feature_gate_it = $do_feature_gate;
             feature = "diesel";
             meta =
-                #[derive(::diesel::FromSqlRow, ::diesel::AsExpression)],
+                #[derive(::diesel::deserialize::FromSqlRow, ::diesel::expression::AsExpression)],
                 #[diesel(sql_type = $type_ident)];
 
             item:

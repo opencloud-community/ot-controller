@@ -305,7 +305,7 @@ impl ExampleData for UserAssetResource {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use pretty_assertions::assert_eq;
     #[cfg(feature = "serde")]
     use serde_json::json;

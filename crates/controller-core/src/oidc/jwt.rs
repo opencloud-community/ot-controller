@@ -156,7 +156,7 @@ fn map_algorithm(alg: Algorithm) -> Option<CoreJwsSigningAlgorithm> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use std::time::{SystemTime, UNIX_EPOCH};
 
     use openidconnect::{

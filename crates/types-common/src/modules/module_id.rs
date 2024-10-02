@@ -6,8 +6,6 @@ use std::str::FromStr;
 
 use snafu::{ensure, Snafu};
 
-#[allow(unused_imports)]
-use crate::imports::*;
 use crate::utils::ExampleData;
 
 /// The `core` module id.
@@ -29,10 +27,17 @@ pub const MAX_MODULE_ID_LENGTH: usize = 255;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, derive_more::Display)]
 #[cfg_attr(
     feature = "diesel",
-    derive(DieselNewtype, AsExpression, FromSqlRow),
-    diesel(sql_type = diesel::sql_types::Text)
+    derive(
+        opentalk_diesel_newtype::DieselNewtype,
+        diesel::expression::AsExpression,
+        diesel::deserialize::FromSqlRow
+    )
 )]
-#[cfg_attr(feature = "serde", derive(Serialize, serde_with::DeserializeFromStr))]
+#[cfg_attr(feature="diesel", diesel(sql_type = diesel::sql_types::Text))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde_with::DeserializeFromStr)
+)]
 pub struct ModuleId(String);
 
 impl Default for ModuleId {

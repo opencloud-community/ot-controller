@@ -91,7 +91,7 @@ async fn find_orphaned_rooms(conn: &mut DbConnection) -> Result<HashSet<RoomId>,
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use opentalk_test_util::database::DatabaseContext;
 
     use crate::jobs::test_utils::create_events_and_independent_rooms;

@@ -352,7 +352,7 @@ impl NewModuleResource {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use opentalk_test_util::{assert_eq, *};
     use serde_json::{json, Value};
     use serial_test::serial;

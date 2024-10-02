@@ -74,7 +74,7 @@ pub trait RbacApiEx: RbacApi {
 impl<T: RbacApi> RbacApiEx for T {}
 
 #[cfg(test)]
-mod test {
+mod tests {
     use std::iter::FromIterator;
 
     use casbin::{CoreApi, DefaultModel, Enforcer, MemoryAdapter, MgmtApi};

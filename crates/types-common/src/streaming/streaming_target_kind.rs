@@ -4,15 +4,13 @@
 
 use url::Url;
 
-#[allow(unused_imports)]
-use crate::imports::*;
 use crate::{streaming::StreamingKey, utils::ExampleData};
 
 /// A streaming target kind
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(tag = "kind", rename_all = "snake_case")
 )]
 #[cfg_attr(

@@ -18,7 +18,7 @@ version.workspace = true
 backend = ["opentalk-types-common/backend", "rand", "redis", "serde"]
 frontend = ["opentalk-types-common/frontend", "serde"]
 rand = ["opentalk-types-common/rand", "uuid/v4"]
-redis = ["dep:redis", "dep:redis-args", "opentalk-types-common/redis", "serde"]
+redis = ["dep:redis-args", "opentalk-types-common/redis", "serde"]
 serde = ["dep:serde", "opentalk-types-common/serde", "uuid/serde"]
 
 [dependencies]
@@ -30,7 +30,6 @@ derive_more = { workspace = true, features = [
   "into",
 ] }
 opentalk-types-common.workspace = true
-redis = { workspace = true, optional = true }
 redis-args = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 strum.workspace = true

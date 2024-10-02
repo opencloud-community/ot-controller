@@ -127,7 +127,7 @@ impl From<Error> for ModerationEvent {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use pretty_assertions::assert_eq;
     use serde_json::json;
 

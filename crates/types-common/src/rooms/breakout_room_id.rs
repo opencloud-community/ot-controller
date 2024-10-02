@@ -5,16 +5,15 @@
 use derive_more::{AsRef, Display, From, FromStr, Into};
 use uuid::Uuid;
 
-#[allow(unused_imports)]
-use crate::imports::*;
 use crate::utils::ExampleData;
 
 /// The id of a breakout room
 #[derive(
     AsRef, Display, From, FromStr, Into, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash,
 )]
-#[cfg_attr(feature = "redis", derive(ToRedisArgs), to_redis_args(fmt))]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "redis", derive(redis_args::ToRedisArgs))]
+#[cfg_attr(feature = "redis", to_redis_args(fmt))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(example = json!(BreakoutRoomId::example_data())))]
 pub struct BreakoutRoomId(Uuid);
 

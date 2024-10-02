@@ -35,6 +35,25 @@ variables:
     # Run on scheduled pipeline runs
     - if: $CI_PIPELINE_SOURCE == 'schedule'
 
+.test:types:
+  stage: test
+  <<: *default_job_condition
+  # Ensures that the crate can be built with each relevant feature individually
+  variables:
+    RUSTFLAGS: -D warnings
+  parallel:
+    matrix:
+      - FEATURES:
+          [
+          '',
+          ]
+        EXTRA_ARGS: ['', --no-default-features]
+  script:
+    - cargo clippy --package $PACKAGE $EXTRA_ARGS --features=$FEATURES
+    - cargo test --package $PACKAGE $EXTRA_ARGS --features=$FEATURES
+
+include: crates/**/gitlab-ci.yml
+
 trigger_enterprise_ci:
   stage: trigger
   needs: []
@@ -318,76 +337,6 @@ check:opentalk-types:
         EXTRA_ARGS: ['', --no-default-features]
   script:
     - cargo check --package opentalk-types $EXTRA_ARGS --features=$FEATURES
-
-check:opentalk-types-common:
-  stage: check
-  needs: []
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-  # Ensures that the `types-common` crate can be built with each relevant feature individually
-  variables:
-    RUSTFLAGS: -D warnings
-  parallel:
-    matrix:
-      - FEATURES:
-          [
-          '',
-            backend,
-            clap,
-            diesel,
-            frontend,
-            rand,
-            redis,
-            serde,
-            utoipa,
-          ]
-        EXTRA_ARGS: ['', --no-default-features]
-  script:
-    - cargo check --package opentalk-types-common $EXTRA_ARGS --features=$FEATURES
-
-check:opentalk-types-signaling:
-  stage: check
-  needs: []
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-  # Ensures that the `types-signaling` crate can be built with each relevant feature individually
-  variables:
-    RUSTFLAGS: -D warnings
-  parallel:
-    matrix:
-      - FEATURES:
-          [
-          '',
-            backend,
-            frontend,
-            rand,
-            redis,
-            serde,
-          ]
-        EXTRA_ARGS: ['', --no-default-features]
-  script:
-    - cargo check --package opentalk-types-signaling $EXTRA_ARGS --features=$FEATURES
-
-check:opentalk-types-signaling-breakout:
-  stage: check
-  needs: []
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-  # Ensures that the `types-signaling-breakout` crate can be built with each relevant feature individually
-  variables:
-    RUSTFLAGS: -D warnings
-  parallel:
-    matrix:
-      - FEATURES:
-          [
-          '',
-            backend,
-            frontend,
-            serde,
-          ]
-        EXTRA_ARGS: ['', --no-default-features]
-  script:
-    - cargo check --package opentalk-types-signaling-breakout $EXTRA_ARGS --features=$FEATURES
 
 check:er-diagram:
   stage: check
