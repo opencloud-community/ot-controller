@@ -1537,6 +1537,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "cookie"
+version = "0.18.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ddef33a339a91ea89fb53151bd0a4689cfce27055c291dfa69945475d22c747"
+dependencies = [
+ "percent-encoding",
+ "time",
+ "version_check",
+]
+
+[[package]]
 name = "cookie-factory"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1550,6 +1561,23 @@ checksum = "387461abbc748185c3a6e1673d826918b450b87ff22639429c694619a83b6cf6"
 dependencies = [
  "cookie 0.17.0",
  "idna 0.3.0",
+ "log",
+ "publicsuffix",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "time",
+ "url",
+]
+
+[[package]]
+name = "cookie_store"
+version = "0.21.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4934e6b7e8419148b6ef56950d277af8561060b56afd59e2aadf98b59fce6baa"
+dependencies = [
+ "cookie 0.18.1",
+ "idna 0.5.0",
  "log",
  "publicsuffix",
  "serde",
@@ -3194,12 +3222,13 @@ dependencies = [
 
 [[package]]
 name = "http-request-derive"
-version = "0.1.2"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3624de92eb00f7632976cf5ec5d132c2592c3b282822b5f48f448c8d09e856c5"
+checksum = "11d8757f2688a71937c94ca4fa7c4b884aff09fd3507ac640f4f0bee64bdc06c"
 dependencies = [
+ "async-trait",
  "bytes",
- "http 0.2.12",
+ "http 1.1.0",
  "http-request-derive-macros",
  "serde",
  "serde_json",
@@ -3597,7 +3626,7 @@ dependencies = [
 name = "kustos-shared"
 version = "0.0.0-dev"
 dependencies = [
- "http 0.2.12",
+ "http 1.1.0",
  "itertools 0.13.0",
  "pretty_assertions",
  "snafu",
@@ -3674,7 +3703,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4979f22fdb869068da03c9f7528f8297c6fd2606bc3a4affe42e6a823fdb8da4"
 dependencies = [
  "cfg-if",
- "windows-targets 0.48.5",
+ "windows-targets 0.52.6",
 ]
 
 [[package]]
@@ -4231,12 +4260,12 @@ name = "opentalk-client"
 version = "0.0.0-dev"
 dependencies = [
  "async-trait",
- "http 0.2.12",
+ "http 1.1.0",
  "http-request-derive",
  "opentalk-client-shared",
  "opentalk-types",
  "opentalk-types-common",
- "reqwest 0.11.27",
+ "reqwest 0.12.7",
  "snafu",
  "tokio",
  "url",
@@ -4249,7 +4278,7 @@ dependencies = [
  "async-trait",
  "bytes",
  "derive_more 1.0.0",
- "http 0.2.12",
+ "http 1.1.0",
  "http-request-derive",
  "serde",
  "serde_json",
@@ -4845,6 +4874,7 @@ dependencies = [
  "redis",
  "redis-args",
  "reqwest 0.11.27",
+ "reqwest 0.12.7",
  "rustc-hash 2.0.0",
  "serde",
  "serde_json",
@@ -4923,6 +4953,7 @@ dependencies = [
  "derive_more 1.0.0",
  "diesel",
  "http 0.2.12",
+ "http 1.1.0",
  "http-request-derive",
  "itertools 0.13.0",
  "log",
@@ -4959,7 +4990,7 @@ dependencies = [
  "derive_more 1.0.0",
  "diesel",
  "email_address",
- "http 0.2.12",
+ "http 1.1.0",
  "itertools 0.13.0",
  "kustos-shared",
  "opentalk-client-shared",
@@ -5023,7 +5054,7 @@ dependencies = [
  "pretty_assertions",
  "redis",
  "redis-args",
- "reqwest 0.11.27",
+ "reqwest 0.12.7",
  "serde",
  "serial_test",
  "snafu",
@@ -6070,7 +6101,7 @@ dependencies = [
  "base64 0.21.7",
  "bytes",
  "cookie 0.17.0",
- "cookie_store",
+ "cookie_store 0.20.0",
  "encoding_rs",
  "futures-core",
  "futures-util",
@@ -6115,6 +6146,8 @@ checksum = "f8f4955649ef5c38cc7f9e8aa41761d48fb9677197daea9984dc54f56aad5e63"
 dependencies = [
  "base64 0.22.1",
  "bytes",
+ "cookie 0.18.1",
+ "cookie_store 0.21.0",
  "futures-channel",
  "futures-core",
  "futures-util",
@@ -8170,7 +8203,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]

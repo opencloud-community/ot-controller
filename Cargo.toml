@@ -75,8 +75,9 @@ either = "1"
 email_address = "0.2.4"
 env_logger = "0.11"
 futures = "0.3"
-http = "0.2"
-http-request-derive = "0.1.2"
+http = "1"
+http-request-derive = { version = "0.3.1", default-features = false }
+http0 = { version = "0", package = "http" }
 itertools = "0.13"
 lapin = { version = "2", default-features = false }
 lapin-pool = "0.1"
@@ -108,7 +109,8 @@ quote = "1"
 rand = "0.8"
 redis = "0.27"
 redis-args = "0.17"
-reqwest = { version = "0.11", default-features = false }
+reqwest = { version = "0.12", default-features = false }
+reqwest11 = { package = "reqwest", version = "0.11", default-features = false }
 rustc-hash = "2.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

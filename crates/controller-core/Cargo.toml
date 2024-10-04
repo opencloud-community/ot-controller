@@ -73,7 +73,7 @@ prometheus = "0.13"
 rand.workspace = true
 redis = { workspace = true, features = ["connection-manager", "tokio-comp"] }
 redis-args.workspace = true
-reqwest = { workspace = true, features = ["rustls-tls-native-roots"] }
+reqwest11 = { workspace = true, features = ["rustls-tls-native-roots"] }
 ring = "0.17"
 rrule = "0.13"
 rustls = "0.23"

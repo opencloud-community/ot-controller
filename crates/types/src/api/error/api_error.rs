@@ -5,7 +5,7 @@
 use core::fmt;
 use std::borrow::Cow;
 
-use http::StatusCode;
+use http0::StatusCode;
 use itertools::Itertools;
 
 use super::{
@@ -201,13 +201,13 @@ impl axum::response::IntoResponse for ApiError {
         let response_builder = axum::response::Response::builder();
 
         let builder = response_builder.header(
-            axum::http::header::CONTENT_TYPE,
-            axum::http::HeaderValue::from_static("text/json; charset=utf-8"),
+            http::header::CONTENT_TYPE,
+            http::HeaderValue::from_static("text/json; charset=utf-8"),
         );
 
         let builder = if let Some(www_authenticate) = self.www_authenticate {
             builder.header(
-                axum::http::header::WWW_AUTHENTICATE,
+                http::header::WWW_AUTHENTICATE,
                 www_authenticate.header_value(),
             )
         } else {
@@ -232,13 +232,13 @@ impl actix_web::ResponseError for ApiError {
         let mut response = actix_web::HttpResponse::new(self.status_code());
 
         let _ = response.headers_mut().insert(
-            http::header::CONTENT_TYPE,
+            http0::header::CONTENT_TYPE,
             actix_http::header::HeaderValue::from_static("text/json; charset=utf-8"),
         );
 
         if let Some(www_authenticate) = self.www_authenticate {
             let _ = response.headers_mut().insert(
-                http::header::WWW_AUTHENTICATE,
+                http0::header::WWW_AUTHENTICATE,
                 www_authenticate
                     .header_value()
                     .try_into()

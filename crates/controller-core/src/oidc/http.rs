@@ -6,23 +6,23 @@ use std::{future::Future, pin::Pin};
 
 use openidconnect::{reqwest::Error, HttpRequest, HttpResponse};
 
-pub fn make_client() -> Result<reqwest::Client, reqwest::Error> {
-    reqwest::Client::builder()
-        .redirect(reqwest::redirect::Policy::none())
+pub fn make_client() -> Result<reqwest11::Client, reqwest11::Error> {
+    reqwest11::Client::builder()
+        .redirect(reqwest11::redirect::Policy::none())
         .build()
 }
 
 pub fn async_http_client(
-    client: reqwest::Client,
-) -> impl Fn(HttpRequest) -> Pin<Box<dyn Future<Output = Result<HttpResponse, Error<reqwest::Error>>>>>
+    client: reqwest11::Client,
+) -> impl Fn(HttpRequest) -> Pin<Box<dyn Future<Output = Result<HttpResponse, Error<reqwest11::Error>>>>>
 {
     move |request| Box::pin(async_http_client_inner(client.clone(), request))
 }
 
 async fn async_http_client_inner(
-    client: reqwest::Client,
+    client: reqwest11::Client,
     request: HttpRequest,
-) -> Result<HttpResponse, Error<reqwest::Error>> {
+) -> Result<HttpResponse, Error<reqwest11::Error>> {
     let mut request_builder = client
         .request(request.method, request.url.as_str())
         .body(request.body);

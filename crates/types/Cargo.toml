@@ -39,6 +39,7 @@ http = { workspace = true, optional = true }
 http-request-derive = { workspace = true, features = [
   "serde",
 ], optional = true }
+http0 = { workspace = true, optional = true }
 itertools.workspace = true
 log.workspace = true
 opentalk-cache = { workspace = true, optional = true }
@@ -66,11 +67,11 @@ validator = { workspace = true, optional = true }
 actix = [
   "dep:actix-http",
   "dep:actix-web",
-  "dep:http",
+  "dep:http0",
   "opentalk-types-common/actix",
   "serde",
 ]
-axum = ["dep:axum", "dep:http", "serde"]
+axum = ["dep:axum", "dep:http", "dep:http0", "serde"]
 backend = [
   "actix",
   "dep:opentalk-cache",
@@ -93,6 +94,7 @@ diesel = [
 frontend = [
   "dep:http",
   "dep:http-request-derive",
+  "dep:http0",
   "opentalk-types-common/frontend",
   "opentalk-types-signaling/frontend",
   "serde",
