@@ -9,6 +9,7 @@ use snafu::{ensure, ResultExt, Snafu};
 use crate::{
     features::{FeatureId, ParseFeatureIdError, NAMESPACE_SEPARATOR},
     modules::{ModuleId, ParseModuleIdError},
+    utils::ExampleData,
 };
 
 /// Identifier of a feature inside a module
@@ -20,6 +21,11 @@ use crate::{
 #[cfg_attr(
     feature = "diesel",
     diesel(sql_type = diesel::sql_types::Text),
+)]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(ModuleFeatureId::example_data())),
 )]
 pub struct ModuleFeatureId {
     /// The id of the module
@@ -38,6 +44,15 @@ impl Display for ModuleFeatureId {
 impl From<(ModuleId, FeatureId)> for ModuleFeatureId {
     fn from((module, feature): (ModuleId, FeatureId)) -> Self {
         Self { module, feature }
+    }
+}
+
+impl ExampleData for ModuleFeatureId {
+    fn example_data() -> Self {
+        Self {
+            module: ModuleId::example_data(),
+            feature: FeatureId::example_data(),
+        }
     }
 }
 
