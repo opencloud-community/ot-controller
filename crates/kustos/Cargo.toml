@@ -61,9 +61,11 @@ features = ["incremental", "runtime-tokio", "watcher"]
 workspace = true
 
 [dev-dependencies]
-serial_test.workspace = true
-# TODO(r.floren) remove this in the future. Currently used to migrate in tests. Find something lighter.
-opentalk-db-storage.workspace = true
+env_logger.workspace = true
 pretty_assertions.workspace = true
+serial_test.workspace = true
 tokio = { workspace = true, features = ["macros", "rt"] }
 url.workspace = true
+
+# TODO(r.floren) remove this in the future. Currently used to migrate in tests. Find something lighter.
+opentalk-db-storage.workspace = true

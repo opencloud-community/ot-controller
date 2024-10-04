@@ -3599,6 +3599,7 @@ dependencies = [
  "casbin",
  "diesel",
  "diesel-async",
+ "env_logger",
  "futures",
  "itertools 0.13.0",
  "kustos-shared",

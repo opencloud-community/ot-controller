@@ -178,13 +178,9 @@ impl Authz {
         let user = user.into();
         let policies = UserPolicies::new(&user, data_access);
 
-        // The return value of casbins add_policy means: true => newly added, false => already in model.
-        // Thus it is sane to just listen for errors here.
-        self.inner
-            .write()
-            .await
-            .add_policies(policies.to_casbin_policies())
+        self.checked_add_policies(policies.to_casbin_policies())
             .await?;
+
         Ok(())
     }
 
@@ -203,13 +199,9 @@ impl Authz {
         let invite = invite.into();
         let policies = InvitePolicies::new(&invite, data_access);
 
-        // The return value of casbins add_policy means: true => newly added, false => already in model.
-        // Thus it is sane to just listen for errors here.
-        self.inner
-            .write()
-            .await
-            .add_policies(policies.to_casbin_policies())
+        self.checked_add_policies(policies.to_casbin_policies())
             .await?;
+
         Ok(())
     }
 
@@ -217,11 +209,27 @@ impl Authz {
     pub async fn add_policies(&self, policies: impl ToCasbinMultiple) -> Result<()> {
         // Applying the policies in chunks in order to avoid generating too large queries
         for chunk in policies.to_casbin_policies().chunks(2000) {
-            self.inner
-                .write()
-                .await
-                .add_policies(Vec::from(chunk))
-                .await?;
+            self.checked_add_policies(chunk.to_vec()).await?;
+        }
+
+        Ok(())
+    }
+
+    async fn checked_add_policies(&self, policies: Vec<Vec<String>>) -> Result<()> {
+        log::trace!("add policies {:?}", policies);
+        if !self
+            .inner
+            .write()
+            .await
+            .add_policies(policies.clone())
+            .await?
+        {
+            log::warn!("Add policies one-by-one since batching failed");
+            for policy in policies {
+                if !self.inner.write().await.add_policy(policy.clone()).await? {
+                    log::warn!("Failed to add policy as it did already exist: {:?}", policy);
+                }
+            }
         }
 
         Ok(())
@@ -253,11 +261,9 @@ impl Authz {
         let group = group.into();
         let policies = GroupPolicies::new(&group, data_access);
 
-        self.inner
-            .write()
-            .await
-            .add_policies(policies.to_casbin_policies())
+        self.checked_add_policies(policies.to_casbin_policies())
             .await?;
+
         Ok(())
     }
 
@@ -276,11 +282,9 @@ impl Authz {
         let role = role.into();
         let policies = RolePolicies::new(&role, data_access);
 
-        self.inner
-            .write()
-            .await
-            .add_policies(policies.to_casbin_policies())
+        self.checked_add_policies(policies.to_casbin_policies())
             .await?;
+
         Ok(())
     }
 

@@ -136,6 +136,7 @@ impl From<String> for ResourceId {
 ///
 /// If a subject has access to a wildcard `/*` or `/resourceName/*` [`AccessibleResources::All`]
 /// should be returned, else a List of all accessible resources via [`AccessibleResources::List`]
+#[derive(Debug)]
 pub enum AccessibleResources<T: Resource> {
     List(Vec<T>),
     All,
