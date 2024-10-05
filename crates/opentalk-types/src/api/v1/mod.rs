@@ -12,6 +12,5 @@ pub mod services;
 pub mod streaming_targets;
 pub mod turn;
 pub mod users;
-pub mod utils;
 
 pub mod order;

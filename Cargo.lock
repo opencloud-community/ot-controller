@@ -5131,6 +5131,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_urlencoded",
+ "serde_with",
  "snafu",
  "strum",
  "utoipa",

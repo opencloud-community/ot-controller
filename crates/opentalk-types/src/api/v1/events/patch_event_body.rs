@@ -10,8 +10,6 @@ use opentalk_types_common::{
     utils::ExampleData,
 };
 
-#[cfg(feature = "serde")]
-use crate::api::v1::utils::deserialize_some;
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -51,8 +49,8 @@ pub struct PatchEventBody {
         feature = "serde",
         serde(
             default,
-            deserialize_with = "deserialize_some",
-            skip_serializing_if = "Option::is_none"
+            skip_serializing_if = "Option::is_none",
+            with = "::serde_with::rust::double_option",
         )
     )]
     // Field is non-required already, utoipa adds a `nullable: true` entry
