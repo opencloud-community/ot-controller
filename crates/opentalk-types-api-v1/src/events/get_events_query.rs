@@ -2,19 +2,17 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_api_v1::{events::GetEventsCursorData, Cursor};
 #[cfg(feature = "serde")]
 use opentalk_types_common::utils::comma_separated;
 use opentalk_types_common::{events::invites::EventInviteStatus, time::Timestamp};
 
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::{events::GetEventsCursorData, Cursor};
 
 /// Path query parameters of the `GET /events` endpoint
 ///
 /// Allows for customization in the search for events
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::IntoParams))]
 pub struct GetEventsQuery {
     /// Optional minimum time in which the event happens

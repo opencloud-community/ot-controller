@@ -39,14 +39,14 @@ use opentalk_keycloak_admin::{users::TenantFilter, KeycloakAdminClient};
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage};
 use opentalk_types::api::{
     error::{ApiError, ValidationErrorEntry, ERROR_CODE_IGNORED_VALUE, ERROR_CODE_VALUE_REQUIRED},
-    v1::events::{GetEventsQuery, PatchEventBody, PostEventsBody},
+    v1::events::{PatchEventBody, PostEventsBody},
 };
 use opentalk_types_api_v1::{
     events::{
         CallInInfo, DeleteEventsQuery, EmailOnlyUser, EventAndInstanceId, EventExceptionResource,
         EventInvitee, EventInviteeProfile, EventOptionsQuery, EventOrException, EventResource,
-        EventRoomInfo, EventStatus, EventType, GetEventQuery, GetEventsCursorData, PatchEventQuery,
-        PublicInviteUserProfile,
+        EventRoomInfo, EventStatus, EventType, GetEventQuery, GetEventsCursorData, GetEventsQuery,
+        PatchEventQuery, PublicInviteUserProfile,
     },
     pagination::default_pagination_per_page,
     users::{PublicUserProfile, UnregisteredUser},
