@@ -121,7 +121,7 @@ fn create_changeset<'a>(
     }
 
     if avatar_url != &token_info.avatar_url {
-        changeset.avatar_url = token_info.avatar_url.as_deref()
+        changeset.avatar_url = Some(token_info.avatar_url.as_deref())
     }
 
     if let Some(enforced_display_name) = enforced_display_name {
