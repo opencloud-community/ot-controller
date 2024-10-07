@@ -468,7 +468,7 @@ pub struct UpdateUser<'a> {
     pub tariff_id: Option<TariffId>,
     pub tariff_status: Option<TariffStatus>,
     pub disabled_since: Option<Option<DateTime<Utc>>>,
-    pub avatar_url: Option<&'a str>,
+    pub avatar_url: Option<Option<&'a str>>,
 }
 
 impl UpdateUser<'_> {
