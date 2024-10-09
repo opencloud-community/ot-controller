@@ -48,8 +48,8 @@ async fn make_event(
     .unwrap();
 
     NewEvent {
-        title: "Test Event".into(),
-        description: "Test Event".into(),
+        title: "Test Event".parse().expect("valid event title"),
+        description: "Test Event".parse().expect("valid event description"),
         room: room.id,
         created_by: user.id,
         updated_by: user.id,
@@ -752,8 +752,8 @@ async fn get_event_min_max_time() {
     .unwrap();
 
     let event1 = NewEvent {
-        title: "Test Event".into(),
-        description: "Test Event".into(),
+        title: "Test Event".parse().expect("valid event title"),
+        description: "Test Event".parse().expect("valid event description"),
         room: room1.id,
         created_by: user.id,
         updated_by: user.id,
@@ -786,8 +786,8 @@ async fn get_event_min_max_time() {
     .unwrap();
 
     let event2 = NewEvent {
-        title: "Test Event".into(),
-        description: "Test Event".into(),
+        title: "Test Event".parse().expect("valid event title"),
+        description: "Test Event".parse().expect("valid event description"),
         room: room2.id,
         created_by: user.id,
         updated_by: user.id,

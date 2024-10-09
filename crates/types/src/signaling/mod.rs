@@ -6,8 +6,6 @@
 //! (typically through websockets)
 
 pub mod chat;
-pub mod common;
-pub mod control;
 pub mod core;
 pub mod echo;
 pub mod integration;
@@ -24,18 +22,4 @@ pub mod whiteboard;
 
 mod namespaced;
 
-#[cfg(feature = "serde")]
-mod module_data;
-
-#[cfg(feature = "serde")]
-mod module_peer_data;
-
 pub use namespaced::{NamespacedCommand, NamespacedEvent};
-
-#[cfg(feature = "serde")]
-mod serde_imports {
-    pub use super::{module_data::ModuleData, module_peer_data::ModulePeerData};
-}
-
-#[cfg(feature = "serde")]
-pub use serde_imports::*;

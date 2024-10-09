@@ -39,18 +39,7 @@ use opentalk_signaling_core::{
     RunnerId, SignalingMetrics, SignalingModule, SignalingModuleError, SignalingRoomId,
     SubscriberHandle, VolatileStorage,
 };
-use opentalk_types::signaling::{
-    common::TargetParticipant,
-    control::{
-        command::ControlCommand,
-        event::{self as control_event, ControlEvent, JoinBlockedReason, JoinSuccess},
-        room::{CreatorInfo, RoomInfo},
-        state::ControlState,
-        AssociatedParticipant, Reason,
-    },
-    moderation::event::ModerationEvent,
-    ModuleData,
-};
+use opentalk_types::signaling::moderation::event::ModerationEvent;
 use opentalk_types_common::{
     features::FeatureId,
     modules::ModuleId,
@@ -59,7 +48,18 @@ use opentalk_types_common::{
     time::Timestamp,
     users::UserId,
 };
-use opentalk_types_signaling::{ParticipantId, ParticipationKind, Role};
+use opentalk_types_signaling::{
+    AssociatedParticipant, LeaveReason, ModuleData, ParticipantId, ParticipationKind, Role,
+    TargetParticipant,
+};
+use opentalk_types_signaling_control::{
+    command::ControlCommand,
+    event::{
+        self as control_event, ControlEvent, JoinBlockedReason, JoinSuccess, Left, RoleUpdated,
+    },
+    room::{CreatorInfo, RoomInfo},
+    state::ControlState,
+};
 use serde_json::Value;
 use snafu::{ensure, whatever, Report, ResultExt, Snafu};
 use tokio::{
@@ -410,7 +410,7 @@ impl Runner {
 
     /// Destroys the runner and all associated resources
     #[tracing::instrument(skip(self), fields(id = %self.id))]
-    pub async fn destroy(mut self, close_ws: bool, reason: Reason) {
+    pub async fn destroy(mut self, close_ws: bool, reason: LeaveReason) {
         let destroy_start_time = Instant::now();
         let mut encountered_error = false;
 
@@ -740,7 +740,7 @@ impl Runner {
             opentalk_signaling_core::control::storage::SKIP_WAITING_ROOM_KEY_REFRESH_INTERVAL,
         ));
 
-        let mut reason = Reason::Quit;
+        let mut reason = LeaveReason::Quit;
 
         while matches!(self.ws.state, State::Open) {
             if self.exit && matches!(self.ws.state, State::Open) {
@@ -751,7 +751,7 @@ impl Runner {
             tokio::select! {
                 res = self.ws.receive() => {
                     match res {
-                        Some(RunnerMessage::Timeout) => reason = Reason::Timeout,
+                        Some(RunnerMessage::Timeout) => reason = LeaveReason::Timeout,
                         Some(RunnerMessage::Message(Message::Close(_))) => {
                             // Received Close frame from ws actor, break to destroy the runner
                             manual_close_ws = true;
@@ -1611,8 +1611,8 @@ impl Runner {
     async fn build_participant(
         &mut self,
         id: ParticipantId,
-    ) -> Result<Option<opentalk_types::signaling::control::Participant>> {
-        let mut participant = opentalk_types::signaling::control::Participant {
+    ) -> Result<Option<opentalk_types_signaling::Participant>> {
+        let mut participant = opentalk_types_signaling::Participant {
             id,
             module_data: Default::default(),
         };
@@ -1726,7 +1726,7 @@ impl Runner {
                     .await;
             }
             exchange::Message::Left { id, reason } => {
-                if self.id == id && reason == Reason::SentToWaitingRoom {
+                if self.id == id && reason == LeaveReason::SentToWaitingRoom {
                     // we are sent to the waiting room
                     self.notify_left(id, reason, timestamp).await;
                     self.reenter_waiting_room(timestamp).await?;
@@ -1840,8 +1840,11 @@ impl Runner {
                 self.handle_module_requested_actions(timestamp, actions)
                     .await;
 
-                self.ws_send_control(timestamp, ControlEvent::RoleUpdated { new_role })
-                    .await;
+                self.ws_send_control(
+                    timestamp,
+                    ControlEvent::RoleUpdated(RoleUpdated { new_role }),
+                )
+                .await;
 
                 self.exchange_publish_control(timestamp, None, exchange::Message::Update(self.id));
             }
@@ -2129,7 +2132,7 @@ impl Runner {
             .await;
     }
 
-    async fn notify_left(&mut self, id: ParticipantId, reason: Reason, timestamp: Timestamp) {
+    async fn notify_left(&mut self, id: ParticipantId, reason: LeaveReason, timestamp: Timestamp) {
         let actions: ModuleRequestedActions = self
             .handle_module_broadcast_event(timestamp, DynBroadcastEvent::ParticipantLeft(id), false)
             .await;
@@ -2137,10 +2140,10 @@ impl Runner {
         if self.id != id {
             self.ws_send_control(
                 timestamp,
-                ControlEvent::Left {
+                ControlEvent::Left(Left {
                     id: AssociatedParticipant { id },
                     reason,
-                },
+                }),
             )
             .await;
         }

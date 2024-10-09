@@ -2,22 +2,32 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Signaling messages for the `control` namespace
+//! Signaling data types for the OpenTalk breakout module.
+
+#![deny(
+    bad_style,
+    missing_debug_implementations,
+    missing_docs,
+    overflowing_literals,
+    patterns_in_fns_without_body,
+    trivial_casts,
+    trivial_numeric_casts,
+    unsafe_code,
+    unused,
+    unused_extern_crates,
+    unused_import_braces,
+    unused_qualifications,
+    unused_results
+)]
 
 pub mod command;
 pub mod event;
 pub mod room;
 pub mod state;
 
-mod associated_participant;
-mod participant;
-mod reason;
 mod waiting_room_state;
 
-pub use associated_participant::AssociatedParticipant;
 use opentalk_types_common::modules::ModuleId;
-pub use participant::Participant;
-pub use reason::Reason;
 pub use waiting_room_state::{WaitingRoomState, NAMESPACE as WAITING_ROOM_STATE_NAMESPACE};
 
 /// The namespace string for the signaling module

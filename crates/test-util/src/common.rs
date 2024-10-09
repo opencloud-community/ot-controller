@@ -10,9 +10,9 @@ use opentalk_signaling_core::{
     module_tester::{ModuleTester, WsMessageOutgoing},
     SignalingModule, VolatileStaticMemoryStorage, VolatileStorage,
 };
-use opentalk_types::signaling::control::event::ControlEvent;
 use opentalk_types_common::rooms::RoomId;
 use opentalk_types_signaling::{ParticipantId, Role};
+use opentalk_types_signaling_control::event::ControlEvent;
 use pretty_assertions::assert_eq;
 use snafu::{ResultExt, Whatever};
 use tokio::sync::broadcast::Sender;

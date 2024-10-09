@@ -2,14 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_signaling::ParticipantId;
-
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::ParticipantId;
 
 /// AssociatedParticipant represents a participant in the same meeting
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AssociatedParticipant {
     /// The participant id for the associated participant
     pub id: ParticipantId,

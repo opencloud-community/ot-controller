@@ -4,8 +4,8 @@
 
 use std::collections::HashMap;
 
-use opentalk_types::signaling::control::state::ControlState;
 use opentalk_types_signaling::{ParticipantId, Role};
+use opentalk_types_signaling_control::state::ControlState;
 
 use crate::SignalingModule;
 

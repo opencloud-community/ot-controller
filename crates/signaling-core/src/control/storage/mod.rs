@@ -37,12 +37,12 @@ mod test_common {
         events::{Event, EventSerialId},
         tariffs::Tariff,
     };
-    use opentalk_types::signaling::control::room::CreatorInfo;
     use opentalk_types_common::{
         events::EventId, rooms::RoomId, tariffs::TariffId, tenants::TenantId, time::Timestamp,
         users::UserId,
     };
     use opentalk_types_signaling::{ParticipantId, Role};
+    use opentalk_types_signaling_control::room::CreatorInfo;
     use pretty_assertions::assert_eq;
     use serde::{Deserialize, Serialize};
 
@@ -389,8 +389,10 @@ mod test_common {
             created_at: Utc.with_ymd_and_hms(2024, 5, 16, 1, 2, 3).unwrap(),
             updated_at: Utc.with_ymd_and_hms(2024, 5, 16, 1, 2, 3).unwrap(),
             id_serial: EventSerialId::from(55i64),
-            title: "Event 1".to_string(),
-            description: "Event 1 description".to_string(),
+            title: "Event 1".parse().expect("valid event title"),
+            description: "Event 1 description"
+                .parse()
+                .expect("valid event description"),
             room: room_id,
             created_by: UserId::generate(),
             updated_by: UserId::generate(),
@@ -414,8 +416,10 @@ mod test_common {
             created_at: Utc.with_ymd_and_hms(2021, 2, 2, 1, 2, 3).unwrap(),
             updated_at: Utc.with_ymd_and_hms(2021, 2, 2, 1, 2, 3).unwrap(),
             id_serial: EventSerialId::from(4234i64),
-            title: "Event 2".to_string(),
-            description: "Event 2 description".to_string(),
+            title: "Event 2".parse().expect("valid event title"),
+            description: "Event 2 description"
+                .parse()
+                .expect("valid event description"),
             room: room_id,
             created_by: UserId::generate(),
             updated_by: UserId::generate(),

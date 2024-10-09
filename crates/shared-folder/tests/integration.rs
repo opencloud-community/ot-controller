@@ -16,11 +16,11 @@ use opentalk_signaling_core::{
     VolatileStorage,
 };
 use opentalk_test_util::{TestContext, ROOM_ID, USER_1, USER_2};
-use opentalk_types::signaling::control::event::{ControlEvent, JoinSuccess};
 use opentalk_types_common::{
     events::EventId, rooms::RoomId, shared_folders::SharedFolder, users::UserId,
 };
 use opentalk_types_signaling::Role;
+use opentalk_types_signaling_control::event::{ControlEvent, JoinSuccess};
 use pretty_assertions::assert_eq;
 use serial_test::serial;
 
@@ -34,8 +34,8 @@ async fn make_event(
         .await
         .unwrap();
     let event = NewEvent {
-        title: "Test Event".into(),
-        description: "Test Event".into(),
+        title: "Test Event".parse().expect("valid event title"),
+        description: "Test Event".parse().expect("valid event description"),
         room: room_id,
         created_by: user_id,
         updated_by: user_id,

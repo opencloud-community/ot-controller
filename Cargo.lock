@@ -4247,6 +4247,7 @@ dependencies = [
  "opentalk-types",
  "opentalk-types-common",
  "opentalk-types-signaling",
+ "opentalk-types-signaling-control",
  "parking_lot",
  "pretty_assertions",
  "redis",
@@ -4369,6 +4370,7 @@ dependencies = [
  "opentalk-types-common",
  "opentalk-types-signaling",
  "opentalk-types-signaling-breakout",
+ "opentalk-types-signaling-control",
  "opentelemetry",
  "opentelemetry-otlp",
  "opentelemetry-prometheus",
@@ -4834,6 +4836,7 @@ dependencies = [
  "opentalk-types",
  "opentalk-types-common",
  "opentalk-types-signaling",
+ "opentalk-types-signaling-control",
  "parking_lot",
  "pretty_assertions",
  "redis",
@@ -4873,6 +4876,7 @@ dependencies = [
  "opentalk-types",
  "opentalk-types-common",
  "opentalk-types-signaling",
+ "opentalk-types-signaling-control",
  "opentelemetry",
  "parking_lot",
  "pretty_assertions",
@@ -4906,9 +4910,9 @@ dependencies = [
  "opentalk-database",
  "opentalk-db-storage",
  "opentalk-signaling-core",
- "opentalk-types",
  "opentalk-types-common",
  "opentalk-types-signaling",
+ "opentalk-types-signaling-control",
  "pretty_assertions",
  "redis",
  "serde",
@@ -5025,6 +5029,7 @@ dependencies = [
  "pretty_assertions",
  "redis-args",
  "serde",
+ "serde_json",
  "strum",
  "uuid",
 ]
@@ -5036,6 +5041,19 @@ dependencies = [
  "opentalk-types-common",
  "opentalk-types-signaling",
  "pretty_assertions",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "opentalk-types-signaling-control"
+version = "0.0.0-dev"
+dependencies = [
+ "chrono",
+ "opentalk-types-common",
+ "opentalk-types-signaling",
+ "pretty_assertions",
+ "redis-args",
  "serde",
  "serde_json",
 ]

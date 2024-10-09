@@ -20,6 +20,13 @@
     unused_results
 )]
 
+mod associated_participant;
+mod leave_reason;
+#[cfg(feature = "serde")]
+mod module_data;
+#[cfg(feature = "serde")]
+mod module_peer_data;
+mod participant;
 mod participant_id;
 mod participation_kind;
 mod role;
@@ -27,7 +34,15 @@ mod role;
 mod signaling_module_frontend_data;
 #[cfg(feature = "serde")]
 mod signaling_module_peer_frontend_data;
+mod target_participant;
 
+pub use associated_participant::AssociatedParticipant;
+pub use leave_reason::LeaveReason;
+#[cfg(feature = "serde")]
+pub use module_data::ModuleData;
+#[cfg(feature = "serde")]
+pub use module_peer_data::ModulePeerData;
+pub use participant::Participant;
 pub use participant_id::ParticipantId;
 pub use participation_kind::ParticipationKind;
 pub use role::{ForRole, Role};
@@ -35,3 +50,4 @@ pub use role::{ForRole, Role};
 pub use signaling_module_frontend_data::SignalingModuleFrontendData;
 #[cfg(feature = "serde")]
 pub use signaling_module_peer_frontend_data::SignalingModulePeerFrontendData;
+pub use target_participant::TargetParticipant;

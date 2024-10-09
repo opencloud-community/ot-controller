@@ -2,14 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_signaling::ParticipantId;
-
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::ParticipantId;
 
 /// Status information about a participant
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Participant {
     /// The id of the participant
     pub id: ParticipantId,
@@ -17,13 +14,13 @@ pub struct Participant {
     /// Module data for the participant
     #[cfg(feature = "serde")]
     #[serde(flatten)]
-    pub module_data: crate::signaling::ModulePeerData,
+    pub module_data: crate::ModulePeerData,
 }
 
 impl Participant {
     /// Gets the inner module data of a Participant
     #[cfg(feature = "serde")]
-    pub fn get_module<T: SignalingModulePeerFrontendData>(
+    pub fn get_module<T: crate::SignalingModulePeerFrontendData>(
         &self,
     ) -> Result<Option<T>, serde_json::Error> {
         self.module_data.get::<T>()
@@ -31,7 +28,7 @@ impl Participant {
 
     /// Updates the inner module data of a Participant and returns the new data
     #[cfg(feature = "serde")]
-    pub fn update_module<T: SignalingModulePeerFrontendData, F: FnOnce(&mut T)>(
+    pub fn update_module<T: crate::SignalingModulePeerFrontendData, F: FnOnce(&mut T)>(
         &mut self,
         update: F,
     ) -> Result<Option<T>, serde_json::Error> {

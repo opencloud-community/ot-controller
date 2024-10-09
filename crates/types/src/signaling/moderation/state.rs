@@ -4,9 +4,10 @@
 
 //! Frontend data for `moderation` namespace
 
+use opentalk_types_signaling::Participant;
+
 #[allow(unused_imports)]
 use crate::imports::*;
-use crate::signaling::control::Participant;
 
 /// The state of the `moderation` module.
 ///

@@ -2,17 +2,15 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Signaling messages for the `control` namespace
+use opentalk_types_signaling::TargetParticipant;
 
-#[allow(unused_imports)]
-use crate::imports::*;
-use crate::signaling::common::TargetParticipant;
+use crate::command::Join;
 
 /// Commands received by the `control` module
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(tag = "action", rename_all = "snake_case")
 )]
 pub enum ControlCommand {
@@ -31,20 +29,14 @@ pub enum ControlCommand {
     RevokeModeratorRole(TargetParticipant),
 }
 
-/// Body of the join command
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Join {
-    /// The users display name
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none",)
-    )]
-    pub display_name: Option<String>,
+impl From<Join> for ControlCommand {
+    fn from(value: Join) -> Self {
+        Self::Join(value)
+    }
 }
 
-#[cfg(test)]
-mod tests {
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
     use pretty_assertions::assert_eq;
     use serde_json::json;
 

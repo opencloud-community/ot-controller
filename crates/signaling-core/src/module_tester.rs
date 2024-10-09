@@ -23,24 +23,23 @@ use futures::{stream::SelectAll, StreamExt};
 use kustos::Authz;
 use opentalk_database::Db;
 use opentalk_db_storage::{rooms::Room, users::User};
-use opentalk_types::signaling::{
-    control::{
-        command::{ControlCommand, Join},
-        event::{ControlEvent, JoinSuccess},
-        module_id,
-        room::{CreatorInfo, RoomInfo},
-        state::ControlState,
-        AssociatedParticipant, Reason,
-    },
-    ModuleData, NamespacedCommand, NamespacedEvent,
-};
+use opentalk_types::signaling::{NamespacedCommand, NamespacedEvent};
 use opentalk_types_common::{
     rooms::BreakoutRoomId,
     tariffs::{TariffId, TariffModuleResource, TariffResource},
     time::Timestamp,
     users::UserId,
 };
-use opentalk_types_signaling::{ParticipantId, ParticipationKind, Role};
+use opentalk_types_signaling::{
+    AssociatedParticipant, LeaveReason, ModuleData, ParticipantId, ParticipationKind, Role,
+};
+use opentalk_types_signaling_control::{
+    command::{ControlCommand, Join},
+    event::{ControlEvent, JoinSuccess, Left},
+    module_id,
+    room::{CreatorInfo, RoomInfo},
+    state::ControlState,
+};
 use serde_json::Value;
 use snafu::{whatever, OptionExt, Report, ResultExt, Snafu};
 use tokio::{
@@ -814,10 +813,10 @@ where
 
                 self.interface
                     .ws
-                    .send(WsMessageOutgoing::Control(ControlEvent::Left {
+                    .send(WsMessageOutgoing::Control(ControlEvent::Left(Left {
                         id: AssociatedParticipant { id },
                         reason,
-                    }))?;
+                    })))?;
 
                 Ok(())
             }
@@ -1027,8 +1026,8 @@ where
     async fn build_participant(
         &mut self,
         id: ParticipantId,
-    ) -> Result<opentalk_types::signaling::control::Participant, SignalingModuleError> {
-        let mut participant = opentalk_types::signaling::control::Participant {
+    ) -> Result<opentalk_types_signaling::Participant, SignalingModuleError> {
+        let mut participant = opentalk_types_signaling::Participant {
             id,
             module_data: Default::default(),
         };
@@ -1067,7 +1066,7 @@ where
 
         self.publish_exchange_control(control::exchange::Message::Left {
             id: self.participant_id,
-            reason: Reason::Quit,
+            reason: LeaveReason::Quit,
         })?;
 
         let ctx = DestroyContext {

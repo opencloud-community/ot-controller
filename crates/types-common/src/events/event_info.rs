@@ -5,7 +5,7 @@
 //! Common types related to event
 
 use crate::{
-    events::{EventId, MeetingDetails},
+    events::{EventId, EventTitle, MeetingDetails},
     rooms::RoomId,
     utils::ExampleData,
 };
@@ -26,7 +26,7 @@ pub struct EventInfo {
     pub room_id: RoomId,
 
     /// The title of the event
-    pub title: String,
+    pub title: EventTitle,
 
     /// True if the event was created ad-hoc
     pub is_adhoc: bool,
@@ -58,7 +58,7 @@ impl ExampleData for EventInfo {
         Self {
             id: EventId::example_data(),
             room_id: RoomId::example_data(),
-            title: "Weekly Team Event".to_string(),
+            title: EventTitle::example_data(),
             is_adhoc: false,
             meeting_details: Some(MeetingDetails::example_data()),
             e2e_encryption: false,

@@ -2,20 +2,15 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Frontend data for `control` namespace
-
 use opentalk_types_common::time::Timestamp;
 use opentalk_types_signaling::{ParticipationKind, Role};
-
-#[allow(unused_imports)]
-use crate::imports::*;
 
 /// The state of a participant in the `control` module.
 ///
 /// This struct is sent to the participant in the `join_success` message
 /// when they join successfully to the meeting.
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ControlState {
     /// Display name of the participant
     pub display_name: String,
@@ -48,6 +43,6 @@ pub struct ControlState {
 }
 
 #[cfg(feature = "serde")]
-impl SignalingModulePeerFrontendData for ControlState {
-    const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
+impl opentalk_types_signaling::SignalingModulePeerFrontendData for ControlState {
+    const NAMESPACE: Option<&'static str> = Some(crate::NAMESPACE);
 }
