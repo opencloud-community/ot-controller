@@ -5,6 +5,68 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.21.0]
+
+### 🚀 New features
+
+- Generate attendance report ([!1074](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1074), [#558](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/558))
+- Add `ToSchema` derive to `ModuleFeatureId` ([!1210](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1210))
+- Don't print warning when skipping modules ([!1201](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1201))
+- Warn about adding rules twice ([!1201](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1201))
+- Add force mute command to livekit module ([!1200](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1200))
+- Respect defaults.screen_share_requires_permission & add grant/revoke_screen_share_permissions ([!1200](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1200))
+- (release) Add a `justfile` with a `prepare-release` target for release automation ([!1226](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1226))
+
+### 🐛 Bug fixes
+
+- (recording) Rollback object storage after certain save asset errors ([!1132](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1132), [#860](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/860))
+- Deserialize errors on missing fields ([!1187](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1187))
+- Properly serialize url queries ([!1187](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1187))
+- Cleanup permissions after removing user from event ([!1201](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1201), [#849](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/849))
+- Properly sync profile pictures on login ([!1224](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1224), [#852](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/852))
+
+### 🔨 Refactor
+
+- (types) Introduce opentalk-types-signaling-breakout crate ([!1177](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1177), [#868](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/868))
+- (types) Remove wildcard `imports` modules in type crates ([!1205](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1205))
+- (types) Introduce opentalk-types-signaling-control crate ([!1204](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1204), [#870](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/870))
+
+### 📦 Dependencies
+
+- (deps) Lock file maintenance ([!1183](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1183), [!1198](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1198), [!1223](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1223))
+- (deps) Update git.opentalk.dev:5050/opentalk/tools/check-changelog docker tag to v0.3.0 ([!1185](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1185))
+- (deps) Update postgres docker tag to v17 ([!1193](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1193))
+- (deps) Update redocly/cli docker tag to v1.25.5 ([!1216](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1216))
+- (deps) Update rust crate async-trait to v0.1.83 ([!1189](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1189))
+- (deps) Update rust crate aws-sdk-s3 to v1.53.0 ([!1211](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1211))
+- (deps) Update rust crate cidr to 0.3 ([!1202](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1202))
+- (deps) Update rust crate clap to v4.5.20 ([!1228](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1228))
+- (deps) Update rust crate http-request-derive to v0.3.2 ([!1212](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1212))
+- (deps) Update rust crate opentalk-diesel-newtype to 0.13 ([!1206](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1206))
+- (deps) Update rust crate proc-macro2 to v1.0.87 ([!1225](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1225))
+- (deps) Update rust crate redis to v0.27.4 ([!1229](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1229))
+- (deps) Update rust crate rustls-pemfile to v2.2.0 ([!1203](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1203))
+- (deps) Update rust crate serde_with to v3.10.0 ([!1208](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1208))
+- (deps) Update rust crate snafu to v0.8.5 ([!1186](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1186))
+- (deps) Update rust crate sysinfo to 0.32 ([!1222](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1222))
+- (deps) Update rust crate tokio-cron-scheduler to 0.13 ([!1182](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1182))
+- (deps) Update rust crate yaml-rust2 to 0.9.0 ([!1191](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1191))
+
+### ⚙ Miscellaneous
+
+- Return livekit errors in snake_case ([!1188](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1188))
+- Fix typo in rooms e2e_encryption field ([!1190](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1190))
+- (ci) Extract crate checks into included gitlab-ci.yml files ([!1205](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1205))
+- (tests) Rename `mod test` to `mod tests` ([!1205](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1205))
+
+### Ci
+
+- Remove changelog-check ([!1178](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1178))
+
+### Test
+
+- (kustos) Verify granting access again works ([!1201](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1201))
+
 ## [0.20.0]
 
 ### 🚀 New features
@@ -818,6 +880,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - initial release candidate
 
 ---
+
+[0.21.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.20.0...v0.21.0
 
 [0.20.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.19.0...v0.20.0
 
