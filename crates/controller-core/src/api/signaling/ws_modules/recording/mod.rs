@@ -304,8 +304,6 @@ impl Recording {
         &self,
         storage: &mut dyn RecordingStorage,
     ) -> Result<(), SignalingModuleError> {
-        let mut conn = self.db.get_conn().await?;
-
         let can_record = self.enabled_features.contains(&RecordingFeature::Record)
             && self.room.breakout_room_id().is_none()
             && !self.room_encryption_enabled;
@@ -319,6 +317,8 @@ impl Recording {
         let streams = if self.room.breakout_room_id().is_some() || !can_stream {
             BTreeMap::from_iter(stock_streams)
         } else {
+            let mut conn = self.db.get_conn().await?;
+
             let streaming_targets =
                 RoomStreamingTargetRecord::get_all_for_room(&mut conn, self.room.room_id()).await?;
             stock_streams
