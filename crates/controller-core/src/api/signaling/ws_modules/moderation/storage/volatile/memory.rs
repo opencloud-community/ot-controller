@@ -111,6 +111,7 @@ impl MemoryModerationState {
         )
     }
 
+    #[cfg(test)]
     pub(super) fn waiting_room_participant_count(&self, room: RoomId) -> usize {
         self.waiting_room_participants
             .get(&room)
@@ -168,6 +169,7 @@ impl MemoryModerationState {
         )
     }
 
+    #[cfg(test)]
     pub(super) fn waiting_room_accepted_participant_count(&self, room: RoomId) -> usize {
         self.waiting_room_accepted_participants
             .get(&room)

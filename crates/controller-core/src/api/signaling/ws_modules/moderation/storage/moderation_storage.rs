@@ -93,6 +93,7 @@ pub(crate) trait ModerationStorage:
         room: RoomId,
     ) -> Result<BTreeSet<ParticipantId>, SignalingModuleError>;
 
+    #[cfg(test)]
     async fn waiting_room_participant_count(
         &mut self,
         room: RoomId,
@@ -127,6 +128,7 @@ pub(crate) trait ModerationStorage:
         room: RoomId,
     ) -> Result<BTreeSet<ParticipantId>, SignalingModuleError>;
 
+    #[cfg(test)]
     async fn waiting_room_accepted_participant_count(
         &mut self,
         room: RoomId,

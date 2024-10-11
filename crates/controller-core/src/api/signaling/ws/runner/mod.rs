@@ -17,6 +17,7 @@ use actix_http::ws::{CloseCode, CloseReason, Message};
 use bytestring::ByteString;
 use futures::{stream::SelectAll, Future};
 use kustos::Authz;
+use log::log_enabled;
 use opentalk_controller_settings::SharedSettings;
 use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
@@ -77,6 +78,7 @@ use super::{
     RunnerMessage,
 };
 use crate::api::signaling::{
+    breakout::{self},
     echo::Echo,
     moderation::{self, ModerationStorageProvider},
     resumption::ResumptionTokenKeepAlive,
@@ -86,6 +88,8 @@ use crate::api::signaling::{
 };
 
 mod call_in;
+
+const GRACE_PERIOD_DURATION: u64 = 60;
 
 #[derive(Debug, Snafu)]
 pub enum RunnerError {
@@ -413,8 +417,9 @@ impl Runner {
     /// Destroys the runner and all associated resources
     #[tracing::instrument(skip(self), fields(id = %self.id))]
     pub async fn destroy(mut self, close_ws: bool, reason: LeaveReason) {
-        let destroy_start_time = Instant::now();
+        let mut destroy_start_time = Instant::now();
         let mut encountered_error = false;
+        let mut cleanup_scope = CleanupScope::None;
 
         if let RunnerState::Joined | RunnerState::Waiting { .. } = &self.state {
             // The retry/wait_time values are set extra high
@@ -487,109 +492,33 @@ impl Runner {
                 }
             };
 
-            let room_is_empty = match self
-                .volatile
-                .control_storage()
-                .participants_all_left(self.room_id)
-                .await
-            {
-                Ok(room_is_empty) => room_is_empty,
-                Err(e) => {
-                    log::error!("Failed to check if room is empty {}", Report::from_error(e));
-                    encountered_error = true;
-                    false
-                }
-            };
-
-            // if the room is empty check that the waiting room is empty
-            let destroy_room = if room_is_empty {
-                if self.room_id.breakout_room_id().is_some() {
-                    // Breakout rooms are destroyed even with participants inside the waiting room
-                    true
-                } else {
-                    // destroy room only if waiting room is empty
-                    let waiting_room_is_empty = match self
-                        .volatile
-                        .moderation_storage()
-                        .waiting_room_participant_count(self.room_id.room_id())
-                        .await
-                    {
-                        Ok(waiting_room_len) => waiting_room_len == 0,
-                        Err(e) => {
-                            log::error!(
-                                "failed to get waiting room len, {}",
-                                Report::from_error(e)
-                            );
-                            encountered_error = true;
-                            false
-                        }
-                    };
-                    let waiting_room_accepted_is_empty = match self
-                        .volatile
-                        .moderation_storage()
-                        .waiting_room_accepted_participant_count(self.room_id.room_id())
-                        .await
-                    {
-                        Ok(waiting_room_len) => waiting_room_len == 0,
-                        Err(e) => {
-                            log::error!(
-                                "failed to get accepted waiting room len, {}",
-                                Report::from_error(e)
-                            );
-                            encountered_error = true;
-                            false
-                        }
-                    };
-                    waiting_room_is_empty && waiting_room_accepted_is_empty
-                }
-            } else {
-                false
-            };
-
-            match self
+            if let Err(err) = self
                 .volatile
                 .control_storage()
                 .decrement_participant_count(self.room.id)
                 .await
             {
-                Ok(remaining_participant_count) => {
-                    if remaining_participant_count == 0 {
-                        if let Err(e) = self.cleanup_redis_for_global_room().await {
-                            log::error!(
-                                "failed to mark participant as left, {}",
-                                Report::from_error(e)
-                            );
-                            encountered_error = true;
-                        }
-                    }
-                }
+                log::error!(
+                    "Failed to decrement participant count, {}",
+                    Report::from_error(err)
+                );
+                encountered_error = true;
+            }
+
+            cleanup_scope = match self.get_cleanup_scope().await {
+                Ok(cleanup_scope) => cleanup_scope,
                 Err(e) => {
                     log::error!(
-                        "failed to decrement participant count, {}",
+                        "Failed to get cleanup scope after grace period ended: {}",
                         Report::from_error(e)
                     );
-                    encountered_error = true;
-                }
-            }
 
-            let ctx = DestroyContext {
-                volatile: &mut self.volatile,
-                destroy_room,
+                    log::error!("This may result in stale state for room {}", self.room_id);
+
+                    encountered_error = true;
+                    CleanupScope::None
+                }
             };
-
-            self.modules.destroy(ctx).await;
-
-            if destroy_room {
-                if let Err(e) = self.cleanup_redis_keys_for_current_room().await {
-                    log::error!(
-                        "Failed to remove all control attributes, {}",
-                        Report::from_error(e)
-                    );
-                    encountered_error = true;
-                }
-
-                self.metrics.increment_destroyed_rooms_count();
-            }
 
             self.metrics.decrement_participants_count(&self.participant);
 
@@ -598,7 +527,7 @@ impl Runner {
                 encountered_error = true;
             }
 
-            if !destroy_room {
+            if cleanup_scope.keep_room() {
                 match &self.state {
                     RunnerState::None => unreachable!("state was checked before"),
                     RunnerState::Waiting { .. } => {
@@ -631,14 +560,6 @@ impl Runner {
                     }
                 }
             }
-        } else {
-            // Not joined, just destroy modules normal
-            let ctx = DestroyContext {
-                volatile: &mut self.volatile,
-                destroy_room: false,
-            };
-
-            self.modules.destroy(ctx).await;
         }
 
         // release participant id
@@ -662,52 +583,328 @@ impl Runner {
             }
         }
 
+        // If a Close frame is received from the websocket actor, manually return a close command
+        if close_ws {
+            self.ws.close(CloseCode::Normal).await;
+        }
+
+        if cleanup_scope.keep_room() {
+            self.destroy_modules(cleanup_scope).await;
+
+            self.metrics.record_destroy_time(
+                destroy_start_time.elapsed().as_secs_f64(),
+                !encountered_error,
+            );
+
+            log::debug!("Exiting room without cleaning up for room {}", self.room_id);
+
+            return;
+        }
+
+        if let RunnerState::None = &self.state {
+            // Early return if the runner never joined the conference
+            return;
+        }
+
+        // At this point, the runner is the last participant in the room. Keep the room alive for a grace period
+        if let Err(e) = self.wait_grace_period(&mut cleanup_scope).await {
+            log::error!(
+                "Encountered error during grace period, {}",
+                Report::from_error(e)
+            );
+
+            self.metrics
+                .record_destroy_time(destroy_start_time.elapsed().as_secs_f64(), false);
+
+            return;
+        }
+
+        // reset the destroy start time
+        destroy_start_time = Instant::now();
+        if cleanup_scope.keep_room() {
+            self.destroy_modules(cleanup_scope).await;
+
+            self.metrics.record_destroy_time(
+                destroy_start_time.elapsed().as_secs_f64(),
+                !encountered_error,
+            );
+
+            return;
+        }
+
+        // acquire room lock
+        let room_guard = match self.volatile.room_locking().lock_room(self.room_id).await {
+            Ok(guard) => guard,
+            Err(e @ LockError::Locked) => {
+                log::error!(
+                    "Failed to acquire r3dlock, contention too high, {}",
+                    Report::from_error(e)
+                );
+
+                self.metrics
+                    .record_destroy_time(destroy_start_time.elapsed().as_secs_f64(), false);
+
+                return;
+            }
+            Err(e) => {
+                log::error!("Failed to acquire r3dlock, {}", Report::from_error(e));
+                // There is a problem when accessing redis which could
+                // mean either the network or redis is broken.
+                // Both cases cannot be handled here, abort the cleanup
+
+                self.metrics
+                    .record_destroy_time(destroy_start_time.elapsed().as_secs_f64(), false);
+
+                return;
+            }
+        };
+
+        // Get the cleanup scope again. We can't ensure that no user joined after the end of the grace period
+        // and before acquiring the room lock:
+        //
+        //                 <users might join here>
+        //                        |-----|
+        // |-----grace period----|
+        //                               |-----room lock----|
+        cleanup_scope = match self.get_cleanup_scope().await {
+            Ok(cleanup_scope) => cleanup_scope,
+            Err(e) => {
+                log::error!(
+                    "Failed to get cleanup scope after grace period ended: {}",
+                    Report::from_error(e)
+                );
+
+                log::error!("This may result in stale state for room {}", self.room_id);
+
+                encountered_error = true;
+
+                CleanupScope::None
+            }
+        };
+
+        self.cleanup_routine(cleanup_scope, &mut encountered_error)
+            .await;
+
+        if let Err(e) = self.volatile.room_locking().unlock_room(room_guard).await {
+            log::error!("Failed to unlock room , {}", Report::from_error(e));
+        }
+
         self.metrics.record_destroy_time(
             destroy_start_time.elapsed().as_secs_f64(),
             !encountered_error,
         );
 
-        // If a Close frame is received from the websocket actor, manually return a close command
-        if close_ws {
-            self.ws.close(CloseCode::Normal).await;
+        log::debug!("Finished room cleanup for {}", self.room_id);
+    }
+
+    async fn cleanup_routine(&mut self, cleanup_scope: CleanupScope, encountered_error: &mut bool) {
+        self.destroy_modules(cleanup_scope).await;
+
+        match cleanup_scope {
+            CleanupScope::None => {
+                log::debug!("Destroying nothing");
+            }
+            CleanupScope::Local => {
+                log::debug!("Destroying breakout room");
+
+                if let Err(e) =
+                    cleanup_redis_keys_for_signaling_room(&mut self.volatile, self.room_id).await
+                {
+                    log::error!(
+                        "Failed to remove all control attributes, {}",
+                        Report::from_error(e)
+                    );
+
+                    *encountered_error = true;
+                }
+            }
+            CleanupScope::Global => {
+                log::debug!("Destroying conference room");
+                if let Err(e) =
+                    cleanup_redis_keys_for_signaling_room(&mut self.volatile, self.room_id).await
+                {
+                    log::error!(
+                        "Failed to remove all control attributes, {}",
+                        Report::from_error(e)
+                    );
+
+                    *encountered_error = true;
+                }
+
+                if let Err(e) = self.cleanup_redis_for_global_room().await {
+                    log::error!(
+                        "failed to cleanup conference room, {}",
+                        Report::from_error(e)
+                    );
+
+                    *encountered_error = true;
+                }
+
+                if self.room_id.breakout_room_id().is_some() {
+                    // Cleanup the signaling room keys for the main room
+                    if let Err(e) = cleanup_redis_keys_for_signaling_room(
+                        &mut self.volatile,
+                        SignalingRoomId::new(self.room_id.room_id(), None),
+                    )
+                    .await
+                    {
+                        log::error!("failed to cleanup main room {}", Report::from_error(e));
+
+                        *encountered_error = true;
+                    }
+                }
+
+                self.metrics.increment_destroyed_rooms_count();
+            }
         }
     }
 
-    /// Remove all room and control module related data from redis for the current 'local' room/breakout-room. Does not
-    /// touch any keys that contain 'global' data that is used across all 'sub'-rooms (main & breakout rooms).
-    async fn cleanup_redis_keys_for_current_room(&mut self) -> Result<()> {
-        self.volatile
+    /// Determine what state of the room should be cleaned up
+    ///
+    /// Note: This must be called after the current participant has left the room and while the room lock is held
+    async fn get_cleanup_scope(&mut self) -> Result<CleanupScope, SignalingModuleError> {
+        // Counts for all participants from the current room, waiting room and breakout rooms
+        let global_room_participants: usize = self
+            .volatile
             .control_storage()
-            .remove_room_closes_at(self.room_id)
-            .await?;
-        self.volatile
+            .get_participant_count(self.room_id.room_id())
+            .await?
+            .unwrap_or(0)
+            .max(0) as usize;
+
+        let current_room_empty = self
+            .volatile
             .control_storage()
-            .remove_participant_set(self.room_id)
+            .participants_all_left(self.room_id)
             .await?;
-        for key in [
-            DISPLAY_NAME,
-            ROLE,
-            JOINED_AT,
-            LEFT_AT,
-            HAND_IS_UP,
-            HAND_UPDATED_AT,
-            IS_ROOM_OWNER,
-            KIND,
-            USER_ID,
-            AVATAR_URL,
-        ] {
-            self.volatile
-                .control_storage()
-                .remove_attribute_key(self.room_id, key)
-                .await?;
+
+        log::debug!("Participant state while determining cleanup scope ( current room empty: {current_room_empty}, global room: {global_room_participants})");
+
+        if global_room_participants == 0 {
+            // The main room, waiting room and all breakout rooms are empty
+            return Ok(CleanupScope::Global);
+        }
+
+        if current_room_empty && self.room_id.breakout_room_id().is_some() {
+            // Participants exist in the main room or in the waiting room, but the local state of this room can be
+            // cleaned up
+            return Ok(CleanupScope::Local);
+        }
+
+        // There are still participants in either a breakout or waiting room, can't clean up the global room yet
+        Ok(CleanupScope::None)
+    }
+
+    /// Determine what state should be cleaned up when a participant joined the conference after the grace period has
+    /// started
+    fn get_cleanup_scope_after_join(&self, join_event: JoinEvent) -> CleanupScope {
+        if self.room_id.breakout_room_id().is_none() {
+            // If this runner is the main room, the room destruction is canceled when a participant joined during the
+            // grace period
+            return CleanupScope::None;
+        }
+
+        // This runner is a breakout room, we might still have to do a partial cleanup, even after someone joined the
+        // conference
+        match join_event {
+            JoinEvent::WaitingRoom => CleanupScope::Local,
+            JoinEvent::Room(signaling_room_id) => {
+                if signaling_room_id == self.room_id {
+                    // Someone joined this specific breakout room, cancel the cleanup
+                    CleanupScope::None
+                } else {
+                    CleanupScope::Local
+                }
+            }
+        }
+    }
+
+    /// Keeps the room alive for a grace period
+    ///
+    /// The grace period can be canceled early when another participant joins the conference and meets the conditions
+    /// to abort the cleanup for this specific room.
+    ///
+    /// Updates the `cleanup_scope` depending on the join event.
+    async fn wait_grace_period(
+        &mut self,
+        cleanup_scope: &mut CleanupScope,
+    ) -> Result<(), snafu::Whatever> {
+        log::debug!(
+            "Entering room destruction grace period for {}",
+            self.room_id
+        );
+        let mut grace_period = Box::pin(tokio::time::sleep(Duration::from_secs(
+            GRACE_PERIOD_DURATION,
+        )));
+
+        loop {
+            tokio::select! {
+                msg = self.subscriber_handle.receive() => {
+                    match msg {
+                        Some(msg) => {
+                            if let Some(join_event) = self.has_participant_joined(msg) {
+                                *cleanup_scope = self.get_cleanup_scope_after_join(join_event);
+                            }
+
+                            if cleanup_scope == &CleanupScope::None {
+                                // A participant joined this room, cancel the destruction
+                                break;
+                            }
+                        },
+                        None => {
+                            whatever!("Exchange handle dropped")
+                        },
+                    }
+                }
+                _ = &mut grace_period => {
+                    log::debug!("Idle timeout reached for {}", self.room_id);
+                    break;
+                }
+            }
+        }
+
+        if log_enabled!(log::Level::Debug) {
+            let remaining_time = grace_period
+                .deadline()
+                .duration_since(tokio::time::Instant::now());
+
+            match remaining_time.as_secs() {
+                0 => log::debug!(
+                    "Finished full grace period, cleanup scope is {:?} for {}",
+                    cleanup_scope,
+                    self.room_id
+                ),
+                remaining => log::debug!(
+                    "Finished grace period early with {} second left, cleanup scope is {:?} for {}",
+                    remaining,
+                    cleanup_scope,
+                    self.room_id
+                ),
+            }
         }
 
         Ok(())
     }
 
+    async fn destroy_modules(&mut self, cleanup_scope: CleanupScope) {
+        log::debug!(
+            "Destroying modules with cleanup scope {:?} for {}",
+            cleanup_scope,
+            self.room_id
+        );
+
+        let ctx = DestroyContext {
+            volatile: &mut self.volatile,
+            destroy_room: cleanup_scope.destroy_room(),
+        };
+
+        self.modules.destroy(ctx).await;
+    }
+
     /// Remove all room and control module related redis keys that are used across all 'sub'-rooms. This must only be
     /// called once the main and all breakout rooms are empty.
     async fn cleanup_redis_for_global_room(&mut self) -> Result<()> {
+        log::debug!("Cleanup up global room for {}", self.room_id);
         self.volatile
             .control_storage()
             .delete_participant_count(self.room.id)
@@ -2243,6 +2440,116 @@ impl Runner {
             })),
             Participant::Guest | Participant::Recorder | Participant::Sip => None,
         }
+    }
+
+    /// Check the given exchange message and determine if a participant joined
+    ///
+    /// Returns an appropriate [`JoinEvent`] or [`None`] when no one joined.
+    fn has_participant_joined(&self, msg: ByteString) -> Option<JoinEvent> {
+        let namespaced = match serde_json::from_str::<NamespacedEvent<Value>>(&msg) {
+            Ok(namespaced) => namespaced,
+            Err(e) => {
+                log::error!(
+                    "Failed to read incoming exchange message, {}",
+                    Report::from_error(e)
+                );
+                return None;
+            }
+        };
+
+        if namespaced.module == control::module_id() {
+            if let Ok(exchange::Message::Joined(_)) =
+                serde_json::from_value::<exchange::Message>(namespaced.payload)
+            {
+                return Some(JoinEvent::Room(self.room_id));
+            }
+        } else if namespaced.module == opentalk_types_signaling_moderation::module_id() {
+            if let Ok(moderation::exchange::Message::JoinedWaitingRoom(_)) =
+                serde_json::from_value::<moderation::exchange::Message>(namespaced.payload)
+            {
+                return Some(JoinEvent::WaitingRoom);
+            }
+        } else if namespaced.module == breakout::module_id() {
+            if let Ok(breakout::exchange::Message::Joined(participant_joined_other_room)) =
+                serde_json::from_value::<breakout::exchange::Message>(namespaced.payload)
+            {
+                return Some(JoinEvent::Room(SignalingRoomId::new(
+                    self.room_id.room_id(),
+                    participant_joined_other_room.breakout_room,
+                )));
+            }
+        }
+
+        None
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum JoinEvent {
+    /// A participant joined the waiting room
+    WaitingRoom,
+    /// A participant joined the either the main or breakout room
+    Room(SignalingRoomId),
+}
+
+/// Remove all room and control module related data from redis for the given 'local' room/breakout-room. Does not
+/// touch any keys that contain 'global' data that is used across all 'sub'-rooms (main & breakout rooms).
+async fn cleanup_redis_keys_for_signaling_room(
+    storage: &mut VolatileStorage,
+    room_id: SignalingRoomId,
+) -> Result<()> {
+    storage
+        .control_storage()
+        .remove_room_closes_at(room_id)
+        .await?;
+    storage
+        .control_storage()
+        .remove_participant_set(room_id)
+        .await?;
+    for key in [
+        DISPLAY_NAME,
+        ROLE,
+        JOINED_AT,
+        LEFT_AT,
+        HAND_IS_UP,
+        HAND_UPDATED_AT,
+        IS_ROOM_OWNER,
+        KIND,
+        USER_ID,
+        AVATAR_URL,
+    ] {
+        storage
+            .control_storage()
+            .remove_attribute_key(room_id, key)
+            .await?;
+    }
+
+    Ok(())
+}
+
+/// The scope of the cleanup
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+enum CleanupScope {
+    /// Keep the rooms state, only the cleanup the runners context
+    None,
+    /// The current room state must be cleaned up. Global state must be kept
+    Local,
+    /// All state that is related to the room must be cleaned up (including the main room if this is a breakout room)
+    Global,
+}
+
+impl CleanupScope {
+    /// Returns true when either the global or current room must be destroyed
+    fn destroy_room(&self) -> bool {
+        match self {
+            CleanupScope::None => false,
+            CleanupScope::Global | CleanupScope::Local => true,
+        }
+    }
+
+    /// Returns true when the current room does not need a state clean up
+    fn keep_room(&self) -> bool {
+        !self.destroy_room()
     }
 }
 
