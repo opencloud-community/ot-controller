@@ -7,7 +7,7 @@ use std::{collections::BTreeSet, time::Duration};
 use either::Either;
 use futures::{stream::once, FutureExt};
 use opentalk_signaling_core::{
-    control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
+    control, CleanupScope, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types_signaling::Role;
@@ -123,39 +123,17 @@ impl SignalingModule for Polls {
         }
     }
 
-    async fn on_destroy(self, ctx: DestroyContext<'_>) {
-        if ctx.destroy_room() {
-            let volatile = ctx.volatile.storage();
-            if let Err(e) = volatile.delete_polls_state(self.room).await {
-                log::error!("failed to remove poll state: {}", Report::from_error(e));
-            }
-
-            let list = match volatile.poll_ids(self.room).await {
-                Ok(list) => list,
-                Err(e) => {
-                    log::error!(
-                        "failed to get list of poll results to clean up, {}",
-                        Report::from_error(e)
-                    );
-                    return;
+    async fn on_destroy(self, mut ctx: DestroyContext<'_>) {
+        match ctx.cleanup_scope {
+            CleanupScope::None => (),
+            CleanupScope::Local => Polls::cleanup_room(&mut ctx, self.room).await,
+            CleanupScope::Global => {
+                if self.room.breakout_room_id().is_some() {
+                    Polls::cleanup_room(&mut ctx, SignalingRoomId::new(self.room.room_id(), None))
+                        .await
                 }
-            };
 
-            for id in list {
-                if let Err(e) = volatile.delete_poll_results(self.room, id).await {
-                    log::error!(
-                        "failed to remove poll results for id {}, {}",
-                        id,
-                        Report::from_error(e)
-                    );
-                }
-            }
-
-            if let Err(e) = volatile.delete_poll_ids(self.room).await {
-                log::error!(
-                    "failed to remove closed poll id list: {}",
-                    Report::from_error(e)
-                );
+                Polls::cleanup_room(&mut ctx, self.room).await
             }
         }
     }
@@ -413,6 +391,55 @@ impl Polls {
 
                 Ok(())
             }
+        }
+    }
+
+    async fn cleanup_room(ctx: &mut DestroyContext<'_>, signaling_room_id: SignalingRoomId) {
+        if let Err(e) = ctx
+            .volatile
+            .storage()
+            .delete_polls_state(signaling_room_id)
+            .await
+        {
+            log::error!("failed to remove poll state: {}", Report::from_error(e));
+        }
+
+        let list = match ctx.volatile.storage().poll_ids(signaling_room_id).await {
+            Ok(list) => list,
+            Err(e) => {
+                log::error!(
+                    "failed to get list of poll results to clean up, {}",
+                    Report::from_error(e)
+                );
+                return;
+            }
+        };
+
+        for id in list {
+            if let Err(e) = ctx
+                .volatile
+                .storage()
+                .delete_poll_results(signaling_room_id, id)
+                .await
+            {
+                log::error!(
+                    "failed to remove poll results for id {}, {}",
+                    id,
+                    Report::from_error(e)
+                );
+            }
+        }
+
+        if let Err(e) = ctx
+            .volatile
+            .storage()
+            .delete_poll_ids(signaling_room_id)
+            .await
+        {
+            log::error!(
+                "failed to remove closed poll id list: {}",
+                Report::from_error(e)
+            );
         }
     }
 }

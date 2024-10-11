@@ -99,7 +99,7 @@ impl Modules {
             module
                 .destroy(DestroyContext {
                     volatile: ctx.volatile,
-                    destroy_room: ctx.destroy_room,
+                    cleanup_scope: ctx.cleanup_scope,
                 })
                 .await;
         }

@@ -74,8 +74,8 @@ use tokio_stream::StreamExt;
 use super::{
     actor::WebSocketActor,
     modules::{DynBroadcastEvent, DynEventCtx, DynTargetedEvent, Modules, NoSuchModuleError},
-    DestroyContext, ExchangeBinding, ExchangePublish, NamespacedCommand, NamespacedEvent,
-    RunnerMessage,
+    CleanupScope, DestroyContext, ExchangeBinding, ExchangePublish, NamespacedCommand,
+    NamespacedEvent, RunnerMessage,
 };
 use crate::api::signaling::{
     breakout::{self},
@@ -177,7 +177,7 @@ impl Builder {
         let ctx = DestroyContext {
             volatile: &mut self.volatile,
             // We haven't joined yet
-            destroy_room: false,
+            cleanup_scope: CleanupScope::None,
         };
 
         self.modules.destroy(ctx).await
@@ -895,7 +895,7 @@ impl Runner {
 
         let ctx = DestroyContext {
             volatile: &mut self.volatile,
-            destroy_room: cleanup_scope.destroy_room(),
+            cleanup_scope,
         };
 
         self.modules.destroy(ctx).await;
@@ -2525,32 +2525,6 @@ async fn cleanup_redis_keys_for_signaling_room(
     }
 
     Ok(())
-}
-
-/// The scope of the cleanup
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-enum CleanupScope {
-    /// Keep the rooms state, only the cleanup the runners context
-    None,
-    /// The current room state must be cleaned up. Global state must be kept
-    Local,
-    /// All state that is related to the room must be cleaned up (including the main room if this is a breakout room)
-    Global,
-}
-
-impl CleanupScope {
-    /// Returns true when either the global or current room must be destroyed
-    fn destroy_room(&self) -> bool {
-        match self {
-            CleanupScope::None => false,
-            CleanupScope::Global | CleanupScope::Local => true,
-        }
-    }
-
-    /// Returns true when the current room does not need a state clean up
-    fn keep_room(&self) -> bool {
-        !self.destroy_room()
-    }
 }
 
 #[must_use]

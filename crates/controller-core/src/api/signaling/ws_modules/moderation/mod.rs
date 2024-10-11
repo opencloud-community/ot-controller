@@ -15,8 +15,9 @@ use opentalk_signaling_core::{
         },
         ControlStateExt as _, ControlStorageProvider,
     },
-    DestroyContext, Event, InitContext, ModuleContext, SerdeJsonSnafu, SignalingModule,
-    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
+    CleanupScope, DestroyContext, Event, InitContext, ModuleContext, SerdeJsonSnafu,
+    SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
+    VolatileStorage,
 };
 use opentalk_types_common::{rooms::RoomId, users::UserId};
 use opentalk_types_signaling::{
@@ -608,7 +609,7 @@ impl SignalingModule for ModerationModule {
     }
 
     async fn on_destroy(self, ctx: DestroyContext<'_>) {
-        if ctx.destroy_room() {
+        if ctx.cleanup_scope == CleanupScope::Global {
             if let Err(e) = ctx
                 .volatile
                 .moderation_storage()

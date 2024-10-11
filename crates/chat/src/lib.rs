@@ -21,8 +21,9 @@ use opentalk_signaling_core::{
         exchange,
         storage::{ControlStorageParticipantAttributes as _, USER_ID},
     },
-    DestroyContext, Event, InitContext, ModuleContext, Participant, SignalingModule,
-    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
+    CleanupScope, DestroyContext, Event, InitContext, LockError, ModuleContext, Participant,
+    RoomLockingProvider as _, SignalingModule, SignalingModuleError, SignalingModuleInitData,
+    SignalingRoomId, VolatileStorage,
 };
 use opentalk_types_common::{
     time::Timestamp,
@@ -61,6 +62,121 @@ pub struct Chat {
 impl Chat {
     fn get_group(&self, name: &GroupName) -> Option<&Group> {
         self.groups.iter().find(|group| group.name == *name)
+    }
+
+    async fn cleanup_room(ctx: &mut DestroyContext<'_>, signaling_room_id: SignalingRoomId) {
+        if let Err(e) = ctx
+            .volatile
+            .storage()
+            .delete_room_history(signaling_room_id)
+            .await
+        {
+            log::error!(
+                "Failed to remove room chat history on room destroy, {}",
+                Report::from_error(e)
+            );
+        }
+
+        if let Err(e) = ctx
+            .volatile
+            .storage()
+            .delete_private_chat_correspondents(signaling_room_id)
+            .await
+        {
+            log::error!(
+                "Failed to remove room chat correspondents on room destroy, {}",
+                Report::from_error(e)
+            );
+        }
+
+        let correspondents = ctx
+            .volatile
+            .storage()
+            .get_private_chat_correspondents(signaling_room_id)
+            .await
+            .unwrap_or_else(|e| {
+                log::error!(
+                    "Failed to load room private chat correspondents, {}",
+                    Report::from_error(e)
+                );
+                Default::default()
+            });
+        for (a, b) in correspondents.iter().map(ParticipantPair::as_tuple) {
+            if let Err(e) = ctx
+                .volatile
+                .storage()
+                .delete_private_chat_history(signaling_room_id, a, b)
+                .await
+            {
+                log::error!(
+                    "Failed to remove room private chat history, {}",
+                    Report::from_error(e)
+                );
+            }
+        }
+
+        let participants = ctx
+            .volatile
+            .storage()
+            .get_all_participants(signaling_room_id)
+            .await
+            .unwrap_or_else(|e| {
+                log::error!(
+                    "Failed to load room participants, {}",
+                    Report::from_error(e)
+                );
+                BTreeSet::new()
+            });
+
+        for participant in participants {
+            if let Err(e) = ctx
+                .volatile
+                .storage()
+                .delete_last_seen_timestamp_global(signaling_room_id, participant)
+                .await
+            {
+                log::error!(
+                    "Failed to clean up last seen timestamp for global chat, {}",
+                    e
+                );
+            }
+            if let Err(e) = ctx
+                .volatile
+                .storage()
+                .delete_last_seen_timestamps_group(signaling_room_id, participant)
+                .await
+            {
+                log::error!(
+                    "Failed to clean up last seen timestamps for group chats, {}",
+                    e
+                );
+            }
+            if let Err(e) = ctx
+                .volatile
+                .storage()
+                .delete_last_seen_timestamps_private(signaling_room_id, participant)
+                .await
+            {
+                log::error!(
+                    "Failed to clean up last seen timestamps for private chats, {}",
+                    e
+                );
+            }
+        }
+    }
+
+    async fn cleanup_global_room(&self, ctx: &mut DestroyContext<'_>) {
+        if let Err(e) = ctx
+            .volatile
+            .storage()
+            .delete_chat_enabled(self.room.room_id())
+            .await
+        {
+            log::error!(
+                "Failed to clean up chat enabled flag {}",
+                Report::from_error(e)
+            );
+        }
     }
 }
 
@@ -278,7 +394,89 @@ impl SignalingModule for Chat {
                     }
                 }
             }
-            Event::Leaving => {}
+            Event::Leaving => {
+                // acquire room lock
+                let room_guard = match ctx.volatile.room_locking().lock_room(self.room).await {
+                    Ok(guard) => guard,
+                    Err(e @ LockError::Locked) => {
+                        log::error!(
+                            "Failed to acquire r3dlock, contention too high, {}",
+                            &Report::from_error(e)
+                        );
+                        return Ok(());
+                    }
+                    Err(e) => {
+                        log::error!("Failed to acquire r3dlock, {}", Report::from_error(e));
+                        return Ok(());
+                    }
+                };
+
+                if let Some(timestamp) = self.last_seen_timestamp_global {
+                    if let Err(e) = ctx
+                        .volatile
+                        .storage()
+                        .set_last_seen_timestamp_global(self.room, self.id, timestamp)
+                        .await
+                    {
+                        log::error!(
+                            "Failed to set last seen timestamp for global chat, {}",
+                            Report::from_error(e)
+                        );
+                    }
+                }
+
+                if !self.last_seen_timestamps_group.is_empty() {
+                    let timestamps: Vec<(GroupName, Timestamp)> = self
+                        .last_seen_timestamps_group
+                        .iter()
+                        .map(|(k, v)| (k.to_owned(), *v))
+                        .collect();
+                    if let Err(e) = ctx
+                        .volatile
+                        .storage()
+                        .set_last_seen_timestamps_group(self.room, self.id, &timestamps)
+                        .await
+                    {
+                        log::error!(
+                            "Failed to set last seen timestamps for group chat, {}",
+                            Report::from_error(e)
+                        );
+                    }
+                }
+
+                if !self.last_seen_timestamps_private.is_empty() {
+                    // ToRedisArgs not implemented for HashMap, so we copy the entries
+                    // for now.
+                    // See: https://github.com/redis-rs/redis-rs/issues/444
+                    let timestamps: Vec<(ParticipantId, Timestamp)> = self
+                        .last_seen_timestamps_private
+                        .iter()
+                        .map(|(k, v)| (*k, *v))
+                        .collect();
+                    if let Err(e) = ctx
+                        .volatile
+                        .storage()
+                        .set_last_seen_timestamps_private(self.room, self.id, &timestamps)
+                        .await
+                    {
+                        log::error!(
+                            "Failed to set last seen timestamps for private chat, {}",
+                            Report::from_error(e)
+                        );
+                    }
+                }
+
+                for group in &self.groups {
+                    ctx.volatile
+                        .storage()
+                        .remove_participant_from_group(self.room, group.id, self.id)
+                        .await;
+                }
+
+                if let Err(e) = ctx.volatile.room_locking().unlock_room(room_guard).await {
+                    log::error!("Failed to unlock room , {}", Report::from_error(e));
+                }
+            }
             Event::RaiseHand => {}
             Event::LowerHand => {}
             Event::ParticipantJoined(participant_id, peer_frontend_data) => {
@@ -525,173 +723,21 @@ impl SignalingModule for Chat {
         Ok(())
     }
 
-    async fn on_destroy(self, ctx: DestroyContext<'_>) {
-        // ==== Cleanup room ====
-        if ctx.destroy_room() {
-            if let Err(e) = ctx.volatile.storage().delete_room_history(self.room).await {
-                log::error!(
-                    "Failed to remove room chat history on room destroy, {}",
-                    Report::from_error(e)
-                );
-            }
-            if let Err(e) = ctx
-                .volatile
-                .storage()
-                .delete_chat_enabled(self.room.room_id())
-                .await
-            {
-                log::error!(
-                    "Failed to clean up chat enabled flag {}",
-                    Report::from_error(e)
-                );
-            }
-            if let Err(e) = ctx
-                .volatile
-                .storage()
-                .delete_private_chat_correspondents(self.room)
-                .await
-            {
-                log::error!(
-                    "Failed to remove room chat correspondents on room destroy, {}",
-                    Report::from_error(e)
-                );
-            }
+    async fn on_destroy(self, mut ctx: DestroyContext<'_>) {
+        match ctx.cleanup_scope {
+            CleanupScope::None => {}
+            CleanupScope::Local => Chat::cleanup_room(&mut ctx, self.room).await,
+            CleanupScope::Global => {
+                if self.room.breakout_room_id().is_some() {
+                    // Cleanup state for the main room
+                    Chat::cleanup_room(&mut ctx, SignalingRoomId::new(self.room.room_id(), None))
+                        .await;
+                }
 
-            let correspondents = ctx
-                .volatile
-                .storage()
-                .get_private_chat_correspondents(self.room)
-                .await
-                .unwrap_or_else(|e| {
-                    log::error!(
-                        "Failed to load room private chat correspondents, {}",
-                        Report::from_error(e)
-                    );
-                    Default::default()
-                });
-            for (a, b) in correspondents.iter().map(ParticipantPair::as_tuple) {
-                if let Err(e) = ctx
-                    .volatile
-                    .storage()
-                    .delete_private_chat_history(self.room, a, b)
-                    .await
-                {
-                    log::error!(
-                        "Failed to remove room private chat history, {}",
-                        Report::from_error(e)
-                    );
-                }
-            }
+                Chat::cleanup_room(&mut ctx, self.room).await;
 
-            let participants = ctx
-                .volatile
-                .storage()
-                .get_all_participants(self.room)
-                .await
-                .unwrap_or_else(|e| {
-                    log::error!(
-                        "Failed to load room participants, {}",
-                        Report::from_error(e)
-                    );
-                    BTreeSet::new()
-                });
-            for participant in participants {
-                if let Err(e) = ctx
-                    .volatile
-                    .storage()
-                    .delete_last_seen_timestamp_global(self.room, participant)
-                    .await
-                {
-                    log::error!(
-                        "Failed to clean up last seen timestamp for global chat, {}",
-                        e
-                    );
-                }
-                if let Err(e) = ctx
-                    .volatile
-                    .storage()
-                    .delete_last_seen_timestamps_group(self.room, participant)
-                    .await
-                {
-                    log::error!(
-                        "Failed to clean up last seen timestamps for group chats, {}",
-                        e
-                    );
-                }
-                if let Err(e) = ctx
-                    .volatile
-                    .storage()
-                    .delete_last_seen_timestamps_private(self.room, participant)
-                    .await
-                {
-                    log::error!(
-                        "Failed to clean up last seen timestamps for private chats, {}",
-                        e
-                    );
-                }
+                self.cleanup_global_room(&mut ctx).await;
             }
-        } else {
-            if let Some(timestamp) = self.last_seen_timestamp_global {
-                if let Err(e) = ctx
-                    .volatile
-                    .storage()
-                    .set_last_seen_timestamp_global(self.room, self.id, timestamp)
-                    .await
-                {
-                    log::error!(
-                        "Failed to set last seen timestamp for global chat, {}",
-                        Report::from_error(e)
-                    );
-                }
-            }
-            if !self.last_seen_timestamps_group.is_empty() {
-                let timestamps: Vec<(GroupName, Timestamp)> = self
-                    .last_seen_timestamps_group
-                    .iter()
-                    .map(|(k, v)| (k.to_owned(), *v))
-                    .collect();
-                if let Err(e) = ctx
-                    .volatile
-                    .storage()
-                    .set_last_seen_timestamps_group(self.room, self.id, &timestamps)
-                    .await
-                {
-                    log::error!(
-                        "Failed to set last seen timestamps for group chat, {}",
-                        Report::from_error(e)
-                    );
-                }
-            }
-
-            if !self.last_seen_timestamps_private.is_empty() {
-                // ToRedisArgs not implemented for HashMap, so we copy the entries
-                // for now.
-                // See: https://github.com/redis-rs/redis-rs/issues/444
-                let timestamps: Vec<(ParticipantId, Timestamp)> = self
-                    .last_seen_timestamps_private
-                    .iter()
-                    .map(|(k, v)| (*k, *v))
-                    .collect();
-                if let Err(e) = ctx
-                    .volatile
-                    .storage()
-                    .set_last_seen_timestamps_private(self.room, self.id, &timestamps)
-                    .await
-                {
-                    log::error!(
-                        "Failed to set last seen timestamps for private chat, {}",
-                        Report::from_error(e)
-                    );
-                }
-            }
-        }
-
-        // ==== Cleanup groups ====
-        for group in self.groups {
-            ctx.volatile
-                .storage()
-                .remove_participant_from_group(self.room, group.id, self.id)
-                .await;
         }
     }
 

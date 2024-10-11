@@ -17,8 +17,8 @@ use opentalk_signaling_core::{
         self,
         storage::{ControlStorageParticipantAttributes as _, RECORDING_CONSENT},
     },
-    DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
-    SignalingModuleInitData, SignalingRoomId, VolatileStorage,
+    CleanupScope, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
+    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types_common::{features::FeatureId, streaming::StreamingTargetId};
 use opentalk_types_signaling::{ParticipantId, Role};
@@ -271,10 +271,16 @@ impl SignalingModule for Recording {
         Ok(())
     }
 
-    async fn on_destroy(self, ctx: DestroyContext<'_>) {
-        if ctx.destroy_room() {
-            if let Err(e) = ctx.volatile.storage().delete_all_streams(self.room).await {
-                log::error!("failed to delete streams, {}", Report::from_error(e));
+    async fn on_destroy(self, mut ctx: DestroyContext<'_>) {
+        match ctx.cleanup_scope {
+            CleanupScope::None => (),
+            CleanupScope::Local => cleanup_streams(&mut ctx, self.room).await,
+            CleanupScope::Global => {
+                cleanup_streams(&mut ctx, self.room).await;
+                if self.room.breakout_room_id().is_some() {
+                    // cleanup streams for main room
+                    cleanup_streams(&mut ctx, SignalingRoomId::new(self.room.room_id(), None)).await
+                }
             }
         }
     }
@@ -296,6 +302,17 @@ impl SignalingModule for Recording {
         } else {
             Ok(None)
         }
+    }
+}
+
+async fn cleanup_streams(ctx: &mut DestroyContext<'_>, signaling_room_id: SignalingRoomId) {
+    if let Err(e) = ctx
+        .volatile
+        .storage()
+        .delete_all_streams(signaling_room_id)
+        .await
+    {
+        log::error!("failed to delete streams, {}", Report::from_error(e));
     }
 }
 

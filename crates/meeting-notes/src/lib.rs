@@ -15,8 +15,9 @@ use opentalk_signaling_core::{
         self,
         storage::{ControlStorageParticipantAttributes as _, DISPLAY_NAME},
     },
-    ChunkFormat, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage, SignalingModule,
-    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
+    ChunkFormat, CleanupScope, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage,
+    SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
+    VolatileStorage,
 };
 use opentalk_types_common::assets::FileExtension;
 use opentalk_types_signaling::{ParticipantId, Role};
@@ -166,22 +167,17 @@ impl SignalingModule for MeetingNotes {
         Ok(())
     }
 
-    async fn on_destroy(self, ctx: DestroyContext<'_>) {
-        if ctx.destroy_room() {
-            if let Err(e) = self.cleanup_etherpad(ctx.volatile.storage()).await {
-                log::error!(
-                    "Failed to cleanup etherpad for room {} in volatile storage: {}",
-                    self.room_id,
-                    e
-                );
-            }
+    async fn on_destroy(self, mut ctx: DestroyContext<'_>) {
+        match ctx.cleanup_scope {
+            CleanupScope::None => (),
+            CleanupScope::Local => self.cleanup_room(&mut ctx, self.room_id).await,
+            CleanupScope::Global => {
+                self.cleanup_room(&mut ctx, self.room_id).await;
 
-            if let Err(e) = ctx.volatile.storage().cleanup(self.room_id).await {
-                log::error!(
-                    "Failed to cleanup meeting-notes keys for room {} in volatile storage: {}",
-                    self.room_id,
-                    e
-                );
+                if self.room_id.breakout_room_id().is_some() {
+                    self.cleanup_room(&mut ctx, SignalingRoomId::new(self.room_id.room_id(), None))
+                        .await
+                }
             }
         }
     }
@@ -606,19 +602,41 @@ impl MeetingNotes {
             .all(|target| room_participants.contains(target)))
     }
 
+    async fn cleanup_room(&self, ctx: &mut DestroyContext<'_>, signaling_room_id: SignalingRoomId) {
+        if let Err(e) = self
+            .cleanup_etherpad(ctx.volatile.storage(), signaling_room_id)
+            .await
+        {
+            log::error!(
+                "Failed to cleanup etherpad for room {}: {}",
+                signaling_room_id,
+                e
+            )
+        }
+
+        if let Err(e) = ctx.volatile.storage().cleanup(signaling_room_id).await {
+            log::error!(
+                "Failed to cleanup meeting-notes keys for room {} in volatile storage: {}",
+                signaling_room_id,
+                e
+            );
+        }
+    }
+
     /// Removes the room related pad and group from etherpad
     async fn cleanup_etherpad(
         &self,
         storage: &mut dyn MeetingNotesStorage,
+        signaling_room_id: SignalingRoomId,
     ) -> Result<(), SignalingModuleError> {
-        let init_state = storage.init_get(self.room_id).await?;
+        let init_state = storage.init_get(signaling_room_id).await?;
 
         if init_state.is_none() {
             // Nothing to cleanup
             return Ok(());
         }
 
-        let group_id = storage.group_get(self.room_id).await?.unwrap();
+        let group_id = storage.group_get(signaling_room_id).await?.unwrap();
 
         let pad_id = format!("{group_id}${PAD_NAME}");
 

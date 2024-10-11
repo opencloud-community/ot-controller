@@ -16,7 +16,7 @@ use livekit_api::{
 use livekit_protocol::{ParticipantPermission, TrackSource};
 use opentalk_controller_settings::{LiveKitSettings, SharedSettings};
 use opentalk_signaling_core::{
-    control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
+    control, CleanupScope, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types_signaling::{ParticipantId, ParticipationKind, ParticipationVisibility, Role};
@@ -153,17 +153,17 @@ impl SignalingModule for Livekit {
     }
 
     async fn on_destroy(self, ctx: DestroyContext<'_>) {
-        if !ctx.destroy_room() {
-            return;
-        }
+        match ctx.cleanup_scope {
+            CleanupScope::None => (),
+            CleanupScope::Local => self.cleanup_room(self.room_id).await,
+            CleanupScope::Global => {
+                if self.room_id.breakout_room_id().is_some() {
+                    self.cleanup_room(SignalingRoomId::new(self.room_id.room_id(), None))
+                        .await
+                }
 
-        if let Err(e) = self
-            .params
-            .room_client
-            .delete_room(&self.room_id.to_string())
-            .await
-        {
-            log::error!("Failed to destroy livekit room {e}");
+                self.cleanup_room(self.room_id).await
+            }
         }
     }
 
@@ -590,5 +590,16 @@ impl Livekit {
         .whatever_context::<&str, SignalingModuleError>("Failed to create livekit access-token")?;
 
         Ok((room.name, access_token, microphone_restriction_state))
+    }
+
+    async fn cleanup_room(&self, signaling_room_id: SignalingRoomId) {
+        if let Err(e) = self
+            .params
+            .room_client
+            .delete_room(&signaling_room_id.to_string())
+            .await
+        {
+            log::error!("Failed to destroy livekit room {e}");
+        }
     }
 }
