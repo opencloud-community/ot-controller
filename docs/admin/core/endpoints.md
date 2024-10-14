@@ -12,6 +12,7 @@ The section in the [configuration file](configuration.md) is called `endpoints`.
 | `users_find_use_kc`                   | `bool` | no       | false         | Use [Keycloaks](keycloak.md) user database in the user search for the `GET /users/find` endpoint. Search results may include users that were never registered on the OpenTalk Controller |
 | `event_invite_external_email_address` | `bool` | no       | false         | Affects the `POST /events/{event_id}/invites` endpoint and allows users to invite email addresses that are unknown to the Controller or Keycloak.                                        |
 | `disallow_custom_display_name`        | `bool` | no       | false         | Enforces the display name that was provided by Keycloak and disallows users to change their display names via the `PATCH /users/me` endpoint.                                            |
+| `disable_openapi`                     | `bool` | no       | false         | Disables the `GET /v1/openapi.json` and `GET /swagger` endpoints which serve information about the OpenTalk controller WebAPI.                                                           |
 
 For configuring user search, see the [User search section](user_search.md).
 
@@ -25,4 +26,5 @@ disable_users_find = false
 users_find_use_kc = false
 event_invite_external_email_address = false
 disallow_custom_display_name = false
+disable_openapi = false
 ```
