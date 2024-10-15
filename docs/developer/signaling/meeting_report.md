@@ -26,14 +26,15 @@ Allows a moderator to generate a meeting report. The meeting report will be stor
 
 | Field                     | Type   | Required | Description                                                                   |
 | ------------------------- | ------ | -------- | ----------------------------------------------------------------------------- |
-| `action`                  | `enum` | yes      | Must be `"generate_meeting_report"`                                           |
+| `action`                  | `enum` | yes      | Must be `"generate_attendance_report"`                                        |
 | `include_email_addresses` | `bool` | yes      | `true` if email addresses should be included in the report, `false` otherwise |
 
 #### Example
 
 ```json
 {
-    "action": "generate_meeting_report"
+    "action": "generate_attendance_report",
+    "include_email_addresses": false
 }
 ```
 
