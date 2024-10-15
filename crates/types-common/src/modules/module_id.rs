@@ -74,7 +74,7 @@ mod impl_to_schema {
             utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>,
         ) {
             (
-                "RoomPassword",
+                "ModuleId",
                 ObjectBuilder::new()
                     .schema_type(SchemaType::String)
                     .description(Some("A module identifier"))

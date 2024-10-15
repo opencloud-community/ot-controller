@@ -58,7 +58,7 @@ mod impl_to_schema {
             utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>,
         ) {
             (
-                "RoomPassword",
+                "FeatureId",
                 ObjectBuilder::new()
                     .schema_type(SchemaType::String)
                     .description(Some("A feature identifier"))
