@@ -22,17 +22,65 @@ use crate::{
     feature = "diesel",
     diesel(sql_type = diesel::sql_types::Text),
 )]
-#[cfg_attr(
-    feature = "utoipa",
-    derive(utoipa::ToSchema),
-    schema(example = json!(ModuleFeatureId::example_data())),
-)]
 pub struct ModuleFeatureId {
     /// The id of the module
     pub module: ModuleId,
 
     /// The id of the feature
     pub feature: FeatureId,
+}
+
+#[cfg(feature = "utoipa")]
+mod impl_to_schema {
+    use utoipa::{
+        openapi::{schema::AnyOf, ObjectBuilder, RefOr, Schema, SchemaType},
+        ToSchema,
+    };
+
+    use super::ModuleFeatureId;
+    use crate::{
+        features::{
+            FeatureId, FEATURE_ID_SCHEMA_CHARS_REGEX, MAX_FEATURE_ID_LENGTH, MIN_FEATURE_ID_LENGTH,
+        },
+        modules::{MAX_MODULE_ID_LENGTH, MIN_MODULE_ID_LENGTH, MODULE_ID_SCHEMA_CHARS_REGEX},
+        utils::ExampleData,
+    };
+
+    impl<'__s> ToSchema<'__s> for ModuleFeatureId {
+        fn schema() -> (&'__s str, RefOr<Schema>) {
+            use serde_json::json;
+
+            let module_id_regex_snippet = format!(
+                "{MODULE_ID_SCHEMA_CHARS_REGEX}{{{MIN_MODULE_ID_LENGTH},{MAX_MODULE_ID_LENGTH}}}"
+            );
+            let feature_id_regex_snippet = format!(
+                "{FEATURE_ID_SCHEMA_CHARS_REGEX}{{{MIN_FEATURE_ID_LENGTH},{MAX_FEATURE_ID_LENGTH}}}"
+            );
+
+            (
+                "ModuleFeatureId",
+                Schema::AnyOf(AnyOf {
+                    items: vec![
+                        FeatureId::schema().1,
+                        ObjectBuilder::new()
+                            .schema_type(SchemaType::String)
+                            .description(Some("A module feature identifier"))
+                            .pattern(Some(format!(
+                                "^{module_id_regex_snippet}::{feature_id_regex_snippet}$",
+                            )))
+                            .example(Some(ModuleFeatureId::example_data().to_string().into()))
+                            .into(),
+                    ],
+                    description: None,
+                    default: None,
+                    example: Some(json!(Self::example_data())),
+                    discriminator: None,
+                    nullable: false,
+                })
+                .into(),
+            )
+        }
+    }
 }
 
 impl Display for ModuleFeatureId {

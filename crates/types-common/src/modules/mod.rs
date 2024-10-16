@@ -8,4 +8,5 @@ mod module_id;
 
 pub use module_id::{
     ModuleId, ParseModuleIdError, DEFAULT_MODULE_ID, MAX_MODULE_ID_LENGTH, MIN_MODULE_ID_LENGTH,
+    MODULE_ID_SCHEMA_CHARS_REGEX,
 };

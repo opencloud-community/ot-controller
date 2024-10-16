@@ -428,6 +428,21 @@ check:docs-generated-parts:
         exit 1
       fi
 
+check:openapi:
+  stage: check
+  needs:
+    - job: build
+      artifacts: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  script:
+    - ./ci/update-openapi-spec.sh
+    - |
+      if ! git diff --ignore-space-at-eol --exit-code; then
+        echo "Generated parts of documentation changed, run ci/update-openapi-spec.sh and commit the result"
+        exit 1
+      fi
+
 package:container-controller-mr:
   stage: package
   needs:

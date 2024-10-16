@@ -3,7 +3,7 @@
 # SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
 # SPDX-License-Identifier: EUPL-1.2
 
-# This script generates a the mail worker protocol schema and example message files.
+# This script generates the mail worker protocol schema and example message files.
 
 set -xe
 set -o pipefail
