@@ -20,17 +20,17 @@ use opentalk_signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
     SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
-use opentalk_types::signaling::recording::{
-    command::{self, RecordingCommand},
+use opentalk_types_common::{features::FeatureId, streaming::StreamingTargetId};
+use opentalk_types_signaling::{ParticipantId, Role};
+use opentalk_types_signaling_recording::{
+    command::{PauseStreaming, RecordingCommand, SetConsent, StartStreaming, StopStreaming},
     event::{Error, RecorderError, RecordingEvent},
     module_id,
     peer_state::RecordingPeerState,
     record_feature,
     state::RecordingState,
-    stream_feature, StreamStatus, StreamTargetSecret, NAMESPACE, RECORD_FEATURE, STREAM_FEATURE,
+    stream_feature, StreamStatus, StreamTargetSecret, NAMESPACE,
 };
-use opentalk_types_common::{features::FeatureId, streaming::StreamingTargetId};
-use opentalk_types_signaling::{ParticipantId, Role};
 use snafu::{Report, ResultExt, Snafu};
 use tokio::time::Duration;
 
@@ -157,10 +157,7 @@ impl SignalingModule for Recording {
     }
 
     fn get_provided_features() -> BTreeSet<FeatureId> {
-        BTreeSet::from_iter([
-            RECORD_FEATURE.parse().expect("valid feature id"),
-            STREAM_FEATURE.parse().expect("valid feature id"),
-        ])
+        BTreeSet::from_iter([record_feature(), stream_feature()])
     }
 
     async fn on_event(
@@ -202,7 +199,7 @@ impl SignalingModule for Recording {
             Event::RoleUpdated(_) => {}
             // Messages from frontend (Command)
             Event::WsMessage(msg) => match msg {
-                RecordingCommand::SetConsent(command::SetConsent { consent }) => {
+                RecordingCommand::SetConsent(SetConsent { consent }) => {
                     ctx.volatile
                         .storage()
                         .set_attribute(self.room, self.id, RECORDING_CONSENT, consent)
@@ -210,13 +207,13 @@ impl SignalingModule for Recording {
 
                     ctx.invalidate_data();
                 }
-                RecordingCommand::StartStream(command::StartStreaming { target_ids }) => {
+                RecordingCommand::StartStream(StartStreaming { target_ids }) => {
                     self.handle_start_streams(&mut ctx, target_ids).await?
                 }
-                RecordingCommand::PauseStream(command::PauseStreaming { target_ids }) => {
+                RecordingCommand::PauseStream(PauseStreaming { target_ids }) => {
                     self.handle_pause_streams(&mut ctx, target_ids).await?
                 }
-                RecordingCommand::StopStream(command::StopStreaming { target_ids }) => {
+                RecordingCommand::StopStream(StopStreaming { target_ids }) => {
                     self.handle_stop_streams(&mut ctx, target_ids).await?
                 }
             },

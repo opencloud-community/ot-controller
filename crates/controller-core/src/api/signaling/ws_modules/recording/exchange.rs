@@ -4,7 +4,7 @@
 
 //! Signaling messages between runners
 
-use opentalk_types::signaling::recording::StreamUpdated;
+use opentalk_types_signaling_recording::StreamUpdated;
 use serde::{Deserialize, Serialize};
 
 /// The exchange message to send between runners

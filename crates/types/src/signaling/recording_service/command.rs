@@ -35,18 +35,3 @@ pub enum RecordingServiceCommand {
         target_ids: BTreeSet<StreamingTargetId>,
     },
 }
-
-/// Error from the `recording_service` module namespace
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(tag = "error", rename_all = "snake_case")
-)]
-pub enum Error {
-    /// The participant has insufficient permissions to perform a command
-    InsufficientPermissions,
-
-    /// Invalid streaming id used
-    InvalidStreamingId,
-}

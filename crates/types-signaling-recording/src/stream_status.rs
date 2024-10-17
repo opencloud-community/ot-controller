@@ -2,15 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::StreamErrorReason;
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::StreamErrorReason;
 
 /// The current status of a stream
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case", tag = "status")
 )]
 pub enum StreamStatus {

@@ -47,6 +47,7 @@ opentalk-types-common = { path = "crates/types-common", version = "0.0.0-dev" }
 opentalk-types-signaling = { path = "crates/types-signaling", version = "0.0.0-dev" }
 opentalk-types-signaling-breakout = { path = "crates/types-signaling-breakout", version = "0.0.0-dev" }
 opentalk-types-signaling-control = { path = "crates/types-signaling-control", version = "0.0.0-dev" }
+opentalk-types-signaling-recording = { path = "crates/types-signaling-recording", version = "0.0.0-dev" }
 opentalk-whiteboard = { path = "crates/whiteboard", version = "0.0.0-dev" }
 
 actix-http = "3"

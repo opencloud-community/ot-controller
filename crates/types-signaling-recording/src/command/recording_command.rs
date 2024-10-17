@@ -2,20 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Signaling commands for the `recording` namespace
-
-use std::collections::BTreeSet;
-
-use opentalk_types_common::streaming::StreamingTargetId;
-
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::command::{PauseStreaming, SetConsent, StartStreaming, StopStreaming};
 
 /// Commands for the `recording` namespace
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(tag = "action", rename_all = "snake_case")
 )]
 pub enum RecordingCommand {
@@ -32,56 +25,26 @@ pub enum RecordingCommand {
     StopStream(StopStreaming),
 }
 
-impl From<StopStreaming> for RecordingCommand {
-    fn from(value: StopStreaming) -> Self {
-        Self::StopStream(value)
-    }
-}
-
-/// Data for the `set_consent` recording command
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct SetConsent {
-    /// Flag indicating whether the participant consents to being recorded
-    pub consent: bool,
-}
-
 impl From<SetConsent> for RecordingCommand {
     fn from(value: SetConsent) -> Self {
         Self::SetConsent(value)
     }
 }
 
-/// Data for the `start` streaming command
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct StartStreaming {
-    /// Id of the to be started stream
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "BTreeSet::is_empty")
-    )]
-    pub target_ids: BTreeSet<StreamingTargetId>,
+impl From<StartStreaming> for RecordingCommand {
+    fn from(value: StartStreaming) -> Self {
+        Self::StartStream(value)
+    }
 }
 
-/// Data for the `pause` streaming command
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct PauseStreaming {
-    /// Id of the to be paused stream
-    pub target_ids: BTreeSet<StreamingTargetId>,
+impl From<StopStreaming> for RecordingCommand {
+    fn from(value: StopStreaming) -> Self {
+        Self::StopStream(value)
+    }
 }
 
-/// Data for the `stop` streaming command
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct StopStreaming {
-    /// Id of the to be stopped stream
-    pub target_ids: BTreeSet<StreamingTargetId>,
-}
-
-#[cfg(test)]
-mod tests {
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
     use std::collections::BTreeSet;
 
     use opentalk_types_common::streaming::StreamingTargetId;

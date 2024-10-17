@@ -1,0 +1,21 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+test:opentalk-types-signaling-recording:
+  extends: .test:types
+  variables:
+    PACKAGE: opentalk-types-signaling-recording
+  parallel:
+    matrix:
+      - FEATURES:
+          [
+          '',
+            backend,
+            frontend,
+            redis,
+            serde,
+          ]
+        EXTRA_ARGS: ['', --no-default-features]

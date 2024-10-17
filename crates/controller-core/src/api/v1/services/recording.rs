@@ -262,7 +262,7 @@ pub(crate) async fn ws_upload(
                 &storage,
                 db.into_inner(),
                 room_id,
-                Some(opentalk_types::signaling::recording::NAMESPACE),
+                Some(opentalk_types_signaling_recording::NAMESPACE),
                 filename,
                 receiver_stream,
                 ChunkFormat::SequenceNumberAndData,
