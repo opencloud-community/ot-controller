@@ -34,6 +34,10 @@ impl RecordingStorage for RedisConnection {
         room: SignalingRoomId,
         target_streams: &BTreeMap<StreamingTargetId, StreamTargetSecret>,
     ) -> Result<(), SignalingModuleError> {
+        if target_streams.is_empty() {
+            return Ok(());
+        }
+
         let target_streams: Vec<_> = target_streams.iter().collect();
         self.hset_multiple(RecordingStreamsKey { room }, target_streams.as_slice())
             .await
