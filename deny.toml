@@ -145,6 +145,9 @@ exceptions = [
   { allow = [
     "EUPL-1.2",
   ], name = "opentalk-types-signaling-recording" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "opentalk-types-signaling-recording-service" },
 ]
 
 # Some crates don't have (easily) machine readable licensing information,

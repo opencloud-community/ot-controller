@@ -4383,6 +4383,7 @@ dependencies = [
  "opentalk-types-signaling-breakout",
  "opentalk-types-signaling-control",
  "opentalk-types-signaling-recording",
+ "opentalk-types-signaling-recording-service",
  "opentelemetry",
  "opentelemetry-otlp",
  "opentelemetry-prometheus",
@@ -4985,7 +4986,6 @@ dependencies = [
  "opentalk-kustos-prefix",
  "opentalk-types-common",
  "opentalk-types-signaling",
- "opentalk-types-signaling-recording",
  "pretty_assertions",
  "redis",
  "redis-args",
@@ -5083,6 +5083,18 @@ dependencies = [
  "redis-args",
  "serde",
  "serde_json",
+ "url",
+]
+
+[[package]]
+name = "opentalk-types-signaling-recording-service"
+version = "0.0.0-dev"
+dependencies = [
+ "opentalk-types-common",
+ "opentalk-types-signaling",
+ "opentalk-types-signaling-recording",
+ "redis-args",
+ "serde",
  "url",
 ]
 

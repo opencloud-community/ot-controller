@@ -1,0 +1,52 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+authors.workspace = true
+description = "Signaling types for the OpenTalk recording_service module"
+documentation = "https://docs.rs/opentalk-types-signaling-recording-service"
+edition = "2021"
+homepage.workspace = true
+license = "EUPL-1.2"
+name = "opentalk-types-signaling-recording-service"
+publish = true
+repository.workspace = true
+version.workspace = true
+
+[features]
+backend = [
+  "opentalk-types-common/backend",
+  "opentalk-types-signaling-recording/backend",
+  "opentalk-types-signaling/backend",
+  "redis",
+  "serde",
+]
+frontend = [
+  "opentalk-types-common/frontend",
+  "opentalk-types-signaling-recording/frontend",
+  "opentalk-types-signaling/frontend",
+  "serde",
+]
+redis = [
+  "dep:redis-args",
+  "opentalk-types-common/redis",
+  "opentalk-types-signaling-recording/redis",
+  "opentalk-types-signaling/redis",
+  "serde",
+]
+serde = [
+  "dep:serde",
+  "opentalk-types-common/serde",
+  "opentalk-types-signaling-recording/serde",
+  "opentalk-types-signaling/serde",
+  "url/serde",
+]
+
+[dependencies]
+opentalk-types-common.workspace = true
+opentalk-types-signaling.workspace = true
+opentalk-types-signaling-recording.workspace = true
+redis-args = { workspace = true, optional = true }
+serde = { workspace = true, optional = true }
+url.workspace = true

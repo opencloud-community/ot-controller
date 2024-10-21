@@ -63,6 +63,9 @@ opentalk-types-signaling-control = { workspace = true, features = ["backend"] }
 opentalk-types-signaling-recording = { workspace = true, features = [
   "backend",
 ] }
+opentalk-types-signaling-recording-service = { workspace = true, features = [
+  "backend",
+] }
 opentelemetry = { workspace = true, features = ["metrics", "trace"] }
 opentelemetry-otlp = "0.17"
 opentelemetry-prometheus = "0.17"

@@ -8,9 +8,7 @@ use std::collections::BTreeMap;
 
 use opentalk_types_common::streaming::StreamingTargetId;
 
-#[allow(unused_imports)]
-use crate::imports::*;
-use crate::signaling::recording::state::RecorderStreamInfo;
+use super::RecorderStreamInfo;
 
 /// The state of the `recording_service` module.
 ///
@@ -19,21 +17,20 @@ use crate::signaling::recording::state::RecorderStreamInfo;
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(
     feature = "redis",
-    derive(ToRedisArgs, FromRedisValue),
-    to_redis_args(serde),
-    from_redis_value(serde)
+    derive(redis_args::ToRedisArgs, redis_args::FromRedisValue)
 )]
+#[cfg_attr(feature = "redis", to_redis_args(serde), from_redis_value(serde))]
 pub struct RecordingServiceState {
     /// The streams to be sent initially to the recorder
     pub streams: BTreeMap<StreamingTargetId, RecorderStreamInfo>,
 }
 
 #[cfg(feature = "serde")]
-impl SignalingModuleFrontendData for RecordingServiceState {
-    const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
+impl opentalk_types_signaling::SignalingModuleFrontendData for RecordingServiceState {
+    const NAMESPACE: Option<&'static str> = Some(crate::NAMESPACE);
 }

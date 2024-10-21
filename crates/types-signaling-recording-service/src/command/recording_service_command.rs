@@ -8,14 +8,11 @@ use std::collections::BTreeSet;
 
 use opentalk_types_common::streaming::StreamingTargetId;
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// Events sent out by the `recording_service` module to the recorder
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(tag = "action", rename_all = "snake_case")
 )]
 pub enum RecordingServiceCommand {
