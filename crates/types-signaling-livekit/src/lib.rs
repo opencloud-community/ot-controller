@@ -21,7 +21,9 @@ pub mod state;
 
 // Credentials
 mod credentials;
+mod microphone_restriction_state;
 pub use credentials::Credentials;
+pub use microphone_restriction_state::MicrophoneRestrictionState;
 
 /// The namespace string for the signaling module
 pub const NAMESPACE: &str = "livekit";

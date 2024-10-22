@@ -4,6 +4,11 @@
 
 use std::{sync::Arc, time::Duration};
 
+use either::Either;
+use futures::{
+    stream::{self},
+    StreamExt,
+};
 use livekit_api::{
     access_token::{AccessToken, VideoGrants},
     services::room::{CreateRoomOptions, RoomClient, UpdateParticipantOptions},
@@ -11,26 +16,30 @@ use livekit_api::{
 use livekit_protocol::{ParticipantPermission, TrackSource};
 use opentalk_controller_settings::{LiveKitSettings, SharedSettings};
 use opentalk_signaling_core::{
-    DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
-    SignalingModuleInitData, SignalingRoomId,
+    control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
+    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types_signaling::{ParticipantId, ParticipationKind, ParticipationVisibility, Role};
 use opentalk_types_signaling_livekit::{
-    command, event,
+    command::{self, UnrestrictedParticipants},
+    event,
     state::{self, LiveKitState},
-    Credentials,
+    Credentials, MicrophoneRestrictionState,
 };
 use snafu::ResultExt;
+use storage::LivekitStorage;
 
+mod exchange;
+mod storage;
+
+const PARALLEL_UPDATES: usize = 25;
 const ACCESS_TOKEN_TTL: Duration = Duration::from_secs(32);
-const SOURCES_WITH_SCREENSHARE: [TrackSource; 4] = [
+const LIVEKIT_MEDIA_SOURCES: [TrackSource; 4] = [
     TrackSource::Camera,
     TrackSource::Microphone,
     TrackSource::ScreenShare,
     TrackSource::ScreenShareAudio,
 ];
-const SOURCES_WITHOUT_SCREENSHARE: [TrackSource; 2] =
-    [TrackSource::Camera, TrackSource::Microphone];
 
 pub struct Livekit {
     room_id: SignalingRoomId,
@@ -46,6 +55,19 @@ pub struct LivekitParams {
     room_client: RoomClient,
 }
 
+trait LivekitStorageProvider {
+    fn storage(&mut self) -> &mut dyn LivekitStorage;
+}
+
+impl LivekitStorageProvider for VolatileStorage {
+    fn storage(&mut self) -> &mut dyn LivekitStorage {
+        match self.as_mut() {
+            Either::Left(v) => v,
+            Either::Right(v) => v,
+        }
+    }
+}
+
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for Livekit {
     const NAMESPACE: &'static str = opentalk_types_signaling_livekit::NAMESPACE;
@@ -53,7 +75,7 @@ impl SignalingModule for Livekit {
     type Params = Arc<LivekitParams>;
     type Incoming = command::LiveKitCommand;
     type Outgoing = event::LiveKitEvent;
-    type ExchangeMessage = ();
+    type ExchangeMessage = exchange::Message;
     type ExtEvent = ();
     type FrontendData = state::LiveKitState;
     type PeerFrontendData = ();
@@ -84,7 +106,7 @@ impl SignalingModule for Livekit {
                 participants: _,
             } => {
                 self.participation_kind = control_data.participation_kind;
-                let (room_name, access_token) = self
+                let (room_name, access_token, microphone_restriction_state) = self
                     .create_room_and_access_token(
                         &mut ctx,
                         control_data.participation_kind.visibility(),
@@ -105,18 +127,25 @@ impl SignalingModule for Livekit {
                     }
                 };
 
-                *frontend_data = Some(LiveKitState(Credentials {
-                    room: room_name,
-                    token: access_token,
-                    public_url: self.params.livekit_settings.public_url.clone(),
-                    service_url,
-                }));
+                *frontend_data = Some(LiveKitState {
+                    credentials: Credentials {
+                        room: room_name,
+                        token: access_token,
+                        public_url: self.params.livekit_settings.public_url.clone(),
+                        service_url,
+                    },
+                    microphone_restriction_state,
+                });
 
                 Ok(())
             }
             Event::WsMessage(command) => self.handle_command(ctx, command).await,
             Event::RoleUpdated(role) => {
                 self.role = role;
+                Ok(())
+            }
+            Event::Exchange(message) => {
+                self.handle_exchange_message(ctx, message).await;
                 Ok(())
             }
             _ => Ok(()),
@@ -167,7 +196,7 @@ impl Livekit {
     ) -> Result<(), SignalingModuleError> {
         match command {
             command::LiveKitCommand::CreateNewAccessToken => {
-                let (room_name, access_token) = self
+                let (room_name, access_token, _) = self
                     .create_room_and_access_token(&mut ctx, self.participation_kind.visibility())
                     .await?;
 
@@ -185,12 +214,12 @@ impl Livekit {
                     }
                 };
 
-                ctx.ws_send(event::LiveKitEvent::State(LiveKitState(Credentials {
+                ctx.ws_send(event::LiveKitEvent::Credentials(Credentials {
                     room: room_name,
                     token: access_token,
                     public_url: self.params.livekit_settings.public_url.clone(),
                     service_url,
-                })));
+                }));
 
                 Ok(())
             }
@@ -247,6 +276,32 @@ impl Livekit {
                 self.set_screenshare_permissions(ctx, participants, false)
                     .await
             }
+            command::LiveKitCommand::EnableMicrophoneRestrictions(UnrestrictedParticipants {
+                unrestricted_participants,
+            }) => {
+                self.set_microphone_permissions(ctx, unrestricted_participants, true)
+                    .await
+            }
+            command::LiveKitCommand::DisableMicrophoneRestrictions => {
+                self.set_microphone_permissions(ctx, vec![], false).await
+            }
+        }
+    }
+
+    async fn handle_exchange_message(
+        &mut self,
+        mut ctx: ModuleContext<'_, Self>,
+        message: exchange::Message,
+    ) {
+        match message {
+            exchange::Message::MicrophoneRestrictionsEnabled(microphone_restrictions_enabled) => {
+                ctx.ws_send(event::LiveKitEvent::MicrophoneRestrictionsEnabled(
+                    microphone_restrictions_enabled,
+                ));
+            }
+            exchange::Message::MicrophoneRestrictionsDisabled => {
+                ctx.ws_send(event::LiveKitEvent::MicrophoneRestrictionsDisabled);
+            }
         }
     }
 
@@ -264,42 +319,177 @@ impl Livekit {
         }
 
         let room = self.room_id.to_string();
+        let all_participants = self
+            .params
+            .room_client
+            .list_participants(&room)
+            .await
+            .whatever_context::<&str, SignalingModuleError>(
+            "Failed to list livekit participants",
+        )?;
 
-        let can_publish_sources = if grant {
-            SOURCES_WITH_SCREENSHARE.map(|s| s as i32).to_vec()
-        } else {
-            SOURCES_WITHOUT_SCREENSHARE.map(|s| s as i32).to_vec()
-        };
+        let participant_ids: Vec<String> =
+            participants.into_iter().map(|id| id.to_string()).collect();
+        let affected_participants = all_participants
+            .into_iter()
+            .filter(|p| participant_ids.contains(&p.identity))
+            .collect::<Vec<_>>();
 
-        for participant_id in participants {
-            if let Err(e) = self
-                .params
-                .room_client
-                .update_participant(
-                    &room,
-                    &participant_id.to_string(),
-                    UpdateParticipantOptions {
-                        permission: Some(ParticipantPermission {
-                            can_subscribe: true,
-                            can_publish: true,
-                            can_publish_data: false,
-                            can_publish_sources: can_publish_sources.clone(),
-                            hidden: false,
-                            can_update_metadata: false,
-                            ..Default::default()
-                        }),
-                        ..Default::default()
-                    },
-                )
-                .await
-            {
-                log::error!(
-                    "Failed to update participant room={room} participant={participant_id}, {e}",
-                );
-            }
-        }
+        let screenshare_source_number = TrackSource::ScreenShare as i32;
+        let screenshare_audio_source_number = TrackSource::ScreenShareAudio as i32;
+
+        self.update_participants_permission(
+            affected_participants,
+            &[screenshare_source_number, screenshare_audio_source_number],
+            grant,
+            &room,
+        )
+        .await;
 
         Ok(())
+    }
+
+    async fn set_microphone_permissions(
+        &mut self,
+        mut ctx: ModuleContext<'_, Self>,
+        unrestricted_participants: Vec<ParticipantId>,
+        restrict: bool,
+    ) -> Result<(), SignalingModuleError> {
+        if !self.role.is_moderator() {
+            ctx.ws_send(event::LiveKitEvent::Error(
+                event::Error::InsufficientPermissions,
+            ));
+            return Ok(());
+        }
+
+        let room = self.room_id.to_string();
+        let mut participants = self
+            .params
+            .room_client
+            .list_participants(&room)
+            .await
+            .whatever_context::<&str, SignalingModuleError>(
+            "Failed to list livekit participants",
+        )?;
+
+        if restrict {
+            ctx.volatile
+                .storage()
+                .set_microphone_restriction_allow_list(
+                    self.room_id.room_id(),
+                    &unrestricted_participants[..],
+                )
+                .await?;
+
+            ctx.exchange_publish(
+                control::exchange::current_room_all_participants(self.room_id),
+                exchange::Message::MicrophoneRestrictionsEnabled(UnrestrictedParticipants {
+                    unrestricted_participants: unrestricted_participants.clone(),
+                }),
+            );
+
+            let allowed_ids = unrestricted_participants
+                .into_iter()
+                .map(|id| id.to_string())
+                .collect::<Vec<_>>();
+            participants.retain(|part| !allowed_ids.contains(&part.identity));
+        } else {
+            ctx.volatile
+                .storage()
+                .clear_microphone_restriction(self.room_id.room_id())
+                .await?;
+
+            ctx.exchange_publish(
+                control::exchange::current_room_all_participants(self.room_id),
+                exchange::Message::MicrophoneRestrictionsDisabled,
+            );
+        }
+
+        let microphone_source_number = TrackSource::Microphone as i32;
+
+        self.update_participants_permission(
+            participants,
+            &[microphone_source_number],
+            !restrict,
+            &room,
+        )
+        .await;
+
+        Ok(())
+    }
+
+    async fn update_participants_permission(
+        &self,
+        participants: Vec<livekit_protocol::ParticipantInfo>,
+        source_numbers: &[i32],
+        grant: bool,
+        room: &str,
+    ) {
+        stream::iter(participants)
+            .map(|participant| {
+                self.update_single_participant_permission(participant, source_numbers, grant, room)
+            })
+            .buffer_unordered(PARALLEL_UPDATES)
+            .collect::<Vec<_>>()
+            .await;
+    }
+
+    async fn update_single_participant_permission(
+        &self,
+        participant: livekit_protocol::ParticipantInfo,
+        source_numbers: &[i32],
+        grant: bool,
+        room: &str,
+    ) {
+        let mut can_publish_sources = participant
+            .permission
+            .map(|p| p.can_publish_sources)
+            .unwrap_or_else(|| {
+                LIVEKIT_MEDIA_SOURCES
+                    .map(|s: TrackSource| s as i32)
+                    .to_vec()
+            });
+
+        for source_number in source_numbers.iter() {
+            Self::update_publish_sources(&mut can_publish_sources, *source_number, grant)
+        }
+
+        if let Err(e) = self
+            .params
+            .room_client
+            .update_participant(
+                room,
+                &participant.identity,
+                UpdateParticipantOptions {
+                    permission: Some(ParticipantPermission {
+                        can_subscribe: true,
+                        can_publish: true,
+                        can_publish_data: false,
+                        can_publish_sources,
+                        hidden: false,
+                        can_update_metadata: false,
+                        ..Default::default()
+                    }),
+                    ..Default::default()
+                },
+            )
+            .await
+        {
+            log::error!(
+                "Failed to update participant room={room} participant={}, {e}",
+                participant.identity
+            );
+        }
+    }
+
+    fn update_publish_sources(can_publish_sources: &mut Vec<i32>, source: i32, grant: bool) {
+        if grant {
+            if !can_publish_sources.contains(&source) {
+                can_publish_sources.push(source);
+            }
+        } else {
+            can_publish_sources.retain(|&x| x != source);
+        }
     }
 
     /// Create Room and AccessToken
@@ -309,7 +499,7 @@ impl Livekit {
         &self,
         ctx: &mut ModuleContext<'_, Self>,
         visibility: ParticipationVisibility,
-    ) -> Result<(String, String), SignalingModuleError> {
+    ) -> Result<(String, String, MicrophoneRestrictionState), SignalingModuleError> {
         let res = self
             .params
             .room_client
@@ -325,6 +515,12 @@ impl Livekit {
             }
         };
 
+        let microphone_restriction_state = ctx
+            .volatile
+            .storage()
+            .get_microphone_restriction_state(self.room_id.room_id())
+            .await?;
+
         let allow_screenshare = !self
             .params
             .shared_settings
@@ -332,15 +528,25 @@ impl Livekit {
             .defaults
             .screen_share_requires_permission;
 
-        let can_publish_sources = if allow_screenshare {
-            SOURCES_WITH_SCREENSHARE
-                .map(|s| TrackSource::as_str_name(&s).to_lowercase())
-                .to_vec()
-        } else {
-            SOURCES_WITHOUT_SCREENSHARE
-                .map(|s| TrackSource::as_str_name(&s).to_lowercase())
-                .to_vec()
+        let mut available_sources = LIVEKIT_MEDIA_SOURCES.to_vec();
+        if let MicrophoneRestrictionState::Enabled {
+            unrestricted_participants,
+        } = &microphone_restriction_state
+        {
+            if !unrestricted_participants.contains(&self.participant_id) {
+                available_sources.retain(|s| s != &TrackSource::Microphone);
+            }
+        }
+
+        if !allow_screenshare {
+            available_sources
+                .retain(|s| s != &TrackSource::ScreenShare && s != &TrackSource::ScreenShareAudio);
         };
+
+        let can_publish_sources = available_sources
+            .into_iter()
+            .map(|s| TrackSource::as_str_name(&s).to_lowercase())
+            .collect();
 
         let participant_id = self.participant_id.to_string();
 
@@ -370,6 +576,6 @@ impl Livekit {
         .to_jwt()
         .whatever_context::<&str, SignalingModuleError>("Failed to create livekit access-token")?;
 
-        Ok((room.name, access_token))
+        Ok((room.name, access_token, microphone_restriction_state))
     }
 }

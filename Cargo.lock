@@ -4701,15 +4701,26 @@ name = "opentalk-livekit"
 version = "0.0.0-dev"
 dependencies = [
  "async-trait",
+ "either",
+ "futures",
  "livekit-api",
  "livekit-protocol",
  "livekit-runtime",
  "log",
  "opentalk-controller-settings",
  "opentalk-signaling-core",
+ "opentalk-types-common",
  "opentalk-types-signaling",
  "opentalk-types-signaling-livekit",
+ "parking_lot",
+ "pretty_assertions",
+ "redis",
+ "redis-args",
+ "serde",
+ "serial_test",
  "snafu",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]

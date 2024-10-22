@@ -3,14 +3,27 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use super::Error;
-use crate::state;
+use crate::{command::UnrestrictedParticipants, Credentials};
 
 /// The events emitted for livekit
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(tag = "message", rename_all = "snake_case")
+)]
 pub enum LiveKitEvent {
     /// The credentials for a client to use livekit
-    State(state::LiveKitState),
+    Credentials(Credentials),
+
+    /// The moderator enabled the microphone-restriction-state. Only participants listed in
+    /// [`UnrestrictedParticipants::unrestricted_participants`] are able to unmute themselves.
+    MicrophoneRestrictionsEnabled(UnrestrictedParticipants),
+
+    /// The moderator disabled the microphone-restriction-state.
+    /// Participants are allowed to unmute themselves again.
+    MicrophoneRestrictionsDisabled,
+
     /// An error e
     Error(Error),
 }
