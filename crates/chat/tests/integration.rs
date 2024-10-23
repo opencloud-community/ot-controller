@@ -6,15 +6,15 @@ use chrono::{DateTime, Utc};
 use opentalk_chat::Chat;
 use opentalk_signaling_core::module_tester::{ModuleTester, WsMessageOutgoing};
 use opentalk_test_util::{TestContext, ROOM_ID, USER_1, USER_2};
-use opentalk_types::signaling::chat::{
-    command::{ChatCommand, SendMessage},
+use opentalk_types_common::{time::Timestamp, users::GroupName};
+use opentalk_types_signaling::{AssociatedParticipant, LeaveReason, Participant, Role};
+use opentalk_types_signaling_chat::{
+    command::{ChatCommand, SendMessage, SetLastSeenTimestamp},
     event::{ChatEvent, MessageSent},
     peer_state::ChatPeerState,
     state::ChatState,
     Scope,
 };
-use opentalk_types_common::{time::Timestamp, users::GroupName};
-use opentalk_types_signaling::{AssociatedParticipant, LeaveReason, Participant, Role};
 use opentalk_types_signaling_control::event::{ControlEvent, JoinSuccess, Left};
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -129,10 +129,10 @@ async fn last_seen_timestamps() {
         let timestamp: Timestamp =
             DateTime::<Utc>::from(DateTime::parse_from_rfc3339(timestamp_global_raw).unwrap())
                 .into();
-        let message = ChatCommand::SetLastSeenTimestamp {
+        let message = ChatCommand::SetLastSeenTimestamp(SetLastSeenTimestamp {
             scope: Scope::Global,
             timestamp,
-        };
+        });
         module_tester
             .send_ws_message(&USER_1.participant_id, message)
             .unwrap();
@@ -143,10 +143,10 @@ async fn last_seen_timestamps() {
         let timestamp: Timestamp =
             DateTime::<Utc>::from(DateTime::parse_from_rfc3339(timestamp_group_raw).unwrap())
                 .into();
-        let message = ChatCommand::SetLastSeenTimestamp {
+        let message = ChatCommand::SetLastSeenTimestamp(SetLastSeenTimestamp {
             scope: Scope::Group(GroupName::from("group1".to_owned())),
             timestamp,
-        };
+        });
         module_tester
             .send_ws_message(&USER_1.participant_id, message)
             .unwrap();
@@ -157,10 +157,10 @@ async fn last_seen_timestamps() {
         let timestamp: Timestamp =
             DateTime::<Utc>::from(DateTime::parse_from_rfc3339(timestamp_private_raw).unwrap())
                 .into();
-        let message = ChatCommand::SetLastSeenTimestamp {
+        let message = ChatCommand::SetLastSeenTimestamp(SetLastSeenTimestamp {
             scope: Scope::Private(USER_2.participant_id),
             timestamp,
-        };
+        });
         module_tester
             .send_ws_message(&USER_1.participant_id, message)
             .unwrap();

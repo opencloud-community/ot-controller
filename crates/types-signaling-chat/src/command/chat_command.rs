@@ -2,19 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Signaling commands for the `chat` namespace
-
-use opentalk_types_common::time::Timestamp;
-
-use super::Scope;
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::command::{SendMessage, SetLastSeenTimestamp};
 
 /// Commands for the `chat` namespace
 #[derive(Debug, Clone)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(tag = "action", rename_all = "snake_case")
 )]
 pub enum ChatCommand {
@@ -31,36 +25,18 @@ pub enum ChatCommand {
     ClearHistory,
 
     /// Set last seen timestamp
-    SetLastSeenTimestamp {
-        /// Scope of the timestamp
-        #[cfg_attr(feature = "serde", serde(flatten))]
-        scope: Scope,
-
-        /// Last seen timestamp
-        timestamp: Timestamp,
-    },
+    SetLastSeenTimestamp(SetLastSeenTimestamp),
 }
 
-/// Send a chat message content with a specific scope
-#[derive(Debug, Clone)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct SendMessage {
-    /// The content of the message
-    pub content: String,
-
-    /// The scope of the message
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub scope: Scope,
-}
-
-#[cfg(test)]
-mod tests {
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
     use opentalk_types_common::users::GroupName;
     use opentalk_types_signaling::ParticipantId;
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
     use super::*;
+    use crate::Scope;
 
     #[test]
     fn user_private_message() {

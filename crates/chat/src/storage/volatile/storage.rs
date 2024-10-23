@@ -3,19 +3,19 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeMap, HashSet},
     sync::{Arc, OnceLock},
 };
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage};
-use opentalk_types::signaling::chat::state::StoredMessage;
 use opentalk_types_common::{
     rooms::RoomId,
     time::Timestamp,
     users::{GroupId, GroupName},
 };
 use opentalk_types_signaling::ParticipantId;
+use opentalk_types_signaling_chat::state::StoredMessage;
 use parking_lot::RwLock;
 
 use super::memory::MemoryChatState;
@@ -95,7 +95,7 @@ impl ChatStorage for VolatileStaticMemoryStorage {
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
-    ) -> Result<HashMap<ParticipantId, Timestamp>, SignalingModuleError> {
+    ) -> Result<BTreeMap<ParticipantId, Timestamp>, SignalingModuleError> {
         Ok(state()
             .read()
             .get_last_seen_timestamps_private(room, participant))
@@ -131,7 +131,7 @@ impl ChatStorage for VolatileStaticMemoryStorage {
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
-    ) -> Result<HashMap<GroupName, Timestamp>, SignalingModuleError> {
+    ) -> Result<BTreeMap<GroupName, Timestamp>, SignalingModuleError> {
         Ok(state()
             .read()
             .get_last_seen_timestamps_group(room, participant))

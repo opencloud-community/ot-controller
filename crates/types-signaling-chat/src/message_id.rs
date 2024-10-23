@@ -5,9 +5,6 @@
 use derive_more::{AsRef, Display, From, FromStr, Into};
 use uuid::Uuid;
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// ID of the message
 #[derive(Debug, Clone, Copy, Eq, PartialEq, AsRef, Display, From, FromStr, Into)]
 #[cfg_attr(
@@ -16,7 +13,7 @@ use crate::imports::*;
     to_redis_args(fmt),
     from_redis_value(FromStr)
 )]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MessageId(Uuid);
 
 impl MessageId {

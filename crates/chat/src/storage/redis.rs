@@ -3,20 +3,20 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeMap, HashSet},
     str::FromStr,
 };
 
 use async_trait::async_trait;
 use opentalk_r3dlock::Mutex;
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
-use opentalk_types::signaling::chat::state::StoredMessage;
 use opentalk_types_common::{
     rooms::RoomId,
     time::Timestamp,
     users::{GroupId, GroupName},
 };
 use opentalk_types_signaling::ParticipantId;
+use opentalk_types_signaling_chat::state::StoredMessage;
 use redis::AsyncCommands as _;
 use redis_args::{FromRedisValue, ToRedisArgs};
 use snafu::{OptionExt as _, Report, ResultExt as _};
@@ -116,7 +116,7 @@ impl ChatStorage for RedisConnection {
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
-    ) -> Result<HashMap<ParticipantId, Timestamp>, SignalingModuleError> {
+    ) -> Result<BTreeMap<ParticipantId, Timestamp>, SignalingModuleError> {
         self.hgetall(RoomParticipantLastSeenTimestampPrivate { room, participant })
             .await
             .context(RedisSnafu {
@@ -159,7 +159,7 @@ impl ChatStorage for RedisConnection {
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
-    ) -> Result<HashMap<GroupName, Timestamp>, SignalingModuleError> {
+    ) -> Result<BTreeMap<GroupName, Timestamp>, SignalingModuleError> {
         self.hgetall(RoomParticipantLastSeenTimestampsGroup { room, participant })
             .await
             .context(RedisSnafu {

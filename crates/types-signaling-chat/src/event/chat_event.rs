@@ -4,17 +4,13 @@
 
 //! Signaling events for the `chat` namespace
 
-use opentalk_types_signaling::ParticipantId;
-
-use super::{MessageId, Scope};
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::event::{ChatDisabled, ChatEnabled, Error, HistoryCleared, MessageSent};
 
 /// A chat event which occured
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(tag = "message", rename_all = "snake_case")
 )]
 pub enum ChatEvent {
@@ -34,26 +30,10 @@ pub enum ChatEvent {
     Error(Error),
 }
 
-/// The chat was enabled
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct ChatEnabled {
-    /// Participant who enabled the chat
-    pub issued_by: ParticipantId,
-}
-
 impl From<ChatEnabled> for ChatEvent {
     fn from(value: ChatEnabled) -> Self {
         Self::ChatEnabled(value)
     }
-}
-
-/// The chat was disabled
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct ChatDisabled {
-    /// Participant who disabled the chat
-    pub issued_by: ParticipantId,
 }
 
 impl From<ChatDisabled> for ChatEvent {
@@ -62,36 +42,10 @@ impl From<ChatDisabled> for ChatEvent {
     }
 }
 
-/// A message was sent
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct MessageSent {
-    /// Id of the message
-    pub id: MessageId,
-
-    /// Sender of the message
-    pub source: ParticipantId,
-
-    /// Content of the message
-    pub content: String,
-
-    /// Scope of the message
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub scope: Scope,
-}
-
 impl From<MessageSent> for ChatEvent {
     fn from(value: MessageSent) -> Self {
         Self::MessageSent(value)
     }
-}
-
-/// The chat history was cleared
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct HistoryCleared {
-    /// ID of the participant that cleared chat history
-    pub issued_by: ParticipantId,
 }
 
 impl From<HistoryCleared> for ChatEvent {
@@ -100,34 +54,21 @@ impl From<HistoryCleared> for ChatEvent {
     }
 }
 
-/// Errors from the `chat` module namespace
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(tag = "error", rename_all = "snake_case")
-)]
-pub enum Error {
-    /// Request while chat is disabled
-    ChatDisabled,
-
-    /// Request user has insufficient permissions
-    InsufficientPermissions,
-}
-
 impl From<Error> for ChatEvent {
     fn from(value: Error) -> Self {
         Self::Error(value)
     }
 }
 
-#[cfg(test)]
-mod tests {
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
     use opentalk_types_common::users::GroupName;
+    use opentalk_types_signaling::ParticipantId;
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
     use super::*;
+    use crate::{MessageId, Scope};
 
     #[test]
     fn global_serialize() {
