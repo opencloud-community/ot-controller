@@ -6,12 +6,12 @@ The OpenTalk controller is able to provide tracing information. If configured, t
 
 The configuration values for the tracing capabilities are in the `logging` section of the [configuration file](../configuration.md).
 
-| Field                   | Type     | Required | Default value | Description                                                       |
-| ----------------------- | -------- | -------- | ------------- | ----------------------------------------------------------------- |
-| `otlp_tracing_endpoint` | `string` | no       | -             | OTLP tracing endpoint to export traces to                         |
-| `service_name`          | `string` | no       | -             | opentelemetry service name                                        |
-| `service_namespace`     | `string` | no       | -             | opentelemetry service namespace                                   |
-| `service_instance_id`   | `string` | no       | -             | opentelemetry service instance id                                 |
+| Field                   | Type     | Required | Default value                      | Description                                                       |
+| ----------------------- | -------- | -------- | ---------------------------------- | ----------------------------------------------------------------- |
+| `otlp_tracing_endpoint` | `string` | no       | -                                  | OTLP tracing endpoint to export traces to                         |
+| `service_name`          | `string` | no       | `controller`                       | opentelemetry service name                                        |
+| `service_namespace`     | `string` | no       | `opentalk`                         | opentelemetry service namespace                                   |
+| `service_instance_id`   | `string` | no       | randomly generated UUID on startup | opentelemetry service instance id                                 |
 
 ### Examples
 
