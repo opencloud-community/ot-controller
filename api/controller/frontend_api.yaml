@@ -17,7 +17,7 @@ paths:
       tags:
         - "api::v1::auth"
       summary: Get the configured OIDC provider
-      description: |
+      description: |-
         Returns the relevant information for a frontend to authenticate against the
         configured OIDC provider for the OpenTalk service.
       operationId: get_login
@@ -35,7 +35,7 @@ paths:
       tags:
         - "api::v1::auth"
       summary: The login endpoint
-      description: |
+      description: |-
         Attempt to authenticate with a provided ID token. The ID token can be
         received from an OIDC provider and contains information about the requesting
         user as well as an expiration timestamp. When a valid token with an unknown user
@@ -103,7 +103,7 @@ paths:
             nullable: true
         - name: invitees_max
           in: query
-          description: |
+          description: |-
             Maximum number of invitees to return inside the event resource
             
             Default value is 0
@@ -136,7 +136,7 @@ paths:
             nullable: true
         - name: after
           in: query
-          description: |
+          description: |-
             Cursor token to get the next page of events
             
             Returned by the endpoint if the maximum number of events per page has been hit
@@ -148,7 +148,7 @@ paths:
             nullable: true
         - name: adhoc
           in: query
-          description: |
+          description: |-
             Only get events that are either marked as adhoc or non-adhoc
             
             If present, all adhoc events will be returned when `true`, all non-adhoc
@@ -160,7 +160,7 @@ paths:
             nullable: true
         - name: time_independent
           in: query
-          description: |
+          description: |-
             Only get events that are either time-independent or time-dependent
             
             If present, all time-independent events will be returned when `true`,
@@ -237,7 +237,7 @@ paths:
       parameters:
         - name: invitees_max
           in: query
-          description: |
+          description: |-
             Maximum number of invitees to return inside the event resource
             
             Default value is 0
@@ -272,7 +272,7 @@ paths:
       tags:
         - "api::v1::events"
       summary: "Delete an event and its owned resources, including the associated room."
-      description: |
+      description: |-
         Deletes the event by the id if found. See the query parameters for affecting
         the behavior of this endpoint, such as mail notification suppression, or
         succeding even if external resources cannot be successfully deleted.
@@ -351,7 +351,7 @@ paths:
         "204":
           description: The patch was empty
         "400":
-          description: |
+          description: |-
             Could not modify the specified event due to wrong
                             syntax or bad values, for example an invalid timestamp string
         "401":
@@ -367,7 +367,7 @@ paths:
       tags:
         - "api::v1::events::instances"
       summary: Get a list of the instances of an event
-      description: |
+      description: |-
         The instances are calculated based on the RRULE of the event. If no RRULE is
         set for the event, the single event instance is returned.
         
@@ -460,7 +460,7 @@ paths:
             $ref: "#/components/schemas/InstanceId"
         - name: invitees_max
           in: query
-          description: |
+          description: |-
             Maximum number of invitees to return inside the event instance resource
             
             Default: 0
@@ -495,7 +495,7 @@ paths:
       tags:
         - "api::v1::events::instances"
       summary: "API Endpoint `PATCH /events/{event_id}/{instance_id}`"
-      description: |
+      description: |-
         Patch an instance of a recurring event. This creates or modifies an exception for the event
         at the point of time of the given instance_id.
         Returns the patched event instance
@@ -515,7 +515,7 @@ paths:
             $ref: "#/components/schemas/InstanceId"
         - name: invitees_max
           in: query
-          description: |
+          description: |-
             Maximum number of invitees to return inside the event instance resource
             
             Default: 0
@@ -718,7 +718,7 @@ paths:
       tags:
         - "api::v1::events::invites"
       summary: Delete an invite from an event
-      description: |
+      description: |-
         Delete/Withdraw an event invitation using the email address as the identifier.
         
         This will also withdraw invites from registered users if the provided email address matches theirs.
@@ -780,7 +780,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
-          description: |
+          description: |-
             The requesting user does not have the required permissions to update the invite.
                           Only the creator of an event can update the invites.
         "404":
@@ -859,7 +859,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
-          description: |
+          description: |-
             The requesting user does not have the required permissions to update the invite.
                           Only the creator of an event can update the invites.
         "404":
@@ -1013,7 +1013,7 @@ paths:
       tags:
         - "api::v1::rooms"
       summary: Get a list of rooms accessible by the requesting user
-      description: |
+      description: |-
         All rooms accessible to the requesting user are returned in a list. If no
         pagination query is added, the default page size is used.
       operationId: accessible
@@ -1114,7 +1114,7 @@ paths:
       tags:
         - "api::v1::rooms"
       summary: Delete a room and its owned resources.
-      description: |
+      description: |-
         Deletes the room by the id if found. See the query parameters for affecting
         the behavior of this endpoint, such as mail notification suppression, or
         succeding even if external resources cannot be successfully deleted.
@@ -1178,7 +1178,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/RoomResource"
         "400":
-          description: |
+          description: |-
             Could not modify the specified room due to wrong
                             syntax or bad values, for example an invalid owner id
         "401":
@@ -1194,7 +1194,7 @@ paths:
       tags:
         - "api::v1::assets"
       summary: Get the assets associated with a room.
-      description: |
+      description: |-
         This returns assets that are available for a room. If no
         pagination query is added, the default page size is used.
       operationId: room_assets
@@ -1241,7 +1241,7 @@ paths:
       tags:
         - "api::v1::assets"
       summary: Get a specific asset inside a room.
-      description: |
+      description: |-
         This will return the plain asset contents, e.g. the binary file contents or
         whatever else is stored inside the asset storage.
       operationId: room_asset
@@ -1308,7 +1308,7 @@ paths:
       tags:
         - "api::v1::rooms"
       summary: "Get a room's event"
-      description: |
+      description: |-
         This returns the event with which the room is associated. Please note
         that rooms can exist without events, in which case a `404` status will be
         returned.
@@ -1343,7 +1343,7 @@ paths:
       tags:
         - "api::v1::invites"
       summary: Get all invites for a room
-      description: |
+      description: |-
         This returns all invites that are available for a room. If no
         pagination query is added, the default page size is used.
       operationId: get_invites
@@ -1412,7 +1412,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/InviteResource"
         "400":
-          description: |
+          description: |-
             Could not create a new invite due to wrong syntax or
                             bad values, for example an invalid owner id.
         "401":
@@ -1444,7 +1444,7 @@ paths:
           description: The invite code id
           required: true
           schema:
-            $ref: "#/components/schemas/InviteCodeId"
+            $ref: "#/components/schemas/InviteCode"
       responses:
         "200":
           description: Successfully retrieved the room invite
@@ -1480,7 +1480,7 @@ paths:
           description: The invite code id
           required: true
           schema:
-            $ref: "#/components/schemas/InviteCodeId"
+            $ref: "#/components/schemas/InviteCode"
       requestBody:
         content:
           application/json:
@@ -1522,7 +1522,7 @@ paths:
           description: The invite code id
           required: true
           schema:
-            $ref: "#/components/schemas/InviteCodeId"
+            $ref: "#/components/schemas/InviteCode"
       responses:
         "204":
           description: Successfully deleted the room invite
@@ -1541,7 +1541,7 @@ paths:
       tags:
         - "api::v1::sip_configs"
       summary: Get the sip config for the specified room.
-      description: |
+      description: |-
         Returns the sip config if available for the room, otherwise `404 NOT_FOUND`
         is returned.
       operationId: get_room_sip
@@ -1573,7 +1573,7 @@ paths:
       tags:
         - "api::v1::sip_configs"
       summary: Modify the sip configuration of a room. A new sip configuration is created
-      description: |
+      description: |-
         if none was set before.
         
         Returns the new modified sip configuration.
@@ -1646,7 +1646,7 @@ paths:
       tags:
         - "api::v1::rooms"
       summary: Start a signaling session as a registered user
-      description: |
+      description: |-
         This endpoint has to be called in order to get a room ticket. When joining a room, the ticket
         must be provided as a `Sec-WebSocket-Protocol` header field when starting the WebSocket
         connection.
@@ -1690,7 +1690,7 @@ paths:
                     code: no_breakout_rooms
                     message: The requested room has no breakout rooms
         "401":
-          description: |
+          description: |-
             The provided AccessToken is expired or the
                             provided ID- or Access-Token is invalid. The WWW-Authenticate
                             header will contain a error description 'session expired' to
@@ -1739,7 +1739,7 @@ paths:
       tags:
         - "api::v1::rooms"
       summary: Start a signaling session for an invitation code
-      description: |
+      description: |-
         Returns a ticket to be used with the `/signaling` endpoint. When joining a
         room, the ticket must be provided as `Sec-WebSocket-Protocol` header field
         when starting the WebSocket connection. When the requested room has a
@@ -1768,7 +1768,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/RoomsStartResponse"
         "400":
-          description: |
+          description: |-
             The provided ID token is malformed or contains
                             invalid claims,  no breakout rooms were found for this room, the
                             breakout room id is invalid, the room doesn't exist or the guest
@@ -1797,7 +1797,7 @@ paths:
                     code: bad_request
                     message: Room id mismatch
         "401":
-          description: |
+          description: |-
             Either: the provided access token is expired or the
                             provided id or access token is invalid. The WWW-Authenticate
                             header will contain an error description 'session expired' to
@@ -2035,7 +2035,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ChangeRoomStreamingTargetResponse"
         "400":
-          description: |
+          description: |-
             Could not modify the specified streaming target due to wrong
                             syntax or bad values
         "401":
@@ -2051,7 +2051,7 @@ paths:
       tags:
         - "api::v1::rooms"
       summary: "Get a room's tariff"
-      description: |
+      description: |-
         This returns the tariff that applies to the room, typically the tariff of
         the room creator.
       operationId: get_room_tariff
@@ -2085,7 +2085,7 @@ paths:
       tags:
         - "api::v1::services::call_in"
       summary: Starts a signaling session
-      description: |
+      description: |-
         Takes call-in id and pin and returns a ticket for the `/signaling` endpoint. Behaves similar to the
         `/rooms/{room_id}/start` endpoint.
         
@@ -2126,7 +2126,7 @@ paths:
       tags:
         - "api::v1::services::recording"
       summary: Starts a signaling session for recording
-      description: |
+      description: |-
         This endpoint is provided for participation of recording and streaming clients
         which will join incognito and receive all the information and media streams required
         for creating a recording or livestream of the meeting.
@@ -2164,7 +2164,7 @@ paths:
       tags:
         - "api::v1::services::recording"
       summary: Streaming upload of a rendered recording
-      description: |
+      description: |-
         This is a WebSocket endpoint, all the data that is sent in binary messages
         is stored in the destination file.
       operationId: ws_upload
@@ -2215,7 +2215,7 @@ paths:
       tags:
         - "api::v1::services::recording"
       summary: Upload a rendered recording
-      description: |
+      description: |-
         The body of this request should simply contain the raw data.
         This endpoint is deprecated, please use the streaming upload
         `/services/recording/upload` WebSocket endpoint instead.
@@ -2262,7 +2262,7 @@ paths:
       tags:
         - "api::signaling"
       summary: Room signaling websocket
-      description: |
+      description: |-
         The room signaling websocket.
         Documentation: <https://docs.opentalk.eu/developer/controller/signaling/>.
       operationId: ws_service
@@ -2306,7 +2306,7 @@ paths:
       tags:
         - "api::v1::turn"
       summary: Get a TURN server and corresponding credentials
-      description: |
+      description: |-
         The returned TURN server can be used with the credentials to circumvent
         NAT restrictions.
       operationId: get_turn
@@ -2358,7 +2358,7 @@ paths:
       tags:
         - "api::v1::users"
       summary: "Get the current user's profile"
-      description: |
+      description: |-
         Returns the private user profile of the currently logged-in user. This
         private profile contains information that is not visible in the public
         profile, such as tariff status or the used storage.
@@ -2396,7 +2396,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/RoomResource"
         "400":
-          description: |
+          description: |-
             Could not modify the user's profile due to wrong
                             syntax or bad values
         "401":
@@ -2410,7 +2410,7 @@ paths:
       tags:
         - "api::v1::users"
       summary: Get the assets associated with the user.
-      description: |
+      description: |-
         All assets associated to the requesting user are returned in a list. If no
         pagination query is added, the default page size is used.
       operationId: get_me_assets
@@ -2634,22 +2634,20 @@ components:
       format: uuid
       description: The id of a breakout room
       example: 00000000-0000-0000-0000-0000badcab1e
-    CallIn:
+    CallInId:
+      $ref: "#/components/schemas/NumericId"
+    CallInInfo:
       type: object
-      description: Call-in info for an event
+      description: Information needed to participate in a call-in connection.
       required:
         - tel
         - id
         - password
       properties:
         id:
-          type: string
-          description: SIP ID which must transmitted via DTMF (number field on the phone) to identify this room
+          $ref: "#/components/schemas/CallInId"
         password:
-          type: string
-          description: |
-            SIP password which must be transmitted via DTMF (number field on the phone) after entering the `sip_id`
-            to enter the room
+          $ref: "#/components/schemas/CallInPassword"
         tel:
           type: string
           description: SIP Call-In phone number which must be used to reach the room
@@ -2657,35 +2655,6 @@ components:
         id: "1234567890"
         password: "0987654321"
         tel: +555-123-456-789
-    CallInId:
-      $ref: "#/components/schemas/NumericId"
-    CallInInfo:
-      type: object
-      description: "Data stored inside the `GET /events` query cursor"
-      required:
-        - tel
-        - id
-        - password
-      properties:
-        id:
-          type: string
-          description: SIP ID which must transmitted via DTMF (number field on the phone) to identify this room
-        password:
-          type: string
-          description: |
-            SIP password which must be transmitted via DTMF (number field on the phone) after entering the `sip_id`
-            to enter the room
-        tel:
-          type: string
-          description: SIP Call-In phone number which must be used to reach the room
-        uri:
-          type: string
-          description: SIP Call-In sip uri
-          nullable: true
-      example:
-        id: "1234567890"
-        password: "9876543210"
-        tel: +555-12345-67890
     CallInPassword:
       $ref: "#/components/schemas/NumericId"
     ChangeRoomStreamingTargetRequest:
@@ -2780,9 +2749,14 @@ components:
       type: string
       description: An event id and an instance id
       example: 00000000-0000-0000-0000-004433221100_20240705T170242Z
+    EventDescription:
+      type: string
+      description: The description of an event
+      example: The Weekly Team Event
+      maxLength: 4096
     EventExceptionResource:
       type: object
-      description: |
+      description: |-
         Event exception resource
         
         Overrides event properties for a event recurrence. May only exist for events of type `recurring`.
@@ -2807,8 +2781,8 @@ components:
         created_by:
           $ref: "#/components/schemas/PublicUserProfile"
         description:
-          type: string
-          description: Override the description of the instance
+          allOf:
+            - $ref: "#/components/schemas/EventDescription"
         ends_at:
           allOf:
             - $ref: "#/components/schemas/DateTimeTz"
@@ -2829,8 +2803,8 @@ components:
         status:
           $ref: "#/components/schemas/EventStatus"
         title:
-          type: string
-          description: Override the title of the instance
+          allOf:
+            - $ref: "#/components/schemas/EventTitle"
         type:
           $ref: "#/components/schemas/EventType"
         updated_at:
@@ -2848,7 +2822,7 @@ components:
           id: 00000000-0000-0000-0000-0000000a11c3
           lastname: Adams
           title: ""
-        description: The weekly teammeeting
+        description: The Weekly Team Event
         ends_at:
           datetime: "2024-07-05T17:00:00Z"
           timezone: Europe/Berlin
@@ -2863,7 +2837,7 @@ components:
           datetime: "2024-07-05T15:00:00Z"
           timezone: Europe/Berlin
         status: ok
-        title: Teammeeting
+        title: Team Event
         type: instance
         updated_at: "2024-07-20T14:16:19Z"
         updated_by:
@@ -2887,7 +2861,11 @@ components:
         - room_id
         - title
         - is_adhoc
+        - e2e_encryption
       properties:
+        e2e_encryption:
+          type: boolean
+          description: Indicates whether the meeting room should have e2e encryption enabled.
         id:
           $ref: "#/components/schemas/EventId"
         is_adhoc:
@@ -2899,9 +2877,9 @@ components:
         room_id:
           $ref: "#/components/schemas/RoomId"
         title:
-          type: string
-          description: The title of the event
+          $ref: "#/components/schemas/EventTitle"
       example:
+        e2e_encryption: false
         id: 00000000-0000-0000-0000-004433221100
         is_adhoc: false
         meeting_details:
@@ -2914,10 +2892,10 @@ components:
             - name: My OwnCast Stream
               url: "https://owncast.example.com/mystream"
         room_id: 00000000-0000-0000-0000-0000abadcafe
-        title: Weekly Team Event
+        title: Team Event
     EventInstance:
       type: object
-      description: |
+      description: |-
         Event instance resource
         
         An event instance is an occurrence of an recurring event
@@ -2957,8 +2935,7 @@ components:
         created_by:
           $ref: "#/components/schemas/PublicUserProfile"
         description:
-          type: string
-          description: Description of the event
+          $ref: "#/components/schemas/EventDescription"
         ends_at:
           $ref: "#/components/schemas/DateTimeTz"
         id:
@@ -2993,8 +2970,7 @@ components:
         status:
           $ref: "#/components/schemas/EventStatus"
         title:
-          type: string
-          description: Title of the event
+          $ref: "#/components/schemas/EventTitle"
         type:
           $ref: "#/components/schemas/EventType"
         updated_at:
@@ -3012,7 +2988,7 @@ components:
           id: 00000000-0000-0000-0000-0000000a11c3
           lastname: Adams
           title: ""
-        description: Our weekly teammeeting
+        description: The Weekly Team Event
         ends_at:
           datetime: "2024-07-22T11:00:00Z"
           timezone: Europe/Berlin
@@ -3040,6 +3016,7 @@ components:
             id: "1234567890"
             password: "9876543210"
             tel: +555-12345-67890
+          e2e_encryption: false
           id: 00000000-0000-0000-0000-0000abadcafe
           password: v3rys3cr3t
           waiting_room: false
@@ -3051,7 +3028,7 @@ components:
           datetime: "2024-07-22T10:00:00Z"
           timezone: Europe/Berlin
         status: ok
-        title: Weekly meeting
+        title: Team Event
         type: recurring
         updated_at: "2024-07-20T14:16:19Z"
         updated_by:
@@ -3072,7 +3049,7 @@ components:
       example: accepted
     EventInvitee:
       type: object
-      description: |
+      description: |-
         Invitee to an event
         
         Contains user profile and invitee status
@@ -3157,7 +3134,7 @@ components:
           id: 00000000-0000-0000-0000-0000000a11c3
           lastname: Adams
           title: ""
-        description: The weekly teammeting
+        description: The Weekly Team Event
         id: 00000000-0000-0000-0000-004433221100
         invite_status: accepted
         invitees:
@@ -3181,6 +3158,7 @@ components:
             id: "1234567890"
             password: "9876543210"
             tel: +555-12345-67890
+          e2e_encryption: false
           id: 00000000-0000-0000-0000-0000abadcafe
           password: v3rys3cr3t
           waiting_room: false
@@ -3199,7 +3177,7 @@ components:
             public_url: "https://streaming.example.com/livestream123"
             streaming_endpoint: "https://ingress.streaming.example.com/"
             streaming_key: aabbccddeeff
-        title: Teammeeting
+        title: Team Event
         type: single
         updated_at: "2024-07-20T14:16:19Z"
         updated_by:
@@ -3212,7 +3190,7 @@ components:
           title: ""
     EventResource:
       type: object
-      description: |
+      description: |-
         Event Resource representation
         
         Returned from `GET /events/` and `GET /events/{event_id}`
@@ -3243,11 +3221,7 @@ components:
         created_by:
           $ref: "#/components/schemas/PublicUserProfile"
         description:
-          type: string
-          description: |
-            Description of the event
-            
-            For display purposes
+          $ref: "#/components/schemas/EventDescription"
         ends_at:
           allOf:
             - $ref: "#/components/schemas/DateTimeTz"
@@ -3262,7 +3236,7 @@ components:
           description: "List of event invitees and their invite status. Might not be complete, see `invite_truncated`"
         invitees_truncated:
           type: boolean
-          description: |
+          description: |-
             Flag which indicates if `invitees` contains all invites as far as known to the application
             May also be true if there are no invitees but no invitees were requested
         is_adhoc:
@@ -3270,7 +3244,7 @@ components:
           description: Flag indicating whether the event is ad-hoc created.
         is_all_day:
           type: boolean
-          description: |
+          description: |-
             Is the event an all day event
             
             All-day events have no start/end time, they last the entire day(s)
@@ -3279,7 +3253,7 @@ components:
           description: "Is this event in the current user's favorite list?"
         is_time_independent:
           type: boolean
-          description: |
+          description: |-
             Is the event time independent?
             
             Time independent events are not bound to any time but instead are constantly available to join
@@ -3302,11 +3276,7 @@ components:
             $ref: "#/components/schemas/RoomStreamingTarget"
           description: The streaming targets of the room associated with the event
         title:
-          type: string
-          description: |
-            Title of the event
-            
-            For display purposes
+          $ref: "#/components/schemas/EventTitle"
         type:
           $ref: "#/components/schemas/EventType"
         updated_at:
@@ -3324,7 +3294,7 @@ components:
           id: 00000000-0000-0000-0000-0000000a11c3
           lastname: Adams
           title: ""
-        description: The weekly teammeting
+        description: The Weekly Team Event
         id: 00000000-0000-0000-0000-004433221100
         invite_status: accepted
         invitees:
@@ -3348,6 +3318,7 @@ components:
             id: "1234567890"
             password: "9876543210"
             tel: +555-12345-67890
+          e2e_encryption: false
           id: 00000000-0000-0000-0000-0000abadcafe
           password: v3rys3cr3t
           waiting_room: false
@@ -3366,7 +3337,7 @@ components:
             public_url: "https://streaming.example.com/livestream123"
             streaming_endpoint: "https://ingress.streaming.example.com/"
             streaming_key: aabbccddeeff
-        title: Teammeeting
+        title: Team Event
         type: single
         updated_at: "2024-07-20T14:16:19Z"
         updated_by:
@@ -3387,6 +3358,9 @@ components:
         call_in:
           allOf:
             - $ref: "#/components/schemas/CallInInfo"
+        e2e_encryption:
+          type: boolean
+          description: Flag to check if the room has e2e encryption enabled
         id:
           $ref: "#/components/schemas/RoomId"
         password:
@@ -3400,6 +3374,7 @@ components:
           id: "1234567890"
           password: "9876543210"
           tel: +555-12345-67890
+        e2e_encryption: false
         id: 00000000-0000-0000-0000-0000abadcafe
         password: v3rys3cr3t
         waiting_room: false
@@ -3410,9 +3385,14 @@ components:
         - ok
         - cancelled
       example: ok
+    EventTitle:
+      type: string
+      description: The title of an event
+      example: Team Event
+      maxLength: 255
     EventType:
       type: string
-      description: |
+      description: |-
         Type of event resource.
         
         Is used as type discriminator in field `type`.
@@ -3422,6 +3402,13 @@ components:
         - instance
         - exception
       example: single
+    FeatureId:
+      type: string
+      description: A feature identifier
+      example: myfeature
+      maxLength: 255
+      minLength: 1
+      pattern: "^[-_0-9a-zA-Z]*$"
     FileExtension:
       type: string
       description: An extension for a file path
@@ -3449,7 +3436,7 @@ components:
             id: 00000000-0000-0000-0000-0000000a11c3
             lastname: Adams
             title: ""
-          description: Our weekly teammeeting
+          description: The Weekly Team Event
           ends_at:
             datetime: "2024-07-22T11:00:00Z"
             timezone: Europe/Berlin
@@ -3477,6 +3464,7 @@ components:
               id: "1234567890"
               password: "9876543210"
               tel: +555-12345-67890
+            e2e_encryption: false
             id: 00000000-0000-0000-0000-0000abadcafe
             password: v3rys3cr3t
             waiting_room: false
@@ -3488,7 +3476,7 @@ components:
             datetime: "2024-07-22T10:00:00Z"
             timezone: Europe/Berlin
           status: ok
-          title: Weekly meeting
+          title: Team Event
           type: recurring
           updated_at: "2024-07-20T14:16:19Z"
           updated_by:
@@ -3644,17 +3632,14 @@ components:
       type: string
       description: An event instance id
       example: "2024-07-20T15:23:42+00:00"
-    InviteCodeId:
+    InviteCode:
       type: string
       format: uuid
       description: An invite code
       example: 00000000-0000-0000-0000-0000deadbeef
     InviteResource:
       type: object
-      description: |
-        Public invite details
-        
-        Contains general public information about a room.
+      description: A room invite code with associated information.
       required:
         - invite_code
         - created
@@ -3679,7 +3664,7 @@ components:
           description: Optional expiration date of the invite
           nullable: true
         invite_code:
-          $ref: "#/components/schemas/InviteCodeId"
+          $ref: "#/components/schemas/InviteCode"
         room_id:
           $ref: "#/components/schemas/RoomId"
         updated:
@@ -3719,14 +3704,14 @@ components:
       example: user
     MeetingDetails:
       type: object
-      description: Details about an event
+      description: Details about meeting
       properties:
         call_in:
           allOf:
-            - $ref: "#/components/schemas/CallIn"
+            - $ref: "#/components/schemas/CallInInfo"
         invite_code_id:
           allOf:
-            - $ref: "#/components/schemas/InviteCodeId"
+            - $ref: "#/components/schemas/InviteCode"
         streaming_links:
           type: array
           items:
@@ -3741,6 +3726,29 @@ components:
         streaming_links:
           - name: My OwnCast Stream
             url: "https://owncast.example.com/mystream"
+    ModuleFeatureId:
+      anyOf:
+        - type: string
+          description: A feature identifier
+          example: myfeature
+          maxLength: 255
+          minLength: 1
+          pattern: "^[-_0-9a-zA-Z]*$"
+        - type: string
+          description: A module feature identifier
+          example: "mymodule::myfeature"
+          pattern: "^[-_0-9a-zA-Z]{1,255}::[-_0-9a-zA-Z]{1,255}$"
+      example: "mymodule::myfeature"
+    ModuleId:
+      anyOf:
+        - type: string
+          description: A module identifier
+          example: mymodule
+          maxLength: 255
+          minLength: 1
+          pattern: "^[-_0-9a-zA-Z]*$"
+      default: core
+      example: mymodule
     NumericId:
       type: string
       description: A string containing number characters
@@ -3787,8 +3795,11 @@ components:
       description: "Body for the `PATCH /events/{event_id}` endpoint"
       properties:
         description:
-          type: string
-          description: Patch the description of the event
+          allOf:
+            - $ref: "#/components/schemas/EventDescription"
+        e2e_encryption:
+          type: boolean
+          description: Patch whether the event is encrypted
         ends_at:
           allOf:
             - $ref: "#/components/schemas/DateTimeTz"
@@ -3800,14 +3811,14 @@ components:
           description: Patch the adhoc flag.
         is_all_day:
           type: boolean
-          description: |
+          description: |-
             Patch if the event is an all-day event
             
             If it changes the value from false to true this request must ensure
             that the `starts_at.datetime` and `ends_at.datetime` have a 00:00 time part.
         is_time_independent:
           type: boolean
-          description: |
+          description: |-
             Patch the time independence of the event
             
             If it changes the independence from true false this body has to have
@@ -3830,9 +3841,8 @@ components:
             $ref: "#/components/schemas/StreamingTarget"
           description: The streaming targets of the room associated with the event
         title:
-          type: string
-          description: Patch the title of th event
-          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/EventTitle"
         waiting_room:
           type: boolean
           description: Patch the presence of a waiting room
@@ -3846,8 +3856,8 @@ components:
       description: "Request body for the `PATCH /events/{event_id}/{instance_id}` endpoint"
       properties:
         description:
-          type: string
-          description: The description of the event
+          allOf:
+            - $ref: "#/components/schemas/EventDescription"
         ends_at:
           allOf:
             - $ref: "#/components/schemas/DateTimeTz"
@@ -3861,8 +3871,8 @@ components:
           allOf:
             - $ref: "#/components/schemas/EventStatus"
         title:
-          type: string
-          description: The title of th event
+          allOf:
+            - $ref: "#/components/schemas/EventTitle"
       example:
         is_all_day: false
         status: cancelled
@@ -3910,6 +3920,10 @@ components:
       type: object
       description: API request parameters to patch a room
       properties:
+        e2e_encryption:
+          type: boolean
+          description: If e2e encryption is enabled
+          nullable: true
         password:
           allOf:
             - $ref: "#/components/schemas/RoomPassword"
@@ -3935,8 +3949,10 @@ components:
         - is_time_independent
       properties:
         description:
-          type: string
-          description: Description of the event
+          $ref: "#/components/schemas/EventDescription"
+        e2e_encryption:
+          type: boolean
+          description: Should the created event be encrypted?
         ends_at:
           allOf:
             - $ref: "#/components/schemas/DateTimeTz"
@@ -3948,13 +3964,13 @@ components:
           description: Is this an ad-hoc chatroom?
         is_all_day:
           type: boolean
-          description: |
+          description: |-
             Should the event be all-day?
             
             If true, requires `starts_at.datetime` and `ends_at.datetime` to have a 00:00 time part
         is_time_independent:
           type: boolean
-          description: |
+          description: |-
             Should the created event be time independent?
             
             If true, all following fields must be null
@@ -3976,13 +3992,13 @@ components:
             $ref: "#/components/schemas/StreamingTarget"
           description: The streaming targets of the room associated with the event
         title:
-          type: string
-          description: Title of the event
+          $ref: "#/components/schemas/EventTitle"
         waiting_room:
           type: boolean
           description: Should the created event have a waiting room?
       example:
         description: The weekly teammeeting
+        e2e_encryption: false
         ends_at:
           datetime: "2024-07-22T11:00:00Z"
           timezone: Europe/Berlin
@@ -4022,7 +4038,7 @@ components:
         - invite_code
       properties:
         invite_code:
-          $ref: "#/components/schemas/InviteCodeId"
+          $ref: "#/components/schemas/InviteCode"
     PostLoginRequestBody:
       type: object
       description: "Body of a *POST* request on `/auth/login`"
@@ -4053,6 +4069,9 @@ components:
       type: object
       description: API request parameters to create a new room
       properties:
+        e2e_encryption:
+          type: boolean
+          description: Enable/Disable e2e encryption for this room; defaults to false when not set
         enable_sip:
           type: boolean
           description: Enable/Disable sip for this room; defaults to false when not set
@@ -4062,7 +4081,7 @@ components:
           nullable: true
         waiting_room:
           type: boolean
-          description: |
+          description: |-
             Indicates whether the meeting room should have the waiting room enabled.
             When not present, the waiting room will be disabled.
     PostRoomsStartInvitedRequestBody:
@@ -4103,7 +4122,7 @@ components:
         resumption: 654321zyxwvutsrqponmlkjihgfedcba654321zyxwvutsrqponmlkjihgfedcba
     PrivateUserProfile:
       type: object
-      description: |
+      description: |-
         Private user profile.
         
         Similar to [`PublicUserProfile`], but contains additional "private" information about a user.
@@ -4180,7 +4199,7 @@ components:
         title: ""
     PublicUserProfile:
       type: object
-      description: |
+      description: |-
         Public user details.
         
         Contains general "public" information about a user. Is accessible to all other users.
@@ -4238,7 +4257,7 @@ components:
       properties:
         lobby:
           type: boolean
-          description: |
+          description: |-
             Enable or disable the lobby for users that join throughh SIP. Defaults
             to [`false`] when not explicity set on creation.
         password:
@@ -4277,7 +4296,7 @@ components:
       minLength: 1
     RoomResource:
       type: object
-      description: |
+      description: |-
         A Room
         
         Contains all room information. Is only be accessible to the owner and users with
@@ -4357,7 +4376,7 @@ components:
           $ref: "#/components/schemas/TicketToken"
     SharedFolder:
       type: object
-      description: |
+      description: |-
         Information about a shared folder containing
         read and optional write access
       required:
@@ -4546,7 +4565,7 @@ components:
         features:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/FeatureId"
           description: Enabled features for the tariff
           uniqueItems: true
     TariffResource:
@@ -4563,14 +4582,14 @@ components:
         disabled_features:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/ModuleFeatureId"
           description: "Disabled features for the tariff  (deprecated, use 'modules' instead)"
           deprecated: true
           uniqueItems: true
         enabled_modules:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/ModuleId"
           description: "Enabled modules for the tariff (deprecated, use 'modules' instead)"
           deprecated: true
           uniqueItems: true
@@ -4632,7 +4651,7 @@ components:
     Timestamp:
       type: string
       format: date-time
-      description: |
+      description: |-
         A UTC DateTime wrapper that implements ToRedisArgs and FromRedisValue.
         
         The values are stores as unix timestamps in redis.
@@ -4801,7 +4820,7 @@ components:
           description: Machine readable error message
         field:
           type: string
-          description: |
+          description: |-
             The field related to the error
             
             If the value is [`None`] that means the error happened at struct level
@@ -4822,7 +4841,7 @@ components:
     NotFound:
       description: The requested data could not be found
     Unauthorized:
-      description: |
+      description: |-
         The provided access token is expired or the provided id or access token is invalid.
                 The WWW-Authenticate header will contain an error description 'session expired' to distinguish between
                 an invalid and an expired token

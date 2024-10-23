@@ -30,4 +30,4 @@ mkdir -p "$DB_DIR"
 $OPENTALK_CONTROLLER_CMD --config extra/example.toml migrate-db
 
 # Generated the ER-diragra
-sqlant -o mermaid $OPENTALK_CTRL_DATABASE__URL > $ER_DIAGRAM_MERMAID
+sqlant -o mermaid "$OPENTALK_CTRL_DATABASE__URL" > $ER_DIAGRAM_MERMAID

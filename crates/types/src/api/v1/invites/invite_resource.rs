@@ -12,9 +12,7 @@ use crate::api::v1::users::PublicUserProfile;
 #[allow(unused_imports)]
 use crate::imports::*;
 
-/// Public invite details
-///
-/// Contains general public information about a room.
+/// A room invite code with associated information.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(

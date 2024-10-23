@@ -20,6 +20,9 @@ pub const MIN_MODULE_ID_LENGTH: usize = 1;
 /// The maximum allowed length for a valid module id
 pub const MAX_MODULE_ID_LENGTH: usize = 255;
 
+/// Regular expression of characters that are allowed inside a module id.
+pub const MODULE_ID_SCHEMA_CHARS_REGEX: &str = "[-_0-9a-zA-Z]";
+
 /// The id of a module.
 ///
 /// Can be parsed using [`std::str::FromStr`].
@@ -60,29 +63,37 @@ mod impl_to_schema {
     //! a manual implementation is required for now.
     //! Issue: <https://github.com/juhaku/utoipa/issues/663>
 
+    use serde_json::json;
     use utoipa::{
-        openapi::{ObjectBuilder, SchemaType},
+        openapi::{schema::AnyOf, ObjectBuilder, RefOr, Schema, SchemaType},
         ToSchema,
     };
 
-    use super::{ModuleId, MAX_MODULE_ID_LENGTH, MIN_MODULE_ID_LENGTH};
+    use super::{
+        ModuleId, MAX_MODULE_ID_LENGTH, MIN_MODULE_ID_LENGTH, MODULE_ID_SCHEMA_CHARS_REGEX,
+    };
     use crate::utils::ExampleData as _;
 
     impl<'__s> ToSchema<'__s> for ModuleId {
-        fn schema() -> (
-            &'__s str,
-            utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>,
-        ) {
+        fn schema() -> (&'__s str, RefOr<Schema>) {
             (
                 "ModuleId",
-                ObjectBuilder::new()
-                    .schema_type(SchemaType::String)
-                    .description(Some("A module identifier"))
-                    .min_length(Some(MIN_MODULE_ID_LENGTH))
-                    .max_length(Some(MAX_MODULE_ID_LENGTH))
-                    .pattern(Some("^[-_0-9a-zA-Z]*$".to_string()))
-                    .example(Some(ModuleId::example_data().to_string().into()))
-                    .into(),
+                Schema::AnyOf(AnyOf {
+                    items: vec![ObjectBuilder::new()
+                        .schema_type(SchemaType::String)
+                        .description(Some("A module identifier"))
+                        .min_length(Some(MIN_MODULE_ID_LENGTH))
+                        .max_length(Some(MAX_MODULE_ID_LENGTH))
+                        .pattern(Some(format!("^{MODULE_ID_SCHEMA_CHARS_REGEX}*$")))
+                        .example(Some(ModuleId::example_data().to_string().into()))
+                        .into()],
+                    description: None,
+                    default: Some(json!(ModuleId::default())),
+                    example: Some(json!(Self::example_data())),
+                    discriminator: None,
+                    nullable: false,
+                })
+                .into(),
             )
         }
     }

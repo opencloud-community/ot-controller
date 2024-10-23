@@ -14,6 +14,9 @@ pub const MIN_FEATURE_ID_LENGTH: usize = 1;
 /// The maximum allowed length for a valid feature id
 pub const MAX_FEATURE_ID_LENGTH: usize = 255;
 
+/// Regular expression of characters that are allowed inside a feature id.
+pub const FEATURE_ID_SCHEMA_CHARS_REGEX: &str = "[-_0-9a-zA-Z]";
+
 /// The id of a feature.
 ///
 /// Can be parsed using [`std::str::FromStr`].
@@ -49,7 +52,9 @@ mod impl_to_schema {
         ToSchema,
     };
 
-    use super::{FeatureId, MAX_FEATURE_ID_LENGTH, MIN_FEATURE_ID_LENGTH};
+    use super::{
+        FeatureId, FEATURE_ID_SCHEMA_CHARS_REGEX, MAX_FEATURE_ID_LENGTH, MIN_FEATURE_ID_LENGTH,
+    };
     use crate::utils::ExampleData as _;
 
     impl<'__s> ToSchema<'__s> for FeatureId {
@@ -64,7 +69,7 @@ mod impl_to_schema {
                     .description(Some("A feature identifier"))
                     .min_length(Some(MIN_FEATURE_ID_LENGTH))
                     .max_length(Some(MAX_FEATURE_ID_LENGTH))
-                    .pattern(Some("^[-_0-9a-zA-Z]*$".to_string()))
+                    .pattern(Some(format!("^{FEATURE_ID_SCHEMA_CHARS_REGEX}*$")))
                     .example(Some(FeatureId::example_data().to_string().into()))
                     .into(),
             )
