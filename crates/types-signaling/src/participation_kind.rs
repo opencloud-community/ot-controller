@@ -4,6 +4,8 @@
 
 use strum::{AsRefStr, Display, EnumCount, EnumIter, EnumString, IntoStaticStr, VariantNames};
 
+use crate::ParticipationVisibility;
+
 /// The kinds of participants in a meeting room.
 #[derive(
     Debug,
@@ -51,8 +53,13 @@ pub enum ParticipationKind {
 impl ParticipationKind {
     /// Returns `true` if the participant kind is visible to other participants
     /// in the room.
-    pub fn is_visible(&self) -> bool {
-        !matches!(self, Self::Recorder)
+    pub fn visibility(&self) -> ParticipationVisibility {
+        match self {
+            ParticipationKind::User | ParticipationKind::Guest | ParticipationKind::Sip => {
+                ParticipationVisibility::Visible
+            }
+            ParticipationKind::Recorder => ParticipationVisibility::Hidden,
+        }
     }
 }
 
@@ -93,10 +100,38 @@ mod tests {
     }
 
     #[test]
+    fn visibility() {
+        assert_eq!(
+            ParticipationKind::Guest.visibility(),
+            ParticipationVisibility::Visible
+        );
+        assert_eq!(
+            ParticipationKind::User.visibility(),
+            ParticipationVisibility::Visible
+        );
+        assert_eq!(
+            ParticipationKind::Sip.visibility(),
+            ParticipationVisibility::Visible
+        );
+        assert_eq!(
+            ParticipationKind::Recorder.visibility(),
+            ParticipationVisibility::Hidden
+        );
+    }
+
+    #[test]
+    fn is_hidden() {
+        assert!(!ParticipationKind::Guest.visibility().is_hidden());
+        assert!(!ParticipationKind::User.visibility().is_hidden());
+        assert!(!ParticipationKind::Sip.visibility().is_hidden());
+        assert!(ParticipationKind::Recorder.visibility().is_hidden());
+    }
+
+    #[test]
     fn is_visible() {
-        assert!(ParticipationKind::Guest.is_visible());
-        assert!(ParticipationKind::User.is_visible());
-        assert!(ParticipationKind::Sip.is_visible());
-        assert!(!ParticipationKind::Recorder.is_visible());
+        assert!(ParticipationKind::Guest.visibility().is_visible());
+        assert!(ParticipationKind::User.visibility().is_visible());
+        assert!(ParticipationKind::Sip.visibility().is_visible());
+        assert!(!ParticipationKind::Recorder.visibility().is_visible());
     }
 }

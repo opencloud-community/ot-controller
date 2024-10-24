@@ -4701,7 +4701,6 @@ name = "opentalk-livekit"
 version = "0.0.0-dev"
 dependencies = [
  "async-trait",
- "config",
  "livekit-api",
  "livekit-protocol",
  "livekit-runtime",
@@ -4709,7 +4708,7 @@ dependencies = [
  "opentalk-controller-settings",
  "opentalk-signaling-core",
  "opentalk-types-signaling",
- "serde",
+ "opentalk-types-signaling-livekit",
  "snafu",
 ]
 
@@ -5085,6 +5084,15 @@ dependencies = [
  "redis-args",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "opentalk-types-signaling-livekit"
+version = "0.0.0-dev"
+dependencies = [
+ "opentalk-types-common",
+ "opentalk-types-signaling",
+ "serde",
 ]
 
 [[package]]

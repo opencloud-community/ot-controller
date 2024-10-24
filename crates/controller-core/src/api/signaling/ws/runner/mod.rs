@@ -936,7 +936,7 @@ impl Runner {
                     .await?;
 
                 let skip_waiting_room = matches!(self.role, Role::Moderator)
-                    || !control_data.participation_kind.is_visible()
+                    || control_data.participation_kind.visibility().is_hidden()
                     || can_skip_waiting_room;
 
                 let waiting_room_enabled = self
@@ -1623,7 +1623,7 @@ impl Runner {
             ControlState::from_storage(self.volatile.control_storage(), self.room_id, id).await?;
 
         // Do not build participants for invisible services
-        if !control_data.participation_kind.is_visible() {
+        if control_data.participation_kind.visibility().is_hidden() {
             return Ok(None);
         };
 

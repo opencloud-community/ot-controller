@@ -122,6 +122,9 @@ pub struct Settings {
     #[serde(default)]
     pub tariffs: Tariffs,
 
+    #[serde(default)]
+    pub livekit: Option<LiveKitSettings>,
+
     #[serde(flatten)]
     pub extensions: HashMap<String, config::Value>,
 }
@@ -186,7 +189,7 @@ impl Settings {
                 file_name: file_name.to_owned(),
             })?;
 
-        let livekit_configured = this.extensions.contains_key("livekit");
+        let livekit_configured = this.livekit.is_some();
         let janus_configured = this.extensions.contains_key("room_server");
 
         if livekit_configured && janus_configured {
@@ -569,6 +572,17 @@ pub struct Tariffs {
 
     #[serde(default)]
     pub status_mapping: Option<TariffStatusMapping>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct LiveKitSettings {
+    pub api_key: String,
+    pub api_secret: String,
+    pub public_url: String,
+
+    // for backwards compatibility
+    #[serde(alias = "url")]
+    pub service_url: String,
 }
 
 #[cfg(test)]
