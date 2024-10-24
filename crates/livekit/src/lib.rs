@@ -9,18 +9,18 @@ use livekit_api::{
     services::room::{CreateRoomOptions, RoomClient, UpdateParticipantOptions},
 };
 use livekit_protocol::{ParticipantPermission, TrackSource};
-use opentalk_controller_settings::SharedSettings;
+use opentalk_controller_settings::{LiveKitSettings, SharedSettings};
 use opentalk_signaling_core::{
-    ConfigSnafu, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
-    SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
+    DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
+    SignalingModuleInitData, SignalingRoomId,
 };
-use opentalk_types_signaling::{ParticipantId, Role, SignalingModuleFrontendData};
-use settings::LivekitSettings;
+use opentalk_types_signaling::{ParticipantId, ParticipationKind, ParticipationVisibility, Role};
+use opentalk_types_signaling_livekit::{
+    command, event,
+    state::{self, LiveKitState},
+    Credentials,
+};
 use snafu::ResultExt;
-
-mod commands;
-mod events;
-mod settings;
 
 const ACCESS_TOKEN_TTL: Duration = Duration::from_secs(32);
 const SOURCES_WITH_SCREENSHARE: [TrackSource; 4] = [
@@ -35,30 +35,27 @@ const SOURCES_WITHOUT_SCREENSHARE: [TrackSource; 2] =
 pub struct Livekit {
     room_id: SignalingRoomId,
     participant_id: ParticipantId,
+    participation_kind: ParticipationKind,
     role: Role,
     params: Arc<LivekitParams>,
 }
 
 pub struct LivekitParams {
     shared_settings: SharedSettings,
-    livekit_settings: LivekitSettings,
+    livekit_settings: LiveKitSettings,
     room_client: RoomClient,
-}
-
-impl SignalingModuleFrontendData for events::Credentials {
-    const NAMESPACE: Option<&'static str> = Some(Livekit::NAMESPACE);
 }
 
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for Livekit {
-    const NAMESPACE: &'static str = "livekit";
+    const NAMESPACE: &'static str = opentalk_types_signaling_livekit::NAMESPACE;
 
     type Params = Arc<LivekitParams>;
-    type Incoming = commands::Command;
-    type Outgoing = events::Event;
+    type Incoming = command::LiveKitCommand;
+    type Outgoing = event::LiveKitEvent;
     type ExchangeMessage = ();
     type ExtEvent = ();
-    type FrontendData = events::Credentials;
+    type FrontendData = state::LiveKitState;
     type PeerFrontendData = ();
 
     async fn init(
@@ -71,6 +68,7 @@ impl SignalingModule for Livekit {
             participant_id: ctx.participant_id(),
             role: ctx.role(),
             params: params.clone(),
+            participation_kind: ctx.participant().kind(),
         }))
     }
 
@@ -81,16 +79,38 @@ impl SignalingModule for Livekit {
     ) -> Result<(), SignalingModuleError> {
         match event {
             Event::Joined {
-                control_data: _,
+                control_data,
                 frontend_data,
                 participants: _,
             } => {
-                let (room_name, access_token) = self.create_room_and_access_token(&mut ctx).await?;
+                self.participation_kind = control_data.participation_kind;
+                let (room_name, access_token) = self
+                    .create_room_and_access_token(
+                        &mut ctx,
+                        control_data.participation_kind.visibility(),
+                    )
+                    .await?;
 
-                *frontend_data = Some(events::Credentials {
+                let service_url = match control_data.participation_kind {
+                    ParticipationKind::User | ParticipationKind::Guest => None,
+                    ParticipationKind::Sip | ParticipationKind::Recorder => {
+                        let service_url = self.params.livekit_settings.service_url.clone();
+                        let service_url_ws = if service_url.starts_with("http") {
+                            service_url.replacen("http", "ws", 1)
+                        } else {
+                            service_url
+                        };
+
+                        Some(service_url_ws)
+                    }
+                };
+
+                *frontend_data = Some(LiveKitState(Credentials {
                     room: room_name,
                     token: access_token,
-                });
+                    public_url: self.params.livekit_settings.public_url.clone(),
+                    service_url,
+                }));
 
                 Ok(())
             }
@@ -121,21 +141,19 @@ impl SignalingModule for Livekit {
     async fn build_params(
         init: SignalingModuleInitData,
     ) -> Result<Option<Self::Params>, SignalingModuleError> {
-        let Some(livekit_settings) =
-            LivekitSettings::extract(&init.startup_settings).context(ConfigSnafu)?
-        else {
+        let Some(livekit_settings) = &init.startup_settings.livekit else {
             return Ok(None);
         };
 
         let room_client = RoomClient::with_api_key(
-            &livekit_settings.url,
+            &livekit_settings.service_url,
             &livekit_settings.api_key,
             &livekit_settings.api_secret,
         );
 
         Ok(Some(Arc::new(LivekitParams {
             shared_settings: init.shared_settings.clone(),
-            livekit_settings,
+            livekit_settings: livekit_settings.clone(),
             room_client,
         })))
     }
@@ -145,22 +163,42 @@ impl Livekit {
     async fn handle_command(
         &mut self,
         mut ctx: ModuleContext<'_, Self>,
-        command: commands::Command,
+        command: command::LiveKitCommand,
     ) -> Result<(), SignalingModuleError> {
         match command {
-            commands::Command::CreateNewAccessToken => {
-                let (room_name, access_token) = self.create_room_and_access_token(&mut ctx).await?;
+            command::LiveKitCommand::CreateNewAccessToken => {
+                let (room_name, access_token) = self
+                    .create_room_and_access_token(&mut ctx, self.participation_kind.visibility())
+                    .await?;
 
-                ctx.ws_send(events::Event::Credentials(events::Credentials {
+                let service_url = match self.participation_kind {
+                    ParticipationKind::User | ParticipationKind::Guest => None,
+                    ParticipationKind::Sip | ParticipationKind::Recorder => {
+                        let service_url = self.params.livekit_settings.service_url.clone();
+                        let service_url_ws = if service_url.starts_with("http") {
+                            service_url.replacen("http", "ws", 1)
+                        } else {
+                            service_url
+                        };
+
+                        Some(service_url_ws)
+                    }
+                };
+
+                ctx.ws_send(event::LiveKitEvent::State(LiveKitState(Credentials {
                     room: room_name,
                     token: access_token,
-                }));
+                    public_url: self.params.livekit_settings.public_url.clone(),
+                    service_url,
+                })));
 
                 Ok(())
             }
-            commands::Command::ForceMute { participants } => {
+            command::LiveKitCommand::ForceMute { participants } => {
                 if !self.role.is_moderator() {
-                    ctx.ws_send(events::Event::Error(events::Error::InsufficientPermissions));
+                    ctx.ws_send(event::LiveKitEvent::Error(
+                        event::Error::InsufficientPermissions,
+                    ));
                     return Ok(());
                 }
 
@@ -201,11 +239,11 @@ impl Livekit {
 
                 Ok(())
             }
-            commands::Command::GrantScreenSharePermission { participants } => {
+            command::LiveKitCommand::GrantScreenSharePermission { participants } => {
                 self.set_screenshare_permissions(ctx, participants, true)
                     .await
             }
-            commands::Command::RevokeScreenSharePermission { participants } => {
+            command::LiveKitCommand::RevokeScreenSharePermission { participants } => {
                 self.set_screenshare_permissions(ctx, participants, false)
                     .await
             }
@@ -219,7 +257,9 @@ impl Livekit {
         grant: bool,
     ) -> Result<(), SignalingModuleError> {
         if !self.role.is_moderator() {
-            ctx.ws_send(events::Event::Error(events::Error::InsufficientPermissions));
+            ctx.ws_send(event::LiveKitEvent::Error(
+                event::Error::InsufficientPermissions,
+            ));
             return Ok(());
         }
 
@@ -268,6 +308,7 @@ impl Livekit {
     async fn create_room_and_access_token(
         &self,
         ctx: &mut ModuleContext<'_, Self>,
+        visibility: ParticipationVisibility,
     ) -> Result<(String, String), SignalingModuleError> {
         let res = self
             .params
@@ -279,7 +320,7 @@ impl Livekit {
         let room = match res {
             Ok(room) => room,
             Err(e) => {
-                ctx.ws_send(events::Event::Error(events::Error::LivekitUnavailable));
+                ctx.ws_send(event::LiveKitEvent::Error(event::Error::LivekitUnavailable));
                 return Err(e);
             }
         };
@@ -322,7 +363,7 @@ impl Livekit {
             can_publish_sources,
             can_update_own_metadata: false,
             ingress_admin: false,
-            hidden: false,
+            hidden: visibility.is_hidden(),
             recorder: false,
         })
         .with_ttl(ACCESS_TOKEN_TTL)

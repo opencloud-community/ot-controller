@@ -83,7 +83,8 @@ to_routing_key = "to-janus"
 
 # WebRTC SFU Alternative to janus (room_server section)
 [livekit]
-url = "https://url.to.your.livekit.server"
+public_url = "wss://url.to.your.livekit.server"
+service_url = "https://localhost:7880"
 
 api_key = "your-livekit-api-key"
 api_secret = "your-livekit-api-secret"
