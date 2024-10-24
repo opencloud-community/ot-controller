@@ -4,49 +4,33 @@
 
 //! Signaling commands for the `moderation` namespace
 
-use std::collections::BTreeSet;
-
-use opentalk_types_signaling::ParticipantId;
-
-use super::KickScope;
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::{
+    command::{Accept, Ban, ChangeDisplayName, Kick, ResetRaisedHands, SendToWaitingRoom},
+    KickScope,
+};
 
 /// Commands for the `moderation` namespace
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(tag = "action", rename_all = "snake_case")
 )]
 pub enum ModerationCommand {
     /// Kick a participant from the room
-    Kick {
-        /// The participant to kick from the room
-        target: ParticipantId,
-    },
-    /// Ban a participant from the room
-    Ban {
-        /// The participant to ban from the room
-        target: ParticipantId,
-    },
+    Kick(Kick),
 
-    /// Same behavior as the Kick command, but implies different handling from the client
-    SendToWaitingRoom {
-        /// The participant to move to the waiting room
-        target: ParticipantId,
-    },
+    /// Ban a participant from the room
+    Ban(Ban),
+
+    /// Send a participant to the waiting room
+    SendToWaitingRoom(SendToWaitingRoom),
 
     /// Start the debriefing
     Debrief(KickScope),
 
     /// Change the display name of the targeted guest
-    ChangeDisplayName {
-        /// The new display name
-        new_name: String,
-        /// The participant that will have their name changed
-        target: ParticipantId,
-    },
+    ChangeDisplayName(ChangeDisplayName),
 
     /// Enable waiting room for the meeting
     EnableWaitingRoom,
@@ -61,27 +45,53 @@ pub enum ModerationCommand {
     DisableRaiseHands,
 
     /// Accept a participant into the meeting
-    Accept {
-        /// The participant to accept into the meeting
-        target: ParticipantId,
-    },
+    Accept(Accept),
 
     /// Reset raised hands for the meeting
-    ResetRaisedHands {
-        /// An optional single participant to reset the raised hand for
-        #[cfg_attr(
-            feature = "serde",
-            serde(
-                default,
-                with = "opentalk_types_common::collections::one_or_many_btree_set_option"
-            )
-        )]
-        target: Option<BTreeSet<ParticipantId>>,
-    },
+    ResetRaisedHands(ResetRaisedHands),
 }
 
-#[cfg(test)]
-mod tests {
+impl From<Kick> for ModerationCommand {
+    fn from(value: Kick) -> Self {
+        Self::Kick(value)
+    }
+}
+
+impl From<Ban> for ModerationCommand {
+    fn from(value: Ban) -> Self {
+        Self::Ban(value)
+    }
+}
+
+impl From<SendToWaitingRoom> for ModerationCommand {
+    fn from(value: SendToWaitingRoom) -> Self {
+        Self::SendToWaitingRoom(value)
+    }
+}
+
+impl From<ChangeDisplayName> for ModerationCommand {
+    fn from(value: ChangeDisplayName) -> Self {
+        Self::ChangeDisplayName(value)
+    }
+}
+
+impl From<Accept> for ModerationCommand {
+    fn from(value: Accept) -> Self {
+        Self::Accept(value)
+    }
+}
+
+impl From<ResetRaisedHands> for ModerationCommand {
+    fn from(value: ResetRaisedHands) -> Self {
+        Self::ResetRaisedHands(value)
+    }
+}
+
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
+    use std::collections::BTreeSet;
+
+    use opentalk_types_signaling::ParticipantId;
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
@@ -96,7 +106,7 @@ mod tests {
 
         let msg: ModerationCommand = serde_json::from_value(json).unwrap();
 
-        if let ModerationCommand::Kick { target } = msg {
+        if let ModerationCommand::Kick(Kick { target }) = msg {
             assert_eq!(target, ParticipantId::nil());
         } else {
             panic!()
@@ -112,7 +122,7 @@ mod tests {
 
         let msg: ModerationCommand = serde_json::from_value(json).unwrap();
 
-        if let ModerationCommand::Ban { target } = msg {
+        if let ModerationCommand::Ban(Ban { target }) = msg {
             assert_eq!(target, ParticipantId::nil());
         } else {
             panic!()
@@ -143,7 +153,7 @@ mod tests {
 
         let msg: ModerationCommand = serde_json::from_value(json).unwrap();
 
-        if let ModerationCommand::Accept { target } = msg {
+        if let ModerationCommand::Accept(Accept { target }) = msg {
             assert_eq!(target, ParticipantId::nil());
         } else {
             panic!()
@@ -159,7 +169,7 @@ mod tests {
 
         let msg: ModerationCommand = serde_json::from_value(json).unwrap();
 
-        if let ModerationCommand::ResetRaisedHands { target } = msg {
+        if let ModerationCommand::ResetRaisedHands(ResetRaisedHands { target }) = msg {
             assert_eq!(target, Some(BTreeSet::from_iter([ParticipantId::nil()])));
         } else {
             panic!()
@@ -175,7 +185,7 @@ mod tests {
 
         let msg: ModerationCommand = serde_json::from_value(json).unwrap();
 
-        if let ModerationCommand::ResetRaisedHands { target } = msg {
+        if let ModerationCommand::ResetRaisedHands(ResetRaisedHands { target }) = msg {
             assert_eq!(
                 target,
                 Some(BTreeSet::from_iter([
@@ -196,7 +206,7 @@ mod tests {
 
         let msg: ModerationCommand = serde_json::from_value(json).unwrap();
 
-        if let ModerationCommand::ResetRaisedHands { target } = msg {
+        if let ModerationCommand::ResetRaisedHands(ResetRaisedHands { target }) = msg {
             assert_eq!(target, None);
         } else {
             panic!()

@@ -18,18 +18,21 @@ use opentalk_signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, SerdeJsonSnafu, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
-use opentalk_types::signaling::moderation::{
-    command::ModerationCommand,
-    event::{DisplayNameChanged, Error, ModerationEvent},
-    state::{ModerationState, ModeratorFrontendData},
-};
-pub use opentalk_types::signaling::moderation::{module_id, NAMESPACE};
 use opentalk_types_common::{rooms::RoomId, users::UserId};
 use opentalk_types_signaling::{
     AssociatedParticipant, LeaveReason, ModulePeerData, Participant, ParticipantId,
     ParticipationKind, Role,
 };
 use opentalk_types_signaling_control::{state::ControlState, WaitingRoomState};
+use opentalk_types_signaling_moderation::{
+    command::{
+        Accept, Ban, ChangeDisplayName, Kick, ModerationCommand, ResetRaisedHands,
+        SendToWaitingRoom,
+    },
+    event::{DebriefingStarted, DisplayNameChanged, Error, ModerationEvent, SessionEnded},
+    state::{ModerationState, ModeratorFrontendData},
+    NAMESPACE,
+};
 use snafu::{Report, ResultExt};
 
 use self::storage::ModerationStorage;
@@ -201,7 +204,7 @@ impl SignalingModule for ModerationModule {
             Event::ParticipantLeft(_) => {}
             Event::ParticipantUpdated(_, _) => {}
             Event::RoleUpdated(_) => {}
-            Event::WsMessage(ModerationCommand::Ban { target }) => {
+            Event::WsMessage(ModerationCommand::Ban(Ban { target })) => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
@@ -233,7 +236,7 @@ impl SignalingModule for ModerationModule {
                     exchange::Message::Banned(target),
                 );
             }
-            Event::WsMessage(ModerationCommand::Kick { target }) => {
+            Event::WsMessage(ModerationCommand::Kick(Kick { target })) => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
@@ -255,7 +258,9 @@ impl SignalingModule for ModerationModule {
                     exchange::Message::Kicked(target),
                 );
             }
-            Event::WsMessage(ModerationCommand::SendToWaitingRoom { target }) => {
+            Event::WsMessage(ModerationCommand::SendToWaitingRoom(SendToWaitingRoom {
+                target,
+            })) => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
@@ -354,7 +359,10 @@ impl SignalingModule for ModerationModule {
                 );
             }
 
-            Event::WsMessage(ModerationCommand::ChangeDisplayName { new_name, target }) => {
+            Event::WsMessage(ModerationCommand::ChangeDisplayName(ChangeDisplayName {
+                new_name,
+                target,
+            })) => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
@@ -422,7 +430,7 @@ impl SignalingModule for ModerationModule {
 
                 set_waiting_room_enabled(&mut ctx, self.room.room_id(), false).await?;
             }
-            Event::WsMessage(ModerationCommand::Accept { target }) => {
+            Event::WsMessage(ModerationCommand::Accept(Accept { target })) => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
@@ -452,7 +460,7 @@ impl SignalingModule for ModerationModule {
                     control::exchange::Message::Accepted(target),
                 );
             }
-            Event::WsMessage(ModerationCommand::ResetRaisedHands { target }) => {
+            Event::WsMessage(ModerationCommand::ResetRaisedHands(ResetRaisedHands { target })) => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
@@ -537,10 +545,12 @@ impl SignalingModule for ModerationModule {
                 issued_by,
             }) => {
                 if kick_scope.kicks_role(ctx.role()) {
-                    ctx.ws_send(ModerationEvent::SessionEnded { issued_by });
+                    ctx.ws_send(SessionEnded { issued_by });
                     ctx.exit(Some(CloseCode::Normal));
                 } else {
-                    ctx.ws_send(ModerationEvent::DebriefingStarted { issued_by });
+                    ctx.ws_send(ModerationEvent::DebriefingStarted(DebriefingStarted {
+                        issued_by,
+                    }));
                 }
             }
             Event::Exchange(exchange::Message::DisplayNameChanged(display_name_changed)) => {

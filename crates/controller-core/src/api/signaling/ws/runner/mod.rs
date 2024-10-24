@@ -39,7 +39,6 @@ use opentalk_signaling_core::{
     RunnerId, SignalingMetrics, SignalingModule, SignalingModuleError, SignalingRoomId,
     SubscriberHandle, VolatileStorage,
 };
-use opentalk_types::signaling::moderation::event::ModerationEvent;
 use opentalk_types_common::{
     features::FeatureId,
     modules::ModuleId,
@@ -59,6 +58,9 @@ use opentalk_types_signaling_control::{
     },
     room::{CreatorInfo, RoomInfo},
     state::ControlState,
+};
+use opentalk_types_signaling_moderation::event::{
+    ModerationEvent, RaiseHandsDisabled, RaiseHandsEnabled, RaisedHandResetByModerator,
 };
 use serde_json::Value;
 use snafu::{ensure, whatever, Report, ResultExt, Snafu};
@@ -603,7 +605,7 @@ impl Runner {
                         self.exchange_publish(
                             exchange::global_room_all_participants(self.room_id.room_id()),
                             serde_json::to_string(&NamespacedEvent {
-                                module: moderation::module_id(),
+                                module: opentalk_types_signaling_moderation::module_id(),
                                 timestamp: Timestamp::now(),
                                 payload: moderation::exchange::Message::LeftWaitingRoom(self.id),
                             })
@@ -960,7 +962,7 @@ impl Runner {
                         self.exchange_publish(
                             control::exchange::global_room_all_participants(self.room_id.room_id()),
                             serde_json::to_string(&NamespacedEvent {
-                                module: moderation::module_id(),
+                                module: opentalk_types_signaling_moderation::module_id(),
                                 timestamp,
                                 payload: moderation::exchange::Message::LeftWaitingRoom(self.id),
                             })
@@ -1273,7 +1275,7 @@ impl Runner {
         self.ws
             .send(Message::Text(
                 serde_json::to_string(&NamespacedEvent {
-                    module: moderation::module_id(),
+                    module: opentalk_types_signaling_moderation::module_id(),
                     timestamp,
                     payload: ModerationEvent::InWaitingRoom,
                 })
@@ -1285,7 +1287,7 @@ impl Runner {
         self.exchange_publish(
             control::exchange::global_room_all_participants(self.room_id.room_id()),
             serde_json::to_string(&NamespacedEvent {
-                module: moderation::module_id(),
+                module: opentalk_types_signaling_moderation::module_id(),
                 timestamp,
                 payload: moderation::exchange::Message::JoinedWaitingRoom(self.id),
             })
@@ -1785,7 +1787,7 @@ impl Runner {
                         self.ws
                             .send(Message::Text(
                                 serde_json::to_string(&NamespacedEvent {
-                                    module: moderation::module_id(),
+                                    module: opentalk_types_signaling_moderation::module_id(),
                                     timestamp,
                                     payload: ModerationEvent::Accepted,
                                 })
@@ -1860,9 +1862,11 @@ impl Runner {
                     self.ws
                         .send(Message::Text(
                             serde_json::to_string(&NamespacedEvent {
-                                module: moderation::module_id(),
+                                module: opentalk_types_signaling_moderation::module_id(),
                                 timestamp,
-                                payload: ModerationEvent::RaisedHandResetByModerator { issued_by },
+                                payload: ModerationEvent::RaisedHandResetByModerator(
+                                    RaisedHandResetByModerator { issued_by },
+                                ),
                             })
                             .whatever_context::<_, RunnerError>("Failed to send ws message")?
                             .into(),
@@ -1874,9 +1878,11 @@ impl Runner {
                 self.ws
                     .send(Message::Text(
                         serde_json::to_string(&NamespacedEvent {
-                            module: moderation::module_id(),
+                            module: opentalk_types_signaling_moderation::module_id(),
                             timestamp,
-                            payload: ModerationEvent::RaiseHandsEnabled { issued_by },
+                            payload: ModerationEvent::RaiseHandsEnabled(RaiseHandsEnabled {
+                                issued_by,
+                            }),
                         })
                         .whatever_context::<_, RunnerError>("Failed to send ws message")?
                         .into(),
@@ -1896,9 +1902,11 @@ impl Runner {
                 self.ws
                     .send(Message::Text(
                         serde_json::to_string(&NamespacedEvent {
-                            module: moderation::module_id(),
+                            module: opentalk_types_signaling_moderation::module_id(),
                             timestamp,
-                            payload: ModerationEvent::RaiseHandsDisabled { issued_by },
+                            payload: ModerationEvent::RaiseHandsDisabled(RaiseHandsDisabled {
+                                issued_by,
+                            }),
                         })
                         .whatever_context::<_, RunnerError>("Failed to send ws message")?
                         .into(),
@@ -1954,7 +1962,7 @@ impl Runner {
         self.ws
             .send(Message::Text(
                 serde_json::to_string(&NamespacedEvent {
-                    module: moderation::module_id(),
+                    module: opentalk_types_signaling_moderation::module_id(),
                     timestamp,
                     payload: ModerationEvent::InWaitingRoom,
                 })
@@ -1966,7 +1974,7 @@ impl Runner {
         self.exchange_publish(
             control::exchange::global_room_all_participants(self.room_id.room_id()),
             serde_json::to_string(&NamespacedEvent {
-                module: moderation::module_id(),
+                module: opentalk_types_signaling_moderation::module_id(),
                 timestamp,
                 payload: moderation::exchange::Message::JoinedWaitingRoom(self.id),
             })

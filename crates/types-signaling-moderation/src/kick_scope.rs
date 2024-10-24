@@ -4,14 +4,11 @@
 
 use opentalk_types_signaling::Role;
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// The scope of users to be kicked from the room
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(tag = "kick_scope", rename_all = "snake_case")
 )]
 pub enum KickScope {

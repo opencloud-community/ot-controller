@@ -11,7 +11,6 @@ pub mod integration;
 pub mod media;
 pub mod meeting_notes;
 pub mod meeting_report;
-pub mod moderation;
 pub mod polls;
 pub mod shared_folder;
 pub mod timer;

@@ -2,18 +2,18 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Signaling events for the `moderation` namespace
+use opentalk_types_signaling::{AssociatedParticipant, Participant};
 
-use opentalk_types_signaling::{AssociatedParticipant, Participant, ParticipantId};
-
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::event::{
+    DebriefingStarted, DisplayNameChanged, Error, RaiseHandsDisabled, RaiseHandsEnabled,
+    RaisedHandResetByModerator, SessionEnded,
+};
 
 /// Events sent out by the `moderation` module
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(tag = "message", rename_all = "snake_case")
 )]
 pub enum ModerationEvent {
@@ -27,16 +27,10 @@ pub enum ModerationEvent {
     SentToWaitingRoom,
 
     /// Sent out when a session is ended by a moderator
-    SessionEnded {
-        /// The moderator who ended the session
-        issued_by: ParticipantId,
-    },
+    SessionEnded(SessionEnded),
 
     /// Sent out when debriefing of a session started
-    DebriefingStarted {
-        /// The moderator who started the debriefing
-        issued_by: ParticipantId,
-    },
+    DebriefingStarted(DebriefingStarted),
 
     /// Sent to participants who are placed into a waiting room
     InWaitingRoom,
@@ -54,16 +48,10 @@ pub enum ModerationEvent {
     WaitingRoomDisabled,
 
     /// Sent out when raise hands is enabled
-    RaiseHandsEnabled {
-        /// The moderator who enabled raise hands
-        issued_by: ParticipantId,
-    },
+    RaiseHandsEnabled(RaiseHandsEnabled),
 
     /// Sent out when raise hands is disabled
-    RaiseHandsDisabled {
-        /// The moderator who disabled raise hands
-        issued_by: ParticipantId,
-    },
+    RaiseHandsDisabled(RaiseHandsDisabled),
 
     /// Sent to a participant when they are accepted by the moderator from the waiting room
     Accepted,
@@ -75,48 +63,43 @@ pub enum ModerationEvent {
     Error(Error),
 
     /// Sent out when raised hand is reset by a moderator
-    RaisedHandResetByModerator {
-        /// The moderator who reset raised hand
-        issued_by: ParticipantId,
-    },
+    RaisedHandResetByModerator(RaisedHandResetByModerator),
 }
 
-/// Received by all participants when a participant gets their display name changed
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct DisplayNameChanged {
-    /// The participant that got their display name changed
-    pub target: ParticipantId,
-    /// The issuer of the display name change
-    pub issued_by: ParticipantId,
-    /// The old display name
-    pub old_name: String,
-    /// The new display name
-    pub new_name: String,
+impl From<SessionEnded> for ModerationEvent {
+    fn from(value: SessionEnded) -> Self {
+        Self::SessionEnded(value)
+    }
 }
 
-/// Error from the `moderation` module namespace
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(tag = "error", rename_all = "snake_case")
-)]
-pub enum Error {
-    /// Cannot ban a guest participant
-    CannotBanGuest,
-    /// Cannot send the room owner to the waiting room
-    CannotSendRoomOwnerToWaitingRoom,
-    /// Cannot change the display name of registered users
-    CannotChangeNameOfRegisteredUsers,
-    /// Invalid display name
-    InvalidDisplayName,
-    /// Insufficient permissions to perform a command
-    InsufficientPermissions,
+impl From<DebriefingStarted> for ModerationEvent {
+    fn from(value: DebriefingStarted) -> Self {
+        Self::DebriefingStarted(value)
+    }
+}
+
+impl From<RaiseHandsEnabled> for ModerationEvent {
+    fn from(value: RaiseHandsEnabled) -> Self {
+        Self::RaiseHandsEnabled(value)
+    }
+}
+
+impl From<RaiseHandsDisabled> for ModerationEvent {
+    fn from(value: RaiseHandsDisabled) -> Self {
+        Self::RaiseHandsDisabled(value)
+    }
+}
+
+impl From<RaisedHandResetByModerator> for ModerationEvent {
+    fn from(value: RaisedHandResetByModerator) -> Self {
+        Self::RaisedHandResetByModerator(value)
+    }
+}
+
+impl From<DisplayNameChanged> for ModerationEvent {
+    fn from(value: DisplayNameChanged) -> Self {
+        Self::DisplayNameChanged(value)
+    }
 }
 
 impl From<Error> for ModerationEvent {
@@ -125,8 +108,9 @@ impl From<Error> for ModerationEvent {
     }
 }
 
-#[cfg(test)]
-mod tests {
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
+    use opentalk_types_signaling::ParticipantId;
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
@@ -157,9 +141,9 @@ mod tests {
             "issued_by": "00000000-0000-0000-0000-000000000000"
         });
 
-        let produced = serde_json::to_value(ModerationEvent::SessionEnded {
+        let produced = serde_json::to_value(ModerationEvent::SessionEnded(SessionEnded {
             issued_by: ParticipantId::nil(),
-        })
+        }))
         .unwrap();
 
         assert_eq!(expected, produced);
@@ -172,10 +156,11 @@ mod tests {
             "issued_by": "00000000-0000-0000-0000-000000000000"
         });
 
-        let produced = serde_json::to_value(ModerationEvent::DebriefingStarted {
-            issued_by: ParticipantId::nil(),
-        })
-        .unwrap();
+        let produced =
+            serde_json::to_value(ModerationEvent::DebriefingStarted(DebriefingStarted {
+                issued_by: ParticipantId::nil(),
+            }))
+            .unwrap();
 
         assert_eq!(expected, produced);
     }

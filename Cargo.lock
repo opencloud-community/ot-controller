@@ -4381,6 +4381,7 @@ dependencies = [
  "opentalk-types-signaling",
  "opentalk-types-signaling-breakout",
  "opentalk-types-signaling-control",
+ "opentalk-types-signaling-moderation",
  "opentalk-types-signaling-recording",
  "opentalk-types-signaling-recording-service",
  "opentelemetry",
@@ -5082,6 +5083,17 @@ dependencies = [
  "opentalk-types-signaling",
  "pretty_assertions",
  "redis-args",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "opentalk-types-signaling-moderation"
+version = "0.0.0-dev"
+dependencies = [
+ "opentalk-types-common",
+ "opentalk-types-signaling",
+ "pretty_assertions",
  "serde",
  "serde_json",
 ]
