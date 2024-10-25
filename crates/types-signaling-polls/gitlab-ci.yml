@@ -1,0 +1,22 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+test:opentalk-types-signaling-polls:
+  extends: .test:types
+  variables:
+    PACKAGE: opentalk-types-signaling-polls
+  parallel:
+    matrix:
+      - FEATURES:
+          [
+          '',
+            backend,
+            frontend,
+            rand,
+            redis,
+            serde,
+          ]
+        EXTRA_ARGS: ['', --no-default-features]

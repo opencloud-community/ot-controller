@@ -9,9 +9,7 @@ use std::time::Duration;
 use chrono::Utc;
 use opentalk_types_common::time::Timestamp;
 
-use super::{Choice, PollId};
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::{Choice, PollId};
 
 /// The state of the `polls` module.
 ///
@@ -20,11 +18,10 @@ use crate::imports::*;
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "redis",
-    derive(ToRedisArgs, FromRedisValue),
-    to_redis_args(serde),
-    from_redis_value(serde)
+    derive(redis_args::ToRedisArgs, redis_args::FromRedisValue)
 )]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "redis", to_redis_args(serde), from_redis_value(serde))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PollsState {
     /// The id of the poll
     pub id: PollId,
@@ -53,8 +50,8 @@ pub struct PollsState {
 }
 
 #[cfg(feature = "serde")]
-impl SignalingModuleFrontendData for PollsState {
-    const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
+impl opentalk_types_signaling::SignalingModuleFrontendData for PollsState {
+    const NAMESPACE: Option<&'static str> = Some(crate::NAMESPACE);
 }
 
 impl PollsState {

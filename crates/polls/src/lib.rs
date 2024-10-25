@@ -10,13 +10,13 @@ use opentalk_signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
-use opentalk_types::signaling::polls::{
+use opentalk_types_signaling::Role;
+use opentalk_types_signaling_polls::{
     command::{PollsCommand, Start, Vote},
     event::{Error, PollsEvent, Started},
     state::PollsState,
     Choice, ChoiceId, PollId, Results, NAMESPACE,
 };
-use opentalk_types_signaling::Role;
 use snafu::Report;
 use storage::PollsStorage;
 use tokio::time::sleep;

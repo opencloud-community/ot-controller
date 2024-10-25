@@ -1221,9 +1221,9 @@ checksum = "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b"
 
 [[package]]
 name = "bytes"
-version = "1.8.0"
+version = "1.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9ac0150caa2ae65ca5bd83f25c7de183dea78d4d366469f148435e2acfbad0da"
+checksum = "428d9aa8fbc0670b7b8d6030a7fadd0f86151cae55e4dbbece15f3780a3dfaf3"
 
 [[package]]
 name = "bytes-utils"
@@ -4820,9 +4820,9 @@ dependencies = [
  "log",
  "opentalk-signaling-core",
  "opentalk-test-util",
- "opentalk-types",
  "opentalk-types-common",
  "opentalk-types-signaling",
+ "opentalk-types-signaling-polls",
  "parking_lot",
  "pretty_assertions",
  "redis",
@@ -5115,6 +5115,21 @@ dependencies = [
  "pretty_assertions",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "opentalk-types-signaling-polls"
+version = "0.0.0-dev"
+dependencies = [
+ "chrono",
+ "derive_more 1.0.0",
+ "opentalk-types-common",
+ "opentalk-types-signaling",
+ "pretty_assertions",
+ "redis-args",
+ "serde",
+ "serde_json",
+ "uuid",
 ]
 
 [[package]]

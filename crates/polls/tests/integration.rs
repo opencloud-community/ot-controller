@@ -7,7 +7,7 @@ use std::{collections::BTreeSet, time::Duration};
 use opentalk_polls::*;
 use opentalk_signaling_core::module_tester::{ModuleTester, WsMessageOutgoing};
 use opentalk_test_util::*;
-use opentalk_types::signaling::polls::{
+use opentalk_types_signaling_polls::{
     command::{Choices, PollsCommand, Start, Vote},
     event::{Error, PollsEvent, Started},
     Choice, ChoiceId, Item, Results,

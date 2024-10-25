@@ -2,19 +2,16 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Types related to signaling events in the `polls` namespace
-
-use std::time::Duration;
-
-use super::{Choice, PollId, Results};
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::{
+    event::{Error, Started},
+    Results,
+};
 
 /// Events sent out by the `polls` module
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case", tag = "message")
 )]
 pub enum PollsEvent {
@@ -31,73 +28,10 @@ pub enum PollsEvent {
     Error(Error),
 }
 
-/// Event signaling to the participant that the poll has started
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Started {
-    /// The id of the poll
-    pub id: PollId,
-
-    /// The description of the poll topic
-    pub topic: String,
-
-    /// True if the poll is live
-    pub live: bool,
-
-    /// True if the poll accepts multiple choices
-    pub multiple_choice: bool,
-
-    /// Choices of the poll
-    pub choices: Vec<Choice>,
-
-    /// Duration of the poll
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "opentalk_types_common::utils::duration_seconds")
-    )]
-    pub duration: Duration,
-}
-
 impl From<Started> for PollsEvent {
     fn from(value: Started) -> Self {
         Self::Started(value)
     }
-}
-
-/// Errors from the `polls` module namespace
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(rename_all = "snake_case", tag = "error")
-)]
-pub enum Error {
-    /// Attempted to perform a command which requires more permissions
-    InsufficientPermissions,
-
-    /// Attempted to start a poll with invalid choice count
-    InvalidChoiceCount,
-
-    /// Attempted to perform a command with an invalid poll id
-    InvalidPollId,
-
-    /// Attempted to perform a command with an invalid choice id
-    InvalidChoiceId,
-
-    /// Attempted to vote for multiple choices although this is not allowed
-    MultipleChoicesNotAllowed,
-
-    /// Attempted to perform a command with an invalid choice description
-    InvalidChoiceDescription,
-
-    /// Attempted to perform a command with an invalid duration
-    InvalidDuration,
-
-    /// Attempted to perform a command with an invalid topic length
-    InvalidTopicLength,
-
-    /// Attempted to start a new poll while an existing one is still running
-    StillRunning,
 }
 
 impl From<Error> for PollsEvent {
@@ -106,13 +40,15 @@ impl From<Error> for PollsEvent {
     }
 }
 
-#[cfg(test)]
-mod tests {
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
+    use std::time::Duration;
+
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
     use super::*;
-    use crate::signaling::polls::{ChoiceId, Item};
+    use crate::{Choice, ChoiceId, Item, PollId};
 
     #[test]
     fn started() {

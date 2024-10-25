@@ -19,9 +19,9 @@ either.workspace = true
 futures.workspace = true
 log.workspace = true
 opentalk-signaling-core.workspace = true
-opentalk-types = { workspace = true, features = ["backend"] }
 opentalk-types-common = { workspace = true, features = ["backend"] }
 opentalk-types-signaling = { workspace = true, features = ["backend"] }
+opentalk-types-signaling-polls = { workspace = true, features = ["backend"] }
 parking_lot.workspace = true
 redis.workspace = true
 redis-args.workspace = true

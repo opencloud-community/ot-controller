@@ -2,19 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Signaling messages for the `polls` namespace
-
-use std::{collections::BTreeSet, time::Duration};
-
-use super::{ChoiceId, PollId};
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::command::{Finish, Start, Vote};
 
 /// Commands received by the `polls` module
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(tag = "action", rename_all = "snake_case")
 )]
 pub enum PollsCommand {
@@ -28,85 +22,33 @@ pub enum PollsCommand {
     Finish(Finish),
 }
 
-/// Command to start a poll
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Start {
-    /// The description of the poll topic
-    pub topic: String,
-
-    /// True if the poll is live
-    #[cfg_attr(feature = "serde", serde(default))]
-    pub live: bool,
-
-    /// True if the poll accepts multiple choices
-    #[cfg_attr(feature = "serde", serde(default))]
-    pub multiple_choice: bool,
-
-    /// The choices of the poll
-    pub choices: Vec<String>,
-
-    /// The duration of the poll
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "opentalk_types_common::utils::duration_seconds")
-    )]
-    pub duration: Duration,
-}
-
-/// Command to vote in the poll
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Vote {
-    /// The id of the poll
-    pub poll_id: PollId,
-
-    /// The choices
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub choices: Choices,
-}
-
-/// The choices of a vote
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(untagged))]
-pub enum Choices {
-    /// A single choice. Takes precedence over `Multiple` during deserialization
-    Single {
-        /// The choice id
-        choice_id: ChoiceId,
-    },
-    /// A multiple choice, `choice_ids` might be empty to abstain
-    Multiple {
-        /// The set of choice ids
-        #[cfg_attr(feature = "serde", serde(default))]
-        choice_ids: BTreeSet<ChoiceId>,
-    },
-}
-
-impl Choices {
-    /// Returns the choices as a BTreeSet
-    pub fn to_hash_set(self) -> BTreeSet<ChoiceId> {
-        match self {
-            Self::Single { choice_id } => BTreeSet::from_iter(vec![choice_id]),
-            Self::Multiple { choice_ids } => choice_ids,
-        }
+impl From<Start> for PollsCommand {
+    fn from(value: Start) -> Self {
+        Self::Start(value)
     }
 }
 
-/// Command to finish the poll
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Finish {
-    /// The id of the poll
-    pub id: PollId,
+impl From<Vote> for PollsCommand {
+    fn from(value: Vote) -> Self {
+        Self::Vote(value)
+    }
 }
 
-#[cfg(test)]
-mod tests {
+impl From<Finish> for PollsCommand {
+    fn from(value: Finish) -> Self {
+        Self::Finish(value)
+    }
+}
+
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
+    use std::{collections::BTreeSet, time::Duration};
+
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
     use super::*;
+    use crate::{command::Choices, ChoiceId, PollId};
 
     #[test]
     fn start() {
