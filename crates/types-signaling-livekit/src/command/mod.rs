@@ -6,4 +6,4 @@
 
 mod livekit_command;
 
-pub use livekit_command::LiveKitCommand;
+pub use livekit_command::{LiveKitCommand, UnrestrictedParticipants};

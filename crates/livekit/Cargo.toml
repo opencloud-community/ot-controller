@@ -16,6 +16,8 @@ ignored = ["livekit-runtime"]
 
 [dependencies]
 async-trait.workspace = true
+either.workspace = true
+futures.workspace = true
 livekit-api = "0.4"
 livekit-protocol = "0.3"
 livekit-runtime = { version = "0.3", default-features = false, features = [
@@ -24,6 +26,17 @@ livekit-runtime = { version = "0.3", default-features = false, features = [
 log.workspace = true
 opentalk-controller-settings.workspace = true
 opentalk-signaling-core.workspace = true
+opentalk-types-common = { workspace = true, features = ["backend"] }
 opentalk-types-signaling = { workspace = true, features = ["backend"] }
 opentalk-types-signaling-livekit = { workspace = true, features = ["backend"] }
+parking_lot.workspace = true
+redis.workspace = true
+redis-args.workspace = true
+serde.workspace = true
 snafu.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+pretty_assertions.workspace = true
+serial_test.workspace = true
