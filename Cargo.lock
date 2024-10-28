@@ -4856,10 +4856,10 @@ dependencies = [
  "opentalk-db-storage",
  "opentalk-signaling-core",
  "opentalk-test-util",
- "opentalk-types",
  "opentalk-types-common",
  "opentalk-types-signaling",
  "opentalk-types-signaling-control",
+ "opentalk-types-signaling-shared-folder",
  "parking_lot",
  "pretty_assertions",
  "redis",
@@ -5166,6 +5166,15 @@ dependencies = [
  "redis-args",
  "serde",
  "url",
+]
+
+[[package]]
+name = "opentalk-types-signaling-shared-folder"
+version = "0.0.0-dev"
+dependencies = [
+ "opentalk-types-common",
+ "opentalk-types-signaling",
+ "serde",
 ]
 
 [[package]]

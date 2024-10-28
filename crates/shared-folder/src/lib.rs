@@ -17,9 +17,9 @@ use opentalk_signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
     SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
-use opentalk_types::signaling::shared_folder::event::SharedFolderEvent;
 use opentalk_types_common::shared_folders::{SharedFolder as SharedFolderType, NAMESPACE};
 use opentalk_types_signaling::ForRole as _;
+use opentalk_types_signaling_shared_folder::event::SharedFolderEvent;
 use snafu::Report;
 use storage::SharedFolderStorage;
 

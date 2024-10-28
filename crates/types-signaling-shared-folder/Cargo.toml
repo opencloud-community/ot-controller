@@ -1,0 +1,33 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+authors.workspace = true
+description = "Signaling types the OpenTalk shared_folder module"
+documentation = "https://docs.rs/opentalk-types-signaling-shared-folder"
+edition = "2021"
+homepage.workspace = true
+license = "EUPL-1.2"
+name = "opentalk-types-signaling-shared-folder"
+publish = true
+repository.workspace = true
+version.workspace = true
+
+[features]
+backend = [
+  "opentalk-types-common/backend",
+  "opentalk-types-signaling/backend",
+  "serde",
+]
+frontend = [
+  "opentalk-types-common/frontend",
+  "opentalk-types-signaling/frontend",
+  "serde",
+]
+serde = ["dep:serde", "opentalk-types-signaling/serde"]
+
+[dependencies]
+opentalk-types-common.workspace = true
+opentalk-types-signaling.workspace = true
+serde = { workspace = true, optional = true }
