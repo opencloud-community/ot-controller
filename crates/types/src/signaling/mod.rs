@@ -9,7 +9,6 @@ pub mod core;
 pub mod echo;
 pub mod integration;
 pub mod media;
-pub mod meeting_notes;
 pub mod meeting_report;
 pub mod shared_folder;
 pub mod timer;

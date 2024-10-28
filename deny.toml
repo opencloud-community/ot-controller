@@ -150,6 +150,9 @@ exceptions = [
   ], name = "opentalk-types-signaling-livekit" },
   { allow = [
     "EUPL-1.2",
+  ], name = "opentalk-types-signaling-meeting-notes" },
+  { allow = [
+    "EUPL-1.2",
   ], name = "opentalk-types-signaling-moderation" },
   { allow = [
     "EUPL-1.2",

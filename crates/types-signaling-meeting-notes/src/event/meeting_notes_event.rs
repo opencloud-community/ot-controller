@@ -4,16 +4,13 @@
 
 //! Types related to signaling events in the `meeting-notes` namespace
 
-use opentalk_types_common::assets::AssetId;
-
-#[allow(unused_imports)]
-use crate::imports::*;
+use super::{AccessUrl, Error, PdfAsset};
 
 /// Events sent out by the `meeting-notes` module
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case", tag = "message")
 )]
 pub enum MeetingNotesEvent {
@@ -30,55 +27,10 @@ pub enum MeetingNotesEvent {
     Error(Error),
 }
 
-/// The access URL to a specific data
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct AccessUrl {
-    /// URL for the data
-    pub url: String,
-}
-
-/// Handle to a PDF asset
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct PdfAsset {
-    /// The file name of the PDF asset
-    pub filename: String,
-
-    /// The asset id for the PDF asset
-    pub asset_id: AssetId,
-}
-
 impl From<PdfAsset> for MeetingNotesEvent {
     fn from(value: PdfAsset) -> Self {
         Self::PdfAsset(value)
     }
-}
-
-/// Errors from the `meeting-notes` module namespace
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(rename_all = "snake_case", tag = "error")
-)]
-pub enum Error {
-    /// The requesting user has insufficient permissions for the operation
-    InsufficientPermissions,
-    /// The request contains invalid participant ids
-    InvalidParticipantSelection,
-    /// Is send when another instance just started initializing and etherpad is not available yet
-    CurrentlyInitializing,
-    /// The etherpad initialization failed
-    FailedInitialization,
-    /// The etherpad is not yet initailized
-    NotInitialized,
-    /// The requesting user has exceeded their storage
-    StorageExceeded,
 }
 
 impl From<Error> for MeetingNotesEvent {
@@ -87,8 +39,8 @@ impl From<Error> for MeetingNotesEvent {
     }
 }
 
-#[cfg(test)]
-mod tests {
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
     use pretty_assertions::assert_eq;
     use serde_json::{self, json};
 

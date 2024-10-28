@@ -1,0 +1,20 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+test:opentalk-types-signaling-meeting-notes:
+  extends: .test:types
+  variables:
+    PACKAGE: opentalk-types-signaling-meeting-notes
+  parallel:
+    matrix:
+      - FEATURES:
+          [
+          '',
+            backend,
+            frontend,
+            serde,
+          ]
+        EXTRA_ARGS: ['', --no-default-features]
