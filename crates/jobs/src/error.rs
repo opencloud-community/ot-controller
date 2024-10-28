@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::num::TryFromIntError;
+
 use opentalk_signaling_core::ObjectStorageError;
 use snafu::Snafu;
 
@@ -73,6 +75,15 @@ pub enum Error {
         source: serde_json::Error,
     },
 
+    /// Invalid value for parameter {parameter_name:?}. Required: {expected_requirement}
+    InvalidParameterValue {
+        /// The name of the parameter
+        parameter_name: String,
+
+        /// The expected requirement which was not fulfilled
+        expected_requirement: String,
+    },
+
     /// Job execution timed out
     #[snafu(context(false))]
     Timeout {
@@ -125,5 +136,11 @@ pub enum Error {
     #[snafu(context(false))]
     KeycloakClient {
         source: opentalk_keycloak_admin::Error,
+    },
+
+    /// Received invalid user count {returned_user_count} from Keycloak API.
+    KeycloakApiReturnedInvalidUserCount {
+        returned_user_count: i32,
+        source: TryFromIntError,
     },
 }
