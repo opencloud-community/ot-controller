@@ -234,17 +234,17 @@ impl Livekit {
                 let room = self.room_id.to_string();
 
                 for participant_id in participants {
-                    let participant_id = participant_id.to_string();
+                    let participant_id_str = participant_id.to_string();
 
                     let participant = match self
                         .params
                         .room_client
-                        .get_participant(&room, &participant_id)
+                        .get_participant(&room, &participant_id_str)
                         .await
                     {
                         Ok(p) => p,
                         Err(e) => {
-                            log::error!("Failed fetch participant room={room} participant={participant_id}, {e}");
+                            log::error!("Failed fetch participant room={room} participant={participant_id_str}, {e}");
                             continue;
                         }
                     };
@@ -258,12 +258,22 @@ impl Livekit {
                         if let Err(e) = self
                             .params
                             .room_client
-                            .mute_published_track(&room, &participant_id, &track.sid, true)
+                            .mute_published_track(&room, &participant_id_str, &track.sid, true)
                             .await
                         {
-                            log::error!("Failed to mute track room={room} participant={participant_id} track-id={}, {e}", track.sid);
+                            log::error!("Failed to mute track room={room} participant={participant_id_str} track-id={}, {e}", track.sid);
                         }
                     }
+
+                    ctx.exchange_publish(
+                        control::exchange::current_room_by_participant_id(
+                            self.room_id,
+                            participant_id,
+                        ),
+                        exchange::Message::ForceMuted {
+                            moderator: self.participant_id,
+                        },
+                    );
                 }
 
                 Ok(())
@@ -301,6 +311,9 @@ impl Livekit {
             }
             exchange::Message::MicrophoneRestrictionsDisabled => {
                 ctx.ws_send(event::LiveKitEvent::MicrophoneRestrictionsDisabled);
+            }
+            exchange::Message::ForceMuted { moderator } => {
+                ctx.ws_send(event::LiveKitEvent::ForceMuted { moderator });
             }
         }
     }

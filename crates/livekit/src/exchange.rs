@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_types_signaling::ParticipantId;
 use opentalk_types_signaling_livekit::command::UnrestrictedParticipants;
 use serde::{Deserialize, Serialize};
 
@@ -9,4 +10,5 @@ use serde::{Deserialize, Serialize};
 pub enum Message {
     MicrophoneRestrictionsEnabled(UnrestrictedParticipants),
     MicrophoneRestrictionsDisabled,
+    ForceMuted { moderator: ParticipantId },
 }

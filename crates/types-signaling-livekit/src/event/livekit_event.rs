@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_types_signaling::ParticipantId;
+
 use super::Error;
 use crate::{command::UnrestrictedParticipants, Credentials};
 
@@ -24,6 +26,12 @@ pub enum LiveKitEvent {
     /// Participants are allowed to unmute themselves again.
     MicrophoneRestrictionsDisabled,
 
-    /// An error e
+    /// The moderator has force muted the participant.
+    ForceMuted {
+        /// The moderator who issued the force mute command.
+        moderator: ParticipantId,
+    },
+
+    /// The last message couldn't be processed since an unexpected error occurred.
     Error(Error),
 }
