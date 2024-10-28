@@ -21,7 +21,7 @@ use opentalk_db_storage::{
     tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId},
     users::User,
 };
-use opentalk_types::api::error::{ApiError, AuthenticationError};
+use opentalk_types::api::error::{ApiError, AuthenticationError, ErrorBody};
 use opentalk_types_api_v1::auth::{
     login::AuthLoginPostRequestBody, GetLoginResponseBody, PostLoginResponseBody,
 };

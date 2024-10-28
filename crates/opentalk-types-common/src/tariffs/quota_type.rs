@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use crate::utils::ExampleData;
+
 /// The quota types that can be enforced on tenants.
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, strum::Display, strum::EnumString)]
 #[strum(serialize_all = "snake_case")]
@@ -34,6 +36,52 @@ pub enum QuotaType {
     #[cfg_attr(feature = "clap", clap(skip))]
     #[strum(default)]
     Other(String),
+}
+
+#[cfg(feature = "utoipa")]
+mod impl_utoipa {
+    //! The `#[derive(utoipa::ToSchema)] implementation does not yet properly support
+    //! exposing schema information of types wrapped by the NewType pattern, therefore
+    //! a manual implementation is required for now.
+    //! Issue: <https://github.com/juhaku/utoipa/issues/663>
+
+    use serde_json::json;
+    use utoipa::{
+        openapi::{schema::AnyOf, ObjectBuilder, RefOr, Schema, Type},
+        PartialSchema, ToSchema,
+    };
+
+    use super::QuotaType;
+    use crate::utils::ExampleData as _;
+
+    impl PartialSchema for QuotaType {
+        fn schema() -> RefOr<Schema> {
+            Schema::AnyOf(AnyOf {
+                items: vec![ObjectBuilder::new()
+                    .schema_type(Type::String)
+                    .description(Some("A quota type"))
+                    .examples([json!(QuotaType::example_data())])
+                    .into()],
+                description: None,
+                example: Some(json!(Self::example_data())),
+                discriminator: None,
+                ..Default::default()
+            })
+            .into()
+        }
+    }
+
+    impl ToSchema for QuotaType {
+        fn schemas(schemas: &mut Vec<(String, RefOr<Schema>)>) {
+            schemas.push((Self::name().into(), Self::schema()));
+        }
+    }
+}
+
+impl ExampleData for QuotaType {
+    fn example_data() -> Self {
+        Self::MaxStorage
+    }
 }
 
 #[cfg(all(test, feature = "serde"))]

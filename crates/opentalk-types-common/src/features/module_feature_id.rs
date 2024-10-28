@@ -31,10 +31,10 @@ pub struct ModuleFeatureId {
 }
 
 #[cfg(feature = "utoipa")]
-mod impl_to_schema {
+mod impl_utoipa {
     use utoipa::{
-        openapi::{schema::AnyOf, ObjectBuilder, RefOr, Schema, SchemaType},
-        ToSchema,
+        openapi::{schema::AnyOf, ObjectBuilder, RefOr, Schema, Type},
+        PartialSchema, ToSchema,
     };
 
     use super::ModuleFeatureId;
@@ -46,8 +46,8 @@ mod impl_to_schema {
         utils::ExampleData,
     };
 
-    impl<'__s> ToSchema<'__s> for ModuleFeatureId {
-        fn schema() -> (&'__s str, RefOr<Schema>) {
+    impl PartialSchema for ModuleFeatureId {
+        fn schema() -> RefOr<Schema> {
             use serde_json::json;
 
             let module_id_regex_snippet = format!(
@@ -57,28 +57,31 @@ mod impl_to_schema {
                 "{FEATURE_ID_SCHEMA_CHARS_REGEX}{{{MIN_FEATURE_ID_LENGTH},{MAX_FEATURE_ID_LENGTH}}}"
             );
 
-            (
-                "ModuleFeatureId",
-                Schema::AnyOf(AnyOf {
-                    items: vec![
-                        FeatureId::schema().1,
-                        ObjectBuilder::new()
-                            .schema_type(SchemaType::String)
-                            .description(Some("A module feature identifier"))
-                            .pattern(Some(format!(
-                                "^{module_id_regex_snippet}::{feature_id_regex_snippet}$",
-                            )))
-                            .example(Some(ModuleFeatureId::example_data().to_string().into()))
-                            .into(),
-                    ],
-                    description: None,
-                    default: None,
-                    example: Some(json!(Self::example_data())),
-                    discriminator: None,
-                    nullable: false,
-                })
-                .into(),
-            )
+            Schema::AnyOf(AnyOf {
+                items: vec![
+                    FeatureId::schema(),
+                    ObjectBuilder::new()
+                        .schema_type(Type::String)
+                        .description(Some("A module feature identifier"))
+                        .pattern(Some(format!(
+                            "^{module_id_regex_snippet}::{feature_id_regex_snippet}$",
+                        )))
+                        .examples([json!(ModuleFeatureId::example_data())])
+                        .into(),
+                ],
+                description: None,
+                default: None,
+                example: Some(json!(Self::example_data())),
+                discriminator: None,
+                ..Default::default()
+            })
+            .into()
+        }
+    }
+
+    impl ToSchema for ModuleFeatureId {
+        fn schemas(schemas: &mut Vec<(String, RefOr<Schema>)>) {
+            schemas.push((Self::name().into(), Self::schema()));
         }
     }
 }

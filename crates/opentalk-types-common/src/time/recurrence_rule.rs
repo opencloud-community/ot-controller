@@ -40,21 +40,31 @@ pub enum ParseRecurrenceRuleError {
 }
 
 #[cfg(feature = "utoipa")]
-impl<'__s> utoipa::ToSchema<'__s> for RecurrenceRule {
-    fn schema() -> (
-        &'__s str,
-        utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>,
-    ) {
-        use serde_json::json;
-        (
-            "RecurrenceRule",
-            utoipa::openapi::ObjectBuilder::new()
-                .schema_type(utoipa::openapi::SchemaType::String)
+mod impl_utoipa {
+    use serde_json::json;
+    use utoipa::{
+        openapi::{ObjectBuilder, RefOr, Schema, Type},
+        PartialSchema, ToSchema,
+    };
+
+    use super::{RecurrenceRule, RECURRENCE_RULE_MAX_LEN};
+    use crate::utils::ExampleData as _;
+
+    impl PartialSchema for RecurrenceRule {
+        fn schema() -> RefOr<Schema> {
+            ObjectBuilder::new()
+                .schema_type(Type::String)
                 .max_length(Some(RECURRENCE_RULE_MAX_LEN))
                 .description(Some("A recurrence rule according to RFC5545"))
-                .example(Some(json!(RecurrenceRule::example_data())))
-                .into(),
-        )
+                .examples([json!(RecurrenceRule::example_data())])
+                .into()
+        }
+    }
+
+    impl ToSchema for RecurrenceRule {
+        fn schemas(schemas: &mut Vec<(String, RefOr<Schema>)>) {
+            schemas.push((Self::name().into(), Self::schema()));
+        }
     }
 }
 

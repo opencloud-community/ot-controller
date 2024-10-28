@@ -52,28 +52,29 @@ mod impl_to_schema {
     //! a manual implementation is required for now.
     //! Issue: <https://github.com/juhaku/utoipa/issues/663>
 
+    use serde_json::json;
     use utoipa::{
-        openapi::{ObjectBuilder, SchemaType},
-        ToSchema,
+        openapi::{ObjectBuilder, RefOr, Schema, Type},
+        PartialSchema, ToSchema,
     };
 
     use super::{UserTitle, MAX_USER_TITLE_LENGTH};
     use crate::utils::ExampleData as _;
 
-    impl<'__s> ToSchema<'__s> for UserTitle {
-        fn schema() -> (
-            &'__s str,
-            utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>,
-        ) {
-            (
-                "UserTitle",
-                ObjectBuilder::new()
-                    .schema_type(SchemaType::String)
-                    .description(Some("The title of a user"))
-                    .max_length(Some(MAX_USER_TITLE_LENGTH))
-                    .example(Some(UserTitle::example_data().to_string().into()))
-                    .into(),
-            )
+    impl PartialSchema for UserTitle {
+        fn schema() -> RefOr<Schema> {
+            ObjectBuilder::new()
+                .schema_type(Type::String)
+                .description(Some("The title of a user"))
+                .max_length(Some(MAX_USER_TITLE_LENGTH))
+                .examples([json!(UserTitle::example_data())])
+                .into()
+        }
+    }
+
+    impl ToSchema for UserTitle {
+        fn schemas(schemas: &mut Vec<(String, RefOr<Schema>)>) {
+            schemas.push((Self::name().into(), Self::schema()));
         }
     }
 }

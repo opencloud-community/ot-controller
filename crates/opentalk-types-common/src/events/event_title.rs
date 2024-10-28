@@ -58,34 +58,35 @@ impl EventTitle {
 }
 
 #[cfg(feature = "utoipa")]
-mod impl_to_schema {
+mod impl_utoipa {
     //! The `#[derive(utoipa::ToSchema)] implementation does not yet properly support
     //! exposing schema information of types wrapped by the NewType pattern, therefore
     //! a manual implementation is required for now.
     //! Issue: <https://github.com/juhaku/utoipa/issues/663>
 
+    use serde_json::json;
     use utoipa::{
-        openapi::{ObjectBuilder, SchemaType},
-        ToSchema,
+        openapi::{ObjectBuilder, RefOr, Schema, Type},
+        PartialSchema, ToSchema,
     };
 
     use super::{EventTitle, MAX_EVENT_TITLE_LENGTH};
     use crate::utils::ExampleData as _;
 
-    impl<'__s> ToSchema<'__s> for EventTitle {
-        fn schema() -> (
-            &'__s str,
-            utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>,
-        ) {
-            (
-                "EventTitle",
-                ObjectBuilder::new()
-                    .schema_type(SchemaType::String)
-                    .description(Some("The title of an event"))
-                    .max_length(Some(MAX_EVENT_TITLE_LENGTH))
-                    .example(Some(EventTitle::example_data().to_string().into()))
-                    .into(),
-            )
+    impl PartialSchema for EventTitle {
+        fn schema() -> RefOr<Schema> {
+            ObjectBuilder::new()
+                .schema_type(Type::String)
+                .description(Some("The title of an event"))
+                .max_length(Some(MAX_EVENT_TITLE_LENGTH))
+                .examples([json!(EventTitle::example_data())])
+                .into()
+        }
+    }
+
+    impl ToSchema for EventTitle {
+        fn schemas(schemas: &mut Vec<(String, RefOr<Schema>)>) {
+            schemas.push((Self::name().into(), Self::schema()));
         }
     }
 }

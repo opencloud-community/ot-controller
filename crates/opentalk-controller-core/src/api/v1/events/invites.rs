@@ -33,8 +33,9 @@ use opentalk_types::api::error::ApiError;
 use opentalk_types_api_v1::{
     events::{
         by_event_id::invites::GetEventsInvitesQuery, DeleteEmailInviteBody, DeleteEventInvitePath,
-        EmailInvite, EventInvitee, EventOptionsQuery, PatchEmailInviteBody, PatchInviteBody,
-        PostEventInviteBody, PostEventInviteQuery, UserInvite,
+        EmailInvite, EventInvitee, EventOptionsQuery, EventResource, GetEventInstanceResponseBody,
+        PatchEmailInviteBody, PatchInviteBody, PostEventInviteBody, PostEventInviteQuery,
+        UserInvite,
     },
     pagination::PagePaginationQuery,
     users::GetEventInvitesPendingResponseBody,
@@ -56,6 +57,7 @@ use snafu::Report;
 use super::{ApiResponse, DefaultApiResult};
 use crate::{
     api::{
+        headers::CursorLink,
         responses::{BadRequest, Forbidden, InternalServerError, NotFound, Unauthorized},
         v1::{
             events::{

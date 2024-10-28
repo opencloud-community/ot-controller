@@ -51,27 +51,28 @@ impl ExampleData for InstanceId {
 }
 
 #[cfg(feature = "utoipa")]
-mod impl_to_schema {
+mod impl_utoipa {
+    use serde_json::json;
     use utoipa::{
-        openapi::{ObjectBuilder, SchemaType},
-        ToSchema,
+        openapi::{ObjectBuilder, RefOr, Schema, Type},
+        PartialSchema, ToSchema,
     };
 
     use super::InstanceId;
 
-    impl<'__s> ToSchema<'__s> for InstanceId {
-        fn schema() -> (
-            &'__s str,
-            utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>,
-        ) {
-            (
-                "InstanceId",
-                ObjectBuilder::new()
-                    .schema_type(SchemaType::String)
-                    .description(Some("An event instance id"))
-                    .example(Some("2024-07-20T15:23:42+00:00".into()))
-                    .into(),
-            )
+    impl PartialSchema for InstanceId {
+        fn schema() -> RefOr<Schema> {
+            ObjectBuilder::new()
+                .schema_type(Type::String)
+                .description(Some("An event instance id"))
+                .examples([json!("2024-07-20T15:23:42+00:00")])
+                .into()
+        }
+    }
+
+    impl ToSchema for InstanceId {
+        fn schemas(schemas: &mut Vec<(String, RefOr<Schema>)>) {
+            schemas.push((Self::name().into(), Self::schema()));
         }
     }
 }

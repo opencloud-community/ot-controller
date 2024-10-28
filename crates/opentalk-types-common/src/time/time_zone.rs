@@ -57,27 +57,29 @@ impl ExampleData for TimeZone {
 }
 
 #[cfg(feature = "utoipa")]
-mod impl_to_schema {
+mod impl_utoipa {
+    use serde_json::json;
     use utoipa::{
-        openapi::{ObjectBuilder, SchemaType},
-        ToSchema,
+        openapi::{ObjectBuilder, RefOr, Schema, Type},
+        PartialSchema, ToSchema,
     };
 
     use super::TimeZone;
+    use crate::utils::ExampleData as _;
 
-    impl<'__s> ToSchema<'__s> for TimeZone {
-        fn schema() -> (
-            &'__s str,
-            utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>,
-        ) {
-            (
-                "TimeZone",
-                ObjectBuilder::new()
-                    .schema_type(SchemaType::String)
-                    .description(Some("A time zone"))
-                    .example(Some("Europe/Berlin".into()))
-                    .into(),
-            )
+    impl PartialSchema for TimeZone {
+        fn schema() -> RefOr<Schema> {
+            ObjectBuilder::new()
+                .schema_type(Type::String)
+                .description(Some("A time zone"))
+                .examples([json!(Self::example_data())])
+                .into()
+        }
+    }
+
+    impl ToSchema for TimeZone {
+        fn schemas(schemas: &mut Vec<(String, RefOr<Schema>)>) {
+            schemas.push((Self::name().into(), Self::schema()));
         }
     }
 }

@@ -41,15 +41,16 @@ pub const FEATURE_ID_SCHEMA_CHARS_REGEX: &str = "[-_0-9a-zA-Z]";
 pub struct FeatureId(String);
 
 #[cfg(feature = "utoipa")]
-mod impl_to_schema {
+mod impl_utoipa {
     //! The `#[derive(utoipa::ToSchema)] implementation does not yet properly support
     //! exposing schema information of types wrapped by the NewType pattern, therefore
     //! a manual implementation is required for now.
     //! Issue: <https://github.com/juhaku/utoipa/issues/663>
 
+    use serde_json::json;
     use utoipa::{
-        openapi::{ObjectBuilder, SchemaType},
-        ToSchema,
+        openapi::{ObjectBuilder, RefOr, Schema, Type},
+        PartialSchema, ToSchema,
     };
 
     use super::{
@@ -57,22 +58,22 @@ mod impl_to_schema {
     };
     use crate::utils::ExampleData as _;
 
-    impl<'__s> ToSchema<'__s> for FeatureId {
-        fn schema() -> (
-            &'__s str,
-            utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>,
-        ) {
-            (
-                "FeatureId",
-                ObjectBuilder::new()
-                    .schema_type(SchemaType::String)
-                    .description(Some("A feature identifier"))
-                    .min_length(Some(MIN_FEATURE_ID_LENGTH))
-                    .max_length(Some(MAX_FEATURE_ID_LENGTH))
-                    .pattern(Some(format!("^{FEATURE_ID_SCHEMA_CHARS_REGEX}*$")))
-                    .example(Some(FeatureId::example_data().to_string().into()))
-                    .into(),
-            )
+    impl PartialSchema for FeatureId {
+        fn schema() -> RefOr<Schema> {
+            ObjectBuilder::new()
+                .schema_type(Type::String)
+                .description(Some("A feature identifier"))
+                .min_length(Some(MIN_FEATURE_ID_LENGTH))
+                .max_length(Some(MAX_FEATURE_ID_LENGTH))
+                .pattern(Some(format!("^{FEATURE_ID_SCHEMA_CHARS_REGEX}*$")))
+                .examples([json!(FeatureId::example_data())])
+                .into()
+        }
+    }
+
+    impl ToSchema for FeatureId {
+        fn schemas(schemas: &mut Vec<(String, RefOr<Schema>)>) {
+            schemas.push((Self::name().into(), Self::schema()));
         }
     }
 }

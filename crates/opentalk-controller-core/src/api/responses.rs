@@ -55,5 +55,5 @@ pub struct BadRequest;
 
 #[derive(ToResponse, ToSchema)]
 #[response(description = "Binary data", content_type = "application/octet-stream")]
-#[schema(value_type = String, format = KnownFormat::Binary)]
-pub struct BinaryData;
+#[schema(format = Binary)]
+pub struct BinaryData(pub String);

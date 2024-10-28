@@ -5,5 +5,7 @@
 //! This module contains types that are used for OpenTalk API V1 assets endpoints.
 
 mod asset_resource;
+mod asset_sorting_query;
 
 pub use asset_resource::AssetResource;
+pub use asset_sorting_query::AssetSortingQuery;

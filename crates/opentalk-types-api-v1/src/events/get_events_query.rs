@@ -50,7 +50,6 @@ pub struct GetEventsQuery {
     /// Cursor token to get the next page of events
     ///
     /// Returned by the endpoint if the maximum number of events per page has been hit
-    #[cfg_attr(feature = "utoipa", param(inline))]
     pub after: Option<Cursor<GetEventsCursorData>>,
 
     /// Only get events that are either marked as adhoc or non-adhoc

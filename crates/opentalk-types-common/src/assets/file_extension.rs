@@ -89,22 +89,32 @@ impl FromStr for FileExtension {
 }
 
 #[cfg(feature = "utoipa")]
-impl<'__s> utoipa::ToSchema<'__s> for FileExtension {
-    fn schema() -> (
-        &'__s str,
-        utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>,
-    ) {
-        use serde_json::json;
-        (
-            "FileExtension",
-            utoipa::openapi::ObjectBuilder::new()
-                .schema_type(utoipa::openapi::SchemaType::String)
+mod impl_utoipa {
+    use serde_json::json;
+    use utoipa::{
+        openapi::{ObjectBuilder, RefOr, Schema, Type},
+        PartialSchema, ToSchema,
+    };
+
+    use super::{FileExtension, MAX_FILE_EXTENSION_LENGTH};
+    use crate::utils::ExampleData;
+
+    impl PartialSchema for FileExtension {
+        fn schema() -> RefOr<Schema> {
+            ObjectBuilder::new()
+                .schema_type(Type::String)
                 .max_length(Some(MAX_FILE_EXTENSION_LENGTH))
                 .pattern(Some("^[0-9a-zA-Z]*$".to_string()))
                 .description(Some("An extension for a file path"))
-                .example(Some(json!(FileExtension::example_data())))
-                .into(),
-        )
+                .examples([json!(FileExtension::example_data())])
+                .into()
+        }
+    }
+
+    impl ToSchema for FileExtension {
+        fn schemas(schemas: &mut Vec<(String, RefOr<Schema>)>) {
+            schemas.push((Self::name().into(), Self::schema()));
+        }
     }
 }
 
