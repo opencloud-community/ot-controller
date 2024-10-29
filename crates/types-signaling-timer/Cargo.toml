@@ -1,0 +1,51 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+authors.workspace = true
+description = "Signaling types the OpenTalk timer module"
+documentation = "https://docs.rs/opentalk-types-signaling-timer"
+edition = "2021"
+homepage.workspace = true
+license = "EUPL-1.2"
+name = "opentalk-types-signaling-timer"
+publish = true
+repository.workspace = true
+version.workspace = true
+
+[features]
+backend = ["rand", "redis", "serde"]
+frontend = ["serde"]
+rand = [
+  "opentalk-types-common/rand",
+  "opentalk-types-signaling/rand",
+  "uuid/v4",
+]
+redis = ["dep:redis-args", "opentalk-types-common/redis", "serde"]
+serde = [
+  "dep:serde",
+  "opentalk-types-common/serde",
+  "opentalk-types-signaling/serde",
+  "uuid/serde",
+]
+
+[dependencies]
+derive_more = { workspace = true, features = [
+  "as_ref",
+  "display",
+  "from",
+  "from_str",
+  "into",
+] }
+opentalk-types-common.workspace = true
+opentalk-types-signaling.workspace = true
+redis-args = { workspace = true, optional = true }
+serde = { workspace = true, optional = true }
+uuid.workspace = true
+
+
+[dev-dependencies]
+chrono.workspace = true
+pretty_assertions.workspace = true
+serde_json.workspace = true

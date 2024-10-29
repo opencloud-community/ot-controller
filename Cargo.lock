@@ -4956,9 +4956,9 @@ dependencies = [
  "log",
  "opentalk-signaling-core",
  "opentalk-test-util",
- "opentalk-types",
  "opentalk-types-common",
  "opentalk-types-signaling",
+ "opentalk-types-signaling-timer",
  "parking_lot",
  "pretty_assertions",
  "redis",
@@ -5175,6 +5175,21 @@ dependencies = [
  "opentalk-types-common",
  "opentalk-types-signaling",
  "serde",
+]
+
+[[package]]
+name = "opentalk-types-signaling-timer"
+version = "0.0.0-dev"
+dependencies = [
+ "chrono",
+ "derive_more 1.0.0",
+ "opentalk-types-common",
+ "opentalk-types-signaling",
+ "pretty_assertions",
+ "redis-args",
+ "serde",
+ "serde_json",
+ "uuid",
 ]
 
 [[package]]

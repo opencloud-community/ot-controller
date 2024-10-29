@@ -4,20 +4,16 @@
 
 //! Signaling events for the `timer` namespace
 
-use opentalk_types_signaling::ParticipantId;
-
-use super::{TimerConfig, TimerId};
-#[allow(unused_imports)]
-use crate::imports::*;
+use super::{Error, Started, Stopped, UpdatedReadyStatus};
 
 /// Outgoing websocket messages
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case", tag = "message")
 )]
-pub enum Message {
+pub enum TimerEvent {
     /// A timer has been started
     Started(Started),
     /// The current timer has been stopped
@@ -28,105 +24,41 @@ pub enum Message {
     Error(Error),
 }
 
-/// A timer has been started
-#[derive(Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Started {
-    /// Config of the started timer
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub config: TimerConfig,
-}
-
-impl From<Started> for Message {
+impl From<Started> for TimerEvent {
     fn from(value: Started) -> Self {
         Self::Started(value)
     }
 }
 
-/// The current timer has been stopped
-#[derive(Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Stopped {
-    /// The timer id
-    pub timer_id: TimerId,
-    /// The stop kind
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub kind: StopKind,
-    /// An optional reason to all participants. Set by moderator
-    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
-    pub reason: Option<String>,
-}
-
-impl From<Stopped> for Message {
+impl From<Stopped> for TimerEvent {
     fn from(value: Stopped) -> Self {
         Self::Stopped(value)
     }
 }
 
-/// The stop reason
-#[derive(Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(rename_all = "snake_case", tag = "kind", content = "participant_id")
-)]
-pub enum StopKind {
-    /// The timer has been stopped by a moderator
-    ByModerator(ParticipantId),
-    /// The timers duration has expired
-    Expired,
-}
-
-/// Update the ready status
-#[derive(Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct UpdatedReadyStatus {
-    /// The timer id that the update is for
-    pub timer_id: TimerId,
-    /// The participant that updated its status
-    pub participant_id: ParticipantId,
-    /// The new status
-    pub status: bool,
-}
-
-impl From<UpdatedReadyStatus> for Message {
+impl From<UpdatedReadyStatus> for TimerEvent {
     fn from(value: UpdatedReadyStatus) -> Self {
         Self::UpdatedReadyStatus(value)
     }
 }
 
-/// Errors from the `timer` module namespace
-#[derive(Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize),
-    serde(rename_all = "snake_case", tag = "error")
-)]
-pub enum Error {
-    /// An invalid timer duration has been configured
-    InvalidDuration,
-    /// The requesting user has insufficient permissions
-    InsufficientPermissions,
-    /// A timer is already running
-    TimerAlreadyRunning,
-}
-
-impl From<Error> for Message {
+impl From<Error> for TimerEvent {
     fn from(value: Error) -> Self {
         Self::Error(value)
     }
 }
 
-#[cfg(test)]
-mod tests {
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
     use std::time::SystemTime;
 
     use chrono::{DateTime, Duration};
     use opentalk_types_common::time::Timestamp;
+    use opentalk_types_signaling::ParticipantId;
     use serde_json::json;
 
     use super::*;
-    use crate::signaling::timer::Kind;
+    use crate::{event::StopKind, Kind, TimerConfig, TimerId};
 
     #[test]
     fn countdown_started() {
@@ -136,7 +68,7 @@ mod tests {
             .map(Timestamp::from)
             .unwrap();
 
-        let started = Message::Started(Started {
+        let started = TimerEvent::Started(Started {
             config: TimerConfig {
                 timer_id: TimerId::nil(),
                 started_at,
@@ -165,7 +97,7 @@ mod tests {
     fn stopwatch_started() {
         let started_at: Timestamp = DateTime::from(SystemTime::UNIX_EPOCH).into();
 
-        let started = Message::Started(Started {
+        let started = TimerEvent::Started(Started {
             config: TimerConfig {
                 timer_id: TimerId::nil(),
                 started_at,
@@ -191,7 +123,7 @@ mod tests {
 
     #[test]
     fn stopped_by_moderator() {
-        let stopped = Message::Stopped(Stopped {
+        let stopped = TimerEvent::Stopped(Stopped {
             timer_id: TimerId::nil(),
             kind: StopKind::ByModerator(ParticipantId::nil()),
             reason: Some("A good reason!".into()),
@@ -211,7 +143,7 @@ mod tests {
 
     #[test]
     fn expired() {
-        let stopped = Message::Stopped(Stopped {
+        let stopped = TimerEvent::Stopped(Stopped {
             timer_id: TimerId::nil(),
             kind: StopKind::Expired,
             reason: None,
@@ -229,7 +161,7 @@ mod tests {
 
     #[test]
     fn error_insufficient_permission() {
-        let stopped = Message::Error(Error::InsufficientPermissions);
+        let stopped = TimerEvent::Error(Error::InsufficientPermissions);
 
         assert_eq!(
             serde_json::to_value(stopped).unwrap(),

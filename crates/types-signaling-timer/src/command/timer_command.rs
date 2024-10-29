@@ -2,20 +2,16 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Signaling commands for the `timer` namespace
-
-use super::TimerId;
-#[allow(unused_imports)]
-use crate::imports::*;
+use super::{Start, Stop, UpdateReadyStatus};
 
 /// Incoming websocket messages
 #[derive(Debug)]
 #[cfg_attr(
     feature = "serde",
-    derive(Deserialize),
+    derive(serde::Deserialize, serde::Serialize),
     serde(rename_all = "snake_case", tag = "action")
 )]
-pub enum Message {
+pub enum TimerCommand {
     /// Start a new timer
     Start(Start),
     /// Stop a running timer
@@ -24,65 +20,31 @@ pub enum Message {
     UpdateReadyStatus(UpdateReadyStatus),
 }
 
-/// The different timer variations
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Deserialize),
-    serde(rename_all = "snake_case", tag = "kind")
-)]
-pub enum Kind {
-    /// The timer continues to run until a moderator stops it.
-    Stopwatch,
-    /// The timer continues to run until its duration expires or if a moderator stops it beforehand.
-    Countdown {
-        /// The duration of the countdown
-        duration: u64,
-    },
+impl From<Start> for TimerCommand {
+    fn from(value: Start) -> Self {
+        Self::Start(value)
+    }
 }
 
-/// Start a new timer
-#[derive(Debug)]
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-pub struct Start {
-    /// The timer kind
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub kind: Kind,
-    /// An optional string tag to flag this timer with a custom style
-    pub style: Option<String>,
-    /// An optional title for the timer
-    pub title: Option<String>,
-    /// Flag to allow/disallow participants to mark themselves as ready
-    #[cfg_attr(feature = "serde", serde(default))]
-    pub enable_ready_check: bool,
+impl From<Stop> for TimerCommand {
+    fn from(value: Stop) -> Self {
+        Self::Stop(value)
+    }
 }
 
-/// Stop a running timer
-#[derive(Debug)]
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-pub struct Stop {
-    /// The timer id
-    pub timer_id: TimerId,
-    /// An optional reason for the stop
-    pub reason: Option<String>,
+impl From<UpdateReadyStatus> for TimerCommand {
+    fn from(value: UpdateReadyStatus) -> Self {
+        Self::UpdateReadyStatus(value)
+    }
 }
 
-/// Update the ready status
-#[derive(Debug)]
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-pub struct UpdateReadyStatus {
-    /// The timer id
-    pub timer_id: TimerId,
-    /// The new status
-    pub status: bool,
-}
-
-#[cfg(test)]
-mod tests {
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
     use super::*;
+    use crate::{command::Kind, TimerId};
 
     #[test]
     fn countdown_start() {
@@ -95,7 +57,7 @@ mod tests {
         });
 
         match serde_json::from_value(json).unwrap() {
-            Message::Start(Start {
+            TimerCommand::Start(Start {
                 kind,
                 style,
                 title,
@@ -120,7 +82,7 @@ mod tests {
         });
 
         match serde_json::from_value(json).unwrap() {
-            Message::Start(Start {
+            TimerCommand::Start(Start {
                 kind,
                 style,
                 title,
@@ -144,7 +106,7 @@ mod tests {
         });
 
         match serde_json::from_value(json).unwrap() {
-            Message::Stop(Stop { timer_id, reason }) => {
+            TimerCommand::Stop(Stop { timer_id, reason }) => {
                 assert_eq!(reason, Some("test".into()));
                 assert_eq!(timer_id, TimerId::nil())
             }
@@ -161,7 +123,7 @@ mod tests {
         });
 
         match serde_json::from_value(json).unwrap() {
-            Message::UpdateReadyStatus(UpdateReadyStatus { timer_id, status }) => {
+            TimerCommand::UpdateReadyStatus(UpdateReadyStatus { timer_id, status }) => {
                 assert!(status);
                 assert_eq!(timer_id, TimerId::nil())
             }

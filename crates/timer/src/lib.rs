@@ -9,15 +9,15 @@ use opentalk_signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
-use opentalk_types::signaling::timer::{
-    command::{self, Message},
-    event::{self, Error, StopKind, UpdatedReadyStatus},
-    ready_status::ReadyStatus,
-    status::TimerStatus,
-    Kind, TimerConfig, TimerId, NAMESPACE,
-};
 use opentalk_types_common::time::Timestamp;
 use opentalk_types_signaling::{ParticipantId, Role};
+use opentalk_types_signaling_timer::{
+    command::{self, TimerCommand},
+    event::{Error, Started, StopKind, Stopped, TimerEvent, UpdatedReadyStatus},
+    peer_state::TimerPeerState,
+    state::TimerState,
+    Kind, TimerConfig, TimerId, NAMESPACE,
+};
 use storage::TimerStorage;
 use tokio::time::sleep;
 use uuid::Uuid;
@@ -54,17 +54,17 @@ impl SignalingModule for Timer {
 
     type Params = ();
 
-    type Incoming = Message;
+    type Incoming = TimerCommand;
 
-    type Outgoing = event::Message;
+    type Outgoing = TimerEvent;
 
     type ExchangeMessage = exchange::Event;
 
     type ExtEvent = ExpiredEvent;
 
-    type FrontendData = TimerStatus;
+    type FrontendData = TimerState;
 
-    type PeerFrontendData = ReadyStatus;
+    type PeerFrontendData = TimerPeerState;
 
     async fn init(
         ctx: InitContext<'_, Self>,
@@ -108,7 +108,7 @@ impl SignalingModule for Timer {
                     None
                 };
 
-                *frontend_data = Some(TimerStatus {
+                *frontend_data = Some(TimerState {
                     config: TimerConfig {
                         timer_id: timer.id,
                         started_at: timer.started_at,
@@ -205,10 +205,10 @@ impl Timer {
     async fn handle_ws_message(
         &self,
         ctx: &mut ModuleContext<'_, Self>,
-        msg: Message,
+        msg: TimerCommand,
     ) -> Result<(), SignalingModuleError> {
         match msg {
-            Message::Start(start) => {
+            TimerCommand::Start(start) => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
@@ -265,7 +265,7 @@ impl Timer {
                     return Ok(());
                 }
 
-                let started = event::Started {
+                let started = Started {
                     config: TimerConfig {
                         timer_id,
                         started_at,
@@ -281,7 +281,7 @@ impl Timer {
                     exchange::Event::Start(started),
                 );
             }
-            Message::Stop(stop) => {
+            TimerCommand::Stop(stop) => {
                 if ctx.role() != Role::Moderator {
                     ctx.ws_send(Error::InsufficientPermissions);
                     return Ok(());
@@ -307,7 +307,7 @@ impl Timer {
                 )
                 .await?;
             }
-            Message::UpdateReadyStatus(update_ready_status) => {
+            TimerCommand::UpdateReadyStatus(update_ready_status) => {
                 if let Some(timer) = ctx.volatile.storage().timer_get(self.room_id).await? {
                     if timer.ready_check_enabled && timer.id == update_ready_status.timer_id {
                         ctx.volatile
@@ -402,7 +402,7 @@ impl Timer {
 
         ctx.exchange_publish(
             control::exchange::current_room_all_participants(self.room_id),
-            exchange::Event::Stop(event::Stopped {
+            exchange::Event::Stop(Stopped {
                 timer_id: timer.id,
                 kind: reason,
                 reason: message,
@@ -419,7 +419,6 @@ mod tests {
 
     use chrono::{DateTime, Duration};
     use opentalk_test_util::assert_eq_json;
-    use opentalk_types::signaling::timer::status::TimerStatus;
 
     use super::*;
     use crate::Kind;
@@ -432,7 +431,7 @@ mod tests {
             .map(Timestamp::from)
             .unwrap();
 
-        let timer_status = TimerStatus {
+        let timer_status = TimerState {
             config: TimerConfig {
                 timer_id: TimerId::nil(),
                 started_at,
@@ -463,7 +462,7 @@ mod tests {
             .map(Timestamp::from)
             .unwrap();
 
-        let timer_status = TimerStatus {
+        let timer_status = TimerState {
             config: TimerConfig {
                 timer_id: TimerId::nil(),
                 started_at,
@@ -495,7 +494,7 @@ mod tests {
             .map(Timestamp::from)
             .unwrap();
 
-        let timer_status = TimerStatus {
+        let timer_status = TimerState {
             config: TimerConfig {
                 timer_id: TimerId::nil(),
                 started_at,

@@ -6,8 +6,8 @@ use std::sync::{Arc, OnceLock};
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage};
-use opentalk_types::signaling::timer::ready_status::ReadyStatus;
 use opentalk_types_signaling::ParticipantId;
+use opentalk_types_signaling_timer::peer_state::TimerPeerState;
 use parking_lot::RwLock;
 
 use super::memory::MemoryTimerState;
@@ -39,7 +39,7 @@ impl TimerStorage for VolatileStaticMemoryStorage {
         &mut self,
         room: SignalingRoomId,
         participant: ParticipantId,
-    ) -> Result<Option<ReadyStatus>, SignalingModuleError> {
+    ) -> Result<Option<TimerPeerState>, SignalingModuleError> {
         Ok(state().read().ready_status_get(room, participant))
     }
 

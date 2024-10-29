@@ -4,8 +4,8 @@
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
-use opentalk_types::signaling::timer::ready_status::ReadyStatus;
 use opentalk_types_signaling::ParticipantId;
+use opentalk_types_signaling_timer::peer_state::TimerPeerState;
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
 use snafu::ResultExt;
@@ -26,7 +26,7 @@ impl TimerStorage for RedisConnection {
                 room_id,
                 participant_id,
             },
-            &ReadyStatus { ready_status },
+            &TimerPeerState { ready_status },
         )
         .await
         .context(RedisSnafu {
@@ -39,7 +39,7 @@ impl TimerStorage for RedisConnection {
         &mut self,
         room_id: SignalingRoomId,
         participant_id: ParticipantId,
-    ) -> Result<Option<ReadyStatus>, SignalingModuleError> {
+    ) -> Result<Option<TimerPeerState>, SignalingModuleError> {
         self.get(ReadyStatusKey {
             room_id,
             participant_id,

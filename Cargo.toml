@@ -55,6 +55,7 @@ opentalk-types-signaling-polls = { path = "crates/types-signaling-polls", versio
 opentalk-types-signaling-recording = { path = "crates/types-signaling-recording", version = "0.0.0-dev" }
 opentalk-types-signaling-recording-service = { path = "crates/types-signaling-recording-service", version = "0.0.0-dev" }
 opentalk-types-signaling-shared-folder = { path = "crates/types-signaling-shared-folder", version = "0.0.0-dev" }
+opentalk-types-signaling-timer = { path = "crates/types-signaling-timer", version = "0.0.0-dev" }
 opentalk-whiteboard = { path = "crates/whiteboard", version = "0.0.0-dev" }
 
 actix-http = "3"

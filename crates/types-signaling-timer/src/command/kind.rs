@@ -2,16 +2,11 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_common::time::Timestamp;
-
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// The different timer variations
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case", tag = "kind")
 )]
 pub enum Kind {
@@ -19,7 +14,7 @@ pub enum Kind {
     Stopwatch,
     /// The timer continues to run until its duration expires or if a moderator stops it beforehand.
     Countdown {
-        /// When the timer will end
-        ends_at: Timestamp,
+        /// The duration of the countdown
+        duration: u64,
     },
 }

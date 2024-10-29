@@ -2,11 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types::signaling::timer::event::{Started, Stopped};
 use opentalk_types_signaling::ParticipantId;
+use opentalk_types_signaling_timer::{
+    event::{Started, Stopped},
+    TimerId,
+};
 use serde::{Deserialize, Serialize};
-
-use crate::TimerId;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Event {

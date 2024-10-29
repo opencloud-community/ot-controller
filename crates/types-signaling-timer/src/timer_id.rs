@@ -2,23 +2,17 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::fmt;
-
-use derive_more::FromStr;
+use derive_more::{AsRef, Display, From, FromStr, Into};
 use uuid::Uuid;
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// The id of the poll
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, FromStr)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, FromStr, Display, AsRef, From, Into)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(
     feature = "redis",
-    derive(redis_args::ToRedisArgs, redis_args::FromRedisValue),
-    to_redis_args(fmt),
-    from_redis_value(FromStr)
+    derive(redis_args::ToRedisArgs, redis_args::FromRedisValue)
 )]
+#[cfg_attr(feature = "redis", to_redis_args(fmt), from_redis_value(FromStr))]
 pub struct TimerId(pub Uuid);
 
 impl TimerId {
@@ -36,11 +30,5 @@ impl TimerId {
     #[cfg(feature = "rand")]
     pub fn generate() -> Self {
         Self(Uuid::new_v4())
-    }
-}
-
-impl fmt::Display for TimerId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.0.fmt(f)
     }
 }
