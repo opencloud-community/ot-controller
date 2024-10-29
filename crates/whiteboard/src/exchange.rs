@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types::signaling::whiteboard::event::PdfAsset;
+use opentalk_types_signaling_whiteboard::event::PdfAsset;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]

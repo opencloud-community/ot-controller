@@ -6,9 +6,6 @@
 
 use url::Url;
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// The state of the `whiteboard` module.
 ///
 /// This struct is sent to the participant in the `join_success` message
@@ -16,7 +13,7 @@ use crate::imports::*;
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case", tag = "status", content = "url")
 )]
 pub enum WhiteboardState {
@@ -31,6 +28,6 @@ pub enum WhiteboardState {
 }
 
 #[cfg(feature = "serde")]
-impl SignalingModuleFrontendData for WhiteboardState {
-    const NAMESPACE: Option<&'static str> = Some(super::NAMESPACE);
+impl opentalk_types_signaling::SignalingModuleFrontendData for WhiteboardState {
+    const NAMESPACE: Option<&'static str> = Some(crate::NAMESPACE);
 }

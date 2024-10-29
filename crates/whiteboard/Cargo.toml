@@ -24,9 +24,11 @@ log.workspace = true
 opentalk-controller-settings.workspace = true
 opentalk-database.workspace = true
 opentalk-signaling-core.workspace = true
-opentalk-types = { workspace = true, features = ["backend"] }
 opentalk-types-common = { workspace = true, features = ["backend"] }
 opentalk-types-signaling = { workspace = true, features = ["backend"] }
+opentalk-types-signaling-whiteboard = { workspace = true, features = [
+  "backend",
+] }
 parking_lot.workspace = true
 redis.workspace = true
 redis-args.workspace = true

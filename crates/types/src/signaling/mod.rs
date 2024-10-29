@@ -10,7 +10,6 @@ pub mod echo;
 pub mod integration;
 pub mod media;
 pub mod meeting_report;
-pub mod whiteboard;
 
 mod namespaced;
 

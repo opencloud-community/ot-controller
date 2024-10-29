@@ -4,14 +4,11 @@
 
 //! Signaling commands for the `whiteboard` namespace
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// Commands for the `whiteboard` namespace
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(tag = "action", rename_all = "snake_case")
 )]
 pub enum WhiteboardCommand {

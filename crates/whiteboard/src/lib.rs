@@ -14,14 +14,14 @@ use opentalk_signaling_core::{
     SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
     VolatileStorage,
 };
-use opentalk_types::signaling::whiteboard::{
+use opentalk_types_common::{assets::FileExtension, time::Timestamp};
+use opentalk_types_signaling::Role;
+use opentalk_types_signaling_whiteboard::{
     command::WhiteboardCommand,
     event::{AccessUrl, Error, PdfAsset, WhiteboardEvent},
     state::WhiteboardState,
     NAMESPACE,
 };
-use opentalk_types_common::{assets::FileExtension, time::Timestamp};
-use opentalk_types_signaling::Role;
 use snafu::{whatever, Report};
 use storage::{InitState, SpaceInfo, WhiteboardStorage};
 use url::Url;
