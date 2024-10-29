@@ -60,9 +60,6 @@ pub enum SettingsError {
         source: Box<serde_path_to_error::Error<config::ConfigError>>,
     },
 
-    #[snafu(display("Config must provide either a janus or livekit configuration"))]
-    MissingMediaBackend,
-
     #[snafu(display("Given base URL is not a base: {}", url))]
     NotBaseUrl { url: Url },
 
@@ -133,8 +130,7 @@ pub struct Settings {
     #[serde(default)]
     pub tariffs: Tariffs,
 
-    #[serde(default)]
-    pub livekit: Option<LiveKitSettings>,
+    pub livekit: LiveKitSettings,
 
     #[serde(flatten)]
     pub extensions: HashMap<String, config::Value>,
@@ -401,26 +397,6 @@ impl Settings {
             serde_path_to_error::deserialize(config).context(DeserializeConfigSnafu {
                 file_name: file_name.to_owned(),
             })?;
-
-        let livekit_configured = this.livekit.is_some();
-        let janus_configured = this.extensions.contains_key("room_server");
-
-        if livekit_configured && janus_configured {
-            use owo_colors::OwoColorize as _;
-
-            anstream::eprintln!(
-                "{}: Both {room_server} (janus) and {livekit} are configured, only one is required at a time.\n\
-                 {}: Keeping both may cause issues when switching between the 'latest' and 'alpha' (livekit) version of OpenTalk.",
-                "WARNING".yellow().bold(),
-                "NOTE".green(),
-                room_server = "room_server".bold(),
-                livekit = "livekit".bold(),
-            );
-        }
-
-        if !janus_configured && !livekit_configured {
-            return Err(SettingsError::MissingMediaBackend);
-        }
 
         Ok(this)
     }

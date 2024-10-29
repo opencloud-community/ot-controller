@@ -78,12 +78,6 @@ pub enum SignalingModuleError {
         source: serde_json::Error,
     },
 
-    #[snafu(display("Janus error: {message}"))]
-    JanusClientError {
-        message: String,
-        source: opentalk_janus_client::error::Error,
-    },
-
     #[snafu(display("Custom error: {message}"), whatever)]
     CustomError {
         message: String,

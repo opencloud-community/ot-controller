@@ -196,29 +196,7 @@ client_secret = "v3rys3cr3t"
 # Possible values are "disabled", "from_database" and "from_user_search_backend".
 users_find_behavior = "from_user_search_backend"
 
-[room_server]
-# Maximum bitrate allowed for media sessions that will be used to transmit webcam video/audio
-# Example: 1.5 Mbit/s
-max_video_bitrate = "1500000"
-
-# Maximum bitrate allowed for media sessions used for screen share
-# Example: 1MB/s
-max_screen_bitrate = "8000000"
-
-
-# Connection settings for the channel used to talk to the room server.
-# Currently these should be equal to the settings in janus.transport.rabbitmq.jcfg
-# of the respective janus instance.
-[[room_server.connections]]
-exchange = "janus-exchange"
-from_routing_key = "from-janus"
-to_routing_key = "to-janus"
-
-# Optional setting to specify how many event loops are configured for this janus server
-# This value is used to balance new webrtc sessions on specific event-loops.
-#event_loops = 92
-
-# WebRTC SFU Alternative to janus (room_server section)
+# LiveKit WebRTC SFU
 [livekit]
 public_url = "wss://url.to.your.livekit.server"
 service_url = "https://localhost:7880"

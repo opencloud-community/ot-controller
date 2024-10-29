@@ -170,19 +170,18 @@ impl SignalingModule for Livekit {
     async fn build_params(
         init: SignalingModuleInitData,
     ) -> Result<Option<Self::Params>, SignalingModuleError> {
-        let Some(livekit_settings) = &init.startup_settings.livekit else {
-            return Ok(None);
-        };
+        let LiveKitSettings {
+            api_key,
+            api_secret,
+            service_url,
+            ..
+        } = &init.startup_settings.livekit;
 
-        let room_client = RoomClient::with_api_key(
-            &livekit_settings.service_url,
-            &livekit_settings.api_key,
-            &livekit_settings.api_secret,
-        );
+        let room_client = RoomClient::with_api_key(service_url, api_key, api_secret);
 
         Ok(Some(Arc::new(LivekitParams {
             shared_settings: init.shared_settings.clone(),
-            livekit_settings: livekit_settings.clone(),
+            livekit_settings: init.startup_settings.livekit.clone(),
             room_client,
         })))
     }
