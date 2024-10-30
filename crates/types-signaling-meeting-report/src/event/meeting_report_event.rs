@@ -4,16 +4,13 @@
 
 //! Signaling events for the `meeting_report` namespace
 
-use opentalk_types_common::assets::AssetId;
-
-#[allow(unused_imports)]
-use crate::imports::*;
+use super::{Error, PdfAsset};
 
 /// Events sent out by the `meeting_report` module
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case", tag = "message")
 )]
 pub enum MeetingReportEvent {
@@ -24,39 +21,10 @@ pub enum MeetingReportEvent {
     Error(Error),
 }
 
-/// Handle to a PDF asset
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct PdfAsset {
-    /// The file name of the PDF asset
-    pub filename: String,
-
-    /// The asset id for the PDF asset
-    pub asset_id: AssetId,
-}
-
 impl From<PdfAsset> for MeetingReportEvent {
     fn from(value: PdfAsset) -> Self {
         Self::PdfAsset(value)
     }
-}
-
-/// Error from the `meeting_report` module namespace
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(tag = "error", rename_all = "snake_case")
-)]
-pub enum Error {
-    /// The requesting user has insufficient permissions for the operation
-    InsufficientPermissions,
-    /// The requesting user has exceeded their storage
-    StorageExceeded,
-    /// Internal error while generating the report
-    Generate,
-    /// Internal error while saving the report
-    Storage,
 }
 
 impl From<Error> for MeetingReportEvent {
@@ -65,12 +33,12 @@ impl From<Error> for MeetingReportEvent {
     }
 }
 
-#[cfg(test)]
-mod tests {
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
     use opentalk_types_common::assets::AssetId;
     use serde_json::json;
 
-    use crate::signaling::meeting_report::event::{Error, MeetingReportEvent, PdfAsset};
+    use super::{Error, MeetingReportEvent, PdfAsset};
 
     #[test]
     fn serialize_meeting_report_event_pdf_asset() {

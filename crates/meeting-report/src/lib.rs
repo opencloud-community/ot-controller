@@ -23,13 +23,13 @@ use opentalk_signaling_core::{
     ObjectStorageError, SignalingModule, SignalingModuleError, SignalingModuleInitData,
     SignalingRoomId, VolatileStorage,
 };
-use opentalk_types::signaling::meeting_report::{
-    command::Message,
+use opentalk_types_common::{assets::FileExtension, time::Timestamp, users::UserId};
+use opentalk_types_signaling::{ParticipantId, ParticipationKind, Role};
+use opentalk_types_signaling_meeting_report::{
+    command::MeetingReportCommand,
     event::{Error, MeetingReportEvent, PdfAsset},
     NAMESPACE,
 };
-use opentalk_types_common::{assets::FileExtension, time::Timestamp, users::UserId};
-use opentalk_types_signaling::{ParticipantId, ParticipationKind, Role};
 use snafu::Report;
 use storage::MeetingReportStorage;
 use template::{ReportParticipant, ReportTemplateParameter};
@@ -69,7 +69,7 @@ impl SignalingModule for MeetingReport {
 
     type Params = (TerdocClient, String);
 
-    type Incoming = Message;
+    type Incoming = MeetingReportCommand;
 
     type Outgoing = MeetingReportEvent;
 
@@ -149,10 +149,10 @@ impl MeetingReport {
     async fn handle_ws_message(
         &mut self,
         mut ctx: ModuleContext<'_, Self>,
-        msg: Message,
+        msg: MeetingReportCommand,
     ) -> Result<(), SignalingModuleError> {
         match msg {
-            Message::GenerateAttendanceReport {
+            MeetingReportCommand::GenerateAttendanceReport {
                 include_email_addresses,
             } => {
                 if ctx.role() != Role::Moderator {

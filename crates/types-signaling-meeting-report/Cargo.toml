@@ -1,0 +1,28 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+authors.workspace = true
+description = "Signaling types the OpenTalk meeting-report module"
+documentation = "https://docs.rs/opentalk-types-signaling-meeting-report"
+edition = "2021"
+homepage.workspace = true
+license = "EUPL-1.2"
+name = "opentalk-types-signaling-meeting-report"
+publish = true
+repository.workspace = true
+version.workspace = true
+
+[features]
+backend = ["serde"]
+frontend = ["serde"]
+serde = ["dep:serde", "opentalk-types-common/serde"]
+
+[dependencies]
+opentalk-types-common.workspace = true
+serde = { workspace = true, optional = true }
+
+[dev-dependencies]
+pretty_assertions.workspace = true
+serde_json.workspace = true
