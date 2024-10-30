@@ -21,6 +21,7 @@
 )]
 
 pub mod command;
+pub mod event;
 
 use opentalk_types_common::modules::ModuleId;
 

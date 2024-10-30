@@ -4,7 +4,7 @@
 
 //! Signaling events for the `meeting_report` namespace
 
-use opentalk_types_common::assets::AssetId;
+use opentalk_types_signaling_meeting_report::event::PdfAsset;
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -22,17 +22,6 @@ pub enum MeetingReportEvent {
 
     /// An error happened when executing a `meeting_report` command
     Error(Error),
-}
-
-/// Handle to a PDF asset
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct PdfAsset {
-    /// The file name of the PDF asset
-    pub filename: String,
-
-    /// The asset id for the PDF asset
-    pub asset_id: AssetId,
 }
 
 impl From<PdfAsset> for MeetingReportEvent {
