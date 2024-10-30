@@ -5,11 +5,74 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [0.25.0] - 2024-10-30
+
+### 🚀 New features
+
+- (types) Types-signaling-livekit crate & send urls to services ([!1274](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1274))
+- Add enable/disable microphone restrictions ([!1268](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1268))
+- (jobs) Add user request page size in keycloak-account-sync job ([!1227](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1227), [#875](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/875))
+- (livekit) Notify participant about force mute via signaling ([!1298](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1298), [#892](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/892))
+- (core) Add grace period to room destruction ([!1238](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1238), [##833](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/#833))
 
 ### 🐛 Bug fixes
 
-- (recording) Avoid calling HMSET when no streams are configured ([!1233](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/), [##867](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/#867))
+- (docs) Add `endpoints.disable_openapi` to the endpoints documentation ([!1242](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1242), [#889](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/889))
+- (docs) Fix invalid example json ([!1245](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1245))
+- Wrong utoipa names ([!1247](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1247))
+- (recording) Avoid calling HMSET when no streams are configured ([!1233](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1233), [#867](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/867))
+- (docs) Invite resource API documentation ([!1253](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1253), [#132](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/132))
+- (ci) Add openapi spec check and fix issues in generation ([!1253](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1253))
+- Shebang with /usr/bin/env bash ([!1275](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1275))
+- (docs) Add default values for service.name and service.namepsace to tracing docs ([!1273](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1273))
+
+### 🔨 Refactor
+
+- (types) Introduce opentalk-types-signaling-recording crate ([!1236](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1236), [#880](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/880))
+- (types) Introduce opentalk-types-signaling-recording-service crate ([!1256](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1256), [#879](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/879))
+- (types) Introduce opentalk-types-signaling-chat crate ([!1272](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1272), [#871](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/871))
+- (types) Introduce opentalk-types-signaling-moderation crate ([!1277](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1277), [#887](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/887))
+- (types) Introduce opentalk-types-signaling-polls crate ([!1286](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1286), [#886](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/886))
+- (types) Introduce opentalk-types-signaling-meeting-notes crate ([!1290](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1290), [#884](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/884))
+- (types) Introduce opentalk-types-signaling-shared-folder crate ([!1295](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1295), [#883](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/883))
+- (types) Introduce opentalk-types-signaling-timer crate ([!1297](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1297), [#882](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/882))
+- (types) Introduce opentalk-types-signaling-whiteboard crate ([!1301](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1301), [#885](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/885))
+- (config) Rework OIDC and user search configuration ([!1209](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1209))
+- Add a cleanup scope to the destroy_context ([!1238](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1238))
+- (types) Introduce opentalk-types-signaling-meeting-report crate ([!1304](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1304), [#897](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/897))
+
+### 📦 Dependencies
+
+- (deps) Update rust crate aws-sdk-s3 to v1.55.0 ([!1234](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1234))
+- (deps) Lock file maintenance ([!1240](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1240))
+- (deps) Update redocly/cli docker tag to v1.25.6 ([!1241](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1241))
+- (deps) Update rust crate uuid to v1.11.0 ([!1248](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1248))
+- (deps) Update rust crate rustls-pki-types to v1.10.0 ([!1246](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1246))
+- (deps) Update redocly/cli docker tag to v1.25.7 ([!1251](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1251))
+- (deps) Update rust crate proc-macro2 to v1.0.88 ([!1252](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1252))
+- (deps) Update rust crate serde_json to v1.0.129 ([!1255](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1255))
+- (deps) Update rust crate aws-sdk-s3 to v1.57.0 ([!1254](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1254))
+- (deps) Update rust crate redis to v0.27.5 ([!1257](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1257))
+- (deps) Update git.opentalk.dev:5050/opentalk/backend/containers/rust docker tag to v1.82.0 ([!1258](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1258))
+- (deps) Lock file maintenance ([!1263](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1263))
+- (deps) Update rust crate fern to 0.7 ([!1262](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1262))
+- (deps) Update rust crate bytes to v1.8.0 ([!1265](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1265))
+- (deps) Update redocly/cli docker tag to v1.25.8 ([!1264](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1264))
+- (deps) Update rust crate serde to v1.0.211 ([!1266](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1266))
+- (deps) Update rust crate tokio to v1.41.0 ([!1267](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1267))
+- (deps) Update rust crate serde to v1.0.213 ([!1270](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1270))
+- (deps) Update rust crate proc-macro2 to v1.0.89 ([!1271](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1271))
+- (deps) Update rust crate config to v0.14.1 ([!1278](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1271))
+- (deps) Update rust crate syn to v2.0.85 ([!1276](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1276))
+- (deps) Update rust crate opentalk-nextcloud-client to 0.2.0 ([!1280](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1280))
+- (deps) Update rust crate anstream to v0.6.17 ([!1287](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1287))
+- (deps) Lock file maintenance ([!1292](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1292))
+- (deps) Update rust crate bigdecimal to v0.4.6 ([!1293](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1293))
+- (deps) Update rust crate serde to v1.0.214 ([!1299](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1299))
+
+### Ci
+
+- Post changelog info ([!1237](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1237))
 
 ## [0.21.0]
 
@@ -886,6 +949,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - initial release candidate
 
 ---
+
+[0.25.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.21.0...v0.25.0
 
 [0.21.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.20.0...v0.21.0
 

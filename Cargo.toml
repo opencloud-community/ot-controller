@@ -10,55 +10,55 @@ resolver = "2"
 authors = ["OpenTalk Team <mail@opentalk.eu>"]
 homepage = "https://opentalk.eu/"
 repository = "https://gitlab.opencode.de/opentalk/controller"
-version = "0.0.0-dev"
+version = "0.25.0"
 
 [workspace.dependencies]
-kustos = { path = "crates/kustos", version = "0.0.0-dev" }
-kustos-shared = { path = "crates/kustos-shared", version = "0.0.0-dev" }
-opentalk-cache = { path = "crates/cache", version = "0.0.0-dev" }
-opentalk-chat = { path = "crates/chat", version = "0.0.0-dev" }
-opentalk-client = { path = "crates/client", version = "0.0.0-dev" }
-opentalk-client-shared = { path = "crates/client-shared", version = "0.0.0-dev" }
-opentalk-community-modules = { path = "crates/community-modules", version = "0.0.0-dev" }
-opentalk-controller-core = { path = "crates/controller-core", version = "0.0.0-dev" }
-opentalk-controller-settings = { path = "crates/controller-settings", version = "0.0.0-dev" }
-opentalk-controller-utils = { path = "crates/controller-utils", version = "0.0.0-dev" }
-opentalk-core = { path = "crates/core", version = "0.0.0-dev" }
-opentalk-database = { path = "crates/database", version = "0.0.0-dev" }
-opentalk-db-storage = { path = "crates/db-storage", version = "0.0.0-dev" }
-opentalk-integration = { path = "crates/integration", version = "0.0.0-dev" }
-opentalk-janus-media = { path = "crates/janus-media", version = "0.0.0-dev" }
-opentalk-jobs = { path = "crates/jobs", version = "0.0.0-dev" }
-opentalk-kustos-prefix = { path = "crates/kustos-prefix", version = "0.0.0-dev" }
-opentalk-kustos-prefix-impl = { path = "crates/kustos-prefix-impl", version = "0.0.0-dev" }
-opentalk-livekit = { path = "crates/livekit", version = "0.0.0-dev" }
-opentalk-log = { path = "crates/log", version = "0.0.0-dev" }
-opentalk-mail-worker-protocol = { path = "crates/mail-worker-protocol", version = "0.0.0-dev" }
-opentalk-meeting-notes = { path = "crates/meeting-notes", version = "0.0.0-dev" }
-opentalk-meeting-report = { path = "crates/meeting-report", version = "0.0.0-dev" }
-opentalk-polls = { path = "crates/polls", version = "0.0.0-dev" }
-opentalk-r3dlock = { path = "crates/r3dlock", version = "0.0.0-dev" }
-opentalk-shared-folder = { path = "crates/shared-folder", version = "0.0.0-dev" }
-opentalk-signaling-core = { path = "crates/signaling-core", version = "0.0.0-dev" }
-opentalk-test-util = { path = "crates/test-util", version = "0.0.0-dev" }
-opentalk-timer = { path = "crates/timer", version = "0.0.0-dev" }
-opentalk-types = { path = "crates/types", version = "0.0.0-dev" }
-opentalk-types-common = { path = "crates/types-common", version = "0.0.0-dev" }
-opentalk-types-signaling = { path = "crates/types-signaling", version = "0.0.0-dev" }
-opentalk-types-signaling-breakout = { path = "crates/types-signaling-breakout", version = "0.0.0-dev" }
-opentalk-types-signaling-chat = { path = "crates/types-signaling-chat", version = "0.0.0-dev" }
-opentalk-types-signaling-control = { path = "crates/types-signaling-control", version = "0.0.0-dev" }
-opentalk-types-signaling-livekit = { path = "crates/types-signaling-livekit", version = "0.0.0-dev" }
-opentalk-types-signaling-meeting-notes = { path = "crates/types-signaling-meeting-notes", version = "0.0.0-dev" }
-opentalk-types-signaling-meeting-report = { path = "crates/types-signaling-meeting-report", version = "0.0.0-dev" }
-opentalk-types-signaling-moderation = { path = "crates/types-signaling-moderation", version = "0.0.0-dev" }
-opentalk-types-signaling-polls = { path = "crates/types-signaling-polls", version = "0.0.0-dev" }
-opentalk-types-signaling-recording = { path = "crates/types-signaling-recording", version = "0.0.0-dev" }
-opentalk-types-signaling-recording-service = { path = "crates/types-signaling-recording-service", version = "0.0.0-dev" }
-opentalk-types-signaling-shared-folder = { path = "crates/types-signaling-shared-folder", version = "0.0.0-dev" }
-opentalk-types-signaling-timer = { path = "crates/types-signaling-timer", version = "0.0.0-dev" }
-opentalk-types-signaling-whiteboard = { path = "crates/types-signaling-whiteboard", version = "0.0.0-dev" }
-opentalk-whiteboard = { path = "crates/whiteboard", version = "0.0.0-dev" }
+kustos = { path = "crates/kustos", version = "0.25.0" }
+kustos-shared = { path = "crates/kustos-shared", version = "0.25.0" }
+opentalk-cache = { path = "crates/cache", version = "0.25.0" }
+opentalk-chat = { path = "crates/chat", version = "0.25.0" }
+opentalk-client = { path = "crates/client", version = "0.25.0" }
+opentalk-client-shared = { path = "crates/client-shared", version = "0.25.0" }
+opentalk-community-modules = { path = "crates/community-modules", version = "0.25.0" }
+opentalk-controller-core = { path = "crates/controller-core", version = "0.25.0" }
+opentalk-controller-settings = { path = "crates/controller-settings", version = "0.25.0" }
+opentalk-controller-utils = { path = "crates/controller-utils", version = "0.25.0" }
+opentalk-core = { path = "crates/core", version = "0.25.0" }
+opentalk-database = { path = "crates/database", version = "0.25.0" }
+opentalk-db-storage = { path = "crates/db-storage", version = "0.25.0" }
+opentalk-integration = { path = "crates/integration", version = "0.25.0" }
+opentalk-janus-media = { path = "crates/janus-media", version = "0.25.0" }
+opentalk-jobs = { path = "crates/jobs", version = "0.25.0" }
+opentalk-kustos-prefix = { path = "crates/kustos-prefix", version = "0.25.0" }
+opentalk-kustos-prefix-impl = { path = "crates/kustos-prefix-impl", version = "0.25.0" }
+opentalk-livekit = { path = "crates/livekit", version = "0.25.0" }
+opentalk-log = { path = "crates/log", version = "0.25.0" }
+opentalk-mail-worker-protocol = { path = "crates/mail-worker-protocol", version = "0.25.0" }
+opentalk-meeting-notes = { path = "crates/meeting-notes", version = "0.25.0" }
+opentalk-meeting-report = { path = "crates/meeting-report", version = "0.25.0" }
+opentalk-polls = { path = "crates/polls", version = "0.25.0" }
+opentalk-r3dlock = { path = "crates/r3dlock", version = "0.25.0" }
+opentalk-shared-folder = { path = "crates/shared-folder", version = "0.25.0" }
+opentalk-signaling-core = { path = "crates/signaling-core", version = "0.25.0" }
+opentalk-test-util = { path = "crates/test-util", version = "0.25.0" }
+opentalk-timer = { path = "crates/timer", version = "0.25.0" }
+opentalk-types = { path = "crates/types", version = "0.25.0" }
+opentalk-types-common = { path = "crates/types-common", version = "0.25.0" }
+opentalk-types-signaling = { path = "crates/types-signaling", version = "0.25.0" }
+opentalk-types-signaling-breakout = { path = "crates/types-signaling-breakout", version = "0.25.0" }
+opentalk-types-signaling-chat = { path = "crates/types-signaling-chat", version = "0.25.0" }
+opentalk-types-signaling-control = { path = "crates/types-signaling-control", version = "0.25.0" }
+opentalk-types-signaling-livekit = { path = "crates/types-signaling-livekit", version = "0.25.0" }
+opentalk-types-signaling-meeting-notes = { path = "crates/types-signaling-meeting-notes", version = "0.25.0" }
+opentalk-types-signaling-meeting-report = { path = "crates/types-signaling-meeting-report", version = "0.25.0" }
+opentalk-types-signaling-moderation = { path = "crates/types-signaling-moderation", version = "0.25.0" }
+opentalk-types-signaling-polls = { path = "crates/types-signaling-polls", version = "0.25.0" }
+opentalk-types-signaling-recording = { path = "crates/types-signaling-recording", version = "0.25.0" }
+opentalk-types-signaling-recording-service = { path = "crates/types-signaling-recording-service", version = "0.25.0" }
+opentalk-types-signaling-shared-folder = { path = "crates/types-signaling-shared-folder", version = "0.25.0" }
+opentalk-types-signaling-timer = { path = "crates/types-signaling-timer", version = "0.25.0" }
+opentalk-types-signaling-whiteboard = { path = "crates/types-signaling-whiteboard", version = "0.25.0" }
+opentalk-whiteboard = { path = "crates/whiteboard", version = "0.25.0" }
 
 actix-http = "3"
 actix-rt = "2"
