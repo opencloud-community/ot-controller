@@ -4,16 +4,13 @@
 
 //! Signaling events for the `meeting_report` namespace
 
-use opentalk_types_signaling_meeting_report::event::{Error, PdfAsset};
-
-#[allow(unused_imports)]
-use crate::imports::*;
+use super::{Error, PdfAsset};
 
 /// Events sent out by the `meeting_report` module
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case", tag = "message")
 )]
 pub enum MeetingReportEvent {
@@ -36,12 +33,12 @@ impl From<Error> for MeetingReportEvent {
     }
 }
 
-#[cfg(test)]
-mod tests {
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
     use opentalk_types_common::assets::AssetId;
     use serde_json::json;
 
-    use crate::signaling::meeting_report::event::{Error, MeetingReportEvent, PdfAsset};
+    use super::{Error, MeetingReportEvent, PdfAsset};
 
     #[test]
     fn serialize_meeting_report_event_pdf_asset() {

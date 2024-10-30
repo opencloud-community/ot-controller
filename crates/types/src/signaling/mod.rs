@@ -9,7 +9,6 @@ pub mod core;
 pub mod echo;
 pub mod integration;
 pub mod media;
-pub mod meeting_report;
 
 mod namespaced;
 

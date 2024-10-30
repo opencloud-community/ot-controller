@@ -23,12 +23,11 @@ use opentalk_signaling_core::{
     ObjectStorageError, SignalingModule, SignalingModuleError, SignalingModuleInitData,
     SignalingRoomId, VolatileStorage,
 };
-use opentalk_types::signaling::meeting_report::event::MeetingReportEvent;
 use opentalk_types_common::{assets::FileExtension, time::Timestamp, users::UserId};
 use opentalk_types_signaling::{ParticipantId, ParticipationKind, Role};
 use opentalk_types_signaling_meeting_report::{
     command::MeetingReportCommand,
-    event::{Error, PdfAsset},
+    event::{Error, MeetingReportEvent, PdfAsset},
     NAMESPACE,
 };
 use snafu::Report;
