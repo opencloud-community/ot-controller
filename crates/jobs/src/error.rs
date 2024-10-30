@@ -143,4 +143,10 @@ pub enum Error {
         returned_user_count: i32,
         source: TryFromIntError,
     },
+
+    /// Invalid settings
+    #[snafu(context(false))]
+    Settings {
+        source: opentalk_controller_settings::SettingsError,
+    },
 }

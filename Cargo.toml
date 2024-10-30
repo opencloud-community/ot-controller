@@ -99,7 +99,7 @@ opentalk-etherpad-client = { version = "0.1.0", default-features = false, featur
   "rustls-tls-native-roots",
 ] }
 opentalk-janus-client = "0.3"
-opentalk-keycloak-admin = { version = "0.2.1", default-features = false, features = [
+opentalk-keycloak-admin = { version = "0.3.0", default-features = false, features = [
   "rustls-tls-native-roots",
 ] }
 opentalk-nextcloud-client = { version = "0.2.0", default-features = false, features = [

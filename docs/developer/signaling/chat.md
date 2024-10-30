@@ -82,7 +82,7 @@ When joining a room, the `joined` control event sent to all other participants c
 #### Fields
 
 | Field        | Type       | Always | Description                         |
-| ------------ | -----------| ------ | ----------------------------------- |
+| ------------ | ---------- | ------ | ----------------------------------- |
 | `groups`     | `string[]` | yes    | Groups belonging to the participant |
 
 ##### Example

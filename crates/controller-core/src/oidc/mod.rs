@@ -4,10 +4,10 @@
 
 use chrono::{DateTime, Utc};
 use http::async_http_client;
-use openidconnect::{AccessToken, TokenIntrospectionResponse};
-use opentalk_controller_settings as settings;
+use openidconnect::{AccessToken, ClientId, ClientSecret, TokenIntrospectionResponse};
 use provider::ProviderClient;
 use snafu::ResultExt;
+use url::Url;
 
 use crate::Result;
 
@@ -22,25 +22,35 @@ pub use jwt::{decode_token, VerifyError};
 /// The `OidcContext` contains all information about the Oidc provider and permissions matrix.
 #[derive(Debug)]
 pub struct OidcContext {
+    pub frontend_auth_base_url: Url,
     pub(crate) provider: ProviderClient,
     http_client: reqwest11::Client,
 }
 
 impl OidcContext {
-    /// Create the OidcContext from the configuration.
-    /// This reads the OidcProvider configuration and tries to fetch the metadata from it.
+    /// Creates the OidcContext.
+    /// This reads the OIDC provider configuration and tries to fetch the metadata from it.
     /// If a provider is misconfigured or not reachable this function will fail.
-    #[tracing::instrument(name = "oidc_discover", skip(config))]
-    pub async fn from_config(config: settings::Keycloak) -> Result<Self> {
-        log::debug!("OIDC config: {:?}", config);
-
+    #[tracing::instrument(name = "oidc_discover", skip(client_secret))]
+    pub async fn new(
+        frontend_auth_base_url: Url,
+        controller_auth_base_url: Url,
+        client_id: ClientId,
+        client_secret: ClientSecret,
+    ) -> Result<Self> {
         let http_client = http::make_client().whatever_context("Failed to make http client")?;
 
-        let client = ProviderClient::discover(http_client.clone(), config)
-            .await
-            .whatever_context("Failed to discover provider client")?;
+        let client = ProviderClient::discover(
+            http_client.clone(),
+            controller_auth_base_url,
+            client_id,
+            client_secret,
+        )
+        .await
+        .whatever_context("Failed to discover provider client")?;
 
         Ok(Self {
+            frontend_auth_base_url,
             provider: client,
             http_client,
         })
@@ -115,7 +125,7 @@ impl OidcContext {
     }
 
     pub fn provider_url(&self) -> String {
-        self.provider.metadata.issuer().to_string()
+        self.frontend_auth_base_url.to_string()
     }
 }
 

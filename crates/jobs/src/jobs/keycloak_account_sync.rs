@@ -9,7 +9,7 @@ use log::Log;
 use opentalk_controller_settings::Settings;
 use opentalk_database::Db;
 use opentalk_db_storage::users::User;
-use opentalk_keycloak_admin::KeycloakAdminClient;
+use opentalk_keycloak_admin::{AuthorizedClient, KeycloakAdminClient};
 use opentalk_log::{debug, info};
 use opentalk_signaling_core::ExchangeHandle;
 use serde::{Deserialize, Serialize};
@@ -80,11 +80,29 @@ impl Job for KeycloakAccountSync {
 
         let users = User::get_all(&mut conn).await?;
 
+        let oidc_and_user_search_configuration =
+            settings.build_oidc_and_user_search_configuration()?;
+
+        let authorized_client = AuthorizedClient::new(
+            oidc_and_user_search_configuration
+                .oidc
+                .controller
+                .auth_base_url,
+            oidc_and_user_search_configuration
+                .user_search
+                .client_id
+                .clone()
+                .into(),
+            oidc_and_user_search_configuration
+                .user_search
+                .client_secret
+                .secret()
+                .clone(),
+        )?;
+
         let kc_admin_client = KeycloakAdminClient::new(
-            settings.keycloak.base_url.clone(),
-            settings.keycloak.realm.clone(),
-            settings.keycloak.client_id.clone().into(),
-            settings.keycloak.client_secret.secret().clone(),
+            oidc_and_user_search_configuration.user_search.api_base_url,
+            authorized_client,
         )?;
 
         let kc_users_count = kc_admin_client.get_users_count().await?;
@@ -113,7 +131,10 @@ impl Job for KeycloakAccountSync {
 
         debug!(log: logger, "Fetched {} users from Keycloak", kc_users.len());
 
-        let user_attribute_name = settings.keycloak.external_id_user_attribute_name.as_deref();
+        let user_attribute_name = oidc_and_user_search_configuration
+            .user_search
+            .external_id_user_attribute_name
+            .as_deref();
 
         update_user_accounts(logger, &mut conn, users, kc_users, user_attribute_name).await?;
 
