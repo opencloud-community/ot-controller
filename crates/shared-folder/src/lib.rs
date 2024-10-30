@@ -14,8 +14,8 @@ use either::Either;
 use opentalk_database::Db;
 use opentalk_db_storage::events::shared_folders::EventSharedFolder;
 use opentalk_signaling_core::{
-    DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
-    SignalingModuleInitData, SignalingRoomId, VolatileStorage,
+    CleanupScope, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
+    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types_common::shared_folders::{SharedFolder as SharedFolderType, NAMESPACE};
 use opentalk_types_signaling::ForRole as _;
@@ -28,6 +28,28 @@ mod storage;
 pub struct SharedFolder {
     room: SignalingRoomId,
     db: Arc<Db>,
+}
+
+impl SharedFolder {
+    async fn cleanup_room(ctx: &mut DestroyContext<'_>, signaling_room_id: SignalingRoomId) {
+        let storage = ctx.volatile.storage();
+
+        if let Err(e) = storage
+            .delete_shared_folder_initialized(signaling_room_id)
+            .await
+        {
+            log::error!(
+                "Failed to remove shared folder initialized flag on room destroy, {}",
+                e
+            );
+        }
+        if let Err(e) = storage.delete_shared_folder(signaling_room_id).await {
+            log::error!(
+                "Failed to remove shared folder on room destroy, {}",
+                Report::from_error(e)
+            );
+        }
+    }
 }
 
 trait SharedFolderStorageProvider {
@@ -137,22 +159,20 @@ impl SignalingModule for SharedFolder {
         Ok(())
     }
 
-    async fn on_destroy(self, ctx: DestroyContext<'_>) {
-        // ==== Cleanup room ====
-        if ctx.destroy_room() {
-            let volatile = ctx.volatile.storage();
+    async fn on_destroy(self, mut ctx: DestroyContext<'_>) {
+        match ctx.cleanup_scope {
+            CleanupScope::None => (),
+            CleanupScope::Local => SharedFolder::cleanup_room(&mut ctx, self.room).await,
+            CleanupScope::Global => {
+                if self.room.breakout_room_id().is_some() {
+                    SharedFolder::cleanup_room(
+                        &mut ctx,
+                        SignalingRoomId::new(self.room.room_id(), None),
+                    )
+                    .await
+                }
 
-            if let Err(e) = volatile.delete_shared_folder_initialized(self.room).await {
-                log::error!(
-                    "Failed to remove shared folder initialized flag on room destroy, {}",
-                    e
-                );
-            }
-            if let Err(e) = volatile.delete_shared_folder(self.room).await {
-                log::error!(
-                    "Failed to remove shared folder on room destroy, {}",
-                    Report::from_error(e)
-                );
+                SharedFolder::cleanup_room(&mut ctx, self.room).await
             }
         }
     }

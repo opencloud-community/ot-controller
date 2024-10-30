@@ -3,7 +3,8 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_signaling_core::{
-    control, DestroyContext, ExchangeBinding, ExchangePublish, ModuleContext, SignalingModule,
+    control, CleanupScope, DestroyContext, ExchangeBinding, ExchangePublish, ModuleContext,
+    SignalingModule,
 };
 use opentalk_types::signaling::{NamespacedCommand, NamespacedEvent};
 

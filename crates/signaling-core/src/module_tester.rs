@@ -61,6 +61,7 @@ use crate::{
         },
         ControlStateExt as _, ControlStorageProvider,
     },
+    destroy_context::CleanupScope,
     room_lock::RoomLockingProvider,
     AnyStream, DestroyContext, Event, ExchangePublish, InitContext, ModuleContext, ObjectStorage,
     Participant, SerdeJsonSnafu, SignalingModule, SignalingModuleError, SignalingRoomId,
@@ -1069,9 +1070,15 @@ where
             reason: LeaveReason::Quit,
         })?;
 
+        let cleanup_scope = if destroy_room {
+            CleanupScope::Global
+        } else {
+            CleanupScope::None
+        };
+
         let ctx = DestroyContext {
             volatile: &mut self.volatile.clone(),
-            destroy_room,
+            cleanup_scope,
         };
         let module = self.module;
 

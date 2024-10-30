@@ -25,6 +25,7 @@ use opentalk_signaling_core::{
 };
 use opentalk_types_common::rooms::{BreakoutRoomId, RoomId};
 use opentalk_types_signaling::{ParticipantId, Role};
+pub(crate) use opentalk_types_signaling_breakout::module_id;
 use opentalk_types_signaling_breakout::{
     command::BreakoutCommand,
     event::{BreakoutEvent, Error, Started},

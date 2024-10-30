@@ -148,6 +148,7 @@ impl ModerationStorage for VolatileStaticMemoryStorage {
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
+    #[cfg(test)]
     async fn waiting_room_participant_count(
         &mut self,
         room: RoomId,
@@ -205,6 +206,7 @@ impl ModerationStorage for VolatileStaticMemoryStorage {
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
+    #[cfg(test)]
     async fn waiting_room_accepted_participant_count(
         &mut self,
         room: RoomId,

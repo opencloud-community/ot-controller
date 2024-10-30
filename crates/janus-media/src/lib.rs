@@ -16,7 +16,7 @@ use mcu::{
 };
 use opentalk_controller_settings::SharedSettings;
 use opentalk_signaling_core::{
-    control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
+    control, CleanupScope, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types::signaling::media::{
@@ -736,53 +736,19 @@ impl SignalingModule for Media {
         Ok(())
     }
 
-    async fn on_destroy(self, ctx: DestroyContext<'_>) {
-        if ctx.destroy_room() {
-            if let Err(e) = ctx
-                .volatile
-                .storage()
-                .clear_force_mute(self.room.room_id())
-                .await
-            {
-                log::error!(
-                    "Media module for failed to remove force-mute state on room destroy, {}",
-                    e
-                );
-            }
+    async fn on_destroy(self, mut ctx: DestroyContext<'_>) {
+        match ctx.cleanup_scope {
+            CleanupScope::None => (),
+            CleanupScope::Local => Media::cleanup_room(&mut ctx, self.room).await,
+            CleanupScope::Global => {
+                Media::cleanup_room(&mut ctx, self.room).await;
 
-            if let Err(e) = ctx.volatile.storage().clear_presenters(self.room).await {
-                log::error!(
-                    "Media module for failed to remove presenter key on room destroy, {}",
-                    e
-                );
-            }
+                if self.room.breakout_room_id().is_some() {
+                    Media::cleanup_room(&mut ctx, SignalingRoomId::new(self.room.room_id(), None))
+                        .await;
+                }
 
-            let participants = ctx
-                .volatile
-                .storage()
-                .get_all_participants(self.room)
-                .await
-                .unwrap_or_else(|e| {
-                    log::error!(
-                        "Failed to load room participants, {}",
-                        Report::from_error(e)
-                    );
-                    BTreeSet::new()
-                });
-
-            if let Err(e) = ctx
-                .volatile
-                .storage()
-                .delete_speaking_state_multiple_participants(
-                    self.room,
-                    &Vec::from_iter(participants),
-                )
-                .await
-            {
-                log::error!(
-                    "Media module for failed to remove speakers on room destroy, {}",
-                    e
-                );
+                self.cleanup_global_room(&mut ctx).await
             }
         }
     }
@@ -1170,6 +1136,62 @@ impl Media {
         }
 
         Ok(())
+    }
+
+    async fn cleanup_room(ctx: &mut DestroyContext<'_>, signaling_room_id: SignalingRoomId) {
+        if let Err(e) = ctx
+            .volatile
+            .storage()
+            .clear_presenters(signaling_room_id)
+            .await
+        {
+            log::error!(
+                "Media module for failed to remove presenter key on room destroy, {}",
+                e
+            );
+        }
+
+        let participants = ctx
+            .volatile
+            .storage()
+            .get_all_participants(signaling_room_id)
+            .await
+            .unwrap_or_else(|e| {
+                log::error!(
+                    "Failed to load room participants, {}",
+                    Report::from_error(e)
+                );
+                BTreeSet::new()
+            });
+
+        if let Err(e) = ctx
+            .volatile
+            .storage()
+            .delete_speaking_state_multiple_participants(
+                signaling_room_id,
+                &Vec::from_iter(participants),
+            )
+            .await
+        {
+            log::error!(
+                "Media module for failed to remove speakers on room destroy, {}",
+                e
+            );
+        }
+    }
+
+    async fn cleanup_global_room(&self, ctx: &mut DestroyContext<'_>) {
+        if let Err(e) = ctx
+            .volatile
+            .storage()
+            .clear_force_mute(self.room.room_id())
+            .await
+        {
+            log::error!(
+                "Media module for failed to remove force-mute state on room destroy, {}",
+                e
+            );
+        }
     }
 }
 

@@ -10,8 +10,8 @@ use futures::stream::once;
 use opentalk_database::Db;
 use opentalk_signaling_core::{
     assets::{save_asset, AssetError, NewAssetFileName},
-    control, ChunkFormat, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage,
-    SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
+    control, ChunkFormat, CleanupScope, DestroyContext, Event, InitContext, ModuleContext,
+    ObjectStorage, SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
     VolatileStorage,
 };
 use opentalk_types_common::{assets::FileExtension, time::Timestamp};
@@ -152,7 +152,8 @@ impl SignalingModule for Whiteboard {
                                 err
                             );
 
-                            self.cleanup(ctx.volatile.storage()).await?;
+                            self.cleanup_room(ctx.volatile.storage(), self.room_id)
+                                .await;
 
                             ctx.ws_send(Error::InitializationFailed);
                         }
@@ -241,13 +242,23 @@ impl SignalingModule for Whiteboard {
         // FIXME: We can not save the PDF here as it potentially takes more than a few seconds to generate the PDF
         // and we hold the r3dlock in the destroy context.
 
-        if ctx.destroy_room() {
-            if let Err(err) = self.cleanup(ctx.volatile.storage()).await {
-                log::error!(
-                    "Failed to cleanup spacedeck for room `{}`: {}",
-                    self.room_id,
-                    err
-                );
+        match ctx.cleanup_scope {
+            CleanupScope::None => (),
+            CleanupScope::Local => {
+                self.cleanup_room(ctx.volatile.storage(), self.room_id)
+                    .await
+            }
+            CleanupScope::Global => {
+                self.cleanup_room(ctx.volatile.storage(), self.room_id)
+                    .await;
+
+                if self.room_id.breakout_room_id().is_some() {
+                    self.cleanup_room(
+                        ctx.volatile.storage(),
+                        SignalingRoomId::new(self.room_id.room_id(), None),
+                    )
+                    .await;
+                }
             }
         }
     }
@@ -306,21 +317,38 @@ impl Whiteboard {
         Ok(())
     }
 
-    async fn cleanup(
+    async fn cleanup_room(
         &self,
         storage: &mut dyn WhiteboardStorage,
-    ) -> Result<(), SignalingModuleError> {
-        let state = match storage.get_init_state(self.room_id).await? {
-            Some(state) => state,
-            None => return Ok(()),
+        signaling_room_id: SignalingRoomId,
+    ) {
+        let state = match storage.get_init_state(signaling_room_id).await {
+            Ok(Some(state)) => state,
+            Ok(None) => return,
+            Err(e) => {
+                log::error!(
+                    "Failed to get state for the whiteboard module {}",
+                    Report::from_error(e)
+                );
+
+                return;
+            }
         };
 
-        storage.delete_init_state(self.room_id).await?;
-
-        if let InitState::Initialized(space_info) = state {
-            self.client.delete_space(&space_info.id).await?;
+        if let Err(e) = storage.delete_init_state(signaling_room_id).await {
+            log::error!(
+                "Failed to delete state for the whiteboard module {}",
+                Report::from_error(e)
+            )
         }
 
-        Ok(())
+        if let InitState::Initialized(space_info) = state {
+            if let Err(e) = self.client.delete_space(&space_info.id).await {
+                log::error!(
+                    "Failed to delete space from spacedeck {}",
+                    Report::from_error(e)
+                )
+            }
+        }
     }
 }
