@@ -20,6 +20,8 @@
     unused_results
 )]
 
+pub mod command;
+
 use opentalk_types_common::modules::ModuleId;
 
 /// The namespace string for the signaling module

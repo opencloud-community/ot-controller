@@ -17,9 +17,12 @@ version.workspace = true
 [features]
 backend = ["serde"]
 frontend = ["serde"]
-serde = ["opentalk-types-common/serde"]
+serde = ["dep:serde", "opentalk-types-common/serde"]
 
 [dependencies]
 opentalk-types-common.workspace = true
+serde = { workspace = true, optional = true }
 
 [dev-dependencies]
+pretty_assertions.workspace = true
+serde_json.workspace = true

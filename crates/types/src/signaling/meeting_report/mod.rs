@@ -4,5 +4,4 @@
 
 //! Types used by the meeting report module.
 
-pub mod command;
 pub mod event;

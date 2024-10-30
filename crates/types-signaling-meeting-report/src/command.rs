@@ -11,7 +11,7 @@
     derive(serde::Deserialize, serde::Serialize),
     serde(rename_all = "snake_case", tag = "action")
 )]
-pub enum Message {
+pub enum MeetingReportCommand {
     /// Generate a report on current and past meeting attendees
     GenerateAttendanceReport {
         /// Include
@@ -19,14 +19,13 @@ pub enum Message {
     },
 }
 
-#[cfg(test)]
-mod tests {
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
-    use super::*;
+    use super::MeetingReportCommand;
 
-    #[cfg(feature = "serde")]
     #[test]
     fn create_attendees_report() {
         let json = json!({
@@ -35,8 +34,8 @@ mod tests {
         });
 
         assert_eq!(
-            serde_json::from_value::<Message>(json).unwrap(),
-            Message::GenerateAttendanceReport {
+            serde_json::from_value::<MeetingReportCommand>(json).unwrap(),
+            MeetingReportCommand::GenerateAttendanceReport {
                 include_email_addresses: false
             }
         );
