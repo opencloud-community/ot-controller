@@ -26,10 +26,10 @@ use opentalk_signaling_core::{
 use opentalk_types::signaling::meeting_report::{
     command::Message,
     event::{Error, MeetingReportEvent, PdfAsset},
-    NAMESPACE,
 };
 use opentalk_types_common::{assets::FileExtension, time::Timestamp, users::UserId};
 use opentalk_types_signaling::{ParticipantId, ParticipationKind, Role};
+use opentalk_types_signaling_meeting_report::NAMESPACE;
 use snafu::Report;
 use storage::MeetingReportStorage;
 use template::{ReportParticipant, ReportTemplateParameter};

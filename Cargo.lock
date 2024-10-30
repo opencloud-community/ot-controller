@@ -4787,6 +4787,7 @@ dependencies = [
  "opentalk-types",
  "opentalk-types-common",
  "opentalk-types-signaling",
+ "opentalk-types-signaling-meeting-report",
  "serde",
  "serde_json",
  "snafu",
@@ -5116,6 +5117,13 @@ dependencies = [
  "pretty_assertions",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "opentalk-types-signaling-meeting-report"
+version = "0.0.0-dev"
+dependencies = [
+ "opentalk-types-common",
 ]
 
 [[package]]

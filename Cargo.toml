@@ -50,6 +50,7 @@ opentalk-types-signaling-chat = { path = "crates/types-signaling-chat", version 
 opentalk-types-signaling-control = { path = "crates/types-signaling-control", version = "0.0.0-dev" }
 opentalk-types-signaling-livekit = { path = "crates/types-signaling-livekit", version = "0.0.0-dev" }
 opentalk-types-signaling-meeting-notes = { path = "crates/types-signaling-meeting-notes", version = "0.0.0-dev" }
+opentalk-types-signaling-meeting-report = { path = "crates/types-signaling-meeting-report", version = "0.0.0-dev" }
 opentalk-types-signaling-moderation = { path = "crates/types-signaling-moderation", version = "0.0.0-dev" }
 opentalk-types-signaling-polls = { path = "crates/types-signaling-polls", version = "0.0.0-dev" }
 opentalk-types-signaling-recording = { path = "crates/types-signaling-recording", version = "0.0.0-dev" }

@@ -26,6 +26,9 @@ opentalk-signaling-core.workspace = true
 opentalk-types = { workspace = true, features = ["backend"] }
 opentalk-types-common = { workspace = true, features = ["backend"] }
 opentalk-types-signaling = { workspace = true, features = ["backend"] }
+opentalk-types-signaling-meeting-report = { workspace = true, features = [
+  "backend",
+] }
 serde.workspace = true
 serde_json.workspace = true
 snafu.workspace = true
