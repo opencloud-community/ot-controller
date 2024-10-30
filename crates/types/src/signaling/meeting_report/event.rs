@@ -4,7 +4,7 @@
 
 //! Signaling events for the `meeting_report` namespace
 
-use opentalk_types_signaling_meeting_report::event::PdfAsset;
+use opentalk_types_signaling_meeting_report::event::{Error, PdfAsset};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -28,24 +28,6 @@ impl From<PdfAsset> for MeetingReportEvent {
     fn from(value: PdfAsset) -> Self {
         Self::PdfAsset(value)
     }
-}
-
-/// Error from the `meeting_report` module namespace
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(tag = "error", rename_all = "snake_case")
-)]
-pub enum Error {
-    /// The requesting user has insufficient permissions for the operation
-    InsufficientPermissions,
-    /// The requesting user has exceeded their storage
-    StorageExceeded,
-    /// Internal error while generating the report
-    Generate,
-    /// Internal error while saving the report
-    Storage,
 }
 
 impl From<Error> for MeetingReportEvent {
