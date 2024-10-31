@@ -4603,24 +4603,8 @@ components:
         - id
         - name
         - quotas
-        - enabled_modules
-        - disabled_features
         - modules
       properties:
-        disabled_features:
-          type: array
-          items:
-            $ref: "#/components/schemas/ModuleFeatureId"
-          description: "Disabled features for the tariff  (deprecated, use 'modules' instead)"
-          deprecated: true
-          uniqueItems: true
-        enabled_modules:
-          type: array
-          items:
-            $ref: "#/components/schemas/ModuleId"
-          description: "Enabled modules for the tariff (deprecated, use 'modules' instead)"
-          deprecated: true
-          uniqueItems: true
         id:
           $ref: "#/components/schemas/TariffId"
         modules:
@@ -4639,14 +4623,6 @@ components:
             format: int64
             minimum: 0
       example:
-        disabled_features:
-          - "recording::stream"
-        enabled_modules:
-          - chat
-          - core
-          - media
-          - moderation
-          - recording
         id: 00000000-0000-0000-0000-000000000000
         modules:
           chat:

@@ -7,7 +7,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::{
-    features::{FeatureId, ModuleFeatureId},
+    features::FeatureId,
     modules::ModuleId,
     tariffs::{QuotaType, TariffId, TariffModuleResource},
     utils::ExampleData,
@@ -31,18 +31,6 @@ pub struct TariffResource {
     /// The quotas of the tariff
     pub quotas: BTreeMap<QuotaType, u64>,
 
-    /// Enabled modules for the tariff (deprecated, use 'modules' instead)
-    #[cfg_attr(feature = "utoipa", schema(deprecated))]
-    pub enabled_modules: BTreeSet<ModuleId>,
-
-    /// Disabled features for the tariff  (deprecated, use 'modules' instead)
-    #[cfg_attr(feature = "utoipa", schema(deprecated))]
-    #[cfg_attr(
-        feature = "serde",
-        serde(serialize_with = "serialize_module_disabled_features")
-    )]
-    pub disabled_features: BTreeSet<ModuleFeatureId>,
-
     /// Enabled modules for the tariff, including their enabled features
     pub modules: BTreeMap<ModuleId, TariffModuleResource>,
 }
@@ -62,42 +50,12 @@ impl TariffResource {
     }
 }
 
-#[cfg(feature = "serde")]
-fn serialize_module_disabled_features<S: serde::Serializer>(
-    value: &BTreeSet<ModuleFeatureId>,
-    serializer: S,
-) -> Result<S::Ok, S::Error> {
-    use serde::Serialize as _;
-
-    let v = value
-        .iter()
-        .flat_map(|v| {
-            if v.module.is_default() {
-                vec![v.to_string(), v.feature.to_string()]
-            } else {
-                vec![v.to_string()]
-            }
-        })
-        .collect::<Vec<_>>();
-    v.serialize(serializer)
-}
-
 impl ExampleData for TariffResource {
     fn example_data() -> Self {
         Self {
             id: TariffId::nil(),
             name: "Starter tariff".to_string(),
             quotas: BTreeMap::from_iter([(QuotaType::MaxStorage, 50000)]),
-            enabled_modules: ["core", "media", "recording", "chat", "moderation"]
-                .into_iter()
-                .map(|s| s.parse::<ModuleId>())
-                .collect::<Result<BTreeSet<ModuleId>, _>>()
-                .expect("valid module ids"),
-            disabled_features: ["recording::stream"]
-                .into_iter()
-                .map(|s| s.parse::<ModuleFeatureId>())
-                .collect::<Result<BTreeSet<ModuleFeatureId>, _>>()
-                .expect("valid module feature ids"),
             modules: [
                 ("core", TariffModuleResource::default()),
                 ("media", TariffModuleResource::default()),
@@ -142,8 +100,6 @@ mod serde_tests {
                 "room_participant_limit": 13,
                 "this_is_somethingElse": 14,
             },
-            "enabled_modules": ["mod_a"],
-            "disabled_features": ["mod_a::feat_a"],
             "modules": {
                 "mod_a": {
                     "features": ["feat_a"],
@@ -160,16 +116,6 @@ mod serde_tests {
                 (QuotaType::RoomParticipantLimit, 13u64),
                 (QuotaType::Other("this_is_somethingElse".to_string()), 14u64),
             ]),
-            enabled_modules: ["mod_a"]
-                .into_iter()
-                .map(|s| s.parse::<ModuleId>())
-                .collect::<Result<BTreeSet<ModuleId>, _>>()
-                .expect("valid module ids"),
-            disabled_features: ["mod_a::feat_a"]
-                .into_iter()
-                .map(|s| s.parse::<ModuleFeatureId>())
-                .collect::<Result<BTreeSet<ModuleFeatureId>, _>>()
-                .expect("valid module feature ids"),
             modules: [(
                 "mod_a",
                 TariffModuleResource {

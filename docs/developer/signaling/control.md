@@ -280,8 +280,6 @@ Received after joining the room. Can be triggered by either calling [Join](#join
     "id": "53db7cb1-12af-4715-9b17-4a5a57876085",
     "name": "OpenTalkDefaultTariff",
     "quotas": {},
-    "enabled_modules": ["core","chat"],
-    "disabled_features": ["core::feature1","feature1"],
     "modules":{
       "core": {"features": ["feature2", "feature3"]},
       "chat": {}

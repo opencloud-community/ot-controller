@@ -91,8 +91,6 @@ mod serde_tests {
             id: TariffId::nil(),
             name: "test".into(),
             quotas: Default::default(),
-            enabled_modules: Default::default(),
-            disabled_features: Default::default(),
             modules: Default::default(),
         }
     }
