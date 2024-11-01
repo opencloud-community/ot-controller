@@ -43,6 +43,8 @@ use arc_swap::ArcSwap;
 use async_trait::async_trait;
 use lapin_pool::RabbitMqPool;
 use oidc::OidcContext;
+use opentalk_controller_service::ControllerBackend;
+use opentalk_controller_service_facade::OpenTalkControllerService;
 use opentalk_database::Db;
 use opentalk_jobs::job_runner::JobRunner;
 use opentalk_keycloak_admin::{AuthorizedClient, KeycloakAdminClient};
@@ -192,6 +194,8 @@ impl<M: RegisterModules> RegisterModules for ControllerModules<M> {
 
 /// Controller struct representation containing all fields required to extend and drive the controller
 pub struct Controller {
+    pub service: OpenTalkControllerService,
+
     /// Settings loaded on [Controller::create]
     pub startup_settings: Arc<Settings>,
 
@@ -404,7 +408,11 @@ impl Controller {
 
         let signaling = SignalingModules::default();
 
+        let backend = ControllerBackend::new();
+        let service = OpenTalkControllerService::new(backend);
+
         let mut controller = Self {
+            service,
             startup_settings: settings,
             shared_settings,
             args,
@@ -499,6 +507,7 @@ impl Controller {
             let metrics = Data::new(self.metrics);
 
             let caches = Data::new(caches::Caches::create(self.volatile.right().clone()));
+            let service = Data::new(self.service.clone());
 
             HttpServer::new(move || {
                 let cors = setup_cors();
@@ -522,6 +531,7 @@ impl Controller {
                     .wrap(cors)
                     .wrap(TracingLogger::<ReducedSpanBuilder>::new())
                     .wrap(api::v1::middleware::headers::Headers {})
+                    .app_data(service.clone())
                     .app_data(caches.clone())
                     .app_data(web::JsonConfig::default().error_handler(json_error_handler))
                     .app_data(Data::from(shared_settings.clone()))

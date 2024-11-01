@@ -4534,6 +4534,8 @@ dependencies = [
  "nix",
  "openidconnect",
  "opentalk-cache",
+ "opentalk-controller-service",
+ "opentalk-controller-service-facade",
  "opentalk-controller-settings",
  "opentalk-controller-utils",
  "opentalk-database",
@@ -4592,6 +4594,22 @@ dependencies = [
  "utoipa-swagger-ui",
  "uuid",
  "yaml-rust2",
+]
+
+[[package]]
+name = "opentalk-controller-service"
+version = "0.29.0-alpha"
+dependencies = [
+ "async-trait",
+ "opentalk-controller-service-facade",
+]
+
+[[package]]
+name = "opentalk-controller-service-facade"
+version = "0.29.0-alpha"
+dependencies = [
+ "async-trait",
+ "tokio",
 ]
 
 [[package]]
