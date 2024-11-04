@@ -71,6 +71,7 @@ allow = [
   "MIT",
   "MPL-2.0",
   "OpenSSL",
+  "Unicode-3.0",
   "Unicode-DFS-2016",
   "Zlib",
 ]
@@ -259,6 +260,7 @@ skip = [
   { name = "hyper", version = "0.14" },
   { name = "hyper-rustls", version = "0.24" },
   { name = "idna", version = "0.3" },
+  { name = "idna", version = "0.5" },
   { name = "indexmap", version = "1" },
   { name = "itertools", version = "0.10" },
   { name = "itertools", version = "0.11" },
@@ -285,6 +287,7 @@ skip = [
   { name = "signature", version = "1.6" },
   { name = "siphasher", version = "0.3" },
   { name = "socket2", version = "0.4" },
+  { name = "spin", version = "0.5" },
   { name = "spki", version = "0.6" },
   { name = "syn", version = "1" },
   { name = "sync_wrapper", version = "0.1" },
