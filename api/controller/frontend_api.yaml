@@ -3539,11 +3539,11 @@ components:
         oidc:
           $ref: "#/components/schemas/OidcProvider"
     GetRoomStreamingTargetResponse:
-      $ref: "#/components/schemas/RoomStreamingTarget"
+      $ref: "#/components/schemas/RoomStreamingTargetResource"
     GetRoomStreamingTargetsResponse:
       type: array
       items:
-        $ref: "#/components/schemas/RoomStreamingTarget"
+        $ref: "#/components/schemas/RoomStreamingTargetResource"
       description: "The body of a *GET /rooms/{room_id}/streaming_targets* response"
       example:
         - id: 00000000-0000-0000-0000-000043434343
@@ -4349,6 +4349,23 @@ components:
         public_url: "https://streaming.example.com/livestream123"
         streaming_endpoint: "https://ingress.streaming.example.com/"
         streaming_key: aabbccddeeff
+    RoomStreamingTargetResource:
+      allOf:
+        - $ref: "#/components/schemas/StreamingTargetResource"
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              $ref: "#/components/schemas/StreamingTargetId"
+      description: A resource for a streaming target which is specific for a Room
+      example:
+        id: 00000000-0000-0000-0000-000043434343
+        kind: custom
+        name: Example Stream
+        public_url: "https://streaming.example.com/livestream123"
+        streaming_endpoint: "https://ingress.streaming.example.com/"
+        streaming_key: aabbccddeeff
     RoomsStartResponse:
       type: object
       description: The JSON body returned from the start endpoints supporting session resumption
@@ -4541,6 +4558,55 @@ components:
         streaming_key: aabbccddeeff
       discriminator:
         propertyName: kind
+    StreamingTargetKindResource:
+      oneOf:
+        - type: object
+          description: "The \"custom\" kind"
+          required:
+            - streaming_endpoint
+            - public_url
+            - kind
+          properties:
+            kind:
+              type: string
+              enum:
+                - custom
+            public_url:
+              type: string
+              format: uri
+              description: The url from which the stream can be accessed
+            streaming_endpoint:
+              type: string
+              format: uri
+              description: The endpoint url of the streaming target
+            streaming_key:
+              allOf:
+                - $ref: "#/components/schemas/StreamingKey"
+      description: A resource for a streaming target kind
+      example:
+        kind: custom
+        public_url: "https://streaming.example.com/livestream123"
+        streaming_endpoint: "https://ingress.streaming.example.com/"
+        streaming_key: aabbccddeeff
+      discriminator:
+        propertyName: kind
+    StreamingTargetResource:
+      allOf:
+        - $ref: "#/components/schemas/StreamingTargetKindResource"
+        - type: object
+          required:
+            - name
+          properties:
+            name:
+              type: string
+              description: The name of the streaming target
+      description: A resource for a streaming target
+      example:
+        kind: custom
+        name: Example Stream
+        public_url: "https://streaming.example.com/livestream123"
+        streaming_endpoint: "https://ingress.streaming.example.com/"
+        streaming_key: aabbccddeeff
     Stun:
       type: object
       description: STUN Server for users.
