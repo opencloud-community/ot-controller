@@ -416,7 +416,7 @@ impl Runner {
 
     /// Destroys the runner and all associated resources
     #[tracing::instrument(skip(self), fields(id = %self.id))]
-    pub async fn destroy(mut self, close_ws: bool, reason: LeaveReason) {
+    pub async fn destroy(mut self, close_ws: bool, reason: LeaveReason, grace_period: bool) {
         let mut destroy_start_time = Instant::now();
         let mut encountered_error = false;
         let mut cleanup_scope = CleanupScope::None;
@@ -606,30 +606,32 @@ impl Runner {
             return;
         }
 
-        // At this point, the runner is the last participant in the room. Keep the room alive for a grace period
-        if let Err(e) = self.wait_grace_period(&mut cleanup_scope).await {
-            log::error!(
-                "Encountered error during grace period, {}",
-                Report::from_error(e)
-            );
+        if grace_period {
+            // At this point, the runner is the last participant in the room. Keep the room alive for a grace period
+            if let Err(e) = self.wait_grace_period(&mut cleanup_scope).await {
+                log::error!(
+                    "Encountered error during grace period, {}",
+                    Report::from_error(e)
+                );
 
-            self.metrics
-                .record_destroy_time(destroy_start_time.elapsed().as_secs_f64(), false);
+                self.metrics
+                    .record_destroy_time(destroy_start_time.elapsed().as_secs_f64(), false);
 
-            return;
-        }
+                return;
+            }
 
-        // reset the destroy start time
-        destroy_start_time = Instant::now();
-        if cleanup_scope.keep_room() {
-            self.destroy_modules(cleanup_scope).await;
+            // reset the destroy start time
+            destroy_start_time = Instant::now();
+            if cleanup_scope.keep_room() {
+                self.destroy_modules(cleanup_scope).await;
 
-            self.metrics.record_destroy_time(
-                destroy_start_time.elapsed().as_secs_f64(),
-                !encountered_error,
-            );
+                self.metrics.record_destroy_time(
+                    destroy_start_time.elapsed().as_secs_f64(),
+                    !encountered_error,
+                );
 
-            return;
+                return;
+            }
         }
 
         // acquire room lock
@@ -856,6 +858,11 @@ impl Runner {
                         },
                     }
                 }
+                _ = self.shutdown_sig.recv() => {
+                    // Received shutdown signal, abort grace period and destroy global room
+                    *cleanup_scope = CleanupScope::Global;
+                    break;
+                }
                 _ = &mut grace_period => {
                     log::debug!("Idle timeout reached for {}", self.room_id);
                     break;
@@ -928,6 +935,7 @@ impl Runner {
     /// Runs the runner until the peer closes its websocket connection or a fatal error occurs.
     pub async fn run(mut self) {
         let mut manual_close_ws = false;
+        let mut grace_period = true;
 
         // Set default `skip_waiting_room` key value with the default expiration time
         _ = self
@@ -991,10 +999,12 @@ impl Runner {
                 _ = &mut self.time_limit_future => {
                     self.ws_send_control(Timestamp::now(), ControlEvent::TimeLimitQuotaElapsed).await;
                     self.ws.close(CloseCode::Normal).await;
+                    grace_period = false;
                     break;
                 }
                 _ = self.shutdown_sig.recv() => {
                     self.ws.close(CloseCode::Away).await;
+                    grace_period = false;
                     break;
                 }
                 _ = self.resumption_keep_alive.wait() => {
@@ -1022,7 +1032,7 @@ impl Runner {
 
         log::debug!("Stopping ws-runner task for participant {}", self.id);
 
-        self.destroy(manual_close_ws, reason).await;
+        self.destroy(manual_close_ws, reason, grace_period).await;
     }
 
     #[tracing::instrument(skip(self, message), fields(id = %self.id))]
