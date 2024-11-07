@@ -262,7 +262,6 @@ skip = [
   { name = "indexmap", version = "1" },
   { name = "itertools", version = "0.10" },
   { name = "itertools", version = "0.11" },
-  { name = "itertools", version = "0.12" },
   { name = "num-bigint", version = "0.4" },
   { name = "ordered-float", version = "2" },
   { name = "p256", version = "0.11" },
