@@ -60,11 +60,6 @@ Migrating from Janus to LiveKit involves several key steps to ensure a smooth tr
     - The `api_key` and `api_secret` must match the values configured in the LiveKit server.
     - The recorder service will fetch the configuration from the controller
 
-5. **Frontend Configuration**
-    The frontend needs an additional environment variable `LIVEKIT_SERVER_URL`
-    - This should be the same as the `public_url` set in the controller
-    - e.g. `LIVEKIT_SERVER_URL=https://livekit-public.example.com`
-
 ## Known Issues
 
 - The Obelisk-Service does only support basic audio codecs and has no video support yet
