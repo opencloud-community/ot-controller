@@ -5,7 +5,7 @@
 //! This module contains types that are used for OpenTalk API V1 streaming target endpoints for specific rooms.
 
 use opentalk_types_common::{
-    streaming::{RoomStreamingTarget, StreamingTarget},
+    streaming::{RoomStreamingTarget, RoomStreamingTargetResource, StreamingTarget},
     utils::ExampleData,
 };
 
@@ -21,11 +21,11 @@ use crate::imports::*;
     derive(utoipa::ToSchema),
     schema(example = json!(GetRoomStreamingTargetsResponse::example_data()))
 )]
-pub struct GetRoomStreamingTargetsResponse(pub Vec<RoomStreamingTarget>);
+pub struct GetRoomStreamingTargetsResponse(pub Vec<RoomStreamingTargetResource>);
 
 impl ExampleData for GetRoomStreamingTargetsResponse {
     fn example_data() -> Self {
-        Self(vec![RoomStreamingTarget::example_data()])
+        Self(vec![RoomStreamingTargetResource::example_data()])
     }
 }
 
@@ -69,11 +69,11 @@ impl ExampleData for PostRoomStreamingTargetResponse {
     derive(utoipa::ToSchema),
     schema(example = json!(GetRoomStreamingTargetResponse::example_data()))
 )]
-pub struct GetRoomStreamingTargetResponse(pub RoomStreamingTarget);
+pub struct GetRoomStreamingTargetResponse(pub RoomStreamingTargetResource);
 
 impl ExampleData for GetRoomStreamingTargetResponse {
     fn example_data() -> Self {
-        Self(RoomStreamingTarget::example_data())
+        Self(RoomStreamingTargetResource::example_data())
     }
 }
 

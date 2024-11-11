@@ -9,6 +9,7 @@ use actix_web::{
 };
 use opentalk_database::Db;
 use opentalk_db_storage::{
+    rooms::Room,
     streaming_targets::{
         get_room_streaming_targets, insert_room_streaming_target, RoomStreamingTargetRecord,
         UpdateRoomStreamingTarget,
@@ -32,7 +33,10 @@ use opentalk_types::api::{
 };
 use opentalk_types_common::{
     rooms::RoomId,
-    streaming::{RoomStreamingTarget, StreamingKind, StreamingTarget, StreamingTargetKind},
+    streaming::{
+        RoomStreamingTarget, RoomStreamingTargetResource, StreamingKind, StreamingTarget,
+        StreamingTargetKind, StreamingTargetKindResource, StreamingTargetResource,
+    },
 };
 use snafu::Report;
 
@@ -84,21 +88,29 @@ use crate::{
 #[get("/rooms/{room_id}/streaming_targets")]
 pub async fn get_streaming_targets(
     db: Data<Db>,
+    current_user: ReqData<User>,
     room_id: Path<RoomId>,
     pagination: Query<PagePaginationQuery>,
 ) -> DefaultApiResult<GetRoomStreamingTargetsResponse> {
     let mut conn = db.get_conn().await?;
+    let current_user_id = current_user.into_inner().id;
     let room_id = room_id.into_inner();
     let PagePaginationQuery { per_page, page } = pagination.into_inner();
 
     let room_streaming_targets = get_room_streaming_targets(&mut conn, room_id).await?;
-
     let len = room_streaming_targets.len();
 
-    Ok(
-        ApiResponse::new(GetRoomStreamingTargetsResponse(room_streaming_targets))
-            .with_page_pagination(per_page, page, len as i64),
-    )
+    let room = Room::get(&mut conn, room_id).await?;
+    let with_streaming_key = room.created_by == current_user_id;
+    let room_streaming_target_resources = room_streaming_targets
+        .into_iter()
+        .map(|rst| build_resource(rst, with_streaming_key))
+        .collect();
+
+    Ok(ApiResponse::new(GetRoomStreamingTargetsResponse(
+        room_streaming_target_resources,
+    ))
+    .with_page_pagination(per_page, page, len as i64))
 }
 
 /// Create a new streaming target
@@ -218,9 +230,11 @@ pub async fn post_streaming_target(
 #[get("/rooms/{room_id}/streaming_targets/{streaming_target_id}")]
 pub async fn get_streaming_target(
     db: Data<Db>,
+    current_user: ReqData<User>,
     path_params: Path<RoomAndStreamingTargetId>,
 ) -> DefaultApiResult<GetRoomStreamingTargetResponse> {
     let mut conn = db.get_conn().await?;
+    let current_user_id = current_user.into_inner().id;
     let RoomAndStreamingTargetId {
         room_id,
         streaming_target_id,
@@ -229,32 +243,38 @@ pub async fn get_streaming_target(
     let room_streaming_target =
         RoomStreamingTargetRecord::get(&mut conn, streaming_target_id, room_id).await?;
 
-    Ok(ApiResponse::new(GetRoomStreamingTargetResponse(
-        RoomStreamingTarget {
-            id: room_streaming_target.id,
-            streaming_target: StreamingTarget {
-                name: room_streaming_target.name,
-                kind: StreamingTargetKind::Custom {
-                    streaming_endpoint: room_streaming_target.streaming_endpoint.parse().map_err(
-                        |e| {
-                            log::warn!(
-                                "Invalid streaming endpoint url entry in db: {}",
-                                Report::from_error(e)
-                            );
-                            ApiError::internal()
-                        },
-                    )?,
-                    streaming_key: room_streaming_target.streaming_key,
-                    public_url: room_streaming_target.public_url.parse().map_err(|e| {
+    let room_streaming_target = RoomStreamingTarget {
+        id: room_streaming_target.id,
+        streaming_target: StreamingTarget {
+            name: room_streaming_target.name,
+            kind: StreamingTargetKind::Custom {
+                streaming_endpoint: room_streaming_target.streaming_endpoint.parse().map_err(
+                    |e| {
                         log::warn!(
                             "Invalid streaming endpoint url entry in db: {}",
                             Report::from_error(e)
                         );
                         ApiError::internal()
-                    })?,
-                },
+                    },
+                )?,
+                streaming_key: room_streaming_target.streaming_key,
+                public_url: room_streaming_target.public_url.parse().map_err(|e| {
+                    log::warn!(
+                        "Invalid streaming endpoint url entry in db: {}",
+                        Report::from_error(e)
+                    );
+                    ApiError::internal()
+                })?,
             },
         },
+    };
+
+    let room = Room::get(&mut conn, room_id).await?;
+    let with_streaming_key = room.created_by == current_user_id;
+    let room_streaming_target_resource = build_resource(room_streaming_target, with_streaming_key);
+
+    Ok(ApiResponse::new(GetRoomStreamingTargetResponse(
+        room_streaming_target_resource,
     )))
 }
 
@@ -479,4 +499,33 @@ pub async fn delete_streaming_target(
     }
 
     Ok(NoContent)
+}
+
+fn build_resource(
+    room_streaming_target: RoomStreamingTarget,
+    with_streaming_key: bool,
+) -> RoomStreamingTargetResource {
+    let kind_resource = match room_streaming_target.streaming_target.kind {
+        StreamingTargetKind::Custom {
+            streaming_endpoint,
+            streaming_key,
+            public_url,
+        } => StreamingTargetKindResource::Custom {
+            streaming_endpoint,
+            streaming_key: if with_streaming_key {
+                Some(streaming_key)
+            } else {
+                None
+            },
+            public_url,
+        },
+    };
+
+    RoomStreamingTargetResource {
+        id: room_streaming_target.id,
+        streaming_target: StreamingTargetResource {
+            name: room_streaming_target.streaming_target.name,
+            kind: kind_resource,
+        },
+    }
 }
