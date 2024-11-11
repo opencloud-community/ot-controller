@@ -119,7 +119,7 @@ pub struct EventResource {
     /// Requires `type` to be `recurring`
     ///
     /// Contains a list of recurrence rules which describe the occurrences of the event.
-    /// To get all event instances resolved use the the `GET /events/{event_id}/instances` endpoint.
+    /// To get all event instances resolved use the `GET /events/{event_id}/instances` endpoint.
     /// Changing this field will always remove all exceptions for the event.
     ///
     /// Allowed are `RRULE`, `RDATE`, `EXRULE` and `EXDATE`.

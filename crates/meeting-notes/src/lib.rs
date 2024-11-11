@@ -527,7 +527,7 @@ impl MeetingNotes {
                 "Missing group for room while preparing a new session",
             )?;
 
-        // Currently there is no proper session refresh in etherpad. Due to the the difficulty of setting new sessions
+        // Currently there is no proper session refresh in etherpad. Due to the difficulty of setting new sessions
         // on the client across domains, we set the expire duration to 14 days and hope for the best.
         // Session refresh is merged and will be available in the next release: https://github.com/ether/etherpad-lite/pull/5361
         // TODO: use proper session refresh from etherpad once it's released

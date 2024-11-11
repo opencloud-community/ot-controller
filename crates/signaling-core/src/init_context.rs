@@ -49,7 +49,7 @@ where
         self.id
     }
 
-    /// Returns a reference to the database representation of the the room
+    /// Returns a reference to the database representation of the room
     ///
     /// Note that the room will always be the same regardless if inside a
     /// breakout room or not.
