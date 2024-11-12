@@ -13,9 +13,17 @@ must be run in order to update ACLs to match the newest version whenever
 new endpoints were added for already present resources. However, even if no
 endpoints were added, simply running the command does no harm.
 
+## Updating to OpenTalk Controller v0.26.0
+
+### Janus support removed entirely
+
+Support for the Janus Media Server has been [removed entirely](core/room_server.md)
+in favor of [LiveKit](core/livekit.md).
+
 ## Updating to OpenTalk Controller `v0.25.0`
 
-This controller version introduces support for LiveKit.
+This controller version introduces support for [LiveKit](core/livekit.md).
+Support for the Janus Media Server [has been deprecated](core/room_server.md).
 
 See [the LiveKit migration documentation](migration/livekit.md).
 

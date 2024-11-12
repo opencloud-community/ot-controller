@@ -5,6 +5,8 @@ title: Migrate to LiveKit
 
 # Migrate to LiveKit
 
+A general [LiveKit configuration documentation section](../core/livekit.md) is also available, this page describes the relevant information when migrating from an installation with [Janus](https://janus.conf.meetecho.com/) to LiveKit.
+
 Migrating from Janus to LiveKit involves several key steps to ensure a smooth transition. Follow the steps outlined below to successfully migrate your services.
 
 1. **Shutdown and Remove Janus Resources**
@@ -17,7 +19,16 @@ Migrating from Janus to LiveKit involves several key steps to ensure a smooth tr
         - Not using `network_mode: host` will result in a separate process being started for each mapped UDP port.
         - Ensure that the UDP port range (e.g. 20000-25000 or the range that was previously used for janus) is reachable for all users.
 
-    - Set the `--node-ip` to specify the IP of the host, which will be advertised to clients. Alternatively, you can set `rtc.use_external_ip` to true to allow LiveKit to discover the true IP using STUN in cloud environments where the host has a public IP address but is not directly exposed.
+    - Node ip selection:
+        - Add `--node-ip <ip>` to the container command to specify the IP of the host which will be advertised to clients.
+
+          Example `command` entry in a compose file:
+
+          ```yaml
+          command: --config /livekit.yaml --node-ip 198.51.100.23
+          ```
+
+        - Alternatively, you can set `rtc.use_external_ip` to true to allow LiveKit to discover the true IP using STUN in cloud environments where the host has a public IP address but is not directly exposed.
 
     - Configure the access tokens used by the controller and livekit. In the livekit configuration, add an entry in the format `<NAME>: <SECRET>`, ensuring it is in sync with the controller settings for `api_key` and `api_secret`.
 
@@ -56,7 +67,7 @@ Migrating from Janus to LiveKit involves several key steps to ensure a smooth tr
     ```
 
     - Ensure that `public_url` is reachable for all users connecting to LiveKit.
-    - The `service_url` should be the URL where the controller can access the LiveKit server, which can be an internal routed URL or IP.
+    - The `service_url` should be the URL where the controller can access the LiveKit server, which can be an internally routed URL or IP.
     - The `api_key` and `api_secret` must match the values configured in the LiveKit server.
     - The recorder service will fetch the configuration from the controller
 

@@ -22,3 +22,8 @@ exclude_rule 'MD013'
 
 # Allow code block identation to make tera templates more "readable"
 exclude_rule 'MD046'
+
+# These are triggered as false positives when used inside blockquoste
+# See also https://github.com/markdownlint/markdownlint/issues/472
+exclude_rule 'MD055'
+exclude_rule 'MD057'
