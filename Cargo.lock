@@ -4411,6 +4411,7 @@ dependencies = [
  "opentalk-signaling-module-meeting-report",
  "opentalk-signaling-module-polls",
  "opentalk-signaling-module-shared-folder",
+ "opentalk-signaling-module-subroom-audio",
  "opentalk-signaling-module-timer",
  "opentalk-signaling-module-whiteboard",
 ]
@@ -4998,6 +4999,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "opentalk-signaling-module-subroom-audio"
+version = "0.28.0-alpha"
+dependencies = [
+ "async-trait",
+ "either",
+ "livekit-api",
+ "livekit-protocol",
+ "livekit-runtime",
+ "log",
+ "opentalk-controller-settings",
+ "opentalk-signaling-core",
+ "opentalk-types-signaling",
+ "opentalk-types-signaling-subroom-audio",
+ "parking_lot",
+ "redis",
+ "redis-args",
+ "serde",
+ "serial_test",
+ "snafu",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "opentalk-signaling-module-timer"
 version = "0.28.0-alpha"
 dependencies = [
@@ -5289,6 +5314,20 @@ dependencies = [
  "opentalk-types-common",
  "opentalk-types-signaling",
  "serde",
+]
+
+[[package]]
+name = "opentalk-types-signaling-subroom-audio"
+version = "0.28.0-alpha"
+dependencies = [
+ "derive_more 1.0.0",
+ "opentalk-types-common",
+ "opentalk-types-signaling",
+ "redis-args",
+ "serde",
+ "serde_json",
+ "strum",
+ "uuid",
 ]
 
 [[package]]

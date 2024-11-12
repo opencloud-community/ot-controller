@@ -39,6 +39,7 @@ opentalk-signaling-module-meeting-notes = { path = "crates/opentalk-signaling-mo
 opentalk-signaling-module-meeting-report = { path = "crates/opentalk-signaling-module-meeting-report", version = "0.28.0-alpha" }
 opentalk-signaling-module-polls = { path = "crates/opentalk-signaling-module-polls", version = "0.28.0-alpha" }
 opentalk-signaling-module-shared-folder = { path = "crates/opentalk-signaling-module-shared-folder", version = "0.28.0-alpha" }
+opentalk-signaling-module-subroom-audio = { path = "crates/opentalk-signaling-module-subroom-audio", version = "0.28.0-alpha" }
 opentalk-signaling-module-timer = { path = "crates/opentalk-signaling-module-timer", version = "0.28.0-alpha" }
 opentalk-signaling-module-whiteboard = { path = "crates/opentalk-signaling-module-whiteboard", version = "0.28.0-alpha" }
 opentalk-test-util = { path = "crates/opentalk-test-util", version = "0.28.0-alpha" }
@@ -56,6 +57,7 @@ opentalk-types-signaling-polls = { path = "crates/opentalk-types-signaling-polls
 opentalk-types-signaling-recording = { path = "crates/opentalk-types-signaling-recording", version = "0.28.0-alpha" }
 opentalk-types-signaling-recording-service = { path = "crates/opentalk-types-signaling-recording-service", version = "0.28.0-alpha" }
 opentalk-types-signaling-shared-folder = { path = "crates/opentalk-types-signaling-shared-folder", version = "0.28.0-alpha" }
+opentalk-types-signaling-subroom-audio = { path = "crates/opentalk-types-signaling-subroom-audio", version = "0.28.0-alpha" }
 opentalk-types-signaling-timer = { path = "crates/opentalk-types-signaling-timer", version = "0.28.0-alpha" }
 opentalk-types-signaling-whiteboard = { path = "crates/opentalk-types-signaling-whiteboard", version = "0.28.0-alpha" }
 

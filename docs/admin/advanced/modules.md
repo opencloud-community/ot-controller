@@ -40,6 +40,7 @@ shared_folder: []
 timer: []
 whiteboard: []
 meeting_report: []
+subroom_audio: []
 ```
 
 <!-- end:fromfile:cli-usage/opentalk-controller-modules-list.md -->

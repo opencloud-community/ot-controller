@@ -12,6 +12,7 @@ use opentalk_signaling_module_meeting_notes::MeetingNotes;
 use opentalk_signaling_module_meeting_report::MeetingReport;
 use opentalk_signaling_module_polls::Polls;
 use opentalk_signaling_module_shared_folder::SharedFolder;
+use opentalk_signaling_module_subroom_audio::SubroomAudio;
 use opentalk_signaling_module_timer::Timer;
 use opentalk_signaling_module_whiteboard::Whiteboard;
 
@@ -29,6 +30,7 @@ impl RegisterModules for CommunityModules {
         registrar.register::<SharedFolder>().await?;
         registrar.register::<Timer>().await?;
         registrar.register::<Whiteboard>().await?;
-        registrar.register::<MeetingReport>().await
+        registrar.register::<MeetingReport>().await?;
+        registrar.register::<SubroomAudio>().await
     }
 }
