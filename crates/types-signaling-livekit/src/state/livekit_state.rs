@@ -8,7 +8,7 @@ use crate::{Credentials, MicrophoneRestrictionState};
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct LiveKitState {
-    /// The current credentials of the livekit instance
+    /// The current credentials for accessing a room on the livekit instance
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub credentials: Credentials,
 

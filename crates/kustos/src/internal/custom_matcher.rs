@@ -75,7 +75,7 @@ pub fn obj_match(request: &str, policy: &str) -> bool {
                     // If the bytes are the same just continue to the next one
                     continue;
                 } else if policy_byte == '*' {
-                    // If the the policy byte is a wildcard (*) we skip every request byte until we hit a slash (/)
+                    // If the policy byte is a wildcard (*) we skip every request byte until we hit a slash (/)
                     skip_until_next_slash(&mut request_iter);
 
                     // Skip over the policy slash (/) that MUST come after the wildcard (*)

@@ -17,13 +17,13 @@ pub enum LiveKitCommand {
 
     /// Force mutes participants
     ForceMute {
-        /// The participants
+        /// The participants that should get muted
         participants: Vec<ParticipantId>,
     },
 
-    /// Allows the permission to share their screen
+    /// Allows the specified participants to share their screens
     GrantScreenSharePermission {
-        /// The participants
+        /// The participants that get granted screen sharing permissions
         participants: Vec<ParticipantId>,
     },
 
