@@ -37,10 +37,18 @@ variables:
 
 .test:types:
   stage: test
-  <<: *default_job_condition
   # Ensures that the crate can be built with each relevant feature individually
   variables:
     RUSTFLAGS: -D warnings
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+      changes:
+        paths:
+          - crates/opentalk-types-common/**/*
+          - crates/opentalk-types-signaling/**/*
+          - crates/$PACKAGE/**/*
+    # Run on scheduled pipeline runs
+    - if: $CI_PIPELINE_SOURCE == 'schedule'
   parallel:
     matrix:
       - FEATURES: ['']
