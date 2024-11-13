@@ -1103,16 +1103,18 @@ fn setup_rustls(tls: &settings::HttpTls) -> Result<rustls::ServerConfig> {
 
 /// Check for deprecated settings, and print warnings if any are found.
 fn check_for_deprecated_settings(settings: &Settings) -> Result<()> {
-    use owo_colors::OwoColorize as _;
+    if settings.extensions.contains_key("room_server") {
+        use owo_colors::OwoColorize as _;
 
-    for deprecated_setting in opentalk_janus_media::check_for_deprecated_settings(settings)
-        .whatever_context("Failed to check deprecated settings")?
-    {
         anstream::eprintln!(
-            "{}: {} setting found in the configuration file. This option is no longer needed.",
+            "{}: Found an obsolete {room_server} (janus) configuration section.\n\
+             {}: This section is no longer needed, please remove it and add a {livekit} section instead.",
             "DEPRECATION WARNING".yellow().bold(),
-            deprecated_setting.bold()
+            "NOTE".green(),
+            room_server = "room_server".bold(),
+            livekit = "livekit".bold(),
         );
     }
+
     Ok(())
 }

@@ -47,7 +47,7 @@ Commands:
 
 Options:
   -c, --config <CONFIG>  Specify path to configuration file [default: config.toml]
-      --reload           Triggers a reload of the Janus Server configuration
+      --reload           Triggers a reload of reloadable configuration options
       --version
   -h, --help             Print help
 ```

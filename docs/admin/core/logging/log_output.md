@@ -47,15 +47,6 @@ default_directives = [
 ]
 ```
 
-### Very verbose logging for the Janus client
-
-```toml
-[logging]
-default_directives = [
-  "janus_client=TRACE",
-]
-```
-
 ### Default Setup
 
 ```toml

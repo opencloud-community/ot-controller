@@ -29,7 +29,7 @@ pub struct Args {
     )]
     pub config: String,
 
-    /// Triggers a reload of the Janus Server configuration
+    /// Triggers a reload of reloadable configuration options
     #[clap(long)]
     pub reload: bool,
 

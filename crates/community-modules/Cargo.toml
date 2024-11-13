@@ -20,7 +20,6 @@ opentalk-signaling-core.workspace = true
 opentalk-chat.workspace = true
 opentalk-core.workspace = true
 opentalk-integration.workspace = true
-opentalk-janus-media.workspace = true
 opentalk-livekit.workspace = true
 opentalk-meeting-notes.workspace = true
 opentalk-meeting-report.workspace = true

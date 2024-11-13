@@ -112,9 +112,6 @@ exceptions = [
   ], name = "opentalk-etherpad-client" },
   { allow = [
     "EUPL-1.2",
-  ], name = "opentalk-janus-client" },
-  { allow = [
-    "EUPL-1.2",
   ], name = "opentalk-keycloak-admin" },
   { allow = [
     "EUPL-1.2",
@@ -278,9 +275,7 @@ skip = [
   { name = "reqwest", version = "0.11" },
   { name = "rfc6979", version = "0.3" },
   { name = "rustls", version = "0.21" },
-  { name = "rustls", version = "0.22" },
   { name = "rustls-native-certs", version = "0.6" },
-  { name = "rustls-native-certs", version = "0.7" },
   { name = "rustls-pemfile", version = "1.0" },
   { name = "rustls-webpki", version = "0.101" },
   { name = "sec1", version = "0.3" },
@@ -292,7 +287,6 @@ skip = [
   { name = "syn", version = "1" },
   { name = "sync_wrapper", version = "0.1" },
   { name = "tokio-rustls", version = "0.24" },
-  { name = "tokio-rustls", version = "0.25" },
   { name = "tower", version = "0.4" },
 ]
 # Similarly to `skip` allows you to skip certain crates during duplicate

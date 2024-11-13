@@ -48,8 +48,6 @@ Inside the crates folder following crates can be found:
     - Settings for the controller
 - [db-storage](crates/db-storage)
     - Database types used for the controller and modules
-- [janus-media](crates/janus-media)
-    - media signaling module using the `janus-client` crate
 - [jobs](crates/jobs)
     - Job execution system for maintenance tasks such as removing old meeting information according to GDPR legislation
 - [community-modules](crates/community-modules)
@@ -67,8 +65,6 @@ Inside the crates folder following crates can be found:
     - Client side implementation of the controllers APIs used for testing
 - [r3dlock](crates/r3dlock)
     - redis redlock distributed lock implementation for a single instance
-- [janus-client](crates/janus-client)
-    - janus client library for interfacing with the [Janus WebRTC Server](https://janus.conf.meetecho.com/)
 - [kustos](crates/kustos)
     - authz abstraction based on casbin-rs
 - [test-util](crates/test-util)

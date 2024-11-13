@@ -8,7 +8,6 @@
 pub mod core;
 pub mod echo;
 pub mod integration;
-pub mod media;
 
 mod namespaced;
 
