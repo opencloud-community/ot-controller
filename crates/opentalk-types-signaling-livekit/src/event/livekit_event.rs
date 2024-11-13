@@ -32,6 +32,12 @@ pub enum LiveKitEvent {
         moderator: ParticipantId,
     },
 
+    /// A livekit access token that cannot publish and is hidden to other participants
+    PopoutStreamAccessToken {
+        /// The token
+        token: String,
+    },
+
     /// The last message couldn't be processed since an unexpected error occurred.
     Error(Error),
 }

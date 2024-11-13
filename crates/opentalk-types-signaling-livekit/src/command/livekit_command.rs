@@ -41,6 +41,9 @@ pub enum LiveKitCommand {
     /// Disable the microphone restriction state which will allow all participants
     /// to unmute their microphone again.
     DisableMicrophoneRestrictions,
+
+    /// Request a new livekit access token that cannot publish and is hidden to other participants
+    RequestPopoutStreamAccessToken,
 }
 
 /// Request a number of participants to mute themselves
