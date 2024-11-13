@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.0] - 2024-11-13
+
+### 🐛 Bug fixes
+
+- Skip the rooms grace period when the controller is shutdown ([!1317](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1317))
+- (streaming) Hide streaming key for users other than room creator/owner ([!1318](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1318))
+
+### 📚 Documentation
+
+- Add LiveKit migration guide ([!1302](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1302))
+- Remove frontend migration since it's not necessary anymore ([!1320](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1320))
+- Add LiveKit Signaling Module documentation ([!1316](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1316))
+- Update documentation for LiveKit, removing support for Janus ([!1303](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1303))
+
+### 📦 Dependencies
+
+- Lock file maintenance ([!1314](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1314))
+- Update livekit-api to 0.4.1, livekit-protocol to 0.3.5, livekit-runtime to 0.3.1 ([!1319](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1319), [#903](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/903))
+- Update redocly/cli docker tag to v1.25.11 ([!1288](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1288))
+- Update rust crate diesel-async to v0.5.1 ([!1311](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1311))
+- Update rust crate opentalk-etherpad-client to 0.2.0 ([!1279](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1279))
+
+### ⚙ Miscellaneous
+
+- Fix redundant `the` in comments ([!1316](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1316))
+- (media) Remove janus-media signaling module and types ([!1303](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1303), [#896](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/896))
+
 ## [0.25.0] - 2024-10-30
 
 ### 🚀 New features
@@ -949,6 +976,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - initial release candidate
 
 ---
+
+[0.26.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.25.0...v0.26.0
 
 [0.25.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.21.0...v0.25.0
 
