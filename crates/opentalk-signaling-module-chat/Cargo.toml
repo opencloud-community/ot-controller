@@ -1,0 +1,42 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+authors.workspace = true
+edition = "2021"
+license = "EUPL-1.2"
+name = "opentalk-signaling-module-chat"
+publish = false
+version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+async-trait.workspace = true
+chrono.workspace = true
+either.workspace = true
+log.workspace = true
+opentalk-database.workspace = true
+opentalk-db-storage.workspace = true
+opentalk-r3dlock.workspace = true
+opentalk-signaling-core.workspace = true
+opentalk-types-common = { workspace = true, features = ["backend"] }
+opentalk-types-signaling = { workspace = true, features = ["backend"] }
+opentalk-types-signaling-chat = { workspace = true, features = ["backend"] }
+parking_lot.workspace = true
+redis.workspace = true
+redis-args.workspace = true
+serde_json.workspace = true
+snafu.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+actix-rt.workspace = true
+opentalk-test-util = { workspace = true, features = ["controller"] }
+opentalk-types-signaling-control = { workspace = true, features = ["backend"] }
+pretty_assertions.workspace = true
+serial_test.workspace = true
