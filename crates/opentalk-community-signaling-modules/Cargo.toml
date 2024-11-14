@@ -1,0 +1,31 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+authors.workspace = true
+edition = "2021"
+license = "EUPL-1.2"
+name = "opentalk-community-signaling-modules"
+publish = false
+version.workspace = true
+
+[lints]
+workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[dependencies]
+opentalk-signaling-core.workspace = true
+
+opentalk-signaling-module-chat.workspace = true
+opentalk-signaling-module-core.workspace = true
+opentalk-signaling-module-integration.workspace = true
+opentalk-signaling-module-livekit.workspace = true
+opentalk-signaling-module-meeting-notes.workspace = true
+opentalk-signaling-module-meeting-report.workspace = true
+opentalk-signaling-module-polls.workspace = true
+opentalk-signaling-module-shared-folder.workspace = true
+opentalk-signaling-module-timer.workspace = true
+opentalk-signaling-module-whiteboard.workspace = true
+
+async-trait.workspace = true

@@ -15,7 +15,7 @@ use unified_diff::diff;
 
 use crate::{locate_project_root, Result};
 
-const SCHEMA_RS_PATH: &str = "crates/db-storage/src/schema.rs";
+const SCHEMA_RS_PATH: &str = "crates/opentalk-db-storage/src/schema.rs";
 const DATABASE_DEFAULT_URL: &str = "postgres://postgres:password123@localhost:5432";
 
 pub async fn generate_db_schema(

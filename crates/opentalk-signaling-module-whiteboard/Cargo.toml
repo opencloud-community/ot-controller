@@ -1,0 +1,49 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+authors.workspace = true
+edition = "2021"
+license = "EUPL-1.2"
+name = "opentalk-signaling-module-whiteboard"
+publish = false
+version.workspace = true
+
+[lints]
+workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-trait.workspace = true
+bytes.workspace = true
+either.workspace = true
+futures.workspace = true
+log.workspace = true
+opentalk-controller-settings.workspace = true
+opentalk-database.workspace = true
+opentalk-signaling-core.workspace = true
+opentalk-types-common = { workspace = true, features = ["backend"] }
+opentalk-types-signaling = { workspace = true, features = ["backend"] }
+opentalk-types-signaling-whiteboard = { workspace = true, features = [
+  "backend",
+] }
+parking_lot.workspace = true
+redis.workspace = true
+redis-args.workspace = true
+reqwest = { workspace = true, features = [
+  "cookies",
+  "json",
+  "rustls-tls-native-roots",
+  "stream",
+] }
+serde.workspace = true
+snafu.workspace = true
+tracing.workspace = true
+url.workspace = true
+
+[dev-dependencies]
+pretty_assertions.workspace = true
+serial_test.workspace = true
+tokio.workspace = true

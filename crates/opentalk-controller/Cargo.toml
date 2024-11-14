@@ -1,0 +1,26 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+authors.workspace = true
+default-run = "opentalk-controller"
+edition = "2021"
+license = "EUPL-1.2"
+name = "opentalk-controller"
+publish = false
+version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+actix-web.workspace = true
+anstream.workspace = true
+opentalk-community-signaling-modules.workspace = true
+opentalk-controller-core.workspace = true
+owo-colors.workspace = true
+
+[features]
+default = ["swagger"]
+swagger = ["opentalk-controller-core/swagger"]
