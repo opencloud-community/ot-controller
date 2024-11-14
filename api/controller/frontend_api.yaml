@@ -8,7 +8,7 @@ info:
     email: mail@opentalk.eu
   license:
     name: EUPL-1.2
-  version: 0.0.0-dev
+  version: 0.26.0
 servers:
   - url: /v1
 paths:
@@ -105,7 +105,7 @@ paths:
           in: query
           description: |-
             Maximum number of invitees to return inside the event resource
-            
+
             Default value is 0
           required: false
           schema:
@@ -138,7 +138,7 @@ paths:
           in: query
           description: |-
             Cursor token to get the next page of events
-            
+
             Returned by the endpoint if the maximum number of events per page has been hit
           required: false
           schema:
@@ -150,7 +150,7 @@ paths:
           in: query
           description: |-
             Only get events that are either marked as adhoc or non-adhoc
-            
+
             If present, all adhoc events will be returned when `true`, all non-adhoc
             events will be returned when `false`. If not present, all events will
             be returned regardless of their `adhoc` flag value.
@@ -162,7 +162,7 @@ paths:
           in: query
           description: |-
             Only get events that are either time-independent or time-dependent
-            
+
             If present, all time-independent events will be returned when `true`,
             all time-dependent events will be returned when `false`. If absent,
             all events will be returned regardless of their time dependency.
@@ -239,7 +239,7 @@ paths:
           in: query
           description: |-
             Maximum number of invitees to return inside the event resource
-            
+
             Default value is 0
           required: false
           schema:
@@ -370,7 +370,7 @@ paths:
       description: |-
         The instances are calculated based on the RRULE of the event. If no RRULE is
         set for the event, the single event instance is returned.
-        
+
         If no pagination query is added, the default page size is used.
       operationId: get_event_instances
       parameters:
@@ -462,7 +462,7 @@ paths:
           in: query
           description: |-
             Maximum number of invitees to return inside the event instance resource
-            
+
             Default: 0
           required: false
           schema:
@@ -517,7 +517,7 @@ paths:
           in: query
           description: |-
             Maximum number of invitees to return inside the event instance resource
-            
+
             Default: 0
           required: false
           schema:
@@ -720,7 +720,7 @@ paths:
       summary: Delete an invite from an event
       description: |-
         Delete/Withdraw an event invitation using the email address as the identifier.
-        
+
         This will also withdraw invites from registered users if the provided email address matches theirs.
       operationId: delete_email_invite_to_event
       parameters:
@@ -1575,7 +1575,7 @@ paths:
       summary: Modify the sip configuration of a room. A new sip configuration is created
       description: |-
         if none was set before.
-        
+
         Returns the new modified sip configuration.
         Get the sip config for the specified room.
       operationId: put
@@ -2088,7 +2088,7 @@ paths:
       description: |-
         Takes call-in id and pin and returns a ticket for the `/signaling` endpoint. Behaves similar to the
         `/rooms/{room_id}/start` endpoint.
-        
+
         This endpoint is provided for call-in gateways to start a room connection
         for call-in participants. The participant typically has to provide the
         credentials (id and pin) via DTMF (the number pad).
@@ -2758,7 +2758,7 @@ components:
       type: object
       description: |-
         Event exception resource
-        
+
         Overrides event properties for a event recurrence. May only exist for events of type `recurring`.
       required:
         - id
@@ -2897,13 +2897,13 @@ components:
       type: object
       description: |-
         Event instance resource
-        
+
         An event instance is an occurrence of an recurring event
-        
+
         Exceptions for the instance are always already applied
-        
+
         For infos on undocumented fields see [`EventResource`]
-        
+
         [`EventResource`]: ../event_ressource/struct.EventResource.html
       required:
         - id
@@ -3051,7 +3051,7 @@ components:
       type: object
       description: |-
         Invitee to an event
-        
+
         Contains user profile and invitee status
       required:
         - profile
@@ -3192,7 +3192,7 @@ components:
       type: object
       description: |-
         Event Resource representation
-        
+
         Returned from `GET /events/` and `GET /events/{event_id}`
       required:
         - id
@@ -3246,7 +3246,7 @@ components:
           type: boolean
           description: |-
             Is the event an all day event
-            
+
             All-day events have no start/end time, they last the entire day(s)
         is_favorite:
           type: boolean
@@ -3255,7 +3255,7 @@ components:
           type: boolean
           description: |-
             Is the event time independent?
-            
+
             Time independent events are not bound to any time but instead are constantly available to join
         recurrence_pattern:
           $ref: "#/components/schemas/RecurrencePattern"
@@ -3394,7 +3394,7 @@ components:
       type: string
       description: |-
         Type of event resource.
-        
+
         Is used as type discriminator in field `type`.
       enum:
         - single
@@ -3813,14 +3813,14 @@ components:
           type: boolean
           description: |-
             Patch if the event is an all-day event
-            
+
             If it changes the value from false to true this request must ensure
             that the `starts_at.datetime` and `ends_at.datetime` have a 00:00 time part.
         is_time_independent:
           type: boolean
           description: |-
             Patch the time independence of the event
-            
+
             If it changes the independence from true false this body has to have
             `is_all_day`, `starts_at` and `ends_at` set
         password:
@@ -3966,13 +3966,13 @@ components:
           type: boolean
           description: |-
             Should the event be all-day?
-            
+
             If true, requires `starts_at.datetime` and `ends_at.datetime` to have a 00:00 time part
         is_time_independent:
           type: boolean
           description: |-
             Should the created event be time independent?
-            
+
             If true, all following fields must be null
             If false, requires `is_all_day`, `starts_at`, `ends_at`
         password:
@@ -4124,7 +4124,7 @@ components:
       type: object
       description: |-
         Private user profile.
-        
+
         Similar to [`PublicUserProfile`], but contains additional "private" information about a user.
         Is only accessible to the user himself.
         Is used on */users/me* endpoints.
@@ -4201,7 +4201,7 @@ components:
       type: object
       description: |-
         Public user details.
-        
+
         Contains general "public" information about a user. Is accessible to all other users.
       required:
         - id
@@ -4298,7 +4298,7 @@ components:
       type: object
       description: |-
         A Room
-        
+
         Contains all room information. Is only be accessible to the owner and users with
         appropriate permissions.
       required:
@@ -4719,7 +4719,7 @@ components:
       format: date-time
       description: |-
         A UTC DateTime wrapper that implements ToRedisArgs and FromRedisValue.
-        
+
         The values are stores as unix timestamps in redis.
     Turn:
       type: object
@@ -4888,7 +4888,7 @@ components:
           type: string
           description: |-
             The field related to the error
-            
+
             If the value is [`None`] that means the error happened at struct level
           nullable: true
         message:
@@ -4916,11 +4916,11 @@ components:
           schema:
             type: string
           description: |
-            
+
             Will contain 'session expired' to distinguish between an invalid and an expired token.
-            
+
             Examples:
-            
+
                 Bearer error="invalid_token", error_description="The provided access token is invalid"
                 Bearer error="invalid_token", error_description="The user session expired"
       content:
