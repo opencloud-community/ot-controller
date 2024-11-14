@@ -438,7 +438,7 @@ check:openapi:
   script:
     - ./ci/update-openapi-spec.sh
     - |
-      if ! git diff --ignore-space-at-eol --exit-code; then
+      if ! git diff --ignore-space-at-eol --exit-code --submodule=diff; then
         echo "Generated parts of documentation changed, run ci/update-openapi-spec.sh and commit the result"
         exit 1
       fi
