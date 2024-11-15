@@ -138,7 +138,7 @@ url = "2"
 utoipa = "4"
 utoipa-swagger-ui = "7"
 uuid = "1"
-validator = { version = "0.18", features = ["derive"] }
+validator = { version = "0.19", features = ["derive"] }
 yaml-rust2 = "0.9.0"
 
 [workspace.dependencies.casbin]

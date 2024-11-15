@@ -256,7 +256,6 @@ skip = [
   { name = "http-body", version = "0.4" },
   { name = "hyper", version = "0.14" },
   { name = "hyper-rustls", version = "0.24" },
-  { name = "idna", version = "0.5" },
   { name = "indexmap", version = "1" },
   { name = "itertools", version = "0.10" },
   { name = "itertools", version = "0.11" },
