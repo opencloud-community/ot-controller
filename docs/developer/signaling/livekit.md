@@ -211,6 +211,29 @@ Disable the microphone restriction state which will allow all participants to un
 
 [MicrophoneRestrictionsDisabled Event](#microphonerestrictionsdisabled)
 
+### RequestPopoutStreamAccessToken
+
+Requests a special, more restrictive, livekit access token for the creation of a popout stream.
+
+This access token is bound to the requesting participants identity. This token can only subscribe and is
+hidden to other participants.
+
+| Field    | Type   | Mandatory | Description                                  |
+| -------- | ------ | --------- | -------------------------------------------- |
+| `action` | `enum` | yes       | Must be `request_popout_stream_access_token` |
+
+#### Example
+
+```json
+{
+    "action": "request_popout_stream_access_token"
+}
+```
+
+#### Response
+
+[PopoutStreamAccessToken](#popoutstreamaccesstoken)
+
 ## Events
 
 <!-- This reflects the data structure found at [SignalingModule::Outgoing] -->
@@ -261,6 +284,15 @@ The moderator has force muted the participant.
 | ----------- | -------- | --------- | -------------------------------------------------------------------------- |
 | `message`   | `enum`   | yes       | Is `force_muted`                                                           |
 | `moderator` | `String` | yes       | The participant ID of the moderator who muted the receiver of this message |
+
+### PopoutStreamAccessToken
+
+The user requested a popout stream access token.
+
+| Field       | Type     | Mandatory | Description                                                                |
+| ----------- | -------- | --------- | -------------------------------------------------------------------------- |
+| `message`   | `enum`   | yes       | Is `popout_stream_access_token`                                            |
+| `token`     | `String` | yes       | A restrictive livekit access token for creating a popout stream            |
 
 ### Error
 

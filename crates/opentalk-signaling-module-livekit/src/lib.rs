@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::{sync::Arc, time::Duration};
+use std::{collections::BTreeSet, sync::Arc, time::Duration};
 
 use either::Either;
 use futures::{
@@ -47,6 +47,7 @@ pub struct Livekit {
     participation_kind: ParticipationKind,
     role: Role,
     params: Arc<LivekitParams>,
+    token_identities: BTreeSet<String>,
 }
 
 pub struct LivekitParams {
@@ -91,6 +92,7 @@ impl SignalingModule for Livekit {
             role: ctx.role(),
             params: params.clone(),
             participation_kind: ctx.participant().kind(),
+            token_identities: BTreeSet::default(),
         }))
     }
 
@@ -146,6 +148,29 @@ impl SignalingModule for Livekit {
             }
             Event::Exchange(message) => {
                 self.handle_exchange_message(ctx, message).await;
+                Ok(())
+            }
+            Event::Leaving => {
+                // Attempt to remove the existing livekit identities
+                for identity in &self.token_identities {
+                    if let Err(e) = self
+                        .params
+                        .room_client
+                        .remove_participant(&self.room_id.to_string(), identity)
+                        .await
+                    {
+                        // There is nothing we can do in the case of an error, just continue with the other identities.
+                        //
+                        // The most likely error here is an `not_found` error. However, we can't match the returned error
+                        // types because livekit does not expose them.
+                        log::debug!(
+                            "Failed to remove participant identity {} from livekit in room {}: {}",
+                            identity,
+                            self.room_id,
+                            e
+                        )
+                    }
+                }
                 Ok(())
             }
             _ => Ok(()),
@@ -293,6 +318,9 @@ impl Livekit {
             }
             command::LiveKitCommand::DisableMicrophoneRestrictions => {
                 self.set_microphone_permissions(ctx, vec![], false).await
+            }
+            command::LiveKitCommand::RequestPopoutStreamAccessToken => {
+                self.create_popout_stream_access_token(&mut ctx).await
             }
         }
     }
@@ -508,7 +536,7 @@ impl Livekit {
     ///
     /// Returns (RoomName, AccessToken)
     async fn create_room_and_access_token(
-        &self,
+        &mut self,
         ctx: &mut ModuleContext<'_, Self>,
         visibility: ParticipationVisibility,
     ) -> Result<(String, String, MicrophoneRestrictionState), SignalingModuleError> {
@@ -560,14 +588,14 @@ impl Livekit {
             .map(|s| TrackSource::as_str_name(&s).to_lowercase())
             .collect();
 
-        let participant_id = self.participant_id.to_string();
+        let identity = self.participant_id.to_string();
 
         let access_token = AccessToken::with_api_key(
             &self.params.livekit_settings.api_key,
             &self.params.livekit_settings.api_secret,
         )
-        .with_name(&participant_id)
-        .with_identity(&participant_id)
+        .with_name(&identity)
+        .with_identity(&identity)
         .with_grants(VideoGrants {
             room_create: false,
             room_list: false,
@@ -588,6 +616,8 @@ impl Livekit {
         .to_jwt()
         .whatever_context::<&str, SignalingModuleError>("Failed to create livekit access-token")?;
 
+        self.token_identities.insert(identity);
+
         Ok((room.name, access_token, microphone_restriction_state))
     }
 
@@ -600,5 +630,48 @@ impl Livekit {
         {
             log::error!("Failed to destroy livekit room {e}");
         }
+    }
+
+    async fn create_popout_stream_access_token(
+        &mut self,
+        ctx: &mut ModuleContext<'_, Self>,
+    ) -> Result<(), SignalingModuleError> {
+        let identity = format!(
+            "{}-popout{}",
+            self.participant_id,
+            self.token_identities.len()
+        );
+
+        let token = AccessToken::with_api_key(
+            &self.params.livekit_settings.api_key,
+            &self.params.livekit_settings.api_secret,
+        )
+        .with_name(&identity)
+        .with_identity(&identity)
+        .with_grants(VideoGrants {
+            room_create: false,
+            room_list: false,
+            room_record: false,
+            room_admin: false,
+            room_join: true,
+            room: self.room_id.to_string(),
+            can_publish: false,
+            can_subscribe: true,
+            can_publish_data: false,
+            can_publish_sources: vec![],
+            can_update_own_metadata: false,
+            ingress_admin: false,
+            hidden: true,
+            recorder: false,
+        })
+        .with_ttl(ACCESS_TOKEN_TTL)
+        .to_jwt()
+        .whatever_context::<&str, SignalingModuleError>("Failed to create livekit access-token")?;
+
+        self.token_identities.insert(identity);
+
+        ctx.ws_send(event::LiveKitEvent::PopoutStreamAccessToken { token });
+
+        Ok(())
     }
 }
