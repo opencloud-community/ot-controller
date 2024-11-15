@@ -23,6 +23,7 @@ use opentalk_types_common::{
     assets::AssetId, events::EventId, module_resources::ModuleResourceId, rooms::RoomId,
     users::UserId,
 };
+use opentalk_types_signaling::NamespacedEvent;
 use snafu::ResultExt;
 
 use super::{Deleter, Error, RACE_CONDITION_ERROR_MESSAGE};
@@ -170,7 +171,7 @@ impl Deleter for RoomDeleter {
         exchange_handle: ExchangeHandle,
         settings: &Settings,
     ) -> Result<(), Error> {
-        let message = opentalk_types::signaling::NamespacedEvent {
+        let message = NamespacedEvent {
             module: control::module_id(),
             timestamp: opentalk_types_common::time::Timestamp::now(),
             payload: control::exchange::Message::RoomDeleted,

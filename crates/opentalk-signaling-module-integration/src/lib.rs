@@ -8,8 +8,13 @@ use opentalk_signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
     SignalingModuleInitData,
 };
-use opentalk_types::signaling::integration::{NAMESPACE, OUTLOOK_FEATURE};
 use opentalk_types_common::features::FeatureId;
+
+/// The namespace string for the signaling module
+pub const NAMESPACE: &str = "integration";
+
+/// The identifier string for the outlook feature
+pub const OUTLOOK_FEATURE: &str = "outlook";
 
 pub struct Integration;
 
