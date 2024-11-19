@@ -2,15 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_api_v1::rooms::by_room_id::invites::InviteResource;
 use opentalk_types_common::utils::ExampleData;
 
-#[allow(unused_imports)]
-use crate::imports::*;
+use super::InviteResource;
 
 /// Response for *GET /rooms/{room_id}/invites*
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature="utoipa",derive(utoipa::ToSchema), schema(example = json!(GetRoomsInvitesResponseBody::example_data())))]
 pub struct GetRoomsInvitesResponseBody(pub Vec<InviteResource>);
 
