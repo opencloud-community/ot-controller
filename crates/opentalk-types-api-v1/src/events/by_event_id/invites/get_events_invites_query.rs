@@ -4,15 +4,13 @@
 
 //! This module contains types that are used for OpenTalk API V1 event invite endpoints.
 
-use opentalk_types_api_v1::pagination::PagePaginationQuery;
 use opentalk_types_common::events::invites::EventInviteStatus;
 
-#[allow(unused)]
-use crate::imports::*;
+use crate::pagination::PagePaginationQuery;
 
 /// The query passed to the `GET /events/{event_id}/invites` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::IntoParams))]
 pub struct GetEventsInvitesQuery {
     /// Results will be paginated by this pagination specification

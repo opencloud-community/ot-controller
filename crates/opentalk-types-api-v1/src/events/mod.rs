@@ -4,6 +4,8 @@
 
 //! This module contains types that are used for OpenTalk API V1 events endpoints.
 
+pub mod by_event_id;
+
 mod call_in_info;
 mod delete_email_invite_body;
 mod delete_event_invite_path;
