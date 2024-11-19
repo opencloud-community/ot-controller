@@ -3,18 +3,16 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::{DateTime, TimeZone, Utc};
-use opentalk_types_api_v1::users::PublicUserProfile;
 use opentalk_types_common::{
     rooms::{invite_codes::InviteCode, RoomId},
     utils::ExampleData,
 };
 
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::users::PublicUserProfile;
 
 /// A room invite code with associated information.
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(
     feature="utoipa",
     derive(utoipa::ToSchema),

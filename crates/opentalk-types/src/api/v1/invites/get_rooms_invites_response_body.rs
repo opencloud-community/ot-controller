@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_types_api_v1::rooms::by_room_id::invites::InviteResource;
 use opentalk_types_common::utils::ExampleData;
 
-use super::InviteResource;
 #[allow(unused_imports)]
 use crate::imports::*;
 

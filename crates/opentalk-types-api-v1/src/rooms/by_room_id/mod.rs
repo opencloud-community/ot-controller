@@ -5,3 +5,4 @@
 //! Types related to the API endpoints under `/rooms/{room_id}`.
 
 pub mod assets;
+pub mod invites;
