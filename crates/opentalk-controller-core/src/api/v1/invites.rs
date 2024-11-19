@@ -18,18 +18,16 @@ use opentalk_db_storage::{
 };
 use opentalk_types::api::{
     error::ApiError,
-    v1::invites::{
-        CodeVerified, PostInviteVerifyRequestBody, PutInviteRequestBody, RoomIdAndInviteCode,
-    },
+    v1::invites::{CodeVerified, PutInviteRequestBody, RoomIdAndInviteCode},
 };
 use opentalk_types_api_v1::{
     pagination::PagePaginationQuery,
     rooms::by_room_id::invites::{
         GetRoomsInvitesResponseBody, InviteResource, PostInviteRequestBody,
+        PostInviteVerifyRequestBody,
     },
 };
 use opentalk_types_common::rooms::RoomId;
-use validator::Validate;
 
 use super::{response::NoContent, DefaultApiResult};
 use crate::{
@@ -435,8 +433,6 @@ pub async fn verify_invite_code(
     data: Json<PostInviteVerifyRequestBody>,
 ) -> DefaultApiResult<CodeVerified> {
     let data = data.into_inner();
-
-    data.validate()?;
 
     let mut conn = db.get_conn().await?;
 

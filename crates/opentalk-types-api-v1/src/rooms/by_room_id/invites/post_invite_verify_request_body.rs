@@ -4,12 +4,9 @@
 
 use opentalk_types_common::rooms::invite_codes::InviteCode;
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// Verify body for *POST /invite/verify*
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize, Validate))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct PostInviteVerifyRequestBody {
     /// The invite code id

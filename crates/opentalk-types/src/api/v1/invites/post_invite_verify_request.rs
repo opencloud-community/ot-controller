@@ -2,7 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::PostInviteVerifyRequestBody;
+use opentalk_types_api_v1::rooms::by_room_id::invites::PostInviteVerifyRequestBody;
+
 #[allow(unused_imports)]
 use crate::imports::*;
 
