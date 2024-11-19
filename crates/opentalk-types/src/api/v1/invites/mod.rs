@@ -10,11 +10,9 @@ use opentalk_types_common::rooms::RoomId;
 use crate::imports::*;
 
 mod post_invite_verify_request;
-mod put_invite_request_body;
 mod room_id_and_invite_code;
 
 pub use post_invite_verify_request::PostInviteVerifyRequest;
-pub use put_invite_request_body::PutInviteRequestBody;
 pub use room_id_and_invite_code::RoomIdAndInviteCode;
 
 /// Verify response body for *POST /invite/verify*

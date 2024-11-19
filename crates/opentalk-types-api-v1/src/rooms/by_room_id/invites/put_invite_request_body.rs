@@ -5,12 +5,9 @@
 use chrono::{DateTime, TimeZone as _, Utc};
 use opentalk_types_common::utils::ExampleData;
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// Body for *PUT /rooms/{room_id}/invites/{invite_code}*
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(
     feature="utoipa",
     derive(utoipa::ToSchema),
