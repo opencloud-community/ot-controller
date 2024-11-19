@@ -10,12 +10,9 @@ use opentalk_types_common::{
     utils::ExampleData,
 };
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// Body for the `PATCH /events/{event_id}` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(
     example = json!(
         PatchEventBody::example_data()

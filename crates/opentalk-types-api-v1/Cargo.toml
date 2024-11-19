@@ -24,6 +24,7 @@ serde = [
   "dep:base64",
   "dep:bincode",
   "dep:serde",
+  "dep:serde_with",
   "opentalk-types-common/serde",
 ]
 utoipa = [
@@ -48,6 +49,7 @@ derive_more = { workspace = true, features = [
 opentalk-types-common.workspace = true
 serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
+serde_with = { workspace = true, optional = true }
 url.workspace = true
 utoipa = { workspace = true, features = [
   "chrono",
