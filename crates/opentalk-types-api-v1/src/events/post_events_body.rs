@@ -11,12 +11,9 @@ use opentalk_types_common::{
     utils::ExampleData,
 };
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// Body of the `POST /events` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize, Validate))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(
     example = json!(
         PostEventsBody::example_data()

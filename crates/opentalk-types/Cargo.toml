@@ -22,7 +22,6 @@ actix-http = { workspace = true, optional = true }
 actix-web = { workspace = true, optional = true }
 axum = { workspace = true, optional = true }
 chrono.workspace = true
-chrono-tz.workspace = true
 diesel = { workspace = true, features = ["uuid"], optional = true }
 http = { workspace = true, optional = true }
 http-request-derive = { workspace = true, features = [
@@ -100,7 +99,6 @@ redis = [
   "serde",
 ]
 serde = [
-  "chrono-tz/serde",
   "chrono/serde",
   "dep:serde",
   "dep:serde_with",

@@ -37,16 +37,15 @@ use opentalk_db_storage::{
 };
 use opentalk_keycloak_admin::{users::TenantFilter, KeycloakAdminClient};
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage};
-use opentalk_types::api::{
-    error::{ApiError, ValidationErrorEntry, ERROR_CODE_IGNORED_VALUE, ERROR_CODE_VALUE_REQUIRED},
-    v1::events::PostEventsBody,
+use opentalk_types::api::error::{
+    ApiError, ValidationErrorEntry, ERROR_CODE_IGNORED_VALUE, ERROR_CODE_VALUE_REQUIRED,
 };
 use opentalk_types_api_v1::{
     events::{
         CallInInfo, DeleteEventsQuery, EmailOnlyUser, EventAndInstanceId, EventExceptionResource,
         EventInvitee, EventInviteeProfile, EventOptionsQuery, EventOrException, EventResource,
         EventRoomInfo, EventStatus, EventType, GetEventQuery, GetEventsCursorData, GetEventsQuery,
-        PatchEventBody, PatchEventQuery, PublicInviteUserProfile,
+        PatchEventBody, PatchEventQuery, PostEventsBody, PublicInviteUserProfile,
     },
     pagination::default_pagination_per_page,
     users::{PublicUserProfile, UnregisteredUser},
@@ -65,7 +64,6 @@ use rrule::{Frequency, RRuleSet};
 use serde::Deserialize;
 use shared_folder::delete_shared_folders;
 use snafu::Report;
-use validator::Validate;
 
 use super::{response::NoContent, ApiResponse, DefaultApiResult};
 use crate::{
@@ -292,8 +290,6 @@ pub async fn new_event(
     let settings = settings.load_full();
     let current_user = current_user.into_inner();
     let new_event = new_event.into_inner();
-
-    new_event.validate()?;
 
     let mut conn = db.get_conn().await?;
 
