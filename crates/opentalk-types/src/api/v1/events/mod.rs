@@ -4,8 +4,6 @@
 
 //! This module contains types that are used for OpenTalk API V1 events endpoints.
 
-mod patch_event_instance_body;
 mod post_events_body;
 
-pub use patch_event_instance_body::PatchEventInstanceBody;
 pub use post_events_body::PostEventsBody;

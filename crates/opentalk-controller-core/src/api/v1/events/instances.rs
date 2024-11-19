@@ -18,13 +18,13 @@ use opentalk_db_storage::{
     users::User,
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
-use opentalk_types::api::{error::ApiError, v1::events::PatchEventInstanceBody};
+use opentalk_types::api::error::ApiError;
 use opentalk_types_api_v1::{
     events::{
         EventAndInstanceId, EventInstance, EventInstancePath, EventInstanceQuery, EventInvitee,
         EventRoomInfo, EventStatus, EventType, GetEventInstanceResponseBody,
         GetEventInstancesCursorData, GetEventInstancesQuery, GetEventInstancesResponseBody,
-        InstanceId,
+        InstanceId, PatchEventInstanceBody,
     },
     Cursor,
 };
@@ -34,7 +34,6 @@ use opentalk_types_common::{
 };
 use rrule::RRuleSet;
 use snafu::Report;
-use validator::Validate;
 
 use super::{
     can_edit, get_invited_mail_recipients_for_event, notify_invitees_about_update, ApiResponse,
@@ -420,8 +419,6 @@ pub async fn patch_event_instance(
     if patch.is_empty() {
         return Ok(Either::Right(NoContent));
     }
-
-    patch.validate()?;
 
     let settings = settings.load_full();
     let EventInstancePath {

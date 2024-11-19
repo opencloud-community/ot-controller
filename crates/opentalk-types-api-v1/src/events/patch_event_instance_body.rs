@@ -2,19 +2,17 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_api_v1::events::EventStatus;
 use opentalk_types_common::{
     events::{EventDescription, EventTitle},
     time::DateTimeTz,
     utils::ExampleData,
 };
 
-#[allow(unused_imports)]
-use crate::imports::*;
+use super::EventStatus;
 
 /// Request body for the `PATCH /events/{event_id}/{instance_id}` endpoint
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize, Validate))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(
     example = json!(
         PatchEventInstanceBody::example_data()
