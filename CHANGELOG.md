@@ -5,7 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.27.0] - 2024-11-20
+
+[0.27.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.26.0...v0.27.0
+
+### 🚀 New features
+
+- (livekit) Add signaling for a popout stream access token ([!1312](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1312), [#901](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/901))
+
+### 🔨 Refactor
+
+- Move all crates into paths matching the crate name ([!1325](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1325))
+- (types) Move NamespacedCommand to opentalk-types-signaling ([!1326](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1326))
+- (types) Move NamespacedEvent to opentalk-types-signaling ([!1326](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1326))
+- (types) Remove core signaling module from opentalk-types ([!1326](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1326))
+- (types) Remove echo signaling module from opentalk-types ([!1326](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1326))
+- (types) Remove integration signaling module from opentalk-types ([!1326](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1326))
+
+### Ci
+
+- Only run ci jobs for types crates when needed ([!1324](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1324))
+
 ## [0.26.0] - 2024-11-13
+
+[0.26.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.25.0...v0.26.0
 
 ### 🐛 Bug fixes
 
@@ -33,6 +56,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - (media) Remove janus-media signaling module and types ([!1303](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1303), [#896](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/896))
 
 ## [0.25.0] - 2024-10-30
+
+[0.25.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.21.0...v0.25.0
 
 ### 🚀 New features
 
@@ -103,6 +128,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.21.0]
 
+[0.21.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.20.0...v0.21.0
+
 ### 🚀 New features
 
 - Generate attendance report ([!1074](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1074), [#558](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/558))
@@ -164,6 +191,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - (kustos) Verify granting access again works ([!1201](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1201))
 
 ## [0.20.0]
+
+[0.20.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.19.0...v0.20.0
 
 ### 🚀 New features
 
@@ -241,6 +270,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.19.1]
 
+[0.19.1]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.19.0...v0.19.1
+
 ### 🐛 Bug fixes
 
 - Always include `streaming_links` property in `MeetingDetails` ([#856](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/856), [!1128](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1128))
@@ -250,6 +281,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update rust crate gix-path to 0.10.10 (fixing [RUSTSEC-2024-0367](https://rustsec.org/advisories/RUSTSEC-2024-0367.html)) ([!1122](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1122))
 
 ## [0.19.0]
+
+[0.19.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.18.0...v0.19.0
 
 ### 🚀 New features
 
@@ -296,6 +329,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.18.0]
 
+[0.18.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.17.0...v0.18.0
+
 ### 🚀 New features
 
 - Use avatar url if the JWT `picture` claim is set ([#824](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/824))
@@ -332,6 +367,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update rust crate vergen to v9
 
 ## [0.17.0]
+
+[0.17.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.16.0...v0.17.0
 
 ### 🚀 New features
 
@@ -379,6 +416,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Introduce enum for quota types ([!1026](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1026))
 
 ## [0.16.0]
+
+[0.16.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.15.0...v0.16.0
 
 ### <!-- 0 -->:rocket: New features
 
@@ -454,6 +493,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.15.0]
 
+[0.15.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.14.0...v0.15.0
+
 ### :rocket: New features
 
 - controller: Allow resetting individual participant's raised hands ([#764](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/764))
@@ -491,6 +532,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.14.0]
 
+[0.14.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.13.0...v0.14.0
+
 ### :rocket: New features
 
 - recording: make `record` and `stream` functionality configurable by module features ([#760](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/760))
@@ -518,6 +561,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.13.0]
 
+[0.13.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.12.1...v0.13.0
+
 ### Added
 
 - controller: Add a websocket-based asset upload interface (currently used for recordings) ([#614](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/614))
@@ -535,11 +580,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.12.1]
 
+[0.12.1]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.12.0...v0.12.1
+
 ### Fixed
 
 - [RUSTSEC-2024-0336](https://rustsec.org/advisories/RUSTSEC-2024-0336)
 
 ## [0.12.0]
+
+[0.12.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/da834e3e401c6a9e3e3d03c1d77ff7ff758f6e23...v0.12.0
 
 ### Fixed
 
@@ -551,6 +600,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - controller: Add the `change_display_name` command to change the display name of a guest or phone user ([#721](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/721))
 
 ## [0.11.0]
+
+[0.11.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/61a936a1a88a63804a2b8cfa3d602cb941ef3944...v0.11.0
 
 ### Added
 
@@ -564,6 +615,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.10.0]
 
+[0.10.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/5ffe66a5586f6792c809a9abefc6023db2e2687a...v0.10.0
+
 ### Added
 
 - controller: add streaming and shared folder information to POST /v1/events ([#652](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/652))
@@ -575,6 +628,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - controller: improve error message if signaling protocol header is not valid or missing.
 
 ## [0.9.0] - 2024-02-22
+
+[0.9.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/1ef2d3091f427c258266a968aa2ffdc5116cc0af...v0.9.0
 
 ### Added
 
@@ -596,6 +651,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.7.1] - 2024-01-10
 
+[0.7.1]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.7.0...v0.7.1
+
 ### Added
 
 - mail-worker-protocol: added `adhoc_retention_seconds` field to `Events`([#591](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/591))
@@ -613,6 +670,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - controller: don't send e-mail notification to creators of ad-hoc meetings ([#606](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/606))
 
 ## [0.7.0] - 2023-10-30
+
+[0.7.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/a79a32ead8943a1e0ecee9b34ecaabdf495b6112...v0.7.0
 
 ### Added
 
@@ -649,6 +708,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.6.0] - 2023-31-08
 
+[0.6.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/32b4c96e3ad319c95baebdfa075d23543b38a8f2...v0.6.0
+
 ### Added
 
 - controller: add the capability to disable specific features in the config file or via a tariff ([#394](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/394))
@@ -671,6 +732,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - controller: fixed a bug where no emails were sent when deleting an event not having an end date ([#498](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/498))
 
 ## [0.5.0] - 2023-06-27
+
+[0.5.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/2129f33efb8898d46f6dd1b43db43e5cbb929f99...v0.5.0
 
 ### Added
 
@@ -697,6 +760,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - signaling: Consider the `enable_phone_mapping` config value when trying to match the phone number to a opentalk user
 
 ## [0.4.0] - 2023-05-25
+
+[0.4.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/60b8af4daa0e0f2ed2ec9589fd1c9da3218baf8c...v0.4.0
 
 ### Added
 
@@ -725,11 +790,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.3.1] - 2023-04-24
 
+[0.3.1]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.3.0...v0.3.1
+
 ### Fixed
 
 - `(backport):` controller-settings: Fixed a panic when trying to parse config values for `tenants` and `tariffs`, when their assignment was set to `static`
 
 ## [0.3.0] - 2023-04-17
+
+[0.3.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/382d6f2d1ccac530431a1fe7f8379ed21769c052...v0.3.0
 
 ### Added
 
@@ -752,11 +821,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.1] - 2023-03-16
 
+[0.2.1]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.2.0...v0.2.1
+
 ### Added
 
 - `(backport):` janus-media: add `resubscribe` message to allow clients to restart the webrtc session of a subscription.
 
 ## [0.2.0] - 2023-03-13
+
+[0.2.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/97c85ca10d136652bc1656792dcf1a539ea4e7a5...v0.2.0
 
 ### Added
 
@@ -771,6 +844,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - timer: distribute timer handling over all participant runners, allowing timers to finish if the moderator has left ([#210](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/210))
 
 ## [0.1.0] - 2023-03-01
+
+[0.1.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/8b6e62c700376aa82fab9eab07346207becf7c78...v0.1.0
 
 ### Added
 
@@ -805,6 +880,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.0.0-internal-release.10] - 2022-12-09
 
+[0.0.0-internal-release.10]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/8302382ac420eccc069ca891e0bd067ef6140754...8b6e62c700376aa82fab9eab07346207becf7c78
+
 ### Added
 
 - controller: added `waiting_room_state` enum to participants in waiting room ([#245](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/245))
@@ -815,6 +892,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - recording: only delete the current recording state when the actual recorder leaves
 
 ## [0.0.0-internal-release.9] - 2022-12-02
+
+[0.0.0-internal-release.9]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/446647a13f2e163f1be02cefbdaf04e201598444...8302382ac420eccc069ca891e0bd067ef6140754
 
 ### Added
 
@@ -843,6 +922,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.0.0-internal-release.8] - 2022-11-10
 
+[0.0.0-internal-release.8]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/8cbc5ed8d23adc95fa3f8e128bbbe84b50977088...446647a13f2e163f1be02cefbdaf04e201598444
+
 ### Added
 
 - controller: add `time_independent` filter to events GET request ([#155](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/155))
@@ -867,6 +948,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.0.0-internal-release.7] - 2022-10-27
 
+[0.0.0-internal-release.7]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/daf5e7e8279bbe48af4240acf74ecbaf8119eb7a...8cbc5ed8d23adc95fa3f8e128bbbe84b50977088
+
 ### Added
 
 - controller: added metrics for the number of participants with audio or video unmuted
@@ -880,6 +963,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - controller: runner's websocket error messages straightened (`text` field renamed to `error`, values changed to slug style)
 
 ## [0.0.0-internal-release.6] - 2022-10-12
+
+[0.0.0-internal-release.6]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/312226b387dea53679a85c48c095bce769be843b...daf5e7e8279bbe48af4240acf74ecbaf8119eb7a
 
 ### Added
 
@@ -895,6 +980,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chat/ee-chat: increase maximum chat message size to 4096 bytes
 
 ## [0.0.0-internal-release.5] - 2022-09-30
+
+[0.0.0-internal-release.5]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/c3d4da97a1fb32c44956281cc70de6568b3e8045...312226b387dea53679a85c48c095bce769be843b
 
 ### Added
 
@@ -917,6 +1004,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.0.0-internal-release.4] - 2022-08-29
 
+[0.0.0-internal-release.4]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/248350563f6de3bd7dab82c2f183a9764fbe68ee...c3d4da97a1fb32c44956281cc70de6568b3e8045
+
 ### Added
 
 - controller: added metrics for number of created rooms and number of issued email tasks
@@ -933,6 +1022,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - janus-media: stopped forwarding RTP media packets while a client is muted
 
 ## [0.0.0-internal-release.3] - 2022-07-20
+
+[0.0.0-internal-release.3]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/f001cf6e5a3f7d8e0da29cc9d1c6d1ad744a717f...248350563f6de3bd7dab82c2f183a9764fbe68ee
 
 ### Added
 
@@ -951,6 +1042,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - changed the login endpoint to return a bad-request with `invalid_claims` when invalid user claims were provided
 
 ## [0.0.0-internal-release.2] - 2022-06-22
+
+[0.0.0-internal-release.2]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/b64afd058f6cfa16c67cbbad2f98cd0f2be3181d...f001cf6e5a3f7d8e0da29cc9d1c6d1ad744a717f
 
 ### Added
 
@@ -971,68 +1064,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.0.0-internal-release.1] - 2022-06-14
 
+[0.0.0-internal-release.1]: https://git.opentalk.dev/opentalk/backend/services/controller/-/commits/b64afd058f6cfa16c67cbbad2f98cd0f2be3181d
+
 ### Added
 
 - initial release candidate
 
 ---
-
-[0.26.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.25.0...v0.26.0
-
-[0.25.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.21.0...v0.25.0
-
-[0.21.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.20.0...v0.21.0
-
-[0.20.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.19.0...v0.20.0
-
-[0.19.1]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.19.0...v0.19.1
-[0.19.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.18.0...v0.19.0
-
-[0.18.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.17.0...v0.18.0
-
-[0.17.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.16.0...v0.17.0
-
-[0.16.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.15.0...v0.16.0
-
-[0.15.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.14.0...v0.15.0
-
-[0.14.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.13.0...v0.14.0
-
-[0.13.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.12.1...v0.13.0
-
-[0.12.1]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.12.0...v0.12.1
-[0.12.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/da834e3e401c6a9e3e3d03c1d77ff7ff758f6e23...v0.12.0
-
-[0.11.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/61a936a1a88a63804a2b8cfa3d602cb941ef3944...v0.11.0
-
-[0.10.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/5ffe66a5586f6792c809a9abefc6023db2e2687a...v0.10.0
-
-[0.9.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/1ef2d3091f427c258266a968aa2ffdc5116cc0af...v0.9.0
-
-[0.7.1]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.7.0...v0.7.1
-[0.7.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/a79a32ead8943a1e0ecee9b34ecaabdf495b6112...v0.7.0
-
-[0.6.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/32b4c96e3ad319c95baebdfa075d23543b38a8f2...v0.6.0
-
-[0.5.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/2129f33efb8898d46f6dd1b43db43e5cbb929f99...v0.5.0
-
-[0.4.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/60b8af4daa0e0f2ed2ec9589fd1c9da3218baf8c...v0.4.0
-
-[0.3.1]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.3.0...v0.3.1
-[0.3.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/382d6f2d1ccac530431a1fe7f8379ed21769c052...v0.3.0
-
-[0.2.1]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.2.0...v0.2.1
-[0.2.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/97c85ca10d136652bc1656792dcf1a539ea4e7a5...v0.2.0
-
-[0.1.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/8b6e62c700376aa82fab9eab07346207becf7c78...v0.1.0
-
-[0.0.0-internal-release.10]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/8302382ac420eccc069ca891e0bd067ef6140754...8b6e62c700376aa82fab9eab07346207becf7c78
-[0.0.0-internal-release.9]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/446647a13f2e163f1be02cefbdaf04e201598444...8302382ac420eccc069ca891e0bd067ef6140754
-[0.0.0-internal-release.8]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/8cbc5ed8d23adc95fa3f8e128bbbe84b50977088...446647a13f2e163f1be02cefbdaf04e201598444
-[0.0.0-internal-release.7]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/daf5e7e8279bbe48af4240acf74ecbaf8119eb7a...8cbc5ed8d23adc95fa3f8e128bbbe84b50977088
-[0.0.0-internal-release.6]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/312226b387dea53679a85c48c095bce769be843b...daf5e7e8279bbe48af4240acf74ecbaf8119eb7a
-[0.0.0-internal-release.5]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/c3d4da97a1fb32c44956281cc70de6568b3e8045...312226b387dea53679a85c48c095bce769be843b
-[0.0.0-internal-release.4]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/248350563f6de3bd7dab82c2f183a9764fbe68ee...c3d4da97a1fb32c44956281cc70de6568b3e8045
-[0.0.0-internal-release.3]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/f001cf6e5a3f7d8e0da29cc9d1c6d1ad744a717f...248350563f6de3bd7dab82c2f183a9764fbe68ee
-[0.0.0-internal-release.2]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/b64afd058f6cfa16c67cbbad2f98cd0f2be3181d...f001cf6e5a3f7d8e0da29cc9d1c6d1ad744a717f
-[0.0.0-internal-release.1]: https://git.opentalk.dev/opentalk/backend/services/controller/-/commits/b64afd058f6cfa16c67cbbad2f98cd0f2be3181d
