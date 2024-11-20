@@ -998,7 +998,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CodeVerified"
+                $ref: "#/components/schemas/PostInviteVerifyResponseBody"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -2670,18 +2670,6 @@ components:
       $ref: "#/components/schemas/UpdateStreamingTarget"
     ChangeRoomStreamingTargetResponse:
       $ref: "#/components/schemas/RoomStreamingTarget"
-    CodeVerified:
-      type: object
-      description: Verify response body for *POST /invite/verify*
-      required:
-        - room_id
-        - password_required
-      properties:
-        password_required:
-          type: boolean
-          description: If password is required
-        room_id:
-          $ref: "#/components/schemas/RoomId"
     CursorLink:
       type: string
       example: "<https://api.example.org/resource?after=urlencodednextpagetoken>; rel='next'"
@@ -4036,6 +4024,18 @@ components:
       properties:
         invite_code:
           $ref: "#/components/schemas/InviteCode"
+    PostInviteVerifyResponseBody:
+      type: object
+      description: Verify response body for *POST /invite/verify*
+      required:
+        - room_id
+        - password_required
+      properties:
+        password_required:
+          type: boolean
+          description: If password is required
+        room_id:
+          $ref: "#/components/schemas/RoomId"
     PostLoginResponseBody:
       type: object
       description: "Body of the response to a *POST* request on `/auth/login`"

@@ -12,7 +12,11 @@ use crate::imports::*;
 #[cfg_attr(
     feature = "frontend",
     derive(HttpRequest),
-    http_request(method = "POST", response = super::CodeVerified, path = "/v1/invite/verify")
+    http_request(
+        method = "POST",
+        response = opentalk_types_api_v1::rooms::by_room_id::invites::PostInviteVerifyResponseBody,
+        path = "/v1/invite/verify"
+    )
 )]
 pub struct PostInviteVerifyRequest(
     #[cfg_attr(feature = "frontend", http_request(body))] pub PostInviteVerifyRequestBody,

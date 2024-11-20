@@ -16,12 +16,13 @@ use opentalk_db_storage::{
     rooms::Room,
     users::User,
 };
-use opentalk_types::api::{error::ApiError, v1::invites::CodeVerified};
+use opentalk_types::api::error::ApiError;
 use opentalk_types_api_v1::{
     pagination::PagePaginationQuery,
     rooms::by_room_id::invites::{
         GetRoomsInvitesResponseBody, InviteResource, PostInviteRequestBody,
-        PostInviteVerifyRequestBody, PutInviteRequestBody, RoomIdAndInviteCode,
+        PostInviteVerifyRequestBody, PostInviteVerifyResponseBody, PutInviteRequestBody,
+        RoomIdAndInviteCode,
     },
 };
 use opentalk_types_common::rooms::RoomId;
@@ -403,7 +404,7 @@ pub async fn delete_invite(
         (
             status = StatusCode::OK,
             description = "Invite is valid, the response body tells the room id",
-            body = CodeVerified,
+            body = PostInviteVerifyResponseBody,
         ),
         (
             status = StatusCode::UNAUTHORIZED,
@@ -428,7 +429,7 @@ pub async fn delete_invite(
 pub async fn verify_invite_code(
     db: Data<Db>,
     data: Json<PostInviteVerifyRequestBody>,
-) -> DefaultApiResult<CodeVerified> {
+) -> DefaultApiResult<PostInviteVerifyResponseBody> {
     let data = data.into_inner();
 
     let mut conn = db.get_conn().await?;
@@ -443,7 +444,7 @@ pub async fn verify_invite_code(
                 return Err(ApiError::not_found());
             }
         }
-        Ok(ApiResponse::new(CodeVerified {
+        Ok(ApiResponse::new(PostInviteVerifyResponseBody {
             room_id: invite.room,
             password_required: room.password.is_some(),
         }))
