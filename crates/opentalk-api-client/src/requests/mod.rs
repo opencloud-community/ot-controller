@@ -5,3 +5,4 @@
 //! Definitions of requests that can be used with the OpenTalk API client.
 
 pub mod auth;
+pub mod rooms;

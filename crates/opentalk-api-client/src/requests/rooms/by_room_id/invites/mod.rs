@@ -2,10 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! This module contains types that are used for OpenTalk API V1 invites endpoints.
-
-#[allow(unused_imports)]
-use crate::imports::*;
+//! Requests for the API endpoints under `/rooms/{room_id}/invites`.
 
 mod post_invite_verify_request;
 
