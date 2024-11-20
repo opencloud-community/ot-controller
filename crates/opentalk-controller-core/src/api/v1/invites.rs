@@ -16,15 +16,12 @@ use opentalk_db_storage::{
     rooms::Room,
     users::User,
 };
-use opentalk_types::api::{
-    error::ApiError,
-    v1::invites::{CodeVerified, RoomIdAndInviteCode},
-};
+use opentalk_types::api::{error::ApiError, v1::invites::CodeVerified};
 use opentalk_types_api_v1::{
     pagination::PagePaginationQuery,
     rooms::by_room_id::invites::{
         GetRoomsInvitesResponseBody, InviteResource, PostInviteRequestBody,
-        PostInviteVerifyRequestBody, PutInviteRequestBody,
+        PostInviteVerifyRequestBody, PutInviteRequestBody, RoomIdAndInviteCode,
     },
 };
 use opentalk_types_common::rooms::RoomId;

@@ -4,12 +4,9 @@
 
 use opentalk_types_common::rooms::{invite_codes::InviteCode, RoomId};
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// Path for *GET /rooms/{room_id}/invites/{invite_code}*
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::IntoParams))]
 pub struct RoomIdAndInviteCode {
     /// The room id for the invite
