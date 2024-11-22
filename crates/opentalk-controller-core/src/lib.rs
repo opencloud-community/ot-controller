@@ -1153,6 +1153,7 @@ fn setup_rustls(tls: &settings::HttpTls) -> Result<rustls::ServerConfig> {
 /// Check for deprecated settings, and print warnings if any are found.
 fn check_for_deprecated_settings(settings: &Settings) -> Result<()> {
     use owo_colors::OwoColorize as _;
+
     if settings.extensions.contains_key("room_server") {
         anstream::eprintln!(
             "{}: Found an obsolete {room_server} (janus) configuration section.\n\
@@ -1173,6 +1174,17 @@ fn check_for_deprecated_settings(settings: &Settings) -> Result<()> {
             keycloak = "keycloak".bold(),
             oidc = "oidc".bold(),
             user_search = "user_search".bold(),
+        );
+    }
+
+    if settings.turn.is_some() {
+        anstream::eprintln!(
+            "{}: Found an obsolete {turn} server configuration.\n\
+             {}: The {turn} config section as well as the related {endpoint} endpoint will be removed in the future.",
+            "DEPRECATION WARNING".yellow().bold(),
+            "NOTE".green(),
+            turn = "turn".bold(),
+            endpoint = "/turn".bold()
         );
     }
 

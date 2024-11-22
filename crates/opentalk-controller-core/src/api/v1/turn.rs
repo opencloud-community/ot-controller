@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! TURN related API structs and Endpoints
+#![allow(deprecated)]
+
 use std::str::FromStr;
 
 use actix_http::StatusCode;
@@ -71,6 +73,7 @@ use crate::{
     ),
 )]
 #[get("/turn")]
+#[deprecated = "This endpoint and related turn settings will be removed in the future"]
 pub async fn get(
     settings: SharedSettingsActix,
     db: Data<Db>,
