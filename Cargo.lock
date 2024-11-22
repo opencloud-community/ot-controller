@@ -1276,6 +1276,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "cargo_metadata"
+version = "0.19.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "afc309ed89476c8957c50fb818f56fe894db857866c3e163335faa91dc34eb85"
+dependencies = [
+ "camino",
+ "cargo-platform",
+ "semver",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+]
+
+[[package]]
 name = "casbin"
 version = "2.0.9"
 source = "git+https://github.com/kbalt/casbin-rs.git?rev=fddb52d61385913727e24a5c7337eed489cb0d56#fddb52d61385913727e24a5c7337eed489cb0d56"
@@ -8236,7 +8250,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "349ed9e45296a581f455bc18039878f409992999bc1d5da12a6800eb18c8752f"
 dependencies = [
  "anyhow",
- "cargo_metadata",
+ "cargo_metadata 0.18.1",
  "derive_builder",
  "regex",
  "rustc_version",
@@ -8776,7 +8790,7 @@ checksum = "66fee0b777b0f5ac1c69bb06d361268faafa61cd4682ae064a171c16c433e9e4"
 name = "xtask"
 version = "0.1.0"
 dependencies = [
- "cargo_metadata",
+ "cargo_metadata 0.19.0",
  "clap",
  "devx-cmd",
  "diesel",
