@@ -72,7 +72,6 @@ allow = [
   "MPL-2.0",
   "OpenSSL",
   "Unicode-3.0",
-  "Unicode-DFS-2016",
   "Zlib",
 ]
 # The confidence threshold for detecting a license from license text.
@@ -256,7 +255,6 @@ skip = [
   { name = "http-body", version = "0.4" },
   { name = "hyper", version = "0.14" },
   { name = "hyper-rustls", version = "0.24" },
-  { name = "idna", version = "0.3" },
   { name = "idna", version = "0.5" },
   { name = "indexmap", version = "1" },
   { name = "itertools", version = "0.10" },
@@ -286,6 +284,8 @@ skip = [
   { name = "spki", version = "0.6" },
   { name = "syn", version = "1" },
   { name = "sync_wrapper", version = "0.1" },
+  { name = "thiserror", version = "1" },
+  { name = "thiserror-impl", version = "1" },
   { name = "tokio-rustls", version = "0.24" },
   { name = "tower", version = "0.4" },
 ]
