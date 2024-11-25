@@ -4,7 +4,6 @@
 
 //! This module contains types that are used for OpenTalk API V1 rooms endpoints.
 
-mod get_room_event_request;
 mod get_room_event_response;
 mod get_rooms_response;
 mod patch_rooms_request_body;
@@ -20,7 +19,6 @@ mod start_room_error;
 pub mod sip_config_resource;
 pub mod streaming_targets;
 
-pub use get_room_event_request::GetRoomEventRequest;
 pub use get_room_event_response::GetRoomEventResponse;
 pub use get_rooms_response::GetRoomsResponse;
 pub use patch_rooms_request_body::PatchRoomsRequestBody;
