@@ -93,7 +93,7 @@ serde_json.workspace = true
 snafu.workspace = true
 strum.workspace = true
 sysinfo = { version = "0.32", default-features = false, features = ["system"] }
-tabled = "0.16"
+tabled = "0.17"
 tokio = { workspace = true, features = ["signal"] }
 tokio-stream.workspace = true
 tracing.workspace = true
