@@ -35,12 +35,12 @@ use opentalk_signaling_core::{ExchangeHandle, ObjectStorage, Participant, Volati
 use opentalk_types::api::{
     error::{ApiError, StandardErrorBody, ValidationErrorEntry, ERROR_CODE_INVALID_VALUE},
     v1::rooms::{
-        DeleteRoomQuery, GetRoomEventResponse, GetRoomsResponse, PatchRoomsRequestBody,
-        PostRoomsRequestBody, PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody,
-        RoomResource, RoomsStartResponse, StartRoomError,
+        GetRoomEventResponse, GetRoomsResponse, PatchRoomsRequestBody, PostRoomsRequestBody,
+        PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody, RoomResource,
+        RoomsStartResponse, StartRoomError,
     },
 };
-use opentalk_types_api_v1::pagination::PagePaginationQuery;
+use opentalk_types_api_v1::{pagination::PagePaginationQuery, rooms::by_room_id::DeleteRoomQuery};
 use opentalk_types_common::{
     features,
     rooms::{invite_codes::InviteCode, RoomId},

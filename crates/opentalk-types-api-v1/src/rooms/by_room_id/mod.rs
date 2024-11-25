@@ -6,3 +6,7 @@
 
 pub mod assets;
 pub mod invites;
+
+mod delete_room_query;
+
+pub use delete_room_query::DeleteRoomQuery;
