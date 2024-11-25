@@ -35,12 +35,15 @@ use opentalk_signaling_core::{ExchangeHandle, ObjectStorage, Participant, Volati
 use opentalk_types::api::{
     error::{ApiError, StandardErrorBody, ValidationErrorEntry, ERROR_CODE_INVALID_VALUE},
     v1::rooms::{
-        GetRoomEventResponse, GetRoomsResponse, PatchRoomsRequestBody, PostRoomsRequestBody,
+        GetRoomsResponse, PatchRoomsRequestBody, PostRoomsRequestBody,
         PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody, RoomResource,
         RoomsStartResponse, StartRoomError,
     },
 };
-use opentalk_types_api_v1::{pagination::PagePaginationQuery, rooms::by_room_id::DeleteRoomQuery};
+use opentalk_types_api_v1::{
+    pagination::PagePaginationQuery,
+    rooms::by_room_id::{DeleteRoomQuery, GetRoomEventResponseBody},
+};
 use opentalk_types_common::{
     features,
     rooms::{invite_codes::InviteCode, RoomId},
@@ -583,7 +586,7 @@ pub async fn get_room_event(
     settings: SharedSettingsActix,
     db: Data<Db>,
     room_id: Path<RoomId>,
-) -> Result<Json<GetRoomEventResponse>, ApiError> {
+) -> Result<Json<GetRoomEventResponseBody>, ApiError> {
     let settings = settings.load();
     let room_id = room_id.into_inner();
 
@@ -599,7 +602,7 @@ pub async fn get_room_event(
             let event_info =
                 build_event_info(&mut conn, call_in_tel, room_id, room.e2e_encryption, event)
                     .await?;
-            Ok(Json(GetRoomEventResponse(event_info)))
+            Ok(Json(GetRoomEventResponseBody(event_info)))
         }
         None => Err(ApiError::not_found()),
     }

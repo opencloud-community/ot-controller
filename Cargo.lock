@@ -4362,7 +4362,6 @@ dependencies = [
  "http 1.1.0",
  "http-request-derive",
  "opentalk-client-shared",
- "opentalk-types",
  "opentalk-types-api-v1",
  "opentalk-types-common",
  "reqwest 0.12.9",

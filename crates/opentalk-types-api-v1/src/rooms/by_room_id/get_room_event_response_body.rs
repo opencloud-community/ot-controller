@@ -4,16 +4,13 @@
 
 use opentalk_types_common::{events::EventInfo, utils::ExampleData};
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// The JSON body returned by the `/rooms/<room_id>/event` endpoint
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct GetRoomEventResponse(pub EventInfo);
+pub struct GetRoomEventResponseBody(pub EventInfo);
 
-impl ExampleData for GetRoomEventResponse {
+impl ExampleData for GetRoomEventResponseBody {
     fn example_data() -> Self {
         Self(EventInfo::example_data())
     }
