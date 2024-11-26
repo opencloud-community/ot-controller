@@ -5,29 +5,13 @@
 //! This module contains types that are used for OpenTalk API V1 streaming target endpoints for specific rooms.
 
 use opentalk_types_common::{
-    streaming::{RoomStreamingTarget, RoomStreamingTargetResource, StreamingTarget},
+    streaming::{RoomStreamingTarget, RoomStreamingTargetResource},
     utils::ExampleData,
 };
 
 use crate::api::v1::streaming_targets::UpdateStreamingTarget;
 #[allow(unused_imports)]
 use crate::imports::*;
-
-/// The body of a *POST /rooms/{room_id}/streaming_targets* request
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(
-    feature = "utoipa",
-    derive(utoipa::ToSchema),
-    schema(example = json!(PostRoomStreamingTargetRequest::example_data()))
-)]
-pub struct PostRoomStreamingTargetRequest(pub StreamingTarget);
-
-impl ExampleData for PostRoomStreamingTargetRequest {
-    fn example_data() -> Self {
-        Self(StreamingTarget::example_data())
-    }
-}
 
 /// The body of a *POST /rooms/{room_id}/streaming_targets* response
 #[derive(Clone, Debug, PartialEq, Eq)]

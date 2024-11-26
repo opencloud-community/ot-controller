@@ -23,8 +23,7 @@ use opentalk_types::api::{
     v1::{
         rooms::streaming_targets::{
             ChangeRoomStreamingTargetRequest, ChangeRoomStreamingTargetResponse,
-            GetRoomStreamingTargetResponse, PostRoomStreamingTargetRequest,
-            PostRoomStreamingTargetResponse,
+            GetRoomStreamingTargetResponse, PostRoomStreamingTargetResponse,
         },
         streaming_targets::RoomAndStreamingTargetId,
     },
@@ -33,7 +32,9 @@ use opentalk_types_api_v1::{
     events::StreamingTargetOptionsQuery,
     pagination::PagePaginationQuery,
     rooms::{
-        by_room_id::streaming_targets::GetRoomStreamingTargetsResponseBody,
+        by_room_id::streaming_targets::{
+            GetRoomStreamingTargetsResponseBody, PostRoomStreamingTargetRequestBody,
+        },
         streaming_targets::UpdateStreamingTargetKind,
     },
 };
@@ -127,7 +128,7 @@ pub async fn get_streaming_targets(
         StreamingTargetOptionsQuery,
         ("room_id" = RoomId, description = "The id of the room"),
     ),
-    request_body = PostRoomStreamingTargetRequest,
+    request_body = PostRoomStreamingTargetRequestBody,
     responses(
         (
             status = StatusCode::OK,
@@ -166,7 +167,7 @@ pub async fn post_streaming_target(
     current_user: ReqData<User>,
     room_id: Path<RoomId>,
     query: Query<StreamingTargetOptionsQuery>,
-    data: Json<PostRoomStreamingTargetRequest>,
+    data: Json<PostRoomStreamingTargetRequestBody>,
 ) -> DefaultApiResult<PostRoomStreamingTargetResponse> {
     let settings = settings.load_full();
     let mail_service = mail_service.into_inner();

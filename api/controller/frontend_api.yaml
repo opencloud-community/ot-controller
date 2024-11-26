@@ -1908,7 +1908,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PostRoomStreamingTargetRequest"
+              $ref: "#/components/schemas/PostRoomStreamingTargetRequestBody"
         required: true
       responses:
         "200":
@@ -4048,7 +4048,7 @@ components:
             type: string
           description: Permissions is a set of strings that each define a permission a user has.
           uniqueItems: true
-    PostRoomStreamingTargetRequest:
+    PostRoomStreamingTargetRequestBody:
       $ref: "#/components/schemas/StreamingTarget"
     PostRoomStreamingTargetResponse:
       $ref: "#/components/schemas/RoomStreamingTarget"
