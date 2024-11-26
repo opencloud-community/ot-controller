@@ -11,7 +11,6 @@ mod post_rooms_start_invited_request;
 mod post_rooms_start_invited_request_body;
 mod post_rooms_start_request;
 mod post_rooms_start_request_body;
-mod room_resource;
 mod rooms_start_response;
 mod start_room_error;
 
@@ -25,6 +24,5 @@ pub use post_rooms_start_invited_request::PostRoomsStartInvitedRequest;
 pub use post_rooms_start_invited_request_body::PostRoomsStartInvitedRequestBody;
 pub use post_rooms_start_request::PostRoomsStartRequest;
 pub use post_rooms_start_request_body::PostRoomsStartRequestBody;
-pub use room_resource::RoomResource;
 pub use rooms_start_response::RoomsStartResponse;
 pub use start_room_error::StartRoomError;

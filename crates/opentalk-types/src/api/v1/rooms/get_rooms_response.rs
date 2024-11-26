@@ -2,7 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use super::RoomResource;
+use opentalk_types_api_v1::rooms::RoomResource;
+
 #[allow(unused_imports)]
 use crate::imports::*;
 

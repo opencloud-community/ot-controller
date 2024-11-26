@@ -2,22 +2,20 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_api_v1::users::PublicUserProfile;
 use opentalk_types_common::{
     rooms::{RoomId, RoomPassword},
     time::Timestamp,
     utils::ExampleData,
 };
 
-#[allow(unused_imports)]
-use crate::imports::*;
+use crate::users::PublicUserProfile;
 
 /// A Room
 ///
 /// Contains all room information. Is only be accessible to the owner and users with
 /// appropriate permissions.
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(
     feature = "utoipa",
     derive(utoipa::ToSchema),

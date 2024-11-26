@@ -6,3 +6,7 @@
 
 pub mod by_room_id;
 pub mod streaming_targets;
+
+mod room_resource;
+
+pub use room_resource::RoomResource;

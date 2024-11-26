@@ -36,13 +36,16 @@ use opentalk_types::api::{
     error::{ApiError, StandardErrorBody, ValidationErrorEntry, ERROR_CODE_INVALID_VALUE},
     v1::rooms::{
         GetRoomsResponse, PatchRoomsRequestBody, PostRoomsRequestBody,
-        PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody, RoomResource,
-        RoomsStartResponse, StartRoomError,
+        PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody, RoomsStartResponse,
+        StartRoomError,
     },
 };
 use opentalk_types_api_v1::{
     pagination::PagePaginationQuery,
-    rooms::by_room_id::{DeleteRoomQuery, GetRoomEventResponseBody},
+    rooms::{
+        by_room_id::{DeleteRoomQuery, GetRoomEventResponseBody},
+        RoomResource,
+    },
 };
 use opentalk_types_common::{
     features,
