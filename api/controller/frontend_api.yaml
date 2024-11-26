@@ -1916,7 +1916,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PostRoomStreamingTargetResponse"
+                $ref: "#/components/schemas/PostRoomStreamingTargetResponseBody"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -4050,7 +4050,7 @@ components:
           uniqueItems: true
     PostRoomStreamingTargetRequestBody:
       $ref: "#/components/schemas/StreamingTarget"
-    PostRoomStreamingTargetResponse:
+    PostRoomStreamingTargetResponseBody:
       $ref: "#/components/schemas/RoomStreamingTarget"
     PostRoomsRequestBody:
       type: object

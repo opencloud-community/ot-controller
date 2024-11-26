@@ -23,7 +23,7 @@ use opentalk_types::api::{
     v1::{
         rooms::streaming_targets::{
             ChangeRoomStreamingTargetRequest, ChangeRoomStreamingTargetResponse,
-            GetRoomStreamingTargetResponse, PostRoomStreamingTargetResponse,
+            GetRoomStreamingTargetResponse,
         },
         streaming_targets::RoomAndStreamingTargetId,
     },
@@ -34,6 +34,7 @@ use opentalk_types_api_v1::{
     rooms::{
         by_room_id::streaming_targets::{
             GetRoomStreamingTargetsResponseBody, PostRoomStreamingTargetRequestBody,
+            PostRoomStreamingTargetResponseBody,
         },
         streaming_targets::UpdateStreamingTargetKind,
     },
@@ -133,7 +134,7 @@ pub async fn get_streaming_targets(
         (
             status = StatusCode::OK,
             description = "Successfully create a new streaming target",
-            body = PostRoomStreamingTargetResponse,
+            body = PostRoomStreamingTargetResponseBody,
         ),
         (
             status = StatusCode::UNAUTHORIZED,
@@ -168,7 +169,7 @@ pub async fn post_streaming_target(
     room_id: Path<RoomId>,
     query: Query<StreamingTargetOptionsQuery>,
     data: Json<PostRoomStreamingTargetRequestBody>,
-) -> DefaultApiResult<PostRoomStreamingTargetResponse> {
+) -> DefaultApiResult<PostRoomStreamingTargetResponseBody> {
     let settings = settings.load_full();
     let mail_service = mail_service.into_inner();
     let current_tenant = current_tenant.into_inner();
@@ -197,7 +198,7 @@ pub async fn post_streaming_target(
         .await?;
     }
 
-    Ok(ApiResponse::new(PostRoomStreamingTargetResponse(
+    Ok(ApiResponse::new(PostRoomStreamingTargetResponseBody(
         room_streaming_target,
     )))
 }
