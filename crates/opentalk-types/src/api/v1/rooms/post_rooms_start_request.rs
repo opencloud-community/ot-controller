@@ -4,7 +4,6 @@
 
 use opentalk_types_common::rooms::RoomId;
 
-use super::PostRoomsStartRequestBody;
 #[allow(unused_imports)]
 use crate::imports::*;
 
@@ -24,5 +23,5 @@ pub struct PostRoomsStartRequest {
     pub room_id: RoomId,
 
     /// The body of the request
-    pub body: PostRoomsStartRequestBody,
+    pub body: opentalk_types_api_v1::rooms::by_room_id::PostRoomsStartRequestBody,
 }

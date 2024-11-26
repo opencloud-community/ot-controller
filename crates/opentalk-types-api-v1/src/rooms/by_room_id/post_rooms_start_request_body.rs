@@ -4,12 +4,9 @@
 
 use opentalk_types_common::{auth::ResumptionToken, rooms::BreakoutRoomId, utils::ExampleData};
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// The JSON body expected when making a *POST /rooms/{room_id}/start*
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(
     feature = "utoipa",
     derive(utoipa::ToSchema),

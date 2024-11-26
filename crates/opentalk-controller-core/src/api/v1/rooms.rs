@@ -34,14 +34,14 @@ use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage, Participant, VolatileStorage};
 use opentalk_types::api::{
     error::{ApiError, StandardErrorBody, ValidationErrorEntry, ERROR_CODE_INVALID_VALUE},
-    v1::rooms::{PostRoomsStartRequestBody, RoomsStartResponse, StartRoomError},
+    v1::rooms::{RoomsStartResponse, StartRoomError},
 };
 use opentalk_types_api_v1::{
     pagination::PagePaginationQuery,
     rooms::{
         by_room_id::{
             DeleteRoomQuery, GetRoomEventResponseBody, PatchRoomsRequestBody,
-            PostRoomsStartInvitedRequestBody,
+            PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody,
         },
         GetRoomsResponseBody, PostRoomsRequestBody, RoomResource,
     },
