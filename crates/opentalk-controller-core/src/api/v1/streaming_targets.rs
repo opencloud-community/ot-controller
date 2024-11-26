@@ -23,7 +23,6 @@ use opentalk_types::api::{
     v1::{
         rooms::streaming_targets::{
             ChangeRoomStreamingTargetRequest, ChangeRoomStreamingTargetResponse,
-            GetRoomStreamingTargetResponse,
         },
         streaming_targets::RoomAndStreamingTargetId,
     },
@@ -33,8 +32,8 @@ use opentalk_types_api_v1::{
     pagination::PagePaginationQuery,
     rooms::{
         by_room_id::streaming_targets::{
-            GetRoomStreamingTargetsResponseBody, PostRoomStreamingTargetRequestBody,
-            PostRoomStreamingTargetResponseBody,
+            GetRoomStreamingTargetResponseBody, GetRoomStreamingTargetsResponseBody,
+            PostRoomStreamingTargetRequestBody, PostRoomStreamingTargetResponseBody,
         },
         streaming_targets::UpdateStreamingTargetKind,
     },
@@ -212,7 +211,7 @@ pub async fn post_streaming_target(
         (
             status = StatusCode::OK,
             description = "The streaming target has been successfully returned",
-            body = GetRoomStreamingTargetResponse,
+            body = GetRoomStreamingTargetResponseBody,
         ),
         (
             status = StatusCode::UNAUTHORIZED,
@@ -240,7 +239,7 @@ pub async fn get_streaming_target(
     db: Data<Db>,
     current_user: ReqData<User>,
     path_params: Path<RoomAndStreamingTargetId>,
-) -> DefaultApiResult<GetRoomStreamingTargetResponse> {
+) -> DefaultApiResult<GetRoomStreamingTargetResponseBody> {
     let mut conn = db.get_conn().await?;
     let current_user_id = current_user.into_inner().id;
     let RoomAndStreamingTargetId {
@@ -281,7 +280,7 @@ pub async fn get_streaming_target(
     let with_streaming_key = room.created_by == current_user_id;
     let room_streaming_target_resource = build_resource(room_streaming_target, with_streaming_key);
 
-    Ok(ApiResponse::new(GetRoomStreamingTargetResponse(
+    Ok(ApiResponse::new(GetRoomStreamingTargetResponseBody(
         room_streaming_target_resource,
     )))
 }

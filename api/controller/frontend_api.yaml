@@ -1953,7 +1953,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetRoomStreamingTargetResponse"
+                $ref: "#/components/schemas/GetRoomStreamingTargetResponseBody"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -3535,7 +3535,7 @@ components:
       properties:
         oidc:
           $ref: "#/components/schemas/OidcProvider"
-    GetRoomStreamingTargetResponse:
+    GetRoomStreamingTargetResponseBody:
       $ref: "#/components/schemas/RoomStreamingTargetResource"
     GetRoomStreamingTargetsResponseBody:
       type: array
