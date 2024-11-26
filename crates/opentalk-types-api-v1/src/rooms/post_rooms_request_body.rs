@@ -4,12 +4,9 @@
 
 use opentalk_types_common::rooms::RoomPassword;
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// API request parameters to create a new room
 #[derive(Clone, Debug)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct PostRoomsRequestBody {
     /// The password to the room, if any
