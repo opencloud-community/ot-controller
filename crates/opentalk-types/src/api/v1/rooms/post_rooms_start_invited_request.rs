@@ -23,5 +23,5 @@ pub struct PostRoomsStartInvitedRequest {
     pub room_id: RoomId,
 
     /// The body of the request
-    pub body: super::PostRoomsStartInvitedRequestBody,
+    pub body: opentalk_types_api_v1::rooms::by_room_id::PostRoomsStartInvitedRequestBody,
 }
