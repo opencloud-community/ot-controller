@@ -1590,7 +1590,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PutSipConfig"
+              $ref: "#/components/schemas/PutSipConfigRequestBody"
         required: true
       responses:
         "200":
@@ -4238,7 +4238,7 @@ components:
           nullable: true
       example:
         expiration: "2024-06-20T14:16:19Z"
-    PutSipConfig:
+    PutSipConfigRequestBody:
       type: object
       description: "Body for the `PUT /rooms/{room_id}/sip` endpoint"
       properties:

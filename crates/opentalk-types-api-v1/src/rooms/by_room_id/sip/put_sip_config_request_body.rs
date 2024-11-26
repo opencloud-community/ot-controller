@@ -6,18 +6,15 @@
 
 use opentalk_types_common::{call_in::CallInPassword, utils::ExampleData};
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// Body for the `PUT /rooms/{room_id}/sip` endpoint
 #[derive(Debug, Clone, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[cfg_attr(
     feature = "utoipa",
     derive(utoipa::ToSchema),
-    schema(example = json!(PutSipConfig::example_data())),
+    schema(example = json!(PutSipConfigRequestBody::example_data())),
 )]
-pub struct PutSipConfig {
+pub struct PutSipConfigRequestBody {
     /// Numeric code required for entering the room. If not set explicitly on
     /// creation, this will be set to a randomly generated number.
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
@@ -37,7 +34,7 @@ pub struct PutSipConfig {
     pub lobby: Option<bool>,
 }
 
-impl ExampleData for PutSipConfig {
+impl ExampleData for PutSipConfigRequestBody {
     fn example_data() -> Self {
         Self {
             password: Some(CallInPassword::example_data()),
@@ -51,20 +48,21 @@ mod serde_impls {
     use opentalk_types_common::call_in::CallInPassword;
     use serde::{de::Error, Deserialize, Deserializer};
 
-    impl<'de> Deserialize<'de> for super::PutSipConfig {
+    impl<'de> Deserialize<'de> for super::PutSipConfigRequestBody {
         fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
         where
             D: Deserializer<'de>,
         {
             #[derive(Deserialize)]
-            struct PutSipConfig {
+            struct PutSipConfigRequestBody {
                 #[serde(default)]
                 password: Option<CallInPassword>,
                 #[serde(default)]
                 lobby: Option<bool>,
             }
 
-            let PutSipConfig { password, lobby } = PutSipConfig::deserialize(deserializer)?;
+            let PutSipConfigRequestBody { password, lobby } =
+                PutSipConfigRequestBody::deserialize(deserializer)?;
 
             if password.is_none() && lobby.is_none() {
                 Err(D::Error::invalid_value(
@@ -72,7 +70,7 @@ mod serde_impls {
                     &"object with either password or lobby value which is non-null",
                 ))
             } else {
-                Ok(super::PutSipConfig { password, lobby })
+                Ok(super::PutSipConfigRequestBody { password, lobby })
             }
         }
     }

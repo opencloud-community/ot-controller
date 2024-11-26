@@ -12,8 +12,8 @@ use opentalk_db_storage::{
     rooms::Room,
     sip_configs::{NewSipConfig, SipConfig, UpdateSipConfig},
 };
-use opentalk_types::api::{error::ApiError, v1::rooms::sip_config_resource::PutSipConfig};
-use opentalk_types_api_v1::rooms::by_room_id::sip::SipConfigResource;
+use opentalk_types::api::error::ApiError;
+use opentalk_types_api_v1::rooms::by_room_id::sip::{PutSipConfigRequestBody, SipConfigResource};
 use opentalk_types_common::{features, rooms::RoomId};
 
 use super::util::require_feature;
@@ -93,7 +93,7 @@ pub async fn get(
     params(
         ("room_id" = RoomId, description = "The id of the room"),
     ),
-    request_body = PutSipConfig,
+    request_body = PutSipConfigRequestBody,
     responses(
         (
             status = StatusCode::OK,
@@ -131,7 +131,7 @@ pub async fn put(
     settings: SharedSettingsActix,
     db: Data<Db>,
     room_id: Path<RoomId>,
-    modify_sip_config: Json<PutSipConfig>,
+    modify_sip_config: Json<PutSipConfigRequestBody>,
 ) -> Result<HttpResponse, ApiError> {
     let settings = settings.load();
     let room_id = room_id.into_inner();
