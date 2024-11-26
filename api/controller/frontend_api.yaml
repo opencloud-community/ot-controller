@@ -1671,7 +1671,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RoomsStartResponse"
+                $ref: "#/components/schemas/RoomsStartResponseBody"
         "400":
           description: "Either no breakout rooms were found for this room, or the breakout room id is invalid"
           content:
@@ -1766,7 +1766,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RoomsStartResponse"
+                $ref: "#/components/schemas/RoomsStartResponseBody"
         "400":
           description: |-
             The provided ID token is malformed or contains
@@ -4365,7 +4365,7 @@ components:
           kind: record
           namespace: recording
           size: 98765432
-    RoomsStartResponse:
+    RoomsStartResponseBody:
       type: object
       description: The JSON body returned from the start endpoints supporting session resumption
       required:

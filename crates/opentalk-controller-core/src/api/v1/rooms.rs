@@ -34,14 +34,14 @@ use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage, Participant, VolatileStorage};
 use opentalk_types::api::{
     error::{ApiError, StandardErrorBody, ValidationErrorEntry, ERROR_CODE_INVALID_VALUE},
-    v1::rooms::{RoomsStartResponse, StartRoomError},
+    v1::rooms::StartRoomError,
 };
 use opentalk_types_api_v1::{
     pagination::PagePaginationQuery,
     rooms::{
         by_room_id::{
             DeleteRoomQuery, GetRoomEventResponseBody, PatchRoomsRequestBody,
-            PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody,
+            PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody, RoomsStartResponseBody,
         },
         GetRoomsResponseBody, PostRoomsRequestBody, RoomResource,
     },
@@ -624,7 +624,7 @@ pub async fn get_room_event(
         (
             status = StatusCode::OK,
             description = "Returns the information for joining the room",
-            body = RoomsStartResponse,
+            body = RoomsStartResponseBody,
         ),
         (
             status = StatusCode::UNAUTHORIZED,
@@ -680,7 +680,7 @@ pub async fn start(
     current_user: ReqData<User>,
     room_id: Path<RoomId>,
     request: Json<PostRoomsStartRequestBody>,
-) -> Result<Json<RoomsStartResponse>, ApiError> {
+) -> Result<Json<RoomsStartResponseBody>, ApiError> {
     let request = request.into_inner();
     let room_id = room_id.into_inner();
 
@@ -723,7 +723,7 @@ pub async fn start(
     )
     .await?;
 
-    Ok(Json(RoomsStartResponse { ticket, resumption }))
+    Ok(Json(RoomsStartResponseBody { ticket, resumption }))
 }
 
 /// Start a signaling session for an invitation code
@@ -743,7 +743,7 @@ pub async fn start(
         (
             status = StatusCode::OK,
             description = "Response body includes the information needed to connect to the signaling endpoint",
-            body = RoomsStartResponse,
+            body = RoomsStartResponseBody,
         ),
         (
             status = StatusCode::BAD_REQUEST,
@@ -835,7 +835,7 @@ pub async fn start_invited(
     volatile: Data<VolatileStorage>,
     room_id: Path<RoomId>,
     request: Json<PostRoomsStartInvitedRequestBody>,
-) -> Result<ApiResponse<RoomsStartResponse>, ApiError> {
+) -> Result<ApiResponse<RoomsStartResponseBody>, ApiError> {
     let request = request.into_inner();
     let room_id = room_id.into_inner();
 
@@ -900,7 +900,10 @@ pub async fn start_invited(
     )
     .await?;
 
-    Ok(ApiResponse::new(RoomsStartResponse { ticket, resumption }))
+    Ok(ApiResponse::new(RoomsStartResponseBody {
+        ticket,
+        resumption,
+    }))
 }
 
 pub trait RoomsPoliciesBuilderExt {

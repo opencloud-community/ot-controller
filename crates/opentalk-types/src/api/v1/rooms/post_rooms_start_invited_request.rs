@@ -14,7 +14,7 @@ use crate::imports::*;
     derive(HttpRequest),
     http_request(
         method = "POST",
-        response = super::RoomsStartResponse,
+        response = opentalk_types_api_v1::rooms::by_room_id::RoomsStartResponseBody,
         path = "/rooms/{room_id}/start_invited"
     )
 )]
