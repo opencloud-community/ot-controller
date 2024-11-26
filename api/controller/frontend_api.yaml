@@ -1043,7 +1043,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetRoomsResponse"
+                $ref: "#/components/schemas/GetRoomsResponseBody"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "500":
@@ -3577,7 +3577,7 @@ components:
             id: 00000000-0000-0000-0000-0000000a11c3
             lastname: Adams
             title: ""
-    GetRoomsResponse:
+    GetRoomsResponseBody:
       type: array
       items:
         $ref: "#/components/schemas/RoomResource"

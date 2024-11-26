@@ -7,6 +7,8 @@
 pub mod by_room_id;
 pub mod streaming_targets;
 
+mod get_rooms_response_body;
 mod room_resource;
 
+pub use get_rooms_response_body::GetRoomsResponseBody;
 pub use room_resource::RoomResource;

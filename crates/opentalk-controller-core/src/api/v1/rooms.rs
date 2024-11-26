@@ -35,16 +35,15 @@ use opentalk_signaling_core::{ExchangeHandle, ObjectStorage, Participant, Volati
 use opentalk_types::api::{
     error::{ApiError, StandardErrorBody, ValidationErrorEntry, ERROR_CODE_INVALID_VALUE},
     v1::rooms::{
-        GetRoomsResponse, PatchRoomsRequestBody, PostRoomsRequestBody,
-        PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody, RoomsStartResponse,
-        StartRoomError,
+        PatchRoomsRequestBody, PostRoomsRequestBody, PostRoomsStartInvitedRequestBody,
+        PostRoomsStartRequestBody, RoomsStartResponse, StartRoomError,
     },
 };
 use opentalk_types_api_v1::{
     pagination::PagePaginationQuery,
     rooms::{
         by_room_id::{DeleteRoomQuery, GetRoomEventResponseBody},
-        RoomResource,
+        GetRoomsResponseBody, RoomResource,
     },
 };
 use opentalk_types_common::{
@@ -81,7 +80,7 @@ use crate::{
         (
             status = StatusCode::OK,
             description = "List of accessible rooms successfully returned",
-            body = GetRoomsResponse,
+            body = GetRoomsResponseBody,
             headers(
                 ("link" = PageLink, description = "Links for paging through the results"),
             ),
@@ -106,7 +105,7 @@ pub async fn accessible(
     current_user: ReqData<User>,
     pagination: web::Query<PagePaginationQuery>,
     authz: Data<Authz>,
-) -> Result<ApiResponse<GetRoomsResponse>, ApiError> {
+) -> Result<ApiResponse<GetRoomsResponseBody>, ApiError> {
     let settings = settings.load();
     let current_user = current_user.into_inner();
     let PagePaginationQuery { per_page, page } = pagination.into_inner();
@@ -137,7 +136,8 @@ pub async fn accessible(
         })
         .collect::<Vec<RoomResource>>();
 
-    Ok(ApiResponse::new(GetRoomsResponse(rooms)).with_page_pagination(per_page, page, room_count))
+    Ok(ApiResponse::new(GetRoomsResponseBody(rooms))
+        .with_page_pagination(per_page, page, room_count))
 }
 
 /// Create a new room
