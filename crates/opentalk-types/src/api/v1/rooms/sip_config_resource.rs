@@ -4,40 +4,10 @@
 
 //! This module contains types that are used for OpenTalk API V1 sip config endpoints.
 
-use opentalk_types_common::{
-    call_in::{CallInId, CallInPassword},
-    rooms::RoomId,
-    utils::ExampleData,
-};
+use opentalk_types_common::{call_in::CallInPassword, utils::ExampleData};
 
 #[allow(unused_imports)]
 use crate::imports::*;
-
-/// Response for the `GET /rooms/{room_id}/sip` endpoint
-#[derive(Debug, Clone, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(example = json!(SipConfigResource::example_data())))]
-pub struct SipConfigResource {
-    /// The room id
-    pub room: RoomId,
-    /// The SIP ID
-    pub sip_id: CallInId,
-    /// The SIP password
-    pub password: CallInPassword,
-    /// Flag if the room is a lobby
-    pub lobby: bool,
-}
-
-impl ExampleData for SipConfigResource {
-    fn example_data() -> Self {
-        Self {
-            room: RoomId::example_data(),
-            sip_id: CallInId::example_data(),
-            password: CallInPassword::example_data(),
-            lobby: false,
-        }
-    }
-}
 
 /// Body for the `PUT /rooms/{room_id}/sip` endpoint
 #[derive(Debug, Clone, Eq, PartialEq)]
