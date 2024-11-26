@@ -11,11 +11,7 @@ use crate::imports::*;
 
 /// Body for the `PUT /rooms/{room_id}/sip` endpoint
 #[derive(Debug, Clone, Eq, PartialEq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize, Validate),
-    validate(schema(function = "disallow_empty"))
-)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 #[cfg_attr(
     feature = "utoipa",
     derive(utoipa::ToSchema),
@@ -24,10 +20,7 @@ use crate::imports::*;
 pub struct PutSipConfig {
     /// Numeric code required for entering the room. If not set explicitly on
     /// creation, this will be set to a randomly generated number.
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     // Field is non-required already, utoipa adds a `nullable: true` entry
     // by default which creates a false positive in the spectral linter when
     // combined with example data.
@@ -36,10 +29,7 @@ pub struct PutSipConfig {
 
     /// Enable or disable the lobby for users that join throughh SIP. Defaults
     /// to [`false`] when not explicity set on creation.
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     // Field is non-required already, utoipa adds a `nullable: true` entry
     // by default which creates a false positive in the spectral linter when
     // combined with example data.
@@ -57,12 +47,33 @@ impl ExampleData for PutSipConfig {
 }
 
 #[cfg(feature = "serde")]
-fn disallow_empty(modify_room: &PutSipConfig) -> Result<(), ValidationError> {
-    let PutSipConfig { password, lobby } = modify_room;
+mod serde_impls {
+    use opentalk_types_common::call_in::CallInPassword;
+    use serde::{de::Error, Deserialize, Deserializer};
 
-    if password.is_none() && lobby.is_none() {
-        Err(ValidationError::new("empty"))
-    } else {
-        Ok(())
+    impl<'de> Deserialize<'de> for super::PutSipConfig {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            #[derive(Deserialize)]
+            struct PutSipConfig {
+                #[serde(default)]
+                password: Option<CallInPassword>,
+                #[serde(default)]
+                lobby: Option<bool>,
+            }
+
+            let PutSipConfig { password, lobby } = PutSipConfig::deserialize(deserializer)?;
+
+            if password.is_none() && lobby.is_none() {
+                Err(D::Error::invalid_value(
+                    serde::de::Unexpected::StructVariant,
+                    &"object with either password or lobby value which is non-null",
+                ))
+            } else {
+                Ok(super::PutSipConfig { password, lobby })
+            }
+        }
     }
 }

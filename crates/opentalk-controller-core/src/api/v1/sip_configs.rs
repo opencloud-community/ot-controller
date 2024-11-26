@@ -15,7 +15,6 @@ use opentalk_db_storage::{
 use opentalk_types::api::{error::ApiError, v1::rooms::sip_config_resource::PutSipConfig};
 use opentalk_types_api_v1::rooms::by_room_id::sip::SipConfigResource;
 use opentalk_types_common::{features, rooms::RoomId};
-use validator::Validate;
 
 use super::util::require_feature;
 use crate::{
@@ -137,8 +136,6 @@ pub async fn put(
     let settings = settings.load();
     let room_id = room_id.into_inner();
     let modify_sip_config = modify_sip_config.into_inner();
-
-    modify_sip_config.validate()?;
 
     let mut conn = db.get_conn().await?;
 
