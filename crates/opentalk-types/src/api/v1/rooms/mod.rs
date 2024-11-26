@@ -6,11 +6,9 @@
 
 mod post_rooms_start_invited_request;
 mod post_rooms_start_request;
-mod start_room_error;
 
 pub mod sip_config_resource;
 pub mod streaming_targets;
 
 pub use post_rooms_start_invited_request::PostRoomsStartInvitedRequest;
 pub use post_rooms_start_request::PostRoomsStartRequest;
-pub use start_room_error::StartRoomError;

@@ -2,10 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_types::api::error::ApiError;
 use strum::AsRefStr;
-
-#[allow(unused_imports)]
-use crate::imports::*;
 
 /// Errors for the /rooms/{room_id}/start* endpoint
 #[derive(Clone, Debug, AsRefStr)]
@@ -22,6 +20,28 @@ pub enum StartRoomError {
 
     /// The user requesting to start the room is banned from the room
     BannedFromRoom,
+}
+
+impl From<StartRoomError> for ApiError {
+    fn from(start_room_error: StartRoomError) -> Self {
+        match start_room_error {
+            StartRoomError::WrongRoomPassword => Self::unauthorized()
+                .with_code(StartRoomError::WrongRoomPassword.as_ref())
+                .with_message("The provided password does not match the room password"),
+
+            StartRoomError::NoBreakoutRooms => Self::bad_request()
+                .with_code(StartRoomError::NoBreakoutRooms.as_ref())
+                .with_message("The requested room has no breakout rooms"),
+
+            StartRoomError::InvalidBreakoutRoomId => Self::bad_request()
+                .with_code(StartRoomError::InvalidBreakoutRoomId.as_ref())
+                .with_message("The provided breakout room ID is invalid"),
+
+            StartRoomError::BannedFromRoom => Self::forbidden()
+                .with_code(StartRoomError::BannedFromRoom.as_ref())
+                .with_message("This user has been banned from entering this room"),
+        }
+    }
 }
 
 #[cfg(test)]

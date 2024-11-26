@@ -5130,7 +5130,6 @@ dependencies = [
  "serde_json",
  "serde_urlencoded",
  "snafu",
- "strum",
  "utoipa",
  "validator",
 ]

@@ -32,9 +32,8 @@ use opentalk_db_storage::{
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage, Participant, VolatileStorage};
-use opentalk_types::api::{
-    error::{ApiError, StandardErrorBody, ValidationErrorEntry, ERROR_CODE_INVALID_VALUE},
-    v1::rooms::StartRoomError,
+use opentalk_types::api::error::{
+    ApiError, StandardErrorBody, ValidationErrorEntry, ERROR_CODE_INVALID_VALUE,
 };
 use opentalk_types_api_v1::{
     pagination::PagePaginationQuery,
@@ -52,6 +51,7 @@ use opentalk_types_common::{
     shared_folders::SharedFolder,
     tariffs::TariffResource,
 };
+use start_room_error::StartRoomError;
 
 use super::{
     events::{get_invited_mail_recipients_for_event, CancellationNotificationValues},
@@ -69,6 +69,8 @@ use crate::{
     services::{MailRecipient, MailService},
     settings::SharedSettingsActix,
 };
+
+mod start_room_error;
 
 /// Get a list of rooms accessible by the requesting user
 ///
