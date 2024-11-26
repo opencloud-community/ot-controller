@@ -4,12 +4,9 @@
 
 use opentalk_types_common::rooms::RoomPassword;
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// API request parameters to patch a room
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize,))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize,))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct PatchRoomsRequestBody {
     /// The password for the room
