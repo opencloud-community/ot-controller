@@ -23,15 +23,19 @@ use opentalk_types::api::{
     v1::{
         rooms::streaming_targets::{
             ChangeRoomStreamingTargetRequest, ChangeRoomStreamingTargetResponse,
-            GetRoomStreamingTargetResponse, GetRoomStreamingTargetsResponse,
-            PostRoomStreamingTargetRequest, PostRoomStreamingTargetResponse,
+            GetRoomStreamingTargetResponse, PostRoomStreamingTargetRequest,
+            PostRoomStreamingTargetResponse,
         },
         streaming_targets::RoomAndStreamingTargetId,
     },
 };
 use opentalk_types_api_v1::{
-    events::StreamingTargetOptionsQuery, pagination::PagePaginationQuery,
-    rooms::streaming_targets::UpdateStreamingTargetKind,
+    events::StreamingTargetOptionsQuery,
+    pagination::PagePaginationQuery,
+    rooms::{
+        by_room_id::streaming_targets::GetRoomStreamingTargetsResponseBody,
+        streaming_targets::UpdateStreamingTargetKind,
+    },
 };
 use opentalk_types_common::{
     rooms::RoomId,
@@ -64,7 +68,7 @@ use crate::{
         (
             status = StatusCode::OK,
             description = "List of streaming targets successfully returned",
-            body = GetRoomStreamingTargetsResponse,
+            body = GetRoomStreamingTargetsResponseBody,
         ),
         (
             status = StatusCode::UNAUTHORIZED,
@@ -93,7 +97,7 @@ pub async fn get_streaming_targets(
     current_user: ReqData<User>,
     room_id: Path<RoomId>,
     pagination: Query<PagePaginationQuery>,
-) -> DefaultApiResult<GetRoomStreamingTargetsResponse> {
+) -> DefaultApiResult<GetRoomStreamingTargetsResponseBody> {
     let mut conn = db.get_conn().await?;
     let current_user_id = current_user.into_inner().id;
     let room_id = room_id.into_inner();
@@ -109,7 +113,7 @@ pub async fn get_streaming_targets(
         .map(|rst| build_resource(rst, with_streaming_key))
         .collect();
 
-    Ok(ApiResponse::new(GetRoomStreamingTargetsResponse(
+    Ok(ApiResponse::new(GetRoomStreamingTargetsResponseBody(
         room_streaming_target_resources,
     ))
     .with_page_pagination(per_page, page, len as i64))

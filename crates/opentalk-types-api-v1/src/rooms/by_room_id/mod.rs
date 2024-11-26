@@ -7,6 +7,7 @@
 pub mod assets;
 pub mod invites;
 pub mod sip;
+pub mod streaming_targets;
 
 mod delete_room_query;
 mod get_room_event_response_body;
