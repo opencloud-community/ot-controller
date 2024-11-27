@@ -34,7 +34,7 @@ pub async fn make_user(
         lastname: lastname.into(),
         avatar_url: None,
         id_token_exp: 0,
-        display_name: display_name.into(),
+        display_name: display_name.parse().expect("valid display name"),
         language: "".into(),
         oidc_sub: format!("{firstname}{lastname}"),
         phone: None,

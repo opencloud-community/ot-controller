@@ -37,7 +37,7 @@ use opentalk_types_signaling_moderation::{
 use snafu::{Report, ResultExt};
 
 use self::storage::ModerationStorage;
-use crate::api::signaling::{trim_display_name, ws::ModuleContextExt};
+use crate::api::signaling::ws::ModuleContextExt;
 
 pub mod exchange;
 pub mod storage;
@@ -382,8 +382,6 @@ impl SignalingModule for ModerationModule {
                     ctx.ws_send(Error::CannotChangeNameOfRegisteredUsers);
                     return Ok(());
                 }
-
-                let new_name = trim_display_name(new_name);
 
                 if new_name.is_empty() || new_name.len() > 100 {
                     ctx.ws_send(Error::InvalidDisplayName);

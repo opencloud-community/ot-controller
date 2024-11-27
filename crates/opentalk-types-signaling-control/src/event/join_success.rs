@@ -2,7 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_common::{events::EventInfo, tariffs::TariffResource, time::Timestamp};
+use opentalk_types_common::{
+    events::EventInfo, tariffs::TariffResource, time::Timestamp, users::DisplayName,
+};
 use opentalk_types_signaling::{Participant, ParticipantId, Role};
 
 use crate::room::RoomInfo;
@@ -15,7 +17,7 @@ pub struct JoinSuccess {
     pub id: ParticipantId,
 
     /// The display name of the participant who joined
-    pub display_name: String,
+    pub display_name: DisplayName,
 
     /// The URL to the avatar of the participant who joined
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]

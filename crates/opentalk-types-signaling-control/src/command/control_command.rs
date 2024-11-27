@@ -52,7 +52,10 @@ mod serde_tests {
         let msg: ControlCommand = serde_json::from_value(json).unwrap();
 
         if let ControlCommand::Join(Join { display_name }) = msg {
-            assert_eq!(display_name, Some("Test!".to_owned()));
+            assert_eq!(
+                display_name,
+                Some("Test!".parse().expect("valid display name"))
+            );
         } else {
             panic!()
         }

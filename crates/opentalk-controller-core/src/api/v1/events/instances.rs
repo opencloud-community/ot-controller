@@ -767,7 +767,7 @@ mod tests {
             title: "".parse().expect("valid user title"),
             firstname: "Test".into(),
             lastname: "Test".into(),
-            display_name: "Tester".into(),
+            display_name: "Tester".parse().expect("valid display name"),
             avatar_url: "https://example.org/avatar".into(),
         };
 

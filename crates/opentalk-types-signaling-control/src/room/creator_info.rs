@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_common::users::UserTitle;
+use opentalk_types_common::users::{DisplayName, UserTitle};
 
 /// Information about the room creator
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -23,7 +23,7 @@ pub struct CreatorInfo {
     pub lastname: String,
 
     /// The creators display name
-    pub display_name: String,
+    pub display_name: DisplayName,
 
     /// The creators avatar url
     pub avatar_url: String,

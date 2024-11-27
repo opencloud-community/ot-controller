@@ -10,7 +10,7 @@ use opentalk_signaling_core::{
     module_tester::{ModuleTester, WsMessageOutgoing},
     SignalingModule, VolatileStaticMemoryStorage, VolatileStorage,
 };
-use opentalk_types_common::rooms::RoomId;
+use opentalk_types_common::{rooms::RoomId, users::DisplayName};
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_control::event::ControlEvent;
 use pretty_assertions::assert_eq;
@@ -24,6 +24,12 @@ pub struct TestUser {
     pub n: u32,
     pub participant_id: ParticipantId,
     pub name: &'static str,
+}
+
+impl TestUser {
+    pub fn display_name(&self) -> DisplayName {
+        DisplayName::from_str_lossy(self.name)
+    }
 }
 
 pub const ROOM_ID: RoomId = RoomId::from_u128(2000);
@@ -140,7 +146,7 @@ pub async fn setup_users<M: SignalingModule>(
             USER_1.participant_id,
             user1.clone(),
             Role::Moderator,
-            USER_1.name,
+            &USER_1.name.parse().expect("valid display name"),
             params.clone(),
         )
         .await
@@ -165,7 +171,7 @@ pub async fn setup_users<M: SignalingModule>(
             USER_2.participant_id,
             user2.clone(),
             Role::User,
-            USER_2.name,
+            &USER_2.name.parse().expect("valid display name"),
             params.clone(),
         )
         .await

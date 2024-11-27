@@ -125,7 +125,7 @@ pub async fn patch_me(
         avatar_url: None,
         phone: None,
         email: None,
-        display_name: patch.display_name.as_deref(),
+        display_name: patch.display_name.as_ref(),
         language: patch.language.as_deref(),
         dashboard_theme: patch.dashboard_theme.as_deref(),
         conference_theme: patch.conference_theme.as_deref(),

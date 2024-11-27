@@ -4,7 +4,10 @@
 
 //! This module contains types that are used in OpenTalk API V1 users endpoints.
 
-use opentalk_types_common::{users::UserTitle, utils::ExampleData};
+use opentalk_types_common::{
+    users::{DisplayName, UserTitle},
+    utils::ExampleData,
+};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -30,8 +33,15 @@ pub struct PatchMeBody {
     pub title: Option<UserTitle>,
 
     /// The user's display name
-    #[cfg_attr(feature = "serde", validate(length(max = 255)))]
-    pub display_name: Option<String>,
+    // Field is non-required already, utoipa adds a `nullable: true` entry
+    // by default which creates a false positive in the spectral linter when
+    // combined with example data.
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    #[cfg_attr(feature = "utoipa", schema(nullable = false))]
+    pub display_name: Option<DisplayName>,
 
     /// The user's language
     #[cfg_attr(feature = "serde", validate(length(max = 35)))]
@@ -68,7 +78,7 @@ impl PatchMeBody {
 impl ExampleData for PatchMeBody {
     fn example_data() -> Self {
         Self {
-            display_name: Some("Alice Adams".to_string()),
+            display_name: Some("Alice Adams".parse().expect("valid display name")),
             language: Some("en".to_string()),
             ..Default::default()
         }

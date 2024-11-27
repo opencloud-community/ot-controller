@@ -497,7 +497,7 @@ mod test_common {
             title: UserTitle::new(),
             firstname: "First".into(),
             lastname: "Last".into(),
-            display_name: "Display".into(),
+            display_name: "Display".parse().expect("valid display name"),
             avatar_url: "https://example.org/avatar".into(),
         };
 
@@ -510,7 +510,7 @@ mod test_common {
             title: "Dr.".parse().expect("valid user title"),
             firstname: "First2".into(),
             lastname: "Last2".into(),
-            display_name: "Display2".into(),
+            display_name: "Display2".parse().expect("valid display name"),
             avatar_url: "https://example.org/avatar".into(),
         };
 

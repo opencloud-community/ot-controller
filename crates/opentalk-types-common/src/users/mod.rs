@@ -4,11 +4,13 @@
 
 //! Data types for handling users.
 
+mod display_name;
 mod group_id;
 mod group_name;
 mod user_id;
 mod user_title;
 
+pub use display_name::DisplayName;
 pub use group_id::GroupId;
 pub use group_name::GroupName;
 pub use user_id::UserId;

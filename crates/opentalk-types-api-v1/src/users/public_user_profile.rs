@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_types_common::{
-    users::{UserId, UserTitle},
+    users::{DisplayName, UserId, UserTitle},
     utils::ExampleData,
 };
 
@@ -34,7 +34,7 @@ pub struct PublicUserProfile {
     pub lastname: String,
 
     /// The user's display name
-    pub display_name: String,
+    pub display_name: DisplayName,
 
     /// The user's avatar URL
     pub avatar_url: String,
@@ -48,7 +48,7 @@ impl ExampleData for PublicUserProfile {
             title: "".parse().expect("valid user title"),
             firstname: "Alice".to_string(),
             lastname: "Adams".to_string(),
-            display_name: "Alice Adams".to_string(),
+            display_name: "Alice Adams".parse().expect("valid display name"),
             avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060".to_string(),
         }
     }

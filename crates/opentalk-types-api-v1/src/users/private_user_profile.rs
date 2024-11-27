@@ -4,7 +4,7 @@
 
 use opentalk_types_common::{
     tariffs::TariffStatus,
-    users::{UserId, UserTitle},
+    users::{DisplayName, UserId, UserTitle},
 };
 
 /// Private user profile.
@@ -32,7 +32,7 @@ pub struct PrivateUserProfile {
     pub lastname: String,
 
     /// The user's display name
-    pub display_name: String,
+    pub display_name: DisplayName,
 
     /// The user's avatar URL
     pub avatar_url: String,

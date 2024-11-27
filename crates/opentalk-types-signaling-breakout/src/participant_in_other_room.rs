@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_common::{rooms::BreakoutRoomId, time::Timestamp};
+use opentalk_types_common::{rooms::BreakoutRoomId, time::Timestamp, users::DisplayName};
 use opentalk_types_signaling::{ParticipantId, ParticipationKind, Role};
 
 /// Information about a participant in another breakout room
@@ -17,7 +17,7 @@ pub struct ParticipantInOtherRoom {
     pub id: ParticipantId,
 
     /// The display name of the other participant
-    pub display_name: String,
+    pub display_name: DisplayName,
 
     /// The role of the other participant
     pub role: Role,

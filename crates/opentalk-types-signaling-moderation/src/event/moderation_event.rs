@@ -188,8 +188,8 @@ mod serde_tests {
             serde_json::to_value(ModerationEvent::DisplayNameChanged(DisplayNameChanged {
                 target: ParticipantId::nil(),
                 issued_by: ParticipantId::nil(),
-                old_name: "Alice".into(),
-                new_name: "Bob".into(),
+                old_name: "Alice".parse().expect("valid display name"),
+                new_name: "Bob".parse().expect("valid display name"),
             }))
             .unwrap();
 

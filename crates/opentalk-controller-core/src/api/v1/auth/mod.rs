@@ -24,7 +24,11 @@ use opentalk_types_api_v1::auth::{
     login::AuthLoginPostRequestBody, GetLoginResponseBody, OidcProvider, PostLoginResponseBody,
 };
 use opentalk_types_common::{
-    events::EventId, rooms::RoomId, tariffs::TariffStatus, tenants::TenantId, users::GroupName,
+    events::EventId,
+    rooms::RoomId,
+    tariffs::TariffStatus,
+    tenants::TenantId,
+    users::{DisplayName, GroupName},
 };
 
 use super::{events::EventPoliciesBuilderExt, rooms::RoomsPoliciesBuilderExt};
@@ -328,8 +332,11 @@ async fn update_core_user_permissions(
     Ok(())
 }
 
-fn build_info_display_name(info: &IdTokenInfo) -> String {
-    info.display_name
-        .clone()
-        .unwrap_or_else(|| format!("{} {}", &info.firstname, &info.lastname))
+fn build_info_display_name(info: &IdTokenInfo) -> DisplayName {
+    DisplayName::from_str_lossy(
+        &info
+            .display_name
+            .clone()
+            .unwrap_or_else(|| format!("{} {}", &info.firstname, &info.lastname)),
+    )
 }

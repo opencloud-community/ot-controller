@@ -132,7 +132,7 @@ mod serde_tests {
 
         let produced = serde_json::to_value(ControlEvent::JoinSuccess(JoinSuccess {
             id: ParticipantId::nil(),
-            display_name: "name".into(),
+            display_name: "name".parse().expect("valid display name"),
             avatar_url: Some("http://url".into()),
             role: Role::User,
             closes_at: Some(
@@ -158,7 +158,7 @@ mod serde_tests {
                     title: "Dr.".parse().expect("valid user title"),
                     firstname: "Bob".into(),
                     lastname: "Bobsen".into(),
-                    display_name: "Bob".into(),
+                    display_name: "Bob".parse().expect("valid display name"),
                     avatar_url: "example.org/avatar.png".into(),
                 },
             },
@@ -202,7 +202,7 @@ mod serde_tests {
 
         let produced = serde_json::to_value(ControlEvent::JoinSuccess(JoinSuccess {
             id: ParticipantId::nil(),
-            display_name: "name".into(),
+            display_name: "name".parse().expect("valid display name"),
             avatar_url: None,
             role: Role::Guest,
             closes_at: None,
@@ -224,7 +224,7 @@ mod serde_tests {
                     title: UserTitle::new(),
                     firstname: "Bob".into(),
                     lastname: "Bobsen".into(),
-                    display_name: "Bob".into(),
+                    display_name: "Bob".parse().expect("valid display name"),
                     avatar_url: "example.org/avatar.png".into(),
                 },
             },

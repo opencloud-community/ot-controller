@@ -2646,6 +2646,11 @@ components:
       properties:
         email:
           $ref: "#/components/schemas/EmailAddress"
+    DisplayName:
+      type: string
+      description: The display name of a user or participant
+      example: Alice Adams
+      maxLength: 255
     EmailAddress:
       type: string
       format: email
@@ -3833,9 +3838,8 @@ components:
           description: The dashboard theme
           nullable: true
         display_name:
-          type: string
-          description: "The user's display name"
-          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/DisplayName"
         language:
           type: string
           description: "The user's language"
@@ -4140,8 +4144,7 @@ components:
           type: string
           description: The dashboard theme
         display_name:
-          type: string
-          description: "The user's display name"
+          $ref: "#/components/schemas/DisplayName"
         email:
           type: string
           description: The email of the user
@@ -4203,8 +4206,7 @@ components:
           type: string
           description: "The user's avatar URL"
         display_name:
-          type: string
-          description: "The user's display name"
+          $ref: "#/components/schemas/DisplayName"
         email:
           type: string
           description: The email of the user
