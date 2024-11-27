@@ -2167,7 +2167,7 @@ paths:
       description: |-
         This is a WebSocket endpoint, all the data that is sent in binary messages
         is stored in the destination file.
-      operationId: ws_upload
+      operationId: get_recording_upload
       parameters:
         - name: room_id
           in: query

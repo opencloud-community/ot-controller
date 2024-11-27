@@ -4,14 +4,11 @@
 
 use opentalk_types_common::{assets::FileExtension, rooms::RoomId, time::Timestamp};
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
-/// Response for the `POST /services/recording/upload_render` endpoint
+/// Response for the `GET /services/recording/upload` endpoint
 #[derive(Debug, Clone, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::IntoParams))]
-pub struct UploadRenderQuery {
+pub struct GetRecordingUploadQuery {
     /// The room id
     pub room_id: RoomId,
 

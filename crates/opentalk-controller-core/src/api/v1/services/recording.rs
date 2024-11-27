@@ -17,9 +17,10 @@ use opentalk_signaling_core::{
     assets::{save_asset, verify_storage_usage, NewAssetFileName},
     ChunkFormat, ObjectStorage, ObjectStorageError, Participant, VolatileStorage,
 };
-use opentalk_types::api::{error::ApiError, v1::services::UploadRenderQuery};
+use opentalk_types::api::error::ApiError;
 use opentalk_types_api_v1::services::{
-    recording::PostRecordingStartRequestBody, PostServiceStartResponseBody,
+    recording::{GetRecordingUploadQuery, PostRecordingStartRequestBody},
+    PostServiceStartResponseBody,
 };
 use tokio::{sync::mpsc, task};
 
@@ -128,7 +129,7 @@ pub(crate) struct RecordingUploadWebSocketHeaders {
 #[utoipa::path(
     context_path = "/services/recording",
     params(
-        UploadRenderQuery,
+        GetRecordingUploadQuery,
         RecordingUploadWebSocketHeaders,
     ),
     responses(
@@ -150,15 +151,15 @@ pub(crate) struct RecordingUploadWebSocketHeaders {
     ),
 )]
 #[get("/upload")]
-pub(crate) async fn ws_upload(
+pub(crate) async fn get_recording_upload(
     db: Data<Db>,
     storage: Data<ObjectStorage>,
     request: HttpRequest,
-    Query(UploadRenderQuery {
+    Query(GetRecordingUploadQuery {
         room_id,
         file_extension,
         timestamp,
-    }): Query<UploadRenderQuery>,
+    }): Query<GetRecordingUploadQuery>,
     stream: web::Payload,
 ) -> actix_web::Result<HttpResponse> {
     // Finish websocket handshake
@@ -202,5 +203,5 @@ pub fn services() -> impl HttpServiceFactory {
     actix_web::web::scope("/recording")
         .wrap(super::RequiredRealmRole::new(REQUIRED_RECORDING_ROLE))
         .service(post_recording_start)
-        .service(ws_upload)
+        .service(get_recording_upload)
 }
