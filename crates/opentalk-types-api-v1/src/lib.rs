@@ -25,6 +25,7 @@ pub mod auth;
 pub mod events;
 pub mod pagination;
 pub mod rooms;
+pub mod services;
 pub mod users;
 
 mod cursor;

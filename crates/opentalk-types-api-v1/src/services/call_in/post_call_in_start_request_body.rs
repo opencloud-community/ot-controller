@@ -4,14 +4,11 @@
 
 use opentalk_types_common::call_in::{CallInId, CallInPassword};
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// Body for the `POST /services/call_in/start` endpoint
 #[derive(Debug, Clone, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct StartCallInRequestBody {
+pub struct PostCallInStartRequestBody {
     /// The call-in ID
     pub id: CallInId,
     /// The call-in password

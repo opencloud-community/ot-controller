@@ -2097,7 +2097,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/StartCallInRequestBody"
+              $ref: "#/components/schemas/PostCallInStartRequestBody"
         required: true
       responses:
         "200":
@@ -3933,6 +3933,17 @@ components:
           type: boolean
           description: If waiting room is enabled
           nullable: true
+    PostCallInStartRequestBody:
+      type: object
+      description: "Body for the `POST /services/call_in/start` endpoint"
+      required:
+        - id
+        - pin
+      properties:
+        id:
+          $ref: "#/components/schemas/CallInId"
+        pin:
+          $ref: "#/components/schemas/CallInPassword"
     PostEventInviteBody:
       oneOf:
         - $ref: "#/components/schemas/UserInvite"
@@ -4475,17 +4486,6 @@ components:
         message:
           type: string
           description: Human readable message
-    StartCallInRequestBody:
-      type: object
-      description: "Body for the `POST /services/call_in/start` endpoint"
-      required:
-        - id
-        - pin
-      properties:
-        id:
-          $ref: "#/components/schemas/CallInId"
-        pin:
-          $ref: "#/components/schemas/CallInPassword"
     StartRecordingRequestBody:
       type: object
       description: "Response for the `POST /services/recording/start` endpoint"

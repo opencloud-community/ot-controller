@@ -11,10 +11,8 @@ use actix_web::{
 use opentalk_database::Db;
 use opentalk_db_storage::sip_configs::SipConfig;
 use opentalk_signaling_core::{Participant, VolatileStorage};
-use opentalk_types::api::{
-    error::ApiError,
-    v1::services::{ServiceStartResponse, StartCallInRequestBody},
-};
+use opentalk_types::api::{error::ApiError, v1::services::ServiceStartResponse};
+use opentalk_types_api_v1::services::call_in::PostCallInStartRequestBody;
 use opentalk_types_common::features;
 
 use crate::{
@@ -41,8 +39,7 @@ pub const REQUIRED_CALL_IN_ROLE: &str = "opentalk-call-in";
 /// credentials (id and pin) via DTMF (the number pad).
 #[utoipa::path(
     context_path = "/services/call_in",
-    operation_id = "post_call_in_start",
-    request_body = StartCallInRequestBody,
+    request_body = PostCallInStartRequestBody,
     responses(
         (
             status = StatusCode::OK,
@@ -71,11 +68,11 @@ pub const REQUIRED_CALL_IN_ROLE: &str = "opentalk-call-in";
     ),
 )]
 #[post("/start")]
-pub async fn start(
+pub async fn post_call_in_start(
     settings: SharedSettingsActix,
     db: Data<Db>,
     volatile: Data<VolatileStorage>,
-    request: Json<StartCallInRequestBody>,
+    request: Json<PostCallInStartRequestBody>,
 ) -> Result<Json<ServiceStartResponse>, ApiError> {
     let settings = settings.load();
     let mut volatile = (**volatile).clone();
@@ -117,5 +114,5 @@ fn invalid_credentials_error() -> ApiError {
 pub fn services() -> impl HttpServiceFactory {
     actix_web::web::scope("/call_in")
         .wrap(super::RequiredRealmRole::new(REQUIRED_CALL_IN_ROLE))
-        .service(start)
+        .service(post_call_in_start)
 }
