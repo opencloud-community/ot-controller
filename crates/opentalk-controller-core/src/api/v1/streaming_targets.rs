@@ -18,7 +18,7 @@ use opentalk_db_storage::{
     users::User,
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
-use opentalk_types::api::{error::ApiError, v1::streaming_targets::RoomAndStreamingTargetId};
+use opentalk_types::api::error::ApiError;
 use opentalk_types_api_v1::{
     events::StreamingTargetOptionsQuery,
     pagination::PagePaginationQuery,
@@ -27,6 +27,7 @@ use opentalk_types_api_v1::{
             GetRoomStreamingTargetResponseBody, GetRoomStreamingTargetsResponseBody,
             PatchRoomStreamingTargetRequestBody, PatchRoomStreamingTargetResponseBody,
             PostRoomStreamingTargetRequestBody, PostRoomStreamingTargetResponseBody,
+            RoomAndStreamingTargetId,
         },
         streaming_targets::UpdateStreamingTargetKind,
     },
