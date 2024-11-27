@@ -3641,6 +3641,11 @@ components:
         - user
         - moderator
       example: user
+    Language:
+      type: string
+      description: A language identifier
+      example: de
+      maxLength: 35
     MeetingDetails:
       type: object
       description: Details about meeting
@@ -3841,9 +3846,8 @@ components:
           allOf:
             - $ref: "#/components/schemas/DisplayName"
         language:
-          type: string
-          description: "The user's language"
-          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/Language"
         title:
           allOf:
             - $ref: "#/components/schemas/UserTitle"
@@ -4154,8 +4158,7 @@ components:
         id:
           $ref: "#/components/schemas/UserId"
         language:
-          type: string
-          description: The language for the user
+          $ref: "#/components/schemas/Language"
         lastname:
           type: string
           description: "The user's last name"

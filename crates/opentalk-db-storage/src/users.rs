@@ -20,7 +20,7 @@ use opentalk_types_api_v1::users::{PrivateUserProfile, PublicUserProfile};
 use opentalk_types_common::{
     tariffs::{TariffId, TariffStatus},
     tenants::TenantId,
-    users::{DisplayName, UserId, UserTitle},
+    users::{DisplayName, Language, UserId, UserTitle},
 };
 use serde::{Deserialize, Serialize};
 
@@ -68,7 +68,7 @@ pub struct User {
     pub firstname: String,
     pub lastname: String,
     pub id_token_exp: i64,
-    pub language: String,
+    pub language: Language,
     pub display_name: DisplayName,
     pub dashboard_theme: String,
     pub conference_theme: String,
@@ -430,7 +430,7 @@ pub struct NewUser {
     pub firstname: String,
     pub lastname: String,
     pub id_token_exp: i64,
-    pub language: String,
+    pub language: Language,
     pub display_name: DisplayName,
     pub phone: Option<String>,
     pub tenant_id: TenantId,
@@ -459,7 +459,7 @@ pub struct UpdateUser<'a> {
     pub lastname: Option<&'a str>,
     pub phone: Option<Option<String>>,
     pub display_name: Option<&'a DisplayName>,
-    pub language: Option<&'a str>,
+    pub language: Option<&'a Language>,
     pub id_token_exp: Option<i64>,
     pub dashboard_theme: Option<&'a str>,
     pub conference_theme: Option<&'a str>,

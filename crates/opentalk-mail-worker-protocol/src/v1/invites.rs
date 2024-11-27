@@ -287,7 +287,7 @@ fn example_inviter() -> RegisteredUser {
         title: "".parse().expect("valid user title"),
         first_name: "Dave".to_string(),
         last_name: "Dunn".to_string(),
-        language: "en".to_string(),
+        language: "en".parse().expect("valid language"),
     }
 }
 

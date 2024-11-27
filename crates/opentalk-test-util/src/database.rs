@@ -104,7 +104,7 @@ impl DatabaseContext {
             avatar_url: Some("https://example.com/avatar/abcdef".into()),
             id_token_exp: 0,
             display_name: "test tester".parse().expect("valid display name"),
-            language: "en".into(),
+            language: "en".parse().expect("valid language"),
             phone: None,
             tenant_id: tenant.id,
             tariff_id: tariff.id,

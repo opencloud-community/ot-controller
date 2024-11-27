@@ -23,7 +23,7 @@ use opentalk_types_common::{
     features,
     shared_folders::SharedFolder,
     streaming::RoomStreamingTarget,
-    users::{UserId, UserTitle},
+    users::{Language, UserId, UserTitle},
 };
 use snafu::ResultExt;
 use tokio::sync::Mutex;
@@ -37,7 +37,7 @@ pub struct RegisteredMailRecipient {
     pub title: UserTitle,
     pub first_name: String,
     pub last_name: String,
-    pub language: String,
+    pub language: Language,
 }
 
 impl From<User> for RegisteredMailRecipient {

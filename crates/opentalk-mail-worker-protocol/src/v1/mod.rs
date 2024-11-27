@@ -8,7 +8,7 @@ use opentalk_types_common::{
     rooms::RoomPassword,
     shared_folders::SharedFolder,
     streaming::RoomStreamingTarget,
-    users::UserTitle,
+    users::{Language, UserTitle},
     utils::ExampleData,
 };
 use serde::{Deserialize, Serialize};
@@ -72,7 +72,7 @@ pub struct RegisteredUser {
     pub title: UserTitle,
     pub first_name: String,
     pub last_name: String,
-    pub language: String,
+    pub language: Language,
 }
 
 impl ExampleData for RegisteredUser {
@@ -82,7 +82,7 @@ impl ExampleData for RegisteredUser {
             title: "Dr.".parse().expect("valid user title"),
             first_name: "Alice".to_string(),
             last_name: "Adams".to_string(),
-            language: "en".to_string(),
+            language: "en".parse().expect("valid language"),
         }
     }
 }
@@ -389,7 +389,7 @@ mod tests {
                 title: "Prof. Dr.".parse().expect("valid user title"),
                 first_name: "Bob".into(),
                 last_name: "Inviter".into(),
-                language: "de".into(),
+                language: "de".parse().expect("valid language"),
             },
             event: Event {
                 id: Uuid::from_u128(1),
@@ -445,7 +445,7 @@ mod tests {
                 title: "Prof. Dr.".parse().expect("valid user title"),
                 first_name: "FirstName".into(),
                 last_name: "LastName".into(),
-                language: "de".into(),
+                language: "de".parse().expect("valid language"),
             },
         }));
 
@@ -507,7 +507,7 @@ mod tests {
                 title: "Prof. Dr.".parse().expect("valid user title"),
                 first_name: "Bob".into(),
                 last_name: "Inviter".into(),
-                language: "de".into(),
+                language: "de".parse().expect("valid language"),
             },
             event: Event {
                 id: Uuid::from_u128(1),
@@ -549,7 +549,7 @@ mod tests {
                 title: "Prof. Dr.".parse().expect("valid user title"),
                 first_name: "FirstName".into(),
                 last_name: "LastName".into(),
-                language: "de".into(),
+                language: "de".parse().expect("valid language"),
             },
         }));
 

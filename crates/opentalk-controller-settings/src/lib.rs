@@ -42,7 +42,7 @@ use std::{
 use arc_swap::ArcSwap;
 use config::{Config, Environment, File, FileFormat};
 use openidconnect::{ClientId, ClientSecret};
-use opentalk_types_common::features::ModuleFeatureId;
+use opentalk_types_common::{features::ModuleFeatureId, users::Language};
 use rustc_hash::FxHashSet;
 use serde::{Deserialize, Deserializer};
 use snafu::{ResultExt, Snafu};
@@ -709,15 +709,15 @@ pub struct CallIn {
 #[derive(Clone, Default, Debug, Deserialize)]
 pub struct Defaults {
     #[serde(default = "default_user_language")]
-    pub user_language: String,
+    pub user_language: Language,
     #[serde(default)]
     pub screen_share_requires_permission: bool,
     #[serde(default)]
     pub disabled_features: BTreeSet<ModuleFeatureId>,
 }
 
-fn default_user_language() -> String {
-    "en-US".into()
+fn default_user_language() -> Language {
+    "en-US".parse().expect("valid language")
 }
 
 #[derive(Clone, Default, Debug, Deserialize)]
