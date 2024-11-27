@@ -39,7 +39,6 @@ use opentalk_types_api_v1::{
 };
 use opentalk_types_common::{tariffs::TariffResource, users::UserId};
 use snafu::{Report, ResultExt, Whatever};
-use validator::Validate;
 
 use super::response::NoContent;
 use crate::{
@@ -101,8 +100,6 @@ pub async fn patch_me(
         return Ok(Either::Right(NoContent));
     }
 
-    patch.validate()?;
-
     let settings = settings.load_full();
 
     let mut conn = db.get_conn().await?;
@@ -127,8 +124,8 @@ pub async fn patch_me(
         email: None,
         display_name: patch.display_name.as_ref(),
         language: patch.language.as_ref(),
-        dashboard_theme: patch.dashboard_theme.as_deref(),
-        conference_theme: patch.conference_theme.as_deref(),
+        dashboard_theme: patch.dashboard_theme.as_ref(),
+        conference_theme: patch.conference_theme.as_ref(),
         id_token_exp: None,
         tariff_id: None,
         tariff_status: None,

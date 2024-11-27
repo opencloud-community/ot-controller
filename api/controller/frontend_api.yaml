@@ -3835,13 +3835,11 @@ components:
       description: Used to modify user settings.
       properties:
         conference_theme:
-          type: string
-          description: The conference theme
-          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/Theme"
         dashboard_theme:
-          type: string
-          description: The dashboard theme
-          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/Theme"
         display_name:
           allOf:
             - $ref: "#/components/schemas/DisplayName"
@@ -3852,8 +3850,6 @@ components:
           allOf:
             - $ref: "#/components/schemas/UserTitle"
       example:
-        conference_theme: ~
-        dashboard_theme: ~
         display_name: Alice Adams
         language: en
     PatchRoomStreamingTargetRequestBody:
@@ -4142,11 +4138,9 @@ components:
           type: string
           description: "The user's avatar URL"
         conference_theme:
-          type: string
-          description: The conference theme
+          $ref: "#/components/schemas/Theme"
         dashboard_theme:
-          type: string
-          description: The dashboard theme
+          $ref: "#/components/schemas/Theme"
         display_name:
           $ref: "#/components/schemas/DisplayName"
         email:
@@ -4676,6 +4670,11 @@ components:
         - default
         - paid
         - downgraded
+    Theme:
+      type: string
+      description: A theme identifier
+      example: de
+      maxLength: 128
     TicketToken:
       type: string
       description: A ticket token

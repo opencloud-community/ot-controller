@@ -924,6 +924,7 @@ impl ModulesRegistrar for Controller {
             opentalk_types_common::time::Timestamp,
             opentalk_types_common::users::DisplayName,
             opentalk_types_common::users::Language,
+            opentalk_types_common::users::Theme,
             opentalk_types_common::users::UserId,
             opentalk_types_common::users::UserTitle,
         ),

@@ -4,7 +4,7 @@
 
 use opentalk_types_common::{
     tariffs::TariffStatus,
-    users::{DisplayName, Language, UserId, UserTitle},
+    users::{DisplayName, Language, Theme, UserId, UserTitle},
 };
 
 /// Private user profile.
@@ -38,10 +38,10 @@ pub struct PrivateUserProfile {
     pub avatar_url: String,
 
     /// The dashboard theme
-    pub dashboard_theme: String,
+    pub dashboard_theme: Theme,
 
     /// The conference theme
-    pub conference_theme: String,
+    pub conference_theme: Theme,
 
     /// The language for the user
     pub language: Language,

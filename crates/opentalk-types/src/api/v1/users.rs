@@ -5,7 +5,7 @@
 //! This module contains types that are used in OpenTalk API V1 users endpoints.
 
 use opentalk_types_common::{
-    users::{DisplayName, Language, UserTitle},
+    users::{DisplayName, Language, Theme, UserTitle},
     utils::ExampleData,
 };
 
@@ -14,7 +14,7 @@ use crate::imports::*;
 
 /// Used to modify user settings.
 #[derive(Default, Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize, Validate))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(
     example = json!(
         PatchMeBody::example_data()
@@ -55,12 +55,26 @@ pub struct PatchMeBody {
     pub language: Option<Language>,
 
     /// The dashboard theme
-    #[cfg_attr(feature = "serde", validate(length(max = 128)))]
-    pub dashboard_theme: Option<String>,
+    // Field is non-required already, utoipa adds a `nullable: true` entry
+    // by default which creates a false positive in the spectral linter when
+    // combined with example data.
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    #[cfg_attr(feature = "utoipa", schema(nullable = false))]
+    pub dashboard_theme: Option<Theme>,
 
     /// The conference theme
-    #[cfg_attr(feature = "serde", validate(length(max = 128)))]
-    pub conference_theme: Option<String>,
+    // Field is non-required already, utoipa adds a `nullable: true` entry
+    // by default which creates a false positive in the spectral linter when
+    // combined with example data.
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    #[cfg_attr(feature = "utoipa", schema(nullable = false))]
+    pub conference_theme: Option<Theme>,
 }
 
 impl PatchMeBody {
