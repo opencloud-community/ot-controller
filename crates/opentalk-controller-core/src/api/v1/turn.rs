@@ -21,8 +21,9 @@ use opentalk_database::{Db, OptionalExt};
 use opentalk_db_storage::{invites::Invite, users::User};
 use opentalk_types::api::{
     error::{ApiError, AuthenticationError},
-    v1::turn::{GetTurnServersResponse, IceServer},
+    v1::turn::GetTurnServersResponse,
 };
+use opentalk_types_api_v1::turn::IceServer;
 use opentalk_types_common::rooms::invite_codes::InviteCode;
 use rand::{
     distributions::{Distribution, Uniform},
