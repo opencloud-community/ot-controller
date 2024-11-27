@@ -3560,7 +3560,7 @@ components:
     IceServer:
       oneOf:
         - $ref: "#/components/schemas/TurnServer"
-        - $ref: "#/components/schemas/Stun"
+        - $ref: "#/components/schemas/StunServer"
       description: Description of an ICE server
     InstanceId:
       type: string
@@ -4575,7 +4575,7 @@ components:
         public_url: "https://streaming.example.com/livestream123"
         streaming_endpoint: "https://ingress.streaming.example.com/"
         streaming_key: aabbccddeeff
-    Stun:
+    StunServer:
       type: object
       description: STUN Server for users.
       required:

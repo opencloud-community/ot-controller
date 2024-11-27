@@ -4,19 +4,10 @@
 
 //! This module contains types that are used for OpenTalk API V1 TURN endpoints.
 
-use opentalk_types_api_v1::turn::TurnServer;
+use opentalk_types_api_v1::turn::{StunServer, TurnServer};
 
 #[allow(unused_imports)]
 use crate::imports::*;
-
-/// STUN Server for users.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct Stun {
-    /// STUN URIs for this TURN server following rfc7065
-    pub uris: Vec<String>,
-}
 
 /// Description of an ICE server
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -27,7 +18,7 @@ pub enum IceServer {
     Turn(TurnServer),
 
     /// STUN ICE server type
-    Stun(Stun),
+    Stun(StunServer),
 }
 
 /// Response to the *GET /turn* endpoint request

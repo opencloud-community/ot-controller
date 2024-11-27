@@ -21,7 +21,7 @@ use opentalk_database::{Db, OptionalExt};
 use opentalk_db_storage::{invites::Invite, users::User};
 use opentalk_types::api::{
     error::{ApiError, AuthenticationError},
-    v1::turn::{GetTurnServersResponse, IceServer, Stun},
+    v1::turn::{GetTurnServersResponse, IceServer},
 };
 use opentalk_types_common::rooms::invite_codes::InviteCode;
 use rand::{
@@ -116,7 +116,7 @@ pub async fn get(
     };
 
     if let Some(stun_config) = stun_servers {
-        ice_servers.push(IceServer::Stun(Stun {
+        ice_servers.push(IceServer::Stun(opentalk_types_api_v1::turn::StunServer {
             uris: stun_config.uris.clone(),
         }));
     }
