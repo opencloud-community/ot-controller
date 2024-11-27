@@ -20,7 +20,7 @@ use opentalk_types_api_v1::users::{PrivateUserProfile, PublicUserProfile};
 use opentalk_types_common::{
     tariffs::{TariffId, TariffStatus},
     tenants::TenantId,
-    users::UserId,
+    users::{UserId, UserTitle},
 };
 use serde::{Deserialize, Serialize};
 
@@ -64,7 +64,7 @@ pub struct User {
     pub id_serial: SerialUserId,
     pub oidc_sub: String,
     pub email: String,
-    pub title: String,
+    pub title: UserTitle,
     pub firstname: String,
     pub lastname: String,
     pub id_token_exp: i64,
@@ -426,7 +426,7 @@ pub fn email_to_libravatar_url(libravatar_url: &str, email: &str) -> String {
 pub struct NewUser {
     pub oidc_sub: String,
     pub email: String,
-    pub title: String,
+    pub title: UserTitle,
     pub firstname: String,
     pub lastname: String,
     pub id_token_exp: i64,
@@ -453,7 +453,7 @@ impl NewUser {
 #[derive(Default, AsChangeset)]
 #[diesel(table_name = users)]
 pub struct UpdateUser<'a> {
-    pub title: Option<&'a str>,
+    pub title: Option<&'a UserTitle>,
     pub email: Option<&'a str>,
     pub firstname: Option<&'a str>,
     pub lastname: Option<&'a str>,

@@ -8,6 +8,7 @@ use opentalk_types_common::{
     rooms::RoomPassword,
     shared_folders::SharedFolder,
     streaming::RoomStreamingTarget,
+    users::UserTitle,
     utils::ExampleData,
 };
 use serde::{Deserialize, Serialize};
@@ -68,7 +69,7 @@ impl AsRef<str> for Email {
 )]
 pub struct RegisteredUser {
     pub email: Email,
-    pub title: String,
+    pub title: UserTitle,
     pub first_name: String,
     pub last_name: String,
     pub language: String,
@@ -78,7 +79,7 @@ impl ExampleData for RegisteredUser {
     fn example_data() -> Self {
         Self {
             email: Email::from("alice.adams@example.com"),
-            title: "Dr.".to_string(),
+            title: "Dr.".parse().expect("valid user title"),
             first_name: "Alice".to_string(),
             last_name: "Adams".to_string(),
             language: "en".to_string(),
@@ -385,7 +386,7 @@ mod tests {
         let basic_invite = MailTask::V1(Message::RegisteredEventInvite(RegisteredEventInvite {
             inviter: RegisteredUser {
                 email: "bob@example.org".into(),
-                title: "Prof. Dr.".into(),
+                title: "Prof. Dr.".parse().expect("valid user title"),
                 first_name: "Bob".into(),
                 last_name: "Inviter".into(),
                 language: "de".into(),
@@ -441,7 +442,7 @@ mod tests {
             },
             invitee: RegisteredUser {
                 email: "lastname@example.org".into(),
-                title: "Prof. Dr.".into(),
+                title: "Prof. Dr.".parse().expect("valid user title"),
                 first_name: "FirstName".into(),
                 last_name: "LastName".into(),
                 language: "de".into(),
@@ -503,7 +504,7 @@ mod tests {
         let basic_invite = MailTask::V1(Message::RegisteredEventInvite(RegisteredEventInvite {
             inviter: RegisteredUser {
                 email: "bob@example.org".into(),
-                title: "Prof. Dr.".into(),
+                title: "Prof. Dr.".parse().expect("valid user title"),
                 first_name: "Bob".into(),
                 last_name: "Inviter".into(),
                 language: "de".into(),
@@ -545,7 +546,7 @@ mod tests {
             },
             invitee: RegisteredUser {
                 email: "lastname@example.org".into(),
-                title: "Prof. Dr.".into(),
+                title: "Prof. Dr.".parse().expect("valid user title"),
                 first_name: "FirstName".into(),
                 last_name: "LastName".into(),
                 language: "de".into(),

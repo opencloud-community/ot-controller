@@ -2,7 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_common::{tariffs::TariffStatus, users::UserId};
+use opentalk_types_common::{
+    tariffs::TariffStatus,
+    users::{UserId, UserTitle},
+};
 
 /// Private user profile.
 ///
@@ -20,7 +23,7 @@ pub struct PrivateUserProfile {
     pub email: String,
 
     /// The title of the user
-    pub title: String,
+    pub title: UserTitle,
 
     /// The user's first name
     pub firstname: String,

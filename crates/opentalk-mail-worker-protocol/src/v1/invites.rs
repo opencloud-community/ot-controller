@@ -284,7 +284,7 @@ impl ExampleData for ExternalEventUninvite {
 fn example_inviter() -> RegisteredUser {
     RegisteredUser {
         email: "dave.dunn@example.com".into(),
-        title: "".to_string(),
+        title: "".parse().expect("valid user title"),
         first_name: "Dave".to_string(),
         last_name: "Dunn".to_string(),
         language: "en".to_string(),

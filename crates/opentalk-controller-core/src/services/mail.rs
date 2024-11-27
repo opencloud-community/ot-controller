@@ -20,7 +20,10 @@ use opentalk_db_storage::{
 };
 use opentalk_mail_worker_protocol::*;
 use opentalk_types_common::{
-    features, shared_folders::SharedFolder, streaming::RoomStreamingTarget, users::UserId,
+    features,
+    shared_folders::SharedFolder,
+    streaming::RoomStreamingTarget,
+    users::{UserId, UserTitle},
 };
 use snafu::ResultExt;
 use tokio::sync::Mutex;
@@ -31,7 +34,7 @@ use crate::{metrics::EndpointMetrics, Result};
 pub struct RegisteredMailRecipient {
     pub id: UserId,
     pub email: String,
-    pub title: String,
+    pub title: UserTitle,
     pub first_name: String,
     pub last_name: String,
     pub language: String,

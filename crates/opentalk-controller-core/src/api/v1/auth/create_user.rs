@@ -12,7 +12,7 @@ use opentalk_db_storage::{
     tenants::Tenant,
     users::NewUser,
 };
-use opentalk_types_common::tariffs::TariffStatus;
+use opentalk_types_common::{tariffs::TariffStatus, users::UserTitle};
 
 use super::{build_info_display_name, LoginResult};
 use crate::{api::util::parse_phone_number, oidc::IdTokenInfo};
@@ -48,7 +48,7 @@ pub(super) async fn create_user(
             let user = NewUser {
                 oidc_sub: info.sub,
                 email: info.email,
-                title: String::new(),
+                title: UserTitle::new(),
                 display_name: info_display_name,
                 firstname: info.firstname,
                 lastname: info.lastname,

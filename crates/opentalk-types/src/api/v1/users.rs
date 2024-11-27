@@ -4,7 +4,7 @@
 
 //! This module contains types that are used in OpenTalk API V1 users endpoints.
 
-use opentalk_types_common::utils::ExampleData;
+use opentalk_types_common::{users::UserTitle, utils::ExampleData};
 
 #[allow(unused_imports)]
 use crate::imports::*;
@@ -19,8 +19,15 @@ use crate::imports::*;
 ))]
 pub struct PatchMeBody {
     /// The user's title
-    #[cfg_attr(feature = "serde", validate(length(max = 255)))]
-    pub title: Option<String>,
+    // Field is non-required already, utoipa adds a `nullable: true` entry
+    // by default which creates a false positive in the spectral linter when
+    // combined with example data.
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    #[cfg_attr(feature = "utoipa", schema(nullable = false))]
+    pub title: Option<UserTitle>,
 
     /// The user's display name
     #[cfg_attr(feature = "serde", validate(length(max = 255)))]

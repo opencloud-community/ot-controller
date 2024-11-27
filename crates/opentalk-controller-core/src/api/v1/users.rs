@@ -119,7 +119,7 @@ pub async fn patch_me(
     }
 
     let changeset = UpdateUser {
-        title: patch.title.as_deref(),
+        title: patch.title.as_ref(),
         firstname: None,
         lastname: None,
         avatar_url: None,

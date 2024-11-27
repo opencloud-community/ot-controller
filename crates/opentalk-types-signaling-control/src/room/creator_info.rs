@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_types_common::users::UserTitle;
+
 /// Information about the room creator
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -12,7 +14,7 @@
 #[cfg_attr(feature = "redis", to_redis_args(serde), from_redis_value(serde))]
 pub struct CreatorInfo {
     /// Optional title of the creator
-    pub title: String,
+    pub title: UserTitle,
 
     /// The creators first name
     pub firstname: String,

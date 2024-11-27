@@ -38,8 +38,12 @@ mod test_common {
         tariffs::Tariff,
     };
     use opentalk_types_common::{
-        events::EventId, rooms::RoomId, tariffs::TariffId, tenants::TenantId, time::Timestamp,
-        users::UserId,
+        events::EventId,
+        rooms::RoomId,
+        tariffs::TariffId,
+        tenants::TenantId,
+        time::Timestamp,
+        users::{UserId, UserTitle},
     };
     use opentalk_types_signaling::{ParticipantId, Role};
     use opentalk_types_signaling_control::room::CreatorInfo;
@@ -490,7 +494,7 @@ mod test_common {
         assert_eq!(s.get_creator(room_id).await.unwrap(), None);
 
         let creator = CreatorInfo {
-            title: "".into(),
+            title: UserTitle::new(),
             firstname: "First".into(),
             lastname: "Last".into(),
             display_name: "Display".into(),
@@ -503,7 +507,7 @@ mod test_common {
         );
 
         let creator2 = CreatorInfo {
-            title: "Dr.".into(),
+            title: "Dr.".parse().expect("valid user title"),
             firstname: "First2".into(),
             lastname: "Last2".into(),
             display_name: "Display2".into(),

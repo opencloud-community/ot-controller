@@ -18,7 +18,7 @@ use opentalk_types_common::{
     rooms::RoomId,
     tariffs::TariffStatus,
     tenants::TenantId,
-    users::{GroupName, UserId},
+    users::{GroupName, UserId, UserTitle},
 };
 use snafu::{ResultExt, Whatever};
 
@@ -98,7 +98,7 @@ impl DatabaseContext {
         let user = NewUser {
             oidc_sub: format!("oidc_sub{n}"),
             email: format!("opentalk_test_user{n}@example.org"),
-            title: "".into(),
+            title: UserTitle::new(),
             firstname: "test".into(),
             lastname: "tester".into(),
             avatar_url: Some("https://example.com/avatar/abcdef".into()),

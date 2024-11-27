@@ -2,7 +2,10 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_common::{users::UserId, utils::ExampleData};
+use opentalk_types_common::{
+    users::{UserId, UserTitle},
+    utils::ExampleData,
+};
 
 /// Public user details.
 ///
@@ -22,7 +25,7 @@ pub struct PublicUserProfile {
     pub email: String,
 
     /// The title of the user
-    pub title: String,
+    pub title: UserTitle,
 
     /// The user's first name
     pub firstname: String,
@@ -42,7 +45,7 @@ impl ExampleData for PublicUserProfile {
         Self {
             id: UserId::from_u128(0xa11c3),
             email: "alice@example.com".to_string(),
-            title: "".to_string(),
+            title: "".parse().expect("valid user title"),
             firstname: "Alice".to_string(),
             lastname: "Adams".to_string(),
             display_name: "Alice Adams".to_string(),

@@ -764,7 +764,7 @@ mod tests {
         let user_profile = PublicUserProfile {
             id: UserId::nil(),
             email: "test@example.org".into(),
-            title: "".into(),
+            title: "".parse().expect("valid user title"),
             firstname: "Test".into(),
             lastname: "Test".into(),
             display_name: "Tester".into(),
