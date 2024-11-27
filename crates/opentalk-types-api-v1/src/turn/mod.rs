@@ -4,10 +4,12 @@
 
 //! Types related to the API endpoints under `/turn`.
 
+mod get_turn_response_body;
 mod ice_server;
 mod stun_server;
 mod turn_server;
 
+pub use get_turn_response_body::GetTurnResponseBody;
 pub use ice_server::IceServer;
 pub use stun_server::StunServer;
 pub use turn_server::TurnServer;

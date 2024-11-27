@@ -19,11 +19,8 @@ use either::Either;
 use openidconnect::AccessToken;
 use opentalk_database::{Db, OptionalExt};
 use opentalk_db_storage::{invites::Invite, users::User};
-use opentalk_types::api::{
-    error::{ApiError, AuthenticationError},
-    v1::turn::GetTurnServersResponse,
-};
-use opentalk_types_api_v1::turn::IceServer;
+use opentalk_types::api::error::{ApiError, AuthenticationError};
+use opentalk_types_api_v1::turn::{GetTurnResponseBody, IceServer};
 use opentalk_types_common::rooms::invite_codes::InviteCode;
 use rand::{
     distributions::{Distribution, Uniform},
@@ -53,7 +50,7 @@ use crate::{
         (
             status = StatusCode::OK,
             description = "TURN server and corresponding credentials",
-            body = GetTurnServersResponse,
+            body = GetTurnResponseBody,
         ),
         (
             status = StatusCode::NO_CONTENT,
@@ -80,7 +77,7 @@ pub async fn get(
     caches: Data<Caches>,
     oidc_ctx: Data<OidcContext>,
     req: HttpRequest,
-) -> Result<AWEither<Json<GetTurnServersResponse>, NoContent>, ApiError> {
+) -> Result<AWEither<Json<GetTurnResponseBody>, NoContent>, ApiError> {
     let settings: &ArcSwap<Settings> = &settings;
     let settings = settings.load();
 
@@ -126,7 +123,7 @@ pub async fn get(
         return Ok(AWEither::Right(NoContent {}));
     }
 
-    Ok(AWEither::Left(Json(GetTurnServersResponse(ice_servers))))
+    Ok(AWEither::Left(Json(GetTurnResponseBody(ice_servers))))
 }
 
 fn create_credentials<T: Rng + CryptoRng>(

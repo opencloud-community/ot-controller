@@ -2269,7 +2269,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetTurnServersResponse"
+                $ref: "#/components/schemas/GetTurnResponseBody"
         "204":
           description: No TURN servers have been configured
         "401":
@@ -3531,11 +3531,11 @@ components:
       items:
         $ref: "#/components/schemas/RoomResource"
       description: "The JSON body returned by the `/rooms` `GET` endpoint"
-    GetTurnServersResponse:
+    GetTurnResponseBody:
       type: array
       items:
         $ref: "#/components/schemas/IceServer"
-      description: Response to the *GET /turn* endpoint request
+      description: Response body to the *GET /turn* endpoint request
     GetUserAssetsResponseBody:
       type: object
       description: "Response body for the `GET /v1/users/me/assets` endpoint"

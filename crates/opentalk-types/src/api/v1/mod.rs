@@ -5,7 +5,6 @@
 //! This module contains types that are used in different areas of the OpenTalk
 //! API V1 endpoints.
 
-pub mod turn;
 pub mod users;
 
 pub mod order;
