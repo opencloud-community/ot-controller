@@ -4,14 +4,11 @@
 
 use opentalk_types_common::auth::{ResumptionToken, TicketToken};
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
-/// Response for `POST /**/**/start` endpoints
+/// Response body for `POST /**/**/start` endpoints
 #[derive(Debug, Clone, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct ServiceStartResponse {
+pub struct PostServiceStartResponseBody {
     /// The ticket token
     pub ticket: TicketToken,
     /// The resumption token

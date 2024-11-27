@@ -2105,7 +2105,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ServiceStartResponse"
+                $ref: "#/components/schemas/PostServiceStartResponseBody"
         "400":
           description: "`id` and `pin` are not valid for any room."
           content:
@@ -2143,7 +2143,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ServiceStartResponse"
+                $ref: "#/components/schemas/PostServiceStartResponseBody"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -4146,6 +4146,17 @@ components:
       example:
         breakout_room: 00000000-0000-0000-0000-00000badcafe
         resumption: 654321zyxwvutsrqponmlkjihgfedcba654321zyxwvutsrqponmlkjihgfedcba
+    PostServiceStartResponseBody:
+      type: object
+      description: "Response body for `POST /**/**/start` endpoints"
+      required:
+        - ticket
+        - resumption
+      properties:
+        resumption:
+          $ref: "#/components/schemas/ResumptionToken"
+        ticket:
+          $ref: "#/components/schemas/TicketToken"
     PrivateUserProfile:
       type: object
       description: |-
@@ -4418,17 +4429,6 @@ components:
       example:
         resumption: 654321zyxwvutsrqponmlkjihgfedcba654321zyxwvutsrqponmlkjihgfedcba
         ticket: abcdefghijklmnopqrstuvwxyz123456abcdefghijklmnopqrstuvwxyz123456
-    ServiceStartResponse:
-      type: object
-      description: "Response for `POST /**/**/start` endpoints"
-      required:
-        - ticket
-        - resumption
-      properties:
-        resumption:
-          $ref: "#/components/schemas/ResumptionToken"
-        ticket:
-          $ref: "#/components/schemas/TicketToken"
     SharedFolder:
       type: object
       description: |-

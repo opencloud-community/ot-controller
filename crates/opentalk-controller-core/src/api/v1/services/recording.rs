@@ -18,11 +18,10 @@ use opentalk_signaling_core::{
     assets::{save_asset, verify_storage_usage, NewAssetFileName},
     ChunkFormat, ObjectStorage, ObjectStorageError, Participant, VolatileStorage,
 };
-use opentalk_types::api::{
-    error::ApiError,
-    v1::services::{ServiceStartResponse, UploadRenderQuery},
+use opentalk_types::api::{error::ApiError, v1::services::UploadRenderQuery};
+use opentalk_types_api_v1::services::{
+    recording::PostRecordingStartRequestBody, PostServiceStartResponseBody,
 };
-use opentalk_types_api_v1::services::recording::PostRecordingStartRequestBody;
 use tokio::{sync::mpsc, task};
 
 pub(crate) use self::deprecated::{__path_upload_render, upload_render};
@@ -57,7 +56,7 @@ const REQUIRED_RECORDING_ROLE: &str = "opentalk-recorder";
             description = "The recording participant has successfully \
                 authenticated for the room. Information needed for connecting to the signaling \
                 is contained in the response",
-            body = ServiceStartResponse,
+            body = PostServiceStartResponseBody,
         ),
         (
             status = StatusCode::UNAUTHORIZED,
@@ -84,7 +83,7 @@ pub async fn post_recording_start(
     db: Data<Db>,
     volatile: Data<VolatileStorage>,
     body: Json<PostRecordingStartRequestBody>,
-) -> Result<Json<ServiceStartResponse>, ApiError> {
+) -> Result<Json<PostServiceStartResponseBody>, ApiError> {
     let mut conn = db.get_conn().await?;
     let settings = settings.load_full();
     if settings.rabbit_mq.recording_task_queue.is_none() {
@@ -107,7 +106,7 @@ pub async fn post_recording_start(
     )
     .await?;
 
-    Ok(Json(ServiceStartResponse { ticket, resumption }))
+    Ok(Json(PostServiceStartResponseBody { ticket, resumption }))
 }
 
 mod deprecated {

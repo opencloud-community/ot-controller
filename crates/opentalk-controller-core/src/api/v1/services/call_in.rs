@@ -11,8 +11,10 @@ use actix_web::{
 use opentalk_database::Db;
 use opentalk_db_storage::sip_configs::SipConfig;
 use opentalk_signaling_core::{Participant, VolatileStorage};
-use opentalk_types::api::{error::ApiError, v1::services::ServiceStartResponse};
-use opentalk_types_api_v1::services::call_in::PostCallInStartRequestBody;
+use opentalk_types::api::error::ApiError;
+use opentalk_types_api_v1::services::{
+    call_in::PostCallInStartRequestBody, PostServiceStartResponseBody,
+};
 use opentalk_types_common::features;
 
 use crate::{
@@ -46,7 +48,7 @@ pub const REQUIRED_CALL_IN_ROLE: &str = "opentalk-call-in";
             description = "The dial-in participant has successfully \
                 authenticated for the room. Information needed for connecting to the signaling \
                 is contained in the response",
-            body = ServiceStartResponse,
+            body = PostServiceStartResponseBody,
         ),
         (
             status = StatusCode::UNAUTHORIZED,
@@ -73,7 +75,7 @@ pub async fn post_call_in_start(
     db: Data<Db>,
     volatile: Data<VolatileStorage>,
     request: Json<PostCallInStartRequestBody>,
-) -> Result<Json<ServiceStartResponse>, ApiError> {
+) -> Result<Json<PostServiceStartResponseBody>, ApiError> {
     let settings = settings.load();
     let mut volatile = (**volatile).clone();
     let request = request.into_inner();
@@ -102,7 +104,7 @@ pub async fn post_call_in_start(
         start_or_continue_signaling_session(&mut volatile, Participant::Sip, room.id, None, None)
             .await?;
 
-    Ok(Json(ServiceStartResponse { ticket, resumption }))
+    Ok(Json(PostServiceStartResponseBody { ticket, resumption }))
 }
 
 fn invalid_credentials_error() -> ApiError {
