@@ -18,21 +18,15 @@ use opentalk_db_storage::{
     users::User,
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
-use opentalk_types::api::{
-    error::ApiError,
-    v1::{
-        rooms::streaming_targets::ChangeRoomStreamingTargetResponse,
-        streaming_targets::RoomAndStreamingTargetId,
-    },
-};
+use opentalk_types::api::{error::ApiError, v1::streaming_targets::RoomAndStreamingTargetId};
 use opentalk_types_api_v1::{
     events::StreamingTargetOptionsQuery,
     pagination::PagePaginationQuery,
     rooms::{
         by_room_id::streaming_targets::{
             GetRoomStreamingTargetResponseBody, GetRoomStreamingTargetsResponseBody,
-            PatchRoomStreamingTargetRequestBody, PostRoomStreamingTargetRequestBody,
-            PostRoomStreamingTargetResponseBody,
+            PatchRoomStreamingTargetRequestBody, PatchRoomStreamingTargetResponseBody,
+            PostRoomStreamingTargetRequestBody, PostRoomStreamingTargetResponseBody,
         },
         streaming_targets::UpdateStreamingTargetKind,
     },
@@ -294,7 +288,7 @@ pub async fn get_streaming_target(
         (
             status = StatusCode::OK,
             description = "Streaming target was successfully updated",
-            body = ChangeRoomStreamingTargetResponse
+            body = PatchRoomStreamingTargetResponseBody
         ),
         (
             status = StatusCode::BAD_REQUEST,
@@ -330,7 +324,7 @@ pub async fn patch_streaming_target(
     path_params: Path<RoomAndStreamingTargetId>,
     query: Query<StreamingTargetOptionsQuery>,
     update_streaming_target: Json<PatchRoomStreamingTargetRequestBody>,
-) -> DefaultApiResult<ChangeRoomStreamingTargetResponse> {
+) -> DefaultApiResult<PatchRoomStreamingTargetResponseBody> {
     let settings = settings.load_full();
     let mail_service = mail_service.into_inner();
     let current_tenant = current_tenant.into_inner();
@@ -423,7 +417,7 @@ pub async fn patch_streaming_target(
         .await?;
     }
 
-    Ok(ApiResponse::new(ChangeRoomStreamingTargetResponse(
+    Ok(ApiResponse::new(PatchRoomStreamingTargetResponseBody(
         room_streaming_target,
     )))
 }

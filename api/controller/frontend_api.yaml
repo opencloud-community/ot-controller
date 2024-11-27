@@ -2033,7 +2033,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ChangeRoomStreamingTargetResponse"
+                $ref: "#/components/schemas/PatchRoomStreamingTargetResponseBody"
         "400":
           description: |-
             Could not modify the specified streaming target due to wrong
@@ -2666,8 +2666,6 @@ components:
         tel: +555-123-456-789
     CallInPassword:
       $ref: "#/components/schemas/NumericId"
-    ChangeRoomStreamingTargetResponse:
-      $ref: "#/components/schemas/RoomStreamingTarget"
     CursorLink:
       type: string
       example: "<https://api.example.org/resource?after=urlencodednextpagetoken>; rel='next'"
@@ -3917,6 +3915,8 @@ components:
         public_url: "https://owncast.example.com/"
         streaming_endpoint: "https://ingress.example.com/"
         streaming_key: aabbccddeeff
+    PatchRoomStreamingTargetResponseBody:
+      $ref: "#/components/schemas/RoomStreamingTarget"
     PatchRoomsRequestBody:
       type: object
       description: API request parameters to patch a room
