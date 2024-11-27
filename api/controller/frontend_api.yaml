@@ -3559,7 +3559,7 @@ components:
             size: 98765432
     IceServer:
       oneOf:
-        - $ref: "#/components/schemas/Turn"
+        - $ref: "#/components/schemas/TurnServer"
         - $ref: "#/components/schemas/Stun"
       description: Description of an ICE server
     InstanceId:
@@ -4689,7 +4689,7 @@ components:
         A UTC DateTime wrapper that implements ToRedisArgs and FromRedisValue.
         
         The values are stores as unix timestamps in redis.
-    Turn:
+    TurnServer:
       type: object
       description: TURN access credentials for users.
       required:

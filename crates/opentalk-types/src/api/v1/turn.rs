@@ -4,26 +4,10 @@
 
 //! This module contains types that are used for OpenTalk API V1 TURN endpoints.
 
+use opentalk_types_api_v1::turn::TurnServer;
+
 #[allow(unused_imports)]
 use crate::imports::*;
-
-/// TURN access credentials for users.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct Turn {
-    /// The TURN access username
-    pub username: String,
-
-    /// The TURN access username
-    pub password: String,
-
-    /// Time to live of the TURN service
-    pub ttl: String,
-
-    /// URIs of the TURN service
-    pub uris: Vec<String>,
-}
 
 /// STUN Server for users.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -40,7 +24,7 @@ pub struct Stun {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum IceServer {
     /// TURN ICE server type
-    Turn(Turn),
+    Turn(TurnServer),
 
     /// STUN ICE server type
     Stun(Stun),
