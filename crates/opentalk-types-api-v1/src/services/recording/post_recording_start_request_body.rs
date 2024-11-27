@@ -4,14 +4,11 @@
 
 use opentalk_types_common::rooms::{BreakoutRoomId, RoomId};
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// Response for the `POST /services/recording/start` endpoint
 #[derive(Debug, Clone, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct StartRecordingRequestBody {
+pub struct PostRecordingStartRequestBody {
     /// The room id
     pub room_id: RoomId,
 

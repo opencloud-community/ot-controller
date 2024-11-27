@@ -2135,7 +2135,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/StartRecordingRequestBody"
+              $ref: "#/components/schemas/PostRecordingStartRequestBody"
         required: true
       responses:
         "200":
@@ -4075,6 +4075,18 @@ components:
             type: string
           description: Permissions is a set of strings that each define a permission a user has.
           uniqueItems: true
+    PostRecordingStartRequestBody:
+      type: object
+      description: "Response for the `POST /services/recording/start` endpoint"
+      required:
+        - room_id
+      properties:
+        breakout_room:
+          allOf:
+            - $ref: "#/components/schemas/BreakoutRoomId"
+          nullable: true
+        room_id:
+          $ref: "#/components/schemas/RoomId"
     PostRoomStreamingTargetRequestBody:
       $ref: "#/components/schemas/StreamingTarget"
     PostRoomStreamingTargetResponseBody:
@@ -4486,18 +4498,6 @@ components:
         message:
           type: string
           description: Human readable message
-    StartRecordingRequestBody:
-      type: object
-      description: "Response for the `POST /services/recording/start` endpoint"
-      required:
-        - room_id
-      properties:
-        breakout_room:
-          allOf:
-            - $ref: "#/components/schemas/BreakoutRoomId"
-          nullable: true
-        room_id:
-          $ref: "#/components/schemas/RoomId"
     StreamingKey:
       type: string
       description: The secret key of a streaming target

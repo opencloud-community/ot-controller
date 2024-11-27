@@ -5,3 +5,4 @@
 //! Types related to the API endpoints under `/services`.
 
 pub mod call_in;
+pub mod recording;

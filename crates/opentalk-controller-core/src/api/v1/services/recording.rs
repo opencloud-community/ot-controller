@@ -20,8 +20,9 @@ use opentalk_signaling_core::{
 };
 use opentalk_types::api::{
     error::ApiError,
-    v1::services::{ServiceStartResponse, StartRecordingRequestBody, UploadRenderQuery},
+    v1::services::{ServiceStartResponse, UploadRenderQuery},
 };
+use opentalk_types_api_v1::services::recording::PostRecordingStartRequestBody;
 use tokio::{sync::mpsc, task};
 
 pub(crate) use self::deprecated::{__path_upload_render, upload_render};
@@ -48,7 +49,7 @@ const REQUIRED_RECORDING_ROLE: &str = "opentalk-recorder";
 /// for creating a recording or livestream of the meeting.
 #[utoipa::path(
     context_path = "/services/recording",
-    request_body = StartRecordingRequestBody,
+    request_body = PostRecordingStartRequestBody,
     operation_id = "start_recording",
     responses(
         (
@@ -78,11 +79,11 @@ const REQUIRED_RECORDING_ROLE: &str = "opentalk-recorder";
     ),
 )]
 #[post("/start")]
-pub async fn start(
+pub async fn post_recording_start(
     settings: SharedSettingsActix,
     db: Data<Db>,
     volatile: Data<VolatileStorage>,
-    body: Json<StartRecordingRequestBody>,
+    body: Json<PostRecordingStartRequestBody>,
 ) -> Result<Json<ServiceStartResponse>, ApiError> {
     let mut conn = db.get_conn().await?;
     let settings = settings.load_full();
@@ -281,7 +282,7 @@ pub(crate) async fn ws_upload(
 pub fn services() -> impl HttpServiceFactory {
     actix_web::web::scope("/recording")
         .wrap(super::RequiredRealmRole::new(REQUIRED_RECORDING_ROLE))
-        .service(start)
+        .service(post_recording_start)
         .service(upload_render)
         .service(ws_upload)
 }
