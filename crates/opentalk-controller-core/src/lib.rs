@@ -781,7 +781,6 @@ impl ModulesRegistrar for Controller {
         api::v1::rooms::start_invited,
         api::v1::services::call_in::post_call_in_start,
         api::v1::services::recording::post_recording_start,
-        api::v1::services::recording::upload_render,
         api::v1::services::recording::ws_upload,
         api::v1::sip_configs::delete,
         api::v1::sip_configs::get,

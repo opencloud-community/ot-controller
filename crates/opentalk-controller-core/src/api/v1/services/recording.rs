@@ -6,12 +6,11 @@ use actix_http::ws::Codec;
 use actix_web::{
     dev::HttpServiceFactory,
     get, post, web,
-    web::{Data, Json, Payload, Query},
+    web::{Data, Json, Query},
     HttpRequest, HttpResponse,
 };
 use actix_web_actors::ws;
 use bytes::Bytes;
-use futures::TryStreamExt;
 use opentalk_database::Db;
 use opentalk_db_storage::rooms::Room;
 use opentalk_signaling_core::{
@@ -24,14 +23,12 @@ use opentalk_types_api_v1::services::{
 };
 use tokio::{sync::mpsc, task};
 
-pub(crate) use self::deprecated::{__path_upload_render, upload_render};
 use crate::{
     api::{
         headers::{ConnectionUpgrade, WebsocketUpgrade},
         responses::{InternalServerError, Unauthorized},
         signaling::ticket::start_or_continue_signaling_session,
         upload::{UploadWebSocketActor, MAXIMUM_WEBSOCKET_BUFFER_SIZE},
-        v1::response::NoContent,
     },
     settings::SharedSettingsActix,
 };
@@ -107,83 +104,6 @@ pub async fn post_recording_start(
     .await?;
 
     Ok(Json(PostServiceStartResponseBody { ticket, resumption }))
-}
-
-mod deprecated {
-    // The only method to mark endpoints as deprecated in `utoipa` is the
-    // use of rust's `#[deprecated]` attribute. This triggers a compiler warning
-    // though,  and the only feasible way I found to ignore these without
-    // allowing `deprecated` everywhere is to encapsulate it in a separate
-    // module which allows it, and re-export it outside.
-
-    #![allow(deprecated)]
-
-    use super::*;
-
-    /// Upload a rendered recording
-    ///
-    /// The body of this request should simply contain the raw data.
-    /// This endpoint is deprecated, please use the streaming upload
-    /// `/services/recording/upload` WebSocket endpoint instead.
-    #[utoipa::path(
-        context_path = "/services/recording",
-        params(UploadRenderQuery),
-        request_body(
-            content = [u8],
-            content_type = "application/octet-stream",
-            description = "The raw data to be uploaded",
-        ),
-        responses(
-            (
-                status = StatusCode::NO_CONTENT,
-                description = "The recording was uploaded successfully",
-            ),
-            (
-                status = StatusCode::UNAUTHORIZED,
-                response = Unauthorized,
-            ),
-            (
-                status = StatusCode::INTERNAL_SERVER_ERROR,
-                response = InternalServerError,
-            ),
-        ),
-        security(
-            ("BearerAuth" = []),
-        ),
-    )]
-    #[post("/upload_render")]
-    #[deprecated = "Please use the streaming upload `/services/recording/upload` WebSocket endpoint instead"]
-    pub(crate) async fn upload_render(
-        storage: Data<ObjectStorage>,
-        db: Data<Db>,
-        Query(UploadRenderQuery {
-            room_id,
-            file_extension,
-            timestamp,
-        }): Query<UploadRenderQuery>,
-        data: Payload,
-    ) -> Result<NoContent, ApiError> {
-        // Assert that the room exists
-        Room::get(&mut db.get_conn().await?, room_id).await?;
-
-        let kind = "recording"
-            .parse()
-            .expect("Must be parseable as AssetFileKind");
-        let filename = NewAssetFileName::new(kind, timestamp, file_extension);
-
-        save_asset(
-            &storage,
-            db.into_inner(),
-            room_id,
-            Some("recording"),
-            filename,
-            data.into_stream(),
-            ChunkFormat::Data,
-        )
-        .await?;
-
-        Ok(NoContent)
-    }
 }
 
 /// This is a dummy type to define the structure of the headers required for
@@ -282,6 +202,5 @@ pub fn services() -> impl HttpServiceFactory {
     actix_web::web::scope("/recording")
         .wrap(super::RequiredRealmRole::new(REQUIRED_RECORDING_ROLE))
         .service(post_recording_start)
-        .service(upload_render)
         .service(ws_upload)
 }
