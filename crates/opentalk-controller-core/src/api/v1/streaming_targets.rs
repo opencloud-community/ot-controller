@@ -21,9 +21,7 @@ use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_types::api::{
     error::ApiError,
     v1::{
-        rooms::streaming_targets::{
-            ChangeRoomStreamingTargetRequest, ChangeRoomStreamingTargetResponse,
-        },
+        rooms::streaming_targets::ChangeRoomStreamingTargetResponse,
         streaming_targets::RoomAndStreamingTargetId,
     },
 };
@@ -33,7 +31,8 @@ use opentalk_types_api_v1::{
     rooms::{
         by_room_id::streaming_targets::{
             GetRoomStreamingTargetResponseBody, GetRoomStreamingTargetsResponseBody,
-            PostRoomStreamingTargetRequestBody, PostRoomStreamingTargetResponseBody,
+            PatchRoomStreamingTargetRequestBody, PostRoomStreamingTargetRequestBody,
+            PostRoomStreamingTargetResponseBody,
         },
         streaming_targets::UpdateStreamingTargetKind,
     },
@@ -290,7 +289,7 @@ pub async fn get_streaming_target(
 /// Modifies and returns a single streaming target.
 #[utoipa::path(
     params(RoomAndStreamingTargetId),
-    request_body = ChangeRoomStreamingTargetRequest,
+    request_body = PatchRoomStreamingTargetRequestBody,
     responses(
         (
             status = StatusCode::OK,
@@ -330,14 +329,14 @@ pub async fn patch_streaming_target(
     current_user: ReqData<User>,
     path_params: Path<RoomAndStreamingTargetId>,
     query: Query<StreamingTargetOptionsQuery>,
-    update_streaming_target: Json<ChangeRoomStreamingTargetRequest>,
+    update_streaming_target: Json<PatchRoomStreamingTargetRequestBody>,
 ) -> DefaultApiResult<ChangeRoomStreamingTargetResponse> {
     let settings = settings.load_full();
     let mail_service = mail_service.into_inner();
     let current_tenant = current_tenant.into_inner();
     let current_user = current_user.into_inner();
     let query = query.into_inner();
-    let update_streaming_target = update_streaming_target.into_inner().0;
+    let update_streaming_target = update_streaming_target.into_inner();
 
     if update_streaming_target.name.is_none() && update_streaming_target.kind.is_none() {
         return Err(ApiError::bad_request());

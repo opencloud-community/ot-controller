@@ -2025,7 +2025,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ChangeRoomStreamingTargetRequest"
+              $ref: "#/components/schemas/PatchRoomStreamingTargetRequestBody"
         required: true
       responses:
         "200":
@@ -2666,8 +2666,6 @@ components:
         tel: +555-123-456-789
     CallInPassword:
       $ref: "#/components/schemas/NumericId"
-    ChangeRoomStreamingTargetRequest:
-      $ref: "#/components/schemas/UpdateStreamingTarget"
     ChangeRoomStreamingTargetResponse:
       $ref: "#/components/schemas/RoomStreamingTarget"
     CursorLink:
@@ -3901,6 +3899,24 @@ components:
         display_name: Alice Adams
         language: en
         title: ~
+    PatchRoomStreamingTargetRequestBody:
+      allOf:
+        - allOf:
+            - $ref: "#/components/schemas/UpdateStreamingTargetKind"
+          nullable: true
+        - type: object
+          properties:
+            name:
+              type: string
+              description: The name of the streaming target
+              nullable: true
+      description: "The body of a *PATCH /rooms/{room_id}/streaming_targets/{streaming_target_id}* request"
+      example:
+        kind: custom
+        name: My OwnCast Stream
+        public_url: "https://owncast.example.com/"
+        streaming_endpoint: "https://ingress.example.com/"
+        streaming_key: aabbccddeeff
     PatchRoomsRequestBody:
       type: object
       description: API request parameters to patch a room
@@ -4764,24 +4780,6 @@ components:
         lastname:
           type: string
           description: Last name of the unregistered user
-    UpdateStreamingTarget:
-      allOf:
-        - allOf:
-            - $ref: "#/components/schemas/UpdateStreamingTargetKind"
-          nullable: true
-        - type: object
-          properties:
-            name:
-              type: string
-              description: The name of the streaming target
-              nullable: true
-      description: "Data to update a streaming target (only fields with [`Some`] are updated)"
-      example:
-        kind: custom
-        name: My OwnCast Stream
-        public_url: "https://owncast.example.com/"
-        streaming_endpoint: "https://ingress.example.com/"
-        streaming_key: aabbccddeeff
     UpdateStreamingTargetKind:
       oneOf:
         - type: object

@@ -6,25 +6,8 @@
 
 use opentalk_types_common::{streaming::RoomStreamingTarget, utils::ExampleData};
 
-use crate::api::v1::streaming_targets::UpdateStreamingTarget;
 #[allow(unused_imports)]
 use crate::imports::*;
-
-/// The body of a *PUT /rooms/{room_id}/streaming_targets/{streaming_target_id}* request
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(
-    feature = "utoipa",
-    derive(utoipa::ToSchema),
-    schema(example = json!(ChangeRoomStreamingTargetRequest::example_data()))
-)]
-pub struct ChangeRoomStreamingTargetRequest(pub UpdateStreamingTarget);
-
-impl ExampleData for ChangeRoomStreamingTargetRequest {
-    fn example_data() -> Self {
-        Self(UpdateStreamingTarget::example_data())
-    }
-}
 
 /// The body of a *PUT /rooms/{room_id}/streaming_targets/{streaming_target_id}* response
 #[derive(Clone, Debug, PartialEq, Eq)]
