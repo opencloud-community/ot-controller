@@ -1,0 +1,45 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+authors.workspace = true
+edition = "2021"
+license = "EUPL-1.2"
+name = "opentalk-signaling-module-subroom-audio"
+publish = false
+version.workspace = true
+
+[package.metadata.cargo-machete]
+# We need to explicitly add the runtime as dependency to enable the tokio feature
+ignored = ["livekit-runtime"]
+
+[dependencies]
+async-trait.workspace = true
+either.workspace = true
+livekit-api = "0.4"
+livekit-protocol = "0.3"
+livekit-runtime = { version = "0.3", default-features = false, features = [
+  "tokio",
+] }
+log.workspace = true
+opentalk-controller-settings.workspace = true
+opentalk-signaling-core.workspace = true
+opentalk-types-signaling = { workspace = true, features = ["backend"] }
+opentalk-types-signaling-subroom-audio = { workspace = true, features = [
+  "backend",
+  "rand",
+] }
+parking_lot.workspace = true
+redis.workspace = true
+redis-args.workspace = true
+serde.workspace = true
+snafu.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+serial_test.workspace = true
+tokio.workspace = true
+
+[lints]
+workspace = true

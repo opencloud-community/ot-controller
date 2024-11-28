@@ -168,6 +168,9 @@ exceptions = [
   ], name = "opentalk-types-signaling-shared-folder" },
   { allow = [
     "EUPL-1.2",
+  ], name = "opentalk-types-signaling-subroom-audio" },
+  { allow = [
+    "EUPL-1.2",
   ], name = "opentalk-types-signaling-timer" },
   { allow = [
     "EUPL-1.2",

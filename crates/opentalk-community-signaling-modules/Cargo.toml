@@ -25,6 +25,7 @@ opentalk-signaling-module-meeting-notes.workspace = true
 opentalk-signaling-module-meeting-report.workspace = true
 opentalk-signaling-module-polls.workspace = true
 opentalk-signaling-module-shared-folder.workspace = true
+opentalk-signaling-module-subroom-audio.workspace = true
 opentalk-signaling-module-timer.workspace = true
 opentalk-signaling-module-whiteboard.workspace = true
 
