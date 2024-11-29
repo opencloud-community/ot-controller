@@ -2339,7 +2339,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PatchMeBody"
+              $ref: "#/components/schemas/PatchMeRequestBody"
         required: true
       responses:
         "200":
@@ -3830,7 +3830,7 @@ components:
             - $ref: "#/components/schemas/InviteRole"
       example:
         role: moderator
-    PatchMeBody:
+    PatchMeRequestBody:
       type: object
       description: Used to modify user settings.
       properties:

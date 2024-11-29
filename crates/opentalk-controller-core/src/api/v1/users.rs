@@ -25,16 +25,13 @@ use opentalk_db_storage::{
 use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_types::api::{
     error::ApiError,
-    v1::{
-        order::{AssetSorting, SortingQuery},
-        users::PatchMeBody,
-    },
+    v1::order::{AssetSorting, SortingQuery},
 };
 use opentalk_types_api_v1::{
     pagination::PagePaginationQuery,
     users::{
-        GetFindQuery, GetFindResponseBody, GetFindResponseEntry, GetUserAssetsResponseBody,
-        PrivateUserProfile, PublicUserProfile, UnregisteredUser,
+        me::PatchMeRequestBody, GetFindQuery, GetFindResponseBody, GetFindResponseEntry,
+        GetUserAssetsResponseBody, PrivateUserProfile, PublicUserProfile, UnregisteredUser,
     },
 };
 use opentalk_types_common::{tariffs::TariffResource, users::UserId};
@@ -58,7 +55,7 @@ const MAX_USER_SEARCH_RESULTS: usize = 20;
 ///
 /// Fields that are not provided in the request body will remain unchanged.
 #[utoipa::path(
-    request_body = PatchMeBody,
+    request_body = PatchMeRequestBody,
     operation_id = "patch_users_me",
     responses(
         (
@@ -92,7 +89,7 @@ pub async fn patch_me(
     current_user: ReqData<User>,
     current_tenant: ReqData<Tenant>,
     access_token: ReqData<AccessToken>,
-    patch: Json<PatchMeBody>,
+    patch: Json<PatchMeRequestBody>,
 ) -> Result<Either<Json<PrivateUserProfile>, NoContent>, ApiError> {
     let patch = patch.into_inner();
 

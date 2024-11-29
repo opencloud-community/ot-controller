@@ -4,6 +4,8 @@
 
 //! This module contains types that are used in OpenTalk API V1 users endpoints.
 
+pub mod me;
+
 mod get_event_invites_pending_response_body;
 mod get_find_query;
 mod get_find_response_body;

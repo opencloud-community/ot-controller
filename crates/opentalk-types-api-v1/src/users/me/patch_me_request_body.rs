@@ -2,25 +2,20 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! This module contains types that are used in OpenTalk API V1 users endpoints.
-
 use opentalk_types_common::{
     users::{DisplayName, Language, Theme, UserTitle},
     utils::ExampleData,
 };
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// Used to modify user settings.
 #[derive(Default, Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(
     example = json!(
-        PatchMeBody::example_data()
+        PatchMeRequestBody::example_data()
     )
 ))]
-pub struct PatchMeBody {
+pub struct PatchMeRequestBody {
     /// The user's title
     // Field is non-required already, utoipa adds a `nullable: true` entry
     // by default which creates a false positive in the spectral linter when
@@ -77,10 +72,10 @@ pub struct PatchMeBody {
     pub conference_theme: Option<Theme>,
 }
 
-impl PatchMeBody {
-    /// Check if any field is empty in `PatchMeBody`.
+impl PatchMeRequestBody {
+    /// Check if any field is empty in `PatchMeRequestBody`.
     pub fn is_empty(&self) -> bool {
-        let PatchMeBody {
+        let PatchMeRequestBody {
             title,
             display_name,
             language,
@@ -96,7 +91,7 @@ impl PatchMeBody {
     }
 }
 
-impl ExampleData for PatchMeBody {
+impl ExampleData for PatchMeRequestBody {
     fn example_data() -> Self {
         Self {
             display_name: Some("Alice Adams".parse().expect("valid display name")),
