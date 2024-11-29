@@ -4,6 +4,7 @@
 
 //! Ordering query types
 
+use opentalk_types_common::order::Ordering;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -103,23 +104,6 @@ impl<'__s, T: utoipa::ToSchema<'__s>> SortingQuery<T> {
             print_parameter(param);
         }
     }
-}
-
-/// The sorting order that should be applied
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub enum Ordering {
-    /// Sorting the lowest value first
-    Ascending,
-
-    /// Sorting the highest value first
-    #[default]
-    Descending,
 }
 
 /// Properties by which a list of assets can get sorted.
