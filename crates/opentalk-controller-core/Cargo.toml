@@ -56,7 +56,11 @@ opentalk-r3dlock.workspace = true
 opentalk-signaling-core.workspace = true
 opentalk-types = { workspace = true, features = ["backend"] }
 opentalk-types-api-v1 = { workspace = true, features = ["backend"] }
-opentalk-types-common = { workspace = true, features = ["backend", "clap"] }
+opentalk-types-common = { workspace = true, features = [
+  "actix",
+  "backend",
+  "clap",
+] }
 opentalk-types-signaling = { workspace = true, features = ["backend"] }
 opentalk-types-signaling-breakout = { workspace = true, features = ["backend"] }
 opentalk-types-signaling-control = { workspace = true, features = ["backend"] }

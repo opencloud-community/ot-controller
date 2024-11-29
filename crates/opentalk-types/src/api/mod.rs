@@ -6,4 +6,3 @@
 //! such as types for the V1 endpoints.
 
 pub mod error;
-pub mod v1;

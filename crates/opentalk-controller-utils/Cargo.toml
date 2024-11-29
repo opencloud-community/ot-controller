@@ -27,7 +27,7 @@ opentalk-log.workspace = true
 opentalk-nextcloud-client.workspace = true
 opentalk-signaling-core.workspace = true
 opentalk-types.workspace = true
-opentalk-types-common.workspace = true
+opentalk-types-common = { workspace = true, features = ["kustos"] }
 opentalk-types-signaling.workspace = true
 serde_json.workspace = true
 snafu.workspace = true

@@ -80,3 +80,4 @@ opentalk-types-common = { workspace = true, features = ["serde"] }
 pretty_assertions.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+serde_urlencoded.workspace = true
