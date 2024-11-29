@@ -198,9 +198,11 @@ impl std::fmt::Display for ApiError {
 #[cfg(feature = "axum")]
 impl axum::response::IntoResponse for ApiError {
     fn into_response(self) -> axum::response::Response {
-        let response_builder = axum::response::Response::builder();
+        let mut builder = axum::response::Response::builder();
 
-        let builder = response_builder.header(
+        builder = builder.status(self.status.as_u16());
+
+        builder = builder.header(
             http::header::CONTENT_TYPE,
             http::HeaderValue::from_static("text/json; charset=utf-8"),
         );
