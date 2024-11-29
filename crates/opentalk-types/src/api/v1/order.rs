@@ -106,34 +106,9 @@ impl<'__s, T: utoipa::ToSchema<'__s>> SortingQuery<T> {
     }
 }
 
-/// Properties by which a list of assets can get sorted.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub enum AssetSorting {
-    /// Sort by filename
-    Filename,
-
-    /// Sort by size
-    Size,
-
-    /// Sort by namespace
-    Namespace,
-
-    /// Sort by kind
-    Kind,
-
-    /// Sort by crated at date
-    #[default]
-    CreatedAt,
-}
-
-#[cfg(test)]
+#[cfg(all(test, feature = "serde"))]
 mod tests {
+    use opentalk_types_common::assets::AssetSorting;
     use pretty_assertions::assert_eq;
 
     use super::*;

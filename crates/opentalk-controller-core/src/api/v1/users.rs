@@ -23,10 +23,7 @@ use opentalk_db_storage::{
     users::{email_to_libravatar_url, UpdateUser, User},
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
-use opentalk_types::api::{
-    error::ApiError,
-    v1::order::{AssetSorting, SortingQuery},
-};
+use opentalk_types::api::{error::ApiError, v1::order::SortingQuery};
 use opentalk_types_api_v1::{
     pagination::PagePaginationQuery,
     users::{
@@ -34,7 +31,7 @@ use opentalk_types_api_v1::{
         GetUserAssetsResponseBody, PrivateUserProfile, PublicUserProfile, UnregisteredUser,
     },
 };
-use opentalk_types_common::{tariffs::TariffResource, users::UserId};
+use opentalk_types_common::{assets::AssetSorting, tariffs::TariffResource, users::UserId};
 use snafu::{Report, ResultExt, Whatever};
 
 use super::response::NoContent;
