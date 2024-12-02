@@ -63,7 +63,7 @@ async fn last_seen_timestamps() {
                 USER_1.participant_id,
                 user1.clone(),
                 Role::User,
-                USER_1.name,
+                &USER_1.display_name(),
                 (),
             )
             .await
@@ -110,7 +110,13 @@ async fn last_seen_timestamps() {
         // join another user in order to keep the room alive when the first
         // user leaves and joins the room
         module_tester
-            .join_user(USER_2.participant_id, user2, Role::User, USER_2.name, ())
+            .join_user(
+                USER_2.participant_id,
+                user2,
+                Role::User,
+                &USER_2.display_name(),
+                (),
+            )
             .await
             .unwrap();
         // discard the received ws join success message, no need to test it here
@@ -169,7 +175,13 @@ async fn last_seen_timestamps() {
     // leave and join again with the first user
     module_tester.leave(&USER_1.participant_id).await.unwrap();
     module_tester
-        .join_user(USER_1.participant_id, user1, Role::User, USER_1.name, ())
+        .join_user(
+            USER_1.participant_id,
+            user1,
+            Role::User,
+            &USER_1.display_name(),
+            (),
+        )
         .await
         .unwrap();
 
@@ -256,7 +268,13 @@ async fn common_groups_on_join() {
     );
 
     module_tester
-        .join_user(USER_1.participant_id, user1, Role::User, USER_1.name, ())
+        .join_user(
+            USER_1.participant_id,
+            user1,
+            Role::User,
+            &USER_1.display_name(),
+            (),
+        )
         .await
         .unwrap();
 
@@ -302,7 +320,13 @@ async fn common_groups_on_join() {
     }
 
     module_tester
-        .join_user(USER_2.participant_id, user2, Role::User, USER_2.name, ())
+        .join_user(
+            USER_2.participant_id,
+            user2,
+            Role::User,
+            &USER_2.display_name(),
+            (),
+        )
         .await
         .unwrap();
 
@@ -391,7 +415,7 @@ async fn private_chat_history_on_join() {
             USER_1.participant_id,
             user1.clone(),
             Role::User,
-            USER_1.name,
+            &USER_1.display_name(),
             (),
         )
         .await
@@ -430,7 +454,13 @@ async fn private_chat_history_on_join() {
     }
 
     module_tester
-        .join_user(USER_2.participant_id, user2, Role::User, USER_2.name, ())
+        .join_user(
+            USER_2.participant_id,
+            user2,
+            Role::User,
+            &USER_2.display_name(),
+            (),
+        )
         .await
         .unwrap();
 
@@ -528,7 +558,13 @@ async fn private_chat_history_on_join() {
     ));
 
     module_tester
-        .join_user(USER_1.participant_id, user1, Role::User, USER_1.name, ())
+        .join_user(
+            USER_1.participant_id,
+            user1,
+            Role::User,
+            &USER_1.display_name(),
+            (),
+        )
         .await
         .unwrap();
 

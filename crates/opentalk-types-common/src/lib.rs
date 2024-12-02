@@ -32,6 +32,7 @@ pub mod events;
 pub mod features;
 pub mod module_resources;
 pub mod modules;
+pub mod order;
 pub mod rooms;
 pub mod shared_folders;
 pub mod streaming;

@@ -33,24 +33,23 @@ use opentalk_db_storage::{
     },
     tariffs::Tariff,
     tenants::Tenant,
-    users::{email_to_libravatar_url, User},
+    users::User,
 };
 use opentalk_keycloak_admin::{users::TenantFilter, KeycloakAdminClient};
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage};
-use opentalk_types::api::{
-    error::{ApiError, ValidationErrorEntry, ERROR_CODE_IGNORED_VALUE, ERROR_CODE_VALUE_REQUIRED},
-    v1::{
-        events::{
-            CallInInfo, DeleteEventsQuery, EmailOnlyUser, EventAndInstanceId,
-            EventExceptionResource, EventInvitee, EventInviteeProfile, EventOptionsQuery,
-            EventOrException, EventResource, EventRoomInfo, EventStatus, EventType, GetEventQuery,
-            GetEventsCursorData, GetEventsQuery, PatchEventBody, PatchEventQuery, PostEventsBody,
-            PublicInviteUserProfile,
-        },
-        pagination::default_pagination_per_page,
-        users::{PublicUserProfile, UnregisteredUser},
-        Cursor,
+use opentalk_types::api::error::{
+    ApiError, ValidationErrorEntry, ERROR_CODE_IGNORED_VALUE, ERROR_CODE_VALUE_REQUIRED,
+};
+use opentalk_types_api_v1::{
+    events::{
+        CallInInfo, DeleteEventsQuery, EmailOnlyUser, EventAndInstanceId, EventExceptionResource,
+        EventInvitee, EventInviteeProfile, EventOptionsQuery, EventOrException, EventResource,
+        EventRoomInfo, EventStatus, EventType, GetEventQuery, GetEventsCursorData, GetEventsQuery,
+        PatchEventBody, PatchEventQuery, PostEventsBody, PublicInviteUserProfile,
     },
+    pagination::default_pagination_per_page,
+    users::{PublicUserProfile, UnregisteredUser},
+    Cursor,
 };
 use opentalk_types_common::{
     events::{invites::EventInviteStatus, EventDescription, EventId, EventTitle},
@@ -65,12 +64,12 @@ use rrule::{Frequency, RRuleSet};
 use serde::Deserialize;
 use shared_folder::delete_shared_folders;
 use snafu::Report;
-use validator::Validate;
 
-use super::{response::NoContent, ApiResponse, DefaultApiResult};
+use super::{response::NoContent, util::ToUserProfile as _, ApiResponse, DefaultApiResult};
 use crate::{
     api::{
         responses::{BadRequest, Forbidden, InternalServerError, NotFound, Unauthorized},
+        util::email_to_libravatar_url,
         v1::{
             events::shared_folder::put_shared_folder, rooms::RoomsPoliciesBuilderExt,
             util::GetUserProfilesBatched,
@@ -292,8 +291,6 @@ pub async fn new_event(
     let settings = settings.load_full();
     let current_user = current_user.into_inner();
     let new_event = new_event.into_inner();
-
-    new_event.validate()?;
 
     let mut conn = db.get_conn().await?;
 
@@ -2202,10 +2199,10 @@ mod tests {
         let user_profile = PublicUserProfile {
             id: UserId::nil(),
             email: "test@example.org".into(),
-            title: "".into(),
+            title: "".parse().expect("valid user title"),
             firstname: "Test".into(),
             lastname: "Test".into(),
-            display_name: "Tester".into(),
+            display_name: "Tester".parse().expect("valid display name"),
             avatar_url: "https://example.org/avatar".into(),
         };
 
@@ -2330,10 +2327,10 @@ mod tests {
         let user_profile = PublicUserProfile {
             id: UserId::nil(),
             email: "test@example.org".into(),
-            title: "".into(),
+            title: "".parse().expect("valid user title"),
             firstname: "Test".into(),
             lastname: "Test".into(),
-            display_name: "Tester".into(),
+            display_name: "Tester".parse().expect("valid display name"),
             avatar_url: "https://example.org/avatar".into(),
         };
 
@@ -2454,10 +2451,10 @@ mod tests {
         let user_profile = PublicUserProfile {
             id: UserId::nil(),
             email: "test@example.org".into(),
-            title: "".into(),
+            title: "".parse().expect("valid user title"),
             firstname: "Test".into(),
             lastname: "Test".into(),
-            display_name: "Tester".into(),
+            display_name: "Tester".parse().expect("valid display name"),
             avatar_url: "https://example.org/avatar".into(),
         };
 

@@ -13,14 +13,12 @@ use diesel::{
     Identifiable, Insertable, OptionalExtension, QueryDsl, Queryable, TextExpressionMethods,
 };
 use diesel_async::RunQueryDsl;
-use opentalk_controller_settings::Settings;
 use opentalk_database::{DbConnection, Paginate, Result};
 use opentalk_diesel_newtype::DieselNewtype;
-use opentalk_types::api::v1::users::{PrivateUserProfile, PublicUserProfile};
 use opentalk_types_common::{
     tariffs::{TariffId, TariffStatus},
     tenants::TenantId,
-    users::UserId,
+    users::{DisplayName, Language, Theme, UserId, UserTitle},
 };
 use serde::{Deserialize, Serialize};
 
@@ -64,14 +62,14 @@ pub struct User {
     pub id_serial: SerialUserId,
     pub oidc_sub: String,
     pub email: String,
-    pub title: String,
+    pub title: UserTitle,
     pub firstname: String,
     pub lastname: String,
     pub id_token_exp: i64,
-    pub language: String,
-    pub display_name: String,
-    pub dashboard_theme: String,
-    pub conference_theme: String,
+    pub language: Language,
+    pub display_name: DisplayName,
+    pub dashboard_theme: Theme,
+    pub conference_theme: Theme,
     pub phone: Option<String>,
     pub tenant_id: TenantId,
     pub tariff_id: TariffId,
@@ -365,43 +363,6 @@ impl User {
             .map_err(Into::into)
     }
 
-    pub fn to_public_user_profile(&self, settings: &Settings) -> PublicUserProfile {
-        let default_avatar = email_to_libravatar_url(&settings.avatar.libravatar_url, &self.email);
-
-        PublicUserProfile {
-            id: self.id,
-            email: self.email.clone(),
-            title: self.title.clone(),
-            firstname: self.firstname.clone(),
-            lastname: self.lastname.clone(),
-            display_name: self.display_name.clone(),
-            avatar_url: self.avatar_url.clone().unwrap_or(default_avatar),
-        }
-    }
-
-    pub fn to_private_user_profile(
-        &self,
-        settings: &Settings,
-        used_storage: u64,
-    ) -> PrivateUserProfile {
-        let default_avatar = email_to_libravatar_url(&settings.avatar.libravatar_url, &self.email);
-
-        PrivateUserProfile {
-            id: self.id,
-            email: self.email.clone(),
-            title: self.title.clone(),
-            firstname: self.firstname.clone(),
-            lastname: self.lastname.clone(),
-            display_name: self.display_name.clone(),
-            dashboard_theme: self.dashboard_theme.clone(),
-            conference_theme: self.conference_theme.clone(),
-            avatar_url: self.avatar_url.clone().unwrap_or(default_avatar),
-            language: self.language.clone(),
-            tariff_status: self.tariff_status,
-            used_storage,
-        }
-    }
-
     /// Delete a user using the given id
     #[tracing::instrument(err, skip_all)]
     pub async fn delete_by_id(conn: &mut DbConnection, user_id: UserId) -> Result<()> {
@@ -413,11 +374,6 @@ impl User {
     }
 }
 
-/// Helper function to turn an email address into libravatar URL.
-pub fn email_to_libravatar_url(libravatar_url: &str, email: &str) -> String {
-    format!("{}{:x}", libravatar_url, md5::compute(email))
-}
-
 /// Diesel insertable user struct
 ///
 /// Represents fields that have to be provided on user insertion.
@@ -426,12 +382,12 @@ pub fn email_to_libravatar_url(libravatar_url: &str, email: &str) -> String {
 pub struct NewUser {
     pub oidc_sub: String,
     pub email: String,
-    pub title: String,
+    pub title: UserTitle,
     pub firstname: String,
     pub lastname: String,
     pub id_token_exp: i64,
-    pub language: String,
-    pub display_name: String,
+    pub language: Language,
+    pub display_name: DisplayName,
     pub phone: Option<String>,
     pub tenant_id: TenantId,
     pub tariff_id: TariffId,
@@ -453,16 +409,16 @@ impl NewUser {
 #[derive(Default, AsChangeset)]
 #[diesel(table_name = users)]
 pub struct UpdateUser<'a> {
-    pub title: Option<&'a str>,
+    pub title: Option<&'a UserTitle>,
     pub email: Option<&'a str>,
     pub firstname: Option<&'a str>,
     pub lastname: Option<&'a str>,
     pub phone: Option<Option<String>>,
-    pub display_name: Option<&'a str>,
-    pub language: Option<&'a str>,
+    pub display_name: Option<&'a DisplayName>,
+    pub language: Option<&'a Language>,
     pub id_token_exp: Option<i64>,
-    pub dashboard_theme: Option<&'a str>,
-    pub conference_theme: Option<&'a str>,
+    pub dashboard_theme: Option<&'a Theme>,
+    pub conference_theme: Option<&'a Theme>,
     // The tenant_id should never be updated!
     //pub tenant_id: Option<TenantId>,
     pub tariff_id: Option<TariffId>,

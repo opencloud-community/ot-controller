@@ -16,24 +16,23 @@ use opentalk_db_storage::{
     rooms::Room,
     users::User,
 };
-use opentalk_types::api::{
-    error::ApiError,
-    v1::{
-        invites::{
-            CodeVerified, GetRoomsInvitesResponseBody, InviteResource, PostInviteRequestBody,
-            PostInviteVerifyRequestBody, PutInviteRequestBody, RoomIdAndInviteCode,
-        },
-        pagination::PagePaginationQuery,
+use opentalk_types::api::error::ApiError;
+use opentalk_types_api_v1::{
+    pagination::PagePaginationQuery,
+    rooms::by_room_id::invites::{
+        GetRoomsInvitesResponseBody, InviteResource, PostInviteRequestBody,
+        PostInviteVerifyRequestBody, PostInviteVerifyResponseBody, PutInviteRequestBody,
+        RoomIdAndInviteCode,
     },
+    users::PublicUserProfile,
 };
 use opentalk_types_common::rooms::RoomId;
-use validator::Validate;
 
 use super::{response::NoContent, DefaultApiResult};
 use crate::{
     api::{
         responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
-        v1::{rooms::RoomsPoliciesBuilderExt, ApiResponse},
+        v1::{rooms::RoomsPoliciesBuilderExt, util::ToUserProfile as _, ApiResponse},
     },
     settings::SharedSettingsActix,
 };
@@ -406,7 +405,7 @@ pub async fn delete_invite(
         (
             status = StatusCode::OK,
             description = "Invite is valid, the response body tells the room id",
-            body = CodeVerified,
+            body = PostInviteVerifyResponseBody,
         ),
         (
             status = StatusCode::UNAUTHORIZED,
@@ -431,10 +430,8 @@ pub async fn delete_invite(
 pub async fn verify_invite_code(
     db: Data<Db>,
     data: Json<PostInviteVerifyRequestBody>,
-) -> DefaultApiResult<CodeVerified> {
+) -> DefaultApiResult<PostInviteVerifyResponseBody> {
     let data = data.into_inner();
-
-    data.validate()?;
 
     let mut conn = db.get_conn().await?;
 
@@ -448,12 +445,39 @@ pub async fn verify_invite_code(
                 return Err(ApiError::not_found());
             }
         }
-        Ok(ApiResponse::new(CodeVerified {
+        Ok(ApiResponse::new(PostInviteVerifyResponseBody {
             room_id: invite.room,
             password_required: room.password.is_some(),
         }))
     } else {
         // TODO(r.floren) Do we want to return something else here?
         Err(ApiError::not_found())
+    }
+}
+
+trait IntoInviteResource {
+    fn into_invite_resource(
+        invite: Invite,
+        created_by: PublicUserProfile,
+        updated_by: PublicUserProfile,
+    ) -> InviteResource;
+}
+
+impl IntoInviteResource for Invite {
+    fn into_invite_resource(
+        invite: Invite,
+        created_by: PublicUserProfile,
+        updated_by: PublicUserProfile,
+    ) -> InviteResource {
+        InviteResource {
+            invite_code: invite.id,
+            created: invite.created_at,
+            created_by,
+            updated: invite.updated_at,
+            updated_by,
+            room_id: invite.room,
+            active: invite.active,
+            expiration: invite.expiration,
+        }
     }
 }

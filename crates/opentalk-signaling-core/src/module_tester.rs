@@ -27,7 +27,7 @@ use opentalk_types_common::{
     rooms::BreakoutRoomId,
     tariffs::{TariffId, TariffModuleResource, TariffResource},
     time::Timestamp,
-    users::UserId,
+    users::{DisplayName, UserId},
 };
 use opentalk_types_signaling::{
     AssociatedParticipant, LeaveReason, ModuleData, NamespacedCommand, NamespacedEvent,
@@ -121,7 +121,7 @@ where
         participant_id: ParticipantId,
         participant: Participant<User>,
         role: Role,
-        display_name: &str,
+        display_name: &DisplayName,
         params: M::Params,
     ) -> Result<(), SignalingModuleError> {
         let (client_interface, runner_interface) = create_interfaces::<M>().await;
@@ -147,7 +147,7 @@ where
         runner_interface
             .ws
             .send(WsMessageIncoming::Control(ControlCommand::Join(Join {
-                display_name: Some(display_name.into()),
+                display_name: Some(display_name.clone()),
             })))?;
 
         self.runner_interfaces
@@ -165,7 +165,7 @@ where
         participant_id: ParticipantId,
         user: User,
         role: Role,
-        display_name: &str,
+        display_name: &DisplayName,
         params: M::Params,
     ) -> Result<(), SignalingModuleError> {
         self.join_internal(
@@ -186,7 +186,7 @@ where
     pub async fn join_guest(
         &mut self,
         participant_id: ParticipantId,
-        display_name: &str,
+        display_name: &DisplayName,
         params: M::Params,
     ) -> Result<(), SignalingModuleError> {
         self.join_internal(

@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+pub mod requests;
+
 mod client;
 mod open_talk_api_client;
 

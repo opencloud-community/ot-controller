@@ -10,7 +10,7 @@ use opentalk_db_storage::{
     tariffs::Tariff,
     users::{UpdateUser, User},
 };
-use opentalk_types_common::tariffs::TariffStatus;
+use opentalk_types_common::{tariffs::TariffStatus, users::DisplayName};
 
 use super::{build_info_display_name, LoginResult};
 use crate::{api::util::parse_phone_number, oidc::IdTokenInfo};
@@ -43,7 +43,7 @@ pub(super) async fn update_user(
         settings,
         &user,
         &info,
-        enforced_display_name.as_deref(),
+        enforced_display_name.as_ref(),
         tariff,
         tariff_status,
     );
@@ -82,7 +82,7 @@ fn create_changeset<'a>(
     settings: &Settings,
     user: &User,
     token_info: &'a IdTokenInfo,
-    enforced_display_name: Option<&'a str>,
+    enforced_display_name: Option<&'a DisplayName>,
     tariff: Tariff,
     tariff_status: TariffStatus,
 ) -> UpdateUser<'a> {

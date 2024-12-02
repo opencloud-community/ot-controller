@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_types_common::users::DisplayName;
+
 /// Body of the join command
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -11,5 +13,5 @@ pub struct Join {
         feature = "serde",
         serde(default, skip_serializing_if = "Option::is_none",)
     )]
-    pub display_name: Option<String>,
+    pub display_name: Option<DisplayName>,
 }

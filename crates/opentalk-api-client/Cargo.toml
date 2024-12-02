@@ -17,9 +17,9 @@ workspace = true
 [dependencies]
 async-trait.workspace = true
 http.workspace = true
-http-request-derive.workspace = true
+http-request-derive = { workspace = true, features = ["serde"] }
 opentalk-client-shared.workspace = true
-opentalk-types = { workspace = true, features = ["frontend"] }
+opentalk-types-api-v1 = { workspace = true, features = ["frontend"] }
 opentalk-types-common = { workspace = true, features = ["frontend"] }
 reqwest.workspace = true
 snafu.workspace = true

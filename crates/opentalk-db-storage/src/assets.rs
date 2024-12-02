@@ -4,24 +4,22 @@
 
 use chrono::{DateTime, Utc};
 use diesel::{
-    BoolExpressionMethods, ExpressionMethods, Identifiable, Insertable, JoinOnDsl, QueryDsl,
-    Queryable,
+    BoolExpressionMethods, ExpressionMethods, Identifiable, Insertable, JoinOnDsl,
+    NullableExpressionMethods as _, QueryDsl, Queryable,
 };
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection, RunQueryDsl};
 use opentalk_database::{DbConnection, Paginate, Result};
-use opentalk_types::api::v1::{
-    assets::AssetResource,
-    order::{AssetSorting, Ordering, SortingQuery},
-    users::UserAssetResource,
-};
 use opentalk_types_common::{
-    assets::AssetId, events::EventId, rooms::RoomId, tenants::TenantId, users::UserId,
+    assets::{AssetId, AssetSorting},
+    events::EventId,
+    modules::ModuleId,
+    order::Ordering,
+    rooms::RoomId,
+    tenants::TenantId,
+    users::UserId,
 };
 
-use crate::{
-    diesel::NullableExpressionMethods,
-    schema::{assets, events, room_assets, rooms},
-};
+use crate::schema::{assets, events, room_assets, rooms};
 
 /// Diesel resource struct
 #[derive(Debug, Clone, Queryable, Identifiable)]
@@ -29,7 +27,7 @@ pub struct Asset {
     pub id: AssetId,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-    pub namespace: Option<String>,
+    pub namespace: Option<ModuleId>,
     pub kind: String,
     pub filename: String,
     pub tenant_id: TenantId,
@@ -176,19 +174,6 @@ impl Asset {
     }
 }
 
-impl From<Asset> for AssetResource {
-    fn from(value: Asset) -> Self {
-        Self {
-            id: value.id,
-            filename: value.filename,
-            namespace: value.namespace,
-            created_at: value.created_at,
-            kind: value.kind,
-            size: value.size,
-        }
-    }
-}
-
 #[derive(Debug, Insertable)]
 pub struct RoomAsset {
     pub room_id: RoomId,
@@ -229,14 +214,17 @@ impl NewAsset {
     }
 }
 
+pub type AssetRoomIdEventIdTuple = (Asset, RoomId, Option<EventId>);
+
 #[tracing::instrument(err, skip_all)]
 pub async fn get_all_for_room_owner_paginated_ordered(
     conn: &mut DbConnection,
     user_id: UserId,
     limit: i64,
     page: i64,
-    sorting: SortingQuery<AssetSorting>,
-) -> Result<(Vec<UserAssetResource>, i64)> {
+    sorting: AssetSorting,
+    order: Ordering,
+) -> Result<(Vec<AssetRoomIdEventIdTuple>, i64)> {
     let mut query = room_assets::table
         .inner_join(assets::table)
         .inner_join(rooms::table.left_join(events::table))
@@ -250,7 +238,7 @@ pub async fn get_all_for_room_owner_paginated_ordered(
 
     // There was no sane approach to move this block to it's own function or call asc/desc on a
     // generalized column.
-    query = match (sorting.order, sorting.sort) {
+    query = match (order, sorting) {
         (Ordering::Ascending, AssetSorting::Filename) => query.order(assets::filename.asc()),
         (Ordering::Ascending, AssetSorting::Size) => query.order(assets::size.asc()),
         (Ordering::Ascending, AssetSorting::Namespace) => query.order(assets::namespace.asc()),
@@ -266,15 +254,7 @@ pub async fn get_all_for_room_owner_paginated_ordered(
 
     let query = query.paginate_by(limit, page);
 
-    let (resources, total): (Vec<(Asset, RoomId, Option<EventId>)>, i64) =
-        query.load_and_count(conn).await?;
-
-    let resources = resources
-        .into_iter()
-        .map(|(asset, room_id, event_id)| UserAssetResource::new(asset.into(), room_id, event_id))
-        .collect();
-
-    Ok((resources, total))
+    Ok(query.load_and_count(conn).await?)
 }
 
 #[derive(Debug, AsChangeset)]

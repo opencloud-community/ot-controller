@@ -28,17 +28,15 @@ use opentalk_db_storage::{
     users::User,
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
-use opentalk_types::api::{
-    error::ApiError,
-    v1::{
-        events::{
-            invites::GetEventsInvitesQuery, DeleteEmailInviteBody, DeleteEventInvitePath,
-            EmailInvite, EventOptionsQuery, PatchEmailInviteBody, PatchInviteBody,
-            PostEventInviteBody, PostEventInviteQuery, UserInvite,
-        },
-        pagination::PagePaginationQuery,
-        users::GetEventInvitesPendingResponse,
+use opentalk_types::api::error::ApiError;
+use opentalk_types_api_v1::{
+    events::{
+        by_event_id::invites::GetEventsInvitesQuery, DeleteEmailInviteBody, DeleteEventInvitePath,
+        EmailInvite, EventInvitee, EventOptionsQuery, PatchEmailInviteBody, PatchInviteBody,
+        PostEventInviteBody, PostEventInviteQuery, UserInvite,
     },
+    pagination::PagePaginationQuery,
+    users::GetEventInvitesPendingResponseBody,
 };
 use opentalk_types_common::{
     email::EmailAddress,
@@ -61,8 +59,8 @@ use crate::{
         v1::{
             events::{
                 enrich_from_keycloak, enrich_invitees_from_keycloak,
-                get_invited_mail_recipients_for_event, get_tenant_filter, EventInvitee,
-                EventInviteeExt, EventPoliciesBuilderExt,
+                get_invited_mail_recipients_for_event, get_tenant_filter, EventInviteeExt,
+                EventPoliciesBuilderExt,
             },
             response::{Created, NoContent},
             rooms::RoomsPoliciesBuilderExt,
@@ -1126,7 +1124,7 @@ async fn notify_invitees_about_uninvite(
         (
             status = StatusCode::OK,
             description = "Information about pending invites is returned",
-            body = GetEventInvitesPendingResponse,
+            body = GetEventInvitesPendingResponseBody,
         ),
         (
             status = StatusCode::UNAUTHORIZED,
@@ -1149,12 +1147,12 @@ async fn notify_invitees_about_uninvite(
 pub async fn get_event_invites_pending(
     db: Data<Db>,
     current_user: ReqData<User>,
-) -> DefaultApiResult<GetEventInvitesPendingResponse> {
+) -> DefaultApiResult<GetEventInvitesPendingResponseBody> {
     let mut conn = db.get_conn().await?;
 
     let event_invites = EventInvite::get_pending_for_user(&mut conn, current_user.id).await?;
 
-    Ok(ApiResponse::new(GetEventInvitesPendingResponse {
+    Ok(ApiResponse::new(GetEventInvitesPendingResponseBody {
         total_pending_invites: event_invites.len() as u32,
     }))
 }

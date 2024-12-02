@@ -355,7 +355,6 @@ check:opentalk-types:
             diesel,
             kustos,
             redis,
-            rand,
             serde,
             utoipa,
           ]

@@ -18,17 +18,15 @@ use opentalk_db_storage::{
     users::User,
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
-use opentalk_types::api::{
-    error::ApiError,
-    v1::{
-        events::{
-            EventAndInstanceId, EventInstance, EventInstancePath, EventInstanceQuery,
-            EventRoomInfo, EventStatus, EventType, GetEventInstanceResponseBody,
-            GetEventInstancesCursorData, GetEventInstancesQuery, GetEventInstancesResponseBody,
-            InstanceId, PatchEventInstanceBody,
-        },
-        Cursor,
+use opentalk_types::api::error::ApiError;
+use opentalk_types_api_v1::{
+    events::{
+        EventAndInstanceId, EventInstance, EventInstancePath, EventInstanceQuery, EventInvitee,
+        EventRoomInfo, EventStatus, EventType, GetEventInstanceResponseBody,
+        GetEventInstancesCursorData, GetEventInstancesQuery, GetEventInstancesResponseBody,
+        InstanceId, PatchEventInstanceBody,
     },
+    Cursor,
 };
 use opentalk_types_common::{
     events::{invites::EventInviteStatus, EventId},
@@ -36,11 +34,10 @@ use opentalk_types_common::{
 };
 use rrule::RRuleSet;
 use snafu::Report;
-use validator::Validate;
 
 use super::{
     can_edit, get_invited_mail_recipients_for_event, notify_invitees_about_update, ApiResponse,
-    DateTimeTz, DefaultApiResult, EventInvitee, UpdateNotificationValues, LOCAL_DT_FORMAT,
+    DateTimeTz, DefaultApiResult, UpdateNotificationValues, LOCAL_DT_FORMAT,
     ONE_HUNDRED_YEARS_IN_DAYS,
 };
 use crate::{
@@ -423,8 +420,6 @@ pub async fn patch_event_instance(
         return Ok(Either::Right(NoContent));
     }
 
-    patch.validate()?;
-
     let settings = settings.load_full();
     let EventInstancePath {
         event_id,
@@ -750,7 +745,7 @@ mod tests {
 
     use chrono_tz::Tz;
     use opentalk_test_util::assert_eq_json;
-    use opentalk_types::api::v1::users::PublicUserProfile;
+    use opentalk_types_api_v1::{events::EventInviteeProfile, users::PublicUserProfile};
     use opentalk_types_common::{
         events::invites::InviteRole,
         rooms::RoomId,
@@ -759,7 +754,7 @@ mod tests {
     };
 
     use super::*;
-    use crate::api::v1::events::{EventInviteeProfile, PublicInviteUserProfile};
+    use crate::api::v1::events::PublicInviteUserProfile;
 
     #[test]
     fn event_instance_serialize() {
@@ -769,10 +764,10 @@ mod tests {
         let user_profile = PublicUserProfile {
             id: UserId::nil(),
             email: "test@example.org".into(),
-            title: "".into(),
+            title: "".parse().expect("valid user title"),
             firstname: "Test".into(),
             lastname: "Test".into(),
-            display_name: "Tester".into(),
+            display_name: "Tester".parse().expect("valid display name"),
             avatar_url: "https://example.org/avatar".into(),
         };
 

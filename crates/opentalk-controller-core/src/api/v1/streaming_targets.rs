@@ -18,17 +18,18 @@ use opentalk_db_storage::{
     users::User,
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
-use opentalk_types::api::{
-    error::ApiError,
-    v1::{
-        events::StreamingTargetOptionsQuery,
-        pagination::PagePaginationQuery,
-        rooms::streaming_targets::{
-            ChangeRoomStreamingTargetRequest, ChangeRoomStreamingTargetResponse,
-            GetRoomStreamingTargetResponse, GetRoomStreamingTargetsResponse,
-            PostRoomStreamingTargetRequest, PostRoomStreamingTargetResponse,
+use opentalk_types::api::error::ApiError;
+use opentalk_types_api_v1::{
+    events::StreamingTargetOptionsQuery,
+    pagination::PagePaginationQuery,
+    rooms::{
+        by_room_id::streaming_targets::{
+            GetRoomStreamingTargetResponseBody, GetRoomStreamingTargetsResponseBody,
+            PatchRoomStreamingTargetRequestBody, PatchRoomStreamingTargetResponseBody,
+            PostRoomStreamingTargetRequestBody, PostRoomStreamingTargetResponseBody,
+            RoomAndStreamingTargetId,
         },
-        streaming_targets::{RoomAndStreamingTargetId, UpdateStreamingTargetKind},
+        streaming_targets::UpdateStreamingTargetKind,
     },
 };
 use opentalk_types_common::{
@@ -62,7 +63,7 @@ use crate::{
         (
             status = StatusCode::OK,
             description = "List of streaming targets successfully returned",
-            body = GetRoomStreamingTargetsResponse,
+            body = GetRoomStreamingTargetsResponseBody,
         ),
         (
             status = StatusCode::UNAUTHORIZED,
@@ -91,7 +92,7 @@ pub async fn get_streaming_targets(
     current_user: ReqData<User>,
     room_id: Path<RoomId>,
     pagination: Query<PagePaginationQuery>,
-) -> DefaultApiResult<GetRoomStreamingTargetsResponse> {
+) -> DefaultApiResult<GetRoomStreamingTargetsResponseBody> {
     let mut conn = db.get_conn().await?;
     let current_user_id = current_user.into_inner().id;
     let room_id = room_id.into_inner();
@@ -107,7 +108,7 @@ pub async fn get_streaming_targets(
         .map(|rst| build_resource(rst, with_streaming_key))
         .collect();
 
-    Ok(ApiResponse::new(GetRoomStreamingTargetsResponse(
+    Ok(ApiResponse::new(GetRoomStreamingTargetsResponseBody(
         room_streaming_target_resources,
     ))
     .with_page_pagination(per_page, page, len as i64))
@@ -121,12 +122,12 @@ pub async fn get_streaming_targets(
         StreamingTargetOptionsQuery,
         ("room_id" = RoomId, description = "The id of the room"),
     ),
-    request_body = PostRoomStreamingTargetRequest,
+    request_body = PostRoomStreamingTargetRequestBody,
     responses(
         (
             status = StatusCode::OK,
             description = "Successfully create a new streaming target",
-            body = PostRoomStreamingTargetResponse,
+            body = PostRoomStreamingTargetResponseBody,
         ),
         (
             status = StatusCode::UNAUTHORIZED,
@@ -160,8 +161,8 @@ pub async fn post_streaming_target(
     current_user: ReqData<User>,
     room_id: Path<RoomId>,
     query: Query<StreamingTargetOptionsQuery>,
-    data: Json<PostRoomStreamingTargetRequest>,
-) -> DefaultApiResult<PostRoomStreamingTargetResponse> {
+    data: Json<PostRoomStreamingTargetRequestBody>,
+) -> DefaultApiResult<PostRoomStreamingTargetResponseBody> {
     let settings = settings.load_full();
     let mail_service = mail_service.into_inner();
     let current_tenant = current_tenant.into_inner();
@@ -190,7 +191,7 @@ pub async fn post_streaming_target(
         .await?;
     }
 
-    Ok(ApiResponse::new(PostRoomStreamingTargetResponse(
+    Ok(ApiResponse::new(PostRoomStreamingTargetResponseBody(
         room_streaming_target,
     )))
 }
@@ -204,7 +205,7 @@ pub async fn post_streaming_target(
         (
             status = StatusCode::OK,
             description = "The streaming target has been successfully returned",
-            body = GetRoomStreamingTargetResponse,
+            body = GetRoomStreamingTargetResponseBody,
         ),
         (
             status = StatusCode::UNAUTHORIZED,
@@ -232,7 +233,7 @@ pub async fn get_streaming_target(
     db: Data<Db>,
     current_user: ReqData<User>,
     path_params: Path<RoomAndStreamingTargetId>,
-) -> DefaultApiResult<GetRoomStreamingTargetResponse> {
+) -> DefaultApiResult<GetRoomStreamingTargetResponseBody> {
     let mut conn = db.get_conn().await?;
     let current_user_id = current_user.into_inner().id;
     let RoomAndStreamingTargetId {
@@ -273,7 +274,7 @@ pub async fn get_streaming_target(
     let with_streaming_key = room.created_by == current_user_id;
     let room_streaming_target_resource = build_resource(room_streaming_target, with_streaming_key);
 
-    Ok(ApiResponse::new(GetRoomStreamingTargetResponse(
+    Ok(ApiResponse::new(GetRoomStreamingTargetResponseBody(
         room_streaming_target_resource,
     )))
 }
@@ -283,12 +284,12 @@ pub async fn get_streaming_target(
 /// Modifies and returns a single streaming target.
 #[utoipa::path(
     params(RoomAndStreamingTargetId),
-    request_body = ChangeRoomStreamingTargetRequest,
+    request_body = PatchRoomStreamingTargetRequestBody,
     responses(
         (
             status = StatusCode::OK,
             description = "Streaming target was successfully updated",
-            body = ChangeRoomStreamingTargetResponse
+            body = PatchRoomStreamingTargetResponseBody
         ),
         (
             status = StatusCode::BAD_REQUEST,
@@ -323,14 +324,14 @@ pub async fn patch_streaming_target(
     current_user: ReqData<User>,
     path_params: Path<RoomAndStreamingTargetId>,
     query: Query<StreamingTargetOptionsQuery>,
-    update_streaming_target: Json<ChangeRoomStreamingTargetRequest>,
-) -> DefaultApiResult<ChangeRoomStreamingTargetResponse> {
+    update_streaming_target: Json<PatchRoomStreamingTargetRequestBody>,
+) -> DefaultApiResult<PatchRoomStreamingTargetResponseBody> {
     let settings = settings.load_full();
     let mail_service = mail_service.into_inner();
     let current_tenant = current_tenant.into_inner();
     let current_user = current_user.into_inner();
     let query = query.into_inner();
-    let update_streaming_target = update_streaming_target.into_inner().0;
+    let update_streaming_target = update_streaming_target.into_inner();
 
     if update_streaming_target.name.is_none() && update_streaming_target.kind.is_none() {
         return Err(ApiError::bad_request());
@@ -417,7 +418,7 @@ pub async fn patch_streaming_target(
         .await?;
     }
 
-    Ok(ApiResponse::new(ChangeRoomStreamingTargetResponse(
+    Ok(ApiResponse::new(PatchRoomStreamingTargetResponseBody(
         room_streaming_target,
     )))
 }

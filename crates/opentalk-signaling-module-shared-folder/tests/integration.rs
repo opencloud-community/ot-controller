@@ -120,7 +120,7 @@ async fn room_without_event() {
                 USER_1.participant_id,
                 user1.clone(),
                 Role::Moderator,
-                USER_1.name,
+                &USER_1.display_name(),
                 (),
             )
             .await
@@ -148,7 +148,7 @@ async fn room_without_event() {
                 USER_2.participant_id,
                 user2.clone(),
                 Role::User,
-                USER_2.name,
+                &USER_2.display_name(),
                 (),
             )
             .await
@@ -212,7 +212,7 @@ async fn room_with_event_but_no_shared_folder() {
                 USER_1.participant_id,
                 user1.clone(),
                 Role::Moderator,
-                USER_1.name,
+                &USER_1.display_name(),
                 (),
             )
             .await
@@ -240,7 +240,7 @@ async fn room_with_event_but_no_shared_folder() {
                 USER_2.participant_id,
                 user2.clone(),
                 Role::User,
-                USER_2.name,
+                &USER_2.display_name(),
                 (),
             )
             .await
@@ -318,7 +318,7 @@ async fn room_with_event_and_shared_folder() {
                 USER_1.participant_id,
                 user1.clone(),
                 Role::Moderator,
-                USER_1.name,
+                &USER_1.display_name(),
                 (),
             )
             .await
@@ -347,7 +347,7 @@ async fn room_with_event_and_shared_folder() {
                 USER_2.participant_id,
                 user2.clone(),
                 Role::User,
-                USER_2.name,
+                &USER_2.display_name(),
                 (),
             )
             .await

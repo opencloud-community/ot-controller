@@ -1,0 +1,19 @@
+// SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+//
+// SPDX-License-Identifier: EUPL-1.2
+
+/// Path query for the `PATCH /events/{event_id}/{instance_id}` endpoint
+#[derive(Debug, Eq, PartialEq, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::IntoParams))]
+pub struct EventInstanceQuery {
+    /// Maximum number of invitees to return inside the event instance resource
+    ///
+    /// Default: 0
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub invitees_max: i64,
+
+    /// Flag to suppress email notification
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub suppress_email_notification: bool,
+}

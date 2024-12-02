@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use either::Either;
-use opentalk_types_common::time::Timestamp;
+use opentalk_types_common::{time::Timestamp, users::DisplayName};
 use opentalk_types_signaling::{ParticipantId, ParticipationKind, Role};
 use opentalk_types_signaling_control::state::ControlState;
 
@@ -64,7 +64,7 @@ impl ControlStateExt for ControlState {
             participation_kind,
             is_room_owner,
         ): (
-            Option<String>,
+            Option<DisplayName>,
             Option<Role>,
             Option<String>,
             Option<Timestamp>,
@@ -99,7 +99,7 @@ impl ControlStateExt for ControlState {
         }
 
         Ok(Self {
-            display_name: display_name.unwrap_or_else(|| "Participant".into()),
+            display_name: display_name.unwrap_or_else(DisplayName::participant),
             role: role.unwrap_or(Role::Guest),
             avatar_url,
             participation_kind: participation_kind.unwrap_or(ParticipationKind::Guest),

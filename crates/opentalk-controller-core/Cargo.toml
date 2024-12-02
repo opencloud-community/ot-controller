@@ -55,7 +55,12 @@ opentalk-nextcloud-client.workspace = true
 opentalk-r3dlock.workspace = true
 opentalk-signaling-core.workspace = true
 opentalk-types = { workspace = true, features = ["backend"] }
-opentalk-types-common = { workspace = true, features = ["backend", "clap"] }
+opentalk-types-api-v1 = { workspace = true, features = ["backend"] }
+opentalk-types-common = { workspace = true, features = [
+  "actix",
+  "backend",
+  "clap",
+] }
 opentalk-types-signaling = { workspace = true, features = ["backend"] }
 opentalk-types-signaling-breakout = { workspace = true, features = ["backend"] }
 opentalk-types-signaling-control = { workspace = true, features = ["backend"] }
@@ -109,7 +114,6 @@ utoipa-swagger-ui = { workspace = true, features = [
   "actix-web",
 ], optional = true }
 uuid = { workspace = true, features = ["serde", "v4"] }
-validator.workspace = true
 yaml-rust2.workspace = true
 
 [dev-dependencies]

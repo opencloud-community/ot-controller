@@ -111,7 +111,7 @@ mod serde_tests {
             serde_json::to_value(BreakoutEvent::Joined(ParticipantInOtherRoom {
                 breakout_room: Some(BreakoutRoomId::nil()),
                 id: ParticipantId::nil(),
-                display_name: "test".into(),
+                display_name: "test".parse().expect("valid display name"),
                 role: Role::Moderator,
                 avatar_url: Some("example.org/avatar.png".into()),
                 participation_kind: ParticipationKind::User,

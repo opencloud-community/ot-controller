@@ -21,11 +21,7 @@ use log::log_enabled;
 use opentalk_controller_settings::SharedSettings;
 use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
-    events::EventInvite,
-    rooms::Room,
-    tariffs::Tariff,
-    users::{email_to_libravatar_url, User},
-    utils::build_event_info,
+    events::EventInvite, rooms::Room, tariffs::Tariff, users::User, utils::build_event_info,
 };
 use opentalk_signaling_core::{
     control::{
@@ -46,7 +42,7 @@ use opentalk_types_common::{
     rooms::BreakoutRoomId,
     tariffs::{QuotaType, TariffResource},
     time::Timestamp,
-    users::UserId,
+    users::{DisplayName, UserId},
 };
 use opentalk_types_signaling::{
     AssociatedParticipant, LeaveReason, ModuleData, NamespacedCommand, ParticipantId,
@@ -76,14 +72,16 @@ use super::{
     modules::{DynBroadcastEvent, DynEventCtx, DynTargetedEvent, Modules, NoSuchModuleError},
     CleanupScope, DestroyContext, ExchangeBinding, ExchangePublish, NamespacedEvent, RunnerMessage,
 };
-use crate::api::signaling::{
-    breakout::{self},
-    echo::Echo,
-    moderation::{self, ModerationStorageProvider},
-    resumption::ResumptionTokenKeepAlive,
-    storage::{SignalingStorageError, SignalingStorageProvider},
-    trim_display_name,
-    ws::actor::WsCommand,
+use crate::api::{
+    signaling::{
+        breakout::{self},
+        echo::Echo,
+        moderation::{self, ModerationStorageProvider},
+        resumption::ResumptionTokenKeepAlive,
+        storage::{SignalingStorageError, SignalingStorageProvider},
+        ws::actor::WsCommand,
+    },
+    util::email_to_libravatar_url,
 };
 
 mod call_in;
@@ -1248,7 +1246,7 @@ impl Runner {
 
     async fn query_control_data(
         &mut self,
-        join_display_name: Option<String>,
+        join_display_name: Option<DisplayName>,
         timestamp: Timestamp,
     ) -> Result<ControlState, RunnerError> {
         let display_name = self.username_or(join_display_name).await;
@@ -1770,7 +1768,7 @@ impl Runner {
     async fn set_control_attributes(
         &mut self,
         timestamp: Timestamp,
-        display_name: &str,
+        display_name: &DisplayName,
         avatar_url: Option<&str>,
     ) -> Result<()> {
         let mut actions = AttributeActions::new(self.room_id, self.id);
@@ -2366,29 +2364,27 @@ impl Runner {
             .await;
     }
 
-    async fn username_or(&self, join_display_name: Option<String>) -> String {
+    async fn username_or(&self, join_display_name: Option<DisplayName>) -> DisplayName {
         let join_display_name = join_display_name.unwrap_or_default();
 
         match &self.participant {
             Participant::User(user) => {
                 // Enforce the auto-generated display name if display name editing is prohibited
                 let settings = self.settings.load();
-                let user_display_name = if settings.endpoints.disallow_custom_display_name {
+                if settings.endpoints.disallow_custom_display_name {
                     user.display_name.clone()
                 } else {
                     join_display_name.clone()
-                };
-
-                trim_display_name(user_display_name)
+                }
             }
-            Participant::Guest => trim_display_name(join_display_name),
+            Participant::Guest => join_display_name,
             Participant::Recorder => join_display_name,
             Participant::Sip => {
                 if let Some(call_in) = self.settings.load().call_in.as_ref() {
                     call_in::display_name(&self.db, call_in, self.room.tenant_id, join_display_name)
                         .await
                 } else {
-                    trim_display_name(join_display_name)
+                    join_display_name
                 }
             }
         }

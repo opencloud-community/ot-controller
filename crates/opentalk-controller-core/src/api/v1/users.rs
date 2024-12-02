@@ -15,35 +15,35 @@ use actix_web::{
 use chrono::Utc;
 use openidconnect::AccessToken;
 use opentalk_controller_settings::{TenantAssignment, UsersFindBehavior};
-use opentalk_database::Db;
+use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
-    assets,
+    assets::{self},
     tariffs::Tariff,
     tenants::Tenant,
-    users::{email_to_libravatar_url, UpdateUser, User},
+    users::{UpdateUser, User},
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
-use opentalk_types::api::{
-    error::ApiError,
-    v1::{
-        order::{AssetSorting, SortingQuery},
-        pagination::PagePaginationQuery,
-        users::{
-            GetFindQuery, GetFindResponse, GetFindResponseItem, GetUserAssetsResponse, PatchMeBody,
-            PrivateUserProfile, PublicUserProfile, UnregisteredUser,
-        },
+use opentalk_types::api::error::ApiError;
+use opentalk_types_api_v1::{
+    pagination::PagePaginationQuery,
+    users::{
+        me::PatchMeRequestBody, GetFindQuery, GetFindResponseBody, GetFindResponseEntry,
+        GetUserAssetsResponseBody, PrivateUserProfile, PublicUserProfile, UnregisteredUser,
+        UserAssetResource,
     },
 };
-use opentalk_types_common::{tariffs::TariffResource, users::UserId};
+use opentalk_types_common::{
+    assets::AssetSorting, order::SortingQuery, tariffs::TariffResource, users::UserId,
+};
 use snafu::{Report, ResultExt, Whatever};
-use validator::Validate;
 
 use super::response::NoContent;
 use crate::{
     api::{
         responses::{Forbidden, InternalServerError, Unauthorized},
         signaling::SignalingModules,
-        v1::ApiResponse,
+        util::email_to_libravatar_url,
+        v1::{assets::asset_to_asset_resource, util::ToUserProfile as _, ApiResponse},
     },
     caches::Caches,
     oidc::{decode_token, UserClaims},
@@ -56,7 +56,7 @@ const MAX_USER_SEARCH_RESULTS: usize = 20;
 ///
 /// Fields that are not provided in the request body will remain unchanged.
 #[utoipa::path(
-    request_body = PatchMeBody,
+    request_body = PatchMeRequestBody,
     operation_id = "patch_users_me",
     responses(
         (
@@ -90,15 +90,13 @@ pub async fn patch_me(
     current_user: ReqData<User>,
     current_tenant: ReqData<Tenant>,
     access_token: ReqData<AccessToken>,
-    patch: Json<PatchMeBody>,
+    patch: Json<PatchMeRequestBody>,
 ) -> Result<Either<Json<PrivateUserProfile>, NoContent>, ApiError> {
     let patch = patch.into_inner();
 
     if patch.is_empty() {
         return Ok(Either::Right(NoContent));
     }
-
-    patch.validate()?;
 
     let settings = settings.load_full();
 
@@ -116,16 +114,16 @@ pub async fn patch_me(
     }
 
     let changeset = UpdateUser {
-        title: patch.title.as_deref(),
+        title: patch.title.as_ref(),
         firstname: None,
         lastname: None,
         avatar_url: None,
         phone: None,
         email: None,
-        display_name: patch.display_name.as_deref(),
-        language: patch.language.as_deref(),
-        dashboard_theme: patch.dashboard_theme.as_deref(),
-        conference_theme: patch.conference_theme.as_deref(),
+        display_name: patch.display_name.as_ref(),
+        language: patch.language.as_ref(),
+        dashboard_theme: patch.dashboard_theme.as_ref(),
+        conference_theme: patch.conference_theme.as_ref(),
         id_token_exp: None,
         tariff_id: None,
         tariff_status: None,
@@ -265,7 +263,7 @@ pub async fn get_me_tariff(
         (
             status = StatusCode::OK,
             description = "List of accessible assets successfully returned",
-            body = GetUserAssetsResponse,
+            body = GetUserAssetsResponseBody,
         ),
         (
             status = StatusCode::UNAUTHORIZED,
@@ -286,14 +284,14 @@ pub async fn get_me_assets(
     current_user: ReqData<User>,
     sorting: Query<SortingQuery<AssetSorting>>,
     pagination: Query<PagePaginationQuery>,
-) -> Result<ApiResponse<GetUserAssetsResponse>, ApiError> {
+) -> Result<ApiResponse<GetUserAssetsResponseBody>, ApiError> {
     let current_user = current_user.into_inner();
     let pagination = pagination.into_inner();
     let sorting = sorting.into_inner();
 
     let mut conn = db.get_conn().await?;
 
-    let (owned_assets, asset_count) = assets::get_all_for_room_owner_paginated_ordered(
+    let (owned_assets, asset_count) = get_all_assets_for_room_owner_paginated_ordered(
         &mut conn,
         current_user.id,
         pagination.per_page,
@@ -303,7 +301,7 @@ pub async fn get_me_assets(
     .await?;
 
     Ok(
-        ApiResponse::new(GetUserAssetsResponse { owned_assets }).with_page_pagination(
+        ApiResponse::new(GetUserAssetsResponseBody { owned_assets }).with_page_pagination(
             pagination.per_page,
             pagination.page,
             asset_count,
@@ -370,7 +368,7 @@ pub async fn get_user(
         (
             status = StatusCode::OK,
             description = "Search results",
-            body = GetFindResponse,
+            body = GetFindResponseBody,
         ),
         (
             status = StatusCode::UNAUTHORIZED,
@@ -392,7 +390,7 @@ pub async fn find(
     db: Data<Db>,
     current_tenant: ReqData<Tenant>,
     query: Query<GetFindQuery>,
-) -> Result<Json<GetFindResponse>, ApiError> {
+) -> Result<Json<GetFindResponseBody>, ApiError> {
     let settings = settings.load_full();
 
     let oidc_and_user_search_configuration =
@@ -480,12 +478,12 @@ pub async fn find(
         // Build a list of registered and unregistered users resulting from the search
         registered_users
             .into_iter()
-            .map(|user| GetFindResponseItem::Registered(user.to_public_user_profile(&settings)))
+            .map(|user| GetFindResponseEntry::Registered(user.to_public_user_profile(&settings)))
             .chain(found_kc_users.into_iter().map(|kc_user| {
                 let avatar_url =
                     email_to_libravatar_url(&settings.avatar.libravatar_url, &kc_user.email);
 
-                GetFindResponseItem::Unregistered(UnregisteredUser {
+                GetFindResponseEntry::Unregistered(UnregisteredUser {
                     email: kc_user.email,
                     firstname: kc_user.first_name,
                     lastname: kc_user.last_name,
@@ -506,9 +504,33 @@ pub async fn find(
 
         found_users
             .into_iter()
-            .map(|user| GetFindResponseItem::Registered(user.to_public_user_profile(&settings)))
+            .map(|user| GetFindResponseEntry::Registered(user.to_public_user_profile(&settings)))
             .collect()
     };
 
-    Ok(Json(GetFindResponse(found_users)))
+    Ok(Json(GetFindResponseBody(found_users)))
+}
+
+#[tracing::instrument(err, skip_all)]
+pub async fn get_all_assets_for_room_owner_paginated_ordered(
+    conn: &mut DbConnection,
+    user_id: UserId,
+    limit: i64,
+    page: i64,
+    sorting: SortingQuery<AssetSorting>,
+) -> Result<(Vec<UserAssetResource>, i64), ApiError> {
+    let SortingQuery { sort, order } = sorting;
+
+    let (resources, total) =
+        assets::get_all_for_room_owner_paginated_ordered(conn, user_id, limit, page, sort, order)
+            .await?;
+
+    let resources = resources
+        .into_iter()
+        .map(|(asset, room_id, event_id)| {
+            UserAssetResource::new(asset_to_asset_resource(asset), room_id, event_id)
+        })
+        .collect();
+
+    Ok((resources, total))
 }

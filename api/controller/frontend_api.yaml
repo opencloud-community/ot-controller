@@ -27,7 +27,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetLoginResponse"
+                $ref: "#/components/schemas/GetLoginResponseBody"
         "500":
           $ref: "#/components/responses/InternalServerError"
       security: []
@@ -45,7 +45,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PostLoginRequestBody"
+              $ref: "#/components/schemas/AuthLoginPostRequestBody"
         required: true
       responses:
         "200":
@@ -53,7 +53,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PostLoginResponse"
+                $ref: "#/components/schemas/PostLoginResponseBody"
               example:
                 permissions: []
         "400":
@@ -998,7 +998,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CodeVerified"
+                $ref: "#/components/schemas/PostInviteVerifyResponseBody"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -1043,7 +1043,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetRoomsResponse"
+                $ref: "#/components/schemas/GetRoomsResponseBody"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "500":
@@ -1225,7 +1225,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetRoomsAssetsResponseBody"
+                $ref: "#/components/schemas/RoomsByRoomIdAssetsGetResponseBody"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -1590,7 +1590,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PutSipConfig"
+              $ref: "#/components/schemas/PutSipConfigRequestBody"
         required: true
       responses:
         "200":
@@ -1671,7 +1671,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RoomsStartResponse"
+                $ref: "#/components/schemas/RoomsStartResponseBody"
         "400":
           description: "Either no breakout rooms were found for this room, or the breakout room id is invalid"
           content:
@@ -1766,7 +1766,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RoomsStartResponse"
+                $ref: "#/components/schemas/RoomsStartResponseBody"
         "400":
           description: |-
             The provided ID token is malformed or contains
@@ -1874,7 +1874,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetRoomStreamingTargetsResponse"
+                $ref: "#/components/schemas/GetRoomStreamingTargetsResponseBody"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -1908,7 +1908,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PostRoomStreamingTargetRequest"
+              $ref: "#/components/schemas/PostRoomStreamingTargetRequestBody"
         required: true
       responses:
         "200":
@@ -1916,7 +1916,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PostRoomStreamingTargetResponse"
+                $ref: "#/components/schemas/PostRoomStreamingTargetResponseBody"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -1953,7 +1953,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetRoomStreamingTargetResponse"
+                $ref: "#/components/schemas/GetRoomStreamingTargetResponseBody"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -2025,7 +2025,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ChangeRoomStreamingTargetRequest"
+              $ref: "#/components/schemas/PatchRoomStreamingTargetRequestBody"
         required: true
       responses:
         "200":
@@ -2033,7 +2033,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ChangeRoomStreamingTargetResponse"
+                $ref: "#/components/schemas/PatchRoomStreamingTargetResponseBody"
         "400":
           description: |-
             Could not modify the specified streaming target due to wrong
@@ -2097,7 +2097,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/StartCallInRequestBody"
+              $ref: "#/components/schemas/PostCallInStartRequestBody"
         required: true
       responses:
         "200":
@@ -2105,7 +2105,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ServiceStartResponse"
+                $ref: "#/components/schemas/PostServiceStartResponseBody"
         "400":
           description: "`id` and `pin` are not valid for any room."
           content:
@@ -2135,7 +2135,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/StartRecordingRequestBody"
+              $ref: "#/components/schemas/PostRecordingStartRequestBody"
         required: true
       responses:
         "200":
@@ -2143,7 +2143,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ServiceStartResponse"
+                $ref: "#/components/schemas/PostServiceStartResponseBody"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -2167,7 +2167,7 @@ paths:
       description: |-
         This is a WebSocket endpoint, all the data that is sent in binary messages
         is stored in the destination file.
-      operationId: ws_upload
+      operationId: get_recording_upload
       parameters:
         - name: room_id
           in: query
@@ -2208,53 +2208,6 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "500":
           $ref: "#/components/responses/InternalServerError"
-      security:
-        - BearerAuth: []
-  /services/recording/upload_render:
-    post:
-      tags:
-        - "api::v1::services::recording"
-      summary: Upload a rendered recording
-      description: |-
-        The body of this request should simply contain the raw data.
-        This endpoint is deprecated, please use the streaming upload
-        `/services/recording/upload` WebSocket endpoint instead.
-      operationId: upload_render
-      parameters:
-        - name: room_id
-          in: query
-          description: The room id
-          required: true
-          schema:
-            $ref: "#/components/schemas/RoomId"
-        - name: file_extension
-          in: query
-          description: The file extension
-          required: true
-          schema:
-            $ref: "#/components/schemas/FileExtension"
-        - name: timestamp
-          in: query
-          description: The recording creation timestamp
-          required: true
-          schema:
-            $ref: "#/components/schemas/Timestamp"
-      requestBody:
-        description: The raw data to be uploaded
-        content:
-          application/octet-stream:
-            schema:
-              type: string
-              format: binary
-        required: true
-      responses:
-        "204":
-          description: The recording was uploaded successfully
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-      deprecated: true
       security:
         - BearerAuth: []
   /signaling:
@@ -2316,7 +2269,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetTurnServersResponse"
+                $ref: "#/components/schemas/GetTurnResponseBody"
         "204":
           description: No TURN servers have been configured
         "401":
@@ -2346,7 +2299,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetFindResponse"
+                $ref: "#/components/schemas/GetFindResponseBody"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "500":
@@ -2386,7 +2339,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PatchMeBody"
+              $ref: "#/components/schemas/PatchMeRequestBody"
         required: true
       responses:
         "200":
@@ -2447,7 +2400,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetUserAssetsResponse"
+                $ref: "#/components/schemas/GetUserAssetsResponseBody"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "500":
@@ -2518,7 +2471,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetEventInvitesPendingResponse"
+                $ref: "#/components/schemas/GetEventInvitesPendingResponseBody"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -2606,9 +2559,8 @@ components:
           type: string
           description: The asset kind
         namespace:
-          type: string
-          description: The namespace of the asset
-          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/ModuleId"
         size:
           type: integer
           format: int64
@@ -2629,6 +2581,16 @@ components:
         - namespace
         - kind
         - created_at
+    AuthLoginPostRequestBody:
+      type: object
+      description: "Body of a *POST* request on `/auth/login`"
+      required:
+        - id_token
+      properties:
+        id_token:
+          type: string
+          description: The id token to use for the login
+          example: bG9yZW0gaXBzdW0sIHF1aWEgZG9sb3Igc2
     BreakoutRoomId:
       type: string
       format: uuid
@@ -2657,22 +2619,6 @@ components:
         tel: +555-123-456-789
     CallInPassword:
       $ref: "#/components/schemas/NumericId"
-    ChangeRoomStreamingTargetRequest:
-      $ref: "#/components/schemas/UpdateStreamingTarget"
-    ChangeRoomStreamingTargetResponse:
-      $ref: "#/components/schemas/RoomStreamingTarget"
-    CodeVerified:
-      type: object
-      description: Verify response body for *POST /invite/verify*
-      required:
-        - room_id
-        - password_required
-      properties:
-        password_required:
-          type: boolean
-          description: If password is required
-        room_id:
-          $ref: "#/components/schemas/RoomId"
     CursorLink:
       type: string
       example: "<https://api.example.org/resource?after=urlencodednextpagetoken>; rel='next'"
@@ -2700,6 +2646,11 @@ components:
       properties:
         email:
           $ref: "#/components/schemas/EmailAddress"
+    DisplayName:
+      type: string
+      description: The display name of a user or participant
+      example: Alice Adams
+      maxLength: 255
     EmailAddress:
       type: string
       format: email
@@ -3487,7 +3438,7 @@ components:
             id: 00000000-0000-0000-0000-0000000a11c3
             lastname: Adams
             title: ""
-    GetEventInvitesPendingResponse:
+    GetEventInvitesPendingResponseBody:
       type: object
       description: "Response body for the `GET /users/me/pending_invites` endpoint"
       required:
@@ -3500,12 +3451,12 @@ components:
           minimum: 0
       example:
         total_pending_invites: 3
-    GetFindResponse:
+    GetFindResponseBody:
       type: array
       items:
-        $ref: "#/components/schemas/GetFindResponseItem"
+        $ref: "#/components/schemas/GetFindResponseEntry"
       description: The response for the find endpoint
-    GetFindResponseItem:
+    GetFindResponseEntry:
       oneOf:
         - allOf:
             - $ref: "#/components/schemas/PublicUserProfile"
@@ -3530,7 +3481,7 @@ components:
       description: The response for users found
       discriminator:
         propertyName: kind
-    GetLoginResponse:
+    GetLoginResponseBody:
       type: object
       description: "Body of the response to a *GET* request on `/auth/login`"
       required:
@@ -3538,9 +3489,9 @@ components:
       properties:
         oidc:
           $ref: "#/components/schemas/OidcProvider"
-    GetRoomStreamingTargetResponse:
+    GetRoomStreamingTargetResponseBody:
       $ref: "#/components/schemas/RoomStreamingTargetResource"
-    GetRoomStreamingTargetsResponse:
+    GetRoomStreamingTargetsResponseBody:
       type: array
       items:
         $ref: "#/components/schemas/RoomStreamingTargetResource"
@@ -3552,18 +3503,6 @@ components:
           public_url: "https://streaming.example.com/livestream123"
           streaming_endpoint: "https://ingress.streaming.example.com/"
           streaming_key: aabbccddeeff
-    GetRoomsAssetsResponseBody:
-      type: array
-      items:
-        $ref: "#/components/schemas/AssetResource"
-      description: "Response for *GET /rooms/{room_id}/assets*"
-      example:
-        - created_at: "2024-06-18T11:22:33Z"
-          filename: recording.webm
-          id: 00000000-0000-0000-0000-0000aabbcc00
-          kind: record
-          namespace: recording
-          size: 98765432
     GetRoomsInvitesResponseBody:
       type: array
       items:
@@ -3592,17 +3531,17 @@ components:
             id: 00000000-0000-0000-0000-0000000a11c3
             lastname: Adams
             title: ""
-    GetRoomsResponse:
+    GetRoomsResponseBody:
       type: array
       items:
         $ref: "#/components/schemas/RoomResource"
       description: "The JSON body returned by the `/rooms` `GET` endpoint"
-    GetTurnServersResponse:
+    GetTurnResponseBody:
       type: array
       items:
         $ref: "#/components/schemas/IceServer"
-      description: Response to the *GET /turn* endpoint request
-    GetUserAssetsResponse:
+      description: Response body to the *GET /turn* endpoint request
+    GetUserAssetsResponseBody:
       type: object
       description: "Response body for the `GET /v1/users/me/assets` endpoint"
       required:
@@ -3625,8 +3564,8 @@ components:
             size: 98765432
     IceServer:
       oneOf:
-        - $ref: "#/components/schemas/Turn"
-        - $ref: "#/components/schemas/Stun"
+        - $ref: "#/components/schemas/TurnServer"
+        - $ref: "#/components/schemas/StunServer"
       description: Description of an ICE server
     InstanceId:
       type: string
@@ -3702,6 +3641,11 @@ components:
         - user
         - moderator
       example: user
+    Language:
+      type: string
+      description: A language identifier
+      example: de
+      maxLength: 35
     MeetingDetails:
       type: object
       description: Details about meeting
@@ -3886,36 +3830,48 @@ components:
             - $ref: "#/components/schemas/InviteRole"
       example:
         role: moderator
-    PatchMeBody:
+    PatchMeRequestBody:
       type: object
       description: Used to modify user settings.
       properties:
         conference_theme:
-          type: string
-          description: The conference theme
-          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/Theme"
         dashboard_theme:
-          type: string
-          description: The dashboard theme
-          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/Theme"
         display_name:
-          type: string
-          description: "The user's display name"
-          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/DisplayName"
         language:
-          type: string
-          description: "The user's language"
-          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/Language"
         title:
-          type: string
-          description: "The user's title"
-          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/UserTitle"
       example:
-        conference_theme: ~
-        dashboard_theme: ~
         display_name: Alice Adams
         language: en
-        title: ~
+    PatchRoomStreamingTargetRequestBody:
+      allOf:
+        - allOf:
+            - $ref: "#/components/schemas/UpdateStreamingTargetKind"
+          nullable: true
+        - type: object
+          properties:
+            name:
+              type: string
+              description: The name of the streaming target
+              nullable: true
+      description: "The body of a *PATCH /rooms/{room_id}/streaming_targets/{streaming_target_id}* request"
+      example:
+        kind: custom
+        name: My OwnCast Stream
+        public_url: "https://owncast.example.com/"
+        streaming_endpoint: "https://ingress.example.com/"
+        streaming_key: aabbccddeeff
+    PatchRoomStreamingTargetResponseBody:
+      $ref: "#/components/schemas/RoomStreamingTarget"
     PatchRoomsRequestBody:
       type: object
       description: API request parameters to patch a room
@@ -3932,6 +3888,17 @@ components:
           type: boolean
           description: If waiting room is enabled
           nullable: true
+    PostCallInStartRequestBody:
+      type: object
+      description: "Body for the `POST /services/call_in/start` endpoint"
+      required:
+        - id
+        - pin
+      properties:
+        id:
+          $ref: "#/components/schemas/CallInId"
+        pin:
+          $ref: "#/components/schemas/CallInPassword"
     PostEventInviteBody:
       oneOf:
         - $ref: "#/components/schemas/UserInvite"
@@ -4039,17 +4006,19 @@ components:
       properties:
         invite_code:
           $ref: "#/components/schemas/InviteCode"
-    PostLoginRequestBody:
+    PostInviteVerifyResponseBody:
       type: object
-      description: "Body of a *POST* request on `/auth/login`"
+      description: Verify response body for *POST /invite/verify*
       required:
-        - id_token
+        - room_id
+        - password_required
       properties:
-        id_token:
-          type: string
-          description: The id token to use for the login
-          example: bG9yZW0gaXBzdW0sIHF1aWEgZG9sb3Igc2
-    PostLoginResponse:
+        password_required:
+          type: boolean
+          description: If password is required
+        room_id:
+          $ref: "#/components/schemas/RoomId"
+    PostLoginResponseBody:
       type: object
       description: "Body of the response to a *POST* request on `/auth/login`"
       required:
@@ -4061,9 +4030,21 @@ components:
             type: string
           description: Permissions is a set of strings that each define a permission a user has.
           uniqueItems: true
-    PostRoomStreamingTargetRequest:
+    PostRecordingStartRequestBody:
+      type: object
+      description: "Response for the `POST /services/recording/start` endpoint"
+      required:
+        - room_id
+      properties:
+        breakout_room:
+          allOf:
+            - $ref: "#/components/schemas/BreakoutRoomId"
+          nullable: true
+        room_id:
+          $ref: "#/components/schemas/RoomId"
+    PostRoomStreamingTargetRequestBody:
       $ref: "#/components/schemas/StreamingTarget"
-    PostRoomStreamingTargetResponse:
+    PostRoomStreamingTargetResponseBody:
       $ref: "#/components/schemas/RoomStreamingTarget"
     PostRoomsRequestBody:
       type: object
@@ -4120,12 +4101,23 @@ components:
       example:
         breakout_room: 00000000-0000-0000-0000-00000badcafe
         resumption: 654321zyxwvutsrqponmlkjihgfedcba654321zyxwvutsrqponmlkjihgfedcba
+    PostServiceStartResponseBody:
+      type: object
+      description: "Response body for `POST /**/**/start` endpoints"
+      required:
+        - ticket
+        - resumption
+      properties:
+        resumption:
+          $ref: "#/components/schemas/ResumptionToken"
+        ticket:
+          $ref: "#/components/schemas/TicketToken"
     PrivateUserProfile:
       type: object
       description: |-
         Private user profile.
         
-        Similar to [`PublicUserProfile`], but contains additional "private" information about a user.
+        Similar to [`super::PublicUserProfile`], but contains additional "private" information about a user.
         Is only accessible to the user himself.
         Is used on */users/me* endpoints.
       required:
@@ -4146,14 +4138,11 @@ components:
           type: string
           description: "The user's avatar URL"
         conference_theme:
-          type: string
-          description: The conference theme
+          $ref: "#/components/schemas/Theme"
         dashboard_theme:
-          type: string
-          description: The dashboard theme
+          $ref: "#/components/schemas/Theme"
         display_name:
-          type: string
-          description: "The user's display name"
+          $ref: "#/components/schemas/DisplayName"
         email:
           type: string
           description: The email of the user
@@ -4163,16 +4152,14 @@ components:
         id:
           $ref: "#/components/schemas/UserId"
         language:
-          type: string
-          description: The language for the user
+          $ref: "#/components/schemas/Language"
         lastname:
           type: string
           description: "The user's last name"
         tariff_status:
           $ref: "#/components/schemas/TariffStatus"
         title:
-          type: string
-          description: The title of the user
+          $ref: "#/components/schemas/UserTitle"
         used_storage:
           type: integer
           format: int64
@@ -4216,8 +4203,7 @@ components:
           type: string
           description: "The user's avatar URL"
         display_name:
-          type: string
-          description: "The user's display name"
+          $ref: "#/components/schemas/DisplayName"
         email:
           type: string
           description: The email of the user
@@ -4230,8 +4216,7 @@ components:
           type: string
           description: "The user's last name"
         title:
-          type: string
-          description: The title of the user
+          $ref: "#/components/schemas/UserTitle"
       example:
         avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
         display_name: Alice Adams
@@ -4251,7 +4236,7 @@ components:
           nullable: true
       example:
         expiration: "2024-06-20T14:16:19Z"
-    PutSipConfig:
+    PutSipConfigRequestBody:
       type: object
       description: "Body for the `PUT /rooms/{room_id}/sip` endpoint"
       properties:
@@ -4366,7 +4351,19 @@ components:
         public_url: "https://streaming.example.com/livestream123"
         streaming_endpoint: "https://ingress.streaming.example.com/"
         streaming_key: aabbccddeeff
-    RoomsStartResponse:
+    RoomsByRoomIdAssetsGetResponseBody:
+      type: array
+      items:
+        $ref: "#/components/schemas/AssetResource"
+      description: "Response for *GET /rooms/{room_id}/assets*"
+      example:
+        - created_at: "2024-06-18T11:22:33Z"
+          filename: recording.webm
+          id: 00000000-0000-0000-0000-0000aabbcc00
+          kind: record
+          namespace: recording
+          size: 98765432
+    RoomsStartResponseBody:
       type: object
       description: The JSON body returned from the start endpoints supporting session resumption
       required:
@@ -4380,17 +4377,6 @@ components:
       example:
         resumption: 654321zyxwvutsrqponmlkjihgfedcba654321zyxwvutsrqponmlkjihgfedcba
         ticket: abcdefghijklmnopqrstuvwxyz123456abcdefghijklmnopqrstuvwxyz123456
-    ServiceStartResponse:
-      type: object
-      description: "Response for `POST /**/**/start` endpoints"
-      required:
-        - ticket
-        - resumption
-      properties:
-        resumption:
-          $ref: "#/components/schemas/ResumptionToken"
-        ticket:
-          $ref: "#/components/schemas/TicketToken"
     SharedFolder:
       type: object
       description: |-
@@ -4460,29 +4446,6 @@ components:
         message:
           type: string
           description: Human readable message
-    StartCallInRequestBody:
-      type: object
-      description: "Body for the `POST /services/call_in/start` endpoint"
-      required:
-        - id
-        - pin
-      properties:
-        id:
-          $ref: "#/components/schemas/CallInId"
-        pin:
-          $ref: "#/components/schemas/CallInPassword"
-    StartRecordingRequestBody:
-      type: object
-      description: "Response for the `POST /services/recording/start` endpoint"
-      required:
-        - room_id
-      properties:
-        breakout_room:
-          allOf:
-            - $ref: "#/components/schemas/BreakoutRoomId"
-          nullable: true
-        room_id:
-          $ref: "#/components/schemas/RoomId"
     StreamingKey:
       type: string
       description: The secret key of a streaming target
@@ -4607,7 +4570,7 @@ components:
         public_url: "https://streaming.example.com/livestream123"
         streaming_endpoint: "https://ingress.streaming.example.com/"
         streaming_key: aabbccddeeff
-    Stun:
+    StunServer:
       type: object
       description: STUN Server for users.
       required:
@@ -4707,6 +4670,11 @@ components:
         - default
         - paid
         - downgraded
+    Theme:
+      type: string
+      description: A theme identifier
+      example: de
+      maxLength: 128
     TicketToken:
       type: string
       description: A ticket token
@@ -4721,7 +4689,7 @@ components:
         A UTC DateTime wrapper that implements ToRedisArgs and FromRedisValue.
         
         The values are stores as unix timestamps in redis.
-    Turn:
+    TurnServer:
       type: object
       description: TURN access credentials for users.
       required:
@@ -4765,24 +4733,6 @@ components:
         lastname:
           type: string
           description: Last name of the unregistered user
-    UpdateStreamingTarget:
-      allOf:
-        - allOf:
-            - $ref: "#/components/schemas/UpdateStreamingTargetKind"
-          nullable: true
-        - type: object
-          properties:
-            name:
-              type: string
-              description: The name of the streaming target
-              nullable: true
-      description: "Data to update a streaming target (only fields with [`Some`] are updated)"
-      example:
-        kind: custom
-        name: My OwnCast Stream
-        public_url: "https://owncast.example.com/"
-        streaming_endpoint: "https://ingress.example.com/"
-        streaming_key: aabbccddeeff
     UpdateStreamingTargetKind:
       oneOf:
         - type: object
@@ -4856,6 +4806,11 @@ components:
       example:
         invitee: 00000009-9889-9889-9889-988000000000
         role: user
+    UserTitle:
+      type: string
+      description: The title of a user
+      example: M.Sc.
+      maxLength: 255
     ValidationErrorBody:
       type: object
       description: The body of a validation error response

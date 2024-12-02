@@ -19,12 +19,16 @@ use opentalk_db_storage::{
     tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId},
     users::User,
 };
-use opentalk_types::api::{
-    error::{ApiError, AuthenticationError},
-    v1::auth::{GetLoginResponse, OidcProvider, PostLoginRequestBody, PostLoginResponse},
+use opentalk_types::api::error::{ApiError, AuthenticationError};
+use opentalk_types_api_v1::auth::{
+    login::AuthLoginPostRequestBody, GetLoginResponseBody, OidcProvider, PostLoginResponseBody,
 };
 use opentalk_types_common::{
-    events::EventId, rooms::RoomId, tariffs::TariffStatus, tenants::TenantId, users::GroupName,
+    events::EventId,
+    rooms::RoomId,
+    tariffs::TariffStatus,
+    tenants::TenantId,
+    users::{DisplayName, GroupName},
 };
 
 use super::{events::EventPoliciesBuilderExt, rooms::RoomsPoliciesBuilderExt};
@@ -44,12 +48,12 @@ mod update_user;
 /// user as well as an expiration timestamp. When a valid token with an unknown user
 /// is provided, a new user will be created in the database.
 #[utoipa::path(
-    request_body = PostLoginRequestBody,
+    request_body = AuthLoginPostRequestBody,
     responses(
         (
             status = StatusCode::OK,
             description = "Login successful, answer contains a list of permissions",
-            body = PostLoginResponse,
+            body = PostLoginResponseBody,
             example = json!({"permissions": []})
         ),
         (
@@ -83,9 +87,9 @@ pub async fn post_login(
     settings: SharedSettingsActix,
     db: Data<Db>,
     oidc_ctx: Data<OidcContext>,
-    body: Json<PostLoginRequestBody>,
+    body: Json<AuthLoginPostRequestBody>,
     authz: Data<kustos::Authz>,
-) -> Result<Json<PostLoginResponse>, ApiError> {
+) -> Result<Json<PostLoginResponseBody>, ApiError> {
     let id_token = body.into_inner().id_token;
 
     let mut info = match oidc_ctx.verify_id_token(&id_token) {
@@ -215,7 +219,7 @@ pub async fn post_login(
 
     update_core_user_permissions(authz.as_ref(), login_result).await?;
 
-    Ok(Json(PostLoginResponse {
+    Ok(Json(PostLoginResponseBody {
         // TODO calculate permissions
         permissions: Default::default(),
     }))
@@ -243,7 +247,7 @@ fn map_tariff_status_name(mapping: &TariffStatusMapping, name: &String) -> Tarif
         (
             status = StatusCode::OK,
             description = "Get information about the OIDC provider",
-            body = GetLoginResponse,
+            body = GetLoginResponseBody,
         ),
         (
             status = StatusCode::INTERNAL_SERVER_ERROR,
@@ -253,13 +257,13 @@ fn map_tariff_status_name(mapping: &TariffStatusMapping, name: &String) -> Tarif
     security(),
 )]
 #[get("/auth/login")]
-pub async fn get_login(oidc_ctx: Data<OidcContext>) -> Json<GetLoginResponse> {
+pub async fn get_login(oidc_ctx: Data<OidcContext>) -> Json<GetLoginResponseBody> {
     let provider = OidcProvider {
         name: "default".to_string(),
         url: oidc_ctx.provider_url(),
     };
 
-    Json(GetLoginResponse { oidc: provider })
+    Json(GetLoginResponseBody { oidc: provider })
 }
 
 enum LoginResult {
@@ -328,8 +332,11 @@ async fn update_core_user_permissions(
     Ok(())
 }
 
-fn build_info_display_name(info: &IdTokenInfo) -> String {
-    info.display_name
-        .clone()
-        .unwrap_or_else(|| format!("{} {}", &info.firstname, &info.lastname))
+fn build_info_display_name(info: &IdTokenInfo) -> DisplayName {
+    DisplayName::from_str_lossy(
+        &info
+            .display_name
+            .clone()
+            .unwrap_or_else(|| format!("{} {}", &info.firstname, &info.lastname)),
+    )
 }

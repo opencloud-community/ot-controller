@@ -18,7 +18,7 @@ workspace = true
 [dependencies]
 kustos-shared = { workspace = true, features = ["internal"] }
 opentalk-database.workspace = true
-opentalk-types.workspace = true
+opentalk-types = { workspace = true, features = ["actix"] }
 
 ## Database migration
 barrel = { version = "0.7", features = ["pg"] }

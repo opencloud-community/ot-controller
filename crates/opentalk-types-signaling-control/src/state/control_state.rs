@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_common::time::Timestamp;
+use opentalk_types_common::{time::Timestamp, users::DisplayName};
 use opentalk_types_signaling::{ParticipationKind, Role};
 
 /// The state of a participant in the `control` module.
@@ -13,7 +13,7 @@ use opentalk_types_signaling::{ParticipationKind, Role};
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ControlState {
     /// Display name of the participant
-    pub display_name: String,
+    pub display_name: DisplayName,
 
     /// Role of the participant
     pub role: Role,

@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use opentalk_types_common::users::DisplayName;
 use opentalk_types_signaling::ParticipantId;
 
 /// Received by all participants when a participant gets their display name changed
@@ -17,7 +18,7 @@ pub struct DisplayNameChanged {
     /// The issuer of the display name change
     pub issued_by: ParticipantId,
     /// The old display name
-    pub old_name: String,
+    pub old_name: DisplayName,
     /// The new display name
-    pub new_name: String,
+    pub new_name: DisplayName,
 }
