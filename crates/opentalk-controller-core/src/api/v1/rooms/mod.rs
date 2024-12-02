@@ -64,7 +64,11 @@ use crate::{
             breakout::BreakoutStorageProvider as _, moderation::ModerationStorageProvider as _,
             ticket::start_or_continue_signaling_session, SignalingModules,
         },
-        v1::{events::notify_invitees_about_delete, util::require_feature, ApiResponse},
+        v1::{
+            events::notify_invitees_about_delete,
+            util::{require_feature, ToUserProfile as _},
+            ApiResponse,
+        },
     },
     services::{MailRecipient, MailService},
     settings::SharedSettingsActix,

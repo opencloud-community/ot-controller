@@ -24,6 +24,7 @@ use opentalk_types_api_v1::{
         PostInviteVerifyRequestBody, PostInviteVerifyResponseBody, PutInviteRequestBody,
         RoomIdAndInviteCode,
     },
+    users::PublicUserProfile,
 };
 use opentalk_types_common::rooms::RoomId;
 
@@ -31,7 +32,7 @@ use super::{response::NoContent, DefaultApiResult};
 use crate::{
     api::{
         responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
-        v1::{rooms::RoomsPoliciesBuilderExt, ApiResponse},
+        v1::{rooms::RoomsPoliciesBuilderExt, util::ToUserProfile as _, ApiResponse},
     },
     settings::SharedSettingsActix,
 };
@@ -451,5 +452,32 @@ pub async fn verify_invite_code(
     } else {
         // TODO(r.floren) Do we want to return something else here?
         Err(ApiError::not_found())
+    }
+}
+
+trait IntoInviteResource {
+    fn into_invite_resource(
+        invite: Invite,
+        created_by: PublicUserProfile,
+        updated_by: PublicUserProfile,
+    ) -> InviteResource;
+}
+
+impl IntoInviteResource for Invite {
+    fn into_invite_resource(
+        invite: Invite,
+        created_by: PublicUserProfile,
+        updated_by: PublicUserProfile,
+    ) -> InviteResource {
+        InviteResource {
+            invite_code: invite.id,
+            created: invite.created_at,
+            created_by,
+            updated: invite.updated_at,
+            updated_by,
+            room_id: invite.room,
+            active: invite.active,
+            expiration: invite.expiration,
+        }
     }
 }

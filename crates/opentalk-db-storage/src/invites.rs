@@ -12,7 +12,6 @@ use diesel::{
 use diesel_async::RunQueryDsl;
 use opentalk_database::{DbConnection, Paginate, Result};
 use opentalk_diesel_newtype::DieselNewtype;
-use opentalk_types_api_v1::{rooms::by_room_id::invites::InviteResource, users::PublicUserProfile};
 use opentalk_types_common::{
     rooms::{invite_codes::InviteCode, RoomId},
     users::UserId,
@@ -280,23 +279,6 @@ impl Invite {
                 .collect::<Vec<_>>(),
             total,
         ))
-    }
-
-    pub fn into_invite_resource(
-        invite: Invite,
-        created_by: PublicUserProfile,
-        updated_by: PublicUserProfile,
-    ) -> InviteResource {
-        InviteResource {
-            invite_code: invite.id,
-            created: invite.created_at,
-            created_by,
-            updated: invite.updated_at,
-            updated_by,
-            room_id: invite.room,
-            active: invite.active,
-            expiration: invite.expiration,
-        }
     }
 
     #[tracing::instrument(err, skip_all)]

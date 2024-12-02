@@ -16,7 +16,8 @@ use opentalk_signaling_core::{
 };
 use opentalk_types::api::error::ApiError;
 use opentalk_types_api_v1::{
-    pagination::PagePaginationQuery, rooms::by_room_id::assets::RoomsByRoomIdAssetsGetResponseBody,
+    assets::AssetResource, pagination::PagePaginationQuery,
+    rooms::by_room_id::assets::RoomsByRoomIdAssetsGetResponseBody,
 };
 use opentalk_types_common::{assets::AssetId, rooms::RoomId};
 
@@ -73,7 +74,7 @@ pub async fn room_assets(
     let (assets, asset_count) =
         Asset::get_all_for_room_paginated(&mut conn, room_id, per_page, page).await?;
 
-    let asset_data = assets.into_iter().map(Into::into).collect();
+    let asset_data = assets.into_iter().map(asset_to_asset_resource).collect();
 
     Ok(
         ApiResponse::new(RoomsByRoomIdAssetsGetResponseBody(asset_data)).with_page_pagination(
@@ -180,4 +181,25 @@ pub async fn delete(
     delete_asset(&storage, db.into_inner(), room_id, asset_id).await?;
 
     Ok(NoContent)
+}
+
+pub(crate) fn asset_to_asset_resource(asset: Asset) -> AssetResource {
+    let Asset {
+        id,
+        created_at,
+        updated_at: _,
+        namespace,
+        kind,
+        filename,
+        tenant_id: _,
+        size,
+    } = asset;
+    AssetResource {
+        id,
+        filename,
+        namespace,
+        created_at,
+        kind,
+        size,
+    }
 }

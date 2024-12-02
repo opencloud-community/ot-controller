@@ -33,7 +33,7 @@ use opentalk_db_storage::{
     },
     tariffs::Tariff,
     tenants::Tenant,
-    users::{email_to_libravatar_url, User},
+    users::User,
 };
 use opentalk_keycloak_admin::{users::TenantFilter, KeycloakAdminClient};
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage};
@@ -65,10 +65,11 @@ use serde::Deserialize;
 use shared_folder::delete_shared_folders;
 use snafu::Report;
 
-use super::{response::NoContent, ApiResponse, DefaultApiResult};
+use super::{response::NoContent, util::ToUserProfile as _, ApiResponse, DefaultApiResult};
 use crate::{
     api::{
         responses::{BadRequest, Forbidden, InternalServerError, NotFound, Unauthorized},
+        util::email_to_libravatar_url,
         v1::{
             events::shared_folder::put_shared_folder, rooms::RoomsPoliciesBuilderExt,
             util::GetUserProfilesBatched,

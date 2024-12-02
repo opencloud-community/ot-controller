@@ -15,12 +15,12 @@ use actix_web::{
 use chrono::Utc;
 use openidconnect::AccessToken;
 use opentalk_controller_settings::{TenantAssignment, UsersFindBehavior};
-use opentalk_database::Db;
+use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
-    assets,
+    assets::{self},
     tariffs::Tariff,
     tenants::Tenant,
-    users::{email_to_libravatar_url, UpdateUser, User},
+    users::{UpdateUser, User},
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_types::api::error::ApiError;
@@ -29,6 +29,7 @@ use opentalk_types_api_v1::{
     users::{
         me::PatchMeRequestBody, GetFindQuery, GetFindResponseBody, GetFindResponseEntry,
         GetUserAssetsResponseBody, PrivateUserProfile, PublicUserProfile, UnregisteredUser,
+        UserAssetResource,
     },
 };
 use opentalk_types_common::{
@@ -41,7 +42,8 @@ use crate::{
     api::{
         responses::{Forbidden, InternalServerError, Unauthorized},
         signaling::SignalingModules,
-        v1::ApiResponse,
+        util::email_to_libravatar_url,
+        v1::{assets::asset_to_asset_resource, util::ToUserProfile as _, ApiResponse},
     },
     caches::Caches,
     oidc::{decode_token, UserClaims},
@@ -289,7 +291,7 @@ pub async fn get_me_assets(
 
     let mut conn = db.get_conn().await?;
 
-    let (owned_assets, asset_count) = assets::get_all_for_room_owner_paginated_ordered(
+    let (owned_assets, asset_count) = get_all_assets_for_room_owner_paginated_ordered(
         &mut conn,
         current_user.id,
         pagination.per_page,
@@ -507,4 +509,28 @@ pub async fn find(
     };
 
     Ok(Json(GetFindResponseBody(found_users)))
+}
+
+#[tracing::instrument(err, skip_all)]
+pub async fn get_all_assets_for_room_owner_paginated_ordered(
+    conn: &mut DbConnection,
+    user_id: UserId,
+    limit: i64,
+    page: i64,
+    sorting: SortingQuery<AssetSorting>,
+) -> Result<(Vec<UserAssetResource>, i64), ApiError> {
+    let SortingQuery { sort, order } = sorting;
+
+    let (resources, total) =
+        assets::get_all_for_room_owner_paginated_ordered(conn, user_id, limit, page, sort, order)
+            .await?;
+
+    let resources = resources
+        .into_iter()
+        .map(|(asset, room_id, event_id)| {
+            UserAssetResource::new(asset_to_asset_resource(asset), room_id, event_id)
+        })
+        .collect();
+
+    Ok((resources, total))
 }

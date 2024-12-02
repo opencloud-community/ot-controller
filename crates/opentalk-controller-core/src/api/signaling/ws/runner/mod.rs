@@ -21,11 +21,7 @@ use log::log_enabled;
 use opentalk_controller_settings::SharedSettings;
 use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
-    events::EventInvite,
-    rooms::Room,
-    tariffs::Tariff,
-    users::{email_to_libravatar_url, User},
-    utils::build_event_info,
+    events::EventInvite, rooms::Room, tariffs::Tariff, users::User, utils::build_event_info,
 };
 use opentalk_signaling_core::{
     control::{
@@ -76,13 +72,16 @@ use super::{
     modules::{DynBroadcastEvent, DynEventCtx, DynTargetedEvent, Modules, NoSuchModuleError},
     CleanupScope, DestroyContext, ExchangeBinding, ExchangePublish, NamespacedEvent, RunnerMessage,
 };
-use crate::api::signaling::{
-    breakout::{self},
-    echo::Echo,
-    moderation::{self, ModerationStorageProvider},
-    resumption::ResumptionTokenKeepAlive,
-    storage::{SignalingStorageError, SignalingStorageProvider},
-    ws::actor::WsCommand,
+use crate::api::{
+    signaling::{
+        breakout::{self},
+        echo::Echo,
+        moderation::{self, ModerationStorageProvider},
+        resumption::ResumptionTokenKeepAlive,
+        storage::{SignalingStorageError, SignalingStorageProvider},
+        ws::actor::WsCommand,
+    },
+    util::email_to_libravatar_url,
 };
 
 mod call_in;
