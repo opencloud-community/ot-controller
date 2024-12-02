@@ -9,6 +9,7 @@ use std::{
 };
 
 use clap::{Args, Subcommand, ValueEnum};
+use itertools::Itertools as _;
 use snafu::{ensure_whatever, ResultExt};
 use utoipa::{openapi::Server, OpenApi as _};
 use yaml_rust2::{YamlEmitter, YamlLoader};
@@ -86,7 +87,7 @@ pub async fn handle_command(command: Command) -> Result<()> {
                     let mut yaml_emitter = YamlEmitter::new(&mut openapi_yaml_string);
                     yaml_emitter.multiline_strings(true);
                     yaml_emitter.dump(&loaded_yaml[0]).unwrap();
-                    openapi_yaml_string
+                    normalized_string(&openapi_yaml_string)
                 }
                 ExportFormat::Json => openapi_json_string,
             };
@@ -97,4 +98,11 @@ pub async fn handle_command(command: Command) -> Result<()> {
             Ok(())
         }
     }
+}
+
+fn normalized_string(s: &str) -> String {
+    s.lines()
+        .chain(std::iter::once("\n"))
+        .map(str::trim_end)
+        .join("\n")
 }
