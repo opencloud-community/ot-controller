@@ -227,7 +227,7 @@ mod serde_impls {
 
     struct ModuleFeatureIdVisitor;
 
-    impl<'de> serde::de::Visitor<'de> for ModuleFeatureIdVisitor {
+    impl serde::de::Visitor<'_> for ModuleFeatureIdVisitor {
         type Value = ModuleFeatureId;
 
         fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {

@@ -70,7 +70,7 @@ mod serde_impls {
 
     struct CursorVisitor<T: CursorData>(PhantomData<T>);
 
-    impl<'de, T: CursorData + DeserializeOwned> serde::de::Visitor<'de> for CursorVisitor<T> {
+    impl<T: CursorData + DeserializeOwned> serde::de::Visitor<'_> for CursorVisitor<T> {
         type Value = Cursor<T>;
 
         fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {

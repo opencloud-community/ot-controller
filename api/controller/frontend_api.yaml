@@ -1577,7 +1577,6 @@ paths:
         if none was set before.
 
         Returns the new modified sip configuration.
-        Get the sip config for the specified room.
       operationId: put
       parameters:
         - name: room_id

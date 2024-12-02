@@ -12,10 +12,12 @@ pub fn make_client() -> Result<reqwest11::Client, reqwest11::Error> {
         .build()
 }
 
+pub type BoxedHttpResponseFuture =
+    Box<dyn Future<Output = Result<HttpResponse, Error<reqwest11::Error>>>>;
+
 pub fn async_http_client(
     client: reqwest11::Client,
-) -> impl Fn(HttpRequest) -> Pin<Box<dyn Future<Output = Result<HttpResponse, Error<reqwest11::Error>>>>>
-{
+) -> impl Fn(HttpRequest) -> Pin<BoxedHttpResponseFuture> {
     move |request| Box::pin(async_http_client_inner(client.clone(), request))
 }
 
