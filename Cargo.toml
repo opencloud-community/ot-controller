@@ -136,6 +136,7 @@ syn = "2"
 terdoc-client = { version = "0.1.1", default-features = false }
 tokio = "1"
 tokio-stream = { version = "0.1", features = ["sync"] }
+toml = "0.8"
 tracing = "0.1"
 url = "2"
 utoipa = "4"

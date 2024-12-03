@@ -885,4 +885,36 @@ mod tests {
             shared_folder
         );
     }
+
+    #[test]
+    fn meeting_report_settings() {
+        let toml_settings: Reports = toml::from_str(
+            r#"
+        url = "http://localhost"
+        "#,
+        )
+        .unwrap();
+        assert_eq!(
+            toml_settings,
+            Reports {
+                url: "http://localhost".parse().unwrap(),
+                template: ReportsTemplate::BuiltIn
+            }
+        );
+
+        let toml_settings: Reports = toml::from_str(
+            r#"
+        url = "http://localhost"
+        template.inline = "lorem ipsum"
+        "#,
+        )
+        .unwrap();
+        assert_eq!(
+            toml_settings,
+            Reports {
+                url: "http://localhost".parse().unwrap(),
+                template: ReportsTemplate::Inline("lorem ipsum".to_string())
+            }
+        );
+    }
 }
