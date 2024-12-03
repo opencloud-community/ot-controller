@@ -641,14 +641,15 @@ pub struct Spacedeck {
     pub api_key: String,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 pub struct Reports {
     pub url: url::Url,
     #[serde(default)]
     pub template: ReportsTemplate,
 }
 
-#[derive(Clone, Debug, Deserialize, Default)]
+#[derive(Clone, Debug, Deserialize, Default, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
 pub enum ReportsTemplate {
     /// Use the Template included with the application.
     #[default]
