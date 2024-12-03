@@ -8,12 +8,19 @@ customized by providing a template in the controller configuration.
 
 The section in the [configuration file](configuration.md) is called `reports`.
 
-| Field      | Type     | Required | Description                                                                                                    |
-| ---------- | -------- | -------- | -------------------------------------------------------------------------------------------------------------- |
-| `url`      | `string` | yes      | The URL where the terdoc service can be reached                                                                |
-| `template` | `string` | yes      | The template which should be used for the report generation (see [Report Template](#meeting-report-template)). |
+| Field      | Type     | Required | Description                                                       |
+| ---------- | -------- | -------- | ----------------------------------------------------------------- |
+| `url`      | `string` | yes      | The URL where the terdoc service can be reached                   |
+| `template` | `enum`   | no       | The template for the generated report (see [Template](#template)) |
 
-### Meeting Report Template
+### Template
+
+The template can be configured by inlining it into the configuration file. If no template is
+provided the built in template will be used. There might be additional options for loading templates in the future.
+
+| Field             | Type     | Required | Description         |
+| ----------------- | -------- | -------- | ------------------- |
+| `template.inline` | `string` | no       | The report template |
 
 The meeting report template uses the [Tera](https://keats.github.io/tera/docs/) templating language.
 For more information on how to use this templating language, refer to the [official Tera documentation](https://keats.github.io/tera/docs/#introduction).
