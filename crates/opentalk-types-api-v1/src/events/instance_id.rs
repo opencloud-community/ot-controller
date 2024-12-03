@@ -86,7 +86,7 @@ mod serde_impls {
     const DT_FORMAT: &str = "%Y%m%dT%H%M%S%z";
     struct InstanceIdVisitor;
 
-    impl<'de> serde::de::Visitor<'de> for InstanceIdVisitor {
+    impl serde::de::Visitor<'_> for InstanceIdVisitor {
         type Value = InstanceId;
 
         fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {

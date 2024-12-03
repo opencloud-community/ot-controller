@@ -87,8 +87,6 @@ pub async fn get(
 /// if none was set before.
 ///
 /// Returns the new modified sip configuration.
-
-/// Get the sip config for the specified room.
 #[utoipa::path(
     params(
         ("room_id" = RoomId, description = "The id of the room"),
