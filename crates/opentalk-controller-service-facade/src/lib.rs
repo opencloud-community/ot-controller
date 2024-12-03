@@ -23,65 +23,8 @@
     unused_results
 )]
 
-use std::sync::Arc;
+mod controller_service;
+mod controller_service_backend;
 
-use async_trait::async_trait;
-use opentalk_types::api::error::ApiError;
-use opentalk_types_api_v1::{
-    auth::GetLoginResponseBody,
-    rooms::{by_room_id::GetRoomEventResponseBody, RoomResource},
-};
-use opentalk_types_common::rooms::RoomId;
-use tokio::sync::RwLock;
-
-/// Trait implemented by OpenTalk controller service backends
-#[async_trait]
-pub trait OpenTalkControllerServiceBackend: Send + Sync {
-    /// Get the login api response
-    async fn get_login(&self) -> GetLoginResponseBody;
-
-    /// Get a room
-    async fn get_room(&self, room_id: &RoomId) -> Result<RoomResource, ApiError>;
-
-    /// Get the event for a room
-    async fn get_room_event(&self, room_id: &RoomId) -> Result<GetRoomEventResponseBody, ApiError>;
-}
-
-/// Thread-safe handle to a [`OpenTalkControllerServiceBackend`] implementation.
-#[derive(Clone)]
-pub struct OpenTalkControllerService {
-    backend: Arc<RwLock<dyn OpenTalkControllerServiceBackend>>,
-}
-
-impl std::fmt::Debug for OpenTalkControllerService {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "OpenTalkControllerService")
-    }
-}
-
-impl OpenTalkControllerService {
-    /// Create a new [`OpenTalkControllerService`] holding a type that implements [`OpenTalkControllerServiceBackend`].
-    pub fn new<B: OpenTalkControllerServiceBackend + 'static>(backend: B) -> Self {
-        Self {
-            backend: Arc::new(RwLock::new(backend)),
-        }
-    }
-
-    /// Get the login api response
-    pub async fn get_login(&self) -> GetLoginResponseBody {
-        self.backend.read().await.get_login().await
-    }
-
-    /// Get the room api response
-    pub async fn get_room(&self, room_id: &RoomId) -> Result<RoomResource, ApiError> {
-        self.backend.read().await.get_room(room_id).await
-    }
-
-    /// Get the event for a room
-    pub async fn get_room_event(
-        &self,
-        room_id: &RoomId,
-    ) -> Result<GetRoomEventResponseBody, ApiError> {
-        self.backend.read().await.get_room_event(room_id).await
-    }
-}
+pub use controller_service::OpenTalkControllerService;
+pub use controller_service_backend::OpenTalkControllerServiceBackend;
