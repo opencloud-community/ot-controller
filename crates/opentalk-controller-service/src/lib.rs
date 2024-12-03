@@ -28,11 +28,11 @@ use async_trait::async_trait;
 use opentalk_controller_service_facade::OpenTalkControllerServiceBackend;
 use opentalk_controller_settings::{Settings, SharedSettings};
 use opentalk_database::Db;
-use opentalk_db_storage::{rooms::Room, users::User};
+use opentalk_db_storage::{events::Event, rooms::Room, users::User, utils::build_event_info};
 use opentalk_types::api::error::ApiError;
 use opentalk_types_api_v1::{
     auth::{GetLoginResponseBody, OidcProvider},
-    rooms::RoomResource,
+    rooms::{by_room_id::GetRoomEventResponseBody, RoomResource},
     users::{PrivateUserProfile, PublicUserProfile},
 };
 use opentalk_types_common::rooms::RoomId;
@@ -90,6 +90,27 @@ impl OpenTalkControllerServiceBackend for ControllerBackend {
         };
 
         Ok(room_resource)
+    }
+
+    async fn get_room_event(&self, room_id: &RoomId) -> Result<GetRoomEventResponseBody, ApiError> {
+        let settings = self.settings.load();
+
+        let mut conn = self.db.get_conn().await?;
+
+        let event = Event::get_for_room(&mut conn, *room_id).await?;
+
+        let room = Room::get(&mut conn, *room_id).await?;
+
+        match event.as_ref() {
+            Some(event) => {
+                let call_in_tel = settings.call_in.as_ref().map(|call_in| call_in.tel.clone());
+                let event_info =
+                    build_event_info(&mut conn, call_in_tel, *room_id, room.e2e_encryption, event)
+                        .await?;
+                Ok(GetRoomEventResponseBody(event_info))
+            }
+            None => Err(ApiError::not_found()),
+        }
     }
 }
 

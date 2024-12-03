@@ -30,7 +30,6 @@ use opentalk_db_storage::{
     streaming_targets::get_room_streaming_targets,
     tenants::Tenant,
     users::User,
-    utils::build_event_info,
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage, Participant, VolatileStorage};
@@ -574,29 +573,10 @@ pub async fn get_room_tariff(
 )]
 #[get("/rooms/{room_id}/event")]
 pub async fn get_room_event(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
+    service: Data<OpenTalkControllerService>,
     room_id: Path<RoomId>,
 ) -> Result<Json<GetRoomEventResponseBody>, ApiError> {
-    let settings = settings.load();
-    let room_id = room_id.into_inner();
-
-    let mut conn = db.get_conn().await?;
-
-    let event = Event::get_for_room(&mut conn, room_id).await?;
-
-    let room = Room::get(&mut conn, room_id).await?;
-
-    match event.as_ref() {
-        Some(event) => {
-            let call_in_tel = settings.call_in.as_ref().map(|call_in| call_in.tel.clone());
-            let event_info =
-                build_event_info(&mut conn, call_in_tel, room_id, room.e2e_encryption, event)
-                    .await?;
-            Ok(Json(GetRoomEventResponseBody(event_info)))
-        }
-        None => Err(ApiError::not_found()),
-    }
+    Ok(Json(service.get_room_event(&room_id).await?))
 }
 
 /// Start a signaling session as a registered user
