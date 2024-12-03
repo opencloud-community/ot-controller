@@ -16,8 +16,13 @@ version.workspace = true
 
 [dependencies]
 async-trait.workspace = true
+md5.workspace = true
 opentalk-controller-service-facade.workspace = true
+opentalk-controller-settings.workspace = true
+opentalk-database.workspace = true
+opentalk-db-storage.workspace = true
 opentalk-types.workspace = true
 opentalk-types-api-v1.workspace = true
+opentalk-types-common.workspace = true
 
 [dev-dependencies]

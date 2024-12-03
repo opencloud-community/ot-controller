@@ -26,7 +26,9 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use opentalk_types_api_v1::auth::GetLoginResponseBody;
+use opentalk_types::api::error::ApiError;
+use opentalk_types_api_v1::{auth::GetLoginResponseBody, rooms::RoomResource};
+use opentalk_types_common::rooms::RoomId;
 use tokio::sync::RwLock;
 
 /// Trait implemented by OpenTalk controller service backends
@@ -34,6 +36,9 @@ use tokio::sync::RwLock;
 pub trait OpenTalkControllerServiceBackend: Send + Sync {
     /// Get the login api response
     async fn get_login(&self) -> GetLoginResponseBody;
+
+    /// Get a room
+    async fn get_room(&self, room_id: &RoomId) -> Result<RoomResource, ApiError>;
 }
 
 /// Thread-safe handle to a [`OpenTalkControllerServiceBackend`] implementation.
@@ -59,5 +64,10 @@ impl OpenTalkControllerService {
     /// Get the login api response
     pub async fn get_login(&self) -> GetLoginResponseBody {
         self.backend.read().await.get_login().await
+    }
+
+    /// Get the room api response
+    pub async fn get_room(&self, room_id: &RoomId) -> Result<RoomResource, ApiError> {
+        self.backend.read().await.get_room(room_id).await
     }
 }

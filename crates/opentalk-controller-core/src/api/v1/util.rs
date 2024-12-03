@@ -4,14 +4,13 @@
 
 use std::collections::HashMap;
 
+use opentalk_controller_service::ToUserProfile as _;
 use opentalk_controller_settings::Settings;
 use opentalk_database::{DbConnection, Result};
 use opentalk_db_storage::{tariffs::Tariff, users::User, utils::HasUsers};
 use opentalk_types::api::error::ApiError;
-use opentalk_types_api_v1::users::{PrivateUserProfile, PublicUserProfile};
+use opentalk_types_api_v1::users::PublicUserProfile;
 use opentalk_types_common::{features::ModuleFeatureId, users::UserId};
-
-use crate::api::util::email_to_libravatar_url;
 
 /// Utility to fetch user profiles batched
 ///
@@ -96,50 +95,4 @@ pub(crate) async fn require_feature(
     }
 
     Ok(())
-}
-
-pub(crate) trait ToUserProfile {
-    fn to_public_user_profile(&self, settings: &Settings) -> PublicUserProfile;
-
-    fn to_private_user_profile(&self, settings: &Settings, used_storage: u64)
-        -> PrivateUserProfile;
-}
-
-impl ToUserProfile for User {
-    fn to_public_user_profile(&self, settings: &Settings) -> PublicUserProfile {
-        let default_avatar = email_to_libravatar_url(&settings.avatar.libravatar_url, &self.email);
-
-        PublicUserProfile {
-            id: self.id,
-            email: self.email.clone(),
-            title: self.title.clone(),
-            firstname: self.firstname.clone(),
-            lastname: self.lastname.clone(),
-            display_name: self.display_name.clone(),
-            avatar_url: self.avatar_url.clone().unwrap_or(default_avatar),
-        }
-    }
-
-    fn to_private_user_profile(
-        &self,
-        settings: &Settings,
-        used_storage: u64,
-    ) -> PrivateUserProfile {
-        let default_avatar = email_to_libravatar_url(&settings.avatar.libravatar_url, &self.email);
-
-        PrivateUserProfile {
-            id: self.id,
-            email: self.email.clone(),
-            title: self.title.clone(),
-            firstname: self.firstname.clone(),
-            lastname: self.lastname.clone(),
-            display_name: self.display_name.clone(),
-            dashboard_theme: self.dashboard_theme.clone(),
-            conference_theme: self.conference_theme.clone(),
-            avatar_url: self.avatar_url.clone().unwrap_or(default_avatar),
-            language: self.language.clone(),
-            tariff_status: self.tariff_status,
-            used_storage,
-        }
-    }
 }

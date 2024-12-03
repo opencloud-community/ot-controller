@@ -18,6 +18,8 @@ use kustos::{
     subject::IsSubject,
     AccessMethod, Authz, Resource,
 };
+use opentalk_controller_service::ToUserProfile as _;
+use opentalk_controller_service_facade::OpenTalkControllerService;
 use opentalk_controller_utils::deletion::{Deleter, RoomDeleter};
 use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
@@ -64,11 +66,7 @@ use crate::{
             breakout::BreakoutStorageProvider as _, moderation::ModerationStorageProvider as _,
             ticket::start_or_continue_signaling_session, SignalingModules,
         },
-        v1::{
-            events::notify_invitees_about_delete,
-            util::{require_feature, ToUserProfile as _},
-            ApiResponse,
-        },
+        v1::{events::notify_invitees_about_delete, util::require_feature, ApiResponse},
     },
     services::{MailRecipient, MailService},
     settings::SharedSettingsActix,
@@ -471,26 +469,10 @@ async fn gather_mail_notification_values(
 )]
 #[get("/rooms/{room_id}")]
 pub async fn get(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
+    service: Data<OpenTalkControllerService>,
     room_id: Path<RoomId>,
 ) -> Result<Json<RoomResource>, ApiError> {
-    let settings = settings.load();
-    let room_id = room_id.into_inner();
-
-    let mut conn = db.get_conn().await?;
-
-    let (room, created_by) = Room::get_with_user(&mut conn, room_id).await?;
-
-    let room_resource = RoomResource {
-        id: room.id,
-        created_by: created_by.to_public_user_profile(&settings),
-        created_at: room.created_at.into(),
-        password: room.password,
-        waiting_room: room.waiting_room,
-    };
-
-    Ok(Json(room_resource))
+    Ok(Json(service.get_room(&room_id).await?))
 }
 
 /// Get a room's tariff

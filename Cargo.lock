@@ -4601,9 +4601,14 @@ name = "opentalk-controller-service"
 version = "0.29.0-alpha"
 dependencies = [
  "async-trait",
+ "md5",
  "opentalk-controller-service-facade",
+ "opentalk-controller-settings",
+ "opentalk-database",
+ "opentalk-db-storage",
  "opentalk-types",
  "opentalk-types-api-v1",
+ "opentalk-types-common",
 ]
 
 [[package]]
@@ -4613,6 +4618,7 @@ dependencies = [
  "async-trait",
  "opentalk-types",
  "opentalk-types-api-v1",
+ "opentalk-types-common",
  "tokio",
 ]
 

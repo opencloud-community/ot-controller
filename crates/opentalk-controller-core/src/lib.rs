@@ -419,7 +419,7 @@ impl Controller {
                     .auth_base_url
                     .to_string(),
             };
-            ControllerBackend::new(oidc_provider)
+            ControllerBackend::new(shared_settings.clone(), db.clone(), oidc_provider)
         };
         let service = OpenTalkControllerService::new(backend);
 
