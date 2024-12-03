@@ -24,17 +24,28 @@
 
 use async_trait::async_trait;
 use opentalk_controller_service_facade::OpenTalkControllerServiceBackend;
+use opentalk_types_api_v1::auth::{GetLoginResponseBody, OidcProvider};
 
 /// The default [`OpenTalkControllerServiceBackend`] implementation.
-#[derive(Debug, Default)]
-pub struct ControllerBackend;
+#[derive(Debug)]
+pub struct ControllerBackend {
+    frontend_oidc_provider: OidcProvider,
+}
 
 impl ControllerBackend {
     /// Create a new [`ControllerBackend`].
-    pub fn new() -> Self {
-        Self
+    pub fn new(frontend_oidc_provider: OidcProvider) -> Self {
+        Self {
+            frontend_oidc_provider,
+        }
     }
 }
 
 #[async_trait]
-impl OpenTalkControllerServiceBackend for ControllerBackend {}
+impl OpenTalkControllerServiceBackend for ControllerBackend {
+    async fn get_login(&self) -> GetLoginResponseBody {
+        GetLoginResponseBody {
+            oidc: self.frontend_oidc_provider.clone(),
+        }
+    }
+}

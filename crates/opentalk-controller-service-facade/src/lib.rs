@@ -26,16 +26,20 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use opentalk_types_api_v1::auth::GetLoginResponseBody;
 use tokio::sync::RwLock;
 
 /// Trait implemented by OpenTalk controller service backends
 #[async_trait]
-pub trait OpenTalkControllerServiceBackend: Send + Sync {}
+pub trait OpenTalkControllerServiceBackend: Send + Sync {
+    /// Get the login api response
+    async fn get_login(&self) -> GetLoginResponseBody;
+}
 
 /// Thread-safe handle to a [`OpenTalkControllerServiceBackend`] implementation.
 #[derive(Clone)]
 pub struct OpenTalkControllerService {
-    _backend: Arc<RwLock<dyn OpenTalkControllerServiceBackend>>,
+    backend: Arc<RwLock<dyn OpenTalkControllerServiceBackend>>,
 }
 
 impl std::fmt::Debug for OpenTalkControllerService {
@@ -48,7 +52,12 @@ impl OpenTalkControllerService {
     /// Create a new [`OpenTalkControllerService`] holding a type that implements [`OpenTalkControllerServiceBackend`].
     pub fn new<B: OpenTalkControllerServiceBackend + 'static>(backend: B) -> Self {
         Self {
-            _backend: Arc::new(RwLock::new(backend)),
+            backend: Arc::new(RwLock::new(backend)),
         }
+    }
+
+    /// Get the login api response
+    pub async fn get_login(&self) -> GetLoginResponseBody {
+        self.backend.read().await.get_login().await
     }
 }

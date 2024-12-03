@@ -54,6 +54,7 @@ use opentalk_signaling_core::{
     VolatileStorage,
 };
 use opentalk_types::api::error::ApiError;
+use opentalk_types_api_v1::auth::OidcProvider;
 use rustls_pki_types::{CertificateDer, PrivatePkcs8KeyDer};
 use service_probe::{set_service_state, start_probe, ServiceState};
 use snafu::{Backtrace, ErrorCompat, Report, ResultExt, Snafu};
@@ -334,7 +335,8 @@ impl Controller {
                 oidc_and_user_search_configuration
                     .oidc
                     .frontend
-                    .auth_base_url,
+                    .auth_base_url
+                    .clone(),
                 oidc_and_user_search_configuration
                     .oidc
                     .controller
@@ -408,7 +410,17 @@ impl Controller {
 
         let signaling = SignalingModules::default();
 
-        let backend = ControllerBackend::new();
+        let backend = {
+            let oidc_provider = OidcProvider {
+                name: "default".to_string(),
+                url: oidc_and_user_search_configuration
+                    .oidc
+                    .frontend
+                    .auth_base_url
+                    .to_string(),
+            };
+            ControllerBackend::new(oidc_provider)
+        };
         let service = OpenTalkControllerService::new(backend);
 
         let mut controller = Self {
