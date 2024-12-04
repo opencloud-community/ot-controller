@@ -419,6 +419,7 @@ impl Controller {
                     .auth_base_url
                     .to_string(),
             };
+
             ControllerBackend::new(shared_settings.clone(), db.clone(), oidc_provider)
         };
         let service = OpenTalkControllerService::new(backend);
@@ -451,6 +452,9 @@ impl Controller {
     /// Runs the controller until a fatal error occurred or a shutdown is requested (e.g. SIGTERM).
     pub async fn run(self) -> Result<()> {
         let signaling_modules = Arc::new(self.signaling);
+        self.service
+            .set_module_features(signaling_modules.get_module_features())
+            .await;
 
         if let Some(MonitoringSettings { port, addr }) = self.startup_settings.monitoring {
             start_probe(addr, port, ServiceState::Up)
@@ -458,7 +462,7 @@ impl Controller {
                 .whatever_context("Failed to start monitoring")?;
         }
 
-        // Start JobExecuter
+        // Start JobExecutor
         JobRunner::start(
             self.db.clone(),
             self.shutdown.subscribe(),

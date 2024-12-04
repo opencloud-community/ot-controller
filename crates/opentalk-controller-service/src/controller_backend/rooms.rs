@@ -5,7 +5,7 @@
 use opentalk_db_storage::{events::Event, rooms::Room, utils::build_event_info};
 use opentalk_types::api::error::ApiError;
 use opentalk_types_api_v1::rooms::{by_room_id::GetRoomEventResponseBody, RoomResource};
-use opentalk_types_common::rooms::RoomId;
+use opentalk_types_common::{rooms::RoomId, tariffs::TariffResource};
 
 use crate::{ControllerBackend, ToUserProfile};
 
@@ -26,6 +26,25 @@ impl ControllerBackend {
         };
 
         Ok(room_resource)
+    }
+
+    pub(super) async fn get_room_tariff(
+        &self,
+        room_id: &RoomId,
+    ) -> Result<TariffResource, ApiError> {
+        let settings = self.settings.load();
+
+        let mut conn = self.db.get_conn().await?;
+
+        let room = Room::get(&mut conn, *room_id).await?;
+        let tariff = room.get_tariff(&mut conn).await?;
+
+        let response = tariff.to_tariff_resource(
+            settings.defaults.disabled_features.clone(),
+            self.module_features.clone(),
+        );
+
+        Ok(response)
     }
 
     pub(super) async fn get_room_event(

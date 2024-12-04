@@ -63,7 +63,7 @@ use crate::{
         responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
         signaling::{
             breakout::BreakoutStorageProvider as _, moderation::ModerationStorageProvider as _,
-            ticket::start_or_continue_signaling_session, SignalingModules,
+            ticket::start_or_continue_signaling_session,
         },
         v1::{events::notify_invitees_about_delete, util::require_feature, ApiResponse},
     },
@@ -512,26 +512,10 @@ pub async fn get(
 )]
 #[get("/rooms/{room_id}/tariff")]
 pub async fn get_room_tariff(
-    shared_settings: SharedSettingsActix,
-    db: Data<Db>,
-    modules: Data<SignalingModules>,
+    service: Data<OpenTalkControllerService>,
     room_id: Path<RoomId>,
 ) -> Result<Json<TariffResource>, ApiError> {
-    let settings = shared_settings.load_full();
-
-    let room_id = room_id.into_inner();
-
-    let mut conn = db.get_conn().await?;
-
-    let room = Room::get(&mut conn, room_id).await?;
-    let tariff = room.get_tariff(&mut conn).await?;
-
-    let response = tariff.to_tariff_resource(
-        settings.defaults.disabled_features.clone(),
-        modules.get_module_features(),
-    );
-
-    Ok(Json(response))
+    Ok(Json(service.get_room_tariff(&room_id).await?))
 }
 
 /// Get a room's event

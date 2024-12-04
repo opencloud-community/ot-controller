@@ -2,14 +2,19 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::sync::Arc;
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    sync::Arc,
+};
 
 use opentalk_types::api::error::ApiError;
 use opentalk_types_api_v1::{
     auth::GetLoginResponseBody,
     rooms::{by_room_id::GetRoomEventResponseBody, RoomResource},
 };
-use opentalk_types_common::rooms::RoomId;
+use opentalk_types_common::{
+    features::FeatureId, modules::ModuleId, rooms::RoomId, tariffs::TariffResource,
+};
 use tokio::sync::RwLock;
 
 use crate::OpenTalkControllerServiceBackend;
@@ -34,6 +39,17 @@ impl OpenTalkControllerService {
         }
     }
 
+    /// Set the available modules and their features
+    pub async fn set_module_features(
+        &self,
+        module_features: BTreeMap<ModuleId, BTreeSet<FeatureId>>,
+    ) {
+        self.backend
+            .write()
+            .await
+            .set_module_features(module_features);
+    }
+
     /// Get the configured OIDC provider
     pub async fn get_login(&self) -> GetLoginResponseBody {
         self.backend.read().await.get_login().await
@@ -42,6 +58,11 @@ impl OpenTalkControllerService {
     /// Get a room
     pub async fn get_room(&self, room_id: &RoomId) -> Result<RoomResource, ApiError> {
         self.backend.read().await.get_room(room_id).await
+    }
+
+    /// Get a room's tariff
+    pub async fn get_room_tariff(&self, room_id: &RoomId) -> Result<TariffResource, ApiError> {
+        self.backend.read().await.get_room_tariff(room_id).await
     }
 
     /// Get a room's event
