@@ -13,11 +13,7 @@ use actix_web::{
     delete, get, patch, post,
     web::{self, Data, Json, Path, ReqData},
 };
-use kustos::{
-    policies_builder::{GrantingAccess, PoliciesBuilder},
-    subject::IsSubject,
-    AccessMethod, Authz, Resource,
-};
+use kustos::Authz;
 use opentalk_controller_service::ToUserProfile as _;
 use opentalk_controller_service_facade::OpenTalkControllerService;
 use opentalk_controller_utils::deletion::{Deleter, RoomDeleter};
@@ -26,7 +22,6 @@ use opentalk_db_storage::{
     events::Event,
     invites::Invite,
     rooms::{self as db_rooms, Room},
-    sip_configs::NewSipConfig,
     streaming_targets::get_room_streaming_targets,
     tenants::Tenant,
     users::User,
@@ -47,7 +42,6 @@ use opentalk_types_api_v1::{
     },
 };
 use opentalk_types_common::{
-    features,
     rooms::{invite_codes::InviteCode, RoomId},
     shared_folders::SharedFolder,
     tariffs::TariffResource,
@@ -65,7 +59,7 @@ use crate::{
             breakout::BreakoutStorageProvider as _, moderation::ModerationStorageProvider as _,
             ticket::start_or_continue_signaling_session,
         },
-        v1::{events::notify_invitees_about_delete, util::require_feature, ApiResponse},
+        v1::{events::notify_invitees_about_delete, ApiResponse},
     },
     services::{MailRecipient, MailService},
     settings::SharedSettingsActix,
@@ -103,44 +97,15 @@ mod start_room_error;
 )]
 #[get("/rooms")]
 pub async fn accessible(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
+    service: Data<OpenTalkControllerService>,
     current_user: ReqData<User>,
     pagination: web::Query<PagePaginationQuery>,
-    authz: Data<Authz>,
 ) -> Result<ApiResponse<GetRoomsResponseBody>, ApiError> {
-    let settings = settings.load();
     let current_user = current_user.into_inner();
     let PagePaginationQuery { per_page, page } = pagination.into_inner();
 
-    let accessible_rooms: kustos::AccessibleResources<RoomId> = authz
-        .get_accessible_resources_for_user(current_user.id, AccessMethod::Get)
-        .await?;
-
-    let mut conn = db.get_conn().await?;
-
-    let (rooms, room_count) = match accessible_rooms {
-        kustos::AccessibleResources::All => {
-            Room::get_all_with_creator_paginated(&mut conn, per_page, page).await?
-        }
-        kustos::AccessibleResources::List(list) => {
-            Room::get_by_ids_with_creator_paginated(&mut conn, &list, per_page, page).await?
-        }
-    };
-
-    let rooms = rooms
-        .into_iter()
-        .map(|(room, user)| RoomResource {
-            id: room.id,
-            created_by: user.to_public_user_profile(&settings),
-            created_at: room.created_at.into(),
-            password: room.password,
-            waiting_room: room.waiting_room,
-        })
-        .collect::<Vec<RoomResource>>();
-
-    Ok(ApiResponse::new(GetRoomsResponseBody(rooms))
-        .with_page_pagination(per_page, page, room_count))
+    let (rooms, room_count) = service.get_rooms(current_user.id, per_page, page).await?;
+    Ok(ApiResponse::new(rooms).with_page_pagination(per_page, page, room_count))
 }
 
 /// Create a new room
@@ -177,53 +142,22 @@ pub async fn accessible(
 )]
 #[post("/rooms")]
 pub async fn new(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
-    authz: Data<Authz>,
+    service: Data<OpenTalkControllerService>,
     current_user: ReqData<User>,
     body: Json<PostRoomsRequestBody>,
 ) -> Result<Json<RoomResource>, ApiError> {
-    let settings = settings.load();
     let current_user = current_user.into_inner();
     let room_parameters = body.into_inner();
 
-    let mut conn = db.get_conn().await?;
-
-    if room_parameters.enable_sip {
-        require_feature(&mut conn, &settings, current_user.id, &features::call_in()).await?;
-    }
-
-    let new_room = db_rooms::NewRoom {
-        created_by: current_user.id,
-        password: room_parameters.password,
-        waiting_room: room_parameters.waiting_room,
-        e2e_encryption: room_parameters.e2e_encryption,
-        tenant_id: current_user.tenant_id,
-    };
-
-    let room = new_room.insert(&mut conn).await?;
-
-    if room_parameters.enable_sip {
-        NewSipConfig::new(room.id, false).insert(&mut conn).await?;
-    }
-
-    drop(conn);
-
-    let room_resource = RoomResource {
-        id: room.id,
-        created_by: current_user.to_public_user_profile(&settings),
-        created_at: room.created_at.into(),
-        password: room.password,
-        waiting_room: room.waiting_room,
-    };
-
-    let policies = PoliciesBuilder::new()
-        .grant_user_access(current_user.id)
-        .room_read_access(room_resource.id)
-        .room_write_access(room_resource.id)
-        .finish();
-
-    authz.add_policies(policies).await?;
+    let room_resource = service
+        .create_room(
+            room_parameters.password,
+            room_parameters.enable_sip,
+            room_parameters.waiting_room,
+            room_parameters.e2e_encryption,
+            current_user,
+        )
+        .await?;
 
     Ok(Json(room_resource))
 }
@@ -856,89 +790,4 @@ pub async fn start_invited(
         ticket,
         resumption,
     }))
-}
-
-pub trait RoomsPoliciesBuilderExt {
-    fn room_guest_read_access(self, room_id: RoomId) -> Self;
-    fn room_read_access(self, room_id: RoomId) -> Self;
-    fn room_write_access(self, room_id: RoomId) -> Self;
-}
-
-impl<T> RoomsPoliciesBuilderExt for PoliciesBuilder<GrantingAccess<T>>
-where
-    T: IsSubject + Clone,
-{
-    fn room_guest_read_access(self, room_id: RoomId) -> Self {
-        self.add_resource(
-            room_id.resource_id().with_suffix("/tariff"),
-            [AccessMethod::Get],
-        )
-        .add_resource(
-            room_id.resource_id().with_suffix("/event"),
-            [AccessMethod::Get],
-        )
-    }
-
-    fn room_read_access(self, room_id: RoomId) -> Self {
-        self.add_resource(room_id.resource_id(), [AccessMethod::Get])
-            .add_resource(
-                room_id.resource_id().with_suffix("/invites"),
-                [AccessMethod::Get],
-            )
-            .add_resource(
-                room_id.resource_id().with_suffix("/streaming_targets"),
-                [AccessMethod::Get],
-            )
-            .add_resource(
-                room_id.resource_id().with_suffix("/start"),
-                [AccessMethod::Post],
-            )
-            .add_resource(
-                room_id.resource_id().with_suffix("/tariff"),
-                [AccessMethod::Get],
-            )
-            .add_resource(
-                room_id.resource_id().with_suffix("/event"),
-                [AccessMethod::Get],
-            )
-            .add_resource(
-                room_id.resource_id().with_suffix("/assets"),
-                [AccessMethod::Get],
-            )
-            .add_resource(
-                room_id.resource_id().with_suffix("/assets/*"),
-                [AccessMethod::Get],
-            )
-    }
-
-    fn room_write_access(self, room_id: RoomId) -> Self {
-        self.add_resource(
-            room_id.resource_id(),
-            [AccessMethod::Patch, AccessMethod::Delete],
-        )
-        .add_resource(
-            room_id.resource_id().with_suffix("/invites"),
-            [AccessMethod::Post],
-        )
-        .add_resource(
-            room_id.resource_id().with_suffix("/streaming_targets"),
-            [AccessMethod::Post],
-        )
-        .add_resource(
-            room_id.resource_id().with_suffix("/invites/*"),
-            [AccessMethod::Get, AccessMethod::Put, AccessMethod::Delete],
-        )
-        .add_resource(
-            room_id.resource_id().with_suffix("/streaming_targets/*"),
-            [AccessMethod::Get, AccessMethod::Patch, AccessMethod::Delete],
-        )
-        .add_resource(
-            room_id.resource_id().with_suffix("/assets"),
-            [AccessMethod::Delete],
-        )
-        .add_resource(
-            room_id.resource_id().with_suffix("/assets/*"),
-            [AccessMethod::Delete],
-        )
-    }
 }

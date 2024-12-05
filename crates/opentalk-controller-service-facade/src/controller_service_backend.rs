@@ -2,26 +2,42 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::collections::{BTreeMap, BTreeSet};
-
 use async_trait::async_trait;
+use opentalk_db_storage::users::User;
 use opentalk_types::api::error::ApiError;
 use opentalk_types_api_v1::{
     auth::GetLoginResponseBody,
-    rooms::{by_room_id::GetRoomEventResponseBody, RoomResource},
+    rooms::{by_room_id::GetRoomEventResponseBody, GetRoomsResponseBody, RoomResource},
 };
 use opentalk_types_common::{
-    features::FeatureId, modules::ModuleId, rooms::RoomId, tariffs::TariffResource,
+    rooms::{RoomId, RoomPassword},
+    tariffs::TariffResource,
+    users::UserId,
 };
 
 /// Trait implemented by OpenTalk controller service backends
-#[async_trait]
+#[async_trait(?Send)]
 pub trait OpenTalkControllerServiceBackend: Send + Sync {
-    /// Set the available modules and their features
-    fn set_module_features(&mut self, module_features: BTreeMap<ModuleId, BTreeSet<FeatureId>>);
-
     /// Get the configured OIDC provider
     async fn get_login(&self) -> GetLoginResponseBody;
+
+    /// Get all accessible rooms
+    async fn get_rooms(
+        &self,
+        current_user_id: UserId,
+        per_page: i64,
+        page: i64,
+    ) -> Result<(GetRoomsResponseBody, i64), ApiError>;
+
+    /// Create a new room
+    async fn create_room(
+        &self,
+        password: Option<RoomPassword>,
+        enable_sip: bool,
+        waiting_room: bool,
+        e2e_encryption: bool,
+        current_user: User,
+    ) -> Result<RoomResource, ApiError>;
 
     /// Get a room
     async fn get_room(&self, room_id: &RoomId) -> Result<RoomResource, ApiError>;

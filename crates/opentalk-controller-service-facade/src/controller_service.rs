@@ -2,18 +2,18 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    sync::Arc,
-};
+use std::sync::Arc;
 
+use opentalk_db_storage::users::User;
 use opentalk_types::api::error::ApiError;
 use opentalk_types_api_v1::{
     auth::GetLoginResponseBody,
-    rooms::{by_room_id::GetRoomEventResponseBody, RoomResource},
+    rooms::{by_room_id::GetRoomEventResponseBody, GetRoomsResponseBody, RoomResource},
 };
 use opentalk_types_common::{
-    features::FeatureId, modules::ModuleId, rooms::RoomId, tariffs::TariffResource,
+    rooms::{RoomId, RoomPassword},
+    tariffs::TariffResource,
+    users::UserId,
 };
 use tokio::sync::RwLock;
 
@@ -39,20 +39,45 @@ impl OpenTalkControllerService {
         }
     }
 
-    /// Set the available modules and their features
-    pub async fn set_module_features(
-        &self,
-        module_features: BTreeMap<ModuleId, BTreeSet<FeatureId>>,
-    ) {
-        self.backend
-            .write()
-            .await
-            .set_module_features(module_features);
-    }
-
     /// Get the configured OIDC provider
     pub async fn get_login(&self) -> GetLoginResponseBody {
         self.backend.read().await.get_login().await
+    }
+
+    /// Get all accessible rooms
+    pub async fn get_rooms(
+        &self,
+        current_user_id: UserId,
+        per_page: i64,
+        page: i64,
+    ) -> Result<(GetRoomsResponseBody, i64), ApiError> {
+        self.backend
+            .read()
+            .await
+            .get_rooms(current_user_id, per_page, page)
+            .await
+    }
+
+    /// Create a new room
+    pub async fn create_room(
+        &self,
+        password: Option<RoomPassword>,
+        enable_sip: bool,
+        waiting_room: bool,
+        e2e_encryption: bool,
+        current_user: User,
+    ) -> Result<RoomResource, ApiError> {
+        self.backend
+            .read()
+            .await
+            .create_room(
+                password,
+                enable_sip,
+                waiting_room,
+                e2e_encryption,
+                current_user,
+            )
+            .await
     }
 
     /// Get a room

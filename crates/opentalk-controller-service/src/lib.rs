@@ -22,12 +22,15 @@
     unused_results
 )]
 
-mod controller_backend;
+pub mod controller_backend;
 
 pub use controller_backend::ControllerBackend;
 use opentalk_controller_settings::Settings;
-use opentalk_db_storage::users::User;
+use opentalk_database::DbConnection;
+use opentalk_db_storage::{tariffs::Tariff, users::User};
+use opentalk_types::api::error::ApiError;
 use opentalk_types_api_v1::users::{PrivateUserProfile, PublicUserProfile};
+use opentalk_types_common::{features::ModuleFeatureId, users::UserId};
 
 /// A trait providing conversion of database users to public and private user profiles
 pub trait ToUserProfile {
@@ -81,4 +84,32 @@ impl ToUserProfile for User {
 /// Helper function to turn an email address into libravatar URL.
 pub fn email_to_libravatar_url(libravatar_url: &str, email: &str) -> String {
     format!("{}{:x}", libravatar_url, md5::compute(email))
+}
+
+/// Checks if the given feature sting is disabled by the tariff of the given user or in the settings of the controller.
+///
+/// Return an [`ApiError`] if the given feature is disabled, differentiating between a config disable or tariff restriction.
+pub async fn require_feature(
+    db_conn: &mut DbConnection,
+    settings: &Settings,
+    user_id: UserId,
+    feature: &ModuleFeatureId,
+) -> opentalk_database::Result<(), ApiError> {
+    if settings.defaults.disabled_features.contains(feature) {
+        return Err(ApiError::forbidden()
+            .with_code("feature_disabled")
+            .with_message(format!("The feature \"{feature}\" is disabled")));
+    }
+
+    let tariff = Tariff::get_by_user_id(db_conn, &user_id).await?;
+
+    if tariff.is_feature_disabled(feature) {
+        return Err(ApiError::forbidden()
+            .with_code("feature_disabled_by_tariff")
+            .with_message(format!(
+                "The user's tariff does not include the {feature} feature"
+            )));
+    }
+
+    Ok(())
 }

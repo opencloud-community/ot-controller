@@ -7,10 +7,9 @@ use std::collections::HashMap;
 use opentalk_controller_service::ToUserProfile as _;
 use opentalk_controller_settings::Settings;
 use opentalk_database::{DbConnection, Result};
-use opentalk_db_storage::{tariffs::Tariff, users::User, utils::HasUsers};
-use opentalk_types::api::error::ApiError;
+use opentalk_db_storage::{users::User, utils::HasUsers};
 use opentalk_types_api_v1::users::PublicUserProfile;
-use opentalk_types_common::{features::ModuleFeatureId, users::UserId};
+use opentalk_types_common::users::UserId;
 
 /// Utility to fetch user profiles batched
 ///
@@ -67,32 +66,4 @@ impl UserProfilesBatch {
             .expect("tried to get user-profile without fetching it first")
             .clone()
     }
-}
-
-/// Checks if the given feature sting is disabled by the tariff of the given user or in the settings of the controller.
-///
-/// Return an [`ApiError`] if the given feature is disabled, differentiating between a config disable or tariff restriction.
-pub(crate) async fn require_feature(
-    db_conn: &mut DbConnection,
-    settings: &Settings,
-    user_id: UserId,
-    feature: &ModuleFeatureId,
-) -> Result<(), ApiError> {
-    if settings.defaults.disabled_features.contains(feature) {
-        return Err(ApiError::forbidden()
-            .with_code("feature_disabled")
-            .with_message(format!("The feature \"{feature}\" is disabled")));
-    }
-
-    let tariff = Tariff::get_by_user_id(db_conn, &user_id).await?;
-
-    if tariff.is_feature_disabled(feature) {
-        return Err(ApiError::forbidden()
-            .with_code("feature_disabled_by_tariff")
-            .with_message(format!(
-                "The user's tariff does not include the {feature} feature"
-            )));
-    }
-
-    Ok(())
 }

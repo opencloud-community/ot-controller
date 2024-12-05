@@ -26,5 +26,7 @@
 mod controller_service;
 mod controller_service_backend;
 
+pub mod rooms;
+
 pub use controller_service::OpenTalkControllerService;
 pub use controller_service_backend::OpenTalkControllerServiceBackend;

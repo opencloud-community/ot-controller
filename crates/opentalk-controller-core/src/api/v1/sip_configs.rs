@@ -7,6 +7,7 @@ use actix_web::{
     web::{Data, Json, Path},
     HttpResponse,
 };
+use opentalk_controller_service::require_feature;
 use opentalk_database::Db;
 use opentalk_db_storage::{
     rooms::Room,
@@ -16,7 +17,6 @@ use opentalk_types::api::error::ApiError;
 use opentalk_types_api_v1::rooms::by_room_id::sip::{PutSipConfigRequestBody, SipConfigResource};
 use opentalk_types_common::{features, rooms::RoomId};
 
-use super::util::require_feature;
 use crate::{
     api::responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
     settings::SharedSettingsActix,
