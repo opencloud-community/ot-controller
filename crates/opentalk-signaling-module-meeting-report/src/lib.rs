@@ -2,14 +2,16 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::{str::FromStr, sync::Arc};
+use std::{path::Path, str::FromStr, sync::Arc};
 
-use chrono::{DateTime, Utc};
+use bytes::Bytes;
+use chrono::{DateTime, Local, Utc};
+use chrono_tz::Tz;
 use either::Either;
-use futures::{stream, Stream, StreamExt as _, TryStreamExt};
-use opentalk_controller_settings::ReportsTemplate;
+use futures::{stream, StreamExt as _, TryStreamExt};
 use opentalk_database::Db;
 use opentalk_db_storage::{events::Event as DbEvent, users::User};
+use opentalk_report_generation::ToReportDateTime;
 use opentalk_signaling_core::{
     assets::{save_asset, AssetError, NewAssetFileName},
     control::{
@@ -26,7 +28,7 @@ use opentalk_signaling_core::{
 use opentalk_types_common::{
     assets::{AssetFileKind, FileExtension},
     modules::ModuleId,
-    time::Timestamp,
+    time::{TimeZone, Timestamp},
     users::UserId,
 };
 use opentalk_types_signaling::{ParticipantId, ParticipationKind, Role};
@@ -35,16 +37,15 @@ use opentalk_types_signaling_meeting_report::{
     event::{Error, MeetingReportEvent, PdfAsset},
     MODULE_ID,
 };
-use snafu::Report;
+use snafu::{Report, ResultExt};
 use storage::MeetingReportStorage;
 use template::{ReportParticipant, ReportTemplateParameter};
-use terdoc_client::{InputFormat, TaskData, Template, TerdocClient, TerdocStreamingClientTrait};
 
 pub mod exchange;
 mod storage;
 mod template;
 
-const DEFAULT_TEMPLATE: &str = include_str!("report.md.tera");
+const DEFAULT_TEMPLATE: &str = include_str!("attendance_report.typ");
 
 trait MeetingReportStorageProvider {
     fn storage(&mut self) -> &mut dyn MeetingReportStorage;
@@ -63,16 +64,13 @@ pub struct MeetingReport {
     room_id: SignalingRoomId,
     db: Arc<Db>,
     storage: Arc<ObjectStorage>,
-
-    terdoc_client: TerdocClient,
-    template: String,
 }
 
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for MeetingReport {
     const NAMESPACE: ModuleId = MODULE_ID;
 
-    type Params = (TerdocClient, String);
+    type Params = ();
 
     type Incoming = MeetingReportCommand;
 
@@ -88,13 +86,10 @@ impl SignalingModule for MeetingReport {
 
     async fn init(
         ctx: InitContext<'_, Self>,
-        (terdoc_client, template): &Self::Params,
+        _params: &Self::Params,
         _protocol: &'static str,
     ) -> Result<Option<Self>, SignalingModuleError> {
         Ok(Some(Self {
-            terdoc_client: terdoc_client.clone(),
-            template: template.clone(),
-
             room_id: ctx.room_id(),
             db: ctx.db.clone(),
             storage: ctx.storage.clone(),
@@ -128,25 +123,9 @@ impl SignalingModule for MeetingReport {
     async fn on_destroy(self, _ctx: DestroyContext<'_>) {}
 
     async fn build_params(
-        init: SignalingModuleInitData,
+        _init: SignalingModuleInitData,
     ) -> Result<Option<Self::Params>, SignalingModuleError> {
-        let Some(report_settings) = init.startup_settings.reports.as_ref() else {
-            return Ok(None);
-        };
-
-        let client =
-            terdoc_client::TerdocClient::new(report_settings.url.as_str()).map_err(|e| {
-                SignalingModuleError::CustomError {
-                    message: "Failed to initialize terdoc client".to_string(),
-                    source: Some(Box::new(e).into()),
-                }
-            })?;
-        let template = match &report_settings.template {
-            ReportsTemplate::Inline(template) => template.clone(),
-            ReportsTemplate::BuiltIn => DEFAULT_TEMPLATE.to_owned(),
-        };
-
-        Ok(Some((client, template)))
+        Ok(Some(()))
     }
 }
 
@@ -179,25 +158,15 @@ impl MeetingReport {
         let (participants, event) = self
             .collect_report_information(&mut ctx, include_email_addresses)
             .await?;
+        let timezone = event.starts_at_tz.unwrap_or(TimeZone::from(Tz::UTC));
 
-        // we need to clone the terdoc client here
-        let mut td_client = self.terdoc_client.clone();
         let report =
-            Self::generate_report_pdf(&mut td_client, self.template.clone(), event, participants)
-                .await;
-
-        let report = match report {
-            Ok(r) => r,
-            e @ Err(_) => {
-                ctx.ws_send(Error::Generate);
-                e?
-            }
-        };
-        let report = report.map_err(|e| ObjectStorageError::Other {
-            message: "Terdoc error".to_string(),
-            source: Some(e.into()),
-        });
-
+            Self::generate_pdf_report(DEFAULT_TEMPLATE.to_string(), event, participants, timezone)
+                .await
+                .with_whatever_context::<_, _, SignalingModuleError>(|_| {
+                    ctx.ws_send(Error::Generate);
+                    "Failed to create pdf"
+                })?;
         self.upload_pdf(report, ctx).await;
 
         Ok(())
@@ -213,12 +182,20 @@ impl MeetingReport {
         let mut conn = self.db.get_conn().await?;
         let storage = ctx.volatile.storage();
 
+        let event = DbEvent::get_for_room(&mut conn, self.room_id.room_id())
+            .await?
+            .ok_or(SignalingModuleError::NotFoundError {
+                message: "Room not found".to_string(),
+            })?;
+
+        let tz = event.starts_at_tz.map(Tz::from).unwrap_or(Tz::UTC);
+
         // Query all participant IDs and create and concurrently fetch all participant information.
         let participants = storage.get_all_participants(self.room_id).await?;
         let participants = participants.iter().map(|p| async {
             let mut volatile = ctx.volatile.clone();
             let storage = volatile.storage();
-            self.query_participant_report(storage, *p, include_email_addresses)
+            self.query_participant_report(storage, *p, include_email_addresses, &tz)
                 .await
         });
 
@@ -231,64 +208,63 @@ impl MeetingReport {
                 source: Some(Box::new(e).into()),
             })?;
 
-        let event = DbEvent::get_for_room(&mut conn, self.room_id.room_id())
-            .await?
-            .ok_or(SignalingModuleError::NotFoundError {
-                message: "Room not found".to_string(),
-            })?;
-
         Ok((participants, event))
     }
 
-    async fn generate_report_pdf(
-        terdoc_client: &mut TerdocClient,
+    async fn generate_pdf_report(
         template: String,
         event: DbEvent,
         participants: Vec<ReportParticipant>,
-    ) -> Result<
-        impl Stream<Item = Result<bytes::Bytes, <TerdocClient as TerdocStreamingClientTrait>::Error>>
-            + '_,
-        SignalingModuleError,
-    > {
-        let task_data = TaskData {
-            output: terdoc_client::OutputFormat::Pdf {
-                engine: terdoc_client::PdfEngine::LibreOffice,
-                theme: None,
-            },
-            data: serde_json::to_value(ReportTemplateParameter {
+        report_timezone: TimeZone,
+    ) -> Result<Vec<u8>, SignalingModuleError> {
+        let tz = Tz::from(report_timezone);
+        let starts_at = event.starts_at.to_report_date_time(&tz);
+        let ends_at = event.ends_at.to_report_date_time(&tz);
+        let timestamp = Local::now().naive_local().format("%Y-%m-%dT%H:%M:%S.%f");
+        Self::generate_pdf_report_from_template(
+            template,
+            &ReportTemplateParameter {
                 title: event.title,
                 description: event.description,
-                starts_at: event.starts_at,
-                starts_at_tz: event.starts_at_tz,
-                ends_at: event.ends_at,
-                ends_at_tz: event.ends_at_tz,
+                starts_at,
+                ends_at,
+                report_timezone,
                 participants,
-            })
-            .expect("TaskData is serializable"),
-            template: Template {
-                content: template,
-                format: InputFormat::Markdown,
-                autoescape: false,
             },
-        };
-
-        terdoc_client.request_render(task_data).await.map_err(|e| {
-            SignalingModuleError::CustomError {
-                message: "Render request failed".to_string(),
-                source: Some(Box::new(e).into()),
-            }
-        })
+            Path::new(&format!("{MODULE_ID}/{timestamp}")),
+        )
     }
 
-    async fn upload_pdf(
-        &mut self,
-        report: impl Stream<Item = Result<bytes::Bytes, ObjectStorageError>> + Unpin + '_,
-        mut ctx: ModuleContext<'_, Self>,
-    ) {
+    fn generate_pdf_report_from_template(
+        template: String,
+        parameter: &ReportTemplateParameter,
+        dump_to_relative_path: &Path,
+    ) -> Result<Vec<u8>, SignalingModuleError> {
+        let dump_to_path = std::env::var("OPENTALK_REPORT_DUMP_PATH")
+            .map(|p| Path::new(&p).join(dump_to_relative_path))
+            .ok();
+
+        let pdf = opentalk_report_generation::generate_pdf_report(
+            template,
+            [(
+                Path::new("data.json"),
+                serde_json::to_string_pretty(parameter).unwrap().as_bytes(),
+            )]
+            .into(),
+            dump_to_path.as_deref(),
+        )
+        .whatever_context::<_, SignalingModuleError>("unable to build pdf")?;
+        Ok(pdf)
+    }
+
+    async fn upload_pdf(&mut self, report: Vec<u8>, mut ctx: ModuleContext<'_, Self>) {
         let asset_file_kind = AssetFileKind::from_str("meeting_report")
             .expect("The asset file kind is at least 1, but no longer than 20 chars and only contains alphanumeric chars and `_`");
         let file_name =
             NewAssetFileName::new(asset_file_kind, Timestamp::now(), FileExtension::pdf());
+        let report =
+            async_stream::stream!(yield Result::<_, ObjectStorageError>::Ok(Bytes::from(report)));
+        let report = Box::pin(report);
         let result = save_asset(
             &self.storage,
             self.db.clone(),
@@ -335,6 +311,7 @@ impl MeetingReport {
         storage: &mut dyn MeetingReportStorage,
         participant: ParticipantId,
         include_email_addresses: bool,
+        tz: &Tz,
     ) -> Result<ReportParticipant, SignalingModuleError> {
         type UserData = (
             Option<DateTime<Utc>>,
@@ -367,6 +344,11 @@ impl MeetingReport {
             _ => None,
         };
 
+        // The report generator does not support sub-seconds resolution, so we
+        // round the timestamps to seconds
+        let joined_at = joined_at.to_report_date_time(tz);
+        let left_at = left_at.to_report_date_time(tz);
+
         Ok(ReportParticipant {
             id: participant,
             name,
@@ -376,5 +358,100 @@ impl MeetingReport {
             email,
             kind,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::Path;
+
+    use insta::assert_snapshot;
+
+    use crate::{template::ReportTemplateParameter, MeetingReport, DEFAULT_TEMPLATE, MODULE_ID};
+
+    fn generate(sample_name: &str, parameter: &ReportTemplateParameter) -> String {
+        let pdf = MeetingReport::generate_pdf_report_from_template(
+            DEFAULT_TEMPLATE.to_string(),
+            parameter,
+            Path::new(&format!("{MODULE_ID}/{sample_name}")),
+        )
+        .expect("generation should work");
+        pdf_extract::extract_text_from_mem(&pdf)
+            .expect("text should be extractable from generated pdf")
+    }
+
+    #[test]
+    fn generate_report_small() {
+        assert_snapshot!(generate("small", &crate::template::tests::example_small()), @r#"
+        Attendance Report
+         Meeting : Testmeeting
+
+        Report timezone : Europe/Berlin
+
+        Participants
+         Nr Name Role
+
+        1 Alice Adams Moderator
+        "#);
+    }
+
+    #[test]
+    fn generate_report_medium() {
+        assert_snapshot!(
+            generate(
+                "medium",
+                &crate::template::tests::example_medium()
+            ),
+            @r#"
+        Attendance Report
+         Meeting : Testmeeting
+
+        Details : A medium sized test meeting
+
+        Start : 2025-02-06 08:18
+
+        End : 2025-02-06 11:25
+
+        Report timezone : Europe/Berlin
+
+        Participants
+         Nr Name Role
+
+        1 Alice Adams Moderator
+
+        2 Bob Burton User
+        "#
+        );
+    }
+
+    #[test]
+    fn generate_report_large() {
+        assert_snapshot!(generate("large", &crate::template::tests::example_large()), @r#"
+        Attendance Report
+         Meeting : Large Testmeeting
+
+        Details : The large test meeting
+
+        Start : 2025-02-06 08:18
+
+        End : 2025-02-06 11:25
+
+        Report timezone : Europe/Berlin
+
+        Participants
+         Nr Name Role
+
+        1 Alice Adams Moderator
+
+        2 Franz Fischer User
+
+        3 Charlie Cooper User
+
+        4 Bob Burton User
+
+        5 Erin Guest
+
+        6 Dave Dunn Guest
+        "#);
     }
 }

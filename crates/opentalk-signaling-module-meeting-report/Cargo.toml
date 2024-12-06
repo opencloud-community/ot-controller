@@ -13,15 +13,17 @@ version.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+async-stream.workspace = true
 async-trait.workspace = true
 bytes.workspace = true
 chrono.workspace = true
+chrono-tz.workspace = true
 either.workspace = true
 futures.workspace = true
 log.workspace = true
-opentalk-controller-settings.workspace = true
 opentalk-database.workspace = true
 opentalk-db-storage.workspace = true
+opentalk-report-generation.workspace = true
 opentalk-signaling-core.workspace = true
 opentalk-types-common = { workspace = true, features = ["backend"] }
 opentalk-types-signaling = { workspace = true, features = ["backend"] }
@@ -31,6 +33,8 @@ opentalk-types-signaling-meeting-report = { workspace = true, features = [
 serde.workspace = true
 serde_json.workspace = true
 snafu.workspace = true
-terdoc-client = { workspace = true, default-features = false, features = [
-  "rustls-tls-native-roots",
-] }
+
+[dev-dependencies]
+insta.workspace = true
+pdf-extract.workspace = true
+pretty_assertions.workspace = true

@@ -37,6 +37,14 @@ ignore = [
   # - openidconnect switches to a different dependency
   # - rsa releases a fixed version
   "RUSTSEC-2023-0071",
+
+  # yaml-rust unmaintained
+  # Solution: No safe upgrade is available!
+  # 
+  # We need to wait until the dependency updates to an alternative crate.
+  # 
+  # Dependency chain: typst 0.12.0 -> syntect 5.2.0 -> yaml-rust 0.4.5
+  "RUSTSEC-2024-0320",
 ]
 # Threshold for security vulnerabilities, any vulnerability with a CVSS score
 # lower than the range specified will be ignored. Note that ignored advisories
@@ -57,6 +65,7 @@ version = 2
 # See https://spdx.org/licenses/ for list of possible licenses
 # [possible values: any SPDX 3.11 short identifier (+ optional exception)].
 allow = [
+  "Apache-2.0 WITH LLVM-exception",
   "Apache-2.0",
   "BSD-2-Clause",
   "BSD-3-Clause",
@@ -125,6 +134,9 @@ exceptions = [
   { allow = [
     "EUPL-1.2",
   ], name = "opentalk-nextcloud-client" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "opentalk-report-generation" },
   { allow = [
     "EUPL-1.2",
   ], name = "opentalk-types-api-v1" },
@@ -282,6 +294,8 @@ skip = [
   { name = "prost-build", version = "0.12" },
   { name = "prost-derive", version = "0.12" },
   { name = "prost-types", version = "0.12" },
+  { name = "quick-xml", version = "0.32" },
+  { name = "quick-xml", version = "0.36" },
   { name = "rand", version = "0.8" },
   { name = "rand_chacha", version = "0.3" },
   { name = "rand_core", version = "0.6" },
