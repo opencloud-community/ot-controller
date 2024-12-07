@@ -4,7 +4,7 @@
 
 use opentelemetry::{
     metrics::{Counter, Histogram, UpDownCounter},
-    Key,
+    Key, KeyValue,
 };
 
 use crate::Participant;
@@ -27,12 +27,12 @@ pub struct SignalingMetrics {
 impl SignalingMetrics {
     pub fn record_startup_time(&self, secs: f64, success: bool) {
         self.runner_startup_time
-            .record(secs, &[STARTUP_SUCCESSFUL.bool(success)]);
+            .record(secs, &[KeyValue::new(STARTUP_SUCCESSFUL, success)]);
     }
 
     pub fn record_destroy_time(&self, secs: f64, success: bool) {
         self.runner_destroy_time
-            .record(secs, &[DESTROY_SUCCESSFUL.bool(success)]);
+            .record(secs, &[KeyValue::new(DESTROY_SUCCESSFUL, success)]);
     }
 
     pub fn increment_created_rooms_count(&self) {
@@ -44,32 +44,44 @@ impl SignalingMetrics {
     }
 
     pub fn increment_participants_count<U>(&self, participant: &Participant<U>) {
-        self.participants_count
-            .add(1, &[PARTICIPATION_KIND.string(participant.as_kind_str())]);
+        self.participants_count.add(
+            1,
+            &[KeyValue::new(PARTICIPATION_KIND, participant.as_kind_str())],
+        );
     }
 
     pub fn decrement_participants_count<U>(&self, participant: &Participant<U>) {
-        self.participants_count
-            .add(-1, &[PARTICIPATION_KIND.string(participant.as_kind_str())]);
+        self.participants_count.add(
+            -1,
+            &[KeyValue::new(PARTICIPATION_KIND, participant.as_kind_str())],
+        );
     }
 
     pub fn increment_participants_with_audio_count(&self, session_type: &str) {
-        self.participants_with_audio_count
-            .add(1, &[MEDIA_SESSION_TYPE.string(session_type.to_owned())]);
+        self.participants_with_audio_count.add(
+            1,
+            &[KeyValue::new(MEDIA_SESSION_TYPE, session_type.to_owned())],
+        );
     }
 
     pub fn decrement_participants_with_audio_count(&self, session_type: &str) {
-        self.participants_with_audio_count
-            .add(-1, &[MEDIA_SESSION_TYPE.string(session_type.to_owned())]);
+        self.participants_with_audio_count.add(
+            -1,
+            &[KeyValue::new(MEDIA_SESSION_TYPE, session_type.to_owned())],
+        );
     }
 
     pub fn increment_participants_with_video_count(&self, session_type: &str) {
-        self.participants_with_video_count
-            .add(1, &[MEDIA_SESSION_TYPE.string(session_type.to_owned())]);
+        self.participants_with_video_count.add(
+            1,
+            &[KeyValue::new(MEDIA_SESSION_TYPE, session_type.to_owned())],
+        );
     }
 
     pub fn decrement_participants_with_video_count(&self, session_type: &str) {
-        self.participants_with_video_count
-            .add(-1, &[MEDIA_SESSION_TYPE.string(session_type.to_owned())]);
+        self.participants_with_video_count.add(
+            -1,
+            &[KeyValue::new(MEDIA_SESSION_TYPE, session_type.to_owned())],
+        );
     }
 }

@@ -12,10 +12,12 @@ use opentalk_mail_worker_protocol::MailTask;
 use opentalk_signaling_core::{RedisMetrics, SignalingMetrics};
 use opentelemetry::{
     global,
-    metrics::{Counter, Histogram, MetricsError},
-    Key,
+    metrics::{Counter, Histogram},
+    otel_error, Key, KeyValue,
 };
-use opentelemetry_sdk::metrics::{new_view, Aggregation, Instrument, SdkMeterProvider, Stream};
+use opentelemetry_sdk::metrics::{
+    new_view, Aggregation, Instrument, MetricError, SdkMeterProvider, Stream,
+};
 use prometheus::{Encoder, Registry, TextEncoder};
 use snafu::{Backtrace, Snafu};
 
@@ -26,7 +28,7 @@ const MAIL_TASK_KIND: Key = Key::from_static_str("mail_task_kind");
 #[derive(Debug, Snafu)]
 #[snafu(context(false))]
 pub struct MetricViewError {
-    source: MetricsError,
+    source: MetricError,
     backtrace: Backtrace,
 }
 
@@ -39,7 +41,7 @@ pub struct EndpointMetrics {
 impl EndpointMetrics {
     pub fn increment_issued_email_tasks_count(&self, mail_task: &MailTask) {
         self.issued_email_tasks_count
-            .add(1, &[MAIL_TASK_KIND.string(mail_task.as_kind_str())]);
+            .add(1, &[KeyValue::new(MAIL_TASK_KIND, mail_task.as_kind_str())]);
     }
 }
 
@@ -135,18 +137,18 @@ impl CombinedMetrics {
                 .f64_histogram("web.request_duration_seconds")
                 .with_description("HTTP response time measured in actix-web middleware")
                 .with_unit("seconds")
-                .init(),
+                .build(),
             response_sizes: meter
                 .u64_histogram("web.response_sizes_bytes")
                 .with_description(
                     "HTTP response size for sized responses measured in actix-web middleware",
                 )
                 .with_unit("bytes")
-                .init(),
+                .build(),
             issued_email_tasks_count: meter
                 .u64_counter("web.issued_email_tasks_count")
                 .with_description("Number of issued email tasks")
-                .init(),
+                .build(),
         });
 
         let signaling = Arc::new(SignalingMetrics {
@@ -154,32 +156,32 @@ impl CombinedMetrics {
                 .f64_histogram("signaling.runner_startup_time_seconds")
                 .with_description("Time the runner takes to initialize")
                 .with_unit("seconds")
-                .init(),
+                .build(),
             runner_destroy_time: meter
                 .f64_histogram("signaling.runner_destroy_time_seconds")
                 .with_description("Time the runner takes to stop")
                 .with_unit("seconds")
-                .init(),
+                .build(),
             created_rooms_count: meter
                 .u64_counter("signaling.created_rooms_count")
                 .with_description("Number of created rooms")
-                .init(),
+                .build(),
             destroyed_rooms_count: meter
                 .u64_counter("signaling.destroyed_rooms_count")
                 .with_description("Number of destroyed rooms")
-                .init(),
+                .build(),
             participants_count: meter
                 .i64_up_down_counter("signaling.participants_count")
                 .with_description("Number of participants")
-                .init(),
+                .build(),
             participants_with_audio_count: meter
                 .i64_up_down_counter("signaling.participants_with_audio_count")
                 .with_description("Number of participants with audio unmuted")
-                .init(),
+                .build(),
             participants_with_video_count: meter
                 .i64_up_down_counter("signaling.participants_with_video_count")
                 .with_description("Number of participants with video unmuted")
-                .init(),
+                .build(),
         });
 
         let database = Arc::new(DatabaseMetrics {
@@ -187,19 +189,19 @@ impl CombinedMetrics {
                 .f64_histogram("sql.execution_time_seconds")
                 .with_description("SQL execution time for a single diesel query")
                 .with_unit("seconds")
-                .init(),
+                .build(),
             sql_error: meter
                 .u64_counter("sql.errors_total")
                 .with_description("Counter for total SQL query errors")
-                .init(),
+                .build(),
             dbpool_connections: meter
                 .u64_histogram("sql.dbpool_connections")
                 .with_description("Number of currently non-idling db connections")
-                .init(),
+                .build(),
             dbpool_connections_idle: meter
                 .u64_histogram("sql.dbpool_connections_idle")
                 .with_description("Number of currently idling db connections")
-                .init(),
+                .build(),
         });
 
         let kustos = Arc::new(KustosMetrics {
@@ -207,12 +209,12 @@ impl CombinedMetrics {
                 .f64_histogram("kustos.enforce_execution_time_seconds")
                 .with_description("Execution time of kustos enforce")
                 .with_unit("seconds")
-                .init(),
+                .build(),
             load_policy_execution_time: meter
                 .f64_histogram("kustos.load_policy_execution_time_seconds")
                 .with_description("Execution time of kustos load_policy")
                 .with_unit("seconds")
-                .init(),
+                .build(),
         });
 
         let redis = Arc::new(RedisMetrics {
@@ -220,7 +222,7 @@ impl CombinedMetrics {
                 .f64_histogram("redis.command_execution_time_seconds")
                 .with_description("Execution time of redis commands in seconds")
                 .with_unit("seconds")
-                .init(),
+                .build(),
         });
 
         Ok(Self {
@@ -256,7 +258,7 @@ pub async fn metrics(
     let metric_families = metrics.registry.gather();
     let mut buf = Vec::new();
     if let Err(err) = encoder.encode(&metric_families[..], &mut buf) {
-        global::handle_error(MetricsError::Other(err.to_string()));
+        otel_error!(name: "export_failure", error = err.to_string());
         return HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR);
     }
 

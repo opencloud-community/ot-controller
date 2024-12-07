@@ -9,8 +9,8 @@ use actix_web::{
 };
 use opentalk_controller_settings::Logging;
 use opentelemetry::{global, KeyValue};
-use opentelemetry_otlp::WithExportConfig;
-use opentelemetry_sdk::{trace, Resource};
+use opentelemetry_otlp::{SpanExporter, WithExportConfig};
+use opentelemetry_sdk::{runtime::TokioCurrentThread, trace::TracerProvider, Resource};
 use snafu::ResultExt;
 use tracing::Span;
 use tracing_actix_web::{RequestId, RootSpanBuilder};
@@ -32,7 +32,7 @@ const DEFAULT_LOGGING_DIRECTIVES: &str = "error,\
 
 pub fn init(settings: &Logging) -> Result<()> {
     // Layer which acts as filter of traces and spans.
-    // The filter is created from enviroment (RUST_LOG) and config file
+    // The filter is created from environment (RUST_LOG) and config file
     let filter = create_filter(settings)?;
 
     // FMT layer prints the trace events into stdout
@@ -40,37 +40,40 @@ pub fn init(settings: &Logging) -> Result<()> {
 
     // If opentelemetry is enabled install that layer
     if let Some(endpoint) = &settings.otlp_tracing_endpoint {
-        let otlp_exporter = opentelemetry_otlp::new_exporter()
-            .tonic()
-            .with_endpoint(endpoint);
+        let otlp_exporter = SpanExporter::builder()
+            .with_tonic()
+            .with_endpoint(endpoint)
+            .build()
+            .whatever_context("Failed to build OpenTelemetry (exporter)")?;
         let service_name = settings
             .service_name
             .clone()
             .unwrap_or_else(|| "controller".into());
+
         let service_namespace = settings
             .service_namespace
             .clone()
             .unwrap_or_else(|| "opentalk".into());
+
         let service_instance_id = settings
             .service_instance_id
             .clone()
             .unwrap_or_else(|| Uuid::new_v4().to_string());
-        let tracer_provider = opentelemetry_otlp::new_pipeline()
-            .tracing()
-            .with_exporter(otlp_exporter)
-            .with_trace_config(trace::Config::default().with_resource(Resource::new(vec![
-                    KeyValue::new("service.name", service_name),
-                    KeyValue::new("service.namespace", service_namespace),
-                    KeyValue::new("service.instance.id", service_instance_id),
-                    KeyValue::new(
-                        "service.version",
-                        option_env!("VERGEN_GIT_SEMVER")
-                            .or(option_env!("CARGO_PKG_VERSION"))
-                            .unwrap_or("unknown"),
-                    ),
-                ])))
-            .install_batch(opentelemetry_sdk::runtime::TokioCurrentThread)
-            .whatever_context("Failed to install batch")?;
+
+        let tracer_provider = TracerProvider::builder()
+            .with_batch_exporter(otlp_exporter, TokioCurrentThread)
+            .with_resource(Resource::new(vec![
+                KeyValue::new("service.name", service_name),
+                KeyValue::new("service.namespace", service_namespace),
+                KeyValue::new("service.instance.id", service_instance_id),
+                KeyValue::new(
+                    "service.version",
+                    option_env!("VERGEN_GIT_SEMVER")
+                        .or(option_env!("CARGO_PKG_VERSION"))
+                        .unwrap_or("unknown"),
+                ),
+            ]))
+            .build();
 
         // Install the global logger
         global::set_tracer_provider(tracer_provider);
@@ -124,7 +127,7 @@ pub async fn destroy() {
         .is_err()
     {
         eprintln!(
-            "Failed to shutdown opentelemetry tracer provider, some information might be missing"
+            "Failed to shutdown OpenTelemetry tracer provider, some information might be missing"
         );
     }
 }
