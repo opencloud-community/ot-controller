@@ -80,8 +80,7 @@ impl Job for KeycloakAccountSync {
 
         let users = User::get_all(&mut conn).await?;
 
-        let oidc_and_user_search_configuration =
-            settings.build_oidc_and_user_search_configuration()?;
+        let oidc_and_user_search_configuration = settings.oidc_and_user_search.clone();
 
         let authorized_client = AuthorizedClient::new(
             oidc_and_user_search_configuration

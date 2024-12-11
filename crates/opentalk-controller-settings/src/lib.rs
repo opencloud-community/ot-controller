@@ -30,6 +30,10 @@
 //! # Implementation Details:
 //!
 //! Setting categories, in which all properties implement a default value, should also implement the [`Default`] trait.
+//!
+//! [`SettingsLoading<()>`] contains incomplete fields and is an intermediate after
+//! loading the raw settings inside [`SettingsLoading::load`]. The final struct with all loaded fields
+//! is [`Settings`] (an alias for [`SettingsLoading<OidcAndUserSearchConfiguration>`]) which contains all loaded fields.
 
 use std::{
     collections::{BTreeSet, HashMap},
@@ -71,15 +75,26 @@ type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
 pub type SharedSettings = Arc<ArcSwap<Settings>>;
 
+pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
+
 #[derive(Debug, Clone, Deserialize)]
-pub struct Settings {
+pub struct SettingsLoading<OIDC> {
     pub database: Database,
+
     #[serde(default)]
     pub keycloak: Option<Keycloak>,
     #[serde(default)]
     pub oidc: Option<Oidc>,
     #[serde(default)]
     pub user_search: Option<UserSearch>,
+
+    /// The OIDC and user search configuration.
+    ///
+    /// This configuration is built from the [`Self::oidc`] and [`Self::user_search`]
+    /// fields or from the legacy [`Self::keycloak`] field.
+    #[serde(skip)]
+    pub oidc_and_user_search: OIDC,
+
     pub http: Http,
     #[serde(default)]
     pub turn: Option<Turn>,
@@ -213,7 +228,7 @@ pub struct UserSearchConfiguration {
     pub users_find_behavior: UsersFindBehavior,
 }
 
-impl Settings {
+impl<OIDC> SettingsLoading<OIDC> {
     /// internal url builder
     fn build_url<I>(base_url: Url, path_segments: I) -> Result<Url>
     where
@@ -230,9 +245,7 @@ impl Settings {
 
     /// Builds the effective OIDC and user search configuration, either from the deprecated `[keycloak]` section
     /// and some deprecated `[endpoints]` settings or from the new `[oidc]` and `[user_search]` sections.
-    pub fn build_oidc_and_user_search_configuration(
-        &self,
-    ) -> Result<OidcAndUserSearchConfiguration> {
+    fn build_oidc_and_user_search_configuration(&self) -> Result<OidcAndUserSearchConfiguration> {
         let keycloak = self.keycloak.clone();
         let disable_users_find = self.endpoints.disable_users_find;
         let users_find_use_kc = self.endpoints.users_find_use_kc;
@@ -327,7 +340,6 @@ impl Settings {
         log::warn!(
                     "You are using deprecated OIDC and user search settings. See docs for [oidc] and [user_search] configuration sections."
                 );
-
         // Collect legacy OIDC and user search settings
         let backend = UserSearchBackend::KeycloakWebapi;
         let api_base_url = Self::build_url(
@@ -378,7 +390,7 @@ impl Settings {
 
     /// Creates a new Settings instance from the provided TOML file.
     /// Specific fields can be set or overwritten with environment variables (See struct level docs for more details).
-    pub fn load(file_name: &str) -> Result<Self> {
+    pub fn load(file_name: &str) -> Result<Settings> {
         let config = Config::builder()
             .add_source(File::new(file_name, FileFormat::Toml))
             .add_source(WarningSource(
@@ -393,12 +405,42 @@ impl Settings {
             )
             .build()?;
 
-        let this: Self =
+        let this: SettingsLoading<()> =
             serde_path_to_error::deserialize(config).context(DeserializeConfigSnafu {
                 file_name: file_name.to_owned(),
             })?;
 
-        Ok(this)
+        let oidc_and_user_search = this.build_oidc_and_user_search_configuration()?;
+
+        Ok(Settings {
+            oidc_and_user_search,
+            database: this.database,
+            keycloak: this.keycloak,
+            oidc: this.oidc,
+            user_search: this.user_search,
+            http: this.http,
+            turn: this.turn,
+            stun: this.stun,
+            redis: this.redis,
+            rabbit_mq: this.rabbit_mq,
+            logging: this.logging,
+            authz: this.authz,
+            avatar: this.avatar,
+            metrics: this.metrics,
+            etcd: this.etcd,
+            etherpad: this.etherpad,
+            spacedeck: this.spacedeck,
+            reports: this.reports,
+            shared_folder: this.shared_folder,
+            call_in: this.call_in,
+            defaults: this.defaults,
+            endpoints: this.endpoints,
+            minio: this.minio,
+            tenants: this.tenants,
+            tariffs: this.tariffs,
+            livekit: this.livekit,
+            extensions: this.extensions,
+        })
     }
 }
 

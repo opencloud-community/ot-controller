@@ -317,9 +317,7 @@ impl Controller {
                 .whatever_context("Failed to initialize object storage")?,
         );
 
-        let oidc_and_user_search_configuration = settings
-            .build_oidc_and_user_search_configuration()
-            .whatever_context("Failed to build oidc and user search settings")?;
+        let oidc_and_user_search_configuration = settings.oidc_and_user_search.clone();
         log::debug!(
             "OIDC and user search configuration: {:?}",
             oidc_and_user_search_configuration
