@@ -1103,9 +1103,8 @@ fn setup_rustls(tls: &settings::HttpTls) -> Result<rustls::ServerConfig> {
 
 /// Check for deprecated settings, and print warnings if any are found.
 fn check_for_deprecated_settings(settings: &Settings) -> Result<()> {
+    use owo_colors::OwoColorize as _;
     if settings.extensions.contains_key("room_server") {
-        use owo_colors::OwoColorize as _;
-
         anstream::eprintln!(
             "{}: Found an obsolete {room_server} (janus) configuration section.\n\
              {}: This section is no longer needed, please remove it and add a {livekit} section instead.",
@@ -1113,6 +1112,18 @@ fn check_for_deprecated_settings(settings: &Settings) -> Result<()> {
             "NOTE".green(),
             room_server = "room_server".bold(),
             livekit = "livekit".bold(),
+        );
+    }
+
+    if settings.keycloak.is_some() {
+        anstream::eprintln!(
+            "{}: Found an obsolete {keycloak} (oidc) configuration section.\n\
+             {}: This section is deprecated, please replace it with the newly introduced {oidc} and {user_search} sections.",
+            "DEPRECATION WARNING".yellow().bold(),
+            "NOTE".green(),
+            keycloak = "keycloak".bold(),
+            oidc = "oidc".bold(),
+            user_search = "user_search".bold(),
         );
     }
 
