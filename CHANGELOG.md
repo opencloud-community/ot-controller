@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.28.0] - 2024-12-12
+
+[0.28.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.27.0...v0.28.0
+
+### 🚀 New features
+
+- Add subroom audio module for whisper functionality ([!1269](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1269), [#872](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/872))
+- (openapi) Normalize whitespace in output of `openapi dump` subcommand ([!1339](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1339), [#912](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/912))
+
+### 🐛 Bug fixes
+
+- (types) Properly build the axum response from the ApiError ([!1336](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1336))
+- Use `snake_case` for `ReportTemplate` setting ([!1341](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1341))
+
+### 📚 Documentation
+
+- Update meeting-report template description ([!1341](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1341), [#918](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/918))
+
+### 🔨 Refactor
+
+- (types) Introduce opentalk-types-api-v1 crate ([!1335](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1335), [#881](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/881))
+- (types) Remove deprecated POST /services/recording/upload_render endpoint ([!1335](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1335))
+
+### 📦 Dependencies
+
+- (deps) Do not skip num-bigint & ordered-float with cargo-deny ([!1346](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1346))
+- (deps) Lock file maintenance ([!1333](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1333))
+- (deps) Update alpine docker tag to v3.21 ([!1343](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1343))
+- (deps) Update git.opentalk.dev:5050/opentalk/backend/containers/rust docker tag to v1.83.0 ([!1340](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1340))
+- (deps) Update redocly/cli docker tag to v1.26.0 ([!1345](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1345))
+- (deps) Update rust crate cargo_metadata to 0.19 ([!1333](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1333))
+- (deps) Update rust crate sysinfo to 0.33 ([!1342](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1342))
+- (deps) Update rust crate tabled to 0.17 ([!1333](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1333))
+- (deps) Update rust crate validator to 0.19 ([!1333](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1333))
+
+### ⚙ Miscellaneous
+
+- Fix clippy lints for rustc 1.83 ([!1338](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1338))
+
+### Test
+
+- Test meeting report settings ([!1341](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1341))
+
 ## [0.27.0] - 2024-11-20
 
 [0.27.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.26.0...v0.27.0
