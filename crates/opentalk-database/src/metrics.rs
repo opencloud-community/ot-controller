@@ -24,7 +24,7 @@ use diesel_async::{
 use futures_core::{future::BoxFuture, stream::BoxStream};
 use opentelemetry::{
     metrics::{Counter, Histogram},
-    Key,
+    Key, KeyValue,
 };
 
 type Parent = Object<AsyncPgConnection>;
@@ -186,7 +186,7 @@ where
                     Poll::Ready(res)
                 }
                 Err(e) => {
-                    let labels = &[ERROR_KEY.string(get_metrics_label_for_error(&e))];
+                    let labels = &[KeyValue::new(ERROR_KEY, get_metrics_label_for_error(&e))];
                     metrics.sql_error.add(1, labels);
 
                     Poll::Ready(Err(e))

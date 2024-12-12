@@ -4,7 +4,7 @@
 
 use std::{sync::Arc, time::Instant};
 
-use opentelemetry::{metrics::Histogram, Key};
+use opentelemetry::{metrics::Histogram, Key, KeyValue};
 use redis::{aio::ConnectionLike, Arg, RedisFuture};
 
 const COMMAND_KEY: Key = Key::from_static_str("command");
@@ -49,9 +49,12 @@ impl ConnectionLike for RedisConnection {
 
                 if res.is_ok() {
                     let command = if let Some(Arg::Simple(b)) = cmd.args_iter().next() {
-                        COMMAND_KEY.string(std::str::from_utf8(b).unwrap_or("UNKNOWN").to_owned())
+                        KeyValue::new(
+                            COMMAND_KEY,
+                            std::str::from_utf8(b).unwrap_or("UNKNOWN").to_owned(),
+                        )
                     } else {
-                        COMMAND_KEY.string("UNKNOWN")
+                        KeyValue::new(COMMAND_KEY, "UNKNOWN")
                     };
 
                     metrics
@@ -85,7 +88,7 @@ impl ConnectionLike for RedisConnection {
                 if res.is_ok() {
                     metrics.command_execution_time.record(
                         start.elapsed().as_secs_f64(),
-                        &[COMMAND_KEY.string("MULTI")],
+                        &[KeyValue::new(COMMAND_KEY, "MULTI")],
                     );
                 }
 

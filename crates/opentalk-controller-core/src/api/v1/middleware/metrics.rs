@@ -13,7 +13,7 @@ use futures::{
     future::{ready, Ready},
     Future, FutureExt,
 };
-use opentelemetry::Key;
+use opentelemetry::{Key, KeyValue};
 
 use crate::metrics::EndpointMetrics;
 
@@ -72,9 +72,11 @@ where
     fn call(&self, req: ServiceRequest) -> Self::Future {
         let metrics = self.metrics.clone();
 
-        let handler =
-            HANDLER_KEY.string(req.match_pattern().unwrap_or_else(|| "default".to_string()));
-        let method = METHOD_KEY.string(req.method().to_string());
+        let handler = KeyValue::new(
+            HANDLER_KEY,
+            req.match_pattern().unwrap_or_else(|| "default".to_string()),
+        );
+        let method = KeyValue::new(METHOD_KEY, req.method().to_string());
 
         let service = self.service.call(req);
 
@@ -86,7 +88,7 @@ where
             let duration = start.elapsed();
 
             let res = if let Ok(resp) = result {
-                let status = STATUS_KEY.i64(resp.status().as_u16() as i64);
+                let status = KeyValue::new(STATUS_KEY, resp.status().as_u16() as i64);
                 let labels = [handler, method, status];
 
                 metrics

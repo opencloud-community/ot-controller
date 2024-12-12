@@ -107,8 +107,9 @@ opentalk-keycloak-admin = { version = "0.3.0", default-features = false, feature
 opentalk-nextcloud-client = { version = "0.2.0", default-features = false, features = [
   "rustls-tls-native-roots",
 ] }
-opentelemetry = { version = "0.24", default-features = false, features = [
+opentelemetry = { version = "0.27", default-features = false, features = [
   "metrics",
+  "trace",
 ] }
 owo-colors = "4"
 parking_lot = "0.12"

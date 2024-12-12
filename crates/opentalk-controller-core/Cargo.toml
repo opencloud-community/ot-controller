@@ -74,11 +74,12 @@ opentalk-types-signaling-recording-service = { workspace = true, features = [
   "backend",
 ] }
 opentelemetry = { workspace = true, features = ["metrics", "trace"] }
-opentelemetry-otlp = "0.17"
-opentelemetry-prometheus = "0.17"
-opentelemetry_sdk = { version = "0.24", features = [
+opentelemetry-otlp = "0.27"
+opentelemetry-prometheus = "0.27"
+opentelemetry_sdk = { version = "0.27", features = [
   "metrics",
   "rt-tokio-current-thread",
+  "spec_unstable_metrics_views",
 ] }
 owo-colors.workspace = true
 parking_lot.workspace = true
