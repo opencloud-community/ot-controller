@@ -8,7 +8,7 @@ info:
     email: mail@opentalk.eu
   license:
     name: EUPL-1.2
-  version: 0.28.0-alpha
+  version: 0.29.0-alpha
 servers:
   - url: /v1
 paths:
