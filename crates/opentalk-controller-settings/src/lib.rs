@@ -34,6 +34,7 @@
 use std::{
     collections::{BTreeSet, HashMap},
     convert::TryFrom,
+    net::IpAddr,
     path::PathBuf,
     sync::Arc,
     time::Duration,
@@ -128,6 +129,9 @@ pub struct Settings {
     pub minio: MinIO,
 
     #[serde(default)]
+    pub monitoring: Option<MonitoringSettings>,
+
+    #[serde(default)]
     pub tenants: Tenants,
 
     #[serde(default)]
@@ -174,6 +178,22 @@ where
 
         Ok(values)
     }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct MonitoringSettings {
+    #[serde(default = "default_monitoring_port")]
+    pub port: u16,
+    #[serde(default = "default_monitoring_addr")]
+    pub addr: IpAddr,
+}
+
+fn default_monitoring_port() -> u16 {
+    11411
+}
+
+fn default_monitoring_addr() -> IpAddr {
+    [0, 0, 0, 0].into()
 }
 
 /// OIDC and user search configuration

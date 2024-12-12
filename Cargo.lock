@@ -4501,6 +4501,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serial_test",
+ "service-probe",
  "snafu",
  "strum",
  "sysinfo",
@@ -7138,6 +7139,20 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.89",
+]
+
+[[package]]
+name = "service-probe"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ec741014f3d2e6dca4a2d5a905c0e92bf067c8ca5412150e911f864dad39186d"
+dependencies = [
+ "http-body-util",
+ "hyper 1.5.1",
+ "hyper-util",
+ "log",
+ "snafu",
+ "tokio",
 ]
 
 [[package]]

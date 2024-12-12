@@ -28,6 +28,7 @@ Functionality that can be configured through the configuration file:
 - [Authz](../advanced/acl.md)
 - [Call-in](../advanced/call_in.md)
 - [MinIO](minio.md)
+- [Monitoring](monitoring.md)
 - [EtherPad](../advanced/additional_services/etherpad.md)
 - [SpaceDeck](../advanced/additional_services/spacedeck.md)
 - [Reports](../advanced/additional_services/reports.md)
@@ -118,6 +119,10 @@ url = "postgres://postgres:password123@localhost:5432/opentalk"
 # Maximum number of connections allowed to the server.
 # Defaults to 100 which is the default of postgres.
 #max_connections = 100
+
+#[monitoring]
+#addr = "0.0.0.0"
+#port = 11411
 
 [http]
 # The port to bind the HTTP Server to (defaults to 11311).
