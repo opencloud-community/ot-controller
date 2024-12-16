@@ -13,7 +13,9 @@ Migrating from Janus to LiveKit involves several key steps to ensure a smooth tr
     Begin by shutting down your existing Janus services and removing any associated resources to prevent conflicts during the migration process.
 
 2. **Configure and Start LiveKit Server**
-    - Use the container image `livekit/livekit-server:v1.7` in combination with controller version `v0.25.0`.
+    - Use the matching container images for the release.
+      - For controller version `0.27.0`, use `livekit/livekit-server:v1.8`
+      - For later versions, look at the [releases page](https://docs.opentalk.eu/releases/), or use what is specified in the corresponding version tag on [ot-setup](https://gitlab.opencode.de/opentalk/ot-setup).
     - If you are using Docker, it is recommended to run LiveKit in `network_mode: host`. This is crucial because:
         - A large number of UDP ports are required for proper functionality.
         - Not using `network_mode: host` will result in a separate process being started for each mapped UDP port.
@@ -70,9 +72,3 @@ Migrating from Janus to LiveKit involves several key steps to ensure a smooth tr
     - The `service_url` should be the URL where the controller can access the LiveKit server, which can be an internally routed URL or IP.
     - The `api_key` and `api_secret` must match the values configured in the LiveKit server.
     - The recorder service will fetch the configuration from the controller
-
-## Known Issues
-
-- The Obelisk-Service does only support basic audio codecs and has no video support yet
-- Users may experience connectivity issues with Firefox when connecting to a Room via a VPN under certain circumstances.
-- LiveKit cannot be hosted behind a URL with a path; a dedicated subdomain is required.

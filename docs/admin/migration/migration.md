@@ -13,7 +13,7 @@ must be run in order to update ACLs to match the newest version whenever
 new endpoints were added for already present resources. However, even if no
 endpoints were added, simply running the command does no harm.
 
-## Updating to OpenTalk Controller v0.26.0
+## Updating to OpenTalk Controller `v0.26.0`
 
 ### Janus support removed entirely
 
@@ -27,7 +27,7 @@ Support for the Janus Media Server [has been deprecated](core/room_server.md).
 
 See [the LiveKit migration documentation](migration/livekit.md).
 
-## Updating to OpenTalk Controller v0.16.0
+## Updating to OpenTalk Controller `v0.16.0`
 
 ### Janus can now be connected to via websocket
 
@@ -36,7 +36,7 @@ via a websocket connection instead of using rabbitmq in-between.
 
 See [the configuration documentation](core/room_server.md).
 
-## Updating to OpenTalk Controller v0.15.0
+## Updating to OpenTalk Controller `v0.15.0`
 
 ### Redis is only required for *clustered* operation
 
@@ -46,7 +46,7 @@ controller should run in *clustered* mode. If the service should only be
 provided by a single node, then the controller can run in *standalone* mode now
 by removing the `[redis]` section from the configuration entirely.
 
-## Updating to OpenTalk Controller v0.9.0
+## Updating to OpenTalk Controller `v0.9.0`
 
 ### Removal of server-side speaker detection
 
