@@ -20,6 +20,55 @@ endpoints were added, simply running the command does no harm.
 Support for the Janus Media Server has been [removed entirely](core/room_server.md)
 in favor of [LiveKit](core/livekit.md).
 
+### Changes in the OIDC configuration
+
+Configuration options of the authentication provider no longer target
+[Keycloak](core/keycloak_deprecated.md)
+specifically, but rather [OIDC in general](core/oidc.md). For the time being,
+Keycloak is still the only supported authentication provider, but that is likely
+to change in the future.
+
+[User search](core/user_search.md) needs to be configured separately now.
+
+#### Example
+
+Assuming this is the `[keycloak]` section in the
+[controller configuration](core/configuration.md).
+
+```toml
+[keycloak]
+base_url = "https://accounts.example.com/auth"
+realm = "MyRealm"
+client_id = "Controller"
+client_secret = "c64c5854-3f02-4728-a617-bbe98ec42b8f"
+```
+
+You must change that section to:
+
+```toml
+# Basic OIDC configuration
+[oidc]
+base_url = "https://accounts.example.com/auth/realms/MyRealm"
+
+# Frontend configuration
+[oidc.frontend]
+# This is the id that the frontend client will use for authentication.
+# Must be the same as configured by the `OIDC_CLIENT_ID` value in the
+# web-frontend. See https://gitlab.opencode.de/opentalk/web-frontend
+client_id = "Frontend"
+
+# Controller configuration
+[oidc.controller]
+client_id = "Controller"
+client_secret = "c64c5854-3f02-4728-a617-bbe98ec42b8f"
+
+# User search is optional, needs extra configuration on the Keycloak server
+[user_search]
+backend = "keycloak_webapi"
+api_base_url = "https://accounts.example.com/auth/admin/realms/MyRealm"
+users_find_behavior = "from_user_search_backend"
+```
+
 ## Updating to OpenTalk Controller `v0.25.0`
 
 This controller version introduces support for [LiveKit](core/livekit.md).

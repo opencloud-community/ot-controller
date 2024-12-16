@@ -14,8 +14,8 @@ Migrating from Janus to LiveKit involves several key steps to ensure a smooth tr
 
 2. **Configure and Start LiveKit Server**
     - Use the matching container images for the release.
-      - For controller version `0.27.0`, use `livekit/livekit-server:v1.8`
-      - For later versions, look at the [releases page](https://docs.opentalk.eu/releases/), or use what is specified in the corresponding version tag on [ot-setup](https://gitlab.opencode.de/opentalk/ot-setup).
+        - For controller version `0.27.0`, use `livekit/livekit-server:v1.8`
+        - For later versions, look at the [releases page](https://docs.opentalk.eu/releases/), or use what is specified in the corresponding version tag on [ot-setup](https://gitlab.opencode.de/opentalk/ot-setup).
     - If you are using Docker, it is recommended to run LiveKit in `network_mode: host`. This is crucial because:
         - A large number of UDP ports are required for proper functionality.
         - Not using `network_mode: host` will result in a separate process being started for each mapped UDP port.
