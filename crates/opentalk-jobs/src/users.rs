@@ -179,7 +179,8 @@ async fn delete_user_events(
         let event_delete_selector = super::events::DeleteSelector::BelongingToUser(user_id);
 
         let mut candidates =
-            super::events::retrieve_deletion_candidate_events(conn, event_delete_selector).await?;
+            super::events::retrieve_deletion_candidate_events(logger, conn, event_delete_selector)
+                .await?;
         event_candidates.append(&mut candidates);
     }
 
