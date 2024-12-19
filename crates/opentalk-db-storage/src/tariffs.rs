@@ -156,7 +156,6 @@ impl Tariff {
                 .chain(disabled_features.into_iter().map(Into::into)),
         );
 
-        let mut enabled_modules = BTreeSet::<ModuleId>::new();
         let mut modules = BTreeMap::<ModuleId, TariffModuleResource>::new();
 
         module_features
@@ -171,20 +170,14 @@ impl Tariff {
                             })
                         }));
                     let module_resource = TariffModuleResource { features };
-                    // The list of enabled module names is deprecated and provided only for backwards compatibility.
-                    // It is replaced by a list of modules including their features.
-                    enabled_modules.insert(module_id.clone());
                     modules.insert(module_id, module_resource);
                 }
             });
 
-        // The 'enabled_modules' and 'disabled_features' fields are deprecated.
         TariffResource {
             id: self.id,
             name: self.name.clone(),
             quotas: self.quotas.0.clone(),
-            enabled_modules,
-            disabled_features,
             modules,
         }
     }
@@ -324,8 +317,6 @@ mod tests {
             "id": "00000000-0000-0000-0000-000000000000",
             "name": "test",
             "quotas": {},
-            "enabled_modules": ["chat"],
-            "disabled_features": ["chat::chat_feature_1"],
             "modules": {
                 "chat": {
                     "features": ["chat_feature_2"]
