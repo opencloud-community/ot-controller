@@ -36,7 +36,7 @@ pub struct Args {
     #[clap(subcommand)]
     cmd: Option<SubCommand>,
 
-    #[clap(long, action=ArgAction::SetTrue)]
+    #[clap(short('V'), long, action=ArgAction::SetTrue, help = "Print version information")]
     version: bool,
 }
 
