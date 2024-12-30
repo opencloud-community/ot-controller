@@ -48,7 +48,7 @@ Commands:
 Options:
   -c, --config <CONFIG>  Specify path to configuration file [default: config.toml]
       --reload           Triggers a reload of reloadable configuration options
-      --version
+  -V, --version          Print version information
   -h, --help             Print help
 ```
 

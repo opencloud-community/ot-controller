@@ -36,7 +36,7 @@ pub struct Args {
     #[clap(subcommand)]
     cmd: Option<SubCommand>,
 
-    #[clap(long, action=ArgAction::SetTrue)]
+    #[clap(short('V'), long, action=ArgAction::SetTrue, help = "Print version information")]
     version: bool,
 }
 
@@ -164,42 +164,8 @@ pub async fn parse_args<M: RegisterModules>() -> Result<Args> {
     Ok(args)
 }
 
-fn profile_to_human(profile: &str) -> &str {
-    // Copied from https://doc.rust-lang.org/cargo/reference/profiles.html#opt-level
-    match profile {
-        "0" => "0, no optimizations",
-        "1" => "1, basic optimizations",
-        "2" => "2, some optimizations",
-        "3" => "3, all optimizations",
-        "s" => "'s', optimize for binary size",
-        "z" => "'z', optimize for binary size, but also turn off loop vectorization.",
-        profile => profile,
-    }
-}
-
-fn build_info() -> [(&'static str, Option<&'static str>); 10] {
-    [
-        ("Build Timestamp", Some(env!("VERGEN_BUILD_TIMESTAMP"))),
-        ("Build Version", Some(env!("CARGO_PKG_VERSION"))),
-        ("Commit SHA", option_env!("VERGEN_GIT_SHA")),
-        ("Commit Date", option_env!("VERGEN_GIT_COMMIT_TIMESTAMP")),
-        ("Commit Branch", option_env!("VERGEN_GIT_BRANCH")),
-        ("rustc Version", Some(env!("VERGEN_RUSTC_SEMVER"))),
-        ("rustc Channel", Some(env!("VERGEN_RUSTC_CHANNEL"))),
-        ("rustc Host Triple", Some(env!("VERGEN_RUSTC_HOST_TRIPLE"))),
-        (
-            "cargo Target Triple",
-            Some(env!("VERGEN_CARGO_TARGET_TRIPLE")),
-        ),
-        (
-            "cargo Profile",
-            Some(env!("VERGEN_CARGO_OPT_LEVEL")).map(profile_to_human),
-        ),
-    ]
-}
+opentalk_version::build_info!();
 
 fn print_version() {
-    for (label, value) in build_info() {
-        println!("{}: {}", label, value.unwrap_or("N/A"));
-    }
+    println!("{}", build_info::BuildInfo::new());
 }
