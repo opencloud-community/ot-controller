@@ -264,6 +264,7 @@ skip = [
   { name = "indexmap", version = "1" },
   { name = "itertools", version = "0.10" },
   { name = "itertools", version = "0.11" },
+  { name = "itertools", version = "0.13" },
   { name = "p256", version = "0.11" },
   { name = "pkcs8", version = "0.9" },
   { name = "polling", version = "2" },
