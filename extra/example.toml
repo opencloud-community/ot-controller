@@ -36,6 +36,10 @@ url = "postgres://postgres:password123@localhost:5432/opentalk"
 # Defaults to 100 which is the default of postgres.
 #max_connections = 100
 
+#[monitoring]
+#addr = "0.0.0.0"
+#port = 11411
+
 [http]
 # The port to bind the HTTP Server to (defaults to 11311).
 port = 11311
