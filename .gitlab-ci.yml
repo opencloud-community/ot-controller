@@ -193,7 +193,6 @@ lint:licensing:
     - reuse lint
 
 lint:commit:
-  allow_failure: true
   cache: {}
   image: node:lts-alpine
   stage: lint
