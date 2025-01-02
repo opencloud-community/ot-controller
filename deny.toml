@@ -241,6 +241,8 @@ skip = [
   { name = "base16ct", version = "0.1" },
   { name = "base64", version = "0.13" },
   { name = "base64", version = "0.21" },
+  { name = "chrono-tz", version = "0.9" },
+  { name = "chrono-tz-build", version = "0.3" },
   { name = "cookie", version = "0.16" },
   { name = "crypto-bigint", version = "0.4" },
   { name = "der", version = "0.6" },
