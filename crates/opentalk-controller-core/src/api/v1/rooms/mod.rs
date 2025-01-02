@@ -15,7 +15,7 @@ use actix_web::{
 };
 use kustos::Authz;
 use opentalk_controller_service::ToUserProfile as _;
-use opentalk_controller_service_facade::OpenTalkControllerService;
+use opentalk_controller_service_facade::{OpenTalkControllerService, RequestUser};
 use opentalk_controller_utils::deletion::{Deleter, RoomDeleter};
 use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
@@ -143,7 +143,7 @@ pub async fn accessible(
 #[post("/rooms")]
 pub async fn new(
     service: Data<OpenTalkControllerService>,
-    current_user: ReqData<User>,
+    current_user: ReqData<RequestUser>,
     body: Json<PostRoomsRequestBody>,
 ) -> Result<Json<RoomResource>, ApiError> {
     let current_user = current_user.into_inner();

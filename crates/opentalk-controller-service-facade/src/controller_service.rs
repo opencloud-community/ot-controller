@@ -4,7 +4,6 @@
 
 use std::sync::Arc;
 
-use opentalk_db_storage::users::User;
 use opentalk_types::api::error::ApiError;
 use opentalk_types_api_v1::{
     auth::GetLoginResponseBody,
@@ -17,7 +16,7 @@ use opentalk_types_common::{
 };
 use tokio::sync::RwLock;
 
-use crate::OpenTalkControllerServiceBackend;
+use crate::{OpenTalkControllerServiceBackend, RequestUser};
 
 /// Thread-safe handle to a [`OpenTalkControllerServiceBackend`] implementation.
 #[derive(Clone)]
@@ -65,7 +64,7 @@ impl OpenTalkControllerService {
         enable_sip: bool,
         waiting_room: bool,
         e2e_encryption: bool,
-        current_user: User,
+        current_user: RequestUser,
     ) -> Result<RoomResource, ApiError> {
         self.backend
             .read()

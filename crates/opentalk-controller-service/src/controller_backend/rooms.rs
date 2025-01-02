@@ -7,11 +7,11 @@ use kustos::{
     prelude::IsSubject,
     AccessMethod, Resource,
 };
+use opentalk_controller_service_facade::RequestUser;
 use opentalk_db_storage::{
     events::Event,
     rooms::{NewRoom, Room},
     sip_configs::NewSipConfig,
-    users::User,
     utils::build_event_info,
 };
 use opentalk_types::api::error::ApiError;
@@ -72,7 +72,7 @@ impl ControllerBackend {
         enable_sip: bool,
         waiting_room: bool,
         e2e_encryption: bool,
-        current_user: User,
+        current_user: RequestUser,
     ) -> Result<RoomResource, ApiError> {
         let settings = self.settings.load();
 

@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use async_trait::async_trait;
-use opentalk_db_storage::users::User;
 use opentalk_types::api::error::ApiError;
 use opentalk_types_api_v1::{
     auth::GetLoginResponseBody,
@@ -14,6 +13,8 @@ use opentalk_types_common::{
     tariffs::TariffResource,
     users::UserId,
 };
+
+use crate::RequestUser;
 
 /// Trait implemented by OpenTalk controller service backends
 #[async_trait(?Send)]
@@ -36,7 +37,7 @@ pub trait OpenTalkControllerServiceBackend: Send + Sync {
         enable_sip: bool,
         waiting_room: bool,
         e2e_encryption: bool,
-        current_user: User,
+        current_user: RequestUser,
     ) -> Result<RoomResource, ApiError>;
 
     /// Get a room

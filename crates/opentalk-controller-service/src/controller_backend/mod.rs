@@ -13,10 +13,9 @@ use std::{
 
 use async_trait::async_trait;
 use kustos::Authz;
-use opentalk_controller_service_facade::OpenTalkControllerServiceBackend;
+use opentalk_controller_service_facade::{OpenTalkControllerServiceBackend, RequestUser};
 use opentalk_controller_settings::SharedSettings;
 use opentalk_database::Db;
-use opentalk_db_storage::users::User;
 use opentalk_types::api::error::ApiError;
 use opentalk_types_api_v1::{
     auth::{GetLoginResponseBody, OidcProvider},
@@ -88,7 +87,7 @@ impl OpenTalkControllerServiceBackend for ControllerBackend {
         enable_sip: bool,
         waiting_room: bool,
         e2e_encryption: bool,
-        current_user: User,
+        current_user: RequestUser,
     ) -> Result<RoomResource, ApiError> {
         self.create_room(
             password,

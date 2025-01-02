@@ -2,4 +2,6 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-//! Provides room types and traits
+//! Some types as provided by the middleware
+
+pub mod user;
