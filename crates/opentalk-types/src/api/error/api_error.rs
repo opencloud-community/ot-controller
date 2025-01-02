@@ -274,7 +274,8 @@ impl From<diesel::result::Error> for ApiError {
 
 impl From<snafu::Whatever> for ApiError {
     fn from(value: snafu::Whatever) -> Self {
-        log::error!("REST API threw generic internal error: {value:?}");
+        let error_report = snafu::Report::from_error(value);
+        log::error!("REST API threw generic internal error: {error_report:?}");
         ApiError::internal()
     }
 }

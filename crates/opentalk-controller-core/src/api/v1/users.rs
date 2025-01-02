@@ -393,10 +393,7 @@ pub async fn find(
 ) -> Result<Json<GetFindResponseBody>, ApiError> {
     let settings = settings.load_full();
 
-    let oidc_and_user_search_configuration =
-        settings
-            .build_oidc_and_user_search_configuration()
-            .whatever_context::<&str, Whatever>("Failed to build user search settings")?;
+    let oidc_and_user_search_configuration = settings.oidc_and_user_search.clone();
 
     if oidc_and_user_search_configuration
         .user_search
