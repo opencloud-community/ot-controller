@@ -193,16 +193,40 @@ lint:licensing:
     - reuse lint
 
 lint:commit:
-  allow_failure: true
   cache: {}
   image: node:lts-alpine
   stage: lint
-  <<: *default_job_condition
+  needs: []
+  rules:
+    # Run in merge requests only.
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
   before_script:
     - apk add --no-cache git
     - npm install -g @commitlint/cli @commitlint/config-conventional
   script:
     - npx commitlint --from $CI_MERGE_REQUEST_DIFF_BASE_SHA --to HEAD --verbose
+
+lint:commit-signature:
+  cache:
+    - key: gpg-public-keys
+      paths:
+        - $GNUPGHOME/trustdb.gpg
+  stage: lint
+  needs: []
+  rules:
+    # Run in merge requests only.
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  variables:
+    GNUPGHOME: $CI_PROJECT_DIR/.gnupg
+  script:
+    # search for public keys on https://keys.openpgp.org
+    - >
+      git log --format=format:'%GK' $CI_MERGE_REQUEST_DIFF_BASE_SHA..HEAD
+      | xargs -I{} sh -c "gpg --trustdb-name trustdb.gpg --keyserver keys.openpgp.org --recv-keys {}"
+    # verify commit signatures
+    - >
+      git rev-list $CI_MERGE_REQUEST_DIFF_BASE_SHA..HEAD
+      | xargs -I{} sh -c "git verify-commit {}"
 
 lint:mod-rs-files:
   # This job is needed until we can fully deny the `self_named_module_files` in clippy.
