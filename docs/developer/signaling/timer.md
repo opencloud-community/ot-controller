@@ -170,11 +170,11 @@ Can be sent by any participant only when `ready_check` is set to true in [Start]
 
 #### Fields
 
-| Field      | Type     | Required | Description                       |
-| ---------- | -------- | -------- | --------------------------------- |
-| `action`   | `enum`   | yes      | Must be `"update_ready_status"`   |
-| `timer_id` | `string` | yes      | The timer id (uuid)               |
-| `status`   | `bool`   | yes      | The R2C status of the participant |
+| Field      | Type     | Required | Description                         |
+| ---------- | -------- | -------- | ----------------------------------- |
+| `action`   | `enum`   | yes      | Must be `"update_ready_status"`     |
+| `timer_id` | `string` | yes      | The timer id (uuid)                 |
+| `status`   | `bool`   | yes      | The ready status of the participant |
 
 ##### Examples
 
@@ -188,7 +188,7 @@ Can be sent by any participant only when `ready_check` is set to true in [Start]
 
 #### Response
 
-Each participant receives a [Control Update](#control-update) event with the participant's R2C status.
+Each participant receives a [Control Update](#updated-ready-status) event with the ready status of the participant that was updated.
 
 ---
 

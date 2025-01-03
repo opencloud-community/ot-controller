@@ -8,7 +8,7 @@ title: Controller
 
 - [Configuration](core/configuration.md)
 - [HTTP Server](core/http_server.md) on which the controller offers its service
-- [Migration guide for updating to new versions](migration.md)
+- [Migration guide for updating to new versions](migration/migration.md)
 - [Command-line usage of the controller](cli/cli.md)
 - [Configuration of multiple tenants](advanced/tenants.md)
 - [Configuration of different tariffs and their capabilities](advanced/tariffs.md)

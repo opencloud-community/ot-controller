@@ -28,7 +28,7 @@ the default value.
 
 In order to use multiple tenants, `assignment` must be set to
 `"by_external_tenant_id"`. This requires the `tenant_id` field
-in the [authentication information sent by KeyCloak](../core/keycloak.md#jwt-fields-for-user-login).
+in the [authentication information sent by KeyCloak](../core/oidc.md#jwt-fields-for-user-login).
 Whenever a user logs in with a `tenant_id` that is unknown to the OpenTalk
 controller, a new entry for this tenant is created in the database. Because of
 that, the command-line tooling provides no option for adding tenants to the

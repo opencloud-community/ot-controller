@@ -8,7 +8,7 @@ title: Update Migration Guide
 ## General information
 
 After installing/deploying the new version
-[`opentalk-controller fix-acl`](advanced/acl.md#opentalk-controller-fix-acl-subcommand)
+[`opentalk-controller fix-acl`](../advanced/acl.md#opentalk-controller-fix-acl-subcommand)
 must be run in order to update ACLs to match the newest version whenever
 new endpoints were added for already present resources. However, even if no
 endpoints were added, simply running the command does no harm.
@@ -17,23 +17,23 @@ endpoints were added, simply running the command does no harm.
 
 ### Janus support removed entirely
 
-Support for the Janus Media Server has been [removed entirely](core/room_server.md)
-in favor of [LiveKit](core/livekit.md).
+Support for the Janus Media Server has been [removed entirely](../core/room_server.md)
+in favor of [LiveKit](../core/livekit.md).
 
 ### Changes in the OIDC configuration
 
 Configuration options of the authentication provider no longer target
-[Keycloak](core/keycloak_deprecated.md)
-specifically, but rather [OIDC in general](core/oidc.md). For the time being,
+[Keycloak](../core/keycloak_deprecated.md)
+specifically, but rather [OIDC in general](../core/oidc.md). For the time being,
 Keycloak is still the only supported authentication provider, but that is likely
 to change in the future.
 
-[User search](core/user_search.md) needs to be configured separately now.
+[User search](../core/user_search.md) needs to be configured separately now.
 
 #### Example
 
 Assuming this is the `[keycloak]` section in the
-[controller configuration](core/configuration.md).
+[controller configuration](../core/configuration.md).
 
 ```toml
 [keycloak]
@@ -71,10 +71,10 @@ users_find_behavior = "from_user_search_backend"
 
 ## Updating to OpenTalk Controller `v0.25.0`
 
-This controller version introduces support for [LiveKit](core/livekit.md).
-Support for the Janus Media Server [has been deprecated](core/room_server.md).
+This controller version introduces support for [LiveKit](../core/livekit.md).
+Support for the Janus Media Server [has been deprecated](../core/room_server.md).
 
-See [the LiveKit migration documentation](migration/livekit.md).
+See [the LiveKit migration documentation](./livekit.md).
 
 ## Updating to OpenTalk Controller `v0.16.0`
 
@@ -83,13 +83,13 @@ See [the LiveKit migration documentation](migration/livekit.md).
 The OpenTalk controller now can be configured to connect to Janus directly
 via a websocket connection instead of using rabbitmq in-between.
 
-See [the configuration documentation](core/room_server.md).
+See [the configuration documentation](../core/room_server.md).
 
 ## Updating to OpenTalk Controller `v0.15.0`
 
 ### Redis is only required for *clustered* operation
 
-Since `v0.15.0` of the OpenTalk controller, the usage of a [Redis](core/
+Since `v0.15.0` of the OpenTalk controller, the usage of a [Redis](../core/
 redis.md) service is only required for synchronizing between nodes when the
 controller should run in *clustered* mode. If the service should only be
 provided by a single node, then the controller can run in *standalone* mode now
@@ -103,7 +103,7 @@ The audio level detection is no longer performed by the MCU (Multipoint Control
 Unit, in this case the Janus Media Server), therefore the corresponding settings
 are deprecated.
 
-Deprecated settings in the [configuration file](configuration.md) are:
+Deprecated settings in the [configuration file](../core/configuration.md) are:
 
 - `room_server.speaker_focus_packets`
 - `room_server.speaker_focus_level`
