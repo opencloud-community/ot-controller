@@ -11,7 +11,7 @@ manual can be used to perform the deletion.
   any earlier releases.
 - While the user is only deleted from the database, no data will be deleted from
   external services such as the file storage ([MinIO](../core/minio.md)) or
-  a configured [shared folder system](shared_folder.md). You will get a list
+  a configured [shared folder system](./additional_services/shared_folder.md). You will get a list
   of these entries though, so these can be deleted by hand on the external
   systems.
 - When following the manual, database entries created by the affected user will

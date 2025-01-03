@@ -27,8 +27,8 @@ When joining a room, the `join_success` control event contains the module-specif
 | Field          | Type                                                      | Always | Description                                                            |
 | -------------- | --------------------------------------------------------- | ------ | ---------------------------------------------------------------------- |
 | `is_presenter` | `bool`                                                    | yes    | Represents if the current participant has permissions for screen share |
-| `speakers`     | (`ParticipantSpeakingState[]`)(#ParticipantSpeakingState) | yes    | The list of current or previous speakers in the meeting                |
-| `force_mute`   | [`ForceMuteState`](#ForceMuteState)                       | yes    | The current force mute state                                           |
+| `speakers`     | [`ParticipantSpeakingState[]`](#participantspeakingstate) | yes    | The list of current or previous speakers in the meeting                |
+| `force_mute`   | [`ForceMuteState`](#forcemutestate)                       | yes    | The current force mute state                                           |
 
 ##### Example
 
@@ -194,7 +194,7 @@ Request an SDP offer for the specified target (a peer participant's published me
 
 #### Response
 
-A [SdpOffer](#SdpOffer) will return an SDP offer to which the client must respond to with an [SdpAnswer](#SdpAnswer).
+A [SdpOffer](#sdpoffer) will return an SDP offer to which the client must respond to with an [SdpAnswer](#sdpanswer).
 
 #### Fields
 
@@ -224,7 +224,7 @@ Request for a WebRTC subscribe session to be restarted, this will restart the co
 
 #### Response
 
-A [SdpOffer](#SdpOffer) will return an SDP offer to which the client must respond to with an [SdpAnswer](#SdpAnswer).
+A [SdpOffer](#sdpoffer) will return an SDP offer to which the client must respond to with an [SdpAnswer](#sdpanswer).
 
 #### Fields
 

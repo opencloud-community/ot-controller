@@ -5,7 +5,7 @@
 The recording module allows for the recording / streaming of a room.
 The recorder is essentially a regular client, therefore they communicate through the same
 protocol.
-However, the recorder's behaviour is distinctly different than a regular client, as to which
+However, the recorder's behavior is distinctly different than a regular client, as to which
 they have some sharing attributes, but e.G. require different information, those differences are highlighted
 in this document.
 
@@ -110,7 +110,7 @@ When joining a room, the `joined` control event sent to all other participants c
 - [`start_stream`](#start)
 - [`pause_stream`](#pause)
 - [`stop_stream`](#stop)
-- [`set_consent`](#SetConsent)
+- [`set_consent`](#setconsent)
 
 ### Start
 

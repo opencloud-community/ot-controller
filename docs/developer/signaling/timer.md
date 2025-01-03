@@ -188,7 +188,7 @@ Can be sent by any participant only when `ready_check` is set to true in [Start]
 
 #### Response
 
-Each participant receives a [Control Update](#control-update) event with the participant's R2C status.
+Each participant receives a [Control Update](#updated-ready-status) event with the participant's R2C status.
 
 ---
 

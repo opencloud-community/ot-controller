@@ -484,9 +484,9 @@ Received when a debriefing has started that a participant is part of.
 
 ---
 
-### In Waiting Room
+### InWaitingRoom
 
-Received after sending [Join](#join) in a room which has the waiting-room enabled. Once in the waiting room one must wait
+Received after sending [Join](./control.md#join) in a room which has the waiting-room enabled. Once in the waiting room one must wait
 until the [Accepted](#accepted) event was received. Then the room can be entered using [Control/EnterRoom](control.md#enterroom).
 
 #### Fields
@@ -507,7 +507,7 @@ until the [Accepted](#accepted) event was received. Then the room can be entered
 
 ### JoinedWaitingRoom
 
-Received when a participant joined the waiting-room. Wraps a [Participant](#participant). Will only contain the data
+Received when a participant joined the waiting-room. Wraps a [Participant](./control.md#participant). Will only contain the data
 of the `control` as other modules will not be initialized before the user joins the room.
 
 #### Fields
