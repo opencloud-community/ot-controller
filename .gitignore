@@ -51,6 +51,3 @@ fabric.properties
 
 # Macos
 .DS_Store
-
-# gnupg files generated in the pipeline and cached
-.gnupg

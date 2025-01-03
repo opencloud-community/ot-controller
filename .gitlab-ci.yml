@@ -207,26 +207,18 @@ lint:commit:
     - npx commitlint --from $CI_MERGE_REQUEST_DIFF_BASE_SHA --to HEAD --verbose
 
 lint:commit-signature:
-  cache:
-    - key: gpg-public-keys
-      paths:
-        - $GNUPGHOME/trustdb.gpg
   stage: lint
   needs: []
   rules:
     # Run in merge requests only.
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-  variables:
-    GNUPGHOME: $CI_PROJECT_DIR/.gnupg
   script:
-    # search for public keys on https://keys.openpgp.org
+    # %G? will log signature information for a commit. `N` stands for "no signature", `B` for "bad signature"
+    # refer to https://git-scm.com/docs/pretty-formats#Documentation/pretty-formats.txt-emGem
+    # grep checks that the output does not contain any "N" or "B" characters.
     - >
-      git log --format=format:'%GK' $CI_MERGE_REQUEST_DIFF_BASE_SHA..HEAD
-      | xargs -I{} sh -c "gpg --trustdb-name trustdb.gpg --keyserver keys.openpgp.org --recv-keys {}"
-    # verify commit signatures
-    - >
-      git rev-list $CI_MERGE_REQUEST_DIFF_BASE_SHA..HEAD
-      | xargs -I{} sh -c "git verify-commit {}"
+      git log --format=format:'%G?' $CI_MERGE_REQUEST_DIFF_BASE_SHA..HEAD
+      | grep --null-data --quiet --invert-match --regexp="N" --regexp="B"
 
 lint:mod-rs-files:
   # This job is needed until we can fully deny the `self_named_module_files` in clippy.
