@@ -22,6 +22,7 @@ use actix_web_httpauth::headers::authorization::Authorization;
 use chrono::Utc;
 use openidconnect::AccessToken;
 use opentalk_cache::Cache;
+use opentalk_controller_service_facade::RequestUser;
 use opentalk_controller_settings::{Settings, SharedSettings, TenantAssignment};
 use opentalk_database::Db;
 use opentalk_db_storage::{
@@ -167,7 +168,9 @@ where
                             req.extensions_mut()
                                 .insert(kustos::actix_web::User::from(Uuid::from(current_user.id)));
                             req.extensions_mut().insert(current_tenant);
-                            req.extensions_mut().insert(current_user);
+                            req.extensions_mut().insert(current_user.clone());
+                            req.extensions_mut()
+                                .insert(build_request_user(current_user));
                             req.extensions_mut().insert(access_token);
                             service.call(req).await
                         }
@@ -185,6 +188,23 @@ where
             }
             .instrument(tracing::trace_span!("OidcAuthMiddleware::async::call")),
         )
+    }
+}
+
+fn build_request_user(user: User) -> RequestUser {
+    RequestUser {
+        id: user.id,
+        email: user.email,
+        title: user.title,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        language: user.language,
+        display_name: user.display_name,
+        dashboard_theme: user.dashboard_theme,
+        conference_theme: user.conference_theme,
+        tenant_id: user.tenant_id,
+        tariff_status: user.tariff_status,
+        avatar_url: user.avatar_url,
     }
 }
 

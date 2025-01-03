@@ -9,6 +9,7 @@ use std::sync::Arc;
 use chrono::Utc;
 use clap::Parser;
 use kustos::prelude::*;
+use opentalk_controller_service::controller_backend::RoomsPoliciesBuilderExt;
 use opentalk_controller_settings::Settings;
 use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
@@ -17,8 +18,7 @@ use opentalk_db_storage::{
 use snafu::{whatever, ResultExt};
 
 use crate::{
-    acl::check_or_create_kustos_default_permissions,
-    api::v1::{events::EventPoliciesBuilderExt, rooms::RoomsPoliciesBuilderExt},
+    acl::check_or_create_kustos_default_permissions, api::v1::events::EventPoliciesBuilderExt,
     Result,
 };
 

@@ -12,6 +12,7 @@ use actix_web::{
 use chrono::Utc;
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
 use kustos::{policies_builder::PoliciesBuilder, Authz};
+use opentalk_controller_service::controller_backend::RoomsPoliciesBuilderExt;
 use opentalk_controller_settings::Settings;
 use opentalk_database::Db;
 use opentalk_db_storage::{
@@ -63,7 +64,6 @@ use crate::{
                 EventPoliciesBuilderExt,
             },
             response::{Created, NoContent},
-            rooms::RoomsPoliciesBuilderExt,
         },
     },
     services::{

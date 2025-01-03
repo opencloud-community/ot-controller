@@ -96,6 +96,12 @@ exceptions = [
   ], name = "opentalk-client-shared" },
   { allow = [
     "EUPL-1.2",
+  ], name = "opentalk-controller-service" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "opentalk-controller-service-facade" },
+  { allow = [
+    "EUPL-1.2",
   ], name = "opentalk-controller-settings" },
   { allow = [
     "EUPL-1.2",

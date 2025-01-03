@@ -39,8 +39,3 @@ pub fn parse_phone_number(
 
     Some(phone_number)
 }
-
-/// Helper function to turn an email address into libravatar URL.
-pub(crate) fn email_to_libravatar_url(libravatar_url: &str, email: &str) -> String {
-    format!("{}{:x}", libravatar_url, md5::compute(email))
-}

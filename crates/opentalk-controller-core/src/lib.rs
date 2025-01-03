@@ -41,8 +41,11 @@ use api::signaling::{
 };
 use arc_swap::ArcSwap;
 use async_trait::async_trait;
+use kustos::Authz;
 use lapin_pool::RabbitMqPool;
 use oidc::OidcContext;
+use opentalk_controller_service::ControllerBackend;
+use opentalk_controller_service_facade::OpenTalkControllerService;
 use opentalk_database::Db;
 use opentalk_jobs::job_runner::JobRunner;
 use opentalk_keycloak_admin::{AuthorizedClient, KeycloakAdminClient};
@@ -52,6 +55,7 @@ use opentalk_signaling_core::{
     VolatileStorage,
 };
 use opentalk_types::api::error::ApiError;
+use opentalk_types_api_v1::auth::OidcProvider;
 use rustls_pki_types::{CertificateDer, PrivatePkcs8KeyDer};
 use service_probe::{set_service_state, start_probe, ServiceState};
 use snafu::{Backtrace, ErrorCompat, Report, ResultExt, Snafu};
@@ -192,6 +196,8 @@ impl<M: RegisterModules> RegisterModules for ControllerModules<M> {
 
 /// Controller struct representation containing all fields required to extend and drive the controller
 pub struct Controller {
+    pub service: OpenTalkControllerService,
+
     /// Settings loaded on [Controller::create]
     pub startup_settings: Arc<Settings>,
 
@@ -208,6 +214,8 @@ pub struct Controller {
     oidc: Arc<OidcContext>,
 
     kc_admin_client: Arc<KeycloakAdminClient>,
+
+    authz: Authz,
 
     /// RabbitMQ connection pool, can be used to create connections and channels
     pub rabbitmq_pool: Arc<RabbitMqPool>,
@@ -235,7 +243,7 @@ pub struct Controller {
     /// List of signaling modules registered to the controller.
     ///
     /// Can and should be used to extend the controllers signaling endpoint's capabilities.
-    pub signaling: SignalingModules,
+    pub signaling_modules: SignalingModules,
 
     /// All metrics of the Application
     pub metrics: metrics::CombinedMetrics,
@@ -330,7 +338,8 @@ impl Controller {
                 oidc_and_user_search_configuration
                     .oidc
                     .frontend
-                    .auth_base_url,
+                    .auth_base_url
+                    .clone(),
                 oidc_and_user_search_configuration
                     .oidc
                     .controller
@@ -402,9 +411,58 @@ impl Controller {
         let (shutdown, _) = broadcast::channel::<()>(1);
         let (reload, _) = broadcast::channel::<()>(4);
 
-        let signaling = SignalingModules::default();
+        let authz = if settings.authz.synchronize_controllers {
+            kustos::Authz::new_with_autoload_and_metrics(
+                db.clone(),
+                rabbitmq_pool.clone(),
+                metrics.kustos.clone(),
+            )
+            .await
+            .whatever_context("Failed to initialize kustos/authz")?
+        } else {
+            kustos::Authz::new(db.clone())
+                .await
+                .whatever_context("Failed to initialize kustos/authz")?
+        };
 
-        let mut controller = Self {
+        let mut initializer = ModuleInitializer {
+            init_data: SignalingModuleInitData {
+                startup_settings: settings.clone(),
+                shared_settings: shared_settings.clone(),
+                rabbitmq_pool: rabbitmq_pool.clone(),
+                volatile: volatile.clone(),
+                shutdown: shutdown.clone(),
+                reload: reload.clone(),
+            },
+            signaling_modules: SignalingModules::default(),
+        };
+
+        M::register(&mut initializer)
+            .await
+            .whatever_context("Failed to register modules")?;
+
+        let backend = {
+            let oidc_provider = OidcProvider {
+                name: "default".to_string(),
+                url: oidc_and_user_search_configuration
+                    .oidc
+                    .frontend
+                    .auth_base_url
+                    .to_string(),
+            };
+
+            ControllerBackend::new(
+                shared_settings.clone(),
+                authz.clone(),
+                db.clone(),
+                oidc_provider,
+                initializer.signaling_modules.get_module_features(),
+            )
+        };
+        let service = OpenTalkControllerService::new(backend);
+
+        let controller = Self {
+            service,
             startup_settings: settings,
             shared_settings,
             args,
@@ -412,25 +470,22 @@ impl Controller {
             storage,
             oidc,
             kc_admin_client,
+            authz,
             rabbitmq_pool,
             exchange_handle,
             volatile,
             shutdown,
             reload,
-            signaling,
+            signaling_modules: initializer.signaling_modules,
             metrics,
         };
-
-        M::register(&mut controller)
-            .await
-            .whatever_context("Failed to register modules")?;
 
         Ok(controller)
     }
 
     /// Runs the controller until a fatal error occurred or a shutdown is requested (e.g. SIGTERM).
     pub async fn run(self) -> Result<()> {
-        let signaling_modules = Arc::new(self.signaling);
+        let signaling_modules = Arc::new(self.signaling_modules);
 
         if let Some(MonitoringSettings { port, addr }) = self.startup_settings.monitoring {
             start_probe(addr, port, ServiceState::Up)
@@ -438,7 +493,7 @@ impl Controller {
                 .whatever_context("Failed to start monitoring")?;
         }
 
-        // Start JobExecuter
+        // Start JobExecutor
         JobRunner::start(
             self.db.clone(),
             self.shutdown.subscribe(),
@@ -475,30 +530,17 @@ impl Controller {
                     .whatever_context("Failed to create rabbitmq channel")?,
             ));
 
-            let authz = if self.startup_settings.authz.synchronize_controllers {
-                kustos::Authz::new_with_autoload_and_metrics(
-                    self.db.clone(),
-                    self.rabbitmq_pool.clone(),
-                    self.metrics.kustos.clone(),
-                )
-                .await
-                .whatever_context("Failed to initialize kustos/authz")?
-            } else {
-                kustos::Authz::new(self.db.clone())
-                    .await
-                    .whatever_context("Failed to initialize kustos/authz")?
-            };
-
             log::info!("Making sure the default permissions are set");
-            check_or_create_kustos_default_permissions(&authz)
+            check_or_create_kustos_default_permissions(&self.authz)
                 .await
                 .whatever_context("Failed to create default permissions")?;
 
-            let authz_middleware = authz.actix_web_middleware(true).await;
+            let authz_middleware = self.authz.actix_web_middleware(true).await;
 
             let metrics = Data::new(self.metrics);
 
             let caches = Data::new(caches::Caches::create(self.volatile.right().clone()));
+            let service = Data::new(self.service.clone());
 
             HttpServer::new(move || {
                 let cors = setup_cors();
@@ -508,7 +550,7 @@ impl Controller {
                 let storage = Data::from(storage.upgrade().unwrap());
 
                 let oidc_ctx = Data::from(oidc_ctx.upgrade().unwrap());
-                let authz = Data::new(authz.clone());
+                let authz = Data::new(self.authz.clone());
                 let volatile = Data::new(volatile.clone());
 
                 let mail_service = mail_service.clone();
@@ -522,6 +564,7 @@ impl Controller {
                     .wrap(cors)
                     .wrap(TracingLogger::<ReducedSpanBuilder>::new())
                     .wrap(api::v1::middleware::headers::Headers {})
+                    .app_data(service.clone())
                     .app_data(caches.clone())
                     .app_data(web::JsonConfig::default().error_handler(json_error_handler))
                     .app_data(Data::from(shared_settings.clone()))
@@ -657,7 +700,7 @@ impl ModulesRegistrar for Controller {
             .with_whatever_context(|_| format!("Failed to initialize module '{}'", M::NAMESPACE))?;
 
         if let Some(params) = params {
-            self.signaling.add_module::<M>(params);
+            self.signaling_modules.add_module::<M>(params);
         } else {
             log::info!(
                 "Skipping module '{}' due to missing configuration",
@@ -1134,4 +1177,31 @@ fn check_for_deprecated_settings(settings: &Settings) -> Result<()> {
     }
 
     Ok(())
+}
+
+struct ModuleInitializer {
+    init_data: SignalingModuleInitData,
+    signaling_modules: SignalingModules,
+}
+
+#[async_trait(?Send)]
+impl ModulesRegistrar for ModuleInitializer {
+    type Error = Whatever;
+
+    async fn register<M: SignalingModule>(&mut self) -> Result<()> {
+        let params = M::build_params(self.init_data.clone())
+            .await
+            .with_whatever_context(|_| format!("Failed to initialize module '{}'", M::NAMESPACE))?;
+
+        if let Some(params) = params {
+            self.signaling_modules.add_module::<M>(params);
+        } else {
+            log::info!(
+                "Skipping module '{}' due to missing configuration",
+                M::NAMESPACE
+            );
+        }
+
+        Ok(())
+    }
 }

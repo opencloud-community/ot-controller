@@ -9,6 +9,9 @@ use actix_web::{
 };
 use chrono::Utc;
 use kustos::{prelude::PoliciesBuilder, Authz};
+use opentalk_controller_service::{
+    controller_backend::RoomsPoliciesBuilderExt, ToUserProfile as _,
+};
 use opentalk_controller_utils::deletion::room::associated_resource_ids_for_invite;
 use opentalk_database::Db;
 use opentalk_db_storage::{
@@ -32,7 +35,7 @@ use super::{response::NoContent, DefaultApiResult};
 use crate::{
     api::{
         responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
-        v1::{rooms::RoomsPoliciesBuilderExt, util::ToUserProfile as _, ApiResponse},
+        v1::ApiResponse,
     },
     settings::SharedSettingsActix,
 };

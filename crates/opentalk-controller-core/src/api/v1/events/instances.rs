@@ -9,6 +9,7 @@ use actix_web::{
 };
 use chrono::{DateTime, Utc};
 use kustos::{prelude::PoliciesBuilder, Authz};
+use opentalk_controller_service::controller_backend::RoomsPoliciesBuilderExt;
 use opentalk_database::Db;
 use opentalk_db_storage::{
     events::{Event, EventException, EventExceptionKind, NewEventException, UpdateEventException},
@@ -49,7 +50,6 @@ use crate::{
                 EventRoomInfoExt,
             },
             response::NoContent,
-            rooms::RoomsPoliciesBuilderExt,
             util::{GetUserProfilesBatched, UserProfilesBatch},
         },
     },

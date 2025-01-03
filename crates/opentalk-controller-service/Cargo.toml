@@ -1,0 +1,29 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+authors.workspace = true
+description = "OpenTalk Controller service"
+documentation = "https://docs.rs/opentalk-controller-service"
+edition = "2021"
+homepage.workspace = true
+license = "EUPL-1.2"
+name = "opentalk-controller-service"
+publish = true
+repository.workspace = true
+version.workspace = true
+
+[dependencies]
+async-trait.workspace = true
+kustos.workspace = true
+md5.workspace = true
+opentalk-controller-service-facade.workspace = true
+opentalk-controller-settings.workspace = true
+opentalk-database.workspace = true
+opentalk-db-storage.workspace = true
+opentalk-types.workspace = true
+opentalk-types-api-v1.workspace = true
+opentalk-types-common.workspace = true
+
+[dev-dependencies]

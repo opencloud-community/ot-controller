@@ -19,6 +19,8 @@ opentalk-cache = { path = "crates/opentalk-cache", version = "0.29.0-alpha" }
 opentalk-client-shared = { path = "crates/opentalk-client-shared", version = "0.29.0-alpha" }
 opentalk-community-signaling-modules = { path = "crates/opentalk-community-signaling-modules", version = "0.29.0-alpha" }
 opentalk-controller-core = { path = "crates/opentalk-controller-core", version = "0.29.0-alpha" }
+opentalk-controller-service = { path = "crates/opentalk-controller-service", version = "0.29.0-alpha" }
+opentalk-controller-service-facade = { path = "crates/opentalk-controller-service-facade", version = "0.29.0-alpha" }
 opentalk-controller-settings = { path = "crates/opentalk-controller-settings", version = "0.29.0-alpha" }
 opentalk-controller-utils = { path = "crates/opentalk-controller-utils", version = "0.29.0-alpha" }
 opentalk-database = { path = "crates/opentalk-database", version = "0.29.0-alpha" }

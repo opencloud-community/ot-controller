@@ -17,6 +17,9 @@ use kustos::{
     prelude::{AccessMethod, IsSubject},
     Authz, Resource,
 };
+use opentalk_controller_service::{
+    controller_backend::RoomsPoliciesBuilderExt, email_to_libravatar_url, ToUserProfile as _,
+};
 use opentalk_controller_settings::{Settings, TenantAssignment};
 use opentalk_controller_utils::deletion::{Deleter, EventDeleter};
 use opentalk_database::{Db, DbConnection};
@@ -65,15 +68,11 @@ use serde::Deserialize;
 use shared_folder::delete_shared_folders;
 use snafu::Report;
 
-use super::{response::NoContent, util::ToUserProfile as _, ApiResponse, DefaultApiResult};
+use super::{response::NoContent, ApiResponse, DefaultApiResult};
 use crate::{
     api::{
         responses::{BadRequest, Forbidden, InternalServerError, NotFound, Unauthorized},
-        util::email_to_libravatar_url,
-        v1::{
-            events::shared_folder::put_shared_folder, rooms::RoomsPoliciesBuilderExt,
-            util::GetUserProfilesBatched,
-        },
+        v1::{events::shared_folder::put_shared_folder, util::GetUserProfilesBatched},
     },
     services::{ExternalMailRecipient, MailRecipient, MailService, UnregisteredMailRecipient},
     settings::SharedSettingsActix,

@@ -11,6 +11,8 @@ use actix_web::{
 };
 use kustos::prelude::PoliciesBuilder;
 use log::error;
+use opentalk_controller_service::controller_backend::RoomsPoliciesBuilderExt;
+use opentalk_controller_service_facade::OpenTalkControllerService;
 use opentalk_controller_settings::{TariffAssignment, TariffStatusMapping, TenantAssignment};
 use opentalk_database::{Db, OptionalExt};
 use opentalk_db_storage::{
@@ -21,7 +23,7 @@ use opentalk_db_storage::{
 };
 use opentalk_types::api::error::{ApiError, AuthenticationError};
 use opentalk_types_api_v1::auth::{
-    login::AuthLoginPostRequestBody, GetLoginResponseBody, OidcProvider, PostLoginResponseBody,
+    login::AuthLoginPostRequestBody, GetLoginResponseBody, PostLoginResponseBody,
 };
 use opentalk_types_common::{
     events::EventId,
@@ -31,7 +33,7 @@ use opentalk_types_common::{
     users::{DisplayName, GroupName},
 };
 
-use super::{events::EventPoliciesBuilderExt, rooms::RoomsPoliciesBuilderExt};
+use super::events::EventPoliciesBuilderExt;
 use crate::{
     api::responses::InternalServerError,
     oidc::{IdTokenInfo, OidcContext, VerifyError},
@@ -257,13 +259,8 @@ fn map_tariff_status_name(mapping: &TariffStatusMapping, name: &String) -> Tarif
     security(),
 )]
 #[get("/auth/login")]
-pub async fn get_login(oidc_ctx: Data<OidcContext>) -> Json<GetLoginResponseBody> {
-    let provider = OidcProvider {
-        name: "default".to_string(),
-        url: oidc_ctx.provider_url(),
-    };
-
-    Json(GetLoginResponseBody { oidc: provider })
+pub async fn get_login(service: Data<OpenTalkControllerService>) -> Json<GetLoginResponseBody> {
+    Json(service.get_login().await)
 }
 
 enum LoginResult {

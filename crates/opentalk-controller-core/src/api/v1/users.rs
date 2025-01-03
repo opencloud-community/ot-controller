@@ -14,6 +14,7 @@ use actix_web::{
 };
 use chrono::Utc;
 use openidconnect::AccessToken;
+use opentalk_controller_service::{email_to_libravatar_url, ToUserProfile as _};
 use opentalk_controller_settings::{TenantAssignment, UsersFindBehavior};
 use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
@@ -42,8 +43,7 @@ use crate::{
     api::{
         responses::{Forbidden, InternalServerError, Unauthorized},
         signaling::SignalingModules,
-        util::email_to_libravatar_url,
-        v1::{assets::asset_to_asset_resource, util::ToUserProfile as _, ApiResponse},
+        v1::{assets::asset_to_asset_resource, ApiResponse},
     },
     caches::Caches,
     oidc::{decode_token, UserClaims},

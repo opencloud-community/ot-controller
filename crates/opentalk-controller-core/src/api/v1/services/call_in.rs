@@ -8,6 +8,7 @@ use actix_web::{
     post,
     web::{Data, Json},
 };
+use opentalk_controller_service::require_feature;
 use opentalk_database::Db;
 use opentalk_db_storage::sip_configs::SipConfig;
 use opentalk_signaling_core::{Participant, VolatileStorage};
@@ -21,7 +22,6 @@ use crate::{
     api::{
         responses::{InternalServerError, Unauthorized},
         signaling::ticket::start_or_continue_signaling_session,
-        v1::util::require_feature,
     },
     settings::SharedSettingsActix,
 };
