@@ -12,6 +12,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 DOCS_TEMP_DIR=target/docs/temporary
 
+# shellcheck source=ci/include/codify.sh
 source "$SCRIPT_DIR"/include/codify.sh
 
 export MAIL_WORKER_PROTOCOL_EXAMPLE_OUTPUT_DIR=$DOCS_TEMP_DIR/mail-worker-protocol

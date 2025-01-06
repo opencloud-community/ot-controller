@@ -31,6 +31,7 @@ DB_DIR="$DOCS_TEMP_DIR"/database
 CMDNAME=opentalk-controller
 ER_DIAGRAM_MERMAID="$DB_DIR/er-diagram.mermaid"
 
+# shellcheck source=ci/include/codify.sh
 source "$SCRIPT_DIR"/include/codify.sh
 
 if ! command -v opentalk-ci-doc-updater; then
@@ -38,7 +39,7 @@ if ! command -v opentalk-ci-doc-updater; then
   exit 1
 fi
 
-if [! command -v $OPENTALK_CONTROLLER_CMD ] || [ ! -f $OPENTALK_CONTROLLER_CMD ]; then
+if [ ! "$(command -v "$OPENTALK_CONTROLLER_CMD")" ] || [ ! -f "$OPENTALK_CONTROLLER_CMD" ]; then
   echo "The variable 'OPENTALK_CONTROLLER_CMD' needs to be set to a path pointing \
 to a valid controller binary or the controller needs to be build using \
 'cargo build --release' prior to executing this script"
@@ -50,7 +51,7 @@ mkdir -p "$CLI_DIR" "$JOBS_DIR" "$CONFIG_DIR" "$DB_DIR"
 # Generate mermaid diagrams only if sqlant is available. Otherwise use already provided mermaid
 # sources (e.g. provided by other ci jobs).
 if command -v sqlant; then
-  $SCRIPT_DIR/docs-generate-mermaid.sh
+  "$SCRIPT_DIR"/docs-generate-mermaid.sh
 fi
 
 if [ ! -f $ER_DIAGRAM_MERMAID ]; then

@@ -11,7 +11,7 @@
 # Make sure to store a GitLab access token at `~/.gitlab_token`.
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-PROJECT_DIR=$( dirname $SCRIPT_DIR )
+PROJECT_DIR=$( dirname "$SCRIPT_DIR" )
 # Remove Unreleased section from Changelog
 
 GITLAB_TOKEN_FILE=$HOME/.gitlab_token
@@ -25,9 +25,9 @@ else
     echo "The scope should at least contain read_api."
 fi
 
-docker run -it -v $PROJECT_DIR:/app \
+docker run -it -v "$PROJECT_DIR":/app \
     -e GITLAB_REPO=$GITLAB_REPO \
     -e GITLAB_API_URL=https://git.opentalk.dev/api/v4 \
-    -e GITLAB_TOKEN=$(cat $GITLAB_TOKEN_FILE) \
-    -u $(id -u):$(id -g) \
+    -e GITLAB_TOKEN="$(cat "$GITLAB_TOKEN_FILE")" \
+    -u "$(id -u):$(id -g)" \
     git.opentalk.dev:5050/opentalk/tools/check-changelog:v0.3.0
