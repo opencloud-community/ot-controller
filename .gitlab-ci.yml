@@ -126,6 +126,15 @@ lint:doc:
     RUSTDOCFLAGS: -Dwarnings
   script: cargo doc --workspace --no-deps
 
+lint:shellcheck:
+  image: koalaman/shellcheck-alpine:latest
+  stage: lint
+  <<: *default_job_condition
+  before_script:
+    - apk update
+    - apk add git
+  script: git ls-files "*.sh" -z | xargs -0r shellcheck
+
 lint:dependency_check:
   stage: lint
   needs: []
