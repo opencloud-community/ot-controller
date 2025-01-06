@@ -2275,6 +2275,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "500":
           $ref: "#/components/responses/InternalServerError"
+      deprecated: true
       security:
         - BearerAuth: []
         - InviteCode: []

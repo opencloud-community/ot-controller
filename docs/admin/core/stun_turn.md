@@ -1,5 +1,10 @@
 # STUN and TURN
 
+**Deprecation warning:**
+The TURN settings and endpoints are deprecated and will be removed in the future. Previously, deployments with a Janus
+SFU relied on our TURN configuration and endpoint. With the transition from Janus to LiveKit, the TURN configuration is
+[configured in LiveKit](https://docs.livekit.io/home/self-hosting/deployment/#turn-tls).
+
 The backend provides an endpoint that offers information about the STUN and
 TURN servers. STUN URIs are simply a list of usable STUN endpoints that can
 be used by the client. The TURN server utilizes the `pre_shared_key` from
@@ -16,7 +21,7 @@ The sections in the [configuration file](configuration.md) are called `stun` and
 | ------ | -------------- | -------- | ------------- | ----------------------------- |
 | `stun` | `list<string>` | no       | -             | List of STUN server endpoints |
 
-### TURN section
+### TURN section (deprecated)
 
 | Field      | Type               | Required | Default value | Description                                                             |
 | ---------- | ------------------ | -------- | ------------- | ----------------------------------------------------------------------- |
