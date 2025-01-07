@@ -53,7 +53,7 @@ ignore = [
 # https://embarkstudios.github.io/cargo-deny/checks/licenses/cfg.html
 [licenses]
 version = 2
-# List of explictly allowed licenses
+# List of explicitly allowed licenses
 # See https://spdx.org/licenses/ for list of possible licenses
 # [possible values: any SPDX 3.11 short identifier (+ optional exception)].
 allow = [
@@ -239,6 +239,8 @@ skip = [
   { name = "ahash", version = "0.7" },
   { name = "async-io", version = "1" },
   { name = "async-lock", version = "2" },
+  { name = "axum", version = "0.7" },
+  { name = "axum-core", version = "0.4" },
   { name = "base16ct", version = "0.1" },
   { name = "base64", version = "0.13" },
   { name = "base64", version = "0.21" },
@@ -268,6 +270,7 @@ skip = [
   { name = "itertools", version = "0.10" },
   { name = "itertools", version = "0.11" },
   { name = "itertools", version = "0.13" },
+  { name = "matchit", version = "0.7" },
   { name = "p256", version = "0.11" },
   { name = "pkcs8", version = "0.9" },
   { name = "polling", version = "2" },
