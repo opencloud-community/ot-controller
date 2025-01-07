@@ -108,6 +108,9 @@ pub struct Settings {
     pub spacedeck: Option<Spacedeck>,
 
     #[serde(default)]
+    pub subroom_audio: Option<SubroomAudio>,
+
+    #[serde(default)]
     pub reports: Option<Reports>,
 
     #[serde(default)]
@@ -639,6 +642,12 @@ pub struct Etherpad {
 pub struct Spacedeck {
     pub url: url::Url,
     pub api_key: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct SubroomAudio {
+    #[serde(default)]
+    pub enable_whisper: bool,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]

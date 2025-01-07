@@ -31,6 +31,7 @@ Functionality that can be configured through the configuration file:
 - [EtherPad](../advanced/additional_services/etherpad.md)
 - [SpaceDeck](../advanced/additional_services/spacedeck.md)
 - [Reports](../advanced/additional_services/reports.md)
+- [Subroom Audio](subroom_audio.md)
 - [Default and fallback values](../advanced/defaults.md)
 - [Endpoints](endpoints.md)
 - [Metrics](logging/metrics.md)
@@ -315,6 +316,10 @@ urls = ["localhost:2379"]
 #{%- endfor %}
 #"""
 #url = "http://localhost:6560"
+
+# Subroom audio whisper configuration
+#[subroom_audio]
+#enable_whisper = false
 
 # Shared folder configuration
 #[shared_folder]
