@@ -57,7 +57,7 @@ impl ModuleId {
 }
 
 #[cfg(feature = "utoipa")]
-mod impl_to_schema {
+mod impl_utoipa {
     //! The `#[derive(utoipa::ToSchema)] implementation does not yet properly support
     //! exposing schema information of types wrapped by the NewType pattern, therefore
     //! a manual implementation is required for now.
@@ -65,8 +65,8 @@ mod impl_to_schema {
 
     use serde_json::json;
     use utoipa::{
-        openapi::{schema::AnyOf, ObjectBuilder, RefOr, Schema, SchemaType},
-        ToSchema,
+        openapi::{schema::AnyOf, ObjectBuilder, RefOr, Schema, Type},
+        PartialSchema, ToSchema,
     };
 
     use super::{
@@ -74,27 +74,30 @@ mod impl_to_schema {
     };
     use crate::utils::ExampleData as _;
 
-    impl<'__s> ToSchema<'__s> for ModuleId {
-        fn schema() -> (&'__s str, RefOr<Schema>) {
-            (
-                "ModuleId",
-                Schema::AnyOf(AnyOf {
-                    items: vec![ObjectBuilder::new()
-                        .schema_type(SchemaType::String)
-                        .description(Some("A module identifier"))
-                        .min_length(Some(MIN_MODULE_ID_LENGTH))
-                        .max_length(Some(MAX_MODULE_ID_LENGTH))
-                        .pattern(Some(format!("^{MODULE_ID_SCHEMA_CHARS_REGEX}*$")))
-                        .example(Some(ModuleId::example_data().to_string().into()))
-                        .into()],
-                    description: None,
-                    default: Some(json!(ModuleId::default())),
-                    example: Some(json!(Self::example_data())),
-                    discriminator: None,
-                    nullable: false,
-                })
-                .into(),
-            )
+    impl PartialSchema for ModuleId {
+        fn schema() -> RefOr<Schema> {
+            Schema::AnyOf(AnyOf {
+                items: vec![ObjectBuilder::new()
+                    .schema_type(Type::String)
+                    .description(Some("A module identifier"))
+                    .min_length(Some(MIN_MODULE_ID_LENGTH))
+                    .max_length(Some(MAX_MODULE_ID_LENGTH))
+                    .pattern(Some(format!("^{MODULE_ID_SCHEMA_CHARS_REGEX}*$")))
+                    .examples([json!(ModuleId::example_data())])
+                    .into()],
+                description: None,
+                default: Some(json!(ModuleId::default())),
+                example: Some(json!(Self::example_data())),
+                discriminator: None,
+                ..Default::default()
+            })
+            .into()
+        }
+    }
+
+    impl ToSchema for ModuleId {
+        fn schemas(schemas: &mut Vec<(String, RefOr<Schema>)>) {
+            schemas.push((Self::name().into(), Self::schema()));
         }
     }
 }

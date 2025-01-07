@@ -12,7 +12,7 @@ use opentalk_controller_service::require_feature;
 use opentalk_database::Db;
 use opentalk_db_storage::sip_configs::SipConfig;
 use opentalk_signaling_core::{Participant, VolatileStorage};
-use opentalk_types::api::error::ApiError;
+use opentalk_types::api::error::{ApiError, StandardErrorBody};
 use opentalk_types_api_v1::services::{
     call_in::PostCallInStartRequestBody, PostServiceStartResponseBody,
 };

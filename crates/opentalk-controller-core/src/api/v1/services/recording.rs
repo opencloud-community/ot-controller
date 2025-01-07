@@ -17,7 +17,7 @@ use opentalk_signaling_core::{
     assets::{save_asset, verify_storage_usage, NewAssetFileName},
     ChunkFormat, ObjectStorage, ObjectStorageError, Participant, VolatileStorage,
 };
-use opentalk_types::api::error::ApiError;
+use opentalk_types::api::error::{ApiError, StandardErrorBody};
 use opentalk_types_api_v1::services::{
     recording::{GetRecordingUploadQuery, PostRecordingStartRequestBody},
     PostServiceStartResponseBody,

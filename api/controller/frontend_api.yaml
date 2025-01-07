@@ -1,5 +1,5 @@
 ---
-openapi: 3.0.3
+openapi: 3.1.0
 info:
   title: OpenTalk Controller Frontend API
   description: Specifies the endpoints and structure of the OpenTalk Controller Frontend API
@@ -8,6 +8,7 @@ info:
     email: mail@opentalk.eu
   license:
     name: EUPL-1.2
+    identifier: EUPL-1.2
   version: 0.29.0-alpha
 servers:
   - url: /v1
@@ -90,17 +91,17 @@ paths:
           description: Optional minimum time in which the event happens
           required: false
           schema:
-            allOf:
+            oneOf:
+              - type: "null"
               - $ref: "#/components/schemas/Timestamp"
-            nullable: true
         - name: time_max
           in: query
           description: Optional maximum time in which the event happens
           required: false
           schema:
-            allOf:
+            oneOf:
+              - type: "null"
               - $ref: "#/components/schemas/Timestamp"
-            nullable: true
         - name: invitees_max
           in: query
           description: |-
@@ -131,9 +132,10 @@ paths:
           description: How many events to return per page
           required: false
           schema:
-            type: integer
+            type:
+              - integer
+              - "null"
             format: int64
-            nullable: true
         - name: after
           in: query
           description: |-
@@ -142,10 +144,9 @@ paths:
             Returned by the endpoint if the maximum number of events per page has been hit
           required: false
           schema:
-            allOf:
-              - type: string
-                description: An encoded cursor pointing to a position in a series of elements
-            nullable: true
+            oneOf:
+              - type: "null"
+              - $ref: "#/components/schemas/Cursor_GetEventsCursorData"
         - name: adhoc
           in: query
           description: |-
@@ -156,8 +157,9 @@ paths:
             be returned regardless of their `adhoc` flag value.
           required: false
           schema:
-            type: boolean
-            nullable: true
+            type:
+              - boolean
+              - "null"
         - name: time_independent
           in: query
           description: |-
@@ -168,8 +170,9 @@ paths:
             all events will be returned regardless of their time dependency.
           required: false
           schema:
-            type: boolean
-            nullable: true
+            type:
+              - boolean
+              - "null"
       responses:
         "200":
           description: List of the events and exceptions
@@ -206,7 +209,6 @@ paths:
           schema:
             type: boolean
       requestBody:
-        description: ""
         content:
           application/json:
             schema:
@@ -386,30 +388,35 @@ paths:
           description: Minimum time of the event instances
           required: false
           schema:
-            allOf:
+            oneOf:
+              - type: "null"
               - $ref: "#/components/schemas/Timestamp"
-            nullable: true
         - name: time_max
           in: query
           description: Maximum time of the event instances
           required: false
           schema:
-            allOf:
+            oneOf:
+              - type: "null"
               - $ref: "#/components/schemas/Timestamp"
-            nullable: true
         - name: per_page
           in: query
           description: How many events to return per page
           required: false
           schema:
-            type: integer
+            type:
+              - integer
+              - "null"
             format: int64
-            nullable: true
         - name: after
           in: query
           required: false
           schema:
-            $ref: "#/components/schemas/GetEventInstancesCursor"
+            $ref: "#/components/schemas/GetEventInstancesCursorData"
+            description: |-
+              Opaque token which represents T as a base64 string (where T is encoded using bincode)
+
+              Used for cursor based pagination
         - name: event_id
           in: path
           description: The id of the event
@@ -636,9 +643,9 @@ paths:
           description: "If present, the results will be filtered by that state"
           required: false
           schema:
-            allOf:
+            oneOf:
+              - type: "null"
               - $ref: "#/components/schemas/EventInviteStatus"
-            nullable: true
         - name: event_id
           in: path
           description: The id of the event
@@ -1572,11 +1579,10 @@ paths:
     put:
       tags:
         - "api::v1::sip_configs"
-      summary: Modify the sip configuration of a room. A new sip configuration is created
-      description: |-
+      summary: |-
+        Modify the sip configuration of a room. A new sip configuration is created
         if none was set before.
-
-        Returns the new modified sip configuration.
+      description: Returns the new modified sip configuration.
       operationId: put
       parameters:
         - name: room_id
@@ -1658,7 +1664,6 @@ paths:
           schema:
             $ref: "#/components/schemas/RoomId"
       requestBody:
-        description: ""
         content:
           application/json:
             schema:
@@ -2384,14 +2389,14 @@ paths:
             format: int64
         - name: sort
           in: query
-          description: sort by this field
-          required: true
+          description: The optional sorting query parameter
+          required: false
           schema:
             $ref: "#/components/schemas/AssetSorting"
         - name: order
           in: query
-          description: ordering direction
-          required: true
+          description: The sorting order that should be applied to the collection
+          required: false
           schema:
             $ref: "#/components/schemas/Ordering"
       responses:
@@ -2555,12 +2560,13 @@ components:
           description: The filename of the asset
         id:
           $ref: "#/components/schemas/AssetId"
+          description: The ID of an asset
         kind:
           type: string
           description: The asset kind
         namespace:
-          allOf:
-            - $ref: "#/components/schemas/ModuleId"
+          $ref: "#/components/schemas/ModuleId"
+          description: The namespace of the asset
         size:
           type: integer
           format: int64
@@ -2581,6 +2587,19 @@ components:
         - namespace
         - kind
         - created_at
+    AssetSortingQuery:
+      type: object
+      description: |-
+        Asset sorting query type
+
+        The struct describes the query parameter that can be provided to sort the returned assets.
+      properties:
+        order:
+          $ref: "#/components/schemas/Ordering"
+          description: The sorting order that should be applied to the collection
+        sort:
+          $ref: "#/components/schemas/AssetSorting"
+          description: The optional sorting query parameter
     AuthLoginPostRequestBody:
       type: object
       description: "Body of a *POST* request on `/auth/login`"
@@ -2598,6 +2617,7 @@ components:
       example: 00000000-0000-0000-0000-0000badcab1e
     CallInId:
       $ref: "#/components/schemas/NumericId"
+      description: The id of a call-in participation
     CallInInfo:
       type: object
       description: Information needed to participate in a call-in connection.
@@ -2608,8 +2628,12 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/CallInId"
+          description: SIP ID which must transmitted via DTMF (number field on the phone) to identify this room
         password:
           $ref: "#/components/schemas/CallInPassword"
+          description: |-
+            SIP password which must be transmitted via DTMF (number field on the phone) after entering the `sip_id`
+            to enter the room
         tel:
           type: string
           description: SIP Call-In phone number which must be used to reach the room
@@ -2619,9 +2643,20 @@ components:
         tel: +555-123-456-789
     CallInPassword:
       $ref: "#/components/schemas/NumericId"
+      description: The password for authenticating call-in participation
     CursorLink:
       type: string
       example: "<https://api.example.org/resource?after=urlencodednextpagetoken>; rel='next'"
+    Cursor_GetEventInstancesCursorData:
+      type: string
+      description: A cursor pointing to an event instance
+      examples:
+        - BAAAAAAAAAA
+    Cursor_GetEventsCursorData:
+      type: string
+      description: A cursor pointing to an event instance
+      examples:
+        - EAAAAAAAAAAAAAAAAAAAAAAAAEQzIhEAFAAAAAAAAAAyMDI0LTA3LTIwVDE0OjE2OjE5WgA
     DateTimeTz:
       type: object
       description: Representation of a datetime timezone
@@ -2635,6 +2670,7 @@ components:
           description: UTC datetime
         timezone:
           $ref: "#/components/schemas/TimeZone"
+          description: Timezone in which the datetime was created in
       example:
         datetime: "2024-07-05T17:23:42Z"
         timezone: Europe/Berlin
@@ -2646,16 +2682,19 @@ components:
       properties:
         email:
           $ref: "#/components/schemas/EmailAddress"
+          description: Email address of the user to delete the invite for
     DisplayName:
       type: string
       description: The display name of a user or participant
-      example: Alice Adams
+      examples:
+        - Alice Adams
       maxLength: 255
     EmailAddress:
       type: string
       format: email
       description: An e-mail address
-      example: alice@example.com
+      examples:
+        - alice@example.com
     EmailInvite:
       type: object
       description: "Request body variant for the `POST /events/{event_id}/invites` endpoint"
@@ -2664,8 +2703,10 @@ components:
       properties:
         email:
           $ref: "#/components/schemas/EmailAddress"
+          description: Email address of the user to invite
         role:
           $ref: "#/components/schemas/EmailInviteRole"
+          description: Invite role of the user
       example:
         email: alice@example.com
         role: guest
@@ -2694,16 +2735,20 @@ components:
     ErrorBody:
       oneOf:
         - $ref: "#/components/schemas/StandardErrorBody"
+          description: The standard error body
         - $ref: "#/components/schemas/ValidationErrorBody"
+          description: Special error body for validation errors
       description: The body of an error response
     EventAndInstanceId:
       type: string
       description: An event id and an instance id
-      example: 00000000-0000-0000-0000-004433221100_20240705T170242Z
+      examples:
+        - 00000000-0000-0000-0000-004433221100_20240705T170242Z
     EventDescription:
       type: string
       description: The description of an event
-      example: The Weekly Team Event
+      examples:
+        - The Weekly Team Event
       maxLength: 4096
     EventExceptionResource:
       type: object
@@ -2729,39 +2774,52 @@ components:
           description: Can the current user edit this resource
         created_at:
           $ref: "#/components/schemas/Timestamp"
+          description: Timestamp of the exceptions creation
         created_by:
           $ref: "#/components/schemas/PublicUserProfile"
+          description: Public user profile of the user which created the exception
         description:
-          allOf:
-            - $ref: "#/components/schemas/EventDescription"
+          $ref: "#/components/schemas/EventDescription"
+          description: Override the description of the instance
         ends_at:
-          allOf:
-            - $ref: "#/components/schemas/DateTimeTz"
+          $ref: "#/components/schemas/DateTimeTz"
+          description: "Override the `ends_at` time of the instance"
         id:
           $ref: "#/components/schemas/EventAndInstanceId"
+          description: Opaque ID of the exception
         instance_id:
           $ref: "#/components/schemas/InstanceId"
+          description: ID of the instance the exception overrides
         is_all_day:
           type: boolean
           description: "Override the `is_all_day` property of the instance"
         original_starts_at:
           $ref: "#/components/schemas/DateTimeTz"
+          description: "The `starts_at` of the instance this exception modifies. Used to match the exception the instance"
         recurring_event_id:
           $ref: "#/components/schemas/EventId"
+          description: ID of the event  the exception belongs to
         starts_at:
-          allOf:
-            - $ref: "#/components/schemas/DateTimeTz"
+          $ref: "#/components/schemas/DateTimeTz"
+          description: "Override the `starts_at` time of the instance"
         status:
           $ref: "#/components/schemas/EventStatus"
+          description: |-
+            Override the status of the event instance
+
+            This can be used to cancel a occurrence of an event
         title:
-          allOf:
-            - $ref: "#/components/schemas/EventTitle"
+          $ref: "#/components/schemas/EventTitle"
+          description: Override the title of the instance
         type:
           $ref: "#/components/schemas/EventType"
+          description: "Must always be `exception`"
         updated_at:
           $ref: "#/components/schemas/Timestamp"
+          description: Timestamp of the exceptions last update
         updated_by:
           $ref: "#/components/schemas/PublicUserProfile"
+          description: Public user profile of the user which last updated the exception
       example:
         can_edit: false
         created_at: "2024-07-20T14:16:19Z"
@@ -2819,16 +2877,19 @@ components:
           description: Indicates whether the meeting room should have e2e encryption enabled.
         id:
           $ref: "#/components/schemas/EventId"
+          description: The id of the event
         is_adhoc:
           type: boolean
           description: True if the event was created ad-hoc
         meeting_details:
-          allOf:
-            - $ref: "#/components/schemas/MeetingDetails"
+          $ref: "#/components/schemas/MeetingDetails"
+          description: The meeting details of the event
         room_id:
           $ref: "#/components/schemas/RoomId"
+          description: The id of the room belonging to the event
         title:
           $ref: "#/components/schemas/EventTitle"
+          description: The title of the event
       example:
         e2e_encryption: false
         id: 00000000-0000-0000-0000-004433221100
@@ -2883,18 +2944,25 @@ components:
           description: Fkag to indicate if the current user can edit the event
         created_at:
           $ref: "#/components/schemas/Timestamp"
+          description: Timestamp of the event creation
         created_by:
           $ref: "#/components/schemas/PublicUserProfile"
+          description: Public user profile of the user which created the event
         description:
           $ref: "#/components/schemas/EventDescription"
+          description: Description of the event
         ends_at:
           $ref: "#/components/schemas/DateTimeTz"
+          description: End time of the event.
         id:
           $ref: "#/components/schemas/EventAndInstanceId"
+          description: Opaque id of the event instance resource
         instance_id:
           $ref: "#/components/schemas/InstanceId"
+          description: Opaque id of the instance
         invite_status:
           $ref: "#/components/schemas/EventInviteStatus"
+          description: "Is this event in the current user's favorite list?"
         invitees:
           type: array
           items:
@@ -2911,23 +2979,33 @@ components:
           description: Flag to indicate if the event is a favorite of the current user
         recurring_event_id:
           $ref: "#/components/schemas/EventId"
+          description: ID of the recurring event this instance belongs to
         room:
           $ref: "#/components/schemas/EventRoomInfo"
+          description: All information about the room the event takes place in
         shared_folder:
-          allOf:
-            - $ref: "#/components/schemas/SharedFolder"
+          $ref: "#/components/schemas/SharedFolder"
+          description: Information about the shared folder for the event
         starts_at:
           $ref: "#/components/schemas/DateTimeTz"
+          description: Start time of the event.
         status:
           $ref: "#/components/schemas/EventStatus"
+          description: The invite status of the current user for this event
         title:
           $ref: "#/components/schemas/EventTitle"
+          description: Title of the event
         type:
           $ref: "#/components/schemas/EventType"
+          description: "Must always be `instance`"
         updated_at:
           $ref: "#/components/schemas/Timestamp"
+          description: Timestamp of the last update
         updated_by:
           $ref: "#/components/schemas/PublicUserProfile"
+          description: |-
+            Public user profile of the user which last updated the event
+            or created the exception which modified the instance
       example:
         can_edit: false
         created_at: "2024-07-20T14:16:19Z"
@@ -3003,15 +3081,17 @@ components:
       description: |-
         Invitee to an event
 
-        Contains user profile and invitee status
+         Contains user profile and invitee status
       required:
         - profile
         - status
       properties:
         profile:
           $ref: "#/components/schemas/EventInviteeProfile"
+          description: User profile of the invitee
         status:
           $ref: "#/components/schemas/EventInviteStatus"
+          description: Invite status of the invitee
       example:
         profile:
           avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
@@ -3028,6 +3108,7 @@ components:
       oneOf:
         - allOf:
             - $ref: "#/components/schemas/PublicInviteUserProfile"
+              description: Registered user profile
             - type: object
               required:
                 - kind
@@ -3036,8 +3117,10 @@ components:
                   type: string
                   enum:
                     - registered
+          description: Registered user profile
         - allOf:
             - $ref: "#/components/schemas/UnregisteredUser"
+              description: Unregistered user profile
             - type: object
               required:
                 - kind
@@ -3046,8 +3129,10 @@ components:
                   type: string
                   enum:
                     - unregistered
+          description: Unregistered user profile
         - allOf:
             - $ref: "#/components/schemas/EmailOnlyUser"
+              description: Email only user profile
             - type: object
               required:
                 - kind
@@ -3056,6 +3141,7 @@ components:
                   type: string
                   enum:
                     - email
+          description: Email only user profile
       description: Profile of an event invitee
       example:
         avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
@@ -3067,12 +3153,12 @@ components:
         lastname: Adams
         role: user
         title: ""
-      discriminator:
-        propertyName: kind
     EventOrException:
       oneOf:
         - $ref: "#/components/schemas/EventResource"
+          description: Event resource
         - $ref: "#/components/schemas/EventExceptionResource"
+          description: Event exception resource
       description: "Return type of the `GET /events` endpoint"
       example:
         can_edit: false
@@ -3169,17 +3255,31 @@ components:
           description: Can the current user edit this resource
         created_at:
           $ref: "#/components/schemas/Timestamp"
+          description: Timestamp of the event creation
         created_by:
           $ref: "#/components/schemas/PublicUserProfile"
+          description: Public user profile of the user which created the event
         description:
           $ref: "#/components/schemas/EventDescription"
+          description: |-
+            Description of the event
+
+            For display purposes
         ends_at:
-          allOf:
-            - $ref: "#/components/schemas/DateTimeTz"
+          $ref: "#/components/schemas/DateTimeTz"
+          description: |-
+            End time of the event.
+
+            Omitted if `is_time_independent` is true
+
+            For events of type `recurring` the datetime contains the time of the first instance.
+            The datetimes of subsequent recurrences are computed using the datetime of the first instance and its timezone.
         id:
           $ref: "#/components/schemas/EventId"
+          description: ID of the event
         invite_status:
           $ref: "#/components/schemas/EventInviteStatus"
+          description: The invite status of the current user for this event
         invitees:
           type: array
           items:
@@ -3210,17 +3310,38 @@ components:
             Time independent events are not bound to any time but instead are constantly available to join
         recurrence_pattern:
           $ref: "#/components/schemas/RecurrencePattern"
+          description: |-
+            Recurrence pattern(s) for recurring events
+
+            May contain RRULE, EXRULE, RDATE and EXDATE strings
+
+            Requires `type` to be `recurring`
+
+            Contains a list of recurrence rules which describe the occurrences of the event.
+            To get all event instances resolved use the `GET /events/{event_id}/instances` endpoint.
+            Changing this field will always remove all exceptions for the event.
+
+            Allowed are `RRULE`, `RDATE`, `EXRULE` and `EXDATE`.
+            The `DTSTART` and `DTEND` attributes are not allowed as their information is stored
+            in the `starts_at` and `ends_at` fields.
         room:
           $ref: "#/components/schemas/EventRoomInfo"
+          description: All information about the room the event takes place in
         shared_folder:
-          allOf:
-            - $ref: "#/components/schemas/SharedFolder"
+          $ref: "#/components/schemas/SharedFolder"
+          description: Information about the shared folder for the event
         show_meeting_details:
           type: boolean
           description: "Indicates whether meeting details should be provided. If absent, no meeting details are made available."
         starts_at:
-          allOf:
-            - $ref: "#/components/schemas/DateTimeTz"
+          $ref: "#/components/schemas/DateTimeTz"
+          description: |-
+            Start time of the event.
+
+            Omitted if `is_time_independent` is true
+
+            For events of type `recurring` the datetime contains the time of the first instance.
+            The datetimes of subsequent recurrences are computed using the datetime of the first instance and its timezone.
         streaming_targets:
           type: array
           items:
@@ -3228,12 +3349,22 @@ components:
           description: The streaming targets of the room associated with the event
         title:
           $ref: "#/components/schemas/EventTitle"
+          description: |-
+            Title of the event
+
+            For display purposes
         type:
           $ref: "#/components/schemas/EventType"
+          description: |-
+            Type of event
+
+            Time independent events or events without recurrence are `single` while recurring events are `recurring`
         updated_at:
           $ref: "#/components/schemas/Timestamp"
+          description: Timestamp of the last update
         updated_by:
           $ref: "#/components/schemas/PublicUserProfile"
+          description: Public user profile of the user which last updated the event
       example:
         can_edit: false
         created_at: "2024-07-20T14:16:19Z"
@@ -3307,16 +3438,17 @@ components:
         - waiting_room
       properties:
         call_in:
-          allOf:
-            - $ref: "#/components/schemas/CallInInfo"
+          $ref: "#/components/schemas/CallInInfo"
+          description: Call-In information
         e2e_encryption:
           type: boolean
           description: Flag to check if the room has e2e encryption enabled
         id:
           $ref: "#/components/schemas/RoomId"
+          description: ID of the room
         password:
-          allOf:
-            - $ref: "#/components/schemas/RoomPassword"
+          $ref: "#/components/schemas/RoomPassword"
+          description: Password of the room
         waiting_room:
           type: boolean
           description: Flag to check if the room has a waiting room enabled
@@ -3339,7 +3471,8 @@ components:
     EventTitle:
       type: string
       description: The title of an event
-      example: Team Event
+      examples:
+        - Team Event
       maxLength: 255
     EventType:
       type: string
@@ -3356,21 +3489,26 @@ components:
     FeatureId:
       type: string
       description: A feature identifier
-      example: myfeature
+      examples:
+        - myfeature
       maxLength: 255
       minLength: 1
       pattern: "^[-_0-9a-zA-Z]*$"
     FileExtension:
       type: string
       description: An extension for a file path
-      example: pdf
+      examples:
+        - pdf
       maxLength: 10
       pattern: "^[0-9a-zA-Z]*$"
     GetEventInstanceResponseBody:
       $ref: "#/components/schemas/EventInstance"
-    GetEventInstancesCursor:
+      description: "Response for *GET /events/{event_id}/instances/{instance_id}*"
+    GetEventInstancesCursorData:
       type: string
-      description: An encoded cursor pointing to a position in a series of elements
+      description: A cursor pointing to an event instance
+      examples:
+        - BAAAAAAAAAA
     GetEventInstancesResponseBody:
       type: array
       items:
@@ -3451,6 +3589,11 @@ components:
           minimum: 0
       example:
         total_pending_invites: 3
+    GetEventsCursorData:
+      type: string
+      description: A cursor pointing to an event instance
+      examples:
+        - EAAAAAAAAAAAAAAAAAAAAAAAAEQzIhEAFAAAAAAAAAAyMDI0LTA3LTIwVDE0OjE2OjE5WgA
     GetFindResponseBody:
       type: array
       items:
@@ -3460,6 +3603,7 @@ components:
       oneOf:
         - allOf:
             - $ref: "#/components/schemas/PublicUserProfile"
+              description: Registered user
             - type: object
               required:
                 - kind
@@ -3468,8 +3612,10 @@ components:
                   type: string
                   enum:
                     - registered
+          description: Registered user
         - allOf:
             - $ref: "#/components/schemas/UnregisteredUser"
+              description: Unregistered user
             - type: object
               required:
                 - kind
@@ -3478,9 +3624,8 @@ components:
                   type: string
                   enum:
                     - unregistered
+          description: Unregistered user
       description: The response for users found
-      discriminator:
-        propertyName: kind
     GetLoginResponseBody:
       type: object
       description: "Body of the response to a *GET* request on `/auth/login`"
@@ -3489,8 +3634,10 @@ components:
       properties:
         oidc:
           $ref: "#/components/schemas/OidcProvider"
+          description: Description of the OIDC provider to use for the login
     GetRoomStreamingTargetResponseBody:
       $ref: "#/components/schemas/RoomStreamingTargetResource"
+      description: "The body of a *GET /rooms/{room_id}/streaming_targets/{streaming_target_id}* response"
     GetRoomStreamingTargetsResponseBody:
       type: array
       items:
@@ -3565,12 +3712,15 @@ components:
     IceServer:
       oneOf:
         - $ref: "#/components/schemas/TurnServer"
+          description: TURN ICE server type
         - $ref: "#/components/schemas/StunServer"
+          description: STUN ICE server type
       description: Description of an ICE server
     InstanceId:
       type: string
       description: An event instance id
-      example: "2024-07-20T15:23:42+00:00"
+      examples:
+        - "2024-07-20T15:23:42+00:00"
     InviteCode:
       type: string
       format: uuid
@@ -3597,21 +3747,26 @@ components:
           description: The timestamp this invite was created at
         created_by:
           $ref: "#/components/schemas/PublicUserProfile"
+          description: The user who created the invite
         expiration:
-          type: string
+          type:
+            - string
+            - "null"
           format: date-time
           description: Optional expiration date of the invite
-          nullable: true
         invite_code:
           $ref: "#/components/schemas/InviteCode"
+          description: The invite code id
         room_id:
           $ref: "#/components/schemas/RoomId"
+          description: The room id for the invite
         updated:
           type: string
           format: date-time
           description: The timestamp this invite was updated at
         updated_by:
           $ref: "#/components/schemas/PublicUserProfile"
+          description: The user who updated the invite
       example:
         active: true
         created: "2024-06-18T11:22:33Z"
@@ -3644,18 +3799,19 @@ components:
     Language:
       type: string
       description: A language identifier
-      example: de
+      examples:
+        - de
       maxLength: 35
     MeetingDetails:
       type: object
       description: Details about meeting
       properties:
         call_in:
-          allOf:
-            - $ref: "#/components/schemas/CallInInfo"
+          $ref: "#/components/schemas/CallInInfo"
+          description: The call-in information for the event
         invite_code_id:
-          allOf:
-            - $ref: "#/components/schemas/InviteCode"
+          $ref: "#/components/schemas/InviteCode"
+          description: The invite code id of the event
         streaming_links:
           type: array
           items:
@@ -3670,24 +3826,12 @@ components:
         streaming_links:
           - name: My OwnCast Stream
             url: "https://owncast.example.com/mystream"
-    ModuleFeatureId:
-      anyOf:
-        - type: string
-          description: A feature identifier
-          example: myfeature
-          maxLength: 255
-          minLength: 1
-          pattern: "^[-_0-9a-zA-Z]*$"
-        - type: string
-          description: A module feature identifier
-          example: "mymodule::myfeature"
-          pattern: "^[-_0-9a-zA-Z]{1,255}::[-_0-9a-zA-Z]{1,255}$"
-      example: "mymodule::myfeature"
     ModuleId:
       anyOf:
         - type: string
           description: A module identifier
-          example: mymodule
+          examples:
+            - mymodule
           maxLength: 255
           minLength: 1
           pattern: "^[-_0-9a-zA-Z]*$"
@@ -3696,7 +3840,8 @@ components:
     NumericId:
       type: string
       description: A string containing number characters
-      example: "0000000000"
+      examples:
+        - "0000000000"
       maxLength: 10
       minLength: 10
       pattern: "[0-9]+"
@@ -3730,23 +3875,25 @@ components:
       properties:
         email:
           $ref: "#/components/schemas/EmailAddress"
+          description: Email address of the user to modify the invite for
         role:
-          allOf:
+          oneOf:
+            - type: "null"
             - $ref: "#/components/schemas/EmailInviteRole"
-          nullable: true
+              description: Invite role of the user
     PatchEventBody:
       type: object
       description: "Body for the `PATCH /events/{event_id}` endpoint"
       properties:
         description:
-          allOf:
-            - $ref: "#/components/schemas/EventDescription"
+          $ref: "#/components/schemas/EventDescription"
+          description: Patch the description of the event
         e2e_encryption:
           type: boolean
           description: Patch whether the event is encrypted
         ends_at:
-          allOf:
-            - $ref: "#/components/schemas/DateTimeTz"
+          $ref: "#/components/schemas/DateTimeTz"
+          description: Patch the end time of the event
         has_shared_folder:
           type: boolean
           description: "Either add a shared folder to the event, if none existed before or delete the shared folder"
@@ -3768,25 +3915,28 @@ components:
             If it changes the independence from true false this body has to have
             `is_all_day`, `starts_at` and `ends_at` set
         password:
-          allOf:
-            - $ref: "#/components/schemas/RoomPassword"
+          $ref: "#/components/schemas/RoomPassword"
+          description: "Patch the password of the event's room"
         recurrence_pattern:
-          allOf:
-            - $ref: "#/components/schemas/RecurrencePattern"
+          $ref: "#/components/schemas/RecurrencePattern"
+          description: |-
+            Patch the events recurrence patterns
+
+            If this list is non empty it override the events current one
         show_meeting_details:
           type: boolean
           description: Patch wether the meeting details are displayed or not
         starts_at:
-          allOf:
-            - $ref: "#/components/schemas/DateTimeTz"
+          $ref: "#/components/schemas/DateTimeTz"
+          description: Patch the start time of the event
         streaming_targets:
           type: array
           items:
             $ref: "#/components/schemas/StreamingTarget"
           description: The streaming targets of the room associated with the event
         title:
-          allOf:
-            - $ref: "#/components/schemas/EventTitle"
+          $ref: "#/components/schemas/EventTitle"
+          description: Patch the title of th event
         waiting_room:
           type: boolean
           description: Patch the presence of a waiting room
@@ -3800,23 +3950,23 @@ components:
       description: "Request body for the `PATCH /events/{event_id}/{instance_id}` endpoint"
       properties:
         description:
-          allOf:
-            - $ref: "#/components/schemas/EventDescription"
+          $ref: "#/components/schemas/EventDescription"
+          description: The description of the event
         ends_at:
-          allOf:
-            - $ref: "#/components/schemas/DateTimeTz"
+          $ref: "#/components/schemas/DateTimeTz"
+          description: End time of the event.
         is_all_day:
           type: boolean
           description: Flag to indicate if the event is all-day
         starts_at:
-          allOf:
-            - $ref: "#/components/schemas/DateTimeTz"
+          $ref: "#/components/schemas/DateTimeTz"
+          description: Start time of the event.
         status:
-          allOf:
-            - $ref: "#/components/schemas/EventStatus"
+          $ref: "#/components/schemas/EventStatus"
+          description: Status of the event
         title:
-          allOf:
-            - $ref: "#/components/schemas/EventTitle"
+          $ref: "#/components/schemas/EventTitle"
+          description: The title of th event
       example:
         is_all_day: false
         status: cancelled
@@ -3826,8 +3976,8 @@ components:
       description: "Request body for the `PATCH /events/{event_id}/invites/{user_id}` endpoint"
       properties:
         role:
-          allOf:
-            - $ref: "#/components/schemas/InviteRole"
+          $ref: "#/components/schemas/InviteRole"
+          description: Invite role of the user
       example:
         role: moderator
     PatchMeRequestBody:
@@ -3835,34 +3985,36 @@ components:
       description: Used to modify user settings.
       properties:
         conference_theme:
-          allOf:
-            - $ref: "#/components/schemas/Theme"
+          $ref: "#/components/schemas/Theme"
+          description: The conference theme
         dashboard_theme:
-          allOf:
-            - $ref: "#/components/schemas/Theme"
+          $ref: "#/components/schemas/Theme"
+          description: The dashboard theme
         display_name:
-          allOf:
-            - $ref: "#/components/schemas/DisplayName"
+          $ref: "#/components/schemas/DisplayName"
+          description: "The user's display name"
         language:
-          allOf:
-            - $ref: "#/components/schemas/Language"
+          $ref: "#/components/schemas/Language"
+          description: "The user's language"
         title:
-          allOf:
-            - $ref: "#/components/schemas/UserTitle"
+          $ref: "#/components/schemas/UserTitle"
+          description: "The user's title"
       example:
         display_name: Alice Adams
         language: en
     PatchRoomStreamingTargetRequestBody:
       allOf:
-        - allOf:
+        - oneOf:
+            - type: "null"
             - $ref: "#/components/schemas/UpdateStreamingTargetKind"
-          nullable: true
+              description: The kind of the streaming target
         - type: object
           properties:
             name:
-              type: string
+              type:
+                - string
+                - "null"
               description: The name of the streaming target
-              nullable: true
       description: "The body of a *PATCH /rooms/{room_id}/streaming_targets/{streaming_target_id}* request"
       example:
         kind: custom
@@ -3872,22 +4024,26 @@ components:
         streaming_key: aabbccddeeff
     PatchRoomStreamingTargetResponseBody:
       $ref: "#/components/schemas/RoomStreamingTarget"
+      description: "The body of a *PATCH /rooms/{room_id}/streaming_targets/{streaming_target_id}* response"
     PatchRoomsRequestBody:
       type: object
       description: API request parameters to patch a room
       properties:
         e2e_encryption:
-          type: boolean
+          type:
+            - boolean
+            - "null"
           description: If e2e encryption is enabled
-          nullable: true
         password:
-          allOf:
+          oneOf:
+            - type: "null"
             - $ref: "#/components/schemas/RoomPassword"
-          nullable: true
+              description: The password for the room
         waiting_room:
-          type: boolean
+          type:
+            - boolean
+            - "null"
           description: If waiting room is enabled
-          nullable: true
     PostCallInStartRequestBody:
       type: object
       description: "Body for the `POST /services/call_in/start` endpoint"
@@ -3897,12 +4053,16 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/CallInId"
+          description: The call-in ID
         pin:
           $ref: "#/components/schemas/CallInPassword"
+          description: The call-in password
     PostEventInviteBody:
       oneOf:
         - $ref: "#/components/schemas/UserInvite"
+          description: Invite a registered user
         - $ref: "#/components/schemas/EmailInvite"
+          description: Invite a user by email
       description: "Request body for the `POST /events/{event_id}/invites` endpoint"
       example:
         invitee: 00000009-9889-9889-9889-988000000000
@@ -3917,12 +4077,16 @@ components:
       properties:
         description:
           $ref: "#/components/schemas/EventDescription"
+          description: Description of the event
         e2e_encryption:
           type: boolean
           description: Should the created event be encrypted?
         ends_at:
-          allOf:
-            - $ref: "#/components/schemas/DateTimeTz"
+          $ref: "#/components/schemas/DateTimeTz"
+          description: |-
+            End time of the event
+
+            For recurring events these must contain the datetime of the first instance
         has_shared_folder:
           type: boolean
           description: Should the created event have a shared folder?
@@ -3943,16 +4107,31 @@ components:
             If true, all following fields must be null
             If false, requires `is_all_day`, `starts_at`, `ends_at`
         password:
-          allOf:
-            - $ref: "#/components/schemas/RoomPassword"
+          $ref: "#/components/schemas/RoomPassword"
+          description: Optional password for the room related to the event
         recurrence_pattern:
           $ref: "#/components/schemas/RecurrencePattern"
+          description: |-
+            Recurrence pattern(s) for recurring events
+
+            May contain RRULE, EXRULE, RDATE and EXDATE strings
+
+            Requires `type` to be `recurring`
+
+            Contains a list of recurrence rules which describe the occurrences of the event.
+
+            Allowed are `RRULE`, `RDATE`, `EXRULE` and `EXDATE`.
+            The `DTSTART` and `DTEND` attributes are not allowed as their information is stored
+            in the `starts_at` and `ends_at` fields.
         show_meeting_details:
           type: boolean
           description: Should it be able to show the meeting details?
         starts_at:
-          allOf:
-            - $ref: "#/components/schemas/DateTimeTz"
+          $ref: "#/components/schemas/DateTimeTz"
+          description: |-
+            Start time of the event
+
+            For recurring events these must contain the datetime of the first instance
         streaming_targets:
           type: array
           items:
@@ -3960,6 +4139,7 @@ components:
           description: The streaming targets of the room associated with the event
         title:
           $ref: "#/components/schemas/EventTitle"
+          description: Title of the event
         waiting_room:
           type: boolean
           description: Should the created event have a waiting room?
@@ -3992,10 +4172,11 @@ components:
       description: "Body for *POST /rooms/{room_id}/invites*"
       properties:
         expiration:
-          type: string
+          type:
+            - string
+            - "null"
           format: date-time
           description: Optional expiration date of the invite
-          nullable: true
       example:
         expiration: "2024-06-20T14:16:19Z"
     PostInviteVerifyRequestBody:
@@ -4006,6 +4187,7 @@ components:
       properties:
         invite_code:
           $ref: "#/components/schemas/InviteCode"
+          description: The invite code id
     PostInviteVerifyResponseBody:
       type: object
       description: Verify response body for *POST /invite/verify*
@@ -4018,6 +4200,7 @@ components:
           description: If password is required
         room_id:
           $ref: "#/components/schemas/RoomId"
+          description: The room id for the invite
     PostLoginResponseBody:
       type: object
       description: "Body of the response to a *POST* request on `/auth/login`"
@@ -4037,15 +4220,19 @@ components:
         - room_id
       properties:
         breakout_room:
-          allOf:
+          oneOf:
+            - type: "null"
             - $ref: "#/components/schemas/BreakoutRoomId"
-          nullable: true
+              description: The optional breakout room id
         room_id:
           $ref: "#/components/schemas/RoomId"
+          description: The room id
     PostRoomStreamingTargetRequestBody:
       $ref: "#/components/schemas/StreamingTarget"
+      description: "The body of a *POST /rooms/{room_id}/streaming_targets* request"
     PostRoomStreamingTargetResponseBody:
       $ref: "#/components/schemas/RoomStreamingTarget"
+      description: "The body of a *POST /rooms/{room_id}/streaming_targets* response"
     PostRoomsRequestBody:
       type: object
       description: API request parameters to create a new room
@@ -4057,9 +4244,10 @@ components:
           type: boolean
           description: Enable/Disable sip for this room; defaults to false when not set
         password:
-          allOf:
+          oneOf:
+            - type: "null"
             - $ref: "#/components/schemas/RoomPassword"
-          nullable: true
+              description: "The password to the room, if any"
         waiting_room:
           type: boolean
           description: |-
@@ -4072,17 +4260,17 @@ components:
         - invite_code
       properties:
         breakout_room:
-          allOf:
-            - $ref: "#/components/schemas/BreakoutRoomId"
+          $ref: "#/components/schemas/BreakoutRoomId"
+          description: Optional breakout room ID
         invite_code:
           type: string
           description: The invite code
         password:
-          allOf:
-            - $ref: "#/components/schemas/RoomPassword"
+          $ref: "#/components/schemas/RoomPassword"
+          description: "The invited user's password to the room"
         resumption:
-          allOf:
-            - $ref: "#/components/schemas/ResumptionToken"
+          $ref: "#/components/schemas/ResumptionToken"
+          description: The resumption token for the room
       example:
         breakout_room: 00000000-0000-0000-0000-0000badcab1e
         invite_code: 00000000-0000-0000-0000-0000deadbeef
@@ -4093,11 +4281,11 @@ components:
       description: "The JSON body expected when making a *POST /rooms/{room_id}/start*"
       properties:
         breakout_room:
-          allOf:
-            - $ref: "#/components/schemas/BreakoutRoomId"
+          $ref: "#/components/schemas/BreakoutRoomId"
+          description: Optional breakout room ID
         resumption:
-          allOf:
-            - $ref: "#/components/schemas/ResumptionToken"
+          $ref: "#/components/schemas/ResumptionToken"
+          description: The resumption token for the room
       example:
         breakout_room: 00000000-0000-0000-0000-00000badcafe
         resumption: 654321zyxwvutsrqponmlkjihgfedcba654321zyxwvutsrqponmlkjihgfedcba
@@ -4110,8 +4298,10 @@ components:
       properties:
         resumption:
           $ref: "#/components/schemas/ResumptionToken"
+          description: The resumption token
         ticket:
           $ref: "#/components/schemas/TicketToken"
+          description: The ticket token
     PrivateUserProfile:
       type: object
       description: |-
@@ -4139,10 +4329,13 @@ components:
           description: "The user's avatar URL"
         conference_theme:
           $ref: "#/components/schemas/Theme"
+          description: The conference theme
         dashboard_theme:
           $ref: "#/components/schemas/Theme"
+          description: The dashboard theme
         display_name:
           $ref: "#/components/schemas/DisplayName"
+          description: "The user's display name"
         email:
           type: string
           description: The email of the user
@@ -4151,15 +4344,19 @@ components:
           description: "The user's first name"
         id:
           $ref: "#/components/schemas/UserId"
+          description: The user id
         language:
           $ref: "#/components/schemas/Language"
+          description: The language for the user
         lastname:
           type: string
           description: "The user's last name"
         tariff_status:
           $ref: "#/components/schemas/TariffStatus"
+          description: The tariff status of the user
         title:
           $ref: "#/components/schemas/UserTitle"
+          description: The title of the user
         used_storage:
           type: integer
           format: int64
@@ -4168,12 +4365,14 @@ components:
     PublicInviteUserProfile:
       allOf:
         - $ref: "#/components/schemas/PublicUserProfile"
+          description: Public user profile
         - type: object
           required:
             - role
           properties:
             role:
               $ref: "#/components/schemas/InviteRole"
+              description: Invite role of the invitee
       description: Profile of a public event invitee
       example:
         avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
@@ -4204,6 +4403,7 @@ components:
           description: "The user's avatar URL"
         display_name:
           $ref: "#/components/schemas/DisplayName"
+          description: "The user's display name"
         email:
           type: string
           description: The email of the user
@@ -4212,11 +4412,13 @@ components:
           description: "The user's first name"
         id:
           $ref: "#/components/schemas/UserId"
+          description: The user id
         lastname:
           type: string
           description: "The user's last name"
         title:
           $ref: "#/components/schemas/UserTitle"
+          description: The title of the user
       example:
         avatar_url: "https://gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
         display_name: Alice Adams
@@ -4230,10 +4432,11 @@ components:
       description: "Body for *PUT /rooms/{room_id}/invites/{invite_code}*"
       properties:
         expiration:
-          type: string
+          type:
+            - string
+            - "null"
           format: date-time
           description: Optional expiration date of the invite
-          nullable: true
       example:
         expiration: "2024-06-20T14:16:19Z"
     PutSipConfigRequestBody:
@@ -4246,8 +4449,10 @@ components:
             Enable or disable the lobby for users that join throughh SIP. Defaults
             to [`false`] when not explicity set on creation.
         password:
-          allOf:
-            - $ref: "#/components/schemas/CallInPassword"
+          $ref: "#/components/schemas/CallInPassword"
+          description: |-
+            Numeric code required for entering the room. If not set explicitly on
+            creation, this will be set to a randomly generated number.
       example:
         lobby: true
         password: "9876543210"
@@ -4256,14 +4461,15 @@ components:
       items:
         $ref: "#/components/schemas/RecurrenceRule"
       description: A recurrence pattern containing recurrence rules
-      example:
-        - FREQ=WEEKLY;INTERVAL=1;BYDAY=MO
+      examples:
+        - - FREQ=WEEKLY;INTERVAL=1;BYDAY=MO
       maxItems: 4
       minItems: 1
     RecurrenceRule:
       type: string
       description: A recurrence rule according to RFC5545
-      example: FREQ=WEEKLY;INTERVAL=1;BYDAY=MO
+      examples:
+        - FREQ=WEEKLY;INTERVAL=1;BYDAY=MO
       maxLength: 1024
     ResumptionToken:
       type: string
@@ -4276,7 +4482,8 @@ components:
     RoomPassword:
       type: string
       description: A room password
-      example: v3rys3cr3t
+      examples:
+        - v3rys3cr3t
       maxLength: 255
       minLength: 1
     RoomResource:
@@ -4294,13 +4501,16 @@ components:
       properties:
         created_at:
           $ref: "#/components/schemas/Timestamp"
+          description: The date when the room was created
         created_by:
           $ref: "#/components/schemas/PublicUserProfile"
+          description: "The public user profile of the room's owner"
         id:
           $ref: "#/components/schemas/RoomId"
+          description: The ID of the room
         password:
-          allOf:
-            - $ref: "#/components/schemas/RoomPassword"
+          $ref: "#/components/schemas/RoomPassword"
+          description: "The password of the room, if any"
         waiting_room:
           type: boolean
           description: If waiting room is enabled
@@ -4320,12 +4530,14 @@ components:
     RoomStreamingTarget:
       allOf:
         - $ref: "#/components/schemas/StreamingTarget"
+          description: The streaming target
         - type: object
           required:
             - id
           properties:
             id:
               $ref: "#/components/schemas/StreamingTargetId"
+              description: The streaming target id
       description: A streaming target which is specific for a Room
       example:
         id: 00000000-0000-0000-0000-000043434343
@@ -4337,12 +4549,14 @@ components:
     RoomStreamingTargetResource:
       allOf:
         - $ref: "#/components/schemas/StreamingTargetResource"
+          description: The streaming target
         - type: object
           required:
             - id
           properties:
             id:
               $ref: "#/components/schemas/StreamingTargetId"
+              description: The streaming target id
       description: A resource for a streaming target which is specific for a Room
       example:
         id: 00000000-0000-0000-0000-000043434343
@@ -4372,8 +4586,10 @@ components:
       properties:
         resumption:
           $ref: "#/components/schemas/ResumptionToken"
+          description: The resumption token for the room
         ticket:
           $ref: "#/components/schemas/TicketToken"
+          description: The ticket token for the room
       example:
         resumption: 654321zyxwvutsrqponmlkjihgfedcba654321zyxwvutsrqponmlkjihgfedcba
         ticket: abcdefghijklmnopqrstuvwxyz123456abcdefghijklmnopqrstuvwxyz123456
@@ -4387,9 +4603,10 @@ components:
       properties:
         read:
           $ref: "#/components/schemas/SharedFolderAccess"
+          description: Read access information for the shared folder
         read_write:
-          allOf:
-            - $ref: "#/components/schemas/SharedFolderAccess"
+          $ref: "#/components/schemas/SharedFolderAccess"
+          description: Read-write access information for the shared folder
       example:
         read:
           password: v3rys3cr3t
@@ -4424,10 +4641,13 @@ components:
           description: Flag if the room is a lobby
         password:
           $ref: "#/components/schemas/CallInPassword"
+          description: The SIP password
         room:
           $ref: "#/components/schemas/RoomId"
+          description: The room id
         sip_id:
           $ref: "#/components/schemas/CallInId"
+          description: The SIP ID
       example:
         lobby: false
         password: "9876543210"
@@ -4470,6 +4690,7 @@ components:
     StreamingTarget:
       allOf:
         - $ref: "#/components/schemas/StreamingTargetKind"
+          description: The kind of the streaming target
         - type: object
           required:
             - name
@@ -4513,14 +4734,13 @@ components:
               description: The endpoint url of the streaming target
             streaming_key:
               $ref: "#/components/schemas/StreamingKey"
+              description: The streaming key
       description: A streaming target kind
       example:
         kind: custom
         public_url: "https://streaming.example.com/livestream123"
         streaming_endpoint: "https://ingress.streaming.example.com/"
         streaming_key: aabbccddeeff
-      discriminator:
-        propertyName: kind
     StreamingTargetKindResource:
       oneOf:
         - type: object
@@ -4543,19 +4763,18 @@ components:
               format: uri
               description: The endpoint url of the streaming target
             streaming_key:
-              allOf:
-                - $ref: "#/components/schemas/StreamingKey"
+              $ref: "#/components/schemas/StreamingKey"
+              description: The streaming key
       description: A resource for a streaming target kind
       example:
         kind: custom
         public_url: "https://streaming.example.com/livestream123"
         streaming_endpoint: "https://ingress.streaming.example.com/"
         streaming_key: aabbccddeeff
-      discriminator:
-        propertyName: kind
     StreamingTargetResource:
       allOf:
         - $ref: "#/components/schemas/StreamingTargetKindResource"
+          description: The kind of the streaming target
         - type: object
           required:
             - name
@@ -4608,11 +4827,23 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/TariffId"
+          description: The ID of the tariff
         modules:
           type: object
           description: "Enabled modules for the tariff, including their enabled features"
           additionalProperties:
             $ref: "#/components/schemas/TariffModuleResource"
+          propertyNames:
+            anyOf:
+              - type: string
+                description: A module identifier
+                examples:
+                  - mymodule
+                maxLength: 255
+                minLength: 1
+                pattern: "^[-_0-9a-zA-Z]*$"
+            default: core
+            example: mymodule
         name:
           type: string
           description: The name of the tariff
@@ -4623,6 +4854,13 @@ components:
             type: integer
             format: int64
             minimum: 0
+          propertyNames:
+            anyOf:
+              - type: string
+                description: A quota type
+                examples:
+                  - max_storage
+            example: max_storage
       example:
         id: 00000000-0000-0000-0000-000000000000
         modules:
@@ -4649,7 +4887,8 @@ components:
     Theme:
       type: string
       description: A theme identifier
-      example: de
+      examples:
+        - de
       maxLength: 128
     TicketToken:
       type: string
@@ -4657,7 +4896,8 @@ components:
     TimeZone:
       type: string
       description: A time zone
-      example: Europe/Berlin
+      examples:
+        - Europe/Berlin
     Timestamp:
       type: string
       format: date-time
@@ -4721,39 +4961,42 @@ components:
               enum:
                 - custom
             public_url:
-              type: string
+              type:
+                - string
+                - "null"
               format: uri
               description: The url from which the stream can be accessed
-              nullable: true
             streaming_endpoint:
-              type: string
+              type:
+                - string
+                - "null"
               format: uri
               description: The endpoint url of the streaming target
-              nullable: true
             streaming_key:
-              allOf:
+              oneOf:
+                - type: "null"
                 - $ref: "#/components/schemas/StreamingKey"
-              nullable: true
+                  description: The streaming key
       description: "Data to update a streaming target kind (only fields with [`Some`] are updated)"
       example:
         kind: custom
         public_url: "https://owncast.example.com/"
         streaming_endpoint: "https://ingress.example.com/"
         streaming_key: aabbccddeeff
-      discriminator:
-        propertyName: kind
     UserAssetResource:
       allOf:
         - $ref: "#/components/schemas/AssetResource"
+          description: The asset resource
         - type: object
           required:
             - room_id
           properties:
             event_id:
-              allOf:
-                - $ref: "#/components/schemas/EventId"
+              $ref: "#/components/schemas/EventId"
+              description: The id of the event that is associated with the room
             room_id:
               $ref: "#/components/schemas/RoomId"
+              description: The id of the room to which the asset belongs
       description: Information related to a specific asset
       example:
         created_at: "2024-06-18T11:22:33Z"
@@ -4777,15 +5020,18 @@ components:
       properties:
         invitee:
           $ref: "#/components/schemas/UserId"
+          description: ID of the user to invite
         role:
           $ref: "#/components/schemas/InviteRole"
+          description: Invite role of the user
       example:
         invitee: 00000009-9889-9889-9889-988000000000
         role: user
     UserTitle:
       type: string
       description: The title of a user
-      example: M.Sc.
+      examples:
+        - M.Sc.
       maxLength: 255
     ValidationErrorBody:
       type: object
@@ -4816,21 +5062,27 @@ components:
           type: string
           description: Machine readable error message
         field:
-          type: string
+          type:
+            - string
+            - "null"
           description: |-
             The field related to the error
 
             If the value is [`None`] that means the error happened at struct level
-          nullable: true
         message:
-          type: string
+          type:
+            - string
+            - "null"
           description: Human readable error message
-          nullable: true
   responses:
     BadRequest:
       description: Bad request
     BinaryData:
       description: Binary data
+      content:
+        application/octet-stream:
+          schema:
+            type: string
     Forbidden:
       description: The authorized user has no permission to access the requested resource
     InternalServerError:

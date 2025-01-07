@@ -7,7 +7,7 @@ use std::str::FromStr;
 use derive_more::{AsRef, Display, Into};
 use snafu::{ensure, Snafu};
 
-use crate::call_in::DIAL_IN_NUMERIC_ID_LENGTH;
+use crate::{call_in::DIAL_IN_NUMERIC_ID_LENGTH, utils::ExampleData};
 
 /// Base type for numeric dial-in identifieirs
 ///
@@ -83,36 +83,44 @@ impl FromStr for NumericId {
     }
 }
 
+impl ExampleData for NumericId {
+    fn example_data() -> Self {
+        Self("0000000000".to_string())
+    }
+}
+
 #[cfg(feature = "utoipa")]
-mod impl_to_schema {
+mod impl_utoipa {
     //! The `#[derive(utoipa::ToSchema)] implementation does not yet properly support
     //! exposing schema information of types wrapped by the NewType pattern, therefore
     //! a manual implementation is required for now.
     //! Issue: <https://github.com/juhaku/utoipa/issues/663>
 
+    use serde_json::json;
     use utoipa::{
-        openapi::{ObjectBuilder, SchemaType},
-        ToSchema,
+        openapi::{ObjectBuilder, RefOr, Schema, Type},
+        PartialSchema, ToSchema,
     };
 
     use super::{NumericId, DIAL_IN_NUMERIC_ID_LENGTH};
+    use crate::utils::ExampleData as _;
 
-    impl<'__s> ToSchema<'__s> for NumericId {
-        fn schema() -> (
-            &'__s str,
-            utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>,
-        ) {
-            (
-                "NumericId",
-                ObjectBuilder::new()
-                    .schema_type(SchemaType::String)
-                    .description(Some("A string containing number characters"))
-                    .min_length(Some(DIAL_IN_NUMERIC_ID_LENGTH))
-                    .max_length(Some(DIAL_IN_NUMERIC_ID_LENGTH))
-                    .pattern(Some("[0-9]+"))
-                    .example(Some("0000000000".into()))
-                    .into(),
-            )
+    impl PartialSchema for NumericId {
+        fn schema() -> RefOr<Schema> {
+            ObjectBuilder::new()
+                .schema_type(Type::String)
+                .description(Some("A string containing number characters"))
+                .min_length(Some(DIAL_IN_NUMERIC_ID_LENGTH))
+                .max_length(Some(DIAL_IN_NUMERIC_ID_LENGTH))
+                .pattern(Some("[0-9]+"))
+                .examples([json!(NumericId::example_data())])
+                .into()
+        }
+    }
+
+    impl ToSchema for NumericId {
+        fn schemas(schemas: &mut Vec<(String, RefOr<Schema>)>) {
+            schemas.push((Self::name().into(), Self::schema()));
         }
     }
 }

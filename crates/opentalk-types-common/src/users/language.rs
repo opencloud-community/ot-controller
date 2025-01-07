@@ -62,28 +62,29 @@ mod impl_to_schema {
     //! a manual implementation is required for now.
     //! Issue: <https://github.com/juhaku/utoipa/issues/663>
 
+    use serde_json::json;
     use utoipa::{
-        openapi::{ObjectBuilder, SchemaType},
-        ToSchema,
+        openapi::{ObjectBuilder, RefOr, Schema, Type},
+        PartialSchema, ToSchema,
     };
 
     use super::{Language, MAX_LANGUAGE_LENGTH};
     use crate::utils::ExampleData as _;
 
-    impl<'__s> ToSchema<'__s> for Language {
-        fn schema() -> (
-            &'__s str,
-            utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>,
-        ) {
-            (
-                "Language",
-                ObjectBuilder::new()
-                    .schema_type(SchemaType::String)
-                    .description(Some("A language identifier"))
-                    .max_length(Some(MAX_LANGUAGE_LENGTH))
-                    .example(Some(Language::example_data().to_string().into()))
-                    .into(),
-            )
+    impl PartialSchema for Language {
+        fn schema() -> RefOr<Schema> {
+            ObjectBuilder::new()
+                .schema_type(Type::String)
+                .description(Some("A language identifier"))
+                .max_length(Some(MAX_LANGUAGE_LENGTH))
+                .examples([json!(Language::example_data())])
+                .into()
+        }
+    }
+
+    impl ToSchema for Language {
+        fn schemas(schemas: &mut Vec<(String, RefOr<Schema>)>) {
+            schemas.push((Self::name().into(), Self::schema()));
         }
     }
 }

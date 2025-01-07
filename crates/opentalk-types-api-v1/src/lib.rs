@@ -31,4 +31,4 @@ pub mod users;
 
 mod cursor;
 
-pub use cursor::{Cursor, CursorData};
+pub use cursor::Cursor;

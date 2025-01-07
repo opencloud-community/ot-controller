@@ -26,16 +26,16 @@ use opentalk_db_storage::{
 use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_types::api::error::ApiError;
 use opentalk_types_api_v1::{
+    assets::AssetSortingQuery,
     pagination::PagePaginationQuery,
+    rooms::RoomResource,
     users::{
         me::PatchMeRequestBody, GetFindQuery, GetFindResponseBody, GetFindResponseEntry,
         GetUserAssetsResponseBody, PrivateUserProfile, PublicUserProfile, UnregisteredUser,
         UserAssetResource,
     },
 };
-use opentalk_types_common::{
-    assets::AssetSorting, order::SortingQuery, tariffs::TariffResource, users::UserId,
-};
+use opentalk_types_common::{tariffs::TariffResource, users::UserId};
 use snafu::{Report, ResultExt, Whatever};
 
 use super::response::NoContent;
@@ -258,7 +258,7 @@ pub async fn get_me_tariff(
 /// All assets associated to the requesting user are returned in a list. If no
 /// pagination query is added, the default page size is used.
 #[utoipa::path(
-    params(PagePaginationQuery, SortingQuery<AssetSorting>),
+    params(PagePaginationQuery, AssetSortingQuery),
     responses(
         (
             status = StatusCode::OK,
@@ -282,7 +282,7 @@ pub async fn get_me_tariff(
 pub async fn get_me_assets(
     db: Data<Db>,
     current_user: ReqData<User>,
-    sorting: Query<SortingQuery<AssetSorting>>,
+    sorting: Query<AssetSortingQuery>,
     pagination: Query<PagePaginationQuery>,
 ) -> Result<ApiResponse<GetUserAssetsResponseBody>, ApiError> {
     let current_user = current_user.into_inner();
@@ -514,9 +514,9 @@ pub async fn get_all_assets_for_room_owner_paginated_ordered(
     user_id: UserId,
     limit: i64,
     page: i64,
-    sorting: SortingQuery<AssetSorting>,
+    sorting: AssetSortingQuery,
 ) -> Result<(Vec<UserAssetResource>, i64), ApiError> {
-    let SortingQuery { sort, order } = sorting;
+    let AssetSortingQuery { sort, order } = sorting;
 
     let (resources, total) =
         assets::get_all_for_room_owner_paginated_ordered(conn, user_id, limit, page, sort, order)

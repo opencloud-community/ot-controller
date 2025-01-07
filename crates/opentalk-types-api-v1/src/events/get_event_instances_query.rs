@@ -32,6 +32,6 @@ pub struct GetEventInstancesQuery {
 
 #[cfg(feature = "utoipa")]
 fn build_cursor_schema() -> impl Into<utoipa::openapi::RefOr<utoipa::openapi::Schema>> {
-    use utoipa::{openapi::Ref, ToSchema as _};
-    Ref::from_schema_name(Cursor::<GetEventInstancesCursorData>::schema().0)
+    use utoipa::PartialSchema as _;
+    Cursor::<GetEventInstancesCursorData>::schema()
 }

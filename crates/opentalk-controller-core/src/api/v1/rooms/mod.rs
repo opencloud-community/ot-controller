@@ -42,6 +42,7 @@ use opentalk_types_api_v1::{
     },
 };
 use opentalk_types_common::{
+    events::EventInfo,
     rooms::{invite_codes::InviteCode, RoomId},
     shared_folders::SharedFolder,
     tariffs::TariffResource,
@@ -54,6 +55,7 @@ use super::{
 };
 use crate::{
     api::{
+        headers::PageLink,
         responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
         signaling::{
             breakout::BreakoutStorageProvider as _, moderation::ModerationStorageProvider as _,

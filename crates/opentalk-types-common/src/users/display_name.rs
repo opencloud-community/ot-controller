@@ -83,28 +83,29 @@ mod impl_to_schema {
     //! a manual implementation is required for now.
     //! Issue: <https://github.com/juhaku/utoipa/issues/663>
 
+    use serde_json::json;
     use utoipa::{
-        openapi::{ObjectBuilder, SchemaType},
-        ToSchema,
+        openapi::{ObjectBuilder, RefOr, Schema, Type},
+        PartialSchema, ToSchema,
     };
 
     use super::{DisplayName, MAX_DISPLAY_NAME_LENGTH};
     use crate::utils::ExampleData as _;
 
-    impl<'__s> ToSchema<'__s> for DisplayName {
-        fn schema() -> (
-            &'__s str,
-            utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>,
-        ) {
-            (
-                "DisplayName",
-                ObjectBuilder::new()
-                    .schema_type(SchemaType::String)
-                    .description(Some("The display name of a user or participant"))
-                    .max_length(Some(MAX_DISPLAY_NAME_LENGTH))
-                    .example(Some(DisplayName::example_data().to_string().into()))
-                    .into(),
-            )
+    impl PartialSchema for DisplayName {
+        fn schema() -> RefOr<Schema> {
+            ObjectBuilder::new()
+                .schema_type(Type::String)
+                .description(Some("The display name of a user or participant"))
+                .max_length(Some(MAX_DISPLAY_NAME_LENGTH))
+                .examples([json!(DisplayName::example_data())])
+                .into()
+        }
+    }
+
+    impl ToSchema for DisplayName {
+        fn schemas(schemas: &mut Vec<(String, RefOr<Schema>)>) {
+            schemas.push((Self::name().into(), Self::schema()));
         }
     }
 }

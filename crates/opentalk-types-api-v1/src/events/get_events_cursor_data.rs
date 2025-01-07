@@ -4,16 +4,9 @@
 
 use opentalk_types_common::{events::EventId, time::Timestamp, utils::ExampleData};
 
-use crate::CursorData;
-
 /// Data stored inside the `GET /events` query cursor
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(
-    feature = "utoipa",
-    derive(utoipa::ToSchema),
-    schema(example = json!(GetEventsCursorData::example_data()))
-)]
 pub struct GetEventsCursorData {
     /// Last event in the list
     pub event_id: EventId,
@@ -35,6 +28,31 @@ impl ExampleData for GetEventsCursorData {
     }
 }
 
-impl CursorData for GetEventsCursorData {
-    const SCHEMA_CURSOR_TYPE_NAME: &'static str = "GetEventsCursor";
+#[cfg(feature = "utoipa")]
+mod impl_utoipa {
+    use opentalk_types_common::utils::ExampleData as _;
+    use serde_json::json;
+    use utoipa::{
+        openapi::{ObjectBuilder, RefOr, Schema, Type},
+        PartialSchema, ToSchema,
+    };
+
+    use super::GetEventsCursorData;
+    use crate::Cursor;
+
+    impl PartialSchema for GetEventsCursorData {
+        fn schema() -> RefOr<Schema> {
+            ObjectBuilder::new()
+                .schema_type(Type::String)
+                .description(Some("A cursor pointing to an event instance"))
+                .examples([json!(Cursor(Self::example_data()))])
+                .into()
+        }
+    }
+
+    impl ToSchema for GetEventsCursorData {
+        fn schemas(schemas: &mut Vec<(String, RefOr<Schema>)>) {
+            schemas.push((Self::name().into(), Self::schema()));
+        }
+    }
 }

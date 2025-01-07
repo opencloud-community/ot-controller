@@ -136,6 +136,7 @@ pub enum User {
 }
 
 #[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Debug)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Time {
     pub time: chrono::DateTime<Utc>,
     pub timezone: String,
@@ -237,6 +238,11 @@ pub enum EventExceptionKind {
 }
 
 #[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Debug)]
+#[cfg_attr(
+    feature = "utoipa",
+    derive(utoipa::ToSchema),
+    schema(example = json!(Room::example_data()))
+)]
 pub struct Room {
     pub id: Uuid,
     pub password: Option<RoomPassword>,

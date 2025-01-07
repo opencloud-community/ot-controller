@@ -39,34 +39,36 @@ pub const MAX_ROOM_PASSWORD_LENGTH: usize = 255;
 pub struct RoomPassword(String);
 
 #[cfg(feature = "utoipa")]
-mod impl_to_schema {
+mod impl_utoipa {
     //! The `#[derive(utoipa::ToSchema)] implementation does not yet properly support
     //! exposing schema information of types wrapped by the NewType pattern, therefore
     //! a manual implementation is required for now.
     //! Issue: <https://github.com/juhaku/utoipa/issues/663>
 
+    use serde_json::json;
     use utoipa::{
-        openapi::{ObjectBuilder, SchemaType},
-        ToSchema,
+        openapi::{ObjectBuilder, RefOr, Schema, Type},
+        PartialSchema, ToSchema,
     };
 
     use super::{RoomPassword, MAX_ROOM_PASSWORD_LENGTH, MIN_ROOM_PASSWORD_LENGTH};
+    use crate::utils::ExampleData;
 
-    impl<'__s> ToSchema<'__s> for RoomPassword {
-        fn schema() -> (
-            &'__s str,
-            utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>,
-        ) {
-            (
-                "RoomPassword",
-                ObjectBuilder::new()
-                    .schema_type(SchemaType::String)
-                    .description(Some("A room password"))
-                    .min_length(Some(MIN_ROOM_PASSWORD_LENGTH))
-                    .max_length(Some(MAX_ROOM_PASSWORD_LENGTH))
-                    .example(Some("v3rys3cr3t".into()))
-                    .into(),
-            )
+    impl PartialSchema for RoomPassword {
+        fn schema() -> RefOr<Schema> {
+            ObjectBuilder::new()
+                .schema_type(Type::String)
+                .description(Some("A room password"))
+                .min_length(Some(MIN_ROOM_PASSWORD_LENGTH))
+                .max_length(Some(MAX_ROOM_PASSWORD_LENGTH))
+                .examples([json!(RoomPassword::example_data())])
+                .into()
+        }
+    }
+
+    impl ToSchema for RoomPassword {
+        fn schemas(schemas: &mut Vec<(String, RefOr<Schema>)>) {
+            schemas.push((Self::name().into(), Self::schema()));
         }
     }
 }

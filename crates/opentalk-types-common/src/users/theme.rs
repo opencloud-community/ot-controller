@@ -62,28 +62,29 @@ mod impl_to_schema {
     //! a manual implementation is required for now.
     //! Issue: <https://github.com/juhaku/utoipa/issues/663>
 
+    use serde_json::json;
     use utoipa::{
-        openapi::{ObjectBuilder, SchemaType},
-        ToSchema,
+        openapi::{ObjectBuilder, RefOr, Schema, Type},
+        PartialSchema, ToSchema,
     };
 
     use super::{Theme, MAX_THEME_LENGTH};
     use crate::utils::ExampleData as _;
 
-    impl<'__s> ToSchema<'__s> for Theme {
-        fn schema() -> (
-            &'__s str,
-            utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>,
-        ) {
-            (
-                "Theme",
-                ObjectBuilder::new()
-                    .schema_type(SchemaType::String)
-                    .description(Some("A theme identifier"))
-                    .max_length(Some(MAX_THEME_LENGTH))
-                    .example(Some(Theme::example_data().to_string().into()))
-                    .into(),
-            )
+    impl PartialSchema for Theme {
+        fn schema() -> RefOr<Schema> {
+            ObjectBuilder::new()
+                .schema_type(Type::String)
+                .description(Some("A theme identifier"))
+                .max_length(Some(MAX_THEME_LENGTH))
+                .examples([json!(Theme::example_data())])
+                .into()
+        }
+    }
+
+    impl ToSchema for Theme {
+        fn schemas(schemas: &mut Vec<(String, RefOr<Schema>)>) {
+            schemas.push((Self::name().into(), Self::schema()));
         }
     }
 }

@@ -50,23 +50,31 @@ impl From<EmailAddress> for String {
 }
 
 #[cfg(feature = "utoipa")]
-impl<'__s> utoipa::ToSchema<'__s> for EmailAddress {
-    fn schema() -> (
-        &'__s str,
-        utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>,
-    ) {
-        use serde_json::json;
-        use utoipa::openapi::{SchemaFormat, SchemaType};
+mod impl_utoipa {
+    use serde_json::json;
+    use utoipa::{
+        openapi::{KnownFormat, ObjectBuilder, RefOr, Schema, SchemaFormat, Type},
+        PartialSchema, ToSchema,
+    };
 
-        (
-            "EmailAddress",
-            utoipa::openapi::ObjectBuilder::new()
-                .schema_type(SchemaType::String)
-                .format(Some(SchemaFormat::Custom("email".to_string())))
+    use super::EmailAddress;
+    use crate::utils::ExampleData;
+
+    impl PartialSchema for EmailAddress {
+        fn schema() -> RefOr<Schema> {
+            ObjectBuilder::new()
+                .schema_type(Type::String)
+                .format(Some(SchemaFormat::KnownFormat(KnownFormat::Email)))
                 .description(Some("An e-mail address"))
-                .example(Some(json!(EmailAddress::example_data())))
-                .into(),
-        )
+                .examples([json!(EmailAddress::example_data())])
+                .into()
+        }
+    }
+
+    impl ToSchema for EmailAddress {
+        fn schemas(schemas: &mut Vec<(String, RefOr<Schema>)>) {
+            schemas.push((Self::name().into(), Self::schema()));
+        }
     }
 }
 

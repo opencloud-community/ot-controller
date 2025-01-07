@@ -43,6 +43,7 @@ use super::{
 };
 use crate::{
     api::{
+        headers::PageLink,
         responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
         v1::{
             events::{

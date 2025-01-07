@@ -44,26 +44,32 @@ impl RecurrencePattern {
 }
 
 #[cfg(feature = "utoipa")]
-impl<'__s> utoipa::ToSchema<'__s> for RecurrencePattern {
-    fn schema() -> (
-        &'__s str,
-        utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>,
-    ) {
-        use serde_json::json;
-        (
-            "RecurrencePattern",
-            utoipa::openapi::ObjectBuilder::new()
-                .schema_type(utoipa::openapi::SchemaType::Array)
+mod impl_utoipa {
+    use serde_json::json;
+    use utoipa::{
+        openapi::{Ref, RefOr, Schema},
+        PartialSchema, ToSchema,
+    };
+
+    use super::{RecurrencePattern, RECURRENCE_PATTERN_MAX_LEN};
+    use crate::{time::RecurrenceRule, utils::ExampleData as _};
+
+    impl PartialSchema for RecurrencePattern {
+        fn schema() -> RefOr<Schema> {
+            Ref::from_schema_name(RecurrenceRule::name())
                 .to_array_builder()
                 .min_items(Some(1))
                 .max_items(Some(RECURRENCE_PATTERN_MAX_LEN))
                 .description(Some("A recurrence pattern containing recurrence rules"))
-                .example(Some(json!(RecurrencePattern::example_data())))
-                .items(utoipa::openapi::Ref::from_schema_name(
-                    RecurrenceRule::schema().0,
-                ))
-                .into(),
-        )
+                .examples([json!(RecurrencePattern::example_data())])
+                .into()
+        }
+    }
+
+    impl ToSchema for RecurrencePattern {
+        fn schemas(schemas: &mut Vec<(String, RefOr<Schema>)>) {
+            schemas.push((Self::name().into(), Self::schema()));
+        }
     }
 }
 

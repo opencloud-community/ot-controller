@@ -71,6 +71,7 @@ use snafu::Report;
 use super::{response::NoContent, ApiResponse, DefaultApiResult};
 use crate::{
     api::{
+        headers::CursorLink,
         responses::{BadRequest, Forbidden, InternalServerError, NotFound, Unauthorized},
         v1::{events::shared_folder::put_shared_folder, util::GetUserProfilesBatched},
     },

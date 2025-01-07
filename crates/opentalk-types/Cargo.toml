@@ -39,7 +39,12 @@ redis-args = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 serde_json.workspace = true
 snafu.workspace = true
-utoipa = { workspace = true, features = ["url", "uuid"], optional = true }
+utoipa = { workspace = true, features = [
+  "chrono",
+  "debug",
+  "url",
+  "uuid",
+], optional = true }
 validator = { workspace = true, optional = true }
 
 [features]
