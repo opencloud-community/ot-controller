@@ -14,10 +14,8 @@ version = "0.29.0-alpha"
 
 [workspace.dependencies]
 kustos = { path = "crates/kustos", version = "0.29.0-alpha" }
-kustos-shared = { path = "crates/kustos-shared", version = "0.29.0-alpha" }
 opentalk-api-client = { path = "crates/opentalk-api-client", version = "0.29.0-alpha" }
 opentalk-cache = { path = "crates/opentalk-cache", version = "0.29.0-alpha" }
-opentalk-client-shared = { path = "crates/opentalk-client-shared", version = "0.29.0-alpha" }
 opentalk-community-signaling-modules = { path = "crates/opentalk-community-signaling-modules", version = "0.29.0-alpha" }
 opentalk-controller-core = { path = "crates/opentalk-controller-core", version = "0.29.0-alpha" }
 opentalk-controller-service = { path = "crates/opentalk-controller-service", version = "0.29.0-alpha" }
@@ -27,8 +25,6 @@ opentalk-controller-utils = { path = "crates/opentalk-controller-utils", version
 opentalk-database = { path = "crates/opentalk-database", version = "0.29.0-alpha" }
 opentalk-db-storage = { path = "crates/opentalk-db-storage", version = "0.29.0-alpha" }
 opentalk-jobs = { path = "crates/opentalk-jobs", version = "0.29.0-alpha" }
-opentalk-kustos-prefix = { path = "crates/opentalk-kustos-prefix", version = "0.29.0-alpha" }
-opentalk-kustos-prefix-impl = { path = "crates/opentalk-kustos-prefix-impl", version = "0.29.0-alpha" }
 opentalk-log = { path = "crates/opentalk-log", version = "0.29.0-alpha" }
 opentalk-mail-worker-protocol = { path = "crates/opentalk-mail-worker-protocol", version = "0.29.0-alpha" }
 opentalk-r3dlock = { path = "crates/opentalk-r3dlock", version = "0.29.0-alpha" }
@@ -46,23 +42,6 @@ opentalk-signaling-module-timer = { path = "crates/opentalk-signaling-module-tim
 opentalk-signaling-module-whiteboard = { path = "crates/opentalk-signaling-module-whiteboard", version = "0.29.0-alpha" }
 opentalk-test-util = { path = "crates/opentalk-test-util", version = "0.29.0-alpha" }
 opentalk-types = { path = "crates/opentalk-types", version = "0.29.0-alpha" }
-opentalk-types-api-v1 = { path = "crates/opentalk-types-api-v1", version = "0.29.0-alpha" }
-opentalk-types-common = { path = "crates/opentalk-types-common", version = "0.29.0-alpha" }
-opentalk-types-signaling = { path = "crates/opentalk-types-signaling", version = "0.29.0-alpha" }
-opentalk-types-signaling-breakout = { path = "crates/opentalk-types-signaling-breakout", version = "0.29.0-alpha" }
-opentalk-types-signaling-chat = { path = "crates/opentalk-types-signaling-chat", version = "0.29.0-alpha" }
-opentalk-types-signaling-control = { path = "crates/opentalk-types-signaling-control", version = "0.29.0-alpha" }
-opentalk-types-signaling-livekit = { path = "crates/opentalk-types-signaling-livekit", version = "0.29.0-alpha" }
-opentalk-types-signaling-meeting-notes = { path = "crates/opentalk-types-signaling-meeting-notes", version = "0.29.0-alpha" }
-opentalk-types-signaling-meeting-report = { path = "crates/opentalk-types-signaling-meeting-report", version = "0.29.0-alpha" }
-opentalk-types-signaling-moderation = { path = "crates/opentalk-types-signaling-moderation", version = "0.29.0-alpha" }
-opentalk-types-signaling-polls = { path = "crates/opentalk-types-signaling-polls", version = "0.29.0-alpha" }
-opentalk-types-signaling-recording = { path = "crates/opentalk-types-signaling-recording", version = "0.29.0-alpha" }
-opentalk-types-signaling-recording-service = { path = "crates/opentalk-types-signaling-recording-service", version = "0.29.0-alpha" }
-opentalk-types-signaling-shared-folder = { path = "crates/opentalk-types-signaling-shared-folder", version = "0.29.0-alpha" }
-opentalk-types-signaling-subroom-audio = { path = "crates/opentalk-types-signaling-subroom-audio", version = "0.29.0-alpha" }
-opentalk-types-signaling-timer = { path = "crates/opentalk-types-signaling-timer", version = "0.29.0-alpha" }
-opentalk-types-signaling-whiteboard = { path = "crates/opentalk-types-signaling-whiteboard", version = "0.29.0-alpha" }
 
 actix-http = "3"
 actix-rt = "2"
@@ -86,18 +65,19 @@ derive_more = "1.0"
 diesel = "2"
 diesel-async = "0.5"
 either = "1"
-email_address = "0.2.4"
 env_logger = "0.11"
 futures = "0.3"
 http = "1"
 http-request-derive = { version = "0.3.1", default-features = false }
 http0 = { version = "0", package = "http" }
 itertools = "0.14"
+kustos-shared = "0.29"
 lapin = { version = "2", default-features = false }
 lapin-pool = "0.1"
 log = "0.4"
 md5 = "0.7"
 openidconnect = "3"
+opentalk-client-shared = "0.29"
 opentalk-diesel-newtype = "0.13"
 opentalk-etherpad-client = { version = "0.2.0", default-features = false, features = [
   "rustls-tls-native-roots",
@@ -108,6 +88,23 @@ opentalk-keycloak-admin = { version = "0.3.0", default-features = false, feature
 opentalk-nextcloud-client = { version = "0.2.0", default-features = false, features = [
   "rustls-tls-native-roots",
 ] }
+opentalk-types-api-v1 = "0.29"
+opentalk-types-common = "0.29"
+opentalk-types-signaling = "0.29"
+opentalk-types-signaling-breakout = "0.29"
+opentalk-types-signaling-chat = "0.29"
+opentalk-types-signaling-control = "0.29"
+opentalk-types-signaling-livekit = "0.29"
+opentalk-types-signaling-meeting-notes = "0.29"
+opentalk-types-signaling-meeting-report = "0.29"
+opentalk-types-signaling-moderation = "0.29"
+opentalk-types-signaling-polls = "0.29"
+opentalk-types-signaling-recording = "0.29"
+opentalk-types-signaling-recording-service = "0.29"
+opentalk-types-signaling-shared-folder = "0.29"
+opentalk-types-signaling-subroom-audio = "0.29"
+opentalk-types-signaling-timer = "0.29"
+opentalk-types-signaling-whiteboard = "0.29"
 opentalk-version = "0.1.1"
 opentelemetry = { version = "0.27", default-features = false, features = [
   "metrics",
@@ -117,9 +114,6 @@ owo-colors = "4"
 parking_lot = "0.12"
 phonenumber = "0.3"
 pretty_assertions = "1"
-proc-macro-crate = "3"
-proc-macro2 = "1"
-quote = "1"
 rand = "0.8"
 redis = "0.27"
 redis-args = "0.17"
@@ -128,12 +122,9 @@ reqwest11 = { package = "reqwest", version = "0.11", default-features = false }
 rustc-hash = "2.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-serde_urlencoded = "0.7"
-serde_with = "3.8"
 serial_test = "3"
 snafu = "0.8"
 strum = { version = "0.26", features = ["derive"] }
-syn = "2"
 terdoc-client = { version = "0.1.1", default-features = false }
 tokio = "1"
 tokio-stream = { version = "0.1", features = ["sync"] }

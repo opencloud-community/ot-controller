@@ -4,7 +4,7 @@
 
 //! Data types for OpenTalk.
 //!
-//! This crate contains all data types that are used in the OpenTalk
+//! This crate contains data types that are used in the OpenTalk
 //! web and signaling APIs.
 //!
 //! # Features
@@ -25,11 +25,10 @@
 //! the OpenTalk room server).
 //!
 //! Depends on:
+//! - `actix`
 //! - `diesel`
-//! - `redis`
-//! - `kustos`
 //! - `serde`
-//! - `rand`
+//! - `utoipa`
 //!
 //! ## `frontend`
 //!
@@ -44,23 +43,6 @@
 //!
 //! Depends on:
 //! - `serde`
-//!
-//! ## `redis`
-//!
-//! Implements [Redis](https://docs.rs/redis/) `ToRedisArgs` and `FromRedisValue`
-//! for types that can be stored on a redis server.
-//!
-//! Depends on:
-//! - `serde`
-//!
-//! ## `kustos`
-//!
-//! Annotates identifier newtypes with a kustos resource implementation.
-//!
-//! ## `rand`
-//!
-//! Some functions for generating values from random numbers are gated by this flag.
-//! These are typically used on the backend for creating new identifiers or tokens.
 //!
 //! ## `serde`
 //!
@@ -85,33 +67,3 @@
 )]
 
 pub mod api;
-
-mod imports {
-    #![allow(unused)]
-
-    #[cfg(feature = "kustos")]
-    pub use opentalk_kustos_prefix::KustosPrefix;
-    #[cfg(feature = "diesel")]
-    pub use {
-        diesel::{
-            deserialize::{FromSql, FromSqlRow},
-            expression::AsExpression,
-            pg::Pg,
-            serialize::ToSql,
-        },
-        opentalk_diesel_newtype::DieselNewtype,
-    };
-    #[cfg(feature = "frontend")]
-    pub use {http::Method, http_request_derive::HttpRequest};
-    #[cfg(feature = "serde")]
-    pub use {
-        opentalk_types_signaling::{SignalingModuleFrontendData, SignalingModulePeerFrontendData},
-        serde::{de, de::DeserializeOwned, Deserialize, Deserializer, Serialize, Serializer},
-        validator::{Validate, ValidationError, ValidationErrors},
-    };
-    #[cfg(feature = "redis")]
-    pub use {
-        redis::{FromRedisValue, RedisResult, ToRedisArgs},
-        redis_args::{FromRedisValue, ToRedisArgs},
-    };
-}

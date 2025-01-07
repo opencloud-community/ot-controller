@@ -35,30 +35,6 @@ variables:
     # Run on scheduled pipeline runs
     - if: $CI_PIPELINE_SOURCE == 'schedule'
 
-.test:types:
-  stage: test
-  # Ensures that the crate can be built with each relevant feature individually
-  variables:
-    RUSTFLAGS: -D warnings
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-      changes:
-        paths:
-          - crates/opentalk-types-common/**/*
-          - crates/opentalk-types-signaling/**/*
-          - crates/$PACKAGE/**/*
-    # Run on scheduled pipeline runs
-    - if: $CI_PIPELINE_SOURCE == 'schedule'
-  parallel:
-    matrix:
-      - FEATURES: ['']
-        EXTRA_ARGS: ['', --no-default-features]
-  script:
-    - cargo clippy --package $PACKAGE $EXTRA_ARGS --features=$FEATURES
-    - cargo test --package $PACKAGE $EXTRA_ARGS --features=$FEATURES
-
-include: crates/**/gitlab-ci.yml
-
 trigger_enterprise_ci:
   stage: trigger
   needs: []
@@ -378,8 +354,6 @@ check:opentalk-types:
             actix,
             axum,
             diesel,
-            kustos,
-            redis,
             serde,
             utoipa,
           ]

@@ -11,8 +11,6 @@ use itertools::Itertools;
 use super::{
     AuthenticationError, ErrorBody, StandardErrorBody, ValidationErrorBody, ValidationErrorEntry,
 };
-#[allow(unused_imports)]
-use crate::imports::*;
 
 /// The default REST API error
 ///
@@ -133,7 +131,7 @@ impl ApiError {
 
     /// Create a new 422 Unprocessable Entity error
     ///
-    /// This error is normally created from [`ValidationErrors`] from the validator crate.
+    /// This error is normally created from [`validator::ValidationErrors`].
     /// The JSON body for this error additionally contains a list of errors for each invalid field.
     pub fn unprocessable_entities<T, I>(errors: I) -> Self
     where
@@ -313,8 +311,8 @@ impl From<opentalk_cache::CacheError> for ApiError {
     }
 }
 
-impl From<ValidationErrors> for ApiError {
-    /// Creates a 422 Unprocessable entity response from the [`ValidationErrors`]
+impl From<validator::ValidationErrors> for ApiError {
+    /// Creates a 422 Unprocessable entity response from the [`validator::ValidationErrors`]
     ///
     /// Note:
     ///
@@ -358,7 +356,7 @@ impl From<ValidationErrors> for ApiError {
     ///
     /// The sender has no way to identify which of the `name` fields is invalid, except manually reviewing the values and
     /// reading the API docs.
-    fn from(validation_errors: ValidationErrors) -> Self {
+    fn from(validation_errors: validator::ValidationErrors) -> Self {
         let mut entries = Vec::with_capacity(validation_errors.errors().len());
 
         collect_validation_errors(validation_errors, &mut entries);
@@ -369,7 +367,7 @@ impl From<ValidationErrors> for ApiError {
 
 /// Convert [`ValidationErrors`] into multiple [`ValidationErrorEntries`](ValidationErrorEntry) and collect them in `entries`
 fn collect_validation_errors(
-    validation_errors: ValidationErrors,
+    validation_errors: validator::ValidationErrors,
     entries: &mut Vec<ValidationErrorEntry>,
 ) {
     let errors = validation_errors.into_errors();
