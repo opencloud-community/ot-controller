@@ -5,12 +5,10 @@
 use std::borrow::Cow;
 
 use super::ValidationErrorEntry;
-#[allow(unused_imports)]
-use crate::imports::*;
 
 /// The body of a validation error response
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ValidationErrorBody {
     /// Machine readable error message

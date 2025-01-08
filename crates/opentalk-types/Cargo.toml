@@ -23,19 +23,11 @@ actix-web = { workspace = true, optional = true }
 axum = { workspace = true, optional = true }
 diesel = { workspace = true, features = ["uuid"], optional = true }
 http = { workspace = true, optional = true }
-http-request-derive = { workspace = true, features = [
-  "serde",
-], optional = true }
 http0 = { workspace = true, optional = true }
 itertools.workspace = true
 log.workspace = true
 opentalk-cache = { workspace = true, optional = true }
 opentalk-database = { workspace = true, optional = true }
-opentalk-diesel-newtype = { workspace = true, optional = true }
-opentalk-kustos-prefix = { workspace = true, optional = true }
-opentalk-types-signaling.workspace = true
-redis = { workspace = true, optional = true }
-redis-args = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 serde_json.workspace = true
 snafu.workspace = true
@@ -55,28 +47,12 @@ backend = [
   "dep:opentalk-cache",
   "dep:opentalk-database",
   "diesel",
-  "kustos",
-  "opentalk-types-signaling/backend",
-  "redis",
   "serde",
   "utoipa",
 ]
-diesel = ["dep:diesel", "dep:opentalk-diesel-newtype", "serde"]
-frontend = [
-  "dep:http",
-  "dep:http-request-derive",
-  "dep:http0",
-  "opentalk-types-signaling/frontend",
-  "serde",
-]
-kustos = ["dep:opentalk-kustos-prefix"]
-redis = [
-  "dep:redis",
-  "dep:redis-args",
-  "opentalk-types-signaling/redis",
-  "serde",
-]
-serde = ["dep:serde", "dep:validator", "opentalk-types-signaling/serde"]
+diesel = ["dep:diesel", "serde"]
+frontend = ["dep:http", "dep:http0", "serde"]
+serde = ["dep:serde", "dep:validator"]
 utoipa = ["dep:utoipa", "serde"]
 
 [dev-dependencies]

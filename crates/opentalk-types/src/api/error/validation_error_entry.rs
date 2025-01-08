@@ -4,12 +4,9 @@
 
 use std::borrow::Cow;
 
-#[allow(unused_imports)]
-use crate::imports::*;
-
 /// An entry in a validation error list
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ValidationErrorEntry {
     /// The field related to the error
