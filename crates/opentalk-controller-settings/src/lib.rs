@@ -124,6 +124,9 @@ pub struct SettingsLoading<OIDC> {
     pub spacedeck: Option<Spacedeck>,
 
     #[serde(default)]
+    pub subroom_audio: Option<SubroomAudio>,
+
+    #[serde(default)]
     pub reports: Option<Reports>,
 
     #[serde(default)]
@@ -451,6 +454,7 @@ impl<OIDC> SettingsLoading<OIDC> {
             etherpad: this.etherpad,
             spacedeck: this.spacedeck,
             reports: this.reports,
+            subroom_audio: this.subroom_audio,
             shared_folder: this.shared_folder,
             call_in: this.call_in,
             defaults: this.defaults,
@@ -702,6 +706,12 @@ pub struct Etherpad {
 pub struct Spacedeck {
     pub url: url::Url,
     pub api_key: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct SubroomAudio {
+    #[serde(default)]
+    pub enable_whisper: bool,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]

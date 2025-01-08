@@ -224,6 +224,10 @@ urls = ["localhost:2379"]
 #"""
 #url = "http://localhost:6560"
 
+# Subroom audio whisper configuration
+#[subroom_audio]
+#enable_whisper = false
+
 # Shared folder configuration
 #[shared_folder]
 #provider = "nextcloud"
