@@ -21,10 +21,11 @@ use snafu::ResultExt;
 use super::{
     control_storage::{
         AttributeAction, ControlStorageEvent, ControlStorageParticipantSet,
-        ControlStorageSkipWaitingRoom,
+        ControlStorageSkipWaitingRoom, GlobalRoomAttributeId, LocalRoomAttributeId,
+        RoomAttributeId,
     },
-    AttributeActions, AttributeId, ControlStorage, ControlStorageParticipantAttributesRaw, LEFT_AT,
-    ROLE, SKIP_WAITING_ROOM_KEY_EXPIRY,
+    AttributeActions, ControlStorage, ControlStorageParticipantAttributesRaw, LEFT_AT, ROLE,
+    SKIP_WAITING_ROOM_KEY_EXPIRY,
 };
 use crate::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 
@@ -33,14 +34,11 @@ impl ControlStorage for RedisConnection {
     #[tracing::instrument(level = "debug", skip(self))]
     async fn remove_attribute_key(
         &mut self,
-        room: SignalingRoomId,
-        attribute: AttributeId,
+        attribute: RoomAttributeId,
     ) -> Result<(), SignalingModuleError> {
-        self.del(RoomParticipantAttributes { room, attribute })
-            .await
-            .with_context(|_| RedisSnafu {
-                message: format!("Failed to remove participant attribute key, {attribute}"),
-            })
+        self.del(attribute).await.with_context(|_| RedisSnafu {
+            message: format!("Failed to remove participant attribute key, {attribute}"),
+        })
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
@@ -51,11 +49,11 @@ impl ControlStorage for RedisConnection {
     {
         let mut pipe = redis::pipe();
         pipe.atomic();
-        pipe.hgetall(RoomParticipantAttributes {
-            room,
+        pipe.hgetall(GlobalRoomAttributeId {
+            room: room.room_id(),
             attribute: ROLE,
         });
-        pipe.hgetall(RoomParticipantAttributes {
+        pipe.hgetall(LocalRoomAttributeId {
             room,
             attribute: LEFT_AT,
         });
@@ -414,14 +412,6 @@ struct RoomParticipants {
     room: SignalingRoomId,
 }
 
-/// Key used for the lock over the room participants set
-#[derive(ToRedisArgs)]
-#[to_redis_args(fmt = "opentalk-signaling:room={room}:participants:attributes:{attribute}")]
-struct RoomParticipantAttributes {
-    room: SignalingRoomId,
-    attribute: AttributeId,
-}
-
 /// The total count of all participants in the room, also considers participants in breakout rooms and the waiting room
 ///
 /// Notice that this key only contains the [`RoomId`] as it applies to all breakout rooms as well
@@ -548,12 +538,11 @@ impl ControlStorageParticipantAttributesRaw for RedisConnection {
     #[tracing::instrument(level = "debug", skip(self))]
     async fn get_attribute_raw(
         &mut self,
-        room: SignalingRoomId,
         participant: ParticipantId,
-        attribute: AttributeId,
+        attribute: RoomAttributeId,
     ) -> Result<Option<serde_json::Value>, SignalingModuleError> {
         let WrappedAttributeValueJson(value) = self
-            .hget(RoomParticipantAttributes { room, attribute }, participant)
+            .hget(attribute, participant)
             .await
             .with_context(|_| RedisSnafu {
                 message: format!("Failed to get attribute {attribute}"),
@@ -565,9 +554,8 @@ impl ControlStorageParticipantAttributesRaw for RedisConnection {
     #[tracing::instrument(level = "debug", skip(self))]
     async fn get_attribute_for_participants_raw(
         &mut self,
-        room: SignalingRoomId,
         participants: &[ParticipantId],
-        attribute: AttributeId,
+        attribute: RoomAttributeId,
     ) -> Result<Vec<Option<serde_json::Value>>, SignalingModuleError> {
         // Special case: HMGET cannot handle empty arrays (missing arguments)
         if participants.is_empty() {
@@ -576,7 +564,7 @@ impl ControlStorageParticipantAttributesRaw for RedisConnection {
             // need manual HMGET command as the HGET command wont work with single value vector input
             let WrappedAttributeValue::<Vec<Option<serde_json::Value>>>(value) =
                 redis::cmd("HMGET")
-                    .arg(RoomParticipantAttributes { room, attribute })
+                    .arg(attribute)
                     .arg(participants)
                     .query_async(self)
                     .await
@@ -592,13 +580,12 @@ impl ControlStorageParticipantAttributesRaw for RedisConnection {
     #[tracing::instrument(level = "debug", skip(self))]
     async fn set_attribute_raw(
         &mut self,
-        room: SignalingRoomId,
         participant: ParticipantId,
-        attribute: AttributeId,
+        attribute: RoomAttributeId,
         value: serde_json::Value,
     ) -> Result<(), SignalingModuleError> {
         self.hset::<_, _, _, ()>(
-            RoomParticipantAttributes { room, attribute },
+            attribute,
             participant,
             WrappedAttributeValueJson(Some(value)),
         )
@@ -613,11 +600,10 @@ impl ControlStorageParticipantAttributesRaw for RedisConnection {
     #[tracing::instrument(level = "debug", skip(self))]
     async fn remove_attribute_raw(
         &mut self,
-        room: SignalingRoomId,
         participant: ParticipantId,
-        attribute: AttributeId,
+        attribute: RoomAttributeId,
     ) -> Result<(), SignalingModuleError> {
-        self.hdel(RoomParticipantAttributes { room, attribute }, participant)
+        self.hdel(attribute, participant)
             .await
             .with_context(|_| RedisSnafu {
                 message: format!("Failed to remove participant attribute key, {attribute}"),
@@ -629,7 +615,6 @@ impl ControlStorageParticipantAttributesRaw for RedisConnection {
         &mut self,
         actions: &AttributeActions,
     ) -> Result<serde_json::Value, SignalingModuleError> {
-        let room = actions.room();
         let participant = actions.participant();
 
         let mut pipe = redis::pipe();
@@ -638,33 +623,17 @@ impl ControlStorageParticipantAttributesRaw for RedisConnection {
             match action {
                 AttributeAction::Set { attribute, value } => {
                     pipe.hset(
-                        RoomParticipantAttributes {
-                            room,
-                            attribute: *attribute,
-                        },
+                        attribute,
                         participant,
                         WrappedAttributeValueJson(Some(value.clone())),
                     )
                     .ignore();
                 }
                 AttributeAction::Get { attribute } => {
-                    pipe.hget(
-                        RoomParticipantAttributes {
-                            room,
-                            attribute: *attribute,
-                        },
-                        participant,
-                    );
+                    pipe.hget(attribute, participant);
                 }
                 AttributeAction::Delete { attribute } => {
-                    pipe.hdel(
-                        RoomParticipantAttributes {
-                            room,
-                            attribute: *attribute,
-                        },
-                        participant,
-                    )
-                    .ignore();
+                    pipe.hdel(attribute, participant).ignore();
                 }
             }
         }

@@ -17,9 +17,11 @@ use parking_lot::RwLock;
 use super::memory::MemoryControlState;
 use crate::{
     control::storage::{
-        control_storage::{ControlStorageParticipantSet, ControlStorageSkipWaitingRoom},
-        AttributeActions, AttributeId, ControlStorage, ControlStorageEvent,
-        ControlStorageParticipantAttributes, ControlStorageParticipantAttributesRaw, LEFT_AT, ROLE,
+        control_storage::{
+            ControlStorageParticipantSet, ControlStorageSkipWaitingRoom, RoomAttributeId,
+        },
+        AttributeActions, ControlStorage, ControlStorageEvent, ControlStorageParticipantAttributes,
+        ControlStorageParticipantAttributesRaw, LEFT_AT, ROLE,
     },
     SignalingModuleError, SignalingRoomId, VolatileStaticMemoryStorage,
 };
@@ -35,10 +37,9 @@ impl ControlStorage for VolatileStaticMemoryStorage {
     #[tracing::instrument(level = "debug", skip(self))]
     async fn remove_attribute_key(
         &mut self,
-        room: SignalingRoomId,
-        attribute: AttributeId,
+        attribute: RoomAttributeId,
     ) -> Result<(), SignalingModuleError> {
-        state().write().remove_attribute_key(room, attribute);
+        state().write().remove_attribute_key(attribute);
         Ok(())
     }
 
@@ -51,10 +52,10 @@ impl ControlStorage for VolatileStaticMemoryStorage {
         let participants = Vec::from_iter(self.get_all_participants(room).await?);
 
         let roles = self
-            .get_attribute_for_participants(room, &participants, ROLE)
+            .get_global_attribute_for_participants(&participants, room.room_id(), ROLE)
             .await?;
         let left_at = self
-            .get_attribute_for_participants(room, &participants, LEFT_AT)
+            .get_local_attribute_for_participants(&participants, room, LEFT_AT)
             .await?;
 
         Ok(participants
@@ -268,51 +269,43 @@ impl ControlStorageParticipantAttributesRaw for VolatileStaticMemoryStorage {
     #[tracing::instrument(level = "debug", skip(self))]
     async fn get_attribute_raw(
         &mut self,
-        room: SignalingRoomId,
         participant: ParticipantId,
-        attribute: AttributeId,
+        attribute: RoomAttributeId,
     ) -> Result<Option<serde_json::Value>, SignalingModuleError> {
-        Ok(state()
-            .read()
-            .get_attribute_raw(room, participant, attribute))
+        Ok(state().read().get_attribute_raw(attribute, participant))
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
     async fn get_attribute_for_participants_raw(
         &mut self,
-        room: SignalingRoomId,
         participants: &[ParticipantId],
-        attribute: AttributeId,
+        attribute: RoomAttributeId,
     ) -> Result<Vec<Option<serde_json::Value>>, SignalingModuleError> {
         Ok(state()
             .read()
-            .get_attribute_for_participants_raw(room, participants, attribute))
+            .get_attribute_for_participants_raw(attribute, participants))
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
     async fn set_attribute_raw(
         &mut self,
-        room: SignalingRoomId,
         participant: ParticipantId,
-        attribute: AttributeId,
+        attribute: RoomAttributeId,
         value: serde_json::Value,
     ) -> Result<(), SignalingModuleError> {
         state()
             .write()
-            .set_attribute_raw(room, participant, attribute, value);
+            .set_attribute_raw(attribute, participant, value);
         Ok(())
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
     async fn remove_attribute_raw(
         &mut self,
-        room: SignalingRoomId,
         participant: ParticipantId,
-        attribute: AttributeId,
+        attribute: RoomAttributeId,
     ) -> Result<(), SignalingModuleError> {
-        state()
-            .write()
-            .remove_attribute_raw(room, participant, attribute);
+        state().write().remove_attribute_raw(attribute, participant);
         Ok(())
     }
 
@@ -321,7 +314,7 @@ impl ControlStorageParticipantAttributesRaw for VolatileStaticMemoryStorage {
         &mut self,
         actions: &AttributeActions,
     ) -> Result<serde_json::Value, SignalingModuleError> {
-        state().write().perform_bulk_attribute_actions_raw(actions)
+        state().write().bulk_attribute_actions_raw(actions)
     }
 }
 

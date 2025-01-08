@@ -274,12 +274,12 @@ impl BreakoutRooms {
                 .breakout_storage()
                 .bulk_attribute_actions(
                     AttributeActions::new(room, participant)
-                        .get(DISPLAY_NAME)
-                        .get(ROLE)
-                        .get(AVATAR_URL)
-                        .get(KIND)
-                        .get(JOINED_AT)
-                        .get(LEFT_AT),
+                        .get_local(DISPLAY_NAME)
+                        .get_global(ROLE)
+                        .get_local(AVATAR_URL)
+                        .get_local(KIND)
+                        .get_local(JOINED_AT)
+                        .get_local(LEFT_AT),
                 )
                 .await;
 

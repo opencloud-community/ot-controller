@@ -343,12 +343,12 @@ impl MeetingReport {
         let (joined_at, left_at, name, role, kind, user_id): UserData = storage
             .bulk_attribute_actions(
                 AttributeActions::new(self.room_id, participant)
-                    .get(JOINED_AT)
-                    .get(LEFT_AT)
-                    .get(DISPLAY_NAME)
-                    .get(ROLE)
-                    .get(KIND)
-                    .get(USER_ID),
+                    .get_local(JOINED_AT)
+                    .get_local(LEFT_AT)
+                    .get_local(DISPLAY_NAME)
+                    .get_global(ROLE)
+                    .get_local(KIND)
+                    .get_local(USER_ID),
             )
             .await?;
 

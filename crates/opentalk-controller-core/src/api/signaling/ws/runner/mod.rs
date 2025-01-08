@@ -28,8 +28,9 @@ use opentalk_signaling_core::{
     control::{
         self, exchange, module_id,
         storage::{
-            AttributeActions, ControlStorageParticipantAttributes, AVATAR_URL, DISPLAY_NAME,
-            HAND_IS_UP, HAND_UPDATED_AT, IS_ROOM_OWNER, JOINED_AT, KIND, LEFT_AT, ROLE, USER_ID,
+            AttributeActions, ControlStorageParticipantAttributes, GlobalRoomAttributeId,
+            LocalRoomAttributeId, AVATAR_URL, DISPLAY_NAME, HAND_IS_UP, HAND_UPDATED_AT,
+            IS_ROOM_OWNER, JOINED_AT, KIND, LEFT_AT, ROLE, USER_ID,
         },
         ControlStateExt as _, ControlStorageProvider,
     },
@@ -40,7 +41,7 @@ use opentalk_signaling_core::{
 use opentalk_types_common::{
     features::FeatureId,
     modules::ModuleId,
-    rooms::BreakoutRoomId,
+    rooms::{BreakoutRoomId, RoomId},
     tariffs::{QuotaType, TariffResource},
     time::Timestamp,
     users::{DisplayName, UserId},
@@ -365,6 +366,18 @@ async fn get_participant_role(
     }
 }
 
+async fn get_adhoc_role(
+    volatile: &mut VolatileStorage,
+    room_id: RoomId,
+    participant_id: ParticipantId,
+) -> Result<Option<Role>> {
+    volatile
+        .control_storage()
+        .get_global_attribute(participant_id, room_id, ROLE)
+        .await
+        .whatever_context::<_, RunnerError>("Failed to get role from volatile storage")
+}
+
 impl Runner {
     #[allow(clippy::too_many_arguments)]
     pub async fn builder(
@@ -380,11 +393,14 @@ impl Runner {
         db: Arc<Db>,
         storage: Arc<ObjectStorage>,
         authz: Arc<Authz>,
-        volatile: VolatileStorage,
+        mut volatile: VolatileStorage,
         exchange_handle: ExchangeHandle,
         resumption_keep_alive: ResumptionTokenKeepAlive,
     ) -> Result<Builder> {
-        let role = get_participant_role(&mut db.get_conn().await?, &participant, &room).await?;
+        let role = match get_adhoc_role(&mut volatile, room.id, id).await? {
+            Some(adhoc_role) => adhoc_role,
+            None => get_participant_role(&mut db.get_conn().await?, &participant, &room).await?,
+        };
 
         Ok(Builder {
             runner_id,
@@ -451,7 +467,7 @@ impl Runner {
                 let res = self
                     .volatile
                     .control_storage()
-                    .set_attribute(self.room_id, self.id, LEFT_AT, Timestamp::now())
+                    .set_local_attribute(self.id, self.room_id, LEFT_AT, Timestamp::now())
                     .await;
                 if let Err(e) = res {
                     log::error!(
@@ -1257,7 +1273,7 @@ impl Runner {
         let left_at: Option<Timestamp> = self
             .volatile
             .control_storage()
-            .get_attribute(self.room_id, self.id, LEFT_AT)
+            .get_local_attribute(self.id, self.room_id, LEFT_AT)
             .await?;
         self.set_control_attributes(timestamp, &display_name, avatar_url.as_deref())
             .await?;
@@ -1291,7 +1307,7 @@ impl Runner {
         let role: Option<Role> = self
             .volatile
             .control_storage()
-            .get_attribute(self.room_id, target, ROLE)
+            .get_global_attribute(target, self.room_id.room_id(), ROLE)
             .await?;
 
         let is_moderator = matches!(role, Some(Role::Moderator));
@@ -1306,7 +1322,7 @@ impl Runner {
         let user_id: Option<UserId> = self
             .volatile
             .control_storage()
-            .get_attribute(self.room_id, target, USER_ID)
+            .get_local_attribute(target, self.room_id, USER_ID)
             .await?;
 
         if let Some(user_id) = user_id {
@@ -1344,8 +1360,8 @@ impl Runner {
             .control_storage()
             .bulk_attribute_actions::<()>(
                 AttributeActions::new(self.room_id, self.id)
-                    .set(HAND_IS_UP, hand_raised)
-                    .set(HAND_UPDATED_AT, timestamp),
+                    .set_local(HAND_IS_UP, hand_raised)
+                    .set_local(HAND_UPDATED_AT, timestamp),
             )
             .await?;
 
@@ -1512,11 +1528,11 @@ impl Runner {
         };
         self.volatile
             .control_storage()
-            .remove_attribute(self.room_id, self.id, LEFT_AT)
+            .remove_local_attribute(self.id, self.room_id, LEFT_AT)
             .await?;
         self.volatile
             .control_storage()
-            .set_attribute(self.room_id, self.id, JOINED_AT, timestamp)
+            .set_local_attribute(self.id, self.room_id, JOINED_AT, timestamp)
             .await?;
 
         // If we haven't joined the waiting room yet, fetch, set and enforce the tariff for the room.
@@ -1774,22 +1790,22 @@ impl Runner {
         match &self.participant {
             Participant::User(ref user) => {
                 actions
-                    .set(KIND, ParticipationKind::User)
-                    .set(
+                    .set_local(KIND, ParticipationKind::User)
+                    .set_local(
                         AVATAR_URL,
                         avatar_url.expect("user must have avatar_url set"),
                     )
-                    .set(USER_ID, user.id)
-                    .set(IS_ROOM_OWNER, user.id == self.room.created_by);
+                    .set_local(USER_ID, user.id)
+                    .set_local(IS_ROOM_OWNER, user.id == self.room.created_by);
             }
             Participant::Guest => {
-                actions.set(KIND, ParticipationKind::Guest);
+                actions.set_local(KIND, ParticipationKind::Guest);
             }
             Participant::Sip => {
-                actions.set(KIND, ParticipationKind::Sip);
+                actions.set_local(KIND, ParticipationKind::Sip);
             }
             Participant::Recorder => {
-                actions.set(KIND, ParticipationKind::Recorder);
+                actions.set_local(KIND, ParticipationKind::Recorder);
             }
         }
 
@@ -1797,11 +1813,11 @@ impl Runner {
             .control_storage()
             .bulk_attribute_actions::<()>(
                 actions
-                    .set(ROLE, self.role)
-                    .set(HAND_IS_UP, false)
-                    .set(HAND_UPDATED_AT, timestamp)
-                    .set(DISPLAY_NAME, display_name)
-                    .set(JOINED_AT, timestamp),
+                    .set_global(ROLE, self.role)
+                    .set_local(HAND_IS_UP, false)
+                    .set_local(HAND_UPDATED_AT, timestamp)
+                    .set_local(DISPLAY_NAME, display_name)
+                    .set_local(JOINED_AT, timestamp),
             )
             .await?;
 
@@ -2030,7 +2046,7 @@ impl Runner {
 
                 self.volatile
                     .control_storage()
-                    .set_attribute(self.room_id, self.id, ROLE, new_role)
+                    .set_global_attribute(self.id, self.room_id.room_id(), ROLE, new_role)
                     .await?;
 
                 let actions = self
@@ -2056,7 +2072,7 @@ impl Runner {
                 let raised: Option<bool> = self
                     .volatile
                     .control_storage()
-                    .get_attribute(self.room_id, self.id, HAND_IS_UP)
+                    .get_local_attribute(self.id, self.room_id, HAND_IS_UP)
                     .await?;
                 if matches!(raised, Some(true)) {
                     self.handle_raise_hand_change(timestamp, false).await?;
@@ -2095,7 +2111,7 @@ impl Runner {
                 let raised: Option<bool> = self
                     .volatile
                     .control_storage()
-                    .get_attribute(self.room_id, self.id, HAND_IS_UP)
+                    .get_local_attribute(self.id, self.room_id, HAND_IS_UP)
                     .await?;
                 if matches!(raised, Some(true)) {
                     self.handle_raise_hand_change(timestamp, false).await?;
@@ -2135,7 +2151,7 @@ impl Runner {
 
         self.volatile
             .control_storage()
-            .set_attribute(self.room_id, self.id, LEFT_AT, Timestamp::now())
+            .set_local_attribute(self.id, self.room_id, LEFT_AT, Timestamp::now())
             .await?;
 
         let actions = self
@@ -2509,9 +2525,9 @@ async fn cleanup_redis_keys_for_signaling_room(
         .control_storage()
         .remove_participant_set(room_id)
         .await?;
-    for key in [
+
+    for attribute in [
         DISPLAY_NAME,
-        ROLE,
         JOINED_AT,
         LEFT_AT,
         HAND_IS_UP,
@@ -2523,8 +2539,29 @@ async fn cleanup_redis_keys_for_signaling_room(
     ] {
         storage
             .control_storage()
-            .remove_attribute_key(room_id, key)
+            .remove_attribute_key(
+                LocalRoomAttributeId {
+                    room: room_id,
+                    attribute,
+                }
+                .into(),
+            )
             .await?;
+    }
+
+    if room_id.breakout_room_id().is_none() {
+        for attribute in [ROLE] {
+            storage
+                .control_storage()
+                .remove_attribute_key(
+                    GlobalRoomAttributeId {
+                        room: room_id.room_id(),
+                        attribute,
+                    }
+                    .into(),
+                )
+                .await?;
+        }
     }
 
     Ok(())

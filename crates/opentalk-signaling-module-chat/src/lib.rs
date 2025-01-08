@@ -347,7 +347,7 @@ impl SignalingModule for Chat {
                 let user_ids: Vec<Option<UserId>> = ctx
                     .volatile
                     .storage()
-                    .get_attribute_for_participants(self.room, &participant_ids, USER_ID)
+                    .get_local_attribute_for_participants(&participant_ids, self.room, USER_ID)
                     .await?;
 
                 // Filter out guest/bots and map each user-id to a participant id
@@ -484,7 +484,7 @@ impl SignalingModule for Chat {
                 let user_id: Option<UserId> = ctx
                     .volatile
                     .storage()
-                    .get_attribute(self.room, participant_id, USER_ID)
+                    .get_local_attribute(participant_id, self.room, USER_ID)
                     .await?;
 
                 if let Some(user_id) = user_id {
