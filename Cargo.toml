@@ -26,7 +26,6 @@ opentalk-database = { path = "crates/opentalk-database", version = "0.29.0-alpha
 opentalk-db-storage = { path = "crates/opentalk-db-storage", version = "0.29.0-alpha" }
 opentalk-jobs = { path = "crates/opentalk-jobs", version = "0.29.0-alpha" }
 opentalk-log = { path = "crates/opentalk-log", version = "0.29.0-alpha" }
-opentalk-mail-worker-protocol = { path = "crates/opentalk-mail-worker-protocol", version = "0.29.0-alpha" }
 opentalk-r3dlock = { path = "crates/opentalk-r3dlock", version = "0.29.0-alpha" }
 opentalk-signaling-core = { path = "crates/opentalk-signaling-core", version = "0.29.0-alpha" }
 opentalk-signaling-module-chat = { path = "crates/opentalk-signaling-module-chat", version = "0.29.0-alpha" }
@@ -85,6 +84,7 @@ opentalk-etherpad-client = { version = "0.2.0", default-features = false, featur
 opentalk-keycloak-admin = { version = "0.3.0", default-features = false, features = [
   "rustls-tls-native-roots",
 ] }
+opentalk-mail-worker-protocol = "0.29"
 opentalk-nextcloud-client = { version = "0.2.0", default-features = false, features = [
   "rustls-tls-native-roots",
 ] }
