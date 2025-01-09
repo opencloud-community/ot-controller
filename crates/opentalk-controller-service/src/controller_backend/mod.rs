@@ -16,9 +16,9 @@ use kustos::Authz;
 use opentalk_controller_service_facade::{OpenTalkControllerServiceBackend, RequestUser};
 use opentalk_controller_settings::SharedSettings;
 use opentalk_database::Db;
-use opentalk_types::api::error::ApiError;
 use opentalk_types_api_v1::{
     auth::{GetLoginResponseBody, OidcProvider},
+    error::ApiError,
     rooms::{by_room_id::GetRoomEventResponseBody, GetRoomsResponseBody, RoomResource},
 };
 use opentalk_types_common::{
@@ -78,7 +78,7 @@ impl OpenTalkControllerServiceBackend for ControllerBackend {
         per_page: i64,
         page: i64,
     ) -> Result<(GetRoomsResponseBody, i64), ApiError> {
-        self.get_rooms(current_user_id, per_page, page).await
+        Ok(self.get_rooms(current_user_id, per_page, page).await?)
     }
 
     async fn create_room(
@@ -118,14 +118,14 @@ impl OpenTalkControllerServiceBackend for ControllerBackend {
     }
 
     async fn get_room(&self, room_id: &RoomId) -> Result<RoomResource, ApiError> {
-        self.get_room(room_id).await
+        Ok(self.get_room(room_id).await?)
     }
 
     async fn get_room_tariff(&self, room_id: &RoomId) -> Result<TariffResource, ApiError> {
-        self.get_room_tariff(room_id).await
+        Ok(self.get_room_tariff(room_id).await?)
     }
 
     async fn get_room_event(&self, room_id: &RoomId) -> Result<GetRoomEventResponseBody, ApiError> {
-        self.get_room_event(room_id).await
+        Ok(self.get_room_event(room_id).await?)
     }
 }

@@ -341,31 +341,6 @@ build:
   script:
     - cargo auditable build --release --locked --workspace
 
-check:opentalk-types:
-  stage: check
-  needs: []
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-  # Ensures that the `types` crate can be built with each relevant feature individually
-  variables:
-    RUSTFLAGS: -D warnings
-  parallel:
-    matrix:
-      - FEATURES:
-          [
-          '',
-            frontend,
-            backend,
-            actix,
-            axum,
-            diesel,
-            serde,
-            utoipa,
-          ]
-        EXTRA_ARGS: ['', --no-default-features]
-  script:
-    - cargo check --package opentalk-types $EXTRA_ARGS --features=$FEATURES
-
 check:er-diagram:
   stage: check
   needs:

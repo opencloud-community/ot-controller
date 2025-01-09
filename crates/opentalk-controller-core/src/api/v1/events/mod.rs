@@ -2,8 +2,6 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::sync::Arc;
-
 use actix_web::{
     delete, get, patch, post,
     web::{Data, Json, Path, Query, ReqData},
@@ -21,7 +19,10 @@ use opentalk_controller_service::{
     controller_backend::RoomsPoliciesBuilderExt, email_to_libravatar_url, ToUserProfile as _,
 };
 use opentalk_controller_settings::{Settings, TenantAssignment};
-use opentalk_controller_utils::deletion::{Deleter, EventDeleter};
+use opentalk_controller_utils::{
+    deletion::{Deleter, EventDeleter},
+    CaptureApiError,
+};
 use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
     events::{
@@ -40,10 +41,8 @@ use opentalk_db_storage::{
 };
 use opentalk_keycloak_admin::{users::TenantFilter, KeycloakAdminClient};
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage};
-use opentalk_types::api::error::{
-    ApiError, ValidationErrorEntry, ERROR_CODE_IGNORED_VALUE, ERROR_CODE_VALUE_REQUIRED,
-};
 use opentalk_types_api_v1::{
+    error::{ApiError, ValidationErrorEntry, ERROR_CODE_IGNORED_VALUE, ERROR_CODE_VALUE_REQUIRED},
     events::{
         CallInInfo, DeleteEventsQuery, EmailOnlyUser, EventAndInstanceId, EventExceptionResource,
         EventInvitee, EventInviteeProfile, EventOptionsQuery, EventOrException, EventResource,
@@ -288,10 +287,27 @@ pub async fn new_event(
     query: Query<EventOptionsQuery>,
     mail_service: Data<MailService>,
 ) -> DefaultApiResult<EventResource> {
-    let settings = settings.load_full();
-    let current_user = current_user.into_inner();
-    let new_event = new_event.into_inner();
+    Ok(new_event_inner(
+        &settings.load_full(),
+        &db,
+        &authz,
+        current_user.into_inner(),
+        new_event.into_inner(),
+        query.into_inner(),
+        &mail_service,
+    )
+    .await?)
+}
 
+async fn new_event_inner(
+    settings: &Settings,
+    db: &Db,
+    authz: &Authz,
+    current_user: User,
+    event: PostEventsBody,
+    query: EventOptionsQuery,
+    mail_service: &MailService,
+) -> DefaultApiResult<EventResource, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let (event_resource, mail_resource) = conn
@@ -299,7 +315,7 @@ pub async fn new_event(
             async move {
                 // simplify logic by splitting the event creation
                 // into two paths: time independent and time dependent
-                let (mut event_resource, mail_resource) = match new_event {
+                let (mut event_resource, mail_resource) = match event {
                     PostEventsBody {
                         title,
                         description,
@@ -317,7 +333,7 @@ pub async fn new_event(
                         show_meeting_details,
                     } if recurrence_pattern.is_empty() => {
                         create_time_independent_event(
-                            &settings,
+                            settings,
                             conn,
                             current_user,
                             title,
@@ -349,7 +365,7 @@ pub async fn new_event(
                         show_meeting_details,
                     } => {
                         create_time_dependent_event(
-                            &settings,
+                            settings,
                             conn,
                             current_user,
                             title,
@@ -368,18 +384,18 @@ pub async fn new_event(
                         )
                             .await?
                     }
-                    new_event => {
-                        let msg = if new_event.is_time_independent {
+                    event => {
+                        let msg = if event.is_time_independent {
                             "time independent events must not have is_all_day, starts_at, ends_at or recurrence_pattern set"
                         } else {
                             "time dependent events must have title, description, is_all_day, starts_at and ends_at set"
                         };
 
-                        return Err(ApiError::bad_request().with_message(msg));
+                        return Err(CaptureApiError::from(ApiError::bad_request().with_message(msg)));
                     }
                 };
 
-                if new_event.has_shared_folder {
+                if event.has_shared_folder {
                     let (shared_folder, _) = put_shared_folder(settings, event_resource.id, conn).await?;
                     event_resource.shared_folder = Some(SharedFolder::from(shared_folder));
                 }
@@ -416,7 +432,7 @@ pub async fn new_event(
             .await
             .map_err(|e| {
                 log::warn!("Failed to send with MailService: {}", Report::from_error(e));
-                ApiError::internal()
+                CaptureApiError::from(ApiError::internal())
             })?;
     }
 
@@ -427,7 +443,7 @@ async fn store_event_streaming_targets(
     conn: &mut DbConnection,
     event_id: EventId,
     streaming_targets: Vec<StreamingTarget>,
-) -> Result<Vec<RoomStreamingTarget>, ApiError> {
+) -> Result<Vec<RoomStreamingTarget>, CaptureApiError> {
     let room_id = Event::get(conn, event_id).await?.room;
 
     let mut room_streaming_targets: Vec<RoomStreamingTarget> = Vec::new();
@@ -460,8 +476,8 @@ async fn create_time_independent_event(
     is_adhoc: bool,
     streaming_targets: Vec<StreamingTarget>,
     show_meeting_details: bool,
-    query: Query<EventOptionsQuery>,
-) -> Result<(EventResource, Option<MailResource>), ApiError> {
+    query: EventOptionsQuery,
+) -> Result<(EventResource, Option<MailResource>), CaptureApiError> {
     let room = NewRoom {
         created_by: current_user.id,
         password,
@@ -558,8 +574,8 @@ async fn create_time_dependent_event(
     is_adhoc: bool,
     streaming_targets: Vec<StreamingTarget>,
     show_meeting_details: bool,
-    query: Query<EventOptionsQuery>,
-) -> Result<(EventResource, Option<MailResource>), ApiError> {
+    query: EventOptionsQuery,
+) -> Result<(EventResource, Option<MailResource>), CaptureApiError> {
     let recurrence_pattern = recurrence_pattern.to_multiline_string();
 
     let (duration_secs, ends_at_dt, ends_at_tz) =
@@ -699,12 +715,25 @@ pub async fn get_events(
     current_user: ReqData<User>,
     query: Query<GetEventsQuery>,
 ) -> DefaultApiResult<Vec<EventOrException>> {
-    let settings = settings.load_full();
-    let current_user = current_user.into_inner();
-    let query = query.into_inner();
+    Ok(get_events_inner(
+        &settings.load_full(),
+        &db,
+        &kc_admin_client,
+        current_tenant.into_inner(),
+        current_user.into_inner(),
+        query.into_inner(),
+    )
+    .await?)
+}
 
-    let kc_admin_client_ref = &kc_admin_client;
-
+async fn get_events_inner(
+    settings: &Settings,
+    db: &Db,
+    kc_admin_client: &KeycloakAdminClient,
+    current_tenant: Tenant,
+    current_user: User,
+    query: GetEventsQuery,
+) -> DefaultApiResult<Vec<EventOrException>, CaptureApiError> {
     let per_page = query
         .per_page
         .unwrap_or_else(default_pagination_per_page)
@@ -742,7 +771,7 @@ pub async fn get_events(
         users.add(exceptions);
     }
 
-    let users = users.fetch(&settings, &mut conn).await?;
+    let users = users.fetch(settings, &mut conn).await?;
 
     let event_refs: Vec<&Event> = events.iter().map(|(event, ..)| event).collect();
 
@@ -801,11 +830,11 @@ pub async fn get_events(
 
         let registered_invitees_iter = invites_with_user
             .into_iter()
-            .map(|(invite, user)| EventInvitee::from_invite_with_user(invite, user, &settings));
+            .map(|(invite, user)| EventInvitee::from_invite_with_user(invite, user, settings));
 
         let unregistered_invitees_iter = email_invites
             .into_iter()
-            .map(|invite| EventInvitee::from_email_invite(invite, &settings));
+            .map(|invite| EventInvitee::from_email_invite(invite, settings));
 
         let invitees = registered_invitees_iter
             .chain(unregistered_invitees_iter)
@@ -827,7 +856,7 @@ pub async fn get_events(
             updated_at: event.updated_at.into(),
             title: event.title,
             description: event.description,
-            room: EventRoomInfo::from_room(&settings, room, sip_config, &tariff),
+            room: EventRoomInfo::from_room(settings, room, sip_config, &tariff),
             invitees_truncated,
             invitees,
             is_time_independent: event.is_time_independent,
@@ -874,8 +903,8 @@ pub async fn get_events(
             match resource {
                 EventOrException::Event(inner) => EventOrException::Event(EventResource {
                     invitees: enrich_invitees_from_keycloak(
-                        settings.clone(),
-                        kc_admin_client_ref,
+                        settings,
+                        kc_admin_client,
                         &current_tenant,
                         inner.invitees,
                     )
@@ -937,21 +966,38 @@ pub async fn get_event(
     event_id: Path<EventId>,
     query: Query<GetEventQuery>,
 ) -> DefaultApiResult<EventResource> {
-    let settings = settings.load_full();
-    let event_id = event_id.into_inner();
-    let query = query.into_inner();
+    Ok(get_event_inner(
+        &settings.load_full(),
+        &db,
+        &kc_admin_client,
+        current_tenant.into_inner(),
+        current_user.into_inner(),
+        event_id.into_inner(),
+        query.into_inner(),
+    )
+    .await?)
+}
 
+async fn get_event_inner(
+    settings: &Settings,
+    db: &Db,
+    kc_admin_client: &KeycloakAdminClient,
+    current_tenant: Tenant,
+    current_user: User,
+    event_id: EventId,
+    query: GetEventQuery,
+) -> DefaultApiResult<EventResource, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let (event, invite, room, sip_config, is_favorite, shared_folder, tariff) =
         Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
     let room_streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
     let (invitees, invitees_truncated) =
-        get_invitees_for_event(&settings, &mut conn, event_id, query.invitees_max).await?;
+        get_invitees_for_event(settings, &mut conn, event_id, query.invitees_max).await?;
 
     let users = GetUserProfilesBatched::new()
         .add(&event)
-        .fetch(&settings, &mut conn)
+        .fetch(settings, &mut conn)
         .await?;
 
     drop(conn);
@@ -967,7 +1013,7 @@ pub async fn get_event(
         id: event.id,
         title: event.title,
         description: event.description,
-        room: EventRoomInfo::from_room(&settings, room, sip_config, &tariff),
+        room: EventRoomInfo::from_room(settings, room, sip_config, &tariff),
         invitees_truncated,
         invitees,
         created_by: users.get(event.created_by),
@@ -1001,7 +1047,7 @@ pub async fn get_event(
     let event_resource = EventResource {
         invitees: enrich_invitees_from_keycloak(
             settings,
-            &kc_admin_client,
+            kc_admin_client,
             &current_tenant,
             event_resource.invitees,
         )
@@ -1078,18 +1124,37 @@ pub async fn patch_event(
     patch: Json<PatchEventBody>,
     mail_service: Data<MailService>,
 ) -> Result<Either<ApiResponse<EventResource>, NoContent>, ApiError> {
-    let patch = patch.into_inner();
+    Ok(patch_event_inner(
+        &settings.load_full(),
+        &db,
+        &authz,
+        &kc_admin_client,
+        current_tenant.into_inner(),
+        current_user.into_inner(),
+        event_id.into_inner(),
+        query.into_inner(),
+        patch.into_inner(),
+        &mail_service,
+    )
+    .await?)
+}
 
+#[allow(clippy::too_many_arguments)]
+async fn patch_event_inner(
+    settings: &Settings,
+    db: &Db,
+    authz: &Authz,
+    kc_admin_client: &KeycloakAdminClient,
+    current_tenant: Tenant,
+    current_user: User,
+    event_id: EventId,
+    query: PatchEventQuery,
+    patch: PatchEventBody,
+    mail_service: &MailService,
+) -> Result<Either<ApiResponse<EventResource>, NoContent>, CaptureApiError> {
     if patch.is_empty() {
         return Ok(Either::Right(NoContent));
     }
-
-    let settings = settings.load_full();
-    let current_tenant = current_tenant.into_inner();
-    let current_user = current_user.into_inner();
-    let event_id = event_id.into_inner();
-    let query = query.into_inner();
-    let mail_service = mail_service.into_inner();
 
     let send_email_notification = !query.suppress_email_notification;
 
@@ -1125,11 +1190,11 @@ pub async fn patch_event(
 
     match patch.has_shared_folder {
         Some(true) => {
-            put_shared_folder(settings.clone(), event_id, &mut conn).await?;
+            put_shared_folder(settings, event_id, &mut conn).await?;
         }
         Some(false) => {
             if let Some(folder) = EventSharedFolder::get_for_event(&mut conn, event_id).await? {
-                delete_shared_folders(settings.clone(), &[folder]).await?;
+                delete_shared_folders(settings, &[folder]).await?;
             }
         }
         None => {}
@@ -1190,7 +1255,7 @@ pub async fn patch_event(
     };
 
     let (invitees, invitees_truncated) =
-        get_invitees_for_event(&settings, &mut conn, event_id, query.invitees_max).await?;
+        get_invitees_for_event(settings, &mut conn, event_id, query.invitees_max).await?;
 
     drop(conn);
 
@@ -1203,13 +1268,13 @@ pub async fn patch_event(
 
     let event_resource = EventResource {
         id: event.id,
-        created_by: created_by.to_public_user_profile(&settings),
+        created_by: created_by.to_public_user_profile(settings),
         created_at: event.created_at.into(),
-        updated_by: current_user.to_public_user_profile(&settings),
+        updated_by: current_user.to_public_user_profile(settings),
         updated_at: event.updated_at.into(),
         title: event.title,
         description: event.description,
-        room: EventRoomInfo::from_room(&settings, room, sip_config, &tariff),
+        room: EventRoomInfo::from_room(settings, room, sip_config, &tariff),
         invitees_truncated,
         invitees,
         is_time_independent: event.is_time_independent,
@@ -1238,10 +1303,10 @@ pub async fn patch_event(
 
     if send_email_notification {
         notify_invitees_about_update(
-            settings.clone(),
+            settings,
             notification_values,
             mail_service,
-            &kc_admin_client,
+            kc_admin_client,
             shared_folder,
             streaming_targets,
         )
@@ -1251,7 +1316,7 @@ pub async fn patch_event(
     let event_resource = EventResource {
         invitees: enrich_invitees_from_keycloak(
             settings,
-            &kc_admin_client,
+            kc_admin_client,
             &current_tenant,
             event_resource.invitees,
         )
@@ -1263,14 +1328,14 @@ pub async fn patch_event(
 }
 
 pub async fn notify_event_invitees_by_room_about_update(
-    kc_admin_client: &Data<KeycloakAdminClient>,
-    settings: Arc<Settings>,
-    mail_service: Arc<MailService>,
+    kc_admin_client: &KeycloakAdminClient,
+    settings: &Settings,
+    mail_service: &MailService,
     current_tenant: Tenant,
     current_user: User,
     conn: &mut DbConnection,
     room_id: RoomId,
-) -> Result<(), ApiError> {
+) -> Result<(), CaptureApiError> {
     let event = Event::get_for_room(conn, room_id).await?;
 
     if let Some(event) = event {
@@ -1302,9 +1367,9 @@ pub async fn notify_event_invitees_by_room_about_update(
 
 #[allow(clippy::too_many_arguments)]
 async fn notify_event_invitees_about_update(
-    kc_admin_client: &Data<KeycloakAdminClient>,
-    settings: Arc<Settings>,
-    mail_service: Arc<MailService>,
+    kc_admin_client: &KeycloakAdminClient,
+    settings: &Settings,
+    mail_service: &MailService,
     current_tenant: Tenant,
     current_user: User,
     conn: &mut DbConnection,
@@ -1313,7 +1378,7 @@ async fn notify_event_invitees_about_update(
     sip_config: Option<SipConfig>,
     shared_folder_for_user: Option<SharedFolder>,
     streaming_targets: Vec<RoomStreamingTarget>,
-) -> Result<(), ApiError> {
+) -> Result<(), CaptureApiError> {
     let invited_users = get_invited_mail_recipients_for_event(conn, event.id).await?;
     let current_user_mail_recipient = MailRecipient::Registered(current_user.clone().into());
     let users_to_notify = invited_users
@@ -1352,21 +1417,17 @@ async fn notify_event_invitees_about_update(
 }
 
 async fn notify_invitees_about_update(
-    settings: Arc<Settings>,
+    settings: &Settings,
     notification_values: UpdateNotificationValues,
-    mail_service: Arc<MailService>,
-    kc_admin_client: &Data<KeycloakAdminClient>,
+    mail_service: &MailService,
+    kc_admin_client: &KeycloakAdminClient,
     shared_folder: Option<SharedFolder>,
     streaming_targets: Vec<RoomStreamingTarget>,
 ) {
     for user in notification_values.users_to_notify {
-        let invited_user = enrich_from_keycloak(
-            settings.clone(),
-            user,
-            &notification_values.tenant,
-            kc_admin_client,
-        )
-        .await;
+        let invited_user =
+            enrich_from_keycloak(settings, user, &notification_values.tenant, kc_admin_client)
+                .await;
 
         if let Err(e) = mail_service
             .send_event_update(
@@ -1463,7 +1524,7 @@ async fn patch_time_independent_event(
     current_user: &User,
     event: &Event,
     patch: PatchEventBody,
-) -> Result<UpdateEvent, ApiError> {
+) -> Result<UpdateEvent, CaptureApiError> {
     if patch.is_all_day.is_some() || patch.starts_at.is_some() || patch.ends_at.is_some() {
         const MSG: Option<&str> = Some("Value would be ignored in this request");
 
@@ -1493,7 +1554,7 @@ async fn patch_time_independent_event(
             ))
         }
 
-        return Err(ApiError::unprocessable_entities(entries));
+        return Err(ApiError::unprocessable_entities(entries).into());
     }
 
     if event.is_recurring.unwrap_or_default() {
@@ -1528,7 +1589,7 @@ async fn patch_time_dependent_event(
     current_user: &User,
     event: &Event,
     patch: PatchEventBody,
-) -> Result<UpdateEvent, ApiError> {
+) -> Result<UpdateEvent, CaptureApiError> {
     let recurrence_pattern = patch.recurrence_pattern.to_multiline_string();
 
     let is_all_day = patch.is_all_day.or(event.is_all_day).unwrap();
@@ -1632,16 +1693,39 @@ pub async fn delete_event(
     event_id: Path<EventId>,
     mail_service: Data<MailService>,
 ) -> Result<NoContent, ApiError> {
-    let settings = settings.load_full();
-    let current_user = current_user.into_inner();
-    let event_id = event_id.into_inner();
-    let mail_service = mail_service.into_inner();
+    Ok(delete_event_inner(
+        &settings.load_full(),
+        &db,
+        &storage,
+        &exchange_handle,
+        &kc_admin_client,
+        current_tenant.into_inner(),
+        current_user.into_inner(),
+        &authz,
+        query.into_inner(),
+        event_id.into_inner(),
+        &mail_service,
+    )
+    .await?)
+}
 
-    let DeleteEventsQuery {
+#[allow(clippy::too_many_arguments)]
+async fn delete_event_inner(
+    settings: &Settings,
+    db: &Db,
+    storage: &ObjectStorage,
+    exchange_handle: &ExchangeHandle,
+    kc_admin_client: &KeycloakAdminClient,
+    current_tenant: Tenant,
+    current_user: User,
+    authz: &Authz,
+    DeleteEventsQuery {
         suppress_email_notification,
         force_delete_reference_if_external_services_fail,
-    } = query.into_inner();
-
+    }: DeleteEventsQuery,
+    event_id: EventId,
+    mail_service: &MailService,
+) -> Result<NoContent, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     // TODO(w.rabl) Further DB access optimization (replacing call to get_with_invite_and_room)?
@@ -1669,11 +1753,11 @@ pub async fn delete_event(
         .perform(
             log::logger(),
             &mut conn,
-            &authz,
+            authz,
             Some(current_user_id),
-            exchange_handle.as_ref().clone(),
-            &settings,
-            &storage,
+            exchange_handle.clone(),
+            settings,
+            storage,
         )
         .await?;
 
@@ -1681,7 +1765,7 @@ pub async fn delete_event(
 
     if !suppress_email_notification {
         let notification_values = CancellationNotificationValues {
-            tenant: current_tenant.into_inner(),
+            tenant: current_tenant,
             created_by,
             event,
             room,
@@ -1691,13 +1775,8 @@ pub async fn delete_event(
             streaming_targets,
         };
 
-        notify_invitees_about_delete(
-            settings,
-            notification_values,
-            mail_service,
-            &kc_admin_client,
-        )
-        .await;
+        notify_invitees_about_delete(settings, notification_values, mail_service, kc_admin_client)
+            .await;
     }
 
     Ok(NoContent)
@@ -1707,10 +1786,10 @@ pub async fn delete_event(
 ///
 /// Notify invited users about the event deletion
 pub(crate) async fn notify_invitees_about_delete(
-    settings: Arc<Settings>,
+    settings: &Settings,
     notification_values: CancellationNotificationValues,
-    mail_service: Arc<MailService>,
-    kc_admin_client: &Data<KeycloakAdminClient>,
+    mail_service: &MailService,
+    kc_admin_client: &KeycloakAdminClient,
 ) {
     // Don't send mails for past events
     match notification_values.event.ends_at {
@@ -1720,13 +1799,9 @@ pub(crate) async fn notify_invitees_about_delete(
         _ => {}
     }
     for user in notification_values.users_to_notify {
-        let invited_user = enrich_from_keycloak(
-            settings.clone(),
-            user,
-            &notification_values.tenant,
-            kc_admin_client,
-        )
-        .await;
+        let invited_user =
+            enrich_from_keycloak(settings, user, &notification_values.tenant, kc_admin_client)
+                .await;
 
         if let Err(e) = mail_service
             .send_event_cancellation(
@@ -1836,8 +1911,8 @@ pub(crate) async fn get_invited_mail_recipients_for_event(
 }
 
 async fn enrich_invitees_from_keycloak(
-    settings: Arc<Settings>,
-    kc_admin_client: &Data<KeycloakAdminClient>,
+    settings: &Settings,
+    kc_admin_client: &KeycloakAdminClient,
     current_tenant: &Tenant,
     invitees: Vec<EventInvitee>,
 ) -> Vec<EventInvitee> {
@@ -2140,10 +2215,10 @@ where
 }
 
 async fn enrich_from_keycloak(
-    settings: Arc<Settings>,
+    settings: &Settings,
     recipient: MailRecipient,
     current_tenant: &Tenant,
-    kc_admin_client: &Data<KeycloakAdminClient>,
+    kc_admin_client: &KeycloakAdminClient,
 ) -> MailRecipient {
     let tenant_assignment = &settings.tenants.assignment;
     if let MailRecipient::External(recipient) = recipient {

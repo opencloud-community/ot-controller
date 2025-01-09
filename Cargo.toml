@@ -40,7 +40,7 @@ opentalk-signaling-module-subroom-audio = { path = "crates/opentalk-signaling-mo
 opentalk-signaling-module-timer = { path = "crates/opentalk-signaling-module-timer", version = "0.29.0-alpha" }
 opentalk-signaling-module-whiteboard = { path = "crates/opentalk-signaling-module-whiteboard", version = "0.29.0-alpha" }
 opentalk-test-util = { path = "crates/opentalk-test-util", version = "0.29.0-alpha" }
-opentalk-types = { path = "crates/opentalk-types", version = "0.29.0-alpha" }
+opentalk-types = "0.30"
 
 actix-http = "3"
 actix-rt = "2"
@@ -70,13 +70,13 @@ http = "1"
 http-request-derive = { version = "0.3.1", default-features = false }
 http0 = { version = "0", package = "http" }
 itertools = "0.14"
-kustos-shared = "0.29"
+kustos-shared = "0.30"
 lapin = { version = "2", default-features = false }
 lapin-pool = "0.1"
 log = "0.4"
 md5 = "0.7"
 openidconnect = "3"
-opentalk-client-shared = "0.29"
+opentalk-client-shared = "0.30"
 opentalk-diesel-newtype = "0.13"
 opentalk-etherpad-client = { version = "0.2.0", default-features = false, features = [
   "rustls-tls-native-roots",
@@ -84,27 +84,27 @@ opentalk-etherpad-client = { version = "0.2.0", default-features = false, featur
 opentalk-keycloak-admin = { version = "0.3.0", default-features = false, features = [
   "rustls-tls-native-roots",
 ] }
-opentalk-mail-worker-protocol = "0.29"
+opentalk-mail-worker-protocol = "0.30"
 opentalk-nextcloud-client = { version = "0.2.0", default-features = false, features = [
   "rustls-tls-native-roots",
 ] }
-opentalk-types-api-v1 = "0.29"
-opentalk-types-common = "0.29"
-opentalk-types-signaling = "0.29"
-opentalk-types-signaling-breakout = "0.29"
-opentalk-types-signaling-chat = "0.29"
-opentalk-types-signaling-control = "0.29"
-opentalk-types-signaling-livekit = "0.29"
-opentalk-types-signaling-meeting-notes = "0.29"
-opentalk-types-signaling-meeting-report = "0.29"
-opentalk-types-signaling-moderation = "0.29"
-opentalk-types-signaling-polls = "0.29"
-opentalk-types-signaling-recording = "0.29"
-opentalk-types-signaling-recording-service = "0.29"
-opentalk-types-signaling-shared-folder = "0.29"
-opentalk-types-signaling-subroom-audio = "0.29"
-opentalk-types-signaling-timer = "0.29"
-opentalk-types-signaling-whiteboard = "0.29"
+opentalk-types-api-v1 = "0.30"
+opentalk-types-common = "0.30"
+opentalk-types-signaling = "0.30"
+opentalk-types-signaling-breakout = "0.30"
+opentalk-types-signaling-chat = "0.30"
+opentalk-types-signaling-control = "0.30"
+opentalk-types-signaling-livekit = "0.30"
+opentalk-types-signaling-meeting-notes = "0.30"
+opentalk-types-signaling-meeting-report = "0.30"
+opentalk-types-signaling-moderation = "0.30"
+opentalk-types-signaling-polls = "0.30"
+opentalk-types-signaling-recording = "0.30"
+opentalk-types-signaling-recording-service = "0.30"
+opentalk-types-signaling-shared-folder = "0.30"
+opentalk-types-signaling-subroom-audio = "0.30"
+opentalk-types-signaling-timer = "0.30.0"
+opentalk-types-signaling-whiteboard = "0.30.0"
 opentalk-version = "0.1.1"
 opentelemetry = { version = "0.27", default-features = false, features = [
   "metrics",
@@ -115,8 +115,8 @@ parking_lot = "0.12"
 phonenumber = "0.3"
 pretty_assertions = "1"
 rand = "0.8"
-redis = "0.27"
-redis-args = "0.17"
+redis = "0.28"
+redis-args = "0.18"
 reqwest = { version = "0.12", default-features = false }
 reqwest11 = { package = "reqwest", version = "0.11", default-features = false }
 rustc-hash = "2.0"

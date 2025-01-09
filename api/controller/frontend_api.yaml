@@ -1681,7 +1681,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StandardErrorBody"
+                $ref: "#/components/schemas/ErrorBody"
               examples:
                 InvalidBreakoutRoomId:
                   summary: Invalid breakout room id
@@ -1707,13 +1707,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StandardErrorBody"
+                $ref: "#/components/schemas/ErrorBody"
         "403":
           description: The user has not been invited to join the room or has been banned from entering this room
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StandardErrorBody"
+                $ref: "#/components/schemas/ErrorBody"
               examples:
                 UserBanned:
                   summary: User has been banned from the room
@@ -1730,7 +1730,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StandardErrorBody"
+                $ref: "#/components/schemas/ErrorBody"
               example:
                 code: not_found
                 message: A requested resource could not be found
@@ -1783,7 +1783,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StandardErrorBody"
+                $ref: "#/components/schemas/ErrorBody"
               examples:
                 InvalidBreakoutRoomId:
                   summary: Invalid breakout room id
@@ -1816,7 +1816,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StandardErrorBody"
+                $ref: "#/components/schemas/ErrorBody"
               examples:
                 ExpiredOrInvalidAccessToken:
                   summary: Expired or invalid access token
@@ -1833,7 +1833,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StandardErrorBody"
+                $ref: "#/components/schemas/ErrorBody"
               example:
                 code: banned_from_room
                 message: This user has been banned from entering this room
@@ -2115,7 +2115,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StandardErrorBody"
+                $ref: "#/components/schemas/ErrorBody"
               example:
                 code: invalid_credentials
                 message: given call-in id & pin combination is not valid
@@ -2155,7 +2155,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StandardErrorBody"
+                $ref: "#/components/schemas/ErrorBody"
               example:
                 code: not_found
                 message: A requested resource could not be found
@@ -2733,12 +2733,23 @@ components:
         avatar_url: "https://secure.gravatar.com/avatar/c160f8cc69a4f0bf2b0362752353d060"
         email: alice@example.com
     ErrorBody:
-      oneOf:
-        - $ref: "#/components/schemas/StandardErrorBody"
-          description: The standard error body
-        - $ref: "#/components/schemas/ValidationErrorBody"
-          description: Special error body for validation errors
-      description: The body of an error response
+      type: object
+      description: Standard API error body
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Machine readable error code
+        message:
+          type: string
+          description: Human readable message
+        validation_errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/ValidationErrorEntry"
+          description: Validation errors for unprocessable entities
     EventAndInstanceId:
       type: string
       description: An event id and an instance id
@@ -4653,19 +4664,6 @@ components:
         password: "9876543210"
         room: 00000000-0000-0000-0000-0000abadcafe
         sip_id: "0123456789"
-    StandardErrorBody:
-      type: object
-      description: Standard API error body
-      required:
-        - code
-        - message
-      properties:
-        code:
-          type: string
-          description: Machine readable error code
-        message:
-          type: string
-          description: Human readable message
     StreamingKey:
       type: string
       description: The secret key of a streaming target
@@ -5033,25 +5031,6 @@ components:
       examples:
         - M.Sc.
       maxLength: 255
-    ValidationErrorBody:
-      type: object
-      description: The body of a validation error response
-      required:
-        - code
-        - message
-        - errors
-      properties:
-        code:
-          type: string
-          description: Machine readable error message
-        errors:
-          type: array
-          items:
-            $ref: "#/components/schemas/ValidationErrorEntry"
-          description: A list validation errors
-        message:
-          type: string
-          description: Human readable message
     ValidationErrorEntry:
       type: object
       description: An entry in a validation error list

@@ -6,7 +6,7 @@ use std::{collections::BTreeSet, fmt::Debug, sync::Arc};
 
 use lapin_pool::RabbitMqPool;
 use opentalk_controller_settings::{Settings, SharedSettings};
-use opentalk_types::api::error::ApiError;
+use opentalk_types_api_v1::error::ApiError;
 use opentalk_types_common::{features::FeatureId, modules::ModuleId};
 use opentalk_types_signaling::{SignalingModuleFrontendData, SignalingModulePeerFrontendData};
 use serde::{Deserialize, Serialize};

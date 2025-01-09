@@ -8,15 +8,15 @@ use actix_web::{
     web::{Data, Path, Query},
     HttpResponse,
 };
+use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::Db;
 use opentalk_db_storage::assets::Asset;
 use opentalk_signaling_core::{
     assets::{delete_asset, get_asset},
     ObjectStorage,
 };
-use opentalk_types::api::error::ApiError;
 use opentalk_types_api_v1::{
-    assets::AssetResource, pagination::PagePaginationQuery,
+    assets::AssetResource, error::ApiError, pagination::PagePaginationQuery,
     rooms::by_room_id::assets::RoomsByRoomIdAssetsGetResponseBody,
 };
 use opentalk_types_common::{assets::AssetId, rooms::RoomId};
@@ -66,9 +66,14 @@ pub async fn room_assets(
     room_id: Path<RoomId>,
     pagination: Query<PagePaginationQuery>,
 ) -> Result<ApiResponse<RoomsByRoomIdAssetsGetResponseBody>, ApiError> {
-    let room_id = room_id.into_inner();
-    let PagePaginationQuery { per_page, page } = pagination.into_inner();
+    Ok(room_assets_inner(&db, room_id.into_inner(), pagination.into_inner()).await?)
+}
 
+async fn room_assets_inner(
+    db: &Db,
+    room_id: RoomId,
+    PagePaginationQuery { per_page, page }: PagePaginationQuery,
+) -> Result<ApiResponse<RoomsByRoomIdAssetsGetResponseBody>, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let (assets, asset_count) =
@@ -127,10 +132,18 @@ pub async fn room_asset(
     path: Path<(RoomId, AssetId)>,
 ) -> Result<HttpResponse, ApiError> {
     let (room_id, asset_id) = path.into_inner();
+    Ok(room_asset_inner(&db, &storage, room_id, asset_id).await?)
+}
 
+async fn room_asset_inner(
+    db: &Db,
+    storage: &ObjectStorage,
+    room_id: RoomId,
+    asset_id: AssetId,
+) -> Result<HttpResponse, CaptureApiError> {
     let asset = Asset::get(&mut db.get_conn().await?, asset_id, room_id).await?;
 
-    let data = get_asset(&storage, &asset.id).await?;
+    let data = get_asset(storage, &asset.id).await?;
 
     Ok(HttpResponse::build(StatusCode::OK).streaming(data))
 }
@@ -176,9 +189,15 @@ pub async fn delete(
     storage: Data<ObjectStorage>,
     path: Path<(RoomId, AssetId)>,
 ) -> Result<NoContent, ApiError> {
-    let (room_id, asset_id) = path.into_inner();
+    Ok(delete_inner(&db, &storage, path.into_inner()).await?)
+}
 
-    delete_asset(&storage, db.into_inner(), room_id, asset_id).await?;
+async fn delete_inner(
+    db: &Db,
+    storage: &ObjectStorage,
+    (room_id, asset_id): (RoomId, AssetId),
+) -> Result<NoContent, CaptureApiError> {
+    delete_asset(storage, db, room_id, asset_id).await?;
 
     Ok(NoContent)
 }

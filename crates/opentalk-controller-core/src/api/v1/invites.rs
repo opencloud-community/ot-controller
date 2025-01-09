@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Contains invite related REST endpoints.
+use std::sync::Arc;
+
 use actix_web::{
     delete, get, post, put,
     web::{Data, Json, Path, Query, ReqData},
@@ -12,15 +14,18 @@ use kustos::{prelude::PoliciesBuilder, Authz};
 use opentalk_controller_service::{
     controller_backend::RoomsPoliciesBuilderExt, ToUserProfile as _,
 };
-use opentalk_controller_utils::deletion::room::associated_resource_ids_for_invite;
+use opentalk_controller_settings::Settings;
+use opentalk_controller_utils::{
+    deletion::room::associated_resource_ids_for_invite, CaptureApiError,
+};
 use opentalk_database::Db;
 use opentalk_db_storage::{
     invites::{Invite, NewInvite, UpdateInvite},
     rooms::Room,
     users::User,
 };
-use opentalk_types::api::error::ApiError;
 use opentalk_types_api_v1::{
+    error::ApiError,
     pagination::PagePaginationQuery,
     rooms::by_room_id::invites::{
         GetRoomsInvitesResponseBody, InviteResource, PostInviteRequestBody,
@@ -89,11 +94,25 @@ pub async fn add_invite(
     room_id: Path<RoomId>,
     data: Json<PostInviteRequestBody>,
 ) -> DefaultApiResult<InviteResource> {
-    let settings = settings.load_full();
-    let room_id = room_id.into_inner();
-    let current_user = current_user.into_inner();
-    let new_invite = data.into_inner();
+    Ok(add_invite_inner(
+        &settings.load_full(),
+        &db,
+        &authz,
+        current_user.into_inner(),
+        room_id.into_inner(),
+        data.into_inner(),
+    )
+    .await?)
+}
 
+async fn add_invite_inner(
+    settings: &Settings,
+    db: &Db,
+    authz: &Authz,
+    current_user: User,
+    room_id: RoomId,
+    new_invite: PostInviteRequestBody,
+) -> DefaultApiResult<InviteResource, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let invite = NewInvite {
@@ -114,8 +133,8 @@ pub async fn add_invite(
 
     authz.add_policies(policies).await?;
 
-    let created_by = current_user.to_public_user_profile(&settings);
-    let updated_by = current_user.to_public_user_profile(&settings);
+    let created_by = current_user.to_public_user_profile(settings);
+    let updated_by = current_user.to_public_user_profile(settings);
 
     let invite = Invite::into_invite_resource(invite, created_by, updated_by);
 
@@ -165,10 +184,21 @@ pub async fn get_invites(
     room_id: Path<RoomId>,
     pagination: Query<PagePaginationQuery>,
 ) -> DefaultApiResult<GetRoomsInvitesResponseBody> {
-    let settings = settings.load_full();
-    let room_id = room_id.into_inner();
-    let PagePaginationQuery { per_page, page } = pagination.into_inner();
+    Ok(get_invites_inner(
+        &settings.load_full(),
+        &db,
+        room_id.into_inner(),
+        pagination.into_inner(),
+    )
+    .await?)
+}
 
+async fn get_invites_inner(
+    settings: &Settings,
+    db: &Db,
+    room_id: RoomId,
+    PagePaginationQuery { per_page, page }: PagePaginationQuery,
+) -> DefaultApiResult<GetRoomsInvitesResponseBody, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let room = Room::get(&mut conn, room_id).await?;
@@ -179,8 +209,8 @@ pub async fn get_invites(
     let invites = invites_with_users
         .into_iter()
         .map(|(db_invite, created_by, updated_by)| {
-            let created_by = created_by.to_public_user_profile(&settings);
-            let updated_by = updated_by.to_public_user_profile(&settings);
+            let created_by = created_by.to_public_user_profile(settings);
+            let updated_by = updated_by.to_public_user_profile(settings);
 
             Invite::into_invite_resource(db_invite, created_by, updated_by)
         })
@@ -233,23 +263,27 @@ pub async fn get_invite(
     db: Data<Db>,
     path_params: Path<RoomIdAndInviteCode>,
 ) -> DefaultApiResult<InviteResource> {
-    let settings = settings.load_full();
+    Ok(get_invite_inner(&settings.load_full(), &db, path_params.into_inner()).await?)
+}
 
-    let RoomIdAndInviteCode {
+async fn get_invite_inner(
+    settings: &Settings,
+    db: &Db,
+    RoomIdAndInviteCode {
         room_id,
         invite_code,
-    } = path_params.into_inner();
-
+    }: RoomIdAndInviteCode,
+) -> DefaultApiResult<InviteResource, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let (invite, created_by, updated_by) = Invite::get_with_users(&mut conn, invite_code).await?;
 
     if invite.room != room_id {
-        return Err(ApiError::not_found());
+        return Err(ApiError::not_found().into());
     }
 
-    let created_by = created_by.to_public_user_profile(&settings);
-    let updated_by = updated_by.to_public_user_profile(&settings);
+    let created_by = created_by.to_public_user_profile(settings);
+    let updated_by = updated_by.to_public_user_profile(settings);
 
     Ok(ApiResponse::new(Invite::into_invite_resource(
         invite, created_by, updated_by,
@@ -297,20 +331,32 @@ pub async fn update_invite(
     path_params: Path<RoomIdAndInviteCode>,
     update_invite: Json<PutInviteRequestBody>,
 ) -> DefaultApiResult<InviteResource> {
-    let settings = settings.load_full();
-    let current_user = current_user.into_inner();
-    let RoomIdAndInviteCode {
+    Ok(update_invite_inner(
+        &settings.load_full(),
+        &db,
+        current_user.into_inner(),
+        path_params.into_inner(),
+        update_invite.into_inner(),
+    )
+    .await?)
+}
+
+async fn update_invite_inner(
+    settings: &Settings,
+    db: &Db,
+    current_user: User,
+    RoomIdAndInviteCode {
         room_id,
         invite_code,
-    } = path_params.into_inner();
-    let update_invite = update_invite.into_inner();
-
+    }: RoomIdAndInviteCode,
+    body: PutInviteRequestBody,
+) -> DefaultApiResult<InviteResource, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let invite = Invite::get(&mut conn, invite_code).await?;
 
     if invite.room != room_id {
-        return Err(ApiError::not_found());
+        return Err(ApiError::not_found().into());
     }
 
     let created_by = User::get(&mut conn, invite.created_by).await?;
@@ -319,15 +365,15 @@ pub async fn update_invite(
     let changeset = UpdateInvite {
         updated_by: Some(current_user.id),
         updated_at: Some(now),
-        expiration: Some(update_invite.expiration),
+        expiration: Some(body.expiration),
         active: None,
         room: None,
     };
 
     let invite = changeset.apply(&mut conn, room_id, invite_code).await?;
 
-    let created_by = created_by.to_public_user_profile(&settings);
-    let updated_by = current_user.to_public_user_profile(&settings);
+    let created_by = created_by.to_public_user_profile(settings);
+    let updated_by = current_user.to_public_user_profile(settings);
 
     Ok(ApiResponse::new(Invite::into_invite_resource(
         invite, created_by, updated_by,
@@ -371,12 +417,22 @@ pub async fn delete_invite(
     current_user: ReqData<User>,
     path_params: Path<RoomIdAndInviteCode>,
 ) -> Result<NoContent, ApiError> {
-    let RoomIdAndInviteCode {
+    Ok(delete_invite_inner(
+        db.into_inner(),
+        current_user.into_inner(),
+        path_params.into_inner(),
+    )
+    .await?)
+}
+
+async fn delete_invite_inner(
+    db: Arc<Db>,
+    current_user: User,
+    RoomIdAndInviteCode {
         room_id,
         invite_code,
-    } = path_params.into_inner();
-
-    let db = db.into_inner();
+    }: RoomIdAndInviteCode,
+) -> Result<NoContent, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let changeset = UpdateInvite {
@@ -434,8 +490,13 @@ pub async fn verify_invite_code(
     db: Data<Db>,
     data: Json<PostInviteVerifyRequestBody>,
 ) -> DefaultApiResult<PostInviteVerifyResponseBody> {
-    let data = data.into_inner();
+    Ok(verify_invite_code_inner(&db, data.into_inner()).await?)
+}
 
+async fn verify_invite_code_inner(
+    db: &Db,
+    data: PostInviteVerifyRequestBody,
+) -> DefaultApiResult<PostInviteVerifyResponseBody, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let invite = Invite::get(&mut conn, data.invite_code).await?;
@@ -445,7 +506,7 @@ pub async fn verify_invite_code(
         if let Some(expiration) = invite.expiration {
             if expiration <= Utc::now() {
                 // Do not leak the existence of the invite when it is expired
-                return Err(ApiError::not_found());
+                return Err(ApiError::not_found().into());
             }
         }
         Ok(ApiResponse::new(PostInviteVerifyResponseBody {
@@ -454,7 +515,7 @@ pub async fn verify_invite_code(
         }))
     } else {
         // TODO(r.floren) Do we want to return something else here?
-        Err(ApiError::not_found())
+        Err(ApiError::not_found().into())
     }
 }
 

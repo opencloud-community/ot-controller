@@ -19,10 +19,13 @@ use arc_swap::ArcSwap;
 use base64::Engine;
 use either::Either;
 use openidconnect::AccessToken;
+use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::{Db, OptionalExt};
 use opentalk_db_storage::{invites::Invite, users::User};
-use opentalk_types::api::error::{ApiError, AuthenticationError};
-use opentalk_types_api_v1::turn::{GetTurnResponseBody, IceServer};
+use opentalk_types_api_v1::{
+    error::{ApiError, AuthenticationError},
+    turn::{GetTurnResponseBody, IceServer},
+};
 use opentalk_types_common::rooms::invite_codes::InviteCode;
 use rand::{
     distributions::{Distribution, Uniform},
@@ -194,7 +197,7 @@ async fn check_access_token_or_invite(
     db: Data<Db>,
     caches: &Caches,
     oidc_ctx: Data<OidcContext>,
-) -> Result<Either<User, Invite>, ApiError> {
+) -> Result<Either<User, Invite>, CaptureApiError> {
     let auth = Authorization::<Bearer>::parse(req).map_err(|e| {
         log::warn!("Unable to parse access token, {}", Report::from_error(e));
         ApiError::unauthorized()
@@ -235,7 +238,8 @@ async fn check_access_token_or_invite(
                 None => {
                     log::warn!("The requesting user could not be found in the database");
                     Err(ApiError::unauthorized()
-                        .with_www_authenticate(AuthenticationError::InvalidAccessToken))
+                        .with_www_authenticate(AuthenticationError::InvalidAccessToken)
+                        .into())
                 }
             }
         }

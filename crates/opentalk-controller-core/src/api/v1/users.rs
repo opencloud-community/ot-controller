@@ -15,8 +15,9 @@ use actix_web::{
 use chrono::Utc;
 use openidconnect::AccessToken;
 use opentalk_controller_service::{email_to_libravatar_url, ToUserProfile as _};
-use opentalk_controller_settings::{TenantAssignment, UsersFindBehavior};
-use opentalk_database::{Db, DbConnection};
+use opentalk_controller_settings::{Settings, TenantAssignment, UsersFindBehavior};
+use opentalk_controller_utils::CaptureApiError;
+use opentalk_database::{DatabaseError, Db, DbConnection};
 use opentalk_db_storage::{
     assets::{self},
     tariffs::Tariff,
@@ -24,9 +25,9 @@ use opentalk_db_storage::{
     users::{UpdateUser, User},
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
-use opentalk_types::api::error::ApiError;
 use opentalk_types_api_v1::{
     assets::AssetSortingQuery,
+    error::ApiError,
     pagination::PagePaginationQuery,
     rooms::RoomResource,
     users::{
@@ -92,13 +93,30 @@ pub async fn patch_me(
     access_token: ReqData<AccessToken>,
     patch: Json<PatchMeRequestBody>,
 ) -> Result<Either<Json<PrivateUserProfile>, NoContent>, ApiError> {
-    let patch = patch.into_inner();
+    Ok(patch_me_inner(
+        &settings.load_full(),
+        &db,
+        &caches,
+        current_user.into_inner(),
+        current_tenant.into_inner(),
+        access_token.into_inner(),
+        patch.into_inner(),
+    )
+    .await?)
+}
 
+async fn patch_me_inner(
+    settings: &Settings,
+    db: &Db,
+    caches: &Caches,
+    current_user: User,
+    current_tenant: Tenant,
+    access_token: AccessToken,
+    patch: PatchMeRequestBody,
+) -> Result<Either<Json<PrivateUserProfile>, NoContent>, CaptureApiError> {
     if patch.is_empty() {
         return Ok(Either::Right(NoContent));
     }
-
-    let settings = settings.load_full();
 
     let mut conn = db.get_conn().await?;
 
@@ -106,9 +124,9 @@ pub async fn patch_me(
     if settings.endpoints.disallow_custom_display_name {
         if let Some(display_name) = &patch.display_name {
             if &current_user.display_name != display_name {
-                return Err(
-                    ApiError::bad_request().with_message("changing the display name is prohibited")
-                );
+                return Err(ApiError::bad_request()
+                    .with_message("changing the display name is prohibited")
+                    .into());
             }
         }
     }
@@ -133,9 +151,9 @@ pub async fn patch_me(
     let user = changeset.apply(&mut conn, current_user.id).await?;
     let used_storage = User::get_used_storage_u64(&mut conn, &current_user.id).await?;
 
-    let user_profile = user.to_private_user_profile(&settings, used_storage);
+    let user_profile = user.to_private_user_profile(settings, used_storage);
 
-    let user_claims = decode_token::<UserClaims>(access_token.clone().secret())
+    let user_claims = decode_token::<UserClaims>(access_token.secret())
         .whatever_context::<&str, Whatever>(
             "failed to decode access token for user profile update",
         )?;
@@ -148,7 +166,7 @@ pub async fn patch_me(
                     .user_access_tokens
                     .insert_with_ttl(
                         access_token.secret().clone(),
-                        Ok((current_tenant.into_inner(), user)),
+                        Ok((current_tenant, user)),
                         token_ttl_std,
                     )
                     .await?;
@@ -196,13 +214,18 @@ pub async fn get_me(
     db: Data<Db>,
     current_user: ReqData<User>,
 ) -> Result<Json<PrivateUserProfile>, ApiError> {
-    let settings = settings.load_full();
-    let current_user = current_user.into_inner();
+    Ok(get_me_inner(&settings.load_full(), &db, current_user.into_inner()).await?)
+}
 
+async fn get_me_inner(
+    settings: &Settings,
+    db: &Db,
+    current_user: User,
+) -> Result<Json<PrivateUserProfile>, CaptureApiError> {
     let used_storage =
         User::get_used_storage_u64(&mut db.get_conn().await?, &current_user.id).await?;
 
-    let user_profile = current_user.to_private_user_profile(&settings, used_storage);
+    let user_profile = current_user.to_private_user_profile(settings, used_storage);
 
     Ok(Json(user_profile))
 }
@@ -237,10 +260,21 @@ pub async fn get_me_tariff(
     modules: Data<SignalingModules>,
     current_user: ReqData<User>,
 ) -> Result<Json<TariffResource>, ApiError> {
-    let settings = settings.load_full();
+    Ok(get_me_tariff_inner(
+        &settings.load_full(),
+        &db,
+        &modules,
+        current_user.into_inner(),
+    )
+    .await?)
+}
 
-    let current_user = current_user.into_inner();
-
+async fn get_me_tariff_inner(
+    settings: &Settings,
+    db: &Db,
+    modules: &SignalingModules,
+    current_user: User,
+) -> Result<Json<TariffResource>, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let tariff = Tariff::get(&mut conn, current_user.tariff_id).await?;
@@ -285,10 +319,21 @@ pub async fn get_me_assets(
     sorting: Query<AssetSortingQuery>,
     pagination: Query<PagePaginationQuery>,
 ) -> Result<ApiResponse<GetUserAssetsResponseBody>, ApiError> {
-    let current_user = current_user.into_inner();
-    let pagination = pagination.into_inner();
-    let sorting = sorting.into_inner();
+    Ok(get_me_assets_inner(
+        &db,
+        current_user.into_inner(),
+        sorting.into_inner(),
+        pagination.into_inner(),
+    )
+    .await?)
+}
 
+async fn get_me_assets_inner(
+    db: &Db,
+    current_user: User,
+    sorting: AssetSortingQuery,
+    pagination: PagePaginationQuery,
+) -> Result<ApiResponse<GetUserAssetsResponseBody>, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let (owned_assets, asset_count) = get_all_assets_for_room_owner_paginated_ordered(
@@ -346,15 +391,26 @@ pub async fn get_user(
     current_user: ReqData<User>,
     user_id: Path<UserId>,
 ) -> Result<Json<PublicUserProfile>, ApiError> {
-    let settings = settings.load_full();
+    Ok(get_user_inner(
+        &settings.load_full(),
+        &db,
+        current_user.into_inner(),
+        user_id.into_inner(),
+    )
+    .await?)
+}
 
+async fn get_user_inner(
+    settings: &Settings,
+    db: &Db,
+    current_user: User,
+    user_id: UserId,
+) -> Result<Json<PublicUserProfile>, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
-    let user =
-        User::get_filtered_by_tenant(&mut conn, current_user.tenant_id, user_id.into_inner())
-            .await?;
+    let user = User::get_filtered_by_tenant(&mut conn, current_user.tenant_id, user_id).await?;
 
-    let user_profile = user.to_public_user_profile(&settings);
+    let user_profile = user.to_public_user_profile(settings);
 
     Ok(Json(user_profile))
 }
@@ -391,8 +447,23 @@ pub async fn find(
     current_tenant: ReqData<Tenant>,
     query: Query<GetFindQuery>,
 ) -> Result<Json<GetFindResponseBody>, ApiError> {
-    let settings = settings.load_full();
+    Ok(find_inner(
+        &settings.load_full(),
+        &kc_admin_client,
+        &db,
+        current_tenant.into_inner(),
+        query.into_inner(),
+    )
+    .await?)
+}
 
+async fn find_inner(
+    settings: &Settings,
+    kc_admin_client: &KeycloakAdminClient,
+    db: &Db,
+    current_tenant: Tenant,
+    query: GetFindQuery,
+) -> Result<Json<GetFindResponseBody>, CaptureApiError> {
     let oidc_and_user_search_configuration = settings.oidc_and_user_search.clone();
 
     if oidc_and_user_search_configuration
@@ -400,13 +471,14 @@ pub async fn find(
         .users_find_behavior
         == UsersFindBehavior::Disabled
     {
-        return Err(ApiError::not_found());
+        return Err(ApiError::not_found().into());
     }
 
     if query.q.len() < 3 {
         return Err(ApiError::bad_request()
             .with_code("query_too_short")
-            .with_message("query must be at least 3 characters long"));
+            .with_message("query must be at least 3 characters long")
+            .into());
     }
 
     // Get all users from Keycloak matching the search criteria
@@ -475,7 +547,7 @@ pub async fn find(
         // Build a list of registered and unregistered users resulting from the search
         registered_users
             .into_iter()
-            .map(|user| GetFindResponseEntry::Registered(user.to_public_user_profile(&settings)))
+            .map(|user| GetFindResponseEntry::Registered(user.to_public_user_profile(settings)))
             .chain(found_kc_users.into_iter().map(|kc_user| {
                 let avatar_url =
                     email_to_libravatar_url(&settings.avatar.libravatar_url, &kc_user.email);
@@ -501,7 +573,7 @@ pub async fn find(
 
         found_users
             .into_iter()
-            .map(|user| GetFindResponseEntry::Registered(user.to_public_user_profile(&settings)))
+            .map(|user| GetFindResponseEntry::Registered(user.to_public_user_profile(settings)))
             .collect()
     };
 
@@ -515,7 +587,7 @@ pub async fn get_all_assets_for_room_owner_paginated_ordered(
     limit: i64,
     page: i64,
     sorting: AssetSortingQuery,
-) -> Result<(Vec<UserAssetResource>, i64), ApiError> {
+) -> Result<(Vec<UserAssetResource>, i64), DatabaseError> {
     let AssetSortingQuery { sort, order } = sorting;
 
     let (resources, total) =

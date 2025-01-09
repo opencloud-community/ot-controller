@@ -17,7 +17,6 @@ use aws_sdk_s3::{
 use bytes::Bytes;
 use futures::{Stream, StreamExt};
 use opentalk_controller_settings::MinIO;
-use opentalk_types::api::error::ApiError;
 use snafu::{ensure, OptionExt, ResultExt, Snafu};
 use url::Url;
 
@@ -90,13 +89,6 @@ impl From<PayloadError> for ObjectStorageError {
             message: "Actix error".into(),
             source: Some(value.into()),
         }
-    }
-}
-
-impl From<ObjectStorageError> for ApiError {
-    fn from(value: ObjectStorageError) -> Self {
-        log::error!("Internal Error: {value}");
-        ApiError::internal()
     }
 }
 

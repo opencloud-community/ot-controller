@@ -15,7 +15,11 @@ use actix_web::{
 };
 use kustos::Authz;
 use opentalk_controller_service_facade::{OpenTalkControllerService, RequestUser};
-use opentalk_controller_utils::deletion::{Deleter, RoomDeleter};
+use opentalk_controller_settings::Settings;
+use opentalk_controller_utils::{
+    deletion::{Deleter, RoomDeleter},
+    CaptureApiError,
+};
 use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
     events::Event, invites::Invite, rooms::Room, streaming_targets::get_room_streaming_targets,
@@ -23,10 +27,8 @@ use opentalk_db_storage::{
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage, Participant, VolatileStorage};
-use opentalk_types::api::error::{
-    ApiError, StandardErrorBody, ValidationErrorEntry, ERROR_CODE_INVALID_VALUE,
-};
 use opentalk_types_api_v1::{
+    error::{ApiError, ErrorBody, ValidationErrorEntry, ERROR_CODE_INVALID_VALUE},
     pagination::PagePaginationQuery,
     rooms::{
         by_room_id::{
@@ -271,12 +273,36 @@ pub async fn delete(
     mail_service: Data<MailService>,
     kc_admin_client: Data<KeycloakAdminClient>,
 ) -> Result<NoContent, ApiError> {
-    let room_id = room_id.into_inner();
-    let current_user = current_user.into_inner();
-    let current_tenant = current_tenant.into_inner();
-    let settings = settings.load_full();
-    let mail_service = mail_service.into_inner();
+    Ok(delete_inner(
+        &settings.load_full(),
+        &db,
+        &storage,
+        &exchange_handle,
+        room_id.into_inner(),
+        current_user.into_inner(),
+        current_tenant.into_inner(),
+        &authz,
+        query.into_inner(),
+        &mail_service,
+        &kc_admin_client,
+    )
+    .await?)
+}
 
+#[allow(clippy::too_many_arguments)]
+async fn delete_inner(
+    settings: &Settings,
+    db: &Db,
+    storage: &ObjectStorage,
+    exchange_handle: &ExchangeHandle,
+    room_id: RoomId,
+    current_user: User,
+    current_tenant: Tenant,
+    authz: &Authz,
+    query: DeleteRoomQuery,
+    mail_service: &MailService,
+    kc_admin_client: &KeycloakAdminClient,
+) -> Result<NoContent, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let notification_values = if !query.suppress_email_notification {
@@ -294,22 +320,17 @@ pub async fn delete(
         .perform(
             log::logger(),
             &mut conn,
-            &authz,
+            authz,
             Some(current_user.id),
-            exchange_handle.as_ref().clone(),
-            &settings,
-            &storage,
+            exchange_handle.clone(),
+            settings,
+            storage,
         )
         .await?;
 
     if let Some(notification_values) = notification_values {
-        notify_invitees_about_delete(
-            settings,
-            notification_values,
-            mail_service,
-            &kc_admin_client,
-        )
-        .await;
+        notify_invitees_about_delete(settings, notification_values, mail_service, kc_admin_client)
+            .await;
     }
 
     Ok(NoContent)
@@ -320,7 +341,7 @@ async fn gather_mail_notification_values(
     current_user: &User,
     current_tenant: &Tenant,
     room_id: RoomId,
-) -> Result<Option<CancellationNotificationValues>, ApiError> {
+) -> Result<Option<CancellationNotificationValues>, CaptureApiError> {
     let linked_event_id = match Event::get_id_for_room(conn, room_id).await? {
         Some(event) => event,
         None => return Ok(None),
@@ -505,7 +526,7 @@ pub async fn get_room_event(
                 provided ID- or Access-Token is invalid. The WWW-Authenticate
                 header will contain a error description 'session expired' to
                 distinguish between an invalid and an expired token.",
-            body = StandardErrorBody,
+            body = ErrorBody,
             headers(
                 (
                     "www-authenticate",
@@ -516,7 +537,7 @@ pub async fn get_room_event(
         (
             status = StatusCode::BAD_REQUEST,
             description = "Either no breakout rooms were found for this room, or the breakout room id is invalid",
-            body = StandardErrorBody,
+            body = ErrorBody,
             examples(
                 ("NoBreakoutRooms" = (summary = "No breakout rooms", value = json!(ApiError::from(StartRoomError::NoBreakoutRooms).body))),
                 ("InvalidBreakoutRoomId" = (summary = "Invalid breakout room id", value = json!(ApiError::from(StartRoomError::InvalidBreakoutRoomId).body))),
@@ -525,7 +546,7 @@ pub async fn get_room_event(
         (
             status = StatusCode::FORBIDDEN,
             description = "The user has not been invited to join the room or has been banned from entering this room",
-            body = StandardErrorBody,
+            body = ErrorBody,
             examples(
                 ("UserBanned" = (summary = "User has been banned from the room", value = json!(ApiError::from(StartRoomError::BannedFromRoom).body))),
                 ("UserNotInvited" = (summary = "User has not been invited to join the room", value = json!(ApiError::forbidden().body))),
@@ -534,7 +555,7 @@ pub async fn get_room_event(
         (
             status = StatusCode::NOT_FOUND,
             description = "The specified room could not be found or it has no event associated with it",
-            body = StandardErrorBody,
+            body = ErrorBody,
             example = json!(ApiError::not_found().body),
         ),
         (
@@ -554,12 +575,24 @@ pub async fn start(
     room_id: Path<RoomId>,
     request: Json<PostRoomsStartRequestBody>,
 ) -> Result<Json<RoomsStartResponseBody>, ApiError> {
-    let request = request.into_inner();
-    let room_id = room_id.into_inner();
+    Ok(start_inner(
+        &db,
+        &mut (**volatile).clone(),
+        current_user.into_inner(),
+        room_id.into_inner(),
+        request.into_inner(),
+    )
+    .await?)
+}
 
+async fn start_inner(
+    db: &Db,
+    volatile: &mut VolatileStorage,
+    current_user: User,
+    room_id: RoomId,
+    request: PostRoomsStartRequestBody,
+) -> Result<Json<RoomsStartResponseBody>, CaptureApiError> {
     let room = Room::get(&mut db.get_conn().await?, room_id).await?;
-
-    let mut volatile = (**volatile).clone();
 
     // check if user is banned from room
     if volatile
@@ -588,7 +621,7 @@ pub async fn start(
     }
 
     let (ticket, resumption) = start_or_continue_signaling_session(
-        &mut volatile,
+        volatile,
         current_user.id.into(),
         room_id,
         request.breakout_room,
@@ -627,7 +660,7 @@ pub async fn start(
                 able to distinguish between existing rooms and rooms they don't
                 have permission to enter, therefore the response is the same in
                 these cases",
-            body = StandardErrorBody,
+            body = ErrorBody,
             examples(
                 (
                     "NoBreakoutRooms" = (
@@ -641,7 +674,7 @@ pub async fn start(
                 ),
                 (
                     "RoomIdMismatch" = (
-                        summary = "Room id mismatch", value = json!(StandardErrorBody { code: "bad_request".into(), message: "Room id mismatch".into() })
+                        summary = "Room id mismatch", value = json!(ErrorBody::new("bad_request", "Room id mismatch"))
                     )
                 ),
             ),
@@ -656,7 +689,7 @@ pub async fn start(
         ),
         (
             status = StatusCode::UNAUTHORIZED,
-            body = StandardErrorBody,
+            body = ErrorBody,
             description = r"Either: the provided access token is expired or the
                 provided id or access token is invalid. The WWW-Authenticate
                 header will contain an error description 'session expired' to
@@ -679,7 +712,7 @@ pub async fn start(
                     value = json!(
                         ApiError::unauthorized()
                         .with_message("The session for this user has expired")
-                        .with_www_authenticate(opentalk_types::api::error::AuthenticationError::SessionExpired)
+                        .with_www_authenticate(opentalk_types_api_v1::error::AuthenticationError::SessionExpired)
                         .body
                     )
                 )),
@@ -687,7 +720,7 @@ pub async fn start(
         ),
         (
             status = StatusCode::FORBIDDEN,
-            body = StandardErrorBody,
+            body = ErrorBody,
             description = "The participant has been banned from entering this room",
             example = json!(ApiError::from(StartRoomError::BannedFromRoom).body),
         ),
@@ -709,9 +742,21 @@ pub async fn start_invited(
     room_id: Path<RoomId>,
     request: Json<PostRoomsStartInvitedRequestBody>,
 ) -> Result<ApiResponse<RoomsStartResponseBody>, ApiError> {
-    let request = request.into_inner();
-    let room_id = room_id.into_inner();
+    Ok(start_invited_inner(
+        &db,
+        &mut (**volatile).clone(),
+        room_id.into_inner(),
+        request.into_inner(),
+    )
+    .await?)
+}
 
+async fn start_invited_inner(
+    db: &Db,
+    volatile: &mut VolatileStorage,
+    room_id: RoomId,
+    request: PostRoomsStartInvitedRequestBody,
+) -> Result<ApiResponse<RoomsStartResponseBody>, CaptureApiError> {
     let invite_code_as_uuid = uuid::Uuid::from_str(&request.invite_code).map_err(|_| {
         ApiError::unprocessable_entities([ValidationErrorEntry::new(
             "invite_code",
@@ -725,11 +770,13 @@ pub async fn start_invited(
     let invite = Invite::get(&mut conn, InviteCode::from(invite_code_as_uuid)).await?;
 
     if !invite.active {
-        return Err(ApiError::not_found());
+        return Err(ApiError::not_found().into());
     }
 
     if invite.room != room_id {
-        return Err(ApiError::bad_request().with_message("Room id mismatch"));
+        return Err(ApiError::bad_request()
+            .with_message("Room id mismatch")
+            .into());
     }
 
     let room = Room::get(&mut conn, invite.room).await?;
@@ -745,8 +792,6 @@ pub async fn start_invited(
             return Err(StartRoomError::WrongRoomPassword.into());
         }
     }
-
-    let mut volatile = (**volatile).clone();
 
     if let Some(breakout_room) = request.breakout_room {
         let config = volatile
@@ -765,7 +810,7 @@ pub async fn start_invited(
     }
 
     let (ticket, resumption) = start_or_continue_signaling_session(
-        &mut volatile,
+        volatile,
         Participant::Guest,
         room_id,
         request.breakout_room,

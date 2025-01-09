@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use kustos_shared::{resource::ResourceParseError, subject::ParsingError};
-use opentalk_types::api::error::ApiError;
 use snafu::Snafu;
 use tokio::task::JoinError;
 
@@ -36,10 +35,3 @@ pub enum Error {
 
 /// A default specialized Result type for kustos
 pub type Result<T, E = Error> = std::result::Result<T, E>;
-
-impl From<Error> for ApiError {
-    fn from(value: Error) -> Self {
-        log::error!("REST API threw internal error from kustos error: {value}");
-        Self::internal()
-    }
-}

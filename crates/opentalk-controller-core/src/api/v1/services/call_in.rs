@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::sync::Arc;
+
 use actix_web::{
     dev::HttpServiceFactory,
     error::Result,
@@ -9,12 +11,14 @@ use actix_web::{
     web::{Data, Json},
 };
 use opentalk_controller_service::require_feature;
+use opentalk_controller_settings::{OidcAndUserSearchConfiguration, SettingsLoading};
+use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::Db;
 use opentalk_db_storage::sip_configs::SipConfig;
 use opentalk_signaling_core::{Participant, VolatileStorage};
-use opentalk_types::api::error::{ApiError, StandardErrorBody};
-use opentalk_types_api_v1::services::{
-    call_in::PostCallInStartRequestBody, PostServiceStartResponseBody,
+use opentalk_types_api_v1::{
+    error::{ApiError, ErrorBody},
+    services::{call_in::PostCallInStartRequestBody, PostServiceStartResponseBody},
 };
 use opentalk_types_common::features;
 
@@ -57,7 +61,7 @@ pub const REQUIRED_CALL_IN_ROLE: &str = "opentalk-call-in";
         (
             status = StatusCode::BAD_REQUEST,
             description = "`id` and `pin` are not valid for any room.",
-            body = StandardErrorBody,
+            body = ErrorBody,
             example = json!(invalid_credentials_error().body),
         ),
         (
@@ -76,10 +80,21 @@ pub async fn post_call_in_start(
     volatile: Data<VolatileStorage>,
     request: Json<PostCallInStartRequestBody>,
 ) -> Result<Json<PostServiceStartResponseBody>, ApiError> {
-    let settings = settings.load();
-    let mut volatile = (**volatile).clone();
-    let request = request.into_inner();
+    Ok(post_call_in_start_inner(
+        settings.load(),
+        &db,
+        &mut (**volatile).clone(),
+        request.into_inner(),
+    )
+    .await?)
+}
 
+async fn post_call_in_start_inner(
+    settings: arc_swap::Guard<Arc<SettingsLoading<OidcAndUserSearchConfiguration>>>,
+    db: &Db,
+    volatile: &mut VolatileStorage,
+    request: PostCallInStartRequestBody,
+) -> Result<Json<PostServiceStartResponseBody>, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let (sip_config, room) = SipConfig::get_with_room(&mut conn, &request.id)
@@ -89,19 +104,20 @@ pub async fn post_call_in_start(
     if room.e2e_encryption {
         return Err(ApiError::forbidden()
             .with_code("service_unavailable")
-            .with_message("call-in is not available for encrypted rooms"));
+            .with_message("call-in is not available for encrypted rooms")
+            .into());
     }
 
     require_feature(&mut conn, &settings, room.created_by, &features::call_in()).await?;
 
     if sip_config.password != request.pin {
-        return Err(invalid_credentials_error());
+        return Err(invalid_credentials_error().into());
     }
 
     drop(conn);
 
     let (ticket, resumption) =
-        start_or_continue_signaling_session(&mut volatile, Participant::Sip, room.id, None, None)
+        start_or_continue_signaling_session(volatile, Participant::Sip, room.id, None, None)
             .await?;
 
     Ok(Json(PostServiceStartResponseBody { ticket, resumption }))

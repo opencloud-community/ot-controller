@@ -2,19 +2,25 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::sync::Arc;
+
 use actix_web::{
     delete, get, put,
     web::{Data, Json, Path},
     HttpResponse,
 };
 use opentalk_controller_service::require_feature;
+use opentalk_controller_settings::{OidcAndUserSearchConfiguration, SettingsLoading};
+use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::Db;
 use opentalk_db_storage::{
     rooms::Room,
     sip_configs::{NewSipConfig, SipConfig, UpdateSipConfig},
 };
-use opentalk_types::api::error::ApiError;
-use opentalk_types_api_v1::rooms::by_room_id::sip::{PutSipConfigRequestBody, SipConfigResource};
+use opentalk_types_api_v1::{
+    error::ApiError,
+    rooms::by_room_id::sip::{PutSipConfigRequestBody, SipConfigResource},
+};
 use opentalk_types_common::{features, rooms::RoomId};
 
 use crate::{
@@ -64,9 +70,14 @@ pub async fn get(
     db: Data<Db>,
     room_id: Path<RoomId>,
 ) -> Result<Json<SipConfigResource>, ApiError> {
-    let settings = settings.load();
-    let room_id = room_id.into_inner();
+    Ok(get_inner(settings.load(), &db, room_id.into_inner()).await?)
+}
 
+async fn get_inner(
+    settings: arc_swap::Guard<Arc<SettingsLoading<OidcAndUserSearchConfiguration>>>,
+    db: &Db,
+    room_id: RoomId,
+) -> Result<Json<SipConfigResource>, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let room = Room::get(&mut conn, room_id).await?;
@@ -131,10 +142,21 @@ pub async fn put(
     room_id: Path<RoomId>,
     modify_sip_config: Json<PutSipConfigRequestBody>,
 ) -> Result<HttpResponse, ApiError> {
-    let settings = settings.load();
-    let room_id = room_id.into_inner();
-    let modify_sip_config = modify_sip_config.into_inner();
+    Ok(put_inner(
+        settings.load(),
+        &db,
+        room_id.into_inner(),
+        modify_sip_config.into_inner(),
+    )
+    .await?)
+}
 
+async fn put_inner(
+    settings: arc_swap::Guard<Arc<SettingsLoading<OidcAndUserSearchConfiguration>>>,
+    db: &Db,
+    room_id: RoomId,
+    modify_sip_config: PutSipConfigRequestBody,
+) -> Result<HttpResponse, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let room = Room::get(&mut conn, room_id).await?;
@@ -228,9 +250,13 @@ pub async fn delete(
     db: Data<Db>,
     room_id: Path<RoomId>,
 ) -> Result<HttpResponse, ApiError> {
-    let settings = settings.load();
-    let room_id = room_id.into_inner();
-
+    Ok(delete_inner(settings.load(), &db, room_id.into_inner()).await?)
+}
+async fn delete_inner(
+    settings: arc_swap::Guard<Arc<SettingsLoading<OidcAndUserSearchConfiguration>>>,
+    db: &Db,
+    room_id: RoomId,
+) -> Result<HttpResponse, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let room = Room::get(&mut conn, room_id).await?;

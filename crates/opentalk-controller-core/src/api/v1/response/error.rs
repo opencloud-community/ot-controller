@@ -3,8 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Error response types for REST APIv1
-use actix_web::{error::JsonPayloadError, http::StatusCode, HttpRequest};
-use opentalk_types::api::error::{ApiError, AuthenticationError, ErrorBody};
+use actix_web::{error::JsonPayloadError, HttpRequest};
+use http::StatusCode;
+use opentalk_controller_utils::CaptureApiError;
+use opentalk_types_api_v1::error::{ApiError, AuthenticationError, ErrorBody};
 use serde::{Deserialize, Serialize};
 use snafu::ResultExt;
 
@@ -35,7 +37,7 @@ pub struct CacheableApiError {
     body: ErrorBody,
 }
 
-impl TryFrom<CacheableApiError> for ApiError {
+impl TryFrom<CacheableApiError> for CaptureApiError {
     type Error = crate::Whatever;
 
     fn try_from(value: CacheableApiError) -> Result<Self, Self::Error> {
@@ -43,7 +45,8 @@ impl TryFrom<CacheableApiError> for ApiError {
             status: StatusCode::from_u16(value.status).whatever_context("Invalid status code")?,
             www_authenticate: value.www_authenticate,
             body: value.body,
-        })
+        }
+        .into())
     }
 }
 
@@ -54,5 +57,11 @@ impl From<&ApiError> for CacheableApiError {
             www_authenticate: value.www_authenticate,
             body: value.body.clone(),
         }
+    }
+}
+
+impl From<&CaptureApiError> for CacheableApiError {
+    fn from(value: &CaptureApiError) -> Self {
+        Self::from(&value.0)
     }
 }

@@ -21,7 +21,6 @@ use opentalk_db_storage::{
     tariffs::Tariff,
     users::User,
 };
-use opentalk_types::api::error::ApiError;
 use opentalk_types_common::{
     assets::{AssetId, FileExtension},
     events::EventTitle,
@@ -66,13 +65,6 @@ pub enum AssetError {
         /// The error that required a rollback
         rollback_reason: Box<AssetError>,
     },
-}
-
-impl From<AssetError> for ApiError {
-    fn from(value: AssetError) -> Self {
-        log::error!("REST API threw internal error: {value:?}");
-        ApiError::internal()
-    }
 }
 
 type Result<T, E = AssetError> = std::result::Result<T, E>;
@@ -321,7 +313,7 @@ pub async fn get_asset(
 /// Delete an asset from the object storage
 pub async fn delete_asset(
     storage: &ObjectStorage,
-    db: Arc<Db>,
+    db: &Db,
     room_id: RoomId,
     asset_id: AssetId,
 ) -> Result<()> {

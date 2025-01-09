@@ -20,4 +20,7 @@
     unused_results
 )]
 
+mod capture_api_error;
 pub mod deletion;
+
+pub use capture_api_error::CaptureApiError;

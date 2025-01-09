@@ -8,15 +8,16 @@ use kustos::{
     AccessMethod, Resource,
 };
 use opentalk_controller_service_facade::RequestUser;
+use opentalk_controller_utils::CaptureApiError;
 use opentalk_db_storage::{
     events::Event,
     rooms::{NewRoom, Room, UpdateRoom},
     sip_configs::NewSipConfig,
     utils::build_event_info,
 };
-use opentalk_types::api::error::ApiError;
-use opentalk_types_api_v1::rooms::{
-    by_room_id::GetRoomEventResponseBody, GetRoomsResponseBody, RoomResource,
+use opentalk_types_api_v1::{
+    error::ApiError,
+    rooms::{by_room_id::GetRoomEventResponseBody, GetRoomsResponseBody, RoomResource},
 };
 use opentalk_types_common::{
     features,
@@ -33,7 +34,7 @@ impl ControllerBackend {
         current_user_id: UserId,
         per_page: i64,
         page: i64,
-    ) -> Result<(GetRoomsResponseBody, i64), ApiError> {
+    ) -> Result<(GetRoomsResponseBody, i64), CaptureApiError> {
         let settings = self.settings.load();
         let mut conn = self.db.get_conn().await?;
 
@@ -73,6 +74,25 @@ impl ControllerBackend {
         waiting_room: bool,
         e2e_encryption: bool,
     ) -> Result<RoomResource, ApiError> {
+        Ok(self
+            .create_room_inner(
+                current_user,
+                password,
+                enable_sip,
+                waiting_room,
+                e2e_encryption,
+            )
+            .await?)
+    }
+
+    async fn create_room_inner(
+        &self,
+        current_user: RequestUser,
+        password: Option<RoomPassword>,
+        enable_sip: bool,
+        waiting_room: bool,
+        e2e_encryption: bool,
+    ) -> Result<RoomResource, CaptureApiError> {
         let settings = self.settings.load();
         let mut conn = self.db.get_conn().await?;
 
@@ -123,6 +143,25 @@ impl ControllerBackend {
         waiting_room: Option<bool>,
         e2e_encryption: Option<bool>,
     ) -> Result<RoomResource, ApiError> {
+        Ok(self
+            .patch_room_inner(
+                current_user,
+                room_id,
+                password,
+                waiting_room,
+                e2e_encryption,
+            )
+            .await?)
+    }
+
+    async fn patch_room_inner(
+        &self,
+        current_user: RequestUser,
+        room_id: RoomId,
+        password: Option<Option<RoomPassword>>,
+        waiting_room: Option<bool>,
+        e2e_encryption: Option<bool>,
+    ) -> Result<RoomResource, CaptureApiError> {
         let settings = self.settings.load();
         let mut conn = self.db.get_conn().await?;
 
@@ -145,7 +184,7 @@ impl ControllerBackend {
         Ok(room_resource)
     }
 
-    pub(super) async fn get_room(&self, room_id: &RoomId) -> Result<RoomResource, ApiError> {
+    pub(super) async fn get_room(&self, room_id: &RoomId) -> Result<RoomResource, CaptureApiError> {
         let settings = self.settings.load();
         let mut conn = self.db.get_conn().await?;
 
@@ -165,7 +204,7 @@ impl ControllerBackend {
     pub(super) async fn get_room_tariff(
         &self,
         room_id: &RoomId,
-    ) -> Result<TariffResource, ApiError> {
+    ) -> Result<TariffResource, CaptureApiError> {
         let settings = self.settings.load();
         let mut conn = self.db.get_conn().await?;
 
@@ -183,7 +222,7 @@ impl ControllerBackend {
     pub(super) async fn get_room_event(
         &self,
         room_id: &RoomId,
-    ) -> Result<GetRoomEventResponseBody, ApiError> {
+    ) -> Result<GetRoomEventResponseBody, CaptureApiError> {
         let settings = self.settings.load();
         let mut conn = self.db.get_conn().await?;
 
@@ -199,7 +238,7 @@ impl ControllerBackend {
                         .await?;
                 Ok(GetRoomEventResponseBody(event_info))
             }
-            None => Err(ApiError::not_found()),
+            None => Err(ApiError::not_found().into()),
         }
     }
 }

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_signaling_core::{Participant, VolatileStorage};
-use opentalk_types::api::error::ApiError;
+use opentalk_types_api_v1::error::ApiError;
 use opentalk_types_common::{
     auth::{ResumptionToken, TicketToken},
     rooms::{BreakoutRoomId, RoomId},

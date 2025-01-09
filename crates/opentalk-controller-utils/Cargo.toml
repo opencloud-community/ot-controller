@@ -15,18 +15,21 @@ version.workspace = true
 workspace = true
 
 [dependencies]
+actix-web.workspace = true
 async-trait.workspace = true
+diesel.workspace = true
 diesel-async.workspace = true
 kustos.workspace = true
 kustos-shared.workspace = true
 log.workspace = true
+opentalk-cache.workspace = true
 opentalk-controller-settings.workspace = true
 opentalk-database.workspace = true
 opentalk-db-storage.workspace = true
 opentalk-log.workspace = true
 opentalk-nextcloud-client.workspace = true
 opentalk-signaling-core.workspace = true
-opentalk-types.workspace = true
+opentalk-types-api-v1 = { workspace = true, features = ["actix"] }
 opentalk-types-common = { workspace = true, features = ["kustos"] }
 opentalk-types-signaling.workspace = true
 serde_json.workspace = true

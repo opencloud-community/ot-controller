@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types::api::error::ApiError;
+use opentalk_types_api_v1::error::ApiError;
 use snafu::Snafu;
 
 #[derive(Debug, Snafu)]
