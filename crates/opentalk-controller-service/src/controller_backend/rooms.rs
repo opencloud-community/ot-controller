@@ -10,7 +10,7 @@ use kustos::{
 use opentalk_controller_service_facade::RequestUser;
 use opentalk_db_storage::{
     events::Event,
-    rooms::{NewRoom, Room},
+    rooms::{NewRoom, Room, UpdateRoom},
     sip_configs::NewSipConfig,
     utils::build_event_info,
 };
@@ -35,7 +35,6 @@ impl ControllerBackend {
         page: i64,
     ) -> Result<(GetRoomsResponseBody, i64), ApiError> {
         let settings = self.settings.load();
-
         let mut conn = self.db.get_conn().await?;
 
         let accessible_rooms: kustos::AccessibleResources<RoomId> = self
@@ -68,14 +67,13 @@ impl ControllerBackend {
 
     pub(super) async fn create_room(
         &self,
+        current_user: RequestUser,
         password: Option<RoomPassword>,
         enable_sip: bool,
         waiting_room: bool,
         e2e_encryption: bool,
-        current_user: RequestUser,
     ) -> Result<RoomResource, ApiError> {
         let settings = self.settings.load();
-
         let mut conn = self.db.get_conn().await?;
 
         if enable_sip {
@@ -117,9 +115,38 @@ impl ControllerBackend {
         Ok(room_resource)
     }
 
+    pub(super) async fn patch_room(
+        &self,
+        current_user: RequestUser,
+        room_id: RoomId,
+        password: Option<Option<RoomPassword>>,
+        waiting_room: Option<bool>,
+        e2e_encryption: Option<bool>,
+    ) -> Result<RoomResource, ApiError> {
+        let settings = self.settings.load();
+        let mut conn = self.db.get_conn().await?;
+
+        let changeset = UpdateRoom {
+            password,
+            waiting_room,
+            e2e_encryption,
+        };
+
+        let room = changeset.apply(&mut conn, room_id).await?;
+
+        let room_resource = RoomResource {
+            id: room.id,
+            created_by: current_user.to_public_user_profile(&settings),
+            created_at: room.created_at.into(),
+            password: room.password,
+            waiting_room: room.waiting_room,
+        };
+
+        Ok(room_resource)
+    }
+
     pub(super) async fn get_room(&self, room_id: &RoomId) -> Result<RoomResource, ApiError> {
         let settings = self.settings.load();
-
         let mut conn = self.db.get_conn().await?;
 
         let (room, created_by) = Room::get_with_user(&mut conn, *room_id).await?;
@@ -140,7 +167,6 @@ impl ControllerBackend {
         room_id: &RoomId,
     ) -> Result<TariffResource, ApiError> {
         let settings = self.settings.load();
-
         let mut conn = self.db.get_conn().await?;
 
         let room = Room::get(&mut conn, *room_id).await?;
@@ -159,7 +185,6 @@ impl ControllerBackend {
         room_id: &RoomId,
     ) -> Result<GetRoomEventResponseBody, ApiError> {
         let settings = self.settings.load();
-
         let mut conn = self.db.get_conn().await?;
 
         let event = Event::get_for_room(&mut conn, *room_id).await?;

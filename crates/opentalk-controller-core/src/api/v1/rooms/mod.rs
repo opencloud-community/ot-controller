@@ -14,17 +14,12 @@ use actix_web::{
     web::{self, Data, Json, Path, ReqData},
 };
 use kustos::Authz;
-use opentalk_controller_service::ToUserProfile as _;
 use opentalk_controller_service_facade::{OpenTalkControllerService, RequestUser};
 use opentalk_controller_utils::deletion::{Deleter, RoomDeleter};
 use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
-    events::Event,
-    invites::Invite,
-    rooms::{self as db_rooms, Room},
-    streaming_targets::get_room_streaming_targets,
-    tenants::Tenant,
-    users::User,
+    events::Event, invites::Invite, rooms::Room, streaming_targets::get_room_streaming_targets,
+    tenants::Tenant, users::User,
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage, Participant, VolatileStorage};
@@ -153,11 +148,11 @@ pub async fn new(
 
     let room_resource = service
         .create_room(
+            current_user,
             room_parameters.password,
             room_parameters.enable_sip,
             room_parameters.waiting_room,
             room_parameters.e2e_encryption,
-            current_user,
         )
         .await?;
 
@@ -203,34 +198,24 @@ pub async fn new(
 )]
 #[patch("/rooms/{room_id}")]
 pub async fn patch(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
-    current_user: ReqData<User>,
+    service: Data<OpenTalkControllerService>,
+    current_user: ReqData<RequestUser>,
     room_id: Path<RoomId>,
     body: Json<PatchRoomsRequestBody>,
 ) -> Result<Json<RoomResource>, ApiError> {
-    let settings = settings.load();
     let current_user = current_user.into_inner();
     let room_id = room_id.into_inner();
-    let modify_room = body.into_inner();
+    let room_parameters = body.into_inner();
 
-    let mut conn = db.get_conn().await?;
-
-    let changeset = db_rooms::UpdateRoom {
-        password: modify_room.password,
-        waiting_room: modify_room.waiting_room,
-        e2e_encryption: modify_room.e2e_encryption,
-    };
-
-    let room = changeset.apply(&mut conn, room_id).await?;
-
-    let room_resource = RoomResource {
-        id: room.id,
-        created_by: current_user.to_public_user_profile(&settings),
-        created_at: room.created_at.into(),
-        password: room.password,
-        waiting_room: room.waiting_room,
-    };
+    let room_resource = service
+        .patch_room(
+            current_user,
+            room_id,
+            room_parameters.password,
+            room_parameters.waiting_room,
+            room_parameters.e2e_encryption,
+        )
+        .await?;
 
     Ok(Json(room_resource))
 }
