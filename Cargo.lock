@@ -4827,14 +4827,14 @@ dependencies = [
 
 [[package]]
 name = "opentalk-mail-worker-protocol"
-version = "0.29.0-alpha"
+version = "0.29.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c6f94c9070f4f634d612fcb4d08dbe133937d1c2a091c811fafa480874b20c2a"
 dependencies = [
  "chrono",
  "opentalk-types-common",
- "pretty_assertions",
  "serde",
  "serde_json",
- "utoipa",
  "uuid",
 ]
 

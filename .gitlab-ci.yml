@@ -390,19 +390,6 @@ check:er-diagram:
   script:
     - ci/docs-generate-mermaid.sh
 
-check:mail-worker-protocol-schema-and-examples:
-  stage: check
-  needs:
-    - job: build
-      artifacts: true
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-  artifacts:
-    paths:
-      - target/docs/temporary/mail-worker-protocol
-  script:
-    - ci/docs-generate-mail-worker-protocol-schema-and-examples.sh
-
 check:docs-generated-parts:
   stage: check
   image:
@@ -412,8 +399,6 @@ check:docs-generated-parts:
     - job: build
       artifacts: true
     - job: check:er-diagram
-      artifacts: true
-    - job: check:mail-worker-protocol-schema-and-examples
       artifacts: true
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
