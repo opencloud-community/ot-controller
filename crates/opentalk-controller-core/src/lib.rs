@@ -156,7 +156,7 @@ where
             ok
         }
         Err(err) => {
-            let show_backtrace = std::env::var("RUST_BACKTRACE").map_or(false, |v| v != "0");
+            let show_backtrace = std::env::var("RUST_BACKTRACE").is_ok_and(|v| v != "0");
 
             let backtrace = if show_backtrace {
                 err.backtrace()
