@@ -40,6 +40,16 @@ pub trait OpenTalkControllerServiceBackend: Send + Sync {
         current_user: RequestUser,
     ) -> Result<RoomResource, ApiError>;
 
+    /// Patch a room with the provided fields
+    async fn patch_room(
+        &self,
+        password: Option<Option<RoomPassword>>,
+        waiting_room: Option<bool>,
+        e2e_encryption: Option<bool>,
+        current_user: RequestUser,
+        room_id: RoomId,
+    ) -> Result<RoomResource, ApiError>;
+
     /// Get a room
     async fn get_room(&self, room_id: &RoomId) -> Result<RoomResource, ApiError>;
 

@@ -10,7 +10,7 @@ use kustos::{
 use opentalk_controller_service_facade::RequestUser;
 use opentalk_db_storage::{
     events::Event,
-    rooms::{NewRoom, Room},
+    rooms::{NewRoom, Room, UpdateRoom},
     sip_configs::NewSipConfig,
     utils::build_event_info,
 };
@@ -113,6 +113,37 @@ impl ControllerBackend {
             .finish();
 
         self.authz.add_policies(policies).await?;
+
+        Ok(room_resource)
+    }
+
+    pub(super) async fn patch_room(
+        &self,
+        password: Option<Option<RoomPassword>>,
+        waiting_room: Option<bool>,
+        e2e_encryption: Option<bool>,
+        current_user: RequestUser,
+        room_id: RoomId,
+    ) -> Result<RoomResource, ApiError> {
+        let settings = self.settings.load();
+
+        let mut conn = self.db.get_conn().await?;
+
+        let changeset = UpdateRoom {
+            password,
+            waiting_room,
+            e2e_encryption,
+        };
+
+        let room = changeset.apply(&mut conn, room_id).await?;
+
+        let room_resource = RoomResource {
+            id: room.id,
+            created_by: current_user.to_public_user_profile(&settings),
+            created_at: room.created_at.into(),
+            password: room.password,
+            waiting_room: room.waiting_room,
+        };
 
         Ok(room_resource)
     }

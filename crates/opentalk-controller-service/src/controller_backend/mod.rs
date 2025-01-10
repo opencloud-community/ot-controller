@@ -99,6 +99,24 @@ impl OpenTalkControllerServiceBackend for ControllerBackend {
         .await
     }
 
+    async fn patch_room(
+        &self,
+        password: Option<Option<RoomPassword>>,
+        waiting_room: Option<bool>,
+        e2e_encryption: Option<bool>,
+        current_user: RequestUser,
+        room_id: RoomId,
+    ) -> Result<RoomResource, ApiError> {
+        self.patch_room(
+            password,
+            waiting_room,
+            e2e_encryption,
+            current_user,
+            room_id,
+        )
+        .await
+    }
+
     async fn get_room(&self, room_id: &RoomId) -> Result<RoomResource, ApiError> {
         self.get_room(room_id).await
     }
