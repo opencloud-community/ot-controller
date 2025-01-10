@@ -35,7 +35,6 @@ impl ControllerBackend {
         page: i64,
     ) -> Result<(GetRoomsResponseBody, i64), ApiError> {
         let settings = self.settings.load();
-
         let mut conn = self.db.get_conn().await?;
 
         let accessible_rooms: kustos::AccessibleResources<RoomId> = self
@@ -68,14 +67,13 @@ impl ControllerBackend {
 
     pub(super) async fn create_room(
         &self,
+        current_user: RequestUser,
         password: Option<RoomPassword>,
         enable_sip: bool,
         waiting_room: bool,
         e2e_encryption: bool,
-        current_user: RequestUser,
     ) -> Result<RoomResource, ApiError> {
         let settings = self.settings.load();
-
         let mut conn = self.db.get_conn().await?;
 
         if enable_sip {
@@ -119,14 +117,13 @@ impl ControllerBackend {
 
     pub(super) async fn patch_room(
         &self,
+        current_user: RequestUser,
+        room_id: RoomId,
         password: Option<Option<RoomPassword>>,
         waiting_room: Option<bool>,
         e2e_encryption: Option<bool>,
-        current_user: RequestUser,
-        room_id: RoomId,
     ) -> Result<RoomResource, ApiError> {
         let settings = self.settings.load();
-
         let mut conn = self.db.get_conn().await?;
 
         let changeset = UpdateRoom {
@@ -150,7 +147,6 @@ impl ControllerBackend {
 
     pub(super) async fn get_room(&self, room_id: &RoomId) -> Result<RoomResource, ApiError> {
         let settings = self.settings.load();
-
         let mut conn = self.db.get_conn().await?;
 
         let (room, created_by) = Room::get_with_user(&mut conn, *room_id).await?;
@@ -171,7 +167,6 @@ impl ControllerBackend {
         room_id: &RoomId,
     ) -> Result<TariffResource, ApiError> {
         let settings = self.settings.load();
-
         let mut conn = self.db.get_conn().await?;
 
         let room = Room::get(&mut conn, *room_id).await?;
@@ -190,7 +185,6 @@ impl ControllerBackend {
         room_id: &RoomId,
     ) -> Result<GetRoomEventResponseBody, ApiError> {
         let settings = self.settings.load();
-
         let mut conn = self.db.get_conn().await?;
 
         let event = Event::get_for_room(&mut conn, *room_id).await?;

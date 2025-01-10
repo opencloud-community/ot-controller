@@ -33,21 +33,21 @@ pub trait OpenTalkControllerServiceBackend: Send + Sync {
     /// Create a new room
     async fn create_room(
         &self,
+        current_user: RequestUser,
         password: Option<RoomPassword>,
         enable_sip: bool,
         waiting_room: bool,
         e2e_encryption: bool,
-        current_user: RequestUser,
     ) -> Result<RoomResource, ApiError>;
 
     /// Patch a room with the provided fields
     async fn patch_room(
         &self,
+        current_user: RequestUser,
+        room_id: RoomId,
         password: Option<Option<RoomPassword>>,
         waiting_room: Option<bool>,
         e2e_encryption: Option<bool>,
-        current_user: RequestUser,
-        room_id: RoomId,
     ) -> Result<RoomResource, ApiError>;
 
     /// Get a room

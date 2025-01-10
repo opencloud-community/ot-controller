@@ -148,11 +148,11 @@ pub async fn new(
 
     let room_resource = service
         .create_room(
+            current_user,
             room_parameters.password,
             room_parameters.enable_sip,
             room_parameters.waiting_room,
             room_parameters.e2e_encryption,
-            current_user,
         )
         .await?;
 
@@ -209,11 +209,11 @@ pub async fn patch(
 
     let room_resource = service
         .patch_room(
+            current_user,
+            room_id,
             room_parameters.password,
             room_parameters.waiting_room,
             room_parameters.e2e_encryption,
-            current_user,
-            room_id,
         )
         .await?;
 

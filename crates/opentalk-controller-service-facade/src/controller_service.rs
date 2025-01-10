@@ -60,21 +60,21 @@ impl OpenTalkControllerService {
     /// Create a new room
     pub async fn create_room(
         &self,
+        current_user: RequestUser,
         password: Option<RoomPassword>,
         enable_sip: bool,
         waiting_room: bool,
         e2e_encryption: bool,
-        current_user: RequestUser,
     ) -> Result<RoomResource, ApiError> {
         self.backend
             .read()
             .await
             .create_room(
+                current_user,
                 password,
                 enable_sip,
                 waiting_room,
                 e2e_encryption,
-                current_user,
             )
             .await
     }
@@ -82,21 +82,21 @@ impl OpenTalkControllerService {
     /// Patch a room with the provided fields
     pub async fn patch_room(
         &self,
+        current_user: RequestUser,
+        room_id: RoomId,
         password: Option<Option<RoomPassword>>,
         waiting_room: Option<bool>,
         e2e_encryption: Option<bool>,
-        current_user: RequestUser,
-        room_id: RoomId,
     ) -> Result<RoomResource, ApiError> {
         self.backend
             .read()
             .await
             .patch_room(
+                current_user,
+                room_id,
                 password,
                 waiting_room,
                 e2e_encryption,
-                current_user,
-                room_id,
             )
             .await
     }
