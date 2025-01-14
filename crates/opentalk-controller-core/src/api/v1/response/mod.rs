@@ -6,7 +6,7 @@
 //!
 //! These all implement the [`Responder`] trait.
 use actix_web::{body::BoxBody, HttpResponse, Responder};
-use opentalk_types::api::error::ApiError;
+use opentalk_types_api_v1::error::ApiError;
 
 pub mod error;
 mod ok;
@@ -14,7 +14,7 @@ mod ok;
 pub use ok::ApiResponse;
 
 /// The default API Result
-pub type DefaultApiResult<T> = Result<ApiResponse<T>, ApiError>;
+pub type DefaultApiResult<T, E = ApiError> = Result<ApiResponse<T>, E>;
 
 /// Represents a 201 Created HTTP Response
 pub struct Created;

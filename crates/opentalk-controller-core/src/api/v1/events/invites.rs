@@ -2,8 +2,6 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::sync::Arc;
-
 use actix_web::{
     delete, get, patch, post,
     web::{Data, Json, Path, Query, ReqData},
@@ -14,6 +12,7 @@ use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
 use kustos::{policies_builder::PoliciesBuilder, Authz};
 use opentalk_controller_service::controller_backend::RoomsPoliciesBuilderExt;
 use opentalk_controller_settings::Settings;
+use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::Db;
 use opentalk_db_storage::{
     events::{
@@ -29,8 +28,8 @@ use opentalk_db_storage::{
     users::User,
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
-use opentalk_types::api::error::ApiError;
 use opentalk_types_api_v1::{
+    error::ApiError,
     events::{
         by_event_id::invites::GetEventsInvitesQuery, DeleteEmailInviteBody, DeleteEventInvitePath,
         EmailInvite, EventInvitee, EventOptionsQuery, EventResource, GetEventInstanceResponseBody,
@@ -125,13 +124,28 @@ pub async fn get_invites_for_event(
     event_id: Path<EventId>,
     query: Query<GetEventsInvitesQuery>,
 ) -> DefaultApiResult<Vec<EventInvitee>> {
-    let settings = settings.load_full();
-    let event_id = event_id.into_inner();
-    let GetEventsInvitesQuery {
+    Ok(get_invites_for_event_inner(
+        &settings.load_full(),
+        &db,
+        &kc_admin_client,
+        &current_tenant,
+        event_id.into_inner(),
+        query.into_inner(),
+    )
+    .await?)
+}
+
+async fn get_invites_for_event_inner(
+    settings: &Settings,
+    db: &Db,
+    kc_admin_client: &KeycloakAdminClient,
+    current_tenant: &Tenant,
+    event_id: EventId,
+    GetEventsInvitesQuery {
         pagination: PagePaginationQuery { per_page, page },
         status: status_filter,
-    } = query.into_inner();
-
+    }: GetEventsInvitesQuery,
+) -> DefaultApiResult<Vec<EventInvitee>, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     // FIXME: Preliminary solution, consider using UNION when Diesel supports it.
@@ -145,7 +159,7 @@ pub async fn get_invites_for_event(
     let event_invitees_iter = event_invites_with_user
         .into_iter()
         .map(|(event_invite, user)| {
-            EventInvitee::from_invite_with_user(event_invite, user, &settings)
+            EventInvitee::from_invite_with_user(event_invite, user, settings)
         });
 
     let (event_email_invites, event_email_invites_total) =
@@ -155,7 +169,7 @@ pub async fn get_invites_for_event(
 
     let event_email_invitees_iter = event_email_invites
         .into_iter()
-        .map(|event_email_invite| EventInvitee::from_email_invite(event_email_invite, &settings));
+        .map(|event_email_invite| EventInvitee::from_email_invite(event_email_invite, settings));
 
     let invitees_to_skip_count = (page - 1) * per_page;
     let invitees = event_invitees_iter
@@ -165,7 +179,7 @@ pub async fn get_invites_for_event(
         .collect();
 
     let invitees =
-        enrich_invitees_from_keycloak(settings, &kc_admin_client, &current_tenant, invitees).await;
+        enrich_invitees_from_keycloak(settings, kc_admin_client, current_tenant, invitees).await;
 
     Ok(ApiResponse::new(invitees).with_page_pagination(
         per_page,
@@ -228,19 +242,44 @@ pub async fn create_invite_to_event(
     create_invite: Json<PostEventInviteBody>,
     mail_service: Data<MailService>,
 ) -> Result<Either<Created, NoContent>, ApiError> {
-    let event_id = event_id.into_inner();
+    Ok(create_invite_to_event_inner(
+        settings,
+        &db,
+        &authz,
+        &kc_admin_client,
+        &current_tenant,
+        current_user.into_inner(),
+        event_id.into_inner(),
+        query.into_inner(),
+        create_invite.into_inner(),
+        &mail_service,
+    )
+    .await?)
+}
 
+#[allow(clippy::too_many_arguments)]
+async fn create_invite_to_event_inner(
+    settings: SharedSettingsActix,
+    db: &Db,
+    authz: &Authz,
+    kc_admin_client: &KeycloakAdminClient,
+    current_tenant: &Tenant,
+    current_user: User,
+    event_id: EventId,
+    query: PostEventInviteQuery,
+    create_invite: PostEventInviteBody,
+    mail_service: &MailService,
+) -> Result<Either<Created, NoContent>, CaptureApiError> {
     let send_email_notification = !query.suppress_email_notification;
-
-    match create_invite.into_inner() {
+    match create_invite {
         PostEventInviteBody::User(user_invite) => {
             create_user_event_invite(
                 db,
                 authz,
-                current_user.into_inner(),
+                current_user,
                 event_id,
                 user_invite,
-                &mail_service.into_inner(),
+                mail_service,
                 send_email_notification,
             )
             .await
@@ -251,11 +290,11 @@ pub async fn create_invite_to_event(
                 db,
                 authz,
                 kc_admin_client,
-                current_tenant.into_inner(),
-                current_user.into_inner(),
+                current_tenant,
+                &current_user,
                 event_id,
                 email_invite,
-                &mail_service.into_inner(),
+                mail_service,
                 send_email_notification,
             )
             .await
@@ -264,16 +303,14 @@ pub async fn create_invite_to_event(
 }
 
 async fn create_user_event_invite(
-    db: Data<Db>,
-    authz: Data<Authz>,
-    current_user: User,
+    db: &Db,
+    authz: &Authz,
+    inviter: User,
     event_id: EventId,
     user_invite: UserInvite,
     mail_service: &MailService,
     send_email_notification: bool,
-) -> Result<Either<Created, NoContent>, ApiError> {
-    let inviter = current_user.clone();
-
+) -> Result<Either<Created, NoContent>, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let (event, room, sip_config) = Event::get_with_room(&mut conn, event_id).await?;
@@ -292,7 +329,7 @@ async fn create_user_event_invite(
         event_id,
         invitee: user_invite.invitee,
         role: user_invite.role,
-        created_by: current_user.id,
+        created_by: inviter.id,
         created_at: None,
     }
     .try_insert(&mut conn)
@@ -344,16 +381,16 @@ async fn create_user_event_invite(
 #[allow(clippy::too_many_arguments)]
 async fn create_email_event_invite(
     settings: SharedSettingsActix,
-    db: Data<Db>,
-    authz: Data<Authz>,
-    kc_admin_client: Data<KeycloakAdminClient>,
-    current_tenant: Tenant,
-    current_user: User,
+    db: &Db,
+    authz: &Authz,
+    kc_admin_client: &KeycloakAdminClient,
+    current_tenant: &Tenant,
+    current_user: &User,
     event_id: EventId,
     email_invite: EmailInvite,
     mail_service: &MailService,
     send_email_notification: bool,
-) -> Result<Either<Created, NoContent>, ApiError> {
+) -> Result<Either<Created, NoContent>, CaptureApiError> {
     let email = email_invite.email.to_lowercase();
 
     #[allow(clippy::large_enum_variant)]
@@ -378,9 +415,6 @@ async fn create_email_event_invite(
     }
 
     let state = {
-        let current_user = current_user.clone();
-        let db = db.clone();
-
         let mut conn = db.get_conn().await?;
 
         let (event, room, sip_config) = Event::get_with_room(&mut conn, event_id).await?;
@@ -454,7 +488,7 @@ async fn create_email_event_invite(
             if send_email_notification {
                 mail_service
                     .send_registered_invite(
-                        current_user,
+                        current_user.clone(),
                         event,
                         room,
                         sip_config,
@@ -486,7 +520,7 @@ async fn create_email_event_invite(
                 mail_service,
                 send_email_notification,
                 current_tenant,
-                current_user,
+                current_user.clone(),
                 event,
                 room,
                 sip_config,
@@ -506,12 +540,12 @@ async fn create_email_event_invite(
 #[allow(clippy::too_many_arguments)]
 async fn create_invite_to_non_matching_email(
     settings: SharedSettingsActix,
-    db: Data<Db>,
-    authz: Data<Authz>,
-    kc_admin_client: Data<KeycloakAdminClient>,
+    db: &Db,
+    authz: &Authz,
+    kc_admin_client: &KeycloakAdminClient,
     mail_service: &MailService,
     send_email_notification: bool,
-    current_tenant: Tenant,
+    current_tenant: &Tenant,
     current_user: User,
     event: Event,
     room: Room,
@@ -520,10 +554,10 @@ async fn create_invite_to_non_matching_email(
     role: EmailInviteRole,
     shared_folder: Option<SharedFolder>,
     streaming_targets: Vec<RoomStreamingTarget>,
-) -> Result<Either<Created, NoContent>, ApiError> {
+) -> Result<Either<Created, NoContent>, CaptureApiError> {
     let settings = settings.load();
 
-    let tenant_filter = get_tenant_filter(&current_tenant, &settings.tenants.assignment);
+    let tenant_filter = get_tenant_filter(current_tenant, &settings.tenants.assignment);
 
     let invitee_user = kc_admin_client
         .get_user_for_email(tenant_filter, email.as_ref())
@@ -625,7 +659,8 @@ async fn create_invite_to_non_matching_email(
             .with_code("unknown_email")
             .with_message(
                 "Only emails registered with the systems are allowed to be used for invites",
-            ))
+            )
+            .into())
     }
 }
 
@@ -672,14 +707,27 @@ pub async fn update_invite_to_event(
     path_parameters: Path<(EventId, UserId)>,
     update_invite: Json<PatchInviteBody>,
 ) -> Result<NoContent, ApiError> {
-    let (event_id, user_id) = path_parameters.into_inner();
+    Ok(update_invite_to_event_inner(
+        &db,
+        &current_user,
+        path_parameters.into_inner(),
+        &update_invite,
+    )
+    .await?)
+}
 
+async fn update_invite_to_event_inner(
+    db: &Db,
+    current_user: &User,
+    (event_id, user_id): (EventId, UserId),
+    update_invite: &PatchInviteBody,
+) -> Result<NoContent, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let event = Event::get(&mut conn, event_id).await?;
 
     if event.created_by != current_user.id {
-        return Err(ApiError::forbidden());
+        return Err(ApiError::forbidden().into());
     }
 
     let changeset = UpdateEventInvite {
@@ -734,14 +782,27 @@ pub async fn update_email_invite_to_event(
     path_parameters: Path<EventId>,
     update_invite: Json<PatchEmailInviteBody>,
 ) -> Result<NoContent, ApiError> {
-    let event_id = path_parameters.into_inner();
+    Ok(update_email_invite_to_event_inner(
+        &db,
+        &current_user,
+        path_parameters.into_inner(),
+        &update_invite,
+    )
+    .await?)
+}
 
+async fn update_email_invite_to_event_inner(
+    db: &Db,
+    current_user: &User,
+    event_id: EventId,
+    update_invite: &PatchEmailInviteBody,
+) -> Result<NoContent, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let event = Event::get(&mut conn, event_id).await?;
 
     if event.created_by != current_user.id {
-        return Err(ApiError::forbidden());
+        return Err(ApiError::forbidden().into());
     }
 
     let changeset = UpdateEventEmailInvite {
@@ -819,13 +880,33 @@ pub async fn delete_invite_to_event(
     query: Query<EventOptionsQuery>,
     mail_service: Data<MailService>,
 ) -> Result<NoContent, ApiError> {
-    let settings = settings.load_full();
-    let current_user = current_user.into_inner();
+    Ok(delete_invite_to_event_inner(
+        &settings.load_full(),
+        &db,
+        &kc_admin_client,
+        current_tenant.into_inner(),
+        current_user.into_inner(),
+        &authz,
+        path_params.into_inner(),
+        query.into_inner(),
+        &mail_service,
+    )
+    .await?)
+}
 
-    let DeleteEventInvitePath { event_id, user_id } = path_params.into_inner();
-
+#[allow(clippy::too_many_arguments)]
+async fn delete_invite_to_event_inner(
+    settings: &Settings,
+    db: &Db,
+    kc_admin_client: &KeycloakAdminClient,
+    current_tenant: Tenant,
+    current_user: User,
+    authz: &Authz,
+    DeleteEventInvitePath { event_id, user_id }: DeleteEventInvitePath,
+    query: EventOptionsQuery,
+    mail_service: &MailService,
+) -> Result<NoContent, CaptureApiError> {
     let send_email_notification = !query.suppress_email_notification;
-
     let mut conn = db.get_conn().await?;
 
     // TODO(w.rabl) Further DB access optimization (replacing call to get_with_invite_and_room)?
@@ -876,7 +957,7 @@ pub async fn delete_invite_to_event(
             .collect();
 
         let notification_values = UninviteNotificationValues {
-            tenant: current_tenant.into_inner(),
+            tenant: current_tenant,
             created_by,
             event,
             room,
@@ -887,15 +968,15 @@ pub async fn delete_invite_to_event(
         notify_invitees_about_uninvite(
             settings,
             notification_values,
-            mail_service.into_inner(),
-            &kc_admin_client,
+            mail_service,
+            kc_admin_client,
             shared_folder.map(SharedFolder::from),
             streaming_targets,
         )
         .await;
     }
 
-    remove_invitee_permissions(&authz, event_id, room_id, invite.invitee).await?;
+    remove_invitee_permissions(authz, event_id, room_id, invite.invitee).await?;
 
     Ok(NoContent)
 }
@@ -951,11 +1032,35 @@ pub async fn delete_email_invite_to_event(
     mail_service: Data<MailService>,
     body: Json<DeleteEmailInviteBody>,
 ) -> Result<NoContent, ApiError> {
-    let settings = settings.load_full();
-    let current_user = current_user.into_inner();
-    let current_tenant = current_tenant.into_inner();
-    let event_id = path.into_inner();
-    let email = body.into_inner().email.to_lowercase().to_string();
+    Ok(delete_email_invite_to_event_inner(
+        &settings.load_full(),
+        &db,
+        &kc_admin_client,
+        current_tenant.into_inner(),
+        current_user.into_inner(),
+        &authz,
+        path.into_inner(),
+        query.into_inner(),
+        &mail_service,
+        body.into_inner().email,
+    )
+    .await?)
+}
+
+#[allow(clippy::too_many_arguments)]
+async fn delete_email_invite_to_event_inner(
+    settings: &Settings,
+    db: &Db,
+    kc_admin_client: &KeycloakAdminClient,
+    current_tenant: Tenant,
+    current_user: User,
+    authz: &Authz,
+    event_id: EventId,
+    query: EventOptionsQuery,
+    mail_service: &MailService,
+    email: EmailAddress,
+) -> Result<NoContent, CaptureApiError> {
+    let email = email.to_lowercase().to_string();
     let tenant_filter = get_tenant_filter(&current_tenant, &settings.tenants.assignment);
 
     let send_email_notification = !query.suppress_email_notification;
@@ -993,7 +1098,7 @@ pub async fn delete_email_invite_to_event(
         })
         .await?;
 
-        remove_invitee_permissions(&authz, event_id, room.id, user_id).await?;
+        remove_invitee_permissions(authz, event_id, room.id, user_id).await?;
 
         MailRecipient::Registered(RegisteredMailRecipient {
             email,
@@ -1029,8 +1134,8 @@ pub async fn delete_email_invite_to_event(
         notify_invitees_about_uninvite(
             settings,
             notification_values,
-            mail_service.into_inner(),
-            &kc_admin_client,
+            mail_service,
+            kc_admin_client,
             shared_folder.map(SharedFolder::from),
             streaming_targets,
         )
@@ -1045,7 +1150,7 @@ async fn remove_invitee_permissions(
     event_id: EventId,
     room_id: RoomId,
     user_id: UserId,
-) -> Result<(), ApiError> {
+) -> Result<(), CaptureApiError> {
     let resources = vec![
         format!("/events/{event_id}"),
         format!("/events/{event_id}/instances"),
@@ -1075,10 +1180,10 @@ async fn remove_invitee_permissions(
 ///
 /// Notify invited users about the event deletion
 async fn notify_invitees_about_uninvite(
-    settings: Arc<Settings>,
+    settings: &Settings,
     notification_values: UninviteNotificationValues,
-    mail_service: Arc<MailService>,
-    kc_admin_client: &Data<KeycloakAdminClient>,
+    mail_service: &MailService,
+    kc_admin_client: &KeycloakAdminClient,
     shared_folder: Option<SharedFolder>,
     streaming_targets: Vec<RoomStreamingTarget>,
 ) {
@@ -1090,13 +1195,9 @@ async fn notify_invitees_about_uninvite(
         _ => {}
     }
     for user in notification_values.users_to_notify {
-        let invited_user = enrich_from_keycloak(
-            settings.clone(),
-            user,
-            &notification_values.tenant,
-            kc_admin_client,
-        )
-        .await;
+        let invited_user =
+            enrich_from_keycloak(settings, user, &notification_values.tenant, kc_admin_client)
+                .await;
 
         if let Err(e) = mail_service
             .send_event_uninvite(
@@ -1150,9 +1251,16 @@ pub async fn get_event_invites_pending(
     db: Data<Db>,
     current_user: ReqData<User>,
 ) -> DefaultApiResult<GetEventInvitesPendingResponseBody> {
+    Ok(get_event_invites_pending_inner(&db, current_user.id).await?)
+}
+
+async fn get_event_invites_pending_inner(
+    db: &Db,
+    user_id: UserId,
+) -> DefaultApiResult<GetEventInvitesPendingResponseBody, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
-    let event_invites = EventInvite::get_pending_for_user(&mut conn, current_user.id).await?;
+    let event_invites = EventInvite::get_pending_for_user(&mut conn, user_id).await?;
 
     Ok(ApiResponse::new(GetEventInvitesPendingResponseBody {
         total_pending_invites: event_invites.len() as u32,
@@ -1198,8 +1306,14 @@ pub async fn accept_event_invite(
     current_user: ReqData<User>,
     event_id: Path<EventId>,
 ) -> Result<NoContent, ApiError> {
-    let event_id = event_id.into_inner();
+    Ok(accept_event_invite_inner(&db, current_user.into_inner().id, event_id.into_inner()).await?)
+}
 
+async fn accept_event_invite_inner(
+    db: &Db,
+    user_id: UserId,
+    event_id: EventId,
+) -> Result<NoContent, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let changeset = UpdateEventInvite {
@@ -1207,9 +1321,7 @@ pub async fn accept_event_invite(
         role: None,
     };
 
-    changeset
-        .apply(&mut conn, current_user.id, event_id)
-        .await?;
+    changeset.apply(&mut conn, user_id, event_id).await?;
 
     Ok(NoContent)
 }
@@ -1253,6 +1365,14 @@ pub async fn decline_event_invite(
     current_user: ReqData<User>,
     event_id: Path<EventId>,
 ) -> Result<NoContent, ApiError> {
+    Ok(decline_event_invite_inner(&db, current_user.id, event_id).await?)
+}
+
+async fn decline_event_invite_inner(
+    db: &Db,
+    user_id: UserId,
+    event_id: Path<EventId>,
+) -> Result<NoContent, CaptureApiError> {
     let event_id = event_id.into_inner();
 
     let mut conn = db.get_conn().await?;
@@ -1262,9 +1382,7 @@ pub async fn decline_event_invite(
         role: None,
     };
 
-    changeset
-        .apply(&mut conn, current_user.id, event_id)
-        .await?;
+    changeset.apply(&mut conn, user_id, event_id).await?;
 
     Ok(NoContent)
 }

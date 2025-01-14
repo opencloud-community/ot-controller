@@ -10,6 +10,8 @@ use actix_web::{
 use chrono::{DateTime, Utc};
 use kustos::{prelude::PoliciesBuilder, Authz};
 use opentalk_controller_service::controller_backend::RoomsPoliciesBuilderExt;
+use opentalk_controller_settings::Settings;
+use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::Db;
 use opentalk_db_storage::{
     events::{Event, EventException, EventExceptionKind, NewEventException, UpdateEventException},
@@ -19,8 +21,8 @@ use opentalk_db_storage::{
     users::User,
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
-use opentalk_types::api::error::ApiError;
 use opentalk_types_api_v1::{
+    error::ApiError,
     events::{
         EventAndInstanceId, EventInstance, EventInstancePath, EventInstanceQuery, EventInvitee,
         EventRoomInfo, EventStatus, EventType, GetEventInstanceResponseBody,
@@ -115,23 +117,38 @@ pub async fn get_event_instances(
     event_id: Path<EventId>,
     query: Query<GetEventInstancesQuery>,
 ) -> DefaultApiResult<GetEventInstancesResponseBody> {
-    let settings = settings.load_full();
-    let event_id = event_id.into_inner();
-    let GetEventInstancesQuery {
+    Ok(get_event_instances_inner(
+        &settings.load_full(),
+        &db,
+        &kc_admin_client,
+        &current_tenant,
+        &current_user,
+        event_id.into_inner(),
+        query.into_inner(),
+    )
+    .await?)
+}
+
+async fn get_event_instances_inner(
+    settings: &Settings,
+    db: &Db,
+    kc_admin_client: &KeycloakAdminClient,
+    current_tenant: &Tenant,
+    current_user: &User,
+    event_id: EventId,
+    GetEventInstancesQuery {
         invitees_max,
         time_min,
         time_max,
         per_page,
         after,
-    } = query.into_inner();
-
+    }: GetEventInstancesQuery,
+) -> DefaultApiResult<GetEventInstancesResponseBody, CaptureApiError> {
     let per_page = per_page.unwrap_or(30).clamp(1, 100);
     let page = after.map(|c| c.page).unwrap_or(1).max(1);
 
     let skip = per_page as usize;
     let offset = (page - 1) as usize;
-
-    let kc_admin_client_ref = &kc_admin_client;
 
     let mut conn = db.get_conn().await?;
 
@@ -139,7 +156,7 @@ pub async fn get_event_instances(
         Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
 
     let (invitees, invitees_truncated) =
-        super::get_invitees_for_event(&settings, &mut conn, event.id, invitees_max).await?;
+        super::get_invitees_for_event(settings, &mut conn, event.id, invitees_max).await?;
 
     let invite_status = invite
         .map(|inv| inv.status)
@@ -177,14 +194,14 @@ pub async fn get_event_instances(
     let users = GetUserProfilesBatched::new()
         .add(&event)
         .add(&exceptions)
-        .fetch(&settings, &mut conn)
+        .fetch(settings, &mut conn)
         .await?;
 
     drop(conn);
 
-    let room = EventRoomInfo::from_room(&settings, room, sip_config, &tariff);
+    let room = EventRoomInfo::from_room(settings, room, sip_config, &tariff);
 
-    let can_edit = can_edit(&event, &current_user);
+    let can_edit = can_edit(&event, current_user);
 
     let shared_folder = shared_folder_for_user(shared_folder, event.created_by, current_user.id);
 
@@ -228,8 +245,8 @@ pub async fn get_event_instances(
     let event_instances = if let Some(instance) = instances_data.instances.first() {
         let enriched_invitees = enrich_invitees_from_keycloak(
             settings,
-            kc_admin_client_ref,
-            &current_tenant,
+            kc_admin_client,
+            current_tenant,
             instance.invitees.clone(),
         )
         .await;
@@ -297,13 +314,30 @@ pub async fn get_event_instance(
     path: Path<EventInstancePath>,
     query: Query<EventInstanceQuery>,
 ) -> DefaultApiResult<GetEventInstanceResponseBody> {
-    let settings = settings.load_full();
-    let EventInstancePath {
+    Ok(get_event_instance_inner(
+        &settings.load_full(),
+        &db,
+        &kc_admin_client,
+        &current_tenant,
+        &current_user,
+        path.into_inner(),
+        query.into_inner(),
+    )
+    .await?)
+}
+
+async fn get_event_instance_inner(
+    settings: &Settings,
+    db: &Db,
+    kc_admin_client: &KeycloakAdminClient,
+    current_tenant: &Tenant,
+    current_user: &User,
+    EventInstancePath {
         event_id,
         instance_id,
-    } = path.into_inner();
-    let query = query.into_inner();
-
+    }: EventInstancePath,
+    query: EventInstanceQuery,
+) -> DefaultApiResult<GetEventInstanceResponseBody, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let (event, invite, room, sip_config, is_favorite, shared_folder, tariff) =
@@ -311,19 +345,19 @@ pub async fn get_event_instance(
     verify_recurrence_date(&event, instance_id.into())?;
 
     let (invitees, invitees_truncated) =
-        super::get_invitees_for_event(&settings, &mut conn, event_id, query.invitees_max).await?;
+        super::get_invitees_for_event(settings, &mut conn, event_id, query.invitees_max).await?;
 
     let exception = EventException::get_for_event(&mut conn, event_id, instance_id.into()).await?;
 
     let users = GetUserProfilesBatched::new()
         .add(&event)
         .add(&exception)
-        .fetch(&settings, &mut conn)
+        .fetch(settings, &mut conn)
         .await?;
 
-    let room = EventRoomInfo::from_room(&settings, room, sip_config, &tariff);
+    let room = EventRoomInfo::from_room(settings, room, sip_config, &tariff);
 
-    let can_edit = can_edit(&event, &current_user);
+    let can_edit = can_edit(&event, current_user);
 
     let shared_folder = shared_folder_for_user(shared_folder, event.created_by, current_user.id);
 
@@ -346,8 +380,8 @@ pub async fn get_event_instance(
     let event_instance = EventInstance {
         invitees: enrich_invitees_from_keycloak(
             settings,
-            &kc_admin_client,
-            &current_tenant,
+            kc_admin_client,
+            current_tenant,
             event_instance.invitees,
         )
         .await,
@@ -415,17 +449,43 @@ pub async fn patch_event_instance(
     patch: Json<PatchEventInstanceBody>,
     mail_service: Data<MailService>,
 ) -> Result<Either<ApiResponse<EventInstance>, NoContent>, ApiError> {
-    let patch = patch.into_inner();
+    Ok(patch_event_instance_inner(
+        &settings.load_full(),
+        &db,
+        &authz,
+        &kc_admin_client,
+        current_tenant.into_inner(),
+        current_user.into_inner(),
+        path.into_inner(),
+        query.into_inner(),
+        patch.into_inner(),
+        &mail_service,
+    )
+    .await?)
+}
 
+#[allow(clippy::too_many_arguments)]
+async fn patch_event_instance_inner(
+    settings: &Settings,
+    db: &Db,
+    authz: &Authz,
+    kc_admin_client: &KeycloakAdminClient,
+    current_tenant: Tenant,
+    current_user: User,
+    EventInstancePath {
+        event_id,
+        instance_id,
+    }: EventInstancePath,
+    EventInstanceQuery {
+        invitees_max,
+        suppress_email_notification,
+    }: EventInstanceQuery,
+    patch: PatchEventInstanceBody,
+    mail_service: &MailService,
+) -> Result<Either<ApiResponse<EventInstance>, NoContent>, CaptureApiError> {
     if patch.is_empty() {
         return Ok(Either::Right(NoContent));
     }
-
-    let settings = settings.load_full();
-    let EventInstancePath {
-        event_id,
-        instance_id,
-    } = path.into_inner();
 
     let mut conn = db.get_conn().await?;
 
@@ -433,7 +493,7 @@ pub async fn patch_event_instance(
         Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
 
     if !event.is_recurring.unwrap_or_default() {
-        return Err(ApiError::not_found());
+        return Err(ApiError::not_found().into());
     }
 
     verify_recurrence_date(&event, instance_id.into())?;
@@ -511,16 +571,16 @@ pub async fn patch_event_instance(
     };
 
     let (invitees, invitees_truncated) =
-        super::get_invitees_for_event(&settings, &mut conn, event_id, query.invitees_max).await?;
+        super::get_invitees_for_event(settings, &mut conn, event_id, invitees_max).await?;
 
     let users = GetUserProfilesBatched::new()
         .add(&event)
         .add(&exception)
-        .fetch(&settings, &mut conn)
+        .fetch(settings, &mut conn)
         .await?;
 
     let event_room_info =
-        EventRoomInfo::from_room(&settings, room.clone(), sip_config.clone(), &tariff);
+        EventRoomInfo::from_room(settings, room.clone(), sip_config.clone(), &tariff);
 
     let can_edit = can_edit(&event, &current_user);
 
@@ -528,13 +588,13 @@ pub async fn patch_event_instance(
 
     let streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
 
-    if !query.suppress_email_notification {
+    if !suppress_email_notification {
         let invited_users = get_invited_mail_recipients_for_event(&mut conn, event_id).await?;
         let invite_for_room =
             Invite::get_first_or_create_for_room(&mut conn, room.id, current_user.id).await?;
 
         let created_by = if event.created_by == current_user.id {
-            current_user.into_inner()
+            current_user
         } else {
             User::get(&mut conn, event.created_by).await?
         };
@@ -550,7 +610,7 @@ pub async fn patch_event_instance(
         authz.add_policies(policies).await?;
 
         let notification_values = UpdateNotificationValues {
-            tenant: current_tenant.clone().into_inner(),
+            tenant: current_tenant.clone(),
             created_by,
             event: event.clone(),
             event_exception: Some(exception.clone()),
@@ -561,10 +621,10 @@ pub async fn patch_event_instance(
         };
 
         notify_invitees_about_update(
-            settings.clone(),
+            settings,
             notification_values,
-            mail_service.into_inner(),
-            &kc_admin_client,
+            mail_service,
+            kc_admin_client,
             None,
             streaming_targets,
         )
@@ -592,7 +652,7 @@ pub async fn patch_event_instance(
     let event_instance = EventInstance {
         invitees: enrich_invitees_from_keycloak(
             settings,
-            &kc_admin_client,
+            kc_admin_client,
             &current_tenant,
             event_instance.invitees,
         )

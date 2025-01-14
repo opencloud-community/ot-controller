@@ -13,7 +13,10 @@ use kustos::prelude::PoliciesBuilder;
 use log::error;
 use opentalk_controller_service::controller_backend::RoomsPoliciesBuilderExt;
 use opentalk_controller_service_facade::OpenTalkControllerService;
-use opentalk_controller_settings::{TariffAssignment, TariffStatusMapping, TenantAssignment};
+use opentalk_controller_settings::{
+    Settings, TariffAssignment, TariffStatusMapping, TenantAssignment,
+};
+use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::{Db, OptionalExt};
 use opentalk_db_storage::{
     groups::{get_or_create_groups_by_name, Group},
@@ -21,9 +24,9 @@ use opentalk_db_storage::{
     tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId},
     users::User,
 };
-use opentalk_types::api::error::{ApiError, AuthenticationError, ErrorBody};
-use opentalk_types_api_v1::auth::{
-    login::AuthLoginPostRequestBody, GetLoginResponseBody, PostLoginResponseBody,
+use opentalk_types_api_v1::{
+    auth::{login::AuthLoginPostRequestBody, GetLoginResponseBody, PostLoginResponseBody},
+    error::{ApiError, AuthenticationError, ErrorBody},
 };
 use opentalk_types_common::{
     events::EventId,
@@ -92,28 +95,45 @@ pub async fn post_login(
     body: Json<AuthLoginPostRequestBody>,
     authz: Data<kustos::Authz>,
 ) -> Result<Json<PostLoginResponseBody>, ApiError> {
-    let id_token = body.into_inner().id_token;
+    Ok(post_login_inner(
+        &settings.load_full(),
+        &db,
+        &oidc_ctx,
+        body.into_inner().id_token,
+        &authz,
+    )
+    .await?)
+}
 
+async fn post_login_inner(
+    settings: &Settings,
+    db: &Db,
+    oidc_ctx: &OidcContext,
+    id_token: String,
+    authz: &kustos::Authz,
+) -> Result<Json<PostLoginResponseBody>, CaptureApiError> {
     let mut info = match oidc_ctx.verify_id_token(&id_token) {
         Ok(info) => info,
         Err(e) => {
             return match e {
                 VerifyError::InvalidClaims => Err(ApiError::bad_request()
                     .with_code("invalid_claims")
-                    .with_message("some required attributes are missing or malformed")),
+                    .with_message("some required attributes are missing or malformed")
+                    .into()),
                 VerifyError::Expired { .. } => Err(ApiError::unauthorized()
-                    .with_www_authenticate(AuthenticationError::SessionExpired)),
+                    .with_www_authenticate(AuthenticationError::SessionExpired)
+                    .into()),
                 VerifyError::MissingKeyID
                 | VerifyError::UnknownKeyID
                 | VerifyError::MalformedSignature
                 | VerifyError::InvalidJwt { .. }
                 | VerifyError::InvalidSignature => Err(ApiError::unauthorized()
-                    .with_www_authenticate(AuthenticationError::InvalidIdToken)),
+                    .with_www_authenticate(AuthenticationError::InvalidIdToken)
+                    .into()),
             };
         }
     };
 
-    let settings = settings.load_full();
     let mut conn = db.get_conn().await?;
 
     // Get tariff depending on the configured assignment
@@ -192,7 +212,7 @@ pub async fn post_login(
         Some(user) => {
             // Found a matching user, update its attributes, tenancy and groups
             update_user::update_user(
-                &settings,
+                settings,
                 &mut conn,
                 user,
                 info,
@@ -205,7 +225,7 @@ pub async fn post_login(
         None => {
             // No matching user, create a new one with inside the given tenants and groups
             create_user::create_user(
-                &settings,
+                settings,
                 &mut conn,
                 info,
                 tenant,
@@ -219,7 +239,7 @@ pub async fn post_login(
 
     drop(conn);
 
-    update_core_user_permissions(authz.as_ref(), login_result).await?;
+    update_core_user_permissions(authz, login_result).await?;
 
     Ok(Json(PostLoginResponseBody {
         // TODO calculate permissions
@@ -279,7 +299,7 @@ enum LoginResult {
 async fn update_core_user_permissions(
     authz: &kustos::Authz,
     db_result: LoginResult,
-) -> Result<(), ApiError> {
+) -> Result<(), CaptureApiError> {
     match db_result {
         LoginResult::UserUpdated {
             user,

@@ -61,8 +61,7 @@ use opentalk_signaling_core::{
     RegisterModules, SignalingModule, SignalingModuleInitData, VolatileStaticMemoryStorage,
     VolatileStorage,
 };
-use opentalk_types::api::error::ApiError;
-use opentalk_types_api_v1::auth::OidcProvider;
+use opentalk_types_api_v1::{auth::OidcProvider, error::ApiError};
 use rustls_pki_types::{CertificateDer, PrivatePkcs8KeyDer};
 use service_probe::{set_service_state, start_probe, ServiceState};
 use snafu::{Backtrace, ErrorCompat, Report, ResultExt, Snafu};
@@ -862,10 +861,8 @@ impl ModulesRegistrar for Controller {
         schemas(
             api::headers::CursorLink,
             api::headers::PageLink,
-            opentalk_types::api::error::ErrorBody,
-            opentalk_types::api::error::StandardErrorBody,
-            opentalk_types::api::error::ValidationErrorBody,
-            opentalk_types::api::error::ValidationErrorEntry,
+            opentalk_types_api_v1::error::ErrorBody,
+            opentalk_types_api_v1::error::ValidationErrorEntry,
             opentalk_types_api_v1::Cursor::<opentalk_types_api_v1::events::GetEventInstancesCursorData>,
             opentalk_types_api_v1::Cursor::<opentalk_types_api_v1::events::GetEventsCursorData>,
             opentalk_types_api_v1::assets::AssetResource,

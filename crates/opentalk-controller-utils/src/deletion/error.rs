@@ -4,8 +4,10 @@
 
 use opentalk_database::DatabaseError;
 use opentalk_signaling_core::ObjectStorageError;
-use opentalk_types::api::error::ApiError;
+use opentalk_types_api_v1::error::ApiError;
 use snafu::Snafu;
+
+use crate::CaptureApiError;
 
 /// Errors returned when deleting an event
 #[derive(Debug, Snafu)]
@@ -67,24 +69,26 @@ pub enum Error {
     },
 }
 
-impl From<Error> for ApiError {
+impl From<Error> for CaptureApiError {
     fn from(value: Error) -> Self {
         match value {
-            Error::Database { source } => Self::from(source),
-            Error::Kustos { source } => Self::from(source),
-            Error::Forbidden => Self::forbidden(),
-            Error::Conflict { message } => Self::conflict().with_message(message),
+            Error::Database { source } => source.into(),
+            Error::Kustos { source } => source.into(),
+            Error::Forbidden => ApiError::forbidden().into(),
+            Error::Conflict { message } => ApiError::conflict().with_message(message).into(),
             Error::ObjectDeletion { source } => {
                 log::error!("REST API threw internal error from object storage: {source}");
-                ApiError::internal()
+                ApiError::internal().into()
             }
-            Error::SharedFoldersNotConfigured => {
-                Self::bad_request().with_message("No shared folder configured for this server")
+            Error::SharedFoldersNotConfigured => ApiError::bad_request()
+                .with_message("No shared folder configured for this server")
+                .into(),
+            Error::NextcloudClient { .. } => ApiError::internal()
+                .with_message("Error performing actions on the NextCloud")
+                .into(),
+            Error::Custom { message, source: _ } => {
+                ApiError::internal().with_message(message).into()
             }
-            Error::NextcloudClient { .. } => {
-                Self::internal().with_message("Error performing actions on the NextCloud")
-            }
-            Error::Custom { message, source: _ } => Self::internal().with_message(message),
         }
     }
 }

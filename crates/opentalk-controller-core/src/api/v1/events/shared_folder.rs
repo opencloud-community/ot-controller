@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::{collections::HashSet, sync::Arc};
+use std::collections::HashSet;
 
 use actix_http::StatusCode;
 use actix_web::{
@@ -13,6 +13,7 @@ use actix_web::{
 use chrono::{Days, NaiveDate, Utc};
 use log::warn;
 use opentalk_controller_settings::Settings;
+use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
     events::{
@@ -25,8 +26,10 @@ use opentalk_db_storage::{
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_nextcloud_client::{Client, ShareId, SharePermission, ShareType};
-use opentalk_types::api::error::ApiError;
-use opentalk_types_api_v1::events::{DeleteSharedFolderQuery, PutSharedFolderQuery};
+use opentalk_types_api_v1::{
+    error::ApiError,
+    events::{DeleteSharedFolderQuery, PutSharedFolderQuery},
+};
 use opentalk_types_common::{
     events::EventId,
     shared_folders::{SharedFolder, SharedFolderAccess},
@@ -85,9 +88,17 @@ pub async fn get_shared_folder_for_event(
     event_id: Path<EventId>,
     current_user: ReqData<User>,
 ) -> Result<Json<SharedFolder>, ApiError> {
-    let event_id = event_id.into_inner();
-    let current_user = current_user.into_inner();
+    Ok(
+        get_shared_folder_for_event_inner(&db, event_id.into_inner(), current_user.into_inner())
+            .await?,
+    )
+}
 
+async fn get_shared_folder_for_event_inner(
+    db: &Db,
+    event_id: EventId,
+    current_user: User,
+) -> Result<Json<SharedFolder>, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let event = Event::get(&mut conn, event_id).await?;
@@ -159,18 +170,35 @@ pub async fn put_shared_folder_for_event(
     event_id: Path<EventId>,
     query: Query<PutSharedFolderQuery>,
 ) -> Result<CustomizeResponder<Json<SharedFolder>>, ApiError> {
-    let settings = settings.load_full();
-    let mail_service = mail_service.into_inner();
-    let current_tenant = current_tenant.into_inner();
-    let current_user = current_user.into_inner();
-    let event_id = event_id.into_inner();
-    let query = query.into_inner();
+    Ok(put_shared_folder_for_event_inner(
+        &settings.load_full(),
+        &db,
+        &kc_admin_client,
+        &mail_service,
+        current_tenant.into_inner(),
+        current_user.into_inner(),
+        event_id.into_inner(),
+        query.into_inner(),
+    )
+    .await?)
+}
 
+#[allow(clippy::too_many_arguments)]
+async fn put_shared_folder_for_event_inner(
+    settings: &Settings,
+    db: &Db,
+    kc_admin_client: &KeycloakAdminClient,
+    mail_service: &MailService,
+    current_tenant: Tenant,
+    current_user: User,
+    event_id: EventId,
+    query: PutSharedFolderQuery,
+) -> Result<CustomizeResponder<Json<SharedFolder>>, CaptureApiError> {
     let send_email_notification = !query.suppress_email_notification;
 
     let mut conn = db.get_conn().await?;
 
-    let (shared_folder, created) = put_shared_folder(settings.clone(), event_id, &mut conn).await?;
+    let (shared_folder, created) = put_shared_folder(settings, event_id, &mut conn).await?;
 
     let (event, _invite, room, sip_config, _is_favorite, _shared_folder, _tariff) =
         Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
@@ -185,7 +213,7 @@ pub async fn put_shared_folder_for_event(
         let streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
 
         notify_event_invitees_about_update(
-            &kc_admin_client,
+            kc_admin_client,
             settings,
             mail_service,
             current_tenant,
@@ -210,10 +238,10 @@ pub async fn put_shared_folder_for_event(
 }
 
 pub(crate) async fn put_shared_folder(
-    settings: Arc<Settings>,
+    settings: &Settings,
     event_id: EventId,
     conn: &mut DbConnection,
-) -> Result<(EventSharedFolder, bool), ApiError> {
+) -> Result<(EventSharedFolder, bool), CaptureApiError> {
     let shared_folder = EventSharedFolder::get_for_event(conn, event_id).await?;
 
     if let Some(shared_folder) = shared_folder {
@@ -376,7 +404,7 @@ pub(crate) async fn put_shared_folder(
 }
 
 pub async fn delete_shared_folders(
-    settings: Arc<Settings>,
+    settings: &Settings,
     shared_folders: &[EventSharedFolder],
 ) -> Result<(), ApiError> {
     if shared_folders.is_empty() {
@@ -496,13 +524,30 @@ pub async fn delete_shared_folder_for_event(
     event_id: Path<EventId>,
     query: Query<DeleteSharedFolderQuery>,
 ) -> Result<NoContent, ApiError> {
-    let settings = settings.load_full();
-    let mail_service = mail_service.into_inner();
-    let current_tenant = current_tenant.into_inner();
-    let current_user = current_user.into_inner();
-    let event_id = event_id.into_inner();
-    let query = query.into_inner();
+    Ok(delete_shared_folder_for_event_inner(
+        &settings.load_full(),
+        &db,
+        &kc_admin_client,
+        &mail_service,
+        current_tenant.into_inner(),
+        current_user.into_inner(),
+        event_id.into_inner(),
+        query.into_inner(),
+    )
+    .await?)
+}
 
+#[allow(clippy::too_many_arguments)]
+async fn delete_shared_folder_for_event_inner(
+    settings: &Settings,
+    db: &Db,
+    kc_admin_client: &KeycloakAdminClient,
+    mail_service: &MailService,
+    current_tenant: Tenant,
+    current_user: User,
+    event_id: EventId,
+    query: DeleteSharedFolderQuery,
+) -> Result<NoContent, CaptureApiError> {
     let send_email_notification = !query.suppress_email_notification;
 
     let mut conn = db.get_conn().await?;
@@ -512,7 +557,7 @@ pub async fn delete_shared_folder_for_event(
 
     if let Some(shared_folder) = shared_folder {
         let shared_folders = std::slice::from_ref(&shared_folder);
-        let deletion = delete_shared_folders(settings.clone(), shared_folders).await;
+        let deletion = delete_shared_folders(settings, shared_folders).await;
 
         let streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
 
@@ -522,7 +567,7 @@ pub async fn delete_shared_folder_for_event(
 
                 if send_email_notification {
                     notify_event_invitees_about_update(
-                        &kc_admin_client,
+                        kc_admin_client,
                         settings,
                         mail_service,
                         current_tenant,
@@ -549,7 +594,7 @@ pub async fn delete_shared_folder_for_event(
 
                     if send_email_notification {
                         notify_event_invitees_about_update(
-                            &kc_admin_client,
+                            kc_admin_client,
                             settings,
                             mail_service,
                             current_tenant,
@@ -566,7 +611,7 @@ pub async fn delete_shared_folder_for_event(
 
                     Ok(NoContent)
                 } else {
-                    Err(e)
+                    Err(e.into())
                 }
             }
         }

@@ -11,16 +11,20 @@ use actix_web::{
 };
 use actix_web_actors::ws;
 use bytes::Bytes;
+use opentalk_controller_settings::Settings;
+use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::Db;
 use opentalk_db_storage::rooms::Room;
 use opentalk_signaling_core::{
     assets::{save_asset, verify_storage_usage, NewAssetFileName},
     ChunkFormat, ObjectStorage, ObjectStorageError, Participant, VolatileStorage,
 };
-use opentalk_types::api::error::{ApiError, StandardErrorBody};
-use opentalk_types_api_v1::services::{
-    recording::{GetRecordingUploadQuery, PostRecordingStartRequestBody},
-    PostServiceStartResponseBody,
+use opentalk_types_api_v1::{
+    error::{ApiError, ErrorBody},
+    services::{
+        recording::{GetRecordingUploadQuery, PostRecordingStartRequestBody},
+        PostServiceStartResponseBody,
+    },
 };
 use tokio::{sync::mpsc, task};
 
@@ -63,7 +67,7 @@ const REQUIRED_RECORDING_ROLE: &str = "opentalk-recorder";
         (
             status = StatusCode::NOT_FOUND,
             description = "Recording has not been configured",
-            body = StandardErrorBody,
+            body = ErrorBody,
             example = json!(ApiError::not_found().body),
         ),
         (
@@ -82,21 +86,32 @@ pub async fn post_recording_start(
     volatile: Data<VolatileStorage>,
     body: Json<PostRecordingStartRequestBody>,
 ) -> Result<Json<PostServiceStartResponseBody>, ApiError> {
-    let mut conn = db.get_conn().await?;
-    let settings = settings.load_full();
-    if settings.rabbit_mq.recording_task_queue.is_none() {
-        return Err(ApiError::not_found());
-    }
+    Ok(post_recording_start_inner(
+        &settings.load_full(),
+        &db,
+        &mut (**volatile).clone(),
+        body.into_inner(),
+    )
+    .await?)
+}
 
-    let mut volatile = (**volatile).clone();
-    let body = body.into_inner();
+async fn post_recording_start_inner(
+    settings: &Settings,
+    db: &Db,
+    volatile: &mut VolatileStorage,
+    body: PostRecordingStartRequestBody,
+) -> Result<Json<PostServiceStartResponseBody>, CaptureApiError> {
+    let mut conn = db.get_conn().await?;
+    if settings.rabbit_mq.recording_task_queue.is_none() {
+        return Err(ApiError::not_found().into());
+    }
 
     let room = Room::get(&mut conn, body.room_id).await?;
 
     verify_storage_usage(&mut conn, room.created_by).await?;
 
     let (ticket, resumption) = start_or_continue_signaling_session(
-        &mut volatile,
+        volatile,
         Participant::Recorder,
         room.id,
         body.breakout_room,

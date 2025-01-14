@@ -24,12 +24,13 @@ use openidconnect::AccessToken;
 use opentalk_cache::Cache;
 use opentalk_controller_service_facade::RequestUser;
 use opentalk_controller_settings::{Settings, SharedSettings, TenantAssignment};
+use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::Db;
 use opentalk_db_storage::{
     tenants::{OidcTenantId, Tenant},
     users::User,
 };
-use opentalk_types::api::error::{ApiError, AuthenticationError};
+use opentalk_types_api_v1::error::{ApiError, AuthenticationError};
 use opentalk_types_common::rooms::invite_codes::InviteCode;
 use snafu::Report;
 use tracing_futures::Instrument;
@@ -215,14 +216,15 @@ pub async fn check_access_token(
     oidc_ctx: Data<OidcContext>,
     cache: &UserAccessTokenCache,
     access_token: &AccessToken,
-) -> Result<(Tenant, User), ApiError> {
+) -> Result<(Tenant, User), CaptureApiError> {
     // First verify the access-token's signature, expiry and claims
     let user_claims = match oidc_ctx.verify_access_token::<UserClaims>(access_token) {
         Ok(user_claims) => user_claims,
         Err(e) => {
             log::debug!("Invalid access token, {}", Report::from_error(e));
             return Err(ApiError::unauthorized()
-                .with_www_authenticate(AuthenticationError::InvalidAccessToken));
+                .with_www_authenticate(AuthenticationError::InvalidAccessToken)
+                .into());
         }
     };
 
@@ -231,9 +233,9 @@ pub async fn check_access_token(
         // Hit! Return the cached result
         match result {
             Ok(tenant_and_user) => Ok(tenant_and_user),
-            Err(err) => Err(ApiError::try_from(err).map_err(|e| {
+            Err(err) => Err(CaptureApiError::try_from(err).map_err(|e| {
                 log::warn!("Error while creating error: {}", Report::from_error(e));
-                ApiError::internal()
+                CaptureApiError::from(ApiError::internal())
             })?),
         }
     } else {
@@ -255,7 +257,8 @@ pub async fn check_access_token(
                 if chrono::Utc::now().timestamp() > user.id_token_exp {
                     return Err(ApiError::unauthorized()
                         .with_message("The session for this user has expired")
-                        .with_www_authenticate(AuthenticationError::SessionExpired));
+                        .with_www_authenticate(AuthenticationError::SessionExpired)
+                        .into());
                 }
 
                 // Avoid caching results for tokens that are about to expire
@@ -296,7 +299,7 @@ async fn check_access_token_inner(
     oidc_ctx: Data<OidcContext>,
     access_token: &AccessToken,
     claims: UserClaims,
-) -> Result<(Tenant, User), ApiError> {
+) -> Result<(Tenant, User), CaptureApiError> {
     // Get the tenant_id depending on the configured assignment
     let oidc_tenant_id = match &settings.tenants.assignment {
         TenantAssignment::Static { static_tenant_id } => static_tenant_id.clone(),
@@ -311,9 +314,11 @@ async fn check_access_token_inner(
     let current_tenant = Tenant::get_by_oidc_id(&mut conn, OidcTenantId::from(oidc_tenant_id))
         .await?
         .ok_or_else(|| {
-            ApiError::unauthorized()
-                .with_code("unknown_tenant_id")
-                .with_message("Unknown tenant_id in access token. Please login first!")
+            CaptureApiError::from(
+                ApiError::unauthorized()
+                    .with_code("unknown_tenant_id")
+                    .with_message("Unknown tenant_id in access token. Please login first!"),
+            )
         })?;
 
     let current_user = User::get_by_oidc_sub(&mut conn, current_tenant.id, &claims.sub)
@@ -333,7 +338,7 @@ async fn check_access_token_inner(
                 "Failed to check if AccessToken is active, {}",
                 Report::from_error(e)
             );
-            return Err(ApiError::internal());
+            return Err(ApiError::internal().into());
         }
     };
 
@@ -341,6 +346,7 @@ async fn check_access_token_inner(
         Ok((current_tenant, current_user))
     } else {
         Err(ApiError::unauthorized()
-            .with_www_authenticate(AuthenticationError::AccessTokenInactive))
+            .with_www_authenticate(AuthenticationError::AccessTokenInactive)
+            .into())
     }
 }

@@ -2,7 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types::api::error::ApiError;
+use opentalk_controller_utils::CaptureApiError;
+use opentalk_types_api_v1::error::ApiError;
 use strum::AsRefStr;
 
 /// Errors for the /rooms/{room_id}/start* endpoint
@@ -41,6 +42,12 @@ impl From<StartRoomError> for ApiError {
                 .with_code(StartRoomError::BannedFromRoom.as_ref())
                 .with_message("This user has been banned from entering this room"),
         }
+    }
+}
+
+impl From<StartRoomError> for CaptureApiError {
+    fn from(value: StartRoomError) -> Self {
+        ApiError::from(value).into()
     }
 }
 

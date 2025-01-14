@@ -7,12 +7,13 @@ use actix_web::{
     web::{Data, Path, ReqData},
     Either,
 };
+use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::Db;
 use opentalk_db_storage::{
     events::{Event, EventFavorite, NewEventFavorite},
     users::User,
 };
-use opentalk_types::api::error::ApiError;
+use opentalk_types_api_v1::error::ApiError;
 use opentalk_types_common::events::EventId;
 
 use crate::api::{
@@ -59,8 +60,14 @@ pub async fn add_event_to_favorites(
     id: Path<EventId>,
     current_user: ReqData<User>,
 ) -> Result<Either<Created, NoContent>, ApiError> {
-    let event_id = id.into_inner();
+    Ok(add_event_to_favorites_inner(&db, id.into_inner(), current_user.into_inner()).await?)
+}
 
+async fn add_event_to_favorites_inner(
+    db: &Db,
+    event_id: EventId,
+    current_user: User,
+) -> Result<Either<Created, NoContent>, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let _event = Event::get(&mut conn, event_id).await?;
@@ -113,15 +120,21 @@ pub async fn remove_event_from_favorites(
     id: Path<EventId>,
     current_user: ReqData<User>,
 ) -> Result<NoContent, ApiError> {
-    let event_id = id.into_inner();
+    Ok(remove_event_from_favorites_inner(&db, id.into_inner(), current_user.into_inner()).await?)
+}
 
+async fn remove_event_from_favorites_inner(
+    db: &Db,
+    id: EventId,
+    current_user: User,
+) -> Result<NoContent, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
-    let existed = EventFavorite::delete_by_id(&mut conn, current_user.id, event_id).await?;
+    let existed = EventFavorite::delete_by_id(&mut conn, current_user.id, id).await?;
 
     if existed {
         Ok(NoContent)
     } else {
-        Err(ApiError::not_found())
+        Err(ApiError::not_found().into())
     }
 }

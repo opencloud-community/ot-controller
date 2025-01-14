@@ -14,7 +14,7 @@ use actix_web::{
     Error,
 };
 use futures::future::Either;
-use opentalk_types::api::error::ApiError;
+use opentalk_types_api_v1::error::ApiError;
 
 use super::middleware::service_auth::RealmRoles;
 

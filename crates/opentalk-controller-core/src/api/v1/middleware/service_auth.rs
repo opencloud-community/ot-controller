@@ -18,7 +18,7 @@ use actix_web::{
 };
 use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
 use openidconnect::AccessToken;
-use opentalk_types::api::error::{ApiError, AuthenticationError};
+use opentalk_types_api_v1::error::{ApiError, AuthenticationError};
 use snafu::Report;
 use tracing::Instrument;
 

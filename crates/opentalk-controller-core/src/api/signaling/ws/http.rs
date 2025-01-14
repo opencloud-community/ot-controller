@@ -5,18 +5,20 @@
 use std::{
     collections::{BTreeMap, BTreeSet},
     marker::PhantomData,
+    sync::Arc,
     time::Instant,
 };
 
 use actix_web::{get, http::header, web, web::Data, HttpMessage, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
 use kustos::Authz;
+use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::Db;
 use opentalk_db_storage::{rooms::Room, users::User};
 use opentalk_signaling_core::{
     ExchangeHandle, ObjectStorage, Participant, SignalingMetrics, SignalingModule, VolatileStorage,
 };
-use opentalk_types::api::error::ApiError;
+use opentalk_types_api_v1::error::ApiError;
 use opentalk_types_common::{
     auth::TicketToken,
     features::{FeatureId, ModuleFeatureId},
@@ -127,8 +129,38 @@ pub(crate) async fn ws_service(
     stream: web::Payload,
     settings: SharedSettingsActix,
 ) -> actix_web::Result<HttpResponse> {
-    let mut volatile = (**volatile).clone();
+    ws_service_inner(
+        &shutdown,
+        db.into_inner(),
+        storage.into_inner(),
+        authz.into_inner(),
+        (**volatile).clone(),
+        (**exchange_handle).clone(),
+        metrics.into_inner(),
+        &protocols,
+        &modules,
+        request,
+        stream,
+        settings,
+    )
+    .await
+}
 
+#[allow(clippy::too_many_arguments)]
+async fn ws_service_inner(
+    shutdown: &broadcast::Sender<()>,
+    db: Arc<Db>,
+    storage: Arc<ObjectStorage>,
+    authz: Arc<Authz>,
+    mut volatile: VolatileStorage,
+    exchange_handle: ExchangeHandle,
+    metrics: Arc<SignalingMetrics>,
+    protocols: &SignalingProtocols,
+    modules: &SignalingModules,
+    request: HttpRequest,
+    stream: web::Payload,
+    settings: SharedSettingsActix,
+) -> actix_web::Result<HttpResponse> {
     let request_id = if let Some(request_id) = request.extensions().get::<RequestId>() {
         *request_id
     } else {
@@ -143,7 +175,7 @@ pub(crate) async fn ws_service(
     let ticket_data = take_ticket_data_from_storage(volatile.signaling_storage(), &ticket).await?;
 
     // Get user & room from database using the ticket data
-    let (participant, room) = get_user_and_room_from_ticket_data(db.clone(), &ticket_data).await?;
+    let (participant, room) = get_user_and_room_from_ticket_data(&db, &ticket_data).await?;
 
     // Create resumption data to be refreshed by the runner in volatile storage
     let resumption_data = ResumptionData {
@@ -159,7 +191,7 @@ pub(crate) async fn ws_service(
     };
 
     let room_tariff = get_tariff_for_room(
-        db.clone(),
+        &db,
         &room,
         settings.load_full().defaults.disabled_features.clone(),
         modules.get_module_features(),
@@ -186,12 +218,12 @@ pub(crate) async fn ws_service(
         ticket_data.breakout_room,
         participant,
         protocol,
-        metrics.clone().into_inner(),
-        db.into_inner(),
-        storage.into_inner(),
-        authz.into_inner(),
-        volatile.clone(),
-        (**exchange_handle).clone(),
+        metrics.clone(),
+        db,
+        storage,
+        authz,
+        volatile,
+        exchange_handle,
         resumption_keep_alive,
     )
     .await
@@ -331,9 +363,9 @@ async fn take_ticket_data_from_storage(
 }
 
 async fn get_user_and_room_from_ticket_data(
-    db: Data<Db>,
+    db: &Db,
     ticket_data: &TicketData,
-) -> Result<(Participant<User>, Room), ApiError> {
+) -> Result<(Participant<User>, Room), CaptureApiError> {
     let participant = ticket_data.participant;
     let room_id = ticket_data.room;
 
@@ -356,11 +388,11 @@ async fn get_user_and_room_from_ticket_data(
 }
 
 async fn get_tariff_for_room(
-    db: Data<Db>,
+    db: &Db,
     room: &Room,
     disabled_features: BTreeSet<ModuleFeatureId>,
     module_features: BTreeMap<ModuleId, BTreeSet<FeatureId>>,
-) -> Result<TariffResource, ApiError> {
+) -> Result<TariffResource, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let tariff = room.get_tariff(&mut conn).await?;

@@ -6,10 +6,13 @@
 
 use opentalk_controller_service_facade::RequestUser;
 use opentalk_controller_settings::Settings;
+use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::DbConnection;
 use opentalk_db_storage::{tariffs::Tariff, users::User};
-use opentalk_types::api::error::ApiError;
-use opentalk_types_api_v1::users::{PrivateUserProfile, PublicUserProfile};
+use opentalk_types_api_v1::{
+    error::ApiError,
+    users::{PrivateUserProfile, PublicUserProfile},
+};
 use opentalk_types_common::{features::ModuleFeatureId, users::UserId};
 
 /// A trait providing conversion of database users to public and private user profiles
@@ -113,11 +116,12 @@ pub async fn require_feature(
     settings: &Settings,
     user_id: UserId,
     feature: &ModuleFeatureId,
-) -> opentalk_database::Result<(), ApiError> {
+) -> opentalk_database::Result<(), CaptureApiError> {
     if settings.defaults.disabled_features.contains(feature) {
         return Err(ApiError::forbidden()
             .with_code("feature_disabled")
-            .with_message(format!("The feature \"{feature}\" is disabled")));
+            .with_message(format!("The feature \"{feature}\" is disabled"))
+            .into());
     }
 
     let tariff = Tariff::get_by_user_id(db_conn, &user_id).await?;
@@ -127,7 +131,8 @@ pub async fn require_feature(
             .with_code("feature_disabled_by_tariff")
             .with_message(format!(
                 "The user's tariff does not include the {feature} feature"
-            )));
+            ))
+            .into());
     }
 
     Ok(())
