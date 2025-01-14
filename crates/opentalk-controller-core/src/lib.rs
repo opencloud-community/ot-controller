@@ -32,7 +32,14 @@
 //! }
 //! ```
 
-use std::{fs::File, io::BufReader, marker::PhantomData, net::Ipv6Addr, sync::Arc, time::Duration};
+use std::{
+    fs::File,
+    io::BufReader,
+    marker::PhantomData,
+    net::{Ipv4Addr, Ipv6Addr, SocketAddr, TcpListener, ToSocketAddrs as _},
+    sync::Arc,
+    time::Duration,
+};
 
 use actix_cors::Cors;
 use actix_web::{web, web::Data, App, HttpServer, Scope};
@@ -594,18 +601,22 @@ impl Controller {
             })
         };
 
-        let address = (Ipv6Addr::UNSPECIFIED, self.startup_settings.http.port);
+        let socket_address = determine_socket_address(
+            self.startup_settings.http.addr.as_deref(),
+            self.startup_settings.http.port,
+        )
+        .whatever_context("Unable to determine bind address")?;
 
         let http_server = if let Some(tls) = &self.startup_settings.http.tls {
             let config = setup_rustls(tls).whatever_context("Failed to setup TLS context")?;
 
-            http_server.bind_rustls_0_23(address, config)
+            http_server.bind_rustls_0_23(&socket_address[..], config)
         } else {
-            http_server.bind(address)
+            http_server.bind(&socket_address[..])
         };
 
         let http_server = http_server.with_whatever_context(|_| {
-            format!("Failed to bind http server to {}:{}", address.0, address.1)
+            format!("Failed to bind http server to {:?}", socket_address)
         })?;
 
         set_service_state(ServiceState::Ready);
@@ -1217,4 +1228,22 @@ impl ModulesRegistrar for ModuleInitializer {
 
         Ok(())
     }
+}
+
+fn is_ipv6_available() -> bool {
+    TcpListener::bind((Ipv6Addr::UNSPECIFIED, 0)).is_ok()
+}
+
+fn determine_socket_address(
+    config_address: Option<&str>,
+    config_port: u16,
+) -> std::io::Result<Vec<SocketAddr>> {
+    let to_socket_addrs = if let Some(addr) = config_address {
+        Vec::from_iter((addr, config_port).to_socket_addrs()?)
+    } else if is_ipv6_available() {
+        Vec::from_iter((Ipv6Addr::UNSPECIFIED, config_port).to_socket_addrs()?)
+    } else {
+        Vec::from_iter((Ipv4Addr::UNSPECIFIED, config_port).to_socket_addrs()?)
+    };
+    Ok(to_socket_addrs)
 }
