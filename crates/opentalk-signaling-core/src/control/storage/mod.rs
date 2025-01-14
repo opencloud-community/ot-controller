@@ -7,32 +7,34 @@ mod redis;
 mod volatile;
 
 pub use control_storage::{
-    AttributeActions, AttributeId, ControlStorage, ControlStorageEvent,
-    ControlStorageParticipantAttributes, ControlStorageParticipantAttributesRaw,
-    ControlStorageParticipantSet, ControlStorageSkipWaitingRoom,
+    AttributeActions, ControlStorage, ControlStorageEvent, ControlStorageParticipantAttributes,
+    ControlStorageParticipantAttributesRaw, ControlStorageParticipantSet,
+    ControlStorageSkipWaitingRoom, GlobalAttributeId, GlobalRoomAttributeId, LocalAttributeId,
+    LocalRoomAttributeId, RoomAttributeId,
 };
 
 // The expiry in seconds for the `skip_waiting_room` key in Redis
 const SKIP_WAITING_ROOM_KEY_EXPIRY: u32 = 120;
 pub const SKIP_WAITING_ROOM_KEY_REFRESH_INTERVAL: u64 = 60;
 
-pub const AVATAR_URL: AttributeId = AttributeId::new("avatar_url");
-pub const DISPLAY_NAME: AttributeId = AttributeId::new("display_name");
-pub const HAND_IS_UP: AttributeId = AttributeId::new("hand_is_up");
-pub const HAND_UPDATED_AT: AttributeId = AttributeId::new("hand_updated_at");
-pub const IS_ROOM_OWNER: AttributeId = AttributeId::new("is_room_owner");
-pub const JOINED_AT: AttributeId = AttributeId::new("joined_at");
-pub const KIND: AttributeId = AttributeId::new("kind");
-pub const LEFT_AT: AttributeId = AttributeId::new("left_at");
-pub const RECORDING_CONSENT: AttributeId = AttributeId::new("recording_consent");
-pub const ROLE: AttributeId = AttributeId::new("role");
-pub const USER_ID: AttributeId = AttributeId::new("user_id");
+pub const AVATAR_URL: LocalAttributeId = LocalAttributeId("avatar_url");
+pub const DISPLAY_NAME: LocalAttributeId = LocalAttributeId("display_name");
+pub const HAND_IS_UP: LocalAttributeId = LocalAttributeId("hand_is_up");
+pub const HAND_UPDATED_AT: LocalAttributeId = LocalAttributeId("hand_updated_at");
+pub const IS_ROOM_OWNER: LocalAttributeId = LocalAttributeId("is_room_owner");
+pub const JOINED_AT: LocalAttributeId = LocalAttributeId("joined_at");
+pub const KIND: LocalAttributeId = LocalAttributeId("kind");
+pub const LEFT_AT: LocalAttributeId = LocalAttributeId("left_at");
+pub const RECORDING_CONSENT: LocalAttributeId = LocalAttributeId("recording_consent");
+pub const ROLE: GlobalAttributeId = GlobalAttributeId("role");
+pub const USER_ID: LocalAttributeId = LocalAttributeId("user_id");
 
 #[cfg(test)]
 mod test_common {
     use std::collections::{BTreeMap, BTreeSet};
 
     use chrono::{TimeZone, Utc};
+    use control_storage::{GlobalRoomAttributeId, LocalRoomAttributeId, RoomAttributeId};
     use opentalk_db_storage::{
         events::{Event, EventSerialId},
         tariffs::Tariff,
@@ -56,8 +58,18 @@ mod test_common {
     pub const ROOM: SignalingRoomId = SignalingRoomId::nil();
     pub const BOB: ParticipantId = ParticipantId::from_u128(0xdeadbeef);
     pub const ALICE: ParticipantId = ParticipantId::from_u128(0xbadcafe);
-    pub const POINT: AttributeId = AttributeId::new("point");
-    pub const LINE: AttributeId = AttributeId::new("line");
+    pub const POINT_ATTR_ID: GlobalAttributeId = GlobalAttributeId("point");
+    pub const LINE_ATTR_ID: LocalAttributeId = LocalAttributeId("line");
+
+    pub const POINT: RoomAttributeId = RoomAttributeId::Global(GlobalRoomAttributeId {
+        room: ROOM.room_id(),
+        attribute: POINT_ATTR_ID,
+    });
+
+    pub const LINE: RoomAttributeId = RoomAttributeId::Local(LocalRoomAttributeId {
+        room: ROOM,
+        attribute: LINE_ATTR_ID,
+    });
 
     pub(super) async fn participant_set(storage: &mut impl ControlStorage) {
         assert!(!storage.participant_set_exists(ROOM).await.unwrap());
@@ -134,17 +146,16 @@ mod test_common {
 
     pub(super) async fn participant_attribute_empty(storage: &mut impl ControlStorage) {
         // Empty should be None
-        let empty_bool: Option<bool> = storage.get_attribute(ROOM, ALICE, POINT).await.unwrap();
+        let empty_bool: Option<bool> = storage.get_attribute(ALICE, POINT).await.unwrap();
         assert!(empty_bool.is_none());
 
         // Storing None should return Some(None). The Some tells us that the storage was initialized. The None is the
         // value that was inserted.
         storage
-            .set_attribute(ROOM, ALICE, POINT, Option::<bool>::None)
+            .set_attribute(ALICE, POINT, Option::<bool>::None)
             .await
             .unwrap();
-        let empty_option: Option<Option<bool>> =
-            storage.get_attribute(ROOM, ALICE, POINT).await.unwrap();
+        let empty_option: Option<Option<bool>> = storage.get_attribute(ALICE, POINT).await.unwrap();
         assert_eq!(empty_option, Some(None));
     }
 
@@ -152,27 +163,27 @@ mod test_common {
         let point = Point { x: 32, y: 42 };
 
         storage
-            .set_attribute(ROOM, ALICE, POINT, point.clone())
+            .set_attribute(ALICE, POINT, point.clone())
             .await
             .unwrap();
 
-        let loaded: Option<Point> = storage.get_attribute(ROOM, ALICE, POINT).await.unwrap();
+        let loaded: Option<Point> = storage.get_attribute(ALICE, POINT).await.unwrap();
         assert_eq!(loaded, Some(point));
 
         assert!(storage
-            .get_attribute::<Point>(ROOM, BOB, POINT)
+            .get_attribute::<Point>(BOB, POINT)
             .await
             .unwrap()
             .is_none());
         assert!(storage
-            .get_attribute::<Point>(ROOM, ALICE, LINE)
+            .get_attribute::<Point>(ALICE, LINE)
             .await
             .unwrap()
             .is_none());
 
-        storage.remove_attribute(ROOM, ALICE, POINT).await.unwrap();
+        storage.remove_attribute(ALICE, POINT).await.unwrap();
         assert!(storage
-            .get_attribute::<Point>(ROOM, ALICE, POINT)
+            .get_attribute::<Point>(ALICE, POINT)
             .await
             .unwrap()
             .is_none());
@@ -183,42 +194,42 @@ mod test_common {
         let bob_point = Point { x: 2, y: 3 };
 
         storage
-            .set_attribute(ROOM, ALICE, POINT, alice_point.clone())
+            .set_attribute(ALICE, POINT, alice_point.clone())
             .await
             .unwrap();
 
         assert_eq!(
             storage
-                .get_attribute_for_participants::<Point>(ROOM, &[ALICE, BOB], POINT)
+                .get_attribute_for_participants::<Point>(&[ALICE, BOB], POINT)
                 .await
                 .unwrap(),
             vec![Some(alice_point.clone()), None]
         );
         assert_eq!(
             storage
-                .get_attribute_for_participants::<Point>(ROOM, &[BOB, ALICE], POINT)
+                .get_attribute_for_participants::<Point>(&[BOB, ALICE], POINT)
                 .await
                 .unwrap(),
             vec![None, Some(alice_point.clone())]
         );
 
         storage
-            .set_attribute(ROOM, BOB, POINT, bob_point.clone())
+            .set_attribute(BOB, POINT, bob_point.clone())
             .await
             .unwrap();
 
         assert_eq!(
             storage
-                .get_attribute_for_participants::<Point>(ROOM, &[BOB, ALICE], POINT)
+                .get_attribute_for_participants::<Point>(&[BOB, ALICE], POINT)
                 .await
                 .unwrap(),
             vec![Some(bob_point.clone()), Some(alice_point.clone())]
         );
 
-        storage.remove_attribute(ROOM, ALICE, POINT).await.unwrap();
+        storage.remove_attribute(ALICE, POINT).await.unwrap();
         assert_eq!(
             storage
-                .get_attribute_for_participants::<Point>(ROOM, &[BOB, ALICE], POINT)
+                .get_attribute_for_participants::<Point>(&[BOB, ALICE], POINT)
                 .await
                 .unwrap(),
             vec![Some(bob_point.clone()), None]
@@ -227,21 +238,21 @@ mod test_common {
 
     pub(super) async fn participant_remove_attributes(storage: &mut impl ControlStorage) {
         storage
-            .set_attribute(ROOM, ALICE, POINT, "alice_point")
+            .set_attribute(ALICE, POINT, "alice_point")
             .await
             .unwrap();
         storage
-            .set_attribute(ROOM, BOB, POINT, "bob_point")
+            .set_attribute(BOB, POINT, "bob_point")
             .await
             .unwrap();
         storage
-            .set_attribute(ROOM, ALICE, LINE, "alice_line")
+            .set_attribute(ALICE, LINE, "alice_line")
             .await
             .unwrap();
 
         assert_eq!(
             storage
-                .get_attribute_for_participants::<String>(ROOM, &[ALICE, BOB], POINT)
+                .get_attribute_for_participants::<String>(&[ALICE, BOB], POINT)
                 .await
                 .unwrap(),
             vec![
@@ -251,24 +262,24 @@ mod test_common {
         );
         assert_eq!(
             storage
-                .get_attribute_for_participants::<String>(ROOM, &[ALICE, BOB], LINE)
+                .get_attribute_for_participants::<String>(&[ALICE, BOB], LINE)
                 .await
                 .unwrap(),
             vec![Some("alice_line".to_string()), None]
         );
 
-        storage.remove_attribute_key(ROOM, POINT).await.unwrap();
+        storage.remove_attribute_key(POINT).await.unwrap();
 
         assert_eq!(
             storage
-                .get_attribute_for_participants::<String>(ROOM, &[ALICE, BOB], POINT)
+                .get_attribute_for_participants::<String>(&[ALICE, BOB], POINT)
                 .await
                 .unwrap(),
             vec![None, None]
         );
         assert_eq!(
             storage
-                .get_attribute_for_participants::<String>(ROOM, &[ALICE, BOB], LINE)
+                .get_attribute_for_participants::<String>(&[ALICE, BOB], LINE)
                 .await
                 .unwrap(),
             vec![Some("alice_line".to_string()), None]
@@ -279,11 +290,11 @@ mod test_common {
         storage.add_participant_to_set(ROOM, ALICE).await.unwrap();
         storage.add_participant_to_set(ROOM, BOB).await.unwrap();
         storage
-            .set_attribute(ROOM, ALICE, ROLE, Role::Guest)
+            .set_global_attribute(ALICE, ROOM.room_id(), ROLE, Role::Guest)
             .await
             .unwrap();
         storage
-            .set_attribute(ROOM, BOB, ROLE, Role::User)
+            .set_global_attribute(BOB, ROOM.room_id(), ROLE, Role::User)
             .await
             .unwrap();
 
@@ -319,17 +330,11 @@ mod test_common {
         assert_eq!(results, (None, Some("alice_point".to_string()), None));
 
         assert_eq!(
-            storage
-                .get_attribute::<Point>(ROOM, ALICE, POINT)
-                .await
-                .unwrap(),
+            storage.get_attribute::<Point>(ALICE, POINT).await.unwrap(),
             Some(point)
         );
         assert_eq!(
-            storage
-                .get_attribute::<String>(ROOM, ALICE, LINE)
-                .await
-                .unwrap(),
+            storage.get_attribute::<String>(ALICE, LINE).await.unwrap(),
             Some("alice_line".to_string())
         );
     }

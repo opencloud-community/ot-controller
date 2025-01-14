@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use core::hash;
 use std::{
     collections::{BTreeSet, HashMap},
     time::Duration,
@@ -15,18 +16,23 @@ use snafu::OptionExt as _;
 
 use crate::{
     control::storage::{
-        control_storage::AttributeAction, AttributeActions, AttributeId,
-        SKIP_WAITING_ROOM_KEY_EXPIRY,
+        control_storage::{
+            AttributeAction, GlobalAttributeId, GlobalRoomAttributeId, LocalRoomAttributeId,
+            RoomAttributeId,
+        },
+        AttributeActions, LocalAttributeId, SKIP_WAITING_ROOM_KEY_EXPIRY,
     },
     ExpiringDataHashMap, NotFoundSnafu, SignalingModuleError, SignalingRoomId,
 };
 
-type AttributeMap = HashMap<(ParticipantId, AttributeId), serde_json::Value>;
+type GlobalAttributeMap = HashMap<(ParticipantId, GlobalAttributeId), serde_json::Value>;
+type LocalAttributeMap = HashMap<(ParticipantId, LocalAttributeId), serde_json::Value>;
 
 #[derive(Debug, Clone, Default)]
 pub(super) struct MemoryControlState {
     room_participants: HashMap<SignalingRoomId, BTreeSet<ParticipantId>>,
-    participant_attributes: HashMap<SignalingRoomId, AttributeMap>,
+    local_participant_attributes: HashMap<SignalingRoomId, LocalAttributeMap>,
+    global_participant_attributes: HashMap<RoomId, GlobalAttributeMap>,
     room_tariffs: HashMap<RoomId, Tariff>,
     room_events: HashMap<RoomId, Option<Event>>,
     room_creators: HashMap<RoomId, CreatorInfo>,
@@ -94,77 +100,91 @@ impl MemoryControlState {
 
     pub(super) fn get_attribute_raw(
         &self,
-        room: SignalingRoomId,
+        key: RoomAttributeId,
         participant: ParticipantId,
-        attribute: AttributeId,
     ) -> Option<serde_json::Value> {
-        self.participant_attributes
-            .get(&room)
-            .and_then(|p| p.get(&(participant, attribute)))
-            .cloned()
+        match key {
+            RoomAttributeId::Local(LocalRoomAttributeId { room, attribute }) => self
+                .local_participant_attributes
+                .get_attribute_raw(participant, room, attribute),
+            RoomAttributeId::Global(GlobalRoomAttributeId { room, attribute }) => self
+                .global_participant_attributes
+                .get_attribute_raw(participant, room, attribute),
+        }
     }
 
     pub(super) fn get_attribute_for_participants_raw(
         &self,
-        room: SignalingRoomId,
+        key: RoomAttributeId,
         participants: &[ParticipantId],
-        attribute: AttributeId,
     ) -> Vec<Option<serde_json::Value>> {
-        participants
-            .iter()
-            .map(|participant| self.get_attribute_raw(room, *participant, attribute))
-            .collect()
+        match key {
+            RoomAttributeId::Local(LocalRoomAttributeId { room, attribute }) => self
+                .local_participant_attributes
+                .get_attribute_for_participants_raw(room, attribute, participants),
+            RoomAttributeId::Global(GlobalRoomAttributeId { room, attribute }) => self
+                .global_participant_attributes
+                .get_attribute_for_participants_raw(room, attribute, participants),
+        }
     }
 
     pub(super) fn set_attribute_raw(
         &mut self,
-        room: SignalingRoomId,
+        key: RoomAttributeId,
         participant: ParticipantId,
-        attribute: AttributeId,
         value: serde_json::Value,
     ) {
-        self.participant_attributes
-            .entry(room)
-            .or_default()
-            .insert((participant, attribute), value);
+        match key {
+            RoomAttributeId::Local(LocalRoomAttributeId { room, attribute }) => self
+                .local_participant_attributes
+                .set_attribute_raw(room, attribute, participant, value),
+            RoomAttributeId::Global(GlobalRoomAttributeId { room, attribute }) => self
+                .global_participant_attributes
+                .set_attribute_raw(room, attribute, participant, value),
+        }
     }
 
     pub(super) fn remove_attribute_raw(
         &mut self,
-        room: SignalingRoomId,
+        key: RoomAttributeId,
         participant: ParticipantId,
-        attribute: AttributeId,
     ) {
-        let is_empty = self
-            .participant_attributes
-            .get_mut(&room)
-            .map(|a| {
-                a.remove(&(participant, attribute));
-                a.is_empty()
-            })
-            .unwrap_or_default();
-        if is_empty {
-            self.participant_attributes.remove(&room);
+        match key {
+            RoomAttributeId::Local(LocalRoomAttributeId { room, attribute }) => self
+                .local_participant_attributes
+                .remove_attribute_raw(room, attribute, participant),
+            RoomAttributeId::Global(GlobalRoomAttributeId { room, attribute }) => self
+                .global_participant_attributes
+                .remove_attribute_raw(room, attribute, participant),
         }
     }
 
-    pub(super) fn perform_bulk_attribute_actions_raw(
+    pub(super) fn remove_attribute_key(&mut self, key: RoomAttributeId) {
+        match key {
+            RoomAttributeId::Local(LocalRoomAttributeId { room, attribute }) => self
+                .local_participant_attributes
+                .remove_attribute_key(room, attribute),
+            RoomAttributeId::Global(GlobalRoomAttributeId { room, attribute }) => self
+                .global_participant_attributes
+                .remove_attribute_key(room, attribute),
+        }
+    }
+
+    pub(super) fn bulk_attribute_actions_raw(
         &mut self,
         actions: &AttributeActions,
     ) -> Result<serde_json::Value, SignalingModuleError> {
-        let room = actions.room();
         let participant = actions.participant();
-
         let mut response = None;
 
         for action in actions.actions() {
             match action {
                 AttributeAction::Set { attribute, value } => {
-                    self.set_attribute_raw(room, participant, *attribute, value.clone());
+                    self.set_attribute_raw(*attribute, participant, value.clone());
                 }
                 AttributeAction::Get { attribute } => {
                     let value =
-                        serde_json::to_value(self.get_attribute_raw(room, participant, *attribute))
+                        serde_json::to_value(self.get_attribute_raw(*attribute, participant))
                             .expect("Option<Value> is serializable");
 
                     response = match response {
@@ -177,17 +197,11 @@ impl MemoryControlState {
                     }
                 }
                 AttributeAction::Delete { attribute } => {
-                    self.remove_attribute_raw(room, participant, *attribute);
+                    self.remove_attribute_raw(*attribute, participant);
                 }
             }
         }
         Ok(response.unwrap_or_default())
-    }
-
-    pub(super) fn remove_attribute_key(&mut self, room: SignalingRoomId, attribute: AttributeId) {
-        if let Some(attributes) = self.participant_attributes.get_mut(&room) {
-            attributes.retain(|k, _v| k.1 != attribute)
-        };
     }
 
     pub(super) fn try_init_tariff(&mut self, room_id: RoomId, tariff: Tariff) -> Tariff {
@@ -318,6 +332,95 @@ impl MemoryControlState {
     }
 }
 
+trait HashMapActions<R, A> {
+    fn get_attribute_raw(
+        &self,
+        participant: ParticipantId,
+        room: R,
+        attribute: A,
+    ) -> Option<serde_json::Value>;
+
+    fn get_attribute_for_participants_raw(
+        &self,
+        room: R,
+        attribute: A,
+        participants: &[ParticipantId],
+    ) -> Vec<Option<serde_json::Value>>;
+
+    fn set_attribute_raw(
+        &mut self,
+        room: R,
+        attribute: A,
+        participant: ParticipantId,
+        value: serde_json::Value,
+    );
+
+    fn remove_attribute_key(&mut self, room: R, attribute: A);
+
+    fn remove_attribute_raw(&mut self, room: R, attribute: A, participant: ParticipantId);
+}
+
+impl<R, A> HashMapActions<R, A> for HashMap<R, HashMap<(ParticipantId, A), serde_json::Value>>
+where
+    R: hash::Hash + Eq + Copy,
+    A: hash::Hash + Eq + Copy,
+{
+    fn get_attribute_raw(
+        &self,
+        participant: ParticipantId,
+        room: R,
+        attribute: A,
+    ) -> Option<serde_json::Value> {
+        self.get(&room)
+            .and_then(|p| p.get(&(participant, attribute)))
+            .cloned()
+    }
+
+    fn get_attribute_for_participants_raw(
+        &self,
+        room: R,
+        attribute: A,
+        participants: &[ParticipantId],
+    ) -> Vec<Option<serde_json::Value>> {
+        participants
+            .iter()
+            .map(move |participant| self.get_attribute_raw(*participant, room, attribute))
+            .collect()
+    }
+
+    fn remove_attribute_key(&mut self, room: R, attribute: A) {
+        if let Some(attributes) = self.get_mut(&room) {
+            attributes.retain(|k, _v| k.1 != attribute)
+        }
+    }
+
+    fn remove_attribute_raw(&mut self, room: R, attribute: A, participant: ParticipantId) {
+        let is_empty = self
+            .get_mut(&room)
+            .map(|a| {
+                a.remove(&(participant, attribute));
+                a.is_empty()
+            })
+            .unwrap_or_default();
+
+        if is_empty {
+            self.remove(&room);
+        }
+    }
+
+    fn set_attribute_raw(
+        &mut self,
+        room: R,
+        attribute: A,
+        participant: ParticipantId,
+        value: serde_json::Value,
+    ) {
+        self.entry(room)
+            .or_default()
+            .insert((participant, attribute), value);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use pretty_assertions::assert_eq;
@@ -326,7 +429,7 @@ mod tests {
 
     use super::*;
 
-    const POINT: AttributeId = AttributeId::new("point");
+    const POINT: GlobalAttributeId = GlobalAttributeId("point");
 
     #[test]
     fn roundtrip_attribute_raw() {
@@ -347,9 +450,14 @@ mod tests {
 
         let point = serde_json::to_value(Point { x: 32, y: 42 }).unwrap();
 
-        state.set_attribute_raw(room, participant, POINT, point.clone());
+        let key = RoomAttributeId::Global(GlobalRoomAttributeId {
+            room: room.room_id(),
+            attribute: POINT,
+        });
 
-        let loaded = state.get_attribute_raw(room, participant, POINT);
+        state.set_attribute_raw(key, participant, point.clone());
+
+        let loaded = state.get_attribute_raw(key, participant);
 
         assert_eq!(loaded, Some(point));
     }

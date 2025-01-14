@@ -470,7 +470,7 @@ impl MeetingNotes {
         storage: &mut dyn MeetingNotesStorage,
     ) -> Result<String, SignalingModuleError> {
         let display_name: String = storage
-            .get_attribute(self.room_id, self.participant_id, DISPLAY_NAME)
+            .get_local_attribute(self.participant_id, self.room_id, DISPLAY_NAME)
             .await?
             .unwrap_or_default();
 

@@ -56,8 +56,9 @@ use crate::{
     control::{
         self,
         storage::{
-            AttributeActions, ControlStorageParticipantAttributes, AVATAR_URL, DISPLAY_NAME,
-            HAND_IS_UP, HAND_UPDATED_AT, IS_ROOM_OWNER, JOINED_AT, KIND, LEFT_AT, ROLE, USER_ID,
+            AttributeActions, ControlStorageParticipantAttributes, LocalRoomAttributeId,
+            AVATAR_URL, DISPLAY_NAME, HAND_IS_UP, HAND_UPDATED_AT, IS_ROOM_OWNER, JOINED_AT, KIND,
+            LEFT_AT, ROLE, USER_ID,
         },
         ControlStateExt as _, ControlStorageProvider,
     },
@@ -566,28 +567,28 @@ where
                 match &self.participant {
                     Participant::User(user) => {
                         actions
-                            .set(KIND, ParticipationKind::User)
-                            .set(USER_ID, user);
+                            .set_local(KIND, ParticipationKind::User)
+                            .set_local(USER_ID, user);
                     }
                     Participant::Guest => {
-                        actions.set(KIND, ParticipationKind::Guest);
+                        actions.set_local(KIND, ParticipationKind::Guest);
                     }
                     Participant::Sip => {
-                        actions.set(KIND, ParticipationKind::Sip);
+                        actions.set_local(KIND, ParticipationKind::Sip);
                     }
                     Participant::Recorder => {
-                        actions.set(KIND, ParticipationKind::Recorder);
+                        actions.set_local(KIND, ParticipationKind::Recorder);
                     }
                 }
 
                 actions
-                    .set(DISPLAY_NAME, &join.display_name)
-                    .set(ROLE, self.role)
-                    .set(AVATAR_URL, &join.display_name)
-                    .set(JOINED_AT, ctx.timestamp)
-                    .set(HAND_IS_UP, false)
-                    .set(HAND_UPDATED_AT, ctx.timestamp)
-                    .set(IS_ROOM_OWNER, is_room_owner);
+                    .set_local(DISPLAY_NAME, &join.display_name)
+                    .set_global(ROLE, self.role)
+                    .set_local(AVATAR_URL, &join.display_name)
+                    .set_local(JOINED_AT, ctx.timestamp)
+                    .set_local(HAND_IS_UP, false)
+                    .set_local(HAND_UPDATED_AT, ctx.timestamp)
+                    .set_local(IS_ROOM_OWNER, is_room_owner);
 
                 self.volatile
                     .control_storage()
@@ -730,8 +731,8 @@ where
                     .control_storage()
                     .bulk_attribute_actions::<()>(
                         AttributeActions::new(self.room_id, self.participant_id)
-                            .set(HAND_IS_UP, true)
-                            .set(HAND_UPDATED_AT, ctx.timestamp),
+                            .set_local(HAND_IS_UP, true)
+                            .set_local(HAND_UPDATED_AT, ctx.timestamp),
                     )
                     .await?;
 
@@ -746,8 +747,8 @@ where
                     .control_storage()
                     .bulk_attribute_actions::<()>(
                         AttributeActions::new(self.room_id, self.participant_id)
-                            .set(HAND_IS_UP, false)
-                            .set(HAND_UPDATED_AT, ctx.timestamp),
+                            .set_local(HAND_IS_UP, false)
+                            .set_local(HAND_UPDATED_AT, ctx.timestamp),
                     )
                     .await?;
 
@@ -1052,7 +1053,7 @@ where
 
         self.volatile
             .control_storage()
-            .set_attribute(self.room_id, self.participant_id, LEFT_AT, Timestamp::now())
+            .set_local_attribute(self.participant_id, self.room_id, LEFT_AT, Timestamp::now())
             .await?;
 
         let destroy_room = self
@@ -1081,7 +1082,7 @@ where
         module.on_destroy(ctx).await;
 
         if destroy_room {
-            for key in [
+            for attribute in [
                 DISPLAY_NAME,
                 KIND,
                 JOINED_AT,
@@ -1092,7 +1093,13 @@ where
             ] {
                 self.volatile
                     .control_storage()
-                    .remove_attribute_key(self.room_id, key)
+                    .remove_attribute_key(
+                        LocalRoomAttributeId {
+                            room: self.room_id,
+                            attribute,
+                        }
+                        .into(),
+                    )
                     .await?
             }
         }

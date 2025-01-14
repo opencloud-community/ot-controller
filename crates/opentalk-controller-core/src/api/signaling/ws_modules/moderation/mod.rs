@@ -219,7 +219,7 @@ impl SignalingModule for ModerationModule {
                 let user_id: Option<UserId> = ctx
                     .volatile
                     .moderation_storage()
-                    .get_attribute(self.room, target, USER_ID)
+                    .get_local_attribute(target, self.room, USER_ID)
                     .await?;
 
                 if let Some(user_id) = user_id {
@@ -271,7 +271,7 @@ impl SignalingModule for ModerationModule {
                 if ctx
                     .volatile
                     .moderation_storage()
-                    .get_attribute(self.room, target, IS_ROOM_OWNER)
+                    .get_local_attribute(target, self.room, IS_ROOM_OWNER)
                     .await?
                     .unwrap_or(false)
                 {
@@ -321,7 +321,11 @@ impl SignalingModule for ModerationModule {
                 let all_participants_role: Vec<Option<Role>> = ctx
                     .volatile
                     .moderation_storage()
-                    .get_attribute_for_participants(self.room, &all_participants, ROLE)
+                    .get_global_attribute_for_participants(
+                        &all_participants,
+                        self.room.room_id(),
+                        ROLE,
+                    )
                     .await?;
 
                 let mut to_remove = vec![];
@@ -372,7 +376,7 @@ impl SignalingModule for ModerationModule {
                 let kind: Option<ParticipationKind> = ctx
                     .volatile
                     .moderation_storage()
-                    .get_attribute(self.room, target, KIND)
+                    .get_local_attribute(target, self.room, KIND)
                     .await?;
 
                 if !matches!(
@@ -391,13 +395,13 @@ impl SignalingModule for ModerationModule {
                 let old_name = ctx
                     .volatile
                     .moderation_storage()
-                    .get_attribute(self.room, target, DISPLAY_NAME)
+                    .get_local_attribute(target, self.room, DISPLAY_NAME)
                     .await?
                     .unwrap_or_default();
 
                 ctx.volatile
                     .moderation_storage()
-                    .set_attribute(self.room, target, DISPLAY_NAME, new_name.clone())
+                    .set_local_attribute(target, self.room, DISPLAY_NAME, new_name.clone())
                     .await?;
 
                 let display_name_changed = DisplayNameChanged {

@@ -9,6 +9,8 @@ use opentalk_db_storage::{events::Event, tariffs::Tariff};
 use opentalk_types_common::{rooms::RoomId, time::Timestamp};
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_control::room::CreatorInfo;
+use redis::ToRedisArgs;
+use redis_args::ToRedisArgs;
 use serde::{de::DeserializeOwned, Serialize};
 use snafu::ResultExt as _;
 
@@ -28,25 +30,84 @@ use crate::{SerdeJsonSnafu, SignalingModuleError, SignalingRoomId};
     derive_more::From,
     derive_more::Into,
 )]
-pub struct AttributeId(&'static str);
+pub struct GlobalAttributeId(pub &'static str);
 
-impl AttributeId {
-    pub const fn new(identifier: &'static str) -> Self {
-        Self(identifier)
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    derive_more::Display,
+    derive_more::From,
+    derive_more::Into,
+)]
+pub struct LocalAttributeId(pub &'static str);
+
+#[derive(Debug, Clone, Copy, ToRedisArgs, derive_more::Display)]
+#[to_redis_args(fmt = "opentalk-signaling:global-room={room}:participants:attributes:{attribute}")]
+#[display("{attribute} in {room}")]
+pub struct GlobalRoomAttributeId {
+    pub room: RoomId,
+    pub attribute: GlobalAttributeId,
+}
+
+#[derive(Debug, Clone, Copy, ToRedisArgs, derive_more::Display)]
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:participants:attributes:{attribute}")]
+#[display("{attribute} in {room}")]
+pub struct LocalRoomAttributeId {
+    pub room: SignalingRoomId,
+    pub attribute: LocalAttributeId,
+}
+
+#[derive(Debug, Clone, Copy, derive_more::Display)]
+pub enum RoomAttributeId {
+    Local(LocalRoomAttributeId),
+    Global(GlobalRoomAttributeId),
+}
+
+impl ToRedisArgs for RoomAttributeId {
+    fn write_redis_args<W>(&self, out: &mut W)
+    where
+        W: ?Sized + redis::RedisWrite,
+    {
+        match self {
+            RoomAttributeId::Local(local_room_attribute_id) => {
+                local_room_attribute_id.write_redis_args(out)
+            }
+            RoomAttributeId::Global(global_room_attribute_id) => {
+                global_room_attribute_id.write_redis_args(out)
+            }
+        }
+    }
+}
+
+impl From<GlobalRoomAttributeId> for RoomAttributeId {
+    fn from(attr_id: GlobalRoomAttributeId) -> Self {
+        Self::Global(attr_id)
+    }
+}
+
+impl From<LocalRoomAttributeId> for RoomAttributeId {
+    fn from(attr_id: LocalRoomAttributeId) -> Self {
+        Self::Local(attr_id)
     }
 }
 
 #[derive(Debug)]
 pub(crate) enum AttributeAction {
     Set {
-        attribute: AttributeId,
+        attribute: RoomAttributeId,
         value: serde_json::Value,
     },
     Get {
-        attribute: AttributeId,
+        attribute: RoomAttributeId,
     },
     Delete {
-        attribute: AttributeId,
+        attribute: RoomAttributeId,
     },
 }
 
@@ -65,37 +126,85 @@ impl AttributeActions {
         }
     }
 
-    pub fn set<V: Serialize>(&mut self, attribute: AttributeId, value: V) -> &mut Self {
+    pub fn set<V: Serialize>(&mut self, attribute: RoomAttributeId, value: V) -> &mut Self {
         let serialized =
             serde_json::to_value(value).expect("attribute value should be serializable");
         self.set_raw(attribute, serialized)
     }
 
-    pub fn get(&mut self, attribute: AttributeId) -> &mut Self {
+    pub fn set_local<V: Serialize>(&mut self, attribute: LocalAttributeId, value: V) -> &mut Self {
+        self.set(
+            RoomAttributeId::Local(LocalRoomAttributeId {
+                room: self.room,
+                attribute,
+            }),
+            value,
+        )
+    }
+
+    pub fn set_global<V: Serialize>(
+        &mut self,
+        attribute: GlobalAttributeId,
+        value: V,
+    ) -> &mut Self {
+        self.set(
+            RoomAttributeId::Global(GlobalRoomAttributeId {
+                room: self.room.room_id(),
+                attribute,
+            }),
+            value,
+        )
+    }
+
+    pub fn get(&mut self, attribute: RoomAttributeId) -> &mut Self {
         self.get_raw(attribute)
     }
 
-    pub fn del(&mut self, attribute: AttributeId) -> &mut Self {
+    pub fn get_local(&mut self, attribute: LocalAttributeId) -> &mut Self {
+        self.get(RoomAttributeId::Local(LocalRoomAttributeId {
+            room: self.room,
+            attribute,
+        }))
+    }
+
+    pub fn get_global(&mut self, attribute: GlobalAttributeId) -> &mut Self {
+        self.get(RoomAttributeId::Global(GlobalRoomAttributeId {
+            room: self.room.room_id(),
+            attribute,
+        }))
+    }
+
+    pub fn del(&mut self, attribute: RoomAttributeId) -> &mut Self {
         self.del_raw(attribute)
     }
 
-    fn set_raw(&mut self, attribute: AttributeId, value: serde_json::Value) -> &mut Self {
+    pub fn del_local(&mut self, attribute: LocalAttributeId) -> &mut Self {
+        self.del(RoomAttributeId::Local(LocalRoomAttributeId {
+            room: self.room,
+            attribute,
+        }))
+    }
+
+    pub fn del_global(&mut self, attribute: GlobalAttributeId) -> &mut Self {
+        self.del(RoomAttributeId::Global(GlobalRoomAttributeId {
+            room: self.room.room_id(),
+            attribute,
+        }))
+    }
+
+    fn set_raw(&mut self, attribute: RoomAttributeId, value: serde_json::Value) -> &mut Self {
         self.actions.push(AttributeAction::Set { attribute, value });
         self
     }
 
-    fn get_raw(&mut self, attribute: AttributeId) -> &mut Self {
+    fn get_raw(&mut self, attribute: RoomAttributeId) -> &mut Self {
         self.actions.push(AttributeAction::Get { attribute });
         self
     }
 
-    fn del_raw(&mut self, attribute: AttributeId) -> &mut Self {
+    fn del_raw(&mut self, attribute: RoomAttributeId) -> &mut Self {
         self.actions.push(AttributeAction::Delete { attribute });
         self
-    }
-
-    pub fn room(&self) -> SignalingRoomId {
-        self.room
     }
 
     pub fn participant(&self) -> ParticipantId {
@@ -121,7 +230,7 @@ pub trait ControlStorage:
         let participants = self.get_all_participants(room).await?;
 
         let left_at_attrs: Vec<Option<Timestamp>> = self
-            .get_attribute_for_participants(room, &Vec::from_iter(participants), LEFT_AT)
+            .get_local_attribute_for_participants(&Vec::from_iter(participants), room, LEFT_AT)
             .await?;
 
         Ok(left_at_attrs.iter().all(Option::is_some))
@@ -129,8 +238,7 @@ pub trait ControlStorage:
 
     async fn remove_attribute_key(
         &mut self,
-        room: SignalingRoomId,
-        attribute: AttributeId,
+        attribute: RoomAttributeId,
     ) -> Result<(), SignalingModuleError>;
 
     async fn get_role_and_left_at_for_room_participants(
@@ -270,34 +378,63 @@ pub trait ControlStorageParticipantSet {
 pub trait ControlStorageParticipantAttributes: ControlStorageParticipantAttributesRaw {
     async fn get_attribute<V>(
         &mut self,
-        room: SignalingRoomId,
         participant: ParticipantId,
-        attribute: AttributeId,
+        attribute: RoomAttributeId,
     ) -> Result<Option<V>, SignalingModuleError>
     where
         V: DeserializeOwned,
     {
-        let Some(loaded) = self.get_attribute_raw(room, participant, attribute).await? else {
+        let Some(loaded) = self.get_attribute_raw(participant, attribute).await? else {
             return Ok(None);
         };
 
-        let deserialized = serde_json::from_value(loaded).with_context(|e| SerdeJsonSnafu{
-                message: format!("failed to deserialize attribute {attribute} for participant {participant} in room {room}, {e}")
+        let deserialized = serde_json::from_value(loaded).with_context(|e| SerdeJsonSnafu {
+            message: format!(
+                "failed to deserialize attribute {attribute} for participant {participant}, {e}"
+            ),
         })?;
         Ok(Some(deserialized))
     }
 
+    async fn get_local_attribute<V>(
+        &mut self,
+        participant: ParticipantId,
+        room: SignalingRoomId,
+        attribute: LocalAttributeId,
+    ) -> Result<Option<V>, SignalingModuleError>
+    where
+        V: DeserializeOwned,
+    {
+        self.get_attribute(participant, LocalRoomAttributeId { room, attribute }.into())
+            .await
+    }
+
+    async fn get_global_attribute<V>(
+        &mut self,
+        participant: ParticipantId,
+        room: RoomId,
+        attribute: GlobalAttributeId,
+    ) -> Result<Option<V>, SignalingModuleError>
+    where
+        V: DeserializeOwned,
+    {
+        self.get_attribute(
+            participant,
+            GlobalRoomAttributeId { room, attribute }.into(),
+        )
+        .await
+    }
+
     async fn get_attribute_for_participants<V>(
         &mut self,
-        room: SignalingRoomId,
         participants: &[ParticipantId],
-        attribute: AttributeId,
+        attribute: RoomAttributeId,
     ) -> Result<Vec<Option<V>>, SignalingModuleError>
     where
         V: DeserializeOwned,
     {
         let loaded = self
-            .get_attribute_for_participants_raw(room, participants, attribute)
+            .get_attribute_for_participants_raw(participants, attribute)
             .await?;
 
         loaded
@@ -305,34 +442,124 @@ pub trait ControlStorageParticipantAttributes: ControlStorageParticipantAttribut
             .map(|v| v.map(serde_json::from_value).transpose())
             .collect::<Result<Vec<Option<V>>, serde_json::Error>>()
             .with_context(|e| SerdeJsonSnafu{
-                message: format!("failed to deserialize attribute {attribute} multiple for participants {participants:?} in room {room}, {e}")
+                message: format!("failed to deserialize attribute {attribute} multiple for participants {participants:?}, {e}")
         })
+    }
+
+    async fn get_global_attribute_for_participants<V>(
+        &mut self,
+        participants: &[ParticipantId],
+        room: RoomId,
+        attribute: GlobalAttributeId,
+    ) -> Result<Vec<Option<V>>, SignalingModuleError>
+    where
+        V: DeserializeOwned,
+    {
+        self.get_attribute_for_participants(
+            participants,
+            GlobalRoomAttributeId { room, attribute }.into(),
+        )
+        .await
+    }
+
+    async fn get_local_attribute_for_participants<V>(
+        &mut self,
+        participants: &[ParticipantId],
+        room: SignalingRoomId,
+        attribute: LocalAttributeId,
+    ) -> Result<Vec<Option<V>>, SignalingModuleError>
+    where
+        V: DeserializeOwned,
+    {
+        self.get_attribute_for_participants(
+            participants,
+            LocalRoomAttributeId { room, attribute }.into(),
+        )
+        .await
     }
 
     async fn set_attribute<V>(
         &mut self,
-        room: SignalingRoomId,
         participant: ParticipantId,
-        attribute: AttributeId,
+        attribute: RoomAttributeId,
         value: V,
     ) -> Result<(), SignalingModuleError>
     where
         V: core::fmt::Debug + Serialize + Send + Sync,
     {
         let serialized = serde_json::to_value(value).with_context(|e| SerdeJsonSnafu {
-            message: format!("failed to serialize attribute {attribute} for participant {participant} in room {room}, {e}")
+            message: format!(
+                "failed to serialize attribute {attribute} for participant {participant}, {e}"
+            ),
         })?;
-        self.set_attribute_raw(room, participant, attribute, serialized)
+        self.set_attribute_raw(participant, attribute, serialized)
             .await
+    }
+
+    async fn set_global_attribute<V>(
+        &mut self,
+        participant: ParticipantId,
+        room: RoomId,
+        attribute: GlobalAttributeId,
+        value: V,
+    ) -> Result<(), SignalingModuleError>
+    where
+        V: core::fmt::Debug + Serialize + Send + Sync,
+    {
+        self.set_attribute(
+            participant,
+            GlobalRoomAttributeId { room, attribute }.into(),
+            value,
+        )
+        .await
+    }
+
+    async fn set_local_attribute<V>(
+        &mut self,
+        participant: ParticipantId,
+        room: SignalingRoomId,
+        attribute: LocalAttributeId,
+        value: V,
+    ) -> Result<(), SignalingModuleError>
+    where
+        V: core::fmt::Debug + Serialize + Send + Sync,
+    {
+        self.set_attribute(
+            participant,
+            LocalRoomAttributeId { room, attribute }.into(),
+            value,
+        )
+        .await
     }
 
     async fn remove_attribute(
         &mut self,
-        room: SignalingRoomId,
         participant: ParticipantId,
-        attribute: AttributeId,
+        attribute: RoomAttributeId,
     ) -> Result<(), SignalingModuleError> {
-        self.remove_attribute_raw(room, participant, attribute)
+        self.remove_attribute_raw(participant, attribute).await
+    }
+
+    async fn remove_global_attribute(
+        &mut self,
+        participant: ParticipantId,
+        room: RoomId,
+        attribute: GlobalAttributeId,
+    ) -> Result<(), SignalingModuleError> {
+        self.remove_attribute(
+            participant,
+            GlobalRoomAttributeId { room, attribute }.into(),
+        )
+        .await
+    }
+
+    async fn remove_local_attribute(
+        &mut self,
+        participant: ParticipantId,
+        room: SignalingRoomId,
+        attribute: LocalAttributeId,
+    ) -> Result<(), SignalingModuleError> {
+        self.remove_attribute(participant, LocalRoomAttributeId { room, attribute }.into())
             .await
     }
 
@@ -356,31 +583,27 @@ impl<T: ControlStorageParticipantAttributesRaw + ?Sized> ControlStorageParticipa
 pub trait ControlStorageParticipantAttributesRaw {
     async fn get_attribute_raw(
         &mut self,
-        room: SignalingRoomId,
         participant: ParticipantId,
-        attribute: AttributeId,
+        attribute: RoomAttributeId,
     ) -> Result<Option<serde_json::Value>, SignalingModuleError>;
 
     async fn get_attribute_for_participants_raw(
         &mut self,
-        room: SignalingRoomId,
         participants: &[ParticipantId],
-        attribute: AttributeId,
+        attribute: RoomAttributeId,
     ) -> Result<Vec<Option<serde_json::Value>>, SignalingModuleError>;
 
     async fn set_attribute_raw(
         &mut self,
-        room: SignalingRoomId,
         participant: ParticipantId,
-        attribute: AttributeId,
+        attribute: RoomAttributeId,
         value: serde_json::Value,
     ) -> Result<(), SignalingModuleError>;
 
     async fn remove_attribute_raw(
         &mut self,
-        room: SignalingRoomId,
         participant: ParticipantId,
-        attribute: AttributeId,
+        attribute: RoomAttributeId,
     ) -> Result<(), SignalingModuleError>;
 
     async fn bulk_attribute_actions_raw(

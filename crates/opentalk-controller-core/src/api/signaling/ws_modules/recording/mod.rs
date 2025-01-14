@@ -177,7 +177,7 @@ impl SignalingModule for Recording {
             Event::Leaving => {
                 ctx.volatile
                     .storage()
-                    .remove_attribute(self.room, self.id, RECORDING_CONSENT)
+                    .remove_local_attribute(self.id, self.room, RECORDING_CONSENT)
                     .await?;
             }
             Event::RaiseHand => {}
@@ -187,7 +187,7 @@ impl SignalingModule for Recording {
                 let consent: Option<bool> = ctx
                     .volatile
                     .storage()
-                    .get_attribute(self.room, id, RECORDING_CONSENT)
+                    .get_local_attribute(id, self.room, RECORDING_CONSENT)
                     .await?;
 
                 if let Some(consent) = consent {
@@ -202,7 +202,7 @@ impl SignalingModule for Recording {
                 RecordingCommand::SetConsent(SetConsent { consent }) => {
                     ctx.volatile
                         .storage()
-                        .set_attribute(self.room, self.id, RECORDING_CONSENT, consent)
+                        .set_local_attribute(self.id, self.room, RECORDING_CONSENT, consent)
                         .await?;
 
                     ctx.invalidate_data();
@@ -537,7 +537,7 @@ impl Recording {
     ) -> Result<(), SignalingModuleError> {
         let participant_ids: Vec<ParticipantId> = participants.keys().copied().collect();
         let participant_consents: Vec<Option<bool>> = storage
-            .get_attribute_for_participants(self.room, &participant_ids, RECORDING_CONSENT)
+            .get_local_attribute_for_participants(&participant_ids, self.room, RECORDING_CONSENT)
             .await?;
 
         for (id, consent) in participant_ids.into_iter().zip(participant_consents) {
