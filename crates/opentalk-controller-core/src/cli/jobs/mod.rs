@@ -205,7 +205,7 @@ struct JobExecutionData<'a> {
     hide_duration: bool,
 }
 
-impl<'a> JobExecutionData<'a> {
+impl JobExecutionData<'_> {
     async fn execute<J: opentalk_jobs::Job>(self) -> Result<(), opentalk_jobs::Error> {
         opentalk_jobs::execute::<J>(
             self.logger,

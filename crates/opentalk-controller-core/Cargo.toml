@@ -133,6 +133,9 @@ snafu.workspace = true
 [features]
 default = []
 swagger = ["dep:utoipa-swagger-ui"]
+# is used inside macros from opentelemetry, provides internal
+# logging for the OpenTelemetry library via tracing
+internal-logs = []
 
 [package.metadata.cargo-machete]
 ignored = [

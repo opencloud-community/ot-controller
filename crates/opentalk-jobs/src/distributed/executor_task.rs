@@ -563,7 +563,7 @@ struct JobExecutionData<'a> {
     hide_duration: bool,
 }
 
-impl<'a> JobExecutionData<'a> {
+impl JobExecutionData<'_> {
     async fn execute<J: JobImpl>(self) -> Result<(), crate::Error> {
         crate::execute::<J>(
             self.logger,
