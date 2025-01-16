@@ -11,7 +11,7 @@ use chrono::{DateTime, Utc};
 use kustos::{prelude::PoliciesBuilder, Authz};
 use opentalk_controller_service::controller_backend::RoomsPoliciesBuilderExt;
 use opentalk_controller_settings::Settings;
-use opentalk_controller_utils::CaptureApiError;
+use opentalk_controller_utils::{event::EventExt as _, CaptureApiError};
 use opentalk_database::Db;
 use opentalk_db_storage::{
     events::{Event, EventException, EventExceptionKind, NewEventException, UpdateEventException},
@@ -36,12 +36,10 @@ use opentalk_types_common::{
     shared_folders::SharedFolder,
 };
 use rrule::RRuleSet;
-use snafu::Report;
 
 use super::{
     can_edit, get_invited_mail_recipients_for_event, notify_invitees_about_update, ApiResponse,
-    DateTimeTz, DefaultApiResult, UpdateNotificationValues, LOCAL_DT_FORMAT,
-    ONE_HUNDRED_YEARS_IN_DAYS,
+    DateTimeTz, DefaultApiResult, UpdateNotificationValues, ONE_HUNDRED_YEARS_IN_DAYS,
 };
 use crate::{
     api::{
@@ -162,7 +160,9 @@ async fn get_event_instances_inner(
         .map(|inv| inv.status)
         .unwrap_or(EventInviteStatus::Accepted);
 
-    let rruleset = build_rruleset(&event)?;
+    let Some(rruleset) = event.to_rruleset()? else {
+        return Err(ApiError::not_found().into());
+    };
 
     const MONTHS_PER_YEAR: u32 = 12;
 
@@ -749,39 +749,13 @@ fn patch<T>(dst: &mut T, value: Option<T>) {
     }
 }
 
-fn build_rruleset(event: &Event) -> Result<RRuleSet, ApiError> {
-    // TODO add recurring check into SQL query?
-    if !event.is_recurring.unwrap_or_default() {
-        return Err(ApiError::not_found());
-    }
-
-    // TODO add more information to internal errors here
-    let recurrence_pattern = event
-        .recurrence_pattern
-        .as_ref()
-        .ok_or_else(ApiError::internal)?;
-    let starts_at = event.starts_at.ok_or_else(ApiError::internal)?;
-    let starts_at_tz = event.starts_at_tz.ok_or_else(ApiError::internal)?;
-
-    let starts_at = starts_at
-        .with_timezone(starts_at_tz.as_ref())
-        .naive_local()
-        .format(LOCAL_DT_FORMAT);
-
-    let rruleset = format!("DTSTART;TZID={starts_at_tz}:{starts_at}\n{recurrence_pattern}");
-    let rruleset: RRuleSet = rruleset.parse().map_err(|e| {
-        log::error!("failed to parse rrule from db {}", Report::from_error(e));
-        ApiError::internal()
-    })?;
-
-    Ok(rruleset)
-}
-
 fn verify_recurrence_date(
     event: &Event,
     requested_dt: DateTime<Utc>,
 ) -> Result<RRuleSet, ApiError> {
-    let rruleset = build_rruleset(event)?;
+    let Some(rruleset) = event.to_rruleset()? else {
+        return Err(ApiError::not_found());
+    };
 
     let requested_dt = requested_dt.with_timezone(event.starts_at_tz.unwrap().as_ref());
 

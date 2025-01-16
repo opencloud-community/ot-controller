@@ -301,6 +301,20 @@ impl Event {
     }
 
     #[tracing::instrument(err, skip_all)]
+    pub async fn get_all_finite_recurring(conn: &mut DbConnection) -> Result<Vec<Event>> {
+        events::table
+            .filter(events::is_recurring.eq(true))
+            .filter(
+                events::recurrence_pattern
+                    .ilike("%UNTIL%")
+                    .or(events::recurrence_pattern.ilike("%COUNT%")),
+            )
+            .load(conn)
+            .await
+            .map_err(Into::into)
+    }
+
+    #[tracing::instrument(err, skip_all)]
     pub async fn get_all_updated_by_user(
         conn: &mut DbConnection,
         updated_by: UserId,

@@ -21,6 +21,8 @@
 )]
 
 mod capture_api_error;
+
 pub mod deletion;
+pub mod event;
 
 pub use capture_api_error::CaptureApiError;

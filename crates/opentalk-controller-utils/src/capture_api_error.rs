@@ -9,6 +9,8 @@ use opentalk_signaling_core::{assets::AssetError, ObjectStorageError};
 use opentalk_types_api_v1::error::ApiError;
 use snafu::Whatever;
 
+use crate::event::EventRRuleSetError;
+
 /// Wraps an [`ApiError`]. Allows converting foreign error types that are not
 /// visible to the [`ApiError`] by using the `?` operator.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -58,6 +60,13 @@ impl From<kustos::Error> for CaptureApiError {
 impl From<ObjectStorageError> for CaptureApiError {
     fn from(value: ObjectStorageError) -> Self {
         log::error!("REST API threw internal error from object storage error: {value}");
+        CaptureApiError(ApiError::internal())
+    }
+}
+
+impl From<EventRRuleSetError> for CaptureApiError {
+    fn from(value: EventRRuleSetError) -> Self {
+        log::error!("REST API threw internal error from event rruleset error: {value}");
         CaptureApiError(ApiError::internal())
     }
 }

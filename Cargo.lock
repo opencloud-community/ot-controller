@@ -4586,6 +4586,7 @@ version = "0.29.0-alpha"
 dependencies = [
  "actix-web",
  "async-trait",
+ "chrono",
  "diesel",
  "diesel-async",
  "kustos",
@@ -4601,6 +4602,7 @@ dependencies = [
  "opentalk-types-api-v1",
  "opentalk-types-common",
  "opentalk-types-signaling",
+ "rrule",
  "serde_json",
  "snafu",
 ]

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeSet, HashMap, HashSet},
     sync::Arc,
 };
 
@@ -11,7 +11,10 @@ use chrono::{DateTime, Utc};
 use kustos::Authz;
 use log::Log;
 use opentalk_controller_settings::Settings;
-use opentalk_controller_utils::deletion::{Deleter, EventDeleter, RoomDeleter};
+use opentalk_controller_utils::{
+    deletion::{Deleter, EventDeleter, RoomDeleter},
+    event::EventExt as _,
+};
 use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
     events::Event,
@@ -88,7 +91,7 @@ async fn delete_events(
     info!(log: logger, "");
     debug!(log: logger, "Retrieving list of events that should be deleted");
 
-    let candidates = retrieve_deletion_candidate_events(conn, delete_selector).await?;
+    let candidates = retrieve_deletion_candidate_events(logger, conn, delete_selector).await?;
 
     let orphaned_rooms = delete_event_candidates(
         logger,
@@ -208,22 +211,55 @@ pub(crate) async fn delete_orphaned_rooms(
 }
 
 pub(crate) async fn retrieve_deletion_candidate_events(
+    logger: &dyn Log,
     conn: &mut DbConnection,
     delete_selector: DeleteSelector,
 ) -> Result<Vec<(EventId, RoomId)>, Error> {
     let events = match delete_selector {
         DeleteSelector::AdHocCreatedBefore(delete_before) => {
-            Event::get_all_adhoc_created_before_including_rooms(conn, delete_before).await
+            Event::get_all_adhoc_created_before_including_rooms(conn, delete_before).await?
         }
         DeleteSelector::ScheduledThatEndedBefore(delete_before) => {
-            Event::get_all_that_ended_before_including_rooms(conn, delete_before).await
+            get_scheduled_events_that_ended_before(logger, conn, delete_before).await?
         }
         DeleteSelector::BelongingToUser(user_id) => {
-            Event::get_all_for_creator_including_rooms(conn, user_id).await
+            Event::get_all_for_creator_including_rooms(conn, user_id).await?
         }
-    }?;
+    };
 
     Ok(events)
+}
+
+async fn get_scheduled_events_that_ended_before(
+    logger: &dyn Log,
+    conn: &mut DbConnection,
+    date: DateTime<Utc>,
+) -> Result<Vec<(EventId, RoomId)>, Error> {
+    // Using BTreeSet to guarantee uniqeness
+    let mut to_be_deleted =
+        BTreeSet::from_iter(Event::get_all_that_ended_before_including_rooms(conn, date).await?);
+    to_be_deleted.append(&mut get_recurring_events_that_ended_before(logger, conn, date).await?);
+    Ok(Vec::from_iter(to_be_deleted))
+}
+
+async fn get_recurring_events_that_ended_before(
+    logger: &dyn Log,
+    conn: &mut DbConnection,
+    date: DateTime<Utc>,
+) -> Result<BTreeSet<(EventId, RoomId)>, Error> {
+    Ok(Event::get_all_finite_recurring(conn).await?
+        .into_iter()
+        .filter_map(
+            |event| match event.has_last_occurrence_before(date) {
+                Ok(true) => Some((event.id, event.room)),
+                Ok(false) => None,
+                Err(e) => {
+                    warn!(log: logger, "Not considering event {} for deletion, because last occurrence date could not be determined: {e}", event.id);
+                    None
+                }
+            },
+        )
+        .collect())
 }
 
 pub(crate) async fn update_user_accounts(

@@ -17,6 +17,7 @@ workspace = true
 [dependencies]
 actix-web.workspace = true
 async-trait.workspace = true
+chrono.workspace = true
 diesel.workspace = true
 diesel-async.workspace = true
 kustos.workspace = true
@@ -32,5 +33,6 @@ opentalk-signaling-core.workspace = true
 opentalk-types-api-v1 = { workspace = true, features = ["actix"] }
 opentalk-types-common = { workspace = true, features = ["kustos"] }
 opentalk-types-signaling.workspace = true
+rrule.workspace = true
 serde_json.workspace = true
 snafu.workspace = true
