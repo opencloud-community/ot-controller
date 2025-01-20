@@ -133,7 +133,7 @@ toml = "0.8"
 tracing = "0.1"
 url = "2"
 utoipa = "5"
-utoipa-swagger-ui = "8"
+utoipa-swagger-ui = "9"
 uuid = "1"
 validator = { version = "0.19", features = ["derive"] }
 yaml-rust2 = "0.9.0"
