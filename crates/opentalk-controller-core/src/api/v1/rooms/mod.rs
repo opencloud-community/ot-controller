@@ -20,12 +20,8 @@ use opentalk_controller_utils::{
     deletion::{Deleter, RoomDeleter},
     CaptureApiError,
 };
-use opentalk_database::{Db, DbConnection};
-use opentalk_db_storage::{
-    events::Event, invites::Invite, rooms::Room, streaming_targets::get_room_streaming_targets,
-    tenants::Tenant, users::User,
-};
-use opentalk_keycloak_admin::KeycloakAdminClient;
+use opentalk_database::Db;
+use opentalk_db_storage::{invites::Invite, rooms::Room, users::User};
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage, Participant, VolatileStorage};
 use opentalk_types_api_v1::{
     error::{ApiError, ErrorBody, ValidationErrorEntry, ERROR_CODE_INVALID_VALUE},
@@ -41,15 +37,11 @@ use opentalk_types_api_v1::{
 use opentalk_types_common::{
     events::EventInfo,
     rooms::{invite_codes::InviteCode, RoomId},
-    shared_folders::SharedFolder,
     tariffs::TariffResource,
 };
 use start_room_error::StartRoomError;
 
-use super::{
-    events::{get_invited_mail_recipients_for_event, CancellationNotificationValues},
-    response::NoContent,
-};
+use super::response::NoContent;
 use crate::{
     api::{
         headers::PageLink,
@@ -58,9 +50,8 @@ use crate::{
             breakout::BreakoutStorageProvider as _, moderation::ModerationStorageProvider as _,
             ticket::start_or_continue_signaling_session,
         },
-        v1::{events::notify_invitees_about_delete, ApiResponse},
+        v1::ApiResponse,
     },
-    services::{MailRecipient, MailService},
     settings::SharedSettingsActix,
 };
 
@@ -225,8 +216,8 @@ pub async fn patch(
 /// Delete a room and its owned resources.
 ///
 /// Deletes the room by the id if found. See the query parameters for affecting
-/// the behavior of this endpoint, such as mail notification suppression, or
-/// succeding even if external resources cannot be successfully deleted.
+/// the behavior of this endpoint, such as succeding even if external resources
+/// cannot be successfully deleted.
 #[utoipa::path(
     params(
         ("room_id" = RoomId, description = "The id of the room"),
@@ -267,11 +258,8 @@ pub async fn delete(
     exchange_handle: Data<ExchangeHandle>,
     room_id: Path<RoomId>,
     current_user: ReqData<User>,
-    current_tenant: ReqData<Tenant>,
     authz: Data<Authz>,
     query: web::Query<DeleteRoomQuery>,
-    mail_service: Data<MailService>,
-    kc_admin_client: Data<KeycloakAdminClient>,
 ) -> Result<NoContent, ApiError> {
     Ok(delete_inner(
         &settings.load_full(),
@@ -280,11 +268,8 @@ pub async fn delete(
         &exchange_handle,
         room_id.into_inner(),
         current_user.into_inner(),
-        current_tenant.into_inner(),
         &authz,
         query.into_inner(),
-        &mail_service,
-        &kc_admin_client,
     )
     .await?)
 }
@@ -297,19 +282,10 @@ async fn delete_inner(
     exchange_handle: &ExchangeHandle,
     room_id: RoomId,
     current_user: User,
-    current_tenant: Tenant,
     authz: &Authz,
     query: DeleteRoomQuery,
-    mail_service: &MailService,
-    kc_admin_client: &KeycloakAdminClient,
 ) -> Result<NoContent, CaptureApiError> {
     let mut conn = db.get_conn().await?;
-
-    let notification_values = if !query.suppress_email_notification {
-        gather_mail_notification_values(&mut conn, &current_user, &current_tenant, room_id).await?
-    } else {
-        None
-    };
 
     let deleter = RoomDeleter::new(
         room_id,
@@ -328,50 +304,7 @@ async fn delete_inner(
         )
         .await?;
 
-    if let Some(notification_values) = notification_values {
-        notify_invitees_about_delete(settings, notification_values, mail_service, kc_admin_client)
-            .await;
-    }
-
     Ok(NoContent)
-}
-
-async fn gather_mail_notification_values(
-    conn: &mut DbConnection,
-    current_user: &User,
-    current_tenant: &Tenant,
-    room_id: RoomId,
-) -> Result<Option<CancellationNotificationValues>, CaptureApiError> {
-    let linked_event_id = match Event::get_id_for_room(conn, room_id).await? {
-        Some(event) => event,
-        None => return Ok(None),
-    };
-
-    let (event, _invite, room, sip_config, _is_favorite, shared_folder, _tariff) =
-        Event::get_with_related_items(conn, current_user.id, linked_event_id).await?;
-
-    let streaming_targets = get_room_streaming_targets(conn, room.id).await?;
-
-    let invitees = get_invited_mail_recipients_for_event(conn, event.id).await?;
-    let created_by_mail_recipient = MailRecipient::Registered(current_user.clone().into());
-
-    let users_to_notify = invitees
-        .into_iter()
-        .chain(std::iter::once(created_by_mail_recipient))
-        .collect::<Vec<_>>();
-
-    let notification_values = CancellationNotificationValues {
-        tenant: current_tenant.clone(),
-        created_by: current_user.clone(),
-        event,
-        room,
-        sip_config,
-        users_to_notify,
-        shared_folder: shared_folder.map(SharedFolder::from),
-        streaming_targets,
-    };
-
-    Ok(Some(notification_values))
 }
 
 /// Get a room
