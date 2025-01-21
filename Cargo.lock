@@ -4543,6 +4543,8 @@ dependencies = [
  "opentalk-controller-utils",
  "opentalk-database",
  "opentalk-db-storage",
+ "opentalk-keycloak-admin",
+ "opentalk-signaling-core",
  "opentalk-types-api-v1",
  "opentalk-types-common",
 ]
