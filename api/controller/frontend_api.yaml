@@ -1123,8 +1123,8 @@ paths:
       summary: Delete a room and its owned resources.
       description: |-
         Deletes the room by the id if found. See the query parameters for affecting
-        the behavior of this endpoint, such as mail notification suppression, or
-        succeding even if external resources cannot be successfully deleted.
+        the behavior of this endpoint, such as succeding even if external resources
+        cannot be successfully deleted.
       operationId: delete
       parameters:
         - name: room_id
