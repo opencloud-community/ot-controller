@@ -8,7 +8,10 @@ use kustos::{
     AccessMethod, Resource,
 };
 use opentalk_controller_service_facade::RequestUser;
-use opentalk_controller_utils::CaptureApiError;
+use opentalk_controller_utils::{
+    deletion::{Deleter, RoomDeleter},
+    CaptureApiError,
+};
 use opentalk_db_storage::{
     events::Event,
     rooms::{NewRoom, Room, UpdateRoom},
@@ -182,6 +185,47 @@ impl ControllerBackend {
         };
 
         Ok(room_resource)
+    }
+
+    pub(super) async fn delete_room(
+        &self,
+        current_user: RequestUser,
+        room_id: RoomId,
+        force_delete_reference_if_external_services_fail: bool,
+    ) -> Result<(), ApiError> {
+        Ok(self
+            .delete_room_inner(
+                current_user,
+                room_id,
+                force_delete_reference_if_external_services_fail,
+            )
+            .await?)
+    }
+
+    async fn delete_room_inner(
+        &self,
+        current_user: RequestUser,
+        room_id: RoomId,
+        force_delete_reference_if_external_services_fail: bool,
+    ) -> Result<(), CaptureApiError> {
+        let settings = self.settings.load_full();
+        let mut conn = self.db.get_conn().await?;
+
+        let deleter = RoomDeleter::new(room_id, force_delete_reference_if_external_services_fail);
+
+        deleter
+            .perform(
+                log::logger(),
+                &mut conn,
+                &self.authz,
+                Some(current_user.id),
+                self.exchange_handle.clone(),
+                &settings,
+                &self.storage,
+            )
+            .await?;
+
+        Ok(())
     }
 
     pub(super) async fn get_room(&self, room_id: &RoomId) -> Result<RoomResource, CaptureApiError> {

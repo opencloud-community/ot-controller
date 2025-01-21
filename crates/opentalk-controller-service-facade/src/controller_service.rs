@@ -101,6 +101,24 @@ impl OpenTalkControllerService {
             .await
     }
 
+    /// Delete a room and its owned resources.
+    pub async fn delete_room(
+        &self,
+        current_user: RequestUser,
+        room_id: RoomId,
+        force_delete_reference_if_external_services_fail: bool,
+    ) -> Result<(), ApiError> {
+        self.backend
+            .read()
+            .await
+            .delete_room(
+                current_user,
+                room_id,
+                force_delete_reference_if_external_services_fail,
+            )
+            .await
+    }
+
     /// Get a room
     pub async fn get_room(&self, room_id: &RoomId) -> Result<RoomResource, ApiError> {
         self.backend.read().await.get_room(room_id).await

@@ -4537,6 +4537,7 @@ version = "0.29.0-alpha"
 dependencies = [
  "async-trait",
  "kustos",
+ "log",
  "md5",
  "opentalk-controller-service-facade",
  "opentalk-controller-settings",

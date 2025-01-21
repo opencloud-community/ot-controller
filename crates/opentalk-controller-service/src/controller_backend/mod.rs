@@ -40,8 +40,8 @@ pub struct ControllerBackend {
     authz: Authz,
     db: Arc<Db>,
     frontend_oidc_provider: OidcProvider,
-    _storage: Arc<ObjectStorage>,
-    _exchange_handle: ExchangeHandle,
+    storage: Arc<ObjectStorage>,
+    exchange_handle: ExchangeHandle,
     _kc_admin_client: Arc<KeycloakAdminClient>,
     module_features: BTreeMap<ModuleId, BTreeSet<FeatureId>>,
 }
@@ -64,8 +64,8 @@ impl ControllerBackend {
             authz,
             db,
             frontend_oidc_provider,
-            _storage: storage,
-            _exchange_handle: exchange_handle,
+            storage,
+            exchange_handle,
             _kc_admin_client: kc_admin_client,
             module_features,
         }
@@ -125,6 +125,20 @@ impl OpenTalkControllerServiceBackend for ControllerBackend {
             password,
             waiting_room,
             e2e_encryption,
+        )
+        .await
+    }
+
+    async fn delete_room(
+        &self,
+        current_user: RequestUser,
+        room_id: RoomId,
+        force_delete_reference_if_external_services_fail: bool,
+    ) -> Result<(), ApiError> {
+        self.delete_room(
+            current_user,
+            room_id,
+            force_delete_reference_if_external_services_fail,
         )
         .await
     }

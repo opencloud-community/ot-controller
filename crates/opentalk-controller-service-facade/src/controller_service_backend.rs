@@ -50,6 +50,14 @@ pub trait OpenTalkControllerServiceBackend: Send + Sync {
         e2e_encryption: Option<bool>,
     ) -> Result<RoomResource, ApiError>;
 
+    /// Delete a room and its owned resources.
+    async fn delete_room(
+        &self,
+        current_user: RequestUser,
+        room_id: RoomId,
+        force_delete_reference_if_external_services_fail: bool,
+    ) -> Result<(), ApiError>;
+
     /// Get a room
     async fn get_room(&self, room_id: &RoomId) -> Result<RoomResource, ApiError>;
 
