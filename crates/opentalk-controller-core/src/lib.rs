@@ -462,6 +462,9 @@ impl Controller {
                 authz.clone(),
                 db.clone(),
                 oidc_provider,
+                storage.clone(),
+                exchange_handle.clone(),
+                kc_admin_client.clone(),
                 initializer.signaling_modules.get_module_features(),
             )
         };

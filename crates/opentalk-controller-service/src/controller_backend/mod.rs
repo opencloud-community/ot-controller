@@ -16,6 +16,8 @@ use kustos::Authz;
 use opentalk_controller_service_facade::{OpenTalkControllerServiceBackend, RequestUser};
 use opentalk_controller_settings::SharedSettings;
 use opentalk_database::Db;
+use opentalk_keycloak_admin::KeycloakAdminClient;
+use opentalk_signaling_core::{ExchangeHandle, ObjectStorage};
 use opentalk_types_api_v1::{
     auth::{GetLoginResponseBody, OidcProvider},
     error::ApiError,
@@ -38,16 +40,23 @@ pub struct ControllerBackend {
     authz: Authz,
     db: Arc<Db>,
     frontend_oidc_provider: OidcProvider,
+    storage: Arc<ObjectStorage>,
+    exchange_handle: ExchangeHandle,
+    _kc_admin_client: Arc<KeycloakAdminClient>,
     module_features: BTreeMap<ModuleId, BTreeSet<FeatureId>>,
 }
 
 impl ControllerBackend {
     /// Create a new [`ControllerBackend`].
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         settings: SharedSettings,
         authz: Authz,
         db: Arc<Db>,
         frontend_oidc_provider: OidcProvider,
+        storage: Arc<ObjectStorage>,
+        exchange_handle: ExchangeHandle,
+        kc_admin_client: Arc<KeycloakAdminClient>,
         module_features: BTreeMap<ModuleId, BTreeSet<FeatureId>>,
     ) -> Self {
         Self {
@@ -55,6 +64,9 @@ impl ControllerBackend {
             authz,
             db,
             frontend_oidc_provider,
+            storage,
+            exchange_handle,
+            _kc_admin_client: kc_admin_client,
             module_features,
         }
     }
@@ -113,6 +125,20 @@ impl OpenTalkControllerServiceBackend for ControllerBackend {
             password,
             waiting_room,
             e2e_encryption,
+        )
+        .await
+    }
+
+    async fn delete_room(
+        &self,
+        current_user: RequestUser,
+        room_id: RoomId,
+        force_delete_reference_if_external_services_fail: bool,
+    ) -> Result<(), ApiError> {
+        self.delete_room(
+            current_user,
+            room_id,
+            force_delete_reference_if_external_services_fail,
         )
         .await
     }

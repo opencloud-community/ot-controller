@@ -13,16 +13,11 @@ use actix_web::{
     delete, get, patch, post,
     web::{self, Data, Json, Path, ReqData},
 };
-use kustos::Authz;
 use opentalk_controller_service_facade::{OpenTalkControllerService, RequestUser};
-use opentalk_controller_settings::Settings;
-use opentalk_controller_utils::{
-    deletion::{Deleter, RoomDeleter},
-    CaptureApiError,
-};
+use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::Db;
 use opentalk_db_storage::{invites::Invite, rooms::Room, users::User};
-use opentalk_signaling_core::{ExchangeHandle, ObjectStorage, Participant, VolatileStorage};
+use opentalk_signaling_core::{Participant, VolatileStorage};
 use opentalk_types_api_v1::{
     error::{ApiError, ErrorBody, ValidationErrorEntry, ERROR_CODE_INVALID_VALUE},
     pagination::PagePaginationQuery,
@@ -42,17 +37,14 @@ use opentalk_types_common::{
 use start_room_error::StartRoomError;
 
 use super::response::NoContent;
-use crate::{
-    api::{
-        headers::PageLink,
-        responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
-        signaling::{
-            breakout::BreakoutStorageProvider as _, moderation::ModerationStorageProvider as _,
-            ticket::start_or_continue_signaling_session,
-        },
-        v1::ApiResponse,
+use crate::api::{
+    headers::PageLink,
+    responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
+    signaling::{
+        breakout::BreakoutStorageProvider as _, moderation::ModerationStorageProvider as _,
+        ticket::start_or_continue_signaling_session,
     },
-    settings::SharedSettingsActix,
+    v1::ApiResponse,
 };
 
 mod start_room_error;
@@ -137,15 +129,15 @@ pub async fn new(
     body: Json<PostRoomsRequestBody>,
 ) -> Result<Json<RoomResource>, ApiError> {
     let current_user = current_user.into_inner();
-    let room_parameters = body.into_inner();
+    let body = body.into_inner();
 
     let room_resource = service
         .create_room(
             current_user,
-            room_parameters.password,
-            room_parameters.enable_sip,
-            room_parameters.waiting_room,
-            room_parameters.e2e_encryption,
+            body.password,
+            body.enable_sip,
+            body.waiting_room,
+            body.e2e_encryption,
         )
         .await?;
 
@@ -198,15 +190,15 @@ pub async fn patch(
 ) -> Result<Json<RoomResource>, ApiError> {
     let current_user = current_user.into_inner();
     let room_id = room_id.into_inner();
-    let room_parameters = body.into_inner();
+    let body = body.into_inner();
 
     let room_resource = service
         .patch_room(
             current_user,
             room_id,
-            room_parameters.password,
-            room_parameters.waiting_room,
-            room_parameters.e2e_encryption,
+            body.password,
+            body.waiting_room,
+            body.e2e_encryption,
         )
         .await?;
 
@@ -252,55 +244,18 @@ pub async fn patch(
 #[allow(clippy::too_many_arguments)]
 #[delete("/rooms/{room_id}")]
 pub async fn delete(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
-    storage: Data<ObjectStorage>,
-    exchange_handle: Data<ExchangeHandle>,
+    service: Data<OpenTalkControllerService>,
+    current_user: ReqData<RequestUser>,
     room_id: Path<RoomId>,
-    current_user: ReqData<User>,
-    authz: Data<Authz>,
     query: web::Query<DeleteRoomQuery>,
 ) -> Result<NoContent, ApiError> {
-    Ok(delete_inner(
-        &settings.load_full(),
-        &db,
-        &storage,
-        &exchange_handle,
-        room_id.into_inner(),
-        current_user.into_inner(),
-        &authz,
-        query.into_inner(),
-    )
-    .await?)
-}
+    let query = query.into_inner();
 
-#[allow(clippy::too_many_arguments)]
-async fn delete_inner(
-    settings: &Settings,
-    db: &Db,
-    storage: &ObjectStorage,
-    exchange_handle: &ExchangeHandle,
-    room_id: RoomId,
-    current_user: User,
-    authz: &Authz,
-    query: DeleteRoomQuery,
-) -> Result<NoContent, CaptureApiError> {
-    let mut conn = db.get_conn().await?;
-
-    let deleter = RoomDeleter::new(
-        room_id,
-        query.force_delete_reference_if_external_services_fail,
-    );
-
-    deleter
-        .perform(
-            log::logger(),
-            &mut conn,
-            authz,
-            Some(current_user.id),
-            exchange_handle.clone(),
-            settings,
-            storage,
+    service
+        .delete_room(
+            current_user.into_inner(),
+            room_id.into_inner(),
+            query.force_delete_reference_if_external_services_fail,
         )
         .await?;
 
