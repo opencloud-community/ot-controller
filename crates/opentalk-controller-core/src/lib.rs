@@ -7,7 +7,8 @@
 //! # Example
 //!
 //! ```no_run
-//! use opentalk_controller_core::{Controller, Whatever};
+//! use opentalk_controller_core::Controller;
+//! use opentalk_controller_service::Whatever;
 //!
 //! # use opentalk_signaling_core::{ModulesRegistrar, RegisterModules};
 //! # struct CommunityModules;
@@ -51,7 +52,7 @@ use async_trait::async_trait;
 use kustos::Authz;
 use lapin_pool::RabbitMqPool;
 use oidc::OidcContext;
-use opentalk_controller_service::ControllerBackend;
+use opentalk_controller_service::{ControllerBackend, Whatever};
 use opentalk_controller_service_facade::OpenTalkControllerService;
 use opentalk_database::Db;
 use opentalk_jobs::job_runner::JobRunner;
@@ -64,7 +65,7 @@ use opentalk_signaling_core::{
 use opentalk_types_api_v1::{auth::OidcProvider, error::ApiError};
 use rustls_pki_types::{CertificateDer, PrivatePkcs8KeyDer};
 use service_probe::{set_service_state, start_probe, ServiceState};
-use snafu::{Backtrace, ErrorCompat, Report, ResultExt, Snafu};
+use snafu::{ErrorCompat, Report, ResultExt, Snafu};
 use swagger::WithSwagger as _;
 use tokio::{
     signal::{
@@ -114,19 +115,6 @@ impl From<BlockingError> for ApiError {
         );
         Self::internal()
     }
-}
-
-/// Send and Sync variant of [`snafu::Whatever`]
-#[derive(Debug, Snafu)]
-#[snafu(whatever)]
-#[snafu(display("{message}"))]
-#[snafu(provide(opt, ref, chain, dyn std::error::Error => source.as_deref()))]
-pub struct Whatever {
-    #[snafu(source(from(Box<dyn std::error::Error + Send + Sync>, Some)))]
-    #[snafu(provide(false))]
-    source: Option<Box<dyn std::error::Error + Send + Sync>>,
-    message: String,
-    backtrace: Backtrace,
 }
 
 type Result<T, E = Whatever> = std::result::Result<T, E>;

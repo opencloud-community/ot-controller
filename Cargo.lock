@@ -4433,6 +4433,7 @@ dependencies = [
  "anstream",
  "opentalk-community-signaling-modules",
  "opentalk-controller-core",
+ "opentalk-controller-service",
  "owo-colors",
 ]
 
@@ -4548,6 +4549,7 @@ dependencies = [
  "opentalk-signaling-core",
  "opentalk-types-api-v1",
  "opentalk-types-common",
+ "snafu",
 ]
 
 [[package]]

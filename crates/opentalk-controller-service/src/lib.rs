@@ -27,3 +27,17 @@ pub mod helpers;
 
 pub use controller_backend::ControllerBackend;
 pub use helpers::{email_to_libravatar_url, require_feature, ToUserProfile};
+use snafu::{Backtrace, Snafu};
+
+/// Send and Sync variant of [`snafu::Whatever`]
+#[derive(Debug, Snafu)]
+#[snafu(whatever)]
+#[snafu(display("{message}"))]
+#[snafu(provide(opt, ref, chain, dyn std::error::Error => source.as_deref()))]
+pub struct Whatever {
+    #[snafu(source(from(Box<dyn std::error::Error + Send + Sync>, Some)))]
+    #[snafu(provide(false))]
+    source: Option<Box<dyn std::error::Error + Send + Sync>>,
+    message: String,
+    backtrace: Backtrace,
+}

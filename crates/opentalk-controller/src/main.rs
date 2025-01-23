@@ -3,7 +3,8 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_community_signaling_modules::CommunityModules;
-use opentalk_controller_core::{Controller, Whatever};
+use opentalk_controller_core::Controller;
+use opentalk_controller_service::Whatever;
 
 #[actix_web::main]
 async fn main() {

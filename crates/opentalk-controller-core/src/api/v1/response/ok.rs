@@ -15,6 +15,7 @@ use actix_web::{
     HttpResponse, Responder,
 };
 use either::Either;
+use opentalk_controller_service::Whatever;
 use serde::Serialize;
 use snafu::ResultExt;
 use url::Url;
@@ -261,7 +262,7 @@ fn vec_to_header_value(
     header::HeaderValue::from_str(&buf)
 }
 
-fn extract_full_url_from_request(req: &actix_web::HttpRequest) -> Result<Url, crate::Whatever> {
+fn extract_full_url_from_request(req: &actix_web::HttpRequest) -> Result<Url, Whatever> {
     let conn = req.connection_info();
 
     let url = Url::parse(&format!(

@@ -5,6 +5,7 @@
 //! Error response types for REST APIv1
 use actix_web::{error::JsonPayloadError, HttpRequest};
 use http::StatusCode;
+use opentalk_controller_service::Whatever;
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_types_api_v1::error::{ApiError, AuthenticationError, ErrorBody};
 use serde::{Deserialize, Serialize};
@@ -38,7 +39,7 @@ pub struct CacheableApiError {
 }
 
 impl TryFrom<CacheableApiError> for CaptureApiError {
-    type Error = crate::Whatever;
+    type Error = Whatever;
 
     fn try_from(value: CacheableApiError) -> Result<Self, Self::Error> {
         Ok(ApiError {

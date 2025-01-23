@@ -19,6 +19,7 @@ actix-web.workspace = true
 anstream.workspace = true
 opentalk-community-signaling-modules.workspace = true
 opentalk-controller-core.workspace = true
+opentalk-controller-service.workspace = true
 owo-colors.workspace = true
 
 [features]
