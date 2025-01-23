@@ -4546,9 +4546,11 @@ dependencies = [
  "opentalk-database",
  "opentalk-db-storage",
  "opentalk-keycloak-admin",
+ "opentalk-mail-worker-protocol",
  "opentalk-signaling-core",
  "opentalk-types-api-v1",
  "opentalk-types-common",
+ "opentelemetry",
  "snafu",
 ]
 

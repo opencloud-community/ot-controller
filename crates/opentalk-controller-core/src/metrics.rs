@@ -7,14 +7,10 @@ use std::sync::Arc;
 use actix_http::{body::BoxBody, StatusCode};
 use actix_web::{dev::PeerAddr, get, web::Data, HttpResponse};
 use kustos::metrics::KustosMetrics;
+use opentalk_controller_service::metrics::EndpointMetrics;
 use opentalk_database::DatabaseMetrics;
-use opentalk_mail_worker_protocol::MailTask;
 use opentalk_signaling_core::{RedisMetrics, SignalingMetrics};
-use opentelemetry::{
-    global,
-    metrics::{Counter, Histogram},
-    otel_error, Key, KeyValue,
-};
+use opentelemetry::{global, otel_error};
 use opentelemetry_sdk::metrics::{
     new_view, Aggregation, Instrument, MetricError, SdkMeterProvider, Stream,
 };
@@ -23,26 +19,11 @@ use snafu::{Backtrace, Snafu};
 
 use crate::{settings::SharedSettingsActix, Result};
 
-const MAIL_TASK_KIND: Key = Key::from_static_str("mail_task_kind");
-
 #[derive(Debug, Snafu)]
 #[snafu(context(false))]
 pub struct MetricViewError {
     source: MetricError,
     backtrace: Backtrace,
-}
-
-pub struct EndpointMetrics {
-    pub(crate) request_durations: Histogram<f64>,
-    pub(crate) response_sizes: Histogram<u64>,
-    pub(crate) issued_email_tasks_count: Counter<u64>,
-}
-
-impl EndpointMetrics {
-    pub fn increment_issued_email_tasks_count(&self, mail_task: &MailTask) {
-        self.issued_email_tasks_count
-            .add(1, &[KeyValue::new(MAIL_TASK_KIND, mail_task.as_kind_str())]);
-    }
 }
 
 pub struct CombinedMetrics {

@@ -11,6 +11,7 @@
 use std::sync::Arc;
 
 use lapin_pool::{RabbitMqChannel, RabbitMqPool};
+use opentalk_controller_service::metrics::EndpointMetrics;
 use opentalk_controller_settings::{Settings, SharedSettings};
 use opentalk_db_storage::{
     events::{Event, EventException, EventExceptionKind},
@@ -29,7 +30,7 @@ use snafu::ResultExt;
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
-use crate::{metrics::EndpointMetrics, Result};
+use crate::Result;
 
 pub struct RegisteredMailRecipient {
     pub id: UserId,

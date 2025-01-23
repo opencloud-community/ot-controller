@@ -13,9 +13,8 @@ use futures::{
     future::{ready, Ready},
     Future, FutureExt,
 };
+use opentalk_controller_service::metrics::EndpointMetrics;
 use opentelemetry::{Key, KeyValue};
-
-use crate::metrics::EndpointMetrics;
 
 #[derive(Clone)]
 pub struct RequestMetrics {

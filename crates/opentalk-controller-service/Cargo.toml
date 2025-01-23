@@ -25,9 +25,11 @@ opentalk-controller-utils.workspace = true
 opentalk-database.workspace = true
 opentalk-db-storage.workspace = true
 opentalk-keycloak-admin.workspace = true
+opentalk-mail-worker-protocol.workspace = true
 opentalk-signaling-core.workspace = true
 opentalk-types-api-v1 = { workspace = true, features = ["diesel"] }
 opentalk-types-common = { workspace = true, features = ["kustos"] }
+opentelemetry = { workspace = true, features = ["metrics", "trace"] }
 snafu.workspace = true
 
 [dev-dependencies]
