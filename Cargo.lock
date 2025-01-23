@@ -4433,6 +4433,7 @@ dependencies = [
  "anstream",
  "opentalk-community-signaling-modules",
  "opentalk-controller-core",
+ "opentalk-controller-service",
  "owo-colors",
 ]
 
@@ -4478,7 +4479,6 @@ dependencies = [
  "opentalk-db-storage",
  "opentalk-jobs",
  "opentalk-keycloak-admin",
- "opentalk-mail-worker-protocol",
  "opentalk-nextcloud-client",
  "opentalk-r3dlock",
  "opentalk-signaling-core",
@@ -4537,6 +4537,7 @@ version = "0.29.0-alpha"
 dependencies = [
  "async-trait",
  "kustos",
+ "lapin-pool",
  "log",
  "md5",
  "opentalk-controller-service-facade",
@@ -4545,9 +4546,15 @@ dependencies = [
  "opentalk-database",
  "opentalk-db-storage",
  "opentalk-keycloak-admin",
+ "opentalk-mail-worker-protocol",
  "opentalk-signaling-core",
  "opentalk-types-api-v1",
  "opentalk-types-common",
+ "opentelemetry",
+ "serde_json",
+ "snafu",
+ "tokio",
+ "uuid",
 ]
 
 [[package]]

@@ -9,7 +9,9 @@ use actix_web::{
 };
 use chrono::{DateTime, Utc};
 use kustos::{prelude::PoliciesBuilder, Authz};
-use opentalk_controller_service::controller_backend::RoomsPoliciesBuilderExt;
+use opentalk_controller_service::{
+    controller_backend::RoomsPoliciesBuilderExt, services::MailService,
+};
 use opentalk_controller_settings::Settings;
 use opentalk_controller_utils::{event::EventExt as _, CaptureApiError};
 use opentalk_database::Db;
@@ -54,7 +56,6 @@ use crate::{
             util::{GetUserProfilesBatched, UserProfilesBatch},
         },
     },
-    services::MailService,
     settings::SharedSettingsActix,
 };
 

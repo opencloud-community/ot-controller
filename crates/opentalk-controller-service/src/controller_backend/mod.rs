@@ -32,6 +32,7 @@ use opentalk_types_common::{
 };
 
 pub use crate::controller_backend::rooms::RoomsPoliciesBuilderExt;
+use crate::services::MailService;
 
 /// The default [`OpenTalkControllerServiceBackend`] implementation.
 pub struct ControllerBackend {
@@ -42,6 +43,7 @@ pub struct ControllerBackend {
     frontend_oidc_provider: OidcProvider,
     storage: Arc<ObjectStorage>,
     exchange_handle: ExchangeHandle,
+    _mail_service: MailService,
     _kc_admin_client: Arc<KeycloakAdminClient>,
     module_features: BTreeMap<ModuleId, BTreeSet<FeatureId>>,
 }
@@ -56,6 +58,7 @@ impl ControllerBackend {
         frontend_oidc_provider: OidcProvider,
         storage: Arc<ObjectStorage>,
         exchange_handle: ExchangeHandle,
+        mail_service: MailService,
         kc_admin_client: Arc<KeycloakAdminClient>,
         module_features: BTreeMap<ModuleId, BTreeSet<FeatureId>>,
     ) -> Self {
@@ -66,6 +69,7 @@ impl ControllerBackend {
             frontend_oidc_provider,
             storage,
             exchange_handle,
+            _mail_service: mail_service,
             _kc_admin_client: kc_admin_client,
             module_features,
         }

@@ -12,6 +12,7 @@ use actix_web::{
 };
 use chrono::{Days, NaiveDate, Utc};
 use log::warn;
+use opentalk_controller_service::services::MailService;
 use opentalk_controller_settings::Settings;
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::{Db, DbConnection};
@@ -44,7 +45,6 @@ use crate::{
             response::NoContent,
         },
     },
-    services::MailService,
     settings::SharedSettingsActix,
 };
 
