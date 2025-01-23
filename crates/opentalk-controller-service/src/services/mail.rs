@@ -11,7 +11,6 @@
 use std::sync::Arc;
 
 use lapin_pool::{RabbitMqChannel, RabbitMqPool};
-use opentalk_controller_service::metrics::EndpointMetrics;
 use opentalk_controller_settings::{Settings, SharedSettings};
 use opentalk_db_storage::{
     events::{Event, EventException, EventExceptionKind},
@@ -30,14 +29,24 @@ use snafu::ResultExt;
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
-use crate::Result;
+use crate::{metrics::EndpointMetrics, Whatever};
 
+type Result<T, E = Whatever> = std::result::Result<T, E>;
+
+/// A registered mail recipient
+#[derive(Debug)]
 pub struct RegisteredMailRecipient {
+    /// The user id
     pub id: UserId,
+    /// The email address
     pub email: String,
+    /// The title
     pub title: UserTitle,
+    /// The first name
     pub first_name: String,
+    /// The last name
     pub last_name: String,
+    /// The language
     pub language: Language,
 }
 
@@ -54,19 +63,32 @@ impl From<User> for RegisteredMailRecipient {
     }
 }
 
+/// An unregistered mail recipient
+#[derive(Debug)]
 pub struct UnregisteredMailRecipient {
+    /// The email address
     pub email: String,
+    /// The first name
     pub first_name: String,
+    /// The last name
     pub last_name: String,
 }
 
+/// An external mail recipient
+#[derive(Debug)]
 pub struct ExternalMailRecipient {
+    /// The email address
     pub email: String,
 }
 
+/// A mail recipient
+#[derive(Debug)]
 pub enum MailRecipient {
+    /// A registered mail recipient
     Registered(RegisteredMailRecipient),
+    /// An unregistered mail recipient
     Unregistered(UnregisteredMailRecipient),
+    /// An external mail recipient
     External(ExternalMailRecipient),
 }
 
@@ -77,7 +99,7 @@ fn to_event(
     settings: &Settings,
     shared_folder: Option<SharedFolder>,
     streaming_targets: Vec<RoomStreamingTarget>,
-) -> opentalk_mail_worker_protocol::v1::Event {
+) -> v1::Event {
     const ONE_DAY_IN_SECONDS: u64 = 86400;
 
     let created_at = v1::Time {
@@ -112,7 +134,7 @@ fn to_event(
         None
     };
 
-    opentalk_mail_worker_protocol::v1::Event {
+    v1::Event {
         id: Uuid::from(event.id),
         name: event.title,
         description: event.description,
@@ -132,21 +154,15 @@ fn to_event(
     }
 }
 
-fn to_event_exception(
-    exception: EventException,
-) -> opentalk_mail_worker_protocol::v1::EventException {
+fn to_event_exception(exception: EventException) -> v1::EventException {
     let exception_date = v1::Time {
         time: exception.exception_date,
         timezone: exception.exception_date_tz.to_string(),
     };
 
     let kind = match exception.kind {
-        EventExceptionKind::Modified => {
-            opentalk_mail_worker_protocol::v1::EventExceptionKind::Modified
-        }
-        EventExceptionKind::Cancelled => {
-            opentalk_mail_worker_protocol::v1::EventExceptionKind::Canceled
-        }
+        EventExceptionKind::Modified => v1::EventExceptionKind::Modified,
+        EventExceptionKind::Cancelled => v1::EventExceptionKind::Canceled,
     };
 
     let starts_at: Option<v1::Time> = exception
@@ -156,7 +172,7 @@ fn to_event_exception(
 
     let ends_at: Option<v1::Time> = exception.ends_at.zip(exception.ends_at_tz).map(Into::into);
 
-    opentalk_mail_worker_protocol::v1::EventException {
+    v1::EventException {
         exception_date,
         kind,
         title: exception.title,
@@ -167,6 +183,7 @@ fn to_event_exception(
     }
 }
 
+/// A service for sending emails
 #[derive(Clone)]
 pub struct MailService {
     settings: SharedSettings,
@@ -175,7 +192,14 @@ pub struct MailService {
     rabbitmq_channel: Arc<Mutex<RabbitMqChannel>>,
 }
 
+impl std::fmt::Debug for MailService {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "MailService")
+    }
+}
+
 impl MailService {
+    /// Creates a new email service
     pub fn new(
         settings: SharedSettings,
         metrics: Arc<EndpointMetrics>,
@@ -207,7 +231,7 @@ impl MailService {
                 channel.clone()
             };
 
-            channel
+            _ = channel
                 .basic_publish(
                     "",
                     queue_name,
@@ -278,7 +302,7 @@ impl MailService {
     ) -> Result<()> {
         let settings = &*self.settings.load();
 
-        let invitee = opentalk_mail_worker_protocol::v1::UnregisteredUser {
+        let invitee = v1::UnregisteredUser {
             email: invitee.email.into(),
             first_name: invitee.first_name,
             last_name: invitee.last_name,

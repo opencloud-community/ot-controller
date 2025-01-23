@@ -16,7 +16,10 @@ use kustos::{
     Authz, Resource,
 };
 use opentalk_controller_service::{
-    controller_backend::RoomsPoliciesBuilderExt, email_to_libravatar_url, ToUserProfile as _,
+    controller_backend::RoomsPoliciesBuilderExt,
+    email_to_libravatar_url,
+    services::{ExternalMailRecipient, MailRecipient, MailService, UnregisteredMailRecipient},
+    ToUserProfile as _,
 };
 use opentalk_controller_settings::{Settings, TenantAssignment};
 use opentalk_controller_utils::{
@@ -74,7 +77,6 @@ use crate::{
         responses::{BadRequest, Forbidden, InternalServerError, NotFound, Unauthorized},
         v1::{events::shared_folder::put_shared_folder, util::GetUserProfilesBatched},
     },
-    services::{ExternalMailRecipient, MailRecipient, MailService, UnregisteredMailRecipient},
     settings::SharedSettingsActix,
 };
 

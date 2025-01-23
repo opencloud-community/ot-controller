@@ -52,7 +52,7 @@ use async_trait::async_trait;
 use kustos::Authz;
 use lapin_pool::RabbitMqPool;
 use oidc::OidcContext;
-use opentalk_controller_service::{ControllerBackend, Whatever};
+use opentalk_controller_service::{services::MailService, ControllerBackend, Whatever};
 use opentalk_controller_service_facade::OpenTalkControllerService;
 use opentalk_database::Db;
 use opentalk_jobs::job_runner::JobRunner;
@@ -84,7 +84,6 @@ use crate::{
         signaling::{breakout::BreakoutRooms, moderation::ModerationModule, SignalingProtocols},
         v1::{middleware::metrics::RequestMetrics, response::error::json_error_handler},
     },
-    services::MailService,
     settings::{MonitoringSettings, Settings, SharedSettings},
     trace::ReducedSpanBuilder,
 };
@@ -94,7 +93,6 @@ mod caches;
 mod cli;
 mod metrics;
 mod oidc;
-mod services;
 mod swagger;
 mod trace;
 
@@ -210,6 +208,8 @@ pub struct Controller {
     kc_admin_client: Arc<KeycloakAdminClient>,
 
     authz: Authz,
+
+    mail_service: MailService,
 
     /// RabbitMQ connection pool, can be used to create connections and channels
     pub rabbitmq_pool: Arc<RabbitMqPool>,
@@ -419,6 +419,16 @@ impl Controller {
                 .whatever_context("Failed to initialize kustos/authz")?
         };
 
+        let mail_service = MailService::new(
+            shared_settings.clone(),
+            metrics.endpoint.clone(),
+            rabbitmq_pool.clone(),
+            rabbitmq_pool
+                .create_channel()
+                .await
+                .whatever_context("Failed to create rabbitmq channel")?,
+        );
+
         let mut initializer = ModuleInitializer {
             init_data: SignalingModuleInitData {
                 startup_settings: settings.clone(),
@@ -452,6 +462,7 @@ impl Controller {
                 oidc_provider,
                 storage.clone(),
                 exchange_handle.clone(),
+                mail_service.clone(),
                 kc_admin_client.clone(),
                 initializer.signaling_modules.get_module_features(),
             )
@@ -468,6 +479,7 @@ impl Controller {
             oidc,
             kc_admin_client,
             authz,
+            mail_service,
             rabbitmq_pool,
             exchange_handle,
             volatile,
@@ -517,15 +529,7 @@ impl Controller {
 
             let kc_admin_client = Data::from(self.kc_admin_client);
 
-            let mail_service = Data::new(MailService::new(
-                self.shared_settings.clone(),
-                self.metrics.endpoint.clone(),
-                self.rabbitmq_pool.clone(),
-                self.rabbitmq_pool
-                    .create_channel()
-                    .await
-                    .whatever_context("Failed to create rabbitmq channel")?,
-            ));
+            let mail_service = Data::new(self.mail_service);
 
             log::info!("Making sure the default permissions are set");
             check_or_create_kustos_default_permissions(&self.authz)

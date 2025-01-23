@@ -53,7 +53,6 @@ opentalk-database.workspace = true
 opentalk-db-storage.workspace = true
 opentalk-jobs.workspace = true
 opentalk-keycloak-admin.workspace = true
-opentalk-mail-worker-protocol = { workspace = true, features = ["client"] }
 opentalk-nextcloud-client.workspace = true
 opentalk-r3dlock.workspace = true
 opentalk-signaling-core.workspace = true

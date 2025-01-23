@@ -12,19 +12,19 @@ use opentelemetry::{
 
 const MAIL_TASK_KIND: Key = Key::from_static_str("mail_task_kind");
 
-/// TODO(WR)
+/// Metrics belonging to endpoints
 #[derive(Debug)]
 pub struct EndpointMetrics {
-    /// TODO(WR)
+    /// A histogram for the request durations
     pub request_durations: Histogram<f64>,
-    /// TODO(WR)
+    /// A histogram for the response sizes
     pub response_sizes: Histogram<u64>,
-    /// TODO(WR)
+    /// A counter for the issued email tasks
     pub issued_email_tasks_count: Counter<u64>,
 }
 
 impl EndpointMetrics {
-    /// TODO(WR)
+    /// Increment the number of issued email tasks
     pub fn increment_issued_email_tasks_count(&self, mail_task: &MailTask) {
         self.issued_email_tasks_count
             .add(1, &[KeyValue::new(MAIL_TASK_KIND, mail_task.as_kind_str())]);

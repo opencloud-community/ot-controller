@@ -7,6 +7,7 @@ use actix_web::{
     delete, get, patch, post,
     web::{Data, Json, Path, Query, ReqData},
 };
+use opentalk_controller_service::services::MailService;
 use opentalk_controller_settings::Settings;
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::Db;
@@ -50,7 +51,6 @@ use crate::{
         responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
         v1::{events::notify_event_invitees_by_room_about_update, ApiResponse},
     },
-    services::MailService,
     settings::SharedSettingsActix,
 };
 

@@ -25,6 +25,7 @@
 pub mod controller_backend;
 pub mod helpers;
 pub mod metrics;
+pub mod services;
 
 pub use controller_backend::ControllerBackend;
 pub use helpers::{email_to_libravatar_url, require_feature, ToUserProfile};
