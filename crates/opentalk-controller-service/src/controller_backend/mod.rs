@@ -101,14 +101,15 @@ impl OpenTalkControllerServiceBackend for ControllerBackend {
         waiting_room: bool,
         e2e_encryption: bool,
     ) -> Result<RoomResource, ApiError> {
-        self.create_room(
-            current_user,
-            password,
-            enable_sip,
-            waiting_room,
-            e2e_encryption,
-        )
-        .await
+        Ok(self
+            .create_room(
+                current_user,
+                password,
+                enable_sip,
+                waiting_room,
+                e2e_encryption,
+            )
+            .await?)
     }
 
     async fn patch_room(
@@ -119,14 +120,15 @@ impl OpenTalkControllerServiceBackend for ControllerBackend {
         waiting_room: Option<bool>,
         e2e_encryption: Option<bool>,
     ) -> Result<RoomResource, ApiError> {
-        self.patch_room(
-            current_user,
-            room_id,
-            password,
-            waiting_room,
-            e2e_encryption,
-        )
-        .await
+        Ok(self
+            .patch_room(
+                current_user,
+                room_id,
+                password,
+                waiting_room,
+                e2e_encryption,
+            )
+            .await?)
     }
 
     async fn delete_room(
@@ -135,12 +137,13 @@ impl OpenTalkControllerServiceBackend for ControllerBackend {
         room_id: RoomId,
         force_delete_reference_if_external_services_fail: bool,
     ) -> Result<(), ApiError> {
-        self.delete_room(
-            current_user,
-            room_id,
-            force_delete_reference_if_external_services_fail,
-        )
-        .await
+        Ok(self
+            .delete_room(
+                current_user,
+                room_id,
+                force_delete_reference_if_external_services_fail,
+            )
+            .await?)
     }
 
     async fn get_room(&self, room_id: &RoomId) -> Result<RoomResource, ApiError> {

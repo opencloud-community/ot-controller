@@ -76,25 +76,6 @@ impl ControllerBackend {
         enable_sip: bool,
         waiting_room: bool,
         e2e_encryption: bool,
-    ) -> Result<RoomResource, ApiError> {
-        Ok(self
-            .create_room_inner(
-                current_user,
-                password,
-                enable_sip,
-                waiting_room,
-                e2e_encryption,
-            )
-            .await?)
-    }
-
-    async fn create_room_inner(
-        &self,
-        current_user: RequestUser,
-        password: Option<RoomPassword>,
-        enable_sip: bool,
-        waiting_room: bool,
-        e2e_encryption: bool,
     ) -> Result<RoomResource, CaptureApiError> {
         let settings = self.settings.load();
         let mut conn = self.db.get_conn().await?;
@@ -145,25 +126,6 @@ impl ControllerBackend {
         password: Option<Option<RoomPassword>>,
         waiting_room: Option<bool>,
         e2e_encryption: Option<bool>,
-    ) -> Result<RoomResource, ApiError> {
-        Ok(self
-            .patch_room_inner(
-                current_user,
-                room_id,
-                password,
-                waiting_room,
-                e2e_encryption,
-            )
-            .await?)
-    }
-
-    async fn patch_room_inner(
-        &self,
-        current_user: RequestUser,
-        room_id: RoomId,
-        password: Option<Option<RoomPassword>>,
-        waiting_room: Option<bool>,
-        e2e_encryption: Option<bool>,
     ) -> Result<RoomResource, CaptureApiError> {
         let settings = self.settings.load();
         let mut conn = self.db.get_conn().await?;
@@ -188,21 +150,6 @@ impl ControllerBackend {
     }
 
     pub(super) async fn delete_room(
-        &self,
-        current_user: RequestUser,
-        room_id: RoomId,
-        force_delete_reference_if_external_services_fail: bool,
-    ) -> Result<(), ApiError> {
-        Ok(self
-            .delete_room_inner(
-                current_user,
-                room_id,
-                force_delete_reference_if_external_services_fail,
-            )
-            .await?)
-    }
-
-    async fn delete_room_inner(
         &self,
         current_user: RequestUser,
         room_id: RoomId,
