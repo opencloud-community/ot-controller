@@ -4,24 +4,30 @@
 
 use actix_http::StatusCode;
 use actix_web::{
-    delete, get,
-    web::{Data, Path, Query},
+    delete, get, post,
+    web::{Data, Path, Payload, Query},
     HttpResponse,
 };
+use futures::TryStreamExt;
+use opentalk_controller_service::helpers::asset_to_asset_resource;
+use opentalk_controller_service_facade::OpenTalkControllerService;
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::Db;
 use opentalk_db_storage::assets::Asset;
 use opentalk_signaling_core::{
-    assets::{delete_asset, get_asset},
-    ObjectStorage,
+    assets::{delete_asset, get_asset, NewAssetFileName},
+    ObjectStorage, ObjectStorageError,
 };
 use opentalk_types_api_v1::{
-    assets::AssetResource, error::ApiError, pagination::PagePaginationQuery,
-    rooms::by_room_id::assets::RoomsByRoomIdAssetsGetResponseBody,
+    error::ApiError,
+    pagination::PagePaginationQuery,
+    rooms::by_room_id::assets::{
+        PostAssetQuery, PostAssetResponseBody, RoomsByRoomIdAssetsGetResponseBody,
+    },
 };
-use opentalk_types_common::{assets::AssetId, rooms::RoomId};
+use opentalk_types_common::{assets::AssetId, rooms::RoomId, time::Timestamp};
 
-use super::{response::NoContent, ApiResponse};
+use super::{response::NoContent, ApiResponse, DefaultApiResult};
 use crate::api::responses::{BinaryData, Forbidden, InternalServerError, NotFound, Unauthorized};
 
 /// Get the assets associated with a room.
@@ -148,6 +154,78 @@ async fn room_asset_inner(
     Ok(HttpResponse::build(StatusCode::OK).streaming(data))
 }
 
+/// Create an asset for a room from an uploaded file
+///
+/// The asset is attached to the room and saved in the storage.
+#[utoipa::path(
+    operation_id = "create_room_asset",
+    request_body(
+        content = String,
+        content_type = "application/octet-stream",
+        description = "The contents of the file",
+    ),
+    params(
+        ("room_id" = RoomId, description = "The id of the room"),
+        PostAssetQuery,
+    ),
+    responses(
+        (
+            status = StatusCode::OK,
+            description = "The asset has been created successfully",
+            body = PostAssetResponseBody,
+        ),
+        (
+            status = StatusCode::UNAUTHORIZED,
+            response = Unauthorized,
+        ),
+        (
+            status = StatusCode::FORBIDDEN,
+            response = Forbidden,
+        ),
+        (
+            status = StatusCode::NOT_FOUND,
+            response = NotFound,
+        ),
+        (
+            status = StatusCode::INTERNAL_SERVER_ERROR,
+            response = InternalServerError,
+        ),
+    ),
+    security(
+        ("BearerAuth" = []),
+    ),
+)]
+#[post("/rooms/{room_id}/assets")]
+pub async fn create(
+    service: Data<OpenTalkControllerService>,
+    path: Path<RoomId>,
+    query: Query<PostAssetQuery>,
+    data: Payload,
+) -> DefaultApiResult<PostAssetResponseBody, ApiError> {
+    let room_id = path.into_inner();
+    let query = query.into_inner();
+
+    let filename = NewAssetFileName::new_with_event_title(
+        query.event_title,
+        query.kind,
+        Timestamp::now(),
+        query.file_extension,
+    );
+
+    let data = data.map_err(|e| ObjectStorageError::Other {
+        message: "Upload error".to_string(),
+        source: Some(e.into()),
+    });
+
+    let resource = service
+        .create_room_asset(room_id, filename, query.namespace, Box::new(data))
+        .await?;
+
+    let response = PostAssetResponseBody(resource);
+
+    Ok(ApiResponse::new(response))
+}
+
 /// Delete an asset from a room.
 ///
 /// The asset is removed from the room and deleted from the storage.
@@ -200,25 +278,4 @@ async fn delete_inner(
     delete_asset(storage, db, room_id, asset_id).await?;
 
     Ok(NoContent)
-}
-
-pub(crate) fn asset_to_asset_resource(asset: Asset) -> AssetResource {
-    let Asset {
-        id,
-        created_at,
-        updated_at: _,
-        namespace,
-        kind,
-        filename,
-        tenant_id: _,
-        size,
-    } = asset;
-    AssetResource {
-        id,
-        filename,
-        namespace,
-        created_at,
-        kind,
-        size,
-    }
 }

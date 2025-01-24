@@ -793,6 +793,7 @@ impl ModulesRegistrar for Controller {
         api::signaling::ws_service,
         api::v1::assets::room_asset,
         api::v1::assets::room_assets,
+        api::v1::assets::create,
         api::v1::assets::delete,
         api::v1::auth::get_login,
         api::v1::auth::post_login,
@@ -931,6 +932,7 @@ impl ModulesRegistrar for Controller {
             opentalk_types_api_v1::users::UserAssetResource,
             opentalk_types_api_v1::users::me::PatchMeRequestBody,
             opentalk_types_common::assets::AssetId,
+            opentalk_types_common::assets::AssetFileKind,
             opentalk_types_common::assets::AssetSorting,
             opentalk_types_common::assets::FileExtension,
             opentalk_types_common::auth::ResumptionToken,
@@ -1095,6 +1097,7 @@ fn v1_scope(
                 .service(api::v1::invites::delete_invite)
                 .service(api::v1::assets::room_assets)
                 .service(api::v1::assets::room_asset)
+                .service(api::v1::assets::create)
                 .service(api::v1::assets::delete)
                 .service(api::v1::streaming_targets::get_streaming_targets)
                 .service(api::v1::streaming_targets::post_streaming_target)

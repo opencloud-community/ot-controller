@@ -4,12 +4,19 @@
 
 use std::sync::Arc;
 
+use bytes::Bytes;
+use futures_core::Stream;
+use opentalk_signaling_core::{assets::NewAssetFileName, ObjectStorageError};
+use opentalk_types_api_v1::assets::AssetResource;
+//use bytes::Bytes;
+//use futures_core::Stream;
 use opentalk_types_api_v1::{
     auth::GetLoginResponseBody,
     error::ApiError,
     rooms::{by_room_id::GetRoomEventResponseBody, GetRoomsResponseBody, RoomResource},
 };
 use opentalk_types_common::{
+    modules::ModuleId,
     rooms::{RoomId, RoomPassword},
     tariffs::TariffResource,
     users::UserId,
@@ -135,5 +142,20 @@ impl OpenTalkControllerService {
         room_id: &RoomId,
     ) -> Result<GetRoomEventResponseBody, ApiError> {
         self.backend.read().await.get_room_event(room_id).await
+    }
+
+    /// Create an asset for a room from an uploaded file
+    pub async fn create_room_asset(
+        &self,
+        room_id: RoomId,
+        filename: NewAssetFileName,
+        namespace: Option<ModuleId>,
+        data: Box<dyn Stream<Item = Result<Bytes, ObjectStorageError>> + Unpin>,
+    ) -> Result<AssetResource, ApiError> {
+        self.backend
+            .read()
+            .await
+            .create_room_asset(room_id, filename, namespace, data)
+            .await
     }
 }

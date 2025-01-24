@@ -3,12 +3,17 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use async_trait::async_trait;
+use bytes::Bytes;
+use futures_core::Stream;
+use opentalk_signaling_core::{assets::NewAssetFileName, ObjectStorageError};
 use opentalk_types_api_v1::{
+    assets::AssetResource,
     auth::GetLoginResponseBody,
     error::ApiError,
     rooms::{by_room_id::GetRoomEventResponseBody, GetRoomsResponseBody, RoomResource},
 };
 use opentalk_types_common::{
+    modules::ModuleId,
     rooms::{RoomId, RoomPassword},
     tariffs::TariffResource,
     users::UserId,
@@ -66,4 +71,13 @@ pub trait OpenTalkControllerServiceBackend: Send + Sync {
 
     /// Get a room's event
     async fn get_room_event(&self, room_id: &RoomId) -> Result<GetRoomEventResponseBody, ApiError>;
+
+    /// Create an asset for a room from an uploaded file
+    async fn create_room_asset(
+        &self,
+        room_id: RoomId,
+        filename: NewAssetFileName,
+        namespace: Option<ModuleId>,
+        data: Box<dyn Stream<Item = Result<Bytes, ObjectStorageError>> + Unpin>,
+    ) -> Result<AssetResource, ApiError>;
 }

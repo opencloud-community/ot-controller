@@ -7,7 +7,7 @@ format.
 
 [Stoplight Spectral](https://stoplight.io/open-source/spectral) is a linter tool
 for structured data such as JSON and YAML. It contains built-in support to
-ensure the consistency of an OpenAPI specfication. These checks go far beyond
+ensure the consistency of an OpenAPI specification. These checks go far beyond
 what most other linters detect, resulting in significantly higher consistency of
 the OpenAPI specification.
 

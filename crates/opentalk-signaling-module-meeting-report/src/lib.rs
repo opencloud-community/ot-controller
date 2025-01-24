@@ -11,7 +11,7 @@ use opentalk_controller_settings::ReportsTemplate;
 use opentalk_database::Db;
 use opentalk_db_storage::{events::Event as DbEvent, users::User};
 use opentalk_signaling_core::{
-    assets::{save_asset, AssetError, AssetFileKind, NewAssetFileName},
+    assets::{save_asset, AssetError, NewAssetFileName},
     control::{
         self,
         storage::{
@@ -24,7 +24,10 @@ use opentalk_signaling_core::{
     SignalingRoomId, VolatileStorage,
 };
 use opentalk_types_common::{
-    assets::FileExtension, modules::ModuleId, time::Timestamp, users::UserId,
+    assets::{AssetFileKind, FileExtension},
+    modules::ModuleId,
+    time::Timestamp,
+    users::UserId,
 };
 use opentalk_types_signaling::{ParticipantId, ParticipationKind, Role};
 use opentalk_types_signaling_meeting_report::{

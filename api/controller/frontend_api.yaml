@@ -1243,6 +1243,71 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+    post:
+      tags:
+        - "api::v1::assets"
+      summary: Create an asset for a room from an uploaded file
+      description: The asset is attached to the room and saved in the storage.
+      operationId: create_room_asset
+      parameters:
+        - name: room_id
+          in: path
+          description: The id of the room
+          required: true
+          schema:
+            $ref: "#/components/schemas/RoomId"
+        - name: event_title
+          in: query
+          description: The title of the event
+          required: false
+          schema:
+            oneOf:
+              - type: "null"
+              - $ref: "#/components/schemas/EventTitle"
+        - name: file_extension
+          in: query
+          description: The file extension
+          required: true
+          schema:
+            $ref: "#/components/schemas/FileExtension"
+        - name: kind
+          in: query
+          description: The kind of the asset
+          required: true
+          schema:
+            $ref: "#/components/schemas/AssetFileKind"
+        - name: namespace
+          in: query
+          description: The namespace the asset is assigned to
+          required: false
+          schema:
+            oneOf:
+              - type: "null"
+              - $ref: "#/components/schemas/ModuleId"
+      requestBody:
+        description: The contents of the file
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+        required: true
+      responses:
+        "200":
+          description: The asset has been created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostAssetResponseBody"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
   "/rooms/{room_id}/assets/{asset_id}":
     get:
       tags:
@@ -2536,6 +2601,14 @@ paths:
         - BearerAuth: []
 components:
   schemas:
+    AssetFileKind:
+      type: string
+      description: An asset file kind
+      examples:
+        - mykind
+      maxLength: 20
+      minLength: 1
+      pattern: "^[0-9a-zA-Z_]*$"
     AssetId:
       type: string
       format: uuid
@@ -4055,6 +4128,9 @@ components:
             - boolean
             - "null"
           description: If waiting room is enabled
+    PostAssetResponseBody:
+      $ref: "#/components/schemas/AssetResource"
+      description: "Response for *POST /rooms/{room_id}/assets*"
     PostCallInStartRequestBody:
       type: object
       description: "Body for the `POST /services/call_in/start` endpoint"
