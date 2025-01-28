@@ -82,6 +82,13 @@ async fn get_inner(
 
     let room = Room::get(&mut conn, room_id).await?;
 
+    if room.e2e_encryption {
+        return Err(ApiError::not_found()
+            .with_code("service_unavailable")
+            .with_message("Call-in not available for end-to-end encrypted room".to_string())
+            .into());
+    }
+
     require_feature(&mut conn, &settings, room.created_by, &features::call_in()).await?;
 
     let config = SipConfig::get_by_room(&mut conn, room_id).await?;
@@ -160,6 +167,13 @@ async fn put_inner(
     let mut conn = db.get_conn().await?;
 
     let room = Room::get(&mut conn, room_id).await?;
+
+    if room.e2e_encryption {
+        return Err(ApiError::forbidden()
+            .with_code("service_unavailable")
+            .with_message("Call-in not available for end-to-end encrypted room".to_string())
+            .into());
+    }
 
     require_feature(&mut conn, &settings, room.created_by, &features::call_in()).await?;
 

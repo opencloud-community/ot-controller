@@ -16,6 +16,7 @@ use opentalk_database::{DatabaseError, DbConnection};
 use opentalk_types_common::{
     call_in::CallInInfo,
     events::{EventInfo, MeetingDetails},
+    features,
     rooms::RoomId,
     streaming::get_public_urls_from_room_streaming_targets,
     users::UserId,
@@ -27,6 +28,7 @@ use crate::{
     invites::Invite,
     sip_configs::SipConfig,
     streaming_targets::get_room_streaming_targets,
+    tariffs::Tariff,
 };
 
 /// Trait for models that have user-ids attached to them like created_by/updated_by fields
@@ -87,19 +89,24 @@ pub async fn build_event_info(
     room_id: RoomId,
     e2e_encryption: bool,
     event: &Event,
+    tariff: &Tariff,
 ) -> Result<EventInfo, DatabaseError> {
     let event_info = if event.show_meeting_details {
         let invite = Invite::get_first_for_room(conn, room_id).await?;
 
         let call_in = if let Some(call_in_tel) = call_in_tel {
-            match SipConfig::get_by_room(conn, room_id).await {
-                Ok(sip_config) => Some(CallInInfo {
-                    tel: call_in_tel,
-                    id: sip_config.sip_id,
-                    password: sip_config.password,
-                }),
-                Err(DatabaseError::NotFound) => None,
-                Err(e) => return Err(e),
+            if e2e_encryption || tariff.is_feature_disabled(&features::call_in()) {
+                None
+            } else {
+                match SipConfig::get_by_room(conn, room_id).await {
+                    Ok(sip_config) => Some(CallInInfo {
+                        tel: call_in_tel,
+                        id: sip_config.sip_id,
+                        password: sip_config.password,
+                    }),
+                    Err(DatabaseError::NotFound) => None,
+                    Err(e) => return Err(e),
+                }
             }
         } else {
             None

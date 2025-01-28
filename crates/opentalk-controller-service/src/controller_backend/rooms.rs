@@ -16,6 +16,7 @@ use opentalk_db_storage::{
     events::Event,
     rooms::{NewRoom, Room, UpdateRoom},
     sip_configs::NewSipConfig,
+    tariffs::Tariff,
     utils::build_event_info,
 };
 use opentalk_types_api_v1::{
@@ -221,12 +222,20 @@ impl ControllerBackend {
 
         let room = Room::get(&mut conn, *room_id).await?;
 
+        let tariff = Tariff::get_by_user_id(&mut conn, &room.created_by).await?;
+
         match event.as_ref() {
             Some(event) => {
                 let call_in_tel = settings.call_in.as_ref().map(|call_in| call_in.tel.clone());
-                let event_info =
-                    build_event_info(&mut conn, call_in_tel, *room_id, room.e2e_encryption, event)
-                        .await?;
+                let event_info = build_event_info(
+                    &mut conn,
+                    call_in_tel,
+                    *room_id,
+                    room.e2e_encryption,
+                    event,
+                    &tariff,
+                )
+                .await?;
                 Ok(GetRoomEventResponseBody(event_info))
             }
             None => Err(ApiError::not_found().into()),
