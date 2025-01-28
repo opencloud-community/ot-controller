@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.28.2] - 2025-01-28
+
+[0.28.2]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.28.1...v0.28.2
+
+- Add an endpoint to determine the readiness of the service (Closes #923) ([#923](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/923))
+
 ## [0.28.1] - 2025-01-10
 
 [0.28.1]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.28.0...v0.28.1

@@ -53,6 +53,7 @@ use opentalk_signaling_core::{
 };
 use opentalk_types::api::error::ApiError;
 use rustls_pki_types::{CertificateDer, PrivatePkcs8KeyDer};
+use service_probe::{set_service_state, start_probe, ServiceState};
 use snafu::{Backtrace, ErrorCompat, Report, ResultExt, Snafu};
 use swagger::WithSwagger as _;
 use tokio::{
@@ -73,7 +74,7 @@ use crate::{
         v1::{middleware::metrics::RequestMetrics, response::error::json_error_handler},
     },
     services::MailService,
-    settings::{Settings, SharedSettings},
+    settings::{MonitoringSettings, Settings, SharedSettings},
     trace::ReducedSpanBuilder,
 };
 
@@ -433,6 +434,12 @@ impl Controller {
     pub async fn run(self) -> Result<()> {
         let signaling_modules = Arc::new(self.signaling);
 
+        if let Some(MonitoringSettings { port, addr }) = self.startup_settings.monitoring {
+            start_probe(addr, port, ServiceState::Up)
+                .await
+                .whatever_context("Failed to start monitoring")?;
+        }
+
         // Start JobExecuter
         JobRunner::start(
             self.db.clone(),
@@ -560,6 +567,7 @@ impl Controller {
             format!("Failed to bind http server to {}:{}", address.0, address.1)
         })?;
 
+        set_service_state(ServiceState::Ready);
         log::info!("Startup finished");
 
         let http_server = http_server.disable_signals().run();
