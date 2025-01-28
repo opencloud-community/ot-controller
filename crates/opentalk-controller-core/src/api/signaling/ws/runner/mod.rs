@@ -1662,6 +1662,7 @@ impl Runner {
                         self.room.id,
                         self.room.e2e_encryption,
                         event,
+                        &tariff,
                     )
                     .await?,
                 )

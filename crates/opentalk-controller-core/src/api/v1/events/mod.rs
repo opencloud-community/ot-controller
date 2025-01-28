@@ -226,7 +226,8 @@ impl EventRoomInfoExt for EventRoomInfo {
             .defaults
             .disabled_features
             .contains(&features::call_in())
-            && !tariff.is_feature_disabled(&features::call_in());
+            && !tariff.is_feature_disabled(&features::call_in())
+            && !room.e2e_encryption;
 
         let mut call_in = None;
 
