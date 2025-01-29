@@ -228,6 +228,21 @@ impl Builder {
             .set_initial(self.volatile.signaling_storage())
             .await?;
 
+        if self.room.e2e_encryption {
+            self.modules
+                .get_module_features_mut()
+                .remove(&opentalk_types_signaling_recording::MODULE_ID);
+            self.modules
+                .get_module_features_mut()
+                .remove(&opentalk_types_signaling_recording_service::MODULE_ID);
+            self.modules
+                .get_module_features_mut()
+                .entry(ModuleId::default())
+                .and_modify(|f| {
+                    f.remove(&opentalk_types_common::features::CALL_IN_FEATURE_ID);
+                });
+        }
+
         Ok(Runner {
             runner_id: self.runner_id,
             id: self.id,

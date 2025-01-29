@@ -40,6 +40,10 @@ impl Modules {
         self.module_features.clone()
     }
 
+    pub fn get_module_features_mut(&mut self) -> &mut BTreeMap<ModuleId, BTreeSet<FeatureId>> {
+        &mut self.module_features
+    }
+
     pub async fn add_module<M>(&mut self, module: M)
     where
         M: SignalingModule,
