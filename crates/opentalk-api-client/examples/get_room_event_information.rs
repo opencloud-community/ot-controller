@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_api_client::{Client, OpenTalkApiClient};
+use opentalk_api_client::{Client, InviteCodeAuthorization, OpenTalkApiClient};
 use opentalk_client_shared::ApiError;
 use opentalk_types_common::rooms::invite_codes::InviteCode;
 use snafu::whatever;
@@ -34,7 +34,10 @@ async fn main() -> Result<(), ApiError<reqwest::Error>> {
     println!("Verification: {verification:?}");
 
     let room_event = client
-        .get_room_event(invite_code, verification.room_id)
+        .get_room_event(
+            InviteCodeAuthorization::from(invite_code),
+            verification.room_id,
+        )
         .await?;
 
     println!("Event: {room_event:?}");

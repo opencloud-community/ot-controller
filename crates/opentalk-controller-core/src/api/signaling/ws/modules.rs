@@ -47,9 +47,9 @@ impl Modules {
         log::debug!("Registering module {}", M::NAMESPACE);
 
         self.modules
-            .insert(M::module_id(), Box::new(ModuleCallerImpl { module }));
+            .insert(M::NAMESPACE, Box::new(ModuleCallerImpl { module }));
         self.module_features
-            .insert(M::module_id(), M::get_provided_features());
+            .insert(M::NAMESPACE, M::get_provided_features());
     }
 
     pub async fn on_event_targeted(
@@ -450,7 +450,7 @@ where
     }
 
     fn module_id(&self) -> ModuleId {
-        M::module_id()
+        M::NAMESPACE
     }
 
     fn provided_features(&self) -> BTreeSet<FeatureId> {

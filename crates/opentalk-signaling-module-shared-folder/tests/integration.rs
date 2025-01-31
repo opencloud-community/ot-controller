@@ -17,7 +17,10 @@ use opentalk_signaling_core::{
 };
 use opentalk_test_util::{TestContext, ROOM_ID, USER_1, USER_2};
 use opentalk_types_common::{
-    events::EventId, rooms::RoomId, shared_folders::SharedFolder, users::UserId,
+    events::EventId,
+    rooms::RoomId,
+    shared_folders::{SharedFolder, MODULE_ID},
+    users::UserId,
 };
 use opentalk_types_signaling::Role;
 use opentalk_types_signaling_control::event::{ControlEvent, JoinSuccess};
@@ -135,7 +138,7 @@ async fn room_without_event() {
                 ..
             })) => {
                 // check that no shared folder information is available
-                assert!(!module_data.contains_key("shared_folder"));
+                assert!(!module_data.contains_key(&MODULE_ID));
             }
             _ => panic!(),
         }
@@ -163,7 +166,7 @@ async fn room_without_event() {
                 ..
             })) => {
                 // check that no shared folder information is available
-                assert!(!module_data.contains_key("shared_folder"));
+                assert!(!module_data.contains_key(&MODULE_ID));
             }
             _ => panic!(),
         }
@@ -227,7 +230,7 @@ async fn room_with_event_but_no_shared_folder() {
                 ..
             })) => {
                 // check that no shared folder information is available
-                assert!(!module_data.contains_key("shared_folder"));
+                assert!(!module_data.contains_key(&MODULE_ID));
             }
             _ => panic!(),
         }
@@ -255,7 +258,7 @@ async fn room_with_event_but_no_shared_folder() {
                 ..
             })) => {
                 // check that no shared folder information is available
-                assert!(!module_data.contains_key("shared_folder"));
+                assert!(!module_data.contains_key(&MODULE_ID));
             }
             _ => panic!(),
         }

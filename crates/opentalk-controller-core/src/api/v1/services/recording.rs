@@ -198,7 +198,7 @@ pub(crate) async fn get_recording_upload(
                 &storage,
                 db.into_inner(),
                 room_id,
-                Some(opentalk_types_signaling_recording::NAMESPACE),
+                Some(opentalk_types_signaling_recording::MODULE_ID),
                 filename,
                 receiver_stream,
                 ChunkFormat::SequenceNumberAndData,

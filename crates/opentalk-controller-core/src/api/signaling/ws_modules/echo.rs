@@ -6,17 +6,18 @@ use opentalk_signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
     SignalingModuleInitData,
 };
+use opentalk_types_common::modules::{module_id, ModuleId};
 use serde_json::Value;
 
 /// The namespace string for the signaling module
-pub const NAMESPACE: &str = "echo";
+pub const MODULE_ID: ModuleId = module_id!("echo");
 
 /// A sample echo websocket module
 pub struct Echo;
 
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for Echo {
-    const NAMESPACE: &'static str = NAMESPACE;
+    const NAMESPACE: ModuleId = MODULE_ID;
     type Params = ();
     type Incoming = Value;
     type Outgoing = Value;

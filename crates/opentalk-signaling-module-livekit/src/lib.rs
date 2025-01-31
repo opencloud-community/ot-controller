@@ -19,6 +19,7 @@ use opentalk_signaling_core::{
     control, CleanupScope, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
+use opentalk_types_common::modules::ModuleId;
 use opentalk_types_signaling::{ParticipantId, ParticipationKind, ParticipationVisibility, Role};
 use opentalk_types_signaling_livekit::{
     command::{self, UnrestrictedParticipants},
@@ -71,7 +72,7 @@ impl LivekitStorageProvider for VolatileStorage {
 
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for Livekit {
-    const NAMESPACE: &'static str = opentalk_types_signaling_livekit::NAMESPACE;
+    const NAMESPACE: ModuleId = opentalk_types_signaling_livekit::MODULE_ID;
 
     type Params = Arc<LivekitParams>;
     type Incoming = command::LiveKitCommand;

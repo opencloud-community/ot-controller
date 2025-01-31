@@ -102,6 +102,6 @@ where
     where
         S: Stream<Item = M::ExtEvent> + 'static,
     {
-        self.events.push(any_stream(M::module_id(), stream));
+        self.events.push(any_stream(M::NAMESPACE, stream));
     }
 }

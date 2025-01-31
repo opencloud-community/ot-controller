@@ -82,7 +82,13 @@ impl ControllerBackend {
         let mut conn = self.db.get_conn().await?;
 
         if enable_sip {
-            require_feature(&mut conn, &settings, current_user.id, &features::call_in()).await?;
+            require_feature(
+                &mut conn,
+                &settings,
+                current_user.id,
+                &features::CALL_IN_MODULE_FEATURE_ID,
+            )
+            .await?;
         }
 
         let new_room = NewRoom {

@@ -108,7 +108,13 @@ async fn post_call_in_start_inner(
             .into());
     }
 
-    require_feature(&mut conn, &settings, room.created_by, &features::call_in()).await?;
+    require_feature(
+        &mut conn,
+        &settings,
+        room.created_by,
+        &features::CALL_IN_MODULE_FEATURE_ID,
+    )
+    .await?;
 
     if sip_config.password != request.pin {
         return Err(invalid_credentials_error().into());

@@ -26,6 +26,7 @@ use opentalk_signaling_core::{
     SignalingRoomId, VolatileStorage,
 };
 use opentalk_types_common::{
+    modules::ModuleId,
     time::Timestamp,
     users::{GroupId, GroupName, UserId},
 };
@@ -35,7 +36,7 @@ use opentalk_types_signaling_chat::{
     event::{ChatDisabled, ChatEnabled, ChatEvent, Error, HistoryCleared, MessageSent},
     peer_state::ChatPeerState,
     state::{ChatState, GroupHistory, PrivateHistory, StoredMessage},
-    MessageId, Scope, NAMESPACE,
+    MessageId, Scope, MODULE_ID,
 };
 use snafu::Report;
 
@@ -266,7 +267,7 @@ impl ChatStorageProvider for VolatileStorage {
 
 #[async_trait::async_trait(? Send)]
 impl SignalingModule for Chat {
-    const NAMESPACE: &'static str = NAMESPACE;
+    const NAMESPACE: ModuleId = MODULE_ID;
 
     type Params = ();
 

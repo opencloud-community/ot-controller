@@ -17,7 +17,10 @@ use opentalk_signaling_core::{
     CleanupScope, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
-use opentalk_types_common::shared_folders::{SharedFolder as SharedFolderType, NAMESPACE};
+use opentalk_types_common::{
+    modules::ModuleId,
+    shared_folders::{SharedFolder as SharedFolderType, MODULE_ID},
+};
 use opentalk_types_signaling::ForRole as _;
 use opentalk_types_signaling_shared_folder::event::SharedFolderEvent;
 use snafu::Report;
@@ -67,7 +70,7 @@ impl SharedFolderStorageProvider for VolatileStorage {
 
 #[async_trait::async_trait(? Send)]
 impl SignalingModule for SharedFolder {
-    const NAMESPACE: &'static str = NAMESPACE;
+    const NAMESPACE: ModuleId = MODULE_ID;
 
     type Params = ();
 

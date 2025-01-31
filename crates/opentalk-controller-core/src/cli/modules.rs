@@ -25,7 +25,7 @@ impl ModulesRegistrar for ModuleConsolePrinter {
     async fn register<M: SignalingModule>(&mut self) -> Result<(), Infallible> {
         println!(
             "{}: [{}]",
-            M::module_id(),
+            M::NAMESPACE,
             M::get_provided_features()
                 .into_iter()
                 .map(|f| format!("\"{f}\""))

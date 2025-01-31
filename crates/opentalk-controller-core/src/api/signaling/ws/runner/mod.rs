@@ -26,13 +26,13 @@ use opentalk_db_storage::{
 };
 use opentalk_signaling_core::{
     control::{
-        self, exchange, module_id,
+        self, exchange,
         storage::{
             AttributeActions, ControlStorageParticipantAttributes, GlobalRoomAttributeId,
             LocalRoomAttributeId, AVATAR_URL, DISPLAY_NAME, HAND_IS_UP, HAND_UPDATED_AT,
             IS_ROOM_OWNER, JOINED_AT, KIND, LEFT_AT, ROLE, USER_ID,
         },
-        ControlStateExt as _, ControlStorageProvider,
+        ControlStateExt as _, ControlStorageProvider, MODULE_ID,
     },
     AnyStream, ExchangeHandle, LockError, ObjectStorage, Participant, RoomLockingProvider as _,
     RunnerId, SignalingMetrics, SignalingModule, SignalingModuleError, SignalingRoomId,
@@ -545,7 +545,7 @@ impl Runner {
                         self.exchange_publish(
                             exchange::global_room_all_participants(self.room_id.room_id()),
                             serde_json::to_string(&NamespacedEvent {
-                                module: opentalk_types_signaling_moderation::module_id(),
+                                module: opentalk_types_signaling_moderation::MODULE_ID,
                                 timestamp: Timestamp::now(),
                                 payload: moderation::exchange::Message::LeftWaitingRoom(self.id),
                             })
@@ -1073,7 +1073,7 @@ impl Runner {
             }
         };
 
-        if namespaced.module == module_id() {
+        if namespaced.module == MODULE_ID {
             match serde_json::from_value(namespaced.payload) {
                 Ok(msg) => {
                     if let Err(e) = self.handle_control_msg(timestamp, msg).await {
@@ -1089,8 +1089,7 @@ impl Runner {
                 }
             }
             // Do not handle any other messages than control-join or echo before joined
-        } else if matches!(&self.state, RunnerState::Joined)
-            || namespaced.module == Echo::module_id()
+        } else if matches!(&self.state, RunnerState::Joined) || namespaced.module == Echo::NAMESPACE
         {
             match self
                 .handle_module_targeted_event(
@@ -1180,7 +1179,7 @@ impl Runner {
                         self.exchange_publish(
                             control::exchange::global_room_all_participants(self.room_id.room_id()),
                             serde_json::to_string(&NamespacedEvent {
-                                module: opentalk_types_signaling_moderation::module_id(),
+                                module: opentalk_types_signaling_moderation::MODULE_ID,
                                 timestamp,
                                 payload: moderation::exchange::Message::LeftWaitingRoom(self.id),
                             })
@@ -1493,7 +1492,7 @@ impl Runner {
         self.ws
             .send(Message::Text(
                 serde_json::to_string(&NamespacedEvent {
-                    module: opentalk_types_signaling_moderation::module_id(),
+                    module: opentalk_types_signaling_moderation::MODULE_ID,
                     timestamp,
                     payload: ModerationEvent::InWaitingRoom,
                 })
@@ -1505,7 +1504,7 @@ impl Runner {
         self.exchange_publish(
             control::exchange::global_room_all_participants(self.room_id.room_id()),
             serde_json::to_string(&NamespacedEvent {
-                module: opentalk_types_signaling_moderation::module_id(),
+                module: opentalk_types_signaling_moderation::MODULE_ID,
                 timestamp,
                 payload: moderation::exchange::Message::JoinedWaitingRoom(self.id),
             })
@@ -1872,7 +1871,7 @@ impl Runner {
             }
         };
 
-        if namespaced.module == module_id() {
+        if namespaced.module == MODULE_ID {
             let msg = match serde_json::from_value::<exchange::Message>(namespaced.payload) {
                 Ok(msg) => msg,
                 Err(e) => {
@@ -2006,7 +2005,7 @@ impl Runner {
                         self.ws
                             .send(Message::Text(
                                 serde_json::to_string(&NamespacedEvent {
-                                    module: opentalk_types_signaling_moderation::module_id(),
+                                    module: opentalk_types_signaling_moderation::MODULE_ID,
                                     timestamp,
                                     payload: ModerationEvent::Accepted,
                                 })
@@ -2081,7 +2080,7 @@ impl Runner {
                     self.ws
                         .send(Message::Text(
                             serde_json::to_string(&NamespacedEvent {
-                                module: opentalk_types_signaling_moderation::module_id(),
+                                module: opentalk_types_signaling_moderation::MODULE_ID,
                                 timestamp,
                                 payload: ModerationEvent::RaisedHandResetByModerator(
                                     RaisedHandResetByModerator { issued_by },
@@ -2097,7 +2096,7 @@ impl Runner {
                 self.ws
                     .send(Message::Text(
                         serde_json::to_string(&NamespacedEvent {
-                            module: opentalk_types_signaling_moderation::module_id(),
+                            module: opentalk_types_signaling_moderation::MODULE_ID,
                             timestamp,
                             payload: ModerationEvent::RaiseHandsEnabled(RaiseHandsEnabled {
                                 issued_by,
@@ -2121,7 +2120,7 @@ impl Runner {
                 self.ws
                     .send(Message::Text(
                         serde_json::to_string(&NamespacedEvent {
-                            module: opentalk_types_signaling_moderation::module_id(),
+                            module: opentalk_types_signaling_moderation::MODULE_ID,
                             timestamp,
                             payload: ModerationEvent::RaiseHandsDisabled(RaiseHandsDisabled {
                                 issued_by,
@@ -2181,7 +2180,7 @@ impl Runner {
         self.ws
             .send(Message::Text(
                 serde_json::to_string(&NamespacedEvent {
-                    module: opentalk_types_signaling_moderation::module_id(),
+                    module: opentalk_types_signaling_moderation::MODULE_ID,
                     timestamp,
                     payload: ModerationEvent::InWaitingRoom,
                 })
@@ -2193,7 +2192,7 @@ impl Runner {
         self.exchange_publish(
             control::exchange::global_room_all_participants(self.room_id.room_id()),
             serde_json::to_string(&NamespacedEvent {
-                module: opentalk_types_signaling_moderation::module_id(),
+                module: opentalk_types_signaling_moderation::MODULE_ID,
                 timestamp,
                 payload: moderation::exchange::Message::JoinedWaitingRoom(self.id),
             })
@@ -2213,7 +2212,7 @@ impl Runner {
         message: exchange::Message,
     ) {
         let message = NamespacedEvent {
-            module: module_id(),
+            module: MODULE_ID,
             timestamp,
             payload: message,
         };
@@ -2349,7 +2348,7 @@ impl Runner {
         self.ws
             .send(Message::Text(
                 serde_json::to_string(&NamespacedEvent {
-                    module: module_id(),
+                    module: MODULE_ID,
                     timestamp,
                     payload,
                 })
@@ -2477,19 +2476,19 @@ impl Runner {
             }
         };
 
-        if namespaced.module == control::module_id() {
+        if namespaced.module == control::MODULE_ID {
             if let Ok(exchange::Message::Joined(_)) =
                 serde_json::from_value::<exchange::Message>(namespaced.payload)
             {
                 return Some(JoinEvent::Room(self.room_id));
             }
-        } else if namespaced.module == opentalk_types_signaling_moderation::module_id() {
+        } else if namespaced.module == opentalk_types_signaling_moderation::MODULE_ID {
             if let Ok(moderation::exchange::Message::JoinedWaitingRoom(_)) =
                 serde_json::from_value::<moderation::exchange::Message>(namespaced.payload)
             {
                 return Some(JoinEvent::WaitingRoom);
             }
-        } else if namespaced.module == breakout::module_id() {
+        } else if namespaced.module == opentalk_types_signaling_breakout::MODULE_ID {
             if let Ok(breakout::exchange::Message::Joined(participant_joined_other_room)) =
                 serde_json::from_value::<breakout::exchange::Message>(namespaced.payload)
             {

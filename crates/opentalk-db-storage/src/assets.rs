@@ -184,7 +184,7 @@ pub struct RoomAsset {
 #[diesel(table_name = assets)]
 pub struct NewAsset {
     pub id: AssetId,
-    pub namespace: Option<String>,
+    pub namespace: Option<ModuleId>,
     pub kind: String,
     pub filename: String,
     pub tenant_id: TenantId,

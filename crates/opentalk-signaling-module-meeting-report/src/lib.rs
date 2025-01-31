@@ -23,12 +23,14 @@ use opentalk_signaling_core::{
     ObjectStorageError, SignalingModule, SignalingModuleError, SignalingModuleInitData,
     SignalingRoomId, VolatileStorage,
 };
-use opentalk_types_common::{assets::FileExtension, time::Timestamp, users::UserId};
+use opentalk_types_common::{
+    assets::FileExtension, modules::ModuleId, time::Timestamp, users::UserId,
+};
 use opentalk_types_signaling::{ParticipantId, ParticipationKind, Role};
 use opentalk_types_signaling_meeting_report::{
     command::MeetingReportCommand,
     event::{Error, MeetingReportEvent, PdfAsset},
-    NAMESPACE,
+    MODULE_ID,
 };
 use snafu::Report;
 use storage::MeetingReportStorage;
@@ -65,7 +67,7 @@ pub struct MeetingReport {
 
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for MeetingReport {
-    const NAMESPACE: &'static str = NAMESPACE;
+    const NAMESPACE: ModuleId = MODULE_ID;
 
     type Params = (TerdocClient, String);
 

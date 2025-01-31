@@ -10,12 +10,13 @@ use opentalk_signaling_core::{
     control, CleanupScope, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
+use opentalk_types_common::modules::ModuleId;
 use opentalk_types_signaling::Role;
 use opentalk_types_signaling_polls::{
     command::{PollsCommand, Start, Vote},
     event::{Error, PollsEvent, Started},
     state::PollsState,
-    Choice, ChoiceId, PollId, Results, NAMESPACE,
+    Choice, ChoiceId, PollId, Results, MODULE_ID,
 };
 use snafu::Report;
 use storage::PollsStorage;
@@ -46,7 +47,7 @@ impl PollsStorageProvider for VolatileStorage {
 
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for Polls {
-    const NAMESPACE: &'static str = NAMESPACE;
+    const NAMESPACE: ModuleId = MODULE_ID;
 
     type Params = ();
 
