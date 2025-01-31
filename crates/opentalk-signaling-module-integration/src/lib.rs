@@ -8,19 +8,22 @@ use opentalk_signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
     SignalingModuleInitData,
 };
-use opentalk_types_common::features::FeatureId;
+use opentalk_types_common::{
+    features::{feature_id, FeatureId},
+    modules::{module_id, ModuleId},
+};
 
 /// The namespace string for the signaling module
-pub const NAMESPACE: &str = "integration";
+pub const MODULE_ID: ModuleId = module_id!("integration");
 
 /// The identifier string for the outlook feature
-pub const OUTLOOK_FEATURE: &str = "outlook";
+pub const OUTLOOK_FEATURE_ID: FeatureId = feature_id!("outlook");
 
 pub struct Integration;
 
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for Integration {
-    const NAMESPACE: &'static str = NAMESPACE;
+    const NAMESPACE: ModuleId = MODULE_ID;
 
     type Params = ();
     type Incoming = ();
@@ -39,7 +42,7 @@ impl SignalingModule for Integration {
     }
 
     fn get_provided_features() -> BTreeSet<FeatureId> {
-        BTreeSet::from_iter([OUTLOOK_FEATURE.parse().expect("valid feature id")])
+        BTreeSet::from_iter([OUTLOOK_FEATURE_ID])
     }
 
     async fn on_event(

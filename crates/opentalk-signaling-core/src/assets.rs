@@ -24,6 +24,7 @@ use opentalk_db_storage::{
 use opentalk_types_common::{
     assets::{AssetId, FileExtension},
     events::EventTitle,
+    modules::ModuleId,
     rooms::RoomId,
     tariffs::QuotaType,
     time::Timestamp,
@@ -182,7 +183,7 @@ pub async fn save_asset<E>(
     storage: &ObjectStorage,
     db: Arc<Db>,
     room_id: RoomId,
-    namespace: Option<&str>,
+    namespace: Option<ModuleId>,
     mut filename: NewAssetFileName,
     data: impl Stream<Item = Result<Bytes, E>> + Unpin,
     chunk_format: ChunkFormat,
@@ -191,7 +192,6 @@ where
     ObjectStorageError: From<E>,
 {
     let mut conn = db.get_conn().await.context(DbConnectionSnafu)?;
-    let namespace = namespace.map(Into::into);
 
     let room = prepare_storage(room_id, &mut conn).await?;
 
@@ -266,7 +266,7 @@ async fn rollback_object_storage(storage: &ObjectStorage, asset_id: &AssetId) ->
 
 async fn insert_asset_into_database(
     db_conn: &mut DbConnection,
-    namespace: Option<String>,
+    namespace: Option<ModuleId>,
     filename: String,
     kind: AssetFileKind,
     asset_id: AssetId,

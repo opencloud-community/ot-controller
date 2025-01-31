@@ -58,7 +58,7 @@ where
         timestamp: Timestamp,
     ) {
         self.ws_messages.push(NamespacedEvent {
-            module: M::module_id(),
+            module: M::NAMESPACE,
             timestamp,
             payload: message.into(),
         });
@@ -70,7 +70,7 @@ where
         routing_key: String,
         message: impl Into<M::ExchangeMessage>,
     ) {
-        self.exchange_publish_to_namespace(routing_key, M::module_id(), message.into())
+        self.exchange_publish_to_namespace(routing_key, M::NAMESPACE, message.into())
     }
 
     /// Queue a outgoing message to be sent via the message exchange
@@ -103,7 +103,7 @@ where
     where
         S: Stream<Item = M::ExtEvent> + 'static,
     {
-        self.events.push(any_stream(M::module_id(), stream));
+        self.events.push(any_stream(M::NAMESPACE, stream));
     }
 
     /// Signals that the data related to the participant has changed

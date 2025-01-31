@@ -9,14 +9,14 @@ use opentalk_signaling_core::{
     control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
-use opentalk_types_common::time::Timestamp;
+use opentalk_types_common::{modules::ModuleId, time::Timestamp};
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_timer::{
     command::{self, TimerCommand},
     event::{Error, Started, StopKind, Stopped, TimerEvent, UpdatedReadyStatus},
     peer_state::TimerPeerState,
     state::TimerState,
-    Kind, TimerConfig, TimerId, NAMESPACE,
+    Kind, TimerConfig, TimerId, MODULE_ID,
 };
 use storage::TimerStorage;
 use tokio::time::sleep;
@@ -50,7 +50,7 @@ impl TimerStorageProvider for VolatileStorage {
 
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for Timer {
-    const NAMESPACE: &'static str = NAMESPACE;
+    const NAMESPACE: ModuleId = MODULE_ID;
 
     type Params = ();
 

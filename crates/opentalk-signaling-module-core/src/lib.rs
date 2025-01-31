@@ -10,14 +10,14 @@ use opentalk_signaling_core::{
 };
 use opentalk_types_common::{
     features::{FeatureId, CALL_IN_FEATURE_ID},
-    modules::CORE_MODULE_ID,
+    modules::{ModuleId, CORE_MODULE_ID},
 };
 
 pub struct Core {}
 
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for Core {
-    const NAMESPACE: &'static str = CORE_MODULE_ID;
+    const NAMESPACE: ModuleId = CORE_MODULE_ID;
 
     type Params = ();
     type Incoming = ();
@@ -36,7 +36,7 @@ impl SignalingModule for Core {
     }
 
     fn get_provided_features() -> BTreeSet<FeatureId> {
-        BTreeSet::from_iter([CALL_IN_FEATURE_ID.parse().expect("valid feature id")])
+        BTreeSet::from_iter([CALL_IN_FEATURE_ID])
     }
 
     async fn on_event(

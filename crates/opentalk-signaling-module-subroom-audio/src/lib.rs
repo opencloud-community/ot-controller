@@ -20,6 +20,7 @@ use opentalk_signaling_core::{
     SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
     VolatileStorage,
 };
+use opentalk_types_common::modules::ModuleId;
 use opentalk_types_signaling::ParticipantId;
 use opentalk_types_signaling_subroom_audio::{
     command::Command,
@@ -29,7 +30,7 @@ use opentalk_types_signaling_subroom_audio::{
     },
     state::{WhisperGroup, WhisperState},
     whisper_id::WhisperId,
-    NAMESPACE,
+    MODULE_ID,
 };
 use snafu::ResultExt;
 use storage::SubroomAudioStorage;
@@ -65,7 +66,7 @@ impl SubroomAudioStorageProvider for VolatileStorage {
 
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for SubroomAudio {
-    const NAMESPACE: &'static str = NAMESPACE;
+    const NAMESPACE: ModuleId = MODULE_ID;
 
     type Params = Arc<SubroomAudioParams>;
     type Incoming = Command;

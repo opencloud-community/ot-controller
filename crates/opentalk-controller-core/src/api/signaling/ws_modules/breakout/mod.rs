@@ -23,14 +23,16 @@ use opentalk_signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
     SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
-use opentalk_types_common::rooms::{BreakoutRoomId, RoomId};
+use opentalk_types_common::{
+    modules::ModuleId,
+    rooms::{BreakoutRoomId, RoomId},
+};
 use opentalk_types_signaling::{ParticipantId, Role};
-pub(crate) use opentalk_types_signaling_breakout::module_id;
 use opentalk_types_signaling_breakout::{
     command::BreakoutCommand,
     event::{BreakoutEvent, Error, Started},
     state::BreakoutState,
-    AssociatedParticipantInOtherRoom, BreakoutRoom, ParticipantInOtherRoom, NAMESPACE,
+    AssociatedParticipantInOtherRoom, BreakoutRoom, ParticipantInOtherRoom, MODULE_ID,
 };
 use snafu::whatever;
 use tokio::time::sleep;
@@ -67,7 +69,7 @@ impl BreakoutStorageProvider for VolatileStorage {
 
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for BreakoutRooms {
-    const NAMESPACE: &'static str = NAMESPACE;
+    const NAMESPACE: ModuleId = MODULE_ID;
 
     type Params = ();
     type Incoming = BreakoutCommand;

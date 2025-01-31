@@ -19,7 +19,7 @@ use opentalk_signaling_core::{
     SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
     VolatileStorage,
 };
-use opentalk_types_common::{rooms::RoomId, users::UserId};
+use opentalk_types_common::{modules::ModuleId, rooms::RoomId, users::UserId};
 use opentalk_types_signaling::{
     AssociatedParticipant, LeaveReason, ModulePeerData, Participant, ParticipantId,
     ParticipationKind, Role,
@@ -32,7 +32,7 @@ use opentalk_types_signaling_moderation::{
     },
     event::{DebriefingStarted, DisplayNameChanged, Error, ModerationEvent, SessionEnded},
     state::{ModerationState, ModeratorFrontendData},
-    NAMESPACE,
+    MODULE_ID,
 };
 use snafu::{Report, ResultExt};
 
@@ -111,7 +111,7 @@ impl ModerationStorageProvider for VolatileStorage {
 
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for ModerationModule {
-    const NAMESPACE: &'static str = NAMESPACE;
+    const NAMESPACE: ModuleId = MODULE_ID;
 
     type Params = ();
     type Incoming = ModerationCommand;

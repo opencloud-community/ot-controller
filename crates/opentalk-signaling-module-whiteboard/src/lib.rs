@@ -14,13 +14,13 @@ use opentalk_signaling_core::{
     ObjectStorage, SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
     VolatileStorage,
 };
-use opentalk_types_common::{assets::FileExtension, time::Timestamp};
+use opentalk_types_common::{assets::FileExtension, modules::ModuleId, time::Timestamp};
 use opentalk_types_signaling::Role;
 use opentalk_types_signaling_whiteboard::{
     command::WhiteboardCommand,
     event::{AccessUrl, Error, PdfAsset, WhiteboardEvent},
     state::WhiteboardState,
-    NAMESPACE,
+    MODULE_ID,
 };
 use snafu::{whatever, Report};
 use storage::{InitState, SpaceInfo, WhiteboardStorage};
@@ -66,7 +66,7 @@ impl WhiteboardStorageProvider for VolatileStorage {
 
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for Whiteboard {
-    const NAMESPACE: &'static str = NAMESPACE;
+    const NAMESPACE: ModuleId = MODULE_ID;
 
     type Params = opentalk_controller_settings::Spacedeck;
 

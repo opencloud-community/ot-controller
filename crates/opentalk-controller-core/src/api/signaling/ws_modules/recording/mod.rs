@@ -20,16 +20,14 @@ use opentalk_signaling_core::{
     CleanupScope, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
-use opentalk_types_common::{features::FeatureId, streaming::StreamingTargetId};
+use opentalk_types_common::{features::FeatureId, modules::ModuleId, streaming::StreamingTargetId};
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_recording::{
     command::{PauseStreaming, RecordingCommand, SetConsent, StartStreaming, StopStreaming},
     event::{Error, RecorderError, RecordingEvent},
-    module_id,
     peer_state::RecordingPeerState,
-    record_feature,
     state::RecordingState,
-    stream_feature, StreamStatus, StreamTargetSecret, NAMESPACE,
+    StreamStatus, StreamTargetSecret, MODULE_ID, RECORD_FEATURE_ID, STREAM_FEATURE_ID,
 };
 use snafu::{Report, ResultExt, Snafu};
 use tokio::time::Duration;
@@ -66,8 +64,8 @@ impl TryFrom<&FeatureId> for RecordingFeature {
 
     fn try_from(value: &FeatureId) -> Result<Self, Self::Error> {
         match value {
-            v if v == &record_feature() => Ok(Self::Record),
-            v if v == &stream_feature() => Ok(Self::Stream),
+            v if v == &RECORD_FEATURE_ID => Ok(Self::Record),
+            v if v == &STREAM_FEATURE_ID => Ok(Self::Stream),
             v => UnknownRecordingFeatureSnafu { found: v.clone() }.fail(),
         }
     }
@@ -114,7 +112,7 @@ impl RecordingStorageProvider for VolatileStorage {
 
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for Recording {
-    const NAMESPACE: &'static str = NAMESPACE;
+    const NAMESPACE: ModuleId = MODULE_ID;
 
     type Params = (Arc<RabbitMqPool>, RecordingParams);
 
@@ -138,7 +136,7 @@ impl SignalingModule for Recording {
 
         let enabled_features = ctx
             .room_tariff
-            .module_features(&module_id())
+            .module_features(&MODULE_ID)
             .into_iter()
             .flatten()
             .filter_map(|feature| RecordingFeature::try_from(feature.clone()).ok())
@@ -157,7 +155,7 @@ impl SignalingModule for Recording {
     }
 
     fn get_provided_features() -> BTreeSet<FeatureId> {
-        BTreeSet::from_iter([record_feature(), stream_feature()])
+        BTreeSet::from_iter([RECORD_FEATURE_ID, STREAM_FEATURE_ID])
     }
 
     async fn on_event(
@@ -451,7 +449,7 @@ impl Recording {
 
         ctx.exchange_publish_to_namespace(
             control::exchange::current_room_all_recorders(self.room),
-            RecordingService::module_id(),
+            RecordingService::NAMESPACE,
             recording_service::exchange::Message::StartStreams { target_ids },
         );
 
@@ -478,7 +476,7 @@ impl Recording {
 
         ctx.exchange_publish_to_namespace(
             control::exchange::current_room_all_recorders(self.room),
-            RecordingService::module_id(),
+            RecordingService::NAMESPACE,
             recording_service::exchange::Message::PauseStreams { target_ids },
         );
 
@@ -523,7 +521,7 @@ impl Recording {
 
         ctx.exchange_publish_to_namespace(
             control::exchange::current_room_all_recorders(self.room),
-            RecordingService::module_id(),
+            RecordingService::NAMESPACE,
             recording_service::exchange::Message::StopStreams { target_ids },
         );
 

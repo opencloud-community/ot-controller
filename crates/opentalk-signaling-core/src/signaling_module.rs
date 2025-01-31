@@ -110,7 +110,7 @@ pub trait SignalingModule: Send + Sized + 'static {
     /// Defines the websocket message namespace
     ///
     /// Must be unique between all registered modules.
-    const NAMESPACE: &'static str;
+    const NAMESPACE: ModuleId;
 
     /// The module params, can be any type that is `Clone` + `Send` + `Sync`
     ///
@@ -168,10 +168,4 @@ pub trait SignalingModule: Send + Sized + 'static {
     ///
     /// If `None` is returned, the module is not initialized.
     async fn build_params(init: SignalingModuleInitData) -> Result<Option<Self::Params>>;
-
-    fn module_id() -> ModuleId {
-        Self::NAMESPACE
-            .parse()
-            .expect("namespace must be a valid module id")
-    }
 }

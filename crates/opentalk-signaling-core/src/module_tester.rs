@@ -36,9 +36,9 @@ use opentalk_types_signaling::{
 use opentalk_types_signaling_control::{
     command::{ControlCommand, Join},
     event::{ControlEvent, JoinSuccess, Left},
-    module_id,
     room::{CreatorInfo, RoomInfo},
     state::ControlState,
+    MODULE_ID,
 };
 use serde_json::Value;
 use snafu::{whatever, OptionExt, Report, ResultExt, Snafu};
@@ -424,7 +424,7 @@ where
             name: "OpenTalkDefaultTariff".to_string(),
             quotas: BTreeMap::new(),
             modules: BTreeMap::from([(
-                M::module_id(),
+                M::NAMESPACE,
                 TariffModuleResource {
                     features: M::get_provided_features(),
                 },
@@ -524,7 +524,7 @@ where
                     self.handle_module_requested_actions(ws_messages, exchange_publish, invalidate_data, events, exit).await;
                 }
                 Some((module_id, message)) = self.events.next() => {
-                    assert_eq!(module_id, M::module_id(), "Invalid module id on external event");
+                    assert_eq!(module_id, M::NAMESPACE, "Invalid module id on external event");
 
                     if let Err(e) = self.module.on_event(ctx, Event::Ext(*message.downcast().expect("invalid ext type"))).await {
                         panic!("Error when handling external event: {}", snafu::Report::from_error(e))
@@ -865,7 +865,7 @@ where
         message: control::exchange::Message,
     ) -> Result<(), SignalingModuleError> {
         let message = serde_json::to_string(&NamespacedCommand {
-            module: module_id(),
+            module: MODULE_ID,
             payload: message,
         })
         .context(SerdeJsonSnafu {
@@ -921,7 +921,7 @@ where
             message: "Failed to read incoming exchange message",
         })?;
 
-        if namespaced.module == module_id() {
+        if namespaced.module == MODULE_ID {
             let control_message =
                 serde_json::from_value(namespaced.payload).context(SerdeJsonSnafu {
                     message: "Failed to serialize",
@@ -931,7 +931,7 @@ where
                 .await?;
 
             Ok(())
-        } else if namespaced.module == M::module_id() {
+        } else if namespaced.module == M::NAMESPACE {
             let module_message =
                 serde_json::from_value(namespaced.payload).context(SerdeJsonSnafu {
                     message: "Failed to serialize",

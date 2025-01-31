@@ -19,13 +19,13 @@ use opentalk_signaling_core::{
     SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
     VolatileStorage,
 };
-use opentalk_types_common::assets::FileExtension;
+use opentalk_types_common::{assets::FileExtension, modules::ModuleId};
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_meeting_notes::{
     command::{MeetingNotesCommand, ParticipantSelection},
     event::{AccessUrl, Error, MeetingNotesEvent, PdfAsset},
     peer_state::MeetingNotesPeerState,
-    NAMESPACE,
+    MODULE_ID,
 };
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
@@ -72,7 +72,7 @@ impl MeetingNotesStorageProvide for VolatileStorage {
 
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for MeetingNotes {
-    const NAMESPACE: &'static str = NAMESPACE;
+    const NAMESPACE: ModuleId = MODULE_ID;
     type Params = opentalk_controller_settings::Etherpad;
     type Incoming = MeetingNotesCommand;
     type Outgoing = MeetingNotesEvent;

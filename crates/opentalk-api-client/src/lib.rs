@@ -4,8 +4,10 @@
 
 pub mod requests;
 
+mod authorization;
 mod client;
 mod open_talk_api_client;
 
+pub use authorization::InviteCodeAuthorization;
 pub use client::Client;
 pub use open_talk_api_client::OpenTalkApiClient;

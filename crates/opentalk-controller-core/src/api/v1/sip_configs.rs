@@ -89,7 +89,13 @@ async fn get_inner(
             .into());
     }
 
-    require_feature(&mut conn, &settings, room.created_by, &features::call_in()).await?;
+    require_feature(
+        &mut conn,
+        &settings,
+        room.created_by,
+        &features::CALL_IN_MODULE_FEATURE_ID,
+    )
+    .await?;
 
     let config = SipConfig::get_by_room(&mut conn, room_id).await?;
 
@@ -175,7 +181,13 @@ async fn put_inner(
             .into());
     }
 
-    require_feature(&mut conn, &settings, room.created_by, &features::call_in()).await?;
+    require_feature(
+        &mut conn,
+        &settings,
+        room.created_by,
+        &features::CALL_IN_MODULE_FEATURE_ID,
+    )
+    .await?;
 
     let changeset = UpdateSipConfig {
         password: modify_sip_config.password.clone(),
@@ -275,7 +287,13 @@ async fn delete_inner(
 
     let room = Room::get(&mut conn, room_id).await?;
 
-    require_feature(&mut conn, &settings, room.created_by, &features::call_in()).await?;
+    require_feature(
+        &mut conn,
+        &settings,
+        room.created_by,
+        &features::CALL_IN_MODULE_FEATURE_ID,
+    )
+    .await?;
 
     SipConfig::delete_by_room(&mut conn, room_id).await?;
 
