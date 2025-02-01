@@ -7,6 +7,7 @@ use std::fmt::Display;
 use opentalk_database::DatabaseError;
 use opentalk_signaling_core::{assets::AssetError, ObjectStorageError};
 use opentalk_types_api_v1::error::ApiError;
+use rand::distr::uniform;
 use snafu::Whatever;
 
 use crate::event::EventRRuleSetError;
@@ -88,6 +89,13 @@ impl From<Whatever> for CaptureApiError {
 
 impl From<AssetError> for CaptureApiError {
     fn from(value: AssetError) -> Self {
+        log::error!("REST API threw internal error: {value:?}");
+        CaptureApiError(ApiError::internal())
+    }
+}
+
+impl From<uniform::Error> for CaptureApiError {
+    fn from(value: uniform::Error) -> Self {
         log::error!("REST API threw internal error: {value:?}");
         CaptureApiError(ApiError::internal())
     }
