@@ -105,7 +105,7 @@ async fn connect_and_migrate(
         .map(|u| u.as_str().to_string())
         .unwrap_or_else(|| DATABASE_DEFAULT_URL.to_owned());
 
-    let random: u8 = rand::thread_rng().gen();
+    let random: u8 = rand::rng().random();
     let (db_name, drop_db) = database_name
         .map(|var| (var, false))
         .unwrap_or_else(|| (format!("opentalk_migration_{random}"), true));

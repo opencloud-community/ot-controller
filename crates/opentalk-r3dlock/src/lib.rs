@@ -9,7 +9,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use rand::{thread_rng, Rng};
+use rand::{rng, Rng};
 use redis::{aio::ConnectionLike, RedisError, Script, ToRedisArgs, Value};
 use snafu::Snafu;
 use tokio::time::sleep;
@@ -149,8 +149,8 @@ where
     where
         C: ConnectionLike,
     {
-        let canary = thread_rng()
-            .sample_iter(rand::distributions::Alphanumeric)
+        let canary = rng()
+            .sample_iter(rand::distr::Alphanumeric)
             .take(20)
             .collect::<Vec<u8>>();
 
@@ -180,7 +180,7 @@ where
                 };
                 return Ok(guard);
             } else {
-                sleep(thread_rng().gen_range(self.wait_time.clone())).await;
+                sleep(rng().random_range(self.wait_time.clone())).await;
             }
         }
 
