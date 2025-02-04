@@ -58,7 +58,7 @@ chrono = "0.4"
 chrono-tz = "0.10"
 clap = { version = "4", features = ["derive"] }
 config = { version = "0.15", default-features = false, features = ["toml"] }
-derive_more = "1.0"
+derive_more = "2.0"
 diesel = "2"
 diesel-async = "0.5"
 either = "1"
