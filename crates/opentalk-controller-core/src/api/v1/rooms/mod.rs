@@ -87,6 +87,7 @@ pub async fn accessible(
     let PagePaginationQuery { per_page, page } = pagination.into_inner();
 
     let (rooms, room_count) = service.get_rooms(current_user.id, per_page, page).await?;
+
     Ok(ApiResponse::new(rooms).with_page_pagination(per_page, page, room_count))
 }
 

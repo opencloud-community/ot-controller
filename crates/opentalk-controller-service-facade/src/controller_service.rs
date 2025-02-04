@@ -6,16 +6,22 @@ use std::sync::Arc;
 
 use bytes::Bytes;
 use futures_core::Stream;
-use opentalk_signaling_core::{assets::NewAssetFileName, ObjectStorageError};
-use opentalk_types_api_v1::assets::AssetResource;
-//use bytes::Bytes;
-//use futures_core::Stream;
+use opentalk_signaling_core::{
+    assets::{ByStreamExt, NewAssetFileName},
+    ObjectStorageError,
+};
 use opentalk_types_api_v1::{
+    assets::AssetResource,
     auth::GetLoginResponseBody,
     error::ApiError,
-    rooms::{by_room_id::GetRoomEventResponseBody, GetRoomsResponseBody, RoomResource},
+    pagination::PagePaginationQuery,
+    rooms::{
+        by_room_id::{assets::RoomsByRoomIdAssetsGetResponseBody, GetRoomEventResponseBody},
+        GetRoomsResponseBody, RoomResource,
+    },
 };
 use opentalk_types_common::{
+    assets::AssetId,
     modules::ModuleId,
     rooms::{RoomId, RoomPassword},
     tariffs::TariffResource,
@@ -144,6 +150,32 @@ impl OpenTalkControllerService {
         self.backend.read().await.get_room_event(room_id).await
     }
 
+    /// Get the assets associated with a room
+    pub async fn get_room_assets(
+        &self,
+        room_id: RoomId,
+        pagination: PagePaginationQuery,
+    ) -> Result<(RoomsByRoomIdAssetsGetResponseBody, i64), ApiError> {
+        self.backend
+            .read()
+            .await
+            .get_room_assets(room_id, pagination)
+            .await
+    }
+
+    /// Get a specific asset inside a room.
+    pub async fn get_room_asset(
+        &self,
+        room_id: RoomId,
+        asset_id: AssetId,
+    ) -> Result<ByStreamExt, ApiError> {
+        self.backend
+            .read()
+            .await
+            .get_room_asset(room_id, asset_id)
+            .await
+    }
+
     /// Create an asset for a room from an uploaded file
     pub async fn create_room_asset(
         &self,
@@ -156,6 +188,19 @@ impl OpenTalkControllerService {
             .read()
             .await
             .create_room_asset(room_id, filename, namespace, data)
+            .await
+    }
+
+    /// Delete an asset from a room
+    pub async fn delete_room_asset(
+        &self,
+        room_id: RoomId,
+        asset_id: AssetId,
+    ) -> Result<(), ApiError> {
+        self.backend
+            .read()
+            .await
+            .delete_room_asset(room_id, asset_id)
             .await
     }
 }
