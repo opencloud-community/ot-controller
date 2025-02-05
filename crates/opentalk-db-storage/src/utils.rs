@@ -112,8 +112,12 @@ pub async fn build_event_info(
             None
         };
 
-        let streaming_targets = get_room_streaming_targets(conn, room_id).await?;
-        let streaming_links = get_public_urls_from_room_streaming_targets(streaming_targets).await;
+        let streaming_links = if !e2e_encryption {
+            let streaming_targets = get_room_streaming_targets(conn, room_id).await?;
+            get_public_urls_from_room_streaming_targets(streaming_targets).await
+        } else {
+            vec![]
+        };
 
         EventInfo::from(EventAndEncryption(event, e2e_encryption)).with_meeting_details(
             MeetingDetails {
