@@ -21,6 +21,7 @@ use opentalk_db_storage::{
 };
 use opentalk_types_api_v1::{
     error::ApiError,
+    pagination::PagePaginationQuery,
     rooms::{by_room_id::GetRoomEventResponseBody, GetRoomsResponseBody, RoomResource},
 };
 use opentalk_types_common::{
@@ -36,8 +37,7 @@ impl ControllerBackend {
     pub(super) async fn get_rooms(
         &self,
         current_user_id: UserId,
-        per_page: i64,
-        page: i64,
+        pagination: &PagePaginationQuery,
     ) -> Result<(GetRoomsResponseBody, i64), CaptureApiError> {
         let settings = self.settings.load();
         let mut conn = self.db.get_conn().await?;
@@ -49,10 +49,21 @@ impl ControllerBackend {
 
         let (rooms, room_count) = match accessible_rooms {
             kustos::AccessibleResources::All => {
-                Room::get_all_with_creator_paginated(&mut conn, per_page, page).await?
+                Room::get_all_with_creator_paginated(
+                    &mut conn,
+                    pagination.per_page,
+                    pagination.page,
+                )
+                .await?
             }
             kustos::AccessibleResources::List(list) => {
-                Room::get_by_ids_with_creator_paginated(&mut conn, &list, per_page, page).await?
+                Room::get_by_ids_with_creator_paginated(
+                    &mut conn,
+                    &list,
+                    pagination.per_page,
+                    pagination.page,
+                )
+                .await?
             }
         };
 

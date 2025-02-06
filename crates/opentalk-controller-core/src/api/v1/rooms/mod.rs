@@ -84,11 +84,15 @@ pub async fn accessible(
     pagination: web::Query<PagePaginationQuery>,
 ) -> Result<ApiResponse<GetRoomsResponseBody>, ApiError> {
     let current_user = current_user.into_inner();
-    let PagePaginationQuery { per_page, page } = pagination.into_inner();
+    let pagination = pagination.into_inner();
 
-    let (rooms, room_count) = service.get_rooms(current_user.id, per_page, page).await?;
+    let (rooms, room_count) = service.get_rooms(current_user.id, &pagination).await?;
 
-    Ok(ApiResponse::new(rooms).with_page_pagination(per_page, page, room_count))
+    Ok(ApiResponse::new(rooms).with_page_pagination(
+        pagination.per_page,
+        pagination.page,
+        room_count,
+    ))
 }
 
 /// Create a new room

@@ -103,10 +103,9 @@ impl OpenTalkControllerServiceBackend for ControllerBackend {
     async fn get_rooms(
         &self,
         current_user_id: UserId,
-        per_page: i64,
-        page: i64,
+        pagination: &PagePaginationQuery,
     ) -> Result<(GetRoomsResponseBody, i64), ApiError> {
-        Ok(self.get_rooms(current_user_id, per_page, page).await?)
+        Ok(self.get_rooms(current_user_id, pagination).await?)
     }
 
     async fn create_room(

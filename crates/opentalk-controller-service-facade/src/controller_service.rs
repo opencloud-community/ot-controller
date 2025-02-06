@@ -60,13 +60,12 @@ impl OpenTalkControllerService {
     pub async fn get_rooms(
         &self,
         current_user_id: UserId,
-        per_page: i64,
-        page: i64,
+        pagination: &PagePaginationQuery,
     ) -> Result<(GetRoomsResponseBody, i64), ApiError> {
         self.backend
             .read()
             .await
-            .get_rooms(current_user_id, per_page, page)
+            .get_rooms(current_user_id, pagination)
             .await
     }
 
