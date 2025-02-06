@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use bytes::Bytes;
+use futures_core::Stream;
 use kustos::{
     policies_builder::{GrantingAccess, PoliciesBuilder},
     prelude::IsSubject,
@@ -13,24 +15,31 @@ use opentalk_controller_utils::{
     CaptureApiError,
 };
 use opentalk_db_storage::{
+    assets::Asset,
     events::Event,
     rooms::{NewRoom, Room, UpdateRoom},
     sip_configs::NewSipConfig,
     tariffs::Tariff,
     utils::build_event_info,
 };
+use opentalk_signaling_core::{
+    assets::{save_asset, NewAssetFileName},
+    ChunkFormat, ObjectStorageError,
+};
 use opentalk_types_api_v1::{
+    assets::AssetResource,
     error::ApiError,
     rooms::{by_room_id::GetRoomEventResponseBody, GetRoomsResponseBody, RoomResource},
 };
 use opentalk_types_common::{
     features,
+    modules::ModuleId,
     rooms::{RoomId, RoomPassword},
     tariffs::TariffResource,
     users::UserId,
 };
 
-use crate::{require_feature, ControllerBackend, ToUserProfile};
+use crate::{helpers::asset_to_asset_resource, require_feature, ControllerBackend, ToUserProfile};
 
 impl ControllerBackend {
     pub(super) async fn get_rooms(
@@ -247,6 +256,29 @@ impl ControllerBackend {
             None => Err(ApiError::not_found().into()),
         }
     }
+
+    pub(super) async fn create_room_asset(
+        &self,
+        room_id: RoomId,
+        filename: NewAssetFileName,
+        namespace: Option<ModuleId>,
+        data: Box<dyn Stream<Item = Result<Bytes, ObjectStorageError>> + Unpin>,
+    ) -> Result<AssetResource, CaptureApiError> {
+        let (asset_id, _filename) = save_asset(
+            &self.storage.clone(),
+            self.db.clone(),
+            room_id,
+            namespace,
+            filename,
+            data,
+            ChunkFormat::Data,
+        )
+        .await?;
+
+        let asset = Asset::get(&mut self.db.get_conn().await?, asset_id, room_id).await?;
+
+        Ok(asset_to_asset_resource(asset))
+    }
 }
 
 /// Provides functionality to grant room privileges
@@ -330,7 +362,7 @@ where
         )
         .add_resource(
             room_id.resource_id().with_suffix("/assets"),
-            [AccessMethod::Delete],
+            [AccessMethod::Post, AccessMethod::Delete],
         )
         .add_resource(
             room_id.resource_id().with_suffix("/assets/*"),

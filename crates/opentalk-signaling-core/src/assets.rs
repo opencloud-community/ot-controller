@@ -5,7 +5,6 @@
 use std::{
     fmt::Display,
     pin::Pin,
-    str::FromStr,
     sync::Arc,
     task::{self, Poll},
 };
@@ -22,7 +21,7 @@ use opentalk_db_storage::{
     users::User,
 };
 use opentalk_types_common::{
-    assets::{AssetId, FileExtension},
+    assets::{AssetFileKind, AssetId, FileExtension},
     events::EventTitle,
     modules::ModuleId,
     rooms::RoomId,
@@ -70,46 +69,7 @@ pub enum AssetError {
 
 type Result<T, E = AssetError> = std::result::Result<T, E>;
 
-pub const MIN_ASSET_FILE_KIND_LENGTH: usize = 1;
-pub const MAX_ASSET_FILE_KIND_LENGTH: usize = 20;
-
-#[derive(Debug, Clone, Default, PartialEq, Eq, derive_more::Display)]
-pub struct AssetFileKind(String);
-
-#[derive(Debug, Snafu)]
-pub enum ParseAssetFileKindError {
-    #[snafu(display("AssetFileKind must be at least {min_length} characters long"))]
-    TooShort { min_length: usize },
-
-    #[snafu(display("AssetFileKind must not be longer than {max_length} characters"))]
-    TooLong { max_length: usize },
-
-    #[snafu(display("AssetFileKind only allows alphanumeric ascii characters or '_'"))]
-    InvalidCharacters,
-}
-
-impl FromStr for AssetFileKind {
-    type Err = ParseAssetFileKindError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.len() < MIN_ASSET_FILE_KIND_LENGTH {
-            return Err(ParseAssetFileKindError::TooShort {
-                min_length: MIN_ASSET_FILE_KIND_LENGTH,
-            });
-        }
-        if s.len() > MAX_ASSET_FILE_KIND_LENGTH {
-            return Err(ParseAssetFileKindError::TooLong {
-                max_length: MAX_ASSET_FILE_KIND_LENGTH,
-            });
-        }
-        if s.chars().any(|c| !(c.is_ascii_alphanumeric() || c == '_')) {
-            return Err(ParseAssetFileKindError::InvalidCharacters);
-        }
-        Ok(AssetFileKind(s.into()))
-    }
-}
-
-const MAX_ASSET_FILE_NAME_LENGTH: usize = 100;
+const ASSET_FILE_NAME_MAX_LENGTH: usize = 100;
 
 pub struct NewAssetFileName {
     event_title: Option<EventTitle>,
@@ -154,7 +114,7 @@ impl Display for NewAssetFileName {
         match &self.event_title {
             Some(event_title) if !event_title.is_empty() => {
                 let max_length =
-                    MAX_ASSET_FILE_NAME_LENGTH.saturating_sub(file_name_fixed_part.len() + 1);
+                    ASSET_FILE_NAME_MAX_LENGTH.saturating_sub(file_name_fixed_part.len() + 1);
                 write!(
                     f,
                     "{}_{}",

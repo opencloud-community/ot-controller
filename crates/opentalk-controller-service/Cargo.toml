@@ -16,6 +16,8 @@ version.workspace = true
 
 [dependencies]
 async-trait.workspace = true
+bytes.workspace = true
+futures-core.workspace = true
 kustos.workspace = true
 lapin-pool.workspace = true
 log = { workspace = true, features = ["serde"] }

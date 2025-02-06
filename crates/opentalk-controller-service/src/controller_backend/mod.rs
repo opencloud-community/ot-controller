@@ -12,13 +12,18 @@ use std::{
 };
 
 use async_trait::async_trait;
+use bytes::Bytes;
+use futures_core::Stream;
 use kustos::Authz;
 use opentalk_controller_service_facade::{OpenTalkControllerServiceBackend, RequestUser};
 use opentalk_controller_settings::SharedSettings;
 use opentalk_database::Db;
 use opentalk_keycloak_admin::KeycloakAdminClient;
-use opentalk_signaling_core::{ExchangeHandle, ObjectStorage};
+use opentalk_signaling_core::{
+    assets::NewAssetFileName, ExchangeHandle, ObjectStorage, ObjectStorageError,
+};
 use opentalk_types_api_v1::{
+    assets::AssetResource,
     auth::{GetLoginResponseBody, OidcProvider},
     error::ApiError,
     rooms::{by_room_id::GetRoomEventResponseBody, GetRoomsResponseBody, RoomResource},
@@ -160,5 +165,17 @@ impl OpenTalkControllerServiceBackend for ControllerBackend {
 
     async fn get_room_event(&self, room_id: &RoomId) -> Result<GetRoomEventResponseBody, ApiError> {
         Ok(self.get_room_event(room_id).await?)
+    }
+
+    async fn create_room_asset(
+        &self,
+        room_id: RoomId,
+        filename: NewAssetFileName,
+        namespace: Option<ModuleId>,
+        data: Box<dyn Stream<Item = Result<Bytes, ObjectStorageError>> + Unpin>,
+    ) -> Result<AssetResource, ApiError> {
+        Ok(self
+            .create_room_asset(room_id, filename, namespace, data)
+            .await?)
     }
 }

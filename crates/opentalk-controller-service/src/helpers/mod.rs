@@ -8,8 +8,9 @@ use opentalk_controller_service_facade::RequestUser;
 use opentalk_controller_settings::Settings;
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::DbConnection;
-use opentalk_db_storage::{tariffs::Tariff, users::User};
+use opentalk_db_storage::{assets::Asset, tariffs::Tariff, users::User};
 use opentalk_types_api_v1::{
+    assets::AssetResource,
     error::ApiError,
     users::{PrivateUserProfile, PublicUserProfile},
 };
@@ -136,4 +137,26 @@ pub async fn require_feature(
     }
 
     Ok(())
+}
+
+/// Converts an Asset from the database to an asset resource
+pub fn asset_to_asset_resource(asset: Asset) -> AssetResource {
+    let Asset {
+        id,
+        created_at,
+        updated_at: _,
+        namespace,
+        kind,
+        filename,
+        tenant_id: _,
+        size,
+    } = asset;
+    AssetResource {
+        id,
+        filename,
+        namespace,
+        created_at,
+        kind,
+        size,
+    }
 }

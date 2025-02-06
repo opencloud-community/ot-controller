@@ -16,6 +16,9 @@ version.workspace = true
 
 [dependencies]
 async-trait.workspace = true
+bytes.workspace = true
+futures-core.workspace = true
+opentalk-signaling-core.workspace = true
 opentalk-types-api-v1.workspace = true
 opentalk-types-common.workspace = true
 tokio = { workspace = true, features = ["sync"] }
