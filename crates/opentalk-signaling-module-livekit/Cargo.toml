@@ -20,7 +20,7 @@ either.workspace = true
 futures.workspace = true
 livekit-api = "0.4"
 livekit-protocol = "0.3"
-livekit-runtime = { version = "0.3", default-features = false, features = [
+livekit-runtime = { version = "0.4", default-features = false, features = [
   "tokio",
 ] }
 log.workspace = true
