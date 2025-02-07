@@ -15,14 +15,21 @@ use opentalk_types_api_v1::{
     error::ApiError,
     pagination::PagePaginationQuery,
     rooms::{
-        by_room_id::{assets::RoomsByRoomIdAssetsGetResponseBody, GetRoomEventResponseBody},
+        by_room_id::{
+            assets::RoomsByRoomIdAssetsGetResponseBody,
+            invites::{
+                GetRoomsInvitesResponseBody, InviteResource, PostInviteRequestBody,
+                PostInviteVerifyRequestBody, PostInviteVerifyResponseBody, PutInviteRequestBody,
+            },
+            GetRoomEventResponseBody,
+        },
         GetRoomsResponseBody, RoomResource,
     },
 };
 use opentalk_types_common::{
     assets::AssetId,
     modules::ModuleId,
-    rooms::{RoomId, RoomPassword},
+    rooms::{invite_codes::InviteCode, RoomId, RoomPassword},
     tariffs::TariffResource,
     users::UserId,
 };
@@ -104,4 +111,49 @@ pub trait OpenTalkControllerServiceBackend: Send + Sync {
 
     /// Delete an asset from a room.
     async fn delete_room_asset(&self, room_id: RoomId, asset_id: AssetId) -> Result<(), ApiError>;
+
+    /// Create a new invite
+    async fn create_invite(
+        &self,
+        current_user: RequestUser,
+        room_id: RoomId,
+        new_invite: PostInviteRequestBody,
+    ) -> Result<InviteResource, ApiError>;
+
+    /// Get all invites for a room
+    async fn get_invites(
+        &self,
+        room_id: RoomId,
+        pagination: &PagePaginationQuery,
+    ) -> Result<(GetRoomsInvitesResponseBody, i64), ApiError>;
+
+    /// Get a room invite
+    async fn get_invite(
+        &self,
+        room_id: RoomId,
+        invite_code: InviteCode,
+    ) -> Result<InviteResource, ApiError>;
+
+    /// Update an invite code
+    async fn update_invite(
+        &self,
+        current_user: RequestUser,
+        room_id: RoomId,
+        invite_code: InviteCode,
+        body: PutInviteRequestBody,
+    ) -> Result<InviteResource, ApiError>;
+
+    /// Delete an invite code
+    async fn delete_invite(
+        &self,
+        current_user: RequestUser,
+        room_id: RoomId,
+        invite_code: InviteCode,
+    ) -> Result<(), ApiError>;
+
+    /// Verify an invite code
+    async fn verify_invite_code(
+        &self,
+        data: PostInviteVerifyRequestBody,
+    ) -> Result<PostInviteVerifyResponseBody, ApiError>;
 }

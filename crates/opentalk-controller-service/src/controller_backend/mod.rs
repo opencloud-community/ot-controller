@@ -5,6 +5,7 @@
 //! Provides the default [`OpenTalkControllerServiceBackend`] implementation.
 mod assets;
 mod auth;
+mod invites;
 mod rooms;
 
 use std::{
@@ -30,7 +31,14 @@ use opentalk_types_api_v1::{
     error::ApiError,
     pagination::PagePaginationQuery,
     rooms::{
-        by_room_id::{assets::RoomsByRoomIdAssetsGetResponseBody, GetRoomEventResponseBody},
+        by_room_id::{
+            assets::RoomsByRoomIdAssetsGetResponseBody,
+            invites::{
+                GetRoomsInvitesResponseBody, InviteResource, PostInviteRequestBody,
+                PostInviteVerifyRequestBody, PostInviteVerifyResponseBody, PutInviteRequestBody,
+            },
+            GetRoomEventResponseBody,
+        },
         GetRoomsResponseBody, RoomResource,
     },
 };
@@ -38,7 +46,7 @@ use opentalk_types_common::{
     assets::AssetId,
     features::FeatureId,
     modules::ModuleId,
-    rooms::{RoomId, RoomPassword},
+    rooms::{invite_codes::InviteCode, RoomId, RoomPassword},
     tariffs::TariffResource,
     users::UserId,
 };
@@ -203,5 +211,62 @@ impl OpenTalkControllerServiceBackend for ControllerBackend {
 
     async fn delete_room_asset(&self, room_id: RoomId, asset_id: AssetId) -> Result<(), ApiError> {
         Ok(self.delete_room_asset(room_id, asset_id).await?)
+    }
+
+    async fn create_invite(
+        &self,
+        current_user: RequestUser,
+        room_id: RoomId,
+        new_invite: PostInviteRequestBody,
+    ) -> Result<InviteResource, ApiError> {
+        Ok(self
+            .create_invite(current_user, room_id, new_invite)
+            .await?)
+    }
+
+    async fn get_invites(
+        &self,
+        room_id: RoomId,
+        pagination: &PagePaginationQuery,
+    ) -> Result<(GetRoomsInvitesResponseBody, i64), ApiError> {
+        Ok(self.get_invites(room_id, pagination).await?)
+    }
+
+    async fn get_invite(
+        &self,
+        room_id: RoomId,
+        invite_code: InviteCode,
+    ) -> Result<InviteResource, ApiError> {
+        Ok(self.get_invite(room_id, invite_code).await?)
+    }
+
+    async fn update_invite(
+        &self,
+        current_user: RequestUser,
+        room_id: RoomId,
+        invite_code: InviteCode,
+        body: PutInviteRequestBody,
+    ) -> Result<InviteResource, ApiError> {
+        Ok(self
+            .update_invite(current_user, room_id, invite_code, body)
+            .await?)
+    }
+
+    async fn delete_invite(
+        &self,
+        current_user: RequestUser,
+        room_id: RoomId,
+        invite_code: InviteCode,
+    ) -> Result<(), ApiError> {
+        Ok(self
+            .delete_invite(current_user, room_id, invite_code)
+            .await?)
+    }
+
+    async fn verify_invite_code(
+        &self,
+        data: PostInviteVerifyRequestBody,
+    ) -> Result<PostInviteVerifyResponseBody, ApiError> {
+        Ok(self.verify_invite_code(data).await?)
     }
 }
