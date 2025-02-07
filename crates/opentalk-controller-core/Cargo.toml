@@ -102,7 +102,7 @@ service-probe = "0.2"
 snafu.workspace = true
 strum.workspace = true
 sysinfo = { version = "0.33", default-features = false, features = ["system"] }
-tabled = "0.17"
+tabled = "0.18"
 tokio = { workspace = true, features = ["signal"] }
 tokio-stream.workspace = true
 tracing.workspace = true
