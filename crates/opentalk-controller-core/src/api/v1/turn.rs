@@ -252,13 +252,16 @@ async fn check_access_token_or_invite(
 #[cfg(test)]
 mod tests {
     use pretty_assertions::assert_eq;
+    use rand::SeedableRng;
+    use rand_chacha::ChaCha12Rng;
 
     use super::*;
 
     #[test]
     fn test_create_credentials() {
-        use rand::{prelude::*, SeedableRng};
-        let mut rng = StdRng::seed_from_u64(1234567890);
+        // Using ChaCha12Rng instead of StdRng because of the reproducibility for randomness
+        // generation as recommeded by the documentation of the rand crate.
+        let mut rng = ChaCha12Rng::seed_from_u64(1234567890);
         let credentials =
             create_credentials(&mut rng, "PSK", 3400, &["turn:turn.turn.turn".to_owned()]);
         assert_eq!(
@@ -274,14 +277,12 @@ mod tests {
 
     #[test]
     fn test_round_robin() {
-        use rand::{prelude::*, SeedableRng};
-
         // No configured servers
-        let mut rng = StdRng::seed_from_u64(1234567890);
+        let mut rng = ChaCha12Rng::from_seed(Default::default());
         assert_eq!(rr_servers(&mut rng, &[], 1200).unwrap(), vec![]);
 
         // One configured server
-        let mut rng = StdRng::seed_from_u64(1234567890);
+        let mut rng = ChaCha12Rng::from_seed(Default::default());
         let one_server = vec![TurnServer {
             uris: vec!["turn:turn1.turn.turn".to_owned()],
             pre_shared_key: "PSK1".to_owned(),
@@ -289,15 +290,15 @@ mod tests {
         assert_eq!(
             rr_servers(&mut rng, &one_server, 1200).unwrap(),
             vec![IceServer::Turn(opentalk_types_api_v1::turn::TurnServer {
-                username: "1200:turn_random_for_privacy_8VbonSpZc9GXSw9gMxaV0A==".to_owned(),
-                password: "G7hjqVZX/dVAOgzzb+GeS8vEpcU=".to_owned(),
+                username: "1200:turn_random_for_privacy_mweBXwRJfi4F0iysOqBhQQ==".to_owned(),
+                password: "iSudkrDCRQdeTWGDRva9p1L7H/w=".to_owned(),
                 ttl: 1200.to_string(),
                 uris: vec!["turn:turn1.turn.turn".to_owned()]
             })]
         );
 
         // Two configured servers
-        let mut rng = StdRng::seed_from_u64(1234567890);
+        let mut rng = ChaCha12Rng::from_seed(Default::default());
         let two_servers = vec![
             TurnServer {
                 uris: vec!["turn:turn1.turn.turn".to_owned()],
@@ -311,15 +312,15 @@ mod tests {
         assert_eq!(
             rr_servers(&mut rng, &two_servers, 1200).unwrap(),
             vec![IceServer::Turn(opentalk_types_api_v1::turn::TurnServer {
-                username: "1200:turn_random_for_privacy_VuidKllz0ZdLD2AzFpXQYA==".to_owned(),
-                password: "Aybo95/GPrJhWN2qqbz6yP2qEvg=".to_owned(),
+                username: "1200:turn_random_for_privacy_B4FfBEl+LgXSLKw6oGFBCw==".to_owned(),
+                password: "GqPGDzE/kk+2IR/tBpdWiAHR90E=".to_owned(),
                 ttl: 1200.to_string(),
                 uris: vec!["turn:turn1.turn.turn".to_owned()]
             })]
         );
 
         // Three configured servers
-        let mut rng = StdRng::seed_from_u64(1234567890);
+        let mut rng = ChaCha12Rng::from_seed(Default::default());
         let three_servers = vec![
             TurnServer {
                 uris: vec!["turn:turn1.turn.turn".to_owned()],
@@ -338,16 +339,16 @@ mod tests {
             rr_servers(&mut rng, &three_servers, 1200).unwrap(),
             vec![
                 IceServer::Turn(opentalk_types_api_v1::turn::TurnServer {
-                    username: "1200:turn_random_for_privacy_nSpZc9GXSw9gMxaV0GDahQ==".to_owned(),
-                    password: "6zfptEfCPlF3oWFtPKtlAPwjAWs=".to_owned(),
-                    ttl: 1200.to_string(),
-                    uris: vec!["turn:turn1.turn.turn".to_owned()]
-                }),
-                IceServer::Turn(opentalk_types_api_v1::turn::TurnServer {
-                    username: "1200:turn_random_for_privacy_AYzBIYeOCHhhiwR7CQ3X1A==".to_owned(),
-                    password: "fiWX+emwV1thN/dBcZ9melA061g=".to_owned(),
+                    username: "1200:turn_random_for_privacy_gV8ESX4uBdIsrDqgYUELIA==".to_owned(),
+                    password: "pg151PsT+0F78fxQhIcm7IMQgcU=".to_owned(),
                     ttl: 1200.to_string(),
                     uris: vec!["turn:turn3.turn.turn".to_owned()]
+                }),
+                IceServer::Turn(opentalk_types_api_v1::turn::TurnServer {
+                    username: "1200:turn_random_for_privacy_hozGGRVMQqHGG+mQJxeySw==".to_owned(),
+                    password: "f01GWWpM8lJpfb6pceKS+tdF35A=".to_owned(),
+                    ttl: 1200.to_string(),
+                    uris: vec!["turn:turn1.turn.turn".to_owned()]
                 })
             ]
         );
