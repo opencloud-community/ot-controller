@@ -184,7 +184,7 @@ impl OpenTalkControllerServiceBackend for ControllerBackend {
     async fn get_room_assets(
         &self,
         room_id: RoomId,
-        pagination: PagePaginationQuery,
+        pagination: &PagePaginationQuery,
     ) -> Result<(RoomsByRoomIdAssetsGetResponseBody, i64), ApiError> {
         Ok(self.get_room_assets(room_id, pagination).await?)
     }

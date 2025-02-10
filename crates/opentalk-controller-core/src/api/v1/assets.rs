@@ -68,7 +68,7 @@ pub async fn room_assets(
     let pagination = pagination.into_inner();
 
     let (assets, asset_count) = service
-        .get_room_assets(room_id.into_inner(), pagination.clone())
+        .get_room_assets(room_id.into_inner(), &pagination)
         .await?;
 
     Ok(ApiResponse::new(assets).with_page_pagination(

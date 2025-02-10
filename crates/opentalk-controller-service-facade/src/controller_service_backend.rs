@@ -90,7 +90,7 @@ pub trait OpenTalkControllerServiceBackend: Send + Sync {
     async fn get_room_assets(
         &self,
         room_id: RoomId,
-        pagination: PagePaginationQuery,
+        pagination: &PagePaginationQuery,
     ) -> Result<(RoomsByRoomIdAssetsGetResponseBody, i64), ApiError>;
 
     /// Get a specific asset inside a room.
