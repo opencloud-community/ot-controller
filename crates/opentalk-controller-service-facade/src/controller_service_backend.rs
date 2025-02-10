@@ -5,14 +5,22 @@
 use async_trait::async_trait;
 use bytes::Bytes;
 use futures_core::Stream;
-use opentalk_signaling_core::{assets::NewAssetFileName, ObjectStorageError};
+use opentalk_signaling_core::{
+    assets::{ByStreamExt, NewAssetFileName},
+    ObjectStorageError,
+};
 use opentalk_types_api_v1::{
     assets::AssetResource,
     auth::GetLoginResponseBody,
     error::ApiError,
-    rooms::{by_room_id::GetRoomEventResponseBody, GetRoomsResponseBody, RoomResource},
+    pagination::PagePaginationQuery,
+    rooms::{
+        by_room_id::{assets::RoomsByRoomIdAssetsGetResponseBody, GetRoomEventResponseBody},
+        GetRoomsResponseBody, RoomResource,
+    },
 };
 use opentalk_types_common::{
+    assets::AssetId,
     modules::ModuleId,
     rooms::{RoomId, RoomPassword},
     tariffs::TariffResource,
@@ -31,8 +39,7 @@ pub trait OpenTalkControllerServiceBackend: Send + Sync {
     async fn get_rooms(
         &self,
         current_user_id: UserId,
-        per_page: i64,
-        page: i64,
+        pagination: &PagePaginationQuery,
     ) -> Result<(GetRoomsResponseBody, i64), ApiError>;
 
     /// Create a new room
@@ -72,7 +79,21 @@ pub trait OpenTalkControllerServiceBackend: Send + Sync {
     /// Get a room's event
     async fn get_room_event(&self, room_id: &RoomId) -> Result<GetRoomEventResponseBody, ApiError>;
 
-    /// Create an asset for a room from an uploaded file
+    /// Get the assets associated with a room.
+    async fn get_room_assets(
+        &self,
+        room_id: RoomId,
+        pagination: PagePaginationQuery,
+    ) -> Result<(RoomsByRoomIdAssetsGetResponseBody, i64), ApiError>;
+
+    /// Get a specific asset inside a room.
+    async fn get_room_asset(
+        &self,
+        room_id: RoomId,
+        asset_id: AssetId,
+    ) -> Result<ByStreamExt, ApiError>;
+
+    /// Create an asset for a room from an uploaded file.
     async fn create_room_asset(
         &self,
         room_id: RoomId,
@@ -80,4 +101,7 @@ pub trait OpenTalkControllerServiceBackend: Send + Sync {
         namespace: Option<ModuleId>,
         data: Box<dyn Stream<Item = Result<Bytes, ObjectStorageError>> + Unpin>,
     ) -> Result<AssetResource, ApiError>;
+
+    /// Delete an asset from a room.
+    async fn delete_room_asset(&self, room_id: RoomId, asset_id: AssetId) -> Result<(), ApiError>;
 }

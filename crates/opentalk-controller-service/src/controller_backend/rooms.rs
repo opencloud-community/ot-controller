@@ -2,8 +2,6 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use bytes::Bytes;
-use futures_core::Stream;
 use kustos::{
     policies_builder::{GrantingAccess, PoliciesBuilder},
     prelude::IsSubject,
@@ -15,38 +13,31 @@ use opentalk_controller_utils::{
     CaptureApiError,
 };
 use opentalk_db_storage::{
-    assets::Asset,
     events::Event,
     rooms::{NewRoom, Room, UpdateRoom},
     sip_configs::NewSipConfig,
     tariffs::Tariff,
     utils::build_event_info,
 };
-use opentalk_signaling_core::{
-    assets::{save_asset, NewAssetFileName},
-    ChunkFormat, ObjectStorageError,
-};
 use opentalk_types_api_v1::{
-    assets::AssetResource,
     error::ApiError,
+    pagination::PagePaginationQuery,
     rooms::{by_room_id::GetRoomEventResponseBody, GetRoomsResponseBody, RoomResource},
 };
 use opentalk_types_common::{
     features,
-    modules::ModuleId,
     rooms::{RoomId, RoomPassword},
     tariffs::TariffResource,
     users::UserId,
 };
 
-use crate::{helpers::asset_to_asset_resource, require_feature, ControllerBackend, ToUserProfile};
+use crate::{require_feature, ControllerBackend, ToUserProfile};
 
 impl ControllerBackend {
     pub(super) async fn get_rooms(
         &self,
         current_user_id: UserId,
-        per_page: i64,
-        page: i64,
+        pagination: &PagePaginationQuery,
     ) -> Result<(GetRoomsResponseBody, i64), CaptureApiError> {
         let settings = self.settings.load();
         let mut conn = self.db.get_conn().await?;
@@ -58,10 +49,21 @@ impl ControllerBackend {
 
         let (rooms, room_count) = match accessible_rooms {
             kustos::AccessibleResources::All => {
-                Room::get_all_with_creator_paginated(&mut conn, per_page, page).await?
+                Room::get_all_with_creator_paginated(
+                    &mut conn,
+                    pagination.per_page,
+                    pagination.page,
+                )
+                .await?
             }
             kustos::AccessibleResources::List(list) => {
-                Room::get_by_ids_with_creator_paginated(&mut conn, &list, per_page, page).await?
+                Room::get_by_ids_with_creator_paginated(
+                    &mut conn,
+                    &list,
+                    pagination.per_page,
+                    pagination.page,
+                )
+                .await?
             }
         };
 
@@ -255,29 +257,6 @@ impl ControllerBackend {
             }
             None => Err(ApiError::not_found().into()),
         }
-    }
-
-    pub(super) async fn create_room_asset(
-        &self,
-        room_id: RoomId,
-        filename: NewAssetFileName,
-        namespace: Option<ModuleId>,
-        data: Box<dyn Stream<Item = Result<Bytes, ObjectStorageError>> + Unpin>,
-    ) -> Result<AssetResource, CaptureApiError> {
-        let (asset_id, _filename) = save_asset(
-            &self.storage.clone(),
-            self.db.clone(),
-            room_id,
-            namespace,
-            filename,
-            data,
-            ChunkFormat::Data,
-        )
-        .await?;
-
-        let asset = Asset::get(&mut self.db.get_conn().await?, asset_id, room_id).await?;
-
-        Ok(asset_to_asset_resource(asset))
     }
 }
 

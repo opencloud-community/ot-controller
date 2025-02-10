@@ -9,15 +9,8 @@ use actix_web::{
     HttpResponse,
 };
 use futures::TryStreamExt;
-use opentalk_controller_service::helpers::asset_to_asset_resource;
 use opentalk_controller_service_facade::OpenTalkControllerService;
-use opentalk_controller_utils::CaptureApiError;
-use opentalk_database::Db;
-use opentalk_db_storage::assets::Asset;
-use opentalk_signaling_core::{
-    assets::{delete_asset, get_asset, NewAssetFileName},
-    ObjectStorage, ObjectStorageError,
-};
+use opentalk_signaling_core::{assets::NewAssetFileName, ObjectStorageError};
 use opentalk_types_api_v1::{
     error::ApiError,
     pagination::PagePaginationQuery,
@@ -68,32 +61,21 @@ use crate::api::responses::{BinaryData, Forbidden, InternalServerError, NotFound
 )]
 #[get("/rooms/{room_id}/assets")]
 pub async fn room_assets(
-    db: Data<Db>,
+    service: Data<OpenTalkControllerService>,
     room_id: Path<RoomId>,
     pagination: Query<PagePaginationQuery>,
 ) -> Result<ApiResponse<RoomsByRoomIdAssetsGetResponseBody>, ApiError> {
-    Ok(room_assets_inner(&db, room_id.into_inner(), pagination.into_inner()).await?)
-}
+    let pagination = pagination.into_inner();
 
-async fn room_assets_inner(
-    db: &Db,
-    room_id: RoomId,
-    PagePaginationQuery { per_page, page }: PagePaginationQuery,
-) -> Result<ApiResponse<RoomsByRoomIdAssetsGetResponseBody>, CaptureApiError> {
-    let mut conn = db.get_conn().await?;
+    let (assets, asset_count) = service
+        .get_room_assets(room_id.into_inner(), pagination.clone())
+        .await?;
 
-    let (assets, asset_count) =
-        Asset::get_all_for_room_paginated(&mut conn, room_id, per_page, page).await?;
-
-    let asset_data = assets.into_iter().map(asset_to_asset_resource).collect();
-
-    Ok(
-        ApiResponse::new(RoomsByRoomIdAssetsGetResponseBody(asset_data)).with_page_pagination(
-            per_page,
-            page,
-            asset_count,
-        ),
-    )
+    Ok(ApiResponse::new(assets).with_page_pagination(
+        pagination.per_page,
+        pagination.page,
+        asset_count,
+    ))
 }
 
 /// Get a specific asset inside a room.
@@ -133,25 +115,14 @@ async fn room_assets_inner(
 )]
 #[get("/rooms/{room_id}/assets/{asset_id}")]
 pub async fn room_asset(
-    db: Data<Db>,
-    storage: Data<ObjectStorage>,
+    service: Data<OpenTalkControllerService>,
     path: Path<(RoomId, AssetId)>,
 ) -> Result<HttpResponse, ApiError> {
     let (room_id, asset_id) = path.into_inner();
-    Ok(room_asset_inner(&db, &storage, room_id, asset_id).await?)
-}
 
-async fn room_asset_inner(
-    db: &Db,
-    storage: &ObjectStorage,
-    room_id: RoomId,
-    asset_id: AssetId,
-) -> Result<HttpResponse, CaptureApiError> {
-    let asset = Asset::get(&mut db.get_conn().await?, asset_id, room_id).await?;
+    let stream = service.get_room_asset(room_id, asset_id).await?;
 
-    let data = get_asset(storage, &asset.id).await?;
-
-    Ok(HttpResponse::build(StatusCode::OK).streaming(data))
+    Ok(HttpResponse::build(StatusCode::OK).streaming(stream))
 }
 
 /// Create an asset for a room from an uploaded file
@@ -263,19 +234,12 @@ pub async fn create(
 )]
 #[delete("/rooms/{room_id}/assets/{asset_id}")]
 pub async fn delete(
-    db: Data<Db>,
-    storage: Data<ObjectStorage>,
+    service: Data<OpenTalkControllerService>,
     path: Path<(RoomId, AssetId)>,
 ) -> Result<NoContent, ApiError> {
-    Ok(delete_inner(&db, &storage, path.into_inner()).await?)
-}
+    let (room_id, asset_id) = path.into_inner();
 
-async fn delete_inner(
-    db: &Db,
-    storage: &ObjectStorage,
-    (room_id, asset_id): (RoomId, AssetId),
-) -> Result<NoContent, CaptureApiError> {
-    delete_asset(storage, db, room_id, asset_id).await?;
+    service.delete_room_asset(room_id, asset_id).await?;
 
     Ok(NoContent)
 }

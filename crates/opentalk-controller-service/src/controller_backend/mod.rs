@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Provides the default [`OpenTalkControllerServiceBackend`] implementation.
+mod assets;
 mod auth;
 mod rooms;
 
@@ -20,15 +21,21 @@ use opentalk_controller_settings::SharedSettings;
 use opentalk_database::Db;
 use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_signaling_core::{
-    assets::NewAssetFileName, ExchangeHandle, ObjectStorage, ObjectStorageError,
+    assets::{ByStreamExt, NewAssetFileName},
+    ExchangeHandle, ObjectStorage, ObjectStorageError,
 };
 use opentalk_types_api_v1::{
     assets::AssetResource,
     auth::{GetLoginResponseBody, OidcProvider},
     error::ApiError,
-    rooms::{by_room_id::GetRoomEventResponseBody, GetRoomsResponseBody, RoomResource},
+    pagination::PagePaginationQuery,
+    rooms::{
+        by_room_id::{assets::RoomsByRoomIdAssetsGetResponseBody, GetRoomEventResponseBody},
+        GetRoomsResponseBody, RoomResource,
+    },
 };
 use opentalk_types_common::{
+    assets::AssetId,
     features::FeatureId,
     modules::ModuleId,
     rooms::{RoomId, RoomPassword},
@@ -96,10 +103,9 @@ impl OpenTalkControllerServiceBackend for ControllerBackend {
     async fn get_rooms(
         &self,
         current_user_id: UserId,
-        per_page: i64,
-        page: i64,
+        pagination: &PagePaginationQuery,
     ) -> Result<(GetRoomsResponseBody, i64), ApiError> {
-        Ok(self.get_rooms(current_user_id, per_page, page).await?)
+        Ok(self.get_rooms(current_user_id, pagination).await?)
     }
 
     async fn create_room(
@@ -167,6 +173,22 @@ impl OpenTalkControllerServiceBackend for ControllerBackend {
         Ok(self.get_room_event(room_id).await?)
     }
 
+    async fn get_room_assets(
+        &self,
+        room_id: RoomId,
+        pagination: PagePaginationQuery,
+    ) -> Result<(RoomsByRoomIdAssetsGetResponseBody, i64), ApiError> {
+        Ok(self.get_room_assets(room_id, pagination).await?)
+    }
+
+    async fn get_room_asset(
+        &self,
+        room_id: RoomId,
+        asset_id: AssetId,
+    ) -> Result<ByStreamExt, ApiError> {
+        Ok(self.get_room_asset(room_id, asset_id).await?)
+    }
+
     async fn create_room_asset(
         &self,
         room_id: RoomId,
@@ -177,5 +199,9 @@ impl OpenTalkControllerServiceBackend for ControllerBackend {
         Ok(self
             .create_room_asset(room_id, filename, namespace, data)
             .await?)
+    }
+
+    async fn delete_room_asset(&self, room_id: RoomId, asset_id: AssetId) -> Result<(), ApiError> {
+        Ok(self.delete_room_asset(room_id, asset_id).await?)
     }
 }
