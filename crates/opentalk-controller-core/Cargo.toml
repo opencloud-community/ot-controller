@@ -121,6 +121,7 @@ yaml-rust2.workspace = true
 [dev-dependencies]
 opentalk-test-util = { workspace = true, features = ["database"] }
 pretty_assertions.workspace = true
+rand_chacha.workspace = true
 serial_test.workspace = true
 
 [build-dependencies]
