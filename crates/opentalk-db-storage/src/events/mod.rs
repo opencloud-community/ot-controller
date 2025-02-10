@@ -415,6 +415,8 @@ impl Event {
         invite_status_filter: Vec<EventInviteStatus>,
         time_min: Option<DateTime<Utc>>,
         time_max: Option<DateTime<Utc>>,
+        created_before: Option<DateTime<Utc>>,
+        created_after: Option<DateTime<Utc>>,
         adhoc: Option<bool>,
         time_independent: Option<bool>,
         cursor: Option<GetEventsCursor>,
@@ -524,6 +526,14 @@ impl Event {
             (None, None) => {
                 // no filters to apply
             }
+        }
+
+        if let Some(created_before) = created_before {
+            query = query.filter(events::created_at.le(created_before));
+        }
+
+        if let Some(created_after) = created_after {
+            query = query.filter(events::created_at.ge(created_after));
         }
 
         if only_favorites {

@@ -762,6 +762,8 @@ async fn get_events_inner(
         query.invite_status,
         query.time_min.map(DateTime::from),
         query.time_max.map(DateTime::from),
+        query.created_before.map(DateTime::from),
+        query.created_after.map(DateTime::from),
         query.adhoc,
         query.time_independent,
         get_events_cursor,

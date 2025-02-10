@@ -125,6 +125,8 @@ async fn test() {
             None,
             None,
             None,
+            None,
+            None,
             2,
         )
         .await
@@ -144,6 +146,8 @@ async fn test() {
             &user,
             false,
             vec![],
+            None,
+            None,
             None,
             None,
             None,
@@ -171,6 +175,8 @@ async fn test() {
             None,
             None,
             None,
+            None,
+            None,
             Some(cursor),
             2,
         )
@@ -190,6 +196,8 @@ async fn test() {
             &user,
             false,
             vec![],
+            None,
+            None,
             None,
             None,
             None,
@@ -218,6 +226,8 @@ async fn test() {
             None,
             None,
             None,
+            None,
+            None,
             100,
         )
         .await
@@ -235,6 +245,8 @@ async fn test() {
             vec![],
             None,
             Some(Utc.with_ymd_and_hms(2020, 1, 1, 5, 0, 0).unwrap()),
+            None,
+            None,
             None,
             None,
             None,
@@ -261,6 +273,8 @@ async fn test() {
             vec![],
             Some(Utc.with_ymd_and_hms(2020, 1, 1, 3, 0, 0).unwrap()),
             Some(Utc.with_ymd_and_hms(2020, 1, 1, 3, 0, 0).unwrap()),
+            None,
+            None,
             None,
             None,
             None,
@@ -303,6 +317,8 @@ async fn get_events_invite_filter() {
         None,
         None,
         None,
+        None,
+        None,
         100,
     )
     .await
@@ -328,6 +344,8 @@ async fn get_events_invite_filter() {
         &inviter,
         false,
         vec![EventInviteStatus::Declined],
+        None,
+        None,
         None,
         None,
         None,
@@ -396,6 +414,8 @@ async fn get_events_invite_filter() {
         None,
         None,
         None,
+        None,
+        None,
         100,
     )
     .await
@@ -412,6 +432,8 @@ async fn get_events_invite_filter() {
         &invitee,
         false,
         vec![EventInviteStatus::Declined],
+        None,
+        None,
         None,
         None,
         None,
@@ -438,6 +460,8 @@ async fn get_events_invite_filter() {
         None,
         None,
         None,
+        None,
+        None,
         100,
     )
     .await
@@ -459,6 +483,8 @@ async fn get_events_invite_filter() {
         None,
         None,
         None,
+        None,
+        None,
         100,
     )
     .await
@@ -475,6 +501,8 @@ async fn get_events_invite_filter() {
         &invitee,
         false,
         vec![],
+        None,
+        None,
         None,
         None,
         None,
@@ -604,6 +632,8 @@ async fn get_event_adhoc() {
         None,
         None,
         None,
+        None,
+        None,
         10,
     )
     .await
@@ -623,6 +653,8 @@ async fn get_event_adhoc() {
         vec![],
         None,
         None,
+        None,
+        None,
         Some(true),
         None,
         None,
@@ -640,6 +672,8 @@ async fn get_event_adhoc() {
         &user,
         false,
         vec![],
+        None,
+        None,
         None,
         None,
         Some(false),
@@ -679,6 +713,8 @@ async fn get_event_time_independent() {
         None,
         None,
         None,
+        None,
+        None,
         10,
     )
     .await
@@ -701,6 +737,8 @@ async fn get_event_time_independent() {
         None,
         None,
         None,
+        None,
+        None,
         Some(true),
         None,
         10,
@@ -717,6 +755,8 @@ async fn get_event_time_independent() {
         &user,
         false,
         vec![],
+        None,
+        None,
         None,
         None,
         None,
@@ -820,6 +860,8 @@ async fn get_event_min_max_time() {
             None,
             None,
             None,
+            None,
+            None,
             10,
         )
         .await
@@ -842,6 +884,8 @@ async fn get_event_min_max_time() {
             None,
             None,
             None,
+            None,
+            None,
             10,
         )
         .await
@@ -861,6 +905,8 @@ async fn get_event_min_max_time() {
             None,
             None,
             None,
+            None,
+            None,
             10,
         )
         .await
@@ -876,6 +922,8 @@ async fn get_event_min_max_time() {
             false,
             vec![],
             Some(Utc.with_ymd_and_hms(2020, 1, 1, 12, 0, 0).unwrap()),
+            None,
+            None,
             None,
             None,
             None,
@@ -899,6 +947,8 @@ async fn get_event_min_max_time() {
             None,
             None,
             None,
+            None,
+            None,
             10,
         )
         .await
@@ -918,6 +968,8 @@ async fn get_event_min_max_time() {
             None,
             None,
             None,
+            None,
+            None,
             10,
         )
         .await
@@ -934,6 +986,8 @@ async fn get_event_min_max_time() {
             false,
             vec![],
             Some(Utc.with_ymd_and_hms(2020, 1, 1, 11, 0, 0).unwrap()),
+            None,
+            None,
             None,
             None,
             None,
@@ -958,6 +1012,8 @@ async fn get_event_min_max_time() {
             None,
             None,
             None,
+            None,
+            None,
             10,
         )
         .await
@@ -978,6 +1034,8 @@ async fn get_event_min_max_time() {
             None,
             None,
             None,
+            None,
+            None,
             10,
         )
         .await
@@ -994,6 +1052,8 @@ async fn get_event_min_max_time() {
             false,
             vec![],
             Some(Utc.with_ymd_and_hms(2020, 1, 1, 10, 30, 0).unwrap()),
+            None,
+            None,
             None,
             None,
             None,
@@ -1018,6 +1078,8 @@ async fn get_event_min_max_time() {
             None,
             None,
             None,
+            None,
+            None,
             10,
         )
         .await
@@ -1038,6 +1100,8 @@ async fn get_event_min_max_time() {
             None,
             None,
             None,
+            None,
+            None,
             10,
         )
         .await
@@ -1055,6 +1119,8 @@ async fn get_event_min_max_time() {
             vec![],
             Some(Utc.with_ymd_and_hms(2020, 1, 1, 9, 0, 0).unwrap()),
             Some(Utc.with_ymd_and_hms(2020, 1, 1, 12, 0, 0).unwrap()),
+            None,
+            None,
             None,
             None,
             None,
