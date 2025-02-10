@@ -296,6 +296,8 @@ skip = [
   { name = "socket2", version = "0.4" },
   { name = "spin", version = "0.5" },
   { name = "spki", version = "0.6" },
+  { name = "strum", version = "0.26" },
+  { name = "strum_macros", version = "0.26" },
   { name = "sync_wrapper", version = "0.1" },
   { name = "thiserror", version = "1" },
   { name = "thiserror-impl", version = "1" },
