@@ -22,7 +22,7 @@ impl ControllerBackend {
     pub(super) async fn get_room_assets(
         &self,
         room_id: RoomId,
-        pagination: PagePaginationQuery,
+        pagination: &PagePaginationQuery,
     ) -> Result<(RoomsByRoomIdAssetsGetResponseBody, i64), CaptureApiError> {
         let mut conn = self.db.get_conn().await?;
 
