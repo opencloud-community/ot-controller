@@ -57,8 +57,8 @@ use crate::{
         self,
         storage::{
             AttributeActions, ControlStorageParticipantAttributes, LocalRoomAttributeId,
-            AVATAR_URL, DISPLAY_NAME, HAND_IS_UP, HAND_UPDATED_AT, IS_ROOM_OWNER, JOINED_AT, KIND,
-            LEFT_AT, ROLE, USER_ID,
+            AVATAR_URL, BREAKOUT_ROOM, DISPLAY_NAME, HAND_IS_UP, HAND_UPDATED_AT, IS_PRESENT,
+            IS_ROOM_OWNER, JOINED_AT, KIND, LEFT_AT, ROLE, USER_ID,
         },
         ControlStateExt as _, ControlStorageProvider,
     },
@@ -1054,6 +1054,25 @@ where
         self.volatile
             .control_storage()
             .set_local_attribute(self.participant_id, self.room_id, LEFT_AT, Timestamp::now())
+            .await?;
+
+        self.volatile
+            .control_storage()
+            .set_global_attribute(
+                self.participant_id,
+                self.room_id.room_id(),
+                IS_PRESENT,
+                false,
+            )
+            .await?;
+        self.volatile
+            .control_storage()
+            .set_global_attribute(
+                self.participant_id,
+                self.room_id.room_id(),
+                BREAKOUT_ROOM,
+                None::<BreakoutRoomId>,
+            )
             .await?;
 
         let destroy_room = self

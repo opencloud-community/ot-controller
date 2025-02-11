@@ -29,8 +29,8 @@ use opentalk_signaling_core::{
         self, exchange,
         storage::{
             AttributeActions, ControlStorageParticipantAttributes, GlobalRoomAttributeId,
-            LocalRoomAttributeId, AVATAR_URL, DISPLAY_NAME, HAND_IS_UP, HAND_UPDATED_AT,
-            IS_ROOM_OWNER, JOINED_AT, KIND, LEFT_AT, ROLE, USER_ID,
+            LocalRoomAttributeId, AVATAR_URL, BREAKOUT_ROOM, DISPLAY_NAME, HAND_IS_UP,
+            HAND_UPDATED_AT, IS_PRESENT, IS_ROOM_OWNER, JOINED_AT, KIND, LEFT_AT, ROLE, USER_ID,
         },
         ControlStateExt as _, ControlStorageProvider, MODULE_ID,
     },
@@ -479,10 +479,15 @@ impl Runner {
 
             if let RunnerState::Joined = &self.state {
                 // first check if the list of joined participant is empty
-                let res = self
+                let res: Result<(), _> = self
                     .volatile
                     .control_storage()
-                    .set_local_attribute(self.id, self.room_id, LEFT_AT, Timestamp::now())
+                    .bulk_attribute_actions(
+                        AttributeActions::new(self.room_id, self.id)
+                            .set_global(IS_PRESENT, false)
+                            .set_global(BREAKOUT_ROOM, None::<BreakoutRoomId>)
+                            .set_local(LEFT_AT, Timestamp::now()),
+                    )
                     .await;
                 if let Err(e) = res {
                     log::error!(
@@ -1829,6 +1834,8 @@ impl Runner {
             .bulk_attribute_actions::<()>(
                 actions
                     .set_global(ROLE, self.role)
+                    .set_global(IS_PRESENT, true)
+                    .set_global(BREAKOUT_ROOM, self.room_id.breakout_room_id())
                     .set_local(HAND_IS_UP, false)
                     .set_local(HAND_UPDATED_AT, timestamp)
                     .set_global(DISPLAY_NAME, display_name)
@@ -2563,7 +2570,7 @@ async fn cleanup_redis_keys_for_signaling_room(
     }
 
     if room_id.breakout_room_id().is_none() {
-        for attribute in [ROLE, DISPLAY_NAME, IS_ROOM_OWNER] {
+        for attribute in [ROLE, DISPLAY_NAME, IS_PRESENT, IS_ROOM_OWNER, BREAKOUT_ROOM] {
             storage
                 .control_storage()
                 .remove_attribute_key(

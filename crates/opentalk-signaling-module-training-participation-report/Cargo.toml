@@ -1,0 +1,47 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+authors.workspace = true
+edition = "2021"
+license = "EUPL-1.2"
+name = "opentalk-signaling-module-training-participation-report"
+publish = false
+version.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-stream.workspace = true
+async-trait.workspace = true
+bytes.workspace = true
+chrono.workspace = true
+chrono-tz.workspace = true
+either.workspace = true
+futures.workspace = true
+log.workspace = true
+opentalk-database.workspace = true
+opentalk-db-storage.workspace = true
+opentalk-report-generation.workspace = true
+opentalk-signaling-core.workspace = true
+opentalk-types-common.workspace = true
+opentalk-types-signaling.workspace = true
+opentalk-types-signaling-control.workspace = true
+opentalk-types-signaling-training-participation-report = { workspace = true, features = [
+  "backend",
+] }
+parking_lot.workspace = true
+rand.workspace = true
+redis.workspace = true
+redis-args.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+snafu.workspace = true
+tokio.workspace = true
+
+[dev-dependencies]
+insta.workspace = true
+pdf-extract.workspace = true
+pretty_assertions.workspace = true
+serial_test.workspace = true
