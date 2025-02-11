@@ -21,7 +21,7 @@ path = [
   "crates/**/README.md",
   "crates/opentalk-db-storage/src/migrations/**.sql",
   "crates/opentalk-db-storage/src/schema.rs",
-  "crates/opentalk-signaling-module-meeting-report/src/report.md.tera",
+  "crates/opentalk-signaling-module-meeting-report/src/*.typ",
   "docs/**.md",
   "docs/**.yml",
   "renovate.json",

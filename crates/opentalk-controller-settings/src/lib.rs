@@ -717,9 +717,8 @@ pub struct SubroomAudio {
     pub enable_whisper: bool,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Default, Clone, Debug, Deserialize, PartialEq, Eq)]
 pub struct Reports {
-    pub url: url::Url,
     #[serde(default)]
     pub template: ReportsTemplate,
 }
@@ -973,7 +972,6 @@ mod tests {
         assert_eq!(
             toml_settings,
             Reports {
-                url: "http://localhost".parse().unwrap(),
                 template: ReportsTemplate::BuiltIn
             }
         );
@@ -988,7 +986,6 @@ mod tests {
         assert_eq!(
             toml_settings,
             Reports {
-                url: "http://localhost".parse().unwrap(),
                 template: ReportsTemplate::Inline("lorem ipsum".to_string())
             }
         );
