@@ -21,6 +21,7 @@ use opentalk_types_api_v1::{
                 GetRoomsInvitesResponseBody, InviteResource, PostInviteRequestBody,
                 PostInviteVerifyRequestBody, PostInviteVerifyResponseBody, PutInviteRequestBody,
             },
+            sip::{PutSipConfigRequestBody, SipConfigResource},
             GetRoomEventResponseBody,
         },
         GetRoomsResponseBody, RoomResource,
@@ -156,4 +157,18 @@ pub trait OpenTalkControllerServiceBackend: Send + Sync {
         &self,
         data: PostInviteVerifyRequestBody,
     ) -> Result<PostInviteVerifyResponseBody, ApiError>;
+
+    /// Get the sip config for the specified room.
+    async fn get_sip_config(&self, room_id: RoomId) -> Result<SipConfigResource, ApiError>;
+
+    /// Modify the sip configuration of a room. A new sip configuration is created
+    /// if none was set before.
+    async fn set_sip_config(
+        &self,
+        room_id: RoomId,
+        modify_sip_config: PutSipConfigRequestBody,
+    ) -> Result<(SipConfigResource, bool), ApiError>;
+
+    /// Delete the SIP configuration of a room.
+    async fn delete_sip_config(&self, room_id: RoomId) -> Result<(), ApiError>;
 }

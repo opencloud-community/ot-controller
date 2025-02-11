@@ -2,30 +2,21 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::sync::Arc;
-
 use actix_web::{
     delete, get, put,
     web::{Data, Json, Path},
     HttpResponse,
 };
-use opentalk_controller_service::require_feature;
-use opentalk_controller_settings::{OidcAndUserSearchConfiguration, SettingsLoading};
-use opentalk_controller_utils::CaptureApiError;
-use opentalk_database::Db;
-use opentalk_db_storage::{
-    rooms::Room,
-    sip_configs::{NewSipConfig, SipConfig, UpdateSipConfig},
-};
+use opentalk_controller_service_facade::OpenTalkControllerService;
 use opentalk_types_api_v1::{
     error::ApiError,
     rooms::by_room_id::sip::{PutSipConfigRequestBody, SipConfigResource},
 };
-use opentalk_types_common::{features, rooms::RoomId};
+use opentalk_types_common::rooms::RoomId;
 
-use crate::{
-    api::responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
-    settings::SharedSettingsActix,
+use crate::api::{
+    responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
+    v1::response::NoContent,
 };
 
 /// Get the sip config for the specified room.
@@ -66,45 +57,10 @@ use crate::{
 )]
 #[get("/rooms/{room_id}/sip")]
 pub async fn get(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
+    service: Data<OpenTalkControllerService>,
     room_id: Path<RoomId>,
 ) -> Result<Json<SipConfigResource>, ApiError> {
-    Ok(get_inner(settings.load(), &db, room_id.into_inner()).await?)
-}
-
-async fn get_inner(
-    settings: arc_swap::Guard<Arc<SettingsLoading<OidcAndUserSearchConfiguration>>>,
-    db: &Db,
-    room_id: RoomId,
-) -> Result<Json<SipConfigResource>, CaptureApiError> {
-    let mut conn = db.get_conn().await?;
-
-    let room = Room::get(&mut conn, room_id).await?;
-
-    if room.e2e_encryption {
-        return Err(ApiError::not_found()
-            .with_code("service_unavailable")
-            .with_message("Call-in not available for end-to-end encrypted room".to_string())
-            .into());
-    }
-
-    require_feature(
-        &mut conn,
-        &settings,
-        room.created_by,
-        &features::CALL_IN_MODULE_FEATURE_ID,
-    )
-    .await?;
-
-    let config = SipConfig::get_by_room(&mut conn, room_id).await?;
-
-    Ok(Json(SipConfigResource {
-        room: room_id,
-        sip_id: config.sip_id,
-        password: config.password,
-        lobby: config.lobby,
-    }))
+    Ok(Json(service.get_sip_config(room_id.into_inner()).await?))
 }
 
 /// Modify the sip configuration of a room. A new sip configuration is created
@@ -150,82 +106,13 @@ async fn get_inner(
 )]
 #[put("/rooms/{room_id}/sip")]
 pub async fn put(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
+    service: Data<OpenTalkControllerService>,
     room_id: Path<RoomId>,
     modify_sip_config: Json<PutSipConfigRequestBody>,
 ) -> Result<HttpResponse, ApiError> {
-    Ok(put_inner(
-        settings.load(),
-        &db,
-        room_id.into_inner(),
-        modify_sip_config.into_inner(),
-    )
-    .await?)
-}
-
-async fn put_inner(
-    settings: arc_swap::Guard<Arc<SettingsLoading<OidcAndUserSearchConfiguration>>>,
-    db: &Db,
-    room_id: RoomId,
-    modify_sip_config: PutSipConfigRequestBody,
-) -> Result<HttpResponse, CaptureApiError> {
-    let mut conn = db.get_conn().await?;
-
-    let room = Room::get(&mut conn, room_id).await?;
-
-    if room.e2e_encryption {
-        return Err(ApiError::forbidden()
-            .with_code("service_unavailable")
-            .with_message("Call-in not available for end-to-end encrypted room".to_string())
-            .into());
-    }
-
-    require_feature(
-        &mut conn,
-        &settings,
-        room.created_by,
-        &features::CALL_IN_MODULE_FEATURE_ID,
-    )
-    .await?;
-
-    let changeset = UpdateSipConfig {
-        password: modify_sip_config.password.clone(),
-        enable_lobby: modify_sip_config.lobby,
-    };
-
-    // FIXME: use on_conflict().do_update() (UPSERT) for this PUT
-    // Try to modify the sip config before creating a new one
-    let (sip_config, newly_created) =
-        if let Some(db_sip_config) = changeset.apply(&mut conn, room_id).await? {
-            let sip_config = SipConfigResource {
-                room: room_id,
-                sip_id: db_sip_config.sip_id,
-                password: db_sip_config.password,
-                lobby: db_sip_config.lobby,
-            };
-
-            (sip_config, false)
-        } else {
-            // Create a new sip config
-            let mut new_config =
-                NewSipConfig::new(room_id, modify_sip_config.lobby.unwrap_or_default());
-
-            if let Some(password) = modify_sip_config.password {
-                new_config.password = password;
-            }
-
-            let config = new_config.insert(&mut conn).await?;
-
-            let config_resource = SipConfigResource {
-                room: room_id,
-                sip_id: config.sip_id,
-                password: config.password,
-                lobby: config.lobby,
-            };
-
-            (config_resource, true)
-        };
+    let (sip_config_resource, newly_created) = service
+        .set_sip_config(room_id.into_inner(), modify_sip_config.into_inner())
+        .await?;
 
     let mut response = if newly_created {
         HttpResponse::Created()
@@ -233,7 +120,7 @@ async fn put_inner(
         HttpResponse::Ok()
     };
 
-    Ok(response.json(sip_config))
+    Ok(response.json(sip_config_resource))
 }
 
 /// Delete the SIP configuration of a room.
@@ -272,30 +159,10 @@ async fn put_inner(
 )]
 #[delete("/rooms/{room_id}/sip")]
 pub async fn delete(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
+    service: Data<OpenTalkControllerService>,
     room_id: Path<RoomId>,
-) -> Result<HttpResponse, ApiError> {
-    Ok(delete_inner(settings.load(), &db, room_id.into_inner()).await?)
-}
-async fn delete_inner(
-    settings: arc_swap::Guard<Arc<SettingsLoading<OidcAndUserSearchConfiguration>>>,
-    db: &Db,
-    room_id: RoomId,
-) -> Result<HttpResponse, CaptureApiError> {
-    let mut conn = db.get_conn().await?;
+) -> Result<NoContent, ApiError> {
+    service.delete_sip_config(room_id.into_inner()).await?;
 
-    let room = Room::get(&mut conn, room_id).await?;
-
-    require_feature(
-        &mut conn,
-        &settings,
-        room.created_by,
-        &features::CALL_IN_MODULE_FEATURE_ID,
-    )
-    .await?;
-
-    SipConfig::delete_by_room(&mut conn, room_id).await?;
-
-    Ok(HttpResponse::NoContent().finish())
+    Ok(NoContent)
 }
