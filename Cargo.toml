@@ -90,7 +90,7 @@ opentalk-mail-worker-protocol = "0.31"
 opentalk-nextcloud-client = { version = "0.2.0", default-features = false, features = [
   "rustls-tls-native-roots",
 ] }
-opentalk-types-api-v1 = "0.31"
+opentalk-types-api-v1 = "0.32"
 opentalk-types-common = "0.31"
 opentalk-types-signaling = "0.31"
 opentalk-types-signaling-breakout = "0.31"

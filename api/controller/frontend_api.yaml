@@ -102,6 +102,22 @@ paths:
             oneOf:
               - type: "null"
               - $ref: "#/components/schemas/Timestamp"
+        - name: created_before
+          in: query
+          description: Only query events created before this timestamp
+          required: false
+          schema:
+            oneOf:
+              - type: "null"
+              - $ref: "#/components/schemas/Timestamp"
+        - name: created_after
+          in: query
+          description: Only query events created after this timestamp
+          required: false
+          schema:
+            oneOf:
+              - type: "null"
+              - $ref: "#/components/schemas/Timestamp"
         - name: invitees_max
           in: query
           description: |-
