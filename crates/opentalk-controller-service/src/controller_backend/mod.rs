@@ -7,6 +7,7 @@ mod assets;
 mod auth;
 mod invites;
 mod rooms;
+mod sip_configs;
 
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -37,6 +38,7 @@ use opentalk_types_api_v1::{
                 GetRoomsInvitesResponseBody, InviteResource, PostInviteRequestBody,
                 PostInviteVerifyRequestBody, PostInviteVerifyResponseBody, PutInviteRequestBody,
             },
+            sip::{PutSipConfigRequestBody, SipConfigResource},
             GetRoomEventResponseBody,
         },
         GetRoomsResponseBody, RoomResource,
@@ -268,5 +270,21 @@ impl OpenTalkControllerServiceBackend for ControllerBackend {
         data: PostInviteVerifyRequestBody,
     ) -> Result<PostInviteVerifyResponseBody, ApiError> {
         Ok(self.verify_invite_code(data).await?)
+    }
+
+    async fn get_sip_config(&self, room_id: RoomId) -> Result<SipConfigResource, ApiError> {
+        Ok(self.get_sip_config(room_id).await?)
+    }
+
+    async fn set_sip_config(
+        &self,
+        room_id: RoomId,
+        modify_sip_config: PutSipConfigRequestBody,
+    ) -> Result<(SipConfigResource, bool), ApiError> {
+        Ok(self.set_sip_config(room_id, modify_sip_config).await?)
+    }
+
+    async fn delete_sip_config(&self, room_id: RoomId) -> Result<(), ApiError> {
+        Ok(self.delete_sip_config(room_id).await?)
     }
 }

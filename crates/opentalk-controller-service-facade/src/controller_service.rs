@@ -22,6 +22,7 @@ use opentalk_types_api_v1::{
                 GetRoomsInvitesResponseBody, InviteResource, PostInviteRequestBody,
                 PostInviteVerifyRequestBody, PostInviteVerifyResponseBody, PutInviteRequestBody,
             },
+            sip::{PutSipConfigRequestBody, SipConfigResource},
             GetRoomEventResponseBody,
         },
         GetRoomsResponseBody, RoomResource,
@@ -284,5 +285,29 @@ impl OpenTalkControllerService {
         data: PostInviteVerifyRequestBody,
     ) -> Result<PostInviteVerifyResponseBody, ApiError> {
         self.backend.read().await.verify_invite_code(data).await
+    }
+
+    /// Get the sip config for the specified room.
+    pub async fn get_sip_config(&self, room_id: RoomId) -> Result<SipConfigResource, ApiError> {
+        self.backend.read().await.get_sip_config(room_id).await
+    }
+
+    /// Modify the sip configuration of a room. A new sip configuration is created
+    /// if none was set before.
+    pub async fn set_sip_config(
+        &self,
+        room_id: RoomId,
+        modify_sip_config: PutSipConfigRequestBody,
+    ) -> Result<(SipConfigResource, bool), ApiError> {
+        self.backend
+            .read()
+            .await
+            .set_sip_config(room_id, modify_sip_config)
+            .await
+    }
+
+    /// Delete the SIP configuration of a room.
+    pub async fn delete_sip_config(&self, room_id: RoomId) -> Result<(), ApiError> {
+        self.backend.read().await.delete_sip_config(room_id).await
     }
 }
