@@ -1,0 +1,22 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+authors.workspace = true
+edition = "2021"
+license = "EUPL-1.2"
+name = "opentalk-signaling-module-e2ee"
+publish = false
+version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+async-trait.workspace = true
+opentalk-signaling-core.workspace = true
+opentalk-types-common.workspace = true
+opentalk-types-signaling.workspace = true
+opentalk-types-signaling-e2ee = { workspace = true, features = ["backend"] }
+serde.workspace = true
