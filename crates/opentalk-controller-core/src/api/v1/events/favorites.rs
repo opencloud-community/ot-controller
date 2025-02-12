@@ -7,12 +7,7 @@ use actix_web::{
     web::{Data, Path, ReqData},
     Either,
 };
-use opentalk_controller_utils::CaptureApiError;
-use opentalk_database::Db;
-use opentalk_db_storage::{
-    events::{Event, EventFavorite, NewEventFavorite},
-    users::User,
-};
+use opentalk_controller_service_facade::{OpenTalkControllerService, RequestUser};
 use opentalk_types_api_v1::error::ApiError;
 use opentalk_types_common::events::EventId;
 
@@ -56,32 +51,17 @@ use crate::api::{
 )]
 #[put("/users/me/event_favorites/{event_id}")]
 pub async fn add_event_to_favorites(
-    db: Data<Db>,
-    id: Path<EventId>,
-    current_user: ReqData<User>,
+    service: Data<OpenTalkControllerService>,
+    current_user: ReqData<RequestUser>,
+    event_id: Path<EventId>,
 ) -> Result<Either<Created, NoContent>, ApiError> {
-    Ok(add_event_to_favorites_inner(&db, id.into_inner(), current_user.into_inner()).await?)
-}
+    let created = service
+        .add_event_to_favorites(current_user.into_inner(), event_id.into_inner())
+        .await?;
 
-async fn add_event_to_favorites_inner(
-    db: &Db,
-    event_id: EventId,
-    current_user: User,
-) -> Result<Either<Created, NoContent>, CaptureApiError> {
-    let mut conn = db.get_conn().await?;
-
-    let _event = Event::get(&mut conn, event_id).await?;
-
-    let result = NewEventFavorite {
-        user_id: current_user.id,
-        event_id,
-    }
-    .try_insert(&mut conn)
-    .await?;
-
-    match result {
-        Some(_) => Ok(Either::Left(Created)),
-        None => Ok(Either::Right(NoContent)),
+    match created {
+        true => Ok(Either::Left(Created)),
+        false => Ok(Either::Right(NoContent)),
     }
 }
 
@@ -116,25 +96,13 @@ async fn add_event_to_favorites_inner(
 )]
 #[delete("/users/me/event_favorites/{event_id}")]
 pub async fn remove_event_from_favorites(
-    db: Data<Db>,
-    id: Path<EventId>,
-    current_user: ReqData<User>,
+    service: Data<OpenTalkControllerService>,
+    current_user: ReqData<RequestUser>,
+    event_id: Path<EventId>,
 ) -> Result<NoContent, ApiError> {
-    Ok(remove_event_from_favorites_inner(&db, id.into_inner(), current_user.into_inner()).await?)
-}
+    service
+        .remove_event_from_favorites(current_user.into_inner(), event_id.into_inner())
+        .await?;
 
-async fn remove_event_from_favorites_inner(
-    db: &Db,
-    id: EventId,
-    current_user: User,
-) -> Result<NoContent, CaptureApiError> {
-    let mut conn = db.get_conn().await?;
-
-    let existed = EventFavorite::delete_by_id(&mut conn, current_user.id, id).await?;
-
-    if existed {
-        Ok(NoContent)
-    } else {
-        Err(ApiError::not_found().into())
-    }
+    Ok(NoContent)
 }
