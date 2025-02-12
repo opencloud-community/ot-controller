@@ -19,7 +19,7 @@ use opentalk_types_common::{assets::AssetId, modules::ModuleId, rooms::RoomId};
 use crate::{helpers::asset_to_asset_resource, ControllerBackend};
 
 impl ControllerBackend {
-    pub(super) async fn get_room_assets(
+    pub(crate) async fn get_room_assets(
         &self,
         room_id: RoomId,
         pagination: &PagePaginationQuery,
@@ -40,7 +40,7 @@ impl ControllerBackend {
         Ok((assets, asset_count))
     }
 
-    pub(super) async fn get_room_asset(
+    pub(crate) async fn get_room_asset(
         &self,
         room_id: RoomId,
         asset_id: AssetId,
@@ -54,7 +54,7 @@ impl ControllerBackend {
         Ok(stream)
     }
 
-    pub(super) async fn create_room_asset(
+    pub(crate) async fn create_room_asset(
         &self,
         room_id: RoomId,
         filename: NewAssetFileName,
@@ -77,7 +77,7 @@ impl ControllerBackend {
         Ok(asset_to_asset_resource(asset))
     }
 
-    pub(super) async fn delete_room_asset(
+    pub(crate) async fn delete_room_asset(
         &self,
         room_id: RoomId,
         asset_id: AssetId,

@@ -34,7 +34,7 @@ use opentalk_types_common::{
 use crate::{require_feature, ControllerBackend, ToUserProfile};
 
 impl ControllerBackend {
-    pub(super) async fn get_rooms(
+    pub(crate) async fn get_rooms(
         &self,
         current_user_id: UserId,
         pagination: &PagePaginationQuery,
@@ -81,7 +81,7 @@ impl ControllerBackend {
         Ok((GetRoomsResponseBody(rooms), room_count))
     }
 
-    pub(super) async fn create_room(
+    pub(crate) async fn create_room(
         &self,
         current_user: RequestUser,
         password: Option<RoomPassword>,
@@ -137,7 +137,7 @@ impl ControllerBackend {
         Ok(room_resource)
     }
 
-    pub(super) async fn patch_room(
+    pub(crate) async fn patch_room(
         &self,
         current_user: RequestUser,
         room_id: RoomId,
@@ -167,7 +167,7 @@ impl ControllerBackend {
         Ok(room_resource)
     }
 
-    pub(super) async fn delete_room(
+    pub(crate) async fn delete_room(
         &self,
         current_user: RequestUser,
         room_id: RoomId,
@@ -193,7 +193,7 @@ impl ControllerBackend {
         Ok(())
     }
 
-    pub(super) async fn get_room(&self, room_id: &RoomId) -> Result<RoomResource, CaptureApiError> {
+    pub(crate) async fn get_room(&self, room_id: &RoomId) -> Result<RoomResource, CaptureApiError> {
         let settings = self.settings.load();
         let mut conn = self.db.get_conn().await?;
 
@@ -210,7 +210,7 @@ impl ControllerBackend {
         Ok(room_resource)
     }
 
-    pub(super) async fn get_room_tariff(
+    pub(crate) async fn get_room_tariff(
         &self,
         room_id: &RoomId,
     ) -> Result<TariffResource, CaptureApiError> {
@@ -228,7 +228,7 @@ impl ControllerBackend {
         Ok(response)
     }
 
-    pub(super) async fn get_room_event(
+    pub(crate) async fn get_room_event(
         &self,
         room_id: &RoomId,
     ) -> Result<GetRoomEventResponseBody, CaptureApiError> {
