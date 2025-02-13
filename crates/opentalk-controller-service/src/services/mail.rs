@@ -29,9 +29,7 @@ use snafu::ResultExt;
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
-use crate::{metrics::EndpointMetrics, Whatever};
-
-type Result<T, E = Whatever> = std::result::Result<T, E>;
+use crate::{metrics::EndpointMetrics, Result};
 
 /// A registered mail recipient
 #[derive(Debug)]

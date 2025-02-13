@@ -18,11 +18,10 @@ use actix_web::{
 };
 use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
 use openidconnect::AccessToken;
+use opentalk_controller_service::oidc::{OidcContext, ServiceClaims};
 use opentalk_types_api_v1::error::{ApiError, AuthenticationError};
 use snafu::Report;
 use tracing::Instrument;
-
-use crate::oidc::{OidcContext, ServiceClaims};
 
 /// Contains a list of string representing the service-account's roles in a realm
 ///

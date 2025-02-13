@@ -16,13 +16,16 @@ version.workspace = true
 
 [dependencies]
 async-trait.workspace = true
+base64.workspace = true
 bytes.workspace = true
 chrono.workspace = true
 futures-core.workspace = true
+jsonwebtoken.workspace = true
 kustos.workspace = true
 lapin-pool.workspace = true
 log = { workspace = true, features = ["serde"] }
 md5.workspace = true
+openidconnect.workspace = true
 opentalk-controller-service-facade.workspace = true
 opentalk-controller-settings.workspace = true
 opentalk-controller-utils.workspace = true
@@ -34,9 +37,15 @@ opentalk-signaling-core.workspace = true
 opentalk-types-api-v1 = { workspace = true, features = ["diesel"] }
 opentalk-types-common = { workspace = true, features = ["kustos"] }
 opentelemetry = { workspace = true, features = ["metrics", "trace"] }
+reqwest11 = { workspace = true, features = ["rustls-tls-native-roots"] }
+ring.workspace = true
+serde.workspace = true
 serde_json.workspace = true
 snafu.workspace = true
 tokio = { workspace = true, features = ["signal"] }
+tracing.workspace = true
+url.workspace = true
 uuid = { workspace = true, features = ["serde", "v4"] }
 
 [dev-dependencies]
+pretty_assertions.workspace = true

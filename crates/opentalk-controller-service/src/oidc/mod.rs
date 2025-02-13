@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+//! Provides OpenID Connect stuff.
+
 use chrono::{DateTime, Utc};
 use http::async_http_client;
 use openidconnect::{AccessToken, ClientId, ClientSecret, TokenIntrospectionResponse};
@@ -22,8 +24,11 @@ pub use jwt::{decode_token, VerifyError};
 /// The `OidcContext` contains all information about the Oidc provider and permissions matrix.
 #[derive(Debug)]
 pub struct OidcContext {
+    /// The URL used by the frontend for authentication
     pub frontend_auth_base_url: Url,
-    pub(crate) provider: ProviderClient,
+    /// The provider client
+    pub provider: ProviderClient,
+    /// The HTTP client
     http_client: reqwest11::Client,
 }
 
@@ -93,7 +98,7 @@ impl OidcContext {
             .await
             .whatever_context("Failed to verify token using the introspect endpoint")?;
 
-        tracing::Span::current().record("active", response.active());
+        _ = tracing::Span::current().record("active", response.active());
 
         Ok(AccessTokenIntrospectInfo {
             active: response.active(),
@@ -124,6 +129,7 @@ impl OidcContext {
         })
     }
 
+    /// Returns the provider URL
     pub fn provider_url(&self) -> String {
         self.frontend_auth_base_url.to_string()
     }
@@ -133,6 +139,7 @@ impl OidcContext {
 #[derive(Debug)]
 #[must_use]
 pub struct AccessTokenIntrospectInfo {
+    /// Indicates whether it's active
     pub active: bool,
 }
 
@@ -141,17 +148,30 @@ pub struct AccessTokenIntrospectInfo {
 /// Contains the sub (client id) and expiration of the ID Token
 #[derive(Debug)]
 pub struct IdTokenInfo {
+    /// The subject
     pub sub: String,
+    /// The subject
     pub issuer: String,
+    /// The date and time of expiration
     pub expiration: DateTime<Utc>,
+    /// The email address
     pub email: String,
+    /// The first name
     pub firstname: String,
+    /// The last name
     pub lastname: String,
+    /// The URL to get the avatar from
     pub avatar_url: Option<String>,
+    /// The group
     pub x_grp: Vec<String>,
+    /// The phone number
     pub phone_number: Option<String>,
+    /// The display name
     pub display_name: Option<String>,
+    /// The tenant id
     pub tenant_id: Option<String>,
+    /// The tariff id
     pub tariff_id: Option<String>,
+    /// The tariff status
     pub tariff_status: Option<String>,
 }
