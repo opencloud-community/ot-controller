@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
+use opentalk_controller_service::oidc::IdTokenInfo;
 use opentalk_controller_settings::Settings;
 use opentalk_database::DbConnection;
 use opentalk_db_storage::{
@@ -13,7 +14,7 @@ use opentalk_db_storage::{
 use opentalk_types_common::{tariffs::TariffStatus, users::DisplayName};
 
 use super::{build_info_display_name, LoginResult};
-use crate::{api::util::parse_phone_number, oidc::IdTokenInfo};
+use crate::api::util::parse_phone_number;
 
 /// Called when the `POST /auth/login` endpoint received an id-token with a `sub`+`tenant_id` combination that maps to
 /// an existing user. Resets the expiry time of the id-token for the user. Also updates all fields in the database that

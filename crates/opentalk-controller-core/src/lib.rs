@@ -51,8 +51,9 @@ use arc_swap::ArcSwap;
 use async_trait::async_trait;
 use kustos::Authz;
 use lapin_pool::RabbitMqPool;
-use oidc::OidcContext;
-use opentalk_controller_service::{services::MailService, ControllerBackend, Whatever};
+use opentalk_controller_service::{
+    oidc::OidcContext, services::MailService, ControllerBackend, Whatever,
+};
 use opentalk_controller_service_facade::OpenTalkControllerService;
 use opentalk_database::Db;
 use opentalk_jobs::job_runner::JobRunner;
@@ -92,7 +93,6 @@ mod acl;
 mod caches;
 mod cli;
 mod metrics;
-mod oidc;
 mod swagger;
 mod trace;
 

@@ -22,6 +22,7 @@ use actix_web_httpauth::headers::authorization::Authorization;
 use chrono::Utc;
 use openidconnect::AccessToken;
 use opentalk_cache::Cache;
+use opentalk_controller_service::oidc::{OidcContext, UserClaims};
 use opentalk_controller_service_facade::RequestUser;
 use opentalk_controller_settings::{Settings, SharedSettings, TenantAssignment};
 use opentalk_controller_utils::CaptureApiError;
@@ -42,7 +43,6 @@ use crate::{
         response::error::CacheableApiError,
     },
     caches::Caches,
-    oidc::{OidcContext, UserClaims},
 };
 
 mod bearer_or_invite_code;

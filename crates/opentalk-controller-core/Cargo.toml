@@ -36,7 +36,6 @@ either.workspace = true
 futures.workspace = true
 http.workspace = true
 itertools.workspace = true
-jsonwebtoken = "9.3"
 kustos.workspace = true
 lapin-pool.workspace = true
 log = { workspace = true, features = ["serde"] }
@@ -90,7 +89,6 @@ prometheus = "0.13"
 rand.workspace = true
 redis = { workspace = true, features = ["connection-manager", "tokio-comp"] }
 redis-args.workspace = true
-reqwest11 = { workspace = true, features = ["rustls-tls-native-roots"] }
 ring = "0.17"
 rrule.workspace = true
 rustls = "0.23"

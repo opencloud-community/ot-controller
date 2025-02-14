@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
+use opentalk_controller_service::oidc::IdTokenInfo;
 use opentalk_controller_settings::Settings;
 use opentalk_database::DbConnection;
 use opentalk_db_storage::{
@@ -15,7 +16,7 @@ use opentalk_db_storage::{
 use opentalk_types_common::{tariffs::TariffStatus, users::UserTitle};
 
 use super::{build_info_display_name, LoginResult};
-use crate::{api::util::parse_phone_number, oidc::IdTokenInfo};
+use crate::api::util::parse_phone_number;
 
 /// Called when `POST /auth/login` receives an id-token with a new `sub` + `tenant_id` field combination. Creates a new
 /// user in the given tenant using the information extracted from the id-token claims.

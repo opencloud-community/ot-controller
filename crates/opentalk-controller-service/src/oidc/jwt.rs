@@ -19,21 +19,33 @@ use snafu::{Report, ResultExt, Snafu};
 /// The error messages will get displayed in a HTTP 401 response
 #[derive(Debug, Snafu, PartialEq, Eq)]
 pub enum VerifyError {
+    /// Not a valid JWT ({message})
     #[snafu(display("Not a valid JWT ({message})"))]
     InvalidJwt {
+        /// The message string
         message: String,
+        /// The source
         source: jsonwebtoken::errors::Error,
     },
+    /// Unable to parse signature from JWT
     #[snafu(display("Unable to parse signature from JWT"))]
     MalformedSignature,
+    /// JWT has invalid claims
     #[snafu(display("JWT has invalid claims"))]
     InvalidClaims,
+    /// JWT token expired ({message})
     #[snafu(display("JWT token expired ({message})"))]
-    Expired { message: String },
+    Expired {
+        /// The message string
+        message: String,
+    },
+    /// JWT header does not specify a KeyID (kid)
     #[snafu(display("JWT header does not specify a KeyID (kid)"))]
     MissingKeyID,
+    /// JWT header specified an unknown KeyID (kid)
     #[snafu(display("JWT header specified an unknown KeyID (kid)"))]
     UnknownKeyID,
+    /// JWT has an invalid signature
     #[snafu(display("JWT has an invalid signature"))]
     InvalidSignature,
 }
@@ -104,6 +116,7 @@ pub fn verify<C: VerifyClaims>(key_set: &CoreJsonWebKeySet, token: &str) -> Resu
     decode_token(token)
 }
 
+/// Decodes the token
 pub fn decode_token<C: VerifyClaims>(token: &str) -> Result<C, VerifyError> {
     // We can ignore the signature check of jsonwebtokens
     // TODO use jsonwebtokens validation
@@ -270,8 +283,7 @@ mod tests {
         let jwt_enc = format!("{message}.{signature}");
 
         // Verify should success
-        let claims =
-            super::verify::<UserClaims>(&jwks, &jwt_enc).expect("Valid JWT failed to verify");
+        let claims = verify::<UserClaims>(&jwks, &jwt_enc).expect("Valid JWT failed to verify");
 
         assert_eq!(claims.sub, "admin");
         assert_eq!(claims.x_grp[0], "/admin");
@@ -300,7 +312,7 @@ mod tests {
         let jwt_enc = format!("{message}.{signature}");
 
         // Verify should success
-        match super::verify::<UserClaims>(&jwks, &jwt_enc) {
+        match verify::<UserClaims>(&jwks, &jwt_enc) {
             Ok(_) => panic!("Test must fail, exp is set in the past"),
             Err(VerifyError::Expired { .. }) => { /* Test successful */ }
             Err(_) => panic!("Test must fail with VerifyError::Expired(...)"),
@@ -326,7 +338,7 @@ mod tests {
         let jwt_enc = format!("{message}.{signature}");
 
         // Verify should success
-        match super::verify::<UserClaims>(&jwks, &jwt_enc) {
+        match verify::<UserClaims>(&jwks, &jwt_enc) {
             Ok(_) => panic!("Test must fail, provided bad signature"),
             Err(e) => {
                 assert_eq!(

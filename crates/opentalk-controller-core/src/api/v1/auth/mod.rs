@@ -11,7 +11,10 @@ use actix_web::{
 };
 use kustos::prelude::PoliciesBuilder;
 use log::error;
-use opentalk_controller_service::controller_backend::RoomsPoliciesBuilderExt;
+use opentalk_controller_service::{
+    controller_backend::RoomsPoliciesBuilderExt,
+    oidc::{IdTokenInfo, OidcContext, VerifyError},
+};
 use opentalk_controller_service_facade::OpenTalkControllerService;
 use opentalk_controller_settings::{
     Settings, TariffAssignment, TariffStatusMapping, TenantAssignment,
@@ -37,11 +40,7 @@ use opentalk_types_common::{
 };
 
 use super::events::EventPoliciesBuilderExt;
-use crate::{
-    api::responses::InternalServerError,
-    oidc::{IdTokenInfo, OidcContext, VerifyError},
-    settings::SharedSettingsActix,
-};
+use crate::{api::responses::InternalServerError, settings::SharedSettingsActix};
 
 mod create_user;
 mod update_user;

@@ -8,7 +8,8 @@ use serde::Deserialize;
 
 use super::jwt;
 
-#[derive(Deserialize)]
+/// Service claims
+#[derive(Deserialize, Debug)]
 pub struct ServiceClaims {
     /// Expires at
     #[serde(with = "time")]
@@ -32,7 +33,7 @@ impl jwt::VerifyClaims for ServiceClaims {
 
 /// Keycloak realm-management claim which includes the realm specific roles of the client
 /// Only included in
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct RealmAccess {
     pub roles: Vec<String>,
 }
@@ -41,7 +42,7 @@ pub struct RealmAccess {
 //
 // A note to devs:
 // Please also update fields in `docs/admin/keycloak.md`.
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct UserClaims {
     /// Expires at
     #[serde(with = "time")]

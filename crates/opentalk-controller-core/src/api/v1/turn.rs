@@ -19,6 +19,7 @@ use arc_swap::ArcSwap;
 use base64::Engine;
 use either::Either;
 use openidconnect::AccessToken;
+use opentalk_controller_service::oidc::OidcContext;
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::{Db, OptionalExt};
 use opentalk_db_storage::{invites::Invite, users::User};
@@ -41,7 +42,6 @@ use crate::{
         v1::{middleware::user_auth::check_access_token, response::NoContent},
     },
     caches::Caches,
-    oidc::OidcContext,
     settings::{Settings, SharedSettingsActix, TurnServer},
 };
 

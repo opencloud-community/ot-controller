@@ -15,7 +15,10 @@ use actix_web::{
 use chrono::Utc;
 use openidconnect::AccessToken;
 use opentalk_controller_service::{
-    email_to_libravatar_url, helpers::asset_to_asset_resource, ToUserProfile as _,
+    email_to_libravatar_url,
+    helpers::asset_to_asset_resource,
+    oidc::{decode_token, UserClaims},
+    ToUserProfile as _,
 };
 use opentalk_controller_settings::{Settings, TenantAssignment, UsersFindBehavior};
 use opentalk_controller_utils::CaptureApiError;
@@ -49,7 +52,6 @@ use crate::{
         v1::ApiResponse,
     },
     caches::Caches,
-    oidc::{decode_token, UserClaims},
     settings::SharedSettingsActix,
 };
 

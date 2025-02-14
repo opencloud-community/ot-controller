@@ -72,6 +72,7 @@ http-request-derive = { version = "0.3.1", default-features = false }
 http0 = { version = "0", package = "http" }
 insta = "1"
 itertools = "0.14"
+jsonwebtoken = "9.3"
 kustos-shared = "0.31"
 lapin = { version = "2", default-features = false }
 lapin-pool = "0.1"
@@ -122,6 +123,7 @@ redis = "0.28"
 redis-args = "0.18"
 reqwest = { version = "0.12", default-features = false }
 reqwest11 = { package = "reqwest", version = "0.11", default-features = false }
+ring = "0.17"
 rrule = "0.13"
 rustc-hash = "2.0"
 serde = { version = "1", features = ["derive"] }
