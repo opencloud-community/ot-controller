@@ -87,27 +87,27 @@ opentalk-etherpad-client = { version = "0.2.0", default-features = false, featur
 opentalk-keycloak-admin = { version = "0.3.0", default-features = false, features = [
   "rustls-tls-native-roots",
 ] }
-opentalk-mail-worker-protocol = "0.31"
+opentalk-mail-worker-protocol = "0.32"
 opentalk-nextcloud-client = { version = "0.2.0", default-features = false, features = [
   "rustls-tls-native-roots",
 ] }
-opentalk-types-api-v1 = "0.32.1"
-opentalk-types-common = "0.31.1"
-opentalk-types-signaling = "0.31"
-opentalk-types-signaling-breakout = "0.31"
-opentalk-types-signaling-chat = "0.31"
-opentalk-types-signaling-control = "0.31"
-opentalk-types-signaling-livekit = "0.31"
-opentalk-types-signaling-meeting-notes = "0.31"
-opentalk-types-signaling-meeting-report = "0.31"
-opentalk-types-signaling-moderation = "0.31"
-opentalk-types-signaling-polls = "0.31"
-opentalk-types-signaling-recording = "0.31"
-opentalk-types-signaling-recording-service = "0.31"
-opentalk-types-signaling-shared-folder = "0.31"
-opentalk-types-signaling-subroom-audio = "0.31"
-opentalk-types-signaling-timer = "0.31"
-opentalk-types-signaling-whiteboard = "0.31"
+opentalk-types-api-v1 = "0.33"
+opentalk-types-common = "0.32"
+opentalk-types-signaling = "0.32"
+opentalk-types-signaling-breakout = "0.32"
+opentalk-types-signaling-chat = "0.32"
+opentalk-types-signaling-control = "0.32"
+opentalk-types-signaling-livekit = "0.32"
+opentalk-types-signaling-meeting-notes = "0.32"
+opentalk-types-signaling-meeting-report = "0.32"
+opentalk-types-signaling-moderation = "0.32"
+opentalk-types-signaling-polls = "0.32"
+opentalk-types-signaling-recording = "0.32"
+opentalk-types-signaling-recording-service = "0.32"
+opentalk-types-signaling-shared-folder = "0.32"
+opentalk-types-signaling-subroom-audio = "0.32"
+opentalk-types-signaling-timer = "0.32"
+opentalk-types-signaling-whiteboard = "0.32"
 opentalk-version = "0.1.1"
 opentelemetry = { version = "0.27", default-features = false, features = [
   "metrics",
@@ -119,8 +119,8 @@ pdf-extract = "0.8"
 phonenumber = "0.3"
 pretty_assertions = "1"
 rand = "0.8"
-redis = "0.28"
-redis-args = "0.18"
+redis = "0.29"
+redis-args = "0.19"
 reqwest = { version = "0.12", default-features = false }
 reqwest11 = { package = "reqwest", version = "0.11", default-features = false }
 ring = "0.17"
