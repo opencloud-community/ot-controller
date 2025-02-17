@@ -27,7 +27,7 @@ use opentalk_types_common::rooms::{invite_codes::InviteCode, RoomId};
 use crate::{controller_backend::RoomsPoliciesBuilderExt, ControllerBackend, ToUserProfile};
 
 impl ControllerBackend {
-    pub(super) async fn create_invite(
+    pub(crate) async fn create_invite(
         &self,
         current_user: RequestUser,
         room_id: RoomId,
@@ -62,7 +62,7 @@ impl ControllerBackend {
         Ok(invite)
     }
 
-    pub(super) async fn get_invites(
+    pub(crate) async fn get_invites(
         &self,
         room_id: RoomId,
         pagination: &PagePaginationQuery,
@@ -93,7 +93,7 @@ impl ControllerBackend {
         Ok((GetRoomsInvitesResponseBody(invites), total_invites))
     }
 
-    pub(super) async fn get_invite(
+    pub(crate) async fn get_invite(
         &self,
         room_id: RoomId,
         invite_code: InviteCode,
@@ -114,7 +114,7 @@ impl ControllerBackend {
         Ok(Invite::into_invite_resource(invite, created_by, updated_by))
     }
 
-    pub(super) async fn update_invite(
+    pub(crate) async fn update_invite(
         &self,
         current_user: RequestUser,
         room_id: RoomId,
@@ -149,7 +149,7 @@ impl ControllerBackend {
         Ok(Invite::into_invite_resource(invite, created_by, updated_by))
     }
 
-    pub(super) async fn delete_invite(
+    pub(crate) async fn delete_invite(
         &self,
         current_user: RequestUser,
         room_id: RoomId,
@@ -176,7 +176,7 @@ impl ControllerBackend {
         Ok(())
     }
 
-    pub(super) async fn verify_invite_code(
+    pub(crate) async fn verify_invite_code(
         &self,
         data: PostInviteVerifyRequestBody,
     ) -> Result<PostInviteVerifyResponseBody, CaptureApiError> {

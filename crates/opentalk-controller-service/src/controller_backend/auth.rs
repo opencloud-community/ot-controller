@@ -7,7 +7,7 @@ use opentalk_types_api_v1::auth::GetLoginResponseBody;
 use crate::ControllerBackend;
 
 impl ControllerBackend {
-    pub(super) async fn get_login(&self) -> GetLoginResponseBody {
+    pub(crate) async fn get_login(&self) -> GetLoginResponseBody {
         GetLoginResponseBody {
             oidc: self.frontend_oidc_provider.clone(),
         }

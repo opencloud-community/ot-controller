@@ -5,6 +5,7 @@
 //! Provides the default [`OpenTalkControllerServiceBackend`] implementation.
 mod assets;
 mod auth;
+mod events;
 mod invites;
 mod rooms;
 mod sip_configs;
@@ -46,6 +47,7 @@ use opentalk_types_api_v1::{
 };
 use opentalk_types_common::{
     assets::AssetId,
+    events::EventId,
     features::FeatureId,
     modules::ModuleId,
     rooms::{invite_codes::InviteCode, RoomId, RoomPassword},
@@ -286,5 +288,23 @@ impl OpenTalkControllerServiceBackend for ControllerBackend {
 
     async fn delete_sip_config(&self, room_id: RoomId) -> Result<(), ApiError> {
         Ok(self.delete_sip_config(room_id).await?)
+    }
+
+    async fn add_event_to_favorites(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+    ) -> Result<bool, ApiError> {
+        Ok(self.add_event_to_favorites(current_user, event_id).await?)
+    }
+
+    async fn remove_event_from_favorites(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+    ) -> Result<(), ApiError> {
+        Ok(self
+            .remove_event_from_favorites(current_user, event_id)
+            .await?)
     }
 }

@@ -29,6 +29,7 @@ use opentalk_types_api_v1::{
 };
 use opentalk_types_common::{
     assets::AssetId,
+    events::EventId,
     modules::ModuleId,
     rooms::{invite_codes::InviteCode, RoomId, RoomPassword},
     tariffs::TariffResource,
@@ -171,4 +172,18 @@ pub trait OpenTalkControllerServiceBackend: Send + Sync {
 
     /// Delete the SIP configuration of a room.
     async fn delete_sip_config(&self, room_id: RoomId) -> Result<(), ApiError>;
+
+    /// Add an event to the current user's favorites
+    async fn add_event_to_favorites(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+    ) -> Result<bool, ApiError>;
+
+    /// Remove an event from the current user's favorites
+    async fn remove_event_from_favorites(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+    ) -> Result<(), ApiError>;
 }

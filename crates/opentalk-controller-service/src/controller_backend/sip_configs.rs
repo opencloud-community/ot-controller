@@ -16,7 +16,7 @@ use opentalk_types_common::{features, rooms::RoomId};
 use crate::{require_feature, ControllerBackend};
 
 impl ControllerBackend {
-    pub(super) async fn get_sip_config(
+    pub(crate) async fn get_sip_config(
         &self,
         room_id: RoomId,
     ) -> Result<SipConfigResource, CaptureApiError> {
@@ -50,7 +50,7 @@ impl ControllerBackend {
         })
     }
 
-    pub(super) async fn set_sip_config(
+    pub(crate) async fn set_sip_config(
         &self,
         room_id: RoomId,
         modify_sip_config: PutSipConfigRequestBody,
@@ -116,7 +116,7 @@ impl ControllerBackend {
         Ok((sip_config, newly_created))
     }
 
-    pub(super) async fn delete_sip_config(&self, room_id: RoomId) -> Result<(), CaptureApiError> {
+    pub(crate) async fn delete_sip_config(&self, room_id: RoomId) -> Result<(), CaptureApiError> {
         let settings = self.settings.load();
         let mut conn = self.db.get_conn().await?;
 
