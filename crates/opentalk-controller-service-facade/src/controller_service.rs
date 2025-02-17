@@ -11,7 +11,7 @@ use opentalk_signaling_core::{
     ObjectStorageError,
 };
 use opentalk_types_api_v1::{
-    assets::AssetResource,
+    assets::{AssetResource, AssetSortingQuery},
     auth::GetLoginResponseBody,
     error::ApiError,
     pagination::PagePaginationQuery,
@@ -26,6 +26,10 @@ use opentalk_types_api_v1::{
             GetRoomEventResponseBody,
         },
         GetRoomsResponseBody, RoomResource,
+    },
+    users::{
+        me::PatchMeRequestBody, GetFindQuery, GetFindResponseBody, GetUserAssetsResponseBody,
+        PrivateUserProfile, PublicUserProfile,
     },
 };
 use opentalk_types_common::{
@@ -335,6 +339,72 @@ impl OpenTalkControllerService {
             .read()
             .await
             .remove_event_from_favorites(current_user, event_id)
+            .await
+    }
+
+    /// Patch the current user's profile.
+    pub async fn patch_me(
+        &self,
+        current_user: RequestUser,
+        patch: PatchMeRequestBody,
+    ) -> Result<Option<PrivateUserProfile>, ApiError> {
+        self.backend
+            .read()
+            .await
+            .patch_me(current_user, patch)
+            .await
+    }
+
+    /// Get the current user's profile.
+    pub async fn get_me(&self, current_user: RequestUser) -> Result<PrivateUserProfile, ApiError> {
+        self.backend.read().await.get_me(current_user).await
+    }
+
+    /// Get the current user tariff information.
+    pub async fn get_my_tariff(
+        &self,
+        current_user: RequestUser,
+    ) -> Result<TariffResource, ApiError> {
+        self.backend.read().await.get_my_tariff(current_user).await
+    }
+
+    /// Get the assets associated with the user.
+    pub async fn get_my_assets(
+        &self,
+        current_user: RequestUser,
+        sorting: AssetSortingQuery,
+        pagination: &PagePaginationQuery,
+    ) -> Result<(GetUserAssetsResponseBody, i64), ApiError> {
+        self.backend
+            .read()
+            .await
+            .get_my_assets(current_user, sorting, pagination)
+            .await
+    }
+
+    /// Get a user's public profile.
+    pub async fn get_user(
+        &self,
+        current_user: RequestUser,
+        user_id: UserId,
+    ) -> Result<PublicUserProfile, ApiError> {
+        self.backend
+            .read()
+            .await
+            .get_user(current_user, user_id)
+            .await
+    }
+
+    /// Find users.
+    pub async fn find_users(
+        &self,
+        current_user: RequestUser,
+        query: GetFindQuery,
+    ) -> Result<GetFindResponseBody, ApiError> {
+        self.backend
+            .read()
+            .await
+            .find_users(current_user, query)
             .await
     }
 }

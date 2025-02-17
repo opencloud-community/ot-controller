@@ -10,7 +10,7 @@ use opentalk_signaling_core::{
     ObjectStorageError,
 };
 use opentalk_types_api_v1::{
-    assets::AssetResource,
+    assets::{AssetResource, AssetSortingQuery},
     auth::GetLoginResponseBody,
     error::ApiError,
     pagination::PagePaginationQuery,
@@ -25,6 +25,10 @@ use opentalk_types_api_v1::{
             GetRoomEventResponseBody,
         },
         GetRoomsResponseBody, RoomResource,
+    },
+    users::{
+        me::PatchMeRequestBody, GetFindQuery, GetFindResponseBody, GetUserAssetsResponseBody,
+        PrivateUserProfile, PublicUserProfile,
     },
 };
 use opentalk_types_common::{
@@ -186,4 +190,39 @@ pub trait OpenTalkControllerServiceBackend: Send + Sync {
         current_user: RequestUser,
         event_id: EventId,
     ) -> Result<(), ApiError>;
+
+    /// Patch the current user's profile.
+    async fn patch_me(
+        &self,
+        current_user: RequestUser,
+        patch: PatchMeRequestBody,
+    ) -> Result<Option<PrivateUserProfile>, ApiError>;
+
+    /// Get the current user's profile.
+    async fn get_me(&self, current_user: RequestUser) -> Result<PrivateUserProfile, ApiError>;
+
+    /// Get the current user tariff information.
+    async fn get_my_tariff(&self, current_user: RequestUser) -> Result<TariffResource, ApiError>;
+
+    /// Get the assets associated with the user.
+    async fn get_my_assets(
+        &self,
+        current_user: RequestUser,
+        sorting: AssetSortingQuery,
+        pagination: &PagePaginationQuery,
+    ) -> Result<(GetUserAssetsResponseBody, i64), ApiError>;
+
+    /// Get a user's public profile.
+    async fn get_user(
+        &self,
+        current_user: RequestUser,
+        user_id: UserId,
+    ) -> Result<PublicUserProfile, ApiError>;
+
+    /// Find users.
+    async fn find_users(
+        &self,
+        current_user: RequestUser,
+        query: GetFindQuery,
+    ) -> Result<GetFindResponseBody, ApiError>;
 }

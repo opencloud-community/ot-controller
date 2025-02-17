@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_types_common::{
-    tariffs::TariffStatus,
+    tariffs::{TariffId, TariffStatus},
     tenants::TenantId,
     users::{DisplayName, Language, Theme, UserId, UserTitle},
 };
@@ -35,7 +35,8 @@ pub struct RequestUser {
     // pub phone: Option<String>,
     /// The user's tenant id
     pub tenant_id: TenantId,
-    // pub tariff_id: TariffId,
+    /// The user's tariff id
+    pub tariff_id: TariffId,
     /// The current tariff status
     pub tariff_status: TariffStatus,
     // pub disabled_since: Option<DateTime<Utc>>,
