@@ -14,7 +14,11 @@ use opentalk_signaling_core::{
     ObjectStorage, SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
     VolatileStorage,
 };
-use opentalk_types_common::{assets::FileExtension, modules::ModuleId, time::Timestamp};
+use opentalk_types_common::{
+    assets::{asset_file_kind, AssetFileKind, FileExtension},
+    modules::ModuleId,
+    time::Timestamp,
+};
 use opentalk_types_signaling::Role;
 use opentalk_types_signaling_whiteboard::{
     command::WhiteboardCommand,
@@ -190,10 +194,9 @@ impl SignalingModule for Whiteboard {
 
                 let data = self.client.download_pdf(url.clone()).await?;
 
-                let kind = "whiteboard_pdf"
-                    .parse()
-                    .expect("Must be parseable as AssetFileKind");
-                let filename = NewAssetFileName::new(kind, timestamp, FileExtension::pdf());
+                const ASSET_FILE_KIND: AssetFileKind = asset_file_kind!("whiteboard_pdf");
+                let filename =
+                    NewAssetFileName::new(ASSET_FILE_KIND, timestamp, FileExtension::pdf());
 
                 let (asset_id, filename) = match save_asset(
                     &self.storage,

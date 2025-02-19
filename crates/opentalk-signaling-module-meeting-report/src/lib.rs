@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::{path::Path, str::FromStr, sync::Arc};
+use std::{path::Path, sync::Arc};
 
 use bytes::Bytes;
 use chrono::{DateTime, Local, Utc};
@@ -26,7 +26,7 @@ use opentalk_signaling_core::{
     SignalingRoomId, VolatileStorage,
 };
 use opentalk_types_common::{
-    assets::{AssetFileKind, FileExtension},
+    assets::{asset_file_kind, AssetFileKind, FileExtension},
     modules::ModuleId,
     time::{TimeZone, Timestamp},
     users::UserId,
@@ -258,10 +258,9 @@ impl MeetingReport {
     }
 
     async fn upload_pdf(&mut self, report: Vec<u8>, mut ctx: ModuleContext<'_, Self>) {
-        let asset_file_kind = AssetFileKind::from_str("meeting_report")
-            .expect("The asset file kind is at least 1, but no longer than 20 chars and only contains alphanumeric chars and `_`");
+        const ASSET_FILE_KIND: AssetFileKind = asset_file_kind!("meeting_report");
         let file_name =
-            NewAssetFileName::new(asset_file_kind, Timestamp::now(), FileExtension::pdf());
+            NewAssetFileName::new(ASSET_FILE_KIND, Timestamp::now(), FileExtension::pdf());
         let report =
             async_stream::stream!(yield Result::<_, ObjectStorageError>::Ok(Bytes::from(report)));
         let report = Box::pin(report);

@@ -1170,7 +1170,7 @@ dependencies = [
  "bitflags 2.8.0",
  "cexpr",
  "clang-sys",
- "itertools 0.11.0",
+ "itertools 0.10.5",
  "lazy_static",
  "lazycell",
  "log",
@@ -3875,7 +3875,7 @@ dependencies = [
  "httpdate",
  "itoa",
  "pin-project-lite",
- "socket2 0.5.8",
+ "socket2 0.4.10",
  "tokio",
  "tower-service",
  "tracing",
@@ -4553,7 +4553,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc2f4eb4bc735547cfed7c0a4922cbd04a4655978c09b54f1f7b228750664c34"
 dependencies = [
  "cfg-if",
- "windows-targets 0.52.6",
+ "windows-targets 0.48.5",
 ]
 
 [[package]]
@@ -5968,9 +5968,9 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-api-v1"
-version = "0.32.0"
+version = "0.32.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb47231debe0816318dbabca3701126222381f0ca813789167da736a697d3524"
+checksum = "3d8104c3dbd1fcc4a267045f9d41be9a6998a93aa165d6410dc942a35c90f3e3"
 dependencies = [
  "actix-web",
  "base64 0.22.1",
@@ -5991,9 +5991,9 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-common"
-version = "0.31.0"
+version = "0.31.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db85534282a8b86921b7feb474693172b9aa1f62afbeaea29c934fe60fa13b88"
+checksum = "9094287afec968180cdd6254f63f08036271260484311ce4eb8254032dfb58b5"
 dependencies = [
  "actix-http",
  "actix-web-httpauth",
@@ -6001,7 +6001,7 @@ dependencies = [
  "chrono",
  "chrono-tz 0.10.1",
  "clap",
- "derive_more 1.0.0",
+ "derive_more 2.0.1",
  "diesel",
  "email_address",
  "itertools 0.14.0",
@@ -6017,7 +6017,7 @@ dependencies = [
  "serde_json",
  "serde_with",
  "snafu",
- "strum 0.26.3",
+ "strum 0.27.0",
  "url",
  "utoipa",
  "uuid",
@@ -6025,11 +6025,11 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-common-identifiers"
-version = "0.31.0"
+version = "0.31.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce63494f1bf4b04af4ad8d519cbf206663eaeeec31ec8618b7ffa5304bb94358"
+checksum = "ab029b9f30fe933d46d389b2e1914d84a43a8810603c6373210758f87b5588d9"
 dependencies = [
- "derive_more 1.0.0",
+ "derive_more 2.0.1",
  "diesel",
  "opentalk-diesel-newtype",
  "serde",
@@ -6041,9 +6041,9 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-common-macros"
-version = "0.31.0"
+version = "0.31.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed6d461ea1b0a6fbedb69b79acfd8ae434f414eb4858407fe1b5b202f56d660c"
+checksum = "0cf474b94ae906484ca2b5617e64229fe343eee7d263b90e6ffab988ca6e9785"
 dependencies = [
  "opentalk-types-common-identifiers",
  "proc-macro-crate",
@@ -7022,8 +7022,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "22505a5c94da8e3b7c2996394d1c933236c4d743e81a410bcca4e6989fc066a4"
 dependencies = [
  "bytes",
- "heck 0.5.0",
- "itertools 0.11.0",
+ "heck 0.4.1",
+ "itertools 0.10.5",
  "log",
  "multimap",
  "once_cell",
@@ -7042,7 +7042,7 @@ version = "0.13.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d0f3e5beed80eb580c68e2c600937ac2c4eedabdfd5ef1e5b7ea4f3fba84497b"
 dependencies = [
- "heck 0.5.0",
+ "heck 0.4.1",
  "itertools 0.13.0",
  "log",
  "multimap",
@@ -7063,7 +7063,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "81bddcdb20abf9501610992b6759a4c888aef7d1a7247ef75e2404275ac24af1"
 dependencies = [
  "anyhow",
- "itertools 0.11.0",
+ "itertools 0.10.5",
  "proc-macro2",
  "quote",
  "syn",
@@ -8512,7 +8512,7 @@ version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "03c3c6b7927ffe7ecaa769ee0e3994da3b8cafc8f444578982c83ecb161af917"
 dependencies = [
- "heck 0.5.0",
+ "heck 0.4.1",
  "proc-macro2",
  "quote",
  "syn",
@@ -10156,7 +10156,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.59.0",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]

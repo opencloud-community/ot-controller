@@ -316,17 +316,20 @@ mod tests {
     use std::str::FromStr as _;
 
     use chrono::{TimeZone as _, Utc};
-    use opentalk_types_common::{assets::FileExtension, time::Timestamp};
+    use opentalk_types_common::{
+        assets::{asset_file_kind, FileExtension},
+        time::Timestamp,
+    };
     use pretty_assertions::assert_eq;
 
-    use super::{AssetFileKind, NewAssetFileName};
+    use super::NewAssetFileName;
 
     #[test]
     fn new_asset_filename() {
         let timestamp = Timestamp::from(Utc.with_ymd_and_hms(2020, 5, 3, 14, 16, 19).unwrap());
 
         let filename = NewAssetFileName::new(
-            AssetFileKind::from_str("recording").unwrap(),
+            asset_file_kind!("recording"),
             timestamp,
             FileExtension::from_str("mkv").unwrap(),
         );
@@ -341,7 +344,7 @@ mod tests {
                     .parse()
                     .expect("valid event title"),
             ),
-            AssetFileKind::from_str("meetingnotes_pdf").unwrap(),
+            asset_file_kind!("meetingnotes_pdf"),
             timestamp,
             FileExtension::pdf(),
         );
@@ -352,7 +355,7 @@ mod tests {
 
         let filename = NewAssetFileName::new_with_event_title(
             Some("世界您好".parse().expect("valid event title")),
-            AssetFileKind::from_str("meetingnotes_pdf").unwrap(),
+            asset_file_kind!("meetingnotes_pdf"),
             timestamp,
             FileExtension::pdf(),
         );
@@ -360,31 +363,5 @@ mod tests {
             "世界您好_meetingnotes_pdf_2020-05-03_14-16-19-UTC.pdf",
             &filename.to_string()
         );
-    }
-
-    #[test]
-    fn new_asset_file_kind() {
-        // Too short
-        assert!(AssetFileKind::from_str("").is_err());
-
-        // Minimum length
-        assert!(AssetFileKind::from_str("a").is_ok());
-
-        // Maximum length
-        assert!(AssetFileKind::from_str("abcdefghijabcdefghij").is_ok());
-
-        // Too long
-        assert!(AssetFileKind::from_str("abcdefghijabcdefghijk").is_err());
-
-        // Valid characters
-        assert!(AssetFileKind::from_str("bcdef1235489").is_ok());
-        assert!(AssetFileKind::from_str("1337hello").is_ok());
-
-        // Invalid characters
-        assert!(AssetFileKind::from_str("a.").is_err());
-        assert!(AssetFileKind::from_str("a!").is_err());
-        assert!(AssetFileKind::from_str("a-").is_err());
-        assert!(AssetFileKind::from_str("a?").is_err());
-        assert!(AssetFileKind::from_str("a/").is_err());
     }
 }
