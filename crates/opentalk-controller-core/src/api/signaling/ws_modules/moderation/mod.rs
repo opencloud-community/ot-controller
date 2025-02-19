@@ -271,7 +271,7 @@ impl SignalingModule for ModerationModule {
                 if ctx
                     .volatile
                     .moderation_storage()
-                    .get_local_attribute(target, self.room, IS_ROOM_OWNER)
+                    .get_global_attribute(target, self.room.room_id(), IS_ROOM_OWNER)
                     .await?
                     .unwrap_or(false)
                 {
@@ -392,16 +392,18 @@ impl SignalingModule for ModerationModule {
                     return Ok(());
                 }
 
+                let room_id = self.room.room_id();
+
                 let old_name = ctx
                     .volatile
                     .moderation_storage()
-                    .get_local_attribute(target, self.room, DISPLAY_NAME)
+                    .get_global_attribute(target, room_id, DISPLAY_NAME)
                     .await?
                     .unwrap_or_default();
 
                 ctx.volatile
                     .moderation_storage()
-                    .set_local_attribute(target, self.room, DISPLAY_NAME, new_name.clone())
+                    .set_global_attribute(target, room_id, DISPLAY_NAME, new_name.clone())
                     .await?;
 
                 let display_name_changed = DisplayNameChanged {
@@ -412,7 +414,7 @@ impl SignalingModule for ModerationModule {
                 };
 
                 ctx.exchange_publish(
-                    control::exchange::current_room_all_participants(self.room),
+                    control::exchange::global_room_all_participants(room_id),
                     exchange::Message::DisplayNameChanged(display_name_changed),
                 );
             }

@@ -77,7 +77,7 @@ impl ControlStateExt for ControlState {
             storage
                 .bulk_attribute_actions(
                     AttributeActions::new(room, participant)
-                        .get_local(DISPLAY_NAME)
+                        .get_global(DISPLAY_NAME)
                         .get_global(ROLE)
                         .get_local(AVATAR_URL)
                         .get_local(JOINED_AT)
@@ -85,7 +85,7 @@ impl ControlStateExt for ControlState {
                         .get_local(HAND_IS_UP)
                         .get_local(HAND_UPDATED_AT)
                         .get_local(KIND)
-                        .get_local(IS_ROOM_OWNER),
+                        .get_global(IS_ROOM_OWNER),
                 )
                 .await
         }?;
