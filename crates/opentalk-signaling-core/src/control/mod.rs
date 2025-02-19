@@ -77,7 +77,7 @@ impl ControlStateExt for ControlState {
             storage
                 .bulk_attribute_actions(
                     AttributeActions::new(room, participant)
-                        .get_local(DISPLAY_NAME)
+                        .get_global(DISPLAY_NAME)
                         .get_global(ROLE)
                         .get_local(AVATAR_URL)
                         .get_local(JOINED_AT)

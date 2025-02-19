@@ -1831,7 +1831,7 @@ impl Runner {
                     .set_global(ROLE, self.role)
                     .set_local(HAND_IS_UP, false)
                     .set_local(HAND_UPDATED_AT, timestamp)
-                    .set_local(DISPLAY_NAME, display_name)
+                    .set_global(DISPLAY_NAME, display_name)
                     .set_local(JOINED_AT, timestamp),
             )
             .await?;
@@ -2542,7 +2542,6 @@ async fn cleanup_redis_keys_for_signaling_room(
         .await?;
 
     for attribute in [
-        DISPLAY_NAME,
         JOINED_AT,
         LEFT_AT,
         HAND_IS_UP,
@@ -2565,7 +2564,7 @@ async fn cleanup_redis_keys_for_signaling_room(
     }
 
     if room_id.breakout_room_id().is_none() {
-        for attribute in [ROLE] {
+        for attribute in [ROLE, DISPLAY_NAME] {
             storage
                 .control_storage()
                 .remove_attribute_key(

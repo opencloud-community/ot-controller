@@ -582,7 +582,7 @@ where
                 }
 
                 actions
-                    .set_local(DISPLAY_NAME, &join.display_name)
+                    .set_global(DISPLAY_NAME, &join.display_name)
                     .set_global(ROLE, self.role)
                     .set_local(AVATAR_URL, &join.display_name)
                     .set_local(JOINED_AT, ctx.timestamp)
@@ -1083,7 +1083,6 @@ where
 
         if destroy_room {
             for attribute in [
-                DISPLAY_NAME,
                 KIND,
                 JOINED_AT,
                 HAND_IS_UP,

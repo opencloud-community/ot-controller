@@ -327,7 +327,7 @@ impl MeetingReport {
                 AttributeActions::new(self.room_id, participant)
                     .get_local(JOINED_AT)
                     .get_local(LEFT_AT)
-                    .get_local(DISPLAY_NAME)
+                    .get_global(DISPLAY_NAME)
                     .get_global(ROLE)
                     .get_local(KIND)
                     .get_local(USER_ID),
