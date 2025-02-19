@@ -19,7 +19,10 @@ use opentalk_signaling_core::{
     SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
     VolatileStorage,
 };
-use opentalk_types_common::{assets::FileExtension, modules::ModuleId};
+use opentalk_types_common::{
+    assets::{asset_file_kind, AssetFileKind, FileExtension},
+    modules::ModuleId,
+};
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_meeting_notes::{
     command::{MeetingNotesCommand, ParticipantSelection},
@@ -367,12 +370,13 @@ impl MeetingNotes {
                         .download_pdf(&session_info.session_id, &pad_id)
                         .await?;
 
-                    let kind = "meetingnotes_pdf"
-                        .parse()
-                        .expect("Must be parseable as AssetFileKind");
+                    const ASSET_FILE_KIND: AssetFileKind = asset_file_kind!("meetingnotes_pdf");
 
-                    let filename =
-                        NewAssetFileName::new(kind, ctx.timestamp(), FileExtension::pdf());
+                    let filename = NewAssetFileName::new(
+                        ASSET_FILE_KIND,
+                        ctx.timestamp(),
+                        FileExtension::pdf(),
+                    );
 
                     let (asset_id, filename) = match save_asset(
                         &self.storage,

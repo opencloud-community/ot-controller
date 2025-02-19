@@ -2622,7 +2622,7 @@ components:
       description: An asset file kind
       examples:
         - mykind
-      maxLength: 20
+      maxLength: 50
       minLength: 1
       pattern: "^[0-9a-zA-Z_]*$"
     AssetId:
