@@ -85,7 +85,7 @@ impl ControlStateExt for ControlState {
                         .get_local(HAND_IS_UP)
                         .get_local(HAND_UPDATED_AT)
                         .get_local(KIND)
-                        .get_local(IS_ROOM_OWNER),
+                        .get_global(IS_ROOM_OWNER),
                 )
                 .await
         }?;

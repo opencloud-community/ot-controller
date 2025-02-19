@@ -588,7 +588,7 @@ where
                     .set_local(JOINED_AT, ctx.timestamp)
                     .set_local(HAND_IS_UP, false)
                     .set_local(HAND_UPDATED_AT, ctx.timestamp)
-                    .set_local(IS_ROOM_OWNER, is_room_owner);
+                    .set_global(IS_ROOM_OWNER, is_room_owner);
 
                 self.volatile
                     .control_storage()
@@ -1082,14 +1082,7 @@ where
         module.on_destroy(ctx).await;
 
         if destroy_room {
-            for attribute in [
-                KIND,
-                JOINED_AT,
-                HAND_IS_UP,
-                HAND_UPDATED_AT,
-                USER_ID,
-                IS_ROOM_OWNER,
-            ] {
+            for attribute in [KIND, JOINED_AT, HAND_IS_UP, HAND_UPDATED_AT, USER_ID] {
                 self.volatile
                     .control_storage()
                     .remove_attribute_key(

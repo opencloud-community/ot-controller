@@ -1811,7 +1811,7 @@ impl Runner {
                         avatar_url.expect("user must have avatar_url set"),
                     )
                     .set_local(USER_ID, user.id)
-                    .set_local(IS_ROOM_OWNER, user.id == self.room.created_by);
+                    .set_global(IS_ROOM_OWNER, user.id == self.room.created_by);
             }
             Participant::Guest => {
                 actions.set_local(KIND, ParticipationKind::Guest);
@@ -2546,7 +2546,6 @@ async fn cleanup_redis_keys_for_signaling_room(
         LEFT_AT,
         HAND_IS_UP,
         HAND_UPDATED_AT,
-        IS_ROOM_OWNER,
         KIND,
         USER_ID,
         AVATAR_URL,
@@ -2564,7 +2563,7 @@ async fn cleanup_redis_keys_for_signaling_room(
     }
 
     if room_id.breakout_room_id().is_none() {
-        for attribute in [ROLE, DISPLAY_NAME] {
+        for attribute in [ROLE, DISPLAY_NAME, IS_ROOM_OWNER] {
             storage
                 .control_storage()
                 .remove_attribute_key(

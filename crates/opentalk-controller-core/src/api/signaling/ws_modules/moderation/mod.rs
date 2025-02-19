@@ -271,7 +271,7 @@ impl SignalingModule for ModerationModule {
                 if ctx
                     .volatile
                     .moderation_storage()
-                    .get_local_attribute(target, self.room, IS_ROOM_OWNER)
+                    .get_global_attribute(target, self.room.room_id(), IS_ROOM_OWNER)
                     .await?
                     .unwrap_or(false)
                 {
