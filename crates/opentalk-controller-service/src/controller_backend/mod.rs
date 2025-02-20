@@ -9,6 +9,7 @@ mod events;
 mod invites;
 mod rooms;
 mod sip_configs;
+mod users;
 
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -28,7 +29,7 @@ use opentalk_signaling_core::{
     ExchangeHandle, ObjectStorage, ObjectStorageError,
 };
 use opentalk_types_api_v1::{
-    assets::AssetResource,
+    assets::{AssetResource, AssetSortingQuery},
     auth::{GetLoginResponseBody, OidcProvider},
     error::ApiError,
     pagination::PagePaginationQuery,
@@ -43,6 +44,10 @@ use opentalk_types_api_v1::{
             GetRoomEventResponseBody,
         },
         GetRoomsResponseBody, RoomResource,
+    },
+    users::{
+        me::PatchMeRequestBody, GetFindQuery, GetFindResponseBody, GetUserAssetsResponseBody,
+        PrivateUserProfile, PublicUserProfile,
     },
 };
 use opentalk_types_common::{
@@ -68,7 +73,7 @@ pub struct ControllerBackend {
     storage: Arc<ObjectStorage>,
     exchange_handle: ExchangeHandle,
     _mail_service: MailService,
-    _kc_admin_client: Arc<KeycloakAdminClient>,
+    kc_admin_client: Arc<KeycloakAdminClient>,
     module_features: BTreeMap<ModuleId, BTreeSet<FeatureId>>,
 }
 
@@ -94,7 +99,7 @@ impl ControllerBackend {
             storage,
             exchange_handle,
             _mail_service: mail_service,
-            _kc_admin_client: kc_admin_client,
+            kc_admin_client,
             module_features,
         }
     }
@@ -306,5 +311,48 @@ impl OpenTalkControllerServiceBackend for ControllerBackend {
         Ok(self
             .remove_event_from_favorites(current_user, event_id)
             .await?)
+    }
+
+    async fn patch_me(
+        &self,
+        current_user: RequestUser,
+        patch: PatchMeRequestBody,
+    ) -> Result<Option<PrivateUserProfile>, ApiError> {
+        Ok(self.patch_me(current_user, patch).await?)
+    }
+
+    async fn get_me(&self, current_user: RequestUser) -> Result<PrivateUserProfile, ApiError> {
+        Ok(self.get_me(current_user).await?)
+    }
+
+    async fn get_my_tariff(&self, current_user: RequestUser) -> Result<TariffResource, ApiError> {
+        Ok(self.get_my_tariff(current_user).await?)
+    }
+
+    async fn get_my_assets(
+        &self,
+        current_user: RequestUser,
+        sorting: AssetSortingQuery,
+        pagination: &PagePaginationQuery,
+    ) -> Result<(GetUserAssetsResponseBody, i64), ApiError> {
+        Ok(self
+            .get_my_assets(current_user, sorting, pagination)
+            .await?)
+    }
+
+    async fn get_user(
+        &self,
+        current_user: RequestUser,
+        user_id: UserId,
+    ) -> Result<PublicUserProfile, ApiError> {
+        Ok(self.get_user(current_user, user_id).await?)
+    }
+
+    async fn find_users(
+        &self,
+        current_user: RequestUser,
+        query: GetFindQuery,
+    ) -> Result<GetFindResponseBody, ApiError> {
+        Ok(self.find_users(current_user, query).await?)
     }
 }

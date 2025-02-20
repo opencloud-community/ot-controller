@@ -204,6 +204,7 @@ fn build_request_user(user: User) -> RequestUser {
         dashboard_theme: user.dashboard_theme,
         conference_theme: user.conference_theme,
         tenant_id: user.tenant_id,
+        tariff_id: user.tariff_id,
         tariff_status: user.tariff_status,
         avatar_url: user.avatar_url,
     }
