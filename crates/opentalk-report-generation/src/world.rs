@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 //
-use std::{collections::BTreeMap, path::Path, sync::LazyLock};
+use std::{borrow::Cow, collections::BTreeMap, path::Path, sync::LazyLock};
 
 use chrono::{DateTime, Datelike as _, FixedOffset, Local, Utc};
 use typst::{
@@ -28,7 +28,7 @@ pub struct World {
 }
 
 impl World {
-    pub fn new(text: String, files: BTreeMap<&Path, &[u8]>) -> Self {
+    pub fn new(text: String, files: BTreeMap<&Path, Cow<'static, [u8]>>) -> Self {
         let fonts = Fonts::searcher()
             .include_system_fonts(false)
             .include_embedded_fonts(true)
@@ -45,7 +45,7 @@ impl World {
                     VirtualPath::new(Path::new("/").join(path))
                 };
                 let file_id = FileId::new(None, path);
-                (file_id, data.into())
+                (file_id, Bytes::new(data))
             })
             .collect();
 
@@ -83,7 +83,7 @@ impl typst::World for World {
 
     fn file(&self, id: FileId) -> FileResult<Bytes> {
         if id == *MAIN_ID {
-            Ok(self.main.text().as_bytes().into())
+            Ok(Bytes::new(self.main.text().to_string()))
         } else {
             self.files.get(&id).cloned().ok_or(FileError::NotSource)
         }

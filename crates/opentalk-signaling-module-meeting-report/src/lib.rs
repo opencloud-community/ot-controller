@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::{path::Path, sync::Arc};
+use std::{collections::BTreeMap, path::Path, sync::Arc};
 
 use bytes::Bytes;
 use chrono::{DateTime, Local, Utc};
@@ -246,11 +246,13 @@ impl MeetingReport {
 
         let pdf = opentalk_report_generation::generate_pdf_report(
             template,
-            [(
+            BTreeMap::from_iter([(
                 Path::new("data.json"),
-                serde_json::to_string_pretty(parameter).unwrap().as_bytes(),
-            )]
-            .into(),
+                serde_json::to_string_pretty(parameter)
+                    .unwrap()
+                    .into_bytes()
+                    .into(),
+            )]),
             dump_to_path.as_deref(),
         )
         .whatever_context::<_, SignalingModuleError>("unable to build pdf")?;
