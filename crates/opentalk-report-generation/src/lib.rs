@@ -29,7 +29,7 @@ mod report_date_time;
 mod report_generation_error;
 mod world;
 
-use std::{collections::BTreeMap, path::Path};
+use std::{borrow::Cow, collections::BTreeMap, path::Path};
 
 pub use report_date_time::{ReportDateTime, ToReportDateTime};
 pub use report_generation_error::ReportGenerationError;
@@ -42,7 +42,7 @@ use world::World;
 /// Generate a pdf file from a typst source string and data.
 pub fn generate_pdf_report(
     source: String,
-    data: BTreeMap<&Path, &[u8]>,
+    data: BTreeMap<&Path, Cow<'static, [u8]>>,
     dump_to_path: Option<&Path>,
 ) -> Result<Vec<u8>, ReportGenerationError> {
     if let Some(dump_path) = dump_to_path {

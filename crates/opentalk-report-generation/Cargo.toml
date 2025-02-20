@@ -22,11 +22,11 @@ log.workspace = true
 pretty_assertions.workspace = true
 serde.workspace = true
 snafu.workspace = true
-typst = "0.12.0"
-typst-kit = { version = "0.12.0", default-features = false, features = [
+typst = "0.13.0"
+typst-kit = { version = "0.13.0", default-features = false, features = [
   "embed-fonts",
 ] }
-typst-pdf = "0.12.0"
+typst-pdf = "0.13.0"
 
 [dev-dependencies]
 serde_json.workspace = true
