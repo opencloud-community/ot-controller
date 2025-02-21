@@ -13,6 +13,7 @@ use opentalk_types_api_v1::{
     assets::{AssetResource, AssetSortingQuery},
     auth::GetLoginResponseBody,
     error::ApiError,
+    events::StreamingTargetOptionsQuery,
     pagination::PagePaginationQuery,
     rooms::{
         by_room_id::{
@@ -22,6 +23,11 @@ use opentalk_types_api_v1::{
                 PostInviteVerifyRequestBody, PostInviteVerifyResponseBody, PutInviteRequestBody,
             },
             sip::{PutSipConfigRequestBody, SipConfigResource},
+            streaming_targets::{
+                GetRoomStreamingTargetResponseBody, GetRoomStreamingTargetsResponseBody,
+                PatchRoomStreamingTargetRequestBody, PatchRoomStreamingTargetResponseBody,
+                PostRoomStreamingTargetResponseBody, RoomAndStreamingTargetId,
+            },
             GetRoomEventResponseBody,
         },
         GetRoomsResponseBody, RoomResource,
@@ -36,6 +42,7 @@ use opentalk_types_common::{
     events::EventId,
     modules::ModuleId,
     rooms::{invite_codes::InviteCode, RoomId, RoomPassword},
+    streaming::StreamingTarget,
     tariffs::TariffResource,
     users::UserId,
 };
@@ -176,6 +183,47 @@ pub trait OpenTalkControllerServiceBackend: Send + Sync {
 
     /// Delete the SIP configuration of a room.
     async fn delete_sip_config(&self, room_id: RoomId) -> Result<(), ApiError>;
+
+    /// Lists the streaming targets of a room
+    async fn get_streaming_targets(
+        &self,
+        user_id: UserId,
+        room_id: RoomId,
+        pagination: &PagePaginationQuery,
+    ) -> Result<GetRoomStreamingTargetsResponseBody, ApiError>;
+
+    /// Creates a new streaming target
+    async fn post_streaming_target(
+        &self,
+        current_user: RequestUser,
+        room_id: RoomId,
+        query: StreamingTargetOptionsQuery,
+        streaming_target: StreamingTarget,
+    ) -> Result<PostRoomStreamingTargetResponseBody, ApiError>;
+
+    /// Gets a streaming target
+    async fn get_streaming_target(
+        &self,
+        user_id: UserId,
+        path_params: RoomAndStreamingTargetId,
+    ) -> Result<GetRoomStreamingTargetResponseBody, ApiError>;
+
+    /// Updates a streaming target
+    async fn patch_streaming_target(
+        &self,
+        current_user: RequestUser,
+        path_params: RoomAndStreamingTargetId,
+        query: StreamingTargetOptionsQuery,
+        update_streaming_target: PatchRoomStreamingTargetRequestBody,
+    ) -> Result<PatchRoomStreamingTargetResponseBody, ApiError>;
+
+    /// Deletes a streaming target
+    async fn delete_streaming_target(
+        &self,
+        current_user: RequestUser,
+        path_params: RoomAndStreamingTargetId,
+        query: StreamingTargetOptionsQuery,
+    ) -> Result<(), ApiError>;
 
     /// Add an event to the current user's favorites
     async fn add_event_to_favorites(

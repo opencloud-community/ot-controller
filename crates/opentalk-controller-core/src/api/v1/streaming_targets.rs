@@ -7,54 +7,27 @@ use actix_web::{
     delete, get, patch, post,
     web::{Data, Json, Path, Query, ReqData},
 };
-use opentalk_controller_service::services::MailService;
-use opentalk_controller_settings::Settings;
-use opentalk_controller_utils::CaptureApiError;
-use opentalk_database::Db;
-use opentalk_db_storage::{
-    rooms::Room,
-    streaming_targets::{
-        get_room_streaming_targets, insert_room_streaming_target, RoomStreamingTargetRecord,
-        UpdateRoomStreamingTarget,
-    },
-    tenants::Tenant,
-    users::User,
-};
-use opentalk_keycloak_admin::KeycloakAdminClient;
+use opentalk_controller_service_facade::{OpenTalkControllerService, RequestUser};
 use opentalk_types_api_v1::{
     error::ApiError,
     events::StreamingTargetOptionsQuery,
     pagination::PagePaginationQuery,
-    rooms::{
-        by_room_id::streaming_targets::{
-            GetRoomStreamingTargetResponseBody, GetRoomStreamingTargetsResponseBody,
-            PatchRoomStreamingTargetRequestBody, PatchRoomStreamingTargetResponseBody,
-            PostRoomStreamingTargetRequestBody, PostRoomStreamingTargetResponseBody,
-            RoomAndStreamingTargetId,
-        },
-        streaming_targets::UpdateStreamingTargetKind,
+    rooms::by_room_id::streaming_targets::{
+        GetRoomStreamingTargetResponseBody, GetRoomStreamingTargetsResponseBody,
+        PatchRoomStreamingTargetRequestBody, PatchRoomStreamingTargetResponseBody,
+        PostRoomStreamingTargetRequestBody, PostRoomStreamingTargetResponseBody,
+        RoomAndStreamingTargetId,
     },
 };
-use opentalk_types_common::{
-    rooms::RoomId,
-    streaming::{
-        RoomStreamingTarget, RoomStreamingTargetResource, StreamingKind, StreamingTarget,
-        StreamingTargetKind, StreamingTargetKindResource, StreamingTargetResource,
-    },
-    users::UserId,
-};
-use snafu::Report;
+use opentalk_types_common::rooms::RoomId;
 
 use super::{response::NoContent, DefaultApiResult};
-use crate::{
-    api::{
-        responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
-        v1::{events::notify_event_invitees_by_room_about_update, ApiResponse},
-    },
-    settings::SharedSettingsActix,
+use crate::api::{
+    responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
+    v1::ApiResponse,
 };
 
-/// List the streaming targets of a room
+/// Lists the streaming targets of a room
 ///
 /// Returns the streaming targets available for a room
 #[utoipa::path(
@@ -91,45 +64,24 @@ use crate::{
 )]
 #[get("/rooms/{room_id}/streaming_targets")]
 pub async fn get_streaming_targets(
-    db: Data<Db>,
-    current_user: ReqData<User>,
+    service: Data<OpenTalkControllerService>,
+    current_user: ReqData<RequestUser>,
     room_id: Path<RoomId>,
     pagination: Query<PagePaginationQuery>,
 ) -> DefaultApiResult<GetRoomStreamingTargetsResponseBody> {
-    Ok(get_streaming_targets_inner(
-        &db,
-        current_user.into_inner().id,
-        room_id.into_inner(),
-        pagination.into_inner(),
-    )
-    .await?)
-}
+    let response = service
+        .get_streaming_targets(current_user.id, room_id.into_inner(), &pagination)
+        .await?;
+    let length = response.0.len();
 
-async fn get_streaming_targets_inner(
-    db: &Db,
-    current_user_id: UserId,
-    room_id: RoomId,
-    PagePaginationQuery { per_page, page }: PagePaginationQuery,
-) -> DefaultApiResult<GetRoomStreamingTargetsResponseBody, CaptureApiError> {
-    let mut conn = db.get_conn().await?;
-
-    let room_streaming_targets = get_room_streaming_targets(&mut conn, room_id).await?;
-    let len = room_streaming_targets.len();
-
-    let room = Room::get(&mut conn, room_id).await?;
-    let with_streaming_key = room.created_by == current_user_id;
-    let room_streaming_target_resources = room_streaming_targets
-        .into_iter()
-        .map(|rst| build_resource(rst, with_streaming_key))
-        .collect();
-
-    Ok(ApiResponse::new(GetRoomStreamingTargetsResponseBody(
-        room_streaming_target_resources,
+    Ok(ApiResponse::new(response).with_page_pagination(
+        pagination.per_page,
+        pagination.page,
+        length as i64,
     ))
-    .with_page_pagination(per_page, page, len as i64))
 }
 
-/// Create a new streaming target
+/// Creates a new streaming target
 ///
 /// Creates a new streaming target for the given room
 #[utoipa::path(
@@ -168,68 +120,25 @@ async fn get_streaming_targets_inner(
 #[post("/rooms/{room_id}/streaming_targets")]
 #[allow(clippy::too_many_arguments)]
 pub async fn post_streaming_target(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
-    kc_admin_client: Data<KeycloakAdminClient>,
-    mail_service: Data<MailService>,
-    current_tenant: ReqData<Tenant>,
-    current_user: ReqData<User>,
+    service: Data<OpenTalkControllerService>,
+    current_user: ReqData<RequestUser>,
     room_id: Path<RoomId>,
     query: Query<StreamingTargetOptionsQuery>,
     data: Json<PostRoomStreamingTargetRequestBody>,
 ) -> DefaultApiResult<PostRoomStreamingTargetResponseBody> {
-    Ok(post_streaming_target_inner(
-        &settings.load_full(),
-        &db,
-        &kc_admin_client,
-        &mail_service,
-        current_tenant.into_inner(),
-        current_user.into_inner(),
-        room_id.into_inner(),
-        query.into_inner(),
-        data.into_inner().0,
-    )
-    .await?)
-}
-
-#[allow(clippy::too_many_arguments)]
-async fn post_streaming_target_inner(
-    settings: &Settings,
-    db: &Db,
-    kc_admin_client: &KeycloakAdminClient,
-    mail_service: &MailService,
-    current_tenant: Tenant,
-    current_user: User,
-    room_id: RoomId,
-    query: StreamingTargetOptionsQuery,
-    streaming_target: StreamingTarget,
-) -> DefaultApiResult<PostRoomStreamingTargetResponseBody, CaptureApiError> {
-    let send_email_notification = !query.suppress_email_notification;
-
-    let mut conn = db.get_conn().await?;
-
-    let room_streaming_target =
-        insert_room_streaming_target(&mut conn, room_id, streaming_target).await?;
-
-    if send_email_notification {
-        notify_event_invitees_by_room_about_update(
-            kc_admin_client,
-            settings,
-            mail_service,
-            current_tenant,
-            current_user,
-            &mut conn,
-            room_id,
+    let response = service
+        .post_streaming_target(
+            current_user.into_inner(),
+            room_id.into_inner(),
+            query.into_inner(),
+            data.into_inner().0,
         )
         .await?;
-    }
 
-    Ok(ApiResponse::new(PostRoomStreamingTargetResponseBody(
-        room_streaming_target,
-    )))
+    Ok(ApiResponse::new(response))
 }
 
-/// Get a streaming target
+/// Gets a streaming target
 ///
 /// Returns a single streaming target for a specific room.
 #[utoipa::path(
@@ -263,65 +172,18 @@ async fn post_streaming_target_inner(
 )]
 #[get("/rooms/{room_id}/streaming_targets/{streaming_target_id}")]
 pub async fn get_streaming_target(
-    db: Data<Db>,
-    current_user: ReqData<User>,
+    service: Data<OpenTalkControllerService>,
+    current_user: ReqData<RequestUser>,
     path_params: Path<RoomAndStreamingTargetId>,
 ) -> DefaultApiResult<GetRoomStreamingTargetResponseBody> {
-    Ok(
-        get_streaming_target_inner(&db, current_user.into_inner().id, path_params.into_inner())
-            .await?,
-    )
+    let response = service
+        .get_streaming_target(current_user.id, path_params.into_inner())
+        .await?;
+
+    Ok(ApiResponse::new(response))
 }
 
-async fn get_streaming_target_inner(
-    db: &Db,
-    current_user_id: UserId,
-    RoomAndStreamingTargetId {
-        room_id,
-        streaming_target_id,
-    }: RoomAndStreamingTargetId,
-) -> DefaultApiResult<GetRoomStreamingTargetResponseBody, CaptureApiError> {
-    let mut conn = db.get_conn().await?;
-
-    let room_streaming_target =
-        RoomStreamingTargetRecord::get(&mut conn, streaming_target_id, room_id).await?;
-
-    let room_streaming_target = RoomStreamingTarget {
-        id: room_streaming_target.id,
-        streaming_target: StreamingTarget {
-            name: room_streaming_target.name,
-            kind: StreamingTargetKind::Custom {
-                streaming_endpoint: room_streaming_target.streaming_endpoint.parse().map_err(
-                    |e| {
-                        log::warn!(
-                            "Invalid streaming endpoint url entry in db: {}",
-                            Report::from_error(e)
-                        );
-                        ApiError::internal()
-                    },
-                )?,
-                streaming_key: room_streaming_target.streaming_key,
-                public_url: room_streaming_target.public_url.parse().map_err(|e| {
-                    log::warn!(
-                        "Invalid streaming endpoint url entry in db: {}",
-                        Report::from_error(e)
-                    );
-                    ApiError::internal()
-                })?,
-            },
-        },
-    };
-
-    let room = Room::get(&mut conn, room_id).await?;
-    let with_streaming_key = room.created_by == current_user_id;
-    let room_streaming_target_resource = build_resource(room_streaming_target, with_streaming_key);
-
-    Ok(ApiResponse::new(GetRoomStreamingTargetResponseBody(
-        room_streaming_target_resource,
-    )))
-}
-
-/// Update a room streaming target
+/// Updates a streaming target
 ///
 /// Modifies and returns a single streaming target.
 #[utoipa::path(
@@ -358,133 +220,27 @@ async fn get_streaming_target_inner(
 #[patch("/rooms/{room_id}/streaming_targets/{streaming_target_id}")]
 #[allow(clippy::too_many_arguments)]
 pub async fn patch_streaming_target(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
-    kc_admin_client: Data<KeycloakAdminClient>,
-    mail_service: Data<MailService>,
-    current_tenant: ReqData<Tenant>,
-    current_user: ReqData<User>,
+    service: Data<OpenTalkControllerService>,
+    current_user: ReqData<RequestUser>,
     path_params: Path<RoomAndStreamingTargetId>,
     query: Query<StreamingTargetOptionsQuery>,
-    update_streaming_target: Json<PatchRoomStreamingTargetRequestBody>,
+    streaming_target: Json<PatchRoomStreamingTargetRequestBody>,
 ) -> DefaultApiResult<PatchRoomStreamingTargetResponseBody> {
-    Ok(patch_streaming_target_inner(
-        &settings.load_full(),
-        &db,
-        &kc_admin_client,
-        &mail_service,
-        current_tenant.into_inner(),
-        current_user.into_inner(),
-        path_params.into_inner(),
-        query.into_inner(),
-        update_streaming_target.into_inner(),
-    )
-    .await?)
-}
-
-#[allow(clippy::too_many_arguments)]
-async fn patch_streaming_target_inner(
-    settings: &Settings,
-    db: &Db,
-    kc_admin_client: &KeycloakAdminClient,
-    mail_service: &MailService,
-    current_tenant: Tenant,
-    current_user: User,
-    RoomAndStreamingTargetId {
-        room_id,
-        streaming_target_id,
-    }: RoomAndStreamingTargetId,
-    query: StreamingTargetOptionsQuery,
-    update_streaming_target: PatchRoomStreamingTargetRequestBody,
-) -> DefaultApiResult<PatchRoomStreamingTargetResponseBody, CaptureApiError> {
-    if update_streaming_target.name.is_none() && update_streaming_target.kind.is_none() {
-        return Err(ApiError::bad_request().into());
-    }
-
-    let send_email_notification = !query.suppress_email_notification;
-
-    let mut conn = db.get_conn().await?;
-
-    let (kind, streaming_endpoint, streaming_key, public_url) = match update_streaming_target.kind {
-        Some(kind) => match kind {
-            UpdateStreamingTargetKind::Custom {
-                streaming_endpoint,
-                streaming_key,
-                public_url,
-            } => (
-                Some(StreamingKind::Custom),
-                streaming_endpoint.map(|s| s.into()),
-                streaming_key.map(|s| s.into()),
-                public_url.map(|s| s.into()),
-            ),
-        },
-        None => (None, None, None, None),
-    };
-
-    let room_streaming_target_table = UpdateRoomStreamingTarget {
-        name: update_streaming_target.name,
-        kind,
-        streaming_endpoint,
-        streaming_key,
-        public_url,
-    };
-
-    let room_streaming_target_table = room_streaming_target_table
-        .apply(&mut conn, room_id, streaming_target_id)
-        .await?;
-
-    let kind = match room_streaming_target_table.kind {
-        StreamingKind::Custom => StreamingTargetKind::Custom {
-            streaming_endpoint: room_streaming_target_table
-                .streaming_endpoint
-                .parse()
-                .map_err(|e| {
-                    log::warn!(
-                        "Invalid streaming endpoint url entry in db: {}",
-                        Report::from_error(e)
-                    );
-                    ApiError::internal()
-                })?,
-            streaming_key: room_streaming_target_table.streaming_key,
-            public_url: room_streaming_target_table
-                .public_url
-                .parse()
-                .map_err(|e| {
-                    log::warn!("Invalid public url entry in db: {}", Report::from_error(e));
-                    ApiError::internal()
-                })?,
-        },
-    };
-
-    let room_streaming_target = RoomStreamingTarget {
-        id: room_streaming_target_table.id,
-        streaming_target: StreamingTarget {
-            name: room_streaming_target_table.name,
-            kind,
-        },
-    };
-
-    if send_email_notification {
-        notify_event_invitees_by_room_about_update(
-            kc_admin_client,
-            settings,
-            mail_service,
-            current_tenant,
-            current_user,
-            &mut conn,
-            room_id,
+    let response = service
+        .patch_streaming_target(
+            current_user.into_inner(),
+            path_params.into_inner(),
+            query.into_inner(),
+            streaming_target.into_inner(),
         )
         .await?;
-    }
 
-    Ok(ApiResponse::new(PatchRoomStreamingTargetResponseBody(
-        room_streaming_target,
-    )))
+    Ok(ApiResponse::new(response))
 }
 
-/// Deletes a single streaming target.
+/// Deletes a streaming target
 ///
-/// The streaming target is deleted from the room.
+/// The streaming target is deleted from the room
 #[utoipa::path(
     params(
         RoomAndStreamingTargetId,
@@ -519,89 +275,18 @@ async fn patch_streaming_target_inner(
 #[delete("/rooms/{room_id}/streaming_targets/{streaming_target_id}")]
 #[allow(clippy::too_many_arguments)]
 pub async fn delete_streaming_target(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
-    kc_admin_client: Data<KeycloakAdminClient>,
-    mail_service: Data<MailService>,
-    current_tenant: ReqData<Tenant>,
-    current_user: ReqData<User>,
+    service: Data<OpenTalkControllerService>,
+    current_user: ReqData<RequestUser>,
     path_params: Path<RoomAndStreamingTargetId>,
     query: Query<StreamingTargetOptionsQuery>,
 ) -> Result<NoContent, ApiError> {
-    Ok(delete_streaming_target_inner(
-        &settings.load_full(),
-        &db,
-        &kc_admin_client,
-        &mail_service,
-        current_tenant.into_inner(),
-        current_user.into_inner(),
-        path_params.into_inner(),
-        query.into_inner(),
-    )
-    .await?)
-}
-
-#[allow(clippy::too_many_arguments)]
-async fn delete_streaming_target_inner(
-    settings: &Settings,
-    db: &Db,
-    kc_admin_client: &KeycloakAdminClient,
-    mail_service: &MailService,
-    current_tenant: Tenant,
-    current_user: User,
-    RoomAndStreamingTargetId {
-        room_id,
-        streaming_target_id,
-    }: RoomAndStreamingTargetId,
-    query: StreamingTargetOptionsQuery,
-) -> Result<NoContent, CaptureApiError> {
-    let send_email_notification = !query.suppress_email_notification;
-
-    let mut conn = db.get_conn().await?;
-
-    RoomStreamingTargetRecord::delete_by_id(&mut conn, room_id, streaming_target_id).await?;
-
-    if send_email_notification {
-        notify_event_invitees_by_room_about_update(
-            kc_admin_client,
-            settings,
-            mail_service,
-            current_tenant,
-            current_user,
-            &mut conn,
-            room_id,
+    service
+        .delete_streaming_target(
+            current_user.into_inner(),
+            path_params.into_inner(),
+            query.into_inner(),
         )
         .await?;
-    }
 
     Ok(NoContent)
-}
-
-fn build_resource(
-    room_streaming_target: RoomStreamingTarget,
-    with_streaming_key: bool,
-) -> RoomStreamingTargetResource {
-    let kind_resource = match room_streaming_target.streaming_target.kind {
-        StreamingTargetKind::Custom {
-            streaming_endpoint,
-            streaming_key,
-            public_url,
-        } => StreamingTargetKindResource::Custom {
-            streaming_endpoint,
-            streaming_key: if with_streaming_key {
-                Some(streaming_key)
-            } else {
-                None
-            },
-            public_url,
-        },
-    };
-
-    RoomStreamingTargetResource {
-        id: room_streaming_target.id,
-        streaming_target: StreamingTargetResource {
-            name: room_streaming_target.streaming_target.name,
-            kind: kind_resource,
-        },
-    }
 }

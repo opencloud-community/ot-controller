@@ -23,6 +23,7 @@
 )]
 
 pub mod controller_backend;
+pub mod events;
 pub mod helpers;
 pub mod metrics;
 pub mod oidc;

@@ -18,10 +18,15 @@ use kustos::{
 use opentalk_controller_service::{
     controller_backend::RoomsPoliciesBuilderExt,
     email_to_libravatar_url,
-    services::{ExternalMailRecipient, MailRecipient, MailService, UnregisteredMailRecipient},
+    events::{
+        enrich_from_keycloak, enrich_invitees_from_keycloak, get_invited_mail_recipients_for_event,
+        notifications::{notify_invitees_about_update, UpdateNotificationValues},
+        shared_folder_for_user,
+    },
+    services::{MailRecipient, MailService},
     ToUserProfile as _,
 };
-use opentalk_controller_settings::{Settings, TenantAssignment};
+use opentalk_controller_settings::Settings;
 use opentalk_controller_utils::{
     deletion::{Deleter, EventDeleter},
     CaptureApiError,
@@ -42,7 +47,7 @@ use opentalk_db_storage::{
     tenants::Tenant,
     users::User,
 };
-use opentalk_keycloak_admin::{users::TenantFilter, KeycloakAdminClient};
+use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage};
 use opentalk_types_api_v1::{
     error::{ApiError, ValidationErrorEntry, ERROR_CODE_IGNORED_VALUE, ERROR_CODE_VALUE_REQUIRED},
@@ -53,17 +58,16 @@ use opentalk_types_api_v1::{
         PatchEventBody, PatchEventQuery, PostEventsBody, PublicInviteUserProfile,
     },
     pagination::default_pagination_per_page,
-    users::{PublicUserProfile, UnregisteredUser},
+    users::PublicUserProfile,
     Cursor,
 };
 use opentalk_types_common::{
     events::{invites::EventInviteStatus, EventDescription, EventId, EventTitle},
     features,
-    rooms::{RoomId, RoomPassword},
-    shared_folders::{SharedFolder, SharedFolderAccess},
+    rooms::RoomPassword,
+    shared_folders::SharedFolder,
     streaming::{RoomStreamingTarget, StreamingTarget},
     time::{DateTimeTz, RecurrencePattern, TimeZone, Timestamp},
-    users::UserId,
 };
 use rrule::{Frequency, RRuleSet};
 use serde::Deserialize;
@@ -1063,17 +1067,6 @@ async fn get_event_inner(
     Ok(ApiResponse::new(event_resource))
 }
 
-struct UpdateNotificationValues {
-    pub tenant: Tenant,
-    pub created_by: User,
-    pub event: Event,
-    pub event_exception: Option<EventException>,
-    pub room: Room,
-    pub sip_config: Option<SipConfig>,
-    pub users_to_notify: Vec<MailRecipient>,
-    pub invite_for_room: Invite,
-}
-
 /// Patch an event
 ///
 /// Fields that are not provided in the request body will remain unchanged.
@@ -1330,130 +1323,6 @@ async fn patch_event_inner(
     };
 
     Ok(Either::Left(ApiResponse::new(event_resource)))
-}
-
-pub async fn notify_event_invitees_by_room_about_update(
-    kc_admin_client: &KeycloakAdminClient,
-    settings: &Settings,
-    mail_service: &MailService,
-    current_tenant: Tenant,
-    current_user: User,
-    conn: &mut DbConnection,
-    room_id: RoomId,
-) -> Result<(), CaptureApiError> {
-    let event = Event::get_for_room(conn, room_id).await?;
-
-    if let Some(event) = event {
-        let (event, _invite, room, sip_config, _is_favorite, shared_folder, _tariff) =
-            Event::get_with_related_items(conn, current_user.id, event.id).await?;
-
-        let shared_folder_for_user =
-            shared_folder_for_user(shared_folder, event.created_by, current_user.id);
-
-        let streaming_targets = get_room_streaming_targets(conn, room.id).await?;
-
-        notify_event_invitees_about_update(
-            kc_admin_client,
-            settings,
-            mail_service,
-            current_tenant,
-            current_user,
-            conn,
-            event,
-            room,
-            sip_config,
-            shared_folder_for_user,
-            streaming_targets,
-        )
-        .await?;
-    }
-    Ok(())
-}
-
-#[allow(clippy::too_many_arguments)]
-async fn notify_event_invitees_about_update(
-    kc_admin_client: &KeycloakAdminClient,
-    settings: &Settings,
-    mail_service: &MailService,
-    current_tenant: Tenant,
-    current_user: User,
-    conn: &mut DbConnection,
-    event: Event,
-    room: Room,
-    sip_config: Option<SipConfig>,
-    shared_folder_for_user: Option<SharedFolder>,
-    streaming_targets: Vec<RoomStreamingTarget>,
-) -> Result<(), CaptureApiError> {
-    let invited_users = get_invited_mail_recipients_for_event(conn, event.id).await?;
-    let current_user_mail_recipient = MailRecipient::Registered(current_user.clone().into());
-    let users_to_notify = invited_users
-        .into_iter()
-        .chain(std::iter::once(current_user_mail_recipient))
-        .collect::<Vec<_>>();
-    let invite_for_room =
-        Invite::get_first_or_create_for_room(conn, room.id, current_user.id).await?;
-    let created_by = if event.created_by == current_user.id {
-        current_user
-    } else {
-        User::get(conn, event.created_by).await?
-    };
-
-    let notification_values = UpdateNotificationValues {
-        tenant: current_tenant,
-        created_by,
-        event,
-        event_exception: None,
-        room,
-        sip_config,
-        users_to_notify,
-        invite_for_room,
-    };
-
-    notify_invitees_about_update(
-        settings,
-        notification_values,
-        mail_service,
-        kc_admin_client,
-        shared_folder_for_user,
-        streaming_targets,
-    )
-    .await;
-    Ok(())
-}
-
-async fn notify_invitees_about_update(
-    settings: &Settings,
-    notification_values: UpdateNotificationValues,
-    mail_service: &MailService,
-    kc_admin_client: &KeycloakAdminClient,
-    shared_folder: Option<SharedFolder>,
-    streaming_targets: Vec<RoomStreamingTarget>,
-) {
-    for user in notification_values.users_to_notify {
-        let invited_user =
-            enrich_from_keycloak(settings, user, &notification_values.tenant, kc_admin_client)
-                .await;
-
-        if let Err(e) = mail_service
-            .send_event_update(
-                notification_values.created_by.clone(),
-                notification_values.event.clone(),
-                notification_values.event_exception.clone(),
-                notification_values.room.clone(),
-                notification_values.sip_config.clone(),
-                invited_user,
-                notification_values.invite_for_room.id.to_string(),
-                shared_folder.clone(),
-                streaming_targets.clone(),
-            )
-            .await
-        {
-            log::error!(
-                "Failed to send event update with MailService, {}",
-                Report::from_error(e)
-            );
-        }
-    }
 }
 
 /// Part of `PATCH /events/{event_id}` (see [`patch_event`])
@@ -1891,85 +1760,6 @@ async fn get_invitees_for_event(
     }
 }
 
-pub(crate) async fn get_invited_mail_recipients_for_event(
-    conn: &mut DbConnection,
-    event_id: EventId,
-) -> opentalk_database::Result<Vec<MailRecipient>> {
-    // TODO(w.rabl) Further DB access optimization (replacing call to get_for_event_paginated)?
-    let (invites_with_user, _) =
-        EventInvite::get_for_event_paginated(conn, event_id, i64::MAX, 1, None).await?;
-    let user_invitees = invites_with_user
-        .into_iter()
-        .map(|(_, user)| MailRecipient::Registered(user.into()));
-
-    let (email_invites, _) =
-        EventEmailInvite::get_for_event_paginated(conn, event_id, i64::MAX, 1).await?;
-    let email_invitees = email_invites.into_iter().map(|invitee| {
-        MailRecipient::External(ExternalMailRecipient {
-            email: invitee.email,
-        })
-    });
-
-    let invitees = user_invitees.chain(email_invitees).collect();
-
-    Ok(invitees)
-}
-
-async fn enrich_invitees_from_keycloak(
-    settings: &Settings,
-    kc_admin_client: &KeycloakAdminClient,
-    current_tenant: &Tenant,
-    invitees: Vec<EventInvitee>,
-) -> Vec<EventInvitee> {
-    let tenant_assignment = &settings.tenants.assignment;
-    let invitee_mapping_futures = invitees.into_iter().map(|invitee| async move {
-        if let EventInviteeProfile::Email(profile_details) = invitee.profile {
-            let tenant_filter = get_tenant_filter(current_tenant, tenant_assignment);
-
-            let user_for_email = kc_admin_client
-                .get_user_for_email(tenant_filter, profile_details.email.as_ref())
-                .await
-                .unwrap_or_default();
-
-            if let Some(user) = user_for_email {
-                let profile_details = UnregisteredUser {
-                    email: profile_details.email,
-                    firstname: user.first_name,
-                    lastname: user.last_name,
-                    avatar_url: profile_details.avatar_url,
-                };
-                EventInvitee {
-                    profile: EventInviteeProfile::Unregistered(profile_details),
-                    ..invitee
-                }
-            } else {
-                EventInvitee {
-                    profile: EventInviteeProfile::Email(profile_details),
-                    ..invitee
-                }
-            }
-        } else {
-            invitee
-        }
-    });
-    futures::future::join_all(invitee_mapping_futures).await
-}
-
-fn get_tenant_filter<'a>(
-    current_tenant: &'a Tenant,
-    tenant_assignment: &'a TenantAssignment,
-) -> Option<TenantFilter<'a>> {
-    match tenant_assignment {
-        TenantAssignment::Static { .. } => None,
-        TenantAssignment::ByExternalTenantId {
-            external_tenant_id_user_attribute_name,
-        } => Some(TenantFilter {
-            field_name: external_tenant_id_user_attribute_name,
-            id: current_tenant.oidc_tenant_id.as_ref(),
-        }),
-    }
-}
-
 fn verify_exception_dt_params(
     is_all_day: bool,
     starts_at: DateTimeTz,
@@ -2107,38 +1897,6 @@ fn can_edit(event: &Event, user: &User) -> bool {
     event.created_by == user.id
 }
 
-fn shared_folder_for_user(
-    shared_folder: Option<EventSharedFolder>,
-    event_created_by: UserId,
-    current_user: UserId,
-) -> Option<SharedFolder> {
-    shared_folder.map(|f| {
-        let EventSharedFolder {
-            write_password,
-            write_url,
-            read_password,
-            read_url,
-            ..
-        } = f;
-
-        let read_write = if event_created_by == current_user {
-            Some(SharedFolderAccess {
-                url: write_url,
-                password: write_password,
-            })
-        } else {
-            None
-        };
-
-        let read = SharedFolderAccess {
-            url: read_url,
-            password: read_password,
-        };
-
-        SharedFolder { read, read_write }
-    })
-}
-
 /// Helper trait to to reduce boilerplate in the single route handlers
 ///
 /// Bundles multiple resources into groups.
@@ -2219,41 +1977,12 @@ where
     }
 }
 
-async fn enrich_from_keycloak(
-    settings: &Settings,
-    recipient: MailRecipient,
-    current_tenant: &Tenant,
-    kc_admin_client: &KeycloakAdminClient,
-) -> MailRecipient {
-    let tenant_assignment = &settings.tenants.assignment;
-    if let MailRecipient::External(recipient) = recipient {
-        let tenant_filter = get_tenant_filter(current_tenant, tenant_assignment);
-
-        let keycloak_user = kc_admin_client
-            .get_user_for_email(tenant_filter, recipient.email.as_ref())
-            .await
-            .unwrap_or_default();
-
-        if let Some(keycloak_user) = keycloak_user {
-            MailRecipient::Unregistered(UnregisteredMailRecipient {
-                email: recipient.email,
-                first_name: keycloak_user.first_name,
-                last_name: keycloak_user.last_name,
-            })
-        } else {
-            MailRecipient::External(recipient)
-        }
-    } else {
-        recipient
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use std::time::SystemTime;
 
     use opentalk_test_util::assert_eq_json;
-    use opentalk_types_common::events::invites::InviteRole;
+    use opentalk_types_common::{events::invites::InviteRole, rooms::RoomId, users::UserId};
 
     use super::*;
 

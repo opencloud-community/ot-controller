@@ -1929,7 +1929,7 @@ paths:
     get:
       tags:
         - "api::v1::streaming_targets"
-      summary: List the streaming targets of a room
+      summary: Lists the streaming targets of a room
       description: Returns the streaming targets available for a room
       operationId: get_streaming_targets
       parameters:
@@ -1973,7 +1973,7 @@ paths:
     post:
       tags:
         - "api::v1::streaming_targets"
-      summary: Create a new streaming target
+      summary: Creates a new streaming target
       description: Creates a new streaming target for the given room
       operationId: post_streaming_target
       parameters:
@@ -2016,7 +2016,7 @@ paths:
     get:
       tags:
         - "api::v1::streaming_targets"
-      summary: Get a streaming target
+      summary: Gets a streaming target
       description: Returns a single streaming target for a specific room.
       operationId: get_streaming_target
       parameters:
@@ -2052,8 +2052,8 @@ paths:
     delete:
       tags:
         - "api::v1::streaming_targets"
-      summary: Deletes a single streaming target.
-      description: The streaming target is deleted from the room.
+      summary: Deletes a streaming target
+      description: The streaming target is deleted from the room
       operationId: delete_streaming_target
       parameters:
         - name: room_id
@@ -2090,7 +2090,7 @@ paths:
     patch:
       tags:
         - "api::v1::streaming_targets"
-      summary: Update a room streaming target
+      summary: Updates a streaming target
       description: Modifies and returns a single streaming target.
       operationId: patch_streaming_target
       parameters:

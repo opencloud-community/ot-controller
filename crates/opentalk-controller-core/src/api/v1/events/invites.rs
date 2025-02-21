@@ -12,6 +12,10 @@ use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
 use kustos::{policies_builder::PoliciesBuilder, Authz};
 use opentalk_controller_service::{
     controller_backend::RoomsPoliciesBuilderExt,
+    events::{
+        enrich_from_keycloak, enrich_invitees_from_keycloak, get_invited_mail_recipients_for_event,
+        get_tenant_filter,
+    },
     services::{
         ExternalMailRecipient, MailRecipient, MailService, RegisteredMailRecipient,
         UnregisteredMailRecipient,
@@ -65,11 +69,7 @@ use crate::{
         headers::CursorLink,
         responses::{BadRequest, Forbidden, InternalServerError, NotFound, Unauthorized},
         v1::{
-            events::{
-                enrich_from_keycloak, enrich_invitees_from_keycloak,
-                get_invited_mail_recipients_for_event, get_tenant_filter, EventInviteeExt,
-                EventPoliciesBuilderExt,
-            },
+            events::{EventInviteeExt, EventPoliciesBuilderExt},
             response::{Created, NoContent},
         },
     },
