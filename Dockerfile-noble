@@ -1,0 +1,34 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+FROM rust:slim-bookworm AS builder
+RUN mkdir /controller
+WORKDIR /controller
+
+ADD . /controller
+
+RUN apt-get update && apt-get install --no-install-recommends -y libpq-dev protobuf-compiler curl
+
+RUN cargo build --release --locked
+
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get full-upgrade -y && \
+    apt-get install --no-install-recommends -y libpq5 ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV USERID=1000
+ENV GROUPID=1000
+
+RUN mkdir /controller
+WORKDIR /controller
+
+COPY --from=builder /controller/target/release/opentalk-controller .
+RUN ln -s /controller/opentalk-controller /controller/k3k-controller
+COPY extra/example.toml /controller/config.toml
+
+USER $USERID:$GROUPID
+
+EXPOSE 11311
+ENTRYPOINT [ "/controller/opentalk-controller" ]

@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.28.4] - 2025-02-25
+
+[0.28.4]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.28.3...v0.28.4
+
+### 🚀 New features
+
+- Add ubuntu based container image ([!1453](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1453))
+
 ## [0.28.3] - 2025-02-03
 
 [0.28.3]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.28.2...v0.28.3

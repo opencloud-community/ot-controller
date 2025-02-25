@@ -3715,7 +3715,7 @@ dependencies = [
 
 [[package]]
 name = "kustos"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "actix-web",
  "async-trait",
@@ -3749,7 +3749,7 @@ dependencies = [
 
 [[package]]
 name = "kustos-shared"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "http 1.1.0",
  "itertools 0.13.0",
@@ -4356,7 +4356,7 @@ checksum = "ff011a302c396a5197692431fc1948019154afc178baf7d8e37367442a4601cf"
 
 [[package]]
 name = "opentalk-api-client"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "async-trait",
  "http 1.1.0",
@@ -4372,7 +4372,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-cache"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "bincode",
  "moka",
@@ -4384,7 +4384,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-client-shared"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "async-trait",
  "bytes",
@@ -4399,7 +4399,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-community-signaling-modules"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "async-trait",
  "opentalk-signaling-core",
@@ -4418,7 +4418,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-controller"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "actix-web",
  "anstream",
@@ -4429,7 +4429,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-controller-core"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "actix",
  "actix-cors",
@@ -4523,7 +4523,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-controller-settings"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "anstream",
  "arc-swap",
@@ -4546,7 +4546,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-controller-utils"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "async-trait",
  "diesel-async",
@@ -4568,7 +4568,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-database"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "async-trait",
  "deadpool-runtime",
@@ -4586,7 +4586,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-db-storage"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "actix-rt",
  "barrel",
@@ -4660,7 +4660,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-jobs"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "actix-rt",
  "async-trait",
@@ -4708,7 +4708,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-kustos-prefix"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "kustos-shared",
  "opentalk-kustos-prefix-impl",
@@ -4716,7 +4716,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-kustos-prefix-impl"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -4726,7 +4726,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-log"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "log",
  "serial_test",
@@ -4734,7 +4734,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-mail-worker-protocol"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "chrono",
  "opentalk-types-common",
@@ -4764,7 +4764,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-r3dlock"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "pretty_assertions",
  "rand",
@@ -4775,7 +4775,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-signaling-core"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "actix-http",
  "actix-rt",
@@ -4825,7 +4825,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-signaling-module-chat"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "actix-rt",
  "async-trait",
@@ -4855,7 +4855,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-signaling-module-core"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "async-trait",
  "opentalk-signaling-core",
@@ -4864,7 +4864,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-signaling-module-integration"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "async-trait",
  "opentalk-signaling-core",
@@ -4873,7 +4873,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-signaling-module-livekit"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "async-trait",
  "either",
@@ -4900,7 +4900,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-signaling-module-meeting-notes"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "async-trait",
  "chrono",
@@ -4925,7 +4925,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-signaling-module-meeting-report"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "async-trait",
  "bytes",
@@ -4948,7 +4948,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-signaling-module-polls"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "actix-rt",
  "async-trait",
@@ -4973,7 +4973,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-signaling-module-shared-folder"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "actix-rt",
  "async-trait",
@@ -4999,7 +4999,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-signaling-module-subroom-audio"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "async-trait",
  "either",
@@ -5023,7 +5023,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-signaling-module-timer"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "actix-rt",
  "async-trait",
@@ -5050,7 +5050,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-signaling-module-whiteboard"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "async-trait",
  "bytes",
@@ -5078,7 +5078,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-test-util"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "diesel",
  "diesel-async",
@@ -5101,7 +5101,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "actix-http",
  "actix-web",
@@ -5129,7 +5129,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-api-v1"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "base64 0.22.1",
  "bincode",
@@ -5148,7 +5148,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-common"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "actix-http",
  "actix-web-httpauth",
@@ -5183,7 +5183,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-signaling"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "derive_more 1.0.0",
  "opentalk-types-common",
@@ -5197,7 +5197,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-signaling-breakout"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "opentalk-types-common",
  "opentalk-types-signaling",
@@ -5208,7 +5208,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-signaling-chat"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "chrono",
  "derive_more 1.0.0",
@@ -5223,7 +5223,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-signaling-control"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "chrono",
  "opentalk-types-common",
@@ -5236,7 +5236,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-signaling-livekit"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "opentalk-types-common",
  "opentalk-types-signaling",
@@ -5245,7 +5245,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-signaling-meeting-notes"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "opentalk-types-common",
  "opentalk-types-signaling",
@@ -5256,7 +5256,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-signaling-meeting-report"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "opentalk-types-common",
  "pretty_assertions",
@@ -5266,7 +5266,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-signaling-moderation"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "opentalk-types-common",
  "opentalk-types-signaling",
@@ -5277,7 +5277,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-signaling-polls"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "chrono",
  "derive_more 1.0.0",
@@ -5292,7 +5292,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-signaling-recording"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "derive_more 1.0.0",
  "opentalk-types-common",
@@ -5306,7 +5306,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-signaling-recording-service"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "opentalk-types-common",
  "opentalk-types-signaling",
@@ -5318,7 +5318,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-signaling-shared-folder"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "opentalk-types-common",
  "opentalk-types-signaling",
@@ -5327,7 +5327,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-signaling-subroom-audio"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "derive_more 1.0.0",
  "opentalk-types-common",
@@ -5341,7 +5341,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-signaling-timer"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "chrono",
  "derive_more 1.0.0",
@@ -5356,7 +5356,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-signaling-whiteboard"
-version = "0.28.3"
+version = "0.28.4"
 dependencies = [
  "opentalk-types-common",
  "opentalk-types-signaling",
@@ -6851,9 +6851,9 @@ dependencies = [
 
 [[package]]
 name = "scc"
-version = "2.2.5"
+version = "2.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "66b202022bb57c049555430e11fc22fea12909276a80a4c3d368da36ac1d88ed"
+checksum = "ea091f6cac2595aa38993f04f4ee692ed43757035c36e67c180b6828356385b1"
 dependencies = [
  "sdd",
 ]
@@ -6894,9 +6894,9 @@ dependencies = [
 
 [[package]]
 name = "sdd"
-version = "3.0.4"
+version = "3.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49c1eeaf4b6a87c7479688c6d52b9f1153cedd3c489300564f932b065c6eab95"
+checksum = "b07779b9b918cc05650cb30f404d4d7835d26df37c235eded8a6832e2fb82cca"
 
 [[package]]
 name = "sec1"
