@@ -153,7 +153,7 @@ impl Tariff {
         let disabled_features: BTreeSet<_> = BTreeSet::from_iter(
             self.disabled_features()
                 .into_iter()
-                .chain(disabled_features.into_iter().map(Into::into)),
+                .chain(disabled_features),
         );
 
         let mut modules = BTreeMap::<ModuleId, TariffModuleResource>::new();
