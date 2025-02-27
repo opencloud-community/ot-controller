@@ -135,7 +135,6 @@ impl<S: IsSubject + ToCasbinString + Clone> From<Policies<'_, S>> for Vec<Vec<St
     fn from(val: Policies<'_, S>) -> Self {
         Into::<Vec<Policy<S>>>::into(val)
             .into_iter()
-            .map(Into::<Policy<S>>::into)
             .map(|policy| policy.to_casbin_policy())
             .collect()
     }
