@@ -41,6 +41,7 @@ timer: []
 whiteboard: []
 meeting_report: []
 subroom_audio: []
+training_participation_report: []
 ```
 
 <!-- end:fromfile:cli-usage/opentalk-controller-modules-list.md -->

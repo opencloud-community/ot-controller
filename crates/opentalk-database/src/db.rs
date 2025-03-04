@@ -26,6 +26,12 @@ pub struct Db {
     pool: DbPool,
 }
 
+impl std::fmt::Debug for Db {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Db")
+    }
+}
+
 impl Db {
     /// Creates a new Db instance from the specified database settings.
     #[tracing::instrument(skip(db_settings))]

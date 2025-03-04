@@ -28,6 +28,8 @@ pub const LEFT_AT: LocalAttributeId = LocalAttributeId("left_at");
 pub const RECORDING_CONSENT: LocalAttributeId = LocalAttributeId("recording_consent");
 pub const ROLE: GlobalAttributeId = GlobalAttributeId("role");
 pub const USER_ID: LocalAttributeId = LocalAttributeId("user_id");
+pub const IS_PRESENT: GlobalAttributeId = GlobalAttributeId("is_present");
+pub const BREAKOUT_ROOM: GlobalAttributeId = GlobalAttributeId("breakout_room");
 
 #[cfg(test)]
 mod test_common {

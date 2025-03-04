@@ -24,7 +24,7 @@ use snafu::{ensure, ResultExt as _, Snafu};
 /// The idea is to represent all timestamps in a report with the same timezone.
 /// Therefore when creating the [`ReportDateTime`] type, the timezone used in
 /// the report must be passed in as a parameter.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub struct ReportDateTime(NaiveDateTime);
 
 impl ReportDateTime {

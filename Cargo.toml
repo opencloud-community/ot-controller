@@ -38,6 +38,7 @@ opentalk-signaling-module-polls = { path = "crates/opentalk-signaling-module-pol
 opentalk-signaling-module-shared-folder = { path = "crates/opentalk-signaling-module-shared-folder", version = "0.29.0-alpha" }
 opentalk-signaling-module-subroom-audio = { path = "crates/opentalk-signaling-module-subroom-audio", version = "0.29.0-alpha" }
 opentalk-signaling-module-timer = { path = "crates/opentalk-signaling-module-timer", version = "0.29.0-alpha" }
+opentalk-signaling-module-training-participation-report = { path = "crates/opentalk-signaling-module-training-participation-report", version = "0.29.0-alpha" }
 opentalk-signaling-module-whiteboard = { path = "crates/opentalk-signaling-module-whiteboard", version = "0.29.0-alpha" }
 opentalk-test-util = { path = "crates/opentalk-test-util", version = "0.29.0-alpha" }
 
@@ -107,6 +108,7 @@ opentalk-types-signaling-recording-service = "0.32"
 opentalk-types-signaling-shared-folder = "0.32"
 opentalk-types-signaling-subroom-audio = "0.32"
 opentalk-types-signaling-timer = "0.32"
+opentalk-types-signaling-training-participation-report = "0.2"
 opentalk-types-signaling-whiteboard = "0.32"
 opentalk-version = "0.1.1"
 opentelemetry = { version = "0.27", default-features = false, features = [
