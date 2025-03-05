@@ -3,10 +3,10 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 FROM rust:slim-bookworm AS builder
-RUN mkdir /app
-WORKDIR /app
+RUN mkdir /controller
+WORKDIR /controller
 
-ADD . /app
+ADD . /controller
 
 RUN apt-get update && apt-get install --no-install-recommends -y libpq-dev protobuf-compiler curl
 
@@ -21,14 +21,14 @@ RUN apt-get update && apt-get full-upgrade -y && \
 ENV USERID=1000
 ENV GROUPID=1000
 
-RUN mkdir /app
-WORKDIR /app
+RUN mkdir /controller
+WORKDIR /controller
 
-COPY --from=builder /app/target/release/opentalk-controller .
-RUN ln -s /app/opentalk-controller /app/k3k-controller
-COPY extra/example.toml /app/config.toml
+COPY --from=builder /controller/target/release/opentalk-controller .
+RUN ln -s /controller/opentalk-controller /controller/k3k-controller
+COPY extra/example.toml /controller/config.toml
 
 USER $USERID:$GROUPID
 
 EXPOSE 11311
-ENTRYPOINT [ "/app/opentalk-controller" ]
+ENTRYPOINT [ "/controller/opentalk-controller" ]
