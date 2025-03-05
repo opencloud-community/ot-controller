@@ -557,6 +557,13 @@ impl TrainingParticipationReport {
                     PresenceLoggingStartedReason::FirstParticipantJoined,
                 )
                 .await?;
+                ctx.volatile
+                    .storage()
+                    .set_training_report_state(
+                        self.room,
+                        TrainingReportState::WaitingForInitialTimeout,
+                    )
+                    .await?;
             }
         }
         Ok(())
