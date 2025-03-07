@@ -61,8 +61,16 @@ pub async fn notify_event_invitees_by_room_about_update(
     let event = Event::get_for_room(conn, room_id).await?;
 
     if let Some(event) = event {
-        let (event, _invite, room, sip_config, _is_favorite, shared_folder, _tariff) =
-            Event::get_with_related_items(conn, current_user.id, event.id).await?;
+        let (
+            event,
+            _invite,
+            room,
+            sip_config,
+            _is_favorite,
+            shared_folder,
+            _tariff,
+            _training_participation_report,
+        ) = Event::get_with_related_items(conn, current_user.id, event.id).await?;
 
         let shared_folder_for_user =
             shared_folder_for_user(shared_folder, event.created_by, current_user.id);

@@ -27,6 +27,7 @@ use opentalk_types_common::{
     sql_enum,
     tenants::TenantId,
     time::TimeZone,
+    training_participation_report::{TimeRange, TrainingParticipationReportParameterSet},
     users::UserId,
 };
 use redis_args::{FromRedisValue, ToRedisArgs};
@@ -36,8 +37,9 @@ use self::shared_folders::EventSharedFolder;
 use crate::{
     rooms::Room,
     schema::{
-        event_exceptions, event_favorites, event_invites, event_shared_folders, events, rooms,
-        sip_configs, tariffs, users,
+        event_exceptions, event_favorites, event_invites, event_shared_folders,
+        event_training_participation_report_parameter_sets, events, rooms, sip_configs, tariffs,
+        users,
     },
     sip_configs::SipConfig,
     tariffs::Tariff,
@@ -352,36 +354,43 @@ impl Event {
         bool,
         Option<EventSharedFolder>,
         Tariff,
+        Option<EventTrainingParticipationReportParameterSet>,
     )> {
-        let query = events::table
-            .left_join(
-                event_invites::table.on(event_invites::event_id
-                    .eq(events::id)
-                    .and(event_invites::invitee.eq(user_id))),
-            )
-            .left_join(
-                event_favorites::table.on(event_favorites::event_id
-                    .eq(events::id)
-                    .and(event_favorites::user_id.eq(user_id))),
-            )
-            .left_join(
-                event_shared_folders::table.on(event_shared_folders::event_id.eq(events::id)),
-            )
-            .inner_join(rooms::table.on(events::room.eq(rooms::id)))
-            .left_join(sip_configs::table.on(rooms::id.eq(sip_configs::room)))
-            .inner_join(users::table.on(users::id.eq(rooms::created_by)))
-            .inner_join(tariffs::table.on(tariffs::id.eq(users::tariff_id)))
-            .select((
-                events::all_columns,
-                event_invites::all_columns.nullable(),
-                rooms::all_columns,
-                sip_configs::all_columns.nullable(),
-                event_favorites::user_id.nullable().is_not_null(),
-                event_shared_folders::all_columns.nullable(),
-                tariffs::all_columns,
-            ))
-            .filter(events::id.eq(event_id));
-
+        let query =
+            events::table
+                .left_join(
+                    event_invites::table.on(event_invites::event_id
+                        .eq(events::id)
+                        .and(event_invites::invitee.eq(user_id))),
+                )
+                .left_join(
+                    event_favorites::table.on(event_favorites::event_id
+                        .eq(events::id)
+                        .and(event_favorites::user_id.eq(user_id))),
+                )
+                .left_join(
+                    event_shared_folders::table.on(event_shared_folders::event_id.eq(events::id)),
+                )
+                .inner_join(rooms::table.on(events::room.eq(rooms::id)))
+                .left_join(sip_configs::table.on(rooms::id.eq(sip_configs::room)))
+                .inner_join(users::table.on(users::id.eq(rooms::created_by)))
+                .inner_join(tariffs::table.on(tariffs::id.eq(users::tariff_id)))
+                .inner_join(
+                    event_training_participation_report_parameter_sets::table
+                        .on(event_training_participation_report_parameter_sets::event_id
+                            .eq(events::id)),
+                )
+                .select((
+                    events::all_columns,
+                    event_invites::all_columns.nullable(),
+                    rooms::all_columns,
+                    sip_configs::all_columns.nullable(),
+                    event_favorites::user_id.nullable().is_not_null(),
+                    event_shared_folders::all_columns.nullable(),
+                    tariffs::all_columns,
+                    event_training_participation_report_parameter_sets::all_columns.nullable(),
+                ))
+                .filter(events::id.eq(event_id));
         Ok(query.first(conn).await?)
     }
 
@@ -431,6 +440,7 @@ impl Event {
             bool,
             Option<EventSharedFolder>,
             Tariff,
+            Option<TrainingParticipationReportParameterSet>,
         )>,
     > {
         // Filter applied to all events which validates that the event is either created by
@@ -585,6 +595,8 @@ impl Event {
             } else {
                 vec![]
             };
+            // TODO: remove this
+            let training_participation_report_parameter_set = None;
 
             events_with_invite_room_and_exceptions.push((
                 event,
@@ -595,6 +607,7 @@ impl Event {
                 is_favorite,
                 shared_folders,
                 tariff,
+                training_participation_report_parameter_set,
             ));
         }
 
@@ -1129,6 +1142,142 @@ impl NewEventFavorite {
                 ..,
             )) => Ok(None),
             Err(e) => Err(e.into()),
+        }
+    }
+}
+
+#[derive(Debug, Insertable, Queryable, Identifiable, Associations)]
+#[diesel(table_name = event_training_participation_report_parameter_sets)]
+#[diesel(primary_key(event_id))]
+#[diesel(belongs_to(Event, foreign_key = event_id))]
+pub struct EventTrainingParticipationReportParameterSet {
+    pub event_id: EventId,
+    pub initial_checkpoint_delay_after: i64,
+    pub initial_checkpoint_delay_within: i64,
+    pub checkpoint_interval_after: i64,
+    pub checkpoint_interval_within: i64,
+}
+
+impl EventTrainingParticipationReportParameterSet {
+    #[tracing::instrument(err, skip_all)]
+    pub async fn get_for_event(conn: &mut DbConnection, event_id: EventId) -> Result<Option<Self>> {
+        let parameter_set = event_training_participation_report_parameter_sets::table
+            .filter(event_training_participation_report_parameter_sets::event_id.eq(event_id))
+            .get_result(conn)
+            .await
+            .optional()?;
+
+        Ok(parameter_set)
+    }
+
+    /// Tries to insert the EventTrainingParticipationParameterSet into the database
+    ///
+    /// When yielding a unique key violation, None is returned.
+    #[tracing::instrument(err, skip_all)]
+    pub async fn try_insert(self, conn: &mut DbConnection) -> Result<Option<Self>> {
+        let query = self.insert_into(event_training_participation_report_parameter_sets::table);
+
+        let result = query.get_result(conn).await;
+
+        match result {
+            Ok(event_invite) => Ok(Some(event_invite)),
+            Err(diesel::result::Error::DatabaseError(
+                diesel::result::DatabaseErrorKind::UniqueViolation,
+                ..,
+            )) => Ok(None),
+            Err(e) => Err(e.into()),
+        }
+    }
+
+    #[tracing::instrument(err, skip_all)]
+    pub async fn delete_by_id(conn: &mut DbConnection, event_id: EventId) -> Result<()> {
+        let query = diesel::delete(
+            event_training_participation_report_parameter_sets::table
+                .filter(event_training_participation_report_parameter_sets::event_id.eq(event_id)),
+        );
+
+        query.execute(conn).await?;
+
+        Ok(())
+    }
+}
+
+impl From<EventTrainingParticipationReportParameterSet>
+    for TrainingParticipationReportParameterSet
+{
+    fn from(
+        EventTrainingParticipationReportParameterSet {
+            event_id: _,
+            initial_checkpoint_delay_after,
+            initial_checkpoint_delay_within,
+            checkpoint_interval_after,
+            checkpoint_interval_within,
+        }: EventTrainingParticipationReportParameterSet,
+    ) -> Self {
+        Self {
+            initial_checkpoint_delay: TimeRange {
+                after: u64::try_from(initial_checkpoint_delay_after).unwrap_or_default(),
+                within: u64::try_from(initial_checkpoint_delay_within).unwrap_or_default(),
+            },
+            checkpoint_interval: TimeRange {
+                after: u64::try_from(checkpoint_interval_after).unwrap_or_default(),
+                within: u64::try_from(checkpoint_interval_within).unwrap_or_default(),
+            },
+        }
+    }
+}
+
+#[derive(AsChangeset)]
+#[diesel(table_name = event_training_participation_report_parameter_sets)]
+pub struct UpdateEventTrainingParticipationReportParameterSet {
+    pub initial_checkpoint_delay_after: Option<i64>,
+    pub initial_checkpoint_delay_within: Option<i64>,
+    pub checkpoint_interval_after: Option<i64>,
+    pub checkpoint_interval_within: Option<i64>,
+}
+
+impl UpdateEventTrainingParticipationReportParameterSet {
+    /// Apply the update to the invite where `user_id` is the invitee
+    #[tracing::instrument(err, skip_all)]
+    pub async fn apply(
+        self,
+        conn: &mut DbConnection,
+        event_id: EventId,
+    ) -> Result<EventTrainingParticipationReportParameterSet> {
+        let query = diesel::update(event_training_participation_report_parameter_sets::table)
+            .filter(event_training_participation_report_parameter_sets::event_id.eq(event_id))
+            .set(self)
+            // change it here
+            .returning(event_training_participation_report_parameter_sets::all_columns);
+
+        let event_training_participation_report_parameter_sets = query.get_result(conn).await?;
+
+        Ok(event_training_participation_report_parameter_sets)
+    }
+}
+
+impl From<TrainingParticipationReportParameterSet>
+    for UpdateEventTrainingParticipationReportParameterSet
+{
+    fn from(
+        TrainingParticipationReportParameterSet {
+            initial_checkpoint_delay,
+            checkpoint_interval,
+        }: TrainingParticipationReportParameterSet,
+    ) -> Self {
+        Self {
+            initial_checkpoint_delay_after: Some(
+                i64::try_from(initial_checkpoint_delay.after).unwrap_or(i64::MAX),
+            ),
+            initial_checkpoint_delay_within: Some(
+                i64::try_from(initial_checkpoint_delay.within).unwrap_or(i64::MAX),
+            ),
+            checkpoint_interval_after: Some(
+                i64::try_from(checkpoint_interval.after).unwrap_or(i64::MAX),
+            ),
+            checkpoint_interval_within: Some(
+                i64::try_from(checkpoint_interval.within).unwrap_or(i64::MAX),
+            ),
         }
     }
 }

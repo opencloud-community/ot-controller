@@ -35,7 +35,8 @@ use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
     events::{
         email_invites::EventEmailInvite, shared_folders::EventSharedFolder, Event, EventException,
-        EventExceptionKind, EventInvite, NewEvent, UpdateEvent,
+        EventExceptionKind, EventInvite, EventTrainingParticipationReportParameterSet, NewEvent,
+        UpdateEvent, UpdateEventTrainingParticipationReportParameterSet,
     },
     invites::Invite,
     rooms::{NewRoom, Room, UpdateRoom},
@@ -68,6 +69,7 @@ use opentalk_types_common::{
     shared_folders::SharedFolder,
     streaming::{RoomStreamingTarget, StreamingTarget},
     time::{DateTimeTz, RecurrencePattern, TimeZone, Timestamp},
+    training_participation_report::TrainingParticipationReportParameterSet,
 };
 use rrule::{Frequency, RRuleSet};
 use serde::Deserialize;
@@ -337,6 +339,7 @@ async fn new_event_inner(
                         streaming_targets,
                         has_shared_folder: _,
                         show_meeting_details,
+                        training_participation_report
                     } if recurrence_pattern.is_empty() => {
                         create_time_independent_event(
                             settings,
@@ -351,6 +354,7 @@ async fn new_event_inner(
                             streaming_targets,
                             show_meeting_details,
                             query,
+                            training_participation_report
                         )
                             .await?
                     }
@@ -369,6 +373,7 @@ async fn new_event_inner(
                         streaming_targets,
                         has_shared_folder: _,
                         show_meeting_details,
+                        training_participation_report
                     } => {
                         create_time_dependent_event(
                             settings,
@@ -387,6 +392,7 @@ async fn new_event_inner(
                             streaming_targets,
                             show_meeting_details,
                             query,
+                            training_participation_report
                         )
                             .await?
                     }
@@ -461,6 +467,34 @@ async fn store_event_streaming_targets(
     Ok(room_streaming_targets)
 }
 
+async fn store_training_participation_report(
+    conn: &mut DbConnection,
+    event_id: EventId,
+    TrainingParticipationReportParameterSet {
+        initial_checkpoint_delay,
+        checkpoint_interval,
+    }: TrainingParticipationReportParameterSet,
+) -> Result<Option<TrainingParticipationReportParameterSet>, CaptureApiError> {
+    let initial_checkpoint_delay_after =
+        i64::try_from(initial_checkpoint_delay.after).unwrap_or(i64::MAX);
+    let initial_checkpoint_delay_within =
+        i64::try_from(initial_checkpoint_delay.within).unwrap_or(i64::MAX);
+    let checkpoint_interval_after = i64::try_from(checkpoint_interval.after).unwrap_or(i64::MAX);
+    let checkpoint_interval_within = i64::try_from(checkpoint_interval.within).unwrap_or(i64::MAX);
+
+    let inserted = EventTrainingParticipationReportParameterSet {
+        event_id,
+        initial_checkpoint_delay_after,
+        initial_checkpoint_delay_within,
+        checkpoint_interval_after,
+        checkpoint_interval_within,
+    }
+    .try_insert(conn)
+    .await?;
+
+    Ok(inserted.map(Into::into))
+}
+
 struct MailResource {
     pub current_user: User,
     pub event: Event,
@@ -483,6 +517,7 @@ async fn create_time_independent_event(
     streaming_targets: Vec<StreamingTarget>,
     show_meeting_details: bool,
     query: EventOptionsQuery,
+    training_participation_report: Option<TrainingParticipationReportParameterSet>,
 ) -> Result<(EventResource, Option<MailResource>), CaptureApiError> {
     let room = NewRoom {
         created_by: current_user.id,
@@ -521,6 +556,12 @@ async fn create_time_independent_event(
     let streaming_targets =
         store_event_streaming_targets(conn, event.id, streaming_targets).await?;
 
+    let training_participation_report = if let Some(parameters) = training_participation_report {
+        store_training_participation_report(conn, event.id, parameters).await?
+    } else {
+        None
+    };
+
     let tariff = Tariff::get_by_user_id(conn, &current_user.id).await?;
 
     let suppress_email_notification = is_adhoc || query.suppress_email_notification;
@@ -557,6 +598,7 @@ async fn create_time_independent_event(
             shared_folder: None,
             streaming_targets,
             show_meeting_details,
+            training_participation_report,
         },
         mail_resource,
     ))
@@ -581,6 +623,7 @@ async fn create_time_dependent_event(
     streaming_targets: Vec<StreamingTarget>,
     show_meeting_details: bool,
     query: EventOptionsQuery,
+    training_participation_report: Option<TrainingParticipationReportParameterSet>,
 ) -> Result<(EventResource, Option<MailResource>), CaptureApiError> {
     let recurrence_pattern = recurrence_pattern.to_multiline_string();
 
@@ -667,6 +710,7 @@ async fn create_time_dependent_event(
             shared_folder: None,
             streaming_targets,
             show_meeting_details,
+            training_participation_report,
         },
         mail_resource,
     ))
@@ -774,7 +818,7 @@ async fn get_events_inner(
     )
     .await?;
 
-    for (event, _, _, _, exceptions, _, _, _) in &events {
+    for (event, _, _, _, exceptions, _, _, _, _) in &events {
         users.add(event);
         users.add(exceptions);
     }
@@ -812,7 +856,17 @@ async fn get_events_inner(
     let mut ret_cursor_data = None;
 
     for (
-        (event, invite, room, sip_config, exceptions, is_favorite, shared_folder, tariff),
+        (
+            event,
+            invite,
+            room,
+            sip_config,
+            exceptions,
+            is_favorite,
+            shared_folder,
+            tariff,
+            training_participation_report,
+        ),
         (mut invites_with_user, mut email_invites),
     ) in events.into_iter().zip(invites_grouped_by_event)
     {
@@ -887,6 +941,7 @@ async fn get_events_inner(
             shared_folder,
             streaming_targets: Vec::new(),
             show_meeting_details: event.show_meeting_details,
+            training_participation_report,
         }));
 
         for exception in exceptions {
@@ -997,8 +1052,16 @@ async fn get_event_inner(
 ) -> DefaultApiResult<EventResource, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
-    let (event, invite, room, sip_config, is_favorite, shared_folder, tariff) =
-        Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
+    let (
+        event,
+        invite,
+        room,
+        sip_config,
+        is_favorite,
+        shared_folder,
+        tariff,
+        training_participation_report,
+    ) = Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
     let room_streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
     let (invitees, invitees_truncated) =
         get_invitees_for_event(settings, &mut conn, event_id, query.invitees_max).await?;
@@ -1050,6 +1113,7 @@ async fn get_event_inner(
         shared_folder,
         streaming_targets: room_streaming_targets,
         show_meeting_details: event.show_meeting_details,
+        training_participation_report: training_participation_report.map(Into::into),
     };
 
     let event_resource = EventResource {
@@ -1157,8 +1221,16 @@ async fn patch_event_inner(
 
     let mut conn = db.get_conn().await?;
 
-    let (event, invite, room, sip_config, is_favorite, shared_folder, tariff) =
-        Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
+    let (
+        event,
+        invite,
+        room,
+        sip_config,
+        is_favorite,
+        shared_folder,
+        tariff,
+        training_participation_report,
+    ) = Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
 
     let room = if patch.password.is_some() || patch.waiting_room.is_some() {
         // Update the event's room if at least one of the fields is set
@@ -1196,6 +1268,19 @@ async fn patch_event_inner(
         }
         None => {}
     }
+
+    let training_participation_report = match &patch.training_participation_report {
+        Some(Some(parameter_set)) => Some(
+            UpdateEventTrainingParticipationReportParameterSet::from(parameter_set.clone())
+                .apply(&mut conn, event.id)
+                .await?,
+        ),
+        Some(None) => {
+            EventTrainingParticipationReportParameterSet::delete_by_id(&mut conn, event.id).await?;
+            None
+        }
+        None => training_participation_report,
+    };
 
     // Special case: if the patch only modifies the password do not update the event
     let event = if patch.only_modifies_room() {
@@ -1296,6 +1381,7 @@ async fn patch_event_inner(
         shared_folder: shared_folder.clone(),
         streaming_targets: streaming_targets.clone(),
         show_meeting_details: event.show_meeting_details,
+        training_participation_report: training_participation_report.map(Into::into),
     };
 
     if send_email_notification {
@@ -1602,8 +1688,16 @@ async fn delete_event_inner(
     let mut conn = db.get_conn().await?;
 
     // TODO(w.rabl) Further DB access optimization (replacing call to get_with_invite_and_room)?
-    let (event, _invite, room, sip_config, _is_favorite, shared_folder, _tariff) =
-        Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
+    let (
+        event,
+        _invite,
+        room,
+        sip_config,
+        _is_favorite,
+        shared_folder,
+        _tariff,
+        _training_participation_report,
+    ) = Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
 
     let streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
 
@@ -1981,7 +2075,10 @@ mod tests {
     use std::time::SystemTime;
 
     use opentalk_test_util::assert_eq_json;
-    use opentalk_types_common::{events::invites::InviteRole, rooms::RoomId, users::UserId};
+    use opentalk_types_common::{
+        events::invites::InviteRole, rooms::RoomId, training_participation_report::TimeRange,
+        users::UserId,
+    };
 
     use super::*;
 
@@ -2058,6 +2155,16 @@ mod tests {
             shared_folder: None,
             streaming_targets: Vec::new(),
             show_meeting_details: true,
+            training_participation_report: Some(TrainingParticipationReportParameterSet {
+                initial_checkpoint_delay: TimeRange {
+                    after: 100,
+                    within: 200,
+                },
+                checkpoint_interval: TimeRange {
+                    after: 300,
+                    within: 400,
+                },
+            }),
         };
 
         assert_eq_json!(
@@ -2124,6 +2231,16 @@ mod tests {
                 "can_edit": true,
                 "is_adhoc": false,
                 "show_meeting_details": true,
+                "training_participation_report": {
+                    "initial_checkpoint_delay": {
+                        "after": 100,
+                        "within": 200,
+                    },
+                    "checkpoint_interval": {
+                        "after": 300,
+                        "within": 400,
+                    },
+                },
             }
         );
     }
@@ -2185,6 +2302,16 @@ mod tests {
             shared_folder: None,
             streaming_targets: Vec::new(),
             show_meeting_details: false,
+            training_participation_report: Some(TrainingParticipationReportParameterSet {
+                initial_checkpoint_delay: TimeRange {
+                    after: 100,
+                    within: 200,
+                },
+                checkpoint_interval: TimeRange {
+                    after: 300,
+                    within: 400,
+                },
+            }),
         };
 
         assert_eq_json!(
@@ -2247,6 +2374,16 @@ mod tests {
                 "can_edit": false,
                 "is_adhoc": false,
                 "show_meeting_details": false,
+                "training_participation_report": {
+                    "initial_checkpoint_delay": {
+                        "after": 100,
+                        "within": 200,
+                    },
+                    "checkpoint_interval": {
+                        "after": 300,
+                        "within": 400,
+                    },
+                },
             }
         );
     }

@@ -73,8 +73,16 @@ impl ControllerBackend {
 
         let (shared_folder, created) = put_shared_folder(&settings, event_id, &mut conn).await?;
 
-        let (event, _invite, room, sip_config, _is_favorite, _shared_folder, _tariff) =
-            Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
+        let (
+            event,
+            _invite,
+            room,
+            sip_config,
+            _is_favorite,
+            _shared_folder,
+            _tariff,
+            _training_participation_report,
+        ) = Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
 
         if send_email_notification {
             let shared_folder_for_user = shared_folder_for_user(
@@ -117,8 +125,16 @@ impl ControllerBackend {
 
         let send_email_notification = !query.suppress_email_notification;
 
-        let (event, _invite, room, sip_config, _is_favorite, shared_folder, _tariff) =
-            Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
+        let (
+            event,
+            _invite,
+            room,
+            sip_config,
+            _is_favorite,
+            shared_folder,
+            _tariff,
+            _training_participation_report,
+        ) = Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
 
         if let Some(shared_folder) = shared_folder {
             let shared_folders = std::slice::from_ref(&shared_folder);

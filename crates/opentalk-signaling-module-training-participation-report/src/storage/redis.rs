@@ -6,11 +6,11 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{NotFoundSnafu, RedisConnection, RedisSnafu, SignalingModuleError};
-use opentalk_types_common::{rooms::RoomId, time::Timestamp};
-use opentalk_types_signaling::ParticipantId;
-use opentalk_types_signaling_training_participation_report::{
-    state::ParticipationLoggingState, TimeRange,
+use opentalk_types_common::{
+    rooms::RoomId, time::Timestamp, training_participation_report::TimeRange,
 };
+use opentalk_types_signaling::ParticipantId;
+use opentalk_types_signaling_training_participation_report::state::ParticipationLoggingState;
 use redis::{AsyncCommands, ExistenceCheck, SetOptions};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};

@@ -19,11 +19,9 @@ mod test_common {
     use std::collections::{BTreeMap, BTreeSet};
 
     use opentalk_signaling_core::SignalingModuleError;
-    use opentalk_types_common::rooms::RoomId;
+    use opentalk_types_common::{rooms::RoomId, training_participation_report::TimeRange};
     use opentalk_types_signaling::ParticipantId;
-    use opentalk_types_signaling_training_participation_report::{
-        state::ParticipationLoggingState, TimeRange,
-    };
+    use opentalk_types_signaling_training_participation_report::state::ParticipationLoggingState;
     use pretty_assertions::assert_eq;
 
     use super::TrainingParticipationReportStorage;

@@ -5,11 +5,11 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use opentalk_signaling_core::{NotFoundSnafu, SignalingModuleError};
-use opentalk_types_common::{rooms::RoomId, time::Timestamp};
-use opentalk_types_signaling::ParticipantId;
-use opentalk_types_signaling_training_participation_report::{
-    state::ParticipationLoggingState, TimeRange,
+use opentalk_types_common::{
+    rooms::RoomId, time::Timestamp, training_participation_report::TimeRange,
 };
+use opentalk_types_signaling::ParticipantId;
+use opentalk_types_signaling_training_participation_report::state::ParticipationLoggingState;
 use snafu::{ensure_whatever, OptionExt as _};
 
 use crate::storage::{Checkpoint, RoomState, TrainingReportState};

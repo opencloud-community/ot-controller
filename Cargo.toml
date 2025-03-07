@@ -93,8 +93,8 @@ opentalk-mail-worker-protocol = "0.32"
 opentalk-nextcloud-client = { version = "0.2.0", default-features = false, features = [
   "rustls-tls-native-roots",
 ] }
-opentalk-types-api-v1 = "0.33"
-opentalk-types-common = "0.32"
+opentalk-types-api-v1 = "0.34"
+opentalk-types-common = "0.32.1"
 opentalk-types-signaling = "0.32"
 opentalk-types-signaling-breakout = "0.32"
 opentalk-types-signaling-chat = "0.32"
@@ -110,7 +110,7 @@ opentalk-types-signaling-recording-service = "0.32"
 opentalk-types-signaling-shared-folder = "0.32"
 opentalk-types-signaling-subroom-audio = "0.32"
 opentalk-types-signaling-timer = "0.32"
-opentalk-types-signaling-training-participation-report = "0.2"
+opentalk-types-signaling-training-participation-report = "0.3"
 opentalk-types-signaling-whiteboard = "0.32"
 opentalk-version = "0.1.1"
 opentelemetry = { version = "0.27", default-features = false, features = [
