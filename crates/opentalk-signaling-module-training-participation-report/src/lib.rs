@@ -52,6 +52,7 @@ use opentalk_types_common::{
     modules::ModuleId,
     rooms::RoomId,
     time::{TimeZone, Timestamp},
+    training_participation_report::TimeRange,
     users::{DisplayName, UserId},
 };
 use opentalk_types_signaling::ParticipantId;
@@ -63,7 +64,7 @@ use opentalk_types_signaling_training_participation_report::{
         PresenceLoggingStartedReason, TrainingParticipationReportEvent,
     },
     state::{ParticipationLoggingState, TrainingParticipationReportState},
-    TimeRange, MODULE_ID,
+    MODULE_ID,
 };
 use rand::Rng as _;
 use snafu::{Report, ResultExt as _};
@@ -209,6 +210,8 @@ impl TrainingParticipationReport {
             .get_recorded_presence_state(self.room, self.participant)
             .await?;
 
+        let parameter_set = None;
+
         if control_data.is_room_owner {
             let (other_room_owners, trainees) = self
                 .load_already_present_room_owners_and_trainees(
@@ -225,8 +228,17 @@ impl TrainingParticipationReport {
                 // Don't ask the room owner for confirmation
                 state = ParticipationLoggingState::Enabled;
             }
+
+            *frontend_data = Some(TrainingParticipationReportState {
+                state,
+                parameter_set,
+            });
+        } else {
+            *frontend_data = Some(TrainingParticipationReportState {
+                state,
+                parameter_set: None,
+            });
         }
-        *frontend_data = Some(TrainingParticipationReportState { state });
         Ok(())
     }
 

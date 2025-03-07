@@ -9,11 +9,11 @@ use std::{
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, VolatileStaticMemoryStorage};
-use opentalk_types_common::{rooms::RoomId, time::Timestamp};
-use opentalk_types_signaling::ParticipantId;
-use opentalk_types_signaling_training_participation_report::{
-    state::ParticipationLoggingState, TimeRange,
+use opentalk_types_common::{
+    rooms::RoomId, time::Timestamp, training_participation_report::TimeRange,
 };
+use opentalk_types_signaling::ParticipantId;
+use opentalk_types_signaling_training_participation_report::state::ParticipationLoggingState;
 use parking_lot::RwLock;
 
 use super::memory::TrainingParticipationReportState;

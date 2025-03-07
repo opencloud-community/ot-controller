@@ -3095,6 +3095,13 @@ components:
         title:
           $ref: "#/components/schemas/EventTitle"
           description: Title of the event
+        training_participation_report:
+          $ref: "#/components/schemas/TrainingParticipationReportParameterSet"
+          description: |-
+            The training participation report parameter set for the event.
+
+            When present, the training participation report will be started
+            automatically in the meeting.
         type:
           $ref: "#/components/schemas/EventType"
           description: "Must always be `instance`"
@@ -3158,6 +3165,13 @@ components:
           timezone: Europe/Berlin
         status: ok
         title: Team Event
+        training_participation_report:
+          checkpoint_interval:
+            after: 300
+            within: 400
+          initial_checkpoint_delay:
+            after: 100
+            within: 200
         type: recurring
         updated_at: "2024-07-20T14:16:19Z"
         updated_by:
@@ -3315,6 +3329,13 @@ components:
             streaming_endpoint: "https://ingress.streaming.example.com/"
             streaming_key: aabbccddeeff
         title: Team Event
+        training_participation_report:
+          checkpoint_interval:
+            after: 300
+            within: 400
+          initial_checkpoint_delay:
+            after: 100
+            within: 200
         type: single
         updated_at: "2024-07-20T14:16:19Z"
         updated_by:
@@ -3453,6 +3474,13 @@ components:
             Title of the event
 
             For display purposes
+        training_participation_report:
+          $ref: "#/components/schemas/TrainingParticipationReportParameterSet"
+          description: |-
+            The training participation report parameter set for the event.
+
+            When present, the training participation report will be started
+            automatically in the meeting.
         type:
           $ref: "#/components/schemas/EventType"
           description: |-
@@ -3520,6 +3548,13 @@ components:
             streaming_endpoint: "https://ingress.streaming.example.com/"
             streaming_key: aabbccddeeff
         title: Team Event
+        training_participation_report:
+          checkpoint_interval:
+            after: 300
+            within: 400
+          initial_checkpoint_delay:
+            after: 100
+            within: 200
         type: single
         updated_at: "2024-07-20T14:16:19Z"
         updated_by:
@@ -3666,6 +3701,13 @@ components:
             timezone: Europe/Berlin
           status: ok
           title: Team Event
+          training_participation_report:
+            checkpoint_interval:
+              after: 300
+              within: 400
+            initial_checkpoint_delay:
+              after: 100
+              within: 200
           type: recurring
           updated_at: "2024-07-20T14:16:19Z"
           updated_by:
@@ -4037,6 +4079,13 @@ components:
         title:
           $ref: "#/components/schemas/EventTitle"
           description: Patch the title of th event
+        training_participation_report:
+          $ref: "#/components/schemas/TrainingParticipationReportParameterSet"
+          description: |-
+            The training participation report parameter set for the event.
+
+            When present, the training participation report will be started
+            automatically in the meeting.
         waiting_room:
           type: boolean
           description: Patch the presence of a waiting room
@@ -4243,6 +4292,13 @@ components:
         title:
           $ref: "#/components/schemas/EventTitle"
           description: Title of the event
+        training_participation_report:
+          $ref: "#/components/schemas/TrainingParticipationReportParameterSet"
+          description: |-
+            The training participation report parameter set for the event.
+
+            When present, the training participation report will be started
+            automatically in the meeting.
         waiting_room:
           type: boolean
           description: Should the created event have a waiting room?
@@ -4269,6 +4325,13 @@ components:
             streaming_endpoint: "https://ingress.streaming.example.com/"
             streaming_key: aabbccddeeff
         title: Teammeeting
+        training_participation_report:
+          checkpoint_interval:
+            after: 300
+            within: 400
+          initial_checkpoint_delay:
+            after: 100
+            within: 200
         waiting_room: false
     PostInviteRequestBody:
       type: object
@@ -4983,6 +5046,26 @@ components:
     TicketToken:
       type: string
       description: A ticket token
+    TimeRange:
+      type: object
+      description: A time range within which checkpoints can be randomly created
+      required:
+        - after
+        - within
+      properties:
+        after:
+          type: integer
+          format: int64
+          description: The earliest number of seconds after which the checkpoint can be created.
+          minimum: 0
+        within:
+          type: integer
+          format: int64
+          description: "The number of seconds within which the checkpoint can be created after the `after` value."
+          minimum: 0
+      example:
+        after: 1200
+        within: 600
     TimeZone:
       type: string
       description: A time zone
@@ -4995,6 +5078,26 @@ components:
         A UTC DateTime wrapper that implements ToRedisArgs and FromRedisValue.
 
         The values are stores as unix timestamps in redis.
+    TrainingParticipationReportParameterSet:
+      type: object
+      description: The parameters for a training participant report checkpoint procedure.
+      required:
+        - initial_checkpoint_delay
+        - checkpoint_interval
+      properties:
+        checkpoint_interval:
+          $ref: "#/components/schemas/TimeRange"
+          description: The time range definition for the subsequent checkpoints.
+        initial_checkpoint_delay:
+          $ref: "#/components/schemas/TimeRange"
+          description: The time range definition for the initial checkpoint delay.
+      example:
+        checkpoint_interval:
+          after: 300
+          within: 400
+        initial_checkpoint_delay:
+          after: 100
+          within: 200
     TurnServer:
       type: object
       description: TURN access credentials for users.

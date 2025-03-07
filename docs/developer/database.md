@@ -75,6 +75,13 @@ event_shared_folders {
     text write_share_id
     text write_url
 }
+event_training_participation_report_parameter_sets {
+    uuid event_id PK,FK
+    bigint checkpoint_interval_after
+    bigint checkpoint_interval_within
+    bigint initial_checkpoint_delay_after
+    bigint initial_checkpoint_delay_within
+}
 events {
     uuid id PK
     uuid created_by FK
@@ -241,6 +248,7 @@ event_invites }o--|| events: ""
 event_invites }o--|| users: ""
 event_invites }o--|| users: ""
 event_shared_folders |o--|| events: ""
+event_training_participation_report_parameter_sets |o--|| events: ""
 events }o--|| rooms: ""
 events }o--|| users: ""
 events }o--|| users: ""

@@ -1227,7 +1227,7 @@ dependencies = [
  "bitflags 2.9.0",
  "cexpr",
  "clang-sys",
- "itertools 0.12.1",
+ "itertools 0.11.0",
  "lazy_static",
  "lazycell",
  "log",
@@ -4370,15 +4370,6 @@ dependencies = [
 
 [[package]]
 name = "itertools"
-version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
-dependencies = [
- "either",
-]
-
-[[package]]
-name = "itertools"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
@@ -6071,9 +6062,9 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-api-v1"
-version = "0.33.0"
+version = "0.34.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8565d68e6994ab6d0d6b5bdbc37d94c4edff34900215309c88d0fe3e248a5924"
+checksum = "a7ffb9ca739d7b748de0e188c7a44f5fed08ecdd2d7063ac383e2c92eb2ba527"
 dependencies = [
  "actix-web",
  "base64 0.22.1",
@@ -6094,9 +6085,9 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-common"
-version = "0.32.0"
+version = "0.32.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ebc7b6f5082ce4410a8a4b483a33ac523863a974344be8ffeeb339e37624a9fd"
+checksum = "13523221c1cf75be9cf89b5149542013472d58eafdadb085f6bdd93def143921"
 dependencies = [
  "actix-http",
  "actix-web-httpauth",
@@ -6336,9 +6327,9 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-signaling-training-participation-report"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c8658e3a6b4303b0d3f637d152029f3ee206ff1bdfdd411bd680094c15f9b004"
+checksum = "94dc459b07a8f2f60c2bd7c8c5713b38b053a9527e3995dee7c7ccd904040c4e"
 dependencies = [
  "opentalk-types-common",
  "opentalk-types-signaling",
@@ -7147,7 +7138,7 @@ checksum = "22505a5c94da8e3b7c2996394d1c933236c4d743e81a410bcca4e6989fc066a4"
 dependencies = [
  "bytes",
  "heck 0.5.0",
- "itertools 0.12.1",
+ "itertools 0.11.0",
  "log",
  "multimap",
  "once_cell",
@@ -7187,7 +7178,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "81bddcdb20abf9501610992b6759a4c888aef7d1a7247ef75e2404275ac24af1"
 dependencies = [
  "anyhow",
- "itertools 0.12.1",
+ "itertools 0.11.0",
  "proc-macro2",
  "quote",
  "syn",
