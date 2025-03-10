@@ -12,7 +12,10 @@ use actix_web::{
 };
 use chrono::{Days, NaiveDate, Utc};
 use log::warn;
-use opentalk_controller_service::services::MailService;
+use opentalk_controller_service::{
+    events::{notifications::notify_event_invitees_about_update, shared_folder_for_user},
+    services::MailService,
+};
 use opentalk_controller_settings::Settings;
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::{Db, DbConnection};
@@ -40,10 +43,7 @@ use snafu::Report;
 use crate::{
     api::{
         responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
-        v1::{
-            events::{notify_event_invitees_about_update, shared_folder_for_user},
-            response::NoContent,
-        },
+        v1::response::NoContent,
     },
     settings::SharedSettingsActix,
 };

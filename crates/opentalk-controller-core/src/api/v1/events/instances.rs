@@ -10,7 +10,13 @@ use actix_web::{
 use chrono::{DateTime, Utc};
 use kustos::{prelude::PoliciesBuilder, Authz};
 use opentalk_controller_service::{
-    controller_backend::RoomsPoliciesBuilderExt, services::MailService,
+    controller_backend::RoomsPoliciesBuilderExt,
+    events::{
+        enrich_invitees_from_keycloak, get_invited_mail_recipients_for_event,
+        notifications::{notify_invitees_about_update, UpdateNotificationValues},
+        shared_folder_for_user,
+    },
+    services::MailService,
 };
 use opentalk_controller_settings::Settings;
 use opentalk_controller_utils::{event::EventExt as _, CaptureApiError};
@@ -39,19 +45,13 @@ use opentalk_types_common::{
 };
 use rrule::RRuleSet;
 
-use super::{
-    can_edit, get_invited_mail_recipients_for_event, notify_invitees_about_update, ApiResponse,
-    DateTimeTz, DefaultApiResult, UpdateNotificationValues, ONE_HUNDRED_YEARS_IN_DAYS,
-};
+use super::{can_edit, ApiResponse, DateTimeTz, DefaultApiResult, ONE_HUNDRED_YEARS_IN_DAYS};
 use crate::{
     api::{
         headers::PageLink,
         responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
         v1::{
-            events::{
-                enrich_invitees_from_keycloak, shared_folder_for_user, DateTimeTzFromDb,
-                EventRoomInfoExt,
-            },
+            events::{DateTimeTzFromDb, EventRoomInfoExt},
             response::NoContent,
             util::{GetUserProfilesBatched, UserProfilesBatch},
         },

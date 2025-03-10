@@ -9,6 +9,7 @@ mod events;
 mod invites;
 mod rooms;
 mod sip_configs;
+mod streaming_targets;
 mod users;
 
 use std::{
@@ -32,6 +33,7 @@ use opentalk_types_api_v1::{
     assets::{AssetResource, AssetSortingQuery},
     auth::{GetLoginResponseBody, OidcProvider},
     error::ApiError,
+    events::StreamingTargetOptionsQuery,
     pagination::PagePaginationQuery,
     rooms::{
         by_room_id::{
@@ -41,6 +43,11 @@ use opentalk_types_api_v1::{
                 PostInviteVerifyRequestBody, PostInviteVerifyResponseBody, PutInviteRequestBody,
             },
             sip::{PutSipConfigRequestBody, SipConfigResource},
+            streaming_targets::{
+                GetRoomStreamingTargetResponseBody, GetRoomStreamingTargetsResponseBody,
+                PatchRoomStreamingTargetRequestBody, PatchRoomStreamingTargetResponseBody,
+                PostRoomStreamingTargetResponseBody, RoomAndStreamingTargetId,
+            },
             GetRoomEventResponseBody,
         },
         GetRoomsResponseBody, RoomResource,
@@ -56,6 +63,7 @@ use opentalk_types_common::{
     features::FeatureId,
     modules::ModuleId,
     rooms::{invite_codes::InviteCode, RoomId, RoomPassword},
+    streaming::StreamingTarget,
     tariffs::TariffResource,
     users::UserId,
 };
@@ -72,7 +80,7 @@ pub struct ControllerBackend {
     frontend_oidc_provider: OidcProvider,
     storage: Arc<ObjectStorage>,
     exchange_handle: ExchangeHandle,
-    _mail_service: MailService,
+    mail_service: MailService,
     kc_admin_client: Arc<KeycloakAdminClient>,
     module_features: BTreeMap<ModuleId, BTreeSet<FeatureId>>,
 }
@@ -98,7 +106,7 @@ impl ControllerBackend {
             frontend_oidc_provider,
             storage,
             exchange_handle,
-            _mail_service: mail_service,
+            mail_service,
             kc_admin_client,
             module_features,
         }
@@ -293,6 +301,60 @@ impl OpenTalkControllerServiceBackend for ControllerBackend {
 
     async fn delete_sip_config(&self, room_id: RoomId) -> Result<(), ApiError> {
         Ok(self.delete_sip_config(room_id).await?)
+    }
+
+    async fn get_streaming_targets(
+        &self,
+        user_id: UserId,
+        room_id: RoomId,
+        pagination: &PagePaginationQuery,
+    ) -> Result<GetRoomStreamingTargetsResponseBody, ApiError> {
+        Ok(self
+            .get_streaming_targets(user_id, room_id, pagination)
+            .await?)
+    }
+
+    async fn post_streaming_target(
+        &self,
+        current_user: RequestUser,
+        room_id: RoomId,
+        query: StreamingTargetOptionsQuery,
+        streaming_target: StreamingTarget,
+    ) -> Result<PostRoomStreamingTargetResponseBody, ApiError> {
+        Ok(self
+            .post_streaming_target(current_user, room_id, query, streaming_target)
+            .await?)
+    }
+
+    async fn get_streaming_target(
+        &self,
+        user_id: UserId,
+        path_params: RoomAndStreamingTargetId,
+    ) -> Result<GetRoomStreamingTargetResponseBody, ApiError> {
+        Ok(self.get_streaming_target(user_id, path_params).await?)
+    }
+
+    async fn patch_streaming_target(
+        &self,
+        current_user: RequestUser,
+        path_params: RoomAndStreamingTargetId,
+        query: StreamingTargetOptionsQuery,
+        streaming_target: PatchRoomStreamingTargetRequestBody,
+    ) -> Result<PatchRoomStreamingTargetResponseBody, ApiError> {
+        Ok(self
+            .patch_streaming_target(current_user, path_params, query, streaming_target)
+            .await?)
+    }
+
+    async fn delete_streaming_target(
+        &self,
+        current_user: RequestUser,
+        path_params: RoomAndStreamingTargetId,
+        query: StreamingTargetOptionsQuery,
+    ) -> Result<(), ApiError> {
+        Ok(self
+            .delete_streaming_target(current_user, path_params, query)
+            .await?)
     }
 
     async fn add_event_to_favorites(

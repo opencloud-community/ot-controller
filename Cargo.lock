@@ -5314,6 +5314,7 @@ dependencies = [
  "base64 0.22.1",
  "bytes",
  "chrono",
+ "futures",
  "futures-core",
  "jsonwebtoken",
  "kustos",
