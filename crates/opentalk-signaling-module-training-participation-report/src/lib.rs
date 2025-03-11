@@ -430,7 +430,7 @@ impl TrainingParticipationReport {
         ctx: &mut ModuleContext<'_, Self>,
         checkpoint: Timestamp,
     ) {
-        let timeout_id = rand::thread_rng().gen();
+        let timeout_id = rand::rng().random();
         room_owner_data.timeout_id = Some(timeout_id);
 
         let duration = checkpoint
@@ -634,8 +634,8 @@ impl TrainingParticipationReport {
     }
 
     fn random_waiting_duration_seconds(range: &TimeRange) -> u64 {
-        let mut rng = rand::thread_rng();
-        let offset = rng.gen_range(0..range.within);
+        let mut rng = rand::rng();
+        let offset = rng.random_range(0..range.within);
         const MAXIMUM_ALLOWED: u64 = i64::MAX as u64;
         range.after.saturating_add(offset).min(MAXIMUM_ALLOWED)
     }
