@@ -28,9 +28,9 @@ yanked = "deny"
 # A list of advisory IDs to ignore. Note that ignored advisories will still
 # output a note when they are encountered.
 ignore = [
-  # Marvin Attack: potential key recovery through timing sidechannels
-  # in `rsa 0.9.3`.
-  # Solution: No safe upgrade is available!
+  # | Marvin Attack: potential key recovery through timing sidechannels
+  # | in `rsa 0.9.3`.
+  # | Solution: No safe upgrade is available!
   #
   # This library is used as a dependency of `openidconnect 3.4.0`, so unless we
   # want to replace that no further action is available until either:
@@ -38,13 +38,41 @@ ignore = [
   # - rsa releases a fixed version
   "RUSTSEC-2023-0071",
 
-  # yaml-rust unmaintained
-  # Solution: No safe upgrade is available!
-  # 
+  # | yaml-rust unmaintained
+  # | Solution: No safe upgrade is available!
+  #
   # We need to wait until the dependency updates to an alternative crate.
-  # 
+  #
   # Dependency chain: typst 0.12.0 -> syntect 5.2.0 -> yaml-rust 0.4.5
   "RUSTSEC-2024-0320",
+
+  # | paste unmaintained
+  # |
+  # | The creator of the crate `paste` has stated in the [`README.md`](https://github.com/dtolnay/paste/blob/master/README.md)
+  # | that this project is not longer maintained as well as archived the repository
+  # | Announcement: https://github.com/dtolnay/paste
+  # | Solution: No safe upgrade is available!
+  #
+  # We need to wait until dependencies update to an alternative crate.
+  #
+  # Dependency chains:
+  # reqwest v0.12.12 -> hyper-rustls v0.27.5 -> rustls v0.23.23 -> aws-lc-rs v1.12.5 -> paste v1.0.15
+  # actix-web v4.10.2 -> actix-http v3.10.0 -> actix-tls v3.4.0 -> tokio-rustls v0.26.2 -> rustls v0.23.23 -> aws-lc-rs v1.12.5 -> paste v1.0.15
+  "RUSTSEC-2024-0436",
+
+  # | Crash due to uncontrolled recursion in protobuf crate
+  # |
+  # | Affected version of this crate did not properly parse unknown fields when parsing a user-supplied input.
+  # |
+  # | This allows an attacker to cause a stack overflow when parsing the mssage on untrusted data.
+  # | Announcement: https://github.com/stepancheg/rust-protobuf/issues/749
+  # | Solution: Upgrade to >=3.7.2
+  #
+  # We need to wait until opentelemetry-prometheus updates the dependency in order to get this fixed.
+  #
+  # Dependency chain:
+  # opentelemetry-prometheus v0.27.0 -> protobuf v2.28.0
+  "RUSTSEC-2024-0437",
 ]
 # Threshold for security vulnerabilities, any vulnerability with a CVSS score
 # lower than the range specified will be ignored. Note that ignored advisories
@@ -257,6 +285,8 @@ skip = [
   { name = "ahash", version = "0.7" },
   { name = "async-io", version = "1" },
   { name = "async-lock", version = "2" },
+  { name = "aws-smithy-http", version = "0.60" },
+  { name = "aws-smithy-http", version = "0.61" },
   { name = "base16ct", version = "0.1" },
   { name = "base64", version = "0.13" },
   { name = "base64", version = "0.21" },
@@ -273,6 +303,7 @@ skip = [
   { name = "event-listener", version = "2" },
   { name = "fastrand", version = "1" },
   { name = "ff", version = "0.12" },
+  { name = "fixedbitset", version = "0.4" },
   { name = "futures-lite", version = "1" },
   { name = "getrandom", version = "0.2" },
   { name = "group", version = "0.12" },
@@ -288,8 +319,11 @@ skip = [
   { name = "indexmap", version = "1" },
   { name = "itertools", version = "0.10" },
   { name = "itertools", version = "0.11" },
-  { name = "itertools", version = "0.13" },
+  { name = "itertools", version = "0.12" },
+  { name = "jiff", version = "0.1" },
+  { name = "linux-raw-sys", version = "0.4" },
   { name = "p256", version = "0.11" },
+  { name = "petgraph", version = "0.6" },
   { name = "pkcs8", version = "0.9" },
   { name = "polling", version = "2" },
   { name = "prost", version = "0.12" },
@@ -305,6 +339,7 @@ skip = [
   { name = "regex-syntax", version = "0.6" },
   { name = "reqwest", version = "0.11" },
   { name = "rfc6979", version = "0.3" },
+  { name = "rustix", version = "0.38" },
   { name = "rustls", version = "0.21" },
   { name = "rustls-native-certs", version = "0.6" },
   { name = "rustls-pemfile", version = "1.0" },
