@@ -3,3 +3,4 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 mod favorites;
+pub mod shared_folder;

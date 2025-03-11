@@ -14,7 +14,7 @@ use opentalk_types_api_v1::{
     assets::{AssetResource, AssetSortingQuery},
     auth::GetLoginResponseBody,
     error::ApiError,
-    events::StreamingTargetOptionsQuery,
+    events::{DeleteSharedFolderQuery, PutSharedFolderQuery, StreamingTargetOptionsQuery},
     pagination::PagePaginationQuery,
     rooms::{
         by_room_id::{
@@ -43,6 +43,7 @@ use opentalk_types_common::{
     events::EventId,
     modules::ModuleId,
     rooms::{invite_codes::InviteCode, RoomId, RoomPassword},
+    shared_folders::SharedFolder,
     streaming::StreamingTarget,
     tariffs::TariffResource,
     users::UserId,
@@ -417,6 +418,47 @@ impl OpenTalkControllerService {
             .read()
             .await
             .remove_event_from_favorites(current_user, event_id)
+            .await
+    }
+
+    /// Get the shared folder for an event
+    pub async fn get_shared_folder_for_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+    ) -> Result<SharedFolder, ApiError> {
+        self.backend
+            .read()
+            .await
+            .get_shared_folder_for_event(current_user, event_id)
+            .await
+    }
+
+    /// Create a shared folder for an event
+    pub async fn put_shared_folder_for_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+        query: PutSharedFolderQuery,
+    ) -> Result<(SharedFolder, bool), ApiError> {
+        self.backend
+            .read()
+            .await
+            .put_shared_folder_for_event(current_user, event_id, query)
+            .await
+    }
+
+    /// Delete the shared folder of an event
+    pub async fn delete_shared_folder_for_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+        query: DeleteSharedFolderQuery,
+    ) -> Result<(), ApiError> {
+        self.backend
+            .read()
+            .await
+            .delete_shared_folder_for_event(current_user, event_id, query)
             .await
     }
 

@@ -13,7 +13,7 @@ use opentalk_types_api_v1::{
     assets::{AssetResource, AssetSortingQuery},
     auth::GetLoginResponseBody,
     error::ApiError,
-    events::StreamingTargetOptionsQuery,
+    events::{DeleteSharedFolderQuery, PutSharedFolderQuery, StreamingTargetOptionsQuery},
     pagination::PagePaginationQuery,
     rooms::{
         by_room_id::{
@@ -42,6 +42,7 @@ use opentalk_types_common::{
     events::EventId,
     modules::ModuleId,
     rooms::{invite_codes::InviteCode, RoomId, RoomPassword},
+    shared_folders::SharedFolder,
     streaming::StreamingTarget,
     tariffs::TariffResource,
     users::UserId,
@@ -237,6 +238,29 @@ pub trait OpenTalkControllerServiceBackend: Send + Sync {
         &self,
         current_user: RequestUser,
         event_id: EventId,
+    ) -> Result<(), ApiError>;
+
+    /// Get the shared folder for an event
+    async fn get_shared_folder_for_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+    ) -> Result<SharedFolder, ApiError>;
+
+    /// Create a shared folder for an event
+    async fn put_shared_folder_for_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+        query: PutSharedFolderQuery,
+    ) -> Result<(SharedFolder, bool), ApiError>;
+
+    /// Delete the shared folder of an event
+    async fn delete_shared_folder_for_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+        query: DeleteSharedFolderQuery,
     ) -> Result<(), ApiError>;
 
     /// Patch the current user's profile.

@@ -34,6 +34,7 @@ opentalk-database.workspace = true
 opentalk-db-storage.workspace = true
 opentalk-keycloak-admin.workspace = true
 opentalk-mail-worker-protocol.workspace = true
+opentalk-nextcloud-client.workspace = true
 opentalk-signaling-core.workspace = true
 opentalk-types-api-v1 = { workspace = true, features = ["diesel"] }
 opentalk-types-common = { workspace = true, features = ["kustos"] }

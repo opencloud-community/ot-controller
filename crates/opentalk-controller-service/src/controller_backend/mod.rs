@@ -33,7 +33,7 @@ use opentalk_types_api_v1::{
     assets::{AssetResource, AssetSortingQuery},
     auth::{GetLoginResponseBody, OidcProvider},
     error::ApiError,
-    events::StreamingTargetOptionsQuery,
+    events::{DeleteSharedFolderQuery, PutSharedFolderQuery, StreamingTargetOptionsQuery},
     pagination::PagePaginationQuery,
     rooms::{
         by_room_id::{
@@ -63,12 +63,16 @@ use opentalk_types_common::{
     features::FeatureId,
     modules::ModuleId,
     rooms::{invite_codes::InviteCode, RoomId, RoomPassword},
+    shared_folders::SharedFolder,
     streaming::StreamingTarget,
     tariffs::TariffResource,
     users::UserId,
 };
 
-pub use crate::controller_backend::rooms::RoomsPoliciesBuilderExt;
+pub use crate::controller_backend::{
+    events::shared_folder::{delete_shared_folders, put_shared_folder},
+    rooms::RoomsPoliciesBuilderExt,
+};
 use crate::services::MailService;
 
 /// The default [`OpenTalkControllerServiceBackend`] implementation.
@@ -372,6 +376,38 @@ impl OpenTalkControllerServiceBackend for ControllerBackend {
     ) -> Result<(), ApiError> {
         Ok(self
             .remove_event_from_favorites(current_user, event_id)
+            .await?)
+    }
+
+    async fn get_shared_folder_for_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+    ) -> Result<SharedFolder, ApiError> {
+        Ok(self
+            .get_shared_folder_for_event(current_user, event_id)
+            .await?)
+    }
+
+    async fn put_shared_folder_for_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+        query: PutSharedFolderQuery,
+    ) -> Result<(SharedFolder, bool), ApiError> {
+        Ok(self
+            .put_shared_folder_for_event(current_user, event_id, query)
+            .await?)
+    }
+
+    async fn delete_shared_folder_for_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+        query: DeleteSharedFolderQuery,
+    ) -> Result<(), ApiError> {
+        Ok(self
+            .delete_shared_folder_for_event(current_user, event_id, query)
             .await?)
     }
 
