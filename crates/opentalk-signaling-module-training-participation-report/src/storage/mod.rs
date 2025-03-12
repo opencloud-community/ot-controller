@@ -19,7 +19,10 @@ mod test_common {
     use std::collections::{BTreeMap, BTreeSet};
 
     use opentalk_signaling_core::SignalingModuleError;
-    use opentalk_types_common::{rooms::RoomId, training_participation_report::TimeRange};
+    use opentalk_types_common::{
+        rooms::RoomId,
+        training_participation_report::{TimeRange, TrainingParticipationReportParameterSet},
+    };
     use opentalk_types_signaling::ParticipantId;
     use opentalk_types_signaling_training_participation_report::state::ParticipationLoggingState;
     use pretty_assertions::assert_eq;
@@ -30,6 +33,56 @@ mod test_common {
     const ALICE: ParticipantId = ParticipantId::from_u128(0xd3cfaa81_23b5_4617_ba72_07db063cc72e);
     const BOB: ParticipantId = ParticipantId::from_u128(0x02ce458e_4fae_459d_87d6_045d62eb4f40);
     const CHARLIE: ParticipantId = ParticipantId::from_u128(0x26d15b4c_cb55_4ccf_b8df_7c821e98517b);
+
+    pub(super) async fn parameter_set_initialized(
+        storage: &mut dyn TrainingParticipationReportStorage,
+    ) {
+        let room = RoomId::generate();
+
+        assert!(!storage.is_parameter_set_initialized(room).await.unwrap());
+
+        storage.set_parameter_set_initialized(room).await.unwrap();
+
+        assert!(storage.is_parameter_set_initialized(room).await.unwrap());
+
+        storage
+            .delete_parameter_set_initialized(room)
+            .await
+            .unwrap();
+
+        assert!(!storage.is_parameter_set_initialized(room).await.unwrap());
+    }
+
+    pub(super) async fn parameter_set(storage: &mut dyn TrainingParticipationReportStorage) {
+        let room = RoomId::generate();
+
+        let parameter_set = TrainingParticipationReportParameterSet {
+            initial_checkpoint_delay: TimeRange {
+                after: 100,
+                within: 200,
+            },
+            checkpoint_interval: TimeRange {
+                after: 300,
+                within: 400,
+            },
+        };
+
+        assert!(storage.get_parameter_set(room).await.unwrap().is_none());
+
+        storage
+            .set_parameter_set(room, parameter_set.clone())
+            .await
+            .unwrap();
+
+        assert_eq!(
+            Some(parameter_set),
+            storage.get_parameter_set(room).await.unwrap()
+        );
+
+        storage.delete_parameter_set(room).await.unwrap();
+
+        assert!(storage.get_parameter_set(room).await.unwrap().is_none());
+    }
 
     pub(super) async fn initialize_room_and_cleanup(
         storage: &mut dyn TrainingParticipationReportStorage,
