@@ -32,6 +32,7 @@ use chrono_tz::Tz;
 use either::Either;
 use futures::{stream::once, FutureExt as _};
 use opentalk_database::Db;
+use opentalk_db_storage::events::EventTrainingParticipationReportParameterSet;
 use opentalk_signaling_core::{
     assets::{save_asset, AssetError, NewAssetFileName},
     control::{
@@ -42,7 +43,7 @@ use opentalk_signaling_core::{
         },
         ControlStorageProvider,
     },
-    ChunkFormat, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage,
+    ChunkFormat, CleanupScope, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage,
     ObjectStorageError, SignalingModule, SignalingModuleError, SignalingModuleInitData,
     VolatileStorage,
 };
@@ -52,7 +53,7 @@ use opentalk_types_common::{
     modules::ModuleId,
     rooms::RoomId,
     time::{TimeZone, Timestamp},
-    training_participation_report::TimeRange,
+    training_participation_report::{TimeRange, TrainingParticipationReportParameterSet},
     users::{DisplayName, UserId},
 };
 use opentalk_types_signaling::ParticipantId;
@@ -187,7 +188,12 @@ impl SignalingModule for TrainingParticipationReport {
         Ok(())
     }
 
-    async fn on_destroy(self, _ctx: DestroyContext<'_>) {}
+    async fn on_destroy(self, ctx: DestroyContext<'_>) {
+        if matches!(ctx.cleanup_scope, CleanupScope::Global) {
+            self.clean_up_parameter_set_storage(ctx.volatile.storage())
+                .await;
+        }
+    }
 
     async fn build_params(
         _init: SignalingModuleInitData,
@@ -204,13 +210,23 @@ impl TrainingParticipationReport {
         participants: &HashMap<ParticipantId, Option<()>>,
         frontend_data: &mut Option<TrainingParticipationReportState>,
     ) -> Result<(), SignalingModuleError> {
+        let parameter_set = if ctx
+            .volatile
+            .storage()
+            .is_parameter_set_initialized(self.room)
+            .await?
+        {
+            ctx.volatile.storage().get_parameter_set(self.room).await?
+        } else {
+            self.initialize_parameter_set(ctx.volatile.storage())
+                .await?
+        };
+
         let mut state = ctx
             .volatile
             .storage()
             .get_recorded_presence_state(self.room, self.participant)
             .await?;
-
-        let parameter_set = None;
 
         if control_data.is_room_owner {
             let (other_room_owners, trainees) = self
@@ -240,6 +256,31 @@ impl TrainingParticipationReport {
             });
         }
         Ok(())
+    }
+
+    async fn initialize_parameter_set(
+        &mut self,
+        storage: &mut dyn TrainingParticipationReportStorage,
+    ) -> Result<Option<TrainingParticipationReportParameterSet>, SignalingModuleError> {
+        let mut conn = self.db.get_conn().await?;
+
+        let Some(event) = storage.get_event(self.room).await? else {
+            return Ok(None);
+        };
+        let parameter_set =
+            EventTrainingParticipationReportParameterSet::get_for_event(&mut conn, event.id)
+                .await?
+                .map(TrainingParticipationReportParameterSet::from);
+
+        if let Some(parameter_set) = &parameter_set {
+            storage
+                .set_parameter_set(self.room, parameter_set.clone())
+                .await?;
+        }
+
+        storage.set_parameter_set_initialized(self.room).await?;
+
+        Ok(parameter_set)
     }
 
     async fn load_already_present_room_owners_and_trainees(
@@ -977,6 +1018,53 @@ impl TrainingParticipationReport {
             control::exchange::global_room_by_user_id(self.room, self.owner),
             exchange::Event::PdfAsset(pdf_asset.clone()),
         );
+    }
+
+    async fn clean_up_parameter_set_storage(
+        self,
+        storage: &mut dyn TrainingParticipationReportStorage,
+    ) {
+        match storage.is_parameter_set_initialized(self.room).await {
+            Ok(is_initialized) => {
+                if is_initialized {
+                    Self::clean_up_parameter_set(self.room, storage).await;
+                }
+                Self::clean_up_parameter_set_initialized(self.room, storage).await;
+            }
+            Err(e) => {
+                log::error!(
+                        "Failed to read training participation report parameter set initialized flag for room {} cleanup: {}",
+                        self.room,
+                        e
+                    );
+            }
+        }
+    }
+
+    async fn clean_up_parameter_set_initialized(
+        room: RoomId,
+        storage: &mut dyn TrainingParticipationReportStorage,
+    ) {
+        if let Err(e) = storage.delete_parameter_set_initialized(room).await {
+            log::error!(
+                "Failed to clean up training participation report parameter set initialized flag for room {}: {}",
+                room,
+                e
+            );
+        }
+    }
+
+    async fn clean_up_parameter_set(
+        room: RoomId,
+        storage: &mut dyn TrainingParticipationReportStorage,
+    ) {
+        if let Err(e) = storage.delete_parameter_set(room).await {
+            log::error!(
+                "Failed to clean up training participation report parameter set {}: {}",
+                room,
+                e
+            );
+        }
     }
 }
 

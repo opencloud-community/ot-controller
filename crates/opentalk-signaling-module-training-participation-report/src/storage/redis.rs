@@ -7,7 +7,9 @@ use std::collections::{BTreeMap, BTreeSet};
 use async_trait::async_trait;
 use opentalk_signaling_core::{NotFoundSnafu, RedisConnection, RedisSnafu, SignalingModuleError};
 use opentalk_types_common::{
-    rooms::RoomId, time::Timestamp, training_participation_report::TimeRange,
+    rooms::RoomId,
+    time::Timestamp,
+    training_participation_report::{TimeRange, TrainingParticipationReportParameterSet},
 };
 use opentalk_types_signaling::ParticipantId;
 use opentalk_types_signaling_training_participation_report::state::ParticipationLoggingState;
@@ -20,6 +22,70 @@ use super::{Checkpoint, RoomState, TrainingParticipationReportStorage, TrainingR
 
 #[async_trait(?Send)]
 impl TrainingParticipationReportStorage for RedisConnection {
+    async fn set_parameter_set_initialized(
+        &mut self,
+        room: RoomId,
+    ) -> Result<(), SignalingModuleError> {
+        self.set(RoomIsParameterSetInitializedKey { room }, true)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to SET parameter set initialized flag",
+            })
+    }
+
+    async fn is_parameter_set_initialized(
+        &mut self,
+        room: RoomId,
+    ) -> Result<bool, SignalingModuleError> {
+        self.get(RoomIsParameterSetInitializedKey { room })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to GET parameter set initialized flag",
+            })
+    }
+
+    async fn delete_parameter_set_initialized(
+        &mut self,
+        room: RoomId,
+    ) -> Result<(), SignalingModuleError> {
+        self.del(RoomIsParameterSetInitializedKey { room })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to DEL parameter set initialized flag",
+            })
+    }
+
+    async fn get_parameter_set(
+        &mut self,
+        room: RoomId,
+    ) -> Result<Option<TrainingParticipationReportParameterSet>, SignalingModuleError> {
+        self.get(RoomParameterSetKey { room })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to GET parameter set",
+            })
+    }
+
+    async fn set_parameter_set(
+        &mut self,
+        room: RoomId,
+        value: TrainingParticipationReportParameterSet,
+    ) -> Result<(), SignalingModuleError> {
+        self.set(RoomParameterSetKey { room }, value)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to SET parameter set",
+            })
+    }
+
+    async fn delete_parameter_set(&mut self, room: RoomId) -> Result<(), SignalingModuleError> {
+        self.del(RoomParameterSetKey { room })
+            .await
+            .context(RedisSnafu {
+                message: "Failed to DEL parameter set",
+            })
+    }
+
     async fn initialize_room(
         &mut self,
         room: RoomId,
@@ -297,6 +363,20 @@ impl TrainingParticipationReportStorage for RedisConnection {
     }
 }
 
+#[derive(ToRedisArgs)]
+#[to_redis_args(
+    fmt = "opentalk-signaling:room={room}:training_report:is_parameter_set_initialized"
+)]
+struct RoomIsParameterSetInitializedKey {
+    room: RoomId,
+}
+
+#[derive(ToRedisArgs)]
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:training_report:parameter_set")]
+struct RoomParameterSetKey {
+    room: RoomId,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ToRedisArgs, FromRedisValue)]
 #[to_redis_args(serde)]
 #[from_redis_value(serde)]
@@ -402,6 +482,18 @@ mod tests {
         redis::cmd("FLUSHALL").exec_async(&mut mgr).await.unwrap();
 
         RedisConnection::new(mgr)
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn parameter_set_initialized() {
+        test_common::parameter_set_initialized(&mut storage().await).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn parameter_set() {
+        test_common::parameter_set(&mut storage().await).await;
     }
 
     #[tokio::test]
