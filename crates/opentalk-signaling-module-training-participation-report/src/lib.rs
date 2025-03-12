@@ -79,6 +79,16 @@ mod template;
 
 const DEFAULT_TEMPLATE: &str = include_str!("training_participation_report.typ");
 
+const SECONDS_PER_MINUTE: u64 = 60;
+const DEFAULT_INITIAL_CHECKPOINT_DELAY: TimeRange = TimeRange {
+    after: 10 * SECONDS_PER_MINUTE,
+    within: 20 * SECONDS_PER_MINUTE,
+};
+const DEFAULT_CHECKPOINT_INTERVAL: TimeRange = TimeRange {
+    after: (60 + 45) * SECONDS_PER_MINUTE,
+    within: 30 * SECONDS_PER_MINUTE,
+};
+
 /// An event queued by the runner for itself to handle a timeout
 #[derive(Debug, PartialEq, Eq)]
 pub struct TimeoutEvent(u32);
@@ -235,16 +245,62 @@ impl TrainingParticipationReport {
                     ctx.volatile.control_storage(),
                 )
                 .await?;
-            self.room_owner_data = Some(RoomOwnerData {
-                other_room_owners,
-                trainees,
-                timeout_id: None,
-            });
             if state == ParticipationLoggingState::WaitingForConfirmation {
                 // Don't ask the room owner for confirmation
                 state = ParticipationLoggingState::Enabled;
             }
 
+            let mut room_owner_data = RoomOwnerData {
+                other_room_owners,
+                trainees,
+                timeout_id: None,
+            };
+
+            if let Some(TrainingParticipationReportParameterSet {
+                initial_checkpoint_delay,
+                checkpoint_interval,
+            }) = parameter_set.clone()
+            {
+                if room_owner_data.other_room_owners.is_empty() {
+                    // this is the first trainer in the room
+
+                    let report_state = if room_owner_data.trainees.is_empty() {
+                        TrainingReportState::WaitingForParticipant
+                    } else {
+                        let first_checkpoint = Self::switch_to_next_checkpoint(
+                            &mut room_owner_data,
+                            self.room,
+                            ctx,
+                            &initial_checkpoint_delay,
+                        )
+                        .await?;
+
+                        ctx.exchange_publish(
+                            control::exchange::global_room_all_participants(self.room),
+                            exchange::Event::PresenceLoggingStarted {
+                                first_checkpoint,
+                                reason: PresenceLoggingStartedReason::Autostart,
+                            },
+                        );
+                        TrainingReportState::WaitingForInitialTimeout
+                    };
+
+                    ctx.volatile
+                        .storage()
+                        .initialize_room(
+                            self.room,
+                            ctx.timestamp,
+                            report_state,
+                            initial_checkpoint_delay,
+                            checkpoint_interval,
+                            room_owner_data.trainees.clone(),
+                        )
+                        .await?;
+                    state = ParticipationLoggingState::Enabled;
+                }
+            }
+
+            self.room_owner_data = Some(room_owner_data);
             *frontend_data = Some(TrainingParticipationReportState {
                 state,
                 parameter_set,
@@ -371,15 +427,22 @@ impl TrainingParticipationReport {
             ));
             return Ok(());
         }
-        const SECONDS_PER_MINUTE: u64 = 60;
-        let initial_checkpoint_delay = initial_checkpoint_delay.unwrap_or(TimeRange {
-            after: 10 * SECONDS_PER_MINUTE,
-            within: 20 * SECONDS_PER_MINUTE,
-        });
-        let checkpoint_interval = checkpoint_interval.unwrap_or(TimeRange {
-            after: (60 + 45) * SECONDS_PER_MINUTE,
-            within: 30 * SECONDS_PER_MINUTE,
-        });
+        let (parameter_set_initial_checkpoint_delay, parameter_set_checkpoint_interval) = storage
+            .get_parameter_set(self.room)
+            .await?
+            .map(
+                |TrainingParticipationReportParameterSet {
+                     initial_checkpoint_delay,
+                     checkpoint_interval,
+                 }| { (Some(initial_checkpoint_delay), Some(checkpoint_interval)) },
+            )
+            .unwrap_or_default();
+        let initial_checkpoint_delay = initial_checkpoint_delay
+            .or(parameter_set_initial_checkpoint_delay)
+            .unwrap_or(DEFAULT_INITIAL_CHECKPOINT_DELAY);
+        let checkpoint_interval = checkpoint_interval
+            .or(parameter_set_checkpoint_interval)
+            .unwrap_or(DEFAULT_CHECKPOINT_INTERVAL);
         if room_owner_data.trainees.is_empty() {
             storage
                 .initialize_room(
@@ -687,8 +750,12 @@ impl TrainingParticipationReport {
     }
 
     fn random_waiting_duration_seconds(range: &TimeRange) -> u64 {
-        let mut rng = rand::rng();
-        let offset = rng.random_range(0..range.within);
+        let offset = if range.within == 0 {
+            0
+        } else {
+            let mut rng = rand::rng();
+            rng.random_range(0..range.within)
+        };
         const MAXIMUM_ALLOWED: u64 = i64::MAX as u64;
         range.after.saturating_add(offset).min(MAXIMUM_ALLOWED)
     }
