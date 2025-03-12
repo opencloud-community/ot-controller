@@ -52,7 +52,6 @@ opentalk-database.workspace = true
 opentalk-db-storage.workspace = true
 opentalk-jobs.workspace = true
 opentalk-keycloak-admin.workspace = true
-opentalk-nextcloud-client.workspace = true
 opentalk-r3dlock.workspace = true
 opentalk-signaling-core.workspace = true
 opentalk-types-api-v1 = { workspace = true, features = ["backend"] }

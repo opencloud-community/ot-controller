@@ -16,7 +16,7 @@ use kustos::{
     Authz, Resource,
 };
 use opentalk_controller_service::{
-    controller_backend::RoomsPoliciesBuilderExt,
+    controller_backend::{delete_shared_folders, put_shared_folder, RoomsPoliciesBuilderExt},
     email_to_libravatar_url,
     events::{
         enrich_from_keycloak, enrich_invitees_from_keycloak, get_invited_mail_recipients_for_event,
@@ -71,7 +71,6 @@ use opentalk_types_common::{
 };
 use rrule::{Frequency, RRuleSet};
 use serde::Deserialize;
-use shared_folder::delete_shared_folders;
 use snafu::Report;
 
 use super::{response::NoContent, ApiResponse, DefaultApiResult};
@@ -79,7 +78,7 @@ use crate::{
     api::{
         headers::CursorLink,
         responses::{BadRequest, Forbidden, InternalServerError, NotFound, Unauthorized},
-        v1::{events::shared_folder::put_shared_folder, util::GetUserProfilesBatched},
+        v1::util::GetUserProfilesBatched,
     },
     settings::SharedSettingsActix,
 };
