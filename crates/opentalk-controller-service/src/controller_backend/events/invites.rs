@@ -2,36 +2,14 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use actix_web::{
-    delete, get, patch, post,
-    web::{Data, Json, Path, Query, ReqData},
-    Either,
-};
+//! Handles event invites
+
 use chrono::Utc;
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
 use kustos::{policies_builder::PoliciesBuilder, Authz};
-use opentalk_controller_service::{
-    controller_backend::{
-        events::invites::{
-            accept_event_invite_inner, create_invite_to_event_inner, decline_event_invite_inner,
-            delete_email_invite_to_event_inner, delete_invite_to_event_inner,
-            get_event_invites_pending_inner, get_invites_for_event_inner,
-            update_email_invite_to_event_inner, update_invite_to_event_inner,
-        },
-        RoomsPoliciesBuilderExt,
-    },
-    events::{
-        enrich_from_keycloak, enrich_invitees_from_keycloak, get_invited_mail_recipients_for_event,
-        get_tenant_filter,
-    },
-    services::{
-        ExternalMailRecipient, MailRecipient, MailService, RegisteredMailRecipient,
-        UnregisteredMailRecipient,
-    },
-};
 use opentalk_controller_settings::Settings;
 use opentalk_controller_utils::CaptureApiError;
-use opentalk_database::Db;
+use opentalk_database::{DatabaseError, Db};
 use opentalk_db_storage::{
     events::{
         email_invites::{EventEmailInvite, NewEventEmailInvite, UpdateEventEmailInvite},
@@ -49,10 +27,9 @@ use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_types_api_v1::{
     error::ApiError,
     events::{
-        by_event_id::invites::GetEventsInvitesQuery, DeleteEmailInviteBody, DeleteEventInvitePath,
-        EmailInvite, EventInvitee, EventOptionsQuery, EventResource, GetEventInstanceResponseBody,
-        PatchEmailInviteBody, PatchInviteBody, PostEventInviteBody, PostEventInviteQuery,
-        UserInvite,
+        by_event_id::invites::GetEventsInvitesQuery, DeleteEventInvitePath, EmailInvite,
+        EventInvitee, EventOptionsQuery, PatchEmailInviteBody, PatchInviteBody,
+        PostEventInviteBody, PostEventInviteQuery, UserInvite,
     },
     pagination::PagePaginationQuery,
     users::GetEventInvitesPendingResponseBody,
@@ -68,88 +45,30 @@ use opentalk_types_common::{
     streaming::RoomStreamingTarget,
     users::UserId,
 };
-use serde::Deserialize;
 use snafu::Report;
 
-use super::{ApiResponse, DefaultApiResult};
 use crate::{
-    api::{
-        headers::CursorLink,
-        responses::{BadRequest, Forbidden, InternalServerError, NotFound, Unauthorized},
-        v1::{
-            events::{EventInviteeExt, EventPoliciesBuilderExt},
-            response::{Created, NoContent},
-        },
+    controller_backend::{
+        events::{EventInviteeExt, EventPoliciesBuilderExt},
+        RoomsPoliciesBuilderExt,
     },
-    settings::SharedSettingsActix,
+    events::{
+        enrich_from_keycloak, enrich_invitees_from_keycloak, get_invited_mail_recipients_for_event,
+        get_tenant_filter,
+    },
+    services::{
+        ExternalMailRecipient, MailRecipient, MailService, RegisteredMailRecipient,
+        UnregisteredMailRecipient,
+    },
+    ControllerBackend,
 };
 
-/// Get the invites for an event
-///
-/// Returns the list of event invites
-#[utoipa::path(
-    params(
-        GetEventsInvitesQuery,
-        ("event_id" = EventId, description = "The id of the event"),
-    ),
-    responses(
-        (
-            status = StatusCode::OK,
-            description = "Event instance successfully returned",
-            body = GetEventInstanceResponseBody,
-            headers(
-                (
-                    "link" = CursorLink,
-                    description = "Links for paging through the results"
-                ),
-            ),
-        ),
-        (
-            status = StatusCode::UNAUTHORIZED,
-            response = Unauthorized,
-        ),
-        (
-            status = StatusCode::FORBIDDEN,
-            response = Forbidden,
-        ),
-        (
-            status = StatusCode::NOT_FOUND,
-            response = NotFound,
-        ),
-        (
-            status = StatusCode::INTERNAL_SERVER_ERROR,
-            response = InternalServerError,
-        ),
-    ),
-    security(
-        ("BearerAuth" = []),
-    ),
-)]
-#[get("/events/{event_id}/invites")]
-pub async fn get_invites_for_event(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
-    kc_admin_client: Data<KeycloakAdminClient>,
-    current_tenant: ReqData<Tenant>,
-    event_id: Path<EventId>,
-    query: Query<GetEventsInvitesQuery>,
-) -> DefaultApiResult<Vec<EventInvitee>> {
-    let (invitees, per_page, page, total) = get_invites_for_event_inner(
-        &settings.load_full(),
-        &db,
-        &kc_admin_client,
-        &current_tenant,
-        event_id.into_inner(),
-        query.into_inner(),
-    )
-    .await?;
-
-    Ok(ApiResponse::new(invitees).with_page_pagination(per_page, page, total))
+impl ControllerBackend {
+    // TODO(WR) impls according to the *_inner fn's
 }
 
-/// TODO(WR) old
-#[allow(dead_code)]
-async fn old_get_invites_for_event_inner(
+/// TODO(WR) new
+pub async fn get_invites_for_event_inner(
     settings: &Settings,
     db: &Db,
     kc_admin_client: &KeycloakAdminClient,
@@ -159,7 +78,7 @@ async fn old_get_invites_for_event_inner(
         pagination: PagePaginationQuery { per_page, page },
         status: status_filter,
     }: GetEventsInvitesQuery,
-) -> DefaultApiResult<Vec<EventInvitee>, CaptureApiError> {
+) -> Result<(Vec<EventInvitee>, i64, i64, i64), CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     // FIXME: Preliminary solution, consider using UNION when Diesel supports it.
@@ -195,93 +114,18 @@ async fn old_get_invites_for_event_inner(
     let invitees =
         enrich_invitees_from_keycloak(settings, kc_admin_client, current_tenant, invitees).await;
 
-    Ok(ApiResponse::new(invitees).with_page_pagination(
+    Ok((
+        invitees,
         per_page,
         page,
         event_invites_total + event_email_invites_total,
     ))
 }
 
-/// Create a new invite to an event
-///
-/// Create a new invite to an event with the fields sent in the body.
-#[utoipa::path(
-    params(
-        PostEventInviteQuery,
-        ("event_id" = EventId, description = "The id of the event"),
-    ),
-    request_body = PostEventInviteBody,
-    responses(
-        (
-            status = StatusCode::CREATED,
-            description = "The user or email has been invited to the event",
-            body = Vec<EventResource>,
-        ),
-        (
-            status = StatusCode::NO_CONTENT,
-            description = "The user or email was already invited before, or the user is the creator of the event, in which case they have been invited implicitly",
-        ),
-        (
-            status = StatusCode::BAD_REQUEST,
-            response = BadRequest,
-        ),
-        (
-            status = StatusCode::UNAUTHORIZED,
-            response = Unauthorized,
-        ),
-        (
-            status = StatusCode::FORBIDDEN,
-            response = Forbidden,
-        ),
-        (
-            status = StatusCode::INTERNAL_SERVER_ERROR,
-            response = InternalServerError,
-        ),
-    ),
-    security(
-        ("BearerAuth" = []),
-    ),
-)]
-#[post("/events/{event_id}/invites")]
 #[allow(clippy::too_many_arguments)]
-pub async fn create_invite_to_event(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
-    authz: Data<Authz>,
-    kc_admin_client: Data<KeycloakAdminClient>,
-    current_tenant: ReqData<Tenant>,
-    current_user: ReqData<User>,
-    event_id: Path<EventId>,
-    query: Query<PostEventInviteQuery>,
-    create_invite: Json<PostEventInviteBody>,
-    mail_service: Data<MailService>,
-) -> Result<Either<Created, NoContent>, ApiError> {
-    let created = create_invite_to_event_inner(
-        &settings.load_full(),
-        &db,
-        &authz,
-        &kc_admin_client,
-        &current_tenant,
-        current_user.into_inner(),
-        event_id.into_inner(),
-        query.into_inner(),
-        create_invite.into_inner(),
-        &mail_service,
-    )
-    .await?;
-
-    Ok(if created {
-        Either::Left(Created)
-    } else {
-        Either::Right(NoContent)
-    })
-}
-
-#[allow(clippy::too_many_arguments)]
-/// TODO(WR) old
-#[allow(dead_code)]
-async fn old_create_invite_to_event_inner(
-    settings: SharedSettingsActix,
+/// TODO(WR) new
+pub async fn create_invite_to_event_inner(
+    settings: &Settings,
     db: &Db,
     authz: &Authz,
     kc_admin_client: &KeycloakAdminClient,
@@ -291,7 +135,7 @@ async fn old_create_invite_to_event_inner(
     query: PostEventInviteQuery,
     create_invite: PostEventInviteBody,
     mail_service: &MailService,
-) -> Result<Either<Created, NoContent>, CaptureApiError> {
+) -> Result<bool, CaptureApiError> {
     let send_email_notification = !query.suppress_email_notification;
     match create_invite {
         PostEventInviteBody::User(user_invite) => {
@@ -332,7 +176,7 @@ async fn create_user_event_invite(
     user_invite: UserInvite,
     mail_service: &MailService,
     send_email_notification: bool,
-) -> Result<Either<Created, NoContent>, CaptureApiError> {
+) -> Result<bool, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let (event, room, sip_config) = Event::get_with_room(&mut conn, event_id).await?;
@@ -344,7 +188,7 @@ async fn create_user_event_invite(
     let streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
 
     if event.created_by == user_invite.invitee {
-        return Ok(Either::Right(NoContent));
+        return Ok(false);
     }
 
     let res = NewEventInvite {
@@ -389,9 +233,9 @@ async fn create_user_event_invite(
                     })?;
             }
 
-            Ok(Either::Left(Created))
+            Ok(true)
         }
-        None => Ok(Either::Right(NoContent)),
+        None => Ok(false),
     }
 }
 
@@ -402,7 +246,7 @@ async fn create_user_event_invite(
 /// and then creates an email invite
 #[allow(clippy::too_many_arguments)]
 async fn create_email_event_invite(
-    settings: SharedSettingsActix,
+    settings: &Settings,
     db: &Db,
     authz: &Authz,
     kc_admin_client: &KeycloakAdminClient,
@@ -412,7 +256,7 @@ async fn create_email_event_invite(
     email_invite: EmailInvite,
     mail_service: &MailService,
     send_email_notification: bool,
-) -> Result<Either<Created, NoContent>, CaptureApiError> {
+) -> Result<bool, CaptureApiError> {
     let email = email_invite.email.to_lowercase();
 
     #[allow(clippy::large_enum_variant)]
@@ -487,7 +331,7 @@ async fn create_email_event_invite(
     };
 
     match state {
-        UserState::ExistsAndIsAlreadyInvited => Ok(Either::Right(NoContent)),
+        UserState::ExistsAndIsAlreadyInvited => Ok(false),
         UserState::ExistsAndWasInvited {
             event,
             room,
@@ -525,7 +369,7 @@ async fn create_email_event_invite(
                     })?;
             }
 
-            Ok(Either::Left(Created))
+            Ok(true)
         }
         UserState::DoesNotExist {
             event,
@@ -561,7 +405,7 @@ async fn create_email_event_invite(
 /// or (if configured) sends an "external" email invite to the given email address
 #[allow(clippy::too_many_arguments)]
 async fn create_invite_to_non_matching_email(
-    settings: SharedSettingsActix,
+    settings: &Settings,
     db: &Db,
     authz: &Authz,
     kc_admin_client: &KeycloakAdminClient,
@@ -576,9 +420,7 @@ async fn create_invite_to_non_matching_email(
     role: EmailInviteRole,
     shared_folder: Option<SharedFolder>,
     streaming_targets: Vec<RoomStreamingTarget>,
-) -> Result<Either<Created, NoContent>, CaptureApiError> {
-    let settings = settings.load();
-
+) -> Result<bool, CaptureApiError> {
     let tenant_filter = get_tenant_filter(current_tenant, &settings.tenants.assignment);
 
     let invitee_user = kc_admin_client
@@ -672,9 +514,9 @@ async fn create_invite_to_non_matching_email(
                     }
                 }
 
-                Ok(Either::Left(Created))
+                Ok(true)
             }
-            None => Ok(Either::Right(NoContent)),
+            None => Ok(false),
         }
     } else {
         Err(ApiError::conflict()
@@ -686,68 +528,13 @@ async fn create_invite_to_non_matching_email(
     }
 }
 
-/// Patch an event invite with the provided fields
-///
-/// Fields that are not provided in the request body will remain unchanged.
-#[utoipa::path(
-    request_body = PatchInviteBody,
-    params(
-        ("event_id" = EventId, description = "The id of the event to be modified"),
-        ("user_id" = UserId, description = "The id of the invited user to be modified"),
-    ),
-    responses(
-        (
-            status = StatusCode::NO_CONTENT,
-            description = "Invite was successfully updated",
-        ),
-        (
-            status = StatusCode::UNAUTHORIZED,
-            response = Unauthorized,
-        ),
-        (
-            status = StatusCode::FORBIDDEN,
-            description = r"The requesting user does not have the required permissions to update the invite.
-              Only the creator of an event can update the invites.",
-        ),
-        (
-            status = StatusCode::NOT_FOUND,
-            response = NotFound,
-        ),
-        (
-            status = StatusCode::INTERNAL_SERVER_ERROR,
-            response = InternalServerError,
-        ),
-    ),
-    security(
-        ("BearerAuth" = []),
-    ),
-)]
-#[patch("/events/{event_id}/invites/{user_id}")]
-pub async fn update_invite_to_event(
-    db: Data<Db>,
-    current_user: ReqData<User>,
-    path_parameters: Path<(EventId, UserId)>,
-    update_invite: Json<PatchInviteBody>,
-) -> Result<NoContent, ApiError> {
-    update_invite_to_event_inner(
-        &db,
-        &current_user,
-        path_parameters.into_inner(),
-        &update_invite,
-    )
-    .await?;
-
-    Ok(NoContent)
-}
-
-/// TODO(WR) old
-#[allow(dead_code)]
-async fn old_update_invite_to_event_inner(
+/// TODO(WR) new
+pub async fn update_invite_to_event_inner(
     db: &Db,
     current_user: &User,
     (event_id, user_id): (EventId, UserId),
     update_invite: &PatchInviteBody,
-) -> Result<NoContent, CaptureApiError> {
+) -> Result<(), CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let event = Event::get(&mut conn, event_id).await?;
@@ -761,72 +548,18 @@ async fn old_update_invite_to_event_inner(
         role: update_invite.role,
     };
 
-    changeset.apply(&mut conn, user_id, event_id).await?;
+    _ = changeset.apply(&mut conn, user_id, event_id).await?;
 
-    Ok(NoContent)
+    Ok(())
 }
 
-/// Patch an event email invite with the provided fields
-///
-/// Fields that are not provided in the request body will remain unchanged.
-#[utoipa::path(
-    request_body = PatchEmailInviteBody,
-    params(
-        ("event_id" = EventId, description = "The id of the event to be modified"),
-    ),
-    responses(
-        (
-            status = StatusCode::NO_CONTENT,
-            description = "Invite was successfully updated",
-        ),
-        (
-            status = StatusCode::UNAUTHORIZED,
-            response = Unauthorized,
-        ),
-        (
-            status = StatusCode::FORBIDDEN,
-            description = r"The requesting user does not have the required permissions to update the invite.
-              Only the creator of an event can update the invites.",
-        ),
-        (
-            status = StatusCode::NOT_FOUND,
-            response = NotFound,
-        ),
-        (
-            status = StatusCode::INTERNAL_SERVER_ERROR,
-            response = InternalServerError,
-        ),
-    ),
-    security(
-        ("BearerAuth" = []),
-    ),
-)]
-#[patch("/events/{event_id}/invites/email")]
-pub async fn update_email_invite_to_event(
-    db: Data<Db>,
-    current_user: ReqData<User>,
-    path_parameters: Path<EventId>,
-    update_invite: Json<PatchEmailInviteBody>,
-) -> Result<NoContent, ApiError> {
-    update_email_invite_to_event_inner(
-        &db,
-        &current_user,
-        path_parameters.into_inner(),
-        &update_invite,
-    )
-    .await?;
-
-    Ok(NoContent)
-}
-
-/// TODO(WR) old
-#[allow(dead_code)]
-async fn old_update_email_invite_to_event_inner(
+/// TODO(WR) new
+pub async fn update_email_invite_to_event_inner(
     db: &Db,
     current_user: &User,
     event_id: EventId,
     update_invite: &PatchEmailInviteBody,
-) -> Result<NoContent, CaptureApiError> {
+) -> Result<(), CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let event = Event::get(&mut conn, event_id).await?;
@@ -839,11 +572,11 @@ async fn old_update_email_invite_to_event_inner(
         role: update_invite.role,
     };
 
-    changeset
+    _ = changeset
         .apply(&mut conn, update_invite.email.to_string(), event_id)
         .await?;
 
-    Ok(NoContent)
+    Ok(())
 }
 
 struct UninviteNotificationValues {
@@ -855,81 +588,9 @@ struct UninviteNotificationValues {
     pub users_to_notify: Vec<MailRecipient>,
 }
 
-/// Query parameters for the `DELETE /events/{event_id}/invites/{user_id}` endpoint
-#[derive(Deserialize, Debug, PartialEq, Eq)]
-pub struct DeleteEventInviteQuery {
-    /// Flag to suppress email notification
-    #[serde(default)]
-    suppress_email_notification: bool,
-}
-
-/// Delete an invite from an event
-///
-/// This will uninvite the user from the event
-#[utoipa::path(
-    params(
-        DeleteEventInvitePath,
-        EventOptionsQuery,
-    ),
-    responses(
-        (
-            status = StatusCode::NO_CONTENT,
-            description = "The user event invitation has been deleted",
-        ),
-        (
-            status = StatusCode::UNAUTHORIZED,
-            response = Unauthorized,
-        ),
-        (
-            status = StatusCode::FORBIDDEN,
-            response = Forbidden,
-        ),
-        (
-            status = StatusCode::NOT_FOUND,
-            response = NotFound,
-        ),
-        (
-            status = StatusCode::INTERNAL_SERVER_ERROR,
-            response = InternalServerError,
-        ),
-    ),
-    security(
-        ("BearerAuth" = []),
-    ),
-)]
-#[delete("/events/{event_id}/invites/{user_id}")]
 #[allow(clippy::too_many_arguments)]
-pub async fn delete_invite_to_event(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
-    kc_admin_client: Data<KeycloakAdminClient>,
-    current_tenant: ReqData<Tenant>,
-    current_user: ReqData<User>,
-    authz: Data<Authz>,
-    path_params: Path<DeleteEventInvitePath>,
-    query: Query<EventOptionsQuery>,
-    mail_service: Data<MailService>,
-) -> Result<NoContent, ApiError> {
-    delete_invite_to_event_inner(
-        &settings.load_full(),
-        &db,
-        &kc_admin_client,
-        current_tenant.into_inner(),
-        current_user.into_inner(),
-        &authz,
-        path_params.into_inner(),
-        query.into_inner(),
-        &mail_service,
-    )
-    .await?;
-
-    Ok(NoContent)
-}
-
-#[allow(clippy::too_many_arguments)]
-/// TODO(WR) old
-#[allow(dead_code)]
-async fn old_delete_invite_to_event_inner(
+/// TODO(WR) new
+pub async fn delete_invite_to_event_inner(
     settings: &Settings,
     db: &Db,
     kc_admin_client: &KeycloakAdminClient,
@@ -939,7 +600,7 @@ async fn old_delete_invite_to_event_inner(
     DeleteEventInvitePath { event_id, user_id }: DeleteEventInvitePath,
     query: EventOptionsQuery,
     mail_service: &MailService,
-) -> Result<NoContent, CaptureApiError> {
+) -> Result<(), CaptureApiError> {
     let send_email_notification = !query.suppress_email_notification;
     let mut conn = db.get_conn().await?;
 
@@ -971,12 +632,12 @@ async fn old_delete_invite_to_event_inner(
                 let invite = EventInvite::delete_by_invitee(conn, event_id, user_id).await?;
 
                 // user access is going to be removed for the event, remove favorite entry if it exists
-                EventFavorite::delete_by_id(conn, current_user.id, event_id).await?;
+                _ = EventFavorite::delete_by_id(conn, current_user.id, event_id).await?;
 
                 let event = Event::get(conn, invite.event_id).await?;
 
                 // TODO: type inference just dies here with this
-                Ok((event.room, invite)) as opentalk_database::Result<(RoomId, EventInvite)>
+                Ok::<(RoomId, EventInvite), DatabaseError>((event.room, invite))
             }
             .scope_boxed()
         })
@@ -1020,81 +681,12 @@ async fn old_delete_invite_to_event_inner(
 
     remove_invitee_permissions(authz, event_id, room_id, invite.invitee).await?;
 
-    Ok(NoContent)
-}
-
-/// Delete an invite from an event
-///
-/// Delete/Withdraw an event invitation using the email address as the identifier.
-///
-/// This will also withdraw invites from registered users if the provided email address matches theirs.
-#[utoipa::path(
-    request_body = DeleteEmailInviteBody,
-    params(
-        ("event_id" = EventId, description = "The id of the event"),
-        EventOptionsQuery,
-    ),
-    responses(
-        (
-            status = StatusCode::NO_CONTENT,
-            description = "The email event invitation has been deleted",
-        ),
-        (
-            status = StatusCode::UNAUTHORIZED,
-            response = Unauthorized,
-        ),
-        (
-            status = StatusCode::FORBIDDEN,
-            response = Forbidden,
-        ),
-        (
-            status = StatusCode::NOT_FOUND,
-            response = NotFound,
-        ),
-        (
-            status = StatusCode::INTERNAL_SERVER_ERROR,
-            response = InternalServerError,
-        ),
-    ),
-    security(
-        ("BearerAuth" = []),
-    ),
-)]
-#[delete("/events/{event_id}/invites/email")]
-#[allow(clippy::too_many_arguments)]
-pub async fn delete_email_invite_to_event(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
-    kc_admin_client: Data<KeycloakAdminClient>,
-    current_tenant: ReqData<Tenant>,
-    current_user: ReqData<User>,
-    authz: Data<Authz>,
-    path: Path<EventId>,
-    query: Query<EventOptionsQuery>,
-    mail_service: Data<MailService>,
-    body: Json<DeleteEmailInviteBody>,
-) -> Result<NoContent, ApiError> {
-    delete_email_invite_to_event_inner(
-        &settings.load_full(),
-        &db,
-        &kc_admin_client,
-        current_tenant.into_inner(),
-        current_user.into_inner(),
-        &authz,
-        path.into_inner(),
-        query.into_inner(),
-        &mail_service,
-        body.into_inner().email,
-    )
-    .await?;
-
-    Ok(NoContent)
+    Ok(())
 }
 
 #[allow(clippy::too_many_arguments)]
-/// TODO(WR) old
-#[allow(dead_code)]
-async fn old_delete_email_invite_to_event_inner(
+/// TODO(WR) new
+pub async fn delete_email_invite_to_event_inner(
     settings: &Settings,
     db: &Db,
     kc_admin_client: &KeycloakAdminClient,
@@ -1105,7 +697,7 @@ async fn old_delete_email_invite_to_event_inner(
     query: EventOptionsQuery,
     mail_service: &MailService,
     email: EmailAddress,
-) -> Result<NoContent, CaptureApiError> {
+) -> Result<(), CaptureApiError> {
     let email = email.to_lowercase().to_string();
     let tenant_filter = get_tenant_filter(&current_tenant, &settings.tenants.assignment);
 
@@ -1141,12 +733,12 @@ async fn old_delete_email_invite_to_event_inner(
                 // delete invite to the event
                 log::error!("deleting: {event_id}, {user_id}");
 
-                EventInvite::delete_by_invitee(conn, event_id, user_id).await?;
+                _ = EventInvite::delete_by_invitee(conn, event_id, user_id).await?;
 
                 // user access is going to be removed for the event, remove favorite entry if it exists
-                EventFavorite::delete_by_id(conn, current_user.id, event_id).await?;
+                _ = EventFavorite::delete_by_id(conn, current_user.id, event_id).await?;
 
-                Ok(()) as opentalk_database::Result<()>
+                Ok::<(), DatabaseError>(())
             }
             .scope_boxed()
         })
@@ -1162,7 +754,7 @@ async fn old_delete_email_invite_to_event_inner(
         .get_user_for_email(tenant_filter, email.as_ref())
         .await
     {
-        EventEmailInvite::delete(&mut conn, &event_id, &email).await?;
+        _ = EventEmailInvite::delete(&mut conn, &event_id, &email).await?;
 
         MailRecipient::Unregistered(UnregisteredMailRecipient {
             email,
@@ -1170,7 +762,7 @@ async fn old_delete_email_invite_to_event_inner(
             last_name: user.last_name,
         })
     } else {
-        EventEmailInvite::delete(&mut conn, &event_id, &email).await?;
+        _ = EventEmailInvite::delete(&mut conn, &event_id, &email).await?;
 
         MailRecipient::External(ExternalMailRecipient { email })
     };
@@ -1196,7 +788,7 @@ async fn old_delete_email_invite_to_event_inner(
         .await;
     }
 
-    Ok(NoContent)
+    Ok(())
 }
 
 async fn remove_invitee_permissions(
@@ -1223,7 +815,7 @@ async fn remove_invitee_permissions(
         format!("/rooms/{room_id}/streaming_targets"),
     ];
 
-    authz
+    _ = authz
         .remove_all_user_permission_for_resources(user_id, resources)
         .await?;
 
@@ -1273,109 +865,26 @@ async fn notify_invitees_about_uninvite(
     }
 }
 
-/// Get information about pending invites
-///
-/// Returns information about pending invites for the current user
-#[utoipa::path(
-    responses(
-        (
-            status = StatusCode::OK,
-            description = "Information about pending invites is returned",
-            body = GetEventInvitesPendingResponseBody,
-        ),
-        (
-            status = StatusCode::UNAUTHORIZED,
-            response = Unauthorized,
-        ),
-        (
-            status = StatusCode::NOT_FOUND,
-            response = NotFound,
-        ),
-        (
-            status = StatusCode::INTERNAL_SERVER_ERROR,
-            response = InternalServerError,
-        ),
-    ),
-    security(
-        ("BearerAuth" = []),
-    ),
-)]
-#[get("/users/me/pending_invites")]
-pub async fn get_event_invites_pending(
-    db: Data<Db>,
-    current_user: ReqData<User>,
-) -> DefaultApiResult<GetEventInvitesPendingResponseBody> {
-    let response = get_event_invites_pending_inner(&db, current_user.id).await?;
-
-    Ok(ApiResponse::new(response))
-}
-
-/// TODO(WR) old
-#[allow(dead_code)]
-async fn old_get_event_invites_pending_inner(
+/// TODO(WR) new
+pub async fn get_event_invites_pending_inner(
     db: &Db,
     user_id: UserId,
-) -> DefaultApiResult<GetEventInvitesPendingResponseBody, CaptureApiError> {
+) -> Result<GetEventInvitesPendingResponseBody, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let event_invites = EventInvite::get_pending_for_user(&mut conn, user_id).await?;
 
-    Ok(ApiResponse::new(GetEventInvitesPendingResponseBody {
+    Ok(GetEventInvitesPendingResponseBody {
         total_pending_invites: event_invites.len() as u32,
-    }))
+    })
 }
 
-/// Accept an invite to an event
-///
-/// No content required, the request will accept the invitation.
-#[utoipa::path(
-    params(
-        ("event_id" = EventId, description = "The id of the event"),
-    ),
-    responses(
-        (
-            status = StatusCode::NO_CONTENT,
-            description = "Invitation was accepted",
-        ),
-        (
-            status = StatusCode::NOT_FOUND,
-            response = NotFound,
-        ),
-        (
-            status = StatusCode::UNAUTHORIZED,
-            response = Unauthorized,
-        ),
-        (
-            status = StatusCode::FORBIDDEN,
-            response = Forbidden,
-        ),
-        (
-            status = StatusCode::INTERNAL_SERVER_ERROR,
-            response = InternalServerError,
-        ),
-    ),
-    security(
-        ("BearerAuth" = []),
-    ),
-)]
-#[patch("/events/{event_id}/invite")]
-pub async fn accept_event_invite(
-    db: Data<Db>,
-    current_user: ReqData<User>,
-    event_id: Path<EventId>,
-) -> Result<NoContent, ApiError> {
-    accept_event_invite_inner(&db, current_user.into_inner().id, event_id.into_inner()).await?;
-
-    Ok(NoContent)
-}
-
-/// TODO(WR) old
-#[allow(dead_code)]
-async fn old_accept_event_invite_inner(
+/// TODO(WR) new
+pub async fn accept_event_invite_inner(
     db: &Db,
     user_id: UserId,
     event_id: EventId,
-) -> Result<NoContent, CaptureApiError> {
+) -> Result<(), CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let changeset = UpdateEventInvite {
@@ -1383,64 +892,17 @@ async fn old_accept_event_invite_inner(
         role: None,
     };
 
-    changeset.apply(&mut conn, user_id, event_id).await?;
+    _ = changeset.apply(&mut conn, user_id, event_id).await?;
 
-    Ok(NoContent)
+    Ok(())
 }
 
-/// Decline an invite to an event
-///
-/// No content required, the request will accept the invitation.
-#[utoipa::path(
-    params(
-        ("event_id" = EventId, description = "The id of the event"),
-    ),
-    responses(
-        (
-            status = StatusCode::NO_CONTENT,
-            description = "Invitation was declined",
-        ),
-        (
-            status = StatusCode::NOT_FOUND,
-            response = NotFound,
-        ),
-        (
-            status = StatusCode::UNAUTHORIZED,
-            response = Unauthorized,
-        ),
-        (
-            status = StatusCode::FORBIDDEN,
-            response = Forbidden,
-        ),
-        (
-            status = StatusCode::INTERNAL_SERVER_ERROR,
-            response = InternalServerError,
-        ),
-    ),
-    security(
-        ("BearerAuth" = []),
-    ),
-)]
-#[delete("/events/{event_id}/invite")]
-pub async fn decline_event_invite(
-    db: Data<Db>,
-    current_user: ReqData<User>,
-    event_id: Path<EventId>,
-) -> Result<NoContent, ApiError> {
-    decline_event_invite_inner(&db, current_user.id, event_id.into_inner()).await?;
-
-    Ok(NoContent)
-}
-
-/// TODO(WR) old
-#[allow(dead_code)]
-async fn old_decline_event_invite_inner(
+/// TODO(WR) new
+pub async fn decline_event_invite_inner(
     db: &Db,
     user_id: UserId,
-    event_id: Path<EventId>,
-) -> Result<NoContent, CaptureApiError> {
-    let event_id = event_id.into_inner();
-
+    event_id: EventId,
+) -> Result<(), CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let changeset = UpdateEventInvite {
@@ -1448,7 +910,7 @@ async fn old_decline_event_invite_inner(
         role: None,
     };
 
-    changeset.apply(&mut conn, user_id, event_id).await?;
+    _ = changeset.apply(&mut conn, user_id, event_id).await?;
 
-    Ok(NoContent)
+    Ok(())
 }

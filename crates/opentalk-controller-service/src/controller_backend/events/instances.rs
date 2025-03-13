@@ -2,29 +2,13 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use actix_web::{
-    get, patch,
-    web::{Data, Json, Path, Query, ReqData},
-    Either,
-};
+//! Handles event instances
+
 use chrono::{DateTime, Utc};
-use kustos::{prelude::PoliciesBuilder, Authz};
-use opentalk_controller_service::{
-    controller_backend::{
-        events::instances::{
-            get_event_instance_inner, get_event_instances_inner, patch_event_instance_inner,
-        },
-        RoomsPoliciesBuilderExt,
-    },
-    events::{
-        enrich_invitees_from_keycloak, get_invited_mail_recipients_for_event,
-        notifications::{notify_invitees_about_update, UpdateNotificationValues},
-        shared_folder_for_user,
-    },
-    services::MailService,
-};
+use futures::future::Either;
+use kustos::{policies_builder::PoliciesBuilder, Authz};
 use opentalk_controller_settings::Settings;
-use opentalk_controller_utils::{event::EventExt as _, CaptureApiError};
+use opentalk_controller_utils::{event::EventExt, CaptureApiError};
 use opentalk_database::Db;
 use opentalk_db_storage::{
     events::{Event, EventException, EventExceptionKind, NewEventException, UpdateEventException},
@@ -47,23 +31,29 @@ use opentalk_types_api_v1::{
 use opentalk_types_common::{
     events::{invites::EventInviteStatus, EventId},
     shared_folders::SharedFolder,
+    time::DateTimeTz,
     training_participation_report::TrainingParticipationReportParameterSet,
 };
 use rrule::RRuleSet;
 
-use super::{can_edit, ApiResponse, DateTimeTz, DefaultApiResult, ONE_HUNDRED_YEARS_IN_DAYS};
 use crate::{
-    api::{
-        headers::PageLink,
-        responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
-        v1::{
-            events::{DateTimeTzFromDb, EventRoomInfoExt},
-            response::NoContent,
-            util::{GetUserProfilesBatched, UserProfilesBatch},
-        },
+    controller_backend::{
+        events::{can_edit, DateTimeTzFromDb, EventRoomInfoExt, ONE_HUNDRED_YEARS_IN_DAYS},
+        RoomsPoliciesBuilderExt,
     },
-    settings::SharedSettingsActix,
+    events::{
+        enrich_invitees_from_keycloak, get_invited_mail_recipients_for_event,
+        notifications::{notify_invitees_about_update, UpdateNotificationValues},
+        shared_folder_for_user,
+    },
+    services::MailService,
+    util::{GetUserProfilesBatched, UserProfilesBatch},
+    ControllerBackend,
 };
+
+impl ControllerBackend {
+    // TODO(WR) impls according to the *_inner fn's
+}
 
 struct GetPaginatedEventInstancesData {
     instances: Vec<EventInstance>,
@@ -71,74 +61,8 @@ struct GetPaginatedEventInstancesData {
     after: Option<String>,
 }
 
-/// Get a list of the instances of an event
-///
-/// The instances are calculated based on the RRULE of the event. If no RRULE is
-/// set for the event, the single event instance is returned.
-///
-/// If no pagination query is added, the default page size is used.
-#[utoipa::path(
-    params(
-        GetEventInstancesQuery,
-        ("event_id" = EventId, description = "The id of the event")
-    ),
-    responses(
-        (
-            status = StatusCode::OK,
-            description = "List of event instances successfully returned",
-            body = GetEventInstancesResponseBody,
-            headers(
-                ("link" = PageLink, description = "Links for paging through the results"),
-            ),
-        ),
-        (
-            status = StatusCode::UNAUTHORIZED,
-            response = Unauthorized,
-        ),
-        (
-            status = StatusCode::FORBIDDEN,
-            response = Forbidden,
-        ),
-        (
-            status = StatusCode::NOT_FOUND,
-            response = NotFound,
-        ),
-        (
-            status = StatusCode::INTERNAL_SERVER_ERROR,
-            response = InternalServerError,
-        ),
-    ),
-    security(
-        ("BearerAuth" = []),
-    ),
-)]
-#[get("/events/{event_id}/instances")]
-pub async fn get_event_instances(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
-    kc_admin_client: Data<KeycloakAdminClient>,
-    current_tenant: ReqData<Tenant>,
-    current_user: ReqData<User>,
-    event_id: Path<EventId>,
-    query: Query<GetEventInstancesQuery>,
-) -> DefaultApiResult<GetEventInstancesResponseBody> {
-    let (event_instances, before, after) = get_event_instances_inner(
-        &settings.load_full(),
-        &db,
-        &kc_admin_client,
-        &current_tenant,
-        &current_user,
-        event_id.into_inner(),
-        query.into_inner(),
-    )
-    .await?;
-
-    Ok(ApiResponse::new(event_instances).with_cursor_pagination(before, after))
-}
-
-/// TODO(WR) old
-#[allow(dead_code)]
-async fn old_get_event_instances_inner(
+/// TODO(WR) new
+pub async fn get_event_instances_inner(
     settings: &Settings,
     db: &Db,
     kc_admin_client: &KeycloakAdminClient,
@@ -152,7 +76,14 @@ async fn old_get_event_instances_inner(
         per_page,
         after,
     }: GetEventInstancesQuery,
-) -> DefaultApiResult<GetEventInstancesResponseBody, CaptureApiError> {
+) -> Result<
+    (
+        GetEventInstancesResponseBody,
+        Option<String>,
+        Option<String>,
+    ),
+    CaptureApiError,
+> {
     let per_page = per_page.unwrap_or(30).clamp(1, 100);
     let page = after.map(|c| c.page).unwrap_or(1).max(1);
 
@@ -286,74 +217,15 @@ async fn old_get_event_instances_inner(
         instances_data.instances
     };
 
-    Ok(
-        ApiResponse::new(GetEventInstancesResponseBody(event_instances))
-            .with_cursor_pagination(instances_data.before, instances_data.after),
-    )
+    Ok((
+        GetEventInstancesResponseBody(event_instances),
+        instances_data.before,
+        instances_data.after,
+    ))
 }
 
-/// Get an event instance
-///
-/// Returns the event instance resource
-#[utoipa::path(
-    params(
-        EventInstancePath,
-        EventInstanceQuery,
-    ),
-    responses(
-        (
-            status = StatusCode::OK,
-            description = "Event instance successfully returned",
-            body = GetEventInstanceResponseBody,
-        ),
-        (
-            status = StatusCode::UNAUTHORIZED,
-            response = Unauthorized,
-        ),
-        (
-            status = StatusCode::FORBIDDEN,
-            response = Forbidden,
-        ),
-        (
-            status = StatusCode::NOT_FOUND,
-            response = NotFound,
-        ),
-        (
-            status = StatusCode::INTERNAL_SERVER_ERROR,
-            response = InternalServerError,
-        ),
-    ),
-    security(
-        ("BearerAuth" = []),
-    ),
-)]
-#[get("/events/{event_id}/instances/{instance_id}")]
-pub async fn get_event_instance(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
-    kc_admin_client: Data<KeycloakAdminClient>,
-    current_tenant: ReqData<Tenant>,
-    current_user: ReqData<User>,
-    path: Path<EventInstancePath>,
-    query: Query<EventInstanceQuery>,
-) -> DefaultApiResult<GetEventInstanceResponseBody> {
-    let response = get_event_instance_inner(
-        &settings.load_full(),
-        &db,
-        &kc_admin_client,
-        &current_tenant,
-        &current_user,
-        path.into_inner(),
-        query.into_inner(),
-    )
-    .await?;
-
-    Ok(ApiResponse::new(response))
-}
-
-/// TODO(WR) old
-#[allow(dead_code)]
-async fn old_get_event_instance_inner(
+/// TODO(WR) new
+pub async fn get_event_instance_inner(
     settings: &Settings,
     db: &Db,
     kc_admin_client: &KeycloakAdminClient,
@@ -364,7 +236,7 @@ async fn old_get_event_instance_inner(
         instance_id,
     }: EventInstancePath,
     query: EventInstanceQuery,
-) -> DefaultApiResult<GetEventInstanceResponseBody, CaptureApiError> {
+) -> Result<GetEventInstanceResponseBody, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
     let (
@@ -377,7 +249,7 @@ async fn old_get_event_instance_inner(
         tariff,
         training_participation_report_parameter_set,
     ) = Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
-    verify_recurrence_date(&event, instance_id.into())?;
+    _ = verify_recurrence_date(&event, instance_id.into())?;
 
     let (invitees, invitees_truncated) =
         super::get_invitees_for_event(settings, &mut conn, event_id, query.invitees_max).await?;
@@ -424,93 +296,12 @@ async fn old_get_event_instance_inner(
         ..event_instance
     };
 
-    Ok(ApiResponse::new(GetEventInstanceResponseBody(
-        event_instance,
-    )))
+    Ok(GetEventInstanceResponseBody(event_instance))
 }
 
-/// API Endpoint `PATCH /events/{event_id}/{instance_id}`
-///
-/// Patch an instance of a recurring event. This creates or modifies an exception for the event
-/// at the point of time of the given instance_id.
-/// Returns the patched event instance
-#[utoipa::path(
-    params(
-        EventInstancePath,
-        EventInstanceQuery,
-    ),
-    request_body = PatchEventInstanceBody,
-    responses(
-        (
-            status = StatusCode::OK,
-            description = "Event instance successfully updated",
-            body = EventInstance,
-        ),
-        (
-            status = StatusCode::NO_CONTENT,
-            description = "The request body was empty, no changes required",
-        ),
-        (
-            status = StatusCode::UNAUTHORIZED,
-            response = Unauthorized,
-        ),
-        (
-            status = StatusCode::FORBIDDEN,
-            response = Forbidden,
-        ),
-        (
-            status = StatusCode::NOT_FOUND,
-            response = NotFound,
-        ),
-        (
-            status = StatusCode::INTERNAL_SERVER_ERROR,
-            response = InternalServerError,
-        ),
-    ),
-    security(
-        ("BearerAuth" = []),
-    ),
-)]
-#[patch("/events/{event_id}/instances/{instance_id}")]
 #[allow(clippy::too_many_arguments)]
-pub async fn patch_event_instance(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
-    authz: Data<Authz>,
-    kc_admin_client: Data<KeycloakAdminClient>,
-    current_tenant: ReqData<Tenant>,
-    current_user: ReqData<User>,
-    path: Path<EventInstancePath>,
-    query: Query<EventInstanceQuery>,
-    patch: Json<PatchEventInstanceBody>,
-    mail_service: Data<MailService>,
-) -> Result<Either<ApiResponse<EventInstance>, NoContent>, ApiError> {
-    let response = patch_event_instance_inner(
-        &settings.load_full(),
-        &db,
-        &authz,
-        &kc_admin_client,
-        current_tenant.into_inner(),
-        current_user.into_inner(),
-        path.into_inner(),
-        query.into_inner(),
-        patch.into_inner(),
-        &mail_service,
-    )
-    .await?;
-
-    Ok(match response {
-        futures::future::Either::Left(event_instance) => {
-            Either::Left(ApiResponse::new(event_instance))
-        }
-        futures::future::Either::Right(()) => Either::Right(NoContent),
-    })
-}
-
-/// TODO(WR) old
-#[allow(dead_code)]
-#[allow(clippy::too_many_arguments)]
-async fn old_patch_event_instance_inner(
+/// TODO(WR) new
+pub async fn patch_event_instance_inner(
     settings: &Settings,
     db: &Db,
     authz: &Authz,
@@ -527,9 +318,9 @@ async fn old_patch_event_instance_inner(
     }: EventInstanceQuery,
     patch: PatchEventInstanceBody,
     mail_service: &MailService,
-) -> Result<Either<ApiResponse<EventInstance>, NoContent>, CaptureApiError> {
+) -> Result<Either<EventInstance, ()>, CaptureApiError> {
     if patch.is_empty() {
-        return Ok(Either::Right(NoContent));
+        return Ok(Either::Right(()));
     }
 
     let mut conn = db.get_conn().await?;
@@ -549,7 +340,7 @@ async fn old_patch_event_instance_inner(
         return Err(ApiError::not_found().into());
     }
 
-    verify_recurrence_date(&event, instance_id.into())?;
+    _ = verify_recurrence_date(&event, instance_id.into())?;
 
     let exception = if let Some(exception) =
         EventException::get_for_event(&mut conn, event_id, instance_id.into()).await?
@@ -714,7 +505,7 @@ async fn old_patch_event_instance_inner(
         ..event_instance
     };
 
-    Ok(Either::Left(ApiResponse::new(event_instance)))
+    Ok(Either::Left(event_instance))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -836,16 +627,18 @@ mod tests {
 
     use chrono_tz::Tz;
     use opentalk_test_util::assert_eq_json;
-    use opentalk_types_api_v1::{events::EventInviteeProfile, users::PublicUserProfile};
+    use opentalk_types_api_v1::{
+        events::{EventInviteeProfile, PublicInviteUserProfile},
+        users::PublicUserProfile,
+    };
     use opentalk_types_common::{
-        events::invites::InviteRole,
+        events::{invites::InviteRole, EventId},
         rooms::RoomId,
         time::{TimeZone, Timestamp},
         users::UserId,
     };
 
     use super::*;
-    use crate::api::v1::events::PublicInviteUserProfile;
 
     #[test]
     fn event_instance_serialize() {

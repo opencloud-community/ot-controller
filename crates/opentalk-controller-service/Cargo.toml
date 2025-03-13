@@ -19,6 +19,8 @@ async-trait.workspace = true
 base64.workspace = true
 bytes.workspace = true
 chrono.workspace = true
+chrono-tz = { workspace = true, features = ["serde"] }
+diesel-async.workspace = true
 futures.workspace = true
 futures-core.workspace = true
 jsonwebtoken.workspace = true
@@ -41,6 +43,7 @@ opentalk-types-common = { workspace = true, features = ["kustos"] }
 opentelemetry = { workspace = true, features = ["metrics", "trace"] }
 reqwest11 = { workspace = true, features = ["rustls-tls-native-roots"] }
 ring.workspace = true
+rrule.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 snafu.workspace = true
@@ -50,4 +53,5 @@ url.workspace = true
 uuid = { workspace = true, features = ["serde", "v4"] }
 
 [dev-dependencies]
+opentalk-test-util = { workspace = true, features = ["database"] }
 pretty_assertions.workspace = true

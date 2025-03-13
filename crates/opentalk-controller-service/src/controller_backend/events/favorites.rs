@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+//! Handles event favorites
+
 use opentalk_controller_service_facade::RequestUser;
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_db_storage::events::{Event, EventFavorite, NewEventFavorite};

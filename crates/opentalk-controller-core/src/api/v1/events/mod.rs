@@ -16,7 +16,14 @@ use kustos::{
     Authz, Resource,
 };
 use opentalk_controller_service::{
-    controller_backend::{delete_shared_folders, put_shared_folder, RoomsPoliciesBuilderExt},
+    controller_backend::{
+        delete_shared_folders,
+        events::{
+            delete_event_inner, get_event_inner, get_events_inner, new_event_inner,
+            patch_event_inner,
+        },
+        put_shared_folder, RoomsPoliciesBuilderExt,
+    },
     email_to_libravatar_url,
     events::{
         enrich_from_keycloak, enrich_invitees_from_keycloak, get_invited_mail_recipients_for_event,
@@ -295,7 +302,7 @@ pub async fn new_event(
     query: Query<EventOptionsQuery>,
     mail_service: Data<MailService>,
 ) -> DefaultApiResult<EventResource> {
-    Ok(new_event_inner(
+    let event_resource = new_event_inner(
         &settings.load_full(),
         &db,
         &authz,
@@ -304,10 +311,14 @@ pub async fn new_event(
         query.into_inner(),
         &mail_service,
     )
-    .await?)
+    .await?;
+
+    Ok(ApiResponse::new(event_resource))
 }
 
-async fn new_event_inner(
+/// TODO(WR) old
+#[allow(dead_code)]
+async fn old_new_event_inner(
     settings: &Settings,
     db: &Db,
     authz: &Authz,
@@ -765,7 +776,7 @@ pub async fn get_events(
     current_user: ReqData<User>,
     query: Query<GetEventsQuery>,
 ) -> DefaultApiResult<Vec<EventOrException>> {
-    Ok(get_events_inner(
+    let (event_resources, before, after) = get_events_inner(
         &settings.load_full(),
         &db,
         &kc_admin_client,
@@ -773,10 +784,14 @@ pub async fn get_events(
         current_user.into_inner(),
         query.into_inner(),
     )
-    .await?)
+    .await?;
+
+    Ok(ApiResponse::new(event_resources).with_cursor_pagination(before, after))
 }
 
-async fn get_events_inner(
+/// TODO(WR) old
+#[allow(dead_code)]
+async fn old_get_events_inner(
     settings: &Settings,
     db: &Db,
     kc_admin_client: &KeycloakAdminClient,
@@ -1029,7 +1044,7 @@ pub async fn get_event(
     event_id: Path<EventId>,
     query: Query<GetEventQuery>,
 ) -> DefaultApiResult<EventResource> {
-    Ok(get_event_inner(
+    let event_resource = get_event_inner(
         &settings.load_full(),
         &db,
         &kc_admin_client,
@@ -1038,10 +1053,14 @@ pub async fn get_event(
         event_id.into_inner(),
         query.into_inner(),
     )
-    .await?)
+    .await?;
+
+    Ok(ApiResponse::new(event_resource))
 }
 
-async fn get_event_inner(
+/// TODO(WR) old
+#[allow(dead_code)]
+async fn old_get_event_inner(
     settings: &Settings,
     db: &Db,
     kc_admin_client: &KeycloakAdminClient,
@@ -1185,7 +1204,7 @@ pub async fn patch_event(
     patch: Json<PatchEventBody>,
     mail_service: Data<MailService>,
 ) -> Result<Either<ApiResponse<EventResource>, NoContent>, ApiError> {
-    Ok(patch_event_inner(
+    let response = patch_event_inner(
         &settings.load_full(),
         &db,
         &authz,
@@ -1197,11 +1216,20 @@ pub async fn patch_event(
         patch.into_inner(),
         &mail_service,
     )
-    .await?)
+    .await?;
+
+    Ok(match response {
+        futures::future::Either::Left(event_resource) => {
+            Either::Left(ApiResponse::new(event_resource))
+        }
+        futures::future::Either::Right(()) => Either::Right(NoContent),
+    })
 }
 
 #[allow(clippy::too_many_arguments)]
-async fn patch_event_inner(
+/// TODO(WR) old
+#[allow(dead_code)]
+async fn old_patch_event_inner(
     settings: &Settings,
     db: &Db,
     authz: &Authz,
@@ -1652,7 +1680,7 @@ pub async fn delete_event(
     event_id: Path<EventId>,
     mail_service: Data<MailService>,
 ) -> Result<NoContent, ApiError> {
-    Ok(delete_event_inner(
+    delete_event_inner(
         &settings.load_full(),
         &db,
         &storage,
@@ -1665,11 +1693,15 @@ pub async fn delete_event(
         event_id.into_inner(),
         &mail_service,
     )
-    .await?)
+    .await?;
+
+    Ok(NoContent)
 }
 
 #[allow(clippy::too_many_arguments)]
-async fn delete_event_inner(
+/// TODO(WR) old
+#[allow(dead_code)]
+async fn old_delete_event_inner(
     settings: &Settings,
     db: &Db,
     storage: &ObjectStorage,
