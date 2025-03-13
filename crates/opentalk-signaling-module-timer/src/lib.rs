@@ -6,7 +6,7 @@ use chrono::{self, Utc};
 use either::Either;
 use futures::{stream::once, FutureExt};
 use opentalk_signaling_core::{
-    control, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
+    control, CleanupScope, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types_common::{modules::ModuleId, time::Timestamp};
@@ -179,9 +179,15 @@ impl SignalingModule for Timer {
 
                 *data = Some(ready_status);
             }
+            Event::Leaving => {
+                let _ = ctx
+                    .volatile
+                    .storage()
+                    .ready_status_delete(self.room_id, self.participant_id)
+                    .await;
+            }
             // Unused
-            Event::Leaving
-            | Event::RaiseHand
+            Event::RaiseHand
             | Event::LowerHand
             | Event::ParticipantUpdated(_, _)
             | Event::ParticipantLeft(_)
@@ -191,7 +197,20 @@ impl SignalingModule for Timer {
         Ok(())
     }
 
-    async fn on_destroy(self, _ctx: DestroyContext<'_>) {}
+    async fn on_destroy(self, mut ctx: DestroyContext<'_>) {
+        match ctx.cleanup_scope {
+            CleanupScope::None => (),
+            CleanupScope::Local => self.cleanup_room(&mut ctx, self.room_id).await,
+            CleanupScope::Global => {
+                if self.room_id.breakout_room_id().is_some() {
+                    self.cleanup_room(&mut ctx, SignalingRoomId::new(self.room_id.room_id(), None))
+                        .await
+                }
+
+                self.cleanup_room(&mut ctx, self.room_id).await
+            }
+        }
+    }
 
     async fn build_params(
         _init: SignalingModuleInitData,
@@ -410,6 +429,12 @@ impl Timer {
         );
 
         Ok(())
+    }
+
+    async fn cleanup_room(&self, ctx: &mut DestroyContext<'_>, room_id: SignalingRoomId) {
+        if let Err(e) = ctx.volatile.storage().timer_delete(self.room_id).await {
+            log::error!("failed to cleanup timer module for room {room_id}: {e:?}");
+        }
     }
 }
 
