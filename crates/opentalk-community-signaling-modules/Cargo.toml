@@ -19,6 +19,7 @@ opentalk-signaling-core.workspace = true
 
 opentalk-signaling-module-chat.workspace = true
 opentalk-signaling-module-core.workspace = true
+opentalk-signaling-module-e2ee.workspace = true
 opentalk-signaling-module-integration.workspace = true
 opentalk-signaling-module-livekit.workspace = true
 opentalk-signaling-module-meeting-notes.workspace = true
