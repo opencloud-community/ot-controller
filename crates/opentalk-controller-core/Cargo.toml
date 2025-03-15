@@ -23,6 +23,7 @@ actix-web = { workspace = true, features = ["rustls-0_23"] }
 actix-web-actors = "4.3"
 actix-web-httpauth.workspace = true
 async-trait.workspace = true
+bincode.workspace = true
 bytes.workspace = true
 bytestring = { workspace = true, features = ["serde"] }
 chrono.workspace = true
@@ -52,7 +53,7 @@ opentalk-jobs.workspace = true
 opentalk-keycloak-admin.workspace = true
 opentalk-r3dlock.workspace = true
 opentalk-signaling-core.workspace = true
-opentalk-types-api-v1 = { workspace = true, features = ["backend"] }
+opentalk-types-api-v1 = { workspace = true, features = ["backend", "bincode"] }
 opentalk-types-common = { workspace = true, features = [
   "actix",
   "backend",

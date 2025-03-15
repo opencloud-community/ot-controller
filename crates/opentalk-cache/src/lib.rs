@@ -5,9 +5,10 @@
 use core::{fmt::Display, time::Duration};
 use std::{hash::Hash, time::Instant};
 
+use bincode::{config, Decode, Encode};
 use moka::future::Cache as LocalCache;
 use redis::{AsyncCommands, RedisError, ToRedisArgs};
-use serde::{de::DeserializeOwned, Serialize};
+use serde::de::DeserializeOwned;
 use siphasher::sip128::{Hasher128, SipHasher24};
 use snafu::Snafu;
 
@@ -30,14 +31,16 @@ struct RedisConfig {
 pub enum CacheError {
     #[snafu(display("Redis error: {}", source), context(false))]
     Redis { source: RedisError },
-    #[snafu(display("Serde error: {}", source), context(false))]
-    Serde { source: bincode::Error },
+    #[snafu(display("Encode error: {}", source), context(false))]
+    Encode { source: bincode::error::EncodeError },
+    #[snafu(display("Decode error: {}", source), context(false))]
+    Decode { source: bincode::error::DecodeError },
 }
 
 impl<K, V> Cache<K, V>
 where
     K: Display + Hash + Eq + Send + Sync + 'static,
-    V: Serialize + DeserializeOwned + Clone + Send + Sync + 'static,
+    V: Encode + Decode<()> + DeserializeOwned + Clone + Send + Sync + 'static,
 {
     pub fn new(ttl: Duration) -> Self {
         Self {
@@ -104,7 +107,7 @@ where
                 .await?;
 
             if let Some(v) = v {
-                let v = bincode::deserialize(&v)?;
+                let (v, _) = bincode::decode_from_slice(&v, config::standard())?;
 
                 Ok(Some(v))
             } else {
@@ -132,7 +135,7 @@ where
                         key: &key,
                         hash_key: *hash_key,
                     },
-                    bincode::serialize(&value)?,
+                    bincode::encode_to_vec(&value, config::standard())?,
                     ttl.as_secs(),
                 )
                 .await?;
@@ -174,7 +177,7 @@ where
                         key: &key,
                         hash_key: *hash_key,
                     },
-                    bincode::serialize(&value)?,
+                    bincode::encode_to_vec(&value, config::standard())?,
                     ttl.as_secs(),
                 )
                 .await?;

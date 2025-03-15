@@ -4,6 +4,7 @@
 
 //! Error response types for REST APIv1
 use actix_web::{error::JsonPayloadError, HttpRequest};
+use bincode::{BorrowDecode, Decode, Encode};
 use http::StatusCode;
 use opentalk_controller_service::Whatever;
 use opentalk_controller_utils::CaptureApiError;
@@ -31,11 +32,35 @@ pub fn json_error_handler(err: JsonPayloadError, _: &HttpRequest) -> actix_web::
 }
 
 /// (De)Serializable version of [`ApiError`] so it can be externally cached
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Encode)]
 pub struct CacheableApiError {
     status: u16,
     www_authenticate: Option<AuthenticationError>,
     body: ErrorBody,
+}
+
+impl<C> Decode<C> for CacheableApiError {
+    fn decode<D: bincode::de::Decoder<Context = C>>(
+        decoder: &mut D,
+    ) -> Result<Self, bincode::error::DecodeError> {
+        Ok(Self {
+            status: Decode::decode(decoder)?,
+            www_authenticate: Decode::decode(decoder)?,
+            body: Decode::decode(decoder)?,
+        })
+    }
+}
+
+impl<C> BorrowDecode<'static, C> for CacheableApiError {
+    fn borrow_decode<D: bincode::de::BorrowDecoder<'static, Context = C>>(
+        decoder: &mut D,
+    ) -> Result<Self, bincode::error::DecodeError> {
+        Ok(Self {
+            status: Decode::decode(decoder)?,
+            www_authenticate: Decode::decode(decoder)?,
+            body: Decode::decode(decoder)?,
+        })
+    }
 }
 
 impl TryFrom<CacheableApiError> for CaptureApiError {
