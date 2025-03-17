@@ -4,9 +4,8 @@
 
 use std::collections::BTreeSet;
 
-use opentalk_types_common::time::Timestamp;
+use opentalk_types_common::{time::Timestamp, training_participation_report::TimeRange};
 use opentalk_types_signaling::ParticipantId;
-use opentalk_types_signaling_training_participation_report::TimeRange;
 
 use super::{Checkpoint, TrainingReportState};
 

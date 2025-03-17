@@ -116,6 +116,18 @@ diesel::table! {
 diesel::table! {
     use crate::sql_types::*;
 
+    event_training_participation_report_parameter_sets (event_id) {
+        event_id -> Uuid,
+        initial_checkpoint_delay_after -> Int8,
+        initial_checkpoint_delay_within -> Int8,
+        checkpoint_interval_after -> Int8,
+        checkpoint_interval_within -> Int8,
+    }
+}
+
+diesel::table! {
+    use crate::sql_types::*;
+
     events (id) {
         id -> Uuid,
         id_serial -> Int8,
@@ -384,6 +396,7 @@ diesel::joinable!(event_favorites -> events (event_id));
 diesel::joinable!(event_favorites -> users (user_id));
 diesel::joinable!(event_invites -> events (event_id));
 diesel::joinable!(event_shared_folders -> events (event_id));
+diesel::joinable!(event_training_participation_report_parameter_sets -> events (event_id));
 diesel::joinable!(events -> rooms (room));
 diesel::joinable!(events -> tenants (tenant_id));
 diesel::joinable!(external_tariffs -> tariffs (tariff_id));
@@ -413,6 +426,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     event_favorites,
     event_invites,
     event_shared_folders,
+    event_training_participation_report_parameter_sets,
     events,
     external_tariffs,
     groups,
