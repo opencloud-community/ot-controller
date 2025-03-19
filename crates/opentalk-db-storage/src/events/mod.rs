@@ -375,7 +375,7 @@ impl Event {
                 .left_join(sip_configs::table.on(rooms::id.eq(sip_configs::room)))
                 .inner_join(users::table.on(users::id.eq(rooms::created_by)))
                 .inner_join(tariffs::table.on(tariffs::id.eq(users::tariff_id)))
-                .inner_join(
+                .left_join(
                     event_training_participation_report_parameter_sets::table
                         .on(event_training_participation_report_parameter_sets::event_id
                             .eq(events::id)),
