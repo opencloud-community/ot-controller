@@ -1035,11 +1035,22 @@ pub async fn patch_event_inner(
     }
 
     let training_participation_report = match &patch.training_participation_report {
-        Some(Some(parameter_set)) => Some(
-            UpdateEventTrainingParticipationReportParameterSet::from(parameter_set.clone())
-                .apply(&mut conn, event.id)
-                .await?,
-        ),
+        Some(Some(parameter_set)) => {
+            if training_participation_report.is_some() {
+                Some(
+                    UpdateEventTrainingParticipationReportParameterSet::from(parameter_set.clone())
+                        .apply(&mut conn, event.id)
+                        .await?,
+                )
+            } else {
+                EventTrainingParticipationReportParameterSet::from((
+                    event.id,
+                    parameter_set.clone(),
+                ))
+                .try_insert(&mut conn)
+                .await?
+            }
+        }
         Some(None) => {
             EventTrainingParticipationReportParameterSet::delete_by_id(&mut conn, event.id).await?;
             None
