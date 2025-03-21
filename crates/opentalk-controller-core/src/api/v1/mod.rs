@@ -18,4 +18,3 @@ pub mod sip_configs;
 pub mod streaming_targets;
 pub mod turn;
 pub mod users;
-mod util;

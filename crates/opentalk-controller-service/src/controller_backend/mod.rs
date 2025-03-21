@@ -5,7 +5,7 @@
 //! Provides the default [`OpenTalkControllerServiceBackend`] implementation.
 mod assets;
 mod auth;
-mod events;
+pub mod events;
 mod invites;
 mod rooms;
 mod sip_configs;

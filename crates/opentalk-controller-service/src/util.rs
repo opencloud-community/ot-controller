@@ -2,20 +2,23 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+//! Provides some utilities.
+
 use std::collections::HashMap;
 
-use opentalk_controller_service::ToUserProfile as _;
 use opentalk_controller_settings::Settings;
 use opentalk_database::{DbConnection, Result};
 use opentalk_db_storage::{users::User, utils::HasUsers};
 use opentalk_types_api_v1::users::PublicUserProfile;
 use opentalk_types_common::users::UserId;
 
+use crate::ToUserProfile;
+
 /// Utility to fetch user profiles batched
 ///
 /// See [`db_storage::utils::HasUsers`]
-#[derive(Default)]
-pub struct GetUserProfilesBatched {
+#[derive(Debug, Default)]
+pub(crate) struct GetUserProfilesBatched {
     users: Vec<UserId>,
 }
 
@@ -55,7 +58,8 @@ impl GetUserProfilesBatched {
     }
 }
 
-pub struct UserProfilesBatch {
+#[derive(Debug)]
+pub(crate) struct UserProfilesBatch {
     users: HashMap<UserId, PublicUserProfile>,
 }
 

@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+//! Handles event shared folders
+
 use std::collections::HashSet;
 
 use chrono::{Days, NaiveDate, Utc};
