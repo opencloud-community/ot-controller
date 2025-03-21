@@ -1227,6 +1227,31 @@ impl From<EventTrainingParticipationReportParameterSet>
     }
 }
 
+impl From<(EventId, TrainingParticipationReportParameterSet)>
+    for EventTrainingParticipationReportParameterSet
+{
+    fn from(
+        (
+            event_id,
+            TrainingParticipationReportParameterSet {
+                initial_checkpoint_delay,
+                checkpoint_interval,
+            },
+        ): (EventId, TrainingParticipationReportParameterSet),
+    ) -> Self {
+        Self {
+            event_id,
+            initial_checkpoint_delay_after: i64::try_from(initial_checkpoint_delay.after)
+                .unwrap_or(i64::MAX),
+            initial_checkpoint_delay_within: i64::try_from(initial_checkpoint_delay.within)
+                .unwrap_or(i64::MAX),
+            checkpoint_interval_after: i64::try_from(checkpoint_interval.after).unwrap_or(i64::MAX),
+            checkpoint_interval_within: i64::try_from(checkpoint_interval.within)
+                .unwrap_or(i64::MAX),
+        }
+    }
+}
+
 #[derive(AsChangeset)]
 #[diesel(table_name = event_training_participation_report_parameter_sets)]
 pub struct UpdateEventTrainingParticipationReportParameterSet {
