@@ -420,7 +420,9 @@ mod tests {
 
         1 Alice Adams Moderator
 
-        2 Bob Burton User
+        2 Charlie Cooper User
+
+        3 Bob Burton User
         "#
         );
     }

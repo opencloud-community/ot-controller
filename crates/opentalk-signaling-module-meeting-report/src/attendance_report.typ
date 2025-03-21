@@ -80,7 +80,7 @@
   table.hline(y: 1),
   ..for (i, participant) in data
     .participants
-    .filter(p => "left_at" not in p and visible_kinds.contains(p.kind))
+    .filter(p => visible_kinds.contains(p.kind))
     .sorted(key: p => role_order.at(p.role))
     .enumerate(start: 1) {
     (
