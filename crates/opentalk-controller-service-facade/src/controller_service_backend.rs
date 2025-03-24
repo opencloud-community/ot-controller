@@ -14,9 +14,11 @@ use opentalk_types_api_v1::{
     auth::GetLoginResponseBody,
     error::ApiError,
     events::{
-        DeleteSharedFolderQuery, EventInstance, EventInstancePath, EventInstanceQuery,
+        DeleteEventsQuery, DeleteSharedFolderQuery, EventInstance, EventInstancePath,
+        EventInstanceQuery, EventOptionsQuery, EventOrException, EventResource,
         GetEventInstanceResponseBody, GetEventInstancesQuery, GetEventInstancesResponseBody,
-        PatchEventInstanceBody, PutSharedFolderQuery, StreamingTargetOptionsQuery,
+        GetEventQuery, GetEventsQuery, PatchEventBody, PatchEventInstanceBody, PatchEventQuery,
+        PostEventsBody, PutSharedFolderQuery, StreamingTargetOptionsQuery,
     },
     pagination::PagePaginationQuery,
     rooms::{
@@ -129,6 +131,46 @@ pub trait OpenTalkControllerServiceBackend: Send + Sync {
 
     /// Delete an asset from a room.
     async fn delete_room_asset(&self, room_id: RoomId, asset_id: AssetId) -> Result<(), ApiError>;
+
+    /// Create a new event
+    async fn new_event(
+        &self,
+        current_user: RequestUser,
+        event: PostEventsBody,
+        query: EventOptionsQuery,
+    ) -> Result<EventResource, ApiError>;
+
+    /// Get a list of events accessible by the requesting user
+    async fn get_events(
+        &self,
+        current_user: RequestUser,
+        query: GetEventsQuery,
+    ) -> Result<(Vec<EventOrException>, Option<String>, Option<String>), ApiError>;
+
+    /// Get an event
+    async fn get_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+        query: GetEventQuery,
+    ) -> Result<EventResource, ApiError>;
+
+    /// Patch an event
+    async fn patch_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+        query: PatchEventQuery,
+        patch: PatchEventBody,
+    ) -> Result<Option<EventResource>, ApiError>;
+
+    /// Delete an event and its owned resources, including the associated room.
+    async fn delete_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+        query: DeleteEventsQuery,
+    ) -> Result<(), ApiError>;
 
     /// Get a list of the instances of an event
     async fn get_event_instances(
