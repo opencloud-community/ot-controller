@@ -33,7 +33,11 @@ use opentalk_types_api_v1::{
     assets::{AssetResource, AssetSortingQuery},
     auth::{GetLoginResponseBody, OidcProvider},
     error::ApiError,
-    events::{DeleteSharedFolderQuery, PutSharedFolderQuery, StreamingTargetOptionsQuery},
+    events::{
+        DeleteSharedFolderQuery, EventInstance, EventInstancePath, EventInstanceQuery,
+        GetEventInstanceResponseBody, GetEventInstancesQuery, GetEventInstancesResponseBody,
+        PatchEventInstanceBody, PutSharedFolderQuery, StreamingTargetOptionsQuery,
+    },
     pagination::PagePaginationQuery,
     rooms::{
         by_room_id::{
@@ -232,6 +236,45 @@ impl OpenTalkControllerServiceBackend for ControllerBackend {
 
     async fn delete_room_asset(&self, room_id: RoomId, asset_id: AssetId) -> Result<(), ApiError> {
         Ok(self.delete_room_asset(room_id, asset_id).await?)
+    }
+
+    async fn get_event_instances(
+        &self,
+        current_user: &RequestUser,
+        event_id: EventId,
+        query: GetEventInstancesQuery,
+    ) -> Result<
+        (
+            GetEventInstancesResponseBody,
+            Option<String>,
+            Option<String>,
+        ),
+        ApiError,
+    > {
+        Ok(self
+            .get_event_instances(current_user, event_id, query)
+            .await?)
+    }
+
+    async fn get_event_instance(
+        &self,
+        current_user: &RequestUser,
+        path: EventInstancePath,
+        query: EventInstanceQuery,
+    ) -> Result<GetEventInstanceResponseBody, ApiError> {
+        Ok(self.get_event_instance(current_user, path, query).await?)
+    }
+
+    async fn patch_event_instance(
+        &self,
+        current_user: RequestUser,
+        path: EventInstancePath,
+        query: EventInstanceQuery,
+        patch: PatchEventInstanceBody,
+    ) -> Result<Option<EventInstance>, ApiError> {
+        Ok(self
+            .patch_event_instance(current_user, path, query, patch)
+            .await?)
     }
 
     async fn create_invite(

@@ -5,11 +5,9 @@
 //! Handles event instances
 
 use chrono::{DateTime, Utc};
-use futures::future::Either;
-use kustos::{policies_builder::PoliciesBuilder, Authz};
-use opentalk_controller_settings::Settings;
+use kustos::policies_builder::PoliciesBuilder;
+use opentalk_controller_service_facade::RequestUser;
 use opentalk_controller_utils::{event::EventExt, CaptureApiError};
-use opentalk_database::Db;
 use opentalk_db_storage::{
     events::{Event, EventException, EventExceptionKind, NewEventException, UpdateEventException},
     invites::Invite,
@@ -17,7 +15,6 @@ use opentalk_db_storage::{
     tenants::Tenant,
     users::User,
 };
-use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_types_api_v1::{
     error::ApiError,
     events::{
@@ -46,466 +43,466 @@ use crate::{
         notifications::{notify_invitees_about_update, UpdateNotificationValues},
         shared_folder_for_user,
     },
-    services::MailService,
     util::{GetUserProfilesBatched, UserProfilesBatch},
     ControllerBackend,
 };
 
 impl ControllerBackend {
-    // TODO(WR) impls according to the *_inner fn's
+    pub(crate) async fn get_event_instances(
+        &self,
+        current_user: &RequestUser,
+        event_id: EventId,
+        GetEventInstancesQuery {
+            invitees_max,
+            time_min,
+            time_max,
+            per_page,
+            after,
+        }: GetEventInstancesQuery,
+    ) -> Result<
+        (
+            GetEventInstancesResponseBody,
+            Option<String>,
+            Option<String>,
+        ),
+        CaptureApiError,
+    > {
+        let settings = self.settings.load();
+
+        let per_page = per_page.unwrap_or(30).clamp(1, 100);
+        let page = after.map(|c| c.page).unwrap_or(1).max(1);
+
+        let skip = per_page as usize;
+        let offset = (page - 1) as usize;
+
+        let mut conn = self.db.get_conn().await?;
+
+        let (
+            event,
+            invite,
+            room,
+            sip_config,
+            is_favorite,
+            shared_folder,
+            tariff,
+            training_participation_report_parameter_set,
+        ) = Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
+
+        let (invitees, invitees_truncated) =
+            super::get_invitees_for_event(&settings, &mut conn, event.id, invitees_max).await?;
+
+        let invite_status = invite
+            .map(|inv| inv.status)
+            .unwrap_or(EventInviteStatus::Accepted);
+
+        let Some(rruleset) = event.to_rruleset()? else {
+            return Err(ApiError::not_found().into());
+        };
+
+        const MONTHS_PER_YEAR: u32 = 12;
+
+        // limit of how far into the future we calculate instances
+        let max_dt = Utc::now()
+            .with_timezone(&rruleset.get_dt_start().timezone())
+            .checked_add_months(chrono::Months::new(40 * MONTHS_PER_YEAR))
+            .expect("Could not add required duration");
+
+        let mut iter: Box<dyn Iterator<Item = DateTime<rrule::Tz>>> =
+            Box::new(rruleset.into_iter().skip_while(move |&dt| dt > max_dt));
+
+        if let Some(time_min) = time_min {
+            iter = Box::new(iter.skip_while(move |&dt| dt <= *time_min));
+        }
+
+        if let Some(time_max) = time_max {
+            iter = Box::new(iter.skip_while(move |&dt| dt >= *time_max));
+        }
+
+        let datetimes: Vec<DateTime<Utc>> = iter
+            .skip(skip * offset)
+            .take(skip)
+            .map(|dt| dt.with_timezone(&Utc))
+            .collect();
+
+        let exceptions = EventException::get_all_for_event(&mut conn, event_id, &datetimes).await?;
+
+        let users = GetUserProfilesBatched::new()
+            .add(&event)
+            .add(&exceptions)
+            .fetch(&settings, &mut conn)
+            .await?;
+
+        let training_participation_report = training_participation_report_parameter_set
+            .map(TrainingParticipationReportParameterSet::from);
+
+        let current_tenant = Tenant::get(&mut conn, current_user.tenant_id).await?;
+        let current_user = User::get(&mut conn, current_user.id).await?;
+
+        drop(conn);
+
+        let room = EventRoomInfo::from_room(&settings, room, sip_config, &tariff);
+
+        let can_edit = can_edit(&event, &current_user);
+
+        let shared_folder =
+            shared_folder_for_user(shared_folder, event.created_by, current_user.id);
+
+        let mut exceptions = exceptions.into_iter().peekable();
+
+        let mut instances = vec![];
+
+        for datetime in datetimes {
+            let exception = exceptions.next_if(|exception| exception.exception_date == datetime);
+
+            let instance = create_event_instance(
+                &users,
+                event.clone(),
+                invite_status,
+                is_favorite,
+                exception,
+                room.clone(),
+                datetime.into(),
+                invitees.clone(),
+                invitees_truncated,
+                can_edit,
+                shared_folder.clone(),
+                training_participation_report.clone(),
+            )?;
+
+            instances.push(instance);
+        }
+
+        let next_cursor = if !instances.is_empty() {
+            Some(Cursor(GetEventInstancesCursorData { page: page + 1 }).to_base64())
+        } else {
+            None
+        };
+
+        let instances_data = GetPaginatedEventInstancesData {
+            instances,
+            before: None,
+            after: next_cursor,
+        };
+
+        // Enrich the invitees for the first instance only and reuse them as all instances have the same invitees.
+        let event_instances = if let Some(instance) = instances_data.instances.first() {
+            let enriched_invitees = enrich_invitees_from_keycloak(
+                &settings,
+                &self.kc_admin_client,
+                &current_tenant,
+                instance.invitees.clone(),
+            )
+            .await;
+
+            instances_data
+                .instances
+                .into_iter()
+                .map(|instance| EventInstance {
+                    invitees: enriched_invitees.clone(),
+                    ..instance
+                })
+                .collect()
+        } else {
+            instances_data.instances
+        };
+
+        Ok((
+            GetEventInstancesResponseBody(event_instances),
+            instances_data.before,
+            instances_data.after,
+        ))
+    }
+
+    pub(crate) async fn get_event_instance(
+        &self,
+        current_user: &RequestUser,
+        EventInstancePath {
+            event_id,
+            instance_id,
+        }: EventInstancePath,
+        query: EventInstanceQuery,
+    ) -> Result<GetEventInstanceResponseBody, CaptureApiError> {
+        let settings = self.settings.load();
+        let mut conn = self.db.get_conn().await?;
+
+        let (
+            event,
+            invite,
+            room,
+            sip_config,
+            is_favorite,
+            shared_folder,
+            tariff,
+            training_participation_report_parameter_set,
+        ) = Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
+        _ = verify_recurrence_date(&event, instance_id.into())?;
+
+        let (invitees, invitees_truncated) =
+            super::get_invitees_for_event(&settings, &mut conn, event_id, query.invitees_max)
+                .await?;
+
+        let exception =
+            EventException::get_for_event(&mut conn, event_id, instance_id.into()).await?;
+
+        let users = GetUserProfilesBatched::new()
+            .add(&event)
+            .add(&exception)
+            .fetch(&settings, &mut conn)
+            .await?;
+
+        let room = EventRoomInfo::from_room(&settings, room, sip_config, &tariff);
+
+        let current_tenant = Tenant::get(&mut conn, current_user.tenant_id).await?;
+        let current_user = User::get(&mut conn, current_user.id).await?;
+
+        let can_edit = can_edit(&event, &current_user);
+
+        let shared_folder =
+            shared_folder_for_user(shared_folder, event.created_by, current_user.id);
+
+        let event_instance = create_event_instance(
+            &users,
+            event,
+            invite
+                .map(|inv| inv.status)
+                .unwrap_or(EventInviteStatus::Accepted),
+            is_favorite,
+            exception,
+            room,
+            instance_id,
+            invitees,
+            invitees_truncated,
+            can_edit,
+            shared_folder,
+            training_participation_report_parameter_set.map(Into::into),
+        )?;
+
+        let event_instance = EventInstance {
+            invitees: enrich_invitees_from_keycloak(
+                &settings,
+                &self.kc_admin_client,
+                &current_tenant,
+                event_instance.invitees,
+            )
+            .await,
+            ..event_instance
+        };
+
+        Ok(GetEventInstanceResponseBody(event_instance))
+    }
+
+    pub(crate) async fn patch_event_instance(
+        &self,
+        current_user: RequestUser,
+        EventInstancePath {
+            event_id,
+            instance_id,
+        }: EventInstancePath,
+        EventInstanceQuery {
+            invitees_max,
+            suppress_email_notification,
+        }: EventInstanceQuery,
+        patch: PatchEventInstanceBody,
+    ) -> Result<Option<EventInstance>, CaptureApiError> {
+        if patch.is_empty() {
+            return Ok(None);
+        }
+
+        let settings = self.settings.load();
+        let mut conn = self.db.get_conn().await?;
+
+        let (
+            event,
+            invite,
+            room,
+            sip_config,
+            is_favorite,
+            shared_folder,
+            tariff,
+            training_participation_report_parameter_set,
+        ) = Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
+
+        if !event.is_recurring.unwrap_or_default() {
+            return Err(ApiError::not_found().into());
+        }
+
+        _ = verify_recurrence_date(&event, instance_id.into())?;
+
+        let exception = if let Some(exception) =
+            EventException::get_for_event(&mut conn, event_id, instance_id.into()).await?
+        {
+            let is_all_day = patch
+                .is_all_day
+                .or(exception.is_all_day)
+                .or(event.is_all_day)
+                .unwrap();
+            let starts_at = patch
+                .starts_at
+                .or_else(|| DateTimeTz::starts_at_of(&event))
+                .or_else(|| DateTimeTz::maybe_from_db(exception.starts_at, exception.starts_at_tz))
+                .unwrap();
+            let ends_at = patch
+                .ends_at
+                .or_else(|| DateTimeTz::ends_at_of(&event))
+                .or_else(|| DateTimeTz::maybe_from_db(exception.ends_at, exception.ends_at_tz))
+                .unwrap();
+
+            super::verify_exception_dt_params(is_all_day, starts_at, ends_at)?;
+
+            let update_exception = UpdateEventException {
+                kind: match patch.status {
+                    Some(EventStatus::Ok) => Some(EventExceptionKind::Modified),
+                    Some(EventStatus::Cancelled) => Some(EventExceptionKind::Cancelled),
+                    None => None,
+                },
+                title: patch.title.map(Some),
+                description: patch.description.map(Some),
+                is_all_day: patch.is_all_day.map(Some),
+                starts_at: patch.starts_at.map(|dt| Some(dt.to_datetime_tz())),
+                starts_at_tz: patch.starts_at.map(|dt| Some(dt.timezone)),
+                ends_at: patch.ends_at.map(|dt| Some(dt.to_datetime_tz())),
+                ends_at_tz: patch.ends_at.map(|dt| Some(dt.timezone)),
+            };
+
+            update_exception.apply(&mut conn, exception.id).await?
+        } else {
+            let is_all_day = patch.is_all_day.or(event.is_all_day).unwrap();
+            let starts_at = patch
+                .starts_at
+                .or_else(|| DateTimeTz::starts_at_of(&event))
+                .unwrap();
+            let ends_at = patch
+                .ends_at
+                .or_else(|| DateTimeTz::ends_at_of(&event))
+                .unwrap();
+
+            super::verify_exception_dt_params(is_all_day, starts_at, ends_at)?;
+
+            let new_exception = NewEventException {
+                event_id: event.id,
+                exception_date: instance_id.into(),
+                exception_date_tz: event.starts_at_tz.unwrap(),
+                created_by: current_user.id,
+                kind: if let Some(EventStatus::Cancelled) = patch.status {
+                    EventExceptionKind::Cancelled
+                } else {
+                    EventExceptionKind::Modified
+                },
+                title: patch.title,
+                description: patch.description,
+                is_all_day: patch.is_all_day,
+                starts_at: patch.starts_at.map(|dt| dt.to_datetime_tz()),
+                starts_at_tz: patch.starts_at.map(|dt| dt.timezone),
+                ends_at: patch.ends_at.map(|dt| dt.to_datetime_tz()),
+                ends_at_tz: patch.ends_at.map(|dt| dt.timezone),
+            };
+
+            new_exception.insert(&mut conn).await?
+        };
+
+        let (invitees, invitees_truncated) =
+            super::get_invitees_for_event(&settings, &mut conn, event_id, invitees_max).await?;
+
+        let users = GetUserProfilesBatched::new()
+            .add(&event)
+            .add(&exception)
+            .fetch(&settings, &mut conn)
+            .await?;
+
+        let event_room_info =
+            EventRoomInfo::from_room(&settings, room.clone(), sip_config.clone(), &tariff);
+
+        let current_tenant = Tenant::get(&mut conn, current_user.tenant_id).await?;
+        let current_user = User::get(&mut conn, current_user.id).await?;
+
+        let can_edit = can_edit(&event, &current_user);
+
+        let shared_folder =
+            shared_folder_for_user(shared_folder, event.created_by, current_user.id);
+
+        let streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
+
+        if !suppress_email_notification {
+            let invited_users = get_invited_mail_recipients_for_event(&mut conn, event_id).await?;
+            let invite_for_room =
+                Invite::get_first_or_create_for_room(&mut conn, room.id, current_user.id).await?;
+
+            let created_by = if event.created_by == current_user.id {
+                current_user
+            } else {
+                User::get(&mut conn, event.created_by).await?
+            };
+
+            // Add the access policy for the invite code, just in case it has been created by
+            // the `Invite::get_first_for_room(…)` call above. That function is not able to
+            // add the policy, because it has no access to the `RoomsPoliciesBuilderExt` trait.
+            let policies = PoliciesBuilder::new()
+                // Grant invitee access
+                .grant_invite_access(invite_for_room.id)
+                .room_guest_read_access(room.id)
+                .finish();
+            self.authz.add_policies(policies).await?;
+
+            let notification_values = UpdateNotificationValues {
+                tenant: current_tenant.clone(),
+                created_by,
+                event: event.clone(),
+                event_exception: Some(exception.clone()),
+                room,
+                sip_config,
+                users_to_notify: invited_users,
+                invite_for_room,
+            };
+
+            notify_invitees_about_update(
+                &settings,
+                notification_values,
+                &self.mail_service,
+                &self.kc_admin_client,
+                None,
+                streaming_targets,
+            )
+            .await;
+        }
+
+        drop(conn);
+
+        let event_instance = create_event_instance(
+            &users,
+            event,
+            invite
+                .map(|inv| inv.status)
+                .unwrap_or(EventInviteStatus::Accepted),
+            is_favorite,
+            Some(exception),
+            event_room_info,
+            instance_id,
+            invitees,
+            invitees_truncated,
+            can_edit,
+            shared_folder,
+            training_participation_report_parameter_set.map(Into::into),
+        )?;
+
+        let event_instance = EventInstance {
+            invitees: enrich_invitees_from_keycloak(
+                &settings,
+                &self.kc_admin_client,
+                &current_tenant,
+                event_instance.invitees,
+            )
+            .await,
+            ..event_instance
+        };
+
+        Ok(Some(event_instance))
+    }
 }
 
 struct GetPaginatedEventInstancesData {
     instances: Vec<EventInstance>,
     before: Option<String>,
     after: Option<String>,
-}
-
-/// TODO(WR) new
-pub async fn get_event_instances_inner(
-    settings: &Settings,
-    db: &Db,
-    kc_admin_client: &KeycloakAdminClient,
-    current_tenant: &Tenant,
-    current_user: &User,
-    event_id: EventId,
-    GetEventInstancesQuery {
-        invitees_max,
-        time_min,
-        time_max,
-        per_page,
-        after,
-    }: GetEventInstancesQuery,
-) -> Result<
-    (
-        GetEventInstancesResponseBody,
-        Option<String>,
-        Option<String>,
-    ),
-    CaptureApiError,
-> {
-    let per_page = per_page.unwrap_or(30).clamp(1, 100);
-    let page = after.map(|c| c.page).unwrap_or(1).max(1);
-
-    let skip = per_page as usize;
-    let offset = (page - 1) as usize;
-
-    let mut conn = db.get_conn().await?;
-
-    let (
-        event,
-        invite,
-        room,
-        sip_config,
-        is_favorite,
-        shared_folder,
-        tariff,
-        training_participation_report_parameter_set,
-    ) = Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
-
-    let (invitees, invitees_truncated) =
-        super::get_invitees_for_event(settings, &mut conn, event.id, invitees_max).await?;
-
-    let invite_status = invite
-        .map(|inv| inv.status)
-        .unwrap_or(EventInviteStatus::Accepted);
-
-    let Some(rruleset) = event.to_rruleset()? else {
-        return Err(ApiError::not_found().into());
-    };
-
-    const MONTHS_PER_YEAR: u32 = 12;
-
-    // limit of how far into the future we calculate instances
-    let max_dt = Utc::now()
-        .with_timezone(&rruleset.get_dt_start().timezone())
-        .checked_add_months(chrono::Months::new(40 * MONTHS_PER_YEAR))
-        .expect("Could not add required duration");
-
-    let mut iter: Box<dyn Iterator<Item = DateTime<rrule::Tz>>> =
-        Box::new(rruleset.into_iter().skip_while(move |&dt| dt > max_dt));
-
-    if let Some(time_min) = time_min {
-        iter = Box::new(iter.skip_while(move |&dt| dt <= *time_min));
-    }
-
-    if let Some(time_max) = time_max {
-        iter = Box::new(iter.skip_while(move |&dt| dt >= *time_max));
-    }
-
-    let datetimes: Vec<DateTime<Utc>> = iter
-        .skip(skip * offset)
-        .take(skip)
-        .map(|dt| dt.with_timezone(&Utc))
-        .collect();
-
-    let exceptions = EventException::get_all_for_event(&mut conn, event_id, &datetimes).await?;
-
-    let users = GetUserProfilesBatched::new()
-        .add(&event)
-        .add(&exceptions)
-        .fetch(settings, &mut conn)
-        .await?;
-
-    let training_participation_report = training_participation_report_parameter_set
-        .map(TrainingParticipationReportParameterSet::from);
-
-    drop(conn);
-
-    let room = EventRoomInfo::from_room(settings, room, sip_config, &tariff);
-
-    let can_edit = can_edit(&event, current_user);
-
-    let shared_folder = shared_folder_for_user(shared_folder, event.created_by, current_user.id);
-
-    let mut exceptions = exceptions.into_iter().peekable();
-
-    let mut instances = vec![];
-
-    for datetime in datetimes {
-        let exception = exceptions.next_if(|exception| exception.exception_date == datetime);
-
-        let instance = create_event_instance(
-            &users,
-            event.clone(),
-            invite_status,
-            is_favorite,
-            exception,
-            room.clone(),
-            datetime.into(),
-            invitees.clone(),
-            invitees_truncated,
-            can_edit,
-            shared_folder.clone(),
-            training_participation_report.clone(),
-        )?;
-
-        instances.push(instance);
-    }
-
-    let next_cursor = if !instances.is_empty() {
-        Some(Cursor(GetEventInstancesCursorData { page: page + 1 }).to_base64())
-    } else {
-        None
-    };
-
-    let instances_data = GetPaginatedEventInstancesData {
-        instances,
-        before: None,
-        after: next_cursor,
-    };
-
-    // Enrich the invitees for the first instance only and reuse them as all instances have the same invitees.
-    let event_instances = if let Some(instance) = instances_data.instances.first() {
-        let enriched_invitees = enrich_invitees_from_keycloak(
-            settings,
-            kc_admin_client,
-            current_tenant,
-            instance.invitees.clone(),
-        )
-        .await;
-
-        instances_data
-            .instances
-            .into_iter()
-            .map(|instance| EventInstance {
-                invitees: enriched_invitees.clone(),
-                ..instance
-            })
-            .collect()
-    } else {
-        instances_data.instances
-    };
-
-    Ok((
-        GetEventInstancesResponseBody(event_instances),
-        instances_data.before,
-        instances_data.after,
-    ))
-}
-
-/// TODO(WR) new
-pub async fn get_event_instance_inner(
-    settings: &Settings,
-    db: &Db,
-    kc_admin_client: &KeycloakAdminClient,
-    current_tenant: &Tenant,
-    current_user: &User,
-    EventInstancePath {
-        event_id,
-        instance_id,
-    }: EventInstancePath,
-    query: EventInstanceQuery,
-) -> Result<GetEventInstanceResponseBody, CaptureApiError> {
-    let mut conn = db.get_conn().await?;
-
-    let (
-        event,
-        invite,
-        room,
-        sip_config,
-        is_favorite,
-        shared_folder,
-        tariff,
-        training_participation_report_parameter_set,
-    ) = Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
-    _ = verify_recurrence_date(&event, instance_id.into())?;
-
-    let (invitees, invitees_truncated) =
-        super::get_invitees_for_event(settings, &mut conn, event_id, query.invitees_max).await?;
-
-    let exception = EventException::get_for_event(&mut conn, event_id, instance_id.into()).await?;
-
-    let users = GetUserProfilesBatched::new()
-        .add(&event)
-        .add(&exception)
-        .fetch(settings, &mut conn)
-        .await?;
-
-    let room = EventRoomInfo::from_room(settings, room, sip_config, &tariff);
-
-    let can_edit = can_edit(&event, current_user);
-
-    let shared_folder = shared_folder_for_user(shared_folder, event.created_by, current_user.id);
-
-    let event_instance = create_event_instance(
-        &users,
-        event,
-        invite
-            .map(|inv| inv.status)
-            .unwrap_or(EventInviteStatus::Accepted),
-        is_favorite,
-        exception,
-        room,
-        instance_id,
-        invitees,
-        invitees_truncated,
-        can_edit,
-        shared_folder,
-        training_participation_report_parameter_set.map(Into::into),
-    )?;
-
-    let event_instance = EventInstance {
-        invitees: enrich_invitees_from_keycloak(
-            settings,
-            kc_admin_client,
-            current_tenant,
-            event_instance.invitees,
-        )
-        .await,
-        ..event_instance
-    };
-
-    Ok(GetEventInstanceResponseBody(event_instance))
-}
-
-#[allow(clippy::too_many_arguments)]
-/// TODO(WR) new
-pub async fn patch_event_instance_inner(
-    settings: &Settings,
-    db: &Db,
-    authz: &Authz,
-    kc_admin_client: &KeycloakAdminClient,
-    current_tenant: Tenant,
-    current_user: User,
-    EventInstancePath {
-        event_id,
-        instance_id,
-    }: EventInstancePath,
-    EventInstanceQuery {
-        invitees_max,
-        suppress_email_notification,
-    }: EventInstanceQuery,
-    patch: PatchEventInstanceBody,
-    mail_service: &MailService,
-) -> Result<Either<EventInstance, ()>, CaptureApiError> {
-    if patch.is_empty() {
-        return Ok(Either::Right(()));
-    }
-
-    let mut conn = db.get_conn().await?;
-
-    let (
-        event,
-        invite,
-        room,
-        sip_config,
-        is_favorite,
-        shared_folder,
-        tariff,
-        training_participation_report_parameter_set,
-    ) = Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
-
-    if !event.is_recurring.unwrap_or_default() {
-        return Err(ApiError::not_found().into());
-    }
-
-    _ = verify_recurrence_date(&event, instance_id.into())?;
-
-    let exception = if let Some(exception) =
-        EventException::get_for_event(&mut conn, event_id, instance_id.into()).await?
-    {
-        let is_all_day = patch
-            .is_all_day
-            .or(exception.is_all_day)
-            .or(event.is_all_day)
-            .unwrap();
-        let starts_at = patch
-            .starts_at
-            .or_else(|| DateTimeTz::starts_at_of(&event))
-            .or_else(|| DateTimeTz::maybe_from_db(exception.starts_at, exception.starts_at_tz))
-            .unwrap();
-        let ends_at = patch
-            .ends_at
-            .or_else(|| DateTimeTz::ends_at_of(&event))
-            .or_else(|| DateTimeTz::maybe_from_db(exception.ends_at, exception.ends_at_tz))
-            .unwrap();
-
-        super::verify_exception_dt_params(is_all_day, starts_at, ends_at)?;
-
-        let update_exception = UpdateEventException {
-            kind: match patch.status {
-                Some(EventStatus::Ok) => Some(EventExceptionKind::Modified),
-                Some(EventStatus::Cancelled) => Some(EventExceptionKind::Cancelled),
-                None => None,
-            },
-            title: patch.title.map(Some),
-            description: patch.description.map(Some),
-            is_all_day: patch.is_all_day.map(Some),
-            starts_at: patch.starts_at.map(|dt| Some(dt.to_datetime_tz())),
-            starts_at_tz: patch.starts_at.map(|dt| Some(dt.timezone)),
-            ends_at: patch.ends_at.map(|dt| Some(dt.to_datetime_tz())),
-            ends_at_tz: patch.ends_at.map(|dt| Some(dt.timezone)),
-        };
-
-        update_exception.apply(&mut conn, exception.id).await?
-    } else {
-        let is_all_day = patch.is_all_day.or(event.is_all_day).unwrap();
-        let starts_at = patch
-            .starts_at
-            .or_else(|| DateTimeTz::starts_at_of(&event))
-            .unwrap();
-        let ends_at = patch
-            .ends_at
-            .or_else(|| DateTimeTz::ends_at_of(&event))
-            .unwrap();
-
-        super::verify_exception_dt_params(is_all_day, starts_at, ends_at)?;
-
-        let new_exception = NewEventException {
-            event_id: event.id,
-            exception_date: instance_id.into(),
-            exception_date_tz: event.starts_at_tz.unwrap(),
-            created_by: current_user.id,
-            kind: if let Some(EventStatus::Cancelled) = patch.status {
-                EventExceptionKind::Cancelled
-            } else {
-                EventExceptionKind::Modified
-            },
-            title: patch.title,
-            description: patch.description,
-            is_all_day: patch.is_all_day,
-            starts_at: patch.starts_at.map(|dt| dt.to_datetime_tz()),
-            starts_at_tz: patch.starts_at.map(|dt| dt.timezone),
-            ends_at: patch.ends_at.map(|dt| dt.to_datetime_tz()),
-            ends_at_tz: patch.ends_at.map(|dt| dt.timezone),
-        };
-
-        new_exception.insert(&mut conn).await?
-    };
-
-    let (invitees, invitees_truncated) =
-        super::get_invitees_for_event(settings, &mut conn, event_id, invitees_max).await?;
-
-    let users = GetUserProfilesBatched::new()
-        .add(&event)
-        .add(&exception)
-        .fetch(settings, &mut conn)
-        .await?;
-
-    let event_room_info =
-        EventRoomInfo::from_room(settings, room.clone(), sip_config.clone(), &tariff);
-
-    let can_edit = can_edit(&event, &current_user);
-
-    let shared_folder = shared_folder_for_user(shared_folder, event.created_by, current_user.id);
-
-    let streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
-
-    if !suppress_email_notification {
-        let invited_users = get_invited_mail_recipients_for_event(&mut conn, event_id).await?;
-        let invite_for_room =
-            Invite::get_first_or_create_for_room(&mut conn, room.id, current_user.id).await?;
-
-        let created_by = if event.created_by == current_user.id {
-            current_user
-        } else {
-            User::get(&mut conn, event.created_by).await?
-        };
-
-        // Add the access policy for the invite code, just in case it has been created by
-        // the `Invite::get_first_for_room(…)` call above. That function is not able to
-        // add the policy, because it has no access to the `RoomsPoliciesBuilderExt` trait.
-        let policies = PoliciesBuilder::new()
-            // Grant invitee access
-            .grant_invite_access(invite_for_room.id)
-            .room_guest_read_access(room.id)
-            .finish();
-        authz.add_policies(policies).await?;
-
-        let notification_values = UpdateNotificationValues {
-            tenant: current_tenant.clone(),
-            created_by,
-            event: event.clone(),
-            event_exception: Some(exception.clone()),
-            room,
-            sip_config,
-            users_to_notify: invited_users,
-            invite_for_room,
-        };
-
-        notify_invitees_about_update(
-            settings,
-            notification_values,
-            mail_service,
-            kc_admin_client,
-            None,
-            streaming_targets,
-        )
-        .await;
-    }
-
-    drop(conn);
-
-    let event_instance = create_event_instance(
-        &users,
-        event,
-        invite
-            .map(|inv| inv.status)
-            .unwrap_or(EventInviteStatus::Accepted),
-        is_favorite,
-        Some(exception),
-        event_room_info,
-        instance_id,
-        invitees,
-        invitees_truncated,
-        can_edit,
-        shared_folder,
-        training_participation_report_parameter_set.map(Into::into),
-    )?;
-
-    let event_instance = EventInstance {
-        invitees: enrich_invitees_from_keycloak(
-            settings,
-            kc_admin_client,
-            &current_tenant,
-            event_instance.invitees,
-        )
-        .await,
-        ..event_instance
-    };
-
-    Ok(Either::Left(event_instance))
 }
 
 #[allow(clippy::too_many_arguments)]

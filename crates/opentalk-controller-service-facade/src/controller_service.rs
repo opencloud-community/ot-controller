@@ -14,7 +14,11 @@ use opentalk_types_api_v1::{
     assets::{AssetResource, AssetSortingQuery},
     auth::GetLoginResponseBody,
     error::ApiError,
-    events::{DeleteSharedFolderQuery, PutSharedFolderQuery, StreamingTargetOptionsQuery},
+    events::{
+        DeleteSharedFolderQuery, EventInstance, EventInstancePath, EventInstanceQuery,
+        GetEventInstanceResponseBody, GetEventInstancesQuery, GetEventInstancesResponseBody,
+        PatchEventInstanceBody, PutSharedFolderQuery, StreamingTargetOptionsQuery,
+    },
     pagination::PagePaginationQuery,
     rooms::{
         by_room_id::{
@@ -221,6 +225,56 @@ impl OpenTalkControllerService {
             .read()
             .await
             .delete_room_asset(room_id, asset_id)
+            .await
+    }
+
+    /// Get a list of the instances of an event
+    pub async fn get_event_instances(
+        &self,
+        current_user: &RequestUser,
+        event_id: EventId,
+        query: GetEventInstancesQuery,
+    ) -> Result<
+        (
+            GetEventInstancesResponseBody,
+            Option<String>,
+            Option<String>,
+        ),
+        ApiError,
+    > {
+        self.backend
+            .read()
+            .await
+            .get_event_instances(current_user, event_id, query)
+            .await
+    }
+
+    /// Get an event instance
+    pub async fn get_event_instance(
+        &self,
+        current_user: &RequestUser,
+        path: EventInstancePath,
+        query: EventInstanceQuery,
+    ) -> Result<GetEventInstanceResponseBody, ApiError> {
+        self.backend
+            .read()
+            .await
+            .get_event_instance(current_user, path, query)
+            .await
+    }
+
+    /// Modifies an event instance
+    pub async fn patch_event_instance(
+        &self,
+        current_user: RequestUser,
+        path: EventInstancePath,
+        query: EventInstanceQuery,
+        patch: PatchEventInstanceBody,
+    ) -> Result<Option<EventInstance>, ApiError> {
+        self.backend
+            .read()
+            .await
+            .patch_event_instance(current_user, path, query, patch)
             .await
     }
 

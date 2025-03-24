@@ -7,16 +7,7 @@ use actix_web::{
     web::{Data, Json, Path, Query, ReqData},
     Either,
 };
-use kustos::Authz;
-use opentalk_controller_service::{
-    controller_backend::events::instances::{
-        get_event_instance_inner, get_event_instances_inner, patch_event_instance_inner,
-    },
-    services::MailService,
-};
-use opentalk_database::Db;
-use opentalk_db_storage::{tenants::Tenant, users::User};
-use opentalk_keycloak_admin::KeycloakAdminClient;
+use opentalk_controller_service_facade::{OpenTalkControllerService, RequestUser};
 use opentalk_types_api_v1::{
     error::ApiError,
     events::{
@@ -27,13 +18,10 @@ use opentalk_types_api_v1::{
 use opentalk_types_common::events::EventId;
 
 use super::{ApiResponse, DefaultApiResult};
-use crate::{
-    api::{
-        headers::PageLink,
-        responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
-        v1::response::NoContent,
-    },
-    settings::SharedSettingsActix,
+use crate::api::{
+    headers::PageLink,
+    responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
+    v1::response::NoContent,
 };
 
 /// Get a list of the instances of an event
@@ -79,24 +67,18 @@ use crate::{
 )]
 #[get("/events/{event_id}/instances")]
 pub async fn get_event_instances(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
-    kc_admin_client: Data<KeycloakAdminClient>,
-    current_tenant: ReqData<Tenant>,
-    current_user: ReqData<User>,
+    service: Data<OpenTalkControllerService>,
+    current_user: ReqData<RequestUser>,
     event_id: Path<EventId>,
     query: Query<GetEventInstancesQuery>,
 ) -> DefaultApiResult<GetEventInstancesResponseBody> {
-    let (event_instances, before, after) = get_event_instances_inner(
-        &settings.load_full(),
-        &db,
-        &kc_admin_client,
-        &current_tenant,
-        &current_user,
-        event_id.into_inner(),
-        query.into_inner(),
-    )
-    .await?;
+    let (event_instances, before, after) = service
+        .get_event_instances(
+            &current_user.into_inner(),
+            event_id.into_inner(),
+            query.into_inner(),
+        )
+        .await?;
 
     Ok(ApiResponse::new(event_instances).with_cursor_pagination(before, after))
 }
@@ -138,29 +120,23 @@ pub async fn get_event_instances(
 )]
 #[get("/events/{event_id}/instances/{instance_id}")]
 pub async fn get_event_instance(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
-    kc_admin_client: Data<KeycloakAdminClient>,
-    current_tenant: ReqData<Tenant>,
-    current_user: ReqData<User>,
+    service: Data<OpenTalkControllerService>,
+    current_user: ReqData<RequestUser>,
     path: Path<EventInstancePath>,
     query: Query<EventInstanceQuery>,
 ) -> DefaultApiResult<GetEventInstanceResponseBody> {
-    let response = get_event_instance_inner(
-        &settings.load_full(),
-        &db,
-        &kc_admin_client,
-        &current_tenant,
-        &current_user,
-        path.into_inner(),
-        query.into_inner(),
-    )
-    .await?;
+    let response = service
+        .get_event_instance(
+            &current_user.into_inner(),
+            path.into_inner(),
+            query.into_inner(),
+        )
+        .await?;
 
     Ok(ApiResponse::new(response))
 }
 
-/// API Endpoint `PATCH /events/{event_id}/{instance_id}`
+/// Modifies an event instance
 ///
 /// Patch an instance of a recurring event. This creates or modifies an exception for the event
 /// at the point of time of the given instance_id.
@@ -205,35 +181,23 @@ pub async fn get_event_instance(
 #[patch("/events/{event_id}/instances/{instance_id}")]
 #[allow(clippy::too_many_arguments)]
 pub async fn patch_event_instance(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
-    authz: Data<Authz>,
-    kc_admin_client: Data<KeycloakAdminClient>,
-    current_tenant: ReqData<Tenant>,
-    current_user: ReqData<User>,
+    service: Data<OpenTalkControllerService>,
+    current_user: ReqData<RequestUser>,
     path: Path<EventInstancePath>,
     query: Query<EventInstanceQuery>,
     patch: Json<PatchEventInstanceBody>,
-    mail_service: Data<MailService>,
 ) -> Result<Either<ApiResponse<EventInstance>, NoContent>, ApiError> {
-    let response = patch_event_instance_inner(
-        &settings.load_full(),
-        &db,
-        &authz,
-        &kc_admin_client,
-        current_tenant.into_inner(),
-        current_user.into_inner(),
-        path.into_inner(),
-        query.into_inner(),
-        patch.into_inner(),
-        &mail_service,
-    )
-    .await?;
+    let event_instance = service
+        .patch_event_instance(
+            current_user.into_inner(),
+            path.into_inner(),
+            query.into_inner(),
+            patch.into_inner(),
+        )
+        .await?;
 
-    Ok(match response {
-        futures::future::Either::Left(event_instance) => {
-            Either::Left(ApiResponse::new(event_instance))
-        }
-        futures::future::Either::Right(()) => Either::Right(NoContent),
-    })
+    match event_instance {
+        Some(event_instance) => Ok(Either::Left(ApiResponse::new(event_instance))),
+        _ => Ok(Either::Right(NoContent)),
+    }
 }

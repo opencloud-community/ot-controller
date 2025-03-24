@@ -13,7 +13,11 @@ use opentalk_types_api_v1::{
     assets::{AssetResource, AssetSortingQuery},
     auth::GetLoginResponseBody,
     error::ApiError,
-    events::{DeleteSharedFolderQuery, PutSharedFolderQuery, StreamingTargetOptionsQuery},
+    events::{
+        DeleteSharedFolderQuery, EventInstance, EventInstancePath, EventInstanceQuery,
+        GetEventInstanceResponseBody, GetEventInstancesQuery, GetEventInstancesResponseBody,
+        PatchEventInstanceBody, PutSharedFolderQuery, StreamingTargetOptionsQuery,
+    },
     pagination::PagePaginationQuery,
     rooms::{
         by_room_id::{
@@ -125,6 +129,38 @@ pub trait OpenTalkControllerServiceBackend: Send + Sync {
 
     /// Delete an asset from a room.
     async fn delete_room_asset(&self, room_id: RoomId, asset_id: AssetId) -> Result<(), ApiError>;
+
+    /// Get a list of the instances of an event
+    async fn get_event_instances(
+        &self,
+        current_user: &RequestUser,
+        event_id: EventId,
+        query: GetEventInstancesQuery,
+    ) -> Result<
+        (
+            GetEventInstancesResponseBody,
+            Option<String>,
+            Option<String>,
+        ),
+        ApiError,
+    >;
+
+    /// Get an event instance
+    async fn get_event_instance(
+        &self,
+        current_user: &RequestUser,
+        path: EventInstancePath,
+        query: EventInstanceQuery,
+    ) -> Result<GetEventInstanceResponseBody, ApiError>;
+
+    /// Modifies an event instance
+    async fn patch_event_instance(
+        &self,
+        current_user: RequestUser,
+        path: EventInstancePath,
+        query: EventInstanceQuery,
+        patch: PatchEventInstanceBody,
+    ) -> Result<Option<EventInstance>, ApiError>;
 
     /// Create a new invite
     async fn create_invite(
