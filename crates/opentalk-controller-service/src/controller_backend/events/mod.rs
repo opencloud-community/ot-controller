@@ -7,7 +7,6 @@
 use chrono::{DateTime, Datelike, NaiveTime, Utc};
 use chrono_tz::Tz;
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
-use futures::future::Either;
 use kustos::{
     policies_builder::{GrantingAccess, PoliciesBuilder},
     prelude::IsSubject,
@@ -977,9 +976,9 @@ pub async fn patch_event_inner(
     query: PatchEventQuery,
     patch: PatchEventBody,
     mail_service: &MailService,
-) -> Result<Either<EventResource, ()>, CaptureApiError> {
+) -> Result<Option<EventResource>, CaptureApiError> {
     if patch.is_empty() {
-        return Ok(Either::Right(()));
+        return Ok(None);
     }
 
     let send_email_notification = !query.suppress_email_notification;
@@ -1183,7 +1182,7 @@ pub async fn patch_event_inner(
         ..event_resource
     };
 
-    Ok(Either::Left(event_resource))
+    Ok(Some(event_resource))
 }
 
 /// Part of `PATCH /events/{event_id}` (see [`patch_event`])

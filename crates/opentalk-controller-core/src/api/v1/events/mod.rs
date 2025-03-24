@@ -269,7 +269,7 @@ pub async fn patch_event(
     patch: Json<PatchEventBody>,
     mail_service: Data<MailService>,
 ) -> Result<Either<ApiResponse<EventResource>, NoContent>, ApiError> {
-    let response = patch_event_inner(
+    let event_resource = patch_event_inner(
         &settings.load_full(),
         &db,
         &authz,
@@ -283,12 +283,10 @@ pub async fn patch_event(
     )
     .await?;
 
-    Ok(match response {
-        futures::future::Either::Left(event_resource) => {
-            Either::Left(ApiResponse::new(event_resource))
-        }
-        futures::future::Either::Right(()) => Either::Right(NoContent),
-    })
+    match event_resource {
+        Some(event_resource) => Ok(Either::Left(ApiResponse::new(event_resource))),
+        _ => Ok(Either::Right(NoContent)),
+    }
 }
 
 /// Delete an event and its owned resources, including the associated room.

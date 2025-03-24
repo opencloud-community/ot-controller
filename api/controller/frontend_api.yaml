@@ -517,7 +517,7 @@ paths:
     patch:
       tags:
         - "api::v1::events::instances"
-      summary: "API Endpoint `PATCH /events/{event_id}/{instance_id}`"
+      summary: Modifies an event instance
       description: |-
         Patch an instance of a recurring event. This creates or modifies an exception for the event
         at the point of time of the given instance_id.

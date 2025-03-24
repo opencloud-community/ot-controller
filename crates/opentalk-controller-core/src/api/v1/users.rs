@@ -96,10 +96,9 @@ pub async fn patch_me(
     )
     .await?;
 
-    if let Some(user_profile) = user_profile {
-        Ok(Either::Left(Json(user_profile)))
-    } else {
-        Ok(Either::Right(NoContent))
+    match user_profile {
+        Some(user_profile) => Ok(Either::Left(Json(user_profile))),
+        _ => Ok(Either::Right(NoContent)),
     }
 }
 
