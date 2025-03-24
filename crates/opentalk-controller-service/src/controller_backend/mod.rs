@@ -34,11 +34,13 @@ use opentalk_types_api_v1::{
     auth::{GetLoginResponseBody, OidcProvider},
     error::ApiError,
     events::{
-        DeleteEventsQuery, DeleteSharedFolderQuery, EventInstance, EventInstancePath,
-        EventInstanceQuery, EventOptionsQuery, EventOrException, EventResource,
+        by_event_id::invites::GetEventsInvitesQuery, DeleteEventInvitePath, DeleteEventsQuery,
+        DeleteSharedFolderQuery, EventInstance, EventInstancePath, EventInstanceQuery,
+        EventInvitee, EventOptionsQuery, EventOrException, EventResource,
         GetEventInstanceResponseBody, GetEventInstancesQuery, GetEventInstancesResponseBody,
-        GetEventQuery, GetEventsQuery, PatchEventBody, PatchEventInstanceBody, PatchEventQuery,
-        PostEventsBody, PutSharedFolderQuery, StreamingTargetOptionsQuery,
+        GetEventQuery, GetEventsQuery, PatchEmailInviteBody, PatchEventBody,
+        PatchEventInstanceBody, PatchEventQuery, PatchInviteBody, PostEventInviteBody,
+        PostEventInviteQuery, PostEventsBody, PutSharedFolderQuery, StreamingTargetOptionsQuery,
     },
     pagination::PagePaginationQuery,
     rooms::{
@@ -59,12 +61,13 @@ use opentalk_types_api_v1::{
         GetRoomsResponseBody, RoomResource,
     },
     users::{
-        me::PatchMeRequestBody, GetFindQuery, GetFindResponseBody, GetUserAssetsResponseBody,
-        PrivateUserProfile, PublicUserProfile,
+        me::PatchMeRequestBody, GetEventInvitesPendingResponseBody, GetFindQuery,
+        GetFindResponseBody, GetUserAssetsResponseBody, PrivateUserProfile, PublicUserProfile,
     },
 };
 use opentalk_types_common::{
     assets::AssetId,
+    email::EmailAddress,
     events::EventId,
     features::FeatureId,
     modules::ModuleId,
@@ -324,6 +327,98 @@ impl OpenTalkControllerServiceBackend for ControllerBackend {
         Ok(self
             .patch_event_instance(current_user, path, query, patch)
             .await?)
+    }
+
+    async fn get_invites_for_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+        query: GetEventsInvitesQuery,
+    ) -> Result<(Vec<EventInvitee>, i64, i64, i64), ApiError> {
+        Ok(self
+            .get_invites_for_event(current_user, event_id, query)
+            .await?)
+    }
+
+    async fn create_invite_to_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+        query: PostEventInviteQuery,
+        create_invite: PostEventInviteBody,
+    ) -> Result<bool, ApiError> {
+        Ok(self
+            .create_invite_to_event(current_user, event_id, query, create_invite)
+            .await?)
+    }
+
+    async fn update_invite_to_event(
+        &self,
+        current_user: &RequestUser,
+        event_id: EventId,
+        user_id: UserId,
+        update_invite: &PatchInviteBody,
+    ) -> Result<(), ApiError> {
+        Ok(self
+            .update_invite_to_event(current_user, event_id, user_id, update_invite)
+            .await?)
+    }
+
+    async fn update_email_invite_to_event(
+        &self,
+        current_user: &RequestUser,
+        event_id: EventId,
+        update_invite: &PatchEmailInviteBody,
+    ) -> Result<(), ApiError> {
+        Ok(self
+            .update_email_invite_to_event(current_user, event_id, update_invite)
+            .await?)
+    }
+
+    async fn delete_invite_to_event(
+        &self,
+        current_user: RequestUser,
+        path: DeleteEventInvitePath,
+        query: EventOptionsQuery,
+    ) -> Result<(), ApiError> {
+        Ok(self
+            .delete_invite_to_event(current_user, path, query)
+            .await?)
+    }
+
+    async fn delete_email_invite_to_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+        email: EmailAddress,
+        query: EventOptionsQuery,
+    ) -> Result<(), ApiError> {
+        Ok(self
+            .delete_email_invite_to_event(current_user, event_id, email, query)
+            .await?)
+    }
+
+    async fn get_event_invites_pending(
+        &self,
+        user_id: UserId,
+    ) -> Result<GetEventInvitesPendingResponseBody, ApiError> {
+        Ok(self.get_event_invites_pending(user_id).await?)
+    }
+
+    async fn accept_event_invite(
+        &self,
+        user_id: UserId,
+        event_id: EventId,
+    ) -> Result<(), ApiError> {
+        Ok(self.accept_event_invite(user_id, event_id).await?)
+    }
+
+    async fn decline_event_invite(
+        &self,
+        user_id: UserId,
+        event_id: EventId,
+    ) -> Result<(), ApiError> {
+        Ok(self.decline_event_invite(user_id, event_id).await?)
     }
 
     async fn create_invite(

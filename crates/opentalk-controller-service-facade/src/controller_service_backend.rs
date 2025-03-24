@@ -14,11 +14,13 @@ use opentalk_types_api_v1::{
     auth::GetLoginResponseBody,
     error::ApiError,
     events::{
-        DeleteEventsQuery, DeleteSharedFolderQuery, EventInstance, EventInstancePath,
-        EventInstanceQuery, EventOptionsQuery, EventOrException, EventResource,
+        by_event_id::invites::GetEventsInvitesQuery, DeleteEventInvitePath, DeleteEventsQuery,
+        DeleteSharedFolderQuery, EventInstance, EventInstancePath, EventInstanceQuery,
+        EventInvitee, EventOptionsQuery, EventOrException, EventResource,
         GetEventInstanceResponseBody, GetEventInstancesQuery, GetEventInstancesResponseBody,
-        GetEventQuery, GetEventsQuery, PatchEventBody, PatchEventInstanceBody, PatchEventQuery,
-        PostEventsBody, PutSharedFolderQuery, StreamingTargetOptionsQuery,
+        GetEventQuery, GetEventsQuery, PatchEmailInviteBody, PatchEventBody,
+        PatchEventInstanceBody, PatchEventQuery, PatchInviteBody, PostEventInviteBody,
+        PostEventInviteQuery, PostEventsBody, PutSharedFolderQuery, StreamingTargetOptionsQuery,
     },
     pagination::PagePaginationQuery,
     rooms::{
@@ -39,12 +41,13 @@ use opentalk_types_api_v1::{
         GetRoomsResponseBody, RoomResource,
     },
     users::{
-        me::PatchMeRequestBody, GetFindQuery, GetFindResponseBody, GetUserAssetsResponseBody,
-        PrivateUserProfile, PublicUserProfile,
+        me::PatchMeRequestBody, GetEventInvitesPendingResponseBody, GetFindQuery,
+        GetFindResponseBody, GetUserAssetsResponseBody, PrivateUserProfile, PublicUserProfile,
     },
 };
 use opentalk_types_common::{
     assets::AssetId,
+    email::EmailAddress,
     events::EventId,
     modules::ModuleId,
     rooms::{invite_codes::InviteCode, RoomId, RoomPassword},
@@ -203,6 +206,74 @@ pub trait OpenTalkControllerServiceBackend: Send + Sync {
         query: EventInstanceQuery,
         patch: PatchEventInstanceBody,
     ) -> Result<Option<EventInstance>, ApiError>;
+
+    /// Get the invites for an event
+    async fn get_invites_for_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+        query: GetEventsInvitesQuery,
+    ) -> Result<(Vec<EventInvitee>, i64, i64, i64), ApiError>;
+
+    /// Create a new invite to an event
+    async fn create_invite_to_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+        query: PostEventInviteQuery,
+        create_invite: PostEventInviteBody,
+    ) -> Result<bool, ApiError>;
+
+    /// Patch an event invite with the provided fields
+    async fn update_invite_to_event(
+        &self,
+        current_user: &RequestUser,
+        event_id: EventId,
+        user_id: UserId,
+        update_invite: &PatchInviteBody,
+    ) -> Result<(), ApiError>;
+
+    /// Patch an event email invite with the provided fields
+    async fn update_email_invite_to_event(
+        &self,
+        current_user: &RequestUser,
+        event_id: EventId,
+        update_invite: &PatchEmailInviteBody,
+    ) -> Result<(), ApiError>;
+
+    /// Delete an invite from an event
+    async fn delete_invite_to_event(
+        &self,
+        current_user: RequestUser,
+        path: DeleteEventInvitePath,
+        query: EventOptionsQuery,
+    ) -> Result<(), ApiError>;
+
+    /// Delete an invite from an event
+    async fn delete_email_invite_to_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+        email: EmailAddress,
+        query: EventOptionsQuery,
+    ) -> Result<(), ApiError>;
+
+    /// Get information about pending invites
+    async fn get_event_invites_pending(
+        &self,
+        user_id: UserId,
+    ) -> Result<GetEventInvitesPendingResponseBody, ApiError>;
+
+    /// Accept an invite to an event
+    async fn accept_event_invite(&self, user_id: UserId, event_id: EventId)
+        -> Result<(), ApiError>;
+
+    /// Decline an invite to an event
+    async fn decline_event_invite(
+        &self,
+        user_id: UserId,
+        event_id: EventId,
+    ) -> Result<(), ApiError>;
 
     /// Create a new invite
     async fn create_invite(
