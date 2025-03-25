@@ -11,18 +11,9 @@ use chrono::{DateTime, Utc};
 use kustos::{
     policies_builder::{GrantingAccess, PoliciesBuilder},
     prelude::{AccessMethod, IsSubject},
-    Authz, Resource,
+    Resource,
 };
-use opentalk_controller_service::{
-    controller_backend::events::{
-        delete_event_inner, get_event_inner, get_events_inner, new_event_inner, patch_event_inner,
-    },
-    services::MailService,
-};
-use opentalk_database::Db;
-use opentalk_db_storage::{tenants::Tenant, users::User};
-use opentalk_keycloak_admin::KeycloakAdminClient;
-use opentalk_signaling_core::{ExchangeHandle, ObjectStorage};
+use opentalk_controller_service_facade::{OpenTalkControllerService, RequestUser};
 use opentalk_types_api_v1::{
     error::ApiError,
     events::{
@@ -34,12 +25,9 @@ use opentalk_types_common::{events::EventId, time::RecurrencePattern};
 use serde::Deserialize;
 
 use super::{response::NoContent, ApiResponse, DefaultApiResult};
-use crate::{
-    api::{
-        headers::CursorLink,
-        responses::{BadRequest, Forbidden, InternalServerError, NotFound, Unauthorized},
-    },
-    settings::SharedSettingsActix,
+use crate::api::{
+    headers::CursorLink,
+    responses::{BadRequest, Forbidden, InternalServerError, NotFound, Unauthorized},
 };
 
 pub mod favorites;
@@ -77,24 +65,18 @@ pub mod shared_folder;
 )]
 #[post("/events")]
 pub async fn new_event(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
-    authz: Data<Authz>,
-    current_user: ReqData<User>,
+    service: Data<OpenTalkControllerService>,
+    current_user: ReqData<RequestUser>,
     new_event: Json<PostEventsBody>,
     query: Query<EventOptionsQuery>,
-    mail_service: Data<MailService>,
 ) -> DefaultApiResult<EventResource> {
-    let event_resource = new_event_inner(
-        &settings.load_full(),
-        &db,
-        &authz,
-        current_user.into_inner(),
-        new_event.into_inner(),
-        query.into_inner(),
-        &mail_service,
-    )
-    .await?;
+    let event_resource = service
+        .new_event(
+            current_user.into_inner(),
+            new_event.into_inner(),
+            query.into_inner(),
+        )
+        .await?;
 
     Ok(ApiResponse::new(event_resource))
 }
@@ -135,22 +117,13 @@ pub async fn new_event(
 )]
 #[get("/events")]
 pub async fn get_events(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
-    kc_admin_client: Data<KeycloakAdminClient>,
-    current_tenant: ReqData<Tenant>,
-    current_user: ReqData<User>,
+    service: Data<OpenTalkControllerService>,
+    current_user: ReqData<RequestUser>,
     query: Query<GetEventsQuery>,
 ) -> DefaultApiResult<Vec<EventOrException>> {
-    let (event_resources, before, after) = get_events_inner(
-        &settings.load_full(),
-        &db,
-        &kc_admin_client,
-        current_tenant.into_inner(),
-        current_user.into_inner(),
-        query.into_inner(),
-    )
-    .await?;
+    let (event_resources, before, after) = service
+        .get_events(current_user.into_inner(), query.into_inner())
+        .await?;
 
     Ok(ApiResponse::new(event_resources).with_cursor_pagination(before, after))
 }
@@ -192,24 +165,18 @@ pub async fn get_events(
 )]
 #[get("/events/{event_id}")]
 pub async fn get_event(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
-    kc_admin_client: Data<KeycloakAdminClient>,
-    current_tenant: ReqData<Tenant>,
-    current_user: ReqData<User>,
+    service: Data<OpenTalkControllerService>,
+    current_user: ReqData<RequestUser>,
     event_id: Path<EventId>,
     query: Query<GetEventQuery>,
 ) -> DefaultApiResult<EventResource> {
-    let event_resource = get_event_inner(
-        &settings.load_full(),
-        &db,
-        &kc_admin_client,
-        current_tenant.into_inner(),
-        current_user.into_inner(),
-        event_id.into_inner(),
-        query.into_inner(),
-    )
-    .await?;
+    let event_resource = service
+        .get_event(
+            current_user.into_inner(),
+            event_id.into_inner(),
+            query.into_inner(),
+        )
+        .await?;
 
     Ok(ApiResponse::new(event_resource))
 }
@@ -258,30 +225,20 @@ pub async fn get_event(
 )]
 #[patch("/events/{event_id}")]
 pub async fn patch_event(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
-    authz: Data<Authz>,
-    kc_admin_client: Data<KeycloakAdminClient>,
-    current_tenant: ReqData<Tenant>,
-    current_user: ReqData<User>,
+    service: Data<OpenTalkControllerService>,
+    current_user: ReqData<RequestUser>,
     event_id: Path<EventId>,
     query: Query<PatchEventQuery>,
     patch: Json<PatchEventBody>,
-    mail_service: Data<MailService>,
 ) -> Result<Either<ApiResponse<EventResource>, NoContent>, ApiError> {
-    let event_resource = patch_event_inner(
-        &settings.load_full(),
-        &db,
-        &authz,
-        &kc_admin_client,
-        current_tenant.into_inner(),
-        current_user.into_inner(),
-        event_id.into_inner(),
-        query.into_inner(),
-        patch.into_inner(),
-        &mail_service,
-    )
-    .await?;
+    let event_resource = service
+        .patch_event(
+            current_user.into_inner(),
+            event_id.into_inner(),
+            query.into_inner(),
+            patch.into_inner(),
+        )
+        .await?;
 
     match event_resource {
         Some(event_resource) => Ok(Either::Left(ApiResponse::new(event_resource))),
@@ -328,32 +285,18 @@ pub async fn patch_event(
 #[delete("/events/{event_id}")]
 #[allow(clippy::too_many_arguments)]
 pub async fn delete_event(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
-    storage: Data<ObjectStorage>,
-    exchange_handle: Data<ExchangeHandle>,
-    kc_admin_client: Data<KeycloakAdminClient>,
-    current_tenant: ReqData<Tenant>,
-    current_user: ReqData<User>,
-    authz: Data<Authz>,
-    query: Query<DeleteEventsQuery>,
+    service: Data<OpenTalkControllerService>,
+    current_user: ReqData<RequestUser>,
     event_id: Path<EventId>,
-    mail_service: Data<MailService>,
+    query: Query<DeleteEventsQuery>,
 ) -> Result<NoContent, ApiError> {
-    delete_event_inner(
-        &settings.load_full(),
-        &db,
-        &storage,
-        &exchange_handle,
-        &kc_admin_client,
-        current_tenant.into_inner(),
-        current_user.into_inner(),
-        &authz,
-        query.into_inner(),
-        event_id.into_inner(),
-        &mail_service,
-    )
-    .await?;
+    service
+        .delete_event(
+            current_user.into_inner(),
+            event_id.into_inner(),
+            query.into_inner(),
+        )
+        .await?;
 
     Ok(NoContent)
 }
@@ -369,7 +312,6 @@ pub struct EventRescheduleBody {
 
 #[post("/events/{event_id}/reschedule")]
 pub async fn event_reschedule(
-    _db: Data<Db>,
     _event_id: Path<EventId>,
     _body: Json<EventRescheduleBody>,
 ) -> actix_web::HttpResponse {

@@ -34,9 +34,11 @@ use opentalk_types_api_v1::{
     auth::{GetLoginResponseBody, OidcProvider},
     error::ApiError,
     events::{
-        DeleteSharedFolderQuery, EventInstance, EventInstancePath, EventInstanceQuery,
+        DeleteEventsQuery, DeleteSharedFolderQuery, EventInstance, EventInstancePath,
+        EventInstanceQuery, EventOptionsQuery, EventOrException, EventResource,
         GetEventInstanceResponseBody, GetEventInstancesQuery, GetEventInstancesResponseBody,
-        PatchEventInstanceBody, PutSharedFolderQuery, StreamingTargetOptionsQuery,
+        GetEventQuery, GetEventsQuery, PatchEventBody, PatchEventInstanceBody, PatchEventQuery,
+        PostEventsBody, PutSharedFolderQuery, StreamingTargetOptionsQuery,
     },
     pagination::PagePaginationQuery,
     rooms::{
@@ -236,6 +238,53 @@ impl OpenTalkControllerServiceBackend for ControllerBackend {
 
     async fn delete_room_asset(&self, room_id: RoomId, asset_id: AssetId) -> Result<(), ApiError> {
         Ok(self.delete_room_asset(room_id, asset_id).await?)
+    }
+
+    async fn new_event(
+        &self,
+        current_user: RequestUser,
+        event: PostEventsBody,
+        query: EventOptionsQuery,
+    ) -> Result<EventResource, ApiError> {
+        Ok(self.new_event(current_user, event, query).await?)
+    }
+
+    async fn get_events(
+        &self,
+        current_user: RequestUser,
+        query: GetEventsQuery,
+    ) -> Result<(Vec<EventOrException>, Option<String>, Option<String>), ApiError> {
+        Ok(self.get_events(current_user, query).await?)
+    }
+
+    async fn get_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+        query: GetEventQuery,
+    ) -> Result<EventResource, ApiError> {
+        Ok(self.get_event(current_user, event_id, query).await?)
+    }
+
+    async fn patch_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+        query: PatchEventQuery,
+        patch: PatchEventBody,
+    ) -> Result<Option<EventResource>, ApiError> {
+        Ok(self
+            .patch_event(current_user, event_id, query, patch)
+            .await?)
+    }
+
+    async fn delete_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+        query: DeleteEventsQuery,
+    ) -> Result<(), ApiError> {
+        Ok(self.delete_event(current_user, event_id, query).await?)
     }
 
     async fn get_event_instances(

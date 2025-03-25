@@ -15,9 +15,11 @@ use opentalk_types_api_v1::{
     auth::GetLoginResponseBody,
     error::ApiError,
     events::{
-        DeleteSharedFolderQuery, EventInstance, EventInstancePath, EventInstanceQuery,
+        DeleteEventsQuery, DeleteSharedFolderQuery, EventInstance, EventInstancePath,
+        EventInstanceQuery, EventOptionsQuery, EventOrException, EventResource,
         GetEventInstanceResponseBody, GetEventInstancesQuery, GetEventInstancesResponseBody,
-        PatchEventInstanceBody, PutSharedFolderQuery, StreamingTargetOptionsQuery,
+        GetEventQuery, GetEventsQuery, PatchEventBody, PatchEventInstanceBody, PatchEventQuery,
+        PostEventsBody, PutSharedFolderQuery, StreamingTargetOptionsQuery,
     },
     pagination::PagePaginationQuery,
     rooms::{
@@ -225,6 +227,76 @@ impl OpenTalkControllerService {
             .read()
             .await
             .delete_room_asset(room_id, asset_id)
+            .await
+    }
+
+    /// Create a new event
+    pub async fn new_event(
+        &self,
+        current_user: RequestUser,
+        event: PostEventsBody,
+        query: EventOptionsQuery,
+    ) -> Result<EventResource, ApiError> {
+        self.backend
+            .read()
+            .await
+            .new_event(current_user, event, query)
+            .await
+    }
+
+    /// Get a list of events accessible by the requesting user
+    pub async fn get_events(
+        &self,
+        current_user: RequestUser,
+        query: GetEventsQuery,
+    ) -> Result<(Vec<EventOrException>, Option<String>, Option<String>), ApiError> {
+        self.backend
+            .read()
+            .await
+            .get_events(current_user, query)
+            .await
+    }
+
+    /// Get an event
+    pub async fn get_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+        query: GetEventQuery,
+    ) -> Result<EventResource, ApiError> {
+        self.backend
+            .read()
+            .await
+            .get_event(current_user, event_id, query)
+            .await
+    }
+
+    /// Patch an event
+    pub async fn patch_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+        query: PatchEventQuery,
+        patch: PatchEventBody,
+    ) -> Result<Option<EventResource>, ApiError> {
+        self.backend
+            .read()
+            .await
+            .patch_event(current_user, event_id, query, patch)
+            .await
+    }
+
+    /// Delete an event and its owned resources, including the associated room.
+    pub async fn delete_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+        query: DeleteEventsQuery,
+    ) -> Result<(), ApiError> {
+        self.backend
+            .read()
+            .await
+            .delete_event(current_user, event_id, query)
             .await
     }
 
