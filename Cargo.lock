@@ -5251,7 +5251,6 @@ dependencies = [
  "opentalk-signaling-core",
  "opentalk-signaling-module-chat",
  "opentalk-signaling-module-core",
- "opentalk-signaling-module-e2ee",
  "opentalk-signaling-module-integration",
  "opentalk-signaling-module-livekit",
  "opentalk-signaling-module-meeting-notes",
