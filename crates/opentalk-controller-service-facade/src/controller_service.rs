@@ -15,11 +15,13 @@ use opentalk_types_api_v1::{
     auth::GetLoginResponseBody,
     error::ApiError,
     events::{
-        DeleteEventsQuery, DeleteSharedFolderQuery, EventInstance, EventInstancePath,
-        EventInstanceQuery, EventOptionsQuery, EventOrException, EventResource,
+        by_event_id::invites::GetEventsInvitesQuery, DeleteEventInvitePath, DeleteEventsQuery,
+        DeleteSharedFolderQuery, EventInstance, EventInstancePath, EventInstanceQuery,
+        EventInvitee, EventOptionsQuery, EventOrException, EventResource,
         GetEventInstanceResponseBody, GetEventInstancesQuery, GetEventInstancesResponseBody,
-        GetEventQuery, GetEventsQuery, PatchEventBody, PatchEventInstanceBody, PatchEventQuery,
-        PostEventsBody, PutSharedFolderQuery, StreamingTargetOptionsQuery,
+        GetEventQuery, GetEventsQuery, PatchEmailInviteBody, PatchEventBody,
+        PatchEventInstanceBody, PatchEventQuery, PatchInviteBody, PostEventInviteBody,
+        PostEventInviteQuery, PostEventsBody, PutSharedFolderQuery, StreamingTargetOptionsQuery,
     },
     pagination::PagePaginationQuery,
     rooms::{
@@ -40,12 +42,13 @@ use opentalk_types_api_v1::{
         GetRoomsResponseBody, RoomResource,
     },
     users::{
-        me::PatchMeRequestBody, GetFindQuery, GetFindResponseBody, GetUserAssetsResponseBody,
-        PrivateUserProfile, PublicUserProfile,
+        me::PatchMeRequestBody, GetEventInvitesPendingResponseBody, GetFindQuery,
+        GetFindResponseBody, GetUserAssetsResponseBody, PrivateUserProfile, PublicUserProfile,
     },
 };
 use opentalk_types_common::{
     assets::AssetId,
+    email::EmailAddress,
     events::EventId,
     modules::ModuleId,
     rooms::{invite_codes::InviteCode, RoomId, RoomPassword},
@@ -347,6 +350,131 @@ impl OpenTalkControllerService {
             .read()
             .await
             .patch_event_instance(current_user, path, query, patch)
+            .await
+    }
+
+    /// Get the invites for an event
+    pub async fn get_invites_for_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+        query: GetEventsInvitesQuery,
+    ) -> Result<(Vec<EventInvitee>, i64, i64, i64), ApiError> {
+        self.backend
+            .read()
+            .await
+            .get_invites_for_event(current_user, event_id, query)
+            .await
+    }
+
+    /// Create a new invite to an event
+    pub async fn create_invite_to_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+        query: PostEventInviteQuery,
+        create_invite: PostEventInviteBody,
+    ) -> Result<bool, ApiError> {
+        self.backend
+            .read()
+            .await
+            .create_invite_to_event(current_user, event_id, query, create_invite)
+            .await
+    }
+
+    /// Patch an event invite with the provided fields
+    pub async fn update_invite_to_event(
+        &self,
+        current_user: &RequestUser,
+        event_id: EventId,
+        user_id: UserId,
+        update_invite: &PatchInviteBody,
+    ) -> Result<(), ApiError> {
+        self.backend
+            .read()
+            .await
+            .update_invite_to_event(current_user, event_id, user_id, update_invite)
+            .await
+    }
+
+    /// Patch an event email invite with the provided fields
+    pub async fn update_email_invite_to_event(
+        &self,
+        current_user: &RequestUser,
+        event_id: EventId,
+        update_invite: &PatchEmailInviteBody,
+    ) -> Result<(), ApiError> {
+        self.backend
+            .read()
+            .await
+            .update_email_invite_to_event(current_user, event_id, update_invite)
+            .await
+    }
+
+    /// Delete an invite from an event
+    pub async fn delete_invite_to_event(
+        &self,
+        current_user: RequestUser,
+        path: DeleteEventInvitePath,
+        query: EventOptionsQuery,
+    ) -> Result<(), ApiError> {
+        self.backend
+            .read()
+            .await
+            .delete_invite_to_event(current_user, path, query)
+            .await
+    }
+
+    /// Delete an invite from an event
+    pub async fn delete_email_invite_to_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+        email: EmailAddress,
+        query: EventOptionsQuery,
+    ) -> Result<(), ApiError> {
+        self.backend
+            .read()
+            .await
+            .delete_email_invite_to_event(current_user, event_id, email, query)
+            .await
+    }
+
+    /// Get information about pending invites
+    pub async fn get_event_invites_pending(
+        &self,
+        user_id: UserId,
+    ) -> Result<GetEventInvitesPendingResponseBody, ApiError> {
+        self.backend
+            .read()
+            .await
+            .get_event_invites_pending(user_id)
+            .await
+    }
+
+    /// Accept an invite to an event
+    pub async fn accept_event_invite(
+        &self,
+        user_id: UserId,
+        event_id: EventId,
+    ) -> Result<(), ApiError> {
+        self.backend
+            .read()
+            .await
+            .accept_event_invite(user_id, event_id)
+            .await
+    }
+
+    /// Decline an invite to an event
+    pub async fn decline_event_invite(
+        &self,
+        user_id: UserId,
+        event_id: EventId,
+    ) -> Result<(), ApiError> {
+        self.backend
+            .read()
+            .await
+            .decline_event_invite(user_id, event_id)
             .await
     }
 

@@ -7,6 +7,7 @@
 use chrono::Utc;
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
 use kustos::{policies_builder::PoliciesBuilder, Authz};
+use opentalk_controller_service_facade::RequestUser;
 use opentalk_controller_settings::Settings;
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::{DatabaseError, Db};
@@ -64,107 +65,408 @@ use crate::{
 };
 
 impl ControllerBackend {
-    // TODO(WR) impls according to the *_inner fn's
-}
+    pub(crate) async fn get_invites_for_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+        GetEventsInvitesQuery {
+            pagination: PagePaginationQuery { per_page, page },
+            status: status_filter,
+        }: GetEventsInvitesQuery,
+    ) -> Result<(Vec<EventInvitee>, i64, i64, i64), CaptureApiError> {
+        let settings = self.settings.load();
+        let mut conn = self.db.get_conn().await?;
 
-/// TODO(WR) new
-pub async fn get_invites_for_event_inner(
-    settings: &Settings,
-    db: &Db,
-    kc_admin_client: &KeycloakAdminClient,
-    current_tenant: &Tenant,
-    event_id: EventId,
-    GetEventsInvitesQuery {
-        pagination: PagePaginationQuery { per_page, page },
-        status: status_filter,
-    }: GetEventsInvitesQuery,
-) -> Result<(Vec<EventInvitee>, i64, i64, i64), CaptureApiError> {
-    let mut conn = db.get_conn().await?;
+        // FIXME: Preliminary solution, consider using UNION when Diesel supports it.
+        // As in #[get("/events")], we simply get all invitees and truncate them afterwards.
+        // Note that get_for_event_paginated returns a total record count of 0 when paging beyond the end.
 
-    // FIXME: Preliminary solution, consider using UNION when Diesel supports it.
-    // As in #[get("/events")], we simply get all invitees and truncate them afterwards.
-    // Note that get_for_event_paginated returns a total record count of 0 when paging beyond the end.
+        let (event_invites_with_user, event_invites_total) =
+            EventInvite::get_for_event_paginated(&mut conn, event_id, i64::MAX, 1, status_filter)
+                .await?;
 
-    let (event_invites_with_user, event_invites_total) =
-        EventInvite::get_for_event_paginated(&mut conn, event_id, i64::MAX, 1, status_filter)
-            .await?;
+        let event_invitees_iter =
+            event_invites_with_user
+                .into_iter()
+                .map(|(event_invite, user)| {
+                    EventInvitee::from_invite_with_user(event_invite, user, &settings)
+                });
 
-    let event_invitees_iter = event_invites_with_user
-        .into_iter()
-        .map(|(event_invite, user)| {
-            EventInvitee::from_invite_with_user(event_invite, user, settings)
+        let (event_email_invites, event_email_invites_total) =
+            EventEmailInvite::get_for_event_paginated(&mut conn, event_id, i64::MAX, 1).await?;
+
+        let current_tenant = Tenant::get(&mut conn, current_user.tenant_id).await?;
+
+        drop(conn);
+
+        let event_email_invitees_iter = event_email_invites.into_iter().map(|event_email_invite| {
+            EventInvitee::from_email_invite(event_email_invite, &settings)
         });
 
-    let (event_email_invites, event_email_invites_total) =
-        EventEmailInvite::get_for_event_paginated(&mut conn, event_id, i64::MAX, 1).await?;
+        let invitees_to_skip_count = (page - 1) * per_page;
+        let invitees = event_invitees_iter
+            .chain(event_email_invitees_iter)
+            .skip(invitees_to_skip_count as usize)
+            .take(per_page as usize)
+            .collect();
 
-    drop(conn);
+        let invitees = enrich_invitees_from_keycloak(
+            &settings,
+            &self.kc_admin_client,
+            &current_tenant,
+            invitees,
+        )
+        .await;
 
-    let event_email_invitees_iter = event_email_invites
-        .into_iter()
-        .map(|event_email_invite| EventInvitee::from_email_invite(event_email_invite, settings));
+        Ok((
+            invitees,
+            per_page,
+            page,
+            event_invites_total + event_email_invites_total,
+        ))
+    }
 
-    let invitees_to_skip_count = (page - 1) * per_page;
-    let invitees = event_invitees_iter
-        .chain(event_email_invitees_iter)
-        .skip(invitees_to_skip_count as usize)
-        .take(per_page as usize)
-        .collect();
+    pub(crate) async fn create_invite_to_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+        query: PostEventInviteQuery,
+        create_invite: PostEventInviteBody,
+    ) -> Result<bool, CaptureApiError> {
+        let settings = self.settings.load();
+        let mut conn = self.db.get_conn().await?;
 
-    let invitees =
-        enrich_invitees_from_keycloak(settings, kc_admin_client, current_tenant, invitees).await;
+        let send_email_notification = !query.suppress_email_notification;
 
-    Ok((
-        invitees,
-        per_page,
-        page,
-        event_invites_total + event_email_invites_total,
-    ))
-}
+        let current_tenant = Tenant::get(&mut conn, current_user.tenant_id).await?;
+        let current_user = User::get(&mut conn, current_user.id).await?;
 
-#[allow(clippy::too_many_arguments)]
-/// TODO(WR) new
-pub async fn create_invite_to_event_inner(
-    settings: &Settings,
-    db: &Db,
-    authz: &Authz,
-    kc_admin_client: &KeycloakAdminClient,
-    current_tenant: &Tenant,
-    current_user: User,
-    event_id: EventId,
-    query: PostEventInviteQuery,
-    create_invite: PostEventInviteBody,
-    mail_service: &MailService,
-) -> Result<bool, CaptureApiError> {
-    let send_email_notification = !query.suppress_email_notification;
-    match create_invite {
-        PostEventInviteBody::User(user_invite) => {
-            create_user_event_invite(
-                db,
-                authz,
-                current_user,
-                event_id,
-                user_invite,
-                mail_service,
-                send_email_notification,
-            )
-            .await
+        match create_invite {
+            PostEventInviteBody::User(user_invite) => {
+                create_user_event_invite(
+                    &self.db,
+                    &self.authz,
+                    current_user,
+                    event_id,
+                    user_invite,
+                    &self.mail_service,
+                    send_email_notification,
+                )
+                .await
+            }
+            PostEventInviteBody::Email(email_invite) => {
+                create_email_event_invite(
+                    &settings,
+                    &self.db,
+                    &self.authz,
+                    &self.kc_admin_client,
+                    &current_tenant,
+                    &current_user,
+                    event_id,
+                    email_invite,
+                    &self.mail_service,
+                    send_email_notification,
+                )
+                .await
+            }
         }
-        PostEventInviteBody::Email(email_invite) => {
-            create_email_event_invite(
-                settings,
-                db,
-                authz,
-                kc_admin_client,
-                current_tenant,
-                &current_user,
-                event_id,
-                email_invite,
-                mail_service,
-                send_email_notification,
-            )
-            .await
+    }
+
+    pub(crate) async fn update_invite_to_event(
+        &self,
+        current_user: &RequestUser,
+        event_id: EventId,
+        user_id: UserId,
+        update_invite: &PatchInviteBody,
+    ) -> Result<(), CaptureApiError> {
+        let mut conn = self.db.get_conn().await?;
+
+        let event = Event::get(&mut conn, event_id).await?;
+
+        if event.created_by != current_user.id {
+            return Err(ApiError::forbidden().into());
         }
+
+        let changeset = UpdateEventInvite {
+            status: None,
+            role: update_invite.role,
+        };
+
+        _ = changeset.apply(&mut conn, user_id, event_id).await?;
+
+        Ok(())
+    }
+
+    pub(crate) async fn update_email_invite_to_event(
+        &self,
+        current_user: &RequestUser,
+        event_id: EventId,
+        update_invite: &PatchEmailInviteBody,
+    ) -> Result<(), CaptureApiError> {
+        let mut conn = self.db.get_conn().await?;
+
+        let event = Event::get(&mut conn, event_id).await?;
+
+        if event.created_by != current_user.id {
+            return Err(ApiError::forbidden().into());
+        }
+
+        let changeset = UpdateEventEmailInvite {
+            role: update_invite.role,
+        };
+
+        _ = changeset
+            .apply(&mut conn, update_invite.email.to_string(), event_id)
+            .await?;
+
+        Ok(())
+    }
+
+    pub(crate) async fn delete_invite_to_event(
+        &self,
+        current_user: RequestUser,
+        DeleteEventInvitePath { event_id, user_id }: DeleteEventInvitePath,
+        query: EventOptionsQuery,
+    ) -> Result<(), CaptureApiError> {
+        let settings = self.settings.load();
+
+        let send_email_notification = !query.suppress_email_notification;
+        let mut conn = self.db.get_conn().await?;
+
+        // TODO(w.rabl) Further DB access optimization (replacing call to get_with_invite_and_room)?
+        let (
+            event,
+            _invite,
+            room,
+            sip_config,
+            _is_favorite,
+            shared_folder,
+            _tariff,
+            _training_participation_report_parameter_set,
+        ) = Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
+        let streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
+
+        let current_tenant = Tenant::get(&mut conn, current_user.tenant_id).await?;
+        let current_user = User::get(&mut conn, current_user.id).await?;
+
+        let created_by = if event.created_by == current_user.id {
+            current_user.clone()
+        } else {
+            User::get(&mut conn, event.created_by).await?
+        };
+
+        let invited_users = get_invited_mail_recipients_for_event(&mut conn, event_id).await?;
+
+        let (room_id, invite) = conn
+            .transaction(|conn| {
+                async move {
+                    // delete invite to the event
+                    let invite = EventInvite::delete_by_invitee(conn, event_id, user_id).await?;
+
+                    // user access is going to be removed for the event, remove favorite entry if it exists
+                    _ = EventFavorite::delete_by_id(conn, current_user.id, event_id).await?;
+
+                    let event = Event::get(conn, invite.event_id).await?;
+
+                    // TODO: type inference just dies here with this
+                    Ok::<(RoomId, EventInvite), DatabaseError>((event.room, invite))
+                }
+                .scope_boxed()
+            })
+            .await?;
+
+        drop(conn);
+
+        if send_email_notification {
+            // Notify just the specified user. Currently, unlike the create_invite_to_event counterpart, this endpoint
+            // only handles and notifies a single registered user. This somehow contradicts patch_event and delete_event
+            // as well.
+            // See this issue for more details: https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/499.
+            let users_to_notify: Vec<MailRecipient> = invited_users
+                .into_iter()
+                .filter(|user| match user {
+                    MailRecipient::Registered(user) => user.id == user_id,
+                    MailRecipient::Unregistered(_) => false,
+                    MailRecipient::External(_) => false,
+                })
+                .collect();
+
+            let notification_values = UninviteNotificationValues {
+                tenant: current_tenant,
+                created_by,
+                event,
+                room,
+                sip_config,
+                users_to_notify,
+            };
+
+            notify_invitees_about_uninvite(
+                &settings,
+                notification_values,
+                &self.mail_service,
+                &self.kc_admin_client,
+                shared_folder.map(SharedFolder::from),
+                streaming_targets,
+            )
+            .await;
+        }
+
+        remove_invitee_permissions(&self.authz, event_id, room_id, invite.invitee).await?;
+
+        Ok(())
+    }
+
+    pub(crate) async fn delete_email_invite_to_event(
+        &self,
+        current_user: RequestUser,
+        event_id: EventId,
+        email: EmailAddress,
+        query: EventOptionsQuery,
+    ) -> Result<(), CaptureApiError> {
+        let settings = self.settings.load();
+        let mut conn = self.db.get_conn().await?;
+
+        let email = email.to_lowercase().to_string();
+
+        let current_tenant = Tenant::get(&mut conn, current_user.tenant_id).await?;
+        let current_user = User::get(&mut conn, current_user.id).await?;
+
+        let tenant_filter = get_tenant_filter(&current_tenant, &settings.tenants.assignment);
+
+        let send_email_notification = !query.suppress_email_notification;
+
+        let (
+            event,
+            _invite,
+            room,
+            sip_config,
+            _is_favorite,
+            shared_folder,
+            _tariff,
+            _training_participation_report_parameter_set,
+        ) = Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
+        let streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
+
+        let created_by = if event.created_by == current_user.id {
+            current_user.clone()
+        } else {
+            User::get(&mut conn, event.created_by).await?
+        };
+
+        let user_from_db = User::get_by_email(&mut conn, current_tenant.id, &email).await?;
+
+        let mail_recipient = if let Some(user) = user_from_db {
+            let user_id = user.id;
+
+            conn.transaction(|conn| {
+                async move {
+                    // delete invite to the event
+                    log::error!("deleting: {event_id}, {user_id}");
+
+                    _ = EventInvite::delete_by_invitee(conn, event_id, user_id).await?;
+
+                    // user access is going to be removed for the event, remove favorite entry if it exists
+                    _ = EventFavorite::delete_by_id(conn, current_user.id, event_id).await?;
+
+                    Ok::<(), DatabaseError>(())
+                }
+                .scope_boxed()
+            })
+            .await?;
+
+            remove_invitee_permissions(&self.authz, event_id, room.id, user_id).await?;
+
+            MailRecipient::Registered(RegisteredMailRecipient {
+                email,
+                ..user.into()
+            })
+        } else if let Ok(Some(user)) = self
+            .kc_admin_client
+            .get_user_for_email(tenant_filter, email.as_ref())
+            .await
+        {
+            _ = EventEmailInvite::delete(&mut conn, &event_id, &email).await?;
+
+            MailRecipient::Unregistered(UnregisteredMailRecipient {
+                email,
+                first_name: user.first_name,
+                last_name: user.last_name,
+            })
+        } else {
+            _ = EventEmailInvite::delete(&mut conn, &event_id, &email).await?;
+
+            MailRecipient::External(ExternalMailRecipient { email })
+        };
+
+        if send_email_notification {
+            let notification_values = UninviteNotificationValues {
+                tenant: current_tenant,
+                created_by,
+                event,
+                room,
+                sip_config,
+                users_to_notify: vec![mail_recipient],
+            };
+
+            notify_invitees_about_uninvite(
+                &settings,
+                notification_values,
+                &self.mail_service,
+                &self.kc_admin_client,
+                shared_folder.map(SharedFolder::from),
+                streaming_targets,
+            )
+            .await;
+        }
+
+        Ok(())
+    }
+
+    pub(crate) async fn get_event_invites_pending(
+        &self,
+        user_id: UserId,
+    ) -> Result<GetEventInvitesPendingResponseBody, CaptureApiError> {
+        let mut conn = self.db.get_conn().await?;
+
+        let event_invites = EventInvite::get_pending_for_user(&mut conn, user_id).await?;
+
+        Ok(GetEventInvitesPendingResponseBody {
+            total_pending_invites: event_invites.len() as u32,
+        })
+    }
+
+    pub(crate) async fn accept_event_invite(
+        &self,
+        user_id: UserId,
+        event_id: EventId,
+    ) -> Result<(), CaptureApiError> {
+        let mut conn = self.db.get_conn().await?;
+
+        let changeset = UpdateEventInvite {
+            status: Some(EventInviteStatus::Accepted),
+            role: None,
+        };
+
+        _ = changeset.apply(&mut conn, user_id, event_id).await?;
+
+        Ok(())
+    }
+
+    pub(crate) async fn decline_event_invite(
+        &self,
+        user_id: UserId,
+        event_id: EventId,
+    ) -> Result<(), CaptureApiError> {
+        let mut conn = self.db.get_conn().await?;
+
+        let changeset = UpdateEventInvite {
+            status: Some(EventInviteStatus::Declined),
+            role: None,
+        };
+
+        _ = changeset.apply(&mut conn, user_id, event_id).await?;
+
+        Ok(())
     }
 }
 
@@ -528,57 +830,6 @@ async fn create_invite_to_non_matching_email(
     }
 }
 
-/// TODO(WR) new
-pub async fn update_invite_to_event_inner(
-    db: &Db,
-    current_user: &User,
-    (event_id, user_id): (EventId, UserId),
-    update_invite: &PatchInviteBody,
-) -> Result<(), CaptureApiError> {
-    let mut conn = db.get_conn().await?;
-
-    let event = Event::get(&mut conn, event_id).await?;
-
-    if event.created_by != current_user.id {
-        return Err(ApiError::forbidden().into());
-    }
-
-    let changeset = UpdateEventInvite {
-        status: None,
-        role: update_invite.role,
-    };
-
-    _ = changeset.apply(&mut conn, user_id, event_id).await?;
-
-    Ok(())
-}
-
-/// TODO(WR) new
-pub async fn update_email_invite_to_event_inner(
-    db: &Db,
-    current_user: &User,
-    event_id: EventId,
-    update_invite: &PatchEmailInviteBody,
-) -> Result<(), CaptureApiError> {
-    let mut conn = db.get_conn().await?;
-
-    let event = Event::get(&mut conn, event_id).await?;
-
-    if event.created_by != current_user.id {
-        return Err(ApiError::forbidden().into());
-    }
-
-    let changeset = UpdateEventEmailInvite {
-        role: update_invite.role,
-    };
-
-    _ = changeset
-        .apply(&mut conn, update_invite.email.to_string(), event_id)
-        .await?;
-
-    Ok(())
-}
-
 struct UninviteNotificationValues {
     pub tenant: Tenant,
     pub created_by: User,
@@ -586,209 +837,6 @@ struct UninviteNotificationValues {
     pub room: Room,
     pub sip_config: Option<SipConfig>,
     pub users_to_notify: Vec<MailRecipient>,
-}
-
-#[allow(clippy::too_many_arguments)]
-/// TODO(WR) new
-pub async fn delete_invite_to_event_inner(
-    settings: &Settings,
-    db: &Db,
-    kc_admin_client: &KeycloakAdminClient,
-    current_tenant: Tenant,
-    current_user: User,
-    authz: &Authz,
-    DeleteEventInvitePath { event_id, user_id }: DeleteEventInvitePath,
-    query: EventOptionsQuery,
-    mail_service: &MailService,
-) -> Result<(), CaptureApiError> {
-    let send_email_notification = !query.suppress_email_notification;
-    let mut conn = db.get_conn().await?;
-
-    // TODO(w.rabl) Further DB access optimization (replacing call to get_with_invite_and_room)?
-    let (
-        event,
-        _invite,
-        room,
-        sip_config,
-        _is_favorite,
-        shared_folder,
-        _tariff,
-        _training_participation_report_parameter_set,
-    ) = Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
-    let streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
-
-    let created_by = if event.created_by == current_user.id {
-        current_user.clone()
-    } else {
-        User::get(&mut conn, event.created_by).await?
-    };
-
-    let invited_users = get_invited_mail_recipients_for_event(&mut conn, event_id).await?;
-
-    let (room_id, invite) = conn
-        .transaction(|conn| {
-            async move {
-                // delete invite to the event
-                let invite = EventInvite::delete_by_invitee(conn, event_id, user_id).await?;
-
-                // user access is going to be removed for the event, remove favorite entry if it exists
-                _ = EventFavorite::delete_by_id(conn, current_user.id, event_id).await?;
-
-                let event = Event::get(conn, invite.event_id).await?;
-
-                // TODO: type inference just dies here with this
-                Ok::<(RoomId, EventInvite), DatabaseError>((event.room, invite))
-            }
-            .scope_boxed()
-        })
-        .await?;
-
-    drop(conn);
-
-    if send_email_notification {
-        // Notify just the specified user. Currently, unlike the create_invite_to_event counterpart, this endpoint
-        // only handles and notifies a single registered user. This somehow contradicts patch_event and delete_event
-        // as well.
-        // See this issue for more details: https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/499.
-        let users_to_notify: Vec<MailRecipient> = invited_users
-            .into_iter()
-            .filter(|user| match user {
-                MailRecipient::Registered(user) => user.id == user_id,
-                MailRecipient::Unregistered(_) => false,
-                MailRecipient::External(_) => false,
-            })
-            .collect();
-
-        let notification_values = UninviteNotificationValues {
-            tenant: current_tenant,
-            created_by,
-            event,
-            room,
-            sip_config,
-            users_to_notify,
-        };
-
-        notify_invitees_about_uninvite(
-            settings,
-            notification_values,
-            mail_service,
-            kc_admin_client,
-            shared_folder.map(SharedFolder::from),
-            streaming_targets,
-        )
-        .await;
-    }
-
-    remove_invitee_permissions(authz, event_id, room_id, invite.invitee).await?;
-
-    Ok(())
-}
-
-#[allow(clippy::too_many_arguments)]
-/// TODO(WR) new
-pub async fn delete_email_invite_to_event_inner(
-    settings: &Settings,
-    db: &Db,
-    kc_admin_client: &KeycloakAdminClient,
-    current_tenant: Tenant,
-    current_user: User,
-    authz: &Authz,
-    event_id: EventId,
-    query: EventOptionsQuery,
-    mail_service: &MailService,
-    email: EmailAddress,
-) -> Result<(), CaptureApiError> {
-    let email = email.to_lowercase().to_string();
-    let tenant_filter = get_tenant_filter(&current_tenant, &settings.tenants.assignment);
-
-    let send_email_notification = !query.suppress_email_notification;
-
-    let mut conn = db.get_conn().await?;
-
-    let (
-        event,
-        _invite,
-        room,
-        sip_config,
-        _is_favorite,
-        shared_folder,
-        _tariff,
-        _training_participation_report_parameter_set,
-    ) = Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
-    let streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
-
-    let created_by = if event.created_by == current_user.id {
-        current_user.clone()
-    } else {
-        User::get(&mut conn, event.created_by).await?
-    };
-
-    let user_from_db = User::get_by_email(&mut conn, current_tenant.id, &email).await?;
-
-    let mail_recipient = if let Some(user) = user_from_db {
-        let user_id = user.id;
-
-        conn.transaction(|conn| {
-            async move {
-                // delete invite to the event
-                log::error!("deleting: {event_id}, {user_id}");
-
-                _ = EventInvite::delete_by_invitee(conn, event_id, user_id).await?;
-
-                // user access is going to be removed for the event, remove favorite entry if it exists
-                _ = EventFavorite::delete_by_id(conn, current_user.id, event_id).await?;
-
-                Ok::<(), DatabaseError>(())
-            }
-            .scope_boxed()
-        })
-        .await?;
-
-        remove_invitee_permissions(authz, event_id, room.id, user_id).await?;
-
-        MailRecipient::Registered(RegisteredMailRecipient {
-            email,
-            ..user.into()
-        })
-    } else if let Ok(Some(user)) = kc_admin_client
-        .get_user_for_email(tenant_filter, email.as_ref())
-        .await
-    {
-        _ = EventEmailInvite::delete(&mut conn, &event_id, &email).await?;
-
-        MailRecipient::Unregistered(UnregisteredMailRecipient {
-            email,
-            first_name: user.first_name,
-            last_name: user.last_name,
-        })
-    } else {
-        _ = EventEmailInvite::delete(&mut conn, &event_id, &email).await?;
-
-        MailRecipient::External(ExternalMailRecipient { email })
-    };
-
-    if send_email_notification {
-        let notification_values = UninviteNotificationValues {
-            tenant: current_tenant,
-            created_by,
-            event,
-            room,
-            sip_config,
-            users_to_notify: vec![mail_recipient],
-        };
-
-        notify_invitees_about_uninvite(
-            settings,
-            notification_values,
-            mail_service,
-            kc_admin_client,
-            shared_folder.map(SharedFolder::from),
-            streaming_targets,
-        )
-        .await;
-    }
-
-    Ok(())
 }
 
 async fn remove_invitee_permissions(
@@ -863,54 +911,4 @@ async fn notify_invitees_about_uninvite(
             );
         }
     }
-}
-
-/// TODO(WR) new
-pub async fn get_event_invites_pending_inner(
-    db: &Db,
-    user_id: UserId,
-) -> Result<GetEventInvitesPendingResponseBody, CaptureApiError> {
-    let mut conn = db.get_conn().await?;
-
-    let event_invites = EventInvite::get_pending_for_user(&mut conn, user_id).await?;
-
-    Ok(GetEventInvitesPendingResponseBody {
-        total_pending_invites: event_invites.len() as u32,
-    })
-}
-
-/// TODO(WR) new
-pub async fn accept_event_invite_inner(
-    db: &Db,
-    user_id: UserId,
-    event_id: EventId,
-) -> Result<(), CaptureApiError> {
-    let mut conn = db.get_conn().await?;
-
-    let changeset = UpdateEventInvite {
-        status: Some(EventInviteStatus::Accepted),
-        role: None,
-    };
-
-    _ = changeset.apply(&mut conn, user_id, event_id).await?;
-
-    Ok(())
-}
-
-/// TODO(WR) new
-pub async fn decline_event_invite_inner(
-    db: &Db,
-    user_id: UserId,
-    event_id: EventId,
-) -> Result<(), CaptureApiError> {
-    let mut conn = db.get_conn().await?;
-
-    let changeset = UpdateEventInvite {
-        status: Some(EventInviteStatus::Declined),
-        role: None,
-    };
-
-    _ = changeset.apply(&mut conn, user_id, event_id).await?;
-
-    Ok(())
 }

@@ -7,19 +7,7 @@ use actix_web::{
     web::{Data, Json, Path, Query, ReqData},
     Either,
 };
-use kustos::Authz;
-use opentalk_controller_service::{
-    controller_backend::events::invites::{
-        accept_event_invite_inner, create_invite_to_event_inner, decline_event_invite_inner,
-        delete_email_invite_to_event_inner, delete_invite_to_event_inner,
-        get_event_invites_pending_inner, get_invites_for_event_inner,
-        update_email_invite_to_event_inner, update_invite_to_event_inner,
-    },
-    services::MailService,
-};
-use opentalk_database::Db;
-use opentalk_db_storage::{tenants::Tenant, users::User};
-use opentalk_keycloak_admin::KeycloakAdminClient;
+use opentalk_controller_service_facade::{OpenTalkControllerService, RequestUser};
 use opentalk_types_api_v1::{
     error::ApiError,
     events::{
@@ -33,13 +21,10 @@ use opentalk_types_common::{events::EventId, users::UserId};
 use serde::Deserialize;
 
 use super::{ApiResponse, DefaultApiResult};
-use crate::{
-    api::{
-        headers::CursorLink,
-        responses::{BadRequest, Forbidden, InternalServerError, NotFound, Unauthorized},
-        v1::response::{Created, NoContent},
-    },
-    settings::SharedSettingsActix,
+use crate::api::{
+    headers::CursorLink,
+    responses::{BadRequest, Forbidden, InternalServerError, NotFound, Unauthorized},
+    v1::response::{Created, NoContent},
 };
 
 /// Get the invites for an event
@@ -85,22 +70,18 @@ use crate::{
 )]
 #[get("/events/{event_id}/invites")]
 pub async fn get_invites_for_event(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
-    kc_admin_client: Data<KeycloakAdminClient>,
-    current_tenant: ReqData<Tenant>,
+    service: Data<OpenTalkControllerService>,
+    current_user: ReqData<RequestUser>,
     event_id: Path<EventId>,
     query: Query<GetEventsInvitesQuery>,
 ) -> DefaultApiResult<Vec<EventInvitee>> {
-    let (invitees, per_page, page, total) = get_invites_for_event_inner(
-        &settings.load_full(),
-        &db,
-        &kc_admin_client,
-        &current_tenant,
-        event_id.into_inner(),
-        query.into_inner(),
-    )
-    .await?;
+    let (invitees, per_page, page, total) = service
+        .get_invites_for_event(
+            current_user.into_inner(),
+            event_id.into_inner(),
+            query.into_inner(),
+        )
+        .await?;
 
     Ok(ApiResponse::new(invitees).with_page_pagination(per_page, page, total))
 }
@@ -148,36 +129,25 @@ pub async fn get_invites_for_event(
 #[post("/events/{event_id}/invites")]
 #[allow(clippy::too_many_arguments)]
 pub async fn create_invite_to_event(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
-    authz: Data<Authz>,
-    kc_admin_client: Data<KeycloakAdminClient>,
-    current_tenant: ReqData<Tenant>,
-    current_user: ReqData<User>,
+    service: Data<OpenTalkControllerService>,
+    current_user: ReqData<RequestUser>,
     event_id: Path<EventId>,
     query: Query<PostEventInviteQuery>,
     create_invite: Json<PostEventInviteBody>,
-    mail_service: Data<MailService>,
 ) -> Result<Either<Created, NoContent>, ApiError> {
-    let created = create_invite_to_event_inner(
-        &settings.load_full(),
-        &db,
-        &authz,
-        &kc_admin_client,
-        &current_tenant,
-        current_user.into_inner(),
-        event_id.into_inner(),
-        query.into_inner(),
-        create_invite.into_inner(),
-        &mail_service,
-    )
-    .await?;
+    let created = service
+        .create_invite_to_event(
+            current_user.into_inner(),
+            event_id.into_inner(),
+            query.into_inner(),
+            create_invite.into_inner(),
+        )
+        .await?;
 
-    Ok(if created {
-        Either::Left(Created)
-    } else {
-        Either::Right(NoContent)
-    })
+    match created {
+        true => Ok(Either::Left(Created)),
+        false => Ok(Either::Right(NoContent)),
+    }
 }
 
 /// Patch an event invite with the provided fields
@@ -218,18 +188,19 @@ pub async fn create_invite_to_event(
 )]
 #[patch("/events/{event_id}/invites/{user_id}")]
 pub async fn update_invite_to_event(
-    db: Data<Db>,
-    current_user: ReqData<User>,
+    service: Data<OpenTalkControllerService>,
+    current_user: ReqData<RequestUser>,
     path_parameters: Path<(EventId, UserId)>,
     update_invite: Json<PatchInviteBody>,
 ) -> Result<NoContent, ApiError> {
-    update_invite_to_event_inner(
-        &db,
-        &current_user,
-        path_parameters.into_inner(),
-        &update_invite,
-    )
-    .await?;
+    service
+        .update_invite_to_event(
+            &current_user,
+            path_parameters.0,
+            path_parameters.1,
+            &update_invite,
+        )
+        .await?;
 
     Ok(NoContent)
 }
@@ -271,18 +242,14 @@ pub async fn update_invite_to_event(
 )]
 #[patch("/events/{event_id}/invites/email")]
 pub async fn update_email_invite_to_event(
-    db: Data<Db>,
-    current_user: ReqData<User>,
+    service: Data<OpenTalkControllerService>,
+    current_user: ReqData<RequestUser>,
     path_parameters: Path<EventId>,
     update_invite: Json<PatchEmailInviteBody>,
 ) -> Result<NoContent, ApiError> {
-    update_email_invite_to_event_inner(
-        &db,
-        &current_user,
-        path_parameters.into_inner(),
-        &update_invite,
-    )
-    .await?;
+    service
+        .update_email_invite_to_event(&current_user, path_parameters.into_inner(), &update_invite)
+        .await?;
 
     Ok(NoContent)
 }
@@ -332,28 +299,18 @@ pub struct DeleteEventInviteQuery {
 #[delete("/events/{event_id}/invites/{user_id}")]
 #[allow(clippy::too_many_arguments)]
 pub async fn delete_invite_to_event(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
-    kc_admin_client: Data<KeycloakAdminClient>,
-    current_tenant: ReqData<Tenant>,
-    current_user: ReqData<User>,
-    authz: Data<Authz>,
+    service: Data<OpenTalkControllerService>,
+    current_user: ReqData<RequestUser>,
     path_params: Path<DeleteEventInvitePath>,
     query: Query<EventOptionsQuery>,
-    mail_service: Data<MailService>,
 ) -> Result<NoContent, ApiError> {
-    delete_invite_to_event_inner(
-        &settings.load_full(),
-        &db,
-        &kc_admin_client,
-        current_tenant.into_inner(),
-        current_user.into_inner(),
-        &authz,
-        path_params.into_inner(),
-        query.into_inner(),
-        &mail_service,
-    )
-    .await?;
+    service
+        .delete_invite_to_event(
+            current_user.into_inner(),
+            path_params.into_inner(),
+            query.into_inner(),
+        )
+        .await?;
 
     Ok(NoContent)
 }
@@ -398,30 +355,20 @@ pub async fn delete_invite_to_event(
 #[delete("/events/{event_id}/invites/email")]
 #[allow(clippy::too_many_arguments)]
 pub async fn delete_email_invite_to_event(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
-    kc_admin_client: Data<KeycloakAdminClient>,
-    current_tenant: ReqData<Tenant>,
-    current_user: ReqData<User>,
-    authz: Data<Authz>,
+    service: Data<OpenTalkControllerService>,
+    current_user: ReqData<RequestUser>,
     path: Path<EventId>,
     query: Query<EventOptionsQuery>,
-    mail_service: Data<MailService>,
     body: Json<DeleteEmailInviteBody>,
 ) -> Result<NoContent, ApiError> {
-    delete_email_invite_to_event_inner(
-        &settings.load_full(),
-        &db,
-        &kc_admin_client,
-        current_tenant.into_inner(),
-        current_user.into_inner(),
-        &authz,
-        path.into_inner(),
-        query.into_inner(),
-        &mail_service,
-        body.into_inner().email,
-    )
-    .await?;
+    service
+        .delete_email_invite_to_event(
+            current_user.into_inner(),
+            path.into_inner(),
+            body.into_inner().email,
+            query.into_inner(),
+        )
+        .await?;
 
     Ok(NoContent)
 }
@@ -455,10 +402,10 @@ pub async fn delete_email_invite_to_event(
 )]
 #[get("/users/me/pending_invites")]
 pub async fn get_event_invites_pending(
-    db: Data<Db>,
-    current_user: ReqData<User>,
+    service: Data<OpenTalkControllerService>,
+    current_user: ReqData<RequestUser>,
 ) -> DefaultApiResult<GetEventInvitesPendingResponseBody> {
-    let response = get_event_invites_pending_inner(&db, current_user.id).await?;
+    let response = service.get_event_invites_pending(current_user.id).await?;
 
     Ok(ApiResponse::new(response))
 }
@@ -498,11 +445,13 @@ pub async fn get_event_invites_pending(
 )]
 #[patch("/events/{event_id}/invite")]
 pub async fn accept_event_invite(
-    db: Data<Db>,
-    current_user: ReqData<User>,
+    service: Data<OpenTalkControllerService>,
+    current_user: ReqData<RequestUser>,
     event_id: Path<EventId>,
 ) -> Result<NoContent, ApiError> {
-    accept_event_invite_inner(&db, current_user.into_inner().id, event_id.into_inner()).await?;
+    service
+        .accept_event_invite(current_user.id, event_id.into_inner())
+        .await?;
 
     Ok(NoContent)
 }
@@ -542,11 +491,13 @@ pub async fn accept_event_invite(
 )]
 #[delete("/events/{event_id}/invite")]
 pub async fn decline_event_invite(
-    db: Data<Db>,
-    current_user: ReqData<User>,
+    service: Data<OpenTalkControllerService>,
+    current_user: ReqData<RequestUser>,
     event_id: Path<EventId>,
 ) -> Result<NoContent, ApiError> {
-    decline_event_invite_inner(&db, current_user.id, event_id.into_inner()).await?;
+    service
+        .decline_event_invite(current_user.id, event_id.into_inner())
+        .await?;
 
     Ok(NoContent)
 }
