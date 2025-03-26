@@ -184,7 +184,6 @@ pub async fn get_event(
 /// Patch an event
 ///
 /// Fields that are not provided in the request body will remain unchanged.
-#[allow(clippy::too_many_arguments)]
 #[utoipa::path(
     request_body = PatchEventBody,
     params(
@@ -283,7 +282,6 @@ pub async fn patch_event(
     ),
 )]
 #[delete("/events/{event_id}")]
-#[allow(clippy::too_many_arguments)]
 pub async fn delete_event(
     service: Data<OpenTalkControllerService>,
     current_user: ReqData<RequestUser>,

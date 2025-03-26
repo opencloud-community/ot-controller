@@ -246,7 +246,6 @@ pub async fn patch(
         ("BearerAuth" = []),
     ),
 )]
-#[allow(clippy::too_many_arguments)]
 #[delete("/rooms/{room_id}")]
 pub async fn delete(
     service: Data<OpenTalkControllerService>,
