@@ -118,7 +118,6 @@ pub async fn get_streaming_targets(
     ),
 )]
 #[post("/rooms/{room_id}/streaming_targets")]
-#[allow(clippy::too_many_arguments)]
 pub async fn post_streaming_target(
     service: Data<OpenTalkControllerService>,
     current_user: ReqData<RequestUser>,
@@ -218,7 +217,6 @@ pub async fn get_streaming_target(
     ),
 )]
 #[patch("/rooms/{room_id}/streaming_targets/{streaming_target_id}")]
-#[allow(clippy::too_many_arguments)]
 pub async fn patch_streaming_target(
     service: Data<OpenTalkControllerService>,
     current_user: ReqData<RequestUser>,
@@ -273,7 +271,6 @@ pub async fn patch_streaming_target(
     ),
 )]
 #[delete("/rooms/{room_id}/streaming_targets/{streaming_target_id}")]
-#[allow(clippy::too_many_arguments)]
 pub async fn delete_streaming_target(
     service: Data<OpenTalkControllerService>,
     current_user: ReqData<RequestUser>,

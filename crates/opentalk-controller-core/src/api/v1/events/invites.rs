@@ -127,7 +127,6 @@ pub async fn get_invites_for_event(
     ),
 )]
 #[post("/events/{event_id}/invites")]
-#[allow(clippy::too_many_arguments)]
 pub async fn create_invite_to_event(
     service: Data<OpenTalkControllerService>,
     current_user: ReqData<RequestUser>,
@@ -297,7 +296,6 @@ pub struct DeleteEventInviteQuery {
     ),
 )]
 #[delete("/events/{event_id}/invites/{user_id}")]
-#[allow(clippy::too_many_arguments)]
 pub async fn delete_invite_to_event(
     service: Data<OpenTalkControllerService>,
     current_user: ReqData<RequestUser>,
@@ -353,7 +351,6 @@ pub async fn delete_invite_to_event(
     ),
 )]
 #[delete("/events/{event_id}/invites/email")]
-#[allow(clippy::too_many_arguments)]
 pub async fn delete_email_invite_to_event(
     service: Data<OpenTalkControllerService>,
     current_user: ReqData<RequestUser>,

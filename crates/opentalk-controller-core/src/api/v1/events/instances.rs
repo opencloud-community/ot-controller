@@ -179,7 +179,6 @@ pub async fn get_event_instance(
     ),
 )]
 #[patch("/events/{event_id}/instances/{instance_id}")]
-#[allow(clippy::too_many_arguments)]
 pub async fn patch_event_instance(
     service: Data<OpenTalkControllerService>,
     current_user: ReqData<RequestUser>,
