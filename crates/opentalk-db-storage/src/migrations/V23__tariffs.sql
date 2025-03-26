@@ -16,7 +16,7 @@ DO $$
 DECLARE
     DefaultTariffId UUID := gen_random_uuid();
 BEGIN
-    -- Create a new default tarrif all current users are assigned to 
+    -- Create a new default tarrif all current users are assigned to
     INSERT INTO tariffs VALUES (DefaultTariffId, 'OpenTalkDefaultTariff', DEFAULT, DEFAULT, '{}', '{}');
 
     ALTER TABLE users ADD COLUMN tariff_id UUID REFERENCES tariffs(id);

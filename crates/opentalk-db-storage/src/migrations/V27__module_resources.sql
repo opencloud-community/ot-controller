@@ -16,7 +16,7 @@ DECLARE
 legal_vote RECORD;
 BEGIN
     FOR legal_vote IN SELECT * FROM legal_votes WHERE room IS NOT NULL
-    
+
     LOOP
         INSERT INTO module_resources
         VALUES
@@ -140,7 +140,7 @@ $$
 BEGIN
     IF NOT ot_jsonb_path_exists(target, path) THEN
         RAISE 'ot_invalid_path'
-            USING 
+            USING
                 ERRCODE = 'OTALK',
                 DETAIL = format('path "%s" does not exist', path);
     END IF;
@@ -199,7 +199,7 @@ BEGIN
         EXCEPTION
             -- catch any exception with error code 'OTALK' and overwrite the error details with the current array index
             WHEN SQLSTATE 'OTALK' THEN
-                GET STACKED DIAGNOSTICS 
+                GET STACKED DIAGNOSTICS
                     err_msg = MESSAGE_TEXT,
                     err_detail = PG_EXCEPTION_DETAIL;
 
