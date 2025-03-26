@@ -6,7 +6,6 @@ use async_trait::async_trait;
 use opentalk_signaling_core::{ModulesRegistrar, RegisterModules};
 use opentalk_signaling_module_chat::Chat;
 use opentalk_signaling_module_core::Core;
-use opentalk_signaling_module_e2ee::E2ee;
 use opentalk_signaling_module_integration::Integration;
 use opentalk_signaling_module_livekit::Livekit;
 use opentalk_signaling_module_meeting_notes::MeetingNotes;
@@ -25,7 +24,6 @@ impl RegisterModules for CommunityModules {
     async fn register<E>(registrar: &mut impl ModulesRegistrar<Error = E>) -> Result<(), E> {
         registrar.register::<Core>().await?;
         registrar.register::<Chat>().await?;
-        registrar.register::<E2ee>().await?;
         registrar.register::<Integration>().await?;
         registrar.register::<Livekit>().await?;
         registrar.register::<Polls>().await?;
