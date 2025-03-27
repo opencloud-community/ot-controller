@@ -9,9 +9,8 @@ use std::{
 
 use async_trait::async_trait;
 use opentalk_db_storage::{events::Event, tariffs::Tariff};
-use opentalk_types_common::{rooms::RoomId, time::Timestamp};
+use opentalk_types_common::{rooms::RoomId, time::Timestamp, users::UserInfo};
 use opentalk_types_signaling::{ParticipantId, Role};
-use opentalk_types_signaling_control::room::CreatorInfo;
 use parking_lot::RwLock;
 
 use super::memory::MemoryControlState;
@@ -120,15 +119,15 @@ impl ControlStorage for VolatileStaticMemoryStorage {
     async fn try_init_creator(
         &mut self,
         room_id: RoomId,
-        creator: CreatorInfo,
-    ) -> Result<CreatorInfo, SignalingModuleError> {
+        creator: UserInfo,
+    ) -> Result<UserInfo, SignalingModuleError> {
         Ok(state().write().try_init_creator(room_id, creator))
     }
 
     async fn get_creator(
         &mut self,
         room_id: RoomId,
-    ) -> Result<Option<CreatorInfo>, SignalingModuleError> {
+    ) -> Result<Option<UserInfo>, SignalingModuleError> {
         Ok(state().read().get_creator(room_id))
     }
 

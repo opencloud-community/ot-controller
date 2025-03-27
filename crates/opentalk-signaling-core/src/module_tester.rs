@@ -27,7 +27,7 @@ use opentalk_types_common::{
     rooms::BreakoutRoomId,
     tariffs::{TariffId, TariffModuleResource, TariffResource},
     time::Timestamp,
-    users::{DisplayName, UserId},
+    users::{DisplayName, UserId, UserInfo},
 };
 use opentalk_types_signaling::{
     AssociatedParticipant, LeaveReason, ModuleData, NamespacedCommand, NamespacedEvent,
@@ -36,7 +36,7 @@ use opentalk_types_signaling::{
 use opentalk_types_signaling_control::{
     command::{ControlCommand, Join},
     event::{ControlEvent, JoinSuccess, Left},
-    room::{CreatorInfo, RoomInfo},
+    room::RoomInfo,
     state::ControlState,
     MODULE_ID,
 };
@@ -684,7 +684,7 @@ where
                 let room_info = RoomInfo {
                     id: self.room_id.room_id(),
                     password: None,
-                    created_by: CreatorInfo {
+                    created_by: UserInfo {
                         title: user.title,
                         firstname: user.firstname,
                         lastname: user.lastname,
@@ -1175,8 +1175,22 @@ where
 {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (Self::Module(l0), Self::Module(r0)) => l0 == r0,
-            (Self::Control(l0), Self::Control(r0)) => l0 == r0,
+            (Self::Module(l0), Self::Module(r0)) => {
+                // Module Outgoing contains a RawValue
+                let value_left =
+                    serde_json::to_value(l0).expect("Module Outgoing must be serializable");
+                let value_right =
+                    serde_json::to_value(r0).expect("Module Outgoing must be serializable");
+                value_left == value_right
+            }
+            (Self::Control(l0), Self::Control(r0)) => {
+                // ControlEvent contains a RawValue
+                let value_left =
+                    serde_json::to_value(l0).expect("ControlEvent must be serializable");
+                let value_right =
+                    serde_json::to_value(r0).expect("ControlEvent must be serializable");
+                value_left == value_right
+            }
             _ => false,
         }
     }

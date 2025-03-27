@@ -6,9 +6,8 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use async_trait::async_trait;
 use opentalk_db_storage::{events::Event, tariffs::Tariff};
-use opentalk_types_common::{rooms::RoomId, time::Timestamp};
+use opentalk_types_common::{rooms::RoomId, time::Timestamp, users::UserInfo};
 use opentalk_types_signaling::{ParticipantId, Role};
-use opentalk_types_signaling_control::room::CreatorInfo;
 use redis::ToRedisArgs;
 use redis_args::ToRedisArgs;
 use serde::{de::DeserializeOwned, Serialize};
@@ -280,13 +279,13 @@ pub trait ControlStorage:
     async fn try_init_creator(
         &mut self,
         room_id: RoomId,
-        creator: CreatorInfo,
-    ) -> Result<CreatorInfo, SignalingModuleError>;
+        creator: UserInfo,
+    ) -> Result<UserInfo, SignalingModuleError>;
 
     async fn get_creator(
         &mut self,
         room_id: RoomId,
-    ) -> Result<Option<CreatorInfo>, SignalingModuleError>;
+    ) -> Result<Option<UserInfo>, SignalingModuleError>;
 
     async fn delete_creator(&mut self, room_id: RoomId) -> Result<(), SignalingModuleError>;
 

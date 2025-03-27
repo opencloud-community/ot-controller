@@ -9,9 +9,8 @@ use std::{
 };
 
 use opentalk_db_storage::{events::Event, tariffs::Tariff};
-use opentalk_types_common::{rooms::RoomId, time::Timestamp};
+use opentalk_types_common::{rooms::RoomId, time::Timestamp, users::UserInfo};
 use opentalk_types_signaling::ParticipantId;
-use opentalk_types_signaling_control::room::CreatorInfo;
 use snafu::OptionExt as _;
 
 use crate::{
@@ -35,7 +34,7 @@ pub(super) struct MemoryControlState {
     global_participant_attributes: HashMap<RoomId, GlobalAttributeMap>,
     room_tariffs: HashMap<RoomId, Tariff>,
     room_events: HashMap<RoomId, Option<Event>>,
-    room_creators: HashMap<RoomId, CreatorInfo>,
+    room_creators: HashMap<RoomId, UserInfo>,
     participant_count: HashMap<RoomId, isize>,
     rooms_close_at: HashMap<SignalingRoomId, Timestamp>,
     participants_skip_waiting_room: ExpiringDataHashMap<ParticipantId, bool>,
@@ -259,15 +258,11 @@ impl MemoryControlState {
         self.participant_count.remove(&room_id);
     }
 
-    pub(super) fn try_init_creator(
-        &mut self,
-        room_id: RoomId,
-        creator: CreatorInfo,
-    ) -> CreatorInfo {
+    pub(super) fn try_init_creator(&mut self, room_id: RoomId, creator: UserInfo) -> UserInfo {
         self.room_creators.entry(room_id).or_insert(creator).clone()
     }
 
-    pub(super) fn get_creator(&self, room_id: RoomId) -> Option<CreatorInfo> {
+    pub(super) fn get_creator(&self, room_id: RoomId) -> Option<UserInfo> {
         self.room_creators.get(&room_id).cloned()
     }
 

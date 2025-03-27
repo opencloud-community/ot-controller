@@ -14,7 +14,10 @@ use opentalk_types_api_v1::{
     error::ApiError,
     users::{PrivateUserProfile, PublicUserProfile},
 };
-use opentalk_types_common::{features::ModuleFeatureId, users::UserId};
+use opentalk_types_common::{
+    features::ModuleFeatureId,
+    users::{UserId, UserInfo},
+};
 
 /// A trait providing conversion of database users to public and private user profiles
 pub trait ToUserProfile {
@@ -33,11 +36,13 @@ impl ToUserProfile for User {
         PublicUserProfile {
             id: self.id,
             email: self.email.clone(),
-            title: self.title.clone(),
-            firstname: self.firstname.clone(),
-            lastname: self.lastname.clone(),
-            display_name: self.display_name.clone(),
-            avatar_url: self.avatar_url.clone().unwrap_or(default_avatar),
+            user_info: UserInfo {
+                title: self.title.clone(),
+                firstname: self.firstname.clone(),
+                lastname: self.lastname.clone(),
+                display_name: self.display_name.clone(),
+                avatar_url: self.avatar_url.clone().unwrap_or(default_avatar),
+            },
         }
     }
 
@@ -72,11 +77,13 @@ impl ToUserProfile for RequestUser {
         PublicUserProfile {
             id: self.id,
             email: self.email.clone(),
-            title: self.title.clone(),
-            firstname: self.firstname.clone(),
-            lastname: self.lastname.clone(),
-            display_name: self.display_name.clone(),
-            avatar_url: self.avatar_url.clone().unwrap_or(default_avatar),
+            user_info: UserInfo {
+                title: self.title.clone(),
+                firstname: self.firstname.clone(),
+                lastname: self.lastname.clone(),
+                display_name: self.display_name.clone(),
+                avatar_url: self.avatar_url.clone().unwrap_or(default_avatar),
+            },
         }
     }
 
