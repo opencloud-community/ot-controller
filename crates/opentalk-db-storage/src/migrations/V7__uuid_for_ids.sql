@@ -13,14 +13,14 @@ ALTER TABLE users DROP CONSTRAINT users_pkey CASCADE;
 ALTER TABLE users ADD PRIMARY KEY (id);
 
 -- Build UNIQUE index over the oidc_issuer and oidc_sub.
--- These make queries faster trying to identify a user
+-- These make queries faster trying to identify a user 
 -- from an id or access token. Also the unique contraint
 -- over these both ensure that no user is duplicated
 CREATE UNIQUE INDEX users_oidc_sub_issuer_key ON users (oidc_issuer, oidc_sub);
 
--- Change groups from
+-- Change groups from 
 -- old - { id: TEXT }
--- to
+-- to 
 -- new - { id: UUID, id_serial: BIGSERIAL, issuer: TEXT, name: TEXT }
 -- where new.name = old.id
 ALTER TABLE groups RENAME id TO old_id;
@@ -66,9 +66,9 @@ ALTER TABLE rooms ALTER id SET DEFAULT gen_random_uuid();
 ALTER TABLE rooms ADD  PRIMARY KEY (id);
 
 -- Restore all foreign keys from dropping the rooms primary key
-ALTER TABLE sip_configs ADD CONSTRAINT sip_config_room_fkey FOREIGN KEY (room) REFERENCES rooms(id);
-ALTER TABLE invites ADD CONSTRAINT invite_room_fkey FOREIGN KEY (room) REFERENCES rooms(id);
-ALTER TABLE legal_votes ADD CONSTRAINT legal_votes_room_fkey FOREIGN KEY (room_id) REFERENCES rooms(id);
+ALTER TABLE sip_configs ADD CONSTRAINT sip_config_room_fkey FOREIGN KEY (room) REFERENCES rooms(id); 
+ALTER TABLE invites ADD CONSTRAINT invite_room_fkey FOREIGN KEY (room) REFERENCES rooms(id); 
+ALTER TABLE legal_votes ADD CONSTRAINT legal_votes_room_fkey FOREIGN KEY (room_id) REFERENCES rooms(id); 
 
 -- Change room's owner from type
 -- BIGINT REFERENCES users(id_serial)
@@ -126,11 +126,12 @@ ALTER TABLE legal_votes ALTER COLUMN initiator SET NOT NULL;
 
 -- Change the old stringified group id (string, now groups.name) in v0 and v1 in casbin_rule to the new group identifier
 UPDATE casbin_rule
-SET v1 = CONCAT('group:', subquery.id)
+SET v1 = CONCAT('group:', subquery.id) 
 FROM (SELECT id, name FROM groups) AS subquery
 WHERE casbin_rule.v1 like 'group:%' AND SPLIT_PART(casbin_rule.v1, ':', 3) = subquery.name;
 
 UPDATE casbin_rule
-SET v0 = CONCAT('group:', subquery.id)
-FROM (SELECT id, name FROM groups) AS subquery
+SET v0 = CONCAT('group:', subquery.id) 
+FROM (SELECT id, name FROM groups) AS subquery      
 WHERE casbin_rule.v0 like 'group:%' AND SPLIT_PART(casbin_rule.v0, ':', 3) = subquery.name;
+
