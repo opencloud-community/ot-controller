@@ -668,6 +668,12 @@ async fn create_time_dependent_event(
 
     let suppress_email_notification = is_adhoc || query.suppress_email_notification;
 
+    let training_participation_report = if let Some(parameters) = training_participation_report {
+        store_training_participation_report(conn, event.id, parameters).await?
+    } else {
+        None
+    };
+
     let mail_resource = (!suppress_email_notification).then(|| MailResource {
         current_user: current_user.clone(),
         event: event.clone(),
