@@ -10,37 +10,37 @@ resolver = "2"
 authors = ["OpenTalk Team <mail@opentalk.eu>"]
 homepage = "https://opentalk.eu/"
 repository = "https://gitlab.opencode.de/opentalk/controller"
-version = "0.29.0"
+version = "0.29.1"
 
 [workspace.dependencies]
-kustos = { path = "crates/kustos", version = "0.29.0" }
-opentalk-cache = { path = "crates/opentalk-cache", version = "0.29.0" }
-opentalk-community-signaling-modules = { path = "crates/opentalk-community-signaling-modules", version = "0.29.0" }
-opentalk-controller-core = { path = "crates/opentalk-controller-core", version = "0.29.0" }
-opentalk-controller-service = { path = "crates/opentalk-controller-service", version = "0.29.0" }
-opentalk-controller-service-facade = { path = "crates/opentalk-controller-service-facade", version = "0.29.0" }
-opentalk-controller-settings = { path = "crates/opentalk-controller-settings", version = "0.29.0" }
-opentalk-controller-utils = { path = "crates/opentalk-controller-utils", version = "0.29.0" }
-opentalk-database = { path = "crates/opentalk-database", version = "0.29.0" }
-opentalk-db-storage = { path = "crates/opentalk-db-storage", version = "0.29.0" }
-opentalk-jobs = { path = "crates/opentalk-jobs", version = "0.29.0" }
-opentalk-log = { path = "crates/opentalk-log", version = "0.29.0" }
-opentalk-r3dlock = { path = "crates/opentalk-r3dlock", version = "0.29.0" }
-opentalk-report-generation = { path = "crates/opentalk-report-generation", version = "0.29.0" }
-opentalk-signaling-core = { path = "crates/opentalk-signaling-core", version = "0.29.0" }
-opentalk-signaling-module-chat = { path = "crates/opentalk-signaling-module-chat", version = "0.29.0" }
-opentalk-signaling-module-core = { path = "crates/opentalk-signaling-module-core", version = "0.29.0" }
-opentalk-signaling-module-integration = { path = "crates/opentalk-signaling-module-integration", version = "0.29.0" }
-opentalk-signaling-module-livekit = { path = "crates/opentalk-signaling-module-livekit", version = "0.29.0" }
-opentalk-signaling-module-meeting-notes = { path = "crates/opentalk-signaling-module-meeting-notes", version = "0.29.0" }
-opentalk-signaling-module-meeting-report = { path = "crates/opentalk-signaling-module-meeting-report", version = "0.29.0" }
-opentalk-signaling-module-polls = { path = "crates/opentalk-signaling-module-polls", version = "0.29.0" }
-opentalk-signaling-module-shared-folder = { path = "crates/opentalk-signaling-module-shared-folder", version = "0.29.0" }
-opentalk-signaling-module-subroom-audio = { path = "crates/opentalk-signaling-module-subroom-audio", version = "0.29.0" }
-opentalk-signaling-module-timer = { path = "crates/opentalk-signaling-module-timer", version = "0.29.0" }
-opentalk-signaling-module-training-participation-report = { path = "crates/opentalk-signaling-module-training-participation-report", version = "0.29.0" }
-opentalk-signaling-module-whiteboard = { path = "crates/opentalk-signaling-module-whiteboard", version = "0.29.0" }
-opentalk-test-util = { path = "crates/opentalk-test-util", version = "0.29.0" }
+kustos = { path = "crates/kustos", version = "0.29.1" }
+opentalk-cache = { path = "crates/opentalk-cache", version = "0.29.1" }
+opentalk-community-signaling-modules = { path = "crates/opentalk-community-signaling-modules", version = "0.29.1" }
+opentalk-controller-core = { path = "crates/opentalk-controller-core", version = "0.29.1" }
+opentalk-controller-service = { path = "crates/opentalk-controller-service", version = "0.29.1" }
+opentalk-controller-service-facade = { path = "crates/opentalk-controller-service-facade", version = "0.29.1" }
+opentalk-controller-settings = { path = "crates/opentalk-controller-settings", version = "0.29.1" }
+opentalk-controller-utils = { path = "crates/opentalk-controller-utils", version = "0.29.1" }
+opentalk-database = { path = "crates/opentalk-database", version = "0.29.1" }
+opentalk-db-storage = { path = "crates/opentalk-db-storage", version = "0.29.1" }
+opentalk-jobs = { path = "crates/opentalk-jobs", version = "0.29.1" }
+opentalk-log = { path = "crates/opentalk-log", version = "0.29.1" }
+opentalk-r3dlock = { path = "crates/opentalk-r3dlock", version = "0.29.1" }
+opentalk-report-generation = { path = "crates/opentalk-report-generation", version = "0.29.1" }
+opentalk-signaling-core = { path = "crates/opentalk-signaling-core", version = "0.29.1" }
+opentalk-signaling-module-chat = { path = "crates/opentalk-signaling-module-chat", version = "0.29.1" }
+opentalk-signaling-module-core = { path = "crates/opentalk-signaling-module-core", version = "0.29.1" }
+opentalk-signaling-module-integration = { path = "crates/opentalk-signaling-module-integration", version = "0.29.1" }
+opentalk-signaling-module-livekit = { path = "crates/opentalk-signaling-module-livekit", version = "0.29.1" }
+opentalk-signaling-module-meeting-notes = { path = "crates/opentalk-signaling-module-meeting-notes", version = "0.29.1" }
+opentalk-signaling-module-meeting-report = { path = "crates/opentalk-signaling-module-meeting-report", version = "0.29.1" }
+opentalk-signaling-module-polls = { path = "crates/opentalk-signaling-module-polls", version = "0.29.1" }
+opentalk-signaling-module-shared-folder = { path = "crates/opentalk-signaling-module-shared-folder", version = "0.29.1" }
+opentalk-signaling-module-subroom-audio = { path = "crates/opentalk-signaling-module-subroom-audio", version = "0.29.1" }
+opentalk-signaling-module-timer = { path = "crates/opentalk-signaling-module-timer", version = "0.29.1" }
+opentalk-signaling-module-training-participation-report = { path = "crates/opentalk-signaling-module-training-participation-report", version = "0.29.1" }
+opentalk-signaling-module-whiteboard = { path = "crates/opentalk-signaling-module-whiteboard", version = "0.29.1" }
+opentalk-test-util = { path = "crates/opentalk-test-util", version = "0.29.1" }
 
 actix-http = "3"
 actix-rt = "2"
@@ -92,8 +92,8 @@ opentalk-mail-worker-protocol = "0.32"
 opentalk-nextcloud-client = { version = "0.2.0", default-features = false, features = [
   "rustls-tls-native-roots",
 ] }
-opentalk-types-api-v1 = "0.33"
-opentalk-types-common = "0.32"
+opentalk-types-api-v1 = "0.34"
+opentalk-types-common = "0.32.1"
 opentalk-types-signaling = "0.32"
 opentalk-types-signaling-breakout = "0.32"
 opentalk-types-signaling-chat = "0.32"
@@ -108,7 +108,7 @@ opentalk-types-signaling-recording-service = "0.32"
 opentalk-types-signaling-shared-folder = "0.32"
 opentalk-types-signaling-subroom-audio = "0.32"
 opentalk-types-signaling-timer = "0.32"
-opentalk-types-signaling-training-participation-report = "0.2"
+opentalk-types-signaling-training-participation-report = "0.3"
 opentalk-types-signaling-whiteboard = "0.32"
 opentalk-version = "0.1.1"
 opentelemetry = { version = "0.27", default-features = false, features = [
@@ -120,7 +120,8 @@ parking_lot = "0.12"
 pdf-extract = "0.8"
 phonenumber = "0.3"
 pretty_assertions = "1"
-rand = "0.8"
+rand = "0.9"
+rand_chacha = "0.9"
 redis = "0.29"
 redis-args = "0.19"
 reqwest = { version = "0.12", default-features = false }

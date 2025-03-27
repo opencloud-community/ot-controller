@@ -5,18 +5,22 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use opentalk_signaling_core::{NotFoundSnafu, SignalingModuleError};
-use opentalk_types_common::{rooms::RoomId, time::Timestamp};
-use opentalk_types_signaling::ParticipantId;
-use opentalk_types_signaling_training_participation_report::{
-    state::ParticipationLoggingState, TimeRange,
+use opentalk_types_common::{
+    rooms::RoomId,
+    time::Timestamp,
+    training_participation_report::{TimeRange, TrainingParticipationReportParameterSet},
 };
+use opentalk_types_signaling::ParticipantId;
+use opentalk_types_signaling_training_participation_report::state::ParticipationLoggingState;
 use snafu::{ensure_whatever, OptionExt as _};
 
 use crate::storage::{Checkpoint, RoomState, TrainingReportState};
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub(crate) struct TrainingParticipationReportState {
-    rooms: BTreeMap<RoomId, RoomState>,
+    room_state: BTreeMap<RoomId, RoomState>,
+    initialized: BTreeSet<RoomId>,
+    parameter_sets: BTreeMap<RoomId, TrainingParticipationReportParameterSet>,
 }
 
 impl TrainingParticipationReportState {
@@ -26,15 +30,48 @@ impl TrainingParticipationReportState {
     }
 
     fn room(&self, room: RoomId) -> Result<&RoomState, SignalingModuleError> {
-        self.rooms.get(&room).with_context(|| NotFoundSnafu {
+        self.room_state.get(&room).with_context(|| NotFoundSnafu {
             message: format!("failed to find training report state of room {room} for reading"),
         })
     }
 
     fn room_mut(&mut self, room: RoomId) -> Result<&mut RoomState, SignalingModuleError> {
-        self.rooms.get_mut(&room).with_context(|| NotFoundSnafu {
-            message: format!("failed to find training report state of room {room} for writing"),
-        })
+        self.room_state
+            .get_mut(&room)
+            .with_context(|| NotFoundSnafu {
+                message: format!("failed to find training report state of room {room} for writing"),
+            })
+    }
+
+    pub(super) fn set_parameter_set_initialized(&mut self, room: RoomId) {
+        _ = self.initialized.insert(room);
+    }
+
+    pub(super) fn get_parameter_set_initialized(&self, room: RoomId) -> bool {
+        self.initialized.contains(&room)
+    }
+
+    pub(super) fn delete_parameter_set_initialized(&mut self, room: RoomId) {
+        _ = self.initialized.remove(&room);
+    }
+
+    pub(super) fn get_parameter_set(
+        &self,
+        room: RoomId,
+    ) -> Option<TrainingParticipationReportParameterSet> {
+        self.parameter_sets.get(&room).cloned()
+    }
+
+    pub(super) fn set_parameter_set(
+        &mut self,
+        room: RoomId,
+        value: TrainingParticipationReportParameterSet,
+    ) {
+        _ = self.parameter_sets.insert(room, value);
+    }
+
+    pub(super) fn delete_parameter_set(&mut self, room: RoomId) {
+        _ = self.parameter_sets.remove(&room);
     }
 
     pub(super) fn initialize_room(
@@ -46,7 +83,7 @@ impl TrainingParticipationReportState {
         checkpoint_interval: TimeRange,
         known_participants: BTreeSet<ParticipantId>,
     ) {
-        _ = self.rooms.insert(
+        _ = self.room_state.insert(
             room,
             RoomState {
                 start,
@@ -61,14 +98,14 @@ impl TrainingParticipationReportState {
     }
 
     pub(super) fn cleanup_room(&mut self, room: RoomId) -> Option<RoomState> {
-        self.rooms.remove(&room)
+        self.room_state.remove(&room)
     }
 
     pub(super) fn get_training_report_state(
         &self,
         room: RoomId,
     ) -> Result<Option<TrainingReportState>, SignalingModuleError> {
-        Ok(self.rooms.get(&room).map(|r| r.report_state))
+        Ok(self.room_state.get(&room).map(|r| r.report_state))
     }
 
     pub(super) fn set_training_report_state(
@@ -156,7 +193,7 @@ impl TrainingParticipationReportState {
         room: RoomId,
         participant: ParticipantId,
     ) -> Result<ParticipationLoggingState, SignalingModuleError> {
-        let Some(room_state) = self.rooms.get(&room) else {
+        let Some(room_state) = self.room_state.get(&room) else {
             return Ok(ParticipationLoggingState::Disabled);
         };
         let Some(current_checkpoint) = room_state.history.last() else {

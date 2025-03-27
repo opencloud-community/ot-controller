@@ -5,17 +5,47 @@
 use std::collections::BTreeSet;
 
 use async_trait::async_trait;
-use opentalk_signaling_core::SignalingModuleError;
-use opentalk_types_common::{rooms::RoomId, time::Timestamp};
-use opentalk_types_signaling::ParticipantId;
-use opentalk_types_signaling_training_participation_report::{
-    state::ParticipationLoggingState, TimeRange,
+use opentalk_signaling_core::{control::storage::ControlStorageEvent, SignalingModuleError};
+use opentalk_types_common::{
+    rooms::RoomId,
+    time::Timestamp,
+    training_participation_report::{TimeRange, TrainingParticipationReportParameterSet},
 };
+use opentalk_types_signaling::ParticipantId;
+use opentalk_types_signaling_training_participation_report::state::ParticipationLoggingState;
 
 use super::{RoomState, TrainingReportState};
 
 #[async_trait(?Send)]
-pub(crate) trait TrainingParticipationReportStorage {
+pub(crate) trait TrainingParticipationReportStorage: ControlStorageEvent {
+    async fn set_parameter_set_initialized(
+        &mut self,
+        room: RoomId,
+    ) -> Result<(), SignalingModuleError>;
+
+    async fn is_parameter_set_initialized(
+        &mut self,
+        room: RoomId,
+    ) -> Result<bool, SignalingModuleError>;
+
+    async fn delete_parameter_set_initialized(
+        &mut self,
+        room: RoomId,
+    ) -> Result<(), SignalingModuleError>;
+
+    async fn get_parameter_set(
+        &mut self,
+        room: RoomId,
+    ) -> Result<Option<TrainingParticipationReportParameterSet>, SignalingModuleError>;
+
+    async fn set_parameter_set(
+        &mut self,
+        room: RoomId,
+        value: TrainingParticipationReportParameterSet,
+    ) -> Result<(), SignalingModuleError>;
+
+    async fn delete_parameter_set(&mut self, room: RoomId) -> Result<(), SignalingModuleError>;
+
     async fn initialize_room(
         &mut self,
         room: RoomId,

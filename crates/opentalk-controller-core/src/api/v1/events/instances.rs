@@ -36,6 +36,7 @@ use opentalk_types_api_v1::{
 use opentalk_types_common::{
     events::{invites::EventInviteStatus, EventId},
     shared_folders::SharedFolder,
+    training_participation_report::TrainingParticipationReportParameterSet,
 };
 use rrule::RRuleSet;
 
@@ -151,8 +152,16 @@ async fn get_event_instances_inner(
 
     let mut conn = db.get_conn().await?;
 
-    let (event, invite, room, sip_config, is_favorite, shared_folder, tariff) =
-        Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
+    let (
+        event,
+        invite,
+        room,
+        sip_config,
+        is_favorite,
+        shared_folder,
+        tariff,
+        training_participation_report_parameter_set,
+    ) = Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
 
     let (invitees, invitees_truncated) =
         super::get_invitees_for_event(settings, &mut conn, event.id, invitees_max).await?;
@@ -198,6 +207,9 @@ async fn get_event_instances_inner(
         .fetch(settings, &mut conn)
         .await?;
 
+    let training_participation_report = training_participation_report_parameter_set
+        .map(TrainingParticipationReportParameterSet::from);
+
     drop(conn);
 
     let room = EventRoomInfo::from_room(settings, room, sip_config, &tariff);
@@ -225,6 +237,7 @@ async fn get_event_instances_inner(
             invitees_truncated,
             can_edit,
             shared_folder.clone(),
+            training_participation_report.clone(),
         )?;
 
         instances.push(instance);
@@ -341,8 +354,16 @@ async fn get_event_instance_inner(
 ) -> DefaultApiResult<GetEventInstanceResponseBody, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
-    let (event, invite, room, sip_config, is_favorite, shared_folder, tariff) =
-        Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
+    let (
+        event,
+        invite,
+        room,
+        sip_config,
+        is_favorite,
+        shared_folder,
+        tariff,
+        training_participation_report_parameter_set,
+    ) = Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
     verify_recurrence_date(&event, instance_id.into())?;
 
     let (invitees, invitees_truncated) =
@@ -376,6 +397,7 @@ async fn get_event_instance_inner(
         invitees_truncated,
         can_edit,
         shared_folder,
+        training_participation_report_parameter_set.map(Into::into),
     )?;
 
     let event_instance = EventInstance {
@@ -490,8 +512,16 @@ async fn patch_event_instance_inner(
 
     let mut conn = db.get_conn().await?;
 
-    let (event, invite, room, sip_config, is_favorite, shared_folder, tariff) =
-        Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
+    let (
+        event,
+        invite,
+        room,
+        sip_config,
+        is_favorite,
+        shared_folder,
+        tariff,
+        training_participation_report_parameter_set,
+    ) = Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
 
     if !event.is_recurring.unwrap_or_default() {
         return Err(ApiError::not_found().into());
@@ -648,6 +678,7 @@ async fn patch_event_instance_inner(
         invitees_truncated,
         can_edit,
         shared_folder,
+        training_participation_report_parameter_set.map(Into::into),
     )?;
 
     let event_instance = EventInstance {
@@ -677,6 +708,7 @@ fn create_event_instance(
     invitees_truncated: bool,
     can_edit: bool,
     shared_folder: Option<SharedFolder>,
+    training_participation_report: Option<TrainingParticipationReportParameterSet>,
 ) -> opentalk_database::Result<EventInstance> {
     let mut status = EventStatus::Ok;
 
@@ -741,6 +773,7 @@ fn create_event_instance(
         is_favorite,
         can_edit,
         shared_folder,
+        training_participation_report,
     })
 }
 
@@ -849,6 +882,7 @@ mod tests {
             is_favorite: false,
             can_edit: false,
             shared_folder: None,
+            training_participation_report: None,
         };
 
         assert_eq_json!(

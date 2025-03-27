@@ -9,11 +9,13 @@ use std::{
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{SignalingModuleError, VolatileStaticMemoryStorage};
-use opentalk_types_common::{rooms::RoomId, time::Timestamp};
-use opentalk_types_signaling::ParticipantId;
-use opentalk_types_signaling_training_participation_report::{
-    state::ParticipationLoggingState, TimeRange,
+use opentalk_types_common::{
+    rooms::RoomId,
+    time::Timestamp,
+    training_participation_report::{TimeRange, TrainingParticipationReportParameterSet},
 };
+use opentalk_types_signaling::ParticipantId;
+use opentalk_types_signaling_training_participation_report::state::ParticipationLoggingState;
 use parking_lot::RwLock;
 
 use super::memory::TrainingParticipationReportState;
@@ -27,6 +29,50 @@ fn state() -> &'static Arc<RwLock<TrainingParticipationReportState>> {
 
 #[async_trait(?Send)]
 impl TrainingParticipationReportStorage for VolatileStaticMemoryStorage {
+    async fn set_parameter_set_initialized(
+        &mut self,
+        room: RoomId,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().set_parameter_set_initialized(room);
+        Ok(())
+    }
+
+    async fn is_parameter_set_initialized(
+        &mut self,
+        room: RoomId,
+    ) -> Result<bool, SignalingModuleError> {
+        Ok(state().read().get_parameter_set_initialized(room))
+    }
+
+    async fn delete_parameter_set_initialized(
+        &mut self,
+        room: RoomId,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().delete_parameter_set_initialized(room);
+        Ok(())
+    }
+
+    async fn get_parameter_set(
+        &mut self,
+        room: RoomId,
+    ) -> Result<Option<TrainingParticipationReportParameterSet>, SignalingModuleError> {
+        Ok(state().read().get_parameter_set(room))
+    }
+
+    async fn set_parameter_set(
+        &mut self,
+        room: RoomId,
+        value: TrainingParticipationReportParameterSet,
+    ) -> Result<(), SignalingModuleError> {
+        state().write().set_parameter_set(room, value);
+        Ok(())
+    }
+
+    async fn delete_parameter_set(&mut self, room: RoomId) -> Result<(), SignalingModuleError> {
+        state().write().delete_parameter_set(room);
+        Ok(())
+    }
+
     async fn initialize_room(
         &mut self,
         room: RoomId,
@@ -142,6 +188,18 @@ mod tests {
     fn storage() -> VolatileStaticMemoryStorage {
         state().write().reset();
         VolatileStaticMemoryStorage
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn parameter_set_initialized() {
+        test_common::parameter_set_initialized(&mut storage()).await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn parameter_set() {
+        test_common::parameter_set(&mut storage()).await;
     }
 
     #[tokio::test]

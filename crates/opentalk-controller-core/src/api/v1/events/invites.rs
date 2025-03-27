@@ -912,8 +912,16 @@ async fn delete_invite_to_event_inner(
     let mut conn = db.get_conn().await?;
 
     // TODO(w.rabl) Further DB access optimization (replacing call to get_with_invite_and_room)?
-    let (event, _invite, room, sip_config, _is_favorite, shared_folder, _tariff) =
-        Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
+    let (
+        event,
+        _invite,
+        room,
+        sip_config,
+        _is_favorite,
+        shared_folder,
+        _tariff,
+        _training_participation_report_parameter_set,
+    ) = Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
     let streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
 
     let created_by = if event.created_by == current_user.id {
@@ -1069,8 +1077,16 @@ async fn delete_email_invite_to_event_inner(
 
     let mut conn = db.get_conn().await?;
 
-    let (event, _invite, room, sip_config, _is_favorite, shared_folder, _tariff) =
-        Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
+    let (
+        event,
+        _invite,
+        room,
+        sip_config,
+        _is_favorite,
+        shared_folder,
+        _tariff,
+        _training_participation_report_parameter_set,
+    ) = Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
     let streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
 
     let created_by = if event.created_by == current_user.id {

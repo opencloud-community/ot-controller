@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.29.1] - 2025-03-27
+
+[0.29.1]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.29.0...v0.29.1
+
+### 🚀 New features
+
+- (training_participation_report) Add configuration to api ([#972](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/972))
+- (training_participation_report) Communicate parameters to frontend on join ([#972](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/972))
+- (training_participation_report) Start training participation report procedure automatically ([#972](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/972))
+
+### 🐛 Bug fixes
+
+- Address cargo-deny remarks ([!1480](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1480))
+- (timer) Cleanup on room destroy ([#975](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/975))
+- Exclude moderators from microphone restrictions ([#978](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/978))
+- (event) Handle missing participation report parameter set correctly ([#979](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/979))
+- (meeting_report) Include users who already left the meeting ([#981](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/981))
+- (training-participation-report) Don't fail when updating the database entry ([#982](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/982))
+- (training-participation-report) Parameter set not stored for unscheduled events ([!1507](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1507), [#987](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/987))
+
+### 📦 Dependencies
+
+- (deps) Update ring to 0.17.13 ([!1478](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1478))
+- (deps) Update rust crate rand to 0.9 ([!1418](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1418))
+- (deps) Update rust crate zip to 2.4.2 ([!1490](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1490))
+
+### ⚙ Miscellaneous
+
+- (justfile) Add commit release script ([!1322](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1322))
+
+### Test
+
+- Use ChaCha12Rng instead of StdRng for reproducibility ([!1480](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1480))
+
 ## [0.29.0] - 2025-03-05
 
 [0.29.0]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.28.4...v0.29.0

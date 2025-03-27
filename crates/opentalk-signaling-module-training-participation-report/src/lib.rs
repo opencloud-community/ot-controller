@@ -32,6 +32,7 @@ use chrono_tz::Tz;
 use either::Either;
 use futures::{stream::once, FutureExt as _};
 use opentalk_database::Db;
+use opentalk_db_storage::events::EventTrainingParticipationReportParameterSet;
 use opentalk_signaling_core::{
     assets::{save_asset, AssetError, NewAssetFileName},
     control::{
@@ -42,7 +43,7 @@ use opentalk_signaling_core::{
         },
         ControlStorageProvider,
     },
-    ChunkFormat, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage,
+    ChunkFormat, CleanupScope, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage,
     ObjectStorageError, SignalingModule, SignalingModuleError, SignalingModuleInitData,
     VolatileStorage,
 };
@@ -52,6 +53,7 @@ use opentalk_types_common::{
     modules::ModuleId,
     rooms::RoomId,
     time::{TimeZone, Timestamp},
+    training_participation_report::{TimeRange, TrainingParticipationReportParameterSet},
     users::{DisplayName, UserId},
 };
 use opentalk_types_signaling::ParticipantId;
@@ -63,7 +65,7 @@ use opentalk_types_signaling_training_participation_report::{
         PresenceLoggingStartedReason, TrainingParticipationReportEvent,
     },
     state::{ParticipationLoggingState, TrainingParticipationReportState},
-    TimeRange, MODULE_ID,
+    MODULE_ID,
 };
 use rand::Rng as _;
 use snafu::{Report, ResultExt as _};
@@ -76,6 +78,16 @@ mod storage;
 mod template;
 
 const DEFAULT_TEMPLATE: &str = include_str!("training_participation_report.typ");
+
+const SECONDS_PER_MINUTE: u64 = 60;
+const DEFAULT_INITIAL_CHECKPOINT_DELAY: TimeRange = TimeRange {
+    after: 10 * SECONDS_PER_MINUTE,
+    within: 20 * SECONDS_PER_MINUTE,
+};
+const DEFAULT_CHECKPOINT_INTERVAL: TimeRange = TimeRange {
+    after: (60 + 45) * SECONDS_PER_MINUTE,
+    within: 30 * SECONDS_PER_MINUTE,
+};
 
 /// An event queued by the runner for itself to handle a timeout
 #[derive(Debug, PartialEq, Eq)]
@@ -186,7 +198,12 @@ impl SignalingModule for TrainingParticipationReport {
         Ok(())
     }
 
-    async fn on_destroy(self, _ctx: DestroyContext<'_>) {}
+    async fn on_destroy(self, ctx: DestroyContext<'_>) {
+        if matches!(ctx.cleanup_scope, CleanupScope::Global) {
+            self.clean_up_parameter_set_storage(ctx.volatile.storage())
+                .await;
+        }
+    }
 
     async fn build_params(
         _init: SignalingModuleInitData,
@@ -203,6 +220,18 @@ impl TrainingParticipationReport {
         participants: &HashMap<ParticipantId, Option<()>>,
         frontend_data: &mut Option<TrainingParticipationReportState>,
     ) -> Result<(), SignalingModuleError> {
+        let parameter_set = if ctx
+            .volatile
+            .storage()
+            .is_parameter_set_initialized(self.room)
+            .await?
+        {
+            ctx.volatile.storage().get_parameter_set(self.room).await?
+        } else {
+            self.initialize_parameter_set(ctx.volatile.storage())
+                .await?
+        };
+
         let mut state = ctx
             .volatile
             .storage()
@@ -216,18 +245,98 @@ impl TrainingParticipationReport {
                     ctx.volatile.control_storage(),
                 )
                 .await?;
-            self.room_owner_data = Some(RoomOwnerData {
-                other_room_owners,
-                trainees,
-                timeout_id: None,
-            });
             if state == ParticipationLoggingState::WaitingForConfirmation {
                 // Don't ask the room owner for confirmation
                 state = ParticipationLoggingState::Enabled;
             }
+
+            let mut room_owner_data = RoomOwnerData {
+                other_room_owners,
+                trainees,
+                timeout_id: None,
+            };
+
+            if let Some(TrainingParticipationReportParameterSet {
+                initial_checkpoint_delay,
+                checkpoint_interval,
+            }) = parameter_set.clone()
+            {
+                if room_owner_data.other_room_owners.is_empty() {
+                    // this is the first trainer in the room
+
+                    let report_state = if room_owner_data.trainees.is_empty() {
+                        TrainingReportState::WaitingForParticipant
+                    } else {
+                        let first_checkpoint = Self::switch_to_next_checkpoint(
+                            &mut room_owner_data,
+                            self.room,
+                            ctx,
+                            &initial_checkpoint_delay,
+                        )
+                        .await?;
+
+                        ctx.exchange_publish(
+                            control::exchange::global_room_all_participants(self.room),
+                            exchange::Event::PresenceLoggingStarted {
+                                first_checkpoint,
+                                reason: PresenceLoggingStartedReason::Autostart,
+                            },
+                        );
+                        TrainingReportState::WaitingForInitialTimeout
+                    };
+
+                    ctx.volatile
+                        .storage()
+                        .initialize_room(
+                            self.room,
+                            ctx.timestamp,
+                            report_state,
+                            initial_checkpoint_delay,
+                            checkpoint_interval,
+                            room_owner_data.trainees.clone(),
+                        )
+                        .await?;
+                    state = ParticipationLoggingState::Enabled;
+                }
+            }
+
+            self.room_owner_data = Some(room_owner_data);
+            *frontend_data = Some(TrainingParticipationReportState {
+                state,
+                parameter_set,
+            });
+        } else {
+            *frontend_data = Some(TrainingParticipationReportState {
+                state,
+                parameter_set: None,
+            });
         }
-        *frontend_data = Some(TrainingParticipationReportState { state });
         Ok(())
+    }
+
+    async fn initialize_parameter_set(
+        &mut self,
+        storage: &mut dyn TrainingParticipationReportStorage,
+    ) -> Result<Option<TrainingParticipationReportParameterSet>, SignalingModuleError> {
+        let mut conn = self.db.get_conn().await?;
+
+        let Some(event) = storage.get_event(self.room).await? else {
+            return Ok(None);
+        };
+        let parameter_set =
+            EventTrainingParticipationReportParameterSet::get_for_event(&mut conn, event.id)
+                .await?
+                .map(TrainingParticipationReportParameterSet::from);
+
+        if let Some(parameter_set) = &parameter_set {
+            storage
+                .set_parameter_set(self.room, parameter_set.clone())
+                .await?;
+        }
+
+        storage.set_parameter_set_initialized(self.room).await?;
+
+        Ok(parameter_set)
     }
 
     async fn load_already_present_room_owners_and_trainees(
@@ -318,15 +427,22 @@ impl TrainingParticipationReport {
             ));
             return Ok(());
         }
-        const SECONDS_PER_MINUTE: u64 = 60;
-        let initial_checkpoint_delay = initial_checkpoint_delay.unwrap_or(TimeRange {
-            after: 10 * SECONDS_PER_MINUTE,
-            within: 20 * SECONDS_PER_MINUTE,
-        });
-        let checkpoint_interval = checkpoint_interval.unwrap_or(TimeRange {
-            after: (60 + 45) * SECONDS_PER_MINUTE,
-            within: 30 * SECONDS_PER_MINUTE,
-        });
+        let (parameter_set_initial_checkpoint_delay, parameter_set_checkpoint_interval) = storage
+            .get_parameter_set(self.room)
+            .await?
+            .map(
+                |TrainingParticipationReportParameterSet {
+                     initial_checkpoint_delay,
+                     checkpoint_interval,
+                 }| { (Some(initial_checkpoint_delay), Some(checkpoint_interval)) },
+            )
+            .unwrap_or_default();
+        let initial_checkpoint_delay = initial_checkpoint_delay
+            .or(parameter_set_initial_checkpoint_delay)
+            .unwrap_or(DEFAULT_INITIAL_CHECKPOINT_DELAY);
+        let checkpoint_interval = checkpoint_interval
+            .or(parameter_set_checkpoint_interval)
+            .unwrap_or(DEFAULT_CHECKPOINT_INTERVAL);
         if room_owner_data.trainees.is_empty() {
             storage
                 .initialize_room(
@@ -430,7 +546,7 @@ impl TrainingParticipationReport {
         ctx: &mut ModuleContext<'_, Self>,
         checkpoint: Timestamp,
     ) {
-        let timeout_id = rand::thread_rng().gen();
+        let timeout_id = rand::rng().random();
         room_owner_data.timeout_id = Some(timeout_id);
 
         let duration = checkpoint
@@ -634,8 +750,12 @@ impl TrainingParticipationReport {
     }
 
     fn random_waiting_duration_seconds(range: &TimeRange) -> u64 {
-        let mut rng = rand::thread_rng();
-        let offset = rng.gen_range(0..range.within);
+        let offset = if range.within == 0 {
+            0
+        } else {
+            let mut rng = rand::rng();
+            rng.random_range(0..range.within)
+        };
         const MAXIMUM_ALLOWED: u64 = i64::MAX as u64;
         range.after.saturating_add(offset).min(MAXIMUM_ALLOWED)
     }
@@ -965,6 +1085,53 @@ impl TrainingParticipationReport {
             control::exchange::global_room_by_user_id(self.room, self.owner),
             exchange::Event::PdfAsset(pdf_asset.clone()),
         );
+    }
+
+    async fn clean_up_parameter_set_storage(
+        self,
+        storage: &mut dyn TrainingParticipationReportStorage,
+    ) {
+        match storage.is_parameter_set_initialized(self.room).await {
+            Ok(is_initialized) => {
+                if is_initialized {
+                    Self::clean_up_parameter_set(self.room, storage).await;
+                }
+                Self::clean_up_parameter_set_initialized(self.room, storage).await;
+            }
+            Err(e) => {
+                log::error!(
+                        "Failed to read training participation report parameter set initialized flag for room {} cleanup: {}",
+                        self.room,
+                        e
+                    );
+            }
+        }
+    }
+
+    async fn clean_up_parameter_set_initialized(
+        room: RoomId,
+        storage: &mut dyn TrainingParticipationReportStorage,
+    ) {
+        if let Err(e) = storage.delete_parameter_set_initialized(room).await {
+            log::error!(
+                "Failed to clean up training participation report parameter set initialized flag for room {}: {}",
+                room,
+                e
+            );
+        }
+    }
+
+    async fn clean_up_parameter_set(
+        room: RoomId,
+        storage: &mut dyn TrainingParticipationReportStorage,
+    ) {
+        if let Err(e) = storage.delete_parameter_set(room).await {
+            log::error!(
+                "Failed to clean up training participation report parameter set {}: {}",
+                room,
+                e
+            );
+        }
     }
 }
 
