@@ -1215,6 +1215,12 @@ async fn create_time_dependent_event(
     let streaming_targets =
         store_event_streaming_targets(conn, event.id, streaming_targets).await?;
 
+    let training_participation_report = if let Some(parameters) = training_participation_report {
+        store_training_participation_report(conn, event.id, parameters).await?
+    } else {
+        None
+    };
+
     let tariff = Tariff::get_by_user_id(conn, &current_user.id).await?;
 
     let suppress_email_notification = is_adhoc || query.suppress_email_notification;
