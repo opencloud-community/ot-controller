@@ -115,6 +115,14 @@ where
         *self.exit = Some(code.unwrap_or(CloseCode::Normal));
     }
 
+    pub fn exit_normal(&mut self) {
+        *self.exit = Some(CloseCode::Normal);
+    }
+
+    pub fn exit_error(&mut self) {
+        *self.exit = Some(CloseCode::Error);
+    }
+
     pub fn metrics(&self) -> Option<&Arc<SignalingMetrics>> {
         self.metrics.as_ref()
     }

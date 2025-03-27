@@ -21,6 +21,7 @@ bytes.workspace = true
 chrono.workspace = true
 chrono-tz = { workspace = true, features = ["serde"] }
 diesel-async.workspace = true
+either.workspace = true
 futures.workspace = true
 futures-core.workspace = true
 jsonwebtoken.workspace = true
@@ -38,15 +39,36 @@ opentalk-keycloak-admin.workspace = true
 opentalk-mail-worker-protocol.workspace = true
 opentalk-nextcloud-client.workspace = true
 opentalk-signaling-core.workspace = true
-opentalk-types-api-v1 = { workspace = true, features = ["diesel"] }
-opentalk-types-common = { workspace = true, features = ["kustos"] }
+opentalk-types-api-v1 = { workspace = true, features = ["backend"] }
+opentalk-types-common = { workspace = true, features = [
+  "backend",
+  "clap",
+  "kustos",
+] }
+opentalk-types-signaling = { workspace = true, features = ["backend"] }
+opentalk-types-signaling-breakout = { workspace = true, features = ["backend"] }
+opentalk-types-signaling-control = { workspace = true, features = ["backend"] }
+opentalk-types-signaling-moderation = { workspace = true, features = [
+  "backend",
+] }
+opentalk-types-signaling-recording = { workspace = true, features = [
+  "backend",
+] }
+opentalk-types-signaling-recording-service = { workspace = true, features = [
+  "backend",
+] }
 opentelemetry = { workspace = true, features = ["metrics", "trace"] }
+parking_lot.workspace = true
+phonenumber.workspace = true
+redis = { workspace = true, features = ["connection-manager", "tokio-comp"] }
+redis-args.workspace = true
 reqwest11 = { workspace = true, features = ["rustls-tls-native-roots"] }
 ring.workspace = true
 rrule.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 snafu.workspace = true
+strum.workspace = true
 tokio = { workspace = true, features = ["signal"] }
 tracing.workspace = true
 url.workspace = true
@@ -55,3 +77,4 @@ uuid = { workspace = true, features = ["serde", "v4"] }
 [dev-dependencies]
 opentalk-test-util = { workspace = true, features = ["database"] }
 pretty_assertions.workspace = true
+serial_test.workspace = true

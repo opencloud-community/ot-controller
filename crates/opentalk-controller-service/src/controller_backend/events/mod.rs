@@ -70,7 +70,7 @@ use crate::{
         shared_folder_for_user,
     },
     services::{MailRecipient, MailService},
-    util::GetUserProfilesBatched,
+    user_profiles::GetUserProfilesBatched,
     ControllerBackend, ToUserProfile,
 };
 

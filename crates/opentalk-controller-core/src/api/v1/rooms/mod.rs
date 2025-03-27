@@ -13,6 +13,10 @@ use actix_web::{
     delete, get, patch, post,
     web::{self, Data, Json, Path, ReqData},
 };
+use opentalk_controller_service::{
+    controller_backend::rooms::start_room_error::StartRoomError,
+    signaling::ticket::start_or_continue_signaling_session,
+};
 use opentalk_controller_service_facade::{OpenTalkControllerService, RequestUser};
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::Db;
@@ -34,7 +38,6 @@ use opentalk_types_common::{
     rooms::{invite_codes::InviteCode, RoomId},
     tariffs::TariffResource,
 };
-use start_room_error::StartRoomError;
 
 use super::response::NoContent;
 use crate::api::{
@@ -42,12 +45,9 @@ use crate::api::{
     responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
     signaling::{
         breakout::BreakoutStorageProvider as _, moderation::ModerationStorageProvider as _,
-        ticket::start_or_continue_signaling_session,
     },
     v1::ApiResponse,
 };
-
-mod start_room_error;
 
 /// Get a list of rooms accessible by the requesting user
 ///

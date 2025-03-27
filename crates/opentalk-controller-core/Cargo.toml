@@ -81,12 +81,10 @@ opentelemetry_sdk = { version = "0.27", features = [
   "spec_unstable_metrics_views",
 ] }
 owo-colors.workspace = true
-parking_lot.workspace = true
 phonenumber.workspace = true
 prometheus = "0.13"
 rand.workspace = true
 redis = { workspace = true, features = ["connection-manager", "tokio-comp"] }
-redis-args.workspace = true
 ring = "0.17"
 rustls = "0.23"
 rustls-pemfile = "2.0"
@@ -118,7 +116,6 @@ yaml-rust2.workspace = true
 [dev-dependencies]
 pretty_assertions.workspace = true
 rand_chacha.workspace = true
-serial_test.workspace = true
 
 [build-dependencies]
 opentalk-version.workspace = true

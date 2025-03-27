@@ -11,6 +11,7 @@ use actix_web::{
 };
 use actix_web_actors::ws;
 use bytes::Bytes;
+use opentalk_controller_service::signaling::ticket::start_or_continue_signaling_session;
 use opentalk_controller_settings::Settings;
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::Db;
@@ -32,7 +33,6 @@ use crate::{
     api::{
         headers::{ConnectionUpgrade, WebsocketUpgrade},
         responses::{InternalServerError, Unauthorized},
-        signaling::ticket::start_or_continue_signaling_session,
         upload::{UploadWebSocketActor, MAXIMUM_WEBSOCKET_BUFFER_SIZE},
     },
     settings::SharedSettingsActix,
