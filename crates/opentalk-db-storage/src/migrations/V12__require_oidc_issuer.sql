@@ -1,5 +1,5 @@
---- DELETE all user_group rows where a group without oidc issuer is referenced
-DELETE FROM user_groups USING groups
+--- DELETE all user_group rows where a group without oidc issuer is referenced 
+DELETE FROM user_groups USING groups 
 WHERE user_groups.group_id = groups.id AND groups.oidc_issuer IS NULL;
 
 --- DELETE all groups that have no oidc_issuer
