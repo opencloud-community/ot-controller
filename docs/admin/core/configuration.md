@@ -220,7 +220,7 @@ client_secret = "v3rys3cr3t"
 #                        attribute must be set here in external_id_user_attribute_name.
 #external_id_user_attribute_name = "my_user_attribute_name"
 
-# Set the behaviour of the `/users/find` endpoint.
+# Set the behavior of the `/users/find` endpoint.
 # This allows searching for users who have not yet logged into the controller.
 # You can choose where to search for users or disable the endpoint completely for performance or privacy reasons.
 # Possible values are "disabled", "from_database" and "from_user_search_backend".
@@ -310,28 +310,6 @@ urls = ["localhost:2379"]
 #url = "http://localhost:9666"
 #api_key = "secret"
 
-# Reports configuration
-#[reports]
-# A template can be provided. If no template is provided the built-in template will be used.
-#template.inline = """# Attendance Report
-
-#|  |  |
-#|--|--|
-#| Meeting | {{title}} |
-#| Description | {{description}} |
-#{% if starts_at %}| Start | {{starts_at | date(timezone=starts_at_tz, format="%Y-%m-%d %H:%M")}} {{starts_at_tz}} | {% endif %}
-#{% if ends_at %}| End | {{ends_at | date(timezone=ends_at_tz, format="%Y-%m-%d %H:%M")}} {{ends_at_tz}} | {% endif %}
-
-### Participants
-
-#| id | Name | Role | Kind | eMail | joined at | left at |
-#| -- | -- | -- | -- | -- | -- | -- |
-#{%- for participant in participants | sort(attribute = "name") | sort(attribute = "role") | reverse %}
-#| {{participant.id}} | {{participant.name}} | {{participant.role}} | {{participant.kind}} | {{participant.email}} | {{participant.joined_at | date(format="%Y-%m-%d %H:%M")}} | {% if participant.left_at %} {{participant.left_at | date(format="%Y-%m-%d %H:%M")}} {% endif %} |
-#{%- endfor %}
-#"""
-#url = "http://localhost:6560"
-
 # Subroom audio whisper configuration
 #[subroom_audio]
 #enable_whisper = false
@@ -419,7 +397,7 @@ urls = ["localhost:2379"]
 #assignment = "static"
 #static_tariff_name = "OpenTalkDefaultTariff"
 #
-# Assignemnt by JWT tariff_id example:
+# Assignment by JWT tariff_id example:
 #assignment = "by_external_tariff_id"
 #
 # Status mapping for tariff status. Can only be used if the tariff assignment
