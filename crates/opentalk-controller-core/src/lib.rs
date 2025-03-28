@@ -1197,7 +1197,7 @@ fn check_for_deprecated_settings(settings: &Settings) -> Result<()> {
 
     if settings.reports.is_some() {
         anstream::eprintln!(
-            "{}: Found an obsolete {reports} configation section.\n\
+            "{}: Found an obsolete {reports} configuration section.\n\
              {}: This section is deprecated and will be reintroduced in a different form in the future.",
             "DEPRECATION WARNING".yellow().bold(),
             "NOTE".green(),
