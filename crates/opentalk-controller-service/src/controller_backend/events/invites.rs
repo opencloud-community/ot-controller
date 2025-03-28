@@ -729,7 +729,7 @@ async fn create_invite_to_non_matching_email(
         .get_user_for_email(tenant_filter, email.as_ref())
         .await
         .map_err(|e| {
-            log::warn!("Failed to query user for email: {}", Report::from_error(e));
+            log::error!("Failed to query user for email: {}", Report::from_error(e));
             ApiError::internal()
         })?;
 
