@@ -28,6 +28,7 @@ opentalk-log = { path = "crates/opentalk-log", version = "0.29.0" }
 opentalk-r3dlock = { path = "crates/opentalk-r3dlock", version = "0.29.0" }
 opentalk-report-generation = { path = "crates/opentalk-report-generation", version = "0.29.0" }
 opentalk-signaling-core = { path = "crates/opentalk-signaling-core", version = "0.29.0" }
+opentalk-signaling-module-automod = { path = "crates/opentalk-signaling-module-automod", version = "0.29.0" }
 opentalk-signaling-module-chat = { path = "crates/opentalk-signaling-module-chat", version = "0.29.0" }
 opentalk-signaling-module-core = { path = "crates/opentalk-signaling-module-core", version = "0.29.0" }
 opentalk-signaling-module-e2ee = { path = "crates/opentalk-signaling-module-e2ee", version = "0.29.0" }
@@ -96,6 +97,7 @@ opentalk-nextcloud-client = { version = "0.2.0", default-features = false, featu
 opentalk-types-api-v1 = "0.35"
 opentalk-types-common = "0.32.1"
 opentalk-types-signaling = "0.33"
+opentalk-types-signaling-automod = "0.3"
 opentalk-types-signaling-breakout = "0.33"
 opentalk-types-signaling-chat = "0.33"
 opentalk-types-signaling-control = "0.33"
