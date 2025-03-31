@@ -2,6 +2,12 @@
 sidebar_position: 304
 ---
 
+:::warning
+
+The report configuration is deprecated and will be removed or changed in the future
+
+:::
+
 # Report generator
 
 The [OpenTalk Report generator](https://gitlab.opencode.de/opentalk/terdoc) is a service whose main purpose is to generate reports (e.g. in PDF).
