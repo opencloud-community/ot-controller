@@ -16,28 +16,28 @@ environment. It reads the settings in this order:
 
 Functionality that can be configured through the configuration file:
 
-- [Logging](logging/log_output.md)
+- [Authz](../advanced/acl.md)
+- [Call-in](../advanced/call_in.md)
 - [Database](database.md)
-- [Shared folders on external storage systems](../advanced/additional_services/shared_folder.md)
+- [Default and fallback values](../advanced/defaults.md)
+- [Endpoints](endpoints.md)
+- [EtherPad](../advanced/additional_services/etherpad.md)
 - [HTTP server](http_server.md)
-- [Room server](room_server.md)
+- [Logging](logging/log_output.md)
+- [Metrics](logging/metrics.md)
+- [MinIO](minio.md)
+- [Monitoring](monitoring.md)
 - [RabbitMQ](rabbitmq.md)
     - The recording service is enabled/disabled by configuring the queue name
 - [Redis](redis.md)
-- [STUN and TURN](stun_turn.md)
-- [Authz](../advanced/acl.md)
-- [Call-in](../advanced/call_in.md)
-- [MinIO](minio.md)
-- [Monitoring](monitoring.md)
-- [EtherPad](../advanced/additional_services/etherpad.md)
-- [SpaceDeck](../advanced/additional_services/spacedeck.md)
 - [Reports](../advanced/additional_services/reports.md)
+- [Room server](room_server.md)
+- [Shared folders on external storage systems](../advanced/additional_services/shared_folder.md)
+- [SpaceDeck](../advanced/additional_services/spacedeck.md)
+- [STUN and TURN](stun_turn.md)
 - [Subroom Audio](subroom_audio.md)
-- [Default and fallback values](../advanced/defaults.md)
-- [Endpoints](endpoints.md)
-- [Metrics](logging/metrics.md)
-- [Tenants](../advanced/tenants.md)
 - [Tariffs](../advanced/tariffs.md)
+- [Tenants](../advanced/tenants.md)
 
 ## Environment variables
 
