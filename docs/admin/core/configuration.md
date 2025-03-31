@@ -27,6 +27,7 @@ Functionality that can be configured through the configuration file:
 - [Metrics](logging/metrics.md)
 - [MinIO](minio.md)
 - [Monitoring](monitoring.md)
+- [OIDC Identity Provider](./keycloak.md)
 - [RabbitMQ](rabbitmq.md)
     - The recording service is enabled/disabled by configuring the queue name
 - [Redis](redis.md)
@@ -38,6 +39,7 @@ Functionality that can be configured through the configuration file:
 - [Subroom Audio](subroom_audio.md)
 - [Tariffs](../advanced/tariffs.md)
 - [Tenants](../advanced/tenants.md)
+- [User search](./user_search.md)
 
 ## Environment variables
 
