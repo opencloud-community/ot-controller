@@ -10,9 +10,8 @@ use std::{
 
 use async_trait::async_trait;
 use opentalk_db_storage::{events::Event, tariffs::Tariff};
-use opentalk_types_common::{rooms::RoomId, time::Timestamp};
+use opentalk_types_common::{rooms::RoomId, time::Timestamp, users::UserInfo};
 use opentalk_types_signaling::{ParticipantId, Role};
-use opentalk_types_signaling_control::room::CreatorInfo;
 use redis::{AsyncCommands, ErrorKind, FromRedisValue, RedisError, ToRedisArgs};
 use redis_args::ToRedisArgs;
 use serde::{de::DeserializeOwned, Serialize};
@@ -169,9 +168,9 @@ impl ControlStorage for RedisConnection {
     async fn try_init_creator(
         &mut self,
         room_id: RoomId,
-        creator: CreatorInfo,
-    ) -> Result<CreatorInfo, SignalingModuleError> {
-        let (_, creator): (bool, CreatorInfo) = redis::pipe()
+        creator: UserInfo,
+    ) -> Result<UserInfo, SignalingModuleError> {
+        let (_, creator): (bool, UserInfo) = redis::pipe()
             .atomic()
             .set_nx(RoomCreator { room_id }, creator)
             .get(RoomCreator { room_id })
@@ -188,7 +187,7 @@ impl ControlStorage for RedisConnection {
     async fn get_creator(
         &mut self,
         room_id: RoomId,
-    ) -> Result<Option<CreatorInfo>, SignalingModuleError> {
+    ) -> Result<Option<UserInfo>, SignalingModuleError> {
         self.get(RoomCreator { room_id }).await.context(RedisSnafu {
             message: "Failed to get room creator",
         })

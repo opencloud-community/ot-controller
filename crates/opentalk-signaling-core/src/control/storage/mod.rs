@@ -47,10 +47,9 @@ mod test_common {
         tariffs::TariffId,
         tenants::TenantId,
         time::Timestamp,
-        users::{UserId, UserTitle},
+        users::{UserId, UserInfo, UserTitle},
     };
     use opentalk_types_signaling::{ParticipantId, Role};
-    use opentalk_types_signaling_control::room::CreatorInfo;
     use pretty_assertions::assert_eq;
     use serde::{Deserialize, Serialize};
 
@@ -500,7 +499,7 @@ mod test_common {
 
         assert_eq!(s.get_creator(room_id).await.unwrap(), None);
 
-        let creator = CreatorInfo {
+        let creator = UserInfo {
             title: UserTitle::new(),
             firstname: "First".into(),
             lastname: "Last".into(),
@@ -513,7 +512,7 @@ mod test_common {
             creator
         );
 
-        let creator2 = CreatorInfo {
+        let creator2 = UserInfo {
             title: "Dr.".parse().expect("valid user title"),
             firstname: "First2".into(),
             lastname: "Last2".into(),

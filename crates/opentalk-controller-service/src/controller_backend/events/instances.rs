@@ -632,7 +632,7 @@ mod tests {
         events::{invites::InviteRole, EventId},
         rooms::RoomId,
         time::{TimeZone, Timestamp},
-        users::UserId,
+        users::{UserId, UserInfo},
     };
 
     use super::*;
@@ -645,11 +645,13 @@ mod tests {
         let user_profile = PublicUserProfile {
             id: UserId::nil(),
             email: "test@example.org".into(),
-            title: "".parse().expect("valid user title"),
-            firstname: "Test".into(),
-            lastname: "Test".into(),
-            display_name: "Tester".parse().expect("valid display name"),
-            avatar_url: "https://example.org/avatar".into(),
+            user_info: UserInfo {
+                title: "".parse().expect("valid user title"),
+                firstname: "Test".into(),
+                lastname: "Test".into(),
+                display_name: "Tester".parse().expect("valid display name"),
+                avatar_url: "https://example.org/avatar".into(),
+            },
         };
 
         let instance = EventInstance {

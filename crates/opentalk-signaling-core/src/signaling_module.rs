@@ -121,7 +121,7 @@ pub trait SignalingModule: Send + Sized + 'static {
     type Incoming: for<'de> Deserialize<'de>;
 
     /// The websocket outgoing message type
-    type Outgoing: Serialize + PartialEq + Debug;
+    type Outgoing: Serialize + Debug;
 
     /// Message type sent over the message exchange to other participant's modules
     type ExchangeMessage: for<'de> Deserialize<'de> + Serialize;

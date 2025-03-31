@@ -44,7 +44,7 @@ use opentalk_types_common::{
     rooms::{BreakoutRoomId, RoomId},
     tariffs::{QuotaType, TariffResource},
     time::Timestamp,
-    users::{DisplayName, UserId},
+    users::{DisplayName, UserId, UserInfo},
 };
 use opentalk_types_signaling::{
     AssociatedParticipant, LeaveReason, ModuleData, NamespacedCommand, ParticipantId,
@@ -55,7 +55,7 @@ use opentalk_types_signaling_control::{
     event::{
         self as control_event, ControlEvent, JoinBlockedReason, JoinSuccess, Left, RoleUpdated,
     },
-    room::{CreatorInfo, RoomInfo},
+    room::RoomInfo,
     state::ControlState,
 };
 use opentalk_types_signaling_moderation::event::{
@@ -2446,7 +2446,7 @@ impl Runner {
 
         let creator = User::get(conn, self.room.created_by).await?;
 
-        let creator_info = CreatorInfo {
+        let creator_info = UserInfo {
             title: creator.title,
             firstname: creator.firstname,
             lastname: creator.lastname,
