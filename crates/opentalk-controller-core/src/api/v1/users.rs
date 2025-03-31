@@ -23,7 +23,6 @@ use opentalk_types_api_v1::{
     assets::AssetSortingQuery,
     error::ApiError,
     pagination::PagePaginationQuery,
-    rooms::RoomResource,
     users::{
         me::PatchMeRequestBody, GetFindQuery, GetFindResponseBody, GetUserAssetsResponseBody,
         PrivateUserProfile, PublicUserProfile,
@@ -51,7 +50,7 @@ use crate::{
         (
             status = StatusCode::OK,
             description = "User profile was successfully updated",
-            body = RoomResource
+            body = PrivateUserProfile
         ),
         (
             status = StatusCode::BAD_REQUEST,
@@ -148,6 +147,7 @@ async fn update_middleware_cache(
 /// private profile contains information that is not visible in the public
 /// profile, such as tariff status or the used storage.
 #[utoipa::path(
+    operation_id = "get_users_me",
     responses(
         (
             status = StatusCode::OK,

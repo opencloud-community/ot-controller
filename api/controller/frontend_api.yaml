@@ -2401,7 +2401,7 @@ paths:
         Returns the private user profile of the currently logged-in user. This
         private profile contains information that is not visible in the public
         profile, such as tariff status or the used storage.
-      operationId: get_me
+      operationId: get_users_me
       responses:
         "200":
           description: Information about the logged in user
@@ -2433,7 +2433,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RoomResource"
+                $ref: "#/components/schemas/PrivateUserProfile"
         "400":
           description: |-
             Could not modify the user's profile due to wrong
