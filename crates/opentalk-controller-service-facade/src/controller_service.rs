@@ -37,7 +37,8 @@ use opentalk_types_api_v1::{
                 PatchRoomStreamingTargetRequestBody, PatchRoomStreamingTargetResponseBody,
                 PostRoomStreamingTargetResponseBody, RoomAndStreamingTargetId,
             },
-            GetRoomEventResponseBody,
+            GetRoomEventResponseBody, PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody,
+            RoomsStartResponseBody,
         },
         GetRoomsResponseBody, RoomResource,
     },
@@ -177,6 +178,33 @@ impl OpenTalkControllerService {
         room_id: &RoomId,
     ) -> Result<GetRoomEventResponseBody, ApiError> {
         self.backend.read().await.get_room_event(room_id).await
+    }
+
+    /// Start a signaling session as a registered user
+    pub async fn start_room_session(
+        &self,
+        current_user: RequestUser,
+        room_id: RoomId,
+        request: PostRoomsStartRequestBody,
+    ) -> Result<RoomsStartResponseBody, ApiError> {
+        self.backend
+            .read()
+            .await
+            .start_room_session(current_user, room_id, request)
+            .await
+    }
+
+    /// Start a signaling session for an invitation code
+    pub async fn start_invited_room_session(
+        &self,
+        room_id: RoomId,
+        request: PostRoomsStartInvitedRequestBody,
+    ) -> Result<RoomsStartResponseBody, ApiError> {
+        self.backend
+            .read()
+            .await
+            .start_invited_room_session(room_id, request)
+            .await
     }
 
     /// Get the assets associated with a room
