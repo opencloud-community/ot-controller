@@ -16,10 +16,10 @@
     trivial_numeric_casts,
     unsafe_code,
     unused,
+    unused_results,
     unused_extern_crates,
     unused_import_braces,
-    unused_qualifications,
-    unused_results
+    unused_qualifications
 )]
 
 pub mod controller_backend;
@@ -27,8 +27,10 @@ pub mod events;
 pub mod helpers;
 pub mod metrics;
 pub mod oidc;
+pub mod phone_numbers;
 pub mod services;
-pub mod util;
+pub mod signaling;
+pub mod user_profiles;
 
 pub use controller_backend::ControllerBackend;
 pub use helpers::{email_to_libravatar_url, require_feature, ToUserProfile};

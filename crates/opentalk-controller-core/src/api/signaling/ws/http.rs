@@ -12,6 +12,11 @@ use std::{
 use actix_web::{get, http::header, web, web::Data, HttpMessage, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
 use kustos::Authz;
+use opentalk_controller_service::signaling::{
+    resumption::{ResumptionData, ResumptionTokenKeepAlive},
+    storage::{SignalingStorage, SignalingStorageProvider as _},
+    ticket::TicketData,
+};
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::Db;
 use opentalk_db_storage::{rooms::Room, users::User};
@@ -39,12 +44,7 @@ use super::{
 use crate::{
     api::{
         responses::{BadRequest, Forbidden, InternalServerError, Unauthorized},
-        signaling::{
-            resumption::{ResumptionData, ResumptionTokenKeepAlive},
-            storage::{SignalingStorage, SignalingStorageProvider as _},
-            ticket::TicketData,
-            ws::actor::WebSocketActor,
-        },
+        signaling::ws::actor::WebSocketActor,
     },
     settings::SharedSettingsActix,
 };

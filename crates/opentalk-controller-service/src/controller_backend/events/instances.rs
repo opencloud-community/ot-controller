@@ -43,7 +43,7 @@ use crate::{
         notifications::{notify_invitees_about_update, UpdateNotificationValues},
         shared_folder_for_user,
     },
-    util::{GetUserProfilesBatched, UserProfilesBatch},
+    user_profiles::{GetUserProfilesBatched, UserProfilesBatch},
     ControllerBackend,
 };
 

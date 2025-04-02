@@ -461,6 +461,7 @@ impl Controller {
                 db.clone(),
                 oidc_provider,
                 storage.clone(),
+                volatile.clone(),
                 exchange_handle.clone(),
                 mail_service.clone(),
                 kc_admin_client.clone(),

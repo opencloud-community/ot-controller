@@ -10,7 +10,9 @@ use actix_web::{
     post,
     web::{Data, Json},
 };
-use opentalk_controller_service::require_feature;
+use opentalk_controller_service::{
+    require_feature, signaling::ticket::start_or_continue_signaling_session,
+};
 use opentalk_controller_settings::{OidcAndUserSearchConfiguration, SettingsLoading};
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::Db;
@@ -23,10 +25,7 @@ use opentalk_types_api_v1::{
 use opentalk_types_common::features;
 
 use crate::{
-    api::{
-        responses::{InternalServerError, Unauthorized},
-        signaling::ticket::start_or_continue_signaling_session,
-    },
+    api::responses::{InternalServerError, Unauthorized},
     settings::SharedSettingsActix,
 };
 

@@ -6,13 +6,12 @@
 
 use std::{convert::TryFrom, sync::Arc};
 
+use opentalk_controller_service::phone_numbers::parse_phone_number;
 use opentalk_controller_settings as settings;
 use opentalk_database::Db;
 use opentalk_db_storage::users::User;
 use opentalk_types_common::{tenants::TenantId, users::DisplayName};
 use phonenumber::PhoneNumber;
-
-use crate::api::util::parse_phone_number;
 
 /// Try to map the provided phone number to a user
 ///

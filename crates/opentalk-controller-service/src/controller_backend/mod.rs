@@ -7,7 +7,7 @@ mod assets;
 mod auth;
 pub mod events;
 mod invites;
-mod rooms;
+pub mod rooms;
 mod sip_configs;
 mod streaming_targets;
 mod users;
@@ -27,7 +27,7 @@ use opentalk_database::Db;
 use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_signaling_core::{
     assets::{ByStreamExt, NewAssetFileName},
-    ExchangeHandle, ObjectStorage, ObjectStorageError,
+    ExchangeHandle, ObjectStorage, ObjectStorageError, VolatileStorage,
 };
 use opentalk_types_api_v1::{
     assets::{AssetResource, AssetSortingQuery},
@@ -92,6 +92,7 @@ pub struct ControllerBackend {
     db: Arc<Db>,
     frontend_oidc_provider: OidcProvider,
     storage: Arc<ObjectStorage>,
+    _volatile: VolatileStorage,
     exchange_handle: ExchangeHandle,
     mail_service: MailService,
     kc_admin_client: Arc<KeycloakAdminClient>,
@@ -107,6 +108,7 @@ impl ControllerBackend {
         db: Arc<Db>,
         frontend_oidc_provider: OidcProvider,
         storage: Arc<ObjectStorage>,
+        volatile: VolatileStorage,
         exchange_handle: ExchangeHandle,
         mail_service: MailService,
         kc_admin_client: Arc<KeycloakAdminClient>,
@@ -118,6 +120,7 @@ impl ControllerBackend {
             db,
             frontend_oidc_provider,
             storage,
+            _volatile: volatile,
             exchange_handle,
             mail_service,
             kc_admin_client,

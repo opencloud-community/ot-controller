@@ -18,7 +18,13 @@ use bytestring::ByteString;
 use futures::{stream::SelectAll, Future};
 use kustos::Authz;
 use log::log_enabled;
-use opentalk_controller_service::email_to_libravatar_url;
+use opentalk_controller_service::{
+    email_to_libravatar_url,
+    signaling::{
+        resumption::ResumptionTokenKeepAlive,
+        storage::{SignalingStorageError, SignalingStorageProvider},
+    },
+};
 use opentalk_controller_settings::SharedSettings;
 use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
@@ -78,8 +84,6 @@ use crate::api::signaling::{
     breakout::{self},
     echo::Echo,
     moderation::{self, ModerationStorageProvider},
-    resumption::ResumptionTokenKeepAlive,
-    storage::{SignalingStorageError, SignalingStorageProvider},
     ws::actor::WsCommand,
 };
 
