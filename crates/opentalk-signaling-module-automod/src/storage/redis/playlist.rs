@@ -9,8 +9,8 @@
 //! - `none`, `random` or `nomination`: The playlist does not get used by these strategies.
 //!
 //! - `playlist` The playlist is a ordered list of participants which will get used to select
-//!     the next participant when yielding. It is also used as a pool to select participants
-//!     randomly from (moderator command `Select`).
+//!   the next participant when yielding. It is also used as a pool to select participants
+//!   randomly from (moderator command `Select`).
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
