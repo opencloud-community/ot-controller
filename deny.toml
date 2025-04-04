@@ -130,9 +130,6 @@ exceptions = [
   ], name = "opentalk-cache" },
   { allow = [
     "EUPL-1.2",
-  ], name = "opentalk-client-shared" },
-  { allow = [
-    "EUPL-1.2",
   ], name = "opentalk-controller-service" },
   { allow = [
     "EUPL-1.2",
@@ -308,8 +305,6 @@ skip = [
   { name = "crypto-bigint", version = "0.4" },
   { name = "der", version = "0.6" },
   { name = "derive_more", version = "0.99" },
-  { name = "derive_more", version = "1.0" },
-  { name = "derive_more-impl", version = "1.0" },
   { name = "ecdsa", version = "0.14" },
   { name = "elliptic-curve", version = "0.12" },
   { name = "event-listener", version = "2" },
