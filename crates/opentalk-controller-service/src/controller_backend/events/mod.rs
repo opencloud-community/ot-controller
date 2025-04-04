@@ -75,9 +75,9 @@ use crate::{
 };
 
 mod favorites;
-pub mod instances;
-pub mod invites;
-pub mod shared_folder;
+pub(crate) mod instances;
+pub(crate) mod invites;
+pub(crate) mod shared_folder;
 
 const LOCAL_DT_FORMAT: &str = "%Y%m%dT%H%M%S";
 const ONE_HUNDRED_YEARS_IN_DAYS: usize = 36525;

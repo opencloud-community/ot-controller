@@ -11,14 +11,11 @@ use actix_web::{
 };
 use actix_web_actors::ws;
 use bytes::Bytes;
-use opentalk_controller_service::signaling::ticket::start_or_continue_signaling_session;
-use opentalk_controller_settings::Settings;
-use opentalk_controller_utils::CaptureApiError;
+use opentalk_controller_service_facade::OpenTalkControllerService;
 use opentalk_database::Db;
-use opentalk_db_storage::rooms::Room;
 use opentalk_signaling_core::{
-    assets::{save_asset, verify_storage_usage, NewAssetFileName},
-    ChunkFormat, ObjectStorage, ObjectStorageError, Participant, VolatileStorage,
+    assets::{save_asset, NewAssetFileName},
+    ChunkFormat, ObjectStorage, ObjectStorageError,
 };
 use opentalk_types_api_v1::{
     error::{ApiError, ErrorBody},
@@ -29,13 +26,10 @@ use opentalk_types_api_v1::{
 };
 use tokio::{sync::mpsc, task};
 
-use crate::{
-    api::{
-        headers::{ConnectionUpgrade, WebsocketUpgrade},
-        responses::{InternalServerError, Unauthorized},
-        upload::{UploadWebSocketActor, MAXIMUM_WEBSOCKET_BUFFER_SIZE},
-    },
-    settings::SharedSettingsActix,
+use crate::api::{
+    headers::{ConnectionUpgrade, WebsocketUpgrade},
+    responses::{InternalServerError, Unauthorized},
+    upload::{UploadWebSocketActor, MAXIMUM_WEBSOCKET_BUFFER_SIZE},
 };
 
 // Note to devs:
@@ -81,45 +75,12 @@ const REQUIRED_RECORDING_ROLE: &str = "opentalk-recorder";
 )]
 #[post("/start")]
 pub async fn post_recording_start(
-    settings: SharedSettingsActix,
-    db: Data<Db>,
-    volatile: Data<VolatileStorage>,
+    service: Data<OpenTalkControllerService>,
     body: Json<PostRecordingStartRequestBody>,
 ) -> Result<Json<PostServiceStartResponseBody>, ApiError> {
-    Ok(post_recording_start_inner(
-        &settings.load_full(),
-        &db,
-        &mut (**volatile).clone(),
-        body.into_inner(),
-    )
-    .await?)
-}
+    let response = service.start_recording(body.into_inner()).await?;
 
-async fn post_recording_start_inner(
-    settings: &Settings,
-    db: &Db,
-    volatile: &mut VolatileStorage,
-    body: PostRecordingStartRequestBody,
-) -> Result<Json<PostServiceStartResponseBody>, CaptureApiError> {
-    let mut conn = db.get_conn().await?;
-    if settings.rabbit_mq.recording_task_queue.is_none() {
-        return Err(ApiError::not_found().into());
-    }
-
-    let room = Room::get(&mut conn, body.room_id).await?;
-
-    verify_storage_usage(&mut conn, room.created_by).await?;
-
-    let (ticket, resumption) = start_or_continue_signaling_session(
-        volatile,
-        Participant::Recorder,
-        room.id,
-        body.breakout_room,
-        None,
-    )
-    .await?;
-
-    Ok(Json(PostServiceStartResponseBody { ticket, resumption }))
+    Ok(Json(response))
 }
 
 /// This is a dummy type to define the structure of the headers required for

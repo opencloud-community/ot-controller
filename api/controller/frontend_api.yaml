@@ -2169,7 +2169,7 @@ paths:
     post:
       tags:
         - "api::v1::services::call_in"
-      summary: Starts a signaling session
+      summary: Starts a signaling session for call-in
       description: |-
         Takes call-in id and pin and returns a ticket for the `/signaling` endpoint. Behaves similar to the
         `/rooms/{room_id}/start` endpoint.
@@ -2197,9 +2197,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorBody"
-              example:
-                code: invalid_credentials
-                message: given call-in id & pin combination is not valid
         "401":
           $ref: "#/components/responses/Unauthorized"
         "500":

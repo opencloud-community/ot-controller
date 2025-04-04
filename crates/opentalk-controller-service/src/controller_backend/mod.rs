@@ -5,10 +5,12 @@
 //! Provides the default [`OpenTalkControllerServiceBackend`] implementation.
 mod assets;
 mod auth;
-pub mod events;
+mod events;
 mod invites;
 pub mod rooms;
 mod sip_configs;
+
+mod services;
 mod streaming_targets;
 mod users;
 
@@ -60,6 +62,10 @@ use opentalk_types_api_v1::{
             RoomsStartResponseBody,
         },
         GetRoomsResponseBody, RoomResource,
+    },
+    services::{
+        call_in::PostCallInStartRequestBody, recording::PostRecordingStartRequestBody,
+        PostServiceStartResponseBody,
     },
     users::{
         me::PatchMeRequestBody, GetEventInvitesPendingResponseBody, GetFindQuery,
@@ -232,6 +238,20 @@ impl OpenTalkControllerServiceBackend for ControllerBackend {
         request: PostRoomsStartInvitedRequestBody,
     ) -> Result<RoomsStartResponseBody, ApiError> {
         Ok(self.start_invited_room_session(room_id, request).await?)
+    }
+
+    async fn start_recording(
+        &self,
+        body: PostRecordingStartRequestBody,
+    ) -> Result<PostServiceStartResponseBody, ApiError> {
+        Ok(self.start_recording(body).await?)
+    }
+
+    async fn start_call_in(
+        &self,
+        request: PostCallInStartRequestBody,
+    ) -> Result<PostServiceStartResponseBody, ApiError> {
+        Ok(self.start_call_in(request).await?)
     }
 
     async fn get_room_assets(
