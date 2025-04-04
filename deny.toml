@@ -73,6 +73,11 @@ ignore = [
   # Dependency chain:
   # opentelemetry-prometheus v0.27.0 -> protobuf v2.28.0
   "RUSTSEC-2024-0437",
+
+  # | gitoxide uses SHA-1 hash implementations without any collision detection, leaving it vulnerable to hash collision attacks.
+  # Dependency chain:
+  # opentalk-version v0.1.1 -> vergen-gix v1.0.6 -> gix v0.69.1 -> gix-features v0.39.1
+  "RUSTSEC-2025-0021",
 ]
 # Threshold for security vulnerabilities, any vulnerability with a CVSS score
 # lower than the range specified will be ignored. Note that ignored advisories
@@ -123,9 +128,6 @@ exceptions = [
   { allow = [
     "EUPL-1.2",
   ], name = "opentalk-cache" },
-  { allow = [
-    "EUPL-1.2",
-  ], name = "opentalk-client-shared" },
   { allow = [
     "EUPL-1.2",
   ], name = "opentalk-controller-service" },
@@ -303,8 +305,6 @@ skip = [
   { name = "crypto-bigint", version = "0.4" },
   { name = "der", version = "0.6" },
   { name = "derive_more", version = "0.99" },
-  { name = "derive_more", version = "1.0" },
-  { name = "derive_more-impl", version = "1.0" },
   { name = "ecdsa", version = "0.14" },
   { name = "elliptic-curve", version = "0.12" },
   { name = "event-listener", version = "2" },

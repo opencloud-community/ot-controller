@@ -15,16 +15,6 @@ version.workspace = true
 workspace = true
 
 [dependencies]
-async-trait.workspace = true
-http.workspace = true
 http-request-derive = { workspace = true, features = ["serde"] }
-opentalk-client-shared.workspace = true
 opentalk-types-api-v1 = { workspace = true, features = ["frontend"] }
 opentalk-types-common = { workspace = true, features = ["frontend"] }
-reqwest.workspace = true
-snafu.workspace = true
-url.workspace = true
-
-[dev-dependencies]
-reqwest = { workspace = true, features = ["rustls-tls-native-roots"] }
-tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread"] }

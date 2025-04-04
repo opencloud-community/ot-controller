@@ -2225,31 +2225,11 @@ dependencies = [
 
 [[package]]
 name = "derive_more"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a9b99b9cbbe49445b21764dc0625032a89b145a2642e67603e1c936f5458d05"
-dependencies = [
- "derive_more-impl 1.0.0",
-]
-
-[[package]]
-name = "derive_more"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "093242cf7570c207c83073cf82f79706fe7b8317e98620a47d5be7c3d8497678"
 dependencies = [
- "derive_more-impl 2.0.1",
-]
-
-[[package]]
-name = "derive_more-impl"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb7330aeadfbe296029522e6c40f315320aba36fc43a5b3632f3795348f3bd22"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
+ "derive_more-impl",
 ]
 
 [[package]]
@@ -3883,9 +3863,9 @@ dependencies = [
 
 [[package]]
 name = "http-request-derive"
-version = "0.3.2"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d14a77f262e1137225c654d968001fbe6919505b64be306bd9b7a77fc3e11ae"
+checksum = "d3076872b277efd8eac5d6a302b585298ab272dd75ff0664b95e507d2007dc0a"
 dependencies = [
  "async-trait",
  "bytes",
@@ -3900,14 +3880,14 @@ dependencies = [
 
 [[package]]
 name = "http-request-derive-macros"
-version = "0.1.3"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "24844d42bba7b74332f013fd2eab0dab6cae859514e7609c6097723113278bd9"
+checksum = "c3198ccc630b08dedb2e2fb86d7daf6a5fba43b2e722e1273afdf4cedb0b0db1"
 dependencies = [
  "darling",
  "proc-macro2",
  "quote",
- "strum 0.26.3",
+ "strum 0.27.1",
  "syn",
 ]
 
@@ -5222,16 +5202,9 @@ checksum = "d05e27ee213611ffe7d6348b942e8f942b37114c00cc03cec254295a4a17852e"
 name = "opentalk-api-client"
 version = "0.29.0"
 dependencies = [
- "async-trait",
- "http 1.2.0",
  "http-request-derive",
- "opentalk-client-shared",
  "opentalk-types-api-v1",
  "opentalk-types-common",
- "reqwest 0.12.12",
- "snafu",
- "tokio",
- "url",
 ]
 
 [[package]]
@@ -5244,23 +5217,6 @@ dependencies = [
  "serde",
  "siphasher",
  "snafu",
-]
-
-[[package]]
-name = "opentalk-client-shared"
-version = "0.30.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ce8188a555bb5397f22a1ac3edccdae263f151ca0d2594087f2c6c785a481dd"
-dependencies = [
- "async-trait",
- "bytes",
- "derive_more 1.0.0",
- "http 1.2.0",
- "http-request-derive",
- "serde",
- "serde_json",
- "snafu",
- "url",
 ]
 
 [[package]]
