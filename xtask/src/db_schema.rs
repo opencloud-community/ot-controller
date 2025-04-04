@@ -129,7 +129,12 @@ async fn connect_and_migrate(
 
 fn change_database_of_url(database_url: &str, default_database: &str) -> (String, String) {
     let base = ::url::Url::parse(database_url).unwrap();
-    let database = base.path_segments().unwrap().last().unwrap().to_owned();
+    let database = base
+        .path_segments()
+        .unwrap()
+        .next_back()
+        .unwrap()
+        .to_owned();
     let mut new_url = base.join(default_database).unwrap();
     new_url.set_query(base.query());
     (database, new_url.into())

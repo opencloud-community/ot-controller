@@ -156,11 +156,7 @@ impl Deleter for EventDeleter {
         delete_shared_folders(
             logger,
             settings,
-            prepared_commit
-                .linked_shared_folder
-                .as_ref()
-                .map(core::slice::from_ref)
-                .unwrap_or_default(),
+            prepared_commit.linked_shared_folder.as_slice(),
             self.fail_on_shared_folder_deletion_error,
         )
         .await?;

@@ -17,27 +17,27 @@
 //! Following selection_strategies are defined:
 //!
 //! - `None`: No automatic reselection happens after the current speaker yields. The next one must
-//!     always be selected by the moderator. The moderator may choose a participant directly
-//!     or let the controller choose one randomly. For that the controller holds a `allow_list`
-//!     which is a set of participants which are able to be randomly selected. Furthermore the
-//!     controller will hold a list of start/stop speaker events. That list can be used to avoid
-//!     double selections (option) when randomly choosing a participant.
+//!   always be selected by the moderator. The moderator may choose a participant directly
+//!   or let the controller choose one randomly. For that the controller holds a `allow_list`
+//!   which is a set of participants which are able to be randomly selected. Furthermore the
+//!   controller will hold a list of start/stop speaker events. That list can be used to avoid
+//!   double selections (option) when randomly choosing a participant.
 //!
 //! - `Playlist`: The playlist-strategy requires a playlist of participants. This list will be
-//!     stored ordered inside the controller. Whenever a speaker yields the controller will
-//!     automatically choose the next participant in the list to be the next speaker.
+//!   stored ordered inside the controller. Whenever a speaker yields the controller will
+//!   automatically choose the next participant in the list to be the next speaker.
 //!
-//!     A moderator may choose to skip over a speaker. That can be done by selecting the next one or
-//!     let the controller choose someone random from the playlist.
-//!     The playlist can, while the automod is active, be edited.
+//!   A moderator may choose to skip over a speaker. That can be done by selecting the next one or
+//!   let the controller choose someone random from the playlist.
+//!   The playlist can, while the automod is active, be edited.
 //!
 //! - `Random`: This strategy behaves like `None` but will always choose the next speaker
-//!     randomly from the `allow_list` as soon as the current speaker yields.
+//!   randomly from the `allow_list` as soon as the current speaker yields.
 //!
 //! - `Nomination`: This strategy behaves like `None` but requires the current speaker to nominate
-//!     the next participant to be speaker. The nominated participant MUST be inside the
-//!     `allow_list` and if double selection is not enabled the controller will check if the
-//!     nominated participant already was a speaker.
+//!   the next participant to be speaker. The nominated participant MUST be inside the
+//!   `allow_list` and if double selection is not enabled the controller will check if the
+//!   nominated participant already was a speaker.
 //!
 //! ### Lifecycle
 //!
