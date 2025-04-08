@@ -7,23 +7,15 @@
 //! The defined structs are exposed to the REST API and will be serialized/deserialized. Similar
 //! structs are defined in the Database crate [`opentalk_db_storage`] for database operations.
 
-use std::str::FromStr;
-
 use actix_web::{
     delete, get, patch, post,
     web::{self, Data, Json, Path, ReqData},
 };
-use opentalk_controller_service::{
-    controller_backend::rooms::start_room_error::StartRoomError,
-    signaling::ticket::start_or_continue_signaling_session,
-};
+use opentalk_controller_service::controller_backend::rooms::start_room_error::StartRoomError;
 use opentalk_controller_service_facade::{OpenTalkControllerService, RequestUser};
-use opentalk_controller_utils::CaptureApiError;
-use opentalk_database::Db;
-use opentalk_db_storage::{invites::Invite, rooms::Room, users::User};
-use opentalk_signaling_core::{Participant, VolatileStorage};
+use opentalk_db_storage::users::User;
 use opentalk_types_api_v1::{
-    error::{ApiError, ErrorBody, ValidationErrorEntry, ERROR_CODE_INVALID_VALUE},
+    error::{ApiError, ErrorBody},
     pagination::PagePaginationQuery,
     rooms::{
         by_room_id::{
@@ -33,19 +25,12 @@ use opentalk_types_api_v1::{
         GetRoomsResponseBody, PostRoomsRequestBody, RoomResource,
     },
 };
-use opentalk_types_common::{
-    events::EventInfo,
-    rooms::{invite_codes::InviteCode, RoomId},
-    tariffs::TariffResource,
-};
+use opentalk_types_common::{events::EventInfo, rooms::RoomId, tariffs::TariffResource};
 
 use super::response::NoContent;
 use crate::api::{
     headers::PageLink,
     responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
-    signaling::{
-        breakout::BreakoutStorageProvider as _, moderation::ModerationStorageProvider as _,
-    },
     v1::ApiResponse,
 };
 
@@ -461,67 +446,22 @@ pub async fn get_room_event(
 )]
 #[post("/rooms/{room_id}/start")]
 pub async fn start(
-    db: Data<Db>,
-    volatile: Data<VolatileStorage>,
-    current_user: ReqData<User>,
+    service: Data<OpenTalkControllerService>,
+    current_user: ReqData<RequestUser>,
     room_id: Path<RoomId>,
     request: Json<PostRoomsStartRequestBody>,
 ) -> Result<Json<RoomsStartResponseBody>, ApiError> {
-    Ok(start_inner(
-        &db,
-        &mut (**volatile).clone(),
-        current_user.into_inner(),
-        room_id.into_inner(),
-        request.into_inner(),
-    )
-    .await?)
-}
+    let response = Json(
+        service
+            .start_room_session(
+                current_user.into_inner(),
+                room_id.into_inner(),
+                request.into_inner(),
+            )
+            .await?,
+    );
 
-async fn start_inner(
-    db: &Db,
-    volatile: &mut VolatileStorage,
-    current_user: User,
-    room_id: RoomId,
-    request: PostRoomsStartRequestBody,
-) -> Result<Json<RoomsStartResponseBody>, CaptureApiError> {
-    let room = Room::get(&mut db.get_conn().await?, room_id).await?;
-
-    // check if user is banned from room
-    if volatile
-        .moderation_storage()
-        .is_user_banned(room.id, current_user.id)
-        .await
-        .map_err(Into::<ApiError>::into)?
-    {
-        return Err(StartRoomError::BannedFromRoom.into());
-    }
-
-    if let Some(breakout_room) = request.breakout_room {
-        let config = volatile
-            .breakout_storage()
-            .get_breakout_config(room.id)
-            .await
-            .map_err(Into::<ApiError>::into)?;
-
-        if let Some(config) = config {
-            if !config.is_valid_id(breakout_room) {
-                return Err(StartRoomError::InvalidBreakoutRoomId.into());
-            }
-        } else {
-            return Err(StartRoomError::NoBreakoutRooms.into());
-        }
-    }
-
-    let (ticket, resumption) = start_or_continue_signaling_session(
-        volatile,
-        current_user.id.into(),
-        room_id,
-        request.breakout_room,
-        request.resumption,
-    )
-    .await?;
-
-    Ok(Json(RoomsStartResponseBody { ticket, resumption }))
+    Ok(response)
 }
 
 /// Start a signaling session for an invitation code
@@ -629,89 +569,13 @@ async fn start_inner(
 )]
 #[post("/rooms/{room_id}/start_invited")]
 pub async fn start_invited(
-    db: Data<Db>,
-    volatile: Data<VolatileStorage>,
+    service: Data<OpenTalkControllerService>,
     room_id: Path<RoomId>,
     request: Json<PostRoomsStartInvitedRequestBody>,
 ) -> Result<ApiResponse<RoomsStartResponseBody>, ApiError> {
-    Ok(start_invited_inner(
-        &db,
-        &mut (**volatile).clone(),
-        room_id.into_inner(),
-        request.into_inner(),
-    )
-    .await?)
-}
+    let response = service
+        .start_invited_room_session(room_id.into_inner(), request.into_inner())
+        .await?;
 
-async fn start_invited_inner(
-    db: &Db,
-    volatile: &mut VolatileStorage,
-    room_id: RoomId,
-    request: PostRoomsStartInvitedRequestBody,
-) -> Result<ApiResponse<RoomsStartResponseBody>, CaptureApiError> {
-    let invite_code_as_uuid = uuid::Uuid::from_str(&request.invite_code).map_err(|_| {
-        ApiError::unprocessable_entities([ValidationErrorEntry::new(
-            "invite_code",
-            ERROR_CODE_INVALID_VALUE,
-            Some("Bad invite code format"),
-        )])
-    })?;
-
-    let mut conn = db.get_conn().await?;
-
-    let invite = Invite::get(&mut conn, InviteCode::from(invite_code_as_uuid)).await?;
-
-    if !invite.active {
-        return Err(ApiError::not_found().into());
-    }
-
-    if invite.room != room_id {
-        return Err(ApiError::bad_request()
-            .with_message("Room id mismatch")
-            .into());
-    }
-
-    let room = Room::get(&mut conn, invite.room).await?;
-
-    drop(conn);
-
-    if let Some(password) = &room.password {
-        if let Some(pw) = &request.password {
-            if pw != password {
-                return Err(StartRoomError::WrongRoomPassword.into());
-            }
-        } else {
-            return Err(StartRoomError::WrongRoomPassword.into());
-        }
-    }
-
-    if let Some(breakout_room) = request.breakout_room {
-        let config = volatile
-            .breakout_storage()
-            .get_breakout_config(room.id)
-            .await
-            .map_err(Into::<ApiError>::into)?;
-
-        if let Some(config) = config {
-            if !config.is_valid_id(breakout_room) {
-                return Err(StartRoomError::InvalidBreakoutRoomId.into());
-            }
-        } else {
-            return Err(StartRoomError::NoBreakoutRooms.into());
-        }
-    }
-
-    let (ticket, resumption) = start_or_continue_signaling_session(
-        volatile,
-        Participant::Guest,
-        room_id,
-        request.breakout_room,
-        request.resumption,
-    )
-    .await?;
-
-    Ok(ApiResponse::new(RoomsStartResponseBody {
-        ticket,
-        resumption,
-    }))
+    Ok(ApiResponse::new(response))
 }

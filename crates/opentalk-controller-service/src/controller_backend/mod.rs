@@ -56,7 +56,8 @@ use opentalk_types_api_v1::{
                 PatchRoomStreamingTargetRequestBody, PatchRoomStreamingTargetResponseBody,
                 PostRoomStreamingTargetResponseBody, RoomAndStreamingTargetId,
             },
-            GetRoomEventResponseBody,
+            GetRoomEventResponseBody, PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody,
+            RoomsStartResponseBody,
         },
         GetRoomsResponseBody, RoomResource,
     },
@@ -92,7 +93,7 @@ pub struct ControllerBackend {
     db: Arc<Db>,
     frontend_oidc_provider: OidcProvider,
     storage: Arc<ObjectStorage>,
-    _volatile: VolatileStorage,
+    volatile: VolatileStorage,
     exchange_handle: ExchangeHandle,
     mail_service: MailService,
     kc_admin_client: Arc<KeycloakAdminClient>,
@@ -120,7 +121,7 @@ impl ControllerBackend {
             db,
             frontend_oidc_provider,
             storage,
-            _volatile: volatile,
+            volatile,
             exchange_handle,
             mail_service,
             kc_admin_client,
@@ -212,6 +213,25 @@ impl OpenTalkControllerServiceBackend for ControllerBackend {
 
     async fn get_room_event(&self, room_id: &RoomId) -> Result<GetRoomEventResponseBody, ApiError> {
         Ok(self.get_room_event(room_id).await?)
+    }
+
+    async fn start_room_session(
+        &self,
+        current_user: RequestUser,
+        room_id: RoomId,
+        request: PostRoomsStartRequestBody,
+    ) -> Result<RoomsStartResponseBody, ApiError> {
+        Ok(self
+            .start_room_session(current_user, room_id, request)
+            .await?)
+    }
+
+    async fn start_invited_room_session(
+        &self,
+        room_id: RoomId,
+        request: PostRoomsStartInvitedRequestBody,
+    ) -> Result<RoomsStartResponseBody, ApiError> {
+        Ok(self.start_invited_room_session(room_id, request).await?)
     }
 
     async fn get_room_assets(

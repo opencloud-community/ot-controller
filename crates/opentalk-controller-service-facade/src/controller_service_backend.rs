@@ -36,7 +36,8 @@ use opentalk_types_api_v1::{
                 PatchRoomStreamingTargetRequestBody, PatchRoomStreamingTargetResponseBody,
                 PostRoomStreamingTargetResponseBody, RoomAndStreamingTargetId,
             },
-            GetRoomEventResponseBody,
+            GetRoomEventResponseBody, PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody,
+            RoomsStartResponseBody,
         },
         GetRoomsResponseBody, RoomResource,
     },
@@ -108,6 +109,21 @@ pub trait OpenTalkControllerServiceBackend: Send + Sync {
 
     /// Get a room's event
     async fn get_room_event(&self, room_id: &RoomId) -> Result<GetRoomEventResponseBody, ApiError>;
+
+    /// Start a signaling session as a registered user
+    async fn start_room_session(
+        &self,
+        current_user: RequestUser,
+        room_id: RoomId,
+        request: PostRoomsStartRequestBody,
+    ) -> Result<RoomsStartResponseBody, ApiError>;
+
+    /// Start a signaling session for an invitation code
+    async fn start_invited_room_session(
+        &self,
+        room_id: RoomId,
+        request: PostRoomsStartInvitedRequestBody,
+    ) -> Result<RoomsStartResponseBody, ApiError>;
 
     /// Get the assets associated with a room.
     async fn get_room_assets(
