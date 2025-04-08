@@ -41,6 +41,10 @@ use opentalk_types_api_v1::{
         },
         GetRoomsResponseBody, RoomResource,
     },
+    services::{
+        call_in::PostCallInStartRequestBody, recording::PostRecordingStartRequestBody,
+        PostServiceStartResponseBody,
+    },
     users::{
         me::PatchMeRequestBody, GetEventInvitesPendingResponseBody, GetFindQuery,
         GetFindResponseBody, GetUserAssetsResponseBody, PrivateUserProfile, PublicUserProfile,
@@ -124,6 +128,18 @@ pub trait OpenTalkControllerServiceBackend: Send + Sync {
         room_id: RoomId,
         request: PostRoomsStartInvitedRequestBody,
     ) -> Result<RoomsStartResponseBody, ApiError>;
+
+    /// Starts a signaling session for recording
+    async fn start_recording(
+        &self,
+        body: PostRecordingStartRequestBody,
+    ) -> Result<PostServiceStartResponseBody, ApiError>;
+
+    /// Starts a signaling session for call-in
+    async fn start_call_in(
+        &self,
+        request: PostCallInStartRequestBody,
+    ) -> Result<PostServiceStartResponseBody, ApiError>;
 
     /// Get the assets associated with a room.
     async fn get_room_assets(

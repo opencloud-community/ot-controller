@@ -4,7 +4,7 @@
 
 //! Provides events stuff.
 
-pub mod notifications;
+pub(crate) mod notifications;
 
 use opentalk_controller_settings::{Settings, TenantAssignment};
 use opentalk_database::DbConnection;
