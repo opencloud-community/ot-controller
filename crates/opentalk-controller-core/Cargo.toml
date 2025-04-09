@@ -71,18 +71,18 @@ opentalk-types-signaling-recording = { workspace = true, features = [
 opentalk-types-signaling-recording-service = { workspace = true, features = [
   "backend",
 ] }
-opentalk-version = "0.1.1"
+opentalk-version.workspace = true
 opentelemetry = { workspace = true, features = ["metrics", "trace"] }
-opentelemetry-otlp = "0.27"
-opentelemetry-prometheus = "0.27"
-opentelemetry_sdk = { version = "0.27", features = [
+opentelemetry-otlp = { workspace = true, features = ["grpc-tonic"] }
+opentelemetry-prometheus.workspace = true
+opentelemetry_sdk = { workspace = true, features = [
   "metrics",
   "rt-tokio-current-thread",
   "spec_unstable_metrics_views",
 ] }
 owo-colors.workspace = true
 phonenumber.workspace = true
-prometheus = "0.13"
+prometheus.workspace = true
 rand.workspace = true
 redis = { workspace = true, features = ["connection-manager", "tokio-comp"] }
 ring = "0.17"
@@ -101,6 +101,7 @@ tokio-stream.workspace = true
 tracing.workspace = true
 tracing-actix-web = { version = "0.7" }
 tracing-futures = "0.2"
+tracing-opentelemetry.workspace = true
 tracing-subscriber = { version = "0.3", features = [
   "env-filter",
   "parking_lot",

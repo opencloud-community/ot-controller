@@ -136,11 +136,7 @@ where
     F: std::future::Future<Output = Result<T>>,
 {
     match f.await {
-        Ok(ok) => {
-            trace::destroy().await;
-
-            ok
-        }
+        Ok(ok) => ok,
         Err(err) => {
             let show_backtrace = std::env::var("RUST_BACKTRACE").is_ok_and(|v| v != "0");
 
@@ -162,8 +158,6 @@ where
             } else {
                 eprintln!("{message}");
             }
-
-            trace::destroy().await;
 
             std::process::exit(-1);
         }

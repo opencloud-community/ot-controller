@@ -8,13 +8,22 @@ use actix_web::{
     Error, HttpMessage,
 };
 use opentalk_controller_settings::Logging;
-use opentelemetry::{global, KeyValue};
-use opentelemetry_otlp::{SpanExporter, WithExportConfig};
-use opentelemetry_sdk::{runtime::TokioCurrentThread, trace::TracerProvider, Resource};
+use opentelemetry::{trace::TracerProvider as _, KeyValue};
+use opentelemetry_otlp::{SpanExporter, WithExportConfig as _};
+use opentelemetry_sdk::{
+    trace::{SdkTracerProvider, Tracer},
+    Resource,
+};
 use snafu::ResultExt;
 use tracing::Span;
 use tracing_actix_web::{RequestId, RootSpanBuilder};
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Registry};
+use tracing_opentelemetry::OpenTelemetryLayer;
+use tracing_subscriber::{
+    fmt::Layer,
+    layer::{Layered, SubscriberExt},
+    util::SubscriberInitExt,
+    EnvFilter, Registry,
+};
 use uuid::Uuid;
 
 use crate::Result;
@@ -39,52 +48,68 @@ pub fn init(settings: &Logging) -> Result<()> {
     let fmt = tracing_subscriber::fmt::Layer::default();
 
     // If opentelemetry is enabled install that layer
+    let mut tracing_layer = None;
     if let Some(endpoint) = &settings.otlp_tracing_endpoint {
-        let otlp_exporter = SpanExporter::builder()
-            .with_tonic()
-            .with_endpoint(endpoint)
-            .build()
-            .whatever_context("Failed to build OpenTelemetry (exporter)")?;
-        let service_name = settings
-            .service_name
-            .clone()
-            .unwrap_or_else(|| "controller".into());
-
-        let service_namespace = settings
-            .service_namespace
-            .clone()
-            .unwrap_or_else(|| "opentalk".into());
-
-        let service_instance_id = settings
-            .service_instance_id
-            .clone()
-            .unwrap_or_else(|| Uuid::new_v4().to_string());
-
-        let tracer_provider = TracerProvider::builder()
-            .with_batch_exporter(otlp_exporter, TokioCurrentThread)
-            .with_resource(Resource::new(vec![
-                KeyValue::new("service.name", service_name),
-                KeyValue::new("service.namespace", service_namespace),
-                KeyValue::new("service.instance.id", service_instance_id),
-                KeyValue::new(
-                    "service.version",
-                    option_env!("VERGEN_GIT_SEMVER")
-                        .or(option_env!("CARGO_PKG_VERSION"))
-                        .unwrap_or("unknown"),
-                ),
-            ]))
-            .build();
-
-        // Install the global logger
-        global::set_tracer_provider(tracer_provider);
+        tracing_layer = Some(init_tracing_layer(settings, endpoint)?);
     }
 
     // Create registry which contains all layers
-    Registry::default().with(filter).with(fmt).init();
+    Registry::default()
+        .with(filter)
+        .with(fmt)
+        .with(tracing_layer)
+        .init();
 
     Ok(())
 }
 
+type SubscriberLayer = Layer<Layered<EnvFilter, Registry>>;
+type Subscriber = Layered<EnvFilter, Registry>;
+
+fn init_tracing_layer(
+    settings: &Logging,
+    endpoint: &str,
+) -> Result<OpenTelemetryLayer<Layered<SubscriberLayer, Subscriber>, Tracer>> {
+    let otlp_exporter = SpanExporter::builder()
+        .with_tonic()
+        .with_endpoint(endpoint)
+        .build()
+        .whatever_context("Failed to build OpenTelemetry (exporter)")?;
+    let service_name = settings
+        .service_name
+        .clone()
+        .unwrap_or_else(|| "controller".into());
+
+    let service_namespace = settings
+        .service_namespace
+        .clone()
+        .unwrap_or_else(|| "opentalk".into());
+
+    let service_instance_id = settings
+        .service_instance_id
+        .clone()
+        .unwrap_or_else(|| Uuid::new_v4().to_string());
+
+    let resource = Resource::builder()
+        .with_service_name(service_name)
+        .with_attribute(KeyValue::new("service.namespace", service_namespace))
+        .with_attribute(KeyValue::new("service.instance.id", service_instance_id))
+        .with_attribute(KeyValue::new(
+            "service.version",
+            option_env!("VERGEN_GIT_SEMVER")
+                .or(option_env!("CARGO_PKG_VERSION"))
+                .unwrap_or("unknown"),
+        ))
+        .build();
+
+    let tracer_provider = SdkTracerProvider::builder()
+        .with_batch_exporter(otlp_exporter)
+        .with_resource(resource)
+        .build();
+
+    let tracer = tracer_provider.tracer("tracing-otel-subscriber");
+    Ok(OpenTelemetryLayer::new(tracer))
+}
 /// Create the logging filter
 ///
 /// The filter is a combination of the values from the RUST_LOG environment variable, the config file and
@@ -115,21 +140,6 @@ fn create_filter(settings: &Logging) -> Result<EnvFilter> {
     let filter = EnvFilter::new(directives);
 
     Ok(filter)
-}
-
-/// Flush remaining spans and traces
-pub async fn destroy() {
-    let handle = tokio::runtime::Handle::current();
-
-    if handle
-        .spawn_blocking(global::shutdown_tracer_provider)
-        .await
-        .is_err()
-    {
-        eprintln!(
-            "Failed to shutdown OpenTelemetry tracer provider, some information might be missing"
-        );
-    }
 }
 
 pub struct ReducedSpanBuilder;
