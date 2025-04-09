@@ -14,7 +14,7 @@ use actix_web::{
 };
 use chrono::Utc;
 use openidconnect::AccessToken;
-use opentalk_controller_service::oidc::{decode_token, UserClaims};
+use opentalk_controller_service::oidc::{decode_token, OnlyExpiryClaim};
 use opentalk_controller_service_facade::{OpenTalkControllerService, RequestUser};
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::Db;
@@ -112,12 +112,12 @@ async fn update_middleware_cache(
     let user = User::get(&mut conn, user_id).await?;
     let tenant = Tenant::get(&mut conn, tenant_id).await?;
 
-    let user_claims = decode_token::<UserClaims>(access_token.secret())
+    let claim = decode_token::<OnlyExpiryClaim>(access_token.secret())
         .whatever_context::<&str, Whatever>(
             "failed to decode access token for user profile update",
         )?;
 
-    let token_ttl = user_claims.exp - Utc::now();
+    let token_ttl = claim.exp - Utc::now();
     if token_ttl > chrono::Duration::seconds(10) {
         match token_ttl.to_std() {
             Ok(token_ttl_std) => {

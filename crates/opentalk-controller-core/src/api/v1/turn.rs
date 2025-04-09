@@ -79,6 +79,7 @@ use crate::{
 #[deprecated = "This endpoint and related turn settings will be removed in the future"]
 pub async fn get(
     settings_provider: Data<SettingsProvider>,
+    authz: Data<kustos::Authz>,
     db: Data<Db>,
     caches: Data<Caches>,
     oidc_ctx: Data<OidcContext>,
@@ -91,7 +92,7 @@ pub async fn get(
     let stun_servers = &settings.stun;
 
     // This is a omniauth endpoint. AccessTokens and InviteCodes are allowed as Bearer tokens
-    match check_access_token_or_invite(&settings, &req, db, &caches, oidc_ctx).await? {
+    match check_access_token_or_invite(&settings, authz, db, &req, &caches, oidc_ctx).await? {
         Either::Right(invite) => {
             log::trace!(
                 "Generating new turn credentials for invite {} and servers {:?}",
@@ -196,8 +197,9 @@ fn rr_servers<T: Rng + CryptoRng>(
 /// Checks for a valid access_token similar to the OIDC Middleware, but also allows invite_tokens as a valid bearer token.
 async fn check_access_token_or_invite(
     settings: &Settings,
-    req: &HttpRequest,
+    authz: Data<kustos::Authz>,
     db: Data<Db>,
+    req: &HttpRequest,
     caches: &Caches,
     oidc_ctx: Data<OidcContext>,
 ) -> Result<Either<User, Invite>, CaptureApiError> {
@@ -211,6 +213,7 @@ async fn check_access_token_or_invite(
     let access_token = auth.into_scheme().token().to_string();
     let current_user = check_access_token(
         settings,
+        &authz,
         db.clone(),
         oidc_ctx,
         &caches.user_access_tokens,

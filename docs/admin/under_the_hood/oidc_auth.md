@@ -13,23 +13,29 @@ sequenceDiagram
 
     U->>F: Clicks login
     F->>I: Performs OIDC Login
-    I-->>F: Returns ID Token and Access Token
-
-    F->>C: Logs into controller using ID Token<br>POST /auth/login
-    C->>C: Validate ID Token:<br>Check Signature against Provider PubKey<br>Cannot be expired
-    Note over C: The endpoint does not authenticate the user<br>but stores the ID Token inside a DB Table to check expiration later
-    C-->>F: Returns
-    F->>U: Login Complete!
+    I-->>F: Returns Access Token
 
     opt Normal REST calls
     U->>F: Creates new Meeting
-    F->>C: POST /v1/event
+    F->>C: POST /v1/event with HTTP header:<br>Authentication: Bearer <AccessToken>
 
-    C->>C: Parse JWT AccessToken<br>Check Signature and expiration
-    C->>C: Verify permissions<br>by looking at groups inside AccessToken
-    C->>I: Verify token against<br>token_instrospect endpoint
-    I-->>C: Returns token info
-    C->>C: Process the info and check if token is still active.
+    opt cached per AccessToken
+        Note over C: The OIDC provider must either implement the introspect endpoint<br>or have AccessTokens in the JWT format<br>If neither is the case an error is always returned to the user
+        alt OIDC Provider supports introspect
+            C->>I: Verify token against<br>introspect endpoint
+            I-->>C: Returns token info
+        else AccessToken is a JWT
+            C->>C: Verify AccessToken<br>Check Signature and expiration
+        end
+
+
+        C->>I: Query userinfo endpoint using the AccessToken
+        I-->>C: Returns user information
+
+        C->>C: Query database for the user,<br>creates one if it doesn't exist.
+
+    end
+
     C->>C: Process request
 
     C-->F: Returns newly created Meeting

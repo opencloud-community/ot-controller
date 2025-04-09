@@ -3,48 +3,25 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Auth related API structs and Endpoints
-use core::mem::take;
+
+#![allow(deprecated)]
 
 use actix_web::{
     get, post,
     web::{Data, Json},
 };
-use kustos::prelude::PoliciesBuilder;
-use log::error;
-use opentalk_controller_service::{
-    controller_backend::RoomsPoliciesBuilderExt,
-    oidc::{IdTokenInfo, OidcContext, VerifyError},
-};
+use opentalk_controller_service::oidc::{OidcContext, VerifyError};
 use opentalk_controller_service_facade::OpenTalkControllerService;
-use opentalk_controller_settings::{
-    Settings, SettingsProvider, TariffAssignment, TariffStatusMapping, TenantAssignment,
-};
 use opentalk_controller_utils::CaptureApiError;
-use opentalk_database::{Db, OptionalExt};
-use opentalk_db_storage::{
-    groups::{get_or_create_groups_by_name, Group},
-    tariffs::{ExternalTariffId, Tariff},
-    tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId},
-    users::User,
-};
 use opentalk_types_api_v1::{
     auth::{login::AuthLoginPostRequestBody, GetLoginResponseBody, PostLoginResponseBody},
     error::{ApiError, AuthenticationError, ErrorBody},
 };
-use opentalk_types_common::{
-    events::EventId,
-    rooms::RoomId,
-    tariffs::TariffStatus,
-    tenants::TenantId,
-    users::{DisplayName, GroupName},
-};
 
-use super::events::EventPoliciesBuilderExt;
 use crate::api::responses::InternalServerError;
 
-mod create_user;
-mod update_user;
-
+/// **Deprecated**: This endpoint exists only for backwards compatibility and must no longer be used.
+///
 /// The login endpoint
 ///
 /// Attempt to authenticate with a provided ID token. The ID token can be
@@ -87,176 +64,41 @@ mod update_user;
     security(),
 )]
 #[post("/auth/login")]
+#[deprecated]
 pub async fn post_login(
-    settings: Data<SettingsProvider>,
-    db: Data<Db>,
     oidc_ctx: Data<OidcContext>,
     body: Json<AuthLoginPostRequestBody>,
-    authz: Data<kustos::Authz>,
 ) -> Result<Json<PostLoginResponseBody>, ApiError> {
-    Ok(post_login_inner(
-        &settings.get(),
-        &db,
-        &oidc_ctx,
-        body.into_inner().id_token,
-        &authz,
-    )
-    .await?)
+    Ok(post_login_inner(&oidc_ctx, body.into_inner().id_token).await?)
 }
 
 async fn post_login_inner(
-    settings: &Settings,
-    db: &Db,
     oidc_ctx: &OidcContext,
     id_token: String,
-    authz: &kustos::Authz,
 ) -> Result<Json<PostLoginResponseBody>, CaptureApiError> {
-    let mut info = match oidc_ctx.verify_id_token(&id_token) {
-        Ok(info) => info,
-        Err(e) => {
-            return match e {
-                VerifyError::InvalidClaims => Err(ApiError::bad_request()
-                    .with_code("invalid_claims")
-                    .with_message("some required attributes are missing or malformed")
-                    .into()),
-                VerifyError::Expired { .. } => Err(ApiError::unauthorized()
-                    .with_www_authenticate(AuthenticationError::SessionExpired)
-                    .into()),
-                VerifyError::MissingKeyID
-                | VerifyError::UnknownKeyID
-                | VerifyError::MalformedSignature
-                | VerifyError::InvalidJwt { .. }
-                | VerifyError::InvalidSignature => Err(ApiError::unauthorized()
-                    .with_www_authenticate(AuthenticationError::InvalidIdToken)
-                    .into()),
-            };
-        }
-    };
-
-    let mut conn = db.get_conn().await?;
-
-    // Get tariff depending on the configured assignment
-    let (tariff, tariff_status) = match &settings.tariffs.assignment {
-        TariffAssignment::Static { static_tariff_name } => (
-            Tariff::get_by_name(&mut conn, static_tariff_name).await?,
-            TariffStatus::Default,
-        ),
-        TariffAssignment::ByExternalTariffId => {
-            let external_tariff_id = info.tariff_id.clone().ok_or_else(|| {
-                ApiError::bad_request()
-                    .with_code("invalid_claims")
-                    .with_message("tariff_id missing in id_token claims")
-            })?;
-
-            let tariff =
-                Tariff::get_by_external_id(&mut conn, &ExternalTariffId::from(external_tariff_id))
-                    .await
-                    .optional()?
-                    .ok_or_else(|| {
-                        ApiError::internal()
-                            .with_code("invalid_tariff_id")
-                            .with_message("JWT contained unknown tariff_id")
-                    })?;
-
-            if let Some(mapping) = settings.tariffs.status_mapping.as_ref() {
-                let status_name = info.tariff_status.clone().ok_or_else(|| {
-                    ApiError::bad_request()
-                        .with_code("invalid_claims")
-                        .with_message("tariff_status missing in id_token claims")
-                })?;
-
-                let status = map_tariff_status_name(mapping, &status_name);
-
-                let tariff = if matches!(status, TariffStatus::Downgraded) {
-                    Tariff::get_by_name(&mut conn, &mapping.downgraded_tariff_name)
-                        .await
-                        .map_err(|_| {
-                            ApiError::internal()
-                                .with_code("invalid_configuration")
-                                .with_message("Unable to load downgraded tariff")
-                        })?
-                } else {
-                    tariff
-                };
-                (tariff, status)
-            } else {
-                (tariff, TariffStatus::Default)
-            }
-        }
-    };
-
-    // Get the tenant_id depending on the configured assignment
-    let tenant_id = match &settings.tenants.assignment {
-        TenantAssignment::Static { static_tenant_id } => static_tenant_id.clone(),
-        TenantAssignment::ByExternalTenantId { .. } => info.tenant_id.clone().ok_or_else(|| {
-            ApiError::bad_request()
+    if let Err(e) = oidc_ctx.verify_id_token(&id_token) {
+        return match e {
+            VerifyError::InvalidClaims => Err(ApiError::bad_request()
                 .with_code("invalid_claims")
-                .with_message("tenant_id missing in id_token claims")
-        })?,
+                .with_message("some required attributes are missing or malformed")
+                .into()),
+            VerifyError::Expired { .. } => Err(ApiError::unauthorized()
+                .with_www_authenticate(AuthenticationError::SessionExpired)
+                .into()),
+            VerifyError::MissingKeyID
+            | VerifyError::UnknownKeyID
+            | VerifyError::MalformedSignature
+            | VerifyError::InvalidJwt { .. }
+            | VerifyError::InvalidSignature => Err(ApiError::unauthorized()
+                .with_www_authenticate(AuthenticationError::InvalidIdToken)
+                .into()),
+        };
     };
-
-    let tenant = get_or_create_tenant_by_oidc_id(&mut conn, &OidcTenantId::from(tenant_id)).await?;
-
-    let groups: Vec<(TenantId, GroupName)> = take(&mut info.x_grp)
-        .into_iter()
-        .map(|group| (tenant.id, GroupName::from(group)))
-        .collect();
-
-    let groups = get_or_create_groups_by_name(&mut conn, &groups).await?;
-
-    // Try to get the user by the `sub` field in the IdToken
-    let user = User::get_by_oidc_sub(&mut conn, tenant.id, &info.sub).await?;
-
-    let login_result = match user {
-        Some(user) => {
-            // Found a matching user, update its attributes, tenancy and groups
-            update_user::update_user(
-                settings,
-                &mut conn,
-                user,
-                info,
-                groups,
-                tariff,
-                tariff_status,
-            )
-            .await?
-        }
-        None => {
-            // No matching user, create a new one with inside the given tenants and groups
-            create_user::create_user(
-                settings,
-                &mut conn,
-                info,
-                tenant,
-                groups,
-                tariff,
-                tariff_status,
-            )
-            .await?
-        }
-    };
-
-    drop(conn);
-
-    update_core_user_permissions(authz, login_result).await?;
 
     Ok(Json(PostLoginResponseBody {
         // TODO calculate permissions
         permissions: Default::default(),
     }))
-}
-
-fn map_tariff_status_name(mapping: &TariffStatusMapping, name: &String) -> TariffStatus {
-    if mapping.default.contains(name) {
-        TariffStatus::Default
-    } else if mapping.paid.contains(name) {
-        TariffStatus::Paid
-    } else if mapping.downgraded.contains(name) {
-        TariffStatus::Downgraded
-    } else {
-        error!("Invalid tariff status value found: \"{name}\"");
-        TariffStatus::Default
-    }
 }
 
 /// Get the configured OIDC provider
@@ -280,79 +122,4 @@ fn map_tariff_status_name(mapping: &TariffStatusMapping, name: &String) -> Tarif
 #[get("/auth/login")]
 pub async fn get_login(service: Data<OpenTalkControllerService>) -> Json<GetLoginResponseBody> {
     Json(service.get_login().await)
-}
-
-enum LoginResult {
-    UserCreated {
-        user: User,
-        groups: Vec<Group>,
-        event_and_room_ids: Vec<(EventId, RoomId)>,
-    },
-    UserUpdated {
-        user: User,
-        groups_added_to: Vec<Group>,
-        groups_removed_from: Vec<Group>,
-    },
-}
-
-async fn update_core_user_permissions(
-    authz: &kustos::Authz,
-    db_result: LoginResult,
-) -> Result<(), CaptureApiError> {
-    match db_result {
-        LoginResult::UserUpdated {
-            user,
-            groups_added_to,
-            groups_removed_from,
-        } => {
-            // TODO(r.floren) this could be optimized I guess, with a user_to_groups?
-            // But this is currently not a hot path.
-            for group in groups_added_to {
-                authz.add_user_to_group(user.id, group.id).await?;
-            }
-
-            for group in groups_removed_from {
-                authz.remove_user_from_group(user.id, group.id).await?;
-            }
-        }
-        LoginResult::UserCreated {
-            user,
-            groups,
-            event_and_room_ids,
-        } => {
-            authz.add_user_to_role(user.id, "user").await?;
-
-            for group in groups {
-                authz.add_user_to_group(user.id, group.id).await?;
-            }
-
-            // Migrate email invites to user invites
-            // Add permissions for user to events that the email was invited to
-            if event_and_room_ids.is_empty() {
-                return Ok(());
-            }
-
-            let mut policies = PoliciesBuilder::new().grant_user_access(user.id);
-
-            for (event_id, room_id) in event_and_room_ids {
-                policies = policies
-                    .event_read_access(event_id)
-                    .room_read_access(room_id)
-                    .event_invite_invitee_access(event_id);
-            }
-
-            authz.add_policies(policies.finish()).await?;
-        }
-    }
-
-    Ok(())
-}
-
-fn build_info_display_name(info: &IdTokenInfo) -> DisplayName {
-    DisplayName::from_str_lossy(
-        &info
-            .display_name
-            .clone()
-            .unwrap_or_else(|| format!("{} {}", &info.firstname, &info.lastname)),
-    )
 }

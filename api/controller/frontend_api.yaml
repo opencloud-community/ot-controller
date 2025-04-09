@@ -35,8 +35,10 @@ paths:
     post:
       tags:
         - "api::v1::auth"
-      summary: The login endpoint
+      summary: "**Deprecated**: This endpoint exists only for backwards compatibility and must no longer be used."
       description: |-
+        The login endpoint
+
         Attempt to authenticate with a provided ID token. The ID token can be
         received from an OIDC provider and contains information about the requesting
         user as well as an expiration timestamp. When a valid token with an unknown user
@@ -77,6 +79,7 @@ paths:
                 message: Authentication failed
         "500":
           $ref: "#/components/responses/InternalServerError"
+      deprecated: true
       security: []
   /events:
     get:

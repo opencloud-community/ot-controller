@@ -367,7 +367,6 @@ diesel::table! {
         firstname -> Varchar,
         #[max_length = 255]
         lastname -> Varchar,
-        id_token_exp -> Int8,
         #[max_length = 35]
         language -> Varchar,
         #[max_length = 511]

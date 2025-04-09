@@ -227,7 +227,6 @@ users {
     character_varying email
     character_varying firstname
     bigint id_serial
-    bigint id_token_exp
     character_varying language
     character_varying lastname
     character_varying oidc_sub

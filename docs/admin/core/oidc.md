@@ -48,17 +48,16 @@ client_id = "Controller"
 client_secret = "v3rys3cr3t"
 ```
 
-## OIDC and JWT
+## OIDC and User Info
 
-The following fields in the JWT returned by the OIDC provider are used by the OpenTalk Controller. These fields differ for authentication of normal users and services.
+The following fields returned by the OIDC provider's `userinfo` endpoint are used by the OpenTalk Controller. These fields differ for authentication of normal users and services.
 
-### JWT fields for user login
+> Note: Previously these fields were required to be in the ID Token's claims, but the ID Token is no longer required.
+
+### User Info fields for user login
 
 | Field           | Type       | Required                                                                      | Description                                                                                     |
 | --------------- | ---------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `exp`           | `string`   | yes                                                                           | RFC 3339 timestamp of the token's expiration date                                               |
-| `iat`           | `string`   | yes                                                                           | RFC 3339 timestamp of the token's issuing date                                                  |
-| `iss`           | `string`   | yes                                                                           | URL of the OIDC provider                                                                        |
 | `sub`           | `string`   | yes                                                                           | Unique identifier of the user                                                                   |
 | `email`         | `string`   | yes                                                                           | E-Mail address of the user                                                                      |
 | `given_name`    | `string`   | yes                                                                           | The given name (also known as first name) of the user                                           |
@@ -79,7 +78,7 @@ provided URL. Therefore it is important to only provide URLs that are guaranteed
 to not inject unwanted content, but rather have a policy which ensures that only
 valid images are served.
 
-### JWT fields for service login
+### Access Token JWT fields for service login
 
 | Field           | Type          | Required | Description                                       |
 | --------------- | ------------- | -------- | ------------------------------------------------- |

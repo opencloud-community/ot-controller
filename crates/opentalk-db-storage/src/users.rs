@@ -66,7 +66,6 @@ pub struct User {
     pub title: UserTitle,
     pub firstname: String,
     pub lastname: String,
-    pub id_token_exp: i64,
     pub language: Language,
     pub display_name: DisplayName,
     pub dashboard_theme: Theme,
@@ -387,7 +386,6 @@ pub struct NewUser {
     pub title: UserTitle,
     pub firstname: String,
     pub lastname: String,
-    pub id_token_exp: i64,
     pub language: Language,
     pub display_name: DisplayName,
     pub phone: Option<String>,
@@ -418,7 +416,6 @@ pub struct UpdateUser<'a> {
     pub phone: Option<Option<String>>,
     pub display_name: Option<&'a DisplayName>,
     pub language: Option<&'a Language>,
-    pub id_token_exp: Option<i64>,
     pub dashboard_theme: Option<&'a Theme>,
     pub conference_theme: Option<&'a Theme>,
     // The tenant_id should never be updated!
@@ -435,6 +432,28 @@ impl UpdateUser<'_> {
         let query = diesel::update(users::table.filter(users::id.eq(user_id))).set(self);
         let user: User = query.get_result(conn).await?;
         Ok(user)
+    }
+
+    pub fn is_empty(&self) -> bool {
+        matches!(
+            self,
+            Self {
+                title: None,
+                email: None,
+                firstname: None,
+                lastname: None,
+                phone: None,
+                display_name: None,
+                language: None,
+                dashboard_theme: None,
+                conference_theme: None,
+                tariff_id: None,
+                tariff_status: None,
+                disabled_since: None,
+                avatar_url: None,
+                timezone: None,
+            }
+        )
     }
 }
 
