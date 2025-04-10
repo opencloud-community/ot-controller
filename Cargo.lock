@@ -1933,9 +1933,9 @@ dependencies = [
 
 [[package]]
 name = "crossbeam-channel"
-version = "0.5.14"
+version = "0.5.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "06ba6d68e24814cb8de6bb986db8222d3a027d15872cabc0d18817bc3c0e4471"
+checksum = "82b8f8f868b36967f9606790d1903570de9ceaf870a7bf9fbbd3016d636a2cb2"
 dependencies = [
  "crossbeam-utils",
 ]
@@ -3917,7 +3917,7 @@ dependencies = [
  "httpdate",
  "itoa",
  "pin-project-lite",
- "socket2 0.5.8",
+ "socket2 0.4.10",
  "tokio",
  "tower-service",
  "tracing",
@@ -4491,7 +4491,7 @@ dependencies = [
 
 [[package]]
 name = "kustos"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "actix-web",
  "async-trait",
@@ -4604,7 +4604,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc2f4eb4bc735547cfed7c0a4922cbd04a4655978c09b54f1f7b228750664c34"
 dependencies = [
  "cfg-if",
- "windows-targets 0.52.6",
+ "windows-targets 0.48.5",
 ]
 
 [[package]]
@@ -5197,7 +5197,7 @@ checksum = "d05e27ee213611ffe7d6348b942e8f942b37114c00cc03cec254295a4a17852e"
 
 [[package]]
 name = "opentalk-api-client"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "async-trait",
  "http 1.2.0",
@@ -5213,7 +5213,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-cache"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "bincode",
  "moka",
@@ -5242,7 +5242,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-community-signaling-modules"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "async-trait",
  "opentalk-signaling-core",
@@ -5262,7 +5262,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-controller"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "actix-web",
  "anstream",
@@ -5274,7 +5274,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-controller-core"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "actix",
  "actix-cors",
@@ -5367,7 +5367,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-controller-service"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -5405,7 +5405,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-controller-service-facade"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "async-trait",
  "bytes",
@@ -5418,7 +5418,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-controller-settings"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "anstream",
  "arc-swap",
@@ -5441,7 +5441,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-controller-utils"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "actix-web",
  "async-trait",
@@ -5469,7 +5469,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-database"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "async-trait",
  "deadpool-runtime",
@@ -5487,7 +5487,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-db-storage"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "actix-rt",
  "barrel",
@@ -5561,7 +5561,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-jobs"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "actix-rt",
  "async-trait",
@@ -5631,7 +5631,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-log"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "log",
  "serial_test",
@@ -5669,7 +5669,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-r3dlock"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "pretty_assertions",
  "rand 0.9.0",
@@ -5680,7 +5680,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-report-generation"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "chrono",
  "chrono-tz 0.10.1",
@@ -5697,7 +5697,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-signaling-core"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "actix-http",
  "actix-rt",
@@ -5747,7 +5747,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-signaling-module-chat"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "actix-rt",
  "async-trait",
@@ -5777,7 +5777,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-signaling-module-core"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "async-trait",
  "opentalk-signaling-core",
@@ -5786,7 +5786,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-signaling-module-integration"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "async-trait",
  "opentalk-signaling-core",
@@ -5795,7 +5795,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-signaling-module-livekit"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "async-trait",
  "either",
@@ -5822,7 +5822,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-signaling-module-meeting-notes"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "async-trait",
  "chrono",
@@ -5847,7 +5847,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-signaling-module-meeting-report"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "async-stream",
  "async-trait",
@@ -5874,7 +5874,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-signaling-module-polls"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "actix-rt",
  "async-trait",
@@ -5899,7 +5899,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-signaling-module-shared-folder"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "actix-rt",
  "async-trait",
@@ -5925,7 +5925,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-signaling-module-subroom-audio"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "async-trait",
  "either",
@@ -5950,7 +5950,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-signaling-module-timer"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "actix-rt",
  "async-trait",
@@ -5977,7 +5977,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-signaling-module-training-participation-report"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "async-stream",
  "async-trait",
@@ -6011,7 +6011,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-signaling-module-whiteboard"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "async-trait",
  "bytes",
@@ -6039,7 +6039,7 @@ dependencies = [
 
 [[package]]
 name = "opentalk-test-util"
-version = "0.29.2"
+version = "0.29.3"
 dependencies = [
  "diesel",
  "diesel-async",
@@ -9146,9 +9146,9 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokio"
-version = "1.44.0"
+version = "1.44.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9975ea0f48b5aa3972bf2d888c238182458437cc2a19374b81b25cdf1023fb3a"
+checksum = "e6b88822cbe49de4185e3a4cbf8321dd487cf5fe0c5c65695fef6346371e9c48"
 dependencies = [
  "backtrace",
  "bytes",

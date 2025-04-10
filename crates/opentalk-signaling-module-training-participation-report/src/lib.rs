@@ -104,7 +104,7 @@ pub struct TrainingParticipationReport {
     room_owner_data: Option<RoomOwnerData>,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 struct RoomOwnerData {
     trainees: BTreeSet<ParticipantId>,
     other_room_owners: BTreeSet<ParticipantId>,
@@ -250,11 +250,12 @@ impl TrainingParticipationReport {
                 state = ParticipationLoggingState::Enabled;
             }
 
-            let mut room_owner_data = RoomOwnerData {
+            let room_owner_data = RoomOwnerData {
                 other_room_owners,
                 trainees,
                 timeout_id: None,
             };
+            self.room_owner_data = Some(room_owner_data.clone());
 
             if let Some(TrainingParticipationReportParameterSet {
                 initial_checkpoint_delay,
@@ -264,43 +265,43 @@ impl TrainingParticipationReport {
                 if room_owner_data.other_room_owners.is_empty() {
                     // this is the first trainer in the room
 
-                    let report_state = if room_owner_data.trainees.is_empty() {
-                        TrainingReportState::WaitingForParticipant
+                    if room_owner_data.trainees.is_empty() {
+                        ctx.volatile
+                            .storage()
+                            .initialize_room(
+                                self.room,
+                                ctx.timestamp,
+                                TrainingReportState::WaitingForParticipant,
+                                initial_checkpoint_delay.clone(),
+                                checkpoint_interval.clone(),
+                                room_owner_data.trainees.clone(),
+                            )
+                            .await?;
                     } else {
-                        let first_checkpoint = Self::switch_to_next_checkpoint(
-                            &mut room_owner_data,
-                            self.room,
+                        ctx.volatile
+                            .storage()
+                            .initialize_room(
+                                self.room,
+                                ctx.timestamp,
+                                TrainingReportState::WaitingForInitialTimeout,
+                                initial_checkpoint_delay.clone(),
+                                checkpoint_interval.clone(),
+                                room_owner_data.trainees.clone(),
+                            )
+                            .await?;
+
+                        self.start_presence_logging(
                             ctx,
-                            &initial_checkpoint_delay,
+                            initial_checkpoint_delay.clone(),
+                            PresenceLoggingStartedReason::Autostart,
                         )
                         .await?;
-
-                        ctx.exchange_publish(
-                            control::exchange::global_room_all_participants(self.room),
-                            exchange::Event::PresenceLoggingStarted {
-                                first_checkpoint,
-                                reason: PresenceLoggingStartedReason::Autostart,
-                            },
-                        );
-                        TrainingReportState::WaitingForInitialTimeout
                     };
 
-                    ctx.volatile
-                        .storage()
-                        .initialize_room(
-                            self.room,
-                            ctx.timestamp,
-                            report_state,
-                            initial_checkpoint_delay,
-                            checkpoint_interval,
-                            room_owner_data.trainees.clone(),
-                        )
-                        .await?;
                     state = ParticipationLoggingState::Enabled;
                 }
             }
 
-            self.room_owner_data = Some(room_owner_data);
             *frontend_data = Some(TrainingParticipationReportState {
                 state,
                 parameter_set,
