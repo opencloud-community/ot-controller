@@ -114,15 +114,19 @@ opentalk-types-signaling-timer = "0.33"
 opentalk-types-signaling-training-participation-report = "0.4"
 opentalk-types-signaling-whiteboard = "0.33"
 opentalk-version = "0.1.1"
-opentelemetry = { version = "0.27", default-features = false, features = [
+opentelemetry = { version = "0.29.1", default-features = false, features = [
   "metrics",
   "trace",
 ] }
+opentelemetry-otlp = "0.29.0"
+opentelemetry-prometheus = "0.29.0"
+opentelemetry_sdk = "0.29.0"
 owo-colors = "4"
 parking_lot = "0.12"
 pdf-extract = "0.8"
 phonenumber = "0.3"
 pretty_assertions = "1"
+prometheus = "0.13.0"
 rand = "0.9"
 rand_chacha = "0.9"
 redis = "0.29"
@@ -141,6 +145,7 @@ tokio = "1"
 tokio-stream = { version = "0.1", features = ["sync"] }
 toml = "0.8"
 tracing = "0.1"
+tracing-opentelemetry = "0.30.0"
 url = "2"
 utoipa = "5"
 utoipa-swagger-ui = "9"
