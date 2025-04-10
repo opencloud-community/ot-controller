@@ -384,6 +384,8 @@ diesel::table! {
         disabled_since -> Nullable<Timestamptz>,
         #[max_length = 2048]
         avatar_url -> Nullable<Varchar>,
+        #[max_length = 255]
+        timezone -> Nullable<Varchar>,
     }
 }
 

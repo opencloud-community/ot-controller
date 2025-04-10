@@ -58,6 +58,7 @@ impl ControllerBackend {
             firstname: None,
             lastname: None,
             avatar_url: None,
+            timezone: None,
             phone: None,
             email: None,
             display_name: patch.display_name.as_ref(),
