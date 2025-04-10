@@ -3862,36 +3862,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "http-request-derive"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3076872b277efd8eac5d6a302b585298ab272dd75ff0664b95e507d2007dc0a"
-dependencies = [
- "async-trait",
- "bytes",
- "http 1.2.0",
- "http-request-derive-macros",
- "serde",
- "serde_json",
- "serde_url_params",
- "snafu",
- "url",
-]
-
-[[package]]
-name = "http-request-derive-macros"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3198ccc630b08dedb2e2fb86d7daf6a5fba43b2e722e1273afdf4cedb0b0db1"
-dependencies = [
- "darling",
- "proc-macro2",
- "quote",
- "strum 0.27.1",
- "syn",
-]
-
-[[package]]
 name = "httparse"
 version = "1.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5197,15 +5167,6 @@ name = "openssl-probe"
 version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d05e27ee213611ffe7d6348b942e8f942b37114c00cc03cec254295a4a17852e"
-
-[[package]]
-name = "opentalk-api-client"
-version = "0.29.0"
-dependencies = [
- "http-request-derive",
- "opentalk-types-api-v1",
- "opentalk-types-common",
-]
 
 [[package]]
 name = "opentalk-cache"
@@ -8421,16 +8382,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "87607cb1398ed59d48732e575a4c28a7a8ebf2454b964fe3f224f2afc07909e1"
 dependencies = [
  "serde",
-]
-
-[[package]]
-name = "serde_url_params"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c43307d0640738af32fe8d01e47119bc0fc8a686be470a44a586caff76dfb34"
-dependencies = [
- "serde",
- "url",
 ]
 
 [[package]]
