@@ -60,20 +60,6 @@ ignore = [
   # actix-web v4.10.2 -> actix-http v3.10.0 -> actix-tls v3.4.0 -> tokio-rustls v0.26.2 -> rustls v0.23.23 -> aws-lc-rs v1.12.5 -> paste v1.0.15
   "RUSTSEC-2024-0436",
 
-  # | Crash due to uncontrolled recursion in protobuf crate
-  # |
-  # | Affected version of this crate did not properly parse unknown fields when parsing a user-supplied input.
-  # |
-  # | This allows an attacker to cause a stack overflow when parsing the mssage on untrusted data.
-  # | Announcement: https://github.com/stepancheg/rust-protobuf/issues/749
-  # | Solution: Upgrade to >=3.7.2
-  #
-  # We need to wait until opentelemetry-prometheus updates the dependency in order to get this fixed.
-  #
-  # Dependency chain:
-  # opentelemetry-prometheus v0.27.0 -> protobuf v2.28.0
-  "RUSTSEC-2024-0437",
-
   # | gitoxide uses SHA-1 hash implementations without any collision detection, leaving it vulnerable to hash collision attacks.
   # Dependency chain:
   # opentalk-version v0.1.1 -> vergen-gix v1.0.6 -> gix v0.69.1 -> gix-features v0.39.1
