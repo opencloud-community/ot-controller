@@ -578,6 +578,7 @@ impl Controller {
                     .app_data(signaling_metrics.clone())
                     .app_data(metrics.clone())
                     .app_data(mail_service)
+                    .service(api::well_known::well_known_api)
                     .service(api::signaling::ws_service)
                     .service(metrics::metrics)
                     .with_swagger_service_if(!settings.load_full().endpoints.disable_openapi)
