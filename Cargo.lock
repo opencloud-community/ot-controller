@@ -3917,7 +3917,7 @@ dependencies = [
  "httpdate",
  "itoa",
  "pin-project-lite",
- "socket2 0.4.10",
+ "socket2 0.5.8",
  "tokio",
  "tower-service",
  "tracing",
@@ -4604,7 +4604,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc2f4eb4bc735547cfed7c0a4922cbd04a4655978c09b54f1f7b228750664c34"
 dependencies = [
  "cfg-if",
- "windows-targets 0.48.5",
+ "windows-targets 0.52.6",
 ]
 
 [[package]]
@@ -6085,9 +6085,9 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-common"
-version = "0.32.1"
+version = "0.32.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "13523221c1cf75be9cf89b5149542013472d58eafdadb085f6bdd93def143921"
+checksum = "75cdaeae190ce8fe2a57c990a8b536c8becae0b2e2983fc331637542ebb29399"
 dependencies = [
  "actix-http",
  "actix-web-httpauth",
