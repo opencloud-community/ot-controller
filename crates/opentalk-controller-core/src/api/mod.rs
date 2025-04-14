@@ -14,3 +14,4 @@ pub mod headers;
 pub mod responses;
 pub mod upload;
 pub mod v1;
+pub mod well_known;
