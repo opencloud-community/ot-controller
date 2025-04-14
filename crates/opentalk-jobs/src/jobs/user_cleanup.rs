@@ -131,6 +131,7 @@ mod tests {
             firstname: None,
             lastname: None,
             avatar_url: None,
+            timezone: None,
             phone: None,
             display_name: None,
             language: None,

@@ -18,6 +18,7 @@ use opentalk_diesel_newtype::DieselNewtype;
 use opentalk_types_common::{
     tariffs::{TariffId, TariffStatus},
     tenants::TenantId,
+    time::TimeZone,
     users::{DisplayName, Language, Theme, UserId, UserTitle},
 };
 use serde::{Deserialize, Serialize};
@@ -76,6 +77,7 @@ pub struct User {
     pub tariff_status: TariffStatus,
     pub disabled_since: Option<DateTime<Utc>>,
     pub avatar_url: Option<String>,
+    pub timezone: Option<TimeZone>,
 }
 
 impl fmt::Debug for User {
@@ -425,6 +427,7 @@ pub struct UpdateUser<'a> {
     pub tariff_status: Option<TariffStatus>,
     pub disabled_since: Option<Option<DateTime<Utc>>>,
     pub avatar_url: Option<Option<&'a str>>,
+    pub timezone: Option<Option<TimeZone>>,
 }
 
 impl UpdateUser<'_> {

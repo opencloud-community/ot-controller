@@ -70,6 +70,7 @@ The following fields in the JWT returned by the OIDC provider are used by the Op
 | `phone_number`  | `string`   | no                                                                            | The phone number of the user                                                                    |
 | `nickname`      | `string`   | no                                                                            | Nickname of the user, typically used to prefill the display name of a meeting participant       |
 | `picture`       | `string`   | no                                                                            | URL to a user picture, will replace the gravatar url generation for that user if provided       |
+| `zoneinfo`      | `string`   | no                                                                            | The timezone of the user, in IANA format (e.g. "Europe/Berlin")                                 |
 
 #### Security considerations
 

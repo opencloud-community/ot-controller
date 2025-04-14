@@ -233,6 +233,7 @@ users {
     character_varying oidc_sub
     character_varying phone
     tariff_status tariff_status
+    character_varying timezone
     character_varying title
 }
 

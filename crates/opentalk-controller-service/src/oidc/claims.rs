@@ -55,14 +55,16 @@ pub struct UserClaims {
     pub iss: String,
     /// Subject (User ID)
     pub sub: String,
-    /// The users email
+    /// The email of the user
     pub email: EmailAddress,
-    /// The users firstname
+    /// The firstname of the user
     pub given_name: String,
-    /// The users lastname
+    /// The lastname of the user
     pub family_name: String,
     /// The profile picture of the user
     pub picture: Option<String>,
+    /// The timezone of the user
+    pub zoneinfo: Option<String>,
     /// Tenant ID of the user
     pub tenant_id: Option<String>,
     /// Tariff ID of the user

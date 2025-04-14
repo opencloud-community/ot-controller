@@ -7,6 +7,7 @@
 use chrono::{DateTime, Utc};
 use http::async_http_client;
 use openidconnect::{AccessToken, ClientId, ClientSecret, TokenIntrospectionResponse};
+use opentalk_types_common::time::TimeZone;
 use provider::ProviderClient;
 use snafu::ResultExt;
 use url::Url;
@@ -112,6 +113,22 @@ impl OidcContext {
     pub fn verify_id_token(&self, id_token: &str) -> Result<IdTokenInfo, VerifyError> {
         let claims = jwt::verify::<UserClaims>(self.provider.metadata.jwks(), id_token)?;
 
+        let timezone_parse_result = claims.zoneinfo.clone().map(|zi| zi.parse());
+        let timezone: Option<TimeZone> = match timezone_parse_result {
+            // Zoneinfo exists and has correct IANA format
+            Some(Ok(tz)) => Some(tz),
+            // Zoneinfo exists but has wrong format
+            Some(Err(_)) => {
+                log::warn!(
+                    "Invalid zoneinfo value in token for OIDC sub {}: \"{}\"",
+                    claims.sub,
+                    claims.zoneinfo.unwrap_or_default()
+                );
+                None
+            }
+            None => None,
+        };
+
         Ok(IdTokenInfo {
             sub: claims.sub,
             issuer: claims.iss,
@@ -120,6 +137,7 @@ impl OidcContext {
             firstname: claims.given_name,
             lastname: claims.family_name,
             avatar_url: claims.picture,
+            timezone,
             x_grp: claims.x_grp,
             phone_number: claims.phone_number,
             display_name: claims.nickname,
@@ -162,6 +180,8 @@ pub struct IdTokenInfo {
     pub lastname: String,
     /// The URL to get the avatar from
     pub avatar_url: Option<String>,
+    /// The timezone of the user
+    pub timezone: Option<TimeZone>,
     /// The group
     pub x_grp: Vec<String>,
     /// The phone number
