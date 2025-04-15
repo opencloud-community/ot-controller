@@ -245,7 +245,11 @@ impl GetEventsCursor {
 impl Event {
     #[tracing::instrument(err, skip_all)]
     pub async fn get(conn: &mut DbConnection, event_id: EventId) -> Result<Event> {
-        let query = events::table.filter(events::id.eq(event_id));
+        let query = events::table
+            .inner_join(users::table.on(users::id.eq(events::created_by)))
+            .select(events::all_columns)
+            .filter(events::id.eq(event_id))
+            .filter(users::disabled_since.is_null());
 
         let event = query.first(conn).await?;
 
@@ -254,7 +258,9 @@ impl Event {
 
     pub async fn get_all_with_creator(conn: &mut DbConnection) -> Result<Vec<(EventId, UserId)>> {
         let events = events::table
+            .inner_join(users::table.on(users::id.eq(events::created_by)))
             .select((events::id, events::created_by))
+            .filter(users::disabled_since.is_null())
             .load(conn)
             .await?;
 
@@ -267,9 +273,11 @@ impl Event {
         date: DateTime<Utc>,
     ) -> Result<Vec<(EventId, RoomId)>> {
         events::table
+            .inner_join(users::table.on(users::id.eq(events::created_by)))
             .select((events::id, events::room))
             .filter(events::ends_at.le(date))
             .filter(events::is_recurring.ne(true))
+            .filter(users::disabled_since.is_null())
             .load(conn)
             .await
             .map_err(Into::into)
@@ -281,9 +289,11 @@ impl Event {
         date: DateTime<Utc>,
     ) -> Result<Vec<(EventId, RoomId)>> {
         events::table
+            .inner_join(users::table.on(users::id.eq(events::created_by)))
             .select((events::id, events::room))
             .filter(events::created_at.le(date))
             .filter(events::is_adhoc.eq(true))
+            .filter(users::disabled_since.is_null())
             .load(conn)
             .await
             .map_err(Into::into)
@@ -295,8 +305,10 @@ impl Event {
         created_by: UserId,
     ) -> Result<Vec<(EventId, RoomId)>> {
         events::table
+            .inner_join(users::table.on(users::id.eq(events::created_by)))
             .select((events::id, events::room))
             .filter(events::created_by.eq(created_by))
+            .filter(users::disabled_since.is_null())
             .load(conn)
             .await
             .map_err(Into::into)
@@ -305,12 +317,15 @@ impl Event {
     #[tracing::instrument(err, skip_all)]
     pub async fn get_all_finite_recurring(conn: &mut DbConnection) -> Result<Vec<Event>> {
         events::table
+            .inner_join(users::table.on(users::id.eq(events::created_by)))
+            .select(events::all_columns)
             .filter(events::is_recurring.eq(true))
             .filter(
                 events::recurrence_pattern
                     .ilike("%UNTIL%")
                     .or(events::recurrence_pattern.ilike("%COUNT%")),
             )
+            .filter(users::disabled_since.is_null())
             .load(conn)
             .await
             .map_err(Into::into)
@@ -322,7 +337,10 @@ impl Event {
         updated_by: UserId,
     ) -> Result<Vec<Event>> {
         events::table
+            .inner_join(users::table.on(users::id.eq(events::created_by)))
+            .select(events::all_columns)
             .filter(events::updated_by.eq(updated_by))
+            .filter(users::disabled_since.is_null())
             .load(conn)
             .await
             .map_err(Into::into)
@@ -332,8 +350,10 @@ impl Event {
         conn: &mut DbConnection,
     ) -> Result<Vec<(EventId, RoomId, UserId)>> {
         let events = events::table
+            .inner_join(users::table.on(users::id.eq(events::created_by)))
             .inner_join(event_invites::table.on(event_invites::event_id.eq(events::id)))
             .select((events::id, events::room, event_invites::invitee))
+            .filter(users::disabled_since.is_null())
             .load(conn)
             .await?;
 
@@ -373,7 +393,7 @@ impl Event {
                 )
                 .inner_join(rooms::table.on(events::room.eq(rooms::id)))
                 .left_join(sip_configs::table.on(rooms::id.eq(sip_configs::room)))
-                .inner_join(users::table.on(users::id.eq(rooms::created_by)))
+                .inner_join(users::table.on(users::id.eq(events::created_by)))
                 .inner_join(tariffs::table.on(tariffs::id.eq(users::tariff_id)))
                 .left_join(
                     event_training_participation_report_parameter_sets::table
@@ -390,6 +410,7 @@ impl Event {
                     tariffs::all_columns,
                     event_training_participation_report_parameter_sets::all_columns.nullable(),
                 ))
+                .filter(users::disabled_since.is_null())
                 .filter(events::id.eq(event_id));
         Ok(query.first(conn).await?)
     }
@@ -401,6 +422,7 @@ impl Event {
         event_id: EventId,
     ) -> Result<(Event, Room, Option<SipConfig>)> {
         let query = events::table
+            .inner_join(users::table.on(users::id.eq(events::created_by)))
             .inner_join(rooms::table.on(events::room.eq(rooms::id)))
             .left_join(sip_configs::table.on(rooms::id.eq(sip_configs::room)))
             .select((
@@ -408,7 +430,8 @@ impl Event {
                 rooms::all_columns,
                 sip_configs::all_columns.nullable(),
             ))
-            .filter(events::id.eq(event_id));
+            .filter(events::id.eq(event_id))
+            .filter(users::disabled_since.is_null());
 
         let (event, room, sip_config) = query.first(conn).await?;
 
@@ -466,7 +489,7 @@ impl Event {
             )
             .inner_join(rooms::table)
             .left_join(sip_configs::table.on(rooms::id.eq(sip_configs::room)))
-            .inner_join(users::table.on(users::id.eq(rooms::created_by)))
+            .inner_join(users::table.on(users::id.eq(events::created_by)))
             .inner_join(tariffs::table.on(tariffs::id.eq(users::tariff_id)))
             .select((
                 events::all_columns,
@@ -479,6 +502,7 @@ impl Event {
             ))
             .filter(events::tenant_id.eq(user.tenant_id))
             .filter(event_related_to_user_id)
+            .filter(users::disabled_since.is_null())
             .order_by(events::starts_at.nullable().asc().nulls_first())
             .then_order_by(events::created_at.asc())
             .then_order_by(events::id)
@@ -628,7 +652,10 @@ impl Event {
     #[tracing::instrument(err, skip_all)]
     pub async fn get_for_room(conn: &mut DbConnection, room_id: RoomId) -> Result<Option<Event>> {
         let event = events::table
+            .inner_join(users::table.on(users::id.eq(events::created_by)))
+            .select(events::all_columns)
             .filter(events::room.eq(room_id))
+            .filter(users::disabled_since.is_null())
             .first::<Event>(conn)
             .await
             .optional()?;
@@ -642,8 +669,10 @@ impl Event {
         room_id: RoomId,
     ) -> Result<Option<EventId>> {
         let query = events::table
+            .inner_join(users::table.on(users::id.eq(events::created_by)))
             .select(events::id)
-            .filter(events::room.eq(room_id));
+            .filter(events::room.eq(room_id))
+            .filter(users::disabled_since.is_null());
 
         let events = query.first(conn).await.optional()?;
 
