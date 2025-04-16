@@ -20,7 +20,7 @@ impl ControllerBackend {
         &self,
         room_id: RoomId,
     ) -> Result<SipConfigResource, CaptureApiError> {
-        let settings = self.settings.load();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let room = Room::get(&mut conn, room_id).await?;
@@ -55,7 +55,7 @@ impl ControllerBackend {
         room_id: RoomId,
         modify_sip_config: PutSipConfigRequestBody,
     ) -> Result<(SipConfigResource, bool), CaptureApiError> {
-        let settings = self.settings.load();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let room = Room::get(&mut conn, room_id).await?;
@@ -117,7 +117,7 @@ impl ControllerBackend {
     }
 
     pub(crate) async fn delete_sip_config(&self, room_id: RoomId) -> Result<(), CaptureApiError> {
-        let settings = self.settings.load();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let room = Room::get(&mut conn, room_id).await?;

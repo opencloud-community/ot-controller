@@ -11,7 +11,7 @@
 use std::sync::Arc;
 
 use lapin_pool::{RabbitMqChannel, RabbitMqPool};
-use opentalk_controller_settings::{Settings, SharedSettings};
+use opentalk_controller_settings::{Settings, SettingsProvider};
 use opentalk_db_storage::{
     events::{Event, EventException, EventExceptionKind},
     rooms::Room,
@@ -184,7 +184,7 @@ fn to_event_exception(exception: EventException) -> v1::EventException {
 /// A service for sending emails
 #[derive(Clone)]
 pub struct MailService {
-    settings: SharedSettings,
+    settings: SettingsProvider,
     metrics: Arc<EndpointMetrics>,
     rabbitmq_pool: Arc<RabbitMqPool>,
     rabbitmq_channel: Arc<Mutex<RabbitMqChannel>>,
@@ -199,7 +199,7 @@ impl std::fmt::Debug for MailService {
 impl MailService {
     /// Creates a new email service
     pub fn new(
-        settings: SharedSettings,
+        settings: SettingsProvider,
         metrics: Arc<EndpointMetrics>,
         rabbitmq_pool: Arc<RabbitMqPool>,
         rabbitmq_channel: RabbitMqChannel,
@@ -213,7 +213,7 @@ impl MailService {
     }
 
     async fn send_to_rabbitmq(&self, mail_task: MailTask) -> Result<()> {
-        if let Some(queue_name) = &self.settings.load().rabbit_mq.mail_task_queue {
+        if let Some(queue_name) = &self.settings.get().rabbit_mq.mail_task_queue {
             let channel = {
                 let mut channel = self.rabbitmq_channel.lock().await;
 
@@ -259,7 +259,7 @@ impl MailService {
         shared_folder: Option<SharedFolder>,
         streaming_targets: Vec<RoomStreamingTarget>,
     ) -> Result<()> {
-        let settings = &*self.settings.load();
+        let settings = &*self.settings.get();
         let shared_folder = shared_folder.map(|sf| {
             if inviter.id == invitee.id {
                 sf
@@ -298,7 +298,7 @@ impl MailService {
         shared_folder: Option<SharedFolder>,
         streaming_targets: Vec<RoomStreamingTarget>,
     ) -> Result<()> {
-        let settings = &*self.settings.load();
+        let settings = &*self.settings.get();
 
         let invitee = v1::UnregisteredUser {
             email: invitee.email.into(),
@@ -337,7 +337,7 @@ impl MailService {
         shared_folder: Option<SharedFolder>,
         streaming_targets: Vec<RoomStreamingTarget>,
     ) -> Result<()> {
-        let settings = &*self.settings.load();
+        let settings = &*self.settings.get();
 
         // Create MailTask
         let mail_task = MailTask::external_event_invite(
@@ -372,7 +372,7 @@ impl MailService {
         shared_folder: Option<SharedFolder>,
         streaming_targets: Vec<RoomStreamingTarget>,
     ) -> Result<()> {
-        let settings = &*self.settings.load();
+        let settings = &*self.settings.get();
 
         let mail_task = match invitee {
             MailRecipient::Registered(invitee) => {
@@ -455,7 +455,7 @@ impl MailService {
         shared_folder: Option<SharedFolder>,
         streaming_targets: Vec<RoomStreamingTarget>,
     ) -> Result<()> {
-        let settings = &*self.settings.load();
+        let settings = &*self.settings.get();
 
         // increment event sequence to satisfy icalendar spec
         event.revision += 1;
@@ -537,7 +537,7 @@ impl MailService {
         shared_folder: Option<SharedFolder>,
         streaming_targets: Vec<RoomStreamingTarget>,
     ) -> Result<()> {
-        let settings = &*self.settings.load();
+        let settings = &*self.settings.get();
 
         // increment event sequence to satisfy icalendar spec
         event.revision += 1;

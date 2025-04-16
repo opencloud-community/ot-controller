@@ -22,8 +22,6 @@ actix-rt.workspace = true
 actix-web = { workspace = true, features = ["rustls-0_23"] }
 actix-web-actors = "4.3"
 actix-web-httpauth.workspace = true
-anstream.workspace = true
-arc-swap.workspace = true
 async-trait.workspace = true
 base64.workspace = true
 bytes.workspace = true
@@ -80,7 +78,6 @@ opentelemetry_sdk = { workspace = true, features = [
   "rt-tokio-current-thread",
   "spec_unstable_metrics_views",
 ] }
-owo-colors.workspace = true
 phonenumber.workspace = true
 prometheus.workspace = true
 rand.workspace = true
@@ -128,9 +125,3 @@ swagger = ["dep:utoipa-swagger-ui"]
 # is used inside macros from opentelemetry, provides internal
 # logging for the OpenTelemetry library via tracing
 internal-logs = []
-
-[package.metadata.cargo-machete]
-ignored = [
-  # is used during build
-  "opentalk-version",
-]

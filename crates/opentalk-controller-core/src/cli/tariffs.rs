@@ -106,7 +106,7 @@ fn parse_quota(s: &str) -> Result<(QuotaType, u64), CliParameterError> {
     Ok((QuotaType::from_str(name).expect("Infallible"), value))
 }
 
-pub async fn handle_command(settings: Settings, command: Command) -> Result<(), DatabaseError> {
+pub async fn handle_command(settings: &Settings, command: Command) -> Result<(), DatabaseError> {
     match command {
         Command::List => list_all_tariffs(settings).await,
         Command::Create {
@@ -157,7 +157,7 @@ pub async fn handle_command(settings: Settings, command: Command) -> Result<(), 
     }
 }
 
-async fn list_all_tariffs(settings: Settings) -> Result<(), DatabaseError> {
+async fn list_all_tariffs(settings: &Settings) -> Result<(), DatabaseError> {
     let db = Db::connect(&settings.database)?;
     let mut conn = db.get_conn().await?;
 
@@ -167,7 +167,7 @@ async fn list_all_tariffs(settings: Settings) -> Result<(), DatabaseError> {
 }
 
 async fn create_tariff(
-    settings: Settings,
+    settings: &Settings,
     name: String,
     external_tariff_id: String,
     disabled_modules: BTreeSet<ModuleId>,
@@ -202,7 +202,7 @@ async fn create_tariff(
     .scope_boxed()).await
 }
 
-async fn delete_tariff(settings: Settings, name: String) -> Result<(), DatabaseError> {
+async fn delete_tariff(settings: &Settings, name: String) -> Result<(), DatabaseError> {
     let db = Db::connect(&settings.database)?;
     let mut conn = db.get_conn().await?;
 
@@ -223,7 +223,7 @@ async fn delete_tariff(settings: Settings, name: String) -> Result<(), DatabaseE
 
 #[allow(clippy::too_many_arguments)]
 async fn edit_tariff(
-    settings: Settings,
+    settings: &Settings,
     name: String,
     set_name: Option<String>,
     add_external_tariff_ids: Vec<String>,

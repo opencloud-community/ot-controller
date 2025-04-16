@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use clap::{ArgAction, Parser, Subcommand};
-use opentalk_controller_settings::Settings;
+use opentalk_controller_settings::SettingsProvider;
 use opentalk_signaling_core::RegisterModules;
 use snafu::ResultExt;
 
@@ -118,13 +118,16 @@ pub async fn parse_args<M: RegisterModules>() -> Result<Args> {
         reload::trigger_reload()?;
     }
     if let Some(sub_command) = args.cmd.clone() {
-        let settings = Settings::load(&args.config).whatever_context("Failed to load settings")?;
+        let settings_provider =
+            SettingsProvider::load(&args.config).whatever_context("Failed to load settings")?;
+        let settings = settings_provider.get();
+
         match sub_command {
             SubCommand::FixAcl(args) => {
-                fix_acl::fix_acl(settings, args).await?;
+                fix_acl::fix_acl(&settings, args).await?;
             }
             SubCommand::Acl(subcommand) => {
-                acl::acl(settings, subcommand).await?;
+                acl::acl(&settings, subcommand).await?;
             }
             SubCommand::MigrateDb => {
                 let result =
@@ -134,17 +137,17 @@ pub async fn parse_args<M: RegisterModules>() -> Result<Args> {
                 println!("{result:?}");
             }
             SubCommand::Tenants(command) => {
-                tenants::handle_command(settings, command)
+                tenants::handle_command(&settings, command)
                     .await
                     .whatever_context("Tenants command failed")?;
             }
             SubCommand::Tariffs(command) => {
-                tariffs::handle_command(settings, command)
+                tariffs::handle_command(&settings, command)
                     .await
                     .whatever_context("Tariffs command failed")?;
             }
             SubCommand::Jobs(command) => {
-                jobs::handle_command(settings, command)
+                jobs::handle_command(&settings, command)
                     .await
                     .whatever_context("Jobs command failed")?;
             }

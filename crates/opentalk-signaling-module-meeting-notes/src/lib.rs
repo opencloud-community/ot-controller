@@ -188,7 +188,7 @@ impl SignalingModule for MeetingNotes {
     async fn build_params(
         init: SignalingModuleInitData,
     ) -> Result<Option<Self::Params>, SignalingModuleError> {
-        let etherpad = init.shared_settings.load_full().etherpad.clone();
+        let etherpad = init.settings_provider.get().etherpad.clone();
 
         Ok(etherpad)
     }

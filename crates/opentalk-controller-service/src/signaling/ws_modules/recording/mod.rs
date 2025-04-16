@@ -300,8 +300,8 @@ impl SignalingModule for Recording {
         init: SignalingModuleInitData,
     ) -> Result<Option<Self::Params>, SignalingModuleError> {
         if let Some(queue) = init
-            .shared_settings
-            .load_full()
+            .settings_provider
+            .get()
             .rabbit_mq
             .recording_task_queue
             .clone()

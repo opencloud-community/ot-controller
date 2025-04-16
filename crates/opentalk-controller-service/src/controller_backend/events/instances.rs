@@ -67,7 +67,7 @@ impl ControllerBackend {
         ),
         CaptureApiError,
     > {
-        let settings = self.settings.load();
+        let settings = self.settings_provider.get();
 
         let per_page = per_page.unwrap_or(30).clamp(1, 100);
         let page = after.map(|c| c.page).unwrap_or(1).max(1);
@@ -222,7 +222,7 @@ impl ControllerBackend {
         }: EventInstancePath,
         query: EventInstanceQuery,
     ) -> Result<GetEventInstanceResponseBody, CaptureApiError> {
-        let settings = self.settings.load();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let (
@@ -308,7 +308,7 @@ impl ControllerBackend {
             return Ok(None);
         }
 
-        let settings = self.settings.load();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let (

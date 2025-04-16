@@ -32,7 +32,7 @@
 //! Setting categories, in which all properties implement a default value, should also implement the [`Default`] trait.
 //!
 //! [`SettingsLoading<()>`] contains incomplete fields and is an intermediate after
-//! loading the raw settings inside [`SettingsLoading::load`]. The final struct with all loaded fields
+//! loading the raw settings inside [`SettingsProvider::load`]. The final struct with all loaded fields
 //! is [`Settings`] (an alias for [`SettingsLoading<OidcAndUserSearchConfiguration>`]) which contains all loaded fields.
 
 use std::{
@@ -40,11 +40,9 @@ use std::{
     convert::TryFrom,
     net::IpAddr,
     path::PathBuf,
-    sync::Arc,
     time::Duration,
 };
 
-use arc_swap::ArcSwap;
 use config::{Config, Environment, File, FileFormat};
 use openidconnect::{ClientId, ClientSecret};
 use opentalk_types_common::{features::ModuleFeatureId, users::Language};
@@ -52,6 +50,9 @@ use rustc_hash::FxHashSet;
 use serde::{Deserialize, Deserializer};
 use snafu::{ResultExt, Snafu};
 use url::Url;
+
+mod settings_provider;
+pub use settings_provider::SettingsProvider;
 
 #[derive(Debug, Snafu)]
 pub enum SettingsError {
@@ -73,8 +74,6 @@ pub enum SettingsError {
 }
 
 type Result<T, E = SettingsError> = std::result::Result<T, E>;
-
-pub type SharedSettings = Arc<ArcSwap<Settings>>;
 
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
 
@@ -449,7 +448,7 @@ impl<OIDC> SettingsLoading<OIDC> {
 
     /// Creates a new Settings instance from the provided TOML file.
     /// Specific fields can be set or overwritten with environment variables (See struct level docs for more details).
-    pub fn load(file_name: &str) -> Result<Settings> {
+    fn load(file_name: &str) -> Result<Settings> {
         let config = Config::builder()
             .add_source(File::new(file_name, FileFormat::Toml))
             .add_source(WarningSource(
@@ -468,6 +467,7 @@ impl<OIDC> SettingsLoading<OIDC> {
             serde_path_to_error::deserialize(config).context(DeserializeConfigSnafu {
                 file_name: file_name.to_owned(),
             })?;
+        this.warn_about_deprecated_items();
 
         let oidc_and_user_search = this.build_oidc_and_user_search_configuration()?;
 
@@ -502,6 +502,54 @@ impl<OIDC> SettingsLoading<OIDC> {
             livekit: this.livekit,
             extensions: this.extensions,
         })
+    }
+
+    fn warn_about_deprecated_items(&self) {
+        use owo_colors::OwoColorize as _;
+
+        if self.extensions.contains_key("room_server") {
+            anstream::eprintln!(
+                "{}: Found an obsolete {room_server} (janus) configuration section.\n\
+                 {}: This section is no longer needed, please remove it and add a {livekit} section instead.",
+                "DEPRECATION WARNING".yellow().bold(),
+                "NOTE".green(),
+                room_server = "room_server".bold(),
+                livekit = "livekit".bold(),
+            );
+        }
+
+        if self.keycloak.is_some() {
+            anstream::eprintln!(
+                "{}: Found an obsolete {keycloak} (oidc) configuration section.\n\
+                 {}: This section is deprecated, please replace it with the newly introduced {oidc} and {user_search} sections.",
+                "DEPRECATION WARNING".yellow().bold(),
+                "NOTE".green(),
+                keycloak = "keycloak".bold(),
+                oidc = "oidc".bold(),
+                user_search = "user_search".bold(),
+            );
+        }
+
+        if self.turn.is_some() {
+            anstream::eprintln!(
+                "{}: Found an obsolete {turn} server configuration.\n\
+                 {}: The {turn} config section as well as the related {endpoint} endpoint will be removed in the future.",
+                "DEPRECATION WARNING".yellow().bold(),
+                "NOTE".green(),
+                turn = "turn".bold(),
+                endpoint = "/turn".bold()
+            );
+        }
+
+        if self.reports.is_some() {
+            anstream::eprintln!(
+                "{}: Found an obsolete {reports} configuration section.\n\
+                 {}: This section is deprecated and will be reintroduced in a different form in the future.",
+                "DEPRECATION WARNING".yellow().bold(),
+                "NOTE".green(),
+                reports = "reports".bold(),
+            );
+        }
     }
 }
 

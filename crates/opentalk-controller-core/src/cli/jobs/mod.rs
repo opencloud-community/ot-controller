@@ -62,7 +62,7 @@ pub enum Command {
     },
 }
 
-pub async fn handle_command(settings: Settings, command: Command) -> Result<()> {
+pub async fn handle_command(settings: &Settings, command: Command) -> Result<()> {
     match command {
         Command::Execute {
             job_type,
@@ -75,7 +75,7 @@ pub async fn handle_command(settings: Settings, command: Command) -> Result<()> 
 }
 
 async fn execute_job(
-    settings: Settings,
+    settings: &Settings,
     job_type: JobType,
     parameters: String,
     timeout: u64,
@@ -108,7 +108,7 @@ async fn execute_job(
         logger: &logger,
         db,
         exchange_handle,
-        settings: &settings,
+        settings,
         parameters,
         timeout,
         hide_duration,

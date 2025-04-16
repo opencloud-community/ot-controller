@@ -5,7 +5,7 @@
 use std::{collections::BTreeSet, fmt::Debug, sync::Arc};
 
 use lapin_pool::RabbitMqPool;
-use opentalk_controller_settings::{Settings, SharedSettings};
+use opentalk_controller_settings::{Settings, SettingsProvider};
 use opentalk_types_api_v1::error::ApiError;
 use opentalk_types_common::{features::FeatureId, modules::ModuleId};
 use opentalk_types_signaling::{SignalingModuleFrontendData, SignalingModulePeerFrontendData};
@@ -97,7 +97,7 @@ impl From<SignalingModuleError> for ApiError {
 #[derive(Clone)]
 pub struct SignalingModuleInitData {
     pub startup_settings: Arc<Settings>,
-    pub shared_settings: SharedSettings,
+    pub settings_provider: SettingsProvider,
     pub rabbitmq_pool: Arc<RabbitMqPool>,
     pub volatile: VolatileStorage,
     pub shutdown: broadcast::Sender<()>,

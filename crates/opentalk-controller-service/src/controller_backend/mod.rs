@@ -24,7 +24,7 @@ use bytes::Bytes;
 use futures_core::Stream;
 use kustos::Authz;
 use opentalk_controller_service_facade::{OpenTalkControllerServiceBackend, RequestUser};
-use opentalk_controller_settings::SharedSettings;
+use opentalk_controller_settings::SettingsProvider;
 use opentalk_database::Db;
 use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_signaling_core::{
@@ -93,8 +93,7 @@ use crate::services::MailService;
 
 /// The default [`OpenTalkControllerServiceBackend`] implementation.
 pub struct ControllerBackend {
-    // TODO: these are ArcSwap in controller-core, investigate what exactly that provides and what it is used for
-    settings: SharedSettings,
+    settings_provider: SettingsProvider,
     authz: Authz,
     db: Arc<Db>,
     frontend_oidc_provider: OidcProvider,
@@ -110,7 +109,7 @@ impl ControllerBackend {
     /// Create a new [`ControllerBackend`].
     #[allow(clippy::too_many_arguments)]
     pub fn new(
-        settings: SharedSettings,
+        settings_provider: SettingsProvider,
         authz: Authz,
         db: Arc<Db>,
         frontend_oidc_provider: OidcProvider,
@@ -122,7 +121,7 @@ impl ControllerBackend {
         module_features: BTreeMap<ModuleId, BTreeSet<FeatureId>>,
     ) -> Self {
         Self {
-            settings,
+            settings_provider,
             authz,
             db,
             frontend_oidc_provider,

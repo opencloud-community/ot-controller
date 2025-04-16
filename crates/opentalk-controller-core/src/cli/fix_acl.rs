@@ -51,7 +51,7 @@ pub(super) struct Args {
     skip_events: bool,
 }
 
-pub(super) async fn fix_acl(settings: Settings, args: Args) -> Result<()> {
+pub(super) async fn fix_acl(settings: &Settings, args: Args) -> Result<()> {
     let db = Arc::new(
         Db::connect(&settings.database).whatever_context("Failed to connect to database")?,
     );

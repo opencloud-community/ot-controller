@@ -8,6 +8,7 @@ use actix_http::{body::BoxBody, StatusCode};
 use actix_web::{dev::PeerAddr, get, web::Data, HttpResponse};
 use kustos::metrics::KustosMetrics;
 use opentalk_controller_service::metrics::EndpointMetrics;
+use opentalk_controller_settings::SettingsProvider;
 use opentalk_database::DatabaseMetrics;
 use opentalk_signaling_core::{RedisMetrics, SignalingMetrics};
 use opentelemetry::{global, otel_error};
@@ -17,7 +18,7 @@ use opentelemetry_sdk::metrics::{
 use prometheus::{Encoder, Registry, TextEncoder};
 use snafu::{Backtrace, Snafu};
 
-use crate::{settings::SharedSettingsActix, Result};
+use crate::Result;
 
 #[derive(Debug, Snafu)]
 #[snafu(context(false))]
@@ -219,11 +220,11 @@ impl CombinedMetrics {
 
 #[get("/metrics")]
 pub async fn metrics(
-    settings: SharedSettingsActix,
+    settings: Data<SettingsProvider>,
     PeerAddr(peer_addr): PeerAddr,
     metrics: Data<CombinedMetrics>,
 ) -> HttpResponse {
-    let settings = settings.load_full();
+    let settings = settings.get();
 
     let allowed = &settings
         .metrics

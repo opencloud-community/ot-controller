@@ -89,7 +89,7 @@ impl ControllerBackend {
         event: PostEventsBody,
         query: EventOptionsQuery,
     ) -> Result<EventResource, CaptureApiError> {
-        let settings = self.settings.load();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let current_user = User::get(&mut conn, current_user.id).await?;
@@ -232,7 +232,7 @@ impl ControllerBackend {
         current_user: RequestUser,
         query: GetEventsQuery,
     ) -> Result<(Vec<EventOrException>, Option<String>, Option<String>), CaptureApiError> {
-        let settings = self.settings.load();
+        let settings = self.settings_provider.get();
 
         let per_page = query
             .per_page
@@ -443,7 +443,7 @@ impl ControllerBackend {
         event_id: EventId,
         query: GetEventQuery,
     ) -> Result<EventResource, CaptureApiError> {
-        let settings = self.settings.load();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let (
@@ -539,7 +539,7 @@ impl ControllerBackend {
             return Ok(None);
         }
 
-        let settings = self.settings.load();
+        let settings = self.settings_provider.get();
 
         let send_email_notification = !query.suppress_email_notification;
 
@@ -761,7 +761,7 @@ impl ControllerBackend {
             force_delete_reference_if_external_services_fail,
         }: DeleteEventsQuery,
     ) -> Result<(), CaptureApiError> {
-        let settings = self.settings.load();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         // TODO(w.rabl) Further DB access optimization (replacing call to get_with_invite_and_room)?

@@ -74,7 +74,7 @@ impl ControllerBackend {
             status: status_filter,
         }: GetEventsInvitesQuery,
     ) -> Result<(Vec<EventInvitee>, i64, i64, i64), CaptureApiError> {
-        let settings = self.settings.load();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         // FIXME: Preliminary solution, consider using UNION when Diesel supports it.
@@ -133,7 +133,7 @@ impl ControllerBackend {
         query: PostEventInviteQuery,
         create_invite: PostEventInviteBody,
     ) -> Result<bool, CaptureApiError> {
-        let settings = self.settings.load();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let send_email_notification = !query.suppress_email_notification;
@@ -228,7 +228,7 @@ impl ControllerBackend {
         DeleteEventInvitePath { event_id, user_id }: DeleteEventInvitePath,
         query: EventOptionsQuery,
     ) -> Result<(), CaptureApiError> {
-        let settings = self.settings.load();
+        let settings = self.settings_provider.get();
 
         let send_email_notification = !query.suppress_email_notification;
         let mut conn = self.db.get_conn().await?;
@@ -323,7 +323,7 @@ impl ControllerBackend {
         email: EmailAddress,
         query: EventOptionsQuery,
     ) -> Result<(), CaptureApiError> {
-        let settings = self.settings.load();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let email = email.to_lowercase().to_string();
