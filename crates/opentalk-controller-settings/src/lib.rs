@@ -35,13 +35,7 @@
 //! loading the raw settings inside [`SettingsProvider::load`]. The final struct with all loaded fields
 //! is [`Settings`] (an alias for [`SettingsLoading<OidcAndUserSearchConfiguration>`]) which contains all loaded fields.
 
-use std::{
-    collections::{BTreeSet, HashMap},
-    convert::TryFrom,
-    net::IpAddr,
-    path::PathBuf,
-    time::Duration,
-};
+use std::{collections::BTreeSet, convert::TryFrom, net::IpAddr, path::PathBuf, time::Duration};
 
 use openidconnect::{ClientId, ClientSecret};
 use opentalk_types_common::{features::ModuleFeatureId, users::Language};
@@ -61,17 +55,6 @@ pub use settings_provider::SettingsProvider;
 type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
-
-#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
-pub struct Extensions(pub HashMap<String, config::Value>);
-
-impl Eq for Extensions {}
-
-impl Extensions {
-    pub fn contains_key(&self, key: &str) -> bool {
-        self.0.contains_key(key)
-    }
-}
 
 #[derive(Debug, Clone)]
 struct WarningSource<T: Clone>(T);
