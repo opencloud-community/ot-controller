@@ -48,30 +48,14 @@ use openidconnect::{ClientId, ClientSecret};
 use opentalk_types_common::{features::ModuleFeatureId, users::Language};
 use rustc_hash::FxHashSet;
 use serde::{Deserialize, Deserializer};
-use snafu::{ResultExt, Snafu};
+use settings_error::DeserializeConfigSnafu;
+use snafu::ResultExt;
 use url::Url;
 
+mod settings_error;
 mod settings_provider;
+pub use settings_error::SettingsError;
 pub use settings_provider::SettingsProvider;
-
-#[derive(Debug, Snafu)]
-pub enum SettingsError {
-    #[snafu(display("Failed to read data as config: {}", source), context(false))]
-    BuildConfig { source: config::ConfigError },
-
-    #[snafu(display("Failed to apply configuration from {} or environment", file_name))]
-    DeserializeConfig {
-        file_name: String,
-        #[snafu(source(from(serde_path_to_error::Error<config::ConfigError>, Box::new)))]
-        source: Box<serde_path_to_error::Error<config::ConfigError>>,
-    },
-
-    #[snafu(display("Given base URL is not a base: {}", url))]
-    NotBaseUrl { url: Url },
-
-    #[snafu(display("Inconsistent configuration for OIDC and user search, check [keycloak], [endpoints], [oidc] and [user_search] sections"))]
-    InconsistentOidcAndUserSearchConfig,
-}
 
 type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
