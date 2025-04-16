@@ -8,15 +8,14 @@ use snafu::ResultExt as _;
 use url::Url;
 
 use super::{
-    ControllerOidcConfiguration, Database, Extensions, FrontendOidcConfiguration,
+    ControllerOidcConfiguration, Database, Extensions, FrontendOidcConfiguration, Keycloak,
     MonitoringSettings, OidcConfiguration, UserSearchConfiguration, WarningSource,
 };
 use crate::{
     settings_error::DeserializeConfigSnafu, Authz, Avatar, CallIn, Defaults, Endpoints, Etcd,
-    Etherpad, Http, Keycloak, LiveKitSettings, Logging, Metrics, MinIO, Oidc,
-    OidcAndUserSearchConfiguration, RabbitMqConfig, RedisConfig, Reports, Result, Settings,
-    SettingsError, SharedFolder, Spacedeck, Stun, SubroomAudio, Tariffs, Tenants, Turn, UserSearch,
-    UserSearchBackend, UsersFindBehavior,
+    Etherpad, Http, LiveKitSettings, Logging, Metrics, MinIO, Oidc, OidcAndUserSearchConfiguration,
+    RabbitMqConfig, RedisConfig, Reports, Result, Settings, SettingsError, SharedFolder, Spacedeck,
+    Stun, SubroomAudio, Tariffs, Tenants, Turn, UserSearch, UserSearchBackend, UsersFindBehavior,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
