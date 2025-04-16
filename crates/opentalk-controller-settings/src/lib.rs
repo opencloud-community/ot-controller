@@ -37,12 +37,10 @@
 
 use std::{collections::BTreeSet, convert::TryFrom, path::PathBuf, time::Duration};
 
-use openidconnect::{ClientId, ClientSecret};
 use opentalk_types_common::{features::ModuleFeatureId, users::Language};
 use rustc_hash::FxHashSet;
 use serde::{Deserialize, Deserializer};
 use settings_file::{OidcAndUserSearchConfiguration, SettingsLoading};
-use url::Url;
 
 pub mod settings_file;
 
@@ -55,37 +53,6 @@ pub use settings_provider::SettingsProvider;
 type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct UserSearch {
-    #[serde(flatten)]
-    pub backend: UserSearchBackend,
-    pub api_base_url: Url,
-    pub client_id: Option<ClientId>,
-    pub client_secret: Option<ClientSecret>,
-    pub external_id_user_attribute_name: Option<String>,
-    #[serde(flatten)]
-    pub users_find_behavior: UsersFindBehavior,
-}
-
-impl PartialEq for UserSearch {
-    fn eq(&self, other: &Self) -> bool {
-        self.backend.eq(&other.backend)
-            && self.api_base_url.eq(&other.api_base_url)
-            && self.client_id.eq(&other.client_id)
-            && self
-                .client_secret
-                .as_ref()
-                .map(|s| s.secret())
-                .eq(&other.client_secret.as_ref().map(|s| s.secret()))
-            && self
-                .external_id_user_attribute_name
-                .eq(&other.external_id_user_attribute_name)
-            && self.users_find_behavior.eq(&other.users_find_behavior)
-    }
-}
-
-impl Eq for UserSearch {}
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case", tag = "backend")]

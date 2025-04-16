@@ -14,6 +14,7 @@ mod oidc_configuration;
 mod oidc_controller;
 mod oidc_frontend;
 mod settings_loading;
+mod user_search;
 mod user_search_configuration;
 mod warning_source;
 
@@ -29,5 +30,6 @@ pub use oidc_configuration::OidcConfiguration;
 pub use oidc_controller::OidcController;
 pub use oidc_frontend::OidcFrontend;
 pub use settings_loading::SettingsLoading;
+pub use user_search::UserSearch;
 pub use user_search_configuration::UserSearchConfiguration;
 use warning_source::WarningSource;
