@@ -4,7 +4,7 @@
 
 use serde::Deserialize;
 
-use crate::HttpTls;
+use super::HttpTls;
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Http {

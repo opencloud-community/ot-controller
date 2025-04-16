@@ -35,7 +35,7 @@
 //! loading the raw settings inside [`SettingsProvider::load`]. The final struct with all loaded fields
 //! is [`Settings`] (an alias for [`SettingsLoading<OidcAndUserSearchConfiguration>`]) which contains all loaded fields.
 
-use std::{collections::BTreeSet, convert::TryFrom, path::PathBuf, time::Duration};
+use std::{collections::BTreeSet, convert::TryFrom, time::Duration};
 
 use opentalk_types_common::{features::ModuleFeatureId, users::Language};
 use rustc_hash::FxHashSet;
@@ -53,12 +53,6 @@ pub use settings_provider::SettingsProvider;
 type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct HttpTls {
-    pub certificate: PathBuf,
-    pub private_key: PathBuf,
-}
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Logging {

@@ -1131,7 +1131,7 @@ fn setup_cors() -> Cors {
 /// Receives the TLS-related settings from the controller configuration
 /// which contains the path to the private key and the certificate files
 /// from where the TLS configuration is loaded and set up.
-fn setup_rustls(tls: &settings::HttpTls) -> Result<rustls::ServerConfig> {
+fn setup_rustls(tls: &settings::settings_file::HttpTls) -> Result<rustls::ServerConfig> {
     let cert_file = File::open(&tls.certificate).with_whatever_context(|_| {
         format!("Failed to open certificate file {:?}", &tls.certificate)
     })?;
