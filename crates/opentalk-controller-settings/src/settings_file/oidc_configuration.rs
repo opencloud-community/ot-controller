@@ -4,8 +4,7 @@
 
 use serde::Deserialize;
 
-use super::FrontendOidcConfiguration;
-use crate::ControllerOidcConfiguration;
+use super::{ControllerOidcConfiguration, FrontendOidcConfiguration};
 
 /// OIDC configuration
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
