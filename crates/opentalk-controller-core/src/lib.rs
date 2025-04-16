@@ -47,7 +47,6 @@ use actix_web::{web, web::Data, App, HttpServer, Scope};
 use api::signaling::{
     echo::Echo, recording::Recording, recording_service::RecordingService, SignalingModules,
 };
-use arc_swap::ArcSwap;
 use async_trait::async_trait;
 use kustos::Authz;
 use lapin_pool::RabbitMqPool;
@@ -55,6 +54,7 @@ use opentalk_controller_service::{
     oidc::OidcContext, services::MailService, ControllerBackend, Whatever,
 };
 use opentalk_controller_service_facade::OpenTalkControllerService;
+use opentalk_controller_settings::SettingsProvider;
 use opentalk_database::Db;
 use opentalk_jobs::job_runner::JobRunner;
 use opentalk_keycloak_admin::{AuthorizedClient, KeycloakAdminClient};
@@ -85,7 +85,7 @@ use crate::{
         signaling::{breakout::BreakoutRooms, moderation::ModerationModule, SignalingProtocols},
         v1::{middleware::metrics::RequestMetrics, response::error::json_error_handler},
     },
-    settings::{MonitoringSettings, Settings, SharedSettings},
+    settings::{MonitoringSettings, Settings},
     trace::ReducedSpanBuilder,
 };
 
@@ -188,7 +188,7 @@ pub struct Controller {
     pub startup_settings: Arc<Settings>,
 
     /// Cloneable shared settings, can be used to reload settings from, when receiving the `reload` signal.
-    pub shared_settings: SharedSettings,
+    pub settings_provider: SettingsProvider,
 
     /// CLI arguments
     args: cli::Args,
@@ -254,26 +254,27 @@ impl Controller {
             return Ok(None);
         }
 
-        let settings =
-            settings::load_settings(&args).whatever_context("Failed to load settings")?;
-        check_for_deprecated_settings(&settings)?;
+        let settings_provider =
+            SettingsProvider::load(&args.config).whatever_context("Failed to load settings")?;
+        let settings = settings_provider.get();
 
         trace::init(&settings.logging).whatever_context("Failed to initialize tracing")?;
 
         log::info!("Starting {}", program_name);
 
-        let controller = Self::init::<ControllerModules<M>>(settings, args)
+        let controller = Self::init::<ControllerModules<M>>(settings_provider, args)
             .await
             .whatever_context("Failed to init controller")?;
 
         Ok(Some(controller))
     }
 
-    #[tracing::instrument(err, skip(settings, args))]
-    async fn init<M: RegisterModules>(settings: Settings, args: cli::Args) -> Result<Self> {
-        let settings = Arc::new(settings);
-        let shared_settings: SharedSettings = Arc::new(ArcSwap::from(settings.clone()));
-
+    #[tracing::instrument(err, skip(settings_provider, args))]
+    async fn init<M: RegisterModules>(
+        settings_provider: SettingsProvider,
+        args: cli::Args,
+    ) -> Result<Self> {
+        let settings = settings_provider.get();
         let metrics = metrics::CombinedMetrics::try_init()
             .whatever_context("Failed to initialize metrics")?;
 
@@ -414,7 +415,7 @@ impl Controller {
         };
 
         let mail_service = MailService::new(
-            shared_settings.clone(),
+            settings_provider.clone(),
             metrics.endpoint.clone(),
             rabbitmq_pool.clone(),
             rabbitmq_pool
@@ -426,7 +427,7 @@ impl Controller {
         let mut initializer = ModuleInitializer {
             init_data: SignalingModuleInitData {
                 startup_settings: settings.clone(),
-                shared_settings: shared_settings.clone(),
+                settings_provider: settings_provider.clone(),
                 rabbitmq_pool: rabbitmq_pool.clone(),
                 volatile: volatile.clone(),
                 shutdown: shutdown.clone(),
@@ -450,7 +451,7 @@ impl Controller {
             };
 
             ControllerBackend::new(
-                shared_settings.clone(),
+                settings_provider.clone(),
                 authz.clone(),
                 db.clone(),
                 oidc_provider,
@@ -467,7 +468,7 @@ impl Controller {
         let controller = Self {
             service,
             startup_settings: settings,
-            shared_settings,
+            settings_provider,
             args,
             db,
             storage,
@@ -509,7 +510,7 @@ impl Controller {
 
         // Start HTTP Server
         let http_server = {
-            let settings = self.shared_settings.clone();
+            let settings_provider = self.settings_provider.clone();
             let volatile = self.volatile.clone();
             let rabbitmq_pool = Data::from(self.rabbitmq_pool.clone());
             let exchange_handle = Data::new(self.exchange_handle);
@@ -520,7 +521,6 @@ impl Controller {
 
             let oidc_ctx = Arc::downgrade(&self.oidc);
             let shutdown = self.shutdown.clone();
-            let shared_settings = self.shared_settings.clone();
 
             let kc_admin_client = Data::from(self.kc_admin_client);
 
@@ -554,6 +554,7 @@ impl Controller {
                 let acl = authz_middleware.clone();
 
                 let signaling_modules = Data::from(signaling_modules.upgrade().unwrap());
+                let swagger_service_enabled = !settings_provider.get().endpoints.disable_openapi;
 
                 App::new()
                     .wrap(RequestMetrics::new(metrics.endpoint.clone()))
@@ -563,7 +564,7 @@ impl Controller {
                     .app_data(service.clone())
                     .app_data(caches.clone())
                     .app_data(web::JsonConfig::default().error_handler(json_error_handler))
-                    .app_data(Data::from(shared_settings.clone()))
+                    .app_data(Data::new(settings_provider.clone()))
                     .app_data(db.clone())
                     .app_data(storage)
                     .app_data(oidc_ctx.clone())
@@ -581,9 +582,9 @@ impl Controller {
                     .service(api::well_known::well_known_api)
                     .service(api::signaling::ws_service)
                     .service(metrics::metrics)
-                    .with_swagger_service_if(!settings.load_full().endpoints.disable_openapi)
+                    .with_swagger_service_if(swagger_service_enabled)
                     .service(v1_scope(
-                        settings.clone(),
+                        settings_provider.clone(),
                         db.clone(),
                         oidc_ctx.clone(),
                         acl,
@@ -630,7 +631,7 @@ impl Controller {
                 _ = reload_signal.recv() => {
                     log::info!("Got reload signal, reloading");
 
-                    if let Err(e) = settings::reload_settings(self.shared_settings.clone(), &self.args.config) {
+                    if let Err(e) = self.settings_provider.reload(&self.args.config) {
                         log::error!("Failed to reload settings, {}", Report::from_error(e));
                         continue
                     }
@@ -689,7 +690,7 @@ impl ModulesRegistrar for Controller {
     async fn register<M: SignalingModule>(&mut self) -> Result<()> {
         let init = SignalingModuleInitData {
             startup_settings: self.startup_settings.clone(),
-            shared_settings: self.shared_settings.clone(),
+            settings_provider: self.settings_provider.clone(),
             rabbitmq_pool: self.rabbitmq_pool.clone(),
             shutdown: self.shutdown.clone(),
             reload: self.reload.clone(),
@@ -1016,7 +1017,7 @@ impl utoipa::Modify for SecurityAddon {
 }
 
 fn v1_scope(
-    settings: SharedSettings,
+    settings_provider: SettingsProvider,
     db: Data<Db>,
     oidc_ctx: Data<OidcContext>,
     acl: kustos::actix_web::KustosService,
@@ -1044,7 +1045,7 @@ fn v1_scope(
             web::scope("")
                 .wrap(acl)
                 .wrap(api::v1::middleware::user_auth::OidcAuth {
-                    settings,
+                    settings_provider,
                     db,
                     oidc_ctx,
                 })
@@ -1151,57 +1152,6 @@ fn setup_rustls(tls: &settings::HttpTls) -> Result<rustls::ServerConfig> {
         .whatever_context("Invalid DER-encoded key ")?;
 
     Ok(config)
-}
-
-/// Check for deprecated settings, and print warnings if any are found.
-fn check_for_deprecated_settings(settings: &Settings) -> Result<()> {
-    use owo_colors::OwoColorize as _;
-
-    if settings.extensions.contains_key("room_server") {
-        anstream::eprintln!(
-            "{}: Found an obsolete {room_server} (janus) configuration section.\n\
-             {}: This section is no longer needed, please remove it and add a {livekit} section instead.",
-            "DEPRECATION WARNING".yellow().bold(),
-            "NOTE".green(),
-            room_server = "room_server".bold(),
-            livekit = "livekit".bold(),
-        );
-    }
-
-    if settings.keycloak.is_some() {
-        anstream::eprintln!(
-            "{}: Found an obsolete {keycloak} (oidc) configuration section.\n\
-             {}: This section is deprecated, please replace it with the newly introduced {oidc} and {user_search} sections.",
-            "DEPRECATION WARNING".yellow().bold(),
-            "NOTE".green(),
-            keycloak = "keycloak".bold(),
-            oidc = "oidc".bold(),
-            user_search = "user_search".bold(),
-        );
-    }
-
-    if settings.turn.is_some() {
-        anstream::eprintln!(
-            "{}: Found an obsolete {turn} server configuration.\n\
-             {}: The {turn} config section as well as the related {endpoint} endpoint will be removed in the future.",
-            "DEPRECATION WARNING".yellow().bold(),
-            "NOTE".green(),
-            turn = "turn".bold(),
-            endpoint = "/turn".bold()
-        );
-    }
-
-    if settings.reports.is_some() {
-        anstream::eprintln!(
-            "{}: Found an obsolete {reports} configuration section.\n\
-             {}: This section is deprecated and will be reintroduced in a different form in the future.",
-            "DEPRECATION WARNING".yellow().bold(),
-            "NOTE".green(),
-            reports = "reports".bold(),
-        );
-    }
-
-    Ok(())
 }
 
 struct ModuleInitializer {

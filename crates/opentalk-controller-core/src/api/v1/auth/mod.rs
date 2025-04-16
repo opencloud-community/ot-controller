@@ -17,7 +17,7 @@ use opentalk_controller_service::{
 };
 use opentalk_controller_service_facade::OpenTalkControllerService;
 use opentalk_controller_settings::{
-    Settings, TariffAssignment, TariffStatusMapping, TenantAssignment,
+    Settings, SettingsProvider, TariffAssignment, TariffStatusMapping, TenantAssignment,
 };
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::{Db, OptionalExt};
@@ -40,7 +40,7 @@ use opentalk_types_common::{
 };
 
 use super::events::EventPoliciesBuilderExt;
-use crate::{api::responses::InternalServerError, settings::SharedSettingsActix};
+use crate::api::responses::InternalServerError;
 
 mod create_user;
 mod update_user;
@@ -88,14 +88,14 @@ mod update_user;
 )]
 #[post("/auth/login")]
 pub async fn post_login(
-    settings: SharedSettingsActix,
+    settings: Data<SettingsProvider>,
     db: Data<Db>,
     oidc_ctx: Data<OidcContext>,
     body: Json<AuthLoginPostRequestBody>,
     authz: Data<kustos::Authz>,
 ) -> Result<Json<PostLoginResponseBody>, ApiError> {
     Ok(post_login_inner(
-        &settings.load_full(),
+        &settings.get(),
         &db,
         &oidc_ctx,
         body.into_inner().id_token,

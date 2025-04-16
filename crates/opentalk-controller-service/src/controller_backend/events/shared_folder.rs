@@ -68,7 +68,7 @@ impl ControllerBackend {
         event_id: EventId,
         query: PutSharedFolderQuery,
     ) -> Result<(SharedFolder, bool), CaptureApiError> {
-        let settings = self.settings.load();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let send_email_notification = !query.suppress_email_notification;
@@ -122,7 +122,7 @@ impl ControllerBackend {
         event_id: EventId,
         query: DeleteSharedFolderQuery,
     ) -> Result<(), CaptureApiError> {
-        let settings = self.settings.load();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let send_email_notification = !query.suppress_email_notification;

@@ -17,6 +17,7 @@ use opentalk_controller_service::signaling::{
     storage::{SignalingStorage, SignalingStorageProvider as _},
     ticket::TicketData,
 };
+use opentalk_controller_settings::SettingsProvider;
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::Db;
 use opentalk_db_storage::{rooms::Room, users::User};
@@ -41,12 +42,9 @@ use super::{
     modules::{ModuleBuilder, ModuleBuilderImpl},
     runner::Runner,
 };
-use crate::{
-    api::{
-        responses::{BadRequest, Forbidden, InternalServerError, Unauthorized},
-        signaling::ws::actor::WebSocketActor,
-    },
-    settings::SharedSettingsActix,
+use crate::api::{
+    responses::{BadRequest, Forbidden, InternalServerError, Unauthorized},
+    signaling::ws::actor::WebSocketActor,
 };
 
 #[derive(Default)]
@@ -127,7 +125,7 @@ pub(crate) async fn ws_service(
     modules: Data<SignalingModules>,
     request: HttpRequest,
     stream: web::Payload,
-    settings: SharedSettingsActix,
+    settings_provider: Data<SettingsProvider>,
 ) -> actix_web::Result<HttpResponse> {
     ws_service_inner(
         &shutdown,
@@ -141,7 +139,7 @@ pub(crate) async fn ws_service(
         &modules,
         request,
         stream,
-        settings,
+        (**settings_provider).clone(),
     )
     .await
 }
@@ -159,7 +157,7 @@ async fn ws_service_inner(
     modules: &SignalingModules,
     request: HttpRequest,
     stream: web::Payload,
-    settings: SharedSettingsActix,
+    settings_provider: SettingsProvider,
 ) -> actix_web::Result<HttpResponse> {
     let request_id = if let Some(request_id) = request.extensions().get::<RequestId>() {
         *request_id
@@ -193,7 +191,7 @@ async fn ws_service_inner(
     let room_tariff = get_tariff_for_room(
         &db,
         &room,
-        settings.load_full().defaults.disabled_features.clone(),
+        settings_provider.get().defaults.disabled_features.clone(),
         modules.get_module_features(),
     )
     .await?;
@@ -252,12 +250,7 @@ async fn ws_service_inner(
 
     // Build and initialize the runner
     let runner = match builder
-        .build(
-            addr,
-            recv,
-            shutdown.subscribe(),
-            settings.into_inner().clone(),
-        )
+        .build(addr, recv, shutdown.subscribe(), settings_provider)
         .await
     {
         Ok(runner) => runner,

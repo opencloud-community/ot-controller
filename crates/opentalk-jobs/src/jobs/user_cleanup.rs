@@ -93,7 +93,7 @@ fn default_days_since_user_has_been_disabled() -> u64 {
 mod tests {
     use chrono::{DateTime, Days, Utc};
     use log::logger;
-    use opentalk_controller_settings::Settings;
+    use opentalk_controller_settings::SettingsProvider;
     use opentalk_database::DbConnection;
     use opentalk_db_storage::{
         events::{Event, UpdateEvent},
@@ -175,7 +175,8 @@ mod tests {
     #[serial_test::serial]
     async fn cleanup_user_with_event_and_invites() {
         init_logger();
-        let settings = Settings::load("../../extra/example.toml").unwrap();
+        let settings_provider = SettingsProvider::load("../../extra/example.toml").unwrap();
+        let settings = settings_provider.get();
 
         let db_ctx = DatabaseContext::new(false).await;
         let mut conn = db_ctx.db.get_conn().await.unwrap();
@@ -227,7 +228,8 @@ mod tests {
     #[serial_test::serial]
     async fn cleanup_user() {
         init_logger();
-        let settings = Settings::load("../../extra/example.toml").unwrap();
+        let settings_provider = SettingsProvider::load("../../extra/example.toml").unwrap();
+        let settings = settings_provider.get();
 
         let db_ctx = DatabaseContext::new(false).await;
         let mut conn = db_ctx.db.get_conn().await.unwrap();

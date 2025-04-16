@@ -184,8 +184,8 @@ impl SignalingModule for SharedFolder {
         init: SignalingModuleInitData,
     ) -> Result<Option<Self::Params>, SignalingModuleError> {
         Ok(init
-            .shared_settings
-            .load_full()
+            .settings_provider
+            .get()
             .shared_folder
             .as_ref()
             .map(|_| ()))

@@ -17,11 +17,11 @@ use crate::{
     Result,
 };
 
-pub(crate) async fn acl(settings: Settings, e: AclSubCommand) -> Result<()> {
+pub(crate) async fn acl(settings: &Settings, e: AclSubCommand) -> Result<()> {
     match e {
         AclSubCommand::UsersHaveAccessToAllRooms { action } => match action {
-            super::EnableDisable::Enable => enable_user_access_to_all_rooms(&settings).await?,
-            super::EnableDisable::Disable => disable_user_access_to_all_rooms(&settings).await?,
+            super::EnableDisable::Enable => enable_user_access_to_all_rooms(settings).await?,
+            super::EnableDisable::Disable => disable_user_access_to_all_rooms(settings).await?,
         },
     }
     Ok(())

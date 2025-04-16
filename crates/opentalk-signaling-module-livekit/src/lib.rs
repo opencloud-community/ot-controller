@@ -14,7 +14,7 @@ use livekit_api::{
     services::room::{CreateRoomOptions, RoomClient, UpdateParticipantOptions},
 };
 use livekit_protocol::{ParticipantPermission, TrackSource};
-use opentalk_controller_settings::{LiveKitSettings, SharedSettings};
+use opentalk_controller_settings::{LiveKitSettings, SettingsProvider};
 use opentalk_signaling_core::{
     control, CleanupScope, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
@@ -52,7 +52,7 @@ pub struct Livekit {
 }
 
 pub struct LivekitParams {
-    shared_settings: SharedSettings,
+    settings_provider: SettingsProvider,
     livekit_settings: LiveKitSettings,
     room_client: RoomClient,
 }
@@ -206,7 +206,7 @@ impl SignalingModule for Livekit {
         let room_client = RoomClient::with_api_key(service_url, api_key, api_secret);
 
         Ok(Some(Arc::new(LivekitParams {
-            shared_settings: init.shared_settings.clone(),
+            settings_provider: init.settings_provider.clone(),
             livekit_settings: init.startup_settings.livekit.clone(),
             room_client,
         })))
@@ -564,8 +564,8 @@ impl Livekit {
 
         let allow_screenshare = !self
             .params
-            .shared_settings
-            .load()
+            .settings_provider
+            .get()
             .defaults
             .screen_share_requires_permission;
 

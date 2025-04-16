@@ -15,11 +15,11 @@ use actix_web::{
     Either as AWEither, HttpRequest, ResponseError,
 };
 use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
-use arc_swap::ArcSwap;
 use base64::Engine;
 use either::Either;
 use openidconnect::AccessToken;
 use opentalk_controller_service::oidc::OidcContext;
+use opentalk_controller_settings::SettingsProvider;
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::{Db, OptionalExt};
 use opentalk_db_storage::{invites::Invite, users::User};
@@ -42,7 +42,7 @@ use crate::{
         v1::{middleware::user_auth::check_access_token, response::NoContent},
     },
     caches::Caches,
-    settings::{Settings, SharedSettingsActix, TurnServer},
+    settings::{Settings, TurnServer},
 };
 
 /// Get a TURN server and corresponding credentials
@@ -78,14 +78,14 @@ use crate::{
 #[get("/turn")]
 #[deprecated = "This endpoint and related turn settings will be removed in the future"]
 pub async fn get(
-    settings: SharedSettingsActix,
+    settings_provider: Data<SettingsProvider>,
     db: Data<Db>,
     caches: Data<Caches>,
     oidc_ctx: Data<OidcContext>,
     req: HttpRequest,
 ) -> Result<AWEither<Json<GetTurnResponseBody>, NoContent>, ApiError> {
-    let settings: &ArcSwap<Settings> = &settings;
-    let settings = settings.load();
+    let settings_provider = settings_provider.into_inner();
+    let settings = settings_provider.get();
 
     let turn_servers = settings.turn.clone();
     let stun_servers = &settings.stun;

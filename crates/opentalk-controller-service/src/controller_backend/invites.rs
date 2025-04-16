@@ -33,7 +33,7 @@ impl ControllerBackend {
         room_id: RoomId,
         new_invite: PostInviteRequestBody,
     ) -> Result<InviteResource, CaptureApiError> {
-        let settings = self.settings.load();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let invite = NewInvite {
@@ -67,7 +67,7 @@ impl ControllerBackend {
         room_id: RoomId,
         pagination: &PagePaginationQuery,
     ) -> Result<(GetRoomsInvitesResponseBody, i64), CaptureApiError> {
-        let settings = self.settings.load();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let room = Room::get(&mut conn, room_id).await?;
@@ -98,7 +98,7 @@ impl ControllerBackend {
         room_id: RoomId,
         invite_code: InviteCode,
     ) -> Result<InviteResource, CaptureApiError> {
-        let settings = self.settings.load();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let (invite, created_by, updated_by) =
@@ -121,7 +121,7 @@ impl ControllerBackend {
         invite_code: InviteCode,
         body: PutInviteRequestBody,
     ) -> Result<InviteResource, CaptureApiError> {
-        let settings = self.settings.load();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let invite = Invite::get(&mut conn, invite_code).await?;

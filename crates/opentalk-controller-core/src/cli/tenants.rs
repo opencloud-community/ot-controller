@@ -20,7 +20,7 @@ pub enum Command {
     SetOidcId { id: Uuid, new_oidc_id: String },
 }
 
-pub async fn handle_command(settings: Settings, command: Command) -> Result<(), DatabaseError> {
+pub async fn handle_command(settings: &Settings, command: Command) -> Result<(), DatabaseError> {
     match command {
         Command::List => list_all_tenants(settings).await,
         Command::SetOidcId { id, new_oidc_id } => {
@@ -50,7 +50,7 @@ impl TenantTableRow {
 }
 
 /// Implementation of the `opentalk-controller tenants list` command
-async fn list_all_tenants(settings: Settings) -> Result<(), DatabaseError> {
+async fn list_all_tenants(settings: &Settings) -> Result<(), DatabaseError> {
     let db = Db::connect(&settings.database)?;
     let mut conn = db.get_conn().await?;
 
@@ -67,7 +67,7 @@ async fn list_all_tenants(settings: Settings) -> Result<(), DatabaseError> {
 
 /// Implementation of the `opentalk-controller tenants set-oidc-id <tenant-id> <new-oidc-id>` command
 async fn set_oidc_id(
-    settings: Settings,
+    settings: &Settings,
     id: TenantId,
     new_oidc_id: OidcTenantId,
 ) -> Result<(), DatabaseError> {

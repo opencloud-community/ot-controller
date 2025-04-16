@@ -20,7 +20,7 @@ impl ControllerBackend {
         &self,
         request: PostCallInStartRequestBody,
     ) -> Result<PostServiceStartResponseBody, CaptureApiError> {
-        let settings = self.settings.load();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
         let mut volatile = self.volatile.clone();
 

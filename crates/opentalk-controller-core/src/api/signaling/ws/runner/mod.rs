@@ -25,7 +25,7 @@ use opentalk_controller_service::{
         storage::{SignalingStorageError, SignalingStorageProvider},
     },
 };
-use opentalk_controller_settings::SharedSettings;
+use opentalk_controller_settings::SettingsProvider;
 use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
     events::EventInvite, rooms::Room, tariffs::Tariff, users::User, utils::build_event_info,
@@ -190,7 +190,7 @@ impl Builder {
         to_ws_actor: Addr<WebSocketActor>,
         from_ws_actor: mpsc::UnboundedReceiver<RunnerMessage>,
         shutdown_sig: broadcast::Receiver<()>,
-        settings: SharedSettings,
+        settings_provider: SettingsProvider,
     ) -> Result<Runner> {
         self.volatile
             .signaling_storage()
@@ -271,7 +271,7 @@ impl Builder {
             resumption_keep_alive: self.resumption_keep_alive,
             shutdown_sig,
             exit: false,
-            settings,
+            settings_provider,
             time_limit_future: Box::pin(future::pending()),
         })
     }
@@ -339,7 +339,7 @@ pub struct Runner {
     exit: bool,
 
     /// Shared settings of the running program
-    settings: SharedSettings,
+    settings_provider: SettingsProvider,
 
     time_limit_future: Pin<Box<dyn Future<Output = ()>>>,
 }
@@ -1660,7 +1660,7 @@ impl Runner {
             .get_room_closes_at(self.room_id)
             .await?;
 
-        let settings = self.settings.load_full();
+        let settings = self.settings_provider.get();
 
         let mut module_features = BTreeMap::<ModuleId, BTreeSet<FeatureId>>::new();
         self.modules
@@ -2410,8 +2410,12 @@ impl Runner {
         match &self.participant {
             Participant::User(user) => {
                 // Enforce the auto-generated display name if display name editing is prohibited
-                let settings = self.settings.load();
-                if settings.endpoints.disallow_custom_display_name {
+                if self
+                    .settings_provider
+                    .get()
+                    .endpoints
+                    .disallow_custom_display_name
+                {
                     user.display_name.clone()
                 } else {
                     join_display_name.clone()
@@ -2420,7 +2424,7 @@ impl Runner {
             Participant::Guest => join_display_name,
             Participant::Recorder => join_display_name,
             Participant::Sip => {
-                if let Some(call_in) = self.settings.load().call_in.as_ref() {
+                if let Some(call_in) = self.settings_provider.get().call_in.as_ref() {
                     call_in::display_name(&self.db, call_in, self.room.tenant_id, join_display_name)
                         .await
                 } else {
@@ -2476,7 +2480,7 @@ impl Runner {
     async fn avatar_url(&self) -> Option<String> {
         match &self.participant {
             Participant::User(user) => Some(user.avatar_url.clone().unwrap_or_else(|| {
-                let settings = self.settings.load();
+                let settings = self.settings_provider.get();
                 format!(
                     "{}{:x}",
                     settings.avatar.libravatar_url,

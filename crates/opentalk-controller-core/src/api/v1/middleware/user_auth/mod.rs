@@ -24,7 +24,7 @@ use openidconnect::AccessToken;
 use opentalk_cache::Cache;
 use opentalk_controller_service::oidc::{OidcContext, UserClaims};
 use opentalk_controller_service_facade::RequestUser;
-use opentalk_controller_settings::{Settings, SharedSettings, TenantAssignment};
+use opentalk_controller_settings::{Settings, SettingsProvider, TenantAssignment};
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::Db;
 use opentalk_db_storage::{
@@ -53,7 +53,7 @@ pub type UserAccessTokenCache = Cache<String, Result<(Tenant, User), CacheableAp
 ///
 /// Transforms into [`OidcAuthMiddleware`]
 pub struct OidcAuth {
-    pub settings: SharedSettings,
+    pub settings_provider: SettingsProvider,
     pub db: Data<Db>,
     pub oidc_ctx: Data<OidcContext>,
 }
@@ -72,7 +72,7 @@ where
     fn new_transform(&self, service: S) -> Self::Future {
         ready(Ok(OidcAuthMiddleware {
             service: Rc::new(service),
-            settings: self.settings.clone(),
+            settings_provider: self.settings_provider.clone(),
             db: self.db.clone(),
             oidc_ctx: self.oidc_ctx.clone(),
         }))
@@ -85,7 +85,7 @@ where
 /// token and provide the associated user as [`ReqData`](actix_web::web::ReqData) for the subsequent services.
 pub struct OidcAuthMiddleware<S> {
     service: Rc<S>,
-    settings: SharedSettings,
+    settings_provider: SettingsProvider,
     db: Data<Db>,
     oidc_ctx: Data<OidcContext>,
 }
@@ -107,7 +107,7 @@ where
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
         let service = self.service.clone();
-        let settings = self.settings.clone();
+        let settings_provider = self.settings_provider.clone();
         let db = self.db.clone();
         let oidc_ctx = self.oidc_ctx.clone();
         let caches = req
@@ -153,7 +153,7 @@ where
 
         Box::pin(
             async move {
-                let settings = settings.load_full();
+                let settings = settings_provider.get();
 
                 match access_token_or_invite_code {
                     AccessTokenOrInviteCode::AccessToken(access_token) => match check_access_token(
