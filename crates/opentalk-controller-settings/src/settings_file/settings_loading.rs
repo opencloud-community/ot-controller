@@ -7,14 +7,14 @@ use serde::Deserialize;
 use snafu::ResultExt as _;
 use url::Url;
 
-use super::Extensions;
+use super::{Extensions, WarningSource};
 use crate::{
     settings_error::DeserializeConfigSnafu, Authz, Avatar, CallIn, ControllerOidcConfiguration,
     Database, Defaults, Endpoints, Etcd, Etherpad, FrontendOidcConfiguration, Http, Keycloak,
     LiveKitSettings, Logging, Metrics, MinIO, MonitoringSettings, Oidc,
     OidcAndUserSearchConfiguration, OidcConfiguration, RabbitMqConfig, RedisConfig, Reports,
     Result, Settings, SettingsError, SharedFolder, Spacedeck, Stun, SubroomAudio, Tariffs, Tenants,
-    Turn, UserSearch, UserSearchBackend, UserSearchConfiguration, UsersFindBehavior, WarningSource,
+    Turn, UserSearch, UserSearchBackend, UserSearchConfiguration, UsersFindBehavior,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
@@ -262,7 +262,7 @@ impl<OIDC> SettingsLoading<OIDC> {
     pub(crate) fn load(file_name: &str) -> Result<Settings> {
         let config = Config::builder()
             .add_source(File::new(file_name, FileFormat::Toml))
-            .add_source(WarningSource(
+            .add_source(WarningSource::new(
                 Environment::with_prefix("K3K_CTRL")
                     .prefix_separator("_")
                     .separator("__"),
