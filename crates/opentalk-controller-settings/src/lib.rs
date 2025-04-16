@@ -54,14 +54,6 @@ type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case", tag = "users_find_behavior")]
-pub enum UsersFindBehavior {
-    Disabled,
-    FromDatabase,
-    FromUserSearchBackend,
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Http {
     #[serde(default, skip_serializing_if = "Option::is_none")]

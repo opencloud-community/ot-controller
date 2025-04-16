@@ -17,6 +17,7 @@ mod settings_loading;
 mod user_search;
 mod user_search_backend;
 mod user_search_configuration;
+mod users_find_behavior;
 mod warning_source;
 
 pub use controller_oidc_configuration::ControllerOidcConfiguration;
@@ -34,4 +35,5 @@ pub use settings_loading::SettingsLoading;
 pub use user_search::UserSearch;
 pub use user_search_backend::UserSearchBackend;
 pub use user_search_configuration::UserSearchConfiguration;
+pub use users_find_behavior::UsersFindBehavior;
 use warning_source::WarningSource;
