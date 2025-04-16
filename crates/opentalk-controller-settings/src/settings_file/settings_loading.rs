@@ -9,11 +9,11 @@ use url::Url;
 
 use super::{
     ControllerOidcConfiguration, Database, Extensions, FrontendOidcConfiguration, Keycloak,
-    MonitoringSettings, OidcConfiguration, UserSearchConfiguration, WarningSource,
+    MonitoringSettings, Oidc, OidcConfiguration, UserSearchConfiguration, WarningSource,
 };
 use crate::{
     settings_error::DeserializeConfigSnafu, Authz, Avatar, CallIn, Defaults, Endpoints, Etcd,
-    Etherpad, Http, LiveKitSettings, Logging, Metrics, MinIO, Oidc, OidcAndUserSearchConfiguration,
+    Etherpad, Http, LiveKitSettings, Logging, Metrics, MinIO, OidcAndUserSearchConfiguration,
     RabbitMqConfig, RedisConfig, Reports, Result, Settings, SettingsError, SharedFolder, Spacedeck,
     Stun, SubroomAudio, Tariffs, Tenants, Turn, UserSearch, UserSearchBackend, UsersFindBehavior,
 };
