@@ -78,7 +78,7 @@ pub type SharedSettings = Arc<ArcSwap<Settings>>;
 
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct SettingsLoading<OIDC> {
     pub database: Database,
 
@@ -155,7 +155,18 @@ pub struct SettingsLoading<OIDC> {
     pub livekit: LiveKitSettings,
 
     #[serde(flatten)]
-    pub extensions: HashMap<String, config::Value>,
+    pub extensions: Extensions,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
+pub struct Extensions(pub HashMap<String, config::Value>);
+
+impl Eq for Extensions {}
+
+impl Extensions {
+    pub fn contains_key(&self, key: &str) -> bool {
+        self.0.contains_key(key)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -195,7 +206,7 @@ where
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct MonitoringSettings {
     #[serde(default = "default_monitoring_port")]
     pub port: u16,
@@ -212,21 +223,21 @@ fn default_monitoring_addr() -> IpAddr {
 }
 
 /// OIDC and user search configuration
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct OidcAndUserSearchConfiguration {
     pub oidc: OidcConfiguration,
     pub user_search: UserSearchConfiguration,
 }
 
 /// OIDC configuration
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct OidcConfiguration {
     pub frontend: FrontendOidcConfiguration,
     pub controller: ControllerOidcConfiguration,
 }
 
 /// OIDC configuration for frontend
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct FrontendOidcConfiguration {
     pub auth_base_url: Url,
     pub client_id: ClientId,
@@ -240,6 +251,16 @@ pub struct ControllerOidcConfiguration {
     pub client_secret: ClientSecret,
 }
 
+impl PartialEq for ControllerOidcConfiguration {
+    fn eq(&self, other: &Self) -> bool {
+        self.auth_base_url.eq(&other.auth_base_url)
+            && self.client_id.eq(&other.client_id)
+            && self.client_secret.secret().eq(other.client_secret.secret())
+    }
+}
+
+impl Eq for ControllerOidcConfiguration {}
+
 /// User search configuration
 #[derive(Debug, Clone, Deserialize)]
 pub struct UserSearchConfiguration {
@@ -250,6 +271,21 @@ pub struct UserSearchConfiguration {
     pub external_id_user_attribute_name: Option<String>,
     pub users_find_behavior: UsersFindBehavior,
 }
+
+impl PartialEq for UserSearchConfiguration {
+    fn eq(&self, other: &Self) -> bool {
+        self.backend.eq(&other.backend)
+            && self.api_base_url.eq(&other.api_base_url)
+            && self.client_id.eq(&other.client_id)
+            && self.client_secret.secret().eq(other.client_secret.secret())
+            && self
+                .external_id_user_attribute_name
+                .eq(&other.external_id_user_attribute_name)
+            && self.users_find_behavior.eq(&other.users_find_behavior)
+    }
+}
+
+impl Eq for UserSearchConfiguration {}
 
 impl<OIDC> SettingsLoading<OIDC> {
     /// internal url builder
@@ -469,7 +505,7 @@ impl<OIDC> SettingsLoading<OIDC> {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Database {
     pub url: String,
     #[serde(default = "default_max_connections")]
@@ -490,14 +526,28 @@ pub struct Keycloak {
     pub external_id_user_attribute_name: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+impl PartialEq for Keycloak {
+    fn eq(&self, other: &Self) -> bool {
+        self.base_url.eq(&other.base_url)
+            && self.realm.eq(&other.realm)
+            && self.client_id.eq(&other.client_id)
+            && self.client_secret.secret().eq(other.client_secret.secret())
+            && self
+                .external_id_user_attribute_name
+                .eq(&other.external_id_user_attribute_name)
+    }
+}
+
+impl Eq for Keycloak {}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Oidc {
     pub authority: Url,
     pub frontend: OidcFrontend,
     pub controller: OidcController,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct OidcFrontend {
     pub authority: Option<Url>,
     pub client_id: ClientId,
@@ -510,6 +560,16 @@ pub struct OidcController {
     pub client_secret: ClientSecret,
 }
 
+impl PartialEq for OidcController {
+    fn eq(&self, other: &Self) -> bool {
+        self.authority.eq(&other.authority)
+            && self.client_id.eq(&other.client_id)
+            && self.client_secret.secret().eq(other.client_secret.secret())
+    }
+}
+
+impl Eq for OidcController {}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct UserSearch {
     #[serde(flatten)]
@@ -521,6 +581,25 @@ pub struct UserSearch {
     #[serde(flatten)]
     pub users_find_behavior: UsersFindBehavior,
 }
+
+impl PartialEq for UserSearch {
+    fn eq(&self, other: &Self) -> bool {
+        self.backend.eq(&other.backend)
+            && self.api_base_url.eq(&other.api_base_url)
+            && self.client_id.eq(&other.client_id)
+            && self
+                .client_secret
+                .as_ref()
+                .map(|s| s.secret())
+                .eq(&other.client_secret.as_ref().map(|s| s.secret()))
+            && self
+                .external_id_user_attribute_name
+                .eq(&other.external_id_user_attribute_name)
+            && self.users_find_behavior.eq(&other.users_find_behavior)
+    }
+}
+
+impl Eq for UserSearch {}
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case", tag = "backend")]
@@ -536,7 +615,7 @@ pub enum UsersFindBehavior {
     FromUserSearchBackend,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Http {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub addr: Option<String>,
@@ -560,13 +639,13 @@ const fn default_http_port() -> u16 {
     11311
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct HttpTls {
     pub certificate: PathBuf,
     pub private_key: PathBuf,
 }
 
-#[derive(Default, Debug, Clone, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Logging {
     pub default_directives: Option<Vec<String>>,
 
@@ -579,7 +658,7 @@ pub struct Logging {
     pub service_instance_id: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Turn {
     /// How long should a credential pair be valid, in seconds
     #[serde(
@@ -604,20 +683,20 @@ fn default_turn_credential_lifetime() -> Duration {
     Duration::from_secs(60)
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct TurnServer {
     // TURN URIs for this TURN server following rfc7065
     pub uris: Vec<String>,
     pub pre_shared_key: String,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 pub struct Stun {
     // STUN URIs for this TURN server following rfc7065
     pub uris: Vec<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct RedisConfig {
     #[serde(default = "redis_default_url")]
     pub url: url::Url,
@@ -635,7 +714,7 @@ fn redis_default_url() -> url::Url {
     url::Url::try_from("redis://localhost:6379/").expect("Invalid default redis URL")
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct RabbitMqConfig {
     #[serde(default = "rabbitmq_default_url")]
     pub url: String,
@@ -676,7 +755,7 @@ fn rabbitmq_default_max_channels() -> u32 {
     100
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 pub struct Authz {
     #[serde(default = "authz_default_synchronize_controller")]
     pub synchronize_controllers: bool,
@@ -694,24 +773,24 @@ fn authz_default_synchronize_controller() -> bool {
     true
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 pub struct Etcd {
     pub urls: Vec<url::Url>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 pub struct Etherpad {
     pub url: url::Url,
     pub api_key: String,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 pub struct Spacedeck {
     pub url: url::Url,
     pub api_key: String,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 pub struct SubroomAudio {
     #[serde(default)]
     pub enable_whisper: bool,
@@ -757,7 +836,7 @@ where
     Ok(Duration::from_secs(duration))
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 pub struct Avatar {
     #[serde(default = "default_libravatar_url")]
     pub libravatar_url: String,
@@ -775,14 +854,14 @@ fn default_libravatar_url() -> String {
     "https://seccdn.libravatar.org/avatar/".into()
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 pub struct CallIn {
     pub tel: String,
     pub enable_phone_mapping: bool,
     pub default_country_code: phonenumber::country::Id,
 }
 
-#[derive(Clone, Default, Debug, Deserialize)]
+#[derive(Clone, Default, Debug, PartialEq, Eq, Deserialize)]
 pub struct Defaults {
     #[serde(default = "default_user_language")]
     pub user_language: Language,
@@ -796,7 +875,7 @@ fn default_user_language() -> Language {
     "en-US".parse().expect("valid language")
 }
 
-#[derive(Clone, Default, Debug, Deserialize)]
+#[derive(Clone, Default, Debug, PartialEq, Eq, Deserialize)]
 pub struct Endpoints {
     pub disable_users_find: Option<bool>,
     pub users_find_use_kc: Option<bool>,
@@ -808,7 +887,7 @@ pub struct Endpoints {
     pub disable_openapi: bool,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 pub struct MinIO {
     pub uri: String,
     pub bucket: String,
@@ -816,12 +895,12 @@ pub struct MinIO {
     pub secret_key: String,
 }
 
-#[derive(Debug, Default, Clone, Deserialize)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Deserialize)]
 pub struct Metrics {
     pub allowlist: Vec<cidr::IpInet>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "snake_case", tag = "assignment")]
 pub enum TenantAssignment {
     Static {
@@ -845,13 +924,13 @@ impl Default for TenantAssignment {
     }
 }
 
-#[derive(Default, Debug, Clone, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Tenants {
     #[serde(default, flatten)]
     pub assignment: TenantAssignment,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "snake_case", tag = "assignment")]
 pub enum TariffAssignment {
     Static { static_tariff_name: String },
@@ -866,7 +945,7 @@ impl Default for TariffAssignment {
     }
 }
 
-#[derive(Default, Debug, Clone, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct TariffStatusMapping {
     pub downgraded_tariff_name: String,
     pub default: FxHashSet<String>,
@@ -874,7 +953,7 @@ pub struct TariffStatusMapping {
     pub downgraded: FxHashSet<String>,
 }
 
-#[derive(Default, Debug, Clone, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Tariffs {
     #[serde(default, flatten)]
     pub assignment: TariffAssignment,
@@ -883,7 +962,7 @@ pub struct Tariffs {
     pub status_mapping: Option<TariffStatusMapping>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct LiveKitSettings {
     pub api_key: String,
     pub api_secret: String,
