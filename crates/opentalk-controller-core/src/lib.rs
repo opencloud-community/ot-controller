@@ -54,7 +54,7 @@ use opentalk_controller_service::{
     oidc::OidcContext, services::MailService, ControllerBackend, Whatever,
 };
 use opentalk_controller_service_facade::OpenTalkControllerService;
-use opentalk_controller_settings::SettingsProvider;
+use opentalk_controller_settings::{settings_file::MonitoringSettings, SettingsProvider};
 use opentalk_database::Db;
 use opentalk_jobs::job_runner::JobRunner;
 use opentalk_keycloak_admin::{AuthorizedClient, KeycloakAdminClient};
@@ -85,7 +85,7 @@ use crate::{
         signaling::{breakout::BreakoutRooms, moderation::ModerationModule, SignalingProtocols},
         v1::{middleware::metrics::RequestMetrics, response::error::json_error_handler},
     },
-    settings::{MonitoringSettings, Settings},
+    settings::Settings,
     trace::ReducedSpanBuilder,
 };
 

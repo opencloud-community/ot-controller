@@ -35,7 +35,7 @@
 //! loading the raw settings inside [`SettingsProvider::load`]. The final struct with all loaded fields
 //! is [`Settings`] (an alias for [`SettingsLoading<OidcAndUserSearchConfiguration>`]) which contains all loaded fields.
 
-use std::{collections::BTreeSet, convert::TryFrom, net::IpAddr, path::PathBuf, time::Duration};
+use std::{collections::BTreeSet, convert::TryFrom, path::PathBuf, time::Duration};
 
 use openidconnect::{ClientId, ClientSecret};
 use opentalk_types_common::{features::ModuleFeatureId, users::Language};
@@ -55,22 +55,6 @@ pub use settings_provider::SettingsProvider;
 type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct MonitoringSettings {
-    #[serde(default = "default_monitoring_port")]
-    pub port: u16,
-    #[serde(default = "default_monitoring_addr")]
-    pub addr: IpAddr,
-}
-
-fn default_monitoring_port() -> u16 {
-    11411
-}
-
-fn default_monitoring_addr() -> IpAddr {
-    [0, 0, 0, 0].into()
-}
 
 /// OIDC and user search configuration
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
