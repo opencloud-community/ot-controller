@@ -2,15 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use openidconnect::ClientId;
 use serde::Deserialize;
 use url::Url;
 
-use super::OidcFrontend;
-use crate::OidcController;
-
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct Oidc {
-    pub authority: Url,
-    pub frontend: OidcFrontend,
-    pub controller: OidcController,
+pub struct OidcFrontend {
+    pub authority: Option<Url>,
+    pub client_id: ClientId,
 }
