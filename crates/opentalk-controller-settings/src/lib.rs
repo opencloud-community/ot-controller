@@ -41,7 +41,7 @@ use openidconnect::{ClientId, ClientSecret};
 use opentalk_types_common::{features::ModuleFeatureId, users::Language};
 use rustc_hash::FxHashSet;
 use serde::{Deserialize, Deserializer};
-use settings_file::SettingsLoading;
+use settings_file::{OidcAndUserSearchConfiguration, SettingsLoading};
 use url::Url;
 
 pub mod settings_file;
@@ -55,13 +55,6 @@ pub use settings_provider::SettingsProvider;
 type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
-
-/// OIDC and user search configuration
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct OidcAndUserSearchConfiguration {
-    pub oidc: OidcConfiguration,
-    pub user_search: UserSearchConfiguration,
-}
 
 /// OIDC configuration
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
