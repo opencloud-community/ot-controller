@@ -4,7 +4,8 @@
 
 use serde::Deserialize;
 
-use crate::{OidcConfiguration, UserSearchConfiguration};
+use super::OidcConfiguration;
+use crate::UserSearchConfiguration;
 
 /// OIDC and user search configuration
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]

@@ -7,14 +7,14 @@ use serde::Deserialize;
 use snafu::ResultExt as _;
 use url::Url;
 
-use super::{Extensions, MonitoringSettings, WarningSource};
+use super::{Extensions, MonitoringSettings, OidcConfiguration, WarningSource};
 use crate::{
     settings_error::DeserializeConfigSnafu, Authz, Avatar, CallIn, ControllerOidcConfiguration,
     Database, Defaults, Endpoints, Etcd, Etherpad, FrontendOidcConfiguration, Http, Keycloak,
-    LiveKitSettings, Logging, Metrics, MinIO, Oidc, OidcAndUserSearchConfiguration,
-    OidcConfiguration, RabbitMqConfig, RedisConfig, Reports, Result, Settings, SettingsError,
-    SharedFolder, Spacedeck, Stun, SubroomAudio, Tariffs, Tenants, Turn, UserSearch,
-    UserSearchBackend, UserSearchConfiguration, UsersFindBehavior,
+    LiveKitSettings, Logging, Metrics, MinIO, Oidc, OidcAndUserSearchConfiguration, RabbitMqConfig,
+    RedisConfig, Reports, Result, Settings, SettingsError, SharedFolder, Spacedeck, Stun,
+    SubroomAudio, Tariffs, Tenants, Turn, UserSearch, UserSearchBackend, UserSearchConfiguration,
+    UsersFindBehavior,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]

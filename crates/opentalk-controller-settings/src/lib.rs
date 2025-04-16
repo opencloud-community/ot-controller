@@ -56,13 +56,6 @@ type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
 
-/// OIDC configuration
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct OidcConfiguration {
-    pub frontend: FrontendOidcConfiguration,
-    pub controller: ControllerOidcConfiguration,
-}
-
 /// OIDC configuration for frontend
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct FrontendOidcConfiguration {
