@@ -97,10 +97,10 @@ mod tests {
     use crate::{
         settings_file::{
             database::default_max_connections, ControllerOidcConfiguration, Database, Extensions,
-            FrontendOidcConfiguration, Oidc, OidcConfiguration, OidcController, OidcFrontend,
+            FrontendOidcConfiguration, Http, Oidc, OidcConfiguration, OidcController, OidcFrontend,
             UserSearch, UserSearchBackend, UserSearchConfiguration, UsersFindBehavior,
         },
-        Authz, Avatar, Defaults, Endpoints, Http, LiveKitSettings, Logging, Metrics, MinIO,
+        Authz, Avatar, Defaults, Endpoints, LiveKitSettings, Logging, Metrics, MinIO,
         OidcAndUserSearchConfiguration, RabbitMqConfig, Settings, SettingsError, Tariffs, Tenants,
     };
 

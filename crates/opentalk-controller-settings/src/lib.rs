@@ -55,30 +55,6 @@ type Result<T, E = SettingsError> = std::result::Result<T, E>;
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct Http {
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub addr: Option<String>,
-    #[serde(default = "default_http_port")]
-    pub port: u16,
-    #[serde(default)]
-    pub tls: Option<HttpTls>,
-}
-
-impl Default for Http {
-    fn default() -> Self {
-        Self {
-            addr: None,
-            port: default_http_port(),
-            tls: None,
-        }
-    }
-}
-
-const fn default_http_port() -> u16 {
-    11311
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct HttpTls {
     pub certificate: PathBuf,
     pub private_key: PathBuf,
