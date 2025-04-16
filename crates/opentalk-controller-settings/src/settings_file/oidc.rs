@@ -5,8 +5,7 @@
 use serde::Deserialize;
 use url::Url;
 
-use super::OidcFrontend;
-use crate::OidcController;
+use super::{OidcController, OidcFrontend};
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Oidc {

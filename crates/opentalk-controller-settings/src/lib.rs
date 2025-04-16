@@ -57,23 +57,6 @@ type Result<T, E = SettingsError> = std::result::Result<T, E>;
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct OidcController {
-    pub authority: Option<Url>,
-    pub client_id: ClientId,
-    pub client_secret: ClientSecret,
-}
-
-impl PartialEq for OidcController {
-    fn eq(&self, other: &Self) -> bool {
-        self.authority.eq(&other.authority)
-            && self.client_id.eq(&other.client_id)
-            && self.client_secret.secret().eq(other.client_secret.secret())
-    }
-}
-
-impl Eq for OidcController {}
-
-#[derive(Debug, Clone, Deserialize)]
 pub struct UserSearch {
     #[serde(flatten)]
     pub backend: UserSearchBackend,
