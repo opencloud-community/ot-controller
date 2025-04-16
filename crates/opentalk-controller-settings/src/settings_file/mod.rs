@@ -9,6 +9,7 @@ mod monitoring_settings;
 mod oidc_and_user_search_configuration;
 mod oidc_configuration;
 mod settings_loading;
+mod user_search_configuration;
 mod warning_source;
 
 pub use controller_oidc_configuration::ControllerOidcConfiguration;
@@ -18,4 +19,5 @@ pub use monitoring_settings::MonitoringSettings;
 pub use oidc_and_user_search_configuration::OidcAndUserSearchConfiguration;
 pub use oidc_configuration::OidcConfiguration;
 pub use settings_loading::SettingsLoading;
+pub use user_search_configuration::UserSearchConfiguration;
 use warning_source::WarningSource;

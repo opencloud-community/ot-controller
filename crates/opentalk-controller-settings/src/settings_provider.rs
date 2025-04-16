@@ -98,11 +98,12 @@ mod tests {
         default_max_connections,
         settings_file::{
             ControllerOidcConfiguration, Extensions, FrontendOidcConfiguration, OidcConfiguration,
+            UserSearchConfiguration,
         },
         Authz, Avatar, Database, Defaults, Endpoints, Http, LiveKitSettings, Logging, Metrics,
         MinIO, Oidc, OidcAndUserSearchConfiguration, OidcController, OidcFrontend, RabbitMqConfig,
         Settings, SettingsError, Tariffs, Tenants, UserSearch, UserSearchBackend,
-        UserSearchConfiguration, UsersFindBehavior,
+        UsersFindBehavior,
     };
 
     const MINIMUM_CONFIG_TOML: &str = r#"
