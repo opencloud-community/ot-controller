@@ -13,10 +13,11 @@ use super::{
     WarningSource,
 };
 use crate::{
-    settings_error::DeserializeConfigSnafu, Authz, Avatar, CallIn, Defaults, Endpoints, Etcd,
-    Etherpad, Http, LiveKitSettings, Logging, Metrics, MinIO, OidcAndUserSearchConfiguration,
-    RabbitMqConfig, RedisConfig, Reports, Result, Settings, SettingsError, SharedFolder, Spacedeck,
-    Stun, SubroomAudio, Tariffs, Tenants, Turn, UserSearchBackend, UsersFindBehavior,
+    settings_error::DeserializeConfigSnafu, settings_file::UserSearchBackend, Authz, Avatar,
+    CallIn, Defaults, Endpoints, Etcd, Etherpad, Http, LiveKitSettings, Logging, Metrics, MinIO,
+    OidcAndUserSearchConfiguration, RabbitMqConfig, RedisConfig, Reports, Result, Settings,
+    SettingsError, SharedFolder, Spacedeck, Stun, SubroomAudio, Tariffs, Tenants, Turn,
+    UsersFindBehavior,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]

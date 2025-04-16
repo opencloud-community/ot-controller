@@ -6,7 +6,8 @@ use openidconnect::{ClientId, ClientSecret};
 use serde::Deserialize;
 use url::Url;
 
-use crate::{UserSearchBackend, UsersFindBehavior};
+use super::UserSearchBackend;
+use crate::UsersFindBehavior;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct UserSearch {
