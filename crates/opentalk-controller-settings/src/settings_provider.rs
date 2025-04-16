@@ -95,15 +95,13 @@ mod tests {
 
     use super::SettingsProvider;
     use crate::{
-        default_max_connections,
         settings_file::{
-            ControllerOidcConfiguration, Extensions, FrontendOidcConfiguration, OidcConfiguration,
-            UserSearchConfiguration,
+            database::default_max_connections, ControllerOidcConfiguration, Database, Extensions,
+            FrontendOidcConfiguration, OidcConfiguration, UserSearchConfiguration,
         },
-        Authz, Avatar, Database, Defaults, Endpoints, Http, LiveKitSettings, Logging, Metrics,
-        MinIO, Oidc, OidcAndUserSearchConfiguration, OidcController, OidcFrontend, RabbitMqConfig,
-        Settings, SettingsError, Tariffs, Tenants, UserSearch, UserSearchBackend,
-        UsersFindBehavior,
+        Authz, Avatar, Defaults, Endpoints, Http, LiveKitSettings, Logging, Metrics, MinIO, Oidc,
+        OidcAndUserSearchConfiguration, OidcController, OidcFrontend, RabbitMqConfig, Settings,
+        SettingsError, Tariffs, Tenants, UserSearch, UserSearchBackend, UsersFindBehavior,
     };
 
     const MINIMUM_CONFIG_TOML: &str = r#"

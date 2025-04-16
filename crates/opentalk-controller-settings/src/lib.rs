@@ -56,17 +56,6 @@ type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct Database {
-    pub url: String,
-    #[serde(default = "default_max_connections")]
-    pub max_connections: u32,
-}
-
-fn default_max_connections() -> u32 {
-    100
-}
-
 /// Settings for Keycloak
 #[derive(Debug, Clone, Deserialize)]
 pub struct Keycloak {

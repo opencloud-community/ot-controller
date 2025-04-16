@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 mod controller_oidc_configuration;
+pub(crate) mod database;
 mod extensions;
 mod frontend_oidc_configuration;
 mod monitoring_settings;
@@ -13,6 +14,7 @@ mod user_search_configuration;
 mod warning_source;
 
 pub use controller_oidc_configuration::ControllerOidcConfiguration;
+pub use database::Database;
 pub use extensions::Extensions;
 pub use frontend_oidc_configuration::FrontendOidcConfiguration;
 pub use monitoring_settings::MonitoringSettings;

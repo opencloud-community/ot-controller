@@ -8,12 +8,12 @@ use snafu::ResultExt as _;
 use url::Url;
 
 use super::{
-    ControllerOidcConfiguration, Extensions, FrontendOidcConfiguration, MonitoringSettings,
-    OidcConfiguration, UserSearchConfiguration, WarningSource,
+    ControllerOidcConfiguration, Database, Extensions, FrontendOidcConfiguration,
+    MonitoringSettings, OidcConfiguration, UserSearchConfiguration, WarningSource,
 };
 use crate::{
-    settings_error::DeserializeConfigSnafu, Authz, Avatar, CallIn, Database, Defaults, Endpoints,
-    Etcd, Etherpad, Http, Keycloak, LiveKitSettings, Logging, Metrics, MinIO, Oidc,
+    settings_error::DeserializeConfigSnafu, Authz, Avatar, CallIn, Defaults, Endpoints, Etcd,
+    Etherpad, Http, Keycloak, LiveKitSettings, Logging, Metrics, MinIO, Oidc,
     OidcAndUserSearchConfiguration, RabbitMqConfig, RedisConfig, Reports, Result, Settings,
     SettingsError, SharedFolder, Spacedeck, Stun, SubroomAudio, Tariffs, Tenants, Turn, UserSearch,
     UserSearchBackend, UsersFindBehavior,
