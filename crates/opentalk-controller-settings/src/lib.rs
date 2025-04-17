@@ -36,9 +36,7 @@
 //! is [`Settings`] (an alias for [`SettingsLoading<OidcAndUserSearchConfiguration>`]) which contains all loaded fields.
 
 use serde::Deserialize;
-use settings_file::{
-    OidcAndUserSearchConfiguration, SettingsLoading, TariffAssignment, TariffStatusMapping,
-};
+use settings_file::{OidcAndUserSearchConfiguration, SettingsLoading};
 
 pub mod settings_file;
 
@@ -51,15 +49,6 @@ pub use settings_provider::SettingsProvider;
 type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
-
-#[derive(Default, Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct Tariffs {
-    #[serde(default, flatten)]
-    pub assignment: TariffAssignment,
-
-    #[serde(default)]
-    pub status_mapping: Option<TariffStatusMapping>,
-}
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct LiveKitSettings {
