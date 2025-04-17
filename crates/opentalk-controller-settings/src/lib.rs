@@ -54,13 +54,6 @@ type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
-pub struct CallIn {
-    pub tel: String,
-    pub enable_phone_mapping: bool,
-    pub default_country_code: phonenumber::country::Id,
-}
-
 #[derive(Clone, Default, Debug, PartialEq, Eq, Deserialize)]
 pub struct Defaults {
     #[serde(default = "default_user_language")]

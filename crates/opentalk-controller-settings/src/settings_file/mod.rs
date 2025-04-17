@@ -4,6 +4,7 @@
 
 mod authz;
 mod avatar;
+mod call_in;
 mod controller_oidc_configuration;
 pub(crate) mod database;
 mod etcd;
@@ -39,6 +40,7 @@ mod warning_source;
 
 pub use authz::Authz;
 pub use avatar::Avatar;
+pub use call_in::CallIn;
 pub use controller_oidc_configuration::ControllerOidcConfiguration;
 pub use database::Database;
 pub use etcd::Etcd;
