@@ -227,7 +227,7 @@ pub async fn put_shared_folder(
     })?;
 
     match shared_folder_settings {
-        opentalk_controller_settings::SharedFolder::Nextcloud {
+        opentalk_controller_settings::settings_file::SharedFolder::Nextcloud {
             url,
             username,
             password,
@@ -392,7 +392,7 @@ pub async fn delete_shared_folders(
     };
 
     match shared_folder_settings {
-        opentalk_controller_settings::SharedFolder::Nextcloud {
+        opentalk_controller_settings::settings_file::SharedFolder::Nextcloud {
             url,
             username,
             password,

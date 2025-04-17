@@ -33,7 +33,7 @@ pub async fn delete_shared_folders(
         .ok_or(Error::SharedFoldersNotConfigured)?;
 
     match shared_folder_settings {
-        opentalk_controller_settings::SharedFolder::Nextcloud {
+        opentalk_controller_settings::settings_file::SharedFolder::Nextcloud {
             url,
             username,
             password,
