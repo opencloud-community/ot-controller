@@ -37,7 +37,7 @@
 
 use rustc_hash::FxHashSet;
 use serde::Deserialize;
-use settings_file::{OidcAndUserSearchConfiguration, SettingsLoading, TenantAssignment};
+use settings_file::{OidcAndUserSearchConfiguration, SettingsLoading};
 
 pub mod settings_file;
 
@@ -50,12 +50,6 @@ pub use settings_provider::SettingsProvider;
 type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
-
-#[derive(Default, Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct Tenants {
-    #[serde(default, flatten)]
-    pub assignment: TenantAssignment,
-}
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "snake_case", tag = "assignment")]
