@@ -72,7 +72,7 @@ impl WhiteboardStorageProvider for VolatileStorage {
 impl SignalingModule for Whiteboard {
     const NAMESPACE: ModuleId = MODULE_ID;
 
-    type Params = opentalk_controller_settings::Spacedeck;
+    type Params = opentalk_controller_settings::settings_file::Spacedeck;
 
     type Incoming = WhiteboardCommand;
 
