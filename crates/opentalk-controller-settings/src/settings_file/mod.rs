@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 mod authz;
+mod avatar;
 mod controller_oidc_configuration;
 pub(crate) mod database;
 mod etcd;
@@ -37,6 +38,7 @@ mod users_find_behavior;
 mod warning_source;
 
 pub use authz::Authz;
+pub use avatar::Avatar;
 pub use controller_oidc_configuration::ControllerOidcConfiguration;
 pub use database::Database;
 pub use etcd::Etcd;

@@ -55,24 +55,6 @@ type Result<T, E = SettingsError> = std::result::Result<T, E>;
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
-pub struct Avatar {
-    #[serde(default = "default_libravatar_url")]
-    pub libravatar_url: String,
-}
-
-impl Default for Avatar {
-    fn default() -> Self {
-        Self {
-            libravatar_url: default_libravatar_url(),
-        }
-    }
-}
-
-fn default_libravatar_url() -> String {
-    "https://seccdn.libravatar.org/avatar/".into()
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 pub struct CallIn {
     pub tel: String,
     pub enable_phone_mapping: bool,
