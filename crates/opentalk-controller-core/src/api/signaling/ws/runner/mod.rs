@@ -1660,7 +1660,7 @@ impl Runner {
             .get_room_closes_at(self.room_id)
             .await?;
 
-        let settings = self.settings_provider.get();
+        let settings = self.settings_provider.get_raw();
 
         let mut module_features = BTreeMap::<ModuleId, BTreeSet<FeatureId>>::new();
         self.modules
@@ -2412,7 +2412,7 @@ impl Runner {
                 // Enforce the auto-generated display name if display name editing is prohibited
                 if self
                     .settings_provider
-                    .get()
+                    .get_raw()
                     .endpoints
                     .disallow_custom_display_name
                 {
@@ -2424,7 +2424,7 @@ impl Runner {
             Participant::Guest => join_display_name,
             Participant::Recorder => join_display_name,
             Participant::Sip => {
-                if let Some(call_in) = self.settings_provider.get().call_in.as_ref() {
+                if let Some(call_in) = self.settings_provider.get_raw().call_in.as_ref() {
                     call_in::display_name(&self.db, call_in, self.room.tenant_id, join_display_name)
                         .await
                 } else {
@@ -2480,7 +2480,7 @@ impl Runner {
     async fn avatar_url(&self) -> Option<String> {
         match &self.participant {
             Participant::User(user) => Some(user.avatar_url.clone().unwrap_or_else(|| {
-                let settings = self.settings_provider.get();
+                let settings = self.settings_provider.get_raw();
                 format!(
                     "{}{:x}",
                     settings.avatar.libravatar_url,

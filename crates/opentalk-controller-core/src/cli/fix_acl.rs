@@ -10,7 +10,7 @@ use chrono::Utc;
 use clap::Parser;
 use kustos::prelude::*;
 use opentalk_controller_service::controller_backend::RoomsPoliciesBuilderExt;
-use opentalk_controller_settings::Settings;
+use opentalk_controller_settings::SettingsRaw;
 use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
     events::Event, invites::Invite, module_resources::ModuleResource, rooms::Room, users::User,
@@ -51,7 +51,7 @@ pub(super) struct Args {
     skip_events: bool,
 }
 
-pub(super) async fn fix_acl(settings: &Settings, args: Args) -> Result<()> {
+pub(super) async fn fix_acl(settings: &SettingsRaw, args: Args) -> Result<()> {
     let db = Arc::new(
         Db::connect(&settings.database).whatever_context("Failed to connect to database")?,
     );

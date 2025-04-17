@@ -54,7 +54,9 @@ use opentalk_controller_service::{
     oidc::OidcContext, services::MailService, ControllerBackend, Whatever,
 };
 use opentalk_controller_service_facade::OpenTalkControllerService;
-use opentalk_controller_settings::{settings_file::MonitoringSettings, SettingsProvider};
+use opentalk_controller_settings::{
+    settings_file::MonitoringSettings, SettingsProvider, SettingsRaw,
+};
 use opentalk_database::Db;
 use opentalk_jobs::job_runner::JobRunner;
 use opentalk_keycloak_admin::{AuthorizedClient, KeycloakAdminClient};
@@ -85,7 +87,6 @@ use crate::{
         signaling::{breakout::BreakoutRooms, moderation::ModerationModule, SignalingProtocols},
         v1::{middleware::metrics::RequestMetrics, response::error::json_error_handler},
     },
-    settings::Settings,
     trace::ReducedSpanBuilder,
 };
 
@@ -185,7 +186,7 @@ pub struct Controller {
     pub service: OpenTalkControllerService,
 
     /// Settings loaded on [Controller::create]
-    pub startup_settings: Arc<Settings>,
+    pub startup_settings: Arc<SettingsRaw>,
 
     /// Cloneable shared settings, can be used to reload settings from, when receiving the `reload` signal.
     pub settings_provider: SettingsProvider,
@@ -256,7 +257,7 @@ impl Controller {
 
         let settings_provider =
             SettingsProvider::load(&args.config).whatever_context("Failed to load settings")?;
-        let settings = settings_provider.get();
+        let settings = settings_provider.get_raw();
 
         trace::init(&settings.logging).whatever_context("Failed to initialize tracing")?;
 
@@ -274,7 +275,7 @@ impl Controller {
         settings_provider: SettingsProvider,
         args: cli::Args,
     ) -> Result<Self> {
-        let settings = settings_provider.get();
+        let settings = settings_provider.get_raw();
         let metrics = metrics::CombinedMetrics::try_init()
             .whatever_context("Failed to initialize metrics")?;
 
@@ -554,7 +555,8 @@ impl Controller {
                 let acl = authz_middleware.clone();
 
                 let signaling_modules = Data::from(signaling_modules.upgrade().unwrap());
-                let swagger_service_enabled = !settings_provider.get().endpoints.disable_openapi;
+                let swagger_service_enabled =
+                    !settings_provider.get_raw().endpoints.disable_openapi;
 
                 App::new()
                     .wrap(RequestMetrics::new(metrics.endpoint.clone()))

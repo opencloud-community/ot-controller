@@ -5,7 +5,7 @@
 use std::{sync::Arc, time::Duration};
 
 use db::jobs::Job;
-use opentalk_controller_settings::Settings;
+use opentalk_controller_settings::SettingsRaw;
 use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage as db;
 use opentalk_signaling_core::ExchangeHandle;
@@ -74,7 +74,7 @@ impl JobRunner {
     pub async fn start(
         db: Arc<Db>,
         shutdown: broadcast::Receiver<()>,
-        settings: Arc<Settings>,
+        settings: Arc<SettingsRaw>,
         exchange_handle: ExchangeHandle,
     ) -> Result<(), JobRunnerError> {
         let etcd_urls = match &settings.etcd {

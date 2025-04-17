@@ -565,7 +565,7 @@ impl Livekit {
         let allow_screenshare = !self
             .params
             .settings_provider
-            .get()
+            .get_raw()
             .defaults
             .screen_share_requires_permission;
 

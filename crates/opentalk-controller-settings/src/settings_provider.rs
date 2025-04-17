@@ -6,12 +6,12 @@ use std::sync::Arc;
 
 use arc_swap::ArcSwap;
 
-use crate::{Result, Settings};
+use crate::{Result, SettingsRaw};
 
 /// A struct for loading and holding the runtime settings.
 #[derive(Debug, Clone)]
 pub struct SettingsProvider {
-    settings: Arc<ArcSwap<Settings>>,
+    settings: Arc<ArcSwap<SettingsRaw>>,
 }
 
 impl SettingsProvider {
@@ -21,25 +21,25 @@ impl SettingsProvider {
     /// Environment variables in the `OPENTALK_CTRL_*` pattern are considiered
     /// and will override the settings found in the file.
     pub fn load(file_name: &str) -> Result<Self> {
-        let settings = Settings::load(file_name)?;
-        Ok(Self::new(Arc::new(settings)))
+        let settings = SettingsRaw::load(file_name)?;
+        Ok(Self::new_raw(Arc::new(settings)))
     }
 
     /// Create a new [`SettingsProvider`] with settings that are already loaded.
-    pub fn new(settings: Arc<Settings>) -> Self {
+    pub fn new_raw(settings: Arc<SettingsRaw>) -> Self {
         Self {
             settings: Arc::new(ArcSwap::new(settings)),
         }
     }
 
-    /// Get an `[Arc]` holding the current runtime settings.
+    /// Get an `[Arc]` holding the current raw settings.
     ///
     /// The returned settings will remain unchanged even if the settings are
     /// reloaded by the [`SettingsProvider`]. A new [`Arc`] will be created
     /// internally by the `reload` function. This allows consistent use of a
-    /// "snapshot" inside a function by calling `get` once, and then using
+    /// "snapshot" inside a function by calling `get_raw` once, and then using
     /// the returned value.
-    pub fn get(&self) -> Arc<Settings> {
+    pub fn get_raw(&self) -> Arc<SettingsRaw> {
         self.settings.load_full()
     }
 
@@ -60,7 +60,7 @@ impl SettingsProvider {
     /// Because an `Arc` was given to these callers, the value will be freed
     /// once the last reference to it has been dropped.
     pub fn reload(&self, config_path: &str) -> Result<()> {
-        let new_settings = Settings::load(config_path)?;
+        let new_settings = SettingsRaw::load(config_path)?;
         let mut current_settings = (*self.settings.load_full()).clone();
 
         // reload extensions config
@@ -102,7 +102,7 @@ mod tests {
             OidcFrontend, RabbitMqConfig, Tariffs, Tenants, UserSearch, UserSearchBackend,
             UserSearchConfiguration, UsersFindBehavior,
         },
-        OidcAndUserSearchConfiguration, Settings, SettingsError,
+        OidcAndUserSearchConfiguration, SettingsError, SettingsRaw,
     };
 
     const MINIMUM_CONFIG_TOML: &str = r#"
@@ -139,8 +139,8 @@ mod tests {
         users_find_behavior = "disabled"
         "#;
 
-    fn minimum_config() -> Settings {
-        Settings {
+    fn minimum_config() -> SettingsRaw {
+        SettingsRaw {
             database: Database {
                 url: "postgres://postgres:password123@localhost:5432/opentalk".to_string(),
                 max_connections: default_max_connections(),
@@ -251,7 +251,7 @@ mod tests {
             SettingsProvider::load(path.to_str().expect("valid file path expected"))
                 .expect("valid configuration expected");
 
-        assert_eq!(&(*settings_provider.get()), &minimum_config());
+        assert_eq!(&(*settings_provider.get_raw()), &minimum_config());
     }
 
     #[test]
@@ -305,13 +305,13 @@ mod tests {
             SettingsProvider::load(modified_path.to_str().expect("valid file path expected"))
                 .expect("valid configuration expected");
 
-        assert_ne!(&(*settings_provider.get()), &minimum_config());
+        assert_ne!(&(*settings_provider.get_raw()), &minimum_config());
 
         settings_provider
             .reload(minimal_path.to_str().expect("valid file path expected"))
             .expect("reload is expected to succeed");
 
-        assert_eq!(&(*settings_provider.get()), &minimum_config());
+        assert_eq!(&(*settings_provider.get_raw()), &minimum_config());
     }
 
     #[test]
@@ -334,7 +334,7 @@ mod tests {
             SettingsProvider::load(minimal_path.to_str().expect("valid file path expected"))
                 .expect("valid configuration expected");
 
-        assert_eq!(&(*settings_provider.get()), &minimum_config());
+        assert_eq!(&(*settings_provider.get_raw()), &minimum_config());
 
         assert_matches!(
             settings_provider.reload(invalid_path.to_str().expect("valid file path expected")),
@@ -344,6 +344,6 @@ mod tests {
             })
         );
 
-        assert_eq!(&(*settings_provider.get()), &minimum_config());
+        assert_eq!(&(*settings_provider.get_raw()), &minimum_config());
     }
 }

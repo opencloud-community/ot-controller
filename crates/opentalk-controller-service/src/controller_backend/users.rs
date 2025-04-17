@@ -39,7 +39,7 @@ impl ControllerBackend {
             return Ok(None);
         }
 
-        let settings = self.settings_provider.get();
+        let settings = self.settings_provider.get_raw();
         let mut conn = self.db.get_conn().await?;
 
         // Prohibit display name editing, if configured
@@ -82,7 +82,7 @@ impl ControllerBackend {
         &self,
         current_user: RequestUser,
     ) -> Result<PrivateUserProfile, CaptureApiError> {
-        let settings = self.settings_provider.get();
+        let settings = self.settings_provider.get_raw();
         let mut conn = self.db.get_conn().await?;
 
         let used_storage = User::get_used_storage_u64(&mut conn, &current_user.id).await?;
@@ -96,7 +96,7 @@ impl ControllerBackend {
         &self,
         current_user: RequestUser,
     ) -> Result<TariffResource, CaptureApiError> {
-        let settings = self.settings_provider.get();
+        let settings = self.settings_provider.get_raw();
         let mut conn = self.db.get_conn().await?;
 
         let tariff = Tariff::get(&mut conn, current_user.tariff_id).await?;
@@ -134,7 +134,7 @@ impl ControllerBackend {
         current_user: RequestUser,
         user_id: UserId,
     ) -> Result<PublicUserProfile, CaptureApiError> {
-        let settings = self.settings_provider.get();
+        let settings = self.settings_provider.get_raw();
         let mut conn = self.db.get_conn().await?;
 
         let user = User::get_filtered_by_tenant(&mut conn, current_user.tenant_id, user_id).await?;
@@ -149,7 +149,7 @@ impl ControllerBackend {
         current_user: RequestUser,
         query: GetFindQuery,
     ) -> Result<GetFindResponseBody, CaptureApiError> {
-        let settings = self.settings_provider.get();
+        let settings = self.settings_provider.get_raw();
 
         const MAX_USER_SEARCH_RESULTS: usize = 20;
 

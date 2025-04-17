@@ -8,7 +8,7 @@ use chrono::Utc;
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
 use kustos::{policies_builder::PoliciesBuilder, Authz};
 use opentalk_controller_service_facade::RequestUser;
-use opentalk_controller_settings::Settings;
+use opentalk_controller_settings::SettingsRaw;
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::{DatabaseError, Db};
 use opentalk_db_storage::{
@@ -74,7 +74,7 @@ impl ControllerBackend {
             status: status_filter,
         }: GetEventsInvitesQuery,
     ) -> Result<(Vec<EventInvitee>, i64, i64, i64), CaptureApiError> {
-        let settings = self.settings_provider.get();
+        let settings = self.settings_provider.get_raw();
         let mut conn = self.db.get_conn().await?;
 
         // FIXME: Preliminary solution, consider using UNION when Diesel supports it.
@@ -133,7 +133,7 @@ impl ControllerBackend {
         query: PostEventInviteQuery,
         create_invite: PostEventInviteBody,
     ) -> Result<bool, CaptureApiError> {
-        let settings = self.settings_provider.get();
+        let settings = self.settings_provider.get_raw();
         let mut conn = self.db.get_conn().await?;
 
         let send_email_notification = !query.suppress_email_notification;
@@ -228,7 +228,7 @@ impl ControllerBackend {
         DeleteEventInvitePath { event_id, user_id }: DeleteEventInvitePath,
         query: EventOptionsQuery,
     ) -> Result<(), CaptureApiError> {
-        let settings = self.settings_provider.get();
+        let settings = self.settings_provider.get_raw();
 
         let send_email_notification = !query.suppress_email_notification;
         let mut conn = self.db.get_conn().await?;
@@ -323,7 +323,7 @@ impl ControllerBackend {
         email: EmailAddress,
         query: EventOptionsQuery,
     ) -> Result<(), CaptureApiError> {
-        let settings = self.settings_provider.get();
+        let settings = self.settings_provider.get_raw();
         let mut conn = self.db.get_conn().await?;
 
         let email = email.to_lowercase().to_string();
@@ -548,7 +548,7 @@ async fn create_user_event_invite(
 /// and then creates an email invite
 #[allow(clippy::too_many_arguments)]
 async fn create_email_event_invite(
-    settings: &Settings,
+    settings: &SettingsRaw,
     db: &Db,
     authz: &Authz,
     kc_admin_client: &KeycloakAdminClient,
@@ -707,7 +707,7 @@ async fn create_email_event_invite(
 /// or (if configured) sends an "external" email invite to the given email address
 #[allow(clippy::too_many_arguments)]
 async fn create_invite_to_non_matching_email(
-    settings: &Settings,
+    settings: &SettingsRaw,
     db: &Db,
     authz: &Authz,
     kc_admin_client: &KeycloakAdminClient,
@@ -874,7 +874,7 @@ async fn remove_invitee_permissions(
 ///
 /// Notify invited users about the event deletion
 async fn notify_invitees_about_uninvite(
-    settings: &Settings,
+    settings: &SettingsRaw,
     notification_values: UninviteNotificationValues,
     mail_service: &MailService,
     kc_admin_client: &KeycloakAdminClient,

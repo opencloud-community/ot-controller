@@ -224,7 +224,7 @@ pub async fn metrics(
     PeerAddr(peer_addr): PeerAddr,
     metrics: Data<CombinedMetrics>,
 ) -> HttpResponse {
-    let settings = settings.get();
+    let settings = settings.get_raw();
 
     let allowed = &settings
         .metrics

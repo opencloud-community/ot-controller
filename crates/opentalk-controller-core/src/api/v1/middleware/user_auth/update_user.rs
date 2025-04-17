@@ -4,7 +4,7 @@
 
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
 use opentalk_controller_service::{oidc::OpenIdConnectUserInfo, phone_numbers::parse_phone_number};
-use opentalk_controller_settings::Settings;
+use opentalk_controller_settings::SettingsRaw;
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::DbConnection;
 use opentalk_db_storage::{
@@ -25,7 +25,7 @@ use super::{build_info_display_name, LoginResult};
 ///
 /// Returns the user and all groups the user was removed from and added to.
 pub(super) async fn update_user(
-    settings: &Settings,
+    settings: &SettingsRaw,
     conn: &mut DbConnection,
     user: User,
     info: OpenIdConnectUserInfo,
@@ -84,7 +84,7 @@ pub(super) async fn update_user(
 
 /// Create an [`UpdateUser`] changeset based on a comparison between `user` and `token_info`
 fn create_changeset<'a>(
-    settings: &Settings,
+    settings: &SettingsRaw,
     user: &User,
     user_info: &'a OpenIdConnectUserInfo,
     enforced_display_name: Option<&'a DisplayName>,

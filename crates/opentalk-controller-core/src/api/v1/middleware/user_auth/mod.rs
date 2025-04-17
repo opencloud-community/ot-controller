@@ -30,7 +30,7 @@ use opentalk_controller_service::{
 use opentalk_controller_service_facade::RequestUser;
 use opentalk_controller_settings::{
     settings_file::{TariffAssignment, TariffStatusMapping, TenantAssignment},
-    Settings, SettingsProvider,
+    SettingsProvider, SettingsRaw,
 };
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::{Db, OptionalExt};
@@ -175,7 +175,7 @@ where
 
         Box::pin(
             async move {
-                let settings = settings_provider.get();
+                let settings = settings_provider.get_raw();
 
                 match access_token_or_invite_code {
                     AccessTokenOrInviteCode::AccessToken(access_token) => match check_access_token(
@@ -235,7 +235,7 @@ fn build_request_user(user: User) -> RequestUser {
 
 #[tracing::instrument(skip_all)]
 pub async fn check_access_token(
-    settings: &Settings,
+    settings: &SettingsRaw,
     authz: &kustos::Authz,
     db: Data<Db>,
     oidc_ctx: Data<OidcContext>,
@@ -340,7 +340,7 @@ async fn verify_access_token(
 
 /// Fetches all associated user data of the access token
 async fn check_access_token_inner(
-    settings: &Settings,
+    settings: &SettingsRaw,
     authz: &kustos::Authz,
     db: Data<Db>,
     oidc_ctx: Data<OidcContext>,

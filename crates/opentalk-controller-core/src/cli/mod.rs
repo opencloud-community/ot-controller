@@ -120,7 +120,7 @@ pub async fn parse_args<M: RegisterModules>() -> Result<Args> {
     if let Some(sub_command) = args.cmd.clone() {
         let settings_provider =
             SettingsProvider::load(&args.config).whatever_context("Failed to load settings")?;
-        let settings = settings_provider.get();
+        let settings = settings_provider.get_raw();
 
         match sub_command {
             SubCommand::FixAcl(args) => {

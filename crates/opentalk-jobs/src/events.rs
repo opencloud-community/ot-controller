@@ -10,7 +10,7 @@ use std::{
 use chrono::{DateTime, Utc};
 use kustos::Authz;
 use log::Log;
-use opentalk_controller_settings::Settings;
+use opentalk_controller_settings::SettingsRaw;
 use opentalk_controller_utils::{
     deletion::{Deleter, EventDeleter, RoomDeleter},
     event::EventExt as _,
@@ -38,7 +38,7 @@ pub(crate) async fn perform_deletion(
     logger: &dyn Log,
     db: Arc<Db>,
     exchange_handle: ExchangeHandle,
-    settings: &Settings,
+    settings: &SettingsRaw,
     fail_on_shared_folder_deletion_error: bool,
     delete_selector: DeleteSelector,
 ) -> Result<(), Error> {
@@ -83,7 +83,7 @@ async fn delete_events(
     conn: &mut DbConnection,
     authz: &Authz,
     exchange_handle: ExchangeHandle,
-    settings: &Settings,
+    settings: &SettingsRaw,
     object_storage: &ObjectStorage,
     fail_on_shared_folder_deletion_error: bool,
     delete_selector: DeleteSelector,
@@ -114,7 +114,7 @@ pub(crate) async fn delete_event_candidates(
     conn: &mut DbConnection,
     authz: &Authz,
     exchange_handle: ExchangeHandle,
-    settings: &Settings,
+    settings: &SettingsRaw,
     object_storage: &ObjectStorage,
     fail_on_shared_folder_deletion_error: bool,
     candidates: Vec<(EventId, RoomId)>,
@@ -171,7 +171,7 @@ pub(crate) async fn delete_orphaned_rooms(
     conn: &mut DbConnection,
     authz: &Authz,
     exchange_handle: ExchangeHandle,
-    settings: &Settings,
+    settings: &SettingsRaw,
     object_storage: &ObjectStorage,
     orphaned_rooms: HashSet<RoomId>,
     fail_on_shared_folder_deletion_error: bool,

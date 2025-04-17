@@ -33,7 +33,7 @@
 //!
 //! [`SettingsLoading<()>`] contains incomplete fields and is an intermediate after
 //! loading the raw settings inside [`SettingsProvider::load`]. The final struct with all loaded fields
-//! is [`Settings`] (an alias for [`SettingsLoading<OidcAndUserSearchConfiguration>`]) which contains all loaded fields.
+//! is [`SettingsRaw`] (an alias for [`SettingsLoading<OidcAndUserSearchConfiguration>`]) which contains all loaded fields.
 
 use settings_file::{OidcAndUserSearchConfiguration, SettingsLoading};
 
@@ -47,4 +47,4 @@ pub use settings_provider::SettingsProvider;
 
 type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
-pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
+pub type SettingsRaw = SettingsLoading<OidcAndUserSearchConfiguration>;

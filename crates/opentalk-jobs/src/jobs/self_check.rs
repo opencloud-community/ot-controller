@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use log::Log;
-use opentalk_controller_settings::Settings;
+use opentalk_controller_settings::SettingsRaw;
 use opentalk_database::Db;
 use opentalk_log::{debug, error, info, trace, warn};
 use opentalk_signaling_core::ExchangeHandle;
@@ -25,7 +25,7 @@ impl Job for SelfCheck {
         logger: &dyn Log,
         _db: Arc<Db>,
         _exchange_handle: ExchangeHandle,
-        _settings: &Settings,
+        _settings: &SettingsRaw,
         _parameters: Self::Parameters,
     ) -> Result<(), Error> {
         info!(log: logger, "Executing self-check job");

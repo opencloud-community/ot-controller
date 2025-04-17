@@ -5,7 +5,7 @@
 //! Provides some helper functions and the like.
 
 use opentalk_controller_service_facade::RequestUser;
-use opentalk_controller_settings::Settings;
+use opentalk_controller_settings::SettingsRaw;
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::DbConnection;
 use opentalk_db_storage::{assets::Asset, tariffs::Tariff, users::User};
@@ -22,15 +22,18 @@ use opentalk_types_common::{
 /// A trait providing conversion of database users to public and private user profiles
 pub trait ToUserProfile {
     /// Convert to the public user profile
-    fn to_public_user_profile(&self, settings: &Settings) -> PublicUserProfile;
+    fn to_public_user_profile(&self, settings: &SettingsRaw) -> PublicUserProfile;
 
     /// Convert to the private user profile
-    fn to_private_user_profile(&self, settings: &Settings, used_storage: u64)
-        -> PrivateUserProfile;
+    fn to_private_user_profile(
+        &self,
+        settings: &SettingsRaw,
+        used_storage: u64,
+    ) -> PrivateUserProfile;
 }
 
 impl ToUserProfile for User {
-    fn to_public_user_profile(&self, settings: &Settings) -> PublicUserProfile {
+    fn to_public_user_profile(&self, settings: &SettingsRaw) -> PublicUserProfile {
         let default_avatar = email_to_libravatar_url(&settings.avatar.libravatar_url, &self.email);
 
         PublicUserProfile {
@@ -48,7 +51,7 @@ impl ToUserProfile for User {
 
     fn to_private_user_profile(
         &self,
-        settings: &Settings,
+        settings: &SettingsRaw,
         used_storage: u64,
     ) -> PrivateUserProfile {
         let default_avatar = email_to_libravatar_url(&settings.avatar.libravatar_url, &self.email);
@@ -71,7 +74,7 @@ impl ToUserProfile for User {
 }
 
 impl ToUserProfile for RequestUser {
-    fn to_public_user_profile(&self, settings: &Settings) -> PublicUserProfile {
+    fn to_public_user_profile(&self, settings: &SettingsRaw) -> PublicUserProfile {
         let default_avatar = email_to_libravatar_url(&settings.avatar.libravatar_url, &self.email);
 
         PublicUserProfile {
@@ -89,7 +92,7 @@ impl ToUserProfile for RequestUser {
 
     fn to_private_user_profile(
         &self,
-        settings: &Settings,
+        settings: &SettingsRaw,
         used_storage: u64,
     ) -> PrivateUserProfile {
         let default_avatar = email_to_libravatar_url(&settings.avatar.libravatar_url, &self.email);
@@ -121,7 +124,7 @@ pub fn email_to_libravatar_url(libravatar_url: &str, email: &str) -> String {
 /// Return an [`ApiError`] if the given feature is disabled, differentiating between a config disable or tariff restriction.
 pub async fn require_feature(
     db_conn: &mut DbConnection,
-    settings: &Settings,
+    settings: &SettingsRaw,
     user_id: UserId,
     feature: &ModuleFeatureId,
 ) -> opentalk_database::Result<(), CaptureApiError> {

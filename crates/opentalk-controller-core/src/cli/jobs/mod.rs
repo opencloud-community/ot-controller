@@ -7,7 +7,7 @@ use std::{sync::Arc, time::Duration};
 use clap::Subcommand;
 use lapin_pool::RabbitMqPool;
 use log::Log;
-use opentalk_controller_settings::Settings;
+use opentalk_controller_settings::SettingsRaw;
 use opentalk_database::Db;
 use opentalk_jobs::Job;
 use opentalk_signaling_core::{ExchangeHandle, ExchangeTask};
@@ -62,7 +62,7 @@ pub enum Command {
     },
 }
 
-pub async fn handle_command(settings: &Settings, command: Command) -> Result<()> {
+pub async fn handle_command(settings: &SettingsRaw, command: Command) -> Result<()> {
     match command {
         Command::Execute {
             job_type,
@@ -75,7 +75,7 @@ pub async fn handle_command(settings: &Settings, command: Command) -> Result<()>
 }
 
 async fn execute_job(
-    settings: &Settings,
+    settings: &SettingsRaw,
     job_type: JobType,
     parameters: String,
     timeout: u64,
@@ -199,7 +199,7 @@ struct JobExecutionData<'a> {
     logger: &'a dyn Log,
     db: Arc<Db>,
     exchange_handle: ExchangeHandle,
-    settings: &'a Settings,
+    settings: &'a SettingsRaw,
     parameters: serde_json::Value,
     timeout: Duration,
     hide_duration: bool,

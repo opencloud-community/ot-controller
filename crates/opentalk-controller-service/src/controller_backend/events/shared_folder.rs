@@ -9,7 +9,7 @@ use std::collections::HashSet;
 use chrono::{Days, NaiveDate, Utc};
 use log::warn;
 use opentalk_controller_service_facade::RequestUser;
-use opentalk_controller_settings::Settings;
+use opentalk_controller_settings::SettingsRaw;
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::DbConnection;
 use opentalk_db_storage::{
@@ -68,7 +68,7 @@ impl ControllerBackend {
         event_id: EventId,
         query: PutSharedFolderQuery,
     ) -> Result<(SharedFolder, bool), CaptureApiError> {
-        let settings = self.settings_provider.get();
+        let settings = self.settings_provider.get_raw();
         let mut conn = self.db.get_conn().await?;
 
         let send_email_notification = !query.suppress_email_notification;
@@ -122,7 +122,7 @@ impl ControllerBackend {
         event_id: EventId,
         query: DeleteSharedFolderQuery,
     ) -> Result<(), CaptureApiError> {
-        let settings = self.settings_provider.get();
+        let settings = self.settings_provider.get_raw();
         let mut conn = self.db.get_conn().await?;
 
         let send_email_notification = !query.suppress_email_notification;
@@ -213,7 +213,7 @@ impl ControllerBackend {
 
 /// Adds a shared folder to the specified event
 pub async fn put_shared_folder(
-    settings: &Settings,
+    settings: &SettingsRaw,
     event_id: EventId,
     conn: &mut DbConnection,
 ) -> Result<(EventSharedFolder, bool), CaptureApiError> {
@@ -376,7 +376,7 @@ pub async fn put_shared_folder(
 
 /// Deletes the shared folders for the specified event
 pub async fn delete_shared_folders(
-    settings: &Settings,
+    settings: &SettingsRaw,
     shared_folders: &[EventSharedFolder],
 ) -> Result<(), ApiError> {
     if shared_folders.is_empty() {

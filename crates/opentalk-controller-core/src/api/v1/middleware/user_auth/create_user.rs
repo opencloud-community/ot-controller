@@ -4,7 +4,7 @@
 
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
 use opentalk_controller_service::{oidc::OpenIdConnectUserInfo, phone_numbers::parse_phone_number};
-use opentalk_controller_settings::Settings;
+use opentalk_controller_settings::SettingsRaw;
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::DbConnection;
 use opentalk_db_storage::{
@@ -26,7 +26,7 @@ use super::{build_info_display_name, LoginResult};
 ///
 /// Returns the created user, their groups and all events they are invited to.
 pub(super) async fn create_user(
-    settings: &Settings,
+    settings: &SettingsRaw,
     conn: &mut DbConnection,
     info: OpenIdConnectUserInfo,
     tenant: &Tenant,

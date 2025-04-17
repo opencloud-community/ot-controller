@@ -7,7 +7,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use kustos::Authz;
 use log::Log;
-use opentalk_controller_settings::Settings;
+use opentalk_controller_settings::SettingsRaw;
 use opentalk_controller_utils::deletion::room::associated_resource_ids_for_invite;
 use opentalk_database::Db;
 use opentalk_db_storage::invites::Invite;
@@ -49,7 +49,7 @@ impl Job for InviteCleanup {
         logger: &dyn Log,
         db: Arc<Db>,
         _exchange_handle: ExchangeHandle,
-        _settings: &Settings,
+        _settings: &SettingsRaw,
         parameters: Self::Parameters,
     ) -> Result<(), Error> {
         info!(log: logger, "Executing invite cleanup job");

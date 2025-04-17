@@ -17,7 +17,7 @@ use super::{
 use crate::{
     settings_error::DeserializeConfigSnafu,
     settings_file::{UserSearchBackend, UsersFindBehavior},
-    OidcAndUserSearchConfiguration, Result, Settings, SettingsError,
+    OidcAndUserSearchConfiguration, Result, SettingsError, SettingsRaw,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
@@ -262,7 +262,7 @@ impl<OIDC> SettingsLoading<OIDC> {
 
     /// Creates a new Settings instance from the provided TOML file.
     /// Specific fields can be set or overwritten with environment variables (See struct level docs for more details).
-    pub(crate) fn load(file_name: &str) -> Result<Settings> {
+    pub(crate) fn load(file_name: &str) -> Result<SettingsRaw> {
         let config = Config::builder()
             .add_source(File::new(file_name, FileFormat::Toml))
             .add_source(WarningSource::new(
@@ -285,7 +285,7 @@ impl<OIDC> SettingsLoading<OIDC> {
 
         let oidc_and_user_search = this.build_oidc_and_user_search_configuration()?;
 
-        Ok(Settings {
+        Ok(SettingsRaw {
             oidc_and_user_search,
             database: this.database,
             keycloak: this.keycloak,
@@ -378,7 +378,7 @@ mod tests {
     #[test]
     fn settings_env_vars_overwrite_config() -> Result<()> {
         // Sanity check
-        let settings = Settings::load("../../extra/example.toml")?;
+        let settings = SettingsRaw::load("../../extra/example.toml")?;
 
         assert_eq!(
             settings.database.url,
@@ -397,7 +397,7 @@ mod tests {
             screen_share_requires_permission.to_string(),
         );
 
-        let settings = Settings::load("../../extra/example.toml")?;
+        let settings = SettingsRaw::load("../../extra/example.toml")?;
 
         assert_eq!(settings.database.url, env_db_url);
         assert_eq!(settings.http.port, env_http_port);

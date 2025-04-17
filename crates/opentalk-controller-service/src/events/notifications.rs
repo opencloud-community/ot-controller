@@ -4,7 +4,7 @@
 
 //! Handles event-related notifications.
 
-use opentalk_controller_settings::Settings;
+use opentalk_controller_settings::SettingsRaw;
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::DbConnection;
 use opentalk_db_storage::{
@@ -51,7 +51,7 @@ pub struct UpdateNotificationValues {
 /// Notifies the invitees of an event belonging to the specified room
 pub async fn notify_event_invitees_by_room_about_update(
     kc_admin_client: &KeycloakAdminClient,
-    settings: &Settings,
+    settings: &SettingsRaw,
     mail_service: &MailService,
     current_tenant: Tenant,
     current_user: User,
@@ -99,7 +99,7 @@ pub async fn notify_event_invitees_by_room_about_update(
 #[allow(clippy::too_many_arguments)]
 pub async fn notify_event_invitees_about_update(
     kc_admin_client: &KeycloakAdminClient,
-    settings: &Settings,
+    settings: &SettingsRaw,
     mail_service: &MailService,
     current_tenant: Tenant,
     current_user: User,
@@ -149,7 +149,7 @@ pub async fn notify_event_invitees_about_update(
 
 /// Notifies the invitees of an event about updates
 pub async fn notify_invitees_about_update(
-    settings: &Settings,
+    settings: &SettingsRaw,
     notification_values: UpdateNotificationValues,
     mail_service: &MailService,
     kc_admin_client: &KeycloakAdminClient,

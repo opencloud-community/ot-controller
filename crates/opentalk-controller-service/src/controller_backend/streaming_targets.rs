@@ -69,7 +69,7 @@ impl ControllerBackend {
         query: StreamingTargetOptionsQuery,
         streaming_target: StreamingTarget,
     ) -> Result<PostRoomStreamingTargetResponseBody, CaptureApiError> {
-        let settings = self.settings_provider.get();
+        let settings = self.settings_provider.get_raw();
         let mut conn = self.db.get_conn().await?;
 
         let send_email_notification = !query.suppress_email_notification;
@@ -155,7 +155,7 @@ impl ControllerBackend {
         query: StreamingTargetOptionsQuery,
         streaming_target: PatchRoomStreamingTargetRequestBody,
     ) -> Result<PatchRoomStreamingTargetResponseBody, CaptureApiError> {
-        let settings = self.settings_provider.get();
+        let settings = self.settings_provider.get_raw();
         let mut conn = self.db.get_conn().await?;
 
         if streaming_target.name.is_none() && streaming_target.kind.is_none() {
@@ -251,7 +251,7 @@ impl ControllerBackend {
         }: RoomAndStreamingTargetId,
         query: StreamingTargetOptionsQuery,
     ) -> Result<(), CaptureApiError> {
-        let settings = self.settings_provider.get();
+        let settings = self.settings_provider.get_raw();
         let mut conn = self.db.get_conn().await?;
 
         let send_email_notification = !query.suppress_email_notification;
