@@ -35,7 +35,7 @@
 //! loading the raw settings inside [`SettingsProvider::load`]. The final struct with all loaded fields
 //! is [`Settings`] (an alias for [`SettingsLoading<OidcAndUserSearchConfiguration>`]) which contains all loaded fields.
 
-use std::{collections::BTreeSet, convert::TryFrom};
+use std::collections::BTreeSet;
 
 use opentalk_types_common::{features::ModuleFeatureId, users::Language};
 use rustc_hash::FxHashSet;
@@ -53,24 +53,6 @@ pub use settings_provider::SettingsProvider;
 type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct RedisConfig {
-    #[serde(default = "redis_default_url")]
-    pub url: url::Url,
-}
-
-impl Default for RedisConfig {
-    fn default() -> Self {
-        Self {
-            url: redis_default_url(),
-        }
-    }
-}
-
-fn redis_default_url() -> url::Url {
-    url::Url::try_from("redis://localhost:6379/").expect("Invalid default redis URL")
-}
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct RabbitMqConfig {
