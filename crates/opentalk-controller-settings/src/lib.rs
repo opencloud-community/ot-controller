@@ -35,11 +35,11 @@
 //! loading the raw settings inside [`SettingsProvider::load`]. The final struct with all loaded fields
 //! is [`Settings`] (an alias for [`SettingsLoading<OidcAndUserSearchConfiguration>`]) which contains all loaded fields.
 
-use std::{collections::BTreeSet, convert::TryFrom, time::Duration};
+use std::{collections::BTreeSet, convert::TryFrom};
 
 use opentalk_types_common::{features::ModuleFeatureId, users::Language};
 use rustc_hash::FxHashSet;
-use serde::{Deserialize, Deserializer};
+use serde::Deserialize;
 use settings_file::{OidcAndUserSearchConfiguration, SettingsLoading};
 
 pub mod settings_file;
@@ -53,31 +53,6 @@ pub use settings_provider::SettingsProvider;
 type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct Turn {
-    /// How long should a credential pair be valid, in seconds
-    #[serde(
-        deserialize_with = "duration_from_secs",
-        default = "default_turn_credential_lifetime"
-    )]
-    pub lifetime: Duration,
-    /// List of configured TURN servers.
-    pub servers: Vec<TurnServer>,
-}
-
-impl Default for Turn {
-    fn default() -> Self {
-        Self {
-            lifetime: default_turn_credential_lifetime(),
-            servers: vec![],
-        }
-    }
-}
-
-fn default_turn_credential_lifetime() -> Duration {
-    Duration::from_secs(60)
-}
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct TurnServer {
@@ -221,15 +196,6 @@ pub enum SharedFolder {
         #[serde(default)]
         expiry: Option<u64>,
     },
-}
-
-fn duration_from_secs<'de, D>(deserializer: D) -> Result<Duration, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let duration: u64 = Deserialize::deserialize(deserializer)?;
-
-    Ok(Duration::from_secs(duration))
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
