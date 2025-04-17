@@ -5,6 +5,7 @@
 mod authz;
 mod controller_oidc_configuration;
 pub(crate) mod database;
+mod etcd;
 mod extensions;
 mod frontend_oidc_configuration;
 mod http;
@@ -32,6 +33,7 @@ mod warning_source;
 pub use authz::Authz;
 pub use controller_oidc_configuration::ControllerOidcConfiguration;
 pub use database::Database;
+pub use etcd::Etcd;
 pub use extensions::Extensions;
 pub use frontend_oidc_configuration::FrontendOidcConfiguration;
 pub use http::Http;

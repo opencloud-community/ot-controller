@@ -55,11 +55,6 @@ type Result<T, E = SettingsError> = std::result::Result<T, E>;
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
-pub struct Etcd {
-    pub urls: Vec<url::Url>,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 pub struct Etherpad {
     pub url: url::Url,
     pub api_key: String,
