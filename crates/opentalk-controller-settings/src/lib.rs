@@ -54,12 +54,6 @@ type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
 
-#[derive(Default, Clone, Debug, Deserialize, PartialEq, Eq)]
-pub struct Reports {
-    #[serde(default)]
-    pub template: ReportsTemplate,
-}
-
 #[derive(Clone, Debug, Deserialize, Default, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum ReportsTemplate {
@@ -250,36 +244,6 @@ mod tests {
         assert_eq!(
             serde_json::from_value::<SharedFolder>(json).unwrap(),
             shared_folder
-        );
-    }
-
-    #[test]
-    fn meeting_report_settings() {
-        let toml_settings: Reports = toml::from_str(
-            r#"
-        url = "http://localhost"
-        "#,
-        )
-        .unwrap();
-        assert_eq!(
-            toml_settings,
-            Reports {
-                template: ReportsTemplate::BuiltIn
-            }
-        );
-
-        let toml_settings: Reports = toml::from_str(
-            r#"
-        url = "http://localhost"
-        template.inline = "lorem ipsum"
-        "#,
-        )
-        .unwrap();
-        assert_eq!(
-            toml_settings,
-            Reports {
-                template: ReportsTemplate::Inline("lorem ipsum".to_string())
-            }
         );
     }
 }

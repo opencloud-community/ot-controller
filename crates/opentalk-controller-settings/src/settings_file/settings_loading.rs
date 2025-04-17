@@ -10,15 +10,15 @@ use url::Url;
 use super::{
     Authz, ControllerOidcConfiguration, Database, Etcd, Etherpad, Extensions,
     FrontendOidcConfiguration, Http, Keycloak, Logging, MonitoringSettings, Oidc,
-    OidcConfiguration, RabbitMqConfig, RedisConfig, Spacedeck, Stun, SubroomAudio, Turn,
+    OidcConfiguration, RabbitMqConfig, RedisConfig, Reports, Spacedeck, Stun, SubroomAudio, Turn,
     UserSearch, UserSearchConfiguration, WarningSource,
 };
 use crate::{
     settings_error::DeserializeConfigSnafu,
     settings_file::{UserSearchBackend, UsersFindBehavior},
     Avatar, CallIn, Defaults, Endpoints, LiveKitSettings, Metrics, MinIO,
-    OidcAndUserSearchConfiguration, Reports, Result, Settings, SettingsError, SharedFolder,
-    Tariffs, Tenants,
+    OidcAndUserSearchConfiguration, Result, Settings, SettingsError, SharedFolder, Tariffs,
+    Tenants,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
