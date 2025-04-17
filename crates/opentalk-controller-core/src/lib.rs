@@ -54,7 +54,7 @@ use opentalk_controller_service::{
     oidc::OidcContext, services::MailService, ControllerBackend, Whatever,
 };
 use opentalk_controller_service_facade::OpenTalkControllerService;
-use opentalk_controller_settings::SettingsProvider;
+use opentalk_controller_settings::{settings_file::MonitoringSettings, SettingsProvider};
 use opentalk_database::Db;
 use opentalk_jobs::job_runner::JobRunner;
 use opentalk_keycloak_admin::{AuthorizedClient, KeycloakAdminClient};
@@ -85,7 +85,7 @@ use crate::{
         signaling::{breakout::BreakoutRooms, moderation::ModerationModule, SignalingProtocols},
         v1::{middleware::metrics::RequestMetrics, response::error::json_error_handler},
     },
-    settings::{MonitoringSettings, Settings},
+    settings::Settings,
     trace::ReducedSpanBuilder,
 };
 
@@ -1131,7 +1131,7 @@ fn setup_cors() -> Cors {
 /// Receives the TLS-related settings from the controller configuration
 /// which contains the path to the private key and the certificate files
 /// from where the TLS configuration is loaded and set up.
-fn setup_rustls(tls: &settings::HttpTls) -> Result<rustls::ServerConfig> {
+fn setup_rustls(tls: &settings::settings_file::HttpTls) -> Result<rustls::ServerConfig> {
     let cert_file = File::open(&tls.certificate).with_whatever_context(|_| {
         format!("Failed to open certificate file {:?}", &tls.certificate)
     })?;

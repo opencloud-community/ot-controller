@@ -7,7 +7,7 @@ use actix_web::{
     http::header::USER_AGENT,
     Error, HttpMessage,
 };
-use opentalk_controller_settings::Logging;
+use opentalk_controller_settings::settings_file::Logging;
 use opentelemetry::{trace::TracerProvider as _, KeyValue};
 use opentelemetry_otlp::{SpanExporter, WithExportConfig as _};
 use opentelemetry_sdk::{

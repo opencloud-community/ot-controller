@@ -76,7 +76,7 @@ impl MeetingNotesStorageProvide for VolatileStorage {
 #[async_trait::async_trait(?Send)]
 impl SignalingModule for MeetingNotes {
     const NAMESPACE: ModuleId = MODULE_ID;
-    type Params = opentalk_controller_settings::Etherpad;
+    type Params = opentalk_controller_settings::settings_file::Etherpad;
     type Incoming = MeetingNotesCommand;
     type Outgoing = MeetingNotesEvent;
     type ExchangeMessage = exchange::Event;

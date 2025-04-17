@@ -181,7 +181,7 @@ async fn sync_files(
 mod tests {
     use bytes::Bytes;
     use futures::stream;
-    use opentalk_controller_settings::MinIO;
+    use opentalk_controller_settings::settings_file::MinIO;
     use opentalk_db_storage::assets::{Asset, NewAsset, UpdateAsset};
     use opentalk_signaling_core::{
         assets::{save_asset, NewAssetFileName},

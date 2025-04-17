@@ -14,7 +14,7 @@ use livekit_api::{
     services::room::{CreateRoomOptions, RoomClient},
 };
 use livekit_protocol::TrackSource;
-use opentalk_controller_settings::LiveKitSettings;
+use opentalk_controller_settings::settings_file::LiveKitSettings;
 use opentalk_signaling_core::{
     control, CleanupScope, DestroyContext, Event as SignalingEvent, InitContext, ModuleContext,
     SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,

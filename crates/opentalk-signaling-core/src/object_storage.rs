@@ -16,7 +16,7 @@ use aws_sdk_s3::{
 };
 use bytes::Bytes;
 use futures::{Stream, StreamExt};
-use opentalk_controller_settings::MinIO;
+use opentalk_controller_settings::settings_file::MinIO;
 use snafu::{ensure, OptionExt, ResultExt, Snafu};
 use url::Url;
 
