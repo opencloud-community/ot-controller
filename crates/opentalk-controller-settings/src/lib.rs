@@ -35,9 +35,10 @@
 //! loading the raw settings inside [`SettingsProvider::load`]. The final struct with all loaded fields
 //! is [`Settings`] (an alias for [`SettingsLoading<OidcAndUserSearchConfiguration>`]) which contains all loaded fields.
 
-use rustc_hash::FxHashSet;
 use serde::Deserialize;
-use settings_file::{OidcAndUserSearchConfiguration, SettingsLoading, TariffAssignment};
+use settings_file::{
+    OidcAndUserSearchConfiguration, SettingsLoading, TariffAssignment, TariffStatusMapping,
+};
 
 pub mod settings_file;
 
@@ -50,14 +51,6 @@ pub use settings_provider::SettingsProvider;
 type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
-
-#[derive(Default, Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct TariffStatusMapping {
-    pub downgraded_tariff_name: String,
-    pub default: FxHashSet<String>,
-    pub paid: FxHashSet<String>,
-    pub downgraded: FxHashSet<String>,
-}
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Tariffs {
