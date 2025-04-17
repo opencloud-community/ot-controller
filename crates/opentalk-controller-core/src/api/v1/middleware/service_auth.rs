@@ -131,7 +131,7 @@ async fn check_access_token(
     oidc_ctx: Data<OidcContext>,
     access_token: AccessToken,
 ) -> Result<RealmRoles, ApiError> {
-    let claims = match oidc_ctx.verify_access_token::<ServiceClaims>(&access_token) {
+    let claims = match oidc_ctx.verify_jwt_token::<ServiceClaims>(&access_token) {
         Ok(claims) => claims,
         Err(e) => {
             log::error!("Invalid access token, {}", Report::from_error(e));
@@ -140,26 +140,10 @@ async fn check_access_token(
         }
     };
 
-    let info = match oidc_ctx.introspect_access_token(&access_token).await {
-        Ok(info) => info,
-        Err(e) => {
-            log::error!(
-                "Failed to check if AccessToken is active, {}",
-                Report::from_error(e)
-            );
-            return Err(ApiError::internal());
-        }
-    };
+    let mut realm_roles = claims.realm_access.roles;
+    realm_roles
+        .iter_mut()
+        .for_each(|role| role.make_ascii_lowercase());
 
-    if info.active {
-        let mut realm_roles = claims.realm_access.roles;
-        realm_roles
-            .iter_mut()
-            .for_each(|role| role.make_ascii_lowercase());
-
-        Ok(RealmRoles(realm_roles.into()))
-    } else {
-        Err(ApiError::unauthorized()
-            .with_www_authenticate(AuthenticationError::AccessTokenInactive))
-    }
+    Ok(RealmRoles(realm_roles.into()))
 }

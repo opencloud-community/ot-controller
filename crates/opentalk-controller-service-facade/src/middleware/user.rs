@@ -23,7 +23,6 @@ pub struct RequestUser {
     pub firstname: String,
     /// The user's last name
     pub lastname: String,
-    // pub id_token_exp: i64,
     /// The language the user has chosen
     pub language: Language,
     /// The user's display name

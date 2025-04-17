@@ -569,7 +569,7 @@ impl Controller {
                     .app_data(storage)
                     .app_data(oidc_ctx.clone())
                     .app_data(kc_admin_client.clone())
-                    .app_data(authz)
+                    .app_data(authz.clone())
                     .app_data(volatile)
                     .app_data(Data::new(shutdown.clone()))
                     .app_data(rabbitmq_pool.clone())
@@ -585,6 +585,7 @@ impl Controller {
                     .with_swagger_service_if(swagger_service_enabled)
                     .service(v1_scope(
                         settings_provider.clone(),
+                        authz,
                         db.clone(),
                         oidc_ctx.clone(),
                         acl,
@@ -1018,6 +1019,7 @@ impl utoipa::Modify for SecurityAddon {
 
 fn v1_scope(
     settings_provider: SettingsProvider,
+    authz: Data<kustos::Authz>,
     db: Data<Db>,
     oidc_ctx: Data<OidcContext>,
     acl: kustos::actix_web::KustosService,
@@ -1046,6 +1048,7 @@ fn v1_scope(
                 .wrap(acl)
                 .wrap(api::v1::middleware::user_auth::OidcAuth {
                     settings_provider,
+                    authz,
                     db,
                     oidc_ctx,
                 })

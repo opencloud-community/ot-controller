@@ -6,14 +6,14 @@ use openidconnect::{
     core::CoreClient, url::Url, ClientId, ClientSecret, IntrospectionUrl, IssuerUrl,
 };
 use serde::{Deserialize, Serialize};
-use snafu::ResultExt;
+use snafu::{whatever, ResultExt};
 
 use super::http::async_http_client;
 use crate::Result;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AdditionalProviderMetadata {
-    introspection_endpoint: Url,
+    pub introspection_endpoint: Option<Url>,
 }
 
 impl openidconnect::AdditionalProviderMetadata for AdditionalProviderMetadata {}
@@ -58,7 +58,12 @@ impl ProviderClient {
         .await
         .whatever_context("Failed to discover provider metadata")?;
 
-        let client = CoreClient::new(
+        // Require the userinfo endpoint
+        if metadata.userinfo_endpoint().is_none() {
+            whatever!("OpenID Connect provider is missing the 'userinfo' endpoint");
+        }
+
+        let mut client = CoreClient::new(
             client_id.clone(),
             Some(client_secret),
             metadata.issuer().clone(),
@@ -66,13 +71,13 @@ impl ProviderClient {
             metadata.token_endpoint().cloned(),
             metadata.userinfo_endpoint().cloned(),
             metadata.jwks().clone(),
-        )
-        .set_introspection_uri(IntrospectionUrl::from_url(
-            metadata
-                .additional_metadata()
-                .introspection_endpoint
-                .clone(),
-        ));
+        );
+
+        // Optionally support the introspection endpoint
+        if let Some(introspection_url) = &metadata.additional_metadata().introspection_endpoint {
+            client =
+                client.set_introspection_uri(IntrospectionUrl::from_url(introspection_url.clone()));
+        }
 
         Ok(ProviderClient { metadata, client })
     }

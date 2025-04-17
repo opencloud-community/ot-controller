@@ -65,7 +65,6 @@ impl ControllerBackend {
             language: patch.language.as_ref(),
             dashboard_theme: patch.dashboard_theme.as_ref(),
             conference_theme: patch.conference_theme.as_ref(),
-            id_token_exp: None,
             tariff_id: None,
             tariff_status: None,
             disabled_since: None,

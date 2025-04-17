@@ -3,8 +3,9 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
-use opentalk_controller_service::{oidc::IdTokenInfo, phone_numbers::parse_phone_number};
+use opentalk_controller_service::{oidc::OpenIdConnectUserInfo, phone_numbers::parse_phone_number};
 use opentalk_controller_settings::Settings;
+use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::DbConnection;
 use opentalk_db_storage::{
     groups::{insert_user_into_groups, remove_user_from_groups, Group},
@@ -27,11 +28,11 @@ pub(super) async fn update_user(
     settings: &Settings,
     conn: &mut DbConnection,
     user: User,
-    info: IdTokenInfo,
+    info: OpenIdConnectUserInfo,
     groups: Vec<Group>,
     tariff: Tariff,
     tariff_status: TariffStatus,
-) -> opentalk_database::Result<LoginResult> {
+) -> Result<LoginResult, CaptureApiError> {
     // Enforce the auto-generated display name if display name editing is prohibited
     let enforced_display_name = if settings.endpoints.disallow_custom_display_name {
         Some(build_info_display_name(&info))
@@ -46,9 +47,13 @@ pub(super) async fn update_user(
         enforced_display_name.as_ref(),
         tariff,
         tariff_status,
-    );
+    )?;
 
-    let user = changeset.apply(conn, user.id).await?;
+    let user = if changeset.is_empty() {
+        user
+    } else {
+        changeset.apply(conn, user.id).await?
+    };
 
     conn.transaction(|conn| {
         async move {
@@ -81,11 +86,11 @@ pub(super) async fn update_user(
 fn create_changeset<'a>(
     settings: &Settings,
     user: &User,
-    token_info: &'a IdTokenInfo,
+    user_info: &'a OpenIdConnectUserInfo,
     enforced_display_name: Option<&'a DisplayName>,
     tariff: Tariff,
     tariff_status: TariffStatus,
-) -> UpdateUser<'a> {
+) -> Result<UpdateUser<'a>, CaptureApiError> {
     let User {
         id: _,
         id_serial: _,
@@ -96,7 +101,6 @@ fn create_changeset<'a>(
         lastname,
         avatar_url,
         timezone,
-        id_token_exp: _,
         language: _,
         display_name,
         dashboard_theme: _,
@@ -108,25 +112,22 @@ fn create_changeset<'a>(
         disabled_since: _,
     } = user;
 
-    let mut changeset = UpdateUser {
-        id_token_exp: Some(token_info.expiration.timestamp()),
-        ..Default::default()
-    };
+    let mut changeset = UpdateUser::default();
 
-    if firstname != &token_info.firstname {
-        changeset.firstname = Some(&token_info.firstname);
+    if firstname != &user_info.firstname {
+        changeset.firstname = Some(&user_info.firstname);
     }
 
-    if lastname != &token_info.lastname {
-        changeset.lastname = Some(&token_info.lastname)
+    if lastname != &user_info.lastname {
+        changeset.lastname = Some(&user_info.lastname)
     }
 
-    if avatar_url != &token_info.avatar_url {
-        changeset.avatar_url = Some(token_info.avatar_url.as_deref())
+    if avatar_url != &user_info.avatar_url {
+        changeset.avatar_url = Some(user_info.avatar_url.as_deref())
     }
 
-    if timezone != &token_info.timezone {
-        changeset.timezone = Some(token_info.timezone)
+    if timezone != &user_info.timezone {
+        changeset.timezone = Some(user_info.timezone)
     }
 
     if let Some(enforced_display_name) = enforced_display_name {
@@ -135,14 +136,14 @@ fn create_changeset<'a>(
         }
     }
 
-    if email != &token_info.email {
-        changeset.email = Some(&token_info.email);
+    if email != &user_info.email {
+        changeset.email = Some(&user_info.email);
     }
 
     let token_phone = if let Some((call_in, phone_number)) = settings
         .call_in
         .as_ref()
-        .zip(token_info.phone_number.as_deref())
+        .zip(user_info.phone_number.as_deref())
     {
         parse_phone_number(phone_number, call_in.default_country_code)
             .map(|p| p.format().mode(phonenumber::Mode::E164).to_string())
@@ -162,7 +163,7 @@ fn create_changeset<'a>(
         changeset.tariff_status = Some(tariff_status);
     }
 
-    changeset
+    Ok(changeset)
 }
 
 /// Returns all elements that are in `a` but no `b`

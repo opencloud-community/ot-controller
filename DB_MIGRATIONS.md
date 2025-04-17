@@ -15,5 +15,5 @@ SPDX-License-Identifier: EUPL-1.2
 - Run `cargo xtask generate-db-schema` to generate a new diesel schema in `crates/db-storage/src/db/schema.rs`.
   This creates a random database by default and deletes it afterwards.
 
-See `cargo xtask generate-db-schema --help` for information what options are possbile to not use default values
+See `cargo xtask generate-db-schema --help` for information what options are possible to not use default values
 or specify a fixed database.

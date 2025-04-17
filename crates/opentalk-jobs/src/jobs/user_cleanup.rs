@@ -135,7 +135,6 @@ mod tests {
             phone: None,
             display_name: None,
             language: None,
-            id_token_exp: None,
             dashboard_theme: None,
             conference_theme: None,
             tariff_id: None,

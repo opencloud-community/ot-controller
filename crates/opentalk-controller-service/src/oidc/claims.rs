@@ -3,10 +3,43 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::{DateTime, Utc};
-use opentalk_types_common::email::EmailAddress;
-use serde::Deserialize;
+use openidconnect::AdditionalClaims;
+use serde::{Deserialize, Serialize};
 
 use super::jwt;
+
+/// Additional OIDC Claims defined by the controller, which aren't provided inside [`openidconnect::StandardClaims`]
+///
+// A note to devs:
+// Please also update fields in `docs/admin/keycloak.md`.
+#[derive(Debug, Deserialize, Serialize)]
+pub(super) struct OpenTalkAdditionalClaims {
+    /// The tenant id
+    pub tenant_id: Option<String>,
+    /// The tariff id
+    pub tariff_id: Option<String>,
+    /// The tariff status
+    pub tariff_status: Option<String>,
+    /// Groups the user belongs to.
+    #[serde(default)]
+    pub x_grp: Vec<String>,
+}
+
+impl AdditionalClaims for OpenTalkAdditionalClaims {}
+
+/// Contains the `exp` claim
+#[derive(Deserialize, Debug)]
+pub struct OnlyExpiryClaim {
+    /// Expires at
+    #[serde(with = "time")]
+    pub exp: DateTime<Utc>,
+}
+
+impl jwt::VerifyClaims for OnlyExpiryClaim {
+    fn exp(&self) -> DateTime<Utc> {
+        self.exp
+    }
+}
 
 /// Service claims
 #[derive(Deserialize, Debug)]
@@ -38,50 +71,18 @@ pub struct RealmAccess {
     pub roles: Vec<String>,
 }
 
-/// Claims provided for a logged-in user
-//
-// A note to devs:
-// Please also update fields in `docs/admin/keycloak.md`.
-#[derive(Deserialize, Debug)]
-pub struct UserClaims {
-    /// Expires at
+#[cfg(test)]
+#[derive(Deserialize)]
+pub(super) struct TestClaims {
+    pub(super) sub: String,
     #[serde(with = "time")]
-    pub exp: DateTime<Utc>,
-    /// Issued at
-    #[allow(unused)]
-    #[serde(with = "time")]
-    pub iat: DateTime<Utc>,
-    /// Issuer (URL to the OIDC Provider)
-    pub iss: String,
-    /// Subject (User ID)
-    pub sub: String,
-    /// The email of the user
-    pub email: EmailAddress,
-    /// The firstname of the user
-    pub given_name: String,
-    /// The lastname of the user
-    pub family_name: String,
-    /// The profile picture of the user
-    pub picture: Option<String>,
-    /// The timezone of the user
-    pub zoneinfo: Option<String>,
-    /// Tenant ID of the user
-    pub tenant_id: Option<String>,
-    /// Tariff ID of the user
-    pub tariff_id: Option<String>,
-    /// Tariff status of the user
-    pub tariff_status: Option<String>,
-    /// Groups the user belongs to.
-    /// This is a custom field not specified by the OIDC Standard
-    #[serde(default)]
-    pub x_grp: Vec<String>,
-    /// The users phone number, if configured
-    pub phone_number: Option<String>,
-    /// The users optional nickname
-    pub nickname: Option<String>,
+    pub(super) exp: DateTime<Utc>,
+    #[serde(flatten)]
+    pub(super) opentalk: OpenTalkAdditionalClaims,
 }
 
-impl jwt::VerifyClaims for UserClaims {
+#[cfg(test)]
+impl jwt::VerifyClaims for TestClaims {
     fn exp(&self) -> DateTime<Utc> {
         self.exp
     }

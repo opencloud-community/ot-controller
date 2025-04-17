@@ -183,7 +183,7 @@ mod tests {
     };
 
     use super::*;
-    use crate::oidc::UserClaims;
+    use crate::oidc::{claims::TestClaims, OnlyExpiryClaim};
 
     // Test PKCS8 Key Pair to sign and validate data
     static PKCS8: &str = "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCq3q7ElUZrf6Kih4YLY3PDMLyItdG2kk3HqzLCYFX3Xe6Mqxrq4AWnr3Bu8V6TWciV20jZupxxbE/wMAqmh+VXXEAQmT8OfgWOblQfvaY3mSR7hMCJ6bqkm1f2TyCEDia+2NyIWbyBUI1YLGFwcNPgY49G49Xs6YrwhmQTXx+yN/YQ0rHelIy3hN/MLD10QSPMVAKOApywa2sXr06tsgw8R/57d8OrM6DcbIYZli5CWRGoSHGw4k02ytvzp9CuxPVgC0+AHftDSFWdFh73R3vkr6SPyAWLZNh56xEfyntLp1WIAs3mh8zMG4jaujunsw7EAPMGpdros9a3YtsyePddAgMBAAECggEAEAjRkbUIZLIXivT4yTzN8jUynAmj4mQcVG5mVwM/TfVMm3q7Detz3GaEQIT6AQ3d2uI3FeeDIsmtPrbjaPk7tlT71hLrbeq5jsIfttLPNEx0tfqhLs/2KdhCCuUmAf5p+GLVXx48qE3s1adkhW6xE0+EdHyQ6KiJ10RlQ8Qbb1fVpN2mS4NAqFALRWR6qoJTLQca/yZ65U/FOn30i6adPnrCFeFyaz4MuGA2KwH97BRsE58Eh7qqq6gvNuFhsmAyc80mgvR656AzsS2iBNQ1sz9F00yKXrJ511eMAbzaxkYbtIvfh/0lRP8d0fmke6spGRL7rRk0aUJmzy2trmL86QKBgQDjjUCQFXtW+eUZSVtPXTFPGbTHnmC5eGznol9ih4IRv4PMwua6MH518M3kh5ALDZOKvr6+jtoYD0olQ/IIvMvRPYpp7RyJbpmfHI9ASk2hR9DuntgDNgOm9yygLRY3h8/ZFh/1Gm7Gk+11U6Z/eOQMLIidaNe2MsEZjfnN7Lb3UwKBgQDAO1ZkVrqg53h/b+2mSSNofz5oNur7HuhYkpFQu+jYDwpE16OW+qWEkKtt50R0X7ceLezuC1ZyqgGifruq+80mTKVDz6e0bZIE84anSzqEzXLazEqZ4kpG1LB7YmR86YSmtau7FP+UfcM63EQrL70+2zvcuygTdU+P49/mZB3wjwKBgQCYF6V7qKAT9ltml11sooF+uVPXyMglr5Q7DpBqruAFNNjHV84XzKn58sXrZaClgqGHLw8XFyw2wKFyXwO7S1V/uX52ZoGYalBLxS8KbZ+NmQ7RL2J6YvP1+Wfed8RNwXzvQJaDoPNBz0X8EblLomXqrSly7MyhfzMJ/ZdmSD3S+QKBgAIdZQDrl1gH0+KLB7FJorMWm0goOoOSvnmi+yhJOPGPkMxbFvilP0brFIe8AJvLJceWN8ISq9vNFQGFpWjnJkWimDrbwPuSLQYS68tRX45weDACCVwSCkEnO93Pok1hgE0ZOI9xVrJ6g7hVDgbvmoRjgxAVmwZDxyFNH3x4Y3/vAoGAAqFGQUR3ouLMdug8grBuLBLa8L7BN+DTDsSlKaheAPvcuhPuPX7DP4cXR3aMoZii3V/dqzJiM0Hg7ERA+TcwMhXqKIjMOsUfVioVFT315k4FaZ/aR5B+6VC07FEiw2/kiy702g1ArY0kRypK1dx84TXIzdG8mtu8jx6iFr/x/u4=";
@@ -210,7 +210,7 @@ mod tests {
         let rng = SystemRandom::new();
         let mut signature = [0; 256];
 
-        pair.sign(&RSA_PKCS1_SHA256, &rng, data.as_ref(), signature.as_mut())
+        pair.sign(&RSA_PKCS1_SHA256, &rng, data.as_ref(), &mut signature)
             .unwrap();
 
         signature
@@ -283,10 +283,10 @@ mod tests {
         let jwt_enc = format!("{message}.{signature}");
 
         // Verify should success
-        let claims = verify::<UserClaims>(&jwks, &jwt_enc).expect("Valid JWT failed to verify");
+        let claims = verify::<TestClaims>(&jwks, &jwt_enc).expect("Valid JWT failed to verify");
 
         assert_eq!(claims.sub, "admin");
-        assert_eq!(claims.x_grp[0], "/admin");
+        assert_eq!(claims.opentalk.x_grp[0], "/admin");
     }
 
     #[test]
@@ -312,7 +312,7 @@ mod tests {
         let jwt_enc = format!("{message}.{signature}");
 
         // Verify should success
-        match verify::<UserClaims>(&jwks, &jwt_enc) {
+        match verify::<OnlyExpiryClaim>(&jwks, &jwt_enc) {
             Ok(_) => panic!("Test must fail, exp is set in the past"),
             Err(VerifyError::Expired { .. }) => { /* Test successful */ }
             Err(_) => panic!("Test must fail with VerifyError::Expired(...)"),
@@ -338,7 +338,7 @@ mod tests {
         let jwt_enc = format!("{message}.{signature}");
 
         // Verify should success
-        match verify::<UserClaims>(&jwks, &jwt_enc) {
+        match verify::<TestClaims>(&jwks, &jwt_enc) {
             Ok(_) => panic!("Test must fail, provided bad signature"),
             Err(e) => {
                 assert_eq!(

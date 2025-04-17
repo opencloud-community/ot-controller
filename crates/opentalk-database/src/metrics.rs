@@ -108,9 +108,15 @@ impl AsyncConnection for MetricsConnection<Parent> {
         T: AsQuery + 'query,
         T::Query: QueryFragment<Self::Backend> + QueryId + 'query,
     {
+        let query = source.as_query();
+        log::trace!(
+            "SQL Query:\n{}",
+            diesel::debug_query::<Self::Backend, _>(&query)
+        );
+
         Instrument {
             metrics: self.metrics.clone(),
-            future: self.conn.load(source),
+            future: self.conn.load(query),
             start: None,
         }
     }
@@ -122,6 +128,11 @@ impl AsyncConnection for MetricsConnection<Parent> {
     where
         T: QueryFragment<Self::Backend> + QueryId + 'query,
     {
+        log::trace!(
+            "SQL Query:\n{}",
+            diesel::debug_query::<Self::Backend, _>(&source)
+        );
+
         Instrument {
             metrics: self.metrics.clone(),
             future: self.conn.execute_returning_count(source),

@@ -19,26 +19,41 @@ use actix_web::{
     HttpMessage, ResponseError,
 };
 use actix_web_httpauth::headers::authorization::Authorization;
-use chrono::Utc;
+use chrono::{DateTime, Utc};
+use kustos::prelude::PoliciesBuilder;
 use openidconnect::AccessToken;
 use opentalk_cache::Cache;
-use opentalk_controller_service::oidc::{OidcContext, UserClaims};
+use opentalk_controller_service::{
+    controller_backend::RoomsPoliciesBuilderExt,
+    oidc::{OidcContext, OnlyExpiryClaim, OpenIdConnectUserInfo},
+};
 use opentalk_controller_service_facade::RequestUser;
-use opentalk_controller_settings::{Settings, SettingsProvider, TenantAssignment};
+use opentalk_controller_settings::{
+    Settings, SettingsProvider, TariffAssignment, TariffStatusMapping, TenantAssignment,
+};
 use opentalk_controller_utils::CaptureApiError;
-use opentalk_database::Db;
+use opentalk_database::{Db, OptionalExt};
 use opentalk_db_storage::{
-    tenants::{OidcTenantId, Tenant},
+    groups::{get_or_create_groups_by_name, Group},
+    tariffs::{ExternalTariffId, Tariff},
+    tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId, Tenant},
     users::User,
 };
 use opentalk_types_api_v1::error::{ApiError, AuthenticationError};
-use opentalk_types_common::rooms::invite_codes::InviteCode;
+use opentalk_types_common::{
+    events::EventId,
+    rooms::{invite_codes::InviteCode, RoomId},
+    tariffs::TariffStatus,
+    tenants::TenantId,
+    users::{DisplayName, GroupName},
+};
 use snafu::Report;
 use tracing_futures::Instrument;
 use uuid::Uuid;
 
 use crate::{
     api::v1::{
+        events::EventPoliciesBuilderExt,
         middleware::user_auth::bearer_or_invite_code::BearerOrInviteCode,
         response::error::CacheableApiError,
     },
@@ -46,6 +61,8 @@ use crate::{
 };
 
 mod bearer_or_invite_code;
+mod create_user;
+mod update_user;
 
 pub type UserAccessTokenCache = Cache<String, Result<(Tenant, User), CacheableApiError>>;
 
@@ -55,6 +72,7 @@ pub type UserAccessTokenCache = Cache<String, Result<(Tenant, User), CacheableAp
 pub struct OidcAuth {
     pub settings_provider: SettingsProvider,
     pub db: Data<Db>,
+    pub authz: Data<kustos::Authz>,
     pub oidc_ctx: Data<OidcContext>,
 }
 
@@ -73,6 +91,7 @@ where
         ready(Ok(OidcAuthMiddleware {
             service: Rc::new(service),
             settings_provider: self.settings_provider.clone(),
+            authz: self.authz.clone(),
             db: self.db.clone(),
             oidc_ctx: self.oidc_ctx.clone(),
         }))
@@ -86,6 +105,7 @@ where
 pub struct OidcAuthMiddleware<S> {
     service: Rc<S>,
     settings_provider: SettingsProvider,
+    authz: Data<kustos::Authz>,
     db: Data<Db>,
     oidc_ctx: Data<OidcContext>,
 }
@@ -108,6 +128,7 @@ where
     fn call(&self, req: ServiceRequest) -> Self::Future {
         let service = self.service.clone();
         let settings_provider = self.settings_provider.clone();
+        let authz = self.authz.clone();
         let db = self.db.clone();
         let oidc_ctx = self.oidc_ctx.clone();
         let caches = req
@@ -158,6 +179,7 @@ where
                 match access_token_or_invite_code {
                     AccessTokenOrInviteCode::AccessToken(access_token) => match check_access_token(
                         &settings,
+                        &authz,
                         db,
                         oidc_ctx,
                         &caches.user_access_tokens,
@@ -213,23 +235,13 @@ fn build_request_user(user: User) -> RequestUser {
 #[tracing::instrument(skip_all)]
 pub async fn check_access_token(
     settings: &Settings,
+    authz: &kustos::Authz,
     db: Data<Db>,
     oidc_ctx: Data<OidcContext>,
     cache: &UserAccessTokenCache,
     access_token: &AccessToken,
 ) -> Result<(Tenant, User), CaptureApiError> {
-    // First verify the access-token's signature, expiry and claims
-    let user_claims = match oidc_ctx.verify_access_token::<UserClaims>(access_token) {
-        Ok(user_claims) => user_claims,
-        Err(e) => {
-            log::debug!("Invalid access token, {}", Report::from_error(e));
-            return Err(ApiError::unauthorized()
-                .with_www_authenticate(AuthenticationError::InvalidAccessToken)
-                .into());
-        }
-    };
-
-    // Access token is still valid, search for cached results
+    // Search for cached results
     if let Ok(Some(result)) = cache.get(access_token.secret()).await {
         // Hit! Return the cached result
         match result {
@@ -242,26 +254,16 @@ pub async fn check_access_token(
     } else {
         // Miss, do the check and cache the result
 
+        let expires_at = verify_access_token(&oidc_ctx, access_token).await?;
+
         // Calculate the remaining ttl of the token
-        let token_ttl = user_claims.exp - Utc::now();
+        let token_ttl = expires_at - Utc::now();
 
         let check_result =
-            check_access_token_inner(settings, db, oidc_ctx, access_token, user_claims).await;
+            check_access_token_inner(settings, authz, db, oidc_ctx, access_token).await;
 
         match check_result {
             Ok((tenant, user)) => {
-                // Check if the id-token info is expired
-                //
-                // This result must not be cached!
-                // The error can be resolved by calling /auth/login with a valid id_token.
-                // The same access-token will then pass this check here.
-                if chrono::Utc::now().timestamp() > user.id_token_exp {
-                    return Err(ApiError::unauthorized()
-                        .with_message("The session for this user has expired")
-                        .with_www_authenticate(AuthenticationError::SessionExpired)
-                        .into());
-                }
-
                 // Avoid caching results for tokens that are about to expire
                 if token_ttl > chrono::Duration::seconds(10) {
                     cache
@@ -293,61 +295,249 @@ pub async fn check_access_token(
     }
 }
 
+/// Verify the access token and return it's expiry timestamp.
+///
+/// Uses the introspect endpoint if available (https://www.rfc-editor.org/rfc/rfc7662),
+/// otherwise the token must be a JWT.
+async fn verify_access_token(
+    oidc_ctx: &OidcContext,
+    access_token: &AccessToken,
+) -> Result<DateTime<Utc>, CaptureApiError> {
+    if oidc_ctx.supports_introspect() {
+        let introspect_info = match oidc_ctx.introspect(access_token.clone()).await {
+            Ok(introspect_info) => introspect_info,
+            Err(e) => {
+                log::error!(
+                    "Failed to check if AccessToken is active, {}",
+                    Report::from_error(e)
+                );
+
+                return Err(ApiError::internal().into());
+            }
+        };
+
+        if !introspect_info.active {
+            return Err(ApiError::unauthorized()
+                .with_www_authenticate(AuthenticationError::AccessTokenInactive)
+                .into());
+        }
+
+        return Ok(introspect_info.exp);
+    }
+
+    // If there's no introspect endpoint, the token must be a JWT with an exp field
+    match oidc_ctx.verify_jwt_token::<OnlyExpiryClaim>(access_token) {
+        Ok(jwt_claims) => Ok(jwt_claims.exp),
+        Err(e) => {
+            log::debug!("Invalid access token, {}", Report::from_error(e));
+            Err(ApiError::unauthorized()
+                .with_www_authenticate(AuthenticationError::InvalidAccessToken)
+                .into())
+        }
+    }
+}
+
 /// Fetches all associated user data of the access token
 async fn check_access_token_inner(
     settings: &Settings,
+    authz: &kustos::Authz,
     db: Data<Db>,
     oidc_ctx: Data<OidcContext>,
     access_token: &AccessToken,
-    claims: UserClaims,
 ) -> Result<(Tenant, User), CaptureApiError> {
+    let info = oidc_ctx.user_info(access_token.clone()).await?;
+
+    let mut conn = db.get_conn().await?;
+
+    // Get tariff depending on the configured assignment
+    let (tariff, tariff_status) = match &settings.tariffs.assignment {
+        TariffAssignment::Static { static_tariff_name } => (
+            Tariff::get_by_name(&mut conn, static_tariff_name).await?,
+            TariffStatus::Default,
+        ),
+        TariffAssignment::ByExternalTariffId => {
+            let external_tariff_id = info.tariff_id.clone().ok_or_else(|| {
+                ApiError::bad_request()
+                    .with_code("invalid_claims")
+                    .with_message("tariff_id missing in id_token claims")
+            })?;
+
+            let tariff =
+                Tariff::get_by_external_id(&mut conn, &ExternalTariffId::from(external_tariff_id))
+                    .await
+                    .optional()?
+                    .ok_or_else(|| {
+                        ApiError::internal()
+                            .with_code("invalid_tariff_id")
+                            .with_message("JWT contained unknown tariff_id")
+                    })?;
+
+            if let Some(mapping) = settings.tariffs.status_mapping.as_ref() {
+                let status_name = info.tariff_status.clone().ok_or_else(|| {
+                    ApiError::bad_request()
+                        .with_code("invalid_claims")
+                        .with_message("tariff_status missing in id_token claims")
+                })?;
+
+                let status = map_tariff_status_name(mapping, &status_name);
+
+                let tariff = if matches!(status, TariffStatus::Downgraded) {
+                    Tariff::get_by_name(&mut conn, &mapping.downgraded_tariff_name)
+                        .await
+                        .map_err(|_| {
+                            ApiError::internal()
+                                .with_code("invalid_configuration")
+                                .with_message("Unable to load downgraded tariff")
+                        })?
+                } else {
+                    tariff
+                };
+                (tariff, status)
+            } else {
+                (tariff, TariffStatus::Default)
+            }
+        }
+    };
+
     // Get the tenant_id depending on the configured assignment
-    let oidc_tenant_id = match &settings.tenants.assignment {
+    let tenant_id = match &settings.tenants.assignment {
         TenantAssignment::Static { static_tenant_id } => static_tenant_id.clone(),
-        TenantAssignment::ByExternalTenantId { .. } => claims.tenant_id.ok_or_else(|| {
+        TenantAssignment::ByExternalTenantId { .. } => info.tenant_id.clone().ok_or_else(|| {
             log::error!("Invalid access token, missing tenant_id");
             ApiError::unauthorized().with_www_authenticate(AuthenticationError::InvalidAccessToken)
         })?,
     };
+    let tenant = get_or_create_tenant_by_oidc_id(&mut conn, &OidcTenantId::from(tenant_id)).await?;
 
-    let mut conn = db.get_conn().await?;
+    let groups: Vec<(TenantId, GroupName)> = info
+        .groups
+        .iter()
+        .map(|group| (tenant.id, GroupName::from(group.clone())))
+        .collect();
+    let groups = get_or_create_groups_by_name(&mut conn, &groups).await?;
 
-    let current_tenant = Tenant::get_by_oidc_id(&mut conn, OidcTenantId::from(oidc_tenant_id))
-        .await?
-        .ok_or_else(|| {
-            CaptureApiError::from(
-                ApiError::unauthorized()
-                    .with_code("unknown_tenant_id")
-                    .with_message("Unknown tenant_id in access token. Please login first!"),
+    let user = User::get_by_oidc_sub(&mut conn, tenant.id, &info.sub).await?;
+
+    let login_result = match user {
+        Some(user) => {
+            // Found a matching user, update its attributes, tenancy and groups
+            update_user::update_user(
+                settings,
+                &mut conn,
+                user,
+                info,
+                groups,
+                tariff,
+                tariff_status,
             )
-        })?;
-
-    let current_user = User::get_by_oidc_sub(&mut conn, current_tenant.id, &claims.sub)
-        .await?
-        .ok_or_else(|| {
-            ApiError::unauthorized()
-                .with_code("unknown_sub")
-                .with_message("Unknown subject in access token. Please login first!")
-        })?;
-
-    drop(conn);
-
-    let info = match oidc_ctx.introspect_access_token(access_token).await {
-        Ok(info) => info,
-        Err(e) => {
-            log::error!(
-                "Failed to check if AccessToken is active, {}",
-                Report::from_error(e)
-            );
-            return Err(ApiError::internal().into());
+            .await?
+        }
+        None => {
+            // No matching user, create a new one with inside the given tenants and groups
+            create_user::create_user(
+                settings,
+                &mut conn,
+                info,
+                &tenant,
+                groups,
+                tariff,
+                tariff_status,
+            )
+            .await?
         }
     };
 
-    if info.active {
-        Ok((current_tenant, current_user))
+    let user = update_core_user_permissions(authz, login_result).await?;
+
+    Ok((tenant, user))
+}
+
+fn map_tariff_status_name(mapping: &TariffStatusMapping, name: &String) -> TariffStatus {
+    if mapping.default.contains(name) {
+        TariffStatus::Default
+    } else if mapping.paid.contains(name) {
+        TariffStatus::Paid
+    } else if mapping.downgraded.contains(name) {
+        TariffStatus::Downgraded
     } else {
-        Err(ApiError::unauthorized()
-            .with_www_authenticate(AuthenticationError::AccessTokenInactive)
-            .into())
+        log::error!("Invalid tariff status value found: \"{name}\"");
+        TariffStatus::Default
     }
+}
+
+enum LoginResult {
+    UserCreated {
+        user: User,
+        groups: Vec<Group>,
+        event_and_room_ids: Vec<(EventId, RoomId)>,
+    },
+    UserUpdated {
+        user: User,
+        groups_added_to: Vec<Group>,
+        groups_removed_from: Vec<Group>,
+    },
+}
+
+async fn update_core_user_permissions(
+    authz: &kustos::Authz,
+    db_result: LoginResult,
+) -> Result<User, CaptureApiError> {
+    match db_result {
+        LoginResult::UserUpdated {
+            user,
+            groups_added_to,
+            groups_removed_from,
+        } => {
+            // TODO(r.floren) this could be optimized I guess, with a user_to_groups?
+            // But this is currently not a hot path.
+            for group in groups_added_to {
+                authz.add_user_to_group(user.id, group.id).await?;
+            }
+
+            for group in groups_removed_from {
+                authz.remove_user_from_group(user.id, group.id).await?;
+            }
+
+            Ok(user)
+        }
+        LoginResult::UserCreated {
+            user,
+            groups,
+            event_and_room_ids,
+        } => {
+            authz.add_user_to_role(user.id, "user").await?;
+
+            for group in groups {
+                authz.add_user_to_group(user.id, group.id).await?;
+            }
+
+            // Migrate email invites to user invites
+            // Add permissions for user to events that the email was invited to
+            if event_and_room_ids.is_empty() {
+                return Ok(user);
+            }
+
+            let mut policies = PoliciesBuilder::new().grant_user_access(user.id);
+
+            for (event_id, room_id) in event_and_room_ids {
+                policies = policies
+                    .event_read_access(event_id)
+                    .room_read_access(room_id)
+                    .event_invite_invitee_access(event_id);
+            }
+
+            authz.add_policies(policies.finish()).await?;
+
+            Ok(user)
+        }
+    }
+}
+
+fn build_info_display_name(info: &OpenIdConnectUserInfo) -> DisplayName {
+    DisplayName::from_str_lossy(
+        &info
+            .display_name
+            .clone()
+            .unwrap_or_else(|| format!("{} {}", &info.firstname, &info.lastname)),
+    )
 }

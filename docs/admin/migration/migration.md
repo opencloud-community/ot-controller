@@ -13,6 +13,18 @@ must be run in order to update ACLs to match the newest version whenever
 new endpoints were added for already present resources. However, even if no
 endpoints were added, simply running the command does no harm.
 
+## Unreleased
+
+### Change to the OpenID Connect Integration
+
+The OpenID Connect integration has been changed to support more authentication
+flows for clients. Previously, ID tokens were used to synchronize user information
+from the OpenID Provider with the OpenTalk database. Now, the `userinfo` endpoint
+is used to fetch user information directly from the OpenID Provider, removing the
+need for the ID token.
+
+OpenID Providers (e.g. Keycloak) must be updated to include the [documented fields](../core/oidc.md#oidc-and-user-info) in the `userinfo` endpoint instead of the ID token.
+
 ## Updating to OpenTalk Controller `v0.29.0`
 
 ### Removal of the reports configuration and the `terdoc` service
@@ -23,7 +35,7 @@ which cannot be operated properly in some environments with strict security
 requirements.
 
 Therefore the `terdoc` service is history now, and we use the
-[`typst`](https:// typst.app/) library internally for generating PDF reports.
+[`typst`](https://typst.app/) library internally for generating PDF reports.
 
 For the time being, the style and format of these reports is baked in and
 requires no further configuration. Therefore the `[report]`  section in the
