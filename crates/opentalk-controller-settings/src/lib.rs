@@ -54,19 +54,6 @@ type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
 
-#[derive(Default, Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct Logging {
-    pub default_directives: Option<Vec<String>>,
-
-    pub otlp_tracing_endpoint: Option<String>,
-
-    pub service_name: Option<String>,
-
-    pub service_namespace: Option<String>,
-
-    pub service_instance_id: Option<String>,
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Turn {
     /// How long should a credential pair be valid, in seconds
