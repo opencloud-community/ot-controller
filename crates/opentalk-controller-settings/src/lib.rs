@@ -55,24 +55,6 @@ type Result<T, E = SettingsError> = std::result::Result<T, E>;
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
-pub struct Authz {
-    #[serde(default = "authz_default_synchronize_controller")]
-    pub synchronize_controllers: bool,
-}
-
-impl Default for Authz {
-    fn default() -> Self {
-        Self {
-            synchronize_controllers: authz_default_synchronize_controller(),
-        }
-    }
-}
-
-fn authz_default_synchronize_controller() -> bool {
-    true
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 pub struct Etcd {
     pub urls: Vec<url::Url>,
 }

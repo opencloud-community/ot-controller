@@ -96,12 +96,12 @@ mod tests {
     use super::SettingsProvider;
     use crate::{
         settings_file::{
-            database::default_max_connections, ControllerOidcConfiguration, Database, Extensions,
-            FrontendOidcConfiguration, Http, Logging, Oidc, OidcConfiguration, OidcController,
-            OidcFrontend, RabbitMqConfig, UserSearch, UserSearchBackend, UserSearchConfiguration,
-            UsersFindBehavior,
+            database::default_max_connections, Authz, ControllerOidcConfiguration, Database,
+            Extensions, FrontendOidcConfiguration, Http, Logging, Oidc, OidcConfiguration,
+            OidcController, OidcFrontend, RabbitMqConfig, UserSearch, UserSearchBackend,
+            UserSearchConfiguration, UsersFindBehavior,
         },
-        Authz, Avatar, Defaults, Endpoints, LiveKitSettings, Metrics, MinIO,
+        Avatar, Defaults, Endpoints, LiveKitSettings, Metrics, MinIO,
         OidcAndUserSearchConfiguration, Settings, SettingsError, Tariffs, Tenants,
     };
 

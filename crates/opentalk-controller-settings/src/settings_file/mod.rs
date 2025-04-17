@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+mod authz;
 mod controller_oidc_configuration;
 pub(crate) mod database;
 mod extensions;
@@ -28,6 +29,7 @@ mod user_search_configuration;
 mod users_find_behavior;
 mod warning_source;
 
+pub use authz::Authz;
 pub use controller_oidc_configuration::ControllerOidcConfiguration;
 pub use database::Database;
 pub use extensions::Extensions;
