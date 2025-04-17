@@ -51,14 +51,6 @@ type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
-pub struct MinIO {
-    pub uri: String,
-    pub bucket: String,
-    pub access_key: String,
-    pub secret_key: String,
-}
-
 #[derive(Debug, Default, Clone, PartialEq, Eq, Deserialize)]
 pub struct Metrics {
     pub allowlist: Vec<cidr::IpInet>,
