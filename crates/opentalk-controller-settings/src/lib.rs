@@ -37,7 +37,7 @@
 
 use rustc_hash::FxHashSet;
 use serde::Deserialize;
-use settings_file::{OidcAndUserSearchConfiguration, SettingsLoading};
+use settings_file::{OidcAndUserSearchConfiguration, SettingsLoading, TenantAssignment};
 
 pub mod settings_file;
 
@@ -50,30 +50,6 @@ pub use settings_provider::SettingsProvider;
 type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "snake_case", tag = "assignment")]
-pub enum TenantAssignment {
-    Static {
-        static_tenant_id: String,
-    },
-    ByExternalTenantId {
-        #[serde(default = "default_external_tenant_id_user_attribute_name")]
-        external_tenant_id_user_attribute_name: String,
-    },
-}
-
-fn default_external_tenant_id_user_attribute_name() -> String {
-    "tenant_id".to_owned()
-}
-
-impl Default for TenantAssignment {
-    fn default() -> Self {
-        Self::Static {
-            static_tenant_id: String::from("OpenTalkDefaultTenant"),
-        }
-    }
-}
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Tenants {

@@ -6,7 +6,7 @@
 
 pub(crate) mod notifications;
 
-use opentalk_controller_settings::{Settings, TenantAssignment};
+use opentalk_controller_settings::{settings_file::TenantAssignment, Settings};
 use opentalk_database::DbConnection;
 use opentalk_db_storage::{
     events::{email_invites::EventEmailInvite, shared_folders::EventSharedFolder, EventInvite},

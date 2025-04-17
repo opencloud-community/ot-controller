@@ -29,7 +29,8 @@ use opentalk_controller_service::{
 };
 use opentalk_controller_service_facade::RequestUser;
 use opentalk_controller_settings::{
-    Settings, SettingsProvider, TariffAssignment, TariffStatusMapping, TenantAssignment,
+    settings_file::TenantAssignment, Settings, SettingsProvider, TariffAssignment,
+    TariffStatusMapping,
 };
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::{Db, OptionalExt};

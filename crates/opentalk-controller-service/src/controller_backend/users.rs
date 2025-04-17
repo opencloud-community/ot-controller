@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_controller_service_facade::RequestUser;
-use opentalk_controller_settings::{settings_file::UsersFindBehavior, TenantAssignment};
+use opentalk_controller_settings::settings_file::{TenantAssignment, UsersFindBehavior};
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::{DatabaseError, DbConnection};
 use opentalk_db_storage::{
