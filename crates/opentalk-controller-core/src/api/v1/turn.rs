@@ -19,7 +19,7 @@ use base64::Engine;
 use either::Either;
 use openidconnect::AccessToken;
 use opentalk_controller_service::oidc::OidcContext;
-use opentalk_controller_settings::SettingsProvider;
+use opentalk_controller_settings::{settings_file::TurnServer, SettingsProvider};
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::{Db, OptionalExt};
 use opentalk_db_storage::{invites::Invite, users::User};
@@ -42,7 +42,7 @@ use crate::{
         v1::{middleware::user_auth::check_access_token, response::NoContent},
     },
     caches::Caches,
-    settings::{Settings, TurnServer},
+    settings::Settings,
 };
 
 /// Get a TURN server and corresponding credentials

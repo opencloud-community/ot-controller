@@ -6,7 +6,7 @@ use std::time::Duration;
 
 use serde::{Deserialize, Deserializer};
 
-use crate::TurnServer;
+use super::TurnServer;
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Turn {

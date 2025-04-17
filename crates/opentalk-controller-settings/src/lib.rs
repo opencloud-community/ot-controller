@@ -54,13 +54,6 @@ type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct TurnServer {
-    // TURN URIs for this TURN server following rfc7065
-    pub uris: Vec<String>,
-    pub pre_shared_key: String,
-}
-
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 pub struct Stun {
     // STUN URIs for this TURN server following rfc7065
