@@ -9,7 +9,7 @@ use url::Url;
 
 use super::{
     ControllerOidcConfiguration, Database, Extensions, FrontendOidcConfiguration, Http, Keycloak,
-    Logging, MonitoringSettings, Oidc, OidcConfiguration, Turn, UserSearch,
+    Logging, MonitoringSettings, Oidc, OidcConfiguration, Stun, Turn, UserSearch,
     UserSearchConfiguration, WarningSource,
 };
 use crate::{
@@ -17,7 +17,7 @@ use crate::{
     settings_file::{UserSearchBackend, UsersFindBehavior},
     Authz, Avatar, CallIn, Defaults, Endpoints, Etcd, Etherpad, LiveKitSettings, Metrics, MinIO,
     OidcAndUserSearchConfiguration, RabbitMqConfig, RedisConfig, Reports, Result, Settings,
-    SettingsError, SharedFolder, Spacedeck, Stun, SubroomAudio, Tariffs, Tenants,
+    SettingsError, SharedFolder, Spacedeck, SubroomAudio, Tariffs, Tenants,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
