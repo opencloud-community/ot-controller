@@ -35,9 +35,6 @@
 //! loading the raw settings inside [`SettingsProvider::load`]. The final struct with all loaded fields
 //! is [`Settings`] (an alias for [`SettingsLoading<OidcAndUserSearchConfiguration>`]) which contains all loaded fields.
 
-use std::collections::BTreeSet;
-
-use opentalk_types_common::{features::ModuleFeatureId, users::Language};
 use rustc_hash::FxHashSet;
 use serde::Deserialize;
 use settings_file::{OidcAndUserSearchConfiguration, SettingsLoading};
@@ -53,20 +50,6 @@ pub use settings_provider::SettingsProvider;
 type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
-
-#[derive(Clone, Default, Debug, PartialEq, Eq, Deserialize)]
-pub struct Defaults {
-    #[serde(default = "default_user_language")]
-    pub user_language: Language,
-    #[serde(default)]
-    pub screen_share_requires_permission: bool,
-    #[serde(default)]
-    pub disabled_features: BTreeSet<ModuleFeatureId>,
-}
-
-fn default_user_language() -> Language {
-    "en-US".parse().expect("valid language")
-}
 
 #[derive(Clone, Default, Debug, PartialEq, Eq, Deserialize)]
 pub struct Endpoints {
