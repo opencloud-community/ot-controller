@@ -9,7 +9,7 @@ use url::Url;
 
 use super::{
     Authz, Avatar, CallIn, ControllerOidcConfiguration, Database, Defaults, Endpoints, Etcd,
-    Etherpad, Extensions, FrontendOidcConfiguration, Http, Keycloak, Logging, MinIO,
+    Etherpad, Extensions, FrontendOidcConfiguration, Http, Keycloak, Logging, Metrics, MinIO,
     MonitoringSettings, Oidc, OidcConfiguration, RabbitMqConfig, RedisConfig, Reports,
     SharedFolder, Spacedeck, Stun, SubroomAudio, Turn, UserSearch, UserSearchConfiguration,
     WarningSource,
@@ -17,8 +17,8 @@ use super::{
 use crate::{
     settings_error::DeserializeConfigSnafu,
     settings_file::{UserSearchBackend, UsersFindBehavior},
-    LiveKitSettings, Metrics, OidcAndUserSearchConfiguration, Result, Settings, SettingsError,
-    Tariffs, Tenants,
+    LiveKitSettings, OidcAndUserSearchConfiguration, Result, Settings, SettingsError, Tariffs,
+    Tenants,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]

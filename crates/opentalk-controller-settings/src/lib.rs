@@ -51,11 +51,6 @@ type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
 
-#[derive(Debug, Default, Clone, PartialEq, Eq, Deserialize)]
-pub struct Metrics {
-    pub allowlist: Vec<cidr::IpInet>,
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "snake_case", tag = "assignment")]
 pub enum TenantAssignment {
