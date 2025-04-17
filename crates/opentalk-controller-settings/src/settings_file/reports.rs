@@ -4,7 +4,7 @@
 
 use serde::Deserialize;
 
-use crate::ReportsTemplate;
+use super::ReportsTemplate;
 
 #[derive(Default, Clone, Debug, Deserialize, PartialEq, Eq)]
 pub struct Reports {
@@ -16,7 +16,7 @@ pub struct Reports {
 mod tests {
     use pretty_assertions::assert_eq;
 
-    use crate::{settings_file::Reports, ReportsTemplate};
+    use crate::settings_file::{Reports, ReportsTemplate};
 
     #[test]
     fn meeting_report_settings() {

@@ -54,17 +54,6 @@ type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
 
-#[derive(Clone, Debug, Deserialize, Default, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-pub enum ReportsTemplate {
-    /// Use the Template included with the application.
-    #[default]
-    BuiltIn,
-
-    /// Use the Template provided by the user configuration.
-    Inline(String),
-}
-
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(tag = "provider", rename_all = "snake_case")]
 pub enum SharedFolder {
