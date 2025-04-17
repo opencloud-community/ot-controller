@@ -35,7 +35,6 @@
 //! loading the raw settings inside [`SettingsProvider::load`]. The final struct with all loaded fields
 //! is [`Settings`] (an alias for [`SettingsLoading<OidcAndUserSearchConfiguration>`]) which contains all loaded fields.
 
-use serde::Deserialize;
 use settings_file::{OidcAndUserSearchConfiguration, SettingsLoading};
 
 pub mod settings_file;
@@ -49,14 +48,3 @@ pub use settings_provider::SettingsProvider;
 type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct LiveKitSettings {
-    pub api_key: String,
-    pub api_secret: String,
-    pub public_url: String,
-
-    // for backwards compatibility
-    #[serde(alias = "url")]
-    pub service_url: String,
-}

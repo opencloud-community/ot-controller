@@ -14,7 +14,7 @@ use livekit_api::{
     services::room::{CreateRoomOptions, RoomClient, UpdateParticipantOptions},
 };
 use livekit_protocol::{ParticipantPermission, TrackSource};
-use opentalk_controller_settings::{LiveKitSettings, SettingsProvider};
+use opentalk_controller_settings::{settings_file::LiveKitSettings, SettingsProvider};
 use opentalk_signaling_core::{
     control, CleanupScope, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
     SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
