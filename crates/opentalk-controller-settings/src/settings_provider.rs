@@ -97,12 +97,12 @@ mod tests {
     use crate::{
         settings_file::{
             database::default_max_connections, Authz, Avatar, ControllerOidcConfiguration,
-            Database, Defaults, Extensions, FrontendOidcConfiguration, Http, Logging, Oidc,
-            OidcConfiguration, OidcController, OidcFrontend, RabbitMqConfig, UserSearch,
+            Database, Defaults, Endpoints, Extensions, FrontendOidcConfiguration, Http, Logging,
+            Oidc, OidcConfiguration, OidcController, OidcFrontend, RabbitMqConfig, UserSearch,
             UserSearchBackend, UserSearchConfiguration, UsersFindBehavior,
         },
-        Endpoints, LiveKitSettings, Metrics, MinIO, OidcAndUserSearchConfiguration, Settings,
-        SettingsError, Tariffs, Tenants,
+        LiveKitSettings, Metrics, MinIO, OidcAndUserSearchConfiguration, Settings, SettingsError,
+        Tariffs, Tenants,
     };
 
     const MINIMUM_CONFIG_TOML: &str = r#"
