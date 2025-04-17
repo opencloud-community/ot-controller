@@ -54,12 +54,6 @@ type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
 pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
-pub struct SubroomAudio {
-    #[serde(default)]
-    pub enable_whisper: bool,
-}
-
 #[derive(Default, Clone, Debug, Deserialize, PartialEq, Eq)]
 pub struct Reports {
     #[serde(default)]
