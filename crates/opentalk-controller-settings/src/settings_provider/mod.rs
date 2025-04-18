@@ -8,6 +8,8 @@ use arc_swap::ArcSwap;
 
 use crate::{Result, Settings, SettingsRaw};
 
+mod loading;
+
 /// A struct for loading and holding the runtime settings.
 #[derive(Debug, Clone)]
 pub struct SettingsProvider {
@@ -21,7 +23,7 @@ impl SettingsProvider {
     /// Environment variables in the `OPENTALK_CTRL_*` pattern are considiered
     /// and will override the settings found in the file.
     pub fn load(file_name: &str) -> Result<Self> {
-        let settings_raw = SettingsRaw::load(file_name)?;
+        let settings_raw = Self::load_raw(file_name)?;
         Self::new_raw(Arc::new(settings_raw))
     }
 
@@ -61,7 +63,7 @@ impl SettingsProvider {
     /// Because an `Arc` was given to these callers, the value will be freed
     /// once the last reference to it has been dropped.
     pub fn reload(&self, config_path: &str) -> Result<()> {
-        let settings_raw = SettingsRaw::load(config_path)?;
+        let settings_raw = Self::load_raw(config_path)?;
 
         let mut current_settings = (*self.settings.load_full()).clone();
 
