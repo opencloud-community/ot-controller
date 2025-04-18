@@ -11,6 +11,6 @@ pub struct Database {
     pub max_connections: u32,
 }
 
-pub(crate) fn default_max_connections() -> u32 {
+pub(super) fn default_max_connections() -> u32 {
     100
 }

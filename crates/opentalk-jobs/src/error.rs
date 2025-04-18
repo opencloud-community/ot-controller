@@ -132,6 +132,9 @@ pub enum Error {
     #[snafu(context(false))]
     FileError { source: std::io::Error },
 
+    /// User search backend is not Keycloak
+    UserSearchBackendIsNotKeycloak,
+
     /// Error communicating with Keycloak instance
     #[snafu(context(false))]
     KeycloakClient {

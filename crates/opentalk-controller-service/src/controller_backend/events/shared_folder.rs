@@ -98,7 +98,7 @@ impl ControllerBackend {
             let streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
 
             notify_event_invitees_about_update(
-                &self.kc_admin_client,
+                &self.user_search_client,
                 &settings,
                 &self.mail_service,
                 current_tenant,
@@ -153,7 +153,7 @@ impl ControllerBackend {
                         let current_user = User::get(&mut conn, current_user.id).await?;
 
                         notify_event_invitees_about_update(
-                            &self.kc_admin_client,
+                            &self.user_search_client,
                             &settings,
                             &self.mail_service,
                             current_tenant,
@@ -184,7 +184,7 @@ impl ControllerBackend {
                             let current_user = User::get(&mut conn, current_user.id).await?;
 
                             notify_event_invitees_about_update(
-                                &self.kc_admin_client,
+                                &self.user_search_client,
                                 &settings,
                                 &self.mail_service,
                                 current_tenant,

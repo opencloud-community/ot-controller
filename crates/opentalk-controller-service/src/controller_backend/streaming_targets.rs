@@ -82,7 +82,7 @@ impl ControllerBackend {
             let current_user = User::get(&mut conn, current_user.id).await?;
 
             notify_event_invitees_by_room_about_update(
-                &self.kc_admin_client,
+                &self.user_search_client,
                 &settings,
                 &self.mail_service,
                 current_tenant,
@@ -228,7 +228,7 @@ impl ControllerBackend {
             let current_user = User::get(&mut conn, current_user.id).await?;
 
             notify_event_invitees_by_room_about_update(
-                &self.kc_admin_client,
+                &self.user_search_client,
                 &settings,
                 &self.mail_service,
                 current_tenant,
@@ -263,7 +263,7 @@ impl ControllerBackend {
             let current_user = User::get(&mut conn, current_user.id).await?;
 
             notify_event_invitees_by_room_about_update(
-                &self.kc_admin_client,
+                &self.user_search_client,
                 &settings,
                 &self.mail_service,
                 current_tenant,

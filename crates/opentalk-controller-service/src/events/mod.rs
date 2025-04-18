@@ -51,9 +51,22 @@ pub async fn get_invited_mail_recipients_for_event(
 }
 
 /// Gets some additional information about invitees from Keycloak and attaches it to them
-pub async fn enrich_invitees_from_keycloak(
+pub async fn enrich_invitees_from_optional_user_search(
     settings: &Settings,
-    kc_admin_client: &KeycloakAdminClient,
+    user_search_client: &Option<KeycloakAdminClient>,
+    current_tenant: &Tenant,
+    invitees: Vec<EventInvitee>,
+) -> Vec<EventInvitee> {
+    let Some(user_search_client) = user_search_client else {
+        return invitees;
+    };
+    enrich_invitees_from_user_search(settings, user_search_client, current_tenant, invitees).await
+}
+
+/// Gets some additional information about invitees from Keycloak and attaches it to them
+async fn enrich_invitees_from_user_search(
+    settings: &Settings,
+    user_search_client: &KeycloakAdminClient,
     current_tenant: &Tenant,
     invitees: Vec<EventInvitee>,
 ) -> Vec<EventInvitee> {
@@ -62,7 +75,7 @@ pub async fn enrich_invitees_from_keycloak(
         if let EventInviteeProfile::Email(profile_details) = invitee.profile {
             let tenant_filter = get_tenant_filter(current_tenant, tenant_assignment);
 
-            let user_for_email = kc_admin_client
+            let user_for_email = user_search_client
                 .get_user_for_email(tenant_filter, profile_details.email.as_ref())
                 .await
                 .unwrap_or_default();
@@ -141,17 +154,30 @@ pub fn shared_folder_for_user(
 }
 
 /// Gets some additional information about invitees from Keycloak and attaches it to them
-pub async fn enrich_from_keycloak(
+pub async fn enrich_from_optional_user_search(
     settings: &Settings,
     recipient: MailRecipient,
     current_tenant: &Tenant,
-    kc_admin_client: &KeycloakAdminClient,
+    user_search_client: &Option<KeycloakAdminClient>,
+) -> MailRecipient {
+    let Some(user_search_client) = user_search_client else {
+        return recipient;
+    };
+    enrich_from_user_search(settings, recipient, current_tenant, user_search_client).await
+}
+
+/// Gets some additional information about invitees from Keycloak and attaches it to them
+async fn enrich_from_user_search(
+    settings: &Settings,
+    recipient: MailRecipient,
+    current_tenant: &Tenant,
+    user_search_client: &KeycloakAdminClient,
 ) -> MailRecipient {
     let tenant_assignment = &settings.raw.tenants.assignment;
     if let MailRecipient::External(recipient) = recipient {
         let tenant_filter = get_tenant_filter(current_tenant, tenant_assignment);
 
-        let keycloak_user = kc_admin_client
+        let keycloak_user = user_search_client
             .get_user_for_email(tenant_filter, recipient.email.as_ref())
             .await
             .unwrap_or_default();

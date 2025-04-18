@@ -4,9 +4,10 @@
 
 use serde::Deserialize;
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Default, Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case", tag = "users_find_behavior")]
 pub enum UsersFindBehavior {
+    #[default]
     Disabled,
     FromDatabase,
     FromUserSearchBackend,

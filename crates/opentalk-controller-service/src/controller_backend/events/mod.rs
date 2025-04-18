@@ -65,7 +65,8 @@ use crate::{
     controller_backend::{delete_shared_folders, put_shared_folder, RoomsPoliciesBuilderExt},
     email_to_libravatar_url,
     events::{
-        enrich_from_keycloak, enrich_invitees_from_keycloak, get_invited_mail_recipients_for_event,
+        enrich_from_optional_user_search, enrich_invitees_from_optional_user_search,
+        get_invited_mail_recipients_for_event,
         notifications::{notify_invitees_about_update, UpdateNotificationValues},
         shared_folder_for_user,
     },
@@ -421,9 +422,9 @@ impl ControllerBackend {
                 .map(|resource| async {
                     match resource {
                         EventOrException::Event(inner) => EventOrException::Event(EventResource {
-                            invitees: enrich_invitees_from_keycloak(
+                            invitees: enrich_invitees_from_optional_user_search(
                                 &settings,
-                                &self.kc_admin_client,
+                                &self.user_search_client,
                                 &current_tenant,
                                 inner.invitees,
                             )
@@ -517,9 +518,9 @@ impl ControllerBackend {
         };
 
         let event_resource = EventResource {
-            invitees: enrich_invitees_from_keycloak(
+            invitees: enrich_invitees_from_optional_user_search(
                 &settings,
-                &self.kc_admin_client,
+                &self.user_search_client,
                 &current_tenant,
                 event_resource.invitees,
             )
@@ -733,7 +734,7 @@ impl ControllerBackend {
                 &settings,
                 notification_values,
                 &self.mail_service,
-                &self.kc_admin_client,
+                &self.user_search_client,
                 shared_folder,
                 streaming_targets,
             )
@@ -741,9 +742,9 @@ impl ControllerBackend {
         }
 
         let event_resource = EventResource {
-            invitees: enrich_invitees_from_keycloak(
+            invitees: enrich_invitees_from_optional_user_search(
                 &settings,
-                &self.kc_admin_client,
+                &self.user_search_client,
                 &current_tenant,
                 event_resource.invitees,
             )
@@ -828,7 +829,7 @@ impl ControllerBackend {
                 &settings,
                 notification_values,
                 &self.mail_service,
-                &self.kc_admin_client,
+                &self.user_search_client,
             )
             .await;
         }
@@ -1478,7 +1479,7 @@ pub(crate) async fn notify_invitees_about_delete(
     settings: &Settings,
     notification_values: CancellationNotificationValues,
     mail_service: &MailService,
-    kc_admin_client: &KeycloakAdminClient,
+    user_search_client: &Option<KeycloakAdminClient>,
 ) {
     // Don't send mails for past events
     match notification_values.event.ends_at {
@@ -1488,9 +1489,13 @@ pub(crate) async fn notify_invitees_about_delete(
         _ => {}
     }
     for user in notification_values.users_to_notify {
-        let invited_user =
-            enrich_from_keycloak(settings, user, &notification_values.tenant, kc_admin_client)
-                .await;
+        let invited_user = enrich_from_optional_user_search(
+            settings,
+            user,
+            &notification_values.tenant,
+            user_search_client,
+        )
+        .await;
 
         if let Err(e) = mail_service
             .send_event_cancellation(

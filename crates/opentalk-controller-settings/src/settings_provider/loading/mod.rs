@@ -6,9 +6,7 @@ use snafu::ResultExt as _;
 use warning_source::WarningSource;
 
 use super::SettingsProvider;
-use crate::{
-    settings_error::DeserializeConfigSnafu, settings_file::SettingsLoading, Result, SettingsRaw,
-};
+use crate::{settings_error::DeserializeConfigSnafu, Result, SettingsRaw};
 
 mod warning_source;
 
@@ -30,48 +28,16 @@ impl SettingsProvider {
             )
             .build()?;
 
-        let initial: SettingsLoading<()> =
+        let settings_raw: SettingsRaw =
             serde_path_to_error::deserialize(config).context(DeserializeConfigSnafu {
                 file_name: file_name.to_owned(),
             })?;
-        Self::warn_about_deprecated_items(&initial);
+        Self::warn_about_deprecated_items(&settings_raw);
 
-        let oidc_and_user_search = initial.build_oidc_and_user_search_configuration()?;
-
-        Ok(SettingsRaw {
-            oidc_and_user_search,
-            database: initial.database,
-            keycloak: initial.keycloak,
-            oidc: initial.oidc,
-            user_search: initial.user_search,
-            http: initial.http,
-            turn: initial.turn,
-            stun: initial.stun,
-            redis: initial.redis,
-            rabbit_mq: initial.rabbit_mq,
-            logging: initial.logging,
-            authz: initial.authz,
-            avatar: initial.avatar,
-            metrics: initial.metrics,
-            etcd: initial.etcd,
-            etherpad: initial.etherpad,
-            spacedeck: initial.spacedeck,
-            reports: initial.reports,
-            subroom_audio: initial.subroom_audio,
-            shared_folder: initial.shared_folder,
-            call_in: initial.call_in,
-            defaults: initial.defaults,
-            endpoints: initial.endpoints,
-            minio: initial.minio,
-            monitoring: initial.monitoring,
-            tenants: initial.tenants,
-            tariffs: initial.tariffs,
-            livekit: initial.livekit,
-            extensions: initial.extensions,
-        })
+        Ok(settings_raw)
     }
 
-    fn warn_about_deprecated_items(raw: &SettingsLoading<()>) {
+    fn warn_about_deprecated_items(raw: &SettingsRaw) {
         use owo_colors::OwoColorize as _;
 
         if raw.extensions.contains_key("room_server") {

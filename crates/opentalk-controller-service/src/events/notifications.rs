@@ -23,7 +23,10 @@ use opentalk_types_common::{
 use snafu::Report;
 
 use crate::{
-    events::{enrich_from_keycloak, get_invited_mail_recipients_for_event, shared_folder_for_user},
+    events::{
+        enrich_from_optional_user_search, get_invited_mail_recipients_for_event,
+        shared_folder_for_user,
+    },
     services::{MailRecipient, MailService},
 };
 
@@ -50,7 +53,7 @@ pub struct UpdateNotificationValues {
 
 /// Notifies the invitees of an event belonging to the specified room
 pub async fn notify_event_invitees_by_room_about_update(
-    kc_admin_client: &KeycloakAdminClient,
+    user_search_client: &Option<KeycloakAdminClient>,
     settings: &Settings,
     mail_service: &MailService,
     current_tenant: Tenant,
@@ -78,7 +81,7 @@ pub async fn notify_event_invitees_by_room_about_update(
         let streaming_targets = get_room_streaming_targets(conn, room.id).await?;
 
         notify_event_invitees_about_update(
-            kc_admin_client,
+            user_search_client,
             settings,
             mail_service,
             current_tenant,
@@ -98,7 +101,7 @@ pub async fn notify_event_invitees_by_room_about_update(
 /// Notifies the invitees of an event about updates
 #[allow(clippy::too_many_arguments)]
 pub async fn notify_event_invitees_about_update(
-    kc_admin_client: &KeycloakAdminClient,
+    user_search_client: &Option<KeycloakAdminClient>,
     settings: &Settings,
     mail_service: &MailService,
     current_tenant: Tenant,
@@ -139,7 +142,7 @@ pub async fn notify_event_invitees_about_update(
         settings,
         notification_values,
         mail_service,
-        kc_admin_client,
+        user_search_client,
         shared_folder_for_user,
         streaming_targets,
     )
@@ -152,14 +155,18 @@ pub async fn notify_invitees_about_update(
     settings: &Settings,
     notification_values: UpdateNotificationValues,
     mail_service: &MailService,
-    kc_admin_client: &KeycloakAdminClient,
+    user_search_client: &Option<KeycloakAdminClient>,
     shared_folder: Option<SharedFolder>,
     streaming_targets: Vec<RoomStreamingTarget>,
 ) {
     for user in notification_values.users_to_notify {
-        let invited_user =
-            enrich_from_keycloak(settings, user, &notification_values.tenant, kc_admin_client)
-                .await;
+        let invited_user = enrich_from_optional_user_search(
+            settings,
+            user,
+            &notification_values.tenant,
+            user_search_client,
+        )
+        .await;
 
         if let Err(e) = mail_service
             .send_event_update(

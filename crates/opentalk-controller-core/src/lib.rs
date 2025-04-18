@@ -54,7 +54,10 @@ use opentalk_controller_service::{
     oidc::OidcContext, services::MailService, ControllerBackend, Whatever,
 };
 use opentalk_controller_service_facade::OpenTalkControllerService;
-use opentalk_controller_settings::{settings_file::MonitoringSettings, Settings, SettingsProvider};
+use opentalk_controller_settings::{
+    settings_file::MonitoringSettings, Settings, SettingsProvider, UserSearchBackend,
+    UserSearchBackendKeycloak,
+};
 use opentalk_database::Db;
 use opentalk_jobs::job_runner::JobRunner;
 use opentalk_keycloak_admin::{AuthorizedClient, KeycloakAdminClient};
@@ -198,7 +201,7 @@ pub struct Controller {
 
     oidc: Arc<OidcContext>,
 
-    kc_admin_client: Arc<KeycloakAdminClient>,
+    user_search_client: Arc<Option<KeycloakAdminClient>>,
 
     authz: Authz,
 
@@ -314,65 +317,43 @@ impl Controller {
                 .whatever_context("Failed to initialize object storage")?,
         );
 
-        let oidc_and_user_search_configuration = settings.raw.oidc_and_user_search.clone();
-        log::debug!(
-            "OIDC and user search configuration: {:?}",
-            oidc_and_user_search_configuration
-        );
+        let oidc_frontend = &settings.oidc.frontend;
+        let oidc_controller = &settings.oidc.controller;
 
         // Discover OIDC Provider
         let oidc = Arc::new(
             OidcContext::new(
-                oidc_and_user_search_configuration
-                    .oidc
-                    .frontend
-                    .auth_base_url
-                    .clone(),
-                oidc_and_user_search_configuration
-                    .oidc
-                    .controller
-                    .auth_base_url
-                    .clone(),
-                oidc_and_user_search_configuration
-                    .oidc
-                    .controller
-                    .client_id
-                    .clone(),
-                oidc_and_user_search_configuration
-                    .oidc
-                    .controller
-                    .client_secret
-                    .clone(),
+                oidc_frontend.authority.clone(),
+                oidc_controller.authority.clone(),
+                oidc_controller.client_id.clone(),
+                oidc_controller.client_secret.clone(),
             )
             .await
             .whatever_context("Failed to initialize OIDC Context")?,
         );
 
-        let authorized_client = AuthorizedClient::new(
-            oidc_and_user_search_configuration
-                .oidc
-                .controller
-                .auth_base_url,
-            oidc_and_user_search_configuration
-                .user_search
-                .client_id
-                .clone()
-                .into(),
-            oidc_and_user_search_configuration
-                .user_search
-                .client_secret
-                .secret()
-                .clone(),
-        )
-        .whatever_context("Failed to initialize authorized client")?;
+        let user_search_client =
+            if let Some(UserSearchBackend::Keycloak(UserSearchBackendKeycloak {
+                api_base_url,
+                client_id,
+                client_secret,
+                external_id_user_attribute_name: _,
+            })) = &settings.user_search_backend
+            {
+                let authorized_client = AuthorizedClient::new(
+                    oidc_controller.authority.clone(),
+                    client_id.clone().into(),
+                    client_secret.secret().clone(),
+                )
+                .whatever_context("Failed to initialize authorized client")?;
 
-        let kc_admin_client = Arc::new(
-            KeycloakAdminClient::new(
-                oidc_and_user_search_configuration.user_search.api_base_url,
-                authorized_client,
-            )
-            .whatever_context("Failed to initialize keycloak")?,
-        );
+                Arc::new(Some(
+                    KeycloakAdminClient::new(api_base_url.clone(), authorized_client)
+                        .whatever_context("Failed to initialize keycloak")?,
+                ))
+            } else {
+                Arc::new(None)
+            };
 
         // Build redis client. Does not check if redis is reachable.
         let redis = settings
@@ -441,12 +422,8 @@ impl Controller {
 
         let backend = {
             let oidc_provider = OidcProvider {
-                name: "default".to_string(),
-                url: oidc_and_user_search_configuration
-                    .oidc
-                    .frontend
-                    .auth_base_url
-                    .to_string(),
+                name: oidc_frontend.client_id.to_string(),
+                url: oidc_frontend.authority.to_string(),
             };
 
             ControllerBackend::new(
@@ -458,7 +435,7 @@ impl Controller {
                 volatile.clone(),
                 exchange_handle.clone(),
                 mail_service.clone(),
-                kc_admin_client.clone(),
+                user_search_client.clone(),
                 initializer.signaling_modules.get_module_features(),
             )
         };
@@ -472,7 +449,7 @@ impl Controller {
             db,
             storage,
             oidc,
-            kc_admin_client,
+            user_search_client,
             authz,
             mail_service,
             rabbitmq_pool,
@@ -521,7 +498,7 @@ impl Controller {
             let oidc_ctx = Arc::downgrade(&self.oidc);
             let shutdown = self.shutdown.clone();
 
-            let kc_admin_client = Data::from(self.kc_admin_client);
+            let user_search_client = Data::from(self.user_search_client);
 
             let mail_service = Data::new(self.mail_service);
 
@@ -568,7 +545,7 @@ impl Controller {
                     .app_data(db.clone())
                     .app_data(storage)
                     .app_data(oidc_ctx.clone())
-                    .app_data(kc_admin_client.clone())
+                    .app_data(user_search_client.clone())
                     .app_data(authz.clone())
                     .app_data(volatile)
                     .app_data(Data::new(shutdown.clone()))
