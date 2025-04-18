@@ -6,12 +6,12 @@ use std::sync::Arc;
 
 use arc_swap::ArcSwap;
 
-use crate::{Result, SettingsRaw};
+use crate::{Result, Settings, SettingsRaw};
 
 /// A struct for loading and holding the runtime settings.
 #[derive(Debug, Clone)]
 pub struct SettingsProvider {
-    settings: Arc<ArcSwap<SettingsRaw>>,
+    settings: Arc<ArcSwap<Settings>>,
 }
 
 impl SettingsProvider {
@@ -21,15 +21,27 @@ impl SettingsProvider {
     /// Environment variables in the `OPENTALK_CTRL_*` pattern are considiered
     /// and will override the settings found in the file.
     pub fn load(file_name: &str) -> Result<Self> {
-        let settings = SettingsRaw::load(file_name)?;
-        Ok(Self::new_raw(Arc::new(settings)))
+        let settings_raw = SettingsRaw::load(file_name)?;
+        Self::new_raw(Arc::new(settings_raw))
     }
 
     /// Create a new [`SettingsProvider`] with settings that are already loaded.
-    pub fn new_raw(settings: Arc<SettingsRaw>) -> Self {
-        Self {
-            settings: Arc::new(ArcSwap::new(settings)),
-        }
+    pub fn new_raw(settings_raw: Arc<SettingsRaw>) -> Result<Self> {
+        let settings = Settings::try_from(settings_raw.clone())?;
+        Ok(Self {
+            settings: Arc::new(ArcSwap::new(Arc::new(settings))),
+        })
+    }
+
+    /// Get an `[Arc]` holding the current raw settings.
+    ///
+    /// The returned settings will remain unchanged even if the settings are
+    /// reloaded by the [`SettingsProvider`]. A new [`Arc`] will be created
+    /// internally by the `reload` function. This allows consistent use of a
+    /// "snapshot" inside a function by calling `get` once, and then using
+    /// the returned value.
+    pub fn get_raw(&self) -> Arc<SettingsRaw> {
+        self.get().settings_raw.clone()
     }
 
     /// Get an `[Arc]` holding the current raw settings.
@@ -39,8 +51,8 @@ impl SettingsProvider {
     /// internally by the `reload` function. This allows consistent use of a
     /// "snapshot" inside a function by calling `get_raw` once, and then using
     /// the returned value.
-    pub fn get_raw(&self) -> Arc<SettingsRaw> {
-        self.settings.load_full()
+    pub fn get(&self) -> Arc<Settings> {
+        self.settings.load_full().clone()
     }
 
     /// Reload the settings from a TOML file.
@@ -60,23 +72,11 @@ impl SettingsProvider {
     /// Because an `Arc` was given to these callers, the value will be freed
     /// once the last reference to it has been dropped.
     pub fn reload(&self, config_path: &str) -> Result<()> {
-        let new_settings = SettingsRaw::load(config_path)?;
+        let settings_raw = SettingsRaw::load(config_path)?;
+
         let mut current_settings = (*self.settings.load_full()).clone();
 
-        // reload extensions config
-        current_settings.extensions = new_settings.extensions;
-
-        // reload turn settings
-        current_settings.turn = new_settings.turn;
-
-        // reload metrics
-        current_settings.metrics = new_settings.metrics;
-
-        // reload avatar
-        current_settings.avatar = new_settings.avatar;
-
-        // reload call in
-        current_settings.call_in = new_settings.call_in;
+        current_settings.try_reload_from(settings_raw)?;
 
         // replace the shared settings with the modified ones
         self.settings.store(Arc::new(current_settings));

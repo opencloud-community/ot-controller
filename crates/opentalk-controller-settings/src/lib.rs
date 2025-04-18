@@ -41,9 +41,11 @@ pub mod settings_file;
 
 mod settings_error;
 mod settings_provider;
+mod settings_runtime;
 
 pub use settings_error::SettingsError;
 pub use settings_provider::SettingsProvider;
+pub use settings_runtime::Settings;
 
 type Result<T, E = SettingsError> = std::result::Result<T, E>;
 
