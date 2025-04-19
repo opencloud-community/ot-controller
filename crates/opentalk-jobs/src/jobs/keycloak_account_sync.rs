@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use log::Log;
-use opentalk_controller_settings::SettingsRaw;
+use opentalk_controller_settings::Settings;
 use opentalk_database::Db;
 use opentalk_db_storage::users::User;
 use opentalk_keycloak_admin::{AuthorizedClient, KeycloakAdminClient};
@@ -55,7 +55,7 @@ impl Job for KeycloakAccountSync {
         logger: &dyn Log,
         db: Arc<Db>,
         _exchange_handle: ExchangeHandle,
-        settings: &SettingsRaw,
+        settings: &Settings,
         parameters: Self::Parameters,
     ) -> Result<(), Error> {
         info!(log: logger, "Starting account cleanup job");
@@ -80,7 +80,7 @@ impl Job for KeycloakAccountSync {
 
         let users = User::get_all(&mut conn).await?;
 
-        let oidc_and_user_search_configuration = settings.oidc_and_user_search.clone();
+        let oidc_and_user_search_configuration = settings.raw.oidc_and_user_search.clone();
 
         let authorized_client = AuthorizedClient::new(
             oidc_and_user_search_configuration

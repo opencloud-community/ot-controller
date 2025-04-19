@@ -1660,7 +1660,7 @@ impl Runner {
             .get_room_closes_at(self.room_id)
             .await?;
 
-        let settings = self.settings_provider.get_raw();
+        let settings = self.settings_provider.get();
 
         let mut module_features = BTreeMap::<ModuleId, BTreeSet<FeatureId>>::new();
         self.modules
@@ -1671,13 +1671,20 @@ impl Runner {
             });
 
         let tariff_resource = tariff
-            .to_tariff_resource(settings.defaults.disabled_features.clone(), module_features)
+            .to_tariff_resource(
+                settings.raw.defaults.disabled_features.clone(),
+                module_features,
+            )
             .into();
 
         let mut conn = self.db.get_conn().await?;
         let event_info = match event.as_ref() {
             Some(event) => {
-                let call_in_tel = settings.call_in.as_ref().map(|call_in| call_in.tel.clone());
+                let call_in_tel = settings
+                    .raw
+                    .call_in
+                    .as_ref()
+                    .map(|call_in| call_in.tel.clone());
                 Some(
                     build_event_info(
                         &mut conn,
@@ -1694,7 +1701,7 @@ impl Runner {
         };
 
         let room_info = self
-            .build_room_info(&mut conn, &settings.avatar.libravatar_url)
+            .build_room_info(&mut conn, &settings.raw.avatar.libravatar_url)
             .await?;
 
         self.ws_send_control(
@@ -2412,7 +2419,8 @@ impl Runner {
                 // Enforce the auto-generated display name if display name editing is prohibited
                 if self
                     .settings_provider
-                    .get_raw()
+                    .get()
+                    .raw
                     .endpoints
                     .disallow_custom_display_name
                 {
@@ -2424,7 +2432,7 @@ impl Runner {
             Participant::Guest => join_display_name,
             Participant::Recorder => join_display_name,
             Participant::Sip => {
-                if let Some(call_in) = self.settings_provider.get_raw().call_in.as_ref() {
+                if let Some(call_in) = self.settings_provider.get().raw.call_in.as_ref() {
                     call_in::display_name(&self.db, call_in, self.room.tenant_id, join_display_name)
                         .await
                 } else {
@@ -2480,10 +2488,10 @@ impl Runner {
     async fn avatar_url(&self) -> Option<String> {
         match &self.participant {
             Participant::User(user) => Some(user.avatar_url.clone().unwrap_or_else(|| {
-                let settings = self.settings_provider.get_raw();
+                let settings = self.settings_provider.get();
                 format!(
                     "{}{:x}",
-                    settings.avatar.libravatar_url,
+                    settings.raw.avatar.libravatar_url,
                     md5::compute(&user.email)
                 )
             })),

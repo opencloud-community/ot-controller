@@ -13,7 +13,7 @@ use kustos::{
     AccessMethod, Resource,
 };
 use opentalk_controller_service_facade::RequestUser;
-use opentalk_controller_settings::SettingsRaw;
+use opentalk_controller_settings::Settings;
 use opentalk_controller_utils::{
     deletion::{Deleter, EventDeleter},
     CaptureApiError,
@@ -89,11 +89,12 @@ impl ControllerBackend {
         event: PostEventsBody,
         query: EventOptionsQuery,
     ) -> Result<EventResource, CaptureApiError> {
-        let settings = self.settings_provider.get_raw();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let current_user = User::get(&mut conn, current_user.id).await?;
 
+        let transaction_settings = settings.clone();
         let (event_resource, mail_resource) = conn
             .transaction(|conn| {
                 async move {
@@ -118,7 +119,7 @@ impl ControllerBackend {
                             training_participation_report
                         } if recurrence_pattern.is_empty() => {
                             create_time_independent_event(
-                                &settings,
+                                &transaction_settings,
                                 conn,
                                 current_user,
                                 title,
@@ -152,7 +153,7 @@ impl ControllerBackend {
                             training_participation_report
                         } => {
                             create_time_dependent_event(
-                                &settings,
+                                &transaction_settings,
                                 conn,
                                 current_user,
                                 title,
@@ -184,7 +185,7 @@ impl ControllerBackend {
                     };
 
                     if event.has_shared_folder {
-                        let (shared_folder, _) = put_shared_folder(&settings, event_resource.id, conn).await?;
+                        let (shared_folder, _) = put_shared_folder(&transaction_settings, event_resource.id, conn).await?;
                         event_resource.shared_folder = Some(SharedFolder::from(shared_folder));
                     }
 
@@ -209,6 +210,7 @@ impl ControllerBackend {
         if let Some(mail_resource) = mail_resource {
             self.mail_service
                 .send_registered_invite(
+                    &settings,
                     mail_resource.current_user.clone(),
                     mail_resource.event,
                     mail_resource.room,
@@ -232,7 +234,7 @@ impl ControllerBackend {
         current_user: RequestUser,
         query: GetEventsQuery,
     ) -> Result<(Vec<EventOrException>, Option<String>, Option<String>), CaptureApiError> {
-        let settings = self.settings_provider.get_raw();
+        let settings = self.settings_provider.get();
 
         let per_page = query
             .per_page
@@ -443,7 +445,7 @@ impl ControllerBackend {
         event_id: EventId,
         query: GetEventQuery,
     ) -> Result<EventResource, CaptureApiError> {
-        let settings = self.settings_provider.get_raw();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let (
@@ -539,7 +541,7 @@ impl ControllerBackend {
             return Ok(None);
         }
 
-        let settings = self.settings_provider.get_raw();
+        let settings = self.settings_provider.get();
 
         let send_email_notification = !query.suppress_email_notification;
 
@@ -761,7 +763,7 @@ impl ControllerBackend {
             force_delete_reference_if_external_services_fail,
         }: DeleteEventsQuery,
     ) -> Result<(), CaptureApiError> {
-        let settings = self.settings_provider.get_raw();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         // TODO(w.rabl) Further DB access optimization (replacing call to get_with_invite_and_room)?
@@ -920,16 +922,12 @@ impl EventResourceExt for EventExceptionResource {
 }
 
 trait EventInviteeExt {
-    fn from_invite_with_user(invite: EventInvite, user: User, settings: &SettingsRaw) -> Self;
-    fn from_email_invite(invite: EventEmailInvite, settings: &SettingsRaw) -> Self;
+    fn from_invite_with_user(invite: EventInvite, user: User, settings: &Settings) -> Self;
+    fn from_email_invite(invite: EventEmailInvite, settings: &Settings) -> Self;
 }
 
 impl EventInviteeExt for EventInvitee {
-    fn from_invite_with_user(
-        invite: EventInvite,
-        user: User,
-        settings: &SettingsRaw,
-    ) -> EventInvitee {
+    fn from_invite_with_user(invite: EventInvite, user: User, settings: &Settings) -> EventInvitee {
         EventInvitee {
             profile: EventInviteeProfile::Registered(PublicInviteUserProfile {
                 user_profile: user.to_public_user_profile(settings),
@@ -939,8 +937,9 @@ impl EventInviteeExt for EventInvitee {
         }
     }
 
-    fn from_email_invite(invite: EventEmailInvite, settings: &SettingsRaw) -> EventInvitee {
-        let avatar_url = email_to_libravatar_url(&settings.avatar.libravatar_url, &invite.email);
+    fn from_email_invite(invite: EventEmailInvite, settings: &Settings) -> EventInvitee {
+        let avatar_url =
+            email_to_libravatar_url(&settings.raw.avatar.libravatar_url, &invite.email);
         EventInvitee {
             profile: EventInviteeProfile::Email(EmailOnlyUser {
                 email: invite.email,
@@ -953,7 +952,7 @@ impl EventInviteeExt for EventInvitee {
 
 trait EventRoomInfoExt {
     fn from_room(
-        settings: &SettingsRaw,
+        settings: &Settings,
         room: Room,
         sip_config: Option<SipConfig>,
         tariff: &Tariff,
@@ -968,12 +967,13 @@ impl EventRoomInfoExt for EventRoomInfo {
     /// - a [`SipConfig`] is provided
     /// - the `CallIn` feature is not disabled in the settings
     fn from_room(
-        settings: &SettingsRaw,
+        settings: &Settings,
         room: Room,
         sip_config: Option<SipConfig>,
         tariff: &Tariff,
     ) -> Self {
         let call_in_feature_is_enabled = !settings
+            .raw
             .defaults
             .disabled_features
             .contains(&features::CALL_IN_MODULE_FEATURE_ID)
@@ -983,7 +983,7 @@ impl EventRoomInfoExt for EventRoomInfo {
         let mut call_in = None;
 
         if call_in_feature_is_enabled {
-            if let (Some(call_in_config), Some(sip_config)) = (&settings.call_in, sip_config) {
+            if let (Some(call_in_config), Some(sip_config)) = (&settings.raw.call_in, sip_config) {
                 call_in = Some(CallInInfo {
                     tel: call_in_config.tel.clone(),
                     uri: None,
@@ -1057,7 +1057,7 @@ struct MailResource {
 /// Part of `POST /events` endpoint
 #[allow(clippy::too_many_arguments)]
 async fn create_time_independent_event(
-    settings: &SettingsRaw,
+    settings: &Settings,
     conn: &mut DbConnection,
     current_user: User,
     title: EventTitle,
@@ -1159,7 +1159,7 @@ async fn create_time_independent_event(
 /// Part of `POST /events` endpoint
 #[allow(clippy::too_many_arguments)]
 async fn create_time_dependent_event(
-    settings: &SettingsRaw,
+    settings: &Settings,
     conn: &mut DbConnection,
     current_user: User,
     title: EventTitle,
@@ -1475,7 +1475,7 @@ pub(crate) struct CancellationNotificationValues {
 ///
 /// Notify invited users about the event deletion
 pub(crate) async fn notify_invitees_about_delete(
-    settings: &SettingsRaw,
+    settings: &Settings,
     notification_values: CancellationNotificationValues,
     mail_service: &MailService,
     kc_admin_client: &KeycloakAdminClient,
@@ -1494,6 +1494,7 @@ pub(crate) async fn notify_invitees_about_delete(
 
         if let Err(e) = mail_service
             .send_event_cancellation(
+                settings,
                 notification_values.created_by.clone(),
                 notification_values.event.clone(),
                 notification_values.room.clone(),
@@ -1523,7 +1524,7 @@ pub struct EventRescheduleBody {
 }
 
 async fn get_invitees_for_event(
-    settings: &SettingsRaw,
+    settings: &Settings,
     conn: &mut DbConnection,
     event_id: EventId,
     invitees_max: i64,

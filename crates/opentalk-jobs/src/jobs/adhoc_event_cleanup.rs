@@ -7,7 +7,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use chrono::{Duration, Utc};
 use log::Log;
-use opentalk_controller_settings::SettingsRaw;
+use opentalk_controller_settings::Settings;
 use opentalk_database::Db;
 use opentalk_log::{debug, error, info};
 use opentalk_signaling_core::ExchangeHandle;
@@ -51,7 +51,7 @@ impl Job for AdhocEventCleanup {
         logger: &dyn Log,
         db: Arc<Db>,
         exchange_handle: ExchangeHandle,
-        settings: &SettingsRaw,
+        settings: &Settings,
         parameters: Self::Parameters,
     ) -> Result<(), Error> {
         info!(log: logger, "Starting ad-hoc event cleanup job");

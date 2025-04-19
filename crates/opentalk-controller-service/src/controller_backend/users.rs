@@ -39,11 +39,11 @@ impl ControllerBackend {
             return Ok(None);
         }
 
-        let settings = self.settings_provider.get_raw();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         // Prohibit display name editing, if configured
-        if settings.endpoints.disallow_custom_display_name {
+        if settings.raw.endpoints.disallow_custom_display_name {
             if let Some(display_name) = &patch.display_name {
                 if &current_user.display_name != display_name {
                     return Err(ApiError::bad_request()
@@ -82,7 +82,7 @@ impl ControllerBackend {
         &self,
         current_user: RequestUser,
     ) -> Result<PrivateUserProfile, CaptureApiError> {
-        let settings = self.settings_provider.get_raw();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let used_storage = User::get_used_storage_u64(&mut conn, &current_user.id).await?;
@@ -96,13 +96,13 @@ impl ControllerBackend {
         &self,
         current_user: RequestUser,
     ) -> Result<TariffResource, CaptureApiError> {
-        let settings = self.settings_provider.get_raw();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let tariff = Tariff::get(&mut conn, current_user.tariff_id).await?;
 
         let response = tariff.to_tariff_resource(
-            settings.defaults.disabled_features.clone(),
+            settings.raw.defaults.disabled_features.clone(),
             self.module_features.clone(),
         );
 
@@ -134,7 +134,7 @@ impl ControllerBackend {
         current_user: RequestUser,
         user_id: UserId,
     ) -> Result<PublicUserProfile, CaptureApiError> {
-        let settings = self.settings_provider.get_raw();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let user = User::get_filtered_by_tenant(&mut conn, current_user.tenant_id, user_id).await?;
@@ -149,11 +149,11 @@ impl ControllerBackend {
         current_user: RequestUser,
         query: GetFindQuery,
     ) -> Result<GetFindResponseBody, CaptureApiError> {
-        let settings = self.settings_provider.get_raw();
+        let settings = self.settings_provider.get();
 
         const MAX_USER_SEARCH_RESULTS: usize = 20;
 
-        let oidc_and_user_search_configuration = settings.oidc_and_user_search.clone();
+        let oidc_and_user_search_configuration = settings.raw.oidc_and_user_search.clone();
 
         if oidc_and_user_search_configuration
             .user_search
@@ -180,7 +180,7 @@ impl ControllerBackend {
             .users_find_behavior
             == UsersFindBehavior::FromUserSearchBackend
         {
-            let mut found_kc_users = match &settings.tenants.assignment {
+            let mut found_kc_users = match &settings.raw.tenants.assignment {
                 TenantAssignment::Static { .. } => {
                     // Do not filter by tenant_id if the assignment is static, since that's used
                     // when Keycloak does not provide any tenant information we can filter over anyway
@@ -247,8 +247,10 @@ impl ControllerBackend {
                     GetFindResponseEntry::Registered(user.to_public_user_profile(&settings))
                 })
                 .chain(found_kc_users.into_iter().map(|kc_user| {
-                    let avatar_url =
-                        email_to_libravatar_url(&settings.avatar.libravatar_url, &kc_user.email);
+                    let avatar_url = email_to_libravatar_url(
+                        &settings.raw.avatar.libravatar_url,
+                        &kc_user.email,
+                    );
 
                     GetFindResponseEntry::Unregistered(UnregisteredUser {
                         email: kc_user.email,

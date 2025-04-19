@@ -185,7 +185,8 @@ impl SignalingModule for SharedFolder {
     ) -> Result<Option<Self::Params>, SignalingModuleError> {
         Ok(init
             .settings_provider
-            .get_raw()
+            .get()
+            .raw
             .shared_folder
             .as_ref()
             .map(|_| ()))

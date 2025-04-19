@@ -7,7 +7,7 @@ use std::{collections::HashSet, sync::Arc};
 use chrono::{DateTime, Utc};
 use kustos::Authz;
 use log::Log;
-use opentalk_controller_settings::SettingsRaw;
+use opentalk_controller_settings::Settings;
 use opentalk_controller_utils::deletion::{user::UserDeleter, Deleter};
 use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
@@ -31,13 +31,13 @@ pub(crate) async fn perform_deletion(
     logger: &dyn Log,
     db: Arc<Db>,
     exchange_handle: ExchangeHandle,
-    settings: &SettingsRaw,
+    settings: &Settings,
     fail_on_shared_folder_deletion_error: bool,
     delete_selector: DeleteSelector,
 ) -> Result<(), Error> {
     let authz = Authz::new(db.clone()).await?;
     let mut conn = db.get_conn().await?;
-    let object_storage = ObjectStorage::new(&settings.minio).await?;
+    let object_storage = ObjectStorage::new(&settings.raw.minio).await?;
 
     delete_users(
         logger,
@@ -61,7 +61,7 @@ async fn delete_users(
     conn: &mut DbConnection,
     authz: &Authz,
     exchange_handle: ExchangeHandle,
-    settings: &SettingsRaw,
+    settings: &Settings,
     object_storage: &ObjectStorage,
     fail_on_shared_folder_deletion_error: bool,
     delete_selector: DeleteSelector,
@@ -122,7 +122,7 @@ pub(crate) async fn delete_users_internal(
     conn: &mut DbConnection,
     authz: &Authz,
     exchange_handle: ExchangeHandle,
-    settings: &SettingsRaw,
+    settings: &Settings,
     object_storage: &ObjectStorage,
     user_ids: &[UserId],
 ) -> Result<(), Error> {
@@ -166,7 +166,7 @@ async fn delete_user_events(
     conn: &mut DbConnection,
     authz: &Authz,
     exchange_handle: ExchangeHandle,
-    settings: &SettingsRaw,
+    settings: &Settings,
     object_storage: &ObjectStorage,
     fail_on_shared_folder_deletion_error: bool,
     user_candidates: &[UserId],

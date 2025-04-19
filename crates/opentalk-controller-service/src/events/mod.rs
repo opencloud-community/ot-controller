@@ -6,7 +6,7 @@
 
 pub(crate) mod notifications;
 
-use opentalk_controller_settings::{settings_file::TenantAssignment, SettingsRaw};
+use opentalk_controller_settings::{settings_file::TenantAssignment, Settings};
 use opentalk_database::DbConnection;
 use opentalk_db_storage::{
     events::{email_invites::EventEmailInvite, shared_folders::EventSharedFolder, EventInvite},
@@ -52,12 +52,12 @@ pub async fn get_invited_mail_recipients_for_event(
 
 /// Gets some additional information about invitees from Keycloak and attaches it to them
 pub async fn enrich_invitees_from_keycloak(
-    settings: &SettingsRaw,
+    settings: &Settings,
     kc_admin_client: &KeycloakAdminClient,
     current_tenant: &Tenant,
     invitees: Vec<EventInvitee>,
 ) -> Vec<EventInvitee> {
-    let tenant_assignment = &settings.tenants.assignment;
+    let tenant_assignment = &settings.raw.tenants.assignment;
     let invitee_mapping_futures = invitees.into_iter().map(|invitee| async move {
         if let EventInviteeProfile::Email(profile_details) = invitee.profile {
             let tenant_filter = get_tenant_filter(current_tenant, tenant_assignment);
@@ -142,12 +142,12 @@ pub fn shared_folder_for_user(
 
 /// Gets some additional information about invitees from Keycloak and attaches it to them
 pub async fn enrich_from_keycloak(
-    settings: &SettingsRaw,
+    settings: &Settings,
     recipient: MailRecipient,
     current_tenant: &Tenant,
     kc_admin_client: &KeycloakAdminClient,
 ) -> MailRecipient {
-    let tenant_assignment = &settings.tenants.assignment;
+    let tenant_assignment = &settings.raw.tenants.assignment;
     if let MailRecipient::External(recipient) = recipient {
         let tenant_filter = get_tenant_filter(current_tenant, tenant_assignment);
 

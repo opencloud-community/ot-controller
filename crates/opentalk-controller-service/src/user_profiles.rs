@@ -6,7 +6,7 @@
 
 use std::collections::HashMap;
 
-use opentalk_controller_settings::SettingsRaw;
+use opentalk_controller_settings::Settings;
 use opentalk_database::{DbConnection, Result};
 use opentalk_db_storage::{users::User, utils::HasUsers};
 use opentalk_types_api_v1::users::PublicUserProfile;
@@ -34,7 +34,7 @@ impl GetUserProfilesBatched {
 
     pub async fn fetch(
         &mut self,
-        settings: &SettingsRaw,
+        settings: &Settings,
         conn: &mut DbConnection,
     ) -> Result<UserProfilesBatch> {
         if self.users.is_empty() {

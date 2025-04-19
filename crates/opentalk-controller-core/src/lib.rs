@@ -54,9 +54,7 @@ use opentalk_controller_service::{
     oidc::OidcContext, services::MailService, ControllerBackend, Whatever,
 };
 use opentalk_controller_service_facade::OpenTalkControllerService;
-use opentalk_controller_settings::{
-    settings_file::MonitoringSettings, SettingsProvider, SettingsRaw,
-};
+use opentalk_controller_settings::{settings_file::MonitoringSettings, Settings, SettingsProvider};
 use opentalk_database::Db;
 use opentalk_jobs::job_runner::JobRunner;
 use opentalk_keycloak_admin::{AuthorizedClient, KeycloakAdminClient};
@@ -186,7 +184,7 @@ pub struct Controller {
     pub service: OpenTalkControllerService,
 
     /// Settings loaded on [Controller::create]
-    pub startup_settings: Arc<SettingsRaw>,
+    pub startup_settings: Arc<Settings>,
 
     /// Cloneable shared settings, can be used to reload settings from, when receiving the `reload` signal.
     pub settings_provider: SettingsProvider,
@@ -257,9 +255,9 @@ impl Controller {
 
         let settings_provider =
             SettingsProvider::load(&args.config).whatever_context("Failed to load settings")?;
-        let settings = settings_provider.get_raw();
+        let settings = settings_provider.get();
 
-        trace::init(&settings.logging).whatever_context("Failed to initialize tracing")?;
+        trace::init(&settings.raw.logging).whatever_context("Failed to initialize tracing")?;
 
         log::info!("Starting {}", program_name);
 
@@ -275,25 +273,25 @@ impl Controller {
         settings_provider: SettingsProvider,
         args: cli::Args,
     ) -> Result<Self> {
-        let settings = settings_provider.get_raw();
+        let settings = settings_provider.get();
         let metrics = metrics::CombinedMetrics::try_init()
             .whatever_context("Failed to initialize metrics")?;
 
-        opentalk_db_storage::migrations::migrate_from_url(&settings.database.url)
+        opentalk_db_storage::migrations::migrate_from_url(&settings.raw.database.url)
             .await
             .whatever_context("Failed to migrate database")?;
 
         let rabbitmq_pool = RabbitMqPool::from_config(
-            &settings.rabbit_mq.url,
-            settings.rabbit_mq.min_connections,
-            settings.rabbit_mq.max_channels_per_connection,
+            &settings.raw.rabbit_mq.url,
+            settings.raw.rabbit_mq.min_connections,
+            settings.raw.rabbit_mq.max_channels_per_connection,
         );
 
         // Only use rabbitmq in the exchange when a redis instance is configured
         // This assumes that the existence of redis means multiple controllers are used
         // and share their signaling state via redis. Only in this case rabbitmq is required
         // in the exchange.
-        let exchange_handle = if settings.redis.is_some() {
+        let exchange_handle = if settings.raw.redis.is_some() {
             ExchangeTask::spawn_with_rabbitmq(rabbitmq_pool.clone())
                 .await
                 .whatever_context("Failed to spawn exchange task")?
@@ -304,19 +302,19 @@ impl Controller {
         };
 
         // Connect to postgres
-        let mut db =
-            Db::connect(&settings.database).whatever_context("Failed to connect to database")?;
+        let mut db = Db::connect(&settings.raw.database)
+            .whatever_context("Failed to connect to database")?;
         db.set_metrics(metrics.database.clone());
         let db = Arc::new(db);
 
         // Connect to MinIO
         let storage = Arc::new(
-            ObjectStorage::new(&settings.minio)
+            ObjectStorage::new(&settings.raw.minio)
                 .await
                 .whatever_context("Failed to initialize object storage")?,
         );
 
-        let oidc_and_user_search_configuration = settings.oidc_and_user_search.clone();
+        let oidc_and_user_search_configuration = settings.raw.oidc_and_user_search.clone();
         log::debug!(
             "OIDC and user search configuration: {:?}",
             oidc_and_user_search_configuration
@@ -378,6 +376,7 @@ impl Controller {
 
         // Build redis client. Does not check if redis is reachable.
         let redis = settings
+            .raw
             .redis
             .as_ref()
             .map(|r| redis::Client::open(r.url.clone()))
@@ -401,7 +400,7 @@ impl Controller {
         let (shutdown, _) = broadcast::channel::<()>(1);
         let (reload, _) = broadcast::channel::<()>(4);
 
-        let authz = if settings.authz.synchronize_controllers {
+        let authz = if settings.raw.authz.synchronize_controllers {
             kustos::Authz::new_with_autoload_and_metrics(
                 db.clone(),
                 rabbitmq_pool.clone(),
@@ -416,7 +415,6 @@ impl Controller {
         };
 
         let mail_service = MailService::new(
-            settings_provider.clone(),
             metrics.endpoint.clone(),
             rabbitmq_pool.clone(),
             rabbitmq_pool
@@ -493,7 +491,7 @@ impl Controller {
     pub async fn run(self) -> Result<()> {
         let signaling_modules = Arc::new(self.signaling_modules);
 
-        if let Some(MonitoringSettings { port, addr }) = self.startup_settings.monitoring {
+        if let Some(MonitoringSettings { port, addr }) = self.startup_settings.raw.monitoring {
             start_probe(addr, port, ServiceState::Up)
                 .await
                 .whatever_context("Failed to start monitoring")?;
@@ -556,7 +554,7 @@ impl Controller {
 
                 let signaling_modules = Data::from(signaling_modules.upgrade().unwrap());
                 let swagger_service_enabled =
-                    !settings_provider.get_raw().endpoints.disable_openapi;
+                    !settings_provider.get().raw.endpoints.disable_openapi;
 
                 App::new()
                     .wrap(RequestMetrics::new(metrics.endpoint.clone()))
@@ -596,12 +594,12 @@ impl Controller {
         };
 
         let socket_address = determine_socket_address(
-            self.startup_settings.http.addr.as_deref(),
-            self.startup_settings.http.port,
+            self.startup_settings.raw.http.addr.as_deref(),
+            self.startup_settings.raw.http.port,
         )
         .whatever_context("Unable to determine bind address")?;
 
-        let http_server = if let Some(tls) = &self.startup_settings.http.tls {
+        let http_server = if let Some(tls) = &self.startup_settings.raw.http.tls {
             let config = setup_rustls(tls).whatever_context("Failed to setup TLS context")?;
 
             http_server.bind_rustls_0_23(&socket_address[..], config)

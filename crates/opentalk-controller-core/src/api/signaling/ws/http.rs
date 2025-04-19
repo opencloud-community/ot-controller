@@ -192,7 +192,8 @@ async fn ws_service_inner(
         &db,
         &room,
         settings_provider
-            .get_raw()
+            .get()
+            .raw
             .defaults
             .disabled_features
             .clone(),

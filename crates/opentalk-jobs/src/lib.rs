@@ -37,7 +37,7 @@ use async_trait::async_trait;
 pub use distributed::job_runner;
 pub use error::Error;
 use log::Log;
-use opentalk_controller_settings::SettingsRaw;
+use opentalk_controller_settings::Settings;
 use opentalk_database::Db;
 use opentalk_log::{error, info};
 use opentalk_signaling_core::ExchangeHandle;
@@ -49,7 +49,7 @@ pub async fn execute<J: Job>(
     logger: &dyn Log,
     db: Arc<Db>,
     exchange_handle: ExchangeHandle,
-    settings: &SettingsRaw,
+    settings: &Settings,
     parameters: serde_json::Value,
     timeout: Duration,
     hide_duration: bool,
@@ -133,7 +133,7 @@ pub trait Job {
         logger: &dyn Log,
         db: Arc<Db>,
         exchange_handle: ExchangeHandle,
-        settings: &SettingsRaw,
+        settings: &Settings,
         parameters: Self::Parameters,
     ) -> Result<(), Error>;
 }

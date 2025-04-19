@@ -7,7 +7,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use chrono::{Days, Utc};
 use log::Log;
-use opentalk_controller_settings::SettingsRaw;
+use opentalk_controller_settings::Settings;
 use opentalk_database::Db;
 use opentalk_log::{debug, error, info};
 use opentalk_signaling_core::ExchangeHandle;
@@ -51,7 +51,7 @@ impl Job for UserCleanup {
         logger: &dyn Log,
         db: Arc<Db>,
         exchange_handle: ExchangeHandle,
-        settings: &SettingsRaw,
+        settings: &Settings,
         parameters: Self::Parameters,
     ) -> Result<(), Error> {
         info!(log: logger, "Starting disabled user cleanup job");
@@ -175,7 +175,7 @@ mod tests {
     async fn cleanup_user_with_event_and_invites() {
         init_logger();
         let settings_provider = SettingsProvider::load("../../extra/example.toml").unwrap();
-        let settings = settings_provider.get_raw();
+        let settings = settings_provider.get();
 
         let db_ctx = DatabaseContext::new(false).await;
         let mut conn = db_ctx.db.get_conn().await.unwrap();
@@ -228,7 +228,7 @@ mod tests {
     async fn cleanup_user() {
         init_logger();
         let settings_provider = SettingsProvider::load("../../extra/example.toml").unwrap();
-        let settings = settings_provider.get_raw();
+        let settings = settings_provider.get();
 
         let db_ctx = DatabaseContext::new(false).await;
         let mut conn = db_ctx.db.get_conn().await.unwrap();

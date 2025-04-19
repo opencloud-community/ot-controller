@@ -7,7 +7,7 @@ use std::{collections::HashSet, sync::Arc};
 use async_trait::async_trait;
 use kustos::Authz;
 use log::Log;
-use opentalk_controller_settings::SettingsRaw;
+use opentalk_controller_settings::Settings;
 use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::rooms::Room;
 use opentalk_log::{debug, info};
@@ -49,7 +49,7 @@ impl Job for RoomCleanup {
         logger: &dyn Log,
         db: Arc<Db>,
         exchange_handle: ExchangeHandle,
-        settings: &SettingsRaw,
+        settings: &Settings,
         parameters: Self::Parameters,
     ) -> Result<(), Error> {
         info!(log: logger, "Starting orphaned rooms cleanup job");
@@ -59,7 +59,7 @@ impl Job for RoomCleanup {
 
         let authz = Authz::new(db.clone()).await?;
 
-        let object_storage = ObjectStorage::new(&settings.minio).await?;
+        let object_storage = ObjectStorage::new(&settings.raw.minio).await?;
 
         let orphaned_rooms = find_orphaned_rooms(&mut conn).await?;
 

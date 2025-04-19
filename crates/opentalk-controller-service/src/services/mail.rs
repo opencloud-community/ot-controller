@@ -11,7 +11,7 @@
 use std::sync::Arc;
 
 use lapin_pool::{RabbitMqChannel, RabbitMqPool};
-use opentalk_controller_settings::{SettingsProvider, SettingsRaw};
+use opentalk_controller_settings::Settings;
 use opentalk_db_storage::{
     events::{Event, EventException, EventExceptionKind},
     rooms::Room,
@@ -91,10 +91,10 @@ pub enum MailRecipient {
 }
 
 fn to_event(
+    settings: &Settings,
     event: Event,
     room: Room,
     sip_config: Option<SipConfig>,
-    settings: &SettingsRaw,
     shared_folder: Option<SharedFolder>,
     streaming_targets: Vec<RoomStreamingTarget>,
 ) -> v1::Event {
@@ -110,6 +110,7 @@ fn to_event(
     let end_time: Option<v1::Time> = event.ends_at_of_first_occurrence().map(Into::into);
 
     let call_in_feature_is_enabled = !settings
+        .raw
         .defaults
         .disabled_features
         .contains(&features::CALL_IN_MODULE_FEATURE_ID);
@@ -117,7 +118,7 @@ fn to_event(
     let mut call_in = None;
 
     if call_in_feature_is_enabled {
-        if let (Some(call_in_settings), Some(sip_config)) = (&settings.call_in, sip_config) {
+        if let (Some(call_in_settings), Some(sip_config)) = (&settings.raw.call_in, sip_config) {
             call_in = Some(v1::CallIn {
                 sip_tel: call_in_settings.tel.clone(),
                 sip_id: sip_config.sip_id.to_string(),
@@ -184,7 +185,6 @@ fn to_event_exception(exception: EventException) -> v1::EventException {
 /// A service for sending emails
 #[derive(Clone)]
 pub struct MailService {
-    settings: SettingsProvider,
     metrics: Arc<EndpointMetrics>,
     rabbitmq_pool: Arc<RabbitMqPool>,
     rabbitmq_channel: Arc<Mutex<RabbitMqChannel>>,
@@ -199,21 +199,19 @@ impl std::fmt::Debug for MailService {
 impl MailService {
     /// Creates a new email service
     pub fn new(
-        settings: SettingsProvider,
         metrics: Arc<EndpointMetrics>,
         rabbitmq_pool: Arc<RabbitMqPool>,
         rabbitmq_channel: RabbitMqChannel,
     ) -> Self {
         Self {
-            settings,
             metrics,
             rabbitmq_pool,
             rabbitmq_channel: Arc::new(Mutex::new(rabbitmq_channel)),
         }
     }
 
-    async fn send_to_rabbitmq(&self, mail_task: MailTask) -> Result<()> {
-        if let Some(queue_name) = &self.settings.get_raw().rabbit_mq.mail_task_queue {
+    async fn send_to_rabbitmq(&self, settings: &Settings, mail_task: MailTask) -> Result<()> {
+        if let Some(queue_name) = &settings.raw.rabbit_mq.mail_task_queue {
             let channel = {
                 let mut channel = self.rabbitmq_channel.lock().await;
 
@@ -251,6 +249,7 @@ impl MailService {
     #[allow(clippy::too_many_arguments)]
     pub async fn send_registered_invite(
         &self,
+        settings: &Settings,
         inviter: User,
         event: Event,
         room: Room,
@@ -259,7 +258,6 @@ impl MailService {
         shared_folder: Option<SharedFolder>,
         streaming_targets: Vec<RoomStreamingTarget>,
     ) -> Result<()> {
-        let settings = &*self.settings.get_raw();
         let shared_folder = shared_folder.map(|sf| {
             if inviter.id == invitee.id {
                 sf
@@ -272,17 +270,17 @@ impl MailService {
         let mail_task = MailTask::registered_event_invite(
             inviter,
             to_event(
+                settings,
                 event,
                 room,
                 sip_config,
-                settings,
                 shared_folder,
                 streaming_targets,
             ),
             invitee,
         );
 
-        self.send_to_rabbitmq(mail_task).await?;
+        self.send_to_rabbitmq(settings, mail_task).await?;
         Ok(())
     }
 
@@ -290,6 +288,7 @@ impl MailService {
     #[allow(clippy::too_many_arguments)]
     pub async fn send_unregistered_invite(
         &self,
+        settings: &Settings,
         inviter: User,
         event: Event,
         room: Room,
@@ -298,8 +297,6 @@ impl MailService {
         shared_folder: Option<SharedFolder>,
         streaming_targets: Vec<RoomStreamingTarget>,
     ) -> Result<()> {
-        let settings = &*self.settings.get_raw();
-
         let invitee = v1::UnregisteredUser {
             email: invitee.email.into(),
             first_name: invitee.first_name,
@@ -310,17 +307,17 @@ impl MailService {
         let mail_task = MailTask::unregistered_event_invite(
             inviter,
             to_event(
+                settings,
                 event,
                 room,
                 sip_config,
-                settings,
                 shared_folder.map(SharedFolder::without_write_access),
                 streaming_targets,
             ),
             invitee,
         );
 
-        self.send_to_rabbitmq(mail_task).await?;
+        self.send_to_rabbitmq(settings, mail_task).await?;
         Ok(())
     }
 
@@ -328,6 +325,7 @@ impl MailService {
     #[allow(clippy::too_many_arguments)]
     pub async fn send_external_invite(
         &self,
+        settings: &Settings,
         inviter: User,
         event: Event,
         room: Room,
@@ -337,16 +335,14 @@ impl MailService {
         shared_folder: Option<SharedFolder>,
         streaming_targets: Vec<RoomStreamingTarget>,
     ) -> Result<()> {
-        let settings = &*self.settings.get_raw();
-
         // Create MailTask
         let mail_task = MailTask::external_event_invite(
             inviter,
             to_event(
+                settings,
                 event,
                 room,
                 sip_config,
-                settings,
                 shared_folder.map(SharedFolder::without_write_access),
                 streaming_targets,
             ),
@@ -354,7 +350,7 @@ impl MailService {
             invite_code,
         );
 
-        self.send_to_rabbitmq(mail_task).await?;
+        self.send_to_rabbitmq(settings, mail_task).await?;
         Ok(())
     }
 
@@ -362,6 +358,7 @@ impl MailService {
     #[allow(clippy::too_many_arguments)]
     pub async fn send_event_update(
         &self,
+        settings: &Settings,
         inviter: User,
         event: Event,
         event_exception: Option<EventException>,
@@ -372,8 +369,6 @@ impl MailService {
         shared_folder: Option<SharedFolder>,
         streaming_targets: Vec<RoomStreamingTarget>,
     ) -> Result<()> {
-        let settings = &*self.settings.get_raw();
-
         let mail_task = match invitee {
             MailRecipient::Registered(invitee) => {
                 let shared_folder = shared_folder.map(|sf| {
@@ -386,10 +381,10 @@ impl MailService {
                 MailTask::registered_event_update(
                     inviter,
                     to_event(
+                        settings,
                         event,
                         room,
                         sip_config,
-                        settings,
                         shared_folder,
                         streaming_targets,
                     ),
@@ -406,10 +401,10 @@ impl MailService {
             MailRecipient::Unregistered(invitee) => MailTask::unregistered_event_update(
                 inviter,
                 to_event(
+                    settings,
                     event,
                     room,
                     sip_config,
-                    settings,
                     shared_folder.map(SharedFolder::without_write_access),
                     streaming_targets,
                 ),
@@ -423,10 +418,10 @@ impl MailService {
             MailRecipient::External(invitee) => MailTask::external_event_update(
                 inviter,
                 to_event(
+                    settings,
                     event,
                     room,
                     sip_config,
-                    settings,
                     shared_folder.map(SharedFolder::without_write_access),
                     streaming_targets,
                 ),
@@ -438,7 +433,7 @@ impl MailService {
             ),
         };
 
-        self.send_to_rabbitmq(mail_task).await?;
+        self.send_to_rabbitmq(settings, mail_task).await?;
 
         Ok(())
     }
@@ -447,6 +442,7 @@ impl MailService {
     #[allow(clippy::too_many_arguments)]
     pub async fn send_event_cancellation(
         &self,
+        settings: &Settings,
         inviter: User,
         mut event: Event,
         room: Room,
@@ -455,8 +451,6 @@ impl MailService {
         shared_folder: Option<SharedFolder>,
         streaming_targets: Vec<RoomStreamingTarget>,
     ) -> Result<()> {
-        let settings = &*self.settings.get_raw();
-
         // increment event sequence to satisfy icalendar spec
         event.revision += 1;
 
@@ -472,10 +466,10 @@ impl MailService {
                 MailTask::registered_event_cancellation(
                     inviter,
                     to_event(
+                        settings,
                         event,
                         room,
                         sip_config,
-                        settings,
                         shared_folder,
                         streaming_targets,
                     ),
@@ -491,10 +485,10 @@ impl MailService {
             MailRecipient::Unregistered(invitee) => MailTask::unregistered_event_cancellation(
                 inviter,
                 to_event(
+                    settings,
                     event,
                     room,
                     sip_config,
-                    settings,
                     shared_folder.map(SharedFolder::without_write_access),
                     streaming_targets,
                 ),
@@ -507,10 +501,10 @@ impl MailService {
             MailRecipient::External(invitee) => MailTask::external_event_cancellation(
                 inviter,
                 to_event(
+                    settings,
                     event,
                     room,
                     sip_config,
-                    settings,
                     shared_folder.map(SharedFolder::without_write_access),
                     streaming_targets,
                 ),
@@ -520,7 +514,7 @@ impl MailService {
             ),
         };
 
-        self.send_to_rabbitmq(mail_task).await?;
+        self.send_to_rabbitmq(settings, mail_task).await?;
 
         Ok(())
     }
@@ -529,6 +523,7 @@ impl MailService {
     #[allow(clippy::too_many_arguments)]
     pub async fn send_event_uninvite(
         &self,
+        settings: &Settings,
         inviter: User,
         mut event: Event,
         room: Room,
@@ -537,8 +532,6 @@ impl MailService {
         shared_folder: Option<SharedFolder>,
         streaming_targets: Vec<RoomStreamingTarget>,
     ) -> Result<()> {
-        let settings = &*self.settings.get_raw();
-
         // increment event sequence to satisfy icalendar spec
         event.revision += 1;
 
@@ -554,10 +547,10 @@ impl MailService {
                 MailTask::registered_event_uninvite(
                     inviter,
                     to_event(
+                        settings,
                         event,
                         room,
                         sip_config,
-                        settings,
                         shared_folder,
                         streaming_targets,
                     ),
@@ -573,10 +566,10 @@ impl MailService {
             MailRecipient::Unregistered(invitee) => MailTask::unregistered_event_uninvite(
                 inviter,
                 to_event(
+                    settings,
                     event,
                     room,
                     sip_config,
-                    settings,
                     shared_folder.map(SharedFolder::without_write_access),
                     streaming_targets,
                 ),
@@ -589,10 +582,10 @@ impl MailService {
             MailRecipient::External(invitee) => MailTask::external_event_uninvite(
                 inviter,
                 to_event(
+                    settings,
                     event,
                     room,
                     sip_config,
-                    settings,
                     shared_folder.map(SharedFolder::without_write_access),
                     streaming_targets,
                 ),
@@ -602,7 +595,7 @@ impl MailService {
             ),
         };
 
-        self.send_to_rabbitmq(mail_task).await?;
+        self.send_to_rabbitmq(settings, mail_task).await?;
 
         Ok(())
     }

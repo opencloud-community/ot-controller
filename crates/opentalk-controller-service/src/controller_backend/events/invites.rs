@@ -8,7 +8,7 @@ use chrono::Utc;
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
 use kustos::{policies_builder::PoliciesBuilder, Authz};
 use opentalk_controller_service_facade::RequestUser;
-use opentalk_controller_settings::SettingsRaw;
+use opentalk_controller_settings::Settings;
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::{DatabaseError, Db};
 use opentalk_db_storage::{
@@ -74,7 +74,7 @@ impl ControllerBackend {
             status: status_filter,
         }: GetEventsInvitesQuery,
     ) -> Result<(Vec<EventInvitee>, i64, i64, i64), CaptureApiError> {
-        let settings = self.settings_provider.get_raw();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         // FIXME: Preliminary solution, consider using UNION when Diesel supports it.
@@ -133,7 +133,7 @@ impl ControllerBackend {
         query: PostEventInviteQuery,
         create_invite: PostEventInviteBody,
     ) -> Result<bool, CaptureApiError> {
-        let settings = self.settings_provider.get_raw();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let send_email_notification = !query.suppress_email_notification;
@@ -144,6 +144,7 @@ impl ControllerBackend {
         match create_invite {
             PostEventInviteBody::User(user_invite) => {
                 create_user_event_invite(
+                    &settings,
                     &self.db,
                     &self.authz,
                     current_user,
@@ -228,7 +229,7 @@ impl ControllerBackend {
         DeleteEventInvitePath { event_id, user_id }: DeleteEventInvitePath,
         query: EventOptionsQuery,
     ) -> Result<(), CaptureApiError> {
-        let settings = self.settings_provider.get_raw();
+        let settings = self.settings_provider.get();
 
         let send_email_notification = !query.suppress_email_notification;
         let mut conn = self.db.get_conn().await?;
@@ -323,7 +324,7 @@ impl ControllerBackend {
         email: EmailAddress,
         query: EventOptionsQuery,
     ) -> Result<(), CaptureApiError> {
-        let settings = self.settings_provider.get_raw();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let email = email.to_lowercase().to_string();
@@ -331,7 +332,7 @@ impl ControllerBackend {
         let current_tenant = Tenant::get(&mut conn, current_user.tenant_id).await?;
         let current_user = User::get(&mut conn, current_user.id).await?;
 
-        let tenant_filter = get_tenant_filter(&current_tenant, &settings.tenants.assignment);
+        let tenant_filter = get_tenant_filter(&current_tenant, &settings.raw.tenants.assignment);
 
         let send_email_notification = !query.suppress_email_notification;
 
@@ -470,7 +471,9 @@ impl ControllerBackend {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn create_user_event_invite(
+    settings: &Settings,
     db: &Db,
     authz: &Authz,
     inviter: User,
@@ -520,6 +523,7 @@ async fn create_user_event_invite(
             if send_email_notification {
                 mail_service
                     .send_registered_invite(
+                        settings,
                         inviter,
                         event,
                         room,
@@ -548,7 +552,7 @@ async fn create_user_event_invite(
 /// and then creates an email invite
 #[allow(clippy::too_many_arguments)]
 async fn create_email_event_invite(
-    settings: &SettingsRaw,
+    settings: &Settings,
     db: &Db,
     authz: &Authz,
     kc_admin_client: &KeycloakAdminClient,
@@ -656,6 +660,7 @@ async fn create_email_event_invite(
             if send_email_notification {
                 mail_service
                     .send_registered_invite(
+                        settings,
                         current_user.clone(),
                         event,
                         room,
@@ -707,7 +712,7 @@ async fn create_email_event_invite(
 /// or (if configured) sends an "external" email invite to the given email address
 #[allow(clippy::too_many_arguments)]
 async fn create_invite_to_non_matching_email(
-    settings: &SettingsRaw,
+    settings: &Settings,
     db: &Db,
     authz: &Authz,
     kc_admin_client: &KeycloakAdminClient,
@@ -723,7 +728,7 @@ async fn create_invite_to_non_matching_email(
     shared_folder: Option<SharedFolder>,
     streaming_targets: Vec<RoomStreamingTarget>,
 ) -> Result<bool, CaptureApiError> {
-    let tenant_filter = get_tenant_filter(current_tenant, &settings.tenants.assignment);
+    let tenant_filter = get_tenant_filter(current_tenant, &settings.raw.tenants.assignment);
 
     let invitee_user = kc_admin_client
         .get_user_for_email(tenant_filter, email.as_ref())
@@ -733,7 +738,7 @@ async fn create_invite_to_non_matching_email(
             ApiError::internal()
         })?;
 
-    if invitee_user.is_some() || settings.endpoints.event_invite_external_email_address {
+    if invitee_user.is_some() || settings.raw.endpoints.event_invite_external_email_address {
         let inviter = current_user.clone();
         let invitee_email = email.clone();
 
@@ -758,6 +763,7 @@ async fn create_invite_to_non_matching_email(
                 if let (Some(invitee_user), true) = (invitee_user, send_email_notification) {
                     mail_service
                         .send_unregistered_invite(
+                            settings,
                             inviter,
                             event,
                             room,
@@ -796,6 +802,7 @@ async fn create_invite_to_non_matching_email(
                     if send_email_notification {
                         mail_service
                             .send_external_invite(
+                                settings,
                                 inviter,
                                 event,
                                 room,
@@ -874,7 +881,7 @@ async fn remove_invitee_permissions(
 ///
 /// Notify invited users about the event deletion
 async fn notify_invitees_about_uninvite(
-    settings: &SettingsRaw,
+    settings: &Settings,
     notification_values: UninviteNotificationValues,
     mail_service: &MailService,
     kc_admin_client: &KeycloakAdminClient,
@@ -895,6 +902,7 @@ async fn notify_invitees_about_uninvite(
 
         if let Err(e) = mail_service
             .send_event_uninvite(
+                settings,
                 notification_values.created_by.clone(),
                 notification_values.event.clone(),
                 notification_values.room.clone(),

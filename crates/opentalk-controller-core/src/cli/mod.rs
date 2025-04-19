@@ -120,7 +120,7 @@ pub async fn parse_args<M: RegisterModules>() -> Result<Args> {
     if let Some(sub_command) = args.cmd.clone() {
         let settings_provider =
             SettingsProvider::load(&args.config).whatever_context("Failed to load settings")?;
-        let settings = settings_provider.get_raw();
+        let settings = settings_provider.get();
 
         match sub_command {
             SubCommand::FixAcl(args) => {
@@ -131,7 +131,7 @@ pub async fn parse_args<M: RegisterModules>() -> Result<Args> {
             }
             SubCommand::MigrateDb => {
                 let result =
-                    opentalk_db_storage::migrations::migrate_from_url(&settings.database.url)
+                    opentalk_db_storage::migrations::migrate_from_url(&settings.raw.database.url)
                         .await
                         .whatever_context("Failed to migrate database")?;
                 println!("{result:?}");

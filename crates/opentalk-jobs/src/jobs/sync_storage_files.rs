@@ -5,7 +5,7 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use opentalk_controller_settings::SettingsRaw;
+use opentalk_controller_settings::Settings;
 use opentalk_database::{DatabaseError, Db, DbConnection};
 use opentalk_db_storage::assets::{Asset, UpdateAsset};
 use opentalk_log::{debug, info, warn};
@@ -54,7 +54,7 @@ impl Job for SyncStorageFiles {
         logger: &dyn log::Log,
         db: Arc<Db>,
         _exchange_handle: ExchangeHandle,
-        settings: &SettingsRaw,
+        settings: &Settings,
         parameters: Self::Parameters,
     ) -> Result<(), Error> {
         info!(log: logger, "Starting storage file synchronization job");
@@ -62,7 +62,7 @@ impl Job for SyncStorageFiles {
 
         let mut conn = db.get_conn().await?;
 
-        let object_storage = ObjectStorage::new(&settings.minio).await?;
+        let object_storage = ObjectStorage::new(&settings.raw.minio).await?;
 
         sync_files(
             logger,

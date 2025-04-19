@@ -10,7 +10,7 @@ use etcd_client::{
     Client, Compare, CompareOp, EventType, GetOptions, KeyValue, PutOptions, TxnOp, WatchOptions,
 };
 use log::Log;
-use opentalk_controller_settings::SettingsRaw;
+use opentalk_controller_settings::Settings;
 use opentalk_database::Db;
 use opentalk_db_storage as db;
 use opentalk_signaling_core::ExchangeHandle;
@@ -76,7 +76,7 @@ pub enum ExecutorError {
 /// A handle to interact and monitor the executor task
 pub struct JobExecutorHandle {
     etcd_urls: Vec<String>,
-    settings: Arc<SettingsRaw>,
+    settings: Arc<Settings>,
     db: Arc<Db>,
     exchange_handle: ExchangeHandle,
     /// Handle to the inner JobExecutor task
@@ -94,7 +94,7 @@ impl JobExecutorHandle {
     pub async fn new(
         etcd_urls: Vec<String>,
         db: Arc<Db>,
-        settings: Arc<SettingsRaw>,
+        settings: Arc<Settings>,
         exchange_handle: ExchangeHandle,
     ) -> Self {
         Self {
@@ -160,7 +160,7 @@ impl JobExecutorHandle {
 ///
 /// Jobs are run in sequence to avoid potential collisions between multiple jobs.
 pub(crate) struct JobExecutor {
-    settings: Arc<SettingsRaw>,
+    settings: Arc<Settings>,
     db: Arc<Db>,
     exchange_handle: ExchangeHandle,
     client: Client,
@@ -173,7 +173,7 @@ impl JobExecutor {
     async fn start(
         etcd_urls: Vec<String>,
         db: Arc<Db>,
-        settings: Arc<SettingsRaw>,
+        settings: Arc<Settings>,
         exchange_handle: ExchangeHandle,
     ) -> Result<InnerHandle, ExecutorError> {
         let (shutdown_tx, shutdown_rx) = oneshot::channel();
@@ -557,7 +557,7 @@ struct JobExecutionData<'a> {
     logger: &'a ExecutionLogger,
     db: Arc<Db>,
     exchange_handle: ExchangeHandle,
-    settings: Arc<SettingsRaw>,
+    settings: Arc<Settings>,
     parameters: serde_json::Value,
     timeout: Duration,
     hide_duration: bool,

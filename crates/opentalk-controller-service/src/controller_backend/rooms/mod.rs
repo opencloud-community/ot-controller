@@ -61,7 +61,7 @@ impl ControllerBackend {
         current_user_id: UserId,
         pagination: &PagePaginationQuery,
     ) -> Result<(GetRoomsResponseBody, i64), CaptureApiError> {
-        let settings = self.settings_provider.get_raw();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let accessible_rooms: kustos::AccessibleResources<RoomId> = self
@@ -111,7 +111,7 @@ impl ControllerBackend {
         waiting_room: bool,
         e2e_encryption: bool,
     ) -> Result<RoomResource, CaptureApiError> {
-        let settings = self.settings_provider.get_raw();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         if enable_sip {
@@ -167,7 +167,7 @@ impl ControllerBackend {
         waiting_room: Option<bool>,
         e2e_encryption: Option<bool>,
     ) -> Result<RoomResource, CaptureApiError> {
-        let settings = self.settings_provider.get_raw();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let changeset = UpdateRoom {
@@ -195,7 +195,7 @@ impl ControllerBackend {
         room_id: RoomId,
         force_delete_reference_if_external_services_fail: bool,
     ) -> Result<(), CaptureApiError> {
-        let settings = self.settings_provider.get_raw();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let deleter = RoomDeleter::new(room_id, force_delete_reference_if_external_services_fail);
@@ -216,7 +216,7 @@ impl ControllerBackend {
     }
 
     pub(crate) async fn get_room(&self, room_id: &RoomId) -> Result<RoomResource, CaptureApiError> {
-        let settings = self.settings_provider.get_raw();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let (room, created_by) = Room::get_with_user(&mut conn, *room_id).await?;
@@ -236,14 +236,14 @@ impl ControllerBackend {
         &self,
         room_id: &RoomId,
     ) -> Result<TariffResource, CaptureApiError> {
-        let settings = self.settings_provider.get_raw();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let room = Room::get(&mut conn, *room_id).await?;
         let tariff = room.get_tariff(&mut conn).await?;
 
         let response = tariff.to_tariff_resource(
-            settings.defaults.disabled_features.clone(),
+            settings.raw.defaults.disabled_features.clone(),
             self.module_features.clone(),
         );
 
@@ -254,7 +254,7 @@ impl ControllerBackend {
         &self,
         room_id: &RoomId,
     ) -> Result<GetRoomEventResponseBody, CaptureApiError> {
-        let settings = self.settings_provider.get_raw();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
         let event = Event::get_for_room(&mut conn, *room_id).await?;
@@ -265,7 +265,11 @@ impl ControllerBackend {
 
         match event.as_ref() {
             Some(event) => {
-                let call_in_tel = settings.call_in.as_ref().map(|call_in| call_in.tel.clone());
+                let call_in_tel = settings
+                    .raw
+                    .call_in
+                    .as_ref()
+                    .map(|call_in| call_in.tel.clone());
                 let event_info = build_event_info(
                     &mut conn,
                     call_in_tel,

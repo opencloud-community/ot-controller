@@ -4,7 +4,7 @@
 
 use kustos::Authz;
 use log::Log;
-use opentalk_controller_settings::SettingsRaw;
+use opentalk_controller_settings::Settings;
 use opentalk_database::DbConnection;
 use opentalk_signaling_core::{ExchangeHandle, ObjectStorage};
 use opentalk_types_common::users::UserId;
@@ -35,7 +35,7 @@ pub trait Deleter: Sync {
         authz: &Authz,
         user_id: Option<UserId>,
         exchange_handle: ExchangeHandle,
-        settings: &SettingsRaw,
+        settings: &Settings,
         object_storage: &ObjectStorage,
     ) -> Result<(), Error> {
         let prepared_commit = self.prepare_commit(logger, conn).await?;
@@ -85,7 +85,7 @@ pub trait Deleter: Sync {
         _logger: &dyn Log,
         _conn: &mut DbConnection,
         _exchange_handle: ExchangeHandle,
-        _settings: &SettingsRaw,
+        _settings: &Settings,
     ) -> Result<(), Error> {
         Ok(())
     }
@@ -103,7 +103,7 @@ pub trait Deleter: Sync {
         &self,
         _commit_output: Self::CommitOutput,
         _logger: &dyn Log,
-        _settings: &SettingsRaw,
+        _settings: &Settings,
         _authz: &Authz,
         _storage: &ObjectStorage,
     ) -> Result<(), Error> {

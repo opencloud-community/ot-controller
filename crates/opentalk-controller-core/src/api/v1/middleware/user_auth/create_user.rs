@@ -4,7 +4,7 @@
 
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
 use opentalk_controller_service::{oidc::OpenIdConnectUserInfo, phone_numbers::parse_phone_number};
-use opentalk_controller_settings::SettingsRaw;
+use opentalk_controller_settings::Settings;
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::DbConnection;
 use opentalk_db_storage::{
@@ -26,7 +26,7 @@ use super::{build_info_display_name, LoginResult};
 ///
 /// Returns the created user, their groups and all events they are invited to.
 pub(super) async fn create_user(
-    settings: &SettingsRaw,
+    settings: &Settings,
     conn: &mut DbConnection,
     info: OpenIdConnectUserInfo,
     tenant: &Tenant,
@@ -36,8 +36,11 @@ pub(super) async fn create_user(
 ) -> Result<LoginResult, CaptureApiError> {
     let info_display_name = build_info_display_name(&info);
 
-    let phone_number = if let Some((call_in, phone_number)) =
-        settings.call_in.as_ref().zip(info.phone_number.as_deref())
+    let phone_number = if let Some((call_in, phone_number)) = settings
+        .raw
+        .call_in
+        .as_ref()
+        .zip(info.phone_number.as_deref())
     {
         parse_phone_number(phone_number, call_in.default_country_code)
             .map(|p| p.format().mode(phonenumber::Mode::E164).to_string())
@@ -56,7 +59,7 @@ pub(super) async fn create_user(
                 lastname: info.lastname,
                 avatar_url: info.avatar_url,
                 // TODO: try to get user language from accept-language header
-                language: settings.defaults.user_language.clone(),
+                language: settings.raw.defaults.user_language.clone(),
                 phone: phone_number,
                 tenant_id: tenant.id,
                 tariff_id: tariff.id,

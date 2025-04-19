@@ -17,11 +17,11 @@ impl ControllerBackend {
         &self,
         body: PostRecordingStartRequestBody,
     ) -> Result<PostServiceStartResponseBody, CaptureApiError> {
-        let settings = self.settings_provider.get_raw();
+        let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
         let mut volatile = self.volatile.clone();
 
-        if settings.rabbit_mq.recording_task_queue.is_none() {
+        if settings.raw.rabbit_mq.recording_task_queue.is_none() {
             return Err(ApiError::not_found().into());
         }
 

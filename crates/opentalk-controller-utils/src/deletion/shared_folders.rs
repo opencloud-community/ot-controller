@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use log::Log;
-use opentalk_controller_settings::SettingsRaw;
+use opentalk_controller_settings::Settings;
 use opentalk_db_storage::events::shared_folders::EventSharedFolder;
 use opentalk_log::{debug, warn};
 use opentalk_nextcloud_client::ShareId;
@@ -14,7 +14,7 @@ use super::error::Error;
 /// Delete a list of shared folders from the remote system and the database
 pub async fn delete_shared_folders(
     logger: &dyn Log,
-    settings: &SettingsRaw,
+    settings: &Settings,
     shared_folders: &[EventSharedFolder],
     fail_on_error: bool,
 ) -> Result<(), Error> {
@@ -28,6 +28,7 @@ pub async fn delete_shared_folders(
 
     debug!(log: logger, "Reading shared folder settings");
     let shared_folder_settings = settings
+        .raw
         .shared_folder
         .as_ref()
         .ok_or(Error::SharedFoldersNotConfigured)?;

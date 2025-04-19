@@ -7,7 +7,7 @@
 use std::sync::Arc;
 
 use kustos::prelude::AccessMethod;
-use opentalk_controller_settings::SettingsRaw;
+use opentalk_controller_settings::Settings;
 use opentalk_database::Db;
 use snafu::ResultExt;
 
@@ -17,7 +17,7 @@ use crate::{
     Result,
 };
 
-pub(crate) async fn acl(settings: &SettingsRaw, e: AclSubCommand) -> Result<()> {
+pub(crate) async fn acl(settings: &Settings, e: AclSubCommand) -> Result<()> {
     match e {
         AclSubCommand::UsersHaveAccessToAllRooms { action } => match action {
             super::EnableDisable::Enable => enable_user_access_to_all_rooms(settings).await?,
@@ -27,9 +27,9 @@ pub(crate) async fn acl(settings: &SettingsRaw, e: AclSubCommand) -> Result<()> 
     Ok(())
 }
 
-async fn enable_user_access_to_all_rooms(settings: &SettingsRaw) -> Result<()> {
+async fn enable_user_access_to_all_rooms(settings: &Settings) -> Result<()> {
     let db = Arc::new(
-        Db::connect(&settings.database).whatever_context("Failed to connect to database")?,
+        Db::connect(&settings.raw.database).whatever_context("Failed to connect to database")?,
     );
     let authz = kustos::Authz::new(db.clone())
         .await
@@ -42,9 +42,9 @@ async fn enable_user_access_to_all_rooms(settings: &SettingsRaw) -> Result<()> {
     Ok(())
 }
 
-async fn disable_user_access_to_all_rooms(settings: &SettingsRaw) -> Result<()> {
+async fn disable_user_access_to_all_rooms(settings: &Settings) -> Result<()> {
     let db = Arc::new(
-        Db::connect(&settings.database).whatever_context("Failed to connect to database")?,
+        Db::connect(&settings.raw.database).whatever_context("Failed to connect to database")?,
     );
     let authz = kustos::Authz::new(db.clone())
         .await

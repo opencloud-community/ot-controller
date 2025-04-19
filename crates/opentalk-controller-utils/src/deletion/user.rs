@@ -7,7 +7,7 @@
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
 use kustos::Authz;
 use log::Log;
-use opentalk_controller_settings::SettingsRaw;
+use opentalk_controller_settings::Settings;
 use opentalk_database::{DatabaseError, DbConnection};
 use opentalk_db_storage::{groups::remove_user_from_all_groups, users::User};
 use opentalk_log::debug;
@@ -58,7 +58,7 @@ impl Deleter for UserDeleter {
         _logger: &dyn Log,
         _conn: &mut DbConnection,
         _exchange_handle: ExchangeHandle,
-        _settings: &SettingsRaw,
+        _settings: &Settings,
     ) -> Result<(), Error> {
         Ok(())
     }
@@ -91,7 +91,7 @@ impl Deleter for UserDeleter {
         &self,
         _commit_output: (),
         _logger: &dyn Log,
-        _settings: &SettingsRaw,
+        _settings: &Settings,
         authz: &Authz,
         _storage: &ObjectStorage,
     ) -> Result<(), Error> {

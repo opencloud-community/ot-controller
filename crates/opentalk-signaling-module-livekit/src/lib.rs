@@ -201,13 +201,13 @@ impl SignalingModule for Livekit {
             api_secret,
             service_url,
             ..
-        } = &init.startup_settings.livekit;
+        } = &init.startup_settings.raw.livekit;
 
         let room_client = RoomClient::with_api_key(service_url, api_key, api_secret);
 
         Ok(Some(Arc::new(LivekitParams {
             settings_provider: init.settings_provider.clone(),
-            livekit_settings: init.startup_settings.livekit.clone(),
+            livekit_settings: init.startup_settings.raw.livekit.clone(),
             room_client,
         })))
     }
@@ -565,7 +565,8 @@ impl Livekit {
         let allow_screenshare = !self
             .params
             .settings_provider
-            .get_raw()
+            .get()
+            .raw
             .defaults
             .screen_share_requires_permission;
 

@@ -30,7 +30,7 @@ use opentalk_controller_service::{
 use opentalk_controller_service_facade::RequestUser;
 use opentalk_controller_settings::{
     settings_file::{TariffAssignment, TariffStatusMapping, TenantAssignment},
-    SettingsProvider, SettingsRaw,
+    Settings, SettingsProvider,
 };
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::{Db, OptionalExt};
@@ -175,7 +175,7 @@ where
 
         Box::pin(
             async move {
-                let settings = settings_provider.get_raw();
+                let settings = settings_provider.get();
 
                 match access_token_or_invite_code {
                     AccessTokenOrInviteCode::AccessToken(access_token) => match check_access_token(
@@ -235,7 +235,7 @@ fn build_request_user(user: User) -> RequestUser {
 
 #[tracing::instrument(skip_all)]
 pub async fn check_access_token(
-    settings: &SettingsRaw,
+    settings: &Settings,
     authz: &kustos::Authz,
     db: Data<Db>,
     oidc_ctx: Data<OidcContext>,
@@ -340,7 +340,7 @@ async fn verify_access_token(
 
 /// Fetches all associated user data of the access token
 async fn check_access_token_inner(
-    settings: &SettingsRaw,
+    settings: &Settings,
     authz: &kustos::Authz,
     db: Data<Db>,
     oidc_ctx: Data<OidcContext>,
@@ -351,7 +351,7 @@ async fn check_access_token_inner(
     let mut conn = db.get_conn().await?;
 
     // Get tariff depending on the configured assignment
-    let (tariff, tariff_status) = match &settings.tariffs.assignment {
+    let (tariff, tariff_status) = match &settings.raw.tariffs.assignment {
         TariffAssignment::Static { static_tariff_name } => (
             Tariff::get_by_name(&mut conn, static_tariff_name).await?,
             TariffStatus::Default,
@@ -373,7 +373,7 @@ async fn check_access_token_inner(
                             .with_message("JWT contained unknown tariff_id")
                     })?;
 
-            if let Some(mapping) = settings.tariffs.status_mapping.as_ref() {
+            if let Some(mapping) = settings.raw.tariffs.status_mapping.as_ref() {
                 let status_name = info.tariff_status.clone().ok_or_else(|| {
                     ApiError::bad_request()
                         .with_code("invalid_claims")
@@ -401,7 +401,7 @@ async fn check_access_token_inner(
     };
 
     // Get the tenant_id depending on the configured assignment
-    let tenant_id = match &settings.tenants.assignment {
+    let tenant_id = match &settings.raw.tenants.assignment {
         TenantAssignment::Static { static_tenant_id } => static_tenant_id.clone(),
         TenantAssignment::ByExternalTenantId { .. } => info.tenant_id.clone().ok_or_else(|| {
             log::error!("Invalid access token, missing tenant_id");

@@ -12,7 +12,7 @@ use chrono::Utc;
 use clap::Subcommand;
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
 use itertools::Itertools;
-use opentalk_controller_settings::SettingsRaw;
+use opentalk_controller_settings::Settings;
 use opentalk_database::{DatabaseError, Db, DbConnection};
 use opentalk_db_storage::{
     tariffs::{ExternalTariff, ExternalTariffId, NewTariff, Tariff, UpdateTariff},
@@ -106,7 +106,7 @@ fn parse_quota(s: &str) -> Result<(QuotaType, u64), CliParameterError> {
     Ok((QuotaType::from_str(name).expect("Infallible"), value))
 }
 
-pub async fn handle_command(settings: &SettingsRaw, command: Command) -> Result<(), DatabaseError> {
+pub async fn handle_command(settings: &Settings, command: Command) -> Result<(), DatabaseError> {
     match command {
         Command::List => list_all_tariffs(settings).await,
         Command::Create {
@@ -157,8 +157,8 @@ pub async fn handle_command(settings: &SettingsRaw, command: Command) -> Result<
     }
 }
 
-async fn list_all_tariffs(settings: &SettingsRaw) -> Result<(), DatabaseError> {
-    let db = Db::connect(&settings.database)?;
+async fn list_all_tariffs(settings: &Settings) -> Result<(), DatabaseError> {
+    let db = Db::connect(&settings.raw.database)?;
     let mut conn = db.get_conn().await?;
 
     let tariffs = Tariff::get_all(&mut conn).await?;
@@ -167,14 +167,14 @@ async fn list_all_tariffs(settings: &SettingsRaw) -> Result<(), DatabaseError> {
 }
 
 async fn create_tariff(
-    settings: &SettingsRaw,
+    settings: &Settings,
     name: String,
     external_tariff_id: String,
     disabled_modules: BTreeSet<ModuleId>,
     disabled_features: BTreeSet<ModuleFeatureId>,
     quotas: BTreeMap<QuotaType, u64>,
 ) -> Result<(), DatabaseError> {
-    let db = Db::connect(&settings.database)?;
+    let db = Db::connect(&settings.raw.database)?;
     let mut conn = db.get_conn().await?;
 
     conn.transaction(|conn| async move {
@@ -202,8 +202,8 @@ async fn create_tariff(
     .scope_boxed()).await
 }
 
-async fn delete_tariff(settings: &SettingsRaw, name: String) -> Result<(), DatabaseError> {
-    let db = Db::connect(&settings.database)?;
+async fn delete_tariff(settings: &Settings, name: String) -> Result<(), DatabaseError> {
+    let db = Db::connect(&settings.raw.database)?;
     let mut conn = db.get_conn().await?;
 
     conn.transaction(|conn| {
@@ -223,7 +223,7 @@ async fn delete_tariff(settings: &SettingsRaw, name: String) -> Result<(), Datab
 
 #[allow(clippy::too_many_arguments)]
 async fn edit_tariff(
-    settings: &SettingsRaw,
+    settings: &Settings,
     name: String,
     set_name: Option<String>,
     add_external_tariff_ids: Vec<String>,
@@ -235,7 +235,7 @@ async fn edit_tariff(
     add_quotas: BTreeMap<QuotaType, u64>,
     remove_quotas: Vec<QuotaType>,
 ) -> Result<(), DatabaseError> {
-    let db = Db::connect(&settings.database)?;
+    let db = Db::connect(&settings.raw.database)?;
     let mut conn = db.get_conn().await?;
 
     conn.transaction(|conn| {

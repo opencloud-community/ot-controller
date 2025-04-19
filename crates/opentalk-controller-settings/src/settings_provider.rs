@@ -38,17 +38,6 @@ impl SettingsProvider {
     /// The returned settings will remain unchanged even if the settings are
     /// reloaded by the [`SettingsProvider`]. A new [`Arc`] will be created
     /// internally by the `reload` function. This allows consistent use of a
-    /// "snapshot" inside a function by calling `get` once, and then using
-    /// the returned value.
-    pub fn get_raw(&self) -> Arc<SettingsRaw> {
-        self.get().settings_raw.clone()
-    }
-
-    /// Get an `[Arc]` holding the current raw settings.
-    ///
-    /// The returned settings will remain unchanged even if the settings are
-    /// reloaded by the [`SettingsProvider`]. A new [`Arc`] will be created
-    /// internally by the `reload` function. This allows consistent use of a
     /// "snapshot" inside a function by calling `get_raw` once, and then using
     /// the returned value.
     pub fn get(&self) -> Arc<Settings> {
@@ -251,7 +240,7 @@ mod tests {
             SettingsProvider::load(path.to_str().expect("valid file path expected"))
                 .expect("valid configuration expected");
 
-        assert_eq!(&(*settings_provider.get_raw()), &minimum_config());
+        assert_eq!(&(*settings_provider.get().raw), &minimum_config());
     }
 
     #[test]
@@ -305,13 +294,13 @@ mod tests {
             SettingsProvider::load(modified_path.to_str().expect("valid file path expected"))
                 .expect("valid configuration expected");
 
-        assert_ne!(&(*settings_provider.get_raw()), &minimum_config());
+        assert_ne!(&(*settings_provider.get().raw), &minimum_config());
 
         settings_provider
             .reload(minimal_path.to_str().expect("valid file path expected"))
             .expect("reload is expected to succeed");
 
-        assert_eq!(&(*settings_provider.get_raw()), &minimum_config());
+        assert_eq!(&(*settings_provider.get().raw), &minimum_config());
     }
 
     #[test]
@@ -334,7 +323,7 @@ mod tests {
             SettingsProvider::load(minimal_path.to_str().expect("valid file path expected"))
                 .expect("valid configuration expected");
 
-        assert_eq!(&(*settings_provider.get_raw()), &minimum_config());
+        assert_eq!(&(*settings_provider.get().raw), &minimum_config());
 
         assert_matches!(
             settings_provider.reload(invalid_path.to_str().expect("valid file path expected")),
@@ -344,6 +333,6 @@ mod tests {
             })
         );
 
-        assert_eq!(&(*settings_provider.get_raw()), &minimum_config());
+        assert_eq!(&(*settings_provider.get().raw), &minimum_config());
     }
 }

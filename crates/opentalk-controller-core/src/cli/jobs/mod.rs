@@ -7,7 +7,7 @@ use std::{sync::Arc, time::Duration};
 use clap::Subcommand;
 use lapin_pool::RabbitMqPool;
 use log::Log;
-use opentalk_controller_settings::SettingsRaw;
+use opentalk_controller_settings::Settings;
 use opentalk_database::Db;
 use opentalk_jobs::Job;
 use opentalk_signaling_core::{ExchangeHandle, ExchangeTask};
@@ -62,7 +62,7 @@ pub enum Command {
     },
 }
 
-pub async fn handle_command(settings: &SettingsRaw, command: Command) -> Result<()> {
+pub async fn handle_command(settings: &Settings, command: Command) -> Result<()> {
     match command {
         Command::Execute {
             job_type,
@@ -75,14 +75,14 @@ pub async fn handle_command(settings: &SettingsRaw, command: Command) -> Result<
 }
 
 async fn execute_job(
-    settings: &SettingsRaw,
+    settings: &Settings,
     job_type: JobType,
     parameters: String,
     timeout: u64,
     hide_duration: bool,
 ) -> Result<()> {
     let db = Arc::new(
-        Db::connect(&settings.database).whatever_context("Failed to connect to database")?,
+        Db::connect(&settings.raw.database).whatever_context("Failed to connect to database")?,
     );
 
     ensure_whatever!(timeout > 0, "Timeout must be a strictly positive number");
@@ -95,9 +95,9 @@ async fn execute_job(
     ensure_whatever!(parameters.is_object(), "Parameters must be a JSON object");
 
     let rabbitmq_pool = RabbitMqPool::from_config(
-        &settings.rabbit_mq.url,
-        settings.rabbit_mq.min_connections,
-        settings.rabbit_mq.max_channels_per_connection,
+        &settings.raw.rabbit_mq.url,
+        settings.raw.rabbit_mq.min_connections,
+        settings.raw.rabbit_mq.max_channels_per_connection,
     );
 
     let exchange_handle = ExchangeTask::spawn_with_rabbitmq(rabbitmq_pool.clone())
@@ -199,7 +199,7 @@ struct JobExecutionData<'a> {
     logger: &'a dyn Log,
     db: Arc<Db>,
     exchange_handle: ExchangeHandle,
-    settings: &'a SettingsRaw,
+    settings: &'a Settings,
     parameters: serde_json::Value,
     timeout: Duration,
     hide_duration: bool,

@@ -8,7 +8,7 @@ use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
 use kustos::{Authz, Resource as _, ResourceId};
 use kustos_shared::access::AccessMethod;
 use log::Log;
-use opentalk_controller_settings::SettingsRaw;
+use opentalk_controller_settings::Settings;
 use opentalk_database::{DatabaseError, DbConnection};
 use opentalk_db_storage::{
     assets::Asset,
@@ -135,7 +135,7 @@ impl Deleter for EventDeleter {
         logger: &dyn Log,
         conn: &mut DbConnection,
         exchange_handle: ExchangeHandle,
-        settings: &SettingsRaw,
+        settings: &Settings,
     ) -> Result<(), Error> {
         let event = Event::get(conn, self.event_id).await?;
         let room_id = event.room;
@@ -209,7 +209,7 @@ impl Deleter for EventDeleter {
         &self,
         commit_output: EventDeleterCommitOutput,
         logger: &dyn Log,
-        _settings: &SettingsRaw,
+        _settings: &Settings,
         authz: &Authz,
         storage: &ObjectStorage,
     ) -> Result<(), Error> {
