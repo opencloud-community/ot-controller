@@ -1562,36 +1562,14 @@ dependencies = [
 
 [[package]]
 name = "chrono-tz"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93698b29de5e97ad0ae26447b344c482a7284c737d9ddc5f9e52b74a336671bb"
-dependencies = [
- "chrono",
- "chrono-tz-build 0.3.0",
- "phf",
-]
-
-[[package]]
-name = "chrono-tz"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c6ac4f2c0bf0f44e9161aec9675e1050aa4a530663c4a9e37e108fa948bca9f"
 dependencies = [
  "chrono",
- "chrono-tz-build 0.4.0",
+ "chrono-tz-build",
  "phf",
  "serde",
-]
-
-[[package]]
-name = "chrono-tz-build"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c088aee841df9c3041febbb73934cfc39708749bf96dc827e3359cd39ef11b1"
-dependencies = [
- "parse-zoneinfo",
- "phf",
- "phf_codegen",
 ]
 
 [[package]]
@@ -5400,7 +5378,7 @@ dependencies = [
  "base64 0.22.1",
  "bytes",
  "chrono",
- "chrono-tz 0.10.1",
+ "chrono-tz",
  "diesel-async",
  "either",
  "futures",
@@ -5540,7 +5518,7 @@ dependencies = [
  "barrel",
  "bigdecimal",
  "chrono",
- "chrono-tz 0.10.1",
+ "chrono-tz",
  "derive_more 2.0.1",
  "diesel",
  "diesel-async",
@@ -5730,7 +5708,7 @@ name = "opentalk-report-generation"
 version = "0.29.0"
 dependencies = [
  "chrono",
- "chrono-tz 0.10.1",
+ "chrono-tz",
  "ecow",
  "log",
  "pretty_assertions",
@@ -5940,7 +5918,7 @@ dependencies = [
  "async-trait",
  "bytes",
  "chrono",
- "chrono-tz 0.10.1",
+ "chrono-tz",
  "either",
  "futures",
  "insta",
@@ -6070,7 +6048,7 @@ dependencies = [
  "async-trait",
  "bytes",
  "chrono",
- "chrono-tz 0.10.1",
+ "chrono-tz",
  "either",
  "futures",
  "insta",
@@ -6157,7 +6135,7 @@ dependencies = [
  "base64 0.22.1",
  "bincode 2.0.1",
  "chrono",
- "chrono-tz 0.10.1",
+ "chrono-tz",
  "derive_more 2.0.1",
  "http 0.2.12",
  "http 1.2.0",
@@ -6180,7 +6158,7 @@ dependencies = [
  "actix-web-httpauth",
  "bytes",
  "chrono",
- "chrono-tz 0.10.1",
+ "chrono-tz",
  "clap",
  "derive_more 2.0.1",
  "diesel",
@@ -7987,16 +7965,15 @@ checksum = "6c20b6793b5c2fa6553b250154b78d6d0db37e72700ae35fad9387a46f487c97"
 
 [[package]]
 name = "rrule"
-version = "0.13.0"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cff1ca93145ff07cdc878b5f6bb90391a299cc8712538af0ad73ebf37613e46a"
+checksum = "720acfb4980b9d8a6a430f6d7a11933e701ebbeba5eee39cc9d8c5f932aaff74"
 dependencies = [
  "chrono",
- "chrono-tz 0.9.0",
- "lazy_static",
+ "chrono-tz",
  "log",
  "regex",
- "thiserror 1.0.69",
+ "thiserror 2.0.12",
 ]
 
 [[package]]

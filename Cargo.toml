@@ -134,7 +134,7 @@ redis-args = "0.19"
 reqwest = { version = "0.12", default-features = false }
 reqwest11 = { package = "reqwest", version = "0.11", default-features = false }
 ring = "0.17"
-rrule = "0.13"
+rrule = "0.14"
 rustc-hash = "2.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
