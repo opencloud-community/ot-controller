@@ -15,7 +15,7 @@ use openidconnect::{
 };
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_types_api_v1::error::ApiError;
-use opentalk_types_common::time::TimeZone;
+use opentalk_types_common::{time::TimeZone, users::Language};
 use provider::ProviderClient;
 use snafu::{OptionExt, ResultExt, Whatever};
 use url::Url;
@@ -128,16 +128,32 @@ impl OidcContext {
             .await
             .whatever_context::<_, Whatever>("Failed to fetch userinfo")?;
 
+        let locale_parse_result = claims.locale().map(|loc| (loc, loc.parse()));
+        let locale: Option<Language> = match locale_parse_result {
+            // Locale exists and has correct BCP47 format
+            Some((_, Ok(lang))) => Some(lang),
+            // Locale exists but has wrong format
+            Some((loc, Err(_))) => {
+                log::warn!(
+                    "Invalid locale value in token for OIDC sub {}: \"{}\"",
+                    claims.subject().as_str(),
+                    loc.as_str(),
+                );
+                None
+            }
+            None => None,
+        };
+
         let timezone_parse_result = claims.zoneinfo().map(|zi| (zi, zi.parse()));
         let timezone: Option<TimeZone> = match timezone_parse_result {
             // Zoneinfo exists and has correct IANA format
             Some((_, Ok(tz))) => Some(tz),
             // Zoneinfo exists but has wrong format
-            Some((tz, Err(_))) => {
+            Some((zi, Err(_))) => {
                 log::warn!(
                     "Invalid zoneinfo value in token for OIDC sub {}: \"{}\"",
                     claims.subject().as_str(),
-                    tz.as_str(),
+                    zi.as_str(),
                 );
                 None
             }
@@ -179,6 +195,7 @@ impl OidcContext {
             firstname: expect_present_localized(claims.given_name(), "given_name")?.to_string(),
             lastname: expect_present_localized(claims.family_name(), "family_name")?.to_string(),
             avatar_url: optional(claims.picture()),
+            locale,
             timezone,
             groups: claims.additional_claims().x_grp.clone(),
             phone_number: claims
@@ -230,6 +247,8 @@ pub struct OpenIdConnectUserInfo {
     pub lastname: String,
     /// The URL to get the avatar from
     pub avatar_url: Option<String>,
+    /// The locale of the user
+    pub locale: Option<Language>,
     /// The timezone of the user
     pub timezone: Option<TimeZone>,
     /// The groups

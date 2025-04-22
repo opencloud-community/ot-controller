@@ -45,7 +45,7 @@ use opentalk_types_common::{
     rooms::{invite_codes::InviteCode, RoomId},
     tariffs::TariffStatus,
     tenants::TenantId,
-    users::{DisplayName, GroupName},
+    users::{DisplayName, GroupName, Language},
 };
 use snafu::Report;
 use tracing_futures::Instrument;
@@ -54,7 +54,9 @@ use uuid::Uuid;
 use crate::{
     api::v1::{
         events::EventPoliciesBuilderExt,
-        middleware::user_auth::bearer_or_invite_code::BearerOrInviteCode,
+        middleware::{
+            locale::get_request_locale, user_auth::bearer_or_invite_code::BearerOrInviteCode,
+        },
         response::error::CacheableApiError,
     },
     caches::Caches,
@@ -172,9 +174,14 @@ where
             }
         };
 
+        let requested_locale = get_request_locale(&req);
+
         Box::pin(
             async move {
                 let settings = settings_provider.get();
+
+                let fallback_locale =
+                    requested_locale.unwrap_or_else(|| settings.defaults.user_language.clone());
 
                 match access_token_or_invite_code {
                     AccessTokenOrInviteCode::AccessToken(access_token) => match check_access_token(
@@ -184,6 +191,7 @@ where
                         oidc_ctx,
                         &caches.user_access_tokens,
                         &access_token,
+                        fallback_locale,
                     )
                     .await
                     {
@@ -240,6 +248,7 @@ pub async fn check_access_token(
     oidc_ctx: Data<OidcContext>,
     cache: &UserAccessTokenCache,
     access_token: &AccessToken,
+    fallback_locale: Language,
 ) -> Result<(Tenant, User), CaptureApiError> {
     // Search for cached results
     if let Ok(Some(result)) = cache.get(access_token.secret()).await {
@@ -260,7 +269,8 @@ pub async fn check_access_token(
         let token_ttl = expires_at - Utc::now();
 
         let check_result =
-            check_access_token_inner(settings, authz, db, oidc_ctx, access_token).await;
+            check_access_token_inner(settings, authz, db, oidc_ctx, access_token, fallback_locale)
+                .await;
 
         match check_result {
             Ok((tenant, user)) => {
@@ -344,6 +354,7 @@ async fn check_access_token_inner(
     db: Data<Db>,
     oidc_ctx: Data<OidcContext>,
     access_token: &AccessToken,
+    fallback_locale: Language,
 ) -> Result<(Tenant, User), CaptureApiError> {
     let info = oidc_ctx.user_info(access_token.clone()).await?;
 
@@ -442,6 +453,7 @@ async fn check_access_token_inner(
                 groups,
                 tariff,
                 tariff_status,
+                fallback_locale,
             )
             .await?
         }
