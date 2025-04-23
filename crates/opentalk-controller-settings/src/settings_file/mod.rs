@@ -5,7 +5,7 @@
 mod authz;
 mod avatar;
 mod call_in;
-pub(crate) mod database;
+mod database;
 mod defaults;
 mod endpoints;
 mod etcd;
@@ -45,7 +45,7 @@ mod users_find_behavior;
 pub use authz::Authz;
 pub use avatar::Avatar;
 pub use call_in::CallIn;
-pub use database::Database;
+pub(crate) use database::Database;
 pub use defaults::Defaults;
 pub use endpoints::Endpoints;
 pub use etcd::Etcd;

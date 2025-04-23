@@ -35,9 +35,7 @@ impl std::fmt::Debug for Db {
 impl Db {
     /// Creates a new Db instance from the specified database settings.
     #[tracing::instrument(skip(db_settings))]
-    pub fn connect(
-        db_settings: &opentalk_controller_settings::settings_file::Database,
-    ) -> crate::Result<Self> {
+    pub fn connect(db_settings: &opentalk_controller_settings::Database) -> crate::Result<Self> {
         Self::connect_url(&db_settings.url, db_settings.max_connections)
     }
 

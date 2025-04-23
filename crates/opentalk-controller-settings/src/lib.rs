@@ -41,7 +41,7 @@ pub use settings_error::SettingsError;
 pub use settings_file::SettingsRaw;
 pub use settings_provider::SettingsProvider;
 pub use settings_runtime::{
-    Http, HttpTls, Oidc, OidcController, OidcFrontend, Settings, UserSearchBackend,
+    Database, Http, HttpTls, Oidc, OidcController, OidcFrontend, Settings, UserSearchBackend,
     UserSearchBackendKeycloak,
 };
 

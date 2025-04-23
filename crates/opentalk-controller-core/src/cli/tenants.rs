@@ -51,7 +51,7 @@ impl TenantTableRow {
 
 /// Implementation of the `opentalk-controller tenants list` command
 async fn list_all_tenants(settings: &Settings) -> Result<(), DatabaseError> {
-    let db = Db::connect(&settings.raw.database)?;
+    let db = Db::connect(&settings.database)?;
     let mut conn = db.get_conn().await?;
 
     let tenants = Tenant::get_all(&mut conn).await?;
@@ -71,7 +71,7 @@ async fn set_oidc_id(
     id: TenantId,
     new_oidc_id: OidcTenantId,
 ) -> Result<(), DatabaseError> {
-    let db = Db::connect(&settings.raw.database)?;
+    let db = Db::connect(&settings.database)?;
     let mut conn = db.get_conn().await?;
 
     let tenant = Tenant::get(&mut conn, id).await?;

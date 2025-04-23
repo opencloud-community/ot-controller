@@ -18,6 +18,7 @@
     unused_results
 )]
 
+mod database;
 mod http;
 mod http_tls;
 mod oidc;
@@ -28,6 +29,7 @@ mod settings;
 mod user_search_backend;
 mod user_search_backend_keycloak;
 
+pub use database::Database;
 pub use http::Http;
 pub use http_tls::HttpTls;
 pub use oidc::Oidc;

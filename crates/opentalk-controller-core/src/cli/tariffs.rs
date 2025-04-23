@@ -158,7 +158,7 @@ pub async fn handle_command(settings: &Settings, command: Command) -> Result<(),
 }
 
 async fn list_all_tariffs(settings: &Settings) -> Result<(), DatabaseError> {
-    let db = Db::connect(&settings.raw.database)?;
+    let db = Db::connect(&settings.database)?;
     let mut conn = db.get_conn().await?;
 
     let tariffs = Tariff::get_all(&mut conn).await?;
@@ -174,7 +174,7 @@ async fn create_tariff(
     disabled_features: BTreeSet<ModuleFeatureId>,
     quotas: BTreeMap<QuotaType, u64>,
 ) -> Result<(), DatabaseError> {
-    let db = Db::connect(&settings.raw.database)?;
+    let db = Db::connect(&settings.database)?;
     let mut conn = db.get_conn().await?;
 
     conn.transaction(|conn| async move {
@@ -203,7 +203,7 @@ async fn create_tariff(
 }
 
 async fn delete_tariff(settings: &Settings, name: String) -> Result<(), DatabaseError> {
-    let db = Db::connect(&settings.raw.database)?;
+    let db = Db::connect(&settings.database)?;
     let mut conn = db.get_conn().await?;
 
     conn.transaction(|conn| {
@@ -235,7 +235,7 @@ async fn edit_tariff(
     add_quotas: BTreeMap<QuotaType, u64>,
     remove_quotas: Vec<QuotaType>,
 ) -> Result<(), DatabaseError> {
-    let db = Db::connect(&settings.raw.database)?;
+    let db = Db::connect(&settings.database)?;
     let mut conn = db.get_conn().await?;
 
     conn.transaction(|conn| {

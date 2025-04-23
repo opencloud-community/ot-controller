@@ -280,7 +280,7 @@ impl Controller {
         let metrics = metrics::CombinedMetrics::try_init()
             .whatever_context("Failed to initialize metrics")?;
 
-        opentalk_db_storage::migrations::migrate_from_url(&settings.raw.database.url)
+        opentalk_db_storage::migrations::migrate_from_url(&settings.database.url)
             .await
             .whatever_context("Failed to migrate database")?;
 
@@ -305,8 +305,8 @@ impl Controller {
         };
 
         // Connect to postgres
-        let mut db = Db::connect(&settings.raw.database)
-            .whatever_context("Failed to connect to database")?;
+        let mut db =
+            Db::connect(&settings.database).whatever_context("Failed to connect to database")?;
         db.set_metrics(metrics.database.clone());
         let db = Arc::new(db);
 
