@@ -302,6 +302,7 @@ impl SignalingModule for Recording {
         if let Some(queue) = init
             .settings_provider
             .get()
+            .raw
             .rabbit_mq
             .recording_task_queue
             .clone()

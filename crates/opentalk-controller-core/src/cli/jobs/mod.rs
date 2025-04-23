@@ -82,7 +82,7 @@ async fn execute_job(
     hide_duration: bool,
 ) -> Result<()> {
     let db = Arc::new(
-        Db::connect(&settings.database).whatever_context("Failed to connect to database")?,
+        Db::connect(&settings.raw.database).whatever_context("Failed to connect to database")?,
     );
 
     ensure_whatever!(timeout > 0, "Timeout must be a strictly positive number");
@@ -95,9 +95,9 @@ async fn execute_job(
     ensure_whatever!(parameters.is_object(), "Parameters must be a JSON object");
 
     let rabbitmq_pool = RabbitMqPool::from_config(
-        &settings.rabbit_mq.url,
-        settings.rabbit_mq.min_connections,
-        settings.rabbit_mq.max_channels_per_connection,
+        &settings.raw.rabbit_mq.url,
+        settings.raw.rabbit_mq.min_connections,
+        settings.raw.rabbit_mq.max_channels_per_connection,
     );
 
     let exchange_handle = ExchangeTask::spawn_with_rabbitmq(rabbitmq_pool.clone())

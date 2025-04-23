@@ -101,7 +101,7 @@ pub struct ControllerBackend {
     volatile: VolatileStorage,
     exchange_handle: ExchangeHandle,
     mail_service: MailService,
-    kc_admin_client: Arc<KeycloakAdminClient>,
+    user_search_client: Arc<Option<KeycloakAdminClient>>,
     module_features: BTreeMap<ModuleId, BTreeSet<FeatureId>>,
 }
 
@@ -117,7 +117,7 @@ impl ControllerBackend {
         volatile: VolatileStorage,
         exchange_handle: ExchangeHandle,
         mail_service: MailService,
-        kc_admin_client: Arc<KeycloakAdminClient>,
+        user_search_client: Arc<Option<KeycloakAdminClient>>,
         module_features: BTreeMap<ModuleId, BTreeSet<FeatureId>>,
     ) -> Self {
         Self {
@@ -129,7 +129,7 @@ impl ControllerBackend {
             volatile,
             exchange_handle,
             mail_service,
-            kc_admin_client,
+            user_search_client,
             module_features,
         }
     }

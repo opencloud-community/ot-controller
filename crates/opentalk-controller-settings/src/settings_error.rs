@@ -24,4 +24,10 @@ pub enum SettingsError {
 
     #[snafu(display("Inconsistent configuration for OIDC and user search, check [keycloak], [endpoints], [oidc] and [user_search] sections"))]
     InconsistentOidcAndUserSearchConfig,
+
+    #[snafu(display("Found a {conflicting_field} configuration value which is not allowed when a [oidc] section is configured"))]
+    OidcInvalidConfiguration { conflicting_field: &'static str },
+
+    #[snafu(display("Missing OIDC configuration. Either an [oidc] or a deprecated [keycloak] section must be present in the configuration"))]
+    OidcConfigurationMissing,
 }

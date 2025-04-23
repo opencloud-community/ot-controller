@@ -30,21 +30,18 @@
 //! # Implementation Details:
 //!
 //! Setting categories, in which all properties implement a default value, should also implement the [`Default`] trait.
-//!
-//! [`SettingsLoading<()>`] contains incomplete fields and is an intermediate after
-//! loading the raw settings inside [`SettingsProvider::load`]. The final struct with all loaded fields
-//! is [`Settings`] (an alias for [`SettingsLoading<OidcAndUserSearchConfiguration>`]) which contains all loaded fields.
-
-use settings_file::{OidcAndUserSearchConfiguration, SettingsLoading};
 
 pub mod settings_file;
 
 mod settings_error;
 mod settings_provider;
+mod settings_runtime;
 
 pub use settings_error::SettingsError;
+pub use settings_file::SettingsRaw;
 pub use settings_provider::SettingsProvider;
+pub use settings_runtime::{
+    Oidc, OidcController, OidcFrontend, Settings, UserSearchBackend, UserSearchBackendKeycloak,
+};
 
 type Result<T, E = SettingsError> = std::result::Result<T, E>;
-
-pub type Settings = SettingsLoading<OidcAndUserSearchConfiguration>;

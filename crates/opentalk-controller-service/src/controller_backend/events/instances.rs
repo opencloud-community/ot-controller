@@ -39,7 +39,7 @@ use crate::{
         RoomsPoliciesBuilderExt,
     },
     events::{
-        enrich_invitees_from_keycloak, get_invited_mail_recipients_for_event,
+        enrich_invitees_from_optional_user_search, get_invited_mail_recipients_for_event,
         notifications::{notify_invitees_about_update, UpdateNotificationValues},
         shared_folder_for_user,
     },
@@ -186,9 +186,9 @@ impl ControllerBackend {
 
         // Enrich the invitees for the first instance only and reuse them as all instances have the same invitees.
         let event_instances = if let Some(instance) = instances_data.instances.first() {
-            let enriched_invitees = enrich_invitees_from_keycloak(
+            let enriched_invitees = enrich_invitees_from_optional_user_search(
                 &settings,
-                &self.kc_admin_client,
+                &self.user_search_client,
                 &current_tenant,
                 instance.invitees.clone(),
             )
@@ -278,9 +278,9 @@ impl ControllerBackend {
         )?;
 
         let event_instance = EventInstance {
-            invitees: enrich_invitees_from_keycloak(
+            invitees: enrich_invitees_from_optional_user_search(
                 &settings,
-                &self.kc_admin_client,
+                &self.user_search_client,
                 &current_tenant,
                 event_instance.invitees,
             )
@@ -458,7 +458,7 @@ impl ControllerBackend {
                 &settings,
                 notification_values,
                 &self.mail_service,
-                &self.kc_admin_client,
+                &self.user_search_client,
                 None,
                 streaming_targets,
             )
@@ -485,9 +485,9 @@ impl ControllerBackend {
         )?;
 
         let event_instance = EventInstance {
-            invitees: enrich_invitees_from_keycloak(
+            invitees: enrich_invitees_from_optional_user_search(
                 &settings,
-                &self.kc_admin_client,
+                &self.user_search_client,
                 &current_tenant,
                 event_instance.invitees,
             )

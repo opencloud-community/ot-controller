@@ -191,7 +191,12 @@ async fn ws_service_inner(
     let room_tariff = get_tariff_for_room(
         &db,
         &room,
-        settings_provider.get().defaults.disabled_features.clone(),
+        settings_provider
+            .get()
+            .raw
+            .defaults
+            .disabled_features
+            .clone(),
         modules.get_module_features(),
     )
     .await?;

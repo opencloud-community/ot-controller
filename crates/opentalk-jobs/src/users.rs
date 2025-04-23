@@ -37,7 +37,7 @@ pub(crate) async fn perform_deletion(
 ) -> Result<(), Error> {
     let authz = Authz::new(db.clone()).await?;
     let mut conn = db.get_conn().await?;
-    let object_storage = ObjectStorage::new(&settings.minio).await?;
+    let object_storage = ObjectStorage::new(&settings.raw.minio).await?;
 
     delete_users(
         logger,

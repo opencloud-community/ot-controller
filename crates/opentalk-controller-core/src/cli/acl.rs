@@ -29,7 +29,7 @@ pub(crate) async fn acl(settings: &Settings, e: AclSubCommand) -> Result<()> {
 
 async fn enable_user_access_to_all_rooms(settings: &Settings) -> Result<()> {
     let db = Arc::new(
-        Db::connect(&settings.database).whatever_context("Failed to connect to database")?,
+        Db::connect(&settings.raw.database).whatever_context("Failed to connect to database")?,
     );
     let authz = kustos::Authz::new(db.clone())
         .await
@@ -44,7 +44,7 @@ async fn enable_user_access_to_all_rooms(settings: &Settings) -> Result<()> {
 
 async fn disable_user_access_to_all_rooms(settings: &Settings) -> Result<()> {
     let db = Arc::new(
-        Db::connect(&settings.database).whatever_context("Failed to connect to database")?,
+        Db::connect(&settings.raw.database).whatever_context("Failed to connect to database")?,
     );
     let authz = kustos::Authz::new(db.clone())
         .await

@@ -3,7 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_controller_service_facade::RequestUser;
-use opentalk_controller_settings::settings_file::{TenantAssignment, UsersFindBehavior};
+use opentalk_controller_settings::{
+    settings_file::{TenantAssignment, UsersFindBehavior},
+    UserSearchBackend, UserSearchBackendKeycloak,
+};
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::{DatabaseError, DbConnection};
 use opentalk_db_storage::{
@@ -43,7 +46,7 @@ impl ControllerBackend {
         let mut conn = self.db.get_conn().await?;
 
         // Prohibit display name editing, if configured
-        if settings.endpoints.disallow_custom_display_name {
+        if settings.raw.endpoints.disallow_custom_display_name {
             if let Some(display_name) = &patch.display_name {
                 if &current_user.display_name != display_name {
                     return Err(ApiError::bad_request()
@@ -102,7 +105,7 @@ impl ControllerBackend {
         let tariff = Tariff::get(&mut conn, current_user.tariff_id).await?;
 
         let response = tariff.to_tariff_resource(
-            settings.defaults.disabled_features.clone(),
+            settings.raw.defaults.disabled_features.clone(),
             self.module_features.clone(),
         );
 
@@ -153,13 +156,7 @@ impl ControllerBackend {
 
         const MAX_USER_SEARCH_RESULTS: usize = 20;
 
-        let oidc_and_user_search_configuration = settings.oidc_and_user_search.clone();
-
-        if oidc_and_user_search_configuration
-            .user_search
-            .users_find_behavior
-            == UsersFindBehavior::Disabled
-        {
+        if settings.users_find_behavior == UsersFindBehavior::Disabled {
             return Err(ApiError::not_found().into());
         }
 
@@ -175,16 +172,27 @@ impl ControllerBackend {
         let current_tenant = Tenant::get(&mut conn, current_user.tenant_id).await?;
 
         // Get all users from Keycloak matching the search criteria
-        let found_users = if oidc_and_user_search_configuration
-            .user_search
-            .users_find_behavior
+        let found_users = if settings.users_find_behavior
             == UsersFindBehavior::FromUserSearchBackend
         {
-            let mut found_kc_users = match &settings.tenants.assignment {
+            let (
+                Some(UserSearchBackend::Keycloak(UserSearchBackendKeycloak {
+                    external_id_user_attribute_name,
+                    ..
+                })),
+                Some(user_search_client),
+            ) = (&settings.user_search_backend, &*self.user_search_client)
+            else {
+                return Err(ApiError::internal()
+                    .with_code("misconfiguration")
+                    .with_message("search backend not properly configured")
+                    .into());
+            };
+            let mut found_kc_users = match &settings.raw.tenants.assignment {
                 TenantAssignment::Static { .. } => {
                     // Do not filter by tenant_id if the assignment is static, since that's used
                     // when Keycloak does not provide any tenant information we can filter over anyway
-                    self.kc_admin_client
+                    user_search_client
                         .search_user(&query.q, MAX_USER_SEARCH_RESULTS)
                         .await
                         .whatever_context::<&str, Whatever>(
@@ -196,7 +204,7 @@ impl ControllerBackend {
                 } => {
                     // Keycloak must contain information about the tenancy of a user,
                     // so we pass in the tenant_id to filter the found users
-                    self.kc_admin_client
+                    user_search_client
                         .search_user_filtered(
                             external_tenant_id_user_attribute_name,
                             current_tenant.oidc_tenant_id.as_ref(),
@@ -212,10 +220,7 @@ impl ControllerBackend {
 
             // Get the name of the user attribute providing the Keycloak user ids. If set to None,
             // Keycloak's id field is used for user assignment instead.
-            let user_attribute_name = oidc_and_user_search_configuration
-                .user_search
-                .external_id_user_attribute_name
-                .as_deref();
+            let user_attribute_name = external_id_user_attribute_name.as_deref();
 
             // Get the Keycloak user ids for Keycloak users found above, omitting users for whom no Keycloak
             // user id is provided
@@ -247,8 +252,10 @@ impl ControllerBackend {
                     GetFindResponseEntry::Registered(user.to_public_user_profile(&settings))
                 })
                 .chain(found_kc_users.into_iter().map(|kc_user| {
-                    let avatar_url =
-                        email_to_libravatar_url(&settings.avatar.libravatar_url, &kc_user.email);
+                    let avatar_url = email_to_libravatar_url(
+                        &settings.raw.avatar.libravatar_url,
+                        &kc_user.email,
+                    );
 
                     GetFindResponseEntry::Unregistered(UnregisteredUser {
                         email: kc_user.email,

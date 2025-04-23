@@ -77,7 +77,7 @@ impl JobRunner {
         settings: Arc<Settings>,
         exchange_handle: ExchangeHandle,
     ) -> Result<(), JobRunnerError> {
-        let etcd_urls = match &settings.etcd {
+        let etcd_urls = match &settings.raw.etcd {
             Some(etcd) => &etcd.urls,
             None => {
                 log::info!("Missing etcd configuration, skipping JobRunner");

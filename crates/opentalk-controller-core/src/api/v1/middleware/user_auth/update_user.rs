@@ -34,7 +34,7 @@ pub(super) async fn update_user(
     tariff_status: TariffStatus,
 ) -> Result<LoginResult, CaptureApiError> {
     // Enforce the auto-generated display name if display name editing is prohibited
-    let enforced_display_name = if settings.endpoints.disallow_custom_display_name {
+    let enforced_display_name = if settings.raw.endpoints.disallow_custom_display_name {
         Some(build_info_display_name(&info))
     } else {
         None
@@ -141,6 +141,7 @@ fn create_changeset<'a>(
     }
 
     let token_phone = if let Some((call_in, phone_number)) = settings
+        .raw
         .call_in
         .as_ref()
         .zip(user_info.phone_number.as_deref())

@@ -53,7 +53,7 @@ pub(super) struct Args {
 
 pub(super) async fn fix_acl(settings: &Settings, args: Args) -> Result<()> {
     let db = Arc::new(
-        Db::connect(&settings.database).whatever_context("Failed to connect to database")?,
+        Db::connect(&settings.raw.database).whatever_context("Failed to connect to database")?,
     );
     let mut conn = db
         .get_conn()

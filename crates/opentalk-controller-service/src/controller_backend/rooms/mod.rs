@@ -243,7 +243,7 @@ impl ControllerBackend {
         let tariff = room.get_tariff(&mut conn).await?;
 
         let response = tariff.to_tariff_resource(
-            settings.defaults.disabled_features.clone(),
+            settings.raw.defaults.disabled_features.clone(),
             self.module_features.clone(),
         );
 
@@ -265,7 +265,11 @@ impl ControllerBackend {
 
         match event.as_ref() {
             Some(event) => {
-                let call_in_tel = settings.call_in.as_ref().map(|call_in| call_in.tel.clone());
+                let call_in_tel = settings
+                    .raw
+                    .call_in
+                    .as_ref()
+                    .map(|call_in| call_in.tel.clone());
                 let event_info = build_event_info(
                     &mut conn,
                     call_in_tel,

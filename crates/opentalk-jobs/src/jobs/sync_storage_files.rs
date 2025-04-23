@@ -62,7 +62,7 @@ impl Job for SyncStorageFiles {
 
         let mut conn = db.get_conn().await?;
 
-        let object_storage = ObjectStorage::new(&settings.minio).await?;
+        let object_storage = ObjectStorage::new(&settings.raw.minio).await?;
 
         sync_files(
             logger,

@@ -28,6 +28,7 @@ pub async fn delete_shared_folders(
 
     debug!(log: logger, "Reading shared folder settings");
     let shared_folder_settings = settings
+        .raw
         .shared_folder
         .as_ref()
         .ok_or(Error::SharedFoldersNotConfigured)?;

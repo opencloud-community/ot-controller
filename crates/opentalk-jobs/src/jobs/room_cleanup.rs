@@ -59,7 +59,7 @@ impl Job for RoomCleanup {
 
         let authz = Authz::new(db.clone()).await?;
 
-        let object_storage = ObjectStorage::new(&settings.minio).await?;
+        let object_storage = ObjectStorage::new(&settings.raw.minio).await?;
 
         let orphaned_rooms = find_orphaned_rooms(&mut conn).await?;
 

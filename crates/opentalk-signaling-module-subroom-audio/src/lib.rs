@@ -137,12 +137,12 @@ impl SignalingModule for SubroomAudio {
     async fn build_params(
         init: SignalingModuleInitData,
     ) -> Result<Option<Self::Params>, SignalingModuleError> {
-        match &init.startup_settings.subroom_audio {
+        match &init.startup_settings.raw.subroom_audio {
             Some(config) if config.enable_whisper => {}
             _ => return Ok(None),
         };
 
-        let livekit_settings = &init.startup_settings.livekit;
+        let livekit_settings = &init.startup_settings.raw.livekit;
 
         let room_client = RoomClient::with_api_key(
             &livekit_settings.service_url,

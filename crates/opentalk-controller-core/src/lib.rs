@@ -54,7 +54,10 @@ use opentalk_controller_service::{
     oidc::OidcContext, services::MailService, ControllerBackend, Whatever,
 };
 use opentalk_controller_service_facade::OpenTalkControllerService;
-use opentalk_controller_settings::{settings_file::MonitoringSettings, SettingsProvider};
+use opentalk_controller_settings::{
+    settings_file::MonitoringSettings, Settings, SettingsProvider, UserSearchBackend,
+    UserSearchBackendKeycloak,
+};
 use opentalk_database::Db;
 use opentalk_jobs::job_runner::JobRunner;
 use opentalk_keycloak_admin::{AuthorizedClient, KeycloakAdminClient};
@@ -85,7 +88,6 @@ use crate::{
         signaling::{breakout::BreakoutRooms, moderation::ModerationModule, SignalingProtocols},
         v1::{middleware::metrics::RequestMetrics, response::error::json_error_handler},
     },
-    settings::Settings,
     trace::ReducedSpanBuilder,
 };
 
@@ -199,7 +201,7 @@ pub struct Controller {
 
     oidc: Arc<OidcContext>,
 
-    kc_admin_client: Arc<KeycloakAdminClient>,
+    user_search_client: Arc<Option<KeycloakAdminClient>>,
 
     authz: Authz,
 
@@ -258,7 +260,7 @@ impl Controller {
             SettingsProvider::load(&args.config).whatever_context("Failed to load settings")?;
         let settings = settings_provider.get();
 
-        trace::init(&settings.logging).whatever_context("Failed to initialize tracing")?;
+        trace::init(&settings.raw.logging).whatever_context("Failed to initialize tracing")?;
 
         log::info!("Starting {}", program_name);
 
@@ -278,21 +280,21 @@ impl Controller {
         let metrics = metrics::CombinedMetrics::try_init()
             .whatever_context("Failed to initialize metrics")?;
 
-        opentalk_db_storage::migrations::migrate_from_url(&settings.database.url)
+        opentalk_db_storage::migrations::migrate_from_url(&settings.raw.database.url)
             .await
             .whatever_context("Failed to migrate database")?;
 
         let rabbitmq_pool = RabbitMqPool::from_config(
-            &settings.rabbit_mq.url,
-            settings.rabbit_mq.min_connections,
-            settings.rabbit_mq.max_channels_per_connection,
+            &settings.raw.rabbit_mq.url,
+            settings.raw.rabbit_mq.min_connections,
+            settings.raw.rabbit_mq.max_channels_per_connection,
         );
 
         // Only use rabbitmq in the exchange when a redis instance is configured
         // This assumes that the existence of redis means multiple controllers are used
         // and share their signaling state via redis. Only in this case rabbitmq is required
         // in the exchange.
-        let exchange_handle = if settings.redis.is_some() {
+        let exchange_handle = if settings.raw.redis.is_some() {
             ExchangeTask::spawn_with_rabbitmq(rabbitmq_pool.clone())
                 .await
                 .whatever_context("Failed to spawn exchange task")?
@@ -303,80 +305,59 @@ impl Controller {
         };
 
         // Connect to postgres
-        let mut db =
-            Db::connect(&settings.database).whatever_context("Failed to connect to database")?;
+        let mut db = Db::connect(&settings.raw.database)
+            .whatever_context("Failed to connect to database")?;
         db.set_metrics(metrics.database.clone());
         let db = Arc::new(db);
 
         // Connect to MinIO
         let storage = Arc::new(
-            ObjectStorage::new(&settings.minio)
+            ObjectStorage::new(&settings.raw.minio)
                 .await
                 .whatever_context("Failed to initialize object storage")?,
         );
 
-        let oidc_and_user_search_configuration = settings.oidc_and_user_search.clone();
-        log::debug!(
-            "OIDC and user search configuration: {:?}",
-            oidc_and_user_search_configuration
-        );
+        let oidc_frontend = &settings.oidc.frontend;
+        let oidc_controller = &settings.oidc.controller;
 
         // Discover OIDC Provider
         let oidc = Arc::new(
             OidcContext::new(
-                oidc_and_user_search_configuration
-                    .oidc
-                    .frontend
-                    .auth_base_url
-                    .clone(),
-                oidc_and_user_search_configuration
-                    .oidc
-                    .controller
-                    .auth_base_url
-                    .clone(),
-                oidc_and_user_search_configuration
-                    .oidc
-                    .controller
-                    .client_id
-                    .clone(),
-                oidc_and_user_search_configuration
-                    .oidc
-                    .controller
-                    .client_secret
-                    .clone(),
+                oidc_frontend.authority.clone(),
+                oidc_controller.authority.clone(),
+                oidc_controller.client_id.clone(),
+                oidc_controller.client_secret.clone(),
             )
             .await
             .whatever_context("Failed to initialize OIDC Context")?,
         );
 
-        let authorized_client = AuthorizedClient::new(
-            oidc_and_user_search_configuration
-                .oidc
-                .controller
-                .auth_base_url,
-            oidc_and_user_search_configuration
-                .user_search
-                .client_id
-                .clone()
-                .into(),
-            oidc_and_user_search_configuration
-                .user_search
-                .client_secret
-                .secret()
-                .clone(),
-        )
-        .whatever_context("Failed to initialize authorized client")?;
+        let user_search_client =
+            if let Some(UserSearchBackend::Keycloak(UserSearchBackendKeycloak {
+                api_base_url,
+                client_id,
+                client_secret,
+                external_id_user_attribute_name: _,
+            })) = &settings.user_search_backend
+            {
+                let authorized_client = AuthorizedClient::new(
+                    oidc_controller.authority.clone(),
+                    client_id.clone().into(),
+                    client_secret.secret().clone(),
+                )
+                .whatever_context("Failed to initialize authorized client")?;
 
-        let kc_admin_client = Arc::new(
-            KeycloakAdminClient::new(
-                oidc_and_user_search_configuration.user_search.api_base_url,
-                authorized_client,
-            )
-            .whatever_context("Failed to initialize keycloak")?,
-        );
+                Arc::new(Some(
+                    KeycloakAdminClient::new(api_base_url.clone(), authorized_client)
+                        .whatever_context("Failed to initialize keycloak")?,
+                ))
+            } else {
+                Arc::new(None)
+            };
 
         // Build redis client. Does not check if redis is reachable.
         let redis = settings
+            .raw
             .redis
             .as_ref()
             .map(|r| redis::Client::open(r.url.clone()))
@@ -400,7 +381,7 @@ impl Controller {
         let (shutdown, _) = broadcast::channel::<()>(1);
         let (reload, _) = broadcast::channel::<()>(4);
 
-        let authz = if settings.authz.synchronize_controllers {
+        let authz = if settings.raw.authz.synchronize_controllers {
             kustos::Authz::new_with_autoload_and_metrics(
                 db.clone(),
                 rabbitmq_pool.clone(),
@@ -415,7 +396,6 @@ impl Controller {
         };
 
         let mail_service = MailService::new(
-            settings_provider.clone(),
             metrics.endpoint.clone(),
             rabbitmq_pool.clone(),
             rabbitmq_pool
@@ -442,12 +422,8 @@ impl Controller {
 
         let backend = {
             let oidc_provider = OidcProvider {
-                name: "default".to_string(),
-                url: oidc_and_user_search_configuration
-                    .oidc
-                    .frontend
-                    .auth_base_url
-                    .to_string(),
+                name: oidc_frontend.client_id.to_string(),
+                url: oidc_frontend.authority.to_string(),
             };
 
             ControllerBackend::new(
@@ -459,7 +435,7 @@ impl Controller {
                 volatile.clone(),
                 exchange_handle.clone(),
                 mail_service.clone(),
-                kc_admin_client.clone(),
+                user_search_client.clone(),
                 initializer.signaling_modules.get_module_features(),
             )
         };
@@ -473,7 +449,7 @@ impl Controller {
             db,
             storage,
             oidc,
-            kc_admin_client,
+            user_search_client,
             authz,
             mail_service,
             rabbitmq_pool,
@@ -492,7 +468,7 @@ impl Controller {
     pub async fn run(self) -> Result<()> {
         let signaling_modules = Arc::new(self.signaling_modules);
 
-        if let Some(MonitoringSettings { port, addr }) = self.startup_settings.monitoring {
+        if let Some(MonitoringSettings { port, addr }) = self.startup_settings.raw.monitoring {
             start_probe(addr, port, ServiceState::Up)
                 .await
                 .whatever_context("Failed to start monitoring")?;
@@ -522,7 +498,7 @@ impl Controller {
             let oidc_ctx = Arc::downgrade(&self.oidc);
             let shutdown = self.shutdown.clone();
 
-            let kc_admin_client = Data::from(self.kc_admin_client);
+            let user_search_client = Data::from(self.user_search_client);
 
             let mail_service = Data::new(self.mail_service);
 
@@ -554,7 +530,8 @@ impl Controller {
                 let acl = authz_middleware.clone();
 
                 let signaling_modules = Data::from(signaling_modules.upgrade().unwrap());
-                let swagger_service_enabled = !settings_provider.get().endpoints.disable_openapi;
+                let swagger_service_enabled =
+                    !settings_provider.get().raw.endpoints.disable_openapi;
 
                 App::new()
                     .wrap(RequestMetrics::new(metrics.endpoint.clone()))
@@ -568,7 +545,7 @@ impl Controller {
                     .app_data(db.clone())
                     .app_data(storage)
                     .app_data(oidc_ctx.clone())
-                    .app_data(kc_admin_client.clone())
+                    .app_data(user_search_client.clone())
                     .app_data(authz.clone())
                     .app_data(volatile)
                     .app_data(Data::new(shutdown.clone()))
@@ -594,12 +571,12 @@ impl Controller {
         };
 
         let socket_address = determine_socket_address(
-            self.startup_settings.http.addr.as_deref(),
-            self.startup_settings.http.port,
+            self.startup_settings.raw.http.addr.as_deref(),
+            self.startup_settings.raw.http.port,
         )
         .whatever_context("Unable to determine bind address")?;
 
-        let http_server = if let Some(tls) = &self.startup_settings.http.tls {
+        let http_server = if let Some(tls) = &self.startup_settings.raw.http.tls {
             let config = setup_rustls(tls).whatever_context("Failed to setup TLS context")?;
 
             http_server.bind_rustls_0_23(&socket_address[..], config)

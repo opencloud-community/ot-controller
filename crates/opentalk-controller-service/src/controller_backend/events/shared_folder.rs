@@ -98,7 +98,7 @@ impl ControllerBackend {
             let streaming_targets = get_room_streaming_targets(&mut conn, room.id).await?;
 
             notify_event_invitees_about_update(
-                &self.kc_admin_client,
+                &self.user_search_client,
                 &settings,
                 &self.mail_service,
                 current_tenant,
@@ -153,7 +153,7 @@ impl ControllerBackend {
                         let current_user = User::get(&mut conn, current_user.id).await?;
 
                         notify_event_invitees_about_update(
-                            &self.kc_admin_client,
+                            &self.user_search_client,
                             &settings,
                             &self.mail_service,
                             current_tenant,
@@ -184,7 +184,7 @@ impl ControllerBackend {
                             let current_user = User::get(&mut conn, current_user.id).await?;
 
                             notify_event_invitees_about_update(
-                                &self.kc_admin_client,
+                                &self.user_search_client,
                                 &settings,
                                 &self.mail_service,
                                 current_tenant,
@@ -222,7 +222,7 @@ pub async fn put_shared_folder(
     if let Some(shared_folder) = shared_folder {
         return Ok((shared_folder, false));
     }
-    let shared_folder_settings = settings.shared_folder.as_ref().ok_or_else(|| {
+    let shared_folder_settings = settings.raw.shared_folder.as_ref().ok_or_else(|| {
         ApiError::bad_request().with_message("No shared folder configured for this server")
     })?;
 
@@ -383,7 +383,7 @@ pub async fn delete_shared_folders(
         return Ok(());
     }
 
-    let shared_folder_settings = if let Some(settings) = settings.shared_folder.as_ref() {
+    let shared_folder_settings = if let Some(settings) = settings.raw.shared_folder.as_ref() {
         settings
     } else {
         return Err(

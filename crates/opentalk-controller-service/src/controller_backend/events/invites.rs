@@ -54,8 +54,8 @@ use crate::{
         RoomsPoliciesBuilderExt,
     },
     events::{
-        enrich_from_keycloak, enrich_invitees_from_keycloak, get_invited_mail_recipients_for_event,
-        get_tenant_filter,
+        enrich_from_optional_user_search, enrich_invitees_from_optional_user_search,
+        get_invited_mail_recipients_for_event, get_tenant_filter,
     },
     services::{
         ExternalMailRecipient, MailRecipient, MailService, RegisteredMailRecipient,
@@ -110,9 +110,9 @@ impl ControllerBackend {
             .take(per_page as usize)
             .collect();
 
-        let invitees = enrich_invitees_from_keycloak(
+        let invitees = enrich_invitees_from_optional_user_search(
             &settings,
-            &self.kc_admin_client,
+            &self.user_search_client,
             &current_tenant,
             invitees,
         )
@@ -144,6 +144,7 @@ impl ControllerBackend {
         match create_invite {
             PostEventInviteBody::User(user_invite) => {
                 create_user_event_invite(
+                    &settings,
                     &self.db,
                     &self.authz,
                     current_user,
@@ -159,7 +160,7 @@ impl ControllerBackend {
                     &settings,
                     &self.db,
                     &self.authz,
-                    &self.kc_admin_client,
+                    &self.user_search_client,
                     &current_tenant,
                     &current_user,
                     event_id,
@@ -304,7 +305,7 @@ impl ControllerBackend {
                 &settings,
                 notification_values,
                 &self.mail_service,
-                &self.kc_admin_client,
+                &self.user_search_client,
                 shared_folder.map(SharedFolder::from),
                 streaming_targets,
             )
@@ -331,7 +332,7 @@ impl ControllerBackend {
         let current_tenant = Tenant::get(&mut conn, current_user.tenant_id).await?;
         let current_user = User::get(&mut conn, current_user.id).await?;
 
-        let tenant_filter = get_tenant_filter(&current_tenant, &settings.tenants.assignment);
+        let tenant_filter = get_tenant_filter(&current_tenant, &settings.raw.tenants.assignment);
 
         let send_email_notification = !query.suppress_email_notification;
 
@@ -380,11 +381,15 @@ impl ControllerBackend {
                 email,
                 ..user.into()
             })
-        } else if let Ok(Some(user)) = self
-            .kc_admin_client
-            .get_user_for_email(tenant_filter, email.as_ref())
-            .await
-        {
+        } else if let Ok(Some(user)) = {
+            if let Some(user_search_client) = &*self.user_search_client {
+                user_search_client
+                    .get_user_for_email(tenant_filter, email.as_ref())
+                    .await
+            } else {
+                Ok(None)
+            }
+        } {
             _ = EventEmailInvite::delete(&mut conn, &event_id, &email).await?;
 
             MailRecipient::Unregistered(UnregisteredMailRecipient {
@@ -412,7 +417,7 @@ impl ControllerBackend {
                 &settings,
                 notification_values,
                 &self.mail_service,
-                &self.kc_admin_client,
+                &self.user_search_client,
                 shared_folder.map(SharedFolder::from),
                 streaming_targets,
             )
@@ -470,7 +475,9 @@ impl ControllerBackend {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn create_user_event_invite(
+    settings: &Settings,
     db: &Db,
     authz: &Authz,
     inviter: User,
@@ -520,6 +527,7 @@ async fn create_user_event_invite(
             if send_email_notification {
                 mail_service
                     .send_registered_invite(
+                        settings,
                         inviter,
                         event,
                         room,
@@ -551,7 +559,7 @@ async fn create_email_event_invite(
     settings: &Settings,
     db: &Db,
     authz: &Authz,
-    kc_admin_client: &KeycloakAdminClient,
+    user_search_client: &Option<KeycloakAdminClient>,
     current_tenant: &Tenant,
     current_user: &User,
     event_id: EventId,
@@ -656,6 +664,7 @@ async fn create_email_event_invite(
             if send_email_notification {
                 mail_service
                     .send_registered_invite(
+                        settings,
                         current_user.clone(),
                         event,
                         room,
@@ -684,7 +693,7 @@ async fn create_email_event_invite(
                 settings,
                 db,
                 authz,
-                kc_admin_client,
+                user_search_client,
                 mail_service,
                 send_email_notification,
                 current_tenant,
@@ -710,7 +719,7 @@ async fn create_invite_to_non_matching_email(
     settings: &Settings,
     db: &Db,
     authz: &Authz,
-    kc_admin_client: &KeycloakAdminClient,
+    user_search_client: &Option<KeycloakAdminClient>,
     mail_service: &MailService,
     send_email_notification: bool,
     current_tenant: &Tenant,
@@ -723,17 +732,21 @@ async fn create_invite_to_non_matching_email(
     shared_folder: Option<SharedFolder>,
     streaming_targets: Vec<RoomStreamingTarget>,
 ) -> Result<bool, CaptureApiError> {
-    let tenant_filter = get_tenant_filter(current_tenant, &settings.tenants.assignment);
+    let tenant_filter = get_tenant_filter(current_tenant, &settings.raw.tenants.assignment);
 
-    let invitee_user = kc_admin_client
-        .get_user_for_email(tenant_filter, email.as_ref())
-        .await
-        .map_err(|e| {
-            log::error!("Failed to query user for email: {}", Report::from_error(e));
-            ApiError::internal()
-        })?;
+    let invitee_user = if let Some(user_search_client) = user_search_client {
+        user_search_client
+            .get_user_for_email(tenant_filter, email.as_ref())
+            .await
+            .map_err(|e| {
+                log::error!("Failed to query user for email: {}", Report::from_error(e));
+                ApiError::internal()
+            })?
+    } else {
+        None
+    };
 
-    if invitee_user.is_some() || settings.endpoints.event_invite_external_email_address {
+    if invitee_user.is_some() || settings.raw.endpoints.event_invite_external_email_address {
         let inviter = current_user.clone();
         let invitee_email = email.clone();
 
@@ -758,6 +771,7 @@ async fn create_invite_to_non_matching_email(
                 if let (Some(invitee_user), true) = (invitee_user, send_email_notification) {
                     mail_service
                         .send_unregistered_invite(
+                            settings,
                             inviter,
                             event,
                             room,
@@ -796,6 +810,7 @@ async fn create_invite_to_non_matching_email(
                     if send_email_notification {
                         mail_service
                             .send_external_invite(
+                                settings,
                                 inviter,
                                 event,
                                 room,
@@ -877,7 +892,7 @@ async fn notify_invitees_about_uninvite(
     settings: &Settings,
     notification_values: UninviteNotificationValues,
     mail_service: &MailService,
-    kc_admin_client: &KeycloakAdminClient,
+    user_search_client: &Option<KeycloakAdminClient>,
     shared_folder: Option<SharedFolder>,
     streaming_targets: Vec<RoomStreamingTarget>,
 ) {
@@ -889,12 +904,17 @@ async fn notify_invitees_about_uninvite(
         _ => {}
     }
     for user in notification_values.users_to_notify {
-        let invited_user =
-            enrich_from_keycloak(settings, user, &notification_values.tenant, kc_admin_client)
-                .await;
+        let invited_user = enrich_from_optional_user_search(
+            settings,
+            user,
+            &notification_values.tenant,
+            user_search_client,
+        )
+        .await;
 
         if let Err(e) = mail_service
             .send_event_uninvite(
+                settings,
                 notification_values.created_by.clone(),
                 notification_values.event.clone(),
                 notification_values.room.clone(),

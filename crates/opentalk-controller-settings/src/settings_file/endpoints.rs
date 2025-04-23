@@ -6,8 +6,8 @@ use serde::Deserialize;
 
 #[derive(Clone, Default, Debug, PartialEq, Eq, Deserialize)]
 pub struct Endpoints {
-    pub disable_users_find: Option<bool>,
-    pub users_find_use_kc: Option<bool>,
+    pub(crate) disable_users_find: Option<bool>,
+    pub(crate) users_find_use_kc: Option<bool>,
     #[serde(default)]
     pub event_invite_external_email_address: bool,
     #[serde(default)]

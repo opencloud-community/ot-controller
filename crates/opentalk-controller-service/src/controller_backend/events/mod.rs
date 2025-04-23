@@ -65,7 +65,8 @@ use crate::{
     controller_backend::{delete_shared_folders, put_shared_folder, RoomsPoliciesBuilderExt},
     email_to_libravatar_url,
     events::{
-        enrich_from_keycloak, enrich_invitees_from_keycloak, get_invited_mail_recipients_for_event,
+        enrich_from_optional_user_search, enrich_invitees_from_optional_user_search,
+        get_invited_mail_recipients_for_event,
         notifications::{notify_invitees_about_update, UpdateNotificationValues},
         shared_folder_for_user,
     },
@@ -94,6 +95,7 @@ impl ControllerBackend {
 
         let current_user = User::get(&mut conn, current_user.id).await?;
 
+        let transaction_settings = settings.clone();
         let (event_resource, mail_resource) = conn
             .transaction(|conn| {
                 async move {
@@ -118,7 +120,7 @@ impl ControllerBackend {
                             training_participation_report
                         } if recurrence_pattern.is_empty() => {
                             create_time_independent_event(
-                                &settings,
+                                &transaction_settings,
                                 conn,
                                 current_user,
                                 title,
@@ -152,7 +154,7 @@ impl ControllerBackend {
                             training_participation_report
                         } => {
                             create_time_dependent_event(
-                                &settings,
+                                &transaction_settings,
                                 conn,
                                 current_user,
                                 title,
@@ -184,7 +186,7 @@ impl ControllerBackend {
                     };
 
                     if event.has_shared_folder {
-                        let (shared_folder, _) = put_shared_folder(&settings, event_resource.id, conn).await?;
+                        let (shared_folder, _) = put_shared_folder(&transaction_settings, event_resource.id, conn).await?;
                         event_resource.shared_folder = Some(SharedFolder::from(shared_folder));
                     }
 
@@ -209,6 +211,7 @@ impl ControllerBackend {
         if let Some(mail_resource) = mail_resource {
             self.mail_service
                 .send_registered_invite(
+                    &settings,
                     mail_resource.current_user.clone(),
                     mail_resource.event,
                     mail_resource.room,
@@ -419,9 +422,9 @@ impl ControllerBackend {
                 .map(|resource| async {
                     match resource {
                         EventOrException::Event(inner) => EventOrException::Event(EventResource {
-                            invitees: enrich_invitees_from_keycloak(
+                            invitees: enrich_invitees_from_optional_user_search(
                                 &settings,
-                                &self.kc_admin_client,
+                                &self.user_search_client,
                                 &current_tenant,
                                 inner.invitees,
                             )
@@ -515,9 +518,9 @@ impl ControllerBackend {
         };
 
         let event_resource = EventResource {
-            invitees: enrich_invitees_from_keycloak(
+            invitees: enrich_invitees_from_optional_user_search(
                 &settings,
-                &self.kc_admin_client,
+                &self.user_search_client,
                 &current_tenant,
                 event_resource.invitees,
             )
@@ -731,7 +734,7 @@ impl ControllerBackend {
                 &settings,
                 notification_values,
                 &self.mail_service,
-                &self.kc_admin_client,
+                &self.user_search_client,
                 shared_folder,
                 streaming_targets,
             )
@@ -739,9 +742,9 @@ impl ControllerBackend {
         }
 
         let event_resource = EventResource {
-            invitees: enrich_invitees_from_keycloak(
+            invitees: enrich_invitees_from_optional_user_search(
                 &settings,
-                &self.kc_admin_client,
+                &self.user_search_client,
                 &current_tenant,
                 event_resource.invitees,
             )
@@ -826,7 +829,7 @@ impl ControllerBackend {
                 &settings,
                 notification_values,
                 &self.mail_service,
-                &self.kc_admin_client,
+                &self.user_search_client,
             )
             .await;
         }
@@ -936,7 +939,8 @@ impl EventInviteeExt for EventInvitee {
     }
 
     fn from_email_invite(invite: EventEmailInvite, settings: &Settings) -> EventInvitee {
-        let avatar_url = email_to_libravatar_url(&settings.avatar.libravatar_url, &invite.email);
+        let avatar_url =
+            email_to_libravatar_url(&settings.raw.avatar.libravatar_url, &invite.email);
         EventInvitee {
             profile: EventInviteeProfile::Email(EmailOnlyUser {
                 email: invite.email,
@@ -970,6 +974,7 @@ impl EventRoomInfoExt for EventRoomInfo {
         tariff: &Tariff,
     ) -> Self {
         let call_in_feature_is_enabled = !settings
+            .raw
             .defaults
             .disabled_features
             .contains(&features::CALL_IN_MODULE_FEATURE_ID)
@@ -979,7 +984,7 @@ impl EventRoomInfoExt for EventRoomInfo {
         let mut call_in = None;
 
         if call_in_feature_is_enabled {
-            if let (Some(call_in_config), Some(sip_config)) = (&settings.call_in, sip_config) {
+            if let (Some(call_in_config), Some(sip_config)) = (&settings.raw.call_in, sip_config) {
                 call_in = Some(CallInInfo {
                     tel: call_in_config.tel.clone(),
                     uri: None,
@@ -1474,7 +1479,7 @@ pub(crate) async fn notify_invitees_about_delete(
     settings: &Settings,
     notification_values: CancellationNotificationValues,
     mail_service: &MailService,
-    kc_admin_client: &KeycloakAdminClient,
+    user_search_client: &Option<KeycloakAdminClient>,
 ) {
     // Don't send mails for past events
     match notification_values.event.ends_at {
@@ -1484,12 +1489,17 @@ pub(crate) async fn notify_invitees_about_delete(
         _ => {}
     }
     for user in notification_values.users_to_notify {
-        let invited_user =
-            enrich_from_keycloak(settings, user, &notification_values.tenant, kc_admin_client)
-                .await;
+        let invited_user = enrich_from_optional_user_search(
+            settings,
+            user,
+            &notification_values.tenant,
+            user_search_client,
+        )
+        .await;
 
         if let Err(e) = mail_service
             .send_event_cancellation(
+                settings,
                 notification_values.created_by.clone(),
                 notification_values.event.clone(),
                 notification_values.room.clone(),
