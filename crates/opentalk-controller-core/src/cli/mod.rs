@@ -4,9 +4,11 @@
 
 use std::path::PathBuf;
 
-use clap::{ArgAction, Parser, Subcommand};
+use build_info::BuildInfo;
+use clap::{Parser, Subcommand};
 use opentalk_controller_settings::SettingsProvider;
 use opentalk_signaling_core::RegisterModules;
+use opentalk_version::InfoArgs;
 use snafu::ResultExt;
 
 use crate::Result;
@@ -14,6 +16,7 @@ use crate::Result;
 mod acl;
 mod fix_acl;
 mod jobs;
+mod license;
 mod modules;
 mod openapi;
 mod reload;
@@ -43,8 +46,8 @@ pub struct Args {
     #[clap(subcommand)]
     cmd: Option<SubCommand>,
 
-    #[clap(short('V'), long, action=ArgAction::SetTrue, help = "Print version information")]
-    version: bool,
+    #[command(flatten)]
+    pub(crate) info: InfoArgs,
 }
 
 #[derive(Subcommand, Debug, Clone)]
@@ -107,7 +110,7 @@ pub(crate) enum EnableDisable {
 impl Args {
     /// Returns true if we want to startup the controller after we finished the cli part
     pub fn controller_should_start(&self) -> bool {
-        !(self.reload || self.cmd.is_some() || self.version)
+        !(self.reload || self.cmd.is_some() || self.info.should_print())
     }
 }
 
@@ -117,8 +120,8 @@ impl Args {
 pub async fn parse_args<M: RegisterModules>() -> Result<Args> {
     let args = Args::parse();
 
-    if args.version {
-        print_version()
+    if args.info.should_print() {
+        print_info(&args.info);
     }
 
     if args.reload {
@@ -177,6 +180,9 @@ pub async fn parse_args<M: RegisterModules>() -> Result<Args> {
 
 opentalk_version::build_info!();
 
-fn print_version() {
-    println!("{}", build_info::BuildInfo::new());
+fn print_info(info_args: &InfoArgs) {
+    let build_info = BuildInfo::with_license(license::LICENSE.to_owned());
+    if let Some(text) = build_info.format(info_args) {
+        println!("{text}");
+    }
 }
