@@ -28,7 +28,8 @@ pub struct SettingsRaw {
     pub(crate) http: Option<Http>,
 
     #[serde(default)]
-    pub turn: Option<Turn>,
+    pub(crate) turn: Option<Turn>,
+
     #[serde(default)]
     pub stun: Option<Stun>,
     #[serde(default)]

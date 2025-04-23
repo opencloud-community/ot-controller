@@ -26,6 +26,8 @@ mod oidc_and_user_search_builder;
 mod oidc_controller;
 mod oidc_frontend;
 mod settings;
+mod turn;
+mod turn_server;
 mod user_search_backend;
 mod user_search_backend_keycloak;
 
@@ -36,5 +38,7 @@ pub use oidc::Oidc;
 pub use oidc_controller::OidcController;
 pub use oidc_frontend::OidcFrontend;
 pub use settings::Settings;
+pub use turn::Turn;
+pub use turn_server::TurnServer;
 pub use user_search_backend::UserSearchBackend;
 pub use user_search_backend_keycloak::UserSearchBackendKeycloak;

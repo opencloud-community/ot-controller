@@ -5,7 +5,8 @@
 use std::sync::Arc;
 
 use super::{
-    oidc_and_user_search_builder::OidcAndUserSearchBuilder, Database, Http, Oidc, UserSearchBackend,
+    oidc_and_user_search_builder::OidcAndUserSearchBuilder, Database, Http, Oidc, Turn,
+    UserSearchBackend,
 };
 use crate::{settings_file::UsersFindBehavior, Result, SettingsError, SettingsRaw};
 
@@ -33,6 +34,9 @@ pub struct Settings {
 
     /// The database connection settings.
     pub database: Database,
+
+    /// The TURN server settings
+    pub turn: Option<Turn>,
 }
 
 impl Settings {
@@ -72,6 +76,7 @@ impl TryFrom<Arc<SettingsRaw>> for Settings {
 
         let http = raw.http.clone().into();
         let database = raw.database.clone().into();
+        let turn = raw.turn.clone().map(Into::into);
 
         Ok(Settings {
             raw,
@@ -80,6 +85,7 @@ impl TryFrom<Arc<SettingsRaw>> for Settings {
             users_find_behavior,
             http,
             database,
+            turn,
         })
     }
 }
