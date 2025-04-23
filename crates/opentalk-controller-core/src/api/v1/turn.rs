@@ -88,7 +88,7 @@ pub async fn get(
     let settings = settings_provider.get();
 
     let turn_servers = &settings.turn;
-    let stun_servers = &settings.raw.stun;
+    let stun_servers = &settings.stun;
 
     // This is a omniauth endpoint. AccessTokens and InviteCodes are allowed as Bearer tokens
     match check_access_token_or_invite(&settings, authz, db, &req, &caches, oidc_ctx).await? {

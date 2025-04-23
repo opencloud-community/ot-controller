@@ -31,7 +31,8 @@ pub struct SettingsRaw {
     pub(crate) turn: Option<Turn>,
 
     #[serde(default)]
-    pub stun: Option<Stun>,
+    pub(crate) stun: Option<Stun>,
+
     #[serde(default)]
     pub redis: Option<RedisConfig>,
     #[serde(default)]

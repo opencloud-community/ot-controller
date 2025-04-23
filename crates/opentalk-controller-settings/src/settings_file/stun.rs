@@ -5,7 +5,7 @@
 use serde::Deserialize;
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
-pub struct Stun {
+pub(crate) struct Stun {
     // STUN URIs for this TURN server following rfc7065
     pub uris: Vec<String>,
 }
