@@ -4,7 +4,9 @@
 
 use std::sync::Arc;
 
-use super::{oidc_and_user_search_builder::OidcAndUserSearchBuilder, Oidc, UserSearchBackend};
+use super::{
+    oidc_and_user_search_builder::OidcAndUserSearchBuilder, Http, Oidc, UserSearchBackend,
+};
 use crate::{settings_file::UsersFindBehavior, Result, SettingsError, SettingsRaw};
 
 /// The settings used for the OpenTalk controller at runtime
@@ -25,6 +27,9 @@ pub struct Settings {
 
     /// The user search behavior.
     pub users_find_behavior: UsersFindBehavior,
+
+    /// The HTTP service settings.
+    pub http: Http,
 }
 
 impl Settings {
@@ -62,11 +67,14 @@ impl TryFrom<Arc<SettingsRaw>> for Settings {
             users_find_behavior,
         } = OidcAndUserSearchBuilder::load_from_settings_raw(&raw)?;
 
+        let http = raw.http.clone().into();
+
         Ok(Settings {
             raw,
             oidc,
             user_search_backend,
             users_find_behavior,
+            http,
         })
     }
 }

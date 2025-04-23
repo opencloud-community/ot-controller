@@ -6,26 +6,14 @@ use serde::Deserialize;
 
 use super::HttpTls;
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Http {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub addr: Option<String>,
-    #[serde(default = "default_http_port")]
-    pub port: u16,
-    #[serde(default)]
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub port: Option<u16>,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tls: Option<HttpTls>,
-}
-
-impl Default for Http {
-    fn default() -> Self {
-        Self {
-            addr: None,
-            port: default_http_port(),
-            tls: None,
-        }
-    }
-}
-
-const fn default_http_port() -> u16 {
-    11311
 }

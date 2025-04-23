@@ -96,6 +96,10 @@ mod tests {
 
     #[test]
     fn settings_env_vars_overwrite_config() -> Result<()> {
+        env::remove_var("OPENTALK_CTRL_DATABASE__URL");
+        env::remove_var("OPENTALK_CTRL_HTTP__PORT");
+        env::remove_var("OPENTALK_CTRL_DEFAULTS__SCREEN_SHARE_REQUIRES_PERMISSION");
+
         // Sanity check
         let settings = SettingsProvider::load_raw("../../extra/example.toml")?;
 
@@ -103,7 +107,7 @@ mod tests {
             settings.database.url,
             "postgres://postgres:password123@localhost:5432/opentalk"
         );
-        assert_eq!(settings.http.port, 11311u16);
+        assert!(settings.http.is_none());
 
         // Set environment variables to overwrite default config file
         let env_db_url = "postgres://envtest:password@localhost:5432/opentalk".to_string();
@@ -119,7 +123,7 @@ mod tests {
         let settings = SettingsProvider::load_raw("../../extra/example.toml")?;
 
         assert_eq!(settings.database.url, env_db_url);
-        assert_eq!(settings.http.port, env_http_port);
+        assert_eq!(settings.http.as_ref().unwrap().port, Some(env_http_port));
         assert_eq!(
             settings.defaults.screen_share_requires_permission,
             screen_share_requires_permission
