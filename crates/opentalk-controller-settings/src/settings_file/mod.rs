@@ -63,7 +63,7 @@ pub(crate) use oidc::Oidc;
 pub(crate) use oidc_controller::OidcController;
 pub(crate) use oidc_frontend::OidcFrontend;
 pub use rabbit_mq_config::RabbitMqConfig;
-pub use redis_config::RedisConfig;
+pub(crate) use redis_config::RedisConfig;
 pub use reports::Reports;
 pub use reports_template::ReportsTemplate;
 pub use settings_raw::SettingsRaw;

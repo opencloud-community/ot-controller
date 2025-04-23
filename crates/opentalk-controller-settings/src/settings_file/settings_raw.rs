@@ -34,7 +34,8 @@ pub struct SettingsRaw {
     pub(crate) stun: Option<Stun>,
 
     #[serde(default)]
-    pub redis: Option<RedisConfig>,
+    pub(crate) redis: Option<RedisConfig>,
+
     #[serde(default)]
     pub rabbit_mq: RabbitMqConfig,
     #[serde(default)]

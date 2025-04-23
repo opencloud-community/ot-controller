@@ -5,8 +5,8 @@
 use std::sync::Arc;
 
 use super::{
-    oidc_and_user_search_builder::OidcAndUserSearchBuilder, Database, Http, Oidc, Stun, Turn,
-    UserSearchBackend,
+    oidc_and_user_search_builder::OidcAndUserSearchBuilder, Database, Http, Oidc, Redis, Stun,
+    Turn, UserSearchBackend,
 };
 use crate::{settings_file::UsersFindBehavior, Result, SettingsError, SettingsRaw};
 
@@ -40,6 +40,9 @@ pub struct Settings {
 
     /// The STUN settings.
     pub stun: Option<Stun>,
+
+    /// The redis connection settings.
+    pub redis: Option<Redis>,
 }
 
 impl Settings {
@@ -81,6 +84,7 @@ impl TryFrom<Arc<SettingsRaw>> for Settings {
         let database = raw.database.clone().into();
         let turn = raw.turn.clone().map(Into::into);
         let stun = raw.stun.clone().map(Into::into);
+        let redis = raw.redis.clone().map(Into::into);
 
         Ok(Settings {
             raw,
@@ -91,6 +95,7 @@ impl TryFrom<Arc<SettingsRaw>> for Settings {
             database,
             turn,
             stun,
+            redis,
         })
     }
 }

@@ -294,7 +294,7 @@ impl Controller {
         // This assumes that the existence of redis means multiple controllers are used
         // and share their signaling state via redis. Only in this case rabbitmq is required
         // in the exchange.
-        let exchange_handle = if settings.raw.redis.is_some() {
+        let exchange_handle = if settings.redis.is_some() {
             ExchangeTask::spawn_with_rabbitmq(rabbitmq_pool.clone())
                 .await
                 .whatever_context("Failed to spawn exchange task")?
@@ -357,7 +357,6 @@ impl Controller {
 
         // Build redis client. Does not check if redis is reachable.
         let redis = settings
-            .raw
             .redis
             .as_ref()
             .map(|r| redis::Client::open(r.url.clone()))
