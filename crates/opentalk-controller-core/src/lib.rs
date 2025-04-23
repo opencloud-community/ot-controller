@@ -55,7 +55,7 @@ use opentalk_controller_service::{
 };
 use opentalk_controller_service_facade::OpenTalkControllerService;
 use opentalk_controller_settings::{
-    settings_file::MonitoringSettings, Settings, SettingsProvider, UserSearchBackend,
+    settings_file::MonitoringSettings, HttpTls, Settings, SettingsProvider, UserSearchBackend,
     UserSearchBackendKeycloak,
 };
 use opentalk_database::Db;
@@ -571,12 +571,12 @@ impl Controller {
         };
 
         let socket_address = determine_socket_address(
-            self.startup_settings.raw.http.addr.as_deref(),
-            self.startup_settings.raw.http.port,
+            self.startup_settings.http.addr.as_deref(),
+            self.startup_settings.http.port,
         )
         .whatever_context("Unable to determine bind address")?;
 
-        let http_server = if let Some(tls) = &self.startup_settings.raw.http.tls {
+        let http_server = if let Some(tls) = &self.startup_settings.http.tls {
             let config = setup_rustls(tls).whatever_context("Failed to setup TLS context")?;
 
             http_server.bind_rustls_0_23(&socket_address[..], config)
@@ -1108,7 +1108,7 @@ fn setup_cors() -> Cors {
 /// Receives the TLS-related settings from the controller configuration
 /// which contains the path to the private key and the certificate files
 /// from where the TLS configuration is loaded and set up.
-fn setup_rustls(tls: &settings::settings_file::HttpTls) -> Result<rustls::ServerConfig> {
+fn setup_rustls(tls: &HttpTls) -> Result<rustls::ServerConfig> {
     let cert_file = File::open(&tls.certificate).with_whatever_context(|_| {
         format!("Failed to open certificate file {:?}", &tls.certificate)
     })?;

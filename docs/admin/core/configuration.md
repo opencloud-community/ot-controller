@@ -125,7 +125,7 @@ url = "postgres://postgres:password123@localhost:5432/opentalk"
 #addr = "0.0.0.0"
 #port = 11411
 
-[http]
+#[http]
 # An optional address to which to bind.
 # Can be either a hostname, or an IP address.
 #
@@ -151,7 +151,7 @@ url = "postgres://postgres:password123@localhost:5432/opentalk"
 #addr = "2001:0DB8::1337:DEAD:CAFE"
 
 # The port to bind the HTTP Server to (defaults to 11311).
-port = 11311
+#port = 11311
 
 # Settings for the keycloak which is the user provider and allows authentication via OIDC.
 # This is deprecated, replace with [oidc] and [user_search] sections.

@@ -17,12 +17,16 @@ pub struct SettingsRaw {
 
     #[serde(default)]
     pub(crate) keycloak: Option<Keycloak>,
+
     #[serde(default)]
     pub(crate) oidc: Option<Oidc>,
+
     #[serde(default)]
     pub(crate) user_search: Option<UserSearch>,
 
-    pub http: Http,
+    #[serde(default)]
+    pub(crate) http: Option<Http>,
+
     #[serde(default)]
     pub turn: Option<Turn>,
     #[serde(default)]
@@ -126,7 +130,7 @@ pub(crate) fn settings_raw_minimal_example() -> SettingsRaw {
             ),
             users_find_behavior: UsersFindBehavior::Disabled,
         }),
-        http: Http::default(),
+        http: None,
         turn: None,
         stun: None,
         redis: None,
@@ -169,8 +173,6 @@ pub(crate) fn settings_raw_minimal_example() -> SettingsRaw {
 pub(crate) const SETTINGS_RAW_MINIMAL_CONFIG_TOML: &str = r#"
         [database]
         url = "postgres://postgres:password123@localhost:5432/opentalk"
-
-        [http]
 
         [minio]
         uri = "http://localhost:9555"

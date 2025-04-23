@@ -78,7 +78,7 @@ impl SettingsProvider {
 
 #[cfg(test)]
 mod tests {
-    use std::{fs::File, io::Write as _};
+    use std::{env, fs::File, io::Write as _};
 
     use pretty_assertions::{assert_eq, assert_matches, assert_ne};
     use tempfile::tempdir;
@@ -133,6 +133,11 @@ mod tests {
 
     #[test]
     fn reload() {
+        env::remove_var("OPENTALK_CTRL_DATABASE__URL");
+        env::remove_var("OPENTALK_CTRL_HTTP__PORT");
+        env::remove_var("OPENTALK_CTRL_HTTP__DEFAULTS__USER_LANGUAGE");
+        env::remove_var("OPENTALK_CTRL_HTTP__DEFAULTS__SCREEN_SHARE_REQUIRES_PERMISSION");
+
         let tempdir = tempdir().unwrap();
 
         let modified_path = tempdir.path().join("controller_modified.toml");
