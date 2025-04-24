@@ -31,8 +31,7 @@ pub trait ToUserProfile {
 
 impl ToUserProfile for User {
     fn to_public_user_profile(&self, settings: &Settings) -> PublicUserProfile {
-        let default_avatar =
-            email_to_libravatar_url(&settings.raw.avatar.libravatar_url, &self.email);
+        let default_avatar = email_to_libravatar_url(&settings.avatar.libravatar_url, &self.email);
 
         PublicUserProfile {
             id: self.id,
@@ -52,8 +51,7 @@ impl ToUserProfile for User {
         settings: &Settings,
         used_storage: u64,
     ) -> PrivateUserProfile {
-        let default_avatar =
-            email_to_libravatar_url(&settings.raw.avatar.libravatar_url, &self.email);
+        let default_avatar = email_to_libravatar_url(&settings.avatar.libravatar_url, &self.email);
 
         PrivateUserProfile {
             id: self.id,
@@ -74,8 +72,7 @@ impl ToUserProfile for User {
 
 impl ToUserProfile for RequestUser {
     fn to_public_user_profile(&self, settings: &Settings) -> PublicUserProfile {
-        let default_avatar =
-            email_to_libravatar_url(&settings.raw.avatar.libravatar_url, &self.email);
+        let default_avatar = email_to_libravatar_url(&settings.avatar.libravatar_url, &self.email);
 
         PublicUserProfile {
             id: self.id,
@@ -95,8 +92,7 @@ impl ToUserProfile for RequestUser {
         settings: &Settings,
         used_storage: u64,
     ) -> PrivateUserProfile {
-        let default_avatar =
-            email_to_libravatar_url(&settings.raw.avatar.libravatar_url, &self.email);
+        let default_avatar = email_to_libravatar_url(&settings.avatar.libravatar_url, &self.email);
 
         PrivateUserProfile {
             id: self.id,

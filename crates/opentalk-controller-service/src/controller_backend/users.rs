@@ -252,10 +252,8 @@ impl ControllerBackend {
                     GetFindResponseEntry::Registered(user.to_public_user_profile(&settings))
                 })
                 .chain(found_kc_users.into_iter().map(|kc_user| {
-                    let avatar_url = email_to_libravatar_url(
-                        &settings.raw.avatar.libravatar_url,
-                        &kc_user.email,
-                    );
+                    let avatar_url =
+                        email_to_libravatar_url(&settings.avatar.libravatar_url, &kc_user.email);
 
                     GetFindResponseEntry::Unregistered(UnregisteredUser {
                         email: kc_user.email,

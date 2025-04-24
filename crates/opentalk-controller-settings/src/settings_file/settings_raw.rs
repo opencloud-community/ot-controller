@@ -46,7 +46,8 @@ pub struct SettingsRaw {
     pub(crate) authz: Option<Authz>,
 
     #[serde(default)]
-    pub avatar: Avatar,
+    pub(crate) avatar: Option<Avatar>,
+
     #[serde(default)]
     pub metrics: Metrics,
 
@@ -140,7 +141,7 @@ pub(crate) fn settings_raw_minimal_example() -> SettingsRaw {
         rabbit_mq: None,
         logging: None,
         authz: None,
-        avatar: Avatar::default(),
+        avatar: None,
         metrics: Metrics::default(),
         etcd: None,
         etherpad: None,

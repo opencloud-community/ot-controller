@@ -947,8 +947,7 @@ impl EventInviteeExt for EventInvitee {
     }
 
     fn from_email_invite(invite: EventEmailInvite, settings: &Settings) -> EventInvitee {
-        let avatar_url =
-            email_to_libravatar_url(&settings.raw.avatar.libravatar_url, &invite.email);
+        let avatar_url = email_to_libravatar_url(&settings.avatar.libravatar_url, &invite.email);
         EventInvitee {
             profile: EventInviteeProfile::Email(EmailOnlyUser {
                 email: invite.email,

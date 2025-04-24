@@ -1701,7 +1701,7 @@ impl Runner {
         };
 
         let room_info = self
-            .build_room_info(&mut conn, &settings.raw.avatar.libravatar_url)
+            .build_room_info(&mut conn, &settings.avatar.libravatar_url)
             .await?;
 
         self.ws_send_control(
@@ -2491,7 +2491,7 @@ impl Runner {
                 let settings = self.settings_provider.get();
                 format!(
                     "{}{:x}",
-                    settings.raw.avatar.libravatar_url,
+                    settings.avatar.libravatar_url,
                     md5::compute(&user.email)
                 )
             })),

@@ -19,6 +19,7 @@
 )]
 
 mod authz;
+mod avatar;
 mod database;
 mod http;
 mod http_tls;
@@ -38,6 +39,7 @@ mod user_search_backend;
 mod user_search_backend_keycloak;
 
 pub use authz::Authz;
+pub use avatar::Avatar;
 pub use database::Database;
 pub use http::Http;
 pub use http_tls::HttpTls;

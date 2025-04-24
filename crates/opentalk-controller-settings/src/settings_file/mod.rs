@@ -43,7 +43,7 @@ mod user_search_backend;
 mod users_find_behavior;
 
 pub(crate) use authz::Authz;
-pub use avatar::Avatar;
+pub(crate) use avatar::Avatar;
 pub use call_in::CallIn;
 pub(crate) use database::Database;
 pub use defaults::Defaults;
