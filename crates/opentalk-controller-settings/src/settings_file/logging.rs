@@ -5,7 +5,7 @@
 use serde::Deserialize;
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct Logging {
+pub(crate) struct Logging {
     pub default_directives: Option<Vec<String>>,
 
     pub otlp_tracing_endpoint: Option<String>,

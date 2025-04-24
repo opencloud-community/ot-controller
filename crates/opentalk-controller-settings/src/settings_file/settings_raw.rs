@@ -40,7 +40,7 @@ pub struct SettingsRaw {
     pub(crate) rabbit_mq: Option<RabbitMqConfig>,
 
     #[serde(default)]
-    pub logging: Logging,
+    pub(crate) logging: Option<Logging>,
 
     #[serde(default)]
     pub(crate) authz: Option<Authz>,
@@ -138,7 +138,7 @@ pub(crate) fn settings_raw_minimal_example() -> SettingsRaw {
         stun: None,
         redis: None,
         rabbit_mq: None,
-        logging: Logging::default(),
+        logging: None,
         authz: None,
         avatar: Avatar::default(),
         metrics: Metrics::default(),

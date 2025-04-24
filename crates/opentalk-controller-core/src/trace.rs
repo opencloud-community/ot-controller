@@ -7,7 +7,7 @@ use actix_web::{
     http::header::USER_AGENT,
     Error, HttpMessage,
 };
-use opentalk_controller_settings::settings_file::Logging;
+use opentalk_controller_settings::{Logging, LoggingOltpTracing};
 use opentelemetry::{trace::TracerProvider as _, KeyValue};
 use opentelemetry_otlp::{SpanExporter, WithExportConfig as _};
 use opentelemetry_sdk::{
@@ -24,7 +24,6 @@ use tracing_subscriber::{
     util::SubscriberInitExt,
     EnvFilter, Registry,
 };
-use uuid::Uuid;
 
 use crate::Result;
 
@@ -49,8 +48,8 @@ pub fn init(settings: &Logging) -> Result<()> {
 
     // If opentelemetry is enabled install that layer
     let mut tracing_layer = None;
-    if let Some(endpoint) = &settings.otlp_tracing_endpoint {
-        tracing_layer = Some(init_tracing_layer(settings, endpoint)?);
+    if let Some(oltp_tracing) = &settings.otlp_tracing {
+        tracing_layer = Some(init_tracing_layer(oltp_tracing)?);
     }
 
     // Create registry which contains all layers
@@ -67,33 +66,29 @@ type SubscriberLayer = Layer<Layered<EnvFilter, Registry>>;
 type Subscriber = Layered<EnvFilter, Registry>;
 
 fn init_tracing_layer(
-    settings: &Logging,
-    endpoint: &str,
+    LoggingOltpTracing {
+        endpoint,
+        service_name,
+        service_namespace,
+        service_instance_id,
+    }: &LoggingOltpTracing,
 ) -> Result<OpenTelemetryLayer<Layered<SubscriberLayer, Subscriber>, Tracer>> {
     let otlp_exporter = SpanExporter::builder()
         .with_tonic()
         .with_endpoint(endpoint)
         .build()
         .whatever_context("Failed to build OpenTelemetry (exporter)")?;
-    let service_name = settings
-        .service_name
-        .clone()
-        .unwrap_or_else(|| "controller".into());
-
-    let service_namespace = settings
-        .service_namespace
-        .clone()
-        .unwrap_or_else(|| "opentalk".into());
-
-    let service_instance_id = settings
-        .service_instance_id
-        .clone()
-        .unwrap_or_else(|| Uuid::new_v4().to_string());
 
     let resource = Resource::builder()
-        .with_service_name(service_name)
-        .with_attribute(KeyValue::new("service.namespace", service_namespace))
-        .with_attribute(KeyValue::new("service.instance.id", service_instance_id))
+        .with_service_name(service_name.to_string())
+        .with_attribute(KeyValue::new(
+            "service.namespace",
+            service_namespace.to_string(),
+        ))
+        .with_attribute(KeyValue::new(
+            "service.instance.id",
+            service_instance_id.to_string(),
+        ))
         .with_attribute(KeyValue::new(
             "service.version",
             option_env!("VERGEN_GIT_SEMVER")

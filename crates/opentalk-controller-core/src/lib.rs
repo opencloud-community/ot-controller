@@ -258,7 +258,7 @@ impl Controller {
             SettingsProvider::load(&args.config).whatever_context("Failed to load settings")?;
         let settings = settings_provider.get();
 
-        trace::init(&settings.raw.logging).whatever_context("Failed to initialize tracing")?;
+        trace::init(&settings.logging).whatever_context("Failed to initialize tracing")?;
 
         log::info!("Starting {}", program_name);
 
