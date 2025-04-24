@@ -1655,58 +1655,6 @@ async fn start_with_one_participant(storage: TestContextVolatileStorage) {
 
 #[actix_rt::test]
 #[serial]
-async fn start_with_empty_participants_redis() {
-    start_with_empty_participants(TestContextVolatileStorage::Redis).await
-}
-
-#[actix_rt::test]
-#[serial]
-async fn start_with_empty_participants_memory() {
-    start_with_empty_participants(TestContextVolatileStorage::Memory).await
-}
-
-async fn start_with_empty_participants(storage: TestContextVolatileStorage) {
-    let test_ctx = TestContext::new(storage).await;
-    let (mut module_tester, _user1, _user2) = common::setup_users::<LegalVote>(&test_ctx, ()).await;
-
-    let start_parameters = UserParameters {
-        kind: VoteKind::RollCall,
-        name: Name::try_from("TestVote").unwrap(),
-        subtitle: Some(Subtitle::try_from("A subtitle").unwrap()),
-        topic: Some(Topic::try_from("Does the test work?").unwrap()),
-        allowed_participants: AllowedParticipants::try_from(vec![]).unwrap(),
-        enable_abstain: false,
-        auto_close: false,
-        duration: None,
-        create_pdf: false,
-        timezone: None,
-    };
-
-    module_tester
-        .send_ws_message(
-            &USER_1.participant_id,
-            LegalVoteCommand::Start(start_parameters.clone()),
-        )
-        .unwrap();
-
-    let expected_response = WsMessageOutgoing::Module(LegalVoteEvent::Error(
-        ErrorKind::BadRequest(InvalidFields {
-            fields: vec!["allowed_participants".into()],
-        }),
-    ));
-
-    let message = module_tester
-        .receive_ws_message(&USER_1.participant_id)
-        .await
-        .unwrap();
-
-    assert_eq!(expected_response, message);
-
-    module_tester.shutdown().await.unwrap()
-}
-
-#[actix_rt::test]
-#[serial]
 async fn initiator_left_redis() {
     initiator_left(TestContextVolatileStorage::Redis).await
 }

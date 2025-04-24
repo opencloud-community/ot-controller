@@ -5,9 +5,7 @@
 use opentalk_database::DatabaseError;
 use opentalk_signaling_core::{assets::AssetError, ObjectStorageError, SignalingModuleError};
 use opentalk_types_signaling::ParticipantId;
-use opentalk_types_signaling_legal_vote::event::{
-    ErrorKind as TypesErrorKind, GuestParticipants, InvalidFields,
-};
+use opentalk_types_signaling_legal_vote::event::{ErrorKind as TypesErrorKind, GuestParticipants};
 use snafu::Snafu;
 
 /// A legal vote error
@@ -39,9 +37,6 @@ pub(crate) enum ErrorKind {
     InvalidVoteId,
     #[snafu(display("The given allowlist contains guests: {guests:?}"))]
     AllowlistContainsGuests { guests: Vec<ParticipantId> },
-    #[allow(dead_code)]
-    #[snafu(display("Failed to validate request. Invalid fields: {fields:?}"))]
-    BadRequest { fields: Vec<String> },
     #[snafu(display("Failed to set or get permissions"))]
     PermissionError,
     #[snafu(display("The requesting user has insufficient permissions"))]
@@ -58,9 +53,6 @@ impl From<ErrorKind> for TypesErrorKind {
             ErrorKind::InvalidVoteId => TypesErrorKind::InvalidVoteId,
             ErrorKind::AllowlistContainsGuests { guests } => {
                 TypesErrorKind::AllowlistContainsGuests(GuestParticipants { guests })
-            }
-            ErrorKind::BadRequest { fields } => {
-                TypesErrorKind::BadRequest(InvalidFields { fields })
             }
             ErrorKind::PermissionError => TypesErrorKind::PermissionError,
             ErrorKind::InsufficientPermissions => TypesErrorKind::InsufficientPermissions,
