@@ -1,9 +1,9 @@
-# Identity Provider (KeyCloak)
+# Identity Provider (Keycloak)
 
-The OpenTalk Controller uses [keycloak](https://www.keycloak.org/), an OpenID Connect compatible
+The OpenTalk Controller uses [Keycloak](https://www.keycloak.org/), an OpenID Connect compatible
 identity and access management software for single sign-on.
 
-## Configuring keycloak for OpenTalk Controller
+## Configuring Keycloak for OpenTalk Controller
 
 :::note
 

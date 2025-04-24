@@ -552,7 +552,7 @@ async fn create_user_event_invite(
 /// Create an invite to an event via email address
 ///
 /// Checks first if a user exists with the email address in our database and creates a regular invite,
-/// else checks if the email is registered with the keycloak (or external invitee support is configured)
+/// else checks if the email is registered with the Keycloak (or external invitee support is configured)
 /// and then creates an email invite
 #[allow(clippy::too_many_arguments)]
 async fn create_email_event_invite(
@@ -712,7 +712,7 @@ async fn create_email_event_invite(
 }
 
 /// Invite a given email to the event.
-/// Will check if the email exists in keycloak and sends an "unregistered" email invite
+/// Will check if the email exists in Keycloak and sends an "unregistered" email invite
 /// or (if configured) sends an "external" email invite to the given email address
 #[allow(clippy::too_many_arguments)]
 async fn create_invite_to_non_matching_email(
