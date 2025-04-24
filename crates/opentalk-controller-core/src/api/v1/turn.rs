@@ -19,7 +19,7 @@ use base64::Engine;
 use either::Either;
 use openidconnect::AccessToken;
 use opentalk_controller_service::oidc::OidcContext;
-use opentalk_controller_settings::{settings_file::TurnServer, Settings, SettingsProvider};
+use opentalk_controller_settings::{Settings, SettingsProvider, TurnServer};
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::{Db, OptionalExt};
 use opentalk_db_storage::{invites::Invite, users::User};
@@ -87,8 +87,8 @@ pub async fn get(
     let settings_provider = settings_provider.into_inner();
     let settings = settings_provider.get();
 
-    let turn_servers = settings.raw.turn.clone();
-    let stun_servers = &settings.raw.stun;
+    let turn_servers = &settings.turn;
+    let stun_servers = &settings.stun;
 
     // This is a omniauth endpoint. AccessTokens and InviteCodes are allowed as Bearer tokens
     match check_access_token_or_invite(&settings, authz, db, &req, &caches, oidc_ctx).await? {

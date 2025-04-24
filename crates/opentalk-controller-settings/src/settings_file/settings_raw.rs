@@ -13,7 +13,7 @@ use super::{
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct SettingsRaw {
-    pub database: Database,
+    pub(crate) database: Database,
 
     #[serde(default)]
     pub(crate) keycloak: Option<Keycloak>,
@@ -28,11 +28,14 @@ pub struct SettingsRaw {
     pub(crate) http: Option<Http>,
 
     #[serde(default)]
-    pub turn: Option<Turn>,
+    pub(crate) turn: Option<Turn>,
+
     #[serde(default)]
-    pub stun: Option<Stun>,
+    pub(crate) stun: Option<Stun>,
+
     #[serde(default)]
-    pub redis: Option<RedisConfig>,
+    pub(crate) redis: Option<RedisConfig>,
+
     #[serde(default)]
     pub rabbit_mq: RabbitMqConfig,
     #[serde(default)]
@@ -92,15 +95,12 @@ pub struct SettingsRaw {
 pub(crate) fn settings_raw_minimal_example() -> SettingsRaw {
     use openidconnect::{ClientId, ClientSecret};
 
-    use super::{
-        database::default_max_connections, OidcController, OidcFrontend, UserSearchBackend,
-        UsersFindBehavior,
-    };
+    use super::{OidcController, OidcFrontend, UserSearchBackend, UsersFindBehavior};
 
     SettingsRaw {
         database: Database {
             url: "postgres://postgres:password123@localhost:5432/opentalk".to_string(),
-            max_connections: default_max_connections(),
+            max_connections: None,
         },
         keycloak: None,
         oidc: Some(Oidc {

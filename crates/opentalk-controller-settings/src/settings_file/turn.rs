@@ -4,40 +4,16 @@
 
 use std::time::Duration;
 
-use serde::{Deserialize, Deserializer};
+use serde::Deserialize;
 
 use super::TurnServer;
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct Turn {
-    /// How long should a credential pair be valid, in seconds
-    #[serde(
-        deserialize_with = "duration_from_secs",
-        default = "default_turn_credential_lifetime"
-    )]
-    pub lifetime: Duration,
+pub(crate) struct Turn {
+    /// How long a credential pair be should be valid, in seconds
+    #[serde(serialize_with = "opentalk_types_common::utils::duration_seconds_option")]
+    pub lifetime: Option<Duration>,
+
     /// List of configured TURN servers.
-    pub servers: Vec<TurnServer>,
-}
-
-impl Default for Turn {
-    fn default() -> Self {
-        Self {
-            lifetime: default_turn_credential_lifetime(),
-            servers: vec![],
-        }
-    }
-}
-
-fn default_turn_credential_lifetime() -> Duration {
-    Duration::from_secs(60)
-}
-
-fn duration_from_secs<'de, D>(deserializer: D) -> Result<Duration, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let duration: u64 = Deserialize::deserialize(deserializer)?;
-
-    Ok(Duration::from_secs(duration))
+    pub servers: Option<Vec<TurnServer>>,
 }

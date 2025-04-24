@@ -82,7 +82,7 @@ async fn execute_job(
     hide_duration: bool,
 ) -> Result<()> {
     let db = Arc::new(
-        Db::connect(&settings.raw.database).whatever_context("Failed to connect to database")?,
+        Db::connect(&settings.database).whatever_context("Failed to connect to database")?,
     );
 
     ensure_whatever!(timeout > 0, "Timeout must be a strictly positive number");

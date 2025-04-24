@@ -7,10 +7,7 @@ use serde::Deserialize;
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Database {
     pub url: String,
-    #[serde(default = "default_max_connections")]
-    pub max_connections: u32,
-}
 
-pub(super) fn default_max_connections() -> u32 {
-    100
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_connections: Option<u32>,
 }

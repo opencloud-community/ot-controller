@@ -131,7 +131,7 @@ pub async fn parse_args<M: RegisterModules>() -> Result<Args> {
             }
             SubCommand::MigrateDb => {
                 let result =
-                    opentalk_db_storage::migrations::migrate_from_url(&settings.raw.database.url)
+                    opentalk_db_storage::migrations::migrate_from_url(&settings.database.url)
                         .await
                         .whatever_context("Failed to migrate database")?;
                 println!("{result:?}");
